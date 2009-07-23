@@ -188,30 +188,13 @@ static GLboolean valid_dst(struct r300_vertex_program_code *vp,
 	return GL_TRUE;
 }
 
-static GLuint *r300TranslateOpcodeADD(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
+static GLuint * ei_vector1(struct r300_vertex_program_code *vp,
+				GLuint hw_opcode,
+				struct prog_instruction *vpi,
+				GLuint * inst,
+				struct prog_src_register src[3])
 {
-	inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeARL(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_FLT2FIX_DX,
+	inst[0] = PVS_OP_DST_OPERAND(hw_opcode,
 				     GL_FALSE,
 				     GL_FALSE,
 				     t_dst_index(vp, &vpi->DstReg),
@@ -224,12 +207,13 @@ static GLuint *r300TranslateOpcodeARL(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
+static GLuint * ei_vector2(struct r300_vertex_program_code *vp,
+				GLuint hw_opcode,
+				struct prog_instruction *vpi,
+				GLuint * inst,
+				struct prog_src_register src[3])
 {
-	inst[0] = PVS_OP_DST_OPERAND(VE_DOT_PRODUCT,
+	inst[0] = PVS_OP_DST_OPERAND(hw_opcode,
 				     GL_FALSE,
 				     GL_FALSE,
 				     t_dst_index(vp, &vpi->DstReg),
@@ -242,30 +226,13 @@ static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDST(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
+static GLuint *ei_math1(struct r300_vertex_program_code *vp,
+				GLuint hw_opcode,
+				struct prog_instruction *vpi,
+				GLuint * inst,
+				struct prog_src_register src[3])
 {
-	inst[0] = PVS_OP_DST_OPERAND(VE_DISTANCE_VECTOR,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeEX2(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(ME_EXP_BASE2_FULL_DX,
+	inst[0] = PVS_OP_DST_OPERAND(hw_opcode,
 				     GL_TRUE,
 				     GL_FALSE,
 				     t_dst_index(vp, &vpi->DstReg),
@@ -278,70 +245,7 @@ static GLuint *r300TranslateOpcodeEX2(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeEXP(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(ME_EXP_BASE2_DX,
-				     GL_TRUE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src_scalar(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeFRC(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_FRACTION,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeLG2(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
-
-	inst[0] = PVS_OP_DST_OPERAND(ME_LOG_BASE2_FULL_DX,
-				     GL_TRUE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_src_class(src[0].File),
-				  src[0].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeLIT(struct r300_vertex_program_code *vp,
+static GLuint *ei_lit(struct r300_vertex_program_code *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -380,25 +284,7 @@ static GLuint *r300TranslateOpcodeLIT(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeLOG(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(ME_LOG_BASE2_DX,
-				     GL_TRUE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src_scalar(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeMAD(struct r300_vertex_program_code *vp,
+static GLuint *ei_mad(struct r300_vertex_program_code *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -416,81 +302,7 @@ static GLuint *r300TranslateOpcodeMAD(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMAX(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_MAXIMUM,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeMIN(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_MINIMUM,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeMOV(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeMUL(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_MULTIPLY,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodePOW(struct r300_vertex_program_code *vp,
+static GLuint *ei_pow(struct r300_vertex_program_code *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -504,78 +316,6 @@ static GLuint *r300TranslateOpcodePOW(struct r300_vertex_program_code *vp,
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = __CONST(0, SWIZZLE_ZERO);
 	inst[3] = t_src_scalar(vp, &src[1]);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeRCP(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(ME_RECIP_DX,
-				     GL_TRUE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src_scalar(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeRSQ(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(ME_RECIP_SQRT_DX,
-				     GL_TRUE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src_scalar(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeSGE(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_SET_GREATER_THAN_EQUAL,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeSLT(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	inst[0] = PVS_OP_DST_OPERAND(VE_SET_LESS_THAN,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
 
 	return inst;
 }
@@ -757,67 +497,28 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 		}
 
 		switch (vpi->Opcode) {
-		case OPCODE_ADD:
-			inst = r300TranslateOpcodeADD(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_ARL:
-			inst = r300TranslateOpcodeARL(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_DP4:
-			inst = r300TranslateOpcodeDP4(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_DST:
-			inst = r300TranslateOpcodeDST(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_EX2:
-			inst = r300TranslateOpcodeEX2(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_EXP:
-			inst = r300TranslateOpcodeEXP(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_FRC:
-			inst = r300TranslateOpcodeFRC(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_LG2:
-			inst = r300TranslateOpcodeLG2(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_LIT:
-			inst = r300TranslateOpcodeLIT(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_LOG:
-			inst = r300TranslateOpcodeLOG(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_MAD:
-			inst = r300TranslateOpcodeMAD(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_MAX:
-			inst = r300TranslateOpcodeMAX(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_MIN:
-			inst = r300TranslateOpcodeMIN(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_MOV:
-			inst = r300TranslateOpcodeMOV(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_MUL:
-			inst = r300TranslateOpcodeMUL(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_POW:
-			inst = r300TranslateOpcodePOW(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_RCP:
-			inst = r300TranslateOpcodeRCP(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_RSQ:
-			inst = r300TranslateOpcodeRSQ(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_SGE:
-			inst = r300TranslateOpcodeSGE(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_SLT:
-			inst = r300TranslateOpcodeSLT(compiler->code, vpi, inst, src);
-			break;
+		case OPCODE_ADD: inst = ei_vector2(compiler->code, VE_ADD, vpi, inst, src); break;
+		case OPCODE_ARL: inst = ei_vector1(compiler->code, VE_FLT2FIX_DX, vpi, inst, src); break;
+		case OPCODE_DP4: inst = ei_vector2(compiler->code, VE_DOT_PRODUCT, vpi, inst, src); break;
+		case OPCODE_DST: inst = ei_vector2(compiler->code, VE_DISTANCE_VECTOR, vpi, inst, src); break;
+		case OPCODE_EX2: inst = ei_math1(compiler->code, ME_EXP_BASE2_FULL_DX, vpi, inst, src); break;
+		case OPCODE_EXP: inst = ei_math1(compiler->code, ME_EXP_BASE2_DX, vpi, inst, src); break;
+		case OPCODE_FRC: inst = ei_vector1(compiler->code, VE_FRACTION, vpi, inst, src); break;
+		case OPCODE_LG2: inst = ei_math1(compiler->code, ME_LOG_BASE2_FULL_DX, vpi, inst, src); break;
+		case OPCODE_LIT: inst = ei_lit(compiler->code, vpi, inst, src); break;
+		case OPCODE_LOG: inst = ei_math1(compiler->code, ME_LOG_BASE2_DX, vpi, inst, src); break;
+		case OPCODE_MAD: inst = ei_mad(compiler->code, vpi, inst, src); break;
+		case OPCODE_MAX: inst = ei_vector2(compiler->code, VE_MAXIMUM, vpi, inst, src); break;
+		case OPCODE_MIN: inst = ei_vector2(compiler->code, VE_MINIMUM, vpi, inst, src); break;
+		case OPCODE_MOV: inst = ei_vector1(compiler->code, VE_ADD, vpi, inst, src); break;
+		case OPCODE_MUL: inst = ei_vector2(compiler->code, VE_MULTIPLY, vpi, inst, src); break;
+		case OPCODE_POW: inst = ei_pow(compiler->code, vpi, inst, src); break;
+		case OPCODE_RCP: inst = ei_math1(compiler->code, ME_RECIP_DX, vpi, inst, src); break;
+		case OPCODE_RSQ: inst = ei_math1(compiler->code, ME_RECIP_SQRT_DX, vpi, inst, src); break;
+		case OPCODE_SGE: inst = ei_vector2(compiler->code, VE_SET_GREATER_THAN_EQUAL, vpi, inst, src); break;
+		case OPCODE_SLT: inst = ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst, src); break;
 		default:
+			fprintf(stderr, "Unknown opcode %i\n", vpi->Opcode);
 			return GL_FALSE;
 		}
 	}
