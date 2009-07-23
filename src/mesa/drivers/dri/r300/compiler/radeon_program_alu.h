@@ -35,6 +35,11 @@ GLboolean radeonTransformALU(
 	struct prog_instruction*,
 	void*);
 
+GLboolean r300_transform_vertex_alu(
+	struct radeon_transform_context *t,
+	struct prog_instruction*,
+	void*);
+
 GLboolean radeonTransformTrigSimple(
 	struct radeon_transform_context *t,
 	struct prog_instruction*,

@@ -25,6 +25,8 @@
 #include "../r300_reg.h"
 
 #include "radeon_nqssadce.h"
+#include "radeon_program.h"
+#include "radeon_program_alu.h"
 
 #include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
@@ -186,34 +188,6 @@ static GLboolean valid_dst(struct r300_vertex_program_code *vp,
 	return GL_TRUE;
 }
 
-static GLuint *r300TranslateOpcodeABS(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_MAXIMUM,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
-				  t_src_class(src[0].File),
-				  (!src[0].
-				   Negate) ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
-	inst[3] = 0;
-
-	return inst;
-}
-
 static GLuint *r300TranslateOpcodeADD(struct r300_vertex_program_code *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
@@ -250,40 +224,6 @@ static GLuint *r300TranslateOpcodeARL(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDP3(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO}
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_DOT_PRODUCT,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-				  SWIZZLE_ZERO,
-				  t_src_class(src[0].File),
-				  src[0].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
-	inst[2] =
-	    PVS_SRC_OPERAND(t_src_index(vp, &src[1]),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)), SWIZZLE_ZERO,
-			    t_src_class(src[1].File),
-			    src[1].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[1].RelAddr << 4);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
 static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program_code *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
@@ -296,32 +236,6 @@ static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program_code *vp,
 				     t_dst_mask(vpi->DstReg.WriteMask),
 				     t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
-	inst[2] = t_src(vp, &src[1]);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeDPH(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W}
-	inst[0] = PVS_OP_DST_OPERAND(VE_DOT_PRODUCT,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-				  PVS_SRC_SELECT_FORCE_1,
-				  t_src_class(src[0].File),
-				  src[0].Negate ? NEGATE_XYZ : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = __CONST(1, SWIZZLE_ZERO);
 
@@ -378,47 +292,6 @@ static GLuint *r300TranslateOpcodeEXP(struct r300_vertex_program_code *vp,
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = __CONST(0, SWIZZLE_ZERO);
 	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeFLR(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3],
-				      int *u_temp_i)
-{
-	/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W}
-	   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_FRACTION,
-				     GL_FALSE,
-				     GL_FALSE,
-				     *u_temp_i,
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     PVS_DST_REG_TEMPORARY);
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-	inst += 4;
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = PVS_SRC_OPERAND(*u_temp_i,
-				  PVS_SRC_SELECT_X,
-				  PVS_SRC_SELECT_Y,
-				  PVS_SRC_SELECT_Z,
-				  PVS_SRC_SELECT_W, PVS_SRC_REG_TEMPORARY,
-				  /* Not 100% sure about this */
-				  (!src[0].
-				   Negate) ? NEGATE_XYZW : NEGATE_NONE);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-	(*u_temp_i)--;
 
 	return inst;
 }
@@ -707,139 +580,6 @@ static GLuint *r300TranslateOpcodeSLT(struct r300_vertex_program_code *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-
-#if 0
-	inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[1]),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
-				  t_src_class(src[1].File),
-				  (!src[1].
-				   Negate) ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[1].RelAddr << 4);
-	inst[3] = 0;
-#else
-	inst[0] =
-	    PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD,
-			       GL_FALSE,
-			       GL_FALSE,
-			       t_dst_index(vp, &vpi->DstReg),
-			       t_dst_mask(vpi->DstReg.WriteMask),
-			       t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ONE);
-	inst[3] = PVS_SRC_OPERAND(t_src_index(vp, &src[1]),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
-				  t_src_class(src[1].File),
-				  (!src[1].
-				   Negate) ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[1].RelAddr << 4);
-#endif
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeSWZ(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3])
-{
-	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = __CONST(0, SWIZZLE_ZERO);
-	inst[3] = __CONST(0, SWIZZLE_ZERO);
-
-	return inst;
-}
-
-static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program_code *vp,
-				      struct prog_instruction *vpi,
-				      GLuint * inst,
-				      struct prog_src_register src[3],
-				      int *u_temp_i)
-{
-	/* mul r0, r1.yzxw, r2.zxyw
-	   mad r0, -r2.yzxw, r1.zxyw, r0
-	 */
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     *u_temp_i,
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     PVS_DST_REG_TEMPORARY);
-	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// Z
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
-				  t_src_class(src[0].File),
-				  src[0].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
-	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// Z
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// X
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// Y
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// W
-				  t_src_class(src[1].File),
-				  src[1].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[1].RelAddr << 4);
-	inst[3] = __CONST(1, SWIZZLE_ZERO);
-	inst += 4;
-
-	inst[0] = PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD,
-				     GL_FALSE,
-				     GL_FALSE,
-				     t_dst_index(vp, &vpi->DstReg),
-				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
-	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// Y
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// Z
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// X
-				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// W
-				  t_src_class(src[1].File),
-				  (!src[1].
-				   Negate) ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[1].RelAddr << 4);
-	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// Z
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
-				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
-				  t_src_class(src[0].File),
-				  src[0].Negate ? NEGATE_XYZW : NEGATE_NONE) |
-	    (src[0].RelAddr << 4);
-	inst[3] =
-	    PVS_SRC_OPERAND(*u_temp_i, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y,
-			    PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W,
-			    PVS_SRC_REG_TEMPORARY, NEGATE_NONE);
-
-	(*u_temp_i)--;
-
-	return inst;
-}
-
 static void t_inputs_outputs(struct r300_vertex_program_code *vp, struct gl_program * glvp)
 {
 	int i;
@@ -1017,23 +757,14 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 		}
 
 		switch (vpi->Opcode) {
-		case OPCODE_ABS:
-			inst = r300TranslateOpcodeABS(compiler->code, vpi, inst, src);
-			break;
 		case OPCODE_ADD:
 			inst = r300TranslateOpcodeADD(compiler->code, vpi, inst, src);
 			break;
 		case OPCODE_ARL:
 			inst = r300TranslateOpcodeARL(compiler->code, vpi, inst, src);
 			break;
-		case OPCODE_DP3:
-			inst = r300TranslateOpcodeDP3(compiler->code, vpi, inst, src);
-			break;
 		case OPCODE_DP4:
 			inst = r300TranslateOpcodeDP4(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_DPH:
-			inst = r300TranslateOpcodeDPH(compiler->code, vpi, inst, src);
 			break;
 		case OPCODE_DST:
 			inst = r300TranslateOpcodeDST(compiler->code, vpi, inst, src);
@@ -1043,10 +774,6 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 			break;
 		case OPCODE_EXP:
 			inst = r300TranslateOpcodeEXP(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_FLR:
-			inst = r300TranslateOpcodeFLR(compiler->code, vpi, inst, src,	/* FIXME */
-						      &u_temp_i);
 			break;
 		case OPCODE_FRC:
 			inst = r300TranslateOpcodeFRC(compiler->code, vpi, inst, src);
@@ -1089,16 +816,6 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 			break;
 		case OPCODE_SLT:
 			inst = r300TranslateOpcodeSLT(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_SUB:
-			inst = r300TranslateOpcodeSUB(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_SWZ:
-			inst = r300TranslateOpcodeSWZ(compiler->code, vpi, inst, src);
-			break;
-		case OPCODE_XPD:
-			inst = r300TranslateOpcodeXPD(compiler->code, vpi, inst, src,	/* FIXME */
-						      &u_temp_i);
 			break;
 		default:
 			return GL_FALSE;
@@ -1201,155 +918,6 @@ static void fog_as_texcoord(struct gl_program *prog, int tex_id)
 	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
 }
 
-static int translateABS(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-
-	inst = &prog->Instructions[pos];
-
-	inst->Opcode = OPCODE_MAX;
-	inst->SrcReg[1] = inst->SrcReg[0];
-	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
-
-	return 0;
-}
-
-static int translateDP3(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-
-	inst = &prog->Instructions[pos];
-
-	inst->Opcode = OPCODE_DP4;
-	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	return 0;
-}
-
-static int translateDPH(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-
-	inst = &prog->Instructions[pos];
-
-	inst->Opcode = OPCODE_DP4;
-	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
-
-	return 0;
-}
-
-static int translateFLR(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-	struct prog_dst_register dst;
-	int tmp_idx;
-
-	tmp_idx = prog->NumTemporaries++;
-
-	_mesa_insert_instructions(prog, pos + 1, 1);
-
-	inst = &prog->Instructions[pos];
-	dst = inst->DstReg;
-
-	inst->Opcode = OPCODE_FRC;
-	inst->DstReg.File = PROGRAM_TEMPORARY;
-	inst->DstReg.Index = tmp_idx;
-	++inst;
-
-	inst->Opcode = OPCODE_ADD;
-	inst->DstReg = dst;
-	inst->SrcReg[0] = (inst-1)->SrcReg[0];
-	inst->SrcReg[1].File = PROGRAM_TEMPORARY;
-	inst->SrcReg[1].Index = tmp_idx;
-	inst->SrcReg[1].Negate = NEGATE_XYZW;
-
-	return 1;
-}
-
-static int translateSUB(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-
-	inst = &prog->Instructions[pos];
-
-	inst->Opcode = OPCODE_ADD;
-	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
-
-	return 0;
-}
-
-static int translateSWZ(struct gl_program *prog, int pos)
-{
-	prog->Instructions[pos].Opcode = OPCODE_MOV;
-
-	return 0;
-}
-
-static int translateXPD(struct gl_program *prog, int pos)
-{
-	struct prog_instruction *inst;
-	int tmp_idx;
-
-	tmp_idx = prog->NumTemporaries++;
-
-	_mesa_insert_instructions(prog, pos + 1, 1);
-
-	inst = &prog->Instructions[pos];
-
-	*(inst+1) = *inst;
-
-	inst->Opcode = OPCODE_MUL;
-	inst->DstReg.File = PROGRAM_TEMPORARY;
-	inst->DstReg.Index = tmp_idx;
-	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
-	inst->SrcReg[1].Swizzle = combine_swizzles4(inst->SrcReg[1].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
-	++inst;
-
-	inst->Opcode = OPCODE_MAD;
-	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
-	inst->SrcReg[1].Swizzle = combine_swizzles4(inst->SrcReg[1].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
-	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
-	inst->SrcReg[2].File = PROGRAM_TEMPORARY;
-	inst->SrcReg[2].Index = tmp_idx;
-
-	return 1;
-}
-
-static void translateInsts(struct gl_program *prog)
-{
-	struct prog_instruction *inst;
-	int i;
-
-	for (i = 0; i < prog->NumInstructions; ++i) {
-		inst = &prog->Instructions[i];
-
-		switch (inst->Opcode) {
-			case OPCODE_ABS:
-				i += translateABS(prog, i);
-				break;
-			case OPCODE_DP3:
-				i += translateDP3(prog, i);
-				break;
-			case OPCODE_DPH:
-				i += translateDPH(prog, i);
-				break;
-			case OPCODE_FLR:
-				i += translateFLR(prog, i);
-				break;
-			case OPCODE_SUB:
-				i += translateSUB(prog, i);
-				break;
-			case OPCODE_SWZ:
-				i += translateSWZ(prog, i);
-				break;
-			case OPCODE_XPD:
-				i += translateXPD(prog, i);
-				break;
-			default:
-				break;
-		}
-	}
-}
 
 #define ADD_OUTPUT(fp_attr, vp_result) \
 	do { \
@@ -1464,7 +1032,12 @@ GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compi
 
 	addArtificialOutputs(compiler);
 
-	translateInsts(compiler->program);
+	{
+		struct radeon_program_transformation transformations[] = {
+			{ &r300_transform_vertex_alu, 0 },
+		};
+		radeonLocalTransform(compiler->program, 1, transformations);
+	}
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");

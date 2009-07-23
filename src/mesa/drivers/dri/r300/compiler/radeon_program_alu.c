@@ -180,6 +180,20 @@ static void transform_ABS(struct radeon_transform_context* t,
 	emit1(t->Program, OPCODE_MOV, inst->SaturateMode, inst->DstReg, src);
 }
 
+static void transform_DP3(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	struct prog_src_register src0 = inst->SrcReg[0];
+	struct prog_src_register src1 = inst->SrcReg[1];
+	src0.Negate &= ~NEGATE_W;
+	src0.Swizzle &= ~(7 << (3 * 3));
+	src0.Swizzle |= SWIZZLE_ZERO << (3 * 3);
+	src1.Negate &= ~NEGATE_W;
+	src1.Swizzle &= ~(7 << (3 * 3));
+	src1.Swizzle |= SWIZZLE_ZERO << (3 * 3);
+	emit2(t->Program, OPCODE_DP4, inst->SaturateMode, inst->DstReg, src0, src1);
+}
+
 static void transform_DPH(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
@@ -415,6 +429,38 @@ GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	}
 }
 
+
+static void transform_r300_vertex_ABS(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	/* Note: r500 can take absolute values, but r300 cannot. */
+	struct prog_src_register src1 = inst->SrcReg[0];
+	src1.Negate ^= NEGATE_XYZW;
+
+	emit2(t->Program, OPCODE_MAX, inst->SaturateMode, inst->DstReg, inst->SrcReg[0], src1);
+}
+
+/**
+ * For use with radeonLocalTransform, this transforms non-native ALU
+ * instructions of the r300 up to r500 vertex engine.
+ */
+GLboolean r300_transform_vertex_alu(struct radeon_transform_context* t,
+	struct prog_instruction* inst,
+	void* unused)
+{
+	switch(inst->Opcode) {
+	case OPCODE_ABS: transform_r300_vertex_ABS(t, inst); return GL_TRUE;
+	case OPCODE_DP3: transform_DP3(t, inst); return GL_TRUE;
+	case OPCODE_DPH: transform_DPH(t, inst); return GL_TRUE;
+	case OPCODE_FLR: transform_FLR(t, inst); return GL_TRUE;
+	case OPCODE_LRP: transform_LRP(t, inst); return GL_TRUE;
+	case OPCODE_SUB: transform_SUB(t, inst); return GL_TRUE;
+	case OPCODE_SWZ: transform_SWZ(t, inst); return GL_TRUE;
+	case OPCODE_XPD: transform_XPD(t, inst); return GL_TRUE;
+	default:
+		return GL_FALSE;
+	}
+}
 
 static void sincos_constants(struct radeon_transform_context* t, GLuint *constants)
 {
