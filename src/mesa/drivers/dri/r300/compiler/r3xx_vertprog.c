@@ -607,12 +607,8 @@ static void nqssadceInit(struct nqssadce_state* s)
 	int i;
 
 	for(i = 0; i < VERT_RESULT_MAX; ++i) {
-		if (compiler->RequiredOutputs & (1 << i)) {
-			if (i != VERT_RESULT_PSIZ)
-				s->Outputs[i].Sourced = WRITEMASK_XYZW;
-			else
-				s->Outputs[i].Sourced = WRITEMASK_X; /* ugly hack! */
-		}
+		if (compiler->RequiredOutputs & (1 << i))
+			s->Outputs[i].Sourced = WRITEMASK_XYZW;
 	}
 }
 
@@ -630,6 +626,8 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
 	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
 	compiler->program = 0;
+
+	rc_move_output(&compiler->Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
 
 	if (compiler->state.WPosAttr != FRAG_ATTRIB_MAX) {
 		rc_copy_output(&compiler->Base,
