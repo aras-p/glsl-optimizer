@@ -94,8 +94,42 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 	return 4 * vp->code.constants.Count;
 }
 
+static GLbitfield compute_required_outputs(struct gl_vertex_program * vp, GLbitfield fpreads)
+{
+	GLbitfield outputs = 0;
+	int i;
+
+#define ADD_OUTPUT(fp_attr, vp_result) \
+	do { \
+		if (fpreads & (1 << (fp_attr))) \
+			outputs |= (1 << (vp_result)); \
+	} while (0)
+
+	ADD_OUTPUT(FRAG_ATTRIB_COL0, VERT_RESULT_COL0);
+	ADD_OUTPUT(FRAG_ATTRIB_COL1, VERT_RESULT_COL1);
+
+	for (i = 0; i <= 7; ++i) {
+		ADD_OUTPUT(FRAG_ATTRIB_TEX0 + i, VERT_RESULT_TEX0 + i);
+	}
+
+#undef ADD_OUTPUT
+
+	if ((fpreads & (1 << FRAG_ATTRIB_COL0)) &&
+	    (vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC0)))
+		outputs |= 1 << VERT_RESULT_BFC0;
+	if ((fpreads & (1 << FRAG_ATTRIB_COL1)) &&
+	    (vp->Base.OutputsWritten & (1 << VERT_RESULT_BFC1)))
+		outputs |= 1 << VERT_RESULT_BFC1;
+
+	outputs |= 1 << VERT_RESULT_HPOS;
+	if (vp->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ))
+		outputs |= 1 << VERT_RESULT_PSIZ;
+
+	return outputs;
+}
+
 static struct r300_vertex_program *build_program(GLcontext *ctx,
-						 struct r300_vertex_program_external_state *wanted_key,
+						 struct r300_vertex_program_key *wanted_key,
 						 const struct gl_vertex_program *mesa_vp)
 {
 	struct r300_vertex_program *vp;
@@ -109,7 +143,9 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	compiler.Base.Debug = (RADEON_DEBUG & DEBUG_VERTS) ? GL_TRUE : GL_FALSE;
 
 	compiler.code = &vp->code;
-	compiler.state = vp->key;
+	compiler.state.FogAttr = vp->key.FogAttr;
+	compiler.state.WPosAttr = vp->key.WPosAttr;
+	compiler.RequiredOutputs = compute_required_outputs(vp->Base, vp->key.FpReads);
 	compiler.program = &vp->Base->Base;
 
 	if (compiler.Base.Debug) {
@@ -133,7 +169,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_vertex_program_external_state wanted_key = { 0 };
+	struct r300_vertex_program_key wanted_key = { 0 };
 	struct r300_vertex_program_cont *vpc;
 	struct r300_vertex_program *vp;
 

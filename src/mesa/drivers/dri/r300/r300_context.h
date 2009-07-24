@@ -395,11 +395,17 @@ struct r300_hw_state {
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+struct r300_vertex_program_key {
+	GLbitfield FpReads;
+	GLuint FogAttr;
+	GLuint WPosAttr;
+};
+
 struct r300_vertex_program {
 	struct gl_vertex_program *Base;
 	struct r300_vertex_program *next;
 
-	struct r300_vertex_program_external_state key;
+	struct r300_vertex_program_key key;
 	struct r300_vertex_program_code code;
 
 	GLboolean error;

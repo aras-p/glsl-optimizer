@@ -82,6 +82,7 @@ struct r300_vertex_program_compiler {
 	struct radeon_compiler Base;
 	struct r300_vertex_program_code *code;
 	struct r300_vertex_program_external_state state;
+	GLbitfield RequiredOutputs;
 	struct gl_program *program;
 };
 

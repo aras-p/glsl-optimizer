@@ -186,7 +186,6 @@ struct rX00_fragment_program_code {
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
 struct r300_vertex_program_external_state {
-	GLuint FpReads;
 	GLuint FogAttr;
 	GLuint WPosAttr;
 };

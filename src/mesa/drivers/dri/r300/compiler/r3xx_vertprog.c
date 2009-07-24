@@ -667,93 +667,42 @@ static void fog_as_texcoord(struct gl_program *prog, int tex_id)
 }
 
 
-#define ADD_OUTPUT(fp_attr, vp_result) \
-	do { \
-		if ((FpReads & (1 << (fp_attr))) && !(compiler->program->OutputsWritten & (1 << (vp_result)))) { \
-			OutputsAdded |= 1 << (vp_result); \
-			count++; \
-		} \
-	} while (0)
-
 static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
 {
-	GLuint OutputsAdded, FpReads;
-	int i, count;
+	int i;
 
-	OutputsAdded = 0;
-	count = 0;
-	FpReads = compiler->state.FpReads;
+	for(i = 0; i < 32; ++i) {
+		if ((compiler->RequiredOutputs & (1 << i)) &&
+		    !(compiler->Base.Program.OutputsWritten & (1 << i))) {
+			struct rc_instruction * inst = rc_insert_new_instruction(&compiler->Base, compiler->Base.Program.Instructions.Prev);
+			inst->I.Opcode = OPCODE_MOV;
 
-	ADD_OUTPUT(FRAG_ATTRIB_COL0, VERT_RESULT_COL0);
-	ADD_OUTPUT(FRAG_ATTRIB_COL1, VERT_RESULT_COL1);
+			inst->I.DstReg.File = PROGRAM_OUTPUT;
+			inst->I.DstReg.Index = i;
+			inst->I.DstReg.WriteMask = WRITEMASK_XYZW;
 
-	for (i = 0; i < 7; ++i) {
-		ADD_OUTPUT(FRAG_ATTRIB_TEX0 + i, VERT_RESULT_TEX0 + i);
-	}
+			inst->I.SrcReg[0].File = PROGRAM_CONSTANT;
+			inst->I.SrcReg[0].Index = 0;
+			inst->I.SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
-	/* Some outputs may be artificially added, to match the inputs of the fragment program.
-	 * Issue 16 of vertex program spec says that all vertex attributes that are unwritten by
-	 * vertex program are undefined, so just use MOV [vertex_result], CONST[0]
-	 */
-	if (count > 0) {
-		struct prog_instruction *inst;
-
-		_mesa_insert_instructions(compiler->program, compiler->program->NumInstructions - 1, count);
-		inst = &compiler->program->Instructions[compiler->program->NumInstructions - 1 - count];
-
-		for (i = 0; i < VERT_RESULT_MAX; ++i) {
-			if (OutputsAdded & (1 << i)) {
-				inst->Opcode = OPCODE_MOV;
-
-				inst->DstReg.File = PROGRAM_OUTPUT;
-				inst->DstReg.Index = i;
-				inst->DstReg.WriteMask = WRITEMASK_XYZW;
-				inst->DstReg.CondMask = COND_TR;
-
-				inst->SrcReg[0].File = PROGRAM_CONSTANT;
-				inst->SrcReg[0].Index = 0;
-				inst->SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-				++inst;
-			}
+			compiler->Base.Program.OutputsWritten |= 1 << i;
 		}
-
-		compiler->program->OutputsWritten |= OutputsAdded;
 	}
 }
-
-#undef ADD_OUTPUT
 
 static void nqssadceInit(struct nqssadce_state* s)
 {
 	struct r300_vertex_program_compiler * compiler = s->UserData;
-	GLuint fp_reads;
+	int i;
 
-	fp_reads = compiler->state.FpReads;
-	{
-		if (fp_reads & FRAG_BIT_COL0) {
-				s->Outputs[VERT_RESULT_COL0].Sourced = WRITEMASK_XYZW;
-				s->Outputs[VERT_RESULT_BFC0].Sourced = WRITEMASK_XYZW;
-		}
-
-		if (fp_reads & FRAG_BIT_COL1) {
-				s->Outputs[VERT_RESULT_COL1].Sourced = WRITEMASK_XYZW;
-				s->Outputs[VERT_RESULT_BFC1].Sourced = WRITEMASK_XYZW;
+	for(i = 0; i < VERT_RESULT_MAX; ++i) {
+		if (compiler->RequiredOutputs & (1 << i)) {
+			if (i != VERT_RESULT_PSIZ)
+				s->Outputs[i].Sourced = WRITEMASK_XYZW;
+			else
+				s->Outputs[i].Sourced = WRITEMASK_X; /* ugly hack! */
 		}
 	}
-
-	{
-		int i;
-		for (i = 0; i < 8; ++i) {
-			if (fp_reads & FRAG_BIT_TEX(i)) {
-				s->Outputs[VERT_RESULT_TEX0 + i].Sourced = WRITEMASK_XYZW;
-			}
-		}
-	}
-
-	s->Outputs[VERT_RESULT_HPOS].Sourced = WRITEMASK_XYZW;
-	if (s->Compiler->Program.OutputsWritten & (1 << VERT_RESULT_PSIZ))
-		s->Outputs[VERT_RESULT_PSIZ].Sourced = WRITEMASK_X;
 }
 
 static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
@@ -776,9 +725,9 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		fog_as_texcoord(compiler->program, compiler->state.FogAttr - FRAG_ATTRIB_TEX0);
 	}
 
-	addArtificialOutputs(compiler);
-
 	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+
+	addArtificialOutputs(compiler);
 
 	{
 		struct radeon_program_transformation transformations[] = {
