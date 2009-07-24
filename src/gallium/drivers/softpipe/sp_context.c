@@ -97,8 +97,6 @@ static void softpipe_destroy( struct pipe_context *pipe )
       softpipe->quad.occlusion->destroy( softpipe->quad.occlusion );
       softpipe->quad.coverage->destroy( softpipe->quad.coverage );
       softpipe->quad.blend->destroy( softpipe->quad.blend );
-      softpipe->quad.colormask->destroy( softpipe->quad.colormask );
-      softpipe->quad.output->destroy( softpipe->quad.output );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
@@ -241,8 +239,6 @@ softpipe_create( struct pipe_screen *screen )
       softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
       softpipe->quad.coverage = sp_quad_coverage_stage(softpipe);
       softpipe->quad.blend = sp_quad_blend_stage(softpipe);
-      softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
-      softpipe->quad.output = sp_quad_output_stage(softpipe);
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {

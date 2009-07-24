@@ -123,8 +123,6 @@ struct softpipe_context {
       struct quad_stage *occlusion;
       struct quad_stage *coverage;
       struct quad_stage *blend;
-      struct quad_stage *colormask;
-      struct quad_stage *output;
 
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;

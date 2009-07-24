@@ -65,25 +65,16 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
 
    /* Color combine
     */
-   sp->quad.first = sp->quad.output;
+   sp->quad.first = sp->quad.blend;
 
-   if (sp->blend->colormask != 0xf) {
-      sp_push_quad_first( sp, sp->quad.colormask );
-   }
-
-   if (sp->blend->blend_enable ||
-       sp->blend->logicop_enable) {
-      sp_push_quad_first( sp, sp->quad.blend );
-   }
-
+   /* Shade/Depth/Stencil/Alpha
+    */
    if ((sp->rasterizer->poly_smooth && sp->reduced_prim == PIPE_PRIM_TRIANGLES) ||
        (sp->rasterizer->line_smooth && sp->reduced_prim == PIPE_PRIM_LINES) ||
        (sp->rasterizer->point_smooth && sp->reduced_prim == PIPE_PRIM_POINTS)) {
       sp_push_quad_first( sp, sp->quad.coverage );
    }
 
-   /* Shade/Depth/Stencil/Alpha
-    */
    if (sp->active_query_count) {
       sp_push_quad_first( sp, sp->quad.occlusion );
    }

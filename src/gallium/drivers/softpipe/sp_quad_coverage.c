@@ -68,7 +68,6 @@ coverage_run(struct quad_stage *qs,
                struct quad_header *quads[],
                unsigned nr)
 {
-   struct softpipe_context *softpipe = qs->softpipe;
    unsigned i;
 
    for (i = 0; i < nr; i++)
