@@ -16,6 +16,9 @@
 #include <GL/glut.h>
 #include "shaderutil.h"
 
+#ifndef M_PI
+#define M_PI 3.1415926535
+#endif
 
 static char *FragProgFile = "skinning.frag";
 static char *VertProgFile = "skinning.vert";
