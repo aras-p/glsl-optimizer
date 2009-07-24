@@ -389,6 +389,9 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/depend
 
 GLEW_FILES = \
+	$(DIRECTORY)/include/GL/glew.h			\
+	$(DIRECTORY)/include/GL/glxew.h			\
+	$(DIRECTORY)/include/GL/wglew.h			\
 	$(DIRECTORY)/src/glew/*.c			\
 	$(DIRECTORY)/src/glew/Makefile			\
 	$(DIRECTORY)/src/glew/SConscript		\
