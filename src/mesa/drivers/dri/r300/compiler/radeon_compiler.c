@@ -123,6 +123,32 @@ void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_r
 
 
 /**
+ * Rewrite the program such that everything that writes into the given
+ * output register will instead write to new_output. The new_output
+ * writemask is honoured.
+ */
+void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_output, unsigned writemask)
+{
+	struct rc_instruction * inst;
+
+	c->Program.OutputsWritten &= ~(1 << output);
+
+	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
+		const unsigned numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
+
+		if (numdsts) {
+			if (inst->I.DstReg.File == PROGRAM_OUTPUT && inst->I.DstReg.Index == output) {
+				inst->I.DstReg.Index = new_output;
+				inst->I.DstReg.WriteMask &= writemask;
+
+				c->Program.OutputsWritten |= 1 << new_output;
+			}
+		}
+	}
+}
+
+
+/**
  * Introduce standard code fragment to deal with fragment.position.
  */
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input)

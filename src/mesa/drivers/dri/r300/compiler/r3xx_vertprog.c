@@ -634,39 +634,6 @@ static void pos_as_texcoord(struct gl_program *prog, int tex_id)
 	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
 }
 
-/**
- * The fogcoord attribute is special in that only the first component
- * is relevant, and the remaining components are always fixed (when read
- * from by the fragment program) to yield an X001 pattern.
- *
- * We need to enforce this either in the vertex program or in the fragment
- * program, and this code chooses not to enforce it in the vertex program.
- * This is slightly cheaper, as long as the fragment program does not use
- * weird swizzles.
- *
- * And it seems that usually, weird swizzles are not used, so...
- *
- * See also the counterpart rewriting for fragment programs.
- */
-static void fog_as_texcoord(struct gl_program *prog, int tex_id)
-{
-	struct prog_instruction *vpi;
-
-	vpi = prog->Instructions;
-	while (vpi->Opcode != OPCODE_END) {
-		if (vpi->DstReg.File == PROGRAM_OUTPUT && vpi->DstReg.Index == VERT_RESULT_FOGC) {
-			vpi->DstReg.Index = VERT_RESULT_TEX0 + tex_id;
-			vpi->DstReg.WriteMask = WRITEMASK_X;
-		}
-
-		++vpi;
-	}
-
-	prog->OutputsWritten &= ~(1 << VERT_RESULT_FOGC);
-	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
-}
-
-
 static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
 {
 	int i;
@@ -721,11 +688,12 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		pos_as_texcoord(compiler->program, compiler->state.WPosAttr - FRAG_ATTRIB_TEX0);
 	}
 
-	if (compiler->state.FogAttr != FRAG_ATTRIB_MAX) {
-		fog_as_texcoord(compiler->program, compiler->state.FogAttr - FRAG_ATTRIB_TEX0);
-	}
-
 	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+	compiler->program = 0;
+
+	if (compiler->state.FogAttr != FRAG_ATTRIB_MAX) {
+		rc_move_output(&compiler->Base, VERT_RESULT_FOGC, compiler->state.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
+	}
 
 	addArtificialOutputs(compiler);
 

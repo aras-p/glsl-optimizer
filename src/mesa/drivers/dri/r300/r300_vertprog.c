@@ -161,6 +161,9 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	r3xx_compile_vertex_program(&compiler);
 	vp->error = compiler.Base.Error;
 
+	vp->Base->Base.InputsRead = vp->code.InputsRead;
+	vp->Base->Base.OutputsWritten = vp->code.OutputsWritten;
+
 	rc_destroy(&compiler.Base);
 
 	return vp;
