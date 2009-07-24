@@ -133,29 +133,19 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
     struct drm_radeon_gem_info gem_info = {0};
-    drm_radeon_getparam_t gp = {0};
     struct drm_radeon_info info = {0};
     int target = 0;
     int retval;
 
     info.value = &target;
-    gp.value = &target;
 
     /* First, get PCI ID */
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: New ioctl for PCI ID failed "
-                "(error number %d), trying classic ioctl...\n",
-                __FUNCTION__, retval);
-        gp.param = RADEON_PARAM_DEVICE_ID;
-        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
-                sizeof(gp));
-        if (retval) {
-            fprintf(stderr, "%s: Failed to get PCI ID, "
-                    "error number %d\n", __FUNCTION__, retval);
-            exit(1);
-        }
+        fprintf(stderr, "%s: Failed to get PCI ID, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
     }
     winsys->pci_id = target;
 
