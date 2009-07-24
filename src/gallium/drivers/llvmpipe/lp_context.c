@@ -88,19 +88,17 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
-   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
-      llvmpipe->quad[i].polygon_stipple->destroy( llvmpipe->quad[i].polygon_stipple );
-      llvmpipe->quad[i].earlyz->destroy( llvmpipe->quad[i].earlyz );
-      llvmpipe->quad[i].shade->destroy( llvmpipe->quad[i].shade );
-      llvmpipe->quad[i].alpha_test->destroy( llvmpipe->quad[i].alpha_test );
-      llvmpipe->quad[i].depth_test->destroy( llvmpipe->quad[i].depth_test );
-      llvmpipe->quad[i].stencil_test->destroy( llvmpipe->quad[i].stencil_test );
-      llvmpipe->quad[i].occlusion->destroy( llvmpipe->quad[i].occlusion );
-      llvmpipe->quad[i].coverage->destroy( llvmpipe->quad[i].coverage );
-      llvmpipe->quad[i].blend->destroy( llvmpipe->quad[i].blend );
-      llvmpipe->quad[i].colormask->destroy( llvmpipe->quad[i].colormask );
-      llvmpipe->quad[i].output->destroy( llvmpipe->quad[i].output );
-   }
+      llvmpipe->quad.polygon_stipple->destroy( llvmpipe->quad.polygon_stipple );
+      llvmpipe->quad.earlyz->destroy( llvmpipe->quad.earlyz );
+      llvmpipe->quad.shade->destroy( llvmpipe->quad.shade );
+      llvmpipe->quad.alpha_test->destroy( llvmpipe->quad.alpha_test );
+      llvmpipe->quad.depth_test->destroy( llvmpipe->quad.depth_test );
+      llvmpipe->quad.stencil_test->destroy( llvmpipe->quad.stencil_test );
+      llvmpipe->quad.occlusion->destroy( llvmpipe->quad.occlusion );
+      llvmpipe->quad.coverage->destroy( llvmpipe->quad.coverage );
+      llvmpipe->quad.blend->destroy( llvmpipe->quad.blend );
+      llvmpipe->quad.colormask->destroy( llvmpipe->quad.colormask );
+      llvmpipe->quad.output->destroy( llvmpipe->quad.output );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
@@ -234,19 +232,17 @@ llvmpipe_create( struct pipe_screen *screen )
 
 
    /* setup quad rendering stages */
-   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
-      llvmpipe->quad[i].polygon_stipple = lp_quad_polygon_stipple_stage(llvmpipe);
-      llvmpipe->quad[i].earlyz = lp_quad_earlyz_stage(llvmpipe);
-      llvmpipe->quad[i].shade = lp_quad_shade_stage(llvmpipe);
-      llvmpipe->quad[i].alpha_test = lp_quad_alpha_test_stage(llvmpipe);
-      llvmpipe->quad[i].depth_test = lp_quad_depth_test_stage(llvmpipe);
-      llvmpipe->quad[i].stencil_test = lp_quad_stencil_test_stage(llvmpipe);
-      llvmpipe->quad[i].occlusion = lp_quad_occlusion_stage(llvmpipe);
-      llvmpipe->quad[i].coverage = lp_quad_coverage_stage(llvmpipe);
-      llvmpipe->quad[i].blend = lp_quad_blend_stage(llvmpipe);
-      llvmpipe->quad[i].colormask = lp_quad_colormask_stage(llvmpipe);
-      llvmpipe->quad[i].output = lp_quad_output_stage(llvmpipe);
-   }
+      llvmpipe->quad.polygon_stipple = lp_quad_polygon_stipple_stage(llvmpipe);
+      llvmpipe->quad.earlyz = lp_quad_earlyz_stage(llvmpipe);
+      llvmpipe->quad.shade = lp_quad_shade_stage(llvmpipe);
+      llvmpipe->quad.alpha_test = lp_quad_alpha_test_stage(llvmpipe);
+      llvmpipe->quad.depth_test = lp_quad_depth_test_stage(llvmpipe);
+      llvmpipe->quad.stencil_test = lp_quad_stencil_test_stage(llvmpipe);
+      llvmpipe->quad.occlusion = lp_quad_occlusion_stage(llvmpipe);
+      llvmpipe->quad.coverage = lp_quad_coverage_stage(llvmpipe);
+      llvmpipe->quad.blend = lp_quad_blend_stage(llvmpipe);
+      llvmpipe->quad.colormask = lp_quad_colormask_stage(llvmpipe);
+      llvmpipe->quad.output = lp_quad_output_stage(llvmpipe);
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {

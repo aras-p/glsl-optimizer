@@ -31,35 +31,29 @@
 #include "pipe/p_shader_tokens.h"
 
 static void
-lp_push_quad_first(
-   struct llvmpipe_context *lp,
-   struct quad_stage *quad,
-   uint i )
+lp_push_quad_first( struct llvmpipe_context *lp,
+                    struct quad_stage *quad )
 {
-   quad->next = lp->quad[i].first;
-   lp->quad[i].first = quad;
+   quad->next = lp->quad.first;
+   lp->quad.first = quad;
 }
 
 static void
-lp_build_depth_stencil(
-   struct llvmpipe_context *lp,
-   uint i )
+lp_build_depth_stencil( struct llvmpipe_context *lp )
 {
    if (lp->depth_stencil->stencil[0].enabled ||
        lp->depth_stencil->stencil[1].enabled) {
-      lp_push_quad_first( lp, lp->quad[i].stencil_test, i );
+      lp_push_quad_first( lp, lp->quad.stencil_test );
    }
    else if (lp->depth_stencil->depth.enabled &&
             lp->framebuffer.zsbuf) {
-      lp_push_quad_first( lp, lp->quad[i].depth_test, i );
+      lp_push_quad_first( lp, lp->quad.depth_test );
    }
 }
 
 void
 lp_build_quad_pipeline(struct llvmpipe_context *lp)
 {
-   uint i;
-
    boolean early_depth_test =
                lp->depth_stencil->depth.enabled &&
                lp->framebuffer.zsbuf &&
@@ -68,51 +62,43 @@ lp_build_quad_pipeline(struct llvmpipe_context *lp)
                !lp->fs->info.writes_z;
 
    /* build up the pipeline in reverse order... */
-   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
-      lp->quad[i].first = lp->quad[i].output;
+      lp->quad.first = lp->quad.output;
 
       if (lp->blend->colormask != 0xf) {
-         lp_push_quad_first( lp, lp->quad[i].colormask, i );
+         lp_push_quad_first( lp, lp->quad.colormask );
       }
 
       if (lp->blend->blend_enable ||
           lp->blend->logicop_enable) {
-         lp_push_quad_first( lp, lp->quad[i].blend, i );
+         lp_push_quad_first( lp, lp->quad.blend );
       }
 
       if (lp->active_query_count) {
-         lp_push_quad_first( lp, lp->quad[i].occlusion, i );
+         lp_push_quad_first( lp, lp->quad.occlusion );
       }
 
       if (lp->rasterizer->poly_smooth ||
           lp->rasterizer->line_smooth ||
           lp->rasterizer->point_smooth) {
-         lp_push_quad_first( lp, lp->quad[i].coverage, i );
+         lp_push_quad_first( lp, lp->quad.coverage );
       }
 
       if (!early_depth_test) {
-         lp_build_depth_stencil( lp, i );
+         lp_build_depth_stencil( lp );
       }
 
       if (lp->depth_stencil->alpha.enabled) {
-         lp_push_quad_first( lp, lp->quad[i].alpha_test, i );
+         lp_push_quad_first( lp, lp->quad.alpha_test );
       }
 
       /* XXX always enable shader? */
       if (1) {
-         lp_push_quad_first( lp, lp->quad[i].shade, i );
+         lp_push_quad_first( lp, lp->quad.shade );
       }
 
       if (early_depth_test) {
-         lp_build_depth_stencil( lp, i );
-         lp_push_quad_first( lp, lp->quad[i].earlyz, i );
+         lp_build_depth_stencil( lp );
+         lp_push_quad_first( lp, lp->quad.earlyz );
       }
-
-#if !USE_DRAW_STAGE_PSTIPPLE
-      if (lp->rasterizer->poly_stipple_enable) {
-         lp_push_quad_first( lp, lp->quad[i].polygon_stipple, i );
-      }
-#endif
-   }
 }
 
