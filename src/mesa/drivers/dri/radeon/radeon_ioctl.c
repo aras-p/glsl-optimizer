@@ -273,7 +273,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    } else {
      OUT_BATCH(rmesa->ioctl.vertex_offset);
    }
-   OUT_BATCH(0xffff);
+   OUT_BATCH(rmesa->ioctl.vertex_max);
    OUT_BATCH(vertex_format);
    OUT_BATCH(primitive |
 	     RADEON_CP_VC_CNTL_PRIM_WALK_IND |
@@ -342,6 +342,7 @@ void radeonEmitAOS( r100ContextPtr rmesa,
    rmesa->ioctl.bo = rmesa->radeon.tcl.aos[0].bo;
    rmesa->ioctl.vertex_offset =
      (rmesa->radeon.tcl.aos[0].offset + offset * rmesa->radeon.tcl.aos[0].stride * 4);
+   rmesa->ioctl.vertex_max = rmesa->radeon.tcl.aos[0].count;
 #else
    BATCH_LOCALS(&rmesa->radeon);
    uint32_t voffset;

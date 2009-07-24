@@ -355,7 +355,8 @@ struct radeon_tcl_info {
 
 struct radeon_ioctl {
 	GLuint vertex_offset;
-        struct radeon_bo *bo;
+	GLuint vertex_max;
+	struct radeon_bo *bo;
 	GLuint vertex_size;
 };
 
