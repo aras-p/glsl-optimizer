@@ -76,6 +76,8 @@ struct r300_fragment_program_compiler {
 	struct rX00_fragment_program_code *code;
 	struct r300_fragment_program_external_state state;
 	GLboolean is_r500;
+	unsigned OutputDepth;
+	unsigned OutputColor;
 };
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);

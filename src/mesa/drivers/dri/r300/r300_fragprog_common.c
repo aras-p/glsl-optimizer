@@ -86,6 +86,69 @@ static void build_state(
 }
 
 
+/**
+ * Transform the program to support fragment.position.
+ *
+ * Introduce a small fragment at the start of the program that will be
+ * the only code that directly reads the FRAG_ATTRIB_WPOS input.
+ * All other code pieces that reference that input will be rewritten
+ * to read from a newly allocated temporary.
+ *
+ */
+static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
+{
+	int i;
+
+	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_WPOS)) {
+		compiler->code->wpos_attr = FRAG_ATTRIB_MAX;
+		return;
+	}
+
+	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
+	{
+		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
+			compiler->code->wpos_attr = i;
+			break;
+		}
+	}
+
+	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, compiler->code->wpos_attr);
+}
+
+/**
+ * Rewrite fragment.fogcoord to use a texture coordinate slot.
+ * Note that fogcoord is forced into an X001 pattern, and this enforcement
+ * is done here.
+ *
+ * See also the counterpart rewriting for vertex programs.
+ */
+static void rewriteFog(struct r300_fragment_program_compiler *compiler)
+{
+	struct rX00_fragment_program_code *code = compiler->code;
+	struct prog_src_register src;
+	int i;
+
+	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_FOGC)) {
+		code->fog_attr = FRAG_ATTRIB_MAX;
+		return;
+	}
+
+	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
+	{
+		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
+			code->fog_attr = i;
+			break;
+		}
+	}
+
+	memset(&src, 0, sizeof(src));
+	src.File = PROGRAM_INPUT;
+	src.Index = code->fog_attr;
+	src.Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+	rc_move_input(&compiler->Base, FRAG_ATTRIB_FOGC, src);
+}
+
+
 static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_program_cont *cont, struct r300_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -97,6 +160,8 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.code = &fp->code;
 	compiler.state = fp->state;
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
+	compiler.OutputDepth = FRAG_RESULT_DEPTH;
+	compiler.OutputColor = FRAG_RESULT_COLOR;
 
 	if (compiler.Base.Debug) {
 		fflush(stdout);
@@ -106,6 +171,10 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	}
 
 	rc_mesa_to_rc_program(&compiler.Base, &cont->Base.Base);
+
+	insert_WPOS_trailer(&compiler);
+
+	rewriteFog(&compiler);
 
 	r3xx_compile_fragment_program(&compiler);
 	fp->error = compiler.Base.Error;

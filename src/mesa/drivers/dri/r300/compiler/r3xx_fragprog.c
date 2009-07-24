@@ -35,72 +35,10 @@
 
 static void nqssadce_init(struct nqssadce_state* s)
 {
-	s->Outputs[FRAG_RESULT_COLOR].Sourced = WRITEMASK_XYZW;
-	s->Outputs[FRAG_RESULT_DEPTH].Sourced = WRITEMASK_W;
+	struct r300_fragment_program_compiler * c = s->UserData;
+	s->Outputs[c->OutputColor].Sourced = WRITEMASK_XYZW;
+	s->Outputs[c->OutputDepth].Sourced = WRITEMASK_W;
 }
-
-/**
- * Transform the program to support fragment.position.
- *
- * Introduce a small fragment at the start of the program that will be
- * the only code that directly reads the FRAG_ATTRIB_WPOS input.
- * All other code pieces that reference that input will be rewritten
- * to read from a newly allocated temporary.
- *
- */
-static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
-{
-	int i;
-
-	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_WPOS)) {
-		compiler->code->wpos_attr = FRAG_ATTRIB_MAX;
-		return;
-	}
-
-	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
-	{
-		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
-			compiler->code->wpos_attr = i;
-			break;
-		}
-	}
-
-	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, compiler->code->wpos_attr);
-}
-
-/**
- * Rewrite fragment.fogcoord to use a texture coordinate slot.
- * Note that fogcoord is forced into an X001 pattern, and this enforcement
- * is done here.
- *
- * See also the counterpart rewriting for vertex programs.
- */
-static void rewriteFog(struct r300_fragment_program_compiler *compiler)
-{
-	struct rX00_fragment_program_code *code = compiler->code;
-	struct prog_src_register src;
-	int i;
-
-	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_FOGC)) {
-		code->fog_attr = FRAG_ATTRIB_MAX;
-		return;
-	}
-
-	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
-	{
-		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
-			code->fog_attr = i;
-			break;
-		}
-	}
-
-	reset_srcreg(&src);
-	src.File = PROGRAM_INPUT;
-	src.Index = code->fog_attr;
-	src.Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
-	rc_move_input(&compiler->Base, FRAG_ATTRIB_FOGC, src);
-}
-
 
 static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 {
@@ -109,7 +47,7 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
 		struct prog_instruction * inst = &rci->I;
 
-		if (inst->DstReg.File != PROGRAM_OUTPUT || inst->DstReg.Index != FRAG_RESULT_DEPTH)
+		if (inst->DstReg.File != PROGRAM_OUTPUT || inst->DstReg.Index != c->OutputDepth)
 			continue;
 
 		if (inst->DstReg.WriteMask & WRITEMASK_Z) {
@@ -146,10 +84,6 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	insert_WPOS_trailer(c);
-
-	rewriteFog(c);
-
 	rewrite_depth_out(c);
 
 	if (c->is_r500) {
@@ -181,14 +115,14 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
 			.BuildSwizzle = &r500FPBuildSwizzle
 		};
-		radeonNqssaDce(&c->Base, &nqssadce, 0);
+		radeonNqssaDce(&c->Base, &nqssadce, c);
 	} else {
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
 			.BuildSwizzle = &r300FPBuildSwizzle
 		};
-		radeonNqssaDce(&c->Base, &nqssadce, 0);
+		radeonNqssaDce(&c->Base, &nqssadce, c);
 	}
 
 	if (c->Base.Debug) {
