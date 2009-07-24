@@ -127,10 +127,18 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
         SETfield(t->SQ_TEX_RESOURCE4, SQ_ENDIAN_NONE,
                  SQ_TEX_RESOURCE_WORD4_0__ENDIAN_SWAP_shift, SQ_TEX_RESOURCE_WORD4_0__ENDIAN_SWAP_mask);
         SETfield(t->SQ_TEX_RESOURCE4, 1, REQUEST_SIZE_shift, REQUEST_SIZE_mask);
-        t->SQ_TEX_RESOURCE4 |= SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift
-		              |SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift
-		              |SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift
-		              |SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift;
+        SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Y,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Z,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
         SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask); /* mip-maps */
 
         t->SQ_TEX_RESOURCE5 = 0;
@@ -141,17 +149,18 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
 
         /* Initialize sampler registers */
         t->SQ_TEX_SAMPLER0                           = 0;
-        t->SQ_TEX_SAMPLER0 |=
-                         SQ_TEX_WRAP << SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_shift
-                        |SQ_TEX_WRAP << CLAMP_Y_shift
-                        |SQ_TEX_WRAP << CLAMP_Z_shift
-                        |SQ_TEX_XY_FILTER_POINT << XY_MAG_FILTER_shift
-                        |SQ_TEX_XY_FILTER_POINT << XY_MIN_FILTER_shift
-                        |SQ_TEX_Z_FILTER_NONE << Z_FILTER_shift
-                        |SQ_TEX_Z_FILTER_NONE << MIP_FILTER_shift
-                        |SQ_TEX_BORDER_COLOR_TRANS_BLACK << BORDER_COLOR_TYPE_shift;
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_shift,
+		 SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, CLAMP_Y_shift, CLAMP_Y_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, CLAMP_Z_shift, CLAMP_Z_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_XY_FILTER_POINT, XY_MAG_FILTER_shift, XY_MAG_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_XY_FILTER_POINT, XY_MIN_FILTER_shift, XY_MIN_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_Z_FILTER_NONE, Z_FILTER_shift, Z_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_Z_FILTER_NONE, MIP_FILTER_shift, MIP_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_BORDER_COLOR_TRANS_BLACK, BORDER_COLOR_TYPE_shift, BORDER_COLOR_TYPE_mask);
 
-        t->SQ_TEX_SAMPLER1 = 0x7FF << MAX_LOD_shift;
+        t->SQ_TEX_SAMPLER1                           = 0;
+        SETfield(t->SQ_TEX_SAMPLER1, MAX_LOD_mask, MAX_LOD_shift, MAX_LOD_mask);
 
         t->SQ_TEX_SAMPLER2                          = 0;
         SETbit(t->SQ_TEX_SAMPLER2, SQ_TEX_SAMPLER_WORD2_0__TYPE_bit);
