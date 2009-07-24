@@ -195,11 +195,13 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler)
 }
 
 
-static void rewrite_depth_out(struct gl_program *prog)
+static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 {
-	struct prog_instruction *inst;
+	struct rc_instruction *rci;
 
-	for (inst = prog->Instructions; inst->Opcode != OPCODE_END; ++inst) {
+	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
+		struct prog_instruction * inst = &rci->I;
+
 		if (inst->DstReg.File != PROGRAM_OUTPUT || inst->DstReg.Index != FRAG_RESULT_DEPTH)
 			continue;
 
@@ -248,9 +250,9 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	rewriteFog(c);
 
-	rewrite_depth_out(c->program);
-
 	rc_mesa_to_rc_program(&c->Base, c->program);
+
+	rewrite_depth_out(c);
 
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
