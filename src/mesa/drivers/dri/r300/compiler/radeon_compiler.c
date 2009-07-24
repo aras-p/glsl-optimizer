@@ -24,6 +24,8 @@
 
 #include <stdarg.h>
 
+#include "radeon_program.h"
+
 
 void rc_init(struct radeon_compiler * c)
 {
@@ -86,5 +88,35 @@ void rc_error(struct radeon_compiler * c, const char * fmt, ...)
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
+	}
+}
+
+/**
+ * Rewrite the program such that everything that source the given input
+ * register will source new_input instead.
+ */
+void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input)
+{
+	struct rc_instruction * inst;
+
+	c->Program.InputsRead &= ~(1 << input);
+
+	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
+		const unsigned numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		unsigned i;
+
+		for(i = 0; i < numsrcs; ++i) {
+			if (inst->I.SrcReg[i].File == PROGRAM_INPUT && inst->I.SrcReg[i].Index == input) {
+				inst->I.SrcReg[i].File = new_input.File;
+				inst->I.SrcReg[i].Index = new_input.Index;
+				inst->I.SrcReg[i].Swizzle = combine_swizzles(new_input.Swizzle, inst->I.SrcReg[i].Swizzle);
+				if (!inst->I.SrcReg[i].Abs) {
+					inst->I.SrcReg[i].Negate ^= new_input.Negate;
+					inst->I.SrcReg[i].Abs = new_input.Abs;
+				}
+
+				c->Program.InputsRead |= 1 << new_input.Index;
+			}
+		}
 	}
 }

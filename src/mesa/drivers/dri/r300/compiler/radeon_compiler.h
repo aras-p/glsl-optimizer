@@ -64,6 +64,8 @@ void rc_destroy(struct radeon_compiler * c);
 void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
 void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
+void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input);
+
 struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;
 	struct rX00_fragment_program_code *code;

@@ -156,42 +156,27 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 static void rewriteFog(struct r300_fragment_program_compiler *compiler)
 {
 	struct rX00_fragment_program_code *code = compiler->code;
-	GLuint InputsRead = compiler->program->InputsRead;
+	struct prog_src_register src;
 	int i;
 
-	if (!(InputsRead & FRAG_BIT_FOGC)) {
+	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_FOGC)) {
 		code->fog_attr = FRAG_ATTRIB_MAX;
 		return;
 	}
 
 	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
 	{
-		if (!(InputsRead & (1 << i))) {
-			InputsRead &= ~(1 << FRAG_ATTRIB_FOGC);
-			InputsRead |= 1 << i;
-			compiler->program->InputsRead = InputsRead;
+		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
 			code->fog_attr = i;
 			break;
 		}
 	}
 
-	{
-		struct prog_instruction *inst;
-
-		inst = compiler->program->Instructions;
-		while (inst->Opcode != OPCODE_END) {
-			const int src_regs = _mesa_num_inst_src_regs(inst->Opcode);
-			for (i = 0; i < src_regs; ++i) {
-				if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == FRAG_ATTRIB_FOGC) {
-					inst->SrcReg[i].Index = code->fog_attr;
-					inst->SrcReg[i].Swizzle = combine_swizzles(
-						MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE),
-						inst->SrcReg[i].Swizzle);
-				}
-			}
-			++inst;
-		}
-	}
+	reset_srcreg(&src);
+	src.File = PROGRAM_INPUT;
+	src.Index = code->fog_attr;
+	src.Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+	rc_move_input(&compiler->Base, FRAG_ATTRIB_FOGC, src);
 }
 
 
@@ -248,9 +233,9 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	insert_WPOS_trailer(c);
 
-	rewriteFog(c);
-
 	rc_mesa_to_rc_program(&c->Base, c->program);
+
+	rewriteFog(c);
 
 	rewrite_depth_out(c);
 
