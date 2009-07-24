@@ -116,7 +116,6 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
 struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after);
 void rc_remove_instruction(struct rc_instruction * inst);
 
-void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program);
 void rc_print_program(const struct rc_program *prog);
 
 #endif

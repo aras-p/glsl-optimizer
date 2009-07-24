@@ -64,6 +64,8 @@ void rc_destroy(struct radeon_compiler * c);
 void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
 void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
+void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program);
+
 void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input);
 void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_output, unsigned writemask);
 void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output);
@@ -83,9 +85,9 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
 struct r300_vertex_program_compiler {
 	struct radeon_compiler Base;
 	struct r300_vertex_program_code *code;
-	struct r300_vertex_program_external_state state;
 	GLbitfield RequiredOutputs;
-	struct gl_program *program;
+
+	void (*SetHwInputOutput)(struct r300_vertex_program_compiler * c);
 };
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);

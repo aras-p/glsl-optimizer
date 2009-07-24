@@ -310,79 +310,6 @@ static void ei_pow(struct r300_vertex_program_code *vp,
 	inst[3] = t_src_scalar(vp, &vpi->SrcReg[1]);
 }
 
-static void t_inputs_outputs(struct r300_vertex_program_compiler * c)
-{
-	int i;
-	int cur_reg;
-	GLuint OutputsWritten, InputsRead;
-
-	OutputsWritten = c->Base.Program.OutputsWritten;
-	InputsRead = c->Base.Program.InputsRead;
-
-	cur_reg = -1;
-	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-		if (InputsRead & (1 << i))
-			c->code->inputs[i] = ++cur_reg;
-		else
-			c->code->inputs[i] = -1;
-	}
-
-	cur_reg = 0;
-	for (i = 0; i < VERT_RESULT_MAX; i++)
-		c->code->outputs[i] = -1;
-
-	assert(OutputsWritten & (1 << VERT_RESULT_HPOS));
-
-	if (OutputsWritten & (1 << VERT_RESULT_HPOS)) {
-		c->code->outputs[VERT_RESULT_HPOS] = cur_reg++;
-	}
-
-	if (OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
-		c->code->outputs[VERT_RESULT_PSIZ] = cur_reg++;
-	}
-
-	/* If we're writing back facing colors we need to send
-	 * four colors to make front/back face colors selection work.
-	 * If the vertex program doesn't write all 4 colors, lets
-	 * pretend it does by skipping output index reg so the colors
-	 * get written into appropriate output vectors.
-	 */
-	if (OutputsWritten & (1 << VERT_RESULT_COL0)) {
-		c->code->outputs[VERT_RESULT_COL0] = cur_reg++;
-	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
-		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		cur_reg++;
-	}
-
-	if (OutputsWritten & (1 << VERT_RESULT_COL1)) {
-		c->code->outputs[VERT_RESULT_COL1] = cur_reg++;
-	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
-		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		cur_reg++;
-	}
-
-	if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		c->code->outputs[VERT_RESULT_BFC0] = cur_reg++;
-	} else if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		cur_reg++;
-	}
-
-	if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		c->code->outputs[VERT_RESULT_BFC1] = cur_reg++;
-	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		cur_reg++;
-	}
-
-	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
-		if (OutputsWritten & (1 << i)) {
-			c->code->outputs[i] = cur_reg++;
-		}
-	}
-
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
-		c->code->outputs[VERT_RESULT_FOGC] = cur_reg++;
-	}
-}
 
 static void translate_vertex_program(struct r300_vertex_program_compiler * compiler)
 {
@@ -391,7 +318,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
 
-	t_inputs_outputs(compiler);
+	compiler->SetHwInputOutput(compiler);
 
 	for(rci = compiler->Base.Program.Instructions.Next; rci != &compiler->Base.Program.Instructions; rci = rci->Next) {
 		struct prog_instruction *vpi = &rci->I;
@@ -624,23 +551,6 @@ static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
-	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
-	compiler->program = 0;
-
-	rc_move_output(&compiler->Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
-
-	if (compiler->state.WPosAttr != FRAG_ATTRIB_MAX) {
-		rc_copy_output(&compiler->Base,
-			VERT_RESULT_HPOS,
-			compiler->state.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0);
-	}
-
-	if (compiler->state.FogAttr != FRAG_ATTRIB_MAX) {
-		rc_move_output(&compiler->Base,
-			VERT_RESULT_FOGC,
-			compiler->state.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
-	}
-
 	addArtificialOutputs(compiler);
 
 	{

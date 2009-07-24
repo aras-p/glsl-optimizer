@@ -128,6 +128,82 @@ static GLbitfield compute_required_outputs(struct gl_vertex_program * vp, GLbitf
 	return outputs;
 }
 
+
+static void t_inputs_outputs(struct r300_vertex_program_compiler * c)
+{
+	int i;
+	int cur_reg;
+	GLuint OutputsWritten, InputsRead;
+
+	OutputsWritten = c->Base.Program.OutputsWritten;
+	InputsRead = c->Base.Program.InputsRead;
+
+	cur_reg = -1;
+	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+		if (InputsRead & (1 << i))
+			c->code->inputs[i] = ++cur_reg;
+		else
+			c->code->inputs[i] = -1;
+	}
+
+	cur_reg = 0;
+	for (i = 0; i < VERT_RESULT_MAX; i++)
+		c->code->outputs[i] = -1;
+
+	assert(OutputsWritten & (1 << VERT_RESULT_HPOS));
+
+	if (OutputsWritten & (1 << VERT_RESULT_HPOS)) {
+		c->code->outputs[VERT_RESULT_HPOS] = cur_reg++;
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+		c->code->outputs[VERT_RESULT_PSIZ] = cur_reg++;
+	}
+
+	/* If we're writing back facing colors we need to send
+	 * four colors to make front/back face colors selection work.
+	 * If the vertex program doesn't write all 4 colors, lets
+	 * pretend it does by skipping output index reg so the colors
+	 * get written into appropriate output vectors.
+	 */
+	if (OutputsWritten & (1 << VERT_RESULT_COL0)) {
+		c->code->outputs[VERT_RESULT_COL0] = cur_reg++;
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_COL1)) {
+		c->code->outputs[VERT_RESULT_COL1] = cur_reg++;
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
+		c->code->outputs[VERT_RESULT_BFC0] = cur_reg++;
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		c->code->outputs[VERT_RESULT_BFC1] = cur_reg++;
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
+		cur_reg++;
+	}
+
+	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
+		if (OutputsWritten & (1 << i)) {
+			c->code->outputs[i] = cur_reg++;
+		}
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+		c->code->outputs[VERT_RESULT_FOGC] = cur_reg++;
+	}
+}
+
+
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
 						 const struct gl_vertex_program *mesa_vp)
@@ -143,19 +219,33 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	compiler.Base.Debug = (RADEON_DEBUG & DEBUG_VERTS) ? GL_TRUE : GL_FALSE;
 
 	compiler.code = &vp->code;
-	compiler.state.FogAttr = vp->key.FogAttr;
-	compiler.state.WPosAttr = vp->key.WPosAttr;
 	compiler.RequiredOutputs = compute_required_outputs(vp->Base, vp->key.FpReads);
-	compiler.program = &vp->Base->Base;
+	compiler.SetHwInputOutput = &t_inputs_outputs;
 
 	if (compiler.Base.Debug) {
 		fprintf(stderr, "Initial vertex program:\n");
-		_mesa_print_program(compiler.program);
+		_mesa_print_program(&vp->Base->Base);
 		fflush(stdout);
 	}
 
 	if (mesa_vp->IsPositionInvariant) {
-		_mesa_insert_mvp_code(ctx, (struct gl_vertex_program *)compiler.program);
+		_mesa_insert_mvp_code(ctx, vp->Base);
+	}
+
+	rc_mesa_to_rc_program(&compiler.Base, &vp->Base->Base);
+
+	rc_move_output(&compiler.Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
+
+	if (vp->key.WPosAttr != FRAG_ATTRIB_MAX) {
+		rc_copy_output(&compiler.Base,
+			VERT_RESULT_HPOS,
+			vp->key.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0);
+	}
+
+	if (vp->key.FogAttr != FRAG_ATTRIB_MAX) {
+		rc_move_output(&compiler.Base,
+			VERT_RESULT_FOGC,
+			vp->key.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
 	}
 
 	r3xx_compile_vertex_program(&compiler);
