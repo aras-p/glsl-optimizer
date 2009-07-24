@@ -68,7 +68,6 @@ coverage_run(struct quad_stage *qs,
                struct quad_header *quads[],
                unsigned nr)
 {
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
    unsigned i;
 
    for (i = 0; i < nr; i++)

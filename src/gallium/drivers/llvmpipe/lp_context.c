@@ -97,8 +97,6 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       llvmpipe->quad.occlusion->destroy( llvmpipe->quad.occlusion );
       llvmpipe->quad.coverage->destroy( llvmpipe->quad.coverage );
       llvmpipe->quad.blend->destroy( llvmpipe->quad.blend );
-      llvmpipe->quad.colormask->destroy( llvmpipe->quad.colormask );
-      llvmpipe->quad.output->destroy( llvmpipe->quad.output );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
@@ -241,8 +239,6 @@ llvmpipe_create( struct pipe_screen *screen )
       llvmpipe->quad.occlusion = lp_quad_occlusion_stage(llvmpipe);
       llvmpipe->quad.coverage = lp_quad_coverage_stage(llvmpipe);
       llvmpipe->quad.blend = lp_quad_blend_stage(llvmpipe);
-      llvmpipe->quad.colormask = lp_quad_colormask_stage(llvmpipe);
-      llvmpipe->quad.output = lp_quad_output_stage(llvmpipe);
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
