@@ -46,6 +46,8 @@ struct rc_program {
 	GLbitfield InputsRead;
 	GLbitfield OutputsWritten;
 	GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
+
+	struct rc_constant_list Constants;
 };
 
 struct radeon_compiler {

@@ -28,6 +28,7 @@
 #include "radeon_program.h"
 
 #include "radeon_compiler.h"
+#include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
 
@@ -190,6 +191,7 @@ void rc_remove_instruction(struct rc_instruction * inst)
 void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program)
 {
 	struct prog_instruction *source;
+	unsigned int i;
 
 	for(source = program->Instructions; source->Opcode != OPCODE_END; ++source) {
 		struct rc_instruction * dest = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
@@ -199,6 +201,15 @@ void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * progr
 	c->Program.ShadowSamplers = program->ShadowSamplers;
 	c->Program.InputsRead = program->InputsRead;
 	c->Program.OutputsWritten = program->OutputsWritten;
+
+	for(i = 0; i < program->Parameters->NumParameters; ++i) {
+		struct rc_constant constant;
+
+		constant.Type = RC_CONSTANT_EXTERNAL;
+		constant.u.External = i;
+
+		rc_constants_add(&c->Program.Constants, &constant);
+	}
 }
 
 

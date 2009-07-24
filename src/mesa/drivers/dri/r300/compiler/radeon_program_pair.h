@@ -110,13 +110,6 @@ struct radeon_pair_texture_instruction {
  */
 struct radeon_pair_handler {
 	/**
-	 * Fill in the proper hardware index for the given constant register.
-	 *
-	 * @return GL_FALSE on error.
-	 */
-	GLboolean (*EmitConst)(void*, GLuint file, GLuint index, GLuint *hwindex);
-
-	/**
 	 * Write a paired instruction to the hardware.
 	 *
 	 * @return GL_FALSE on error.

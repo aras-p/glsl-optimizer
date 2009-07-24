@@ -640,7 +640,7 @@ static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instructio
 		index = get_hw_reg(s, src.File, src.Index);
 	} else {
 		constant = 1;
-		s->Compiler->Error |= !s->Handler->EmitConst(s->UserData, src.File, src.Index, &index);
+		index = src.Index;
 	}
 
 	for(i = 0; i < 3; ++i) {

@@ -834,6 +834,8 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	translate_vertex_program(compiler);
 
+	rc_constants_copy(&compiler->code->constants, &compiler->Base.Program.Constants);
+
 	compiler->code->InputsRead = compiler->Base.Program.InputsRead;
 	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
 }

@@ -56,31 +56,6 @@
 	} while(0)
 
 
-static GLboolean emit_const(void* data, GLuint file, GLuint index, GLuint *hwindex)
-{
-	PROG_CODE;
-
-	for (*hwindex = 0; *hwindex < code->const_nr; ++*hwindex) {
-		if (code->constant[*hwindex].File == file &&
-		    code->constant[*hwindex].Index == index)
-			break;
-	}
-
-	if (*hwindex >= code->const_nr) {
-		if (*hwindex >= R300_PFS_NUM_CONST_REGS) {
-			error("Out of hw constants!\n");
-			return GL_FALSE;
-		}
-
-		code->const_nr++;
-		code->constant[*hwindex].File = file;
-		code->constant[*hwindex].Index = index;
-	}
-
-	return GL_TRUE;
-}
-
-
 /**
  * Mark a temporary register as used.
  */
@@ -315,7 +290,6 @@ static GLboolean emit_tex(void* data, struct radeon_pair_texture_instruction* in
 
 
 static const struct radeon_pair_handler pair_handler = {
-	.EmitConst = &emit_const,
 	.EmitPaired = &emit_alu,
 	.EmitTex = &emit_tex,
 	.BeginTexBlock = &begin_tex,

@@ -376,15 +376,6 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
   uint32_t inst0;
   char *str = NULL;
 
-  if (code->const_nr) {
-    fprintf(stderr, "--------\nConstants:\n");
-    for (n = 0; n < code->const_nr; n++) {
-      fprintf(stderr, "Constant %d: %i[%i]\n", n,
-        code->constant[n].File, code->constant[n].Index);
-    }
-    fprintf(stderr, "--------\n");
-  }
-
   for (n = 0; n < code->inst_end+1; n++) {
     inst0 = inst = code->inst[n].inst0;
     fprintf(stderr,"%d\t0:CMN_INST   0x%08x:", n, inst);

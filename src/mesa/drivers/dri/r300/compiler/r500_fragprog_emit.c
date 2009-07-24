@@ -60,33 +60,6 @@
 	} while(0)
 
 
-/**
- * Callback to register hardware constants.
- */
-static GLboolean emit_const(void *data, GLuint file, GLuint idx, GLuint *hwindex)
-{
-	PROG_CODE;
-
-	for (*hwindex = 0; *hwindex < code->const_nr; ++*hwindex) {
-		if (code->constant[*hwindex].File == file &&
-		    code->constant[*hwindex].Index == idx)
-			break;
-	}
-
-	if (*hwindex >= code->const_nr) {
-		if (*hwindex >= R500_PFS_NUM_CONST_REGS) {
-			error("Out of hw constants!\n");
-			return GL_FALSE;
-		}
-
-		code->const_nr++;
-		code->constant[*hwindex].File = file;
-		code->constant[*hwindex].Index = idx;
-	}
-
-	return GL_TRUE;
-}
-
 static GLuint translate_rgb_op(struct r300_fragment_program_compiler *c, GLuint opcode)
 {
 	switch(opcode) {
@@ -295,7 +268,6 @@ static GLboolean emit_tex(void *data, struct radeon_pair_texture_instruction *in
 }
 
 static const struct radeon_pair_handler pair_handler = {
-	.EmitConst = emit_const,
 	.EmitPaired = emit_paired,
 	.EmitTex = emit_tex,
 	.MaxHwTemps = 128

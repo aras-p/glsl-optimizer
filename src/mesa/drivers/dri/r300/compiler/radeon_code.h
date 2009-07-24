@@ -23,7 +23,6 @@
 #ifndef RADEON_CODE_H
 #define RADEON_CODE_H
 
-
 #define R300_PFS_MAX_ALU_INST     64
 #define R300_PFS_MAX_TEX_INST     32
 #define R300_PFS_MAX_TEX_INDIRECT 4
@@ -38,6 +37,44 @@
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 #define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
 
+
+enum {
+	/**
+	 * External constants are constants whose meaning is unknown to this
+	 * compiler. For example, a Mesa gl_program's constants are turned
+	 * into external constants.
+	 */
+	RC_CONSTANT_EXTERNAL = 0,
+
+	RC_CONSTANT_IMMEDIATE,
+
+	/**
+	 * Constant referring to state that is known by this compiler,
+	 * i.e. *not* arbitrary Mesa (or other) state.
+	 */
+	RC_CONSTANT_STATE
+};
+
+struct rc_constant {
+	unsigned Type:2; /**< RC_CONSTANT_xxx */
+	union {
+		unsigned External;
+		float Immediate[4];
+		unsigned State[4];
+	} u;
+};
+
+struct rc_constant_list {
+	struct rc_constant * Constants;
+	unsigned Count;
+
+	unsigned _Reserved;
+};
+
+void rc_constants_init(struct rc_constant_list * c);
+void rc_constants_copy(struct rc_constant_list * dst, struct rc_constant_list * src);
+void rc_constants_destroy(struct rc_constant_list * c);
+unsigned rc_constants_add(struct rc_constant_list * c, struct rc_constant * constant);
 
 /**
  * Stores state that influences the compilation of a fragment program.
@@ -98,13 +135,6 @@ struct r300_fragment_program_code {
 	int cur_node;
 	int first_node_has_tex;
 
-	/**
-	 * Remember which program register a given hardware constant
-	 * belongs to.
-	 */
-	struct prog_src_register constant[R300_PFS_NUM_CONST_REGS];
-	int const_nr;
-
 	int max_temp_idx;
 };
 
@@ -122,13 +152,6 @@ struct r500_fragment_program_code {
 	int inst_offset;
 	int inst_end;
 
-	/**
-	 * Remember which program register a given hardware constant
-	 * belongs to.
-	 */
-	struct prog_src_register constant[R500_PFS_NUM_CONST_REGS];
-	int const_nr;
-
 	int max_temp_idx;
 };
 
@@ -139,6 +162,8 @@ struct rX00_fragment_program_code {
 	} code;
 
 	GLboolean writes_depth;
+
+	struct rc_constant_list constants;
 
 	/* attribute that we are sending the WPOS in */
 	gl_frag_attrib wpos_attr;
@@ -167,6 +192,8 @@ struct r300_vertex_program_code {
 	int num_temporaries;	/* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
+
+	struct rc_constant_list constants;
 
 	GLbitfield InputsRead;
 	GLbitfield OutputsWritten;

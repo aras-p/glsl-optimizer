@@ -45,56 +45,53 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "r300_state.h"
 
-
-static int r300VertexProgUpdateParams(GLcontext * ctx, struct gl_vertex_program *vp, float *dst)
+/**
+ * Write parameter array for the given vertex program into dst.
+ * Return the total number of components written.
+ */
+static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_program *vp, float *dst)
 {
-	int pi;
-	float *dst_o = dst;
-	struct gl_program_parameter_list *paramList;
+	int i;
 
-	if (vp->IsNVProgram) {
+	if (vp->Base->IsNVProgram) {
 		_mesa_load_tracked_matrices(ctx);
-
-		for (pi = 0; pi < MAX_NV_VERTEX_PROGRAM_PARAMS; pi++) {
-			*dst++ = ctx->VertexProgram.Parameters[pi][0];
-			*dst++ = ctx->VertexProgram.Parameters[pi][1];
-			*dst++ = ctx->VertexProgram.Parameters[pi][2];
-			*dst++ = ctx->VertexProgram.Parameters[pi][3];
+	} else {
+		if (vp->Base->Base.Parameters) {
+			_mesa_load_state_parameters(ctx, vp->Base->Base.Parameters);
 		}
-		return dst - dst_o;
 	}
 
-	if (!vp->Base.Parameters)
-		return 0;
-
-	_mesa_load_state_parameters(ctx, vp->Base.Parameters);
-
-	if (vp->Base.Parameters->NumParameters * 4 >
-	    VSF_MAX_FRAGMENT_LENGTH) {
+	if (vp->code.constants.Count * 4 > VSF_MAX_FRAGMENT_LENGTH) {
+		/* Should have checked this earlier... */
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
 		_mesa_exit(-1);
 	}
 
-	paramList = vp->Base.Parameters;
-	for (pi = 0; pi < paramList->NumParameters; pi++) {
-		switch (paramList->Parameters[pi].Type) {
-		case PROGRAM_STATE_VAR:
-		case PROGRAM_NAMED_PARAM:
-			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
-		case PROGRAM_CONSTANT:
-			*dst++ = paramList->ParameterValues[pi][0];
-			*dst++ = paramList->ParameterValues[pi][1];
-			*dst++ = paramList->ParameterValues[pi][2];
-			*dst++ = paramList->ParameterValues[pi][3];
+	for(i = 0; i < vp->code.constants.Count; ++i) {
+		const float * src = 0;
+		const struct rc_constant * constant = &vp->code.constants.Constants[i];
+
+		switch(constant->Type) {
+		case RC_CONSTANT_EXTERNAL:
+			if (vp->Base->IsNVProgram) {
+				src = ctx->VertexProgram.Parameters[constant->u.External];
+			} else {
+				src = vp->Base->Base.Parameters->ParameterValues[constant->u.External];
+			}
 			break;
-		default:
-			_mesa_problem(NULL, "Bad param type in %s",
-				      __FUNCTION__);
+
+		case RC_CONSTANT_IMMEDIATE:
+			src = constant->u.Immediate;
+			break;
 		}
 
+		dst[4*i] = src[0];
+		dst[4*i + 1] = src[1];
+		dst[4*i + 2] = src[2];
+		dst[4*i + 3] = src[3];
 	}
 
-	return dst - dst_o;
+	return 4 * vp->code.constants.Count;
 }
 
 static struct r300_vertex_program *build_program(GLcontext *ctx,
@@ -113,7 +110,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 
 	compiler.code = &vp->code;
 	compiler.state = vp->key;
-	compiler.program = vp->Base;
+	compiler.program = &vp->Base->Base;
 
 	if (compiler.Base.Debug) {
 		fprintf(stderr, "Initial vertex program:\n");
@@ -210,7 +207,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
 	R300_STATECHANGE(rmesa, vpp);
-	param_count = r300VertexProgUpdateParams(ctx, prog->Base, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
+	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 

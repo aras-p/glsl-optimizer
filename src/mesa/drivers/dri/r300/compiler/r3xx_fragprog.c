@@ -303,6 +303,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		r300BuildFragmentProgramHwCode(c);
 	}
 
+	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
+
 	if (c->Base.Debug) {
 		if (c->is_r500) {
 			r500FragmentProgramDump(c->code);

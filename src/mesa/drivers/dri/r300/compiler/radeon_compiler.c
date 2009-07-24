@@ -37,6 +37,7 @@ void rc_init(struct radeon_compiler * c)
 
 void rc_destroy(struct radeon_compiler * c)
 {
+	rc_constants_destroy(&c->Program.Constants);
 	memory_pool_destroy(&c->Pool);
 	free(c->ErrorMsg);
 }
