@@ -35,8 +35,6 @@
 
 
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
-#define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
-
 
 enum {
 	/**
@@ -50,17 +48,26 @@ enum {
 
 	/**
 	 * Constant referring to state that is known by this compiler,
-	 * i.e. *not* arbitrary Mesa (or other) state.
+	 * see RC_STATE_xxx, i.e. *not* arbitrary Mesa (or other) state.
 	 */
 	RC_CONSTANT_STATE
 };
 
+enum {
+	RC_STATE_SHADOW_AMBIENT = 0,
+
+	RC_STATE_R300_WINDOW_DIMENSION,
+	RC_STATE_R300_TEXRECT_FACTOR
+};
+
 struct rc_constant {
 	unsigned Type:2; /**< RC_CONSTANT_xxx */
+	unsigned Size:3;
+
 	union {
 		unsigned External;
 		float Immediate[4];
-		unsigned State[4];
+		unsigned State[2];
 	} u;
 };
 
@@ -75,6 +82,9 @@ void rc_constants_init(struct rc_constant_list * c);
 void rc_constants_copy(struct rc_constant_list * dst, struct rc_constant_list * src);
 void rc_constants_destroy(struct rc_constant_list * c);
 unsigned rc_constants_add(struct rc_constant_list * c, struct rc_constant * constant);
+unsigned rc_constants_add_state(struct rc_constant_list * c, unsigned state1, unsigned state2);
+unsigned rc_constants_add_immediate_vec4(struct rc_constant_list * c, const float * data);
+unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float data, unsigned * swizzle);
 
 /**
  * Stores state that influences the compilation of a fragment program.

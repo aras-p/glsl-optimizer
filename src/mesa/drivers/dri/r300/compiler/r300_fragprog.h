@@ -44,6 +44,6 @@ extern void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler
 
 extern void r300FragmentProgramDump(struct rX00_fragment_program_code *c);
 
-extern GLboolean r300_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
+extern GLboolean r300_transform_TEX(struct radeon_compiler * c, struct rc_instruction* inst, void* data);
 
 #endif

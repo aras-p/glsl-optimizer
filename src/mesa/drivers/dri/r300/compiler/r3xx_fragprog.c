@@ -250,6 +250,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	rewrite_depth_out(c->program);
 
+	rc_mesa_to_rc_program(&c->Base, c->program);
+
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r500_transform_TEX, c },
@@ -257,23 +259,21 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(c->program, 4, transformations);
+		radeonLocalTransform(&c->Base, 4, transformations);
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_TEX, c },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(c->program, 3, transformations);
+		radeonLocalTransform(&c->Base, 3, transformations);
 	}
 
 	if (c->Base.Debug) {
 		_mesa_printf("Fragment Program: After native rewrite:\n");
-		_mesa_print_program(c->program);
+		rc_print_program(&c->Base.Program);
 		fflush(stdout);
 	}
-
-	rc_mesa_to_rc_program(&c->Base, c->program);
 
 	if (c->is_r500) {
 		struct radeon_nqssadce_descr nqssadce = {

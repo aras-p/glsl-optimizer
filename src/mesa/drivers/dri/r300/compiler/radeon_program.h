@@ -88,18 +88,6 @@ static INLINE void reset_srcreg(struct prog_src_register* reg)
 
 
 /**
- * Transformation context that is passed to local transformations.
- *
- * Care must be taken with some operations during transformation,
- * e.g. finding new temporary registers must use @ref radeonFindFreeTemporary
- */
-struct radeon_transform_context {
-	struct gl_program *Program;
-	struct prog_instruction *OldInstructions;
-	GLuint OldNumInstructions;
-};
-
-/**
  * A transformation that can be passed to \ref radeonLocalTransform.
  *
  * The function will be called once for each instruction.
@@ -111,23 +99,16 @@ struct radeon_transform_context {
  */
 struct radeon_program_transformation {
 	GLboolean (*function)(
-		struct radeon_transform_context*,
-		struct prog_instruction*,
+		struct radeon_compiler*,
+		struct rc_instruction*,
 		void*);
 	void *userData;
 };
 
 void radeonLocalTransform(
-	struct gl_program *program,
+	struct radeon_compiler *c,
 	int num_transformations,
 	struct radeon_program_transformation* transformations);
-
-/**
- * Find a usable free temporary register during program transformation
- */
-GLint radeonFindFreeTemporary(struct radeon_transform_context *ctx);
-
-struct prog_instruction *radeonAppendInstructions(struct gl_program *program, int count);
 
 GLint rc_find_free_temporary(struct radeon_compiler * c);
 

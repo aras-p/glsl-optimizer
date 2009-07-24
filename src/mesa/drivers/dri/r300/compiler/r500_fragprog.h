@@ -47,6 +47,9 @@ extern GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register r
 
 extern void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src);
 
-extern GLboolean r500_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
+extern GLboolean r500_transform_TEX(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	void* data);
 
 #endif

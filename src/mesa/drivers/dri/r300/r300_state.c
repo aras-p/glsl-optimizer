@@ -1063,24 +1063,6 @@ r300FetchStateParameter(GLcontext * ctx,
 				break;
 			}
 
-		case STATE_R300_TEXRECT_FACTOR:{
-				struct gl_texture_object *t =
-				    ctx->Texture.Unit[state[2]].CurrentTex[TEXTURE_RECT_INDEX];
-
-				if (t && t->Image[0][t->BaseLevel]) {
-					struct gl_texture_image *image =
-					    t->Image[0][t->BaseLevel];
-					value[0] = 1.0 / image->Width2;
-					value[1] = 1.0 / image->Height2;
-				} else {
-					value[0] = 1.0;
-					value[1] = 1.0;
-				}
-				value[2] = 1.0;
-				value[3] = 1.0;
-				break;
-			}
-
 		default:
 			break;
 		}
@@ -2029,7 +2011,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	rmesa->radeon.NewGLState = 0;
 }
 
-static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index)
+static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index, GLfloat * buffer)
 {
 	static const GLfloat dummy[4] = { 0, 0, 0, 0 };
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -2041,6 +2023,47 @@ static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index)
 		return fp->Base->Parameters->ParameterValues[rcc->u.External];
 	case RC_CONSTANT_IMMEDIATE:
 		return rcc->u.Immediate;
+	case RC_CONSTANT_STATE:
+		switch(rcc->u.State[0]) {
+		case RC_STATE_SHADOW_AMBIENT: {
+			const int unit = (int) rcc->u.State[1];
+			const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+			if (texObj) {
+				buffer[0] =
+				buffer[1] =
+				buffer[2] =
+				buffer[3] = texObj->CompareFailValue;
+			}
+			return buffer;
+		}
+
+		case RC_STATE_R300_WINDOW_DIMENSION: {
+			__DRIdrawablePrivate * drawable = radeon_get_drawable(&rmesa->radeon);
+			buffer[0] = drawable->w * 0.5f;	/* width*0.5 */
+			buffer[1] = drawable->h * 0.5f;	/* height*0.5 */
+			buffer[2] = 0.5F;	/* for moving range [-1 1] -> [0 1] */
+			buffer[3] = 1.0F;	/* not used */
+			return buffer;
+		}
+
+		case RC_STATE_R300_TEXRECT_FACTOR: {
+			struct gl_texture_object *t =
+				ctx->Texture.Unit[rcc->u.State[1]].CurrentTex[TEXTURE_RECT_INDEX];
+
+			if (t && t->Image[0][t->BaseLevel]) {
+				struct gl_texture_image *image =
+					t->Image[0][t->BaseLevel];
+				buffer[0] = 1.0 / image->Width2;
+				buffer[1] = 1.0 / image->Height2;
+			} else {
+				buffer[0] = 1.0;
+				buffer[1] = 1.0;
+			}
+			buffer[2] = 1.0;
+			buffer[3] = 1.0;
+			return buffer;
+		}
+		}
 	}
 
 	return dummy;
@@ -2096,7 +2119,8 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	R300_STATECHANGE(rmesa, fpp);
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_PFS_PARAM_0_X, fp->code.constants.Count * 4);
 	for (i = 0; i < fp->code.constants.Count; i++) {
-		const GLfloat *constant = get_fragmentprogram_constant(ctx, i);
+		GLfloat buffer[4];
+		const GLfloat *constant = get_fragmentprogram_constant(ctx, i, buffer);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(constant[0]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(constant[1]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(constant[2]);
@@ -2157,7 +2181,8 @@ static void r500SetupPixelShader(GLcontext *ctx)
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->code.constants.Count; i++) {
-		const GLfloat *constant = get_fragmentprogram_constant(ctx, i);
+		GLfloat buffer[4];
+		const GLfloat *constant = get_fragmentprogram_constant(ctx, i, buffer);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(constant[0]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(constant[1]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(constant[2]);

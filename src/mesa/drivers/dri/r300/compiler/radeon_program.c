@@ -48,83 +48,25 @@
  * one instruction at a time.
  */
 void radeonLocalTransform(
-	struct gl_program *program,
+	struct radeon_compiler * c,
 	int num_transformations,
 	struct radeon_program_transformation* transformations)
 {
-	struct radeon_transform_context ctx;
-	int ip;
+	struct rc_instruction * inst = c->Program.Instructions.Next;
 
-	ctx.Program = program;
-	ctx.OldInstructions = program->Instructions;
-	ctx.OldNumInstructions = program->NumInstructions;
-
-	program->Instructions = 0;
-	program->NumInstructions = 0;
-
-	for(ip = 0; ip < ctx.OldNumInstructions; ++ip) {
-		struct prog_instruction *instr = ctx.OldInstructions + ip;
+	while(inst != &c->Program.Instructions) {
+		struct rc_instruction * current = inst;
 		int i;
+
+		inst = inst->Next;
 
 		for(i = 0; i < num_transformations; ++i) {
 			struct radeon_program_transformation* t = transformations + i;
 
-			if (t->function(&ctx, instr, t->userData))
+			if (t->function(c, current, t->userData))
 				break;
 		}
-
-		if (i >= num_transformations) {
-			struct prog_instruction* dest = radeonAppendInstructions(program, 1);
-			_mesa_copy_instructions(dest, instr, 1);
-		}
 	}
-
-	_mesa_free_instructions(ctx.OldInstructions, ctx.OldNumInstructions);
-}
-
-
-static void scan_instructions(GLboolean* used, const struct prog_instruction* insts, GLuint count)
-{
-	GLuint i;
-	for (i = 0; i < count; i++) {
-		const struct prog_instruction *inst = insts + i;
-		const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
-		GLuint k;
-
-		for (k = 0; k < n; k++) {
-			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
-				used[inst->SrcReg[k].Index] = GL_TRUE;
-		}
-	}
-}
-
-GLint radeonFindFreeTemporary(struct radeon_transform_context *t)
-{
-	GLboolean used[MAX_PROGRAM_TEMPS];
-	GLuint i;
-
-	_mesa_memset(used, 0, sizeof(used));
-	scan_instructions(used, t->Program->Instructions, t->Program->NumInstructions);
-	scan_instructions(used, t->OldInstructions, t->OldNumInstructions);
-
-	for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-		if (!used[i])
-			return i;
-	}
-
-	return -1;
-}
-
-
-/**
- * Append the given number of instructions to the program and return a
- * pointer to the first new instruction.
- */
-struct prog_instruction *radeonAppendInstructions(struct gl_program *program, int count)
-{
-	int oldnum = program->NumInstructions;
-	_mesa_insert_instructions(program, oldnum, count);
-	return program->Instructions + oldnum;
 }
 
 
@@ -206,6 +148,7 @@ void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * progr
 		struct rc_constant constant;
 
 		constant.Type = RC_CONSTANT_EXTERNAL;
+		constant.Size = 4;
 		constant.u.External = i;
 
 		rc_constants_add(&c->Program.Constants, &constant);

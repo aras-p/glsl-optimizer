@@ -76,3 +76,95 @@ unsigned rc_constants_add(struct rc_constant_list * c, struct rc_constant * cons
 
 	return index;
 }
+
+
+/**
+ * Add a state vector to the constant list, while trying to avoid duplicates.
+ */
+unsigned rc_constants_add_state(struct rc_constant_list * c, unsigned state0, unsigned state1)
+{
+	unsigned index;
+	struct rc_constant constant;
+
+	for(index = 0; index < c->Count; ++index) {
+		if (c->Constants[index].Type == RC_CONSTANT_STATE) {
+			if (c->Constants[index].u.State[0] == state0 &&
+			    c->Constants[index].u.State[1] == state1)
+				return index;
+		}
+	}
+
+	memset(&constant, 0, sizeof(constant));
+	constant.Type = RC_CONSTANT_STATE;
+	constant.Size = 4;
+	constant.u.State[0] = state0;
+	constant.u.State[1] = state1;
+
+	return rc_constants_add(c, &constant);
+}
+
+
+/**
+ * Add an immediate vector to the constant list, while trying to avoid
+ * duplicates.
+ */
+unsigned rc_constants_add_immediate_vec4(struct rc_constant_list * c, const float * data)
+{
+	unsigned index;
+	struct rc_constant constant;
+
+	for(index = 0; index < c->Count; ++index) {
+		if (c->Constants[index].Type == RC_CONSTANT_IMMEDIATE) {
+			if (!memcmp(c->Constants[index].u.Immediate, data, sizeof(float)*4))
+				return index;
+		}
+	}
+
+	memset(&constant, 0, sizeof(constant));
+	constant.Type = RC_CONSTANT_IMMEDIATE;
+	constant.Size = 4;
+	memcpy(constant.u.Immediate, data, sizeof(float) * 4);
+
+	return rc_constants_add(c, &constant);
+}
+
+
+/**
+ * Add an immediate scalar to the constant list, while trying to avoid
+ * duplicates.
+ */
+unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float data, unsigned * swizzle)
+{
+	unsigned index;
+	int free_index = -1;
+	struct rc_constant constant;
+
+	for(index = 0; index < c->Count; ++index) {
+		if (c->Constants[index].Type == RC_CONSTANT_IMMEDIATE) {
+			for(unsigned comp = 0; comp < c->Constants[index].Size; ++comp) {
+				if (c->Constants[index].u.Immediate[comp] == data) {
+					*swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
+					return index;
+				}
+			}
+
+			if (c->Constants[index].Size < 4)
+				free_index = index;
+		}
+	}
+
+	if (free_index >= 0) {
+		unsigned comp = c->Constants[free_index].Size++;
+		c->Constants[free_index].u.Immediate[comp] = data;
+		*swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
+		return free_index;
+	}
+
+	memset(&constant, 0, sizeof(constant));
+	constant.Type = RC_CONSTANT_IMMEDIATE;
+	constant.Size = 1;
+	constant.u.Immediate[0] = data;
+	*swizzle = SWIZZLE_XXXX;
+
+	return rc_constants_add(c, &constant);
+}

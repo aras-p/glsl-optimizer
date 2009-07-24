@@ -29,152 +29,139 @@
 
 #include "../r300_reg.h"
 
-static struct prog_src_register shadow_ambient(struct gl_program *program, int tmu)
+static struct prog_src_register shadow_ambient(struct radeon_compiler * c, int tmu)
 {
-	gl_state_index fail_value_tokens[STATE_LENGTH] = {
-		STATE_INTERNAL, STATE_SHADOW_AMBIENT, 0, 0, 0
-	};
 	struct prog_src_register reg = { 0, };
 
-	fail_value_tokens[2] = tmu;
 	reg.File = PROGRAM_STATE_VAR;
-	reg.Index = _mesa_add_state_reference(program->Parameters, fail_value_tokens);
+	reg.Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_SHADOW_AMBIENT, tmu);
 	reg.Swizzle = SWIZZLE_WWWW;
 	return reg;
 }
 
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following way:
- *  - premultiply texture coordinates for RECT
- *  - extract operand swizzles
- *  - introduce a temporary register when write masks are needed
- *
+ *  - implement texture compare (shadow extensions)
+ *  - extract non-native source / destination operands
  */
 GLboolean r500_transform_TEX(
-	struct radeon_transform_context *t,
-	struct prog_instruction* orig_inst, void* data)
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	void* data)
 {
 	struct r300_fragment_program_compiler *compiler =
 		(struct r300_fragment_program_compiler*)data;
-	struct prog_instruction inst = *orig_inst;
-	struct prog_instruction* tgt;
-	GLboolean destredirect = GL_FALSE;
 
-	if (inst.Opcode != OPCODE_TEX &&
-	    inst.Opcode != OPCODE_TXB &&
-	    inst.Opcode != OPCODE_TXP &&
-	    inst.Opcode != OPCODE_KIL)
+	if (inst->I.Opcode != OPCODE_TEX &&
+	    inst->I.Opcode != OPCODE_TXB &&
+	    inst->I.Opcode != OPCODE_TXP &&
+	    inst->I.Opcode != OPCODE_KIL)
 		return GL_FALSE;
 
 	/* ARB_shadow & EXT_shadow_funcs */
-	if (inst.Opcode != OPCODE_KIL &&
-	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
+	if (inst->I.Opcode != OPCODE_KIL &&
+	    c->Program.ShadowSamplers & (1 << inst->I.TexSrcUnit)) {
+		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst->I.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
-			tgt = radeonAppendInstructions(t->Program, 1);
+			inst->I.Opcode = OPCODE_MOV;
 
-			tgt->Opcode = OPCODE_MOV;
-			tgt->DstReg = inst.DstReg;
 			if (comparefunc == GL_ALWAYS) {
-				tgt->SrcReg[0].File = PROGRAM_BUILTIN;
-				tgt->SrcReg[0].Swizzle = SWIZZLE_1111;
+				inst->I.SrcReg[0].File = PROGRAM_BUILTIN;
+				inst->I.SrcReg[0].Swizzle = SWIZZLE_1111;
 			} else {
-				tgt->SrcReg[0] = shadow_ambient(t->Program, inst.TexSrcUnit);
+				inst->I.SrcReg[0] = shadow_ambient(c, inst->I.TexSrcUnit);
 			}
+
 			return GL_TRUE;
-		}
-
-		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = radeonFindFreeTemporary(t);
-		inst.DstReg.WriteMask = WRITEMASK_XYZW;
-	} else if (inst.Opcode != OPCODE_KIL && inst.DstReg.File != PROGRAM_TEMPORARY) {
-		int tempreg = radeonFindFreeTemporary(t);
-
-		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = tempreg;
-		inst.DstReg.WriteMask = WRITEMASK_XYZW;
-		destredirect = GL_TRUE;
-	}
-
-	if (inst.SrcReg[0].File != PROGRAM_TEMPORARY && inst.SrcReg[0].File != PROGRAM_INPUT) {
-		int tmpreg = radeonFindFreeTemporary(t);
-		tgt = radeonAppendInstructions(t->Program, 1);
-		tgt->Opcode = OPCODE_MOV;
-		tgt->DstReg.File = PROGRAM_TEMPORARY;
-		tgt->DstReg.Index = tmpreg;
-		tgt->SrcReg[0] = inst.SrcReg[0];
-
-		reset_srcreg(&inst.SrcReg[0]);
-		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
-		inst.SrcReg[0].Index = tmpreg;
-	}
-
-	tgt = radeonAppendInstructions(t->Program, 1);
-	_mesa_copy_instructions(tgt, &inst, 1);
-
-	if (inst.Opcode != OPCODE_KIL &&
-	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
-		GLuint depthmode = compiler->state.unit[inst.TexSrcUnit].depth_texture_mode;
-		int rcptemp = radeonFindFreeTemporary(t);
-		int pass, fail;
-
-		tgt = radeonAppendInstructions(t->Program, 3);
-
-		tgt[0].Opcode = OPCODE_RCP;
-		tgt[0].DstReg.File = PROGRAM_TEMPORARY;
-		tgt[0].DstReg.Index = rcptemp;
-		tgt[0].DstReg.WriteMask = WRITEMASK_W;
-		tgt[0].SrcReg[0] = inst.SrcReg[0];
-		tgt[0].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-
-		tgt[1].Opcode = OPCODE_MAD;
-		tgt[1].DstReg = inst.DstReg;
-		tgt[1].DstReg.WriteMask = orig_inst->DstReg.WriteMask;
-		tgt[1].SrcReg[0] = inst.SrcReg[0];
-		tgt[1].SrcReg[0].Swizzle = SWIZZLE_ZZZZ;
-		tgt[1].SrcReg[1].File = PROGRAM_TEMPORARY;
-		tgt[1].SrcReg[1].Index = rcptemp;
-		tgt[1].SrcReg[1].Swizzle = SWIZZLE_WWWW;
-		tgt[1].SrcReg[2].File = PROGRAM_TEMPORARY;
-		tgt[1].SrcReg[2].Index = inst.DstReg.Index;
-		if (depthmode == 0) /* GL_LUMINANCE */
-			tgt[1].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
-		else if (depthmode == 2) /* GL_ALPHA */
-			tgt[1].SrcReg[2].Swizzle = SWIZZLE_WWWW;
-
-		/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
-		 *   r  < tex  <=>      -tex+r < 0
-		 *   r >= tex  <=> not (-tex+r < 0 */
-		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
-			tgt[1].SrcReg[2].Negate = tgt[0].SrcReg[2].Negate ^ NEGATE_XYZW;
-		else
-			tgt[1].SrcReg[0].Negate = tgt[0].SrcReg[0].Negate ^ NEGATE_XYZW;
-
-		tgt[2].Opcode = OPCODE_CMP;
-		tgt[2].DstReg = orig_inst->DstReg;
-		tgt[2].SrcReg[0].File = PROGRAM_TEMPORARY;
-		tgt[2].SrcReg[0].Index = tgt[1].DstReg.Index;
-
-		if (comparefunc == GL_LESS || comparefunc == GL_GREATER) {
-			pass = 1;
-			fail = 2;
 		} else {
-			pass = 2;
-			fail = 1;
+			GLuint comparefunc = GL_NEVER + compiler->state.unit[inst->I.TexSrcUnit].texture_compare_func;
+			GLuint depthmode = compiler->state.unit[inst->I.TexSrcUnit].depth_texture_mode;
+			struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, inst);
+			struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_rcp);
+			struct rc_instruction * inst_cmp = rc_insert_new_instruction(c, inst_mad);
+			int pass, fail;
+
+			inst_rcp->I.Opcode = OPCODE_RCP;
+			inst_rcp->I.DstReg.File = PROGRAM_TEMPORARY;
+			inst_rcp->I.DstReg.Index = rc_find_free_temporary(c);
+			inst_rcp->I.DstReg.WriteMask = WRITEMASK_W;
+			inst_rcp->I.SrcReg[0] = inst->I.SrcReg[0];
+			inst_rcp->I.SrcReg[0].Swizzle = SWIZZLE_WWWW;
+
+			inst_cmp->I.DstReg = inst->I.DstReg;
+			inst->I.DstReg.File = PROGRAM_TEMPORARY;
+			inst->I.DstReg.Index = rc_find_free_temporary(c);
+			inst->I.DstReg.WriteMask = WRITEMASK_XYZW;
+
+			inst_mad->I.Opcode = OPCODE_MAD;
+			inst_mad->I.DstReg.File = PROGRAM_TEMPORARY;
+			inst_mad->I.DstReg.Index = rc_find_free_temporary(c);
+			inst_mad->I.SrcReg[0] = inst->I.SrcReg[0];
+			inst_mad->I.SrcReg[0].Swizzle = SWIZZLE_ZZZZ;
+			inst_mad->I.SrcReg[1].File = PROGRAM_TEMPORARY;
+			inst_mad->I.SrcReg[1].Index = inst_rcp->I.DstReg.Index;
+			inst_mad->I.SrcReg[1].Swizzle = SWIZZLE_WWWW;
+			inst_mad->I.SrcReg[2].File = PROGRAM_TEMPORARY;
+			inst_mad->I.SrcReg[2].Index = inst->I.DstReg.Index;
+			if (depthmode == 0) /* GL_LUMINANCE */
+				inst_mad->I.SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
+			else if (depthmode == 2) /* GL_ALPHA */
+				inst_mad->I.SrcReg[2].Swizzle = SWIZZLE_WWWW;
+
+			/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
+			 *   r  < tex  <=>      -tex+r < 0
+			 *   r >= tex  <=> not (-tex+r < 0 */
+			if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
+				inst_mad->I.SrcReg[2].Negate = inst_mad->I.SrcReg[2].Negate ^ NEGATE_XYZW;
+			else
+				inst_mad->I.SrcReg[0].Negate = inst_mad->I.SrcReg[0].Negate ^ NEGATE_XYZW;
+
+			inst_cmp->I.Opcode = OPCODE_CMP;
+			/* DstReg has been filled out above */
+			inst_cmp->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+			inst_cmp->I.SrcReg[0].Index = inst_mad->I.DstReg.Index;
+
+			if (comparefunc == GL_LESS || comparefunc == GL_GREATER) {
+				pass = 1;
+				fail = 2;
+			} else {
+				pass = 2;
+				fail = 1;
+			}
+
+			inst_cmp->I.SrcReg[pass].File = PROGRAM_BUILTIN;
+			inst_cmp->I.SrcReg[pass].Swizzle = SWIZZLE_1111;
+			inst_cmp->I.SrcReg[fail] = shadow_ambient(c, inst->I.TexSrcUnit);
 		}
+	}
 
-		tgt[2].SrcReg[pass].File = PROGRAM_BUILTIN;
-		tgt[2].SrcReg[pass].Swizzle = SWIZZLE_1111;
-		tgt[2].SrcReg[fail] = shadow_ambient(t->Program, inst.TexSrcUnit);
-	} else if (destredirect) {
-		tgt = radeonAppendInstructions(t->Program, 1);
+	/* Cannot write texture to output registers */
+	if (inst->I.Opcode != OPCODE_KIL && inst->I.DstReg.File != PROGRAM_TEMPORARY) {
+		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
 
-		tgt->Opcode = OPCODE_MOV;
-		tgt->DstReg = orig_inst->DstReg;
-		tgt->SrcReg[0].File = PROGRAM_TEMPORARY;
-		tgt->SrcReg[0].Index = inst.DstReg.Index;
+		inst_mov->I.Opcode = OPCODE_MOV;
+		inst_mov->I.DstReg = inst->I.DstReg;
+		inst_mov->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+		inst_mov->I.SrcReg[0].Index = rc_find_free_temporary(c);
+
+		inst->I.DstReg.File = PROGRAM_TEMPORARY;
+		inst->I.DstReg.Index = inst_mov->I.SrcReg[0].Index;
+		inst->I.DstReg.WriteMask = WRITEMASK_XYZW;
+	}
+
+	/* Cannot read texture coordinate from constants file */
+	if (inst->I.SrcReg[0].File != PROGRAM_TEMPORARY && inst->I.SrcReg[0].File != PROGRAM_INPUT) {
+		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
+
+		inst_mov->I.Opcode = OPCODE_MOV;
+		inst_mov->I.DstReg.File = PROGRAM_TEMPORARY;
+		inst_mov->I.DstReg.Index = rc_find_free_temporary(c);
+		inst_mov->I.SrcReg[0] = inst->I.SrcReg[0];
+
+		reset_srcreg(&inst->I.SrcReg[0]);
+		inst->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+		inst->I.SrcReg[0].Index = inst_mov->I.DstReg.Index;
 	}
 
 	return GL_TRUE;

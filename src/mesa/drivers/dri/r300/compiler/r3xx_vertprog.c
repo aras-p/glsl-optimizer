@@ -538,47 +538,43 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
  * Introduce intermediate MOVs to temporary registers to account for this.
  */
 static GLboolean transform_source_conflicts(
-	struct radeon_transform_context *t,
-	struct prog_instruction* orig_inst,
+	struct radeon_compiler *c,
+	struct rc_instruction* inst,
 	void* unused)
 {
-	struct prog_instruction inst = *orig_inst;
-	struct prog_instruction * dst;
-	GLuint num_operands = _mesa_num_inst_src_regs(inst.Opcode);
+	GLuint num_operands = _mesa_num_inst_src_regs(inst->I.Opcode);
 
 	if (num_operands == 3) {
-		if (t_src_conflict(inst.SrcReg[1], inst.SrcReg[2])
-		    || t_src_conflict(inst.SrcReg[0], inst.SrcReg[2])) {
-			int tmpreg = radeonFindFreeTemporary(t);
-			struct prog_instruction * inst_mov = radeonAppendInstructions(t->Program, 1);
-			inst_mov->Opcode = OPCODE_MOV;
-			inst_mov->DstReg.File = PROGRAM_TEMPORARY;
-			inst_mov->DstReg.Index = tmpreg;
-			inst_mov->SrcReg[0] = inst.SrcReg[2];
+		if (t_src_conflict(inst->I.SrcReg[1], inst->I.SrcReg[2])
+		    || t_src_conflict(inst->I.SrcReg[0], inst->I.SrcReg[2])) {
+			int tmpreg = rc_find_free_temporary(c);
+			struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
+			inst_mov->I.Opcode = OPCODE_MOV;
+			inst_mov->I.DstReg.File = PROGRAM_TEMPORARY;
+			inst_mov->I.DstReg.Index = tmpreg;
+			inst_mov->I.SrcReg[0] = inst->I.SrcReg[2];
 
-			reset_srcreg(&inst.SrcReg[2]);
-			inst.SrcReg[2].File = PROGRAM_TEMPORARY;
-			inst.SrcReg[2].Index = tmpreg;
+			reset_srcreg(&inst->I.SrcReg[2]);
+			inst->I.SrcReg[2].File = PROGRAM_TEMPORARY;
+			inst->I.SrcReg[2].Index = tmpreg;
 		}
 	}
 
 	if (num_operands >= 2) {
-		if (t_src_conflict(inst.SrcReg[1], inst.SrcReg[0])) {
-			int tmpreg = radeonFindFreeTemporary(t);
-			struct prog_instruction * inst_mov = radeonAppendInstructions(t->Program, 1);
-			inst_mov->Opcode = OPCODE_MOV;
-			inst_mov->DstReg.File = PROGRAM_TEMPORARY;
-			inst_mov->DstReg.Index = tmpreg;
-			inst_mov->SrcReg[0] = inst.SrcReg[1];
+		if (t_src_conflict(inst->I.SrcReg[1], inst->I.SrcReg[0])) {
+			int tmpreg = rc_find_free_temporary(c);
+			struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
+			inst_mov->I.Opcode = OPCODE_MOV;
+			inst_mov->I.DstReg.File = PROGRAM_TEMPORARY;
+			inst_mov->I.DstReg.Index = tmpreg;
+			inst_mov->I.SrcReg[0] = inst->I.SrcReg[1];
 
-			reset_srcreg(&inst.SrcReg[1]);
-			inst.SrcReg[1].File = PROGRAM_TEMPORARY;
-			inst.SrcReg[1].Index = tmpreg;
+			reset_srcreg(&inst->I.SrcReg[1]);
+			inst->I.SrcReg[1].File = PROGRAM_TEMPORARY;
+			inst->I.SrcReg[1].Index = tmpreg;
 		}
 	}
 
-	dst = radeonAppendInstructions(t->Program, 1);
-	*dst = inst;
 	return GL_TRUE;
 }
 
@@ -782,16 +778,18 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	addArtificialOutputs(compiler);
 
+	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+
 	{
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 		};
-		radeonLocalTransform(compiler->program, 1, transformations);
+		radeonLocalTransform(&compiler->Base, 1, transformations);
 	}
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
-		_mesa_print_program(compiler->program);
+		rc_print_program(&compiler->Base.Program);
 		fflush(stdout);
 	}
 
@@ -803,16 +801,14 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		struct radeon_program_transformation transformations[] = {
 			{ &transform_source_conflicts, 0 },
 		};
-		radeonLocalTransform(compiler->program, 1, transformations);
+		radeonLocalTransform(&compiler->Base, 1, transformations);
 	}
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after source conflict resolve:\n");
-		_mesa_print_program(compiler->program);
+		rc_print_program(&compiler->Base.Program);
 		fflush(stdout);
 	}
-
-	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
 
 	{
 		struct radeon_nqssadce_descr nqssadce = {
