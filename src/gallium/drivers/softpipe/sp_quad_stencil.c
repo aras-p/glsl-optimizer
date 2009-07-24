@@ -330,7 +330,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quads[],
       }
 
       if (quad->inout.mask)
-         quads[pass++] = q;
+         quads[pass++] = quad;
    }
 
    if (pass)
