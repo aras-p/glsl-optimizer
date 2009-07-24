@@ -68,21 +68,18 @@ quad_shade_stage(struct quad_stage *qs)
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
-static void
+static boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = qss->machine;
    boolean z_written;
-   
-   /* Consts do not require 16 byte alignment. */
-   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
-
-   machine->InterpCoefs = quad->coef;
 
    /* run shader */
    quad->inout.mask &= softpipe->fs->run( softpipe->fs, machine, quad );
+   if (quad->inout.mask == 0)
+      return FALSE;
 
    /* store outputs */
    z_written = FALSE;
@@ -129,11 +126,34 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
       quad->output.depth[3] = z0 + dzdx + dzdy;
    }
 
-   /* shader may cull fragments */
-   if (quad->inout.mask) {
-      qs->next->run( qs->next, quad );
-   }
+   return TRUE;
 }
+
+static void
+shade_quads(struct quad_stage *qs, 
+                 struct quad_header *quads[],
+                 unsigned nr)
+{
+   struct quad_shade_stage *qss = quad_shade_stage( qs );
+   struct softpipe_context *softpipe = qs->softpipe;
+   struct tgsi_exec_machine *machine = qss->machine;
+
+   unsigned i, pass = 0;
+   
+   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   machine->InterpCoefs = quads[0]->coef;
+
+   for (i = 0; i < nr; i++) {
+      if (shade_quad(qs, quads[i]))
+         quads[pass++] = quads[i];
+   }
+   
+   if (pass)
+      qs->next->run(qs->next, quads, pass);
+}
+   
+
+
 
 
 /**
@@ -174,7 +194,7 @@ sp_quad_shade_stage( struct softpipe_context *softpipe )
 
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
-   qss->stage.run = shade_quad;
+   qss->stage.run = shade_quads;
    qss->stage.destroy = shade_destroy;
 
    qss->machine = tgsi_exec_machine_create();

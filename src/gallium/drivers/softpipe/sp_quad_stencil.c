@@ -198,7 +198,8 @@ apply_stencil_op(ubyte stencilVals[QUAD_SIZE],
  * depth testing.
  */
 static void
-stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
+stencil_test_quad(struct quad_stage *qs, struct quad_header *quads[],
+                  unsigned nr)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
@@ -206,9 +207,12 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
-   uint j;
-   uint face = quad->input.facing;
+      = sp_get_cached_tile(softpipe->zsbuf_cache, 
+                           quads[0]->input.x0, 
+                           quads[0]->input.y0);
+   uint face = quads[0]->input.facing;
+   uint pass = 0;
+   uint j, q;
 
    if (!softpipe->depth_stencil->stencil[1].enabled) {
       /* single-sided stencil test, use front (face=0) state */
@@ -227,103 +231,110 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    assert(ps); /* shouldn't get here if there's no stencil buffer */
 
-   /* get stencil values from cached tile */
-   switch (ps->format) {
-   case PIPE_FORMAT_S8Z24_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         stencilVals[j] = tile->data.depth32[y][x] >> 24;
-      }
-      break;
-   case PIPE_FORMAT_Z24S8_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         stencilVals[j] = tile->data.depth32[y][x] & 0xff;
-      }
-      break;
-   case PIPE_FORMAT_S8_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         stencilVals[j] = tile->data.stencil8[y][x];
-      }
-      break;
-   default:
-      assert(0);
-   }
+   for (q = 0; q < nr; q++) {
+      struct quad_header *quad = quads[q];
 
-   /* do the stencil test first */
-   {
-      unsigned passMask, failMask;
-      passMask = do_stencil_test(stencilVals, func, ref, valMask);
-      failMask = quad->inout.mask & ~passMask;
-      quad->inout.mask &= passMask;
-
-      if (failOp != PIPE_STENCIL_OP_KEEP) {
-         apply_stencil_op(stencilVals, failMask, failOp, ref, wrtMask);
-      }
-   }
-
-   if (quad->inout.mask) {
-      /* now the pixels that passed the stencil test are depth tested */
-      if (softpipe->depth_stencil->depth.enabled) {
-         const unsigned origMask = quad->inout.mask;
-
-         sp_depth_test_quad(qs, quad);  /* quad->mask is updated */
-
-         /* update stencil buffer values according to z pass/fail result */
-         if (zFailOp != PIPE_STENCIL_OP_KEEP) {
-            const unsigned failMask = origMask & ~quad->inout.mask;
-            apply_stencil_op(stencilVals, failMask, zFailOp, ref, wrtMask);
+      /* get stencil values from cached tile */
+      switch (ps->format) {
+      case PIPE_FORMAT_S8Z24_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            stencilVals[j] = tile->data.depth32[y][x] >> 24;
          }
+         break;
+      case PIPE_FORMAT_Z24S8_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            stencilVals[j] = tile->data.depth32[y][x] & 0xff;
+         }
+         break;
+      case PIPE_FORMAT_S8_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            stencilVals[j] = tile->data.stencil8[y][x];
+         }
+         break;
+      default:
+         assert(0);
+      }
 
-         if (zPassOp != PIPE_STENCIL_OP_KEEP) {
-            const unsigned passMask = origMask & quad->inout.mask;
-            apply_stencil_op(stencilVals, passMask, zPassOp, ref, wrtMask);
+      /* do the stencil test first */
+      {
+         unsigned passMask, failMask;
+         passMask = do_stencil_test(stencilVals, func, ref, valMask);
+         failMask = quad->inout.mask & ~passMask;
+         quad->inout.mask &= passMask;
+
+         if (failOp != PIPE_STENCIL_OP_KEEP) {
+            apply_stencil_op(stencilVals, failMask, failOp, ref, wrtMask);
          }
       }
-      else {
-         /* no depth test, apply Zpass operator to stencil buffer values */
-         apply_stencil_op(stencilVals, quad->inout.mask, zPassOp, ref, wrtMask);
+
+      if (quad->inout.mask) {
+         /* now the pixels that passed the stencil test are depth tested */
+         if (softpipe->depth_stencil->depth.enabled) {
+            const unsigned origMask = quad->inout.mask;
+
+            sp_depth_test_quad(qs, quad);  /* quad->mask is updated */
+
+            /* update stencil buffer values according to z pass/fail result */
+            if (zFailOp != PIPE_STENCIL_OP_KEEP) {
+               const unsigned failMask = origMask & ~quad->inout.mask;
+               apply_stencil_op(stencilVals, failMask, zFailOp, ref, wrtMask);
+            }
+
+            if (zPassOp != PIPE_STENCIL_OP_KEEP) {
+               const unsigned passMask = origMask & quad->inout.mask;
+               apply_stencil_op(stencilVals, passMask, zPassOp, ref, wrtMask);
+            }
+         }
+         else {
+            /* no depth test, apply Zpass operator to stencil buffer values */
+            apply_stencil_op(stencilVals, quad->inout.mask, zPassOp, ref, wrtMask);
+         }
+
       }
 
+      /* put new stencil values into cached tile */
+      switch (ps->format) {
+      case PIPE_FORMAT_S8Z24_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            uint s8z24 = tile->data.depth32[y][x];
+            s8z24 = (stencilVals[j] << 24) | (s8z24 & 0xffffff);
+            tile->data.depth32[y][x] = s8z24;
+         }
+         break;
+      case PIPE_FORMAT_Z24S8_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            uint z24s8 = tile->data.depth32[y][x];
+            z24s8 = (z24s8 & 0xffffff00) | stencilVals[j];
+            tile->data.depth32[y][x] = z24s8;
+         }
+         break;
+      case PIPE_FORMAT_S8_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+            tile->data.stencil8[y][x] = stencilVals[j];
+         }
+         break;
+      default:
+         assert(0);
+      }
+
+      if (quad->inout.mask)
+         quads[pass++] = q;
    }
 
-   /* put new stencil values into cached tile */
-   switch (ps->format) {
-   case PIPE_FORMAT_S8Z24_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         uint s8z24 = tile->data.depth32[y][x];
-         s8z24 = (stencilVals[j] << 24) | (s8z24 & 0xffffff);
-         tile->data.depth32[y][x] = s8z24;
-      }
-      break;
-   case PIPE_FORMAT_Z24S8_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         uint z24s8 = tile->data.depth32[y][x];
-         z24s8 = (z24s8 & 0xffffff00) | stencilVals[j];
-         tile->data.depth32[y][x] = z24s8;
-      }
-      break;
-   case PIPE_FORMAT_S8_UNORM:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = quad->input.x0 % TILE_SIZE + (j & 1);
-         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
-         tile->data.stencil8[y][x] = stencilVals[j];
-      }
-      break;
-   default:
-      assert(0);
-   }
-
-   if (quad->inout.mask)
-      qs->next->run(qs->next, quad);
+   if (pass)
+      qs->next->run(qs->next, quads, pass);
 }
 
 

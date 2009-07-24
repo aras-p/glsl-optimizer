@@ -55,50 +55,52 @@ void
 sp_build_quad_pipeline(struct softpipe_context *sp)
 {
    boolean early_depth_test =
-               sp->depth_stencil->depth.enabled &&
-               sp->framebuffer.zsbuf &&
-               !sp->depth_stencil->alpha.enabled &&
-               !sp->fs->info.uses_kill &&
-               !sp->fs->info.writes_z;
+      sp->depth_stencil->depth.enabled &&
+      sp->framebuffer.zsbuf &&
+      !sp->depth_stencil->alpha.enabled &&
+      !sp->fs->info.uses_kill &&
+      !sp->fs->info.writes_z;
 
    /* build up the pipeline in reverse order... */
-      sp->quad.first = sp->quad.output;
 
-      if (sp->blend->colormask != 0xf) {
-         sp_push_quad_first( sp, sp->quad.colormask );
-      }
+   /* Color combine
+    */
+   sp->quad.first = sp->quad.output;
 
-      if (sp->blend->blend_enable ||
-          sp->blend->logicop_enable) {
-         sp_push_quad_first( sp, sp->quad.blend );
-      }
+   if (sp->blend->colormask != 0xf) {
+      sp_push_quad_first( sp, sp->quad.colormask );
+   }
 
-      if (sp->active_query_count) {
-         sp_push_quad_first( sp, sp->quad.occlusion );
-      }
+   if (sp->blend->blend_enable ||
+       sp->blend->logicop_enable) {
+      sp_push_quad_first( sp, sp->quad.blend );
+   }
 
-      if (sp->rasterizer->poly_smooth ||
-          sp->rasterizer->line_smooth ||
-          sp->rasterizer->point_smooth) {
-         sp_push_quad_first( sp, sp->quad.coverage );
-      }
+   if (sp->rasterizer->poly_smooth ||
+       sp->rasterizer->line_smooth ||
+       sp->rasterizer->point_smooth) {
+      sp_push_quad_first( sp, sp->quad.coverage );
+   }
 
-      if (!early_depth_test) {
-         sp_build_depth_stencil( sp );
-      }
+   /* Shade/Depth/Stencil/Alpha
+    */
+   if (sp->active_query_count) {
+      sp_push_quad_first( sp, sp->quad.occlusion );
+   }
 
-      if (sp->depth_stencil->alpha.enabled) {
-         sp_push_quad_first( sp, sp->quad.alpha_test );
-      }
+   if (!early_depth_test) {
+      sp_build_depth_stencil( sp );
+   }
 
-      /* XXX always enable shader? */
-      if (1) {
-         sp_push_quad_first( sp, sp->quad.shade );
-      }
+   if (sp->depth_stencil->alpha.enabled) {
+      sp_push_quad_first( sp, sp->quad.alpha_test );
+   }
 
-      if (early_depth_test) {
-         sp_build_depth_stencil( sp );
-         sp_push_quad_first( sp, sp->quad.earlyz );
-      }
+   sp_push_quad_first( sp, sp->quad.shade );
+
+   if (early_depth_test) {
+      sp_build_depth_stencil( sp );
+      sp_push_quad_first( sp, sp->quad.earlyz );
+   }
 }
 

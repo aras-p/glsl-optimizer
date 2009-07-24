@@ -49,7 +49,7 @@
  * Try to effectively do that with codegen...
  */
 
-void
+boolean
 sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
@@ -193,6 +193,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    }
 
    quad->inout.mask &= zmask;
+   if (quad->inout.mask == 0)
+      return FALSE;
 
    if (softpipe->depth_stencil->depth.writemask) {
       
@@ -252,16 +254,25 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          assert(0);
       }
    }
+
+   return TRUE;
 }
 
 
 static void
-depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
+depth_test_quads(struct quad_stage *qs, 
+                 struct quad_header *quads[],
+                 unsigned nr)
 {
-   sp_depth_test_quad(qs, quad);
+   unsigned i, pass = 0;
 
-   if (quad->inout.mask)
-      qs->next->run(qs->next, quad);
+   for (i = 0; i < nr; i++) {
+      if (sp_depth_test_quad(qs, quads[i]))
+         quads[pass++] = quads[i];
+   }
+   
+   if (pass)
+      qs->next->run(qs->next, quads, pass);
 }
 
 
@@ -283,7 +294,7 @@ struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
 
    stage->softpipe = softpipe;
    stage->begin = depth_test_begin;
-   stage->run = depth_test_quad;
+   stage->run = depth_test_quads;
    stage->destroy = depth_test_destroy;
 
    return stage;

@@ -49,7 +49,7 @@ struct quad_stage {
    void (*begin)(struct quad_stage *qs);
 
    /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
+   void (*run)(struct quad_stage *qs, struct quad_header *quad[], unsigned nr);
 
    void (*destroy)(struct quad_stage *qs);
 };
@@ -69,6 +69,6 @@ struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
 
 void sp_build_quad_pipeline(struct softpipe_context *sp);
 
-void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
+boolean sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
 #endif /* SP_QUAD_PIPE_H */

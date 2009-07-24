@@ -84,10 +84,21 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
       if (!(softpipe->blend->colormask & PIPE_MASK_A))
           COPY_4V(quadColor[3], dest[3]);
    }
+}
+
+static void
+colormask_quads(struct quad_stage *qs, struct quad_header *quads[],
+                unsigned nr)
+{
+   unsigned i;
+
+   for (i = 0; i < nr; i++)
+      colormask_quad(qs, quads[i]);
 
    /* pass quad to next stage */
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, nr);
 }
+
 
 
 static void colormask_begin(struct quad_stage *qs)
@@ -108,7 +119,7 @@ struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
 
    stage->softpipe = softpipe;
    stage->begin = colormask_begin;
-   stage->run = colormask_quad;
+   stage->run = colormask_quads;
    stage->destroy = colormask_destroy;
 
    return stage;

@@ -38,11 +38,8 @@
  * taking mask into account.
  */
 static void
-output_quad(struct quad_stage *qs, struct quad_header *quad)
+output_quad(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
 {
-   /* in-tile pos: */
-   const int itx = quad->input.x0 % TILE_SIZE;
-   const int ity = quad->input.y0 % TILE_SIZE;
 
    struct softpipe_context *softpipe = qs->softpipe;
    uint cbuf;
@@ -51,25 +48,35 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
-                              quad->input.x0, quad->input.y0);
-      float (*quadColor)[4] = quad->output.color[cbuf];
-      int i, j;
+                              quads[0]->input.x0, 
+                              quads[0]->input.y0);
+      int i, j, q;
 
       /* get/swizzle dest colors */
-      for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->inout.mask & (1 << j)) {
-            int x = itx + (j & 1);
-            int y = ity + (j >> 1);
-            for (i = 0; i < 4; i++) { /* loop over color chans */
-               tile->data.color[y][x][i] = quadColor[i][j];
-            }
-            if (0) {
-               debug_printf("sp write pixel %d,%d: %g, %g, %g\n",
-                            quad->input.x0 + x,
-                            quad->input.y0 + y,
-                            quadColor[0][j],
-                            quadColor[1][j],
-                            quadColor[2][j]);
+      for (q = 0; q < nr; q++) {
+         struct quad_header *quad = quads[q];
+         float (*quadColor)[4] = quad->output.color[cbuf];
+
+         /* in-tile pos: */
+         const int itx = quad->input.x0 % TILE_SIZE;
+         const int ity = quad->input.y0 % TILE_SIZE;
+
+         
+         for (j = 0; j < QUAD_SIZE; j++) {
+            if (quad->inout.mask & (1 << j)) {
+               int x = itx + (j & 1);
+               int y = ity + (j >> 1);
+               for (i = 0; i < 4; i++) { /* loop over color chans */
+                  tile->data.color[y][x][i] = quadColor[i][j];
+               }
+               if (0) {
+                  debug_printf("sp write pixel %d,%d: %g, %g, %g\n",
+                               quad->input.x0 + x,
+                               quad->input.y0 + y,
+                               quadColor[0][j],
+                               quadColor[1][j],
+                               quadColor[2][j]);
+               }
             }
          }
       }

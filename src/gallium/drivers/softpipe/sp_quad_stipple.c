@@ -14,40 +14,46 @@
  * Apply polygon stipple to quads produced by triangle rasterization
  */
 static void
-stipple_quad(struct quad_stage *qs, struct quad_header *quad)
+stipple_quad(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
 {
    static const uint bit31 = 1 << 31;
    static const uint bit30 = 1 << 30;
+   unsigned pass = nr;
 
-   if (quad->input.prim == QUAD_PRIM_TRI) {
+   if (quads[0]->input.prim == QUAD_PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
-      /* need to invert Y to index into OpenGL's stipple pattern */
-      const int col0 = quad->input.x0 % 32;
-      const int y0 = quad->input.y0;
-      const int y1 = y0 + 1;
-      const uint stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
-      const uint stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
+      unsigned q;
 
-      /* turn off quad mask bits that fail the stipple test */
-      if ((stipple0 & (bit31 >> col0)) == 0)
-         quad->inout.mask &= ~MASK_TOP_LEFT;
+      pass = 0;
 
-      if ((stipple0 & (bit30 >> col0)) == 0)
-         quad->inout.mask &= ~MASK_TOP_RIGHT;
+      for (q = 0; q < nr; q++)  {
+         struct quad_header *quad = quads[q];
 
-      if ((stipple1 & (bit31 >> col0)) == 0)
-         quad->inout.mask &= ~MASK_BOTTOM_LEFT;
+         const int col0 = quad->input.x0 % 32;
+         const int y0 = quad->input.y0;
+         const int y1 = y0 + 1;
+         const uint stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
+         const uint stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
 
-      if ((stipple1 & (bit30 >> col0)) == 0)
-         quad->inout.mask &= ~MASK_BOTTOM_RIGHT;
+         /* turn off quad mask bits that fail the stipple test */
+         if ((stipple0 & (bit31 >> col0)) == 0)
+            quad->inout.mask &= ~MASK_TOP_LEFT;
 
-      if (!quad->inout.mask) {
-         /* all fragments failed stipple test, end of quad pipeline */
-         return;
+         if ((stipple0 & (bit30 >> col0)) == 0)
+            quad->inout.mask &= ~MASK_TOP_RIGHT;
+
+         if ((stipple1 & (bit31 >> col0)) == 0)
+            quad->inout.mask &= ~MASK_BOTTOM_LEFT;
+
+         if ((stipple1 & (bit30 >> col0)) == 0)
+            quad->inout.mask &= ~MASK_BOTTOM_RIGHT;
+
+         if (quad->inout.mask)
+            quads[pass++] = quad;
       }
    }
 
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, pass);
 }
 
 

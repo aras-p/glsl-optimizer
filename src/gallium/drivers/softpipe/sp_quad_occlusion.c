@@ -50,13 +50,15 @@ static unsigned count_bits( unsigned val )
 }
 
 static void
-occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
+occlusion_count_quads(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
 {
    struct softpipe_context *softpipe = qs->softpipe;
+   unsigned i;
 
-   softpipe->occlusion_count += count_bits(quad->inout.mask);
+   for (i = 0; i < nr; i++)
+      softpipe->occlusion_count += count_bits(quads[i]->inout.mask);
 
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, nr);
 }
 
 
@@ -78,7 +80,7 @@ struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe )
 
    stage->softpipe = softpipe;
    stage->begin = occlusion_begin;
-   stage->run = occlusion_count_quad;
+   stage->run = occlusion_count_quads;
    stage->destroy = occlusion_destroy;
 
    return stage;

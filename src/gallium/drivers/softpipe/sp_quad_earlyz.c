@@ -43,20 +43,26 @@
 static void
 earlyz_quad(
    struct quad_stage    *qs,
-   struct quad_header   *quad )
+   struct quad_header   *quads[],
+   unsigned nr )
 {
-   const float fx = (float) quad->input.x0;
-   const float fy = (float) quad->input.y0;
-   const float dzdx = quad->posCoef->dadx[2];
-   const float dzdy = quad->posCoef->dady[2];
-   const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+   const float a0z = quads[0]->posCoef->a0[2];
+   const float dzdx = quads[0]->posCoef->dadx[2];
+   const float dzdy = quads[0]->posCoef->dady[2];
+   unsigned i;
 
-   quad->output.depth[0] = z0;
-   quad->output.depth[1] = z0 + dzdx;
-   quad->output.depth[2] = z0 + dzdy;
-   quad->output.depth[3] = z0 + dzdx + dzdy;
+   for (i = 0; i < nr; i++) {
+      const float fx = (float) quads[i]->input.x0;
+      const float fy = (float) quads[i]->input.y0;
+      const float z0 = a0z + dzdx * fx + dzdy * fy;
 
-   qs->next->run( qs->next, quad );
+      quads[i]->output.depth[0] = z0;
+      quads[i]->output.depth[1] = z0 + dzdx;
+      quads[i]->output.depth[2] = z0 + dzdy;
+      quads[i]->output.depth[3] = z0 + dzdx + dzdy;
+   }
+
+   qs->next->run( qs->next, quads, nr );
 }
 
 static void
