@@ -146,15 +146,6 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	if (c->Base.Debug) {
-		fflush(stdout);
-		_mesa_printf("Fragment Program: Initial program:\n");
-		_mesa_print_program(c->program);
-		fflush(stdout);
-	}
-
-	rc_mesa_to_rc_program(&c->Base, c->program);
-
 	insert_WPOS_trailer(c);
 
 	rewriteFog(c);

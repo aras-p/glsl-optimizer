@@ -39,7 +39,6 @@ static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont 
 	while (fp) {
 		tmp = fp->next;
 		rc_constants_destroy(&fp->code.constants);
-		_mesa_reference_program(ctx, &fp->Base, NULL);
 		_mesa_free(fp);
 		fp = tmp;
 	}

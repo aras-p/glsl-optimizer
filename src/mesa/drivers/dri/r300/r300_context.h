@@ -428,7 +428,6 @@ struct r300_vertex_program_cont {
 */
 struct r300_fragment_program {
 	GLboolean error;
-	struct gl_program *Base;
 	struct r300_fragment_program *next;
 	struct r300_fragment_program_external_state state;
 

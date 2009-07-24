@@ -1044,35 +1044,6 @@ void r300UpdateViewportOffset(GLcontext * ctx)
 	radeonUpdateScissor(ctx);
 }
 
-static void
-r300FetchStateParameter(GLcontext * ctx,
-			const gl_state_index state[STATE_LENGTH],
-			GLfloat * value)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	switch (state[0]) {
-	case STATE_INTERNAL:
-		switch (state[1]) {
-		case STATE_R300_WINDOW_DIMENSION: {
-				__DRIdrawablePrivate * drawable = radeon_get_drawable(&r300->radeon);
-				value[0] = drawable->w * 0.5f;	/* width*0.5 */
-				value[1] = drawable->h * 0.5f;	/* height*0.5 */
-				value[2] = 0.5F;	/* for moving range [-1 1] -> [0 1] */
-				value[3] = 1.0F;	/* not used */
-				break;
-			}
-
-		default:
-			break;
-		}
-		break;
-
-	default:
-		break;
-	}
-}
-
 /**
  * Update R300's own internal state parameters.
  * For now just STATE_R300_WINDOW_DIMENSION
@@ -1081,7 +1052,6 @@ static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_program_parameter_list *paramList;
-	GLuint i;
 
 	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS)))
 		return;
@@ -1089,21 +1059,12 @@ static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 	if (!ctx->FragmentProgram._Current || !rmesa->selected_fp)
 		return;
 
-	paramList = rmesa->selected_fp->Base->Parameters;
+	paramList = ctx->FragmentProgram._Current->Base.Parameters;
 
 	if (!paramList)
 		return;
 
 	_mesa_load_state_parameters(ctx, paramList);
-
-	for (i = 0; i < paramList->NumParameters; i++) {
-		if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
-			r300FetchStateParameter(ctx,
-						paramList->Parameters[i].
-						StateIndexes,
-						paramList->ParameterValues[i]);
-		}
-	}
 }
 
 /* =============================================================
@@ -2015,12 +1976,11 @@ static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx, GLuint index,
 {
 	static const GLfloat dummy[4] = { 0, 0, 0, 0 };
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_fragment_program * fp = rmesa->selected_fp;
-	struct rc_constant * rcc = &fp->code.constants.Constants[index];
+	struct rc_constant * rcc = &rmesa->selected_fp->code.constants.Constants[index];
 
 	switch(rcc->Type) {
 	case RC_CONSTANT_EXTERNAL:
-		return fp->Base->Parameters->ParameterValues[rcc->u.External];
+		return ctx->FragmentProgram._Current->Base.Parameters->ParameterValues[rcc->u.External];
 	case RC_CONSTANT_IMMEDIATE:
 		return rcc->u.Immediate;
 	case RC_CONSTANT_STATE:
