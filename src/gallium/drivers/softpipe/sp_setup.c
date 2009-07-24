@@ -61,87 +61,7 @@ struct edge {
    int lines;		/**< number of lines on this edge */
 };
 
-#if SP_NUM_QUAD_THREADS > 1
 
-/* Set to 1 if you want other threads to be instantly
- * notified of pending jobs.
- */
-#define INSTANT_NOTEMPTY_NOTIFY 0
-
-struct thread_info
-{
-   struct setup_context *setup;
-   uint id;
-   pipe_thread handle;
-};
-
-struct quad_job;
-
-typedef void (* quad_job_routine)( struct setup_context *setup, uint thread, struct quad_job *job );
-
-struct quad_job
-{
-   struct quad_header_input input;
-   struct quad_header_inout inout;
-   quad_job_routine routine;
-};
-
-#define NUM_QUAD_JOBS 64
-
-struct quad_job_que
-{
-   struct quad_job jobs[NUM_QUAD_JOBS];
-   uint first;
-   uint last;
-   pipe_mutex que_mutex;
-   pipe_condvar que_notfull_condvar;
-   pipe_condvar que_notempty_condvar;
-   uint jobs_added;
-   uint jobs_done;
-   pipe_condvar que_done_condvar;
-};
-
-static void
-add_quad_job( struct quad_job_que *que, struct quad_header *quad, quad_job_routine routine )
-{
-#if INSTANT_NOTEMPTY_NOTIFY
-   boolean empty;
-#endif
-
-   /* Wait for empty slot, see if the que is empty.
-    */
-   pipe_mutex_lock( que->que_mutex );
-   while ((que->last + 1) % NUM_QUAD_JOBS == que->first) {
-#if !INSTANT_NOTEMPTY_NOTIFY
-      pipe_condvar_broadcast( que->que_notempty_condvar );
-#endif
-      pipe_condvar_wait( que->que_notfull_condvar, que->que_mutex );
-   }
-#if INSTANT_NOTEMPTY_NOTIFY
-   empty = que->last == que->first;
-#endif
-   que->jobs_added++;
-   pipe_mutex_unlock( que->que_mutex );
-
-   /* Submit new job.
-    */
-   que->jobs[que->last].input = quad->input;
-   que->jobs[que->last].inout = quad->inout;
-   que->jobs[que->last].routine = routine;
-   que->last = (que->last + 1) % NUM_QUAD_JOBS;
-
-#if INSTANT_NOTEMPTY_NOTIFY
-   /* If the que was empty, notify consumers there's a job to be done.
-    */
-   if (empty) {
-      pipe_mutex_lock( que->que_mutex );
-      pipe_condvar_broadcast( que->que_notempty_condvar );
-      pipe_mutex_unlock( que->que_mutex );
-   }
-#endif
-}
-
-#endif
 
 /**
  * Triangle setup info (derived from draw_stage).
@@ -169,11 +89,6 @@ struct setup_context {
    struct tgsi_interp_coef posCoef;  /* For Z, W */
    struct quad_header quad;
 
-#if SP_NUM_QUAD_THREADS > 1
-   struct quad_job_que que;
-   struct thread_info threads[SP_NUM_QUAD_THREADS];
-#endif
-
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
       int right[2];
@@ -188,67 +103,6 @@ struct setup_context {
    unsigned winding;		/* which winding to cull */
 };
 
-#if SP_NUM_QUAD_THREADS > 1
-
-static PIPE_THREAD_ROUTINE( quad_thread, param )
-{
-   struct thread_info *info = (struct thread_info *) param;
-   struct quad_job_que *que = &info->setup->que;
-
-   for (;;) {
-      struct quad_job job;
-      boolean full;
-
-      /* Wait for an available job.
-       */
-      pipe_mutex_lock( que->que_mutex );
-      while (que->last == que->first)
-         pipe_condvar_wait( que->que_notempty_condvar, que->que_mutex );
-
-      /* See if the que is full.
-       */
-      full = (que->last + 1) % NUM_QUAD_JOBS == que->first;
-
-      /* Take a job and remove it from que.
-       */
-      job = que->jobs[que->first];
-      que->first = (que->first + 1) % NUM_QUAD_JOBS;
-
-      /* Notify the producer if the que is not full.
-       */
-      if (full)
-         pipe_condvar_signal( que->que_notfull_condvar );
-      pipe_mutex_unlock( que->que_mutex );
-
-      job.routine( info->setup, info->id, &job );
-
-      /* Notify the producer if that's the last finished job.
-       */
-      pipe_mutex_lock( que->que_mutex );
-      que->jobs_done++;
-      if (que->jobs_added == que->jobs_done)
-         pipe_condvar_signal( que->que_done_condvar );
-      pipe_mutex_unlock( que->que_mutex );
-   }
-
-   return NULL;
-}
-
-#define WAIT_FOR_COMPLETION(setup) \
-   do {\
-      pipe_mutex_lock( setup->que.que_mutex );\
-      if (!INSTANT_NOTEMPTY_NOTIFY)\
-         pipe_condvar_broadcast( setup->que.que_notempty_condvar );\
-      while (setup->que.jobs_added != setup->que.jobs_done)\
-         pipe_condvar_wait( setup->que.que_done_condvar, setup->que.que_mutex );\
-      pipe_mutex_unlock( setup->que.que_mutex );\
-   } while (0)
-
-#else
-
-#define WAIT_FOR_COMPLETION(setup) ((void) 0)
-
-#endif
 
 
 
@@ -311,38 +165,16 @@ quad_clip( struct setup_context *setup, struct quad_header *quad )
  * Emit a quad (pass to next stage) with clipping.
  */
 static INLINE void
-clip_emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
+clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
 {
    quad_clip( setup, quad );
+
    if (quad->inout.mask) {
       struct softpipe_context *sp = setup->softpipe;
 
-      sp->quad[thread].first->run( sp->quad[thread].first, quad );
+      sp->quad.first->run( sp->quad.first, quad );
    }
 }
-
-#if SP_NUM_QUAD_THREADS > 1
-
-static void
-clip_emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
-{
-   struct quad_header quad;
-
-   quad.input = job->input;
-   quad.inout = job->inout;
-   quad.coef = setup->quad.coef;
-   quad.posCoef = setup->quad.posCoef;
-   quad.nr_attrs = setup->quad.nr_attrs;
-   clip_emit_quad( setup, &quad, thread );
-}
-
-#define CLIP_EMIT_QUAD(setup) add_quad_job( &setup->que, &setup->quad, clip_emit_quad_job )
-
-#else
-
-#define CLIP_EMIT_QUAD(setup) clip_emit_quad( setup, &setup->quad, 0 )
-
-#endif
 
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
@@ -361,7 +193,7 @@ emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
    if (mask & 4) setup->numFragsEmitted++;
    if (mask & 8) setup->numFragsEmitted++;
 #endif
-   sp->quad[thread].first->run( sp->quad[thread].first, quad );
+   sp->quad.first->run( sp->quad.first, quad );
 #if DEBUG_FRAGS
    mask = quad->inout.mask;
    if (mask & 1) setup->numFragsWritten++;
@@ -371,38 +203,15 @@ emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
 #endif
 }
 
-#if SP_NUM_QUAD_THREADS > 1
 
-static void
-emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
-{
-   struct quad_header quad;
+#define EMIT_QUAD(setup,x,y,qmask)              \
+do {                                            \
+      setup->quad.input.x0 = x;                 \
+      setup->quad.input.y0 = y;                 \
+      setup->quad.inout.mask = qmask;           \
+      emit_quad( setup, &setup->quad, 0 );      \
+} while (0)
 
-   quad.input = job->input;
-   quad.inout = job->inout;
-   quad.coef = setup->quad.coef;
-   quad.posCoef = setup->quad.posCoef;
-   quad.nr_attrs = setup->quad.nr_attrs;
-   emit_quad( setup, &quad, thread );
-}
-
-#define EMIT_QUAD(setup,x,y,qmask) do {\
-      setup->quad.input.x0 = x;\
-      setup->quad.input.y0 = y;\
-      setup->quad.inout.mask = qmask;\
-      add_quad_job( &setup->que, &setup->quad, emit_quad_job );\
-   } while (0)
-
-#else
-
-#define EMIT_QUAD(setup,x,y,qmask) do {\
-      setup->quad.input.x0 = x;\
-      setup->quad.input.y0 = y;\
-      setup->quad.inout.mask = qmask;\
-      emit_quad( setup, &setup->quad, 0 );\
-   } while (0)
-
-#endif
 
 /**
  * Given an X or Y coordinate, return the block/quad coordinate that it
@@ -956,8 +765,6 @@ void setup_tri( struct setup_context *setup,
 
    flush_spans( setup );
 
-   WAIT_FOR_COMPLETION(setup);
-
 #if DEBUG_FRAGS
    printf("Tri: %u frags emitted, %u written\n",
           setup->numFragsEmitted,
@@ -1101,7 +908,7 @@ plot(struct setup_context *setup, int x, int y)
       /* flush prev quad, start new quad */
 
       if (setup->quad.input.x0 != -1)
-         CLIP_EMIT_QUAD(setup);
+         clip_emit_quad( setup, &setup->quad );
 
       setup->quad.input.x0 = quadX;
       setup->quad.input.y0 = quadY;
@@ -1223,10 +1030,8 @@ setup_line(struct setup_context *setup,
 
    /* draw final quad */
    if (setup->quad.inout.mask) {
-      CLIP_EMIT_QUAD(setup);
+      clip_emit_quad( setup, &setup->quad );
    }
-
-   WAIT_FOR_COMPLETION(setup);
 }
 
 
@@ -1334,7 +1139,7 @@ setup_point( struct setup_context *setup,
       setup->quad.input.x0 = (int) x - ix;
       setup->quad.input.y0 = (int) y - iy;
       setup->quad.inout.mask = (1 << ix) << (2 * iy);
-      CLIP_EMIT_QUAD(setup);
+      clip_emit_quad( setup, &setup->quad );
    }
    else {
       if (round) {
@@ -1395,7 +1200,7 @@ setup_point( struct setup_context *setup,
                if (setup->quad.inout.mask) {
                   setup->quad.input.x0 = ix;
                   setup->quad.input.y0 = iy;
-                  CLIP_EMIT_QUAD(setup);
+                  clip_emit_quad( setup, &setup->quad );
                }
             }
          }
@@ -1442,19 +1247,16 @@ setup_point( struct setup_context *setup,
                setup->quad.inout.mask = mask;
                setup->quad.input.x0 = ix;
                setup->quad.input.y0 = iy;
-               CLIP_EMIT_QUAD(setup);
+               clip_emit_quad( setup, &setup->quad );
             }
          }
       }
    }
-
-   WAIT_FOR_COMPLETION(setup);
 }
 
 void setup_prepare( struct setup_context *setup )
 {
    struct softpipe_context *sp = setup->softpipe;
-   unsigned i;
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
@@ -1463,9 +1265,7 @@ void setup_prepare( struct setup_context *setup )
    /* Note: nr_attrs is only used for debugging (vertex printing) */
    setup->quad.nr_attrs = draw_num_vs_outputs(sp->draw);
 
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
-      sp->quad[i].first->begin( sp->quad[i].first );
-   }
+   sp->quad.first->begin( sp->quad.first );
 
    if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
        sp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
@@ -1493,9 +1293,6 @@ void setup_destroy_context( struct setup_context *setup )
 struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
-#if SP_NUM_QUAD_THREADS > 1
-   uint i;
-#endif
 
    setup->softpipe = softpipe;
 
@@ -1504,22 +1301,6 @@ struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 
    setup->span.left[0] = 1000000;     /* greater than right[0] */
    setup->span.left[1] = 1000000;     /* greater than right[1] */
-
-#if SP_NUM_QUAD_THREADS > 1
-   setup->que.first = 0;
-   setup->que.last = 0;
-   pipe_mutex_init( setup->que.que_mutex );
-   pipe_condvar_init( setup->que.que_notfull_condvar );
-   pipe_condvar_init( setup->que.que_notempty_condvar );
-   setup->que.jobs_added = 0;
-   setup->que.jobs_done = 0;
-   pipe_condvar_init( setup->que.que_done_condvar );
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
-      setup->threads[i].setup = setup;
-      setup->threads[i].id = i;
-      setup->threads[i].handle = pipe_thread_create( quad_thread, &setup->threads[i] );
-   }
-#endif
 
    return setup;
 }

@@ -39,17 +39,6 @@
 #include "sp_tex_sample.h"
 
 
-/**
- * This is a temporary variable for testing draw-stage polygon stipple.
- * If zero, do stipple in sp_quad_stipple.c
- */
-#define USE_DRAW_STAGE_PSTIPPLE 1
-
-/* Number of threads working on individual quads.
- * Setting to 1 disables this feature.
- */
-#define SP_NUM_QUAD_THREADS 1
-
 struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
@@ -129,7 +118,7 @@ struct softpipe_context {
       struct quad_stage *output;
 
       struct quad_stage *first; /**< points to one of the above stages */
-   } quad[SP_NUM_QUAD_THREADS];
+   } quad;
 
    /** TGSI exec things */
    struct {
