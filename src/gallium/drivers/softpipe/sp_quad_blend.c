@@ -117,9 +117,9 @@ do { \
 
 
 static void
-logicop_quad(struct quad_stage *qs, 
-             struct quad_header *quads[],
-             unsigned nr)
+logicop_quads(struct quad_stage *qs, 
+              struct quad_header *quads[],
+              unsigned nr)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    uint cbuf;
@@ -241,13 +241,102 @@ logicop_quad(struct quad_stage *qs,
          }
       }
    }
+
+   /* pass blended quad to next stage */
+   qs->next->run(qs->next, quads, nr);
 }
 
+static void
+blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs, 
+                                         struct quad_header *quads[],
+                                         unsigned nr)
+{
+   static const float one[4] = { 1, 1, 1, 1 };
+   float one_minus_alpha[QUAD_SIZE];
+   float dest[4][QUAD_SIZE];
+   float source[4][QUAD_SIZE];
+   uint i, j, q;
+
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(qs->softpipe->cbuf_cache[0],
+                           quads[0]->input.x0, 
+                           quads[0]->input.y0);
+
+   for (q = 0; q < nr; q++) {
+      struct quad_header *quad = quads[q];
+      float (*quadColor)[4] = quad->output.color[0];
+      const float *alpha = quadColor[3];
+      
+      /* get/swizzle dest colors */
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = (quad->input.x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->input.y0 & (TILE_SIZE-1)) + (j >> 1);
+         for (i = 0; i < 4; i++) {
+            dest[i][j] = tile->data.color[y][x][i];
+         }
+      }
+
+      VEC4_MUL(source[0], quadColor[0], alpha); /* R */
+      VEC4_MUL(source[1], quadColor[1], alpha); /* G */
+      VEC4_MUL(source[2], quadColor[2], alpha); /* B */
+      VEC4_MUL(source[3], quadColor[3], alpha); /* A */
+
+      VEC4_SUB(one_minus_alpha, one, alpha);
+      VEC4_MUL(dest[0], dest[0], one_minus_alpha); /* R */
+      VEC4_MUL(dest[1], dest[1], one_minus_alpha); /* G */
+      VEC4_MUL(dest[2], dest[2], one_minus_alpha); /* B */
+      VEC4_MUL(dest[3], dest[3], one_minus_alpha); /* B */
+
+      VEC4_ADD_SAT(quadColor[0], source[0], dest[0]); /* R */
+      VEC4_ADD_SAT(quadColor[1], source[1], dest[1]); /* G */
+      VEC4_ADD_SAT(quadColor[2], source[2], dest[2]); /* B */
+      VEC4_ADD_SAT(quadColor[3], source[3], dest[3]); /* A */
+   }
+
+   /* pass blended quad to next stage */
+   qs->next->run(qs->next, quads, nr);
+}
 
 static void
-blend_quads(struct quad_stage *qs, 
-            struct quad_header *quads[],
-            unsigned nr)
+blend_single_add_one_one(struct quad_stage *qs, 
+                         struct quad_header *quads[],
+                         unsigned nr)
+{
+   float dest[4][QUAD_SIZE];
+   uint i, j, q;
+
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(qs->softpipe->cbuf_cache[0],
+                           quads[0]->input.x0, 
+                           quads[0]->input.y0);
+
+   for (q = 0; q < nr; q++) {
+      struct quad_header *quad = quads[q];
+      float (*quadColor)[4] = quad->output.color[0];
+      
+      /* get/swizzle dest colors */
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = (quad->input.x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->input.y0 & (TILE_SIZE-1)) + (j >> 1);
+         for (i = 0; i < 4; i++) {
+            dest[i][j] = tile->data.color[y][x][i];
+         }
+      }
+     
+      VEC4_ADD_SAT(quadColor[0], quadColor[0], dest[0]); /* R */
+      VEC4_ADD_SAT(quadColor[1], quadColor[1], dest[1]); /* G */
+      VEC4_ADD_SAT(quadColor[2], quadColor[2], dest[2]); /* B */
+      VEC4_ADD_SAT(quadColor[3], quadColor[3], dest[3]); /* A */
+   }
+
+   /* pass blended quad to next stage */
+   qs->next->run(qs->next, quads, nr);
+}
+
+static void
+blend_quads_fallback(struct quad_stage *qs, 
+                     struct quad_header *quads[],
+                     unsigned nr)
 {
    static const float zero[4] = { 0, 0, 0, 0 };
    static const float one[4] = { 1, 1, 1, 1 };
@@ -747,6 +836,9 @@ blend_quads(struct quad_stage *qs,
          }
       }
    } /* cbuf loop */
+
+   /* pass blended quad to next stage */
+   qs->next->run(qs->next, quads, nr);
 }
 
 
@@ -756,21 +848,39 @@ blend_quad(struct quad_stage *qs,
            unsigned nr)
 {
    struct softpipe_context *softpipe = qs->softpipe;
+   const struct pipe_blend_state *blend = softpipe->blend;
 
    if (softpipe->blend->logicop_enable) {
-      logicop_quad(qs, quads, nr);
+      qs->run = logicop_quads;
    }
-   else if (softpipe->blend->blend_enable) {
-      blend_quads(qs, quads, nr );
+   else {
+      qs->run = blend_quads_fallback;
+
+      if (blend->rgb_src_factor == blend->alpha_src_factor &&
+          blend->rgb_dst_factor == blend->alpha_dst_factor &&
+          blend->rgb_func == blend->alpha_func &&
+          softpipe->framebuffer.nr_cbufs == 1)
+      {
+         if (blend->alpha_func == PIPE_BLEND_ADD) {
+            if (blend->rgb_src_factor == PIPE_BLENDFACTOR_ONE &&
+                blend->rgb_dst_factor == PIPE_BLENDFACTOR_ONE) {
+               qs->run = blend_single_add_one_one;
+            }
+            else if (blend->rgb_src_factor == PIPE_BLENDFACTOR_SRC_ALPHA &&
+                blend->rgb_dst_factor == PIPE_BLENDFACTOR_INV_SRC_ALPHA)
+               qs->run = blend_single_add_src_alpha_inv_src_alpha;
+
+         }
+      } 
    }
 
-   /* pass blended quad to next stage */
-   qs->next->run(qs->next, quads, nr);
+   qs->run(qs, quads, nr);
 }
 
 
 static void blend_begin(struct quad_stage *qs)
 {
+   qs->run = blend_quad;
    qs->next->begin(qs->next);
 }
 
