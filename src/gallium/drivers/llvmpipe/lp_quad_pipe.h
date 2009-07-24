@@ -49,7 +49,7 @@ struct quad_stage {
    void (*begin)(struct quad_stage *qs);
 
    /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
+   void (*run)(struct quad_stage *qs, struct quad_header *quad[], unsigned nr);
 
    void (*destroy)(struct quad_stage *qs);
 };
@@ -69,6 +69,6 @@ struct quad_stage *lp_quad_output_stage( struct llvmpipe_context *llvmpipe );
 
 void lp_build_quad_pipeline(struct llvmpipe_context *lp);
 
-void lp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
+boolean lp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
 #endif /* LP_QUAD_PIPE_H */

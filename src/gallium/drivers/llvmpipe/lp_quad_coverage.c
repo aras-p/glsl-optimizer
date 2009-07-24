@@ -42,32 +42,46 @@
 /**
  * Multiply quad's alpha values by the fragment coverage.
  */
-static void
+static INLINE void
 coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   const uint prim = quad->input.prim;
+   uint cbuf;
+
+   /* loop over colorbuffer outputs */
+   for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) {
+      float (*quadColor)[4] = quad->output.color[cbuf];
+      unsigned j;
+      for (j = 0; j < QUAD_SIZE; j++) {
+         assert(quad->input.coverage[j] >= 0.0);
+         assert(quad->input.coverage[j] <= 1.0);
+         quadColor[3][j] *= quad->input.coverage[j];
+      }
+   }
+}
+
+
+/* XXX: Incorporate into shader after alpha_test.
+ */
+static void
+coverage_run(struct quad_stage *qs,
+               struct quad_header *quads[],
+               unsigned nr)
+{
+   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
+   const uint prim = quads[0]->input.prim;
+   unsigned i;
 
    if ((llvmpipe->rasterizer->poly_smooth && prim == QUAD_PRIM_TRI) ||
        (llvmpipe->rasterizer->line_smooth && prim == QUAD_PRIM_LINE) ||
        (llvmpipe->rasterizer->point_smooth && prim == QUAD_PRIM_POINT)) {
-      uint cbuf;
 
-      /* loop over colorbuffer outputs */
-      for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) {
-         float (*quadColor)[4] = quad->output.color[cbuf];
-         unsigned j;
-         for (j = 0; j < QUAD_SIZE; j++) {
-            assert(quad->input.coverage[j] >= 0.0);
-            assert(quad->input.coverage[j] <= 1.0);
-         quadColor[3][j] *= quad->input.coverage[j];
-         }
-      }
+      for (i = 0; i < nr; i++)
+         coverage_quad( qs, quads[i] );
    }
 
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, nr);
 }
-
 
 static void coverage_begin(struct quad_stage *qs)
 {
@@ -87,7 +101,7 @@ struct quad_stage *lp_quad_coverage_stage( struct llvmpipe_context *llvmpipe )
 
    stage->llvmpipe = llvmpipe;
    stage->begin = coverage_begin;
-   stage->run = coverage_quad;
+   stage->run = coverage_run;
    stage->destroy = coverage_destroy;
 
    return stage;

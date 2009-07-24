@@ -172,7 +172,7 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
    if (quad->inout.mask) {
       struct llvmpipe_context *lp = setup->llvmpipe;
 
-      lp->quad.first->run( lp->quad.first, quad );
+      lp->quad.first->run( lp->quad.first, &quad, 1 );
    }
 }
 
@@ -193,7 +193,7 @@ emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
    if (mask & 4) setup->numFragsEmitted++;
    if (mask & 8) setup->numFragsEmitted++;
 #endif
-   lp->quad.first->run( lp->quad.first, quad );
+   lp->quad.first->run( lp->quad.first, &quad, 1 );
 #if DEBUG_FRAGS
    mask = quad->inout.mask;
    if (mask & 1) setup->numFragsWritten++;

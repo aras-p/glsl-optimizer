@@ -50,13 +50,15 @@ static unsigned count_bits( unsigned val )
 }
 
 static void
-occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
+occlusion_count_quads(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
 {
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
+   unsigned i;
 
-   llvmpipe->occlusion_count += count_bits(quad->inout.mask);
+   for (i = 0; i < nr; i++)
+      llvmpipe->occlusion_count += count_bits(quads[i]->inout.mask);
 
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, nr);
 }
 
 
@@ -78,7 +80,7 @@ struct quad_stage *lp_quad_occlusion_stage( struct llvmpipe_context *llvmpipe )
 
    stage->llvmpipe = llvmpipe;
    stage->begin = occlusion_begin;
-   stage->run = occlusion_count_quad;
+   stage->run = occlusion_count_quads;
    stage->destroy = occlusion_destroy;
 
    return stage;
