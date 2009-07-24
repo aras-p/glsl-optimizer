@@ -120,3 +120,76 @@ void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_r
 		}
 	}
 }
+
+
+/**
+ * Introduce standard code fragment to deal with fragment.position.
+ */
+void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input)
+{
+	unsigned tempregi = rc_find_free_temporary(c);
+
+	c->Program.InputsRead &= ~(1 << wpos);
+	c->Program.InputsRead |= 1 << new_input;
+
+	/* perspective divide */
+	struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, &c->Program.Instructions);
+	inst_rcp->I.Opcode = OPCODE_RCP;
+
+	inst_rcp->I.DstReg.File = PROGRAM_TEMPORARY;
+	inst_rcp->I.DstReg.Index = tempregi;
+	inst_rcp->I.DstReg.WriteMask = WRITEMASK_W;
+
+	inst_rcp->I.SrcReg[0].File = PROGRAM_INPUT;
+	inst_rcp->I.SrcReg[0].Index = new_input;
+	inst_rcp->I.SrcReg[0].Swizzle = SWIZZLE_WWWW;
+
+	struct rc_instruction * inst_mul = rc_insert_new_instruction(c, inst_rcp);
+	inst_mul->I.Opcode = OPCODE_MUL;
+
+	inst_mul->I.DstReg.File = PROGRAM_TEMPORARY;
+	inst_mul->I.DstReg.Index = tempregi;
+	inst_mul->I.DstReg.WriteMask = WRITEMASK_XYZ;
+
+	inst_mul->I.SrcReg[0].File = PROGRAM_INPUT;
+	inst_mul->I.SrcReg[0].Index = new_input;
+
+	inst_mul->I.SrcReg[1].File = PROGRAM_TEMPORARY;
+	inst_mul->I.SrcReg[1].Index = tempregi;
+	inst_mul->I.SrcReg[1].Swizzle = SWIZZLE_WWWW;
+
+	/* viewport transformation */
+	struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_mul);
+	inst_mad->I.Opcode = OPCODE_MAD;
+
+	inst_mad->I.DstReg.File = PROGRAM_TEMPORARY;
+	inst_mad->I.DstReg.Index = tempregi;
+	inst_mad->I.DstReg.WriteMask = WRITEMASK_XYZ;
+
+	inst_mad->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+	inst_mad->I.SrcReg[0].Index = tempregi;
+	inst_mad->I.SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	inst_mad->I.SrcReg[1].File = PROGRAM_STATE_VAR;
+	inst_mad->I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_WINDOW_DIMENSION, 0);
+	inst_mad->I.SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	inst_mad->I.SrcReg[2].File = PROGRAM_STATE_VAR;
+	inst_mad->I.SrcReg[2].Index = inst_mad->I.SrcReg[1].Index;
+	inst_mad->I.SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	struct rc_instruction * inst;
+	for (inst = inst_mad->Next; inst != &c->Program.Instructions; inst = inst->Next) {
+		const unsigned numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		unsigned i;
+
+		for(i = 0; i < numsrcs; i++) {
+			if (inst->I.SrcReg[i].File == PROGRAM_INPUT &&
+			    inst->I.SrcReg[i].Index == wpos) {
+				inst->I.SrcReg[i].File = PROGRAM_TEMPORARY;
+				inst->I.SrcReg[i].Index = tempregi;
+			}
+		}
+	}
+}
+
