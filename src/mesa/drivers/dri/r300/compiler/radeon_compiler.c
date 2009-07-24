@@ -149,6 +149,47 @@ void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_ou
 
 
 /**
+ * Rewrite the program such that a given output is duplicated.
+ */
+void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output)
+{
+	unsigned tempreg = rc_find_free_temporary(c);
+	struct rc_instruction * inst;
+
+	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
+		const unsigned numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
+
+		if (numdsts) {
+			if (inst->I.DstReg.File == PROGRAM_OUTPUT && inst->I.DstReg.Index == output) {
+				inst->I.DstReg.File = PROGRAM_TEMPORARY;
+				inst->I.DstReg.Index = tempreg;
+			}
+		}
+	}
+
+	inst = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
+	inst->I.Opcode = OPCODE_MOV;
+	inst->I.DstReg.File = PROGRAM_OUTPUT;
+	inst->I.DstReg.Index = output;
+
+	inst->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+	inst->I.SrcReg[0].Index = tempreg;
+	inst->I.SrcReg[0].Swizzle = SWIZZLE_XYZW;
+
+	inst = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
+	inst->I.Opcode = OPCODE_MOV;
+	inst->I.DstReg.File = PROGRAM_OUTPUT;
+	inst->I.DstReg.Index = dup_output;
+
+	inst->I.SrcReg[0].File = PROGRAM_TEMPORARY;
+	inst->I.SrcReg[0].Index = tempreg;
+	inst->I.SrcReg[0].Swizzle = SWIZZLE_XYZW;
+
+	c->Program.OutputsWritten |= 1 << dup_output;
+}
+
+
+/**
  * Introduce standard code fragment to deal with fragment.position.
  */
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input)

@@ -578,62 +578,6 @@ static GLboolean transform_source_conflicts(
 	return GL_TRUE;
 }
 
-static void insert_wpos(struct gl_program *prog, GLuint temp_index, int tex_id)
-{
-	struct prog_instruction *vpi;
-
-	_mesa_insert_instructions(prog, prog->NumInstructions - 1, 2);
-
-	vpi = &prog->Instructions[prog->NumInstructions - 3];
-
-	vpi->Opcode = OPCODE_MOV;
-
-	vpi->DstReg.File = PROGRAM_OUTPUT;
-	vpi->DstReg.Index = VERT_RESULT_HPOS;
-	vpi->DstReg.WriteMask = WRITEMASK_XYZW;
-	vpi->DstReg.CondMask = COND_TR;
-
-	vpi->SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi->SrcReg[0].Index = temp_index;
-	vpi->SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-	++vpi;
-
-	vpi->Opcode = OPCODE_MOV;
-
-	vpi->DstReg.File = PROGRAM_OUTPUT;
-	vpi->DstReg.Index = VERT_RESULT_TEX0 + tex_id;
-	vpi->DstReg.WriteMask = WRITEMASK_XYZW;
-	vpi->DstReg.CondMask = COND_TR;
-
-	vpi->SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi->SrcReg[0].Index = temp_index;
-	vpi->SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-	++vpi;
-
-	vpi->Opcode = OPCODE_END;
-}
-
-static void pos_as_texcoord(struct gl_program *prog, int tex_id)
-{
-	struct prog_instruction *vpi;
-	GLuint tempregi = prog->NumTemporaries;
-
-	prog->NumTemporaries++;
-
-	for (vpi = prog->Instructions; vpi->Opcode != OPCODE_END; vpi++) {
-		if (vpi->DstReg.File == PROGRAM_OUTPUT && vpi->DstReg.Index == VERT_RESULT_HPOS) {
-			vpi->DstReg.File = PROGRAM_TEMPORARY;
-			vpi->DstReg.Index = tempregi;
-		}
-	}
-
-	insert_wpos(prog, tempregi, tex_id);
-
-	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
-}
-
 static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
 {
 	int i;
@@ -684,15 +628,19 @@ static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
-	if (compiler->state.WPosAttr != FRAG_ATTRIB_MAX) {
-		pos_as_texcoord(compiler->program, compiler->state.WPosAttr - FRAG_ATTRIB_TEX0);
-	}
-
 	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
 	compiler->program = 0;
 
+	if (compiler->state.WPosAttr != FRAG_ATTRIB_MAX) {
+		rc_copy_output(&compiler->Base,
+			VERT_RESULT_HPOS,
+			compiler->state.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0);
+	}
+
 	if (compiler->state.FogAttr != FRAG_ATTRIB_MAX) {
-		rc_move_output(&compiler->Base, VERT_RESULT_FOGC, compiler->state.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
+		rc_move_output(&compiler->Base,
+			VERT_RESULT_FOGC,
+			compiler->state.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
 	}
 
 	addArtificialOutputs(compiler);

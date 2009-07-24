@@ -66,6 +66,7 @@ void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
 void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input);
 void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_output, unsigned writemask);
+void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output);
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input);
 
 struct r300_fragment_program_compiler {
