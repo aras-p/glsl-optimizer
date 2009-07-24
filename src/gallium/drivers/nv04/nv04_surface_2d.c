@@ -110,10 +110,12 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	unsigned cx;
 	unsigned cy;
 
+#if 0
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
 	/* That's the way she likes it */
 	assert(src_pitch == ((struct nv04_surface *)dst)->pitch);
+#endif
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
@@ -258,7 +260,8 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	assert(src->format == dst->format);
 
 	/* Setup transfer to swizzle the texture to vram if needed */
-	if (src_linear && !dst_linear && w > 1 && h > 1) {
+	if (src_linear && !dst_linear && w > 1 && h > 1 &&
+	    !(w & (w - 1)) && !(h & (h - 1))) { /* POT only */
 		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy, w, h);
 		return;
 	}
