@@ -55,6 +55,9 @@ static void r300_setup_texture_state(struct r300_texture* tex,
     if (height > 2048) {
         state->format2 |= R500_TXHEIGHT_BIT11;
     }
+
+    debug_printf("r300: Set texture state (%dx%d, pitch %d, %d levels)\n",
+            width, height, pitch, levels);
 }
 
 static void r300_setup_miptree(struct r300_texture* tex)
@@ -71,19 +74,25 @@ static void r300_setup_miptree(struct r300_texture* tex)
         }
 
         base->nblocksx[i] = pf_get_nblocksx(&base->block, base->width[i]);
-        base->nblocksy[i] = pf_get_nblocksy(&base->block, base->width[i]);
+        base->nblocksy[i] = pf_get_nblocksy(&base->block, base->height[i]);
 
         /* Radeons enjoy things in multiples of 64.
          *
          * XXX
          * POT, uncompressed, unmippmapped textures can be aligned to 32,
          * instead of 64. */
-        stride = align(base->nblocksx[i] * base->block.size, 64);
+        stride = align(
+                (base->nblocksx[i] * base->block.size) / base->block.width,
+                32);
         size = stride * base->nblocksy[i] * base->depth[i];
 
-        tex->offset[i] = align(tex->size, 64);
+        tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
 
+        debug_printf("r300: Texture miptree: Level %d "
+                "(%dx%dx%d px, pitch %d bytes)\n",
+                i, base->width[i], base->height[i], base->depth[i],
+                stride);
         /* Save stride of first level to the texture. */
         if (i == 0) {
             tex->stride = stride;
