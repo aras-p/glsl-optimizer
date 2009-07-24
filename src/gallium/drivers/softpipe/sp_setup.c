@@ -62,6 +62,8 @@ struct edge {
 };
 
 
+#define MAX_QUADS 16
+
 
 /**
  * Triangle setup info (derived from draw_stage).
@@ -84,10 +86,14 @@ struct setup_context {
    struct edge emaj;
 
    float oneoverarea;
+   int facing;
+
+   struct quad_header quad[MAX_QUADS];
+   struct quad_header *quad_ptrs[MAX_QUADS];
+   unsigned count;
 
    struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
    struct tgsi_interp_coef posCoef;  /* For Z, W */
-   struct quad_header quad;
 
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
@@ -176,41 +182,6 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
    }
 }
 
-/**
- * Emit a quad (pass to next stage).  No clipping is done.
- */
-static INLINE void
-emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
-{
-   struct softpipe_context *sp = setup->softpipe;
-#if DEBUG_FRAGS
-   uint mask = quad->inout.mask;
-#endif
-
-#if DEBUG_FRAGS
-   if (mask & 1) setup->numFragsEmitted++;
-   if (mask & 2) setup->numFragsEmitted++;
-   if (mask & 4) setup->numFragsEmitted++;
-   if (mask & 8) setup->numFragsEmitted++;
-#endif
-   sp->quad.first->run( sp->quad.first, &quad, 1 );
-#if DEBUG_FRAGS
-   mask = quad->inout.mask;
-   if (mask & 1) setup->numFragsWritten++;
-   if (mask & 2) setup->numFragsWritten++;
-   if (mask & 4) setup->numFragsWritten++;
-   if (mask & 8) setup->numFragsWritten++;
-#endif
-}
-
-
-#define EMIT_QUAD(setup,x,y,qmask)              \
-do {                                            \
-      setup->quad.input.x0 = x;                 \
-      setup->quad.input.y0 = y;                 \
-      setup->quad.inout.mask = qmask;           \
-      emit_quad( setup, &setup->quad, 0 );      \
-} while (0)
 
 
 /**
@@ -219,7 +190,12 @@ do {                                            \
  */
 static INLINE int block( int x )
 {
-   return x & ~1;
+   return x & ~(2-1);
+}
+
+static INLINE int block_x( int x )
+{
+   return x & ~(16-1);
 }
 
 
@@ -228,13 +204,15 @@ static INLINE int block( int x )
  */
 static void flush_spans( struct setup_context *setup )
 {
-   const int step = 30;
+   const int step = 16;
    const int xleft0 = setup->span.left[0];
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
    const int xright1 = setup->span.right[1];
+   struct quad_stage *pipe = setup->softpipe->quad.first;
 
-   int minleft = block(MIN2(xleft0, xleft1));
+
+   int minleft = block_x(MIN2(xleft0, xleft1));
    int maxright = MAX2(xright0, xright1);
    int x;
 
@@ -244,7 +222,8 @@ static void flush_spans( struct setup_context *setup )
       unsigned skip_right0 = CLAMP(x + step - xright0, 0, step);
       unsigned skip_right1 = CLAMP(x + step - xright1, 0, step);
       unsigned lx = x;
-      
+      unsigned q = 0;
+
       unsigned skipmask_left0 = (1U << skip_left0) - 1U;
       unsigned skipmask_left1 = (1U << skip_left1) - 1U;
 
@@ -256,13 +235,22 @@ static void flush_spans( struct setup_context *setup )
       unsigned mask0 = ~skipmask_left0 & ~skipmask_right0;
       unsigned mask1 = ~skipmask_left1 & ~skipmask_right1;
 
-      while (mask0 | mask1) {
-         unsigned quadmask = (mask0 & 3) | ((mask1 & 3) << 2);
-         if (quadmask)
-            EMIT_QUAD( setup, lx, setup->span.y, quadmask );
-         mask0 >>= 2;
-         mask1 >>= 2;
-         lx += 2;
+      if (mask0 | mask1) {
+         do {
+            unsigned quadmask = (mask0 & 3) | ((mask1 & 3) << 2);
+            if (quadmask) {
+               setup->quad[q].input.x0 = lx;
+               setup->quad[q].input.y0 = setup->span.y;
+               setup->quad[q].inout.mask = quadmask;
+               setup->quad_ptrs[q] = &setup->quad[q];
+               q++;
+            }
+            mask0 >>= 2;
+            mask1 >>= 2;
+            lx += 2;
+         } while (mask0 | mask1);
+
+         pipe->run( pipe, setup->quad_ptrs, q );
       }
    }
 
@@ -281,7 +269,7 @@ static void print_vertex(const struct setup_context *setup,
 {
    int i;
    debug_printf("   Vertex: (%p)\n", v);
-   for (i = 0; i < setup->quad.nr_attrs; i++) {
+   for (i = 0; i < setup->quad[0].nr_attrs; i++) {
       debug_printf("     %d: %f %f %f %f\n",  i,
               v[i][0], v[i][1], v[i][2], v[i][3]);
       if (util_is_inf_or_nan(v[i][0])) {
@@ -386,7 +374,9 @@ static boolean setup_sort_vertices( struct setup_context *setup,
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
     */
-   setup->quad.input.facing = (det > 0.0) ^ (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
+   setup->facing = 
+      ((det > 0.0) ^ 
+       (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW));
 
    return TRUE;
 }
@@ -573,7 +563,7 @@ static void setup_tri_coefficients( struct setup_context *setup )
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -741,7 +731,7 @@ void setup_tri( struct setup_context *setup,
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
-   setup->quad.input.prim = QUAD_PRIM_TRI;
+   assert(setup->softpipe->reduced_prim == PIPE_PRIM_TRIANGLES);
 
    setup->span.y = 0;
    setup->span.right[0] = 0;
@@ -881,7 +871,7 @@ setup_line_coefficients(struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -902,20 +892,20 @@ plot(struct setup_context *setup, int x, int y)
    const int quadY = y - iy;
    const int mask = (1 << ix) << (2 * iy);
 
-   if (quadX != setup->quad.input.x0 ||
-       quadY != setup->quad.input.y0)
+   if (quadX != setup->quad[0].input.x0 ||
+       quadY != setup->quad[0].input.y0)
    {
       /* flush prev quad, start new quad */
 
-      if (setup->quad.input.x0 != -1)
-         clip_emit_quad( setup, &setup->quad );
+      if (setup->quad[0].input.x0 != -1)
+         clip_emit_quad( setup, &setup->quad[0] );
 
-      setup->quad.input.x0 = quadX;
-      setup->quad.input.y0 = quadY;
-      setup->quad.inout.mask = 0x0;
+      setup->quad[0].input.x0 = quadX;
+      setup->quad[0].input.y0 = quadY;
+      setup->quad[0].inout.mask = 0x0;
    }
 
-   setup->quad.inout.mask |= mask;
+   setup->quad[0].inout.mask |= mask;
 }
 
 
@@ -975,17 +965,18 @@ setup_line(struct setup_context *setup,
 
    assert(dx >= 0);
    assert(dy >= 0);
+   assert(setup->softpipe->reduced_prim == PIPE_PRIM_LINES);
 
-   setup->quad.input.x0 = setup->quad.input.y0 = -1;
-   setup->quad.inout.mask = 0x0;
-   setup->quad.input.prim = QUAD_PRIM_LINE;
+   setup->quad[0].input.x0 = setup->quad[0].input.y0 = -1;
+   setup->quad[0].inout.mask = 0x0;
+
    /* XXX temporary: set coverage to 1.0 so the line appears
     * if AA mode happens to be enabled.
     */
-   setup->quad.input.coverage[0] =
-   setup->quad.input.coverage[1] =
-   setup->quad.input.coverage[2] =
-   setup->quad.input.coverage[3] = 1.0;
+   setup->quad[0].input.coverage[0] =
+   setup->quad[0].input.coverage[1] =
+   setup->quad[0].input.coverage[2] =
+   setup->quad[0].input.coverage[3] = 1.0;
 
    if (dx > dy) {
       /*** X-major line ***/
@@ -1029,8 +1020,8 @@ setup_line(struct setup_context *setup,
    }
 
    /* draw final quad */
-   if (setup->quad.inout.mask) {
-      clip_emit_quad( setup, &setup->quad );
+   if (setup->quad[0].inout.mask) {
+      clip_emit_quad( setup, &setup->quad[0] );
    }
 }
 
@@ -1078,6 +1069,8 @@ setup_point( struct setup_context *setup,
    if (softpipe->no_rast)
       return;
 
+   assert(setup->softpipe->reduced_prim == PIPE_PRIM_POINTS);
+
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
     * XXX: which coefficients are the texcoords???
@@ -1124,22 +1117,21 @@ setup_point( struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
    }
 
-   setup->quad.input.prim = QUAD_PRIM_POINT;
 
    if (halfSize <= 0.5 && !round) {
       /* special case for 1-pixel points */
       const int ix = ((int) x) & 1;
       const int iy = ((int) y) & 1;
-      setup->quad.input.x0 = (int) x - ix;
-      setup->quad.input.y0 = (int) y - iy;
-      setup->quad.inout.mask = (1 << ix) << (2 * iy);
-      clip_emit_quad( setup, &setup->quad );
+      setup->quad[0].input.x0 = (int) x - ix;
+      setup->quad[0].input.y0 = (int) y - iy;
+      setup->quad[0].inout.mask = (1 << ix) << (2 * iy);
+      clip_emit_quad( setup, &setup->quad[0] );
    }
    else {
       if (round) {
@@ -1159,15 +1151,15 @@ setup_point( struct setup_context *setup,
             for (ix = ixmin; ix <= ixmax; ix += 2) {
                float dx, dy, dist2, cover;
 
-               setup->quad.inout.mask = 0x0;
+               setup->quad[0].inout.mask = 0x0;
 
                dx = (ix + 0.5f) - x;
                dy = (iy + 0.5f) - y;
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.input.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0f);
-                  setup->quad.inout.mask |= MASK_TOP_LEFT;
+                  setup->quad[0].input.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0f);
+                  setup->quad[0].inout.mask |= MASK_TOP_LEFT;
                }
 
                dx = (ix + 1.5f) - x;
@@ -1175,8 +1167,8 @@ setup_point( struct setup_context *setup,
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.input.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0f);
-                  setup->quad.inout.mask |= MASK_TOP_RIGHT;
+                  setup->quad[0].input.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0f);
+                  setup->quad[0].inout.mask |= MASK_TOP_RIGHT;
                }
 
                dx = (ix + 0.5f) - x;
@@ -1184,8 +1176,8 @@ setup_point( struct setup_context *setup,
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.input.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0f);
-                  setup->quad.inout.mask |= MASK_BOTTOM_LEFT;
+                  setup->quad[0].input.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0f);
+                  setup->quad[0].inout.mask |= MASK_BOTTOM_LEFT;
                }
 
                dx = (ix + 1.5f) - x;
@@ -1193,14 +1185,14 @@ setup_point( struct setup_context *setup,
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.input.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0f);
-                  setup->quad.inout.mask |= MASK_BOTTOM_RIGHT;
+                  setup->quad[0].input.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0f);
+                  setup->quad[0].inout.mask |= MASK_BOTTOM_RIGHT;
                }
 
-               if (setup->quad.inout.mask) {
-                  setup->quad.input.x0 = ix;
-                  setup->quad.input.y0 = iy;
-                  clip_emit_quad( setup, &setup->quad );
+               if (setup->quad[0].inout.mask) {
+                  setup->quad[0].input.x0 = ix;
+                  setup->quad[0].input.y0 = iy;
+                  clip_emit_quad( setup, &setup->quad[0] );
                }
             }
          }
@@ -1244,10 +1236,10 @@ setup_point( struct setup_context *setup,
                   mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
                }
 
-               setup->quad.inout.mask = mask;
-               setup->quad.input.x0 = ix;
-               setup->quad.input.y0 = iy;
-               clip_emit_quad( setup, &setup->quad );
+               setup->quad[0].inout.mask = mask;
+               setup->quad[0].input.x0 = ix;
+               setup->quad[0].input.y0 = iy;
+               clip_emit_quad( setup, &setup->quad[0] );
             }
          }
       }
@@ -1261,9 +1253,6 @@ void setup_prepare( struct setup_context *setup )
    if (sp->dirty) {
       softpipe_update_derived(sp);
    }
-
-   /* Note: nr_attrs is only used for debugging (vertex printing) */
-   setup->quad.nr_attrs = draw_num_vs_outputs(sp->draw);
 
    sp->quad.first->begin( sp->quad.first );
 
@@ -1293,11 +1282,14 @@ void setup_destroy_context( struct setup_context *setup )
 struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
+   unsigned i;
 
    setup->softpipe = softpipe;
 
-   setup->quad.coef = setup->coef;
-   setup->quad.posCoef = &setup->posCoef;
+   for (i = 0; i < MAX_QUADS; i++) {
+      setup->quad[i].coef = setup->coef;
+      setup->quad[i].posCoef = &setup->posCoef;
+   }
 
    setup->span.left[0] = 1000000;     /* greater than right[0] */
    setup->span.left[1] = 1000000;     /* greater than right[1] */

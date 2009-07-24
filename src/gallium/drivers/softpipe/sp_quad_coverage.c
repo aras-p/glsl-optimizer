@@ -69,16 +69,10 @@ coverage_run(struct quad_stage *qs,
                unsigned nr)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   const uint prim = quads[0]->input.prim;
    unsigned i;
 
-   if ((softpipe->rasterizer->poly_smooth && prim == QUAD_PRIM_TRI) ||
-       (softpipe->rasterizer->line_smooth && prim == QUAD_PRIM_LINE) ||
-       (softpipe->rasterizer->point_smooth && prim == QUAD_PRIM_POINT)) {
-
-      for (i = 0; i < nr; i++)
-         coverage_quad( qs, quads[i] );
-   }
+   for (i = 0; i < nr; i++)
+      coverage_quad( qs, quads[i] );
 
    qs->next->run(qs->next, quads, nr);
 }

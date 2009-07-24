@@ -76,9 +76,9 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp_push_quad_first( sp, sp->quad.blend );
    }
 
-   if (sp->rasterizer->poly_smooth ||
-       sp->rasterizer->line_smooth ||
-       sp->rasterizer->point_smooth) {
+   if ((sp->rasterizer->poly_smooth && sp->reduced_prim == PIPE_PRIM_TRIANGLES) ||
+       (sp->rasterizer->line_smooth && sp->reduced_prim == PIPE_PRIM_LINES) ||
+       (sp->rasterizer->point_smooth && sp->reduced_prim == PIPE_PRIM_POINTS)) {
       sp_push_quad_first( sp, sp->quad.coverage );
    }
 

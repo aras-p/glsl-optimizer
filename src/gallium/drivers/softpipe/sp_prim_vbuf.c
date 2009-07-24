@@ -44,6 +44,7 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 
 
 #define SP_MAX_VBUF_INDEXES 1024
@@ -167,6 +168,7 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
    
    setup_prepare( setup_ctx );
 
+   cvbr->softpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
    return TRUE;
 

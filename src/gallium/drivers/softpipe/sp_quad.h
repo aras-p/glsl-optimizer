@@ -97,10 +97,10 @@ struct quad_header {
    struct quad_header_inout inout;
    struct quad_header_output output;
 
-   const struct tgsi_interp_coef *coef;
+   /* Redundant/duplicated:
+    */
    const struct tgsi_interp_coef *posCoef;
-
-   unsigned nr_attrs;
+   const struct tgsi_interp_coef *coef;
 };
 
 #endif /* SP_QUAD_H */

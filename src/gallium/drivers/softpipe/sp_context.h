@@ -96,7 +96,16 @@ struct softpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
+   /* The reduced version of the primitive supplied by the state
+    * tracker.
+    */
+   unsigned reduced_api_prim;
+
+   /* The reduced primitive after unfilled triangles, wide-line
+    * decomposition, etc, are taken into account.  This is the
+    * primitive actually rasterized.
+    */
+   unsigned reduced_prim;
 
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
