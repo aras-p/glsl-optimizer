@@ -69,16 +69,10 @@ coverage_run(struct quad_stage *qs,
                unsigned nr)
 {
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   const uint prim = quads[0]->input.prim;
    unsigned i;
 
-   if ((llvmpipe->rasterizer->poly_smooth && prim == QUAD_PRIM_TRI) ||
-       (llvmpipe->rasterizer->line_smooth && prim == QUAD_PRIM_LINE) ||
-       (llvmpipe->rasterizer->point_smooth && prim == QUAD_PRIM_POINT)) {
-
-      for (i = 0; i < nr; i++)
-         coverage_quad( qs, quads[i] );
-   }
+   for (i = 0; i < nr; i++)
+      coverage_quad( qs, quads[i] );
 
    qs->next->run(qs->next, quads, nr);
 }

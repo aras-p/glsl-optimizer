@@ -76,9 +76,9 @@ lp_build_quad_pipeline(struct llvmpipe_context *lp)
       lp_push_quad_first( lp, lp->quad.blend );
    }
 
-   if (lp->rasterizer->poly_smooth ||
-       lp->rasterizer->line_smooth ||
-       lp->rasterizer->point_smooth) {
+   if ((lp->rasterizer->poly_smooth && lp->reduced_prim == PIPE_PRIM_TRIANGLES) ||
+       (lp->rasterizer->line_smooth && lp->reduced_prim == PIPE_PRIM_LINES) ||
+       (lp->rasterizer->point_smooth && lp->reduced_prim == PIPE_PRIM_POINTS)) {
       lp_push_quad_first( lp, lp->quad.coverage );
    }
 
