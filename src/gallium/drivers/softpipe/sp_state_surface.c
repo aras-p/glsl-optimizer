@@ -75,51 +75,21 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 
       /* update cache */
       sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
-   }
 
-#if 0
-   /* XXX combined depth/stencil here */
-
-   /* sbuf changing? */
-   if (sp->framebuffer.sbuf != fb->sbuf) {
-      /* flush old */
-      sp_flush_tile_cache(sp, sp->sbuf_cache_sep);
-
-      /* assign new */
-      sp->framebuffer.sbuf = fb->sbuf;
-
-      /* update cache */
-      if (fb->sbuf != fb->zbuf) {
-         /* separate stencil buf */
-         sp->sbuf_cache = sp->sbuf_cache_sep;
-         sp_tile_cache_set_surface(sp->sbuf_cache, fb->sbuf);
-      }
-      else {
-         /* combined depth/stencil */
-         sp->sbuf_cache = sp->zbuf_cache;
-         sp_tile_cache_set_surface(sp->sbuf_cache, fb->sbuf);
-      }
-   }
-#endif
-
-   /* Tell draw module how deep the Z/depth buffer is */
-   {
-      int depth_bits;
-      double mrd;
+      /* Tell draw module how deep the Z/depth buffer is */
       if (sp->framebuffer.zsbuf) {
+         int depth_bits;
+         double mrd;
          depth_bits = pf_get_component_bits(sp->framebuffer.zsbuf->format,
                                             PIPE_FORMAT_COMP_Z);
+         if (depth_bits > 16) {
+            mrd = 0.0000001;
+         }
+         else {
+            mrd = 0.00002;
+         }
+         draw_set_mrd(sp->draw, mrd);
       }
-      else {
-         depth_bits = 0;
-      }
-      if (depth_bits > 16) {
-         mrd = 0.0000001;
-      }
-      else {
-         mrd = 0.00002;
-      }
-      draw_set_mrd(sp->draw, mrd);
    }
 
    sp->framebuffer.width = fb->width;
