@@ -194,8 +194,6 @@ struct asm_parser_state {
    } option;
 
    struct {
-      unsigned TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];
-      unsigned ShadowSamplers;
       unsigned UsesKill:1;
    } fragment;
 };

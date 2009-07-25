@@ -3971,11 +3971,11 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.InputsRead      = prog.InputsRead;
    program->Base.OutputsWritten  = prog.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++) {
-      program->Base.TexturesUsed[i] = state.fragment.TexturesUsed[i];
-      if (state.fragment.TexturesUsed[i])
+      program->Base.TexturesUsed[i] = prog.TexturesUsed[i];
+      if (prog.TexturesUsed[i])
          program->Base.SamplersUsed |= (1 << i);
    }
-   program->Base.ShadowSamplers = state.fragment.ShadowSamplers;
+   program->Base.ShadowSamplers = prog.ShadowSamplers;
    switch (state.option.Fog) {
    case OPTION_FOG_EXP:    program->FogOption = GL_EXP;    break;
    case OPTION_FOG_EXP2:   program->FogOption = GL_EXP2;   break;
