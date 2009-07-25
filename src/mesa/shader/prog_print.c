@@ -816,7 +816,7 @@ _mesa_fprint_program_opt(FILE *f,
 void
 _mesa_print_program(const struct gl_program *prog)
 {
-   _mesa_fprint_program_opt(stdout, prog, PROG_PRINT_DEBUG, GL_TRUE);
+   _mesa_fprint_program_opt(stderr, prog, PROG_PRINT_DEBUG, GL_TRUE);
 }
 
 
