@@ -165,11 +165,19 @@ llvmpipe_get_vbuf_vertex_info(struct llvmpipe_context *llvmpipe)
 static void
 compute_cliprect(struct llvmpipe_context *lp)
 {
+   /* LP_NEW_FRAMEBUFFER
+    */
    uint surfWidth = lp->framebuffer.width;
    uint surfHeight = lp->framebuffer.height;
 
+   /* LP_NEW_RASTERIZER
+    */
    if (lp->rasterizer->scissor) {
-      /* clip to scissor rect */
+
+      /* LP_NEW_SCISSOR
+       *
+       * clip to scissor rect:
+       */
       lp->cliprect.minx = MAX2(lp->scissor.minx, 0);
       lp->cliprect.miny = MAX2(lp->scissor.miny, 0);
       lp->cliprect.maxx = MIN2(lp->scissor.maxx, surfWidth);
@@ -231,7 +239,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       invalidate_vertex_layout( llvmpipe );
 
    if (llvmpipe->dirty & (LP_NEW_SCISSOR |
-                          LP_NEW_DEPTH_STENCIL_ALPHA |
+                          LP_NEW_RASTERIZER |
                           LP_NEW_FRAMEBUFFER))
       compute_cliprect(llvmpipe);
 
