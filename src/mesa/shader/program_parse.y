@@ -1513,12 +1513,17 @@ paramConstVector: '{' signedFloatConstant '}'
 	{
 	   $$.count = 1;
 	   $$.data[0] = $2;
+	   $$.data[1] = 0.0f;
+	   $$.data[2] = 0.0f;
+	   $$.data[3] = 0.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant '}'
 	{
 	   $$.count = 2;
 	   $$.data[0] = $2;
 	   $$.data[1] = $4;
+	   $$.data[2] = 0.0f;
+	   $$.data[3] = 0.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant '}'
@@ -1526,7 +1531,8 @@ paramConstVector: '{' signedFloatConstant '}'
 	   $$.count = 3;
 	   $$.data[0] = $2;
 	   $$.data[1] = $4;
-	   $$.data[1] = $6;
+	   $$.data[2] = $6;
+	   $$.data[3] = 0.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant ',' signedFloatConstant '}'
@@ -1534,8 +1540,8 @@ paramConstVector: '{' signedFloatConstant '}'
 	   $$.count = 4;
 	   $$.data[0] = $2;
 	   $$.data[1] = $4;
-	   $$.data[1] = $6;
-	   $$.data[1] = $8;
+	   $$.data[2] = $6;
+	   $$.data[3] = $8;
 	}
 	;
 
