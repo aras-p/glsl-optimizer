@@ -165,11 +165,19 @@ softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe)
 static void
 compute_cliprect(struct softpipe_context *sp)
 {
+   /* SP_NEW_FRAMEBUFFER
+    */
    uint surfWidth = sp->framebuffer.width;
    uint surfHeight = sp->framebuffer.height;
 
+   /* SP_NEW_RASTERIZER
+    */
    if (sp->rasterizer->scissor) {
-      /* clip to scissor rect */
+
+      /* SP_NEW_SCISSOR
+       *
+       * clip to scissor rect:
+       */
       sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
       sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
       sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth);
@@ -231,7 +239,7 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
       invalidate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
+                          SP_NEW_RASTERIZER |
                           SP_NEW_FRAMEBUFFER))
       compute_cliprect(softpipe);
 
