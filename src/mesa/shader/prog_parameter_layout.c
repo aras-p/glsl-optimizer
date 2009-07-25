@@ -170,10 +170,15 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	 }
 
 
+	 if ((inst->SrcReg[i].Base.File <= PROGRAM_VARYING )
+	     || (inst->SrcReg[i].Base.File >= PROGRAM_WRITE_ONLY)) {
+	    continue;
+	 }
+
 	 inst->Base.SrcReg[i] = inst->SrcReg[i].Base;
 	 p = & state->prog->Parameters->Parameters[idx];
 
-	 switch (inst->SrcReg[i].Base.File) {
+	 switch (p->Type) {
 	 case PROGRAM_CONSTANT: {
 	    const float *const v =
 	       state->prog->Parameters->ParameterValues[idx];
@@ -194,6 +199,9 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	 default:
 	    break;
 	 }
+
+	 inst->SrcReg[i].Base.File = p->Type;
+	 inst->Base.SrcReg[i].File = p->Type;
       }
    }
 
