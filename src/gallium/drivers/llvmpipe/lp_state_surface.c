@@ -75,51 +75,21 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 
       /* update cache */
       lp_tile_cache_set_surface(lp->zsbuf_cache, fb->zsbuf);
-   }
 
-#if 0
-   /* XXX combined depth/stencil here */
-
-   /* sbuf changing? */
-   if (lp->framebuffer.sbuf != fb->sbuf) {
-      /* flush old */
-      lp_flush_tile_cache(lp, lp->sbuf_cache_sep);
-
-      /* assign new */
-      lp->framebuffer.sbuf = fb->sbuf;
-
-      /* update cache */
-      if (fb->sbuf != fb->zbuf) {
-         /* separate stencil buf */
-         lp->sbuf_cache = lp->sbuf_cache_sep;
-         lp_tile_cache_set_surface(lp->sbuf_cache, fb->sbuf);
-      }
-      else {
-         /* combined depth/stencil */
-         lp->sbuf_cache = lp->zbuf_cache;
-         lp_tile_cache_set_surface(lp->sbuf_cache, fb->sbuf);
-      }
-   }
-#endif
-
-   /* Tell draw module how deep the Z/depth buffer is */
-   {
-      int depth_bits;
-      double mrd;
+      /* Tell draw module how deep the Z/depth buffer is */
       if (lp->framebuffer.zsbuf) {
+         int depth_bits;
+         double mrd;
          depth_bits = pf_get_component_bits(lp->framebuffer.zsbuf->format,
                                             PIPE_FORMAT_COMP_Z);
+         if (depth_bits > 16) {
+            mrd = 0.0000001;
+         }
+         else {
+            mrd = 0.00002;
+         }
+         draw_set_mrd(lp->draw, mrd);
       }
-      else {
-         depth_bits = 0;
-      }
-      if (depth_bits > 16) {
-         mrd = 0.0000001;
-      }
-      else {
-         mrd = 0.00002;
-      }
-      draw_set_mrd(lp->draw, mrd);
    }
 
    lp->framebuffer.width = fb->width;
