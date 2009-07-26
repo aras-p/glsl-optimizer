@@ -433,6 +433,11 @@ struct r300_fragment_program {
 
 	struct rX00_fragment_program_code code;
 	GLbitfield InputsRead;
+
+	/* attribute that we are sending the WPOS in */
+	gl_frag_attrib wpos_attr;
+	/* attribute that we are sending the fog coordinate in */
+	gl_frag_attrib fog_attr;
 };
 
 struct r300_fragment_program_cont {

@@ -268,8 +268,8 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
-	wanted_key.FogAttr = r300->selected_fp->code.fog_attr;
-	wanted_key.WPosAttr = r300->selected_fp->code.wpos_attr;
+	wanted_key.FogAttr = r300->selected_fp->fog_attr;
+	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
 
 	for (vp = vpc->progs; vp; vp = vp->next) {
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))

@@ -174,11 +174,6 @@ struct rX00_fragment_program_code {
 	GLboolean writes_depth;
 
 	struct rc_constant_list constants;
-
-	/* attribute that we are sending the WPOS in */
-	gl_frag_attrib wpos_attr;
-	/* attribute that we are sending the fog coordinate in */
-	gl_frag_attrib fog_attr;
 };
 
 

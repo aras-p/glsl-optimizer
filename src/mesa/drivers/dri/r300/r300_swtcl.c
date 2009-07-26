@@ -150,16 +150,16 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_POINT_SIZE, swiz, MASK_X, 0);
 	}
 
-	if (rmesa->selected_fp->code.wpos_attr != FRAG_ATTRIB_MAX) {
-		int tex_id = rmesa->selected_fp->code.wpos_attr - FRAG_ATTRIB_TEX0;
+	if (rmesa->selected_fp->wpos_attr != FRAG_ATTRIB_MAX) {
+		int tex_id = rmesa->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
 		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
 		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
-	if (rmesa->selected_fp->code.fog_attr != FRAG_ATTRIB_MAX) {
-		int tex_id = rmesa->selected_fp->code.fog_attr - FRAG_ATTRIB_TEX0;
+	if (rmesa->selected_fp->fog_attr != FRAG_ATTRIB_MAX) {
+		int tex_id = rmesa->selected_fp->fog_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
 		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];

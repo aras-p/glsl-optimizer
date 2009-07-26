@@ -95,24 +95,24 @@ static void build_state(
  * to read from a newly allocated temporary.
  *
  */
-static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
+static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler, struct r300_fragment_program * fp)
 {
 	int i;
 
 	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_WPOS)) {
-		compiler->code->wpos_attr = FRAG_ATTRIB_MAX;
+		fp->wpos_attr = FRAG_ATTRIB_MAX;
 		return;
 	}
 
 	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
 	{
 		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
-			compiler->code->wpos_attr = i;
+			fp->wpos_attr = i;
 			break;
 		}
 	}
 
-	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, compiler->code->wpos_attr);
+	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, fp->wpos_attr);
 }
 
 /**
@@ -122,28 +122,27 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
  *
  * See also the counterpart rewriting for vertex programs.
  */
-static void rewriteFog(struct r300_fragment_program_compiler *compiler)
+static void rewriteFog(struct r300_fragment_program_compiler *compiler, struct r300_fragment_program * fp)
 {
-	struct rX00_fragment_program_code *code = compiler->code;
 	struct prog_src_register src;
 	int i;
 
 	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_FOGC)) {
-		code->fog_attr = FRAG_ATTRIB_MAX;
+		fp->fog_attr = FRAG_ATTRIB_MAX;
 		return;
 	}
 
 	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
 	{
 		if (!(compiler->Base.Program.InputsRead & (1 << i))) {
-			code->fog_attr = i;
+			fp->fog_attr = i;
 			break;
 		}
 	}
 
 	memset(&src, 0, sizeof(src));
 	src.File = PROGRAM_INPUT;
-	src.Index = code->fog_attr;
+	src.Index = fp->fog_attr;
 	src.Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
 	rc_move_input(&compiler->Base, FRAG_ATTRIB_FOGC, src);
 }
@@ -220,9 +219,9 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	rc_mesa_to_rc_program(&compiler.Base, &cont->Base.Base);
 
-	insert_WPOS_trailer(&compiler);
+	insert_WPOS_trailer(&compiler, fp);
 
-	rewriteFog(&compiler);
+	rewriteFog(&compiler, fp);
 
 	r3xx_compile_fragment_program(&compiler);
 	fp->error = compiler.Base.Error;
