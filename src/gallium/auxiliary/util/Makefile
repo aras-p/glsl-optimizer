@@ -10,6 +10,8 @@ C_SOURCES = \
 	u_blit.c \
 	u_cache.c \
 	u_draw_quad.c \
+	u_format.c \
+	u_format_table.c \
 	u_gen_mipmap.c \
 	u_handle_table.c \
 	u_hash_table.c \
