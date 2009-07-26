@@ -40,7 +40,7 @@
 #include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
-	rc_error(s->Compiler, "%s::%s(): " fmt "\n",	\
+	rc_error(&s->Compiler->Base, "%s::%s(): " fmt "\n",	\
 		__FILE__, __FUNCTION__, ##args);	\
 } while(0)
 
@@ -118,7 +118,7 @@ struct pair_register_translation {
 };
 
 struct pair_state {
-	struct radeon_compiler * Compiler;
+	struct r300_fragment_program_compiler * Compiler;
 	const struct radeon_pair_handler *Handler;
 	GLboolean Verbose;
 	void *UserData;
@@ -335,10 +335,10 @@ static void scan_instructions(struct pair_state *s)
 	struct rc_instruction *source;
 	GLuint ip;
 
-	for(source = s->Compiler->Program.Instructions.Next, ip = 0;
-	    source != &s->Compiler->Program.Instructions;
+	for(source = s->Compiler->Base.Program.Instructions.Next, ip = 0;
+	    source != &s->Compiler->Base.Program.Instructions;
 	    source = source->Next, ++ip) {
-		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Compiler->Pool, sizeof(*pairinst));
+		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Compiler->Base.Pool, sizeof(*pairinst));
 		memset(pairinst, 0, sizeof(struct pair_state_instruction));
 
 		pairinst->Instruction = source->I;
@@ -374,7 +374,7 @@ static void scan_instructions(struct pair_state *s)
 					    GET_BIT(pairinst->Instruction.DstReg.WriteMask, swz))
 						continue;
 
-					struct reg_value_reader* r = memory_pool_malloc(&s->Compiler->Pool, sizeof(*r));
+					struct reg_value_reader* r = memory_pool_malloc(&s->Compiler->Base.Pool, sizeof(*r));
 					pairinst->NumDependencies++;
 					t->Value[swz]->NumReaders++;
 					r->Reader = pairinst;
@@ -397,7 +397,7 @@ static void scan_instructions(struct pair_state *s)
 						if (!GET_BIT(pairinst->Instruction.DstReg.WriteMask, j))
 							continue;
 
-						struct reg_value* v = memory_pool_malloc(&s->Compiler->Pool, sizeof(*v));
+						struct reg_value* v = memory_pool_malloc(&s->Compiler->Base.Pool, sizeof(*v));
 						memset(v, 0, sizeof(struct reg_value));
 						v->Writer = pairinst;
 						if (t->Value[j]) {
@@ -435,7 +435,7 @@ static void scan_instructions(struct pair_state *s)
  */
 static void allocate_input_registers(struct pair_state *s)
 {
-	GLuint InputsRead = s->Compiler->Program.InputsRead;
+	GLuint InputsRead = s->Compiler->Base.Program.InputsRead;
 	int i;
 	GLuint hwindex = 0;
 
@@ -577,11 +577,11 @@ static void emit_all_tex(struct pair_state *s)
 			get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 	}
 
-	if (s->Compiler->Debug)
+	if (s->Compiler->Base.Debug)
 		_mesa_printf(" BEGIN_TEX\n");
 
 	if (s->Handler->BeginTexBlock)
-		s->Compiler->Error = s->Compiler->Error || !s->Handler->BeginTexBlock(s->UserData);
+		s->Compiler->Base.Error = s->Compiler->Base.Error || !s->Handler->BeginTexBlock(s->UserData);
 
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
 		struct prog_instruction *inst = &pairinst->Instruction;
@@ -591,7 +591,7 @@ static void emit_all_tex(struct pair_state *s)
 			inst->DstReg.Index = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 		inst->SrcReg[0].Index = get_hw_reg(s, inst->SrcReg[0].File, inst->SrcReg[0].Index);
 
-		if (s->Compiler->Debug) {
+		if (s->Compiler->Base.Debug) {
 			_mesa_printf("   ");
 			_mesa_print_instruction(inst);
 			fflush(stdout);
@@ -614,10 +614,10 @@ static void emit_all_tex(struct pair_state *s)
 		rpti.SrcIndex = inst->SrcReg[0].Index;
 		rpti.SrcSwizzle = inst->SrcReg[0].Swizzle;
 
-		s->Compiler->Error = s->Compiler->Error || !s->Handler->EmitTex(s->UserData, &rpti);
+		s->Compiler->Base.Error = s->Compiler->Base.Error || !s->Handler->EmitTex(s->UserData, &rpti);
 	}
 
-	if (s->Compiler->Debug)
+	if (s->Compiler->Base.Debug)
 		_mesa_printf(" END_TEX\n");
 }
 
@@ -781,10 +781,10 @@ static void fill_dest_into_pair(
 	struct prog_instruction *inst = &pairinst->Instruction;
 
 	if (inst->DstReg.File == PROGRAM_OUTPUT) {
-		if (inst->DstReg.Index == FRAG_RESULT_COLOR) {
+		if (inst->DstReg.Index == s->Compiler->OutputColor) {
 			pair->RGB.OutputWriteMask |= inst->DstReg.WriteMask & WRITEMASK_XYZ;
 			pair->Alpha.OutputWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
-		} else if (inst->DstReg.Index == FRAG_RESULT_DEPTH) {
+		} else if (inst->DstReg.Index == s->Compiler->OutputDepth) {
 			pair->Alpha.DepthWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
 		}
 	} else {
@@ -864,15 +864,15 @@ static void emit_alu(struct pair_state *s)
 	success: ;
 	}
 
-	if (s->Compiler->Debug)
+	if (s->Compiler->Base.Debug)
 		radeonPrintPairInstruction(&pair);
 
-	s->Compiler->Error = s->Compiler->Error || !s->Handler->EmitPaired(s->UserData, &pair);
+	s->Compiler->Base.Error = s->Compiler->Base.Error || !s->Handler->EmitPaired(s->UserData, &pair);
 }
 
 
 void radeonPairProgram(
-	struct radeon_compiler * compiler,
+	struct r300_fragment_program_compiler * compiler,
 	const struct radeon_pair_handler* handler, void *userdata)
 {
 	struct pair_state s;
@@ -881,15 +881,15 @@ void radeonPairProgram(
 	s.Compiler = compiler;
 	s.Handler = handler;
 	s.UserData = userdata;
-	s.Verbose = GL_FALSE && s.Compiler->Debug;
+	s.Verbose = GL_FALSE && s.Compiler->Base.Debug;
 
-	if (s.Compiler->Debug)
+	if (s.Compiler->Base.Debug)
 		_mesa_printf("Emit paired program\n");
 
 	scan_instructions(&s);
 	allocate_input_registers(&s);
 
-	while(!s.Compiler->Error &&
+	while(!s.Compiler->Base.Error &&
 	      (s.ReadyTEX || s.ReadyRGB || s.ReadyAlpha || s.ReadyFullALU)) {
 		if (s.ReadyTEX)
 			emit_all_tex(&s);
@@ -898,7 +898,7 @@ void radeonPairProgram(
 			emit_alu(&s);
 	}
 
-	if (s.Compiler->Debug)
+	if (s.Compiler->Base.Debug)
 		_mesa_printf(" END\n");
 }
 

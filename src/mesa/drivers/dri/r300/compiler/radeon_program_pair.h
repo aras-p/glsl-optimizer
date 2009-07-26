@@ -30,7 +30,7 @@
 
 #include "radeon_program.h"
 
-struct radeon_compiler;
+struct r300_fragment_program_compiler;
 
 
 /**
@@ -131,11 +131,11 @@ struct radeon_pair_handler {
 	 */
 	GLboolean (*BeginTexBlock)(void*);
 
-	GLuint MaxHwTemps;
+	unsigned MaxHwTemps;
 };
 
 void radeonPairProgram(
-	struct radeon_compiler * compiler,
+	struct r300_fragment_program_compiler * compiler,
 	const struct radeon_pair_handler*, void *userdata);
 
 void radeonPrintPairInstruction(struct radeon_pair_instruction *inst);

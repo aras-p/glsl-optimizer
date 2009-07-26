@@ -282,7 +282,7 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	code->inst_offset = 0;
 	code->inst_end = -1;
 
-	radeonPairProgram(&compiler->Base, &pair_handler, compiler);
+	radeonPairProgram(compiler, &pair_handler, compiler);
 	if (compiler->Base.Error)
 		return;
 
