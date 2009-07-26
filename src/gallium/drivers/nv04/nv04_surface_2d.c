@@ -111,8 +111,6 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	unsigned cy;
 
 #if 0
-	/* POT or GTFO */
-	assert(!(w & (w - 1)) && !(h & (h - 1)));
 	/* That's the way she likes it */
 	assert(src_pitch == ((struct nv04_surface *)dst)->pitch);
 #endif
@@ -260,9 +258,27 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	assert(src->format == dst->format);
 
 	/* Setup transfer to swizzle the texture to vram if needed */
-	if (src_linear && !dst_linear && w > 1 && h > 1 &&
-	    !(w & (w - 1)) && !(h & (h - 1))) { /* POT only */
-		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy, w, h);
+	if (src_linear && !dst_linear && w > 1 && h > 1) {
+		int potWidth = 1<<log2i(w);
+		int potHeight = 1<<log2i(h);
+		int remainWidth = w-potWidth;
+		int remainHeight = h-potHeight;
+
+		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy,
+		                          potWidth, potHeight);
+
+		if (remainWidth>0) {
+			nv04_surface_copy(ctx, dst, dx+potWidth, dy,
+			                  src, sx+potWidth, sy,
+			                  remainWidth, potHeight);
+		}
+
+		if (remainHeight>0) {
+			nv04_surface_copy(ctx, dst, dx, dy+potHeight,
+			                  src, sx, sy+potHeight,
+			                  w, remainHeight);
+		}
+
 		return;
 	}
 
