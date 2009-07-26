@@ -1,0 +1,421 @@
+/**************************************************************************
+ * 
+ * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Michel Dänzer <michel@tungstengraphics.com>
+  */
+
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
+#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+#include "lp_context.h"
+#include "lp_state.h"
+#include "lp_texture.h"
+#include "lp_tile_cache.h"
+#include "lp_screen.h"
+#include "lp_winsys.h"
+
+
+/* Simple, maximally packed layout.
+ */
+
+static unsigned minify( unsigned d )
+{
+   return MAX2(1, d>>1);
+}
+
+
+/* Conventional allocation path for non-display textures:
+ */
+static boolean
+llvmpipe_texture_layout(struct pipe_screen *screen,
+                        struct llvmpipe_texture * lpt)
+{
+   struct pipe_texture *pt = &lpt->base;
+   unsigned level;
+   unsigned width = pt->width[0];
+   unsigned height = pt->height[0];
+   unsigned depth = pt->depth[0];
+
+   unsigned buffer_size = 0;
+
+   for (level = 0; level <= pt->last_level; level++) {
+      pt->width[level] = width;
+      pt->height[level] = height;
+      pt->depth[level] = depth;
+      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
+      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
+      lpt->stride[level] = pt->nblocksx[level]*pt->block.size;
+
+      lpt->level_offset[level] = buffer_size;
+
+      buffer_size += (pt->nblocksy[level] *
+                      ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
+                      lpt->stride[level]);
+
+      width  = minify(width);
+      height = minify(height);
+      depth = minify(depth);
+   }
+
+   lpt->buffer = screen->buffer_create(screen, 32,
+                                       PIPE_BUFFER_USAGE_PIXEL,
+                                       buffer_size);
+
+   return lpt->buffer != NULL;
+}
+
+static boolean
+llvmpipe_displaytarget_layout(struct pipe_screen *screen,
+                              struct llvmpipe_texture * lpt)
+{
+   unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
+                     PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+
+   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
+   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
+
+   lpt->buffer = screen->surface_buffer_create( screen, 
+                                                lpt->base.width[0], 
+                                                lpt->base.height[0],
+                                                lpt->base.format,
+                                                usage,
+                                                &lpt->stride[0]);
+
+   return lpt->buffer != NULL;
+}
+
+
+
+
+
+static struct pipe_texture *
+llvmpipe_texture_create(struct pipe_screen *screen,
+                        const struct pipe_texture *templat)
+{
+   struct llvmpipe_texture *lpt = CALLOC_STRUCT(llvmpipe_texture);
+   if (!lpt)
+      return NULL;
+
+   lpt->base = *templat;
+   pipe_reference_init(&lpt->base.reference, 1);
+   lpt->base.screen = screen;
+
+   if (lpt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if (!llvmpipe_displaytarget_layout(screen, lpt))
+         goto fail;
+   }
+   else {
+      if (!llvmpipe_texture_layout(screen, lpt))
+         goto fail;
+   }
+    
+   return &lpt->base;
+
+ fail:
+   FREE(lpt);
+   return NULL;
+}
+
+
+static struct pipe_texture *
+llvmpipe_texture_blanket(struct pipe_screen * screen,
+                         const struct pipe_texture *base,
+                         const unsigned *stride,
+                         struct pipe_buffer *buffer)
+{
+   struct llvmpipe_texture *lpt;
+   assert(screen);
+
+   /* Only supports one type */
+   if (base->target != PIPE_TEXTURE_2D ||
+       base->last_level != 0 ||
+       base->depth[0] != 1) {
+      return NULL;
+   }
+
+   lpt = CALLOC_STRUCT(llvmpipe_texture);
+   if (!lpt)
+      return NULL;
+
+   lpt->base = *base;
+   pipe_reference_init(&lpt->base.reference, 1);
+   lpt->base.screen = screen;
+   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
+   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
+   lpt->stride[0] = stride[0];
+
+   pipe_buffer_reference(&lpt->buffer, buffer);
+
+   return &lpt->base;
+}
+
+
+static void
+llvmpipe_texture_destroy(struct pipe_texture *pt)
+{
+   struct llvmpipe_texture *lpt = llvmpipe_texture(pt);
+
+   pipe_buffer_reference(&lpt->buffer, NULL);
+   FREE(lpt);
+}
+
+
+static struct pipe_surface *
+llvmpipe_get_tex_surface(struct pipe_screen *screen,
+                         struct pipe_texture *pt,
+                         unsigned face, unsigned level, unsigned zslice,
+                         unsigned usage)
+{
+   struct llvmpipe_texture *lpt = llvmpipe_texture(pt);
+   struct pipe_surface *ps;
+
+   assert(level <= pt->last_level);
+
+   ps = CALLOC_STRUCT(pipe_surface);
+   if (ps) {
+      pipe_reference_init(&ps->reference, 1);
+      pipe_texture_reference(&ps->texture, pt);
+      ps->format = pt->format;
+      ps->width = pt->width[level];
+      ps->height = pt->height[level];
+      ps->offset = lpt->level_offset[level];
+      ps->usage = usage;
+
+      /* Because we are llvmpipe, anything that the state tracker
+       * thought was going to be done with the GPU will actually get
+       * done with the CPU.  Let's adjust the flags to take that into
+       * account.
+       */
+      if (ps->usage & PIPE_BUFFER_USAGE_GPU_WRITE) {
+         /* GPU_WRITE means "render" and that can involve reads (blending) */
+         ps->usage |= PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_CPU_READ;
+      }
+
+      if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
+         ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
+                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
+         /* Mark the surface as dirty.  The tile cache will look for this. */
+         lpt->modified = TRUE;
+      }
+
+      ps->face = face;
+      ps->level = level;
+      ps->zslice = zslice;
+
+      if (pt->target == PIPE_TEXTURE_CUBE) {
+         ps->offset += face * pt->nblocksy[level] * lpt->stride[level];
+      }
+      else if (pt->target == PIPE_TEXTURE_3D) {
+         ps->offset += zslice * pt->nblocksy[level] * lpt->stride[level];
+      }
+      else {
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+   }
+   return ps;
+}
+
+
+static void 
+llvmpipe_tex_surface_destroy(struct pipe_surface *surf)
+{
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For llvmpipe, nothing to do.
+    */
+   assert(surf->texture);
+   pipe_texture_reference(&surf->texture, NULL);
+   FREE(surf);
+}
+
+
+static struct pipe_transfer *
+llvmpipe_get_tex_transfer(struct pipe_screen *screen,
+                          struct pipe_texture *texture,
+                          unsigned face, unsigned level, unsigned zslice,
+                          enum pipe_transfer_usage usage,
+                          unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   struct llvmpipe_texture *lptex = llvmpipe_texture(texture);
+   struct llvmpipe_transfer *lpt;
+
+   assert(texture);
+   assert(level <= texture->last_level);
+
+   lpt = CALLOC_STRUCT(llvmpipe_transfer);
+   if (lpt) {
+      struct pipe_transfer *pt = &lpt->base;
+      pipe_texture_reference(&pt->texture, texture);
+      pt->format = texture->format;
+      pt->block = texture->block;
+      pt->x = x;
+      pt->y = y;
+      pt->width = w;
+      pt->height = h;
+      pt->nblocksx = texture->nblocksx[level];
+      pt->nblocksy = texture->nblocksy[level];
+      pt->stride = lptex->stride[level];
+      pt->usage = usage;
+      pt->face = face;
+      pt->level = level;
+      pt->zslice = zslice;
+
+      lpt->offset = lptex->level_offset[level];
+
+      if (texture->target == PIPE_TEXTURE_CUBE) {
+         lpt->offset += face * pt->nblocksy * pt->stride;
+      }
+      else if (texture->target == PIPE_TEXTURE_3D) {
+         lpt->offset += zslice * pt->nblocksy * pt->stride;
+      }
+      else {
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+      return pt;
+   }
+   return NULL;
+}
+
+
+static void 
+llvmpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
+{
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For llvmpipe, nothing to do.
+    */
+   assert (transfer->texture);
+   pipe_texture_reference(&transfer->texture, NULL);
+   FREE(transfer);
+}
+
+
+static void *
+llvmpipe_transfer_map( struct pipe_screen *screen,
+                       struct pipe_transfer *transfer )
+{
+   ubyte *map, *xfer_map;
+   struct llvmpipe_texture *lpt;
+   unsigned flags = 0;
+
+   assert(transfer->texture);
+   lpt = llvmpipe_texture(transfer->texture);
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+   }
+
+   if (transfer->usage != PIPE_TRANSFER_WRITE) {
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+   }
+
+   map = pipe_buffer_map(screen, lpt->buffer, flags);
+   if (map == NULL)
+      return NULL;
+
+   /* May want to different things here depending on read/write nature
+    * of the map:
+    */
+   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
+   {
+      /* Do something to notify sharing contexts of a texture change.
+       * In llvmpipe, that would mean flushing the texture cache.
+       */
+      llvmpipe_screen(screen)->timestamp++;
+   }
+   
+   xfer_map = map + llvmpipe_transfer(transfer)->offset +
+      transfer->y / transfer->block.height * transfer->stride +
+      transfer->x / transfer->block.width * transfer->block.size;
+   /*printf("map = %p  xfer map = %p\n", map, xfer_map);*/
+   return xfer_map;
+}
+
+
+static void
+llvmpipe_transfer_unmap(struct pipe_screen *screen,
+                       struct pipe_transfer *transfer)
+{
+   struct llvmpipe_texture *lpt;
+
+   assert(transfer->texture);
+   lpt = llvmpipe_texture(transfer->texture);
+
+   pipe_buffer_unmap( screen, lpt->buffer );
+}
+
+
+void
+llvmpipe_init_texture_funcs(struct llvmpipe_context *lp)
+{
+}
+
+
+void
+llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
+{
+   screen->texture_create = llvmpipe_texture_create;
+   screen->texture_blanket = llvmpipe_texture_blanket;
+   screen->texture_destroy = llvmpipe_texture_destroy;
+
+   screen->get_tex_surface = llvmpipe_get_tex_surface;
+   screen->tex_surface_destroy = llvmpipe_tex_surface_destroy;
+
+   screen->get_tex_transfer = llvmpipe_get_tex_transfer;
+   screen->tex_transfer_destroy = llvmpipe_tex_transfer_destroy;
+   screen->transfer_map = llvmpipe_transfer_map;
+   screen->transfer_unmap = llvmpipe_transfer_unmap;
+}
+
+
+boolean
+llvmpipe_get_texture_buffer( struct pipe_texture *texture,
+                             struct pipe_buffer **buf,
+                             unsigned *stride )
+{
+   struct llvmpipe_texture *tex = (struct llvmpipe_texture *)texture;
+
+   if (!tex)
+      return FALSE;
+
+   pipe_buffer_reference(buf, tex->buffer);
+
+   if (stride)
+      *stride = tex->stride[0];
+
+   return TRUE;
+}
