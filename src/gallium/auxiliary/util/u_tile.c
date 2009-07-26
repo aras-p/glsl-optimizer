@@ -153,7 +153,7 @@ a8r8g8b8_put_tile_rgba(unsigned *dst,
 }
 
 
-/*** PIPE_FORMAT_A8R8G8B8_UNORM ***/
+/*** PIPE_FORMAT_X8R8G8B8_UNORM ***/
 
 static void
 x8r8g8b8_get_tile_rgba(const unsigned *src,
