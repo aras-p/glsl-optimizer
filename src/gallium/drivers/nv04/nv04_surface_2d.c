@@ -263,10 +263,17 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		int potHeight = 1<<log2i(h);
 		int remainWidth = w-potWidth;
 		int remainHeight = h-potHeight;
+		int squareDim = (potWidth>potHeight ? potHeight : potWidth);
+		int x,y;
 
-		/* top left is always POT */
-		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy,
-		                          potWidth, potHeight);
+		/* top left is always POT, but we can only swizzle squares */
+		for (y=0; y<potHeight; y+=squareDim) {
+			for (x=0; x<potWidth; x+= squareDim) {
+				nv04_surface_copy_swizzle(ctx, dst, dx+x, dy+y,
+				                          src, sx+x, sy+y,
+				                          squareDim, squareDim);
+			}
+		}
 
 		/* top right */
 		if (remainWidth>0) {
