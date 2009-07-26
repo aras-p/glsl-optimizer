@@ -427,51 +427,6 @@ static void scan_instructions(struct pair_state *s)
 }
 
 
-/**
- * Reserve hardware temporary registers for the program inputs.
- *
- * @note This allocation is performed explicitly, because the order of inputs
- * is determined by the RS hardware.
- */
-static void allocate_input_registers(struct pair_state *s)
-{
-	GLuint InputsRead = s->Compiler->Base.Program.InputsRead;
-	int i;
-	GLuint hwindex = 0;
-
-	/* Primary colour */
-	if (InputsRead & FRAG_BIT_COL0)
-		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL0, hwindex++);
-	InputsRead &= ~FRAG_BIT_COL0;
-
-	/* Secondary color */
-	if (InputsRead & FRAG_BIT_COL1)
-		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL1, hwindex++);
-	InputsRead &= ~FRAG_BIT_COL1;
-
-	/* Texcoords */
-	for (i = 0; i < 8; i++) {
-		if (InputsRead & (FRAG_BIT_TEX0 << i))
-			alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i, hwindex++);
-	}
-	InputsRead &= ~FRAG_BITS_TEX_ANY;
-
-	/* Fogcoords treated as a texcoord */
-	if (InputsRead & FRAG_BIT_FOGC)
-		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_FOGC, hwindex++);
-	InputsRead &= ~FRAG_BIT_FOGC;
-
-	/* fragment position treated as a texcoord */
-	if (InputsRead & FRAG_BIT_WPOS)
-		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_WPOS, hwindex++);
-	InputsRead &= ~FRAG_BIT_WPOS;
-
-	/* Anything else */
-	if (InputsRead)
-		error("Don't know how to handle inputs 0x%x\n", InputsRead);
-}
-
-
 static void decrement_dependencies(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
 	ASSERT(pairinst->NumDependencies > 0);
@@ -870,6 +825,12 @@ static void emit_alu(struct pair_state *s)
 	s->Compiler->Base.Error = s->Compiler->Base.Error || !s->Handler->EmitPaired(s->UserData, &pair);
 }
 
+/* Callback function for assigning input registers to hardware registers */
+static void alloc_helper(void * data, unsigned input, unsigned hwreg)
+{
+	struct pair_state * s = data;
+	alloc_hw_reg(s, PROGRAM_INPUT, input, hwreg);
+}
 
 void radeonPairProgram(
 	struct r300_fragment_program_compiler * compiler,
@@ -887,7 +848,7 @@ void radeonPairProgram(
 		_mesa_printf("Emit paired program\n");
 
 	scan_instructions(&s);
-	allocate_input_registers(&s);
+	s.Compiler->AllocateHwInputs(s.Compiler->UserData, &alloc_helper, &s);
 
 	while(!s.Compiler->Base.Error &&
 	      (s.ReadyTEX || s.ReadyRGB || s.ReadyAlpha || s.ReadyFullALU)) {

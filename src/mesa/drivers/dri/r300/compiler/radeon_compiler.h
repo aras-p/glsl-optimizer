@@ -78,6 +78,12 @@ struct r300_fragment_program_compiler {
 	GLboolean is_r500;
 	unsigned OutputDepth;
 	unsigned OutputColor;
+
+	void * UserData;
+	void (*AllocateHwInputs)(
+		void * yourdata,
+		void (*allocate)(void * data, unsigned input, unsigned hwreg),
+		void * mydata);
 };
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);

@@ -149,6 +149,52 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler)
 }
 
 
+/**
+ * Reserve hardware temporary registers for the program inputs.
+ *
+ * @note This allocation is performed explicitly, because the order of inputs
+ * is determined by the RS hardware.
+ */
+static void allocate_hw_inputs(void * yourdata, void (*allocate)(void * data, unsigned input, unsigned hwreg), void * mydata)
+{
+	struct r300_fragment_program_compiler * c = yourdata;
+	GLuint InputsRead = c->Base.Program.InputsRead;
+	int i;
+	GLuint hwindex = 0;
+
+	/* Primary colour */
+	if (InputsRead & FRAG_BIT_COL0)
+		allocate(mydata, FRAG_ATTRIB_COL0, hwindex++);
+	InputsRead &= ~FRAG_BIT_COL0;
+
+	/* Secondary color */
+	if (InputsRead & FRAG_BIT_COL1)
+		allocate(mydata, FRAG_ATTRIB_COL1, hwindex++);
+	InputsRead &= ~FRAG_BIT_COL1;
+
+	/* Texcoords */
+	for (i = 0; i < 8; i++) {
+		if (InputsRead & (FRAG_BIT_TEX0 << i))
+			allocate(mydata, FRAG_ATTRIB_TEX0+i, hwindex++);
+	}
+	InputsRead &= ~FRAG_BITS_TEX_ANY;
+
+	/* Fogcoords treated as a texcoord */
+	if (InputsRead & FRAG_BIT_FOGC)
+		allocate(mydata, FRAG_ATTRIB_FOGC, hwindex++);
+	InputsRead &= ~FRAG_BIT_FOGC;
+
+	/* fragment position treated as a texcoord */
+	if (InputsRead & FRAG_BIT_WPOS)
+		allocate(mydata, FRAG_ATTRIB_WPOS, hwindex++);
+	InputsRead &= ~FRAG_BIT_WPOS;
+
+	/* Anything else */
+	if (InputsRead)
+		rc_error(&c->Base, "Don't know how to handle inputs 0x%x\n", InputsRead);
+}
+
+
 static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_program_cont *cont, struct r300_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -162,6 +208,8 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;
 	compiler.OutputColor = FRAG_RESULT_COLOR;
+	compiler.AllocateHwInputs = &allocate_hw_inputs;
+	compiler.UserData = &compiler;
 
 	if (compiler.Base.Debug) {
 		fflush(stdout);
