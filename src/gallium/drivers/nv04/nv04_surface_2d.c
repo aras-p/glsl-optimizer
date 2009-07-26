@@ -133,7 +133,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	for (cy = 0; cy < h; cy += sub_h) {
 	  for (cx = 0; cx < w; cx += sub_w) {
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
+	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx+dx, cy+dy) *
 			     dst->texture->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
@@ -264,19 +264,29 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		int remainWidth = w-potWidth;
 		int remainHeight = h-potHeight;
 
+		/* top left is always POT */
 		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy,
 		                          potWidth, potHeight);
 
+		/* top right */
 		if (remainWidth>0) {
 			nv04_surface_copy(ctx, dst, dx+potWidth, dy,
 			                  src, sx+potWidth, sy,
 			                  remainWidth, potHeight);
 		}
 
+		/* bottom left */
 		if (remainHeight>0) {
 			nv04_surface_copy(ctx, dst, dx, dy+potHeight,
 			                  src, sx, sy+potHeight,
-			                  w, remainHeight);
+			                  potWidth, remainHeight);
+		}
+
+		/* bottom right */
+		if ((remainWidth>0) && (remainHeight>0)) {
+			nv04_surface_copy(ctx, dst, dx+potWidth, dy+potHeight,
+			                  src, sx+potWidth, sy+potHeight,
+			                  remainWidth, remainHeight);
 		}
 
 		return;
