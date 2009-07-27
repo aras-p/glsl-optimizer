@@ -19,6 +19,7 @@ C_SOURCES = \
 		r500_fragprog.c \
 		r500_fragprog_emit.c \
 		r3xx_vertprog.c \
+		r3xx_vertprog_dump.c \
 		\
 		memory_pool.c
 

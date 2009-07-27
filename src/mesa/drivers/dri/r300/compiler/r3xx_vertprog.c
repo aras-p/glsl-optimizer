@@ -607,4 +607,9 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	compiler->code->InputsRead = compiler->Base.Program.InputsRead;
 	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
+
+	if (compiler->Base.Debug) {
+		printf("Final vertex program code:\n");
+		r300_vertex_program_dump(compiler->code);
+	}
 }

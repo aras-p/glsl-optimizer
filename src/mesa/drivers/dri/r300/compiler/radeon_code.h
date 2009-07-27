@@ -203,4 +203,6 @@ struct r300_vertex_program_code {
 	uint32_t OutputsWritten;
 };
 
+void r300_vertex_program_dump(struct r300_vertex_program_code * vs);
+
 #endif /* RADEON_CODE_H */
