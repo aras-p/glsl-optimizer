@@ -252,7 +252,7 @@ static void process_instruction(struct nqssadce_state* s)
 	s->IP = s->IP->Prev;
 }
 
-static void calculateInputs(struct radeon_compiler * c)
+void rc_calculate_inputs_outputs(struct radeon_compiler * c)
 {
 	struct rc_instruction *inst;
 
@@ -290,5 +290,5 @@ void radeonNqssaDce(struct radeon_compiler * c, struct radeon_nqssadce_descr* de
 	while(s.IP != &c->Program.Instructions && !c->Error)
 		process_instruction(&s);
 
-	calculateInputs(c);
+	rc_calculate_inputs_outputs(c);
 }

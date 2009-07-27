@@ -43,6 +43,9 @@ struct rc_program {
 	 */
 	struct rc_instruction Instructions;
 
+	/* Long term, we should probably remove InputsRead & OutputsWritten,
+	 * since updating dependent state can be fragile, and they aren't
+	 * actually used very often. */
 	uint32_t InputsRead;
 	uint32_t OutputsWritten;
 	uint32_t ShadowSamplers; /**< Texture units used for shadow sampling. */
@@ -65,6 +68,8 @@ void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
 void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
 void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program);
+
+void rc_calculate_inputs_outputs(struct radeon_compiler * c);
 
 void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input);
 void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_output, unsigned writemask);
