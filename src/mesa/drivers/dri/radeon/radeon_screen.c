@@ -1025,7 +1025,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
    else
 	   screen->scratch = (__volatile__ uint32_t *)
-		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+		   ((GLubyte *)screen->status.map + R600_SCRATCH_REG_OFFSET);
 
    screen->buffers = drmMapBufs( sPriv->fd );
    if ( !screen->buffers ) {
