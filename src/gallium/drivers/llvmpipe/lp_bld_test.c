@@ -35,7 +35,55 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
+#include "util/u_format.h"
+
 #include "lp_bld.h"
+
+
+struct pixel_test_case
+{
+   enum pipe_format format;
+   uint32_t packed;
+   double unpacked[4];
+};
+
+
+struct pixel_test_case test_cases[] =
+{
+   {PIPE_FORMAT_R5G6B5_UNORM,   0x0000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R5G6B5_UNORM,   0x001f, {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_R5G6B5_UNORM,   0x07e0, {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R5G6B5_UNORM,   0xf800, {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R5G6B5_UNORM,   0xffff, {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x0000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x001f, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x03e0, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x7c00, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x8000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_A1R5G5B5_UNORM, 0xffff, {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x000000ff, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x0000ff00, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00ff0000, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xff000000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x0000ff00, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0xff000000, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x0000ff00, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xff000000, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
+};
 
 
 static LLVMValueRef
@@ -103,22 +151,19 @@ add_pack_rgba_test(LLVMModuleRef module,
 }
 
 
-int main(int argc, char **argv)
+static boolean
+test_format(const struct pixel_test_case *test)
 {
    char *error = NULL;
-   int n;
-
-   if (argc > 1)
-      sscanf(argv[1], "%x", &n);
-   else
-      n = 0x0000f0f0;
+   const struct util_format_description *desc;
+   
+   desc = util_format_description(test->format);
+   fprintf(stderr, "%s\n", desc->name);
 
    LLVMModuleRef module = LLVMModuleCreateWithName("test");
 
-   enum pipe_format format;
-   format = PIPE_FORMAT_R5G6B5_UNORM;
-   LLVMValueRef unpack = add_unpack_rgba_test(module, format);
-   LLVMValueRef pack = add_pack_rgba_test(module, format);
+   LLVMValueRef unpack = add_unpack_rgba_test(module, test->format);
+   LLVMValueRef pack = add_pack_rgba_test(module, test->format);
 
    LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
    LLVMDisposeMessage(error);
@@ -145,55 +190,63 @@ int main(int argc, char **argv)
    LLVMAddGVNPass(pass);
    LLVMAddCFGSimplificationPass(pass);
    LLVMRunPassManager(pass, module);
-#endif
    LLVMDumpModule(module);
+#endif
 
-   printf("Packed: %08x\n", n);
 
-   float rgba[4] = {0, 0, 0, 0};
+   float unpacked[4] = {0, 0, 0, 0};
+   unsigned packed = 0;
 
    {
-#if 1
-      typedef void (*unpack_ptr_t)(void *, float *);
+      typedef void (*unpack_ptr_t)(const void *, float *);
       unpack_ptr_t unpack_ptr = (unpack_ptr_t)LLVMGetPointerToGlobal(engine, unpack);
 
-      unpack_ptr(&n, rgba);
-#else
-      LLVMGenericValueRef exec_args[] = {
-         LLVMCreateGenericValueOfPointer(n),
-         LLVMCreateGenericValueOfPointer(rgba)
-      };
-      LLVMGenericValueRef exec_res = LLVMRunFunction(engine, unpack, 2, exec_args);
-#endif
+      unpack_ptr(&test->packed, unpacked);
 
-      printf("Unpacked: %f %f %f %f\n",
-             rgba[0],
-             rgba[1],
-             rgba[2],
-             rgba[3]);
    }
 
-   n = 0;
 
    {
-#if 1
-      typedef void (*pack_ptr_t)(void *, float *);
+      typedef void (*pack_ptr_t)(void *, const float *);
       pack_ptr_t pack_ptr = (pack_ptr_t)LLVMGetPointerToGlobal(engine, pack);
 
-      pack_ptr(&n, rgba);
-#else
-      LLVMGenericValueRef exec_args[] = {
-         LLVMCreateGenericValueOfPointer(n),
-         LLVMCreateGenericValueOfPointer(rgba)
-      };
-      LLVMGenericValueRef exec_res = LLVMRunFunction(engine, pack, 2, exec_args);
-#endif
+      pack_ptr(&packed, unpacked);
 
-      printf("Packed: %08x\n", n);
+   }
+
+   boolean success = TRUE;
+   unsigned i;
+   if(test->packed != packed)
+      success = FALSE;
+   for(i = 0; i < 4; ++i)
+      if(test->unpacked[i] != unpacked[i])
+         success = FALSE;
+
+   if (!success) {
+      printf("FAILED\n");
+      printf("  Packed: %08x\n", test->packed);
+      printf("          %08x\n", packed);
+      printf("  Unpacked: %f %f %f %f\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+      printf("            %f %f %f %f\n", test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
+      LLVMDumpModule(module);
    }
 
    LLVMDisposePassManager(pass);
    LLVMDisposeExecutionEngine(engine);
+   //LLVMDisposeModule(module);
 
-   return 0;
+   return success;
+}
+
+
+int main(int argc, char **argv)
+{
+   unsigned i;
+   int ret;
+
+   for (i = 0; i < sizeof(test_cases)/sizeof(test_cases[0]); ++i)
+      if(!test_format(&test_cases[i]))
+        ret = 1;
+
+   return ret;
 }
