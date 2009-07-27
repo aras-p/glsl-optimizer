@@ -1653,9 +1653,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->VGT_MIN_VTX_INDX.u32All      = 0;
     r700->VGT_INDX_OFFSET.u32All    = 0;
 
-    /* Specify the number of instances */
-    r700->VGT_DMA_NUM_INSTANCES.u32All = 1;
-
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;

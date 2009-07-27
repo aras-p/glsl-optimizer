@@ -393,7 +393,6 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT      	        VGT_GROUP_VECT_1_FMT_CNTL ;  /* 0xA28F */
 	union UINT_FLOAT               	VGT_GS_MODE               ;  /* 0xA290 */
 	union UINT_FLOAT        	VGT_PRIMITIVEID_EN        ;  /* 0xA2A1 */
-	union UINT_FLOAT     	        VGT_DMA_NUM_INSTANCES     ;  /* 0xA2A2 */
 	union UINT_FLOAT	        VGT_MULTI_PRIM_IB_RESET_EN;  /* 0xA2A5 */
 	union UINT_FLOAT  	        VGT_INSTANCE_STEP_RATE_0  ;  /* 0xA2A8 */
 	union UINT_FLOAT  	        VGT_INSTANCE_STEP_RATE_1  ;  /* 0xA2A9 */

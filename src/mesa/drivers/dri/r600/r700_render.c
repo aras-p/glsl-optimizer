@@ -329,7 +329,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SendDepthTargetState(context);
 
     /* richard test code */
-    for (i = 0; i < vb->PrimitiveCount; i++) 
+    for (i = 0; i < vb->PrimitiveCount; i++)
     {
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
         GLuint start = vb->Primitive[i].start;
@@ -341,25 +341,31 @@ static GLboolean r700RunRender(GLcontext * ctx,
         unsigned int VGT_INDEX_TYPE     = 0;
         unsigned int VGT_PRIMITIVE_TYPE = 0;
         unsigned int VGT_NUM_INDICES    = 0;
-        
-        numEntires = 2 /* VGT_INDEX_TYPE */
-                     + 3 /* VGT_PRIMITIVE_TYPE */
-                     + numIndices + 3; /* DRAW_INDEX_IMMD */                  
-                     
-        BEGIN_BATCH_NO_AUTOSTATE(numEntires);  
 
-        VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
+        numEntires =   3 /* VGT_PRIMITIVE_TYPE */
+		     + 2 /* VGT_INDEX_TYPE */
+		     + 2 /* NUM_INSTANCES */
+                     + numIndices + 3; /* DRAW_INDEX_IMMD */
 
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
-        R600_OUT_BATCH(VGT_INDEX_TYPE);
+        BEGIN_BATCH_NO_AUTOSTATE(numEntires);
 
-        VGT_NUM_INDICES = numIndices;
-
+	// prim
         VGT_PRIMITIVE_TYPE |= r700PrimitiveType(prim) << VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift;
         R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
         R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
         R600_OUT_BATCH(VGT_PRIMITIVE_TYPE);
 
+	// index type
+        VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+        R600_OUT_BATCH(VGT_INDEX_TYPE);
+
+	// num instances
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
+        R600_OUT_BATCH(1);
+
+	// draw packet
+        VGT_NUM_INDICES = numIndices;
         VGT_DRAW_INITIATOR |= DI_SRC_SEL_IMMEDIATE << SOURCE_SELECT_shift;
         VGT_DRAW_INITIATOR |= DI_MAJOR_MODE_0 << MAJOR_MODE_shift;
 
