@@ -646,9 +646,9 @@ static unsigned mask_count[0x8] =
 
 
 static void
-depth_test_quads(struct quad_stage *qs, 
-                 struct quad_header *quads[],
-                 unsigned nr)
+depth_test_quads_fallback(struct quad_stage *qs, 
+                          struct quad_header *quads[],
+                          unsigned nr)
 {
    unsigned i, pass = 0;
    const struct sp_fragment_shader *fs = qs->softpipe->fs;
@@ -704,9 +704,144 @@ depth_test_quads(struct quad_stage *qs,
       qs->next->run(qs->next, quads, nr);
 }
 
+/* XXX: this function assumes setup function actually emits linear
+ * spans of quads.  It seems a lot more natural to do (early)
+ * depth-testing on spans rather than quads.
+ */
+static void
+depth_interp_z16_less_write(struct quad_stage *qs, 
+                            struct quad_header *quads[],
+                            unsigned nr)
+{
+   unsigned i, pass = 0;
+   const unsigned ix = quads[0]->input.x0;
+   const unsigned iy = quads[0]->input.y0;
+   const float fx = (float) ix;
+   const float fy = (float) iy;
+   const float dzdx = quads[0]->posCoef->dadx[2];
+   const float dzdy = quads[0]->posCoef->dady[2];
+   const float z0 = quads[0]->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+   struct softpipe_cached_tile *tile;
+   ushort (*depth16)[TILE_SIZE];
+   ushort idepth[4], depth_step;
+   const float scale = 65535.0;
+
+   idepth[0] = (ushort)((z0) * scale);
+   idepth[1] = (ushort)((z0 + dzdx) * scale);
+   idepth[2] = (ushort)((z0 + dzdy) * scale);
+   idepth[3] = (ushort)((z0 + dzdx + dzdy) * scale);
+
+   depth_step = (ushort)(dzdx * 2 * scale);
+
+   tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, ix, iy);
+
+   depth16 = (ushort (*)[TILE_SIZE])
+      &tile->data.depth16[iy % TILE_SIZE][ix % TILE_SIZE];
+
+   for (i = 0; i < nr; i++) {
+      unsigned outmask = quads[i]->inout.mask;
+      unsigned mask = 0;
+      
+      if ((outmask & 1) && idepth[0] < depth16[0][0]) {
+         depth16[0][0] = idepth[0];
+         mask |= (1 << 0);
+      }
+
+      if ((outmask & 2) && idepth[1] < depth16[0][1]) {
+         depth16[0][1] = idepth[1];
+         mask |= (1 << 1);
+      }
+
+      if ((outmask & 4) && idepth[2] < depth16[1][0]) {
+         depth16[1][0] = idepth[2];
+         mask |= (1 << 2);
+      }
+
+      if ((outmask & 8) && idepth[3] < depth16[1][1]) {
+         depth16[1][1] = idepth[3];
+         mask |= (1 << 3);
+      }
+
+      idepth[0] += depth_step;
+      idepth[1] += depth_step;
+      idepth[2] += depth_step;
+      idepth[3] += depth_step;
+
+      depth16 = (ushort (*)[TILE_SIZE]) &depth16[0][2];
+
+      quads[i]->inout.mask = mask;
+      if (quads[i]->inout.mask)
+         quads[pass++] = quads[i];
+   }
+
+   if (pass)
+      qs->next->run(qs->next, quads, pass);
+
+}
+
+
+static void
+depth_noop(struct quad_stage *qs, 
+           struct quad_header *quads[],
+           unsigned nr)
+{
+   qs->next->run(qs->next, quads, nr);
+}
+
+
+
+static void
+choose_depth_test(struct quad_stage *qs, 
+                  struct quad_header *quads[],
+                  unsigned nr)
+{
+   boolean interp_depth = !qs->softpipe->fs->info.writes_z;
+
+   boolean alpha = qs->softpipe->depth_stencil->alpha.enabled;
+
+   boolean depth = (qs->softpipe->framebuffer.zsbuf && 
+                    qs->softpipe->depth_stencil->depth.enabled);
+
+   unsigned depthfunc = qs->softpipe->depth_stencil->depth.func;
+
+   boolean stencil = qs->softpipe->depth_stencil->stencil[0].enabled;
+
+   boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
+
+
+   qs->run = depth_test_quads_fallback;
+
+   if (!alpha &&
+       !depth &&
+       !stencil) {
+      qs->run = depth_noop;
+   }
+   else if (!alpha && 
+            interp_depth && 
+            depth && 
+            depthfunc == PIPE_FUNC_LESS && 
+            depthwrite && 
+            !stencil) 
+   {
+      switch (qs->softpipe->framebuffer.zsbuf->format) {
+      case PIPE_FORMAT_Z16_UNORM:
+         qs->run = depth_interp_z16_less_write;
+         break;
+      default:
+         break;
+      }
+   }
+
+   qs->run( qs, quads, nr );
+}
+
+
+
+
 
 static void depth_test_begin(struct quad_stage *qs)
 {
+   qs->run = choose_depth_test;
    qs->next->begin(qs->next);
 }
 
@@ -723,7 +858,7 @@ struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
 
    stage->softpipe = softpipe;
    stage->begin = depth_test_begin;
-   stage->run = depth_test_quads;
+   stage->run = choose_depth_test;
    stage->destroy = depth_test_destroy;
 
    return stage;
