@@ -38,18 +38,6 @@ sp_push_quad_first( struct softpipe_context *sp,
    sp->quad.first = quad;
 }
 
-static void
-sp_build_depth_stencil( struct softpipe_context *sp )
-{
-   if (sp->depth_stencil->stencil[0].enabled ||
-       sp->depth_stencil->stencil[1].enabled) {
-      sp_push_quad_first( sp, sp->quad.stencil_test );
-   }
-   else if (sp->depth_stencil->depth.enabled &&
-            sp->framebuffer.zsbuf) {
-      sp_push_quad_first( sp, sp->quad.depth_test );
-   }
-}
 
 void
 sp_build_quad_pipeline(struct softpipe_context *sp)
@@ -61,37 +49,15 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       !sp->fs->info.uses_kill &&
       !sp->fs->info.writes_z;
 
-   /* build up the pipeline in reverse order... */
-
-   /* Color combine
-    */
    sp->quad.first = sp->quad.blend;
 
-   /* Shade/Depth/Stencil/Alpha
-    */
-   if ((sp->rasterizer->poly_smooth && sp->reduced_prim == PIPE_PRIM_TRIANGLES) ||
-       (sp->rasterizer->line_smooth && sp->reduced_prim == PIPE_PRIM_LINES) ||
-       (sp->rasterizer->point_smooth && sp->reduced_prim == PIPE_PRIM_POINTS)) {
-      sp_push_quad_first( sp, sp->quad.coverage );
-   }
-
-   if (sp->active_query_count) {
-      sp_push_quad_first( sp, sp->quad.occlusion );
-   }
-
-   if (!early_depth_test) {
-      sp_build_depth_stencil( sp );
-   }
-
-   if (sp->depth_stencil->alpha.enabled) {
-      sp_push_quad_first( sp, sp->quad.alpha_test );
-   }
-
-   sp_push_quad_first( sp, sp->quad.shade );
-
    if (early_depth_test) {
-      sp_build_depth_stencil( sp );
-      sp_push_quad_first( sp, sp->quad.earlyz );
+      sp_push_quad_first( sp, sp->quad.shade );
+      sp_push_quad_first( sp, sp->quad.depth_test );
+   }
+   else {
+      sp_push_quad_first( sp, sp->quad.depth_test );
+      sp_push_quad_first( sp, sp->quad.shade );
    }
 }
 

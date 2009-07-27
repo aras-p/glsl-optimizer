@@ -88,14 +88,8 @@ static void softpipe_destroy( struct pipe_context *pipe )
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
 
-      softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
-      softpipe->quad.earlyz->destroy( softpipe->quad.earlyz );
       softpipe->quad.shade->destroy( softpipe->quad.shade );
-      softpipe->quad.alpha_test->destroy( softpipe->quad.alpha_test );
       softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
-      softpipe->quad.stencil_test->destroy( softpipe->quad.stencil_test );
-      softpipe->quad.occlusion->destroy( softpipe->quad.occlusion );
-      softpipe->quad.coverage->destroy( softpipe->quad.coverage );
       softpipe->quad.blend->destroy( softpipe->quad.blend );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
@@ -230,14 +224,8 @@ softpipe_create( struct pipe_screen *screen )
 
 
    /* setup quad rendering stages */
-      softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
-      softpipe->quad.earlyz = sp_quad_earlyz_stage(softpipe);
       softpipe->quad.shade = sp_quad_shade_stage(softpipe);
-      softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
       softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
-      softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
-      softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
-      softpipe->quad.coverage = sp_quad_coverage_stage(softpipe);
       softpipe->quad.blend = sp_quad_blend_stage(softpipe);
 
    /* vertex shader samplers */

@@ -111,23 +111,30 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
       }
    }
 
-   if (!z_written) {
-      /* compute Z values now, as in the quad earlyz stage */
-      /* XXX we should really only do this if the earlyz stage is not used */
-      const float fx = (float) quad->input.x0;
-      const float fy = (float) quad->input.y0;
-      const float dzdx = quad->posCoef->dadx[2];
-      const float dzdy = quad->posCoef->dady[2];
-      const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
-
-      quad->output.depth[0] = z0;
-      quad->output.depth[1] = z0 + dzdx;
-      quad->output.depth[2] = z0 + dzdy;
-      quad->output.depth[3] = z0 + dzdx + dzdy;
-   }
-
    return TRUE;
 }
+
+
+
+static void
+coverage_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   struct softpipe_context *softpipe = qs->softpipe;
+   uint cbuf;
+
+   /* loop over colorbuffer outputs */
+   for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
+      float (*quadColor)[4] = quad->output.color[cbuf];
+      unsigned j;
+      for (j = 0; j < QUAD_SIZE; j++) {
+         assert(quad->input.coverage[j] >= 0.0);
+         assert(quad->input.coverage[j] <= 1.0);
+         quadColor[3][j] *= quad->input.coverage[j];
+      }
+   }
+}
+
+
 
 static void
 shade_quads(struct quad_stage *qs, 
@@ -144,8 +151,13 @@ shade_quads(struct quad_stage *qs,
    machine->InterpCoefs = quads[0]->coef;
 
    for (i = 0; i < nr; i++) {
-      if (shade_quad(qs, quads[i]))
-         quads[pass++] = quads[i];
+      if (!shade_quad(qs, quads[i]))
+         continue;
+
+      if (/*do_coverage*/ 0)
+         coverage_quad( qs, quads[i] );
+
+      quads[pass++] = quads[i];
    }
    
    if (pass)

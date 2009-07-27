@@ -246,9 +246,7 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
    if (softpipe->dirty & (SP_NEW_BLEND |
                           SP_NEW_DEPTH_STENCIL_ALPHA |
                           SP_NEW_FRAMEBUFFER |
-                          SP_NEW_RASTERIZER |
-                          SP_NEW_FS | 
-			  SP_NEW_QUERY))
+                          SP_NEW_FS))
       sp_build_quad_pipeline(softpipe);
 
    softpipe->dirty = 0;
