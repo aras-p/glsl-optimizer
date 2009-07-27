@@ -85,6 +85,17 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_R580: return "R580";
 	case CHIP_FAMILY_RV560: return "RV560";
 	case CHIP_FAMILY_RV570: return "RV570";
+	case CHIP_FAMILY_R600: return "R600";
+	case CHIP_FAMILY_RV610: return "RV610";
+	case CHIP_FAMILY_RV630: return "RV630";
+	case CHIP_FAMILY_RV670: return "RV670";
+	case CHIP_FAMILY_RV620: return "RV620";
+	case CHIP_FAMILY_RV635: return "RV635";
+	case CHIP_FAMILY_RS780: return "RS780";
+	case CHIP_FAMILY_RV770: return "RV770";
+	case CHIP_FAMILY_RV730: return "RV730";
+	case CHIP_FAMILY_RV710: return "RV710";
+	case CHIP_FAMILY_RV740: return "RV740";
 	default: return "unknown";
 	}
 }
