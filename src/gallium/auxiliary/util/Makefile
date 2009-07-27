@@ -34,3 +34,6 @@ C_SOURCES = \
 	u_simple_screen.c
 
 include ../../Makefile.template
+
+u_format_table.c: u_format_table.py u_format.csv
+	python u_format_table.py u_format.csv > $@

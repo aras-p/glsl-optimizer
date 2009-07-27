@@ -120,10 +120,10 @@ util_format_description_table[] =
          {UTIL_FORMAT_TYPE_UNSIGNED, TRUE, 1} /* w */
       },
       {
-         UTIL_FORMAT_SWIZZLE_W, /* r */
-         UTIL_FORMAT_SWIZZLE_X, /* g */
-         UTIL_FORMAT_SWIZZLE_Y, /* b */
-         UTIL_FORMAT_SWIZZLE_Z /* a */
+         UTIL_FORMAT_SWIZZLE_Z, /* r */
+         UTIL_FORMAT_SWIZZLE_Y, /* g */
+         UTIL_FORMAT_SWIZZLE_X, /* b */
+         UTIL_FORMAT_SWIZZLE_W /* a */
       },
       UTIL_FORMAT_COLORSPACE_RGB,
    },
@@ -139,10 +139,10 @@ util_format_description_table[] =
          {UTIL_FORMAT_TYPE_UNSIGNED, TRUE, 4} /* w */
       },
       {
-         UTIL_FORMAT_SWIZZLE_W, /* r */
-         UTIL_FORMAT_SWIZZLE_X, /* g */
-         UTIL_FORMAT_SWIZZLE_Y, /* b */
-         UTIL_FORMAT_SWIZZLE_Z /* a */
+         UTIL_FORMAT_SWIZZLE_Z, /* r */
+         UTIL_FORMAT_SWIZZLE_Y, /* g */
+         UTIL_FORMAT_SWIZZLE_X, /* b */
+         UTIL_FORMAT_SWIZZLE_W /* a */
       },
       UTIL_FORMAT_COLORSPACE_RGB,
    },
