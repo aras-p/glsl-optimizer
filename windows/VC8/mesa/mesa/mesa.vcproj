@@ -52,6 +52,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
+				ForcedIncludeFiles="../../../../src/mesa/main/compiler.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -122,6 +123,7 @@
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
+				ForcedIncludeFiles="../../../../src/mesa/main/compiler.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -192,6 +194,7 @@
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
+				ForcedIncludeFiles="../../../../src/mesa/main/compiler.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -262,6 +265,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
+				ForcedIncludeFiles="../../../../src/mesa/main/compiler.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -376,6 +380,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\convolve.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\cpuinfo.c"
 				>
 			</File>
 			<File
@@ -651,10 +659,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\prog_debug.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_execute.c"
 				>
 			</File>
@@ -664,6 +668,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_noise.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_optimize.c"
 				>
 			</File>
 			<File
@@ -1035,6 +1043,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texgetimage.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.c"
 				>
 			</File>
@@ -1060,10 +1072,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\varray.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\main\viewport.c"
 				>
 			</File>
 			<File
@@ -1120,6 +1128,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\vbo\vbo_split_inplace.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.c"
 				>
 			</File>
 			<File
@@ -1261,6 +1273,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\convolve.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\cpuinfo.h"
 				>
 			</File>
 			<File
@@ -1520,10 +1536,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\prog_debug.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_execute.h"
 				>
 			</File>
@@ -1533,6 +1545,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_noise.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_optimize.h"
 				>
 			</File>
 			<File
@@ -1880,6 +1896,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texgetimage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.h"
 				>
 			</File>
@@ -1912,10 +1932,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\viewport.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\vbo\vbo.h"
 				>
 			</File>
@@ -1945,6 +1961,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\version.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.h"
 				>
 			</File>
 			<File
