@@ -39,6 +39,7 @@ enum asm_type {
 };
 
 struct asm_symbol {
+   struct asm_symbol *next;    /**< List linkage for freeing. */
    const char *name;
    enum asm_type type;
    unsigned attrib_binding;
@@ -133,6 +134,14 @@ struct asm_parser_state {
    struct gl_program_constants *limits;
 
    struct _mesa_symbol_table *st;
+
+   /**
+    * Linked list of symbols
+    *
+    * This list is \b only used when cleaning up compiler state and freeing
+    * memory.
+    */
+   struct asm_symbol *sym;
 
    /**
     * State for the lexer.

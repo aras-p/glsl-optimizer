@@ -1904,6 +1904,8 @@ declare_variable(struct asm_parser_state *state, char *name, enum asm_type t,
       }
 
       _mesa_symbol_table_add_symbol(state->st, 0, s->name, s);
+      s->next = state->sym;
+      state->sym = s;
    }
 
    return s;
@@ -2104,6 +2106,9 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    struct asm_instruction *inst;
    unsigned i;
    GLubyte *strz;
+   GLboolean result = GL_FALSE;
+   void *temp;
+   struct asm_symbol *sym;
 
    state->ctx = ctx;
    state->prog->Target = target;
@@ -2165,7 +2170,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 
 
    if (ctx->Program.ErrorPos != -1) {
-      return GL_FALSE;
+      goto error;
    }
 
    if (! _mesa_layout_parameters(state)) {
@@ -2176,7 +2181,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
       loc.position = len;
 
       yyerror(& loc, state, "invalid PARAM usage");
-      return GL_FALSE;
+      goto error;
    }
 
 
@@ -2190,8 +2195,6 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
       struct asm_instruction *const temp = inst->next;
 
       state->prog->Instructions[i] = inst->Base;
-      _mesa_free(inst);
-
       inst = temp;
    }
 
@@ -2215,5 +2218,27 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    state->prog->NumNativeAttributes = state->prog->NumAttributes;
    state->prog->NumNativeAddressRegs = state->prog->NumAddressRegs;
 
-   return GL_TRUE;
+   result = GL_TRUE;
+
+error:
+   for (inst = state->inst_head; inst != NULL; inst = temp) {
+      temp = inst->next;
+      _mesa_free(inst);
+   }
+
+   state->inst_head = NULL;
+   state->inst_tail = NULL;
+
+   for (sym = state->sym; sym != NULL; sym = temp) {
+      temp = sym->next;
+
+      _mesa_free((void *) sym->name);
+      _mesa_free(sym);
+   }
+   state->sym = NULL;
+
+   _mesa_symbol_table_dtor(state->st);
+   state->st = NULL;
+
+   return result;
 }
