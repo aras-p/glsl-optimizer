@@ -156,6 +156,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000},  /* 8_8_8_8_REV */
          };
 
+#if 0
    static const uint32_t masks_table_bgr[8][4] = {
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -177,6 +178,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000},  /* 8_8_8_8_REV */
          };
+#endif
 
    static const uint8_t bytes_per_pixel[8] = {
             0, 0, 0, 2, 2, 4, 0, 4
