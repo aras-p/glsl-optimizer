@@ -43,9 +43,9 @@ struct rc_program {
 	 */
 	struct rc_instruction Instructions;
 
-	GLbitfield InputsRead;
-	GLbitfield OutputsWritten;
-	GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
+	uint32_t InputsRead;
+	uint32_t OutputsWritten;
+	uint32_t ShadowSamplers; /**< Texture units used for shadow sampling. */
 
 	struct rc_constant_list Constants;
 };
@@ -53,8 +53,8 @@ struct rc_program {
 struct radeon_compiler {
 	struct memory_pool Pool;
 	struct rc_program Program;
-	GLboolean Debug;
-	GLboolean Error;
+	unsigned Debug:1;
+	unsigned Error:1;
 	char * ErrorMsg;
 };
 
@@ -75,7 +75,7 @@ struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;
 	struct rX00_fragment_program_code *code;
 	struct r300_fragment_program_external_state state;
-	GLboolean is_r500;
+	unsigned is_r500;
 	unsigned OutputDepth;
 	unsigned OutputColor;
 
@@ -94,6 +94,7 @@ struct r300_vertex_program_compiler {
 	struct r300_vertex_program_code *code;
 	GLbitfield RequiredOutputs;
 
+	void * UserData;
 	void (*SetHwInputOutput)(struct r300_vertex_program_compiler * c);
 };
 

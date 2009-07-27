@@ -23,6 +23,8 @@
 #ifndef RADEON_CODE_H
 #define RADEON_CODE_H
 
+#include <stdint.h>
+
 #define R300_PFS_MAX_ALU_INST     64
 #define R300_PFS_MAX_TEX_INST     32
 #define R300_PFS_MAX_TEX_INDIRECT 4
@@ -99,7 +101,7 @@ struct r300_fragment_program_external_state {
 		 *  2 - GL_ALPHA
 		 * depending on the depth texture mode.
 		 */
-		GLuint depth_texture_mode : 2;
+		unsigned depth_texture_mode : 2;
 
 		/**
 		 * If the sampler is used as a shadow sampler,
@@ -108,7 +110,7 @@ struct r300_fragment_program_external_state {
 		 *
 		 * Otherwise, this field is 0.
 		 */
-		GLuint texture_compare_func : 3;
+		unsigned texture_compare_func : 3;
 	} unit[16];
 };
 
@@ -128,16 +130,16 @@ struct r300_fragment_program_node {
 struct r300_fragment_program_code {
 	struct {
 		int length; /**< total # of texture instructions used */
-		GLuint inst[R300_PFS_MAX_TEX_INST];
+		uint32_t inst[R300_PFS_MAX_TEX_INST];
 	} tex;
 
 	struct {
 		int length; /**< total # of ALU instructions used */
 		struct {
-			GLuint inst0;
-			GLuint inst1;
-			GLuint inst2;
-			GLuint inst3;
+			uint32_t inst0;
+			uint32_t inst1;
+			uint32_t inst2;
+			uint32_t inst3;
 		} inst[R300_PFS_MAX_ALU_INST];
 	} alu;
 
@@ -151,12 +153,12 @@ struct r300_fragment_program_code {
 
 struct r500_fragment_program_code {
 	struct {
-		GLuint inst0;
-		GLuint inst1;
-		GLuint inst2;
-		GLuint inst3;
-		GLuint inst4;
-		GLuint inst5;
+		uint32_t inst0;
+		uint32_t inst1;
+		uint32_t inst2;
+		uint32_t inst3;
+		uint32_t inst4;
+		uint32_t inst5;
 	} inst[R500_PFS_MAX_INST];
 
 	int inst_offset;
@@ -171,7 +173,7 @@ struct rX00_fragment_program_code {
 		struct r500_fragment_program_code r500;
 	} code;
 
-	GLboolean writes_depth;
+	unsigned writes_depth:1;
 
 	struct rc_constant_list constants;
 };
@@ -180,22 +182,25 @@ struct rX00_fragment_program_code {
 #define VSF_MAX_FRAGMENT_LENGTH (255*4)
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
+#define VSF_MAX_INPUTS 32
+#define VSF_MAX_OUTPUTS 32
+
 struct r300_vertex_program_code {
 	int length;
 	union {
-		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
+		uint32_t d[VSF_MAX_FRAGMENT_LENGTH];
 		float f[VSF_MAX_FRAGMENT_LENGTH];
 	} body;
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
-	int inputs[VERT_ATTRIB_MAX];
-	int outputs[VERT_RESULT_MAX];
+	int inputs[VSF_MAX_INPUTS];
+	int outputs[VSF_MAX_OUTPUTS];
 
 	struct rc_constant_list constants;
 
-	GLbitfield InputsRead;
-	GLbitfield OutputsWritten;
+	uint32_t InputsRead;
+	uint32_t OutputsWritten;
 };
 
 #endif /* RADEON_CODE_H */
