@@ -87,7 +87,7 @@ static void r300_setup_miptree(struct r300_texture* tex)
         size = stride * base->nblocksy[i] * base->depth[i];
 
         tex->offset[i] = align(tex->size, 32);
-        tex->size = tex->offset[i] + size;
+        tex->size += tex->offset[i] + size;
 
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",
@@ -120,7 +120,7 @@ static struct pipe_texture*
     r300_setup_texture_state(tex, template->width[0], template->height[0],
             template->width[0], template->last_level);
 
-    tex->buffer = screen->buffer_create(screen, 64,
+    tex->buffer = screen->buffer_create(screen, 1024,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
 
