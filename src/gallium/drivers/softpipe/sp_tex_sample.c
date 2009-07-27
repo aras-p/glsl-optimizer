@@ -663,9 +663,63 @@ choose_mipmap_levels(const struct pipe_texture *texture,
  * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
 static void
+get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
+                  unsigned face, unsigned level, int x, int y, 
+                  const float *out[4])
+{
+   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+
+   const struct softpipe_cached_tile *tile
+      = sp_get_cached_tile_tex(samp->cache,
+                               tile_address(x, y, 0, face, level));
+
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+      
+   out[0] = &tile->data.color[y  ][x  ][0];
+   out[1] = &tile->data.color[y  ][x+1][0];
+   out[2] = &tile->data.color[y+1][x  ][0];
+   out[3] = &tile->data.color[y+1][x+1][0];
+}
+
+static INLINE const float *
+get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
+                 unsigned face, unsigned level, int x, int y)
+{
+   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+
+   const struct softpipe_cached_tile *tile
+      = sp_get_cached_tile_tex(samp->cache,
+                               tile_address(x, y, 0, face, level));
+
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   return &tile->data.color[y][x][0];
+}
+
+
+static void
+get_texel_quad_2d_mt(const struct tgsi_sampler *tgsi_sampler,
+                     unsigned face, unsigned level, 
+                     int x0, int y0, 
+                     int x1, int y1,
+                     const float *out[4])
+{
+   unsigned i;
+
+   for (i = 0; i < 4; i++) {
+      unsigned tx = (i & 1) ? x1 : x0;
+      unsigned ty = (i >> 1) ? y1 : y0;
+
+      out[i] = get_texel_2d_ptr( tgsi_sampler, face, level, tx, ty );
+   }
+}
+
+static void
 get_texel(const struct tgsi_sampler *tgsi_sampler,
-          unsigned face, unsigned level, int x, int y, int z,
-          float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
+                 unsigned face, unsigned level, int x, int y, int z,
+                 float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
    const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
    const struct pipe_texture *texture = samp->texture;
@@ -824,6 +878,193 @@ shadow_compare4(const struct pipe_sampler_state *sampler,
    }
 }
 
+
+
+static void
+sp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                    const float s[QUAD_SIZE],
+                                    const float t[QUAD_SIZE],
+                                    const float p[QUAD_SIZE],
+                                    float lodbias,
+                                    float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot - 0.5F;
+      float v = t[j] * ypot - 0.5F;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      float xw = u - (float)uflr;
+      float yw = v - (float)vflr;
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *tx[4];
+      
+
+      /* Can we fetch all four at once:
+       */
+      if (x0 % TILE_SIZE != TILE_SIZE-1 &&
+          y0 % TILE_SIZE != TILE_SIZE-1)
+      {
+         get_texel_quad_2d(tgsi_sampler, 0, level, x0, y0, tx);
+      }
+      else 
+      {
+         unsigned x1 = (uflr + 1) & (xpot - 1);
+         unsigned y1 = (vflr + 1) & (ypot - 1);
+         get_texel_quad_2d_mt(tgsi_sampler, 0, level, 
+                              x0, y0, x1, y1, tx);
+      }
+
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw, yw, 
+                              tx[0][c], tx[1][c], 
+                              tx[2][c], tx[3][c]);
+      }
+   }
+}
+
+
+static void
+sp_get_samples_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                     const float s[QUAD_SIZE],
+                                     const float t[QUAD_SIZE],
+                                     const float p[QUAD_SIZE],
+                                     float lodbias,
+                                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot - 0.5F;
+      float v = t[j] * ypot - 0.5F;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+sp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
+                                     const float s[QUAD_SIZE],
+                                     const float t[QUAD_SIZE],
+                                     const float p[QUAD_SIZE],
+                                     float lodbias,
+                                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = (1<<samp->xpot);
+   unsigned ypot = (1<<samp->ypot);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot - 0.5F;
+      float v = t[j] * ypot - 0.5F;
+
+      int x0, y0;
+      const float *out;
+
+      x0 = util_ifloor(u);
+      if (x0 < 0) 
+         x0 = 0;
+      else if (x0 > xpot - 1)
+         x0 = xpot - 1;
+
+      y0 = util_ifloor(v);
+      if (y0 < 0) 
+         y0 = 0;
+      else if (y0 > ypot - 1)
+         y0 = ypot - 1;
+      
+      out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+sp_get_samples_2d_linear_mip_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                               const float s[QUAD_SIZE],
+                                               const float t[QUAD_SIZE],
+                                               const float p[QUAD_SIZE],
+                                               float lodbias,
+                                               float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+   int level0, level1;
+   float lambda;
+
+   lambda = compute_lambda(texture, sampler, s, t, p, lodbias);
+   level0 = (int)lambda;
+   level1 = level0 + 1;
+
+   if (lambda < 0.0) { 
+      samp->level = 0;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, lodbias, rgba );
+   }
+   else if (level0 >= texture->last_level) {
+      samp->level = texture->last_level;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, lodbias, rgba );
+   }
+   else {
+      float rgba0[4][4];
+      float rgba1[4][4];
+      int c,j;
+
+      float levelBlend = lambda - level0;  /* blending weight between levels */
+
+      samp->level = level0;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, lodbias, rgba0 );
+
+      samp->level++;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, lodbias, rgba1 );
+
+      for (c = 0; c < 4; c++) 
+         for (j = 0; j < 4; j++)
+            rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
+  }
+}
 
 /**
  * Common code for sampling 1D/2D/cube textures.
@@ -1254,6 +1495,16 @@ sp_get_samples(struct tgsi_sampler *tgsi_sampler,
 #endif
 }
 
+static void
+sp_get_samples_fallback(struct tgsi_sampler *tgsi_sampler,
+                        const float s[QUAD_SIZE],
+                        const float t[QUAD_SIZE],
+                        const float p[QUAD_SIZE],
+                        float lodbias,
+                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   sp_get_samples(tgsi_sampler, s, t, p, TRUE, lodbias, rgba);
+}
 
 /**
  * Called via tgsi_sampler::get_samples() when running a fragment shader.
@@ -1267,7 +1518,77 @@ sp_get_samples_fragment(struct tgsi_sampler *tgsi_sampler,
                         float lodbias,
                         float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   sp_get_samples(tgsi_sampler, s, t, p, TRUE, lodbias, rgba);
+   struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+
+   tgsi_sampler->get_samples = sp_get_samples_fallback;
+
+   /* Try to hook in a faster sampler.  Ultimately we'll have to
+    * code-generate these.  Luckily most of this looks like it is
+    * orthogonal state within the sampler.
+    */
+   if (texture->target == PIPE_TEXTURE_2D &&
+       sampler->min_img_filter == sampler->mag_img_filter &&
+       sampler->wrap_s == sampler->wrap_t &&
+       sampler->compare_mode == FALSE &&
+       sampler->normalized_coords) 
+   {
+      samp->xpot = util_unsigned_logbase2( samp->texture->width[0] );
+      samp->ypot = util_unsigned_logbase2( samp->texture->height[0] );
+
+      if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
+         samp->level = CLAMP((int) sampler->min_lod,
+                             0, (int) texture->last_level);
+
+         if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               tgsi_sampler->get_samples = sp_get_samples_2d_nearest_repeat_POT;
+               break;
+            case PIPE_TEX_FILTER_LINEAR:
+               tgsi_sampler->get_samples = sp_get_samples_2d_linear_repeat_POT;
+               break;
+            default:
+               break;
+            }
+         } 
+         else if (sampler->wrap_s == PIPE_TEX_WRAP_CLAMP) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               tgsi_sampler->get_samples = sp_get_samples_2d_nearest_clamp_POT;
+               break;
+            default:
+               break;
+            }
+         }
+      }
+      else if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+         if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_LINEAR:
+               /* This one not working yet:
+                */
+               if (0)
+                  tgsi_sampler->get_samples = sp_get_samples_2d_linear_mip_linear_repeat_POT;
+               break;
+            default:
+               break;
+            }
+         } 
+      }
+   }
+   else if (0) {
+      _debug_printf("target %d/%d min_mip %d/%d min_img %d/%d wrap %d/%d compare %d/%d norm %d/%d\n",
+                    texture->target, PIPE_TEXTURE_2D,
+                    sampler->min_mip_filter, PIPE_TEX_MIPFILTER_NONE,
+                    sampler->min_img_filter, sampler->mag_img_filter,
+                    sampler->wrap_s, sampler->wrap_t,
+                    sampler->compare_mode, FALSE,
+                    sampler->normalized_coords, TRUE);
+   }
+
+   tgsi_sampler->get_samples( tgsi_sampler, s, t, p, lodbias, rgba );
 }
 
 

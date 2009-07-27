@@ -39,6 +39,12 @@ struct sp_shader_sampler
 {
    struct tgsi_sampler base;  /**< base class */
 
+   /* For sp_get_samples_2d_linear_POT:
+    */
+   unsigned xpot;
+   unsigned ypot;
+   unsigned level;
+
    const struct pipe_texture *texture;
    const struct pipe_sampler_state *sampler;
 
@@ -47,10 +53,10 @@ struct sp_shader_sampler
 
 
 
-static INLINE const struct sp_shader_sampler *
+static INLINE struct sp_shader_sampler *
 sp_shader_sampler(const struct tgsi_sampler *sampler)
 {
-   return (const struct sp_shader_sampler *) sampler;
+   return (struct sp_shader_sampler *) sampler;
 }
 
 

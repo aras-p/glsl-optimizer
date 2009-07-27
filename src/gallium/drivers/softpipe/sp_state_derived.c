@@ -208,6 +208,7 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       softpipe->tgsi.frag_samplers[i].sampler = softpipe->sampler[i];
       softpipe->tgsi.frag_samplers[i].texture = softpipe->texture[i];
+      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples_fragment;
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
