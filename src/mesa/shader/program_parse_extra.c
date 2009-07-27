@@ -91,17 +91,16 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
 
 	 return 0;
       } else if (strcmp(option, "draw_buffers") == 0) {
-	 /* FINISHME: This should validate that the driver support the
-	  * FINISHME: GL_ARB_draw_buffers extension.
+	 /* Don't need to check extension availability because all Mesa-based
+	  * drivers support GL_ARB_draw_buffers.
 	  */
 	 state->option.DrawBuffers = 1;
 	 return 1;
       } else if (strcmp(option, "fragment_program_shadow") == 0) {
-	 /* FINISHME: This should validate that the driver support the
-	  * FINISHME: GL_ARB_fragment_program_shadow extension.
-	  */
-	 state->option.Shadow = 1;
-	 return 1;
+	 if (state->ctx->Extensions.ARB_fragment_program_shadow) {
+	    state->option.Shadow = 1;
+	    return 1;
+	 }
       }
    }
 

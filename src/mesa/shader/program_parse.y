@@ -815,10 +815,20 @@ vtxAttribItem: POSITION
 	}
 	| COLOR optColorType
 	{
+	   if (!state->ctx->Extensions.EXT_secondary_color) {
+	      yyerror(& @2, state, "GL_EXT_secondary_color not supported");
+	      YYERROR;
+	   }
+
 	   $$ = VERT_ATTRIB_COLOR0 + $2;
 	}
 	| FOGCOORD
 	{
+	   if (!state->ctx->Extensions.EXT_fog_coord) {
+	      yyerror(& @1, state, "GL_EXT_fog_coord not supported");
+	      YYERROR;
+	   }
+
 	   $$ = VERT_ATTRIB_FOG;
 	}
 	| TEXCOORD optTexCoordUnitNum
@@ -827,6 +837,7 @@ vtxAttribItem: POSITION
 	}
 	| MATRIXINDEX '[' vtxWeightNum ']'
 	{
+	   yyerror(& @1, state, "GL_ARB_matrix_palette not supported");
 	   YYERROR;
 	}
 	| VTXATTRIB '[' vtxAttribNum ']'
@@ -1060,6 +1071,11 @@ stateLightProperty: ambDiffSpecProperty
 	}
 	| ATTENUATION
 	{
+	   if (!state->ctx->Extensions.EXT_point_parameters) {
+	      yyerror(& @1, state, "GL_ARB_point_parameters not supported");
+	      YYERROR;
+	   }
+
 	   $$ = STATE_ATTENUATION;
 	}
 	| SPOT stateSpotProperty
@@ -1346,6 +1362,7 @@ stateMatrixName: MODELVIEW stateOptModMatNum
 	}
 	| PALETTE '[' statePaletteMatNum ']'
 	{
+	   yyerror(& @1, state, "GL_ARB_matrix_palette not supported");
 	   YYERROR;
 	}
 	| MAT_PROGRAM '[' stateProgramMatNum ']'
