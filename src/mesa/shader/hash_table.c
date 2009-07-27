@@ -137,7 +137,7 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
     const unsigned bucket = hash_value % ht->num_buckets;
     struct hash_node *node;
 
-    node = _mesa_calloc(1, sizeof(*node));
+    node = _mesa_calloc(sizeof(*node));
 
     node->data = data;
     node->key = key;
