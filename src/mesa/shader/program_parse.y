@@ -284,7 +284,11 @@ option: OPTION IDENTIFIER ';'
 
 
 	   if (!valid) {
-	      yyerror(& @2, state, "invalid option string");
+	      const char *const err_str = (state->mode == ARB_vertex)
+		 ? "invalid ARB vertex program option"
+		 : "invalid ARB fragment program option";
+
+	      yyerror(& @2, state, err_str);
 	      YYERROR;
 	   }
 	}
