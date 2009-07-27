@@ -1047,7 +1047,8 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       _mesa_image_image_stride(packing, width, height, format, type);
    GLint i;
    const GLubyte *src;
-   enum pipe_transfer_usage transfer_usage;
+   /* init to silence warning only: */
+   enum pipe_transfer_usage transfer_usage = PIPE_TRANSFER_WRITE;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
