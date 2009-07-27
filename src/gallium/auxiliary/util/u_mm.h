@@ -84,7 +84,7 @@ extern struct mem_block *u_mmFindBlock(struct mem_block *heap, int start);
 extern void u_mmDestroy(struct mem_block *mmInit);
 
 /**
- * For debuging purpose.
+ * For debugging purposes.
  */
 extern void u_mmDumpMemInfo(const struct mem_block *mmInit);
 
