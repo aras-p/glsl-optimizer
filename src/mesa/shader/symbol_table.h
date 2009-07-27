@@ -38,6 +38,7 @@ extern void *_mesa_symbol_table_find_symbol(
 
 extern struct _mesa_symbol_table *_mesa_symbol_table_ctor(void);
 
+extern void _mesa_symbol_table_dtor(struct _mesa_symbol_table *);
 
 extern struct _mesa_symbol_table_iterator *_mesa_symbol_table_iterator_ctor(
     struct _mesa_symbol_table *table, int name_space, const char *name);

@@ -325,10 +325,24 @@ _mesa_symbol_table_ctor(void)
 {
     struct _mesa_symbol_table *table = calloc(1, sizeof(*table));
 
-    table->ht = hash_table_ctor(32, hash_table_string_hash,
-                                hash_table_string_compare);
+    if (table != NULL) {
+       table->ht = hash_table_ctor(32, hash_table_string_hash,
+				   hash_table_string_compare);
 
-    _mesa_symbol_table_push_scope(table);
+       _mesa_symbol_table_push_scope(table);
+    }
 
     return table;
+}
+
+
+void
+_mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
+{
+   while (table->current_scope != NULL) {
+      _mesa_symbol_table_pop_scope(table);
+   }
+
+   hash_table_dtor(table->ht);
+   free(table);
 }
