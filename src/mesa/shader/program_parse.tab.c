@@ -4966,7 +4966,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 
 
    if (ctx->Program.ErrorPos != -1) {
-     goto error;
+      goto error;
    }
 
    if (! _mesa_layout_parameters(state)) {
@@ -5028,7 +5028,7 @@ error:
    for (sym = state->sym; sym != NULL; sym = temp) {
       temp = sym->next;
 
-      _mesa_free(sym->name);
+      _mesa_free((void *) sym->name);
       _mesa_free(sym);
    }
    state->sym = NULL;

@@ -3521,10 +3521,6 @@ _mesa_program_lexer_ctor(void **scanner, struct asm_parser_state *state,
 void
 _mesa_program_lexer_dtor(void *scanner)
 {
-   /* FINISHME: It's not clear to me whether or not the buffer state returned
-    * FINISHME: by yy_scan_bytes in _mesa_program_lexer_ctor needs to be
-    * FINISHME: explicitly destroyed here or not.
-    */
    yylex_destroy(scanner);
 }
 
