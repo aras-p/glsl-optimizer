@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_TILE_CACHE_H
-#define SP_TILE_CACHE_H
+#ifndef LP_TILE_CACHE_H
+#define LP_TILE_CACHE_H
 
 #define TILE_CLEAR_OPTIMIZATION 1
 
@@ -102,5 +102,5 @@ lp_get_cached_tile_tex(struct llvmpipe_context *llvmpipe,
                        int face, int level);
 
 
-#endif /* SP_TILE_CACHE_H */
+#endif /* LP_TILE_CACHE_H */
 

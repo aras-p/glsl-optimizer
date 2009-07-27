@@ -28,28 +28,28 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_STATE_H
-#define SP_STATE_H
+#ifndef LP_STATE_H
+#define LP_STATE_H
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 
 
-#define SP_NEW_VIEWPORT      0x1
-#define SP_NEW_RASTERIZER    0x2
-#define SP_NEW_FS            0x4
-#define SP_NEW_BLEND         0x8
-#define SP_NEW_CLIP          0x10
-#define SP_NEW_SCISSOR       0x20
-#define SP_NEW_STIPPLE       0x40
-#define SP_NEW_FRAMEBUFFER   0x80
-#define SP_NEW_DEPTH_STENCIL_ALPHA 0x100
-#define SP_NEW_CONSTANTS     0x200
-#define SP_NEW_SAMPLER       0x400
-#define SP_NEW_TEXTURE       0x800
-#define SP_NEW_VERTEX        0x1000
-#define SP_NEW_VS            0x2000
-#define SP_NEW_QUERY         0x4000
+#define LP_NEW_VIEWPORT      0x1
+#define LP_NEW_RASTERIZER    0x2
+#define LP_NEW_FS            0x4
+#define LP_NEW_BLEND         0x8
+#define LP_NEW_CLIP          0x10
+#define LP_NEW_SCISSOR       0x20
+#define LP_NEW_STIPPLE       0x40
+#define LP_NEW_FRAMEBUFFER   0x80
+#define LP_NEW_DEPTH_STENCIL_ALPHA 0x100
+#define LP_NEW_CONSTANTS     0x200
+#define LP_NEW_SAMPLER       0x400
+#define LP_NEW_TEXTURE       0x800
+#define LP_NEW_VERTEX        0x1000
+#define LP_NEW_VS            0x2000
+#define LP_NEW_QUERY         0x4000
 
 
 struct tgsi_sampler;

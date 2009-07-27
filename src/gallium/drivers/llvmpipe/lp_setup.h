@@ -24,8 +24,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-#ifndef SP_SETUP_H
-#define SP_SETUP_H
+#ifndef LP_SETUP_H
+#define LP_SETUP_H
 
 struct setup_context;
 struct llvmpipe_context;

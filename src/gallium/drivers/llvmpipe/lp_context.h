@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_CONTEXT_H
-#define SP_CONTEXT_H
+#ifndef LP_CONTEXT_H
+#define LP_CONTEXT_H
 
 #include "pipe/p_context.h"
 
@@ -48,7 +48,7 @@
 /* Number of threads working on individual quads.
  * Setting to 1 disables this feature.
  */
-#define SP_NUM_QUAD_THREADS 1
+#define LP_NUM_QUAD_THREADS 1
 
 struct llvmpipe_vbuf_render;
 struct draw_context;
@@ -86,7 +86,7 @@ struct llvmpipe_context {
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
-   unsigned dirty; /**< Mask of SP_NEW_x flags */
+   unsigned dirty; /**< Mask of LP_NEW_x flags */
 
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
@@ -129,7 +129,7 @@ struct llvmpipe_context {
       struct quad_stage *output;
 
       struct quad_stage *first; /**< points to one of the above stages */
-   } quad[SP_NUM_QUAD_THREADS];
+   } quad[LP_NUM_QUAD_THREADS];
 
    /** TGSI exec things */
    struct {
@@ -164,5 +164,5 @@ llvmpipe_context( struct pipe_context *pipe )
    return (struct llvmpipe_context *)pipe;
 }
 
-#endif /* SP_CONTEXT_H */
+#endif /* LP_CONTEXT_H */
 

@@ -125,5 +125,5 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    lp->framebuffer.width = fb->width;
    lp->framebuffer.height = fb->height;
 
-   lp->dirty |= SP_NEW_FRAMEBUFFER;
+   lp->dirty |= LP_NEW_FRAMEBUFFER;
 }

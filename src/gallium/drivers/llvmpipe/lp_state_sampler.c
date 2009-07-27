@@ -73,7 +73,7 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
 
    llvmpipe->num_samplers = num;
 
-   llvmpipe->dirty |= SP_NEW_SAMPLER;
+   llvmpipe->dirty |= LP_NEW_SAMPLER;
 }
 
 
@@ -102,7 +102,7 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
 
    llvmpipe->num_textures = num;
 
-   llvmpipe->dirty |= SP_NEW_TEXTURE;
+   llvmpipe->dirty |= LP_NEW_TEXTURE;
 }
 
 

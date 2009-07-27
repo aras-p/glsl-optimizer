@@ -31,8 +31,8 @@
  */
 
 
-#ifndef SP_WINSYS_H
-#define SP_WINSYS_H
+#ifndef LP_WINSYS_H
+#define LP_WINSYS_H
 
 
 #ifdef __cplusplus
@@ -62,4 +62,4 @@ llvmpipe_get_texture_buffer( struct pipe_texture *texture,
 }
 #endif
 
-#endif /* SP_WINSYS_H */
+#endif /* LP_WINSYS_H */

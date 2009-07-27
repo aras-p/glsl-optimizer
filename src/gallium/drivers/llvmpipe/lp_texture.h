@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_TEXTURE_H
-#define SP_TEXTURE_H
+#ifndef LP_TEXTURE_H
+#define LP_TEXTURE_H
 
 
 #include "pipe/p_state.h"
@@ -80,4 +80,4 @@ extern void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
 
-#endif /* SP_TEXTURE */
+#endif /* LP_TEXTURE */

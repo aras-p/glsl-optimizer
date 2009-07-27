@@ -75,7 +75,7 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    llvmpipe->fs = (struct lp_fragment_shader *) fs;
 
-   llvmpipe->dirty |= SP_NEW_FS;
+   llvmpipe->dirty |= LP_NEW_FS;
 }
 
 
@@ -133,7 +133,7 @@ llvmpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
    draw_bind_vertex_shader(llvmpipe->draw,
                            (llvmpipe->vs ? llvmpipe->vs->draw_data : NULL));
 
-   llvmpipe->dirty |= SP_NEW_VS;
+   llvmpipe->dirty |= LP_NEW_VS;
 }
 
 
@@ -165,5 +165,5 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    pipe_buffer_reference(&llvmpipe->constants[shader].buffer,
 			 buf ? buf->buffer : NULL);
 
-   llvmpipe->dirty |= SP_NEW_CONSTANTS;
+   llvmpipe->dirty |= LP_NEW_CONSTANTS;
 }

@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_QUAD_PIPE_H
-#define SP_QUAD_PIPE_H
+#ifndef LP_QUAD_PIPE_H
+#define LP_QUAD_PIPE_H
 
 
 struct llvmpipe_context;
@@ -71,4 +71,4 @@ void lp_build_quad_pipeline(struct llvmpipe_context *lp);
 
 void lp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
-#endif /* SP_QUAD_PIPE_H */
+#endif /* LP_QUAD_PIPE_H */

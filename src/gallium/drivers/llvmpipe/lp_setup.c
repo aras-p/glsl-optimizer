@@ -61,7 +61,7 @@ struct edge {
    int lines;		/**< number of lines on this edge */
 };
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
 
 /* Set to 1 if you want other threads to be instantly
  * notified of pending jobs.
@@ -169,9 +169,9 @@ struct setup_context {
    struct tgsi_interp_coef posCoef;  /* For Z, W */
    struct quad_header quad;
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
    struct quad_job_que que;
-   struct thread_info threads[SP_NUM_QUAD_THREADS];
+   struct thread_info threads[LP_NUM_QUAD_THREADS];
 #endif
 
    struct {
@@ -190,7 +190,7 @@ struct setup_context {
    unsigned winding;		/* which winding to cull */
 };
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
 
 static PIPE_THREAD_ROUTINE( quad_thread, param )
 {
@@ -323,7 +323,7 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad, uint thre
    }
 }
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
 
 static void
 clip_emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
@@ -373,7 +373,7 @@ emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
 #endif
 }
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
 
 static void
 emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
@@ -1490,7 +1490,7 @@ void setup_prepare( struct setup_context *setup )
    /* Note: nr_attrs is only used for debugging (vertex printing) */
    setup->quad.nr_attrs = draw_num_vs_outputs(lp->draw);
 
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
       lp->quad[i].first->begin( lp->quad[i].first );
    }
 
@@ -1520,7 +1520,7 @@ void setup_destroy_context( struct setup_context *setup )
 struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
    uint i;
 #endif
 
@@ -1529,7 +1529,7 @@ struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
    setup->quad.coef = setup->coef;
    setup->quad.posCoef = &setup->posCoef;
 
-#if SP_NUM_QUAD_THREADS > 1
+#if LP_NUM_QUAD_THREADS > 1
    setup->que.first = 0;
    setup->que.last = 0;
    pipe_mutex_init( setup->que.que_mutex );
@@ -1538,7 +1538,7 @@ struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
    setup->que.jobs_added = 0;
    setup->que.jobs_done = 0;
    pipe_condvar_init( setup->que.que_done_condvar );
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
       setup->threads[i].setup = setup;
       setup->threads[i].id = i;
       setup->threads[i].handle = pipe_thread_create( quad_thread, &setup->threads[i] );

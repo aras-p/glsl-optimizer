@@ -47,7 +47,7 @@ void llvmpipe_bind_blend_state( struct pipe_context *pipe,
 
    llvmpipe->blend = (const struct pipe_blend_state *)blend;
 
-   llvmpipe->dirty |= SP_NEW_BLEND;
+   llvmpipe->dirty |= LP_NEW_BLEND;
 }
 
 void llvmpipe_delete_blend_state(struct pipe_context *pipe,
@@ -64,7 +64,7 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
 
    llvmpipe->blend_color = *blend_color;
 
-   llvmpipe->dirty |= SP_NEW_BLEND;
+   llvmpipe->dirty |= LP_NEW_BLEND;
 }
 
 
@@ -88,7 +88,7 @@ llvmpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 
    llvmpipe->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
 
-   llvmpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
+   llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
 void

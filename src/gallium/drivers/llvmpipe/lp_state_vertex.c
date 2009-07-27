@@ -49,7 +49,7 @@ llvmpipe_set_vertex_elements(struct pipe_context *pipe,
           count * sizeof(struct pipe_vertex_element));
    llvmpipe->num_vertex_elements = count;
 
-   llvmpipe->dirty |= SP_NEW_VERTEX;
+   llvmpipe->dirty |= LP_NEW_VERTEX;
 
    draw_set_vertex_elements(llvmpipe->draw, count, attribs);
 }
@@ -67,7 +67,7 @@ llvmpipe_set_vertex_buffers(struct pipe_context *pipe,
    memcpy(llvmpipe->vertex_buffer, buffers, count * sizeof(buffers[0]));
    llvmpipe->num_vertex_buffers = count;
 
-   llvmpipe->dirty |= SP_NEW_VERTEX;
+   llvmpipe->dirty |= LP_NEW_VERTEX;
 
    draw_set_vertex_buffers(llvmpipe->draw, count, buffers);
 }

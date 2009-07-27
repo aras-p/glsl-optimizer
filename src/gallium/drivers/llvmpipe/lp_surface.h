@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_SURFACE_H
-#define SP_SURFACE_H
+#ifndef LP_SURFACE_H
+#define LP_SURFACE_H
 
 
 struct llvmpipe_context;
@@ -39,4 +39,4 @@ extern void
 lp_init_surface_functions(struct llvmpipe_context *lp);
 
 
-#endif /* SP_SURFACE_H */
+#endif /* LP_SURFACE_H */

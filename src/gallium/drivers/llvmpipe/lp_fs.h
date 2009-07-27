@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_FS_H
-#define SP_FS_H
+#ifndef LP_FS_H
+#define LP_FS_H
 
 struct lp_fragment_shader *
 llvmpipe_create_fs_exec(struct llvmpipe_context *llvmpipe,

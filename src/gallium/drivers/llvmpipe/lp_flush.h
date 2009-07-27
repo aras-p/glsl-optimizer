@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_FLUSH_H
-#define SP_FLUSH_H
+#ifndef LP_FLUSH_H
+#define LP_FLUSH_H
 
 struct pipe_context;
 struct pipe_fence_handle;

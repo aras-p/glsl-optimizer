@@ -189,22 +189,22 @@ compute_cliprect(struct llvmpipe_context *lp)
  */
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 {
-   if (llvmpipe->dirty & (SP_NEW_RASTERIZER |
-                          SP_NEW_FS |
-                          SP_NEW_VS))
+   if (llvmpipe->dirty & (LP_NEW_RASTERIZER |
+                          LP_NEW_FS |
+                          LP_NEW_VS))
       invalidate_vertex_layout( llvmpipe );
 
-   if (llvmpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
-                          SP_NEW_FRAMEBUFFER))
+   if (llvmpipe->dirty & (LP_NEW_SCISSOR |
+                          LP_NEW_DEPTH_STENCIL_ALPHA |
+                          LP_NEW_FRAMEBUFFER))
       compute_cliprect(llvmpipe);
 
-   if (llvmpipe->dirty & (SP_NEW_BLEND |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
-                          SP_NEW_FRAMEBUFFER |
-                          SP_NEW_RASTERIZER |
-                          SP_NEW_FS | 
-			  SP_NEW_QUERY))
+   if (llvmpipe->dirty & (LP_NEW_BLEND |
+                          LP_NEW_DEPTH_STENCIL_ALPHA |
+                          LP_NEW_FRAMEBUFFER |
+                          LP_NEW_RASTERIZER |
+                          LP_NEW_FS | 
+			  LP_NEW_QUERY))
       lp_build_quad_pipeline(llvmpipe);
 
    llvmpipe->dirty = 0;

@@ -50,7 +50,7 @@ void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
 
    llvmpipe->rasterizer = (struct pipe_rasterizer_state *)setup;
 
-   llvmpipe->dirty |= SP_NEW_RASTERIZER;
+   llvmpipe->dirty |= LP_NEW_RASTERIZER;
 }
 
 void llvmpipe_delete_rasterizer_state(struct pipe_context *pipe,

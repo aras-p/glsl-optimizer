@@ -91,7 +91,7 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
       llvmpipe->quad[i].polygon_stipple->destroy( llvmpipe->quad[i].polygon_stipple );
       llvmpipe->quad[i].earlyz->destroy( llvmpipe->quad[i].earlyz );
       llvmpipe->quad[i].shade->destroy( llvmpipe->quad[i].shade );
@@ -237,7 +237,7 @@ llvmpipe_create( struct pipe_screen *screen )
 
 
    /* setup quad rendering stages */
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
       llvmpipe->quad[i].polygon_stipple = lp_quad_polygon_stipple_stage(llvmpipe);
       llvmpipe->quad[i].earlyz = lp_quad_earlyz_stage(llvmpipe);
       llvmpipe->quad[i].shade = lp_quad_shade_stage(llvmpipe);
@@ -285,10 +285,10 @@ llvmpipe_create( struct pipe_screen *screen )
    if (!llvmpipe->setup)
       goto fail;
 
-   if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
+   if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   if (debug_get_bool_option( "SP_NO_VBUF", FALSE )) {
+   if (debug_get_bool_option( "LP_NO_VBUF", FALSE )) {
       /* Deprecated path -- vbuf is the intended interface to the draw module:
        */
       draw_set_rasterize_stage(llvmpipe->draw, llvmpipe->setup);

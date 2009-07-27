@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_TEX_SAMPLE_H
-#define SP_TEX_SAMPLE_H
+#ifndef LP_TEX_SAMPLE_H
+#define LP_TEX_SAMPLE_H
 
 
 #include "tgsi/tgsi_exec.h"
@@ -70,4 +70,4 @@ lp_get_samples_vertex(struct tgsi_sampler *tgsi_sampler,
                       float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 
-#endif /* SP_TEX_SAMPLE_H */
+#endif /* LP_TEX_SAMPLE_H */

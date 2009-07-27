@@ -46,8 +46,8 @@
 #include "util/u_memory.h"
 
 
-#define SP_MAX_VBUF_INDEXES 1024
-#define SP_MAX_VBUF_SIZE    4096
+#define LP_MAX_VBUF_INDEXES 1024
+#define LP_MAX_VBUF_SIZE    4096
 
 typedef const float (*cptrf4)[4];
 
@@ -562,8 +562,8 @@ lp_init_vbuf(struct llvmpipe_context *lp)
 
    lp->vbuf_render = CALLOC_STRUCT(llvmpipe_vbuf_render);
 
-   lp->vbuf_render->base.max_indices = SP_MAX_VBUF_INDEXES;
-   lp->vbuf_render->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
+   lp->vbuf_render->base.max_indices = LP_MAX_VBUF_INDEXES;
+   lp->vbuf_render->base.max_vertex_buffer_bytes = LP_MAX_VBUF_SIZE;
 
    lp->vbuf_render->base.get_vertex_info = lp_vbuf_get_vertex_info;
    lp->vbuf_render->base.allocate_vertices = lp_vbuf_allocate_vertices;

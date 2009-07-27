@@ -29,11 +29,11 @@
  *    Keith Whitwell
  */
 
-#ifndef SP_QUERY_H
-#define SP_QUERY_H
+#ifndef LP_QUERY_H
+#define LP_QUERY_H
 
 struct llvmpipe_context;
 extern void llvmpipe_init_query_funcs(struct llvmpipe_context * );
 
 
-#endif /* SP_QUERY_H */
+#endif /* LP_QUERY_H */

@@ -68,7 +68,7 @@ lp_build_quad_pipeline(struct llvmpipe_context *lp)
                !lp->fs->info.writes_z;
 
    /* build up the pipeline in reverse order... */
-   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+   for (i = 0; i < LP_NUM_QUAD_THREADS; i++) {
       lp->quad[i].first = lp->quad[i].output;
 
       if (lp->blend->colormask != 0xf) {

@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_VBUF_H
-#define SP_VBUF_H
+#ifndef LP_VBUF_H
+#define LP_VBUF_H
 
 
 struct llvmpipe_context;
@@ -35,4 +35,4 @@ extern void
 lp_init_vbuf(struct llvmpipe_context *llvmpipe);
 
 
-#endif /* SP_VBUF_H */
+#endif /* LP_VBUF_H */

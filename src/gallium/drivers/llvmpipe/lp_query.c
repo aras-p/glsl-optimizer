@@ -71,7 +71,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    
    sq->start = llvmpipe->occlusion_count;
    llvmpipe->active_query_count++;
-   llvmpipe->dirty |= SP_NEW_QUERY;
+   llvmpipe->dirty |= LP_NEW_QUERY;
 }
 
 
@@ -83,7 +83,7 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
 
    llvmpipe->active_query_count--;
    sq->end = llvmpipe->occlusion_count;
-   llvmpipe->dirty |= SP_NEW_QUERY;
+   llvmpipe->dirty |= LP_NEW_QUERY;
 }
 
 

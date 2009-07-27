@@ -26,8 +26,8 @@
  **************************************************************************/
 
 
-#ifndef SP_PRIM_SETUP_H
-#define SP_PRIM_SETUP_H
+#ifndef LP_PRIM_SETUP_H
+#define LP_PRIM_SETUP_H
 
 
 /**
@@ -82,4 +82,4 @@ lp_draw_vbuf_stage( struct draw_context *draw_context,
                     vbuf_draw_func draw );
 
 
-#endif /* SP_PRIM_SETUP_H */
+#endif /* LP_PRIM_SETUP_H */

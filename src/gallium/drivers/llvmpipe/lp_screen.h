@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_SCREEN_H
-#define SP_SCREEN_H
+#ifndef LP_SCREEN_H
+#define LP_SCREEN_H
 
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
@@ -55,4 +55,4 @@ llvmpipe_screen( struct pipe_screen *pipe )
 }
 
 
-#endif /* SP_SCREEN_H */
+#endif /* LP_SCREEN_H */

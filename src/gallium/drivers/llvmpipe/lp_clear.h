@@ -29,8 +29,8 @@
  *    Brian Paul
  */
 
-#ifndef SP_CLEAR_H
-#define SP_CLEAR_H
+#ifndef LP_CLEAR_H
+#define LP_CLEAR_H
 
 #include "pipe/p_state.h"
 struct pipe_context;
@@ -40,4 +40,4 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
                double depth, unsigned stencil);
 
 
-#endif /* SP_CLEAR_H */
+#endif /* LP_CLEAR_H */

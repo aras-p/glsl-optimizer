@@ -51,7 +51,7 @@ void llvmpipe_set_viewport_state( struct pipe_context *pipe,
    draw_set_viewport_state(llvmpipe->draw, viewport);
 
    llvmpipe->viewport = *viewport; /* struct copy */
-   llvmpipe->dirty |= SP_NEW_VIEWPORT;
+   llvmpipe->dirty |= LP_NEW_VIEWPORT;
 }
 
 
@@ -63,7 +63,7 @@ void llvmpipe_set_scissor_state( struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    llvmpipe->scissor = *scissor; /* struct copy */
-   llvmpipe->dirty |= SP_NEW_SCISSOR;
+   llvmpipe->dirty |= LP_NEW_SCISSOR;
 }
 
 
@@ -75,5 +75,5 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    llvmpipe->poly_stipple = *stipple; /* struct copy */
-   llvmpipe->dirty |= SP_NEW_STIPPLE;
+   llvmpipe->dirty |= LP_NEW_STIPPLE;
 }
