@@ -88,14 +88,8 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
-      llvmpipe->quad.polygon_stipple->destroy( llvmpipe->quad.polygon_stipple );
-      llvmpipe->quad.earlyz->destroy( llvmpipe->quad.earlyz );
       llvmpipe->quad.shade->destroy( llvmpipe->quad.shade );
-      llvmpipe->quad.alpha_test->destroy( llvmpipe->quad.alpha_test );
       llvmpipe->quad.depth_test->destroy( llvmpipe->quad.depth_test );
-      llvmpipe->quad.stencil_test->destroy( llvmpipe->quad.stencil_test );
-      llvmpipe->quad.occlusion->destroy( llvmpipe->quad.occlusion );
-      llvmpipe->quad.coverage->destroy( llvmpipe->quad.coverage );
       llvmpipe->quad.blend->destroy( llvmpipe->quad.blend );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
@@ -230,14 +224,8 @@ llvmpipe_create( struct pipe_screen *screen )
 
 
    /* setup quad rendering stages */
-      llvmpipe->quad.polygon_stipple = lp_quad_polygon_stipple_stage(llvmpipe);
-      llvmpipe->quad.earlyz = lp_quad_earlyz_stage(llvmpipe);
       llvmpipe->quad.shade = lp_quad_shade_stage(llvmpipe);
-      llvmpipe->quad.alpha_test = lp_quad_alpha_test_stage(llvmpipe);
       llvmpipe->quad.depth_test = lp_quad_depth_test_stage(llvmpipe);
-      llvmpipe->quad.stencil_test = lp_quad_stencil_test_stage(llvmpipe);
-      llvmpipe->quad.occlusion = lp_quad_occlusion_stage(llvmpipe);
-      llvmpipe->quad.coverage = lp_quad_coverage_stage(llvmpipe);
       llvmpipe->quad.blend = lp_quad_blend_stage(llvmpipe);
 
    /* vertex shader samplers */

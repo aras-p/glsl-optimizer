@@ -38,18 +38,6 @@ lp_push_quad_first( struct llvmpipe_context *lp,
    lp->quad.first = quad;
 }
 
-static void
-lp_build_depth_stencil( struct llvmpipe_context *lp )
-{
-   if (lp->depth_stencil->stencil[0].enabled ||
-       lp->depth_stencil->stencil[1].enabled) {
-      lp_push_quad_first( lp, lp->quad.stencil_test );
-   }
-   else if (lp->depth_stencil->depth.enabled &&
-            lp->framebuffer.zsbuf) {
-      lp_push_quad_first( lp, lp->quad.depth_test );
-   }
-}
 
 void
 lp_build_quad_pipeline(struct llvmpipe_context *lp)
@@ -61,37 +49,15 @@ lp_build_quad_pipeline(struct llvmpipe_context *lp)
       !lp->fs->info.uses_kill &&
       !lp->fs->info.writes_z;
 
-   /* build up the pipeline in reverse order... */
-
-   /* Color combine
-    */
    lp->quad.first = lp->quad.blend;
 
-   /* Shade/Depth/Stencil/Alpha
-    */
-   if ((lp->rasterizer->poly_smooth && lp->reduced_prim == PIPE_PRIM_TRIANGLES) ||
-       (lp->rasterizer->line_smooth && lp->reduced_prim == PIPE_PRIM_LINES) ||
-       (lp->rasterizer->point_smooth && lp->reduced_prim == PIPE_PRIM_POINTS)) {
-      lp_push_quad_first( lp, lp->quad.coverage );
-   }
-
-   if (lp->active_query_count) {
-      lp_push_quad_first( lp, lp->quad.occlusion );
-   }
-
-   if (!early_depth_test) {
-      lp_build_depth_stencil( lp );
-   }
-
-   if (lp->depth_stencil->alpha.enabled) {
-      lp_push_quad_first( lp, lp->quad.alpha_test );
-   }
-
-   lp_push_quad_first( lp, lp->quad.shade );
-
    if (early_depth_test) {
-      lp_build_depth_stencil( lp );
-      lp_push_quad_first( lp, lp->quad.earlyz );
+      lp_push_quad_first( lp, lp->quad.shade );
+      lp_push_quad_first( lp, lp->quad.depth_test );
+   }
+   else {
+      lp_push_quad_first( lp, lp->quad.depth_test );
+      lp_push_quad_first( lp, lp->quad.shade );
    }
 }
 

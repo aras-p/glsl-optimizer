@@ -19,13 +19,8 @@ C_SOURCES = \
 	lp_prim_vbuf.c \
 	lp_quad_pipe.c \
 	lp_quad_stipple.c \
-	lp_quad_earlyz.c \
 	lp_quad_depth_test.c \
-	lp_quad_stencil.c \
 	lp_quad_fs.c \
-	lp_quad_alpha_test.c \
-	lp_quad_occlusion.c \
-	lp_quad_coverage.c \
 	lp_quad_blend.c \
 	lp_screen.c \
         lp_setup.c \

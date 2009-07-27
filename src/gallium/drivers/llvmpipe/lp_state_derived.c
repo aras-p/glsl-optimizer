@@ -246,9 +246,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
    if (llvmpipe->dirty & (LP_NEW_BLEND |
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_FRAMEBUFFER |
-                          LP_NEW_RASTERIZER |
-                          LP_NEW_FS | 
-			  LP_NEW_QUERY))
+                          LP_NEW_FS))
       lp_build_quad_pipeline(llvmpipe);
 
    llvmpipe->dirty = 0;
