@@ -157,6 +157,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %token SCENECOLOR SECONDARY SHININESS SIZE SPECULAR SPOT STATE
 %token TEXCOORD TEXENV TEXGEN TEXGEN_Q TEXGEN_R TEXGEN_S TEXGEN_T TEXTURE TRANSPOSE
 %token TEXTURE_UNIT TEX_1D TEX_2D TEX_3D TEX_CUBE TEX_RECT
+%token TEX_SHADOW1D TEX_SHADOW2D TEX_SHADOWRECT
 %token VERTEX VTXATTRIB
 %token WEIGHT
 
@@ -383,11 +384,43 @@ SAMPLE_instruction: SAMPLE_OP maskedDstReg ',' swizzleSrcReg ',' texImageUnit ',
 	{
 	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
 	   if ($$ != NULL) {
+	      const GLbitfield tex_mask = (1U << $6);
+	      GLbitfield shadow_tex = 0;
+	      GLbitfield target_mask = 0;
+
+
 	      $$->Base.SaturateMode = $1.SaturateMode;
 	      $$->Base.TexSrcUnit = $6;
-	      $$->Base.TexSrcTarget = $8;
 
-	      state->prog->TexturesUsed[$6] |= (1U << $8);
+	      if ($8 < 0) {
+		 shadow_tex = tex_mask;
+
+		 $$->Base.TexSrcTarget = -$8;
+		 $$->Base.TexShadow = 1;
+	      } else {
+		 $$->Base.TexSrcTarget = $8;
+	      }
+
+	      target_mask = (1U << $$->Base.TexSrcTarget);
+
+	      /* If this texture unit was previously accessed and that access
+	       * had a different texture target, generate an error.
+	       *
+	       * If this texture unit was previously accessed and that access
+	       * had a different shadow mode, generate an error.
+	       */
+	      if ((state->prog->TexturesUsed[$6] != 0)
+		  && ((state->prog->TexturesUsed[$6] != target_mask)
+		      || ((state->prog->ShadowSamplers & tex_mask)
+			  != shadow_tex))) {
+		 yyerror(& @8, state,
+			 "multiple targets used on one texture image unit");
+		 YYERROR;
+	      }
+
+
+	      state->prog->TexturesUsed[$6] |= target_mask;
+	      state->prog->ShadowSamplers |= shadow_tex;
 	   }
 	}
 	;
@@ -410,6 +443,9 @@ texTarget: TEX_1D  { $$ = TEXTURE_1D_INDEX; }
 	| TEX_3D   { $$ = TEXTURE_3D_INDEX; }
 	| TEX_CUBE { $$ = TEXTURE_CUBE_INDEX; }
 	| TEX_RECT { $$ = TEXTURE_RECT_INDEX; }
+	| TEX_SHADOW1D   { $$ = -TEXTURE_1D_INDEX; }
+	| TEX_SHADOW2D   { $$ = -TEXTURE_2D_INDEX; }
+	| TEX_SHADOWRECT { $$ = -TEXTURE_RECT_INDEX; }
 	;
 
 SWZ_instruction: SWZ maskedDstReg ',' srcReg ',' extendedSwizzle
