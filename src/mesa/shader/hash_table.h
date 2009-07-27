@@ -54,6 +54,15 @@ extern struct hash_table *hash_table_ctor(unsigned num_buckets,
 
 
 /**
+ * Release all memory associated with a hash table
+ *
+ * \warning
+ * This function cannot release memory occupied either by keys or data.
+ */
+extern void hash_table_dtor(struct hash_table *ht);
+
+
+/**
  * Flush all entries from a hash table
  *
  * \param ht  Table to be cleared of its entries.

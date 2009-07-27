@@ -68,7 +68,8 @@ hash_table_ctor(unsigned num_buckets, hash_func_t hash,
         num_buckets = 16;
     }
 
-    ht = malloc(sizeof(*ht) + ((num_buckets - 1) * sizeof(ht->buckets[0])));
+    ht = _mesa_malloc(sizeof(*ht) + ((num_buckets - 1) 
+				     * sizeof(ht->buckets[0])));
     if (ht != NULL) {
         ht->hash = hash;
         ht->compare = compare;
@@ -84,6 +85,14 @@ hash_table_ctor(unsigned num_buckets, hash_func_t hash,
 
 
 void
+hash_table_dtor(struct hash_table *ht)
+{
+   hash_table_clear(ht);
+   _mesa_free(ht);
+}
+
+
+void
 hash_table_clear(struct hash_table *ht)
 {
    struct node *node;
@@ -94,7 +103,7 @@ hash_table_clear(struct hash_table *ht)
    for (i = 0; i < ht->num_buckets; i++) {
       foreach_s(node, temp, & ht->buckets[i]) {
 	 remove_from_list(node);
-	 free(node);
+	 _mesa_free(node);
       }
 
       assert(is_empty_list(& ht->buckets[i]));
@@ -128,7 +137,7 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
     const unsigned bucket = hash_value % ht->num_buckets;
     struct hash_node *node;
 
-    node = calloc(1, sizeof(*node));
+    node = _mesa_calloc(1, sizeof(*node));
 
     node->data = data;
     node->key = key;
