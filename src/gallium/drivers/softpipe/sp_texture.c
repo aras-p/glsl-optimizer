@@ -42,6 +42,7 @@
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
 #include "sp_screen.h"
+#include "sp_winsys.h"
 
 
 /* Simple, maximally packed layout.
