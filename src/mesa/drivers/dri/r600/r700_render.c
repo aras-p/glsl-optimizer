@@ -342,6 +342,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
         unsigned int VGT_PRIMITIVE_TYPE = 0;
         unsigned int VGT_NUM_INDICES    = 0;
 
+	if (numIndices < 1)
+		continue;
+
         numEntires =   3 /* VGT_PRIMITIVE_TYPE */
 		     + 2 /* VGT_INDEX_TYPE */
 		     + 2 /* NUM_INSTANCES */
