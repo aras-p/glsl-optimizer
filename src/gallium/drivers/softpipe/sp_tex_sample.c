@@ -955,8 +955,8 @@ sp_get_samples_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
 
-      float u = s[j] * xpot - 0.5F;
-      float v = t[j] * ypot - 0.5F;
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
 
       int uflr = util_ifloor(u);
       int vflr = util_ifloor(v);
@@ -990,8 +990,8 @@ sp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
 
-      float u = s[j] * xpot - 0.5F;
-      float v = t[j] * ypot - 0.5F;
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
 
       int x0, y0;
       const float *out;
