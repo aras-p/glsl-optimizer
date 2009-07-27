@@ -261,6 +261,9 @@ language: ARBvp_10
 	      yyerror(& @1, state, "invalid vertex program header");
 	   }
 	   state->mode = ARB_fragment;
+
+	   state->option.TexRect =
+	      (state->ctx->Extensions.NV_texture_rectangle != GL_FALSE);
 	}
 	;
 

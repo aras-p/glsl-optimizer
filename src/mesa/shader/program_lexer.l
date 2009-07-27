@@ -29,6 +29,7 @@
 
 #define require_ARB_vp (yyextra->mode == ARB_vertex)
 #define require_ARB_fp (yyextra->mode == ARB_fragment)
+#define require_rect   (yyextra->option.TexRect)
 
 #define return_token_or_IDENTIFIER(condition, token)	\
    do {							\
@@ -293,7 +294,7 @@ texture                   { return_token_or_IDENTIFIER(require_ARB_fp, TEXTURE_U
 2D                        { return_token_or_IDENTIFIER(require_ARB_fp, TEX_2D); }
 3D                        { return_token_or_IDENTIFIER(require_ARB_fp, TEX_3D); }
 CUBE                      { return_token_or_IDENTIFIER(require_ARB_fp, TEX_CUBE); }
-RECT                      { return_token_or_IDENTIFIER(require_ARB_fp, TEX_RECT); }
+RECT                      { return_token_or_IDENTIFIER(require_ARB_fp && require_rect, TEX_RECT); }
 
 [_a-zA-Z$][_a-zA-Z0-9$]*  {
    yylval->string = strdup(yytext);

@@ -200,6 +200,7 @@ struct asm_parser_state {
       unsigned PrecisionHint:2;
       unsigned DrawBuffers:1;
       unsigned Shadow:1;
+      unsigned TexRect:1;
    } option;
 
    struct {
