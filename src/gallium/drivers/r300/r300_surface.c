@@ -139,7 +139,7 @@ validate:
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
+        r300_emit_vertex_program_code(r300, &r300_passthrough_vertex_shader, 0);
     } else {
         BEGIN_CS(4);
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);
@@ -277,7 +277,7 @@ validate:
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
+        r300_emit_vertex_program_code(r300, &r300_passthrough_vertex_shader, 0);
     } else {
         BEGIN_CS(4);
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);

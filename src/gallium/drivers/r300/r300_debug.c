@@ -22,6 +22,83 @@
 
 #include "r300_debug.h"
 
+
+static char* r5xx_fs_swiz[] = {
+    " R",
+    " G",
+    " B",
+    " A",
+    " 0",
+    ".5",
+    " 1",
+    " U",
+};
+
+static char* r5xx_fs_op_rgb[] = {
+    "MAD",
+    "DP3",
+    "DP4",
+    "D2A",
+    "MIN",
+    "MAX",
+    "---",
+    "CND",
+    "CMP",
+    "FRC",
+    "SOP",
+    "MDH",
+    "MDV",
+};
+
+static char* r5xx_fs_op_alpha[] = {
+    "MAD",
+    " DP",
+    "MIN",
+    "MAX",
+    "---",
+    "CND",
+    "CMP",
+    "FRC",
+    "EX2",
+    "LN2",
+    "RCP",
+    "RSQ",
+    "SIN",
+    "COS",
+    "MDH",
+    "MDV",
+};
+
+static char* r5xx_fs_mask[] = {
+    "NONE",
+    "R   ",
+    " G  ",
+    "RG  ",
+    "  B ",
+    "R B ",
+    " GB ",
+    "RGB ",
+    "   A",
+    "R  A",
+    " G A",
+    "RG A",
+    "  BA",
+    "R BA",
+    " GBA",
+    "RGBA",
+};
+
+static char* r5xx_fs_tex[] = {
+    "    NOP",
+    "     LD",
+    "TEXKILL",
+    "   PROJ",
+    "LODBIAS",
+    "    LOD",
+    "   DXDY",
+};
+
+
 void r3xx_dump_fs(struct r3xx_fragment_shader* fs)
 {
     int i;
@@ -142,57 +219,10 @@ void r5xx_fs_dump(struct r5xx_fragment_shader* fs)
                         r5xx_fs_swiz[(inst >> 26) & 0x3],
                         r5xx_fs_swiz[(inst >> 28) & 0x3],
                         r5xx_fs_swiz[(inst >> 30) & 0x3]);
-                
+
                 inst = fs->instructions[i].inst3;
                 debug_printf("    3: TEX_DXDY   0x%08x\n", inst);
                 break;
         }
-    }
-}
-
-static void r300_vs_op_dump(uint32_t op)
-{
-    debug_printf(" dst: %d%s op: ",
-            (op >> 13) & 0x7f, r300_vs_dst_debug[(op >> 8) & 0x7]);
-    if (op & 0x80) {
-        if (op & 0x1) {
-            debug_printf("PVS_MACRO_OP_2CLK_M2X_ADD\n");
-        } else {
-            debug_printf("   PVS_MACRO_OP_2CLK_MADD\n");
-        }
-    } else if (op & 0x40) {
-        debug_printf("%s\n", r300_vs_me_ops[op & 0x1f]);
-    } else {
-        debug_printf("%s\n", r300_vs_ve_ops[op & 0x1f]);
-    }
-}
-
-void r300_vs_src_dump(uint32_t src)
-{
-    debug_printf(" reg: %d%s swiz: %s%s/%s%s/%s%s/%s%s\n",
-            (src >> 5) & 0x7f, r300_vs_src_debug[src & 0x3],
-            src & (1 << 25) ? "-" : " ",
-            r300_vs_swiz_debug[(src >> 13) & 0x7],
-            src & (1 << 26) ? "-" : " ",
-            r300_vs_swiz_debug[(src >> 16) & 0x7],
-            src & (1 << 27) ? "-" : " ",
-            r300_vs_swiz_debug[(src >> 19) & 0x7],
-            src & (1 << 28) ? "-" : " ",
-            r300_vs_swiz_debug[(src >> 22) & 0x7]);
-}
-
-void r300_vs_dump(struct r300_vertex_shader* vs)
-{
-    int i;
-
-    for (i = 0; i < vs->instruction_count; i++) {
-        debug_printf("%d: op: 0x%08x", i, vs->instructions[i].inst0);
-        r300_vs_op_dump(vs->instructions[i].inst0);
-        debug_printf(" src0: 0x%08x", vs->instructions[i].inst1);
-        r300_vs_src_dump(vs->instructions[i].inst1);
-        debug_printf(" src1: 0x%08x", vs->instructions[i].inst2);
-        r300_vs_src_dump(vs->instructions[i].inst2);
-        debug_printf(" src2: 0x%08x", vs->instructions[i].inst3);
-        r300_vs_src_dump(vs->instructions[i].inst3);
     }
 }

@@ -66,6 +66,8 @@ static struct r3xx_fragment_shader r3xx_texture_fragment_shader = {
         R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
 };
 
+struct r300_fs_asm;
+
 void r3xx_fs_finalize(struct r300_fragment_shader* fs,
                       struct r300_fs_asm* assembler);
 

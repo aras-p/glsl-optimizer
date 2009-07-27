@@ -24,6 +24,8 @@
 
 #include "r300_emit.h"
 
+#include "r300_vs.h"
+
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend)
 {
@@ -380,13 +382,33 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
-void r300_emit_vertex_shader(struct r300_context* r300,
-                             struct r300_vertex_shader* vs)
+static const float * get_shader_constant(
+    struct r300_context * r300,
+    struct rc_constant * constant,
+    struct r300_constant_buffer * externals)
+{
+    static const float zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+    switch(constant->Type) {
+        case RC_CONSTANT_EXTERNAL:
+            return externals->constants[constant->u.External];
+
+        case RC_CONSTANT_IMMEDIATE:
+            return constant->u.Immediate;
+
+        default:
+            debug_printf("r300: Implementation error: Unhandled constant type %i\n",
+                constant->Type);
+            return zero;
+    }
+}
+
+void r300_emit_vertex_program_code(struct r300_context* r300,
+                                   struct r300_vertex_program_code* code,
+                                   struct r300_constant_buffer* constants)
 {
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct r300_constant_buffer* constants =
-        &r300->shader_constants[PIPE_SHADER_VERTEX];
+    unsigned instruction_count = code->length / 4;
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
@@ -395,10 +417,10 @@ void r300_emit_vertex_shader(struct r300_context* r300,
         return;
     }
 
-    if (constants->count) {
-        BEGIN_CS(14 + (vs->instruction_count * 4) + (constants->count * 4));
+    if (code->constants.Count) {
+        BEGIN_CS(14 + code->length + (code->constants.Count * 4));
     } else {
-        BEGIN_CS(11 + (vs->instruction_count * 4));
+        BEGIN_CS(11 + code->length);
     }
 
     /* R300_VAP_PVS_CODE_CNTL_0
@@ -408,30 +430,27 @@ void r300_emit_vertex_shader(struct r300_context* r300,
      * XXX these could be optimized to select better values... */
     OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
     OUT_CS(R300_PVS_FIRST_INST(0) |
-            R300_PVS_XYZW_VALID_INST(vs->instruction_count - 1) |
-            R300_PVS_LAST_INST(vs->instruction_count - 1));
-    OUT_CS(R300_PVS_MAX_CONST_ADDR(constants->count - 1));
-    OUT_CS(vs->instruction_count - 1);
+            R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
+            R300_PVS_LAST_INST(instruction_count - 1));
+    OUT_CS(R300_PVS_MAX_CONST_ADDR(code->constants.Count - 1));
+    OUT_CS(instruction_count - 1);
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
-    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, vs->instruction_count * 4);
-    for (i = 0; i < vs->instruction_count; i++) {
-        OUT_CS(vs->instructions[i].inst0);
-        OUT_CS(vs->instructions[i].inst1);
-        OUT_CS(vs->instructions[i].inst2);
-        OUT_CS(vs->instructions[i].inst3);
-    }
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->length);
+    for (i = 0; i < code->length; i++)
+        OUT_CS(code->body.d[i]);
 
-    if (constants->count) {
+    if (code->constants.Count) {
         OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                 (r300screen->caps->is_r500 ?
                  R500_PVS_CONST_START : R300_PVS_CONST_START));
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->count * 4);
-        for (i = 0; i < constants->count; i++) {
-            OUT_CS_32F(constants->constants[i][0]);
-            OUT_CS_32F(constants->constants[i][1]);
-            OUT_CS_32F(constants->constants[i][2]);
-            OUT_CS_32F(constants->constants[i][3]);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->constants.Count * 4);
+        for (i = 0; i < code->constants.Count; i++) {
+            const float * data = get_shader_constant(r300, &code->constants.Constants[i], constants);
+            OUT_CS_32F(data[0]);
+            OUT_CS_32F(data[1]);
+            OUT_CS_32F(data[2]);
+            OUT_CS_32F(data[3]);
         }
     }
 
@@ -441,6 +460,12 @@ void r300_emit_vertex_shader(struct r300_context* r300,
             R300_PVS_VF_MAX_VTX_NUM(12));
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
+}
+
+void r300_emit_vertex_shader(struct r300_context* r300,
+                             struct r300_vertex_shader* vs)
+{
+    r300_emit_vertex_program_code(r300, &vs->code, &r300->shader_constants[PIPE_SHADER_VERTEX]);
 }
 
 void r300_emit_viewport_state(struct r300_context* r300,

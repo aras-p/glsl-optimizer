@@ -34,6 +34,8 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
+struct r300_vertex_shader;
+
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control; /* R300_RB3D_ABLEND: 0x4e08 */
@@ -240,33 +242,6 @@ struct r300_vertex_format {
     int vs_tab[16];
     /* Map of rasterizer attributes from GB through RS to US. */
     int fs_tab[16];
-};
-
-struct r300_vertex_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-    struct tgsi_shader_info info;
-
-    /* Fallback shader, because Draw has issues */
-    struct draw_vertex_shader* draw;
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Are there immediates in this shader?
-     * If not, we can heavily optimize recompilation. */
-    boolean uses_imms;
-
-    /* Number of used instructions */
-    int instruction_count;
-
-    /* Machine instructions */
-    struct {
-        uint32_t inst0;
-        uint32_t inst1;
-        uint32_t inst2;
-        uint32_t inst3;
-    } instructions[128]; /*< XXX magic number */
 };
 
 static struct pipe_viewport_state r300_viewport_identity = {

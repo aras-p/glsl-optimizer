@@ -122,6 +122,8 @@ static struct r5xx_fragment_shader r5xx_texture_fragment_shader = {
         R500_ALU_RGBA_A_SWIZ_0,
 };
 
+struct r300_fs_asm;
+
 void r5xx_fs_finalize(struct r5xx_fragment_shader* fs,
                       struct r300_fs_asm* assembler);
 

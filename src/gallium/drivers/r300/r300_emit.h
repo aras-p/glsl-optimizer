@@ -30,6 +30,8 @@
 #include "r300_screen.h"
 #include "r300_state_inlines.h"
 
+struct r300_vertex_program_code;
+
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend);
 
@@ -67,6 +69,10 @@ void r300_emit_texture(struct r300_context* r300,
 void r300_emit_vertex_buffer(struct r300_context* r300);
 
 void r300_emit_vertex_format_state(struct r300_context* r300);
+
+void r300_emit_vertex_program_code(struct r300_context* r300,
+                                   struct r300_vertex_program_code* code,
+                                   struct r300_constant_buffer* constants);
 
 void r300_emit_vertex_shader(struct r300_context* r300,
                              struct r300_vertex_shader* vs);
