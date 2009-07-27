@@ -924,6 +924,13 @@ single_output_color(struct quad_stage *qs,
    }
 }
 
+static void
+blend_noop(struct quad_stage *qs, 
+           struct quad_header *quads[],
+           unsigned nr)
+{
+}
+
 
 static void
 choose_blend_quad(struct quad_stage *qs, 
@@ -934,9 +941,12 @@ choose_blend_quad(struct quad_stage *qs,
    const struct pipe_blend_state *blend = llvmpipe->blend;
 
    qs->run = blend_fallback;
-
-   if (!llvmpipe->blend->logicop_enable &&
-       llvmpipe->blend->colormask == 0xf) 
+   
+   if (llvmpipe->framebuffer.nr_cbufs == 0) {
+      qs->run = blend_noop;
+   }
+   else if (!llvmpipe->blend->logicop_enable &&
+            llvmpipe->blend->colormask == 0xf) 
    {
       if (!blend->blend_enable) {
          qs->run = single_output_color;
