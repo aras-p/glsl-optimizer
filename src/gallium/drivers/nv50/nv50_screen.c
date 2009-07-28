@@ -44,9 +44,10 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 	} else
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
+		case PIPE_FORMAT_Z32_FLOAT:
 		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z16_UNORM:
+		case PIPE_FORMAT_X8Z24_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
 			return TRUE;
 		default:
 			break;
