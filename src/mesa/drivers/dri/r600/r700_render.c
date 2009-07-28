@@ -403,10 +403,6 @@ static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
         return GL_TRUE;
     }
 
-    context_t *context = R700_CONTEXT(ctx);
-
-    r700UpdateShaders(ctx);
-
     bRet = r700RunRender(ctx, stage);
 
     return bRet;
