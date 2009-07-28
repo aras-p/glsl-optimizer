@@ -455,38 +455,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_30        ;  /* 0xA0FE */
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_31        ;  /* 0xA0FF */
 
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_0       ;  /* 0xA191 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_1       ;  /* 0xA192 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_2       ;  /* 0xA193 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_3       ;  /* 0xA194 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_4       ;  /* 0xA195 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_5       ;  /* 0xA196 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_6       ;  /* 0xA197 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_7       ;  /* 0xA198 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_8       ;  /* 0xA199 */
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_9       ;  /* 0xA19A */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_10      ;  /* 0xA19B */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_11      ;  /* 0xA19C */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_12      ;  /* 0xA19D */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_13      ;  /* 0xA19E */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_14      ;  /* 0xA19F */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_15      ;  /* 0xA1A0 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_16      ;  /* 0xA1A1 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_17      ;  /* 0xA1A2 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_18      ;  /* 0xA1A3 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_19      ;  /* 0xA1A4 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_20      ;  /* 0xA1A5 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_21      ;  /* 0xA1A6 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_22      ;  /* 0xA1A7 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_23      ;  /* 0xA1A8 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_24      ;  /* 0xA1A9 */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_25      ;  /* 0xA1AA */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_26      ;  /* 0xA1AB */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_27      ;  /* 0xA1AC */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_28      ;  /* 0xA1AD */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_29      ;  /* 0xA1AE */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_30      ;  /* 0xA1AF */
-	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_31      ;  /* 0xA1B0 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL[R700_MAX_SHADER_EXPORTS];
 
 	// shaders
 	PS_STATE_STRUCT                 ps;

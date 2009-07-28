@@ -255,20 +255,20 @@ void * r700GetActiveFpShaderBo(GLcontext * ctx)
 
 GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);   
+    context_t *context = R700_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
-    
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
-
+    r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
+    struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
-    unsigned int ui;
-
+    unsigned int ui, i;
     unsigned int unNumOfReg;
-    
+    unsigned int unBit;
+
     if(GL_FALSE == fp->loaded)
     {
         if(fp->r700Shader.bNeedsAssembly == GL_TRUE)
@@ -277,11 +277,11 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    }
 
         /* Load fp to gpu */
-        r600EmitShader(ctx, 
-                       &(fp->shaderbo), 
+        r600EmitShader(ctx,
+                       &(fp->shaderbo),
                        (GLvoid *)(fp->r700Shader.pProgram),
                        fp->r700Shader.uShaderBinaryDWORDSize,
-                       "FS");    			                
+                       "FS");
 
         fp->loaded = GL_TRUE;
     }
@@ -360,6 +360,46 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         }
         END_BATCH();
         COMMIT_BATCH();
+    }
+
+    // emit ps input map
+    unBit = 1 << FRAG_ATTRIB_COL0;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL0];
+	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		     SEMANTIC_shift, SEMANTIC_mask);
+	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    else
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    unBit = 1 << FRAG_ATTRIB_COL1;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1];
+	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		     SEMANTIC_shift, SEMANTIC_mask);
+	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    else
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    for(i=0; i<8; i++)
+    {
+	    unBit = 1 << (FRAG_ATTRIB_TEX0 + i);
+	    if(mesa_fp->Base.InputsRead & unBit)
+	    {
+		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+		    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+			     SEMANTIC_shift, SEMANTIC_mask);
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    }
     }
 
     return GL_TRUE;

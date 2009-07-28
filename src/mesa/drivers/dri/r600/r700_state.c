@@ -824,11 +824,9 @@ static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
 	switch (mode) {
 	case GL_FLAT:
 		SETbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
-		//SETbit(r700->SPI_PS_INPUT_CNTL_0.u32All, FLAT_SHADE_bit);
 		break;
 	case GL_SMOOTH:
 		CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
-		//CLEARbit(r700->SPI_PS_INPUT_CNTL_0.u32All, FLAT_SHADE_bit);
 		break;
 	default:
 		return;
@@ -1674,10 +1672,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
-
-    r700->SPI_PS_INPUT_CNTL_0.u32All  = 0x00000800;
-    r700->SPI_PS_INPUT_CNTL_1.u32All  = 0x00000801;
-    r700->SPI_PS_INPUT_CNTL_2.u32All  = 0x00000802;
 
     r700->SPI_THREAD_GROUPING.u32All = 0;
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
