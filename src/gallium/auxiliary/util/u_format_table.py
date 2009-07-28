@@ -51,9 +51,6 @@ class Type:
         return s
 
 
-SCALED, NORM, SRGB = 'scaled', 'norm', 'srgb'
-
-
 class Format:
 
     def __init__(self, name, layout, block_width, block_height, in_types, out_swizzle, colorspace):
@@ -111,7 +108,12 @@ def layout_map(layout):
     return 'UTIL_FORMAT_LAYOUT_' + str(layout).upper()
 
 
-layout_channels_map = {
+def colorspace_map(colorspace):
+    return 'UTIL_FORMAT_COLORSPACE_' + str(colorspace).upper()
+
+
+colorspace_channels_map = {
+    'rgb': 'rgba',
     'rgba': 'rgba',
     'zs': 'zs',
     'yuv': ['y1', 'y2', 'u', 'v'],
@@ -186,7 +188,7 @@ def write_format_table(formats):
                 comment = 'ignored'
             print "         %s%s /* %s */" % (swizzle_map[swizzle], sep, comment)
         print "      },"
-        print "      UTIL_FORMAT_COLORSPACE_RGB,"
+        print "      %s," % (colorspace_map(format.colorspace),)
         print "   },"
     print "   {"
     print "      PIPE_FORMAT_NONE,"
