@@ -808,9 +808,11 @@ static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
 	switch (mode) {
 	case GL_FLAT:
 		SETbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
+		SETbit(r700->SPI_PS_INPUT_CNTL_0.u32All, FLAT_SHADE_bit);
 		break;
 	case GL_SMOOTH:
 		CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
+		CLEARbit(r700->SPI_PS_INPUT_CNTL_0.u32All, FLAT_SHADE_bit);
 		break;
 	default:
 		return;
