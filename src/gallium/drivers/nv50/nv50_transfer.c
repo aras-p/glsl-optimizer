@@ -76,13 +76,13 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct nouveau_bo *src_bo,
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
 		if (src_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf, 0x0218, 1);
-			OUT_RING  (chan, (dy << 16) | sx);
+			OUT_RING  (chan, (sy << 16) | sx);
 		} else {
 			src_offset += (line_count * src_pitch);
 		}
 		if (dst_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf, 0x0234, 1);
-			OUT_RING  (chan, (sy << 16) | dx);
+			OUT_RING  (chan, (dy << 16) | dx);
 		} else {
 			dst_offset += (line_count * dst_pitch);
 		}
