@@ -205,10 +205,15 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	}
 
 	limit = CLAMP(cso->lod_bias, -16.0, 15.0);
-	tsc[1] |= ((int)(limit * 256.0) & 0x1fff) << 11;
+	tsc[1] |= ((int)(limit * 256.0) & 0x1fff) << 12;
 
 	tsc[2] |= ((int)CLAMP(cso->max_lod, 0.0, 15.0) << 20) |
 		  ((int)CLAMP(cso->min_lod, 0.0, 15.0) << 8);
+
+	tsc[4] = fui(cso->border_color[0]);
+	tsc[5] = fui(cso->border_color[1]);
+	tsc[6] = fui(cso->border_color[2]);
+	tsc[7] = fui(cso->border_color[3]);
 
 	sso->normalized = cso->normalized_coords;
 	return (void *)sso;
