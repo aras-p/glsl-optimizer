@@ -35,13 +35,13 @@ nv50_format(enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
-		return NV50_2D_DST_FORMAT_32BPP;
+		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
-		return NV50_2D_DST_FORMAT_24BPP;
+		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
 	case PIPE_FORMAT_R5G6B5_UNORM:
-		return NV50_2D_DST_FORMAT_16BPP;
+		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
 	case PIPE_FORMAT_A8_UNORM:
-		return NV50_2D_DST_FORMAT_8BPP;
+		return NV50_2D_DST_FORMAT_R8_UNORM;
 	default:
 		return -1;
 	}
