@@ -18,6 +18,7 @@ SOURCES = \
 	clear-repeat.c \
 	clear-random.c \
 	clear.c \
+	createwin.c \
 	dlist-dangling.c \
 	dlist-flat-tri.c \
 	dlist-mat-tri.c \
@@ -48,6 +49,7 @@ SOURCES = \
 	lineloop-clip.c \
 	lineloop-elts.c \
 	lineloop.c \
+	linestrip-clip.c \
 	linestrip-flat-stipple.c \
 	linestrip-stipple-wide.c \
 	linestrip-stipple.c \
@@ -87,7 +89,9 @@ SOURCES = \
 	quadstrip-cont.c \
 	quadstrip-flat.c \
 	quadstrip.c \
+	readpixels.c \
 	tri-alpha.c \
+	tri-alpha-tex.c \
 	tri-array-interleaved.c \
 	tri-blend-color.c \
 	tri-blend-max.c \
@@ -95,6 +99,7 @@ SOURCES = \
 	tri-blend-revsub.c \
 	tri-blend-sub.c \
 	tri-blend.c \
+	tri-clear.c \
 	tri-clip.c \
 	tri-cull-both.c \
 	tri-cull.c \
@@ -117,6 +122,7 @@ SOURCES = \
 	tri-query.c \
 	tri-repeat.c \
 	tri-scissor-tri.c \
+	tri-square.c \
 	tri-stencil.c \
 	tri-stipple.c \
 	tri-multitex-vbo.c \
@@ -126,6 +132,7 @@ SOURCES = \
 	tri-unfilled-fog.c \
 	tri-unfilled-edgeflag.c \
 	tri-unfilled-clip.c \
+	tri-unfilled-point.c \
 	tri-unfilled-smooth.c \
 	tri-unfilled-tri.c \
 	tri-unfilled-tri-lit.c \
@@ -134,6 +141,7 @@ SOURCES = \
 	tri-unfilled.c \
 	tri-userclip.c \
 	tri-viewport.c \
+	tri-z-9.c \
 	tri-z-eq.c \
 	tri-z.c \
 	tri.c \
