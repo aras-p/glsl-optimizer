@@ -417,6 +417,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, 0x1234, 1);
 	so_data  (so, 1);
 
+	/* activate first scissor rectangle */
+	so_method(so, screen->tesla, NV50TCL_SCISSOR_ENABLE, 1);
+	so_data  (so, 1);
+
 	so_emit(chan, so);
 	so_ref (so, &screen->static_init);
 	so_ref (NULL, &so);

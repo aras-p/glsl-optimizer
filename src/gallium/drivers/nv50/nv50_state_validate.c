@@ -119,12 +119,18 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
-	so_method(so, tesla, 0x0e04, 2);
+	/* set window scissor rectangle to window extents */
+	so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
-	so_method(so, tesla, 0xdf8, 2);
+	/* set window lower left corner */
+	so_method(so, tesla, NV50TCL_WINDOW_LEFT, 2);
 	so_data  (so, 0);
 	so_data  (so, h);
+	/* set screen scissor rectangle */
+	so_method(so, tesla, NV50TCL_SCREEN_SCISSOR_HORIZ, 2);
+	so_data  (so, w << 16);
+	so_data  (so, h << 16);
 
 	so_ref(so, &nv50->state.fb);
 	so_ref(NULL, &so);
@@ -233,13 +239,16 @@ nv50_state_validate(struct nv50_context *nv50)
 		nv50->state.scissor_enabled = rast->scissor;
 
 		so = so_new(3, 0);
-		so_method(so, tesla, 0x0ff4, 2);
+		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
 		if (nv50->state.scissor_enabled) {
-			so_data(so, ((s->maxx - s->minx) << 16) | s->minx);
-			so_data(so, ((s->maxy - s->miny) << 16) | s->miny);
+			/* the hw has y = 0 = bottom here */
+			unsigned top = nv50->framebuffer.height - s->miny;
+			unsigned bottom = nv50->framebuffer.height - s->maxy;
+			so_data(so, (s->maxx << 16) | s->minx);
+			so_data(so, (top << 16) | bottom);
 		} else {
-			so_data(so, (8192 << 16));
-			so_data(so, (8192 << 16));
+			so_data(so, (nv50->framebuffer.width << 16));
+			so_data(so, (nv50->framebuffer.height << 16));
 		}
 		so_ref(so, &nv50->state.scissor);
 		so_ref(NULL, &so);
