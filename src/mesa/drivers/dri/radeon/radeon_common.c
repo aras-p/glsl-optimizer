@@ -887,10 +887,11 @@ void radeonUpdatePageFlipping(radeonContextPtr radeon)
 
 void radeon_window_moved(radeonContextPtr radeon)
 {
+	/* Cliprects has to be updated before doing anything else */
+	radeonSetCliprects(radeon);
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
 		radeonUpdatePageFlipping(radeon);
 	}
-	radeonSetCliprects(radeon);
 }
 
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height)
