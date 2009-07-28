@@ -45,7 +45,7 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
    desc = util_format_description(format);
 
    /* FIXME: Support more formats */
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_RGBA);
+   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
    assert(desc->block.width == 1);
    assert(desc->block.height == 1);
    assert(desc->block.bits <= 32);
