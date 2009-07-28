@@ -5,10 +5,17 @@ clear-random
 clear-repeat
 clear-scissor
 clear-undefined
+createwin
+dlist-begin-call-end
 dlist-dangling
 dlist-degenerate
 dlist-edgeflag
 dlist-edgeflag-dangling
+dlist-flat-tri
+dlist-mat-tri
+dlist-recursive-call
+dlist-tri-flat-tri
+dlist-tri-mat-tri
 draw2arrays
 drawarrays
 drawelements
@@ -31,6 +38,7 @@ lineloop
 lineloop-clip
 lineloop-elts
 linestrip
+linestrip-clip
 linestrip-flat-stipple
 linestrip-stipple
 linestrip-stipple-wide
@@ -71,8 +79,10 @@ quadstrip-cont
 quadstrip-flat
 readtex.c
 readtex.h
+readpixels
 tri
 tri-alpha
+tri-alpha-tex
 tri-array-interleaved
 tri-blend
 tri-blend-color
@@ -80,6 +90,7 @@ tri-blend-max
 tri-blend-min
 tri-blend-revsub
 tri-blend-sub
+tri-clear
 tri-clip
 tri-cull
 tri-cull-both
@@ -94,6 +105,7 @@ tri-fog
 tri-fp
 tri-fp-const-imm
 tri-lit
+tri-lit-material
 tri-logicop-none
 tri-logicop-xor
 tri-mask-tri
@@ -102,6 +114,7 @@ tri-orig
 tri-query
 tri-repeat
 tri-scissor-tri
+tri-square
 tri-stencil
 tri-stipple
 tri-tex
@@ -111,6 +124,7 @@ tri-unfilled
 tri-unfilled-clip
 tri-unfilled-edgeflag
 tri-unfilled-fog
+tri-unfilled-point
 tri-unfilled-smooth
 tri-unfilled-tri
 tri-unfilled-tri-lit
@@ -119,6 +133,7 @@ tri-unfilled-userclip-stip
 tri-userclip
 tri-viewport
 tri-z
+tri-z-9
 tri-z-eq
 trifan
 trifan-flat

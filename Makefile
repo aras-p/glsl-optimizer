@@ -388,7 +388,17 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/glw.pc.in			\
 	$(DIRECTORY)/src/glw/depend
 
+GLEW_FILES = \
+	$(DIRECTORY)/include/GL/glew.h			\
+	$(DIRECTORY)/include/GL/glxew.h			\
+	$(DIRECTORY)/include/GL/wglew.h			\
+	$(DIRECTORY)/src/glew/*.c			\
+	$(DIRECTORY)/src/glew/Makefile			\
+	$(DIRECTORY)/src/glew/SConscript		\
+	$(DIRECTORY)/src/glew/LICENSE.txt
+
 DEMO_FILES = \
+	$(GLEW_FILES)					\
 	$(DIRECTORY)/progs/beos/*.cpp			\
 	$(DIRECTORY)/progs/beos/Makefile		\
 	$(DIRECTORY)/progs/images/*.rgb			\

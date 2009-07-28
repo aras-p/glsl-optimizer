@@ -628,10 +628,10 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       if (gem_disable) {
-	 fprintf(stderr, "GEM disabled.  Using classic.\n");
+	 _mesa_warning(NULL, "GEM disabled.  Using classic.");
       } else {
-	 fprintf(stderr, "Failed to initialize GEM.  "
-		 "Falling back to classic.\n");
+	 _mesa_warning(NULL,
+                       "Failed to initialize GEM.  Falling back to classic.");
       }
 
       if (intelScreen->tex.size == 0) {
