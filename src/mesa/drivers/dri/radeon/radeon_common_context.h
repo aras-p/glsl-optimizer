@@ -239,6 +239,11 @@ struct radeon_tex_obj {
 	GLuint SQ_TEX_SAMPLER1;
 	GLuint SQ_TEX_SAMPLER2;
 
+	GLuint TD_PS_SAMPLER0_BORDER_RED;
+	GLuint TD_PS_SAMPLER0_BORDER_GREEN;
+	GLuint TD_PS_SAMPLER0_BORDER_BLUE;
+	GLuint TD_PS_SAMPLER0_BORDER_ALPHA;
+
 	GLboolean border_fallback;
 
 

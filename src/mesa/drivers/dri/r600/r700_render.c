@@ -187,6 +187,15 @@ GLboolean r700SendTextureState(context_t *context)
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
 			    END_BATCH();
+
+			    BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
+			    R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
+			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
+			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
+			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
+			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
+			    END_BATCH();
+
 			    COMMIT_BATCH();
 		    }
 	    }
