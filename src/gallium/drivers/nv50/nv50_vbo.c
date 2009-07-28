@@ -49,6 +49,57 @@ nv50_prim(unsigned mode)
 	return NV50TCL_VERTEX_BEGIN_POINTS;
 }
 
+static INLINE unsigned
+nv50_vtxeltfmt(unsigned pf)
+{
+	static const uint8_t vtxelt_32[4] = { 0x90, 0x20, 0x10, 0x08 };
+	static const uint8_t vtxelt_16[4] = { 0xd8, 0x78, 0x28, 0x18 };
+	static const uint8_t vtxelt_08[4] = { 0xe8, 0xc0, 0x98, 0x50 };
+
+	unsigned nf, c = 0;
+
+	switch (pf_type(pf)) {
+	case PIPE_FORMAT_TYPE_FLOAT:
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT; break;
+	case PIPE_FORMAT_TYPE_UNORM:
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM; break;
+	case PIPE_FORMAT_TYPE_SNORM:
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM; break;
+	case PIPE_FORMAT_TYPE_USCALED:
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED; break;
+	case PIPE_FORMAT_TYPE_SSCALED:
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED; break;
+	default:
+		NOUVEAU_ERR("invalid vbo type %d\n",pf_type(pf));
+		assert(0);
+		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
+		break;
+	}
+
+	if (pf_size_y(pf)) c++;
+	if (pf_size_z(pf)) c++;
+	if (pf_size_w(pf)) c++;
+
+	if (pf_exp2(pf) == 3) {
+		switch (pf_size_x(pf)) {
+		case 1: return (nf | (vtxelt_08[c] << 16));
+		case 2: return (nf | (vtxelt_16[c] << 16));
+		case 4: return (nf | (vtxelt_32[c] << 16));
+		default:
+			break;
+		}
+	} else
+	if (pf_exp2(pf) == 6 && pf_size_x(pf) == 1) {
+		NOUVEAU_ERR("unsupported vbo component size 64\n");
+		assert(0);
+		return (nf | 0x08000000);
+	}
+
+	NOUVEAU_ERR("invalid vbo format %s\n",pf_name(pf));
+	assert(0);
+	return (nf | 0x08000000);
+}
+
 boolean
 nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
@@ -208,6 +259,10 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	struct nouveau_stateobj *vtxbuf, *vtxfmt;
 	int i;
 
+	/* don't validate if Gallium took away our buffers */
+	if (nv50->vtxbuf_nr == 0)
+		return;
+
 	vtxbuf = so_new(nv50->vtxelt_nr * 4, nv50->vtxelt_nr * 2);
 	vtxfmt = so_new(nv50->vtxelt_nr + 1, 0);
 	so_method(vtxfmt, tesla, 0x1ac0, nv50->vtxelt_nr);
@@ -218,30 +273,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			&nv50->vtxbuf[ve->vertex_buffer_index];
 		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
 
-		switch (ve->src_format) {
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-			so_data(vtxfmt, 0x7e080000 | i);
-			break;
-		case PIPE_FORMAT_R32G32B32_FLOAT:
-			so_data(vtxfmt, 0x7e100000 | i);
-			break;
-		case PIPE_FORMAT_R32G32_FLOAT:
-			so_data(vtxfmt, 0x7e200000 | i);
-			break;
-		case PIPE_FORMAT_R32_FLOAT:
-			so_data(vtxfmt, 0x7e900000 | i);
-			break;
-		case PIPE_FORMAT_R8G8B8A8_UNORM:
-			so_data(vtxfmt, 0x24500000 | i);
-			break;
-		default:
-		{
-			NOUVEAU_ERR("invalid vbo format %s\n",
-				    pf_name(ve->src_format));
-			assert(0);
-			return;
-		}
-		}
+		so_data(vtxfmt, nv50_vtxeltfmt(ve->src_format) | i);
 
 		so_method(vtxbuf, tesla, 0x900 + (i * 16), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->stride);
