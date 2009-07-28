@@ -139,7 +139,7 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 }
 
 static INLINE void
-nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint8_t *map,
+nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 			      unsigned start, unsigned count)
 {
 	struct nouveau_channel *chan = nv50->screen->tesla->channel;
