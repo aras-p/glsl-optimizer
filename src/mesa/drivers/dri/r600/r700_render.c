@@ -276,19 +276,11 @@ static GLboolean r700RunRender(GLcontext * ctx,
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     int lastIndex = 0;
-#if 1
     BATCH_LOCALS(&context->radeon);
 
     unsigned int i, j;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
-
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
-	                                   (ctx->FragmentProgram._Current);
-    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-    {
-        fp->r700AsmCode.bR6xx = 1;
-    }
 
     r700Start3D(context); /* TODO : this is too much. */
 
@@ -307,14 +299,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r600UpdateTextureState(ctx);
     r700SendTextureState(context);
-
-    if(GL_FALSE == fp->translated)
-    {
-        if( GL_FALSE == r700TranslateFragmentShader(fp, &(fp->mesa_program)) )
-        {
-            return GL_TRUE;
-        }
-    }
 
     r700SetupShaders(ctx);
 
@@ -391,7 +375,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     radeonReleaseArrays(ctx, 0);
 
-#endif //0
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
 
     return GL_FALSE;

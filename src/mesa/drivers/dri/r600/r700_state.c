@@ -72,12 +72,28 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
 
     GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
     GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
+    int i;
 
-    struct r700_vertex_program *vp;
-	int i;
+    if (ctx->FragmentProgram._Current) {
+	    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+		    (ctx->FragmentProgram._Current);
+	    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+	    {
+		    fp->r700AsmCode.bR6xx = 1;
+	    }
+
+	    if(GL_FALSE == fp->translated)
+	    {
+		    if( GL_FALSE == r700TranslateFragmentShader(fp, &(fp->mesa_program)) )
+		    {
+			    //return GL_TRUE;
+		    }
+	    }
+    }
 
     if (context->radeon.NewGLState) 
     {
+	struct r700_vertex_program *vp;
         context->radeon.NewGLState = 0;
 
         for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
