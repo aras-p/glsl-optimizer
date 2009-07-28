@@ -31,6 +31,7 @@
 #define require_ARB_fp (yyextra->mode == ARB_fragment)
 #define require_shadow (yyextra->option.Shadow)
 #define require_rect   (yyextra->option.TexRect)
+#define require_texarray        (yyextra->option.TexArray)
 
 #define return_token_or_IDENTIFIER(condition, token)	\
    do {							\
@@ -299,6 +300,10 @@ RECT                      { return_token_or_IDENTIFIER(require_ARB_fp && require
 SHADOW1D                  { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow, TEX_SHADOW1D); }
 SHADOW2D                  { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow, TEX_SHADOW2D); }
 SHADOWRECT                { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_rect, TEX_SHADOWRECT); }
+ARRAY1D                   { return_token_or_IDENTIFIER(require_ARB_fp && require_texarray, TEX_ARRAY1D); }
+ARRAY2D                   { return_token_or_IDENTIFIER(require_ARB_fp && require_texarray, TEX_ARRAY2D); }
+ARRAYSHADOW1D             { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_texarray, TEX_ARRAYSHADOW1D); }
+ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_texarray, TEX_ARRAYSHADOW2D); }
 
 [_a-zA-Z$][_a-zA-Z0-9$]*  {
    yylval->string = strdup(yytext);

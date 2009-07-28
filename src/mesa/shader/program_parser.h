@@ -201,6 +201,7 @@ struct asm_parser_state {
       unsigned DrawBuffers:1;
       unsigned Shadow:1;
       unsigned TexRect:1;
+      unsigned TexArray:1;
    } option;
 
    struct {

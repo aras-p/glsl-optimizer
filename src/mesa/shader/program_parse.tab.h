@@ -127,17 +127,21 @@
      TEX_SHADOW1D = 343,
      TEX_SHADOW2D = 344,
      TEX_SHADOWRECT = 345,
-     VERTEX = 346,
-     VTXATTRIB = 347,
-     WEIGHT = 348,
-     IDENTIFIER = 349,
-     MASK4 = 350,
-     MASK3 = 351,
-     MASK2 = 352,
-     MASK1 = 353,
-     SWIZZLE = 354,
-     DOT_DOT = 355,
-     DOT = 356
+     TEX_ARRAY1D = 346,
+     TEX_ARRAY2D = 347,
+     TEX_ARRAYSHADOW1D = 348,
+     TEX_ARRAYSHADOW2D = 349,
+     VERTEX = 350,
+     VTXATTRIB = 351,
+     WEIGHT = 352,
+     IDENTIFIER = 353,
+     MASK4 = 354,
+     MASK3 = 355,
+     MASK2 = 356,
+     MASK1 = 357,
+     SWIZZLE = 358,
+     DOT_DOT = 359,
+     DOT = 360
    };
 #endif
 
@@ -170,7 +174,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 174 "program_parse.tab.h"
+#line 178 "program_parse.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
