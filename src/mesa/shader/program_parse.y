@@ -683,12 +683,19 @@ dstReg: resultBinding
 	   }
 
 	   init_dst_reg(& $$);
-	   if (s->type == at_temp) {
+	   switch (s->type) {
+	   case at_temp:
 	      $$.File = PROGRAM_TEMPORARY;
 	      $$.Index = s->temp_binding;
-	   } else {
+	      break;
+	   case at_output:
+	      $$.File = PROGRAM_OUTPUT;
+	      $$.Index = s->output_binding;
+	      break;
+	   default:
 	      $$.File = s->param_binding_type;
 	      $$.Index = s->param_binding_begin;
+	      break;
 	   }
 	}
 	;
