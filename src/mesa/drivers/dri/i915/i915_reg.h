@@ -86,8 +86,10 @@
 #define BFM_ENABLE_STENCIL_WRITE_MASK     (1<<16)
 #define BFM_STENCIL_TEST_MASK_SHIFT       8
 #define BFM_STENCIL_TEST_MASK_MASK        (0xff<<8)
+#define BFM_STENCIL_TEST_MASK(x)	  (((x)&0xff) << 8)
 #define BFM_STENCIL_WRITE_MASK_SHIFT      0
 #define BFM_STENCIL_WRITE_MASK_MASK       (0xff<<0)
+#define BFM_STENCIL_WRITE_MASK(x)	  ((x)&0xff)
 
 
 

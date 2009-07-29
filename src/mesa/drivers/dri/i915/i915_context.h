@@ -82,7 +82,9 @@
 #define I915_CTXREG_IAB   	 	6
 #define I915_CTXREG_BLENDCOLOR0		7
 #define I915_CTXREG_BLENDCOLOR1		8
-#define I915_CTX_SETUP_SIZE		9
+#define I915_CTXREG_BF_STENCIL_OPS	9
+#define I915_CTXREG_BF_STENCIL_MASKS	10
+#define I915_CTX_SETUP_SIZE		11
 
 #define I915_FOGREG_COLOR		0
 #define I915_FOGREG_MODE0		1
@@ -321,6 +323,7 @@ extern void i915_print_ureg(const char *msg, GLuint ureg);
 extern void i915InitStateFunctions(struct dd_function_table *functions);
 extern void i915InitState(struct i915_context *i915);
 extern void i915_update_fog(GLcontext * ctx);
+extern void i915_update_stencil(GLcontext * ctx);
 
 
 /*======================================================================

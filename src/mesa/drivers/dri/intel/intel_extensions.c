@@ -120,8 +120,10 @@ static const struct dri_extension i915_extensions[] = {
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_shadow",                     NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_ATI_texture_env_combine3",       NULL },
    { "GL_EXT_shadow_funcs",               NULL },
+   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_NV_texture_env_combine4",        NULL },
    { NULL,                                NULL }
 };

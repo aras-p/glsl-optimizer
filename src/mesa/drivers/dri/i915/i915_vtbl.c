@@ -176,7 +176,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(20, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(18, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -223,11 +223,6 @@ i915_emit_invarient_state(struct intel_context *intel)
    OUT_BATCH(_3DSTATE_DEPTH_SUBRECT_DISABLE);
 
    OUT_BATCH(_3DSTATE_LOAD_INDIRECT | 0);       /* disable indirect state */
-   OUT_BATCH(0);
-
-
-   /* Don't support twosided stencil yet */
-   OUT_BATCH(_3DSTATE_BACKFACE_STENCIL_OPS | BFO_ENABLE_STENCIL_TWO_SIDE | 0);
    OUT_BATCH(0);
 
    ADVANCE_BATCH();
