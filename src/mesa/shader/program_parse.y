@@ -463,6 +463,7 @@ SWZ_instruction: SWZ maskedDstReg ',' srcReg ',' extendedSwizzle
 	    * FIXME: to the existing swizzle?
 	    */
 	   $4.Base.Swizzle = $6.swizzle;
+	   $4.Base.Negate = $6.mask;
 
 	   $$ = asm_instruction_ctor(OPCODE_SWZ, & $2, & $4, NULL, NULL);
 	   $$->Base.SaturateMode = $1.SaturateMode;
