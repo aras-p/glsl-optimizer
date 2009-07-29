@@ -67,6 +67,12 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1] = pAsm->number_used_registers++;
 	}
 
+        unBit = 1 << FRAG_ATTRIB_FOGC;
+        if(mesa_fp->Base.InputsRead & unBit)
+        {
+                pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
+        }
+
 	for(i=0; i<8; i++)
 	{
 		unBit = 1 << (FRAG_ATTRIB_TEX0 + i);

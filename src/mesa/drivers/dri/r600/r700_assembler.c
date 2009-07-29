@@ -4014,6 +4014,22 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
         export_starting_index++;
 	}
 
+        unBit = 1 << VERT_RESULT_FOGC;
+        if(OutputsWritten & unBit)
+        {
+        if( GL_FALSE == Process_Export(pR700AsmCode,
+                                       SQ_EXPORT_PARAM,
+                                       export_starting_index,
+                                       1,
+                                       pR700AsmCode->ucVP_OutputMap[VERT_RESULT_FOGC],
+                                       GL_FALSE) )
+        {
+            return GL_FALSE;
+        }
+
+        export_starting_index++;
+        }
+
 	for(i=0; i<8; i++)
 	{
 		unBit = 1 << (VERT_RESULT_TEX0 + i);
