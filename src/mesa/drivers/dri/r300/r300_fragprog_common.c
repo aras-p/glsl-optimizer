@@ -154,9 +154,11 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler, struct r
  * @note This allocation is performed explicitly, because the order of inputs
  * is determined by the RS hardware.
  */
-static void allocate_hw_inputs(void * yourdata, void (*allocate)(void * data, unsigned input, unsigned hwreg), void * mydata)
+static void allocate_hw_inputs(
+	struct r300_fragment_program_compiler * c,
+	void (*allocate)(void * data, unsigned input, unsigned hwreg),
+	void * mydata)
 {
-	struct r300_fragment_program_compiler * c = yourdata;
 	GLuint InputsRead = c->Base.Program.InputsRead;
 	int i;
 	GLuint hwindex = 0;
@@ -208,7 +210,6 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;
 	compiler.OutputColor = FRAG_RESULT_COLOR;
 	compiler.AllocateHwInputs = &allocate_hw_inputs;
-	compiler.UserData = &compiler;
 
 	if (compiler.Base.Debug) {
 		fflush(stdout);

@@ -86,7 +86,7 @@ struct r300_fragment_program_compiler {
 
 	void * UserData;
 	void (*AllocateHwInputs)(
-		void * yourdata,
+		struct r300_fragment_program_compiler * c,
 		void (*allocate)(void * data, unsigned input, unsigned hwreg),
 		void * mydata);
 };

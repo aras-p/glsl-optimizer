@@ -848,7 +848,7 @@ void radeonPairProgram(
 		_mesa_printf("Emit paired program\n");
 
 	scan_instructions(&s);
-	s.Compiler->AllocateHwInputs(s.Compiler->UserData, &alloc_helper, &s);
+	s.Compiler->AllocateHwInputs(s.Compiler, &alloc_helper, &s);
 
 	while(!s.Compiler->Base.Error &&
 	      (s.ReadyTEX || s.ReadyRGB || s.ReadyAlpha || s.ReadyFullALU)) {
