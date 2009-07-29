@@ -171,6 +171,7 @@ static const struct dri_extension brw_extensions[] = {
 
 
 static const struct dri_extension arb_oq_extensions[] = {
+   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { NULL, NULL }
 };
 
@@ -214,5 +215,9 @@ intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 
       if (intel == NULL || driQueryOptionb(&intel->optionCache, "fragment_shader"))
 	 driInitExtensions(ctx, fragment_shader_extensions, GL_FALSE);
+
+      if (intel == NULL || driQueryOptionb(&intel->optionCache,
+					   "stub_occlusion_query"))
+	 driInitExtensions(ctx, arb_oq_extensions, GL_FALSE);
    }
 }
