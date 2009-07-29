@@ -160,6 +160,7 @@ src_vector(struct i915_fragment_program *p,
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
+   case PROGRAM_UNIFORM:
       src =
          i915_emit_param4fv(p,
                             program->Base.Parameters->ParameterValues[source->

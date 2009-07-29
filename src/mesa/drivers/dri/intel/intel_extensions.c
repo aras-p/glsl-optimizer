@@ -182,6 +182,10 @@ static const struct dri_extension ttm_extensions[] = {
    { NULL, NULL }
 };
 
+static const struct dri_extension fragment_shader_extensions[] = {
+   { "GL_ARB_fragment_shader",            NULL },
+   { NULL, NULL }
+};
 
 /**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
@@ -205,6 +209,10 @@ intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
 
    if (intel == NULL || IS_915(intel->intelScreen->deviceID)
-       || IS_945(intel->intelScreen->deviceID))
+       || IS_945(intel->intelScreen->deviceID)) {
       driInitExtensions(ctx, i915_extensions, GL_FALSE);
+
+      if (intel == NULL || driQueryOptionb(&intel->optionCache, "fragment_shader"))
+	 driInitExtensions(ctx, fragment_shader_extensions, GL_FALSE);
+   }
 }
