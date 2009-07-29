@@ -160,7 +160,7 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
         SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_BORDER_COLOR_TRANS_BLACK, BORDER_COLOR_TYPE_shift, BORDER_COLOR_TYPE_mask);
 
         t->SQ_TEX_SAMPLER1                           = 0;
-        SETfield(t->SQ_TEX_SAMPLER1, MAX_LOD_mask, MAX_LOD_shift, MAX_LOD_mask);
+        SETfield(t->SQ_TEX_SAMPLER1, 0x3ff, MAX_LOD_shift, MAX_LOD_mask);
 
         t->SQ_TEX_SAMPLER2                          = 0;
         SETbit(t->SQ_TEX_SAMPLER2, SQ_TEX_SAMPLER_WORD2_0__TYPE_bit);

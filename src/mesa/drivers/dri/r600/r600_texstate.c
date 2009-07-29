@@ -598,6 +598,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	uTexelPitch = (firstImage->Width + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
 
+	/* min pitch is 8 */
+	if (uTexelPitch < 8)
+		uTexelPitch = 8;
+
 	SETfield(t->SQ_TEX_RESOURCE0, (uTexelPitch/8)-1, PITCH_shift, PITCH_mask);
 	SETfield(t->SQ_TEX_RESOURCE0, firstImage->Width - 1,
 		 TEX_WIDTH_shift, TEX_WIDTH_mask);
@@ -751,6 +755,11 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
+
+	/* min pitch is 8 */
+	if (pitch_val < 8)
+		pitch_val = 8;
+
 	SETfield(t->SQ_TEX_RESOURCE0, (pitch_val/8)-1, PITCH_shift, PITCH_mask);
 }
 
@@ -897,6 +906,10 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 
 	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
+
+	/* min pitch is 8 */
+	if (pitch_val < 8)
+		pitch_val = 8;
 
 	SETfield(t->SQ_TEX_RESOURCE0, (pitch_val/8)-1, PITCH_shift, PITCH_mask);
 	SETfield(t->SQ_TEX_RESOURCE0, rb->base.Width - 1,

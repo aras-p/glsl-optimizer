@@ -1638,8 +1638,9 @@ static void r700InitSQConfig(GLcontext * ctx)
 void r700InitState(GLcontext * ctx) //-------------------
 {
     context_t *context = R700_CONTEXT(ctx);
-
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    radeon_firevertices(&context->radeon);
 
     r700->TA_CNTL_AUX.u32All = 0;
     SETfield(r700->TA_CNTL_AUX.u32All, 28, TD_FIFO_CREDIT_shift, TD_FIFO_CREDIT_mask);
