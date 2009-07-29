@@ -113,8 +113,6 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
 
-    printf("translate_vertex_shader\n");
-
     /* Setup the compiler */
     rc_init(&compiler.Base);
 
