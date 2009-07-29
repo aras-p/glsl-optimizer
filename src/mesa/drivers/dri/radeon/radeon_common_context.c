@@ -241,7 +241,15 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
                 radeon->texture_depth = ( glVisual->rgbBits > 16 ) ?
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
-	radeon->texture_row_align = 32;
+	if (IS_R600_CLASS(radeon->radeonScreen)) {
+		radeon->texture_row_align = 256;
+		radeon->texture_rect_row_align = 256;
+		radeon->texture_compressed_row_align = 256;
+	} else {
+		radeon->texture_row_align = 32;
+		radeon->texture_rect_row_align = 64;
+		radeon->texture_compressed_row_align = 64;
+	}
 
 	return GL_TRUE;
 }

@@ -556,7 +556,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	const struct gl_texture_image *firstImage;
 	int firstlevel = t->mt ? t->mt->firstLevel : 0;
-	GLuint uTexelPitch;
+	GLuint uTexelPitch, row_align;;
 
 	firstImage = t->base.Image[0][firstlevel];
 
@@ -595,7 +595,9 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 		return;
 	}
 
-	uTexelPitch = (firstImage->Width + R700_TEXEL_PITCH_ALIGNMENT_MASK)
+	row_align = rmesa->radeon.texture_row_align - 1;
+	uTexelPitch = ((firstImage->Width * t->mt->bpp + row_align) & ~row_align) / t->mt->bpp;
+	uTexelPitch = (uTexelPitch + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
 
 	/* min pitch is 8 */

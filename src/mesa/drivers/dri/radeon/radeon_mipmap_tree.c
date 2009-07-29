@@ -90,16 +90,18 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	GLuint face, GLuint level, GLuint* curOffset)
 {
 	radeon_mipmap_level *lvl = &mt->levels[level];
-	uint32_t row_align = rmesa->texture_row_align - 1;
+	uint32_t row_align;
 
 	/* Find image size in bytes */
 	if (mt->compressed) {
 		/* TODO: Is this correct? Need test cases for compressed textures! */
-		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
+		row_align = rmesa->texture_compressed_row_align - 1;
+		lvl->rowstride = (lvl->width * mt->bpp + row_align) & ~row_align;
 		lvl->size = radeon_compressed_texture_size(mt->radeon->glCtx,
 							   lvl->width, lvl->height, lvl->depth, mt->compressed);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
-		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
+		row_align = rmesa->texture_rect_row_align - 1;
+		lvl->rowstride = (lvl->width * mt->bpp + row_align) & ~row_align;
 		lvl->size = lvl->rowstride * lvl->height;
 	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
 		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
@@ -108,6 +110,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
 		lvl->size = lvl->rowstride * ((lvl->height + 1) / 2) * lvl->depth;
 	} else {
+		row_align = rmesa->texture_row_align - 1;
 		lvl->rowstride = (lvl->width * mt->bpp + row_align) & ~row_align;
 		lvl->size = lvl->rowstride * lvl->height * lvl->depth;
 	}
