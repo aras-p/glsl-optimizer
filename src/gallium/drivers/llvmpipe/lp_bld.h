@@ -48,15 +48,14 @@
 /**
  * Unpack a pixel into its RGBA components.
  *
- * @param ptr value with the pointer to the packed pixel. Pointer type is
- * irrelevant.
+ * @param packed integer.
  *
  * @return RGBA in a 4 floats vector.
  */
 LLVMValueRef
 lp_build_unpack_rgba(LLVMBuilderRef builder,
                      enum pipe_format format, 
-                     LLVMValueRef ptr);
+                     LLVMValueRef packed);
 
 
 /**
@@ -64,11 +63,36 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
  *
  * @param rgba 4 float vector with the unpacked components.
  */
-void 
+LLVMValueRef
 lp_build_pack_rgba(LLVMBuilderRef builder,
                    enum pipe_format format,
-                   LLVMValueRef ptr,
                    LLVMValueRef rgba);
+
+
+/**
+ * Load a pixel into its RGBA components.
+ *
+ * @param ptr value with the pointer to the packed pixel. Pointer type is
+ * irrelevant.
+ *
+ * @return RGBA in a 4 floats vector.
+ */
+LLVMValueRef
+lp_build_load_rgba(LLVMBuilderRef builder,
+                   enum pipe_format format, 
+                   LLVMValueRef ptr);
+
+
+/**
+ * Store a pixel.
+ *
+ * @param rgba 4 float vector with the unpacked components.
+ */
+void 
+lp_build_store_rgba(LLVMBuilderRef builder,
+                    enum pipe_format format,
+                    LLVMValueRef ptr,
+                    LLVMValueRef rgba);
 
 
 struct lp_build_loop_state

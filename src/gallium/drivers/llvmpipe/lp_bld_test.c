@@ -89,14 +89,14 @@ struct pixel_test_case test_cases[] =
 
 
 static LLVMValueRef
-add_unpack_rgba_test(LLVMModuleRef module,
-                     enum pipe_format format)
+add_load_rgba_test(LLVMModuleRef module,
+                   enum pipe_format format)
 {
    LLVMTypeRef args[] = {
       LLVMPointerType(LLVMInt8Type(), 0),
       LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0)
    };
-   LLVMValueRef func = LLVMAddFunction(module, "unpack", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   LLVMValueRef func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    LLVMValueRef ptr = LLVMGetParam(func, 0);
    LLVMValueRef rgba_ptr = LLVMGetParam(func, 1);
@@ -111,7 +111,7 @@ add_unpack_rgba_test(LLVMModuleRef module,
 
    lp_build_loop_begin(builder, LLVMConstInt(LLVMInt32Type(), 1, 0), &loop);
 
-   rgba = lp_build_unpack_rgba(builder, format, ptr);
+   rgba = lp_build_load_rgba(builder, format, ptr);
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
    lp_build_loop_end(builder, LLVMConstInt(LLVMInt32Type(), 4, 0), NULL, &loop);
@@ -124,14 +124,14 @@ add_unpack_rgba_test(LLVMModuleRef module,
 
 
 static LLVMValueRef
-add_pack_rgba_test(LLVMModuleRef module,
-                   enum pipe_format format)
+add_store_rgba_test(LLVMModuleRef module,
+                    enum pipe_format format)
 {
    LLVMTypeRef args[] = {
       LLVMPointerType(LLVMInt8Type(), 0),
       LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0)
    };
-   LLVMValueRef func = LLVMAddFunction(module, "pack", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   LLVMValueRef func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    LLVMValueRef ptr = LLVMGetParam(func, 0);
    LLVMValueRef rgba_ptr = LLVMGetParam(func, 1);
@@ -144,7 +144,7 @@ add_pack_rgba_test(LLVMModuleRef module,
 
    rgba = LLVMBuildLoad(builder, rgba_ptr, "");
 
-   lp_build_pack_rgba(builder, format, ptr, rgba);
+   lp_build_store_rgba(builder, format, ptr, rgba);
 
    LLVMBuildRetVoid(builder);
 
@@ -164,8 +164,8 @@ test_format(const struct pixel_test_case *test)
 
    LLVMModuleRef module = LLVMModuleCreateWithName("test");
 
-   LLVMValueRef unpack = add_unpack_rgba_test(module, test->format);
-   LLVMValueRef pack = add_pack_rgba_test(module, test->format);
+   LLVMValueRef load = add_load_rgba_test(module, test->format);
+   LLVMValueRef store = add_store_rgba_test(module, test->format);
 
    LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
    LLVMDisposeMessage(error);
@@ -200,19 +200,19 @@ test_format(const struct pixel_test_case *test)
    unsigned packed = 0;
 
    {
-      typedef void (*unpack_ptr_t)(const void *, float *);
-      unpack_ptr_t unpack_ptr = (unpack_ptr_t)LLVMGetPointerToGlobal(engine, unpack);
+      typedef void (*load_ptr_t)(const void *, float *);
+      load_ptr_t load_ptr = (load_ptr_t)LLVMGetPointerToGlobal(engine, load);
 
-      unpack_ptr(&test->packed, unpacked);
+      load_ptr(&test->packed, unpacked);
 
    }
 
 
    {
-      typedef void (*pack_ptr_t)(void *, const float *);
-      pack_ptr_t pack_ptr = (pack_ptr_t)LLVMGetPointerToGlobal(engine, pack);
+      typedef void (*store_ptr_t)(void *, const float *);
+      store_ptr_t store_ptr = (store_ptr_t)LLVMGetPointerToGlobal(engine, store);
 
-      pack_ptr(&packed, unpacked);
+      store_ptr(&packed, unpacked);
 
    }
 

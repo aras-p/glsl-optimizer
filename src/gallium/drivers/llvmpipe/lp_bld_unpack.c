@@ -34,11 +34,10 @@
 LLVMValueRef
 lp_build_unpack_rgba(LLVMBuilderRef builder,
                      enum pipe_format format,
-                     LLVMValueRef ptr)
+                     LLVMValueRef packed)
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
-   LLVMValueRef deferred;
    unsigned shift = 0;
    unsigned i;
 
@@ -52,24 +51,22 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
 
    type = LLVMIntType(desc->block.bits);
 
-   deferred = LLVMBuildLoad(builder, LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), ""), "");
-
    /* Do the intermediate integer computations with 32bit integers since it
     * matches floating point size */
    if (desc->block.bits < 32)
-      deferred = LLVMBuildZExt(builder, deferred, LLVMInt32Type(), "");
+      packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
 
    /* Broadcast the packed value to all four channels */
-   deferred = LLVMBuildInsertElement(builder,
-                                     LLVMGetUndef(LLVMVectorType(LLVMInt32Type(), 4)),
-                                     deferred,
-                                     LLVMConstNull(LLVMInt32Type()),
-                                     "");
-   deferred = LLVMBuildShuffleVector(builder,
-                                     deferred,
-                                     LLVMGetUndef(LLVMVectorType(LLVMInt32Type(), 4)),
-                                     LLVMConstNull(LLVMVectorType(LLVMInt32Type(), 4)),
-                                     "");
+   packed = LLVMBuildInsertElement(builder,
+                                   LLVMGetUndef(LLVMVectorType(LLVMInt32Type(), 4)),
+                                   packed,
+                                   LLVMConstNull(LLVMInt32Type()),
+                                   "");
+   packed = LLVMBuildShuffleVector(builder,
+                                   packed,
+                                   LLVMGetUndef(LLVMVectorType(LLVMInt32Type(), 4)),
+                                   LLVMConstNull(LLVMVectorType(LLVMInt32Type(), 4)),
+                                   "");
 
    LLVMValueRef shifted, casted, scaled, masked, swizzled;
    LLVMValueRef shifts[4];
@@ -108,7 +105,7 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
       shift += bits;
    }
 
-   shifted = LLVMBuildLShr(builder, deferred, LLVMConstVector(shifts, 4), "");
+   shifted = LLVMBuildLShr(builder, packed, LLVMConstVector(shifts, 4), "");
    masked = LLVMBuildAnd(builder, shifted, LLVMConstVector(masks, 4), "");
    // UIToFP can't be expressed in SSE2
    casted = LLVMBuildSIToFP(builder, masked, LLVMVectorType(LLVMFloatType(), 4), "");

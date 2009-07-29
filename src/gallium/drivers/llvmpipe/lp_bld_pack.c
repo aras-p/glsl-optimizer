@@ -31,10 +31,9 @@
 #include "lp_bld.h"
 
 
-void
+LLVMValueRef
 lp_build_pack_rgba(LLVMBuilderRef builder,
                    enum pipe_format format,
-                   LLVMValueRef ptr,
                    LLVMValueRef rgba)
 {
    const struct util_format_description *desc;
@@ -121,12 +120,12 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
       }
    }
 
-   if (packed) {
+   if (!packed)
+      packed = LLVMGetUndef(LLVMInt32Type());
 
-      if (desc->block.bits < 32)
-         packed = LLVMBuildTrunc(builder, packed, type, "");
+   if (desc->block.bits < 32)
+      packed = LLVMBuildTrunc(builder, packed, type, "");
 
-      LLVMBuildStore(builder, packed, LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), ""));
-   }
+   return packed;
 }
 

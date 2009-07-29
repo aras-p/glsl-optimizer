@@ -9,6 +9,8 @@ C_SOURCES = \
 	lp_fs_llvm.c \
 	lp_bld_pack.c \
 	lp_bld_unpack.c \
+	lp_bld_load.c \
+	lp_bld_store.c \
 	lp_bld_loop.c \
 	lp_clear.c \
 	lp_flush.c \
