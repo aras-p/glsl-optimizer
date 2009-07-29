@@ -71,6 +71,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_multitexture",               NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+   { "GL_ARB_point_sprite",               NULL },
    { "GL_ARB_texture_border_clamp",       NULL },
    { "GL_ARB_texture_cube_map",           NULL },
    { "GL_ARB_texture_env_add",            NULL },
