@@ -12,6 +12,7 @@ C_SOURCES = \
 	lp_bld_load.c \
 	lp_bld_store.c \
 	lp_bld_loop.c \
+	lp_bld_logicop.c \
 	lp_clear.c \
 	lp_flush.c \
 	lp_query.c \

@@ -15,6 +15,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_bld_load.c',
 		'lp_bld_store.c',
 		'lp_bld_loop.c',
+		'lp_bld_logicop.c',
 		'lp_clear.c',
 		'lp_context.c',
 		'lp_draw_arrays.c',
