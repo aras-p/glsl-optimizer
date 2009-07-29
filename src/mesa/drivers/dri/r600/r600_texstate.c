@@ -556,7 +556,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	const struct gl_texture_image *firstImage;
 	int firstlevel = t->mt ? t->mt->firstLevel : 0;
-	GLuint uTexelPitch, row_align;;
+	GLuint uTexelPitch, row_align;
 
 	firstImage = t->base.Image[0][firstlevel];
 
