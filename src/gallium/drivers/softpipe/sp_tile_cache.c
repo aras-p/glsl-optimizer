@@ -225,7 +225,7 @@ clear_tile(struct softpipe_cached_tile *tile,
 
    switch (pf_get_size(format)) {
    case 1:
-      memset(tile->data.any, 0, TILE_SIZE * TILE_SIZE);
+      memset(tile->data.any, clear_value, TILE_SIZE * TILE_SIZE);
       break;
    case 2:
       if (clear_value == 0) {
