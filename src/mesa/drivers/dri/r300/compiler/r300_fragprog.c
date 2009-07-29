@@ -203,18 +203,21 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 	fprintf(stderr, "Hardware program\n");
 	fprintf(stderr, "----------------\n");
 
-	for (n = 0; n < (code->cur_node + 1); n++) {
-		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, "
-			"alu_end: %d, tex_end: %d, flags: %08x\n", n,
-			code->node[n].alu_offset,
-			code->node[n].tex_offset,
-			code->node[n].alu_end, code->node[n].tex_end,
-			code->node[n].flags);
+	for (n = 0; n <= (code->config & 3); n++) {
+		uint32_t code_addr = code->code_addr[3 - (code->config & 3) + n];
+		int alu_offset = (code_addr & R300_ALU_START_MASK) >> R300_ALU_START_SHIFT;
+		int alu_end = (code_addr & R300_ALU_SIZE_MASK) >> R300_ALU_SIZE_SHIFT;
+		int tex_offset = (code_addr & R300_TEX_START_MASK) >> R300_TEX_START_SHIFT;
+		int tex_end = (code_addr & R300_TEX_SIZE_MASK) >> R300_TEX_SIZE_SHIFT;
 
-		if (n > 0 || code->first_node_has_tex) {
+		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, "
+			"alu_end: %d, tex_end: %d  (code_addr: %08x)\n", n,
+			alu_offset, tex_offset, alu_end, tex_end, code_addr);
+
+		if (n > 0 || (code->config & R300_PFS_CNTL_FIRST_NODE_HAS_TEX)) {
 			fprintf(stderr, "  TEX:\n");
-			for (i = code->node[n].tex_offset;
-			     i <= code->node[n].tex_offset + code->node[n].tex_end;
+			for (i = tex_offset;
+			     i <= tex_offset + tex_end;
 			     ++i) {
 				const char *instr;
 
@@ -252,8 +255,8 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			}
 		}
 
-		for (i = code->node[n].alu_offset;
-		     i <= code->node[n].alu_offset + code->node[n].alu_end; ++i) {
+		for (i = alu_offset;
+		     i <= alu_offset + alu_end; ++i) {
 			char srcc[3][10], dstc[20];
 			char srca[3][10], dsta[20];
 			char argc[3][20];
@@ -261,8 +264,8 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			char flags[5], tmp[10];
 
 			for (j = 0; j < 3; ++j) {
-				int regc = code->alu.inst[i].inst1 >> (j * 6);
-				int rega = code->alu.inst[i].inst3 >> (j * 6);
+				int regc = code->alu.inst[i].rgb_addr >> (j * 6);
+				int rega = code->alu.inst[i].alpha_addr >> (j * 6);
 
 				sprintf(srcc[j], "%c%i",
 					(regc & 32) ? 'c' : 't', regc & 31);
@@ -273,45 +276,45 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			dstc[0] = 0;
 			sprintf(flags, "%s%s%s",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_X) ? "x" : "",
+				 rgb_addr & R300_ALU_DSTC_REG_X) ? "x" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_Y) ? "y" : "",
+				 rgb_addr & R300_ALU_DSTC_REG_Y) ? "y" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_Z) ? "z" : "");
+				 rgb_addr & R300_ALU_DSTC_REG_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(dstc, "t%i.%s ",
 					(code->alu.inst[i].
-					 inst1 >> R300_ALU_DSTC_SHIFT) & 31,
+					 rgb_addr >> R300_ALU_DSTC_SHIFT) & 31,
 					flags);
 			}
 			sprintf(flags, "%s%s%s",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_X) ? "x" : "",
+				 rgb_addr & R300_ALU_DSTC_OUTPUT_X) ? "x" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_Y) ? "y" : "",
+				 rgb_addr & R300_ALU_DSTC_OUTPUT_Y) ? "y" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_Z) ? "z" : "");
+				 rgb_addr & R300_ALU_DSTC_OUTPUT_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(tmp, "o%i.%s",
 					(code->alu.inst[i].
-					 inst1 >> R300_ALU_DSTC_SHIFT) & 31,
+					 rgb_addr >> R300_ALU_DSTC_SHIFT) & 31,
 					flags);
 				strcat(dstc, tmp);
 			}
 
 			dsta[0] = 0;
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_REG) {
+			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_REG) {
 				sprintf(dsta, "t%i.w ",
 					(code->alu.inst[i].
-					 inst3 >> R300_ALU_DSTA_SHIFT) & 31);
+					 alpha_addr >> R300_ALU_DSTA_SHIFT) & 31);
 			}
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_OUTPUT) {
+			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_OUTPUT) {
 				sprintf(tmp, "o%i.w ",
 					(code->alu.inst[i].
-					 inst3 >> R300_ALU_DSTA_SHIFT) & 31);
+					 alpha_addr >> R300_ALU_DSTA_SHIFT) & 31);
 				strcat(dsta, tmp);
 			}
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_DEPTH) {
+			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_DEPTH) {
 				strcat(dsta, "Z");
 			}
 
@@ -319,12 +322,12 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 				"%3i: xyz: %3s %3s %3s -> %-20s (%08x)\n"
 				"       w: %3s %3s %3s -> %-20s (%08x)\n", i,
 				srcc[0], srcc[1], srcc[2], dstc,
-				code->alu.inst[i].inst1, srca[0], srca[1],
-				srca[2], dsta, code->alu.inst[i].inst3);
+				code->alu.inst[i].rgb_addr, srca[0], srca[1],
+				srca[2], dsta, code->alu.inst[i].alpha_addr);
 
 			for (j = 0; j < 3; ++j) {
-				int regc = code->alu.inst[i].inst0 >> (j * 7);
-				int rega = code->alu.inst[i].inst2 >> (j * 7);
+				int regc = code->alu.inst[i].rgb_inst >> (j * 7);
+				int rega = code->alu.inst[i].alpha_inst >> (j * 7);
 				int d;
 				char buf[20];
 
@@ -406,8 +409,8 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			fprintf(stderr, "     xyz: %8s %8s %8s    op: %08x\n"
 				"       w: %8s %8s %8s    op: %08x\n",
 				argc[0], argc[1], argc[2],
-				code->alu.inst[i].inst0, arga[0], arga[1],
-				arga[2], code->alu.inst[i].inst2);
+				code->alu.inst[i].rgb_inst, arga[0], arga[1],
+				arga[2], code->alu.inst[i].alpha_inst);
 		}
 	}
 }

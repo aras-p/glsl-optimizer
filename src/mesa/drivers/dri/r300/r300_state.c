@@ -2035,7 +2035,7 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_fragment_program *fp = rmesa->selected_fp;
 	struct r300_fragment_program_code *code;
-	int i, k;
+	int i;
 
 	code = &fp->code.code.r300;
 
@@ -2048,33 +2048,18 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_ALPHA_INST_0, code->alu.length);
 	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
 	for (i = 0; i < code->alu.length; i++) {
-		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst0;
-		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst1;
-		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst2;
-		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst3;
+		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].rgb_inst;
+		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].rgb_addr;
+		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].alpha_inst;
+		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].alpha_addr;
 	}
 
 	R300_STATECHANGE(rmesa, fp);
-	rmesa->hw.fp.cmd[R300_FP_CNTL0] = code->cur_node | (code->first_node_has_tex << 3);
-	rmesa->hw.fp.cmd[R300_FP_CNTL1] = code->max_temp_idx;
-	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
-	  (0 << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
-	  ((code->alu.length-1) << R300_PFS_CNTL_ALU_END_SHIFT) |
-	  (0 << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
-	  ((code->tex.length ? code->tex.length-1 : 0) << R300_PFS_CNTL_TEX_END_SHIFT);
-	/* I just want to say, the way these nodes are stored.. weird.. */
-	for (i = 0, k = (4 - (code->cur_node + 1)); i < 4; i++, k++) {
-		if (i < (code->cur_node + 1)) {
-			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
-			  (code->node[i].alu_offset << R300_ALU_START_SHIFT) |
-			  (code->node[i].alu_end << R300_ALU_SIZE_SHIFT) |
-			  (code->node[i].tex_offset << R300_TEX_START_SHIFT) |
-			  (code->node[i].tex_end << R300_TEX_SIZE_SHIFT) |
-			  code->node[i].flags;
-		} else {
-			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
-		}
-	}
+	rmesa->hw.fp.cmd[R300_FP_CNTL0] = code->config;
+	rmesa->hw.fp.cmd[R300_FP_CNTL1] = code->pixsize;
+	rmesa->hw.fp.cmd[R300_FP_CNTL2] = code->code_offset;
+	for (i = 0; i < 4; i++)
+		rmesa->hw.fp.cmd[R300_FP_NODE0 + i] = code->code_addr[i];
 
 	R300_STATECHANGE(rmesa, fpp);
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_PFS_PARAM_0_X, fp->code.constants.Count * 4);

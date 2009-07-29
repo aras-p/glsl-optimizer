@@ -136,18 +136,17 @@ struct r300_fragment_program_code {
 	struct {
 		int length; /**< total # of ALU instructions used */
 		struct {
-			uint32_t inst0;
-			uint32_t inst1;
-			uint32_t inst2;
-			uint32_t inst3;
+			uint32_t rgb_inst;
+			uint32_t rgb_addr;
+			uint32_t alpha_inst;
+			uint32_t alpha_addr;
 		} inst[R300_PFS_MAX_ALU_INST];
 	} alu;
 
-	struct r300_fragment_program_node node[4];
-	int cur_node;
-	int first_node_has_tex;
-
-	int max_temp_idx;
+	uint32_t config; /* US_CONFIG */
+	uint32_t pixsize; /* US_PIXSIZE */
+	uint32_t code_offset; /* US_CODE_OFFSET */
+	uint32_t code_addr[4]; /* US_CODE_ADDR */
 };
 
 

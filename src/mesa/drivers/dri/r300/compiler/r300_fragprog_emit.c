@@ -46,8 +46,18 @@
 #include "r300_fragprog_swizzle.h"
 
 
+struct r300_emit_state {
+	struct r300_fragment_program_compiler * compiler;
+
+	unsigned current_node : 2;
+	unsigned node_first_tex : 8;
+	unsigned node_first_alu : 8;
+	uint32_t node_flags;
+};
+
 #define PROG_CODE \
-	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
+	struct r300_emit_state * emit = (struct r300_emit_state*)data; \
+	struct r300_fragment_program_compiler *c = emit->compiler; \
 	struct r300_fragment_program_code *code = &c->code->code.r300
 
 #define error(fmt, args...) do {			\
@@ -61,8 +71,8 @@
  */
 static void use_temporary(struct r300_fragment_program_code *code, GLuint index)
 {
-	if (index > code->max_temp_idx)
-		code->max_temp_idx = index;
+	if (index > code->pixsize)
+		code->pixsize = index;
 }
 
 
@@ -121,62 +131,61 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 
 	int ip = code->alu.length++;
 	int j;
-	code->node[code->cur_node].alu_end++;
 
-	code->alu.inst[ip].inst0 = translate_rgb_opcode(c, inst->RGB.Opcode);
-	code->alu.inst[ip].inst2 = translate_alpha_opcode(c, inst->Alpha.Opcode);
+	code->alu.inst[ip].rgb_inst = translate_rgb_opcode(c, inst->RGB.Opcode);
+	code->alu.inst[ip].alpha_inst = translate_alpha_opcode(c, inst->Alpha.Opcode);
 
 	for(j = 0; j < 3; ++j) {
 		GLuint src = inst->RGB.Src[j].Index | (inst->RGB.Src[j].Constant << 5);
 		if (!inst->RGB.Src[j].Constant)
 			use_temporary(code, inst->RGB.Src[j].Index);
-		code->alu.inst[ip].inst1 |= src << (6*j);
+		code->alu.inst[ip].rgb_addr |= src << (6*j);
 
 		src = inst->Alpha.Src[j].Index | (inst->Alpha.Src[j].Constant << 5);
 		if (!inst->Alpha.Src[j].Constant)
 			use_temporary(code, inst->Alpha.Src[j].Index);
-		code->alu.inst[ip].inst3 |= src << (6*j);
+		code->alu.inst[ip].alpha_addr |= src << (6*j);
 
 		GLuint arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
 		arg |= inst->RGB.Arg[j].Abs << 6;
 		arg |= inst->RGB.Arg[j].Negate << 5;
-		code->alu.inst[ip].inst0 |= arg << (7*j);
+		code->alu.inst[ip].rgb_inst |= arg << (7*j);
 
 		arg = r300FPTranslateAlphaSwizzle(inst->Alpha.Arg[j].Source, inst->Alpha.Arg[j].Swizzle);
 		arg |= inst->Alpha.Arg[j].Abs << 6;
 		arg |= inst->Alpha.Arg[j].Negate << 5;
-		code->alu.inst[ip].inst2 |= arg << (7*j);
+		code->alu.inst[ip].alpha_inst |= arg << (7*j);
 	}
 
 	if (inst->RGB.Saturate)
-		code->alu.inst[ip].inst0 |= R300_ALU_OUTC_CLAMP;
+		code->alu.inst[ip].rgb_inst |= R300_ALU_OUTC_CLAMP;
 	if (inst->Alpha.Saturate)
-		code->alu.inst[ip].inst2 |= R300_ALU_OUTA_CLAMP;
+		code->alu.inst[ip].alpha_inst |= R300_ALU_OUTA_CLAMP;
 
 	if (inst->RGB.WriteMask) {
 		use_temporary(code, inst->RGB.DestIndex);
-		code->alu.inst[ip].inst1 |=
+		code->alu.inst[ip].rgb_addr |=
 			(inst->RGB.DestIndex << R300_ALU_DSTC_SHIFT) |
 			(inst->RGB.WriteMask << R300_ALU_DSTC_REG_MASK_SHIFT);
 	}
 	if (inst->RGB.OutputWriteMask) {
-		code->alu.inst[ip].inst1 |= (inst->RGB.OutputWriteMask << R300_ALU_DSTC_OUTPUT_MASK_SHIFT);
-		code->node[code->cur_node].flags |= R300_RGBA_OUT;
+		code->alu.inst[ip].rgb_addr |= (inst->RGB.OutputWriteMask << R300_ALU_DSTC_OUTPUT_MASK_SHIFT);
+		emit->node_flags |= R300_RGBA_OUT;
 	}
 
 	if (inst->Alpha.WriteMask) {
 		use_temporary(code, inst->Alpha.DestIndex);
-		code->alu.inst[ip].inst3 |=
+		code->alu.inst[ip].alpha_addr |=
 			(inst->Alpha.DestIndex << R300_ALU_DSTA_SHIFT) |
 			R300_ALU_DSTA_REG;
 	}
 	if (inst->Alpha.OutputWriteMask) {
-		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_OUTPUT;
-		code->node[code->cur_node].flags |= R300_RGBA_OUT;
+		code->alu.inst[ip].alpha_addr |= R300_ALU_DSTA_OUTPUT;
+		emit->node_flags |= R300_RGBA_OUT;
 	}
 	if (inst->Alpha.DepthWriteMask) {
-		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_DEPTH;
-		code->node[code->cur_node].flags |= R300_W_OUT;
+		code->alu.inst[ip].alpha_addr |= R300_ALU_DSTA_DEPTH;
+		emit->node_flags |= R300_W_OUT;
 		c->code->writes_depth = GL_TRUE;
 	}
 
@@ -187,30 +196,49 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 /**
  * Finish the current node without advancing to the next one.
  */
-static GLboolean finish_node(struct r300_fragment_program_compiler *c)
+static GLboolean finish_node(struct r300_emit_state * emit)
 {
-	struct r300_fragment_program_code *code = &c->code->code.r300;
-	struct r300_fragment_program_node *node = &code->node[code->cur_node];
+	struct r300_fragment_program_compiler * c = emit->compiler;
+	struct r300_fragment_program_code *code = &emit->compiler->code->code.r300;
 
-	if (node->alu_end < 0) {
+	if (code->alu.length == emit->node_first_alu) {
 		/* Generate a single NOP for this node */
 		struct radeon_pair_instruction inst;
 		_mesa_bzero(&inst, sizeof(inst));
-		if (!emit_alu(c, &inst))
+		if (!emit_alu(emit, &inst))
 			return GL_FALSE;
 	}
 
-	if (node->tex_end < 0) {
-		if (code->cur_node == 0) {
-			node->tex_end = 0;
-		} else {
-			error("Node %i has no TEX instructions", code->cur_node);
+	unsigned alu_offset = emit->node_first_alu;
+	unsigned alu_end = code->alu.length - alu_offset - 1;
+	unsigned tex_offset = emit->node_first_tex;
+	unsigned tex_end = code->tex.length - tex_offset - 1;
+
+	if (code->tex.length == emit->node_first_tex) {
+		if (emit->current_node > 0) {
+			error("Node %i has no TEX instructions", emit->current_node);
 			return GL_FALSE;
 		}
+
+		tex_end = 0;
 	} else {
-		if (code->cur_node == 0)
-			code->first_node_has_tex = 1;
+		if (emit->current_node == 0)
+			code->config |= R300_PFS_CNTL_FIRST_NODE_HAS_TEX;
 	}
+
+	/* Write the config register.
+	 * Note: The order in which the words for each node are written
+	 * is not correct here and needs to be fixed up once we're entirely
+	 * done
+	 *
+	 * Also note that the register specification from AMD is slightly
+	 * incorrect in its description of this register. */
+	code->code_addr[emit->current_node] =
+			(alu_offset << R300_ALU_START_SHIFT) |
+			(alu_end << R300_ALU_SIZE_SHIFT) |
+			(tex_offset << R300_TEX_START_SHIFT) |
+			(tex_end << R300_TEX_SIZE_SHIFT) |
+			emit->node_flags;
 
 	return GL_TRUE;
 }
@@ -224,25 +252,23 @@ static GLboolean begin_tex(void* data)
 {
 	PROG_CODE;
 
-	if (code->cur_node == 0) {
-		if (code->node[0].alu_end < 0 &&
-		    code->node[0].tex_end < 0)
-			return GL_TRUE;
+	if (code->alu.length == emit->node_first_alu &&
+	    code->tex.length == emit->node_first_tex) {
+		return GL_TRUE;
 	}
 
-	if (code->cur_node == 3) {
+	if (emit->current_node == 3) {
 		error("Too many texture indirections");
 		return GL_FALSE;
 	}
 
-	if (!finish_node(c))
+	if (!finish_node(emit))
 		return GL_FALSE;
 
-	struct r300_fragment_program_node *node = &code->node[++code->cur_node];
-	node->alu_offset = code->alu.length;
-	node->alu_end = -1;
-	node->tex_offset = code->tex.length;
-	node->tex_end = -1;
+	emit->current_node++;
+	emit->node_first_tex = code->tex.length;
+	emit->node_first_alu = code->alu.length;
+	emit->node_flags = 0;
 	return GL_TRUE;
 }
 
@@ -279,7 +305,6 @@ static GLboolean emit_tex(void* data, struct radeon_pair_texture_instruction* in
 
 	use_temporary(code, inst->SrcIndex);
 
-	code->node[code->cur_node].tex_end++;
 	code->tex.inst[code->tex.length++] =
 		(inst->SrcIndex << R300_SRC_ADDR_SHIFT) |
 		(dest << R300_DST_ADDR_SHIFT) |
@@ -302,16 +327,34 @@ static const struct radeon_pair_handler pair_handler = {
  */
 void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
+	struct r300_emit_state emit;
 	struct r300_fragment_program_code *code = &compiler->code->code.r300;
 
-	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
-	code->node[0].alu_end = -1;
-	code->node[0].tex_end = -1;
+	memset(&emit, 0, sizeof(emit));
+	emit.compiler = compiler;
 
-	radeonPairProgram(compiler, &pair_handler, compiler);
+	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
+
+	radeonPairProgram(compiler, &pair_handler, &emit);
 	if (compiler->Base.Error)
 		return;
 
-	finish_node(compiler);
-}
+	/* Finish the program */
+	finish_node(&emit);
 
+	code->config |= emit.current_node; /* FIRST_NODE_HAS_TEX set by finish_node */
+	code->code_offset =
+		(0 << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
+		((code->alu.length-1) << R300_PFS_CNTL_ALU_END_SHIFT) |
+		(0 << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
+		((code->tex.length ? code->tex.length-1 : 0) << R300_PFS_CNTL_TEX_END_SHIFT);
+
+	if (emit.current_node < 3) {
+		int shift = 3 - emit.current_node;
+		int i;
+		for(i = 0; i <= emit.current_node; ++i)
+			code->code_addr[shift + i] = code->code_addr[i];
+		for(i = 0; i < shift; ++i)
+			code->code_addr[i] = 0;
+	}
+}
