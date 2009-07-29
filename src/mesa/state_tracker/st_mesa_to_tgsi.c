@@ -158,12 +158,6 @@ map_texture_target(
     GLuint textarget,
     GLboolean shadow )
 {
-#if 1
-   /* XXX remove this line after we've checked that the rest of gallium
-    * can handle the TGSI_TEXTURE_SHADOWx tokens.
-    */
-   shadow = GL_FALSE;
-#endif
    switch( textarget ) {
    case TEXTURE_1D_INDEX:
       if (shadow)

@@ -1467,15 +1467,15 @@ emit_tex( struct x86_function *func,
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
-   case TGSI_TEXTURE_SHADOW1D:
       count = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-   case TGSI_TEXTURE_SHADOW2D:
-   case TGSI_TEXTURE_SHADOWRECT:
       count = 2;
       break;
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       count = 3;
