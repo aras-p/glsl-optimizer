@@ -152,4 +152,16 @@ void st_init_flush_functions(struct dd_function_table *functions)
 {
    functions->Flush = st_glFlush;
    functions->Finish = st_glFinish;
+
+   /* Windows opengl32.dll calls glFinish prior to every swapbuffers.
+    * This is unnecessary and degrades performance.  Luckily we have some
+    * scope to work around this, as the externally-visible behaviour of
+    * Finish() is identical to Flush() in all cases - no differences in
+    * rendering or ReadPixels are visible if we opt not to wait here.
+    *
+    * Only set this up on windows to avoid suprise elsewhere.
+    */
+#ifdef PIPE_OS_WINDOWS
+   functions->Finish = st_glFlush;
+#endif
 }
