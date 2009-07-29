@@ -1076,7 +1076,9 @@ intelRunPipeline(GLcontext * ctx)
       intel->NewGLState = 0;
    }
 
+   intel_map_vertex_shader_textures(ctx);
    _tnl_run_pipeline(ctx);
+   intel_unmap_vertex_shader_textures(ctx);
 
    _mesa_unlock_context_textures(ctx);
 }
