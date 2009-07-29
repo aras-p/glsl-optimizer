@@ -4,6 +4,8 @@
 
 #include <util/u_memory.h>
 
+#include <errno.h>
+
 #include "nouveau/nouveau_bo.h"
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
@@ -141,12 +143,13 @@ nouveau_screen_bo_map_range(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			    unsigned offset, unsigned length, unsigned usage)
 {
 	struct nouveau_bo *bo = nouveau_bo(pb);
+	uint32_t flags = nouveau_screen_map_flags(usage);
 	int ret;
 
-	ret = nouveau_bo_map_range(bo, offset, length,
-				   nouveau_screen_map_flags(usage));
+	ret = nouveau_bo_map_range(bo, offset, length, flags);
 	if (ret) {
-		debug_printf("map_range failed: %d\n", ret);
+		if (!(flags & NOUVEAU_BO_NOWAIT) || ret != -EBUSY)
+			debug_printf("map_range failed: %d\n", ret);
 		return NULL;
 	}
 
