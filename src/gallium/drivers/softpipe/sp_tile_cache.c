@@ -26,7 +26,7 @@
  **************************************************************************/
 
 /**
- * Texture tile caching.
+ * Render target tile caching.
  *
  * Author:
  *    Brian Paul
@@ -37,7 +37,6 @@
 #include "util/u_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
-#include "sp_texture.h"
 #include "sp_tile_cache.h"
 
 
@@ -111,10 +110,6 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
       screen = tc->transfer->texture->screen;
       screen->tex_transfer_destroy(tc->transfer);
    }
-   if (tc->tex_trans) {
-      screen = tc->tex_trans->texture->screen;
-      screen->tex_transfer_destroy(tc->tex_trans);
-   }
 
    FREE( tc );
 }
@@ -127,8 +122,6 @@ void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   assert(!tc->texture);
-
    if (tc->transfer) {
       struct pipe_screen *screen = tc->transfer->texture->screen;
 
@@ -180,9 +173,6 @@ sp_tile_cache_map_transfers(struct softpipe_tile_cache *tc)
 {
    if (tc->transfer && !tc->transfer_map)
       tc->transfer_map = tc->screen->transfer_map(tc->screen, tc->transfer);
-
-   if (tc->tex_trans && !tc->tex_trans_map)
-      tc->tex_trans_map = tc->screen->transfer_map(tc->screen, tc->tex_trans);
 }
 
 
@@ -193,67 +183,7 @@ sp_tile_cache_unmap_transfers(struct softpipe_tile_cache *tc)
       tc->screen->transfer_unmap(tc->screen, tc->transfer);
       tc->transfer_map = NULL;
    }
-
-   if (tc->tex_trans_map) {
-      tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
-      tc->tex_trans_map = NULL;
-   }
 }
-
-void
-sp_tile_cache_validate_texture(struct softpipe_tile_cache *tc)
-{
-   if (tc->texture) {
-      struct softpipe_texture *spt = softpipe_texture(tc->texture);
-      if (spt->timestamp != tc->timestamp) {
-         /* texture was modified, invalidate all cached tiles */
-         uint i;
-         _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
-         for (i = 0; i < NUM_ENTRIES; i++) {
-            tc->entries[i].addr.bits.invalid = 1;
-         }
-
-         tc->timestamp = spt->timestamp;
-      }
-   }
-}
-
-/**
- * Specify the texture to cache.
- */
-void
-sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
-                          struct pipe_texture *texture)
-{
-   uint i;
-
-   assert(!tc->transfer);
-
-   if (tc->texture != texture) {
-      pipe_texture_reference(&tc->texture, texture);
-
-      if (tc->tex_trans) {
-         struct pipe_screen *screen = tc->tex_trans->texture->screen;
-         
-         if (tc->tex_trans_map) {
-            screen->transfer_unmap(screen, tc->tex_trans);
-            tc->tex_trans_map = NULL;
-         }
-
-         screen->tex_transfer_destroy(tc->tex_trans);
-         tc->tex_trans = NULL;
-      }
-
-      /* mark as entries as invalid/empty */
-      /* XXX we should try to avoid this when the teximage hasn't changed */
-      for (i = 0; i < NUM_ENTRIES; i++) {
-         tc->entries[i].addr.bits.invalid = 1;
-      }
-
-      tc->tex_face = -1; /* any invalid value here */
-   }
-}
-
 
 /**
  * Set pixels in a tile to the given clear color/value, float.
@@ -345,7 +275,7 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
       for (x = 0; x < w; x += TILE_SIZE) {
-         union tile_address addr = tile_address(x, y, 0, 0, 0);
+         union tile_address addr = tile_address(x, y);
 
          if (is_clear_flag_set(tc->clear_flags, addr)) {
             pipe_put_tile_raw(pt,
@@ -402,13 +332,6 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
 #if TILE_CLEAR_OPTIMIZATION
       sp_tile_cache_flush_clear(tc);
 #endif
-   }
-   else if (tc->texture) {
-      /* caching a texture, mark all entries as empty */
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         tc->entries[pos].addr.bits.invalid = 1;
-      }
-      tc->tex_face = -1;
    }
 
 #if 0
@@ -488,97 +411,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
 }
 
 
-/**
- * Given the texture face, level, zslice, x and y values, compute
- * the cache entry position/index where we'd hope to find the
- * cached texture tile.
- * This is basically a direct-map cache.
- * XXX There's probably lots of ways in which we can improve this.
- */
-static INLINE uint
-tex_cache_pos( union tile_address addr )
-{
-   uint entry = (addr.bits.x + 
-                 addr.bits.y * 9 + 
-                 addr.bits.z * 3 + 
-                 addr.bits.face + 
-                 addr.bits.level * 7);
 
-   return entry % NUM_ENTRIES;
-}
-
-/**
- * Similar to sp_get_cached_tile() but for textures.
- * Tiles are read-only and indexed with more params.
- */
-const struct softpipe_cached_tile *
-sp_find_cached_tile_tex(struct softpipe_tile_cache *tc, 
-                        union tile_address addr )
-{
-   struct pipe_screen *screen = tc->screen;
-   struct softpipe_cached_tile *tile;
-   
-   tile = tc->entries + tex_cache_pos( addr );
-
-   if (addr.value != tile->addr.value) {
-
-      /* cache miss.  Most misses are because we've invaldiated the
-       * texture cache previously -- most commonly on binding a new
-       * texture.  Currently we effectively flush the cache on texture
-       * bind.
-       */
-#if 0
-      _debug_printf("miss at %u:  x=%d y=%d z=%d face=%d level=%d\n"
-                    "   tile %u:  x=%d y=%d z=%d face=%d level=%d\n",
-                    pos, x/TILE_SIZE, y/TILE_SIZE, z, face, level,
-                    pos, tile->addr.bits.x, tile->addr.bits.y, tile->z, tile->face, tile->level);
-#endif
-
-      /* check if we need to get a new transfer */
-      if (!tc->tex_trans ||
-          tc->tex_face != addr.bits.face ||
-          tc->tex_level != addr.bits.level ||
-          tc->tex_z != addr.bits.z) {
-         /* get new transfer (view into texture) */
-
-         if (tc->tex_trans) {
-            if (tc->tex_trans_map) {
-               tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
-               tc->tex_trans_map = NULL;
-            }
-
-            screen->tex_transfer_destroy(tc->tex_trans);
-            tc->tex_trans = NULL;
-         }
-
-         tc->tex_trans = 
-            screen->get_tex_transfer(screen, tc->texture, 
-                                     addr.bits.face, 
-                                     addr.bits.level, 
-                                     addr.bits.z, 
-                                     PIPE_TRANSFER_READ, 0, 0,
-                                     tc->texture->width[addr.bits.level],
-                                     tc->texture->height[addr.bits.level]);
-
-         tc->tex_trans_map = screen->transfer_map(screen, tc->tex_trans);
-
-         tc->tex_face = addr.bits.face;
-         tc->tex_level = addr.bits.level;
-         tc->tex_z = addr.bits.z;
-      }
-
-      /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->tex_trans,
-                         addr.bits.x * TILE_SIZE, 
-                         addr.bits.y * TILE_SIZE,
-                         TILE_SIZE, TILE_SIZE,
-                         (float *) tile->data.color);
-      tile->addr = addr;
-   }
-
-   tc->last_tile = tile;
-   return tile;
-}
 
 
 /**

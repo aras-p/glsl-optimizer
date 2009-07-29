@@ -43,6 +43,7 @@ struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
+struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
 
@@ -141,7 +142,7 @@ struct softpipe_context {
    struct softpipe_tile_cache *zsbuf_cache;
    
    unsigned tex_timestamp;
-   struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;

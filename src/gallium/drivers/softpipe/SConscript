@@ -37,6 +37,7 @@ softpipe = env.ConvenienceLibrary(
 		'sp_state_vertex.c',
 		'sp_surface.c',
 		'sp_tex_sample.c',
+		'sp_tex_tile_cache.c',
 		'sp_texture.c',
 		'sp_tile_cache.c',
 	])

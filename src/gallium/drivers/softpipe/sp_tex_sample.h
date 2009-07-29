@@ -48,7 +48,7 @@ struct sp_shader_sampler
    const struct pipe_texture *texture;
    const struct pipe_sampler_state *sampler;
 
-   struct softpipe_tile_cache *cache;
+   struct softpipe_tex_tile_cache *cache;
 };
 
 

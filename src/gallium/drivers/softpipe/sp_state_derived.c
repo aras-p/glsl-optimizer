@@ -212,7 +212,7 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      sp_tile_cache_validate_texture( softpipe->tex_cache[i] );
+      sp_tex_tile_cache_validate_texture( softpipe->tex_cache[i] );
    }
 }
 

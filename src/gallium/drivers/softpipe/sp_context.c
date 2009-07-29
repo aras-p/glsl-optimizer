@@ -97,7 +97,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
    sp_destroy_tile_cache(softpipe->zsbuf_cache);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      sp_destroy_tile_cache(softpipe->tex_cache[i]);
+      sp_destroy_tex_tile_cache(softpipe->tex_cache[i]);
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
@@ -220,7 +220,7 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->zsbuf_cache = sp_create_tile_cache( screen );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      softpipe->tex_cache[i] = sp_create_tile_cache( screen );
+      softpipe->tex_cache[i] = sp_create_tex_tile_cache( screen );
 
 
    /* setup quad rendering stages */
