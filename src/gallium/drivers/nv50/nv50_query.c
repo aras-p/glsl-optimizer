@@ -107,13 +107,13 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 		  boolean wait, uint64_t *result)
 {
 	struct nv50_query *q = nv50_query(pq);
-
-	/*XXX: Want to be able to return FALSE here instead of blocking
-	 *     until the result is available..
-	 */
+	int ret;
 
 	if (!q->ready) {
-		nouveau_bo_map(q->bo, NOUVEAU_BO_RD);
+		ret = nouveau_bo_map(q->bo, NOUVEAU_BO_RD |
+				     wait ? 0 : NOUVEAU_BO_NOWAIT);
+		if (ret)
+			return false;
 		q->result = ((uint32_t *)q->bo->map)[1];
 		q->ready = TRUE;
 		nouveau_bo_unmap(q->bo);
