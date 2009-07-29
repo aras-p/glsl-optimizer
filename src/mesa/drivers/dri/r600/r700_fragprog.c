@@ -395,6 +395,19 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
+    unBit = 1 << FRAG_ATTRIB_FOGC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
     for(i=0; i<8; i++)
     {
 	    unBit = 1 << (FRAG_ATTRIB_TEX0 + i);
