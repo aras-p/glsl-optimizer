@@ -2540,14 +2540,14 @@ yyreduce:
 	      (yyval.src_reg).Base.Index = s->param_binding_begin;
 	      break;
 	   case at_attrib:
-	     (yyval.src_reg).Base.File = PROGRAM_INPUT;
-	     (yyval.src_reg).Base.Index = s->attrib_binding;
-	     state->prog->InputsRead |= (1U << (yyval.src_reg).Base.Index);
+	      (yyval.src_reg).Base.File = PROGRAM_INPUT;
+	      (yyval.src_reg).Base.Index = s->attrib_binding;
+	      state->prog->InputsRead |= (1U << (yyval.src_reg).Base.Index);
 
-	     if (!validate_inputs(& (yylsp[(1) - (1)]), state)) {
-		YYERROR;
-	     }
-	     break;
+	      if (!validate_inputs(& (yylsp[(1) - (1)]), state)) {
+		 YYERROR;
+	      }
+	      break;
 
 	   default:
 	      YYERROR;

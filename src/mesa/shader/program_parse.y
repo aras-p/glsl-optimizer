@@ -608,14 +608,14 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	      $$.Base.Index = s->param_binding_begin;
 	      break;
 	   case at_attrib:
-	     $$.Base.File = PROGRAM_INPUT;
-	     $$.Base.Index = s->attrib_binding;
-	     state->prog->InputsRead |= (1U << $$.Base.Index);
+	      $$.Base.File = PROGRAM_INPUT;
+	      $$.Base.Index = s->attrib_binding;
+	      state->prog->InputsRead |= (1U << $$.Base.Index);
 
-	     if (!validate_inputs(& @1, state)) {
-		YYERROR;
-	     }
-	     break;
+	      if (!validate_inputs(& @1, state)) {
+		 YYERROR;
+	      }
+	      break;
 
 	   default:
 	      YYERROR;
