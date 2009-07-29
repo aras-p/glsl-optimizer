@@ -5135,6 +5135,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    state->prog->NumInstructions++;
 
    state->prog->NumParameters = state->prog->Parameters->NumParameters;
+   state->prog->NumAttributes = _mesa_bitcount(state->prog->InputsRead);
 
    /*
     * Initialize native counts to logical counts.  The device driver may
