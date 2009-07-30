@@ -446,6 +446,35 @@ st_finish_render_texture(GLcontext *ctx,
 
 
 /**
+ * Validate a renderbuffer attachment for a particular usage.
+ */
+
+static GLboolean
+st_validate_attachment(struct pipe_screen *screen,
+		       const struct gl_renderbuffer_attachment *att,
+		       GLuint usage)
+{
+   const struct st_texture_object *stObj =
+      st_texture_object(att->Texture);
+
+   /**
+    * Only validate texture attachments for now, since
+    * st_renderbuffer_alloc_storage makes sure that
+    * the format is supported.
+    */
+
+   if (att->Type != GL_TEXTURE)
+      return GL_TRUE;
+
+   if (!stObj)
+      return GL_FALSE;
+
+   return screen->is_format_supported(screen, stObj->pt->format,
+				      PIPE_TEXTURE_2D,
+				      usage, 0);
+}
+
+/**
  * Check that the framebuffer configuration is valid in terms of what
  * the driver can support.
  *
@@ -454,13 +483,37 @@ st_finish_render_texture(GLcontext *ctx,
 static void
 st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    const struct gl_renderbuffer *depthRb =
       fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    const struct gl_renderbuffer *stencilRb =
       fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   GLuint i;
 
    if (stencilRb && depthRb && stencilRb != depthRb) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+
+   if (!st_validate_attachment(screen,
+			       &fb->Attachment[BUFFER_DEPTH],
+			       PIPE_TEXTURE_USAGE_DEPTH_STENCIL)) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   if (!st_validate_attachment(screen,
+			       &fb->Attachment[BUFFER_STENCIL],
+			       PIPE_TEXTURE_USAGE_DEPTH_STENCIL)) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   for (i = 0; i < ctx->Const.MaxColorAttachments; i++) {
+      if (!st_validate_attachment(screen,
+				  &fb->Attachment[BUFFER_COLOR0 + i],
+				  PIPE_TEXTURE_USAGE_RENDER_TARGET)) {
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 return;
+      }
    }
 }
 
