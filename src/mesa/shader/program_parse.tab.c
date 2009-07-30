@@ -4748,7 +4748,15 @@ asm_instruction_ctor(gl_inst_opcode op,
    if (inst) {
       _mesa_init_instructions(& inst->Base, 1);
       inst->Base.Opcode = op;
-      inst->Base.DstReg = *dst;
+
+      /* In the core ARB extensions only the KIL instruction doesn't have a
+       * destination register.
+       */
+      if (dst == NULL) {
+	 init_dst_reg(& inst->Base.DstReg);
+      } else {
+	 inst->Base.DstReg = *dst;
+      }
 
       inst->Base.SrcReg[0] = src0->Base;
       inst->SrcReg[0] = *src0;
