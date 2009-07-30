@@ -82,7 +82,7 @@ static const char *processor_type_names[] =
    "GEOM"
 };
 
-static const char *file_names[] =
+static const char *file_names[TGSI_FILE_COUNT] =
 {
    "NULL",
    "CONST",
@@ -91,7 +91,8 @@ static const char *file_names[] =
    "TEMP",
    "SAMP",
    "ADDR",
-   "IMM"
+   "IMM",
+   "LOOP"
 };
 
 static const char *interpolate_names[] =

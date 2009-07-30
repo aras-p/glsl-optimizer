@@ -69,7 +69,7 @@ static const char *TGSI_TOKEN_TYPES[] =
    "TOKEN_TYPE_INSTRUCTION"
 };
 
-static const char *TGSI_FILES[] =
+static const char *TGSI_FILES[TGSI_FILE_COUNT] =
 {
    "FILE_NULL",
    "FILE_CONSTANT",
@@ -78,7 +78,8 @@ static const char *TGSI_FILES[] =
    "FILE_TEMPORARY",
    "FILE_SAMPLER",
    "FILE_ADDRESS",
-   "FILE_IMMEDIATE"
+   "FILE_IMMEDIATE",
+   "FILE_LOOP"
 };
 
 static const char *TGSI_INTERPOLATES[] =

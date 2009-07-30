@@ -78,6 +78,7 @@ enum tgsi_file_type {
    TGSI_FILE_SAMPLER     =5,
    TGSI_FILE_ADDRESS     =6,
    TGSI_FILE_IMMEDIATE   =7,
+   TGSI_FILE_LOOP        =8,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
