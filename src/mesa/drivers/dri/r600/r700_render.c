@@ -173,7 +173,7 @@ GLboolean r700SendTextureState(context_t *context)
 						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
 						 bo,
-						 0,
+						 r700->textures[i]->SQ_TEX_RESOURCE3,
 						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);

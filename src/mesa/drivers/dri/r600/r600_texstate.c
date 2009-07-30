@@ -610,6 +610,11 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	SETfield(t->SQ_TEX_RESOURCE1, firstImage->Height - 1,
 		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
 
+	if ((t->mt->lastLevel - t->mt->firstLevel) > 0) {
+		t->SQ_TEX_RESOURCE3 = t->mt->levels[0].size / 256;
+		SETfield(t->SQ_TEX_RESOURCE4, t->mt->firstLevel, BASE_LEVEL_shift, BASE_LEVEL_mask);
+		SETfield(t->SQ_TEX_RESOURCE5, t->mt->lastLevel, LAST_LEVEL_shift, LAST_LEVEL_mask);
+	}
 }
 
 /**
