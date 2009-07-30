@@ -224,12 +224,6 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
          ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
 
-      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
-                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
-         /* Mark the surface as dirty.  The tile cache will look for this. */
-         spt->modified = TRUE;
-      }
-
       ps->face = face;
       ps->level = level;
       ps->zslice = zslice;
@@ -376,6 +370,11 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
    spt = softpipe_texture(transfer->texture);
 
    pipe_buffer_unmap( screen, spt->buffer );
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      /* Mark the texture as dirty to expire the tile caches. */
+      spt->modified = TRUE;
+   }
 }
 
 
