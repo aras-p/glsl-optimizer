@@ -424,12 +424,21 @@ i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
    return 0;
 }
 
-
-
+/* Warning the user about program errors seems to be quite valuable, from
+ * our bug reports.  It unfortunately means piglit reporting errors
+ * when we fall back to software due to an unsupportable program, though.
+ */
 void
-i915_program_error(struct i915_fragment_program *p, const char *msg)
+i915_program_error(struct i915_fragment_program *p, const char *fmt, ...)
 {
-   _mesa_problem(NULL, "i915_program_error: %s", msg);
+   va_list args;
+
+   fprintf(stderr, "i915_program_error: ");
+   va_start(args, fmt);
+   vfprintf(stderr, fmt, args);
+   va_end(args);
+
+   fprintf(stderr, "\n");
    p->error = 1;
 }
 

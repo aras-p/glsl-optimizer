@@ -89,7 +89,8 @@ src_vector(struct i915_fragment_program *p,
        */
    case PROGRAM_TEMPORARY:
       if (source->Index >= I915_MAX_TEMPORARY) {
-         i915_program_error(p, "Exceeded max temporary reg");
+         i915_program_error(p, "Exceeded max temporary reg: %d/%d",
+			    source->Index, I915_MAX_TEMPORARY);
          return 0;
       }
       src = UREG(REG_TYPE_R, source->Index);
@@ -124,7 +125,7 @@ src_vector(struct i915_fragment_program *p,
          break;
 
       default:
-         i915_program_error(p, "Bad source->Index");
+         i915_program_error(p, "Bad source->Index: %d", source->Index);
          return 0;
       }
       break;
@@ -153,7 +154,7 @@ src_vector(struct i915_fragment_program *p,
       break;
 
    default:
-      i915_program_error(p, "Bad source->File");
+      i915_program_error(p, "Bad source->File: %d", source->File);
       return 0;
    }
 
@@ -186,13 +187,14 @@ get_result_vector(struct i915_fragment_program *p,
          p->depth_written = 1;
          return UREG(REG_TYPE_OD, 0);
       default:
-         i915_program_error(p, "Bad inst->DstReg.Index");
+         i915_program_error(p, "Bad inst->DstReg.Index: %d",
+			    inst->DstReg.Index);
          return 0;
       }
    case PROGRAM_TEMPORARY:
       return UREG(REG_TYPE_R, inst->DstReg.Index);
    default:
-      i915_program_error(p, "Bad inst->DstReg.File");
+      i915_program_error(p, "Bad inst->DstReg.File: %d", inst->DstReg.File);
       return 0;
    }
 }
@@ -231,7 +233,7 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
    case TEXTURE_CUBE_INDEX:
       return D0_SAMPLE_TYPE_CUBE;
    default:
-      i915_program_error(p, "TexSrcBit");
+      i915_program_error(p, "TexSrcBit: %d", bit);
       return 0;
    }
 }
@@ -870,7 +872,8 @@ upload_program(struct i915_fragment_program *p)
          return;
 
       default:
-         i915_program_error(p, "bad opcode");
+         i915_program_error(p, "bad opcode: %s",
+			    _mesa_opcode_string(inst->Opcode));
          return;
       }
 
