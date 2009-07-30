@@ -279,7 +279,6 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 
 	_mesa_bzero(code, sizeof(*code));
 	code->max_temp_idx = 1;
-	code->inst_offset = 0;
 	code->inst_end = -1;
 
 	radeonPairProgram(compiler, &pair_handler, compiler);

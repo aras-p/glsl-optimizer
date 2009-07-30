@@ -160,8 +160,7 @@ struct r500_fragment_program_code {
 		uint32_t inst5;
 	} inst[R500_PFS_MAX_INST];
 
-	int inst_offset;
-	int inst_end;
+	int inst_end; /* Number of instructions - 1; also, last instruction to be executed */
 
 	int max_temp_idx;
 };
