@@ -100,7 +100,7 @@ TestGetTexImageRTT(void)
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-   glBindFramebuffer(GL_FRAMEBUFFER_EXT, fb);
+   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
                              GL_TEXTURE_2D, tex, level);
 
@@ -137,7 +137,7 @@ TestGetTexImageRTT(void)
       free(data2);
    }
 
-   glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
    glDeleteFramebuffersEXT(1, &fb);
    glDeleteTextures(1, &tex);
 

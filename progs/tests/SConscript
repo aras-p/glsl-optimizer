@@ -72,6 +72,7 @@ progs = [
     'fogcoord',
     'fptest1',
     'fptexture',
+    'getteximage',
     'glutfx',
     'interleave',
     'invert',
