@@ -100,6 +100,8 @@ struct brw_clip_compile {
       
       struct brw_reg fixed_planes;
       struct brw_reg plane_equation;
+       
+      struct brw_reg ff_sync;
    } reg;
 
    /* 3 different ways of expressing vertex size:
@@ -173,4 +175,5 @@ struct brw_reg get_tmp( struct brw_clip_compile *c );
 void brw_clip_project_position(struct brw_clip_compile *c,
              struct brw_reg pos );
 void brw_clip_ff_sync(struct brw_clip_compile *c);
+void brw_clip_init_ff_sync(struct brw_clip_compile *c);
 #endif

@@ -85,6 +85,10 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
       i++;
    }
 
+   if (c->need_ff_sync) {
+      c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
+      i++;
+   }
 
    c->first_tmp = i;
    c->last_tmp = i;
@@ -246,8 +250,6 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 
    brw_ADD(p, c->reg.t, c->reg.t0, c->reg.t1);
    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.t, brw_imm_f(1.0));
-   if (c->need_ff_sync)
-	   brw_clip_ff_sync(c);      
    not_culled = brw_IF(p, BRW_EXECUTE_1);
    {
       brw_clip_interp_vertex(c, newvtx0, vtx0, vtx1, c->reg.t0, GL_FALSE);
@@ -265,6 +267,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 void brw_emit_line_clip( struct brw_clip_compile *c )
 {
    brw_clip_line_alloc_regs(c);
+   brw_clip_init_ff_sync(c);
 
    if (c->key.do_flat_shading)
       brw_clip_copy_colors(c, 0, 1);
