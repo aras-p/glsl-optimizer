@@ -4073,10 +4073,8 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
       _mesa_free_parameter_list(program->Base.Parameters);
    program->Base.Parameters = prog.Parameters; 
 
-#if 1 || DEBUG_VP
+#if DEBUG_VP
    _mesa_printf("____________Vertex program %u __________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
-   _mesa_printf("inputs = 0x%04x, outputs = 0x%04x\n", program->Base.InputsRead,
-		program->Base.OutputsWritten);
 #endif
 }
