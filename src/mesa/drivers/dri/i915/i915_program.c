@@ -186,6 +186,11 @@ i915_emit_arith(struct i915_fragment_program * p,
       p->utemp_flag = old_utemp_flag;   /* restore */
    }
 
+   if (p->csr >= p->program + I915_PROGRAM_SIZE) {
+      i915_program_error(p, "Program contains too many instructions");
+      return UREG_BAD;
+   }
+
    *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
    *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
    *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
@@ -269,6 +274,11 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
       if (GET_UREG_TYPE(coord) == REG_TYPE_R &&
 	  p->register_phases[GET_UREG_NR(coord)] == p->nr_tex_indirect)
 	 p->nr_tex_indirect++;
+
+      if (p->csr >= p->program + I915_PROGRAM_SIZE) {
+	 i915_program_error(p, "Program contains too many instructions");
+	 return UREG_BAD;
+      }
 
       *(p->csr++) = (op | 
 		     T0_DEST( dest ) |
