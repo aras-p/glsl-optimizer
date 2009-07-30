@@ -121,6 +121,13 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
    int negate;
    struct asm_vector vector;
    gl_inst_opcode opcode;
+
+   struct {
+      unsigned swz;
+      unsigned rgba_valid:1;
+      unsigned xyzw_valid:1;
+      unsigned negate:1;
+   } ext_swizzle;
 }
 
 %token ARBvp_10 ARBfp_10
@@ -175,9 +182,9 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 
 %type <dst_reg> dstReg maskedDstReg maskedAddrReg
 %type <src_reg> srcReg scalarSrcReg swizzleSrcReg
-%type <swiz_mask> scalarSuffix swizzleSuffix extendedSwizzle extSwizComp
+%type <swiz_mask> scalarSuffix swizzleSuffix extendedSwizzle
+%type <ext_swizzle> extSwizComp extSwizSel
 %type <swiz_mask> optionalMask
-%type <integer> extSwizSel
 
 %type <sym> progParamArray
 %type <integer> addrRegRelOffset addrRegPosOffset addrRegNegOffset
@@ -529,17 +536,41 @@ maskedAddrReg: addrReg addrWriteMask
 
 extendedSwizzle: extSwizComp ',' extSwizComp ',' extSwizComp ',' extSwizComp
 	{
-	   $$.swizzle = MAKE_SWIZZLE4($1.swizzle, $3.swizzle,
-				      $5.swizzle, $7.swizzle);
-	   $$.mask = ($1.mask) | ($3.mask << 1) | ($5.mask << 2)
-	      | ($7.mask << 3);
+	   const unsigned xyzw_valid =
+	      ($1.xyzw_valid << 0)
+	      | ($3.xyzw_valid << 1)
+	      | ($5.xyzw_valid << 2)
+	      | ($7.xyzw_valid << 3);
+	   const unsigned rgba_valid =
+	      ($1.rgba_valid << 0)
+	      | ($3.rgba_valid << 1)
+	      | ($5.rgba_valid << 2)
+	      | ($7.rgba_valid << 3);
+
+	   /* All of the swizzle components have to be valid in either RGBA
+	    * or XYZW.  Note that 0 and 1 are valid in both, so both masks
+	    * can have some bits set.
+	    *
+	    * We somewhat deviate from the spec here.  It would be really hard
+	    * to figure out which component is the error, and there probably
+	    * isn't a lot of benefit.
+	    */
+	   if ((rgba_valid != 0x0f) && (xyzw_valid != 0x0f)) {
+	      yyerror(& @1, state, "cannot combine RGBA and XYZW swizzle "
+		      "components");
+	      YYERROR;
+	   }
+
+	   $$.swizzle = MAKE_SWIZZLE4($1.swz, $3.swz, $5.swz, $7.swz);
+	   $$.mask = ($1.negate) | ($3.negate << 1) | ($5.negate << 2)
+	      | ($7.negate << 3);
 	}
 	;
 
 extSwizComp: optionalSign extSwizSel
 	{
-	   $$.swizzle = $2;
-	   $$.mask = ($1) ? 1 : 0;
+	   $$ = $2;
+	   $$.negate = ($1) ? 1 : 0;
 	}
 	;
 
@@ -550,7 +581,13 @@ extSwizSel: INTEGER
 	      YYERROR;
 	   }
 
-	   $$ = ($1 == 0) ? SWIZZLE_ZERO : SWIZZLE_ONE;
+	   $$.swz = ($1 == 0) ? SWIZZLE_ZERO : SWIZZLE_ONE;
+
+	   /* 0 and 1 are valid for both RGBA swizzle names and XYZW
+	    * swizzle names.
+	    */
+	   $$.xyzw_valid = 1;
+	   $$.rgba_valid = 1;
 	}
 	| IDENTIFIER
 	{
@@ -561,17 +598,39 @@ extSwizSel: INTEGER
 
 	   switch ($1[0]) {
 	   case 'x':
-	      $$ = SWIZZLE_X;
+	      $$.swz = SWIZZLE_X;
+	      $$.xyzw_valid = 1;
 	      break;
 	   case 'y':
-	      $$ = SWIZZLE_Y;
+	      $$.swz = SWIZZLE_Y;
+	      $$.xyzw_valid = 1;
 	      break;
 	   case 'z':
-	      $$ = SWIZZLE_Z;
+	      $$.swz = SWIZZLE_Z;
+	      $$.xyzw_valid = 1;
 	      break;
 	   case 'w':
-	      $$ = SWIZZLE_W;
+	      $$.swz = SWIZZLE_W;
+	      $$.xyzw_valid = 1;
 	      break;
+
+	   case 'r':
+	      $$.swz = SWIZZLE_X;
+	      $$.rgba_valid = 1;
+	      break;
+	   case 'g':
+	      $$.swz = SWIZZLE_Y;
+	      $$.rgba_valid = 1;
+	      break;
+	   case 'b':
+	      $$.swz = SWIZZLE_Z;
+	      $$.rgba_valid = 1;
+	      break;
+	   case 'a':
+	      $$.swz = SWIZZLE_W;
+	      $$.rgba_valid = 1;
+	      break;
+
 	   default:
 	      yyerror(& @1, state, "invalid extended swizzle selector");
 	      YYERROR;

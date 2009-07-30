@@ -171,10 +171,17 @@ typedef union YYSTYPE
    struct asm_vector vector;
    gl_inst_opcode opcode;
 
+   struct {
+      unsigned swz;
+      unsigned rgba_valid:1;
+      unsigned xyzw_valid:1;
+      unsigned negate:1;
+   } ext_swizzle;
+
 
 
 /* Line 1676 of yacc.c  */
-#line 178 "program_parse.tab.h"
+#line 185 "program_parse.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
