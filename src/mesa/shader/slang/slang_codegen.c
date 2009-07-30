@@ -381,8 +381,8 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
       { "gl_TexCoord", FRAG_ATTRIB_TEX0, SWIZZLE_NOOP },
       /* note: we're packing several quantities into the fogcoord vector */
       { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, SWIZZLE_XXXX },
-      { "gl_FrontFacing", FRAG_ATTRIB_FOGC, SWIZZLE_YYYY }, /*XXX*/
-      { "gl_PointCoord", FRAG_ATTRIB_FOGC, SWIZZLE_ZWWW },
+      { "gl_PointCoord", FRAG_ATTRIB_PNTC, SWIZZLE_XYZW },
+      { "gl_FrontFacing", FRAG_ATTRIB_FACE, SWIZZLE_XXXX },
       { NULL, 0, SWIZZLE_NOOP }
    };
    GLuint i;

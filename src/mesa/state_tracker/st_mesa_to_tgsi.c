@@ -112,27 +112,6 @@ map_register_file_index(
 {
    switch( file ) {
    case TGSI_FILE_INPUT:
-      if (procType == TGSI_PROCESSOR_FRAGMENT &&
-          index == FRAG_ATTRIB_FOGC) {
-         if (GET_SWZ(*swizzle, 0) == SWIZZLE_X) {
-            /* do nothing we're, ok */
-         } else if (GET_SWZ(*swizzle, 0) == SWIZZLE_Y) {
-            /* replace the swizzle with xxxx */
-            *swizzle = MAKE_SWIZZLE4(SWIZZLE_X,
-                                     SWIZZLE_X,
-                                     SWIZZLE_X,
-                                     SWIZZLE_X);
-            /* register after fog */
-            return inputMapping[index] + 1;
-         } else {
-            *swizzle = MAKE_SWIZZLE4(SWIZZLE_Z,
-                                     SWIZZLE_W,
-                                     SWIZZLE_Z,
-                                     SWIZZLE_W);
-            /* register after frontface */
-            return inputMapping[index] + 2;
-         }
-      }
       /* inputs are mapped according to the user-defined map */
       return inputMapping[index];
 

@@ -227,7 +227,9 @@ typedef enum
    FRAG_ATTRIB_TEX5 = 9,
    FRAG_ATTRIB_TEX6 = 10,
    FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
+   FRAG_ATTRIB_FACE = 12,  /**< front/back face */
+   FRAG_ATTRIB_PNTC = 13,  /**< sprite/point coord */
+   FRAG_ATTRIB_VAR0 = 14,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
 
@@ -239,6 +241,8 @@ typedef enum
 #define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
 #define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
 #define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
+#define FRAG_BIT_FACE  (1 << FRAG_ATTRIB_FACE)
+#define FRAG_BIT_PNTC  (1 << FRAG_ATTRIB_PNTC)
 #define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
 #define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
 #define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
@@ -1834,9 +1838,6 @@ struct gl_fragment_program
    struct gl_program Base;   /**< base class */
    GLenum FogOption;
    GLboolean UsesKill;          /**< shader uses KIL instruction */
-   GLboolean UsesPointCoord;    /**< shader uses gl_PointCoord */
-   GLboolean UsesFrontFacing;   /**< shader used gl_FrontFacing */
-   GLboolean UsesFogFragCoord;  /**< shader used gl_FogFragCoord */
 };
 
 

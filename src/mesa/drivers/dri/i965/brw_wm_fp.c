@@ -376,14 +376,6 @@ static void emit_interp( struct brw_wm_compile *c,
       }
       break;
    case FRAG_ATTRIB_FOGC:
-      /* The FOGC input is really special.  When a program uses glFogFragCoord,
-       * the results returned are supposed to be (f,0,0,1).  But for Mesa GLSL,
-       * the glFrontFacing and glPointCoord values are also stashed in FOGC.
-       * So, write the interpolated fog value to X, then either 0, 1, or the
-       * stashed values to Y, Z, W.  Note that this means that
-       * glFogFragCoord.yzw can be wrong in those cases!
-       */
-
       /* Interpolate the fog coordinate */
       emit_op(c,
 	      WM_PINTERP,
@@ -393,26 +385,40 @@ static void emit_interp( struct brw_wm_compile *c,
 	      deltas,
 	      get_pixel_w(c));
 
-      /* Move the front facing value into FOGC.y if it's needed. */
-      if (c->fp->program.UsesFrontFacing) {
-	 emit_op(c,
-		 WM_FRONTFACING,
-		 dst_mask(dst, WRITEMASK_Y),
-		 0,
-		 src_undef(),
-		 src_undef(),
-		 src_undef());
-      } else {
-	 emit_op(c,
-		 OPCODE_MOV,
-		 dst_mask(dst, WRITEMASK_Y),
-		 0,
-		 src_swizzle1(interp, SWIZZLE_ZERO),
-		 src_undef(),
-		 src_undef());
-      }
+      emit_op(c,
+	      OPCODE_MOV,
+	      dst_mask(dst, WRITEMASK_YZW),
+	      0,
+	      src_swizzle(interp,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ONE),
+	      src_undef(),
+	      src_undef());
+      break;
 
-      /* Should do the PointCoord thing here. */
+   case FRAG_ATTRIB_FACE:
+      /* XXX review/test this case */
+      emit_op(c,
+              WM_FRONTFACING,
+              dst_mask(dst, WRITEMASK_X),
+              0,
+              src_undef(),
+              src_undef(),
+              src_undef());
+      break;
+
+   case FRAG_ATTRIB_PNTC:
+      /* XXX review/test this case */
+      emit_op(c,
+	      WM_PINTERP,
+	      dst_mask(dst, WRITEMASK_XY),
+	      0,
+	      interp,
+	      deltas,
+	      get_pixel_w(c));
+
       emit_op(c,
 	      OPCODE_MOV,
 	      dst_mask(dst, WRITEMASK_ZW),
@@ -425,6 +431,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	      src_undef(),
 	      src_undef());
       break;
+
    default:
       emit_op(c,
 	      WM_PINTERP,
