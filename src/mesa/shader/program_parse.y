@@ -205,7 +205,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %type <state> stateLightItem stateLightModelItem stateLightProdItem
 %type <state> stateTexGenItem stateFogItem stateClipPlaneItem statePointItem
 %type <state> stateMatrixItem stateMatrixRow stateMatrixRows
-%type <state> stateTexEnvItem
+%type <state> stateTexEnvItem stateDepthItem
 
 %type <state> stateLModProperty
 %type <state> stateMatrixName optMatrixRows
@@ -1083,6 +1083,7 @@ stateSingleItem: STATE stateMaterialItem  { memcpy($$, $2, sizeof($$)); }
 	| STATE stateClipPlaneItem        { memcpy($$, $2, sizeof($$)); }
 	| STATE statePointItem            { memcpy($$, $2, sizeof($$)); }
 	| STATE stateMatrixRow            { memcpy($$, $2, sizeof($$)); }
+	| STATE stateDepthItem            { memcpy($$, $2, sizeof($$)); }
 	;
 
 stateMaterialItem: MATERIAL optFaceType stateMatProperty
@@ -1469,6 +1470,12 @@ stateProgramMatNum: INTEGER
 	}
 	;
 
+stateDepthItem: DEPTH RANGE
+	{
+	   memset($$, 0, sizeof($$));
+	   $$[0] = STATE_DEPTH_RANGE;
+	}
+	;
 
 
 programSingleItem: progEnvParam | progLocalParam;
