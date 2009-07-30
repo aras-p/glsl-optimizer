@@ -2007,8 +2007,8 @@ parse_param (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
       if (specified_length != (int)param_var->param_binding_length) {
          program_error(ctx, Program->Position,
               "Declared parameter array length does not match parameter list");
+         return 1;
       }
-      return 1;
    }
 
    (*inst)++;
