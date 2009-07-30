@@ -1058,6 +1058,28 @@ i915ProgramStringNotify(GLcontext * ctx,
    _tnl_program_string(ctx, target, prog);
 }
 
+void
+i915_update_program(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct i915_context *i915 = i915_context(&intel->ctx);
+   struct i915_fragment_program *fp =
+      (struct i915_fragment_program *) ctx->FragmentProgram._Current;
+
+   if (i915->current_program != fp) {
+      if (i915->current_program) {
+         i915->current_program->on_hardware = 0;
+         i915->current_program->params_uptodate = 0;
+      }
+
+      i915->current_program = fp;
+   }
+
+   if (!fp->translated)
+      translate_program(fp);
+
+   FALLBACK(&i915->intel, I915_FALLBACK_PROGRAM, fp->error);
+}
 
 void
 i915ValidateFragmentProgram(struct i915_context *i915)
@@ -1074,16 +1096,6 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
    int i, offset = 0;
-
-   if (i915->current_program != p) {
-      if (i915->current_program) {
-         i915->current_program->on_hardware = 0;
-         i915->current_program->params_uptodate = 0;
-      }
-
-      i915->current_program = p;
-   }
-
 
    /* Important:
     */

@@ -155,7 +155,6 @@ extern void i915_upload_program(struct i915_context *i915,
 
 extern void i915_fini_program(struct i915_fragment_program *p);
 
-
-
+extern void i915_update_program(GLcontext *ctx);
 
 #endif

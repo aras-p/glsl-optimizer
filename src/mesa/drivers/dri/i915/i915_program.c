@@ -530,8 +530,6 @@ i915_upload_program(struct i915_context *i915,
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
 
-   FALLBACK(&i915->intel, I915_FALLBACK_PROGRAM, p->error);
-
    /* Could just go straight to the batchbuffer from here:
     */
    if (i915->state.ProgramSize != (program_size + decl_size) ||
