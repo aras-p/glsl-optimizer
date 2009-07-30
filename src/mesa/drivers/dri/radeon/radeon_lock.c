@@ -86,8 +86,34 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 
 	rmesa->vtbl.get_lock(rmesa);
 }
+#ifndef NDEBUG
+struct lock_debug {
+	const char* function;
+	const char* file;
+	int line;
+};
 
-void radeon_lock_hardware(radeonContextPtr radeon)
+static struct lock_debug ldebug = {0};
+#endif
+
+#if 0
+/** TODO: use atomic operations for reference counting **/
+/** gcc 4.2 has builtin functios for this **/
+#define ATOMIC_INC_AND_FETCH(atomic) __sync_add_and_fetch(&atomic, 1)
+#define ATOMIC_DEC_AND_FETCH(atomic) __sync_sub_and_fetch(&atomic, 1)
+#else
+#define ATOMIC_INC_AND_FETCH(atomic) (++atomic)
+#define ATOMIC_DEC_AND_FETCH(atomic) (--atomic)
+#endif
+
+
+void radeon_lock_hardware(radeonContextPtr radeon
+#ifndef NDEBUG
+		,const char* function
+		,const char* file
+		,const int line
+#endif
+		)
 {
 	char ret = 0;
 	struct radeon_framebuffer *rfb = NULL;
@@ -102,16 +128,39 @@ void radeon_lock_hardware(radeonContextPtr radeon)
 	}
 
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		if (ATOMIC_INC_AND_FETCH(radeon->dri.hwLockCount) > 1)
+		{
+#ifndef NDEBUG
+			if ( RADEON_DEBUG & DEBUG_SANITY )
+				fprintf(stderr, "*** %d times of recursive call to %s ***\n"
+						"Original call was from %s (file: %s line: %d)\n"
+						"Now call is coming from %s (file: %s line: %d)\n"
+						, radeon->dri.hwLockCount, __FUNCTION__
+						, ldebug.function, ldebug.file, ldebug.line
+						, function, file, line
+					   );
+#endif
+			return;
+		}
 		DRM_CAS(radeon->dri.hwLock, radeon->dri.hwContext,
 			 (DRM_LOCK_HELD | radeon->dri.hwContext), ret );
 		if (ret)
 			radeonGetLock(radeon, 0);
+#ifndef NDEBUG
+		ldebug.function = function;
+		ldebug.file = file;
+		ldebug.line = line;
+#endif
 	}
 }
 
 void radeon_unlock_hardware(radeonContextPtr radeon)
 {
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		if (ATOMIC_DEC_AND_FETCH(radeon->dri.hwLockCount) > 0)
+		{
+			return;
+		}
 		DRM_UNLOCK( radeon->dri.fd,
 			    radeon->dri.hwLock,
 			    radeon->dri.hwContext );

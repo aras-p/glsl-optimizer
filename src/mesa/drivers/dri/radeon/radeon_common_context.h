@@ -365,6 +365,7 @@ struct radeon_dri_mirror {
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
+	int hwLockCount;
 	int fd;
 	int drmMinor;
 };

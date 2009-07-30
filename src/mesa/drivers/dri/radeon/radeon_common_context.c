@@ -211,6 +211,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	radeon->dri.screen = sPriv;
 	radeon->dri.hwContext = driContextPriv->hHWContext;
 	radeon->dri.hwLock = &sPriv->pSAREA->lock;
+	radeon->dri.hwLockCount = 0;
 	radeon->dri.fd = sPriv->fd;
 	radeon->dri.drmMinor = sPriv->drm_version.minor;
 

@@ -48,12 +48,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
 
-void radeon_lock_hardware(radeonContextPtr rmesa);
+void radeon_lock_hardware(radeonContextPtr rmesa
+#ifndef NDEBUG
+		,const char* function
+		,const char* file
+		,const int line
+#endif
+		);
 void radeon_unlock_hardware(radeonContextPtr rmesa);
 
 /* Lock the hardware and validate our state.
  */
+#ifdef NDEBUG
 #define LOCK_HARDWARE( rmesa )	radeon_lock_hardware(rmesa)
+#else
+#define LOCK_HARDWARE( rmesa )	radeon_lock_hardware(rmesa, __FUNCTION__, __FILE__, __LINE__)
+#endif
 #define UNLOCK_HARDWARE( rmesa )  radeon_unlock_hardware(rmesa)
 
 #endif
