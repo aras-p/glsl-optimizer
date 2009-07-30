@@ -126,7 +126,39 @@ exec_run( const struct sp_fragment_shader *base,
 		       (float)quad->input.x0, (float)quad->input.y0, 
 		       &machine->QuadPos);
    
-   return tgsi_exec_machine_run( machine );
+   quad->inout.mask &= tgsi_exec_machine_run( machine );
+   if (quad->inout.mask == 0)
+      return FALSE;
+
+   /* store outputs */
+   {
+      const ubyte *sem_name = base->info.output_semantic_name;
+      const ubyte *sem_index = base->info.output_semantic_index;
+      const uint n = base->info.num_outputs;
+      uint i;
+      for (i = 0; i < n; i++) {
+         switch (sem_name[i]) {
+         case TGSI_SEMANTIC_COLOR:
+            {
+               uint cbuf = sem_index[i];
+               memcpy(quad->output.color[cbuf],
+                      &machine->Outputs[i].xyzw[0].f[0],
+                      sizeof(quad->output.color[0]) );
+            }
+            break;
+         case TGSI_SEMANTIC_POSITION:
+            {
+               uint j;
+               for (j = 0; j < 4; j++) {
+                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+               }
+            }
+            break;
+         }
+      }
+   }
+
+   return TRUE;
 }
 
 

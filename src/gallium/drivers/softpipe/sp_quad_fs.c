@@ -68,7 +68,7 @@ quad_shade_stage(struct quad_stage *qs)
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
-static boolean
+static INLINE boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
@@ -76,39 +76,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct tgsi_exec_machine *machine = qss->machine;
 
    /* run shader */
-   quad->inout.mask &= softpipe->fs->run( softpipe->fs, machine, quad );
-   if (quad->inout.mask == 0)
-      return FALSE;
-
-   /* store outputs */
-   {
-      const ubyte *sem_name = softpipe->fs->info.output_semantic_name;
-      const ubyte *sem_index = softpipe->fs->info.output_semantic_index;
-      const uint n = qss->stage.softpipe->fs->info.num_outputs;
-      uint i;
-      for (i = 0; i < n; i++) {
-         switch (sem_name[i]) {
-         case TGSI_SEMANTIC_COLOR:
-            {
-               uint cbuf = sem_index[i];
-               memcpy(quad->output.color[cbuf],
-                      &machine->Outputs[i].xyzw[0].f[0],
-                      sizeof(quad->output.color[0]) );
-            }
-            break;
-         case TGSI_SEMANTIC_POSITION:
-            {
-               uint j;
-               for (j = 0; j < 4; j++) {
-                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
-               }
-            }
-            break;
-         }
-      }
-   }
-
-   return TRUE;
+   return softpipe->fs->run( softpipe->fs, machine, quad );
 }
 
 

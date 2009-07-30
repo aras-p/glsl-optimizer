@@ -104,7 +104,40 @@ fs_sse_run( const struct sp_fragment_shader *base,
 		 //	 , &machine->QuadPos
       );
 
-   return ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
+   quad->inout.mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
+   if (quad->inout.mask == 0)
+      return FALSE;
+
+
+   /* store outputs */
+   {
+      const ubyte *sem_name = shader->base.info.output_semantic_name;
+      const ubyte *sem_index = shader->base.info.output_semantic_index;
+      const uint n = shader->base.info.num_outputs;
+      uint i;
+      for (i = 0; i < n; i++) {
+         switch (sem_name[i]) {
+         case TGSI_SEMANTIC_COLOR:
+            {
+               uint cbuf = sem_index[i];
+               memcpy(quad->output.color[cbuf],
+                      &machine->Outputs[i].xyzw[0].f[0],
+                      sizeof(quad->output.color[0]) );
+            }
+            break;
+         case TGSI_SEMANTIC_POSITION:
+            {
+               uint j;
+               for (j = 0; j < 4; j++) {
+                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+               }
+            }
+            break;
+         }
+      }
+   }
+
+   return TRUE;
 }
 
 
