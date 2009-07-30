@@ -679,37 +679,14 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
                     GLenum target, GLint level,
                     struct gl_texture_image *texImage)
 {
+   const GLuint face = _mesa_tex_target_to_face(target);
+
    ASSERT(tObj);
    ASSERT(texImage);
-   /* XXX simplify this with _mesa_tex_target_to_face() */
-   switch (target) {
-      case GL_TEXTURE_1D:
-      case GL_TEXTURE_2D:
-      case GL_TEXTURE_3D:
-      case GL_TEXTURE_1D_ARRAY_EXT:
-      case GL_TEXTURE_2D_ARRAY_EXT:
-         tObj->Image[0][level] = texImage;
-         break;
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         {
-            GLuint face = ((GLuint) target - 
-                           (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-            tObj->Image[face][level] = texImage;
-         }
-         break;
-      case GL_TEXTURE_RECTANGLE_NV:
-         ASSERT(level == 0);
-         tObj->Image[0][level] = texImage;
-         break;
-      default:
-         _mesa_problem(NULL, "bad target in _mesa_set_tex_image()");
-         return;
-   }
+   ASSERT(target != GL_TEXTURE_RECTANGLE_NV || level == 0);
+
+   tObj->Image[face][level] = texImage;
+
    /* Set the 'back' pointer */
    texImage->TexObject = tObj;
 }
