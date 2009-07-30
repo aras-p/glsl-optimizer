@@ -74,7 +74,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = qss->machine;
-   boolean z_written;
 
    /* run shader */
    quad->inout.mask &= softpipe->fs->run( softpipe->fs, machine, quad );
@@ -82,7 +81,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
       return FALSE;
 
    /* store outputs */
-   z_written = FALSE;
    {
       const ubyte *sem_name = softpipe->fs->info.output_semantic_name;
       const ubyte *sem_index = softpipe->fs->info.output_semantic_index;
@@ -104,7 +102,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
                for (j = 0; j < 4; j++) {
                   quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
                }
-               z_written = TRUE;
             }
             break;
          }
