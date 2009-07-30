@@ -366,7 +366,7 @@ upload_program(struct i915_fragment_program *p)
 
    while (1) {
       GLuint src0, src1, src2, flags;
-      GLuint tmp = 0, consts0 = 0, consts1 = 0;
+      GLuint tmp = 0, dst, consts0 = 0, consts1 = 0;
 
       switch (inst->Opcode) {
       case OPCODE_ABS:
@@ -518,6 +518,10 @@ upload_program(struct i915_fragment_program *p)
          EMIT_1ARG_ARITH(A0_FLR);
          break;
 
+      case OPCODE_TRUNC:
+	 EMIT_1ARG_ARITH(A0_TRC);
+	 break;
+
       case OPCODE_FRC:
          EMIT_1ARG_ARITH(A0_FRC);
          break;
@@ -530,6 +534,22 @@ upload_program(struct i915_fragment_program *p)
                          tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
                          0, src0, T0_TEXKILL);
          break;
+
+      case OPCODE_KIL_NV:
+	 if (inst->DstReg.CondMask == COND_TR) {
+	    tmp = i915_get_utemp(p);
+
+	    i915_emit_texld(p, get_live_regs(p, inst),
+			    tmp, A0_DEST_CHANNEL_ALL,
+			    0, /* use a dummy dest reg */
+			    swizzle(tmp, ONE, ONE, ONE, ONE), /* always */
+			    T0_TEXKILL);
+	 } else {
+	    p->error = 1;
+	    i915_program_error(p, "Unsupported KIL_NV condition code: %d",
+			       inst->DstReg.CondMask);
+	 }
+	 break;
 
       case OPCODE_LG2:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -629,6 +649,20 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_MUL:
          EMIT_2ARG_ARITH(A0_MUL);
          break;
+
+      case OPCODE_NOISE1:
+      case OPCODE_NOISE2:
+      case OPCODE_NOISE3:
+      case OPCODE_NOISE4:
+	 /* Don't implement noise because we just don't have the instructions
+	  * to spare.  We aren't the first vendor to do so.
+	  */
+	 i915_program_error(p, "Stubbed-out noise functions");
+	 i915_emit_arith(p,
+			 A0_MOV,
+			 get_result_vector(p, inst),
+			 get_result_flags(inst), 0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0, 0);
 
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -736,9 +770,38 @@ upload_program(struct i915_fragment_program *p)
          }
          break;
 
-      case OPCODE_SGE:
-         EMIT_2ARG_ARITH(A0_SGE);
-         break;
+      case OPCODE_SEQ:
+	 tmp = i915_get_utemp(p);
+	 flags = get_result_flags(inst);
+	 dst = get_result_vector(p, inst);
+
+	 /* dst = src1 >= src2 */
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 dst,
+			 flags, 0,
+			 src_vector(p, &inst->SrcReg[0], program),
+			 src_vector(p, &inst->SrcReg[1], program),
+			 0);
+	 /* tmp = src1 <= src2 */
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 tmp,
+			 flags, 0,
+			 negate(src_vector(p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector(p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+	 /* dst = tmp && dst */
+	 i915_emit_arith(p,
+			 A0_MUL,
+			 dst,
+			 flags, 0,
+			 dst,
+			 tmp,
+			 0);
+	 break;
 
       case OPCODE_SIN:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -824,8 +887,69 @@ upload_program(struct i915_fragment_program *p)
 
          break;
 
+      case OPCODE_SGE:
+	 EMIT_2ARG_ARITH(A0_SGE);
+	 break;
+
+      case OPCODE_SGT:
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 get_result_vector( p, inst ),
+			 get_result_flags( inst ), 0,
+			 negate(src_vector( p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector( p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+         break;
+
+      case OPCODE_SLE:
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 get_result_vector( p, inst ),
+			 get_result_flags( inst ), 0,
+			 negate(src_vector( p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector( p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+         break;
+
       case OPCODE_SLT:
          EMIT_2ARG_ARITH(A0_SLT);
+         break;
+
+      case OPCODE_SNE:
+	 tmp = i915_get_utemp(p);
+	 flags = get_result_flags(inst);
+	 dst = get_result_vector(p, inst);
+
+	 /* dst = src1 < src2 */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 dst,
+			 flags, 0,
+			 src_vector(p, &inst->SrcReg[0], program),
+			 src_vector(p, &inst->SrcReg[1], program),
+			 0);
+	 /* tmp = src1 > src2 */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 tmp,
+			 flags, 0,
+			 negate(src_vector(p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector(p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+	 /* dst = tmp || dst */
+	 i915_emit_arith(p,
+			 A0_ADD,
+			 dst,
+			 flags | A0_DEST_SATURATE, 0,
+			 dst,
+			 tmp,
+			 0);
          break;
 
       case OPCODE_SUB:
@@ -884,6 +1008,36 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_END:
          return;
 
+      case OPCODE_BGNLOOP:
+      case OPCODE_BGNSUB:
+      case OPCODE_BRA:
+      case OPCODE_BRK:
+      case OPCODE_CAL:
+      case OPCODE_CONT:
+      case OPCODE_DDX:
+      case OPCODE_DDY:
+      case OPCODE_ELSE:
+      case OPCODE_ENDIF:
+      case OPCODE_ENDLOOP:
+      case OPCODE_ENDSUB:
+      case OPCODE_IF:
+      case OPCODE_RET:
+	 p->error = 1;
+	 i915_program_error(p, "Unsupported opcode: %s",
+			    _mesa_opcode_string(inst->Opcode));
+	 return;
+
+      case OPCODE_EXP:
+      case OPCODE_LOG:
+	 /* These opcodes are claimed as GLSL, NV_vp, and ARB_vp in
+	  * prog_instruction.h, but apparently GLSL doesn't ever emit them.
+	  * Instead, it translates to EX2 or LG2.
+	  */
+      case OPCODE_TXD:
+      case OPCODE_TXL:
+	 /* These opcodes are claimed by GLSL in prog_instruction.h, but
+	  * only NV_vp/fp appears to emit them.
+	  */
       default:
          i915_program_error(p, "bad opcode: %s",
 			    _mesa_opcode_string(inst->Opcode));
