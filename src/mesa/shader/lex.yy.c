@@ -1769,7 +1769,7 @@ YY_RULE_SETUP
 case 85:
 YY_RULE_SETUP
 #line 239 "program_lexer.l"
-{ return_token_or_DOT(require_ARB_vp, ATTENUATION); }
+{ return ATTENUATION; }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP

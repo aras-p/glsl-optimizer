@@ -236,7 +236,7 @@ state                     { return STATE; }
 result                    { return RESULT; }
 
 {dot}ambient              { return AMBIENT; }
-{dot}attenuation          { return_token_or_DOT(require_ARB_vp, ATTENUATION); }
+{dot}attenuation          { return ATTENUATION; }
 {dot}back                 { return BACK; }
 {dot}clip                 { return_token_or_DOT(require_ARB_vp, CLIP); }
 {dot}color                { return COLOR; }
