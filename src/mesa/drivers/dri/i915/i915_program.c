@@ -130,6 +130,7 @@ i915_emit_decl(struct i915_fragment_program *p,
    *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
    *(p->decl++) = D1_MBZ;
    *(p->decl++) = D2_MBZ;
+   assert(p->decl <= p->declarations + ARRAY_SIZE(p->declarations));
 
    p->nr_decl_insn++;
    return reg;
@@ -186,7 +187,7 @@ i915_emit_arith(struct i915_fragment_program * p,
       p->utemp_flag = old_utemp_flag;   /* restore */
    }
 
-   if (p->csr >= p->program + I915_PROGRAM_SIZE) {
+   if (p->csr >= p->program + ARRAY_SIZE(p->program)) {
       i915_program_error(p, "Program contains too many instructions");
       return UREG_BAD;
    }
@@ -275,7 +276,7 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
 	  p->register_phases[GET_UREG_NR(coord)] == p->nr_tex_indirect)
 	 p->nr_tex_indirect++;
 
-      if (p->csr >= p->program + I915_PROGRAM_SIZE) {
+      if (p->csr >= p->program + ARRAY_SIZE(p->program)) {
 	 i915_program_error(p, "Program contains too many instructions");
 	 return UREG_BAD;
       }
@@ -529,6 +530,9 @@ i915_upload_program(struct i915_context *i915,
 {
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
+
+   if (p->error)
+      return;
 
    /* Could just go straight to the batchbuffer from here:
     */
