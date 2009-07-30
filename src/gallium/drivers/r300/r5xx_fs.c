@@ -23,445 +23,103 @@
 
 #include "r5xx_fs.h"
 
-static INLINE unsigned r5xx_fix_swiz(unsigned s)
-{
-    /* For historical reasons, the swizzle values x, y, z, w, and 0 are
-     * equivalent to the actual machine code, but 1 is not. Thus, we just
-     * adjust it a bit... */
-    if (s == TGSI_EXTSWIZZLE_ONE) {
-        return R500_SWIZZLE_ONE;
-    } else {
-        return s;
-    }
-}
+#include "r300_reg.h"
 
-static uint32_t r5xx_rgba_swiz(struct tgsi_full_src_register* reg)
-{
-    if (reg->SrcRegister.Extended) {
-        return r5xx_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleX) |
-            (r5xx_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleY) << 3) |
-            (r5xx_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleZ) << 6) |
-            (r5xx_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleW) << 9);
-    } else {
-        return reg->SrcRegister.SwizzleX |
-            (reg->SrcRegister.SwizzleY << 3) |
-            (reg->SrcRegister.SwizzleZ << 6) |
-            (reg->SrcRegister.SwizzleW << 9);
-    }
-}
+/* XXX this all should find its way back to r300_reg */
+/* Swizzle tools */
+#define R500_SWIZZLE_ZERO 4
+#define R500_SWIZZLE_HALF 5
+#define R500_SWIZZLE_ONE 6
+#define R500_SWIZ_RGB_ZERO ((4 << 0) | (4 << 3) | (4 << 6))
+#define R500_SWIZ_RGB_ONE ((6 << 0) | (6 << 3) | (6 << 6))
+#define R500_SWIZ_RGB_RGB ((0 << 0) | (1 << 3) | (2 << 6))
+#define R500_SWIZ_MOD_NEG 1
+#define R500_SWIZ_MOD_ABS 2
+#define R500_SWIZ_MOD_NEG_ABS 3
+/* Swizzles for inst2 */
+#define R500_SWIZ_TEX_STRQ(x) ((x) << 8)
+#define R500_SWIZ_TEX_RGBA(x) ((x) << 24)
+/* Swizzles for inst3 */
+#define R500_SWIZ_RGB_A(x) ((x) << 2)
+#define R500_SWIZ_RGB_B(x) ((x) << 15)
+/* Swizzles for inst4 */
+#define R500_SWIZ_ALPHA_A(x) ((x) << 14)
+#define R500_SWIZ_ALPHA_B(x) ((x) << 21)
+/* Swizzle for inst5 */
+#define R500_SWIZ_RGBA_C(x) ((x) << 14)
+#define R500_SWIZ_ALPHA_C(x) ((x) << 27)
+/* Writemasks */
+#define R500_TEX_WMASK(x) ((x) << 11)
+#define R500_ALU_WMASK(x) ((x) << 11)
+#define R500_ALU_OMASK(x) ((x) << 15)
+#define R500_W_OMASK (1 << 31)
 
-static uint32_t r5xx_strq_swiz(struct tgsi_full_src_register* reg)
-{
-    return reg->SrcRegister.SwizzleX |
-        (reg->SrcRegister.SwizzleY << 2) |
-        (reg->SrcRegister.SwizzleZ << 4) |
-        (reg->SrcRegister.SwizzleW << 6);
-}
+struct rX00_fragment_program_code r5xx_passthrough_fragment_shader = {
+    .code.r500.max_temp_idx = 0,
+    .code.r500.inst_end = 0,
 
-static INLINE uint32_t r5xx_rgb_swiz(struct tgsi_full_src_register* reg)
-{
-    /* Only the first 9 bits... */
-    return (r5xx_rgba_swiz(reg) & 0x1ff) |
-        (reg->SrcRegister.Negate ? (1 << 9) : 0) |
-        (reg->SrcRegisterExtMod.Absolute ? (1 << 10) : 0);
-}
+    .code.r500.inst[0].inst0 = R500_INST_TYPE_OUT |
+        R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
+        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+        R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
+    .code.r500.inst[0].inst1 =
+        R500_RGB_ADDR0(0) | R500_RGB_ADDR1(0) | R500_RGB_ADDR1_CONST |
+        R500_RGB_ADDR2(0) | R500_RGB_ADDR2_CONST,
+    .code.r500.inst[0].inst2 =
+        R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) | R500_ALPHA_ADDR1_CONST |
+        R500_ALPHA_ADDR2(0) | R500_ALPHA_ADDR2_CONST,
+    .code.r500.inst[0].inst3 =
+        R500_ALU_RGB_SEL_A_SRC0 | R500_ALU_RGB_R_SWIZ_A_R |
+        R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B |
+        R500_ALU_RGB_SEL_B_SRC0 | R500_ALU_RGB_R_SWIZ_B_R |
+        R500_ALU_RGB_B_SWIZ_B_G | R500_ALU_RGB_G_SWIZ_B_B,
+    .code.r500.inst[0].inst4 =
+        R500_ALPHA_OP_CMP | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_A,
+    .code.r500.inst[0].inst5 =
+        R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
+        R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
+        R500_ALU_RGBA_A_SWIZ_0,
+};
 
-static INLINE uint32_t r5xx_alpha_swiz(struct tgsi_full_src_register* reg)
-{
-    /* Only the last 3 bits... */
-    return (r5xx_rgba_swiz(reg) >> 9) |
-        (reg->SrcRegister.Negate ? (1 << 9) : 0) |
-        (reg->SrcRegisterExtMod.Absolute ? (1 << 10) : 0);
-}
+struct rX00_fragment_program_code r5xx_texture_fragment_shader = {
+    .code.r500.max_temp_idx = 0,
+    .code.r500.inst_end = 1,
 
-static INLINE uint32_t r5xx_rgba_op(unsigned op)
-{
-    switch (op) {
-        case TGSI_OPCODE_COS:
-        case TGSI_OPCODE_EX2:
-        case TGSI_OPCODE_LG2:
-        case TGSI_OPCODE_RCP:
-        case TGSI_OPCODE_RSQ:
-        case TGSI_OPCODE_SIN:
-            return R500_ALU_RGBA_OP_SOP;
-        case TGSI_OPCODE_DDX:
-            return R500_ALU_RGBA_OP_MDH;
-        case TGSI_OPCODE_DDY:
-            return R500_ALU_RGBA_OP_MDV;
-        case TGSI_OPCODE_FRC:
-            return R500_ALU_RGBA_OP_FRC;
-        case TGSI_OPCODE_DP3:
-            return R500_ALU_RGBA_OP_DP3;
-        case TGSI_OPCODE_DP4:
-        case TGSI_OPCODE_DPH:
-            return R500_ALU_RGBA_OP_DP4;
-        case TGSI_OPCODE_ABS:
-        case TGSI_OPCODE_CMP:
-        case TGSI_OPCODE_MOV:
-        case TGSI_OPCODE_SWZ:
-            return R500_ALU_RGBA_OP_CMP;
-        case TGSI_OPCODE_ADD:
-        case TGSI_OPCODE_MAD:
-        case TGSI_OPCODE_MUL:
-        case TGSI_OPCODE_SUB:
-            return R500_ALU_RGBA_OP_MAD;
-        default:
-            return 0;
-    }
-}
-
-static INLINE uint32_t r5xx_alpha_op(unsigned op)
-{
-    switch (op) {
-        case TGSI_OPCODE_COS:
-            return R500_ALPHA_OP_COS;
-        case TGSI_OPCODE_EX2:
-            return R500_ALPHA_OP_EX2;
-        case TGSI_OPCODE_LG2:
-            return R500_ALPHA_OP_LN2;
-        case TGSI_OPCODE_RCP:
-            return R500_ALPHA_OP_RCP;
-        case TGSI_OPCODE_RSQ:
-            return R500_ALPHA_OP_RSQ;
-        case TGSI_OPCODE_FRC:
-            return R500_ALPHA_OP_FRC;
-        case TGSI_OPCODE_SIN:
-            return R500_ALPHA_OP_SIN;
-        case TGSI_OPCODE_DDX:
-            return R500_ALPHA_OP_MDH;
-        case TGSI_OPCODE_DDY:
-            return R500_ALPHA_OP_MDV;
-        case TGSI_OPCODE_DP3:
-        case TGSI_OPCODE_DP4:
-        case TGSI_OPCODE_DPH:
-            return R500_ALPHA_OP_DP;
-        case TGSI_OPCODE_ABS:
-        case TGSI_OPCODE_CMP:
-        case TGSI_OPCODE_MOV:
-        case TGSI_OPCODE_SWZ:
-            return R500_ALPHA_OP_CMP;
-        case TGSI_OPCODE_ADD:
-        case TGSI_OPCODE_MAD:
-        case TGSI_OPCODE_MUL:
-        case TGSI_OPCODE_SUB:
-            return R500_ALPHA_OP_MAD;
-        default:
-            return 0;
-    }
-}
-
-static INLINE uint32_t r5xx_tex_op(unsigned op)
-{
-    switch (op) {
-        case TGSI_OPCODE_KIL:
-            return R500_TEX_INST_TEXKILL;
-        case TGSI_OPCODE_TEX:
-            return R500_TEX_INST_LD;
-        case TGSI_OPCODE_TXB:
-            return R500_TEX_INST_LODBIAS;
-        case TGSI_OPCODE_TXP:
-            return R500_TEX_INST_PROJ;
-        default:
-            return 0;
-    }
-}
-
-/* Setup an ALU operation. */
-static INLINE void r5xx_emit_maths(struct r5xx_fragment_shader* fs,
-                                   struct r300_fs_asm* assembler,
-                                   struct tgsi_full_src_register* src,
-                                   struct tgsi_full_dst_register* dst,
-                                   unsigned op,
-                                   unsigned count)
-{
-    int i = fs->instruction_count;
-
-    if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-        fs->instructions[i].inst0 = R500_INST_TYPE_OUT;
-        if (r300_fs_is_depr(assembler, dst)) {
-            fs->instructions[i].inst4 = R500_W_OMASK;
-        } else {
-            fs->instructions[i].inst0 |=
-                R500_ALU_OMASK(dst->DstRegister.WriteMask);
-        }
-    } else {
-        fs->instructions[i].inst0 = R500_INST_TYPE_ALU |
-            R500_ALU_WMASK(dst->DstRegister.WriteMask);
-    }
-
-    fs->instructions[i].inst0 |= R500_INST_TEX_SEM_WAIT;
-
-    fs->instructions[i].inst4 |=
-        R500_ALPHA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
-    fs->instructions[i].inst5 =
-        R500_ALU_RGBA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
-
-    switch (count) {
-        case 3:
-            fs->instructions[i].inst1 =
-                R500_RGB_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
-            fs->instructions[i].inst2 =
-                R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
-            fs->instructions[i].inst5 |=
-                R500_ALU_RGBA_SEL_C_SRC2 |
-                R500_SWIZ_RGBA_C(r5xx_rgb_swiz(&src[2])) |
-                R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
-                R500_SWIZ_ALPHA_C(r5xx_alpha_swiz(&src[2]));
-        case 2:
-            fs->instructions[i].inst1 |=
-                R500_RGB_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister));
-            fs->instructions[i].inst2 |=
-                R500_ALPHA_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister));
-            fs->instructions[i].inst3 =
-                R500_ALU_RGB_SEL_B_SRC1 |
-                R500_SWIZ_RGB_B(r5xx_rgb_swiz(&src[1]));
-            fs->instructions[i].inst4 |=
-                R500_ALPHA_SEL_B_SRC1 |
-                R500_SWIZ_ALPHA_B(r5xx_alpha_swiz(&src[1]));
-        case 1:
-        case 0:
-        default:
-            fs->instructions[i].inst1 |=
-                R500_RGB_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister));
-            fs->instructions[i].inst2 |=
-                R500_ALPHA_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister));
-            fs->instructions[i].inst3 |=
-                R500_ALU_RGB_SEL_A_SRC0 |
-                R500_SWIZ_RGB_A(r5xx_rgb_swiz(&src[0]));
-            fs->instructions[i].inst4 |=
-                R500_ALPHA_SEL_A_SRC0 |
-                R500_SWIZ_ALPHA_A(r5xx_alpha_swiz(&src[0]));
-            break;
-    }
-
-    fs->instructions[i].inst4 |= r5xx_alpha_op(op);
-    fs->instructions[i].inst5 |= r5xx_rgba_op(op);
-
-    fs->instruction_count++;
-}
-
-static INLINE void r5xx_emit_tex(struct r5xx_fragment_shader* fs,
-                                 struct r300_fs_asm* assembler,
-                                 struct tgsi_full_src_register* src,
-                                 struct tgsi_full_dst_register* dst,
-                                 uint32_t op)
-{
-    int i = fs->instruction_count;
-
-    fs->instructions[i].inst0 = R500_INST_TYPE_TEX |
-        R500_TEX_WMASK(dst->DstRegister.WriteMask) |
-        R500_INST_TEX_SEM_WAIT;
-    fs->instructions[i].inst1 = R500_TEX_ID(0) |
-        R500_TEX_SEM_ACQUIRE | //R500_TEX_IGNORE_UNCOVERED |
-        r5xx_tex_op(op);
-    fs->instructions[i].inst2 =
-        R500_TEX_SRC_ADDR(r300_fs_src(assembler, &src->SrcRegister)) |
-        R500_SWIZ_TEX_STRQ(r5xx_strq_swiz(src)) |
-        R500_TEX_DST_ADDR(r300_fs_dst(assembler, &dst->DstRegister)) |
+    .code.r500.inst[0].inst0 = R500_INST_TYPE_TEX |
+        R500_INST_TEX_SEM_WAIT |
+        R500_INST_RGB_WMASK_RGB | R500_INST_ALPHA_WMASK |
+        R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
+    .code.r500.inst[0].inst1 = R500_TEX_ID(0) | R500_TEX_INST_LD |
+        R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED,
+    .code.r500.inst[0].inst2 = R500_TEX_SRC_ADDR(0) |
+        R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G |
+        R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A |
+        R500_TEX_DST_ADDR(0) |
         R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G |
-        R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
+        R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A,
+    .code.r500.inst[0].inst3 = 0x0,
+    .code.r500.inst[0].inst4 = 0x0,
+    .code.r500.inst[0].inst5 = 0x0,
 
-    if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-        fs->instructions[i].inst2 |=
-            R500_TEX_DST_ADDR(assembler->temp_count +
-                    assembler->temp_offset);
-
-        fs->instruction_count++;
-
-        /* Setup and emit a MOV. */
-        src[0].SrcRegister.Index = assembler->temp_count;
-        src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-
-        src[1] = src[0];
-        src[2] = r300_constant_zero;
-        r5xx_emit_maths(fs, assembler, src, dst, TGSI_OPCODE_MOV, 3);
-    } else {
-        fs->instruction_count++;
-    }
-}
-
-void r5xx_fs_finalize(struct r5xx_fragment_shader* fs,
-                      struct r300_fs_asm* assembler)
-{
-    /* XXX should this just go with OPCODE_END? */
-    fs->instructions[fs->instruction_count - 1].inst0 |=
-        R500_INST_LAST;
-}
-
-void r5xx_fs_instruction(struct r5xx_fragment_shader* fs,
-                         struct r300_fs_asm* assembler,
-                         struct tgsi_full_instruction* inst)
-{
-    /* Switch between opcodes. When possible, prefer using the official
-     * AMD/ATI names for opcodes, please, as it facilitates using the
-     * documentation. */
-    switch (inst->Instruction.Opcode) {
-        /* XXX trig needs extra prep */
-        case TGSI_OPCODE_COS:
-        case TGSI_OPCODE_SIN:
-        /* The simple scalar ops. */
-        case TGSI_OPCODE_EX2:
-        case TGSI_OPCODE_LG2:
-        case TGSI_OPCODE_RCP:
-        case TGSI_OPCODE_RSQ:
-            /* Copy red swizzle to alpha for src0 */
-            inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleW =
-                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleX;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleW =
-                inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
-            /* Fall through */
-        case TGSI_OPCODE_DDX:
-        case TGSI_OPCODE_DDY:
-        case TGSI_OPCODE_FRC:
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1);
-            break;
-
-        /* The dot products. */
-        case TGSI_OPCODE_DPH:
-            /* Set alpha swizzle to one for src0 */
-            if (!inst->FullSrcRegisters[0].SrcRegister.Extended) {
-                inst->FullSrcRegisters[0].SrcRegister.Extended = TRUE;
-                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleX =
-                    inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
-                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleY =
-                    inst->FullSrcRegisters[0].SrcRegister.SwizzleY;
-                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleZ =
-                    inst->FullSrcRegisters[0].SrcRegister.SwizzleZ;
-            }
-            inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleW =
-                TGSI_EXTSWIZZLE_ONE;
-            /* Fall through */
-        case TGSI_OPCODE_DP3:
-        case TGSI_OPCODE_DP4:
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
-            break;
-
-        /* Simple three-source operations. */
-        case TGSI_OPCODE_CMP:
-            /* Swap src0 and src2 */
-            inst->FullSrcRegisters[3] = inst->FullSrcRegisters[2];
-            inst->FullSrcRegisters[2] = inst->FullSrcRegisters[0];
-            inst->FullSrcRegisters[0] = inst->FullSrcRegisters[3];
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
-            break;
-
-        /* The MAD variants. */
-        case TGSI_OPCODE_SUB:
-            /* Just like ADD, but flip the negation on src1 first */
-            inst->FullSrcRegisters[1].SrcRegister.Negate =
-                !inst->FullSrcRegisters[1].SrcRegister.Negate;
-            /* Fall through */
-        case TGSI_OPCODE_ADD:
-            /* Force src0 to one, move all registers over */
-            inst->FullSrcRegisters[2] = inst->FullSrcRegisters[1];
-            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[0];
-            inst->FullSrcRegisters[0] = r300_constant_one;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
-            break;
-        case TGSI_OPCODE_MUL:
-            /* Force our src2 to zero */
-            inst->FullSrcRegisters[2] = r300_constant_zero;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
-            break;
-        case TGSI_OPCODE_MAD:
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
-            break;
-
-        /* The MOV variants. */
-        case TGSI_OPCODE_ABS:
-            /* Set absolute value modifiers. */
-            inst->FullSrcRegisters[0].SrcRegisterExtMod.Absolute = TRUE;
-            /* Fall through */
-        case TGSI_OPCODE_MOV:
-        case TGSI_OPCODE_SWZ:
-            /* src0 -> src1 and src2 forced to zero */
-            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[0];
-            inst->FullSrcRegisters[2] = r300_constant_zero;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
-            break;
-
-        /* The compound and hybrid insts. */
-        case TGSI_OPCODE_LRP:
-            /* LRP DST A, B, C -> MAD TMP -A, C, C; MAD DST A, B, TMP */
-            inst->FullSrcRegisters[3] = inst->FullSrcRegisters[1];
-            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[2];
-            inst->FullSrcRegisters[0].SrcRegister.Negate =
-                !(inst->FullSrcRegisters[0].SrcRegister.Negate);
-            inst->FullDstRegisters[1] = inst->FullDstRegisters[0];
-            inst->FullDstRegisters[0].DstRegister.Index =
-                assembler->temp_count;
-            inst->FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], TGSI_OPCODE_MAD, 3);
-            inst->FullSrcRegisters[2].SrcRegister.Index =
-                assembler->temp_count;
-            inst->FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
-            inst->FullSrcRegisters[2].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-            inst->FullSrcRegisters[2].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
-            inst->FullSrcRegisters[2].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
-            inst->FullSrcRegisters[2].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
-            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[3];
-            inst->FullSrcRegisters[0].SrcRegister.Negate =
-                !(inst->FullSrcRegisters[0].SrcRegister.Negate);
-            inst->FullDstRegisters[0] = inst->FullDstRegisters[1];
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], TGSI_OPCODE_MAD, 3);
-            break;
-        case TGSI_OPCODE_POW:
-            /* POW DST A, B -> LG2 TMP A; MUL TMP TMP, B; EX2 DST TMP */
-            inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleW =
-                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleX;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleW =
-                inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
-            inst->FullDstRegisters[1] = inst->FullDstRegisters[0];
-            inst->FullDstRegisters[0].DstRegister.Index =
-                assembler->temp_count;
-            inst->FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], TGSI_OPCODE_LG2, 1);
-            inst->FullSrcRegisters[0].SrcRegister.Index =
-                assembler->temp_count;
-            inst->FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
-            inst->FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
-            inst->FullSrcRegisters[2] = r300_constant_zero;
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], TGSI_OPCODE_MUL, 3);
-            inst->FullDstRegisters[0] = inst->FullDstRegisters[1];
-            r5xx_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], TGSI_OPCODE_EX2, 1);
-            break;
-
-        /* The texture instruction set. */
-        case TGSI_OPCODE_KIL:
-        case TGSI_OPCODE_TEX:
-        case TGSI_OPCODE_TXB:
-        case TGSI_OPCODE_TXP:
-            r5xx_emit_tex(fs, assembler, &inst->FullSrcRegisters[0],
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode);
-            break;
-
-        /* This is the end. My only friend, the end. */
-        case TGSI_OPCODE_END:
-            break;
-        default:
-            debug_printf("r300: fs: Bad opcode %d\n",
-                    inst->Instruction.Opcode);
-            break;
-    }
-
-    /* Clamp, if saturation flags are set. */
-    if (inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE) {
-        fs->instructions[fs->instruction_count - 1].inst0 |=
-            R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
-    }
-}
+    .code.r500.inst[1].inst0 = R500_INST_TYPE_OUT |
+        R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
+        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+        R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
+    .code.r500.inst[1].inst1 =
+        R500_RGB_ADDR0(0) | R500_RGB_ADDR1(0) | R500_RGB_ADDR1_CONST |
+        R500_RGB_ADDR2(0) | R500_RGB_ADDR2_CONST,
+    .code.r500.inst[1].inst2 =
+        R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) | R500_ALPHA_ADDR1_CONST |
+        R500_ALPHA_ADDR2(0) | R500_ALPHA_ADDR2_CONST,
+    .code.r500.inst[1].inst3 =
+        R500_ALU_RGB_SEL_A_SRC0 | R500_ALU_RGB_R_SWIZ_A_R |
+        R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B |
+        R500_ALU_RGB_SEL_B_SRC0 | R500_ALU_RGB_R_SWIZ_B_R |
+        R500_ALU_RGB_B_SWIZ_B_G | R500_ALU_RGB_G_SWIZ_B_B,
+    .code.r500.inst[1].inst4 =
+        R500_ALPHA_OP_CMP | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_A,
+    .code.r500.inst[1].inst5 =
+        R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
+        R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
+        R500_ALU_RGBA_A_SWIZ_0,
+};

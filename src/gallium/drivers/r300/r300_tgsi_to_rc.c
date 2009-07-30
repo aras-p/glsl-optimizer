@@ -224,6 +224,39 @@ static void transform_srcreg(
     dst->Negate ^= src->SrcRegister.Negate ? NEGATE_XYZW : 0;
 }
 
+static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_ext_texture src)
+{
+    switch(src.Texture) {
+        case TGSI_TEXTURE_1D:
+            dst->I.TexSrcTarget = TEXTURE_1D_INDEX;
+            break;
+        case TGSI_TEXTURE_2D:
+            dst->I.TexSrcTarget = TEXTURE_2D_INDEX;
+            break;
+        case TGSI_TEXTURE_3D:
+            dst->I.TexSrcTarget = TEXTURE_3D_INDEX;
+            break;
+        case TGSI_TEXTURE_CUBE:
+            dst->I.TexSrcTarget = TEXTURE_CUBE_INDEX;
+            break;
+        case TGSI_TEXTURE_RECT:
+            dst->I.TexSrcTarget = TEXTURE_RECT_INDEX;
+            break;
+        case TGSI_TEXTURE_SHADOW1D:
+            dst->I.TexSrcTarget = TEXTURE_1D_INDEX;
+            dst->I.TexShadow = 1;
+            break;
+        case TGSI_TEXTURE_SHADOW2D:
+            dst->I.TexSrcTarget = TEXTURE_2D_INDEX;
+            dst->I.TexShadow = 1;
+            break;
+        case TGSI_TEXTURE_SHADOWRECT:
+            dst->I.TexSrcTarget = TEXTURE_RECT_INDEX;
+            dst->I.TexShadow = 1;
+            break;
+    }
+}
+
 static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_instruction * src)
 {
     if (src->Instruction.Opcode == TGSI_OPCODE_END)
@@ -238,10 +271,15 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     if (src->Instruction.NumDstRegs)
         transform_dstreg(ttr, &dst->I.DstReg, &src->FullDstRegisters[0]);
 
-    for(i = 0; i < src->Instruction.NumSrcRegs; ++i)
-        transform_srcreg(ttr, &dst->I.SrcReg[i], &src->FullSrcRegisters[i]);
+    for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
+        if (src->FullSrcRegisters[i].SrcRegister.File == TGSI_FILE_SAMPLER)
+            dst->I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
+        else
+            transform_srcreg(ttr, &dst->I.SrcReg[i], &src->FullSrcRegisters[i]);
+    }
 
-    /* TODO: Textures */
+    /* Texturing. */
+    transform_texture(dst, src->InstructionExtTexture);
 }
 
 static void handle_immediate(struct tgsi_to_rc * ttr, struct tgsi_full_immediate * imm)

@@ -34,6 +34,7 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
+struct r300_fragment_shader;
 struct r300_vertex_shader;
 
 struct r300_blend_state {
@@ -149,65 +150,6 @@ struct r300_constant_buffer {
     unsigned user_count;
     /* Total number of constants */
     unsigned count;
-};
-
-struct r300_fragment_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-    struct tgsi_shader_info info;
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Pixel stack size */
-    int stack_size;
-
-    /* Are there immediates in this shader?
-     * If not, we can heavily optimize recompilation. */
-    boolean uses_imms;
-};
-
-struct r3xx_fragment_shader {
-    /* Parent class */
-    struct r300_fragment_shader shader;
-
-    /* Number of ALU instructions */
-    int alu_instruction_count;
-
-    /* Number of texture instructions */
-    int tex_instruction_count;
-
-    /* Number of texture indirections */
-    int indirections;
-
-    /* Indirection node offsets */
-    int alu_offset[4];
-
-    /* Machine instructions */
-    struct {
-        uint32_t alu_rgb_inst;
-        uint32_t alu_rgb_addr;
-        uint32_t alu_alpha_inst;
-        uint32_t alu_alpha_addr;
-    } instructions[64]; /* XXX magic num */
-};
-
-struct r5xx_fragment_shader {
-    /* Parent class */
-    struct r300_fragment_shader shader;
-
-    /* Number of used instructions */
-    int instruction_count;
-
-    /* Machine instructions */
-    struct {
-        uint32_t inst0;
-        uint32_t inst1;
-        uint32_t inst2;
-        uint32_t inst3;
-        uint32_t inst4;
-        uint32_t inst5;
-    } instructions[256]; /*< XXX magic number */
 };
 
 struct r300_texture {

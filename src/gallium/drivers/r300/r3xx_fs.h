@@ -24,55 +24,9 @@
 #ifndef R3XX_FS_H
 #define R3XX_FS_H
 
-#include "r300_fs_inlines.h"
+#include "radeon_code.h"
 
-static struct r3xx_fragment_shader r3xx_passthrough_fragment_shader = {
-    .alu_instruction_count = 1,
-    .tex_instruction_count = 0,
-    .indirections = 0,
-    .shader.stack_size = 1,
-
-    .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_CMP,
-    .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
-        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
-    .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_CMP,
-    .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
-        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
-};
-
-static struct r3xx_fragment_shader r3xx_texture_fragment_shader = {
-    .alu_instruction_count = 1,
-    .tex_instruction_count = 0,
-    .indirections = 0,
-    .shader.stack_size = 1,
-
-    .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_CMP,
-    .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
-        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
-    .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_CMP,
-    .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
-        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
-};
-
-struct r300_fs_asm;
-
-void r3xx_fs_finalize(struct r300_fragment_shader* fs,
-                      struct r300_fs_asm* assembler);
-
-void r3xx_fs_instruction(struct r3xx_fragment_shader* fs,
-                         struct r300_fs_asm* assembler,
-                         struct tgsi_full_instruction* inst);
+struct rX00_fragment_program_code r3xx_passthrough_fragment_shader;
+struct rX00_fragment_program_code r3xx_texture_fragment_shader;
 
 #endif /* R3XX_FS_H */
