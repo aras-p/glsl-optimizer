@@ -1,6 +1,6 @@
 /*
  * mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -2192,6 +2192,127 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
 
 
 /**
+ * Do error checking for a glGetTexImage() call.
+ * \return GL_TRUE if any error, GL_FALSE if no errors.
+ */
+static GLboolean
+getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
+                        GLenum format, GLenum type, GLvoid *pixels )
+{
+   const struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
+
+   ASSERT(maxLevels > 0);  /* 0 indicates bad target, caught above */
+
+   if (level < 0 || level >= maxLevels) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexImage(level)" );
+      return GL_TRUE;
+   }
+
+   if (_mesa_sizeof_packed_type(type) <= 0) {
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexImage(type)" );
+      return GL_TRUE;
+   }
+
+   if (_mesa_components_in_format(format) <= 0 ||
+       format == GL_STENCIL_INDEX) {
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexImage(format)" );
+      return GL_TRUE;
+   }
+
+   if (!ctx->Extensions.EXT_paletted_texture && is_index_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return GL_TRUE;
+   }
+
+   if (!ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return GL_TRUE;
+   }
+
+   if (!ctx->Extensions.MESA_ycbcr_texture && is_ycbcr_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return GL_TRUE;
+   }
+
+   if (!ctx->Extensions.EXT_packed_depth_stencil
+       && is_depthstencil_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return GL_TRUE;
+   }
+
+   if (!ctx->Extensions.ATI_envmap_bumpmap
+       && is_dudv_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return GL_TRUE;
+   }
+
+
+   texUnit = &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+   if (!texImage) {
+      /* out of memory */
+      return GL_TRUE;
+   }
+      
+   /* Make sure the requested image format is compatible with the
+    * texture's format.  Note that a color index texture can be converted
+    * to RGBA so that combo is allowed.
+    */
+   if (_mesa_is_color_format(format)
+       && !_mesa_is_color_format(texImage->TexFormat->BaseFormat)
+       && !is_index_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+   else if (is_index_format(format)
+            && !is_index_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+   else if (is_depth_format(format)
+            && !is_depth_format(texImage->TexFormat->BaseFormat)
+            && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+   else if (is_ycbcr_format(format)
+            && !is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+   else if (is_depthstencil_format(format)
+            && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+   else if (is_dudv_format(format)
+            && !is_dudv_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
+
+   if (ctx->Pack.BufferObj->Name) {
+      /* packing texture image into a PBO */
+      const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
+      if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
+                                     texImage->Height, texImage->Depth,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetTexImage(invalid PBO access)");
+         return GL_TRUE;
+      }
+   }
+
+   return GL_FALSE;
+}
+
+
+
+/**
  * Get texture image.  Called by glGetTexImage.
  *
  * \param target texture target.
@@ -2206,8 +2327,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 {
    const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   GLint maxLevels = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2218,116 +2337,19 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   maxLevels = _mesa_max_texture_levels(ctx, target);
-   ASSERT(maxLevels > 0);  /* 0 indicates bad target, caught above */
-
-   if (level < 0 || level >= maxLevels) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexImage(level)" );
-      return;
-   }
-
-   if (_mesa_sizeof_packed_type(type) <= 0) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexImage(type)" );
-      return;
-   }
-
-   if (_mesa_components_in_format(format) <= 0 ||
-       format == GL_STENCIL_INDEX) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexImage(format)" );
-      return;
-   }
-
-   if (!ctx->Extensions.EXT_paletted_texture && is_index_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
-      return;
-   }
-
-   if (!ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
-      return;
-   }
-
-   if (!ctx->Extensions.MESA_ycbcr_texture && is_ycbcr_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
-      return;
-   }
-
-   if (!ctx->Extensions.EXT_packed_depth_stencil
-       && is_depthstencil_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
-      return;
-   }
-
-   if (!ctx->Extensions.ATI_envmap_bumpmap
-       && is_dudv_format(format)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+   if (getteximage_error_check(ctx, target, level, format, type, pixels)) {
       return;
    }
 
    _mesa_lock_texture(ctx, texObj);
    {
-      texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-      if (!texImage) {
-	 /* invalid mipmap level, not an error */
-	 goto out;
-      }
-
-
-      /* Make sure the requested image format is compatible with the
-       * texture's format.  Note that a color index texture can be converted
-       * to RGBA so that combo is allowed.
-       */
-      if (_mesa_is_color_format(format)
-	  && !_mesa_is_color_format(texImage->TexFormat->BaseFormat)
-	  && !is_index_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-      else if (is_index_format(format)
-	       && !is_index_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-      else if (is_depth_format(format)
-	       && !is_depth_format(texImage->TexFormat->BaseFormat)
-	       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-      else if (is_ycbcr_format(format)
-	       && !is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-      else if (is_depthstencil_format(format)
-	       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-      else if (is_dudv_format(format)
-	       && !is_dudv_format(texImage->TexFormat->BaseFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
-	 goto out;
-      }
-
-      if (ctx->Pack.BufferObj->Name) {
-	 /* packing texture image into a PBO */
-	 const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
-	 if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
-					texImage->Height, texImage->Depth,
-					format, type, pixels)) {
-	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glGetTexImage(invalid PBO access)");
-	    goto out;
-	 }
-      }
+      struct gl_texture_image *texImage =
+         _mesa_select_tex_image(ctx, texObj, target, level);
 
       /* typically, this will call _mesa_get_teximage() */
       ctx->Driver.GetTexImage(ctx, target, level, format, type, pixels,
-			      texObj, texImage);
-
+                              texObj, texImage);
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
