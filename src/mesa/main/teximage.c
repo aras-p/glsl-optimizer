@@ -841,74 +841,28 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 
 
 /**
- * Get the texture image struct which corresponds to target and level
- * of the given texture unit.
+ * Get a texture image pointer from a texture object, given a texture
+ * target and mipmap level.  The target and level parameters should
+ * have already been error-checked.
  *
  * \param ctx GL context.
  * \param texObj texture unit.
  * \param target texture target.
  * \param level image level.
  *
- * \return pointer to the texture image structure on success, or NULL on failure.
- *
- * \sa gl_texture_unit.
+ * \return pointer to the texture image structure, or NULL on failure.
  */
 struct gl_texture_image *
 _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
 		       GLenum target, GLint level)
 {
+   const GLuint face = _mesa_tex_target_to_face(target);
+
    ASSERT(texObj);
+   ASSERT(level >= 0);
+   ASSERT(level < MAX_TEXTURE_LEVELS);
 
-   if (level < 0 || level >= MAX_TEXTURE_LEVELS) 
-      return NULL;
-
-   /* XXX simplify this with _mesa_tex_target_to_face() */
-   switch (target) {
-      case GL_TEXTURE_1D:
-      case GL_PROXY_TEXTURE_1D:
-      case GL_TEXTURE_2D:
-      case GL_PROXY_TEXTURE_2D:
-      case GL_TEXTURE_3D:
-      case GL_PROXY_TEXTURE_3D:
-         return texObj->Image[0][level];
-
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: 
-         if (ctx->Extensions.ARB_texture_cube_map) {
-	    GLuint face = ((GLuint) target - 
-			   (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-            return texObj->Image[face][level];
-	 }
-         else
-            return NULL;
-
-      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texObj->Image[0][level];
-         else
-            return NULL;
-
-      case GL_TEXTURE_RECTANGLE_NV:
-      case GL_PROXY_TEXTURE_RECTANGLE_NV:
-         if (ctx->Extensions.NV_texture_rectangle && level == 0) 
-            return texObj->Image[0][level];
-         else 
-            return NULL;
-
-      case GL_TEXTURE_1D_ARRAY_EXT:
-      case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-      case GL_TEXTURE_2D_ARRAY_EXT:
-      case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return (ctx->Extensions.MESA_texture_array)
-            ? texObj->Image[0][level] : NULL;
-
-      default:
-         return NULL;
-   }
+   return texObj->Image[face][level];
 }
 
 
