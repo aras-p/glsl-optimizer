@@ -1572,47 +1572,56 @@ paramConstUse: paramConstScalarUse | paramConstVector;
 
 paramConstScalarDecl: signedFloatConstant
 	{
-	   $$.count = 1;
+	   $$.count = 4;
 	   $$.data[0] = $1;
+	   $$.data[1] = $1;
+	   $$.data[2] = $1;
+	   $$.data[3] = $1;
 	}
 	;
 
 paramConstScalarUse: REAL
 	{
-	   $$.count = 1;
+	   $$.count = 4;
 	   $$.data[0] = $1;
+	   $$.data[1] = 0.0f;
+	   $$.data[2] = 0.0f;
+	   $$.data[3] = 1.0f;
 	}
 	| INTEGER
 	{
-	   $$.count = 1;
+	   $$.count = 4;
 	   $$.data[0] = (float) $1;
+	   $$.data[1] = 0.0f;
+	   $$.data[2] = 0.0f;
+	   $$.data[3] = 1.0f;
 	}
 	;
 
 paramConstVector: '{' signedFloatConstant '}'
 	{
-	   $$.count = 1;
+	   $$.count = 4;
 	   $$.data[0] = $2;
 	   $$.data[1] = 0.0f;
 	   $$.data[2] = 0.0f;
-	   $$.data[3] = 0.0f;
+	   $$.data[3] = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant '}'
 	{
-	   $$.count = 2;
+	   $$.count = 4;
 	   $$.data[0] = $2;
 	   $$.data[1] = $4;
 	   $$.data[2] = 0.0f;
-	   $$.data[3] = 0.0f;
+	   $$.data[3] = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant '}'
 	{
-	   $$.count = 3;
+	   $$.count = 4;
 	   $$.data[0] = $2;
 	   $$.data[1] = $4;
 	   $$.data[2] = $6;
-	   $$.data[3] = 0.0f;
+	   $$.data[3] = 1.0f;
 	}
 	| '{' signedFloatConstant ',' signedFloatConstant ','
               signedFloatConstant ',' signedFloatConstant '}'
