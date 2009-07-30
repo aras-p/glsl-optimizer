@@ -499,6 +499,8 @@ struct __GLXscreenConfigsRec {
 
     __GLXDRIscreen *driScreen;
 
+    const __DRIconfig** driver_configs;
+
 #ifdef __DRI_COPY_SUB_BUFFER
     const __DRIcopySubBufferExtension *driCopySubBuffer;
 #endif

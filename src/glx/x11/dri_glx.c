@@ -418,6 +418,8 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
     psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
 
+    psc->driver_configs = driver_configs;
+
     /* Visuals with depth != screen depth are subject to automatic compositing
      * in the X server, so DRI1 can't render to them properly. Mark them as
      * non-conformant to prevent apps from picking them up accidentally.
