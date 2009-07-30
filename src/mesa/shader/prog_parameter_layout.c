@@ -187,7 +187,7 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	       _mesa_add_unnamed_constant(layout, v, p->Size, & swizzle);
 
 	    inst->Base.SrcReg[i].Swizzle = 
-	       _mesa_combine_swizzles(inst->Base.SrcReg[i].Swizzle, swizzle);
+	       _mesa_combine_swizzles(swizzle, inst->Base.SrcReg[i].Swizzle);
 	    break;
 	 }
 
