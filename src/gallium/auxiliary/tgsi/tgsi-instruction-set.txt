@@ -667,7 +667,16 @@ TGSI Instruction Specification
 
 1.9.8  LOOP - Loop
 
-  TBD
+  dst.x = floor(src.x)
+  dst.y = floor(src.y)
+  dst.z = floor(src.z)
+
+  if (dst.y <= 0)
+    pc = [matching ENDLOOP] + 1
+  endif
+
+  Note: The destination must be a loop register.
+        The source must be a constant register.
 
 
 1.9.9  REP - Repeat
@@ -687,7 +696,14 @@ TGSI Instruction Specification
 
 1.9.12  ENDLOOP - End Loop
 
-  TBD
+  dst.x = dst.x + dst.z
+  dst.y = dst.y - 1.0
+
+  if (dst.y > 0)
+    pc = [matching LOOP instruction] + 1
+  endif
+
+  Note: The destination must be a loop register.
 
 
 1.9.13  ENDREP - End Repeat
