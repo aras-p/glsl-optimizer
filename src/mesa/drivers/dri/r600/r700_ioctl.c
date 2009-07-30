@@ -43,7 +43,7 @@
 static void r700Flush(GLcontext *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-    context_t *     context = R700_CONTEXT(ctx);
+	context_t *     context = R700_CONTEXT(ctx);
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);

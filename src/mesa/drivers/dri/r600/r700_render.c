@@ -279,15 +279,68 @@ unsigned int r700PrimitiveType(int prim)
     }
 }
 
+void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	BATCH_LOCALS(&context->radeon);
+	int type, i, total_emit;
+	int num_indices = end - start;
+	uint32_t vgt_draw_initiator = 0;
+	uint32_t vgt_index_type     = 0;
+	uint32_t vgt_primitive_type = 0;
+	uint32_t vgt_num_indices    = 0;
+
+	type = r700PrimitiveType(prim);
+
+	if (type < 0 || num_indices <= 0)
+		return;
+
+        total_emit =   3 /* VGT_PRIMITIVE_TYPE */
+		     + 2 /* VGT_INDEX_TYPE */
+		     + 2 /* NUM_INSTANCES */
+                     + num_indices + 3; /* DRAW_INDEX_IMMD */
+
+        BEGIN_BATCH_NO_AUTOSTATE(total_emit);
+	// prim
+        SETfield(vgt_primitive_type, type,
+		 VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+        R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+        R600_OUT_BATCH(vgt_primitive_type);
+
+	// index type
+        SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+        R600_OUT_BATCH(vgt_index_type);
+
+	// num instances
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
+        R600_OUT_BATCH(1);
+
+	// draw packet
+        vgt_num_indices = num_indices;
+        SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+	SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
+
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
+        R600_OUT_BATCH(vgt_num_indices);
+        R600_OUT_BATCH(vgt_draw_initiator);
+
+        for (i = start; i < end; i++) {
+            R600_OUT_BATCH(i);
+        }
+        END_BATCH();
+        COMMIT_BATCH();
+
+}
+
 static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     int lastIndex = 0;
-    BATCH_LOCALS(&context->radeon);
-
-    unsigned int i, j;
+    unsigned int i;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
 
@@ -322,61 +375,11 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SendDepthTargetState(context);
 
     /* richard test code */
-    for (i = 0; i < vb->PrimitiveCount; i++)
-    {
+    for (i = 0; i < vb->PrimitiveCount; i++) {
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
         GLuint start = vb->Primitive[i].start;
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-        GLuint numIndices = vb->Primitive[i].count;
-        GLuint numEntires;
-
-        unsigned int VGT_DRAW_INITIATOR = 0;
-        unsigned int VGT_INDEX_TYPE     = 0;
-        unsigned int VGT_PRIMITIVE_TYPE = 0;
-        unsigned int VGT_NUM_INDICES    = 0;
-
-	if (numIndices < 1)
-		continue;
-
-        numEntires =   3 /* VGT_PRIMITIVE_TYPE */
-		     + 2 /* VGT_INDEX_TYPE */
-		     + 2 /* NUM_INSTANCES */
-                     + numIndices + 3; /* DRAW_INDEX_IMMD */
-
-        BEGIN_BATCH_NO_AUTOSTATE(numEntires);
-
-	// prim
-        VGT_PRIMITIVE_TYPE |= r700PrimitiveType(prim) << VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift;
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-        R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-        R600_OUT_BATCH(VGT_PRIMITIVE_TYPE);
-
-	// index type
-        VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
-        R600_OUT_BATCH(VGT_INDEX_TYPE);
-
-	// num instances
-	R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
-        R600_OUT_BATCH(1);
-
-	// draw packet
-        VGT_NUM_INDICES = numIndices;
-        VGT_DRAW_INITIATOR |= DI_SRC_SEL_IMMEDIATE << SOURCE_SELECT_shift;
-        VGT_DRAW_INITIATOR |= DI_MAJOR_MODE_0 << MAJOR_MODE_shift;
-
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
-        R600_OUT_BATCH(VGT_NUM_INDICES);
-        R600_OUT_BATCH(VGT_DRAW_INITIATOR);
-
-        for (j = lastIndex; j < lastIndex + numIndices; j++)
-        {
-            R600_OUT_BATCH(j);
-        }
-        lastIndex += numIndices;
-
-        END_BATCH();
-        COMMIT_BATCH();
+	r700RunRenderPrimitive(ctx, start, end, prim);
     }
 
     /* Flush render op cached for last several quads. */
