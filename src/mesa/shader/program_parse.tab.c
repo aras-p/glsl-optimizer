@@ -5051,7 +5051,6 @@ GLboolean
 _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 			GLsizei len, struct asm_parser_state *state)
 {
-   struct gl_program_constants limits;
    struct asm_instruction *inst;
    unsigned i;
    GLubyte *strz;
@@ -5077,29 +5076,9 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 
    state->st = _mesa_symbol_table_ctor();
 
-   /* All of these limits should come from ctx.
-    */
-   limits.MaxInstructions = 128;
-   limits.MaxAluInstructions = 128;
-   limits.MaxTexInstructions = 128;
-   limits.MaxTexIndirections = 128; 
-   limits.MaxAttribs = 16;
-   limits.MaxTemps = 128;
-   limits.MaxAddressRegs = 1;
-   limits.MaxParameters = 128;
-   limits.MaxLocalParams = 256;
-   limits.MaxEnvParams = 128;
-   limits.MaxNativeInstructions = 128;
-   limits.MaxNativeAluInstructions = 128;
-   limits.MaxNativeTexInstructions = 128;
-   limits.MaxNativeTexIndirections = 128;
-   limits.MaxNativeAttribs = 16;
-   limits.MaxNativeTemps = 128;
-   limits.MaxNativeAddressRegs = 1;
-   limits.MaxNativeParameters = 128;
-   limits.MaxUniformComponents = 0;
-
-   state->limits = & limits;
+   state->limits = (target == GL_VERTEX_PROGRAM_ARB)
+      ? & ctx->Const.VertexProgram
+      : & ctx->Const.FragmentProgram;
 
    state->MaxTextureImageUnits = 16;
    state->MaxTextureCoordUnits = 8;
