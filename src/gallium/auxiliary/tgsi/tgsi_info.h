@@ -47,6 +47,10 @@ struct tgsi_opcode_info
 const struct tgsi_opcode_info *
 tgsi_get_opcode_info( uint opcode );
 
+const char *
+tgsi_get_opcode_name( uint opcode );
+
+
 #if defined __cplusplus
 }
 #endif

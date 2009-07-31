@@ -170,3 +170,12 @@ tgsi_get_opcode_info( uint opcode )
    assert( 0 );
    return NULL;
 }
+
+
+const char *
+tgsi_get_opcode_name( uint opcode )
+{
+   const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
+   return info->mnemonic;
+}
+
