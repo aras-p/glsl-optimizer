@@ -85,8 +85,6 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	}
 
 	rmesa->vtbl.get_lock(rmesa);
-
-	rmesa->lost_context = GL_TRUE;
 }
 
 void radeon_lock_hardware(radeonContextPtr radeon)

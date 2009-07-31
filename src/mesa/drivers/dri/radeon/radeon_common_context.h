@@ -445,7 +445,6 @@ struct radeon_context {
    GLuint numClipRects;	/* Cliprects for the draw buffer */
    drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
-   GLboolean lost_context;
    drm_radeon_sarea_t *sarea;	/* Private SAREA data */
 
    /* Mirrors of some DRI state */
