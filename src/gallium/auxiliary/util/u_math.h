@@ -53,11 +53,11 @@ __inline double ceil(double val)
 {
    double ceil_val;
 
-   if((val - (long) val) == 0) {
+   if ((val - (long) val) == 0) {
       ceil_val = val;
    }
    else {
-      if(val > 0) {
+      if (val > 0) {
          ceil_val = (long) val + 1;
       }
       else {
@@ -73,11 +73,11 @@ __inline double floor(double val)
 {
    double floor_val;
 
-   if((val - (long) val) == 0) {
+   if ((val - (long) val) == 0) {
       floor_val = val;
    }
    else {
-      if(val > 0) {
+      if (val > 0) {
          floor_val = (long) val;
       }
       else {
@@ -189,7 +189,10 @@ static INLINE double log2( double x )
 extern float pow2_table[POW2_TABLE_SIZE];
 
 
-
+/**
+ * Initialize math module.  This should be called before using any
+ * other functions in this module.
+ */
 extern void
 util_init_math(void);
 
@@ -220,7 +223,7 @@ util_fast_exp2(float x)
    if(x > 129.00000f)
       return 3.402823466e+38f;
 
-   if(x < -126.99999f)
+   if (x < -126.99999f)
       return 0.0f;
 
    ipart = (int32_t) x;
@@ -228,7 +231,8 @@ util_fast_exp2(float x)
 
    /* same as
     *   epart.f = (float) (1 << ipart)
-    * but faster and without integer overflow for ipart > 31 */
+    * but faster and without integer overflow for ipart > 31
+    */
    epart.i = (ipart + 127 ) << 23;
 
    mpart = pow2_table[POW2_TABLE_OFFSET + (int)(fpart * POW2_TABLE_SCALE)];
@@ -254,6 +258,9 @@ util_fast_exp(float x)
 extern float log2_table[LOG2_TABLE_SIZE];
 
 
+/**
+ * Fast approximation to log2(x).
+ */
 static INLINE float
 util_fast_log2(float x)
 {
@@ -267,12 +274,14 @@ util_fast_log2(float x)
 }
 
 
+/**
+ * Fast approximation to x^y.
+ */
 static INLINE float
 util_fast_pow(float x, float y)
 {
    return util_fast_exp2(util_fast_log2(x) * y);
 }
-
 
 
 /**
@@ -284,8 +293,8 @@ util_ifloor(float f)
    int ai, bi;
    double af, bf;
    union fi u;
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
+   af = (3 << 22) + 0.5 + (double) f;
+   bf = (3 << 22) + 0.5 - (double) f;
    u.f = (float) af;  ai = u.i;
    u.f = (float) bf;  bi = u.i;
    return (ai - bi) >> 1;
@@ -305,9 +314,9 @@ util_iround(float f)
 #elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
    int r;
    _asm {
-	 fld f
-	 fistp r
-	}
+      fld f
+      fistp r
+   }
    return r;
 #else
    if (f >= 0.0f)
@@ -340,7 +349,7 @@ static INLINE
 unsigned long ffs( unsigned long u )
 {
    unsigned long i;
-   if(_BitScanForward(&i, u))
+   if (_BitScanForward(&i, u))
       return i + 1;
    else
       return 0;
@@ -351,7 +360,7 @@ unsigned ffs( unsigned u )
 {
    unsigned i;
 
-   if( u == 0 ) {
+   if (u == 0) {
       return 0;
    }
 
@@ -378,7 +387,10 @@ fui( float f )
 }
 
 
-
+/**
+ * Convert ubyte to float in [0, 1].
+ * XXX a 256-entry lookup table would be slightly faster.
+ */
 static INLINE float
 ubyte_to_float(ubyte ub)
 {
@@ -422,7 +434,10 @@ util_logbase2(unsigned n)
 }
 
 
-
+/**
+ * Clamp X to [MIN, MAX].
+ * This is a macro to allow float, int, uint, etc. types.
+ */
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
 
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
