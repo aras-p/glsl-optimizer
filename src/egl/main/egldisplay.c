@@ -53,7 +53,7 @@ _eglLinkDisplay(_EGLDisplay *dpy)
    assert(key);
    /* "link" the display to the hash table */
    _eglHashInsert(_eglGlobal.Displays, key, dpy);
-   dpy->Handle = (EGLDisplay) key;
+   dpy->Handle = (EGLDisplay) _eglUIntToPointer(key);
 
    return dpy->Handle;
 }
@@ -66,7 +66,8 @@ _eglLinkDisplay(_EGLDisplay *dpy)
 void
 _eglUnlinkDisplay(_EGLDisplay *dpy)
 {
-   _eglHashRemove(_eglGlobal.Displays, (EGLuint) dpy->Handle);
+   EGLuint key = _eglPointerToUInt((void *) dpy->Handle);
+   _eglHashRemove(_eglGlobal.Displays, key);
    dpy->Handle = EGL_NO_DISPLAY;
 }
 
@@ -91,7 +92,7 @@ _eglGetDisplayHandle(_EGLDisplay *display)
 _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)
 {
-   EGLuint key = (EGLuint) dpy;
+   EGLuint key = _eglPointerToUInt((void *) dpy);
    return (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
 }
 
@@ -224,7 +225,7 @@ _eglUnlinkContext(_EGLContext *ctx)
 EGLContext
 _eglGetContextHandle(_EGLContext *ctx)
 {
-   return (EGLContext) (ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT;
+   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
 }
 
 
@@ -257,7 +258,7 @@ _eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
    assert(key);
    _eglHashInsert(_eglGlobal.Surfaces, key, surf);
 
-   surf->Handle = (EGLSurface) key;
+   surf->Handle = (EGLSurface) _eglUIntToPointer(key);
    return surf->Handle;
 }
 
@@ -270,8 +271,9 @@ void
 _eglUnlinkSurface(_EGLSurface *surf)
 {
    _EGLSurface *prev;
+   EGLuint key = _eglPointerToUInt((void *) surf->Handle);
 
-   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
+   _eglHashRemove(_eglGlobal.Surfaces, key);
    surf->Handle = EGL_NO_SURFACE;
 
    prev = surf->Display->SurfaceList;
@@ -314,7 +316,6 @@ _eglGetSurfaceHandle(_EGLSurface *surface)
 _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
-                                                   (EGLuint) surf);
-   return c;
+   EGLuint key = _eglPointerToUInt((void *) surf);
+   return (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces, key);
 }

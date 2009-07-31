@@ -125,4 +125,25 @@ _eglIsSurfaceLinked(_EGLSurface *surf)
 }
 
 
+/**
+ * Cast an unsigned int to a pointer.
+ */
+static INLINE void *
+_eglUIntToPointer(unsigned int v)
+{
+   return (void *) ((uintptr_t) v);
+}
+
+
+/**
+ * Cast a pointer to an unsigned int.  The pointer must be one that is
+ * returned by _eglUIntToPointer.
+ */
+static INLINE unsigned int
+_eglPointerToUInt(const void *p)
+{
+   return (unsigned int) ((uintptr_t) p);
+}
+
+
 #endif /* EGLDISPLAY_INCLUDED */
