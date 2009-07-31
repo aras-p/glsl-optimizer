@@ -151,6 +151,9 @@ GLboolean r700SyncSurf(context_t *context,
     BATCH_LOCALS(&context->radeon);
     uint32_t cp_coher_size;
 
+    if (!pbo)
+	    return GL_FALSE;
+
     if (pbo->size == 0xffffffff)
 	    cp_coher_size = 0xffffffff;
     else

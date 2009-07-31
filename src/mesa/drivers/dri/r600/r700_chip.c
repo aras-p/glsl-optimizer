@@ -321,6 +321,9 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     unsigned int uSQ_VTX_CONSTANT_WORD3_0 = 0;
     unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
 
+    if (!paos->bo)
+	    return GL_FALSE;
+
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
@@ -594,6 +597,9 @@ GLboolean r700SendPSState(context_t *context)
 
 	pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
 
+	if (!pbo)
+		return GL_FALSE;
+
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
         BEGIN_BATCH_NO_AUTOSTATE(3);
@@ -622,6 +628,9 @@ GLboolean r700SendVSState(context_t *context)
 	BATCH_LOCALS(&context->radeon);
 
 	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
+
+	if (!pbo)
+		return GL_FALSE;
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
@@ -659,6 +668,9 @@ GLboolean r700SendFSState(context_t *context)
 	r700->fs.SQ_PGM_RESOURCES_FS.u32All = 0;
 	r700->fs.SQ_PGM_CF_OFFSET_FS.u32All = 0;
 	/* XXX */
+
+	if (!pbo)
+		return GL_FALSE;
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
