@@ -44,7 +44,6 @@
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"
 
-#include "radeon_mipmap_tree.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
@@ -138,68 +137,6 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
     r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
 
-    return GL_TRUE;
-}
-
-GLboolean r700SendTextureState(context_t *context)
-{
-    unsigned int i;
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    offset_modifiers offset_mod = {NO_SHIFT, 0, 0xFFFFFFFF};
-    struct radeon_bo *bo = NULL;
-    BATCH_LOCALS(&context->radeon);
-
-    for (i=0; i<R700_TEXTURE_NUMBERUNITS; i++) {
-	    radeonTexObj *t = r700->textures[i];
-	    if (t) {
-		    if (!t->image_override)
-			    bo = t->mt->bo;
-		    else
-			    bo = t->bo;
-		    if (bo) {
-
-			    r700SyncSurf(context, bo,
-					 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
-					 0, TC_ACTION_ENA_bit);
-
-			    BEGIN_BATCH_NO_AUTOSTATE(9);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-			    R600_OUT_BATCH(i * 7);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
-						 bo,
-						 0,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
-						 bo,
-						 r700->textures[i]->SQ_TEX_RESOURCE3,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
-			    END_BATCH();
-
-			    BEGIN_BATCH_NO_AUTOSTATE(5);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-			    R600_OUT_BATCH(i * 3);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
-			    END_BATCH();
-
-			    BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
-			    R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
-			    END_BATCH();
-
-			    COMMIT_BATCH();
-		    }
-	    }
-    }
     return GL_TRUE;
 }
 
@@ -342,29 +279,25 @@ static GLboolean r700RunRender(GLcontext * ctx,
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
 
-    r700Start3D(context); /* TODO : this is too much. */
-
-    r700SendSQConfig(context);
-
     r700UpdateShaders(ctx);
-
     r700SetScissor(context);
     r700SetRenderTarget(context, 0);
     r700SetDepthTarget(context);
-
-    if(r700SetupStreams(ctx))
-    {
-        return GL_TRUE;
-    }
-
     r600UpdateTextureState(ctx);
-    r700SendTextureState(context);
-
     r700SetupShaders(ctx);
 
+
+    r700Start3D(context);
+    r700SendSQConfig(context);
     r700SendFSState(context); // FIXME just a place holder for now
     r700SendPSState(context);
     r700SendVSState(context);
+    r700SendVSConstants(ctx);
+    r700SendPSConstants(ctx);
+
+    r700SendTextureState(context);
+    if(r700SetupStreams(ctx))
+	    return GL_TRUE;
 
     r700SendUCPState(context);
     r700SendContextStates(context);

@@ -393,6 +393,20 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     */
 
+    return GL_TRUE;
+}
+
+GLboolean r700SendVSConstants(GLcontext * ctx)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    BATCH_LOCALS(&context->radeon);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+    struct r700_vertex_program *vp
+             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct gl_program_parameter_list *paramList;
+    unsigned int unNumParamData;
+    unsigned int ui;
+
     /* sent out shader constants. */
 
     paramList = vp->mesa_program.Base.Parameters;
@@ -403,8 +417,8 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
         unNumParamData = paramList->NumParameters * 4;
 
-        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2); 
-        
+        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2);
+
         R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
         /* assembler map const from very beginning. */
         R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
