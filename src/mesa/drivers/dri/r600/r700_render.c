@@ -57,7 +57,7 @@ void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
 void r700Start3D(context_t *context);
 GLboolean r700SendTextureState(context_t *context);
-unsigned int r700PrimitiveType(int prim);
+static unsigned int r700PrimitiveType(int prim);
 void r600UpdateTextureState(GLcontext * ctx);
 GLboolean r700SyncSurf(context_t *context,
 		       struct radeon_bo *pbo,
@@ -137,6 +137,8 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
     r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
 
+    r600UpdateTextureState(ctx);
+
     return GL_TRUE;
 }
 
@@ -175,7 +177,7 @@ GLboolean r700SyncSurf(context_t *context,
     return GL_TRUE;
 }
 
-unsigned int r700PrimitiveType(int prim)
+static unsigned int r700PrimitiveType(int prim)
 {
     switch (prim & PRIM_MODE_MASK)
     {
@@ -216,7 +218,7 @@ unsigned int r700PrimitiveType(int prim)
     }
 }
 
-void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
+static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	BATCH_LOCALS(&context->radeon);
@@ -271,6 +273,29 @@ void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 
 }
 
+void r700EmitState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+
+	r700Start3D(context);
+	r700SendSQConfig(context);
+	r700SendFSState(context); // FIXME just a place holder for now
+	r700SendPSState(context);
+	r700SendVSState(context);
+	r700SendVSConstants(ctx);
+	r700SendPSConstants(ctx);
+
+	r700SendTextureState(context);
+	r700SetupStreams(ctx);
+
+	r700SendUCPState(context);
+	r700SendContextStates(context);
+	r700SendViewportState(context, 0);
+	r700SendRenderTargetState(context, 0);
+	r700SendDepthTargetState(context);
+
+}
+
 static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
@@ -281,29 +306,12 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700UpdateShaders(ctx);
     r700SetScissor(context);
-    r700SetRenderTarget(context, 0);
-    r700SetDepthTarget(context);
-    r600UpdateTextureState(ctx);
     r700SetupShaders(ctx);
 
+    r700SetRenderTarget(context, 0);
+    r700SetDepthTarget(context);
 
-    r700Start3D(context);
-    r700SendSQConfig(context);
-    r700SendFSState(context); // FIXME just a place holder for now
-    r700SendPSState(context);
-    r700SendVSState(context);
-    r700SendVSConstants(ctx);
-    r700SendPSConstants(ctx);
-
-    r700SendTextureState(context);
-    if(r700SetupStreams(ctx))
-	    return GL_TRUE;
-
-    r700SendUCPState(context);
-    r700SendContextStates(context);
-    r700SendViewportState(context, 0);
-    r700SendRenderTargetState(context, 0);
-    r700SendDepthTargetState(context);
+    r700EmitState(ctx);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) {
@@ -316,7 +324,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
 
-    radeonReleaseArrays(ctx, 0);
+    radeonReleaseArrays(ctx, ~0);
 
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
 

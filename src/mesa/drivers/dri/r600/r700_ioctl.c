@@ -43,7 +43,6 @@
 static void r700Flush(GLcontext *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	context_t *     context = R700_CONTEXT(ctx);
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);
@@ -59,7 +58,7 @@ static void r700Flush(GLcontext *ctx)
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
 
-	r700SendContextStates(context);
+	r700EmitState(ctx);
 
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);

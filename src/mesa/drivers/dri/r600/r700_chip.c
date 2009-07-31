@@ -373,7 +373,6 @@ void r700SetupVTXConstants(GLcontext  * ctx,
 int r700SetupStreams(GLcontext * ctx)
 {
     context_t         *context = R700_CONTEXT(ctx);
-
     BATCH_LOCALS(&context->radeon);
 
     struct r700_vertex_program *vpc
@@ -387,7 +386,7 @@ int r700SetupStreams(GLcontext * ctx)
 
     BEGIN_BATCH_NO_AUTOSTATE(6);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-	R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
+    R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
     R600_OUT_BATCH(0);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
