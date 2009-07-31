@@ -3007,7 +3007,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
  
                   loop_depth--;
                   inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
-                  /* patch all the BREAK/CONT instructions from last BEGINLOOP */
+                  /* patch all the BREAK/CONT instructions from last BGNLOOP */
                   while (inst0 > loop_inst[loop_depth]) {
                      inst0--;
                      if (inst0->header.opcode == BRW_OPCODE_BREAK) {

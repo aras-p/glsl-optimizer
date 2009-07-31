@@ -60,7 +60,7 @@ static const char convolution_asm[] =
    "DCL SAMP[0], CONSTANT\n"
    "0: MOV TEMP[0], CONST[0].xxxx\n"
    "1: MOV TEMP[1], CONST[0].xxxx\n"
-   "2: BGNLOOP2 :14\n"
+   "2: BGNLOOP :14\n"
    "3: SGE TEMP[0].z, TEMP[0].yyyy, CONST[1].xxxx\n"
    "4: IF TEMP[0].zzzz :7\n"
    "5: BRK\n"
@@ -72,7 +72,7 @@ static const char convolution_asm[] =
    "11: MOV TEMP[3], CONST[ADDR[0]+%d]\n"
    "12: MAD TEMP[1], TEMP[2], TEMP[3], TEMP[1]\n"
    "13: ADD TEMP[0].y, TEMP[0].yyyy, CONST[0].yyyy\n"
-   "14: ENDLOOP2 :2\n"
+   "14: ENDLOOP :2\n"
    "15: MAD OUT[0], TEMP[1], CONST[1].yyyy, CONST[1].zzzz\n"
    "16: END\n";
 

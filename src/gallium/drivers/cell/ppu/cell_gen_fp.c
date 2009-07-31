@@ -1834,9 +1834,9 @@ emit_instruction(struct codegen *gen,
    case TGSI_OPCODE_ENDIF:
       return emit_ENDIF(gen, inst);
 
-   case TGSI_OPCODE_BGNLOOP2:
+   case TGSI_OPCODE_BGNLOOP:
       return emit_BGNLOOP(gen, inst);
-   case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_ENDLOOP:
       return emit_ENDLOOP(gen, inst);
    case TGSI_OPCODE_BRK:
       return emit_BRK(gen, inst);

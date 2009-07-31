@@ -1758,9 +1758,9 @@ exec_instruction(
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] = 0;
       break;
 
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       /* fall-through (for now) */
-   case TGSI_OPCODE_BGNLOOP2:
+   case TGSI_OPCODE_BGNLOOP:
       /* push LoopMask and ContMasks */
       ASSERT(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
@@ -1768,9 +1768,9 @@ exec_instruction(
       mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       break;
 
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       /* fall-through (for now at least) */
-   case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_ENDLOOP:
       /* Restore ContMask, but don't pop */
       ASSERT(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];

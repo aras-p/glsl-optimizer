@@ -473,8 +473,8 @@ iter_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_ELSE:
-   case TGSI_OPCODE_BGNLOOP2:
-   case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_BGNLOOP:
+   case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_CAL:
       TXT( " :" );
       UID( inst->InstructionExtLabel.Label );

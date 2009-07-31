@@ -516,7 +516,7 @@ translate_instruction(llvm::Module *module,
       return;  //just update the state
    }
       break;
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       break;
    case TGSI_OPCODE_REP:
       break;
@@ -532,7 +532,7 @@ translate_instruction(llvm::Module *module,
       return; //just update the state
    }
       break;
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       break;
    case TGSI_OPCODE_ENDREP:
       break;
@@ -574,7 +574,7 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_ENDPRIM:
       break;
-   case TGSI_OPCODE_BGNLOOP2: {
+   case TGSI_OPCODE_BGNLOOP: {
       instr->beginLoop();
       storage->setCurrentBlock(instr->currentBlock());
       return;
@@ -587,7 +587,7 @@ translate_instruction(llvm::Module *module,
       return;
    }
       break;
-   case TGSI_OPCODE_ENDLOOP2: {
+   case TGSI_OPCODE_ENDLOOP: {
       instr->endLoop();
       storage->setCurrentBlock(instr->currentBlock());
       return;
@@ -890,7 +890,7 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_IF: {
    }
       break;
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       break;
    case TGSI_OPCODE_REP:
       break;
@@ -900,7 +900,7 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_ENDIF: {
    }
       break;
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       break;
    case TGSI_OPCODE_ENDREP:
       break;
@@ -941,13 +941,13 @@ translate_instructionir(llvm::Module *module,
       break;
    case TGSI_OPCODE_ENDPRIM:
       break;
-   case TGSI_OPCODE_BGNLOOP2: {
+   case TGSI_OPCODE_BGNLOOP: {
    }
       break;
    case TGSI_OPCODE_BGNSUB: {
    }
       break;
-   case TGSI_OPCODE_ENDLOOP2: {
+   case TGSI_OPCODE_ENDLOOP: {
    }
       break;
    case TGSI_OPCODE_ENDSUB: {

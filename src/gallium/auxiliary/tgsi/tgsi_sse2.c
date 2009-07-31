@@ -2531,7 +2531,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       return 0;
       break;
 
@@ -2547,7 +2547,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       return 0;
       break;
 

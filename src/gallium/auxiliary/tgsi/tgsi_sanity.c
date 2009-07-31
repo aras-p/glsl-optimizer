@@ -242,8 +242,8 @@ iter_instruction(
    }
 
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_LOOP:
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_BGNFOR:
+   case TGSI_OPCODE_ENDFOR:
       if (inst->FullDstRegisters[0].DstRegister.File != TGSI_FILE_LOOP ||
           inst->FullDstRegisters[0].DstRegister.Index != 0) {
          report_error(ctx, "Destination register must be LOOP[0]");
@@ -252,7 +252,7 @@ iter_instruction(
    }
 
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       if (inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_CONSTANT &&
           inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_IMMEDIATE) {
          report_error(ctx, "Source register file must be either CONST or IMM");

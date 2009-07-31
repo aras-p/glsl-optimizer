@@ -238,11 +238,11 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_TXL                 72
 #define TGSI_OPCODE_BRK                 73
 #define TGSI_OPCODE_IF                  74
-#define TGSI_OPCODE_LOOP                75
+#define TGSI_OPCODE_BGNFOR              75
 #define TGSI_OPCODE_REP                 76
 #define TGSI_OPCODE_ELSE                77
 #define TGSI_OPCODE_ENDIF               78
-#define TGSI_OPCODE_ENDLOOP             79
+#define TGSI_OPCODE_ENDFOR              79
 #define TGSI_OPCODE_ENDREP              80
 #define TGSI_OPCODE_PUSHA               81
 #define TGSI_OPCODE_POPA                82
@@ -262,9 +262,9 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_CONT                96
 #define TGSI_OPCODE_EMIT                97
 #define TGSI_OPCODE_ENDPRIM             98
-#define TGSI_OPCODE_BGNLOOP2            99
+#define TGSI_OPCODE_BGNLOOP             99
 #define TGSI_OPCODE_BGNSUB              100
-#define TGSI_OPCODE_ENDLOOP2            101
+#define TGSI_OPCODE_ENDLOOP             101
 #define TGSI_OPCODE_ENDSUB              102
 #define TGSI_OPCODE_NOISE1              103
 #define TGSI_OPCODE_NOISE2              104
