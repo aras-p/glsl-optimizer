@@ -351,10 +351,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
     struct drm_radeon_cs       cs_cmd;
     struct drm_radeon_cs_chunk cs_chunk[2];
-    drm_radeon_cmd_buffer_t cmd; 
-    /* drm_r300_cmd_header_t age; */
     uint32_t length_dw_reloc_chunk;
-    uint64_t ull;
     uint64_t chunk_ptrs[2];
     uint32_t reloc_chunk[128]; 
     int r;
@@ -363,43 +360,13 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* TODO : put chip level things here if need. */
     /* csm->ctx->vtbl.emit_cs_header(cs, csm->ctx); */
 
-    BATCH_LOCALS(csm->ctx);
-    drm_radeon_getparam_t gp;
-    uint32_t              current_scratchx_age;
-
-    gp.param = RADEON_PARAM_LAST_CLEAR;
-    gp.value = (int *)&current_scratchx_age;
-    r = drmCommandWriteRead(cs->csm->fd, 
-                            DRM_RADEON_GETPARAM,
-                            &gp, 
-                            sizeof(gp));
-    if (r) 
-    {
-        fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
-        exit(1);
-    }
-
-    csm->pending_age = 0;
     csm->pending_count = 1;
 
-    current_scratchx_age++;
-    csm->pending_age = current_scratchx_age;
-
-    BEGIN_BATCH_NO_AUTOSTATE(3);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    R600_OUT_BATCH((SCRATCH_REG2 - R600_SET_CONFIG_REG_OFFSET) >> 2);
-    R600_OUT_BATCH(current_scratchx_age);
-    END_BATCH();
-    COMMIT_BATCH();
-
-    //TODO ioctl to get back cs id assigned in drm
-    //csm->pending_age = cs_id_back;
-    
     r = r600_cs_process_relocs(cs, &(reloc_chunk[0]), &length_dw_reloc_chunk);
     if (r) {
         return 0;
     }
-      
+
     /* raw ib chunk */
     cs_chunk[0].chunk_id   = RADEON_CHUNK_ID_IB;
     cs_chunk[0].length_dw  = cs->cdw;
@@ -428,6 +395,8 @@ static int r600_cs_emit(struct radeon_cs *cs)
     if (r) {
         return r;
     }
+
+    csm->pending_age = cs_cmd.cs_id;
 
     r600_cs_set_age(cs);
 
