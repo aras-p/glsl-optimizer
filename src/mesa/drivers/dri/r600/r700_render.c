@@ -282,7 +282,6 @@ unsigned int r700PrimitiveType(int prim)
 void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 {
 	context_t *context = R700_CONTEXT(ctx);
-	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	BATCH_LOCALS(&context->radeon);
 	int type, i, total_emit;
 	int num_indices = end - start;
@@ -339,7 +338,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
-    int lastIndex = 0;
     unsigned int i;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;

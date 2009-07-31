@@ -249,7 +249,6 @@ void r700SetupVTXConstants(GLcontext  * ctx,
 			   unsigned int count)     /* number of vectors in stream */
 {
     context_t *context = R700_CONTEXT(ctx);
-    uint32_t *dest;
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
     offset_modifiers offset_mod = {NO_SHIFT, 0, 0xFFFFFFFF};
 
@@ -417,7 +416,7 @@ GLboolean r700SendContextStates(context_t *context)
     return GL_TRUE;
 }
 
-GLboolean r700SendDepthTargetState(context_t *context, int id)
+GLboolean r700SendDepthTargetState(context_t *context)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_renderbuffer *rrb;
@@ -540,7 +539,6 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 GLboolean r700SendPSState(context_t *context)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_renderbuffer *rrb;
 	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
@@ -575,7 +573,6 @@ GLboolean r700SendPSState(context_t *context)
 GLboolean r700SendVSState(context_t *context)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_renderbuffer *rrb;
 	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
@@ -609,7 +606,6 @@ GLboolean r700SendVSState(context_t *context)
 GLboolean r700SendFSState(context_t *context)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_renderbuffer *rrb;
 	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
@@ -652,8 +648,6 @@ GLboolean r700SendFSState(context_t *context)
 GLboolean r700SendViewportState(context_t *context, int id)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_renderbuffer *rrb;
-	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
 
 	if (id > R700_MAX_VIEWPORTS)
