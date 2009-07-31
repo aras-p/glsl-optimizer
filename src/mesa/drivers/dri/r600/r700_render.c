@@ -150,16 +150,11 @@ GLboolean r700SyncSurf(context_t *context,
 {
     BATCH_LOCALS(&context->radeon);
     uint32_t cp_coher_size;
-    offset_modifiers offset_mod;
 
     if (pbo->size == 0xffffffff)
 	    cp_coher_size = 0xffffffff;
     else
 	    cp_coher_size = ((pbo->size + 255) >> 8);
-
-    offset_mod.shift     = NO_SHIFT;
-    offset_mod.shiftbits = 0;
-    offset_mod.mask      = 0xFFFFFFFF;
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SURFACE_SYNC, 3));
@@ -168,7 +163,7 @@ GLboolean r700SyncSurf(context_t *context,
     R600_OUT_BATCH_RELOC(0,
 			 pbo,
 			 0,
-			 read_domain, write_domain, 0, &offset_mod); // ???
+			 read_domain, write_domain, 0); // ???
     R600_OUT_BATCH(10);
 
     END_BATCH();

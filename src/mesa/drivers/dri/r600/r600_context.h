@@ -128,13 +128,6 @@ enum
     RIGHT_SHIFT = 2,
 };
 
-typedef struct offset_modifiers
-{
-    GLuint shift;
-    GLuint shiftbits;
-    GLuint mask;
-} offset_modifiers;
-
 /**
  * \brief R600 context structure.
  */

@@ -340,8 +340,6 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
 
-    struct gl_program_parameter_list *paramList;
-
     if(GL_FALSE == vp->loaded)
     {
         if(vp->r700Shader.bNeedsAssembly == GL_TRUE)

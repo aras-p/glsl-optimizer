@@ -78,8 +78,7 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
                         struct radeon_bo *bo,
                         uint32_t read_domain,
                         uint32_t write_domain,
-                        uint32_t flags,
-                        offset_modifiers* poffset_mod)
+                        uint32_t flags)
 {
     struct r600_cs_reloc_legacy *relocs;
     int i;
@@ -135,10 +134,6 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
             cs->section_ndw += 2;
             cs->section_cdw += 2;
 
-            relocs[i].offset_mod.shift     = poffset_mod->shift;
-            relocs[i].offset_mod.shiftbits = poffset_mod->shiftbits;
-            relocs[i].offset_mod.mask      = poffset_mod->mask;
-
             return 0;
         }
     }
@@ -160,9 +155,6 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
     {
         return -ENOMEM;
     }
-    relocs[cs->crelocs].offset_mod.shift     = poffset_mod->shift;
-    relocs[cs->crelocs].offset_mod.shiftbits = poffset_mod->shiftbits;
-    relocs[cs->crelocs].offset_mod.mask      = poffset_mod->mask;
 
     relocs[cs->crelocs].indices[0] = cs->cdw - 1;
     relocs[cs->crelocs].reloc_indices[0] = cs->section_cdw;
@@ -286,28 +278,13 @@ restart:
                 exit(0);
                 return -EINVAL;
             }
-            /* apply offset operator */
-            switch (relocs[i].offset_mod.shift)
-            {
-            case NO_SHIFT:
-                asicoffset = asicoffset & relocs[i].offset_mod.mask;
-                break;
-            case LEFT_SHIFT:
-                asicoffset = (asicoffset << relocs[i].offset_mod.shiftbits) & relocs[i].offset_mod.mask;
-                break;
-            case RIGHT_SHIFT:
-                asicoffset = (asicoffset >> relocs[i].offset_mod.shiftbits) & relocs[i].offset_mod.mask;
-                break;
-            default:
-                break;
-            };              
 
             /* pkt3 nop header in ib chunk */
             cs->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
 
             /* reloc index in ib chunk */
             cs->packets[relocs[i].reloc_indices[j] + 1] = offset_dw;
-            
+
             /* asic offset in reloc chunk */ /* see alex drm r600_nomm_relocate */
             reloc_chunk[offset_dw] = asicoffset;
             reloc_chunk[offset_dw + 3] = 0;
