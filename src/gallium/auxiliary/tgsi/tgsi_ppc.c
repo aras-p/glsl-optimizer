@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sse.h"
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_dump.h"
@@ -1317,8 +1318,10 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
          ok = emit_instruction(&gen, &parse.FullToken.FullInstruction);
 
 	 if (!ok) {
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
 	    debug_printf("failed to translate tgsi opcode %d to PPC (%s)\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode,
+			 opcode,
+                         tgsi_get_opcode_name(opcode),
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
                          "vertex shader" : "fragment shader");
 	 }

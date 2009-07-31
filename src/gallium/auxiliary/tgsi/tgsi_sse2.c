@@ -36,6 +36,7 @@
 #if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
 #endif
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -2917,8 +2918,10 @@ tgsi_emit_sse2(
             &parse.FullToken.FullInstruction );
 
 	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d to SSE (%s)\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode,
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+	    debug_printf("failed to translate tgsi opcode %d (%s) to SSE (%s)\n", 
+			 opcode,
+                         tgsi_get_opcode_name(opcode),
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
                          "vertex shader" : "fragment shader");
 	 }
