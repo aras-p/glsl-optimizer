@@ -951,7 +951,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 			fprintf(stderr, " Allocate new miptree\n");
 		radeon_try_alloc_miptree(rmesa, t, &baseimage->base, 0, texObj->BaseLevel);
 		if (!t->mt) {
-			_mesa_problem(ctx, "r300_validate_texture failed to alloc miptree");
+			_mesa_problem(ctx, "radeon_validate_texture failed to alloc miptree");
 			return GL_FALSE;
 		}
 	}
