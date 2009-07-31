@@ -483,8 +483,9 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
 void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 {
     radeonContextPtr rmesa = &r600->radeon;
-	
     GLuint size;
+    rmesa->hw.max_state_size = 4000; /* rough estimate */
+
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");

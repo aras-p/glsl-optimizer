@@ -335,18 +335,12 @@ void * r700GetActiveVpShaderBo(GLcontext * ctx)
 GLboolean r700SetupVertexProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
-
-    BATCH_LOCALS(&context->radeon);
-
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
 
     struct gl_program_parameter_list *paramList;
-    unsigned int unNumParamData;
-
-    unsigned int ui;
 
     if(GL_FALSE == vp->loaded)
     {
@@ -400,7 +394,6 @@ GLboolean r700SendVSConstants(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
     struct gl_program_parameter_list *paramList;

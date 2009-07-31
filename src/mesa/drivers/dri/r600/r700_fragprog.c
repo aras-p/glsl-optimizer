@@ -262,15 +262,12 @@ void * r700GetActiveFpShaderBo(GLcontext * ctx)
 GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
-    BATCH_LOCALS(&context->radeon);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
     struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
-    struct gl_program_parameter_list *paramList;
-    unsigned int unNumParamData;
     unsigned int ui, i;
     unsigned int unNumOfReg;
     unsigned int unBit;
@@ -398,7 +395,6 @@ GLboolean r700SendPSConstants(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     struct gl_program_parameter_list *paramList;

@@ -277,6 +277,9 @@ void r700EmitState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
 
+	rcommonEnsureCmdBufSpace(&context->radeon,
+				 context->radeon.hw.max_state_size, __FUNCTION__);
+
 	r700Start3D(context);
 	r700SendSQConfig(context);
 	r700SendFSState(context); // FIXME just a place holder for now
