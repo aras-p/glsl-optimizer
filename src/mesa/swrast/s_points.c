@@ -139,10 +139,10 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
       }
 
       ATTRIB_LOOP_BEGIN
-         if ((attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7) ||
-            attr >= FRAG_ATTRIB_VAR0) {
+         if (attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7) {
+            /* a texcoord attribute */
             const GLuint u = attr - FRAG_ATTRIB_TEX0;
-            /* a texcoord */
+            ASSERT(u < Elements(ctx->Point.CoordReplace));
             if (ctx->Point.CoordReplace[u]) {
                tCoords[numTcoords++] = attr;
 
