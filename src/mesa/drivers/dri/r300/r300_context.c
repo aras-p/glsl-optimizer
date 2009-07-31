@@ -451,11 +451,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitState(r300);
 	r300InitShaderFunctions(r300);
 
-	if (screen->chip_family == CHIP_FAMILY_RS600 ||	screen->chip_family == CHIP_FAMILY_RS690 ||
-		screen->chip_family == CHIP_FAMILY_RS740) {
-		r300->radeon.texture_row_align = 64;
-	}
-
 	r300InitGLExtensions(ctx);
 
 	return GL_TRUE;

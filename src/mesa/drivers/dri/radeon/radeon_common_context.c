@@ -245,8 +245,19 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 		radeon->texture_row_align = 256;
 		radeon->texture_rect_row_align = 256;
 		radeon->texture_compressed_row_align = 256;
-	} else {
+	} else if (IS_R200_CLASS(radeon->radeonScreen) ||
+		   IS_R100_CLASS(radeon->radeonScreen)) {
 		radeon->texture_row_align = 32;
+		radeon->texture_rect_row_align = 64;
+		radeon->texture_compressed_row_align = 32;
+	} else { /* R300 - not sure this is all correct */
+		int chip_family = radeon->radeonScreen->chip_family;
+		if (chip_family == CHIP_FAMILY_RS600 ||
+		    chip_family == CHIP_FAMILY_RS690 ||
+		    chip_family == CHIP_FAMILY_RS740)
+			radeon->texture_row_align = 64;
+		else
+			radeon->texture_row_align = 32;
 		radeon->texture_rect_row_align = 64;
 		radeon->texture_compressed_row_align = 64;
 	}
