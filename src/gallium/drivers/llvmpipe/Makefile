@@ -7,6 +7,7 @@ C_SOURCES = \
 	lp_fs_exec.c \
 	lp_fs_sse.c \
 	lp_fs_llvm.c \
+	lp_bld_arit.c \
 	lp_bld_pack.c \
 	lp_bld_unpack.c \
 	lp_bld_load.c \
