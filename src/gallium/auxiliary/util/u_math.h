@@ -216,23 +216,23 @@ util_fast_exp2(float x)
    int32_t ipart;
    float fpart, mpart;
    union fi epart;
-   
+
    if(x > 129.00000f)
       return 3.402823466e+38f;
-   
+
    if(x < -126.99999f)
       return 0.0f;
 
    ipart = (int32_t) x;
    fpart = x - (float) ipart;
-   
+
    /* same as
     *   epart.f = (float) (1 << ipart)
     * but faster and without integer overflow for ipart > 31 */
    epart.i = (ipart + 127 ) << 23;
-   
+
    mpart = pow2_table[POW2_TABLE_OFFSET + (int)(fpart * POW2_TABLE_SCALE)];
-   
+
    return epart.f * mpart;
 }
 
@@ -406,6 +406,19 @@ float_to_ubyte(float f)
       tmp.f = tmp.f * (255.0f/256.0f) + 32768.0f;
       return (ubyte) tmp.i;
    }
+}
+
+
+/**
+ * Calc log base 2
+ */
+static INLINE unsigned
+util_logbase2(unsigned n)
+{
+   unsigned log2 = 0;
+   while (n >>= 1)
+      ++log2;
+   return log2;
 }
 
 

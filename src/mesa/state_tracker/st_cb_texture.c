@@ -59,6 +59,7 @@
 #include "util/u_tile.h"
 #include "util/u_blit.h"
 #include "util/u_surface.h"
+#include "util/u_math.h"
 
 
 #define DBG if (0) printf
@@ -237,16 +238,6 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-static INLINE unsigned
-logbase2(unsigned n)
-{
-   unsigned log2 = 0;
-   while (n >>= 1)
-      ++log2;
-   return log2;
-}
-
-
 /**
  * Return default texture usage bitmask for the given texture format.
  */
@@ -340,9 +331,9 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel;
    }
    else {
-      GLuint l2width = logbase2(width);
-      GLuint l2height = logbase2(height);
-      GLuint l2depth = logbase2(depth);
+      GLuint l2width = util_logbase2(width);
+      GLuint l2height = util_logbase2(height);
+      GLuint l2depth = util_logbase2(depth);
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
