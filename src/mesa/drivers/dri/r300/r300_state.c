@@ -1253,6 +1253,7 @@ static GLuint translate_lod_bias(GLfloat bias)
 	return (((GLuint)b) << R300_LOD_BIAS_SHIFT) & R300_LOD_BIAS_MASK;
 }
 
+
 static void r300SetupTextures(GLcontext * ctx)
 {
 	int i, mtu;
@@ -1345,6 +1346,28 @@ static void r300SetupTextures(GLcontext * ctx)
 		}
 	}
 
+	/* R3xx and R4xx chips require that the texture unit corresponding to
+	 * KIL instructions is really enabled.
+	 *
+	 * We do some fakery here and in the state atom emit logic to enable
+	 * the texture without tripping up the CS checker in the kernel.
+	 */
+	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+		if (ctx->FragmentProgram._Current->UsesKill && last_hw_tmu < 0) {
+			last_hw_tmu++;
+
+			r300->hw.txe.cmd[R300_TXE_ENABLE] |= 1;
+
+			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0] = 0;
+			r300->hw.tex.chroma_key.cmd[R300_TEX_VALUE_0] = 0;
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0] = 0;
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0] = 0;
+			r300->hw.tex.size.cmd[R300_TEX_VALUE_0] = 0; /* 1x1 texture */
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0] = 0; /* A8 format */
+			r300->hw.tex.pitch.cmd[R300_TEX_VALUE_0] = 0;
+		}
+	}
+
 	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER0_0, last_hw_tmu + 1);
 	r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] =
@@ -1362,16 +1385,6 @@ static void r300SetupTextures(GLcontext * ctx)
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_BORDER_COLOR_0, last_hw_tmu + 1);
 
-	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		if (ctx->FragmentProgram._Current->UsesKill && last_hw_tmu < 0) {
-			// The KILL operation requires the first texture unit
-			// to be enabled.
-			r300->hw.txe.cmd[R300_TXE_ENABLE] |= 1;
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0] = 0;
-			r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
-				cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER0_0, 1);
-		}
-	}
 	r300->vtbl.SetupFragmentShaderTextures(ctx, tmu_mappings);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
