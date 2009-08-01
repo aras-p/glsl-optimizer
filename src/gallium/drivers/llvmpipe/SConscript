@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('llvm-config --cflags --libs jit interpreter nativecodegen')
+env.ParseConfig('llvm-config --cflags')
 
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
@@ -17,6 +17,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_bld_store.c',
 		'lp_bld_loop.c',
 		'lp_bld_logicop.c',
+		'lp_bld_blend.c',
 		'lp_clear.c',
 		'lp_context.c',
 		'lp_draw_arrays.c',
@@ -45,12 +46,21 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_tile_cache.c',
 	])
 
+
+env = env.Clone()
+
 env['LINK'] = env['CXX']
+env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
+env.Prepend(LIBS = [llvmpipe] + auxiliaries)
 
 env.Program(
     target = 'lp_bld_test',
     source = ['lp_bld_test.c'],
-    LIBS = [llvmpipe] + auxiliaries + env['LIBS'],
+)
+
+env.Program(
+    target = 'lp_test_blend',
+    source = ['lp_test_blend.c'],
 )
 
 Export('llvmpipe')

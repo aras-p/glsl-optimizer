@@ -1,0 +1,319 @@
+/**************************************************************************
+ *
+ * Copyright 2009 VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+
+/**
+ * @file
+ * Blend LLVM IR generation.
+ *
+ * This code is generic -- it should be able to cope both with floating point
+ * and integer inputs in AOS form.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
+
+#include "pipe/p_state.h"
+
+#include "lp_bld.h"
+#include "lp_bld_arit.h"
+
+
+/**
+ * We may the same values several times, so we keep them here to avoid
+ * recomputing them. Also reusing the values allows us to do simplifications
+ * that LLVM optimization passes wouldn't normally be able to do.
+ */
+struct lp_build_blend_values
+{
+   LLVMBuilderRef builder;
+   
+   LLVMValueRef undef;
+   LLVMValueRef zero;
+   LLVMValueRef one;
+
+   LLVMValueRef src;
+   LLVMValueRef dst;
+   LLVMValueRef const_;
+
+   LLVMValueRef inv_src;
+   LLVMValueRef inv_dst;
+   LLVMValueRef inv_const;
+   LLVMValueRef saturate;
+
+   LLVMValueRef rgb_src_factor;
+   LLVMValueRef alpha_src_factor;
+   LLVMValueRef rgb_dst_factor;
+   LLVMValueRef alpha_dst_factor;
+};
+
+
+static LLVMValueRef
+lp_build_blend_factor_unswizzled(struct lp_build_blend_values *values,
+                                 unsigned factor,
+                                 boolean alpha)
+{
+   switch (factor) {
+   case PIPE_BLENDFACTOR_ZERO:
+      return values->zero;
+   case PIPE_BLENDFACTOR_ONE:
+      return values->one;
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      return values->src;
+   case PIPE_BLENDFACTOR_DST_COLOR:
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+      return values->dst;
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+      if(alpha)
+         return values->one;
+      else {
+         if(!values->inv_dst)
+            values->inv_dst = lp_build_sub(values->builder, values->one, values->dst, values->zero);
+         if(!values->saturate)
+            values->saturate = lp_build_min_sat(values->builder, values->src, values->inv_dst, values->zero, values->one);
+         return values->saturate;
+      }
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      return values->const_;
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+      /* TODO */
+      assert(0);
+      return values->zero;
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+      if(!values->inv_src)
+         values->inv_src = lp_build_sub(values->builder, values->one, values->src, values->zero);
+      return values->inv_src;
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+      if(!values->inv_dst)
+         values->inv_dst = lp_build_sub(values->builder, values->one, values->dst, values->zero);
+      return values->inv_dst;
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+      if(!values->inv_const)
+         values->inv_const = lp_build_sub(values->builder, values->one, values->const_, values->zero);
+      return values->inv_const;
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+      /* TODO */
+      assert(0);
+      return values->zero;
+   default:
+      assert(0);
+      return values->zero;
+   }
+}
+
+
+enum lp_build_blend_swizzle {
+   LP_BUILD_BLEND_SWIZZLE_RGBA = 0,
+   LP_BUILD_BLEND_SWIZZLE_AAAA = 1,
+};
+
+
+/**
+ * How should we shuffle the base factor.
+ */
+static enum lp_build_blend_swizzle
+lp_build_blend_factor_swizzle(unsigned factor)
+{
+   switch (factor) {
+   case PIPE_BLENDFACTOR_ONE:
+   case PIPE_BLENDFACTOR_ZERO:
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+   case PIPE_BLENDFACTOR_DST_COLOR:
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+      return LP_BUILD_BLEND_SWIZZLE_RGBA;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+      return LP_BUILD_BLEND_SWIZZLE_AAAA;
+   default:
+      assert(0);
+      return LP_BUILD_BLEND_SWIZZLE_RGBA;
+   }
+}
+
+
+static LLVMValueRef
+lp_build_blend_swizzle(struct lp_build_blend_values *values,
+                       LLVMValueRef rgb, 
+                       LLVMValueRef alpha, 
+                       enum lp_build_blend_swizzle rgb_swizzle,
+                       unsigned alpha_swizzle,
+                       unsigned n)
+{
+   LLVMValueRef swizzles[LP_MAX_VECTOR_SIZE];
+   unsigned i, j;
+
+   if(rgb == alpha) {
+      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA)
+         return rgb;
+
+      alpha = values->undef;
+   }
+
+   for(j = 0; j < n; j += 4) {
+      for(i = 0; i < 4; ++i) {
+         unsigned swizzle;
+
+         if(i == alpha_swizzle && alpha != values->undef) {
+            /* Take the alpha from the second shuffle argument */
+            swizzle = n + j + alpha_swizzle;
+         }
+         else if (rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA) {
+            /* Take the alpha from the first shuffle argument */
+            swizzle = j + alpha_swizzle;
+         }
+         else {
+            swizzle = j + i;
+         }
+
+         swizzles[j + i] = LLVMConstInt(LLVMInt32Type(), swizzle, 0);
+      }
+   }
+
+   return LLVMBuildShuffleVector(values->builder, rgb, alpha, LLVMConstVector(swizzles, n), "");
+}
+
+
+static LLVMValueRef
+lp_build_blend_factor(struct lp_build_blend_values *values,
+                      LLVMValueRef factor1,
+                      unsigned rgb_factor,
+                      unsigned alpha_factor,
+                      unsigned alpha_swizzle,
+                      unsigned n)
+{
+   LLVMValueRef rgb_factor_;
+   LLVMValueRef alpha_factor_;
+   LLVMValueRef factor2;
+   enum lp_build_blend_swizzle rgb_swizzle;
+
+   rgb_factor_   = lp_build_blend_factor_unswizzled(values, rgb_factor,   FALSE);
+   alpha_factor_ = lp_build_blend_factor_unswizzled(values, alpha_factor, TRUE);
+
+   rgb_swizzle = lp_build_blend_factor_swizzle(rgb_factor);
+
+   factor2 = lp_build_blend_swizzle(values, rgb_factor_, alpha_factor_, rgb_swizzle, alpha_swizzle, n);
+
+   return lp_build_mul(values->builder, factor1, factor2, values->zero, values->one);
+}
+
+
+static LLVMValueRef
+lp_build_blend_func(struct lp_build_blend_values *values,
+                    unsigned func,
+                    LLVMValueRef term1, 
+                    LLVMValueRef term2)
+{
+   switch (func) {
+   case PIPE_BLEND_ADD:
+      return lp_build_add_sat(values->builder, term1, term2, values->zero, values->one);
+      break;
+   case PIPE_BLEND_SUBTRACT:
+      return lp_build_sub_sat(values->builder, term1, term2, values->zero, values->one);
+   case PIPE_BLEND_REVERSE_SUBTRACT:
+      return lp_build_sub_sat(values->builder, term2, term1, values->zero, values->one);
+   case PIPE_BLEND_MIN:
+      return lp_build_min_sat(values->builder, term1, term2, values->zero, values->one);
+   case PIPE_BLEND_MAX:
+      return lp_build_max_sat(values->builder, term1, term2, values->zero, values->one);
+   default:
+      assert(0);
+      return values->zero;
+   }
+}
+
+
+LLVMValueRef
+lp_build_blend(LLVMBuilderRef builder,
+               const struct pipe_blend_state *blend,
+               LLVMValueRef src,
+               LLVMValueRef dst,
+               LLVMValueRef const_,
+               unsigned alpha_swizzle)
+{
+   struct lp_build_blend_values values;
+   LLVMValueRef src_term;
+   LLVMValueRef dst_term;
+   LLVMTypeRef type;
+   unsigned n;
+
+   type = LLVMTypeOf(src);
+   n = LLVMGetVectorSize(type);
+
+   /*
+    * Compute constants
+    */
+   memset(&values, 0, sizeof values);
+   values.builder = builder;
+   values.undef = LLVMGetUndef(type);
+   values.zero = LLVMConstNull(type);
+   values.one = lp_build_const_aos(type, 1.0, 1.0, 1.0, 1.0, NULL);
+
+   values.src = src;
+   values.dst = dst;
+   values.const_ = const_;
+
+   /* TODO: There are still a few optimization oportunities here. For certain
+    * combinations it is possible to reorder the operations and therefor saving
+    * some instructions. */
+
+   src_term = lp_build_blend_factor(&values, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle, n);
+   dst_term = lp_build_blend_factor(&values, dst, blend->rgb_dst_factor, blend->alpha_dst_factor, alpha_swizzle, n);
+
+   if(blend->rgb_func == blend->alpha_func) {
+      return lp_build_blend_func(&values, blend->rgb_func, src_term, dst_term);
+   }
+   else {
+      /* Seperate RGB / A functions */
+
+      LLVMValueRef rgb;
+      LLVMValueRef alpha;
+
+      rgb   = lp_build_blend_func(&values, blend->rgb_func,   src_term, dst_term);
+      alpha = lp_build_blend_func(&values, blend->alpha_func, src_term, dst_term);
+
+      return lp_build_blend_swizzle(&values, rgb, alpha, LP_BUILD_BLEND_SWIZZLE_RGBA, alpha_swizzle, n);
+   }
+}

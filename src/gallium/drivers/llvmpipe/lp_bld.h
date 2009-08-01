@@ -45,6 +45,9 @@
 #include "pipe/p_format.h"
 
 
+struct pipe_blend_state;
+
+
 /**
  * Unpack a pixel into its RGBA components.
  *
@@ -126,6 +129,15 @@ lp_build_logicop(LLVMBuilderRef builder,
                  unsigned logicop_func,
                  LLVMValueRef src,
                  LLVMValueRef dst);
+
+
+LLVMValueRef
+lp_build_blend(LLVMBuilderRef builder,
+               const struct pipe_blend_state *blend,
+               LLVMValueRef src,
+               LLVMValueRef dst,
+               LLVMValueRef const_,
+               unsigned alpha_swizzle);
 
 
 #endif /* !LP_BLD_H */
