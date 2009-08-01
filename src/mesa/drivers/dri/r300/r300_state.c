@@ -2234,6 +2234,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 		_mesa_update_draw_buffer_bounds(ctx);
 
 		R300_STATECHANGE(r300, cb);
+		R300_STATECHANGE(r300, zb);
 	}
 
 	r300->radeon.NewGLState |= new_state;

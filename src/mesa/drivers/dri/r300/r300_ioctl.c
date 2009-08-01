@@ -168,18 +168,21 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 	}
 #if 1
 	if (flags & (CLEARBUFFER_DEPTH | CLEARBUFFER_STENCIL)) {
-		assert(rrbd != 0);
-		cbpitch = (rrbd->pitch / rrbd->cpp);
+		uint32_t zbpitch = (rrbd->pitch / rrbd->cpp);
 		if (rrbd->bo->flags & RADEON_BO_FLAGS_MACRO_TILE){
-			cbpitch |= R300_DEPTHMACROTILE_ENABLE;
+			zbpitch |= R300_DEPTHMACROTILE_ENABLE;
         }
 		if (rrbd->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
-            cbpitch |= R300_DEPTHMICROTILE_TILED;
+            zbpitch |= R300_DEPTHMICROTILE_TILED;
         }
 		BEGIN_BATCH_NO_AUTOSTATE(6);
 		OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 		OUT_BATCH_RELOC(0, rrbd->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-		OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, cbpitch);
+		OUT_BATCH_REGSEQ(R300_ZB_DEPTHPITCH, 1);
+		if (!r300->radeon.radeonScreen->kernel_mm)
+			OUT_BATCH(zbpitch);
+		else
+			OUT_BATCH_RELOC(zbpitch, rrbd->bo, zbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 		END_BATCH();
 	}
 #endif
