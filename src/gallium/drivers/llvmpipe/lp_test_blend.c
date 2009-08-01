@@ -369,9 +369,9 @@ test_one(const struct pipe_blend_state *blend)
 
    if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
       LLVMDumpModule(module);
-      LLVMDisposeMessage(error);
       abort();
    }
+   LLVMDisposeMessage(error);
 
    provider = LLVMCreateModuleProviderForExistingModule(module);
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
@@ -432,8 +432,11 @@ test_one(const struct pipe_blend_state *blend)
       }
    }
 
+   LLVMFreeMachineCodeForFunction(engine, func);
+
    LLVMDisposeExecutionEngine(engine);
-   //LLVMDisposeModule(module);
+   if(pass)
+      LLVMDisposePassManager(pass);
 
    return success;
 }

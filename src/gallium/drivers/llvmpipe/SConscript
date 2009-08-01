@@ -54,8 +54,8 @@ env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
 env.Prepend(LIBS = [llvmpipe] + auxiliaries)
 
 env.Program(
-    target = 'lp_bld_test',
-    source = ['lp_bld_test.c'],
+    target = 'lp_test_format',
+    source = ['lp_test_format.c'],
 )
 
 env.Program(

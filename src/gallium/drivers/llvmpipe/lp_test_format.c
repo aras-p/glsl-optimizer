@@ -88,26 +88,33 @@ struct pixel_test_case test_cases[] =
 };
 
 
+typedef void (*load_ptr_t)(const void *, float *);
+
+
 static LLVMValueRef
 add_load_rgba_test(LLVMModuleRef module,
                    enum pipe_format format)
 {
-   LLVMTypeRef args[] = {
-      LLVMPointerType(LLVMInt8Type(), 0),
-      LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0)
-   };
-   LLVMValueRef func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
-   LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   LLVMValueRef ptr = LLVMGetParam(func, 0);
-   LLVMValueRef rgba_ptr = LLVMGetParam(func, 1);
-
-   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
-   LLVMBuilderRef builder = LLVMCreateBuilder();
-   LLVMPositionBuilderAtEnd(builder, block);
-
+   LLVMTypeRef args[2];
+   LLVMValueRef func;
+   LLVMValueRef ptr;
+   LLVMValueRef rgba_ptr;
+   LLVMBasicBlockRef block;
+   LLVMBuilderRef builder;
    LLVMValueRef rgba;
-
    struct lp_build_loop_state loop;
+
+   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+
+   func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   LLVMSetFunctionCallConv(func, LLVMCCallConv);
+   ptr = LLVMGetParam(func, 0);
+   rgba_ptr = LLVMGetParam(func, 1);
+
+   block = LLVMAppendBasicBlock(func, "entry");
+   builder = LLVMCreateBuilder();
+   LLVMPositionBuilderAtEnd(builder, block);
 
    lp_build_loop_begin(builder, LLVMConstInt(LLVMInt32Type(), 1, 0), &loop);
 
@@ -123,24 +130,32 @@ add_load_rgba_test(LLVMModuleRef module,
 }
 
 
+typedef void (*store_ptr_t)(void *, const float *);
+
+
 static LLVMValueRef
 add_store_rgba_test(LLVMModuleRef module,
                     enum pipe_format format)
 {
-   LLVMTypeRef args[] = {
-      LLVMPointerType(LLVMInt8Type(), 0),
-      LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0)
-   };
-   LLVMValueRef func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
-   LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   LLVMValueRef ptr = LLVMGetParam(func, 0);
-   LLVMValueRef rgba_ptr = LLVMGetParam(func, 1);
-
-   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
-   LLVMBuilderRef builder = LLVMCreateBuilder();
-   LLVMPositionBuilderAtEnd(builder, block);
-
+   LLVMTypeRef args[2];
+   LLVMValueRef func;
+   LLVMValueRef ptr;
+   LLVMValueRef rgba_ptr;
+   LLVMBasicBlockRef block;
+   LLVMBuilderRef builder;
    LLVMValueRef rgba;
+
+   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+
+   func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   LLVMSetFunctionCallConv(func, LLVMCCallConv);
+   ptr = LLVMGetParam(func, 0);
+   rgba_ptr = LLVMGetParam(func, 1);
+
+   block = LLVMAppendBasicBlock(func, "entry");
+   builder = LLVMCreateBuilder();
+   LLVMPositionBuilderAtEnd(builder, block);
 
    rgba = LLVMBuildLoad(builder, rgba_ptr, "");
 
@@ -156,68 +171,67 @@ add_store_rgba_test(LLVMModuleRef module,
 static boolean
 test_format(const struct pixel_test_case *test)
 {
+   LLVMModuleRef module = NULL;
+   LLVMValueRef load = NULL;
+   LLVMValueRef store = NULL;
+   LLVMExecutionEngineRef engine = NULL;
+   LLVMModuleProviderRef provider = NULL;
+   LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    const struct util_format_description *desc;
-   
+   load_ptr_t load_ptr;
+   store_ptr_t store_ptr;
+   float unpacked[4];
+   unsigned packed;
+   boolean success;
+   unsigned i;
+
    desc = util_format_description(test->format);
    fprintf(stderr, "%s\n", desc->name);
 
-   LLVMModuleRef module = LLVMModuleCreateWithName("test");
+   module = LLVMModuleCreateWithName("test");
 
-   LLVMValueRef load = add_load_rgba_test(module, test->format);
-   LLVMValueRef store = add_store_rgba_test(module, test->format);
+   load = add_load_rgba_test(module, test->format);
+   store = add_store_rgba_test(module, test->format);
 
-   LLVMVerifyModule(module, LLVMAbortProcessAction, &error);
+   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
+      LLVMDumpModule(module);
+      abort();
+   }
    LLVMDisposeMessage(error);
 
-   LLVMExecutionEngineRef engine;
-   LLVMModuleProviderRef provider = LLVMCreateModuleProviderForExistingModule(module);
-   error = NULL;
-   LLVMCreateJITCompiler(&engine, provider, 1, &error);
-   if (error) {
+   provider = LLVMCreateModuleProviderForExistingModule(module);
+   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
    }
 
-   LLVMPassManagerRef pass = LLVMCreatePassManager();
 #if 0
+   pass = LLVMCreatePassManager();
    LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
    /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
     * but there are more on SVN. */
    LLVMAddConstantPropagationPass(pass);
    LLVMAddInstructionCombiningPass(pass);
    LLVMAddPromoteMemoryToRegisterPass(pass);
-   LLVMAddDemoteMemoryToRegisterPass(pass);
    LLVMAddGVNPass(pass);
    LLVMAddCFGSimplificationPass(pass);
    LLVMRunPassManager(pass, module);
-   LLVMDumpModule(module);
+#else
+   (void)pass;
 #endif
 
+   load_ptr  = (load_ptr_t) LLVMGetPointerToGlobal(engine, load);
+   store_ptr = (store_ptr_t)LLVMGetPointerToGlobal(engine, store);
 
-   float unpacked[4] = {0, 0, 0, 0};
-   unsigned packed = 0;
+   memset(unpacked, 0, sizeof unpacked);
+   packed = 0;
 
-   {
-      typedef void (*load_ptr_t)(const void *, float *);
-      load_ptr_t load_ptr = (load_ptr_t)LLVMGetPointerToGlobal(engine, load);
+   load_ptr(&test->packed, unpacked);
+   store_ptr(&packed, unpacked);
 
-      load_ptr(&test->packed, unpacked);
-
-   }
-
-
-   {
-      typedef void (*store_ptr_t)(void *, const float *);
-      store_ptr_t store_ptr = (store_ptr_t)LLVMGetPointerToGlobal(engine, store);
-
-      store_ptr(&packed, unpacked);
-
-   }
-
-   boolean success = TRUE;
-   unsigned i;
+   success = TRUE;
    if(test->packed != packed)
       success = FALSE;
    for(i = 0; i < 4; ++i)
@@ -233,9 +247,12 @@ test_format(const struct pixel_test_case *test)
       LLVMDumpModule(module);
    }
 
-   LLVMDisposePassManager(pass);
+   LLVMFreeMachineCodeForFunction(engine, store);
+   LLVMFreeMachineCodeForFunction(engine, load);
+
    LLVMDisposeExecutionEngine(engine);
-   //LLVMDisposeModule(module);
+   if(pass)
+      LLVMDisposePassManager(pass);
 
    return success;
 }
