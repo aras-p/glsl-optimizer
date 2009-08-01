@@ -33,8 +33,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef RADEON_DMA_H
 #define RADEON_DMA_H
 
+void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count);
 void radeonEmitVec8(uint32_t *out, const GLvoid * data, int stride, int count);
 void radeonEmitVec12(uint32_t *out, const GLvoid * data, int stride, int count);
+void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count);
 
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 const GLvoid * data, int size, int stride, int count);

@@ -52,7 +52,7 @@ do {						\
 } while (0)
 #endif
 
-static void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count)
+void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -110,7 +110,7 @@ void radeonEmitVec12(uint32_t *out, const GLvoid * data, int stride, int count)
 		}
 }
 
-static void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
+void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
