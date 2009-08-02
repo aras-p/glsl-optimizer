@@ -81,7 +81,7 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef res;
 
    type.value = 0;
-   type.kind = LP_TYPE_FLOAT;
+   type.floating = TRUE;
    type.sign = TRUE;
    type.norm = TRUE;
    type.width = 32;

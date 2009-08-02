@@ -53,7 +53,7 @@
 LLVMTypeRef
 lp_build_elem_type(union lp_type type)
 {
-   if (type.kind == LP_TYPE_FLOAT) {
+   if (type.floating) {
       assert(type.sign);
       switch(type.width) {
          case 32:
@@ -90,9 +90,15 @@ lp_build_vec_type(union lp_type type)
 boolean
 lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type) 
 {
-   LLVMTypeKind elem_kind = LLVMGetTypeKind(elem_type);
+   LLVMTypeKind elem_kind;
 
-   if (type.kind == LP_TYPE_FLOAT) {
+   assert(elem_type);
+   if(!elem_type)
+      return FALSE;
+
+   elem_kind = LLVMGetTypeKind(elem_type);
+
+   if (type.floating) {
       switch(type.width) {
       case 32:
          if(elem_kind != LLVMFloatTypeKind)
@@ -124,6 +130,10 @@ lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type)
 {
    LLVMTypeRef elem_type;
 
+   assert(vec_type);
+   if(!vec_type)
+      return FALSE;
+
    if(LLVMGetTypeKind(vec_type) != LLVMVectorTypeKind)
       return FALSE;
 
@@ -135,6 +145,73 @@ lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type)
    return lp_check_elem_type(type, elem_type);
 }
 
+
+boolean
+lp_check_value(union lp_type type, LLVMValueRef val) 
+{
+   LLVMTypeRef vec_type;
+
+   assert(val);
+   if(!val)
+      return FALSE;
+
+   vec_type = LLVMTypeOf(val);
+
+   return lp_check_vec_type(type, vec_type);
+}
+
+
+LLVMValueRef
+lp_build_undef(union lp_type type)
+{
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   return LLVMGetUndef(vec_type);
+}
+               
+
+LLVMValueRef
+lp_build_zero(union lp_type type)
+{
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   return LLVMConstNull(vec_type);
+}
+               
+
+LLVMValueRef
+lp_build_one(union lp_type type)
+{
+   LLVMTypeRef elem_type;
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(type.length < LP_MAX_VECTOR_LENGTH);
+
+   elem_type = lp_build_elem_type(type);
+
+   if(type.floating)
+      elems[0] = LLVMConstReal(elem_type, 1.0);
+   else if(type.fixed)
+      elems[0] = LLVMConstInt(elem_type, 1LL << (type.width/2), 0);
+   else if(!type.norm)
+      elems[0] = LLVMConstInt(elem_type, 1, 0);
+   else {
+      /* special case' -- 1.0 for normalized types is more easily attained if
+       * we start with a vector consisting of all bits set */
+      LLVMTypeRef vec_type = LLVMVectorType(elem_type, type.length);
+      LLVMValueRef vec = LLVMConstAllOnes(vec_type);
+
+      if(type.sign)
+         vec = LLVMConstLShr(vec, LLVMConstInt(LLVMInt32Type(), 1, 0));
+
+      return vec;
+   }
+
+   for(i = 1; i < type.length; ++i)
+      elems[i] = elems[0];
+
+   return LLVMConstVector(elems, type.length);
+}
+               
 
 LLVMValueRef
 lp_build_const_aos(union lp_type type, 
@@ -154,20 +231,18 @@ lp_build_const_aos(union lp_type type,
    if(swizzle == NULL)
       swizzle = default_swizzle;
 
-   if(type.kind == LP_TYPE_FLOAT) {
-      for(i = 0; i < type.length; i += 4) {
-         elems[i + swizzle[0]] = LLVMConstReal(elem_type, r);
-         elems[i + swizzle[1]] = LLVMConstReal(elem_type, g);
-         elems[i + swizzle[2]] = LLVMConstReal(elem_type, b);
-         elems[i + swizzle[3]] = LLVMConstReal(elem_type, a);
-      }
+   if(type.floating) {
+      elems[swizzle[0]] = LLVMConstReal(elem_type, r);
+      elems[swizzle[1]] = LLVMConstReal(elem_type, g);
+      elems[swizzle[2]] = LLVMConstReal(elem_type, b);
+      elems[swizzle[3]] = LLVMConstReal(elem_type, a);
    }
    else {
       unsigned shift;
       long long llscale;
       double dscale;
 
-      if(type.kind == LP_TYPE_FIXED)
+      if(type.fixed)
          shift = type.width/2;
       else if(type.norm)
          shift = type.sign ? type.width - 1 : type.width;
@@ -178,13 +253,14 @@ lp_build_const_aos(union lp_type type,
       dscale = (double)llscale;
       assert((long long)dscale == llscale);
 
-      for(i = 0; i < type.length; i += 4) {
-         elems[i + swizzle[0]] = LLVMConstInt(elem_type, r*dscale + 0.5, 0);
-         elems[i + swizzle[1]] = LLVMConstInt(elem_type, g*dscale + 0.5, 0);
-         elems[i + swizzle[2]] = LLVMConstInt(elem_type, b*dscale + 0.5, 0);
-         elems[i + swizzle[3]] = LLVMConstInt(elem_type, a*dscale + 0.5, 0);
-      }
+      elems[swizzle[0]] = LLVMConstInt(elem_type, r*dscale + 0.5, 0);
+      elems[swizzle[1]] = LLVMConstInt(elem_type, g*dscale + 0.5, 0);
+      elems[swizzle[2]] = LLVMConstInt(elem_type, b*dscale + 0.5, 0);
+      elems[swizzle[3]] = LLVMConstInt(elem_type, a*dscale + 0.5, 0);
    }
+
+   for(i = 4; i < type.length; ++i)
+      elems[i] = elems[i % 4];
 
    return LLVMConstVector(elems, type.length);
 }
@@ -219,165 +295,261 @@ lp_build_intrinsic_binary(LLVMBuilderRef builder,
 }
 
 
-LLVMValueRef
-lp_build_add(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero)
+static LLVMValueRef
+lp_build_min_simple(struct lp_build_context *bld,
+                    LLVMValueRef a,
+                    LLVMValueRef b)
 {
-   if(a == zero)
-      return b;
-   else if(b == zero)
-      return a;
-   else if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      return LLVMConstAdd(a, b);
+   const union lp_type type = bld->type;
+   const char *intrinsic = NULL;
+   LLVMValueRef cond;
+
+   /* TODO: optimize the constant case */
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(type.width * type.length == 128) {
+      if(type.floating)
+         if(type.width == 32)
+            intrinsic = "llvm.x86.sse.min.ps";
+         if(type.width == 64)
+            intrinsic = "llvm.x86.sse2.min.pd";
+      else {
+         if(type.width == 8 && !type.sign)
+            intrinsic = "llvm.x86.sse2.pminu.b";
+         if(type.width == 16 && type.sign)
+            intrinsic = "llvm.x86.sse2.pmins.w";
+      }
+   }
+#endif
+   
+   if(intrinsic)
+      return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+
+   if(type.floating)
+      cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
    else
-      return LLVMBuildAdd(builder, a, b, "");
+      cond = LLVMBuildICmp(bld->builder, type.sign ? LLVMIntSLT : LLVMIntULT, a, b, "");
+   return LLVMBuildSelect(bld->builder, cond, a, b, "");
+}
+
+
+static LLVMValueRef
+lp_build_max_simple(struct lp_build_context *bld,
+                    LLVMValueRef a,
+                    LLVMValueRef b)
+{
+   const union lp_type type = bld->type;
+   const char *intrinsic = NULL;
+   LLVMValueRef cond;
+
+   /* TODO: optimize the constant case */
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(type.width * type.length == 128) {
+      if(type.floating)
+         if(type.width == 32)
+            intrinsic = "llvm.x86.sse.max.ps";
+         if(type.width == 64)
+            intrinsic = "llvm.x86.sse2.max.pd";
+      else {
+         if(type.width == 8 && !type.sign)
+            intrinsic = "llvm.x86.sse2.pmaxu.b";
+         if(type.width == 16 && type.sign)
+            intrinsic = "llvm.x86.sse2.pmaxs.w";
+      }
+   }
+#endif
+
+   if(intrinsic)
+      return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+
+   if(type.floating)
+      cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
+   else
+      cond = LLVMBuildICmp(bld->builder, type.sign ? LLVMIntSLT : LLVMIntULT, a, b, "");
+   return LLVMBuildSelect(bld->builder, cond, b, a, "");
 }
 
 
 LLVMValueRef
-lp_build_sub(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero)
+lp_build_comp(struct lp_build_context *bld,
+              LLVMValueRef a)
 {
-   if(b == zero)
-      return a;
-   else if(a == b)
-      return zero;
-   else if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      return LLVMConstSub(a, b);
+   const union lp_type type = bld->type;
+
+   if(a == bld->one)
+      return bld->zero;
+   if(a == bld->zero)
+      return bld->one;
+
+   if(type.norm && !type.floating && !type.fixed && !type.sign) {
+      if(LLVMIsConstant(a))
+         return LLVMConstNot(a);
+      else
+         return LLVMBuildNot(bld->builder, a, "");
+   }
+
+   if(LLVMIsConstant(a))
+      return LLVMConstSub(bld->one, a);
    else
-      return LLVMBuildSub(builder, a, b, "");
+      return LLVMBuildSub(bld->builder, bld->one, a, "");
 }
 
 
 LLVMValueRef
-lp_build_mul(LLVMBuilderRef builder,
+lp_build_add(struct lp_build_context *bld,
              LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero,
-             LLVMValueRef one)
+             LLVMValueRef b)
 {
-   if(a == zero)
-      return zero;
-   else if(a == one)
+   const union lp_type type = bld->type;
+   LLVMValueRef res;
+
+   if(a == bld->zero)
       return b;
-   else if(b == zero)
-      return zero;
-   else if(b == one)
+   if(b == bld->zero)
       return a;
-   else if(LLVMIsConstant(a) && LLVMIsConstant(b))
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
+
+   if(bld->type.norm) {
+      const char *intrinsic = NULL;
+
+      if(a == bld->one || b == bld->one)
+        return bld->one;
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+      if(type.width * type.length == 128 &&
+         !type.floating && !type.fixed) {
+         if(type.width == 8)
+            intrinsic = type.sign ? "llvm.x86.sse2.adds.b" : "llvm.x86.sse2.addus.b";
+         if(type.width == 16)
+            intrinsic = type.sign ? "llvm.x86.sse2.adds.w" : "llvm.x86.sse2.addus.w";
+      }
+#endif
+   
+      if(intrinsic)
+         return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+   }
+
+   if(LLVMIsConstant(a) && LLVMIsConstant(b))
+      res = LLVMConstAdd(a, b);
+   else
+      res = LLVMBuildAdd(bld->builder, a, b, "");
+
+   if(bld->type.norm && (bld->type.floating || bld->type.fixed))
+      res = lp_build_min_simple(bld, res, bld->one);
+
+   return res;
+}
+
+
+LLVMValueRef
+lp_build_sub(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b)
+{
+   const union lp_type type = bld->type;
+   LLVMValueRef res;
+
+   if(b == bld->zero)
+      return a;
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
+   if(a == b)
+      return bld->zero;
+
+   if(bld->type.norm) {
+      const char *intrinsic = NULL;
+
+      if(b == bld->one)
+        return bld->zero;
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+      if(type.width * type.length == 128 &&
+         !type.floating && !type.fixed) {
+         if(type.width == 8)
+            intrinsic = type.sign ? "llvm.x86.sse2.subs.b" : "llvm.x86.sse2.subus.b";
+         if(type.width == 16)
+            intrinsic = type.sign ? "llvm.x86.sse2.subs.w" : "llvm.x86.sse2.subus.w";
+      }
+#endif
+   
+      if(intrinsic)
+         return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+   }
+
+   if(LLVMIsConstant(a) && LLVMIsConstant(b))
+      res = LLVMConstSub(a, b);
+   else
+      res = LLVMBuildSub(bld->builder, a, b, "");
+
+   if(bld->type.norm && (bld->type.floating || bld->type.fixed))
+      res = lp_build_max_simple(bld, res, bld->zero);
+
+   return res;
+}
+
+
+LLVMValueRef
+lp_build_mul(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b)
+{
+   if(a == bld->zero)
+      return bld->zero;
+   if(a == bld->one)
+      return b;
+   if(b == bld->zero)
+      return bld->zero;
+   if(b == bld->one)
+      return a;
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
+
+   if(LLVMIsConstant(a) && LLVMIsConstant(b))
       return LLVMConstMul(a, b);
-   else
-      return LLVMBuildMul(builder, a, b, "");
+
+   return LLVMBuildMul(bld->builder, a, b, "");
 }
 
 
 LLVMValueRef
-lp_build_min(LLVMBuilderRef builder,
+lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   /* TODO: optimize the constant case */
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(bld->type.norm) {
+      if(a == bld->zero || b == bld->zero)
+         return bld->zero;
+      if(a == bld->one)
+         return b;
+      if(b == bld->one)
+         return a;
+   }
 
-   return lp_build_intrinsic_binary(builder, "llvm.x86.sse.min.ps", a, b);
-
-#else
-
-   LLVMValueRef cond = LLVMBuildFCmp(values->builder, LLVMRealULT, a, b, "");
-   return LLVMBuildSelect(values->builder, cond, a, b, "");
-
-#endif
+   return lp_build_min_simple(bld, a, b);
 }
 
 
 LLVMValueRef
-lp_build_max(LLVMBuilderRef builder,
+lp_build_max(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   /* TODO: optimize the constant case */
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(bld->type.norm) {
+      if(a == bld->one || b == bld->one)
+         return bld->one;
+      if(a == bld->zero)
+         return b;
+      if(b == bld->zero)
+         return a;
+   }
 
-   return lp_build_intrinsic_binary(builder, "llvm.x86.sse.max.ps", a, b);
-
-#else
-
-   LLVMValueRef cond = LLVMBuildFCmp(values->builder, LLVMRealULT, a, b, "");
-   return LLVMBuildSelect(values->builder, cond, b, a, "");
-
-#endif
-}
-
-
-LLVMValueRef
-lp_build_add_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one)
-{
-   if(a == zero)
-      return b;
-   else if(b == zero)
-      return a;
-   else if(a == one || b == one)
-      return one;
-   else
-      return lp_build_min(builder, lp_build_add(builder, a, b, zero), one);
-}
-
-LLVMValueRef
-lp_build_sub_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one)
-{
-   if(b == zero)
-      return a;
-   else if(b == one)
-      return zero;
-   else
-      return lp_build_max(builder, lp_build_sub(builder, a, b, zero), zero);
-}
-
-LLVMValueRef
-lp_build_min_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one)
-{
-   if(a == zero || b == zero)
-      return zero;
-   else if(a == one)
-      return b;
-   else if(b == one)
-      return a;
-   else
-      return lp_build_min(builder, a, b);
-}
-
-
-LLVMValueRef
-lp_build_max_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one)
-{
-   if(a == zero)
-      return b;
-   else if(b == zero)
-      return a;
-   else if(a == one || b == one)
-      return one;
-   else
-      return lp_build_max(builder, a, b);
+   return lp_build_max_simple(bld, a, b);
 }

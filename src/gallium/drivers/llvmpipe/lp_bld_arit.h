@@ -66,7 +66,13 @@ union lp_type {
        * Integer. floating-point, or fixed point as established by the
        * lp_build_type_kind enum above.
        */
-      unsigned kind:2;
+      unsigned floating:1;
+
+      /** 
+       * Integer. floating-point, or fixed point as established by the
+       * lp_build_type_kind enum above.
+       */
+      unsigned fixed:1;
       
       /** 
        * Whether it can represent negative values or not.
@@ -79,9 +85,11 @@ union lp_type {
        * Whether values are normalized to fit [0, 1] interval, or [-1, 1] interval for
        * signed types.
        *
-       * For integer types
+       * For integer types it means the representable integer range should be
+       * interpreted as the interval above.
        *
-       * It makes no sense to use this with fixed point values.
+       * For floating and fixed point formats it means the values should be
+       * clamped to the interval above.
        */
       unsigned norm:1;
 
@@ -123,9 +131,26 @@ boolean
 lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type);
 
 
+boolean
+lp_check_value(union lp_type type, LLVMValueRef val);
+
+
 /*
  * Constants
  */
+
+
+LLVMValueRef
+lp_build_undef(union lp_type type);
+
+
+LLVMValueRef
+lp_build_zero(union lp_type type);
+
+
+LLVMValueRef
+lp_build_one(union lp_type type);
+
 
 LLVMValueRef
 lp_build_const_aos(union lp_type type, 
@@ -136,66 +161,52 @@ lp_build_const_aos(union lp_type type,
  * Basic arithmetic
  */
 
-LLVMValueRef
-lp_build_add(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero);
 
-LLVMValueRef
-lp_build_sub(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero);
-
-LLVMValueRef
-lp_build_mul(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b,
-             LLVMValueRef zero,
-             LLVMValueRef one);
-
-LLVMValueRef
-lp_build_min(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b);
-
-LLVMValueRef
-lp_build_max(LLVMBuilderRef builder,
-             LLVMValueRef a,
-             LLVMValueRef b);
-
-/*
- * Satured arithmetic
+/**
  */
+struct lp_build_context
+{
+   LLVMBuilderRef builder;
+   
+   union lp_type type;
+
+   LLVMValueRef undef;
+   LLVMValueRef zero;
+   LLVMValueRef one;
+};
+
+
+/**
+ * Complement, i.e., 1 - a.
+ */
+LLVMValueRef
+lp_build_comp(struct lp_build_context *bld,
+              LLVMValueRef a);
 
 LLVMValueRef
-lp_build_add_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one);
+lp_build_add(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
 
 LLVMValueRef
-lp_build_sub_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one);
+lp_build_sub(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
 
 LLVMValueRef
-lp_build_min_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one);
+lp_build_mul(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
 
 LLVMValueRef
-lp_build_max_sat(LLVMBuilderRef builder,
-                 LLVMValueRef a,
-                 LLVMValueRef b,
-                 LLVMValueRef zero,
-                 LLVMValueRef one);
+lp_build_min(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
+
+LLVMValueRef
+lp_build_max(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
 
 
 #endif /* !LP_BLD_ARIT_H */
