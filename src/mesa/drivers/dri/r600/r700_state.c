@@ -600,14 +600,46 @@ static void r700BlendFuncSeparate(GLcontext * ctx,
 
 /**
  * Translate LogicOp enums into hardware representation.
- * Both use a very logical bit-wise layout, but unfortunately the order
- * of bits is reversed.
  */
 static GLuint translate_logicop(GLenum logicop)
 {
-	GLuint bits = logicop - GL_CLEAR;
-	bits = ((bits & 1) << 3) | ((bits & 2) << 1) | ((bits & 4) >> 1) | ((bits & 8) >> 3);
-	return bits;
+	switch (logicop) {
+	case GL_CLEAR:
+		return 0x00;
+	case GL_SET:
+		return 0xff;
+	case GL_COPY:
+		return 0xcc;
+	case GL_COPY_INVERTED:
+		return 0x33;
+	case GL_NOOP:
+		return 0xaa;
+	case GL_INVERT:
+		return 0x55;
+	case GL_AND:
+		return 0x88;
+	case GL_NAND:
+		return 0x77;
+	case GL_OR:
+		return 0xee;
+	case GL_NOR:
+		return 0x11;
+	case GL_XOR:
+		return 0x66;
+	case GL_EQUIV:
+		return 0xaa;
+	case GL_AND_REVERSE:
+		return 0x44;
+	case GL_AND_INVERTED:
+		return 0x22;
+	case GL_OR_REVERSE:
+		return 0xdd;
+	case GL_OR_INVERTED:
+		return 0xbb;
+	default:
+		fprintf(stderr, "unknown blend logic operation %x\n", logicop);
+		return 0xcc;
+	}
 }
 
 /**
