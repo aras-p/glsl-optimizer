@@ -177,14 +177,17 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		} else if (!t) {
 			/* Texture unit hasn't a texture bound.
 			 * We assign the current color buffer as a fakery to make
-			 * KIL work. */
-			struct radeon_renderbuffer *rrb = radeon_get_colorbuffer(&r300->radeon);
-			if (rrb && rrb->bo) {
-				BEGIN_BATCH_NO_AUTOSTATE(4);
-				OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-				OUT_BATCH_RELOC(0, rrb->bo, 0,
-						RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				END_BATCH();
+			 * KIL work on KMS (without it, the CS checker will complain).
+			 */
+			if (r300->radeon.radeonScreen->kernel_mm) {
+				struct radeon_renderbuffer *rrb = radeon_get_colorbuffer(&r300->radeon);
+				if (rrb && rrb->bo) {
+					BEGIN_BATCH_NO_AUTOSTATE(4);
+					OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+					OUT_BATCH_RELOC(0, rrb->bo, 0,
+							RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					END_BATCH();
+				}
 			}
 		} else { /* override cases */
 			if (t->bo) {
