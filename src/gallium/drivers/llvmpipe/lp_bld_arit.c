@@ -184,7 +184,7 @@ lp_build_one(union lp_type type)
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
-   assert(type.length < LP_MAX_VECTOR_LENGTH);
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
    elem_type = lp_build_elem_type(type);
 
@@ -224,7 +224,7 @@ lp_build_const_aos(union lp_type type,
    unsigned i;
 
    assert(type.length % 4 == 0);
-   assert(type.length < LP_MAX_VECTOR_LENGTH);
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
    elem_type = lp_build_elem_type(type);
 
@@ -421,9 +421,9 @@ lp_build_add(struct lp_build_context *bld,
       if(type.width * type.length == 128 &&
          !type.floating && !type.fixed) {
          if(type.width == 8)
-            intrinsic = type.sign ? "llvm.x86.sse2.adds.b" : "llvm.x86.sse2.addus.b";
+            intrinsic = type.sign ? "llvm.x86.sse2.padds.b" : "llvm.x86.sse2.paddus.b";
          if(type.width == 16)
-            intrinsic = type.sign ? "llvm.x86.sse2.adds.w" : "llvm.x86.sse2.addus.w";
+            intrinsic = type.sign ? "llvm.x86.sse2.padds.w" : "llvm.x86.sse2.paddus.w";
       }
 #endif
    
@@ -468,9 +468,9 @@ lp_build_sub(struct lp_build_context *bld,
       if(type.width * type.length == 128 &&
          !type.floating && !type.fixed) {
          if(type.width == 8)
-            intrinsic = type.sign ? "llvm.x86.sse2.subs.b" : "llvm.x86.sse2.subus.b";
+            intrinsic = type.sign ? "llvm.x86.sse2.psubs.b" : "llvm.x86.sse2.psubus.b";
          if(type.width == 16)
-            intrinsic = type.sign ? "llvm.x86.sse2.subs.w" : "llvm.x86.sse2.subus.w";
+            intrinsic = type.sign ? "llvm.x86.sse2.psubs.w" : "llvm.x86.sse2.psubus.w";
       }
 #endif
    
@@ -490,11 +490,124 @@ lp_build_sub(struct lp_build_context *bld,
 }
 
 
+/**
+ * Build shuffle vectors that match PUNPCKLxx and PUNPCKHxx instructions.
+ */
+static LLVMValueRef 
+lp_build_unpack_shuffle(unsigned n, unsigned lo_hi)
+{
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i, j;
+
+   assert(n <= LP_MAX_VECTOR_LENGTH);
+   assert(lo_hi < 2);
+
+   for(i = 0, j = lo_hi*n/2; i < n; i += 2, ++j) {
+      elems[i + 0] = LLVMConstInt(LLVMInt32Type(), 0 + j, 0);
+      elems[i + 1] = LLVMConstInt(LLVMInt32Type(), n + j, 0);
+   }
+
+   return LLVMConstVector(elems, n);
+}
+
+
+static LLVMValueRef 
+lp_build_const_vec(LLVMTypeRef type, unsigned n, long long c)
+{
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(n <= LP_MAX_VECTOR_LENGTH);
+
+   for(i = 0; i < n; ++i)
+      elems[i] = LLVMConstInt(type, c, 0);
+
+   return LLVMConstVector(elems, n);
+}
+
+
+/**
+ * Normalized 8bit multiplication.
+ *
+ * - alpha plus one
+ *
+ *     makes the following approximation to the division (Sree)
+ *    
+ *       a*b/255 ~= (a*(b + 1)) >> 256
+ *    
+ *     which is the fastest method that satisfies the following OpenGL criteria
+ *    
+ *       0*0 = 0 and 255*255 = 255
+ *
+ * - geometric series
+ *
+ *     takes the geometric series approximation to the division
+ *
+ *       t/255 = (t >> 8) + (t >> 16) + (t >> 24) ..
+ *
+ *     in this case just the first two terms to fit in 16bit arithmetic
+ *
+ *       t/255 ~= (t + (t >> 8)) >> 8
+ *
+ *     note that just by itself it doesn't satisfies the OpenGL criteria, as
+ *     255*255 = 254, so the special case b = 255 must be accounted or roundoff
+ *     must be used
+ *
+ * - geometric series plus rounding
+ *
+ *     when using a geometric series division instead of truncating the result
+ *     use roundoff in the approximation (Jim Blinn)
+ *
+ *       t/255 ~= (t + (t >> 8) + 0x80) >> 8
+ *
+ *     achieving the exact results
+ *
+ * @sa Alvy Ray Smith, Image Compositing Fundamentals, Tech Memo 4, Aug 15, 1995, 
+ *     ftp://ftp.alvyray.com/Acrobat/4_Comp.pdf
+ * @sa Michael Herf, The "double blend trick", May 2000, 
+ *     http://www.stereopsis.com/doubleblend.html
+ */
+static LLVMValueRef
+lp_build_mul_u8n(LLVMBuilderRef builder,
+                 LLVMValueRef a, LLVMValueRef b)
+{
+   static LLVMValueRef c01 = NULL;
+   static LLVMValueRef c08 = NULL;
+   static LLVMValueRef c80 = NULL;
+   LLVMValueRef ab;
+
+   if(!c01) c01 = lp_build_const_vec(LLVMInt16Type(), 8, 0x01);
+   if(!c08) c08 = lp_build_const_vec(LLVMInt16Type(), 8, 0x08);
+   if(!c80) c80 = lp_build_const_vec(LLVMInt16Type(), 8, 0x80);
+   
+#if 0
+   
+   /* a*b/255 ~= (a*(b + 1)) >> 256 */
+   b = LLVMBuildAdd(builder, b, c01, "");
+   ab = LLVMBuildMul(builder, a, b, "");
+
+#else
+   
+   /* t/255 ~= (t + (t >> 8) + 0x80) >> 8 */
+   ab = LLVMBuildMul(builder, a, b, "");
+   ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, c08, ""), "");
+   ab = LLVMBuildAdd(builder, ab, c80, "");
+
+#endif
+   
+   ab = LLVMBuildLShr(builder, ab, c08, "");
+
+   return ab;
+}
+
+
 LLVMValueRef
 lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
+   const union lp_type type = bld->type;
+
    if(a == bld->zero)
       return bld->zero;
    if(a == bld->one)
@@ -505,6 +618,50 @@ lp_build_mul(struct lp_build_context *bld,
       return a;
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
+
+   if(!type.floating && !type.fixed && type.norm) {
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+      if(type.width == 8 && type.length == 16) {
+         LLVMTypeRef i16x8 = LLVMVectorType(LLVMInt16Type(), 8);
+         LLVMTypeRef i8x16 = LLVMVectorType(LLVMInt8Type(), 16);
+         static LLVMValueRef ml = NULL;
+         static LLVMValueRef mh = NULL;
+         LLVMValueRef al, ah, bl, bh;
+         LLVMValueRef abl, abh;
+         LLVMValueRef ab;
+         
+         if(!ml) ml = lp_build_unpack_shuffle(16, 0);
+         if(!mh) mh = lp_build_unpack_shuffle(16, 1);
+
+         /*  PUNPCKLBW, PUNPCKHBW */
+         al = LLVMBuildShuffleVector(bld->builder, a, bld->zero, ml, "");
+         bl = LLVMBuildShuffleVector(bld->builder, b, bld->zero, ml, "");
+         ah = LLVMBuildShuffleVector(bld->builder, a, bld->zero, mh, "");
+         bh = LLVMBuildShuffleVector(bld->builder, b, bld->zero, mh, "");
+
+         /* NOP */
+         al = LLVMBuildBitCast(bld->builder, al, i16x8, "");
+         bl = LLVMBuildBitCast(bld->builder, bl, i16x8, "");
+         ah = LLVMBuildBitCast(bld->builder, ah, i16x8, "");
+         bh = LLVMBuildBitCast(bld->builder, bh, i16x8, "");
+
+         /* PMULLW, PSRLW, PADDW */
+         abl = lp_build_mul_u8n(bld->builder, al, bl);
+         abh = lp_build_mul_u8n(bld->builder, ah, bh);
+
+         /* PACKUSWB */
+         ab = lp_build_intrinsic_binary(bld->builder, "llvm.x86.sse2.packuswb.128" , abl, abh);
+
+         /* NOP */
+         ab = LLVMBuildBitCast(bld->builder, ab, i8x16, "");
+         
+         return ab;
+      }
+#endif
+
+      /* FIXME */
+      assert(0);
+   }
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       return LLVMConstMul(a, b);
