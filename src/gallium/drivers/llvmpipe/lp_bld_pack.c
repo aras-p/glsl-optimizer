@@ -39,7 +39,12 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
    const struct util_format_description *desc;
    LLVMTypeRef type;
    LLVMValueRef packed = NULL;
-   unsigned shift = 0;
+   LLVMValueRef swizzles[4];
+   LLVMValueRef shifted, casted, scaled, unswizzled;
+   LLVMValueRef shifts[4];
+   LLVMValueRef scales[4];
+   bool normalized;
+   unsigned shift;
    unsigned i, j;
 
    desc = util_format_description(format);
@@ -49,10 +54,6 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
    assert(desc->block.height == 1);
 
    type = LLVMIntType(desc->block.bits);
-
-   LLVMValueRef swizzles[4];
-   LLVMValueRef shifted, casted, scaled, unswizzled;
-
 
    /* Unswizzle the color components into the source vector. */
    for (i = 0; i < 4; ++i) {
@@ -70,10 +71,8 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
                                        LLVMGetUndef(LLVMVectorType(LLVMFloatType(), 4)),
                                        LLVMConstVector(swizzles, 4), "");
 
-   LLVMValueRef shifts[4];
-   LLVMValueRef scales[4];
-   bool normalized = FALSE;
-
+   normalized = FALSE;
+   shift = 0;
    for (i = 0; i < 4; ++i) {
       unsigned bits = desc->channel[i].size;
 

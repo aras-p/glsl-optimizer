@@ -38,7 +38,15 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
-   unsigned shift = 0;
+   LLVMValueRef shifted, casted, scaled, masked;
+   LLVMValueRef shifts[4];
+   LLVMValueRef masks[4];
+   LLVMValueRef scales[4];
+   LLVMValueRef swizzles[4];
+   LLVMValueRef aux[4];
+   bool normalized;
+   int empty_channel;
+   unsigned shift;
    unsigned i;
 
    desc = util_format_description(format);
@@ -68,14 +76,10 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
                                    LLVMConstNull(LLVMVectorType(LLVMInt32Type(), 4)),
                                    "");
 
-   LLVMValueRef shifted, casted, scaled, masked, swizzled;
-   LLVMValueRef shifts[4];
-   LLVMValueRef masks[4];
-   LLVMValueRef scales[4];
-   bool normalized = FALSE;
-   int empty_channel = -1;
-
    /* Initialize vector constants */
+   normalized = FALSE;
+   empty_channel = -1;
+   shift = 0;
    for (i = 0; i < 4; ++i) {
       unsigned bits = desc->channel[i].size;
 
@@ -115,9 +119,6 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
    else
       scaled = casted;
 
-   LLVMValueRef swizzles[4];
-   LLVMValueRef aux[4];
-
    for (i = 0; i < 4; ++i)
       aux[i] = LLVMGetUndef(LLVMFloatType());
 
@@ -146,8 +147,6 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
       }
    }
 
-   swizzled = LLVMBuildShuffleVector(builder, scaled, LLVMConstVector(aux, 4), LLVMConstVector(swizzles, 4), "");
-
-   return swizzled;
+   return LLVMBuildShuffleVector(builder, scaled, LLVMConstVector(aux, 4), LLVMConstVector(swizzles, 4), "");
 }
 
