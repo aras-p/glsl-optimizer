@@ -103,6 +103,35 @@ lp_build_const_aos(LLVMTypeRef type,
 }
                
 
+static LLVMValueRef
+lp_build_intrinsic_binary(LLVMBuilderRef builder,
+                          const char *name,
+                          LLVMValueRef a,
+                          LLVMValueRef b)
+{
+   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+   LLVMValueRef function;
+   LLVMValueRef args[2];
+
+   function = LLVMGetNamedFunction(module, name);
+   if(!function) {
+      LLVMTypeRef type = LLVMTypeOf(a);
+      LLVMTypeRef arg_types[2];
+      arg_types[0] = type;
+      arg_types[1] = type;
+      function = LLVMAddFunction(module, name, LLVMFunctionType(type, arg_types, 2, 0));
+      LLVMSetFunctionCallConv(function, LLVMCCallConv);
+      LLVMSetLinkage(function, LLVMExternalLinkage);
+   }
+   assert(LLVMIsDeclaration(function));
+
+   args[0] = a;
+   args[1] = b;
+
+   return LLVMBuildCall(builder, function, args, 2, "");
+}
+
+
 LLVMValueRef
 lp_build_add(LLVMBuilderRef builder,
              LLVMValueRef a,
@@ -168,26 +197,7 @@ lp_build_min(LLVMBuilderRef builder,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 
-   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
-   LLVMValueRef args[2];
-
-   function = LLVMGetNamedFunction(module, "llvm.x86.sse.min.ps");
-   if(!function) {
-      LLVMTypeRef type = LLVMVectorType(LLVMFloatType(), 4);
-      LLVMTypeRef arg_types[2];
-      arg_types[0] = type;
-      arg_types[1] = type;
-      function = LLVMAddFunction(module, "llvm.x86.sse.min.ps", LLVMFunctionType(type, arg_types, 2, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
-
-   args[0] = a;
-   args[1] = b;
-
-   return LLVMBuildCall(builder, function, args, 2, "");
+   return lp_build_intrinsic_binary(builder, "llvm.x86.sse.min.ps", a, b);
 
 #else
 
@@ -207,26 +217,7 @@ lp_build_max(LLVMBuilderRef builder,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 
-   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
-   LLVMValueRef args[2];
-
-   function = LLVMGetNamedFunction(module, "llvm.x86.sse.max.ps");
-   if(!function) {
-      LLVMTypeRef type = LLVMVectorType(LLVMFloatType(), 4);
-      LLVMTypeRef arg_types[2];
-      arg_types[0] = type;
-      arg_types[1] = type;
-      function = LLVMAddFunction(module, "llvm.x86.sse.max.ps", LLVMFunctionType(type, arg_types, 2, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
-
-   args[0] = a;
-   args[1] = b;
-
-   return LLVMBuildCall(builder, function, args, 2, "");
+   return lp_build_intrinsic_binary(builder, "llvm.x86.sse.max.ps", a, b);
 
 #else
 
