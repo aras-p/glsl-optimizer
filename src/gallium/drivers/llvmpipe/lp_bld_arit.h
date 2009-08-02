@@ -25,6 +25,14 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * Helper arithmetic functions.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
+
 #ifndef LP_BLD_ARIT_H
 #define LP_BLD_ARIT_H
 
@@ -32,7 +40,87 @@
 #include <llvm-c/Core.h>  
 
  
-#define LP_MAX_VECTOR_SIZE 16
+#define LP_MAX_VECTOR_LENGTH 16
+
+
+/*
+ * Types
+ */
+
+
+enum lp_type_kind {
+   LP_TYPE_INTEGER = 0,
+   LP_TYPE_FLOAT = 1,
+   LP_TYPE_FIXED = 2
+};
+
+
+/**
+ * The LLVM type system can't conveniently express all the things we care about
+ * on the types used for intermediate computations, such as signed vs unsigned,
+ * normalized values, or fixed point.
+ */
+union lp_type {
+   struct {
+      /** 
+       * Integer. floating-point, or fixed point as established by the
+       * lp_build_type_kind enum above.
+       */
+      unsigned kind:2;
+      
+      /** 
+       * Whether it can represent negative values or not.
+       *
+       * Floating point values 
+       */
+      unsigned sign:1;
+
+      /**
+       * Whether values are normalized to fit [0, 1] interval, or [-1, 1] interval for
+       * signed types.
+       *
+       * For integer types
+       *
+       * It makes no sense to use this with fixed point values.
+       */
+      unsigned norm:1;
+
+      /**
+       * Element width.
+       *
+       * For fixed point values, the fixed point is assumed to be at half the width.
+       */
+      unsigned width:14;
+
+      /** 
+       * Vector length.
+       *
+       * width*length should be a power of two greater or equal to height.
+       *
+       * Several functions can only cope with vectors of length up to
+       * LP_MAX_VECTOR_LENGTH, so you may need to increase that value if you
+       * want to represent bigger vectors.
+       */
+      unsigned length:14;
+   };
+   uint32_t value;
+};
+
+
+LLVMTypeRef
+lp_build_elem_type(union lp_type type);
+
+
+LLVMTypeRef
+lp_build_vec_type(union lp_type type);
+
+
+boolean
+lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type);
+
+
+boolean
+lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type);
 
 
 /*
@@ -40,7 +128,7 @@
  */
 
 LLVMValueRef
-lp_build_const_aos(LLVMTypeRef type, 
+lp_build_const_aos(union lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle);
 

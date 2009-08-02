@@ -50,56 +50,143 @@
 #include "lp_bld_arit.h"
 
 
+LLVMTypeRef
+lp_build_elem_type(union lp_type type)
+{
+   if (type.kind == LP_TYPE_FLOAT) {
+      assert(type.sign);
+      switch(type.width) {
+         case 32:
+         return LLVMFloatType();
+         break;
+      case 64:
+         return LLVMDoubleType();
+         break;
+      default:
+         assert(0);
+         return LLVMFloatType();
+      }
+   }
+   else {
+      return LLVMIntType(type.width);
+   }
+}
+
+
+LLVMTypeRef
+lp_build_vec_type(union lp_type type)
+{
+   LLVMTypeRef elem_type = lp_build_elem_type(type);
+   return LLVMVectorType(elem_type, type.length);
+}
+
+
+/**
+ * This function is a mirrot of lp_build_elem_type() above.
+ *
+ * XXX: I'm not sure if it wouldn't be easier/efficient to just recreate the
+ * type and check for identity.
+ */
+boolean
+lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type) 
+{
+   LLVMTypeKind elem_kind = LLVMGetTypeKind(elem_type);
+
+   if (type.kind == LP_TYPE_FLOAT) {
+      switch(type.width) {
+      case 32:
+         if(elem_kind != LLVMFloatTypeKind)
+            return FALSE;
+         break;
+      case 64:
+         if(elem_kind != LLVMDoubleTypeKind)
+            return FALSE;
+         break;
+      default:
+         assert(0);
+         return FALSE;
+      }
+   }
+   else {
+      if(elem_kind != LLVMIntegerTypeKind)
+         return FALSE;
+
+      if(LLVMGetIntTypeWidth(elem_type) != type.width)
+         return FALSE;
+   }
+
+   return TRUE; 
+}
+
+
+boolean
+lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type) 
+{
+   LLVMTypeRef elem_type;
+
+   if(LLVMGetTypeKind(vec_type) != LLVMVectorTypeKind)
+      return FALSE;
+
+   if(LLVMGetVectorSize(vec_type) != type.length)
+      return FALSE;
+
+   elem_type = LLVMGetElementType(vec_type);
+
+   return lp_check_elem_type(type, elem_type);
+}
+
+
 LLVMValueRef
-lp_build_const_aos(LLVMTypeRef type, 
+lp_build_const_aos(union lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle)
 {
    const unsigned char default_swizzle[4] = {0, 1, 2, 3};
    LLVMTypeRef elem_type;
-   unsigned num_elems;
-   unsigned elem_width;
-   LLVMValueRef elems[LP_MAX_VECTOR_SIZE];
-   double scale;
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
-   num_elems = LLVMGetVectorSize(type);
-   assert(num_elems % 4 == 0);
-   assert(num_elems < LP_MAX_VECTOR_SIZE);
+   assert(type.length % 4 == 0);
+   assert(type.length < LP_MAX_VECTOR_LENGTH);
 
-   elem_type = LLVMGetElementType(type);
+   elem_type = lp_build_elem_type(type);
 
    if(swizzle == NULL)
       swizzle = default_swizzle;
 
-   switch(LLVMGetTypeKind(elem_type)) {
-   case LLVMFloatTypeKind:
-      for(i = 0; i < num_elems; i += 4) {
+   if(type.kind == LP_TYPE_FLOAT) {
+      for(i = 0; i < type.length; i += 4) {
          elems[i + swizzle[0]] = LLVMConstReal(elem_type, r);
          elems[i + swizzle[1]] = LLVMConstReal(elem_type, g);
          elems[i + swizzle[2]] = LLVMConstReal(elem_type, b);
          elems[i + swizzle[3]] = LLVMConstReal(elem_type, a);
       }
-      break;
+   }
+   else {
+      unsigned shift;
+      long long llscale;
+      double dscale;
 
-   case LLVMIntegerTypeKind:
-      elem_width = LLVMGetIntTypeWidth(elem_type);
-      assert(elem_width <= 32);
-      scale = (double)((1 << elem_width) - 1);
-      for(i = 0; i < num_elems; i += 4) {
-         elems[i + swizzle[0]] = LLVMConstInt(elem_type, r*scale + 0.5, 0);
-         elems[i + swizzle[1]] = LLVMConstInt(elem_type, g*scale + 0.5, 0);
-         elems[i + swizzle[2]] = LLVMConstInt(elem_type, b*scale + 0.5, 0);
-         elems[i + swizzle[3]] = LLVMConstInt(elem_type, a*scale + 0.5, 0);
+      if(type.kind == LP_TYPE_FIXED)
+         shift = type.width/2;
+      else if(type.norm)
+         shift = type.sign ? type.width - 1 : type.width;
+      else
+         shift = 0;
+
+      llscale = (long long)1 << shift;
+      dscale = (double)llscale;
+      assert((long long)dscale == llscale);
+
+      for(i = 0; i < type.length; i += 4) {
+         elems[i + swizzle[0]] = LLVMConstInt(elem_type, r*dscale + 0.5, 0);
+         elems[i + swizzle[1]] = LLVMConstInt(elem_type, g*dscale + 0.5, 0);
+         elems[i + swizzle[2]] = LLVMConstInt(elem_type, b*dscale + 0.5, 0);
+         elems[i + swizzle[3]] = LLVMConstInt(elem_type, a*dscale + 0.5, 0);
       }
-      break;
-
-   default:
-      assert(0);
-      return LLVMGetUndef(type);
    }
 
-   return LLVMConstVector(elems, num_elems);
+   return LLVMConstVector(elems, type.length);
 }
                
 

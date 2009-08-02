@@ -182,7 +182,7 @@ lp_build_blend_swizzle(struct lp_build_blend_values *values,
                        unsigned alpha_swizzle,
                        unsigned n)
 {
-   LLVMValueRef swizzles[LP_MAX_VECTOR_SIZE];
+   LLVMValueRef swizzles[LP_MAX_VECTOR_LENGTH];
    unsigned i, j;
 
    if(rgb == alpha) {
@@ -268,6 +268,7 @@ lp_build_blend_func(struct lp_build_blend_values *values,
 LLVMValueRef
 lp_build_blend(LLVMBuilderRef builder,
                const struct pipe_blend_state *blend,
+               union lp_type type,
                LLVMValueRef src,
                LLVMValueRef dst,
                LLVMValueRef const_,
@@ -276,19 +277,17 @@ lp_build_blend(LLVMBuilderRef builder,
    struct lp_build_blend_values values;
    LLVMValueRef src_term;
    LLVMValueRef dst_term;
-   LLVMTypeRef type;
-   unsigned n;
+   LLVMTypeRef vec_type;
 
-   type = LLVMTypeOf(src);
-   n = LLVMGetVectorSize(type);
+   vec_type = lp_build_vec_type(type);
 
    /*
     * Compute constants
     */
    memset(&values, 0, sizeof values);
    values.builder = builder;
-   values.undef = LLVMGetUndef(type);
-   values.zero = LLVMConstNull(type);
+   values.undef = LLVMGetUndef(vec_type);
+   values.zero = LLVMConstNull(vec_type);
    values.one = lp_build_const_aos(type, 1.0, 1.0, 1.0, 1.0, NULL);
 
    values.src = src;
@@ -299,8 +298,8 @@ lp_build_blend(LLVMBuilderRef builder,
     * combinations it is possible to reorder the operations and therefor saving
     * some instructions. */
 
-   src_term = lp_build_blend_factor(&values, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle, n);
-   dst_term = lp_build_blend_factor(&values, dst, blend->rgb_dst_factor, blend->alpha_dst_factor, alpha_swizzle, n);
+   src_term = lp_build_blend_factor(&values, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle, type.length);
+   dst_term = lp_build_blend_factor(&values, dst, blend->rgb_dst_factor, blend->alpha_dst_factor, alpha_swizzle, type.length);
 
    if(blend->rgb_func == blend->alpha_func) {
       return lp_build_blend_func(&values, blend->rgb_func, src_term, dst_term);
@@ -314,6 +313,6 @@ lp_build_blend(LLVMBuilderRef builder,
       rgb   = lp_build_blend_func(&values, blend->rgb_func,   src_term, dst_term);
       alpha = lp_build_blend_func(&values, blend->alpha_func, src_term, dst_term);
 
-      return lp_build_blend_swizzle(&values, rgb, alpha, LP_BUILD_BLEND_SWIZZLE_RGBA, alpha_swizzle, n);
+      return lp_build_blend_swizzle(&values, rgb, alpha, LP_BUILD_BLEND_SWIZZLE_RGBA, alpha_swizzle, type.length);
    }
 }

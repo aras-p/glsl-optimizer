@@ -46,6 +46,7 @@
 
 
 struct pipe_blend_state;
+union lp_type;
 
 
 /**
@@ -134,6 +135,7 @@ lp_build_logicop(LLVMBuilderRef builder,
 LLVMValueRef
 lp_build_blend(LLVMBuilderRef builder,
                const struct pipe_blend_state *blend,
+               union lp_type type,
                LLVMValueRef src,
                LLVMValueRef dst,
                LLVMValueRef const_,

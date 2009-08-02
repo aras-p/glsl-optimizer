@@ -52,6 +52,7 @@
 #include "util/u_math.h"
 
 #include "lp_bld.h"
+#include "lp_bld_arit.h"
 
 
 unsigned verbose = 0;
@@ -64,6 +65,8 @@ static LLVMValueRef
 add_blend_test(LLVMModuleRef module,
                const struct pipe_blend_state *blend)
 {
+   union lp_type type;
+
    LLVMTypeRef args[4];
    LLVMValueRef func;
    LLVMValueRef src_ptr;
@@ -76,6 +79,13 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef dst;
    LLVMValueRef const_;
    LLVMValueRef res;
+
+   type.value = 0;
+   type.kind = LP_TYPE_FLOAT;
+   type.sign = TRUE;
+   type.norm = TRUE;
+   type.width = 32;
+   type.length = 4;
 
    args[0] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
    args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
@@ -96,7 +106,7 @@ add_blend_test(LLVMModuleRef module,
    dst = LLVMBuildLoad(builder, dst_ptr, "dst");
    const_ = LLVMBuildLoad(builder, const_ptr, "const");
 
-   res = lp_build_blend(builder, blend, src, dst, const_, 3);
+   res = lp_build_blend(builder, blend, type, src, dst, const_, 3);
 
    LLVMSetValueName(res, "res");
 
