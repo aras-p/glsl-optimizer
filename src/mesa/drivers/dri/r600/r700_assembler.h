@@ -424,7 +424,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
 GLboolean assemble_dst(r700_AssemblerBase *pAsm);
 GLboolean tex_dst(r700_AssemblerBase *pAsm);
 GLboolean tex_src(r700_AssemblerBase *pAsm);
-GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm);
+GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalized);
 void initialize(r700_AssemblerBase *pAsm);
 GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
                            int                  source_index,
