@@ -1854,6 +1854,8 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Set up color compare mask */
     r700->CB_CLRCMP_MSK.u32All = 0xFFFFFFFF;
 
+    context->radeon.hw.all_dirty = GL_TRUE;
+
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------

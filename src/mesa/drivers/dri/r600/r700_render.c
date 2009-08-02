@@ -139,6 +139,13 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
 
     r600UpdateTextureState(ctx);
 
+    r700SendFSState(context); // FIXME just a place holder for now
+    r700SendPSState(context);
+    r700SendVSState(context);
+
+    r700SendTextureState(context);
+    r700SetupStreams(ctx);
+
     return GL_TRUE;
 }
 
@@ -274,18 +281,16 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 void r700EmitState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
+	radeonContextPtr radeon = &context->radeon;
+
+	if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
+		return;
 
 	rcommonEnsureCmdBufSpace(&context->radeon,
 				 context->radeon.hw.max_state_size, __FUNCTION__);
 
 	r700Start3D(context);
 	r700SendSQConfig(context);
-	r700SendFSState(context); // FIXME just a place holder for now
-	r700SendPSState(context);
-	r700SendVSState(context);
-
-	r700SendTextureState(context);
-	r700SetupStreams(ctx);
 
 	r700SendUCPState(context);
 	r700SendContextStates(context);
@@ -324,8 +329,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700WaitForIdleClean(context);
 
     radeonReleaseArrays(ctx, ~0);
-
-    rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
 
     return GL_FALSE;
 }

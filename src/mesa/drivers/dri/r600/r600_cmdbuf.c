@@ -457,6 +457,9 @@ void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
     GLuint size;
     rmesa->hw.max_state_size = 4000; /* rough estimate */
 
+    rmesa->hw.all_dirty = GL_TRUE;
+    rmesa->hw.is_dirty = GL_TRUE;
+
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");
