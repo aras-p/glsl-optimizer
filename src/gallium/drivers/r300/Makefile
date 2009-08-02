@@ -9,7 +9,6 @@ C_SOURCES = \
 	r300_chipset.c \
 	r300_clear.c \
 	r300_context.c \
-	r300_debug.c \
 	r300_emit.c \
 	r300_flush.c \
 	r300_fs.c \
@@ -21,6 +20,22 @@ C_SOURCES = \
 	r300_state_invariant.c \
 	r300_vs.c \
 	r300_surface.c \
-	r300_texture.c
+	r300_texture.c \
+	r300_tgsi_to_rc.c
+
+LIBRARY_INCLUDES = \
+	-I$(TOP)/src/mesa/drivers/dri/r300/compiler \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/include
+
+COMPILER_ARCHIVE = $(TOP)/src/mesa/drivers/dri/r300/compiler/libr300compiler.a
+
+EXTRA_OBJECTS = \
+	$(COMPILER_ARCHIVE)
 
 include ../../Makefile.template
+
+.PHONY : $(COMPILER_ARCHIVE)
+
+$(COMPILER_ARCHIVE):
+	cd $(TOP)/src/mesa/drivers/dri/r300/compiler; make

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Nicolai Hähnle <nhaehnle@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -15,40 +15,27 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * THE COPYRIGHT HOLDER(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_VS_H
-#define R300_VS_H
+#ifndef R300_TGSI_TO_RC_H
+#define R300_TGSI_TO_RC_H
 
-#include "pipe/p_state.h"
-#include "tgsi/tgsi_scan.h"
+struct radeon_compiler;
 
-#include "radeon_code.h"
+struct tgsi_full_declaration;
+struct tgsi_shader_info;
+struct tgsi_token;
 
-struct r300_context;
+struct tgsi_to_rc {
+    struct radeon_compiler * compiler;
+    const struct tgsi_shader_info * info;
 
-struct r300_vertex_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-    struct tgsi_shader_info info;
-
-    /* Fallback shader, because Draw has issues */
-    struct draw_vertex_shader* draw;
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Machine code (if translated) */
-    struct r300_vertex_program_code code;
+    int immediate_offset;
 };
 
+void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens);
 
-extern struct r300_vertex_program_code r300_passthrough_vertex_shader;
-
-void r300_translate_vertex_shader(struct r300_context* r300,
-                                  struct r300_vertex_shader* vs);
-
-#endif /* R300_VS_H */
+#endif /* R300_TGSI_TO_RC_H */

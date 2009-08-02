@@ -23,89 +23,115 @@
 
 #include "r300_fs.h"
 
-void r300_translate_fragment_shader(struct r300_context* r300,
-                                    struct r300_fragment_shader* fs)
+#include "r300_tgsi_to_rc.h"
+
+#include "radeon_compiler.h"
+
+static void find_output_registers(struct r300_fragment_program_compiler * compiler,
+                                  struct r300_fragment_shader * fs)
 {
-    struct tgsi_parse_context parser;
+    unsigned i;
+
+    /* Mark the outputs as not present initially */
+    compiler->OutputColor = fs->info.num_outputs;
+    compiler->OutputDepth = fs->info.num_outputs;
+
+    /* Now see where they really are. */
+    for(i = 0; i < fs->info.num_outputs; ++i) {
+        switch(fs->info.output_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                compiler->OutputColor = i;
+                break;
+            case TGSI_SEMANTIC_POSITION:
+                compiler->OutputDepth = i;
+                break;
+        }
+    }
+}
+
+static void allocate_hardware_inputs(
+    struct r300_fragment_program_compiler * c,
+    void (*allocate)(void * data, unsigned input, unsigned hwreg),
+    void * mydata)
+{
+    struct tgsi_shader_info* info = &((struct r300_fragment_shader*)c->UserData)->info;
+    int total_colors = 0;
+    int colors = 0;
+    int total_generic = 0;
+    int generic = 0;
     int i;
-    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
-    struct r300_constant_buffer* consts =
-        &r300->shader_constants[PIPE_SHADER_FRAGMENT];
 
-    struct r300_fs_asm* assembler = CALLOC_STRUCT(r300_fs_asm);
-    if (assembler == NULL) {
-        return;
-    }
-    /* Setup starting offset for immediates. */
-    assembler->imm_offset = consts->user_count;
-    /* Enable depth writes, if needed. */
-    assembler->writes_depth = fs->info.writes_z;
-
-    /* Make sure we start at the beginning of the shader. */
-    if (is_r500) {
-        ((struct r5xx_fragment_shader*)fs)->instruction_count = 0;
-    }
-
-    tgsi_parse_init(&parser, fs->state.tokens);
-
-    while (!tgsi_parse_end_of_tokens(&parser)) {
-        tgsi_parse_token(&parser);
-
-        /* This is seriously the lamest way to create fragment programs ever.
-         * I blame TGSI. */
-        switch (parser.FullToken.Token.Type) {
-            case TGSI_TOKEN_TYPE_DECLARATION:
-                /* Allocated registers sitting at the beginning
-                 * of the program. */
-                r300_fs_declare(assembler, &parser.FullToken.FullDeclaration);
+    for (i = 0; i < info->num_inputs; i++) {
+        switch (info->input_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                total_colors++;
                 break;
-            case TGSI_TOKEN_TYPE_IMMEDIATE:
-                debug_printf("r300: Emitting immediate to constant buffer, "
-                        "position %d\n",
-                        assembler->imm_offset + assembler->imm_count);
-                /* I am not amused by the length of these. */
-                for (i = 0; i < 4; i++) {
-                    consts->constants[assembler->imm_offset +
-                        assembler->imm_count][i] =
-                        parser.FullToken.FullImmediate.u[i].Float;
-                }
-                assembler->imm_count++;
-                break;
-            case TGSI_TOKEN_TYPE_INSTRUCTION:
-                if (is_r500) {
-                    r5xx_fs_instruction((struct r5xx_fragment_shader*)fs,
-                            assembler, &parser.FullToken.FullInstruction);
-                } else {
-                    r3xx_fs_instruction((struct r3xx_fragment_shader*)fs,
-                            assembler, &parser.FullToken.FullInstruction);
-                }
+            case TGSI_SEMANTIC_FOG:
+            case TGSI_SEMANTIC_GENERIC:
+                total_generic++;
                 break;
         }
     }
 
-    debug_printf("r300: fs: %d texs and %d colors, first free reg is %d\n",
-            assembler->tex_count, assembler->color_count,
-            assembler->tex_count + assembler->color_count);
+    for(i = 0; i < info->num_inputs; i++) {
+        switch (info->input_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                allocate(mydata, i, colors);
+                colors++;
+                break;
+            case TGSI_SEMANTIC_FOG:
+            case TGSI_SEMANTIC_GENERIC:
+                allocate(mydata, i, total_colors + generic);
+                generic++;
+                break;
+        }
+    }
+}
 
-    consts->count = consts->user_count + assembler->imm_count;
-    fs->uses_imms = assembler->imm_count;
-    debug_printf("r300: fs: %d total constants, "
-            "%d from user and %d from immediates\n", consts->count,
-            consts->user_count, assembler->imm_count);
-    r3xx_fs_finalize(fs, assembler);
-    if (is_r500) {
-        r5xx_fs_finalize((struct r5xx_fragment_shader*)fs, assembler);
+void r300_translate_fragment_shader(struct r300_context* r300,
+                                    struct r300_fragment_shader* fs)
+{
+    struct r300_fragment_program_compiler compiler;
+    struct tgsi_to_rc ttr;
+
+    memset(&compiler, 0, sizeof(compiler));
+    rc_init(&compiler.Base);
+    compiler.Base.Debug = 1;
+
+    compiler.code = &fs->code;
+    compiler.is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    compiler.AllocateHwInputs = &allocate_hardware_inputs;
+    compiler.UserData = fs;
+
+    /* TODO: Program compilation depends on texture compare modes,
+     * which are sampler state. Therefore, programs need to be recompiled
+     * depending on this state as in the classic Mesa driver.
+     *
+     * This is not yet handled correctly.
+     */
+
+    find_output_registers(&compiler, fs);
+
+    if (compiler.Base.Debug) {
+        debug_printf("r300: Initial vertex program\n");
+        tgsi_dump(fs->state.tokens, 0);
     }
 
-    tgsi_dump(fs->state.tokens, 0);
-    /* XXX finish r300 dumper too */
-    if (is_r500) {
-        r5xx_fs_dump((struct r5xx_fragment_shader*)fs);
-    }
+    /* Translate TGSI to our internal representation */
+    ttr.compiler = &compiler.Base;
+    ttr.info = &fs->info;
 
-    tgsi_parse_free(&parser);
-    FREE(assembler);
+    r300_tgsi_to_rc(&ttr, fs->state.tokens);
+
+    /* Invoke the compiler */
+    r3xx_compile_fragment_program(&compiler);
+    if (compiler.Base.Error) {
+        /* Todo: Fail gracefully */
+        fprintf(stderr, "r300 FP: Compiler error\n");
+        abort();
+    }
 
     /* And, finally... */
+    rc_destroy(&compiler.Base);
     fs->translated = TRUE;
 }

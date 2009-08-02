@@ -24,6 +24,9 @@
 
 #include "r300_emit.h"
 
+#include "r300_fs.h"
+#include "r300_vs.h"
+
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend)
 {
@@ -109,73 +112,158 @@ void r300_emit_dsa_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_fragment_shader(struct r300_context* r300,
-                               struct r3xx_fragment_shader* fs)
+static const float * get_shader_constant(
+    struct r300_context * r300,
+    struct rc_constant * constant,
+    struct r300_constant_buffer * externals)
 {
+    static const float zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+    switch(constant->Type) {
+        case RC_CONSTANT_EXTERNAL:
+            return externals->constants[constant->u.External];
+
+        case RC_CONSTANT_IMMEDIATE:
+            return constant->u.Immediate;
+
+        default:
+            debug_printf("r300: Implementation error: Unhandled constant type %i\n",
+                constant->Type);
+            return zero;
+    }
+}
+
+/* Convert a normal single-precision float into the 7.16 format
+ * used by the R300 fragment shader.
+ */
+static uint32_t pack_float24(float f)
+{
+    union {
+        float fl;
+        uint32_t u;
+    } u;
+    float mantissa;
+    int exponent;
+    uint32_t float24 = 0;
+
+    if (f == 0.0)
+        return 0;
+
+    u.fl = f;
+
+    mantissa = frexpf(f, &exponent);
+
+    /* Handle -ve */
+    if (mantissa < 0) {
+        float24 |= (1 << 23);
+        mantissa = mantissa * -1.0;
+    }
+    /* Handle exponent, bias of 63 */
+    exponent += 62;
+    float24 |= (exponent << 16);
+    /* Kill 7 LSB of mantissa */
+    float24 |= (u.u & 0x7FFFFF) >> 7;
+
+    return float24;
+}
+
+void r300_emit_fragment_program_code(struct r300_context* r300,
+                                     struct rX00_fragment_program_code* generic_code,
+                                     struct r300_constant_buffer* externals)
+{
+    struct r300_fragment_program_code * code = &generic_code->code.r300;
+    struct rc_constant_list * constants = &generic_code->constants;
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS(22);
+    BEGIN_CS(15 +
+             code->alu.length * 4 +
+             (code->tex.length ? (1 + code->tex.length) : 0) +
+             (constants->Count ? (1 + constants->Count * 4) : 0));
 
-    OUT_CS_REG(R300_US_CONFIG, fs->indirections);
-    OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
-    /* XXX figure out exactly how big the sizes are on this reg */
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x40);
-    /* XXX figure these ones out a bit better kthnx */
-    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x40 | R300_RGBA_OUT);
+    OUT_CS_REG(R300_US_CONFIG, code->config);
+    OUT_CS_REG(R300_US_PIXSIZE, code->pixsize);
+    OUT_CS_REG(R300_US_CODE_OFFSET, code->code_offset);
 
-    for (i = 0; i < fs->alu_instruction_count; i++) {
-        OUT_CS_REG(R300_US_ALU_RGB_INST_0 + (4 * i),
-            fs->instructions[i].alu_rgb_inst);
-        OUT_CS_REG(R300_US_ALU_RGB_ADDR_0 + (4 * i),
-            fs->instructions[i].alu_rgb_addr);
-        OUT_CS_REG(R300_US_ALU_ALPHA_INST_0 + (4 * i),
-            fs->instructions[i].alu_alpha_inst);
-        OUT_CS_REG(R300_US_ALU_ALPHA_ADDR_0 + (4 * i),
-            fs->instructions[i].alu_alpha_addr);
+    OUT_CS_REG_SEQ(R300_US_CODE_ADDR_0, 4);
+    for(i = 0; i < 4; ++i)
+        OUT_CS(code->code_addr[i]);
+
+    OUT_CS_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++)
+        OUT_CS(code->alu.inst[i].rgb_inst);
+
+    OUT_CS_REG_SEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++)
+        OUT_CS(code->alu.inst[i].rgb_addr);
+
+    OUT_CS_REG_SEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++)
+        OUT_CS(code->alu.inst[i].alpha_inst);
+
+    OUT_CS_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++)
+        OUT_CS(code->alu.inst[i].alpha_addr);
+
+    if (code->tex.length) {
+        OUT_CS_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
+        for(i = 0; i < code->tex.length; ++i)
+            OUT_CS(code->tex.inst[i]);
+    }
+
+    if (constants->Count) {
+        OUT_CS_ONE_REG(R300_PFS_PARAM_0_X, constants->Count * 4);
+        for(i = 0; i < constants->Count; ++i) {
+            const float * data = get_shader_constant(r300, &constants->Constants[i], externals);
+            OUT_CS(pack_float24(data[0]));
+            OUT_CS(pack_float24(data[1]));
+            OUT_CS(pack_float24(data[2]));
+            OUT_CS(pack_float24(data[3]));
+        }
     }
 
     END_CS;
 }
 
-void r500_emit_fragment_shader(struct r300_context* r300,
-                               struct r5xx_fragment_shader* fs)
+void r500_emit_fragment_program_code(struct r300_context* r300,
+                                     struct rX00_fragment_program_code* generic_code,
+                                     struct r300_constant_buffer* externals)
 {
+    struct r500_fragment_program_code * code = &generic_code->code.r500;
+    struct rc_constant_list * constants = &generic_code->constants;
     int i;
-    struct r300_constant_buffer* constants =
-        &r300->shader_constants[PIPE_SHADER_FRAGMENT];
     CS_LOCALS(r300);
 
-    BEGIN_CS(9 + (fs->instruction_count * 6) + (constants->count ? 3 : 0) +
-            (constants->count * 4));
-    OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
-    OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
-    OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
-            R500_US_CODE_END_ADDR(fs->instruction_count));
+    BEGIN_CS(13 +
+             ((code->inst_end + 1) * 6) +
+             (constants->Count ? (3 + (constants->Count * 4)) : 0));
+    OUT_CS_REG(R500_US_CONFIG, 0);
+    OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
+    OUT_CS_REG(R500_US_CODE_RANGE,
+               R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
+    OUT_CS_REG(R500_US_CODE_OFFSET, 0);
+    OUT_CS_REG(R500_US_CODE_ADDR,
+               R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(code->inst_end));
 
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, fs->instruction_count * 6);
-    for (i = 0; i < fs->instruction_count; i++) {
-        OUT_CS(fs->instructions[i].inst0);
-        OUT_CS(fs->instructions[i].inst1);
-        OUT_CS(fs->instructions[i].inst2);
-        OUT_CS(fs->instructions[i].inst3);
-        OUT_CS(fs->instructions[i].inst4);
-        OUT_CS(fs->instructions[i].inst5);
+    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, (code->inst_end + 1) * 6);
+    for (i = 0; i <= code->inst_end; i++) {
+        OUT_CS(code->inst[i].inst0);
+        OUT_CS(code->inst[i].inst1);
+        OUT_CS(code->inst[i].inst2);
+        OUT_CS(code->inst[i].inst3);
+        OUT_CS(code->inst[i].inst4);
+        OUT_CS(code->inst[i].inst5);
     }
 
-    if (constants->count) {
-        OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
-                R500_GA_US_VECTOR_INDEX_TYPE_CONST);
-        OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->count * 4);
-        for (i = 0; i < constants->count; i++) {
-            OUT_CS_32F(constants->constants[i][0]);
-            OUT_CS_32F(constants->constants[i][1]);
-            OUT_CS_32F(constants->constants[i][2]);
-            OUT_CS_32F(constants->constants[i][3]);
+    if (constants->Count) {
+        OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
+        OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->Count * 4);
+        for (i = 0; i < constants->Count; i++) {
+            const float * data = get_shader_constant(r300, &constants->Constants[i], externals);
+            OUT_CS_32F(data[0]);
+            OUT_CS_32F(data[1]);
+            OUT_CS_32F(data[2]);
+            OUT_CS_32F(data[3]);
         }
     }
 
@@ -380,13 +468,13 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
-void r300_emit_vertex_shader(struct r300_context* r300,
-                             struct r300_vertex_shader* vs)
+void r300_emit_vertex_program_code(struct r300_context* r300,
+                                   struct r300_vertex_program_code* code,
+                                   struct r300_constant_buffer* constants)
 {
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct r300_constant_buffer* constants =
-        &r300->shader_constants[PIPE_SHADER_VERTEX];
+    unsigned instruction_count = code->length / 4;
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
@@ -395,10 +483,10 @@ void r300_emit_vertex_shader(struct r300_context* r300,
         return;
     }
 
-    if (constants->count) {
-        BEGIN_CS(14 + (vs->instruction_count * 4) + (constants->count * 4));
+    if (code->constants.Count) {
+        BEGIN_CS(14 + code->length + (code->constants.Count * 4));
     } else {
-        BEGIN_CS(11 + (vs->instruction_count * 4));
+        BEGIN_CS(11 + code->length);
     }
 
     /* R300_VAP_PVS_CODE_CNTL_0
@@ -408,30 +496,27 @@ void r300_emit_vertex_shader(struct r300_context* r300,
      * XXX these could be optimized to select better values... */
     OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
     OUT_CS(R300_PVS_FIRST_INST(0) |
-            R300_PVS_XYZW_VALID_INST(vs->instruction_count - 1) |
-            R300_PVS_LAST_INST(vs->instruction_count - 1));
-    OUT_CS(R300_PVS_MAX_CONST_ADDR(constants->count - 1));
-    OUT_CS(vs->instruction_count - 1);
+            R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
+            R300_PVS_LAST_INST(instruction_count - 1));
+    OUT_CS(R300_PVS_MAX_CONST_ADDR(code->constants.Count - 1));
+    OUT_CS(instruction_count - 1);
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
-    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, vs->instruction_count * 4);
-    for (i = 0; i < vs->instruction_count; i++) {
-        OUT_CS(vs->instructions[i].inst0);
-        OUT_CS(vs->instructions[i].inst1);
-        OUT_CS(vs->instructions[i].inst2);
-        OUT_CS(vs->instructions[i].inst3);
-    }
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->length);
+    for (i = 0; i < code->length; i++)
+        OUT_CS(code->body.d[i]);
 
-    if (constants->count) {
+    if (code->constants.Count) {
         OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                 (r300screen->caps->is_r500 ?
                  R500_PVS_CONST_START : R300_PVS_CONST_START));
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->count * 4);
-        for (i = 0; i < constants->count; i++) {
-            OUT_CS_32F(constants->constants[i][0]);
-            OUT_CS_32F(constants->constants[i][1]);
-            OUT_CS_32F(constants->constants[i][2]);
-            OUT_CS_32F(constants->constants[i][3]);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->constants.Count * 4);
+        for (i = 0; i < code->constants.Count; i++) {
+            const float * data = get_shader_constant(r300, &code->constants.Constants[i], constants);
+            OUT_CS_32F(data[0]);
+            OUT_CS_32F(data[1]);
+            OUT_CS_32F(data[2]);
+            OUT_CS_32F(data[3]);
         }
     }
 
@@ -441,6 +526,12 @@ void r300_emit_vertex_shader(struct r300_context* r300,
             R300_PVS_VF_MAX_VTX_NUM(12));
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
+}
+
+void r300_emit_vertex_shader(struct r300_context* r300,
+                             struct r300_vertex_shader* vs)
+{
+    r300_emit_vertex_program_code(r300, &vs->code, &r300->shader_constants[PIPE_SHADER_VERTEX]);
 }
 
 void r300_emit_viewport_state(struct r300_context* r300,
@@ -564,11 +655,9 @@ validate:
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
         if (r300screen->caps->is_r500) {
-            r500_emit_fragment_shader(r300,
-                (struct r5xx_fragment_shader*)r300->fs);
+            r500_emit_fragment_program_code(r300, &r300->fs->code, &r300->shader_constants[PIPE_SHADER_FRAGMENT]);
         } else {
-            r300_emit_fragment_shader(r300,
-                (struct r3xx_fragment_shader*)r300->fs);
+            r300_emit_fragment_program_code(r300, &r300->fs->code, &r300->shader_constants[PIPE_SHADER_FRAGMENT]);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
     }
