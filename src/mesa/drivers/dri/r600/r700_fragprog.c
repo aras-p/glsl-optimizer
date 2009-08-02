@@ -263,11 +263,13 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
+    BATCH_LOCALS(&context->radeon);
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
     struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
+    struct gl_program_parameter_list *paramList;
+    unsigned int unNumParamData;
     unsigned int ui, i;
     unsigned int unNumOfReg;
     unsigned int unBit;
@@ -335,6 +337,35 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
     }
 
+    /* sent out shader constants. */
+    paramList = fp->mesa_program.Base.Parameters;
+
+    if(NULL != paramList)
+    {
+        _mesa_load_state_parameters(ctx, paramList);
+
+        unNumParamData = paramList->NumParameters * 4;
+
+        BEGIN_BATCH_NO_AUTOSTATE(2 + unNumParamData);
+
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
+
+        /* assembler map const from very beginning. */
+        R600_OUT_BATCH(SQ_ALU_CONSTANT_PS_OFFSET * 4);
+
+        unNumParamData = paramList->NumParameters;
+
+        for(ui=0; ui<unNumParamData; ui++)
+        {
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
+        }
+        END_BATCH();
+        COMMIT_BATCH();
+    }
+
     // emit ps input map
     unBit = 1 << FRAG_ATTRIB_COL0;
     if(mesa_fp->Base.InputsRead & unBit)
@@ -386,48 +417,6 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 			     SEMANTIC_shift, SEMANTIC_mask);
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    }
-    }
-
-    return GL_TRUE;
-}
-
-GLboolean r700SendPSConstants(GLcontext * ctx)
-{
-    context_t *context = R700_CONTEXT(ctx);
-    BATCH_LOCALS(&context->radeon);
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
-	                                   (ctx->FragmentProgram._Current);
-    struct gl_program_parameter_list *paramList;
-    unsigned int unNumParamData;
-    unsigned int ui;
-
-    /* sent out shader constants. */
-    paramList = fp->mesa_program.Base.Parameters;
-
-    if(NULL != paramList)
-    {
-        _mesa_load_state_parameters(ctx, paramList);
-
-        unNumParamData = paramList->NumParameters * 4;
-
-        BEGIN_BATCH_NO_AUTOSTATE(2 + unNumParamData);
-
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
-
-        /* assembler map const from very beginning. */
-        R600_OUT_BATCH(SQ_ALU_CONSTANT_PS_OFFSET * 4);
-
-        unNumParamData = paramList->NumParameters;
-
-        for(ui=0; ui<unNumParamData; ui++)
-        {
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
-        }
-        END_BATCH();
-        COMMIT_BATCH();
     }
 
     return GL_TRUE;

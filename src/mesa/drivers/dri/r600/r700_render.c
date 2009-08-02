@@ -283,8 +283,6 @@ void r700EmitState(GLcontext * ctx)
 	r700SendFSState(context); // FIXME just a place holder for now
 	r700SendPSState(context);
 	r700SendVSState(context);
-	r700SendVSConstants(ctx);
-	r700SendPSConstants(ctx);
 
 	r700SendTextureState(context);
 	r700SetupStreams(ctx);
