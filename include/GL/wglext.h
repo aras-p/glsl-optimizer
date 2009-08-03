@@ -48,9 +48,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number */
-/* wglext.h last updated 2009/03/03 */
+/* wglext.h last updated 2009/08/03 */
 /* Current version at http://www.opengl.org/registry/ */
-#define WGL_WGLEXT_VERSION 12
+#define WGL_WGLEXT_VERSION 15
 
 #ifndef WGL_ARB_buffer_region
 #define WGL_FRONT_COLOR_BUFFER_BIT_ARB 0x00000001
@@ -176,13 +176,20 @@ extern "C" {
 #endif
 
 #ifndef WGL_ARB_create_context
-#define WGL_CONTEXT_DEBUG_BIT_ARB      0x0001
-#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x0002
+#define WGL_CONTEXT_DEBUG_BIT_ARB      0x00000001
+#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
 #define WGL_CONTEXT_LAYER_PLANE_ARB    0x2093
 #define WGL_CONTEXT_FLAGS_ARB          0x2094
 #define ERROR_INVALID_VERSION_ARB      0x2095
+#endif
+
+#ifndef WGL_ARB_create_context_profile
+#define WGL_CONTEXT_PROFILE_MASK_ARB   0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+#define ERROR_INVALID_PROFILE_ARB      0x2096
 #endif
 
 #ifndef WGL_EXT_make_current_read
@@ -495,6 +502,10 @@ typedef BOOL (WINAPI * PFNWGLSETPBUFFERATTRIBARBPROC) (HPBUFFERARB hPbuffer, con
 extern HGLRC WINAPI wglCreateContextAttribsARB (HDC, HGLRC, const int *);
 #endif /* WGL_WGLEXT_PROTOTYPES */
 typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
+#endif
+
+#ifndef WGL_ARB_create_context_profile
+#define WGL_ARB_create_context_profile 1
 #endif
 
 #ifndef WGL_EXT_display_color_table
