@@ -366,8 +366,8 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
 	        mt->width0 == firstImage->Width &&
 	        mt->height0 == firstImage->Height &&
 	        mt->depth0 == firstImage->Depth &&
-	        mt->bpp == firstImage->TexFormat->TexelBytes &&
-	        mt->compressed == compressed);
+	        mt->compressed == compressed &&
+	        (!mt->compressed ? (mt->bpp == firstImage->TexFormat->TexelBytes) : 1));
 }
 
 
