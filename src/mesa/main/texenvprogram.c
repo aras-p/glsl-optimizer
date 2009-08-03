@@ -341,7 +341,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       if (vertexShader)
          vprog = ctx->Shader.CurrentProgram->VertexProgram;
       else
-         vprog = ctx->VertexProgram._Current;
+         vprog = ctx->VertexProgram.Current;
 
       vp_outputs = vprog->Base.OutputsWritten;
 
