@@ -96,7 +96,7 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
    _EGLContext *context = _eglLookupContext(ctx);
    if (context) {
       _eglUnlinkContext(context);
-      if (!context->IsBound)
+      if (!_eglIsContextBound(context))
          free(context);
       return EGL_TRUE;
    }
@@ -207,7 +207,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
     * check if the old context or surfaces need to be deleted
     */
    if (oldDrawSurface != NULL) {
-      oldDrawSurface->IsBound = EGL_FALSE;
+      oldDrawSurface->Binding = NULL;
       if (!_eglIsSurfaceLinked(oldDrawSurface)) {
          /* make sure we don't try to rebind a deleted surface */
          if (draw == oldDrawSurface || draw == oldReadSurface) {
@@ -218,7 +218,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       }
    }
    if (oldReadSurface != NULL && oldReadSurface != oldDrawSurface) {
-      oldReadSurface->IsBound = EGL_FALSE;
+      oldReadSurface->Binding = NULL;
       if (!_eglIsSurfaceLinked(oldReadSurface)) {
          /* make sure we don't try to rebind a deleted surface */
          if (read == oldDrawSurface || read == oldReadSurface) {
@@ -229,7 +229,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       }
    }
    if (oldContext != NULL) {
-      oldContext->IsBound = EGL_FALSE;
+      oldContext->Binding = NULL;
       if (!_eglIsContextLinked(oldContext)) {
          /* make sure we don't try to rebind a deleted context */
          if (ctx == oldContext) {
@@ -248,9 +248,9 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       }
       ctx->DrawSurface = draw;
       ctx->ReadSurface = read;
-      ctx->IsBound = EGL_TRUE;
-      draw->IsBound = EGL_TRUE;
-      read->IsBound = EGL_TRUE;
+      ctx->Binding = t;
+      draw->Binding = ctx;
+      read->Binding = ctx;
       t->CurrentContexts[apiIndex] = ctx;
    }
    else {

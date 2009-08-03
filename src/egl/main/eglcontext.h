@@ -15,12 +15,12 @@ struct _egl_context
    _EGLDisplay *Display;
    _EGLContext *Next;
 
-   _EGLConfig *Config;
-
+   /* The bound status of the context */
+   _EGLThreadInfo *Binding;
    _EGLSurface *DrawSurface;
    _EGLSurface *ReadSurface;
 
-   EGLBoolean IsBound;
+   _EGLConfig *Config;
 
    EGLint ClientAPI; /**< EGL_OPENGL_ES_API, EGL_OPENGL_API, EGL_OPENVG_API */
    EGLint ClientVersion; /**< 1 = OpenGLES 1.x, 2 = OpenGLES 2.x */
@@ -50,5 +50,16 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface rea
 
 extern EGLBoolean
 _eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
+
+
+/**
+ * Return true if the context is bound to a thread.
+ */
+static INLINE EGLBoolean
+_eglIsContextBound(_EGLContext *ctx)
+{
+   return (ctx->Binding != NULL);
+}
+
 
 #endif /* EGLCONTEXT_INCLUDED */

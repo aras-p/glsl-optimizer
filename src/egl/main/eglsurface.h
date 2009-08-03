@@ -15,11 +15,11 @@ struct _egl_surface
    _EGLSurface *Next;
    EGLSurface Handle;
 
-   _EGLConfig *Config;
-
-   /* May need reference counting here */
-   EGLBoolean IsBound;
+   /* The bound status of the surface */
+   _EGLContext *Binding;
    EGLBoolean BoundToTexture;
+
+   _EGLConfig *Config;
 
    EGLint Type; /* one of EGL_WINDOW_BIT, EGL_PIXMAP_BIT or EGL_PBUFFER_BIT */
    EGLint Width, Height;
@@ -99,6 +99,17 @@ _eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
 
 #endif /* EGL_VERSION_1_2 */
 
+
+/**
+ * Return true if the surface is bound to a thread.
+ * A surface bound to a texutre is not considered bound by
+ * this function.
+ */
+static INLINE EGLBoolean
+_eglIsSurfaceBound(_EGLSurface *surf)
+{
+   return (surf->Binding != NULL);
+}
 
 
 #endif /* EGLSURFACE_INCLUDED */

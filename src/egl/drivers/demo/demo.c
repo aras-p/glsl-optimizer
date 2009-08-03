@@ -236,7 +236,7 @@ demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    DemoSurface *fs = LookupDemoSurface(surface);
    _eglUnlinkSurface(&fs->Base);
-   if (!fs->Base.IsBound)
+   if (!_eglIsSurfaceBound(&fs->Base))
       free(fs);
    return EGL_TRUE;
 }
@@ -247,7 +247,7 @@ demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    DemoContext *fc = LookupDemoContext(context);
    _eglUnlinkContext(&fc->Base);
-   if (!fc->Base.IsBound)
+   if (!_eglIsContextBound(&fc->Base))
       free(fc);
    return EGL_TRUE;
 }

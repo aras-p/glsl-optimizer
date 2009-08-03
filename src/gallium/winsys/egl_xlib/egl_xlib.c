@@ -382,7 +382,7 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
    struct xlib_egl_context *context = lookup_context(ctx);
    if (context) {
       _eglUnlinkContext(&context->Base);
-      if (!context->Base.IsBound) {
+      if (!_eglIsContextBound(&context->Base)) {
          /* API-dependent clean-up */
          switch (context->Base.ClientAPI) {
          case EGL_OPENGL_ES_API:
@@ -533,7 +533,7 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    struct xlib_egl_surface *surf = lookup_surface(surface);
    if (surf) {
       _eglUnlinkSurface(&surf->Base);
-      if (!surf->Base.IsBound) {
+      if (!_eglIsSurfaceBound(&surf->Base)) {
          XFreeGC(surf->Dpy, surf->Gc);
          st_unreference_framebuffer(surf->Framebuffer);
          free(surf);
