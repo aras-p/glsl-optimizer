@@ -916,7 +916,7 @@ struct bo_legacy *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
     struct bo_legacy *bo;
 
 #ifdef RADEON_DEBUG_BO
-    bo = bo_allocate(boml, size, 0, RADEON_GEM_DOMAIN_VRAM, 0, szBufUsage);
+    bo = bo_allocate(boml, size, 0, RADEON_GEM_DOMAIN_VRAM, 0, "fake bo");
 #else
     bo = bo_allocate(boml, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 #endif /* RADEON_DEBUG_BO */
