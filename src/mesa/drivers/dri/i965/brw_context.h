@@ -475,6 +475,9 @@ struct brw_context
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
 
+      struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
+      GLuint nr_enabled;
+
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
 

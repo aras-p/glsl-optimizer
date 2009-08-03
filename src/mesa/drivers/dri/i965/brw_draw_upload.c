@@ -350,9 +350,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
 
-   struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
-   GLuint nr_enabled = 0;
-
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
 
@@ -362,12 +359,13 @@ static void brw_prepare_vertices(struct brw_context *brw)
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
    /* Accumulate the list of enabled arrays. */
+   brw->vb.nr_enabled = 0;
    while (vs_inputs) {
       GLuint i = _mesa_ffsll(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~(1 << i);
-      enabled[nr_enabled++] = input;
+      brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
    /* XXX: In the rare cases where this happens we fallback all
@@ -376,13 +374,13 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * cases with > 17 vertex attributes enabled, so it probably
     * isn't an issue at this point.
     */
-   if (nr_enabled >= BRW_VEP_MAX) {
+   if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
       intel->Fallback = 1;
       return;
    }
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
       input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
@@ -466,8 +464,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    brw_prepare_query_begin(brw);
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       brw_add_validated_bo(brw, input->bo);
    }
@@ -477,19 +475,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
-   struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint i;
-   GLuint nr_enabled = 0;
-
-  /* Accumulate the list of enabled arrays. */
-   while (vs_inputs) {
-      i = _mesa_ffsll(vs_inputs) - 1;
-      struct brw_vertex_element *input = &brw->vb.inputs[i];
-
-      vs_inputs &= ~(1 << i);
-      enabled[nr_enabled++] = input;
-   }
 
    brw_emit_query_begin(brw);
 
@@ -499,12 +485,12 @@ static void brw_emit_vertices(struct brw_context *brw)
     * are interleaved or from the same VBO.  TBD if this makes a
     * performance difference.
     */
-   BEGIN_BATCH(1 + nr_enabled * 4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4, IGNORE_CLIPRECTS);
    OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
-	     ((1 + nr_enabled * 4) - 2));
+	     ((1 + brw->vb.nr_enabled * 4) - 2));
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       OUT_BATCH((i << BRW_VB0_INDEX_SHIFT) |
 		BRW_VB0_ACCESS_VERTEXDATA |
@@ -529,10 +515,10 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
    ADVANCE_BATCH();
 
-   BEGIN_BATCH(1 + nr_enabled * 2, IGNORE_CLIPRECTS);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr_enabled * 2) - 2));
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2, IGNORE_CLIPRECTS);
+   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
 					 input->glarray->Size,
 					 input->glarray->Format,
