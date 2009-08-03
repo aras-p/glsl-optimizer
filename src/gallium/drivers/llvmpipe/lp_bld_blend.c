@@ -188,6 +188,35 @@ lp_build_blend_swizzle(struct lp_build_blend_context *bld,
       alpha = bld->base.undef;
    }
 
+   if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA &&
+      !bld->base.type.floating) {
+#if 0
+      /* Use a select */
+      /* FIXME: Unfortunetaly select of vectors do not work */
+
+      for(j = 0; j < n; j += 4)
+         for(i = 0; i < 4; ++i)
+            swizzles[j + i] = LLVMConstInt(LLVMInt1Type(), i == alpha_swizzle ? 0 : 1, 0);
+
+      return LLVMBuildSelect(bld->base.builder, LLVMConstVector(swizzles, n), rgb, alpha, "");
+#else
+      /* XXX: Use a bitmask, as byte shuffles often end up being translated
+       * into many PEXTRB. Ideally LLVM X86 code generation should pick this
+       * automatically for us. */
+
+      for(j = 0; j < n; j += 4)
+         for(i = 0; i < 4; ++i)
+            swizzles[j + i] = LLVMConstInt(LLVMIntType(bld->base.type.width), i == alpha_swizzle ? 0 : ~0, 0);
+
+      /* TODO: Unfortunately constant propagation prevents from using PANDN. And
+       * on SSE4 we have even better -- PBLENDVB */
+      return LLVMBuildOr(bld->base.builder,
+                         LLVMBuildAnd(bld->base.builder, rgb,   LLVMConstVector(swizzles, n), ""),
+                         LLVMBuildAnd(bld->base.builder, alpha, LLVMBuildNot(bld->base.builder, LLVMConstVector(swizzles, n), ""), ""),
+                         "");
+#endif
+   }
+
    for(j = 0; j < n; j += 4) {
       for(i = 0; i < 4; ++i) {
          unsigned swizzle;
