@@ -41,12 +41,13 @@
 
 #include "lp_bld.h"
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 #include "lp_bld_arit.h"
 
 
 /**
- * We may the same bld several times, so we keep them here to avoid
- * recomputing them. Also reusing the bld allows us to do simplifications
+ * We may the same values several times, so we keep them here to avoid
+ * recomputing them. Also reusing the values allows us to do simplifications
  * that LLVM optimization passes wouldn't normally be able to do.
  */
 struct lp_build_blend_context

@@ -27,14 +27,14 @@
 
 /**
  * @file
- * Helper arithmetic functions.
+ * Helper functions for constant building.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
 
-#ifndef LP_BLD_ARIT_H
-#define LP_BLD_ARIT_H
+#ifndef LP_BLD_CONST_H
+#define LP_BLD_CONST_H
 
 
 #include <llvm-c/Core.h>  
@@ -43,63 +43,22 @@
 union lp_type type;
 
 
-/**
- * We need most of the information here in order to correctly and efficiently
- * translate an arithmetic operation into LLVM IR. Putting it here avoids the
- * trouble of passing it as parameters.
- */
-struct lp_build_context
-{
-   LLVMBuilderRef builder;
-   
-   /**
-    * This not only describes the input/output LLVM types, but also whether
-    * to normalize/clamp the results.
-    */
-   union lp_type type;
-
-   /** Same as lp_build_undef(type) */
-   LLVMValueRef undef;
-
-   /** Same as lp_build_zero(type) */
-   LLVMValueRef zero;
-
-   /** Same as lp_build_one(type) */
-   LLVMValueRef one;
-};
-
-
-/**
- * Complement, i.e., 1 - a.
- */
 LLVMValueRef
-lp_build_comp(struct lp_build_context *bld,
-              LLVMValueRef a);
+lp_build_undef(union lp_type type);
+
 
 LLVMValueRef
-lp_build_add(struct lp_build_context *bld,
-             LLVMValueRef a,
-             LLVMValueRef b);
+lp_build_zero(union lp_type type);
+
 
 LLVMValueRef
-lp_build_sub(struct lp_build_context *bld,
-             LLVMValueRef a,
-             LLVMValueRef b);
+lp_build_one(union lp_type type);
+
 
 LLVMValueRef
-lp_build_mul(struct lp_build_context *bld,
-             LLVMValueRef a,
-             LLVMValueRef b);
-
-LLVMValueRef
-lp_build_min(struct lp_build_context *bld,
-             LLVMValueRef a,
-             LLVMValueRef b);
-
-LLVMValueRef
-lp_build_max(struct lp_build_context *bld,
-             LLVMValueRef a,
-             LLVMValueRef b);
+lp_build_const_aos(union lp_type type, 
+                   double r, double g, double b, double a, 
+                   const unsigned char *swizzle);
 
 
-#endif /* !LP_BLD_ARIT_H */
+#endif /* !LP_BLD_CONST_H */
