@@ -82,6 +82,7 @@ struct xlib_egl_surface
 {
    _EGLSurface Base;   /**< base class */
 
+   /* These are set for window surface */
    Display *Dpy;  /**< The X Display of the window */
    Window Win;    /**< The user-created window ID */
    GC Gc;
@@ -101,7 +102,7 @@ xlib_egl_driver(_EGLDriver *drv)
 }
 
 
-static struct xlib_egl_surface *
+static INLINE struct xlib_egl_surface *
 lookup_surface(EGLSurface surf)
 {
    _EGLSurface *surface = _eglLookupSurface(surf);
@@ -109,10 +110,10 @@ lookup_surface(EGLSurface surf)
 }
 
 
-static struct xlib_egl_context *
-lookup_context(EGLContext surf)
+static INLINE struct xlib_egl_context *
+lookup_context(EGLContext ctx)
 {
-   _EGLContext *context = _eglLookupContext(surf);
+   _EGLContext *context = _eglLookupContext(ctx);
    return (struct xlib_egl_context *) context;
 }
 
@@ -180,7 +181,7 @@ create_configs(_EGLDriver *drv, EGLDisplay dpy)
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_RENDERABLE, EGL_FALSE);
       SET_CONFIG_ATTRIB(config, EGL_CONFORMANT, all_apis);
       SET_CONFIG_ATTRIB(config, EGL_RENDERABLE_TYPE, all_apis);
-      SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+      SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT);
 
       _eglAddConfig(disp, config);
    }
@@ -264,7 +265,13 @@ static void
 check_and_update_buffer_size(struct xlib_egl_surface *surface)
 {
    uint width, height;
-   get_drawable_size(surface->Dpy, surface->Win, &width, &height);
+   if (surface->Base.Type == EGL_PBUFFER_BIT) {
+      width = surface->Base.Width;
+      height = surface->Base.Height;
+   }
+   else {
+      get_drawable_size(surface->Dpy, surface->Win, &width, &height);
+   }
    st_resize_framebuffer(surface->Framebuffer, width, height);
    surface->Base.Width = width;
    surface->Base.Height = height;
@@ -280,6 +287,9 @@ display_surface(struct pipe_winsys *pws,
    struct softpipe_texture *spt = softpipe_texture(psurf->texture);
    XImage *ximage;
    void *data;
+
+   if (xsurf->Base.Type == EGL_PBUFFER_BIT)
+      return;
 
    ximage = XCreateImage(xsurf->Dpy,
                          xsurf->VisInfo.visual,
@@ -527,6 +537,83 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 }
 
 
+static EGLSurface
+xlib_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                             const EGLint *attrib_list)
+{
+   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
+   struct xlib_egl_surface *surf;
+   __GLcontextModes visual;
+   uint width, height;
+   EGLBoolean bind_texture;
+
+   if (!disp) {
+      _eglError(EGL_BAD_DISPLAY, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   surf = CALLOC_STRUCT(xlib_egl_surface);
+   if (!surf) {
+      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   if (!_eglInitSurface(drv, &surf->Base, EGL_PBUFFER_BIT,
+                        conf, attrib_list)) {
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+   if (surf->Base.Width < 0 || surf->Base.Height < 0) {
+      _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferSurface");
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+
+   bind_texture = (surf->Base.TextureFormat != EGL_NO_TEXTURE);
+   width = (uint) surf->Base.Width;
+   height = (uint) surf->Base.Height;
+   if ((surf->Base.TextureTarget == EGL_NO_TEXTURE && bind_texture) ||
+       (surf->Base.TextureTarget != EGL_NO_TEXTURE && !bind_texture)) {
+      _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+   /* a framebuffer of zero width or height confuses st */
+   if (width == 0 || height == 0) {
+      _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+   /* no mipmap generation */
+   if (surf->Base.MipmapTexture) {
+      _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
+
+   surf->winsys = xdrv->winsys;
+
+   _eglConfigToContextModesRec(conf, &visual);
+
+   /* Create GL statetracker framebuffer */
+   surf->Framebuffer = st_create_framebuffer(&visual,
+                                             choose_color_format(&visual),
+                                             choose_depth_format(&visual),
+                                             choose_stencil_format(&visual),
+                                             width, height,
+                                             (void *) surf);
+   st_resize_framebuffer(surf->Framebuffer, width, height);
+
+   return _eglLinkSurface(&surf->Base, disp);
+}
+
+
 static EGLBoolean
 xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
@@ -534,7 +621,8 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    if (surf) {
       _eglUnlinkSurface(&surf->Base);
       if (!_eglIsSurfaceBound(&surf->Base)) {
-         XFreeGC(surf->Dpy, surf->Gc);
+         if (surf->Base.Type != EGL_PBUFFER_BIT)
+            XFreeGC(surf->Dpy, surf->Gc);
          st_unreference_framebuffer(surf->Framebuffer);
          free(surf);
       }
@@ -631,6 +719,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.CreateContext = xlib_eglCreateContext;
    xdrv->Base.API.DestroyContext = xlib_eglDestroyContext;
    xdrv->Base.API.CreateWindowSurface = xlib_eglCreateWindowSurface;
+   xdrv->Base.API.CreatePbufferSurface = xlib_eglCreatePbufferSurface;
    xdrv->Base.API.DestroySurface = xlib_eglDestroySurface;
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
