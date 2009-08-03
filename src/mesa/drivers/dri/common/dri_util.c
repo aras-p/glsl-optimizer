@@ -82,6 +82,46 @@ driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
    return (rect1.x2 - rect1.x1) * (rect1.y2 - rect1.y1);
 }
 
+static int driFreeDrawable(__DRIcontext *pcp)
+{
+    __DRIdrawable *pdp;
+    __DRIdrawable *prp;
+
+	if (pcp == NULL)
+		return GL_FALSE;
+
+    pdp = pcp->driDrawablePriv;
+    prp = pcp->driReadablePriv;
+
+    /* already unbound */
+    if (!pdp && !prp)
+      return GL_TRUE;
+
+    if (pdp->refcount == 0) {
+	/* ERROR!!! */
+	return GL_FALSE;
+    }
+
+    dri_put_drawable(pdp);
+
+    if (prp != pdp) {
+        if (prp->refcount == 0) {
+	    /* ERROR!!! */
+	    return GL_FALSE;
+	}
+
+    dri_put_drawable(prp);
+    }
+
+
+    /* XXX this is disabled so that if we call SwapBuffers on an unbound
+     * window we can determine the last context bound to the window and
+     * use that context's lock. (BrianP, 2-Dec-2000)
+     */
+    pcp->driDrawablePriv = pcp->driReadablePriv = NULL;
+	return GL_TRUE;
+}
+
 /*****************************************************************/
 /** \name Context (un)binding functions                          */
 /*****************************************************************/
@@ -106,8 +146,6 @@ driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
 static int driUnbindContext(__DRIcontext *pcp)
 {
     __DRIscreen *psp;
-    __DRIdrawable *pdp;
-    __DRIdrawable *prp;
 
     /*
     ** Assume error checking is done properly in glXMakeCurrent before
@@ -118,37 +156,9 @@ static int driUnbindContext(__DRIcontext *pcp)
         return GL_FALSE;
 
     psp = pcp->driScreenPriv;
-    pdp = pcp->driDrawablePriv;
-    prp = pcp->driReadablePriv;
 
-    /* already unbound */
-    if (!pdp && !prp)
-      return GL_TRUE;
-    /* Let driver unbind drawable from context */
+	/* Let driver unbind drawable from context */
     (*psp->DriverAPI.UnbindContext)(pcp);
-
-    if (pdp->refcount == 0) {
-	/* ERROR!!! */
-	return GL_FALSE;
-    }
-
-    dri_put_drawable(pdp);
-
-    if (prp != pdp) {
-        if (prp->refcount == 0) {
-	    /* ERROR!!! */
-	    return GL_FALSE;
-	}
-
-    	dri_put_drawable(prp);
-    }
-
-
-    /* XXX this is disabled so that if we call SwapBuffers on an unbound
-     * window we can determine the last context bound to the window and
-     * use that context's lock. (BrianP, 2-Dec-2000)
-     */
-    pcp->driDrawablePriv = pcp->driReadablePriv = NULL;
 
 #if 0
     /* Unbind the drawable */
@@ -171,17 +181,44 @@ static int driBindContext(__DRIcontext *pcp,
 
     /* Bind the drawable to the context */
 
-    if (pcp) {
-	pcp->driDrawablePriv = pdp;
-	pcp->driReadablePriv = prp;
-	if (pdp) {
-	    pdp->driContextPriv = pcp;
-    	    dri_get_drawable(pdp);
+	if (pcp) {
+
+		if (pcp->driDrawablePriv != pdp 
+			|| pcp->driReadablePriv != prp)
+		{
+			/* first increment ref count for new drawables */
+
+			if (pdp)
+			{
+				pdp->driContextPriv = pcp;
+				dri_get_drawable(pdp);
+			}
+
+			if (prp && prp != pdp)
+			{
+				dri_get_drawable(prp);
+			}
+
+			/* free old drawables */ 
+
+			if (pcp->driReadablePriv 
+				&& pcp->driReadablePriv != pcp->driDrawablePriv)
+			{
+				dri_put_drawable(pcp->driReadablePriv);
+			}
+
+			if (pcp->driDrawablePriv)
+			{
+				dri_put_drawable(pcp->driDrawablePriv);
+			}
+
+			/* assign new drawables to context */
+
+			pcp->driDrawablePriv = pdp;
+			pcp->driReadablePriv = prp;
+
+		}
 	}
-	if ( prp && pdp != prp ) {
-    	    dri_get_drawable(prp);
-	}
-    }
 
     /*
     ** Now that we have a context associated with this drawable, we can
@@ -542,6 +579,7 @@ static void
 driDestroyContext(__DRIcontext *pcp)
 {
     if (pcp) {
+	driFreeDrawable(pcp);
 	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
 	_mesa_free(pcp);
     }
@@ -579,6 +617,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
 
     pcp->driScreenPriv = psp;
     pcp->driDrawablePriv = NULL;
+    pcp->driReadablePriv = NULL;
 
     /* When the first context is created for a screen, initialize a "dummy"
      * context.
