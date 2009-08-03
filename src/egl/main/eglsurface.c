@@ -26,7 +26,8 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
 {
    const char *func;
    EGLint width = 0, height = 0, largest = 0;
-   EGLint texFormat = 0, texTarget = 0, mipmapTex = 0;
+   EGLint texFormat = EGL_NO_TEXTURE, texTarget = EGL_NO_TEXTURE;
+   EGLint mipmapTex = EGL_FALSE;
    EGLint renderBuffer = EGL_BACK_BUFFER;
 #ifdef EGL_VERSION_1_2
    EGLint colorspace = EGL_COLORSPACE_sRGB;
