@@ -12276,7 +12276,7 @@
 
 <xi:include href="EXT_texture_array.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<category name="GL_APPLE_flush_buffer_range" number="367">
+<category name="GL_APPLE_texture_range" number="367">
     <enum name="TEXTURE_STORAGE_HINT_APPLE" count="1" value="0x85BC">
         <size name="TexParameteriv"/>
         <size name="TexParameterfv"/>
