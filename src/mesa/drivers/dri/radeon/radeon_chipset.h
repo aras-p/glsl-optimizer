@@ -356,7 +356,9 @@
 #define PCI_CHIP_RV770_947A             0x947A
 #define PCI_CHIP_RV770_947B             0x947B
 
+#define PCI_CHIP_RV730_9480             0x9480
 #define PCI_CHIP_RV730_9487             0x9487
+#define PCI_CHIP_RV730_9488             0x9488
 #define PCI_CHIP_RV730_9489             0x9489
 #define PCI_CHIP_RV730_948F             0x948F
 #define PCI_CHIP_RV730_9490             0x9490

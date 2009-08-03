@@ -878,7 +878,9 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
+   case PCI_CHIP_RV730_9480:
    case PCI_CHIP_RV730_9487:
+   case PCI_CHIP_RV730_9488:
    case PCI_CHIP_RV730_9489:
    case PCI_CHIP_RV730_948F:
    case PCI_CHIP_RV730_9490:
