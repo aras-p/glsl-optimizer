@@ -53,6 +53,7 @@
 #include "util/u_math.h"
 
 #include "lp_bld.h"
+#include "lp_bld_type.h"
 #include "lp_bld_arit.h"
 
 
