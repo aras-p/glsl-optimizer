@@ -12255,6 +12255,65 @@
     </function>
 </category>
 
+<category name="GL_APPLE_flush_buffer_range" number="321">
+    <enum name="BUFFER_SERIALIZED_MODIFY_APPLE" count="1" value="0x8A12">
+        <size name="GetBufferParameteriv" mode="get"/>
+    </enum>
+    <enum name="BUFFER_FLUSHING_UNMAP_APPLE" count="1" value="0x8A13">
+        <size name="GetBufferParameteriv" mode="get"/>
+    </enum>
+    <function name="BufferParameteriAPPLE" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+    </function>
+    <function name="FlushMappedBufferRangeAPPLE" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="size" type="GLsizeiptr"/>
+    </function>
+</category>
+
+<xi:include href="EXT_texture_array.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<category name="GL_APPLE_flush_buffer_range" number="367">
+    <enum name="TEXTURE_STORAGE_HINT_APPLE" count="1" value="0x85BC">
+        <size name="TexParameteriv"/>
+        <size name="TexParameterfv"/>
+        <size name="GetTexParameteriv" mode="get"/>
+        <size name="GetTexParameterfv" mode="get"/>
+    </enum>
+    <enum name="STORAGE_PRIVATE_APPLE" count="1" value="0x85BD">
+        <size name="TexParameteriv"/>
+        <size name="TexParameterfv"/>
+    </enum>
+    <enum name="STORAGE_CACHED_APPLE" count="1" value="0x85BE">
+        <size name="TexParameteriv"/>
+        <size name="TexParameterfv"/>
+    </enum>
+    <enum name="STORAGE_SHARED_APPLE" count="1" value="0x85BF">
+        <size name="TexParameteriv"/>
+        <size name="TexParameterfv"/>
+    </enum>
+    <enum name="TEXTURE_RANGE_LENGTH_APPLE" count="1" value="0x85B7">
+        <size name="GetTexParameteriv" mode="get"/>
+        <size name="GetTexParameterfv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_RANGE_POINTER_APPLE" count="1" value="0x85B8">
+        <size name="GetTexParameterPointervAPPLE" mode="get"/>
+    </enum>
+    <function name="TextureRangeAPPLE" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="length" type="GLsizei"/>
+        <param name="pointer" type="GLvoid *"/>
+    </function>
+    <function name="GetTexParameterPointervAPPLE" offset="assign" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLvoid **"/>
+    </function>
+</category>
+
 <!-- Unnumbered extensions sorted by name. -->
 
 <category name="GL_ATI_blend_equation_separate">
