@@ -59,7 +59,27 @@
 unsigned verbose = 0;
 
 
-typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+typedef int64_t (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+
+
+static LLVMValueRef
+read_cycle_counter(LLVMBuilderRef builder)
+{
+   const char *name = "llvm.readcyclecounter";
+   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+   LLVMValueRef function;
+
+   function = LLVMGetNamedFunction(module, name);
+   if(!function) {
+      LLVMTypeRef type = LLVMInt64Type();
+      function = LLVMAddFunction(module, name, LLVMFunctionType(type, NULL, 0, 0));
+      LLVMSetFunctionCallConv(function, LLVMCCallConv);
+      LLVMSetLinkage(function, LLVMExternalLinkage);
+   }
+   assert(LLVMIsDeclaration(function));
+
+   return LLVMBuildCall(builder, function, NULL, 0, "");
+}
 
 
 static LLVMValueRef
@@ -67,6 +87,7 @@ add_blend_test(LLVMModuleRef module,
                const struct pipe_blend_state *blend,
                union lp_type type)
 {
+   LLVMTypeRef ret_type;
    LLVMTypeRef vec_type;
    LLVMTypeRef args[4];
    LLVMValueRef func;
@@ -80,11 +101,14 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef dst;
    LLVMValueRef con;
    LLVMValueRef res;
+   LLVMValueRef start_counter;
+   LLVMValueRef end_counter;
 
+   ret_type = LLVMInt64Type();
    vec_type = lp_build_vec_type(type);
 
    args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
-   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMVoidType(), args, 4, 0));
+   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMInt64Type(), args, 4, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    src_ptr = LLVMGetParam(func, 0);
    dst_ptr = LLVMGetParam(func, 1);
@@ -99,13 +123,17 @@ add_blend_test(LLVMModuleRef module,
    dst = LLVMBuildLoad(builder, dst_ptr, "dst");
    con = LLVMBuildLoad(builder, const_ptr, "const");
 
+   start_counter = read_cycle_counter(builder);
+
    res = lp_build_blend(builder, blend, type, src, dst, con, 3);
 
    LLVMSetValueName(res, "res");
 
+   end_counter = read_cycle_counter(builder);
+
    LLVMBuildStore(builder, res, res_ptr);
 
-   LLVMBuildRetVoid(builder);
+   LLVMBuildRet(builder, LLVMBuildSub(builder, end_counter, start_counter, "cycles"));;
 
    LLVMDisposeBuilder(builder);
    return func;
@@ -362,6 +390,8 @@ test_one(const struct pipe_blend_state *blend,
    char *error = NULL;
    blend_test_ptr_t blend_test_ptr;
    boolean success;
+   const unsigned n = 32;
+   int64_t cycles[n];
    unsigned i, j, k;
 
    module = LLVMModuleCreateWithName("test");
@@ -402,7 +432,7 @@ test_one(const struct pipe_blend_state *blend,
       LLVMDumpModule(module);
 
    success = TRUE;
-   for(i = 0; i < 10; ++i) { 
+   for(i = 0; i < n && success; ++i) {
       if(type.floating && type.width == 32) {
          float src[LP_MAX_VECTOR_LENGTH];
          float dst[LP_MAX_VECTOR_LENGTH];
@@ -419,14 +449,14 @@ test_one(const struct pipe_blend_state *blend,
          for(j = 0; j < type.length; j += 4)
             compute_blend_ref(blend, src + j, dst + j, con + j, ref + j);
 
-         blend_test_ptr(src, dst, con, res);
+         cycles[i] = blend_test_ptr(src, dst, con, res);
 
          for(j = 0; j < type.length; ++j)
             if(fabs(res[j] - ref[j]) > FLT_EPSILON)
                success = FALSE;
 
          if (!success) {
-            fprintf(stderr, "FAILED\n");
+            fprintf(stderr, "MISMATCH\n");
             fprintf(stderr, "  Result:   ");
             for(j = 0; j < type.length; ++j)
                fprintf(stderr, " %f", res[j]);
@@ -468,7 +498,7 @@ test_one(const struct pipe_blend_state *blend,
                ref[j + k] = (uint8_t)(reff[k]*255.0f + 0.5f);
          }
 
-         blend_test_ptr(src, dst, con, res);
+         cycles[i] = blend_test_ptr(src, dst, con, res);
 
          for(j = 0; j < type.length; ++j) {
             int delta = (int)res[j] - (int)ref[j];
@@ -479,7 +509,7 @@ test_one(const struct pipe_blend_state *blend,
          }
 
          if (!success) {
-            fprintf(stderr, "FAILED\n");
+            fprintf(stderr, "MISMATCH\n");
             fprintf(stderr, "  Result:   ");
             for(j = 0; j < type.length; ++j)
                fprintf(stderr, " %3u", res[j]);
@@ -492,14 +522,50 @@ test_one(const struct pipe_blend_state *blend,
       }
       else
          assert(0);
+   }
 
-      if (!success) {
-         LLVMDumpModule(module);
-         LLVMWriteBitcodeToFile(module, "blend.bc");
-         fprintf(stderr, "blend.bc written\n");
-         abort();
-         break;
+   /*
+    * Unfortunately the output of cycle counter is not very reliable as it comes
+    * -- sometimes we get outliers (due IRQs perhaps?) which are
+    * better removed to avoid random or biased data.
+    */
+   if(verbose >=1 && success) {
+      double sum = 0.0, sum2 = 0.0;
+      double avg, std;
+      unsigned m;
+
+      for(i = 0; i < n; ++i) {
+         sum += cycles[i];
+         sum2 += cycles[i]*cycles[i];
       }
+
+      avg = sum/n;
+      std = sqrtf((sum2 - n*avg*avg)/n);
+
+      m = 0;
+      sum = 0.0;
+      for(i = 0; i < n; ++i) {
+         if(fabs(cycles[i] - avg) <= 4.0*std) {
+            sum += cycles[i];
+            ++m;
+         }
+      }
+
+      avg = sum/m;
+
+      fprintf(stdout, " cycles=%.1f", avg);
+   }
+
+   if(verbose >= 1) {
+      fprintf(stdout, " result=%s\n", success ? "pass" : "fail");
+      fflush(stdout);
+   }
+
+   if (!success) {
+      LLVMDumpModule(module);
+      LLVMWriteBitcodeToFile(module, "blend.bc");
+      fprintf(stderr, "blend.bc written\n");
+      abort();
    }
 
    LLVMFreeMachineCodeForFunction(engine, func);
@@ -594,15 +660,17 @@ test_all(void)
                            alpha_dst_factor->value == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
                            continue;
 
-                        if(verbose >= 1)
-                           fprintf(stderr, 
-                                   "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s ...\n",
+                        if(verbose >= 1) {
+                           fprintf(stdout,
+                                   "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
                                    "rgb_func",         rgb_func->name,
                                    "rgb_src_factor",   rgb_src_factor->name,
                                    "rgb_dst_factor",   rgb_dst_factor->name,
                                    "alpha_func",       alpha_func->name,
                                    "alpha_src_factor", alpha_src_factor->name,
                                    "alpha_dst_factor", alpha_dst_factor->name);
+                           fflush(stdout);
+                        }
 
                         memset(&blend, 0, sizeof blend);
                         blend.blend_enable      = 1;
@@ -658,15 +726,17 @@ test_some(unsigned long n)
 
       for(type = blend_types; type < &blend_types[num_types]; ++type) {
 
-         if(verbose >= 1)
-            fprintf(stderr, 
-                    "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s ...\n",
+         if(verbose >= 1) {
+            fprintf(stdout,
+                    "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
                     "rgb_func",         rgb_func->name,
                     "rgb_src_factor",   rgb_src_factor->name,
                     "rgb_dst_factor",   rgb_dst_factor->name,
                     "alpha_func",       alpha_func->name,
                     "alpha_src_factor", alpha_src_factor->name,
                     "alpha_dst_factor", alpha_dst_factor->name);
+            fflush(stdout);
+         }
 
          memset(&blend, 0, sizeof blend);
          blend.blend_enable      = 1;
