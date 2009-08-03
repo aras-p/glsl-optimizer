@@ -1093,7 +1093,7 @@ void radeonFlush(GLcontext *ctx)
 			 * each of N places that do rendering.  This has worse performances,
 			 * but it is much easier to get correct.
 			 */
-			if (radeon->is_front_buffer_rendering) {
+			if (!radeon->is_front_buffer_rendering) {
 				radeon->front_buffer_dirty = GL_FALSE;
 			}
 		}
