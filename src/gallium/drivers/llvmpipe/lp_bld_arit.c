@@ -288,6 +288,14 @@ lp_build_intrinsic_binary(LLVMBuilderRef builder,
    }
    assert(LLVMIsDeclaration(function));
 
+#ifdef DEBUG
+   /* We shouldn't use only constants with intrinsics, as they won't be
+    * propagated by LLVM optimization passes.
+    */
+   if(LLVMIsConstant(a) && LLVMIsConstant(b))
+      debug_printf("warning: invoking intrinsic \"%s\" with constants\n");
+#endif
+
    args[0] = a;
    args[1] = b;
 
@@ -678,6 +686,9 @@ lp_build_min(struct lp_build_context *bld,
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
 
+   if(a == b)
+      return a;
+
    if(bld->type.norm) {
       if(a == bld->zero || b == bld->zero)
          return bld->zero;
@@ -698,6 +709,9 @@ lp_build_max(struct lp_build_context *bld,
 {
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
+
+   if(a == b)
+      return a;
 
    if(bld->type.norm) {
       if(a == bld->one || b == bld->one)
