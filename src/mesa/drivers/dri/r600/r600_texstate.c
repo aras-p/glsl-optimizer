@@ -568,9 +568,6 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 		}
 	}
 
-	if (t->image_override && t->bo)
-		return;
-
 	switch (texObj->Target) {
         case GL_TEXTURE_1D:
 		SETfield(t->SQ_TEX_RESOURCE0, SQ_TEX_DIM_1D, DIM_shift, DIM_mask);
@@ -701,7 +698,7 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	radeonTexObjPtr t = radeon_tex_obj(tObj);
-	uint32_t pitch_val;
+	uint32_t pitch_val, size;
 
 	if (!tObj)
 		return;
@@ -711,7 +708,12 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	if (!offset)
 		return;
 
-	t->bo = NULL;
+	size = pitch;//h * w * (depth / 8);
+	if (t->bo) {
+		radeon_bo_unref(t->bo);
+		t->bo = NULL;
+	}
+	t->bo = radeon_legacy_bo_alloc_fake(rmesa->radeon.radeonScreen->bom, size, offset);
 	t->override_offset = offset;
 	pitch_val = pitch;
 	switch (depth) {

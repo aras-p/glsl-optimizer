@@ -904,3 +904,32 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
     return bo->size;
 }
 
+/*
+ * Fake up a bo for things like texture image_override.
+ * bo->offset already includes fb_location
+ */
+struct bo_legacy *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
+					      int size,
+	                                      uint32_t offset)
+{
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bom;
+    struct bo_legacy *bo;
+
+#ifdef RADEON_DEBUG_BO
+    bo = bo_allocate(boml, size, 0, RADEON_GEM_DOMAIN_VRAM, 0, szBufUsage);
+#else
+    bo = bo_allocate(boml, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+#endif /* RADEON_DEBUG_BO */
+    if (bo == NULL)
+	return NULL;
+    bo->static_bo = 1;
+    bo->offset = offset;
+    bo->base.handle = bo->offset;
+    bo->ptr = boml->screen->driScreen->pFB + (offset - boml->fb_location);
+    if (bo->base.handle > boml->nhandle) {
+        boml->nhandle = bo->base.handle + 1;
+    }
+    radeon_bo_ref(&(bo->base));
+    return bo;
+}
+
