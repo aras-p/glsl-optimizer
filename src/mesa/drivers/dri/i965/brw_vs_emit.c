@@ -68,6 +68,7 @@ static void release_tmps( struct brw_vs_compile *c )
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
+   int attributes_in_vue;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -221,10 +222,15 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
 
+   /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
+    * them to fit the biggest thing they need to.
+    */
+   attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
+
    if (BRW_IS_IGDNG(c->func.brw))
-       c->prog_data.urb_entry_size = (c->nr_outputs + 6 + 3) / 4;
+       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
-       c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
+       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
 
    c->prog_data.total_grf = reg;
 
