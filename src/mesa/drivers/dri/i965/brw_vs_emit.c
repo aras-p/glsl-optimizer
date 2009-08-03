@@ -68,6 +68,7 @@ static void release_tmps( struct brw_vs_compile *c )
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
+   int attributes_in_vue;
 
 #if 0
    if (c->vp->program.Base.Parameters->NumParameters >= 6)
@@ -201,7 +202,13 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
 
-   c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
+   /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
+    * them to fit the biggest thing they need to.
+    */
+   attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
+
+   c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
+
    c->prog_data.total_grf = reg;
 
    if (INTEL_DEBUG & DEBUG_VS) {
