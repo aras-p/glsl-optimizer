@@ -1200,7 +1200,7 @@ struct brw_instruction
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
       GLuint execution_size:3;
-      GLuint destreg__conditonalmod:4; /* destreg - send, conditionalmod - others */
+      GLuint destreg__conditionalmod:4; /* destreg - send, conditionalmod - others */
       GLuint pad0:2;
       GLuint debug_control:1;
       GLuint saturate:1;

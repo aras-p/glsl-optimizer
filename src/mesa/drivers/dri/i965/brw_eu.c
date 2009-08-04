@@ -62,7 +62,7 @@ void brw_set_predicate_control( struct brw_compile *p, GLuint pc )
 
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional )
 {
-   p->current->header.destreg__conditonalmod = conditional;
+   p->current->header.destreg__conditionalmod = conditional;
 }
 
 void brw_set_access_mode( struct brw_compile *p, GLuint access_mode )
