@@ -7,6 +7,7 @@ util = env.ConvenienceLibrary(
 		'u_blit.c',
 		'u_cache.c',
 		'u_debug.c',
+		'u_debug_dump.c',
 		'u_debug_memory.c',
 		'u_debug_profile.c',
 		'u_debug_stack.c',
