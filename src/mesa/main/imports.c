@@ -911,6 +911,20 @@ _mesa_strtod( const char *s, char **end )
    return strtod(s, end);
 }
 
+/** Compute simple checksum/hash for a string */
+unsigned int
+_mesa_str_checksum(const char *str)
+{
+   /* This could probably be much better */
+   unsigned int sum, i;
+   const char *c;
+   sum = i = 1;
+   for (c = str; *c; c++)
+      sum += *c * (i % 100);
+   return sum;
+}
+
+
 /*@}*/
 
 

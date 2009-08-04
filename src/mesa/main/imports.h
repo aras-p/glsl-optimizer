@@ -586,6 +586,9 @@ _mesa_atoi( const char *s );
 extern double
 _mesa_strtod( const char *s, char **end );
 
+extern unsigned int
+_mesa_str_checksum(const char *str);
+
 extern int
 _mesa_sprintf( char *str, const char *fmt, ... );
 
