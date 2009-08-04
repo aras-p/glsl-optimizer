@@ -1203,10 +1203,9 @@ _mesa_IsTexture( GLuint texture )
 
 
 /**
- * Simplest implementation of texture locking: Grab the a new mutex in
- * the shared context.  Examine the shared context state timestamp and
- * if there has been a change, set the appropriate bits in
- * ctx->NewState.
+ * Simplest implementation of texture locking: grab the shared tex
+ * mutex.  Examine the shared context state timestamp and if there has
+ * been a change, set the appropriate bits in ctx->NewState.
  *
  * This is used to deal with synchronizing things when a texture object
  * is used/modified by different contexts (or threads) which are sharing
