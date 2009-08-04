@@ -45,6 +45,9 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
    if(a == bld->undef || a == bld->zero || a == bld->one)
       return a;
 
+   /* XXX: SSE3 has PSHUFB which should be better than bitmasks, but forcing
+    * using shuffles here actually causes worst results. More investigation is
+    * needed. */
    if (n <= 4) {
       /*
        * Shuffle.
@@ -62,10 +65,10 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
       /*
        * Bit mask and recursive shifts
        *
-       *   XYZW XYZW .... XYZW
-       *   _Y__ _Y__ .... _Y__
-       *   YY_  YY__ .... YY__
-       *   YYYY YYYY .... YYYY
+       *   XYZW XYZW .... XYZW  <= input
+       *   0Y00 0Y00 .... 0Y00
+       *   YY00 YY00 .... YY00
+       *   YYYY YYYY .... YYYY  <= output
        */
       union lp_type type4 = type;
       const char shifts[4][2] = {
