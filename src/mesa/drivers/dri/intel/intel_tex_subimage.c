@@ -44,10 +44,12 @@ intelTexSubimage(GLcontext * ctx,
                  GLenum target, GLint level,
                  GLint xoffset, GLint yoffset, GLint zoffset,
                  GLint width, GLint height, GLint depth,
+                 GLsizei imageSize,
                  GLenum format, GLenum type, const void *pixels,
                  const struct gl_pixelstore_attrib *packing,
                  struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
+                 struct gl_texture_image *texImage,
+                 GLboolean compressed)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -59,9 +61,14 @@ intelTexSubimage(GLcontext * ctx,
 
    intelFlush(ctx);
 
-   pixels =
-      _mesa_validate_pbo_teximage(ctx, dims, width, height, depth, format,
-                                  type, pixels, packing, "glTexSubImage2D");
+   if (compressed)
+      pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize,
+                                                      pixels, packing,
+                                                      "glCompressedTexImage");
+   else
+      pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
+                                           format, type, pixels, packing,
+                                           "glTexSubImage");
    if (!pixels)
       return;
 
@@ -90,15 +97,28 @@ intelTexSubimage(GLcontext * ctx,
 
    assert(dstRowStride);
 
-   if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
-                                        texImage->TexFormat,
-                                        texImage->Data,
-                                        xoffset, yoffset, zoffset,
-                                        dstRowStride,
-                                        texImage->ImageOffsets,
-                                        width, height, depth,
-                                        format, type, pixels, packing)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+   if (compressed) {
+      if (intelImage->mt) {
+         struct intel_region *dst = intelImage->mt->region;
+         
+         _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
+                         xoffset, yoffset / 4,
+                         (width + 3)  & ~3, (height + 3) / 4,
+                         pixels, (width + 3) & ~3, 0, 0);
+      } else
+        memcpy(texImage->Data, pixels, imageSize);
+   }
+   else {
+      if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
+                                           texImage->TexFormat,
+                                           texImage->Data,
+                                           xoffset, yoffset, zoffset,
+                                           dstRowStride,
+                                           texImage->ImageOffsets,
+                                           width, height, depth,
+                                           format, type, pixels, packing)) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+      }
    }
 
    _mesa_unmap_teximage_pbo(ctx, packing);
@@ -132,8 +152,8 @@ intelTexSubImage3D(GLcontext * ctx,
    intelTexSubimage(ctx, 3,
                     target, level,
                     xoffset, yoffset, zoffset,
-                    width, height, depth,
-                    format, type, pixels, packing, texObj, texImage);
+                    width, height, depth, 0,
+                    format, type, pixels, packing, texObj, texImage, GL_FALSE);
 }
 
 
@@ -152,8 +172,8 @@ intelTexSubImage2D(GLcontext * ctx,
    intelTexSubimage(ctx, 2,
                     target, level,
                     xoffset, yoffset, 0,
-                    width, height, 1,
-                    format, type, pixels, packing, texObj, texImage);
+                    width, height, 1, 0,
+                    format, type, pixels, packing, texObj, texImage, GL_FALSE);
 }
 
 
@@ -172,8 +192,8 @@ intelTexSubImage1D(GLcontext * ctx,
    intelTexSubimage(ctx, 1,
                     target, level,
                     xoffset, 0, 0,
-                    width, 1, 1,
-                    format, type, pixels, packing, texObj, texImage);
+                    width, 1, 1, 0,
+                    format, type, pixels, packing, texObj, texImage, GL_FALSE);
 }
 
 static void
@@ -187,8 +207,11 @@ intelCompressedTexSubImage2D(GLcontext * ctx,
 			     struct gl_texture_object *texObj,
 			     struct gl_texture_image *texImage)
 {
-   fprintf(stderr, "stubbed CompressedTexSubImage2D: %dx%d@%dx%d\n",
-	   width, height, xoffset, yoffset);
+   intelTexSubimage(ctx, 2,
+                    target, level,
+                    xoffset, yoffset, 0,
+                    width, height, 1, imageSize,
+                    format, 0, pixels, &ctx->Unpack, texObj, texImage, GL_TRUE);
 }
 
 
