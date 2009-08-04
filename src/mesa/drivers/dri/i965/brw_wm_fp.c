@@ -717,7 +717,11 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      tmpcoord,
 	      0,
 	      inst->SrcReg[0],
-	      scale,
+	      src_swizzle(scale,
+			  SWIZZLE_X,
+			  SWIZZLE_Y,
+			  SWIZZLE_ONE,
+			  SWIZZLE_ONE),
 	      src_undef());
 
       coord = src_reg_from_dst(tmpcoord);
