@@ -81,13 +81,11 @@ static void r300_setup_miptree(struct r300_texture* tex)
          * XXX
          * POT, uncompressed, unmippmapped textures can be aligned to 32,
          * instead of 64. */
-        stride = align(
-                (base->nblocksx[i] * base->block.size) / base->block.width,
-                32);
+        stride = align(pf_get_stride(&base->block, base->width[i]), 32);
         size = stride * base->nblocksy[i] * base->depth[i];
 
         tex->offset[i] = align(tex->size, 32);
-        tex->size += tex->offset[i] + size;
+        tex->size = tex->offset[i] + size;
 
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",
