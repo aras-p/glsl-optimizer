@@ -326,7 +326,8 @@ GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 	if (face >= mt->faces || level < mt->firstLevel || level > mt->lastLevel)
 		return GL_FALSE;
 
-	if (texImage->IsCompressed != mt->compressed)
+	if ((!texImage->IsCompressed && mt->compressed) ||
+	    (texImage->IsCompressed && !mt->compressed))
 		return GL_FALSE;
 
 	if (!texImage->IsCompressed &&
