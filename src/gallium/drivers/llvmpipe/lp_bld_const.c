@@ -143,3 +143,38 @@ lp_build_const_aos(union lp_type type,
 
    return LLVMConstVector(elems, type.length);
 }
+
+
+LLVMValueRef
+lp_build_const_shift(union lp_type type,
+                     int c)
+{
+   LLVMTypeRef elem_type = LLVMIntType(type.width);
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+
+   for(i = 0; i < type.length; ++i)
+      elems[i] = LLVMConstInt(elem_type, c, 0);
+
+   return LLVMConstVector(elems, type.length);
+}
+
+
+LLVMValueRef
+lp_build_const_mask_aos(union lp_type type,
+                        boolean cond[4])
+{
+   LLVMTypeRef elem_type = LLVMIntType(type.width);
+   LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];
+   unsigned i, j;
+
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+
+   for(j = 0; j < type.length; j += 4)
+      for(i = 0; i < 4; ++i)
+         masks[j + i] = LLVMConstInt(elem_type, cond[i] ? ~0 : 0, 0);
+
+   return LLVMConstVector(masks, type.length);
+}

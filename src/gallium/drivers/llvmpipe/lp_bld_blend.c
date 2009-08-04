@@ -43,6 +43,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_swizzle.h"
 
 
 /**
@@ -179,67 +180,30 @@ lp_build_blend_swizzle(struct lp_build_blend_context *bld,
                        enum lp_build_blend_swizzle rgb_swizzle,
                        unsigned alpha_swizzle)
 {
-   const unsigned n = bld->base.type.length;
-   LLVMValueRef swizzles[LP_MAX_VECTOR_LENGTH];
-   unsigned i, j;
-
    if(rgb == alpha) {
       if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA)
          return rgb;
-
-      alpha = bld->base.undef;
+      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA)
+         return lp_build_broadcast_aos(&bld->base, rgb, alpha_swizzle);
    }
-
-   if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA &&
-      !bld->base.type.floating) {
-#if 0
-      /* Use a select */
-      /* FIXME: Unfortunetaly select of vectors do not work */
-
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
-            swizzles[j + i] = LLVMConstInt(LLVMInt1Type(), i == alpha_swizzle ? 0 : 1, 0);
-
-      return LLVMBuildSelect(bld->base.builder, LLVMConstVector(swizzles, n), rgb, alpha, "");
-#else
-      /* XXX: Use a bitmask, as byte shuffles often end up being translated
-       * into many PEXTRB. Ideally LLVM X86 code generation should pick this
-       * automatically for us. */
-
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
-            swizzles[j + i] = LLVMConstInt(LLVMIntType(bld->base.type.width), i == alpha_swizzle ? 0 : ~0, 0);
-
-      /* TODO: Unfortunately constant propagation prevents from using PANDN. And
-       * on SSE4 we have even better -- PBLENDVB */
-      return LLVMBuildOr(bld->base.builder,
-                         LLVMBuildAnd(bld->base.builder, rgb,   LLVMConstVector(swizzles, n), ""),
-                         LLVMBuildAnd(bld->base.builder, alpha, LLVMBuildNot(bld->base.builder, LLVMConstVector(swizzles, n), ""), ""),
-                         "");
-#endif
-   }
-
-   for(j = 0; j < n; j += 4) {
-      for(i = 0; i < 4; ++i) {
-         unsigned swizzle;
-
-         if(i == alpha_swizzle && alpha != bld->base.undef) {
-            /* Take the alpha from the second shuffle argument */
-            swizzle = n + j + alpha_swizzle;
-         }
-         else if (rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA) {
-            /* Take the alpha from the first shuffle argument */
-            swizzle = j + alpha_swizzle;
-         }
-         else {
-            swizzle = j + i;
-         }
-
-         swizzles[j + i] = LLVMConstInt(LLVMInt32Type(), swizzle, 0);
+   else {
+      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA) {
+         boolean cond[4] = {0, 0, 0, 0};
+         cond[alpha_swizzle] = 1;
+         return lp_build_select_aos(&bld->base, alpha, rgb, cond);
+      }
+      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA) {
+         unsigned char swizzle[4];
+         swizzle[0] = alpha_swizzle;
+         swizzle[1] = alpha_swizzle;
+         swizzle[2] = alpha_swizzle;
+         swizzle[3] = alpha_swizzle;
+         swizzle[alpha_swizzle] += 4;
+         return lp_build_swizzle2_aos(&bld->base, rgb, alpha, swizzle);
       }
    }
-
-   return LLVMBuildShuffleVector(bld->base.builder, rgb, alpha, LLVMConstVector(swizzles, n), "");
+   assert(0);
+   return bld->base.undef;
 }
 
 

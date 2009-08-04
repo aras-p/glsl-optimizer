@@ -33,42 +33,55 @@
  */
 
 
-#ifndef LP_BLD_CONST_H
-#define LP_BLD_CONST_H
+#ifndef LP_BLD_SWIZZLE_H
+#define LP_BLD_SWIZZLE_H
 
 
 #include <llvm-c/Core.h>  
 
 
 union lp_type type;
+struct lp_build_context;
+
+
+/**
+ * Broadcast one channel of a vector composed of arrays of XYZW structures into
+ * all four channel.
+ */
+LLVMValueRef
+lp_build_broadcast_aos(struct lp_build_context *bld,
+                       LLVMValueRef a,
+                       unsigned channel);
 
 
 LLVMValueRef
-lp_build_undef(union lp_type type);
+lp_build_select_aos(struct lp_build_context *bld,
+                    LLVMValueRef a,
+                    LLVMValueRef b,
+                    boolean cond[4]);
 
 
+/**
+ * Swizzle a vector consisting of an array of XYZW structs.
+ *
+ * @param swizzle is the in [0,4[ range.
+ */
 LLVMValueRef
-lp_build_zero(union lp_type type);
+lp_build_swizzle1_aos(struct lp_build_context *bld,
+                      LLVMValueRef a,
+                      unsigned char swizzle[4]);
 
 
+/**
+ * Swizzle two vector consisting of an array of XYZW structs.
+ *
+ * @param swizzle is the in [0,8[ range. Values in [4,8[ range refer to b.
+ */
 LLVMValueRef
-lp_build_one(union lp_type type);
+lp_build_swizzle2_aos(struct lp_build_context *bld,
+                      LLVMValueRef a,
+                      LLVMValueRef b,
+                      unsigned char swizzle[4]);
 
 
-LLVMValueRef
-lp_build_const_aos(union lp_type type, 
-                   double r, double g, double b, double a, 
-                   const unsigned char *swizzle);
-
-
-LLVMValueRef
-lp_build_const_shift(union lp_type type,
-                     int c);
-
-
-LLVMValueRef
-lp_build_const_mask_aos(union lp_type type,
-                        boolean cond[4]);
-
-
-#endif /* !LP_BLD_CONST_H */
+#endif /* !LP_BLD_SWIZZLE_H */
