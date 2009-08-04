@@ -263,6 +263,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
 {
    /* _NEW_PROGRAM */
    const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
+				   ctx->Shader.CurrentProgram->LinkStatus &&
                                    ctx->Shader.CurrentProgram->VertexProgram);
    const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
    GLbitfield fp_inputs = 0x0;
