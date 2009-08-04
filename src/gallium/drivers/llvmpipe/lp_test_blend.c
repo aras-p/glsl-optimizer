@@ -51,6 +51,7 @@
 #include "pipe/p_state.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_debug_dump.h"
 
 #include "lp_bld.h"
 #include "lp_bld_type.h"
@@ -61,6 +62,78 @@ unsigned verbose = 0;
 
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+
+
+static void
+write_tsv_header(FILE *fp)
+{
+   fprintf(fp,
+           "result\t"
+           "cycles\t"
+           "type\t"
+           "rgb_func\t"
+           "rgb_src_factor\t"
+           "rgb_dst_factor\t"
+           "alpha_func\t"
+           "alpha_src_factor\t"
+           "alpha_dst_factor\n");
+
+   fflush(fp);
+}
+
+
+static void
+write_tsv_row(FILE *fp,
+              const struct pipe_blend_state *blend,
+              union lp_type type,
+              double cycles,
+              boolean success)
+{
+   fprintf(fp, "%s\t", success ? "pass" : "fail");
+
+   fprintf(fp, "%u\t", (unsigned)(cycles + 0.5));
+
+   fprintf(fp, "%s%u%sx%u\t",
+           type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
+           type.width,
+           type.norm ? "n" : "",
+           type.length);
+
+   fprintf(fp,
+           "%s\t%s\t%s\t%s\t%s\t%s\n",
+           debug_dump_blend_func(blend->rgb_func, TRUE),
+           debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
+           debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
+           debug_dump_blend_func(blend->alpha_func, TRUE),
+           debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
+           debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
+
+   fflush(fp);
+}
+
+
+static void
+dump_blend_type(FILE *fp,
+                const struct pipe_blend_state *blend,
+                union lp_type type)
+{
+   fprintf(fp,
+           "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
+           "rgb_func",         debug_dump_blend_func(blend->rgb_func, TRUE),
+           "rgb_src_factor",   debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
+           "rgb_dst_factor",   debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
+           "alpha_func",       debug_dump_blend_func(blend->alpha_func, TRUE),
+           "alpha_src_factor", debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
+           "alpha_dst_factor", debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
+
+   fprintf(fp, " type=%s%u%sx%u",
+           type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
+           type.width,
+           type.norm ? "n" : "",
+           type.length);
+
+   fflush(fp);
+}
 
 
 static INLINE uint64_t
@@ -367,7 +440,8 @@ compute_blend_ref(const struct pipe_blend_state *blend,
 
 
 static boolean
-test_one(const struct pipe_blend_state *blend,
+test_one(FILE *fp,
+         const struct pipe_blend_state *blend,
          union lp_type type)
 {
    LLVMModuleRef module = NULL;
@@ -380,7 +454,11 @@ test_one(const struct pipe_blend_state *blend,
    boolean success;
    const unsigned n = 32;
    int64_t cycles[n];
+   double cycles_avg = 0.0;
    unsigned i, j, k;
+
+   if(verbose >= 1)
+      dump_blend_type(stdout, blend, type);
 
    module = LLVMModuleCreateWithName("test");
 
@@ -394,6 +472,8 @@ test_one(const struct pipe_blend_state *blend,
 
    provider = LLVMCreateModuleProviderForExistingModule(module);
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
+      dump_blend_type(stderr, blend, type);
+      fprintf(stderr, "\n");
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
@@ -449,6 +529,8 @@ test_one(const struct pipe_blend_state *blend,
                success = FALSE;
 
          if (!success) {
+            dump_blend_type(stderr, blend, type);
+            fprintf(stderr, "\n");
             fprintf(stderr, "MISMATCH\n");
             fprintf(stderr, "  Result:   ");
             for(j = 0; j < type.length; ++j)
@@ -504,6 +586,8 @@ test_one(const struct pipe_blend_state *blend,
          }
 
          if (!success) {
+            dump_blend_type(stderr, blend, type);
+            fprintf(stderr, "\n");
             fprintf(stderr, "MISMATCH\n");
             fprintf(stderr, "  Result:   ");
             for(j = 0; j < type.length; ++j)
@@ -526,7 +610,7 @@ test_one(const struct pipe_blend_state *blend,
     * -- sometimes we get outliers (due IRQs perhaps?) which are
     * better removed to avoid random or biased data.
     */
-   if(verbose >=1 && success) {
+   {
       double sum = 0.0, sum2 = 0.0;
       double avg, std;
       unsigned m;
@@ -548,16 +632,22 @@ test_one(const struct pipe_blend_state *blend,
          }
       }
 
-      avg = sum/m;
+      cycles_avg = sum/m;
 
-      fprintf(stdout, " cycles=%.1f", avg);
-      fprintf(stdout, " cycles_per_elem=%.1f", avg/type.length);
+   }
+
+   if(verbose >= 1) {
+      fprintf(stdout, " cycles=%.1f", cycles_avg);
+      fprintf(stdout, " cycles_per_elem=%.1f", cycles_avg/type.length);
    }
 
    if(verbose >= 1) {
       fprintf(stdout, " result=%s\n", success ? "pass" : "fail");
       fflush(stdout);
    }
+
+   if(fp)
+      write_tsv_row(fp, blend, type, cycles_avg, success);
 
    if (!success) {
       LLVMDumpModule(module);
@@ -576,48 +666,41 @@ test_one(const struct pipe_blend_state *blend,
 }
 
 
-struct value_name_pair
-{
-   unsigned value;
-   const char *name;
-};
-
-
-const struct value_name_pair
+const unsigned
 blend_factors[] = {
-   {PIPE_BLENDFACTOR_ZERO                , "zero"},
-   {PIPE_BLENDFACTOR_ONE                 , "one"},
-   {PIPE_BLENDFACTOR_SRC_COLOR           , "src_color"},
-   {PIPE_BLENDFACTOR_SRC_ALPHA           , "src_alpha"},
-   {PIPE_BLENDFACTOR_DST_COLOR           , "dst_color"},
-   {PIPE_BLENDFACTOR_DST_ALPHA           , "dst_alpha"},
-   {PIPE_BLENDFACTOR_CONST_COLOR         , "const_color"},
-   {PIPE_BLENDFACTOR_CONST_ALPHA         , "const_alpha"},
+   PIPE_BLENDFACTOR_ZERO,
+   PIPE_BLENDFACTOR_ONE,
+   PIPE_BLENDFACTOR_SRC_COLOR,
+   PIPE_BLENDFACTOR_SRC_ALPHA,
+   PIPE_BLENDFACTOR_DST_COLOR,
+   PIPE_BLENDFACTOR_DST_ALPHA,
+   PIPE_BLENDFACTOR_CONST_COLOR,
+   PIPE_BLENDFACTOR_CONST_ALPHA,
 #if 0
-   {PIPE_BLENDFACTOR_SRC1_COLOR          , "src1_color"},
-   {PIPE_BLENDFACTOR_SRC1_ALPHA          , "src1_alpha"},
+   PIPE_BLENDFACTOR_SRC1_COLOR,
+   PIPE_BLENDFACTOR_SRC1_ALPHA,
 #endif
-   {PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE  , "src_alpha_saturate"},
-   {PIPE_BLENDFACTOR_INV_SRC_COLOR       , "inv_src_color"},
-   {PIPE_BLENDFACTOR_INV_SRC_ALPHA       , "inv_src_alpha"},
-   {PIPE_BLENDFACTOR_INV_DST_COLOR       , "inv_dst_color"},
-   {PIPE_BLENDFACTOR_INV_DST_ALPHA       , "inv_dst_alpha"},
-   {PIPE_BLENDFACTOR_INV_CONST_COLOR     , "inv_const_color"},
-   {PIPE_BLENDFACTOR_INV_CONST_ALPHA     , "inv_const_alpha"},
+   PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE,
+   PIPE_BLENDFACTOR_INV_SRC_COLOR,
+   PIPE_BLENDFACTOR_INV_SRC_ALPHA,
+   PIPE_BLENDFACTOR_INV_DST_COLOR,
+   PIPE_BLENDFACTOR_INV_DST_ALPHA,
+   PIPE_BLENDFACTOR_INV_CONST_COLOR,
+   PIPE_BLENDFACTOR_INV_CONST_ALPHA,
 #if 0
-   {PIPE_BLENDFACTOR_INV_SRC1_COLOR      , "inv_src1_color"},
-   {PIPE_BLENDFACTOR_INV_SRC1_ALPHA      , "inv_src1_alpha"}
+   PIPE_BLENDFACTOR_INV_SRC1_COLOR,
+   PIPE_BLENDFACTOR_INV_SRC1_ALPHA,
 #endif
 };
 
 
-const struct value_name_pair
+const unsigned
 blend_funcs[] = {
-   {PIPE_BLEND_ADD               , "add"},
-   {PIPE_BLEND_SUBTRACT          , "sub"},
-   {PIPE_BLEND_REVERSE_SUBTRACT  , "rev_sub"},
-   {PIPE_BLEND_MIN               , "min"},
-   {PIPE_BLEND_MAX               , "max"}
+   PIPE_BLEND_ADD,
+   PIPE_BLEND_SUBTRACT,
+   PIPE_BLEND_REVERSE_SUBTRACT,
+   PIPE_BLEND_MIN,
+   PIPE_BLEND_MAX
 };
 
 
@@ -634,14 +717,14 @@ const unsigned num_types = sizeof(blend_types)/sizeof(blend_types[0]);
 
 
 static boolean 
-test_all(void)
+test_all(FILE *fp)
 {
-   const struct value_name_pair *rgb_func;
-   const struct value_name_pair *rgb_src_factor;
-   const struct value_name_pair *rgb_dst_factor;
-   const struct value_name_pair *alpha_func;
-   const struct value_name_pair *alpha_src_factor;
-   const struct value_name_pair *alpha_dst_factor;
+   const unsigned *rgb_func;
+   const unsigned *rgb_src_factor;
+   const unsigned *rgb_dst_factor;
+   const unsigned *alpha_func;
+   const unsigned *alpha_src_factor;
+   const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
    const union lp_type *type;
    bool success = TRUE;
@@ -654,32 +737,20 @@ test_all(void)
                   for(alpha_dst_factor = blend_factors; alpha_dst_factor <= alpha_src_factor; ++alpha_dst_factor) {
                      for(type = blend_types; type < &blend_types[num_types]; ++type) {
 
-                        if(rgb_dst_factor->value == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
-                           alpha_dst_factor->value == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
+                        if(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+                           *alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
                            continue;
-
-                        if(verbose >= 1) {
-                           fprintf(stdout,
-                                   "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-                                   "rgb_func",         rgb_func->name,
-                                   "rgb_src_factor",   rgb_src_factor->name,
-                                   "rgb_dst_factor",   rgb_dst_factor->name,
-                                   "alpha_func",       alpha_func->name,
-                                   "alpha_src_factor", alpha_src_factor->name,
-                                   "alpha_dst_factor", alpha_dst_factor->name);
-                           fflush(stdout);
-                        }
 
                         memset(&blend, 0, sizeof blend);
                         blend.blend_enable      = 1;
-                        blend.rgb_func          = rgb_func->value;
-                        blend.rgb_src_factor    = rgb_src_factor->value;
-                        blend.rgb_dst_factor    = rgb_dst_factor->value;
-                        blend.alpha_func        = alpha_func->value;
-                        blend.alpha_src_factor  = alpha_src_factor->value;
-                        blend.alpha_dst_factor  = alpha_dst_factor->value;
+                        blend.rgb_func          = *rgb_func;
+                        blend.rgb_src_factor    = *rgb_src_factor;
+                        blend.rgb_dst_factor    = *rgb_dst_factor;
+                        blend.alpha_func        = *alpha_func;
+                        blend.alpha_src_factor  = *alpha_src_factor;
+                        blend.alpha_dst_factor  = *alpha_dst_factor;
 
-                        if(!test_one(&blend, *type))
+                        if(!test_one(fp, &blend, *type))
                           success = FALSE;
 
                      }
@@ -695,14 +766,14 @@ test_all(void)
 
 
 static boolean 
-test_some(unsigned long n)
+test_some(FILE *fp, unsigned long n)
 {
-   const struct value_name_pair *rgb_func;
-   const struct value_name_pair *rgb_src_factor;
-   const struct value_name_pair *rgb_dst_factor;
-   const struct value_name_pair *alpha_func;
-   const struct value_name_pair *alpha_src_factor;
-   const struct value_name_pair *alpha_dst_factor;
+   const unsigned *rgb_func;
+   const unsigned *rgb_src_factor;
+   const unsigned *rgb_dst_factor;
+   const unsigned *alpha_func;
+   const unsigned *alpha_src_factor;
+   const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
    const union lp_type *type;
    unsigned long i;
@@ -716,38 +787,25 @@ test_some(unsigned long n)
       
       do {
          rgb_dst_factor = &blend_factors[random() % num_factors];
-      } while(rgb_dst_factor->value == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
+      } while(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
       do {
          alpha_dst_factor = &blend_factors[random() % num_factors];
-      } while(alpha_dst_factor->value == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
+      } while(*alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
       for(type = blend_types; type < &blend_types[num_types]; ++type) {
 
-         if(verbose >= 1) {
-            fprintf(stdout,
-                    "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-                    "rgb_func",         rgb_func->name,
-                    "rgb_src_factor",   rgb_src_factor->name,
-                    "rgb_dst_factor",   rgb_dst_factor->name,
-                    "alpha_func",       alpha_func->name,
-                    "alpha_src_factor", alpha_src_factor->name,
-                    "alpha_dst_factor", alpha_dst_factor->name);
-            fflush(stdout);
-         }
-
          memset(&blend, 0, sizeof blend);
          blend.blend_enable      = 1;
-         blend.rgb_func          = rgb_func->value;
-         blend.rgb_src_factor    = rgb_src_factor->value;
-         blend.rgb_dst_factor    = rgb_dst_factor->value;
-         blend.alpha_func        = alpha_func->value;
-         blend.alpha_src_factor  = alpha_src_factor->value;
-         blend.alpha_dst_factor  = alpha_dst_factor->value;
+         blend.rgb_func          = *rgb_func;
+         blend.rgb_src_factor    = *rgb_src_factor;
+         blend.rgb_dst_factor    = *rgb_dst_factor;
+         blend.alpha_func        = *alpha_func;
+         blend.alpha_src_factor  = *alpha_src_factor;
+         blend.alpha_dst_factor  = *alpha_dst_factor;
 
-         if(!test_one(&blend, *type))
+         if(!test_one(fp, &blend, *type))
            success = FALSE;
-
       }
    }
 
@@ -758,20 +816,33 @@ test_some(unsigned long n)
 int main(int argc, char **argv)
 {
    unsigned long n = 1000;
+   FILE *fp = NULL;
    unsigned i;
    boolean success;
 
    for(i = 1; i < argc; ++i) {
       if(strcmp(argv[i], "-v") == 0)
          ++verbose;
+      else if(strcmp(argv[i], "-o") == 0)
+         fp = fopen(argv[++i], "wt");
       else
          n = atoi(argv[i]);
    }
+
+   if(fp) {
+      /* Warm up the caches */
+      test_some(NULL, 100);
+
+      write_tsv_header(fp);
+   }
       
    if(n)
-      success = test_some(n);
+      success = test_some(fp, n);
    else
-      success = test_all();
+      success = test_all(fp);
+
+   if(fp)
+      fclose(fp);
 
    return success ? 0 : 1;
 }
