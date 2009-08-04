@@ -679,7 +679,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
       assert(if_insn->header.opcode == BRW_OPCODE_IF);
 
       if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
-      if_insn->bits3.if_else.pop_count = 1;
+      if_insn->bits3.if_else.pop_count = 0;
       if_insn->bits3.if_else.pad0 = 0;
    }
 
