@@ -1558,6 +1558,19 @@ void brw_vs_emit(struct brw_vs_compile *c )
 				    "unknown");
       }
 
+      /* Set the predication update on the last instruction of the native
+       * instruction sequence.
+       *
+       * This would be problematic if it was set on a math instruction,
+       * but that shouldn't be the case with the current GLSL compiler.
+       */
+      if (inst->CondUpdate) {
+	 struct brw_instruction *hw_insn = &p->store[p->nr_insn - 1];
+
+	 assert(hw_insn->header.destreg__conditionalmod == 0);
+	 hw_insn->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      }
+
       if ((inst->DstReg.File == PROGRAM_OUTPUT)
           && (inst->DstReg.Index != VERT_RESULT_HPOS)
           && c->output_regs[inst->DstReg.Index].used_in_src) {
