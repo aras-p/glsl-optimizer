@@ -129,6 +129,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 reg++;
       }
    }
+   /* If there are no inputs, we'll still be reading one attribute's worth
+    * because it's required -- see urb_read_length setting.
+    */
+   if (c->nr_inputs == 0)
+      reg++;
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
@@ -221,6 +226,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * vertex urb, so is half the amount:
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
+   /* Setting this field to 0 leads to undefined behavior according to the
+    * the VS_STATE docs.  Our VUEs will always have at least one attribute
+    * sitting in them, even if it's padding.
+    */
+   if (c->prog_data.urb_read_length == 0)
+      c->prog_data.urb_read_length = 1;
 
    /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
     * them to fit the biggest thing they need to.
