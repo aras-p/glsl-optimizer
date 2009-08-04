@@ -176,7 +176,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(18, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(17, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -199,14 +199,6 @@ i915_emit_invarient_state(struct intel_context *intel)
              CSB_TCB(2, 2) |
              CSB_TCB(3, 3) |
              CSB_TCB(4, 4) | CSB_TCB(5, 5) | CSB_TCB(6, 6) | CSB_TCB(7, 7));
-
-   OUT_BATCH(_3DSTATE_RASTER_RULES_CMD |
-             ENABLE_POINT_RASTER_RULE |
-             OGL_POINT_RASTER_RULE |
-             ENABLE_LINE_STRIP_PROVOKE_VRTX |
-             ENABLE_TRI_FAN_PROVOKE_VRTX |
-             LINE_STRIP_PROVOKE_VRTX(1) |
-             TRI_FAN_PROVOKE_VRTX(2) | ENABLE_TEXKILL_3D_4D | TEXKILL_4D);
 
    /* Need to initialize this to zero.
     */
@@ -257,6 +249,9 @@ get_state_size(struct i915_hw_state *state)
 
    if (dirty & I915_UPLOAD_INVARIENT)
       sz += 30 * 4;
+
+   if (dirty & I915_UPLOAD_RASTER_RULES)
+      sz += sizeof(state->RasterRules);
 
    if (dirty & I915_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
@@ -364,6 +359,12 @@ i915_emit_state(struct intel_context *intel)
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_INVARIENT:\n");
       i915_emit_invarient_state(intel);
+   }
+
+   if (dirty & I915_UPLOAD_RASTER_RULES) {
+      if (INTEL_DEBUG & DEBUG_STATE)
+         fprintf(stderr, "I915_UPLOAD_RASTER_RULES:\n");
+      emit(intel, state->RasterRules, sizeof(state->RasterRules));
    }
 
    if (dirty & I915_UPLOAD_CTX) {

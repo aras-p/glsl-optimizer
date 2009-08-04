@@ -48,6 +48,7 @@
 #define I915_UPLOAD_FOG              0x20
 #define I915_UPLOAD_INVARIENT        0x40
 #define I915_UPLOAD_DEFAULTS         0x80
+#define I915_UPLOAD_RASTER_RULES     0x100
 #define I915_UPLOAD_TEX(i)           (0x00010000<<(i))
 #define I915_UPLOAD_TEX_ALL          (0x00ff0000)
 #define I915_UPLOAD_TEX_0_SHIFT      16
@@ -112,6 +113,10 @@
 #define I915_DEFREG_Z1    5
 #define I915_DEF_SETUP_SIZE    6
 
+enum {
+   I915_RASTER_RULES,
+   I915_RASTER_RULES_SETUP_SIZE,
+};
 
 #define I915_MAX_CONSTANT      32
 #define I915_CONSTANT_SIZE     (2+(4*I915_MAX_CONSTANT))
@@ -208,6 +213,7 @@ struct i915_hw_state
    GLuint Stipple[I915_STP_SETUP_SIZE];
    GLuint Fog[I915_FOG_SETUP_SIZE];
    GLuint Defaults[I915_DEF_SETUP_SIZE];
+   GLuint RasterRules[I915_RASTER_RULES_SETUP_SIZE];
    GLuint Tex[I915_TEX_UNITS][I915_TEX_SETUP_SIZE];
    GLuint Constant[I915_CONSTANT_SIZE];
    GLuint ConstantSize;
@@ -324,6 +330,7 @@ extern void i915InitStateFunctions(struct dd_function_table *functions);
 extern void i915InitState(struct i915_context *i915);
 extern void i915_update_fog(GLcontext * ctx);
 extern void i915_update_stencil(GLcontext * ctx);
+extern void i915_update_provoking_vertex(GLcontext *ctx);
 
 
 /*======================================================================

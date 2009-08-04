@@ -1033,6 +1033,13 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Buffer[I915_DESTREG_SR2] = 0;
    }
 
+   i915->state.RasterRules[I915_RASTER_RULES] = _3DSTATE_RASTER_RULES_CMD |
+      ENABLE_POINT_RASTER_RULE |
+      OGL_POINT_RASTER_RULE |
+      ENABLE_LINE_STRIP_PROVOKE_VRTX |
+      ENABLE_TRI_FAN_PROVOKE_VRTX |
+      LINE_STRIP_PROVOKE_VRTX(1) |
+      TRI_FAN_PROVOKE_VRTX(2) | ENABLE_TEXKILL_3D_4D | TEXKILL_4D;
 
 #if 0
    {
@@ -1053,7 +1060,33 @@ i915_init_packets(struct i915_context *i915)
    i915->state.active = (I915_UPLOAD_PROGRAM |
                          I915_UPLOAD_STIPPLE |
                          I915_UPLOAD_CTX |
-                         I915_UPLOAD_BUFFERS | I915_UPLOAD_INVARIENT);
+                         I915_UPLOAD_BUFFERS |
+			 I915_UPLOAD_INVARIENT |
+			 I915_UPLOAD_RASTER_RULES);
+}
+
+void
+i915_update_provoking_vertex(GLcontext * ctx)
+{
+   struct i915_context *i915 = I915_CONTEXT(ctx);
+
+   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   i915->state.Ctx[I915_CTXREG_LIS6] &= ~(S6_TRISTRIP_PV_MASK);
+
+   I915_STATECHANGE(i915, I915_UPLOAD_RASTER_RULES);
+   i915->state.RasterRules[I915_RASTER_RULES] &= ~(LINE_STRIP_PROVOKE_VRTX_MASK |
+						   TRI_FAN_PROVOKE_VRTX_MASK);
+
+   /* _NEW_LIGHT */
+   if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION) {
+      i915->state.RasterRules[I915_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(1) |
+						     TRI_FAN_PROVOKE_VRTX(2));
+      i915->state.Ctx[I915_CTXREG_LIS6] |= (2 << S6_TRISTRIP_PV_SHIFT);
+   } else {
+      i915->state.RasterRules[I915_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(0) |
+						     TRI_FAN_PROVOKE_VRTX(1));
+      i915->state.Ctx[I915_CTXREG_LIS6] |= (0 << S6_TRISTRIP_PV_SHIFT);
+    }
 }
 
 void

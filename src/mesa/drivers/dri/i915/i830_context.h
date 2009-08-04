@@ -40,6 +40,7 @@
 #define I830_UPLOAD_BUFFERS          0x2
 #define I830_UPLOAD_STIPPLE          0x4
 #define I830_UPLOAD_INVARIENT        0x8
+#define I830_UPLOAD_RASTER_RULES     0x10
 #define I830_UPLOAD_TEX(i)           (0x10<<(i))
 #define I830_UPLOAD_TEXBLEND(i)      (0x100<<(i))
 #define I830_UPLOAD_TEX_ALL          (0x0f0)
@@ -99,6 +100,11 @@
 
 #define I830_TEXBLEND_SIZE	12      /* (4 args + op) * 2 + COLOR_FACTOR */
 
+enum {
+   I830_RASTER_RULES,
+   I830_RASTER_RULES_SIZE
+};
+
 struct i830_texture_object
 {
    struct intel_texture_object intel;
@@ -112,6 +118,7 @@ struct i830_hw_state
    GLuint Ctx[I830_CTX_SETUP_SIZE];
    GLuint Buffer[I830_DEST_SETUP_SIZE];
    GLuint Stipple[I830_STP_SETUP_SIZE];
+   GLuint RasterRules[I830_RASTER_RULES_SIZE];
    GLuint Tex[I830_TEX_UNITS][I830_TEX_SETUP_SIZE];
    GLuint TexBlend[I830_TEX_UNITS][I830_TEXBLEND_SIZE];
    GLuint TexBlendWordsUsed[I830_TEX_UNITS];
@@ -197,6 +204,7 @@ extern void i830InitStateFuncs(struct dd_function_table *functions);
 extern void i830EmitState(struct i830_context *i830);
 
 extern void i830InitState(struct i830_context *i830);
+extern void i830_update_provoking_vertex(GLcontext *ctx);
 
 /* i830_metaops.c
  */

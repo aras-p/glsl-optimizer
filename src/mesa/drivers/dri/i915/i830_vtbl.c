@@ -299,7 +299,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(30, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(29, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_DFLT_DIFFUSE_CMD);
    OUT_BATCH(0);
@@ -351,15 +351,6 @@ i830_emit_invarient_state(struct intel_context *intel)
    OUT_BATCH(_3DSTATE_MAP_COORD_TRANSFORM);
    OUT_BATCH(DISABLE_TEX_TRANSFORM | TEXTURE_SET(3));
 
-   OUT_BATCH(_3DSTATE_RASTER_RULES_CMD |
-             ENABLE_POINT_RASTER_RULE |
-             OGL_POINT_RASTER_RULE |
-             ENABLE_LINE_STRIP_PROVOKE_VRTX |
-             ENABLE_TRI_FAN_PROVOKE_VRTX |
-             ENABLE_TRI_STRIP_PROVOKE_VRTX |
-             LINE_STRIP_PROVOKE_VRTX(1) |
-             TRI_FAN_PROVOKE_VRTX(2) | TRI_STRIP_PROVOKE_VRTX(2));
-
    OUT_BATCH(_3DSTATE_VERTEX_TRANSFORM);
    OUT_BATCH(DISABLE_VIEWPORT_TRANSFORM | DISABLE_PERSPECTIVE_DIVIDE);
 
@@ -393,6 +384,9 @@ get_state_size(struct i830_hw_state *state)
 
    if (dirty & I830_UPLOAD_INVARIENT)
       sz += 40 * sizeof(int);
+
+   if (dirty & I830_UPLOAD_RASTER_RULES)
+      sz += sizeof(state->RasterRules);
 
    if (dirty & I830_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
@@ -484,6 +478,11 @@ i830_emit_state(struct intel_context *intel)
    if (dirty & I830_UPLOAD_INVARIENT) {
       DBG("I830_UPLOAD_INVARIENT:\n");
       i830_emit_invarient_state(intel);
+   }
+
+   if (dirty & I830_UPLOAD_RASTER_RULES) {
+      DBG("I830_UPLOAD_RASTER_RULES:\n");
+      emit(intel, state->RasterRules, sizeof(state->RasterRules));
    }
 
    if (dirty & I830_UPLOAD_CTX) {
@@ -737,6 +736,13 @@ i830_assert_not_dirty( struct intel_context *intel )
    assert(!get_dirty(state));
 }
 
+static void
+i830_invalidate_state(struct intel_context *intel, GLuint new_state)
+{
+   if (new_state & _NEW_LIGHT)
+      i830_update_provoking_vertex(&intel->ctx);
+}
+
 void
 i830InitVtbl(struct i830_context *i830)
 {
@@ -752,4 +758,5 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
    i830->intel.vtbl.finish_batch = intel_finish_vb;
+   i830->intel.vtbl.invalidate_state = i830_invalidate_state;
 }
