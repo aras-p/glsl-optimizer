@@ -765,6 +765,9 @@ _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
 GLboolean
 _mesa_is_proxy_texture(GLenum target)
 {
+   /* NUM_TEXTURE_TARGETS should match number of terms below */
+   assert(NUM_TEXTURE_TARGETS == 7);
+
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
            target == GL_PROXY_TEXTURE_3D ||
@@ -2261,9 +2264,14 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-
    texUnit = get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+
+   if (!texObj || _mesa_is_proxy_texture(target)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target)");
+      return GL_TRUE;
+   }
+
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
    if (!texImage) {
       /* out of memory */
@@ -2342,16 +2350,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   texUnit = get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   if (!texObj || _mesa_is_proxy_texture(target)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target)");
-      return;
-   }
-
    if (getteximage_error_check(ctx, target, level, format, type, pixels)) {
       return;
    }
+
+   texUnit = get_current_tex_unit(ctx);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
    {
