@@ -75,7 +75,7 @@ struct {
     [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 1, .ndst = 01 },
     [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 1, .ndst = 0 },
+    [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
@@ -85,7 +85,7 @@ struct {
     [BRW_OPCODE_POP] = { .name = "pop", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_WAIT] = { .name = "wait", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 0, .ndst = 0 },
+    [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
 
 char *conditional_modifier[16] = {
