@@ -505,7 +505,7 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 	  * each of N places that do rendering.  This has worse performances,
 	  * but it is much easier to get correct.
 	  */
-	 if (intel->is_front_buffer_rendering) {
+	 if (!intel->is_front_buffer_rendering) {
 	    intel->front_buffer_dirty = GL_FALSE;
 	 }
       }
