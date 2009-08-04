@@ -2004,6 +2004,7 @@ struct gl_shader
    GLboolean Main;  /**< shader defines main() */
    GLboolean UnresolvedRefs;
    const GLchar *Source;  /**< Source code string */
+   GLuint SourceChecksum;       /**< for debug/logging purposes */
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
    struct gl_sl_pragmas Pragmas;
