@@ -108,6 +108,32 @@ union lp_type {
 };
 
 
+/**
+ * We need most of the information here in order to correctly and efficiently
+ * translate an arithmetic operation into LLVM IR. Putting it here avoids the
+ * trouble of passing it as parameters.
+ */
+struct lp_build_context
+{
+   LLVMBuilderRef builder;
+
+   /**
+    * This not only describes the input/output LLVM types, but also whether
+    * to normalize/clamp the results.
+    */
+   union lp_type type;
+
+   /** Same as lp_build_undef(type) */
+   LLVMValueRef undef;
+
+   /** Same as lp_build_zero(type) */
+   LLVMValueRef zero;
+
+   /** Same as lp_build_one(type) */
+   LLVMValueRef one;
+};
+
+
 LLVMTypeRef
 lp_build_elem_type(union lp_type type);
 
