@@ -266,5 +266,6 @@ _mesa_GetError( void )
       _mesa_debug(ctx, "glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
+   ctx->ErrorDebugCount = 0;
    return e;
 }
