@@ -396,6 +396,20 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 dri_bo_reference(input->bo);
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
+
+	 /* This is a common place to reach if the user mistakenly supplies
+	  * a pointer in place of a VBO offset.  If we just let it go through,
+	  * we may end up dereferencing a pointer beyond the bounds of the
+	  * GTT.  We would hope that the VBO's max_index would save us, but
+	  * Mesa appears to hand us min/max values not clipped to the
+	  * array object's _MaxElement, and _MaxElement frequently appears
+	  * to be wrong anyway.
+	  *
+	  * The VBO spec allows application termination in this case, and it's
+	  * probably a service to the poor programmer to do so rather than
+	  * trying to just not render.
+	  */
+	 assert(input->offset < input->bo->size);
       } else {
 	 if (input->bo != NULL) {
 	    /* Already-uploaded vertex data is present from a previous
