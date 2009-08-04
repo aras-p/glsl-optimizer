@@ -377,8 +377,8 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
    /* Reset this one-shot flag: 
     */
 
-   if (p->current->header.destreg__conditonalmod) {
-      p->current->header.destreg__conditonalmod = 0;   
+   if (p->current->header.destreg__conditionalmod) {
+      p->current->header.destreg__conditionalmod = 0;
       p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
    }
 
@@ -746,7 +746,7 @@ void brw_CMP(struct brw_compile *p,
 {
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_CMP);
 
-   insn->header.destreg__conditonalmod = conditional;
+   insn->header.destreg__conditionalmod = conditional;
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, src1);
@@ -790,7 +790,7 @@ void brw_math( struct brw_compile *p,
     * instructions.
     */
    insn->header.predicate_control = 0; 
-   insn->header.destreg__conditonalmod = msg_reg_nr;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src);
@@ -826,7 +826,7 @@ void brw_math_16( struct brw_compile *p,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
    insn = next_insn(p, BRW_OPCODE_SEND);
-   insn->header.destreg__conditonalmod = msg_reg_nr;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src);
@@ -842,7 +842,7 @@ void brw_math_16( struct brw_compile *p,
     */
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.compression_control = BRW_COMPRESSION_2NDHALF;
-   insn->header.destreg__conditonalmod = msg_reg_nr+1;
+   insn->header.destreg__conditionalmod = msg_reg_nr+1;
 
    brw_set_dest(insn, offset(dest,1));
    brw_set_src0(insn, src);
@@ -888,7 +888,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
    
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
   
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src);
@@ -933,7 +933,7 @@ void brw_dp_READ_16( struct brw_compile *p,
    
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
   
       brw_set_dest(insn, dest);	/* UW? */
       brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
@@ -986,7 +986,7 @@ void brw_dp_READ_4( struct brw_compile *p,
    
       insn->header.predicate_control = BRW_PREDICATE_NONE;
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
       insn->header.mask_control = BRW_MASK_DISABLE;
   
       /* cast dest to a uword[8] vector */
@@ -1059,7 +1059,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
    
       insn->header.predicate_control = BRW_PREDICATE_NONE;
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
       insn->header.mask_control = BRW_MASK_DISABLE;
       /*insn->header.access_mode = BRW_ALIGN_16;*/
   
@@ -1092,7 +1092,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    
    insn->header.predicate_control = 0; /* XXX */
    insn->header.compression_control = BRW_COMPRESSION_NONE; 
-   insn->header.destreg__conditonalmod = msg_reg_nr;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
   
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
@@ -1187,7 +1187,7 @@ void brw_SAMPLE(struct brw_compile *p,
    
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE;
-      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
 
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src0);
@@ -1238,7 +1238,7 @@ void brw_urb_WRITE(struct brw_compile *p,
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->header.destreg__conditonalmod = msg_reg_nr;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_urb_message(insn,
 		       allocate,
