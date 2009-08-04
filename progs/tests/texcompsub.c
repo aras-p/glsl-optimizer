@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
 
@@ -31,6 +32,8 @@ CheckError(int line)
 static void
 LoadCompressedImage(void)
 {
+   unsigned char ImgDataTemp[ImgSize / 4];
+   unsigned i;
    const GLenum filter = GL_LINEAR;
    glTexImage2D(Target, 0, CompFormat, ImgWidth, ImgHeight, 0,
                 GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -40,11 +43,24 @@ LoadCompressedImage(void)
                                 0, 0, /* pos */
                                 ImgWidth, ImgHeight / 2,
                                 CompFormat, ImgSize / 2, ImgData + ImgSize / 2);
-   /* top half */
+
+   /* top left */
+   for (i = 0; i < ImgHeight / 8; i++) {
+      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[i * 2 * ImgWidth], ImgWidth);
+   }
    glCompressedTexSubImage2DARB(Target, 0,
                                 0, ImgHeight / 2, /* pos */
-                                ImgWidth, ImgHeight / 2,
-                                CompFormat, ImgSize / 2, ImgData);
+                                ImgWidth / 2, ImgHeight / 2,
+                                CompFormat, ImgSize / 4, ImgDataTemp);
+
+   /* top right */
+   for (i = 0; i < ImgHeight / 8; i++) {
+      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[i * 2 * ImgWidth + ImgWidth], ImgWidth);
+   }
+   glCompressedTexSubImage2DARB(Target, 0,
+                                ImgWidth / 2, ImgHeight / 2, /* pos */
+                                ImgWidth / 2, ImgHeight / 2,
+                                CompFormat, ImgSize / 4, ImgDataTemp);
 
    glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, filter);
    glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, filter);
