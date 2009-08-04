@@ -1596,11 +1596,6 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-	if (IS_R200_CLASS(screen))
-		return r200CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-
 #if !RADEON_COMMON
 	(void)screen;
 	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
@@ -1800,8 +1795,13 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen      = radeonInitScreen,
    .DestroyScreen   = radeonDestroyScreen,
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   .CreateContext   = r200CreateContext,
+   .DestroyContext  = r200DestroyContext,
+#else
    .CreateContext   = radeonCreateContext,
    .DestroyContext  = radeonDestroyContext,
+#endif
    .CreateBuffer    = radeonCreateBuffer,
    .DestroyBuffer   = radeonDestroyBuffer,
    .SwapBuffers     = radeonSwapBuffers,
