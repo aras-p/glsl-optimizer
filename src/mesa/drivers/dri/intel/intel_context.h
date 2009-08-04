@@ -191,6 +191,7 @@ struct intel_context
    GLboolean ttm;
 
    struct intel_batchbuffer *batch;
+   drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
    unsigned batch_id;
 
