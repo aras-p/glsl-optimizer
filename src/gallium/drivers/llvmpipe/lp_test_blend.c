@@ -60,26 +60,19 @@
 unsigned verbose = 0;
 
 
-typedef int64_t (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
 
 
-static LLVMValueRef
-read_cycle_counter(LLVMBuilderRef builder)
+static INLINE uint64_t
+rdtsc(void)
 {
-   const char *name = "llvm.readcyclecounter";
-   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
-
-   function = LLVMGetNamedFunction(module, name);
-   if(!function) {
-      LLVMTypeRef type = LLVMInt64Type();
-      function = LLVMAddFunction(module, name, LLVMFunctionType(type, NULL, 0, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
-
-   return LLVMBuildCall(builder, function, NULL, 0, "");
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   uint32_t hi, lo;
+   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+   return ((uint64_t)lo) | (((uint64_t)hi) << 32);
+#else
+   return 0;
+#endif
 }
 
 
@@ -102,14 +95,12 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef dst;
    LLVMValueRef con;
    LLVMValueRef res;
-   LLVMValueRef start_counter;
-   LLVMValueRef end_counter;
 
    ret_type = LLVMInt64Type();
    vec_type = lp_build_vec_type(type);
 
    args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
-   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMInt64Type(), args, 4, 0));
+   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMVoidType(), args, 4, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    src_ptr = LLVMGetParam(func, 0);
    dst_ptr = LLVMGetParam(func, 1);
@@ -124,17 +115,13 @@ add_blend_test(LLVMModuleRef module,
    dst = LLVMBuildLoad(builder, dst_ptr, "dst");
    con = LLVMBuildLoad(builder, const_ptr, "const");
 
-   start_counter = read_cycle_counter(builder);
-
    res = lp_build_blend(builder, blend, type, src, dst, con, 3);
 
    LLVMSetValueName(res, "res");
 
-   end_counter = read_cycle_counter(builder);
-
    LLVMBuildStore(builder, res, res_ptr);
 
-   LLVMBuildRet(builder, LLVMBuildSub(builder, end_counter, start_counter, "cycles"));;
+   LLVMBuildRetVoid(builder);;
 
    LLVMDisposeBuilder(builder);
    return func;
@@ -434,6 +421,9 @@ test_one(const struct pipe_blend_state *blend,
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
+      int64_t start_counter = 0;
+      int64_t end_counter = 0;
+
       if(type.floating && type.width == 32) {
          float src[LP_MAX_VECTOR_LENGTH];
          float dst[LP_MAX_VECTOR_LENGTH];
@@ -450,7 +440,9 @@ test_one(const struct pipe_blend_state *blend,
          for(j = 0; j < type.length; j += 4)
             compute_blend_ref(blend, src + j, dst + j, con + j, ref + j);
 
-         cycles[i] = blend_test_ptr(src, dst, con, res);
+         start_counter = rdtsc();
+         blend_test_ptr(src, dst, con, res);
+         end_counter = rdtsc();
 
          for(j = 0; j < type.length; ++j)
             if(fabs(res[j] - ref[j]) > FLT_EPSILON)
@@ -499,7 +491,9 @@ test_one(const struct pipe_blend_state *blend,
                ref[j + k] = (uint8_t)(reff[k]*255.0f + 0.5f);
          }
 
-         cycles[i] = blend_test_ptr(src, dst, con, res);
+         start_counter = rdtsc();
+         blend_test_ptr(src, dst, con, res);
+         end_counter = rdtsc();
 
          for(j = 0; j < type.length; ++j) {
             int delta = (int)res[j] - (int)ref[j];
@@ -523,6 +517,8 @@ test_one(const struct pipe_blend_state *blend,
       }
       else
          assert(0);
+
+      cycles[i] = end_counter - start_counter;
    }
 
    /*
@@ -555,6 +551,7 @@ test_one(const struct pipe_blend_state *blend,
       avg = sum/m;
 
       fprintf(stdout, " cycles=%.1f", avg);
+      fprintf(stdout, " cycles_per_elem=%.1f", avg/type.length);
    }
 
    if(verbose >= 1) {
