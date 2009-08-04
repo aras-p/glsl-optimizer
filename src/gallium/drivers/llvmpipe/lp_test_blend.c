@@ -71,6 +71,9 @@ write_tsv_header(FILE *fp)
            "result\t"
            "cycles\t"
            "type\t"
+           "sep_func\t"
+           "sep_src_factor\t"
+           "sep_dst_factor\t"
            "rgb_func\t"
            "rgb_src_factor\t"
            "rgb_dst_factor\t"
@@ -91,13 +94,19 @@ write_tsv_row(FILE *fp,
 {
    fprintf(fp, "%s\t", success ? "pass" : "fail");
 
-   fprintf(fp, "%u\t", (unsigned)(cycles + 0.5));
+   fprintf(fp, "%.1f\t", cycles + 0.5);
 
    fprintf(fp, "%s%u%sx%u\t",
            type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
            type.width,
            type.norm ? "n" : "",
            type.length);
+
+   fprintf(fp,
+           "%s\t%s\t%s\t",
+           blend->rgb_func != blend->alpha_func ? "true" : "false",
+           blend->rgb_src_factor != blend->alpha_src_factor ? "true" : "false",
+           blend->rgb_dst_factor != blend->alpha_dst_factor ? "true" : "false");
 
    fprintf(fp,
            "%s\t%s\t%s\t%s\t%s\t%s\n",
