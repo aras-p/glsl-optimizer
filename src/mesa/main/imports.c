@@ -1021,22 +1021,58 @@ output_if_debug(const char *prefixString, const char *outputString,
    }
 }
 
-static const char *error_string( GLenum error );
 
-static void flush_delayed_errors( GLcontext *ctx )
+/**
+ * Return string version of GL error code.
+ */
+static const char *
+error_string( GLenum error )
 {
-   char s2[MAXSTRING];
+   switch (error) {
+   case GL_NO_ERROR:
+      return "GL_NO_ERROR";
+   case GL_INVALID_VALUE:
+      return "GL_INVALID_VALUE";
+   case GL_INVALID_ENUM:
+      return "GL_INVALID_ENUM";
+   case GL_INVALID_OPERATION:
+      return "GL_INVALID_OPERATION";
+   case GL_STACK_OVERFLOW:
+      return "GL_STACK_OVERFLOW";
+   case GL_STACK_UNDERFLOW:
+      return "GL_STACK_UNDERFLOW";
+   case GL_OUT_OF_MEMORY:
+      return "GL_OUT_OF_MEMORY";
+   case GL_TABLE_TOO_LARGE:
+      return "GL_TABLE_TOO_LARGE";
+   case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
+      return "GL_INVALID_FRAMEBUFFER_OPERATION";
+   default:
+      return "unknown";
+   }
+}
+
+
+/**
+ * When a new type of error is recorded, print a message describing
+ * previous errors which were accumulated.
+ */
+static void
+flush_delayed_errors( GLcontext *ctx )
+{
+   char s[MAXSTRING];
 
    if (ctx->ErrorDebugCount) {
-      _mesa_snprintf(s2, MAXSTRING, "%d similar %s errors", 
+      _mesa_snprintf(s, MAXSTRING, "%d similar %s errors", 
                      ctx->ErrorDebugCount,
                      error_string(ctx->ErrorValue));
 
-      output_if_debug("Mesa: ", s2, GL_TRUE);
+      output_if_debug("Mesa", s, GL_TRUE);
 
       ctx->ErrorDebugCount = 0;
    }
 }
+
 
 /**
  * Report a warning (a recoverable error condition) to stderr if
@@ -1083,31 +1119,6 @@ _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
    fprintf(stderr, "Please report at bugzilla.freedesktop.org\n");
 }
 
-static const char *error_string( GLenum error )
-{
-   switch (error) {
-   case GL_NO_ERROR:
-      return "GL_NO_ERROR";
-   case GL_INVALID_VALUE:
-      return "GL_INVALID_VALUE";
-   case GL_INVALID_ENUM:
-      return "GL_INVALID_ENUM";
-   case GL_INVALID_OPERATION:
-      return "GL_INVALID_OPERATION";
-   case GL_STACK_OVERFLOW:
-      return "GL_STACK_OVERFLOW";
-   case GL_STACK_UNDERFLOW:
-      return "GL_STACK_UNDERFLOW";
-   case GL_OUT_OF_MEMORY:
-      return "GL_OUT_OF_MEMORY";
-   case GL_TABLE_TOO_LARGE:
-      return "GL_TABLE_TOO_LARGE";
-   case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
-      return "GL_INVALID_FRAMEBUFFER_OPERATION";
-   default:
-      return "unknown";
-   }
-}
 
 /**
  * Record an OpenGL state error.  These usually occur when the user
