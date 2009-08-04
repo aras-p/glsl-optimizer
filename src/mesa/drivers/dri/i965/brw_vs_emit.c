@@ -1283,7 +1283,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint file;
 
    if (INTEL_DEBUG & DEBUG_VS) {
-      _mesa_printf("vs-emit:\n");
+      _mesa_printf("vs-mesa:\n");
       _mesa_print_program(&c->vp->program.Base); 
       _mesa_printf("\n");
    }
@@ -1595,4 +1595,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
    emit_vertex_write(c);
 
    post_vs_emit(c, end_inst, last_inst);
+
+   if (INTEL_DEBUG & DEBUG_VS) {
+      int i;
+
+      _mesa_printf("vs-native:\n");
+      for (i = 0; i < p->nr_insn; i++)
+	 brw_disasm(stderr, &p->store[i]);
+      _mesa_printf("\n");
+   }
 }

@@ -471,8 +471,9 @@
 #define BRW_CONDITIONAL_GE    4
 #define BRW_CONDITIONAL_L     5
 #define BRW_CONDITIONAL_LE    6
-#define BRW_CONDITIONAL_C     7
+#define BRW_CONDITIONAL_R     7
 #define BRW_CONDITIONAL_O     8
+#define BRW_CONDITIONAL_U     9
 
 #define BRW_DEBUG_NONE        0
 #define BRW_DEBUG_BREAKPOINT  1
@@ -512,6 +513,7 @@
 #define BRW_OPCODE_RSL        11
 #define BRW_OPCODE_ASR        12
 #define BRW_OPCODE_CMP        16
+#define BRW_OPCODE_CMPN       17
 #define BRW_OPCODE_JMPI       32
 #define BRW_OPCODE_IF         34
 #define BRW_OPCODE_IFF        35

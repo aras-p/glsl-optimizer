@@ -3032,6 +3032,13 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
+
+    if (INTEL_DEBUG & DEBUG_WM) {
+      _mesa_printf("wm-native:\n");
+      for (i = 0; i < p->nr_insn; i++)
+	 brw_disasm(stderr, &p->store[i]);
+      _mesa_printf("\n");
+    }
 }
 
 

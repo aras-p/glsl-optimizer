@@ -43,6 +43,7 @@ DRIVER_SOURCES = \
 	brw_clip_util.c \
 	brw_context.c \
 	brw_curbe.c \
+	brw_disasm.c \
 	brw_draw.c \
 	brw_draw_upload.c \
 	brw_eu.c \

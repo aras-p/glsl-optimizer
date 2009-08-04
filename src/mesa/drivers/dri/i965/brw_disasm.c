@@ -27,7 +27,9 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "gen4asm.h"
+#include "main/mtypes.h"
+
+#include "brw_context.h"
 #include "brw_defines.h"
 
 struct {
@@ -626,13 +628,13 @@ static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
 	format (file, "0x%08xUD", inst->bits3.ud);
 	break;
     case BRW_REGISTER_TYPE_D:
-	format (file, "%dD", inst->bits3.id);
+	format (file, "%dD", inst->bits3.d);
 	break;
     case BRW_REGISTER_TYPE_UW:
 	format (file, "0x%04xUW", (uint16_t) inst->bits3.ud);
 	break;
     case BRW_REGISTER_TYPE_W:
-	format (file, "%dW", (int16_t) inst->bits3.id);
+	format (file, "%dW", (int16_t) inst->bits3.d);
 	break;
     case BRW_REGISTER_TYPE_UB:
 	format (file, "0x%02xUB", (int8_t) inst->bits3.ud);
@@ -644,7 +646,7 @@ static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
 	format (file, "0x%08xV", inst->bits3.ud);
 	break;
     case BRW_REGISTER_TYPE_F:
-	format (file, "%-gF", inst->bits3.fd);
+	format (file, "%-gF", inst->bits3.f);
     }
     return 0;
 }
@@ -769,7 +771,7 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-int disasm (FILE *file, struct brw_instruction *inst)
+int brw_disasm (FILE *file, struct brw_instruction *inst)
 {
     int	err = 0;
     int space = 0;

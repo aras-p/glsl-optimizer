@@ -1385,4 +1385,13 @@ void brw_wm_emit( struct brw_wm_compile *c )
 		      inst->dst[i]->hw_reg, 
 		      inst->dst[i]->spill_slot);
    }
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      int i;
+
+      _mesa_printf("wm-native:\n");
+      for (i = 0; i < p->nr_insn; i++)
+	 brw_disasm(stderr, &p->store[i]);
+      _mesa_printf("\n");
+   }
 }
