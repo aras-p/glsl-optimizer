@@ -1265,6 +1265,23 @@ post_vs_emit( struct brw_vs_compile *c,
    brw_set_src1(end_inst, brw_imm_d(offset * 16));
 }
 
+static uint32_t
+get_predicate(uint32_t swizzle)
+{
+   switch (swizzle) {
+   case SWIZZLE_XXXX:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_X;
+   case SWIZZLE_YYYY:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_Y;
+   case SWIZZLE_ZZZZ:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_Z;
+   case SWIZZLE_WWWW:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_W;
+   default:
+      _mesa_problem("Unexpected predicate: 0x%08x\n", swizzle);
+      return BRW_PREDICATE_NORMAL;
+   }
+}
 
 /* Emit the vertex program instructions here.
  */
@@ -1470,7 +1487,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_IF:
 	 assert(if_depth < MAX_IF_DEPTH);
-         if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
+	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 if_inst[if_depth]->header.predicate_control =
+	    get_predicate(inst->DstReg.CondSwizzle);
+	 if_depth++;
 	 break;
       case OPCODE_ELSE:
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
