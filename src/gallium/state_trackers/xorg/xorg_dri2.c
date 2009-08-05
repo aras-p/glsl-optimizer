@@ -178,7 +178,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 	ms->screen->get_tex_surface(ms->screen, src_priv->tex, 0, 0, 0,
 				    PIPE_BUFFER_USAGE_GPU_READ);
 
-#if 0
+#if 1
     ms->ctx->surface_copy(ms->ctx, dst_surf, 0, 0, src_surf,
 			  0, 0, pDraw->width, pDraw->height);
 #else
