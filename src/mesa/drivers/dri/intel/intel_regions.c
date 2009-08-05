@@ -452,6 +452,7 @@ void
 intel_region_cow(struct intel_context *intel, struct intel_region *region)
 {
    struct intel_buffer_object *pbo = region->pbo;
+   GLboolean ok;
 
    intel_region_release_pbo(intel, region);
 
@@ -463,13 +464,14 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
     */
 
    LOCK_HARDWARE(intel);
-   assert(intelEmitCopyBlit(intel,
-			    region->cpp,
-			    region->pitch, pbo->buffer, 0, region->tiling,
-			    region->pitch, region->buffer, 0, region->tiling,
-			    0, 0, 0, 0,
-			    region->pitch, region->height,
-			    GL_COPY));
+   ok = intelEmitCopyBlit(intel,
+                          region->cpp,
+                          region->pitch, pbo->buffer, 0, region->tiling,
+                          region->pitch, region->buffer, 0, region->tiling,
+                          0, 0, 0, 0,
+                          region->pitch, region->height,
+                          GL_COPY);
+   assert(ok);
    UNLOCK_HARDWARE(intel);
 }
 
