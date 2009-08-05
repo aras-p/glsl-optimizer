@@ -1278,7 +1278,7 @@ get_predicate(uint32_t swizzle)
    case SWIZZLE_WWWW:
       return BRW_PREDICATE_ALIGN16_REPLICATE_W;
    default:
-      _mesa_problem("Unexpected predicate: 0x%08x\n", swizzle);
+      _mesa_problem(NULL, "Unexpected predicate: 0x%08x\n", swizzle);
       return BRW_PREDICATE_NORMAL;
    }
 }
