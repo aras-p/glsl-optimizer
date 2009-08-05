@@ -523,6 +523,12 @@ st_TexImage(GLcontext * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
+   /* switch to "normal" */
+   if (stObj->surface_based) {
+      _mesa_clear_texture_object(ctx, texObj);
+      stObj->surface_based = GL_FALSE;
+   }
+
    /* gallium does not support texture borders, strip it off */
    if (border) {
       strip_texture_border(border, &width, &height, &depth, unpack, &unpackNB);
