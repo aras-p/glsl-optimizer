@@ -268,6 +268,7 @@ setup_vertex_data_tex(struct blit_state *ctx,
 /**
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
+ * Flipping and stretching are supported.
  * XXX need some control over blitting Z and/or stencil.
  */
 void
@@ -294,6 +295,29 @@ util_blit_pixels(struct blit_state *ctx,
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
+   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+
+   /*
+    * Check for simple case:  no format conversion, no flipping, no stretching.
+    */
+   if (dst->format == src->format &&
+       srcX0 < srcX1 &&
+       dstX0 < dstX1 &&
+       srcY0 < srcY1 &&
+       dstY0 < dstY1 &&
+       (dstX1 - dstX0) == (srcX1 - srcX0) &&
+       (dstY1 - dstY0) == (srcY1 - srcY0)) {
+      /* FIXME: this will most surely fail for overlapping rectangles */
+      pipe->surface_copy(pipe,
+			 dst, dstX0, dstY0, /* dest */
+			 src, srcX0, srcY0, /* src */
+			 srcW, srcH);       /* size */
+      return;
+   }
+   
    if (srcLeft != srcX0) {
       /* left-right flip */
       int tmp = dstX0;
@@ -308,22 +332,6 @@ util_blit_pixels(struct blit_state *ctx,
       dstY1 = tmp;
    }
 
-   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
-
-   if (dst->format == src->format &&
-       (dstX1 - dstX0) == srcW &&
-       (dstY1 - dstY0) == srcH) {
-      /* FIXME: this will most surely fail for overlapping rectangles */
-      pipe->surface_copy(pipe,
-			 dst, dstX0, dstY0,   /* dest */
-			 src, srcX0, srcY0, /* src */
-			 srcW, srcH);     /* size */
-      return;
-   }
-   
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
 
