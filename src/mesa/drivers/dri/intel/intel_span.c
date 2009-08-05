@@ -501,7 +501,7 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
 
 
 /**
- * Prepare for softare rendering.  Map current read/draw framebuffers'
+ * Prepare for software rendering.  Map current read/draw framebuffers'
  * renderbuffes and all currently bound texture objects.
  *
  * Old note: Moved locking out to get reasonable span performance.
@@ -526,7 +526,7 @@ intelSpanRenderStart(GLcontext * ctx)
 }
 
 /**
- * Called when done softare rendering.  Unmap the buffers we mapped in
+ * Called when done software rendering.  Unmap the buffers we mapped in
  * the above function.
  */
 void
