@@ -340,6 +340,7 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
 
 	dev->softpipe = debug_get_bool_option("INTEL_SOFTPIPE", FALSE);
+	dev->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
 
 	return true;
 }
