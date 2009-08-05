@@ -75,6 +75,11 @@ st_BlitFramebuffer(GLcontext *ctx,
                          ? PIPE_TEX_MIPFILTER_NEAREST
                          : PIPE_TEX_MIPFILTER_LINEAR);
 
+   if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
+                        &dstX0, &dstY0, &dstX1, &dstY1)) {
+      return; /* nothing to draw/blit */
+   }
+
    if (mask & GL_COLOR_BUFFER_BIT) {
       struct st_renderbuffer *srcRb = 
          st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
@@ -84,12 +89,29 @@ st_BlitFramebuffer(GLcontext *ctx,
       struct pipe_surface *dstSurf = dstRb->surface;
 
       if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-         /* invert Y */
-         srcY0 = srcRb->Base.Height - srcY0;
-         srcY1 = srcRb->Base.Height - srcY1;
-
+         /* invert Y for dest */
          dstY0 = dstRb->Base.Height - dstY0;
          dstY1 = dstRb->Base.Height - dstY1;
+      }
+
+      if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         /* invert Y for src */
+         srcY0 = srcRb->Base.Height - srcY0;
+         srcY1 = srcRb->Base.Height - srcY1;
+      }
+
+      if (srcY0 > srcY1 && dstY0 > dstY1) {
+         /* Both src and dst are upside down.  Swap Y to make it
+          * right-side up to increase odds of using a fast path.
+          * Recall that all Gallium raster coords have Y=0=top.
+          */
+         GLint tmp;
+         tmp = srcY0;
+         srcY0 = srcY1;
+         srcY1 = tmp;
+         tmp = dstY0;
+         dstY0 = dstY1;
+         dstY1 = tmp;
       }
 
       util_blit_pixels(st->blit,
