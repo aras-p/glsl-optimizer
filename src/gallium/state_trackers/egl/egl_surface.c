@@ -98,8 +98,8 @@ drm_create_texture(_EGLDriver *drv,
 		goto err_buf;
 
 	memset(&templat, 0, sizeof(templat));
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	templat.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth[0] = 1;
