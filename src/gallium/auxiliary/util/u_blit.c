@@ -294,6 +294,7 @@ regions_overlap(int srcX0, int srcY0,
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
+ * XXX what about clipping???
  * XXX need some control over blitting Z and/or stencil.
  */
 void
