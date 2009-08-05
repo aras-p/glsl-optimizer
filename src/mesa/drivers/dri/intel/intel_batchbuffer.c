@@ -201,6 +201,11 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }
 
+   if (intel->first_post_swapbuffers_batch == NULL) {
+      intel->first_post_swapbuffers_batch = intel->batch->buf;
+      drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
+   }
+
    if (used == 0) {
       batch->cliprect_mode = IGNORE_CLIPRECTS;
       return;

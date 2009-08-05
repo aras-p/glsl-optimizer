@@ -233,7 +233,9 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_POINT_SPRITE)) {
       ctx->Extensions.ARB_point_sprite = GL_TRUE;
-      ctx->Extensions.NV_point_sprite = GL_TRUE;
+      /* GL_NV_point_sprite is not supported by gallium because we don't
+       * support the GL_POINT_SPRITE_R_MODE_NV option.
+       */
    }
 
    if (screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY)) {

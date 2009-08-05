@@ -291,4 +291,10 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
                      GLint *x, GLint *y,
                      GLsizei *width, GLsizei *height );
 
+extern GLboolean
+_mesa_clip_blit(GLcontext *ctx,
+                GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
+                GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1);
+
+
 #endif
