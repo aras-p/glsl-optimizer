@@ -359,8 +359,48 @@ ExaPixmapIsOffscreen(PixmapPtr pPixmap)
     return FALSE;
 }
 
+int
+xorg_exa_set_displayed_usage(PixmapPtr pPixmap)
+{
+    struct exa_pixmap_priv *priv;
+    priv = exaGetPixmapDriverPrivate(pPixmap);
+
+    if (!priv) {
+	FatalError("NO PIXMAP PRIVATE\n");
+	return 0;
+    }
+
+    if (priv->flags & ~PIPE_TEXTURE_USAGE_PRIMARY) {
+	FatalError("BAD FLAGS\n");
+	return 0;
+    }
+    priv->flags = PIPE_TEXTURE_USAGE_PRIMARY;
+
+    return 0;
+}
+
+int
+xorg_exa_set_shared_usage(PixmapPtr pPixmap)
+{
+    struct exa_pixmap_priv *priv;
+    priv = exaGetPixmapDriverPrivate(pPixmap);
+
+    if (!priv) {
+	FatalError("NO PIXMAP PRIVATE\n");
+	return 0;
+    }
+
+    if (priv->flags & ~PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+	FatalError("BAD FLAGS\n");
+	return 0;
+    }
+    priv->flags = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+
+    return 0;
+}
+
 unsigned
-xorg_exa_get_pixmap_handle(PixmapPtr pPixmap)
+xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
 {
     ScreenPtr pScreen = pPixmap->drawable.pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -385,6 +425,9 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap)
     ms->api->buffer_from_texture(ms->api, priv->tex, &buffer, &stride);
     ms->api->handle_from_buffer(ms->api, ms->screen, buffer, &handle);
     pipe_buffer_reference(&buffer, NULL);
+    if (stride_out)
+	*stride_out = stride;
+
     return handle;
 }
 
@@ -421,7 +464,9 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 			     bitsPerPixel, devKind, NULL);
 
     /* Deal with screen resize */
-    if (priv->tex && (priv->tex->width[0] != width || priv->tex->height[0] != height)) {
+    if (priv->tex && (priv->tex->width[0] != width ||
+		      priv->tex->height[0] != height ||
+		      priv->tex_flags != priv->flags)) {
 	pipe_texture_reference(&priv->tex, NULL);
     }
 
@@ -436,7 +481,8 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	template.height[0] = height;
 	template.depth[0] = 1;
 	template.last_level = 0;
-	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
+	priv->tex_flags = priv->flags;
 	priv->tex = exa->scrn->texture_create(exa->scrn, &template);
     }
 

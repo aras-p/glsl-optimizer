@@ -39,6 +39,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_rect.h"
+
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
@@ -83,7 +85,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    pipe_texture_reference(&tex, depth);
 	} else if (attachments[i] == DRI2BufferDepth) {
 	    struct pipe_texture template;
-
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
 	    template.format = PIPE_FORMAT_S8Z24_UNORM;
@@ -92,8 +93,9 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    template.height[0] = pDraw->height;
 	    template.depth[0] = 1;
 	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
 	    tex = ms->screen->texture_create(ms->screen, &template);
+	    depth = tex;
 	} else {
 	    struct pipe_texture template;
 	    memset(&template, 0, sizeof(template));
@@ -107,6 +109,9 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	}
+
+	if (!tex)
+		FatalError("NO TEXTURE IN DRI2\n");
 
 	ms->api->buffer_from_texture(ms->api, tex, &buf, &stride);
 	ms->api->global_handle_from_buffer(ms->api, ms->screen, buf, &handle);
@@ -138,6 +143,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     modesettingPtr ms = modesettingPTR(pScrn);
     BufferPrivatePtr private;
     int i;
+    (void)ms;
 
     for (i = 0; i < count; i++) {
 	private = buffers[i].driverPrivate;
@@ -172,8 +178,13 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 	ms->screen->get_tex_surface(ms->screen, src_priv->tex, 0, 0, 0,
 				    PIPE_BUFFER_USAGE_GPU_READ);
 
+#if 0
     ms->ctx->surface_copy(ms->ctx, dst_surf, 0, 0, src_surf,
 			  0, 0, pDraw->width, pDraw->height);
+#else
+    util_surface_copy(ms->ctx, false, dst_surf, 0, 0, src_surf,
+		      0, 0, pDraw->width, pDraw->height);
+#endif
 
     pipe_surface_reference(&dst_surf, NULL);
     pipe_surface_reference(&src_surf, NULL);

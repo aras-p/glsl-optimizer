@@ -179,8 +179,10 @@ CreateFrontBuffer(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     ScreenPtr pScreen = pScrn->pScreen;
     PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    unsigned handle, stride;
 
     ms->noEvict = TRUE;
+    xorg_exa_set_displayed_usage(rootPixmap);
     pScreen->ModifyPixmapHeader(rootPixmap,
 				pScrn->virtualX, pScrn->virtualY,
 				pScrn->depth, pScrn->bitsPerPixel,
@@ -188,13 +190,16 @@ CreateFrontBuffer(ScrnInfoPtr pScrn)
 				NULL);
     ms->noEvict = FALSE;
 
+    handle = xorg_exa_get_pixmap_handle(rootPixmap, &stride);
+
     drmModeAddFB(ms->fd,
 		 pScrn->virtualX,
 		 pScrn->virtualY,
 		 pScrn->depth,
 		 pScrn->bitsPerPixel,
-		 pScrn->displayWidth * pScrn->bitsPerPixel / 8,
-		 xorg_exa_get_pixmap_handle(rootPixmap), &ms->fb_id);
+		 stride,
+		 handle,
+		 &ms->fb_id);
 
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
@@ -426,6 +431,7 @@ CreateScreenResources(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     PixmapPtr rootPixmap;
     Bool ret;
+    unsigned handle, stride;
 
     ms->noEvict = TRUE;
 
@@ -435,18 +441,22 @@ CreateScreenResources(ScreenPtr pScreen)
 
     rootPixmap = pScreen->GetScreenPixmap(pScreen);
 
+    xorg_exa_set_displayed_usage(rootPixmap);
     if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
 	FatalError("Couldn't adjust screen pixmap\n");
 
     ms->noEvict = FALSE;
+
+    handle = xorg_exa_get_pixmap_handle(rootPixmap, &stride);
 
     drmModeAddFB(ms->fd,
 		 pScrn->virtualX,
 		 pScrn->virtualY,
 		 pScrn->depth,
 		 pScrn->bitsPerPixel,
-		 pScrn->displayWidth * pScrn->bitsPerPixel / 8,
-		 xorg_exa_get_pixmap_handle(rootPixmap), &ms->fb_id);
+		 stride,
+		 handle,
+                 &ms->fb_id);
 
     AdjustFrame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
 
