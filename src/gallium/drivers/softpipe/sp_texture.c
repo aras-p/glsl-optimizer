@@ -130,7 +130,8 @@ softpipe_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
 
-   if (spt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+   if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                              PIPE_TEXTURE_USAGE_PRIMARY)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }
