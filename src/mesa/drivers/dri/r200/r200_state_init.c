@@ -772,7 +772,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
 
-   for (i = 0; i < 5; i++)
+   for (i = 0; i < 6; i++)
       if (rmesa->radeon.radeonScreen->kernel_mm)
           rmesa->hw.tex[i].emit = tex_emit_cs;
       else
@@ -784,7 +784,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
-      for (i = 0; i < 5; i++)
+      for (i = 0; i < 6; i++)
           if (rmesa->radeon.radeonScreen->kernel_mm)
               rmesa->hw.cube[i].emit = cube_emit_cs;
           else
