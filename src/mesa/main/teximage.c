@@ -1219,6 +1219,23 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
 
 
 /**
+ * Free and clear fields of the gl_texture_image struct.
+ *
+ * \param ctx GL context.
+ * \param texImage texture image structure to be cleared.
+ *
+ * After the call, \p texImage will have no data associated with it.  Its
+ * fields are cleared so that its parent object will test incomplete.
+ */
+void
+_mesa_clear_texture_image(GLcontext *ctx, struct gl_texture_image *texImage)
+{
+   ctx->Driver.FreeTexImageData(ctx, texImage);
+   clear_teximage_fields(texImage);
+}
+
+
+/**
  * This is the fallback for Driver.TestProxyTexImage().  Test the texture
  * level, width, height and depth against the ctx->Const limits for textures.
  *

@@ -73,6 +73,10 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
 
 
 extern void
+_mesa_clear_texture_image(GLcontext *ctx, struct gl_texture_image *texImage);
+
+
+extern void
 _mesa_set_tex_image(struct gl_texture_object *tObj,
                     GLenum target, GLint level,
                     struct gl_texture_image *texImage);
