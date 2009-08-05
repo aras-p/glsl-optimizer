@@ -266,6 +266,31 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
 
 /**
+ * \return TRUE if two regions overlap, FALSE otherwise
+ */
+static boolean
+regions_overlap(int srcX0, int srcY0,
+                int srcX1, int srcY1,
+                int dstX0, int dstY0,
+                int dstX1, int dstY1)
+{
+   if (MAX2(srcX0, srcX1) < MIN2(dstX0, dstX1))
+      return FALSE; /* src completely left of dst */
+
+   if (MAX2(dstX0, dstX1) < MIN2(srcX0, srcX1))
+      return FALSE; /* dst completely left of src */
+
+   if (MAX2(srcY0, srcY1) < MIN2(dstY0, dstY1))
+      return FALSE; /* src completely above dst */
+
+   if (MAX2(dstY0, dstY1) < MIN2(srcY0, srcY1))
+      return FALSE; /* dst completely above src */
+
+   return TRUE; /* some overlap */
+}
+
+
+/**
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
@@ -291,6 +316,7 @@ util_blit_pixels(struct blit_state *ctx,
    const int srcLeft = MIN2(srcX0, srcX1);
    const int srcTop = MIN2(srcY0, srcY1);
    unsigned offset;
+   boolean overlap;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -300,8 +326,13 @@ util_blit_pixels(struct blit_state *ctx,
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_SAMPLER, 0));
 
+   /* do the regions overlap? */
+   overlap = (src == dst) && regions_overlap(srcX0, srcY0, srcX1, srcY1,
+                                             dstX0, dstY0, dstX1, dstY1);
+
    /*
-    * Check for simple case:  no format conversion, no flipping, no stretching.
+    * Check for simple case:  no format conversion, no flipping, no stretching,
+    * no overlapping.
     */
    if (dst->format == src->format &&
        srcX0 < srcX1 &&
@@ -309,7 +340,8 @@ util_blit_pixels(struct blit_state *ctx,
        srcY0 < srcY1 &&
        dstY0 < dstY1 &&
        (dstX1 - dstX0) == (srcX1 - srcX0) &&
-       (dstY1 - dstY0) == (srcY1 - srcY0)) {
+       (dstY1 - dstY0) == (srcY1 - srcY0) &&
+       !overlap) {
       /* FIXME: this will most surely fail for overlapping rectangles */
       pipe->surface_copy(pipe,
 			 dst, dstX0, dstY0, /* dest */
