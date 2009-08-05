@@ -102,7 +102,7 @@ trace_drm_buffer_from_texture(struct drm_api *_api,
    result = api->buffer_from_texture(api, texture, &buffer, stride);
 
    if (result && _buffer)
-      buffer = trace_buffer_create(trace_screen(texture->screen), buffer);
+      buffer = trace_buffer_create(trace_screen(_texture->screen), buffer);
 
    if (_buffer)
       *_buffer = buffer;
