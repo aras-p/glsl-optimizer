@@ -563,7 +563,6 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   radeon_mipmap_level *lvl;
 
    if (t && t->mt && !t->image_override)
      dwords += 2;
@@ -591,7 +590,6 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   radeon_mipmap_level *lvl;
    int hastexture = 1;
 
    if (!r200->state.texture.unit[i].unitneeded)
