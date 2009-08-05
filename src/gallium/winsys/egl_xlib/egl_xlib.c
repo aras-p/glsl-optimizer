@@ -182,6 +182,8 @@ create_configs(_EGLDriver *drv, EGLDisplay dpy)
       SET_CONFIG_ATTRIB(config, EGL_CONFORMANT, all_apis);
       SET_CONFIG_ATTRIB(config, EGL_RENDERABLE_TYPE, all_apis);
       SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT);
+      SET_CONFIG_ATTRIB(config, EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE);
+      SET_CONFIG_ATTRIB(config, EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE);
 
       _eglAddConfig(disp, config);
    }
@@ -640,6 +642,86 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 
 
 static EGLBoolean
+xlib_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy,
+                     EGLSurface surface, EGLint buffer)
+{
+   struct xlib_egl_surface *xsurf = lookup_surface(surface);
+   struct xlib_egl_context *xctx;
+   struct pipe_surface *psurf;
+   enum pipe_format format;
+   int target;
+
+   if (!xsurf || xsurf->Base.Type != EGL_PBUFFER_BIT)
+      return _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+   if (buffer != EGL_BACK_BUFFER)
+      return _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+   if (xsurf->Base.BoundToTexture)
+      return _eglError(EGL_BAD_ACCESS, "eglBindTexImage");
+
+   /* this should be updated when choose_color_format is */
+   switch (xsurf->Base.TextureFormat) {
+   case EGL_TEXTURE_RGB:
+      format = PIPE_FORMAT_R8G8B8_UNORM;
+      break;
+   case EGL_TEXTURE_RGBA:
+      format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      break;
+   default:
+      return _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+   }
+
+   switch (xsurf->Base.TextureTarget) {
+   case EGL_TEXTURE_2D:
+      target = ST_TEXTURE_2D;
+      break;
+   default:
+      return _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+   }
+
+   /* flush properly */
+   if (eglGetCurrentSurface(EGL_DRAW) == surface) {
+      xctx = lookup_context(eglGetCurrentContext());
+      st_flush(xctx->Context, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME,
+               NULL);
+   }
+   else if (_eglIsSurfaceBound(&xsurf->Base)) {
+      xctx = lookup_context(_eglGetContextHandle(xsurf->Base.Binding));
+      if (xctx)
+         st_finish(xctx->Context);
+   }
+
+   st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
+                              &psurf);
+   st_bind_texture_surface(psurf, target, xsurf->Base.MipmapLevel, format);
+   xsurf->Base.BoundToTexture = EGL_TRUE;
+
+   return EGL_TRUE;
+}
+
+
+static EGLBoolean
+xlib_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
+                        EGLint buffer)
+{
+   struct xlib_egl_surface *xsurf = lookup_surface(surface);
+   struct pipe_surface *psurf;
+
+   if (!xsurf || xsurf->Base.Type != EGL_PBUFFER_BIT ||
+       !xsurf->Base.BoundToTexture)
+      return _eglError(EGL_BAD_SURFACE, "eglReleaseTexImage");
+   if (buffer != EGL_BACK_BUFFER)
+      return _eglError(EGL_BAD_PARAMETER, "eglReleaseTexImage");
+
+   st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
+                              &psurf);
+   st_unbind_texture_surface(psurf, ST_TEXTURE_2D, xsurf->Base.MipmapLevel);
+   xsurf->Base.BoundToTexture = EGL_FALSE;
+
+   return EGL_TRUE;
+}
+
+
+static EGLBoolean
 xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {
    /* error checking step: */
@@ -725,6 +807,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.CreateWindowSurface = xlib_eglCreateWindowSurface;
    xdrv->Base.API.CreatePbufferSurface = xlib_eglCreatePbufferSurface;
    xdrv->Base.API.DestroySurface = xlib_eglDestroySurface;
+   xdrv->Base.API.BindTexImage = xlib_eglBindTexImage;
+   xdrv->Base.API.ReleaseTexImage = xlib_eglReleaseTexImage;
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
 
