@@ -2038,7 +2038,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_STENCIL_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_StencilBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_StencilBuffer;
-      if (readRb->StencilBits != drawRb->StencilBits) {
+      if (!readRb ||
+          !drawRb ||
+          readRb->StencilBits != drawRb->StencilBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(stencil buffer size mismatch");
          return;
@@ -2048,7 +2050,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_DEPTH_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_DepthBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_DepthBuffer;
-      if (readRb->DepthBits != drawRb->DepthBits) {
+      if (!readRb ||
+          !drawRb ||
+          readRb->DepthBits != drawRb->DepthBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(depth buffer size mismatch");
          return;
