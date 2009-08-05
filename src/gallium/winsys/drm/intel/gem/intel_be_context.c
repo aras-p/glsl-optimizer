@@ -36,7 +36,7 @@ intel_be_batch_reloc(struct i915_winsys *sws,
 	}
 
 	if (access_flags & I915_BUFFER_ACCESS_READ) {
-		read |= I915_GEM_DOMAIN_VERTEX;
+		read |= I915_GEM_DOMAIN_SAMPLER;
 	}
 
 	ret = intel_be_offset_relocation(intel->batch,
