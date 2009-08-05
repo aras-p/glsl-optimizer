@@ -155,7 +155,11 @@ util_destroy_blit(struct blit_state *ctx)
 }
 
 
-static unsigned get_next_slot( struct blit_state *ctx )
+/**
+ * Get offset of next free slot in vertex buffer for quad vertices.
+ */
+static unsigned
+get_next_slot( struct blit_state *ctx )
 {
    const unsigned max_slots = 4096 / sizeof ctx->vertices;
 
@@ -172,7 +176,6 @@ static unsigned get_next_slot( struct blit_state *ctx )
    return ctx->vbuf_slot++ * sizeof ctx->vertices;
 }
                                
-
 
 /**
  * Setup vertex data for the textured quad we'll draw.
@@ -260,6 +263,8 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
    return offset;
 }
+
+
 /**
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
@@ -308,7 +313,9 @@ util_blit_pixels(struct blit_state *ctx,
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_SAMPLER, 0));
 
-   if(dst->format == src->format && (dstX1 - dstX0) == srcW && (dstY1 - dstY0) == srcH) {
+   if (dst->format == src->format &&
+       (dstX1 - dstX0) == srcW &&
+       (dstY1 - dstY0) == srcH) {
       /* FIXME: this will most surely fail for overlapping rectangles */
       pipe->surface_copy(pipe,
 			 dst, dstX0, dstY0,   /* dest */
