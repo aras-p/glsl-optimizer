@@ -47,6 +47,10 @@ intel_be_init_device(struct intel_be_device *device, int fd, unsigned id);
 
 struct intel_be_buffer {
 	struct pipe_buffer base;
+	void *ptr;
+	unsigned map_count;
+	boolean map_gtt;
+
 	drm_intel_bo *bo;
 	boolean flinked;
 	unsigned flink;

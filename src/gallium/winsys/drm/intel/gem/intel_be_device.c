@@ -16,6 +16,8 @@
 #include "intel_be_api.h"
 #include <stdio.h>
 
+#define I915_TILING_X 1
+
 /*
  * Buffer
  */
@@ -25,9 +27,10 @@ intel_be_buffer_map(struct pipe_winsys *winsys,
 		    struct pipe_buffer *buf,
 		    unsigned flags)
 {
+	struct intel_be_buffer *buffer = intel_be_buffer(buf);
 	drm_intel_bo *bo = intel_bo(buf);
 	int write = 0;
-	int ret;
+	int ret = 0;
 
         if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
            /* Remove this when drm_intel_bo_map supports DONTBLOCK 
@@ -38,19 +41,37 @@ intel_be_buffer_map(struct pipe_winsys *winsys,
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		write = 1;
 
-	ret = drm_intel_bo_map(bo, write);
+	if (buffer->map_count)
+		goto out;
 
+	if (buffer->map_gtt)
+		ret = drm_intel_gem_bo_map_gtt(bo);
+	else
+		ret = drm_intel_bo_map(bo, write);
+
+	buffer->ptr = bo->virtual;
+
+out:
 	if (ret)
 		return NULL;
 
-	return bo->virtual;
+	buffer->map_count++;
+	return buffer->ptr;
 }
 
 static void
 intel_be_buffer_unmap(struct pipe_winsys *winsys,
 		      struct pipe_buffer *buf)
 {
-	drm_intel_bo_unmap(intel_bo(buf));
+	struct intel_be_buffer *buffer = intel_be_buffer(buf);
+
+	if (--buffer->map_count)
+		return;
+
+	if (buffer->map_gtt)
+		drm_intel_gem_bo_unmap_gtt(intel_bo(buf));
+	else
+		drm_intel_bo_unmap(intel_bo(buf));
 }
 
 static void
@@ -80,8 +101,13 @@ intel_be_buffer_create(struct pipe_winsys *winsys,
 	buffer->base.size = size;
 	buffer->flinked = FALSE;
 	buffer->flink = 0;
+	buffer->map_gtt = FALSE;
 
-	if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
+	if (usage & I915_BUFFER_USAGE_SCANOUT) {
+		/* Scanout buffer */
+		name = "gallium3d_scanout";
+		pool = dev->pools.gem;
+	} else if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
 		/* Local buffer */
 		name = "gallium3d_local";
 		pool = dev->pools.gem;
@@ -96,6 +122,12 @@ intel_be_buffer_create(struct pipe_winsys *winsys,
 	}
 
 	buffer->bo = drm_intel_bo_alloc(pool, name, size, alignment);
+	if (usage & I915_BUFFER_USAGE_SCANOUT) {
+		unsigned tiling = I915_TILING_X;
+		unsigned stride = 2048 * 4; /* TODO do something smarter here */
+		drm_intel_bo_set_tiling(buffer->bo, &tiling, stride);
+		buffer->map_gtt = TRUE;
+	}
 
 	if (!buffer->bo)
 		goto err;
