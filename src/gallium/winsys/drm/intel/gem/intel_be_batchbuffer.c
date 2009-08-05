@@ -122,6 +122,10 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 		}
 
 		drm_intel_bo_unmap(batch->bo);
+	} else {
+		/* TODO figgure out why the gpu hangs if we don't run sync */
+		drm_intel_bo_map(batch->bo, FALSE);
+		drm_intel_bo_unmap(batch->bo);
 	}
 
 	intel_be_batchbuffer_reset(batch);
