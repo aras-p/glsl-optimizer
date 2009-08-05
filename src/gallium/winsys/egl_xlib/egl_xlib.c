@@ -425,10 +425,14 @@ xlib_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy,
    struct xlib_egl_context *context = lookup_context(ctx);
    struct xlib_egl_surface *draw_surf = lookup_surface(draw);
    struct xlib_egl_surface *read_surf = lookup_surface(read);
+   struct st_context *oldctx = st_get_current();
 
    if (!_eglMakeCurrent(drv, dpy, draw, read, context))
       return EGL_FALSE;
 
+   /* Flush before switching context.  Check client API? */
+   if (oldctx)
+      st_flush(oldctx, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    st_make_current((context ? context->Context : NULL),
                    (draw_surf ? draw_surf->Framebuffer : NULL),
                    (read_surf ? read_surf->Framebuffer : NULL));
