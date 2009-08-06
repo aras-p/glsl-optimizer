@@ -1099,6 +1099,29 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 
 
 /**
+ * Copy one client vertex array to another.
+ */
+void
+_mesa_copy_client_array(GLcontext *ctx,
+                        struct gl_client_array *dst,
+                        struct gl_client_array *src)
+{
+   dst->Size = src->Size;
+   dst->Type = src->Type;
+   dst->Format = src->Format;
+   dst->Stride = src->Stride;
+   dst->StrideB = src->StrideB;
+   dst->Ptr = src->Ptr;
+   dst->Enabled = src->Enabled;
+   dst->Normalized = src->Normalized;
+   dst->_ElementSize = src->_ElementSize;
+   _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
+   dst->_MaxElement = src->_MaxElement;
+}
+
+
+
+/**
  * Print vertex array's fields.
  */
 static void
