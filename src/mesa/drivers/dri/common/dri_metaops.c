@@ -357,6 +357,7 @@ meta_clear_tris(struct dri_metaops *meta, GLbitfield mask)
    GLuint saved_shader_program = 0;
    unsigned int saved_active_texture;
    struct gl_array_object *arraySave = NULL;
+   GLfloat saved_near, saved_far;
 
    if (!meta->clear.arrayObj)
       meta_init_clear(meta);
@@ -370,8 +371,7 @@ meta_clear_tris(struct dri_metaops *meta, GLbitfield mask)
 		    GL_POLYGON_BIT |
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
-		    GL_CURRENT_BIT |
-		    GL_VIEWPORT_BIT);
+		    GL_CURRENT_BIT);
    saved_active_texture = ctx->Texture.CurrentUnit;
 
    /* Disable existing GL state we don't want to apply to a clear. */
@@ -440,6 +440,8 @@ meta_clear_tris(struct dri_metaops *meta, GLbitfield mask)
    /* The ClearDepth value is unaffected by DepthRange, so do a default
     * mapping.
     */
+   saved_near = ctx->Viewport.Near;
+   saved_far = ctx->Viewport.Far;
    _mesa_DepthRange(0.0, 1.0);
 
    /* Prepare the vertices, which are the same regardless of which buffer we're
@@ -519,6 +521,7 @@ meta_clear_tris(struct dri_metaops *meta, GLbitfield mask)
    if (saved_shader_program)
       _mesa_UseProgramObjectARB(saved_shader_program);
 
+   _mesa_DepthRange(saved_near, saved_far);
    _mesa_PopAttrib();
 
    /* restore current array object */
