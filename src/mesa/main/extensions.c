@@ -404,6 +404,7 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
+   ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
