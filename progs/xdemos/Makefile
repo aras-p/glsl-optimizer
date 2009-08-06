@@ -26,6 +26,7 @@ PROGS = \
 	glxsnoop \
 	glxswapcontrol \
 	manywin \
+	multictx \
 	offset \
 	overlay \
 	pbinfo \
