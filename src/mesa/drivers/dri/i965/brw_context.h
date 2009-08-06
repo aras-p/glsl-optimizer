@@ -438,9 +438,13 @@ struct brw_query_object {
    unsigned int count;
 };
 
+
+/**
+ * brw_context is derived from intel_context.
+ */
 struct brw_context 
 {
-   struct intel_context intel;
+   struct intel_context intel;  /**< base class, must be first field */
    GLuint primitive;
 
    GLboolean emit_state_always;
