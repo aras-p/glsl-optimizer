@@ -2,11 +2,14 @@ Import('*')
 
 env = drienv.Clone()
 
+env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
+
 drivers = [
+    st_dri,
+    inteldrm,
     softpipe,
     i915simple,
     trace,
-    inteldrm
 ]
 
 env.SharedLibrary(
