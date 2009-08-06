@@ -328,8 +328,9 @@ util_blit_pixels(struct blit_state *ctx,
                                       PIPE_TEXTURE_USAGE_SAMPLER, 0));
 
    /* do the regions overlap? */
-   overlap = (src == dst) && regions_overlap(srcX0, srcY0, srcX1, srcY1,
-                                             dstX0, dstY0, dstX1, dstY1);
+   overlap = util_same_surface(src, dst) &&
+      regions_overlap(srcX0, srcY0, srcX1, srcY1,
+                      dstX0, dstY0, dstX1, dstY1);
 
    /*
     * Check for simple case:  no format conversion, no flipping, no stretching,
@@ -343,7 +344,6 @@ util_blit_pixels(struct blit_state *ctx,
        (dstX1 - dstX0) == (srcX1 - srcX0) &&
        (dstY1 - dstY0) == (srcY1 - srcY0) &&
        !overlap) {
-      /* FIXME: this will most surely fail for overlapping rectangles */
       pipe->surface_copy(pipe,
 			 dst, dstX0, dstY0, /* dest */
 			 src, srcX0, srcY0, /* src */
