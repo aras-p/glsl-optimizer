@@ -326,7 +326,7 @@ util_blit_pixels(struct blit_state *ctx,
    assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_SAMPLER, 0));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
 
    /* do the regions overlap? */
    overlap = util_same_surface(src, dst) &&
