@@ -45,6 +45,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_surface.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -335,6 +336,7 @@ util_blit_pixels(struct blit_state *ctx,
    /*
     * Check for simple case:  no format conversion, no flipping, no stretching,
     * no overlapping.
+    * Filter mode should not matter since there's no stretching.
     */
    if (dst->format == src->format &&
        srcX0 < srcX1 &&
