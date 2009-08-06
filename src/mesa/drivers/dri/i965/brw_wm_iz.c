@@ -118,6 +118,7 @@ const struct {
 
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
+		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key )
 {
    GLuint reg = 2;
@@ -127,7 +128,7 @@ void brw_wm_lookup_iz( GLuint line_aa,
    if (lookup & IZ_PS_COMPUTES_DEPTH_BIT)
       key->computes_depth = 1;
 
-   if (wm_iz_table[lookup].sd_present) {
+   if (wm_iz_table[lookup].sd_present || ps_uses_depth) {
       key->source_depth_reg = reg;
       reg += 2;
    }

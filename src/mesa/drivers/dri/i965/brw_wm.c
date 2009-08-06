@@ -202,6 +202,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
+   GLboolean uses_depth = (fp->program.Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
    GLuint lookup = 0;
    GLuint line_aa;
    GLuint i;
@@ -263,6 +264,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	 
    brw_wm_lookup_iz(line_aa,
 		    lookup,
+		    uses_depth,
 		    key);
 
 
