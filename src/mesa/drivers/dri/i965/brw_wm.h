@@ -292,6 +292,7 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
+		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
