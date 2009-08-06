@@ -80,9 +80,13 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 
 #define INTEL_MAX_FIXUP 64
 
+
+/**
+ * intel_context is derived from Mesa's context class: GLcontext.
+ */
 struct intel_context
 {
-   GLcontext ctx;               /* the parent class */
+   GLcontext ctx;  /**< base class, must be first field */
 
    struct
    {
