@@ -198,7 +198,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
          return;
       }
 
-      if (ctx->Pack.BufferObj->Pointer) {
+      if (_mesa_bufferobj_mapped(ctx->Pack.BufferObj)) {
          /* buffer is mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
          return;

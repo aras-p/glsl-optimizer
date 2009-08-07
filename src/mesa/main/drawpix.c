@@ -103,7 +103,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
                            "glDrawPixels(invalid PBO access)");
                return;
             }
-            if (ctx->Unpack.BufferObj->Pointer) {
+            if (_mesa_bufferobj_mapped(ctx->Unpack.BufferObj)) {
                /* buffer is mapped - that's an error */
                _mesa_error(ctx, GL_INVALID_OPERATION,
                            "glDrawPixels(PBO is mapped)");
@@ -254,7 +254,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
                         "glBitmap(invalid PBO access)");
             return;
          }
-         if (ctx->Unpack.BufferObj->Pointer) {
+         if (_mesa_bufferobj_mapped(ctx->Unpack.BufferObj)) {
             /* buffer is mapped - that's an error */
             _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
             return;
