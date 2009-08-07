@@ -83,6 +83,10 @@ struct radeon_bo_funcs {
     int (*bo_unmap)(struct radeon_bo *bo);
     int (*bo_wait)(struct radeon_bo *bo);
     int (*bo_is_static)(struct radeon_bo *bo);
+    int (*bo_set_tiling)(struct radeon_bo *bo, uint32_t tiling_flags,
+			  uint32_t pitch);
+    int (*bo_get_tiling)(struct radeon_bo *bo, uint32_t *tiling_flags,
+			  uint32_t *pitch);
 };
 
 struct radeon_bo_manager {
@@ -185,6 +189,18 @@ static inline int _radeon_bo_wait(struct radeon_bo *bo,
                                   int line)
 {
     return bo->bom->funcs->bo_wait(bo);
+}
+
+static inline int radeon_bo_set_tiling(struct radeon_bo *bo,
+				       uint32_t tiling_flags, uint32_t pitch)
+{
+    return bo->bom->funcs->bo_set_tiling(bo, tiling_flags, pitch);
+}
+
+static inline int radeon_bo_get_tiling(struct radeon_bo *bo,
+				       uint32_t *tiling_flags, uint32_t *pitch)
+{
+    return bo->bom->funcs->bo_get_tiling(bo, tiling_flags, pitch);
 }
 
 static inline int radeon_bo_is_static(struct radeon_bo *bo)

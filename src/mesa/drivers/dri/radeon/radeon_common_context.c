@@ -762,8 +762,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			bo = depth_bo;
 			radeon_bo_ref(bo);
 		} else {
+			uint32_t tiling_flags = 0, pitch = 0;
+			int ret;
 #ifdef RADEON_DEBUG_BO
-            bo = radeon_bo_open(radeon->radeonScreen->bom,
+			bo = radeon_bo_open(radeon->radeonScreen->bom,
 						buffers[i].name,
 						0,
 						0,
@@ -784,6 +786,13 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 					regname, buffers[i].name);
 
 			}
+
+			ret = radeon_bo_get_tiling(bo, &tiling_flags, &pitch);
+			if (tiling_flags & RADEON_TILING_MACRO)
+				bo->flags |= RADEON_BO_FLAGS_MACRO_TILE;
+			if (tiling_flags & RADEON_TILING_MICRO)
+				bo->flags |= RADEON_BO_FLAGS_MICRO_TILE;
+			
 		}
 
 		if (buffers[i].attachment == __DRI_BUFFER_DEPTH) {

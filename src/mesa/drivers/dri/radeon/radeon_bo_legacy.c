@@ -577,6 +577,8 @@ static struct radeon_bo_funcs bo_legacy_funcs = {
     bo_unmap,
     NULL,
     bo_is_static,
+    NULL,
+    NULL,
 };
 
 static int bo_vram_validate(struct radeon_bo *bo,
