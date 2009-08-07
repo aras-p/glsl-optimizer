@@ -36,6 +36,14 @@
  * Internal functions
  */
 
+
+/** Is the given buffer object currently mapped? */
+static INLINE GLboolean
+_mesa_bufferobj_mapped(struct gl_buffer_object *obj)
+{
+   return obj->Pointer != NULL;
+}
+
 extern void
 _mesa_init_buffer_objects( GLcontext *ctx );
 
