@@ -804,8 +804,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   _mesa_set_vp_override( ctx, TRUE );
-   _mesa_update_state( ctx );
+   /* Mesa state should be up to date by now */
+   assert(ctx->NewState == 0x0);
 
    st_validate_state(st);
 
@@ -833,8 +833,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          pipe_texture_reference(&pt, NULL);
       }
    }
-
-   _mesa_set_vp_override( ctx, FALSE );
 }
 
 
