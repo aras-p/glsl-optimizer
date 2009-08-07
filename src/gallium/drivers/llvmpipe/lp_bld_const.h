@@ -49,6 +49,10 @@ unsigned
 lp_const_shift(union lp_type type);
 
 
+unsigned
+lp_const_offset(union lp_type type);
+
+
 double
 lp_const_scale(union lp_type type);
 

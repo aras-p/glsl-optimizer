@@ -59,7 +59,7 @@ lp_const_shift(union lp_type type)
 }
 
 
-static unsigned
+unsigned
 lp_const_offset(union lp_type type)
 {
    if(type.floating || type.fixed)
