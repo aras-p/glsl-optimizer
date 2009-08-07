@@ -1262,7 +1262,11 @@ post_vs_emit( struct brw_vs_compile *c,
 
    /* patch up the END code to jump past subroutines, etc */
    offset = last_inst - end_inst;
-   brw_set_src1(end_inst, brw_imm_d(offset * 16));
+   if (offset > 1) {
+      brw_set_src1(end_inst, brw_imm_d(offset * 16));
+   } else {
+      end_inst->header.opcode = BRW_OPCODE_NOP;
+   }
 }
 
 static uint32_t
