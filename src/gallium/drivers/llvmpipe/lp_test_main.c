@@ -178,11 +178,11 @@ random_elem(union lp_type type, void *dst, unsigned index)
    assert(index < type.length);
    if (type.floating) {
       double value = (double)random()/(double)RAND_MAX;
-      if(!type.norm)
+      if(!type.norm) {
          value += (double)random();
-      if(type.sign)
          if(random() & 1)
             value = -value;
+      }
       switch(type.width) {
       case 32:
          *((float *)dst + index) = (float)value;
@@ -250,7 +250,7 @@ random_vec(union lp_type type, void *dst)
 
 
 boolean
-compare_vec(union lp_type type, const void *res, const double *ref)
+compare_vec(union lp_type type, const void *res, const void *ref)
 {
    double eps;
    unsigned i;
@@ -276,7 +276,7 @@ compare_vec(union lp_type type, const void *res, const double *ref)
 
    for (i = 0; i < type.length; ++i) {
       double res_elem = read_elem(type, res, i);
-      double ref_elem = ref[i];
+      double ref_elem = read_elem(type, ref, i);
       double delta = fabs(res_elem - ref_elem);
       if(delta >= 2.0*eps)
          return FALSE;

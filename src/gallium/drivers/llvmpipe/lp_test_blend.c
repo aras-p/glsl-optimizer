@@ -466,10 +466,10 @@ test_one(unsigned verbose,
    (void)pass;
 #endif
 
-   blend_test_ptr = (blend_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
-
    if(verbose >= 2)
       LLVMDumpModule(module);
+
+   blend_test_ptr = (blend_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
@@ -477,7 +477,7 @@ test_one(unsigned verbose,
       uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
       uint8_t con[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
       uint8_t res[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      double ref[LP_MAX_VECTOR_LENGTH];
+      uint8_t ref[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
       int64_t start_counter = 0;
       int64_t end_counter = 0;
 
@@ -489,13 +489,16 @@ test_one(unsigned verbose,
          double fsrc[LP_MAX_VECTOR_LENGTH];
          double fdst[LP_MAX_VECTOR_LENGTH];
          double fcon[LP_MAX_VECTOR_LENGTH];
+         double fref[LP_MAX_VECTOR_LENGTH];
 
          read_vec(type, src, fsrc);
          read_vec(type, dst, fdst);
          read_vec(type, con, fcon);
 
          for(j = 0; j < type.length; j += 4)
-            compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, ref + j);
+            compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, fref + j);
+
+         write_vec(type, ref, fref);
       }
 
       start_counter = rdtsc();
