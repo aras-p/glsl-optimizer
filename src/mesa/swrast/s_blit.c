@@ -105,7 +105,7 @@ static void
 blit_nearest(GLcontext *ctx,
              GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
              GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-             GLenum buffer)
+             GLbitfield buffer)
 {
    struct gl_renderbuffer *readRb, *drawRb;
 
@@ -457,7 +457,7 @@ static void
 simple_blit(GLcontext *ctx,
             GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-            GLenum buffer)
+            GLbitfield buffer)
 {
    struct gl_renderbuffer *readRb, *drawRb;
    const GLint width = srcX1 - srcX0;
@@ -560,7 +560,7 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                         GLbitfield mask, GLenum filter)
 {
-   static const GLint buffers[3] = {
+   static const GLbitfield buffers[3] = {
       GL_COLOR_BUFFER_BIT,
       GL_DEPTH_BUFFER_BIT,
       GL_STENCIL_BUFFER_BIT
