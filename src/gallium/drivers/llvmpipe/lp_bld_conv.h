@@ -47,7 +47,7 @@ void
 lp_build_conv(LLVMBuilderRef builder,
               union lp_type src_type,
               union lp_type dst_type,
-              LLVMValueRef *srcs, unsigned num_srcs,
+              const LLVMValueRef *srcs, unsigned num_srcs,
               LLVMValueRef *dsts, unsigned num_dsts);
 
 

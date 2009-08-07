@@ -53,11 +53,89 @@
 #include "lp_bld_conv.h"
 
 
+/**
+ * Build shuffle vectors that match PUNPCKLxx and PUNPCKHxx instructions.
+ */
+static LLVMValueRef
+lp_build_const_expand_shuffle(unsigned n, unsigned lo_hi)
+{
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i, j;
+
+   assert(n <= LP_MAX_VECTOR_LENGTH);
+   assert(lo_hi < 2);
+
+   /* TODO: cache results in a static table */
+
+   for(i = 0, j = lo_hi*n/2; i < n; i += 2, ++j) {
+      elems[i + 0] = LLVMConstInt(LLVMInt32Type(), 0 + j, 0);
+      elems[i + 1] = LLVMConstInt(LLVMInt32Type(), n + j, 0);
+   }
+
+   return LLVMConstVector(elems, n);
+}
+
+
+static void
+lp_build_expand(LLVMBuilderRef builder,
+               union lp_type src_type,
+               union lp_type dst_type,
+               LLVMValueRef src,
+               LLVMValueRef *dst, unsigned num_dsts)
+{
+   unsigned num_tmps;
+   unsigned i;
+
+   /* Register width must remain constant */
+   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
+
+   /* We must not loose or gain channels. Only precision */
+   assert(src_type.length == dst_type.length * num_dsts);
+
+   num_tmps = 1;
+   dst[0] = src;
+
+   while(src_type.width < dst_type.width) {
+      union lp_type new_type = src_type;
+      LLVMTypeRef new_vec_type;
+
+      new_type.width *= 2;
+      new_type.length /= 2;
+      new_vec_type = lp_build_vec_type(new_type);
+
+      for(i = num_tmps; i--; ) {
+         LLVMValueRef zero;
+         LLVMValueRef shuffle_lo;
+         LLVMValueRef shuffle_hi;
+         LLVMValueRef lo;
+         LLVMValueRef hi;
+
+         zero = lp_build_zero(src_type);
+         shuffle_lo = lp_build_const_expand_shuffle(src_type.length, 0);
+         shuffle_hi = lp_build_const_expand_shuffle(src_type.length, 1);
+
+         /*  PUNPCKLBW, PUNPCKHBW */
+         lo = LLVMBuildShuffleVector(builder, dst[i], zero, shuffle_lo, "");
+         hi = LLVMBuildShuffleVector(builder, dst[i], zero, shuffle_hi, "");
+
+         dst[2*i + 0] = LLVMBuildBitCast(builder, lo, new_vec_type, "");
+         dst[2*i + 1] = LLVMBuildBitCast(builder, hi, new_vec_type, "");
+      }
+
+      src_type = new_type;
+
+      num_tmps *= 2;
+   }
+
+   assert(num_tmps == num_dsts);
+}
+
+
 static LLVMValueRef
 lp_build_trunc(LLVMBuilderRef builder,
                union lp_type src_type,
                union lp_type dst_type,
-               LLVMValueRef *src, unsigned num_srcs)
+               const LLVMValueRef *src, unsigned num_srcs)
 {
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned i;
@@ -125,9 +203,12 @@ void
 lp_build_conv(LLVMBuilderRef builder,
               union lp_type src_type,
               union lp_type dst_type,
-              LLVMValueRef *src, unsigned num_srcs,
+              const LLVMValueRef *src, unsigned num_srcs,
               LLVMValueRef *dst, unsigned num_dsts)
 {
+   union lp_type tmp_type;
+   LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
+   unsigned num_tmps;
    unsigned i;
 
    /* Register width must remain constant */
@@ -136,34 +217,51 @@ lp_build_conv(LLVMBuilderRef builder,
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
-   if(!src_type.norm && dst_type.norm) {
-      /* FIXME: clamp */
+   assert(src_type.length <= LP_MAX_VECTOR_LENGTH);
+   assert(dst_type.length <= LP_MAX_VECTOR_LENGTH);
+
+   tmp_type = src_type;
+   for(i = 0; i < num_srcs; ++i)
+      tmp[i] = src[i];
+   num_tmps = num_srcs;
+
+   /*
+    * Clamp if necessary
+    */
+
+   if(!tmp_type.norm && dst_type.norm) {
+      /* FIXME */
    }
 
-   if(src_type.floating && !dst_type.floating) {
-      double dscale;
-      LLVMTypeRef tmp;
+   /*
+    * Scale to the narrowest range
+    */
 
-      /* Rescale */
-      dscale = lp_const_scale(dst_type);
-      if (dscale != 1.0) {
-         LLVMValueRef scale = lp_build_const_uni(src_type, dscale);
-         for(i = 0; i < num_srcs; ++i)
-            src[i] = LLVMBuildMul(builder, src[i], scale, "");
+   if(dst_type.floating) {
+      /* Nothing to do */
+   }
+   else if(tmp_type.floating) {
+      double dst_scale = lp_const_scale(dst_type);
+      LLVMTypeRef tmp_vec_type;
+
+      if (dst_scale != 1.0) {
+         LLVMValueRef scale = lp_build_const_uni(tmp_type, dst_scale);
+         for(i = 0; i < num_tmps; ++i)
+            tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
       }
 
       /* Use an equally sized integer for intermediate computations */
-      src_type.floating = FALSE;
-      tmp = lp_build_vec_type(src_type);
-      for(i = 0; i < num_srcs; ++i) {
+      tmp_type.floating = FALSE;
+      tmp_vec_type = lp_build_vec_type(tmp_type);
+      for(i = 0; i < num_tmps; ++i) {
 #if 0
          if(dst_type.sign)
-            src[i] = LLVMBuildFPToSI(builder, src[i], tmp, "");
+            tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
          else
-            src[i] = LLVMBuildFPToUI(builder, src[i], tmp, "");
+            tmp[i] = LLVMBuildFPToUI(builder, tmp[i], tmp_vec_type, "");
 #else
         /* FIXME: there is no SSE counterpart for LLVMBuildFPToUI */
-         src[i] = LLVMBuildFPToSI(builder, src[i], tmp, "");
+         tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
 #endif
       }
    }
@@ -171,20 +269,88 @@ lp_build_conv(LLVMBuilderRef builder,
       unsigned src_shift = lp_const_shift(src_type);
       unsigned dst_shift = lp_const_shift(dst_type);
 
+      /* FIXME: compensate different offsets too */
       if(src_shift > dst_shift) {
-         LLVMValueRef shift = lp_build_int_const_uni(src_type, src_shift - dst_shift);
-         for(i = 0; i < num_srcs; ++i)
+         LLVMValueRef shift = lp_build_int_const_uni(tmp_type, src_shift - dst_shift);
+         for(i = 0; i < num_tmps; ++i)
             if(dst_type.sign)
-               src[i] = LLVMBuildAShr(builder, src[i], shift, "");
+               tmp[i] = LLVMBuildAShr(builder, tmp[i], shift, "");
             else
-               src[i] = LLVMBuildLShr(builder, src[i], shift, "");
+               tmp[i] = LLVMBuildLShr(builder, tmp[i], shift, "");
       }
    }
 
-   if(src_type.width > dst_type.width) {
+   /*
+    * Truncate or expand bit width
+    */
+
+   assert(!tmp_type.floating);
+
+   if(tmp_type.width > dst_type.width) {
       assert(num_dsts == 1);
-      dst[0] = lp_build_trunc(builder, src_type, dst_type, src, num_srcs);
+      tmp[0] = lp_build_trunc(builder, tmp_type, dst_type, tmp, num_tmps);
+      tmp_type.width = dst_type.width;
+      tmp_type.length = dst_type.length;
+      num_tmps = 1;
    }
-   else
-      assert(0);
+
+   if(tmp_type.width < dst_type.width) {
+      assert(num_tmps == 1);
+      lp_build_expand(builder, tmp_type, dst_type, tmp[0], tmp, num_dsts);
+      tmp_type.width = dst_type.width;
+      tmp_type.length = dst_type.length;
+      num_tmps = num_dsts;
+   }
+
+   assert(tmp_type.width == dst_type.width);
+   assert(tmp_type.length == dst_type.length);
+   assert(num_tmps == num_dsts);
+
+   /*
+    * Scale to the widest range
+    */
+
+   if(src_type.floating) {
+      /* Nothing to do */
+   }
+   else if(!src_type.floating && dst_type.floating) {
+      double src_scale = lp_const_scale(src_type);
+      LLVMTypeRef tmp_vec_type;
+
+      /* Use an equally sized integer for intermediate computations */
+      tmp_type.floating = TRUE;
+      tmp_type.sign = TRUE;
+      tmp_vec_type = lp_build_vec_type(tmp_type);
+      for(i = 0; i < num_tmps; ++i) {
+ #if 0
+         if(dst_type.sign)
+            tmp[i] = LLVMBuildSIToFP(builder, tmp[i], tmp_vec_type, "");
+         else
+            tmp[i] = LLVMBuildUIToFP(builder, tmp[i], tmp_vec_type, "");
+ #else
+         /* FIXME: there is no SSE counterpart for LLVMBuildUIToFP */
+         tmp[i] = LLVMBuildSIToFP(builder, tmp[i], tmp_vec_type, "");
+ #endif
+       }
+
+       if (src_scale != 1.0) {
+          LLVMValueRef scale = lp_build_const_uni(tmp_type, 1.0/src_scale);
+          for(i = 0; i < num_tmps; ++i)
+             tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
+       }
+    }
+    else {
+       unsigned src_shift = lp_const_shift(src_type);
+       unsigned dst_shift = lp_const_shift(dst_type);
+
+       /* FIXME: compensate different offsets too */
+       if(src_shift < dst_shift) {
+          LLVMValueRef shift = lp_build_int_const_uni(tmp_type, src_shift - dst_shift);
+          for(i = 0; i < num_tmps; ++i)
+             tmp[i] = LLVMBuildShl(builder, tmp[i], shift, "");
+       }
+    }
+
+   for(i = 0; i < num_dsts; ++i)
+      dst[i] = tmp[i];
 }

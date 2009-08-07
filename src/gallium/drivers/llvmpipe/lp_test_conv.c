@@ -353,7 +353,7 @@ test_all(unsigned verbose, FILE *fp)
    const union lp_type *dst_type;
    bool success = TRUE;
 
-   for(src_type = conv_types; src_type < &conv_types[1 /* num_types */]; ++src_type) {
+   for(src_type = conv_types; src_type < &conv_types[num_types]; ++src_type) {
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
 
          if(src_type == dst_type)
@@ -378,7 +378,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    bool success = TRUE;
 
    for(i = 0; i < n; ++i) {
-      src_type = &conv_types[0 /* random() % num_types */];
+      src_type = &conv_types[random() % num_types];
       
       do {
          dst_type = &conv_types[random() % num_types];
