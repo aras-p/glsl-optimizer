@@ -42,6 +42,12 @@
 #define RADEON_BO_FLAGS_MACRO_TILE  1
 #define RADEON_BO_FLAGS_MICRO_TILE  2
 
+#define RADEON_TILING_MACRO 0x1
+#define RADEON_TILING_MICRO 0x2
+#define RADEON_TILING_SWAP 0x4
+#define RADEON_TILING_SURFACE 0x8 /* this object requires a surface
+				   * when mapped - i.e. front buffer */
+
 struct radeon_bo_manager;
 
 struct radeon_bo {
