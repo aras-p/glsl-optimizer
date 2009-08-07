@@ -3507,7 +3507,10 @@ extension_supported(const char *haystack, const char *needle)
 }
 
 
-static void
+/* Run all the known extension function tests, if the extension is supported.
+ * Return a count of how many failed.
+ */
+static int
 check_functions( const char *extensions )
 {
    struct name_test_pair *entry;
@@ -3629,11 +3632,19 @@ check_functions( const char *extensions )
    printf("Total: %d pass  %d fail  %d untested  %d unsupported  %d total\n", 
       totalPass, totalFail, totalUntested, totalUnsupported,
       totalPass + totalFail + totalUntested + totalUnsupported);
+
+   return totalFail;
 }
 
 
+/* Return an error code */
+#define ERROR_NONE 0
+#define ERROR_NO_VISUAL 1
+#define ERROR_NO_CONTEXT 2
+#define ERROR_NO_MAKECURRENT 3
+#define ERROR_FAILED 4
 
-static void
+static int
 print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
 {
    Window win;
@@ -3659,6 +3670,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
    GLXContext ctx;
    XVisualInfo *visinfo;
    int width = 100, height = 100;
+   int failures;
 
    root = RootWindow(dpy, scrnum);
 
@@ -3667,7 +3679,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
       if (!visinfo) {
          fprintf(stderr, "Error: couldn't find RGB GLX visual\n");
-         return;
+         return ERROR_NO_VISUAL;
       }
    }
 
@@ -3684,26 +3696,29 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
    if (!ctx) {
       fprintf(stderr, "Error: glXCreateContext failed\n");
       XDestroyWindow(dpy, win);
-      return;
+      return ERROR_NO_CONTEXT;
    }
 
-   if (glXMakeCurrent(dpy, win, ctx)) {
-      check_functions( (const char *) glGetString(GL_EXTENSIONS) );
-   }
-   else {
+   if (!glXMakeCurrent(dpy, win, ctx)) {
       fprintf(stderr, "Error: glXMakeCurrent failed\n");
+      glXDestroyContext(dpy, ctx);
+      XDestroyWindow(dpy, win);
+      return ERROR_NO_MAKECURRENT;
    }
 
+   failures = check_functions( (const char *) glGetString(GL_EXTENSIONS) );
    glXDestroyContext(dpy, ctx);
    XDestroyWindow(dpy, win);
-}
 
+   return (failures == 0 ? ERROR_NONE : ERROR_FAILED);
+}
 
 int
 main(int argc, char *argv[])
 {
    char *displayName = NULL;
    Display *dpy;
+   int returnCode;
 
    dpy = XOpenDisplay(displayName);
    if (!dpy) {
@@ -3711,9 +3726,9 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   print_screen_info(dpy, 0, GL_TRUE);
+   returnCode = print_screen_info(dpy, 0, GL_TRUE);
 
    XCloseDisplay(dpy);
 
-   return 0;
+   return returnCode;
 }
