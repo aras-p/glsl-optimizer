@@ -154,4 +154,12 @@ boolean
 lp_check_value(union lp_type type, LLVMValueRef val);
 
 
+LLVMTypeRef
+lp_build_int_elem_type(union lp_type type);
+
+
+LLVMTypeRef
+lp_build_int_vec_type(union lp_type type);
+
+
 #endif /* !LP_BLD_TYPE_H */

@@ -40,6 +40,56 @@
 #include "lp_bld_const.h"
 
 
+/**
+ * Shift of the unity.
+ *
+ * Same as lp_const_scale(), but in terms of shifts.
+ */
+unsigned
+lp_const_shift(union lp_type type)
+{
+   if(type.fixed)
+      return type.width/2;
+   else if(type.norm)
+      return type.sign ? type.width - 1 : type.width;
+   else
+      return 0;
+}
+
+
+static unsigned
+lp_const_offset(union lp_type type)
+{
+   if(type.floating || type.fixed)
+      return 0;
+   else if(type.norm)
+      return 1;
+   else
+      return 0;
+}
+
+
+/**
+ * Scaling factor between the LLVM native value and its interpretation.
+ *
+ * This is 1.0 for all floating types and unnormalized integers, and something
+ * else for the fixed points types and normalized integers.
+ */
+double
+lp_const_scale(union lp_type type)
+{
+   unsigned long long llscale;
+   double dscale;
+
+   llscale = (unsigned long long)1 << lp_const_shift(type);
+   llscale -= lp_const_offset(type);
+   dscale = (double)llscale;
+   assert((unsigned long long)dscale == llscale);
+
+   return dscale;
+}
+
+
 LLVMValueRef
 lp_build_undef(union lp_type type)
 {
@@ -93,6 +143,49 @@ lp_build_one(union lp_type type)
                
 
 LLVMValueRef
+lp_build_const_uni(union lp_type type,
+                   double val)
+{
+   LLVMTypeRef elem_type = lp_build_elem_type(type);
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+
+   if(type.floating) {
+      elems[0] = LLVMConstReal(elem_type, val);
+   }
+   else {
+      double dscale = lp_const_scale(type);
+
+      elems[0] = LLVMConstInt(elem_type, val*dscale + 0.5, 0);
+   }
+
+   for(i = 1; i < type.length; ++i)
+      elems[i] = elems[0];
+
+   return LLVMConstVector(elems, type.length);
+}
+
+
+LLVMValueRef
+lp_build_int_const_uni(union lp_type type,
+                       long long val)
+{
+   LLVMTypeRef elem_type = lp_build_int_elem_type(type);
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+
+   for(i = 0; i < type.length; ++i)
+      elems[i] = LLVMConstInt(elem_type, val, type.sign ? 1 : 0);
+
+   return LLVMConstVector(elems, type.length);
+}
+
+
+LLVMValueRef
 lp_build_const_aos(union lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle)
@@ -117,20 +210,7 @@ lp_build_const_aos(union lp_type type,
       elems[swizzle[3]] = LLVMConstReal(elem_type, a);
    }
    else {
-      unsigned shift;
-      long long llscale;
-      double dscale;
-
-      if(type.fixed)
-         shift = type.width/2;
-      else if(type.norm)
-         shift = type.sign ? type.width - 1 : type.width;
-      else
-         shift = 0;
-
-      llscale = (long long)1 << shift;
-      dscale = (double)llscale;
-      assert((long long)dscale == llscale);
+      double dscale = lp_const_scale(type);
 
       elems[swizzle[0]] = LLVMConstInt(elem_type, r*dscale + 0.5, 0);
       elems[swizzle[1]] = LLVMConstInt(elem_type, g*dscale + 0.5, 0);
@@ -140,23 +220,6 @@ lp_build_const_aos(union lp_type type,
 
    for(i = 4; i < type.length; ++i)
       elems[i] = elems[i % 4];
-
-   return LLVMConstVector(elems, type.length);
-}
-
-
-LLVMValueRef
-lp_build_const_shift(union lp_type type,
-                     int c)
-{
-   LLVMTypeRef elem_type = LLVMIntType(type.width);
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
-
-   assert(type.length <= LP_MAX_VECTOR_LENGTH);
-
-   for(i = 0; i < type.length; ++i)
-      elems[i] = LLVMConstInt(elem_type, c, 0);
 
    return LLVMConstVector(elems, type.length);
 }

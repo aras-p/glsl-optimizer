@@ -39,8 +39,18 @@
 
 #include <llvm-c/Core.h>  
 
+#include <pipe/p_compiler.h>
+
 
 union lp_type type;
+
+
+unsigned
+lp_const_shift(union lp_type type);
+
+
+double
+lp_const_scale(union lp_type type);
 
 
 LLVMValueRef
@@ -56,14 +66,19 @@ lp_build_one(union lp_type type);
 
 
 LLVMValueRef
-lp_build_const_aos(union lp_type type, 
-                   double r, double g, double b, double a, 
-                   const unsigned char *swizzle);
+lp_build_const_uni(union lp_type type,
+                   double val);
 
 
 LLVMValueRef
-lp_build_const_shift(union lp_type type,
-                     int c);
+lp_build_int_const_uni(union lp_type type,
+                       long long val);
+
+
+LLVMValueRef
+lp_build_const_aos(union lp_type type, 
+                   double r, double g, double b, double a, 
+                   const unsigned char *swizzle);
 
 
 LLVMValueRef

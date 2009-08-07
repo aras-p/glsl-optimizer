@@ -37,7 +37,7 @@ lp_build_elem_type(union lp_type type)
    if (type.floating) {
       assert(type.sign);
       switch(type.width) {
-         case 32:
+      case 32:
          return LLVMFloatType();
          break;
       case 64:
@@ -63,7 +63,7 @@ lp_build_vec_type(union lp_type type)
 
 
 /**
- * This function is a mirrot of lp_build_elem_type() above.
+ * This function is a mirror of lp_build_elem_type() above.
  *
  * XXX: I'm not sure if it wouldn't be easier/efficient to just recreate the
  * type and check for identity.
@@ -139,4 +139,19 @@ lp_check_value(union lp_type type, LLVMValueRef val)
    vec_type = LLVMTypeOf(val);
 
    return lp_check_vec_type(type, vec_type);
+}
+
+
+LLVMTypeRef
+lp_build_int_elem_type(union lp_type type)
+{
+   return LLVMIntType(type.width);
+}
+
+
+LLVMTypeRef
+lp_build_int_vec_type(union lp_type type)
+{
+   LLVMTypeRef elem_type = lp_build_int_elem_type(type);
+   return LLVMVectorType(elem_type, type.length);
 }
