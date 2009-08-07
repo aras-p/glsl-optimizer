@@ -35,6 +35,18 @@
 #include "state.h"
 
 
+
+/**
+ * If a fragment program is enabled, check that it's valid.
+ * \return GL_TRUE if valid, GL_FALSE otherwise
+ */
+static GLboolean
+valid_fragment_program(GLcontext *ctx)
+{
+   return !(ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled);
+}
+
+
 #if _HAVE_FULL_GL
 
 /*
@@ -56,7 +68,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       _mesa_update_state(ctx);
    }
 
-   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+   if (!valid_fragment_program(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glDrawPixels (invalid fragment program)");
       return;
@@ -142,7 +154,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       _mesa_update_state(ctx);
    }
 
-   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+   if (!valid_fragment_program(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyPixels (invalid fragment program)");
       return;
@@ -215,7 +227,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       _mesa_update_state(ctx);
    }
 
-   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+   if (!valid_fragment_program(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBitmap (invalid fragment program)");
       return;
