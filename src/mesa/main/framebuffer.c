@@ -827,8 +827,10 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
 {
    const struct gl_renderbuffer_attachment *att = ctx->ReadBuffer->Attachment;
 
-   /* state validation should have already been done */
-   ASSERT(ctx->NewState == 0x0);
+   /* If we don't know the framebuffer status, update it now */
+   if (ctx->ReadBuffer->_Status == 0) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+   }
 
    if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       return GL_FALSE;
@@ -898,8 +900,10 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
 {
    const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
 
-   /* state validation should have already been done */
-   ASSERT(ctx->NewState == 0x0);
+   /* If we don't know the framebuffer status, update it now */
+   if (ctx->DrawBuffer->_Status == 0) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->DrawBuffer);
+   }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       return GL_FALSE;
