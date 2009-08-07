@@ -48,7 +48,9 @@
 unsigned
 lp_const_shift(union lp_type type)
 {
-   if(type.fixed)
+   if(type.floating)
+      return 0;
+   else if(type.fixed)
       return type.width/2;
    else if(type.norm)
       return type.sign ? type.width - 1 : type.width;
