@@ -27,6 +27,7 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "drawpix.h"
+#include "enums.h"
 #include "feedback.h"
 #include "framebuffer.h"
 #include "image.h"
@@ -62,7 +63,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
 
    if (_mesa_error_check_format_type(ctx, format, type, GL_TRUE)) {
-      /* found an error */
+      /* the error was already recorded */
       return;
    }
 
@@ -73,7 +74,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
 
    if (!ctx->Current.RasterPosValid) {
-      return;
+      return; /* no-op, not an error */
    }
 
    if (ctx->RenderMode == GL_RENDER) {
@@ -126,6 +127,17 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (width < 0 || height < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)");
+      return;
+   }
+
+   if (type != GL_COLOR && type != GL_DEPTH && type != GL_STENCIL) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels(type=%s)",
+                  _mesa_lookup_enum_by_nr(type));
+      return;
+   }
+
    if (ctx->NewState) {
       _mesa_update_state(ctx);
    }
@@ -133,11 +145,6 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyPixels (invalid fragment program)");
-      return;
-   }
-
-   if (width < 0 || height < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)");
       return;
    }
 
@@ -156,7 +163,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
 
    if (!ctx->Current.RasterPosValid || width ==0 || height == 0) {
-      return;
+      return; /* no-op, not an error */
    }
 
    if (ctx->RenderMode == GL_RENDER) {
