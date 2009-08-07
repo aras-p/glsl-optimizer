@@ -48,44 +48,8 @@
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"
+#include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
-
-
-static LLVMValueRef
-lp_build_intrinsic_binary(LLVMBuilderRef builder,
-                          const char *name,
-                          LLVMValueRef a,
-                          LLVMValueRef b)
-{
-   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
-   LLVMValueRef args[2];
-
-   function = LLVMGetNamedFunction(module, name);
-   if(!function) {
-      LLVMTypeRef type = LLVMTypeOf(a);
-      LLVMTypeRef arg_types[2];
-      arg_types[0] = type;
-      arg_types[1] = type;
-      function = LLVMAddFunction(module, name, LLVMFunctionType(type, arg_types, 2, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
-
-#ifdef DEBUG
-   /* We shouldn't use only constants with intrinsics, as they won't be
-    * propagated by LLVM optimization passes.
-    */
-   if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      debug_printf("warning: invoking intrinsic \"%s\" with constants\n");
-#endif
-
-   args[0] = a;
-   args[1] = b;
-
-   return LLVMBuildCall(builder, function, args, 2, "");
-}
 
 
 static LLVMValueRef
@@ -116,7 +80,7 @@ lp_build_min_simple(struct lp_build_context *bld,
 #endif
    
    if(intrinsic)
-      return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+      return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
 
    if(type.floating)
       cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
@@ -154,7 +118,7 @@ lp_build_max_simple(struct lp_build_context *bld,
 #endif
 
    if(intrinsic)
-      return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+      return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
 
    if(type.floating)
       cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
@@ -221,7 +185,7 @@ lp_build_add(struct lp_build_context *bld,
 #endif
    
       if(intrinsic)
-         return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+         return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
    }
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
@@ -268,7 +232,7 @@ lp_build_sub(struct lp_build_context *bld,
 #endif
    
       if(intrinsic)
-         return lp_build_intrinsic_binary(bld->builder, intrinsic, a, b);
+         return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
    }
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
@@ -443,7 +407,7 @@ lp_build_mul(struct lp_build_context *bld,
          abh = lp_build_mul_u8n(bld->builder, ah, bh);
 
          /* PACKUSWB */
-         ab = lp_build_intrinsic_binary(bld->builder, "llvm.x86.sse2.packuswb.128" , abl, abh);
+         ab = lp_build_intrinsic_binary(bld->builder, "llvm.x86.sse2.packuswb.128" , i16x8, abl, abh);
 
          /* NOP */
          ab = LLVMBuildBitCast(bld->builder, ab, i8x16, "");
