@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('llvm-config --cflags')
+env.ParseConfig('llvm-config --cppflags')
 
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
