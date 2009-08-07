@@ -64,7 +64,7 @@ env.Program(
 
 env.Program(
     target = 'lp_test_blend',
-    source = ['lp_test_blend.c'],
+    source = ['lp_test_blend.c', 'lp_test_main.c'],
 )
 
 Export('llvmpipe')

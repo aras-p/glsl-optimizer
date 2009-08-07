@@ -48,6 +48,8 @@
  */
 #define LP_MAX_VECTOR_LENGTH 16
 
+#define LP_MAX_TYPE_WIDTH 64
+
 
 /**
  * The LLVM type system can't conveniently express all the things we care about

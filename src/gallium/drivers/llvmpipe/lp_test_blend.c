@@ -37,34 +37,16 @@
  */
 
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <float.h>
-
-#include <llvm-c/Core.h>
-#include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/BitWriter.h>
-#include <llvm-c/Transforms/Scalar.h>
-
-#include "pipe/p_state.h"
-#include "util/u_format.h"
-#include "util/u_math.h"
-#include "util/u_debug_dump.h"
-
 #include "lp_bld.h"
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
-
-
-unsigned verbose = 0;
+#include "lp_test.h"
 
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
 
 
-static void
+void
 write_tsv_header(FILE *fp)
 {
    fprintf(fp,
@@ -145,19 +127,6 @@ dump_blend_type(FILE *fp,
 }
 
 
-static INLINE uint64_t
-rdtsc(void)
-{
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   uint32_t hi, lo;
-   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-   return ((uint64_t)lo) | (((uint64_t)hi) << 32);
-#else
-   return 0;
-#endif
-}
-
-
 static LLVMValueRef
 add_blend_test(LLVMModuleRef module,
                const struct pipe_blend_state *blend,
@@ -210,13 +179,6 @@ add_blend_test(LLVMModuleRef module,
 }
 
 
-static float
-random_float(void)
-{
-    return (float)((double)random()/(double)RAND_MAX);
-}
-
-
 /** Add and limit result to ceiling of 1.0 */
 #define ADD_SAT(R, A, B) \
 do { \
@@ -233,13 +195,13 @@ do { \
 static void
 compute_blend_ref_term(unsigned rgb_factor,
                        unsigned alpha_factor,
-                       const float *factor,
-                       const float *src, 
-                       const float *dst, 
-                       const float *con, 
-                       float *term)
+                       const double *factor,
+                       const double *src,
+                       const double *dst,
+                       const double *con,
+                       double *term)
 {
-   float temp;
+   double temp;
 
    switch (rgb_factor) {
    case PIPE_BLENDFACTOR_ONE:
@@ -379,13 +341,13 @@ compute_blend_ref_term(unsigned rgb_factor,
 
 static void
 compute_blend_ref(const struct pipe_blend_state *blend,
-                  const float *src, 
-                  const float *dst, 
-                  const float *con, 
-                  float *res)
+                  const double *src,
+                  const double *dst,
+                  const double *con,
+                  double *res)
 {
-   float src_term[4];
-   float dst_term[4];
+   double src_term[4];
+   double dst_term[4];
 
    compute_blend_ref_term(blend->rgb_src_factor, blend->alpha_src_factor, src, src, dst, con, src_term);
    compute_blend_ref_term(blend->rgb_dst_factor, blend->alpha_dst_factor, dst, src, dst, con, dst_term);
@@ -449,7 +411,8 @@ compute_blend_ref(const struct pipe_blend_state *blend,
 
 
 static boolean
-test_one(FILE *fp,
+test_one(unsigned verbose,
+         FILE *fp,
          const struct pipe_blend_state *blend,
          union lp_type type)
 {
@@ -464,7 +427,7 @@ test_one(FILE *fp,
    const unsigned n = 32;
    int64_t cycles[n];
    double cycles_avg = 0.0;
-   unsigned i, j, k;
+   unsigned i, j;
 
    if(verbose >= 1)
       dump_blend_type(stdout, blend, type);
@@ -510,108 +473,64 @@ test_one(FILE *fp,
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
+      uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+      uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+      uint8_t con[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+      uint8_t res[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+      double ref[LP_MAX_VECTOR_LENGTH];
       int64_t start_counter = 0;
       int64_t end_counter = 0;
 
-      if(type.floating && type.width == 32) {
-         float src[LP_MAX_VECTOR_LENGTH];
-         float dst[LP_MAX_VECTOR_LENGTH];
-         float con[LP_MAX_VECTOR_LENGTH];
-         float ref[LP_MAX_VECTOR_LENGTH];
-         float res[LP_MAX_VECTOR_LENGTH];
+      random_vec(type, src);
+      random_vec(type, dst);
+      random_vec(type, con);
 
-         for(j = 0; j < type.length; ++j) {
-            src[j] = random_float();
-            dst[j] = random_float();
-            con[j] = random_float();
-         }
+      {
+         double fsrc[LP_MAX_VECTOR_LENGTH];
+         double fdst[LP_MAX_VECTOR_LENGTH];
+         double fcon[LP_MAX_VECTOR_LENGTH];
+
+         read_vec(type, src, fsrc);
+         read_vec(type, dst, fdst);
+         read_vec(type, con, fcon);
 
          for(j = 0; j < type.length; j += 4)
-            compute_blend_ref(blend, src + j, dst + j, con + j, ref + j);
-
-         start_counter = rdtsc();
-         blend_test_ptr(src, dst, con, res);
-         end_counter = rdtsc();
-
-         for(j = 0; j < type.length; ++j)
-            if(fabs(res[j] - ref[j]) > FLT_EPSILON)
-               success = FALSE;
-
-         if (!success) {
-            dump_blend_type(stderr, blend, type);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "MISMATCH\n");
-            fprintf(stderr, "  Result:   ");
-            for(j = 0; j < type.length; ++j)
-               fprintf(stderr, " %f", res[j]);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  Expected: ");
-            for(j = 0; j < type.length; ++j)
-               fprintf(stderr, " %f", ref[j]);
-            fprintf(stderr, "\n");
-         }
+            compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, ref + j);
       }
-      else if(!type.floating && !type.fixed && !type.sign && type.norm && type.width == 8) {
-         uint8_t src[LP_MAX_VECTOR_LENGTH];
-         uint8_t dst[LP_MAX_VECTOR_LENGTH];
-         uint8_t con[LP_MAX_VECTOR_LENGTH];
-         uint8_t ref[LP_MAX_VECTOR_LENGTH];
-         uint8_t res[LP_MAX_VECTOR_LENGTH];
 
-         for(j = 0; j < type.length; ++j) {
-            src[j] = random() & 0xff;
-            dst[j] = random() & 0xff;
-            con[j] = random() & 0xff;
-         }
-
-         for(j = 0; j < type.length; j += 4) {
-            float srcf[4];
-            float dstf[4];
-            float conf[4];
-            float reff[4];
-
-            for(k = 0; k < 4; ++k) {
-               srcf[k] = (1.0f/255.0f)*src[j + k];
-               dstf[k] = (1.0f/255.0f)*dst[j + k];
-               conf[k] = (1.0f/255.0f)*con[j + k];
-            }
-
-            compute_blend_ref(blend, srcf, dstf, conf, reff);
-
-            for(k = 0; k < 4; ++k)
-               ref[j + k] = (uint8_t)(reff[k]*255.0f + 0.5f);
-         }
-
-         start_counter = rdtsc();
-         blend_test_ptr(src, dst, con, res);
-         end_counter = rdtsc();
-
-         for(j = 0; j < type.length; ++j) {
-            int delta = (int)res[j] - (int)ref[j];
-            if (delta < 0)
-               delta = -delta;
-            if(delta > 1)
-               success = FALSE;
-         }
-
-         if (!success) {
-            dump_blend_type(stderr, blend, type);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "MISMATCH\n");
-            fprintf(stderr, "  Result:   ");
-            for(j = 0; j < type.length; ++j)
-               fprintf(stderr, " %3u", res[j]);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  Expected: ");
-            for(j = 0; j < type.length; ++j)
-               fprintf(stderr, " %3u", ref[j]);
-            fprintf(stderr, "\n");
-         }
-      }
-      else
-         assert(0);
+      start_counter = rdtsc();
+      blend_test_ptr(src, dst, con, res);
+      end_counter = rdtsc();
 
       cycles[i] = end_counter - start_counter;
+
+      success = compare_vec(type, res, ref);
+
+      if (!success) {
+         dump_blend_type(stderr, blend, type);
+         fprintf(stderr, "\n");
+         fprintf(stderr, "MISMATCH\n");
+
+         fprintf(stderr, "  Src: ");
+         dump_vec(stderr, type, src);
+         fprintf(stderr, "\n");
+
+         fprintf(stderr, "  Dst: ");
+         dump_vec(stderr, type, dst);
+         fprintf(stderr, "\n");
+
+         fprintf(stderr, "  Con: ");
+         dump_vec(stderr, type, con);
+         fprintf(stderr, "\n");
+
+         fprintf(stderr, "  Res: ");
+         dump_vec(stderr, type, res);
+         fprintf(stderr, "\n");
+
+         fprintf(stderr, "  Ref: ");
+         dump_vec(stderr, type, ref);
+         fprintf(stderr, "\n");
+      }
    }
 
    /*
@@ -725,8 +644,8 @@ const unsigned num_factors = sizeof(blend_factors)/sizeof(blend_factors[0]);
 const unsigned num_types = sizeof(blend_types)/sizeof(blend_types[0]);
 
 
-static boolean 
-test_all(FILE *fp)
+boolean
+test_all(unsigned verbose, FILE *fp)
 {
    const unsigned *rgb_func;
    const unsigned *rgb_src_factor;
@@ -759,7 +678,7 @@ test_all(FILE *fp)
                         blend.alpha_src_factor  = *alpha_src_factor;
                         blend.alpha_dst_factor  = *alpha_dst_factor;
 
-                        if(!test_one(fp, &blend, *type))
+                        if(!test_one(verbose, fp, &blend, *type))
                           success = FALSE;
 
                      }
@@ -774,8 +693,8 @@ test_all(FILE *fp)
 }
 
 
-static boolean 
-test_some(FILE *fp, unsigned long n)
+boolean
+test_some(unsigned verbose, FILE *fp, unsigned long n)
 {
    const unsigned *rgb_func;
    const unsigned *rgb_src_factor;
@@ -813,45 +732,10 @@ test_some(FILE *fp, unsigned long n)
          blend.alpha_src_factor  = *alpha_src_factor;
          blend.alpha_dst_factor  = *alpha_dst_factor;
 
-         if(!test_one(fp, &blend, *type))
+         if(!test_one(verbose, fp, &blend, *type))
            success = FALSE;
       }
    }
 
    return success;
-}
-
-
-int main(int argc, char **argv)
-{
-   unsigned long n = 1000;
-   FILE *fp = NULL;
-   unsigned i;
-   boolean success;
-
-   for(i = 1; i < argc; ++i) {
-      if(strcmp(argv[i], "-v") == 0)
-         ++verbose;
-      else if(strcmp(argv[i], "-o") == 0)
-         fp = fopen(argv[++i], "wt");
-      else
-         n = atoi(argv[i]);
-   }
-
-   if(fp) {
-      /* Warm up the caches */
-      test_some(NULL, 100);
-
-      write_tsv_header(fp);
-   }
-      
-   if(n)
-      success = test_some(fp, n);
-   else
-      success = test_all(fp);
-
-   if(fp)
-      fclose(fp);
-
-   return success ? 0 : 1;
 }
