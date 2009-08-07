@@ -12,6 +12,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_fs_llvm.c',
 		'lp_bld_arit.c',
 		'lp_bld_const.c',
+		'lp_bld_conv.c',
 		'lp_bld_intr.c',
 		'lp_bld_pack.c',
 		'lp_bld_unpack.c',
@@ -65,6 +66,11 @@ env.Program(
 env.Program(
     target = 'lp_test_blend',
     source = ['lp_test_blend.c', 'lp_test_main.c'],
+)
+
+env.Program(
+    target = 'lp_test_conv',
+    source = ['lp_test_conv.c', 'lp_test_main.c'],
 )
 
 Export('llvmpipe')
