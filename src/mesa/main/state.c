@@ -713,6 +713,6 @@ _mesa_set_vp_override(GLcontext *ctx, GLboolean flag)
       /* Set one of the bits which will trigger fragment program
        * regeneration:
        */
-      ctx->NewState |= _NEW_ARRAY; 
+      ctx->NewState |= _NEW_PROGRAM;
    }
 }
