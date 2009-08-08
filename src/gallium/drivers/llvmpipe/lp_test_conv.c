@@ -87,6 +87,7 @@ dump_conv_types(FILE *fp,
    fprintf(fp, " dst_type=");
    dump_type(fp, dst_type);
 
+   fprintf(fp, " ...\n");
    fflush(fp);
 }
 
@@ -189,8 +190,8 @@ test_one(unsigned verbose,
 
    provider = LLVMCreateModuleProviderForExistingModule(module);
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      dump_conv_types(stderr, src_type, dst_type);
-      fprintf(stderr, "\n");
+      if(verbose < 1)
+         dump_conv_types(stderr, src_type, dst_type);
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
@@ -248,8 +249,8 @@ test_one(unsigned verbose,
       }
 
       if (!success) {
-         dump_conv_types(stderr, src_type, dst_type);
-         fprintf(stderr, "\n");
+         if(verbose < 1)
+            dump_conv_types(stderr, src_type, dst_type);
          fprintf(stderr, "MISMATCH\n");
 
          for(j = 0; j < num_srcs; ++j) {
@@ -258,9 +259,12 @@ test_one(unsigned verbose,
             fprintf(stderr, "\n");
          }
 
+#if 0
+         fprintf(stderr, "  Ref:  ", j);
          for(j = 0; j < src_type.length*num_srcs; ++j)
             fprintf(stderr, " %f", fref[j]);
          fprintf(stderr, "\n");
+#endif
 
          for(j = 0; j < num_dsts; ++j) {
             fprintf(stderr, "  Dst%u: ", j);
@@ -305,23 +309,20 @@ test_one(unsigned verbose,
 
    }
 
-   if(verbose >= 1) {
-      fprintf(stdout, " cycles=%.1f", cycles_avg);
-   }
-
-   if(verbose >= 1) {
-      fprintf(stdout, " result=%s\n", success ? "pass" : "fail");
-      fflush(stdout);
-   }
-
    if(fp)
       write_tsv_row(fp, src_type, dst_type, cycles_avg, success);
 
    if (!success) {
-      LLVMDumpModule(module);
-      LLVMWriteBitcodeToFile(module, "conv.bc");
-      fprintf(stderr, "conv.bc written\n");
-      abort();
+      static boolean firsttime = TRUE;
+      if(firsttime) {
+         if(verbose < 2)
+            LLVMDumpModule(module);
+         LLVMWriteBitcodeToFile(module, "conv.bc");
+         fprintf(stderr, "conv.bc written\n");
+         fprintf(stderr, "Invoke as \"llc -o - conv.bc\"\n");
+         firsttime = FALSE;
+         //abort();
+      }
    }
 
    LLVMFreeMachineCodeForFunction(engine, func);
@@ -336,8 +337,26 @@ test_one(unsigned verbose,
 
 const union lp_type conv_types[] = {
    /* float, fixed,  sign,  norm, width, len */
-   {{  TRUE, FALSE,  TRUE,  TRUE,    32,   4 }}, /* f32 x 4 */
-   {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }}, /* u8n x 16 */
+
+   {{  TRUE, FALSE,  TRUE,  TRUE,    32,   4 }},
+   {{  TRUE, FALSE,  TRUE, FALSE,    32,   4 }},
+   {{  TRUE, FALSE, FALSE,  TRUE,    32,   4 }},
+   {{  TRUE, FALSE, FALSE, FALSE,    32,   4 }},
+
+   {{ FALSE, FALSE,  TRUE,  TRUE,    32,   4 }},
+   {{ FALSE, FALSE,  TRUE, FALSE,    32,   4 }},
+   {{ FALSE, FALSE, FALSE,  TRUE,    32,   4 }},
+   {{ FALSE, FALSE, FALSE, FALSE,    32,   4 }},
+
+   {{ FALSE, FALSE,  TRUE,  TRUE,    16,   8 }},
+   {{ FALSE, FALSE,  TRUE, FALSE,    16,   8 }},
+   {{ FALSE, FALSE, FALSE,  TRUE,    16,   8 }},
+   {{ FALSE, FALSE, FALSE, FALSE,    16,   8 }},
+
+   {{ FALSE, FALSE,  TRUE,  TRUE,     8,  16 }},
+   {{ FALSE, FALSE,  TRUE, FALSE,     8,  16 }},
+   {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }},
+   {{ FALSE, FALSE, FALSE, FALSE,     8,  16 }},
 };
 
 
@@ -355,6 +374,9 @@ test_all(unsigned verbose, FILE *fp)
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
 
          if(src_type == dst_type)
+            continue;
+
+         if(src_type->norm != dst_type->norm)
             continue;
 
          if(!test_one(verbose, fp, *src_type, *dst_type))
@@ -380,7 +402,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
       
       do {
          dst_type = &conv_types[random() % num_types];
-      } while (src_type == dst_type);
+      } while (src_type == dst_type || src_type->norm != dst_type->norm);
 
       if(!test_one(verbose, fp, *src_type, *dst_type))
         success = FALSE;

@@ -42,8 +42,9 @@ void
 dump_type(FILE *fp,
           union lp_type type)
 {
-   fprintf(fp, "%s%u%sx%u",
-           type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
+   fprintf(fp, "%s%s%u%sx%u",
+           type.sign ? (type.floating || type.fixed ? "" : "s") : "u",
+           type.floating ? "f" : (type.fixed ? "h" : "i"),
            type.width,
            type.norm ? "n" : "",
            type.length);
@@ -114,11 +115,13 @@ read_elem(union lp_type type, const void *src, unsigned index)
 
 
 void
-write_elem(union lp_type type, void *dst, unsigned index, double src)
+write_elem(union lp_type type, void *dst, unsigned index, double value)
 {
-   double scale = lp_const_scale(type);
-   double value = scale*src;
    assert(index < type.length);
+   if(!type.sign && value < 0.0)
+      value = 0.0;
+   if(type.norm && value > 1.0)
+      value = 1.0;
    if (type.floating) {
       switch(type.width) {
       case 32:
@@ -132,19 +135,21 @@ write_elem(union lp_type type, void *dst, unsigned index, double src)
       }
    }
    else {
+      double scale = lp_const_scale(type);
+      value = round(value*scale);
       if(type.sign) {
          switch(type.width) {
          case 8:
-            *((int8_t *)dst + index) = (int8_t)round(value);
+            *((int8_t *)dst + index) = (int8_t)value;
             break;
          case 16:
-            *((int16_t *)dst + index) = (int16_t)round(value);
+            *((int16_t *)dst + index) = (int16_t)value;
             break;
          case 32:
-            *((int32_t *)dst + index) = (int32_t)round(value);
+            *((int32_t *)dst + index) = (int32_t)value;
             break;
          case 64:
-            *((int64_t *)dst + index) = (int32_t)round(value);
+            *((int64_t *)dst + index) = (int32_t)value;
             break;
          default:
             assert(0);
@@ -153,16 +158,16 @@ write_elem(union lp_type type, void *dst, unsigned index, double src)
       else {
          switch(type.width) {
          case 8:
-            *((uint8_t *)dst + index) = (uint8_t)round(value);
+            *((uint8_t *)dst + index) = (uint8_t)value;
             break;
          case 16:
-            *((uint16_t *)dst + index) = (uint16_t)round(value);
+            *((uint16_t *)dst + index) = (uint16_t)value;
             break;
          case 32:
-            *((uint32_t *)dst + index) = (uint32_t)round(value);
+            *((uint32_t *)dst + index) = (uint32_t)value;
             break;
          case 64:
-            *((uint64_t *)dst + index) = (uint64_t)round(value);
+            *((uint64_t *)dst + index) = (uint64_t)value;
             break;
          default:
             assert(0);
@@ -175,43 +180,25 @@ write_elem(union lp_type type, void *dst, unsigned index, double src)
 void
 random_elem(union lp_type type, void *dst, unsigned index)
 {
+   double value;
    assert(index < type.length);
-   if (type.floating) {
-      double value = (double)random()/(double)RAND_MAX;
-      if(!type.norm) {
-         value += (double)random();
-         if(random() & 1)
-            value = -value;
-      }
-      switch(type.width) {
-      case 32:
-         *((float *)dst + index) = (float)value;
-         break;
-      case 64:
-          *((double *)dst + index) = value;
-         break;
-      default:
-         assert(0);
-      }
+   value = (double)random()/(double)RAND_MAX;
+   if(!type.norm) {
+      unsigned long long mask;
+      if (type.floating)
+         mask = ~(unsigned long long)0;
+      else if (type.fixed)
+         mask = ((unsigned long long)1 << (type.width / 2)) - 1;
+      else if (type.sign)
+         mask = ((unsigned long long)1 << (type.width - 1)) - 1;
+      else
+         mask = ((unsigned long long)1 << type.width) - 1;
+      value += (double)(mask & random());
    }
-   else {
-      switch(type.width) {
-      case 8:
-         *((uint8_t *)dst + index) = (uint8_t)random();
-         break;
-      case 16:
-         *((uint16_t *)dst + index) = (uint16_t)random();
-         break;
-      case 32:
-         *((uint32_t *)dst + index) = (uint32_t)random();
-         break;
-      case 64:
-         *((uint64_t *)dst + index) = (uint64_t)random();
-         break;
-      default:
-         assert(0);
-      }
-   }
+   if(!type.sign)
+      if(random() & 1)
+         value = -value;
+   write_elem(type, dst, index, value);
 }
 
 

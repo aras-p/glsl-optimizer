@@ -50,6 +50,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_arit.h"
 #include "lp_bld_conv.h"
 
 
@@ -164,8 +165,16 @@ lp_build_trunc(LLVMBuilderRef builder,
          LLVMValueRef packed = NULL;
 
          if(src_type.width == 32) {
-            /* FIXME: we only have a packed signed intrinsic */
+#if 0
+            if(dst_type.sign)
+               packed = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", tmp_vec_type, lo, hi);
+            else {
+               /* XXX: PACKUSDW intrinsic is actually the only one with a consistent signature */
+               packed = lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", new_vec_type, lo, hi);
+            }
+#else
             packed = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", tmp_vec_type, lo, hi);
+#endif
          }
          else if(src_type.width == 16) {
             if(dst_type.sign)
@@ -229,8 +238,17 @@ lp_build_conv(LLVMBuilderRef builder,
     * Clamp if necessary
     */
 
-   if(!tmp_type.norm && dst_type.norm) {
-      /* FIXME */
+   if(tmp_type.sign != dst_type.sign || tmp_type.norm != dst_type.norm) {
+      struct lp_build_context bld;
+      lp_build_context_init(&bld, builder, tmp_type);
+
+      if(tmp_type.sign && !dst_type.sign)
+         for(i = 0; i < num_tmps; ++i)
+            tmp[i] = lp_build_max(&bld, tmp[i], bld.zero);
+
+      if(!tmp_type.norm && dst_type.norm)
+         for(i = 0; i < num_tmps; ++i)
+            tmp[i] = lp_build_min(&bld, tmp[i], bld.one);
    }
 
    /*
@@ -284,7 +302,7 @@ lp_build_conv(LLVMBuilderRef builder,
     * Truncate or expand bit width
     */
 
-   assert(!tmp_type.floating);
+   assert(!tmp_type.floating || tmp_type.width == dst_type.width);
 
    if(tmp_type.width > dst_type.width) {
       assert(num_dsts == 1);
@@ -345,7 +363,7 @@ lp_build_conv(LLVMBuilderRef builder,
 
        /* FIXME: compensate different offsets too */
        if(src_shift < dst_shift) {
-          LLVMValueRef shift = lp_build_int_const_uni(tmp_type, src_shift - dst_shift);
+          LLVMValueRef shift = lp_build_int_const_uni(tmp_type, dst_shift - src_shift);
           for(i = 0; i < num_tmps; ++i)
              tmp[i] = LLVMBuildShl(builder, tmp[i], shift, "");
        }
