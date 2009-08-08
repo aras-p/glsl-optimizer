@@ -279,11 +279,7 @@ lp_build_blend(LLVMBuilderRef builder,
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
-   bld.base.builder = builder;
-   bld.base.type = type;
-   bld.base.undef = lp_build_undef(type);
-   bld.base.zero = lp_build_zero(type);
-   bld.base.one = lp_build_one(type);
+   lp_build_context_init(&bld.base, builder, type);
    bld.src = src;
    bld.dst = dst;
    bld.const_ = const_;

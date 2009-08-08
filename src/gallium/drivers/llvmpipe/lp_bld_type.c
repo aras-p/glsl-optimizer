@@ -155,3 +155,16 @@ lp_build_int_vec_type(union lp_type type)
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
    return LLVMVectorType(elem_type, type.length);
 }
+
+
+void
+lp_build_context_init(struct lp_build_context *bld,
+                      LLVMBuilderRef builder,
+                      union lp_type type)
+{
+   bld->builder = builder;
+   bld->type = type;
+   bld->undef = lp_build_undef(type);
+   bld->zero = lp_build_zero(type);
+   bld->one = lp_build_one(type);
+}
