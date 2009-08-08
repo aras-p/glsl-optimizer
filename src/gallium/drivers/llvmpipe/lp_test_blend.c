@@ -123,6 +123,7 @@ dump_blend_type(FILE *fp,
            type.norm ? "n" : "",
            type.length);
 
+   fprintf(fp, " ...\n");
    fflush(fp);
 }
 
@@ -444,8 +445,8 @@ test_one(unsigned verbose,
 
    provider = LLVMCreateModuleProviderForExistingModule(module);
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      dump_blend_type(stderr, blend, type);
-      fprintf(stderr, "\n");
+      if(verbose < 1)
+         dump_blend_type(stderr, blend, type);
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
@@ -510,8 +511,8 @@ test_one(unsigned verbose,
       success = compare_vec(type, res, ref);
 
       if (!success) {
-         dump_blend_type(stderr, blend, type);
-         fprintf(stderr, "\n");
+         if(verbose < 1)
+            dump_blend_type(stderr, blend, type);
          fprintf(stderr, "MISMATCH\n");
 
          fprintf(stderr, "  Src: ");
@@ -567,23 +568,15 @@ test_one(unsigned verbose,
 
    }
 
-   if(verbose >= 1) {
-      fprintf(stdout, " cycles=%.1f", cycles_avg);
-      fprintf(stdout, " cycles_per_elem=%.1f", cycles_avg/type.length);
-   }
-
-   if(verbose >= 1) {
-      fprintf(stdout, " result=%s\n", success ? "pass" : "fail");
-      fflush(stdout);
-   }
-
    if(fp)
       write_tsv_row(fp, blend, type, cycles_avg, success);
 
    if (!success) {
-      LLVMDumpModule(module);
+      if(verbose < 2)
+         LLVMDumpModule(module);
       LLVMWriteBitcodeToFile(module, "blend.bc");
       fprintf(stderr, "blend.bc written\n");
+      fprintf(stderr, "Invoke as \"llc -o - blend.bc\"\n");
       abort();
    }
 
