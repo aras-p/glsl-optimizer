@@ -309,6 +309,9 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			 &sf, sizeof(sf),
 			 NULL, NULL);
 
+   /* STATE_PREFETCH command description describes this state as being
+    * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
+    */
    /* Emit SF program relocation */
    dri_bo_emit_reloc(bo,
 		     I915_GEM_DOMAIN_INSTRUCTION, 0,
