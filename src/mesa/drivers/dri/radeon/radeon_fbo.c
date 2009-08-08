@@ -407,7 +407,7 @@ restart:
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_RGB5;
 		rrb->base._BaseFormat = GL_RGB;
-		rrb->base.DataType = GL_UNSIGNED_SHORT;
+		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGB5 texture OK\n");
 	}
 	else if (texImage->TexFormat == &_mesa_texformat_argb1555) {
