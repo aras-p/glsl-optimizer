@@ -65,16 +65,25 @@ lp_build_min_simple(struct lp_build_context *bld,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
-      if(type.floating)
+      if(type.floating) {
          if(type.width == 32)
             intrinsic = "llvm.x86.sse.min.ps";
          if(type.width == 64)
             intrinsic = "llvm.x86.sse2.min.pd";
+      }
       else {
          if(type.width == 8 && !type.sign)
             intrinsic = "llvm.x86.sse2.pminu.b";
+         if(type.width == 8 && type.sign)
+            intrinsic = "llvm.x86.sse41.pminsb";
+         if(type.width == 16 && !type.sign)
+            intrinsic = "llvm.x86.sse41.pminuw";
          if(type.width == 16 && type.sign)
             intrinsic = "llvm.x86.sse2.pmins.w";
+         if(type.width == 32 && !type.sign)
+            intrinsic = "llvm.x86.sse41.pminud";
+         if(type.width == 32 && type.sign)
+            intrinsic = "llvm.x86.sse41.pminsd";
       }
    }
 #endif
@@ -103,16 +112,25 @@ lp_build_max_simple(struct lp_build_context *bld,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
-      if(type.floating)
+      if(type.floating) {
          if(type.width == 32)
             intrinsic = "llvm.x86.sse.max.ps";
          if(type.width == 64)
             intrinsic = "llvm.x86.sse2.max.pd";
+      }
       else {
          if(type.width == 8 && !type.sign)
             intrinsic = "llvm.x86.sse2.pmaxu.b";
+         if(type.width == 8 && type.sign)
+            intrinsic = "llvm.x86.sse41.pmaxsb";
+         if(type.width == 16 && !type.sign)
+            intrinsic = "llvm.x86.sse41.pmaxuw";
          if(type.width == 16 && type.sign)
             intrinsic = "llvm.x86.sse2.pmaxs.w";
+         if(type.width == 32 && !type.sign)
+            intrinsic = "llvm.x86.sse41.pmaxud";
+         if(type.width == 32 && type.sign)
+            intrinsic = "llvm.x86.sse41.pmaxsd";
       }
    }
 #endif
