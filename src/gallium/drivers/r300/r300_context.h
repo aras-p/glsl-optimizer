@@ -146,8 +146,6 @@ struct r300_constant_buffer {
     /* Buffer of constants */
     /* XXX first number should be raised */
     float constants[32][4];
-    /* Number of user-defined constants */
-    unsigned user_count;
     /* Total number of constants */
     unsigned count;
 };

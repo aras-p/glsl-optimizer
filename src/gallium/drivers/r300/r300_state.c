@@ -138,7 +138,6 @@ static void
                              const struct pipe_constant_buffer* buffer)
 {
     struct r300_context* r300 = r300_context(pipe);
-    int i = r300->shader_constants[shader].user_count;
 
     /* This entire chunk of code seems ever-so-slightly baked.
      * It's as if I've got pipe_buffer* matryoshkas... */
@@ -149,10 +148,10 @@ static void
             map, buffer->buffer->size);
         pipe->winsys->buffer_unmap(pipe->winsys, buffer->buffer);
 
-        r300->shader_constants[shader].user_count =
+        r300->shader_constants[shader].count =
             buffer->buffer->size / (sizeof(float) * 4);
     } else {
-        r300->shader_constants[shader].user_count = 0;
+        r300->shader_constants[shader].count = 0;
     }
 
     r300->dirty_state |= R300_NEW_CONSTANTS;
