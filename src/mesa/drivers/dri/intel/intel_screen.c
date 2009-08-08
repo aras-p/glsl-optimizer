@@ -69,7 +69,11 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
 
-      DRI_CONF_TEXTURE_TILING(false)
+#ifdef I915
+     DRI_CONF_TEXTURE_TILING(false)
+#else
+     DRI_CONF_TEXTURE_TILING(true)
+#endif
 
       DRI_CONF_OPT_BEGIN(early_z, bool, false)
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
