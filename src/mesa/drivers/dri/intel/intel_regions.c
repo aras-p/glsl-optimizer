@@ -181,6 +181,11 @@ intel_region_alloc(struct intel_context *intel,
    dri_bo *buffer;
    struct intel_region *region;
 
+   if (tiling == I915_TILING_X)
+      height = ALIGN(height, 8);
+   else if (tiling == I915_TILING_Y)
+      height = ALIGN(height, 32);
+
    if (expect_accelerated_upload) {
       buffer = drm_intel_bo_alloc_for_render(intel->bufmgr, "region",
 					     pitch * cpp * height, 64);
