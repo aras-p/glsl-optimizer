@@ -125,14 +125,20 @@ lp_build_one(union lp_type type)
       elems[0] = LLVMConstInt(elem_type, 1LL << (type.width/2), 0);
    else if(!type.norm)
       elems[0] = LLVMConstInt(elem_type, 1, 0);
+   else if(type.sign)
+      elems[0] = LLVMConstInt(elem_type, (1LL << (type.width - 1)) - 1, 0);
    else {
       /* special case' -- 1.0 for normalized types is more easily attained if
        * we start with a vector consisting of all bits set */
       LLVMTypeRef vec_type = LLVMVectorType(elem_type, type.length);
       LLVMValueRef vec = LLVMConstAllOnes(vec_type);
 
+#if 0
       if(type.sign)
-         vec = LLVMConstLShr(vec, LLVMConstInt(LLVMInt32Type(), 1, 0));
+         /* TODO: Unfortunately this caused "Tried to create a shift operation
+          * on a non-integer type!" */
+         vec = LLVMConstLShr(vec, lp_build_int_const_uni(type, 1));
+#endif
 
       return vec;
    }
