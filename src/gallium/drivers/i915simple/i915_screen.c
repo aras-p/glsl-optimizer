@@ -232,6 +232,8 @@ i915_get_tex_transfer(struct pipe_screen *screen,
    if (trans) {
       pipe_texture_reference(&trans->base.texture, texture);
       trans->base.format = trans->base.format;
+      trans->base.x = x;
+      trans->base.y = y;
       trans->base.width = w;
       trans->base.height = h;
       trans->base.block = texture->block;
