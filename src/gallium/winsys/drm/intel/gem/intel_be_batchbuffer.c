@@ -21,7 +21,7 @@ intel_be_batchbuffer_alloc(struct intel_be_context *intel)
 	batch->base.size = 0;
 	batch->base.actual_size = intel->device->max_batch_size;
 	batch->base.relocs = 0;
-	batch->base.max_relocs = 500;/*INTEL_DEFAULT_RELOCS;*/
+	batch->base.max_relocs = 100;/*INTEL_DEFAULT_RELOCS;*/
 
 	batch->intel = intel;
 	batch->device = intel->device;
