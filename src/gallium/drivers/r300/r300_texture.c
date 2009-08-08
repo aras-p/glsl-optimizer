@@ -22,13 +22,6 @@
 
 #include "r300_texture.h"
 
-/* XXX maths need to go to util */
-
-static int minify(int i)
-{
-    return MAX2(1, i >> 1);
-}
-
 static void r300_setup_texture_state(struct r300_texture* tex,
                                      unsigned width,
                                      unsigned height,

@@ -48,11 +48,6 @@
 /* Simple, maximally packed layout.
  */
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 
 /* Conventional allocation path for non-display textures:
  */

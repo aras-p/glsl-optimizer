@@ -450,6 +450,11 @@ align(int value, int alignment)
    return (value + alignment - 1) & ~(alignment - 1);
 }
 
+static INLINE unsigned
+minify(unsigned value)
+{
+    return MAX2(1, value >> 1);
+}
 
 #ifndef COPY_4V
 #define COPY_4V( DST, SRC )         \

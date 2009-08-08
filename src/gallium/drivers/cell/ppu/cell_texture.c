@@ -44,13 +44,6 @@
 
 
 
-static unsigned
-minify(unsigned d)
-{
-   return MAX2(1, d>>1);
-}
-
-
 static void
 cell_texture_layout(struct cell_texture *ct)
 {

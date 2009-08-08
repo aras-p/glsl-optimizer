@@ -65,11 +65,6 @@ unsigned intel_compressed_alignment(unsigned internalFormat)
 }
 #endif
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 
 static void intel_miptree_set_image_offset(struct brw_texture *tex,
                                            unsigned level,

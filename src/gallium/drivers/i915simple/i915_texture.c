@@ -72,11 +72,6 @@ static const int step_offsets[6][2] = {
    {-1, 1}
 };
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 static unsigned
 power_of_two(unsigned x)
 {
