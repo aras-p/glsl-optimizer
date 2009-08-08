@@ -152,6 +152,5 @@ intel_be_batchbuffer_free(struct intel_be_batchbuffer *batch)
 	if (batch->bo)
 		drm_intel_bo_unreference(batch->bo);
 
-	free(batch->base.map);
 	free(batch);
 }
