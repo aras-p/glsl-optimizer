@@ -51,7 +51,7 @@ write_tsv_header(FILE *fp)
 {
    fprintf(fp,
            "result\t"
-           "cycles\t"
+           "cycles_per_channel\t"
            "type\t"
            "sep_func\t"
            "sep_src_factor\t"
@@ -76,7 +76,7 @@ write_tsv_row(FILE *fp,
 {
    fprintf(fp, "%s\t", success ? "pass" : "fail");
 
-   fprintf(fp, "%.1f\t", cycles + 0.5);
+   fprintf(fp, "%.1f\t", cycles / type.length);
 
    fprintf(fp, "%s%u%sx%u\t",
            type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),

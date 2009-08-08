@@ -47,8 +47,7 @@ write_tsv_header(FILE *fp)
 {
    fprintf(fp,
            "result\t"
-           "cycles\t"
-           "type\t"
+           "cycles_per_channel\t"
            "src_type\t"
            "dst_type\n");
 
@@ -65,13 +64,13 @@ write_tsv_row(FILE *fp,
 {
    fprintf(fp, "%s\t", success ? "pass" : "fail");
 
-   fprintf(fp, "%.1f\t", cycles + 0.5);
+   fprintf(fp, "%.1f\t", cycles / MAX2(src_type.length, dst_type.length));
 
    dump_type(fp, src_type);
    fprintf(fp, "\t");
 
    dump_type(fp, dst_type);
-   fprintf(fp, "\t");
+   fprintf(fp, "\n");
 
    fflush(fp);
 }
@@ -177,7 +176,6 @@ test_one(unsigned verbose,
 
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
-
 
    module = LLVMModuleCreateWithName("test");
 
