@@ -34,7 +34,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(22 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(24 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
@@ -56,6 +56,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x0);
     OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x0);
     OUT_CS_REG(R300_FG_DEPTH_SRC, 0x0);
+    OUT_CS_REG(R300_US_W_FMT, 0x0);
 
     /*** VAP ***/
     /* Max and min vertex index clamp. */
@@ -72,7 +73,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(71 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(64 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -132,11 +133,5 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
 
-    OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
-    OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
     END_CS;
 }
