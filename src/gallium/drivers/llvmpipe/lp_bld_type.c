@@ -29,13 +29,13 @@
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 
 
 LLVMTypeRef
 lp_build_elem_type(union lp_type type)
 {
    if (type.floating) {
-      assert(type.sign);
       switch(type.width) {
       case 32:
          return LLVMFloatType();

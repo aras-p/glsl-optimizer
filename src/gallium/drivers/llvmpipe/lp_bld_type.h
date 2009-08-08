@@ -73,7 +73,8 @@ union lp_type {
       /** 
        * Whether it can represent negative values or not.
        *
-       * Floating point values should always have this bit set.
+       * If this is not set for floating point, it means that all values are
+       * assumed to be positive.
        */
       unsigned sign:1;
 
