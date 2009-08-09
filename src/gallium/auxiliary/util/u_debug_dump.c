@@ -100,6 +100,7 @@ debug_dump_blend_factor_names[] = {
    "PIPE_BLENDFACTOR_INV_SRC_ALPHA",
    "PIPE_BLENDFACTOR_INV_DST_ALPHA",
    "PIPE_BLENDFACTOR_INV_DST_COLOR",
+   DEBUG_DUMP_INVALID_NAME, /* 0x16 */
    "PIPE_BLENDFACTOR_INV_CONST_COLOR",
    "PIPE_BLENDFACTOR_INV_CONST_ALPHA",
    "PIPE_BLENDFACTOR_INV_SRC1_COLOR",
@@ -130,6 +131,7 @@ debug_dump_blend_factor_short_names[] = {
    "inv_src_alpha",
    "inv_dst_alpha",
    "inv_dst_color",
+   DEBUG_DUMP_INVALID_NAME, /* 0x16 */
    "inv_const_color",
    "inv_const_alpha",
    "inv_src1_color",
