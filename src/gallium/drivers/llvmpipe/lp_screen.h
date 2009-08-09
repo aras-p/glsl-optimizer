@@ -31,13 +31,22 @@
 #ifndef LP_SCREEN_H
 #define LP_SCREEN_H
 
+#include <llvm-c/Core.h>
+#include <llvm-c/Analysis.h>
+#include <llvm-c/ExecutionEngine.h>
+
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 
 
-
-struct llvmpipe_screen {
+struct llvmpipe_screen
+{
    struct pipe_screen base;
+
+   LLVMModuleRef module;
+   LLVMExecutionEngineRef engine;
+   LLVMModuleProviderRef provider;
+   LLVMPassManagerRef pass;
 
    /* Increments whenever textures are modified.  Contexts can track
     * this.

@@ -31,6 +31,8 @@
 #ifndef LP_STATE_H
 #define LP_STATE_H
 
+#include <llvm-c/Core.h>
+
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 
@@ -87,6 +89,23 @@ struct lp_fragment_shader {
 struct lp_vertex_shader {
    struct pipe_shader_state shader;
    struct draw_vertex_shader *draw_data;
+};
+
+
+typedef void
+(*lp_blend_func)(float src[][4],
+                 float dst[][4],
+                 float con[][4],
+                 float res[][4]);
+
+
+struct lp_blend_state
+{
+   struct pipe_blend_state base;
+
+   LLVMValueRef function;
+
+   lp_blend_func jit_function;
 };
 
 

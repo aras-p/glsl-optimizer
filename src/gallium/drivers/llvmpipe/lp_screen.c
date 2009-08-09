@@ -26,6 +26,8 @@
  **************************************************************************/
 
 
+#include <llvm-c/Transforms/Scalar.h>
+
 #include "util/u_memory.h"
 #include "util/u_simple_screen.h"
 #include "pipe/internal/p_winsys_screen.h"
@@ -149,9 +151,17 @@ llvmpipe_is_format_supported( struct pipe_screen *screen,
 
 
 static void
-llvmpipe_destroy_screen( struct pipe_screen *screen )
+llvmpipe_destroy_screen( struct pipe_screen *_screen )
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
+
+   struct pipe_winsys *winsys = _screen->winsys;
+
+   if(screen->engine)
+      LLVMDisposeExecutionEngine(screen->engine);
+
+   if(screen->pass)
+      LLVMDisposePassManager(screen->pass);
 
    if(winsys->destroy)
       winsys->destroy(winsys);
@@ -169,6 +179,7 @@ struct pipe_screen *
 llvmpipe_create_screen(struct pipe_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
+   char *error = NULL;
 
    if (!screen)
       return NULL;
@@ -185,6 +196,26 @@ llvmpipe_create_screen(struct pipe_winsys *winsys)
 
    llvmpipe_init_screen_texture_funcs(&screen->base);
    u_simple_screen_init(&screen->base);
+
+   screen->module = LLVMModuleCreateWithName("llvmpipe");
+
+   screen->provider = LLVMCreateModuleProviderForExistingModule(screen->module);
+
+   if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
+      fprintf(stderr, "%s\n", error);
+      LLVMDisposeMessage(error);
+      abort();
+   }
+
+   screen->pass = LLVMCreateFunctionPassManager(screen->provider);
+   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(screen->engine), screen->pass);
+   /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
+    * but there are more on SVN. */
+   LLVMAddConstantPropagationPass(screen->pass);
+   LLVMAddInstructionCombiningPass(screen->pass);
+   LLVMAddPromoteMemoryToRegisterPass(screen->pass);
+   LLVMAddGVNPass(screen->pass);
+   LLVMAddCFGSimplificationPass(screen->pass);
 
    return &screen->base;
 }

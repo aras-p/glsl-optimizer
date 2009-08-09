@@ -46,13 +46,14 @@ struct llvmpipe_tile_cache;
 struct llvmpipe_tex_tile_cache;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
+struct lp_blend_state;
 
 
 struct llvmpipe_context {
    struct pipe_context pipe;  /**< base class */
 
    /** Constant state objects */
-   const struct pipe_blend_state *blend;
+   struct lp_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_alpha_state *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
@@ -60,7 +61,7 @@ struct llvmpipe_context {
    const struct lp_vertex_shader *vs;
 
    /** Other rendering state */
-   struct pipe_blend_color blend_color;
+   float ALIGN16_ATTRIB blend_color[4][QUAD_SIZE];
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
