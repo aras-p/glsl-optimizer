@@ -302,6 +302,9 @@ lp_build_blend_aos(LLVMBuilderRef builder,
    LLVMValueRef src_term;
    LLVMValueRef dst_term;
 
+   if(!blend->blend_enable)
+      return src;
+
    /* It makes no sense to blend unless values are normalized */
    assert(type.norm);
 

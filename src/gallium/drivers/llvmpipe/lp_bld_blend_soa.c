@@ -167,6 +167,15 @@ lp_build_blend_soa(LLVMBuilderRef builder,
    struct lp_build_blend_soa_context bld;
    unsigned i, j;
 
+   if(!blend->blend_enable) {
+      for (i = 0; i < 4; ++i)
+         res[i] = src[i];
+      return;
+   }
+
+   /* It makes no sense to blend unless values are normalized */
+   assert(type.norm);
+
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);

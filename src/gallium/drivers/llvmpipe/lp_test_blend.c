@@ -766,7 +766,7 @@ blend_funcs[] = {
 
 const union lp_type blend_types[] = {
    /* float, fixed,  sign,  norm, width, len */
-   {{  TRUE, FALSE,  TRUE,  TRUE,    32,   4 }}, /* f32 x 4 */
+   {{  TRUE, FALSE, FALSE,  TRUE,    32,   4 }}, /* f32 x 4 */
    {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }}, /* u8n x 16 */
 };
 
