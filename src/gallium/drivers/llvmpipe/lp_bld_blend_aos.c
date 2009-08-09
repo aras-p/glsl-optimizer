@@ -302,6 +302,9 @@ lp_build_blend_aos(LLVMBuilderRef builder,
    LLVMValueRef src_term;
    LLVMValueRef dst_term;
 
+   /* FIXME */
+   assert(blend->colormask == 0xf);
+
    if(!blend->blend_enable)
       return src;
 

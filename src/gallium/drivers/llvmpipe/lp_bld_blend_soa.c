@@ -65,12 +65,12 @@ struct lp_build_blend_soa_context
     * We store all factors in a table in order to eliminate redundant
     * multiplications later.
     */
-   LLVMValueRef factor[2][8];
+   LLVMValueRef factor[2][2][4];
 
    /**
     * Table with all terms.
     */
-   LLVMValueRef term[8];
+   LLVMValueRef term[2][4];
 };
 
 
@@ -165,16 +165,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                    LLVMValueRef res[4])
 {
    struct lp_build_blend_soa_context bld;
-   unsigned i, j;
-
-   if(!blend->blend_enable) {
-      for (i = 0; i < 4; ++i)
-         res[i] = src[i];
-      return;
-   }
-
-   /* It makes no sense to blend unless values are normalized */
-   assert(type.norm);
+   unsigned i, j, k;
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
@@ -185,62 +176,75 @@ lp_build_blend_soa(LLVMBuilderRef builder,
       bld.con[i] = con[i];
    }
 
-   /*
-    * Compute src/dst factors.
-    */
    for (i = 0; i < 4; ++i) {
-      unsigned src_factor = i < 3 ? blend->rgb_src_factor : blend->alpha_src_factor;
-      unsigned dst_factor = i < 3 ? blend->rgb_dst_factor : blend->alpha_dst_factor;
-      bld.factor[0][0 + i] = src[i];
-      bld.factor[1][0 + i] = lp_build_blend_soa_factor(&bld, src_factor, i);
-      bld.factor[0][4 + i] = dst[i];
-      bld.factor[1][4 + i] = lp_build_blend_soa_factor(&bld, dst_factor, i);
-   }
+      if (blend->colormask & (1 << i)) {
+         if (blend->blend_enable) {
+            unsigned src_factor = i < 3 ? blend->rgb_src_factor : blend->alpha_src_factor;
+            unsigned dst_factor = i < 3 ? blend->rgb_dst_factor : blend->alpha_dst_factor;
+            unsigned func = i < 3 ? blend->rgb_func : blend->alpha_func;
+            boolean func_commutative = lp_build_blend_func_commutative(func);
 
-   /*
-    * Compute src/dst terms
-    */
-   for (i = 0; i < 8; ++i) {
+            /* It makes no sense to blend unless values are normalized */
+            assert(type.norm);
 
-      /* See if this multiplication has been previously computed */
-      for(j = 0; j < i; ++j) {
-         if((bld.factor[0][j] == bld.factor[0][i] &&
-             bld.factor[1][j] == bld.factor[1][i]) ||
-            (bld.factor[0][j] == bld.factor[1][i] &&
-             bld.factor[1][j] == bld.factor[0][i]))
-            break;
+            /*
+             * Compute src/dst factors.
+             */
+
+            bld.factor[0][0][i] = src[i];
+            bld.factor[0][1][i] = lp_build_blend_soa_factor(&bld, src_factor, i);
+            bld.factor[1][0][i] = dst[i];
+            bld.factor[1][1][i] = lp_build_blend_soa_factor(&bld, dst_factor, i);
+
+            /*
+             * Compute src/dst terms
+             */
+
+            for(k = 0; k < 2; ++k) {
+               /* See if this multiplication has been previously computed */
+               for(j = 0; j < i; ++j) {
+                  if((bld.factor[k][0][j] == bld.factor[k][0][i] &&
+                      bld.factor[k][1][j] == bld.factor[k][1][i]) ||
+                     (bld.factor[k][0][j] == bld.factor[k][1][i] &&
+                      bld.factor[k][1][j] == bld.factor[k][0][i]))
+                     break;
+               }
+
+               if(j < i)
+                  bld.term[k][i] = bld.term[k][j];
+               else
+                  bld.term[k][i] = lp_build_mul(&bld.base, bld.factor[k][0][i], bld.factor[k][1][i]);
+            }
+
+            /*
+             * Combine terms
+             */
+
+            /* See if this function has been previously applied */
+            for(j = 0; j < i; ++j) {
+               unsigned prev_func = j < 3 ? blend->rgb_func : blend->alpha_func;
+               unsigned func_reverse = lp_build_blend_func_reverse(func, prev_func);
+
+               if((!func_reverse &&
+                   bld.term[0][j] == bld.term[0][i] &&
+                   bld.term[1][j] == bld.term[1][i]) ||
+                  ((func_commutative || func_reverse) &&
+                   bld.term[0][j] == bld.term[1][i] &&
+                   bld.term[1][j] == bld.term[0][i]))
+                  break;
+            }
+
+            if(j < i)
+               res[i] = res[j];
+            else
+               res[i] = lp_build_blend_func(&bld.base, func, bld.term[0][i], bld.term[1][i]);
+         }
+         else {
+            res[i] = src[i];
+         }
       }
-
-      if(j < i)
-         bld.term[i] = bld.term[j];
-      else
-         bld.term[i] = lp_build_mul(&bld.base, bld.factor[0][i], bld.factor[1][i]);
-   }
-
-   /*
-    * Combine terms
-    */
-   for (i = 0; i < 4; ++i) {
-      unsigned func = i < 3 ? blend->rgb_func : blend->alpha_func;
-      boolean func_commutative = lp_build_blend_func_commutative(func);
-
-      /* See if this function has been previously applied */
-      for(j = 0; j < i; ++j) {
-         unsigned prev_func = j < 3 ? blend->rgb_func : blend->alpha_func;
-         unsigned func_reverse = lp_build_blend_func_reverse(func, prev_func);
-
-         if((!func_reverse &&
-             bld.factor[0 + j] == bld.factor[0 + i] &&
-             bld.factor[4 + j] == bld.factor[4 + i]) ||
-            ((func_commutative || func_reverse) &&
-             bld.factor[0 + j] == bld.factor[4 + i] &&
-             bld.factor[4 + j] == bld.factor[0 + i]))
-            break;
+      else {
+         res[i] = dst[i];
       }
-
-      if(j < i)
-         res[i] = res[j];
-      else
-         res[i] = lp_build_blend_func(&bld.base, func, bld.term[i + 0], bld.term[i + 4]);
    }
 }

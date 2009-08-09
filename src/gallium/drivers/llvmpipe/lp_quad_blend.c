@@ -148,31 +148,6 @@ logicop_quad(struct quad_stage *qs,
 }
 
 
-static void
-colormask_quad(struct quad_stage *qs,
-               float (*quadColor)[4],
-               float (*dest)[4])
-{
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-
-   /* R */
-   if (!(llvmpipe->blend->base.colormask & PIPE_MASK_R))
-      COPY_4V(quadColor[0], dest[0]);
-
-   /* G */
-   if (!(llvmpipe->blend->base.colormask & PIPE_MASK_G))
-      COPY_4V(quadColor[1], dest[1]);
-
-   /* B */
-   if (!(llvmpipe->blend->base.colormask & PIPE_MASK_B))
-      COPY_4V(quadColor[2], dest[2]);
-
-   /* A */
-   if (!(llvmpipe->blend->base.colormask & PIPE_MASK_A))
-      COPY_4V(quadColor[3], dest[3]);
-}
-
-
 static void blend_begin(struct quad_stage *qs)
 {
 }
@@ -225,9 +200,6 @@ blend_run(struct quad_stage *qs,
                blend->jit_function( quadColor, dest, llvmpipe->blend_color, quadColor );
          }
 
-         if (blend->base.colormask != 0xf)
-            colormask_quad( qs, quadColor, dest );
-   
          /* Output color values
           */
          for (j = 0; j < QUAD_SIZE; j++) {

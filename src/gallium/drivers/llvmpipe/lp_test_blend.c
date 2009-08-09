@@ -811,6 +811,7 @@ test_all(unsigned verbose, FILE *fp)
                            blend.alpha_func        = *alpha_func;
                            blend.alpha_src_factor  = *alpha_src_factor;
                            blend.alpha_dst_factor  = *alpha_dst_factor;
+                           blend.colormask         = PIPE_MASK_RGBA;
 
                            if(!test_one(verbose, fp, &blend, mode, *type))
                              success = FALSE;
@@ -869,6 +870,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
       blend.alpha_func        = *alpha_func;
       blend.alpha_src_factor  = *alpha_src_factor;
       blend.alpha_dst_factor  = *alpha_dst_factor;
+      blend.colormask         = PIPE_MASK_RGBA;
 
       if(!test_one(verbose, fp, &blend, mode, *type))
         success = FALSE;
