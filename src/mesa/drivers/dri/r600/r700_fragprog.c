@@ -347,7 +347,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
     {
 	SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
-	SetField(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
+	SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
 	SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);	
     }
 
