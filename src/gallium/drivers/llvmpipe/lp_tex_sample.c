@@ -38,7 +38,7 @@
 #include "lp_surface.h"
 #include "lp_texture.h"
 #include "lp_tex_sample.h"
-#include "lp_tile_cache.h"
+#include "lp_tex_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
@@ -680,17 +680,17 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
       rgba[3][j] = sampler->border_color[3];
    }
    else {
-      const unsigned tx = x % TILE_SIZE;
-      const unsigned ty = y % TILE_SIZE;
-      const struct llvmpipe_cached_tile *tile;
+      const unsigned tx = x % TEX_TILE_SIZE;
+      const unsigned ty = y % TEX_TILE_SIZE;
+      const struct llvmpipe_cached_tex_tile *tile;
 
-      tile = lp_get_cached_tile_tex(samp->cache, 
-                                    tile_address(x, y, z, face, level));
+      tile = lp_get_cached_tex_tile(samp->cache,
+                                    tex_tile_address(x, y, z, face, level));
 
-      rgba[0][j] = tile->data.color[ty][tx][0];
-      rgba[1][j] = tile->data.color[ty][tx][1];
-      rgba[2][j] = tile->data.color[ty][tx][2];
-      rgba[3][j] = tile->data.color[ty][tx][3];
+      rgba[0][j] = tile->color[ty][tx][0];
+      rgba[1][j] = tile->color[ty][tx][1];
+      rgba[2][j] = tile->color[ty][tx][2];
+      rgba[3][j] = tile->color[ty][tx][3];
       if (0)
       {
          debug_printf("Get texel %f %f %f %f from %s\n",

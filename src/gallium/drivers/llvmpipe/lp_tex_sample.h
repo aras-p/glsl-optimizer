@@ -32,6 +32,9 @@
 #include "tgsi/tgsi_exec.h"
 
 
+struct llvmpipe_tex_tile_cache;
+
+
 /**
  * Subclass of tgsi_sampler
  */
@@ -42,7 +45,7 @@ struct lp_shader_sampler
    const struct pipe_texture *texture;
    const struct pipe_sampler_state *sampler;
 
-   struct llvmpipe_tile_cache *cache;
+   struct llvmpipe_tex_tile_cache *cache;
 };
 
 

@@ -42,6 +42,7 @@
 #include "lp_state.h"
 #include "lp_surface.h"
 #include "lp_tile_cache.h"
+#include "lp_tex_cache.h"
 #include "lp_texture.h"
 #include "lp_winsys.h"
 #include "lp_query.h"
@@ -97,7 +98,7 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    lp_destroy_tile_cache(llvmpipe->zsbuf_cache);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      lp_destroy_tile_cache(llvmpipe->tex_cache[i]);
+      lp_destroy_tex_tile_cache(llvmpipe->tex_cache[i]);
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       if (llvmpipe->constants[i].buffer) {
@@ -220,7 +221,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->zsbuf_cache = lp_create_tile_cache( screen );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      llvmpipe->tex_cache[i] = lp_create_tile_cache( screen );
+      llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
 
 
    /* setup quad rendering stages */

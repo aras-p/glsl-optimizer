@@ -37,6 +37,7 @@
 #include "lp_surface.h"
 #include "lp_state.h"
 #include "lp_tile_cache.h"
+#include "lp_tex_cache.h"
 #include "lp_winsys.h"
 
 
@@ -52,7 +53,7 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
       for (i = 0; i < llvmpipe->num_textures; i++) {
-         lp_flush_tile_cache(llvmpipe->tex_cache[i]);
+         lp_flush_tex_tile_cache(llvmpipe->tex_cache[i]);
       }
    }
 

@@ -33,6 +33,7 @@
 #include "draw/draw_private.h"
 #include "lp_context.h"
 #include "lp_screen.h"
+#include "lp_tex_cache.h"
 #include "lp_state.h"
 
 
@@ -211,7 +212,7 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      lp_tile_cache_validate_texture( llvmpipe->tex_cache[i] );
+      lp_tex_tile_cache_validate_texture( llvmpipe->tex_cache[i] );
    }
 }
 

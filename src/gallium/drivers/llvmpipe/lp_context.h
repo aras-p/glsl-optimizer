@@ -43,6 +43,7 @@ struct llvmpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct llvmpipe_tile_cache;
+struct llvmpipe_tex_tile_cache;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 
@@ -141,7 +142,7 @@ struct llvmpipe_context {
    struct llvmpipe_tile_cache *zsbuf_cache;
    
    unsigned tex_timestamp;
-   struct llvmpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;

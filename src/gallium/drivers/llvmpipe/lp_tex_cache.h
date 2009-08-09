@@ -25,32 +25,30 @@
  * 
  **************************************************************************/
 
-#ifndef LP_TILE_CACHE_H
-#define LP_TILE_CACHE_H
-
-#define TILE_CLEAR_OPTIMIZATION 1
+#ifndef LP_TEX_CACHE_H
+#define LP_TEX_CACHE_H
 
 
 #include "pipe/p_compiler.h"
 
 
 struct llvmpipe_context;
-struct llvmpipe_tile_cache;
+struct llvmpipe_tex_tile_cache;
 
 
 /**
  * Cache tile size (width and height). This needs to be a power of two.
  */
-#define TILE_SIZE 64
+#define TEX_TILE_SIZE 64
 
 
 /* If we need to support > 4096, just expand this to be a 64 bit
  * union, or consider tiling in Z as well.
  */
-union tile_address {
+union tex_tile_address {
    struct {
-      unsigned x:6;             /* 4096 / TILE_SIZE */
-      unsigned y:6;             /* 4096 / TILE_SIZE */
+      unsigned x:6;             /* 4096 / TEX_TILE_SIZE */
+      unsigned y:6;             /* 4096 / TEX_TILE_SIZE */
       unsigned z:12;            /* 4096 -- z not tiled */
       unsigned face:3;
       unsigned level:4;
@@ -60,28 +58,21 @@ union tile_address {
 };
 
 
-struct llvmpipe_cached_tile
+struct llvmpipe_cached_tex_tile
 {
-   union tile_address addr;
-   union {
-      float color[TILE_SIZE][TILE_SIZE][4];
-      uint color32[TILE_SIZE][TILE_SIZE];
-      uint depth32[TILE_SIZE][TILE_SIZE];
-      ushort depth16[TILE_SIZE][TILE_SIZE];
-      ubyte stencil8[TILE_SIZE][TILE_SIZE];
-      ubyte any[1];
-   } data;
+   union tex_tile_address addr;
+   float color[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
 };
 
 #define NUM_ENTRIES 50
 
 
 /** XXX move these */
-#define MAX_WIDTH 2048
-#define MAX_HEIGHT 2048
+#define MAX_TEX_WIDTH 2048
+#define MAX_TEX_HEIGHT 2048
 
 
-struct llvmpipe_tile_cache
+struct llvmpipe_tex_tile_cache
 {
    struct pipe_screen *screen;
    struct pipe_surface *surface;  /**< the surface we're caching */
@@ -91,64 +82,54 @@ struct llvmpipe_tile_cache
    struct pipe_texture *texture;  /**< if caching a texture */
    unsigned timestamp;
 
-   struct llvmpipe_cached_tile entries[NUM_ENTRIES];
-   uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
-   float clear_color[4];  /**< for color bufs */
-   uint clear_val;        /**< for z+stencil, or packed color clear value */
-   boolean depth_stencil; /**< Is the surface a depth/stencil format? */
+   struct llvmpipe_cached_tex_tile entries[NUM_ENTRIES];
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;
    int tex_face, tex_level, tex_z;
 
-   struct llvmpipe_cached_tile tile;  /**< scratch tile for clears */
-
-   struct llvmpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
+   struct llvmpipe_cached_tex_tile *last_tile;  /**< most recently retrieved tile */
 };
 
 
-extern struct llvmpipe_tile_cache *
-lp_create_tile_cache( struct pipe_screen *screen );
+extern struct llvmpipe_tex_tile_cache *
+lp_create_tex_tile_cache( struct pipe_screen *screen );
 
 extern void
-lp_destroy_tile_cache(struct llvmpipe_tile_cache *tc);
+lp_destroy_tex_tile_cache(struct llvmpipe_tex_tile_cache *tc);
 
 extern void
-lp_tile_cache_set_surface(struct llvmpipe_tile_cache *tc,
-                          struct pipe_surface *lps);
-
-extern struct pipe_surface *
-lp_tile_cache_get_surface(struct llvmpipe_tile_cache *tc);
+lp_tex_tile_cache_map_transfers(struct llvmpipe_tex_tile_cache *tc);
 
 extern void
-lp_tile_cache_map_transfers(struct llvmpipe_tile_cache *tc);
+lp_tex_tile_cache_unmap_transfers(struct llvmpipe_tex_tile_cache *tc);
 
 extern void
-lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc);
+lp_tex_tile_cache_set_texture(struct llvmpipe_tex_tile_cache *tc,
+                          struct pipe_texture *texture);
+
+void
+lp_tex_tile_cache_validate_texture(struct llvmpipe_tex_tile_cache *tc);
 
 extern void
-lp_flush_tile_cache(struct llvmpipe_tile_cache *tc);
+lp_flush_tex_tile_cache(struct llvmpipe_tex_tile_cache *tc);
 
-extern void
-lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
-                    uint clearValue);
+extern const struct llvmpipe_cached_tex_tile *
+lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
+                        union tex_tile_address addr );
 
-extern struct llvmpipe_cached_tile *
-lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
-                    union tile_address addr );
-
-static INLINE const union tile_address
-tile_address( unsigned x,
-              unsigned y,
-              unsigned z,
-              unsigned face,
-              unsigned level )
+static INLINE const union tex_tile_address
+tex_tile_address( unsigned x,
+                  unsigned y,
+                  unsigned z,
+                  unsigned face,
+                  unsigned level )
 {
-   union tile_address addr;
+   union tex_tile_address addr;
 
    addr.value = 0;
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
+   addr.bits.x = x / TEX_TILE_SIZE;
+   addr.bits.y = y / TEX_TILE_SIZE;
    addr.bits.z = z;
    addr.bits.face = face;
    addr.bits.level = level;
@@ -158,20 +139,16 @@ tile_address( unsigned x,
 
 /* Quickly retrieve tile if it matches last lookup.
  */
-static INLINE struct llvmpipe_cached_tile *
-lp_get_cached_tile(struct llvmpipe_tile_cache *tc, 
-                   int x, int y )
+static INLINE const struct llvmpipe_cached_tex_tile *
+lp_get_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
+                       union tex_tile_address addr )
 {
-   union tile_address addr = tile_address( x, y, 0, 0, 0 );
-
    if (tc->last_tile->addr.value == addr.value)
       return tc->last_tile;
 
-   return lp_find_cached_tile( tc, addr );
+   return lp_find_cached_tex_tile( tc, addr );
 }
 
 
-
-
-#endif /* LP_TILE_CACHE_H */
+#endif /* LP_TEX_CACHE_H */
 
