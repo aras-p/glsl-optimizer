@@ -51,6 +51,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_tex_sample.c',
 		'lp_texture.c',
 		'lp_tile_cache.c',
+		'lp_tile_soa.c',
 	])
 
 

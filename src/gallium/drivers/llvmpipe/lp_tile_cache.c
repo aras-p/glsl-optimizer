@@ -38,6 +38,7 @@
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
+#include "lp_tile_soa.h"
 #include "lp_tile_cache.h"
 
 
@@ -216,15 +217,11 @@ clear_tile_rgba(struct llvmpipe_cached_tile *tile,
       memset(tile->data.color, 0, sizeof(tile->data.color));
    }
    else {
-      uint i, j;
-      for (i = 0; i < TILE_SIZE; i++) {
-         for (j = 0; j < TILE_SIZE; j++) {
-            tile->data.color[i][j][0] = clear_value[0];
-            tile->data.color[i][j][1] = clear_value[1];
-            tile->data.color[i][j][2] = clear_value[2];
-            tile->data.color[i][j][3] = clear_value[3];
-         }
-      }
+      uint i, x, y;
+      for (i = 0; i < 4; ++i)
+         for (y = 0; y < TILE_SIZE; y++)
+            for (x = 0; x < TILE_SIZE; x++)
+               tile->data.color[i][y][x] = clear_value[i];
    }
 }
 
@@ -334,11 +331,10 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
                                  tile->data.depth32, 0/*STRIDE*/);
             }
             else {
-               pipe_put_tile_rgba(pt,
-                                  tile->addr.bits.x * TILE_SIZE, 
-                                  tile->addr.bits.y * TILE_SIZE, 
-                                  TILE_SIZE, TILE_SIZE,
-                                  (float *) tile->data.color);
+               lp_put_tile_rgba_soa(pt,
+                                    tile->addr.bits.x * TILE_SIZE,
+                                    tile->addr.bits.y * TILE_SIZE,
+                                    tile->data.color);
             }
             tile->addr.bits.invalid = 1;  /* mark as empty */
             inuse++;
@@ -390,11 +386,10 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_put_tile_rgba(pt,
-                               tile->addr.bits.x * TILE_SIZE,
-                               tile->addr.bits.y * TILE_SIZE,
-                               TILE_SIZE, TILE_SIZE,
-                               (float *) tile->data.color);
+            lp_put_tile_rgba_soa(pt,
+                                 tile->addr.bits.x * TILE_SIZE,
+                                 tile->addr.bits.y * TILE_SIZE,
+                                 tile->data.color);
          }
       }
 
@@ -420,11 +415,10 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_get_tile_rgba(pt,
-                               tile->addr.bits.x * TILE_SIZE, 
-                               tile->addr.bits.y * TILE_SIZE,
-                               TILE_SIZE, TILE_SIZE,
-                               (float *) tile->data.color);
+            lp_get_tile_rgba_soa(pt,
+                                 tile->addr.bits.x * TILE_SIZE,
+                                 tile->addr.bits.y * TILE_SIZE,
+                                 tile->data.color);
          }
       }
    }

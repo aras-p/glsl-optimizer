@@ -183,7 +183,7 @@ blend_run(struct quad_stage *qs,
             int x = itx + (j & 1);
             int y = ity + (j >> 1);
             for (i = 0; i < 4; i++) {
-               dest[i][j] = tile->data.color[y][x][i];
+               dest[i][j] = tile->data.color[i][y][x];
             }
          }
 
@@ -207,7 +207,7 @@ blend_run(struct quad_stage *qs,
                int x = itx + (j & 1);
                int y = ity + (j >> 1);
                for (i = 0; i < 4; i++) { /* loop over color chans */
-                  tile->data.color[y][x][i] = quadColor[i][j];
+                  tile->data.color[i][y][x] = quadColor[i][j];
                }
             }
          }
