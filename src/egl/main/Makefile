@@ -74,6 +74,7 @@ install: default
 clean:
 	-rm -f *.o *.so*
 	-rm -f core.*
+	-rm -f depend depend.bak
 
 
 depend: $(SOURCES) $(HEADERS)

@@ -55,6 +55,7 @@ install:
 clean:
 	-rm -f *.o
 	-rm -f *.so
+	-rm -f depend depend.bak
 
 depend: $(SOURCES) $(HEADERS)
 	@ echo "running $(MKDEP)"
