@@ -37,10 +37,17 @@
  */
 
 
-#include "lp_bld.h"
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_blend.h"
 #include "lp_test.h"
+
+
+enum vector_mode
+{
+   AoS = 0,
+   SoA = 1
+};
 
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
@@ -52,6 +59,7 @@ write_tsv_header(FILE *fp)
    fprintf(fp,
            "result\t"
            "cycles_per_channel\t"
+           "mode\t"
            "type\t"
            "sep_func\t"
            "sep_src_factor\t"
@@ -70,13 +78,22 @@ write_tsv_header(FILE *fp)
 static void
 write_tsv_row(FILE *fp,
               const struct pipe_blend_state *blend,
+              enum vector_mode mode,
               union lp_type type,
               double cycles,
               boolean success)
 {
    fprintf(fp, "%s\t", success ? "pass" : "fail");
 
-   fprintf(fp, "%.1f\t", cycles / type.length);
+   if (mode == AoS) {
+      fprintf(fp, "%.1f\t", cycles / type.length);
+      fprintf(fp, "aos\t");
+   }
+
+   if (mode == SoA) {
+      fprintf(fp, "%.1f\t", cycles / (4 * type.length));
+      fprintf(fp, "soa\t");
+   }
 
    fprintf(fp, "%s%u%sx%u\t",
            type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
@@ -106,22 +123,25 @@ write_tsv_row(FILE *fp,
 static void
 dump_blend_type(FILE *fp,
                 const struct pipe_blend_state *blend,
+                enum vector_mode mode,
                 union lp_type type)
 {
-   fprintf(fp,
-           "%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-           "rgb_func",         debug_dump_blend_func(blend->rgb_func, TRUE),
-           "rgb_src_factor",   debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
-           "rgb_dst_factor",   debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
-           "alpha_func",       debug_dump_blend_func(blend->alpha_func, TRUE),
-           "alpha_src_factor", debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
-           "alpha_dst_factor", debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
+   fprintf(fp, "%s", mode ? "soa" : "aos");
 
    fprintf(fp, " type=%s%u%sx%u",
            type.floating ? "f" : (type.fixed ? "h" : (type.sign ? "s" : "u")),
            type.width,
            type.norm ? "n" : "",
            type.length);
+
+   fprintf(fp,
+           " %s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
+           "rgb_func",         debug_dump_blend_func(blend->rgb_func, TRUE),
+           "rgb_src_factor",   debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
+           "rgb_dst_factor",   debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
+           "alpha_func",       debug_dump_blend_func(blend->alpha_func, TRUE),
+           "alpha_src_factor", debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
+           "alpha_dst_factor", debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
 
    fprintf(fp, " ...\n");
    fflush(fp);
@@ -131,6 +151,7 @@ dump_blend_type(FILE *fp,
 static LLVMValueRef
 add_blend_test(LLVMModuleRef module,
                const struct pipe_blend_state *blend,
+               enum vector_mode mode,
                union lp_type type)
 {
    LLVMTypeRef ret_type;
@@ -143,10 +164,6 @@ add_blend_test(LLVMModuleRef module,
    LLVMValueRef res_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
-   LLVMValueRef src;
-   LLVMValueRef dst;
-   LLVMValueRef con;
-   LLVMValueRef res;
 
    ret_type = LLVMInt64Type();
    vec_type = lp_build_vec_type(type);
@@ -163,15 +180,51 @@ add_blend_test(LLVMModuleRef module,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   src = LLVMBuildLoad(builder, src_ptr, "src");
-   dst = LLVMBuildLoad(builder, dst_ptr, "dst");
-   con = LLVMBuildLoad(builder, const_ptr, "const");
+   if (mode == AoS) {
+      LLVMValueRef src;
+      LLVMValueRef dst;
+      LLVMValueRef con;
+      LLVMValueRef res;
 
-   res = lp_build_blend(builder, blend, type, src, dst, con, 3);
+      src = LLVMBuildLoad(builder, src_ptr, "src");
+      dst = LLVMBuildLoad(builder, dst_ptr, "dst");
+      con = LLVMBuildLoad(builder, const_ptr, "const");
 
-   LLVMSetValueName(res, "res");
+      res = lp_build_blend_aos(builder, blend, type, src, dst, con, 3);
 
-   LLVMBuildStore(builder, res, res_ptr);
+      LLVMSetValueName(res, "res");
+
+      LLVMBuildStore(builder, res, res_ptr);
+   }
+
+   if (mode == SoA) {
+      LLVMValueRef src[4];
+      LLVMValueRef dst[4];
+      LLVMValueRef con[4];
+      LLVMValueRef res[4];
+      char src_name[5] = "src?";
+      char dst_name[5] = "dst?";
+      char con_name[5] = "con?";
+      char res_name[5] = "res?";
+      unsigned i;
+
+      for(i = 0; i < 4; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         con_name[3] = dst_name[3] = src_name[3] = "rgba"[i];
+         src[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, src_ptr, &index, 1, ""), src_name);
+         dst[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), dst_name);
+         con[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), con_name);
+      }
+
+      lp_build_blend_soa(builder, blend, type, src, dst, con, res);
+
+      for(i = 0; i < 4; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         res_name[3] = "rgba"[i];
+         LLVMSetValueName(res[i], res_name);
+         LLVMBuildStore(builder, res[i], LLVMBuildGEP(builder, res_ptr, &index, 1, ""));
+      }
+   }
 
    LLVMBuildRetVoid(builder);;
 
@@ -415,6 +468,7 @@ static boolean
 test_one(unsigned verbose,
          FILE *fp,
          const struct pipe_blend_state *blend,
+         enum vector_mode mode,
          union lp_type type)
 {
    LLVMModuleRef module = NULL;
@@ -431,11 +485,11 @@ test_one(unsigned verbose,
    unsigned i, j;
 
    if(verbose >= 1)
-      dump_blend_type(stdout, blend, type);
+      dump_blend_type(stdout, blend, mode, type);
 
    module = LLVMModuleCreateWithName("test");
 
-   func = add_blend_test(module, blend, type);
+   func = add_blend_test(module, blend, mode, type);
 
    if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
       LLVMDumpModule(module);
@@ -446,7 +500,7 @@ test_one(unsigned verbose,
    provider = LLVMCreateModuleProviderForExistingModule(module);
    if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
       if(verbose < 1)
-         dump_blend_type(stderr, blend, type);
+         dump_blend_type(stderr, blend, mode, type);
       fprintf(stderr, "%s\n", error);
       LLVMDisposeMessage(error);
       abort();
@@ -474,66 +528,148 @@ test_one(unsigned verbose,
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
-      uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      uint8_t con[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      uint8_t res[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      uint8_t ref[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
-      int64_t start_counter = 0;
-      int64_t end_counter = 0;
+      if(mode == AoS) {
+         uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t con[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t res[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t ref[LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         int64_t start_counter = 0;
+         int64_t end_counter = 0;
 
-      random_vec(type, src);
-      random_vec(type, dst);
-      random_vec(type, con);
+         random_vec(type, src);
+         random_vec(type, dst);
+         random_vec(type, con);
 
-      {
-         double fsrc[LP_MAX_VECTOR_LENGTH];
-         double fdst[LP_MAX_VECTOR_LENGTH];
-         double fcon[LP_MAX_VECTOR_LENGTH];
-         double fref[LP_MAX_VECTOR_LENGTH];
+         {
+            double fsrc[LP_MAX_VECTOR_LENGTH];
+            double fdst[LP_MAX_VECTOR_LENGTH];
+            double fcon[LP_MAX_VECTOR_LENGTH];
+            double fref[LP_MAX_VECTOR_LENGTH];
 
-         read_vec(type, src, fsrc);
-         read_vec(type, dst, fdst);
-         read_vec(type, con, fcon);
+            read_vec(type, src, fsrc);
+            read_vec(type, dst, fdst);
+            read_vec(type, con, fcon);
 
-         for(j = 0; j < type.length; j += 4)
-            compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, fref + j);
+            for(j = 0; j < type.length; j += 4)
+               compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, fref + j);
 
-         write_vec(type, ref, fref);
+            write_vec(type, ref, fref);
+         }
+
+         start_counter = rdtsc();
+         blend_test_ptr(src, dst, con, res);
+         end_counter = rdtsc();
+
+         cycles[i] = end_counter - start_counter;
+
+         if(!compare_vec(type, res, ref)) {
+            success = FALSE;
+
+            if(verbose < 1)
+               dump_blend_type(stderr, blend, mode, type);
+            fprintf(stderr, "MISMATCH\n");
+
+            fprintf(stderr, "  Src: ");
+            dump_vec(stderr, type, src);
+            fprintf(stderr, "\n");
+
+            fprintf(stderr, "  Dst: ");
+            dump_vec(stderr, type, dst);
+            fprintf(stderr, "\n");
+
+            fprintf(stderr, "  Con: ");
+            dump_vec(stderr, type, con);
+            fprintf(stderr, "\n");
+
+            fprintf(stderr, "  Res: ");
+            dump_vec(stderr, type, res);
+            fprintf(stderr, "\n");
+
+            fprintf(stderr, "  Ref: ");
+            dump_vec(stderr, type, ref);
+            fprintf(stderr, "\n");
+         }
       }
 
-      start_counter = rdtsc();
-      blend_test_ptr(src, dst, con, res);
-      end_counter = rdtsc();
+      if(mode == SoA) {
+         const unsigned stride = type.length*type.width/8;
+         uint8_t src[4*LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t dst[4*LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t con[4*LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t res[4*LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         uint8_t ref[4*LP_MAX_VECTOR_LENGTH*LP_MAX_TYPE_WIDTH/8];
+         int64_t start_counter = 0;
+         int64_t end_counter = 0;
+         boolean mismatch;
 
-      cycles[i] = end_counter - start_counter;
+         for(j = 0; j < 4; ++j) {
+            random_vec(type, src + j*stride);
+            random_vec(type, dst + j*stride);
+            random_vec(type, con + j*stride);
+         }
 
-      success = compare_vec(type, res, ref);
+         {
+            double fsrc[4];
+            double fdst[4];
+            double fcon[4];
+            double fref[4];
+            unsigned k;
 
-      if (!success) {
-         if(verbose < 1)
-            dump_blend_type(stderr, blend, type);
-         fprintf(stderr, "MISMATCH\n");
+            for(k = 0; k < type.length; ++k) {
+               for(j = 0; j < 4; ++j) {
+                  fsrc[j] = read_elem(type, src + j*stride, k);
+                  fdst[j] = read_elem(type, dst + j*stride, k);
+                  fcon[j] = read_elem(type, con + j*stride, k);
+               }
 
-         fprintf(stderr, "  Src: ");
-         dump_vec(stderr, type, src);
-         fprintf(stderr, "\n");
+               compute_blend_ref(blend, fsrc, fdst, fcon, fref);
 
-         fprintf(stderr, "  Dst: ");
-         dump_vec(stderr, type, dst);
-         fprintf(stderr, "\n");
+               for(j = 0; j < 4; ++j)
+                  write_elem(type, ref + j*stride, k, fref[j]);
+            }
+         }
 
-         fprintf(stderr, "  Con: ");
-         dump_vec(stderr, type, con);
-         fprintf(stderr, "\n");
+         start_counter = rdtsc();
+         blend_test_ptr(src, dst, con, res);
+         end_counter = rdtsc();
 
-         fprintf(stderr, "  Res: ");
-         dump_vec(stderr, type, res);
-         fprintf(stderr, "\n");
+         cycles[i] = end_counter - start_counter;
 
-         fprintf(stderr, "  Ref: ");
-         dump_vec(stderr, type, ref);
-         fprintf(stderr, "\n");
+         mismatch = FALSE;
+         for (j = 0; j < 4; ++j)
+            if(!compare_vec(type, res + j*stride, ref + j*stride))
+               mismatch = TRUE;
+
+         if (mismatch) {
+            success = FALSE;
+
+            if(verbose < 1)
+               dump_blend_type(stderr, blend, mode, type);
+            fprintf(stderr, "MISMATCH\n");
+            for(j = 0; j < 4; ++j) {
+               char channel = "RGBA"[j];
+               fprintf(stderr, "  Src%c: ", channel);
+               dump_vec(stderr, type, src + j*stride);
+               fprintf(stderr, "\n");
+
+               fprintf(stderr, "  Dst%c: ", channel);
+               dump_vec(stderr, type, dst + j*stride);
+               fprintf(stderr, "\n");
+
+               fprintf(stderr, "  Con%c: ", channel);
+               dump_vec(stderr, type, con + j*stride);
+               fprintf(stderr, "\n");
+
+               fprintf(stderr, "  Res%c: ", channel);
+               dump_vec(stderr, type, res + j*stride);
+               fprintf(stderr, "\n");
+
+               fprintf(stderr, "  Ref%c: ", channel);
+               dump_vec(stderr, type, ref + j*stride);
+               fprintf(stderr, "\n");
+            }
+         }
       }
    }
 
@@ -569,7 +705,7 @@ test_one(unsigned verbose,
    }
 
    if(fp)
-      write_tsv_row(fp, blend, type, cycles_avg, success);
+      write_tsv_row(fp, blend, mode, type, cycles_avg, success);
 
    if (!success) {
       if(verbose < 2)
@@ -650,6 +786,7 @@ test_all(unsigned verbose, FILE *fp)
    const unsigned *alpha_src_factor;
    const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
+   enum vector_mode mode;
    const union lp_type *type;
    bool success = TRUE;
 
@@ -659,24 +796,26 @@ test_all(unsigned verbose, FILE *fp)
             for(rgb_dst_factor = blend_factors; rgb_dst_factor <= rgb_src_factor; ++rgb_dst_factor) {
                for(alpha_src_factor = blend_factors; alpha_src_factor < &blend_factors[num_factors]; ++alpha_src_factor) {
                   for(alpha_dst_factor = blend_factors; alpha_dst_factor <= alpha_src_factor; ++alpha_dst_factor) {
-                     for(type = blend_types; type < &blend_types[num_types]; ++type) {
+                     for(mode = 0; mode < 2; ++mode) {
+                        for(type = blend_types; type < &blend_types[num_types]; ++type) {
 
-                        if(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
-                           *alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
-                           continue;
+                           if(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+                              *alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
+                              continue;
 
-                        memset(&blend, 0, sizeof blend);
-                        blend.blend_enable      = 1;
-                        blend.rgb_func          = *rgb_func;
-                        blend.rgb_src_factor    = *rgb_src_factor;
-                        blend.rgb_dst_factor    = *rgb_dst_factor;
-                        blend.alpha_func        = *alpha_func;
-                        blend.alpha_src_factor  = *alpha_src_factor;
-                        blend.alpha_dst_factor  = *alpha_dst_factor;
+                           memset(&blend, 0, sizeof blend);
+                           blend.blend_enable      = 1;
+                           blend.rgb_func          = *rgb_func;
+                           blend.rgb_src_factor    = *rgb_src_factor;
+                           blend.rgb_dst_factor    = *rgb_dst_factor;
+                           blend.alpha_func        = *alpha_func;
+                           blend.alpha_src_factor  = *alpha_src_factor;
+                           blend.alpha_dst_factor  = *alpha_dst_factor;
 
-                        if(!test_one(verbose, fp, &blend, *type))
-                          success = FALSE;
+                           if(!test_one(verbose, fp, &blend, mode, *type))
+                             success = FALSE;
 
+                        }
                      }
                   }
                }
@@ -699,6 +838,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    const unsigned *alpha_src_factor;
    const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
+   enum vector_mode mode;
    const union lp_type *type;
    unsigned long i;
    bool success = TRUE;
@@ -717,20 +857,21 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
          alpha_dst_factor = &blend_factors[random() % num_factors];
       } while(*alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
-      for(type = blend_types; type < &blend_types[num_types]; ++type) {
+      mode = random() & 1;
 
-         memset(&blend, 0, sizeof blend);
-         blend.blend_enable      = 1;
-         blend.rgb_func          = *rgb_func;
-         blend.rgb_src_factor    = *rgb_src_factor;
-         blend.rgb_dst_factor    = *rgb_dst_factor;
-         blend.alpha_func        = *alpha_func;
-         blend.alpha_src_factor  = *alpha_src_factor;
-         blend.alpha_dst_factor  = *alpha_dst_factor;
+      type = &blend_types[random() % num_types];
 
-         if(!test_one(verbose, fp, &blend, *type))
-           success = FALSE;
-      }
+      memset(&blend, 0, sizeof blend);
+      blend.blend_enable      = 1;
+      blend.rgb_func          = *rgb_func;
+      blend.rgb_src_factor    = *rgb_src_factor;
+      blend.rgb_dst_factor    = *rgb_dst_factor;
+      blend.alpha_func        = *alpha_func;
+      blend.alpha_src_factor  = *alpha_src_factor;
+      blend.alpha_dst_factor  = *alpha_dst_factor;
+
+      if(!test_one(verbose, fp, &blend, mode, *type))
+        success = FALSE;
    }
 
    return success;

@@ -45,7 +45,6 @@
 #include "pipe/p_format.h"
 
 
-struct pipe_blend_state;
 union lp_type;
 
 
@@ -130,16 +129,6 @@ lp_build_logicop(LLVMBuilderRef builder,
                  unsigned logicop_func,
                  LLVMValueRef src,
                  LLVMValueRef dst);
-
-
-LLVMValueRef
-lp_build_blend(LLVMBuilderRef builder,
-               const struct pipe_blend_state *blend,
-               union lp_type type,
-               LLVMValueRef src,
-               LLVMValueRef dst,
-               LLVMValueRef const_,
-               unsigned alpha_swizzle);
 
 
 #endif /* !LP_BLD_H */

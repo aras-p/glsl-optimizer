@@ -28,10 +28,7 @@
 
 /**
  * @file
- * Blend LLVM IR generation.
- *
- * This code is generic -- it should be able to cope both with floating point
- * and integer inputs in AOS form.
+ * Blend LLVM IR generation -- AOS form.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -39,11 +36,11 @@
 
 #include "pipe/p_state.h"
 
-#include "lp_bld.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_swizzle.h"
+#include "lp_bld_blend.h"
 
 
 /**
@@ -51,7 +48,7 @@
  * recomputing them. Also reusing the values allows us to do simplifications
  * that LLVM optimization passes wouldn't normally be able to do.
  */
-struct lp_build_blend_context
+struct lp_build_blend_aos_context
 {
    struct lp_build_context base;
    
@@ -72,7 +69,7 @@ struct lp_build_blend_context
 
 
 static LLVMValueRef
-lp_build_blend_factor_unswizzled(struct lp_build_blend_context *bld,
+lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
                                  unsigned factor,
                                  boolean alpha)
 {
@@ -174,7 +171,7 @@ lp_build_blend_factor_swizzle(unsigned factor)
 
 
 static LLVMValueRef
-lp_build_blend_swizzle(struct lp_build_blend_context *bld,
+lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
                        LLVMValueRef rgb, 
                        LLVMValueRef alpha, 
                        enum lp_build_blend_swizzle rgb_swizzle,
@@ -211,7 +208,7 @@ lp_build_blend_swizzle(struct lp_build_blend_context *bld,
  * @sa http://www.opengl.org/sdk/docs/man/xhtml/glBlendFuncSeparate.xml
  */
 static LLVMValueRef
-lp_build_blend_factor(struct lp_build_blend_context *bld,
+lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
                       LLVMValueRef factor1,
                       unsigned rgb_factor,
                       unsigned alpha_factor,
@@ -233,44 +230,75 @@ lp_build_blend_factor(struct lp_build_blend_context *bld,
 }
 
 
+boolean
+lp_build_blend_func_commutative(unsigned func)
+{
+   switch (func) {
+   case PIPE_BLEND_ADD:
+   case PIPE_BLEND_MIN:
+   case PIPE_BLEND_MAX:
+      return TRUE;
+   case PIPE_BLEND_SUBTRACT:
+   case PIPE_BLEND_REVERSE_SUBTRACT:
+      return FALSE;
+   default:
+      assert(0);
+      return TRUE;
+   }
+}
+
+
+boolean
+lp_build_blend_func_reverse(unsigned rgb_func, unsigned alpha_func)
+{
+   if(rgb_func == alpha_func)
+      return FALSE;
+   if(rgb_func == PIPE_BLEND_SUBTRACT && alpha_func == PIPE_BLEND_REVERSE_SUBTRACT)
+      return TRUE;
+   if(rgb_func == PIPE_BLEND_REVERSE_SUBTRACT && alpha_func == PIPE_BLEND_SUBTRACT)
+      return TRUE;
+   return FALSE;
+}
+
+
 /**
  * @sa http://www.opengl.org/sdk/docs/man/xhtml/glBlendEquationSeparate.xml
  */
-static LLVMValueRef
-lp_build_blend_func(struct lp_build_blend_context *bld,
+LLVMValueRef
+lp_build_blend_func(struct lp_build_context *bld,
                     unsigned func,
                     LLVMValueRef term1, 
                     LLVMValueRef term2)
 {
    switch (func) {
    case PIPE_BLEND_ADD:
-      return lp_build_add(&bld->base, term1, term2);
+      return lp_build_add(bld, term1, term2);
       break;
    case PIPE_BLEND_SUBTRACT:
-      return lp_build_sub(&bld->base, term1, term2);
+      return lp_build_sub(bld, term1, term2);
    case PIPE_BLEND_REVERSE_SUBTRACT:
-      return lp_build_sub(&bld->base, term2, term1);
+      return lp_build_sub(bld, term2, term1);
    case PIPE_BLEND_MIN:
-      return lp_build_min(&bld->base, term1, term2);
+      return lp_build_min(bld, term1, term2);
    case PIPE_BLEND_MAX:
-      return lp_build_max(&bld->base, term1, term2);
+      return lp_build_max(bld, term1, term2);
    default:
       assert(0);
-      return bld->base.zero;
+      return bld->zero;
    }
 }
 
 
 LLVMValueRef
-lp_build_blend(LLVMBuilderRef builder,
-               const struct pipe_blend_state *blend,
-               union lp_type type,
-               LLVMValueRef src,
-               LLVMValueRef dst,
-               LLVMValueRef const_,
-               unsigned alpha_swizzle)
+lp_build_blend_aos(LLVMBuilderRef builder,
+                   const struct pipe_blend_state *blend,
+                   union lp_type type,
+                   LLVMValueRef src,
+                   LLVMValueRef dst,
+                   LLVMValueRef const_,
+                   unsigned alpha_swizzle)
 {
-   struct lp_build_blend_context bld;
+   struct lp_build_blend_aos_context bld;
    LLVMValueRef src_term;
    LLVMValueRef dst_term;
 
@@ -284,8 +312,8 @@ lp_build_blend(LLVMBuilderRef builder,
    bld.dst = dst;
    bld.const_ = const_;
 
-   /* TODO: There are still a few optimization oportunities here. For certain
-    * combinations it is possible to reorder the operations and therefor saving
+   /* TODO: There are still a few optimization opportunities here. For certain
+    * combinations it is possible to reorder the operations and therefore saving
     * some instructions. */
 
    src_term = lp_build_blend_factor(&bld, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle);
@@ -297,7 +325,7 @@ lp_build_blend(LLVMBuilderRef builder,
 #endif
 
    if(blend->rgb_func == blend->alpha_func) {
-      return lp_build_blend_func(&bld, blend->rgb_func, src_term, dst_term);
+      return lp_build_blend_func(&bld.base, blend->rgb_func, src_term, dst_term);
    }
    else {
       /* Seperate RGB / A functions */
@@ -305,8 +333,8 @@ lp_build_blend(LLVMBuilderRef builder,
       LLVMValueRef rgb;
       LLVMValueRef alpha;
 
-      rgb   = lp_build_blend_func(&bld, blend->rgb_func,   src_term, dst_term);
-      alpha = lp_build_blend_func(&bld, blend->alpha_func, src_term, dst_term);
+      rgb   = lp_build_blend_func(&bld.base, blend->rgb_func,   src_term, dst_term);
+      alpha = lp_build_blend_func(&bld.base, blend->alpha_func, src_term, dst_term);
 
       return lp_build_blend_swizzle(&bld, rgb, alpha, LP_BUILD_BLEND_SWIZZLE_RGBA, alpha_swizzle);
    }
