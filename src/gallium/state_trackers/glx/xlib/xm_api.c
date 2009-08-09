@@ -742,7 +742,7 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
-   struct pipe_screen *screen;
+   static struct pipe_screen *screen = NULL;
    struct pipe_context *pipe;
    XMesaContext c;
    GLcontext *mesaCtx;
@@ -750,6 +750,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    if (firstTime) {
       pipe_mutex_init(_xmesa_lock);
+      screen = driver.create_pipe_screen();
       firstTime = GL_FALSE;
    }
 
@@ -765,9 +766,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_read_buffer = NULL;
 
-   /* XXX: create once per Xlib Display.
-    */
-   screen = driver.create_pipe_screen();
    if (screen == NULL)
       goto fail;
 
@@ -800,9 +798,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       st_destroy_context(c->st);
    else if (pipe)
       pipe->destroy(pipe);
-
-   if (screen)
-      screen->destroy( screen );
 
    FREE(c);
    return NULL;
