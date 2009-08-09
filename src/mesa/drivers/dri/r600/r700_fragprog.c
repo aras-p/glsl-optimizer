@@ -55,6 +55,12 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 //Input mapping : mesa_fp->Base.InputsRead set the flag, set in 
 	//The flags parsed in parse_attrib_binding. FRAG_ATTRIB_COLx, FRAG_ATTRIB_TEXx, ...
 	//MUST match order in Map_Vertex_Output
+	unBit = 1 << FRAG_ATTRIB_WPOS;
+	if(mesa_fp->Base.InputsRead & unBit)
+	{
+		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS] = pAsm->number_used_registers++;
+	}
+
 	unBit = 1 << FRAG_ATTRIB_COL0;
 	if(mesa_fp->Base.InputsRead & unBit)
 	{
@@ -337,6 +343,14 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
     }
 
+    /* PS uses fragment.position */
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
+    {
+	SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+	SetField(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
+	SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);	
+    }
+
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;
 
@@ -367,6 +381,19 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     }
 
     // emit ps input map
+    unBit = 1 << FRAG_ATTRIB_WPOS;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
     unBit = 1 << FRAG_ATTRIB_COL0;
     if(mesa_fp->Base.InputsRead & unBit)
     {
