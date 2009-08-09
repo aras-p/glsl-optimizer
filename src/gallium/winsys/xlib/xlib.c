@@ -45,6 +45,7 @@ enum mode {
    MODE_TRACE,
    MODE_BRW,
    MODE_CELL,
+   MODE_LLVMPIPE,
    MODE_SOFTPIPE
 };
 
@@ -62,7 +63,11 @@ static enum mode get_mode()
       return MODE_CELL;
 #endif
 
+#if defined(GALLIUM_LLVMPIPE)
+   return MODE_LLVMPIPE;
+#else
    return MODE_SOFTPIPE;
+#endif
 }
 
 static void _init( void ) __attribute__((constructor));
@@ -87,6 +92,10 @@ static void _init( void )
       xmesa_set_driver( &xlib_cell_driver );
 #endif
       break;
+   case MODE_LLVMPIPE:
+#if defined(GALLIUM_LLVMPIPE)
+      xmesa_set_driver( &xlib_llvmpipe_driver );
+#endif
    case MODE_SOFTPIPE:
 #if defined(GALLIUM_SOFTPIPE)
       xmesa_set_driver( &xlib_softpipe_driver );
