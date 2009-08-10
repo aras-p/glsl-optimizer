@@ -105,6 +105,7 @@ struct save_state
    GLenum MatrixMode;
    GLfloat ModelviewMatrix[16];
    GLfloat ProjectionMatrix[16];
+   GLfloat TextureMatrix[16];
    GLbitfield ClipPlanesEnabled;
 
    /** META_TEXTURE */
@@ -363,12 +364,19 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    }
 
    if (state & META_TRANSFORM) {
+      GLuint activeTexture = ctx->Texture.CurrentUnit;
       _mesa_memcpy(save->ModelviewMatrix, ctx->ModelviewMatrixStack.Top->m,
                    16 * sizeof(GLfloat));
       _mesa_memcpy(save->ProjectionMatrix, ctx->ProjectionMatrixStack.Top->m,
                    16 * sizeof(GLfloat));
+      _mesa_memcpy(save->TextureMatrix, ctx->TextureMatrixStack[0].Top->m,
+                   16 * sizeof(GLfloat));
       save->MatrixMode = ctx->Transform.MatrixMode;
       /* set 1:1 vertex:pixel coordinate transform */
+      _mesa_ActiveTextureARB(GL_TEXTURE0);
+      _mesa_MatrixMode(GL_TEXTURE);
+      _mesa_LoadIdentity();
+      _mesa_ActiveTextureARB(GL_TEXTURE0 + activeTexture);
       _mesa_MatrixMode(GL_MODELVIEW);
       _mesa_LoadIdentity();
       _mesa_MatrixMode(GL_PROJECTION);
@@ -569,11 +577,20 @@ _mesa_meta_end(GLcontext *ctx)
    }
 
    if (state & META_TRANSFORM) {
+      GLuint activeTexture = ctx->Texture.CurrentUnit;
+      _mesa_ActiveTextureARB(GL_TEXTURE0);
+      _mesa_MatrixMode(GL_TEXTURE);
+      _mesa_LoadMatrixf(save->TextureMatrix);
+      _mesa_ActiveTextureARB(GL_TEXTURE0 + activeTexture);
+
       _mesa_MatrixMode(GL_MODELVIEW);
       _mesa_LoadMatrixf(save->ModelviewMatrix);
+
       _mesa_MatrixMode(GL_PROJECTION);
       _mesa_LoadMatrixf(save->ProjectionMatrix);
+
       _mesa_MatrixMode(save->MatrixMode);
+
       save->ClipPlanesEnabled = ctx->Transform.ClipPlanesEnabled;
       if (save->ClipPlanesEnabled) {
          GLuint i;
@@ -890,8 +907,10 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
     */
    _mesa_meta_begin(ctx, (META_RASTERIZATION |
                           META_SHADER |
+                          META_TEXTURE |
                           META_TRANSFORM |
-                          META_VERTEX));
+                          META_VERTEX |
+                          META_VIEWPORT));
 
    if (copypix->TexObj == 0) {
       /* one-time setup */
