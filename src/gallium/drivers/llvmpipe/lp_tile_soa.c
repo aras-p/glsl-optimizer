@@ -38,17 +38,11 @@
 #include "util/u_memory.h"
 #include "util/u_rect.h"
 #include "util/u_tile.h"
+#include "lp_tile_cache.h"
 #include "lp_tile_soa.h"
 
 
 #define PIXEL(_p, _x, _y, _c) ((_p)[(_c)*TILE_SIZE*TILE_SIZE + (_y)*TILE_SIZE + (_x)])
-
-
-/** Convert short in [-32768,32767] to GLfloat in [-1.0,1.0] */
-#define SHORT_TO_FLOAT(S)   ((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
-
-#define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
-   us = ( (short) ( CLAMP((f), -1.0, 1.0) * 32767.0F) )
 
 
 
@@ -57,17 +51,17 @@
 static void
 a8r8g8b8_get_tile_rgba(const unsigned *src,
                        unsigned w, unsigned h,
-                       float *p)
+                       uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = ubyte_to_float((pixel >> 16) & 0xff);
-         PIXEL(p, j, i, 1) = ubyte_to_float((pixel >>  8) & 0xff);
-         PIXEL(p, j, i, 2) = ubyte_to_float((pixel >>  0) & 0xff);
-         PIXEL(p, j, i, 3) = ubyte_to_float((pixel >> 24) & 0xff);
+         PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
+         PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
+         PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
+         PIXEL(p, j, i, 3) = (pixel >> 24) & 0xff;
       }
    }
 }
@@ -76,17 +70,17 @@ a8r8g8b8_get_tile_rgba(const unsigned *src,
 static void
 a8r8g8b8_put_tile_rgba(unsigned *dst,
                        unsigned w, unsigned h,
-                       const float *p)
+                       const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         g = float_to_ubyte(PIXEL(p, j, i, 1));
-         b = float_to_ubyte(PIXEL(p, j, i, 2));
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         r = PIXEL(p, j, i, 0);
+         g = PIXEL(p, j, i, 1);
+         b = PIXEL(p, j, i, 2);
+         a = PIXEL(p, j, i, 3);
          *dst++ = (a << 24) | (r << 16) | (g << 8) | b;
       }
    }
@@ -98,17 +92,17 @@ a8r8g8b8_put_tile_rgba(unsigned *dst,
 static void
 x8r8g8b8_get_tile_rgba(const unsigned *src,
                        unsigned w, unsigned h,
-                       float *p)
+                       uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = ubyte_to_float((pixel >> 16) & 0xff);
-         PIXEL(p, j, i, 1) = ubyte_to_float((pixel >>  8) & 0xff);
-         PIXEL(p, j, i, 2) = ubyte_to_float((pixel >>  0) & 0xff);
-         PIXEL(p, j, i, 3) = ubyte_to_float(0xff);
+         PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
+         PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
+         PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
+         PIXEL(p, j, i, 3) = 0xff;
       }
    }
 }
@@ -117,16 +111,16 @@ x8r8g8b8_get_tile_rgba(const unsigned *src,
 static void
 x8r8g8b8_put_tile_rgba(unsigned *dst,
                        unsigned w, unsigned h,
-                       const float *p)
+                       const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         g = float_to_ubyte(PIXEL(p, j, i, 1));
-         b = float_to_ubyte(PIXEL(p, j, i, 2));
+         r = PIXEL(p, j, i, 0);
+         g = PIXEL(p, j, i, 1);
+         b = PIXEL(p, j, i, 2);
          *dst++ = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
    }
@@ -138,17 +132,17 @@ x8r8g8b8_put_tile_rgba(unsigned *dst,
 static void
 b8g8r8a8_get_tile_rgba(const unsigned *src,
                        unsigned w, unsigned h,
-                       float *p)
+                       uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = ubyte_to_float((pixel >>  8) & 0xff);
-         PIXEL(p, j, i, 1) = ubyte_to_float((pixel >> 16) & 0xff);
-         PIXEL(p, j, i, 2) = ubyte_to_float((pixel >> 24) & 0xff);
-         PIXEL(p, j, i, 3) = ubyte_to_float((pixel >>  0) & 0xff);
+         PIXEL(p, j, i, 0) = (pixel >>  8) & 0xff;
+         PIXEL(p, j, i, 1) = (pixel >> 16) & 0xff;
+         PIXEL(p, j, i, 2) = (pixel >> 24) & 0xff;
+         PIXEL(p, j, i, 3) = (pixel >>  0) & 0xff;
       }
    }
 }
@@ -157,17 +151,17 @@ b8g8r8a8_get_tile_rgba(const unsigned *src,
 static void
 b8g8r8a8_put_tile_rgba(unsigned *dst,
                        unsigned w, unsigned h,
-                       const float *p)
+                       const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         g = float_to_ubyte(PIXEL(p, j, i, 1));
-         b = float_to_ubyte(PIXEL(p, j, i, 2));
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         r = PIXEL(p, j, i, 0);
+         g = PIXEL(p, j, i, 1);
+         b = PIXEL(p, j, i, 2);
+         a = PIXEL(p, j, i, 3);
          *dst++ = (b << 24) | (g << 16) | (r << 8) | a;
       }
    }
@@ -179,17 +173,17 @@ b8g8r8a8_put_tile_rgba(unsigned *dst,
 static void
 a1r5g5b5_get_tile_rgba(const ushort *src,
                        unsigned w, unsigned h,
-                       float *p)
+                       uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >> 10) & 0x1f) * (1.0f / 31.0f);
-         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x1f) * (1.0f / 31.0f);
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
-         PIXEL(p, j, i, 3) = ((pixel >> 15)       ) * 1.0f;
+         PIXEL(p, j, i, 0) = ((pixel >> 10) & 0x1f) * 255 / 31;
+         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x1f) * 255 / 31;
+         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
+         PIXEL(p, j, i, 3) = ((pixel >> 15)       ) * 255;
       }
    }
 }
@@ -198,17 +192,17 @@ a1r5g5b5_get_tile_rgba(const ushort *src,
 static void
 a1r5g5b5_put_tile_rgba(ushort *dst,
                        unsigned w, unsigned h,
-                       const float *p)
+                       const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         g = float_to_ubyte(PIXEL(p, j, i, 1));
-         b = float_to_ubyte(PIXEL(p, j, i, 2));
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         r = PIXEL(p, j, i, 0);
+         g = PIXEL(p, j, i, 1);
+         b = PIXEL(p, j, i, 2);
+         a = PIXEL(p, j, i, 3);
          r = r >> 3;  /* 5 bits */
          g = g >> 3;  /* 5 bits */
          b = b >> 3;  /* 5 bits */
@@ -224,17 +218,17 @@ a1r5g5b5_put_tile_rgba(ushort *dst,
 static void
 a4r4g4b4_get_tile_rgba(const ushort *src,
                        unsigned w, unsigned h,
-                       float *p)
+                       uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >>  8) & 0xf) * (1.0f / 15.0f);
-         PIXEL(p, j, i, 1) = ((pixel >>  4) & 0xf) * (1.0f / 15.0f);
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0xf) * (1.0f / 15.0f);
-         PIXEL(p, j, i, 3) = ((pixel >> 12)      ) * (1.0f / 15.0f);
+         PIXEL(p, j, i, 0) = ((pixel >>  8) & 0xf) * 255 / 15;
+         PIXEL(p, j, i, 1) = ((pixel >>  4) & 0xf) * 255 / 15;
+         PIXEL(p, j, i, 2) = ((pixel      ) & 0xf) * 255 / 15;
+         PIXEL(p, j, i, 3) = ((pixel >> 12)      ) * 255 / 15;
       }
    }
 }
@@ -243,17 +237,17 @@ a4r4g4b4_get_tile_rgba(const ushort *src,
 static void
 a4r4g4b4_put_tile_rgba(ushort *dst,
                        unsigned w, unsigned h,
-                       const float *p)
+                       const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         g = float_to_ubyte(PIXEL(p, j, i, 1));
-         b = float_to_ubyte(PIXEL(p, j, i, 2));
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         r = PIXEL(p, j, i, 0);
+         g = PIXEL(p, j, i, 1);
+         b = PIXEL(p, j, i, 2);
+         a = PIXEL(p, j, i, 3);
          r >>= 4;
          g >>= 4;
          b >>= 4;
@@ -269,17 +263,17 @@ a4r4g4b4_put_tile_rgba(ushort *dst,
 static void
 r5g6b5_get_tile_rgba(const ushort *src,
                      unsigned w, unsigned h,
-                     float *p)
+                     uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >> 11) & 0x1f) * (1.0f / 31.0f);
-         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x3f) * (1.0f / 63.0f);
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
-         PIXEL(p, j, i, 3) = 1.0f;
+         PIXEL(p, j, i, 0) = ((pixel >> 11) & 0x1f) * 255 / 31;
+         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x3f) * 255 / 63;
+         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
+         PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -288,15 +282,15 @@ r5g6b5_get_tile_rgba(const ushort *src,
 static void
 r5g6b5_put_tile_rgba(ushort *dst,
                      unsigned w, unsigned h,
-                     const float *p)
+                     const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         uint r = (uint) (CLAMP(PIXEL(p, j, i, 0), 0.0, 1.0) * 31.0);
-         uint g = (uint) (CLAMP(PIXEL(p, j, i, 1), 0.0, 1.0) * 63.0);
-         uint b = (uint) (CLAMP(PIXEL(p, j, i, 2), 0.0, 1.0) * 31.0);
+         uint r = (uint) PIXEL(p, j, i, 0) * 31 / 255;
+         uint g = (uint) PIXEL(p, j, i, 1) * 63 / 255;
+         uint b = (uint) PIXEL(p, j, i, 2) * 31 / 255;
          *dst++ = (r << 11) | (g << 5) | (b);
       }
    }
@@ -312,7 +306,7 @@ r5g6b5_put_tile_rgba(ushort *dst,
 static void
 z16_get_tile_rgba(const ushort *src,
                   unsigned w, unsigned h,
-                  float *p)
+                  uint8_t *p)
 {
    const float scale = 1.0f / 65535.0f;
    unsigned i, j;
@@ -335,7 +329,7 @@ z16_get_tile_rgba(const ushort *src,
 static void
 l8_get_tile_rgba(const ubyte *src,
                  unsigned w, unsigned h,
-                 float *p)
+                 uint8_t *p)
 {
    unsigned i, j;
 
@@ -343,8 +337,8 @@ l8_get_tile_rgba(const ubyte *src,
       for (j = 0; j < w; j++, src++) {
          PIXEL(p, j, i, 0) =
          PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = ubyte_to_float(*src);
-         PIXEL(p, j, i, 3) = 1.0;
+         PIXEL(p, j, i, 2) = *src;
+         PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -353,14 +347,14 @@ l8_get_tile_rgba(const ubyte *src,
 static void
 l8_put_tile_rgba(ubyte *dst,
                  unsigned w, unsigned h,
-                 const float *p)
+                 const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
+         r = PIXEL(p, j, i, 0);
          *dst++ = (ubyte) r;
       }
    }
@@ -373,7 +367,7 @@ l8_put_tile_rgba(ubyte *dst,
 static void
 a8_get_tile_rgba(const ubyte *src,
                  unsigned w, unsigned h,
-                 float *p)
+                 uint8_t *p)
 {
    unsigned i, j;
 
@@ -381,8 +375,8 @@ a8_get_tile_rgba(const ubyte *src,
       for (j = 0; j < w; j++, src++) {
          PIXEL(p, j, i, 0) =
          PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = 0.0;
-         PIXEL(p, j, i, 3) = ubyte_to_float(*src);
+         PIXEL(p, j, i, 2) = 0;
+         PIXEL(p, j, i, 3) = *src;
       }
    }
 }
@@ -391,14 +385,14 @@ a8_get_tile_rgba(const ubyte *src,
 static void
 a8_put_tile_rgba(ubyte *dst,
                  unsigned w, unsigned h,
-                 const float *p)
+                 const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned a;
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         a = PIXEL(p, j, i, 3);
          *dst++ = (ubyte) a;
       }
    }
@@ -411,16 +405,16 @@ a8_put_tile_rgba(ubyte *dst,
 static void
 r16_get_tile_rgba(const short *src,
                   unsigned w, unsigned h,
-                  float *p)
+                  uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src++) {
-         PIXEL(p, j, i, 0) = SHORT_TO_FLOAT(src[0]);
+         PIXEL(p, j, i, 0) = MAX2(src[0] >> 7, 0);
          PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = 0.0;
-         PIXEL(p, j, i, 3) = 1.0;
+         PIXEL(p, j, i, 2) = 0;
+         PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -429,13 +423,13 @@ r16_get_tile_rgba(const short *src,
 static void
 r16_put_tile_rgba(short *dst,
                   unsigned w, unsigned h,
-                  const float *p)
+                  const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, dst++) {
-         UNCLAMPED_FLOAT_TO_SHORT(dst[0], PIXEL(p, j, i, 0));
+         dst[0] = PIXEL(p, j, i, 0) << 7;
       }
    }
 }
@@ -446,16 +440,16 @@ r16_put_tile_rgba(short *dst,
 static void
 r16g16b16a16_get_tile_rgba(const short *src,
                            unsigned w, unsigned h,
-                           float *p)
+                           uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src += 4) {
-         PIXEL(p, j, i, 0) = SHORT_TO_FLOAT(src[0]);
-         PIXEL(p, j, i, 1) = SHORT_TO_FLOAT(src[1]);
-         PIXEL(p, j, i, 2) = SHORT_TO_FLOAT(src[2]);
-         PIXEL(p, j, i, 3) = SHORT_TO_FLOAT(src[3]);
+         PIXEL(p, j, i, 0) = src[0] >> 8;
+         PIXEL(p, j, i, 1) = src[1] >> 8;
+         PIXEL(p, j, i, 2) = src[2] >> 8;
+         PIXEL(p, j, i, 3) = src[3] >> 8;
       }
    }
 }
@@ -464,16 +458,16 @@ r16g16b16a16_get_tile_rgba(const short *src,
 static void
 r16g16b16a16_put_tile_rgba(short *dst,
                            unsigned w, unsigned h,
-                           const float *p)
+                           const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, dst += 4) {
-         UNCLAMPED_FLOAT_TO_SHORT(dst[0], PIXEL(p, j, i, 0));
-         UNCLAMPED_FLOAT_TO_SHORT(dst[1], PIXEL(p, j, i, 1));
-         UNCLAMPED_FLOAT_TO_SHORT(dst[2], PIXEL(p, j, i, 2));
-         UNCLAMPED_FLOAT_TO_SHORT(dst[3], PIXEL(p, j, i, 3));
+         dst[0] = PIXEL(p, j, i, 0) << 8;
+         dst[1] = PIXEL(p, j, i, 1) << 8;
+         dst[2] = PIXEL(p, j, i, 2) << 8;
+         dst[3] = PIXEL(p, j, i, 3) << 8;
       }
    }
 }
@@ -485,7 +479,7 @@ r16g16b16a16_put_tile_rgba(short *dst,
 static void
 i8_get_tile_rgba(const ubyte *src,
                  unsigned w, unsigned h,
-                 float *p)
+                 uint8_t *p)
 {
    unsigned i, j;
 
@@ -494,7 +488,7 @@ i8_get_tile_rgba(const ubyte *src,
          PIXEL(p, j, i, 0) =
          PIXEL(p, j, i, 1) =
          PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = ubyte_to_float(*src);
+         PIXEL(p, j, i, 3) = *src;
       }
    }
 }
@@ -503,14 +497,14 @@ i8_get_tile_rgba(const ubyte *src,
 static void
 i8_put_tile_rgba(ubyte *dst,
                  unsigned w, unsigned h,
-                 const float *p)
+                 const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
+         r = PIXEL(p, j, i, 0);
          *dst++ = (ubyte) r;
       }
    }
@@ -522,7 +516,7 @@ i8_put_tile_rgba(ubyte *dst,
 static void
 a8l8_get_tile_rgba(const ushort *src,
                    unsigned w, unsigned h,
-                   float *p)
+                   uint8_t *p)
 {
    unsigned i, j;
 
@@ -531,8 +525,8 @@ a8l8_get_tile_rgba(const ushort *src,
          ushort ra = *src++;
          PIXEL(p, j, i, 0) =
          PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = ubyte_to_float(ra & 0xff);
-         PIXEL(p, j, i, 3) = ubyte_to_float(ra >> 8);
+         PIXEL(p, j, i, 2) = ra & 0xff;
+         PIXEL(p, j, i, 3) = ra >> 8;
       }
    }
 }
@@ -541,15 +535,15 @@ a8l8_get_tile_rgba(const ushort *src,
 static void
 a8l8_put_tile_rgba(ushort *dst,
                    unsigned w, unsigned h,
-                   const float *p)
+                   const uint8_t *p)
 {
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, a;
-         r = float_to_ubyte(PIXEL(p, j, i, 0));
-         a = float_to_ubyte(PIXEL(p, j, i, 3));
+         r = PIXEL(p, j, i, 0);
+         a = PIXEL(p, j, i, 3);
          *dst++ = (a << 8) | r;
       }
    }
@@ -566,7 +560,7 @@ a8l8_put_tile_rgba(ushort *dst,
 static void
 z32_get_tile_rgba(const unsigned *src,
                   unsigned w, unsigned h,
-                  float *p)
+                  uint8_t *p)
 {
    const double scale = 1.0 / (double) 0xffffffff;
    unsigned i, j;
@@ -590,7 +584,7 @@ z32_get_tile_rgba(const unsigned *src,
 static void
 s8z24_get_tile_rgba(const unsigned *src,
                     unsigned w, unsigned h,
-                    float *p)
+                    uint8_t *p)
 {
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -614,7 +608,7 @@ s8z24_get_tile_rgba(const unsigned *src,
 static void
 z24s8_get_tile_rgba(const unsigned *src,
                     unsigned w, unsigned h,
-                    float *p)
+                    uint8_t *p)
 {
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -638,7 +632,7 @@ z24s8_get_tile_rgba(const unsigned *src,
 static void
 z32f_get_tile_rgba(const float *src,
                    unsigned w, unsigned h,
-                   float *p)
+                   uint8_t *p)
 {
    unsigned i, j;
 
@@ -661,10 +655,9 @@ z32f_get_tile_rgba(const float *src,
 static void
 ycbcr_get_tile_rgba(const ushort *src,
                     unsigned w, unsigned h,
-                    float *p,
+                    uint8_t *p,
                     boolean rev)
 {
-   const float scale = 1.0f / 255.0f;
    unsigned i, j;
 
    for (i = 0; i < h; i++) {
@@ -690,19 +683,19 @@ ycbcr_get_tile_rgba(const ushort *src,
          r = 1.164f * (y0-16) + 1.596f * (cr-128);
          g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         PIXEL(p, j, i, 0) = r * scale;
-         PIXEL(p, j, i, 1) = g * scale;
-         PIXEL(p, j, i, 2) = b * scale;
-         PIXEL(p, j, i, 3) = 1.0f;
+         PIXEL(p, j, i, 0) = r;
+         PIXEL(p, j, i, 1) = g;
+         PIXEL(p, j, i, 2) = b;
+         PIXEL(p, j, i, 3) = 255;
 
          /* odd pixel: use y1,cr,cb */
          r = 1.164f * (y1-16) + 1.596f * (cr-128);
          g = 1.164f * (y1-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y1-16) + 2.018f * (cb-128);
-         PIXEL(p, j + 1, i, 0) = r * scale;
-         PIXEL(p, j + 1, i, 1) = g * scale;
-         PIXEL(p, j + 1, i, 2) = b * scale;
-         PIXEL(p, j + 1, i, 3) = 1.0f;
+         PIXEL(p, j + 1, i, 0) = r;
+         PIXEL(p, j + 1, i, 1) = g;
+         PIXEL(p, j + 1, i, 2) = b;
+         PIXEL(p, j + 1, i, 3) = 255;
       }
       /* do the last texel */
       if (w & 1) {
@@ -725,10 +718,10 @@ ycbcr_get_tile_rgba(const ushort *src,
          r = 1.164f * (y0-16) + 1.596f * (cr-128);
          g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         PIXEL(p, j, i, 0) = r * scale;
-         PIXEL(p, j, i, 1) = g * scale;
-         PIXEL(p, j, i, 2) = b * scale;
-         PIXEL(p, j, i, 3) = 1.0f;
+         PIXEL(p, j, i, 0) = r;
+         PIXEL(p, j, i, 1) = g;
+         PIXEL(p, j, i, 2) = b;
+         PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -737,7 +730,7 @@ ycbcr_get_tile_rgba(const ushort *src,
 static void
 fake_get_tile_rgba(const ushort *src,
                    unsigned w, unsigned h,
-                   float *p)
+                   uint8_t *p)
 {
    unsigned i, j;
 
@@ -746,7 +739,7 @@ fake_get_tile_rgba(const ushort *src,
          PIXEL(p, j, i, 0) =
          PIXEL(p, j, i, 1) =
          PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = (i ^ j) & 1 ? 1.0f : 0.0f;
+         PIXEL(p, j, i, 3) = (i ^ j) & 1 ? 255 : 0;
       }
    }
 }
@@ -756,7 +749,7 @@ static void
 lp_tile_raw_to_rgba_soa(enum pipe_format format,
                         void *src,
                         uint w, uint h,
-                        float *p)
+                        uint8_t *p)
 {
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -828,7 +821,7 @@ lp_tile_raw_to_rgba_soa(enum pipe_format format,
 void
 lp_get_tile_rgba_soa(struct pipe_transfer *pt,
                      uint x, uint y,
-                     float *p)
+                     uint8_t *p)
 {
    uint w = TILE_SIZE, h = TILE_SIZE;
    void *packed;
@@ -855,7 +848,7 @@ lp_get_tile_rgba_soa(struct pipe_transfer *pt,
 void
 lp_put_tile_rgba_soa(struct pipe_transfer *pt,
                      uint x, uint y,
-                     const float *p)
+                     const uint8_t *p)
 {
    uint w = TILE_SIZE, h = TILE_SIZE;
    void *packed;

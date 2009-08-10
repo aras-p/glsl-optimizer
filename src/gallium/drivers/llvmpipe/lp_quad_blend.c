@@ -46,29 +46,14 @@
 
 static void
 logicop_quad(struct quad_stage *qs, 
-             float (*quadColor)[4],
-             float (*dest)[4])
+             uint8_t src[][16],
+             uint8_t dst[][16])
 {
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   ubyte src[4][4], dst[4][4], res[4][4];
-   uint *src4 = (uint *) src;
-   uint *dst4 = (uint *) dst;
-   uint *res4 = (uint *) res;
+   uint32_t *src4 = (uint32_t *) src;
+   uint32_t *dst4 = (uint32_t *) dst;
+   uint32_t *res4 = (uint32_t *) src;
    uint j;
-
-
-   /* convert to ubyte */
-   for (j = 0; j < 4; j++) { /* loop over R,G,B,A channels */
-      dst[j][0] = float_to_ubyte(dest[j][0]); /* P0 */
-      dst[j][1] = float_to_ubyte(dest[j][1]); /* P1 */
-      dst[j][2] = float_to_ubyte(dest[j][2]); /* P2 */
-      dst[j][3] = float_to_ubyte(dest[j][3]); /* P3 */
-
-      src[j][0] = float_to_ubyte(quadColor[j][0]); /* P0 */
-      src[j][1] = float_to_ubyte(quadColor[j][1]); /* P1 */
-      src[j][2] = float_to_ubyte(quadColor[j][2]); /* P2 */
-      src[j][3] = float_to_ubyte(quadColor[j][3]); /* P3 */
-   }
 
    switch (llvmpipe->blend->base.logicop_func) {
    case PIPE_LOGICOP_CLEAR:
@@ -138,13 +123,6 @@ logicop_quad(struct quad_stage *qs,
    default:
       assert(0);
    }
-
-   for (j = 0; j < 4; j++) {
-      quadColor[j][0] = ubyte_to_float(res[j][0]);
-      quadColor[j][1] = ubyte_to_float(res[j][1]);
-      quadColor[j][2] = ubyte_to_float(res[j][2]);
-      quadColor[j][3] = ubyte_to_float(res[j][3]);
-   }
 }
 
 
@@ -161,53 +139,62 @@ blend_run(struct quad_stage *qs,
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
    struct lp_blend_state *blend = llvmpipe->blend;
    unsigned cbuf;
-   uint q, i, j;
+   uint q, i, j, k;
 
    for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) 
    {
-      float ALIGN16_ATTRIB dest[4][QUAD_SIZE];
+      uint8_t ALIGN16_ATTRIB src[4][16];
+      uint8_t ALIGN16_ATTRIB dst[4][16];
       struct llvmpipe_cached_tile *tile
          = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf],
                               quads[0]->input.x0, 
                               quads[0]->input.y0);
 
-      for (q = 0; q < nr; q++) {
-         struct quad_header *quad = quads[q];
-         float (*quadColor)[4] = quad->output.color[cbuf];
-         const int itx = (quad->input.x0 & (TILE_SIZE-1));
-         const int ity = (quad->input.y0 & (TILE_SIZE-1));
+      for (q = 0; q < nr; q += 4) {
+         for (k = 0; k < 4 && q + k < nr; ++k) {
+            struct quad_header *quad = quads[q + k];
+            const int itx = (quad->input.x0 & (TILE_SIZE-1));
+            const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
-         /* get/swizzle dest colors 
-          */
-         for (j = 0; j < QUAD_SIZE; j++) {
-            int x = itx + (j & 1);
-            int y = ity + (j >> 1);
-            for (i = 0; i < 4; i++) {
-               dest[i][j] = tile->data.color[i][y][x];
+            /* get/swizzle src/dest colors
+             */
+            for (j = 0; j < QUAD_SIZE; j++) {
+               int x = itx + (j & 1);
+               int y = ity + (j >> 1);
+               for (i = 0; i < 4; i++) {
+                  src[i][4*k + j] = float_to_ubyte(quad->output.color[cbuf][i][j]);
+                  dst[i][4*k + j] = tile->data.color[i][y][x];
+               }
             }
          }
 
 
          if (blend->base.logicop_enable) {
-            logicop_quad( qs, quadColor, dest );
+            logicop_quad( qs, src, dst );
          }
          else {
             assert(blend->jit_function);
-            assert((((uintptr_t)quadColor) & 0xf) == 0);
-            assert((((uintptr_t)dest) & 0xf) == 0);
+            assert((((uintptr_t)src) & 0xf) == 0);
+            assert((((uintptr_t)dst) & 0xf) == 0);
             assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
             if(blend->jit_function)
-               blend->jit_function( quadColor, dest, llvmpipe->blend_color, quadColor );
+               blend->jit_function( src, dst, llvmpipe->blend_color, src );
          }
 
          /* Output color values
           */
-         for (j = 0; j < QUAD_SIZE; j++) {
-            if (quad->inout.mask & (1 << j)) {
-               int x = itx + (j & 1);
-               int y = ity + (j >> 1);
-               for (i = 0; i < 4; i++) { /* loop over color chans */
-                  tile->data.color[i][y][x] = quadColor[i][j];
+         for (k = 0; k < 4 && q + k < nr; ++k) {
+            struct quad_header *quad = quads[q + k];
+            const int itx = (quad->input.x0 & (TILE_SIZE-1));
+            const int ity = (quad->input.y0 & (TILE_SIZE-1));
+
+            for (j = 0; j < QUAD_SIZE; j++) {
+               if (quad->inout.mask & (1 << j)) {
+                  int x = itx + (j & 1);
+                  int y = ity + (j >> 1);
+                  for (i = 0; i < 4; i++) { /* loop over color chans */
+                     tile->data.color[i][y][x] = src[i][4*k + j];
+                  }
                }
             }
          }

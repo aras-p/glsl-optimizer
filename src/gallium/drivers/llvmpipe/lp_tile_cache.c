@@ -221,7 +221,7 @@ clear_tile_rgba(struct llvmpipe_cached_tile *tile,
       for (i = 0; i < 4; ++i)
          for (y = 0; y < TILE_SIZE; y++)
             for (x = 0; x < TILE_SIZE; x++)
-               tile->data.color[i][y][x] = clear_value[i];
+               tile->data.color[i][y][x] = float_to_ubyte(clear_value[i]);
    }
 }
 

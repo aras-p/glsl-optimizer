@@ -66,7 +66,7 @@ struct llvmpipe_cached_tile
    union {
 
       /** color in SOA format (rrrr, gggg, bbbb, aaaa) */
-      float color[4][TILE_SIZE][TILE_SIZE];
+      uint8_t color[4][TILE_SIZE][TILE_SIZE];
 
       uint color32[TILE_SIZE][TILE_SIZE];
       uint depth32[TILE_SIZE][TILE_SIZE];

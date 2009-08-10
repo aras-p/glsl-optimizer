@@ -30,11 +30,8 @@
 
 #include "pipe/p_compiler.h"
 
-#include "lp_tile_cache.h"
-
 
 struct pipe_transfer;
-
 
 
 #ifdef __cplusplus
@@ -45,12 +42,12 @@ extern "C" {
 void
 lp_get_tile_rgba_soa(struct pipe_transfer *pt,
                      uint x, uint y,
-                     float *p);
+                     uint8_t *p);
 
 void
 lp_put_tile_rgba_soa(struct pipe_transfer *pt,
                      uint x, uint y,
-                     const float *p);
+                     const uint8_t *p);
 
 
 #ifdef __cplusplus

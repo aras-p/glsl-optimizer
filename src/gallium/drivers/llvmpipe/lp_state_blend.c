@@ -32,6 +32,7 @@
  */
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "util/u_debug_dump.h"
 #include "lp_screen.h"
 #include "lp_context.h"
@@ -66,11 +67,11 @@ blend_generate(struct llvmpipe_screen *screen,
    unsigned i;
 
    type.value = 0;
-   type.floating = TRUE;
+   type.floating = FALSE;
    type.sign = FALSE;
    type.norm = TRUE;
-   type.width = 32;
-   type.length = 4;
+   type.width = 8;
+   type.length = 16;
 
    vec_type = lp_build_vec_type(type);
 
@@ -181,8 +182,8 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
    unsigned i, j;
 
    for (i = 0; i < 4; ++i)
-      for (j = 0; j < QUAD_SIZE; ++j)
-         llvmpipe->blend_color[i][j] = blend_color->color[i];
+      for (j = 0; j < 16; ++j)
+         llvmpipe->blend_color[i][j] = float_to_ubyte(blend_color->color[i]);
 
    llvmpipe->dirty |= LP_NEW_BLEND;
 }
