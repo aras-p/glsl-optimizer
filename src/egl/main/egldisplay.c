@@ -13,6 +13,7 @@
 #include "eglhash.h"
 #include "eglstring.h"
 #include "eglmutex.h"
+#include "egllog.h"
 
 
 static _EGL_DECLARE_MUTEX(_eglDisplayInitMutex);
@@ -29,7 +30,22 @@ _eglFiniDisplay(void)
 {
    _eglLockMutex(&_eglDisplayInitMutex);
    if (_eglDisplayHash) {
-      /* XXX TODO walk over table entries, deleting each */
+      EGLuint key = _eglHashFirstEntry(_eglDisplayHash);
+
+      while (key) {
+         _EGLDisplay *dpy = (_EGLDisplay *)
+            _eglHashLookup(_eglDisplayHash, key);
+         assert(dpy);
+
+         if (dpy->ContextList || dpy->SurfaceList)
+            _eglLog(_EGL_DEBUG, "Display %u is destroyed with resources", key);
+
+         _eglCleanupDisplay(dpy);
+         free(dpy);
+
+         key = _eglHashNextEntry(_eglDisplayHash, key);
+      }
+
       _eglDeleteHashTable(_eglDisplayHash);
       _eglDisplayHash = NULL;
       _eglDeleteHashTable(_eglSurfaceHash);
