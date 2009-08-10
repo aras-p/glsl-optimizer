@@ -38,6 +38,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 
 #include "i830_dri.h"
 
@@ -712,6 +713,8 @@ intelInitContext(struct intel_context *intel,
    _swrast_allow_pixel_fog(ctx, GL_FALSE);
    _swrast_allow_vertex_fog(ctx, GL_TRUE);
 
+   _mesa_meta_init(ctx);
+
    intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
 
@@ -814,6 +817,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       GLboolean release_texture_heaps;
 
       INTEL_FIREVERTICES(intel);
+
+      _mesa_meta_free(&intel->ctx);
 
       meta_destroy_metaops(&intel->meta);
 
