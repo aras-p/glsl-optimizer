@@ -9,6 +9,21 @@ Requirements
  - LLVM. On Debian based distributions do:
  
      aptitude install llvm-dev
+
+   There is a type in one of the llvm-dev 2.5 headers, that causes compilation
+   errors in the debug build:
+
+     --- /usr/include/llvm-c/Core.h.orig	2009-08-10 15:38:54.000000000 +0100
+     +++ /usr/include/llvm-c/Core.h	2009-08-10 15:38:25.000000000 +0100
+     @@ -831,7 +831,7 @@
+        template<typename T>
+        inline T **unwrap(LLVMValueRef *Vals, unsigned Length) {
+          #if DEBUG
+     -    for (LLVMValueRef *I = Vals, E = Vals + Length; I != E; ++I)
+     +    for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
+            cast<T>(*I);
+          #endif
+          return reinterpret_cast<T**>(Vals);
  
  - A x86 or amd64 processor with support for sse2, sse3, and sse4.1 SIMD
    instructions. This is necessary because we emit several SSE intrinsics for
