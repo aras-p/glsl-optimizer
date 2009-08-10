@@ -1,4 +1,3 @@
-
 /**
  * Functions related to EGLDisplay.
  */
@@ -13,6 +12,51 @@
 #include "eglglobals.h"
 #include "eglhash.h"
 #include "eglstring.h"
+#include "eglmutex.h"
+
+
+static _EGL_DECLARE_MUTEX(_eglDisplayInitMutex);
+static _EGLHashtable *_eglDisplayHash;
+/* TODO surface hash table should be per-display */
+static _EGLHashtable *_eglSurfaceHash;
+
+
+/**
+ * Finish display management.
+ */
+static void
+_eglFiniDisplay(void)
+{
+   _eglLockMutex(&_eglDisplayInitMutex);
+   if (_eglDisplayHash) {
+      /* XXX TODO walk over table entries, deleting each */
+      _eglDeleteHashTable(_eglDisplayHash);
+      _eglDisplayHash = NULL;
+      _eglDeleteHashTable(_eglSurfaceHash);
+      _eglSurfaceHash = NULL;
+   }
+   _eglUnlockMutex(&_eglDisplayInitMutex);
+}
+
+
+/* This can be avoided if hash table can be statically initialized */
+static INLINE void
+_eglInitDisplay(void)
+{
+   if (!_eglDisplayHash) {
+      _eglLockMutex(&_eglDisplayInitMutex);
+
+      /* check again after acquiring lock */
+      if (!_eglDisplayHash) {
+         _eglDisplayHash = _eglNewHashTable();
+         _eglSurfaceHash = _eglNewHashTable();
+
+         (void) _eglFiniDisplay;
+      }
+
+      _eglUnlockMutex(&_eglDisplayInitMutex);
+   }
+}
 
 
 /**
@@ -30,6 +74,9 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
 #if defined(_EGL_PLATFORM_X)
       dpy->Xdpy = (Display *) nativeDisplay;
 #endif
+
+      _eglInitDisplay();
+      dpy->SurfaceHash = _eglSurfaceHash;
 
       dpy->DriverName = _eglChooseDriver(dpy);
       if (!dpy->DriverName) {
@@ -49,10 +96,13 @@ EGLDisplay
 _eglLinkDisplay(_EGLDisplay *dpy)
 {
    EGLuint key;
-   key = _eglHashGenKey(_eglGlobal.Displays);
+
+   _eglInitDisplay();
+
+   key = _eglHashGenKey(_eglDisplayHash);
    assert(key);
    /* "link" the display to the hash table */
-   _eglHashInsert(_eglGlobal.Displays, key, dpy);
+   _eglHashInsert(_eglDisplayHash, key, dpy);
    dpy->Handle = (EGLDisplay) _eglUIntToPointer(key);
 
    return dpy->Handle;
@@ -67,7 +117,10 @@ void
 _eglUnlinkDisplay(_EGLDisplay *dpy)
 {
    EGLuint key = _eglPointerToUInt((void *) dpy->Handle);
-   _eglHashRemove(_eglGlobal.Displays, key);
+
+   _eglInitDisplay();
+
+   _eglHashRemove(_eglDisplayHash, key);
    dpy->Handle = EGL_NO_DISPLAY;
 }
 
@@ -84,7 +137,7 @@ _eglGetDisplayHandle(_EGLDisplay *display)
       return EGL_NO_DISPLAY;
 }
 
- 
+
 /**
  * Lookup a handle to find the linked display.
  * Return NULL if the handle has no corresponding linked display.
@@ -93,7 +146,10 @@ _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)
 {
    EGLuint key = _eglPointerToUInt((void *) dpy);
-   return (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
+
+   _eglInitDisplay();
+
+   return (_EGLDisplay *) _eglHashLookup(_eglDisplayHash, key);
 }
 
 
@@ -104,17 +160,20 @@ _eglLookupDisplay(EGLDisplay dpy)
 _EGLDisplay *
 _eglFindDisplay(NativeDisplayType nativeDisplay)
 {
-   EGLuint key = _eglHashFirstEntry(_eglGlobal.Displays);
+   EGLuint key;
+
+   _eglInitDisplay();
 
    /* Walk the hash table.  Should switch to list if it is a problem. */
+   key = _eglHashFirstEntry(_eglDisplayHash);
    while (key) {
       _EGLDisplay *dpy = (_EGLDisplay *)
-            _eglHashLookup(_eglGlobal.Displays, key);
+            _eglHashLookup(_eglDisplayHash, key);
       assert(dpy);
 
       if (dpy->NativeDisplay == nativeDisplay)
          return dpy;
-      key = _eglHashNextEntry(_eglGlobal.Displays, key);
+      key = _eglHashNextEntry(_eglDisplayHash, key);
    }
 
    return NULL;
@@ -254,9 +313,9 @@ _eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
    surf->Next = dpy->SurfaceList;
    dpy->SurfaceList = surf;
 
-   key = _eglHashGenKey(_eglGlobal.Surfaces);
+   key = _eglHashGenKey(dpy->SurfaceHash);
    assert(key);
-   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
+   _eglHashInsert(dpy->SurfaceHash, key, surf);
 
    surf->Handle = (EGLSurface) _eglUIntToPointer(key);
    return surf->Handle;
@@ -273,7 +332,7 @@ _eglUnlinkSurface(_EGLSurface *surf)
    _EGLSurface *prev;
    EGLuint key = _eglPointerToUInt((void *) surf->Handle);
 
-   _eglHashRemove(_eglGlobal.Surfaces, key);
+   _eglHashRemove(surf->Display->SurfaceHash, key);
    surf->Handle = EGL_NO_SURFACE;
 
    prev = surf->Display->SurfaceList;
@@ -317,5 +376,5 @@ _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
    EGLuint key = _eglPointerToUInt((void *) surf);
-   return (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces, key);
+   return (_EGLSurface *) _eglHashLookup(_eglSurfaceHash, key);
 }

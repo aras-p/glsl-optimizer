@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "eglglobals.h"
+#include "egldisplay.h"
 #include "egllog.h"
 
 struct _egl_global _eglGlobal = 
@@ -15,8 +16,6 @@ void
 _eglInitGlobals(void)
 {
    if (!_eglGlobal.Initialized) {
-      _eglGlobal.Displays = _eglNewHashTable();
-      _eglGlobal.Surfaces = _eglNewHashTable();
       _eglGlobal.FreeScreenHandle = 1;
       _eglGlobal.Initialized = EGL_TRUE;
 
@@ -31,7 +30,4 @@ _eglInitGlobals(void)
 void
 _eglDestroyGlobals(void)
 {
-   /* XXX TODO walk over table entries, deleting each */
-   _eglDeleteHashTable(_eglGlobal.Displays);
-   _eglDeleteHashTable(_eglGlobal.Surfaces);
 }

@@ -6,6 +6,7 @@
 #endif
 
 #include "egltypedefs.h"
+#include "eglhash.h"
 
 
 struct _egl_display 
@@ -26,6 +27,10 @@ struct _egl_display
    /* lists of linked contexts and surface */
    _EGLContext *ContextList;
    _EGLSurface *SurfaceList;
+
+   /* hash table to map surfaces to handles */
+   _EGLHashtable *SurfaceHash;
+
 #ifdef _EGL_PLATFORM_X
    Display *Xdpy;
 #endif

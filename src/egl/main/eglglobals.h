@@ -13,10 +13,6 @@ struct _egl_global
 {
    EGLBoolean Initialized;
 
-   /* these are private to egldisplay.c */
-   _EGLHashtable *Displays;
-   _EGLHashtable *Surfaces;
-
    EGLScreenMESA FreeScreenHandle;
 
    /* bitmaks of supported APIs (supported by _some_ driver) */
