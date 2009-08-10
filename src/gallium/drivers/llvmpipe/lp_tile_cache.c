@@ -34,6 +34,7 @@
 
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "util/u_tile.h"
 #include "lp_context.h"
 #include "lp_surface.h"
