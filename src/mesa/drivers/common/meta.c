@@ -137,6 +137,8 @@ struct save_state
 struct blit_state
 {
    GLuint TexObj;
+   GLsizei TexWidth, TexHeight;
+   GLenum TexType;
    GLuint ArrayObj;
    GLuint VBO;
    GLfloat verts[4][4]; /** four verts of X,Y,S,T */
@@ -630,6 +632,15 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    ASSERT(ctx->Extensions.NV_texture_rectangle);
 
+   if (srcW > ctx->Const.MaxTextureRectSize ||
+       srcH > ctx->Const.MaxTextureRectSize) {
+      /* XXX avoid this fallback */
+      _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
+                              dstX0, dstY0, dstX1, dstY1, mask, filter);
+      return;
+   }
+
+
    if (srcFlipX) {
       GLint tmp = dstX0;
       dstX0 = dstX1;
@@ -712,8 +723,22 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    /* copy framebuffer image to texture */
    if (mask & GL_COLOR_BUFFER_BIT) {
-      _mesa_CopyTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA,
-                           srcX, srcY, srcW, srcH, 0);
+      if (blit->TexWidth == srcW &&
+          blit->TexHeight == srcH &&
+          blit->TexType == GL_RGBA) {
+         /* replace existing tex image */
+         _mesa_CopyTexSubImage2D(GL_TEXTURE_RECTANGLE, 0,
+                                 0, 0, srcX, srcY, srcW, srcH);
+      }
+      else {
+         /* create new tex image */
+         _mesa_CopyTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA,
+                              srcX, srcY, srcW, srcH, 0);
+         blit->TexWidth = srcW;
+         blit->TexHeight = srcH;
+         blit->TexType = GL_RGBA;
+      }
+
       mask &= ~GL_COLOR_BUFFER_BIT;
    }
 
