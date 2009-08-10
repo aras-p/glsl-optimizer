@@ -83,6 +83,7 @@
 /*@{*/
 struct _mesa_HashTable;
 struct gl_attrib_node;
+struct gl_meta_state;
 struct gl_pixelstore_attrib;
 struct gl_program_cache;
 struct gl_texture_format;
@@ -2981,6 +2982,8 @@ struct __GLcontextRec
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
    /*@}*/
+
+   struct gl_meta_state *Meta;  /**< for "meta" operations */
 
 #if FEATURE_EXT_framebuffer_object
    struct gl_renderbuffer *CurrentRenderbuffer;
