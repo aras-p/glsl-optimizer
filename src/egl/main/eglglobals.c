@@ -21,9 +21,6 @@ _eglInitGlobals(void)
       _eglGlobal.Initialized = EGL_TRUE;
 
       _eglGlobal.ClientAPIsMask = 0x0;
-
-      if (!_eglInitCurrent())
-         _eglLog(_EGL_FATAL, "failed to initialize \"current\" system");
    }
 }
 
@@ -34,7 +31,6 @@ _eglInitGlobals(void)
 void
 _eglDestroyGlobals(void)
 {
-   _eglFiniCurrent();
    /* XXX TODO walk over table entries, deleting each */
    _eglDeleteHashTable(_eglGlobal.Displays);
    _eglDeleteHashTable(_eglGlobal.Surfaces);

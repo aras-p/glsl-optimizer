@@ -6,8 +6,12 @@
 #include "eglmutex.h"
 
 
+/* This should be kept in sync with _eglInitThreadInfo() */
+#define _EGL_THREAD_INFO_INITIALIZER \
+   { EGL_SUCCESS, { NULL }, 1 }
+
 /* a fallback thread info to guarantee that every thread always has one */
-static _EGLThreadInfo dummy_thread;
+static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;
 
 
 #ifdef GLX_USE_TLS
@@ -32,6 +36,7 @@ static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
 {
    /* TODO destroy TSD */
    (void) dtor;
+   (void) _eglFiniTSD;
    return EGL_TRUE;
 }
 
@@ -79,6 +84,7 @@ static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
             return EGL_FALSE;
          }
          _egl_FreeTSD = dtor;
+         (void) _eglFiniTSD;
          _egl_TSDInitialized = EGL_TRUE;
       }
 
@@ -112,6 +118,7 @@ static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
 {
    if (!_egl_FreeTSD && dtor) {
       _egl_FreeTSD = dtor;
+      (void) _eglFiniTSD;
    }
    return EGL_TRUE;
 }
@@ -156,23 +163,17 @@ _eglDestroyThreadInfo(_EGLThreadInfo *t)
 
 
 /**
- * Initialize "current thread" management.
+ * Make sure TSD is initialized and return current value.
  */
-EGLBoolean
-_eglInitCurrent(void)
+static INLINE _EGLThreadInfo *
+_eglCheckedGetTSD(void)
 {
-   _eglInitThreadInfo(&dummy_thread);
-   return _eglInitTSD((void (*)(void *)) _eglDestroyThreadInfo);
-}
+   if (_eglInitTSD(&_eglDestroyThreadInfo) != EGL_TRUE) {
+      _eglLog(_EGL_FATAL, "failed to initialize \"current\" system");
+      return NULL;
+   }
 
-
-/**
- * Finish "current thread" management.
- */
-void
-_eglFiniCurrent(void)
-{
-   _eglFiniTSD();
+   return _eglGetTSD();
 }
 
 
@@ -186,7 +187,7 @@ _eglFiniCurrent(void)
 _EGLThreadInfo *
 _eglGetCurrentThread(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    if (!t) {
       t = _eglCreateThreadInfo();
       _eglSetTSD(t);
@@ -202,7 +203,7 @@ _eglGetCurrentThread(void)
 void
 _eglDestroyCurrentThread(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    if (t) {
       _eglDestroyThreadInfo(t);
       _eglSetTSD(NULL);
@@ -219,7 +220,7 @@ _eglDestroyCurrentThread(void)
 EGLBoolean
 _eglIsCurrentThreadDummy(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    return (!t || t == &dummy_thread);
 }
 
