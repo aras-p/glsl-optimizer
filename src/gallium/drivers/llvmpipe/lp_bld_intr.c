@@ -51,37 +51,113 @@
 
 
 LLVMValueRef
+lp_build_intrinsic(LLVMBuilderRef builder,
+                   const char *name,
+                   LLVMTypeRef ret_type,
+                   LLVMValueRef *args,
+                   unsigned num_args)
+{
+   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+   LLVMValueRef function;
+
+   assert(num_args <= LP_MAX_FUNC_ARGS);
+
+   function = LLVMGetNamedFunction(module, name);
+   if(!function) {
+      LLVMTypeRef arg_types[LP_MAX_FUNC_ARGS];
+      unsigned i;
+      for(i = 0; i < num_args; ++i) {
+         assert(args[i]);
+         arg_types[i] = LLVMTypeOf(args[i]);
+      }
+      function = LLVMAddFunction(module, name, LLVMFunctionType(ret_type, arg_types, num_args, 0));
+      LLVMSetFunctionCallConv(function, LLVMCCallConv);
+      LLVMSetLinkage(function, LLVMExternalLinkage);
+   }
+   assert(LLVMIsDeclaration(function));
+
+   return LLVMBuildCall(builder, function, args, num_args, "");
+}
+
+
+LLVMValueRef
+lp_build_intrinsic_unary(LLVMBuilderRef builder,
+                         const char *name,
+                         LLVMTypeRef ret_type,
+                         LLVMValueRef a)
+{
+   return lp_build_intrinsic(builder, name, ret_type, &a, 1);
+}
+
+
+LLVMValueRef
 lp_build_intrinsic_binary(LLVMBuilderRef builder,
                           const char *name,
                           LLVMTypeRef ret_type,
                           LLVMValueRef a,
                           LLVMValueRef b)
 {
-   LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef function;
    LLVMValueRef args[2];
-
-   function = LLVMGetNamedFunction(module, name);
-   if(!function) {
-      LLVMTypeRef arg_types[2];
-      arg_types[0] = LLVMTypeOf(a);
-      arg_types[1] = LLVMTypeOf(b);
-      function = LLVMAddFunction(module, name, LLVMFunctionType(ret_type, arg_types, 2, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
-
-#ifdef DEBUG
-   /* We shouldn't use only constants with intrinsics, as they won't be
-    * propagated by LLVM optimization passes.
-    */
-   if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      debug_printf("warning: invoking intrinsic \"%s\" with constants\n");
-#endif
 
    args[0] = a;
    args[1] = b;
 
-   return LLVMBuildCall(builder, function, args, 2, "");
+   return lp_build_intrinsic(builder, name, ret_type, args, 2);
 }
+
+
+LLVMValueRef
+lp_build_intrinsic_map(LLVMBuilderRef builder,
+                       const char *name,
+                       LLVMTypeRef ret_type,
+                       LLVMValueRef *args,
+                       unsigned num_args)
+{
+   LLVMTypeRef ret_elem_type = LLVMGetElementType(ret_type);
+   unsigned n = LLVMGetVectorSize(ret_type);
+   unsigned i, j;
+   LLVMValueRef res;
+
+   assert(num_args <= LP_MAX_FUNC_ARGS);
+
+   res = LLVMGetUndef(ret_type);
+   for(i = 0; i < n; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef arg_elems[LP_MAX_FUNC_ARGS];
+      LLVMValueRef res_elem;
+      for(j = 0; j < num_args; ++j)
+         arg_elems[j] = LLVMBuildExtractElement(builder, args[j], index, "");
+      res_elem = lp_build_intrinsic(builder, name, ret_elem_type, arg_elems, num_args);
+      res = LLVMBuildInsertElement(builder, res, res_elem, index, "");
+   }
+
+   return res;
+}
+
+
+LLVMValueRef
+lp_build_intrinsic_map_unary(LLVMBuilderRef builder,
+                             const char *name,
+                             LLVMTypeRef ret_type,
+                             LLVMValueRef a)
+{
+   return lp_build_intrinsic_map(builder, name, ret_type, &a, 1);
+}
+
+
+LLVMValueRef
+lp_build_intrinsic_map_binary(LLVMBuilderRef builder,
+                              const char *name,
+                              LLVMTypeRef ret_type,
+                              LLVMValueRef a,
+                              LLVMValueRef b)
+{
+   LLVMValueRef args[2];
+
+   args[0] = a;
+   args[1] = b;
+
+   return lp_build_intrinsic_map(builder, name, ret_type, args, 2);
+}
+
+

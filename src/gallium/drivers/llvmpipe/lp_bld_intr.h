@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Helper arithmetic functions.
+ * Helper functions for calling intrinsics.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -40,12 +40,53 @@
 #include <llvm-c/Core.h>  
 
 
+#define LP_MAX_FUNC_ARGS 32
+
+
+LLVMValueRef
+lp_build_intrinsic(LLVMBuilderRef builder,
+                   const char *name,
+                   LLVMTypeRef ret_type,
+                   LLVMValueRef *args,
+                   unsigned num_args);
+
+
+LLVMValueRef
+lp_build_intrinsic_unary(LLVMBuilderRef builder,
+                         const char *name,
+                         LLVMTypeRef ret_type,
+                         LLVMValueRef a);
+
+
 LLVMValueRef
 lp_build_intrinsic_binary(LLVMBuilderRef builder,
                           const char *name,
                           LLVMTypeRef ret_type,
                           LLVMValueRef a,
                           LLVMValueRef b);
+
+
+LLVMValueRef
+lp_build_intrinsic_map(LLVMBuilderRef builder,
+                       const char *name,
+                       LLVMTypeRef ret_type,
+                       LLVMValueRef *args,
+                       unsigned num_args);
+
+
+LLVMValueRef
+lp_build_intrinsic_map_unary(LLVMBuilderRef builder,
+                             const char *name,
+                             LLVMTypeRef ret_type,
+                             LLVMValueRef a);
+
+
+LLVMValueRef
+lp_build_intrinsic_map_binary(LLVMBuilderRef builder,
+                              const char *name,
+                              LLVMTypeRef ret_type,
+                              LLVMValueRef a,
+                              LLVMValueRef b);
 
 
 #endif /* !LP_BLD_INTR_H */
