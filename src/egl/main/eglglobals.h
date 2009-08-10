@@ -11,8 +11,6 @@
  */
 struct _egl_global
 {
-   EGLBoolean Initialized;
-
    EGLScreenMESA FreeScreenHandle;
 
    /* bitmaks of supported APIs (supported by _some_ driver) */
@@ -26,14 +24,6 @@ struct _egl_global
 
 
 extern struct _egl_global _eglGlobal;
-
-
-extern void
-_eglInitGlobals(void);
-
-
-extern void
-_eglDestroyGlobals(void);
 
 
 #endif /* EGLGLOBALS_INCLUDED */
