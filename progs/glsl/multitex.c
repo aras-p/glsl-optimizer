@@ -134,7 +134,7 @@ DrawPolygonArray(void)
 
    if (VertCoord_attr >= 0) {
       glVertexAttribPointer(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
-                                 0, VertCoords);
+                                 0, vertPtr);
       glEnableVertexAttribArray(VertCoord_attr);
    }
    else {
@@ -143,11 +143,11 @@ DrawPolygonArray(void)
    }
 
    glVertexAttribPointer(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex0Coords);
+                              0, tex0Ptr);
    glEnableVertexAttribArray(TexCoord0_attr);
 
    glVertexAttribPointer(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex1Coords);
+                              0, tex1Ptr);
    glEnableVertexAttribArray(TexCoord1_attr);
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
