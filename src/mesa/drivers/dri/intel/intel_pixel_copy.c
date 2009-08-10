@@ -31,7 +31,7 @@
 #include "main/state.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
-#include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
@@ -96,162 +96,6 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
 	    ctx->FragmentProgram._Enabled ||
 	    ctx->Color.BlendEnabled);
 }
-
-#ifdef I915
-/* Doesn't work for overlapping regions.  Could do a double copy or
- * just fallback.
- */
-static GLboolean
-do_texture_copypixels(GLcontext * ctx,
-                      GLint srcx, GLint srcy,
-                      GLsizei width, GLsizei height,
-                      GLint dstx, GLint dsty, GLenum type)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
-   struct intel_region *src = copypix_src_region(intel, type);
-   GLenum src_format;
-   GLenum src_type;
-
-   DBG("%s %d,%d %dx%d --> %d,%d\n", __FUNCTION__, 
-       srcx, srcy, width, height, dstx, dsty);
-
-   if (!src || !dst || type != GL_COLOR)
-      return GL_FALSE;
-
-   if (ctx->_ImageTransferState) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         fprintf(stderr, "%s: check_color failed\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   /* Can't handle overlapping regions.  Don't have sufficient control
-    * over rasterization to pull it off in-place.  Punt on these for
-    * now.
-    * 
-    * XXX: do a copy to a temporary. 
-    */
-   if (src->buffer == dst->buffer) {
-      drm_clip_rect_t srcbox;
-      drm_clip_rect_t dstbox;
-      drm_clip_rect_t tmp;
-
-      srcbox.x1 = srcx;
-      srcbox.y1 = srcy;
-      srcbox.x2 = srcx + width;
-      srcbox.y2 = srcy + height;
-
-      if (ctx->Pixel.ZoomX > 0) {
-	 dstbox.x1 = dstx;
-	 dstbox.x2 = dstx + width * ctx->Pixel.ZoomX;
-      } else {
-	 dstbox.x1 = dstx + width * ctx->Pixel.ZoomX;
-	 dstbox.x2 = dstx;
-      }
-      if (ctx->Pixel.ZoomY > 0) {
-	 dstbox.y1 = dsty;
-	 dstbox.y2 = dsty + height * ctx->Pixel.ZoomY;
-      } else {
-	 dstbox.y1 = dsty + height * ctx->Pixel.ZoomY;
-	 dstbox.y2 = dsty;
-      }
-
-      DBG("src %d,%d %d,%d\n", srcbox.x1, srcbox.y1, srcbox.x2, srcbox.y2);
-      DBG("dst %d,%d %d,%d (%dx%d) (%f,%f)\n", dstbox.x1, dstbox.y1, dstbox.x2, dstbox.y2,
-	  width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-
-      if (intel_intersect_cliprects(&tmp, &srcbox, &dstbox)) {
-         DBG("%s: regions overlap\n", __FUNCTION__);
-         return GL_FALSE;
-      }
-   }
-
-   intelFlush(&intel->ctx);
-
-   intel->vtbl.install_meta_state(intel);
-
-   /* Is this true?  Also will need to turn depth testing on according
-    * to state:
-    */
-   intel->vtbl.meta_no_stencil_write(intel);
-   intel->vtbl.meta_no_depth_write(intel);
-
-   /* Set the 3d engine to draw into the destination region:
-    */
-   intel->vtbl.meta_draw_region(intel, dst, intel->depth_region);
-
-   intel->vtbl.meta_import_pixel_state(intel);
-
-   if (src->cpp == 2) {
-      src_format = GL_RGB;
-      src_type = GL_UNSIGNED_SHORT_5_6_5;
-   }
-   else {
-      src_format = GL_BGRA;
-      src_type = GL_UNSIGNED_BYTE;
-   }
-
-   /* Set the frontbuffer up as a large rectangular texture.
-    */
-   if (!intel->vtbl.meta_tex_rect_source(intel, src->buffer, 0,
-                                         src->pitch,
-                                         src->height, src_format, src_type)) {
-      intel->vtbl.leave_meta_state(intel);
-      return GL_FALSE;
-   }
-
-
-   intel->vtbl.meta_texture_blend_replace(intel);
-
-   LOCK_HARDWARE(intel);
-
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-
-      srcy = dPriv->h - srcy - height;  /* convert from gl to hardware coords */
-
-      srcx += dPriv->x;
-      srcy += dPriv->y;
-
-      /* Clip against the source region.  This is the only source
-       * clipping we do.  XXX: Just set the texcord wrap mode to clamp
-       * or similar.
-       *
-       */
-      if (0) {
-         GLint orig_x = srcx;
-         GLint orig_y = srcy;
-
-         if (!_mesa_clip_to_region(0, 0, src->pitch, src->height,
-                                   &srcx, &srcy, &width, &height))
-            goto out;
-
-         dstx += srcx - orig_x;
-         dsty += (srcy - orig_y) * ctx->Pixel.ZoomY;
-      }
-
-      /* Just use the regular cliprect mechanism...  Does this need to
-       * even hold the lock???
-       */
-      intel->vtbl.meta_draw_quad(intel,
-				 dstx,
-				 dstx + width * ctx->Pixel.ZoomX,
-				 dPriv->h - (dsty + height * ctx->Pixel.ZoomY),
-				 dPriv->h - (dsty), 0, /* XXX: what z value? */
-				 0x00ff00ff,
-				 srcx, srcx + width, srcy, srcy + height);
-
-    out:
-      intel->vtbl.leave_meta_state(intel);
-      intel_batchbuffer_emit_mi_flush(intel->batch);
-   }
-   UNLOCK_HARDWARE(intel);
-
-   DBG("%s: success\n", __FUNCTION__);
-   return GL_TRUE;
-}
-#endif /* I915 */
 
 
 /**
@@ -400,12 +244,5 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
-#ifdef I915
-   if (do_texture_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
-      return;
-#endif
-
-   DBG("fallback to _swrast_CopyPixels\n");
-
-   _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
+   _mesa_meta_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }
