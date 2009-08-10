@@ -291,7 +291,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 	    rrb->base.RedBits = 8;
 	    rrb->base.GreenBits = 8;
 	    rrb->base.BlueBits = 8;
-	    rrb->base.AlphaBits = 8;
+	    rrb->base.AlphaBits = 0;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
 	    break;
 	case GL_RGBA8:
