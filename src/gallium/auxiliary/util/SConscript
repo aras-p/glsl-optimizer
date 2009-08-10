@@ -1,5 +1,9 @@
 Import('*')
 
+env.Clone()
+
+env.Append(CPPPATH = ['.'])
+
 env.CodeGenerate(
 	target = 'u_format_table.c',
 	script = 'u_format_table.py',
