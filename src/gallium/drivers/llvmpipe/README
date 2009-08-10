@@ -1,0 +1,48 @@
+LLVMPIPE -- a fork of softpipe that employs LLVM for code generation.
+
+
+Requirements
+============
+
+ - Linux
+ 
+ - LLVM. On Debian based distributions do:
+ 
+     aptitude install llvm-dev
+ 
+ - A x86 or amd64 processor with support for sse2, sse3, and sse4.1 SIMD
+   instructions. This is necessary because we emit several SSE intrinsics for
+   convenience. See /proc/cpuinfo to know what your CPU supports.
+ 
+ - scons (although it should be straightforward to fix the Makefiles as well)
+
+
+Building
+========
+
+To build everything invoke scons as:
+
+  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=xlib dri=false -k
+
+
+Using
+=====
+
+Building will create a drop-in alternative for libGL.so. To use it set the
+environment variables:
+
+  export LD_LIRBARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIRBARY_PATH
+  export LD_LIRBARY_PATH=$PWD/build/linux-x86_64-debug/lib:$LD_LIRBARY_PATH
+
+
+Unit testing
+============
+
+Building will also create several unit tests in
+build/linux-???-debug/gallium/drivers/llvmpipe:
+
+ - lp_test_blend: blending
+ - lp_test_conv: SIMD vector conversion
+ - lp_test_format: pixel unpacking/packing
+
+
