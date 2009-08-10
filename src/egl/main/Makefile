@@ -20,6 +20,7 @@ HEADERS = \
 	eglhash.h \
 	eglmisc.h \
 	eglmode.h \
+	eglmutex.h \
 	eglscreen.h \
 	eglstring.h \
 	eglsurface.h \
