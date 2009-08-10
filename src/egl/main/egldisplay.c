@@ -67,7 +67,7 @@ _eglInitDisplay(void)
          _eglDisplayHash = _eglNewHashTable();
          _eglSurfaceHash = _eglNewHashTable();
 
-         (void) _eglFiniDisplay;
+         _eglAddAtExitCall(_eglFiniDisplay);
       }
 
       _eglUnlockMutex(&_eglDisplayInitMutex);

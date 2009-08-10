@@ -4,6 +4,7 @@
 #include "eglcontext.h"
 #include "egllog.h"
 #include "eglmutex.h"
+#include "eglglobals.h"
 
 
 /* This should be kept in sync with _eglInitThreadInfo() */
@@ -84,7 +85,7 @@ static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
             return EGL_FALSE;
          }
          _egl_FreeTSD = dtor;
-         (void) _eglFiniTSD;
+         _eglAddAtExitCall(_eglFiniTSD);
          _egl_TSDInitialized = EGL_TRUE;
       }
 
@@ -118,7 +119,7 @@ static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
 {
    if (!_egl_FreeTSD && dtor) {
       _egl_FreeTSD = dtor;
-      (void) _eglFiniTSD;
+      _eglAddAtExitCall(_eglFiniTSD);
    }
    return EGL_TRUE;
 }
