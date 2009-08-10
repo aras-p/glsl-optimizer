@@ -63,5 +63,10 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 extern void
 _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers);
 
+extern void
+_mesa_meta_copy_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+                       GLsizei width, GLsizei height,
+                       GLint dstx, GLint dsty, GLenum type);
+
 
 #endif /* META_H */

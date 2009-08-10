@@ -155,6 +155,21 @@ struct clear_state
 
 
 /**
+ * State for glCopyPixels()
+ */
+struct copypix_state
+{
+   GLuint TexObj;
+   GLsizei TexWidth, TexHeight;
+   GLenum TexType;
+   GLuint ArrayObj;
+   GLuint VBO;
+   GLfloat verts[4][5]; /** four verts of X,Y,Z,S,T */
+};
+
+
+
+/**
  * All per-context meta state.
  */
 struct gl_meta_state
@@ -163,6 +178,7 @@ struct gl_meta_state
 
    struct blit_state Blit;    /**< For _mesa_meta_blit_framebuffer() */
    struct clear_state Clear;  /**< For _mesa_meta_clear() */
+   struct copypix_state CopyPix;  /**< For _mesa_meta_copy_pixels() */
 
    /* other possible meta-ops:
     * glDrawPixels()
@@ -203,6 +219,12 @@ _mesa_meta_free(GLcontext *ctx)
    if (meta->Clear.VBO) {
       _mesa_DeleteBuffersARB(1, & meta->Clear.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->Clear.ArrayObj);
+   }
+
+   if (meta->CopyPix.TexObj) {
+      _mesa_DeleteTextures(1, &meta->CopyPix.TexObj);
+      _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
    }
 
    _mesa_free(ctx->Meta);
@@ -810,3 +832,142 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
    _mesa_meta_end(ctx);
 }
 
+
+/**
+ * Meta implementation of ctx->Driver.CopyPixels() in terms
+ * of texture mapping and polygon rendering.
+ * Note: this function requires GL_ARB_texture_rectangle support.
+ */
+void
+_mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
+                       GLsizei width, GLsizei height,
+                       GLint dstX, GLint dstY, GLenum type)
+{
+   const GLenum filter = GL_NEAREST;
+   struct copypix_state *copypix = &ctx->Meta->CopyPix;
+   const GLfloat z = ctx->Current.RasterPos[2];
+   const GLfloat dstX1 = dstX + width * ctx->Pixel.ZoomX;
+   const GLfloat dstY1 = dstY + height * ctx->Pixel.ZoomY;
+
+   ASSERT(ctx->Extensions.NV_texture_rectangle);
+
+   if (type != GL_COLOR ||
+       ctx->_ImageTransferState ||
+       width > ctx->Const.MaxTextureRectSize ||
+       height > ctx->Const.MaxTextureRectSize) {
+      /* XXX avoid this fallback */
+      _swrast_CopyPixels(ctx, srcX, srcY, width, height, dstX, dstY, type);
+      return;
+   }
+
+   /* Most GL state applies to glCopyPixels, but a there's a few things
+    * we need to override:
+    */
+   _mesa_meta_begin(ctx, (META_RASTERIZATION |
+                          META_SHADER |
+                          META_TRANSFORM |
+                          META_VERTEX));
+
+   if (copypix->TexObj == 0) {
+      /* one-time setup */
+
+      /* create texture object */
+      _mesa_GenTextures(1, &copypix->TexObj);
+      _mesa_BindTexture(GL_TEXTURE_RECTANGLE, copypix->TexObj);
+      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      _mesa_TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, filter);
+      _mesa_TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, filter);
+   }
+   else {
+      _mesa_BindTexture(GL_TEXTURE_RECTANGLE, copypix->TexObj);
+   }
+
+   if (copypix->ArrayObj == 0) {
+      /* one-time setup */
+
+      /* create vertex array object */
+      _mesa_GenVertexArrays(1, &copypix->ArrayObj);
+      _mesa_BindVertexArray(copypix->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &copypix->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, copypix->VBO);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(copypix->verts),
+                          copypix->verts, GL_STREAM_DRAW_ARB);
+
+      /* setup vertex arrays */
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(copypix->verts[0]),
+                          (void*) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(copypix->verts[0]),
+                            (void *) (3 * sizeof(GLfloat)));
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+   else {
+      _mesa_BindVertexArray(copypix->ArrayObj);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, copypix->VBO);
+   }
+
+   /* vertex positions, texcoords */
+   copypix->verts[0][0] = (GLfloat) dstX;
+   copypix->verts[0][1] = (GLfloat) dstY;
+   copypix->verts[0][2] = z;
+   copypix->verts[0][3] = 0.0F;
+   copypix->verts[0][4] = 0.0F;
+   copypix->verts[1][0] = (GLfloat) dstX1;
+   copypix->verts[1][1] = (GLfloat) dstY;
+   copypix->verts[1][2] = z;
+   copypix->verts[1][3] = (GLfloat) width;
+   copypix->verts[1][4] = 0.0F;
+   copypix->verts[2][0] = (GLfloat) dstX1;
+   copypix->verts[2][1] = (GLfloat) dstY1;
+   copypix->verts[2][2] = z;
+   copypix->verts[2][3] = (GLfloat) width;
+   copypix->verts[2][4] = (GLfloat) height;
+   copypix->verts[3][0] = (GLfloat) dstX;
+   copypix->verts[3][1] = (GLfloat) dstY1;
+   copypix->verts[3][2] = z;
+   copypix->verts[3][3] = 0.0F;
+   copypix->verts[3][4] = (GLfloat) height;
+
+   /* upload new vertex data */
+   _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
+                          sizeof(copypix->verts), copypix->verts);
+
+   /* copy framebuffer image to texture */
+   if (type == GL_COLOR) {
+      if (copypix->TexWidth == width &&
+          copypix->TexHeight == height &&
+          copypix->TexType == type) {
+         /* replace existing tex image */
+         _mesa_CopyTexSubImage2D(GL_TEXTURE_RECTANGLE, 0,
+                                 0, 0, srcX, srcY, width, height);
+      }
+      else {
+         /* create new tex image */
+         _mesa_CopyTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA,
+                              srcX, srcY, width, height, 0);
+         copypix->TexWidth = width;
+         copypix->TexHeight = height;
+         copypix->TexType = type;
+      }
+   }
+   else if (type == GL_DEPTH) {
+      /* TO-DO: Use a GL_DEPTH_COMPONENT texture and a fragment program/shader
+       * that replaces the fragment.z value.
+       */
+   }
+   else {
+      ASSERT(type == GL_STENCIL);
+      /* have to use sw fallback */
+   }
+
+   _mesa_Enable(GL_TEXTURE_RECTANGLE);
+
+   /* draw textured quad */
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+   _mesa_Disable(GL_TEXTURE_RECTANGLE);
+
+   _mesa_meta_end(ctx);
+}
