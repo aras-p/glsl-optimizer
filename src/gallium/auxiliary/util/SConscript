@@ -1,5 +1,12 @@
 Import('*')
 
+env.CodeGenerate(
+	target = 'u_format_table.c',
+	script = 'u_format_table.py',
+	source = ['u_format.csv'],
+	command = 'python $SCRIPT $SOURCE > $TARGET'
+)
+
 util = env.ConvenienceLibrary(
 	target = 'util',
 	source = [
