@@ -46,8 +46,8 @@ Using
 Building will create a drop-in alternative for libGL.so. To use it set the
 environment variables:
 
-  export LD_LIRBARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIRBARY_PATH
-  export LD_LIRBARY_PATH=$PWD/build/linux-x86_64-debug/lib:$LD_LIRBARY_PATH
+  export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH=$PWD/build/linux-x86_64-debug/lib:$LD_LIBRARY_PATH
 
 
 Unit testing
