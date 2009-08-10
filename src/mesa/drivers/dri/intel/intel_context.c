@@ -775,7 +775,7 @@ intelInitContext(struct intel_context *intel,
    if (intel->use_texture_tiling &&
        !intel->intelScreen->kernel_exec_fencing) {
       fprintf(stderr, "No kernel support for execution fencing, "
-	      "disabling texture tiling");
+	      "disabling texture tiling\n");
       intel->use_texture_tiling = GL_FALSE;
    }
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
