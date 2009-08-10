@@ -709,8 +709,6 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
    }
-
-   _mesa_Finish();
 }
 
 
