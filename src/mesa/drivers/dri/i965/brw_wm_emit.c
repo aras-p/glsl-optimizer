@@ -352,13 +352,13 @@ void emit_ddxy(struct brw_compile *p,
       brw_set_saturate(p, 0);
 }
 
-static void emit_alu1( struct brw_compile *p, 
-		       struct brw_instruction *(*func)(struct brw_compile *, 
-						       struct brw_reg, 
-						       struct brw_reg),
-		       const struct brw_reg *dst,
-		       GLuint mask,
-		       const struct brw_reg *arg0 )
+void emit_alu1(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0)
 {
    GLuint i;
 
@@ -376,15 +376,15 @@ static void emit_alu1( struct brw_compile *p,
 }
 
 
-static void emit_alu2( struct brw_compile *p, 
-		       struct brw_instruction *(*func)(struct brw_compile *, 
-						       struct brw_reg, 
-						       struct brw_reg, 
-						       struct brw_reg),
-		       const struct brw_reg *dst,
-		       GLuint mask,
-		       const struct brw_reg *arg0,
-		       const struct brw_reg *arg1 )
+void emit_alu2(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0,
+	       const struct brw_reg *arg1)
 {
    GLuint i;
 

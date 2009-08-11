@@ -308,6 +308,23 @@ void brw_wm_lookup_iz( GLuint line_aa,
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
+/* brw_wm_emit.c */
+void emit_alu1(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0);
+void emit_alu2(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0,
+	       const struct brw_reg *arg1);
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,

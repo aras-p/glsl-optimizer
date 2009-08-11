@@ -668,26 +668,6 @@ static void emit_trunc( struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_mov( struct brw_wm_compile *c,
-                      const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i);
-            /* XXX some moves from immediate value don't work reliably!!! */
-            /*src = get_src_reg_imm(c, inst, 0, i);*/
-            src = get_src_reg(c, inst, 0, i);
-	    brw_MOV(p, dst, src);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
 static void emit_pixel_xy(struct brw_wm_compile *c,
                           const struct prog_instruction *inst)
 {
@@ -1169,25 +1149,6 @@ static void emit_lg2(struct brw_wm_compile *c,
     emit_math1(c, inst, BRW_MATH_FUNCTION_LOG);
 }
 
-static void emit_add(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, src1, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_ADD(p, dst, src0, src1);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
 static void emit_arl(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
 {
@@ -1198,63 +1159,6 @@ static void emit_arl(struct brw_wm_compile *c,
                            BRW_ARF_ADDRESS, 0);
     src0 = get_src_reg(c, inst, 0, 0); /* channel 0 */
     brw_MOV(p, addr_reg, src0);
-    brw_set_saturate(p, 0);
-}
-
-
-static void emit_mul(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, src1, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_MUL(p, dst, src0, src1);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_frc(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg_imm(c, inst, 0, i);
-	    brw_FRC(p, dst, src0);
-	}
-    }
-    if (inst->SaturateMode != SATURATE_OFF)
-	brw_set_saturate(p, 0);
-}
-
-static void emit_flr(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg_imm(c, inst, 0, i);
-	    brw_RNDD(p, dst, src0);
-	}
-    }
     brw_set_saturate(p, 0);
 }
 
@@ -2824,16 +2728,16 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_frontfacing(c, inst);
 		break;
 	    case OPCODE_ADD:
-		emit_add(c, inst);
+		emit_alu2(p, brw_ADD, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_ARL:
 		emit_arl(c, inst);
 		break;
 	    case OPCODE_FRC:
-		emit_frc(c, inst);
+		emit_alu1(p, brw_FRC, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_FLR:
-		emit_flr(c, inst);
+		emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LRP:
 		emit_lrp(c, inst);
@@ -2843,7 +2747,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case OPCODE_MOV:
 	    case OPCODE_SWZ:
-		emit_mov(c, inst);
+		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_DP3:
 		emit_dp3(c, inst);
@@ -2903,7 +2807,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_sne(c, inst);
 		break;
 	    case OPCODE_MUL:
-		emit_mul(c, inst);
+		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_POW:
 		emit_pow(c, inst);
