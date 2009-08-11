@@ -310,6 +310,16 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     ui = (r700->SPI_PS_IN_CONTROL_0.u32All & NUM_INTERP_mask) / (1 << NUM_INTERP_shift);
 
+    /* PS uses fragment.position */
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
+    {
+        ui += 1;
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
+        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+        SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
+    }
+
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
@@ -341,14 +351,6 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     else
     {
         CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-
-    /* PS uses fragment.position */
-    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
-    {
-	SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
-	SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
-	SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);	
     }
 
     /* sent out shader constants. */
