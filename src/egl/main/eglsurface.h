@@ -47,55 +47,55 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
 
 
 extern EGLBoolean
-_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw);
+_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf);
 
 
 extern EGLBoolean
-_eglCopyBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, NativePixmapType target);
+_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, NativePixmapType target);
 
 
 extern EGLBoolean
-_eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value);
+_eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint attribute, EGLint *value);
 
 
-extern EGLSurface
-_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list);
+extern _EGLSurface *
+_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list);
 
 
-extern EGLSurface
-_eglCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list);
+extern _EGLSurface *
+_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list);
 
 
-extern EGLSurface
-_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface);
+extern _EGLSurface *
+_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
 
 
 extern EGLBoolean
-_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint value);
+_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf);
 
 
 extern EGLBoolean
-_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer);
+_eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint attribute, EGLint value);
 
 
 extern EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer);
+_eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint buffer);
 
 
 extern EGLBoolean
-_eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval);
+_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint buffer);
+
+
+extern EGLBoolean
+_eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, EGLint interval);
 
 
 #ifdef EGL_VERSION_1_2
 
-extern EGLSurface
-_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
+extern _EGLSurface *
+_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
                                   EGLenum buftype, EGLClientBuffer buffer,
-                                  EGLConfig config, const EGLint *attrib_list);
+                                  _EGLConfig *conf, const EGLint *attrib_list);
 
 #endif /* EGL_VERSION_1_2 */
 

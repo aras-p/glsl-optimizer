@@ -129,9 +129,8 @@ drm_find_dpms(struct drm_device *dev, struct drm_screen *screen)
 }
 
 EGLBoolean
-drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
+drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 {
-	_EGLDisplay *disp = _eglLookupDisplay(dpy);
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_screen *screen = NULL;
 	drmModeConnectorPtr connector = NULL;
@@ -214,7 +213,7 @@ err_fd:
 }
 
 EGLBoolean
-drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
+drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_screen *screen;
@@ -240,7 +239,7 @@ drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 
 	drmClose(dev->drmFD);
 
-	_eglCleanupDisplay(_eglLookupDisplay(dpy));
+	_eglCleanupDisplay(dpy);
 	free(dev);
 
 	return EGL_TRUE;

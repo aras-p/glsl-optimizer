@@ -83,22 +83,15 @@ const struct dri_extension card_extensions[] = {
 	{NULL, NULL}
 };
 
-EGLContext
-drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+_EGLContext *
+drm_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list)
 {
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_context *ctx;
 	struct drm_context *share = NULL;
 	struct st_context *st_share = NULL;
-	_EGLConfig *conf;
 	int i;
 	__GLcontextModes *visual;
-
-	conf = _eglLookupConfig(drv, dpy, config);
-	if (!conf) {
-		_eglError(EGL_BAD_CONFIG, "eglCreateContext");
-		return EGL_NO_CONTEXT;
-	}
 
 	for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
 		switch (attrib_list[i]) {
@@ -129,25 +122,20 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 	if (!ctx->st)
 		goto err_gl;
 
-        /* link to display */
-        _eglLinkContext(&ctx->base, _eglLookupDisplay(dpy));
-	assert(_eglGetContextHandle(&ctx->base));
-
-	return _eglGetContextHandle(&ctx->base);
+	return &ctx->base;
 
 err_gl:
 	ctx->pipe->destroy(ctx->pipe);
 err_pipe:
 	free(ctx);
 err_c:
-	return EGL_NO_CONTEXT;
+	return NULL;
 }
 
 EGLBoolean
-drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
+drm_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *context)
 {
 	struct drm_context *c = lookup_drm_context(context);
-        _eglUnlinkContext(&c->base);
 	if (!_eglIsContextBound(&c->base)) {
 		st_destroy_context(c->st);
 		c->pipe->destroy(c->pipe);
@@ -157,7 +145,7 @@ drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 }
 
 EGLBoolean
-drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext context)
+drm_make_current(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *context)
 {
 	struct drm_surface *readSurf = lookup_drm_surface(read);
 	struct drm_surface *drawSurf = lookup_drm_surface(draw);

@@ -178,22 +178,22 @@ drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
 	screen->shown = 0;
 }
 
-EGLSurface
-drm_create_window_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list)
+_EGLSurface *
+drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list)
 {
-	return EGL_NO_SURFACE;
+	return NULL;
 }
 
 
-EGLSurface
-drm_create_pixmap_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list)
+_EGLSurface *
+drm_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list)
 {
-	return EGL_NO_SURFACE;
+	return NULL;
 }
 
 
-EGLSurface
-drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_EGLSurface *
+drm_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                            const EGLint *attrib_list)
 {
 	int i;
@@ -201,13 +201,6 @@ drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 	int height = -1;
 	struct drm_surface *surf = NULL;
 	__GLcontextModes *visual;
-	_EGLConfig *conf;
-
-	conf = _eglLookupConfig(drv, dpy, config);
-	if (!conf) {
-		_eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
-		return EGL_NO_CONTEXT;
-	}
 
 	for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
 		switch (attrib_list[i]) {
@@ -225,7 +218,7 @@ drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
 	if (width < 1 || height < 1) {
 		_eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface");
-		return EGL_NO_SURFACE;
+		return NULL;
 	}
 
 	surf = (struct drm_surface *) calloc(1, sizeof(struct drm_surface));
@@ -245,17 +238,16 @@ drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 	                                    (void*)surf);
 	drm_visual_modes_destroy(visual);
 
-        _eglLinkSurface(&surf->base, _eglLookupDisplay(dpy));
-	return surf->base.Handle;
+	return &surf->base;
 
 err_surf:
 	free(surf);
 err:
-	return EGL_NO_SURFACE;
+	return NULL;
 }
 
-EGLSurface
-drm_create_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
+_EGLSurface *
+drm_create_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *cfg,
                                const EGLint *attrib_list)
 {
 	EGLSurface surf = drm_create_pbuffer_surface(drv, dpy, cfg, attrib_list);
@@ -264,14 +256,13 @@ drm_create_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
 }
 
 EGLBoolean
-drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
-                             EGLScreenMESA screen,
-                             EGLSurface surface, EGLModeMESA m)
+drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy,
+                             _EGLScreen *screen,
+                             _EGLSurface *surface, _EGLMode *mode)
 {
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_surface *surf = lookup_drm_surface(surface);
-	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
-	_EGLMode *mode = _eglLookupMode(dpy, m);
+	struct drm_screen *scrn = lookup_drm_screen(screen);
 	int ret;
 	unsigned int i, k;
 
@@ -361,11 +352,9 @@ err_bo:
 }
 
 EGLBoolean
-drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
 	struct drm_surface *surf = lookup_drm_surface(surface);
-	_eglUnlinkSurface(&surf->base);
-
 	if (!_eglIsSurfaceBound(&surf->base)) {
 		if (surf->screen)
 			drm_takedown_shown_screen(drv, surf->screen);
@@ -376,7 +365,7 @@ drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 }
 
 EGLBoolean
-drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
+drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
 	struct drm_surface *surf = lookup_drm_surface(draw);
 	struct pipe_surface *back_surf;

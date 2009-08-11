@@ -34,7 +34,7 @@ _eglGetConfigHandle(_EGLConfig *config);
 
 
 extern _EGLConfig *
-_eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config);
+_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy);
 
 
 extern _EGLConfig *
@@ -46,15 +46,15 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list);
 
 
 extern EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
 
 extern EGLBoolean
-_eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value);
+_eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLint attribute, EGLint *value);
 
 
 extern EGLBoolean
-_eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+_eglGetConfigs(_EGLDriver *drv, _EGLDisplay *dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
 
 extern void

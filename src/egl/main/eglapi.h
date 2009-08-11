@@ -12,61 +12,61 @@ typedef void (*_EGLProc)();
  */
 
 /* driver funcs */
-typedef EGLBoolean (*Initialize_t)(_EGLDriver *, EGLDisplay dpy, EGLint *major, EGLint *minor);
-typedef EGLBoolean (*Terminate_t)(_EGLDriver *, EGLDisplay dpy);
+typedef EGLBoolean (*Initialize_t)(_EGLDriver *, _EGLDisplay *dpy, EGLint *major, EGLint *minor);
+typedef EGLBoolean (*Terminate_t)(_EGLDriver *, _EGLDisplay *dpy);
 
 /* config funcs */
-typedef EGLBoolean (*GetConfigs_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
-typedef EGLBoolean (*ChooseConfig_t)(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
-typedef EGLBoolean (*GetConfigAttrib_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value);
+typedef EGLBoolean (*GetConfigs_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+typedef EGLBoolean (*ChooseConfig_t)(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
+typedef EGLBoolean (*GetConfigAttrib_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, EGLint attribute, EGLint *value);
 
 /* context funcs */
-typedef EGLContext (*CreateContext_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list);
-typedef EGLBoolean (*DestroyContext_t)(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx);
-typedef EGLBoolean (*MakeCurrent_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
-typedef EGLBoolean (*QueryContext_t)(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value);
+typedef _EGLContext *(*CreateContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, _EGLContext *share_list, const EGLint *attrib_list);
+typedef EGLBoolean (*DestroyContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
+typedef EGLBoolean (*MakeCurrent_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
+typedef EGLBoolean (*QueryContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint attribute, EGLint *value);
 
 /* surface funcs */
-typedef EGLSurface (*CreateWindowSurface_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list);
-typedef EGLSurface (*CreatePixmapSurface_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list);
-typedef EGLSurface (*CreatePbufferSurface_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-typedef EGLBoolean (*DestroySurface_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface);
-typedef EGLBoolean (*QuerySurface_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value);
-typedef EGLBoolean (*SurfaceAttrib_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint value);
-typedef EGLBoolean (*BindTexImage_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer);
-typedef EGLBoolean (*ReleaseTexImage_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer);
-typedef EGLBoolean (*SwapInterval_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint interval);
-typedef EGLBoolean (*SwapBuffers_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw);
-typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, NativePixmapType target);
+typedef _EGLSurface *(*CreateWindowSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, NativeWindowType window, const EGLint *attrib_list);
+typedef _EGLSurface *(*CreatePixmapSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, NativePixmapType pixmap, const EGLint *attrib_list);
+typedef _EGLSurface *(*CreatePbufferSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, const EGLint *attrib_list);
+typedef EGLBoolean (*DestroySurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface);
+typedef EGLBoolean (*QuerySurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint attribute, EGLint *value);
+typedef EGLBoolean (*SurfaceAttrib_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint attribute, EGLint value);
+typedef EGLBoolean (*BindTexImage_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint buffer);
+typedef EGLBoolean (*ReleaseTexImage_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint buffer);
+typedef EGLBoolean (*SwapInterval_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint interval);
+typedef EGLBoolean (*SwapBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw);
+typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, NativePixmapType target);
 
 /* misc funcs */
-typedef const char *(*QueryString_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint name);
-typedef EGLBoolean (*WaitGL_t)(_EGLDriver *drv, EGLDisplay dpy);
-typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint engine);
+typedef const char *(*QueryString_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name);
+typedef EGLBoolean (*WaitGL_t)(_EGLDriver *drv, _EGLDisplay *dpy);
+typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine);
 
 typedef _EGLProc (*GetProcAddress_t)(const char *procname);
 
 
 
 #ifdef EGL_MESA_screen_surface
-typedef EGLBoolean (*ChooseModeMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
-typedef EGLBoolean (*GetModesMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode);
-typedef EGLBoolean (*GetModeAttribMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
-typedef EGLBoolean (*CopyContextMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
-typedef EGLBoolean (*GetScreensMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
-typedef EGLSurface (*CreateScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-typedef EGLBoolean (*ShowScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA mode);
-typedef EGLBoolean (*ScreenPositionMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y);
-typedef EGLBoolean (*QueryScreenMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value);
-typedef EGLBoolean (*QueryScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface);
-typedef EGLBoolean (*QueryScreenModeMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
-typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode);
+typedef EGLBoolean (*ChooseModeMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
+typedef EGLBoolean (*GetModesMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode);
+typedef EGLBoolean (*GetModeAttribMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *mode, EGLint attribute, EGLint *value);
+typedef EGLBoolean (*CopyContextMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *source, _EGLContext *dest, EGLint mask);
+typedef EGLBoolean (*GetScreensMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
+typedef _EGLSurface *(*CreateScreenSurfaceMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, const EGLint *attrib_list);
+typedef EGLBoolean (*ShowScreenSurfaceMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, _EGLSurface *surface, _EGLMode *mode);
+typedef EGLBoolean (*ScreenPositionMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, EGLint x, EGLint y);
+typedef EGLBoolean (*QueryScreenMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, EGLint attribute, EGLint *value);
+typedef EGLBoolean (*QueryScreenSurfaceMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, _EGLSurface **surface);
+typedef EGLBoolean (*QueryScreenModeMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, _EGLMode **mode);
+typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *mode);
 #endif /* EGL_MESA_screen_surface */
 
 
 #ifdef EGL_VERSION_1_2
-typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, EGLDisplay dpy);
-typedef EGLSurface (*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer, EGLConfig config, const EGLint *attrib_list);
+typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, _EGLDisplay *dpy);
+typedef _EGLSurface *(*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum buftype, EGLClientBuffer buffer, _EGLConfig *config, const EGLint *attrib_list);
 #endif /* EGL_VERSION_1_2 */
 
 

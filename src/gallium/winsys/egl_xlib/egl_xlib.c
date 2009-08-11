@@ -103,18 +103,16 @@ xlib_egl_driver(_EGLDriver *drv)
 
 
 static INLINE struct xlib_egl_surface *
-lookup_surface(EGLSurface surf)
+lookup_surface(_EGLSurface *surf)
 {
-   _EGLSurface *surface = _eglLookupSurface(surf);
-   return (struct xlib_egl_surface *) surface;
+   return (struct xlib_egl_surface *) surf;
 }
 
 
 static INLINE struct xlib_egl_context *
-lookup_context(EGLContext ctx)
+lookup_context(_EGLContext *ctx)
 {
-   _EGLContext *context = _eglLookupContext(ctx);
-   return (struct xlib_egl_context *) context;
+   return (struct xlib_egl_context *) ctx;
 }
 
 
@@ -133,13 +131,12 @@ bitcount(unsigned int n)
  * Create the EGLConfigs.  (one per X visual)
  */
 static void
-create_configs(_EGLDriver *drv, EGLDisplay dpy)
+create_configs(_EGLDriver *drv, _EGLDisplay *disp)
 {
    static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
                                    EGL_OPENGL_ES2_BIT |
                                    EGL_OPENVG_BIT |
                                    EGL_OPENGL_BIT);
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
    XVisualInfo *visInfo, visTemplate;
    int num_visuals, i;
 
@@ -194,7 +191,7 @@ create_configs(_EGLDriver *drv, EGLDisplay dpy)
  * Called via eglInitialize(), drv->API.Initialize().
  */
 static EGLBoolean
-xlib_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
+xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
                    EGLint *minor, EGLint *major)
 {
    create_configs(drv, dpy);
@@ -213,7 +210,7 @@ xlib_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
  * Called via eglTerminate(), drv->API.Terminate().
  */
 static EGLBoolean
-xlib_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
+xlib_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    return EGL_TRUE;
 }
@@ -342,24 +339,23 @@ flush_frontbuffer(struct pipe_winsys *pws,
 /**
  * Called via eglCreateContext(), drv->API.CreateContext().
  */
-static EGLContext
-xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
-                      EGLContext share_list, const EGLint *attrib_list)
+static _EGLContext *
+xlib_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
+                      _EGLContext *share_list, const EGLint *attrib_list)
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
-   _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
    struct xlib_egl_context *ctx;
    struct st_context *share_ctx = NULL; /* XXX fix */
    __GLcontextModes visual;
 
    ctx = CALLOC_STRUCT(xlib_egl_context);
    if (!ctx)
-      return EGL_NO_CONTEXT;
+      return NULL;
 
    /* let EGL lib init the common stuff */
    if (!_eglInitContext(drv, &ctx->Base, conf, attrib_list)) {
       free(ctx);
-      return EGL_NO_CONTEXT;
+      return NULL;
    }
 
    /* API-dependent context creation */
@@ -379,41 +375,33 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    default:
       _eglError(EGL_BAD_MATCH, "eglCreateContext(unsupported API)");
       free(ctx);
-      return EGL_NO_CONTEXT;
+      return NULL;
    }
 
-   _eglLinkContext(&ctx->Base, _eglLookupDisplay(dpy));
-
-   return _eglGetContextHandle(&ctx->Base);
+   return &ctx->Base;
 }
 
 
 static EGLBoolean
-xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
+xlib_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
    struct xlib_egl_context *context = lookup_context(ctx);
-   if (context) {
-      _eglUnlinkContext(&context->Base);
-      if (!_eglIsContextBound(&context->Base)) {
-         /* API-dependent clean-up */
-         switch (context->Base.ClientAPI) {
-         case EGL_OPENGL_ES_API:
-         case EGL_OPENVG_API:
-            /* fall-through */
-         case EGL_OPENGL_API:
-            st_destroy_context(context->Context);
-            break;
-         default:
-            assert(0);
-         }
-         free(context);
+
+   if (!_eglIsContextBound(&context->Base)) {
+      /* API-dependent clean-up */
+      switch (context->Base.ClientAPI) {
+      case EGL_OPENGL_ES_API:
+      case EGL_OPENVG_API:
+         /* fall-through */
+      case EGL_OPENGL_API:
+         st_destroy_context(context->Context);
+         break;
+      default:
+         assert(0);
       }
-      return EGL_TRUE;
+      free(context);
    }
-   else {
-      _eglError(EGL_BAD_CONTEXT, "eglDestroyContext");
-      return EGL_TRUE;
-   }
+   return EGL_TRUE;
 }
 
 
@@ -421,15 +409,15 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
  * Called via eglMakeCurrent(), drv->API.MakeCurrent().
  */
 static EGLBoolean
-xlib_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy,
-                    EGLSurface draw, EGLSurface read, EGLContext ctx)
+xlib_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy,
+                    _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx)
 {
    struct xlib_egl_context *context = lookup_context(ctx);
    struct xlib_egl_surface *draw_surf = lookup_surface(draw);
    struct xlib_egl_surface *read_surf = lookup_surface(read);
    struct st_context *oldctx = st_get_current();
 
-   if (!_eglMakeCurrent(drv, dpy, draw, read, context))
+   if (!_eglMakeCurrent(drv, dpy, draw, read, ctx))
       return EGL_FALSE;
 
    /* Flush before switching context.  Check client API? */
@@ -488,30 +476,25 @@ choose_stencil_format(const __GLcontextModes *visual)
 /**
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
-static EGLSurface
-xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+static _EGLSurface *
+xlib_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                             NativeWindowType window, const EGLint *attrib_list)
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
-
    struct xlib_egl_surface *surf;
    __GLcontextModes visual;
    uint width, height;
 
    surf = CALLOC_STRUCT(xlib_egl_surface);
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
    /* Let EGL lib init the common stuff */
    if (!_eglInitSurface(drv, &surf->Base, EGL_WINDOW_BIT,
                         conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
-
-   _eglLinkSurface(&surf->Base, disp);
 
    /*
     * Now init the Xlib and gallium stuff
@@ -539,46 +522,35 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    st_resize_framebuffer(surf->Framebuffer, width, height);
 
-   return _eglGetSurfaceHandle(&surf->Base);
+   return &surf->Base;
 }
 
 
-static EGLSurface
-xlib_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+static _EGLSurface *
+xlib_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                              const EGLint *attrib_list)
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
    struct xlib_egl_surface *surf;
    __GLcontextModes visual;
    uint width, height;
    EGLBoolean bind_texture;
 
-   if (!disp) {
-      _eglError(EGL_BAD_DISPLAY, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
-   }
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
-   }
-
    surf = CALLOC_STRUCT(xlib_egl_surface);
    if (!surf) {
       _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
    if (!_eglInitSurface(drv, &surf->Base, EGL_PBUFFER_BIT,
                         conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
    if (surf->Base.Width < 0 || surf->Base.Height < 0) {
       _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferSurface");
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
    bind_texture = (surf->Base.TextureFormat != EGL_NO_TEXTURE);
@@ -588,19 +560,19 @@ xlib_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
        (surf->Base.TextureTarget != EGL_NO_TEXTURE && !bind_texture)) {
       _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
    /* a framebuffer of zero width or height confuses st */
    if (width == 0 || height == 0) {
       _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
    /* no mipmap generation */
    if (surf->Base.MipmapTexture) {
       _eglError(EGL_BAD_MATCH, "eglCreatePbufferSurface");
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
    surf->winsys = xdrv->winsys;
@@ -616,34 +588,27 @@ xlib_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                                              (void *) surf);
    st_resize_framebuffer(surf->Framebuffer, width, height);
 
-   return _eglLinkSurface(&surf->Base, disp);
+   return &surf->Base;
 }
 
 
 static EGLBoolean
-xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+xlib_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
    struct xlib_egl_surface *surf = lookup_surface(surface);
-   if (surf) {
-      _eglUnlinkSurface(&surf->Base);
-      if (!_eglIsSurfaceBound(&surf->Base)) {
-         if (surf->Base.Type != EGL_PBUFFER_BIT)
-            XFreeGC(surf->Dpy, surf->Gc);
-         st_unreference_framebuffer(surf->Framebuffer);
-         free(surf);
-      }
-      return EGL_TRUE;
+   if (!_eglIsSurfaceBound(&surf->Base)) {
+      if (surf->Base.Type != EGL_PBUFFER_BIT)
+         XFreeGC(surf->Dpy, surf->Gc);
+      st_unreference_framebuffer(surf->Framebuffer);
+      free(surf);
    }
-   else {
-      _eglError(EGL_BAD_SURFACE, "eglDestroySurface");
-      return EGL_FALSE;
-   }
+   return EGL_TRUE;
 }
 
 
 static EGLBoolean
-xlib_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy,
-                     EGLSurface surface, EGLint buffer)
+xlib_eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy,
+                     _EGLSurface *surface, EGLint buffer)
 {
    struct xlib_egl_surface *xsurf = lookup_surface(surface);
    struct xlib_egl_context *xctx;
@@ -680,12 +645,12 @@ xlib_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy,
 
    /* flush properly */
    if (eglGetCurrentSurface(EGL_DRAW) == surface) {
-      xctx = lookup_context(eglGetCurrentContext());
+      xctx = lookup_context(_eglGetCurrentContext());
       st_flush(xctx->Context, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME,
                NULL);
    }
    else if (_eglIsSurfaceBound(&xsurf->Base)) {
-      xctx = lookup_context(_eglGetContextHandle(xsurf->Base.Binding));
+      xctx = lookup_context(xsurf->Base.Binding);
       if (xctx)
          st_finish(xctx->Context);
    }
@@ -700,7 +665,7 @@ xlib_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy,
 
 
 static EGLBoolean
-xlib_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
+xlib_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                         EGLint buffer)
 {
    struct xlib_egl_surface *xsurf = lookup_surface(surface);
@@ -722,7 +687,7 @@ xlib_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
 
 
 static EGLBoolean
-xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
+xlib_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
    /* error checking step: */
    if (!_eglSwapBuffers(drv, dpy, draw))
@@ -831,4 +796,3 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 
    return &xdrv->Base;
 }
-

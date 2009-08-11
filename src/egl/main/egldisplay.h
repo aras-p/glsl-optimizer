@@ -72,7 +72,7 @@ _eglFindDisplay(NativeDisplayType nativeDisplay);
 
 
 extern void
-_eglReleaseDisplayResources(_EGLDriver *drv, EGLDisplay dpy);
+_eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *dpy);
 
 
 extern void
@@ -92,7 +92,7 @@ _eglGetContextHandle(_EGLContext *ctx);
 
 
 extern _EGLContext *
-_eglLookupContext(EGLContext ctx);
+_eglLookupContext(EGLContext ctx, _EGLDisplay *dpy);
 
 
 /**
@@ -117,7 +117,7 @@ _eglGetSurfaceHandle(_EGLSurface *);
 
 
 extern _EGLSurface *
-_eglLookupSurface(EGLSurface surf);
+_eglLookupSurface(EGLSurface surf, _EGLDisplay *dpy);
 
 
 /**

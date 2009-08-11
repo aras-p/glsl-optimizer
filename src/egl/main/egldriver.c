@@ -277,7 +277,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 
 
 EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
+_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    void *handle = drv->LibHandle;
    EGLBoolean b;

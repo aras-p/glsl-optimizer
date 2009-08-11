@@ -25,11 +25,6 @@ _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
       return EGL_FALSE;
    }
 
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "_eglInitContext");
-      return EGL_FALSE;
-   }
-
    memset(ctx, 0, sizeof(_EGLContext));
 
    ctx->ClientVersion = 1; /* the default, per EGL spec */
@@ -58,32 +53,25 @@ _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
 /**
  * Just a placeholder/demo function.  Real driver will never use this!
  */
-EGLContext
-_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
-                  EGLContext share_list, const EGLint *attrib_list)
+_EGLContext *
+_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
+                  _EGLContext *share_list, const EGLint *attrib_list)
 {
 #if 0 /* example code */
    _EGLContext *context;
-   _EGLConfig *conf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
-      return EGL_NO_CONTEXT;
-   }
 
    context = (_EGLContext *) calloc(1, sizeof(_EGLContext));
    if (!context)
-      return EGL_NO_CONTEXT;
+      return NULL;
 
    if (!_eglInitContext(drv, context, conf, attrib_list)) {
       free(context);
-      return EGL_NO_CONTEXT;
+      return NULL;
    }
 
-   return _eglLinkContext(context, _eglLookupDisplay(dpy));
+   return context;
 #endif
-   return EGL_NO_CONTEXT;
+   return NULL;
 }
 
 
@@ -91,35 +79,20 @@ _eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  * Default fallback routine - drivers should usually override this.
  */
 EGLBoolean
-_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
+_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
-   _EGLContext *context = _eglLookupContext(ctx);
-   if (context) {
-      _eglUnlinkContext(context);
-      if (!_eglIsContextBound(context))
-         free(context);
-      return EGL_TRUE;
-   }
-   else {
-      _eglError(EGL_BAD_CONTEXT, "eglDestroyContext");
-      return EGL_TRUE;
-   }
+   if (!_eglIsContextBound(ctx))
+      free(ctx);
+   return EGL_TRUE;
 }
 
 
 EGLBoolean
-_eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
+_eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
                  EGLint attribute, EGLint *value)
 {
-   _EGLContext *c = _eglLookupContext(ctx);
-
    (void) drv;
    (void) dpy;
-
-   if (!c) {
-      _eglError(EGL_BAD_CONTEXT, "eglQueryContext");
-      return EGL_FALSE;
-   }
 
    switch (attribute) {
    case EGL_CONFIG_ID:
@@ -146,14 +119,10 @@ _eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
  * Then, the driver will do its device-dependent Make-Current stuff.
  */
 EGLBoolean
-_eglMakeCurrent(_EGLDriver *drv, EGLDisplay display, EGLSurface d,
-                EGLSurface r, EGLContext context)
+_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw,
+                _EGLSurface *read, _EGLContext *ctx)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLDisplay *dpy = _eglLookupDisplay(display);
-   _EGLContext *ctx = _eglLookupContext(context);
-   _EGLSurface *draw = _eglLookupSurface(d);
-   _EGLSurface *read = _eglLookupSurface(r);
    _EGLContext *oldContext = NULL;
    _EGLSurface *oldDrawSurface = NULL;
    _EGLSurface *oldReadSurface = NULL;
@@ -161,18 +130,13 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay display, EGLSurface d,
 
    if (_eglIsCurrentThreadDummy())
       return _eglError(EGL_BAD_ALLOC, "eglMakeCurrent");
-   if (dpy == NULL)
-      return _eglError(EGL_BAD_DISPLAY, "eglMakeCurrent");
 
    if (ctx) {
       /* error checking */
       if (ctx->Binding && ctx->Binding != t)
          return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
-      if (draw == NULL || read == NULL) {
-         EGLint err = (d == EGL_NO_SURFACE || r == EGL_NO_SURFACE)
-                      ? EGL_BAD_MATCH : EGL_BAD_SURFACE;
-         return _eglError(err, "eglMakeCurrent");
-      }
+      if (draw == NULL || read == NULL)
+         return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
       if (draw->Config != ctx->Config || read->Config != ctx->Config)
          return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
       if ((draw->Binding && draw->Binding->Binding != t) ||
@@ -197,8 +161,6 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay display, EGLSurface d,
       apiIndex = _eglConvertApiToIndex(ctx->ClientAPI);
    }
    else {
-      if (context != EGL_NO_CONTEXT)
-         return _eglError(EGL_BAD_CONTEXT, "eglMakeCurrent");
       if (draw != NULL || read != NULL)
          return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
       apiIndex = t->CurrentAPIIndex;
@@ -221,23 +183,19 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay display, EGLSurface d,
 
       /*
        * check if the old context or surfaces need to be deleted
-       * FIXME They are linked so that they can be unlinked.  This is ugly.
        */
       if (!_eglIsSurfaceLinked(oldDrawSurface)) {
          assert(draw != oldDrawSurface && read != oldDrawSurface);
-         drv->API.DestroySurface(drv, display,
-                                 _eglLinkSurface(oldDrawSurface, dpy));
+         drv->API.DestroySurface(drv, dpy, oldDrawSurface);
       }
       if (oldReadSurface != oldDrawSurface &&
           !_eglIsSurfaceLinked(oldReadSurface)) {
          assert(draw != oldReadSurface && read != oldReadSurface);
-         drv->API.DestroySurface(drv, display,
-                                 _eglLinkSurface(oldReadSurface, dpy));
+         drv->API.DestroySurface(drv, dpy, oldReadSurface);
       }
       if (!_eglIsContextLinked(oldContext)) {
          assert(ctx != oldContext);
-         drv->API.DestroyContext(drv, display,
-                                 _eglLinkContext(oldContext, dpy));
+         drv->API.DestroyContext(drv, dpy, oldContext);
       }
    }
 

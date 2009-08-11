@@ -137,24 +137,21 @@ struct drm_screen
 
 
 static INLINE struct drm_context *
-lookup_drm_context(EGLContext context)
+lookup_drm_context(_EGLContext *c)
 {
-	_EGLContext *c = _eglLookupContext(context);
 	return (struct drm_context *) c;
 }
 
 
 static INLINE struct drm_surface *
-lookup_drm_surface(EGLSurface surface)
+lookup_drm_surface(_EGLSurface *s)
 {
-	_EGLSurface *s = _eglLookupSurface(surface);
 	return (struct drm_surface *) s;
 }
 
 static INLINE struct drm_screen *
-lookup_drm_screen(EGLDisplay dpy, EGLScreenMESA screen)
+lookup_drm_screen(_EGLScreen *s)
 {
-	_EGLScreen *s = _eglLookupScreen(dpy, screen);
 	return (struct drm_screen *) s;
 }
 
@@ -178,18 +175,18 @@ void drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen);
  * All function exported to the egl side.
  */
 /*@{*/
-EGLBoolean drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor);
-EGLBoolean drm_terminate(_EGLDriver *drv, EGLDisplay dpy);
-EGLContext drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list);
-EGLBoolean drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context);
-EGLSurface drm_create_window_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list);
-EGLSurface drm_create_pixmap_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list);
-EGLSurface drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-EGLSurface drm_create_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg, const EGLint *attrib_list);
-EGLBoolean drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA m);
-EGLBoolean drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface);
-EGLBoolean drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext context);
-EGLBoolean drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw);
+EGLBoolean drm_initialize(_EGLDriver *drv, _EGLDisplay *dpy, EGLint *major, EGLint *minor);
+EGLBoolean drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy);
+_EGLContext *drm_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list);
+EGLBoolean drm_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *context);
+_EGLSurface *drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list);
+_EGLSurface *drm_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list);
+_EGLSurface *drm_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
+_EGLSurface *drm_create_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
+EGLBoolean drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *screen, _EGLSurface *surface, _EGLMode *mode);
+EGLBoolean drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface);
+EGLBoolean drm_make_current(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *context);
+EGLBoolean drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw);
 /*@}*/
 
 #endif

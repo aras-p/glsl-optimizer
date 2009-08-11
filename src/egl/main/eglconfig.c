@@ -71,10 +71,9 @@ _eglGetConfigHandle(_EGLConfig *config)
  * This is the inverse of _eglGetConfigHandle().
  */
 _EGLConfig *
-_eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
+_eglLookupConfig(EGLConfig config, _EGLDisplay *disp)
 {
    EGLint i;
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
    for (i = 0; i < disp->NumConfigs; i++) {
       if (disp->Configs[i]->Handle == config) {
           return disp->Configs[i];
@@ -319,10 +318,9 @@ _eglCompareConfigs(const void *a, const void *b)
  * Typical fallback routine for eglChooseConfig
  */
 EGLBoolean
-_eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
+_eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
                  EGLConfig *configs, EGLint config_size, EGLint *num_configs)
 {
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLConfig **configList, criteria;
    EGLint i, count;
 
@@ -367,10 +365,9 @@ _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
  * Fallback for eglGetConfigAttrib.
  */
 EGLBoolean
-_eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                     EGLint attribute, EGLint *value)
 {
-   const _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
    const EGLint k = attribute - FIRST_ATTRIB;
    if (k >= 0 && k < MAX_ATTRIBS) {
       *value = conf->Attrib[k];
@@ -387,16 +384,9 @@ _eglGetConfigAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  * Fallback for eglGetConfigs.
  */
 EGLBoolean
-_eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
+_eglGetConfigs(_EGLDriver *drv, _EGLDisplay *disp, EGLConfig *configs,
                EGLint config_size, EGLint *num_config)
 {
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
-
-   if (!drv->Initialized) {
-      _eglError(EGL_NOT_INITIALIZED, "eglGetConfigs");
-      return EGL_FALSE;
-   }
-
    if (configs) {
       EGLint i;
       *num_config = MIN2(disp->NumConfigs, config_size);

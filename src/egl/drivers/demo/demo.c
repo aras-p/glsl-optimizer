@@ -49,9 +49,8 @@ typedef struct demo_context
 
 
 static EGLBoolean
-demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
+demoInitialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 {
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLScreen *scrn;
    EGLint i;
 
@@ -95,7 +94,7 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 
 
 static EGLBoolean
-demoTerminate(_EGLDriver *drv, EGLDisplay dpy)
+demoTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    /*DemoDriver *demo = DEMO_DRIVER(dpy);*/
    free(drv);
@@ -104,62 +103,48 @@ demoTerminate(_EGLDriver *drv, EGLDisplay dpy)
 
 
 static DemoContext *
-LookupDemoContext(EGLContext ctx)
+LookupDemoContext(_EGLContext *c)
 {
-   _EGLContext *c = _eglLookupContext(ctx);
    return (DemoContext *) c;
 }
 
 
 static DemoSurface *
-LookupDemoSurface(EGLSurface surf)
+LookupDemoSurface(_EGLSurface *s)
 {
-   _EGLSurface *s = _eglLookupSurface(surf);
    return (DemoSurface *) s;
 }
 
 
-
-static EGLContext
-demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+static _EGLContext *
+demoCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
    DemoContext *c;
    int i;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
-      return EGL_NO_CONTEXT;
-   }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
          /* no attribs defined for now */
       default:
          _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
-         return EGL_NO_CONTEXT;
+         return NULL;
       }
    }
 
    c = (DemoContext *) calloc(1, sizeof(DemoContext));
    if (!c)
-      return EGL_NO_CONTEXT;
+      return NULL;
 
    _eglInitContext(drv, &c->Base, conf, attrib_list);
    c->DemoStuff = 1;
    printf("demoCreateContext\n");
 
-   /* link to display */
-   _eglLinkContext(&c->Base, _eglLookupDisplay(dpy));
-   assert(_eglGetContextHandle(&c->Base));
-
-   return _eglGetContextHandle(&c->Base);
+   return &c->Base;
 }
 
 
-static EGLSurface
-demoCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list)
+static _EGLSurface *
+demoCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list)
 {
    int i;
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
@@ -167,75 +152,65 @@ demoCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, Nativ
          /* no attribs at this time */
       default:
          _eglError(EGL_BAD_ATTRIBUTE, "eglCreateWindowSurface");
-         return EGL_NO_SURFACE;
+         return NULL;
       }
    }
    printf("eglCreateWindowSurface()\n");
    /* XXX unfinished */
 
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
-static EGLSurface
-demoCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list)
+static _EGLSurface *
+demoCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
    EGLint i;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePixmapSurface");
-      return EGL_NO_SURFACE;
-   }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
          /* no attribs at this time */
       default:
          _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePixmapSurface");
-         return EGL_NO_SURFACE;
+         return NULL;
       }
    }
 
    if (conf->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] == 0) {
       _eglError(EGL_BAD_MATCH, "eglCreatePixmapSurface");
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
    printf("eglCreatePixmapSurface()\n");
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
-static EGLSurface
-demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+static _EGLSurface *
+demoCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                          const EGLint *attrib_list)
 {
    DemoSurface *surf = (DemoSurface *) calloc(1, sizeof(DemoSurface));
-   _EGLConfig *conf;
 
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
-   conf = _eglLookupConfig(drv, dpy, config);
    if (!_eglInitSurface(drv, &surf->Base, EGL_PBUFFER_BIT,
                         conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
    /* a real driver would allocate the pbuffer memory here */
 
-   return surf->Base.Handle;
+   return &surf->Base;
 }
 
 
 static EGLBoolean
-demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+demoDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
    DemoSurface *fs = LookupDemoSurface(surface);
-   _eglUnlinkSurface(&fs->Base);
    if (!_eglIsSurfaceBound(&fs->Base))
       free(fs);
    return EGL_TRUE;
@@ -243,10 +218,9 @@ demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 
 
 static EGLBoolean
-demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
+demoDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *context)
 {
    DemoContext *fc = LookupDemoContext(context);
-   _eglUnlinkContext(&fc->Base);
    if (!_eglIsContextBound(&fc->Base))
       free(fc);
    return EGL_TRUE;
@@ -254,15 +228,12 @@ demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 
 
 static EGLBoolean
-demoMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext context)
+demoMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *drawSurf, _EGLSurface *readSurf, _EGLContext *ctx)
 {
    /*DemoDriver *demo = DEMO_DRIVER(dpy);*/
-   DemoSurface *readSurf = LookupDemoSurface(read);
-   DemoSurface *drawSurf = LookupDemoSurface(draw);
-   DemoContext *ctx = LookupDemoContext(context);
    EGLBoolean b;
 
-   b = _eglMakeCurrent(drv, dpy, draw, read, context);
+   b = _eglMakeCurrent(drv, dpy, drawSurf, readSurf, ctx);
    if (!b)
       return EGL_FALSE;
 

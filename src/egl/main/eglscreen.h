@@ -35,7 +35,7 @@ _eglInitScreen(_EGLScreen *screen);
 
 
 extern _EGLScreen *
-_eglLookupScreen(EGLDisplay dpy, EGLScreenMESA screen);
+_eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *dpy);
 
 
 extern void
@@ -43,40 +43,40 @@ _eglAddScreen(_EGLDisplay *display, _EGLScreen *screen);
 
 
 extern EGLBoolean
-_eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
+_eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 
 
-extern EGLSurface
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-
-
-extern EGLBoolean
-_eglShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA mode);
+extern _EGLSurface *
+_eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, const EGLint *attrib_list);
 
 
 extern EGLBoolean
-_eglScreenModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA mode);
+_eglShowScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLSurface *surf, _EGLMode *m);
 
 
 extern EGLBoolean
-_eglScreenPositionMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y);
+_eglScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLMode *m);
 
 
 extern EGLBoolean
-_eglQueryDisplayMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint attribute, EGLint *value);
+_eglScreenPositionMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, EGLint x, EGLint y);
 
 
 extern EGLBoolean
-_eglQueryScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
-                           EGLScreenMESA screen, EGLSurface *surface);
+_eglQueryDisplayMESA(_EGLDriver *drv, _EGLDisplay *dpy, EGLint attribute, EGLint *value);
 
 
 extern EGLBoolean
-_eglQueryScreenModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
+_eglQueryScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy,
+                           _EGLScreen *scrn, _EGLSurface **surface);
 
 
 extern EGLBoolean
-_eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value);
+_eglQueryScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, _EGLMode **m);
+
+
+extern EGLBoolean
+_eglQueryScreenMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn, EGLint attribute, EGLint *value);
 
 
 extern void

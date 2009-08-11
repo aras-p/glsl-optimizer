@@ -34,9 +34,8 @@ my_strdup(const char *s)
  * or null if non-existant.
  */
 _EGLMode *
-_eglLookupMode(EGLDisplay dpy, EGLModeMESA mode)
+_eglLookupMode(EGLModeMESA mode, _EGLDisplay *disp)
 {
-   const _EGLDisplay *disp = _eglLookupDisplay(dpy);
    EGLint scrnum;
 
    /* loop over all screens on the display */
@@ -272,18 +271,12 @@ _eglCompareModes(const void *a, const void *b)
  * Called via eglChooseModeMESA API function.
  */
 EGLBoolean
-_eglChooseModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
+_eglChooseModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
                    const EGLint *attrib_list, EGLModeMESA *modes,
                    EGLint modes_size, EGLint *num_modes)
 {
-   const _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
    _EGLMode **modeList, min;
    EGLint i, count;
-
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglChooseModeMESA");
-      return EGL_FALSE;
-   }
 
    if (!_eglParseModeAttribs(&min, attrib_list)) {
       /* error code will have been recorded */
@@ -326,16 +319,9 @@ _eglChooseModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
  * Called via eglGetModesMESA() API function.
  */
 EGLBoolean
-_eglGetModesMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
+_eglGetModesMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
                  EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes)
 {
-   _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglGetModesMESA");
-      return EGL_FALSE;
-   }
-
    if (modes) {
       EGLint i;
       *num_modes = MIN2(scrn->NumModes, modes_size);
@@ -356,16 +342,10 @@ _eglGetModesMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
  * Query an attribute of a mode.
  */
 EGLBoolean
-_eglGetModeAttribMESA(_EGLDriver *drv, EGLDisplay dpy,
-                      EGLModeMESA mode, EGLint attribute, EGLint *value)
+_eglGetModeAttribMESA(_EGLDriver *drv, _EGLDisplay *dpy,
+                      _EGLMode *m, EGLint attribute, EGLint *value)
 {
-   _EGLMode *m = _eglLookupMode(dpy, mode);
    EGLint v;
-
-   if (!m) {
-      _eglError(EGL_BAD_MODE_MESA, "eglGetModeAttribMESA");
-      return EGL_FALSE;
-   }
 
    v = getModeAttrib(m, attribute);
    if (v < 0) {
@@ -382,13 +362,8 @@ _eglGetModeAttribMESA(_EGLDriver *drv, EGLDisplay dpy,
  * This is the default function called by eglQueryModeStringMESA().
  */
 const char *
-_eglQueryModeStringMESA(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode)
+_eglQueryModeStringMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *m)
 {
-   _EGLMode *m = _eglLookupMode(dpy, mode);
-   if (!m) {
-      _eglError(EGL_BAD_MODE_MESA, "eglQueryModeStringMESA");
-      return NULL;
-   }
    return m->Name;
 }
 

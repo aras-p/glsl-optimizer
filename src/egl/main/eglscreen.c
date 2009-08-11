@@ -52,13 +52,9 @@ _eglInitScreen(_EGLScreen *screen)
  * Given a public screen handle, return the internal _EGLScreen object.
  */
 _EGLScreen *
-_eglLookupScreen(EGLDisplay dpy, EGLScreenMESA screen)
+_eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *display)
 {
    EGLint i;
-   _EGLDisplay *display = _eglLookupDisplay(dpy);
-
-   if (!display)
-      return NULL;
 
    for (i = 0; i < display->NumScreens; i++) {
       if (display->Screens[i]->Handle == screen)
@@ -89,16 +85,10 @@ _eglAddScreen(_EGLDisplay *display, _EGLScreen *screen)
 
 
 EGLBoolean
-_eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
+_eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *display, EGLScreenMESA *screens,
                    EGLint max_screens, EGLint *num_screens)
 {
-   _EGLDisplay *display = _eglLookupDisplay(dpy);
    EGLint n;
-
-   if (!display) {
-      _eglError(EGL_BAD_DISPLAY, "eglGetScreensMESA");
-      return EGL_FALSE;
-   }
 
    if (display->NumScreens > max_screens) {
       n = max_screens;
@@ -122,33 +112,26 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
 /**
  * Example function - drivers should do a proper implementation.
  */
-EGLSurface
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_EGLSurface *
+_eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                             const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
-   _EGLConfig *conf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateScreenSurfaceMESA");
-      return EGL_NO_SURFACE;
-   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
    if (!_eglInitSurface(drv, surf, EGL_SCREEN_BIT_MESA,
                         conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
-   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
+   return surf;
 #endif
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
@@ -160,28 +143,15 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  * this with code that _really_ shows the surface.
  */
 EGLBoolean
-_eglShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
-                          EGLScreenMESA screen, EGLSurface surface,
-                          EGLModeMESA m)
+_eglShowScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy,
+                          _EGLScreen *scrn, _EGLSurface *surf,
+                          _EGLMode *mode)
 {
-   _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-   _EGLMode *mode = _eglLookupMode(dpy, m);
-
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglShowSurfaceMESA");
-      return EGL_FALSE;
-   }
-   if (!mode && (m != EGL_NO_MODE_MESA )) {
-      _eglError(EGL_BAD_MODE_MESA, "eglShowSurfaceMESA");
-      return EGL_FALSE;
-   }
-
-   if (surface == EGL_NO_SURFACE) {
+   if (!surf) {
       scrn->CurrentSurface = NULL;
    }
    else {
-      _EGLSurface *surf = _eglLookupSurface(surface);
-      if (!surf || surf->Type != EGL_SCREEN_BIT_MESA) {
+      if (surf->Type != EGL_SCREEN_BIT_MESA) {
          _eglError(EGL_BAD_SURFACE, "eglShowSurfaceMESA");
          return EGL_FALSE;
       }
@@ -206,18 +176,10 @@ _eglShowScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
  * this with code that _really_ sets the mode.
  */
 EGLBoolean
-_eglScreenModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                   EGLModeMESA mode)
+_eglScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
+                   _EGLMode *m)
 {
-   _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglScreenModeMESA");
-      return EGL_FALSE;
-   }
-
-   scrn->CurrentMode = _eglLookupMode(dpy, mode);
-
+   scrn->CurrentMode = m;
    return EGL_TRUE;
 }
 
@@ -226,15 +188,9 @@ _eglScreenModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
  * Set a screen's surface origin.
  */
 EGLBoolean
-_eglScreenPositionMESA(_EGLDriver *drv, EGLDisplay dpy,
-                       EGLScreenMESA screen, EGLint x, EGLint y)
+_eglScreenPositionMESA(_EGLDriver *drv, _EGLDisplay *dpy,
+                       _EGLScreen *scrn, EGLint x, EGLint y)
 {
-   _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglScreenPositionMESA");
-      return EGL_FALSE;
-   }
-
    scrn->OriginX = x;
    scrn->OriginY = y;
 
@@ -246,14 +202,10 @@ _eglScreenPositionMESA(_EGLDriver *drv, EGLDisplay dpy,
  * Query a screen's current surface.
  */
 EGLBoolean
-_eglQueryScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
-                           EGLScreenMESA screen, EGLSurface *surface)
+_eglQueryScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy,
+                           _EGLScreen *scrn, _EGLSurface **surf)
 {
-   const _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-   if (scrn->CurrentSurface)
-      *surface = scrn->CurrentSurface->Handle;
-   else
-      *surface = EGL_NO_SURFACE;
+   *surf = scrn->CurrentSurface;
    return EGL_TRUE;
 }
 
@@ -262,29 +214,18 @@ _eglQueryScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy,
  * Query a screen's current mode.
  */
 EGLBoolean
-_eglQueryScreenModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                        EGLModeMESA *mode)
+_eglQueryScreenModeMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
+                        _EGLMode **m)
 {
-   const _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-   if (scrn->CurrentMode)
-      *mode = scrn->CurrentMode->Handle;
-   else
-      *mode = EGL_NO_MODE_MESA;
+   *m = scrn->CurrentMode;
    return EGL_TRUE;
 }
 
 
 EGLBoolean
-_eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
+_eglQueryScreenMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLScreen *scrn,
                     EGLint attribute, EGLint *value)
 {
-   const _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, "eglQueryScreenMESA");
-      return EGL_FALSE;
-   }
-
    switch (attribute) {
    case EGL_SCREEN_POSITION_MESA:
       value[0] = scrn->OriginX;

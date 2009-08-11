@@ -77,7 +77,7 @@ _eglUpdateAPIsString(_EGLDriver *drv)
 
 
 const char *
-_eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
+_eglQueryString(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name)
 {
    (void) drv;
    (void) dpy;
@@ -102,7 +102,7 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
 
 
 EGLBoolean
-_eglWaitGL(_EGLDriver *drv, EGLDisplay dpy)
+_eglWaitGL(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    /* just a placeholder */
    (void) drv;
@@ -112,7 +112,7 @@ _eglWaitGL(_EGLDriver *drv, EGLDisplay dpy)
 
 
 EGLBoolean
-_eglWaitNative(_EGLDriver *drv, EGLDisplay dpy, EGLint engine)
+_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 {
    /* just a placeholder */
    (void) drv;

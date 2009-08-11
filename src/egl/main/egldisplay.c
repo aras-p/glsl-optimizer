@@ -200,29 +200,29 @@ _eglFindDisplay(NativeDisplayType nativeDisplay)
  * Destroy the contexts and surfaces that are linked to the display.
  */
 void
-_eglReleaseDisplayResources(_EGLDriver *drv, EGLDisplay dpy)
+_eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *display)
 {
-   _EGLDisplay *display;
    _EGLContext *contexts;
    _EGLSurface *surfaces;
 
-   display = _eglLookupDisplay(dpy);
-   if (!display)
-      return;
    contexts = display->ContextList;
    surfaces = display->SurfaceList;
 
    while (contexts) {
-      EGLContext handle = _eglGetContextHandle(contexts);
+      _EGLContext *ctx = contexts;
       contexts = contexts->Next;
-      drv->API.DestroyContext(drv, dpy, handle);
+
+      _eglUnlinkContext(ctx);
+      drv->API.DestroyContext(drv, display, ctx);
    }
    assert(!display->ContextList);
 
    while (surfaces) {
-      EGLSurface handle = _eglGetSurfaceHandle(surfaces);
+      _EGLSurface *surf = surfaces;
       surfaces = surfaces->Next;
-      drv->API.DestroySurface(drv, dpy, handle);
+
+      _eglUnlinkSurface(surf);
+      drv->API.DestroySurface(drv, display, surf);
    }
    assert(!display->SurfaceList);
 }
@@ -309,7 +309,7 @@ _eglGetContextHandle(_EGLContext *ctx)
  * Return NULL if the handle has no corresponding linked context.
  */
 _EGLContext *
-_eglLookupContext(EGLContext ctx)
+_eglLookupContext(EGLContext ctx, _EGLDisplay *dpy)
 {
    _EGLContext *context = (_EGLContext *) ctx;
    return (context && context->Display) ? context : NULL;
@@ -389,8 +389,8 @@ _eglGetSurfaceHandle(_EGLSurface *surface)
  * Return NULL if the handle has no corresponding linked surface.
  */
 _EGLSurface *
-_eglLookupSurface(EGLSurface surf)
+_eglLookupSurface(EGLSurface surf, _EGLDisplay *dpy)
 {
    EGLuint key = _eglPointerToUInt((void *) surf);
-   return (_EGLSurface *) _eglHashLookup(_eglSurfaceHash, key);
+   return (_EGLSurface *) _eglHashLookup(dpy->SurfaceHash, key);
 }

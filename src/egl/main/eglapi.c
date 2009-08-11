@@ -29,7 +29,6 @@
  */
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +38,9 @@
 #include "eglglobals.h"
 #include "egldriver.h"
 #include "eglsurface.h"
-
+#include "eglconfig.h"
+#include "eglscreen.h"
+#include "eglmode.h"
 
 
 /**
@@ -67,232 +68,481 @@ eglGetDisplay(NativeDisplayType nativeDisplay)
 EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLDriver *drv;
    EGLint major_int, minor_int;
 
-   if (dpy) {
-      EGLBoolean retVal;
-      _EGLDisplay *dpyPriv = _eglLookupDisplay(dpy);
-      if (!dpyPriv) {
-         return EGL_FALSE;
-      }
-      dpyPriv->Driver = _eglOpenDriver(dpyPriv,
-                                       dpyPriv->DriverName,
-                                       dpyPriv->DriverArgs);
-      if (!dpyPriv->Driver) {
-         return EGL_FALSE;
-      }
-      /* Initialize the particular driver now */
-      retVal = dpyPriv->Driver->API.Initialize(dpyPriv->Driver, dpy,
-                                               &major_int, &minor_int);
+   if (!disp)
+      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
 
-      dpyPriv->Driver->APImajor = major_int;
-      dpyPriv->Driver->APIminor = minor_int;
-      snprintf(dpyPriv->Driver->Version, sizeof(dpyPriv->Driver->Version),
-               "%d.%d (%s)", major_int, minor_int, dpyPriv->Driver->Name);
+   drv = disp->Driver;
+   if (!drv) {
+      drv = _eglOpenDriver(disp, disp->DriverName, disp->DriverArgs);
+      if (!drv)
+         return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
 
-      /* Update applications version of major and minor if not NULL */
-      if((major != NULL) && (minor != NULL))
-      {
-         *major = major_int;
-         *minor = minor_int;
+      /* Initialize the particular display now */
+      if (!drv->API.Initialize(drv, disp, &major_int, &minor_int)) {
+         _eglCloseDriver(drv, disp);
+         return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
       }
 
-      return retVal;
+      drv->APImajor = major_int;
+      drv->APIminor = minor_int;
+      snprintf(drv->Version, sizeof(drv->Version),
+               "%d.%d (%s)", major_int, minor_int, drv->Name);
+
+      disp->Driver = drv;
+   } else {
+      major_int = drv->APImajor;
+      minor_int = drv->APIminor;
    }
-   return EGL_FALSE;
+
+   /* Update applications version of major and minor if not NULL */
+   if ((major != NULL) && (minor != NULL)) {
+      *major = major_int;
+      *minor = minor_int;
+   }
+
+   return EGL_TRUE;
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglTerminate(EGLDisplay dpy)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return _eglCloseDriver(drv, dpy);
-   else
-      return EGL_FALSE;
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLDriver *drv;
+
+   if (!disp)
+      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+
+   drv = disp->Driver;
+   if (drv) {
+      /* TODO drv->API.Terminate should be called here */
+      _eglCloseDriver(drv, disp);
+      disp->Driver = NULL;
+   }
+
+   return EGL_TRUE;
 }
+
+
+/**
+ * A bunch of check functions and declare macros to simply error checking.
+ */
+static INLINE _EGLDriver *
+_eglCheckDisplay(_EGLDisplay *disp, const char *msg)
+{
+   if (!disp) {
+      _eglError(EGL_BAD_DISPLAY, msg);
+      return NULL;
+   }
+   if (!disp->Driver) {
+      _eglError(EGL_NOT_INITIALIZED, msg);
+      return NULL;
+   }
+   return disp->Driver;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckSurface(_EGLDisplay *disp, _EGLSurface *surf, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!surf) {
+      _eglError(EGL_BAD_SURFACE, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckContext(_EGLDisplay *disp, _EGLContext *context, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!context) {
+      _eglError(EGL_BAD_CONTEXT, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckConfig(_EGLDisplay *disp, _EGLConfig *conf, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+#define _EGL_DECLARE_DD(dpy)                                   \
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
+   _EGLDriver *drv;                                            \
+   do {                                                        \
+      drv = _eglCheckDisplay(disp, __FUNCTION__);              \
+      if (!drv)                                                \
+         return EGL_FALSE;                                     \
+   } while (0)
+
+
+#define _EGL_DECLARE_DD_AND_SURFACE(dpy, surface)              \
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
+   _EGLSurface *surf = _eglLookupSurface((surface), disp);     \
+   _EGLDriver *drv;                                            \
+   do {                                                        \
+      drv = _eglCheckSurface(disp, surf, __FUNCTION__);        \
+      if (!drv)                                                \
+         return EGL_FALSE;                                     \
+   } while (0)
+
+
+#define _EGL_DECLARE_DD_AND_CONTEXT(dpy, ctx)                  \
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
+   _EGLContext *context = _eglLookupContext((ctx), disp);      \
+   _EGLDriver *drv;                                            \
+   do {                                                        \
+      drv = _eglCheckContext(disp, context, __FUNCTION__);     \
+      if (!drv)                                                \
+         return EGL_FALSE;                                     \
+   } while (0)
+
+
+#ifdef EGL_MESA_screen_surface
+
+
+static INLINE _EGLDriver *
+_eglCheckScreen(_EGLDisplay *disp, _EGLScreen *scrn, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!scrn) {
+      _eglError(EGL_BAD_SCREEN_MESA, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckMode(_EGLDisplay *disp, _EGLMode *m, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!m) {
+      _eglError(EGL_BAD_MODE_MESA, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+#define _EGL_DECLARE_DD_AND_SCREEN(dpy, screen)                \
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
+   _EGLScreen *scrn = _eglLookupScreen((screen), disp);        \
+   _EGLDriver *drv;                                            \
+   do {                                                        \
+      drv = _eglCheckScreen(disp, scrn, __FUNCTION__);         \
+      if (!drv)                                                \
+         return EGL_FALSE;                                     \
+   } while (0)
+
+
+#define _EGL_DECLARE_DD_AND_MODE(dpy, mode)                    \
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
+   _EGLMode *m = _eglLookupMode((mode), disp);                 \
+   _EGLDriver *drv;                                            \
+   do {                                                        \
+      drv = _eglCheckMode(disp, m, __FUNCTION__);              \
+      if (!drv)                                                \
+         return EGL_FALSE;                                     \
+   } while (0)
+
+
+#endif /* EGL_MESA_screen_surface */
 
 
 const char * EGLAPIENTRY
 eglQueryString(EGLDisplay dpy, EGLint name)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.QueryString(drv, dpy, name);
-   else
-      return NULL;
+   _EGL_DECLARE_DD(dpy);
+   return drv->API.QueryString(drv, disp, name);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglGetConfigs(EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config)
+eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
+              EGLint config_size, EGLint *num_config)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   /* XXX check drv for null in remaining functions */
-   return drv->API.GetConfigs(drv, dpy, configs, config_size, num_config);
+   _EGL_DECLARE_DD(dpy);
+   return drv->API.GetConfigs(drv, disp, configs, config_size, num_config);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config)
+eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs,
+                EGLint config_size, EGLint *num_config)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.ChooseConfig(drv, dpy, attrib_list, configs, config_size, num_config);
+   _EGL_DECLARE_DD(dpy);
+   return drv->API.ChooseConfig(drv, disp, attrib_list, configs,
+                                config_size, num_config);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value)
+eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
+                   EGLint attribute, EGLint *value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.GetConfigAttrib(drv, dpy, config, attribute, value);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+
+   return drv->API.GetConfigAttrib(drv, disp, conf, attribute, value);
 }
 
 
 EGLContext EGLAPIENTRY
-eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
+                 const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreateContext(drv, dpy, config, share_list, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLContext *share = _eglLookupContext(share_list, disp);
+   _EGLDriver *drv;
+   _EGLContext *context;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_CONTEXT;
+   if (!share && share_list != EGL_NO_CONTEXT) {
+      _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+      return EGL_NO_CONTEXT;
+   }
+
+   context = drv->API.CreateContext(drv, disp, conf, share, attrib_list);
+   if (context)
+      return _eglLinkContext(context, disp);
+   else
+      return EGL_NO_CONTEXT;
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.DestroyContext(drv, dpy, ctx);
+   _EGL_DECLARE_DD_AND_CONTEXT(dpy, ctx);
+   _eglUnlinkContext(context);
+   return drv->API.DestroyContext(drv, disp, context);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx)
+eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read,
+               EGLContext ctx)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.MakeCurrent(drv, dpy, draw, read, ctx);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLContext *context = _eglLookupContext(ctx, disp);
+   _EGLSurface *draw_surf = _eglLookupSurface(draw, disp);
+   _EGLSurface *read_surf = _eglLookupSurface(read, disp);
+   _EGLDriver *drv;
+
+   drv = _eglCheckDisplay(disp, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+   if (!context && ctx != EGL_NO_CONTEXT)
+      return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+   if ((!draw_surf && draw != EGL_NO_SURFACE) ||
+       (!read_surf && read != EGL_NO_SURFACE))
+      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+
+   return drv->API.MakeCurrent(drv, disp, draw_surf, read_surf, context);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglQueryContext(EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value)
+eglQueryContext(EGLDisplay dpy, EGLContext ctx,
+                EGLint attribute, EGLint *value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QueryContext(drv, dpy, ctx, attribute, value);
+   _EGL_DECLARE_DD_AND_CONTEXT(dpy, ctx);
+   return drv->API.QueryContext(drv, disp, context, attribute, value);
 }
 
 
 EGLSurface EGLAPIENTRY
-eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list)
+eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
+                       NativeWindowType window, const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreateWindowSurface(drv, dpy, config, window, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_SURFACE;
+
+   surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
+   if (surf)
+      return _eglLinkSurface(surf, disp);
+   else
+      return EGL_NO_SURFACE;
 }
 
 
 EGLSurface EGLAPIENTRY
-eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list)
+eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
+                       NativePixmapType pixmap, const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreatePixmapSurface(drv, dpy, config, pixmap, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_SURFACE;
+
+   surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
+   if (surf)
+      return _eglLinkSurface(surf, disp);
+   else
+      return EGL_NO_SURFACE;
 }
 
 
 EGLSurface EGLAPIENTRY
-eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
+eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
+                        const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreatePbufferSurface(drv, dpy, config, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_SURFACE;
+
+   surf = drv->API.CreatePbufferSurface(drv, disp, conf, attrib_list);
+   if (surf)
+      return _eglLinkSurface(surf, disp);
+   else
+      return EGL_NO_SURFACE;
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.DestroySurface(drv, dpy, surface);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   _eglUnlinkSurface(surf);
+   return drv->API.DestroySurface(drv, disp, surf);
 }
 
-
 EGLBoolean EGLAPIENTRY
-eglQuerySurface(EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value)
+eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
+                EGLint attribute, EGLint *value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QuerySurface(drv, dpy, surface, attribute, value);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.QuerySurface(drv, disp, surf, attribute, value);
 }
 
-
 EGLBoolean EGLAPIENTRY
-eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint value)
+eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface,
+                 EGLint attribute, EGLint value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.SurfaceAttrib(drv, dpy, surface, attribute, value);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.SurfaceAttrib(drv, disp, surf, attribute, value);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglBindTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.BindTexImage(drv, dpy, surface, buffer);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.BindTexImage(drv, disp, surf, buffer);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.ReleaseTexImage(drv, dpy, surface, buffer);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.ReleaseTexImage(drv, disp, surf, buffer);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.SwapInterval(drv, dpy, interval);
+   _EGL_DECLARE_DD(dpy);
+   return drv->API.SwapInterval(drv, disp, interval);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglSwapBuffers(EGLDisplay dpy, EGLSurface draw)
+eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.SwapBuffers(drv, dpy, draw);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.SwapBuffers(drv, disp, surf);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, NativePixmapType target)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CopyBuffers(drv, dpy, surface, target);
+   _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+   return drv->API.CopyBuffers(drv, disp, surf, target);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglWaitGL(void)
 {
-   EGLDisplay dpy = eglGetCurrentDisplay();
-   if (dpy != EGL_NO_DISPLAY) {
-      _EGLDriver *drv = _eglLookupDriver(dpy);
-      return drv->API.WaitGL(drv, dpy);
-   }
-   else
-      return EGL_FALSE;
+   _EGLDisplay *disp = _eglGetCurrentDisplay();
+   _EGLDriver *drv;
+
+   if (!disp)
+      return EGL_TRUE;
+
+   /* a current display is always initialized */
+   drv = disp->Driver;
+
+   return drv->API.WaitGL(drv, disp);
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglWaitNative(EGLint engine)
 {
-   EGLDisplay dpy = eglGetCurrentDisplay();
-   if (dpy != EGL_NO_DISPLAY) {
-      _EGLDriver *drv = _eglLookupDriver(dpy);
-      return drv->API.WaitNative(drv, dpy, engine);
-   }
-   else
-      return EGL_FALSE;
+   _EGLDisplay *disp = _eglGetCurrentDisplay();
+   _EGLDriver *drv;
+
+   if (!disp)
+      return EGL_TRUE;
+
+   /* a current display is always initialized */
+   drv = disp->Driver;
+
+   return drv->API.WaitNative(drv, disp, engine);
 }
 
 
@@ -420,111 +670,168 @@ eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen,
                   const EGLint *attrib_list, EGLModeMESA *modes,
                   EGLint modes_size, EGLint *num_modes)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.ChooseModeMESA(drv, dpy, screen, attrib_list, modes, modes_size, num_modes);
-   else
-      return EGL_FALSE;
+   _EGL_DECLARE_DD_AND_SCREEN(dpy, screen);
+   return drv->API.ChooseModeMESA(drv, disp, scrn, attrib_list,
+                                  modes, modes_size, num_modes);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode)
+eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes,
+                EGLint mode_size, EGLint *num_mode)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.GetModesMESA(drv, dpy, screen, modes, mode_size, num_mode);
-   else
-      return EGL_FALSE;
+   _EGL_DECLARE_DD_AND_SCREEN(dpy, screen);
+   return drv->API.GetModesMESA(drv, disp, scrn, modes, mode_size, num_mode);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value)
+eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode,
+                     EGLint attribute, EGLint *value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.GetModeAttribMESA(drv, dpy, mode, attribute, value);
-   else
-      return EGL_FALSE;
+   _EGL_DECLARE_DD_AND_MODE(dpy, mode);
+   return drv->API.GetModeAttribMESA(drv, disp, m, attribute, value);
 }
 
 
 EGLBoolean EGLAPIENTRY
-eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask)
+eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest,
+                   EGLint mask)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.CopyContextMESA(drv, dpy, source, dest, mask);
-   else
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLContext *source_context = _eglLookupContext(source, disp);
+   _EGLContext *dest_context = _eglLookupContext(dest, disp);
+   _EGLDriver *drv;
+
+   drv = _eglCheckContext(disp, source_context, __FUNCTION__);
+   if (!drv || !dest_context) {
+      if (drv)
+         _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
       return EGL_FALSE;
+   }
+
+   return drv->API.CopyContextMESA(drv, disp, source_context, dest_context,
+                                   mask);
 }
 
 
 EGLBoolean
-eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens)
+eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
+                  EGLint max_screens, EGLint *num_screens)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   if (drv)
-      return drv->API.GetScreensMESA(drv, dpy, screens, max_screens, num_screens);
-   else
-      return EGL_FALSE;
+   _EGL_DECLARE_DD(dpy);
+   return drv->API.GetScreensMESA(drv, disp, screens,
+                                  max_screens, num_screens);
 }
 
 
 EGLSurface
-eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
+eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
+                           const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreateScreenSurfaceMESA(drv, dpy, config, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_SURFACE;
+
+   surf = drv->API.CreateScreenSurfaceMESA(drv, disp, conf, attrib_list);
+   if (surf)
+      return _eglLinkSurface(surf, disp);
+   else
+      return EGL_NO_SURFACE;
 }
 
 
 EGLBoolean
-eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface, EGLModeMESA mode)
+eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
+                         EGLSurface surface, EGLModeMESA mode)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.ShowScreenSurfaceMESA(drv, dpy, screen, surface, mode);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLScreen *scrn = _eglLookupScreen((EGLScreenMESA) screen, disp);
+   _EGLSurface *surf = _eglLookupSurface(surface, disp);
+   _EGLMode *m = _eglLookupMode(mode, disp);
+   _EGLDriver *drv;
+
+   drv = _eglCheckScreen(disp, scrn, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+   if (!surf && surface != EGL_NO_SURFACE)
+      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+   if (!m && mode != EGL_NO_MODE_MESA)
+      return _eglError(EGL_BAD_MODE_MESA, __FUNCTION__);
+
+   return drv->API.ShowScreenSurfaceMESA(drv, disp, scrn, surf, m);
 }
 
 
 EGLBoolean
 eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.ScreenPositionMESA(drv, dpy, screen, x, y);
+   _EGL_DECLARE_DD_AND_SCREEN(dpy, screen);
+   return drv->API.ScreenPositionMESA(drv, disp, scrn, x, y);
 }
 
 
 EGLBoolean
-eglQueryScreenMESA( EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value)
+eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
+                   EGLint attribute, EGLint *value)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QueryScreenMESA(drv, dpy, screen, attribute, value);
+   _EGL_DECLARE_DD_AND_SCREEN(dpy, screen);
+   return drv->API.QueryScreenMESA(drv, disp, scrn, attribute, value);
 }
 
 
 EGLBoolean
-eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface)
+eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
+                          EGLSurface *surface)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QueryScreenSurfaceMESA(drv, dpy, screen, surface);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLScreen *scrn = _eglLookupScreen((EGLScreenMESA) screen, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckScreen(disp, scrn, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+
+   if (drv->API.QueryScreenSurfaceMESA(drv, disp, scrn, &surf) != EGL_TRUE)
+      surf = NULL;
+   if (surface)
+      *surface = _eglGetSurfaceHandle(surf);
+   return (surf != NULL);
 }
 
 
 EGLBoolean
 eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QueryScreenModeMESA(drv, dpy, screen, mode);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLScreen *scrn = _eglLookupScreen((EGLScreenMESA) screen, disp);
+   _EGLDriver *drv;
+   _EGLMode *m;
+
+   drv = _eglCheckScreen(disp, scrn, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+
+   if (drv->API.QueryScreenModeMESA(drv, disp, scrn, &m) != EGL_TRUE)
+      m = NULL;
+   if (mode)
+      *mode = m->Handle;
+
+   return (m != NULL);
 }
 
 
 const char *
 eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.QueryModeStringMESA(drv, dpy, mode);
+   _EGL_DECLARE_DD_AND_MODE(dpy, mode);
+   return drv->API.QueryModeStringMESA(drv, disp, m);
 }
 
 
@@ -605,27 +912,37 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
                                  EGLClientBuffer buffer, EGLConfig config,
                                  const EGLint *attrib_list)
 {
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->API.CreatePbufferFromClientBuffer(drv, dpy, buftype, buffer,
-                                                 config, attrib_list);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLConfig *conf = _eglLookupConfig(config, disp);
+   _EGLDriver *drv;
+   _EGLSurface *surf;
+
+   drv = _eglCheckConfig(disp, conf, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_SURFACE;
+
+   surf = drv->API.CreatePbufferFromClientBuffer(drv, disp, buftype, buffer,
+                                                 conf, attrib_list);
+   if (surf)
+      return _eglLinkSurface(surf, disp);
+   else
+      return EGL_NO_SURFACE;
 }
 
 
 EGLBoolean
 eglReleaseThread(void)
 {
-   EGLDisplay dpy;
-
-   if (_eglIsCurrentThreadDummy())
-      return EGL_TRUE;
-
-   dpy = eglGetCurrentDisplay();
-   if (dpy) {
-      _EGLDriver *drv = _eglLookupDriver(dpy);
-      /* unbind context */
-      (void) drv->API.MakeCurrent(drv, dpy, EGL_NO_SURFACE,
-                                  EGL_NO_SURFACE, EGL_NO_CONTEXT);
+   /* unbind current context */
+   if (!_eglIsCurrentThreadDummy()) {
+      _EGLDisplay *disp = _eglGetCurrentDisplay();
+      _EGLDriver *drv;
+      if (disp) {
+         drv = disp->Driver;
+         (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
+      }
    }
+
    _eglDestroyCurrentThread();
    return EGL_TRUE;
 }
@@ -634,13 +951,17 @@ eglReleaseThread(void)
 EGLBoolean
 eglWaitClient(void)
 {
-   EGLDisplay dpy = eglGetCurrentDisplay();
-   if (dpy != EGL_NO_DISPLAY) {
-      _EGLDriver *drv = _eglLookupDriver(dpy);
-      return drv->API.WaitClient(drv, dpy);
-   }
-   else
-      return EGL_FALSE;
+   _EGLDisplay *disp = _eglGetCurrentDisplay();
+   _EGLDriver *drv;
+
+   if (!disp)
+      return EGL_TRUE;
+
+   /* a current display is always initialized */
+   drv = disp->Driver;
+
+   return drv->API.WaitClient(drv, disp);
 }
+
 
 #endif /* EGL_VERSION_1_2 */

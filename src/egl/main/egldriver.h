@@ -59,7 +59,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args);
 
 
 extern EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy);
+_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy);
 
 
 extern void

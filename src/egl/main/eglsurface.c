@@ -211,22 +211,15 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
 
 
 EGLBoolean
-_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
+_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 {
-   /* Basically just do error checking here.  Drivers have to do the
-    * actual buffer swap.
-    */
-   _EGLSurface *surface = _eglLookupSurface(draw);
-   if (surface == NULL) {
-      _eglError(EGL_BAD_SURFACE, "eglSwapBuffers");
-      return EGL_FALSE;
-   }
+   /* Drivers have to do the actual buffer swap.  */
    return EGL_TRUE;
 }
 
 
 EGLBoolean
-_eglCopyBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
+_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                 NativePixmapType target)
 {
    /* copy surface to native pixmap */
@@ -236,14 +229,9 @@ _eglCopyBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
 
 
 EGLBoolean
-_eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+_eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                  EGLint attribute, EGLint *value)
 {
-   _EGLSurface *surface = _eglLookupSurface(surf);
-   if (surface == NULL) {
-      _eglError(EGL_BAD_SURFACE, "eglQuerySurface");
-      return EGL_FALSE;
-   }
    switch (attribute) {
    case EGL_WIDTH:
       *value = surface->Width;
@@ -312,96 +300,75 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
 /**
  * Example function - drivers should do a proper implementation.
  */
-EGLSurface
-_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_EGLSurface *
+_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                         NativeWindowType window, const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
-   _EGLConfig *conf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateWindowSurface");
-      return EGL_NO_SURFACE;
-   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
    if (!_eglInitSurface(drv, surf, EGL_WINDOW_BIT, conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
-   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
+   return surf;
 #endif
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
 /**
  * Example function - drivers should do a proper implementation.
  */
-EGLSurface
-_eglCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_EGLSurface *
+_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                         NativePixmapType pixmap, const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
-   _EGLConfig *conf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePixmapSurface");
-      return EGL_NO_SURFACE;
-   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
    if (!_eglInitSurface(drv, surf, EGL_PIXMAP_BIT, conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
-   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
+   return surf;
 #endif
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
 /**
  * Example function - drivers should do a proper implementation.
  */
-EGLSurface
-_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_EGLSurface *
+_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                          const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
-   _EGLConfig *conf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
-   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
-      return EGL_NO_SURFACE;
+      return NULL;
 
    if (!_eglInitSurface(drv, surf, EGL_PBUFFER_BIT, conf, attrib_list)) {
       free(surf);
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
-   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
+   return NULL;
 #endif
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 
@@ -409,19 +376,11 @@ _eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  * Default fallback routine - drivers should usually override this.
  */
 EGLBoolean
-_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 {
-   _EGLSurface *surf = _eglLookupSurface(surface);
-   if (surf) {
-      _eglUnlinkSurface(surf);
-      if (!_eglIsSurfaceBound(surf))
-         free(surf);
-      return EGL_TRUE;
-   }
-   else {
-      _eglError(EGL_BAD_SURFACE, "eglDestroySurface");
-      return EGL_FALSE;
-   }
+   if (!_eglIsSurfaceBound(surf))
+      free(surf);
+   return EGL_TRUE;
 }
 
 
@@ -429,16 +388,9 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
  * Default fallback routine - drivers might override this.
  */
 EGLBoolean
-_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+_eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                   EGLint attribute, EGLint value)
 {
-   _EGLSurface *surface = _eglLookupSurface(surf);
-
-   if (surface == NULL) {
-      _eglError(EGL_BAD_SURFACE, "eglSurfaceAttrib");
-      return EGL_FALSE;
-   }
-
    switch (attribute) {
    case EGL_MIPMAP_LEVEL:
       surface->MipmapLevel = value;
@@ -452,15 +404,14 @@ _eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
 
 
 EGLBoolean
-_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+_eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                  EGLint buffer)
 {
    /* Just do basic error checking and return success/fail.
     * Drivers must implement the real stuff.
     */
-   _EGLSurface *surface = _eglLookupSurface(surf);
 
-   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+   if (surface->Type != EGL_PBUFFER_BIT) {
       _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
       return EGL_FALSE;
    }
@@ -482,15 +433,14 @@ _eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
 
 
 EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                     EGLint buffer)
 {
    /* Just do basic error checking and return success/fail.
     * Drivers must implement the real stuff.
     */
-   _EGLSurface *surface = _eglLookupSurface(surf);
 
-   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+   if (surface->Type != EGL_PBUFFER_BIT) {
       _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
       return EGL_FALSE;
    }
@@ -517,14 +467,11 @@ _eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
 
 
 EGLBoolean
-_eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval)
+_eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, EGLint interval)
 {
    _EGLSurface *surf = _eglGetCurrentSurface(EGL_DRAW);
-   if (surf == NULL) {
-      _eglError(EGL_BAD_SURFACE, "eglSwapInterval");
-      return EGL_FALSE;
-   }
-   surf->SwapInterval = interval;
+   if (surf)
+      surf->SwapInterval = interval;
    return EGL_TRUE;
 }
 
@@ -534,17 +481,17 @@ _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval)
 /**
  * Example function - drivers should do a proper implementation.
  */
-EGLSurface
-_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, EGLDisplay dpy,
+_EGLSurface *
+_eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
                                   EGLenum buftype, EGLClientBuffer buffer,
-                                  EGLConfig config, const EGLint *attrib_list)
+                                  _EGLConfig *conf, const EGLint *attrib_list)
 {
    if (buftype != EGL_OPENVG_IMAGE) {
       _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferFromClientBuffer");
-      return EGL_NO_SURFACE;
+      return NULL;
    }
 
-   return EGL_NO_SURFACE;
+   return NULL;
 }
 
 #endif /* EGL_VERSION_1_2 */
