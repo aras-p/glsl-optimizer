@@ -1446,7 +1446,7 @@ void __glXClientInfo (  Display *dpy, int opcode  )
                        GLX_MAJOR_VERSION,
                        GLX_MINOR_VERSION,
                        size,
-                       (const uint8_t *)ext_str);
+                       ext_str);
 #else
     xGLXClientInfoReq *req;
 
