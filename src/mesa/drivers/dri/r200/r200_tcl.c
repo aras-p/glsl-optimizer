@@ -156,8 +156,6 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
       if (rmesa->radeon.dma.flush)
 	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-      rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->radeon.tcl.aos_count), __FUNCTION__);
-
       r200EmitAOS( rmesa,
 		   rmesa->radeon.tcl.aos_count, 0 );
 
@@ -187,9 +185,6 @@ static void r200EmitPrim( GLcontext *ctx,
    r200TclPrimitive( ctx, prim, hwprim );
    
    //   fprintf(stderr,"Emit prim %d\n", rmesa->radeon.tcl.aos_count);
-   rcommonEnsureCmdBufSpace( &rmesa->radeon,
-			     AOS_BUFSZ(rmesa->radeon.tcl.aos_count) +
-			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    r200EmitAOS( rmesa,
 		rmesa->radeon.tcl.aos_count,

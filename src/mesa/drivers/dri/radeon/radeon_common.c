@@ -1032,12 +1032,6 @@ void radeonEmitState(radeonContextPtr radeon)
 	if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
 		return;
 
-	/* To avoid going across the entire set of states multiple times, just check
-	 * for enough space for the case of emitting all state, and inline the
-	 * radeonAllocCmdBuf code here without all the checks.
-	 */
-	rcommonEnsureCmdBufSpace(radeon, radeon->hw.max_state_size, __FUNCTION__);
-
 	if (!radeon->cmdbuf.cs->cdw) {
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
@@ -1197,10 +1191,12 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
  */
 void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
 {
-	if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size ||
-	    radeon_cs_need_flush(rmesa->cmdbuf.cs)) {
-		rcommonFlushCmdBuf(rmesa, caller);
-	}
+   if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size
+	 || radeon_cs_need_flush(rmesa->cmdbuf.cs)) {
+      /* If we try to flush empty buffer there is too big rendering operation. */
+      assert(rmesa->cmdbuf.cs->cdw);
+      rcommonFlushCmdBuf(rmesa, caller);
+   }
 }
 
 void rcommonInitCmdBuf(radeonContextPtr rmesa)
@@ -1275,7 +1271,6 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 		       const char *function,
 		       int line)
 {
-	rcommonEnsureCmdBufSpace(rmesa, n, function);
 	if (!rmesa->cmdbuf.cs->cdw && dostate) {
 		if (RADEON_DEBUG & DEBUG_IOCTL)
 			fprintf(stderr, "Reemit state after flush (from %s)\n", function);
