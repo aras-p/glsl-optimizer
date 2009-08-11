@@ -76,6 +76,9 @@ struct lp_build_tgsi_soa_context
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][4];
    LLVMValueRef temps[LP_MAX_TEMPS][4];
+
+   /** Coords/texels store */
+   LLVMValueRef store_ptr;
 };
 
 
@@ -296,7 +299,6 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    LLVMValueRef lodbias;
    LLVMValueRef oow;
-   LLVMValueRef store_ptr;
    LLVMValueRef args[3];
    unsigned count;
    unsigned i;
@@ -326,10 +328,11 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    else
       lodbias = bld->base.zero;
 
-   store_ptr = LLVMBuildArrayAlloca(bld->base.builder,
-                                    vec_type,
-                                    LLVMConstInt(LLVMInt32Type(), 4, 0),
-                                    "store");
+   if(!bld->store_ptr)
+      bld->store_ptr = LLVMBuildArrayAlloca(bld->base.builder,
+                                            vec_type,
+                                            LLVMConstInt(LLVMInt32Type(), 4, 0),
+                                            "store");
 
    if (projected) {
       oow = FETCH( bld, *inst, 0, 3 );
@@ -338,7 +341,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 
    for (i = 0; i < count; i++) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef coord_ptr = LLVMBuildGEP(bld->base.builder, store_ptr, &index, 1, "");
+      LLVMValueRef coord_ptr = LLVMBuildGEP(bld->base.builder, bld->store_ptr, &index, 1, "");
       LLVMValueRef coord;
 
       coord = FETCH( bld, *inst, 0, i );
@@ -351,13 +354,13 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 
    args[0] = bld->samplers_ptr;
    args[1] = LLVMConstInt(LLVMInt32Type(), unit, 0);
-   args[2] = store_ptr;
+   args[2] = bld->store_ptr;
 
    lp_build_intrinsic(bld->base.builder, "fetch_texel", LLVMVoidType(), args, 3);
 
    FOR_EACH_DST0_ENABLED_CHANNEL( *inst, i ) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef res_ptr = LLVMBuildGEP(bld->base.builder, store_ptr, &index, 1, "");
+      LLVMValueRef res_ptr = LLVMBuildGEP(bld->base.builder, bld->store_ptr, &index, 1, "");
       LLVMValueRef res = LLVMBuildLoad(bld->base.builder, res_ptr, "");
       STORE( bld, *inst, 0, i, res );
    }
