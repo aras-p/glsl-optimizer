@@ -37,7 +37,7 @@ static void r300_surface_setup(struct r300_context* r300,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(24);
+    BEGIN_CS(26);
 
     /* Viewport setup */
     OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
@@ -78,8 +78,10 @@ static void r300_surface_setup(struct r300_context* r300,
     /* Setup colorbuffer. */
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
     OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch |
-        r300_translate_colorformat(dest->tex.format));
+    OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0, 1);
+    OUT_CS_RELOC(dest->buffer, pixpitch |
+                 r300_translate_colorformat(dest->tex.format), 0,
+                 RADEON_GEM_DOMAIN_VRAM, 0);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0xf);
 
     END_CS;

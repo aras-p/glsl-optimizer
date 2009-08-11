@@ -278,7 +278,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((8 * fb->nr_cbufs) + (fb->zsbuf ? 8 : 0) + 4);
+    BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
@@ -287,8 +287,10 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
-        OUT_CS_REG(R300_RB3D_COLORPITCH0 + (4 * i), pixpitch |
-            r300_translate_colorformat(tex->tex.format));
+        OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
+        OUT_CS_RELOC(tex->buffer, pixpitch |
+                     r300_translate_colorformat(tex->tex.format), 0,
+                     RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
             r300_translate_out_fmt(fb->cbufs[i]->format));
@@ -304,7 +306,8 @@ void r300_emit_fb_state(struct r300_context* r300,
 
         OUT_CS_REG(R300_ZB_FORMAT, r300_translate_zsformat(tex->tex.format));
 
-        OUT_CS_REG(R300_ZB_DEPTHPITCH, pixpitch);
+        OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
+        OUT_CS_RELOC(tex->buffer, pixpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
