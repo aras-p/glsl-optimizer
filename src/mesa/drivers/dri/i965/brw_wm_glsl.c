@@ -650,24 +650,6 @@ static void invoke_subroutine( struct brw_wm_compile *c,
     }
 }
 
-static void emit_trunc( struct brw_wm_compile *c,
-                        const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg(c, inst, 0, i);
-	    brw_RNDZ(p, dst, src);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
 static void emit_pixel_xy(struct brw_wm_compile *c,
                           const struct prog_instruction *inst)
 {
@@ -2743,7 +2725,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_lrp(c, inst);
 		break;
 	    case OPCODE_TRUNC:
-		emit_trunc(c, inst);
+		emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MOV:
 	    case OPCODE_SWZ:
