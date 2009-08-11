@@ -135,12 +135,12 @@ llvmpipe_create_blend_state(struct pipe_context *pipe,
                 "alpha_func",       debug_dump_blend_func  (blend->base.alpha_func, TRUE),
                 "alpha_src_factor", debug_dump_blend_factor(blend->base.alpha_src_factor, TRUE),
                 "alpha_dst_factor", debug_dump_blend_factor(blend->base.alpha_dst_factor, TRUE));
-   LLVMDumpModule(screen->module);
+   LLVMDumpValue(blend->function);
    debug_printf("\n");
 #endif
 
    if(LLVMVerifyFunction(blend->function, LLVMPrintMessageAction)) {
-      LLVMDumpModule(screen->module);
+      LLVMDumpValue(blend->function);
       abort();
    }
 
