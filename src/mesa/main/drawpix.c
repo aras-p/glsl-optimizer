@@ -239,11 +239,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       return;    /* do nothing */
    }
 
-   /* We're not using the current vertex program, and the driver may install
-    * it's own.
-    */
-   _mesa_set_vp_override(ctx, GL_TRUE);
-
    if (ctx->NewState) {
       _mesa_update_state(ctx);
    }
@@ -251,13 +246,13 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    if (!valid_fragment_program(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBitmap (invalid fragment program)");
-      goto end;
+      return;
    }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glBitmap(incomplete framebuffer)");
-      goto end;
+      return;
    }
 
    if (ctx->RenderMode == GL_RENDER) {
@@ -273,12 +268,12 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
                                         (GLvoid *) bitmap)) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glBitmap(invalid PBO access)");
-            goto end;
+            return;
          }
          if (_mesa_bufferobj_mapped(ctx->Unpack.BufferObj)) {
             /* buffer is mapped - that's an error */
             _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
-            goto end;
+            return;
          }
       }
 
@@ -303,7 +298,4 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    /* update raster position */
    ctx->Current.RasterPos[0] += xmove;
    ctx->Current.RasterPos[1] += ymove;
-
-end:
-   _mesa_set_vp_override(ctx, GL_FALSE);
 }
