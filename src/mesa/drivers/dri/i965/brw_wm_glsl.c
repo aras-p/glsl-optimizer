@@ -1208,24 +1208,6 @@ static void emit_arl(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_sub(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, src1, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_ADD(p, dst, src0, negate(src1));
-	}
-    }
-    brw_set_saturate(p, 0);
-}
 
 static void emit_mul(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
@@ -2860,9 +2842,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case OPCODE_ARL:
 		emit_arl(c, inst);
-		break;
-	    case OPCODE_SUB:
-		emit_sub(c, inst);
 		break;
 	    case OPCODE_FRC:
 		emit_frc(c, inst);
