@@ -109,7 +109,7 @@ static GLboolean discrete_prim[0x10] = {
 #define ELT_INIT(prim, hw_prim) \
    r200TclPrimitive( ctx, prim, hw_prim | R200_VF_PRIM_WALK_IND )
 
-#define GET_MESA_ELTS() rmesa->tcl.Elts
+#define GET_MESA_ELTS() TNL_CONTEXT(ctx)->vb.Elts
 
 
 /* Don't really know how many elts will fit in what's left of cmdbuf,
@@ -533,8 +533,6 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    r200EnsureEmitSize( ctx, vimap_rev );
    r200EmitArrays( ctx, vimap_rev );
 
-   rmesa->tcl.Elts = VB->Elts;
-
    for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
       GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
@@ -544,7 +542,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       if (!length)
 	 continue;
 
-      if (rmesa->tcl.Elts)
+      if (VB->Elts)
 	 r200EmitEltPrimitive( ctx, start, start+length, prim );
       else
 	 r200EmitPrimitive( ctx, start, start+length, prim );

@@ -526,8 +526,6 @@ struct r200_state {
 struct r200_tcl_info {
    GLuint hw_primitive;
 
-   GLuint *Elts;
-
    int elt_used;
 
 };
