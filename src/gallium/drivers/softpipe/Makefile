@@ -6,7 +6,6 @@ LIBNAME = softpipe
 C_SOURCES = \
 	sp_fs_exec.c \
 	sp_fs_sse.c \
-	sp_fs_llvm.c \
 	sp_clear.c \
 	sp_flush.c \
 	sp_query.c \

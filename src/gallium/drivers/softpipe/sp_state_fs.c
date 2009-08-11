@@ -51,12 +51,9 @@ softpipe_create_fs_state(struct pipe_context *pipe,
       tgsi_dump(templ->tokens, 0);
 
    /* codegen */
-   state = softpipe_create_fs_llvm( softpipe, templ );
+   state = softpipe_create_fs_sse( softpipe, templ );
    if (!state) {
-      state = softpipe_create_fs_sse( softpipe, templ );
-      if (!state) {
-         state = softpipe_create_fs_exec( softpipe, templ );
-      }
+      state = softpipe_create_fs_exec( softpipe, templ );
    }
 
    assert(state);
