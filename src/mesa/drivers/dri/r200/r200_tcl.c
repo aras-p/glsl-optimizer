@@ -206,6 +206,7 @@ static void r200EmitPrim( GLcontext *ctx,
    r200EmitPrim( ctx, prim, hwprim, start, count );             \
    (void) rmesa; } while (0)
 
+#define MAX_CONVERSION_SIZE 40
 /* Try & join small primitives
  */
 #if 0
@@ -368,6 +369,58 @@ r200ComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
    }
 }
 
+/**
+ * Predict total emit size for next rendering operation so there is no flush in middle of rendering
+ * Prediction has to aim towards the best possible value that is worse than worst case scenario
+ */
+static void r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
+{
+  r200ContextPtr rmesa = R200_CONTEXT(ctx);
+  TNLcontext *tnl = TNL_CONTEXT(ctx);
+  struct vertex_buffer *VB = &tnl->vb;
+  GLuint space_required;
+  GLuint nr_aos = 0;
+  int i;
+  /* predict number of aos to emit */
+  for (i = 0; i < 15; ++i)
+  {
+    if (vimap_rev[i] != 255)
+    {
+      ++nr_aos;
+    }
+  }
+
+  {
+    /* count the prediction for state size */
+    space_required = radeonCountEmitSize( &rmesa->radeon );
+    /* vtx may be changed in r200EmitArrays so account for it if not dirty */
+    if (!rmesa->hw.vtx.dirty)
+      space_required += rmesa->hw.vtx.check(rmesa->radeon.glCtx, &rmesa->hw.vtx);
+    /* predict size for elements */
+    for (i = 0; i < VB->PrimitiveCount; ++i)
+    {
+      if (!VB->Primitive[i].count)
+	continue;
+      /* If primitive.count is less than MAX_CONVERSION_SIZE
+         rendering code may decide convert to elts.
+	 In that case we have to make pessimistic prediction.
+	 and use larger of 2 paths. */
+      const GLuint elts = ELTS_BUFSZ(nr_aos);
+      const GLuint index = INDEX_BUFSZ;
+      const GLuint vbuf = VBUF_BUFSZ;
+      if ( (!VB->Elts && VB->Primitive[i].count >= MAX_CONVERSION_SIZE)
+	  || vbuf > index + elts)
+	space_required += vbuf;
+      else
+	space_required += index + elts;
+      space_required += AOS_BUFSZ(nr_aos);
+    }
+    space_required += SCISSOR_BUFSZ;
+  }
+  /* flush the buffer in case we need more than is left. */
+  rcommonEnsureCmdBufSpace(&rmesa->radeon, space_required, __FUNCTION__);
+}
+
 
 /**********************************************************************/
 /*                          Render pipeline stage                     */
@@ -482,6 +535,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    /* Do the actual work:
     */
    radeonReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
+   r200EnsureEmitSize( ctx, vimap_rev );
    r200EmitArrays( ctx, vimap_rev );
 
    rmesa->tcl.Elts = VB->Elts;

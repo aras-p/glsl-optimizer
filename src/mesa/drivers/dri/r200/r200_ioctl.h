@@ -125,10 +125,12 @@ static INLINE int R200_DB_STATECHANGE(
  * are available, you will also be adding an rmesa->state.max_state_size because
  * r200EmitState is called from within r200EmitVbufPrim and r200FlushElts.
  */
-#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2)) * sizeof(int))
-#define VERT_AOS_BUFSZ	(5 * sizeof(int))
+#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2) + nr*2))
+#define VERT_AOS_BUFSZ	(5)
 #define ELTS_BUFSZ(nr)	(12 + nr * 2)
-#define VBUF_BUFSZ	(3 * sizeof(int))
+#define VBUF_BUFSZ	(3)
+#define SCISSOR_BUFSZ	(8)
+#define INDEX_BUFSZ	(8+2)
 
 static inline uint32_t cmdpacket3(int cmd_type)
 {

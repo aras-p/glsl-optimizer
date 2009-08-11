@@ -24,6 +24,7 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 void radeonFlush(GLcontext *ctx);
 void radeonFinish(GLcontext * ctx);
 void radeonEmitState(radeonContextPtr radeon);
+GLuint radeonCountEmitSize(radeonContextPtr radeon);
 
 void radeon_clear_tris(GLcontext *ctx, GLbitfield mask);
 
