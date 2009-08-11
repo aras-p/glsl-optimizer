@@ -612,17 +612,20 @@ static void brw_prepare_indices(struct brw_context *brw)
    dri_bo *bo = NULL;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
+   GLuint ib_type_size;
 
    if (index_buffer == NULL)
       return;
 
-   ib_size = get_size(index_buffer->type) * index_buffer->count;
+   ib_type_size = get_size(index_buffer->type);
+   ib_size = ib_type_size * index_buffer->count;
    bufferobj = index_buffer->obj;;
 
    /* Turn into a proper VBO:
     */
    if (!bufferobj->Name) {
-     
+      brw->ib.start_vertex_offset = 0;
+
       /* Get new bufferobj, offset:
        */
       get_space(brw, ib_size, &bo, &offset);
@@ -638,6 +641,7 @@ static void brw_prepare_indices(struct brw_context *brw)
       }
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
+      brw->ib.start_vertex_offset = 0;
 
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
@@ -658,26 +662,50 @@ static void brw_prepare_indices(struct brw_context *brw)
 	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
 				      INTEL_READ);
 	  dri_bo_reference(bo);
+
+	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
+	   * the index buffer state when we're just moving the start index
+	   * of our drawing.
+	   */
+	  brw->ib.start_vertex_offset = offset / ib_type_size;
+	  offset = 0;
+	  ib_size = bo->size;
        }
    }
 
-   dri_bo_unreference(brw->ib.bo);
-   brw->ib.bo = bo;
-   brw->ib.offset = offset;
+   if (brw->ib.bo != bo ||
+       brw->ib.offset != offset ||
+       brw->ib.size != ib_size)
+   {
+      drm_intel_bo_unreference(brw->ib.bo);
+      brw->ib.bo = bo;
+      brw->ib.offset = offset;
+      brw->ib.size = ib_size;
+
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
+   } else {
+      drm_intel_bo_unreference(bo);
+   }
 
    brw_add_validated_bo(brw, brw->ib.bo);
 }
 
-static void brw_emit_indices(struct brw_context *brw)
+const struct brw_tracked_state brw_indices = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_INDICES,
+      .cache = 0,
+   },
+   .prepare = brw_prepare_indices,
+};
+
+static void brw_emit_index_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
-   GLuint ib_size;
 
    if (index_buffer == NULL)
       return;
-
-   ib_size = get_size(index_buffer->type) * index_buffer->count - 1;
 
    /* Emit the indexbuffer packet:
     */
@@ -685,12 +713,11 @@ static void brw_emit_indices(struct brw_context *brw)
       struct brw_indexbuffer ib;
 
       memset(&ib, 0, sizeof(ib));
-   
+
       ib.header.bits.opcode = CMD_INDEX_BUFFER;
       ib.header.bits.length = sizeof(ib)/4 - 2;
       ib.header.bits.index_format = get_index_type(index_buffer->type);
       ib.header.bits.cut_index_enable = 0;
-   
 
       BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
@@ -699,18 +726,17 @@ static void brw_emit_indices(struct brw_context *brw)
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + ib_size);
+		brw->ib.offset + brw->ib.size);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }
 }
 
-const struct brw_tracked_state brw_indices = {
+const struct brw_tracked_state brw_index_buffer = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_INDICES,
+      .brw = BRW_NEW_BATCH | BRW_NEW_INDEX_BUFFER,
       .cache = 0,
    },
-   .prepare = brw_prepare_indices,
-   .emit = brw_emit_indices,
+   .emit = brw_emit_index_buffer,
 };

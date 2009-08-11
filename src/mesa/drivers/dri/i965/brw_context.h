@@ -143,6 +143,7 @@ struct brw_context;
 #define BRW_NEW_DEPTH_BUFFER		0x20000
 #define BRW_NEW_NR_WM_SURFACES		0x40000
 #define BRW_NEW_NR_VS_SURFACES		0x80000
+#define BRW_NEW_INDEX_BUFFER		0x100000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -505,8 +506,15 @@ struct brw_context
        */
       const struct _mesa_index_buffer *ib;
 
+      /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
       dri_bo *bo;
       unsigned int offset;
+      unsigned int size;
+      /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
+       * avoid re-uploading the IB packet over and over if we're actually
+       * referencing the same index buffer.
+       */
+      unsigned int start_vertex_offset;
    } ib;
 
    /* Active vertex program: 
