@@ -171,9 +171,11 @@ static void do_wm_prog( struct brw_context *brw,
     * differently from "simple" shaders.
     */
    if (fp->isGLSL) {
+      c->dispatch_width = 8;
       brw_wm_glsl_emit(brw, c);
    }
    else {
+      c->dispatch_width = 16;
       brw_wm_non_glsl_emit(brw, c);
    }
 
