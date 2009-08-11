@@ -87,7 +87,7 @@ lp_build_min_simple(struct lp_build_context *bld,
       }
    }
 #endif
-   
+
    if(intrinsic)
       return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
 
@@ -446,6 +446,36 @@ lp_build_mul(struct lp_build_context *bld,
 
 
 LLVMValueRef
+lp_build_div(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b)
+{
+   const union lp_type type = bld->type;
+
+   if(a == bld->zero)
+      return bld->zero;
+   if(a == bld->one)
+      return lp_build_rcp(bld, b);
+   if(b == bld->zero)
+      return bld->undef;
+   if(b == bld->one)
+      return a;
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
+
+   if(LLVMIsConstant(a) && LLVMIsConstant(b))
+      return LLVMConstFDiv(a, b);
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(type.width == 32 && type.length == 4)
+      return lp_build_mul(bld, a, lp_build_rcp(bld, b));
+#endif
+
+   return LLVMBuildFDiv(bld->builder, a, b, "");
+}
+
+
+LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
@@ -491,3 +521,189 @@ lp_build_max(struct lp_build_context *bld,
 
    return lp_build_max_simple(bld, a, b);
 }
+
+
+LLVMValueRef
+lp_build_abs(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   if(!type.sign)
+      return a;
+
+   /* XXX: is this really necessary? */
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(!type.floating && type.width*type.length == 128) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      if(type.width == 8)
+         return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.b.128", vec_type, a);
+      if(type.width == 16)
+         return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.w.128", vec_type, a);
+      if(type.width == 32)
+         return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.d.128", vec_type, a);
+   }
+#endif
+
+   return lp_build_max(bld, a, LLVMBuildNeg(bld->builder, a, ""));
+}
+
+
+LLVMValueRef
+lp_build_sqrt(struct lp_build_context *bld,
+              LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   const char *intrinsic;
+
+   /* TODO: optimize the constant case */
+
+   assert(type.floating);
+
+   switch(type.width) {
+   case 32:
+      intrinsic = "llvm.sqrt.f32";
+      break;
+   case 64:
+      intrinsic = "llvm.sqrt.f64";
+      break;
+   default:
+      assert(0);
+      return LLVMGetUndef(vec_type);
+   }
+
+   return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+}
+
+
+LLVMValueRef
+lp_build_rcp(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   if(a == bld->zero)
+      return bld->undef;
+   if(a == bld->one)
+      return bld->one;
+   if(a == bld->undef)
+      return bld->undef;
+
+   assert(type.floating);
+
+   if(LLVMIsConstant(a))
+      return LLVMConstFDiv(bld->one, a);
+
+   /* XXX: is this really necessary? */
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(type.width == 32 && type.length == 4)
+      return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
+#endif
+
+   return LLVMBuildFDiv(bld->builder, bld->one, a, "");
+}
+
+
+LLVMValueRef
+lp_build_rsqrt(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   assert(type.floating);
+
+   /* XXX: is this really necessary? */
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   if(type.width == 32 && type.length == 4)
+      return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rsqrt.ps", lp_build_vec_type(type), a);
+#endif
+
+   return lp_build_rcp(bld, lp_build_sqrt(bld, a));
+}
+
+
+LLVMValueRef
+lp_build_cos(struct lp_build_context *bld,
+              LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   const char *intrinsic;
+
+   /* TODO: optimize the constant case */
+
+   assert(type.floating);
+
+   switch(type.width) {
+   case 32:
+      intrinsic = "llvm.cos.f32";
+      break;
+   case 64:
+      intrinsic = "llvm.cos.f64";
+      break;
+   default:
+      assert(0);
+      return LLVMGetUndef(vec_type);
+   }
+
+   return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+}
+
+
+LLVMValueRef
+lp_build_sin(struct lp_build_context *bld,
+              LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   const char *intrinsic;
+
+   /* TODO: optimize the constant case */
+
+   assert(type.floating);
+
+   switch(type.width) {
+   case 32:
+      intrinsic = "llvm.sin.f32";
+      break;
+   case 64:
+      intrinsic = "llvm.sin.f64";
+      break;
+   default:
+      assert(0);
+      return LLVMGetUndef(vec_type);
+   }
+
+   return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+}
+
+
+LLVMValueRef
+lp_build_pow(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   const char *intrinsic;
+
+   /* TODO: optimize the constant case */
+
+   assert(type.floating);
+
+   switch(type.width) {
+   case 32:
+      intrinsic = "llvm.pow.f32";
+      break;
+   case 64:
+      intrinsic = "llvm.pow.f64";
+      break;
+   default:
+      assert(0);
+      return LLVMGetUndef(vec_type);
+   }
+
+   return lp_build_intrinsic_binary(bld->builder, intrinsic, vec_type, a, b);
+}
+

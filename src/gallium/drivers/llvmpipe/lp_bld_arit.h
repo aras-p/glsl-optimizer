@@ -67,6 +67,11 @@ lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_div(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
+
+LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
@@ -76,5 +81,33 @@ lp_build_max(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
 
+LLVMValueRef
+lp_build_abs(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_sqrt(struct lp_build_context *bld,
+              LLVMValueRef a);
+
+LLVMValueRef
+lp_build_rcp(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_rsqrt(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
+lp_build_cos(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_sin(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_pow(struct lp_build_context *bld,
+             LLVMValueRef a,
+             LLVMValueRef b);
 
 #endif /* !LP_BLD_ARIT_H */
