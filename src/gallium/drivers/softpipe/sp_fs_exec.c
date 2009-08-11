@@ -59,15 +59,34 @@ sp_exec_fragment_shader(const struct sp_fragment_shader *base)
 }
 
 
+static void
+exec_prepare( const struct sp_fragment_shader *base,
+	      struct tgsi_exec_machine *machine,
+	      struct tgsi_sampler **samplers )
+{
+   /*
+    * Bind tokens/shader to the interpreter's machine state.
+    * Avoid redundant binding.
+    */
+   if (machine->Tokens != base->shader.tokens) {
+      tgsi_exec_machine_bind_shader( machine,
+                                     base->shader.tokens,
+                                     PIPE_MAX_SAMPLERS,
+                                     samplers );
+   }
+}
+
+
+
 /**
  * Compute quad X,Y,Z,W for the four fragments in a quad.
  *
  * This should really be part of the compiled shader.
  */
-void
-sp_setup_pos_vector(const struct tgsi_interp_coef *coef,
-		    float x, float y,
-		    struct tgsi_exec_vector *quadpos)
+static void
+setup_pos_vector(const struct tgsi_interp_coef *coef,
+                 float x, float y,
+                 struct tgsi_exec_vector *quadpos)
 {
    uint chan;
    /* do X */
@@ -95,24 +114,6 @@ sp_setup_pos_vector(const struct tgsi_interp_coef *coef,
 }
 
 
-static void
-exec_prepare( const struct sp_fragment_shader *base,
-	      struct tgsi_exec_machine *machine,
-	      struct tgsi_sampler **samplers )
-{
-   /*
-    * Bind tokens/shader to the interpreter's machine state.
-    * Avoid redundant binding.
-    */
-   if (machine->Tokens != base->shader.tokens) {
-      tgsi_exec_machine_bind_shader( machine,
-                                     base->shader.tokens,
-                                     PIPE_MAX_SAMPLERS,
-                                     samplers );
-   }
-}
-
-
 /* TODO: hide the machine struct in here somewhere, remove from this
  * interface:
  */
@@ -122,9 +123,9 @@ exec_run( const struct sp_fragment_shader *base,
 	  struct quad_header *quad )
 {
    /* Compute X, Y, Z, W vals for this quad */
-   sp_setup_pos_vector(quad->posCoef, 
-		       (float)quad->input.x0, (float)quad->input.y0, 
-		       &machine->QuadPos);
+   setup_pos_vector(quad->posCoef, 
+                    (float)quad->input.x0, (float)quad->input.y0, 
+                    &machine->QuadPos);
    
    quad->inout.mask &= tgsi_exec_machine_run( machine );
    if (quad->inout.mask == 0)
