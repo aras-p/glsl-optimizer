@@ -383,7 +383,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = brw->vb.enabled[i];
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
-      input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 
       if (input->glarray->BufferObj->Name != 0) {
 	 struct intel_buffer_object *intel_buffer =
@@ -396,6 +395,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 dri_bo_reference(input->bo);
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
+	 input->count = input->glarray->_MaxElement;
 
 	 /* This is a common place to reach if the user mistakenly supplies
 	  * a pointer in place of a VBO offset.  If we just let it go through,
@@ -411,6 +411,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  */
 	 assert(input->offset < input->bo->size);
       } else {
+	 input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 	 if (input->bo != NULL) {
 	    /* Already-uploaded vertex data is present from a previous
 	     * prepare_vertices, but we had to re-validate state due to
@@ -546,7 +547,7 @@ static void brw_emit_vertices(struct brw_context *brw)
                         input->offset + input->element_size);
           }
       } else
-          OUT_BATCH(brw->vb.max_index);
+          OUT_BATCH(input->count);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
