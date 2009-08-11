@@ -793,7 +793,10 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
                                          struct quad_header *quads[],
                                          unsigned nr)
 {
-   float source[4];
+   static const float one[4] = { 1, 1, 1, 1 };
+   float one_minus_alpha[QUAD_SIZE];
+   float dest[4][QUAD_SIZE];
+   float source[4][QUAD_SIZE];
    uint i, j, q;
 
    struct softpipe_cached_tile *tile
@@ -803,26 +806,45 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
 
    for (q = 0; q < nr; q++) {
       struct quad_header *quad = quads[q];
+      float (*quadColor)[4] = quad->output.color[0];
+      const float *alpha = quadColor[3];
       const int itx = (quad->input.x0 & (TILE_SIZE-1));
       const int ity = (quad->input.y0 & (TILE_SIZE-1));
-      float (*swzColor)[4] = quad->output.color[0];
       
-      for (j = 0; j < 4; j++) {
-         if (quad->inout.mask & (1<<j)) {
-            float *dest = tile->data.color[ity + (j>>1)][itx + (j&1)];
-            const float alpha = swzColor[3][j];
-            const float one_minus_alpha = 1.0 - alpha;
+      /* get/swizzle dest colors */
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = itx + (j & 1);
+         int y = ity + (j >> 1);
+         for (i = 0; i < 4; i++) {
+            dest[i][j] = tile->data.color[y][x][i];
+         }
+      }
 
-            for (i = 0; i < 4; i++) {
-               dest[i] *= one_minus_alpha;
-               dest[i] += swzColor[i][j] * alpha;
+      VEC4_MUL(source[0], quadColor[0], alpha); /* R */
+      VEC4_MUL(source[1], quadColor[1], alpha); /* G */
+      VEC4_MUL(source[2], quadColor[2], alpha); /* B */
+      VEC4_MUL(source[3], quadColor[3], alpha); /* A */
 
-               /* XXX: redundant, will be clamped later for argb8 surfaces: 
-                */
-               dest[i] = CLAMP(dest[i], 0.0, 1.0);
+      VEC4_SUB(one_minus_alpha, one, alpha);
+      VEC4_MUL(dest[0], dest[0], one_minus_alpha); /* R */
+      VEC4_MUL(dest[1], dest[1], one_minus_alpha); /* G */
+      VEC4_MUL(dest[2], dest[2], one_minus_alpha); /* B */
+      VEC4_MUL(dest[3], dest[3], one_minus_alpha); /* B */
+
+      VEC4_ADD_SAT(quadColor[0], source[0], dest[0]); /* R */
+      VEC4_ADD_SAT(quadColor[1], source[1], dest[1]); /* G */
+      VEC4_ADD_SAT(quadColor[2], source[2], dest[2]); /* B */
+      VEC4_ADD_SAT(quadColor[3], source[3], dest[3]); /* A */
+
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->inout.mask & (1 << j)) {
+            int x = itx + (j & 1);
+            int y = ity + (j >> 1);
+            for (i = 0; i < 4; i++) { /* loop over color chans */
+               tile->data.color[y][x][i] = quadColor[i][j];
             }
          }
-      }  
+      }
    }
 }
 
@@ -841,27 +863,33 @@ blend_single_add_one_one(struct quad_stage *qs,
 
    for (q = 0; q < nr; q++) {
       struct quad_header *quad = quads[q];
+      float (*quadColor)[4] = quad->output.color[0];
       const int itx = (quad->input.x0 & (TILE_SIZE-1));
       const int ity = (quad->input.y0 & (TILE_SIZE-1));
-      float (*dest)[64][4] = (float (*)[64][4])&tile->data.color[ity][itx];
-      float (*swzColor)[4] = quad->output.color[0];
-      float quadColor[4][4];
-
+      
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
+         int x = itx + (j & 1);
+         int y = ity + (j >> 1);
          for (i = 0; i < 4; i++) {
-            quadColor[i][j] = swzColor[j][i];
+            dest[i][j] = tile->data.color[y][x][i];
          }
       }
      
-      if (quad->inout.mask & 1) 
-         VEC4_ADD_SAT(dest[0][0], quadColor[0], dest[0][0]);
-      if (quad->inout.mask & 2) 
-         VEC4_ADD_SAT(dest[0][1], quadColor[1], dest[0][1]);
-      if (quad->inout.mask & 4) 
-         VEC4_ADD_SAT(dest[1][0], quadColor[2], dest[1][0]);
-      if (quad->inout.mask & 8) 
-         VEC4_ADD_SAT(dest[1][1], quadColor[3], dest[1][1]);
+      VEC4_ADD_SAT(quadColor[0], quadColor[0], dest[0]); /* R */
+      VEC4_ADD_SAT(quadColor[1], quadColor[1], dest[1]); /* G */
+      VEC4_ADD_SAT(quadColor[2], quadColor[2], dest[2]); /* B */
+      VEC4_ADD_SAT(quadColor[3], quadColor[3], dest[3]); /* A */
+
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->inout.mask & (1 << j)) {
+            int x = itx + (j & 1);
+            int y = ity + (j >> 1);
+            for (i = 0; i < 4; i++) { /* loop over color chans */
+               tile->data.color[y][x][i] = quadColor[i][j];
+            }
+         }
+      }
    }
 }
 
