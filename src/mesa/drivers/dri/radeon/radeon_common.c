@@ -926,10 +926,10 @@ static void radeon_print_state_atom_kmm(radeonContextPtr radeon, struct radeon_s
 	int dwords = (*state->check) (radeon->glCtx, state);
 	uint32_t packet0;
 
-	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, state->cmd_size, dwords);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
-		for (i = 0; i < dwords;) {
+		for (i = 0; i < state->cmd_size;) {
 			packet0 = state->cmd[i];
 			reg = (packet0 & 0x1FFF) << 2;
 			count = ((packet0 & 0x3FFF0000) >> 16) + 1;
