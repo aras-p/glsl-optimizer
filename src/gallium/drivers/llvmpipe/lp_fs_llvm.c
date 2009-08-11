@@ -1,5 +1,6 @@
 /**************************************************************************
  * 
+ * Copyright 2009 VMware, Inc.
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
@@ -27,20 +28,30 @@
 
 /**
  * Execute fragment shader using LLVM code generation.
- * Authors:
- *   Zack Rusin
  */
 
-#include "lp_context.h"
-#include "lp_state.h"
-#include "lp_fs.h"
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "tgsi/tgsi_sse2.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_dump.h"
+#include "lp_bld_type.h"
+#include "lp_bld_tgsi.h"
+#include "lp_screen.h"
+#include "lp_context.h"
+#include "lp_state.h"
+#include "lp_fs.h"
+#include "lp_quad.h"
 
-#if 0
+
+typedef void
+(*lp_shader_fs_func)(void *inputs,
+                     void *consts,
+                     void *outputs,
+                     struct tgsi_sampler **samplers);
+
 
 /**
  * Subclass of lp_fragment_shader
@@ -48,119 +59,302 @@
 struct lp_llvm_fragment_shader
 {
    struct lp_fragment_shader base;
-   struct gallivm_prog *llvm_prog;
+
+   struct llvmpipe_screen *screen;
+
+   LLVMValueRef function;
+
+   lp_shader_fs_func jit_function;
 };
 
 
+/** cast wrapper */
+static INLINE struct lp_llvm_fragment_shader *
+lp_llvm_fragment_shader(const struct lp_fragment_shader *base)
+{
+   return (struct lp_llvm_fragment_shader *) base;
+}
+
+
 static void
-shade_quad_llvm(struct quad_stage *qs,
-                struct quad_header *quad)
+shader_generate(struct llvmpipe_screen *screen,
+                struct lp_llvm_fragment_shader *shader)
 {
-   struct quad_shade_stage *qss = quad_shade_stage(qs);
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   float dests[4][16][4] ALIGN16_ATTRIB;
-   float inputs[4][16][4] ALIGN16_ATTRIB;
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
-   struct gallivm_prog *llvm = qss->llvm_prog;
+   const struct tgsi_token *tokens = shader->base.shader.tokens;
+   union lp_type type;
+   LLVMTypeRef elem_type;
+   LLVMTypeRef vec_type;
+   LLVMTypeRef args[4];
+   LLVMValueRef inputs_ptr;
+   LLVMValueRef consts_ptr;
+   LLVMValueRef outputs_ptr;
+   LLVMValueRef samplers_ptr;
+   LLVMBasicBlockRef block;
+   LLVMBuilderRef builder;
+   LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][4];
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][4];
+   char name[32];
+   unsigned i, j;
 
-   inputs[0][0][0] = fx;
-   inputs[1][0][0] = fx + 1.0f;
-   inputs[2][0][0] = fx;
-   inputs[3][0][0] = fx + 1.0f;
+   type.value = 0;
+   type.floating = TRUE;
+   type.sign = FALSE;
+   type.norm = TRUE;
+   type.width = 32;
+   type.length = 4;
 
-   inputs[0][0][1] = fy;
-   inputs[1][0][1] = fy;
-   inputs[2][0][1] = fy + 1.0f;
-   inputs[3][0][1] = fy + 1.0f;
+   elem_type = lp_build_elem_type(type);
+   vec_type = lp_build_vec_type(type);
 
+   args[0] = LLVMPointerType(vec_type, 0);
+   args[1] = LLVMPointerType(elem_type, 0);
+   args[2] = LLVMPointerType(vec_type, 0);
+   args[3] = LLVMPointerType(LLVMInt8Type(), 0);
+   shader->function = LLVMAddFunction(screen->module, "shader", LLVMFunctionType(LLVMVoidType(), args, 4, 0));
+   LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
 
-   gallivm_prog_inputs_interpolate(llvm, inputs, quad->coef);
+   inputs_ptr = LLVMGetParam(shader->function, 0);
+   consts_ptr = LLVMGetParam(shader->function, 1);
+   outputs_ptr = LLVMGetParam(shader->function, 2);
+   samplers_ptr = LLVMGetParam(shader->function, 3);
 
-#if DLLVM
-   debug_printf("MASK = %d\n", quad->mask);
-   for (int i = 0; i < 4; ++i) {
-      for (int j = 0; j < 2; ++j) {
-         debug_printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
-                inputs[i][j][0], inputs[i][j][1], inputs[i][j][2], inputs[i][j][3]);
+   LLVMSetValueName(inputs_ptr, "inputs");
+   LLVMSetValueName(consts_ptr, "consts");
+   LLVMSetValueName(outputs_ptr, "outputs");
+   LLVMSetValueName(samplers_ptr, "samplers");
+
+   block = LLVMAppendBasicBlock(shader->function, "entry");
+   builder = LLVMCreateBuilder();
+   LLVMPositionBuilderAtEnd(builder, block);
+
+   for(i = 0; i < PIPE_MAX_SHADER_INPUTS; ++i) {
+      for(j = 0; j < 4; ++j) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*4 + j, 0);
+         util_snprintf(name, sizeof name, "input%u.%c", i, "xywz"[j]);
+         inputs[i][j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, inputs_ptr, &index, 1, ""), name);
       }
    }
-#endif
 
-   quad->mask &=
-      gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
-                                   llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
-                                   qss->samplers);
-#if DLLVM
-   debug_printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
-          dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 
-          dests[0][1][0], dests[0][1][1], dests[0][1][2], dests[0][1][3]);
-#endif
+   memset(outputs, 0, sizeof outputs);
 
-   /* store result color */
-   if (qss->colorOutSlot >= 0) {
-      unsigned i;
-      /* XXX need to handle multiple color outputs someday */
-      allvmrt(qss->stage.llvmpipe->fs->info.output_semantic_name[qss->colorOutSlot]
-             == TGSI_SEMANTIC_COLOR);
-      for (i = 0; i < QUAD_SIZE; ++i) {
-         quad->outputs.color[0][0][i] = dests[i][qss->colorOutSlot][0];
-         quad->outputs.color[0][1][i] = dests[i][qss->colorOutSlot][1];
-         quad->outputs.color[0][2][i] = dests[i][qss->colorOutSlot][2];
-         quad->outputs.color[0][3][i] = dests[i][qss->colorOutSlot][3];
+   lp_build_tgsi_soa(builder, tokens, type, inputs, consts_ptr, outputs, samplers_ptr);
+
+   for(i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i) {
+      for(j = 0; j < 4; ++j) {
+         if(outputs[i][j]) {
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*4 + j, 0);
+            util_snprintf(name, sizeof name, "output%u.%c", i, "xywz"[j]);
+            LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, name));
+         }
       }
    }
-#if DLLVM
-   for (int i = 0; i < QUAD_SIZE; ++i) {
-      debug_printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
-             quad->outputs.color[0][0][i],
-             quad->outputs.color[0][1][i],
-             quad->outputs.color[0][2][i],
-             quad->outputs.color[0][3][i]);
-   }
-#endif
 
-   /* store result Z */
-   if (qss->depthOutSlot >= 0) {
-      /* output[slot] is new Z */
-      uint i;
-      for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = dests[i][0][2];
-      }
-   }
-   else {
-      /* copy input Z (which was interpolated by the executor) to output Z */
-      uint i;
-      for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = inputs[i][0][2];
-      }
-   }
-#if DLLVM
-   debug_printf("D [%f, %f, %f, %f] mask = %d\n",
-             quad->outputs.depth[0],
-             quad->outputs.depth[1],
-             quad->outputs.depth[2],
-             quad->outputs.depth[3], quad->mask);
-#endif
+   LLVMBuildRetVoid(builder);;
 
-   /* shader may cull fragments */
-   if( quad->mask ) {
-      qs->next->run( qs->next, quad );
+   LLVMDisposeBuilder(builder);
+}
+
+
+
+static void
+fs_llvm_prepare( const struct lp_fragment_shader *base,
+		struct tgsi_exec_machine *machine,
+		struct tgsi_sampler **samplers )
+{
+   /*
+    * Bind tokens/shader to the interpreter's machine state.
+    * Avoid redundant binding.
+    */
+   if (machine->Tokens != base->shader.tokens) {
+      tgsi_exec_machine_bind_shader( machine,
+                                     base->shader.tokens,
+                                     PIPE_MAX_SAMPLERS,
+                                     samplers );
    }
 }
 
 
-unsigned 
-run_llvm_fs( const struct lp_fragment_shader *base,
-	     struct foo *machine )
+
+
+/**
+ * Evaluate a constant-valued coefficient at the position of the
+ * current quad.
+ */
+static void
+eval_constant_coef(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
 {
+   unsigned i;
+
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      mach->Inputs[attrib].xyzw[chan].f[i] = mach->InterpCoefs[attrib].a0[chan];
+   }
+}
+
+/**
+ * Evaluate a linear-valued coefficient at the position of the
+ * current quad.
+ */
+static void
+eval_linear_coef(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
+{
+   const float x = mach->QuadPos.xyzw[0].f[0];
+   const float y = mach->QuadPos.xyzw[1].f[0];
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
+   mach->Inputs[attrib].xyzw[chan].f[0] = a0;
+   mach->Inputs[attrib].xyzw[chan].f[1] = a0 + dadx;
+   mach->Inputs[attrib].xyzw[chan].f[2] = a0 + dady;
+   mach->Inputs[attrib].xyzw[chan].f[3] = a0 + dadx + dady;
+}
+
+/**
+ * Evaluate a perspective-valued coefficient at the position of the
+ * current quad.
+ */
+static void
+eval_perspective_coef(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
+{
+   const float x = mach->QuadPos.xyzw[0].f[0];
+   const float y = mach->QuadPos.xyzw[1].f[0];
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
+   const float *w = mach->QuadPos.xyzw[3].f;
+   /* divide by W here */
+   mach->Inputs[attrib].xyzw[chan].f[0] = a0 / w[0];
+   mach->Inputs[attrib].xyzw[chan].f[1] = (a0 + dadx) / w[1];
+   mach->Inputs[attrib].xyzw[chan].f[2] = (a0 + dady) / w[2];
+   mach->Inputs[attrib].xyzw[chan].f[3] = (a0 + dadx + dady) / w[3];
 }
 
 
-void 
-delete_llvm_fs( struct lp_fragment_shader *base )
+typedef void
+(*eval_coef_func)(struct tgsi_exec_machine *mach,
+                  unsigned attrib,
+                  unsigned chan );
+
+
+static void
+exec_declaration(
+   struct tgsi_exec_machine *mach,
+   const struct tgsi_full_declaration *decl )
 {
-   FREE(base);
+   if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
+      if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+         unsigned first, last, mask;
+         eval_coef_func eval;
+
+         first = decl->DeclarationRange.First;
+         last = decl->DeclarationRange.Last;
+         mask = decl->Declaration.UsageMask;
+
+         switch( decl->Declaration.Interpolate ) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            eval = eval_constant_coef;
+            break;
+
+         case TGSI_INTERPOLATE_LINEAR:
+            eval = eval_linear_coef;
+            break;
+
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            eval = eval_perspective_coef;
+            break;
+
+         default:
+            eval = NULL;
+            assert( 0 );
+         }
+
+         if( mask == TGSI_WRITEMASK_XYZW ) {
+            unsigned i, j;
+
+            for( i = first; i <= last; i++ ) {
+               for( j = 0; j < NUM_CHANNELS; j++ ) {
+                  eval( mach, i, j );
+               }
+            }
+         }
+         else {
+            unsigned i, j;
+
+            for( j = 0; j < NUM_CHANNELS; j++ ) {
+               if( mask & (1 << j) ) {
+                  for( i = first; i <= last; i++ ) {
+                     eval( mach, i, j );
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+/* TODO: codegenerate the whole run function, skip this wrapper.
+ * TODO: break dependency on tgsi_exec_machine struct
+ * TODO: push Position calculation into the generated shader
+ * TODO: process >1 quad at a time
+ */
+static unsigned 
+fs_llvm_run( const struct lp_fragment_shader *base,
+	    struct tgsi_exec_machine *machine,
+	    struct quad_header *quad )
+{
+   struct lp_llvm_fragment_shader *shader = lp_llvm_fragment_shader(base);
+   unsigned i;
+   unsigned mask;
+
+   /* Compute X, Y, Z, W vals for this quad */
+   lp_setup_pos_vector(quad->posCoef, 
+                       (float)quad->input.x0, (float)quad->input.y0,
+                       &machine->QuadPos);
+
+   /* init kill mask */
+   tgsi_set_kill_mask(machine, 0x0);
+   tgsi_set_exec_mask(machine, 1, 1, 1, 1);
+
+   /* execute declarations (interpolants) */
+   for (i = 0; i < machine->NumDeclarations; i++)
+      exec_declaration( machine, &machine->Declarations[i] );
+
+   memset(machine->Outputs, 0, sizeof machine->Outputs);
+
+   shader->jit_function( machine->Inputs,
+                         machine->Consts,
+                         machine->Outputs,
+                         machine->Samplers);
+
+   /* FIXME */
+   mask = ~0;
+
+   return mask;
+}
+
+
+static void 
+fs_llvm_delete( struct lp_fragment_shader *base )
+{
+   struct lp_llvm_fragment_shader *shader = lp_llvm_fragment_shader(base);
+   struct llvmpipe_screen *screen = shader->screen;
+
+   if(shader->function) {
+      if(shader->jit_function)
+         LLVMFreeMachineCodeForFunction(screen->engine, shader->function);
+      LLVMDeleteFunction(shader->function);
+   }
+
+   FREE((void *) shader->base.shader.tokens);
+   FREE(shader);
 }
 
 
@@ -168,38 +362,49 @@ struct lp_fragment_shader *
 llvmpipe_create_fs_llvm(struct llvmpipe_context *llvmpipe,
                         const struct pipe_shader_state *templ)
 {
-   struct lp_llvm_fragment_shader *shader = NULL;
+   struct llvmpipe_screen *screen = llvmpipe_screen(llvmpipe->pipe.screen);
+   struct lp_llvm_fragment_shader *shader;
+   LLVMValueRef fetch_texel;
 
-   /* LLVM fragment shaders currently disabled:
-    */
-   state = CALLOC_STRUCT(lp_llvm_shader_state);
-   if (!state)
+   shader = CALLOC_STRUCT(lp_llvm_fragment_shader);
+   if (!shader)
       return NULL;
 
-   state->llvm_prog = 0;
+   /* we need to keep a local copy of the tokens */
+   shader->base.shader.tokens = tgsi_dup_tokens(templ->tokens);
+   shader->base.prepare = fs_llvm_prepare;
+   shader->base.run = fs_llvm_run;
+   shader->base.delete = fs_llvm_delete;
 
-   if (!gallivm_global_cpu_engine()) {
-      gallivm_cpu_engine_create(state->llvm_prog);
-   }
-   else
-      gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
-   
-   if (shader) {
-      shader->base.run = run_llvm_fs;
-      shader->base.delete = delete_llvm_fs;
-   }
+   shader->screen = screen;
 
-   return shader;
-}
+   tgsi_dump(templ->tokens, 0);
 
+   shader_generate(screen, shader);
 
-#else
+   LLVMRunFunctionPassManager(screen->pass, shader->function);
 
-struct lp_fragment_shader *
-llvmpipe_create_fs_llvm(struct llvmpipe_context *llvmpipe,
-		       const struct pipe_shader_state *templ)
-{
-   return NULL;
-}
-
+#if 1
+   LLVMDumpValue(shader->function);
+   debug_printf("\n");
 #endif
+
+   if(LLVMVerifyFunction(shader->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(shader->function);
+      abort();
+   }
+
+   fetch_texel = LLVMGetNamedFunction(screen->module, "fetch_texel");
+   if(fetch_texel) {
+      static boolean first_time = TRUE;
+      if(first_time) {
+         LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_build_tgsi_fetch_texel_soa);
+         first_time = FALSE;
+      }
+   }
+
+   shader->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, shader->function);
+
+   return &shader->base;
+}
+
