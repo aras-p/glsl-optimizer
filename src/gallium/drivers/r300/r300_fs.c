@@ -113,7 +113,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     find_output_registers(&compiler, fs);
 
     if (compiler.Base.Debug) {
-        debug_printf("r300: Initial vertex program\n");
+        debug_printf("r300: Initial fragment program\n");
         tgsi_dump(fs->state.tokens, 0);
     }
 
