@@ -7,6 +7,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 
 #include "intel_be_fence.h"
 
@@ -174,6 +175,40 @@ err:
 	return NULL;
 }
 
+static struct pipe_buffer *
+intel_be_surface_buffer_create(struct pipe_winsys *winsys,
+                               unsigned width, unsigned height,
+                               enum pipe_format format,
+                               unsigned usage,
+                               unsigned tex_usage,
+                               unsigned *stride)
+{
+	struct pipe_format_block block;
+	unsigned buf_usage = 0;
+	unsigned buf_stride = 0;
+	unsigned buf_size = 0;
+
+	pf_get_block(format, &block);
+	buf_stride = pf_get_stride(&block, width);
+	buf_stride = align(buf_stride, 64);
+
+	if (tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) {
+		/* TODO more checks */
+		assert(buf_stride <= 2048*4);
+		assert(height % 8 == 0);
+		buf_stride = 2048 * 4;
+		buf_usage |= I915_BUFFER_USAGE_SCANOUT;
+	}
+
+	buf_size = buf_stride * height;
+	*stride = buf_stride;
+
+	return intel_be_buffer_create(winsys,
+	                              0,
+	                              buf_usage,
+	                              buf_size);
+}
+
 boolean
 intel_be_get_texture_buffer(struct drm_api *api,
                             struct pipe_texture *texture,
@@ -257,6 +292,7 @@ intel_be_global_handle_from_buffer(struct drm_api *api,
 	*handle = buf->flink;
 	return TRUE;
 }
+
 /*
  * Fence
  */
@@ -328,8 +364,8 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.buffer_unmap = intel_be_buffer_unmap;
 	dev->base.buffer_destroy = intel_be_buffer_destroy;
 
-	/* Not used anymore */
-	dev->base.surface_buffer_create = NULL;
+	/* Used by softpipe */
+	dev->base.surface_buffer_create = intel_be_surface_buffer_create;
 
 	dev->base.fence_reference = intel_be_fence_refunref;
 	dev->base.fence_signalled = intel_be_fence_signalled;
