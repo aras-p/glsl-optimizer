@@ -752,6 +752,13 @@ static const char VertexAttrib4ubNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_texture_range)
+static const char TextureRangeAPPLE_names[] = 
+    "iip\0" /* Parameter signature */
+    "glTextureRangeAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_SUN_vertex)
 static const char TexCoord2fColor4fNormal3fVertex3fSUN_names[] = 
     "ffffffffffff\0" /* Parameter signature */
@@ -1567,6 +1574,13 @@ static const char FragmentLightivSGIX_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_texture_range)
+static const char GetTexParameterPointervAPPLE_names[] = 
+    "iip\0" /* Parameter signature */
+    "glGetTexParameterPointervAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_pixel_transform)
 static const char PixelTransformParameterfvEXT_names[] = 
     "iip\0" /* Parameter signature */
@@ -1768,6 +1782,13 @@ static const char EndQueryARB_names[] =
 static const char DeleteFencesNV_names[] = 
     "ip\0" /* Parameter signature */
     "glDeleteFencesNV\0"
+    "";
+#endif
+
+#if defined(need_GL_SGIX_polynomial_ffd)
+static const char DeformationMap3dSGIX_names[] = 
+    "iddiiddiiddiip\0" /* Parameter signature */
+    "glDeformationMap3dSGIX\0"
     "";
 #endif
 
@@ -1997,13 +2018,6 @@ static const char GetCombinerOutputParameterivNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_IBM_multimode_draw_arrays)
-static const char MultiModeDrawArraysIBM_names[] = 
-    "pppii\0" /* Parameter signature */
-    "glMultiModeDrawArraysIBM\0"
-    "";
-#endif
-
 #if defined(need_GL_SGIS_pixel_texture)
 static const char PixelTexGenParameterivSGIS_names[] = 
     "ip\0" /* Parameter signature */
@@ -2076,6 +2090,13 @@ static const char Uniform2fvARB_names[] =
     "iip\0" /* Parameter signature */
     "glUniform2fv\0"
     "glUniform2fvARB\0"
+    "";
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const char BufferParameteriAPPLE_names[] = 
+    "iii\0" /* Parameter signature */
+    "glBufferParameteriAPPLE\0"
     "";
 #endif
 
@@ -2800,6 +2821,13 @@ static const char IsProgramNV_names[] =
     "i\0" /* Parameter signature */
     "glIsProgramARB\0"
     "glIsProgramNV\0"
+    "";
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const char FlushMappedBufferRangeAPPLE_names[] = 
+    "iii\0" /* Parameter signature */
+    "glFlushMappedBufferRangeAPPLE\0"
     "";
 #endif
 
@@ -3920,6 +3948,13 @@ static const char VertexAttribs4dvNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_IBM_multimode_draw_arrays)
+static const char MultiModeDrawArraysIBM_names[] = 
+    "pppii\0" /* Parameter signature */
+    "glMultiModeDrawArraysIBM\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4dARB_names[] = 
     "idddd\0" /* Parameter signature */
@@ -4604,13 +4639,6 @@ static const char Minmax_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGIX_polynomial_ffd)
-static const char DeformationMap3dSGIX_names[] = 
-    "iddiiddiiddiip\0" /* Parameter signature */
-    "glDeformationMap3dSGIX\0"
-    "";
-#endif
-
 #if defined(need_GL_VERSION_1_4) || defined(need_GL_EXT_fog_coord)
 static const char FogCoorddvEXT_names[] = 
     "p\0" /* Parameter signature */
@@ -4969,6 +4997,22 @@ static const char WindowPos2fMESA_names[] =
 #if defined(need_GL_3DFX_tbuffer)
 static const struct dri_extension_function GL_3DFX_tbuffer_functions[] = {
     { TbufferMask3DFX_names, TbufferMask3DFX_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const struct dri_extension_function GL_APPLE_flush_buffer_range_functions[] = {
+    { BufferParameteriAPPLE_names, BufferParameteriAPPLE_remap_index, -1 },
+    { FlushMappedBufferRangeAPPLE_names, FlushMappedBufferRangeAPPLE_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_APPLE_texture_range)
+static const struct dri_extension_function GL_APPLE_texture_range_functions[] = {
+    { TextureRangeAPPLE_names, TextureRangeAPPLE_remap_index, -1 },
+    { GetTexParameterPointervAPPLE_names, GetTexParameterPointervAPPLE_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -6131,9 +6175,9 @@ static const struct dri_extension_function GL_SGIX_pixel_texture_functions[] = {
 #if defined(need_GL_SGIX_polynomial_ffd)
 static const struct dri_extension_function GL_SGIX_polynomial_ffd_functions[] = {
     { LoadIdentityDeformationMapSGIX_names, LoadIdentityDeformationMapSGIX_remap_index, -1 },
+    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { DeformSGIX_names, DeformSGIX_remap_index, -1 },
     { DeformationMap3fSGIX_names, DeformationMap3fSGIX_remap_index, -1 },
-    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
