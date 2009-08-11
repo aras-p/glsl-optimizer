@@ -289,6 +289,7 @@ identity_screen_surface_buffer_create(struct pipe_screen *_screen,
                                       unsigned height,
                                       enum pipe_format format,
                                       unsigned usage,
+                                      unsigned tex_usage,
                                       unsigned *stride)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
@@ -300,6 +301,7 @@ identity_screen_surface_buffer_create(struct pipe_screen *_screen,
                                           height,
                                           format,
                                           usage,
+                                          tex_usage,
                                           stride);
 
    if (result)

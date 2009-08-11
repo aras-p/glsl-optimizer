@@ -140,6 +140,7 @@ struct pipe_winsys
 						unsigned width, unsigned height,
 						enum pipe_format format,
 						unsigned usage,
+						unsigned tex_usage,
 						unsigned *stride);
 
 

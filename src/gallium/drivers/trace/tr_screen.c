@@ -462,6 +462,7 @@ trace_screen_surface_buffer_create(struct pipe_screen *_screen,
                                    unsigned width, unsigned height,
                                    enum pipe_format format,
                                    unsigned usage,
+                                   unsigned tex_usage,
                                    unsigned *pstride)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
@@ -476,11 +477,13 @@ trace_screen_surface_buffer_create(struct pipe_screen *_screen,
    trace_dump_arg(uint, height);
    trace_dump_arg(format, format);
    trace_dump_arg(uint, usage);
+   trace_dump_arg(uint, tex_usage);
 
    result = screen->surface_buffer_create(screen,
                                           width, height,
                                           format,
                                           usage,
+                                          tex_usage,
                                           pstride);
 
    stride = *pstride;

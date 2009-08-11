@@ -95,6 +95,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 {
    unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
                      PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   unsigned tex_usage = spt->base.tex_usage;
 
    spt->base.nblocksx[0] = pf_get_nblocksx(&spt->base.block, spt->base.width[0]);  
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
@@ -104,6 +105,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
                                                 spt->base.height[0],
                                                 spt->base.format,
                                                 usage,
+                                                tex_usage,
                                                 &spt->stride[0]);
 
    return spt->buffer != NULL;
