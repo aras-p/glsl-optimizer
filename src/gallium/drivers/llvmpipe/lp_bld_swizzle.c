@@ -34,6 +34,24 @@
 
 
 LLVMValueRef
+lp_build_broadcast_scalar(struct lp_build_context *bld,
+                          LLVMValueRef scalar)
+{
+   const union lp_type type = bld->type;
+   LLVMValueRef res;
+   unsigned i;
+
+   res = bld->undef;
+   for(i = 0; i < type.length; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+   }
+
+   return res;
+}
+
+
+LLVMValueRef
 lp_build_broadcast_aos(struct lp_build_context *bld,
                        LLVMValueRef a,
                        unsigned channel)

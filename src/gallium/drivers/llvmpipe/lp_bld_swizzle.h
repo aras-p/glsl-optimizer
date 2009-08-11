@@ -44,6 +44,11 @@ union lp_type type;
 struct lp_build_context;
 
 
+LLVMValueRef
+lp_build_broadcast_scalar(struct lp_build_context *bld,
+                          LLVMValueRef scalar);
+
+
 /**
  * Broadcast one channel of a vector composed of arrays of XYZW structures into
  * all four channel.
