@@ -533,6 +533,7 @@ st_draw_vbo(GLcontext *ctx,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
             const struct _mesa_index_buffer *ib,
+	    GLboolean index_bounds_valid,
             GLuint min_index,
             GLuint max_index)
 {
@@ -544,6 +545,10 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
    GLboolean userSpace;
+
+   /* Gallium probably doesn't want this in some cases. */
+   if (!index_bounds_valid)
+      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);

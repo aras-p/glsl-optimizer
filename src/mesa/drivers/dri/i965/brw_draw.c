@@ -422,54 +422,31 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return retval;
 }
 
-static GLboolean brw_need_rebase( GLcontext *ctx,
-				  const struct gl_client_array *arrays[],
-				  const struct _mesa_index_buffer *ib,
-				  GLuint min_index )
-{
-   if (min_index == 0) 
-      return GL_FALSE;
-
-   if (ib) {
-      if (!vbo_all_varyings_in_vbos(arrays))
-	 return GL_TRUE;
-      else
-	 return GL_FALSE;
-   }
-   else {
-      /* Hmm.  This isn't quite what I wanted.  BRW can actually
-       * handle the mixed case well enough that we shouldn't need to
-       * rebase.  However, it's probably not very common, nor hugely
-       * expensive to do it this way:
-       */
-      if (!vbo_all_varyings_in_vbos(arrays))
-	 return GL_TRUE;
-      else
-	 return GL_FALSE;
-   }
-}
-				  
-
 void brw_draw_prims( GLcontext *ctx,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,
+		     GLboolean index_bounds_valid,
 		     GLuint min_index,
 		     GLuint max_index )
 {
    GLboolean retval;
 
-   /* Decide if we want to rebase.  If so we end up recursing once
-    * only into this function.
-    */
-   if (brw_need_rebase( ctx, arrays, ib, min_index )) {
-      vbo_rebase_prims( ctx, arrays, 
-			prim, nr_prims, 
-			ib, min_index, max_index, 
-			brw_draw_prims );
-      
-      return;
+   if (!vbo_all_varyings_in_vbos(arrays)) {
+      if (!index_bounds_valid)
+	 vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
+
+      /* Decide if we want to rebase.  If so we end up recursing once
+       * only into this function.
+       */
+      if (min_index != 0) {
+	 vbo_rebase_prims(ctx, arrays,
+			  prim, nr_prims,
+			  ib, min_index, max_index,
+			  brw_draw_prims );
+	 return;
+      }
    }
 
    /* Make a first attempt at drawing:

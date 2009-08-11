@@ -462,6 +462,7 @@ static void r300DrawPrims(GLcontext *ctx,
 			 const struct _mesa_prim *prim,
 			 GLuint nr_prims,
 			 const struct _mesa_index_buffer *ib,
+			 GLboolean index_bounds_valid,
 			 GLuint min_index,
 			 GLuint max_index)
 {
@@ -475,6 +476,12 @@ static void r300DrawPrims(GLcontext *ctx,
 
 	limits.max_indices = 65535;
 	limits.max_vb_size = 1024*1024;
+
+	/* This check should get folded into just the places that
+	 * min/max index are really needed.
+	 */
+	if (!index_bounds_valid)
+	   vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
 
 	if (min_index) {
 		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims );

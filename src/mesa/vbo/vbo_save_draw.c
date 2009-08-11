@@ -279,6 +279,7 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
 				    node->prim, 
 				    node->prim_count,
 				    NULL,
+				    GL_TRUE,
 				    0,	/* Node is a VBO, so this is ok */
 				    node->count - 1);
    }

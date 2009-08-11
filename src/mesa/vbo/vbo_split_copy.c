@@ -194,6 +194,7 @@ flush( struct copy_context *copy )
 	       copy->dstprim,
 	       copy->dstprim_nr,
 	       &copy->dstib,
+	       GL_TRUE,
 	       0,
 	       copy->dstbuf_nr );
 

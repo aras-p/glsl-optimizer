@@ -378,6 +378,7 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
 				       exec->vtx.prim, 
 				       exec->vtx.prim_count,
 				       NULL,
+				       GL_TRUE,
 				       0,
 				       exec->vtx.vert_count - 1);
 

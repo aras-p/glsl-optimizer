@@ -208,6 +208,7 @@ void vbo_rebase_prims( GLcontext *ctx,
 	 prim, 
 	 nr_prims, 
 	 ib, 
+	 GL_TRUE,
 	 0, 
 	 max_index - min_index );
    

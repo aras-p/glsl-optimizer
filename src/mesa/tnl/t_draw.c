@@ -360,6 +360,20 @@ static void unmap_vbos( GLcontext *ctx,
 }
 
 
+void _tnl_vbo_draw_prims(GLcontext *ctx,
+			 const struct gl_client_array *arrays[],
+			 const struct _mesa_prim *prim,
+			 GLuint nr_prims,
+			 const struct _mesa_index_buffer *ib,
+			 GLboolean index_bounds_valid,
+			 GLuint min_index,
+			 GLuint max_index)
+{
+   if (!index_bounds_valid)
+      vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
+
+   _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+}
 
 /* This is the main entrypoint into the slimmed-down software tnl
  * module.  In a regular swtnl driver, this can be plugged straight
@@ -393,7 +407,7 @@ void _tnl_draw_prims( GLcontext *ctx,
        */
       vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, 
 			min_index, max_index,
-			_tnl_draw_prims );
+			_tnl_vbo_draw_prims );
       return;
    }
    else if (max_index > max) {
@@ -411,7 +425,7 @@ void _tnl_draw_prims( GLcontext *ctx,
        */
       vbo_split_prims( ctx, arrays, prim, nr_prims, ib, 
 		       0, max_index,
-		       _tnl_draw_prims,
+		       _tnl_vbo_draw_prims,
 		       &limits );
    }
    else {

@@ -85,6 +85,7 @@ static void flush_vertex( struct split_context *split )
 		split->dstprim,
 		split->dstprim_nr,
 		NULL,
+		GL_TRUE,
 		min_index,
 		max_index);
 

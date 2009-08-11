@@ -96,6 +96,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      const struct _mesa_prim *prims,
                      GLuint nr_prims,
                      const struct _mesa_index_buffer *ib,
+		     GLboolean index_bounds_valid,
                      GLuint min_index,
                      GLuint max_index)
 {
@@ -113,6 +114,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
    assert(draw);
 
    st_validate_state(ctx->st);
+
+   if (!index_bounds_valid)
+      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* must get these after state validation! */
    vp = ctx->st->vp;

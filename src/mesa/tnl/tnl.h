@@ -81,6 +81,16 @@ _tnl_draw_prims( GLcontext *ctx,
 		 GLuint min_index,
 		 GLuint max_index);
 
+void
+_tnl_vbo_draw_prims( GLcontext *ctx,
+		     const struct gl_client_array *arrays[],
+		     const struct _mesa_prim *prim,
+		     GLuint nr_prims,
+		     const struct _mesa_index_buffer *ib,
+		     GLboolean index_bounds_valid,
+		     GLuint min_index,
+		     GLuint max_index);
+
 extern void
 _mesa_load_tracked_matrices(GLcontext *ctx);
 

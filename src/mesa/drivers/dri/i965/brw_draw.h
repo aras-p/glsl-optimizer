@@ -39,6 +39,7 @@ void brw_draw_prims( GLcontext *ctx,
 		     const struct _mesa_prim *prims,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,
+		     GLboolean index_bounds_valid,
 		     GLuint min_index,
 		     GLuint max_index );
 

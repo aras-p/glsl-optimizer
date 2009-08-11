@@ -47,6 +47,7 @@ st_draw_vbo(GLcontext *ctx,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
             const struct _mesa_index_buffer *ib,
+	    GLboolean index_bounds_valid,
             GLuint min_index,
             GLuint max_index);
 
@@ -56,6 +57,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      const struct _mesa_prim *prims,
                      GLuint nr_prims,
                      const struct _mesa_index_buffer *ib,
+		     GLboolean index_bounds_valid,
                      GLuint min_index,
                      GLuint max_index);
 
