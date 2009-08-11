@@ -1319,7 +1319,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
 
 	 if (!ok) {
             uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-	    debug_printf("failed to translate tgsi opcode %d to PPC (%s)\n", 
+	    debug_printf("failed to translate tgsi opcode %d (%s) to PPC (%s)\n", 
 			 opcode,
                          tgsi_get_opcode_name(opcode),
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
