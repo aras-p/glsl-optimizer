@@ -640,23 +640,6 @@ static void invoke_subroutine( struct brw_wm_compile *c,
     }
 }
 
-static void emit_abs( struct brw_wm_compile *c,
-                      const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for (i = 0; i < 4; i++) {
-	if (inst->DstReg.WriteMask & (1<<i)) {
-	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg(c, inst, 0, i);
-	    brw_MOV(p, dst, brw_abs(src));
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
 static void emit_trunc( struct brw_wm_compile *c,
                         const struct prog_instruction *inst)
 {
@@ -2833,9 +2816,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case WM_FRONTFACING:
 		emit_frontfacing(c, inst);
-		break;
-	    case OPCODE_ABS:
-		emit_abs(c, inst);
 		break;
 	    case OPCODE_ADD:
 		emit_add(c, inst);
