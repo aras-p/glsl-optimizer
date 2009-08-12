@@ -1,9 +1,10 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  7.6
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,13 +25,14 @@
  */
 
 
-/* xfonts.c -- glXUseXFont() for Mesa written by
- * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
+/**
+ * Fake implementation of glXUseXFont().
+ * XXX rename this file to glx_usefont.c
  */
+
 
 #include "context.h"
 #include "imports.h"
-#include "fakeglx.h"
 #include <GL/glx.h>
 
 
@@ -210,7 +212,7 @@ isvalid(XFontStruct * fs, unsigned int which)
 
 
 void
-Fake_glXUseXFont(Font font, int first, int count, int listbase)
+glXUseXFont(Font font, int first, int count, int listbase)
 {
    Display *dpy;
    Window win;
@@ -228,7 +230,8 @@ Fake_glXUseXFont(Font font, int first, int count, int listbase)
    dpy = glXGetCurrentDisplay();
    if (!dpy)
       return;			/* I guess glXMakeCurrent wasn't called */
-   win = RootWindow(dpy, DefaultScreen(dpy));
+   i = DefaultScreen(dpy);
+   win = RootWindow(dpy, i);
 
    fs = XQueryFont(dpy, font);
    if (!fs) {
