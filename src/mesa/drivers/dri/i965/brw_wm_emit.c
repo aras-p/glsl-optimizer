@@ -44,6 +44,7 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
    return reg;
 }
 
+
 /* Payload R0:
  *
  * R0.0 -- pixel mask, one bit for each of 4 pixels in 4 tiles,
@@ -60,42 +61,50 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
  * R1.8 -- ?
  */
 
-
-static void emit_pixel_xy(struct brw_compile *p,
-			  const struct brw_reg *dst,
-			  GLuint mask)
+void emit_pixel_xy(struct brw_wm_compile *c,
+		   const struct brw_reg *dst,
+		   GLuint mask)
 {
+   struct brw_compile *p = &c->func;
    struct brw_reg r1 = brw_vec1_grf(1, 0);
    struct brw_reg r1_uw = retype(r1, BRW_REGISTER_TYPE_UW);
+   struct brw_reg dst0_uw, dst1_uw;
 
+   brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+
+   if (c->dispatch_width == 16) {
+      dst0_uw = vec16(retype(dst[0], BRW_REGISTER_TYPE_UW));
+      dst1_uw = vec16(retype(dst[1], BRW_REGISTER_TYPE_UW));
+   } else {
+      dst0_uw = vec8(retype(dst[0], BRW_REGISTER_TYPE_UW));
+      dst1_uw = vec8(retype(dst[1], BRW_REGISTER_TYPE_UW));
+   }
 
    /* Calculate pixel centers by adding 1 or 0 to each of the
     * micro-tile coordinates passed in r1.
     */
    if (mask & WRITEMASK_X) {
       brw_ADD(p,
-	      vec16(retype(dst[0], BRW_REGISTER_TYPE_UW)),
+	      dst0_uw,
 	      stride(suboffset(r1_uw, 4), 2, 4, 0),
 	      brw_imm_v(0x10101010));
    }
 
    if (mask & WRITEMASK_Y) {
       brw_ADD(p,
-	      vec16(retype(dst[1], BRW_REGISTER_TYPE_UW)),
+	      dst1_uw,
 	      stride(suboffset(r1_uw,5), 2, 4, 0),
 	      brw_imm_v(0x11001100));
    }
-
-   brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+   brw_pop_insn_state(p);
 }
 
 
-
-static void emit_delta_xy(struct brw_compile *p,
-			  const struct brw_reg *dst,
-			  GLuint mask,
-			  const struct brw_reg *arg0)
+void emit_delta_xy(struct brw_compile *p,
+		   const struct brw_reg *dst,
+		   GLuint mask,
+		   const struct brw_reg *arg0)
 {
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
@@ -118,10 +127,10 @@ static void emit_delta_xy(struct brw_compile *p,
    }
 }
 
-static void emit_wpos_xy(struct brw_wm_compile *c,
-			 const struct brw_reg *dst,
-			 GLuint mask,
-			 const struct brw_reg *arg0)
+void emit_wpos_xy(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
 
@@ -146,12 +155,14 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 }
 
 
-static void emit_pixel_w( struct brw_compile *p,
-			  const struct brw_reg *dst,
-			  GLuint mask,
-			  const struct brw_reg *arg0,
-			  const struct brw_reg *deltas)
+void emit_pixel_w(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas)
 {
+   struct brw_compile *p = &c->func;
+
    /* Don't need this if all you are doing is interpolating color, for
     * instance.
     */
@@ -165,21 +176,29 @@ static void emit_pixel_w( struct brw_compile *p,
       brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
 
       /* Calc w */
-      brw_math_16( p, dst[3],
-		   BRW_MATH_FUNCTION_INV,
-		   BRW_MATH_SATURATE_NONE,
-		   2, brw_null_reg(),
-		   BRW_MATH_PRECISION_FULL);
+      if (c->dispatch_width == 16) {
+	 brw_math_16(p, dst[3],
+		     BRW_MATH_FUNCTION_INV,
+		     BRW_MATH_SATURATE_NONE,
+		     2, brw_null_reg(),
+		     BRW_MATH_PRECISION_FULL);
+      } else {
+	 brw_math(p, dst[3],
+		  BRW_MATH_FUNCTION_INV,
+		  BRW_MATH_SATURATE_NONE,
+		  2, brw_null_reg(),
+		  BRW_MATH_DATA_VECTOR,
+		  BRW_MATH_PRECISION_FULL);
+      }
    }
 }
 
 
-
-static void emit_linterp( struct brw_compile *p, 
-			 const struct brw_reg *dst,
-			 GLuint mask,
-			 const struct brw_reg *arg0,
-			 const struct brw_reg *deltas )
+void emit_linterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas)
 {
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
@@ -199,12 +218,12 @@ static void emit_linterp( struct brw_compile *p,
 }
 
 
-static void emit_pinterp( struct brw_compile *p, 
-			  const struct brw_reg *dst,
-			  GLuint mask,
-			  const struct brw_reg *arg0,
-			  const struct brw_reg *deltas,
-			  const struct brw_reg *w)
+void emit_pinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas,
+		  const struct brw_reg *w)
 {
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
@@ -229,10 +248,10 @@ static void emit_pinterp( struct brw_compile *p,
 }
 
 
-static void emit_cinterp( struct brw_compile *p, 
-			 const struct brw_reg *dst,
-			 GLuint mask,
-			 const struct brw_reg *arg0 )
+void emit_cinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0)
 {
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
@@ -251,9 +270,9 @@ static void emit_cinterp( struct brw_compile *p,
 }
 
 /* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
-static void emit_frontfacing( struct brw_compile *p,
-			      const struct brw_reg *dst,
-			      GLuint mask )
+void emit_frontfacing(struct brw_compile *p,
+		      const struct brw_reg *dst,
+		      GLuint mask)
 {
    struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
    GLuint i;
@@ -1316,7 +1335,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 /* Generated instructions for calculating triangle interpolants:
 	  */
       case WM_PIXELXY:
-	 emit_pixel_xy(p, dst, dst_flags);
+	 emit_pixel_xy(c, dst, dst_flags);
 	 break;
 
       case WM_DELTAXY:
@@ -1328,7 +1347,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case WM_PIXELW:
-	 emit_pixel_w(p, dst, dst_flags, args[0], args[1]);
+	 emit_pixel_w(c, dst, dst_flags, args[0], args[1]);
 	 break;
 
       case WM_LINTERP:

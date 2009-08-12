@@ -325,11 +325,19 @@ void emit_alu2(struct brw_compile *p,
 	       GLuint mask,
 	       const struct brw_reg *arg0,
 	       const struct brw_reg *arg1);
+void emit_cinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0);
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
 	       GLboolean is_ddx,
 	       const struct brw_reg *arg0);
+void emit_delta_xy(struct brw_compile *p,
+		   const struct brw_reg *dst,
+		   GLuint mask,
+		   const struct brw_reg *arg0);
 void emit_dp3(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -345,6 +353,14 @@ void emit_dph(struct brw_compile *p,
 	      GLuint mask,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_frontfacing(struct brw_compile *p,
+		      const struct brw_reg *dst,
+		      GLuint mask);
+void emit_linterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas);
 void emit_lrp(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -368,12 +384,30 @@ void emit_math2(struct brw_wm_compile *c,
 		GLuint mask,
 		const struct brw_reg *arg0,
 		const struct brw_reg *arg1);
+void emit_pinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas,
+		  const struct brw_reg *w);
+void emit_pixel_xy(struct brw_wm_compile *c,
+		   const struct brw_reg *dst,
+		   GLuint mask);
+void emit_pixel_w(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas);
 void emit_sop(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
 	      GLuint cond,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_wpos_xy(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0);
 void emit_xpd(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,

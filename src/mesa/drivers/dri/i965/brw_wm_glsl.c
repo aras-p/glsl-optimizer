@@ -671,67 +671,6 @@ unalias3(struct brw_wm_compile *c,
     release_tmps(c, mark);
 }
 
-static void emit_pixel_xy(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_reg r1 = brw_vec1_grf(1, 0);
-    struct brw_reg r1_uw = retype(r1, BRW_REGISTER_TYPE_UW);
-
-    struct brw_reg dst0, dst1;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    dst0 = get_dst_reg(c, inst, 0);
-    dst1 = get_dst_reg(c, inst, 1);
-    /* Calculate pixel centers by adding 1 or 0 to each of the
-     * micro-tile coordinates passed in r1.
-     */
-    if (mask & WRITEMASK_X) {
-	brw_ADD(p,
-		vec8(retype(dst0, BRW_REGISTER_TYPE_UW)),
-		stride(suboffset(r1_uw, 4), 2, 4, 0),
-		brw_imm_v(0x10101010));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	brw_ADD(p,
-		vec8(retype(dst1, BRW_REGISTER_TYPE_UW)),
-		stride(suboffset(r1_uw, 5), 2, 4, 0),
-		brw_imm_v(0x11001100));
-    }
-}
-
-static void emit_delta_xy(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_reg r1 = brw_vec1_grf(1, 0);
-    struct brw_reg dst0, dst1, src0, src1;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    dst0 = get_dst_reg(c, inst, 0);
-    dst1 = get_dst_reg(c, inst, 1);
-    src0 = get_src_reg(c, inst, 0, 0);
-    src1 = get_src_reg(c, inst, 0, 1);
-    /* Calc delta X,Y by subtracting origin in r1 from the pixel
-     * centers.
-     */
-    if (mask & WRITEMASK_X) {
-	brw_ADD(p,
-		dst0,
-		retype(src0, BRW_REGISTER_TYPE_UW),
-		negate(r1));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	brw_ADD(p,
-		dst1,
-		retype(src1, BRW_REGISTER_TYPE_UW),
-		negate(suboffset(r1,1)));
-
-    }
-}
-
 static void fire_fb_write( struct brw_wm_compile *c,
                            GLuint base_reg,
                            GLuint nr,
@@ -827,154 +766,6 @@ static void emit_fb_write(struct brw_wm_compile *c,
     target = INST_AUX_GET_TARGET(inst->Aux);
     eot = inst->Aux & INST_AUX_EOT;
     fire_fb_write(c, 0, nr, target, eot);
-}
-
-static void emit_pixel_w( struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    if (mask & WRITEMASK_W) {
-	struct brw_reg dst, src0, delta0, delta1;
-	struct brw_reg interp3;
-
-	dst = get_dst_reg(c, inst, 3);
-	src0 = get_src_reg(c, inst, 0, 0);
-	delta0 = get_src_reg(c, inst, 1, 0);
-	delta1 = get_src_reg(c, inst, 1, 1);
-
-	interp3 = brw_vec1_grf(src0.nr+1, 4);
-	/* Calc 1/w - just linterp wpos[3] optimized by putting the
-	 * result straight into a message reg.
-	 */
-	brw_LINE(p, brw_null_reg(), interp3, delta0);
-	brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), delta1);
-
-	/* Calc w */
-	brw_math_16( p, dst,
-		BRW_MATH_FUNCTION_INV,
-		BRW_MATH_SATURATE_NONE,
-		2, brw_null_reg(),
-		BRW_MATH_PRECISION_FULL);
-    }
-}
-
-static void emit_linterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg interp[4];
-    struct brw_reg dst, delta0, delta1;
-    struct brw_reg src0;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    delta0 = get_src_reg(c, inst, 1, 0);
-    delta1 = get_src_reg(c, inst, 1, 1);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
-	    brw_MAC(p, dst, suboffset(interp[i],1), delta1);
-	}
-    }
-}
-
-static void emit_cinterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    struct brw_reg interp[4];
-    struct brw_reg dst, src0;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, suboffset(interp[i],3));
-	}
-    }
-}
-
-static void emit_pinterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    struct brw_reg interp[4];
-    struct brw_reg dst, delta0, delta1;
-    struct brw_reg src0, w;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    delta0 = get_src_reg(c, inst, 1, 0);
-    delta1 = get_src_reg(c, inst, 1, 1);
-    w = get_src_reg(c, inst, 2, 3);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
-	    brw_MAC(p, dst, suboffset(interp[i],1), 
-		    delta1);
-	    brw_MUL(p, dst, dst, w);
-	}
-    }
-}
-
-/* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
-static void emit_frontfacing(struct brw_wm_compile *c,
-			     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
-    struct brw_reg dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, brw_imm_f(0.0));
-	}
-    }
-
-    /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
-     * us front face
-     */
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, r1_6ud, brw_imm_ud(1 << 31));
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, brw_imm_f(1.0));
-	}
-    }
-    brw_set_predicate_control_flag_value(p, 0xff);
 }
 
 static void emit_arl(struct brw_wm_compile *c,
@@ -2106,39 +1897,7 @@ static void emit_noise4( struct brw_wm_compile *c,
     
     release_tmps( c, mark );
 }
-    
-static void emit_wpos_xy(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg src0[2], dst[2];
 
-    dst[0] = get_dst_reg(c, inst, 0);
-    dst[1] = get_dst_reg(c, inst, 1);
-
-    src0[0] = get_src_reg(c, inst, 0, 0);
-    src0[1] = get_src_reg(c, inst, 0, 1);
-
-    /* Calculate the pixel offset from window bottom left into destination
-     * X and Y channels.
-     */
-    if (mask & WRITEMASK_X) {
-	/* X' = X - origin_x */
-	brw_ADD(p,
-		dst[0],
-		retype(src0[0], BRW_REGISTER_TYPE_W),
-		brw_imm_d(0 - c->key.origin_x));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	/* Y' = height - (Y - origin_y) = height + origin_y - Y */
-	brw_ADD(p,
-		dst[1],
-		negate(retype(src0[1], BRW_REGISTER_TYPE_W)),
-		brw_imm_d(c->key.origin_y + c->key.drawable_height - 1));
-    }
-}
 
 /* TODO
    BIAS on SIMD8 not working yet...
@@ -2378,31 +2137,31 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
-		emit_pixel_xy(c, inst);
+		emit_pixel_xy(c, dst, dst_flags);
 		break;
 	    case WM_DELTAXY: 
-		emit_delta_xy(c, inst);
+		emit_delta_xy(p, dst, dst_flags, args[0]);
 		break;
 	    case WM_PIXELW:
-		emit_pixel_w(c, inst);
+		emit_pixel_w(c, dst, dst_flags, args[0], args[1]);
 		break;	
 	    case WM_LINTERP:
-		emit_linterp(c, inst);
+		emit_linterp(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case WM_PINTERP:
-		emit_pinterp(c, inst);
+		emit_pinterp(p, dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case WM_CINTERP:
-		emit_cinterp(c, inst);
+		emit_cinterp(p, dst, dst_flags, args[0]);
 		break;
 	    case WM_WPOSXY:
-		emit_wpos_xy(c, inst);
+		emit_wpos_xy(c, dst, dst_flags, args[0]);
 		break;
 	    case WM_FB_WRITE:
 		emit_fb_write(c, inst);
 		break;
 	    case WM_FRONTFACING:
-		emit_frontfacing(c, inst);
+		emit_frontfacing(p, dst, dst_flags);
 		break;
 	    case OPCODE_ADD:
 		emit_alu2(p, brw_ADD, dst, dst_flags, args[0], args[1]);
