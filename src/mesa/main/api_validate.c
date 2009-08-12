@@ -24,6 +24,7 @@
 
 #include "glheader.h"
 #include "api_validate.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "imports.h"
 #include "mtypes.h"
@@ -62,7 +63,7 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
    GLuint max = 0;
    GLuint i;
 
-   if (elementBuf->Name) {
+   if (_mesa_is_bufferobj(elementBuf)) {
       /* elements are in a user-defined buffer object.  need to map it */
       map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
                                   GL_READ_ONLY, elementBuf);
@@ -164,7 +165,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
@@ -237,7 +238,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {

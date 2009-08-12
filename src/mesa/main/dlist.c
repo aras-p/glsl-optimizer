@@ -690,7 +690,7 @@ unpack_image(GLuint dimensions, GLsizei width, GLsizei height, GLsizei depth,
              GLenum format, GLenum type, const GLvoid * pixels,
              const struct gl_pixelstore_attrib *unpack)
 {
-   if (unpack->BufferObj->Name == 0) {
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
       /* no PBO */
       return _mesa_unpack_image(dimensions, width, height, depth, format,
                                 type, pixels, unpack);

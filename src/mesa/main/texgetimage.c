@@ -30,6 +30,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "image.h"
 #include "texcompress.h"
@@ -116,7 +117,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 {
    const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* Packing texture image into a PBO.
        * Map the (potentially) VRAM-based buffer into our process space so
        * we can write into it with the code below.
@@ -296,7 +297,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
       } /* img */
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }
@@ -316,7 +317,7 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
 {
    GLuint size;
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
       GLubyte *buf;
       if ((const GLubyte *) img + texImage->CompressedSize >
@@ -349,7 +350,7 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
    /* just memcpy, no pixelstore or pixel transfer */
    _mesa_memcpy(img, texImage->Data, size);
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }

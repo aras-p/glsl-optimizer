@@ -190,7 +190,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    if (width == 0 || height == 0)
       return; /* nothing to do */
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,

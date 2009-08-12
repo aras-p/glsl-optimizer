@@ -2332,7 +2332,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* packing texture image into a PBO */
       const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
       if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
