@@ -499,70 +499,46 @@ emit_instruction(
       }
       break;
 
-#if 0
    case TGSI_OPCODE_LIT:
-      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
-          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
-         tmp0 = bld->base.one;
-         if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
-            STORE( bld, *inst, 0, CHAN_X, tmp0);
-         }
-         if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
-            STORE( bld, *inst, 0, CHAN_W, tmp0);
-         }
+      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
+         STORE( bld, *inst, 0, CHAN_X, bld->base.one);
       }
-      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
-          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
-         if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
-            tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-            tmp0 = lp_build_max( &bld->base, tmp0, bld->base.one);
-            STORE( bld, *inst, 0, CHAN_Y, tmp0);
-         }
-         if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
-            /* XMM[1] = SrcReg[0].yyyy */
-            tmp1 = FETCH( bld, *inst, 0, CHAN_Y );
-            /* XMM[1] = max(XMM[1], 0) */
-            sse_maxps(
-               bld,
-               make_xmm( 1 ),
-               get_temp(
-                  TGSI_EXEC_TEMP_00000000_I,
-                  TGSI_EXEC_TEMP_00000000_C ) );
-            /* XMM[2] = SrcReg[0].wwww */
-            tmp2 = FETCH( bld, *inst, 0, CHAN_W );
-            /* XMM[2] = min(XMM[2], 128.0) */
-            sse_minps(
-               bld,
-               make_xmm( 2 ),
-               get_temp(
-                  TGSI_EXEC_TEMP_128_I,
-                  TGSI_EXEC_TEMP_128_C ) );
-            /* XMM[2] = max(XMM[2], -128.0) */
-            sse_maxps(
-               bld,
-               make_xmm( 2 ),
-               get_temp(
-                  TGSI_EXEC_TEMP_MINUS_128_I,
-                  TGSI_EXEC_TEMP_MINUS_128_C ) );
-            tmp1 = lp_build_pow( &bld->base, tmp1, tmp2);
-            tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-            sse_xorps(
-               bld,
-               make_xmm( 2 ),
-               make_xmm( 2 ) );
-            sse_cmpps(
-               bld,
-               make_xmm( 2 ),
-               make_xmm( 0 ),
-               cc_LessThan );
-            sse_andps(
-               bld,
-               make_xmm( 2 ),
-               make_xmm( 1 ) );
-            STORE( bld, *inst, 0, CHAN_Z, tmp2);
-         }
+      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
+         STORE( bld, *inst, 0, CHAN_W, bld->base.one);
+      }
+      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
+         tmp0 = FETCH( bld, *inst, 0, CHAN_X );
+         tmp0 = lp_build_max( &bld->base, tmp0, bld->base.one);
+         STORE( bld, *inst, 0, CHAN_Y, tmp0);
+      }
+#if 0
+      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
+         /* XMM[1] = SrcReg[0].yyyy */
+         tmp1 = FETCH( bld, *inst, 0, CHAN_Y );
+         /* XMM[1] = max(XMM[1], 0) */
+         tmp1 = lp_build_max( &bld->base, tmp1, bld->base.zero);
+         /* XMM[2] = SrcReg[0].wwww */
+         tmp2 = FETCH( bld, *inst, 0, CHAN_W );
+         tmp1 = lp_build_pow( &bld->base, tmp1, tmp2);
+         tmp0 = FETCH( bld, *inst, 0, CHAN_X );
+         sse_xorps(
+            bld,
+            make_xmm( 2 ),
+            make_xmm( 2 ) );
+         sse_cmpps(
+            bld,
+            make_xmm( 2 ),
+            make_xmm( 0 ),
+            cc_LessThan );
+         sse_andps(
+            bld,
+            make_xmm( 2 ),
+            make_xmm( 1 ) );
+         STORE( bld, *inst, 0, CHAN_Z, tmp2);
       }
       break;
+#else
+      return 0;
 #endif
 
    case TGSI_OPCODE_RCP:
@@ -716,14 +692,9 @@ emit_instruction(
       }
       break;
 
-#if 0
    case TGSI_OPCODE_DST:
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) {
-         emit_tempf(
-            bld,
-            0,
-            TEMP_ONE_I,
-            TEMP_ONE_C );
+         tmp0 = bld->base.one;
          STORE( bld, *inst, 0, CHAN_X, tmp0);
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
@@ -741,7 +712,6 @@ emit_instruction(
          STORE( bld, *inst, 0, CHAN_W, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_MIN:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -771,6 +741,7 @@ emit_instruction(
    /* TGSI_OPCODE_SETGE */
       emit_setcc( bld, inst, cc_NotLessThan );
       break;
+#endif
 
    case TGSI_OPCODE_MAD:
    /* TGSI_OPCODE_MADD */
@@ -792,7 +763,6 @@ emit_instruction(
          STORE( bld, *inst, 0, chan_index, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_LRP:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -1112,6 +1082,7 @@ emit_instruction(
    case TGSI_OPCODE_CMP:
       emit_cmp (bld, inst);
       break;
+#endif
 
    case TGSI_OPCODE_SCS:
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) {
@@ -1125,23 +1096,14 @@ emit_instruction(
          STORE( bld, *inst, 0, CHAN_Y, tmp0);
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) {
-	 emit_tempf(
-	    bld,
-	    0,
-	    TGSI_EXEC_TEMP_00000000_I,
-	    TGSI_EXEC_TEMP_00000000_C );
+         tmp0 = bld->base.zero;
          STORE( bld, *inst, 0, CHAN_Z, tmp0);
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) {
-	 emit_tempf(
-	    bld,
-	    0,
-	    TEMP_ONE_I,
-	    TEMP_ONE_C );
+         tmp0 = bld->base.one;
          STORE( bld, *inst, 0, CHAN_W, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_TXB:
       emit_tex( bld, inst, TRUE, FALSE );
