@@ -716,7 +716,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
        /* tmp0 = 1 / tmp1 */
        emit_op(c, OPCODE_RCP,
-               tmp0,
+               dst_mask(tmp0, WRITEMASK_X),
                0,
                tmp1src,
                src_undef(),
@@ -727,7 +727,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                tmpcoord,
                0,
                src0,
-               tmp0src,
+               src_swizzle1(tmp0src, SWIZZLE_X),
                src_undef());
 
        release_temp(c, tmp0);
