@@ -63,7 +63,7 @@ vbo_get_minmax_index(GLcontext *ctx,
 
    switch (ib->type) {
    case GL_UNSIGNED_INT: {
-      const GLuint *ui_indices = (const GLuint *)ib->ptr;
+      const GLuint *ui_indices = (const GLuint *)indices;
       GLuint max_ui = ui_indices[count-1];
       GLuint min_ui = ui_indices[0];
       for (i = 0; i < count; i++) {
