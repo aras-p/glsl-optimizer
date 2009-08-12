@@ -624,12 +624,34 @@ static int bo_vram_validate(struct radeon_bo *bo,
 
     if (bo_legacy->dirty || bo_legacy->tobj->base.dirty_images[0]) {
 	    if (IS_R600_CLASS(boml->screen)) {
-		    char *src = bo_legacy->ptr;
-		    char *dst = (char *) boml->screen->driScreen->pFB +
-			    (bo_legacy->offset - boml->fb_location);
+		    drm_radeon_texture_t tex;
+		    drm_radeon_tex_image_t tmp;
+		    int ret;
 
-		    /* FIXME: alignment, pitch, etc. */
-		    memcpy(dst, src, bo->size);
+		    tex.offset = bo_legacy->offset;
+		    tex.image = &tmp;
+		    assert(!(tex.offset & 1023));
+
+		    tmp.x = 0;
+		    tmp.y = 0;
+		    tmp.width = bo->size;
+		    tmp.height = 1;
+		    tmp.data = bo_legacy->ptr;
+		    tex.format = RADEON_TXFORMAT_ARGB8888;
+		    tex.width = tmp.width;
+		    tex.height = tmp.height;
+		    tex.pitch = bo->size;
+		    do {
+			    ret = drmCommandWriteRead(bo->bom->fd,
+						      DRM_RADEON_TEXTURE,
+						      &tex,
+						      sizeof(drm_radeon_texture_t));
+			    if (ret) {
+				    if (RADEON_DEBUG & DEBUG_IOCTL)
+					    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");
+				    usleep(1);
+			    }
+		    } while (ret == -EAGAIN);
 	    } else {
 		    /* Copy to VRAM using a blit.
 		     * All memory is 4K aligned. We're using 1024 pixels wide blits.
