@@ -31,6 +31,7 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
+#include "swrast/swrast.h"
 
 #include "radeon_lock.h"
 #include "r600_context.h"

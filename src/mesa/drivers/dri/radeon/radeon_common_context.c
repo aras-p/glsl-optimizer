@@ -295,11 +295,10 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	GET_CURRENT_CONTEXT(ctx);
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
-
-    /* +r6/r7 */
-    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
+	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-    /* --------- */
+#endif
 
 	if (radeon == current) {
 		radeon_firevertices(radeon);

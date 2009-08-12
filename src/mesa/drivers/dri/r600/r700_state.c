@@ -179,8 +179,6 @@ static void r700FetchStateParameter(GLcontext * ctx,
 			                        const gl_state_index state[STATE_LENGTH],
 			                        GLfloat * value)
 {
-	context_t *context = R700_CONTEXT(ctx);
-
     /* TODO */
 }
 

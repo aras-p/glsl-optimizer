@@ -158,6 +158,17 @@ extern GLboolean r700InitChipObject(context_t *context);
 extern GLboolean r700SendContextStates(context_t *context);
 extern GLboolean r700SendViewportState(context_t *context, int id);
 extern GLboolean r700SendRenderTargetState(context_t *context, int id);
+extern GLboolean r700SendTextureState(context_t *context);
+extern GLboolean r700SendDepthTargetState(context_t *context);
+extern GLboolean r700SendUCPState(context_t *context);
+extern GLboolean r700SendFSState(context_t *context);
+extern void r700EmitState(GLcontext * ctx);
+
+extern GLboolean r700SyncSurf(context_t *context,
+			      struct radeon_bo *pbo,
+			      uint32_t read_domain,
+			      uint32_t write_domain,
+			      uint32_t sync_type);
 
 extern int       r700SetupStreams(GLcontext * ctx);
 extern void      r700SetupVTXConstants(GLcontext  * ctx, 
