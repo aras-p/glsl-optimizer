@@ -65,8 +65,7 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
 
 static void emit_pixel_xy(struct brw_compile *p,
 			  const struct brw_reg *dst,
-			  GLuint mask,
-			  const struct brw_reg *arg0)
+			  GLuint mask)
 {
    struct brw_reg r1 = brw_vec1_grf(1, 0);
    struct brw_reg r1_uw = retype(r1, BRW_REGISTER_TYPE_UW);
@@ -98,8 +97,7 @@ static void emit_pixel_xy(struct brw_compile *p,
 static void emit_delta_xy(struct brw_compile *p,
 			  const struct brw_reg *dst,
 			  GLuint mask,
-			  const struct brw_reg *arg0,
-			  const struct brw_reg *arg1)
+			  const struct brw_reg *arg0)
 {
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
@@ -1194,11 +1192,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 /* Generated instructions for calculating triangle interpolants:
 	  */
       case WM_PIXELXY:
-	 emit_pixel_xy(p, dst, dst_flags, args[0]);
+	 emit_pixel_xy(p, dst, dst_flags);
 	 break;
 
       case WM_DELTAXY:
-	 emit_delta_xy(p, dst, dst_flags, args[0], args[1]);
+	 emit_delta_xy(p, dst, dst_flags, args[0]);
 	 break;
 
       case WM_WPOSXY:
