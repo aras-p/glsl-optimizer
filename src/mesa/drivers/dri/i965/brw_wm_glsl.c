@@ -131,19 +131,6 @@ static void set_reg(struct brw_wm_compile *c, int file, int index,
     c->wm_regs[file][index][component].inited = GL_TRUE;
 }
 
-/**
- * Examine instruction's write mask to find index of first component
- * enabled for writing.
- */
-static int get_scalar_dst_index(const struct prog_instruction *inst)
-{
-    int i;
-    for (i = 0; i < 4; i++)
-	if (inst->DstReg.WriteMask & (1<<i))
-	    break;
-    return i;
-}
-
 static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 {
     struct brw_reg reg;
