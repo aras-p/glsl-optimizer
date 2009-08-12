@@ -37,7 +37,7 @@ extern GLuint
 LinkShaders(GLuint vertShader, GLuint fragShader);
 
 extern void
-InitUniforms(GLuint program, struct uniform_info uniforms[]);
+SetUniformValues(GLuint program, struct uniform_info uniforms[]);
 
 extern GLuint
 GetUniforms(GLuint program, struct uniform_info uniforms[]);

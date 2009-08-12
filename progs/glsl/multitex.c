@@ -328,7 +328,8 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    glUseProgram(program);
 
-   InitUniforms(program, uniforms);
+   SetUniformValues(program, uniforms);
+   PrintUniforms(Uniforms);
 
    VertCoord_attr = glGetAttribLocation(program, "VertCoord");
    if (VertCoord_attr > 0) {

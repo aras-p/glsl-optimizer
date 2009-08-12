@@ -382,7 +382,8 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    glUseProgram(program);
 
-   InitUniforms(program, uniforms);
+   SetUniformValues(program, uniforms);
+   PrintUniforms(uniforms);
 
    return program;
 }

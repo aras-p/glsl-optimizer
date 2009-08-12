@@ -179,7 +179,8 @@ Init(void)
 
    glUseProgram(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    assert(glGetError() == 0);
 

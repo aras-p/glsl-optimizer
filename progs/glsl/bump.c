@@ -242,7 +242,8 @@ Init(void)
 
    CheckError(__LINE__);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    CheckError(__LINE__);
 

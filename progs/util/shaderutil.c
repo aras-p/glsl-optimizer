@@ -122,7 +122,7 @@ LinkShaders(GLuint vertShader, GLuint fragShader)
 
 
 void
-InitUniforms(GLuint program, struct uniform_info uniforms[])
+SetUniformValues(GLuint program, struct uniform_info uniforms[])
 {
    GLuint i;
 

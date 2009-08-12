@@ -159,7 +159,8 @@ Init(void)
 
    glUseProgram(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    uZoom = glGetUniformLocation(program, "Zoom");
    uXcenter = glGetUniformLocation(program, "Xcenter");
