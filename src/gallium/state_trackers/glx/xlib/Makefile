@@ -11,7 +11,7 @@ LIBRARY_INCLUDES = \
 C_SOURCES = \
 	glx_getproc.c \
 	fakeglx.c \
-	fakeglx_fonts.c \
+	glx_usefont.c \
 	xm_api.c
 
 include ../../../Makefile.template

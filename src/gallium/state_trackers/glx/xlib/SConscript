@@ -21,7 +21,7 @@ if env['platform'] == 'linux' \
 	source = [
 		'glx_getproc.c',
 		'fakeglx.c',
-		'fakeglx_fonts.c',
+		'glx_usefont.c',
 		'xm_api.c',
 		]
     )
