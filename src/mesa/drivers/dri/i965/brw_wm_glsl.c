@@ -2771,6 +2771,21 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
         if (c->fp->use_const_buffer)
            fetch_constants(c, inst);
 
+	if (inst->Opcode != OPCODE_ARL) {
+	   for (j = 0; j < 4; j++) {
+	      if (inst->DstReg.WriteMask & (1 << j))
+		 dst[j] = get_dst_reg(c, inst, j);
+	      else
+		 dst[j] = brw_null_reg();
+	   }
+	}
+	for (j = 0; j < brw_wm_nr_args(inst->Opcode); j++)
+	    get_argument_regs(c, inst, j, args[j], WRITEMASK_XYZW);
+
+	dst_flags = inst->DstReg.WriteMask;
+	if (inst->SaturateMode == SATURATE_ZERO_ONE)
+	    dst_flags |= SATURATE;
+
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
@@ -2866,13 +2881,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case OPCODE_DDX:
 	    case OPCODE_DDY:
-		for (j = 0; j < 4; j++) {
-		    if (inst->DstReg.WriteMask & (1 << j))
-			dst[j] = get_dst_reg(c, inst, j);
-		    else
-			dst[j] = brw_null_reg();
-		}
-		get_argument_regs(c, inst, 0, args[0], WRITEMASK_XYZW);
 		emit_ddxy(p, dst, dst_flags, (inst->Opcode == OPCODE_DDX),
 			  args[0]);
                 break;

@@ -162,6 +162,8 @@ struct brw_wm_instruction {
 #define BRW_WM_MAX_CONST 256
 #define BRW_WM_MAX_SUBROUTINE 16
 
+/* used in masks next to WRITEMASK_*. */
+#define SATURATE (1<<5)
 
 
 /* New opcodes to track internal operations required for WM unit.
