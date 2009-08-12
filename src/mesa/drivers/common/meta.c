@@ -1048,6 +1048,42 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
 
 
 /**
+ * When the glDrawPixels() image size is greater than the max rectangle
+ * texture size we use this function to break the glDrawPixels() image
+ * into tiles which fit into the max texture size.
+ */
+static void
+tiled_draw_pixels(GLcontext *ctx,
+                  GLint x, GLint y, GLsizei width, GLsizei height,
+                  GLenum format, GLenum type,
+                  const struct gl_pixelstore_attrib *unpack,
+                  const GLvoid *pixels)
+{
+   const GLint maxSize = ctx->Const.MaxTextureRectSize;
+   struct gl_pixelstore_attrib tileUnpack = *unpack;
+   GLint i, j;
+
+   for (i = 0; i < width; i += maxSize) {
+      const GLint tileWidth = MIN2(maxSize, width - i);
+      const GLint tileX = (GLint) (x + i * ctx->Pixel.ZoomX);
+
+      tileUnpack.SkipPixels = unpack->SkipPixels + i;
+
+      for (j = 0; j < height; j += maxSize) {
+         const GLint tileHeight = MIN2(maxSize, height - j);
+         const GLint tileY = (GLint) (y + j * ctx->Pixel.ZoomY);
+
+         tileUnpack.SkipRows = unpack->SkipRows + j;
+
+         _mesa_meta_draw_pixels(ctx, tileX, tileY,
+                                tileWidth, tileHeight,
+                                format, type, &tileUnpack, pixels);
+      }
+   }
+}
+
+
+/**
  * Meta implementation of ctx->Driver.DrawPixels() in terms
  * of texture mapping and polygon rendering.
  * Note: this function requires GL_ARB_texture_rectangle support.
@@ -1075,9 +1111,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
     */
    fallback = GL_FALSE;
    if (ctx->_ImageTransferState ||
-       ctx->Fog.Enabled ||
-       width > ctx->Const.MaxTextureRectSize ||
-       height > ctx->Const.MaxTextureRectSize) {
+       ctx->Fog.Enabled) {
       fallback = GL_TRUE;
    }
 
@@ -1091,6 +1125,16 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    if (fallback) {
       _swrast_DrawPixels(ctx, x, y, width, height,
                          format, type, unpack, pixels);
+      return;
+   }
+
+   /*
+    * Check image size against max texture size, draw as tiles if needed.
+    */
+   if (width > ctx->Const.MaxTextureRectSize ||
+       height > ctx->Const.MaxTextureRectSize) {
+      tiled_draw_pixels(ctx, x, y, width, height,
+                        format, type, unpack, pixels);
       return;
    }
 
