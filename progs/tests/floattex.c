@@ -189,7 +189,7 @@ CreateProgram(void)
 
    glUseProgram_func(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
 
    return program;
 }
