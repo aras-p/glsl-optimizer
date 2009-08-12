@@ -60,7 +60,7 @@ identity_drm_create_screen(struct drm_api *_api, int fd,
    screen = api->create_screen(api, fd, arg);
 
    return identity_screen_create(screen);
-};
+}
 
 static struct pipe_context *
 identity_drm_create_context(struct drm_api *_api,
@@ -77,7 +77,7 @@ identity_drm_create_context(struct drm_api *_api,
    pipe = identity_context_create(_screen, pipe);
 
    return pipe;
-};
+}
 
 static boolean
 identity_drm_buffer_from_texture(struct drm_api *_api,
