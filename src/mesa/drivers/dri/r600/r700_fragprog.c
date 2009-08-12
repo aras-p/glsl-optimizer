@@ -118,6 +118,7 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->uiFP_OutputMap[FRAG_RESULT_DEPTH] = pAsm->number_used_registers++;
 		pAsm->number_of_exports++;
 		pAsm->number_of_colorandz_exports++;
+		pAsm->pR700Shader->depthIsExported = 1;
 	}
 
     pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);    

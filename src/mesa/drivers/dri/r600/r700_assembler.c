@@ -3839,6 +3839,9 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     if (export_count == 1) 
     {
         ucWriteMask = pAsm->pucOutMask[starting_register_number - pAsm->starting_export_register_number];
+	/* exports Z as a float into Red channel */
+	if (GL_TRUE == is_depth_export)
+	    ucWriteMask = 0x1;
 
         if( (ucWriteMask & 0x1) != 0)
         {
