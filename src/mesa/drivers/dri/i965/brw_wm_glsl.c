@@ -550,42 +550,6 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     }
 }
 
-
-/**
- * Same as \sa get_src_reg() but if the register is a literal, emit
- * a brw_reg encoding the literal.
- * Note that a brw instruction only allows one src operand to be a literal.
- * For instructions with more than one operand, only the second can be a
- * literal.  This means that we treat some literals as constants/uniforms
- * (which why PROGRAM_CONSTANT is checked in fetch_constants()).
- * 
- */
-static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c, 
-                                      const struct prog_instruction *inst,
-                                      GLuint srcRegIndex, GLuint channel)
-{
-    const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
-    if (src->File == PROGRAM_CONSTANT) {
-       /* a literal */
-       const int component = GET_SWZ(src->Swizzle, channel);
-       const GLfloat *param =
-          c->fp->program.Base.Parameters->ParameterValues[src->Index];
-       GLfloat value = param[component];
-       if (src->Negate & (1 << channel))
-          value = -value;
-       if (src->Abs)
-          value = FABSF(value);
-#if 0
-       printf("  form immed value %f for chan %d\n", value, channel);
-#endif
-       return brw_imm_f(value);
-    }
-    else {
-       return get_src_reg(c, inst, srcRegIndex, channel);
-    }
-}
-
-
 /**
  * Subroutines are minimal support for resusable instruction sequences.
  * They are implemented as simply as possible to minimise overhead: there
@@ -1013,100 +977,6 @@ static void emit_frontfacing(struct brw_wm_compile *c,
     brw_set_predicate_control_flag_value(p, 0xff);
 }
 
-static void emit_xpd(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    for (i = 0; i < 4; i++) {
-	GLuint i2 = (i+2)%3;
-	GLuint i1 = (i+1)%3;
-	if (mask & (1<<i)) {
-	    struct brw_reg src0, src1, dst;
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = negate(get_src_reg(c, inst, 0, i2));
-	    src1 = get_src_reg_imm(c, inst, 1, i1);
-	    brw_MUL(p, brw_null_reg(), src0, src1);
-	    src0 = get_src_reg(c, inst, 0, i1);
-	    src1 = get_src_reg_imm(c, inst, 1, i2);
-	    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-	    brw_MAC(p, dst, src0, src1);
-	    brw_set_saturate(p, 0);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-/**
- * Emit a scalar instruction, like RCP, RSQ, LOG, EXP.
- * Note that the result of the function is smeared across the dest
- * register's X, Y, Z and W channels (subject to writemasking of course).
- */
-static void emit_math1(struct brw_wm_compile *c,
-                       const struct prog_instruction *inst, GLuint func)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    /* Get first component of source register */
-    dst = get_dst_reg(c, inst, dst_chan);
-    src0 = get_src_reg(c, inst, 0, 0);
-
-    brw_MOV(p, brw_message_reg(2), src0);
-    brw_math(p,
-             dst,
-             func,
-             (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-             2,
-             brw_null_reg(),
-             BRW_MATH_DATA_VECTOR,
-             BRW_MATH_PRECISION_FULL);
-}
-
-static void emit_rcp(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_INV);
-}
-
-static void emit_rsq(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_RSQ);
-}
-
-static void emit_sin(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_SIN);
-}
-
-static void emit_cos(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_COS);
-}
-
-static void emit_ex2(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_EXP);
-}
-
-static void emit_lg2(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_LOG);
-}
-
 static void emit_arl(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
 {
@@ -1167,36 +1037,6 @@ static void emit_min_max(struct brw_wm_compile *c,
     }
     brw_pop_insn_state(p);
     release_tmps(c, mark);
-}
-
-static void emit_pow(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg dst, src0, src1;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    dst = get_dst_reg(c, inst, dst_chan);
-    src0 = get_src_reg_imm(c, inst, 0, 0);
-    src1 = get_src_reg_imm(c, inst, 1, 0);
-
-    brw_MOV(p, brw_message_reg(2), src0);
-    brw_MOV(p, brw_message_reg(3), src1);
-
-    brw_math(p,
-	    dst,
-	    BRW_MATH_FUNCTION_POW,
-	    (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	    2,
-	    brw_null_reg(),
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
 }
 
 /**
@@ -2594,28 +2434,28 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_dp4(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_XPD:
-		emit_xpd(c, inst);
+		emit_xpd(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DPH:
 		emit_dph(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_RCP:
-		emit_rcp(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_INV, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_RSQ:
-		emit_rsq(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_SIN:
-		emit_sin(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_COS:
-		emit_cos(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_COS, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_EX2:
-		emit_ex2(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LG2:
-		emit_lg2(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MIN:	
 	    case OPCODE_MAX:	
@@ -2654,7 +2494,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_POW:
-		emit_pow(c, inst);
+		emit_math2(c, BRW_MATH_FUNCTION_POW,
+			   dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_MAD:
 		emit_mad(p, dst, dst_flags, args[0], args[1], args[2]);

@@ -357,10 +357,26 @@ void emit_mad(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1,
 	      const struct brw_reg *arg2);
+void emit_math1(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0);
+void emit_math2(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0,
+		const struct brw_reg *arg1);
 void emit_sop(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
 	      GLuint cond,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_xpd(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
 

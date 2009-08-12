@@ -665,11 +665,11 @@ void emit_dph(struct brw_compile *p,
 }
 
 
-static void emit_xpd( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_xpd(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    GLuint i;
 
@@ -690,41 +690,68 @@ static void emit_xpd( struct brw_compile *p,
 }
 
 
-static void emit_math1( struct brw_compile *p, 
-			GLuint function,
-			const struct brw_reg *dst,
-			GLuint mask,
-			const struct brw_reg *arg0 )
+void emit_math1(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0)
 {
+   struct brw_compile *p = &c->func;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   GLuint saturate = ((mask & SATURATE) ?
+		      BRW_MATH_SATURATE_SATURATE :
+		      BRW_MATH_SATURATE_NONE);
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
    assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
+   /* If compressed, this will write message reg 2,3 from arg0.x's 16
+    * channels.
+    */
    brw_MOV(p, brw_message_reg(2), arg0[0]);
 
    /* Send two messages to perform all 16 operations:
     */
-   brw_math_16(p, 
-	       dst[dst_chan],
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_math(p,
+	    dst[dst_chan],
+	    function,
+	    saturate,
+	    2,
+	    brw_null_reg(),
+	    BRW_MATH_DATA_VECTOR,
+	    BRW_MATH_PRECISION_FULL);
+
+   if (c->dispatch_width == 16) {
+      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      brw_math(p,
+	       offset(dst[dst_chan],1),
 	       function,
-	       (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	       2,
+	       saturate,
+	       3,
 	       brw_null_reg(),
+	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
+   }
+   brw_pop_insn_state(p);
 }
 
 
-static void emit_math2( struct brw_compile *p, 
-			GLuint function,
-			const struct brw_reg *dst,
-			GLuint mask,
-			const struct brw_reg *arg0,
-			const struct brw_reg *arg1)
+void emit_math2(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0,
+		const struct brw_reg *arg1)
 {
+   struct brw_compile *p = &c->func;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   GLuint saturate = ((mask & SATURATE) ?
+		      BRW_MATH_SATURATE_SATURATE :
+		      BRW_MATH_SATURATE_NONE);
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -735,37 +762,41 @@ static void emit_math2( struct brw_compile *p,
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_MOV(p, brw_message_reg(2), arg0[0]);
-   brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-   brw_MOV(p, brw_message_reg(4), sechalf(arg0[0]));
+   if (c->dispatch_width == 16) {
+      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      brw_MOV(p, brw_message_reg(4), sechalf(arg0[0]));
+   }
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_MOV(p, brw_message_reg(3), arg1[0]);
-   brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-   brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
+   if (c->dispatch_width == 16) {
+      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
+   }
 
-   
-   /* Send two messages to perform all 16 operations:
-    */
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math(p, 
 	    dst[dst_chan],
 	    function,
-	    (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
+	    saturate,
 	    2,
 	    brw_null_reg(),
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
-   brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-   brw_math(p, 
-	    offset(dst[dst_chan],1),
-	    function,
-	    (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	    4,
-	    brw_null_reg(),
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
-   
+   /* Send two messages to perform all 16 operations:
+    */
+   if (c->dispatch_width == 16) {
+      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      brw_math(p,
+	       offset(dst[dst_chan],1),
+	       function,
+	       saturate,
+	       4,
+	       brw_null_reg(),
+	       BRW_MATH_DATA_VECTOR,
+	       BRW_MATH_PRECISION_FULL);
+   }
    brw_pop_insn_state(p);
 }
 		     
@@ -909,11 +940,13 @@ static void emit_txb( struct brw_wm_compile *c,
 }
 
 
-static void emit_lit( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0 )
+static void emit_lit(struct brw_wm_compile *c,
+		     const struct brw_reg *dst,
+		     GLuint mask,
+		     const struct brw_reg *arg0)
 {
+   struct brw_compile *p = &c->func;
+
    assert((mask & WRITEMASK_XW) == 0);
 
    if (mask & WRITEMASK_Y) {
@@ -923,7 +956,7 @@ static void emit_lit( struct brw_compile *p,
    }
 
    if (mask & WRITEMASK_Z) {
-      emit_math2(p, BRW_MATH_FUNCTION_POW,
+      emit_math2(c, BRW_MATH_FUNCTION_POW,
 		 &dst[2],
 		 WRITEMASK_X | (mask & SATURATE),
 		 &arg0[1],
@@ -1380,27 +1413,27 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 /* Higher math functions:
 	  */
       case OPCODE_RCP:
-	 emit_math1(p, BRW_MATH_FUNCTION_INV, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_INV, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_RSQ:
-	 emit_math1(p, BRW_MATH_FUNCTION_RSQ, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_SIN:
-	 emit_math1(p, BRW_MATH_FUNCTION_SIN, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_COS:
-	 emit_math1(p, BRW_MATH_FUNCTION_COS, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_COS, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_EX2:
-	 emit_math1(p, BRW_MATH_FUNCTION_EXP, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_LG2:
-	 emit_math1(p, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
+	 emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_SCS:
@@ -1408,13 +1441,13 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	  * fixup for 16-element execution.
 	  */
 	 if (dst_flags & WRITEMASK_X)
-	    emit_math1(p, BRW_MATH_FUNCTION_COS, dst, (dst_flags&SATURATE)|WRITEMASK_X, args[0]);
+	    emit_math1(c, BRW_MATH_FUNCTION_COS, dst, (dst_flags&SATURATE)|WRITEMASK_X, args[0]);
 	 if (dst_flags & WRITEMASK_Y)
-	    emit_math1(p, BRW_MATH_FUNCTION_SIN, dst+1, (dst_flags&SATURATE)|WRITEMASK_X, args[0]);
+	    emit_math1(c, BRW_MATH_FUNCTION_SIN, dst+1, (dst_flags&SATURATE)|WRITEMASK_X, args[0]);
 	 break;
 
       case OPCODE_POW:
-	 emit_math2(p, BRW_MATH_FUNCTION_POW, dst, dst_flags, args[0], args[1]);
+	 emit_math2(c, BRW_MATH_FUNCTION_POW, dst, dst_flags, args[0], args[1]);
 	 break;
 
 	 /* Comparisons:
@@ -1452,7 +1485,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	break;
 
       case OPCODE_LIT:
-	 emit_lit(p, dst, dst_flags, args[0]);
+	 emit_lit(c, dst, dst_flags, args[0]);
 	 break;
 
 	 /* Texturing operations:
