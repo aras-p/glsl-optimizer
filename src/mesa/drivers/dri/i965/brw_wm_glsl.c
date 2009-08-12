@@ -1214,29 +1214,6 @@ static void emit_kil(struct brw_wm_compile *c)
     brw_pop_insn_state(p);
 }
 
-static void emit_mad(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, src0, src1, src2;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    src2 = get_src_reg_imm(c, inst, 2, i);
-	    brw_MUL(p, dst, src0, src1);
-
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_ADD(p, dst, dst, src2);
-	    brw_set_saturate(p, 0);
-	}
-    }
-}
-
 static void emit_sop(struct brw_wm_compile *c,
                      const struct prog_instruction *inst, GLuint cond)
 {
@@ -2734,7 +2711,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_pow(c, inst);
 		break;
 	    case OPCODE_MAD:
-		emit_mad(c, inst);
+		emit_mad(p, dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case OPCODE_NOISE1:
 		emit_noise1(c, inst);
