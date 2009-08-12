@@ -174,6 +174,21 @@ struct copypix_state
 
 
 /**
+ * State for glDrawPixels()
+ */
+struct drawpix_state
+{
+   GLuint TexObj;
+   GLsizei TexWidth, TexHeight;
+   GLenum TexIntFormat;
+   GLuint ArrayObj;
+   GLuint VBO;
+   GLfloat verts[4][5]; /** four verts of X,Y,Z,S,T */
+};
+
+
+
+/**
  * All per-context meta state.
  */
 struct gl_meta_state
@@ -183,11 +198,12 @@ struct gl_meta_state
    struct blit_state Blit;    /**< For _mesa_meta_blit_framebuffer() */
    struct clear_state Clear;  /**< For _mesa_meta_clear() */
    struct copypix_state CopyPix;  /**< For _mesa_meta_copy_pixels() */
+   struct drawpix_state DrawPix;  /**< For _mesa_meta_draw_pixels() */
 
    /* other possible meta-ops:
     * glDrawPixels()
-    * glCopyPixels()
     * glBitmap()
+    * glGenerateMipmap()
     */
 };
 
@@ -229,6 +245,12 @@ _mesa_meta_free(GLcontext *ctx)
       _mesa_DeleteTextures(1, &meta->CopyPix.TexObj);
       _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
+   }
+
+   if (meta->DrawPix.TexObj) {
+      _mesa_DeleteTextures(1, &meta->DrawPix.TexObj);
+      _mesa_DeleteBuffersARB(1, & meta->DrawPix.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
    }
 
    _mesa_free(ctx->Meta);
@@ -1012,6 +1034,164 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
       ASSERT(type == GL_STENCIL);
       /* have to use sw fallback */
    }
+
+   _mesa_Enable(GL_TEXTURE_RECTANGLE);
+
+   /* draw textured quad */
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+   _mesa_Disable(GL_TEXTURE_RECTANGLE);
+
+   _mesa_meta_end(ctx);
+}
+
+
+
+/**
+ * Meta implementation of ctx->Driver.DrawPixels() in terms
+ * of texture mapping and polygon rendering.
+ * Note: this function requires GL_ARB_texture_rectangle support.
+ */
+void
+_mesa_meta_draw_pixels(GLcontext *ctx,
+		       GLint x, GLint y, GLsizei width, GLsizei height,
+		       GLenum format, GLenum type,
+		       const struct gl_pixelstore_attrib *unpack,
+		       const GLvoid *pixels)
+{
+   const GLenum filter = GL_NEAREST;
+   struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
+   const GLfloat z = ctx->Current.RasterPos[2];
+   const GLfloat x1 = x + width * ctx->Pixel.ZoomX;
+   const GLfloat y1 = y + height * ctx->Pixel.ZoomY;
+   const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
+   GLenum texIntFormat;
+   GLboolean fallback;
+
+   ASSERT(ctx->Extensions.NV_texture_rectangle);
+
+   /*
+    * Determine if we can do the glDrawPixels with texture mapping.
+    */
+   fallback = GL_FALSE;
+   if (ctx->_ImageTransferState ||
+       ctx->Fog.Enabled ||
+       width > ctx->Const.MaxTextureRectSize ||
+       height > ctx->Const.MaxTextureRectSize) {
+      fallback = GL_TRUE;
+   }
+
+   if (_mesa_is_color_format(format)) {
+      texIntFormat = GL_RGBA;
+   }
+   else {
+      fallback = GL_TRUE;
+   }
+
+   if (fallback) {
+      _swrast_DrawPixels(ctx, x, y, width, height,
+                         format, type, unpack, pixels);
+      return;
+   }
+
+   /* Most GL state applies to glDrawPixels, but a there's a few things
+    * we need to override:
+    */
+   _mesa_meta_begin(ctx, (META_RASTERIZATION |
+                          META_SHADER |
+                          META_TEXTURE |
+                          META_TRANSFORM |
+                          META_VERTEX |
+                          META_VIEWPORT));
+
+   if (drawpix->TexObj == 0) {
+      /* one-time setup */
+
+      /* create texture object */
+      _mesa_GenTextures(1, &drawpix->TexObj);
+      _mesa_BindTexture(GL_TEXTURE_RECTANGLE, drawpix->TexObj);
+      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      _mesa_TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, filter);
+      _mesa_TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, filter);
+   }
+   else {
+      _mesa_BindTexture(GL_TEXTURE_RECTANGLE, drawpix->TexObj);
+   }
+
+   if (drawpix->ArrayObj == 0) {
+      /* one-time setup */
+
+      /* create vertex array object */
+      _mesa_GenVertexArrays(1, &drawpix->ArrayObj);
+      _mesa_BindVertexArray(drawpix->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &drawpix->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(drawpix->verts),
+                          drawpix->verts, GL_STREAM_DRAW_ARB);
+
+      /* setup vertex arrays */
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(drawpix->verts[0]),
+                          (void*) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(drawpix->verts[0]),
+                            (void *) (3 * sizeof(GLfloat)));
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+   else {
+      _mesa_BindVertexArray(drawpix->ArrayObj);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
+   }
+
+   /* vertex positions, texcoords */
+   drawpix->verts[0][0] = (GLfloat) x;
+   drawpix->verts[0][1] = (GLfloat) y;
+   drawpix->verts[0][2] = z;
+   drawpix->verts[0][3] = 0.0F;
+   drawpix->verts[0][4] = 0.0F;
+   drawpix->verts[1][0] = (GLfloat) x1;
+   drawpix->verts[1][1] = (GLfloat) y;
+   drawpix->verts[1][2] = z;
+   drawpix->verts[1][3] = (GLfloat) width;
+   drawpix->verts[1][4] = 0.0F;
+   drawpix->verts[2][0] = (GLfloat) x1;
+   drawpix->verts[2][1] = (GLfloat) y1;
+   drawpix->verts[2][2] = z;
+   drawpix->verts[2][3] = (GLfloat) width;
+   drawpix->verts[2][4] = (GLfloat) height;
+   drawpix->verts[3][0] = (GLfloat) x;
+   drawpix->verts[3][1] = (GLfloat) y1;
+   drawpix->verts[3][2] = z;
+   drawpix->verts[3][3] = 0.0F;
+   drawpix->verts[3][4] = (GLfloat) height;
+
+   /* upload new vertex data */
+   _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
+                          sizeof(drawpix->verts), drawpix->verts);
+
+   /* set given unpack params */
+   ctx->Unpack = *unpack; /* XXX bufobj */
+
+   /* copy pixel data to texture */
+   if (drawpix->TexWidth == width &&
+       drawpix->TexHeight == height &&
+       drawpix->TexIntFormat == texIntFormat) {
+      /* replace existing tex image */
+      _mesa_TexSubImage2D(GL_TEXTURE_RECTANGLE, 0,
+                          0, 0, width, height, format, type, pixels);
+   }
+   else {
+      /* create new tex image */
+      _mesa_TexImage2D(GL_TEXTURE_RECTANGLE, 0, texIntFormat,
+                       width, height, 0, format, type, pixels);
+      drawpix->TexWidth = width;
+      drawpix->TexHeight = height;
+      drawpix->TexIntFormat = texIntFormat;
+   }
+
+   /* restore unpack params */
+   ctx->Unpack = unpackSave; /* XXX bufobj */
 
    _mesa_Enable(GL_TEXTURE_RECTANGLE);
 

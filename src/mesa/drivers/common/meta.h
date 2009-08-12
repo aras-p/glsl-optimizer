@@ -69,5 +69,12 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                        GLsizei width, GLsizei height,
                        GLint dstx, GLint dsty, GLenum type);
 
+extern void
+_mesa_meta_draw_pixels(GLcontext *ctx,
+		       GLint x, GLint y, GLsizei width, GLsizei height,
+		       GLenum format, GLenum type,
+		       const struct gl_pixelstore_attrib *unpack,
+		       const GLvoid *pixels);
+
 
 #endif /* META_H */
