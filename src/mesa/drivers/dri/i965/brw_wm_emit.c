@@ -422,12 +422,12 @@ static void emit_mad( struct brw_compile *p,
    }
 }
 
-static void emit_lrp( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1,
-		      const struct brw_reg *arg2 )
+void emit_lrp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2)
 {
    GLuint i;
 

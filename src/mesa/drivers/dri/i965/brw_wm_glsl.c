@@ -650,6 +650,63 @@ static void invoke_subroutine( struct brw_wm_compile *c,
     }
 }
 
+/* Workaround for using brw_wm_emit.c's emit functions, which expect
+ * destination regs to be uniquely written.  Moves arguments out to
+ * temporaries as necessary for instructions which use their destination as
+ * a temporary.
+ */
+static void
+unalias3(struct brw_wm_compile *c,
+	 void (*func)(struct brw_compile *c,
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1,
+		      const struct brw_reg *arg2),
+	 const struct brw_reg *dst,
+	 GLuint mask,
+	 const struct brw_reg *arg0,
+	 const struct brw_reg *arg1,
+	 const struct brw_reg *arg2)
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg tmp_arg0[4], tmp_arg1[4], tmp_arg2[4];
+    int i, j;
+    int mark = mark_tmps(c);
+
+    for (j = 0; j < 4; j++) {
+	tmp_arg0[j] = arg0[j];
+	tmp_arg1[j] = arg1[j];
+	tmp_arg2[j] = arg2[j];
+    }
+
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    for (j = 0; j < 4; j++) {
+		if (arg0[j].file == dst[i].file &&
+		    dst[i].nr == arg0[j].nr) {
+		    tmp_arg0[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg0[j], arg0[j]);
+		}
+		if (arg1[j].file == dst[i].file &&
+		    dst[i].nr == arg1[j].nr) {
+		    tmp_arg1[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg1[j], arg1[j]);
+		}
+		if (arg2[j].file == dst[i].file &&
+		    dst[i].nr == arg2[j].nr) {
+		    tmp_arg2[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg2[j], arg2[j]);
+		}
+	    }
+	}
+    }
+
+    func(p, dst, mask, tmp_arg0, tmp_arg1, tmp_arg2);
+
+    release_tmps(c, mark);
+}
+
 static void emit_pixel_xy(struct brw_wm_compile *c,
                           const struct prog_instruction *inst)
 {
@@ -1221,44 +1278,6 @@ static void emit_pow(struct brw_wm_compile *c,
 	    brw_null_reg(),
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
-}
-
-static void emit_lrp(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, tmp1, tmp2, src0, src1, src2;
-    int i;
-    int mark = mark_tmps(c);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-
-	    if (src1.nr == dst.nr) {
-		tmp1 = alloc_tmp(c);
-		brw_MOV(p, tmp1, src1);
-	    } else
-		tmp1 = src1;
-
-	    src2 = get_src_reg(c, inst, 2, i);
-	    if (src2.nr == dst.nr) {
-		tmp2 = alloc_tmp(c);
-		brw_MOV(p, tmp2, src2);
-	    } else
-		tmp2 = src2;
-
-	    brw_ADD(p, dst, negate(src0), brw_imm_f(1.0));
-	    brw_MUL(p, brw_null_reg(), dst, tmp2);
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_MAC(p, dst, src0, tmp1);
-	    brw_set_saturate(p, 0);
-	}
-	release_tmps(c, mark);
-    }
 }
 
 /**
@@ -2722,7 +2741,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LRP:
-		emit_lrp(c, inst);
+		unalias3(c, emit_lrp,
+			 dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case OPCODE_TRUNC:
 		emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
