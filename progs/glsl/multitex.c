@@ -59,8 +59,8 @@ static GLint VertCoord_attr = -1, TexCoord0_attr = -1, TexCoord1_attr = -1;
 
 /* value[0] = tex unit */
 static struct uniform_info Uniforms[] = {
-   { "tex1",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
-   { "tex2",  1, GL_INT, { 1, 0, 0, 0 }, -1 },
+   { "tex1",  1, GL_SAMPLER_2D, { 0, 0, 0, 0 }, -1 },
+   { "tex2",  1, GL_SAMPLER_2D, { 1, 0, 0, 0 }, -1 },
    END_OF_UNIFORMS
 };
 

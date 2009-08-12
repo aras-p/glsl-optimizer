@@ -35,8 +35,8 @@ static const char *FragShaderText =
 
 
 static struct uniform_info Uniforms[] = {
-   { "Scale",    4, GL_FLOAT, { 0.5, 0.4, 0.0, 0}, -1 },
-   { "Bias",     4, GL_FLOAT, { 0.5, 0.3, 0.0, 0}, -1 },
+   { "Scale",    1, GL_FLOAT_VEC4, { 0.5, 0.4, 0.0, 0}, -1 },
+   { "Bias",     1, GL_FLOAT_VEC4, { 0.5, 0.3, 0.0, 0}, -1 },
    { "Slice",    1, GL_FLOAT, { 0.5, 0, 0, 0}, -1 },
    END_OF_UNIFORMS
 };

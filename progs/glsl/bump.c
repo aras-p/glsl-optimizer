@@ -24,11 +24,11 @@ static GLuint program;
 
 
 static struct uniform_info Uniforms[] = {
-   { "LightPosition",    3, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
-   { "SurfaceColor",     3, GL_FLOAT, { 0.8, 0.8, 0.2, 0 }, -1 },
-   { "BumpDensity",      1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
-   { "BumpSize",         1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
-   { "SpecularFactor",   1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   { "LightPosition",  1, GL_FLOAT_VEC3, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "SurfaceColor",   1, GL_FLOAT_VEC3, { 0.8, 0.8, 0.2, 0 }, -1 },
+   { "BumpDensity",    1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
+   { "BumpSize",       1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
+   { "SpecularFactor", 1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
    END_OF_UNIFORMS
 };
 

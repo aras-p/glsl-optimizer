@@ -130,21 +130,26 @@ SetUniformValues(GLuint program, struct uniform_info uniforms[])
       uniforms[i].location
          = glGetUniformLocation(program, uniforms[i].name);
 
-      switch (uniforms[i].size) {
-      case 1:
-         if (uniforms[i].type == GL_INT)
-            glUniform1i(uniforms[i].location,
-                             (GLint) uniforms[i].value[0]);
-         else
-            glUniform1fv(uniforms[i].location, 1, uniforms[i].value);
+      switch (uniforms[i].type) {
+      case GL_INT:
+      case GL_SAMPLER_1D:
+      case GL_SAMPLER_2D:
+      case GL_SAMPLER_3D:
+      case GL_SAMPLER_CUBE:
+      case GL_SAMPLER_2D_RECT_ARB:
+         glUniform1i(uniforms[i].location,
+                     (GLint) uniforms[i].value[0]);
          break;
-      case 2:
+      case GL_FLOAT:
+         glUniform1fv(uniforms[i].location, 1, uniforms[i].value);
+         break;
+      case GL_FLOAT_VEC2:
          glUniform2fv(uniforms[i].location, 1, uniforms[i].value);
          break;
-      case 3:
+      case GL_FLOAT_VEC3:
          glUniform3fv(uniforms[i].location, 1, uniforms[i].value);
          break;
-      case 4:
+      case GL_FLOAT_VEC4:
          glUniform4fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       default:
@@ -171,52 +176,6 @@ GetUniforms(GLuint program, struct uniform_info uniforms[])
       glGetActiveUniform(program, i, 100, &len, &size, &type, name);
 
       uniforms[i].name = strdup(name);
-      switch (type) {
-      case GL_FLOAT:
-         size = 1;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC2:
-         size = 2;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC3:
-         size = 3;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC4:
-         size = 4;
-         type = GL_FLOAT;
-         break;
-      case GL_INT:
-         size = 1;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC2:
-         size = 2;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC3:
-         size = 3;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC4:
-         size = 4;
-         type = GL_INT;
-         break;
-      case GL_FLOAT_MAT3:
-         /* XXX fix me */
-         size = 3;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_MAT4:
-         /* XXX fix me */
-         size = 4;
-         type = GL_FLOAT;
-         break;
-      default:
-         abort();
-      }
       uniforms[i].size = size;
       uniforms[i].type = type;
       uniforms[i].location = glGetUniformLocation(program, name);
@@ -267,42 +226,6 @@ GetAttribs(GLuint program, struct attrib_info attribs[])
       glGetActiveAttrib(program, i, 100, &len, &size, &type, name);
 
       attribs[i].name = strdup(name);
-      switch (type) {
-      case GL_FLOAT:
-         size = 1;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC2:
-         size = 2;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC3:
-         size = 3;
-         type = GL_FLOAT;
-         break;
-      case GL_FLOAT_VEC4:
-         size = 4;
-         type = GL_FLOAT;
-         break;
-      case GL_INT:
-         size = 1;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC2:
-         size = 2;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC3:
-         size = 3;
-         type = GL_INT;
-         break;
-      case GL_INT_VEC4:
-         size = 4;
-         type = GL_INT;
-         break;
-      default:
-         abort();
-      }
       attribs[i].size = size;
       attribs[i].type = type;
       attribs[i].location = glGetAttribLocation(program, name);
