@@ -328,6 +328,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    GLint attribMap[MAX_VERTEX_GENERIC_ATTRIBS];
    GLuint i, j;
    GLbitfield usedAttributes; /* generics only, not legacy attributes */
+   GLbitfield inputsRead = 0x0;
 
    assert(origProg != linkedProg);
    assert(origProg->Target == GL_VERTEX_PROGRAM_ARB);
@@ -371,6 +372,10 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    for (i = 0; i < linkedProg->NumInstructions; i++) {
       struct prog_instruction *inst = linkedProg->Instructions + i;
       for (j = 0; j < 3; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
+            inputsRead |= (1 << inst->SrcReg[j].Index);
+         }
+
          if (inst->SrcReg[j].File == PROGRAM_INPUT &&
              inst->SrcReg[j].Index >= VERT_ATTRIB_GENERIC0) {
             /*
@@ -429,6 +434,20 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
             /* update the instruction's src reg */
             inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
          }
+      }
+   }
+
+   /* Handle pre-defined attributes here (gl_Vertex, gl_Normal, etc).
+    * When the user queries the active attributes we need to include both
+    * the user-defined attributes and the built-in ones.
+    */
+   for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_GENERIC0; i++) {
+      if (inputsRead & (1 << i)) {
+         _mesa_add_attribute(linkedProg->Attributes,
+                             _slang_vert_attrib_name(i),
+                             1, /* size */
+                             _slang_vert_attrib_type(i),
+                             -1 /* attrib/input */);
       }
    }
 
