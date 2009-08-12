@@ -40,6 +40,7 @@
 #include "shader/prog_statevars.h"
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
+#include "slang_builtin.h"
 #include "slang_link.h"
 
 
