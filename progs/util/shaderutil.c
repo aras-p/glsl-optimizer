@@ -9,19 +9,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include "shaderutil.h"
-
-
-static void
-Init(void)
-{
-   static GLboolean firstCall = GL_TRUE;
-   if (firstCall) {
-      firstCall = GL_FALSE;
-   }
-}
 
 
 GLboolean
@@ -46,8 +37,6 @@ CompileShaderText(GLenum shaderType, const char *text)
 {
    GLuint shader;
    GLint stat;
-
-   Init();
 
    shader = glCreateShader(shaderType);
    glShaderSource(shader, 1, (const GLchar **) &text, NULL);
@@ -78,9 +67,6 @@ CompileShaderFile(GLenum shaderType, const char *filename)
    char *buffer = (char*) malloc(max);
    GLuint shader;
    FILE *f;
-
-   Init();
-
 
    f = fopen(filename, "r");
    if (!f) {
@@ -144,9 +130,6 @@ InitUniforms(GLuint program, struct uniform_info uniforms[])
       uniforms[i].location
          = glGetUniformLocation(program, uniforms[i].name);
 
-      printf("Uniform %s location: %d\n", uniforms[i].name,
-             uniforms[i].location);
-
       switch (uniforms[i].size) {
       case 1:
          if (uniforms[i].type == GL_INT)
@@ -167,5 +150,183 @@ InitUniforms(GLuint program, struct uniform_info uniforms[])
       default:
          abort();
       }
+   }
+}
+
+
+/** Get list of uniforms used in the program */
+GLuint
+GetUniforms(GLuint program, struct uniform_info uniforms[])
+{
+   GLint n, max, i;
+
+   glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &n);
+   glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max);
+
+   for (i = 0; i < n; i++) {
+      GLint size, len;
+      GLenum type;
+      char name[100];
+
+      glGetActiveUniform(program, i, 100, &len, &size, &type, name);
+
+      uniforms[i].name = strdup(name);
+      switch (type) {
+      case GL_FLOAT:
+         size = 1;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC2:
+         size = 2;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC3:
+         size = 3;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC4:
+         size = 4;
+         type = GL_FLOAT;
+         break;
+      case GL_INT:
+         size = 1;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC2:
+         size = 2;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC3:
+         size = 3;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC4:
+         size = 4;
+         type = GL_INT;
+         break;
+      case GL_FLOAT_MAT3:
+         /* XXX fix me */
+         size = 3;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_MAT4:
+         /* XXX fix me */
+         size = 4;
+         type = GL_FLOAT;
+         break;
+      default:
+         abort();
+      }
+      uniforms[i].size = size;
+      uniforms[i].type = type;
+      uniforms[i].location = glGetUniformLocation(program, name);
+   }
+
+   uniforms[i].name = NULL; /* end of list */
+
+   return n;
+}
+
+
+void
+PrintUniforms(const struct uniform_info uniforms[])
+{
+   GLint i;
+
+   printf("Uniforms:\n");
+
+   for (i = 0; uniforms[i].name; i++) {
+      printf("  %d: %s size=%d type=0x%x loc=%d value=%g, %g, %g, %g\n",
+             i,
+             uniforms[i].name,
+             uniforms[i].size,
+             uniforms[i].type,
+             uniforms[i].location,
+             uniforms[i].value[0],
+             uniforms[i].value[1],
+             uniforms[i].value[2],
+             uniforms[i].value[3]);
+   }
+}
+
+
+/** Get list of attribs used in the program */
+GLuint
+GetAttribs(GLuint program, struct attrib_info attribs[])
+{
+   GLint n, max, i;
+
+   glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &n);
+   glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max);
+
+   for (i = 0; i < n; i++) {
+      GLint size, len;
+      GLenum type;
+      char name[100];
+
+      glGetActiveAttrib(program, i, 100, &len, &size, &type, name);
+
+      attribs[i].name = strdup(name);
+      switch (type) {
+      case GL_FLOAT:
+         size = 1;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC2:
+         size = 2;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC3:
+         size = 3;
+         type = GL_FLOAT;
+         break;
+      case GL_FLOAT_VEC4:
+         size = 4;
+         type = GL_FLOAT;
+         break;
+      case GL_INT:
+         size = 1;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC2:
+         size = 2;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC3:
+         size = 3;
+         type = GL_INT;
+         break;
+      case GL_INT_VEC4:
+         size = 4;
+         type = GL_INT;
+         break;
+      default:
+         abort();
+      }
+      attribs[i].size = size;
+      attribs[i].type = type;
+      attribs[i].location = glGetAttribLocation(program, name);
+   }
+
+   attribs[i].name = NULL; /* end of list */
+
+   return n;
+}
+
+
+void
+PrintAttribs(const struct attrib_info attribs[])
+{
+   GLint i;
+
+   printf("Attribs:\n");
+
+   for (i = 0; attribs[i].name; i++) {
+      printf("  %d: %s size=%d type=0x%x loc=%d\n",
+             i,
+             attribs[i].name,
+             attribs[i].size,
+             attribs[i].type,
+             attribs[i].location);
    }
 }
