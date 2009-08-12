@@ -51,7 +51,7 @@ vbo_get_minmax_index(GLcontext *ctx,
    GLsizei count = prim->count;
    const void *indices;
 
-   if (ib->obj->Name) {
+   if (_mesa_is_bufferobj(ib->obj)) {
       const GLvoid *map = ctx->Driver.MapBuffer(ctx,
                                                 GL_ELEMENT_ARRAY_BUFFER_ARB,
                                                 GL_READ_ONLY,
@@ -103,7 +103,7 @@ vbo_get_minmax_index(GLcontext *ctx,
       break;
    }
 
-   if (ib->obj->Name != 0) {
+   if (_mesa_is_bufferobj(ib->obj)) {
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ELEMENT_ARRAY_BUFFER_ARB,
 			      ib->obj);
@@ -121,7 +121,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
 {
    if (array->Enabled) {
       const void *data = array->Ptr;
-      if (array->BufferObj->Name) {
+      if (_mesa_is_bufferobj(array->BufferObj)) {
          if (!array->BufferObj->Pointer) {
             /* need to map now */
             array->BufferObj->Pointer = ctx->Driver.MapBuffer(ctx,
@@ -166,8 +166,8 @@ static void
 unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
-       array->BufferObj->Name &&
-       array->BufferObj->Pointer) {
+       _mesa_is_bufferobj(array->BufferObj) &&
+       _mesa_bufferobj_mapped(array->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx,
                               GL_ARRAY_BUFFER_ARB,
                               array->BufferObj);
@@ -186,7 +186,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
    const void *elemMap;
    GLint i, k;
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       elemMap = ctx->Driver.MapBuffer(ctx,
                                       GL_ELEMENT_ARRAY_BUFFER_ARB,
                                       GL_READ_ONLY,
@@ -225,7 +225,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
       }
    }
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ELEMENT_ARRAY_BUFFER_ARB,
 			      ctx->Array.ElementArrayBufferObj);
