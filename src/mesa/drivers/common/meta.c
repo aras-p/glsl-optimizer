@@ -78,6 +78,9 @@ struct save_state
    /** META_DEPTH_TEST */
    struct gl_depthbuffer_attrib Depth;
 
+   /** META_FOG */
+   GLboolean Fog;
+
    /** META_PIXELSTORE */
    /* XXX / TO-DO */
 
@@ -128,7 +131,6 @@ struct save_state
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
-   GLboolean Fog;
 };
 
 
@@ -169,7 +171,6 @@ struct copypix_state
    GLuint VBO;
    GLfloat verts[4][5]; /** four verts of X,Y,Z,S,T */
 };
-
 
 
 /**
@@ -279,6 +280,12 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
          _mesa_Disable(GL_DEPTH_TEST);
    }
 
+   if (state & META_FOG) {
+      save->Fog = ctx->Fog.Enabled;
+      if (ctx->Fog.Enabled)
+         _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
+   }
+
    if (state & META_RASTERIZATION) {
       save->FrontPolygonMode = ctx->Polygon.FrontMode;
       save->BackPolygonMode = ctx->Polygon.BackMode;
@@ -335,16 +342,19 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
          save->TexGenEnabled[u] = ctx->Texture.Unit[u].TexGenEnabled;
-         _mesa_ActiveTextureARB(GL_TEXTURE0 + u);
-         _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-         _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
+         if (ctx->Texture.Unit[u].Enabled ||
+             ctx->Texture.Unit[u].TexGenEnabled) {
+            _mesa_ActiveTextureARB(GL_TEXTURE0 + u);
+            _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
+         }
       }
 
       /* save current texture objects for unit[0] only */
@@ -357,10 +367,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       _mesa_ActiveTextureARB(GL_TEXTURE0);
       _mesa_ClientActiveTextureARB(GL_TEXTURE0);
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-      _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
    }
 
    if (state & META_TRANSFORM) {
@@ -418,10 +424,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->Lighting = ctx->Light.Enabled;
       if (ctx->Light.Enabled)
          _mesa_set_enable(ctx, GL_LIGHTING, GL_FALSE);
-
-      save->Fog = ctx->Fog.Enabled;
-      if (ctx->Fog.Enabled)
-         _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
    }
 }
 
@@ -458,6 +460,10 @@ _mesa_meta_end(GLcontext *ctx)
          _mesa_set_enable(ctx, GL_DEPTH_TEST, save->Depth.Test);
       _mesa_DepthFunc(save->Depth.Func);
       _mesa_DepthMask(save->Depth.Mask);
+   }
+
+   if (state & META_FOG) {
+      _mesa_set_enable(ctx, GL_FOG, save->Fog);
    }
 
    if (state & META_RASTERIZATION) {
@@ -895,6 +901,7 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
 
    if (type != GL_COLOR ||
        ctx->_ImageTransferState ||
+       ctx->Fog.Enabled ||
        width > ctx->Const.MaxTextureRectSize ||
        height > ctx->Const.MaxTextureRectSize) {
       /* XXX avoid this fallback */

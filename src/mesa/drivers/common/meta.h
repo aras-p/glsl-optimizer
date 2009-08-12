@@ -36,14 +36,15 @@
 #define META_BLEND           0x2  /**< includes logicop */
 #define META_COLOR_MASK      0x4
 #define META_DEPTH_TEST      0x8
-#define META_RASTERIZATION  0x10
-#define META_SCISSOR        0x20
-#define META_SHADER         0x40
-#define META_STENCIL_TEST   0x80
-#define META_TRANSFORM     0x100 /**< modelview, projection */
-#define META_TEXTURE       0x200
-#define META_VERTEX        0x400
-#define META_VIEWPORT      0x800
+#define META_FOG            0x10
+#define META_RASTERIZATION  0x20
+#define META_SCISSOR        0x40
+#define META_SHADER         0x80
+#define META_STENCIL_TEST  0x100
+#define META_TRANSFORM     0x200 /**< modelview, projection */
+#define META_TEXTURE       0x400
+#define META_VERTEX        0x800
+#define META_VIEWPORT     0x1000
 #define META_ALL            ~0x0
 /*@}*/
 
