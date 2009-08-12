@@ -40,7 +40,6 @@
 #include "macros.h"
 #include "imports.h"
 #include "version.h"
-#include "fakeglx.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 
