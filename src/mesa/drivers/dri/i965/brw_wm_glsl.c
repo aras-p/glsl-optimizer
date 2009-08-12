@@ -1214,66 +1214,6 @@ static void emit_kil(struct brw_wm_compile *c)
     brw_pop_insn_state(p);
 }
 
-static void emit_sop(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst, GLuint cond)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, src0, src1;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_push_insn_state(p);
-	    brw_CMP(p, brw_null_reg(), cond, src0, src1);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	    brw_MOV(p, dst, brw_imm_f(0.0));
-	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	    brw_MOV(p, dst, brw_imm_f(1.0));
-	    brw_pop_insn_state(p);
-	}
-    }
-}
-
-static void emit_slt(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_L);
-}
-
-static void emit_sle(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_LE);
-}
-
-static void emit_sgt(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_G);
-}
-
-static void emit_sge(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_GE);
-}
-
-static void emit_seq(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_EQ);
-}
-
-static void emit_sne(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_NEQ);
-}
-
 static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
@@ -2687,22 +2627,28 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 			  args[0]);
                 break;
 	    case OPCODE_SLT:
-		emit_slt(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_L, args[0], args[1]);
 		break;
 	    case OPCODE_SLE:
-		emit_sle(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_LE, args[0], args[1]);
 		break;
 	    case OPCODE_SGT:
-		emit_sgt(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_G, args[0], args[1]);
 		break;
 	    case OPCODE_SGE:
-		emit_sge(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_GE, args[0], args[1]);
 		break;
 	    case OPCODE_SEQ:
-		emit_seq(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_EQ, args[0], args[1]);
 		break;
 	    case OPCODE_SNE:
-		emit_sne(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_NEQ, args[0], args[1]);
 		break;
 	    case OPCODE_MUL:
 		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);

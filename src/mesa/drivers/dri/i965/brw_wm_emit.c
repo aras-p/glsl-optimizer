@@ -447,21 +447,24 @@ void emit_lrp(struct brw_compile *p,
    }
 }
 
-static void emit_sop( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      GLuint cond,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_sop(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      GLuint cond,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    GLuint i;
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
-	 brw_MOV(p, dst[i], brw_imm_f(0));
+	 brw_push_insn_state(p);
 	 brw_CMP(p, brw_null_reg(), cond, arg0[i], arg1[i]);
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+	 brw_MOV(p, dst[i], brw_imm_f(0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
 	 brw_MOV(p, dst[i], brw_imm_f(1.0));
-	 brw_set_predicate_control_flag_value(p, 0xff);
+	 brw_pop_insn_state(p);
       }
    }
 }
