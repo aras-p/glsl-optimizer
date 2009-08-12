@@ -36,45 +36,53 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/dri2tokens.h>
 
-typedef struct {
-    unsigned int attachment;
-    unsigned int name;
-    unsigned int pitch;
-    unsigned int cpp;
-    unsigned int flags;
+typedef struct
+{
+   unsigned int attachment;
+   unsigned int name;
+   unsigned int pitch;
+   unsigned int cpp;
+   unsigned int flags;
 } DRI2Buffer;
 
 extern Bool
-DRI2QueryExtension(Display *display, int *eventBase, int *errorBase);
+DRI2QueryExtension(Display * display, int *eventBase, int *errorBase);
+
 extern Bool
-DRI2QueryVersion(Display *display, int *major, int *minor);
+DRI2QueryVersion(Display * display, int *major, int *minor);
+
 extern Bool
-DRI2Connect(Display *display, XID window,
-	    char **driverName, char **deviceName);
+DRI2Connect(Display * display, XID window,
+            char **driverName, char **deviceName);
+
 extern Bool
-DRI2Authenticate(Display *display, XID window, drm_magic_t magic);
+DRI2Authenticate(Display * display, XID window, drm_magic_t magic);
+
 extern void
-DRI2CreateDrawable(Display *display, XID drawable);
+DRI2CreateDrawable(Display * display, XID drawable);
+
 extern void
-DRI2DestroyDrawable(Display *display, XID handle);
-extern DRI2Buffer *
-DRI2GetBuffers(Display *dpy, XID drawable,
-	       int *width, int *height,
-	       unsigned int *attachments, int count,
-	       int *outCount);
+DRI2DestroyDrawable(Display * display, XID handle);
+
+extern DRI2Buffer*
+DRI2GetBuffers(Display * dpy, XID drawable,
+               int *width, int *height,
+               unsigned int *attachments, int count,
+               int *outCount);
 
 /**
  * \note
  * This function is only supported with DRI2 version 1.1 or later.
  */
-extern DRI2Buffer *
-DRI2GetBuffersWithFormat(Display *dpy, XID drawable,
-			 int *width, int *height,
-			 unsigned int *attachments, int count,
-			 int *outCount);
+extern DRI2Buffer*
+DRI2GetBuffersWithFormat(Display * dpy, XID drawable,
+                         int *width, int *height,
+                         unsigned int *attachments,
+                         int count, int *outCount);
 
 extern void
-DRI2CopyRegion(Display *dpy, XID drawable, XserverRegion region,
-	       CARD32 dest, CARD32 src);
+DRI2CopyRegion(Display * dpy, XID drawable,
+               XserverRegion region,
+               CARD32 dest, CARD32 src);
 
 #endif

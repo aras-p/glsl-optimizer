@@ -1,18 +1,18 @@
 /*
  * (C) Copyright IBM Corporation 2004, 2005
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -39,7 +39,7 @@
 /**
  * \file indirect_vertex_array.c
  * Implement GLX protocol for vertex arrays and vertex buffer objects.
- * 
+ *
  * The most important function in this fill is \c fill_array_info_cache.
  * The \c array_state_vector contains a cache of the ARRAY_INFO data sent
  * in the DrawArrays protocol.  Certain operations, such as enabling or
@@ -47,7 +47,7 @@
  * fills-in this data.  Additionally, it examines the enabled state and
  * other factors to determine what "version" of DrawArrays protocoal can be
  * used.
- * 
+ *
  * Current, only two versions of DrawArrays protocol are implemented.  The
  * first version is the "none" protocol.  This is the fallback when the
  * server does not support GL 1.1 / EXT_vertex_arrays.  It is implemented
@@ -90,11 +90,11 @@ static GLboolean validate_type(__GLXcontext * gc, GLenum type);
 
 
 /**
- * Table of sizes, in bytes, of a GL types.  All of the type enums are be in 
+ * Table of sizes, in bytes, of a GL types.  All of the type enums are be in
  * the range 0x1400 - 0x140F.  That includes types added by extensions (i.e.,
  * \c GL_HALF_FLOAT_NV).  This elements of this table correspond to the
  * type enums masked with 0x0f.
- * 
+ *
  * \notes
  * \c GL_HALF_FLOAT_NV is not included.  Neither are \c GL_2_BYTES,
  * \c GL_3_BYTES, or \c GL_4_BYTES.
@@ -131,15 +131,15 @@ __glXFreeVertexArrayState(__GLXcontext * gc)
 
 /**
  * Initialize vertex array state of a GLX context.
- * 
+ *
  * \param gc  GLX context whose vertex array state is to be initialized.
- * 
+ *
  * \warning
  * This function may only be called after __GLXcontext::gl_extension_bits,
  * __GLXcontext::server_minor, and __GLXcontext::server_major have been
  * initialized.  These values are used to determine what vertex arrays are
  * supported.
- * 
+ *
  * \bug
  * Return values from malloc are not properly tested.
  */
@@ -171,7 +171,7 @@ __glXInitVertexArrayState(__GLXcontext * gc)
     * are supported by the server are create.  For example, if the server
     * supports only 2 texture units, then only 2 texture coordinate arrays
     * are created.
-    * 
+    *
     * At the very least, GL_VERTEX_ARRAY, GL_NORMAL_ARRAY,
     * GL_COLOR_ARRAY, GL_INDEX_ARRAY, GL_TEXTURE_COORD_ARRAY, and
     * GL_EDGE_FLAG_ARRAY are supported.
@@ -532,7 +532,7 @@ emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count)
 /**
  * Emit the header data for the GL 1.1 / EXT_vertex_arrays DrawArrays
  * protocol.
- * 
+ *
  * \param gc                    GLX context.
  * \param arrays                Array state.
  * \param elements_per_request  Location to store the number of elements that
@@ -543,7 +543,7 @@ emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count)
  *                              will be zero.
  * \param mode                  Drawing mode.
  * \param count                 Number of vertices.
- * 
+ *
  * \returns
  * A pointer to the buffer for array data.
  */
@@ -594,7 +594,7 @@ emit_DrawArrays_header_old(__GLXcontext * gc,
       /* Calculate the number of data packets that will be required to send
        * the whole command.  To do this, the number of verticies that
        * will fit in a single buffer must be calculated.
-       * 
+       *
        * The important value here is elements_per_request.  This is the
        * number of complete array elements that will fit in a single
        * buffer.  There may be some wasted space at the end of the buffer,
@@ -869,7 +869,7 @@ emit_DrawElements_old(GLenum mode, GLsizei count, GLenum type,
 /**
  * Validate that the \c mode parameter to \c glDrawArrays, et. al. is valid.
  * If it is not valid, then an error code is set in the GLX context.
- * 
+ *
  * \returns
  * \c GL_TRUE if the argument is valid, \c GL_FALSE if is not.
  */
@@ -902,7 +902,7 @@ validate_mode(__GLXcontext * gc, GLenum mode)
  * A value less than zero is invalid and will result in \c GL_INVALID_VALUE
  * being set.  A value of zero will not result in an error being set, but
  * will result in \c GL_FALSE being returned.
- * 
+ *
  * \returns
  * \c GL_TRUE if the argument is valid, \c GL_FALSE if it is not.
  */
@@ -1084,21 +1084,21 @@ __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count,
 
 
 #define COMMON_ARRAY_DATA_INIT(a, PTR, TYPE, STRIDE, COUNT, NORMALIZED, HDR_SIZE, OPCODE) \
-    do { \
-	(a)->data = PTR; \
-	(a)->data_type = TYPE; \
-	(a)->user_stride = STRIDE; \
-	(a)->count = COUNT; \
-	(a)->normalized = NORMALIZED; \
-	\
-	(a)->element_size = __glXTypeSize( TYPE ) * COUNT; \
-	(a)->true_stride = (STRIDE == 0) \
-	  ? (a)->element_size : STRIDE; \
-	\
-	(a)->header_size = HDR_SIZE; \
-	((uint16_t *) (a)->header)[0] = __GLX_PAD((a)->header_size + (a)->element_size); \
-	((uint16_t *) (a)->header)[1] = OPCODE; \
-    } while(0)
+  do {                                                                  \
+    (a)->data = PTR;                                                    \
+    (a)->data_type = TYPE;                                              \
+    (a)->user_stride = STRIDE;                                          \
+    (a)->count = COUNT;                                                 \
+    (a)->normalized = NORMALIZED;                                       \
+                                                                        \
+    (a)->element_size = __glXTypeSize( TYPE ) * COUNT;                  \
+    (a)->true_stride = (STRIDE == 0)                                    \
+      ? (a)->element_size : STRIDE;                                     \
+                                                                        \
+    (a)->header_size = HDR_SIZE;                                        \
+    ((uint16_t *) (a)->header)[0] = __GLX_PAD((a)->header_size + (a)->element_size); \
+    ((uint16_t *) (a)->header)[1] = OPCODE;                             \
+  } while(0)
 
 
 void
@@ -1363,36 +1363,36 @@ __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 {
    static const uint16_t short_ops[5] = {
       0, X_GLrop_TexCoord1sv, X_GLrop_TexCoord2sv, X_GLrop_TexCoord3sv,
-         X_GLrop_TexCoord4sv
+      X_GLrop_TexCoord4sv
    };
    static const uint16_t int_ops[5] = {
       0, X_GLrop_TexCoord1iv, X_GLrop_TexCoord2iv, X_GLrop_TexCoord3iv,
-         X_GLrop_TexCoord4iv
+      X_GLrop_TexCoord4iv
    };
    static const uint16_t float_ops[5] = {
       0, X_GLrop_TexCoord1dv, X_GLrop_TexCoord2fv, X_GLrop_TexCoord3fv,
-         X_GLrop_TexCoord4fv
+      X_GLrop_TexCoord4fv
    };
    static const uint16_t double_ops[5] = {
       0, X_GLrop_TexCoord1dv, X_GLrop_TexCoord2dv, X_GLrop_TexCoord3dv,
-         X_GLrop_TexCoord4dv
+      X_GLrop_TexCoord4dv
    };
 
    static const uint16_t mshort_ops[5] = {
       0, X_GLrop_MultiTexCoord1svARB, X_GLrop_MultiTexCoord2svARB,
-         X_GLrop_MultiTexCoord3svARB, X_GLrop_MultiTexCoord4svARB
+      X_GLrop_MultiTexCoord3svARB, X_GLrop_MultiTexCoord4svARB
    };
    static const uint16_t mint_ops[5] = {
       0, X_GLrop_MultiTexCoord1ivARB, X_GLrop_MultiTexCoord2ivARB,
-         X_GLrop_MultiTexCoord3ivARB, X_GLrop_MultiTexCoord4ivARB
+      X_GLrop_MultiTexCoord3ivARB, X_GLrop_MultiTexCoord4ivARB
    };
    static const uint16_t mfloat_ops[5] = {
       0, X_GLrop_MultiTexCoord1dvARB, X_GLrop_MultiTexCoord2fvARB,
-         X_GLrop_MultiTexCoord3fvARB, X_GLrop_MultiTexCoord4fvARB
+      X_GLrop_MultiTexCoord3fvARB, X_GLrop_MultiTexCoord4fvARB
    };
    static const uint16_t mdouble_ops[5] = {
       0, X_GLrop_MultiTexCoord1dvARB, X_GLrop_MultiTexCoord2dvARB,
-         X_GLrop_MultiTexCoord3dvARB, X_GLrop_MultiTexCoord4dvARB
+      X_GLrop_MultiTexCoord3dvARB, X_GLrop_MultiTexCoord4dvARB
    };
 
    uint16_t opcode;

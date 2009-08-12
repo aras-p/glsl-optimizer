@@ -315,10 +315,10 @@ set_glx_extension(const struct extension_info *ext,
 
 /**
  * Convert the server's extension string to a bit-field.
- * 
+ *
  * \param server_string   GLX extension string from the server.
  * \param server_support  Bit-field of supported extensions.
- * 
+ *
  * \note
  * This function is used to process both GLX and GL extension strings.  The
  * bit-fields used to track each of these have different sizes.  Therefore,
@@ -336,8 +336,7 @@ __glXProcessServerString(const struct extension_info *ext,
       /* Determine the length of the next extension name.
        */
       for (len = 0; (server_string[base + len] != SEPARATOR)
-           && (server_string[base + len] != NUL);
-           len++) {
+           && (server_string[base + len] != NUL); len++) {
          /* empty */
       }
 
@@ -351,8 +350,7 @@ __glXProcessServerString(const struct extension_info *ext,
        * over the previous string and any trialing white-space.
        */
       for (base += len; (server_string[base] == SEPARATOR)
-           && (server_string[base] != NUL);
-           base++) {
+           && (server_string[base] != NUL); base++) {
          /* empty */
       }
    }
@@ -549,7 +547,7 @@ __glXGetClientExtensions(void)
 /**
  * Calculate the list of application usable extensions.  The resulting
  * string is stored in \c psc->effectiveGLXexts.
- * 
+ *
  * \param psc                        Pointer to GLX per-screen record.
  * \param display_is_direct_capable  True if the display is capable of
  *                                   direct rendering.
@@ -600,7 +598,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
     * it and the "server" supports it.  In this case that means that either
     * the true server supports it or it is only for direct-rendering and
     * the direct rendering driver supports it.
-    * 
+    *
     * If the display is not capable of direct rendering, then the extension
     * is enabled if and only if the client-side library and the server
     * support it.
@@ -609,10 +607,10 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
    if (display_is_direct_capable) {
       for (i = 0; i < 8; i++) {
          usable[i] = (client_glx_support[i] & client_glx_only[i])
-            | (client_glx_support[i] & psc->
-               direct_support[i] & server_support[i])
-            | (client_glx_support[i] & psc->
-               direct_support[i] & direct_glx_only[i]);
+            | (client_glx_support[i] & psc->direct_support[i] &
+               server_support[i])
+            | (client_glx_support[i] & psc->direct_support[i] &
+               direct_glx_only[i]);
       }
    }
    else {
@@ -630,7 +628,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
 /**
  * Calculate the list of application usable extensions.  The resulting
  * string is stored in \c gc->extensions.
- * 
+ *
  * \param gc             Pointer to GLX context.
  * \param server_string  Extension string from the server.
  * \param major_version  GL major version from the server.

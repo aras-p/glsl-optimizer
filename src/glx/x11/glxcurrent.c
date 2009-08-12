@@ -81,7 +81,7 @@ _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Per-thread GLX context pointer.
- * 
+ *
  * \c __glXSetCurrentContext is written is such a way that this pointer can
  * \b never be \c NULL.  This is important!  Because of this
  * \c __glXGetCurrentContext can be implemented as trivial macro.
@@ -101,7 +101,7 @@ static pthread_once_t once_control = PTHREAD_ONCE_INIT;
 
 /**
  * Per-thread data key.
- * 
+ *
  * Once \c init_thread_data has been called, the per-thread data key will
  * take a value of \c NULL.  As each new thread is created the default
  * value, in that thread, will be \c NULL.
@@ -110,7 +110,7 @@ static pthread_key_t ContextTSD;
 
 /**
  * Initialize the per-thread data key.
- * 
+ *
  * This function is called \b exactly once per-process (not per-thread!) to
  * initialize the per-thread data key.  This is ideally done using the
  * \c pthread_once mechanism.
@@ -302,8 +302,8 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 #endif /* GLX_DIRECT_RENDERING */
 
 static void
-__glXGenerateError(Display *dpy, GLXContext gc, XID resource,
-		   BYTE errorCode, CARD16 minorCode)
+__glXGenerateError(Display * dpy, GLXContext gc, XID resource,
+                   BYTE errorCode, CARD16 minorCode)
 {
    xError error;
 
@@ -318,7 +318,7 @@ __glXGenerateError(Display *dpy, GLXContext gc, XID resource,
 
 /**
  * Make a particular context current.
- * 
+ *
  * \note This is in this file so that it can access dummyContext.
  */
 static Bool
@@ -347,21 +347,19 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 
    if (gc == NULL && (draw != None || read != None)) {
       __glXGenerateError(dpy, gc, (draw != None) ? draw : read,
-			 BadMatch, X_GLXMakeContextCurrent);
+                         BadMatch, X_GLXMakeContextCurrent);
       return False;
    }
    if (gc != NULL && (draw == None || read == None)) {
-      __glXGenerateError(dpy, gc, None,
-			 BadMatch, X_GLXMakeContextCurrent);
+      __glXGenerateError(dpy, gc, None, BadMatch, X_GLXMakeContextCurrent);
       return False;
    }
 
    _glapi_check_multithread();
 
-   if (gc != NULL && gc->thread_id != 0 &&
-       gc->thread_id != _glthread_GetID()) {
+   if (gc != NULL && gc->thread_id != 0 && gc->thread_id != _glthread_GetID()) {
       __glXGenerateError(dpy, gc, gc->xid,
-			 BadAccess, X_GLXMakeContextCurrent);
+                         BadAccess, X_GLXMakeContextCurrent);
       return False;
    }
 
@@ -373,7 +371,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 
       if ((pdraw == NULL) || (pread == NULL)) {
          __glXGenerateError(dpy, gc, (pdraw == NULL) ? draw : read,
-			    GLXBadDrawable, X_GLXMakeContextCurrent);
+                            GLXBadDrawable, X_GLXMakeContextCurrent);
          return False;
       }
 
@@ -521,6 +519,5 @@ GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
 
 PUBLIC
 GLX_ALIAS(Bool, glXMakeContextCurrent,
-	  (Display * dpy, GLXDrawable d, GLXDrawable r,
-	   GLXContext ctx), (dpy, d, r, ctx),
-	  MakeContextCurrent)
+          (Display * dpy, GLXDrawable d, GLXDrawable r,
+           GLXContext ctx), (dpy, d, r, ctx), MakeContextCurrent)
