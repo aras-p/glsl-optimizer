@@ -46,8 +46,10 @@
 
 
 #include "util/u_debug.h"
+#include "util/u_string.h"
 
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 
@@ -555,23 +557,13 @@ lp_build_sqrt(struct lp_build_context *bld,
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
-   const char *intrinsic;
+   char intrinsic[32];
 
+   /* TODO: optimize the constant case */
    /* TODO: optimize the constant case */
 
    assert(type.floating);
-
-   switch(type.width) {
-   case 32:
-      intrinsic = "llvm.sqrt.f32";
-      break;
-   case 64:
-      intrinsic = "llvm.sqrt.f64";
-      break;
-   default:
-      assert(0);
-      return LLVMGetUndef(vec_type);
-   }
+   util_snprintf(intrinsic, sizeof intrinsic, "llvm.sqrt.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
 }
@@ -629,23 +621,12 @@ lp_build_cos(struct lp_build_context *bld,
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
-   const char *intrinsic;
+   char intrinsic[32];
 
    /* TODO: optimize the constant case */
 
    assert(type.floating);
-
-   switch(type.width) {
-   case 32:
-      intrinsic = "llvm.cos.f32";
-      break;
-   case 64:
-      intrinsic = "llvm.cos.f64";
-      break;
-   default:
-      assert(0);
-      return LLVMGetUndef(vec_type);
-   }
+   util_snprintf(intrinsic, sizeof intrinsic, "llvm.cos.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
 }
@@ -657,23 +638,12 @@ lp_build_sin(struct lp_build_context *bld,
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
-   const char *intrinsic;
+   char intrinsic[32];
 
    /* TODO: optimize the constant case */
 
    assert(type.floating);
-
-   switch(type.width) {
-   case 32:
-      intrinsic = "llvm.sin.f32";
-      break;
-   case 64:
-      intrinsic = "llvm.sin.f64";
-      break;
-   default:
-      assert(0);
-      return LLVMGetUndef(vec_type);
-   }
+   util_snprintf(intrinsic, sizeof intrinsic, "llvm.sin.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
 }
@@ -686,24 +656,127 @@ lp_build_pow(struct lp_build_context *bld,
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
-   const char *intrinsic;
+   char intrinsic[32];
 
    /* TODO: optimize the constant case */
 
    assert(type.floating);
-
-   switch(type.width) {
-   case 32:
-      intrinsic = "llvm.pow.f32";
-      break;
-   case 64:
-      intrinsic = "llvm.pow.f64";
-      break;
-   default:
-      assert(0);
-      return LLVMGetUndef(vec_type);
-   }
+   util_snprintf(intrinsic, sizeof intrinsic, "llvm.pow.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_binary(bld->builder, intrinsic, vec_type, a, b);
 }
 
+
+LLVMValueRef
+lp_build_exp(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   /* FIXME: optimize */
+   return lp_build_pow(bld, lp_build_const_uni(bld->type, 2.7182818284590452354), a);
+}
+
+
+LLVMValueRef
+lp_build_log(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   /* FIXME: implement */
+   return bld->undef;
+}
+
+
+#define EXP_POLY_DEGREE 3
+#define LOG_POLY_DEGREE 5
+
+
+static LLVMValueRef
+lp_build_polynomial(struct lp_build_context *bld,
+                    LLVMValueRef x,
+                    const double *coeffs,
+                    unsigned num_coeffs)
+{
+   const union lp_type type = bld->type;
+   LLVMValueRef res = NULL;
+   unsigned i;
+
+   for (i = num_coeffs; i--; ) {
+      LLVMValueRef coeff = lp_build_const_uni(type, coeffs[i]);
+      if(res)
+         res = lp_build_add(bld, coeff, lp_build_mul(bld, x, res));
+      else
+         res = coeff;
+   }
+
+   if(res)
+      return res;
+   else
+      return bld->undef;
+}
+
+
+LLVMValueRef
+lp_build_exp2(struct lp_build_context *bld,
+              LLVMValueRef a)
+{
+   /* FIXME: optimize */
+   return lp_build_pow(bld, lp_build_const_uni(bld->type, 2.0), a);
+}
+
+
+/**
+ * See http://www.devmaster.net/forums/showthread.php?p=43580
+ */
+LLVMValueRef
+lp_build_log2(struct lp_build_context *bld,
+              LLVMValueRef x)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+
+   LLVMValueRef expmask = lp_build_int_const_uni(type, 0x7f800000);
+   LLVMValueRef mantmask = lp_build_int_const_uni(type, 0x007fffff);
+   LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
+
+   LLVMValueRef i = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
+
+   LLVMValueRef exp;
+   LLVMValueRef mant;
+   LLVMValueRef logmant;
+
+   /* exp = (float) exponent(x) */
+   exp = LLVMBuildAnd(bld->builder, i, expmask, "");
+   exp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_uni(type, 23), "");
+   exp = LLVMBuildSub(bld->builder, exp, lp_build_int_const_uni(type, 127), "");
+   exp = LLVMBuildSIToFP(bld->builder, exp, vec_type, "");
+
+   /* mant = (float) mantissa(x) */
+   mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
+   mant = LLVMBuildOr(bld->builder, mant, one, "");
+   mant = LLVMBuildSIToFP(bld->builder, mant, vec_type, "");
+
+   /* Minimax polynomial fit of log2(x)/(x - 1), for x in range [1, 2[
+    * These coefficients can be generate with
+    * http://www.boost.org/doc/libs/1_36_0/libs/math/doc/sf_and_dist/html/math_toolkit/toolkit/internals2/minimax.html
+    */
+   const double polynomial[] = {
+#if LOG_POLY_DEGREE == 6
+      3.11578814719469302614, -3.32419399085241980044, 2.59883907202499966007, -1.23152682416275988241, 0.318212422185251071475, -0.0344359067839062357313
+#elif LOG_POLY_DEGREE == 5
+      2.8882704548164776201, -2.52074962577807006663, 1.48116647521213171641, -0.465725644288844778798, 0.0596515482674574969533
+#elif LOG_POLY_DEGREE == 4
+      2.61761038894603480148, -1.75647175389045657003, 0.688243882994381274313, -0.107254423828329604454
+#elif LOG_POLY_DEGREE == 3
+      2.28330284476918490682, -1.04913055217340124191, 0.204446009836232697516
+#else
+#error
+#endif
+   };
+
+   logmant = lp_build_polynomial(bld, mant, polynomial, sizeof(polynomial)/sizeof(polynomial[0]));
+
+   /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
+   logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildMul(bld->builder, mant, bld->one, ""), "");
+
+   return LLVMBuildAdd(bld->builder, logmant, exp, "");
+}

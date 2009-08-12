@@ -110,4 +110,20 @@ lp_build_pow(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
 
+LLVMValueRef
+lp_build_exp(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_log(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_exp2(struct lp_build_context *bld,
+              LLVMValueRef a);
+
+LLVMValueRef
+lp_build_log2(struct lp_build_context *bld,
+              LLVMValueRef a);
+
 #endif /* !LP_BLD_ARIT_H */
