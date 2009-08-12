@@ -5,8 +5,7 @@ LIBNAME = xlib
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main
+	-I$(TOP)/src/mesa
 
 C_SOURCES = \
 	glx_api.c \

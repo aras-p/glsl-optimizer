@@ -34,11 +34,11 @@
 #include "GL/glx.h"
 
 #include "xm_api.h"
-#include "context.h"
-#include "config.h"
-#include "macros.h"
-#include "imports.h"
-#include "version.h"
+#include "main/context.h"
+#include "main/config.h"
+#include "main/macros.h"
+#include "main/imports.h"
+#include "main/version.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 

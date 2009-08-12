@@ -57,7 +57,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 #define XMESA_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 #include "pipe/p_thread.h"
