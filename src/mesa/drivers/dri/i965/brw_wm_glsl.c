@@ -10,6 +10,9 @@ enum _subroutine {
     SUB_NOISE1, SUB_NOISE2, SUB_NOISE3, SUB_NOISE4
 };
 
+static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
+                                  const struct prog_instruction *inst,
+                                  GLuint component);
 
 /**
  * Determine if the given fragment program uses GLSL features such
@@ -389,6 +392,27 @@ static void prealloc_reg(struct brw_wm_compile *c)
     /* Don't use GRF 126, 127.  Using them seems to lead to GPU lock-ups */
     prealloc_grf(c, 126);
     prealloc_grf(c, 127);
+
+    for (i = 0; i < c->nr_fp_insns; i++) {
+	const struct prog_instruction *inst = &c->prog_instructions[i];
+	struct brw_reg dst[4];
+
+	switch (inst->Opcode) {
+	case OPCODE_TEX:
+	case OPCODE_TXB:
+	    /* Allocate the channels of texture results contiguously,
+	     * since they are written out that way by the sampler unit.
+	     */
+	    for (j = 0; j < 4; j++) {
+		dst[j] = get_dst_reg(c, inst, j);
+		if (j != 0)
+		    assert(dst[j].nr == dst[j - 1].nr + 1);
+	    }
+	    break;
+	default:
+	    break;
+	}
+    }
 
     /* An instruction may reference up to three constants.
      * They'll be found in these registers.
