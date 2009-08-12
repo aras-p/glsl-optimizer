@@ -932,7 +932,7 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
  * Fake up a bo for things like texture image_override.
  * bo->offset already includes fb_location
  */
-struct bo_legacy *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
+struct radeon_bo *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
 					      int size,
 	                                      uint32_t offset)
 {
@@ -954,6 +954,6 @@ struct bo_legacy *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
         boml->nhandle = bo->base.handle + 1;
     }
     radeon_bo_ref(&(bo->base));
-    return bo;
+    return &(bo->base);
 }
 
