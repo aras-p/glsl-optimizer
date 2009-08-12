@@ -41,13 +41,13 @@ GLuint brw_wm_nr_args( GLuint opcode )
 {
    switch (opcode) {
    case WM_FRONTFACING:
-      return 0;
    case WM_PIXELXY:
+      return 0;
    case WM_CINTERP:
    case WM_WPOSXY:
+   case WM_DELTAXY:
       return 1;
    case WM_LINTERP:
-   case WM_DELTAXY:
    case WM_PIXELW:
       return 2;
    case WM_FB_WRITE:
