@@ -257,34 +257,6 @@ static void pass0_set_dst( struct brw_wm_compile *c,
 }
 
 
-static void pass0_set_dst_scalar( struct brw_wm_compile *c,
-				  struct brw_wm_instruction *out,
-                                  const struct prog_instruction *inst,
-				  GLuint writemask )
-{
-   if (writemask) {
-      const struct prog_dst_register *dst = &inst->DstReg;
-      GLuint i;
-
-      /* Compute only the first (X) value:
-       */
-      out->writemask = WRITEMASK_X;
-      out->dst[0] = get_value(c);
-
-      /* Update our tracking register file for all the components in
-       * writemask:
-       */
-      for (i = 0; i < 4; i++) {
-	 if (writemask & (1<<i)) {
-	    pass0_set_fpreg_value(c, dst->File, dst->Index, i, out->dst[0]);
-	 }
-      }
-   }
-   else
-      out->writemask = 0;
-}
-
-
 static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
 						    struct prog_src_register src,
 						    GLuint i )
@@ -363,10 +335,7 @@ translate_insn(struct brw_wm_compile *c,
 
    /* Dst:
     */
-   if (brw_wm_is_scalar_result(out->opcode)) 
-      pass0_set_dst_scalar(c, out, inst, writemask);
-   else 
-      pass0_set_dst(c, out, inst, writemask);
+   pass0_set_dst(c, out, inst, writemask);
 }
 
 

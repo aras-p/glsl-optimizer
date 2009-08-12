@@ -226,8 +226,41 @@ static struct prog_instruction * emit_op(struct brw_wm_compile *c,
                       0, 0, 0,  /* tex unit, target, shadow */
                       src0, src1, src2);
 }
-   
 
+
+/* Many Mesa opcodes produce the same value across all the result channels.
+ * We'd rather not have to support that splatting in the opcode implementations,
+ * and brw_wm_pass*.c wants to optimize them out by shuffling references around
+ * anyway.  We can easily get both by emitting the opcode to one channel, and
+ * then MOVing it to the others, which brw_wm_pass*.c already understands.
+ */
+static struct prog_instruction *emit_scalar_insn(struct brw_wm_compile *c,
+						 const struct prog_instruction *inst0)
+{
+   struct prog_instruction *inst;
+   unsigned int dst_chan;
+   unsigned int other_channel_mask;
+
+   if (inst0->DstReg.WriteMask == 0)
+      return NULL;
+
+   dst_chan = _mesa_ffs(inst0->DstReg.WriteMask) - 1;
+   inst = get_fp_inst(c);
+   *inst = *inst0;
+   inst->DstReg.WriteMask = 1 << dst_chan;
+
+   other_channel_mask = inst0->DstReg.WriteMask & ~(1 << dst_chan);
+   if (other_channel_mask != 0) {
+      inst = emit_op(c,
+		     OPCODE_MOV,
+		     dst_mask(inst0->DstReg, other_channel_mask),
+		     0,
+		     src_swizzle1(src_reg_from_dst(inst0->DstReg), dst_chan),
+		     src_undef(),
+		     src_undef());
+   }
+   return inst;
+}
 
 
 /***********************************************************************
@@ -1138,9 +1171,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 break;
       case OPCODE_PRINT:
 	 break;
-	 
       default:
-	 emit_insn(c, inst);
+	 if (brw_wm_is_scalar_result(inst->Opcode))
+	    emit_scalar_insn(c, inst);
+	 else
+	    emit_insn(c, inst);
 	 break;
       }
    }

@@ -1032,12 +1032,20 @@ static void emit_dp3(struct brw_wm_compile *c,
     struct brw_reg src0[3], src1[3], dst;
     int i;
     struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+    if (!(mask & WRITEMASK_XYZW))
+	return;
+
+    assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
     for (i = 0; i < 3; i++) {
 	src0[i] = get_src_reg(c, inst, 0, i);
 	src1[i] = get_src_reg_imm(c, inst, 1, i);
     }
 
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
+    dst = get_dst_reg(c, inst, dst_chan);
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
@@ -1051,11 +1059,19 @@ static void emit_dp4(struct brw_wm_compile *c,
     struct brw_reg src0[4], src1[4], dst;
     int i;
     struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+    if (!(mask & WRITEMASK_XYZW))
+	return;
+
+    assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
     for (i = 0; i < 4; i++) {
 	src0[i] = get_src_reg(c, inst, 0, i);
 	src1[i] = get_src_reg_imm(c, inst, 1, i);
     }
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
+    dst = get_dst_reg(c, inst, dst_chan);
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_MAC(p, brw_null_reg(), src0[2], src1[2]);
@@ -1070,11 +1086,19 @@ static void emit_dph(struct brw_wm_compile *c,
     struct brw_reg src0[4], src1[4], dst;
     int i;
     struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+    if (!(mask & WRITEMASK_XYZW))
+	return;
+
+    assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
     for (i = 0; i < 4; i++) {
 	src0[i] = get_src_reg(c, inst, 0, i);
 	src1[i] = get_src_reg_imm(c, inst, 1, i);
     }
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
+    dst = get_dst_reg(c, inst, dst_chan);
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_MAC(p, dst, src0[2], src1[2]);
@@ -1092,37 +1116,28 @@ static void emit_math1(struct brw_wm_compile *c,
                        const struct prog_instruction *inst, GLuint func)
 {
     struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst, tmp;
-    const int mark = mark_tmps( c );
-    int i;
+    struct brw_reg src0, dst;
+    GLuint mask = inst->DstReg.WriteMask;
+    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
 
-    tmp = alloc_tmp(c);
+    if (!(mask & WRITEMASK_XYZW))
+	return;
+
+    assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
     /* Get first component of source register */
+    dst = get_dst_reg(c, inst, dst_chan);
     src0 = get_src_reg(c, inst, 0, 0);
 
-    /* tmp = func(src0) */
     brw_MOV(p, brw_message_reg(2), src0);
     brw_math(p,
-             tmp,
+             dst,
              func,
              (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
              2,
              brw_null_reg(),
              BRW_MATH_DATA_VECTOR,
              BRW_MATH_PRECISION_FULL);
-
-    /*tmp.dw1.bits.swizzle = SWIZZLE_XXXX;*/
-
-    /* replicate tmp value across enabled dest channels */
-    for (i = 0; i < 4; i++) {
-       if (inst->DstReg.WriteMask & (1 << i)) {
-          dst = get_dst_reg(c, inst, i);
-          brw_MOV(p, dst, tmp);
-       }
-    }
-
-    release_tmps(c, mark);
 }
 
 static void emit_rcp(struct brw_wm_compile *c,
@@ -1322,7 +1337,15 @@ static void emit_pow(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst, src0, src1;
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
+    GLuint mask = inst->DstReg.WriteMask;
+    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+    if (!(mask & WRITEMASK_XYZW))
+	return;
+
+    assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
+    dst = get_dst_reg(c, inst, dst_chan);
     src0 = get_src_reg_imm(c, inst, 0, 0);
     src1 = get_src_reg_imm(c, inst, 1, 0);
 
@@ -3041,7 +3064,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
       _mesa_printf("\n");
     }
 }
-
 
 /**
  * Do GPU code generation for shaders that use GLSL features such as

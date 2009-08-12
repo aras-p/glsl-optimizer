@@ -543,16 +543,18 @@ static void emit_dp3( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
    brw_MAC(p, brw_null_reg(), arg0[1], arg1[1]);
 
    brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-   brw_MAC(p, dst[0], arg0[2], arg1[2]);
+   brw_MAC(p, dst[dst_chan], arg0[2], arg1[2]);
    brw_set_saturate(p, 0);
 }
 
@@ -563,17 +565,19 @@ static void emit_dp4( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
    brw_MAC(p, brw_null_reg(), arg0[1], arg1[1]);
    brw_MAC(p, brw_null_reg(), arg0[2], arg1[2]);
 
    brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-   brw_MAC(p, dst[0], arg0[3], arg1[3]);
+   brw_MAC(p, dst[dst_chan], arg0[3], arg1[3]);
    brw_set_saturate(p, 0);
 }
 
@@ -630,18 +634,19 @@ static void emit_math1( struct brw_compile *p,
 			GLuint mask,
 			const struct brw_reg *arg0 )
 {
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   //assert((mask & WRITEMASK_XYZW) == WRITEMASK_X ||
-   //	  function == BRW_MATH_FUNCTION_SINCOS);
-   
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
    brw_MOV(p, brw_message_reg(2), arg0[0]);
 
    /* Send two messages to perform all 16 operations:
     */
    brw_math_16(p, 
-	       dst[0],
+	       dst[dst_chan],
 	       function,
 	       (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
 	       2,
@@ -657,10 +662,12 @@ static void emit_math2( struct brw_compile *p,
 			const struct brw_reg *arg0,
 			const struct brw_reg *arg1)
 {
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
    brw_push_insn_state(p);
 
@@ -679,7 +686,7 @@ static void emit_math2( struct brw_compile *p,
     */
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math(p, 
-	    dst[0],
+	    dst[dst_chan],
 	    function,
 	    (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
 	    2,
@@ -689,7 +696,7 @@ static void emit_math2( struct brw_compile *p,
 
    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
    brw_math(p, 
-	    offset(dst[0],1),
+	    offset(dst[dst_chan],1),
 	    function,
 	    (mask & SATURATE) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
 	    4,
