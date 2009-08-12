@@ -39,7 +39,7 @@
 
 /** Is the given buffer object currently mapped? */
 static INLINE GLboolean
-_mesa_bufferobj_mapped(struct gl_buffer_object *obj)
+_mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
 {
    return obj->Pointer != NULL;
 }
@@ -50,7 +50,7 @@ _mesa_bufferobj_mapped(struct gl_buffer_object *obj)
  * always have Name==0.  User created buffers have Name!=0.
  */
 static INLINE GLboolean
-_mesa_is_bufferobj(struct gl_buffer_object *obj)
+_mesa_is_bufferobj(const struct gl_buffer_object *obj)
 {
    return obj->Name != 0;
 }
