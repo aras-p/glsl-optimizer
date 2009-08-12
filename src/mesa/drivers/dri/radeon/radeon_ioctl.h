@@ -132,16 +132,18 @@ static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
  * r200EmitState is called from within r200EmitVbufPrim and r200FlushElts.
  */
 #if RADEON_OLD_PACKETS
-#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2)) * sizeof(int))
+#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2))+nr*2)
 #define VERT_AOS_BUFSZ	(0)
 #define ELTS_BUFSZ(nr)	(24 + nr * 2)
-#define VBUF_BUFSZ	(6 * sizeof(int))
+#define VBUF_BUFSZ	(8)
 #else
-#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2)) * sizeof(int))
-#define VERT_AOS_BUFSZ	(5 * sizeof(int))
+#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2) + nr*2))
+#define VERT_AOS_BUFSZ	(5)
 #define ELTS_BUFSZ(nr)	(16 + nr * 2)
-#define VBUF_BUFSZ	(4 * sizeof(int))
+#define VBUF_BUFSZ	(4)
 #endif
+#define SCISSOR_BUFSZ	(8)
+#define INDEX_BUFSZ	(7)
 
 
 static inline uint32_t cmdpacket3(int cmd_type)
