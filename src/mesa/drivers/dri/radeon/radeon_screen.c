@@ -1586,11 +1586,6 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-	if (IS_R600_CLASS(screen))
-		return r600CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 	if (IS_R300_CLASS(screen))
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
@@ -1798,6 +1793,9 @@ const struct __DriverAPIRec driDriverAPI = {
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    .CreateContext   = r200CreateContext,
    .DestroyContext  = r200DestroyContext,
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+   .CreateContext   = r600CreateContext,
+   .DestroyContext  = r600DestroyContext,
 #else
    .CreateContext   = radeonCreateContext,
    .DestroyContext  = radeonDestroyContext,

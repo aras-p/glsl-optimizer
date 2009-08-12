@@ -306,16 +306,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	}
 
 	assert(radeon);
-	if (radeon) 
-    {
-
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
-	    if (IS_R600_CLASS(screen))
-        {
-		r600DestroyContext(driContextPriv);
-        }
-#endif
-
+	if (radeon) {
 		if (radeon->dma.current) {
 			rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 		}

@@ -395,6 +395,8 @@ r600DestroyContext (__DRIcontextPrivate * driContextPriv)
 
     if (context)
 	    FREE(context->hw.pStateList);
+
+    radeonDestroyContext(driContextPriv);
 }
 
 
