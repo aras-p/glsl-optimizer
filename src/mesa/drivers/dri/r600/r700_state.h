@@ -42,10 +42,8 @@ extern void r700UpdateDrawBuffer (GLcontext * ctx);
 extern void r700InitState (GLcontext * ctx);
 extern void r700InitStateFuncs (struct dd_function_table *functions);
 
-extern void r700SetRenderTarget(context_t *context, int id);
 extern void r700SetDefaultStates(context_t * context);
 
-void r700SetScissor(context_t *context);
-void r700SetDepthTarget(context_t *context);
+extern void r700SetScissor(context_t *context);
 
 #endif	/* _R600_SCREEN_H */

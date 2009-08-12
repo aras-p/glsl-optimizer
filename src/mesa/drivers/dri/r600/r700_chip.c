@@ -322,7 +322,7 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
 
     if (!paos->bo)
-	    return GL_FALSE;
+	    return;
 
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||

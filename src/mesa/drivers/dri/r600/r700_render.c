@@ -289,7 +289,6 @@ void r700EmitState(GLcontext * ctx)
 	rcommonEnsureCmdBufSpace(&context->radeon,
 				 context->radeon.hw.max_state_size, __FUNCTION__);
 
-	r700Start3D(context);
 	r700SendSQConfig(context);
 
 	r700SendUCPState(context);
@@ -308,12 +307,11 @@ static GLboolean r700RunRender(GLcontext * ctx,
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
 
+    r700Start3D(context);
+
     r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupShaders(ctx);
-
-    r700SetRenderTarget(context, 0);
-    r700SetDepthTarget(context);
 
     r700EmitState(ctx);
 

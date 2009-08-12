@@ -60,6 +60,8 @@ static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
 static void r700UpdatePolygonMode(GLcontext * ctx);
 static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
 static void r700SetStencilState(GLcontext * ctx, GLboolean state);
+static void r700SetRenderTarget(context_t *context, int id);
+static void r700SetDepthTarget(context_t *context);
 
 void r700SetDefaultStates(context_t *context) //--------------------
 {
@@ -158,21 +160,10 @@ void r700UpdateViewportOffset(GLcontext * ctx) //------------------
  */
 void r700UpdateDrawBuffer(GLcontext * ctx) /* TODO */ //---------------------
 {
-#if 0 /* to be enabled */
-    context_t *context = R700_CONTEXT(ctx);
+	context_t *context = R700_CONTEXT(ctx);
 
-    switch (ctx->DrawBuffer->_ColorDrawBufferIndexes[0]) 
-    {
-	case BUFFER_FRONT_LEFT:
-	    context->target.rt = context->screen->frontBuffer;
-	    break;
-	case BUFFER_BACK_LEFT:
-	    context->target.rt = context->screen->backBuffer;
-	    break;
-	default:
-	    memset (&context->target.rt, sizeof(context->target.rt), 0);
-	}
-#endif /* to be enabled */
+	r700SetRenderTarget(context, 0);
+	r700SetDepthTarget(context);
 }
 
 static void r700FetchStateParameter(GLcontext * ctx,
@@ -1357,21 +1348,21 @@ void r700SetScissor(context_t *context) //---------------
 	r700->viewport[id].enabled = GL_TRUE;
 }
 
-void r700SetRenderTarget(context_t *context, int id)
+static void r700SetRenderTarget(context_t *context, int id)
 {
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct radeon_renderbuffer *rrb;
     unsigned int nPitchInPixel;
 
+    rrb = radeon_get_colorbuffer(&context->radeon);
+    if (!rrb || !rrb->bo) {
+	    fprintf(stderr, "no rrb\n");
+	    return;
+    }
+
     /* screen/window/view */
     SETfield(r700->CB_TARGET_MASK.u32All, 0xF, (4 * id), TARGET0_ENABLE_mask);
-
-    rrb = radeon_get_colorbuffer(&context->radeon);
-	if (!rrb || !rrb->bo) {
-		fprintf(stderr, "no rrb\n");
-		return;
-	}
 
     /* color buffer */
     r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
@@ -1405,39 +1396,22 @@ void r700SetRenderTarget(context_t *context, int id)
     r700->render_target[id].enabled = GL_TRUE;
 }
 
-void r700SetDepthTarget(context_t *context)
+static void r700SetDepthTarget(context_t *context)
 {
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct radeon_renderbuffer *rrb;
     unsigned int nPitchInPixel;
 
+    rrb = radeon_get_depthbuffer(&context->radeon);
+    if (!rrb)
+	    return;
+
     /* depth buf */
     r700->DB_DEPTH_SIZE.u32All = 0;
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
-
-    r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
-    r700->DB_DEPTH_VIEW.u32All      = 0;
-    r700->DB_RENDER_CONTROL.u32All  = 0;
-    SETbit(r700->DB_RENDER_CONTROL.u32All, STENCIL_COMPRESS_DISABLE_bit);
-    SETbit(r700->DB_RENDER_CONTROL.u32All, DEPTH_COMPRESS_DISABLE_bit);
-    r700->DB_RENDER_OVERRIDE.u32All = 0;
-    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-	    SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
-
-    r700->DB_ALPHA_TO_MASK.u32All = 0;
-    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET0_shift, ALPHA_TO_MASK_OFFSET0_mask);
-    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET1_shift, ALPHA_TO_MASK_OFFSET1_mask);
-    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET2_shift, ALPHA_TO_MASK_OFFSET2_mask);
-    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET3_shift, ALPHA_TO_MASK_OFFSET3_mask);
-
-    rrb = radeon_get_depthbuffer(&context->radeon);
-	if (!rrb)
-		return;
+    r700->DB_DEPTH_VIEW.u32All = 0;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
 
@@ -1786,6 +1760,24 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700DepthMask(ctx, ctx->Depth.Mask);
     r700DepthFunc(ctx, ctx->Depth.Func);
     SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
+
+    r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
+
+    r700->DB_RENDER_CONTROL.u32All  = 0;
+    SETbit(r700->DB_RENDER_CONTROL.u32All, STENCIL_COMPRESS_DISABLE_bit);
+    SETbit(r700->DB_RENDER_CONTROL.u32All, DEPTH_COMPRESS_DISABLE_bit);
+    r700->DB_RENDER_OVERRIDE.u32All = 0;
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+	    SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+    r700->DB_ALPHA_TO_MASK.u32All = 0;
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET0_shift, ALPHA_TO_MASK_OFFSET0_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET1_shift, ALPHA_TO_MASK_OFFSET1_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET2_shift, ALPHA_TO_MASK_OFFSET2_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET3_shift, ALPHA_TO_MASK_OFFSET3_mask);
 
     /* stencil */
     r700Enable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
