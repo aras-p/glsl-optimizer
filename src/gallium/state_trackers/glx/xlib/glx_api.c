@@ -26,7 +26,6 @@
 
 /**
  * "Fake" GLX API implemented in terms of the XMesa*() functions.
- * XXX rename this file to glx_api.c
  */
 
 

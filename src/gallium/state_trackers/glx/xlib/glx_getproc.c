@@ -24,8 +24,8 @@
  */
 
 
-/*
- * XXX rename this file to glx_getproc.c
+/**
+ * glXGetProcAddress()
  */
 
 

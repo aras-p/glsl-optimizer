@@ -27,7 +27,6 @@
 
 /**
  * Fake implementation of glXUseXFont().
- * XXX rename this file to glx_usefont.c
  */
 
 
