@@ -736,42 +736,70 @@ const double lp_build_exp2_polynomial[] = {
 };
 
 
-LLVMValueRef
-lp_build_exp2(struct lp_build_context *bld,
-              LLVMValueRef x)
+void
+lp_build_exp2_approx(struct lp_build_context *bld,
+                     LLVMValueRef x,
+                     LLVMValueRef *p_exp2_int_part,
+                     LLVMValueRef *p_frac_part,
+                     LLVMValueRef *p_exp2)
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef ipart;
-   LLVMValueRef fpart, expipart, expfpart;
+   LLVMValueRef fpart, expipart, expfpart, res;
 
-   /* TODO: optimize the constant case */
-   if(LLVMIsConstant(x))
-      debug_printf("%s: inefficient/imprecise constant arithmetic\n");
+   if(p_exp2_int_part || p_frac_part || p_exp2) {
+      /* TODO: optimize the constant case */
+      if(LLVMIsConstant(x))
+         debug_printf("%s: inefficient/imprecise constant arithmetic\n");
 
-   assert(type.floating && type.width == 32);
+      assert(type.floating && type.width == 32);
 
-   x = lp_build_min(bld, x, lp_build_const_uni(type,  129.0));
-   x = lp_build_max(bld, x, lp_build_const_uni(type, -126.99999));
+      x = lp_build_min(bld, x, lp_build_const_uni(type,  129.0));
+      x = lp_build_max(bld, x, lp_build_const_uni(type, -126.99999));
 
-   /* ipart = int(x - 0.5) */
-   ipart = LLVMBuildSub(bld->builder, x, lp_build_const_uni(type, 0.5f), "");
-   ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
+      /* ipart = int(x - 0.5) */
+      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_uni(type, 0.5f), "");
+      ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
 
-   /* fpart = x - ipart */
-   fpart = LLVMBuildSIToFP(bld->builder, ipart, vec_type, "");
-   fpart = LLVMBuildSub(bld->builder, x, fpart, "");
+      /* fpart = x - ipart */
+      fpart = LLVMBuildSIToFP(bld->builder, ipart, vec_type, "");
+      fpart = LLVMBuildSub(bld->builder, x, fpart, "");
+   }
 
-   /* expipart = (float) (1 << ipart) */
-   expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_int_const_uni(type, 127), "");
-   expipart = LLVMBuildShl(bld->builder, expipart, lp_build_int_const_uni(type, 23), "");
-   expipart = LLVMBuildBitCast(bld->builder, expipart, vec_type, "");
+   if(p_exp2_int_part || p_exp2) {
+      /* expipart = (float) (1 << ipart) */
+      expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_int_const_uni(type, 127), "");
+      expipart = LLVMBuildShl(bld->builder, expipart, lp_build_int_const_uni(type, 23), "");
+      expipart = LLVMBuildBitCast(bld->builder, expipart, vec_type, "");
+   }
 
-   expfpart = lp_build_polynomial(bld, fpart, lp_build_exp2_polynomial,
-                                  Elements(lp_build_exp2_polynomial));
+   if(p_exp2) {
+      expfpart = lp_build_polynomial(bld, fpart, lp_build_exp2_polynomial,
+                                     Elements(lp_build_exp2_polynomial));
 
-   return LLVMBuildMul(bld->builder, expipart, expfpart, "");
+      res = LLVMBuildMul(bld->builder, expipart, expfpart, "");
+   }
+
+   if(p_exp2_int_part)
+      *p_exp2_int_part = expipart;
+
+   if(p_frac_part)
+      *p_frac_part = fpart;
+
+   if(p_exp2)
+      *p_exp2 = res;
+}
+
+
+LLVMValueRef
+lp_build_exp2(struct lp_build_context *bld,
+              LLVMValueRef x)
+{
+   LLVMValueRef res;
+   lp_build_exp2_approx(bld, x, NULL, NULL, &res);
+   return res;
 }
 
 
@@ -798,9 +826,12 @@ const double lp_build_log2_polynomial[] = {
 /**
  * See http://www.devmaster.net/forums/showthread.php?p=43580
  */
-LLVMValueRef
-lp_build_log2(struct lp_build_context *bld,
-              LLVMValueRef x)
+void
+lp_build_log2_approx(struct lp_build_context *bld,
+                     LLVMValueRef x,
+                     LLVMValueRef *p_exp,
+                     LLVMValueRef *p_floor_log2,
+                     LLVMValueRef *p_log2)
 {
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
@@ -810,34 +841,63 @@ lp_build_log2(struct lp_build_context *bld,
    LLVMValueRef mantmask = lp_build_int_const_uni(type, 0x007fffff);
    LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
 
-   LLVMValueRef i = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
-
+   LLVMValueRef i;
    LLVMValueRef exp;
    LLVMValueRef mant;
+   LLVMValueRef logexp;
    LLVMValueRef logmant;
+   LLVMValueRef res;
 
-   /* TODO: optimize the constant case */
-   if(LLVMIsConstant(x))
-      debug_printf("%s: inefficient/imprecise constant arithmetic\n");
+   if(p_exp || p_floor_log2 || p_log2) {
+      /* TODO: optimize the constant case */
+      if(LLVMIsConstant(x))
+         debug_printf("%s: inefficient/imprecise constant arithmetic\n");
 
-   assert(type.floating && type.width == 32);
+      assert(type.floating && type.width == 32);
 
-   /* exp = (float) exponent(x) */
-   exp = LLVMBuildAnd(bld->builder, i, expmask, "");
-   exp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_uni(type, 23), "");
-   exp = LLVMBuildSub(bld->builder, exp, lp_build_int_const_uni(type, 127), "");
-   exp = LLVMBuildSIToFP(bld->builder, exp, vec_type, "");
+      i = LLVMBuildBitCast(bld->builder, x, int_vec_type, "");
 
-   /* mant = (float) mantissa(x) */
-   mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
-   mant = LLVMBuildOr(bld->builder, mant, one, "");
-   mant = LLVMBuildSIToFP(bld->builder, mant, vec_type, "");
+      /* exp = (float) exponent(x) */
+      exp = LLVMBuildAnd(bld->builder, i, expmask, "");
+   }
 
-   logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
-                                 Elements(lp_build_log2_polynomial));
+   if(p_floor_log2 || p_log2) {
+      logexp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_uni(type, 23), "");
+      logexp = LLVMBuildSub(bld->builder, logexp, lp_build_int_const_uni(type, 127), "");
+      logexp = LLVMBuildSIToFP(bld->builder, logexp, vec_type, "");
+   }
 
-   /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
-   logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildMul(bld->builder, mant, bld->one, ""), "");
+   if(p_log2) {
+      /* mant = (float) mantissa(x) */
+      mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
+      mant = LLVMBuildOr(bld->builder, mant, one, "");
+      mant = LLVMBuildSIToFP(bld->builder, mant, vec_type, "");
 
-   return LLVMBuildAdd(bld->builder, logmant, exp, "");
+      logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
+                                    Elements(lp_build_log2_polynomial));
+
+      /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
+      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildMul(bld->builder, mant, bld->one, ""), "");
+
+      res = LLVMBuildAdd(bld->builder, logmant, logexp, "");
+   }
+
+   if(p_exp)
+      *p_exp = exp;
+
+   if(p_floor_log2)
+      *p_floor_log2 = logexp;
+
+   if(p_log2)
+      *p_log2 = res;
+}
+
+
+LLVMValueRef
+lp_build_log2(struct lp_build_context *bld,
+              LLVMValueRef x)
+{
+   LLVMValueRef res;
+   lp_build_log2_approx(bld, x, NULL, NULL, &res);
+   return res;
 }

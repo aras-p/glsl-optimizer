@@ -521,10 +521,7 @@ emit_instruction(
          tmp2 = FETCH( bld, *inst, 0, CHAN_W );
          tmp1 = lp_build_pow( &bld->base, tmp1, tmp2);
          tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-         sse_xorps(
-            bld,
-            make_xmm( 2 ),
-            make_xmm( 2 ) );
+         tmp2 = bld->base.zero;
          sse_cmpps(
             bld,
             make_xmm( 2 ),
@@ -560,34 +557,31 @@ emit_instruction(
       }
       break;
 
-#if 0
    case TGSI_OPCODE_EXP:
       if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-         tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
-             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-            tmp1 = tmp0;
-            emit_flr( bld, 2, 1 );
-            /* dst.x = ex2(floor(src.x)) */
-            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
-               tmp2 = tmp1;
-               tmp2 = lp_build_exp2( &bld->base, tmp2);
-               STORE( bld, *inst, 0, CHAN_X, tmp2);
-            }
-            /* dst.y = src.x - floor(src.x) */
-            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-               tmp2 = tmp0;
-               tmp2 = lp_build_sub( &bld->base, tmp2, tmp1);
-               STORE( bld, *inst, 0, CHAN_Y, tmp2);
-            }
-         }
-         /* dst.z = ex2(src.x) */
-         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-            tmp0 = lp_build_exp2( &bld->base, tmp0);
-            STORE( bld, *inst, 0, CHAN_Z, tmp0);
-         }
+         LLVMValueRef *p_exp2_int_part = NULL;
+         LLVMValueRef *p_frac_part = NULL;
+         LLVMValueRef *p_exp2 = NULL;
+
+         src0 = FETCH( bld, *inst, 0, CHAN_X );
+
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ))
+            p_exp2_int_part = &tmp0;
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ))
+            p_frac_part = &tmp1;
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ))
+            p_exp2 = &tmp2;
+
+         lp_build_exp2_approx(&bld->base, src0, p_exp2_int_part, p_frac_part, p_exp2);
+
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ))
+            STORE( bld, *inst, 0, CHAN_X, tmp0);
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ))
+            STORE( bld, *inst, 0, CHAN_Y, tmp1);
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ))
+            STORE( bld, *inst, 0, CHAN_Z, tmp2);
       }
       /* dst.w = 1.0 */
       if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
@@ -595,44 +589,45 @@ emit_instruction(
          STORE( bld, *inst, 0, CHAN_W, tmp0);
       }
       break;
-#endif
 
-#if 0
    case TGSI_OPCODE_LOG:
       if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-         tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-         tmp0 = lp_build_abs( &bld->base, tmp0 );
-         tmp1 = tmp0;
-         tmp1 = lp_build_log2( &bld->base, tmp1);
+         LLVMValueRef *p_floor_log2;
+         LLVMValueRef *p_exp;
+         LLVMValueRef *p_log2;
+
+         src0 = FETCH( bld, *inst, 0, CHAN_X );
+         src0 = lp_build_abs( &bld->base, src0 );
+
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ))
+            p_floor_log2 = &tmp0;
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ))
+            p_exp = &tmp1;
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ))
+            p_log2 = &tmp2;
+
+         lp_build_log2_approx(&bld->base, src0, p_exp, p_floor_log2, p_log2);
+
+         /* dst.x = floor(lg2(abs(src.x))) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ))
+            STORE( bld, *inst, 0, CHAN_X, tmp0);
+         /* dst.y = abs(src)/ex2(floor(lg2(abs(src.x)))) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            tmp1 = lp_build_div( &bld->base, src0, tmp1);
+            STORE( bld, *inst, 0, CHAN_Y, tmp1);
+         }
          /* dst.z = lg2(abs(src.x)) */
-         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-            STORE( bld, *inst, 0, CHAN_Z, tmp1);
-         }
-         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
-             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-            emit_flr( bld, 2, 1 );
-            /* dst.x = floor(lg2(abs(src.x))) */
-            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
-               STORE( bld, *inst, 0, CHAN_X, tmp1);
-            }
-            /* dst.x = abs(src)/ex2(floor(lg2(abs(src.x)))) */
-            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-               tmp1 = lp_build_exp2( &bld->base, tmp1);
-               emit_rcp( bld, 1, 1 );
-               tmp0 = lp_build_mul( &bld->base, tmp0, tmp1);
-               STORE( bld, *inst, 0, CHAN_Y, tmp0);
-            }
-         }
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ))
+            STORE( bld, *inst, 0, CHAN_Z, tmp2);
       }
       /* dst.w = 1.0 */
       if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
-         emit_tempf( bld, 0, TEMP_ONE_I, TEMP_ONE_C );
+         tmp0 = bld->base.one;
          STORE( bld, *inst, 0, CHAN_W, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_MUL:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
