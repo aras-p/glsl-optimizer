@@ -98,8 +98,8 @@ shader_generate(struct llvmpipe_screen *screen,
 
    type.value = 0;
    type.floating = TRUE;
-   type.sign = FALSE;
-   type.norm = TRUE;
+   type.sign = TRUE;
+   type.norm = FALSE;
    type.width = 32;
    type.length = 4;
 
