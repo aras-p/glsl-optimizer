@@ -1038,87 +1038,6 @@ static void emit_xpd(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_dp3(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[3], src1[3], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 3; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_MAC(p, dst, src0[2], src1[2]);
-    brw_set_saturate(p, 0);
-}
-
-static void emit_dp4(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[4], src1[4], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_MAC(p, brw_null_reg(), src0[2], src1[2]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_MAC(p, dst, src0[3], src1[3]);
-    brw_set_saturate(p, 0);
-}
-
-static void emit_dph(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[4], src1[4], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_MAC(p, dst, src0[2], src1[2]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_ADD(p, dst, dst, src1[3]);
-    brw_set_saturate(p, 0);
-}
-
 /**
  * Emit a scalar instruction, like RCP, RSQ, LOG, EXP.
  * Note that the result of the function is smeared across the dest
@@ -2752,16 +2671,16 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_DP3:
-		emit_dp3(c, inst);
+		emit_dp3(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DP4:
-		emit_dp4(c, inst);
+		emit_dp4(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_XPD:
 		emit_xpd(c, inst);
 		break;
 	    case OPCODE_DPH:
-		emit_dph(c, inst);
+		emit_dph(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_RCP:
 		emit_rcp(c, inst);

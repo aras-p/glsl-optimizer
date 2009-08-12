@@ -330,6 +330,21 @@ void emit_ddxy(struct brw_compile *p,
 	       GLuint mask,
 	       GLboolean is_ddx,
 	       const struct brw_reg *arg0);
+void emit_dp3(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_dp4(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_dph(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
 void emit_lrp(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,

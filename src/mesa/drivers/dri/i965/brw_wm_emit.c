@@ -594,11 +594,11 @@ static void emit_min( struct brw_compile *p,
 }
 
 
-static void emit_dp3( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_dp3(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
 
@@ -616,11 +616,11 @@ static void emit_dp3( struct brw_compile *p,
 }
 
 
-static void emit_dp4( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_dp4(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
 
@@ -639,11 +639,11 @@ static void emit_dp4( struct brw_compile *p,
 }
 
 
-static void emit_dph( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_dph(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    const int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
 
