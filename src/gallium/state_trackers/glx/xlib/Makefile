@@ -9,7 +9,7 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/mesa/main
 
 C_SOURCES = \
-	glxapi.c \
+	glx_getproc.c \
 	fakeglx.c \
 	fakeglx_fonts.c \
 	xm_api.c
