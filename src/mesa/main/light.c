@@ -496,7 +496,7 @@ _mesa_LightModeliv( GLenum pname, const GLint *params )
          break;
       default:
          /* Error will be caught later in gl_LightModelfv */
-         ;
+         ASSIGN_4V(fparam, 0.0F, 0.0F, 0.0F, 0.0F);
    }
    _mesa_LightModelfv( pname, fparam );
 }

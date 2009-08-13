@@ -67,7 +67,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
 	 break;
       default:
          /* Error will be caught later in _mesa_Fogfv */
-         ;
+         ASSIGN_4V(p, 0.0F, 0.0F, 0.0F, 0.0F);
    }
    _mesa_Fogfv(pname, p);
 }
