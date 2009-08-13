@@ -35,6 +35,7 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include "shaderutil.h"
+#include "readtex.h"
 
 
 typedef enum
@@ -361,6 +362,69 @@ InitUniforms(const struct config_file *conf,
 }
 
 
+static void
+LoadTexture(GLint unit, const char *texFileName)
+{
+   GLint imgWidth, imgHeight;
+   GLenum imgFormat;
+   GLubyte *image = NULL;
+   GLuint tex;
+   GLenum filter = GL_LINEAR;
+
+   image = LoadRGBImage(texFileName, &imgWidth, &imgHeight, &imgFormat);
+   if (!image) {
+      printf("Couldn't read %s\n", texFileName);
+      exit(1);
+   }
+
+   printf("Load Texture: unit %d: %s %d x %d\n",
+          unit, texFileName, imgWidth, imgHeight);
+
+   glActiveTexture(GL_TEXTURE0 + unit);
+   glGenTextures(1, &tex);
+   glBindTexture(GL_TEXTURE_2D, tex);
+
+   gluBuild2DMipmaps(GL_TEXTURE_2D, 4, imgWidth, imgHeight,
+                     imgFormat, GL_UNSIGNED_BYTE, image);
+   free(image);
+      
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+}
+
+
+static GLenum
+TypeFromName(const char *n)
+{
+   static const struct {
+      const char *name;
+      GLenum type;
+   } types[] = {
+      { "GL_FLOAT", GL_FLOAT },
+      { "GL_FLOAT_VEC2", GL_FLOAT_VEC2 },
+      { "GL_FLOAT_VEC3", GL_FLOAT_VEC3 },
+      { "GL_FLOAT_VEC4", GL_FLOAT_VEC4 },
+      { "GL_INT", GL_INT },
+      { "GL_INT_VEC2", GL_INT_VEC2 },
+      { "GL_INT_VEC3", GL_INT_VEC3 },
+      { "GL_INT_VEC4", GL_INT_VEC4 },
+      { "GL_SAMPLER_2D", GL_SAMPLER_2D },
+      { NULL, 0 }
+   };
+   GLuint i;
+
+   for (i = 0; types[i].name; i++) {
+      if (strcmp(types[i].name, n) == 0)
+         return types[i].type;
+   }
+   abort();
+   return GL_NONE;
+}
+
+
+
 /**
  * Read a config file.
  */
@@ -381,7 +445,7 @@ ReadConfigFile(const char *filename, struct config_file *conf)
    /* ugly but functional parser */
    while (!feof(f)) {
       fgets(line, sizeof(line), f);
-      if (line[0]) {
+      if (!feof(f) && line[0]) {
          if (strncmp(line, "vs ", 3) == 0) {
             VertShaderFile = strdup(line + 3);
             VertShaderFile[strlen(VertShaderFile) - 1] = 0;
@@ -390,32 +454,23 @@ ReadConfigFile(const char *filename, struct config_file *conf)
             FragShaderFile = strdup(line + 3);
             FragShaderFile[strlen(FragShaderFile) - 1] = 0;
          }
+         else if (strncmp(line, "texture ", 8) == 0) {
+            char texFileName[100];
+            int unit, k;
+            k = sscanf(line + 8, "%d %s", &unit, texFileName);
+            assert(k == 2);
+            LoadTexture(unit, texFileName);
+         }
          else if (strncmp(line, "uniform ", 8) == 0) {
-            char name[1000];
+            char name[1000], typeName[100];
             int k;
-            float v1, v2, v3, v4;
+            float v1 = 0.0F, v2 = 0.0F, v3 = 0.0F, v4 = 0.0F;
             GLenum type;
 
-            k = sscanf(line + 8, "%s %f %f %f %f", name, &v1, &v2, &v3, &v4);
+            k = sscanf(line + 8, "%s %s %f %f %f %f", name, typeName,
+                       &v1, &v2, &v3, &v4);
 
-            switch (k) {
-            case 1:
-               type = GL_NONE;
-               abort();
-               break;
-            case 2:
-               type = GL_FLOAT;
-               break;
-            case 3:
-               type = GL_FLOAT_VEC2;
-               break;
-            case 4:
-               type = GL_FLOAT_VEC3;
-               break;
-            case 5:
-               type = GL_FLOAT_VEC4;
-               break;
-            }
+            type = TypeFromName(typeName);
 
             strcpy(conf->uniforms[conf->num_uniforms].name, name);
             conf->uniforms[conf->num_uniforms].value[0] = v1;
