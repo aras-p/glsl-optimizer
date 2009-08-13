@@ -445,7 +445,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
       if (inputsRead & (1 << i)) {
          _mesa_add_attribute(linkedProg->Attributes,
                              _slang_vert_attrib_name(i),
-                             1, /* size */
+                             4, /* size in floats */
                              _slang_vert_attrib_type(i),
                              -1 /* attrib/input */);
       }
