@@ -681,7 +681,6 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
 /**
  * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
  * If we run out of memory, GL_OUT_OF_MEMORY will be recorded.
- * \todo This won't suffice when the PBO is really in VRAM/GPU memory.
  */
 static GLvoid *
 unpack_image(GLcontext *ctx, GLuint dimensions,
@@ -698,12 +697,27 @@ unpack_image(GLcontext *ctx, GLuint dimensions,
       }
       return image;
    }
-   else
-      if (_mesa_validate_pbo_access
-          (dimensions, unpack, width, height, depth, format, type, pixels)) {
-      const GLubyte *src = ADD_POINTERS(unpack->BufferObj->Data, pixels);
-      GLvoid *image = _mesa_unpack_image(dimensions, width, height, depth,
-                                         format, type, src, unpack);
+   else if (_mesa_validate_pbo_access(dimensions, unpack, width, height, depth,
+                                      format, type, pixels)) {
+      const GLubyte *map, *src;
+      GLvoid *image;
+
+      map = (GLubyte *)
+         ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                               GL_READ_ONLY_ARB, unpack->BufferObj);
+      if (!map) {
+         /* unable to map src buffer! */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "unable to map PBO");
+         return NULL;
+      }
+
+      src = ADD_POINTERS(map, pixels);
+      image = _mesa_unpack_image(dimensions, width, height, depth,
+                                 format, type, src, unpack);
+
+      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                              unpack->BufferObj);
+
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "display list construction");
       }
