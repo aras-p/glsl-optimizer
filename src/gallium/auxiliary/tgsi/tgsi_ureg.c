@@ -69,6 +69,7 @@ struct ureg_tokens {
 #define UREG_MAX_INPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_OUTPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_IMMEDIATE 32
+#define UREG_MAX_TEMP 256
 
 #define DOMAIN_DECL 0
 #define DOMAIN_INSN 1
@@ -94,12 +95,13 @@ struct ureg_program
    struct {
       float v[4];
       unsigned nr;
-   } immediate[UREG_MAX_OUTPUT];
+   } immediate[UREG_MAX_IMMEDIATE];
    unsigned nr_immediates;
 
+   unsigned temps_active[UREG_MAX_TEMP / 32];
+   unsigned nr_temps;
 
    unsigned nr_constants;
-   unsigned nr_temps;
    unsigned nr_samplers;
 
    struct ureg_tokens domain[2];
@@ -303,11 +305,41 @@ struct ureg_src ureg_DECL_constant(struct ureg_program *ureg )
 }
 
 
-/* Allocate a new temporary.  No way to release temporaries in this code. 
+/* Allocate a new temporary.  Temporaries greater than UREG_MAX_TEMP
+ * are legal, but will not be released.
  */
 struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
 {
-   return ureg_dst_register( TGSI_FILE_TEMPORARY, ureg->nr_temps++ );
+   unsigned i;
+
+   for (i = 0; i < UREG_MAX_TEMP; i += 32) {
+      int bit = ffs(~ureg->temps_active[i/32]);
+      if (bit != 0) {
+         i += bit - 1;
+         goto out;
+      }
+   }
+
+   /* No reusable temps, so allocate a new one:
+    */
+   i = ureg->nr_temps++;
+
+out:
+   if (i < UREG_MAX_TEMP)
+      ureg->temps_active[i/32] |= 1 << (i % 32);
+
+   if (i >= ureg->nr_temps)
+      ureg->nr_temps = i + 1;
+
+   return ureg_dst_register( TGSI_FILE_TEMPORARY, i );
+}
+
+
+void ureg_release_temporary( struct ureg_program *ureg,
+                             struct ureg_dst tmp )
+{
+   if (tmp.Index < UREG_MAX_TEMP)
+      ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
 }
 
 
