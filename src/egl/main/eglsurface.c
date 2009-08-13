@@ -243,7 +243,7 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
    case EGL_LARGEST_PBUFFER:
-      *value = drv->LargestPbuffer;
+      *value = dpy->LargestPbuffer;
       return EGL_TRUE;
    case EGL_SURFACE_TYPE:
       *value = surface->Type;

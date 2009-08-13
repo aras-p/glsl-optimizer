@@ -87,15 +87,18 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
          return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
       }
 
-      drv->APImajor = major_int;
-      drv->APIminor = minor_int;
-      snprintf(drv->Version, sizeof(drv->Version),
+      disp->APImajor = major_int;
+      disp->APIminor = minor_int;
+      snprintf(disp->Version, sizeof(disp->Version),
                "%d.%d (%s)", major_int, minor_int, drv->Name);
+
+      /* update the global notion of supported APIs */
+      _eglGlobal.ClientAPIsMask |= disp->ClientAPIsMask;
 
       disp->Driver = drv;
    } else {
-      major_int = drv->APImajor;
-      minor_int = drv->APIminor;
+      major_int = disp->APImajor;
+      minor_int = disp->APIminor;
    }
 
    /* Update applications version of major and minor if not NULL */

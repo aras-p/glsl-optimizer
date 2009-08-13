@@ -15,7 +15,6 @@ struct _egl_global _eglGlobal =
    &_eglGlobalMutex,       /* Mutex */
    1,                      /* FreeScreenHandle */
    0x0,                    /* ClientAPIsMask */
-   { 0x0 },                /* ClientAPIs */
    0,                      /* NumDrivers */
    { NULL },               /* Drivers */
    1,                      /* NumAtExitCalls */

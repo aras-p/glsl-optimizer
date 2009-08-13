@@ -4,19 +4,6 @@
 
 #include "egltypedefs.h"
 #include "eglapi.h"
-#include "egldefines.h"
-
-
-/**
- * Optional EGL extensions info.
- */
-struct _egl_extensions
-{
-   EGLBoolean MESA_screen_surface;
-   EGLBoolean MESA_copy_context;
-
-   char String[_EGL_MAX_EXTENSIONS_LEN];
-};
 
 
 /**
@@ -24,8 +11,6 @@ struct _egl_extensions
  */
 struct _egl_driver
 {
-   EGLBoolean Initialized; /**< set by driver after initialized */
-
    void *LibHandle; /**< dlopen handle */
    const char *Path;  /**< path to this driver */
    const char *Args;  /**< args to load this driver */
@@ -36,21 +21,11 @@ struct _egl_driver
    /**< called before dlclose to release this driver */
    void (*Unload)(_EGLDriver *drv);
 
-   int APImajor, APIminor; /**< as returned by eglInitialize() */
-   char Version[1000];       /**< initialized from APImajor/minor, Name */
-
-   /** Bitmask of supported APIs (EGL_xx_BIT) set by the driver during init */
-   EGLint ClientAPIsMask;
-
    _EGLAPI API;  /**< EGL API dispatch table */
-
-   _EGLExtensions Extensions;
-
-   int LargestPbuffer;
 };
 
 
-extern _EGLDriver *_eglMain(_EGLDisplay *dpy, const char *args);
+extern _EGLDriver *_eglMain(const char *args);
 
 
 extern const char *

@@ -18,8 +18,6 @@ struct _egl_global
    /* bitmaks of supported APIs (supported by _some_ driver) */
    EGLint ClientAPIsMask;
 
-   char ClientAPIs[1000];   /**< updated by eglQueryString */
-
    EGLint NumDrivers;
    _EGLDriver *Drivers[10];
 

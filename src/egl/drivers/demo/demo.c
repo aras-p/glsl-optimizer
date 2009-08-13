@@ -84,7 +84,9 @@ demoInitialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
       _eglAddConfig(disp, config);
    }
 
-   drv->Initialized = EGL_TRUE;
+   /* enable supported extensions */
+   disp->Extensions.MESA_screen_surface = EGL_TRUE;
+   disp->Extensions.MESA_copy_context = EGL_TRUE;
 
    *major = 1;
    *minor = 0;
@@ -97,7 +99,6 @@ static EGLBoolean
 demoTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    /*DemoDriver *demo = DEMO_DRIVER(dpy);*/
-   free(drv);
    return EGL_TRUE;
 }
 
@@ -247,12 +248,19 @@ demoMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *drawSurf, _EGLSu
 }
 
 
+static void
+demoUnload(_EGLDriver *drv)
+{
+   free(drv);
+}
+
+
 /**
  * The bootstrap function.  Return a new DemoDriver object and
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy, const char *args)
+_eglMain(const char *args)
 {
    DemoDriver *demo;
 
@@ -274,9 +282,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    demo->Base.API.DestroySurface = demoDestroySurface;
    demo->Base.API.DestroyContext = demoDestroyContext;
 
-   /* enable supported extensions */
-   demo->Base.Extensions.MESA_screen_surface = EGL_TRUE;
-   demo->Base.Extensions.MESA_copy_context = EGL_TRUE;
+   demo->Base.Name = "egl/demo";
+   demo->Base.Unload = demoUnload;
 
    return &demo->Base;
 }

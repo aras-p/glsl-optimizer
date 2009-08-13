@@ -35,6 +35,7 @@
 #include <string.h>
 #include "eglglobals.h"
 #include "eglmisc.h"
+#include "egldisplay.h"
 
 
 /**
@@ -42,38 +43,43 @@
  * the driver's Extensions string.
  */
 static void
-_eglUpdateExtensionsString(_EGLDriver *drv)
+_eglUpdateExtensionsString(_EGLDisplay *dpy)
 {
-   drv->Extensions.String[0] = 0;
+   char *exts = dpy->Extensions.String;
 
-   if (drv->Extensions.MESA_screen_surface)
-      strcat(drv->Extensions.String, "EGL_MESA_screen_surface ");
-   if (drv->Extensions.MESA_copy_context)
-      strcat(drv->Extensions.String, "EGL_MESA_copy_context ");
-   assert(strlen(drv->Extensions.String) < _EGL_MAX_EXTENSIONS_LEN);
+   if (exts[0])
+      return;
+
+   if (dpy->Extensions.MESA_screen_surface)
+      strcat(exts, "EGL_MESA_screen_surface ");
+   if (dpy->Extensions.MESA_copy_context)
+      strcat(exts, "EGL_MESA_copy_context ");
+   assert(strlen(exts) < _EGL_MAX_EXTENSIONS_LEN);
 }
 
 
 static void
-_eglUpdateAPIsString(_EGLDriver *drv)
+_eglUpdateAPIsString(_EGLDisplay *dpy)
 {
-   _eglGlobal.ClientAPIs[0] = 0;
+   char *apis = dpy->ClientAPIs;
 
-   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT)
-      strcat(_eglGlobal.ClientAPIs, "OpenGL ");
+   if (apis[0] || !dpy->ClientAPIsMask)
+      return;
 
-   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_ES_BIT)
-      strcat(_eglGlobal.ClientAPIs, "OpenGL_ES ");
+   if (dpy->ClientAPIsMask & EGL_OPENGL_BIT)
+      strcat(apis, "OpenGL ");
 
-   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_ES2_BIT)
-      strcat(_eglGlobal.ClientAPIs, "OpenGL_ES2 ");
+   if (dpy->ClientAPIsMask & EGL_OPENGL_ES_BIT)
+      strcat(apis, "OpenGL_ES ");
 
-   if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT)
-      strcat(_eglGlobal.ClientAPIs, "OpenVG ");
+   if (dpy->ClientAPIsMask & EGL_OPENGL_ES2_BIT)
+      strcat(apis, "OpenGL_ES2 ");
 
-   assert(strlen(_eglGlobal.ClientAPIs) < sizeof(_eglGlobal.ClientAPIs));
+   if (dpy->ClientAPIsMask & EGL_OPENVG_BIT)
+      strcat(apis, "OpenVG ");
+
+   assert(strlen(apis) < sizeof(dpy->ClientAPIs));
 }
-
 
 
 const char *
@@ -85,14 +91,14 @@ _eglQueryString(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name)
    case EGL_VENDOR:
       return _EGL_VENDOR_STRING;
    case EGL_VERSION:
-      return drv->Version;
+      return dpy->Version;
    case EGL_EXTENSIONS:
-      _eglUpdateExtensionsString(drv);
-      return drv->Extensions.String;
+      _eglUpdateExtensionsString(dpy);
+      return dpy->Extensions.String;
 #ifdef EGL_VERSION_1_2
    case EGL_CLIENT_APIS:
-      _eglUpdateAPIsString(drv);
-      return _eglGlobal.ClientAPIs;
+      _eglUpdateAPIsString(dpy);
+      return dpy->ClientAPIs;
 #endif
    default:
       _eglError(EGL_BAD_PARAMETER, "eglQueryString");

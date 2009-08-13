@@ -62,6 +62,7 @@ struct xlib_egl_driver
 {
    _EGLDriver Base;   /**< base class */
 
+   EGLint apis;
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 };
@@ -194,9 +195,15 @@ static EGLBoolean
 xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
                    EGLint *minor, EGLint *major)
 {
+   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+
    create_configs(drv, dpy);
 
-   drv->Initialized = EGL_TRUE;
+   if (!dpy->Xdpy) {
+      dpy->Xdpy = XOpenDisplay(NULL);
+   }
+
+   dpy->ClientAPIsMask = xdrv->apis;
 
    /* we're supporting EGL 1.4 */
    *minor = 1;
@@ -212,6 +219,8 @@ xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
 static EGLBoolean
 xlib_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
+   _eglReleaseDisplayResources(drv, dpy);
+   _eglCleanupDisplay(dpy);
    return EGL_TRUE;
 }
 
@@ -744,12 +753,22 @@ find_supported_apis(void)
 }
 
 
+static void
+xlib_Unload(_EGLDriver *drv)
+{
+   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   xdrv->screen->destroy(xdrv->screen);
+   free(xdrv->winsys);
+   free(xdrv);
+}
+
+
 /**
  * This is the main entrypoint into the driver.
  * Called by libEGL to instantiate an _EGLDriver object.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy, const char *args)
+_eglMain(const char *args)
 {
    struct xlib_egl_driver *xdrv;
 
@@ -758,10 +777,6 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv = CALLOC_STRUCT(xlib_egl_driver);
    if (!xdrv)
       return NULL;
-
-   if (!dpy->Xdpy) {
-      dpy->Xdpy = XOpenDisplay(NULL);
-   }
 
    _eglInitDriverFallbacks(&xdrv->Base);
    xdrv->Base.API.Initialize = xlib_eglInitialize;
@@ -777,16 +792,17 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
 
-   xdrv->Base.ClientAPIsMask = find_supported_apis();
-   if (xdrv->Base.ClientAPIsMask == 0x0) {
+   xdrv->apis = find_supported_apis();
+   if (xdrv->apis == 0x0) {
       /* the app isn't directly linked with any EGL-supprted APIs
        * (such as libGLESv2.so) so use an EGL utility to see what
        * APIs might be loaded dynamically on this system.
        */
-      xdrv->Base.ClientAPIsMask = _eglFindAPIs();
-   }      
+      xdrv->apis = _eglFindAPIs();
+   }
 
    xdrv->Base.Name = "Xlib/softpipe";
+   xdrv->Base.Unload = xlib_Unload;
 
    /* create one winsys and use it for all contexts/surfaces */
    xdrv->winsys = create_sw_winsys();

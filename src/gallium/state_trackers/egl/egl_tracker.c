@@ -21,12 +21,20 @@ extern const struct dri_extension card_extensions[];
  * Exported functions
  */
 
+static void
+drm_unload(_EGLDriver *drv)
+{
+	struct drm_device *dev = (struct drm_device *)drv;
+	dev->api->destroy(dev->api);
+	free(dev);
+}
+
 /**
  * The bootstrap function.  Return a new drm_driver object and
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy, const char *args)
+_eglMain(const char *args)
 {
 	struct drm_device *drm;
 
@@ -53,12 +61,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 	drm->base.API.ShowScreenSurfaceMESA = drm_show_screen_surface_mesa;
 	drm->base.API.SwapBuffers = drm_swap_buffers;
 
-	drm->base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
 	drm->base.Name = "DRM/Gallium/Win";
-
-	/* enable supported extensions */
-	drm->base.Extensions.MESA_screen_surface = EGL_TRUE;
-	drm->base.Extensions.MESA_copy_context = EGL_TRUE;
+	drm->base.Unload = drm_unload;
 
 	return &drm->base;
 }
@@ -199,7 +203,10 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	_eglSetConfigAttrib(config, EGL_SURFACE_TYPE, EGL_PBUFFER_BIT);
 	_eglAddConfig(disp, config);
 
-	drv->Initialized = EGL_TRUE;
+	disp->ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
+	/* enable supported extensions */
+	disp->Extensions.MESA_screen_surface = EGL_TRUE;
+	disp->Extensions.MESA_copy_context = EGL_TRUE;
 
 	*major = 1;
 	*minor = 4;
@@ -219,6 +226,8 @@ drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 	struct drm_screen *screen;
 	int i = 0;
 
+	_eglReleaseDisplayResources(drv, dpy);
+
 	drmFreeVersion(dev->version);
 
 	for (i = 0; i < dev->count_screens; i++) {
@@ -235,12 +244,10 @@ drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
 	dev->screen->destroy(dev->screen);
 	dev->winsys = NULL;
-	dev->api->destroy(dev->api);
 
 	drmClose(dev->drmFD);
 
 	_eglCleanupDisplay(dpy);
-	free(dev);
 
 	return EGL_TRUE;
 }

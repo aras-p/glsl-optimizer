@@ -7,6 +7,19 @@
 
 #include "egltypedefs.h"
 #include "eglhash.h"
+#include "egldefines.h"
+
+
+/**
+ * Optional EGL extensions info.
+ */
+struct _egl_extensions
+{
+   EGLBoolean MESA_screen_surface;
+   EGLBoolean MESA_copy_context;
+
+   char String[_EGL_MAX_EXTENSIONS_LEN];
+};
 
 
 struct _egl_display 
@@ -16,6 +29,18 @@ struct _egl_display
 
    const char *DriverName;
    _EGLDriver *Driver;
+   void *DriverData; /* private to driver */
+
+   int APImajor, APIminor; /**< as returned by eglInitialize() */
+   char Version[1000];     /**< initialized from APImajor/minor, DriverName */
+
+   /** Bitmask of supported APIs (EGL_xx_BIT) set by the driver during init */
+   EGLint ClientAPIsMask;
+   char ClientAPIs[1000];   /**< updated by eglQueryString */
+
+   _EGLExtensions Extensions;
+
+   int LargestPbuffer;
 
    EGLint NumScreens;
    _EGLScreen **Screens;  /* array [NumScreens] */

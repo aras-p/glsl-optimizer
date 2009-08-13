@@ -245,7 +245,7 @@ _eglOpenLibrary(const char *driverName, lib_handle *handle)
  * owned by the driver and freed.
  */
 static _EGLDriver *
-_eglLoadDriver(_EGLDisplay *dpy, char *path, char *args)
+_eglLoadDriver(char *path, char *args)
 {
    _EGLMain_t mainFunc;
    lib_handle lib;
@@ -255,7 +255,7 @@ _eglLoadDriver(_EGLDisplay *dpy, char *path, char *args)
    if (!mainFunc)
       return NULL;
 
-   drv = mainFunc(dpy, args);
+   drv = mainFunc(args);
    if (!drv) {
       if (lib)
          close_library(lib);
@@ -332,12 +332,9 @@ _eglPreloadDriver(_EGLDisplay *dpy)
       }
    }
 
-   drv = _eglLoadDriver(dpy, path, args);
+   drv = _eglLoadDriver(path, args);
    if (!drv)
       return NULL;
-
-   /* update the global notion of supported APIs */
-   _eglGlobal.ClientAPIsMask |= drv->ClientAPIsMask;
 
    _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
 

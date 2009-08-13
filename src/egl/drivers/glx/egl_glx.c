@@ -462,10 +462,10 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
       }
    } 
 
+   disp->ClientAPIsMask = all_apis;
+
    glXQueryVersion(disp->Xdpy, &GLX_drv->glx_maj, &GLX_drv->glx_min);
    
-   GLX_drv->Base.Initialized = EGL_TRUE;
-
    GLX_drv->Base.Name = "GLX";
 
    /* we're supporting EGL 1.4 */
@@ -513,7 +513,9 @@ GLX_eglTerminate(_EGLDriver *drv, _EGLDisplay *disp)
 {
    _eglLog(_EGL_DEBUG, "GLX: eglTerminate");
 
+   _eglReleaseDisplayResources(drv, disp);
    FreeDisplayExt(disp->Xdpy);
+   _eglCleanupDisplay(disp);
 
    return EGL_TRUE;
 }
@@ -797,12 +799,20 @@ GLX_eglGetProcAddress(const char *procname)
 }
 
 
+static void
+GLX_Unload(_EGLDriver *drv)
+{
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   free(GLX_drv);
+}
+
+
 /**
  * This is the main entrypoint into the driver, called by libEGL.
  * Create a new _EGLDriver object and init its dispatch table.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *disp, const char *args)
+_eglMain(const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
    char *env;
@@ -831,8 +841,8 @@ _eglMain(_EGLDisplay *disp, const char *args)
    GLX_drv->Base.API.SwapBuffers = GLX_eglSwapBuffers;
    GLX_drv->Base.API.GetProcAddress = GLX_eglGetProcAddress;
 
-   GLX_drv->Base.ClientAPIsMask = all_apis;
    GLX_drv->Base.Name = "GLX";
+   GLX_drv->Base.Unload = GLX_Unload;
 
    _eglLog(_EGL_DEBUG, "GLX: main(%s)", args);
 
