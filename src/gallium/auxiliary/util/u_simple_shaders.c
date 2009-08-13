@@ -42,9 +42,7 @@
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 
-#include "tgsi/tgsi_build.h"
-#include "tgsi/tgsi_dump.h"
-#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_ureg.h"
 
 
 
@@ -58,93 +56,31 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     const uint *semantic_indexes)
                                     
 {
-   struct pipe_shader_state shader;
-   struct tgsi_token tokens[100];
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-   const uint procType = TGSI_PROCESSOR_VERTEX;
-   uint ti, i;
+   struct ureg_program *ureg;
+   uint i;
 
-   /* shader header
-    */
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
+   ureg = ureg_create( pipe, TGSI_PROCESSOR_VERTEX );
+   if (ureg == NULL)
+      return NULL;
 
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
-
-   ti = 3;
-
-   /* declare inputs */
    for (i = 0; i < num_attribs; i++) {
-      decl = tgsi_default_full_declaration();
-      decl.Declaration.File = TGSI_FILE_INPUT;
+      struct ureg_src src;
+      struct ureg_dst dst;
 
-      decl.Declaration.Semantic = 1;
-      decl.Semantic.SemanticName = semantic_names[i];
-      decl.Semantic.SemanticIndex = semantic_indexes[i];
-
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = i;
-      ti += tgsi_build_full_declaration(&decl,
-                                        &tokens[ti],
-                                        header,
-                                        Elements(tokens) - ti);
+      src = ureg_DECL_vs_input( ureg,
+                                semantic_names[i],
+                                semantic_indexes[i]);
+      
+      dst = ureg_DECL_output( ureg,
+                              semantic_names[i],
+                              semantic_indexes[i]);
+      
+      ureg_MOV( ureg, dst, src );
    }
 
-   /* declare outputs */
-   for (i = 0; i < num_attribs; i++) {
-      decl = tgsi_default_full_declaration();
-      decl.Declaration.File = TGSI_FILE_OUTPUT;
-      decl.Declaration.Semantic = 1;
-      decl.Semantic.SemanticName = semantic_names[i];
-      decl.Semantic.SemanticIndex = semantic_indexes[i];
-      decl.DeclarationRange.First = 
-         decl.DeclarationRange.Last = i;
-      ti += tgsi_build_full_declaration(&decl,
-                                        &tokens[ti],
-                                        header,
-                                        Elements(tokens) - ti);
-   }
+   ureg_END( ureg );
 
-   /* emit MOV instructions */
-   for (i = 0; i < num_attribs; i++) {
-      /* MOVE out[i], in[i]; */
-      inst = tgsi_default_full_instruction();
-      inst.Instruction.Opcode = TGSI_OPCODE_MOV;
-      inst.Instruction.NumDstRegs = 1;
-      inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      inst.FullDstRegisters[0].DstRegister.Index = i;
-      inst.Instruction.NumSrcRegs = 1;
-      inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      inst.FullSrcRegisters[0].SrcRegister.Index = i;
-      ti += tgsi_build_full_instruction(&inst,
-                                        &tokens[ti],
-                                        header,
-                                        Elements(tokens) - ti );
-   }
-
-   /* END instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_END;
-   inst.Instruction.NumDstRegs = 0;
-   inst.Instruction.NumSrcRegs = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti );
-
-#if 0 /*debug*/
-   tgsi_dump(tokens, 0);
-#endif
-
-   shader.tokens = tokens;
-
-   return pipe->create_vs_state(pipe, &shader);
+   return ureg_create_shader_and_destroy( ureg );
 }
 
 
@@ -158,99 +94,29 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 void *
 util_make_fragment_tex_shader(struct pipe_context *pipe)
 {
-   struct pipe_shader_state shader;
-   struct tgsi_token tokens[100];
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-   const uint procType = TGSI_PROCESSOR_FRAGMENT;
-   uint ti;
+   struct ureg_program *ureg;
+   struct ureg_src sampler;
+   struct ureg_src tex;
+   struct ureg_dst out;
 
-   /* shader header
-    */
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
+   ureg = ureg_create( pipe, TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return NULL;
+   
+   sampler = ureg_DECL_sampler( ureg );
 
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
+   tex = ureg_DECL_fs_input( ureg, 
+                             TGSI_SEMANTIC_GENERIC, 0, 
+                             TGSI_INTERPOLATE_PERSPECTIVE );
 
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
+   out = ureg_DECL_output( ureg, 
+                           TGSI_SEMANTIC_COLOR,
+                           0 );
 
-   ti = 3;
+   ureg_TEX( ureg, out, TGSI_TEXTURE_2D, tex, sampler );
+   ureg_END( ureg );
 
-   /* declare TEX[0] input */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   /* XXX this could be linear... */
-   decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
-   decl.Semantic.SemanticIndex = 0;
-   decl.DeclarationRange.First = 
-   decl.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti);
-
-   /* declare color[0] output */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
-   decl.Semantic.SemanticIndex = 0;
-   decl.DeclarationRange.First = 
-   decl.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti);
-
-   /* declare sampler */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.DeclarationRange.First = 
-   decl.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti);
-
-   /* TEX instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_TEX;
-   inst.Instruction.NumDstRegs = 1;
-   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-   inst.FullDstRegisters[0].DstRegister.Index = 0;
-   inst.Instruction.NumSrcRegs = 2;
-   inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
-   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-   inst.FullSrcRegisters[0].SrcRegister.Index = 0;
-   inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-   inst.FullSrcRegisters[1].SrcRegister.Index = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti );
-
-   /* END instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_END;
-   inst.Instruction.NumDstRegs = 0;
-   inst.Instruction.NumSrcRegs = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti );
-
-#if 0 /*debug*/
-   tgsi_dump(tokens, 0);
-#endif
-
-   shader.tokens = tokens;
-
-   return pipe->create_fs_state(pipe, &shader);
+   return ureg_create_shader_and_destroy( ureg );
 }
 
 
@@ -263,87 +129,23 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
 void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe)
 {
-   struct pipe_shader_state shader;
-   struct tgsi_token tokens[40];
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-   const uint procType = TGSI_PROCESSOR_FRAGMENT;
-   uint ti;
+   struct ureg_program *ureg;
+   struct ureg_src src;
+   struct ureg_dst dst;
 
-   /* shader header
-    */
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
+   ureg = ureg_create( pipe, TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return NULL;
 
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
+   src = ureg_DECL_fs_input( ureg, TGSI_SEMANTIC_COLOR, 0, 
+                             TGSI_INTERPOLATE_PERSPECTIVE );
 
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
+   dst = ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, 0 );
 
-   ti = 3;
+   ureg_MOV( ureg, dst, src );
+   ureg_END( ureg );
 
-   /* declare input */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
-   decl.Semantic.SemanticIndex = 0;
-   decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti);
-
-   /* declare output */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
-   decl.Semantic.SemanticIndex = 0;
-   decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti);
-
-
-   /* MOVE out[0], in[0]; */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_MOV;
-   inst.Instruction.NumDstRegs = 1;
-   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-   inst.FullDstRegisters[0].DstRegister.Index = 0;
-   inst.Instruction.NumSrcRegs = 1;
-   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-   inst.FullSrcRegisters[0].SrcRegister.Index = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti );
-
-   /* END instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_END;
-   inst.Instruction.NumDstRegs = 0;
-   inst.Instruction.NumSrcRegs = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     Elements(tokens) - ti );
-
-   assert(ti < Elements(tokens));
-
-#if 0 /*debug*/
-   tgsi_dump(tokens, 0);
-#endif
-
-   shader.tokens = tokens;
-
-   return pipe->create_fs_state(pipe, &shader);
+   return ureg_create_shader_and_destroy( ureg );
 }
 
 
