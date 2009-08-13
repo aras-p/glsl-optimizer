@@ -232,7 +232,6 @@ void draw_pipeline_run( struct draw_context *draw,
                         unsigned count )
 {
    char *verts = (char *)vertices;
-   unsigned i;
 
    draw->pipeline.verts = verts;
    draw->pipeline.vertex_stride = stride;
