@@ -153,7 +153,14 @@ SetUniformValues(GLuint program, struct uniform_info uniforms[])
          glUniform4fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       default:
-         abort();
+         if (strncmp(uniforms[i].name, "gl_", 3) == 0) {
+            /* built-in uniform: ignore */
+         }
+         else {
+            fprintf(stderr,
+                    "Unexpected uniform data type in SetUniformValues\n");
+            abort();
+         }
       }
    }
 }
