@@ -39,6 +39,7 @@
 #include "main/bufferobj.h"
 #include "main/depth.h"
 #include "main/enable.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/polygon.h"

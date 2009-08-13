@@ -115,25 +115,6 @@ extern GLuint
 _mesa_tex_target_to_face(GLenum target);
 
 
-extern GLboolean
-_mesa_is_color_format(GLenum format);
-
-extern GLboolean
-_mesa_is_index_format(GLenum format);
-
-extern GLboolean
-_mesa_is_depth_format(GLenum format);
-
-extern GLboolean
-_mesa_is_ycbcr_format(GLenum format);
-
-extern GLboolean
-_mesa_is_depthstencil_format(GLenum format);
-
-extern GLboolean
-_mesa_is_dudv_format(GLenum format);
-
-
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
  */
