@@ -334,7 +334,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_texture_object *oldTex = *ptr;
 
-      assert(valid_texture_object(oldTex));
+      ASSERT(valid_texture_object(oldTex));
 
       _glthread_LOCK_MUTEX(oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
@@ -357,7 +357,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 
    if (tex) {
       /* reference new texture */
-      assert(valid_texture_object(tex));
+      ASSERT(valid_texture_object(tex));
       _glthread_LOCK_MUTEX(tex->Mutex);
       if (tex->RefCount == 0) {
          /* this texture's being deleted (look just above) */
