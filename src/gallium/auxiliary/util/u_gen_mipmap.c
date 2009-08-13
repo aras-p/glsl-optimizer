@@ -46,10 +46,6 @@
 #include "util/u_gen_mipmap.h"
 #include "util/u_simple_shaders.h"
 
-#include "tgsi/tgsi_build.h"
-#include "tgsi/tgsi_dump.h"
-#include "tgsi/tgsi_parse.h"
-
 #include "cso_cache/cso_context.h"
 
 
