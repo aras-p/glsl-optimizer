@@ -118,6 +118,21 @@ _mesa_tex_target_to_face(GLenum target);
 extern GLboolean
 _mesa_is_color_format(GLenum format);
 
+extern GLboolean
+_mesa_is_index_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depth_format(GLenum format);
+
+extern GLboolean
+_mesa_is_ycbcr_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depthstencil_format(GLenum format);
+
+extern GLboolean
+_mesa_is_dudv_format(GLenum format);
+
 
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
@@ -165,11 +180,6 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat,
                      GLsizei width, GLsizei height, GLsizei depth,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels );
-
-
-extern void GLAPIENTRY
-_mesa_GetTexImage( GLenum target, GLint level,
-                   GLenum format, GLenum type, GLvoid *pixels );
 
 
 extern void GLAPIENTRY
@@ -263,9 +273,6 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
-
-extern void GLAPIENTRY
-_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
 
 /*@}*/
 
