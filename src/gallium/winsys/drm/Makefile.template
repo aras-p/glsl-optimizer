@@ -83,7 +83,9 @@ default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -noprefix -o $@ \
-		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES)  $(WINOBJ) $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
+		$(OBJECTS) $(PIPE_DRIVERS) \
+                -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \
+                 $(WINOBJ) $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
 
 $(LIBNAME_EGL): $(WINSYS_OBJECTS) $(LIBS)
 	$(MKLIB) -o $(LIBNAME_EGL) \
