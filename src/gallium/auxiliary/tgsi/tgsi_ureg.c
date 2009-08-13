@@ -118,7 +118,7 @@ static void tokens_error( struct ureg_tokens *tokens )
 static void tokens_expand( struct ureg_tokens *tokens,
                            unsigned count )
 {
-   union tgsi_any_token *tmp;
+   unsigned old_size = tokens->size * sizeof(unsigned);
 
    if (tokens->tokens == error_tokens)
       goto fail;
@@ -127,18 +127,12 @@ static void tokens_expand( struct ureg_tokens *tokens,
       tokens->size = (1 << ++tokens->order);
    }
 
-   tmp = MALLOC(tokens->size * sizeof(unsigned));
-   if (tmp == NULL) {
-      FREE(tokens->tokens);
+   tokens->tokens = REALLOC(tokens->tokens, 
+                            old_size,
+                            tokens->size * sizeof(unsigned));
+   if (tokens->tokens == NULL) 
       goto fail;
-   }
 
-   if (tokens->count) {
-      memcpy(tmp, tokens->tokens, tokens->count * sizeof tokens->tokens[0] );
-      FREE(tokens->tokens);
-   }
-
-   tokens->tokens = tmp;
    return;
           
 fail:
