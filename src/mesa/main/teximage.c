@@ -784,10 +784,6 @@ _mesa_max_texture_levels(GLcontext *ctx, GLenum target)
    case GL_PROXY_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_PROXY_TEXTURE_2D:
-   case GL_TEXTURE_1D_ARRAY_EXT:
-   case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-   case GL_TEXTURE_2D_ARRAY_EXT:
-   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       return ctx->Const.MaxTextureLevels;
    case GL_TEXTURE_3D:
    case GL_PROXY_TEXTURE_3D:
@@ -800,10 +796,17 @@ _mesa_max_texture_levels(GLcontext *ctx, GLenum target)
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
    case GL_TEXTURE_CUBE_MAP_ARB:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-      return ctx->Const.MaxCubeTextureLevels;
+      return ctx->Extensions.ARB_texture_cube_map
+         ? ctx->Const.MaxCubeTextureLevels : 0;
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
-      return 1;
+      return ctx->Extensions.NV_texture_rectangle ? 1 : 0;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+      return ctx->Extensions.MESA_texture_array
+         ? ctx->Const.MaxTextureLevels : 0;
    default:
       return 0; /* bad target */
    }
