@@ -27,8 +27,14 @@ struct _egl_driver
    EGLBoolean Initialized; /**< set by driver after initialized */
 
    void *LibHandle; /**< dlopen handle */
+   const char *Path;  /**< path to this driver */
+   const char *Args;  /**< args to load this driver */
 
    const char *Name;  /**< name of this driver */
+   /**< probe a display to see if it is supported */
+   EGLBoolean (*Probe)(_EGLDriver *drv, _EGLDisplay *dpy);
+   /**< called before dlclose to release this driver */
+   void (*Unload)(_EGLDriver *drv);
 
    int APImajor, APIminor; /**< as returned by eglInitialize() */
    char Version[1000];       /**< initialized from APImajor/minor, Name */
@@ -50,20 +56,21 @@ extern _EGLDriver *_eglMain(_EGLDisplay *dpy, const char *args);
 extern const char *
 _eglChooseDRMDriver(int card);
 
+
 extern const char *
-_eglChooseDriver(_EGLDisplay *dpy);
+_eglPreloadDriver(_EGLDisplay *dpy);
 
 
 extern _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args);
+_eglOpenDriver(_EGLDisplay *dpy);
 
 
 extern EGLBoolean
 _eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy);
 
 
-extern void
-_eglSaveDriver(_EGLDriver *drv);
+void
+_eglUnloadDrivers(void);
 
 
 extern _EGLDriver *

@@ -77,7 +77,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
    drv = disp->Driver;
    if (!drv) {
-      drv = _eglOpenDriver(disp, disp->DriverName, disp->DriverArgs);
+      drv = _eglOpenDriver(disp);
       if (!drv)
          return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
 

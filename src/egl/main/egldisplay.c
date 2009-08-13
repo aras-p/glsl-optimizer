@@ -94,7 +94,7 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
       _eglInitDisplay();
       dpy->SurfaceHash = _eglSurfaceHash;
 
-      dpy->DriverName = _eglChooseDriver(dpy);
+      dpy->DriverName = _eglPreloadDriver(dpy);
       if (!dpy->DriverName) {
          free(dpy);
          return NULL;
@@ -244,11 +244,6 @@ _eglCleanupDisplay(_EGLDisplay *disp)
    disp->Configs = NULL;
 
    /* XXX incomplete */
-
-   free((void *) disp->DriverName);
-   disp->DriverName = NULL;
-
-   /* driver deletes the _EGLDisplay object */
 }
 
 

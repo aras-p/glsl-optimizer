@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "eglglobals.h"
-#include "egldisplay.h"
+#include "egldriver.h"
 #include "egllog.h"
 #include "eglmutex.h"
 
@@ -18,8 +18,10 @@ struct _egl_global _eglGlobal =
    { 0x0 },                /* ClientAPIs */
    0,                      /* NumDrivers */
    { NULL },               /* Drivers */
-   0,                      /* NumAtExitCalls */
-   { NULL },               /* AtExitCalls */
+   1,                      /* NumAtExitCalls */
+   {                       /* AtExitCalls */
+      _eglUnloadDrivers
+   },
 };
 
 
