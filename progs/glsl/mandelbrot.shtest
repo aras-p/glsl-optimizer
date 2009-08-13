@@ -1,0 +1,14 @@
+vs CH18-mandel.vert
+fs CH18-mandel.frag
+uniform LightPosition        0.1 0.1 9.0
+uniform SpecularContribution 0.5
+uniform DiffuseContribution  0.5
+uniform Shininess            20.0
+uniform Iterations           12
+uniform Zoom                 0.125
+uniform Xcenter              -1.5
+uniform Ycenter              .005
+uniform InnerColor           1 0 0
+uniform OuterColor1          0 1 0
+uniform OuterColor2          0 0 1
+

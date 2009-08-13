@@ -33,6 +33,7 @@ DEMO_SOURCES = \
 	points.c \
 	samplers.c \
 	shadow_sampler.c \
+	shtest.c \
 	skinning.c \
 	texaaline.c \
 	texdemo1.c \
@@ -198,9 +199,14 @@ shadow_sampler.o: $(UTIL_HEADERS)
 shadow_sampler: shadow_sampler.o $(UTIL_OBJS)
 
 
-skinning.o: $(UTIL_HEADERS)
+shtest.o: $(UTIL_HEADERS)
 
-skinning: skinning.o $(UTIL_OBJS)
+shtest: shtest.o $(UTIL_OBJS)
+
+
+shtest.o: $(UTIL_HEADERS)
+
+shtest: shtest.o $(UTIL_OBJS)
 
 
 texaaline.o: $(UTIL_HEADERS)

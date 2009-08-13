@@ -1,0 +1,17 @@
+vs CH11-toyball.vert
+fs CH11-toyball.frag
+uniform LightDir  0.57737 0.57735 0.57735 0.0
+uniform HVector 0.32506 0.32506 0.88808 0.0
+uniform BallCenter 0.0 0.0 0.0 1.0
+uniform SpecularColor 0.4 0.4 0.4 60.0
+uniform Red     0.6 0.0 0.0 1.0
+uniform Blue    0.0 0.3 0.6 1.0
+uniform Yellow  0.6 0.5 0.0 1.0
+uniform HalfSpace0 1.0 0.0 0.0 0.2
+uniform HalfSpace1 .309016994 0.951056516 0.0 0.2
+uniform HalfSpace2 -0.809016994 0.587785252 0.0 0.2
+uniform HalfSpace3 -0.809016994 -0.587785252 0.0 0.2
+uniform HalfSpace4 .309116994 -0.951056516 0.0 0.2
+uniform InOrOutInit -3.0
+uniform StripeWidth 0.3
+uniform FWidth  .005
