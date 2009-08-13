@@ -462,6 +462,8 @@ def generate(env):
         shlinkflags += [
             '-Wl,-Bsymbolic',
         ]
+        # Handle circular dependencies in the libraries
+        env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
