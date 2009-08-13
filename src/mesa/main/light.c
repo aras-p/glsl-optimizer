@@ -1224,15 +1224,15 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
 	 ctx->Driver.LightingSpaceChange( ctx );
    }
    else {
-      GLuint new_state = ctx->NewState;
+      GLuint new_state2 = ctx->NewState;
 
       /* Recalculate that same state only if it has been invalidated
        * by other statechanges.
        */
-      if (new_state & _NEW_MODELVIEW)
+      if (new_state2 & _NEW_MODELVIEW)
 	 update_modelview_scale(ctx);
 
-      if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
+      if (new_state2 & (_NEW_LIGHT|_NEW_MODELVIEW))
 	 compute_light_positions( ctx );
    }
 }

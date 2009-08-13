@@ -1016,7 +1016,7 @@ _mesa_save_CallList(GLuint list)
 
 
 void GLAPIENTRY
-_mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
+_mesa_save_CallLists(GLsizei num, GLenum type, const GLvoid * lists)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -1041,7 +1041,7 @@ _mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
       typeErrorFlag = GL_TRUE;
    }
 
-   for (i = 0; i < n; i++) {
+   for (i = 0; i < num; i++) {
       GLint list = translate_id(i, type, lists);
       Node *n = ALLOC_INSTRUCTION(ctx, OPCODE_CALL_LIST_OFFSET, 2);
       if (n) {
@@ -1056,7 +1056,7 @@ _mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    invalidate_saved_current_state( ctx );
 
    if (ctx->ExecuteFlag) {
-      CALL_CallLists(ctx->Exec, (n, type, lists));
+      CALL_CallLists(ctx->Exec, (num, type, lists));
    }
 }
 
