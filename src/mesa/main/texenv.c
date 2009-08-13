@@ -909,12 +909,26 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
    }
 }
 
-/* why does ATI_envmap_bumpmap require new entrypoints? Should just
-   reuse TexEnv ones... */
+
+/**
+ * Why does ATI_envmap_bumpmap require new entrypoints? Should just
+ * reuse TexEnv ones...
+ */
 void GLAPIENTRY
 _mesa_TexBumpParameterivATI( GLenum pname, const GLint *param )
 {
    GLfloat p[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->Extensions.ATI_envmap_bumpmap) {
+      /* This isn't an "official" error case, but let's tell the user
+       * that something's wrong.
+       */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBumpParameterivATI");
+      return;
+   }
+
    if (pname == GL_BUMP_ROT_MATRIX_ATI) {
       /* hope that conversion is correct here */
       p[0] = INT_TO_FLOAT( param[0] );
@@ -924,10 +938,11 @@ _mesa_TexBumpParameterivATI( GLenum pname, const GLint *param )
    }
    else {
       p[0] = (GLfloat) param[0];
-      p[1] = p[2] = p[3] = 0;  /* init to zero, just to be safe */
+      p[1] = p[2] = p[3] = 0.0F;  /* init to zero, just to be safe */
    }
    _mesa_TexBumpParameterfvATI( pname, p );
 }
+
 
 void GLAPIENTRY
 _mesa_TexBumpParameterfvATI( GLenum pname, const GLfloat *param )
@@ -936,7 +951,10 @@ _mesa_TexBumpParameterfvATI( GLenum pname, const GLfloat *param )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   /* should return error if extension not supported? */
+   if (!ctx->Extensions.ATI_envmap_bumpmap) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBumpParameterfvATI");
+      return;
+   }
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
@@ -957,16 +975,19 @@ _mesa_TexBumpParameterfvATI( GLenum pname, const GLfloat *param )
    }
 }
 
+
 void GLAPIENTRY
 _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
 {
    const struct gl_texture_unit *texUnit;
    GLuint i;
-   GLint temp = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   /* should return error if extension not supported? */
+   if (!ctx->Extensions.ATI_envmap_bumpmap) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexBumpParameterivATI");
+      return;
+   }
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
@@ -985,12 +1006,13 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
       param[3] = FLOAT_TO_INT(texUnit->RotMatrix[3]);
    }
    else if (pname == GL_BUMP_NUM_TEX_UNITS_ATI) {
+      GLint count = 0;
       for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
-            temp++;
+            count++;
          }
       }
-      *param = temp;
+      *param = count;
    }
    else if (pname == GL_BUMP_TEX_UNITS_ATI) {
       for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
@@ -1005,16 +1027,19 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
    }
 }
 
+
 void GLAPIENTRY
 _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
 {
    const struct gl_texture_unit *texUnit;
    GLuint i;
-   GLint temp = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   /* should return error if extension not supported? */
+   if (!ctx->Extensions.ATI_envmap_bumpmap) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexBumpParameterfvATI");
+      return;
+   }
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
@@ -1022,7 +1047,7 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
       /* spec leaves open to support larger matrices.
          Don't think anyone would ever want to use it
          (and apps might not understand it) so hardcode this. */
-      *param = (GLfloat) 4;
+      *param = 4.0F;
    }
    else if (pname == GL_BUMP_ROT_MATRIX_ATI) {
       param[0] = texUnit->RotMatrix[0];
@@ -1031,12 +1056,13 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
       param[3] = texUnit->RotMatrix[3];
    }
    else if (pname == GL_BUMP_NUM_TEX_UNITS_ATI) {
+      GLint count = 0;
       for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
-            temp++;
+            count++;
          }
       }
-      *param = (GLfloat) temp;
+      *param = (GLfloat) count;
    }
    else if (pname == GL_BUMP_TEX_UNITS_ATI) {
       for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
@@ -1050,4 +1076,3 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
       return;
    }
 }
-
