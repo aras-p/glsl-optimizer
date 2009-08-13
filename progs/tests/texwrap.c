@@ -258,8 +258,26 @@ static void Init( void )
    }
 
    glBindTexture(GL_TEXTURE_2D, BORDER_TEXTURE);
+#ifdef TEST_PBO_DLIST
+   /* test fetching teximage from PBO in display list */
+   {
+      GLuint b = 42, l = 10;
+
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, b);
+      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER, sizeof(BorderImage),
+                      BorderImage, GL_STREAM_DRAW);
+
+      glNewList(l, GL_COMPILE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SIZE+2, SIZE+2, 1,
+                GL_RGBA, GL_UNSIGNED_BYTE, (void *) 0/* BorderImage*/);
+      glEndList();
+      glCallList(l);
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, 0);
+   }
+#else
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SIZE+2, SIZE+2, 1,
                 GL_RGBA, GL_UNSIGNED_BYTE, (void *) BorderImage);
+#endif
 
    for (i = 0; i < SIZE; i++) {
       for (j = 0; j < SIZE; j++) {
