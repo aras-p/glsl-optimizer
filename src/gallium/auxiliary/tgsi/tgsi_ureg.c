@@ -723,7 +723,7 @@ void *ureg_create_shader( struct ureg_program *ureg )
 
    state.tokens = (const struct tgsi_token *)ureg->domain[DOMAIN_DECL].tokens;
 
-   if (1) {
+   if (0) {
       debug_printf("%s: emitted shader %d tokens:\n", __FUNCTION__, 
                    ureg->domain[DOMAIN_DECL].count);
       tgsi_dump( state.tokens, 0 );
