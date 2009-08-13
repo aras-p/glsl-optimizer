@@ -40,7 +40,6 @@ _eglFiniDisplay(void)
          if (dpy->ContextList || dpy->SurfaceList)
             _eglLog(_EGL_DEBUG, "Display %u is destroyed with resources", key);
 
-         _eglCleanupDisplay(dpy);
          free(dpy);
 
          key = _eglHashNextEntry(_eglDisplayHash, key);
@@ -237,11 +236,13 @@ _eglCleanupDisplay(_EGLDisplay *disp)
 {
    EGLint i;
 
-   for (i = 0; i < disp->NumConfigs; i++) {
-      free(disp->Configs[i]);
+   if (disp->Configs) {
+      for (i = 0; i < disp->NumConfigs; i++)
+         free(disp->Configs[i]);
+      free(disp->Configs);
+      disp->Configs = NULL;
+      disp->NumConfigs = 0;
    }
-   free(disp->Configs);
-   disp->Configs = NULL;
 
    /* XXX incomplete */
 }

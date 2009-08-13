@@ -122,7 +122,7 @@ eglTerminate(EGLDisplay dpy)
 
    drv = disp->Driver;
    if (drv) {
-      /* TODO drv->API.Terminate should be called here */
+      drv->API.Terminate(drv, disp);
       _eglCloseDriver(drv, disp);
       disp->Driver = NULL;
    }

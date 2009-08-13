@@ -359,8 +359,6 @@ _eglOpenDriver(_EGLDisplay *dpy)
 EGLBoolean
 _eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
 {
-   _eglReleaseDisplayResources(drv, dpy);
-   drv->API.Terminate(drv, dpy);
    return EGL_TRUE;
 }
 
