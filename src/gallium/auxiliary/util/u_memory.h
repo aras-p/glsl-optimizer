@@ -100,8 +100,14 @@ ExFreePool(void *P);
 #define MALLOC( SIZE )  malloc( SIZE )
 #define CALLOC( COUNT, SIZE )   calloc( COUNT, SIZE )
 #define FREE( PTR )  free( PTR )
-#define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
 
+static INLINE void *
+_REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
+{
+   (void) old_size;
+   return realloc(old_ptr, new_size);
+}
+#define REALLOC( a, b, c ) _REALLOC( a, b, c )
 #endif
 
 
