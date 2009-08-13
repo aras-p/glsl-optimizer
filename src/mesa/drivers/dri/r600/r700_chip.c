@@ -487,6 +487,18 @@ GLboolean r700SendContextStates(context_t *context)
     for(ui = 0; ui < R700_MAX_SHADER_EXPORTS; ui++)
 	    R600_OUT_BATCH(r700->SPI_PS_INPUT_CNTL[ui].u32All);
     END_BATCH();
+
+    if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
+	    for (ui = 0; ui < R700_MAX_RENDER_TARGETS; ui++) {
+		    if (r700->render_target[ui].enabled) {
+			    BEGIN_BATCH_NO_AUTOSTATE(3);
+			    R600_OUT_BATCH_REGVAL(CB_BLEND0_CONTROL + (4 * ui),
+						  r700->render_target[ui].CB_BLEND0_CONTROL.u32All);
+			    END_BATCH();
+		    }
+	    }
+    }
+
     COMMIT_BATCH();
 
     return GL_TRUE;
@@ -566,12 +578,6 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_FRAG + (4 * id), r700->render_target[id].CB_COLOR0_FRAG.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), r700->render_target[id].CB_COLOR0_MASK.u32All);
         END_BATCH();
-
-	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
-		BEGIN_BATCH_NO_AUTOSTATE(3);
-		R600_OUT_BATCH_REGVAL(CB_BLEND0_CONTROL + (4 * id), r700->render_target[id].CB_BLEND0_CONTROL.u32All);
-		END_BATCH();
-	}
 
 	COMMIT_BATCH();
 
