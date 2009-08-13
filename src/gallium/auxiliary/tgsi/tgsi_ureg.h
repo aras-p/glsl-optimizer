@@ -396,7 +396,7 @@ ureg_saturate( struct ureg_dst reg )
 }
 
 static INLINE struct ureg_dst
-ureg_from_src( struct ureg_src src )
+ureg_dst( struct ureg_src src )
 {
    struct ureg_dst dst;
 
@@ -412,7 +412,7 @@ ureg_from_src( struct ureg_src src )
 }
 
 static INLINE struct ureg_src
-ureg_from_dst( struct ureg_dst dst )
+ureg_src( struct ureg_dst dst )
 {
    struct ureg_src src;
 
@@ -424,7 +424,7 @@ ureg_from_dst( struct ureg_dst dst )
    src.Pad       = 0;
    src.Indirect  = dst.Indirect;
    src.Absolute  = 0;
-   src.Index     = src.Index;
+   src.Index     = dst.Index;
    src.Negate    = 0;
 
    return src;
