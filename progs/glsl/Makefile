@@ -204,9 +204,9 @@ shtest.o: $(UTIL_HEADERS)
 shtest: shtest.o $(UTIL_OBJS)
 
 
-shtest.o: $(UTIL_HEADERS)
+skinning.o: $(UTIL_HEADERS)
 
-shtest: shtest.o $(UTIL_OBJS)
+skinning: skinning.o $(UTIL_OBJS)
 
 
 texaaline.o: $(UTIL_HEADERS)
