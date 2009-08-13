@@ -204,6 +204,30 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
    st_resize_framebuffer(drawable->stfb, dri_drawable->w, dri_drawable->h);
 }
 
+/**
+ * These are used for GLX_EXT_texture_from_pixmap
+ */
+void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
+                          GLint format, __DRIdrawable *dPriv)
+{
+   struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct pipe_surface *ps;
+
+   dri_get_buffers(drawable->dPriv);
+   st_get_framebuffer_surface(drawable->stfb, ST_SURFACE_FRONT_LEFT, &ps);
+
+   st_bind_texture_surface(ps, target == GL_TEXTURE_2D ? ST_TEXTURE_2D :
+                           ST_TEXTURE_RECT, 0,
+                           format == GLX_TEXTURE_FORMAT_RGBA_EXT ?
+                           PIPE_FORMAT_R8G8B8A8_UNORM : PIPE_FORMAT_R8G8B8X8_UNORM);
+}
+
+void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
+                         __DRIdrawable *dPriv)
+{
+   dri2_set_tex_buffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+}
+
 void
 dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private)

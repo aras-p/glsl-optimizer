@@ -91,6 +91,12 @@ void dri_get_buffers(__DRIdrawablePrivate * dPriv);
 
 void dri_destroy_buffer(__DRIdrawablePrivate * dPriv);
 
+void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
+                          GLint glx_texture_format, __DRIdrawable *dPriv);
+
+void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
+                         __DRIdrawable *dPriv);
+
 void
 dri1_update_drawables(struct dri_context *ctx,
 		      struct dri_drawable *draw, struct dri_drawable *read);
