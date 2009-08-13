@@ -133,7 +133,20 @@ SquareVertex(GLfloat s, GLfloat t, GLfloat size)
 {
    GLfloat x = -size + s * 2.0 * size;
    GLfloat y = -size + t * 2.0 * size;
-   glTexCoord2f(s, t);
+   GLuint i;
+
+   glMultiTexCoord2f(GL_TEXTURE0, s, t);
+   glMultiTexCoord2f(GL_TEXTURE1, s, t);
+   glMultiTexCoord2f(GL_TEXTURE2, s, t);
+   glMultiTexCoord2f(GL_TEXTURE3, s, t);
+
+   /* assign (s,t) to the generic attributes */
+   for (i = 0; i < NumAttribs; i++) {
+      if (Attribs[i].location >= 0) {
+         glVertexAttrib2f(Attribs[i].location, s, t);
+      }
+   }
+
    glVertex2f(x, y);
 }
 
@@ -148,7 +161,7 @@ Square(GLfloat size)
    glNormal3f(0, 0, 1);
    glVertexAttrib3f(tangentAttrib, 1, 0, 0);
    glBegin(GL_POLYGON);
-#if 0
+#if 1
    SquareVertex(0, 0, size);
    SquareVertex(1, 0, size);
    SquareVertex(1, 1, size);
