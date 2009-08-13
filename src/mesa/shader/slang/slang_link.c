@@ -504,20 +504,6 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
             prog->InputsRead |= 1 << inst->SrcReg[j].Index;
-            if (prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
-                inst->SrcReg[j].Index == FRAG_ATTRIB_FOGC) {
-               /* The fragment shader FOGC input is used for fog,
-                * front-facing and sprite/point coord.
-                */
-               struct gl_fragment_program *fp = fragment_program(prog);
-               const GLint swz = GET_SWZ(inst->SrcReg[j].Swizzle, 0);
-               if (swz == SWIZZLE_X)
-                  fp->UsesFogFragCoord = GL_TRUE;
-               else if (swz == SWIZZLE_Y)
-                  fp->UsesFrontFacing = GL_TRUE;
-               else if (swz == SWIZZLE_Z || swz == SWIZZLE_W)
-                  fp->UsesPointCoord = GL_TRUE;
-            }
          }
          else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
             maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));
