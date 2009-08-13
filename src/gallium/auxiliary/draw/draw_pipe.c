@@ -158,6 +158,60 @@ static void do_triangle( struct draw_context *draw,
 
 
 
+#define QUAD(i0,i1,i2,i3)                       \
+   do_triangle( draw,                           \
+                ( DRAW_PIPE_RESET_STIPPLE |     \
+                  DRAW_PIPE_EDGE_FLAG_0 |       \
+                  DRAW_PIPE_EDGE_FLAG_2 ),      \
+                verts + stride * elts[i0],      \
+                verts + stride * elts[i1],      \
+                verts + stride * elts[i3]);     \
+   do_triangle( draw,                           \
+                ( DRAW_PIPE_EDGE_FLAG_0 |       \
+                  DRAW_PIPE_EDGE_FLAG_1 ),      \
+                verts + stride * elts[i1],      \
+                verts + stride * elts[i2],      \
+                verts + stride * elts[i3])
+
+#define TRIANGLE(flags,i0,i1,i2)                                        \
+   do_triangle( draw,                                                   \
+                elts[i0],  /* flags */                          \
+                verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * elts[i1],                              \
+                verts + stride * elts[i2])
+
+#define LINE(flags,i0,i1)                                       \
+   do_line( draw,                                               \
+            elts[i0],                                   \
+            verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK), \
+            verts + stride * elts[i1])
+
+#define POINT(i0)                               \
+   do_point( draw,                              \
+             verts + stride * elts[i0] )
+
+#define FUNC pipe_run
+#define ARGS                                    \
+    struct draw_context *draw,                  \
+    unsigned prim,                              \
+    struct vertex_header *vertices,             \
+    unsigned stride,                            \
+    const ushort *elts
+
+#define LOCAL_VARS                                           \
+   char *verts = (char *)vertices;                           \
+   boolean flatfirst = (draw->rasterizer->flatshade &&       \
+                        draw->rasterizer->flatshade_first);  \
+   unsigned i;                                               \
+   ushort flags
+
+#define FLUSH
+
+#include "draw_pt_decompose.h"
+#undef ARGS
+#undef LOCAL_VARS
+
+
 
 /* Code to run the pipeline on a fairly arbitary collection of vertices.
  *
@@ -184,28 +238,7 @@ void draw_pipeline_run( struct draw_context *draw,
    draw->pipeline.vertex_stride = stride;
    draw->pipeline.vertex_count = vertex_count;
    
-   switch (prim) {
-   case PIPE_PRIM_POINTS:
-      for (i = 0; i < count; i++) 
-         do_point( draw, 
-                   verts + stride * elts[i] );
-      break;
-   case PIPE_PRIM_LINES:
-      for (i = 0; i+1 < count; i += 2) 
-         do_line( draw, 
-                  elts[i+0],  /* flags */
-                  verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
-                  verts + stride * elts[i+1]);
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      for (i = 0; i+2 < count; i += 3)
-         do_triangle( draw, 
-                      elts[i+0],  /* flags */
-                      verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
-                      verts + stride * elts[i+1],
-                      verts + stride * elts[i+2]);
-      break;
-   }
+   pipe_run(draw, prim, vertices, stride, elts, count);
    
    draw->pipeline.verts = NULL;
    draw->pipeline.vertex_count = 0;
