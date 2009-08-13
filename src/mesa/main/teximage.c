@@ -576,18 +576,6 @@ _mesa_is_proxy_texture(GLenum target)
 
 
 /**
- * Return pointer to current texture unit.
- * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
- */
-static INLINE struct gl_texture_unit *
-get_current_tex_unit(GLcontext *ctx)
-{
-   ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));
-   return &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
-}
-
-
-/**
  * Get the texture object that corresponds to the target of the given texture unit.
  *
  * \param ctx GL context.
@@ -2163,7 +2151,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
       _mesa_lock_texture(ctx, texObj);
       {
@@ -2271,7 +2259,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
       _mesa_lock_texture(ctx, texObj);
       {
@@ -2374,7 +2362,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
       _mesa_lock_texture(ctx, texObj);
       {
@@ -2480,7 +2468,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    }
 
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    assert(texObj);
 
@@ -2540,7 +2528,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
       return;   /* error was detected */
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
    {
@@ -2592,7 +2580,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
       return;   /* error was detected */
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -2653,7 +2641,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
                                postConvWidth, 1, border))
       return;
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
    {
@@ -2719,7 +2707,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                postConvWidth, postConvHeight, border))
       return;
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -2779,7 +2767,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    if (copytexsubimage_error_check1(ctx, 1, target, level))
       return;
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -2834,7 +2822,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    if (copytexsubimage_error_check1(ctx, 2, target, level))
       return;
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -2889,7 +2877,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    if (copytexsubimage_error_check1(ctx, 3, target, level))
       return;
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -3143,7 +3131,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
          return;
       }
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
       _mesa_lock_texture(ctx, texObj);
@@ -3197,7 +3185,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
          struct gl_texture_unit *texUnit;
          struct gl_texture_object *texObj;
          struct gl_texture_image *texImage;
-         texUnit = get_current_tex_unit(ctx);
+         texUnit = _mesa_get_current_tex_unit(ctx);
 	 texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
 	 _mesa_lock_texture(ctx, texObj);
@@ -3240,7 +3228,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
          return;
       }
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
       _mesa_lock_texture(ctx, texObj);
@@ -3296,7 +3284,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
          struct gl_texture_unit *texUnit;
          struct gl_texture_object *texObj;
          struct gl_texture_image *texImage;
-         texUnit = get_current_tex_unit(ctx);
+         texUnit = _mesa_get_current_tex_unit(ctx);
 	 texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
 	 _mesa_lock_texture(ctx, texObj);
@@ -3336,7 +3324,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
          return;
       }
 
-      texUnit = get_current_tex_unit(ctx);
+      texUnit = _mesa_get_current_tex_unit(ctx);
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
       _mesa_lock_texture(ctx, texObj);
       {
@@ -3390,7 +3378,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
          struct gl_texture_unit *texUnit;
          struct gl_texture_object *texObj;
          struct gl_texture_image *texImage;
-         texUnit = get_current_tex_unit(ctx);
+         texUnit = _mesa_get_current_tex_unit(ctx);
 	 texObj = _mesa_select_tex_object(ctx, texUnit, target);
 	 _mesa_lock_texture(ctx, texObj);
 	 {
@@ -3429,7 +3417,7 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
    {
@@ -3486,7 +3474,7 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
    {
@@ -3543,7 +3531,7 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
    {

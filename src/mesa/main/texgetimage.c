@@ -37,6 +37,7 @@
 #include "texformat.h"
 #include "texgetimage.h"
 #include "teximage.h"
+#include "texstate.h"
 
 
 
@@ -103,18 +104,6 @@ type_with_negative_values(GLenum type)
    default:
       return GL_FALSE;
    }
-}
-
-
-/**
- * Return pointer to current texture unit.
- * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
- */
-static INLINE struct gl_texture_unit *
-get_current_tex_unit(GLcontext *ctx)
-{
-   ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));
-   return &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
 }
 
 
@@ -429,7 +418,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    if (!texObj || _mesa_is_proxy_texture(target)) {
@@ -519,7 +508,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);
@@ -545,7 +534,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   texUnit = get_current_tex_unit(ctx);
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!texObj) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImageARB");

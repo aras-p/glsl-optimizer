@@ -35,6 +35,7 @@
 #include "main/enums.h"
 #include "main/macros.h"
 #include "main/texenv.h"
+#include "main/texstate.h"
 
 
 #define TE_ERROR(errCode, msg, value)				\
@@ -466,7 +467,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
@@ -793,7 +794,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (target == GL_TEXTURE_ENV) {
       if (pname == GL_TEXTURE_ENV_COLOR) {
@@ -857,7 +858,7 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (target == GL_TEXTURE_ENV) {
       if (pname == GL_TEXTURE_ENV_COLOR) {
@@ -936,7 +937,8 @@ _mesa_TexBumpParameterfvATI( GLenum pname, const GLfloat *param )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* should return error if extension not supported? */
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (pname == GL_BUMP_ROT_MATRIX_ATI) {
       if (TEST_EQ_4V(param, texUnit->RotMatrix))
@@ -965,7 +967,8 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* should return error if extension not supported? */
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (pname == GL_BUMP_ROT_MATRIX_SIZE_ATI) {
       /* spec leaves open to support larger matrices.
@@ -1012,7 +1015,8 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* should return error if extension not supported? */
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (pname == GL_BUMP_ROT_MATRIX_SIZE_ATI) {
       /* spec leaves open to support larger matrices.

@@ -35,6 +35,18 @@
 #include "mtypes.h"
 
 
+/**
+ * Return pointer to current texture unit.
+ * This the texture unit set by glActiveTexture(), not glClientActiveTexture().
+ */
+static INLINE struct gl_texture_unit *
+_mesa_get_current_tex_unit(GLcontext *ctx)
+{
+   ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->Texture.Unit));
+   return &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
+}
+
+
 extern void
 _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst );
 
@@ -48,15 +60,13 @@ _mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
  */
 /*@{*/
 
-
-/*
- * GL_ARB_multitexture
- */
 extern void GLAPIENTRY
 _mesa_ActiveTextureARB( GLenum target );
 
 extern void GLAPIENTRY
 _mesa_ClientActiveTextureARB( GLenum target );
+
+/*@}*/
 
 
 /**

@@ -38,6 +38,7 @@
 #include "main/texcompress.h"
 #include "main/texparam.h"
 #include "main/teximage.h"
+#include "main/texstate.h"
 #include "shader/prog_instruction.h"
 
 
@@ -88,7 +89,7 @@ get_texobj(GLcontext *ctx, GLenum target)
       return NULL;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    switch (target) {
    case GL_TEXTURE_1D:
@@ -773,7 +774,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    /* this will catch bad target values */
    dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
@@ -1002,7 +1003,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -1169,7 +1170,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
