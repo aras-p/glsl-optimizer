@@ -1883,7 +1883,10 @@ save_Fogfv(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_Fogf(GLenum pname, GLfloat param)
 {
-   save_Fogfv(pname, &param);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_Fogfv(pname, parray);
 }
 
 
@@ -1916,7 +1919,10 @@ save_Fogiv(GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_Fogi(GLenum pname, GLint param)
 {
-   save_Fogiv(pname, &param);
+   GLint parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0;
+   save_Fogiv(pname, parray);
 }
 
 
@@ -2080,9 +2086,12 @@ save_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 
 
 static void GLAPIENTRY
-save_Lightf(GLenum light, GLenum pname, GLfloat params)
+save_Lightf(GLenum light, GLenum pname, GLfloat param)
 {
-   save_Lightfv(light, pname, &params);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_Lightfv(light, pname, parray);
 }
 
 
@@ -2128,7 +2137,10 @@ save_Lightiv(GLenum light, GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_Lighti(GLenum light, GLenum pname, GLint param)
 {
-   save_Lightiv(light, pname, &param);
+   GLint parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0;
+   save_Lightiv(light, pname, parray);
 }
 
 
@@ -2155,7 +2167,10 @@ save_LightModelfv(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_LightModelf(GLenum pname, GLfloat param)
 {
-   save_LightModelfv(pname, &param);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_LightModelfv(pname, parray);
 }
 
 
@@ -2186,7 +2201,10 @@ save_LightModeliv(GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_LightModeli(GLenum pname, GLint param)
 {
-   save_LightModeliv(pname, &param);
+   GLint parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0;
+   save_LightModeliv(pname, parray);
 }
 
 
@@ -2701,21 +2719,28 @@ save_PointParameterfvEXT(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_PointParameterfEXT(GLenum pname, GLfloat param)
 {
-   save_PointParameterfvEXT(pname, &param);
+   GLfloat parray[3];
+   parray[0] = param;
+   parray[1] = parray[2] = 0.0F;
+   save_PointParameterfvEXT(pname, parray);
 }
 
 static void GLAPIENTRY
 save_PointParameteriNV(GLenum pname, GLint param)
 {
-   GLfloat p = (GLfloat) param;
-   save_PointParameterfvEXT(pname, &p);
+   GLfloat parray[3];
+   parray[0] = (GLfloat) param;
+   parray[1] = parray[2] = 0.0F;
+   save_PointParameterfvEXT(pname, parray);
 }
 
 static void GLAPIENTRY
 save_PointParameterivNV(GLenum pname, const GLint * param)
 {
-   GLfloat p = (GLfloat) param[0];
-   save_PointParameterfvEXT(pname, &p);
+   GLfloat parray[3];
+   parray[0] = (GLfloat) param[0];
+   parray[1] = parray[2] = 0.0F;
+   save_PointParameterfvEXT(pname, parray);
 }
 
 
@@ -3387,7 +3412,10 @@ save_TexEnvfv(GLenum target, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_TexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
-   save_TexEnvfv(target, pname, &param);
+   GLfloat parray[4];
+   parray[0] = (GLfloat) param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_TexEnvfv(target, pname, parray);
 }
 
 
@@ -3455,8 +3483,10 @@ save_TexGeniv(GLenum coord, GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_TexGend(GLenum coord, GLenum pname, GLdouble param)
 {
-   GLfloat p = (GLfloat) param;
-   save_TexGenfv(coord, pname, &p);
+   GLfloat parray[4];
+   parray[0] = (GLfloat) param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_TexGenfv(coord, pname, parray);
 }
 
 
@@ -3475,14 +3505,20 @@ save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params)
 static void GLAPIENTRY
 save_TexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
-   save_TexGenfv(coord, pname, &param);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_TexGenfv(coord, pname, parray);
 }
 
 
 static void GLAPIENTRY
 save_TexGeni(GLenum coord, GLenum pname, GLint param)
 {
-   save_TexGeniv(coord, pname, &param);
+   GLint parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0;
+   save_TexGeniv(coord, pname, parray);
 }
 
 
@@ -3510,7 +3546,10 @@ save_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_TexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-   save_TexParameterfv(target, pname, &param);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_TexParameterfv(target, pname, parray);
 }
 
 
