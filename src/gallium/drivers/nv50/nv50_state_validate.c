@@ -124,10 +124,6 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
-	/* set window scissor rectangle to window extents */
-	so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
-	so_data  (so, w << 16);
-	so_data  (so, h << 16);
 	/* set window lower left corner */
 	so_method(so, tesla, NV50TCL_WINDOW_LEFT, 2);
 	so_data  (so, 0);
@@ -136,6 +132,10 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_SCREEN_SCISSOR_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
+
+	/* we set scissors to framebuffer size when they're 'turned off' */
+	nv50->dirty |= NV50_NEW_SCISSOR;
+	so_ref(NULL, &nv50->state.scissor);
 
 	so_ref(so, &nv50->state.fb);
 	so_ref(NULL, &so);
