@@ -343,6 +343,7 @@ const union lp_type conv_types[] = {
    {{  TRUE, FALSE, FALSE,  TRUE,    32,   4 }},
    {{  TRUE, FALSE, FALSE, FALSE,    32,   4 }},
 
+#if 0
    {{ FALSE, FALSE,  TRUE,  TRUE,    32,   4 }},
    {{ FALSE, FALSE,  TRUE, FALSE,    32,   4 }},
    {{ FALSE, FALSE, FALSE,  TRUE,    32,   4 }},
@@ -357,6 +358,12 @@ const union lp_type conv_types[] = {
    {{ FALSE, FALSE,  TRUE, FALSE,     8,  16 }},
    {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }},
    {{ FALSE, FALSE, FALSE, FALSE,     8,  16 }},
+#else
+   {{ FALSE, FALSE,  TRUE, FALSE,    32,   4 }},
+   {{ FALSE, FALSE,  TRUE, FALSE,    16,   8 }},
+   {{ FALSE, FALSE, FALSE, FALSE,     8,  16 }},
+   {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }},
+#endif
 };
 
 
