@@ -138,9 +138,14 @@
 /** 
  * Maximum viewport/image width. Must accomodate all texture sizes too. 
  */
-#define MAX_WIDTH 4096
+
+#ifndef MAX_WIDTH
+#   define MAX_WIDTH 4096
+#endif
 /** Maximum viewport/image height */
-#define MAX_HEIGHT 4096
+#ifndef MAX_HEIGHT
+#   define MAX_HEIGHT 4096
+#endif
 
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
