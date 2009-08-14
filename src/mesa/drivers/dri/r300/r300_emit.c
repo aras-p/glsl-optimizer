@@ -124,41 +124,6 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes)
 	return ret;
 }
 
-GLboolean r300EmitArrays(GLcontext * ctx)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-	GLuint InputsRead, OutputsWritten;
-
-	r300ChooseSwtclVertexFormat(ctx, &InputsRead, &OutputsWritten);
-
-	r300SwitchFallback(ctx, R300_FALLBACK_AOS_LIMIT, vbuf->num_attribs > R300_MAX_AOS_ARRAYS);
-	if (r300->fallback & R300_RASTER_FALLBACK_MASK)
-		return GL_FALSE;
-
-	{
-		struct vertex_buffer *mesa_vb = &TNL_CONTEXT(ctx)->vb;
-		GLuint attr, i;
-
-		for (i = 0; i < vbuf->num_attribs; i++) {
-			attr = vbuf->attribs[i].element;
-			rcommon_emit_vector(ctx, &r300->radeon.tcl.aos[i], mesa_vb->AttribPtr[attr]->data,
-					mesa_vb->AttribPtr[attr]->size, mesa_vb->AttribPtr[attr]->stride, mesa_vb->Count);
-		}
-
-		r300->radeon.tcl.aos_count = vbuf->num_attribs;
-
-		/* Fill index buffer info */
-		r300->ind_buf.ptr = mesa_vb->Elts;
-		r300->ind_buf.is_32bit = GL_TRUE;
-		r300->ind_buf.free_needed = GL_FALSE;
-	}
-
-	r300SetupVAP(ctx, InputsRead, OutputsWritten);
-
-	return GL_TRUE;
-}
-
 void r300EmitCacheFlush(r300ContextPtr rmesa)
 {
 	BATCH_LOCALS(&rmesa->radeon);

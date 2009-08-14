@@ -64,9 +64,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
-#include "r300_render.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_buffer_objects.h"
 
 
 #include "vblank.h"
@@ -154,7 +154,6 @@ const struct dri_extension gl_20_extension[] = {
 };
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
-
 	/* Catch any t&l fallbacks
 	 */
 	&_tnl_vertex_transform_stage,
@@ -165,21 +164,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	&_tnl_texture_transform_stage,
 	&_tnl_point_attenuation_stage,
 	&_tnl_vertex_program_stage,
-
-	/* Try again to go to tcl?
-	 *     - no good for asymmetric-twoside (do with multipass)
-	 *     - no good for asymmetric-unfilled (do with multipass)
-	 *     - good for material
-	 *     - good for texgen
-	 *     - need to manipulate a bit of state
-	 *
-	 * - worth it/not worth it?
-	 */
-
-	/* Else do them here.
-	 */
-	&_r300_render_stage,
-	&_tnl_render_stage,	/* FALLBACK  */
+	&_tnl_render_stage,
 	0,
 };
 
@@ -398,6 +383,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
+	radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,

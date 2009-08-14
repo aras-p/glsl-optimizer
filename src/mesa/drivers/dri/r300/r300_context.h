@@ -478,11 +478,12 @@ struct r300_vertex_buffer {
 	struct vertex_attribute {
 		/* generic */
 		GLubyte element;
-		GLvoid *data;
-		GLboolean free_needed;
 		GLuint stride;
 		GLuint dwords;
 		GLubyte size; /* number of components */
+		GLboolean is_named_bo;
+		struct radeon_bo *bo;
+		GLint bo_offset;
 
 		/* hw specific */
 		uint32_t data_type:4;
@@ -497,9 +498,10 @@ struct r300_vertex_buffer {
 };
 
 struct r300_index_buffer {
-	GLvoid *ptr;
+	struct radeon_bo *bo;
+	int bo_offset;
+
 	GLboolean is_32bit;
-	GLboolean free_needed;
 	GLuint count;
 };
 
