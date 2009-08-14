@@ -1145,6 +1145,21 @@ AC_ARG_WITH([xorg-driver-dir],
     [XORG_DRIVER_INSTALL_DIR="${libdir}/xorg/modules/drivers"])
 AC_SUBST([XORG_DRIVER_INSTALL_DIR])
 
+AC_ARG_WITH([max-width],
+    [AS_HELP_STRING([--with-max-width=N],
+                    [Maximum framebuffer width (4096)])],
+    [DEFINES="${DEFINES} -DMAX_WIDTH=${withval}";
+     AS_IF([test "${withval}" -gt "4096"],
+           [AC_MSG_WARN([Large framebuffer: see s_tritemp.h comments.])])]
+)
+AC_ARG_WITH([max-height],
+    [AS_HELP_STRING([--with-max-height=N],
+                    [Maximum framebuffer height (4096)])],
+    [DEFINES="${DEFINES} -DMAX_HEIGHT=${withval}";
+     AS_IF([test "${withval}" -gt "4096"],
+           [AC_MSG_WARN([Large framebuffer: see s_tritemp.h comments.])])]
+)
+
 dnl
 dnl Gallium Intel configuration
 dnl
