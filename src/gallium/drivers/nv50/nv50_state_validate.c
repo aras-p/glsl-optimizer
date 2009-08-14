@@ -131,7 +131,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	/* set window lower left corner */
 	so_method(so, tesla, NV50TCL_WINDOW_LEFT, 2);
 	so_data  (so, 0);
-	so_data  (so, h);
+	so_data  (so, 0);
 	/* set screen scissor rectangle */
 	so_method(so, tesla, NV50TCL_SCREEN_SCISSOR_HORIZ, 2);
 	so_data  (so, w << 16);
@@ -246,11 +246,8 @@ nv50_state_validate(struct nv50_context *nv50)
 		so = so_new(3, 0);
 		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
 		if (nv50->state.scissor_enabled) {
-			/* the hw has y = 0 = bottom here */
-			unsigned top = nv50->framebuffer.height - s->miny;
-			unsigned bottom = nv50->framebuffer.height - s->maxy;
 			so_data(so, (s->maxx << 16) | s->minx);
-			so_data(so, (top << 16) | bottom);
+			so_data(so, (s->maxy << 16) | s->miny);
 		} else {
 			so_data(so, (nv50->framebuffer.width << 16));
 			so_data(so, (nv50->framebuffer.height << 16));
@@ -263,7 +260,6 @@ scissor_uptodate:
 
 	if (nv50->dirty & (NV50_NEW_VIEWPORT | NV50_NEW_RASTERIZER)) {
 		unsigned bypass;
-		float y_translate = (float)nv50->framebuffer.height;
 
 		if (!nv50->rasterizer->pipe.bypass_vs_clip_and_viewport)
 			bypass = 0;
@@ -277,33 +273,27 @@ scissor_uptodate:
 		nv50->state.viewport_bypass = bypass;
 
 		so = so_new(12, 0);
-		so_method(so, tesla, NV50TCL_VIEW_VOLUME_CLIP_CTRL, 1);
 		if (!bypass) {
-			so_data(so, 0x0000);
-			y_translate -= nv50->viewport.translate[1];
 			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE(0), 3);
 			so_data  (so, fui(nv50->viewport.translate[0]));
-			so_data  (so, fui(y_translate));
+			so_data  (so, fui(nv50->viewport.translate[1]));
 			so_data  (so, fui(nv50->viewport.translate[2]));
 			so_method(so, tesla, NV50TCL_VIEWPORT_SCALE(0), 3);
 			so_data  (so, fui(nv50->viewport.scale[0]));
-			so_data  (so, fui(-nv50->viewport.scale[1]));
+			so_data  (so, fui(nv50->viewport.scale[1]));
 			so_data  (so, fui(nv50->viewport.scale[2]));
+
+			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
+			so_data  (so, 1);
+			/* no idea what 0f90 does */
+			so_method(so, tesla, 0x0f90, 1);
+			so_data  (so, 0);
 		} else {
-			/* don't do xy-clipping in NDC space */
-			so_data(so, 0x0800);
-			/* in bypass mode, y = 0 would be bottom */
-			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE(0), 3);
-			so_data  (so, fui(0.0f));
-			so_data  (so, fui(y_translate));
-			so_data  (so, fui(0.0f));
-			so_method(so, tesla, NV50TCL_VIEWPORT_SCALE(0), 3);
-			so_data  (so, fui(1.0f));
-			so_data  (so, fui(-1.0f));
-			so_data  (so, fui(1.0f));
+			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
+			so_data  (so, 0);
+			so_method(so, tesla, 0x0f90, 1);
+			so_data  (so, 1);
 		}
-		so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
-		so_data  (so, 1);
 
 		so_ref(so, &nv50->state.viewport);
 		so_ref(NULL, &so);

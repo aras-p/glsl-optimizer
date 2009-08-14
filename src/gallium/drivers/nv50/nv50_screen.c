@@ -291,8 +291,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	so_method(so, screen->tesla, 0x13bc, 1);
 	so_data  (so, 0x54);
+	/* origin is top left (set to 1 for bottom left) */
 	so_method(so, screen->tesla, 0x13ac, 1);
-	so_data  (so, 1);
+	so_data  (so, 0);
 	so_method(so, screen->tesla, 0x16b8, 1);
 	so_data  (so, 8);
 
