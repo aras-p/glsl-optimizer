@@ -417,21 +417,22 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       if (format == GL_COLOR) {
          if (att->Renderbuffer->_BaseFormat != GL_RGB &&
              att->Renderbuffer->_BaseFormat != GL_RGBA) {
-            ASSERT(att->Renderbuffer->RedBits);
-            ASSERT(att->Renderbuffer->GreenBits);
-            ASSERT(att->Renderbuffer->BlueBits);
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
          }
+         ASSERT(att->Renderbuffer->RedBits);
+         ASSERT(att->Renderbuffer->GreenBits);
+         ASSERT(att->Renderbuffer->BlueBits);
       }
       else if (format == GL_DEPTH) {
-         ASSERT(att->Renderbuffer->DepthBits);
          if (att->Renderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
+            ASSERT(att->Renderbuffer->DepthBits);
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
                   att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            ASSERT(att->Renderbuffer->DepthBits);
             /* OK */
          }
          else {
@@ -442,12 +443,13 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
       else {
          assert(format == GL_STENCIL);
-         ASSERT(att->Renderbuffer->StencilBits);
          if (att->Renderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
+            ASSERT(att->Renderbuffer->StencilBits);
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
                   att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            ASSERT(att->Renderbuffer->StencilBits);
             /* OK */
          }
          else {
