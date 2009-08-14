@@ -61,6 +61,7 @@ static const struct {
    { OFF, "GL_ARB_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
+   { OFF, "GL_ARB_seamless_cube_map",          F(ARB_seamless_cube_map) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
    { OFF, "GL_ARB_shading_language_120",       F(ARB_shading_language_120) },

@@ -1445,6 +1445,9 @@ struct gl_texture_attrib
 
    struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 
+   /** GL_ARB_seamless_cubemap */
+   GLboolean CubeMapSeamless;
+
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
@@ -2458,6 +2461,7 @@ struct gl_extensions
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_point_sprite;
+   GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_120;

@@ -7954,6 +7954,8 @@
 
 <xi:include href="ARB_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_seamless_cube_map.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 
 <!-- Non-ARB extensions sorted by extension number. -->
 
