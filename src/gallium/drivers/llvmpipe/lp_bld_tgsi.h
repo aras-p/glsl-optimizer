@@ -44,7 +44,10 @@ void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
-                  LLVMValueRef (*inputs)[4],
+                  LLVMValueRef *pos,
+                  LLVMValueRef a0_ptr,
+                  LLVMValueRef dadx_ptr,
+                  LLVMValueRef dady_ptr,
                   LLVMValueRef consts_ptr,
                   LLVMValueRef (*outputs)[4],
                   LLVMValueRef samplers_ptr);

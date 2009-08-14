@@ -69,13 +69,21 @@ struct lp_build_tgsi_soa_context
 {
    struct lp_build_context base;
 
-   LLVMValueRef (*inputs)[4];
+   LLVMValueRef x, y, w;
+   LLVMValueRef a0_ptr;
+   LLVMValueRef dadx_ptr;
+   LLVMValueRef dady_ptr;
+
    LLVMValueRef consts_ptr;
-   LLVMValueRef (*outputs)[4];
+   LLVMValueRef (*outputs)[NUM_CHANNELS];
    LLVMValueRef samplers_ptr;
 
-   LLVMValueRef immediates[LP_MAX_IMMEDIATES][4];
-   LLVMValueRef temps[LP_MAX_TEMPS][4];
+   LLVMValueRef oow;
+
+   LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+
+   LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
+   LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
    /** Coords/texels store */
    LLVMValueRef store_ptr;
@@ -1339,48 +1347,70 @@ emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
    struct tgsi_full_declaration *decl )
 {
-#if 0
    if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+      LLVMBuilderRef builder = bld->base.builder;
       unsigned first, last, mask;
-      unsigned i, j;
-      LLVMValueRef tmp;
+      unsigned attrib, chan;
 
       first = decl->DeclarationRange.First;
       last = decl->DeclarationRange.Last;
       mask = decl->Declaration.UsageMask;
 
-      for( i = first; i <= last; i++ ) {
-         for( j = 0; j < NUM_CHANNELS; j++ ) {
-            if( mask & (1 << j) ) {
+      for( attrib = first; attrib <= last; attrib++ ) {
+         for( chan = 0; chan < NUM_CHANNELS; chan++ ) {
+            LLVMValueRef input = bld->base.undef;
+
+            if( mask & (1 << chan) ) {
+               LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
+               LLVMValueRef a0;
+               LLVMValueRef dadx;
+               LLVMValueRef dady;
+               char name[32];
+
                switch( decl->Declaration.Interpolate ) {
-               case TGSI_INTERPOLATE_CONSTANT:
-                  bld->inputs[i][j] = bld->interp_coefs[i].a0[j];
-                  break;
-
-               case TGSI_INTERPOLATE_LINEAR:
-                  tmp = bld->interp_coefs[i].a0[j];
-                  tmp = lp_build_add(&bld->base, tmp, lp_build_mul(&bld->base, bld->pos[0], bld->interp_coefs[i].dadx[j]));
-                  tmp = lp_build_add(&bld->base, tmp, lp_build_mul(&bld->base, bld->pos[1], bld->interp_coefs[i].dady[j]));
-                  bld->inputs[i][j] = tmp;
-                  break;
-
                case TGSI_INTERPOLATE_PERSPECTIVE:
-                  tmp = bld->interp_coefs[i].a0[j];
-                  tmp = lp_build_add(&bld->base, tmp, lp_build_mul(&bld->base, bld->pos[0], bld->interp_coefs[i].dadx[j]));
-                  tmp = lp_build_add(&bld->base, tmp, lp_build_mul(&bld->base, bld->pos[1], bld->interp_coefs[i].dady[j]));
-                  tmp = lp_build_div(&bld->base, tmp, bld->pos[3]);
-                  bld->inputs[i][j] = tmp;
+               case TGSI_INTERPOLATE_LINEAR: {
+                  LLVMValueRef dadx_ptr = LLVMBuildGEP(builder, bld->dadx_ptr, &index, 1, "");
+                  LLVMValueRef dady_ptr = LLVMBuildGEP(builder, bld->dady_ptr, &index, 1, "");
+                  util_snprintf(name, sizeof name, "dadx_%u.%c", attrib, "xyzw"[chan]);
+                  dadx = LLVMBuildLoad(builder, dadx_ptr, name);
+                  util_snprintf(name, sizeof name, "dady_%u.%c", attrib, "xyzw"[chan]);
+                  dady = LLVMBuildLoad(builder, dady_ptr, name);
+               }
+
+               case TGSI_INTERPOLATE_CONSTANT: {
+                  LLVMValueRef a0_ptr = LLVMBuildGEP(builder, bld->a0_ptr, &index, 1, "");
+                  util_snprintf(name, sizeof name, "a0_%u.%c", attrib, "xyzw"[chan]);
+                  a0 = LLVMBuildLoad(builder, a0_ptr, name);
                   break;
+               }
 
                default:
-                  assert( 0 );
-		  break;
+                  assert(0);
+                  break;
                }
+
+               input = a0;
+
+               if (decl->Declaration.Interpolate != TGSI_INTERPOLATE_CONSTANT) {
+                  input = lp_build_add(&bld->base, input, lp_build_mul(&bld->base, bld->x, dadx));
+                  input = lp_build_add(&bld->base, input, lp_build_mul(&bld->base, bld->y, dady));
+               }
+
+               if (decl->Declaration.Interpolate == TGSI_INTERPOLATE_PERSPECTIVE) {
+                  if(!bld->oow)
+                     bld->oow = lp_build_rcp(&bld->base, bld->w);
+                  input = lp_build_mul(&bld->base, input, bld->oow);
+               }
+
+               util_snprintf(name, sizeof name, "input%u.%c", attrib, "xyzw"[chan]);
+               LLVMSetValueName(input, name);
             }
+
+            bld->inputs[attrib][chan] = input;
          }
       }
    }
-#endif
 }
 
 /**
@@ -1396,7 +1426,10 @@ void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
-                  LLVMValueRef (*inputs)[4],
+                  LLVMValueRef *pos,
+                  LLVMValueRef a0_ptr,
+                  LLVMValueRef dadx_ptr,
+                  LLVMValueRef dady_ptr,
                   LLVMValueRef consts_ptr,
                   LLVMValueRef (*outputs)[4],
                   LLVMValueRef samplers_ptr)
@@ -1409,7 +1442,12 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
-   bld.inputs = inputs;
+   bld.x = pos[0];
+   bld.y = pos[1];
+   bld.w = pos[3];
+   bld.a0_ptr = a0_ptr;
+   bld.dadx_ptr = dadx_ptr;
+   bld.dady_ptr = dady_ptr;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.samplers_ptr = samplers_ptr;

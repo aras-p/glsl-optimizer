@@ -47,7 +47,10 @@
 
 
 typedef void
-(*lp_shader_fs_func)(void *inputs,
+(*lp_shader_fs_func)(void *pos,
+                     void *a0,
+                     void *dadx,
+                     void *dady,
                      void *consts,
                      void *outputs,
                      struct tgsi_sampler **samplers);
@@ -65,6 +68,13 @@ struct lp_llvm_fragment_shader
    LLVMValueRef function;
 
    lp_shader_fs_func jit_function;
+
+   union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+
+   uint32_t magic;
 };
 
 
@@ -84,15 +94,19 @@ shader_generate(struct llvmpipe_screen *screen,
    union lp_type type;
    LLVMTypeRef elem_type;
    LLVMTypeRef vec_type;
-   LLVMTypeRef args[4];
-   LLVMValueRef inputs_ptr;
+   LLVMTypeRef arg_types[7];
+   LLVMTypeRef func_type;
+   LLVMValueRef pos_ptr;
+   LLVMValueRef a0_ptr;
+   LLVMValueRef dadx_ptr;
+   LLVMValueRef dady_ptr;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs_ptr;
    LLVMValueRef samplers_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
-   LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][4];
-   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][4];
+   LLVMValueRef pos[NUM_CHANNELS];
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    char name[32];
    unsigned i, j;
 
@@ -106,19 +120,31 @@ shader_generate(struct llvmpipe_screen *screen,
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
 
-   args[0] = LLVMPointerType(vec_type, 0);
-   args[1] = LLVMPointerType(elem_type, 0);
-   args[2] = LLVMPointerType(vec_type, 0);
-   args[3] = LLVMPointerType(LLVMInt8Type(), 0);
-   shader->function = LLVMAddFunction(screen->module, "shader", LLVMFunctionType(LLVMVoidType(), args, 4, 0));
+   arg_types[0] = LLVMPointerType(vec_type, 0);        /* pos */
+   arg_types[1] = LLVMPointerType(vec_type, 0);        /* a0 */
+   arg_types[2] = LLVMPointerType(vec_type, 0);        /* dadx */
+   arg_types[3] = LLVMPointerType(vec_type, 0);        /* dady */
+   arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
+   arg_types[5] = LLVMPointerType(vec_type, 0);        /* outputs */
+   arg_types[6] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+
+   func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
+
+   shader->function = LLVMAddFunction(screen->module, "shader", func_type);
    LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
 
-   inputs_ptr = LLVMGetParam(shader->function, 0);
-   consts_ptr = LLVMGetParam(shader->function, 1);
-   outputs_ptr = LLVMGetParam(shader->function, 2);
-   samplers_ptr = LLVMGetParam(shader->function, 3);
+   pos_ptr = LLVMGetParam(shader->function, 0);
+   a0_ptr = LLVMGetParam(shader->function, 1);
+   dadx_ptr = LLVMGetParam(shader->function, 2);
+   dady_ptr = LLVMGetParam(shader->function, 3);
+   consts_ptr = LLVMGetParam(shader->function, 4);
+   outputs_ptr = LLVMGetParam(shader->function, 5);
+   samplers_ptr = LLVMGetParam(shader->function, 6);
 
-   LLVMSetValueName(inputs_ptr, "inputs");
+   LLVMSetValueName(pos_ptr, "pos");
+   LLVMSetValueName(a0_ptr, "a0");
+   LLVMSetValueName(dadx_ptr, "dadx");
+   LLVMSetValueName(dady_ptr, "dady");
    LLVMSetValueName(consts_ptr, "consts");
    LLVMSetValueName(outputs_ptr, "outputs");
    LLVMSetValueName(samplers_ptr, "samplers");
@@ -127,23 +153,23 @@ shader_generate(struct llvmpipe_screen *screen,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   for(i = 0; i < PIPE_MAX_SHADER_INPUTS; ++i) {
-      for(j = 0; j < 4; ++j) {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*4 + j, 0);
-         util_snprintf(name, sizeof name, "input%u.%c", i, "xywz"[j]);
-         inputs[i][j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, inputs_ptr, &index, 1, ""), name);
-      }
+   for(j = 0; j < NUM_CHANNELS; ++j) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), j, 0);
+      util_snprintf(name, sizeof name, "pos.%c", "xyzw"[j]);
+      pos[j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), name);
    }
 
    memset(outputs, 0, sizeof outputs);
 
-   lp_build_tgsi_soa(builder, tokens, type, inputs, consts_ptr, outputs, samplers_ptr);
+   lp_build_tgsi_soa(builder, tokens, type,
+                     pos, a0_ptr, dadx_ptr, dady_ptr,
+                     consts_ptr, outputs, samplers_ptr);
 
    for(i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i) {
-      for(j = 0; j < 4; ++j) {
+      for(j = 0; j < NUM_CHANNELS; ++j) {
          if(outputs[i][j]) {
-            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*4 + j, 0);
-            util_snprintf(name, sizeof name, "output%u.%c", i, "xywz"[j]);
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*NUM_CHANNELS + j, 0);
+            util_snprintf(name, sizeof name, "output%u.%c", i, "xyzw"[j]);
             LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, name));
          }
       }
@@ -175,130 +201,55 @@ fs_llvm_prepare( const struct lp_fragment_shader *base,
 
 
 
-
-/**
- * Evaluate a constant-valued coefficient at the position of the
- * current quad.
- */
 static void
-eval_constant_coef(
-   struct tgsi_exec_machine *mach,
-   unsigned attrib,
-   unsigned chan )
+setup_pos_vector(struct lp_llvm_fragment_shader *shader,
+                 const struct tgsi_interp_coef *coef,
+                 float x, float y)
 {
-   unsigned i;
+   uint chan;
 
-   for( i = 0; i < QUAD_SIZE; i++ ) {
-      mach->Inputs[attrib].xyzw[chan].f[i] = mach->InterpCoefs[attrib].a0[chan];
+   /* do X */
+   shader->pos[0].f[0] = x;
+   shader->pos[0].f[1] = x + 1;
+   shader->pos[0].f[2] = x;
+   shader->pos[0].f[3] = x + 1;
+
+   /* do Y */
+   shader->pos[1].f[0] = y;
+   shader->pos[1].f[1] = y;
+   shader->pos[1].f[2] = y + 1;
+   shader->pos[1].f[3] = y + 1;
+
+   /* do Z and W for all fragments in the quad */
+   for (chan = 2; chan < 4; chan++) {
+      const float dadx = coef->dadx[chan];
+      const float dady = coef->dady[chan];
+      const float a0 = coef->a0[chan] + dadx * x + dady * y;
+      shader->pos[chan].f[0] = a0;
+      shader->pos[chan].f[1] = a0 + dadx;
+      shader->pos[chan].f[2] = a0 + dady;
+      shader->pos[chan].f[3] = a0 + dadx + dady;
    }
 }
 
-/**
- * Evaluate a linear-valued coefficient at the position of the
- * current quad.
- */
-static void
-eval_linear_coef(
-   struct tgsi_exec_machine *mach,
-   unsigned attrib,
-   unsigned chan )
-{
-   const float x = mach->QuadPos.xyzw[0].f[0];
-   const float y = mach->QuadPos.xyzw[1].f[0];
-   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
-   const float dady = mach->InterpCoefs[attrib].dady[chan];
-   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
-   mach->Inputs[attrib].xyzw[chan].f[0] = a0;
-   mach->Inputs[attrib].xyzw[chan].f[1] = a0 + dadx;
-   mach->Inputs[attrib].xyzw[chan].f[2] = a0 + dady;
-   mach->Inputs[attrib].xyzw[chan].f[3] = a0 + dadx + dady;
-}
-
-/**
- * Evaluate a perspective-valued coefficient at the position of the
- * current quad.
- */
-static void
-eval_perspective_coef(
-   struct tgsi_exec_machine *mach,
-   unsigned attrib,
-   unsigned chan )
-{
-   const float x = mach->QuadPos.xyzw[0].f[0];
-   const float y = mach->QuadPos.xyzw[1].f[0];
-   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
-   const float dady = mach->InterpCoefs[attrib].dady[chan];
-   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
-   const float *w = mach->QuadPos.xyzw[3].f;
-   /* divide by W here */
-   mach->Inputs[attrib].xyzw[chan].f[0] = a0 / w[0];
-   mach->Inputs[attrib].xyzw[chan].f[1] = (a0 + dadx) / w[1];
-   mach->Inputs[attrib].xyzw[chan].f[2] = (a0 + dady) / w[2];
-   mach->Inputs[attrib].xyzw[chan].f[3] = (a0 + dadx + dady) / w[3];
-}
-
-
-typedef void
-(*eval_coef_func)(struct tgsi_exec_machine *mach,
-                  unsigned attrib,
-                  unsigned chan );
-
 
 static void
-exec_declaration(
-   struct tgsi_exec_machine *mach,
-   const struct tgsi_full_declaration *decl )
+setup_coef_vector(struct lp_llvm_fragment_shader *shader,
+                  const struct tgsi_interp_coef *coef)
 {
-   if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
-      if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-         unsigned first, last, mask;
-         eval_coef_func eval;
+   unsigned attrib, chan, i;
 
-         first = decl->DeclarationRange.First;
-         last = decl->DeclarationRange.Last;
-         mask = decl->Declaration.UsageMask;
-
-         switch( decl->Declaration.Interpolate ) {
-         case TGSI_INTERPOLATE_CONSTANT:
-            eval = eval_constant_coef;
-            break;
-
-         case TGSI_INTERPOLATE_LINEAR:
-            eval = eval_linear_coef;
-            break;
-
-         case TGSI_INTERPOLATE_PERSPECTIVE:
-            eval = eval_perspective_coef;
-            break;
-
-         default:
-            eval = NULL;
-            assert( 0 );
-         }
-
-         if( mask == TGSI_WRITEMASK_XYZW ) {
-            unsigned i, j;
-
-            for( i = first; i <= last; i++ ) {
-               for( j = 0; j < NUM_CHANNELS; j++ ) {
-                  eval( mach, i, j );
-               }
-            }
-         }
-         else {
-            unsigned i, j;
-
-            for( j = 0; j < NUM_CHANNELS; j++ ) {
-               if( mask & (1 << j) ) {
-                  for( i = first; i <= last; i++ ) {
-                     eval( mach, i, j );
-                  }
-               }
-            }
+   for (attrib = 0; attrib < PIPE_MAX_SHADER_INPUTS; ++attrib) {
+      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+         for( i = 0; i < QUAD_SIZE; ++i ) {
+            shader->a0[attrib][chan].f[i] = coef[attrib].a0[chan];
+            shader->dadx[attrib][chan].f[i] = coef[attrib].dadx[chan];
+            shader->dady[attrib][chan].f[i] = coef[attrib].dady[chan];
          }
       }
    }
 }
+
 
 /* TODO: codegenerate the whole run function, skip this wrapper.
  * TODO: break dependency on tgsi_exec_machine struct
@@ -311,25 +262,24 @@ fs_llvm_run( const struct lp_fragment_shader *base,
 	    struct quad_header *quad )
 {
    struct lp_llvm_fragment_shader *shader = lp_llvm_fragment_shader(base);
-   unsigned i;
    unsigned mask;
 
    /* Compute X, Y, Z, W vals for this quad */
-   lp_setup_pos_vector(quad->posCoef, 
-                       (float)quad->input.x0, (float)quad->input.y0,
-                       &machine->QuadPos);
+   setup_pos_vector(shader,
+                    quad->posCoef,
+                   (float)quad->input.x0, (float)quad->input.y0);
+
+   setup_coef_vector(shader,
+                     quad->coef);
 
    /* init kill mask */
    tgsi_set_kill_mask(machine, 0x0);
    tgsi_set_exec_mask(machine, 1, 1, 1, 1);
 
-   /* execute declarations (interpolants) */
-   for (i = 0; i < machine->NumDeclarations; i++)
-      exec_declaration( machine, &machine->Declarations[i] );
-
    memset(machine->Outputs, 0, sizeof machine->Outputs);
 
-   shader->jit_function( machine->Inputs,
+   shader->jit_function( shader->pos,
+                         shader->a0, shader->dadx, shader->dady,
                          machine->Consts,
                          machine->Outputs,
                          machine->Samplers);
