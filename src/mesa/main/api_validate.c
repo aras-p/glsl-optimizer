@@ -97,14 +97,12 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
 
 
 /**
- * Check if OK to render by examining framebuffer status and vertex arrays.
+ * Check if OK to draw arrays/elements.
  */
 static GLboolean
 check_valid_to_render(GLcontext *ctx, const char *function)
 {
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "%s(incomplete framebuffer)", function);
+   if (!_mesa_valid_to_render(ctx, function)) {
       return GL_FALSE;
    }
 
