@@ -13,7 +13,6 @@ struct _egl_surface
    /* Managed by EGLDisplay for linking */
    _EGLDisplay *Display;
    _EGLSurface *Next;
-   EGLSurface Handle;
 
    /* The bound status of the surface */
    _EGLContext *Binding;

@@ -52,9 +52,6 @@ struct _egl_display
    _EGLContext *ContextList;
    _EGLSurface *SurfaceList;
 
-   /* hash table to map surfaces to handles */
-   _EGLHashtable *SurfaceHash;
-
 #ifdef _EGL_PLATFORM_X
    Display *Xdpy;
 #endif

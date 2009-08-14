@@ -18,8 +18,6 @@
 
 static _EGL_DECLARE_MUTEX(_eglDisplayInitMutex);
 static _EGLHashtable *_eglDisplayHash;
-/* TODO surface hash table should be per-display */
-static _EGLHashtable *_eglSurfaceHash;
 
 
 /**
@@ -47,8 +45,6 @@ _eglFiniDisplay(void)
 
       _eglDeleteHashTable(_eglDisplayHash);
       _eglDisplayHash = NULL;
-      _eglDeleteHashTable(_eglSurfaceHash);
-      _eglSurfaceHash = NULL;
    }
    _eglUnlockMutex(&_eglDisplayInitMutex);
 }
@@ -64,7 +60,6 @@ _eglInitDisplay(void)
       /* check again after acquiring lock */
       if (!_eglDisplayHash) {
          _eglDisplayHash = _eglNewHashTable();
-         _eglSurfaceHash = _eglNewHashTable();
 
          _eglAddAtExitCall(_eglFiniDisplay);
       }
@@ -89,9 +84,6 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
 #if defined(_EGL_PLATFORM_X)
       dpy->Xdpy = (Display *) nativeDisplay;
 #endif
-
-      _eglInitDisplay();
-      dpy->SurfaceHash = _eglSurfaceHash;
 
       dpy->DriverName = _eglPreloadDriver(dpy);
       if (!dpy->DriverName) {
@@ -319,18 +311,10 @@ _eglLookupContext(EGLContext ctx, _EGLDisplay *dpy)
 EGLSurface
 _eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
 {
-   EGLuint key;
-
    surf->Display = dpy;
    surf->Next = dpy->SurfaceList;
    dpy->SurfaceList = surf;
-
-   key = _eglHashGenKey(dpy->SurfaceHash);
-   assert(key);
-   _eglHashInsert(dpy->SurfaceHash, key, surf);
-
-   surf->Handle = (EGLSurface) _eglUIntToPointer(key);
-   return surf->Handle;
+   return (EGLSurface) surf;
 }
 
 
@@ -342,10 +326,6 @@ void
 _eglUnlinkSurface(_EGLSurface *surf)
 {
    _EGLSurface *prev;
-   EGLuint key = _eglPointerToUInt((void *) surf->Handle);
-
-   _eglHashRemove(surf->Display->SurfaceHash, key);
-   surf->Handle = EGL_NO_SURFACE;
 
    prev = surf->Display->SurfaceList;
    if (prev != surf) {
@@ -371,12 +351,9 @@ _eglUnlinkSurface(_EGLSurface *surf)
  * Return the handle of a linked surface, or EGL_NO_SURFACE.
  */
 EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surface)
+_eglGetSurfaceHandle(_EGLSurface *surf)
 {
-   if (surface)
-      return surface->Handle;
-   else
-      return EGL_NO_SURFACE;
+   return (EGLSurface) ((surf && surf->Display) ? surf : EGL_NO_SURFACE);
 }
 
 
@@ -385,8 +362,8 @@ _eglGetSurfaceHandle(_EGLSurface *surface)
  * Return NULL if the handle has no corresponding linked surface.
  */
 _EGLSurface *
-_eglLookupSurface(EGLSurface surf, _EGLDisplay *dpy)
+_eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
 {
-   EGLuint key = _eglPointerToUInt((void *) surf);
-   return (_EGLSurface *) _eglHashLookup(dpy->SurfaceHash, key);
+   _EGLSurface *surf = (_EGLSurface *) surface;
+   return (surf && surf->Display) ? surf : NULL;
 }
