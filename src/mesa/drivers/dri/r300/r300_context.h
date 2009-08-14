@@ -498,9 +498,10 @@ struct r300_vertex_buffer {
 };
 
 struct r300_index_buffer {
-	GLvoid *ptr;
+	struct radeon_bo *bo;
+	int bo_offset;
+
 	GLboolean is_32bit;
-	GLboolean free_needed;
 	GLuint count;
 };
 

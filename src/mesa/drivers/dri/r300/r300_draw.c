@@ -47,76 +47,6 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 
-static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_index_buffer *ind_buf = &r300->ind_buf;
-	GLvoid *src_ptr;
-	GLboolean mapped_bo = GL_FALSE;
-
-	if (!mesa_ind_buf) {
-		ind_buf->ptr = NULL;
-		return;
-	}
-
-	ind_buf->count = mesa_ind_buf->count;
-	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-		ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
-		mapped_bo = GL_TRUE;
-		assert(mesa_ind_buf->obj->Pointer != NULL);
-	}
-	src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
-
-	if (mesa_ind_buf->type == GL_UNSIGNED_BYTE) {
-		GLubyte *in = (GLubyte *)src_ptr;
-		GLuint *out = _mesa_malloc(sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1));
-		int i;
-
-		ind_buf->ptr = out;
-
-		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
-			*out++ = in[i] | in[i + 1] << 16;
-		}
-
-		if (i < mesa_ind_buf->count) {
-			*out++ = in[i];
-		}
-
-		ind_buf->free_needed = GL_TRUE;
-		ind_buf->is_32bit = GL_FALSE;
-	} else if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) {
-#if MESA_BIG_ENDIAN
-		GLushort *in = (GLushort *)src_ptr;
-		GLuint *out = _mesa_malloc(sizeof(GLushort) *
-					   ((mesa_ind_buf->count + 1) & ~1));
-		int i;
-
-		ind_buf->ptr = out;
-
-		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
-			*out++ = in[i] | in[i + 1] << 16;
-		}
-
-		if (i < mesa_ind_buf->count) {
-			*out++ = in[i];
-		}
-
-		ind_buf->free_needed = GL_TRUE;
-#else
-		ind_buf->ptr = src_ptr;
-		ind_buf->free_needed = GL_FALSE;
-#endif
-		ind_buf->is_32bit = GL_FALSE;
-	} else {
-		ind_buf->ptr = src_ptr;
-		ind_buf->free_needed = GL_FALSE;
-		ind_buf->is_32bit = GL_TRUE;
-	}
-
-	if (mapped_bo) {
-		ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
-	}
-}
 
 static int getTypeSize(GLenum type)
 {
@@ -140,6 +70,102 @@ static int getTypeSize(GLenum type)
 		default:
 			assert(0);
 			return 0;
+	}
+}
+
+static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLvoid *src_ptr;
+	GLuint *out;
+	int i;
+
+	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
+		ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		assert(mesa_ind_buf->obj->Pointer != NULL);
+	}
+	src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
+
+	if (mesa_ind_buf->type == GL_UNSIGNED_BYTE) {
+		GLuint size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
+		GLubyte *in = (GLubyte *)src_ptr;
+
+		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offset, size, 4);
+
+		assert(r300->ind_buf.bo->ptr != NULL);
+		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
+
+		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
+			*out++ = in[i] | in[i + 1] << 16;
+		}
+
+		if (i < mesa_ind_buf->count) {
+			*out++ = in[i];
+		}
+
+#if MESA_BIG_ENDIAN
+	} else { /* if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) */
+		GLushort *in = (GLushort *)src_ptr;
+		size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
+
+		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offet, size, 4);
+
+		assert(r300->ind_buf.bo->ptr != NULL)
+		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
+
+		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
+			*out++ = in[i] | in[i + 1] << 16;
+		}
+
+		if (i < mesa_ind_buf->count) {
+			*out++ = in[i];
+		}
+#endif
+	}
+
+	r300->ind_buf.is_32bit = GL_FALSE;
+	r300->ind_buf.count = mesa_ind_buf->count;
+}
+
+
+static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLboolean mapped_named_bo = GL_FALSE;
+
+	if (!mesa_ind_buf) {
+		r300->ind_buf.bo = NULL;
+		return;
+	}
+
+#if MESA_BIG_ENDIAN
+	if (mesa_ind_buf->type == GL_UNSIGNED_INT) {
+#else
+	if (mesa_ind_buf->type != GL_UNSIGNED_BYTE) {
+#endif
+		const GLvoid *src_ptr;
+		GLvoid *dst_ptr;
+
+		if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
+			ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+			assert(mesa_ind_buf->obj->Pointer != NULL);
+			mapped_named_bo = GL_TRUE;
+		}
+
+		src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
+
+		const GLuint size = mesa_ind_buf->count * getTypeSize(mesa_ind_buf->type);
+
+		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offset, size, 4);
+
+		assert(r300->ind_buf.bo->ptr != NULL);
+		dst_ptr = ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
+		_mesa_memcpy(dst_ptr, src_ptr, size);
+
+		r300->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
+		r300->ind_buf.count = mesa_ind_buf->count;
+	} else {
+		r300FixupIndexBuffer(ctx, mesa_ind_buf);
 	}
 }
 
@@ -473,13 +499,22 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 											  RADEON_GEM_DOMAIN_GTT, 0);
 			}
 		}
-
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
+
+		if (r300->ind_buf.bo) {
+			radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
+										  r300->ind_buf.bo,
+										  RADEON_GEM_DOMAIN_GTT, 0);
+		}
 	}
 }
 
 static void r300FreeData(GLcontext *ctx)
 {
+	/* Need to zero tcl.aos[n].bo and tcl.elt_dma_bo
+	 * to prevent double unref in radeonReleaseArrays
+	 * called during context destroy
+	 */
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	{
 		int i;
@@ -493,15 +528,9 @@ static void r300FreeData(GLcontext *ctx)
 	}
 
 	{
-		struct r300_index_buffer *ind_buf = &R300_CONTEXT(ctx)->ind_buf;
-		if (ind_buf->free_needed) {
-			_mesa_free(ind_buf->ptr);
+		if (r300->ind_buf.bo != NULL) {
+			radeon_bo_unref(r300->ind_buf.bo);
 		}
-
-		if (r300->radeon.tcl.elt_dma_bo) {
-			radeon_bo_unref(r300->radeon.tcl.elt_dma_bo);
-		}
-		r300->radeon.tcl.elt_dma_bo = NULL;
 	}
 }
 
@@ -526,7 +555,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	r300FixupIndexBuffer(ctx, ib);
+	r300SetupIndexBuffer(ctx, ib);
 
 	/* ensure we have the cmd buf space in advance to cover
  	 * the state + DMA AOS pointers */

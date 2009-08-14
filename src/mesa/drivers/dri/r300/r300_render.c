@@ -172,64 +172,42 @@ int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void r300EmitElts(GLcontext * ctx, unsigned long n_elts)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	void *out;
-	GLuint size;
-
-	size = ((rmesa->ind_buf.is_32bit ? 4 : 2) * n_elts + 3) & ~3;
-
-	radeonAllocDmaRegion(&rmesa->radeon, &rmesa->radeon.tcl.elt_dma_bo,
-			     &rmesa->radeon.tcl.elt_dma_offset, size, 4);
-	radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
-	out = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
-	memcpy(out, rmesa->ind_buf.ptr, size);
-	radeon_bo_unmap(rmesa->radeon.tcl.elt_dma_bo);
-}
-
 static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
+	int size;
 
-    r300_emit_scissor(rmesa->radeon.glCtx);
-	if (vertex_count > 0) {
-		int size;
+	r300_emit_scissor(rmesa->radeon.glCtx);
 
-		BEGIN_BATCH(10);
-		OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
-		if (rmesa->ind_buf.is_32bit) {
-			size = vertex_count;
-			OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
-			  ((vertex_count + 0) << 16) | type |
-			  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-		} else {
-			size = (vertex_count + 1) >> 1;
-			OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
-			   ((vertex_count + 0) << 16) | type);
-		}
-
-		if (!rmesa->radeon.radeonScreen->kernel_mm) {
-			OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
-			OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
-	    			 (R300_VAP_PORT_IDX0 >> 2));
-			OUT_BATCH_RELOC(rmesa->radeon.tcl.elt_dma_offset,
-					rmesa->radeon.tcl.elt_dma_bo,
-					rmesa->radeon.tcl.elt_dma_offset,
-					RADEON_GEM_DOMAIN_GTT, 0, 0);
-			OUT_BATCH(size);
-		} else {
-			OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
-			OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
-	    			 (R300_VAP_PORT_IDX0 >> 2));
-			OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
-			OUT_BATCH(size);
-			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-					      rmesa->radeon.tcl.elt_dma_bo,
-					      RADEON_GEM_DOMAIN_GTT, 0, 0);
-		}
-		END_BATCH();
+	BEGIN_BATCH(10);
+	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
+	if (rmesa->ind_buf.is_32bit) {
+		size = vertex_count;
+		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+		  (vertex_count << 16) | type |
+		  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+	} else {
+		size = (vertex_count + 1) >> 1;
+		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+		   (vertex_count << 16) | type);
 	}
+
+	if (!rmesa->radeon.radeonScreen->kernel_mm) {
+		OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
+		OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
+				 (R300_VAP_PORT_IDX0 >> 2));
+		OUT_BATCH_RELOC(0, rmesa->ind_buf.bo, rmesa->ind_buf.bo_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+		OUT_BATCH(size);
+	} else {
+		OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
+		OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
+				 (R300_VAP_PORT_IDX0 >> 2));
+		OUT_BATCH(rmesa->ind_buf.bo_offset);
+		OUT_BATCH(size);
+		radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+				      rmesa->ind_buf.bo, RADEON_GEM_DOMAIN_GTT, 0, 0);
+	}
+	END_BATCH();
 }
 
 static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
@@ -365,8 +343,7 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	 */
 	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
 
-	if (rmesa->ind_buf.ptr) {
-		r300EmitElts(ctx, num_verts);
+	if (rmesa->ind_buf.bo) {
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, 0);
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);
