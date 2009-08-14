@@ -594,23 +594,10 @@ static void r300DrawPrims(GLcontext *ctx,
 			 GLuint min_index,
 			 GLuint max_index)
 {
-	struct split_limits limits;
 	GLboolean retval;
-
-	if (ib)
-		limits.max_verts = 0xffffffff;
-	else
-		limits.max_verts = 65535;
-
-	limits.max_indices = 65535;
-	limits.max_vb_size = 1024*1024;
 
 	if (min_index) {
 		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims );
-		return;
-	}
-	if ((ib && ib->count > 65535)) {
-		vbo_split_prims (ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims, &limits);
 		return;
 	}
 

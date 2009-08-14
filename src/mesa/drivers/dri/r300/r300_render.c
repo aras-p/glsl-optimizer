@@ -337,6 +337,11 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	if (type < 0 || num_verts <= 0)
 		return;
 
+	if (num_verts > 65535) {
+		WARN_ONCE("Can't handle more then 65535 vertices at once\n");
+		return;
+	}
+
 	/* Make space for at least 128 dwords.
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
