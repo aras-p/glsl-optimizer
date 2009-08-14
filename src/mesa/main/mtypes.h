@@ -2037,6 +2037,7 @@ struct gl_shader_program
    struct gl_program_parameter_list *Varying;
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
+   GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
 };   
 

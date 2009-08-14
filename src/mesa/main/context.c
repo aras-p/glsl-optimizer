@@ -150,6 +150,7 @@
 #include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
 #include "shader/program.h"
+#include "shader/prog_print.h"
 #include "shader/shader_api.h"
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
@@ -1613,6 +1614,32 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
                   "%s(incomplete framebuffer)", where);
       return GL_FALSE;
    }
+
+#ifdef DEBUG
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+      if (shProg) {
+         if (!shProg->_Used) {
+            /* This is the first time this shader is being used.
+             * Append shader's constants/uniforms to log file.
+             */
+            GLuint i;
+            for (i = 0; i < shProg->NumShaders; i++) {
+               struct gl_shader *sh = shProg->Shaders[i];
+               if (sh->Type == GL_VERTEX_SHADER) {
+                  _mesa_append_uniforms_to_file(sh,
+                                                &shProg->VertexProgram->Base);
+               }
+               else if (sh->Type == GL_FRAGMENT_SHADER) {
+                  _mesa_append_uniforms_to_file(sh,
+                                                &shProg->FragmentProgram->Base);
+               }
+            }
+            shProg->_Used = GL_TRUE;
+         }
+      }
+   }
+#endif
 
    return GL_TRUE;
 }
