@@ -140,6 +140,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
+   { "GL_ARB_seamless_cube_map",          NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
    { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
