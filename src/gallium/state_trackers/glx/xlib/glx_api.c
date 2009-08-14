@@ -1298,10 +1298,8 @@ void
 glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                 unsigned long mask )
 {
-   GLXContext fakeSrc = src;
-   GLXContext fakeDst = dst;
-   XMesaContext xm_src = fakeSrc->xmesaContext;
-   XMesaContext xm_dst = fakeDst->xmesaContext;
+   XMesaContext xm_src = src->xmesaContext;
+   XMesaContext xm_dst = dst->xmesaContext;
    (void) dpy;
    if (MakeCurrent_PrevContext == src) {
       _mesa_Flush();
