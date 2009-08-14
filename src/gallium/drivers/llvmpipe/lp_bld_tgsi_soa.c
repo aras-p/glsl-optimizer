@@ -1372,16 +1372,22 @@ emit_declaration(
                case TGSI_INTERPOLATE_LINEAR: {
                   LLVMValueRef dadx_ptr = LLVMBuildGEP(builder, bld->dadx_ptr, &index, 1, "");
                   LLVMValueRef dady_ptr = LLVMBuildGEP(builder, bld->dady_ptr, &index, 1, "");
+                  dadx = LLVMBuildLoad(builder, dadx_ptr, "");
+                  dady = LLVMBuildLoad(builder, dady_ptr, "");
+                  dadx = lp_build_broadcast_scalar(&bld->base, dadx);
+                  dady = lp_build_broadcast_scalar(&bld->base, dady);
                   util_snprintf(name, sizeof name, "dadx_%u.%c", attrib, "xyzw"[chan]);
-                  dadx = LLVMBuildLoad(builder, dadx_ptr, name);
+                  LLVMSetValueName(dadx, name);
                   util_snprintf(name, sizeof name, "dady_%u.%c", attrib, "xyzw"[chan]);
-                  dady = LLVMBuildLoad(builder, dady_ptr, name);
+                  LLVMSetValueName(dady, name);
                }
 
                case TGSI_INTERPOLATE_CONSTANT: {
                   LLVMValueRef a0_ptr = LLVMBuildGEP(builder, bld->a0_ptr, &index, 1, "");
+                  a0 = LLVMBuildLoad(builder, a0_ptr, "");
+                  a0 = lp_build_broadcast_scalar(&bld->base, a0);
                   util_snprintf(name, sizeof name, "a0_%u.%c", attrib, "xyzw"[chan]);
-                  a0 = LLVMBuildLoad(builder, a0_ptr, name);
+                  LLVMSetValueName(a0, name);
                   break;
                }
 

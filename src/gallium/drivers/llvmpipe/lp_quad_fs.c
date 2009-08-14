@@ -54,9 +54,9 @@ struct quad_shade_stage
    struct quad_stage stage;  /**< base class */
 
    union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
    struct tgsi_exec_vector ALIGN16_ATTRIB outputs[PIPE_MAX_ATTRIBS];
 };
@@ -111,11 +111,9 @@ setup_coef_vector(struct quad_shade_stage *qss,
 
    for (attrib = 0; attrib < num_inputs; ++attrib) {
       for (chan = 0; chan < NUM_CHANNELS; ++chan) {
-         for( i = 0; i < QUAD_SIZE; ++i ) {
-            qss->a0[attrib][chan].f[i] = coef[attrib].a0[chan];
-            qss->dadx[attrib][chan].f[i] = coef[attrib].dadx[chan];
-            qss->dady[attrib][chan].f[i] = coef[attrib].dady[chan];
-         }
+         qss->a0[attrib][chan] = coef[attrib].a0[chan];
+         qss->dadx[attrib][chan] = coef[attrib].dadx[chan];
+         qss->dady[attrib][chan] = coef[attrib].dady[chan];
       }
    }
 }

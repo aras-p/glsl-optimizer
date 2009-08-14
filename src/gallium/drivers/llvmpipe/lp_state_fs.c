@@ -77,9 +77,9 @@ shader_generate(struct llvmpipe_screen *screen,
    vec_type = lp_build_vec_type(type);
 
    arg_types[0] = LLVMPointerType(vec_type, 0);        /* pos */
-   arg_types[1] = LLVMPointerType(vec_type, 0);        /* a0 */
-   arg_types[2] = LLVMPointerType(vec_type, 0);        /* dadx */
-   arg_types[3] = LLVMPointerType(vec_type, 0);        /* dady */
+   arg_types[1] = LLVMPointerType(elem_type, 0);       /* a0 */
+   arg_types[2] = LLVMPointerType(elem_type, 0);       /* dadx */
+   arg_types[3] = LLVMPointerType(elem_type, 0);       /* dady */
    arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
    arg_types[5] = LLVMPointerType(vec_type, 0);        /* outputs */
    arg_types[6] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
