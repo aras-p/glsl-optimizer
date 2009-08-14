@@ -367,6 +367,11 @@ void st_make_current(struct vg_context *st,
    }
 }
 
+struct vg_context *st_get_current(void)
+{
+   return vg_current_context();
+}
+
 void st_flush(struct vg_context *st, uint pipeFlushFlags,
               struct pipe_fence_handle **fence)
 {
@@ -399,8 +404,13 @@ void st_notify_swapbuffers_complete(struct st_framebuffer *stfb)
 {
 }
 
-int
-st_set_teximage(struct pipe_texture *pt, int target)
+int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
+                            enum pipe_format format)
+{
+   return 0;
+}
+
+int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
 {
    return 0;
 }

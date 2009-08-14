@@ -70,7 +70,10 @@ void st_set_framebuffer_surface(struct st_framebuffer *stfb,
 void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
 				    uint *width, uint *height);
 
-int st_set_teximage(struct pipe_texture *pt, int target);
+int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
+                            enum pipe_format format);
+
+int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level);
 
 int st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                uint surfIndex, struct pipe_surface **surf);
@@ -85,6 +88,8 @@ void st_unreference_framebuffer(struct st_framebuffer *stfb);
 void st_make_current(struct vg_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
+
+struct vg_context *st_get_current(void);
 
 void st_flush(struct vg_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence);
