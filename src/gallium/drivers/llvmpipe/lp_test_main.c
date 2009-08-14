@@ -136,38 +136,40 @@ write_elem(union lp_type type, void *dst, unsigned index, double value)
    }
    else {
       double scale = lp_const_scale(type);
-      value = round(value*scale);
+      long long lvalue = (long long)round(value*scale);
       if(type.sign) {
+         lvalue = MIN2(lvalue, (1 << (type.width - 1)) - 1);
          switch(type.width) {
          case 8:
-            *((int8_t *)dst + index) = (int8_t)value;
+            *((int8_t *)dst + index) = (int8_t)lvalue;
             break;
          case 16:
-            *((int16_t *)dst + index) = (int16_t)value;
+            *((int16_t *)dst + index) = (int16_t)lvalue;
             break;
          case 32:
-            *((int32_t *)dst + index) = (int32_t)value;
+            *((int32_t *)dst + index) = (int32_t)lvalue;
             break;
          case 64:
-            *((int64_t *)dst + index) = (int32_t)value;
+            *((int64_t *)dst + index) = (int32_t)lvalue;
             break;
          default:
             assert(0);
          }
       }
       else {
+         lvalue = MIN2(lvalue, (1 << type.width) - 1);
          switch(type.width) {
          case 8:
-            *((uint8_t *)dst + index) = (uint8_t)value;
+            *((uint8_t *)dst + index) = (uint8_t)lvalue;
             break;
          case 16:
-            *((uint16_t *)dst + index) = (uint16_t)value;
+            *((uint16_t *)dst + index) = (uint16_t)lvalue;
             break;
          case 32:
-            *((uint32_t *)dst + index) = (uint32_t)value;
+            *((uint32_t *)dst + index) = (uint32_t)lvalue;
             break;
          case 64:
-            *((uint64_t *)dst + index) = (uint64_t)value;
+            *((uint64_t *)dst + index) = (uint64_t)lvalue;
             break;
          default:
             assert(0);
