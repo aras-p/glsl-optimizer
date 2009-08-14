@@ -885,7 +885,7 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
 static struct gl_program_parameter *
 get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
 {
-   const struct gl_program *prog;
+   const struct gl_program *prog = NULL;
    GLint progPos;
 
    progPos = shProg->Uniforms->Uniforms[index].VertPos;
@@ -915,7 +915,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLenum *type, GLchar *nameOut)
 {
    const struct gl_shader_program *shProg;
-   const struct gl_program *prog;
+   const struct gl_program *prog = NULL;
    const struct gl_program_parameter *param;
    GLint progPos;
 
