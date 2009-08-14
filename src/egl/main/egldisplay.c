@@ -275,3 +275,69 @@ _eglUnlinkSurface(_EGLSurface *surf)
    surf->Next = NULL;
    surf->Display = NULL;
 }
+
+
+#ifndef _EGL_SKIP_HANDLE_CHECK
+
+
+/**
+ * Return EGL_TRUE if the given handle is a valid handle to a display.
+ */
+EGLBoolean
+_eglCheckDisplayHandle(EGLDisplay dpy)
+{
+   _EGLDisplay *cur;
+
+   _eglLockMutex(_eglGlobal.Mutex);
+   cur = _eglGlobal.DisplayList;
+   while (cur) {
+      if (cur == (_EGLDisplay *) dpy)
+         break;
+      cur = cur->Next;
+   }
+   _eglUnlockMutex(_eglGlobal.Mutex);
+   return (cur != NULL);
+}
+
+
+/**
+ * Return EGL_TRUE if the given handle is a valid handle to a context.
+ */
+EGLBoolean
+_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
+{
+   _EGLContext *cur;
+
+   cur = dpy->ContextList;
+   while (cur) {
+      if (cur == (_EGLContext *) ctx) {
+         assert(cur->Display == dpy);
+         break;
+      }
+      cur = cur->Next;
+   }
+   return (cur != NULL);
+}
+
+
+/**
+ * Return EGL_TRUE if the given handle is a valid handle to a surface.
+ */
+EGLBoolean
+_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
+{
+   _EGLSurface *cur;
+
+   cur = dpy->SurfaceList;
+   while (cur) {
+      if (cur == (_EGLSurface *) surf) {
+         assert(cur->Display == dpy);
+         break;
+      }
+      cur = cur->Next;
+   }
+   return (cur != NULL);
+}
+
+
+#endif /* !_EGL_SKIP_HANDLE_CHECK */

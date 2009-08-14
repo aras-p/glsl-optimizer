@@ -105,6 +105,48 @@ extern void
 _eglUnlinkSurface(_EGLSurface *surf);
 
 
+#ifndef _EGL_SKIP_HANDLE_CHECK
+
+
+extern EGLBoolean
+_eglCheckDisplayHandle(EGLDisplay dpy);
+
+
+extern EGLBoolean
+_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy);
+
+
+extern EGLBoolean
+_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy);
+
+
+#else /* !_EGL_SKIP_HANDLE_CHECK */
+
+/* Only do a quick check.  This is NOT standard compliant. */
+
+static INLINE EGLBoolean
+_eglCheckDisplayHandle(EGLDisplay dpy) { return EGL_TRUE; }
+
+
+static INLINE EGLBoolean
+_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
+{
+   _EGLContext *c = (_EGLContext *) ctx;
+   return (c && c->Display == dpy);
+}
+
+
+static INLINE EGLBoolean
+_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
+{
+   _EGLSurface *s = (_EGLSurface *) surf;
+   return (s && s->Display == dpy);
+}
+
+
+#endif /* _EGL_SKIP_HANDLE_CHECK */
+
+
 /**
  * Lookup a handle to find the linked display.
  * Return NULL if the handle has no corresponding linked display.
@@ -113,6 +155,8 @@ static INLINE _EGLDisplay *
 _eglLookupDisplay(EGLDisplay display)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) display;
+   if (!_eglCheckDisplayHandle(display))
+      dpy = NULL;
    return dpy;
 }
 
@@ -145,7 +189,9 @@ static INLINE _EGLContext *
 _eglLookupContext(EGLContext context, _EGLDisplay *dpy)
 {
    _EGLContext *ctx = (_EGLContext *) context;
-   return (ctx && ctx->Display) ? ctx : NULL;
+   if (!_eglCheckContextHandle(context, dpy))
+      ctx = NULL;
+   return ctx;
 }
 
 
@@ -177,7 +223,9 @@ static INLINE _EGLSurface *
 _eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
 {
    _EGLSurface *surf = (_EGLSurface *) surface;
-   return (surf && surf->Display) ? surf : NULL;
+   if (!_eglCheckSurfaceHandle(surf, dpy))
+      surf = NULL;
+   return surf;
 }
 
 
