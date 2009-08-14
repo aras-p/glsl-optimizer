@@ -76,29 +76,16 @@
 
 
 /**
- * Minimal __GLXContextRec that mimics a "real" GLX context.
+ * The GLXContext typedef is defined as a pointer to this structure.
  */
-typedef struct __GLXcontextRec
+struct __GLXcontextRec
 {
    Display *currentDpy;
    GLboolean isDirect;
    GLXDrawable currentDrawable;
    GLXDrawable currentReadable;
    XID xid;
-} __GLXcontext;
 
-
-/**
- * Our fake GLX context will contain a "real" GLX context and an XMesa context.
- *
- * Note that a pointer to a __GLXcontext is a pointer to a fake_glx_context,
- * and vice versa.
- *
- * XXX merge this struct with the one above.
- */
-struct fake_glx_context
-{
-   __GLXcontext glxContext;   /* this MUST be first! */
    XMesaContext xmesaContext;
 };
 
@@ -1059,13 +1046,13 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
                   GLXContext share_list, Bool direct )
 {
    XMesaVisual xmvis;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
+   GLXContext glxCtx;
+   GLXContext shareCtx = share_list;
 
    if (!dpy || !visinfo)
       return 0;
 
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
+   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
    if (!glxCtx)
       return 0;
 
@@ -1092,13 +1079,11 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
+   glxCtx->isDirect = DEFAULT_DIRECT;
+   glxCtx->currentDpy = dpy;
+   glxCtx->xid = (XID) glxCtx;  /* self pointer */
 
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
-
-   return (GLXContext) glxCtx;
+   return glxCtx;
 }
 
 
@@ -1115,7 +1100,7 @@ Bool
 glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
                        GLXDrawable read, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+   GLXContext glxCtx = ctx;
    static boolean firsttime = 1, no_rast = 0;
 
    if (firsttime) {
@@ -1177,9 +1162,9 @@ glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
 
       /* Now make current! */
       if (XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer)) {
-         ((__GLXcontext *) ctx)->currentDpy = dpy;
-         ((__GLXcontext *) ctx)->currentDrawable = draw;
-         ((__GLXcontext *) ctx)->currentReadable = read;
+         ctx->currentDpy = dpy;
+         ctx->currentDrawable = draw;
+         ctx->currentReadable = read;
          SetCurrentContext(ctx);
          return True;
       }
@@ -1224,10 +1209,9 @@ glXGetCurrentContext(void)
 Display *
 glXGetCurrentDisplay(void)
 {
-   struct fake_glx_context *glxCtx =
-      (struct fake_glx_context *) glXGetCurrentContext();
+   GLXContext glxCtx = glXGetCurrentContext();
 
-   return glxCtx ? glxCtx->glxContext.currentDpy : NULL;
+   return glxCtx ? glxCtx->currentDpy : NULL;
 }
 
 
@@ -1241,7 +1225,7 @@ glXGetCurrentDisplayEXT(void)
 GLXDrawable
 glXGetCurrentDrawable(void)
 {
-   __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
+   GLXContext gc = glXGetCurrentContext();
    return gc ? gc->currentDrawable : 0;
 }
 
@@ -1249,7 +1233,7 @@ glXGetCurrentDrawable(void)
 GLXDrawable
 glXGetCurrentReadDrawable(void)
 {
-   __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
+   GLXContext gc = glXGetCurrentContext();
    return gc ? gc->currentReadable : 0;
 }
 
@@ -1327,8 +1311,8 @@ void
 glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                 unsigned long mask )
 {
-   struct fake_glx_context *fakeSrc = (struct fake_glx_context *) src;
-   struct fake_glx_context *fakeDst = (struct fake_glx_context *) dst;
+   GLXContext fakeSrc = src;
+   GLXContext fakeDst = dst;
    XMesaContext xm_src = fakeSrc->xmesaContext;
    XMesaContext xm_dst = fakeDst->xmesaContext;
    (void) dpy;
@@ -1353,7 +1337,7 @@ glXQueryExtension( Display *dpy, int *errorb, int *event )
 void
 glXDestroyContext( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+   GLXContext glxCtx = ctx;
    (void) dpy;
    MakeCurrent_PrevContext = 0;
    MakeCurrent_PrevDrawable = 0;
@@ -1369,9 +1353,9 @@ glXDestroyContext( Display *dpy, GLXContext ctx )
 Bool
 glXIsDirect( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+   GLXContext glxCtx = ctx;
    (void) ctx;
-   return glxCtx->glxContext.isDirect;
+   return glxCtx->isDirect;
 }
 
 
@@ -2106,15 +2090,15 @@ GLXContext
 glXCreateNewContext( Display *dpy, GLXFBConfig config,
                           int renderType, GLXContext shareList, Bool direct )
 {
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) shareList;
+   GLXContext glxCtx;
+   GLXContext shareCtx = shareList;
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
        (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
       return 0;
 
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
+   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
    if (!glxCtx)
       return 0;
 
@@ -2128,20 +2112,18 @@ glXCreateNewContext( Display *dpy, GLXFBConfig config,
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
+   glxCtx->isDirect = DEFAULT_DIRECT;
+   glxCtx->currentDpy = dpy;
+   glxCtx->xid = (XID) glxCtx;  /* self pointer */
 
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
-
-   return (GLXContext) glxCtx;
+   return glxCtx;
 }
 
 
 int
 glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+   GLXContext glxCtx = ctx;
    XMesaContext xmctx = glxCtx->xmesaContext;
 
    (void) dpy;
@@ -2333,10 +2315,10 @@ GLXContext
 glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
+   GLXContext glxCtx;
+   GLXContext shareCtx = share_list;
 
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
+   glxCtx = CALLOC_STRUCT(__GLXcontextRec);
    if (!glxCtx)
       return 0;
 
@@ -2350,13 +2332,11 @@ glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
+   glxCtx->isDirect = DEFAULT_DIRECT;
+   glxCtx->currentDpy = dpy;
+   glxCtx->xid = (XID) glxCtx;  /* self pointer */
 
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
-
-   return (GLXContext) glxCtx;
+   return glxCtx;
 }
 
 
