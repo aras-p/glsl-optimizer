@@ -128,24 +128,24 @@ static char* r300_vs_swiz_debug[] = {
 
 static void r300_vs_op_dump(uint32_t op)
 {
-	printf(" dst: %d%s op: ",
+	fprintf(stderr, " dst: %d%s op: ",
 			(op >> 13) & 0x7f, r300_vs_dst_debug[(op >> 8) & 0x7]);
 	if (op & 0x80) {
 		if (op & 0x1) {
-			printf("PVS_MACRO_OP_2CLK_M2X_ADD\n");
+			fprintf(stderr, "PVS_MACRO_OP_2CLK_M2X_ADD\n");
 		} else {
-			printf("   PVS_MACRO_OP_2CLK_MADD\n");
+			fprintf(stderr, "   PVS_MACRO_OP_2CLK_MADD\n");
 		}
 	} else if (op & 0x40) {
-		printf("%s\n", r300_vs_me_ops[op & 0x1f]);
+		fprintf(stderr, "%s\n", r300_vs_me_ops[op & 0x1f]);
 	} else {
-		printf("%s\n", r300_vs_ve_ops[op & 0x1f]);
+		fprintf(stderr, "%s\n", r300_vs_ve_ops[op & 0x1f]);
 	}
 }
 
 static void r300_vs_src_dump(uint32_t src)
 {
-	printf(" reg: %d%s swiz: %s%s/%s%s/%s%s/%s%s\n",
+	fprintf(stderr, " reg: %d%s swiz: %s%s/%s%s/%s%s/%s%s\n",
 			(src >> 5) & 0x7f, r300_vs_src_debug[src & 0x3],
 			src & (1 << 25) ? "-" : " ",
 			r300_vs_swiz_debug[(src >> 13) & 0x7],
@@ -166,11 +166,11 @@ void r300_vertex_program_dump(struct r300_vertex_program_code * vs)
 		unsigned offset = i*4;
 		unsigned src;
 
-		printf("%d: op: 0x%08x", i, vs->body.d[offset]);
+		fprintf(stderr, "%d: op: 0x%08x", i, vs->body.d[offset]);
 		r300_vs_op_dump(vs->body.d[offset]);
 
 		for(src = 0; src < 3; ++src) {
-			printf(" src%i: 0x%08x", src, vs->body.d[offset+1+src]);
+			fprintf(stderr, " src%i: 0x%08x", src, vs->body.d[offset+1+src]);
 			r300_vs_src_dump(vs->body.d[offset+1+src]);
 		}
 	}
