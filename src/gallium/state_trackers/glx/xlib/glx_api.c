@@ -110,19 +110,6 @@ GetCurrentContext(void)
 
 
 /**********************************************************************/
-/***                     Debug helper code                          ***/
-/**********************************************************************/
-
-extern void _kw_ungrab_all( Display *dpy );
-void _kw_ungrab_all( Display *dpy )
-{
-   XUngrabPointer( dpy, CurrentTime );
-   XUngrabKeyboard( dpy, CurrentTime );
-}
-
-
-
-/**********************************************************************/
 /***                       GLX Visual Code                          ***/
 /**********************************************************************/
 
