@@ -489,8 +489,7 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (ctx->NewState)
       _mesa_update_state( ctx );
       
-   if (!vbo_validate_shaders(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawArrays(bad shader)");
+   if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {
       return;
    }
 
@@ -604,8 +603,7 @@ vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
-   if (!vbo_validate_shaders(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawRangeElements(bad shader)");
+   if (!_mesa_valid_to_render(ctx, "glDraw[Range]Elements")) {
       return;
    }
 
