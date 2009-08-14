@@ -2382,12 +2382,24 @@
 #define CALL_BlitFramebufferEXT(disp, parameters) (*((disp)->BlitFramebufferEXT)) parameters
 #define GET_BlitFramebufferEXT(disp) ((disp)->BlitFramebufferEXT)
 #define SET_BlitFramebufferEXT(disp, fn) ((disp)->BlitFramebufferEXT = fn)
+#define CALL_BufferParameteriAPPLE(disp, parameters) (*((disp)->BufferParameteriAPPLE)) parameters
+#define GET_BufferParameteriAPPLE(disp) ((disp)->BufferParameteriAPPLE)
+#define SET_BufferParameteriAPPLE(disp, fn) ((disp)->BufferParameteriAPPLE = fn)
+#define CALL_FlushMappedBufferRangeAPPLE(disp, parameters) (*((disp)->FlushMappedBufferRangeAPPLE)) parameters
+#define GET_FlushMappedBufferRangeAPPLE(disp) ((disp)->FlushMappedBufferRangeAPPLE)
+#define SET_FlushMappedBufferRangeAPPLE(disp, fn) ((disp)->FlushMappedBufferRangeAPPLE = fn)
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) (*((disp)->FramebufferTextureLayerEXT)) parameters
 #define GET_FramebufferTextureLayerEXT(disp) ((disp)->FramebufferTextureLayerEXT)
 #define SET_FramebufferTextureLayerEXT(disp, fn) ((disp)->FramebufferTextureLayerEXT = fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) (*((disp)->ProvokingVertexEXT)) parameters
 #define GET_ProvokingVertexEXT(disp) ((disp)->ProvokingVertexEXT)
 #define SET_ProvokingVertexEXT(disp, fn) ((disp)->ProvokingVertexEXT = fn)
+#define CALL_GetTexParameterPointervAPPLE(disp, parameters) (*((disp)->GetTexParameterPointervAPPLE)) parameters
+#define GET_GetTexParameterPointervAPPLE(disp) ((disp)->GetTexParameterPointervAPPLE)
+#define SET_GetTexParameterPointervAPPLE(disp, fn) ((disp)->GetTexParameterPointervAPPLE = fn)
+#define CALL_TextureRangeAPPLE(disp, parameters) (*((disp)->TextureRangeAPPLE)) parameters
+#define GET_TextureRangeAPPLE(disp) ((disp)->TextureRangeAPPLE)
+#define SET_TextureRangeAPPLE(disp, fn) ((disp)->TextureRangeAPPLE = fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) (*((disp)->StencilFuncSeparateATI)) parameters
 #define GET_StencilFuncSeparateATI(disp) ((disp)->StencilFuncSeparateATI)
 #define SET_StencilFuncSeparateATI(disp, fn) ((disp)->StencilFuncSeparateATI = fn)
@@ -2406,7 +2418,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 373
+#define driDispatchRemapTable_size 377
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2775,13 +2787,17 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define IsRenderbufferEXT_remap_index 363
 #define RenderbufferStorageEXT_remap_index 364
 #define BlitFramebufferEXT_remap_index 365
-#define FramebufferTextureLayerEXT_remap_index 366
-#define ProvokingVertexEXT_remap_index 367
-#define StencilFuncSeparateATI_remap_index 368
-#define ProgramEnvParameters4fvEXT_remap_index 369
-#define ProgramLocalParameters4fvEXT_remap_index 370
-#define GetQueryObjecti64vEXT_remap_index 371
-#define GetQueryObjectui64vEXT_remap_index 372
+#define BufferParameteriAPPLE_remap_index 366
+#define FlushMappedBufferRangeAPPLE_remap_index 367
+#define FramebufferTextureLayerEXT_remap_index 368
+#define ProvokingVertexEXT_remap_index 369
+#define GetTexParameterPointervAPPLE_remap_index 370
+#define TextureRangeAPPLE_remap_index 371
+#define StencilFuncSeparateATI_remap_index 372
+#define ProgramEnvParameters4fvEXT_remap_index 373
+#define ProgramLocalParameters4fvEXT_remap_index 374
+#define GetQueryObjecti64vEXT_remap_index 375
+#define GetQueryObjectui64vEXT_remap_index 376
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -3881,12 +3897,24 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_BlitFramebufferEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum)), driDispatchRemapTable[BlitFramebufferEXT_remap_index], parameters)
 #define GET_BlitFramebufferEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index])
 #define SET_BlitFramebufferEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BlitFramebufferEXT_remap_index], fn)
+#define CALL_BufferParameteriAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint)), driDispatchRemapTable[BufferParameteriAPPLE_remap_index], parameters)
+#define GET_BufferParameteriAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[BufferParameteriAPPLE_remap_index])
+#define SET_BufferParameteriAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BufferParameteriAPPLE_remap_index], fn)
+#define CALL_FlushMappedBufferRangeAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLintptr, GLsizeiptr)), driDispatchRemapTable[FlushMappedBufferRangeAPPLE_remap_index], parameters)
+#define GET_FlushMappedBufferRangeAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[FlushMappedBufferRangeAPPLE_remap_index])
+#define SET_FlushMappedBufferRangeAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FlushMappedBufferRangeAPPLE_remap_index], fn)
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint, GLint)), driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], parameters)
 #define GET_FramebufferTextureLayerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index])
 #define SET_FramebufferTextureLayerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ProvokingVertexEXT_remap_index], parameters)
 #define GET_ProvokingVertexEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index])
 #define SET_ProvokingVertexEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index], fn)
+#define CALL_GetTexParameterPointervAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLvoid **)), driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index], parameters)
+#define GET_GetTexParameterPointervAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index])
+#define SET_GetTexParameterPointervAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index], fn)
+#define CALL_TextureRangeAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLvoid *)), driDispatchRemapTable[TextureRangeAPPLE_remap_index], parameters)
+#define GET_TextureRangeAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[TextureRangeAPPLE_remap_index])
+#define SET_TextureRangeAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TextureRangeAPPLE_remap_index], fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparateATI_remap_index], parameters)
 #define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index])
 #define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index], fn)
