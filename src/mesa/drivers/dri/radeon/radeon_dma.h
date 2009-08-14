@@ -42,13 +42,15 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 const GLvoid * data, int size, int stride, int count);
 
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size);
+void radeon_init_dma(radeonContextPtr rmesa);
 void radeonAllocDmaRegion(radeonContextPtr rmesa,
 			  struct radeon_bo **pbo, int *poffset,
 			  int bytes, int alignment);
-void radeonReleaseDmaRegion(radeonContextPtr rmesa);
+void radeonReleaseDmaRegions(radeonContextPtr rmesa);
 
 void rcommon_flush_last_swtcl_prim(GLcontext *ctx);
 
 void *rcommonAllocDmaLowVerts(radeonContextPtr rmesa, int nverts, int vsize);
+void radeonFreeDmaRegions(radeonContextPtr rmesa);
 void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs );
 #endif

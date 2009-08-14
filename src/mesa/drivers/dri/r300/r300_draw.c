@@ -31,6 +31,7 @@
 #include "main/state.h"
 #include "main/api_validate.h"
 #include "main/enums.h"
+#include "main/simple_list.h"
 
 #include "r300_reg.h"
 #include "r300_context.h"
@@ -510,7 +511,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 		}
 
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
-		ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, r300->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+		ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, first_elem(&r300->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
 		if (ret)
 			r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, GL_TRUE);
 	}

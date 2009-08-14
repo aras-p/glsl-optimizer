@@ -2289,8 +2289,11 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct radeon_renderbuffer *rrb;
+   struct radeon_dma_bo *dma_bo;
    int i, ret;
 
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s\n", __FUNCTION__);
    radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
    rrb = radeon_get_colorbuffer(&rmesa->radeon);
@@ -2323,9 +2326,12 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
-   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
-   if (ret)
-       return GL_FALSE;
+   dma_bo = first_elem(&rmesa->radeon.dma.reserved);
+   {
+       ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, dma_bo->bo, RADEON_GEM_DOMAIN_GTT, 0);
+       if (ret)
+	   return GL_FALSE;
+   }
    return GL_TRUE;
 }
 

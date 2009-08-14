@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/simple_list.h"
 
 #include "swrast_setup/swrast_setup.h"
 #include "math/m_translate.h"
@@ -291,7 +292,7 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    radeonEmitState(&rmesa->radeon);
    radeonEmitVertexAOS( rmesa,
 			rmesa->radeon.swtcl.vertex_size,
-			rmesa->radeon.dma.current,
+			first_elem(&rmesa->radeon.dma.reserved)->bo,
 			current_offset);
 
 		      

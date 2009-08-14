@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
+#include "main/simple_list.h"
 
 #include "r600_context.h"
 #include "r700_state.h"
@@ -685,7 +686,7 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
 
-	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, first_elem(&rmesa->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
 	if (ret)
 		return GL_FALSE;
 	return GL_TRUE;

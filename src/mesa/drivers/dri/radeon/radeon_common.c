@@ -1043,7 +1043,7 @@ void radeonFlush(GLcontext *ctx)
 	   we have no DMA buffer allocated.
 	   then no point flushing anything at all.
 	*/
-	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && !radeon->dma.current)
+	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && is_empty_list(&radeon->dma.reserved))
 		return;
 
 	if (radeon->dma.flush)
@@ -1152,7 +1152,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 {
 	int ret;
 
-	radeonReleaseDmaRegion(rmesa);
+	radeonReleaseDmaRegions(rmesa);
 
 	LOCK_HARDWARE(rmesa);
 	ret = rcommonFlushCmdBufLocked(rmesa, caller);

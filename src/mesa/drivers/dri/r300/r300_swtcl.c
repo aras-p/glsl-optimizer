@@ -39,6 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_tex.h"
 #include "r300_render.h"
+#include "main/simple_list.h"
 
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
@@ -617,7 +618,7 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
     r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
 			rmesa->radeon.swtcl.vertex_size,
-			rmesa->radeon.dma.current,
+			first_elem(&rmesa->radeon.dma.reserved)->bo,
 			current_offset);
 
 	r300EmitVbufPrim(rmesa,

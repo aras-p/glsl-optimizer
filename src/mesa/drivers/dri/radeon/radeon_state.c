@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/state.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
+#include "main/simple_list.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -2099,7 +2100,7 @@ static GLboolean r100ValidateBuffers(GLcontext *ctx)
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
-   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, first_elem(&rmesa->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
    if (ret)
        return GL_FALSE;
    return GL_TRUE;

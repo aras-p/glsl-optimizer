@@ -264,6 +264,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	}
 
 	make_empty_list(&radeon->query.not_flushed_head);
+	radeon_init_dma(radeon);
 
 	return GL_TRUE;
 }
@@ -309,10 +310,11 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 
 	assert(radeon);
 	if (radeon) {
-		if (radeon->dma.current) {
+		if (!is_empty_list(&radeon->dma.reserved)) {
 			rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 		}
 
+		radeonFreeDmaRegions(radeon);
 		radeonReleaseArrays(radeon->glCtx, ~0);
 		meta_destroy_metaops(&radeon->meta);
 		if (radeon->vtbl.free_context)

@@ -31,6 +31,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/context.h"
+#include "main/simple_list.h"
 #include "swrast/swrast.h"
 
 #include "radeon_common.h"
@@ -52,7 +53,7 @@ static void r700Flush(GLcontext *ctx)
 	   we have no DMA buffer allocated.
 	   then no point flushing anything at all.
 	*/
-	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && !radeon->dma.current)
+	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && is_empty_list(&radeon->dma.reserved))
 		return;
 
 	if (radeon->dma.flush)

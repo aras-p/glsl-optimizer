@@ -18,6 +18,22 @@ struct radeon_context;
 
 #include "radeon_bocs_wrapper.h"
 
+/* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
+   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
+   with other compilers ... GLUE!
+*/
+#define WARN_ONCE(a, ...)	{ \
+	static int warn##__LINE__=1; \
+	if(warn##__LINE__){ \
+		fprintf(stderr, "*********************************WARN_ONCE*********************************\n"); \
+		fprintf(stderr, "File %s function %s line %d\n", \
+			__FILE__, __FUNCTION__, __LINE__); \
+		fprintf(stderr,  a, ## __VA_ARGS__);\
+		fprintf(stderr, "***************************************************************************\n"); \
+		warn##__LINE__=0;\
+		} \
+	}
+
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
 typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
@@ -281,12 +297,22 @@ struct radeon_aos {
 	int count; /** Number of vertices */
 };
 
+#define DMA_BO_FREE_TIME 100
+
+struct radeon_dma_bo {
+  struct radeon_dma_bo *next, *prev;
+  struct radeon_bo *bo;
+  int expire_counter;
+};
+
 struct radeon_dma {
         /* Active dma region.  Allocations for vertices and retained
          * regions come from here.  Also used for emitting random vertices,
          * these may be flushed by calling flush_current();
          */
-        struct radeon_bo *current; /** Buffer that DMA memory is allocated from */
+	struct radeon_dma_bo free;
+	struct radeon_dma_bo wait;
+	struct radeon_dma_bo reserved;
         int current_used; /** Number of bytes allocated and forgotten about */
         int current_vertexptr; /** End of active vertex region */
 
@@ -296,12 +322,6 @@ struct radeon_dma {
          * performed.
          */
         void (*flush) (GLcontext *);
-
-        /* Number of "in-flight" DMA buffers, i.e. the number of buffers
-         * for which a DISCARD command is currently queued in the command buffer
-.
-         */
-        GLuint nr_released_bufs;
 };
 
 /* radeon_swtcl.c
