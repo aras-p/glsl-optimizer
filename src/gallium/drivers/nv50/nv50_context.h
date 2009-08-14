@@ -71,6 +71,7 @@ struct nv50_sampler_stateobj {
 struct nv50_miptree_level {
 	int *image_offset;
 	unsigned pitch;
+	unsigned tile_mode;
 };
 
 struct nv50_miptree {

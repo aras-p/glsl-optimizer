@@ -8,6 +8,7 @@ struct nv50_transfer {
 	struct pipe_transfer base;
 	struct nouveau_bo *bo;
 	unsigned level_offset;
+	unsigned level_tiling;
 	int level_pitch;
 	int level_width;
 	int level_height;
@@ -16,11 +17,14 @@ struct nv50_transfer {
 };
 
 static void
-nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct nouveau_bo *src_bo,
-			unsigned src_offset, int src_pitch, int sx, int sy,
-			int sw, int sh, struct nouveau_bo *dst_bo,
-			unsigned dst_offset, int dst_pitch, int dx, int dy,
-			int dw, int dh, int cpp, int width, int height,
+nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
+			struct nouveau_bo *src_bo, unsigned src_offset,
+			int src_pitch, unsigned src_tile_mode,
+			int sx, int sy, int sw, int sh,
+			struct nouveau_bo *dst_bo, unsigned dst_offset,
+			int dst_pitch, unsigned dst_tile_mode,
+			int dx, int dy, int dw, int dh,
+			int cpp, int width, int height,
 			unsigned src_reloc, unsigned dst_reloc)
 {
 	struct nv50_screen *screen = nv50_screen(pscreen);
@@ -41,7 +45,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct nouveau_bo *src_bo,
 	} else {
 		BEGIN_RING(chan, m2mf, 0x0200, 6);
 		OUT_RING  (chan, 0);
-		OUT_RING  (chan, src_bo->tile_mode << 4);
+		OUT_RING  (chan, src_tile_mode << 4);
 		OUT_RING  (chan, sw * cpp);
 		OUT_RING  (chan, sh);
 		OUT_RING  (chan, 1);
@@ -57,7 +61,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct nouveau_bo *src_bo,
 	} else {
 		BEGIN_RING(chan, m2mf, 0x021c, 6);
 		OUT_RING  (chan, 0);
-		OUT_RING  (chan, dst_bo->tile_mode << 4);
+		OUT_RING  (chan, dst_tile_mode << 4);
 		OUT_RING  (chan, dw * cpp);
 		OUT_RING  (chan, dh);
 		OUT_RING  (chan, 1);
@@ -136,6 +140,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->level_width = mt->base.width[level];
 	tx->level_height = mt->base.height[level];
 	tx->level_offset = lvl->image_offset[image];
+	tx->level_tiling = lvl->tile_mode;
 	tx->level_x = x;
 	tx->level_y = y;
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
@@ -147,9 +152,11 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	if (usage != PIPE_TRANSFER_WRITE) {
 		nv50_transfer_rect_m2mf(pscreen, mt->bo, tx->level_offset,
-					tx->level_pitch, x, y, tx->level_width,
-					tx->level_height, tx->bo, 0,
-					tx->base.stride, 0, 0,
+					tx->level_pitch, tx->level_tiling,
+					x, y,
+					tx->level_width, tx->level_height,
+					tx->bo, 0, tx->base.stride,
+					tx->bo->tile_mode, 0, 0,
 					tx->base.width, tx->base.height,
 					tx->base.block.size, w, h,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
@@ -168,12 +175,14 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	if (ptx->usage != PIPE_TRANSFER_READ) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0, tx->base.stride,
-					0, 0, tx->base.width, tx->base.height,
-					mt->bo, tx->level_offset,
-					tx->level_pitch, tx->level_x,
-					tx->level_y, tx->level_width,
-					tx->level_height, tx->base.block.size,
+					tx->bo->tile_mode, 0, 0,
 					tx->base.width, tx->base.height,
+					mt->bo, tx->level_offset,
+					tx->level_pitch, tx->level_tiling,
+					tx->level_x, tx->level_y,
+					tx->level_width, tx->level_height,
+					tx->base.block.size, tx->base.width,
+					tx->base.height,
 					NOUVEAU_BO_GART, NOUVEAU_BO_VRAM |
 					NOUVEAU_BO_GART);
 	}
