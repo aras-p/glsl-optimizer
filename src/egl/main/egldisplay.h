@@ -24,8 +24,10 @@ struct _egl_extensions
 
 struct _egl_display 
 {
+   /* used to link displays */
+   _EGLDisplay *Next;
+
    EGLNativeDisplayType NativeDisplay;
-   EGLDisplay Handle;
 
    const char *DriverName;
    _EGLDriver *Driver;
@@ -56,6 +58,10 @@ struct _egl_display
    Display *Xdpy;
 #endif
 };
+
+
+extern void
+_eglFiniDisplay(void);
 
 
 extern _EGLDisplay *

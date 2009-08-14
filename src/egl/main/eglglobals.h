@@ -2,7 +2,7 @@
 #define EGLGLOBALS_INCLUDED
 
 #include "egltypedefs.h"
-#include "eglhash.h"
+#include "egldisplay.h"
 #include "eglcurrent.h"
 #include "eglmutex.h"
 
@@ -13,6 +13,10 @@
 struct _egl_global
 {
    _EGLMutex *Mutex;
+
+   /* the list of all displays */
+   _EGLDisplay *DisplayList;
+
    EGLScreenMESA FreeScreenHandle;
 
    /* bitmaks of supported APIs (supported by _some_ driver) */

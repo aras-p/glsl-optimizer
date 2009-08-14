@@ -16,56 +16,27 @@
 #include "egllog.h"
 
 
-static _EGL_DECLARE_MUTEX(_eglDisplayInitMutex);
-static _EGLHashtable *_eglDisplayHash;
-
-
 /**
  * Finish display management.
  */
-static void
+void
 _eglFiniDisplay(void)
 {
-   _eglLockMutex(&_eglDisplayInitMutex);
-   if (_eglDisplayHash) {
-      EGLuint key = _eglHashFirstEntry(_eglDisplayHash);
+   _EGLDisplay *dpyList, *dpy;
 
-      while (key) {
-         _EGLDisplay *dpy = (_EGLDisplay *)
-            _eglHashLookup(_eglDisplayHash, key);
-         assert(dpy);
+   /* atexit function is called with global mutex locked */
+   dpyList = _eglGlobal.DisplayList;
+   while (dpyList) {
+      /* pop list head */
+      dpy = dpyList;
+      dpyList = dpyList->Next;
 
-         if (dpy->ContextList || dpy->SurfaceList)
-            _eglLog(_EGL_DEBUG, "Display %u is destroyed with resources", key);
+      if (dpy->ContextList || dpy->SurfaceList)
+         _eglLog(_EGL_DEBUG, "Display %p is destroyed with resources", dpy);
 
-         free(dpy);
-
-         key = _eglHashNextEntry(_eglDisplayHash, key);
-      }
-
-      _eglDeleteHashTable(_eglDisplayHash);
-      _eglDisplayHash = NULL;
+      free(dpy);
    }
-   _eglUnlockMutex(&_eglDisplayInitMutex);
-}
-
-
-/* This can be avoided if hash table can be statically initialized */
-static INLINE void
-_eglInitDisplay(void)
-{
-   if (!_eglDisplayHash) {
-      _eglLockMutex(&_eglDisplayInitMutex);
-
-      /* check again after acquiring lock */
-      if (!_eglDisplayHash) {
-         _eglDisplayHash = _eglNewHashTable();
-
-         _eglAddAtExitCall(_eglFiniDisplay);
-      }
-
-      _eglUnlockMutex(&_eglDisplayInitMutex);
-   }
+   _eglGlobal.DisplayList = NULL;
 }
 
 
@@ -102,17 +73,14 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
 EGLDisplay
 _eglLinkDisplay(_EGLDisplay *dpy)
 {
-   EGLuint key;
+   _eglLockMutex(_eglGlobal.Mutex);
 
-   _eglInitDisplay();
+   dpy->Next = _eglGlobal.DisplayList;
+   _eglGlobal.DisplayList = dpy;
 
-   key = _eglHashGenKey(_eglDisplayHash);
-   assert(key);
-   /* "link" the display to the hash table */
-   _eglHashInsert(_eglDisplayHash, key, dpy);
-   dpy->Handle = (EGLDisplay) _eglUIntToPointer(key);
+   _eglUnlockMutex(_eglGlobal.Mutex);
 
-   return dpy->Handle;
+   return (EGLDisplay) dpy;
 }
 
 
@@ -123,12 +91,25 @@ _eglLinkDisplay(_EGLDisplay *dpy)
 void
 _eglUnlinkDisplay(_EGLDisplay *dpy)
 {
-   EGLuint key = _eglPointerToUInt((void *) dpy->Handle);
+   _EGLDisplay *prev;
 
-   _eglInitDisplay();
+   _eglLockMutex(_eglGlobal.Mutex);
 
-   _eglHashRemove(_eglDisplayHash, key);
-   dpy->Handle = EGL_NO_DISPLAY;
+   prev = _eglGlobal.DisplayList;
+   if (prev != dpy) {
+      while (prev) {
+         if (prev->Next == dpy)
+            break;
+         prev = prev->Next;
+      }
+      assert(prev);
+      prev->Next = dpy->Next;
+   }
+   else {
+      _eglGlobal.DisplayList = dpy->Next;
+   }
+
+   _eglUnlockMutex(_eglGlobal.Mutex);
 }
 
 
@@ -136,12 +117,9 @@ _eglUnlinkDisplay(_EGLDisplay *dpy)
  * Return the handle of a linked display, or EGL_NO_DISPLAY.
  */
 EGLDisplay
-_eglGetDisplayHandle(_EGLDisplay *display)
+_eglGetDisplayHandle(_EGLDisplay *dpy)
 {
-   if (display)
-      return display->Handle;
-   else
-      return EGL_NO_DISPLAY;
+   return (EGLDisplay) ((dpy) ? dpy : EGL_NO_DISPLAY);
 }
 
 
@@ -150,13 +128,10 @@ _eglGetDisplayHandle(_EGLDisplay *display)
  * Return NULL if the handle has no corresponding linked display.
  */
 _EGLDisplay *
-_eglLookupDisplay(EGLDisplay dpy)
+_eglLookupDisplay(EGLDisplay display)
 {
-   EGLuint key = _eglPointerToUInt((void *) dpy);
-
-   _eglInitDisplay();
-
-   return (_EGLDisplay *) _eglHashLookup(_eglDisplayHash, key);
+   _EGLDisplay *dpy = (_EGLDisplay *) display;
+   return dpy;
 }
 
 
@@ -167,21 +142,20 @@ _eglLookupDisplay(EGLDisplay dpy)
 _EGLDisplay *
 _eglFindDisplay(NativeDisplayType nativeDisplay)
 {
-   EGLuint key;
+   _EGLDisplay *dpy;
 
-   _eglInitDisplay();
+   _eglLockMutex(_eglGlobal.Mutex);
 
-   /* Walk the hash table.  Should switch to list if it is a problem. */
-   key = _eglHashFirstEntry(_eglDisplayHash);
-   while (key) {
-      _EGLDisplay *dpy = (_EGLDisplay *)
-            _eglHashLookup(_eglDisplayHash, key);
-      assert(dpy);
-
-      if (dpy->NativeDisplay == nativeDisplay)
+   dpy = _eglGlobal.DisplayList;
+   while (dpy) {
+      if (dpy->NativeDisplay == nativeDisplay) {
+         _eglUnlockMutex(_eglGlobal.Mutex);
          return dpy;
-      key = _eglHashNextEntry(_eglDisplayHash, key);
+      }
+      dpy = dpy->Next;
    }
+
+   _eglUnlockMutex(_eglGlobal.Mutex);
 
    return NULL;
 }
