@@ -148,7 +148,32 @@ nv50_state_emit(struct nv50_context *nv50)
 	struct nouveau_channel *chan = screen->base.channel;
 
 	if (nv50->pctx_id != screen->cur_pctx) {
-		nv50->state.dirty |= 0xffffffff;
+		if (nv50->state.fb)
+			nv50->state.dirty |= NV50_NEW_FRAMEBUFFER;
+		if (nv50->state.blend)
+			nv50->state.dirty |= NV50_NEW_BLEND;
+		if (nv50->state.zsa)
+			nv50->state.dirty |= NV50_NEW_ZSA;
+		if (nv50->state.vertprog)
+			nv50->state.dirty |= NV50_NEW_VERTPROG;
+		if (nv50->state.fragprog)
+			nv50->state.dirty |= NV50_NEW_FRAGPROG;
+		if (nv50->state.rast)
+			nv50->state.dirty |= NV50_NEW_RASTERIZER;
+		if (nv50->state.blend_colour)
+			nv50->state.dirty |= NV50_NEW_BLEND_COLOUR;
+		if (nv50->state.stipple)
+			nv50->state.dirty |= NV50_NEW_STIPPLE;
+		if (nv50->state.scissor)
+			nv50->state.dirty |= NV50_NEW_SCISSOR;
+		if (nv50->state.viewport)
+			nv50->state.dirty |= NV50_NEW_VIEWPORT;
+		if (nv50->state.tsc_upload)
+			nv50->state.dirty |= NV50_NEW_SAMPLER;
+		if (nv50->state.tic_upload)
+			nv50->state.dirty |= NV50_NEW_TEXTURE;
+		if (nv50->state.vtxfmt && nv50->state.vtxbuf)
+			nv50->state.dirty |= NV50_NEW_ARRAYS;
 		screen->cur_pctx = nv50->pctx_id;
 	}
 
