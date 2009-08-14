@@ -59,11 +59,11 @@ struct vertex_info;
 
 
 typedef void
-(*lp_shader_fs_func)(void *pos,
-                     void *a0,
-                     void *dadx,
-                     void *dady,
-                     void *consts,
+(*lp_shader_fs_func)(const void *pos,
+                     const void *a0,
+                     const void *dadx,
+                     const void *dady,
+                     const void *consts,
                      void *outputs,
                      struct tgsi_sampler **samplers);
 

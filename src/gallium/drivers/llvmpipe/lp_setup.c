@@ -92,7 +92,7 @@ struct setup_context {
    struct quad_header *quad_ptrs[MAX_QUADS];
    unsigned count;
 
-   struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
+   struct quad_interp_coef coef;
    struct tgsi_interp_coef posCoef;  /* For Z, W */
 
    struct {
@@ -383,34 +383,11 @@ static boolean setup_sort_vertices( struct setup_context *setup,
 
 
 /**
- * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
- * The value value comes from vertex[slot][i].
- * The result will be put into setup->coef[slot].a0[i].
- * \param slot  which attribute slot
- * \param i  which component of the slot (0..3)
- */
-static void const_coeff( struct setup_context *setup,
-                         struct tgsi_interp_coef *coef,
-                         uint vertSlot, uint i)
-{
-   assert(i <= 3);
-
-   coef->dadx[i] = 0;
-   coef->dady[i] = 0;
-
-   /* need provoking vertex info!
-    */
-   coef->a0[i] = setup->vprovoke[vertSlot][i];
-}
-
-
-/**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
  */
-static void tri_linear_coeff( struct setup_context *setup,
-                              struct tgsi_interp_coef *coef,
-                              uint vertSlot, uint i)
+static void tri_pos_coeff( struct setup_context *setup,
+                           uint vertSlot, unsigned i)
 {
    float botda = setup->vmid[vertSlot][i] - setup->vmin[vertSlot][i];
    float majda = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
@@ -421,8 +398,8 @@ static void tri_linear_coeff( struct setup_context *setup,
 
    assert(i <= 3);
 
-   coef->dadx[i] = dadx;
-   coef->dady[i] = dady;
+   setup->posCoef.dadx[i] = dadx;
+   setup->posCoef.dady[i] = dady;
 
    /* calculate a0 as the value which would be sampled for the
     * fragment at (0,0), taking into account that we want to sample at
@@ -436,17 +413,108 @@ static void tri_linear_coeff( struct setup_context *setup,
     * to define a0 as the sample at a pixel center somewhere near vmin
     * instead - i'll switch to this later.
     */
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+   setup->posCoef.a0[i] = (setup->vmin[vertSlot][i] -
+                           (dadx * (setup->vmin[0][0] - 0.5f) +
+                            dady * (setup->vmin[0][1] - 0.5f)));
 
    /*
    debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
-		slot, "xyzw"[i],
-		setup->coef[slot].a0[i],
-		setup->coef[slot].dadx[i],
-		setup->coef[slot].dady[i]);
+                slot, "xyzw"[i],
+                setup->coef[slot].a0[i],
+                setup->coef[slot].dadx[i],
+                setup->coef[slot].dady[i]);
    */
+}
+
+
+/**
+ * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
+ * The value value comes from vertex[slot][i].
+ * The result will be put into setup->coef[slot].a0[i].
+ * \param slot  which attribute slot
+ * \param i  which component of the slot (0..3)
+ */
+static void const_pos_coeff( struct setup_context *setup,
+                             uint vertSlot, unsigned i)
+{
+   setup->posCoef.dadx[i] = 0;
+   setup->posCoef.dady[i] = 0;
+
+   /* need provoking vertex info!
+    */
+   setup->posCoef.a0[i] = setup->vprovoke[vertSlot][i];
+}
+
+
+/**
+ * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
+ * The value value comes from vertex[slot][i].
+ * The result will be put into setup->coef[slot].a0[i].
+ * \param slot  which attribute slot
+ * \param i  which component of the slot (0..3)
+ */
+static void const_coeff( struct setup_context *setup,
+                         unsigned attrib,
+                         uint vertSlot)
+{
+   unsigned i;
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      setup->coef.dadx[attrib][i] = 0;
+      setup->coef.dady[attrib][i] = 0;
+
+      /* need provoking vertex info!
+       */
+      setup->coef.a0[attrib][i] = setup->vprovoke[vertSlot][i];
+   }
+}
+
+
+/**
+ * Compute a0, dadx and dady for a linearly interpolated coefficient,
+ * for a triangle.
+ */
+static void tri_linear_coeff( struct setup_context *setup,
+                              unsigned attrib,
+                              uint vertSlot)
+{
+   unsigned i;
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      float botda = setup->vmid[vertSlot][i] - setup->vmin[vertSlot][i];
+      float majda = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
+      float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+      float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+      float dadx = a * setup->oneoverarea;
+      float dady = b * setup->oneoverarea;
+
+      assert(i <= 3);
+
+      setup->coef.dadx[attrib][i] = dadx;
+      setup->coef.dady[attrib][i] = dady;
+
+      /* calculate a0 as the value which would be sampled for the
+       * fragment at (0,0), taking into account that we want to sample at
+       * pixel centers, in other words (0.5, 0.5).
+       *
+       * this is neat but unfortunately not a good way to do things for
+       * triangles with very large values of dadx or dady as it will
+       * result in the subtraction and re-addition from a0 of a very
+       * large number, which means we'll end up loosing a lot of the
+       * fractional bits and precision from a0.  the way to fix this is
+       * to define a0 as the sample at a pixel center somewhere near vmin
+       * instead - i'll switch to this later.
+       */
+      setup->coef.a0[attrib][i] = (setup->vmin[vertSlot][i] -
+                     (dadx * (setup->vmin[0][0] - 0.5f) +
+                      dady * (setup->vmin[0][1] - 0.5f)));
+
+      /*
+      debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
+                   slot, "xyzw"[i],
+                   setup->coef[slot].a0[i],
+                   setup->coef[slot].dadx[i],
+                   setup->coef[slot].dady[i]);
+      */
+   }
 }
 
 
@@ -459,35 +527,38 @@ static void tri_linear_coeff( struct setup_context *setup,
  * divide the interpolated value by the interpolated W at that fragment.
  */
 static void tri_persp_coeff( struct setup_context *setup,
-                             struct tgsi_interp_coef *coef,
-                             uint vertSlot, uint i)
+                             unsigned attrib,
+                             uint vertSlot)
 {
-   /* premultiply by 1/w  (v[0][3] is always W):
-    */
-   float mina = setup->vmin[vertSlot][i] * setup->vmin[0][3];
-   float mida = setup->vmid[vertSlot][i] * setup->vmid[0][3];
-   float maxa = setup->vmax[vertSlot][i] * setup->vmax[0][3];
-   float botda = mida - mina;
-   float majda = maxa - mina;
-   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
-   float dadx = a * setup->oneoverarea;
-   float dady = b * setup->oneoverarea;
+   unsigned i;
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      /* premultiply by 1/w  (v[0][3] is always W):
+       */
+      float mina = setup->vmin[vertSlot][i] * setup->vmin[0][3];
+      float mida = setup->vmid[vertSlot][i] * setup->vmid[0][3];
+      float maxa = setup->vmax[vertSlot][i] * setup->vmax[0][3];
+      float botda = mida - mina;
+      float majda = maxa - mina;
+      float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+      float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+      float dadx = a * setup->oneoverarea;
+      float dady = b * setup->oneoverarea;
 
-   /*
-   debug_printf("tri persp %d,%d: %f %f %f\n", vertSlot, i,
-          	setup->vmin[vertSlot][i],
-          	setup->vmid[vertSlot][i],
-       		setup->vmax[vertSlot][i]
-          );
-   */
-   assert(i <= 3);
+      /*
+      debug_printf("tri persp %d,%d: %f %f %f\n", vertSlot, i,
+                   setup->vmin[vertSlot][i],
+                   setup->vmid[vertSlot][i],
+                   setup->vmax[vertSlot][i]
+             );
+      */
+      assert(i <= 3);
 
-   coef->dadx[i] = dadx;
-   coef->dady[i] = dady;
-   coef->a0[i] = (mina -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+      setup->coef.dadx[attrib][i] = dadx;
+      setup->coef.dady[attrib][i] = dady;
+      setup->coef.a0[attrib][i] = (mina -
+                     (dadx * (setup->vmin[0][0] - 0.5f) +
+                      dady * (setup->vmin[0][1] - 0.5f)));
+   }
 }
 
 
@@ -501,21 +572,21 @@ static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
    /*X*/
-   setup->coef[slot].a0[0] = 0;
-   setup->coef[slot].dadx[0] = 1.0;
-   setup->coef[slot].dady[0] = 0.0;
+   setup->coef.a0[slot][0] = 0;
+   setup->coef.dadx[slot][0] = 1.0;
+   setup->coef.dady[slot][0] = 0.0;
    /*Y*/
-   setup->coef[slot].a0[1] = 0.0;
-   setup->coef[slot].dadx[1] = 0.0;
-   setup->coef[slot].dady[1] = 1.0;
+   setup->coef.a0[slot][1] = 0.0;
+   setup->coef.dadx[slot][1] = 0.0;
+   setup->coef.dady[slot][1] = 1.0;
    /*Z*/
-   setup->coef[slot].a0[2] = setup->posCoef.a0[2];
-   setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
-   setup->coef[slot].dady[2] = setup->posCoef.dady[2];
+   setup->coef.a0[slot][2] = setup->posCoef.a0[2];
+   setup->coef.dadx[slot][2] = setup->posCoef.dadx[2];
+   setup->coef.dady[slot][2] = setup->posCoef.dady[2];
    /*W*/
-   setup->coef[slot].a0[3] = setup->posCoef.a0[3];
-   setup->coef[slot].dadx[3] = setup->posCoef.dadx[3];
-   setup->coef[slot].dady[3] = setup->posCoef.dady[3];
+   setup->coef.a0[slot][3] = setup->posCoef.a0[3];
+   setup->coef.dadx[slot][3] = setup->posCoef.dadx[3];
+   setup->coef.dady[slot][3] = setup->posCoef.dady[3];
 }
 
 
@@ -533,27 +604,23 @@ static void setup_tri_coefficients( struct setup_context *setup )
 
    /* z and w are done by linear interpolation:
     */
-   tri_linear_coeff(setup, &setup->posCoef, 0, 2);
-   tri_linear_coeff(setup, &setup->posCoef, 0, 3);
+   tri_pos_coeff(setup, 0, 2);
+   tri_pos_coeff(setup, 0, 3);
 
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < lpfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
-      uint j;
 
       switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         const_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         tri_linear_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_PERSPECTIVE:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         tri_persp_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
@@ -563,9 +630,9 @@ static void setup_tri_coefficients( struct setup_context *setup )
       }
 
       if (lpfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
-         setup->coef[fragSlot].dadx[0] = 0.0;
-         setup->coef[fragSlot].dady[0] = 0.0;
+         setup->coef.a0[fragSlot][0] = 1.0f - setup->facing;
+         setup->coef.dadx[fragSlot][0] = 0.0;
+         setup->coef.dady[fragSlot][0] = 0.0;
       }
    }
 }
@@ -769,18 +836,40 @@ void setup_tri( struct setup_context *setup,
  * for a line.
  */
 static void
-line_linear_coeff(const struct setup_context *setup,
-                  struct tgsi_interp_coef *coef,
-                  uint vertSlot, uint i)
+linear_pos_coeff(struct setup_context *setup,
+                 uint vertSlot, uint i)
 {
    const float da = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
    const float dadx = da * setup->emaj.dx * setup->oneoverarea;
    const float dady = da * setup->emaj.dy * setup->oneoverarea;
-   coef->dadx[i] = dadx;
-   coef->dady[i] = dady;
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+   setup->posCoef.dadx[i] = dadx;
+   setup->posCoef.dady[i] = dady;
+   setup->posCoef.a0[i] = (setup->vmin[vertSlot][i] -
+                           (dadx * (setup->vmin[0][0] - 0.5f) +
+                            dady * (setup->vmin[0][1] - 0.5f)));
+}
+
+
+/**
+ * Compute a0, dadx and dady for a linearly interpolated coefficient,
+ * for a line.
+ */
+static void
+line_linear_coeff(struct setup_context *setup,
+                  unsigned attrib,
+                  uint vertSlot)
+{
+   unsigned i;
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      const float da = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
+      const float dadx = da * setup->emaj.dx * setup->oneoverarea;
+      const float dady = da * setup->emaj.dy * setup->oneoverarea;
+      setup->coef.dadx[attrib][i] = dadx;
+      setup->coef.dady[attrib][i] = dady;
+      setup->coef.a0[attrib][i] = (setup->vmin[vertSlot][i] -
+                     (dadx * (setup->vmin[0][0] - 0.5f) +
+                      dady * (setup->vmin[0][1] - 0.5f)));
+   }
 }
 
 
@@ -789,21 +878,24 @@ line_linear_coeff(const struct setup_context *setup,
  * for a line.
  */
 static void
-line_persp_coeff(const struct setup_context *setup,
-                 struct tgsi_interp_coef *coef,
-                 uint vertSlot, uint i)
+line_persp_coeff(struct setup_context *setup,
+                 unsigned attrib,
+                 uint vertSlot)
 {
-   /* XXX double-check/verify this arithmetic */
-   const float a0 = setup->vmin[vertSlot][i] * setup->vmin[0][3];
-   const float a1 = setup->vmax[vertSlot][i] * setup->vmax[0][3];
-   const float da = a1 - a0;
-   const float dadx = da * setup->emaj.dx * setup->oneoverarea;
-   const float dady = da * setup->emaj.dy * setup->oneoverarea;
-   coef->dadx[i] = dadx;
-   coef->dady[i] = dady;
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+   unsigned i;
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      /* XXX double-check/verify this arithmetic */
+      const float a0 = setup->vmin[vertSlot][i] * setup->vmin[0][3];
+      const float a1 = setup->vmax[vertSlot][i] * setup->vmax[0][3];
+      const float da = a1 - a0;
+      const float dadx = da * setup->emaj.dx * setup->oneoverarea;
+      const float dady = da * setup->emaj.dy * setup->oneoverarea;
+      setup->coef.dadx[attrib][i] = dadx;
+      setup->coef.dady[attrib][i] = dady;
+      setup->coef.a0[attrib][i] = (setup->vmin[vertSlot][i] -
+                     (dadx * (setup->vmin[0][0] - 0.5f) +
+                      dady * (setup->vmin[0][1] - 0.5f)));
+   }
 }
 
 
@@ -841,27 +933,23 @@ setup_line_coefficients(struct setup_context *setup,
 
    /* z and w are done by linear interpolation:
     */
-   line_linear_coeff(setup, &setup->posCoef, 0, 2);
-   line_linear_coeff(setup, &setup->posCoef, 0, 3);
+   linear_pos_coeff(setup, 0, 2);
+   linear_pos_coeff(setup, 0, 3);
 
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < lpfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
-      uint j;
 
       switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         const_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         line_linear_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_PERSPECTIVE:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         line_persp_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
@@ -871,9 +959,9 @@ setup_line_coefficients(struct setup_context *setup,
       }
 
       if (lpfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
-         setup->coef[fragSlot].dadx[0] = 0.0;
-         setup->coef[fragSlot].dady[0] = 0.0;
+         setup->coef.a0[fragSlot][0] = 1.0f - setup->facing;
+         setup->coef.dadx[fragSlot][0] = 0.0;
+         setup->coef.dady[fragSlot][0] = 0.0;
       }
    }
    return TRUE;
@@ -1027,15 +1115,17 @@ setup_line(struct setup_context *setup,
 
 
 static void
-point_persp_coeff(const struct setup_context *setup,
+point_persp_coeff(struct setup_context *setup,
                   const float (*vert)[4],
-                  struct tgsi_interp_coef *coef,
-                  uint vertSlot, uint i)
+                  unsigned attrib,
+                  uint vertSlot)
 {
-   assert(i <= 3);
-   coef->dadx[i] = 0.0F;
-   coef->dady[i] = 0.0F;
-   coef->a0[i] = vert[vertSlot][i] * vert[0][3];
+   unsigned i;
+   for(i = 0; i < NUM_CHANNELS; ++i) {
+      setup->coef.dadx[attrib][i] = 0.0F;
+      setup->coef.dady[attrib][i] = 0.0F;
+      setup->coef.a0[attrib][i] = vert[vertSlot][i] * vert[0][3];
+   }
 }
 
 
@@ -1090,24 +1180,20 @@ setup_point( struct setup_context *setup,
    setup->vprovoke = v0;
 
    /* setup Z, W */
-   const_coeff(setup, &setup->posCoef, 0, 2);
-   const_coeff(setup, &setup->posCoef, 0, 3);
+   const_pos_coeff(setup, 0, 2);
+   const_pos_coeff(setup, 0, 3);
 
    for (fragSlot = 0; fragSlot < lpfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->attrib[fragSlot].src_index;
-      uint j;
 
       switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
          /* fall-through */
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         const_coeff(setup, fragSlot, vertSlot);
          break;
       case INTERP_PERSPECTIVE:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            point_persp_coeff(setup, setup->vprovoke,
-                              &setup->coef[fragSlot], vertSlot, j);
+         point_persp_coeff(setup, setup->vprovoke, fragSlot, vertSlot);
          break;
       case INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
@@ -1117,9 +1203,9 @@ setup_point( struct setup_context *setup,
       }
 
       if (lpfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
-         setup->coef[fragSlot].dadx[0] = 0.0;
-         setup->coef[fragSlot].dady[0] = 0.0;
+         setup->coef.a0[fragSlot][0] = 1.0f - setup->facing;
+         setup->coef.dadx[fragSlot][0] = 0.0;
+         setup->coef.dady[fragSlot][0] = 0.0;
       }
    }
 
@@ -1287,7 +1373,7 @@ struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
    setup->llvmpipe = llvmpipe;
 
    for (i = 0; i < MAX_QUADS; i++) {
-      setup->quad[i].coef = setup->coef;
+      setup->quad[i].coef = &setup->coef;
       setup->quad[i].posCoef = &setup->posCoef;
    }
 

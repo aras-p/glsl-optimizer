@@ -54,9 +54,6 @@ struct quad_shade_stage
    struct quad_stage stage;  /**< base class */
 
    union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
-   float ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
    struct tgsi_exec_vector ALIGN16_ATTRIB outputs[PIPE_MAX_ATTRIBS];
 };
@@ -102,23 +99,6 @@ setup_pos_vector(struct quad_shade_stage *qss,
 }
 
 
-static void
-setup_coef_vector(struct quad_shade_stage *qss,
-                  const struct tgsi_interp_coef *coef)
-{
-   unsigned num_inputs = qss->stage.llvmpipe->fs->info.num_inputs;
-   unsigned attrib, chan, i;
-
-   for (attrib = 0; attrib < num_inputs; ++attrib) {
-      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
-         qss->a0[attrib][chan] = coef[attrib].a0[chan];
-         qss->dadx[attrib][chan] = coef[attrib].dadx[chan];
-         qss->dady[attrib][chan] = coef[attrib].dady[chan];
-      }
-   }
-}
-
-
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
@@ -142,7 +122,9 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* run shader */
    llvmpipe->fs->jit_function( qss->pos,
-                               qss->a0, qss->dadx, qss->dady,
+                               quad->coef->a0,
+                               quad->coef->dadx,
+                               quad->coef->dady,
                                constants,
                                qss->outputs,
                                samplers);
@@ -217,9 +199,6 @@ shade_quads(struct quad_stage *qs,
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    unsigned i, pass = 0;
    
-   setup_coef_vector(qss,
-                     quads[0]->coef);
-
    for (i = 0; i < nr; i++) {
       if (!shade_quad(qs, quads[i]))
          continue;

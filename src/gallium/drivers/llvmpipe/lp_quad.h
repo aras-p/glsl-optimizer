@@ -89,6 +89,17 @@ struct quad_header_output
 
 
 /**
+ * Input interpolation coefficients
+ */
+struct quad_interp_coef
+{
+   float ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+};
+
+
+/**
  * Encodes everything we need to know about a 2x2 pixel block.  Uses
  * "Channel-Serial" or "SoA" layout.  
  */
@@ -100,7 +111,7 @@ struct quad_header {
    /* Redundant/duplicated:
     */
    const struct tgsi_interp_coef *posCoef;
-   const struct tgsi_interp_coef *coef;
+   const struct quad_interp_coef *coef;
 };
 
 #endif /* LP_QUAD_H */
