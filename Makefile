@@ -345,7 +345,9 @@ DRI_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
 
