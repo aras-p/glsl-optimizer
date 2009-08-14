@@ -55,7 +55,6 @@
 
 
 struct tgsi_sampler;
-struct tgsi_exec_machine;
 struct vertex_info;
 
 
@@ -84,11 +83,6 @@ struct lp_fragment_shader
    LLVMValueRef function;
 
    lp_shader_fs_func jit_function;
-
-   union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   union tgsi_exec_channel ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 };
 
 

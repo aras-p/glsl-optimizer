@@ -52,8 +52,13 @@
 struct quad_shade_stage
 {
    struct quad_stage stage;  /**< base class */
-   struct tgsi_exec_machine *machine;
-   struct tgsi_exec_vector *inputs, *outputs;
+
+   union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+
+   struct tgsi_exec_vector ALIGN16_ATTRIB outputs[PIPE_MAX_ATTRIBS];
 };
 
 
@@ -66,110 +71,53 @@ quad_shade_stage(struct quad_stage *qs)
 
 
 static void
-shader_prepare( const struct lp_fragment_shader *shader,
-                struct tgsi_exec_machine *machine,
-                struct tgsi_sampler **samplers )
-{
-   /*
-    * Bind tokens/shader to the interpreter's machine state.
-    * Avoid redundant binding.
-    */
-   if (machine->Tokens != shader->base.tokens) {
-      tgsi_exec_machine_bind_shader( machine,
-                                     shader->base.tokens,
-                                     PIPE_MAX_SAMPLERS,
-                                     samplers );
-   }
-}
-
-
-
-static void
-setup_pos_vector(struct lp_fragment_shader *shader,
+setup_pos_vector(struct quad_shade_stage *qss,
                  const struct tgsi_interp_coef *coef,
                  float x, float y)
 {
    uint chan;
 
    /* do X */
-   shader->pos[0].f[0] = x;
-   shader->pos[0].f[1] = x + 1;
-   shader->pos[0].f[2] = x;
-   shader->pos[0].f[3] = x + 1;
+   qss->pos[0].f[0] = x;
+   qss->pos[0].f[1] = x + 1;
+   qss->pos[0].f[2] = x;
+   qss->pos[0].f[3] = x + 1;
 
    /* do Y */
-   shader->pos[1].f[0] = y;
-   shader->pos[1].f[1] = y;
-   shader->pos[1].f[2] = y + 1;
-   shader->pos[1].f[3] = y + 1;
+   qss->pos[1].f[0] = y;
+   qss->pos[1].f[1] = y;
+   qss->pos[1].f[2] = y + 1;
+   qss->pos[1].f[3] = y + 1;
 
    /* do Z and W for all fragments in the quad */
    for (chan = 2; chan < 4; chan++) {
       const float dadx = coef->dadx[chan];
       const float dady = coef->dady[chan];
       const float a0 = coef->a0[chan] + dadx * x + dady * y;
-      shader->pos[chan].f[0] = a0;
-      shader->pos[chan].f[1] = a0 + dadx;
-      shader->pos[chan].f[2] = a0 + dady;
-      shader->pos[chan].f[3] = a0 + dadx + dady;
+      qss->pos[chan].f[0] = a0;
+      qss->pos[chan].f[1] = a0 + dadx;
+      qss->pos[chan].f[2] = a0 + dady;
+      qss->pos[chan].f[3] = a0 + dadx + dady;
    }
 }
 
 
 static void
-setup_coef_vector(struct lp_fragment_shader *shader,
+setup_coef_vector(struct quad_shade_stage *qss,
                   const struct tgsi_interp_coef *coef)
 {
+   unsigned num_inputs = qss->stage.llvmpipe->fs->info.num_inputs;
    unsigned attrib, chan, i;
 
-   for (attrib = 0; attrib < PIPE_MAX_SHADER_INPUTS; ++attrib) {
+   for (attrib = 0; attrib < num_inputs; ++attrib) {
       for (chan = 0; chan < NUM_CHANNELS; ++chan) {
          for( i = 0; i < QUAD_SIZE; ++i ) {
-            shader->a0[attrib][chan].f[i] = coef[attrib].a0[chan];
-            shader->dadx[attrib][chan].f[i] = coef[attrib].dadx[chan];
-            shader->dady[attrib][chan].f[i] = coef[attrib].dady[chan];
+            qss->a0[attrib][chan].f[i] = coef[attrib].a0[chan];
+            qss->dadx[attrib][chan].f[i] = coef[attrib].dadx[chan];
+            qss->dady[attrib][chan].f[i] = coef[attrib].dady[chan];
          }
       }
    }
-}
-
-
-/* TODO: codegenerate the whole run function, skip this wrapper.
- * TODO: break dependency on tgsi_exec_machine struct
- * TODO: push Position calculation into the generated shader
- * TODO: process >1 quad at a time
- */
-static unsigned
-shader_run( struct lp_fragment_shader *shader,
-            struct tgsi_exec_machine *machine,
-            struct quad_header *quad )
-{
-   unsigned mask;
-
-   /* Compute X, Y, Z, W vals for this quad */
-   setup_pos_vector(shader,
-                    quad->posCoef,
-                    (float)quad->input.x0, (float)quad->input.y0);
-
-   setup_coef_vector(shader,
-                     quad->coef);
-
-   /* init kill mask */
-   tgsi_set_kill_mask(machine, 0x0);
-   tgsi_set_exec_mask(machine, 1, 1, 1, 1);
-
-   memset(machine->Outputs, 0, sizeof machine->Outputs);
-
-   shader->jit_function( shader->pos,
-                         shader->a0, shader->dadx, shader->dady,
-                         machine->Consts,
-                         machine->Outputs,
-                         machine->Samplers);
-
-   /* FIXME */
-   mask = ~0;
-
-   return mask;
 }
 
 
@@ -181,13 +129,32 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   struct tgsi_exec_machine *machine = qss->machine;
+   void *constants;
+   struct tgsi_sampler **samplers;
    boolean z_written;
 
+   /* Compute X, Y, Z, W vals for this quad */
+   setup_pos_vector(qss,
+                    quad->posCoef,
+                    (float)quad->input.x0, (float)quad->input.y0);
+
+
+   constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
+
    /* run shader */
-   quad->inout.mask &= shader_run( llvmpipe->fs, machine, quad );
+   llvmpipe->fs->jit_function( qss->pos,
+                               qss->a0, qss->dadx, qss->dady,
+                               constants,
+                               qss->outputs,
+                               samplers);
+
+   /* FIXME */
+#if 0
+   quad->inout.mask &= ... ;
    if (quad->inout.mask == 0)
       return FALSE;
+#endif
 
    /* store outputs */
    z_written = FALSE;
@@ -202,7 +169,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
             {
                uint cbuf = sem_index[i];
                memcpy(quad->output.color[cbuf],
-                      &machine->Outputs[i].xyzw[0].f[0],
+                      &qss->outputs[i].xyzw[0].f[0],
                       sizeof(quad->output.color[0]) );
             }
             break;
@@ -210,7 +177,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
             {
                uint j;
                for (j = 0; j < 4; j++) {
-                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+                  quad->output.depth[j] = qss->outputs[0].xyzw[2].f[j];
                }
                z_written = TRUE;
             }
@@ -250,13 +217,10 @@ shade_quads(struct quad_stage *qs,
                  unsigned nr)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   struct tgsi_exec_machine *machine = qss->machine;
-
    unsigned i, pass = 0;
    
-   machine->Consts = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
-   machine->InterpCoefs = quads[0]->coef;
+   setup_coef_vector(qss,
+                     quads[0]->coef);
 
    for (i = 0; i < nr; i++) {
       if (!shade_quad(qs, quads[i]))
@@ -282,13 +246,6 @@ shade_quads(struct quad_stage *qs,
 static void
 shade_begin(struct quad_stage *qs)
 {
-   struct quad_shade_stage *qss = quad_shade_stage(qs);
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-
-   shader_prepare( llvmpipe->fs,
-                   qss->machine,
-                   (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list );
-
    qs->next->begin(qs->next);
 }
 
@@ -296,10 +253,6 @@ shade_begin(struct quad_stage *qs)
 static void
 shade_destroy(struct quad_stage *qs)
 {
-   struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
-
-   tgsi_exec_machine_destroy(qss->machine);
-
    FREE( qs );
 }
 
@@ -307,25 +260,16 @@ shade_destroy(struct quad_stage *qs)
 struct quad_stage *
 lp_quad_shade_stage( struct llvmpipe_context *llvmpipe )
 {
-   struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
+   struct quad_shade_stage *qss;
+
+   qss = CALLOC_STRUCT(quad_shade_stage);
    if (!qss)
-      goto fail;
+      return NULL;
 
    qss->stage.llvmpipe = llvmpipe;
    qss->stage.begin = shade_begin;
    qss->stage.run = shade_quads;
    qss->stage.destroy = shade_destroy;
 
-   qss->machine = tgsi_exec_machine_create();
-   if (!qss->machine)
-      goto fail;
-
    return &qss->stage;
-
-fail:
-   if (qss && qss->machine)
-      tgsi_exec_machine_destroy(qss->machine);
-
-   FREE(qss);
-   return NULL;
 }
