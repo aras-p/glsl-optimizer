@@ -296,7 +296,7 @@ kill_temp_temp(struct nv50_pc *pc)
 static int
 ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 {
-	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * r * sizeof(float)),
+	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(float)),
 			       (pc->immd_nr + 1) * 4 * sizeof(float));
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
