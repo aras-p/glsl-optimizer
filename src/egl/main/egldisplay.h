@@ -6,8 +6,9 @@
 #endif
 
 #include "egltypedefs.h"
-#include "eglhash.h"
 #include "egldefines.h"
+#include "eglcontext.h"
+#include "eglsurface.h"
 
 
 /**
@@ -76,24 +77,6 @@ extern void
 _eglUnlinkDisplay(_EGLDisplay *dpy);
 
 
-extern EGLDisplay
-_eglGetDisplayHandle(_EGLDisplay *display);
-
-
-extern _EGLDisplay *
-_eglLookupDisplay(EGLDisplay dpy);
-
-
-/**
- * Return true if the display is linked.
- */
-static INLINE EGLBoolean
-_eglIsDisplayLinked(_EGLDisplay *dpy)
-{
-   return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
-}
-
-
 extern _EGLDisplay *
 _eglFindDisplay(NativeDisplayType nativeDisplay);
 
@@ -114,12 +97,66 @@ extern void
 _eglUnlinkContext(_EGLContext *ctx);
 
 
-extern EGLContext
-_eglGetContextHandle(_EGLContext *ctx);
+extern EGLSurface
+_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
 
 
-extern _EGLContext *
-_eglLookupContext(EGLContext ctx, _EGLDisplay *dpy);
+extern void
+_eglUnlinkSurface(_EGLSurface *surf);
+
+
+/**
+ * Lookup a handle to find the linked display.
+ * Return NULL if the handle has no corresponding linked display.
+ */
+static INLINE _EGLDisplay *
+_eglLookupDisplay(EGLDisplay display)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) display;
+   return dpy;
+}
+
+
+/**
+ * Return the handle of a linked display, or EGL_NO_DISPLAY.
+ */
+static INLINE EGLDisplay
+_eglGetDisplayHandle(_EGLDisplay *dpy)
+{
+   return (EGLDisplay) ((dpy) ? dpy : EGL_NO_DISPLAY);
+}
+
+
+/**
+ * Return true if the display is linked.
+ */
+static INLINE EGLBoolean
+_eglIsDisplayLinked(_EGLDisplay *dpy)
+{
+   return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
+}
+
+
+/**
+ * Lookup a handle to find the linked context.
+ * Return NULL if the handle has no corresponding linked context.
+ */
+static INLINE _EGLContext *
+_eglLookupContext(EGLContext context, _EGLDisplay *dpy)
+{
+   _EGLContext *ctx = (_EGLContext *) context;
+   return (ctx && ctx->Display) ? ctx : NULL;
+}
+
+
+/**
+ * Return the handle of a linked context, or EGL_NO_CONTEXT.
+ */
+static INLINE EGLContext
+_eglGetContextHandle(_EGLContext *ctx)
+{
+   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
+}
 
 
 /**
@@ -131,20 +168,27 @@ _eglIsContextLinked(_EGLContext *ctx)
    return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
 }
 
-extern EGLSurface
-_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
+
+/**
+ * Lookup a handle to find the linked surface.
+ * Return NULL if the handle has no corresponding linked surface.
+ */
+static INLINE _EGLSurface *
+_eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
+{
+   _EGLSurface *surf = (_EGLSurface *) surface;
+   return (surf && surf->Display) ? surf : NULL;
+}
 
 
-extern void
-_eglUnlinkSurface(_EGLSurface *surf);
-
-
-extern EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *);
-
-
-extern _EGLSurface *
-_eglLookupSurface(EGLSurface surf, _EGLDisplay *dpy);
+/**
+ * Return the handle of a linked surface, or EGL_NO_SURFACE.
+ */
+static INLINE EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *surf)
+{
+   return (EGLSurface) ((surf && surf->Display) ? surf : EGL_NO_SURFACE);
+}
 
 
 /**

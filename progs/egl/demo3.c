@@ -551,7 +551,7 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
    }
 }
 
-#include "../src/egl/main/egldisplay.h"
+#include "../../src/egl/main/egldisplay.h"
 
 typedef struct fb_display
 {

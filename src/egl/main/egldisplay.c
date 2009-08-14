@@ -114,28 +114,6 @@ _eglUnlinkDisplay(_EGLDisplay *dpy)
 
 
 /**
- * Return the handle of a linked display, or EGL_NO_DISPLAY.
- */
-EGLDisplay
-_eglGetDisplayHandle(_EGLDisplay *dpy)
-{
-   return (EGLDisplay) ((dpy) ? dpy : EGL_NO_DISPLAY);
-}
-
-
-/**
- * Lookup a handle to find the linked display.
- * Return NULL if the handle has no corresponding linked display.
- */
-_EGLDisplay *
-_eglLookupDisplay(EGLDisplay display)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) display;
-   return dpy;
-}
-
-
-/**
  * Find the display corresponding to the specified native display id in all
  * linked displays.
  */
@@ -257,28 +235,6 @@ _eglUnlinkContext(_EGLContext *ctx)
 
 
 /**
- * Return the handle of a linked context, or EGL_NO_CONTEXT.
- */
-EGLContext
-_eglGetContextHandle(_EGLContext *ctx)
-{
-   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
-}
-
-
-/**
- * Lookup a handle to find the linked context.
- * Return NULL if the handle has no corresponding linked context.
- */
-_EGLContext *
-_eglLookupContext(EGLContext ctx, _EGLDisplay *dpy)
-{
-   _EGLContext *context = (_EGLContext *) ctx;
-   return (context && context->Display) ? context : NULL;
-}
-
-
-/**
  * Link a surface to a display and return the handle of the link.
  * The handle can be passed to client directly.
  */
@@ -318,26 +274,4 @@ _eglUnlinkSurface(_EGLSurface *surf)
 
    surf->Next = NULL;
    surf->Display = NULL;
-}
-
-
-/**
- * Return the handle of a linked surface, or EGL_NO_SURFACE.
- */
-EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surf)
-{
-   return (EGLSurface) ((surf && surf->Display) ? surf : EGL_NO_SURFACE);
-}
-
-
-/**
- * Lookup a handle to find the linked surface.
- * Return NULL if the handle has no corresponding linked surface.
- */
-_EGLSurface *
-_eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
-{
-   _EGLSurface *surf = (_EGLSurface *) surface;
-   return (surf && surf->Display) ? surf : NULL;
 }
