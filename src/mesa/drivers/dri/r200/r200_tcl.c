@@ -146,7 +146,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
        rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
       GLushort *dest = (GLushort *)(rmesa->radeon.tcl.elt_dma_bo->ptr +
-				    rmesa->tcl.elt_used);
+				    rmesa->radeon.tcl.elt_dma_offset + rmesa->tcl.elt_used);
 
       rmesa->tcl.elt_used += nr*2;
 
