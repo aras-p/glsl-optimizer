@@ -382,37 +382,6 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	COMMIT_BATCH();
 }
 
-static void r300RunRender(GLcontext * ctx, struct tnl_pipeline_stage *stage)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	int i;
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *vb = &tnl->vb;
-
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	r300UpdateShaders(rmesa);
-	r300EmitArrays(ctx);
-
-	r300UpdateShaderStates(rmesa);
-
-	r300EmitCacheFlush(rmesa);
-	radeonEmitState(&rmesa->radeon);
-
-	for (i = 0; i < vb->PrimitiveCount; i++) {
-		GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
-		GLuint start = vb->Primitive[i].start;
-		GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-		r300RunRenderPrimitive(ctx, start, end, prim);
-	}
-
-	r300EmitCacheFlush(rmesa);
-
-	radeonReleaseArrays(ctx, ~0);
-}
-
-
 static const char *getFallbackString(uint32_t bit)
 {
 	switch (bit) {
@@ -449,7 +418,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	uint32_t old_fallback = rmesa->fallback;
 	static uint32_t fallback_warn = 0;
-	
+
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
 			if (RADEON_DEBUG & DEBUG_FALLBACKS)
@@ -470,7 +439,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 		/* update only if we change from no raster fallbacks to some raster fallbacks */
 		if (((old_fallback & R300_RASTER_FALLBACK_MASK) == 0) &&
 			((bit & R300_RASTER_FALLBACK_MASK) > 0)) {
-			
+
 			radeon_firevertices(&rmesa->radeon);
 			rmesa->radeon.swtcl.RenderIndex = ~0;
 			_swsetup_Wakeup( ctx );
@@ -489,7 +458,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 		/* update only if we have disabled all raster fallbacks */
 		if ((old_fallback & R300_RASTER_FALLBACK_MASK) == bit) {
 			_swrast_flush( ctx );
-			
+
 			tnl->Driver.Render.Start = r300RenderStart;
 			tnl->Driver.Render.Finish = r300RenderFinish;
 			tnl->Driver.Render.PrimitiveNotify = r300RenderPrimitive;
@@ -497,38 +466,10 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 			tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
 			tnl->Driver.Render.CopyPV = _tnl_copy_pv;
 			tnl->Driver.Render.Interp = _tnl_interp;
-			
+
 			_tnl_invalidate_vertex_state( ctx, ~0 );
 			_tnl_invalidate_vertices( ctx, ~0 );
 		}
 	}
-	
+
 }
-
-static GLboolean r300RunNonTCLRender(GLcontext * ctx,
-				     struct tnl_pipeline_stage *stage)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (rmesa->fallback & R300_RASTER_FALLBACK_MASK)
-		return GL_TRUE;
-
-	if (rmesa->options.hw_tcl_enabled == GL_FALSE)
-		return GL_TRUE;
-
-	r300RunRender(ctx, stage);
-
-	return GL_FALSE;
-}
-
-const struct tnl_pipeline_stage _r300_render_stage = {
-	"r300 Hardware Rasterization",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	r300RunNonTCLRender
-};
