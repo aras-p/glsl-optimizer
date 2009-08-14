@@ -79,9 +79,11 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 	GLvoid *src_ptr;
 	GLuint *out;
 	int i;
+	GLboolean mapped_named_bo = GL_FALSE;
 
 	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
 		ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		mapped_named_bo = GL_TRUE;
 		assert(mesa_ind_buf->obj->Pointer != NULL);
 	}
 	src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
@@ -125,13 +127,16 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 	r300->ind_buf.is_32bit = GL_FALSE;
 	r300->ind_buf.count = mesa_ind_buf->count;
+
+	if (mapped_named_bo) {
+		ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+	}
 }
 
 
 static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	GLboolean mapped_named_bo = GL_FALSE;
 
 	if (!mesa_ind_buf) {
 		r300->ind_buf.bo = NULL;
@@ -145,6 +150,7 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 #endif
 		const GLvoid *src_ptr;
 		GLvoid *dst_ptr;
+		GLboolean mapped_named_bo = GL_FALSE;
 
 		if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
 			ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
@@ -164,6 +170,10 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 		r300->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
 		r300->ind_buf.count = mesa_ind_buf->count;
+
+		if (mapped_named_bo) {
+			ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
+		}
 	} else {
 		r300FixupIndexBuffer(ctx, mesa_ind_buf);
 	}
