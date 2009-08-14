@@ -132,6 +132,32 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 
 
 LLVMValueRef
+lp_build_select(struct lp_build_context *bld,
+                LLVMValueRef mask,
+                LLVMValueRef a,
+                LLVMValueRef b)
+{
+   const union lp_type type = bld->type;
+
+   if(a == b)
+      return a;
+
+   /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
+
+   a = LLVMBuildAnd(bld->builder, a, mask, "");
+
+   /* This often gets translated to PANDN, but sometimes the NOT is
+    * pre-computed and stored in another constant. The best strategy depends
+    * on available registers, so it is not a big deal -- hopefully LLVM does
+    * the right decision attending the rest of the program.
+    */
+   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+
+   return LLVMBuildOr(bld->builder, a, b, "");
+}
+
+
+LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b,
@@ -188,19 +214,7 @@ lp_build_select_aos(struct lp_build_context *bld,
 #endif
    else {
       LLVMValueRef mask = lp_build_const_mask_aos(type, cond);
-
-      /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
-
-      a = LLVMBuildAnd(bld->builder, a, mask, "");
-
-      /* This often gets translated to PANDN, but sometimes the NOT is
-       * pre-computed and stored in another constant. The best strategy depends
-       * on available registers, so it is not a big deal -- hopefully LLVM does
-       * the right decision attending the rest of the program.
-       */
-      b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
-
-      return LLVMBuildOr(bld->builder, a, b, "");
+      return lp_build_select(bld, mask, a, b);
    }
 }
 

@@ -60,6 +60,12 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 
 
 LLVMValueRef
+lp_build_select(struct lp_build_context *bld,
+                LLVMValueRef mask,
+                LLVMValueRef a,
+                LLVMValueRef b);
+
+LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b,
