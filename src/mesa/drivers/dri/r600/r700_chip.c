@@ -528,6 +528,14 @@ GLboolean r700SendDepthTargetState(context_t *context)
 	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
         END_BATCH();
 
+	if ((context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) &&
+	    (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)) {
+		BEGIN_BATCH_NO_AUTOSTATE(2);
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SURFACE_BASE_UPDATE, 0));
+		R600_OUT_BATCH(1 << 0);
+		END_BATCH();
+	}
+
 	COMMIT_BATCH();
 
 	r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
