@@ -503,10 +503,13 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 			aos->components = vbuf->attribs[i].dwords;
 			aos->bo = vbuf->attribs[i].bo;
 
+			radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
+										  r300->vbuf.attribs[i].bo,
+										  RADEON_GEM_DOMAIN_GTT, 0);
 			if (vbuf->attribs[i].is_named_bo) {
-				radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-											  aos->bo,
-											  RADEON_GEM_DOMAIN_GTT, 0);
+				radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
+												  r300->vbuf.attribs[i].bo,
+												  RADEON_GEM_DOMAIN_GTT, 0);
 			}
 		}
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
