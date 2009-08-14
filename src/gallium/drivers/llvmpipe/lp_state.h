@@ -59,29 +59,36 @@ struct tgsi_exec_machine;
 struct vertex_info;
 
 
+typedef void
+(*lp_shader_fs_func)(void *pos,
+                     void *a0,
+                     void *dadx,
+                     void *dady,
+                     void *consts,
+                     void *outputs,
+                     struct tgsi_sampler **samplers);
+
 /**
  * Subclass of pipe_shader_state (though it doesn't really need to be).
  *
  * This is starting to look an awful lot like a quad pipeline stage...
  */
-struct lp_fragment_shader {
-   struct pipe_shader_state shader;
+struct lp_fragment_shader
+{
+   struct pipe_shader_state base;
 
    struct tgsi_shader_info info;
 
-   void (*prepare)( const struct lp_fragment_shader *shader,
-		    struct tgsi_exec_machine *machine,
-		    struct tgsi_sampler **samplers);
+   struct llvmpipe_screen *screen;
 
-   /* Run the shader - this interface will get cleaned up in the
-    * future:
-    */
-   unsigned (*run)( const struct lp_fragment_shader *shader,
-		    struct tgsi_exec_machine *machine,
-		    struct quad_header *quad );
+   LLVMValueRef function;
 
+   lp_shader_fs_func jit_function;
 
-   void (*delete)( struct lp_fragment_shader * );
+   union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   union tgsi_exec_channel ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 };
 
 

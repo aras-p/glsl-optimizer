@@ -7,9 +7,6 @@ env.ParseConfig('llvm-config --cppflags')
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
-		'lp_fs_exec.c',
-		'lp_fs_sse.c',
-		'lp_fs_llvm.c',
 		'lp_bld_arit.c',
 		'lp_bld_blend_aos.c',
 		'lp_bld_blend_soa.c',

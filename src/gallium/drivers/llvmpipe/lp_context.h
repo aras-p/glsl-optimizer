@@ -57,7 +57,7 @@ struct llvmpipe_context {
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_alpha_state *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
-   const struct lp_fragment_shader *fs;
+   struct lp_fragment_shader *fs;
    const struct lp_vertex_shader *vs;
 
    /** Other rendering state */
@@ -145,8 +145,6 @@ struct llvmpipe_context {
    unsigned tex_timestamp;
    struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
-   unsigned use_sse : 1;
-   unsigned dump_fs : 1;
    unsigned no_rast : 1;
 };
 

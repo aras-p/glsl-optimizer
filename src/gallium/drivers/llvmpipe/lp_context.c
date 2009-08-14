@@ -148,14 +148,6 @@ llvmpipe_create( struct pipe_screen *screen )
 
    util_init_math();
 
-#ifdef PIPE_ARCH_X86
-   llvmpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );
-#else
-   llvmpipe->use_sse = FALSE;
-#endif
-
-   llvmpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
-
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
    llvmpipe->pipe.destroy = llvmpipe_destroy;

@@ -1,5 +1,6 @@
 /**************************************************************************
  * 
+ * Copyright 2009 VMware, Inc.
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
@@ -25,10 +26,6 @@
  * 
  **************************************************************************/
 
-#include "lp_context.h"
-#include "lp_state.h"
-#include "lp_fs.h"
-
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "pipe/internal/p_winsys_screen.h"
@@ -37,34 +34,159 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
+#include "lp_bld_type.h"
+#include "lp_bld_tgsi.h"
+#include "lp_screen.h"
+#include "lp_context.h"
+#include "lp_state.h"
+#include "lp_quad.h"
+
+
+static void
+shader_generate(struct llvmpipe_screen *screen,
+                struct lp_fragment_shader *shader)
+{
+   const struct tgsi_token *tokens = shader->base.tokens;
+   union lp_type type;
+   LLVMTypeRef elem_type;
+   LLVMTypeRef vec_type;
+   LLVMTypeRef arg_types[7];
+   LLVMTypeRef func_type;
+   LLVMValueRef pos_ptr;
+   LLVMValueRef a0_ptr;
+   LLVMValueRef dadx_ptr;
+   LLVMValueRef dady_ptr;
+   LLVMValueRef consts_ptr;
+   LLVMValueRef outputs_ptr;
+   LLVMValueRef samplers_ptr;
+   LLVMBasicBlockRef block;
+   LLVMBuilderRef builder;
+   LLVMValueRef pos[NUM_CHANNELS];
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   char name[32];
+   unsigned i, j;
+
+   type.value = 0;
+   type.floating = TRUE;
+   type.sign = TRUE;
+   type.norm = FALSE;
+   type.width = 32;
+   type.length = 4;
+
+   elem_type = lp_build_elem_type(type);
+   vec_type = lp_build_vec_type(type);
+
+   arg_types[0] = LLVMPointerType(vec_type, 0);        /* pos */
+   arg_types[1] = LLVMPointerType(vec_type, 0);        /* a0 */
+   arg_types[2] = LLVMPointerType(vec_type, 0);        /* dadx */
+   arg_types[3] = LLVMPointerType(vec_type, 0);        /* dady */
+   arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
+   arg_types[5] = LLVMPointerType(vec_type, 0);        /* outputs */
+   arg_types[6] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+
+   func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
+
+   shader->function = LLVMAddFunction(screen->module, "shader", func_type);
+   LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
+
+   pos_ptr = LLVMGetParam(shader->function, 0);
+   a0_ptr = LLVMGetParam(shader->function, 1);
+   dadx_ptr = LLVMGetParam(shader->function, 2);
+   dady_ptr = LLVMGetParam(shader->function, 3);
+   consts_ptr = LLVMGetParam(shader->function, 4);
+   outputs_ptr = LLVMGetParam(shader->function, 5);
+   samplers_ptr = LLVMGetParam(shader->function, 6);
+
+   LLVMSetValueName(pos_ptr, "pos");
+   LLVMSetValueName(a0_ptr, "a0");
+   LLVMSetValueName(dadx_ptr, "dadx");
+   LLVMSetValueName(dady_ptr, "dady");
+   LLVMSetValueName(consts_ptr, "consts");
+   LLVMSetValueName(outputs_ptr, "outputs");
+   LLVMSetValueName(samplers_ptr, "samplers");
+
+   block = LLVMAppendBasicBlock(shader->function, "entry");
+   builder = LLVMCreateBuilder();
+   LLVMPositionBuilderAtEnd(builder, block);
+
+   for(j = 0; j < NUM_CHANNELS; ++j) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), j, 0);
+      util_snprintf(name, sizeof name, "pos.%c", "xyzw"[j]);
+      pos[j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), name);
+   }
+
+   memset(outputs, 0, sizeof outputs);
+
+   lp_build_tgsi_soa(builder, tokens, type,
+                     pos, a0_ptr, dadx_ptr, dady_ptr,
+                     consts_ptr, outputs, samplers_ptr);
+
+   for(i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i) {
+      for(j = 0; j < NUM_CHANNELS; ++j) {
+         if(outputs[i][j]) {
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*NUM_CHANNELS + j, 0);
+            util_snprintf(name, sizeof name, "output%u.%c", i, "xyzw"[j]);
+            LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, name));
+         }
+      }
+   }
+
+   LLVMBuildRetVoid(builder);;
+
+   LLVMDisposeBuilder(builder);
+}
 
 
 void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
-   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct lp_fragment_shader *state;
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
+   struct lp_fragment_shader *shader;
+   LLVMValueRef fetch_texel;
 
-   /* debug */
-   if (llvmpipe->dump_fs) 
-      tgsi_dump(templ->tokens, 0);
+   shader = CALLOC_STRUCT(lp_fragment_shader);
+   if (!shader)
+      return NULL;
 
-   /* codegen */
-   state = llvmpipe_create_fs_llvm( llvmpipe, templ );
-   if (!state) {
-      state = llvmpipe_create_fs_sse( llvmpipe, templ );
-      if (!state) {
-         state = llvmpipe_create_fs_exec( llvmpipe, templ );
+   /* get/save the summary info for this shader */
+   tgsi_scan_shader(templ->tokens, &shader->info);
+
+   /* we need to keep a local copy of the tokens */
+   shader->base.tokens = tgsi_dup_tokens(templ->tokens);
+
+   shader->screen = screen;
+
+#ifdef DEBUG
+   tgsi_dump(templ->tokens, 0);
+#endif
+
+   shader_generate(screen, shader);
+
+   LLVMRunFunctionPassManager(screen->pass, shader->function);
+
+#ifdef DEBUG
+   LLVMDumpValue(shader->function);
+   debug_printf("\n");
+#endif
+
+   if(LLVMVerifyFunction(shader->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(shader->function);
+      abort();
+   }
+
+   fetch_texel = LLVMGetNamedFunction(screen->module, "fetch_texel");
+   if(fetch_texel) {
+      static boolean first_time = TRUE;
+      if(first_time) {
+         LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_build_tgsi_fetch_texel_soa);
+         first_time = FALSE;
       }
    }
 
-   assert(state);
+   shader->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, shader->function);
 
-   /* get/save the summary info for this shader */
-   tgsi_scan_shader(templ->tokens, &state->info);
-
-   return state;
+   return shader;
 }
 
 
@@ -82,11 +204,19 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
-   struct lp_fragment_shader *state = fs;
+   struct lp_fragment_shader *shader = fs;
+   struct llvmpipe_screen *screen = shader->screen;
 
    assert(fs != llvmpipe_context(pipe)->fs);
    
-   state->delete( state );
+   if(shader->function) {
+      if(shader->jit_function)
+         LLVMFreeMachineCodeForFunction(screen->engine, shader->function);
+      LLVMDeleteFunction(shader->function);
+   }
+
+   FREE((void *) shader->base.tokens);
+   FREE(shader);
 }
 
 
