@@ -57,7 +57,6 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
-#include "eglhash.h"
 #include "egllog.h"
 #include "eglsurface.h"
 
