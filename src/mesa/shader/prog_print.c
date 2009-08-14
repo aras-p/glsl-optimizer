@@ -964,7 +964,8 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
  * _mesa_write_shader_to_file function.
  */
 void
-_mesa_append_uniforms_to_file(const struct gl_shader *shader)
+_mesa_append_uniforms_to_file(const struct gl_shader *shader,
+                              const struct gl_program *prog)
 {
    const char *type;
    char filename[100];
@@ -984,7 +985,7 @@ _mesa_append_uniforms_to_file(const struct gl_shader *shader)
 
    fprintf(f, "/* First-draw parameters / constants */\n");
    fprintf(f, "/*\n");
-   _mesa_fprint_parameter_list(f, shader->Program->Parameters);
+   _mesa_fprint_parameter_list(f, prog->Parameters);
    fprintf(f, "*/\n");
 
    fclose(f);
