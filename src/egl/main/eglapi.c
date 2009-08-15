@@ -65,6 +65,7 @@
 #include "eglconfig.h"
 #include "eglscreen.h"
 #include "eglmode.h"
+#include "eglimage.h"
 
 
 /**
@@ -700,6 +701,10 @@ eglGetProcAddress(const char *procname)
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
       { "eglQueryModeStringMESA", (_EGLProc) eglQueryModeStringMESA },
 #endif /* EGL_MESA_screen_surface */
+#ifdef EGL_KHR_image_base
+      { "eglCreateImageKHR", (_EGLProc) eglCreateImageKHR },
+      { "eglDestroyImageKHR", (_EGLProc) eglDestroyImageKHR },
+#endif /* EGL_KHR_image_base */
       { NULL, NULL }
    };
    EGLint i;
@@ -995,3 +1000,52 @@ eglReleaseThread(void)
 
 
 #endif /* EGL_VERSION_1_2 */
+
+
+#ifdef EGL_KHR_image_base
+
+
+EGLImageKHR
+eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+                  EGLClientBuffer buffer, const EGLint *attr_list)
+{
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLContext *context = _eglLookupContext(ctx, disp);
+   _EGLDriver *drv;
+   _EGLImage *img;
+
+   drv = _eglCheckDisplay(disp, __FUNCTION__);
+   if (!drv)
+      return EGL_NO_IMAGE_KHR;
+   if (!context && ctx != EGL_NO_CONTEXT) {
+      _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   img = drv->API.CreateImageKHR(drv,
+         disp, context, target, buffer, attr_list);
+   if (img)
+      return _eglLinkImage(img, disp);
+   else
+      return EGL_NO_IMAGE_KHR;
+}
+
+
+EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
+{
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLImage *img = _eglLookupImage(image, disp);
+   _EGLDriver *drv;
+
+   drv = _eglCheckDisplay(disp, __FUNCTION__);
+   if (!drv)
+      return EGL_FALSE;
+   if (!img)
+      return _eglError(EGL_BAD_PARAMETER, __FUNCTION__);
+
+   _eglUnlinkImage(img);
+   return drv->API.DestroyImageKHR(drv, disp, img);
+}
+
+
+#endif /* EGL_KHR_image_base */

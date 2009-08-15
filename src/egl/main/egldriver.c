@@ -19,6 +19,7 @@
 #include "eglscreen.h"
 #include "eglstring.h"
 #include "eglsurface.h"
+#include "eglimage.h"
 
 #if defined(_EGL_PLATFORM_POSIX)
 #include <dlfcn.h>
@@ -545,6 +546,11 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 #ifdef EGL_VERSION_1_2
    drv->API.CreatePbufferFromClientBuffer = _eglCreatePbufferFromClientBuffer;
 #endif /* EGL_VERSION_1_2 */
+
+#ifdef EGL_KHR_image_base
+   drv->API.CreateImageKHR = _eglCreateImageKHR;
+   drv->API.DestroyImageKHR = _eglDestroyImageKHR;
+#endif /* EGL_KHR_image_base */
 }
 
 

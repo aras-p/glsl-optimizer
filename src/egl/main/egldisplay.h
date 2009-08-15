@@ -8,6 +8,7 @@
 enum _egl_resource_type {
    _EGL_RESOURCE_CONTEXT,
    _EGL_RESOURCE_SURFACE,
+   _EGL_RESOURCE_IMAGE,
 
    _EGL_NUM_RESOURCES
 };
@@ -30,6 +31,8 @@ struct _egl_extensions
 {
    EGLBoolean MESA_screen_surface;
    EGLBoolean MESA_copy_context;
+   EGLBoolean KHR_image_base;
+   EGLBoolean KHR_image_pixmap;
 
    char String[_EGL_MAX_EXTENSIONS_LEN];
 };

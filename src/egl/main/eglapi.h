@@ -69,6 +69,11 @@ typedef _EGLSurface *(*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, _EGLDis
 #endif /* EGL_VERSION_1_2 */
 
 
+#ifdef EGL_KHR_image_base
+typedef _EGLImage *(*CreateImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attr_list);
+typedef EGLBoolean (*DestroyImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
+#endif /* EGL_KHR_image_base */
+
 
 /**
  * The API dispatcher jumps through these functions
@@ -104,7 +109,7 @@ struct _egl_api
    WaitNative_t WaitNative;
    GetProcAddress_t GetProcAddress;
 
-   /* EGL_MESA_screen extension */
+#ifdef EGL_MESA_screen_surface
    ChooseModeMESA_t ChooseModeMESA;
    GetModesMESA_t GetModesMESA;
    GetModeAttribMESA_t GetModeAttribMESA;
@@ -117,10 +122,16 @@ struct _egl_api
    QueryScreenSurfaceMESA_t QueryScreenSurfaceMESA;
    QueryScreenModeMESA_t QueryScreenModeMESA;
    QueryModeStringMESA_t QueryModeStringMESA;
+#endif /* EGL_MESA_screen_surface */
 
 #ifdef EGL_VERSION_1_2
    CreatePbufferFromClientBuffer_t CreatePbufferFromClientBuffer;
 #endif
+
+#ifdef EGL_KHR_image_base
+   CreateImageKHR_t CreateImageKHR;
+   DestroyImageKHR_t DestroyImageKHR;
+#endif /* EGL_KHR_image_base */
 };
 
 #endif /* EGLAPI_INCLUDED */
