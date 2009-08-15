@@ -586,43 +586,11 @@ eglGetError(void)
 
 void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
 {
-   typedef void (*genericFunc)();
-   struct name_function {
+   static const struct {
       const char *name;
       _EGLProc function;
-   };
-   static struct name_function egl_functions[] = {
-      /* alphabetical order */
-      { "eglBindTexImage", (_EGLProc) eglBindTexImage },
-      { "eglChooseConfig", (_EGLProc) eglChooseConfig },
-      { "eglCopyBuffers", (_EGLProc) eglCopyBuffers },
-      { "eglCreateContext", (_EGLProc) eglCreateContext },
-      { "eglCreatePbufferSurface", (_EGLProc) eglCreatePbufferSurface },
-      { "eglCreatePixmapSurface", (_EGLProc) eglCreatePixmapSurface },
-      { "eglCreateWindowSurface", (_EGLProc) eglCreateWindowSurface },
-      { "eglDestroyContext", (_EGLProc) eglDestroyContext },
-      { "eglDestroySurface", (_EGLProc) eglDestroySurface },
-      { "eglGetConfigAttrib", (_EGLProc) eglGetConfigAttrib },
-      { "eglGetConfigs", (_EGLProc) eglGetConfigs },
-      { "eglGetCurrentContext", (_EGLProc) eglGetCurrentContext },
-      { "eglGetCurrentDisplay", (_EGLProc) eglGetCurrentDisplay },
-      { "eglGetCurrentSurface", (_EGLProc) eglGetCurrentSurface },
-      { "eglGetDisplay", (_EGLProc) eglGetDisplay },
-      { "eglGetError", (_EGLProc) eglGetError },
-      { "eglGetProcAddress", (_EGLProc) eglGetProcAddress },
-      { "eglInitialize", (_EGLProc) eglInitialize },
-      { "eglMakeCurrent", (_EGLProc) eglMakeCurrent },
-      { "eglQueryContext", (_EGLProc) eglQueryContext },
-      { "eglQueryString", (_EGLProc) eglQueryString },
-      { "eglQuerySurface", (_EGLProc) eglQuerySurface },
-      { "eglReleaseTexImage", (_EGLProc) eglReleaseTexImage },
-      { "eglSurfaceAttrib", (_EGLProc) eglSurfaceAttrib },
-      { "eglSwapBuffers", (_EGLProc) eglSwapBuffers },
-      { "eglSwapInterval", (_EGLProc) eglSwapInterval },
-      { "eglTerminate", (_EGLProc) eglTerminate },
-      { "eglWaitGL", (_EGLProc) eglWaitGL },
-      { "eglWaitNative", (_EGLProc) eglWaitNative },
-      /* Extensions */
+   } egl_functions[] = {
+      /* extensions only */
 #ifdef EGL_MESA_screen_surface
       { "eglChooseModeMESA", (_EGLProc) eglChooseModeMESA },
       { "eglGetModesMESA", (_EGLProc) eglGetModesMESA },
@@ -637,19 +605,16 @@ void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
       { "eglQueryModeStringMESA", (_EGLProc) eglQueryModeStringMESA },
 #endif /* EGL_MESA_screen_surface */
-#ifdef EGL_VERSION_1_2
-      { "eglBindAPI", (_EGLProc) eglBindAPI },
-      { "eglCreatePbufferFromClientBuffer", (_EGLProc) eglCreatePbufferFromClientBuffer },
-      { "eglQueryAPI", (_EGLProc) eglQueryAPI },
-      { "eglReleaseThread", (_EGLProc) eglReleaseThread },
-      { "eglWaitClient", (_EGLProc) eglWaitClient },
-#endif /* EGL_VERSION_1_2 */
       { NULL, NULL }
    };
    EGLint i;
-   for (i = 0; egl_functions[i].name; i++) {
-      if (strcmp(egl_functions[i].name, procname) == 0) {
-         return (genericFunc) egl_functions[i].function;
+
+   if (!procname)
+      return NULL;
+   if (strncmp(procname, "egl", 3) == 0) {
+      for (i = 0; egl_functions[i].name; i++) {
+         if (strcmp(egl_functions[i].name, procname) == 0)
+            return egl_functions[i].function;
       }
    }
 
@@ -662,6 +627,9 @@ void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
 
    return NULL;
 }
+
+
+#ifdef EGL_MESA_screen_surface
 
 
 /*
@@ -836,6 +804,9 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
    _EGL_DECLARE_DD_AND_MODE(dpy, mode);
    return drv->API.QueryModeStringMESA(drv, disp, m);
 }
+
+
+#endif /* EGL_MESA_screen_surface */
 
 
 /**
