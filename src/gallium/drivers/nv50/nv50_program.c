@@ -251,7 +251,7 @@ alloc_temp4(struct nv50_pc *pc, struct nv50_reg *dst[4], int idx)
 
 	if (pc->r_temp[idx] || pc->r_temp[idx + 1] ||
 	    pc->r_temp[idx + 2] || pc->r_temp[idx + 3])
-		return alloc_temp4(pc, dst, idx + 1);
+		return alloc_temp4(pc, dst, idx + 4);
 
 	for (i = 0; i < 4; i++) {
 		dst[i] = CALLOC_STRUCT(nv50_reg);
@@ -1014,6 +1014,7 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 		break;
 	}
 
+	/* some cards need t[0]'s hw index to be a multiple of 4 */
 	alloc_temp4(pc, t, 0);
 
 	if (proj) {
