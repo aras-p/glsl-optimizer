@@ -36,6 +36,7 @@
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_render.h"
+#include "r300_queryobj.h"
 #include "r300_state.h"
 #include "r300_tex.h"
 
@@ -507,7 +508,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 				radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs, r300->vbuf.attribs[i].bo, RADEON_GEM_DOMAIN_GTT, 0);
 			}
 		}
-		
+
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
 		ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, r300->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 		if (ret)
@@ -581,11 +582,15 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	r300EmitCacheFlush(r300);
 	radeonEmitState(&r300->radeon);
 
+	r300EmitQueryBegin(ctx);
+
 	for (i = 0; i < nr_prims; ++i) {
 		r300RunRenderPrimitive(ctx, prim[i].start, prim[i].start + prim[i].count, prim[i].mode);
 	}
 
 	r300EmitCacheFlush(r300);
+
+	r300EmitQueryEnd(ctx);
 
 	r300FreeData(ctx);
 

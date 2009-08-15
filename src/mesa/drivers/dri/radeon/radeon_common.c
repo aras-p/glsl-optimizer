@@ -880,7 +880,7 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 
 	if (!radeon->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
 		if (radeon->is_front_buffer_rendering) {
-			radeonFlush(ctx);
+			ctx->Driver.Flush(ctx);
 		}
 		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
 		if (driContext->driDrawablePriv != driContext->driReadablePriv)
@@ -1211,7 +1211,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	rmesa->cmdbuf.size = size;
 
 	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
-				  (void (*)(void *))radeonFlush, rmesa->glCtx);
+				  (void (*)(void *))rmesa->glCtx->Driver.Flush, rmesa->glCtx);
 
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
