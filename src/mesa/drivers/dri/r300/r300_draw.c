@@ -466,7 +466,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-
+	int ret;
 	{
 		int i, tmp;
 
@@ -503,22 +503,15 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 			aos->components = vbuf->attribs[i].dwords;
 			aos->bo = vbuf->attribs[i].bo;
 
-			radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-										  r300->vbuf.attribs[i].bo,
-										  RADEON_GEM_DOMAIN_GTT, 0);
 			if (vbuf->attribs[i].is_named_bo) {
-				radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
-												  r300->vbuf.attribs[i].bo,
-												  RADEON_GEM_DOMAIN_GTT, 0);
+				radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs, r300->vbuf.attribs[i].bo, RADEON_GEM_DOMAIN_GTT, 0);
 			}
 		}
+		
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
-
-		if (r300->ind_buf.bo) {
-			radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-										  r300->ind_buf.bo,
-										  RADEON_GEM_DOMAIN_GTT, 0);
-		}
+		ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, r300->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+		if (ret)
+			r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, GL_TRUE);
 	}
 }
 
@@ -568,13 +561,13 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	r300SetupIndexBuffer(ctx, ib);
-
 	/* ensure we have the cmd buf space in advance to cover
  	 * the state + DMA AOS pointers */
 	rcommonEnsureCmdBufSpace(&r300->radeon,
                            r300->radeon.hw.max_state_size + (60*sizeof(int)),
-                           __FUNCTION__);
+                          __FUNCTION__);
+
+	r300SetupIndexBuffer(ctx, ib);
 
 	r300SetVertexFormat(ctx, arrays, max_index + 1);
 
