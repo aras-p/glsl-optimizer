@@ -31,6 +31,8 @@
 #include "main/imports.h"
 #include "main/simple_list.h"
 
+#define DDEBUG 0
+
 #define PAGE_SIZE 4096
 
 static void r300QueryGetResult(GLcontext *ctx, struct gl_query_object *q)
@@ -39,6 +41,8 @@ static void r300QueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 	uint32_t *result;
 	int i;
 
+	if (DDEBUG) fprintf(stderr, "%s: query id %d, result %d\n", __FUNCTION__, query->Base.Id, (int) query->Base.Result);
+
 	radeon_bo_map(query->bo, GL_FALSE);
 
 	result = query->bo->ptr;
@@ -46,6 +50,7 @@ static void r300QueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 	query->Base.Result = 0;
 	for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
 		query->Base.Result += result[i];
+		if (DDEBUG) fprintf(stderr, "result[%d] = %d\n", i, result[i]);
 	}
 
 	radeon_bo_unmap(query->bo);
@@ -62,12 +67,16 @@ static struct gl_query_object * r300NewQueryObject(GLcontext *ctx, GLuint id)
 	query->Base.Active = GL_FALSE;
 	query->Base.Ready = GL_TRUE;
 
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, query->Base.Id);
+
 	return &query->Base;
 }
 
 static void r300DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct r300_query_object *query = (struct r300_query_object *)q;
+
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	if (query->bo) {
 		radeon_bo_unref(query->bo);
@@ -80,6 +89,8 @@ static void r300BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_query_object *query = (struct r300_query_object *)q;
+
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	assert(r300->query.current == NULL);
 
@@ -95,6 +106,8 @@ static void r300BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 static void r300EndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	r300EmitQueryEnd(ctx);
 
@@ -120,6 +133,8 @@ static void r300WaitQuery(GLcontext *ctx, struct gl_query_object *q)
 			ctx->Driver.Flush(ctx);
 	}
 
+	if (DDEBUG) fprintf(stderr, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, q->Id, query->bo, query->curr_offset);
+
 	r300QueryGetResult(ctx, q);
 
 	query->Base.Ready = GL_TRUE;
@@ -133,6 +148,8 @@ static void r300WaitQuery(GLcontext *ctx, struct gl_query_object *q)
  */
 static void r300CheckQuery(GLcontext *ctx, struct gl_query_object *q)
 {
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
+
 	r300WaitQuery(ctx, q);
 }
 
@@ -144,6 +161,8 @@ void r300EmitQueryBegin(GLcontext *ctx)
 
 	if (!query || query->emitted_begin)
 		return;
+
+	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, query->Base.Id);
 
 	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) {
 		BEGIN_BATCH_NO_AUTOSTATE(4);
@@ -168,6 +187,8 @@ void r300EmitQueryEnd(GLcontext *ctx)
 
 	if (!query || !query->emitted_begin)
 		return;
+
+	if (DDEBUG) fprintf(stderr, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, query->Base.Id, query->bo, query->curr_offset);
 
 	radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
 								  query->bo,
