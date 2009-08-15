@@ -999,6 +999,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsPointSprites = (sPriv->drm_version.minor >= 13);
       screen->drmSupportsCubeMapsR100 = (sPriv->drm_version.minor >= 15);
       screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
+      screen->drmSupportsOcclusionQueries = (sPriv->drm_version.minor >= 30);
    }
 
    ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
@@ -1094,7 +1095,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    /* +r6/r7 */
    if(screen->chip_family >= CHIP_FAMILY_R600)
    {
-       if (ret) 
+       if (ret)
        {
             FREE( screen );
             fprintf(stderr, "Unable to get fb location need newer drm\n");
@@ -1107,18 +1108,18 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    }
    else
    {
-        if (ret) 
+        if (ret)
         {
             if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
 	            screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
-            else 
+            else
             {
                 FREE( screen );
                 fprintf(stderr, "Unable to get fb location need newer drm\n");
                 return NULL;
             }
-        } 
-        else 
+        }
+        else
         {
             screen->fbLocation = (temp & 0xffff) << 16;
         }
@@ -1298,6 +1299,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->drmSupportsPointSprites = 1;
    screen->drmSupportsCubeMapsR100 = 1;
    screen->drmSupportsVertexProgram = 1;
+   screen->drmSupportsOcclusionQueries = 1;
    screen->irq = 1;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
