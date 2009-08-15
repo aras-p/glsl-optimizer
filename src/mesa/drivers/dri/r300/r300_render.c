@@ -380,6 +380,11 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 				    if (align % 4)
 					nr -= incr;
 				} while(align % 4);
+				if (nr <= 0) {
+					WARN_ONCE("did the impossible happen? we never aligned nr to dword\n");
+					return;
+				}
+					
 			}
 			r300FireEB(rmesa, nr, type, offset);
 
