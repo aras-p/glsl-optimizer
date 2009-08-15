@@ -573,7 +573,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	/* ensure we have the cmd buf space in advance to cover
  	 * the state + DMA AOS pointers */
 	rcommonEnsureCmdBufSpace(&r300->radeon,
-                           r300->radeon.hw.max_state_size + (50*sizeof(int)),
+                           r300->radeon.hw.max_state_size + (60*sizeof(int)),
                            __FUNCTION__);
 
 	r300SetVertexFormat(ctx, arrays, max_index + 1);

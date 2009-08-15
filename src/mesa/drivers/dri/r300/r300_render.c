@@ -64,6 +64,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
+#include "vbo/vbo_split.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 #include "radeon_reg.h"
@@ -172,21 +173,24 @@ int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
+static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type, int offset)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 	int size;
 
-	r300_emit_scissor(rmesa->radeon.glCtx);
-
+	/* offset is in indices */
 	BEGIN_BATCH(10);
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
 	if (rmesa->ind_buf.is_32bit) {
+		/* convert to bytes */
+		offset *= 4;
 		size = vertex_count;
 		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
 		  (vertex_count << 16) | type |
 		  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 	} else {
+		/* convert to bytes */
+		offset *= 2;
 		size = (vertex_count + 1) >> 1;
 		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
 		   (vertex_count << 16) | type);
@@ -196,13 +200,13 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 		OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
 		OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
 				 (R300_VAP_PORT_IDX0 >> 2));
-		OUT_BATCH_RELOC(0, rmesa->ind_buf.bo, rmesa->ind_buf.bo_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+		OUT_BATCH_RELOC(0, rmesa->ind_buf.bo, rmesa->ind_buf.bo_offset + offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
 		OUT_BATCH(size);
 	} else {
 		OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
 		OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
 				 (R300_VAP_PORT_IDX0 >> 2));
-		OUT_BATCH(rmesa->ind_buf.bo_offset);
+		OUT_BATCH(rmesa->ind_buf.bo_offset + offset);
 		OUT_BATCH(size);
 		radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
 				      rmesa->ind_buf.bo, RADEON_GEM_DOMAIN_GTT, 0, 0);
@@ -318,7 +322,7 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
-    r300_emit_scissor(rmesa->radeon.glCtx);
+        r300_emit_scissor(rmesa->radeon.glCtx);
 	BEGIN_BATCH(3);
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
 	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
@@ -337,11 +341,6 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	if (type < 0 || num_verts <= 0)
 		return;
 
-	if (num_verts > 65535) {
-		WARN_ONCE("Can't handle more then 65535 vertices at once\n");
-		return;
-	}
-
 	/* Make space for at least 128 dwords.
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
@@ -349,6 +348,15 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
 
 	if (rmesa->ind_buf.bo) {
+		GLuint first, incr, offset = 0;
+
+		if (!split_prim_inplace(prim & PRIM_MODE_MASK, &first, &incr) &&
+			num_verts > 65500) {
+			WARN_ONCE("Fixme: can't handle spliting prim %d\n", prim);
+			return;
+		}
+
+
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, 0);
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);
@@ -356,8 +364,34 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 			OUT_BATCH(rmesa->radeon.tcl.aos[0].count);
 			END_BATCH();
 		}
-		r300FireEB(rmesa, num_verts, type);
+
+		r300_emit_scissor(rmesa->radeon.glCtx);
+		while (num_verts > 0) {
+			int nr;
+			int align;
+
+			nr = MIN2(num_verts, 65535);
+			nr -= (nr - first) % incr;
+
+			/* get alignment for IB correct */
+			if (nr != num_verts) {
+				do {
+				    align = nr * (rmesa->ind_buf.is_32bit ? 4 : 2);
+				    if (align % 4)
+					nr -= incr;
+				} while(align % 4);
+			}
+			r300FireEB(rmesa, nr, type, offset);
+
+			num_verts -= nr;
+			offset += nr;
+		}
+
 	} else {
+		if (num_verts > 65535) {
+			WARN_ONCE("Fixme: can't handle more then 65535 vertices");
+			return;
+		}
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
 		r300FireAOS(rmesa, num_verts, type);
 	}
