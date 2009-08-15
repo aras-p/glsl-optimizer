@@ -224,7 +224,8 @@ static const struct {
    { EGL_MATCH_NATIVE_PIXMAP,       ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_SPECIAL,
                                     EGL_NONE },
-   { EGL_PRESERVED_RESOURCES,       ATTRIB_TYPE_PSEUDO,
+   /* there is a gap before EGL_SAMPLES */
+   { 0x3030,                        ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_IGNORE,
                                     0 },
    { EGL_NONE,                      ATTRIB_TYPE_PSEUDO,
@@ -773,7 +774,7 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
 
    /* there are some holes in the range */
    switch (attr) {
-   case EGL_PRESERVED_RESOURCES:
+   case 0x3030 /* a gap before EGL_SAMPLES */:
    case EGL_NONE:
 #ifdef EGL_VERSION_1_4
    case EGL_MATCH_NATIVE_PIXMAP:

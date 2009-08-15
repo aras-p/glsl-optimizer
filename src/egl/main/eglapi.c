@@ -678,7 +678,8 @@ eglGetError(void)
 }
 
 
-void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
+__eglMustCastToProperFunctionPointerType EGLAPIENTRY
+eglGetProcAddress(const char *procname)
 {
    static const struct {
       const char *name;
