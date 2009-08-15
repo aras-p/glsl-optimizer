@@ -547,7 +547,7 @@ static void brw_emit_vertices(struct brw_context *brw)
                         input->offset + input->element_size);
           }
       } else
-          OUT_BATCH(input->count);
+          OUT_BATCH(input->stride ? input->count : 0);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
