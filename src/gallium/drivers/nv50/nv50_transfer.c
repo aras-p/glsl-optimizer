@@ -37,13 +37,16 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 	WAIT_RING (chan, 14);
 
 	if (!src_bo->tile_flags) {
-		BEGIN_RING(chan, m2mf, 0x0200, 1);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_IN, 1);
 		OUT_RING  (chan, 1);
-		BEGIN_RING(chan, m2mf, 0x0314, 1);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_IN, 1);
 		OUT_RING  (chan, src_pitch);
 		src_offset += (sy * src_pitch) + (sx * cpp);
 	} else {
-		BEGIN_RING(chan, m2mf, 0x0200, 6);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_IN, 6);
 		OUT_RING  (chan, 0);
 		OUT_RING  (chan, src_tile_mode << 4);
 		OUT_RING  (chan, sw * cpp);
@@ -53,13 +56,16 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 	}
 
 	if (!dst_bo->tile_flags) {
-		BEGIN_RING(chan, m2mf, 0x021c, 1);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_OUT, 1);
 		OUT_RING  (chan, 1);
-		BEGIN_RING(chan, m2mf, 0x0318, 1);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_OUT, 1);
 		OUT_RING  (chan, dst_pitch);
 		dst_offset += (dy * dst_pitch) + (dx * cpp);
 	} else {
-		BEGIN_RING(chan, m2mf, 0x021c, 6);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_OUT, 6);
 		OUT_RING  (chan, 0);
 		OUT_RING  (chan, dst_tile_mode << 4);
 		OUT_RING  (chan, dw * cpp);
@@ -72,25 +78,30 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		int line_count = height > 2047 ? 2047 : height;
 
 		WAIT_RING (chan, 15);
-		BEGIN_RING(chan, m2mf, 0x0238, 2);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN_HIGH, 2);
 		OUT_RELOCh(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCh(chan, dst_bo, dst_offset, dst_reloc);
-		BEGIN_RING(chan, m2mf, 0x030c, 2);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
 		OUT_RELOCl(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
 		if (src_bo->tile_flags) {
-			BEGIN_RING(chan, m2mf, 0x0218, 1);
+			BEGIN_RING(chan, m2mf,
+				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_IN, 1);
 			OUT_RING  (chan, (sy << 16) | sx);
 		} else {
 			src_offset += (line_count * src_pitch);
 		}
 		if (dst_bo->tile_flags) {
-			BEGIN_RING(chan, m2mf, 0x0234, 1);
+			BEGIN_RING(chan, m2mf,
+				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_OUT, 1);
 			OUT_RING  (chan, (dy << 16) | dx);
 		} else {
 			dst_offset += (line_count * dst_pitch);
 		}
-		BEGIN_RING(chan, m2mf, 0x031c, 4);
+		BEGIN_RING(chan, m2mf,
+			NV50_MEMORY_TO_MEMORY_FORMAT_LINE_LENGTH_IN, 4);
 		OUT_RING  (chan, width * cpp);
 		OUT_RING  (chan, line_count);
 		OUT_RING  (chan, 0x00000101);

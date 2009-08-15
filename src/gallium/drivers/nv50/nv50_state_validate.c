@@ -55,15 +55,15 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->cbufs[i]->format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
-			so_data(so, 0xcf);
+			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
 			break;
 		case PIPE_FORMAT_R5G6B5_UNORM:
-			so_data(so, 0xe8);
+			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
 			break;
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
 				    pf_name(fb->cbufs[i]->format));
-			so_data(so, 0xe6);
+			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
 			break;
 		}
 		so_data(so, bo->tile_mode << 4);
@@ -115,7 +115,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 
 		so_method(so, tesla, 0x1538, 1);
 		so_data  (so, 1);
-		so_method(so, tesla, 0x1228, 3);
+		so_method(so, tesla, NV50TCL_ZETA_HORIZ, 3);
 		so_data  (so, fb->zsbuf->width);
 		so_data  (so, fb->zsbuf->height);
 		so_data  (so, 0x00010001);
@@ -330,9 +330,10 @@ viewport_uptodate:
 		int i;
 
 		so = so_new(nv50->sampler_nr * 8 + 3, 0);
-		so_method(so, tesla, 0x0f00, 1);
+		so_method(so, tesla, NV50TCL_CB_ADDR, 1);
 		so_data  (so, NV50_CB_TSC);
-		so_method(so, tesla, 0x40000f04, nv50->sampler_nr * 8);
+		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000,
+			nv50->sampler_nr * 8);
 		for (i = 0; i < nv50->sampler_nr; i++)
 			so_datap (so, nv50->sampler[i]->tsc, 8);
 		so_ref(so, &nv50->state.tsc_upload);

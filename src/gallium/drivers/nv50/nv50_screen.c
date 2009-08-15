@@ -189,7 +189,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	nv50_transfer_init_screen_functions(pscreen);
 
 	/* DMA engine object */
-	ret = nouveau_grobj_alloc(chan, 0xbeef5039, 0x5039, &screen->m2mf);
+	ret = nouveau_grobj_alloc(chan, 0xbeef5039,
+		NV50_MEMORY_TO_MEMORY_FORMAT, &screen->m2mf);
 	if (ret) {
 		NOUVEAU_ERR("Error creating M2MF object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
@@ -198,7 +199,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	BIND_RING(chan, screen->m2mf, 1);
 
 	/* 2D object */
-	ret = nouveau_grobj_alloc(chan, 0xbeef502d, 0x502d, &screen->eng2d);
+	ret = nouveau_grobj_alloc(chan, 0xbeef502d, NV50_2D, &screen->eng2d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 2D object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
@@ -209,14 +210,15 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	/* 3D object */
 	switch (chipset & 0xf0) {
 	case 0x50:
-		tesla_class = 0x5097;
+		tesla_class = NV50TCL;
 		break;
 	case 0x80:
 	case 0x90:
-		tesla_class = 0x8297;
+		/* this stupid name should be corrected. */
+		tesla_class = NV54TCL;
 		break;
 	case 0xa0:
-		tesla_class = 0x8397;
+		tesla_class = NVA0TCL;
 		break;
 	default:
 		NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", chipset);
@@ -230,7 +232,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	ret = nouveau_grobj_alloc(chan, 0xbeef5097, tesla_class, &screen->tesla);
+	ret = nouveau_grobj_alloc(chan, 0xbeef5097, tesla_class,
+		&screen->tesla);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
@@ -248,7 +251,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Static M2MF init */
 	so = so_new(32, 0);
-	so_method(so, screen->m2mf, 0x0180, 3);
+	so_method(so, screen->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 3);
 	so_data  (so, screen->sync->handle);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
@@ -294,7 +297,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	/* origin is top left (set to 1 for bottom left) */
 	so_method(so, screen->tesla, 0x13ac, 1);
 	so_data  (so, 0);
-	so_method(so, screen->tesla, 0x16b8, 1);
+	so_method(so, screen->tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	so_data  (so, 8);
 
 	/* constant buffers for immediates and VP/FP parameters */
@@ -332,33 +335,33 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_data  (so, 0x000BBNP1);
 	*/
 
-	so_method(so, screen->tesla, 0x1280, 3);
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000800);
-	so_method(so, screen->tesla, 0x1694, 1);
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000001 | (NV50_CB_PMISC << 12));
-	so_method(so, screen->tesla, 0x1694, 1);
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000031 | (NV50_CB_PMISC << 12));
 
-	so_method(so, screen->tesla, 0x1280, 3);
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PVP << 16) | 0x00000800);
-	so_method(so, screen->tesla, 0x1694, 1);
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000101 | (NV50_CB_PVP << 12));
 
-	so_method(so, screen->tesla, 0x1280, 3);
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PFP << 16) | 0x00000800);
-	so_method(so, screen->tesla, 0x1694, 1);
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000131 | (NV50_CB_PFP << 12));
 
 	/* Texture sampler/image unit setup - we abuse the constant buffer
@@ -372,13 +375,13 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	so_method(so, screen->tesla, 0x1280, 3);
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_TIC << 16) | 0x0800);
-	so_method(so, screen->tesla, 0x1574, 3);
+	so_method(so, screen->tesla, NV50TCL_TIC_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
@@ -391,13 +394,13 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	so_method(so, screen->tesla, 0x1280, 3);
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_TSC << 16) | 0x0800);
-	so_method(so, screen->tesla, 0x155c, 3);
+	so_method(so, screen->tesla, NV50TCL_TSC_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
@@ -407,7 +410,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Vertex array limits - max them out */
 	for (i = 0; i < 16; i++) {
-		so_method(so, screen->tesla, 0x1080 + (i * 8), 2);
+		so_method(so, screen->tesla, NV50TCL_UNK1080_OFFSET_HIGH(i), 2);
 		so_data  (so, 0x000000ff);
 		so_data  (so, 0xffffffff);
 	}

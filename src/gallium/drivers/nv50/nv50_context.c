@@ -112,5 +112,3 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	return &nv50->pipe;
 }
-
-		

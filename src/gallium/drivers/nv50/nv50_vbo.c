@@ -265,7 +265,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	vtxbuf = so_new(nv50->vtxelt_nr * 4, nv50->vtxelt_nr * 2);
 	vtxfmt = so_new(nv50->vtxelt_nr + 1, 0);
-	so_method(vtxfmt, tesla, 0x1ac0, nv50->vtxelt_nr);
+	so_method(vtxfmt, tesla, NV50TCL_VERTEX_ARRAY_ATTRIB(0),
+		nv50->vtxelt_nr);
 
 	for (i = 0; i < nv50->vtxelt_nr; i++) {
 		struct pipe_vertex_element *ve = &nv50->vtxelt[i];
@@ -275,7 +276,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 		so_data(vtxfmt, nv50_vtxeltfmt(ve->src_format) | i);
 
-		so_method(vtxbuf, tesla, 0x900 + (i * 16), 3);
+		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_FORMAT(i), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->stride);
 		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |

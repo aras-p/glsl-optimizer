@@ -121,7 +121,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		FREE(mt);
 		return NULL;
 	}
-			     
+
 	return &mt->base;
 }
 
@@ -158,7 +158,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 	struct nv50_miptree *mt = nv50_miptree(pt);
 
 	nouveau_bo_ref(NULL, &mt->bo);
-        FREE(mt);
+	FREE(mt);
 }
 
 static struct pipe_surface *
@@ -201,8 +201,8 @@ nv50_miptree_surface_del(struct pipe_surface *ps)
 {
 	struct nv50_surface *s = nv50_surface(ps);
 
-        pipe_texture_reference(&ps->texture, NULL);
-        FREE(s);
+	pipe_texture_reference(&ps->texture, NULL);
+	FREE(s);
 }
 
 void

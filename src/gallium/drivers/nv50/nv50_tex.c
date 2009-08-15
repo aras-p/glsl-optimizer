@@ -145,25 +145,28 @@ nv50_tex_validate(struct nv50_context *nv50)
 	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
 
 	so = so_new(push, nv50->miptree_nr * 2);
-	so_method(so, tesla, 0x0f00, 1);
+	so_method(so, tesla, NV50TCL_CB_ADDR, 1);
 	so_data  (so, NV50_CB_TIC);
 	for (unit = 0; unit < nv50->miptree_nr; unit++) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
-		so_method(so, tesla, 0x40000f04, 8);
+		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000, 8);
 		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
 			return;
 		}
 
-		so_method(so, tesla, 0x1458, 1);
-		so_data  (so, (unit << 9) | (unit << 1) | 1);
+		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
+		so_data  (so, (unit << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
+			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
+			NV50TCL_SET_SAMPLER_TEX_VALID);
 	}
 
 	for (; unit < nv50->state.miptree_nr; unit++) {
-		so_method(so, tesla, 0x1458, 1);
-		so_data  (so, (unit << 1) | 0);
+		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
+		so_data  (so,
+			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
 	}
 
 	so_ref(so, &nv50->state.tic_upload);
