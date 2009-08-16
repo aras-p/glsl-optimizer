@@ -1472,10 +1472,10 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          if (!emit_instruction( &bld, &parse.FullToken.FullInstruction )) {
-	    debug_printf("failed to translate tgsi opcode %d to SSE (%s)\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode,
-                         parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
-                         "vertex shader" : "fragment shader");
+            unsigned opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+            const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
+	    _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
+	                  info ? info->mnemonic : "<invalid>");
 	 }
          break;
 
