@@ -430,6 +430,7 @@ static void emit_zstencil_format(GLcontext *ctx, struct radeon_state_atom * atom
 	    format = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
 	}
 
+	BEGIN_BATCH_NO_AUTOSTATE(5);
 	OUT_BATCH(atom->cmd[0]);
 	atom->cmd[1] &= ~0xf;
 	atom->cmd[1] |= format;
@@ -437,6 +438,7 @@ static void emit_zstencil_format(GLcontext *ctx, struct radeon_state_atom * atom
 	OUT_BATCH(atom->cmd[2]);
 	OUT_BATCH(atom->cmd[3]);
 	OUT_BATCH(atom->cmd[4]);
+	END_BATCH();
 }
 
 static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
