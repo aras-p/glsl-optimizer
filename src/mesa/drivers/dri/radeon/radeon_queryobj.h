@@ -26,9 +26,30 @@
  */
 
 #include "main/imports.h"
-#include "r300_context.h"
+#include "main/simple_list.h"
+#include "radeon_context.h"
 
-extern void r300EmitQueryBegin(GLcontext *ctx);
-extern void r300EmitQueryEnd(GLcontext *ctx);
+extern void radeonEmitQueryBegin(GLcontext *ctx);
+extern void radeonEmitQueryEnd(GLcontext *ctx);
 
-extern void r300InitQueryObjFunctions(struct dd_function_table *functions);
+extern void radeonInitQueryObjFunctions(struct dd_function_table *functions);
+
+#define RADEON_QUERY_PAGE_SIZE 4096
+
+int radeon_check_query_active(GLcontext *ctx, struct radeon_state_atom *atom);
+void radeon_emit_queryobj(GLcontext *ctx, struct radeon_state_atom *atom);
+
+static inline void radeon_init_query_stateobj(radeonContextPtr radeon, int SZ)
+{
+	radeon->query.queryobj.cmd_size = (SZ);
+	radeon->query.queryobj.cmd = (uint32_t*)CALLOC((SZ) * sizeof(uint32_t));
+	radeon->query.queryobj.name = "queryobj";
+	radeon->query.queryobj.idx = 0;
+	radeon->query.queryobj.check = radeon_check_query_active;
+	radeon->query.queryobj.dirty = GL_FALSE;
+	radeon->query.queryobj.emit = radeon_emit_queryobj;
+
+	radeon->hw.max_state_size += (SZ);
+	insert_at_tail(&radeon->hw.atomlist, &radeon->query.queryobj);
+}
+

@@ -54,6 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "r300_state.h"
 #include "radeon_reg.h"
+#include "radeon_queryobj.h"
 
 /** # of dwords reserved for additional instructions that may need to be written
  * during flushing.
@@ -792,6 +793,17 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(tex.border_color, variable, mtu + 1, 0);
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_BORDER_COLOR_0, 0);
+
+	radeon_init_query_stateobj(&r300->radeon, R300_QUERYOBJ_CMDSIZE);
+	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) {
+		r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, RV530_FG_ZBREG_DEST, 1);
+		r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_DATA_0] = RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL;
+	} else {
+		r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_SU_REG_DEST, 1);
+		r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_DATA_0] = R300_RASTER_PIPE_SELECT_ALL;
+	}
+	r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_CMD_1] = cmdpacket0(r300->radeon.radeonScreen, R300_ZB_ZPASS_DATA, 1);
+	r300->radeon.query.queryobj.cmd[R300_QUERYOBJ_DATA_1] = 0;
 
 	r300->radeon.hw.is_dirty = GL_TRUE;
 	r300->radeon.hw.all_dirty = GL_TRUE;

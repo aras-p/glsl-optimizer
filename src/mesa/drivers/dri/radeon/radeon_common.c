@@ -83,6 +83,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_lock.h"
 #include "radeon_drm.h"
 #include "radeon_mipmap_tree.h"
+#include "radeon_queryobj.h"
 
 #define DEBUG_CMDBUF         0
 
@@ -1072,6 +1073,9 @@ void radeonFlush(GLcontext *ctx)
 			}
 		}
 	}
+
+	make_empty_list(&radeon->query.not_flushed_head);
+
 }
 
 /* Make sure all commands have been sent to the hardware and have
@@ -1127,6 +1131,8 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 		fprintf(stderr, "%s from %s - %i cliprects\n",
 			__FUNCTION__, caller, rmesa->numClipRects);
 	}
+
+	radeonEmitQueryEnd(rmesa->glCtx);
 
 	if (rmesa->cmdbuf.cs->cdw) {
 		ret = radeon_cs_emit(rmesa->cmdbuf.cs);

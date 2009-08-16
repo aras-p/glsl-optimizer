@@ -471,7 +471,7 @@ static void r300SetEarlyZState(GLcontext * ctx)
 		topZ = R300_ZTOP_DISABLE;
 	else if (ctx->FragmentProgram._Current && ctx->FragmentProgram._Current->UsesKill)
 		topZ = R300_ZTOP_DISABLE;
-	else if (r300->query.current)
+	else if (r300->radeon.query.current)
 		topZ = R300_ZTOP_DISABLE;
 
 	if (topZ != r300->hw.zstencil_format.cmd[2]) {

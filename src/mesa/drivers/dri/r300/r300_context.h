@@ -290,6 +290,12 @@ typedef struct r300_context *r300ContextPtr;
 #define R300_TEX_CMDSIZE	(MAX_TEXTURE_UNITS+1)
 */
 
+#define R300_QUERYOBJ_CMD_0  0
+#define R300_QUERYOBJ_DATA_0 1
+#define R300_QUERYOBJ_CMD_1  2
+#define R300_QUERYOBJ_DATA_1  3
+#define R300_QUERYOBJ_CMDSIZE  4
+
 /**
  * Cache for hardware register state.
  */
@@ -380,7 +386,6 @@ struct r300_hw_state {
 		struct radeon_state_atom border_color;
 	} tex;
 	struct radeon_state_atom txe;	/* tex enable (4104) */
-
 	radeonTexObj *textures[R300_MAX_TEXTURE_UNITS];
 };
 
@@ -505,15 +510,6 @@ struct r300_index_buffer {
 	GLuint count;
 };
 
-struct r300_query_object {
-	struct gl_query_object Base;
-	struct radeon_bo *bo;
-	int curr_offset;
-	GLboolean emitted_begin;
-
-	/* Double linked list of not flushed query objects */
-	struct r300_query_object *prev, *next;
-};
 
 /**
  * \brief R300 context structure.
@@ -549,12 +545,6 @@ struct r300_context {
 	uint32_t fallback;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
-
-	struct {
-		struct r300_query_object *current;
-		struct r300_query_object not_flushed_head;
-	} query;
-
 	int num_z_pipes;
 };
 

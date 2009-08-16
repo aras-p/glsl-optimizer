@@ -36,7 +36,6 @@
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_render.h"
-#include "r300_queryobj.h"
 #include "r300_state.h"
 #include "r300_tex.h"
 
@@ -583,15 +582,11 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	r300EmitCacheFlush(r300);
 	radeonEmitState(&r300->radeon);
 
-	r300EmitQueryBegin(ctx);
-
 	for (i = 0; i < nr_prims; ++i) {
 		r300RunRenderPrimitive(ctx, prim[i].start, prim[i].start + prim[i].count, prim[i].mode);
 	}
 
 	r300EmitCacheFlush(r300);
-
-	r300EmitQueryEnd(ctx);
 
 	r300FreeData(ctx);
 

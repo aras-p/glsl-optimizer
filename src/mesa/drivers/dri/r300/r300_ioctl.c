@@ -57,7 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r300_emit.h"
 #include "r300_context.h"
-#include "r300_queryobj.h"
 
 #include "vblank.h"
 
@@ -755,19 +754,9 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	}
 }
 
-static void r300Flush(GLcontext *ctx)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	radeonFlush(ctx);
-
-	make_empty_list(&r300->query.not_flushed_head);
-}
-
-
 void r300InitIoctlFuncs(struct dd_function_table *functions)
 {
 	functions->Clear = r300Clear;
 	functions->Finish = radeonFinish;
-	functions->Flush = r300Flush;
+	functions->Flush = radeonFlush;
 }

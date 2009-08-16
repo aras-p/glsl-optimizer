@@ -263,6 +263,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 		radeon->texture_compressed_row_align = 64;
 	}
 
+	make_empty_list(&radeon->query.not_flushed_head);
+
 	return GL_TRUE;
 }
 

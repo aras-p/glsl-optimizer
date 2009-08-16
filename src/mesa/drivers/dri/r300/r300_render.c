@@ -76,7 +76,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_fragprog_common.h"
-#include "r300_queryobj.h"
 #include "r300_swtcl.h"
 
 /**

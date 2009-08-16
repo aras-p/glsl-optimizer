@@ -163,6 +163,7 @@ struct radeon_hw_state {
   	/* Head of the linked list of state atoms. */
 	struct radeon_state_atom atomlist;
 	int max_state_size;	/* Number of bytes necessary for a full state emit. */
+	int max_post_flush_size; /* Number of bytes necessary for post flushing emits */
 	GLboolean is_dirty, all_dirty;
 };
 
@@ -253,6 +254,17 @@ static INLINE radeonTexObj* radeon_tex_obj(struct gl_texture_object *texObj)
 {
 	return (radeonTexObj*)texObj;
 }
+
+/* occlusion query */
+struct radeon_query_object {
+	struct gl_query_object Base;
+	struct radeon_bo *bo;
+	int curr_offset;
+	GLboolean emitted_begin;
+
+	/* Double linked list of not flushed query objects */
+	struct radeon_query_object *prev, *next;
+};
 
 /* Need refcounting on dma buffers:
  */
@@ -500,6 +512,12 @@ struct radeon_context {
    struct dri_metaops meta;
 
    struct {
+	struct radeon_query_object *current;
+	struct radeon_query_object not_flushed_head;
+	struct radeon_state_atom queryobj;
+   } query;
+
+   struct {
 	   void (*get_lock)(radeonContextPtr radeon);
 	   void (*update_viewport_offset)(GLcontext *ctx);
 	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
@@ -508,6 +526,7 @@ struct radeon_context {
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
 	   void (*fallback)(GLcontext *ctx, GLuint bit, GLboolean mode);
 	   void (*free_context)(GLcontext *ctx);
+	   void (*emit_query_finish)(radeonContextPtr radeon);
    } vtbl;
 };
 
@@ -522,7 +541,6 @@ static inline __DRIdrawablePrivate* radeon_get_readable(radeonContextPtr radeon)
 {
 	return radeon->dri.context->driReadablePriv;
 }
-
 
 /**
  * This function takes a float and packs it into a uint32_t

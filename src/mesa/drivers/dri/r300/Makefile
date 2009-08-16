@@ -37,7 +37,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_span.c \
 	radeon_fbo.c \
-	radeon_buffer_objects.c
+	radeon_buffer_objects.c \
+	radeon_queryobj.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
@@ -54,7 +55,6 @@ DRIVER_SOURCES = \
 		 r300_shader.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
-		 r300_queryobj.c \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)

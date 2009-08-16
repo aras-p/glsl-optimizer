@@ -64,11 +64,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
-#include "r300_queryobj.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_buffer_objects.h"
-
+#include "radeon_queryobj.h"
 
 #include "vblank.h"
 #include "utils.h"
@@ -234,6 +233,85 @@ static void r300_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 		r300->radeon.Fallback &= ~bit;
 }
 
+static void r300_emit_query_finish(radeonContextPtr radeon)
+{
+	r300ContextPtr r300 = (r300ContextPtr)radeon;
+	struct radeon_query_object *query = radeon->query.current;
+	BATCH_LOCALS(radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(3 * 2 *r300->num_z_pipes + 2);
+	switch (r300->num_z_pipes) {
+	case 4:
+		OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_3);
+		OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+		OUT_BATCH_RELOC(0, query->bo, query->curr_offset+3*sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+	case 3:
+		OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_2);
+		OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+		OUT_BATCH_RELOC(0, query->bo, query->curr_offset+2*sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+	case 2:
+		if (r300->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV380) {
+			OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_3);
+		} else {
+			OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_1);
+		}
+		OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+		OUT_BATCH_RELOC(0, query->bo, query->curr_offset+1*sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+	case 1:
+	default:
+		OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_0);
+		OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+		OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+		break;
+	}
+	OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_ALL);
+	END_BATCH();
+	query->curr_offset += r300->num_z_pipes * sizeof(uint32_t);
+	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+	query->emitted_begin = GL_FALSE;
+}
+
+static void rv530_emit_query_finish_single_z(radeonContextPtr radeon)
+{
+	r300ContextPtr r300 = (r300ContextPtr)radeon;
+	BATCH_LOCALS(radeon);
+	struct radeon_query_object *query = radeon->query.current;
+
+	BEGIN_BATCH_NO_AUTOSTATE(8);
+	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
+	OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+	OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
+	END_BATCH();
+
+	query->curr_offset += sizeof(uint32_t);
+	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+	query->emitted_begin = GL_FALSE;
+}
+
+#if 0
+static void rv530_emit_query_finish_double_z(radeonContextPtr radeon)
+{
+	r300ContextPtr r300 = (r300ContextPtr)radeon;
+	BATCH_LOCALS(radeon);
+	struct radeon_query_object *query = radeon->query.current;
+
+	BEGIN_BATCH_NO_AUTOSTATE(6);
+	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
+	OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+	OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
+	OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
+	OUT_BATCH_RELOC(0, query->bo, query->curr_offset + sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
+	END_BATCH();
+
+	query->curr_offset += 2 * sizeof(uint32_t);
+	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+	query->emitted_begin = GL_FALSE;
+}
+#endif
+
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
 	radeon->vtbl.get_lock = r300_get_lock;
@@ -242,6 +320,12 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.swtcl_flush = r300_swtcl_flush;
 	radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r300_fallback;
+	if (radeon->radeonScreen->chip_family == CHIP_FAMILY_RV530)
+		/* single Z gives me correct results on my hw need to check if we ever need
+		 * double z */
+		radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
+	else
+		radeon->vtbl.emit_query_finish = r300_emit_query_finish;
 }
 
 static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -361,8 +445,7 @@ static void r300InitGLExtensions(GLcontext *ctx)
 		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
-	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries ||
-		!r300->options.hw_tcl_enabled) {
+	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
 		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 	}
 }
@@ -389,6 +472,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	r300ParseOptions(r300, screen);
 
+	r300->radeon.radeonScreen = screen;
 	r300_init_vtbl(&r300->radeon);
 
 	_mesa_init_driver_functions(&functions);
@@ -396,7 +480,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
-	r300InitQueryObjFunctions(&functions);
+	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
@@ -452,8 +536,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitShaderFunctions(r300);
 
 	r300InitGLExtensions(ctx);
-
-	make_empty_list(&r300->query.not_flushed_head);
 
 	return GL_TRUE;
 }
