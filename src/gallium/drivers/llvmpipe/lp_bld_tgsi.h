@@ -40,7 +40,7 @@ lp_build_tgsi_fetch_texel_soa( struct tgsi_sampler **samplers,
                                uint32_t unit,
                                float *store );
 
-void
+LLVMValueRef
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,

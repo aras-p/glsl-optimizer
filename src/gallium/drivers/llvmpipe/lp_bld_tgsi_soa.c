@@ -31,6 +31,7 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_exec.h"
@@ -38,6 +39,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_tgsi.h"
 
@@ -84,6 +86,8 @@ struct lp_build_tgsi_soa_context
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
+
+   LLVMValueRef mask;
 
    /** Coords/texels store */
    LLVMValueRef store_ptr;
@@ -356,88 +360,39 @@ emit_kil(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_src_register *reg )
 {
-#if 0
-   unsigned uniquemask;
-   unsigned unique_count = 0;
+   LLVMValueRef terms[NUM_CHANNELS];
    unsigned chan_index;
-   unsigned i;
 
-   /* This mask stores component bits that were already tested. Note that
-    * we test if the value is less than zero, so 1.0 and 0.0 need not to be
-    * tested. */
-   uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
+   memset(&terms, 0, sizeof terms);
 
    FOR_EACH_CHANNEL( chan_index ) {
       unsigned swizzle;
 
-      /* unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle(
-         reg,
-         chan_index );
+      /* Unswizzle channel */
+      swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
 
-      /* check if the component has not been already tested */
-      if( !(uniquemask & (1 << swizzle)) ) {
-         uniquemask |= 1 << swizzle;
+      /* Note that we test if the value is less than zero, so 1.0 and 0.0 need
+       * not to be tested. */
+      if(swizzle == TGSI_EXTSWIZZLE_ZERO || swizzle == TGSI_EXTSWIZZLE_ONE)
+         continue;
 
-         /* allocate register */
-         emit_fetch(
-            bld,
-            unique_count++,
-            reg,
-            chan_index );
-      }
+      /* Check if the component has not been already tested. */
+      assert(swizzle < NUM_CHANNELS);
+      if( !terms[swizzle] )
+         /* TODO: change the comparison operator instead of setting the sign */
+         terms[swizzle] =  emit_fetch(bld, reg, chan_index );
    }
 
-   x86_push(
-      bld,
-      x86_make_reg( file_REG32, reg_AX ) );
-   x86_push(
-      bld,
-      x86_make_reg( file_REG32, reg_DX ) );
+   FOR_EACH_CHANNEL( chan_index ) {
+      LLVMValueRef mask;
 
-   for (i = 0 ; i < unique_count; i++ ) {
-      LLVMValueRef dataXMM = make_xmm(i);
-
-      sse_cmpps(
-         bld,
-         dataXMM,
-         get_temp(
-            TGSI_EXEC_TEMP_00000000_I,
-            TGSI_EXEC_TEMP_00000000_C ),
-         cc_LessThan );
+      mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
       
-      if( i == 0 ) {
-         sse_movmskps(
-            bld,
-            x86_make_reg( file_REG32, reg_AX ),
-            dataXMM );
-      }
-      else {
-         sse_movmskps(
-            bld,
-            x86_make_reg( file_REG32, reg_DX ),
-            dataXMM );
-         x86_or(
-            bld,
-            x86_make_reg( file_REG32, reg_AX ),
-            x86_make_reg( file_REG32, reg_DX ) );
-      }
+      if(bld->mask)
+         bld->mask = LLVMBuildAnd(bld->base.builder, bld->mask, mask, "");
+      else
+         bld->mask = mask;
    }
-
-   x86_or(
-      bld,
-      get_temp(
-         TGSI_EXEC_TEMP_KILMASK_I,
-         TGSI_EXEC_TEMP_KILMASK_C ),
-      x86_make_reg( file_REG32, reg_AX ) );
-
-   x86_pop(
-      bld,
-      x86_make_reg( file_REG32, reg_DX ) );
-   x86_pop(
-      bld,
-      x86_make_reg( file_REG32, reg_AX ) );
-#endif
 }
 
 
@@ -953,12 +908,12 @@ emit_instruction(
       emit_kilp( bld );
       return 0; /* XXX fix me */
       break;
+#endif
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
       emit_kil( bld, &inst->FullSrcRegisters[0] );
       break;
-#endif
 
    case TGSI_OPCODE_PK2H:
       return 0;
@@ -1428,7 +1383,7 @@ emit_declaration(
  * \param immediates  buffer to place immediates, later passed to SSE bld
  * \param return  1 for success, 0 if translation failed
  */
-void
+LLVMValueRef
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
@@ -1500,5 +1455,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    }
 
    tgsi_parse_free( &parse );
+
+   return bld.mask;
 }
 

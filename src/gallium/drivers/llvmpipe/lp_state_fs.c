@@ -51,7 +51,8 @@ shader_generate(struct llvmpipe_screen *screen,
    union lp_type type;
    LLVMTypeRef elem_type;
    LLVMTypeRef vec_type;
-   LLVMTypeRef arg_types[7];
+   LLVMTypeRef int_vec_type;
+   LLVMTypeRef arg_types[8];
    LLVMTypeRef func_type;
    LLVMValueRef pos_ptr;
    LLVMValueRef a0_ptr;
@@ -59,11 +60,13 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMValueRef dady_ptr;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs_ptr;
+   LLVMValueRef mask_ptr;
    LLVMValueRef samplers_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef mask;
    char name[32];
    unsigned i, j;
 
@@ -76,6 +79,7 @@ shader_generate(struct llvmpipe_screen *screen,
 
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
+   int_vec_type = lp_build_int_vec_type(type);
 
    arg_types[0] = LLVMPointerType(vec_type, 0);        /* pos */
    arg_types[1] = LLVMPointerType(elem_type, 0);       /* a0 */
@@ -83,7 +87,8 @@ shader_generate(struct llvmpipe_screen *screen,
    arg_types[3] = LLVMPointerType(elem_type, 0);       /* dady */
    arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
    arg_types[5] = LLVMPointerType(vec_type, 0);        /* outputs */
-   arg_types[6] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+   arg_types[6] = LLVMPointerType(int_vec_type, 0);    /* mask */
+   arg_types[7] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -98,7 +103,8 @@ shader_generate(struct llvmpipe_screen *screen,
    dady_ptr = LLVMGetParam(shader->function, 3);
    consts_ptr = LLVMGetParam(shader->function, 4);
    outputs_ptr = LLVMGetParam(shader->function, 5);
-   samplers_ptr = LLVMGetParam(shader->function, 6);
+   mask_ptr = LLVMGetParam(shader->function, 6);
+   samplers_ptr = LLVMGetParam(shader->function, 7);
 
    LLVMSetValueName(pos_ptr, "pos");
    LLVMSetValueName(a0_ptr, "a0");
@@ -106,6 +112,7 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMSetValueName(dady_ptr, "dady");
    LLVMSetValueName(consts_ptr, "consts");
    LLVMSetValueName(outputs_ptr, "outputs");
+   LLVMSetValueName(mask_ptr, "mask");
    LLVMSetValueName(samplers_ptr, "samplers");
 
    block = LLVMAppendBasicBlock(shader->function, "entry");
@@ -120,9 +127,9 @@ shader_generate(struct llvmpipe_screen *screen,
 
    memset(outputs, 0, sizeof outputs);
 
-   lp_build_tgsi_soa(builder, tokens, type,
-                     pos, a0_ptr, dadx_ptr, dady_ptr,
-                     consts_ptr, outputs, samplers_ptr);
+   mask = lp_build_tgsi_soa(builder, tokens, type,
+                            pos, a0_ptr, dadx_ptr, dady_ptr,
+                            consts_ptr, outputs, samplers_ptr);
 
    for(i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i) {
       for(j = 0; j < NUM_CHANNELS; ++j) {
@@ -133,6 +140,9 @@ shader_generate(struct llvmpipe_screen *screen,
          }
       }
    }
+
+   if(mask)
+      LLVMBuildStore(builder, mask, mask_ptr);
 
    LLVMBuildRetVoid(builder);;
 

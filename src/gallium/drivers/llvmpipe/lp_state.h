@@ -65,6 +65,7 @@ typedef void
                      const void *dady,
                      const void *consts,
                      void *outputs,
+                     uint32_t *mask,
                      struct tgsi_sampler **samplers);
 
 /**

@@ -56,6 +56,7 @@ struct quad_shade_stage
    union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
 
    struct tgsi_exec_vector ALIGN16_ATTRIB outputs[PIPE_MAX_ATTRIBS];
+   uint32_t ALIGN16_ATTRIB mask[NUM_CHANNELS];
 };
 
 
@@ -109,6 +110,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
    void *constants;
    struct tgsi_sampler **samplers;
+   unsigned chan_index;
    boolean z_written;
 
    /* Compute X, Y, Z, W vals for this quad */
@@ -120,6 +122,9 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
    samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
 
+   for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+      qss->mask[chan_index] = ~0;
+
    /* run shader */
    llvmpipe->fs->jit_function( qss->pos,
                                quad->coef->a0,
@@ -127,14 +132,14 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
                                quad->coef->dady,
                                constants,
                                qss->outputs,
+                               qss->mask,
                                samplers);
 
-   /* FIXME */
-#if 0
-   quad->inout.mask &= ... ;
+   for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+      if(!qss->mask[chan_index])
+         quad->inout.mask &= ~(1 << chan_index);
    if (quad->inout.mask == 0)
       return FALSE;
-#endif
 
    /* store outputs */
    z_written = FALSE;
