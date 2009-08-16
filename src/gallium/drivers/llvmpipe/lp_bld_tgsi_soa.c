@@ -140,6 +140,7 @@ emit_fetch(
 
       default:
          assert( 0 );
+         return bld->base.undef;
       }
       break;
 
@@ -153,6 +154,7 @@ emit_fetch(
 
    default:
       assert( 0 );
+      return bld->base.undef;
    }
 
    switch( tgsi_util_get_full_src_register_sign_mode( reg, chan_index ) ) {

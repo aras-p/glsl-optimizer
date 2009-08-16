@@ -746,8 +746,11 @@ lp_build_exp2_approx(struct lp_build_context *bld,
    const union lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-   LLVMValueRef ipart;
-   LLVMValueRef fpart, expipart, expfpart, res;
+   LLVMValueRef ipart = NULL;
+   LLVMValueRef fpart = NULL;
+   LLVMValueRef expipart = NULL;
+   LLVMValueRef expfpart = NULL;
+   LLVMValueRef res = NULL;
 
    if(p_exp2_int_part || p_frac_part || p_exp2) {
       /* TODO: optimize the constant case */
@@ -841,12 +844,12 @@ lp_build_log2_approx(struct lp_build_context *bld,
    LLVMValueRef mantmask = lp_build_int_const_uni(type, 0x007fffff);
    LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
 
-   LLVMValueRef i;
-   LLVMValueRef exp;
-   LLVMValueRef mant;
-   LLVMValueRef logexp;
-   LLVMValueRef logmant;
-   LLVMValueRef res;
+   LLVMValueRef i = NULL;
+   LLVMValueRef exp = NULL;
+   LLVMValueRef mant = NULL;
+   LLVMValueRef logexp = NULL;
+   LLVMValueRef logmant = NULL;
+   LLVMValueRef res = NULL;
 
    if(p_exp || p_floor_log2 || p_log2) {
       /* TODO: optimize the constant case */

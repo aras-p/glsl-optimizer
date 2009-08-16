@@ -137,8 +137,6 @@ lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef a,
                 LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
-
    if(a == b)
       return a;
 

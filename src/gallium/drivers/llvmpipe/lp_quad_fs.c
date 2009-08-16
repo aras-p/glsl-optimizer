@@ -201,7 +201,6 @@ shade_quads(struct quad_stage *qs,
                  struct quad_header *quads[],
                  unsigned nr)
 {
-   struct quad_shade_stage *qss = quad_shade_stage( qs );
    unsigned i, pass = 0;
    
    for (i = 0; i < nr; i++) {
