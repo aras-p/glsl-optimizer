@@ -88,6 +88,8 @@ shader_generate(struct llvmpipe_screen *screen,
 
    shader->function = LLVMAddFunction(screen->module, "shader", func_type);
    LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
+   for(i = 0; i < Elements(arg_types); ++i)
+      LLVMAddAttribute(LLVMGetParam(shader->function, i), LLVMNoAliasAttribute);
 
    pos_ptr = LLVMGetParam(shader->function, 0);
    a0_ptr = LLVMGetParam(shader->function, 1);
