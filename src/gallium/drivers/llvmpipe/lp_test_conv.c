@@ -36,6 +36,7 @@
 
 #include "lp_bld_type.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_debug.h"
 #include "lp_test.h"
 
 
@@ -216,6 +217,9 @@ test_one(unsigned verbose,
       LLVMDumpModule(module);
 
    conv_test_ptr = (conv_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+
+   if(verbose >= 2)
+      lp_disassemble(conv_test_ptr);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {

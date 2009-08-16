@@ -6,11 +6,19 @@ Requirements
 
  - Linux
  
+ - udis86, http://udis86.sourceforge.net/
+ 
+     git clone git://udis86.git.sourceforge.net/gitroot/udis86
+     cd udis86
+     ./configure --with-pic
+     make
+     sudo make install
+ 
  - LLVM. On Debian based distributions do:
  
      aptitude install llvm-dev
 
-   There is a type in one of the llvm-dev 2.5 headers, that causes compilation
+   There is a typo in one of the llvm-dev 2.5 headers, that causes compilation
    errors in the debug build:
 
      --- /usr/include/llvm-c/Core.h.orig	2009-08-10 15:38:54.000000000 +0100

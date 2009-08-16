@@ -12,6 +12,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_bld_blend_soa.c',
 		'lp_bld_const.c',
 		'lp_bld_conv.c',
+		'lp_bld_debug.c',
 		'lp_bld_intr.c',
 		'lp_bld_pack.c',
 		'lp_bld_unpack.c',
@@ -55,6 +56,7 @@ llvmpipe = env.ConvenienceLibrary(
 
 env = env.Clone()
 
+env.Prepend(LIBS = 'udis86')
 env['LINK'] = env['CXX']
 env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
 env.Prepend(LIBS = [llvmpipe] + auxiliaries)

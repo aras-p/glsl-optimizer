@@ -41,6 +41,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_blend.h"
+#include "lp_bld_debug.h"
 
 
 static void
@@ -127,7 +128,7 @@ llvmpipe_create_blend_state(struct pipe_context *pipe,
 
    LLVMRunFunctionPassManager(screen->pass, blend->function);
 
-#if 1
+#ifdef DEBUG
    debug_printf("%s=%s %s=%s %s=%s %s=%s %s=%s %s=%s\n",
                 "rgb_func",         debug_dump_blend_func  (blend->base.rgb_func, TRUE),
                 "rgb_src_factor",   debug_dump_blend_factor(blend->base.rgb_src_factor, TRUE),
@@ -145,6 +146,10 @@ llvmpipe_create_blend_state(struct pipe_context *pipe,
    }
 
    blend->jit_function = (lp_blend_func)LLVMGetPointerToGlobal(screen->engine, blend->function);
+
+#ifdef DEBUG
+   lp_disassemble(blend->jit_function);
+#endif
 
    return blend;
 }

@@ -40,6 +40,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_blend.h"
+#include "lp_bld_debug.h"
 #include "lp_test.h"
 
 
@@ -525,6 +526,9 @@ test_one(unsigned verbose,
       LLVMDumpModule(module);
 
    blend_test_ptr = (blend_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+
+   if(verbose >= 2)
+      lp_disassemble(blend_test_ptr);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {

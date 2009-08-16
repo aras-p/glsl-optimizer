@@ -36,6 +36,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "lp_bld_type.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_debug.h"
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_state.h"
@@ -187,6 +188,10 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    }
 
    shader->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, shader->function);
+
+#ifdef DEBUG
+   lp_disassemble(shader->jit_function);
+#endif
 
    return shader;
 }
