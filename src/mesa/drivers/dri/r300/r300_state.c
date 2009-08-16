@@ -462,7 +462,7 @@ static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 static void r300SetEarlyZState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	GLuint topZ = R300_ZTOP_DISABLE;
+	GLuint topZ = R300_ZTOP_ENABLE;
 	GLuint w_fmt, fgdepthsrc;
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
@@ -470,6 +470,8 @@ static void r300SetEarlyZState(GLcontext * ctx)
 	else if (current_fragment_program_writes_depth(ctx))
 		topZ = R300_ZTOP_DISABLE;
 	else if (ctx->FragmentProgram._Current && ctx->FragmentProgram._Current->UsesKill)
+		topZ = R300_ZTOP_DISABLE;
+	else if (r300->query.current)
 		topZ = R300_ZTOP_DISABLE;
 
 	if (topZ != r300->hw.zstencil_format.cmd[2]) {
