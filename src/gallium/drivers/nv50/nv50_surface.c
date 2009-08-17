@@ -144,7 +144,7 @@ nv50_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
 
 	assert(src->format == dest->format);
@@ -158,7 +158,7 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;

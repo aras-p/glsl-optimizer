@@ -47,7 +47,7 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 static void
 nv50_destroy(struct pipe_context *pipe)
 {
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nv50_context *nv50 = nv50_context(pipe);
 
 	draw_destroy(nv50->draw);
 	FREE(nv50);
