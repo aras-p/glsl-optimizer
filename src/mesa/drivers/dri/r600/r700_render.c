@@ -323,7 +323,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         R600_OUT_BATCH(vgt_num_indices);
         R600_OUT_BATCH(vgt_draw_initiator);
 
-        for (i = start; i < end; i++) {
+        for (i = start; i < (start + num_indices); i++) {
             R600_OUT_BATCH(i);
         }
         END_BATCH();
