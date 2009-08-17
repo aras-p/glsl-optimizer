@@ -28,6 +28,7 @@
 
 #include "pipe/p_defines.h"
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_logic.h"
 
@@ -171,4 +172,106 @@ lp_build_cmp(struct lp_build_context *bld,
    }
 
    return LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+}
+
+
+LLVMValueRef
+lp_build_select(struct lp_build_context *bld,
+                LLVMValueRef mask,
+                LLVMValueRef a,
+                LLVMValueRef b)
+{
+   union lp_type type = bld->type;
+   LLVMValueRef res;
+
+   if(a == b)
+      return a;
+
+   if(type.floating) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+   }
+
+   /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
+
+   a = LLVMBuildAnd(bld->builder, a, mask, "");
+
+   /* This often gets translated to PANDN, but sometimes the NOT is
+    * pre-computed and stored in another constant. The best strategy depends
+    * on available registers, so it is not a big deal -- hopefully LLVM does
+    * the right decision attending the rest of the program.
+    */
+   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+
+   res = LLVMBuildOr(bld->builder, a, b, "");
+
+   if(type.floating) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+
+   return res;
+}
+
+
+LLVMValueRef
+lp_build_select_aos(struct lp_build_context *bld,
+                    LLVMValueRef a,
+                    LLVMValueRef b,
+                    boolean cond[4])
+{
+   const union lp_type type = bld->type;
+   const unsigned n = type.length;
+   unsigned i, j;
+
+   if(a == b)
+      return a;
+   if(cond[0] && cond[1] && cond[2] && cond[3])
+      return a;
+   if(!cond[0] && !cond[1] && !cond[2] && !cond[3])
+      return b;
+   if(a == bld->undef || b == bld->undef)
+      return bld->undef;
+
+   /*
+    * There are three major ways of accomplishing this:
+    * - with a shuffle,
+    * - with a select,
+    * - or with a bit mask.
+    *
+    * Select isn't supported for vector types yet.
+    * The flip between these is empirical and might need to be.
+    */
+   if (n <= 4) {
+      /*
+       * Shuffle.
+       */
+      LLVMTypeRef elem_type = LLVMInt32Type();
+      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+
+      for(j = 0; j < n; j += 4)
+         for(i = 0; i < 4; ++i)
+            shuffles[j + i] = LLVMConstInt(elem_type, (cond[i] ? 0 : n) + j + i, 0);
+
+      return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
+   }
+#if 0
+   else if(0) {
+      /* FIXME: Unfortunately select of vectors do not work */
+      /* Use a select */
+      LLVMTypeRef elem_type = LLVMInt1Type();
+      LLVMValueRef cond[LP_MAX_VECTOR_LENGTH];
+
+      for(j = 0; j < n; j += 4)
+         for(i = 0; i < 4; ++i)
+            cond[j + i] = LLVMConstInt(elem_type, cond[i] ? 1 : 0, 0);
+
+      return LLVMBuildSelect(bld->builder, LLVMConstVector(cond, n), a, b, "");
+   }
+#endif
+   else {
+      LLVMValueRef mask = lp_build_const_mask_aos(type, cond);
+      return lp_build_select(bld, mask, a, b);
+   }
 }

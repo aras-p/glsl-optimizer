@@ -59,19 +59,6 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
                        unsigned channel);
 
 
-LLVMValueRef
-lp_build_select(struct lp_build_context *bld,
-                LLVMValueRef mask,
-                LLVMValueRef a,
-                LLVMValueRef b);
-
-LLVMValueRef
-lp_build_select_aos(struct lp_build_context *bld,
-                    LLVMValueRef a,
-                    LLVMValueRef b,
-                    boolean cond[4]);
-
-
 /**
  * Swizzle a vector consisting of an array of XYZW structs.
  *

@@ -39,6 +39,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_blend.h"
 
