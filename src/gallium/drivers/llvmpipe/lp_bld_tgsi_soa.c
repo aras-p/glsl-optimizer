@@ -470,15 +470,11 @@ emit_instruction(
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
          STORE( bld, *inst, 0, CHAN_X, bld->base.one);
       }
-      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
-         STORE( bld, *inst, 0, CHAN_W, bld->base.one);
-      }
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
-         tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-         tmp0 = lp_build_max( &bld->base, tmp0, bld->base.one);
-         STORE( bld, *inst, 0, CHAN_Y, tmp0);
+         src0 = FETCH( bld, *inst, 0, CHAN_X );
+         dst0 = lp_build_max( &bld->base, src0, bld->base.zero);
+         STORE( bld, *inst, 0, CHAN_Y, dst0);
       }
-#if 0
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
          /* XMM[1] = SrcReg[0].yyyy */
          tmp1 = FETCH( bld, *inst, 0, CHAN_Y );
@@ -488,22 +484,14 @@ emit_instruction(
          tmp2 = FETCH( bld, *inst, 0, CHAN_W );
          tmp1 = lp_build_pow( &bld->base, tmp1, tmp2);
          tmp0 = FETCH( bld, *inst, 0, CHAN_X );
-         tmp2 = bld->base.zero;
-         sse_cmpps(
-            bld,
-            make_xmm( 2 ),
-            make_xmm( 0 ),
-            cc_LessThan );
-         sse_andps(
-            bld,
-            make_xmm( 2 ),
-            make_xmm( 1 ) );
-         STORE( bld, *inst, 0, CHAN_Z, tmp2);
+         tmp2 = lp_build_cmp(&bld->base, PIPE_FUNC_GREATER, tmp0, bld->base.zero);
+         dst0 = lp_build_select(&bld->base, tmp2, tmp1, bld->base.zero);
+         STORE( bld, *inst, 0, CHAN_Z, dst0);
+      }
+      if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
+         STORE( bld, *inst, 0, CHAN_W, bld->base.one);
       }
       break;
-#else
-      return 0;
-#endif
 
    case TGSI_OPCODE_RCP:
    /* TGSI_OPCODE_RECIP */
