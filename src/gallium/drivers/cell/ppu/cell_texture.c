@@ -417,7 +417,8 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
    if (!ctrans->map)
       return NULL; /* out of memory */
 
-   if (transfer->usage & PIPE_TRANSFER_READ) {
+   if (transfer->usage == PIPE_TRANSFER_READ ||
+       transfer->usage == PIPE_TRANSFER_READ_WRITE) {
       /* need to untwiddle the texture to make a linear version */
       const uint bpp = pf_get_size(ct->base.format);
       if (bpp == 4) {
@@ -458,7 +459,8 @@ cell_transfer_unmap(struct pipe_screen *screen,
                                    PIPE_BUFFER_USAGE_CPU_READ);
    }
 
-   if (transfer->usage & PIPE_TRANSFER_WRITE) {
+   if (transfer->usage == PIPE_TRANSFER_WRITE ||
+       transfer->usage == PIPE_TRANSFER_READ_WRITE) {
       /* The user wrote new texture data into the mapped buffer.
        * We need to convert the new linear data into the twiddled/tiled format.
        */
