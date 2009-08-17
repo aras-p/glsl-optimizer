@@ -185,15 +185,9 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	}
 
 again_alloc:
-#ifdef RADEON_DEBUG_BO
-    rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
-					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
-					    0, "dma.current");
-#else    
 	rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
 					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
 					    0);
-#endif /* RADEON_DEBUG_BO */
 
 	if (!rmesa->dma.current) {
 		rcommonFlushCmdBuf(rmesa, __FUNCTION__);

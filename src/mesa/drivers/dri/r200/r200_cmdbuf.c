@@ -240,15 +240,9 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    radeonEmitState(&rmesa->radeon);
 
-#ifdef RADEON_DEBUG_BO
-   rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-					  0, R200_ELT_BUF_SZ, 4,
-						 RADEON_GEM_DOMAIN_GTT, 0, "ELT");
-#else
    rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
 					  0, R200_ELT_BUF_SZ, 4,
 					  RADEON_GEM_DOMAIN_GTT, 0);
-#endif
    rmesa->radeon.tcl.elt_dma_offset = 0;
    rmesa->tcl.elt_used = min_nr * 2;
 

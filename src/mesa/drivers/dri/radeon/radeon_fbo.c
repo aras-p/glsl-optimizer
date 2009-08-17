@@ -185,22 +185,12 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
      rrb->pitch = pitch * cpp;
      rrb->cpp = cpp;
-#ifdef RADEON_DEBUG_BO
-     rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-			      0,
-			      size,
-			      0,
-			      RADEON_GEM_DOMAIN_VRAM,
-			      0,
-                  "Radeon RBO");
-#else
      rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 			      0,
 			      size,
 			      0,
 			      RADEON_GEM_DOMAIN_VRAM,
 			      0);
-#endif /* RADEON_DEBUG_BO */
      rb->Width = width;
      rb->Height = height;
        return GL_TRUE;

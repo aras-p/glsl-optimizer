@@ -100,22 +100,13 @@ radeonBufferData(GLcontext * ctx,
     }
 
     if (size != 0) {
-#ifdef RADEON_DEBUG_BO
-        radeon_obj->bo = radeon_bo_open(radeon->radeonScreen->bom,
-                                        0,
-                                        size,
-                                        32,
-                                        RADEON_GEM_DOMAIN_GTT,
-                                        0,
-                                        "Radeon Named object");
-#else
         radeon_obj->bo = radeon_bo_open(radeon->radeonScreen->bom,
                                         0,
                                         size,
                                         32,
                                         RADEON_GEM_DOMAIN_GTT,
                                         0);
-#endif
+
         if (data != NULL) {
             radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
