@@ -137,8 +137,17 @@ lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef a,
                 LLVMValueRef b)
 {
+   union lp_type type = bld->type;
+   LLVMValueRef res;
+
    if(a == b)
       return a;
+
+   if(type.floating) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+   }
 
    /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
 
@@ -151,7 +160,14 @@ lp_build_select(struct lp_build_context *bld,
     */
    b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
 
-   return LLVMBuildOr(bld->builder, a, b, "");
+   res = LLVMBuildOr(bld->builder, a, b, "");
+
+   if(type.floating) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+
+   return res;
 }
 
 
