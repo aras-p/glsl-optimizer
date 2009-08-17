@@ -223,18 +223,71 @@ static unsigned int r700PrimitiveType(int prim)
     }
 }
 
+static int r700NumVerts(int num_verts, int prim)
+{
+	int verts_off = 0;
+
+	switch (prim & PRIM_MODE_MASK) {
+	case GL_POINTS:
+		verts_off = 0;
+		break;
+	case GL_LINES:
+		verts_off = num_verts % 2;
+		break;
+	case GL_LINE_STRIP:
+		if (num_verts < 2)
+			verts_off = num_verts;
+		break;
+	case GL_LINE_LOOP:
+		if (num_verts < 2)
+			verts_off = num_verts;
+		break;
+	case GL_TRIANGLES:
+		verts_off = num_verts % 3;
+		break;
+	case GL_TRIANGLE_STRIP:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	case GL_TRIANGLE_FAN:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	case GL_QUADS:
+		verts_off = num_verts % 4;
+		break;
+	case GL_QUAD_STRIP:
+		if (num_verts < 4)
+			verts_off = num_verts;
+		else
+			verts_off = num_verts % 2;
+		break;
+	case GL_POLYGON:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	default:
+		assert(0);
+		return -1;
+		break;
+	}
+
+	return num_verts - verts_off;
+}
+
 static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	BATCH_LOCALS(&context->radeon);
 	int type, i, total_emit;
-	int num_indices = end - start;
+	int num_indices;
 	uint32_t vgt_draw_initiator = 0;
 	uint32_t vgt_index_type     = 0;
 	uint32_t vgt_primitive_type = 0;
 	uint32_t vgt_num_indices    = 0;
 
 	type = r700PrimitiveType(prim);
+	num_indices = r700NumVerts(end - start, prim);
 
 	if (type < 0 || num_indices <= 0)
 		return;
