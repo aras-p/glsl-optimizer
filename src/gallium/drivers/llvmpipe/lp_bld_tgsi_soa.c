@@ -386,14 +386,16 @@ emit_kil(
    }
 
    FOR_EACH_CHANNEL( chan_index ) {
-      LLVMValueRef mask;
+      if(terms[chan_index]) {
+         LLVMValueRef mask;
 
-      mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
-      
-      if(bld->mask)
-         bld->mask = LLVMBuildAnd(bld->base.builder, bld->mask, mask, "");
-      else
-         bld->mask = mask;
+         mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
+
+         if(bld->mask)
+            bld->mask = LLVMBuildAnd(bld->base.builder, bld->mask, mask, "");
+         else
+            bld->mask = mask;
+      }
    }
 }
 
