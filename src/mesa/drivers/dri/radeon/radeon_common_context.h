@@ -596,7 +596,7 @@ extern int RADEON_DEBUG;
 
 #ifndef HAVE_LIBDRM_RADEON
 #ifndef RADEON_DEBUG_BO
-#define RADEON_DEBUG_BO 1
+#define RADEON_DEBUG_BO 0
 #endif
 #endif
 
