@@ -9,7 +9,7 @@
 
 /* This should be kept in sync with _eglInitThreadInfo() */
 #define _EGL_THREAD_INFO_INITIALIZER \
-   { EGL_SUCCESS, { NULL }, 1 }
+   { EGL_SUCCESS, { NULL }, 0 }
 
 /* a fallback thread info to guarantee that every thread always has one */
 static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;

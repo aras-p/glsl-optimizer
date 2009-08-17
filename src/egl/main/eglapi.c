@@ -92,8 +92,8 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       snprintf(disp->Version, sizeof(disp->Version),
                "%d.%d (%s)", major_int, minor_int, drv->Name);
 
-      /* update the global notion of supported APIs */
-      _eglGlobal.ClientAPIsMask |= disp->ClientAPIsMask;
+      /* limit to APIs supported by core */
+      disp->ClientAPIsMask &= _EGL_API_ALL_BITS;
 
       disp->Driver = drv;
    } else {
@@ -842,33 +842,7 @@ eglBindAPI(EGLenum api)
    if (!_eglIsApiValid(api))
       return _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
 
-   switch (api) {
-#ifdef EGL_VERSION_1_4
-   case EGL_OPENGL_API:
-      if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT) {
-         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
-         return EGL_TRUE;
-      }
-      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
-      return EGL_FALSE;
-#endif
-   case EGL_OPENGL_ES_API:
-      if (_eglGlobal.ClientAPIsMask & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)) {
-         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
-         return EGL_TRUE;
-      }
-      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
-      return EGL_FALSE;
-   case EGL_OPENVG_API:
-      if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT) {
-         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
-         return EGL_TRUE;
-      }
-      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
-      return EGL_FALSE;
-   default:
-      return EGL_FALSE;
-   }
+   t->CurrentAPIIndex = _eglConvertApiToIndex(api);
    return EGL_TRUE;
 }
 
