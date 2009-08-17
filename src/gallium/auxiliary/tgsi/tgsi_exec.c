@@ -375,15 +375,9 @@ tgsi_exec_machine_create( void )
    if (!mach)
       goto fail;
 
-   mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
+   memset(mach, 0, sizeof(*mach));
 
-   mach->Samplers = NULL;
-   mach->Consts = NULL;
-   mach->Tokens = NULL;
-   mach->Primitives = NULL;
-   mach->InterpCoefs = NULL;
-   mach->Instructions = NULL;
-   mach->Declarations = NULL;
+   mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
