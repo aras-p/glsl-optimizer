@@ -31,6 +31,7 @@
 #include "tgsi/tgsi_ureg.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 union tgsi_any_token {
    struct tgsi_version version;
