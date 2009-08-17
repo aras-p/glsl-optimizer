@@ -394,12 +394,23 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 		}
 
 	} else {
-		if (num_verts > 65535) {
-			WARN_ONCE("Fixme: can't handle more then 65535 vertices");
+		GLuint first, incr, offset = 0;
+
+		if (!split_prim_inplace(prim & PRIM_MODE_MASK, &first, &incr) &&
+			num_verts > 65500) {
+			WARN_ONCE("Fixme: can't handle spliting prim %d\n", prim);
 			return;
 		}
-		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
-		r300FireAOS(rmesa, num_verts, type);
+		r300_emit_scissor(rmesa->radeon.glCtx);
+		while (num_verts > 0) {
+			int nr;
+			nr = MIN2(num_verts, 65535);
+			nr -= (nr - first) % incr;
+			r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start + offset);
+			r300FireAOS(rmesa, nr, type);
+			num_verts -= nr;
+			offset += nr;
+		}
 	}
 	COMMIT_BATCH();
 }
