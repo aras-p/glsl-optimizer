@@ -46,7 +46,7 @@ Requirements
      make
      sudo make install
  
- - LLVM. On Debian based distributions do:
+ - LLVM 2.5. On Debian based distributions do:
  
      aptitude install llvm-dev
 
