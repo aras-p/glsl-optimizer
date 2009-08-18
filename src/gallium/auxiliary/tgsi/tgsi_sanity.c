@@ -131,7 +131,7 @@ is_register_used(
    return (ctx->regs_used[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
 }
 
-static const char *file_names[] =
+static const char *file_names[TGSI_FILE_COUNT] =
 {
    "NULL",
    "CONST",
@@ -140,7 +140,8 @@ static const char *file_names[] =
    "TEMP",
    "SAMP",
    "ADDR",
-   "IMM"
+   "IMM",
+   "LOOP"
 };
 
 static boolean
@@ -234,9 +235,29 @@ iter_instruction(
             index,
             "indirect",
             FALSE );
-         if (file != TGSI_FILE_ADDRESS || index != 0)
-            report_warning( ctx, "Indirect register not ADDR[0]" );
+         if (!(file == TGSI_FILE_ADDRESS || file == TGSI_FILE_LOOP) || index != 0) {
+            report_warning(ctx, "Indirect register neither ADDR[0] nor LOOP[0]");
+         }
       }
+   }
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_BGNFOR:
+   case TGSI_OPCODE_ENDFOR:
+      if (inst->FullDstRegisters[0].DstRegister.File != TGSI_FILE_LOOP ||
+          inst->FullDstRegisters[0].DstRegister.Index != 0) {
+         report_error(ctx, "Destination register must be LOOP[0]");
+      }
+      break;
+   }
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_BGNFOR:
+      if (inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_CONSTANT &&
+          inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_IMMEDIATE) {
+         report_error(ctx, "Source register file must be either CONST or IMM");
+      }
+      break;
    }
 
    ctx->num_instructions++;

@@ -59,8 +59,8 @@ static GLint VertCoord_attr = -1, TexCoord0_attr = -1, TexCoord1_attr = -1;
 
 /* value[0] = tex unit */
 static struct uniform_info Uniforms[] = {
-   { "tex1",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
-   { "tex2",  1, GL_INT, { 1, 0, 0, 0 }, -1 },
+   { "tex1",  1, GL_SAMPLER_2D, { 0, 0, 0, 0 }, -1 },
+   { "tex2",  1, GL_SAMPLER_2D, { 1, 0, 0, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
@@ -134,7 +134,7 @@ DrawPolygonArray(void)
 
    if (VertCoord_attr >= 0) {
       glVertexAttribPointer(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
-                                 0, VertCoords);
+                                 0, vertPtr);
       glEnableVertexAttribArray(VertCoord_attr);
    }
    else {
@@ -143,11 +143,11 @@ DrawPolygonArray(void)
    }
 
    glVertexAttribPointer(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex0Coords);
+                              0, tex0Ptr);
    glEnableVertexAttribArray(TexCoord0_attr);
 
    glVertexAttribPointer(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex1Coords);
+                              0, tex1Ptr);
    glEnableVertexAttribArray(TexCoord1_attr);
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -328,7 +328,8 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    glUseProgram(program);
 
-   InitUniforms(program, uniforms);
+   SetUniformValues(program, uniforms);
+   PrintUniforms(Uniforms);
 
    VertCoord_attr = glGetAttribLocation(program, "VertCoord");
    if (VertCoord_attr > 0) {

@@ -947,7 +947,7 @@ static void brw_wm_emit_instruction( struct brw_wm_compile *c,
 #endif
 
       break;
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       c->loop_inst[c->loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
       break;
    case TGSI_OPCODE_BRK:
@@ -958,11 +958,11 @@ static void brw_wm_emit_instruction( struct brw_wm_compile *c,
       brw_CONT(p);
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
       break;
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       c->loop_insn--;
       c->inst0 = c->inst1 = brw_WHILE(p, c->loop_inst[c->loop_insn]);
       /* patch all the BREAK instructions from
-	 last BEGINLOOP */
+         last BGNFOR */
       while (c->inst0 > c->loop_inst[c->loop_insn]) {
 	 c->inst0--;
 	 if (c->inst0->header.opcode == BRW_OPCODE_BREAK) {

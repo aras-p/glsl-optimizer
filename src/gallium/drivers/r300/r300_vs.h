@@ -23,133 +23,30 @@
 #ifndef R300_VS_H
 #define R300_VS_H
 
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_dump.h"
+#include "pipe/p_state.h"
+#include "tgsi/tgsi_scan.h"
 
-#include "r300_context.h"
-#include "r300_debug.h"
-#include "r300_reg.h"
-#include "r300_screen.h"
-#include "r300_shader_inlines.h"
+#include "radeon_code.h"
 
-/* XXX get these to r300_reg */
-#define R300_PVS_DST_OPCODE(x)   ((x) << 0)
-#   define R300_VE_DOT_PRODUCT            1
-#   define R300_VE_MULTIPLY               2
-#   define R300_VE_ADD                    3
-#   define R300_VE_MAXIMUM                7
-#   define R300_VE_SET_LESS_THAN          10
-#define R300_PVS_DST_MATH_INST     (1 << 6)
-#   define R300_ME_RECIP_DX               6
-#define R300_PVS_DST_MACRO_INST    (1 << 7)
-#   define R300_PVS_MACRO_OP_2CLK_MADD    0
-#define R300_PVS_DST_REG_TYPE(x) ((x) << 8)
-#   define R300_PVS_DST_REG_TEMPORARY     0
-#   define R300_PVS_DST_REG_A0            1
-#   define R300_PVS_DST_REG_OUT           2
-#   define R300_PVS_DST_REG_OUT_REPL_X    3
-#   define R300_PVS_DST_REG_ALT_TEMPORARY 4
-#   define R300_PVS_DST_REG_INPUT         5
-#define R300_PVS_DST_OFFSET(x)   ((x) << 13)
-#define R300_PVS_DST_WE(x)       ((x) << 20)
-#define R300_PVS_DST_WE_XYZW     (0xf << 20)
+struct r300_context;
 
-#define R300_PVS_SRC_REG_TYPE(x) ((x) << 0)
-#   define R300_PVS_SRC_REG_TEMPORARY     0
-#   define R300_PVS_SRC_REG_INPUT         1
-#   define R300_PVS_SRC_REG_CONSTANT      2
-#   define R300_PVS_SRC_REG_ALT_TEMPORARY 3
-#define R300_PVS_SRC_OFFSET(x)   ((x) << 5)
-#define R300_PVS_SRC_SWIZZLE(x)  ((x) << 13)
-#   define R300_PVS_SRC_SELECT_X          0
-#   define R300_PVS_SRC_SELECT_Y          1
-#   define R300_PVS_SRC_SELECT_Z          2
-#   define R300_PVS_SRC_SELECT_W          3
-#   define R300_PVS_SRC_SELECT_FORCE_0    4
-#   define R300_PVS_SRC_SELECT_FORCE_1    5
-#   define R300_PVS_SRC_SWIZZLE_XYZW \
-    ((R300_PVS_SRC_SELECT_X | (R300_PVS_SRC_SELECT_Y << 3) | \
-     (R300_PVS_SRC_SELECT_Z << 6) | (R300_PVS_SRC_SELECT_W << 9)) << 13)
-#   define R300_PVS_SRC_SWIZZLE_ZERO \
-    ((R300_PVS_SRC_SELECT_FORCE_0 | (R300_PVS_SRC_SELECT_FORCE_0 << 3) | \
-     (R300_PVS_SRC_SELECT_FORCE_0 << 6) | \
-      (R300_PVS_SRC_SELECT_FORCE_0 << 9)) << 13)
-#   define R300_PVS_SRC_SWIZZLE_ONE \
-    ((R300_PVS_SRC_SELECT_FORCE_1 | (R300_PVS_SRC_SELECT_FORCE_1 << 3) | \
-     (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
-      (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
-#define R300_PVS_MODIFIER_X        (1 << 25)
-#define R300_PVS_MODIFIER_Y        (1 << 26)
-#define R300_PVS_MODIFIER_Z        (1 << 27)
-#define R300_PVS_MODIFIER_W        (1 << 28)
-#define R300_PVS_NEGATE_XYZW \
-    (R300_PVS_MODIFIER_X | R300_PVS_MODIFIER_Y | \
-     R300_PVS_MODIFIER_Z | R300_PVS_MODIFIER_W)
+struct r300_vertex_shader {
+    /* Parent class */
+    struct pipe_shader_state state;
+    struct tgsi_shader_info info;
 
-/* Temporary struct used to hold assembly state while putting together
- * fragment programs. */
-struct r300_vs_asm {
-    /* Pipe context. */
-    struct r300_context* r300;
-    /* Number of colors. */
-    unsigned color_count;
-    /* Number of texcoords. */
-    unsigned tex_count;
-    /* Number of requested temporary registers. */
-    unsigned temp_count;
-    /* Offset for immediate constants. Neither R300 nor R500 can do four
-     * inline constants per source, so instead we copy immediates into the
-     * constant buffer. */
-    unsigned imm_offset;
-    /* Number of immediate constants. */
-    unsigned imm_count;
-    /* Number of colors to write. */
-    unsigned out_colors;
-    /* Number of texcoords to write. */
-    unsigned out_texcoords;
-    /* Whether to emit point size. */
-    boolean point_size;
-    /* Tab of declared outputs to OVM outputs. */
-    unsigned tab[16];
+    /* Fallback shader, because Draw has issues */
+    struct draw_vertex_shader* draw;
+
+    /* Has this shader been translated yet? */
+    boolean translated;
+
+    /* Machine code (if translated) */
+    struct r300_vertex_program_code code;
 };
 
-static struct r300_vertex_shader r300_passthrough_vertex_shader = {
-        /* XXX translate these back into normal instructions */
-    .instruction_count = 2,
-    .instructions[0].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(0) | R300_PVS_DST_WE_XYZW,
-    .instructions[0].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(0) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .instructions[0].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
-    .instructions[0].inst3 = 0x0,
-    .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
-    .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
-    .instructions[1].inst3 = 0x0,
-};
 
-static struct r300_vertex_shader r300_texture_vertex_shader = {
-        /* XXX translate these back into normal instructions */
-    .instruction_count = 2,
-    .instructions[0].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(0) | R300_PVS_DST_WE_XYZW,
-    .instructions[0].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(0) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .instructions[0].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
-    .instructions[0].inst3 = 0x0,
-    .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
-    .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
-    .instructions[1].inst3 = 0x0,
-};
+extern struct r300_vertex_program_code r300_passthrough_vertex_shader;
 
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs);

@@ -59,6 +59,7 @@
 #include "util/u_tile.h"
 #include "util/u_blit.h"
 #include "util/u_surface.h"
+#include "util/u_math.h"
 
 
 #define DBG if (0) printf
@@ -237,16 +238,6 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-static INLINE unsigned
-logbase2(unsigned n)
-{
-   unsigned log2 = 0;
-   while (n >>= 1)
-      ++log2;
-   return log2;
-}
-
-
 /**
  * Return default texture usage bitmask for the given texture format.
  */
@@ -340,9 +331,9 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel;
    }
    else {
-      GLuint l2width = logbase2(width);
-      GLuint l2height = logbase2(height);
-      GLuint l2depth = logbase2(depth);
+      GLuint l2width = util_logbase2(width);
+      GLuint l2height = util_logbase2(height);
+      GLuint l2depth = util_logbase2(depth);
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
@@ -531,6 +522,12 @@ st_TexImage(GLcontext * ctx,
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
+
+   /* switch to "normal" */
+   if (stObj->surface_based) {
+      _mesa_clear_texture_object(ctx, texObj);
+      stObj->surface_based = GL_FALSE;
+   }
 
    /* gallium does not support texture borders, strip it off */
    if (border) {
@@ -1047,7 +1044,8 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       _mesa_image_image_stride(packing, width, height, format, type);
    GLint i;
    const GLubyte *src;
-   enum pipe_transfer_usage transfer_usage;
+   /* init to silence warning only: */
+   enum pipe_transfer_usage transfer_usage = PIPE_TRANSFER_WRITE;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),

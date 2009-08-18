@@ -86,8 +86,10 @@
 #define BFM_ENABLE_STENCIL_WRITE_MASK     (1<<16)
 #define BFM_STENCIL_TEST_MASK_SHIFT       8
 #define BFM_STENCIL_TEST_MASK_MASK        (0xff<<8)
+#define BFM_STENCIL_TEST_MASK(x)	  (((x)&0xff) << 8)
 #define BFM_STENCIL_WRITE_MASK_SHIFT      0
 #define BFM_STENCIL_WRITE_MASK_MASK       (0xff<<0)
+#define BFM_STENCIL_WRITE_MASK(x)	  ((x)&0xff)
 
 
 
@@ -295,7 +297,9 @@
 #define TEXKILL_4D                      (1<<9)
 #define ENABLE_LINE_STRIP_PROVOKE_VRTX	(1<<8)
 #define ENABLE_TRI_FAN_PROVOKE_VRTX	(1<<5)
+#define LINE_STRIP_PROVOKE_VRTX_MASK	(3 << 6)
 #define LINE_STRIP_PROVOKE_VRTX(x)	((x)<<6)
+#define TRI_FAN_PROVOKE_VRTX_MASK	(3 << 3)
 #define TRI_FAN_PROVOKE_VRTX(x) 	((x)<<3)
 
 /* _3DSTATE_SCISSOR_ENABLE, p256 */

@@ -453,6 +453,7 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
 
    brw_clip_tri_alloc_regs(c, 3 + c->key.nr_userclip + 6);
    brw_clip_tri_init_vertices(c);
+   brw_clip_init_ff_sync(c);
 
    assert(c->offset[VERT_RESULT_EDGE]);
 
@@ -496,8 +497,6 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    }
    brw_ENDIF(p, do_clip);
    
-   if (c->need_ff_sync)
-	   brw_clip_ff_sync(c);      
    emit_unfilled_primitives(c);
    brw_clip_kill_thread(c);
 }

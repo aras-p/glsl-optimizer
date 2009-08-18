@@ -52,7 +52,7 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
 
     draw_set_mapped_constant_buffer(r300->draw,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
-            r300->shader_constants[PIPE_SHADER_VERTEX].user_count *
+            r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
 
     draw_arrays(r300->draw, mode, start, count);

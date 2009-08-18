@@ -158,7 +158,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       /* unpack pixelmap from PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
@@ -188,7 +188,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 
    store_pixelmap(ctx, map, mapsize, values);
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               ctx->Unpack.BufferObj);
    }
@@ -217,7 +217,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       /* unpack pixelmap from PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
@@ -259,7 +259,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
       }
    }
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               ctx->Unpack.BufferObj);
    }
@@ -290,7 +290,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       /* unpack pixelmap from PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
@@ -333,7 +333,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
       }
    }
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               ctx->Unpack.BufferObj);
    }
@@ -359,7 +359,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 
    mapsize = pm->Size;
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack pixelmap into PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
@@ -397,7 +397,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
       MEMCPY(values, pm->Map, mapsize * sizeof(GLfloat));
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }
@@ -420,7 +420,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
    }
    mapsize = pm->Size;
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack pixelmap into PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
@@ -458,7 +458,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
       }
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }
@@ -481,7 +481,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
    }
    mapsize = pm ? pm->Size : 0;
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack pixelmap into PBO */
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
@@ -528,7 +528,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       }
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }

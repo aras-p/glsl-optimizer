@@ -212,13 +212,14 @@ timed_surface_buffer_create(struct pipe_winsys *winsys,
                               unsigned width, unsigned height,
                               enum pipe_format format, 
                               unsigned usage,
+                              unsigned tex_usage,
                               unsigned *stride)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
    struct pipe_buffer *ret = backend->surface_buffer_create( backend, width, height, 
-                                                             format, usage, stride );
+                                                             format, usage, tex_usage, stride );
 
    time_finish(winsys, start, 7, __FUNCTION__);
    

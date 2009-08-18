@@ -55,6 +55,12 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 //Input mapping : mesa_fp->Base.InputsRead set the flag, set in 
 	//The flags parsed in parse_attrib_binding. FRAG_ATTRIB_COLx, FRAG_ATTRIB_TEXx, ...
 	//MUST match order in Map_Vertex_Output
+	unBit = 1 << FRAG_ATTRIB_WPOS;
+	if(mesa_fp->Base.InputsRead & unBit)
+	{
+		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS] = pAsm->number_used_registers++;
+	}
+
 	unBit = 1 << FRAG_ATTRIB_COL0;
 	if(mesa_fp->Base.InputsRead & unBit)
 	{
@@ -66,6 +72,12 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 	{
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1] = pAsm->number_used_registers++;
 	}
+
+        unBit = 1 << FRAG_ATTRIB_FOGC;
+        if(mesa_fp->Base.InputsRead & unBit)
+        {
+                pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
+        }
 
 	for(i=0; i<8; i++)
 	{
@@ -106,6 +118,7 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->uiFP_OutputMap[FRAG_RESULT_DEPTH] = pAsm->number_used_registers++;
 		pAsm->number_of_exports++;
 		pAsm->number_of_colorandz_exports++;
+		pAsm->pR700Shader->depthIsExported = 1;
 	}
 
     pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);    
@@ -255,20 +268,19 @@ void * r700GetActiveFpShaderBo(GLcontext * ctx)
 
 GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);   
-    BATCH_LOCALS(&context->radeon);
-    
+    context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
+    BATCH_LOCALS(&context->radeon);
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
-
+    r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
+    struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
-    unsigned int ui;
-
+    unsigned int ui, i;
     unsigned int unNumOfReg;
-    
+    unsigned int unBit;
+
     if(GL_FALSE == fp->loaded)
     {
         if(fp->r700Shader.bNeedsAssembly == GL_TRUE)
@@ -277,11 +289,11 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    }
 
         /* Load fp to gpu */
-        r600EmitShader(ctx, 
-                       &(fp->shaderbo), 
+        r600EmitShader(ctx,
+                       &(fp->shaderbo),
                        (GLvoid *)(fp->r700Shader.pProgram),
                        fp->r700Shader.uShaderBinaryDWORDSize,
-                       "FS");    			                
+                       "FS");
 
         fp->loaded = GL_TRUE;
     }
@@ -299,7 +311,17 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     ui = (r700->SPI_PS_IN_CONTROL_0.u32All & NUM_INTERP_mask) / (1 << NUM_INTERP_shift);
 
-    ui = ui ? ui : unNumOfReg;
+    /* PS uses fragment.position */
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
+    {
+        ui += 1;
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
+        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+        SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
+    }
+
+    ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
     
@@ -333,7 +355,6 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     }
 
     /* sent out shader constants. */
-
     paramList = fp->mesa_program.Base.Parameters;
 
     if(NULL != paramList)
@@ -343,7 +364,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         unNumParamData = paramList->NumParameters * 4;
 
         BEGIN_BATCH_NO_AUTOSTATE(2 + unNumParamData);
-        
+
         R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
 
         /* assembler map const from very beginning. */
@@ -362,8 +383,72 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         COMMIT_BATCH();
     }
 
+    // emit ps input map
+    unBit = 1 << FRAG_ATTRIB_WPOS;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    unBit = 1 << FRAG_ATTRIB_COL0;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL0];
+	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		     SEMANTIC_shift, SEMANTIC_mask);
+	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    else
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    unBit = 1 << FRAG_ATTRIB_COL1;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1];
+	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		     SEMANTIC_shift, SEMANTIC_mask);
+	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    else
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    unBit = 1 << FRAG_ATTRIB_FOGC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+
+    for(i=0; i<8; i++)
+    {
+	    unBit = 1 << (FRAG_ATTRIB_TEX0 + i);
+	    if(mesa_fp->Base.InputsRead & unBit)
+	    {
+		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
+		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+		    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+			     SEMANTIC_shift, SEMANTIC_mask);
+		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    }
+    }
+
     return GL_TRUE;
 }
-
-
 

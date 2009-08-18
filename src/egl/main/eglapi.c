@@ -50,7 +50,6 @@ EGLDisplay EGLAPIENTRY
 eglGetDisplay(NativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy;
-   _eglInitGlobals();
    dpy = _eglFindDisplay(nativeDisplay);
    if (!dpy) {
       dpy = _eglNewDisplay(nativeDisplay);

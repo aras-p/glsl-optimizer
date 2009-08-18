@@ -1200,7 +1200,7 @@ struct brw_instruction
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
       GLuint execution_size:3;
-      GLuint destreg__conditonalmod:4; /* destreg - send, conditionalmod - others */
+      GLuint destreg__conditionalmod:4; /* destreg - send, conditionalmod - others */
       GLuint pad0:2;
       GLuint debug_control:1;
       GLuint saturate:1;
@@ -1228,7 +1228,9 @@ struct brw_instruction
 	 GLuint dest_reg_type:3;
 	 GLuint src0_reg_file:2;
 	 GLuint src0_reg_type:3;
-	 GLuint pad:6;
+	 GLuint src1_reg_file:2;        /* 0x00000c00 */
+	 GLuint src1_reg_type:3;        /* 0x00007000 */
+	 GLuint pad:1;
 	 GLint dest_indirect_offset:10;	/* offset against the deref'd address reg */
 	 GLuint dest_subreg_nr:3; /* subnr for the address reg a0.x */
 	 GLuint dest_horiz_stride:2;
@@ -1243,7 +1245,7 @@ struct brw_instruction
 	 GLuint src0_reg_type:3;
 	 GLuint src1_reg_file:2;
 	 GLuint src1_reg_type:3;
-	 GLuint pad0:1;
+	 GLuint pad:1;
 	 GLuint dest_writemask:4;
 	 GLuint dest_subreg_nr:1;
 	 GLuint dest_reg_nr:8;
@@ -1348,7 +1350,7 @@ struct brw_instruction
 	 GLuint src1_reg_nr:8;
 	 GLuint src1_abs:1;
 	 GLuint src1_negate:1;
-	 GLuint pad:1;
+	 GLuint src1_address_mode:1;
 	 GLuint src1_horiz_stride:2;
 	 GLuint src1_width:3;
 	 GLuint src1_vert_stride:4;
@@ -1363,7 +1365,7 @@ struct brw_instruction
 	 GLuint src1_reg_nr:8;
 	 GLuint src1_abs:1;
 	 GLuint src1_negate:1;
-	 GLuint pad0:1;
+	 GLuint src1_address_mode:1;
 	 GLuint src1_swz_z:2;
 	 GLuint src1_swz_w:2;
 	 GLuint pad1:1;
@@ -1377,7 +1379,7 @@ struct brw_instruction
 	 GLuint src1_subreg_nr:3;
 	 GLuint src1_abs:1;
 	 GLuint src1_negate:1;
-	 GLuint pad0:1;
+	 GLuint src1_address_mode:1;
 	 GLuint src1_horiz_stride:2;
 	 GLuint src1_width:3;
 	 GLuint src1_vert_stride:4;
@@ -1565,6 +1567,7 @@ struct brw_instruction
 
       GLint d;
       GLuint ud;
+      float f;
    } bits3;
 };
 

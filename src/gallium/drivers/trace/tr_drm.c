@@ -63,7 +63,7 @@ trace_drm_create_screen(struct drm_api *_api, int fd,
    screen = api->create_screen(api, fd, arg);
 
    return trace_screen_create(screen);
-};
+}
 
 static struct pipe_context *
 trace_drm_create_context(struct drm_api *_api,
@@ -82,7 +82,7 @@ trace_drm_create_context(struct drm_api *_api,
    pipe = trace_context_create(_screen, pipe);
 
    return pipe;
-};
+}
 
 static boolean
 trace_drm_buffer_from_texture(struct drm_api *_api,
@@ -102,7 +102,7 @@ trace_drm_buffer_from_texture(struct drm_api *_api,
    result = api->buffer_from_texture(api, texture, &buffer, stride);
 
    if (result && _buffer)
-      buffer = trace_buffer_create(trace_screen(texture->screen), buffer);
+      buffer = trace_buffer_create(trace_screen(_texture->screen), buffer);
 
    if (_buffer)
       *_buffer = buffer;

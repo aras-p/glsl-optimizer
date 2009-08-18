@@ -35,7 +35,7 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
 #include <sys/time.h>
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #include <windows.h>
@@ -77,7 +77,7 @@ util_time_get_frequency(void)
 void 
 util_time_get(struct util_time *t)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
    gettimeofday(&t->tv, NULL);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    LONGLONG temp;
@@ -102,7 +102,7 @@ util_time_add(const struct util_time *t1,
               int64_t usecs,
               struct util_time *t2)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
    t2->tv.tv_sec = t1->tv.tv_sec + usecs / 1000000;
    t2->tv.tv_usec = t1->tv.tv_usec + usecs % 1000000;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
@@ -124,7 +124,7 @@ int64_t
 util_time_diff(const struct util_time *t1, 
                const struct util_time *t2)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
    return (t2->tv.tv_usec - t1->tv.tv_usec) + 
           (t2->tv.tv_sec - t1->tv.tv_sec)*1000000;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
@@ -144,7 +144,7 @@ util_time_micros( void )
    
    util_time_get(&t1);
    
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
    return t1.tv.tv_usec + t1.tv.tv_sec*1000000LL;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    util_time_get_frequency();
@@ -166,7 +166,7 @@ static INLINE int
 util_time_compare(const struct util_time *t1, 
                   const struct util_time *t2)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
    if (t1->tv.tv_sec < t2->tv.tv_sec)
       return -1;
    else if(t1->tv.tv_sec > t2->tv.tv_sec)

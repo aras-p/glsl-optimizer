@@ -69,6 +69,7 @@ typedef void (*vbo_draw_func)( GLcontext *ctx,
 			       const struct _mesa_prim *prims,
 			       GLuint nr_prims,
 			       const struct _mesa_index_buffer *ib,
+			       GLboolean index_bounds_valid,
 			       GLuint min_index,
 			       GLuint max_index );
 
@@ -112,7 +113,10 @@ void vbo_rebase_prims( GLcontext *ctx,
 		       GLuint min_index,
 		       GLuint max_index,
 		       vbo_draw_func draw );
-
+void
+vbo_get_minmax_index(GLcontext *ctx, const struct _mesa_prim *prim,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint *min_index, GLuint *max_index);
 
 void vbo_use_buffer_objects(GLcontext *ctx);
 

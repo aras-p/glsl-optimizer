@@ -541,7 +541,7 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 /**
  * Print a single vertex/fragment program instruction.
  */
-static GLint
+GLint
 _mesa_fprint_instruction_opt(FILE *f,
                             const struct prog_instruction *inst,
                             GLint indent,
@@ -933,7 +933,7 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
       return;
    }
 
-   fprintf(f, "/* Shader %u source */\n", shader->Name);
+   fprintf(f, "/* Shader %u source, checksum %u */\n", shader->Name, shader->SourceChecksum);
    fputs(shader->Source, f);
    fprintf(f, "\n");
 
@@ -958,3 +958,35 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
 }
 
 
+/**
+ * Append the shader's uniform info/values to the shader log file.
+ * The log file will typically have been created by the
+ * _mesa_write_shader_to_file function.
+ */
+void
+_mesa_append_uniforms_to_file(const struct gl_shader *shader,
+                              const struct gl_program *prog)
+{
+   const char *type;
+   char filename[100];
+   FILE *f;
+
+   if (shader->Type == GL_FRAGMENT_SHADER)
+      type = "frag";
+   else
+      type = "vert";
+
+   _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
+   f = fopen(filename, "a"); /* append */
+   if (!f) {
+      fprintf(stderr, "Unable to open %s for appending\n", filename);
+      return;
+   }
+
+   fprintf(f, "/* First-draw parameters / constants */\n");
+   fprintf(f, "/*\n");
+   _mesa_fprint_parameter_list(f, prog->Parameters);
+   fprintf(f, "*/\n");
+
+   fclose(f);
+}

@@ -25,7 +25,7 @@
 /**
  * \file glx_query.c
  * Generic utility functions to query internal data from the server.
- * 
+ *
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
@@ -43,13 +43,10 @@
  * Exchange a protocol request for glXQueryServerString.
  */
 char *
-__glXQueryServerString(Display* dpy,
-                       int opcode,
-                       CARD32 screen,
-                       CARD32 name)
+__glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
 {
    xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_glx_query_server_string_reply_t* reply =
+   xcb_glx_query_server_string_reply_t *reply =
       xcb_glx_query_server_string_reply(c,
                                         xcb_glx_query_server_string(c,
                                                                     screen,
@@ -59,7 +56,7 @@ __glXQueryServerString(Display* dpy,
    /* The spec doesn't mention this, but the Xorg server replies with
     * a string already terminated with '\0'. */
    uint32_t len = xcb_glx_query_server_string_string_length(reply);
-   char* buf = Xmalloc(len);
+   char *buf = Xmalloc(len);
    memcpy(buf, xcb_glx_query_server_string_string(reply), len);
    free(reply);
 
@@ -70,23 +67,20 @@ __glXQueryServerString(Display* dpy,
  * Exchange a protocol request for glGetString.
  */
 char *
-__glXGetString(Display* dpy,
-               int opcode,
-               CARD32 contextTag,
-               CARD32 name)
+__glXGetString(Display * dpy, int opcode, CARD32 contextTag, CARD32 name)
 {
    xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_glx_get_string_reply_t* reply =
-      xcb_glx_get_string_reply(c,
-                               xcb_glx_get_string(c,
-                                                  contextTag,
-                                                  name),
-                               NULL);
+   xcb_glx_get_string_reply_t *reply = xcb_glx_get_string_reply(c,
+                                                                xcb_glx_get_string
+                                                                (c,
+                                                                 contextTag,
+                                                                 name),
+                                                                NULL);
 
    /* The spec doesn't mention this, but the Xorg server replies with
     * a string already terminated with '\0'. */
    uint32_t len = xcb_glx_get_string_string_length(reply);
-   char* buf = Xmalloc(len);
+   char *buf = Xmalloc(len);
    memcpy(buf, xcb_glx_get_string_string(reply), len);
    free(reply);
 
@@ -97,7 +91,7 @@ __glXGetString(Display* dpy,
 
 /**
  * GLX protocol structure for the ficticious "GXLGenericGetString" request.
- * 
+ *
  * This is a non-existant protocol packet.  It just so happens that all of
  * the real protocol packets used to request a string from the server have
  * an identical binary layout.  The only difference between them is the
@@ -167,25 +161,17 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
 }
 
 char *
-__glXQueryServerString(Display* dpy,
-                       int opcode,
-                       CARD32 screen,
-                       CARD32 name)
+__glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
 {
    return __glXGetStringFromServer(dpy, opcode,
-                                   X_GLXQueryServerString,
-                                   screen, name);
+                                   X_GLXQueryServerString, screen, name);
 }
 
 char *
-__glXGetString(Display* dpy,
-               int opcode,
-               CARD32 contextTag,
-               CARD32 name)
+__glXGetString(Display * dpy, int opcode, CARD32 contextTag, CARD32 name)
 {
    return __glXGetStringFromServer(dpy, opcode, X_GLsop_GetString,
                                    contextTag, name);
 }
 
 #endif /* USE_XCB */
-

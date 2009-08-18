@@ -48,11 +48,6 @@
 /* Simple, maximally packed layout.
  */
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 
 /* Conventional allocation path for non-display textures:
  */
@@ -100,6 +95,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 {
    unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
                      PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   unsigned tex_usage = spt->base.tex_usage;
 
    spt->base.nblocksx[0] = pf_get_nblocksx(&spt->base.block, spt->base.width[0]);  
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
@@ -109,6 +105,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
                                                 spt->base.height[0],
                                                 spt->base.format,
                                                 usage,
+                                                tex_usage,
                                                 &spt->stride[0]);
 
    return spt->buffer != NULL;
@@ -130,7 +127,8 @@ softpipe_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
 
-   if (spt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+   if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                              PIPE_TEXTURE_USAGE_PRIMARY)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }
@@ -223,12 +221,6 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
          ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
-
-      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
-                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
-         /* Mark the surface as dirty.  The tile cache will look for this. */
-         spt->modified = TRUE;
-      }
 
       ps->face = face;
       ps->level = level;
@@ -376,6 +368,11 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
    spt = softpipe_texture(transfer->texture);
 
    pipe_buffer_unmap( screen, spt->buffer );
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      /* Mark the texture as dirty to expire the tile caches. */
+      spt->modified = TRUE;
+   }
 }
 
 

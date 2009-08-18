@@ -82,7 +82,7 @@ static inline int radeon_cs_setup_bo(struct radeon_cs_space_check *sc, struct ra
 	    if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
 		sizes->op_read -= bo->size;
 		sizes->op_vram_write += bo->size;
-	    } else if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
+	    } else if (write_domain == RADEON_GEM_DOMAIN_GTT) {
 		sizes->op_read -= bo->size;
 		sizes->op_gart_write += bo->size;
 	    }

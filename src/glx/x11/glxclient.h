@@ -55,9 +55,7 @@
 #include "GL/internal/glcore.h"
 #include "glapi/glapitable.h"
 #include "glxhash.h"
-#if defined( USE_XTHREADS )
-# include <X11/Xthreads.h>
-#elif defined( PTHREADS )
+#if defined( PTHREADS )
 # include <pthread.h>
 #endif
 
@@ -67,7 +65,7 @@
 /* If we build the library with gcc's -fvisibility=hidden flag, we'll
  * use the PUBLIC macro to mark functions that are to be exported.
  *
- * We also need to define a USED attribute, so the optimizer doesn't 
+ * We also need to define a USED attribute, so the optimizer doesn't
  * inline a static function that we later use in an alias. - ajax
  */
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
@@ -80,8 +78,8 @@
 
 
 
-#define GLX_MAJOR_VERSION	1	/* current version numbers */
-#define GLX_MINOR_VERSION	4
+#define GLX_MAJOR_VERSION 1       /* current version numbers */
+#define GLX_MINOR_VERSION 4
 
 #define __GLX_MAX_TEXTURE_UNITS 32
 
@@ -95,7 +93,7 @@ typedef struct _glapi_table __GLapi;
 
 #ifdef GLX_DIRECT_RENDERING
 
-#define containerOf(ptr, type, member)			\
+#define containerOf(ptr, type, member)              \
     (type *)( (char *)ptr - offsetof(type,member) )
 
 #include <GL/internal/dri_interface.h>
@@ -112,75 +110,78 @@ typedef struct __GLXDRIcontextRec __GLXDRIcontext;
 
 #include "glxextensions.h"
 
-struct __GLXDRIdisplayRec {
+struct __GLXDRIdisplayRec
+{
     /**
      * Method to destroy the private DRI display data.
      */
-    void (*destroyDisplay)(__GLXDRIdisplay *display);
+   void (*destroyDisplay) (__GLXDRIdisplay * display);
 
-    __GLXDRIscreen *(*createScreen)(__GLXscreenConfigs *psc, int screen,
-				    __GLXdisplayPrivate *priv);
+   __GLXDRIscreen *(*createScreen) (__GLXscreenConfigs * psc, int screen,
+                                    __GLXdisplayPrivate * priv);
 };
 
-struct __GLXDRIscreenRec {
+struct __GLXDRIscreenRec
+{
 
-    void (*destroyScreen)(__GLXscreenConfigs *psc);
+   void (*destroyScreen) (__GLXscreenConfigs * psc);
 
-    __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
-				      const __GLcontextModes *mode,
-				      GLXContext gc,
-				      GLXContext shareList, int renderType);
-	
-    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
-					XID drawable,
-					GLXDrawable glxDrawable,
-					const __GLcontextModes *modes);
+   __GLXDRIcontext *(*createContext) (__GLXscreenConfigs * psc,
+                                      const __GLcontextModes * mode,
+                                      GLXContext gc,
+                                      GLXContext shareList, int renderType);
 
-    void (*swapBuffers)(__GLXDRIdrawable *pdraw);
-    void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
-			  int x, int y, int width, int height);
-    void (*waitX)(__GLXDRIdrawable *pdraw);
-    void (*waitGL)(__GLXDRIdrawable *pdraw);
+   __GLXDRIdrawable *(*createDrawable) (__GLXscreenConfigs * psc,
+                                        XID drawable,
+                                        GLXDrawable glxDrawable,
+                                        const __GLcontextModes * modes);
+
+   void (*swapBuffers) (__GLXDRIdrawable * pdraw);
+   void (*copySubBuffer) (__GLXDRIdrawable * pdraw,
+                          int x, int y, int width, int height);
+   void (*waitX) (__GLXDRIdrawable * pdraw);
+   void (*waitGL) (__GLXDRIdrawable * pdraw);
 };
 
-struct __GLXDRIcontextRec {
-    void (*destroyContext)(__GLXDRIcontext *context, __GLXscreenConfigs *psc,
-			   Display *dpy);
-    Bool (*bindContext)(__GLXDRIcontext *context,
-			__GLXDRIdrawable *pdraw,
-			__GLXDRIdrawable *pread);
-    
-    void (*unbindContext)(__GLXDRIcontext *context);
+struct __GLXDRIcontextRec
+{
+   void (*destroyContext) (__GLXDRIcontext * context,
+                           __GLXscreenConfigs * psc, Display * dpy);
+     Bool(*bindContext) (__GLXDRIcontext * context, __GLXDRIdrawable * pdraw,
+                         __GLXDRIdrawable * pread);
+
+   void (*unbindContext) (__GLXDRIcontext * context);
 };
 
-struct __GLXDRIdrawableRec {
-    void (*destroyDrawable)(__GLXDRIdrawable *drawable);
+struct __GLXDRIdrawableRec
+{
+   void (*destroyDrawable) (__GLXDRIdrawable * drawable);
 
-    XID xDrawable;
-    XID drawable;
-    __GLXscreenConfigs *psc;
-    GLenum textureTarget;
-    __DRIdrawable *driDrawable;
-    GLenum textureFormat; /* EXT_texture_from_pixmap support */
+   XID xDrawable;
+   XID drawable;
+   __GLXscreenConfigs *psc;
+   GLenum textureTarget;
+   __DRIdrawable *driDrawable;
+   GLenum textureFormat;        /* EXT_texture_from_pixmap support */
 };
 
 /*
 ** Function to create and DRI display data and initialize the display
 ** dependent methods.
 */
-extern __GLXDRIdisplay *driswCreateDisplay(Display *dpy);
-extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
-extern __GLXDRIdisplay *dri2CreateDisplay(Display *dpy);
+extern __GLXDRIdisplay *driswCreateDisplay(Display * dpy);
+extern __GLXDRIdisplay *driCreateDisplay(Display * dpy);
+extern __GLXDRIdisplay *dri2CreateDisplay(Display * dpy);
 
-extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
+extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
 
 /*
 ** Functions to obtain driver configuration information from a direct
 ** rendering client application
 */
-extern const char *glXGetScreenDriver (Display *dpy, int scrNum);
+extern const char *glXGetScreenDriver(Display * dpy, int scrNum);
 
-extern const char *glXGetDriverConfig (const char *driverName);
+extern const char *glXGetDriverConfig(const char *driverName);
 
 #endif
 
@@ -188,53 +189,57 @@ extern const char *glXGetDriverConfig (const char *driverName);
 
 #define __GL_CLIENT_ATTRIB_STACK_DEPTH 16
 
-typedef struct __GLXpixelStoreModeRec {
-    GLboolean swapEndian;
-    GLboolean lsbFirst;
-    GLuint rowLength;
-    GLuint imageHeight;
-    GLuint imageDepth;
-    GLuint skipRows;
-    GLuint skipPixels;
-    GLuint skipImages;
-    GLuint alignment;
+typedef struct __GLXpixelStoreModeRec
+{
+   GLboolean swapEndian;
+   GLboolean lsbFirst;
+   GLuint rowLength;
+   GLuint imageHeight;
+   GLuint imageDepth;
+   GLuint skipRows;
+   GLuint skipPixels;
+   GLuint skipImages;
+   GLuint alignment;
 } __GLXpixelStoreMode;
 
 
-typedef struct __GLXattributeRec {
-    GLuint mask;
+typedef struct __GLXattributeRec
+{
+   GLuint mask;
 
     /**
      * Pixel storage state.  Most of the pixel store mode state is kept
      * here and used by the client code to manage the packing and
      * unpacking of data sent to/received from the server.
      */
-    __GLXpixelStoreMode storePack, storeUnpack;
+   __GLXpixelStoreMode storePack, storeUnpack;
 
     /**
      * Is EXT_vertex_array / GL 1.1 DrawArrays protocol specifically
      * disabled?
      */
-    GLboolean NoDrawArraysProtocol;
-    
+   GLboolean NoDrawArraysProtocol;
+
     /**
      * Vertex Array storage state.  The vertex array component
      * state is stored here and is used to manage the packing of
      * DrawArrays data sent to the server.
      */
-    struct array_state_vector * array_state;
+   struct array_state_vector *array_state;
 } __GLXattribute;
 
-typedef struct __GLXattributeMachineRec {
-	__GLXattribute *stack[__GL_CLIENT_ATTRIB_STACK_DEPTH];
-	__GLXattribute **stackPointer;
+typedef struct __GLXattributeMachineRec
+{
+   __GLXattribute *stack[__GL_CLIENT_ATTRIB_STACK_DEPTH];
+   __GLXattribute **stackPointer;
 } __GLXattributeMachine;
 
 /**
  * GLX state that needs to be kept on the client.  One of these records
  * exist for each context that has been made current by this client.
  */
-struct __GLXcontextRec {
+struct __GLXcontextRec
+{
     /**
      * \name Drawing command buffer.
      *
@@ -251,13 +256,13 @@ struct __GLXcontextRec {
      * These must be the first 6 fields since they are static initialized
      * in the dummy context in glxext.c
      */
-    /*@{*/
-    GLubyte *buf;
-    GLubyte *pc;
-    GLubyte *limit;
-    GLubyte *bufEnd;
-    GLint bufSize;
-    /*@}*/
+   /*@{ */
+   GLubyte *buf;
+   GLubyte *pc;
+   GLubyte *limit;
+   GLubyte *bufEnd;
+   GLint bufSize;
+   /*@} */
 
     /**
      * The XID of this rendering context.  When the context is created a
@@ -265,24 +270,24 @@ struct __GLXcontextRec {
      * destroyed but is still current to some thread. In this case the
      * context will be freed on next MakeCurrent.
      */
-    XID xid;
+   XID xid;
 
     /**
      * The XID of the \c shareList context.
      */
-    XID share_xid;
+   XID share_xid;
 
     /**
      * Screen number.
      */
-    GLint screen;
-    __GLXscreenConfigs *psc;
+   GLint screen;
+   __GLXscreenConfigs *psc;
 
     /**
      * \c GL_TRUE if the context was created with ImportContext, which
      * means the server-side context was created by another X client.
      */
-    GLboolean imported;
+   GLboolean imported;
 
     /**
      * The context tag returned by MakeCurrent when this context is made
@@ -292,7 +297,7 @@ struct __GLXcontextRec {
      * \c WaitX, \c WaitGL, \c UseXFont, and \c MakeCurrent (for the old
      * context)).
      */
-    GLXContextTag currentContextTag;
+   GLXContextTag currentContextTag;
 
     /**
      * \name Rendering mode
@@ -301,11 +306,11 @@ struct __GLXcontextRec {
      * When \c glRenderMode is called, the buffer associated with the
      * previous rendering mode (feedback or select) is filled.
      */
-    /*@{*/
-    GLenum renderMode;
-    GLfloat *feedbackBuf;
-    GLuint *selectBuf;
-    /*@}*/
+   /*@{ */
+   GLenum renderMode;
+   GLfloat *feedbackBuf;
+   GLuint *selectBuf;
+   /*@} */
 
     /**
      * This is \c GL_TRUE if the pixel unpack modes are such that an image
@@ -313,43 +318,43 @@ struct __GLXcontextRec {
      * still be true that the server will have to do some work.  This
      * just promises that a straight copy will fetch the correct bytes.
      */
-    GLboolean fastImageUnpack;
+   GLboolean fastImageUnpack;
 
     /**
      * Fill newImage with the unpacked form of \c oldImage getting it
      * ready for transport to the server.
      */
-    void (*fillImage)(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
-		      GLenum, const GLvoid*, GLubyte*, GLubyte*);
+   void (*fillImage) (__GLXcontext *, GLint, GLint, GLint, GLint, GLenum,
+                      GLenum, const GLvoid *, GLubyte *, GLubyte *);
 
     /**
      * Client side attribs.
      */
-    __GLXattributeMachine attributes;
+   __GLXattributeMachine attributes;
 
     /**
      * Client side error code.  This is set when client side gl API
      * routines need to set an error because of a bad enumerant or
      * running out of memory, etc.
      */
-    GLenum error;
+   GLenum error;
 
     /**
      * Whether this context does direct rendering.
      */
-    Bool isDirect;
+   Bool isDirect;
 
     /**
      * \c dpy of current display for this context.  Will be \c NULL if not
      * current to any display, or if this is the "dummy context".
      */
-    Display *currentDpy;
+   Display *currentDpy;
 
     /**
      * The current drawable for this context.  Will be None if this
      * context is not current to any drawable.  currentReadable is below.
      */
-    GLXDrawable currentDrawable;
+   GLXDrawable currentDrawable;
 
     /**
      * \name GL Constant Strings
@@ -358,38 +363,38 @@ struct __GLXcontextRec {
      * These pertain to GL attributes, not to be confused with
      * GLX versioning attributes.
      */
-    /*@{*/
-    GLubyte *vendor;
-    GLubyte *renderer;
-    GLubyte *version;
-    GLubyte *extensions;
-    /*@}*/
+   /*@{ */
+   GLubyte *vendor;
+   GLubyte *renderer;
+   GLubyte *version;
+   GLubyte *extensions;
+   /*@} */
 
     /**
      * Record the dpy this context was created on for later freeing
      */
-    Display *createDpy;
+   Display *createDpy;
 
     /**
      * Maximum small render command size.  This is the smaller of 64k and
      * the size of the above buffer.
      */
-    GLint maxSmallRenderCommandSize;
+   GLint maxSmallRenderCommandSize;
 
     /**
      * Major opcode for the extension.  Copied here so a lookup isn't
      * needed.
      */
-    GLint majorOpcode;
+   GLint majorOpcode;
 
     /**
      * Pointer to the mode used to create this context.
      */
-    const __GLcontextModes * mode;
+   const __GLcontextModes *mode;
 
 #ifdef GLX_DIRECT_RENDERING
-    __GLXDRIcontext *driContext;
-    __DRIcontext *__driContext;
+   __GLXDRIcontext *driContext;
+   __DRIcontext *__driContext;
 #endif
 
     /**
@@ -398,22 +403,22 @@ struct __GLXcontextRec {
      *
      * \since Internal API version 20030606.
      */
-    GLXDrawable currentReadable;
+   GLXDrawable currentReadable;
 
-   /** 
+   /**
     * Pointer to client-state data that is private to libGL.  This is only
     * used for indirect rendering contexts.
     *
     * No internal API version change was made for this change.  Client-side
     * drivers should NEVER use this data or even care that it exists.
     */
-   void * client_state_private;
+   void *client_state_private;
 
    /**
     * Stored value for \c glXQueryContext attribute \c GLX_RENDER_TYPE.
     */
    int renderType;
-    
+
    /**
     * \name Raw server GL version
     *
@@ -421,23 +426,23 @@ struct __GLXcontextRec {
     * returned by the server, and it may not reflect what is actually
     * supported (or reported) by the client-side library.
     */
-    /*@{*/
+   /*@{ */
    int server_major;        /**< Major version number. */
    int server_minor;        /**< Minor version number. */
-    /*@}*/
+   /*@} */
 
    /**
     * Thread ID we're currently current in. Zero if none.
     */
    unsigned long thread_id;
 
-    char gl_extension_bits[ __GL_EXT_BYTES ];
+   char gl_extension_bits[__GL_EXT_BYTES];
 };
 
-#define __glXSetError(gc,code) \
-    if (!(gc)->error) {	       \
-	(gc)->error = code;    \
-    }
+#define __glXSetError(gc,code)  \
+   if (!(gc)->error) {          \
+      (gc)->error = code;       \
+   }
 
 extern void __glFreeAttributeState(__GLXcontext *);
 
@@ -448,7 +453,7 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * that will use the GLXRender GLX command.  In this case it is
  * \c glPolygonStipple.
  */
-#define __GLX_MAX_SMALL_RENDER_CMD_SIZE	156
+#define __GLX_MAX_SMALL_RENDER_CMD_SIZE 156
 
 /**
  * To keep the implementation fast, the code uses a "limit" pointer
@@ -460,73 +465,76 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * efficacy of the buffer.  The "+32" is just to keep the code working
  * in case somebody counts wrong.
  */
-#define __GLX_BUFFER_LIMIT_SIZE	(__GLX_MAX_SMALL_RENDER_CMD_SIZE + 32)
+#define __GLX_BUFFER_LIMIT_SIZE (__GLX_MAX_SMALL_RENDER_CMD_SIZE + 32)
 
 /**
  * This implementation uses a smaller threshold for switching
  * to the RenderLarge protocol than the protcol requires so that
  * large copies don't occur.
  */
-#define __GLX_RENDER_CMD_SIZE_LIMIT	4096
+#define __GLX_RENDER_CMD_SIZE_LIMIT 4096
 
 /**
  * One of these records exists per screen of the display.  It contains
  * a pointer to the config data for that screen (if the screen supports GL).
  */
-struct __GLXscreenConfigsRec {
+struct __GLXscreenConfigsRec
+{
     /**
      * GLX extension string reported by the X-server.
      */
-    const char *serverGLXexts;
+   const char *serverGLXexts;
 
     /**
      * GLX extension string to be reported to applications.  This is the
      * set of extensions that the application can actually use.
      */
-    char *effectiveGLXexts;
+   char *effectiveGLXexts;
 
 #ifdef GLX_DIRECT_RENDERING
     /**
      * Per screen direct rendering interface functions and data.
      */
-    __DRIscreen *__driScreen;
-    const __DRIcoreExtension *core;
-    const __DRIlegacyExtension *legacy;
-    const __DRIswrastExtension *swrast;
-    const __DRIdri2Extension *dri2;
-    __glxHashTable *drawHash;
-    Display *dpy;
-    int scr, fd;
-    void *driver;
+   __DRIscreen *__driScreen;
+   const __DRIcoreExtension *core;
+   const __DRIlegacyExtension *legacy;
+   const __DRIswrastExtension *swrast;
+   const __DRIdri2Extension *dri2;
+   __glxHashTable *drawHash;
+   Display *dpy;
+   int scr, fd;
+   void *driver;
 
-    __GLXDRIscreen *driScreen;
+   __GLXDRIscreen *driScreen;
+
+   const __DRIconfig **driver_configs;
 
 #ifdef __DRI_COPY_SUB_BUFFER
-    const __DRIcopySubBufferExtension *driCopySubBuffer;
+   const __DRIcopySubBufferExtension *driCopySubBuffer;
 #endif
 
 #ifdef __DRI_SWAP_CONTROL
-    const __DRIswapControlExtension *swapControl;
+   const __DRIswapControlExtension *swapControl;
 #endif
 
 #ifdef __DRI_ALLOCATE
-    const __DRIallocateExtension *allocate;
+   const __DRIallocateExtension *allocate;
 #endif
 
 #ifdef __DRI_FRAME_TRACKING
-    const __DRIframeTrackingExtension *frameTracking;
+   const __DRIframeTrackingExtension *frameTracking;
 #endif
 
 #ifdef __DRI_MEDIA_STREAM_COUNTER
-    const __DRImediaStreamCounterExtension *msc;
+   const __DRImediaStreamCounterExtension *msc;
 #endif
 
 #ifdef __DRI_TEX_BUFFER
-    const __DRItexBufferExtension *texBuffer;
+   const __DRItexBufferExtension *texBuffer;
 #endif
 
 #ifdef __DRI2_FLUSH
-    const __DRI2flushExtension *f;
+   const __DRI2flushExtension *f;
 #endif
 
 #endif
@@ -534,7 +542,7 @@ struct __GLXscreenConfigsRec {
     /**
      * Linked list of glx visuals and  fbconfigs for this screen.
      */
-    __GLcontextModes *visuals, *configs;
+   __GLcontextModes *visuals, *configs;
 
     /**
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
@@ -543,10 +551,10 @@ struct __GLXscreenConfigsRec {
      * this field.  The \c __GLXscreenConfigs structure is not used outside
      * libGL.
      */
-    /*@{*/
-    unsigned char direct_support[8];
-    GLboolean ext_list_first_time;
-    /*@}*/
+   /*@{ */
+   unsigned char direct_support[8];
+   GLboolean ext_list_first_time;
+   /*@} */
 
 };
 
@@ -554,67 +562,68 @@ struct __GLXscreenConfigsRec {
  * Per display private data.  One of these records exists for each display
  * that is using the OpenGL (GLX) extension.
  */
-struct __GLXdisplayPrivateRec {
+struct __GLXdisplayPrivateRec
+{
     /**
      * Back pointer to the display
      */
-    Display *dpy;
+   Display *dpy;
 
     /**
      * The \c majorOpcode is common to all connections to the same server.
      * It is also copied into the context structure.
      */
-    int majorOpcode;
+   int majorOpcode;
 
     /**
      * \name Server Version
      *
      * Major and minor version returned by the server during initialization.
      */
-    /*@{*/
-    int majorVersion, minorVersion;
-    /*@}*/
+   /*@{ */
+   int majorVersion, minorVersion;
+   /*@} */
 
     /**
      * \name Storage for the servers GLX vendor and versions strings.
-     * 
+     *
      * These are the same for all screens on this display. These fields will
      * be filled in on demand.
      */
-    /*@{*/
-    const char *serverGLXvendor;
-    const char *serverGLXversion;
-    /*@}*/
+   /*@{ */
+   const char *serverGLXvendor;
+   const char *serverGLXversion;
+   /*@} */
 
     /**
      * Configurations of visuals for all screens on this display.
      * Also, per screen data which now includes the server \c GLX_EXTENSION
      * string.
      */
-    __GLXscreenConfigs *screenConfigs;
+   __GLXscreenConfigs *screenConfigs;
 
 #ifdef GLX_DIRECT_RENDERING
     /**
      * Per display direct rendering interface functions and data.
      */
-    __GLXDRIdisplay *driswDisplay;
-    __GLXDRIdisplay *driDisplay;
-    __GLXDRIdisplay *dri2Display;
+   __GLXDRIdisplay *driswDisplay;
+   __GLXDRIdisplay *driDisplay;
+   __GLXDRIdisplay *dri2Display;
 #endif
 };
 
 
-extern GLubyte *__glXFlushRenderBuffer(__GLXcontext*, GLubyte*);
+extern GLubyte *__glXFlushRenderBuffer(__GLXcontext *, GLubyte *);
 
-extern void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber, 
-				GLint totalRequests,
-				const GLvoid * data, GLint dataLen);
+extern void __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
+                                GLint totalRequests,
+                                const GLvoid * data, GLint dataLen);
 
 extern void __glXSendLargeCommand(__GLXcontext *, const GLvoid *, GLint,
-				  const GLvoid *, GLint);
+                                  const GLvoid *, GLint);
 
 /* Initialize the GLX extension for dpy */
-extern __GLXdisplayPrivate *__glXInitialize(Display*);
+extern __GLXdisplayPrivate *__glXInitialize(Display *);
 
 extern void __glXPreferEGL(int state);
 
@@ -623,16 +632,16 @@ extern void __glXPreferEGL(int state);
 extern int __glXDebug;
 
 /* This is per-thread storage in an MT environment */
-#if defined( USE_XTHREADS ) || defined( PTHREADS )
+#if defined( PTHREADS )
 
-extern void __glXSetCurrentContext(__GLXcontext *c);
+extern void __glXSetCurrentContext(__GLXcontext * c);
 
 # if defined( GLX_USE_TLS )
 
-extern __thread void * __glX_tls_Context
-    __attribute__((tls_model("initial-exec")));
+extern __thread void *__glX_tls_Context
+   __attribute__ ((tls_model("initial-exec")));
 
-#  define __glXGetCurrentContext()	__glX_tls_Context
+#  define __glXGetCurrentContext() __glX_tls_Context
 
 # else
 
@@ -643,25 +652,21 @@ extern __GLXcontext *__glXGetCurrentContext(void);
 #else
 
 extern __GLXcontext *__glXcurrentContext;
-#define __glXGetCurrentContext()	__glXcurrentContext
-#define __glXSetCurrentContext(gc)	__glXcurrentContext = gc
+#define __glXGetCurrentContext() __glXcurrentContext
+#define __glXSetCurrentContext(gc) __glXcurrentContext = gc
 
-#endif /* defined( USE_XTHREADS ) || defined( PTHREADS ) */
+#endif /* defined( PTHREADS ) */
 
 extern void __glXSetCurrentContextNull(void);
 
-extern void __glXFreeContext(__GLXcontext*);
+extern void __glXFreeContext(__GLXcontext *);
 
 
 /*
 ** Global lock for all threads in this address space using the GLX
 ** extension
 */
-#if defined( USE_XTHREADS )
-extern xmutex_rec __glXmutex;
-#define __glXLock()    xmutex_lock(&__glXmutex)
-#define __glXUnlock()  xmutex_unlock(&__glXmutex)
-#elif defined( PTHREADS )
+#if defined( PTHREADS )
 extern pthread_mutex_t __glXmutex;
 #define __glXLock()    pthread_mutex_lock(&__glXmutex)
 #define __glXUnlock()  pthread_mutex_unlock(&__glXmutex)
@@ -673,7 +678,7 @@ extern pthread_mutex_t __glXmutex;
 /*
 ** Setup for a command.  Initialize the extension for dpy if necessary.
 */
-extern CARD8 __glXSetupForCommand(Display *dpy);
+extern CARD8 __glXSetupForCommand(Display * dpy);
 
 /************************************************************************/
 
@@ -684,9 +689,11 @@ extern CARD8 __glXSetupForCommand(Display *dpy);
 extern const GLuint __glXDefaultPixelStore[9];
 
 /* Send an image to the server using RenderLarge. */
-extern void __glXSendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
-    GLint width, GLint height, GLint depth, GLenum format, GLenum type,
-    const GLvoid *src, GLubyte *pc, GLubyte *modes);
+extern void __glXSendLargeImage(__GLXcontext * gc, GLint compsize, GLint dim,
+                                GLint width, GLint height, GLint depth,
+                                GLenum format, GLenum type,
+                                const GLvoid * src, GLubyte * pc,
+                                GLubyte * modes);
 
 /* Return the size, in bytes, of some pixel data */
 extern GLint __glImageSize(GLint, GLint, GLint, GLenum, GLenum, GLenum);
@@ -706,23 +713,23 @@ extern GLint __glBytesPerElement(GLenum type);
 ** updated to contain the modes needed by the server to decode the
 ** sent data.
 */
-extern void __glFillImage(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
-			  GLenum, const GLvoid*, GLubyte*, GLubyte*);
+extern void __glFillImage(__GLXcontext *, GLint, GLint, GLint, GLint, GLenum,
+                          GLenum, const GLvoid *, GLubyte *, GLubyte *);
 
 /* Copy map data with a stride into a packed buffer */
 extern void __glFillMap1f(GLint, GLint, GLint, const GLfloat *, GLubyte *);
 extern void __glFillMap1d(GLint, GLint, GLint, const GLdouble *, GLubyte *);
 extern void __glFillMap2f(GLint, GLint, GLint, GLint, GLint,
-			  const GLfloat *, GLfloat *);
+                          const GLfloat *, GLfloat *);
 extern void __glFillMap2d(GLint, GLint, GLint, GLint, GLint,
-			  const GLdouble *, GLdouble *);
+                          const GLdouble *, GLdouble *);
 
 /*
 ** Empty an image out of the reply buffer into the clients memory applying
 ** the pack modes to pack back into the clients requested format.
 */
-extern void __glEmptyImage(__GLXcontext*, GLint, GLint, GLint, GLint, GLenum,
-		           GLenum, const GLubyte *, GLvoid *);
+extern void __glEmptyImage(__GLXcontext *, GLint, GLint, GLint, GLint, GLenum,
+                           GLenum, const GLubyte *, GLvoid *);
 
 
 /*
@@ -735,7 +742,7 @@ extern void __glXFreeVertexArrayState(__GLXcontext *);
 ** Inform the Server of the major and minor numbers and of the client
 ** libraries extension string.
 */
-extern void __glXClientInfo (  Display *dpy, int opcode );
+extern void __glXClientInfo(Display * dpy, int opcode);
 
 /************************************************************************/
 
@@ -743,20 +750,22 @@ extern void __glXClientInfo (  Display *dpy, int opcode );
 ** Declarations that should be in Xlib
 */
 #ifdef __GL_USE_OUR_PROTOTYPES
-extern void _XFlush(Display*);
-extern Status _XReply(Display*, xReply*, int, Bool);
-extern void _XRead(Display*, void*, long);
-extern void _XSend(Display*, const void*, long);
+extern void _XFlush(Display *);
+extern Status _XReply(Display *, xReply *, int, Bool);
+extern void _XRead(Display *, void *, long);
+extern void _XSend(Display *, const void *, long);
 #endif
 
 
-extern void __glXInitializeVisualConfigFromTags( __GLcontextModes *config,
-    int count, const INT32 *bp, Bool tagged_only, Bool fbconfig_style_tags );
+extern void __glXInitializeVisualConfigFromTags(__GLcontextModes * config,
+                                                int count, const INT32 * bp,
+                                                Bool tagged_only,
+                                                Bool fbconfig_style_tags);
 
-extern char * __glXQueryServerString(Display* dpy, int opcode,
-                                     CARD32 screen, CARD32 name);
-extern char * __glXGetString(Display* dpy, int opcode,
-                             CARD32 screen, CARD32 name);
+extern char *__glXQueryServerString(Display * dpy, int opcode,
+                                    CARD32 screen, CARD32 name);
+extern char *__glXGetString(Display * dpy, int opcode,
+                            CARD32 screen, CARD32 name);
 
 extern char *__glXstrdup(const char *str);
 
@@ -765,15 +774,16 @@ extern const char __glXGLClientVersion[];
 extern const char __glXGLClientExtensions[];
 
 /* Get the unadjusted system time */
-extern int __glXGetUST( int64_t * ust );
+extern int __glXGetUST(int64_t * ust);
 
 extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
-				    int32_t * numerator, int32_t * denominator);
+                                    int32_t * numerator,
+                                    int32_t * denominator);
 
 #ifdef GLX_DIRECT_RENDERING
 GLboolean
-__driGetMscRateOML(__DRIdrawable *draw,
-		   int32_t *numerator, int32_t *denominator, void *private);
+__driGetMscRateOML(__DRIdrawable * draw,
+                   int32_t * numerator, int32_t * denominator, void *private);
 #endif
 
 #endif /* !__GLX_client_h__ */

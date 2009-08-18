@@ -103,6 +103,10 @@ struct wm_sampler_key {
       GLenum minfilter, magfilter;
       GLenum comparemode, comparefunc;
       dri_bo *sdc_bo;
+
+      /** If target is cubemap, take context setting.
+       */
+      GLboolean seamless_cube_map;
    } sampler[BRW_MAX_TEX_UNIT];
 };
 
@@ -169,30 +173,33 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
       }  
    }
 
-   if (key->tex_target == GL_TEXTURE_CUBE_MAP &&
-       (key->minfilter != GL_NEAREST || key->magfilter != GL_NEAREST)) {
-      /* If we're using anything but nearest sampling for a cube map, we
-       * need to set this wrap mode to avoid GPU lock-ups.
-       */
-      sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-      sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-      sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-   }
-   else if (key->tex_target == GL_TEXTURE_1D) {
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
+
+   /* Cube-maps on 965 and later must use the same wrap mode for all 3
+    * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
+    */
+   if (key->tex_target == GL_TEXTURE_CUBE_MAP) {
+      if (key->seamless_cube_map &&
+	  (key->minfilter != GL_NEAREST || key->magfilter != GL_NEAREST)) {
+	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+      } else {
+	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+      }
+   } else if (key->tex_target == GL_TEXTURE_1D) {
       /* There's a bug in 1D texture sampling - it actually pays
        * attention to the wrap_t value, though it should not.
        * Override the wrap_t value here to GL_REPEAT to keep
        * any nonexistent border pixels from floating in.
        */
-      sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
-      sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
       sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_WRAP;
    }
-   else {
-      sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
-      sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
-      sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
-   }
+
 
    /* Set shadow function: 
     */
@@ -248,6 +255,9 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    texObj->Image[0][intelObj->firstLevel];
 
          entry->tex_target = texObj->Target;
+
+	 entry->seamless_cube_map = (texObj->Target == GL_TEXTURE_CUBE_MAP)
+	    ? ctx->Texture.CubeMapSeamless : GL_FALSE;
 
 	 entry->wrap_r = texObj->WrapR;
 	 entry->wrap_s = texObj->WrapS;

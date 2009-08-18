@@ -902,7 +902,6 @@ EXPORTS
 	_mesa_generate_mipmap
 	_mesa_get_compressed_teximage
 	_mesa_get_current_context
-	_mesa_get_program_register
 	_mesa_get_teximage
 	_mesa_init_driver_functions
 	_mesa_init_glsl_driver_functions

@@ -52,7 +52,7 @@ static struct name_test_pair functions[] = {"""
 		prev_category = None
 		
 
-		for f in api.functionIterateByOffset():
+		for f in api.functionIterateByCategory():
 			[category, num] = api.get_category_for_name( f.name )
 			if category != prev_category:
 				print '   { "-%s", NULL},' % category

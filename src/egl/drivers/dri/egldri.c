@@ -296,7 +296,7 @@ _eglDRIDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 
    fs->drawable.destroyDrawable(disp, fs->drawable.private);
 
-   if (!fs->Base.IsBound)
+   if (!_eglIsSurfaceBound(&fs->Base))
       free(fs);
    return EGL_TRUE;
 }
@@ -312,7 +312,7 @@ _eglDRIDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 
    fc->driContext.destroyContext(disp, 0, fc->driContext.private);
 
-   if (!fc->Base.IsBound)
+   if (!_eglIsContextBound(&fc->Base))
       free(fc);
    return EGL_TRUE;
 }

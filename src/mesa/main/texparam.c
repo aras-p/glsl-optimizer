@@ -38,6 +38,7 @@
 #include "main/texcompress.h"
 #include "main/texparam.h"
 #include "main/teximage.h"
+#include "main/texstate.h"
 #include "shader/prog_instruction.h"
 
 
@@ -88,7 +89,7 @@ get_texobj(GLcontext *ctx, GLenum target)
       return NULL;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    switch (target) {
    case GL_TEXTURE_1D:
@@ -716,44 +717,6 @@ _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
 }
 
 
-static GLuint
-tex_image_dimensions(GLcontext *ctx, GLenum target)
-{
-   switch (target) {
-      case GL_TEXTURE_1D:
-      case GL_PROXY_TEXTURE_1D:
-         return 1;
-      case GL_TEXTURE_2D:
-      case GL_PROXY_TEXTURE_2D:
-         return 2;
-      case GL_TEXTURE_3D:
-      case GL_PROXY_TEXTURE_3D:
-         return 3;
-      case GL_TEXTURE_CUBE_MAP:
-      case GL_PROXY_TEXTURE_CUBE_MAP:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-         return ctx->Extensions.ARB_texture_cube_map ? 2 : 0;
-      case GL_TEXTURE_RECTANGLE_NV:
-      case GL_PROXY_TEXTURE_RECTANGLE_NV:
-         return ctx->Extensions.NV_texture_rectangle ? 2 : 0;
-      case GL_TEXTURE_1D_ARRAY_EXT:
-      case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array ? 2 : 0;
-      case GL_TEXTURE_2D_ARRAY_EXT:
-      case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array ? 3 : 0;
-      default:
-         _mesa_problem(ctx, "bad target in _mesa_tex_target_dimensions()");
-         return 0;
-   }
-}
-
-
 void GLAPIENTRY
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params )
@@ -761,7 +724,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    const struct gl_texture_image *img = NULL;
-   GLuint dimensions;
    GLboolean isProxy;
    GLint maxLevels;
    GET_CURRENT_CONTEXT(ctx);
@@ -773,19 +735,13 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    /* this will catch bad target values */
-   dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
-   if (dimensions == 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
-      return;
-   }
-
    maxLevels = _mesa_max_texture_levels(ctx, target);
    if (maxLevels == 0) {
-      /* should not happen since <target> was just checked above */
-      _mesa_problem(ctx, "maxLevels=0 in _mesa_GetTexLevelParameter");
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetTexLevelParameter[if]v(target=0x%x)", target);
       return;
    }
 
@@ -1002,7 +958,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -1169,7 +1125,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {

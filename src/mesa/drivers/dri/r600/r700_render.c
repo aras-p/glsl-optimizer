@@ -44,7 +44,6 @@
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"
 
-#include "radeon_mipmap_tree.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
@@ -58,7 +57,7 @@ void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
 void r700Start3D(context_t *context);
 GLboolean r700SendTextureState(context_t *context);
-unsigned int r700PrimitiveType(int prim);
+static unsigned int r700PrimitiveType(int prim);
 void r600UpdateTextureState(GLcontext * ctx);
 GLboolean r700SyncSurf(context_t *context,
 		       struct radeon_bo *pbo,
@@ -138,59 +137,15 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
     r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
 
-    return GL_TRUE;
-}
+    r600UpdateTextureState(ctx);
 
-GLboolean r700SendTextureState(context_t *context)
-{
-    unsigned int i;
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    offset_modifiers offset_mod = {NO_SHIFT, 0, 0xFFFFFFFF};
-    struct radeon_bo *bo = NULL;
-    BATCH_LOCALS(&context->radeon);
+    r700SendFSState(context); // FIXME just a place holder for now
+    r700SendPSState(context);
+    r700SendVSState(context);
 
-    for (i=0; i<R700_TEXTURE_NUMBERUNITS; i++) {
-	    radeonTexObj *t = r700->textures[i];
-	    if (t) {
-		    if (!t->image_override)
-			    bo = t->mt->bo;
-		    else
-			    bo = t->bo;
-		    if (bo) {
+    r700SendTextureState(context);
+    r700SetupStreams(ctx);
 
-			    r700SyncSurf(context, bo,
-					 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
-					 0, TC_ACTION_ENA_bit);
-
-			    BEGIN_BATCH_NO_AUTOSTATE(9);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-			    R600_OUT_BATCH(i * 7);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
-						 bo,
-						 0,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
-						 bo,
-						 0,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
-			    END_BATCH();
-
-			    BEGIN_BATCH_NO_AUTOSTATE(5);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-			    R600_OUT_BATCH(i * 3);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
-			    END_BATCH();
-			    COMMIT_BATCH();
-		    }
-	    }
-    }
     return GL_TRUE;
 }
 
@@ -202,16 +157,14 @@ GLboolean r700SyncSurf(context_t *context,
 {
     BATCH_LOCALS(&context->radeon);
     uint32_t cp_coher_size;
-    offset_modifiers offset_mod;
+
+    if (!pbo)
+	    return GL_FALSE;
 
     if (pbo->size == 0xffffffff)
 	    cp_coher_size = 0xffffffff;
     else
 	    cp_coher_size = ((pbo->size + 255) >> 8);
-
-    offset_mod.shift     = NO_SHIFT;
-    offset_mod.shiftbits = 0;
-    offset_mod.mask      = 0xFFFFFFFF;
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SURFACE_SYNC, 3));
@@ -220,7 +173,7 @@ GLboolean r700SyncSurf(context_t *context,
     R600_OUT_BATCH_RELOC(0,
 			 pbo,
 			 0,
-			 read_domain, write_domain, 0, &offset_mod); // ???
+			 read_domain, write_domain, 0); // ???
     R600_OUT_BATCH(10);
 
     END_BATCH();
@@ -229,7 +182,7 @@ GLboolean r700SyncSurf(context_t *context,
     return GL_TRUE;
 }
 
-unsigned int r700PrimitiveType(int prim)
+static unsigned int r700PrimitiveType(int prim)
 {
     switch (prim & PRIM_MODE_MASK)
     {
@@ -270,119 +223,163 @@ unsigned int r700PrimitiveType(int prim)
     }
 }
 
+static int r700NumVerts(int num_verts, int prim)
+{
+	int verts_off = 0;
+
+	switch (prim & PRIM_MODE_MASK) {
+	case GL_POINTS:
+		verts_off = 0;
+		break;
+	case GL_LINES:
+		verts_off = num_verts % 2;
+		break;
+	case GL_LINE_STRIP:
+		if (num_verts < 2)
+			verts_off = num_verts;
+		break;
+	case GL_LINE_LOOP:
+		if (num_verts < 2)
+			verts_off = num_verts;
+		break;
+	case GL_TRIANGLES:
+		verts_off = num_verts % 3;
+		break;
+	case GL_TRIANGLE_STRIP:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	case GL_TRIANGLE_FAN:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	case GL_QUADS:
+		verts_off = num_verts % 4;
+		break;
+	case GL_QUAD_STRIP:
+		if (num_verts < 4)
+			verts_off = num_verts;
+		else
+			verts_off = num_verts % 2;
+		break;
+	case GL_POLYGON:
+		if (num_verts < 3)
+			verts_off = num_verts;
+		break;
+	default:
+		assert(0);
+		return -1;
+		break;
+	}
+
+	return num_verts - verts_off;
+}
+
+static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	BATCH_LOCALS(&context->radeon);
+	int type, i, total_emit;
+	int num_indices;
+	uint32_t vgt_draw_initiator = 0;
+	uint32_t vgt_index_type     = 0;
+	uint32_t vgt_primitive_type = 0;
+	uint32_t vgt_num_indices    = 0;
+
+	type = r700PrimitiveType(prim);
+	num_indices = r700NumVerts(end - start, prim);
+
+	if (type < 0 || num_indices <= 0)
+		return;
+
+        total_emit =   3 /* VGT_PRIMITIVE_TYPE */
+		     + 2 /* VGT_INDEX_TYPE */
+		     + 2 /* NUM_INSTANCES */
+                     + num_indices + 3; /* DRAW_INDEX_IMMD */
+
+        BEGIN_BATCH_NO_AUTOSTATE(total_emit);
+	// prim
+        SETfield(vgt_primitive_type, type,
+		 VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+        R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+        R600_OUT_BATCH(vgt_primitive_type);
+
+	// index type
+        SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+        R600_OUT_BATCH(vgt_index_type);
+
+	// num instances
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
+        R600_OUT_BATCH(1);
+
+	// draw packet
+        vgt_num_indices = num_indices;
+        SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+	SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
+
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
+        R600_OUT_BATCH(vgt_num_indices);
+        R600_OUT_BATCH(vgt_draw_initiator);
+
+        for (i = start; i < (start + num_indices); i++) {
+            R600_OUT_BATCH(i);
+        }
+        END_BATCH();
+        COMMIT_BATCH();
+
+}
+
+void r700EmitState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	radeonContextPtr radeon = &context->radeon;
+
+	if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
+		return;
+
+	rcommonEnsureCmdBufSpace(&context->radeon,
+				 context->radeon.hw.max_state_size, __FUNCTION__);
+
+	r700SendSQConfig(context);
+
+	r700SendUCPState(context);
+	r700SendContextStates(context);
+	r700SendViewportState(context, 0);
+	r700SendRenderTargetState(context, 0);
+	r700SendDepthTargetState(context);
+
+}
+
 static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    int lastIndex = 0;
-#if 1
-    BATCH_LOCALS(&context->radeon);
-
-    unsigned int i, j;
+    unsigned int i;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
 
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
-	                                   (ctx->FragmentProgram._Current);
-    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-    {
-        fp->r700AsmCode.bR6xx = 1;
-    }
-
-    r700Start3D(context); /* TODO : this is too much. */
-
-    r700SendSQConfig(context);
+    r700Start3D(context);
 
     r700UpdateShaders(ctx);
-
     r700SetScissor(context);
-    r700SetRenderTarget(context, 0);
-    r700SetDepthTarget(context);
-
-    if(r700SetupStreams(ctx))
-    {
-        return GL_TRUE;
-    }
-
-    r600UpdateTextureState(ctx);
-    r700SendTextureState(context);
-
-    if(GL_FALSE == fp->translated)
-    {
-        if( GL_FALSE == r700TranslateFragmentShader(fp, &(fp->mesa_program)) )
-        {
-            return GL_TRUE;
-        }
-    }
-
     r700SetupShaders(ctx);
 
-    r700SendFSState(context); // FIXME just a place holder for now
-    r700SendPSState(context);
-    r700SendVSState(context);
-
-    r700SendContextStates(context);
-    r700SendViewportState(context, 0);
-    r700SendRenderTargetState(context, 0);
-    r700SendDepthTargetState(context);
+    r700EmitState(ctx);
 
     /* richard test code */
-    for (i = 0; i < vb->PrimitiveCount; i++) 
-    {
+    for (i = 0; i < vb->PrimitiveCount; i++) {
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
         GLuint start = vb->Primitive[i].start;
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-        GLuint numIndices = vb->Primitive[i].count;
-        GLuint numEntires;
-
-        unsigned int VGT_DRAW_INITIATOR = 0;
-        unsigned int VGT_INDEX_TYPE     = 0;
-        unsigned int VGT_PRIMITIVE_TYPE = 0;
-        unsigned int VGT_NUM_INDICES    = 0;
-        
-        numEntires = 2 /* VGT_INDEX_TYPE */
-                     + 3 /* VGT_PRIMITIVE_TYPE */
-                     + numIndices + 3; /* DRAW_INDEX_IMMD */                  
-                     
-        BEGIN_BATCH_NO_AUTOSTATE(numEntires);  
-
-        VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
-
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
-        R600_OUT_BATCH(VGT_INDEX_TYPE);
-
-        VGT_NUM_INDICES = numIndices;
-
-        VGT_PRIMITIVE_TYPE |= r700PrimitiveType(prim) << VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift;
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-        R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-        R600_OUT_BATCH(VGT_PRIMITIVE_TYPE);
-
-        VGT_DRAW_INITIATOR |= DI_SRC_SEL_IMMEDIATE << SOURCE_SELECT_shift;
-        VGT_DRAW_INITIATOR |= DI_MAJOR_MODE_0 << MAJOR_MODE_shift;
-
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
-        R600_OUT_BATCH(VGT_NUM_INDICES);
-        R600_OUT_BATCH(VGT_DRAW_INITIATOR);
-
-        for (j = lastIndex; j < lastIndex + numIndices; j++)
-        {
-            R600_OUT_BATCH(j);
-        }
-        lastIndex += numIndices;
-
-        END_BATCH();
-        COMMIT_BATCH();
+	r700RunRenderPrimitive(ctx, start, end, prim);
     }
 
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
 
-    radeonReleaseArrays(ctx, 0);
-
-#endif //0
-    rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
+    radeonReleaseArrays(ctx, ~0);
 
     return GL_FALSE;
 }
@@ -409,10 +406,6 @@ static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
     {
         return GL_TRUE;
     }
-
-    context_t *context = R700_CONTEXT(ctx);
-
-    r700UpdateShaders(ctx);
 
     bRet = r700RunRender(ctx, stage);
 

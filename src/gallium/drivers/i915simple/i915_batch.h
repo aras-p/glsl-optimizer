@@ -50,8 +50,8 @@ i915_batchbuffer_check( struct i915_batchbuffer *batch,
 			size_t dwords,
 			size_t relocs )
 {
-   /** TODO JB: Check relocs */
-   return dwords * 4 <= batch->size - (batch->ptr - batch->map);
+   return dwords * 4 <= batch->size - (batch->ptr - batch->map) &&
+          relocs <= (batch->max_relocs - batch->relocs);
 }
 
 static INLINE size_t

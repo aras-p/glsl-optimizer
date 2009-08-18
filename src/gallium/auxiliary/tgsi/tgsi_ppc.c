@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sse.h"
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_dump.h"
@@ -619,17 +620,17 @@ emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
             ppc_vandc(gen->f, v1, v0, bit31_vec); /* v1 = v0 & ~bit31 */
          }
          break;
-      case TGSI_OPCODE_FLOOR:
+      case TGSI_OPCODE_FLR:
          ppc_vrfim(gen->f, v1, v0);         /* v1 = floor(v0) */
          break;
-      case TGSI_OPCODE_FRAC:
+      case TGSI_OPCODE_FRC:
          ppc_vrfim(gen->f, v1, v0);      /* tmp = floor(v0) */
          ppc_vsubfp(gen->f, v1, v0, v1); /* v1 = v0 - v1 */
          break;
-      case TGSI_OPCODE_EXPBASE2:
+      case TGSI_OPCODE_EX2:
          ppc_vexptefp(gen->f, v1, v0);     /* v1 = 2^v0 */
          break;
-      case TGSI_OPCODE_LOGBASE2:
+      case TGSI_OPCODE_LG2:
          /* XXX this may be broken! */
          ppc_vlogefp(gen->f, v1, v0);      /* v1 = log2(v0) */
          break;
@@ -1111,10 +1112,10 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_SWZ:
    case TGSI_OPCODE_ABS:
-   case TGSI_OPCODE_FLOOR:
-   case TGSI_OPCODE_FRAC:
-   case TGSI_OPCODE_EXPBASE2:
-   case TGSI_OPCODE_LOGBASE2:
+   case TGSI_OPCODE_FLR:
+   case TGSI_OPCODE_FRC:
+   case TGSI_OPCODE_EX2:
+   case TGSI_OPCODE_LG2:
       emit_unaryop(gen, inst);
       break;
    case TGSI_OPCODE_RSQ:
@@ -1317,8 +1318,10 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
          ok = emit_instruction(&gen, &parse.FullToken.FullInstruction);
 
 	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d to PPC (%s)\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode,
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+	    debug_printf("failed to translate tgsi opcode %d (%s) to PPC (%s)\n", 
+			 opcode,
+                         tgsi_get_opcode_name(opcode),
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
                          "vertex shader" : "fragment shader");
 	 }
@@ -1333,7 +1336,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for (i = 0; i < size; i++) {
                immediates[num_immediates][i] =
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
             num_immediates++;
          }

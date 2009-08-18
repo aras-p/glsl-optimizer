@@ -72,11 +72,6 @@ static const int step_offsets[6][2] = {
    {-1, 1}
 };
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 static unsigned
 power_of_two(unsigned x)
 {
@@ -160,10 +155,10 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
 
 
 /**
- * Special case to deal with display targets.
+ * Special case to deal with scanout textures.
  */
 static boolean
-i915_displaytarget_layout(struct i915_texture *tex)
+i915_scanout_layout(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
 
@@ -177,9 +172,13 @@ i915_displaytarget_layout(struct i915_texture *tex)
    i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
    if (tex->base.width[0] >= 128) {
+#if 0
       tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
+#else
+      tex->stride = 2048 * 4; /* TODO fix when backend is smarter */
+#endif
       tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
-#if 0 /* used for tiled display targets */
+#if 0 /* used for tiled textures */
       tex->tiled = 1;
 #endif
    } else {
@@ -209,9 +208,9 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned nblocksx = pt->nblocksx[0];
    unsigned nblocksy = pt->nblocksy[0];
 
-   /* used for tiled display targets */
-   if (0)
-      if (i915_displaytarget_layout(tex))
+   /* used for scanouts that need special layouts */
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+      if (i915_scanout_layout(tex))
 	 return;
 
    tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
@@ -584,6 +583,7 @@ i915_texture_create(struct pipe_screen *screen,
    struct i915_screen *i915screen = i915_screen(screen);
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
    size_t tex_size;
+   unsigned buf_usage = 0;
 
    if (!tex)
       return NULL;
@@ -605,9 +605,11 @@ i915_texture_create(struct pipe_screen *screen,
 
    tex_size = tex->stride * tex->total_nblocksy;
 
-   tex->buffer = screen->buffer_create(screen, 64,
-                                    PIPE_BUFFER_USAGE_PIXEL,
-                                    tex_size);
+   buf_usage = PIPE_BUFFER_USAGE_PIXEL;
+   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+      buf_usage |= I915_BUFFER_USAGE_SCANOUT;
+
+   tex->buffer = screen->buffer_create(screen, 64, buf_usage, tex_size);
 
    if (!tex->buffer)
       goto fail;

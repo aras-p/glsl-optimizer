@@ -61,6 +61,7 @@ static const struct {
    { OFF, "GL_ARB_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
+   { OFF, "GL_ARB_seamless_cube_map",          F(ARB_seamless_cube_map) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
    { OFF, "GL_ARB_shading_language_120",       F(ARB_shading_language_120) },
@@ -78,6 +79,7 @@ static const struct {
    { OFF, "GL_ARB_texture_non_power_of_two",   F(ARB_texture_non_power_of_two)},
    { OFF, "GL_ARB_texture_rectangle",          F(NV_texture_rectangle) },
    { ON,  "GL_ARB_transpose_matrix",           F(ARB_transpose_matrix) },
+   { OFF, "GL_ARB_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
    { OFF, "GL_ARB_vertex_array_object",        F(ARB_vertex_array_object) },
    { ON,  "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
    { OFF, "GL_ARB_vertex_program",             F(ARB_vertex_program) },
@@ -413,6 +415,7 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
+   ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;

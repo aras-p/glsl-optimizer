@@ -239,6 +239,11 @@ struct radeon_tex_obj {
 	GLuint SQ_TEX_SAMPLER1;
 	GLuint SQ_TEX_SAMPLER2;
 
+	GLuint TD_PS_SAMPLER0_BORDER_RED;
+	GLuint TD_PS_SAMPLER0_BORDER_GREEN;
+	GLuint TD_PS_SAMPLER0_BORDER_BLUE;
+	GLuint TD_PS_SAMPLER0_BORDER_ALPHA;
+
 	GLboolean border_fallback;
 
 
@@ -360,6 +365,7 @@ struct radeon_dri_mirror {
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
+	int hwLockCount;
 	int fd;
 	int drmMinor;
 };
@@ -424,6 +430,8 @@ struct radeon_context {
    int                   texture_depth;
    float                 initialMaxAnisotropy;
    uint32_t              texture_row_align;
+   uint32_t              texture_rect_row_align;
+   uint32_t              texture_compressed_row_align;
 
   struct radeon_dma dma;
   struct radeon_hw_state hw;
@@ -438,7 +446,6 @@ struct radeon_context {
    GLuint numClipRects;	/* Cliprects for the draw buffer */
    drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
-   GLboolean lost_context;
    drm_radeon_sarea_t *sarea;	/* Private SAREA data */
 
    /* Mirrors of some DRI state */
@@ -585,12 +592,6 @@ extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
 extern int RADEON_DEBUG;
 #else
 #define RADEON_DEBUG		0
-#endif
-
-#ifndef HAVE_LIBDRM_RADEON
-#ifndef RADEON_DEBUG_BO
-#define RADEON_DEBUG_BO 1
-#endif
 #endif
 
 #endif

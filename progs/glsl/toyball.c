@@ -24,18 +24,18 @@ static GLuint program;
 
 
 static struct uniform_info Uniforms[] = {
-   { "LightDir",       4, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
-   { "HVector",        4, GL_FLOAT, { 0.32506, 0.32506, 0.88808, 0.0 }, -1 },
-   { "BallCenter",     4, GL_FLOAT, { 0.0, 0.0, 0.0, 1.0 }, -1 },
-   { "SpecularColor",  4, GL_FLOAT, { 0.4, 0.4, 0.4, 60.0 }, -1 },
-   { "Red",         4, GL_FLOAT, { 0.6, 0.0, 0.0, 1.0 }, -1 },
-   { "Blue",        4, GL_FLOAT, { 0.0, 0.3, 0.6, 1.0 }, -1 },
-   { "Yellow",      4, GL_FLOAT, { 0.6, 0.5, 0.0, 1.0 }, -1 },
-   { "HalfSpace0",  4, GL_FLOAT, { 1.0, 0.0, 0.0, 0.2 }, -1 },
-   { "HalfSpace1",  4, GL_FLOAT, { 0.309016994, 0.951056516, 0.0, 0.2 }, -1 },
-   { "HalfSpace2",  4, GL_FLOAT, { -0.809016994, 0.587785252, 0.0, 0.2 }, -1 },
-   { "HalfSpace3",  4, GL_FLOAT, { -0.809016994, -0.587785252, 0.0, 0.2 }, -1 },
-   { "HalfSpace4",  4, GL_FLOAT, { 0.309116994, -0.951056516, 0.0, 0.2 }, -1 },
+   { "LightDir",    1, GL_FLOAT_VEC4, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "HVector",     1, GL_FLOAT_VEC4, { 0.32506, 0.32506, 0.88808, 0.0 }, -1 },
+   { "BallCenter",  1, GL_FLOAT_VEC4, { 0.0, 0.0, 0.0, 1.0 }, -1 },
+   { "SpecularColor", 1, GL_FLOAT_VEC4, { 0.4, 0.4, 0.4, 60.0 }, -1 },
+   { "Red",         1, GL_FLOAT_VEC4, { 0.6, 0.0, 0.0, 1.0 }, -1 },
+   { "Blue",        1, GL_FLOAT_VEC4, { 0.0, 0.3, 0.6, 1.0 }, -1 },
+   { "Yellow",      1, GL_FLOAT_VEC4, { 0.6, 0.5, 0.0, 1.0 }, -1 },
+   { "HalfSpace0",  1, GL_FLOAT_VEC4, { 1.0, 0.0, 0.0, 0.2 }, -1 },
+   { "HalfSpace1",  1, GL_FLOAT_VEC4, { 0.309016994, 0.951056516, 0.0, 0.2 }, -1 },
+   { "HalfSpace2",  1, GL_FLOAT_VEC4, { -0.809016994, 0.587785252, 0.0, 0.2 }, -1 },
+   { "HalfSpace3",  1, GL_FLOAT_VEC4, { -0.809016994, -0.587785252, 0.0, 0.2 }, -1 },
+   { "HalfSpace4",  1, GL_FLOAT_VEC4, { 0.309116994, -0.951056516, 0.0, 0.2 }, -1 },
    { "InOrOutInit", 1, GL_FLOAT, { -3.0, 0, 0, 0 }, -1 },
    { "StripeWidth", 1, GL_FLOAT, {  0.3, 0, 0, 0 }, -1 },
    { "FWidth",      1, GL_FLOAT, { 0.005, 0, 0, 0 }, -1 },
@@ -173,7 +173,8 @@ Init(void)
 
    glUseProgram(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    assert(glGetError() == 0);
 
@@ -204,7 +205,6 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition( 0, 0);
    glutInitWindowSize(400, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);

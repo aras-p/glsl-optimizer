@@ -54,6 +54,24 @@ _mesa_bytes_per_pixel( GLenum format, GLenum type );
 extern GLboolean
 _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type );
 
+extern GLboolean
+_mesa_is_color_format(GLenum format);
+
+extern GLboolean
+_mesa_is_index_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depth_format(GLenum format);
+
+extern GLboolean
+_mesa_is_ycbcr_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depthstencil_format(GLenum format);
+
+extern GLboolean
+_mesa_is_dudv_format(GLenum format);
+
 
 extern GLvoid *
 _mesa_image_address( GLuint dimensions,
@@ -290,5 +308,11 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
                      GLint xmax, GLint ymax,
                      GLint *x, GLint *y,
                      GLsizei *width, GLsizei *height );
+
+extern GLboolean
+_mesa_clip_blit(GLcontext *ctx,
+                GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
+                GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1);
+
 
 #endif

@@ -1,41 +1,53 @@
 #include <stdlib.h>
+#include <assert.h>
 #include "eglglobals.h"
+#include "egldisplay.h"
 #include "egllog.h"
+#include "eglmutex.h"
 
-struct _egl_global _eglGlobal = 
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+
+static _EGL_DECLARE_MUTEX(_eglGlobalMutex);
+struct _egl_global _eglGlobal =
 {
-   EGL_FALSE
+   &_eglGlobalMutex,       /* Mutex */
+   1,                      /* FreeScreenHandle */
+   0x0,                    /* ClientAPIsMask */
+   { 0x0 },                /* ClientAPIs */
+   0,                      /* NumDrivers */
+   { NULL },               /* Drivers */
+   0,                      /* NumAtExitCalls */
+   { NULL },               /* AtExitCalls */
 };
 
-/**
- * Init the fields in the _eglGlobal struct
- * May be safely called more than once.
- */
-void
-_eglInitGlobals(void)
+
+static void
+_eglAtExit(void)
 {
-   if (!_eglGlobal.Initialized) {
-      _eglGlobal.Displays = _eglNewHashTable();
-      _eglGlobal.Surfaces = _eglNewHashTable();
-      _eglGlobal.FreeScreenHandle = 1;
-      _eglGlobal.Initialized = EGL_TRUE;
-
-      _eglGlobal.ClientAPIsMask = 0x0;
-
-      if (!_eglInitCurrent())
-         _eglLog(_EGL_FATAL, "failed to initialize \"current\" system");
-   }
+   EGLint i;
+   for (i = _eglGlobal.NumAtExitCalls - 1; i >= 0; i--)
+      _eglGlobal.AtExitCalls[i]();
 }
 
 
-/**
- * Should call this via an atexit handler.
- */
 void
-_eglDestroyGlobals(void)
+_eglAddAtExitCall(void (*func)(void))
 {
-   _eglFiniCurrent();
-   /* XXX TODO walk over table entries, deleting each */
-   _eglDeleteHashTable(_eglGlobal.Displays);
-   _eglDeleteHashTable(_eglGlobal.Surfaces);
+   if (func) {
+      static EGLBoolean registered = EGL_FALSE;
+
+      _eglLockMutex(_eglGlobal.Mutex);
+
+      if (!registered) {
+         atexit(_eglAtExit);
+         registered = EGL_TRUE;
+      }
+
+      assert(_eglGlobal.NumAtExitCalls < ARRAY_SIZE(_eglGlobal.AtExitCalls));
+      _eglGlobal.AtExitCalls[_eglGlobal.NumAtExitCalls++] = func;
+
+      _eglUnlockMutex(_eglGlobal.Mutex);
+   }
 }

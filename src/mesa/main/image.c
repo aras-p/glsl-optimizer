@@ -531,6 +531,210 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
 
 
 /**
+ * Test if the given image format is a color/RGBA format (i.e., not color
+ * index, depth, stencil, etc).
+ * \param format  the image format value (may by an internal texture format)
+ * \return GL_TRUE if its a color/RGBA format, GL_FALSE otherwise.
+ */
+GLboolean
+_mesa_is_color_format(GLenum format)
+{
+   switch (format) {
+      case GL_RED:
+      case GL_GREEN:
+      case GL_BLUE:
+      case GL_ALPHA:
+      case GL_ALPHA4:
+      case GL_ALPHA8:
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+      case 1:
+      case GL_LUMINANCE:
+      case GL_LUMINANCE4:
+      case GL_LUMINANCE8:
+      case GL_LUMINANCE12:
+      case GL_LUMINANCE16:
+      case 2:
+      case GL_LUMINANCE_ALPHA:
+      case GL_LUMINANCE4_ALPHA4:
+      case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+      case GL_LUMINANCE12_ALPHA4:
+      case GL_LUMINANCE12_ALPHA12:
+      case GL_LUMINANCE16_ALPHA16:
+      case GL_INTENSITY:
+      case GL_INTENSITY4:
+      case GL_INTENSITY8:
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+      case 3:
+      case GL_RGB:
+      case GL_BGR:
+      case GL_R3_G3_B2:
+      case GL_RGB4:
+      case GL_RGB5:
+      case GL_RGB8:
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+      case 4:
+      case GL_ABGR_EXT:
+      case GL_RGBA:
+      case GL_BGRA:
+      case GL_RGBA2:
+      case GL_RGBA4:
+      case GL_RGB5_A1:
+      case GL_RGBA8:
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+      /* float texture formats */
+      case GL_ALPHA16F_ARB:
+      case GL_ALPHA32F_ARB:
+      case GL_LUMINANCE16F_ARB:
+      case GL_LUMINANCE32F_ARB:
+      case GL_LUMINANCE_ALPHA16F_ARB:
+      case GL_LUMINANCE_ALPHA32F_ARB:
+      case GL_INTENSITY16F_ARB:
+      case GL_INTENSITY32F_ARB:
+      case GL_RGB16F_ARB:
+      case GL_RGB32F_ARB:
+      case GL_RGBA16F_ARB:
+      case GL_RGBA32F_ARB:
+      /* compressed formats */
+      case GL_COMPRESSED_ALPHA:
+      case GL_COMPRESSED_LUMINANCE:
+      case GL_COMPRESSED_LUMINANCE_ALPHA:
+      case GL_COMPRESSED_INTENSITY:
+      case GL_COMPRESSED_RGB:
+      case GL_COMPRESSED_RGBA:
+      case GL_RGB_S3TC:
+      case GL_RGB4_S3TC:
+      case GL_RGBA_S3TC:
+      case GL_RGBA4_S3TC:
+      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      case GL_COMPRESSED_RGB_FXT1_3DFX:
+      case GL_COMPRESSED_RGBA_FXT1_3DFX:
+#if FEATURE_EXT_texture_sRGB
+      case GL_SRGB_EXT:
+      case GL_SRGB8_EXT:
+      case GL_SRGB_ALPHA_EXT:
+      case GL_SRGB8_ALPHA8_EXT:
+      case GL_SLUMINANCE_ALPHA_EXT:
+      case GL_SLUMINANCE8_ALPHA8_EXT:
+      case GL_SLUMINANCE_EXT:
+      case GL_SLUMINANCE8_EXT:
+      case GL_COMPRESSED_SRGB_EXT:
+      case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      case GL_COMPRESSED_SLUMINANCE_EXT:
+      case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+#endif /* FEATURE_EXT_texture_sRGB */
+         return GL_TRUE;
+      /* signed texture formats */
+      case GL_RGBA_SNORM:
+      case GL_RGBA8_SNORM:
+         return GL_TRUE;
+      case GL_YCBCR_MESA:  /* not considered to be RGB */
+         /* fall-through */
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given image format is a color index format.
+ */
+GLboolean
+_mesa_is_index_format(GLenum format)
+{
+   switch (format) {
+      case GL_COLOR_INDEX:
+      case GL_COLOR_INDEX1_EXT:
+      case GL_COLOR_INDEX2_EXT:
+      case GL_COLOR_INDEX4_EXT:
+      case GL_COLOR_INDEX8_EXT:
+      case GL_COLOR_INDEX12_EXT:
+      case GL_COLOR_INDEX16_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given image format is a depth component format.
+ */
+GLboolean
+_mesa_is_depth_format(GLenum format)
+{
+   switch (format) {
+      case GL_DEPTH_COMPONENT:
+      case GL_DEPTH_COMPONENT16:
+      case GL_DEPTH_COMPONENT24:
+      case GL_DEPTH_COMPONENT32:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given image format is a YCbCr format.
+ */
+GLboolean
+_mesa_is_ycbcr_format(GLenum format)
+{
+   switch (format) {
+      case GL_YCBCR_MESA:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given image format is a depth+stencil format.
+ */
+GLboolean
+_mesa_is_depthstencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_DEPTH24_STENCIL8_EXT:
+      case GL_DEPTH_STENCIL_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+/**
+ * Test if the given image format is a dudv format.
+ */
+GLboolean
+_mesa_is_dudv_format(GLenum format)
+{
+   switch (format) {
+      case GL_DUDV_ATI:
+      case GL_DU8DV8_ATI:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
  * Return the address of a specific pixel in an image (1D, 2D or 3D).
  *
  * Pixel unpacking/packing parameters are observed according to \p packing.
@@ -5332,6 +5536,184 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 
    if (*height <= 0)
       return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Clip dst coords against Xmax (or Ymax).
+ */
+static INLINE void
+clip_right_or_top(GLint *srcX0, GLint *srcX1,
+                  GLint *dstX0, GLint *dstX1,
+                  GLint maxValue)
+{
+   GLfloat t, bias;
+
+   if (*dstX1 > maxValue) {
+      /* X1 outside right edge */
+      ASSERT(*dstX0 < maxValue); /* X0 should be inside right edge */
+      t = (GLfloat) (maxValue - *dstX0) / (GLfloat) (*dstX1 - *dstX0);
+      /* chop off [t, 1] part */
+      ASSERT(t >= 0.0 && t <= 1.0);
+      *dstX1 = maxValue;
+      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5;
+      *srcX1 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
+   }
+   else if (*dstX0 > maxValue) {
+      /* X0 outside right edge */
+      ASSERT(*dstX1 < maxValue); /* X1 should be inside right edge */
+      t = (GLfloat) (maxValue - *dstX1) / (GLfloat) (*dstX0 - *dstX1);
+      /* chop off [t, 1] part */
+      ASSERT(t >= 0.0 && t <= 1.0);
+      *dstX0 = maxValue;
+      bias = (*srcX0 < *srcX1) ? -0.5 : 0.5;
+      *srcX0 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
+   }
+}
+
+
+/**
+ * Clip dst coords against Xmin (or Ymin).
+ */
+static INLINE void
+clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
+                    GLint *dstX0, GLint *dstX1,
+                    GLint minValue)
+{
+   GLfloat t, bias;
+
+   if (*dstX0 < minValue) {
+      /* X0 outside left edge */
+      ASSERT(*dstX1 > minValue); /* X1 should be inside left edge */
+      t = (GLfloat) (minValue - *dstX0) / (GLfloat) (*dstX1 - *dstX0);
+      /* chop off [0, t] part */
+      ASSERT(t >= 0.0 && t <= 1.0);
+      *dstX0 = minValue;
+      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5; /* flipped??? */
+      *srcX0 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
+   }
+   else if (*dstX1 < minValue) {
+      /* X1 outside left edge */
+      ASSERT(*dstX0 > minValue); /* X0 should be inside left edge */
+      t = (GLfloat) (minValue - *dstX1) / (GLfloat) (*dstX0 - *dstX1);
+      /* chop off [0, t] part */
+      ASSERT(t >= 0.0 && t <= 1.0);
+      *dstX1 = minValue;
+      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5;
+      *srcX1 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
+   }
+}
+
+
+/**
+ * Do clipping of blit src/dest rectangles.
+ * The dest rect is clipped against both the buffer bounds and scissor bounds.
+ * The src rect is just clipped against the buffer bounds.
+ *
+ * When either the src or dest rect is clipped, the other is also clipped
+ * proportionately!
+ *
+ * Note that X0 need not be less than X1 (same for Y) for either the source
+ * and dest rects.  That makes the clipping a little trickier.
+ *
+ * \return GL_TRUE if anything is left to draw, GL_FALSE if totally clipped
+ */
+GLboolean
+_mesa_clip_blit(GLcontext *ctx,
+                GLint *srcX0, GLint *srcY0, GLint *srcX1, GLint *srcY1,
+                GLint *dstX0, GLint *dstY0, GLint *dstX1, GLint *dstY1)
+{
+   const GLint srcXmin = 0;
+   const GLint srcXmax = ctx->ReadBuffer->Width;
+   const GLint srcYmin = 0;
+   const GLint srcYmax = ctx->ReadBuffer->Height;
+
+   /* these include scissor bounds */
+   const GLint dstXmin = ctx->DrawBuffer->_Xmin;
+   const GLint dstXmax = ctx->DrawBuffer->_Xmax;
+   const GLint dstYmin = ctx->DrawBuffer->_Ymin;
+   const GLint dstYmax = ctx->DrawBuffer->_Ymax;
+
+   /*
+   printf("PreClipX:  src: %d .. %d  dst: %d .. %d\n",
+          *srcX0, *srcX1, *dstX0, *dstX1);
+   printf("PreClipY:  src: %d .. %d  dst: %d .. %d\n",
+          *srcY0, *srcY1, *dstY0, *dstY1);
+   */
+
+   /* trivial rejection tests */
+   if (*dstX0 == *dstX1)
+      return GL_FALSE; /* no width */
+   if (*dstX0 <= dstXmin && *dstX1 <= dstXmin)
+      return GL_FALSE; /* totally out (left) of bounds */
+   if (*dstX0 >= dstXmax && *dstX1 >= dstXmax)
+      return GL_FALSE; /* totally out (right) of bounds */
+
+   if (*dstY0 == *dstY1)
+      return GL_FALSE;
+   if (*dstY0 <= dstYmin && *dstY1 <= dstYmin)
+      return GL_FALSE;
+   if (*dstY0 >= dstYmax && *dstY1 >= dstYmax)
+      return GL_FALSE;
+
+   if (*srcX0 == *srcX1)
+      return GL_FALSE;
+   if (*srcX0 <= srcXmin && *srcX1 <= srcXmin)
+      return GL_FALSE;
+   if (*srcX0 >= srcXmax && *srcX1 >= srcXmax)
+      return GL_FALSE;
+
+   if (*srcY0 == *srcY1)
+      return GL_FALSE;
+   if (*srcY0 <= srcYmin && *srcY1 <= srcYmin)
+      return GL_FALSE;
+   if (*srcY0 >= srcYmax && *srcY1 >= srcYmax)
+      return GL_FALSE;
+
+   /*
+    * dest clip
+    */
+   clip_right_or_top(srcX0, srcX1, dstX0, dstX1, dstXmax);
+   clip_right_or_top(srcY0, srcY1, dstY0, dstY1, dstYmax);
+   clip_left_or_bottom(srcX0, srcX1, dstX0, dstX1, dstXmin);
+   clip_left_or_bottom(srcY0, srcY1, dstY0, dstY1, dstYmin);
+
+   /*
+    * src clip (just swap src/dst values from above)
+    */
+   clip_right_or_top(dstX0, dstX1, srcX0, srcX1, srcXmax);
+   clip_right_or_top(dstY0, dstY1, srcY0, srcY1, srcYmax);
+   clip_left_or_bottom(dstX0, dstX1, srcX0, srcX1, srcXmin);
+   clip_left_or_bottom(dstY0, dstY1, srcY0, srcY1, srcYmin);
+
+   /*
+   printf("PostClipX: src: %d .. %d  dst: %d .. %d\n",
+          *srcX0, *srcX1, *dstX0, *dstX1);
+   printf("PostClipY: src: %d .. %d  dst: %d .. %d\n",
+          *srcY0, *srcY1, *dstY0, *dstY1);
+   */
+
+   ASSERT(*dstX0 >= dstXmin);
+   ASSERT(*dstX0 <= dstXmax);
+   ASSERT(*dstX1 >= dstXmin);
+   ASSERT(*dstX1 <= dstXmax);
+
+   ASSERT(*dstY0 >= dstYmin);
+   ASSERT(*dstY0 <= dstYmax);
+   ASSERT(*dstY1 >= dstYmin);
+   ASSERT(*dstY1 <= dstYmax);
+
+   ASSERT(*srcX0 >= srcXmin);
+   ASSERT(*srcX0 <= srcXmax);
+   ASSERT(*srcX1 >= srcXmin);
+   ASSERT(*srcX1 <= srcXmax);
+
+   ASSERT(*srcY0 >= srcYmin);
+   ASSERT(*srcY0 <= srcYmax);
+   ASSERT(*srcY1 >= srcYmin);
+   ASSERT(*srcY1 <= srcYmax);
 
    return GL_TRUE;
 }

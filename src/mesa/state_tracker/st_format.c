@@ -435,10 +435,10 @@ st_choose_format(struct pipe_context *pipe, GLenum internalFormat,
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A1R5G5B5_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_R5G6B5_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_R5G6B5_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_A1R5G5B5_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_ALPHA:

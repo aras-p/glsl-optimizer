@@ -68,6 +68,7 @@ static void release_tmps( struct brw_vs_compile *c )
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
+   int attributes_in_vue;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -128,6 +129,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 reg++;
       }
    }
+   /* If there are no inputs, we'll still be reading one attribute's worth
+    * because it's required -- see urb_read_length setting.
+    */
+   if (c->nr_inputs == 0)
+      reg++;
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
@@ -220,11 +226,22 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * vertex urb, so is half the amount:
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
+   /* Setting this field to 0 leads to undefined behavior according to the
+    * the VS_STATE docs.  Our VUEs will always have at least one attribute
+    * sitting in them, even if it's padding.
+    */
+   if (c->prog_data.urb_read_length == 0)
+      c->prog_data.urb_read_length = 1;
+
+   /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
+    * them to fit the biggest thing they need to.
+    */
+   attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
    if (BRW_IS_IGDNG(c->func.brw))
-       c->prog_data.urb_entry_size = (c->nr_outputs + 6 + 3) / 4;
+       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
-       c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
+       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
 
    c->prog_data.total_grf = reg;
 
@@ -1245,9 +1262,30 @@ post_vs_emit( struct brw_vs_compile *c,
 
    /* patch up the END code to jump past subroutines, etc */
    offset = last_inst - end_inst;
-   brw_set_src1(end_inst, brw_imm_d(offset * 16));
+   if (offset > 1) {
+      brw_set_src1(end_inst, brw_imm_d(offset * 16));
+   } else {
+      end_inst->header.opcode = BRW_OPCODE_NOP;
+   }
 }
 
+static uint32_t
+get_predicate(uint32_t swizzle)
+{
+   switch (swizzle) {
+   case SWIZZLE_XXXX:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_X;
+   case SWIZZLE_YYYY:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_Y;
+   case SWIZZLE_ZZZZ:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_Z;
+   case SWIZZLE_WWWW:
+      return BRW_PREDICATE_ALIGN16_REPLICATE_W;
+   default:
+      _mesa_problem(NULL, "Unexpected predicate: 0x%08x\n", swizzle);
+      return BRW_PREDICATE_NORMAL;
+   }
+}
 
 /* Emit the vertex program instructions here.
  */
@@ -1266,7 +1304,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint file;
 
    if (INTEL_DEBUG & DEBUG_VS) {
-      _mesa_printf("vs-emit:\n");
+      _mesa_printf("vs-mesa:\n");
       _mesa_print_program(&c->vp->program.Base); 
       _mesa_printf("\n");
    }
@@ -1453,7 +1491,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_IF:
 	 assert(if_depth < MAX_IF_DEPTH);
-         if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
+	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 if_inst[if_depth]->header.predicate_control =
+	    get_predicate(inst->DstReg.CondSwizzle);
+	 if_depth++;
 	 break;
       case OPCODE_ELSE:
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
@@ -1541,6 +1582,19 @@ void brw_vs_emit(struct brw_vs_compile *c )
 				    "unknown");
       }
 
+      /* Set the predication update on the last instruction of the native
+       * instruction sequence.
+       *
+       * This would be problematic if it was set on a math instruction,
+       * but that shouldn't be the case with the current GLSL compiler.
+       */
+      if (inst->CondUpdate) {
+	 struct brw_instruction *hw_insn = &p->store[p->nr_insn - 1];
+
+	 assert(hw_insn->header.destreg__conditionalmod == 0);
+	 hw_insn->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      }
+
       if ((inst->DstReg.File == PROGRAM_OUTPUT)
           && (inst->DstReg.Index != VERT_RESULT_HPOS)
           && c->output_regs[inst->DstReg.Index].used_in_src) {
@@ -1578,4 +1632,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
    emit_vertex_write(c);
 
    post_vs_emit(c, end_inst, last_inst);
+
+   if (INTEL_DEBUG & DEBUG_VS) {
+      int i;
+
+      _mesa_printf("vs-native:\n");
+      for (i = 0; i < p->nr_insn; i++)
+	 brw_disasm(stderr, &p->store[i]);
+      _mesa_printf("\n");
+   }
 }

@@ -36,6 +36,7 @@
 #if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
 #endif
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -1467,15 +1468,15 @@ emit_tex( struct x86_function *func,
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
-   case TGSI_TEXTURE_SHADOW1D:
       count = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-   case TGSI_TEXTURE_SHADOW2D:
-   case TGSI_TEXTURE_SHADOWRECT:
       count = 2;
       break;
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       count = 3;
@@ -2064,8 +2065,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LERP:
-   /* TGSI_OPCODE_LRP */
+   case TGSI_OPCODE_LRP:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          FETCH( func, *inst, 1, 1, chan_index );
@@ -2085,8 +2085,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_DOT2ADD:
-   /* TGSI_OPCODE_DP2A */
+   case TGSI_OPCODE_DP2A:
       FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
       FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
       emit_mul( func, 0, 1 );              /* xmm0 = xmm0 * xmm1 */
@@ -2101,16 +2100,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_INDEX:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_NEGATE:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_FRAC:
-   /* TGSI_OPCODE_FRC */
+   case TGSI_OPCODE_FRC:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_frc( func, 0, 0 );
@@ -2122,8 +2112,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_FLOOR:
-   /* TGSI_OPCODE_FLR */
+   case TGSI_OPCODE_FLR:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_flr( func, 0, 0 );
@@ -2139,8 +2128,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_EXPBASE2:
-   /* TGSI_OPCODE_EX2 */
+   case TGSI_OPCODE_EX2:
       FETCH( func, *inst, 0, 0, CHAN_X );
       emit_ex2( func, 0, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2148,8 +2136,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LOGBASE2:
-   /* TGSI_OPCODE_LG2 */
+   case TGSI_OPCODE_LG2:
       FETCH( func, *inst, 0, 0, CHAN_X );
       emit_lg2( func, 0, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2157,8 +2144,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_POWER:
-   /* TGSI_OPCODE_POW */
+   case TGSI_OPCODE_POW:
       FETCH( func, *inst, 0, 0, CHAN_X );
       FETCH( func, *inst, 1, 1, CHAN_X );
       emit_pow( func, 0, 0, 0, 1 );
@@ -2167,8 +2153,7 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_CROSSPRODUCT:
-   /* TGSI_OPCODE_XPD */
+   case TGSI_OPCODE_XPD:
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
          FETCH( func, *inst, 1, 1, CHAN_Z );
@@ -2212,10 +2197,6 @@ emit_instruction(
 	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
-      break;
-
-   case TGSI_OPCODE_MULTIPLYMATRIX:
-      return 0;
       break;
 
    case TGSI_OPCODE_ABS:
@@ -2551,7 +2532,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       return 0;
       break;
 
@@ -2567,7 +2548,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       return 0;
       break;
 
@@ -2937,8 +2918,10 @@ tgsi_emit_sse2(
             &parse.FullToken.FullInstruction );
 
 	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d to SSE (%s)\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode,
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+	    debug_printf("failed to translate tgsi opcode %d (%s) to SSE (%s)\n", 
+			 opcode,
+                         tgsi_get_opcode_name(opcode),
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
                          "vertex shader" : "fragment shader");
 	 }
@@ -2953,7 +2936,7 @@ tgsi_emit_sse2(
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for( i = 0; i < size; i++ ) {
                immediates[num_immediates][i] =
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
 #if 0
             debug_printf("SSE FS immediate[%d] = %f %f %f %f\n",

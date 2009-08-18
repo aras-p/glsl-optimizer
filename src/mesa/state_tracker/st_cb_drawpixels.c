@@ -60,6 +60,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
 #include "util/u_draw_quad.h"
+#include "util/u_math.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -341,6 +342,7 @@ make_texture(struct st_context *st,
    enum pipe_format pipeFormat;
    GLuint cpp;
    GLenum baseFormat;
+   int ptw, pth;
 
    baseFormat = _mesa_base_format(format);
 
@@ -355,7 +357,28 @@ make_texture(struct st_context *st,
    if (!pixels)
       return NULL;
 
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height, 1,
+   /* Need to use POT texture? */
+   ptw = width;
+   pth = height;
+   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
+      int l2pt, maxSize;
+
+      l2pt = util_logbase2(width);
+      if (1<<l2pt != width) {
+         ptw = 1<<(l2pt+1);
+      }
+      l2pt = util_logbase2(height);
+      if (1<<l2pt != height) {
+         pth = 1<<(l2pt+1);
+      }
+
+      /* Check against maximum texture size */
+      maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+      assert(ptw <= maxSize);
+      assert(pth <= maxSize);
+   }
+
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, ptw, pth, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
       _mesa_unmap_drawpix_pbo(ctx, unpack);
@@ -420,7 +443,7 @@ make_texture(struct st_context *st,
 static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1, const GLfloat *color,
-          GLboolean invertTex)
+          GLboolean invertTex, GLfloat maxXcoord, GLfloat maxYcoord)
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = ctx->st->pipe;
@@ -435,8 +458,9 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       const GLfloat clip_y0 = y0 / fb_height * 2.0f - 1.0f;
       const GLfloat clip_x1 = x1 / fb_width * 2.0f - 1.0f;
       const GLfloat clip_y1 = y1 / fb_height * 2.0f - 1.0f;
-      const GLfloat sLeft = 0.0f, sRight = 1.0f;
-      const GLfloat tTop = invertTex, tBot = 1.0f - tTop;
+      const GLfloat sLeft = 0.0f, sRight = maxXcoord;
+      const GLfloat tTop = invertTex ? maxYcoord : 0.0f;
+      const GLfloat tBot = invertTex ? 0.0f : maxYcoord;
       GLuint tex, i;
 
       /* upper-left */
@@ -608,7 +632,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
 
-   draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex);
+   draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
+	     (GLfloat) width / pt->width[0],
+	     (GLfloat) height / pt->height[0]);
 
    /* restore state */
    cso_restore_rasterizer(cso);
@@ -648,7 +674,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
-   
+
    pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture, 0, 0, 0,
 				       usage, x, y,
 				       width, height);
@@ -778,8 +804,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   _mesa_set_vp_override( ctx, TRUE );
-   _mesa_update_state( ctx );
+   /* Mesa state should be up to date by now */
+   assert(ctx->NewState == 0x0);
 
    st_validate_state(st);
 
@@ -807,8 +833,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          pipe_texture_reference(&pt, NULL);
       }
    }
-
-   _mesa_set_vp_override( ctx, FALSE );
 }
 
 
@@ -841,7 +865,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
-   
+
    ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
 					   rbDraw->texture, 0, 0, 0,
 					   usage, dstx, dsty,
@@ -849,7 +873,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    assert(ptDraw->block.width == 1);
    assert(ptDraw->block.height == 1);
-   
+
    /* map the stencil buffer */
    drawMap = screen->transfer_map(screen, ptDraw);
 
@@ -923,6 +947,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_texture *pt;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
+   int ptw, pth;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
@@ -1004,13 +1029,34 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          height -= -srcy;
          srcy = 0;
       }
-      
+
       if (height < 0)
          return;
    }
 
+   /* Need to use POT texture? */
+   ptw = width;
+   pth = height;
+   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
+      int l2pt, maxSize;
+
+      l2pt = util_logbase2(width);
+      if (1<<l2pt != width) {
+         ptw = 1<<(l2pt+1);
+      }
+      l2pt = util_logbase2(height);
+      if (1<<l2pt != height) {
+         pth = 1<<(l2pt+1);
+      }
+
+      /* Check against maximum texture size */
+      maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+      assert(ptw <= maxSize);
+      assert(pth <= maxSize);
+   }
+
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
-                          width, height, 1,
+                          ptw, pth, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt)
       return;

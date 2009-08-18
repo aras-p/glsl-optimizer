@@ -1015,6 +1015,10 @@ StateVars = [
 	# GL_APPLE_vertex_array_object
 	( "GL_VERTEX_ARRAY_BINDING_APPLE", GLint, ["ctx->Array.ArrayObj->Name"], "",
 	  ["APPLE_vertex_array_object"] ),
+
+	# GL_ARB_seamless_cube_map
+	( "GL_TEXTURE_CUBE_MAP_SEAMLESS", GLboolean, ["ctx->Texture.CubeMapSeamless"], "",
+	  ["ARB_seamless_cube_map"] ),
 ]
 
 

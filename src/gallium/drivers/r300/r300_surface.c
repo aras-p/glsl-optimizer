@@ -37,7 +37,7 @@ static void r300_surface_setup(struct r300_context* r300,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(24);
+    BEGIN_CS(26);
 
     /* Viewport setup */
     OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
@@ -78,8 +78,10 @@ static void r300_surface_setup(struct r300_context* r300,
     /* Setup colorbuffer. */
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
     OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch |
-        r300_translate_colorformat(dest->tex.format));
+    OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0, 1);
+    OUT_CS_RELOC(dest->buffer, pixpitch |
+                 r300_translate_colorformat(dest->tex.format), 0,
+                 RADEON_GEM_DOMAIN_VRAM, 0);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0xf);
 
     END_CS;
@@ -125,9 +127,10 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         goto validate;
     }
-    if (r300->winsys->validate(r300->winsys)) {
+    if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
+            debug_printf("r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;
@@ -138,10 +141,14 @@ validate:
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
+        r300_emit_vertex_program_code(r300, &r300_passthrough_vertex_shader, 0);
     } else {
         BEGIN_CS(4);
-        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);
+        OUT_CS_REG(R300_VAP_CNTL_STATUS,
+#ifdef PIPE_ARCH_BIG_ENDIAN
+                   R300_VC_32BIT_SWAP |
+#endif
+                   R300_VAP_TCL_BYPASS);
         OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
                 R300_PVS_NUM_CNTLRS(5) |
                 R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
@@ -151,10 +158,10 @@ validate:
 
     /* Fragment shader setup */
     if (caps->is_r500) {
-        r500_emit_fragment_shader(r300, &r5xx_passthrough_fragment_shader);
+        r500_emit_fragment_program_code(r300, &r5xx_passthrough_fragment_shader, 0);
         r300_emit_rs_block_state(r300, &r5xx_rs_block_clear_state);
     } else {
-        r300_emit_fragment_shader(r300, &r3xx_passthrough_fragment_shader);
+        r300_emit_fragment_program_code(r300, &r3xx_passthrough_fragment_shader, 0);
         r300_emit_rs_block_state(r300, &r3xx_rs_block_clear_state);
     }
 
@@ -256,9 +263,10 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         goto validate;
     }
-    if (r300->winsys->validate(r300->winsys)) {
+    if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
+            debug_printf("r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;
@@ -275,10 +283,14 @@ validate:
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
+        r300_emit_vertex_program_code(r300, &r300_passthrough_vertex_shader, 0);
     } else {
         BEGIN_CS(4);
-        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);
+        OUT_CS_REG(R300_VAP_CNTL_STATUS,
+#ifdef PIPE_ARCH_BIG_ENDIAN
+                   R300_VC_32BIT_SWAP |
+#endif
+                   R300_VAP_TCL_BYPASS);
         OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
                 R300_PVS_NUM_CNTLRS(5) |
                 R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
@@ -288,10 +300,10 @@ validate:
 
     /* Fragment shader setup */
     if (caps->is_r500) {
-        r500_emit_fragment_shader(r300, &r5xx_texture_fragment_shader);
+        r500_emit_fragment_program_code(r300, &r5xx_texture_fragment_shader, 0);
         r300_emit_rs_block_state(r300, &r5xx_rs_block_copy_state);
     } else {
-        r300_emit_fragment_shader(r300, &r3xx_texture_fragment_shader);
+        r300_emit_fragment_program_code(r300, &r3xx_texture_fragment_shader, 0);
         r300_emit_rs_block_state(r300, &r3xx_rs_block_copy_state);
     }
 

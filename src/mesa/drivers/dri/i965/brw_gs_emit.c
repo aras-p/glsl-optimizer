@@ -101,7 +101,7 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
 		 BRW_URB_SWIZZLE_NONE);
 }
 
-void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
+static void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
 {
 	struct brw_compile *p = &c->func;
 	brw_MOV(p, get_element_ud(c->reg.R0, 1), brw_imm_ud(num_prim));

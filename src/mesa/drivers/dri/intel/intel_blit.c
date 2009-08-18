@@ -477,6 +477,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   BR13 |= BR13_565;
                }
 
+	       assert(irb->region->tiling != I915_TILING_Y);
+
 #ifndef I915
 	       if (irb->region->tiling != I915_TILING_NONE) {
 		  CMD |= XY_DST_TILED;
@@ -571,6 +573,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    assert( logic_op - GL_CLEAR >= 0 );
    assert( logic_op - GL_CLEAR < 0x10 );
+   assert(dst_pitch > 0);
 
    if (w < 0 || h < 0)
       return GL_TRUE;

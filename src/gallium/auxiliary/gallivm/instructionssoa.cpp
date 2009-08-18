@@ -128,7 +128,7 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_DP4]   = "dp4";
    m_functionsMap[TGSI_OPCODE_MIN]   = "min";
    m_functionsMap[TGSI_OPCODE_MAX]   = "max";
-   m_functionsMap[TGSI_OPCODE_POWER] = "pow";
+   m_functionsMap[TGSI_OPCODE_POW]   = "pow";
    m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
    m_functionsMap[TGSI_OPCODE_RSQ]   = "rsq";
    m_functionsMap[TGSI_OPCODE_SLT]   = "slt";
@@ -311,7 +311,7 @@ std::vector<llvm::Value*> InstructionsSoa::mul(const std::vector<llvm::Value*> i
 std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> in1,
                                                const std::vector<llvm::Value*> in2)
 {
-   llvm::Function *func = function(TGSI_OPCODE_POWER);
+   llvm::Function *func = function(TGSI_OPCODE_POW);
    return callBuiltin(func, in1, in2);
 }
 

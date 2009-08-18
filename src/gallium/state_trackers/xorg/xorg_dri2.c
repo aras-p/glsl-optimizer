@@ -39,10 +39,13 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_rect.h"
+
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
     struct pipe_buffer *buf;
+    struct pipe_fence_handle *fence;
 } *BufferPrivatePtr;
 
 static DRI2BufferPtr
@@ -83,7 +86,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    pipe_texture_reference(&tex, depth);
 	} else if (attachments[i] == DRI2BufferDepth) {
 	    struct pipe_texture template;
-
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
 	    template.format = PIPE_FORMAT_S8Z24_UNORM;
@@ -92,21 +94,19 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    template.height[0] = pDraw->height;
 	    template.depth[0] = 1;
 	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
 	    tex = ms->screen->texture_create(ms->screen, &template);
+	    depth = tex;
 	} else {
-	    struct pipe_texture template;
-	    memset(&template, 0, sizeof(template));
-	    template.target = PIPE_TEXTURE_2D;
-	    template.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-	    pf_get_block(template.format, &template.block);
-	    template.width[0] = pDraw->width;
-	    template.height[0] = pDraw->height;
-	    template.depth[0] = 1;
-	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-	    tex = ms->screen->texture_create(ms->screen, &template);
+	    pPixmap = (*pScreen->CreatePixmap)(pScreen, pDraw->width,
+					       pDraw->height,
+					       pDraw->depth,
+					       0);
+	    tex = xorg_exa_get_texture(pPixmap);
 	}
+
+	if (!tex)
+		FatalError("NO TEXTURE IN DRI2\n");
 
 	ms->api->buffer_from_texture(ms->api, tex, &buf, &stride);
 	ms->api->global_handle_from_buffer(ms->api, ms->screen, buf, &handle);
@@ -138,15 +138,17 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     modesettingPtr ms = modesettingPTR(pScrn);
     BufferPrivatePtr private;
     int i;
+    (void)ms;
 
     for (i = 0; i < count; i++) {
 	private = buffers[i].driverPrivate;
 
-	if (private->pPixmap)
-	    (*pScreen->DestroyPixmap)(private->pPixmap);
-
 	pipe_texture_reference(&private->tex, NULL);
 	pipe_buffer_reference(&private->buf, NULL);
+        ms->screen->fence_reference(ms->screen, &private->fence, NULL);
+
+	if (private->pPixmap)
+	    (*pScreen->DestroyPixmap)(private->pPixmap);
     }
 
     if (buffers) {
@@ -164,19 +166,42 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
     modesettingPtr ms = modesettingPTR(pScrn);
     BufferPrivatePtr dst_priv = pDestBuffer->driverPrivate;
     BufferPrivatePtr src_priv = pSrcBuffer->driverPrivate;
+    PixmapPtr src_pixmap;
+    PixmapPtr dst_pixmap;
+    GCPtr gc;
+    RegionPtr copy_clip;
 
-    struct pipe_surface *dst_surf =
-	ms->screen->get_tex_surface(ms->screen, dst_priv->tex, 0, 0, 0,
-				    PIPE_BUFFER_USAGE_GPU_WRITE);
-    struct pipe_surface *src_surf =
-	ms->screen->get_tex_surface(ms->screen, src_priv->tex, 0, 0, 0,
-				    PIPE_BUFFER_USAGE_GPU_READ);
+    src_pixmap = src_priv->pPixmap;
+    dst_pixmap = dst_priv->pPixmap;
+    if (pSrcBuffer->attachment == DRI2BufferFrontLeft)
+	src_pixmap = (PixmapPtr)pDraw;
+    if (pDestBuffer->attachment == DRI2BufferFrontLeft)
+	dst_pixmap = (PixmapPtr)pDraw;
+    gc = GetScratchGC(pDraw->depth, pScreen);
+    copy_clip = REGION_CREATE(pScreen, NULL, 0);
+    REGION_COPY(pScreen, copy_clip, pRegion);
+    (*gc->funcs->ChangeClip) (gc, CT_REGION, copy_clip, 0);
+    ValidateGC(&dst_pixmap->drawable, gc);
 
-    ms->ctx->surface_copy(ms->ctx, dst_surf, 0, 0, src_surf,
-			  0, 0, pDraw->width, pDraw->height);
+    /* If this is a full buffer swap, throttle on the previous one */
+    if (dst_priv->fence && REGION_NUM_RECTS(pRegion) == 1) {
+	BoxPtr extents = REGION_EXTENTS(pScreen, pRegion);
 
-    pipe_surface_reference(&dst_surf, NULL);
-    pipe_surface_reference(&src_surf, NULL);
+	if (extents->x1 == 0 && extents->y1 == 0 &&
+	    extents->x2 == pDraw->width && extents->y2 == pDraw->height) {
+	    ms->screen->fence_finish(ms->screen, dst_priv->fence, 0);
+	    ms->screen->fence_reference(ms->screen, &dst_priv->fence, NULL);
+	}
+    }
+
+    (*gc->ops->CopyArea)(&src_pixmap->drawable, &dst_pixmap->drawable, gc,
+			 0, 0, pDraw->width, pDraw->height, 0, 0);
+
+    FreeScratchGC(gc);
+
+    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS,
+		   pDestBuffer->attachment == DRI2BufferFrontLeft ?
+		   &dst_priv->fence : NULL);
 }
 
 Bool

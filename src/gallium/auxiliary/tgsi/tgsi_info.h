@@ -41,12 +41,15 @@ struct tgsi_opcode_info
    boolean is_tex;
    boolean is_branch;
    const char *mnemonic;
-   const char *alt_mnemonic1;
-   const char *alt_mnemonic2;
+   uint opcode;
 };
 
 const struct tgsi_opcode_info *
 tgsi_get_opcode_info( uint opcode );
+
+const char *
+tgsi_get_opcode_name( uint opcode );
+
 
 #if defined __cplusplus
 }

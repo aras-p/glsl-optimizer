@@ -23,10 +23,7 @@
  * This is a port of the infamous "gears" demo to straight GLX (i.e. no GLUT)
  * Port by Brian Paul  23 March 2001
  *
- * Command line options:
- *    -info      print GL implementation information
- *    -stereo    use stereo enabled GLX visual
- *
+ * See usage() below for command line options.
  */
 
 
@@ -44,10 +41,6 @@
 typedef int (*PFNGLXGETSWAPINTERVALMESAPROC)(void);
 #endif
 
-
-static int is_glx_extension_supported(Display *dpy, const char *query);
-
-static void query_vsync(Display *dpy);
 
 #define BENCHMARK
 
@@ -572,7 +565,7 @@ make_window( Display *dpy, const char *name,
 /**
  * Determine whether or not a GLX extension is supported.
  */
-int
+static int
 is_glx_extension_supported(Display *dpy, const char *query)
 {
    const int scrnum = DefaultScreen(dpy);
@@ -592,7 +585,7 @@ is_glx_extension_supported(Display *dpy, const char *query)
 /**
  * Attempt to determine whether or not the display is synched to vblank.
  */
-void
+static void
 query_vsync(Display *dpy)
 {
    int interval = 0;

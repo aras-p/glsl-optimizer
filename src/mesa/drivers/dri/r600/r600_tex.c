@@ -62,10 +62,10 @@ static unsigned int translate_wrap_mode(GLenum wrapmode)
 	case GL_CLAMP: return SQ_TEX_CLAMP_HALF_BORDER;
 	case GL_CLAMP_TO_EDGE: return SQ_TEX_CLAMP_LAST_TEXEL;
 	case GL_CLAMP_TO_BORDER: return SQ_TEX_CLAMP_BORDER;
-	case GL_MIRRORED_REPEAT: return SQ_TEX_MIRROR_ONCE_HALF_BORDER;
-	case GL_MIRROR_CLAMP_EXT: return SQ_TEX_MIRROR;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return SQ_TEX_MIRROR_ONCE_BORDER;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
+	case GL_MIRRORED_REPEAT: return SQ_TEX_MIRROR;
+	case GL_MIRROR_CLAMP_EXT: return SQ_TEX_MIRROR_ONCE_HALF_BORDER;
+	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
+	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return SQ_TEX_MIRROR_ONCE_BORDER;
 	default:
 		_mesa_problem(NULL, "bad wrap mode in %s", __FUNCTION__);
 		return 0;
@@ -127,10 +127,18 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
         SETfield(t->SQ_TEX_RESOURCE4, SQ_ENDIAN_NONE,
                  SQ_TEX_RESOURCE_WORD4_0__ENDIAN_SWAP_shift, SQ_TEX_RESOURCE_WORD4_0__ENDIAN_SWAP_mask);
         SETfield(t->SQ_TEX_RESOURCE4, 1, REQUEST_SIZE_shift, REQUEST_SIZE_mask);
-        t->SQ_TEX_RESOURCE4 |= SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift
-		              |SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift
-		              |SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift
-		              |SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift;
+        SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Y,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Z,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift,
+		 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
         SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask); /* mip-maps */
 
         t->SQ_TEX_RESOURCE5 = 0;
@@ -141,17 +149,18 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
 
         /* Initialize sampler registers */
         t->SQ_TEX_SAMPLER0                           = 0;
-        t->SQ_TEX_SAMPLER0 |=
-                         SQ_TEX_WRAP << SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_shift
-                        |SQ_TEX_WRAP << CLAMP_Y_shift
-                        |SQ_TEX_WRAP << CLAMP_Z_shift
-                        |SQ_TEX_XY_FILTER_POINT << XY_MAG_FILTER_shift
-                        |SQ_TEX_XY_FILTER_POINT << XY_MIN_FILTER_shift
-                        |SQ_TEX_Z_FILTER_NONE << Z_FILTER_shift
-                        |SQ_TEX_Z_FILTER_NONE << MIP_FILTER_shift
-                        |SQ_TEX_BORDER_COLOR_TRANS_BLACK << BORDER_COLOR_TYPE_shift;
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_shift,
+		 SQ_TEX_SAMPLER_WORD0_0__CLAMP_X_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, CLAMP_Y_shift, CLAMP_Y_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_WRAP, CLAMP_Z_shift, CLAMP_Z_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_XY_FILTER_POINT, XY_MAG_FILTER_shift, XY_MAG_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_XY_FILTER_POINT, XY_MIN_FILTER_shift, XY_MIN_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_Z_FILTER_NONE, Z_FILTER_shift, Z_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_Z_FILTER_NONE, MIP_FILTER_shift, MIP_FILTER_mask);
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_BORDER_COLOR_TRANS_BLACK, BORDER_COLOR_TYPE_shift, BORDER_COLOR_TYPE_mask);
 
-        t->SQ_TEX_SAMPLER1 = 0x7FF << MAX_LOD_shift;
+        t->SQ_TEX_SAMPLER1                           = 0;
+        SETfield(t->SQ_TEX_SAMPLER1, 0x3ff, MAX_LOD_shift, MAX_LOD_mask);
 
         t->SQ_TEX_SAMPLER2                          = 0;
         SETbit(t->SQ_TEX_SAMPLER2, SQ_TEX_SAMPLER_WORD2_0__TYPE_bit);
@@ -260,14 +269,12 @@ static void r600SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 
 static void r600SetTexBorderColor(radeonTexObjPtr t, const GLfloat color[4])
 {
-#if 0
-	GLubyte c[4];
-	CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
-	CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
-	CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
-	CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
-	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
-#endif
+	t->TD_PS_SAMPLER0_BORDER_ALPHA = *((uint32_t*)&(color[3]));
+	t->TD_PS_SAMPLER0_BORDER_RED = *((uint32_t*)&(color[2]));
+	t->TD_PS_SAMPLER0_BORDER_GREEN = *((uint32_t*)&(color[1]));
+	t->TD_PS_SAMPLER0_BORDER_BLUE = *((uint32_t*)&(color[0]));
+        SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_BORDER_COLOR_REGISTER,
+		 BORDER_COLOR_TYPE_shift, BORDER_COLOR_TYPE_mask);
 }
 
 /**

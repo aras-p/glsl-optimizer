@@ -36,6 +36,26 @@
  * Internal functions
  */
 
+
+/** Is the given buffer object currently mapped? */
+static INLINE GLboolean
+_mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
+{
+   return obj->Pointer != NULL;
+}
+
+/**
+ * Is the given buffer object a user-created buffer object?
+ * Mesa uses default buffer objects in several places.  Default buffers
+ * always have Name==0.  User created buffers have Name!=0.
+ */
+static INLINE GLboolean
+_mesa_is_bufferobj(const struct gl_buffer_object *obj)
+{
+   return obj->Name != 0;
+}
+
+
 extern void
 _mesa_init_buffer_objects( GLcontext *ctx );
 

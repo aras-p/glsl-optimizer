@@ -309,7 +309,8 @@ SPARC_API =			\
 	sparc/glapi_sparc.S
 
 COMMON_DRIVER_SOURCES =			\
-	drivers/common/driverfuncs.c
+	drivers/common/driverfuncs.c	\
+	drivers/common/meta.c
 
 
 # Sources for building non-Gallium drivers

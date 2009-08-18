@@ -69,6 +69,11 @@ struct st_texture_object
    struct pipe_texture *pt;
 
    GLboolean teximage_realloc;
+
+   /* True if there is/was a surface bound to this texture object.  It helps
+    * track whether the texture object is surface based or not.
+    */
+   GLboolean surface_based;
 };
 
 

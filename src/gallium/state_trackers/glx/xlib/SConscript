@@ -18,9 +18,10 @@ if env['platform'] == 'linux' \
 
     st_xlib = env.ConvenienceLibrary(
 	target = 'st_xlib',
-	source = [ 'glxapi.c',
-		'fakeglx.c',
-		'fakeglx_fonts.c',
+	source = [
+		'glx_api.c',
+		'glx_getproc.c',
+		'glx_usefont.c',
 		'xm_api.c',
 		]
     )

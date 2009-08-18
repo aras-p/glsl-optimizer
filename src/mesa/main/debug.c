@@ -33,6 +33,7 @@
 #include "get.h"
 #include "pixelstore.h"
 #include "readpix.h"
+#include "texgetimage.h"
 #include "texobj.h"
 #include "texformat.h"
 
@@ -234,11 +235,11 @@ _mesa_init_debug( GLcontext *ctx )
  */
 static void
 write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
-          int comps, int rcomp, int gcomp, int bcomp)
+          int comps, int rcomp, int gcomp, int bcomp, GLboolean invert)
 {
    FILE *f = fopen( filename, "w" );
    if (f) {
-      int i, x, y;
+      int x, y;
       const GLubyte *ptr = buffer;
       fprintf(f,"P6\n");
       fprintf(f,"# ppm-file created by osdemo.c\n");
@@ -246,10 +247,11 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
       fprintf(f,"255\n");
       fclose(f);
       f = fopen( filename, "ab" );  /* reopen in binary append mode */
-      for (y=height-1; y>=0; y--) {
-         for (x=0; x<width; x++) {
-            i = (y*width + x) * comps;
-            fputc(ptr[i+rcomp], f);   /* write red */
+      for (y=0; y < height; y++) {
+         for (x = 0; x < width; x++) {
+            int yy = invert ? (height - 1 - y) : y;
+            int i = (yy * width + x) * comps;
+            fputc(ptr[i+rcomp], f); /* write red */
             fputc(ptr[i+gcomp], f); /* write green */
             fputc(ptr[i+bcomp], f); /* write blue */
          }
@@ -263,47 +265,34 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
  * Write level[0] image to a ppm file.
  */
 static void
-write_texture_image(struct gl_texture_object *texObj)
+write_texture_image(struct gl_texture_object *texObj, GLuint face, GLuint level)
 {
-   const struct gl_texture_image *img = texObj->Image[0][0];
-   if (img && img->Data) {
+   struct gl_texture_image *img = texObj->Image[face][level];
+   if (img) {
+      GET_CURRENT_CONTEXT(ctx);
+      struct gl_pixelstore_attrib store;
+      GLubyte *buffer;
       char s[100];
 
-      /* make filename */
-      sprintf(s, "/tmp/teximage%u.ppm", texObj->Name);
+      buffer = (GLubyte *) _mesa_malloc(img->Width * img->Height
+                                        * img->Depth * 4);
 
-      switch (img->TexFormat->MesaFormat) {
-      case MESA_FORMAT_RGBA8888:
-         write_ppm(s, img->Data, img->Width, img->Height, 4, 3, 2, 1);
-         break;
-      case MESA_FORMAT_ARGB8888:
-         write_ppm(s, img->Data, img->Width, img->Height, 4, 2, 1, 0);
-         break;
-      case MESA_FORMAT_RGB888:
-         write_ppm(s, img->Data, img->Width, img->Height, 3, 2, 1, 0);
-         break;
-      case MESA_FORMAT_RGB565:
-         {
-            GLubyte *buf2 = (GLubyte *) _mesa_malloc(img->Width * img->Height * 3);
-            GLuint i;
-            for (i = 0; i < img->Width * img->Height; i++) {
-               GLint r, g, b;
-               GLushort s = ((GLushort *) img->Data)[i];
-               r = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) | ((s >> 13) & 0x7) );
-               g = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) | ((s >>  9) & 0x3) );
-               b = UBYTE_TO_CHAN( ((s << 3) & 0xf8) | ((s >>  2) & 0x7) );
-               buf2[i*3+1] = r;
-               buf2[i*3+2] = g;
-               buf2[i*3+3] = b;
-            }
-            write_ppm(s, buf2, img->Width, img->Height, 3, 2, 1, 0);
-            _mesa_free(buf2);
-         }
-         break;
-      default:
-         printf("XXXX unsupported mesa tex format %d in %s\n",
-                img->TexFormat->MesaFormat, __FUNCTION__);
-      }
+      store = ctx->Pack; /* save */
+      ctx->Pack = ctx->DefaultPacking;
+
+      ctx->Driver.GetTexImage(ctx, texObj->Target, level,
+                              GL_RGBA, GL_UNSIGNED_BYTE,
+                              buffer, texObj, img);
+
+      /* make filename */
+      _mesa_sprintf(s, "/tmp/teximage%u.ppm", texObj->Name);
+
+      _mesa_printf("  Writing image level %u to %s\n", level, s);
+      write_ppm(s, buffer, img->Width, img->Height, 4, 0, 1, 2, GL_FALSE);
+
+      ctx->Pack = store; /* restore */
+
+      _mesa_free(buffer);
    }
 }
 
@@ -316,17 +305,21 @@ dump_texture_cb(GLuint id, void *data, void *userData)
 {
    struct gl_texture_object *texObj = (struct gl_texture_object *) data;
    int i;
+   GLboolean written = GL_FALSE;
    (void) userData;
 
-   printf("Texture %u\n", texObj->Name);
-   printf("  Target 0x%x\n", texObj->Target);
+   _mesa_printf("Texture %u\n", texObj->Name);
+   _mesa_printf("  Target 0x%x\n", texObj->Target);
    for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
       struct gl_texture_image *texImg = texObj->Image[0][i];
       if (texImg) {
-         printf("  Image %u: %d x %d x %d at %p\n", i,
-                texImg->Width, texImg->Height, texImg->Depth, texImg->Data);
-         if (DumpImages && i == 0) {
-            write_texture_image(texObj);
+         _mesa_printf("  Image %u: %d x %d x %d, format %u at %p\n", i,
+                      texImg->Width, texImg->Height, texImg->Depth,
+                      texImg->TexFormat->MesaFormat, texImg->Data);
+         if (DumpImages && !written) {
+            GLuint face = 0;
+            write_texture_image(texObj, face, i);
+            written = GL_TRUE;
          }
       }
    }
@@ -368,7 +361,7 @@ _mesa_dump_color_buffer(const char *filename)
                 ctx->DrawBuffer->_ColorDrawBuffers[0],
                 ctx->DrawBuffer->ColorDrawBuffer[0]);
    _mesa_printf("Writing %d x %d color buffer to %s\n", w, h, filename);
-   write_ppm(filename, buf, w, h, 4, 0, 1, 2);
+   write_ppm(filename, buf, w, h, 4, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
 
@@ -403,7 +396,7 @@ _mesa_dump_depth_buffer(const char *filename)
    }
 
    _mesa_printf("Writing %d x %d depth buffer to %s\n", w, h, filename);
-   write_ppm(filename, buf2, w, h, 3, 0, 1, 2);
+   write_ppm(filename, buf2, w, h, 3, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
 
@@ -438,7 +431,7 @@ _mesa_dump_stencil_buffer(const char *filename)
    }
 
    _mesa_printf("Writing %d x %d stencil buffer to %s\n", w, h, filename);
-   write_ppm(filename, buf2, w, h, 3, 0, 1, 2);
+   write_ppm(filename, buf2, w, h, 3, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
 

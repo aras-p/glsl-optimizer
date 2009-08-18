@@ -34,7 +34,7 @@ void
 _eglInitConfig(_EGLConfig *config, EGLint id)
 {
    memset(config, 0, sizeof(*config));
-   config->Handle = (EGLConfig) id;
+   config->Handle = (EGLConfig) _eglUIntToPointer((unsigned int) id);
    _eglSetConfigAttrib(config, EGL_CONFIG_ID,               id);
    _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);

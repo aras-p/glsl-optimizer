@@ -28,6 +28,30 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+/**
+ * Notes on wide points and sprite mode:
+ *
+ * In wide point/sprite mode we effectively need to convert each incoming
+ * vertex into four outgoing vertices specifying the corners of a quad.
+ * Since we don't (yet) have geometry shaders, we have to handle this here
+ * in the draw module.
+ *
+ * For sprites, it also means that this is where we have to handle texcoords
+ * for the vertices of the quad.  OpenGL's GL_COORD_REPLACE state specifies
+ * if/how enabled texcoords are automatically generated for sprites.  We pass
+ * that info through gallium in the pipe_rasterizer_state::sprite_coord_mode
+ * array.
+ *
+ * Additionally, GLSL's gl_PointCoord fragment attribute has to be handled
+ * here as well.  This is basically an additional texture/generic attribute
+ * that varies .x from 0 to 1 horizontally across the point and varies .y
+ * vertically from 0 to 1 down the sprite.
+ *
+ * With geometry shaders, the state tracker could create a GS to do
+ * most/all of this.
+ */
+
+
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
@@ -52,7 +76,7 @@ struct widepoint_stage {
 
    int psize_slot;
 
-   int point_coord_fs_input;  /**< input for pointcoord (and fog) */
+   int point_coord_fs_input;  /**< input for pointcoord */
 };
 
 
@@ -62,8 +86,6 @@ widepoint_stage( struct draw_stage *stage )
 {
    return (struct widepoint_stage *)stage;
 }
-
-
 
 
 /**
@@ -89,10 +111,12 @@ static void set_texcoords(const struct widepoint_stage *wide,
    }
 
    if (wide->point_coord_fs_input >= 0) {
-      /* put gl_PointCoord into extra vertex output's zw components */
-      uint k = wide->stage.draw->extra_vp_outputs.slot;
-      v->data[k][2] = tc[0];
-      v->data[k][3] = tc[1];
+      /* put gl_PointCoord into the extra vertex slot */
+      uint slot = wide->stage.draw->extra_vp_outputs.slot;
+      v->data[slot][0] = tc[0];
+      v->data[slot][1] = tc[1];
+      v->data[slot][2] = 0.0F;
+      v->data[slot][3] = 1.0F;
    }
 }
 
@@ -182,10 +206,10 @@ static void widepoint_point( struct draw_stage *stage,
 
 
 static int
-find_fog_input_attrib(struct draw_context *draw)
+find_pntc_input_attrib(struct draw_context *draw)
 {
-   /* Scan the fragment program's input decls to find the fogcoord
-    * attribute.  The z/w components will store the point coord.
+   /* Scan the fragment program's input decls to find the pointcoord
+    * attribute.  The xy components will store the point coord.
     */
    return 0; /* XXX fix this */
 }
@@ -229,8 +253,8 @@ static void widepoint_first_point( struct draw_stage *stage,
       }
       wide->num_texcoords = j;
 
-      /* find fragment shader PointCoord/Fog input */
-      wide->point_coord_fs_input = find_fog_input_attrib(draw);
+      /* find fragment shader PointCoord input */
+      wide->point_coord_fs_input = find_pntc_input_attrib(draw);
 
       /* setup extra vp output (point coord implemented as a texcoord) */
       draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;

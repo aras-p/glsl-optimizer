@@ -120,6 +120,10 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
+   if (ctx->Viewport.Near == nearval &&
+       ctx->Viewport.Far == farval)
+      return;
+
    ctx->Viewport.Near = (GLfloat) CLAMP(nearval, 0.0, 1.0);
    ctx->Viewport.Far = (GLfloat) CLAMP(farval, 0.0, 1.0);
    ctx->NewState |= _NEW_VIEWPORT;

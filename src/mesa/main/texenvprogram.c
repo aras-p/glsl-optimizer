@@ -275,6 +275,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
 {
    /* _NEW_PROGRAM */
    const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
+				   ctx->Shader.CurrentProgram->LinkStatus &&
                                    ctx->Shader.CurrentProgram->VertexProgram);
    const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
    GLbitfield fp_inputs = 0x0;
@@ -321,8 +322,10 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       /* Then look at what might be varying as a result of enabled
        * arrays, etc:
        */
-      if (varying_inputs & VERT_BIT_COLOR0) fp_inputs |= FRAG_BIT_COL0;
-      if (varying_inputs & VERT_BIT_COLOR1) fp_inputs |= FRAG_BIT_COL1;
+      if (varying_inputs & VERT_BIT_COLOR0)
+         fp_inputs |= FRAG_BIT_COL0;
+      if (varying_inputs & VERT_BIT_COLOR1)
+         fp_inputs |= FRAG_BIT_COL1;
 
       fp_inputs |= (((varying_inputs & VERT_BIT_TEX_ANY) >> VERT_ATTRIB_TEX0) 
                     << FRAG_ATTRIB_TEX0);
@@ -340,7 +343,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       if (vertexShader)
          vprog = ctx->Shader.CurrentProgram->VertexProgram;
       else
-         vprog = ctx->VertexProgram._Current;
+         vprog = ctx->VertexProgram.Current;
 
       vp_outputs = vprog->Base.OutputsWritten;
 
@@ -351,8 +354,10 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       if (ctx->Point.PointSprite)
          vp_outputs |= FRAG_BITS_TEX_ANY;
 
-      if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
-      if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;
+      if (vp_outputs & (1 << VERT_RESULT_COL0))
+         fp_inputs |= FRAG_BIT_COL0;
+      if (vp_outputs & (1 << VERT_RESULT_COL1))
+         fp_inputs |= FRAG_BIT_COL1;
 
       fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) >> VERT_RESULT_TEX0) 
                     << FRAG_ATTRIB_TEX0);

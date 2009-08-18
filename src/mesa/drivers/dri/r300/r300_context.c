@@ -64,9 +64,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
-#include "r300_render.h"
+#include "r300_queryobj.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_buffer_objects.h"
 
 
 #include "vblank.h"
@@ -74,6 +75,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
 #define need_GL_VERSION_2_0
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_equation_separate
@@ -94,6 +96,7 @@ const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
+  {"GL_ARB_occlusion_query",		GL_ARB_occlusion_query_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
@@ -154,7 +157,6 @@ const struct dri_extension gl_20_extension[] = {
 };
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
-
 	/* Catch any t&l fallbacks
 	 */
 	&_tnl_vertex_transform_stage,
@@ -165,21 +167,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	&_tnl_texture_transform_stage,
 	&_tnl_point_attenuation_stage,
 	&_tnl_vertex_program_stage,
-
-	/* Try again to go to tcl?
-	 *     - no good for asymmetric-twoside (do with multipass)
-	 *     - no good for asymmetric-unfilled (do with multipass)
-	 *     - good for material
-	 *     - good for texgen
-	 *     - need to manipulate a bit of state
-	 *
-	 * - worth it/not worth it?
-	 */
-
-	/* Else do them here.
-	 */
-	&_r300_render_stage,
-	&_tnl_render_stage,	/* FALLBACK  */
+	&_tnl_render_stage,
 	0,
 };
 
@@ -325,6 +313,11 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 		ctx->Const.FragmentProgram.MaxNativeTexIndirections = R300_PFS_MAX_TEX_INDIRECT;
 		ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
 	}
+
+	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530)
+		r300->num_z_pipes = 2;
+	else
+		r300->num_z_pipes = r300->radeon.radeonScreen->num_gb_pipes;
 }
 
 static void r300ParseOptions(r300ContextPtr r300, radeonScreenPtr screen)
@@ -367,6 +360,11 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	} else if (r300->options.s3tc_force_disabled) {
 		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
+
+	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries ||
+		!r300->options.hw_tcl_enabled) {
+		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+	}
 }
 
 /* Create the device specific rendering context.
@@ -398,6 +396,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
+	r300InitQueryObjFunctions(&functions);
+	radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
@@ -451,12 +451,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitState(r300);
 	r300InitShaderFunctions(r300);
 
-	if (screen->chip_family == CHIP_FAMILY_RS600 ||	screen->chip_family == CHIP_FAMILY_RS690 ||
-		screen->chip_family == CHIP_FAMILY_RS740) {
-		r300->radeon.texture_row_align = 64;
-	}
-
 	r300InitGLExtensions(ctx);
+
+	make_empty_list(&r300->query.not_flushed_head);
 
 	return GL_TRUE;
 }

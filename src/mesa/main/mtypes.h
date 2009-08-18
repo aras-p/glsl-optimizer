@@ -83,6 +83,7 @@
 /*@{*/
 struct _mesa_HashTable;
 struct gl_attrib_node;
+struct gl_meta_state;
 struct gl_pixelstore_attrib;
 struct gl_program_cache;
 struct gl_texture_format;
@@ -227,7 +228,9 @@ typedef enum
    FRAG_ATTRIB_TEX5 = 9,
    FRAG_ATTRIB_TEX6 = 10,
    FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
+   FRAG_ATTRIB_FACE = 12,  /**< front/back face */
+   FRAG_ATTRIB_PNTC = 13,  /**< sprite/point coord */
+   FRAG_ATTRIB_VAR0 = 14,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
 
@@ -239,6 +242,8 @@ typedef enum
 #define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
 #define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
 #define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
+#define FRAG_BIT_FACE  (1 << FRAG_ATTRIB_FACE)
+#define FRAG_BIT_PNTC  (1 << FRAG_ATTRIB_PNTC)
 #define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
 #define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
 #define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
@@ -1440,6 +1445,9 @@ struct gl_texture_attrib
 
    struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 
+   /** GL_ARB_seamless_cubemap */
+   GLboolean CubeMapSeamless;
+
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
@@ -1834,9 +1842,6 @@ struct gl_fragment_program
    struct gl_program Base;   /**< base class */
    GLenum FogOption;
    GLboolean UsesKill;          /**< shader uses KIL instruction */
-   GLboolean UsesPointCoord;    /**< shader uses gl_PointCoord */
-   GLboolean UsesFrontFacing;   /**< shader used gl_FrontFacing */
-   GLboolean UsesFogFragCoord;  /**< shader used gl_FogFragCoord */
 };
 
 
@@ -2004,6 +2009,7 @@ struct gl_shader
    GLboolean Main;  /**< shader defines main() */
    GLboolean UnresolvedRefs;
    const GLchar *Source;  /**< Source code string */
+   GLuint SourceChecksum;       /**< for debug/logging purposes */
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
    struct gl_sl_pragmas Pragmas;
@@ -2034,6 +2040,7 @@ struct gl_shader_program
    struct gl_program_parameter_list *Varying;
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
+   GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
 };   
 
@@ -2454,6 +2461,7 @@ struct gl_extensions
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_point_sprite;
+   GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_120;
@@ -2980,6 +2988,8 @@ struct __GLcontextRec
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
    /*@}*/
+
+   struct gl_meta_state *Meta;  /**< for "meta" operations */
 
 #if FEATURE_EXT_framebuffer_object
    struct gl_renderbuffer *CurrentRenderbuffer;

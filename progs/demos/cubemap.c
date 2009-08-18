@@ -43,6 +43,9 @@
 #include "GL/glut.h"
 #include "readtex.h"
 
+#ifndef GL_TEXTURE_CUBE_MAP_SEAMLESS
+#define GL_TEXTURE_CUBE_MAP_SEAMLESS 0x884F
+#endif
 
 static GLfloat Xrot = 0, Yrot = 0;
 static GLfloat EyeDist = 10;
@@ -53,6 +56,8 @@ static GLint FrameParity = 0;
 static GLenum FilterIndex = 0;
 static GLint ClampIndex = 0;
 static GLboolean supportFBO = GL_FALSE;
+static GLboolean supportSeamless = GL_FALSE;
+static GLboolean seamless = GL_FALSE;
 
 
 static struct {
@@ -91,7 +96,9 @@ static struct {
 
 
 
-#define eps1 0.99
+/* The effects of GL_ARB_seamless_cube_map don't show up unless eps1 is 1.0.
+ */
+#define eps1 1.0 /*0.99*/
 #define br   20.0  /* box radius */
 
 static const GLfloat tex_coords[] = {
@@ -231,6 +238,13 @@ static void draw( void )
    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER,
                    FilterModes[FilterIndex].mag_mode);
 
+   if (supportSeamless) {
+      if (seamless) {
+	 glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+      } else {
+	 glDisable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+      }
+   }
    wrap = ClampModes[ClampIndex].mode;
    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, wrap);
    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, wrap);
@@ -321,6 +335,11 @@ static void key(unsigned char k, int x, int y)
          mode = !mode;
          set_mode(mode);
          break;
+      case 's':
+	 seamless = ! seamless;
+	 printf("Seamless cube map filtering is %sabled\n",
+		(seamless) ? "en" : "dis" );
+	 break;
       case 'v':
          use_vertex_arrays = ! use_vertex_arrays;
          printf( "Vertex arrays are %sabled\n",
@@ -502,23 +521,26 @@ static void load_envmaps(void)
 static void init( GLboolean useImageFiles )
 {
    /* check for extensions */
-   {
-      char *exten = (char *) glGetString(GL_EXTENSIONS);
-      if (!strstr(exten, "GL_ARB_texture_cube_map")) {
-         printf("Sorry, this demo requires GL_ARB_texture_cube_map\n");
-         exit(0);
-      }
-
-      /* Needed for glGenerateMipmapEXT / auto mipmapping
-       */
-      if (strstr(exten, "GL_EXT_framebuffer_object")) {
-         supportFBO = GL_TRUE;
-      }
-      else if (!strstr(exten, "GL_SGIS_generate_mipmap")) {
-         printf("Sorry, this demo requires GL_EXT_framebuffer_object or GL_SGIS_generate_mipmap\n");
-         exit(0);
-      }
+   if (!GLEW_ARB_texture_cube_map) {
+      printf("Sorry, this demo requires GL_ARB_texture_cube_map\n");
+      exit(0);
    }
+
+   /* Needed for glGenerateMipmapEXT / auto mipmapping
+    */
+   supportFBO = GLEW_EXT_framebuffer_object;
+
+   if (!supportFBO && !GLEW_SGIS_generate_mipmap) {
+      printf("Sorry, this demo requires GL_EXT_framebuffer_object or "
+	     "GL_SGIS_generate_mipmap\n");
+      exit(0);
+   }
+
+   /* GLEW doesn't know about this extension yet, so use the old GLUT function
+    * to check for availability.
+    */
+   supportSeamless = glutExtensionSupported("GL_ARB_seamless_cube_map");
+
    printf("GL_RENDERER: %s\n", (char *) glGetString(GL_RENDERER));
 
    if (useImageFiles) {

@@ -423,7 +423,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    if (drb)
      dwords += 6;
    if (rrb)
-     dwords += 6;
+     dwords += 8;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
    /* In the CS case we need to split this up */
@@ -449,7 +449,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
-     OUT_BATCH(cbpitch);
+     OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
    // if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM) {

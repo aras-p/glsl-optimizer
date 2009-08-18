@@ -44,6 +44,10 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
                               GLboolean drawing)
 {
    const char *readDraw = drawing ? "Draw" : "Read";
+   const GLboolean reading = !drawing;
+
+   /* state validation should have already been done */
+   ASSERT(ctx->NewState == 0x0);
 
    if (ctx->Extensions.EXT_packed_depth_stencil
        && type == GL_UNSIGNED_INT_24_8_EXT
@@ -73,32 +77,45 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
-      if (drawing && !ctx->Visual.rgbMode) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
+      if (drawing) {
+         if (!ctx->DrawBuffer->Visual.rgbMode) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
                    "glDrawPixels(drawing RGB pixels into color index buffer)");
-         return GL_TRUE;
+            return GL_TRUE;
+         }
       }
-      if (!drawing && !_mesa_dest_buffer_exists(ctx, GL_COLOR)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(no color buffer)");
-         return GL_TRUE;
+      else {
+         /* reading */
+         if (!_mesa_source_buffer_exists(ctx, GL_COLOR)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glReadPixels(no color buffer)");
+            return GL_TRUE;
+         }
       }
       break;
    case GL_COLOR_INDEX:
-      if (!drawing && ctx->Visual.rgbMode) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                    "glReadPixels(reading color index format from RGB buffer)");
-         return GL_TRUE;
+      if (drawing) {
+         if (ctx->DrawBuffer->Visual.rgbMode &&
+             (ctx->PixelMaps.ItoR.Size == 0 ||
+              ctx->PixelMaps.ItoG.Size == 0 ||
+              ctx->PixelMaps.ItoB.Size == 0)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                   "glDrawPixels(drawing color index pixels into RGB buffer)");
+            return GL_TRUE;
+         }
       }
-      if (!drawing && !_mesa_dest_buffer_exists(ctx, GL_COLOR)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(no color buffer)");
-         return GL_TRUE;
+      else {
+         /* reading */
+         if (!_mesa_source_buffer_exists(ctx, GL_COLOR)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glReadPixels(no color buffer)");
+            return GL_TRUE;
+         }
       }
       break;
    case GL_STENCIL_INDEX:
       if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
-          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
+          (reading && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no stencil buffer)", readDraw);
          return GL_TRUE;
@@ -118,7 +135,7 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
          return GL_TRUE;
       }
       if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
-          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
+          (reading && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no depth or stencil buffer)", readDraw);
          return GL_TRUE;
@@ -173,7 +190,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    if (width == 0 || height == 0)
       return; /* nothing to do */
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -181,7 +198,7 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
          return;
       }
 
-      if (ctx->Pack.BufferObj->Pointer) {
+      if (_mesa_bufferobj_mapped(ctx->Pack.BufferObj)) {
          /* buffer is mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
          return;

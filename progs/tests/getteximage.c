@@ -15,7 +15,7 @@ static int Win;
 
 
 static void
-TestGetTexImage(void)
+TestGetTexImage(GLboolean npot)
 {
    GLuint iter;
    GLubyte *data = (GLubyte *) malloc(1024 * 1024 * 4);
@@ -27,8 +27,8 @@ TestGetTexImage(void)
 
    for (iter = 0; iter < 8; iter++) {
       GLint p = (iter % 8) + 3;
-      GLint w = (1 << p);
-      GLint h = (1 << p);
+      GLint w = npot ? (p * 20) : (1 << p);
+      GLint h = npot ? (p * 10) : (1 << p);
       GLuint i;
       GLint level = 0;
 
@@ -83,63 +83,94 @@ ColorsEqual(const GLubyte ref[4], const GLubyte act[4])
 
 
 static void
-TestGetTexImageRTT(void)
+TestGetTexImageRTT(GLboolean npot)
 {
    GLuint iter;
-   GLuint fb, tex;
-   GLint w = 512;
-   GLint h = 256;
-   GLint level = 0;
-   
-   glGenTextures(1, &tex);
-   glGenFramebuffersEXT(1, &fb);
-
-   glBindTexture(GL_TEXTURE_2D, tex);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
-                GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-   glBindFramebuffer(GL_FRAMEBUFFER_EXT, fb);
-   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-                             GL_TEXTURE_2D, tex, level);
 
    printf("Render to texture + glGetTexImage:\n");
-   printf("  Testing %d x %d tex image\n", w, h);
+
    for (iter = 0; iter < 8; iter++) {
-      GLubyte color[4];
-      GLubyte *data2 = (GLubyte *) malloc(w * h * 4);
-      GLuint i;
 
-      /* random clear color */
-      for (i = 0; i < 4; i++) {
-         color[i] = rand() % 256;
+      GLuint fb, tex;
+      GLint w, h;
+      GLint level = 0;
+
+      if (npot) {
+         w = 200 + iter * 40;
+         h = 200 + iter * 12;
+      }
+      else {
+         w = 4 << iter;
+         h = 4 << iter;
       }
 
-      glClearColor(color[0] / 255.0,
-                   color[1] / 255.0,
-                   color[2] / 255.0,
-                   color[3] / 255.0);
+      glGenTextures(1, &tex);
+      glGenFramebuffersEXT(1, &fb);
 
-      glClear(GL_COLOR_BUFFER_BIT);
+      glBindTexture(GL_TEXTURE_2D, tex);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+                   GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-      /* get */
-      glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
+      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+                                GL_TEXTURE_2D, tex, level);
 
-      /* compare */
-      for (i = 0; i < w * h; i += 4) {
-         if (!ColorsEqual(color, data2 + i * 4)) {
-            printf("Render to texture failure!\n");
-            abort();
+      glViewport(0, 0, w, h);
+
+      printf("  Testing %d x %d tex image\n", w, h);
+      {
+         static const GLubyte blue[4] = {0, 0, 255, 255};
+         GLubyte color[4];
+         GLubyte *data2 = (GLubyte *) malloc(w * h * 4);
+         GLuint i;
+
+         /* random clear color */
+         for (i = 0; i < 4; i++) {
+            color[i] = rand() % 256;
          }
+
+         glClearColor(color[0] / 255.0,
+                      color[1] / 255.0,
+                      color[2] / 255.0,
+                      color[3] / 255.0);
+
+         glClear(GL_COLOR_BUFFER_BIT);
+
+         /* draw polygon over top half, in blue */
+         glColor4ubv(blue);
+         glRectf(0, 0.5, 1.0, 1.0);
+
+         /* get */
+         glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+
+         /* compare */
+         for (i = 0; i < w * h; i += 4) {
+            if (i < w * h / 2) {
+               /* lower half */
+               if (!ColorsEqual(color, data2 + i * 4)) {
+                  printf("Render to texture failure (expected clear color)!\n");
+                  abort();
+               }
+            }
+            else {
+               /* upper half */
+               if (!ColorsEqual(blue, data2 + i * 4)) {
+                  printf("Render to texture failure (expected blue)!\n");
+                  abort();
+               }
+            }
+         }
+
+         free(data2);
       }
 
-      free(data2);
-   }
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+      glDeleteFramebuffersEXT(1, &fb);
+      glDeleteTextures(1, &tex);
 
-   glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
-   glDeleteFramebuffersEXT(1, &fb);
-   glDeleteTextures(1, &tex);
+   }
 
    printf("Passed\n");
 }
@@ -152,11 +183,16 @@ Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   TestGetTexImage();
+   TestGetTexImage(GL_FALSE);
+   if (glutExtensionSupported("GL_ARB_texture_non_power_of_two"))
+      TestGetTexImage(GL_TRUE);
 
    if (glutExtensionSupported("GL_EXT_framebuffer_object") ||
-       glutExtensionSupported("GL_ARB_framebuffer_object"))
-      TestGetTexImageRTT();
+       glutExtensionSupported("GL_ARB_framebuffer_object")) {
+      TestGetTexImageRTT(GL_FALSE);
+      if (glutExtensionSupported("GL_ARB_texture_non_power_of_two"))
+         TestGetTexImageRTT(GL_TRUE);
+   }
 
    glutDestroyWindow(Win);
    exit(0);
@@ -171,10 +207,10 @@ Reshape(int width, int height)
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+   glOrtho(0, 1, 0, 1, -1, 1);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0.0, 0.0, -15.0);
+   glTranslatef(0.0, 0.0, 0.0);
 }
 
 

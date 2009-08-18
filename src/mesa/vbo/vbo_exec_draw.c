@@ -214,7 +214,7 @@ vbo_exec_bind_arrays( GLcontext *ctx )
          /* override the default array set above */
          exec->vtx.inputs[attr] = &arrays[attr];
 
-         if (exec->vtx.bufferobj->Name) {
+         if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
             /* a real buffer obj: Ptr is an offset, not a pointer*/
             GLsizeiptr offset;
             assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
@@ -251,7 +251,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 {
    GLenum target = GL_ARRAY_BUFFER_ARB;
 
-   if (exec->vtx.bufferobj->Name) {
+   if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
       GLcontext *ctx = exec->ctx;
       
       if (ctx->Driver.FlushMappedBufferRange) {
@@ -291,7 +291,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
                               MESA_MAP_NOWAIT_BIT;
    const GLenum usage = GL_STREAM_DRAW_ARB;
    
-   if (exec->vtx.bufferobj->Name == 0)
+   if (!_mesa_is_bufferobj(exec->vtx.bufferobj))
       return;
 
    if (exec->vtx.buffer_map != NULL) {
@@ -365,7 +365,7 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
          if (ctx->NewState)
             _mesa_update_state( ctx );
 
-         if (exec->vtx.bufferobj->Name) {
+         if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
             vbo_exec_vtx_unmap( exec );
          }
 
@@ -378,12 +378,13 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
 				       exec->vtx.prim, 
 				       exec->vtx.prim_count,
 				       NULL,
+				       GL_TRUE,
 				       0,
 				       exec->vtx.vert_count - 1);
 
 	 /* If using a real VBO, get new storage -- unless asked not to.
           */
-         if (exec->vtx.bufferobj->Name && !unmap) {
+         if (_mesa_is_bufferobj(exec->vtx.bufferobj) && !unmap) {
             vbo_exec_vtx_map( exec );
          }
       }
@@ -392,7 +393,7 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
    /* May have to unmap explicitly if we didn't draw:
     */
    if (unmap && 
-       exec->vtx.bufferobj->Name &&
+       _mesa_is_bufferobj(exec->vtx.bufferobj) &&
        exec->vtx.buffer_map) {
       vbo_exec_vtx_unmap( exec );
    }

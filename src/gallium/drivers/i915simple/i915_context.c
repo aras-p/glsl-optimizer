@@ -142,10 +142,14 @@ i915_is_texture_referenced( struct pipe_context *pipe,
 			    unsigned face, unsigned level)
 {
    /**
-    * FIXME: Optimize.
+    * FIXME: Return the corrent result. We can't alays return referenced
+    *        since it causes a double flush within the vbo module.
     */
-
+#if 0
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+#else
+   return 0;
+#endif
 }
 
 static unsigned int
@@ -153,10 +157,14 @@ i915_is_buffer_referenced( struct pipe_context *pipe,
 			   struct pipe_buffer *buf)
 {
    /**
-    * FIXME: Optimize.
+    * FIXME: Return the corrent result. We can't alays return referenced
+    *        since it causes a double flush within the vbo module.
     */
-
+#if 0
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+#else
+   return 0;
+#endif
 }
 
 

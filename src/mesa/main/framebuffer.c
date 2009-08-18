@@ -817,7 +817,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
 
 /**
  * Check if the renderbuffer for a read operation (glReadPixels, glCopyPixels,
- * glCopyTex[Sub]Image, etc. exists.
+ * glCopyTex[Sub]Image, etc) exists.
  * \param format  a basic image format such as GL_RGB, GL_RGBA, GL_ALPHA,
  *                GL_DEPTH_COMPONENT, etc. or GL_COLOR, GL_DEPTH, GL_STENCIL.
  * \return GL_TRUE if buffer exists, GL_FALSE otherwise
@@ -825,8 +825,12 @@ _mesa_update_framebuffer(GLcontext *ctx)
 GLboolean
 _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
 {
-   const struct gl_renderbuffer_attachment *att
-      = ctx->ReadBuffer->Attachment;
+   const struct gl_renderbuffer_attachment *att = ctx->ReadBuffer->Attachment;
+
+   /* If we don't know the framebuffer status, update it now */
+   if (ctx->ReadBuffer->_Status == 0) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+   }
 
    if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       return GL_FALSE;
@@ -850,10 +854,8 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
       if (ctx->ReadBuffer->_ColorReadBuffer == NULL) {
          return GL_FALSE;
       }
-      /* XXX enable this post 6.5 release:
       ASSERT(ctx->ReadBuffer->_ColorReadBuffer->RedBits > 0 ||
              ctx->ReadBuffer->_ColorReadBuffer->IndexBits > 0);
-      */
       break;
    case GL_DEPTH:
    case GL_DEPTH_COMPONENT:
@@ -891,13 +893,17 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
 
 /**
  * As above, but for drawing operations.
- * XXX code do some code merging w/ above function.
+ * XXX could do some code merging w/ above function.
  */
 GLboolean
 _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
 {
-   const struct gl_renderbuffer_attachment *att
-      = ctx->ReadBuffer->Attachment;
+   const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
+
+   /* If we don't know the framebuffer status, update it now */
+   if (ctx->DrawBuffer->_Status == 0) {
+      _mesa_test_framebuffer_completeness(ctx, ctx->DrawBuffer);
+   }
 
    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       return GL_FALSE;
@@ -918,7 +924,7 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
    case GL_BGRA:
    case GL_ABGR_EXT:
    case GL_COLOR_INDEX:
-      /* nothing special */
+      /* Nothing special since GL_DRAW_BUFFER could be GL_NONE. */
       /* Could assert that colorbuffer has RedBits > 0 */
       break;
    case GL_DEPTH:
@@ -945,7 +951,7 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
       break;
    default:
       _mesa_problem(ctx,
-                    "Unexpected format 0x%x in _mesa_source_buffer_exists",
+                    "Unexpected format 0x%x in _mesa_dest_buffer_exists",
                     format);
       return GL_FALSE;
    }

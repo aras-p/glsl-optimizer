@@ -481,32 +481,6 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		if (!n)
 			continue;
 
-		if (IS_R600_CLASS(rmesa->radeonScreen)) {
-			int cpp = rmesa->radeonScreen->cpp;
-			int src_pitch = rmesa->radeonScreen->backPitch * cpp;
-			int dst_pitch = rmesa->radeonScreen->frontPitch * cpp;
-			char *src = (char *)rmesa->radeonScreen->driScreen->pFB + rmesa->radeonScreen->backOffset;
-			char *dst = (char *)rmesa->radeonScreen->driScreen->pFB + rmesa->radeonScreen->frontOffset;
-			int j;
-			drm_clip_rect_t *pb = rmesa->sarea->boxes;
-
-			for (j = 0; j < n; j++) {
-				int x = pb[j].x1;
-				int y = pb[j].y1;
-				int w = pb[j].x2 - x;
-				int h = pb[j].y2 - y;
-
-				src += (y * src_pitch) + (x * cpp);
-				dst += (y * dst_pitch) + (x * cpp);
-
-				while (h--) {
-					memcpy(dst, src, w * cpp);
-					src += src_pitch;
-					dst += dst_pitch;
-				}
-			}
-		}
-
 		ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_SWAP );
 
 		if ( ret ) {
@@ -887,10 +861,11 @@ void radeonUpdatePageFlipping(radeonContextPtr radeon)
 
 void radeon_window_moved(radeonContextPtr radeon)
 {
+	/* Cliprects has to be updated before doing anything else */
+	radeonSetCliprects(radeon);
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
 		radeonUpdatePageFlipping(radeon);
 	}
-	radeonSetCliprects(radeon);
 }
 
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height)
@@ -905,7 +880,7 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 
 	if (!radeon->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
 		if (radeon->is_front_buffer_rendering) {
-			radeonFlush(ctx);
+			ctx->Driver.Flush(ctx);
 		}
 		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
 		if (driContext->driDrawablePriv != driContext->driReadablePriv)
@@ -1092,7 +1067,7 @@ void radeonFlush(GLcontext *ctx)
 			 * each of N places that do rendering.  This has worse performances,
 			 * but it is much easier to get correct.
 			 */
-			if (radeon->is_front_buffer_rendering) {
+			if (!radeon->is_front_buffer_rendering) {
 				radeon->front_buffer_dirty = GL_FALSE;
 			}
 		}
@@ -1236,7 +1211,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	rmesa->cmdbuf.size = size;
 
 	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
-				  (void (*)(void *))radeonFlush, rmesa->glCtx);
+				  (void (*)(void *))rmesa->glCtx->Driver.Flush, rmesa->glCtx);
 
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);

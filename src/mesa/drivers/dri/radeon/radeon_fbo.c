@@ -185,22 +185,12 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
      rrb->pitch = pitch * cpp;
      rrb->cpp = cpp;
-#ifdef RADEON_DEBUG_BO
-     rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-			      0,
-			      size,
-			      0,
-			      RADEON_GEM_DOMAIN_VRAM,
-			      0,
-                  "Radeon RBO");
-#else
      rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 			      0,
 			      size,
 			      0,
 			      RADEON_GEM_DOMAIN_VRAM,
 			      0);
-#endif /* RADEON_DEBUG_BO */
      rb->Width = width;
      rb->Height = height;
        return GL_TRUE;
@@ -291,7 +281,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 	    rrb->base.RedBits = 8;
 	    rrb->base.GreenBits = 8;
 	    rrb->base.BlueBits = 8;
-	    rrb->base.AlphaBits = 8;
+	    rrb->base.AlphaBits = 0;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
 	    break;
 	case GL_RGBA8:
@@ -407,7 +397,7 @@ restart:
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_RGB5;
 		rrb->base._BaseFormat = GL_RGB;
-		rrb->base.DataType = GL_UNSIGNED_SHORT;
+		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGB5 texture OK\n");
 	}
 	else if (texImage->TexFormat == &_mesa_texformat_argb1555) {

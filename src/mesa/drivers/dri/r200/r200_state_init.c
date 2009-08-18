@@ -515,7 +515,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    if (drb)
      dwords += 6;
    if (rrb)
-     dwords += 6;
+     dwords += 8;
    if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
      dwords += 4;
 
@@ -546,7 +546,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
-     OUT_BATCH(cbpitch);
+     OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
    if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM) {
@@ -563,7 +563,6 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   radeon_mipmap_level *lvl;
 
    if (t && t->mt && !t->image_override)
      dwords += 2;
@@ -591,7 +590,6 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   radeon_mipmap_level *lvl;
    int hastexture = 1;
 
    if (!r200->state.texture.unit[i].unitneeded)
@@ -774,7 +772,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
 
-   for (i = 0; i < 5; i++)
+   for (i = 0; i < 6; i++)
       if (rmesa->radeon.radeonScreen->kernel_mm)
           rmesa->hw.tex[i].emit = tex_emit_cs;
       else
@@ -786,7 +784,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
-      for (i = 0; i < 5; i++)
+      for (i = 0; i < 6; i++)
           if (rmesa->radeon.radeonScreen->kernel_mm)
               rmesa->hw.cube[i].emit = cube_emit_cs;
           else

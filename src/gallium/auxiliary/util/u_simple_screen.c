@@ -65,12 +65,13 @@ pass_surface_buffer_create(struct pipe_screen *screen,
                            unsigned width, unsigned height,
                            enum pipe_format format,
                            unsigned usage,
+                           unsigned tex_usage,
                            unsigned *stride)
 {
    struct pipe_buffer *buffer =
       screen->winsys->surface_buffer_create(screen->winsys,
                                                 width, height,
-                                                format, usage, stride);
+                                                format, usage, tex_usage, stride);
 
    buffer->screen = screen;
 

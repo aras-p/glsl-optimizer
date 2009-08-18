@@ -102,19 +102,19 @@ static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
                            __GLX_NUMBER_ERRORS, error_list)
 
-     static /* const */ XExtensionHooks __glXExtensionHooks = {
-        NULL,                   /* create_gc */
-        NULL,                   /* copy_gc */
-        NULL,                   /* flush_gc */
-        NULL,                   /* free_gc */
-        NULL,                   /* create_font */
-        NULL,                   /* free_font */
-        __glXCloseDisplay,      /* close_display */
-        NULL,                   /* wire_to_event */
-        NULL,                   /* event_to_wire */
-        NULL,                   /* error */
-        __glXErrorString,       /* error_string */
-     };
+static /* const */ XExtensionHooks __glXExtensionHooks = {
+  NULL,                   /* create_gc */
+  NULL,                   /* copy_gc */
+  NULL,                   /* flush_gc */
+  NULL,                   /* free_gc */
+  NULL,                   /* create_font */
+  NULL,                   /* free_font */
+  __glXCloseDisplay,      /* close_display */
+  NULL,                   /* wire_to_event */
+  NULL,                   /* event_to_wire */
+  NULL,                   /* error */
+  __glXErrorString,       /* error_string */
+};
 
 static
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
@@ -149,6 +149,12 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       Xfree((char *) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
+      if (psc->driver_configs) {
+         for (unsigned int i = 0; psc->driver_configs[i]; i++)
+            free((__DRIconfig *) psc->driver_configs[i]);
+         free(psc->driver_configs);
+         psc->driver_configs = NULL;
+      }
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
          __glxHashDestroy(psc->drawHash);
@@ -211,15 +217,14 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
 #ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_glx_query_version_reply_t* reply =
-      xcb_glx_query_version_reply(c,
-                                  xcb_glx_query_version(c,
-                                                        GLX_MAJOR_VERSION,
-                                                        GLX_MINOR_VERSION),
-                                  NULL);
+   xcb_glx_query_version_reply_t *reply = xcb_glx_query_version_reply(c,
+                                                                      xcb_glx_query_version
+                                                                      (c,
+                                                                       GLX_MAJOR_VERSION,
+                                                                       GLX_MINOR_VERSION),
+                                                                      NULL);
 
-   if(reply->major_version != GLX_MAJOR_VERSION)
-   {
+   if (reply->major_version != GLX_MAJOR_VERSION) {
       free(reply);
       return GL_FALSE;
    }
@@ -537,7 +542,8 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
    __GLXscreenConfigs *psc;
 
    psc = priv->screenConfigs + screen;
-   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
+   psc->serverGLXexts =
+      __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
    LockDisplay(dpy);
 
@@ -595,7 +601,8 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
    priv->screenConfigs = psc;
 
-   priv->serverGLXversion = __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
+   priv->serverGLXversion =
+      __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
    if (priv->serverGLXversion == NULL) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
@@ -644,17 +651,6 @@ __glXInitialize(Display * dpy)
    int major, minor;
 #ifdef GLX_DIRECT_RENDERING
    Bool glx_direct, glx_accel;
-#endif
-
-#if defined(USE_XTHREADS)
-   {
-      static int firstCall = 1;
-      if (firstCall) {
-         /* initialize the GLX mutexes */
-         xmutex_init(&__glXmutex);
-         firstCall = 0;
-      }
-   }
 #endif
 
    /* The one and only long long lock */
@@ -791,10 +787,10 @@ __glXSetupForCommand(Display * dpy)
 
 /**
  * Flush the drawing command transport buffer.
- * 
+ *
  * \param ctx  Context whose transport buffer is to be flushed.
  * \param pc   Pointer to first unused buffer location.
- * 
+ *
  * \todo
  * Modify this function to use \c ctx->pc instead of the explicit
  * \c pc parameter.
@@ -886,11 +882,11 @@ __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
 
 /**
  * Send a command that is too large for the GLXRender protocol request.
- * 
+ *
  * Send a large command, one that is too large for some reason to
  * send using the GLXRender protocol request.  One reason to send
  * a large command is to avoid copying the data.
- * 
+ *
  * \param ctx        GLX context
  * \param header     Header data.
  * \param headerLen  Size, in bytes, of the header data.  It is assumed that

@@ -33,6 +33,7 @@
 #include "tnl/tnl.h"
 
 #include "r600_context.h"
+#include "r600_emit.h"
 
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
@@ -87,7 +88,6 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
     struct r700_vertex_program   * vp;
     struct r700_fragment_program * fp;
-    context_t *context = R700_CONTEXT(ctx);
 
     switch (prog->Target) 
     {

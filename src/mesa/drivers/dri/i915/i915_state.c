@@ -48,73 +48,119 @@
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
+void
+i915_update_stencil(GLcontext * ctx)
+{
+   struct i915_context *i915 = I915_CONTEXT(ctx);
+   GLuint front_ref, front_writemask, front_mask;
+   GLenum front_func, front_fail, front_pass_z_fail, front_pass_z_pass;
+   GLuint back_ref, back_writemask, back_mask;
+   GLenum back_func, back_fail, back_pass_z_fail, back_pass_z_pass;
+
+   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+
+   /* The 915 considers CW to be "front" for two-sided stencil, so choose
+    * appropriately.
+    */
+   /* _NEW_POLYGON | _NEW_STENCIL */
+   if (ctx->Polygon.FrontFace == GL_CW) {
+      front_ref = ctx->Stencil.Ref[0];
+      front_mask = ctx->Stencil.ValueMask[0];
+      front_writemask = ctx->Stencil.WriteMask[0];
+      front_func = ctx->Stencil.Function[0];
+      front_fail = ctx->Stencil.FailFunc[0];
+      front_pass_z_fail = ctx->Stencil.ZFailFunc[0];
+      front_pass_z_pass = ctx->Stencil.ZPassFunc[0];
+      back_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
+      back_mask = ctx->Stencil.ValueMask[ctx->Stencil._BackFace];
+      back_writemask = ctx->Stencil.WriteMask[ctx->Stencil._BackFace];
+      back_func = ctx->Stencil.Function[ctx->Stencil._BackFace];
+      back_fail = ctx->Stencil.FailFunc[ctx->Stencil._BackFace];
+      back_pass_z_fail = ctx->Stencil.ZFailFunc[ctx->Stencil._BackFace];
+      back_pass_z_pass = ctx->Stencil.ZPassFunc[ctx->Stencil._BackFace];
+   } else {
+      front_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
+      front_mask = ctx->Stencil.ValueMask[ctx->Stencil._BackFace];
+      front_writemask = ctx->Stencil.WriteMask[ctx->Stencil._BackFace];
+      front_func = ctx->Stencil.Function[ctx->Stencil._BackFace];
+      front_fail = ctx->Stencil.FailFunc[ctx->Stencil._BackFace];
+      front_pass_z_fail = ctx->Stencil.ZFailFunc[ctx->Stencil._BackFace];
+      front_pass_z_pass = ctx->Stencil.ZPassFunc[ctx->Stencil._BackFace];
+      back_ref = ctx->Stencil.Ref[0];
+      back_mask = ctx->Stencil.ValueMask[0];
+      back_writemask = ctx->Stencil.WriteMask[0];
+      back_func = ctx->Stencil.Function[0];
+      back_fail = ctx->Stencil.FailFunc[0];
+      back_pass_z_fail = ctx->Stencil.ZFailFunc[0];
+      back_pass_z_pass = ctx->Stencil.ZPassFunc[0];
+   }
+
+   /* Set front state. */
+   i915->state.Ctx[I915_CTXREG_STATE4] &= ~(MODE4_ENABLE_STENCIL_TEST_MASK |
+					    MODE4_ENABLE_STENCIL_WRITE_MASK);
+   i915->state.Ctx[I915_CTXREG_STATE4] |= (ENABLE_STENCIL_TEST_MASK |
+					   ENABLE_STENCIL_WRITE_MASK |
+					   STENCIL_TEST_MASK(front_mask) |
+					   STENCIL_WRITE_MASK(front_writemask));
+
+   i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_REF_MASK |
+					  S5_STENCIL_TEST_FUNC_MASK |
+					  S5_STENCIL_FAIL_MASK |
+					  S5_STENCIL_PASS_Z_FAIL_MASK |
+					  S5_STENCIL_PASS_Z_PASS_MASK);
+
+   i915->state.Ctx[I915_CTXREG_LIS5] |=
+      (front_ref << S5_STENCIL_REF_SHIFT) |
+      (intel_translate_compare_func(front_func) << S5_STENCIL_TEST_FUNC_SHIFT) |
+      (intel_translate_stencil_op(front_fail) << S5_STENCIL_FAIL_SHIFT) |
+      (intel_translate_stencil_op(front_pass_z_fail) <<
+       S5_STENCIL_PASS_Z_FAIL_SHIFT) |
+      (intel_translate_stencil_op(front_pass_z_pass) <<
+       S5_STENCIL_PASS_Z_PASS_SHIFT);
+
+   /* Set back state if different from front. */
+   if (ctx->Stencil._TestTwoSide) {
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &=
+	 ~(BFO_STENCIL_REF_MASK |
+	   BFO_STENCIL_TEST_MASK |
+	   BFO_STENCIL_FAIL_MASK |
+	   BFO_STENCIL_PASS_Z_FAIL_MASK |
+	   BFO_STENCIL_PASS_Z_PASS_MASK);
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] |= BFO_STENCIL_TWO_SIDE |
+	 (back_ref << BFO_STENCIL_REF_SHIFT) |
+	 (intel_translate_compare_func(back_func) << BFO_STENCIL_TEST_SHIFT) |
+	 (intel_translate_stencil_op(back_fail) << BFO_STENCIL_FAIL_SHIFT) |
+	 (intel_translate_stencil_op(back_pass_z_fail) <<
+	  BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
+	 (intel_translate_stencil_op(back_pass_z_pass) <<
+	  BFO_STENCIL_PASS_Z_PASS_SHIFT);
+
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] &=
+	 ~(BFM_STENCIL_TEST_MASK_MASK |
+	   BFM_STENCIL_WRITE_MASK_MASK);
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] |=
+	 BFM_STENCIL_TEST_MASK(back_mask) |
+	 BFM_STENCIL_WRITE_MASK(back_writemask);
+   } else {
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &= ~BFO_STENCIL_TWO_SIDE;
+   }
+}
+
 static void
 i915StencilFuncSeparate(GLcontext * ctx, GLenum face, GLenum func, GLint ref,
                         GLuint mask)
 {
-   struct i915_context *i915 = I915_CONTEXT(ctx);
-   int test = intel_translate_compare_func(func);
-
-   mask = mask & 0xff;
-
-   DBG("%s : func: %s, ref : 0x%x, mask: 0x%x\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(func), ref, mask);
-
-
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_STATE4] &= ~MODE4_ENABLE_STENCIL_TEST_MASK;
-   i915->state.Ctx[I915_CTXREG_STATE4] |= (ENABLE_STENCIL_TEST_MASK |
-                                           STENCIL_TEST_MASK(mask));
-
-   i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_REF_MASK |
-                                          S5_STENCIL_TEST_FUNC_MASK);
-
-   i915->state.Ctx[I915_CTXREG_LIS5] |= ((ref << S5_STENCIL_REF_SHIFT) |
-                                         (test <<
-                                          S5_STENCIL_TEST_FUNC_SHIFT));
 }
 
 static void
 i915StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 {
-   struct i915_context *i915 = I915_CONTEXT(ctx);
-
-   DBG("%s : mask 0x%x\n", __FUNCTION__, mask);
-   
-   mask = mask & 0xff;
-
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_STATE4] &= ~MODE4_ENABLE_STENCIL_WRITE_MASK;
-   i915->state.Ctx[I915_CTXREG_STATE4] |= (ENABLE_STENCIL_WRITE_MASK |
-                                           STENCIL_WRITE_MASK(mask));
 }
-
 
 static void
 i915StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail, GLenum zfail,
                       GLenum zpass)
 {
-   struct i915_context *i915 = I915_CONTEXT(ctx);
-   int fop = intel_translate_stencil_op(fail);
-   int dfop = intel_translate_stencil_op(zfail);
-   int dpop = intel_translate_stencil_op(zpass);
-
-
-   DBG("%s: fail : %s, zfail: %s, zpass : %s\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(fail),
-       _mesa_lookup_enum_by_nr(zfail), _mesa_lookup_enum_by_nr(zpass));
-
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-
-   i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_FAIL_MASK |
-                                          S5_STENCIL_PASS_Z_FAIL_MASK |
-                                          S5_STENCIL_PASS_Z_PASS_MASK);
-
-   i915->state.Ctx[I915_CTXREG_LIS5] |= ((fop << S5_STENCIL_FAIL_SHIFT) |
-                                         (dfop <<
-                                          S5_STENCIL_PASS_Z_FAIL_SHIFT) |
-                                         (dpop <<
-                                          S5_STENCIL_PASS_Z_PASS_SHIFT));
 }
 
 static void
@@ -945,6 +991,17 @@ i915_init_packets(struct i915_context *i915)
          _3DSTATE_CONST_BLEND_COLOR_CMD;
       i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] = 0;
 
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] =
+	 _3DSTATE_BACKFACE_STENCIL_MASKS |
+	 BFM_ENABLE_STENCIL_TEST_MASK |
+	 BFM_ENABLE_STENCIL_WRITE_MASK |
+	 (0xff << BFM_STENCIL_WRITE_MASK_SHIFT) |
+	 (0xff << BFM_STENCIL_TEST_MASK_SHIFT);
+      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] =
+	 _3DSTATE_BACKFACE_STENCIL_OPS |
+	 BFO_ENABLE_STENCIL_REF |
+	 BFO_ENABLE_STENCIL_FUNCS |
+	 BFO_ENABLE_STENCIL_TWO_SIDE;
    }
 
    {
@@ -976,6 +1033,13 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Buffer[I915_DESTREG_SR2] = 0;
    }
 
+   i915->state.RasterRules[I915_RASTER_RULES] = _3DSTATE_RASTER_RULES_CMD |
+      ENABLE_POINT_RASTER_RULE |
+      OGL_POINT_RASTER_RULE |
+      ENABLE_LINE_STRIP_PROVOKE_VRTX |
+      ENABLE_TRI_FAN_PROVOKE_VRTX |
+      LINE_STRIP_PROVOKE_VRTX(1) |
+      TRI_FAN_PROVOKE_VRTX(2) | ENABLE_TEXKILL_3D_4D | TEXKILL_4D;
 
 #if 0
    {
@@ -996,7 +1060,33 @@ i915_init_packets(struct i915_context *i915)
    i915->state.active = (I915_UPLOAD_PROGRAM |
                          I915_UPLOAD_STIPPLE |
                          I915_UPLOAD_CTX |
-                         I915_UPLOAD_BUFFERS | I915_UPLOAD_INVARIENT);
+                         I915_UPLOAD_BUFFERS |
+			 I915_UPLOAD_INVARIENT |
+			 I915_UPLOAD_RASTER_RULES);
+}
+
+void
+i915_update_provoking_vertex(GLcontext * ctx)
+{
+   struct i915_context *i915 = I915_CONTEXT(ctx);
+
+   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   i915->state.Ctx[I915_CTXREG_LIS6] &= ~(S6_TRISTRIP_PV_MASK);
+
+   I915_STATECHANGE(i915, I915_UPLOAD_RASTER_RULES);
+   i915->state.RasterRules[I915_RASTER_RULES] &= ~(LINE_STRIP_PROVOKE_VRTX_MASK |
+						   TRI_FAN_PROVOKE_VRTX_MASK);
+
+   /* _NEW_LIGHT */
+   if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION) {
+      i915->state.RasterRules[I915_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(1) |
+						     TRI_FAN_PROVOKE_VRTX(2));
+      i915->state.Ctx[I915_CTXREG_LIS6] |= (2 << S6_TRISTRIP_PV_SHIFT);
+   } else {
+      i915->state.RasterRules[I915_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(0) |
+						     TRI_FAN_PROVOKE_VRTX(1));
+      i915->state.Ctx[I915_CTXREG_LIS6] |= (0 << S6_TRISTRIP_PV_SHIFT);
+    }
 }
 
 void

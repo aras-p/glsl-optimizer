@@ -547,7 +547,8 @@ _mesa_update_state_locked( GLcontext *ctx )
    /* Determine which state flags effect vertex/fragment program state */
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       prog_flags |= (_NEW_TEXTURE | _NEW_FOG |
-		     _NEW_ARRAY | _NEW_LIGHT | _NEW_POINT | _NEW_RENDERMODE);
+		     _NEW_ARRAY | _NEW_LIGHT | _NEW_POINT | _NEW_RENDERMODE |
+		     _NEW_PROGRAM);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
@@ -712,6 +713,6 @@ _mesa_set_vp_override(GLcontext *ctx, GLboolean flag)
       /* Set one of the bits which will trigger fragment program
        * regeneration:
        */
-      ctx->NewState |= _NEW_ARRAY; 
+      ctx->NewState |= _NEW_PROGRAM;
    }
 }

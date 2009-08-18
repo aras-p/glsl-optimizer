@@ -53,14 +53,14 @@ static int win = 0;
 
 
 static struct uniform_info ReflectUniforms[] = {
-   { "cubeTex",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
-   { "lightPos", 3, GL_FLOAT, { 10, 10, 20, 0 }, -1 },
+   { "cubeTex",  1, GL_SAMPLER_CUBE, { 0, 0, 0, 0 }, -1 },
+   { "lightPos", 1, GL_FLOAT_VEC3, { 10, 10, 20, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
 static struct uniform_info SimpleUniforms[] = {
-   { "tex2d",    1, GL_INT,   { 1, 0, 0, 0 }, -1 },
-   { "lightPos", 3, GL_FLOAT, { 10, 10, 20, 0 }, -1 },
+   { "tex2d",    1, GL_SAMPLER_2D, { 1, 0, 0, 0 }, -1 },
+   { "lightPos", 1, GL_FLOAT_VEC3, { 10, 10, 20, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
@@ -382,7 +382,8 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    glUseProgram(program);
 
-   InitUniforms(program, uniforms);
+   SetUniformValues(program, uniforms);
+   PrintUniforms(uniforms);
 
    return program;
 }

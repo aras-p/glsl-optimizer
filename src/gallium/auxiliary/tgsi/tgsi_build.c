@@ -335,7 +335,10 @@ tgsi_default_full_immediate( void )
    struct tgsi_full_immediate fullimm;
 
    fullimm.Immediate = tgsi_default_immediate();
-   fullimm.u.Pointer = (void *) 0;
+   fullimm.u[0].Float = 0.0f;
+   fullimm.u[1].Float = 0.0f;
+   fullimm.u[2].Float = 0.0f;
+   fullimm.u[3].Float = 0.0f;
 
    return fullimm;
 }
@@ -352,19 +355,19 @@ immediate_grow(
    header_bodysize_grow( header );
 }
 
-struct tgsi_immediate_float32
+union tgsi_immediate_data
 tgsi_build_immediate_float32(
    float value,
    struct tgsi_immediate *immediate,
    struct tgsi_header *header )
 {
-   struct tgsi_immediate_float32 immediate_float32;
+   union tgsi_immediate_data immediate_data;
 
-   immediate_float32.Float = value;
+   immediate_data.Float = value;
 
    immediate_grow( immediate, header );
 
-   return immediate_float32;
+   return immediate_data;
 }
 
 unsigned
@@ -384,16 +387,18 @@ tgsi_build_full_immediate(
 
    *immediate = tgsi_build_immediate( header );
 
+   assert( full_imm->Immediate.NrTokens <= 4 + 1 );
+
    for( i = 0; i < full_imm->Immediate.NrTokens - 1; i++ ) {
-      struct tgsi_immediate_float32 *if32;
+      union tgsi_immediate_data *data;
 
       if( maxsize <= size )
          return  0;
-      if32 = (struct tgsi_immediate_float32 *) &tokens[size];
+      data = (union tgsi_immediate_data *) &tokens[size];
       size++;
 
-      *if32 = tgsi_build_immediate_float32(
-         full_imm->u.ImmediateFloat32[i].Float,
+      *data = tgsi_build_immediate_float32(
+         full_imm->u[i].Float,
          immediate,
          header );
    }

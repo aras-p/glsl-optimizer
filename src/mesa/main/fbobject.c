@@ -417,21 +417,22 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       if (format == GL_COLOR) {
          if (att->Renderbuffer->_BaseFormat != GL_RGB &&
              att->Renderbuffer->_BaseFormat != GL_RGBA) {
-            ASSERT(att->Renderbuffer->RedBits);
-            ASSERT(att->Renderbuffer->GreenBits);
-            ASSERT(att->Renderbuffer->BlueBits);
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
          }
+         ASSERT(att->Renderbuffer->RedBits);
+         ASSERT(att->Renderbuffer->GreenBits);
+         ASSERT(att->Renderbuffer->BlueBits);
       }
       else if (format == GL_DEPTH) {
-         ASSERT(att->Renderbuffer->DepthBits);
          if (att->Renderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
+            ASSERT(att->Renderbuffer->DepthBits);
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
                   att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            ASSERT(att->Renderbuffer->DepthBits);
             /* OK */
          }
          else {
@@ -442,12 +443,13 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
       else {
          assert(format == GL_STENCIL);
-         ASSERT(att->Renderbuffer->StencilBits);
          if (att->Renderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
+            ASSERT(att->Renderbuffer->StencilBits);
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
                   att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            ASSERT(att->Renderbuffer->StencilBits);
             /* OK */
          }
          else {
@@ -2038,7 +2040,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_STENCIL_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_StencilBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_StencilBuffer;
-      if (readRb->StencilBits != drawRb->StencilBits) {
+      if (!readRb ||
+          !drawRb ||
+          readRb->StencilBits != drawRb->StencilBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(stencil buffer size mismatch");
          return;
@@ -2048,7 +2052,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (mask & GL_DEPTH_BUFFER_BIT) {
       struct gl_renderbuffer *readRb = readFb->_DepthBuffer;
       struct gl_renderbuffer *drawRb = drawFb->_DepthBuffer;
-      if (readRb->DepthBits != drawRb->DepthBits) {
+      if (!readRb ||
+          !drawRb ||
+          readRb->DepthBits != drawRb->DepthBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(depth buffer size mismatch");
          return;

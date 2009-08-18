@@ -316,6 +316,19 @@ Basically, applying a translation of (0.375, 0.375, 0.0) to your coordinates
 will fix the problem.
 </p>
 
+<h2>3.6 How can I change the maximum framebuffer size in Mesa's
+<tt>swrast</tt> backend?</h2>
+<p>
+These can be overridden by using the <tt>--with-max-width</tt> and
+<tt>--with-max-height</tt> options.  The two need not be equal.
+</p><p>
+Do note that Mesa uses these values to size some internal buffers,
+so increasing these sizes will cause Mesa to require additional
+memory.  Furthermore, increasing these limits beyond <tt>4096</tt>
+may introduce rasterization artifacts; see the leading comments in
+<tt>src/mesa/swrast/s_tritemp.h</tt>.
+</p>
+
 <br>
 <br>
 

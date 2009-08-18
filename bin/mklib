@@ -971,5 +971,6 @@ esac
 #
 if [ ${INSTALLDIR} != "." ] ; then
     echo "mklib: Installing" ${FINAL_LIBS} "in" ${INSTALLDIR}
+    test -d ${INSTALLDIR} || mkdir -p ${INSTALLDIR}
     mv ${FINAL_LIBS} ${INSTALLDIR}/
 fi

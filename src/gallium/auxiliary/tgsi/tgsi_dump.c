@@ -82,7 +82,7 @@ static const char *processor_type_names[] =
    "GEOM"
 };
 
-static const char *file_names[] =
+static const char *file_names[TGSI_FILE_COUNT] =
 {
    "NULL",
    "CONST",
@@ -91,7 +91,8 @@ static const char *file_names[] =
    "TEMP",
    "SAMP",
    "ADDR",
-   "IMM"
+   "IMM",
+   "LOOP"
 };
 
 static const char *interpolate_names[] =
@@ -295,10 +296,12 @@ iter_immediate(
    ENM( imm->Immediate.DataType, immediate_type_names );
 
    TXT( " { " );
+
+   assert( imm->Immediate.NrTokens <= 4 + 1 );
    for (i = 0; i < imm->Immediate.NrTokens - 1; i++) {
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
-         FLT( imm->u.ImmediateFloat32[i].Float );
+         FLT( imm->u[i].Float );
          break;
       default:
          assert( 0 );
@@ -470,8 +473,8 @@ iter_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_ELSE:
-   case TGSI_OPCODE_BGNLOOP2:
-   case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_BGNLOOP:
+   case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_CAL:
       TXT( " :" );
       UID( inst->InstructionExtLabel.Label );

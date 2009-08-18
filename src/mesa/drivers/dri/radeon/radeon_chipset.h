@@ -356,11 +356,14 @@
 #define PCI_CHIP_RV770_947A             0x947A
 #define PCI_CHIP_RV770_947B             0x947B
 
+#define PCI_CHIP_RV730_9480             0x9480
 #define PCI_CHIP_RV730_9487             0x9487
+#define PCI_CHIP_RV730_9488             0x9488
 #define PCI_CHIP_RV730_9489             0x9489
 #define PCI_CHIP_RV730_948F             0x948F
 #define PCI_CHIP_RV730_9490             0x9490
 #define PCI_CHIP_RV730_9491             0x9491
+#define PCI_CHIP_RV730_9495             0x9495
 #define PCI_CHIP_RV730_9498             0x9498
 #define PCI_CHIP_RV730_949C             0x949C
 #define PCI_CHIP_RV730_949E             0x949E
@@ -374,12 +377,16 @@
 #define PCI_CHIP_RV710_9552             0x9552
 #define PCI_CHIP_RV710_9553             0x9553
 #define PCI_CHIP_RV710_9555             0x9555
+#define PCI_CHIP_RV710_9557             0x9557
 
 #define PCI_CHIP_RV740_94A0             0x94A0
 #define PCI_CHIP_RV740_94A1             0x94A1
+#define PCI_CHIP_RV740_94A3             0x94A3
 #define PCI_CHIP_RV740_94B1             0x94B1
 #define PCI_CHIP_RV740_94B3             0x94B3
+#define PCI_CHIP_RV740_94B4             0x94B4
 #define PCI_CHIP_RV740_94B5             0x94B5
+#define PCI_CHIP_RV740_94B9             0x94B9
 
 enum {
    CHIP_FAMILY_R100,

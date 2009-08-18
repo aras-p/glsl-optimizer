@@ -27,66 +27,25 @@ static boolean radeon_r300_add_buffer(struct r300_winsys* winsys,
                                       uint32_t rd,
                                       uint32_t wd)
 {
-    int i;
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
-    struct radeon_cs_space_check* sc = priv->sc;
     struct radeon_bo* bo = ((struct radeon_pipe_buffer*)pbuffer)->bo;
 
-    /* Check to see if this BO is already in line for validation;
-     * find a slot for it otherwise. */
-    for (i = 0; i < priv->bo_count; i++) {
-        if (sc[i].bo == bo) {
-            sc[i].read_domains |= rd;
-            sc[i].write_domain |= wd;
-            return TRUE;
-        }
-    }
-
-    if (priv->bo_count >= RADEON_MAX_BOS) {
-        /* Dohoho. Not falling for that one again. Request a flush. */
-        return FALSE;
-    }
-
-    sc[priv->bo_count].bo = bo;
-    sc[priv->bo_count].read_domains = rd;
-    sc[priv->bo_count].write_domain = wd;
-    priv->bo_count++;
-
+    radeon_cs_space_add_persistent_bo(priv->cs, bo, rd, wd);
     return TRUE;
 }
 
 static boolean radeon_r300_validate(struct r300_winsys* winsys)
 {
-    int retval, i;
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
-    struct radeon_cs_space_check* sc = priv->sc;
 
-    retval = radeon_cs_space_check(priv->cs, sc, priv->bo_count);
-
-    if (retval == RADEON_CS_SPACE_OP_TO_BIG) {
-        /* We might as well HCF, since this is not going to fit in the card,
-         * period. */
-        /* XXX just drop it on the floor instead */
-	exit(1);
-    } else if (retval == RADEON_CS_SPACE_FLUSH) {
-        /* We must flush before more rendering can commence. */
-        return TRUE;
-    }
-
-    /* XXX should probably be its own function */
-    for (i = 0; i < priv->bo_count; i++) {
-        if (sc[i].read_domains && sc[i].write_domain) {
-            /* Cute, cute. We need to flush first. */
-            debug_printf("radeon: BO %p can't be read and written; "
-                    "requesting flush.\n", sc[i].bo);
-            return TRUE;
-        }
+    if (radeon_cs_space_check(priv->cs) < 0) {
+        return FALSE;
     }
 
     /* Things are fine, we can proceed as normal. */
-    return FALSE;
+    return TRUE;
 }
 
 static boolean radeon_r300_check_cs(struct r300_winsys* winsys, int size)
@@ -151,8 +110,7 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 {
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
-    struct radeon_cs_space_check* sc = priv->sc;
-    int retval = 1;
+    int retval;
 
     /* Emit the CS. */
     retval = radeon_cs_emit(priv->cs);
@@ -160,40 +118,34 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
         debug_printf("radeon: Bad CS, dumping...\n");
         radeon_cs_print(priv->cs, stderr);
     }
-    radeon_cs_erase(priv->cs);
 
     /* Clean out BOs. */
-    memset(sc, 0, sizeof(struct radeon_cs_space_check) * RADEON_MAX_BOS);
-    priv->bo_count = 0;
+    radeon_cs_space_reset_bos(priv->cs);
+
+    /* Reset CS.
+     * Someday, when we care about performance, we should really find a way
+     * to rotate between two or three CS objects so that the GPU can be
+     * spinning through one CS while another one is being filled. */
+    radeon_cs_erase(priv->cs);
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
     struct drm_radeon_gem_info gem_info = {0};
-    drm_radeon_getparam_t gp = {0};
     struct drm_radeon_info info = {0};
     int target = 0;
     int retval;
 
     info.value = &target;
-    gp.value = &target;
 
     /* First, get PCI ID */
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: New ioctl for PCI ID failed "
-                "(error number %d), trying classic ioctl...\n",
-                __FUNCTION__, retval);
-        gp.param = RADEON_PARAM_DEVICE_ID;
-        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
-                sizeof(gp));
-        if (retval) {
-            fprintf(stderr, "%s: Failed to get PCI ID, "
-                    "error number %d\n", __FUNCTION__, retval);
-            exit(1);
-        }
+        fprintf(stderr, "%s: Failed to get PCI ID, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
     }
     winsys->pci_id = target;
 

@@ -41,13 +41,27 @@
 /**
  * Compute min and max elements for glDraw[Range]Elements() calls.
  */
-static void
-get_minmax_index(GLuint count, GLuint type, const GLvoid *indices,
-                 GLuint *min_index, GLuint *max_index)
+void
+vbo_get_minmax_index(GLcontext *ctx,
+		     const struct _mesa_prim *prim,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint *min_index, GLuint *max_index)
 {
    GLuint i;
+   GLsizei count = prim->count;
+   const void *indices;
 
-   switch(type) {
+   if (_mesa_is_bufferobj(ib->obj)) {
+      const GLvoid *map = ctx->Driver.MapBuffer(ctx,
+                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                                GL_READ_ONLY,
+                                                ib->obj);
+      indices = ADD_POINTERS(map, ib->ptr);
+   } else {
+      indices = ib->ptr;
+   }
+
+   switch (ib->type) {
    case GL_UNSIGNED_INT: {
       const GLuint *ui_indices = (const GLuint *)indices;
       GLuint max_ui = ui_indices[count-1];
@@ -88,6 +102,12 @@ get_minmax_index(GLuint count, GLuint type, const GLvoid *indices,
       assert(0);
       break;
    }
+
+   if (_mesa_is_bufferobj(ib->obj)) {
+      ctx->Driver.UnmapBuffer(ctx,
+			      GL_ELEMENT_ARRAY_BUFFER_ARB,
+			      ib->obj);
+   }
 }
 
 
@@ -101,7 +121,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
 {
    if (array->Enabled) {
       const void *data = array->Ptr;
-      if (array->BufferObj->Name) {
+      if (_mesa_is_bufferobj(array->BufferObj)) {
          if (!array->BufferObj->Pointer) {
             /* need to map now */
             array->BufferObj->Pointer = ctx->Driver.MapBuffer(ctx,
@@ -146,8 +166,8 @@ static void
 unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
-       array->BufferObj->Name &&
-       array->BufferObj->Pointer) {
+       _mesa_is_bufferobj(array->BufferObj) &&
+       _mesa_bufferobj_mapped(array->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx,
                               GL_ARRAY_BUFFER_ARB,
                               array->BufferObj);
@@ -166,7 +186,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
    const void *elemMap;
    GLint i, k;
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       elemMap = ctx->Driver.MapBuffer(ctx,
                                       GL_ELEMENT_ARRAY_BUFFER_ARB,
                                       GL_READ_ONLY,
@@ -205,7 +225,7 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
       }
    }
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ELEMENT_ARRAY_BUFFER_ARB,
 			      ctx->Array.ElementArrayBufferObj);
@@ -469,8 +489,7 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (ctx->NewState)
       _mesa_update_state( ctx );
       
-   if (!vbo_validate_shaders(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawArrays(bad shader)");
+   if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {
       return;
    }
 
@@ -500,7 +519,7 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    prim[0].indexed = 0;
 
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL,
-                    start, start + count - 1 );
+                    GL_TRUE, start, start + count - 1 );
 
 #if 0
    print_draw_arrays(ctx, exec, mode, start, count);
@@ -566,70 +585,35 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
                            ctx->Array.ElementArrayBufferObj);
 }
 
-
-static void GLAPIENTRY
-vbo_exec_DrawRangeElements(GLenum mode,
-			   GLuint start, GLuint end,
-			   GLsizei count, GLenum type, const GLvoid *indices)
+/* Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
+static void
+vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
+				GLboolean index_bounds_valid,
+				GLuint start, GLuint end,
+				GLsizei count, GLenum type,
+				const GLvoid *indices)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
    struct _mesa_index_buffer ib;
    struct _mesa_prim prim[1];
-
-   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
-                                          type, indices ))
-      return;
-
-   if (end >= ctx->Array.ArrayObj->_MaxElement) {
-      /* the max element is out of bounds of one or more enabled arrays */
-      _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
-                    "type 0x%x, indices=%p)\n"
-                    "\tindex=%u is out of bounds (max=%u)  "
-                    "Element Buffer %u (size %d)",
-                    start, end, count, type, indices, end,
-                    ctx->Array.ArrayObj->_MaxElement - 1,
-                    ctx->Array.ElementArrayBufferObj->Name,
-                    ctx->Array.ElementArrayBufferObj->Size);
-
-      if (0)
-         dump_element_buffer(ctx, type);
-
-      if (0)
-         _mesa_print_arrays(ctx);
-      return;
-   }
-   else if (0) {
-      _mesa_printf("glDraw[Range]Elements"
-                   "(start %u, end %u, type 0x%x, count %d) ElemBuf %u\n",
-                   start, end, type, count,
-                   ctx->Array.ElementArrayBufferObj->Name);
-   }
-
-#if 0
-   check_draw_elements_data(ctx, count, type, indices);
-#else
-   (void) check_draw_elements_data;
-#endif
 
    FLUSH_CURRENT( ctx, 0 );
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
-   if (!vbo_validate_shaders(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawRangeElements(bad shader)");
+   if (!_mesa_valid_to_render(ctx, "glDraw[Range]Elements")) {
       return;
    }
-
-   bind_arrays( ctx );
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
+   bind_arrays( ctx );
+
    ib.count = count;
-   ib.type = type; 
+   ib.type = type;
    ib.obj = ctx->Array.ElementArrayBufferObj;
    ib.ptr = indices;
 
@@ -673,7 +657,54 @@ vbo_exec_DrawRangeElements(GLenum mode,
     * for the latter case elsewhere.
     */
 
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, start, end );
+   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib,
+		    index_bounds_valid, start, end );
+}
+
+static void GLAPIENTRY
+vbo_exec_DrawRangeElements(GLenum mode,
+			   GLuint start, GLuint end,
+			   GLsizei count, GLenum type, const GLvoid *indices)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
+                                          type, indices ))
+      return;
+
+   if (end >= ctx->Array.ArrayObj->_MaxElement) {
+      /* the max element is out of bounds of one or more enabled arrays */
+      _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
+                    "type 0x%x, indices=%p)\n"
+                    "\tindex=%u is out of bounds (max=%u)  "
+                    "Element Buffer %u (size %d)",
+                    start, end, count, type, indices, end,
+                    ctx->Array.ArrayObj->_MaxElement - 1,
+                    ctx->Array.ElementArrayBufferObj->Name,
+                    ctx->Array.ElementArrayBufferObj->Size);
+
+      if (0)
+         dump_element_buffer(ctx, type);
+
+      if (0)
+         _mesa_print_arrays(ctx);
+      return;
+   }
+   else if (0) {
+      _mesa_printf("glDraw[Range]Elements"
+                   "(start %u, end %u, type 0x%x, count %d) ElemBuf %u\n",
+                   start, end, type, count,
+                   ctx->Array.ElementArrayBufferObj->Name);
+   }
+
+#if 0
+   check_draw_elements_data(ctx, count, type, indices);
+#else
+   (void) check_draw_elements_data;
+#endif
+
+   vbo_validated_drawrangeelements(ctx, mode, GL_TRUE, start, end,
+				   count, type, indices);
 }
 
 
@@ -682,35 +713,12 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
                       const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint min_index = 0;
-   GLuint max_index = 0;
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
 
-   if (!vbo_validate_shaders(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawElements(bad shader)");
-      return;
-   }
-
-   if (ctx->Array.ElementArrayBufferObj->Name) {
-      const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                                GL_READ_ONLY,
-                                                ctx->Array.ElementArrayBufferObj);
-
-      get_minmax_index(count, type, ADD_POINTERS(map, indices),
-                       &min_index, &max_index);
-
-      ctx->Driver.UnmapBuffer(ctx,
-			      GL_ELEMENT_ARRAY_BUFFER_ARB,
-			      ctx->Array.ElementArrayBufferObj);
-   }
-   else {
-      get_minmax_index(count, type, indices, &min_index, &max_index);
-   }
-
-   vbo_exec_DrawRangeElements(mode, min_index, max_index, count, type, indices);
+   vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
+				   count, type, indices);
 }
 
 

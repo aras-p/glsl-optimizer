@@ -38,7 +38,7 @@ static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont 
 
 	while (fp) {
 		tmp = fp->next;
-		_mesa_reference_program(ctx, &fp->Base, NULL);
+		rc_constants_destroy(&fp->code.constants);
 		_mesa_free(fp);
 		fp = tmp;
 	}
@@ -50,6 +50,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *c
 
 	while (vp) {
 		tmp = vp->next;
+		rc_constants_destroy(&vp->code.constants);
 		_mesa_reference_vertprog(ctx, &vp->Base, NULL);
 		_mesa_free(vp);
 		vp = tmp;
@@ -122,15 +123,11 @@ static GLboolean
 r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	if (target == GL_FRAGMENT_PROGRAM_ARB) {
-		struct r300_fragment_program *fp = r300SelectFragmentShader(ctx);
-		if (!fp->translated)
-			r300TranslateFragmentShader(ctx, fp);
+		struct r300_fragment_program *fp = r300SelectAndTranslateFragmentShader(ctx);
 
 		return !fp->error;
 	} else {
-		struct r300_vertex_program *vp = r300SelectVertexShader(ctx);
-		if (!vp->translated)
-			r300TranslateVertexShader(vp);
+		struct r300_vertex_program *vp = r300SelectAndTranslateVertexShader(ctx);
 
 		return !vp->error;
 	}

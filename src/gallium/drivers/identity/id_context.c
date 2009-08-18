@@ -501,7 +501,7 @@ identity_set_sampler_textures(struct pipe_context *_pipe,
 
    pipe->set_sampler_textures(pipe,
                               num_textures,
-                              _textures);
+                              textures);
 }
 
 static void

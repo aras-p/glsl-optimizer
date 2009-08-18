@@ -752,6 +752,13 @@ static const char VertexAttrib4ubNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_texture_range)
+static const char TextureRangeAPPLE_names[] = 
+    "iip\0" /* Parameter signature */
+    "glTextureRangeAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_SUN_vertex)
 static const char TexCoord2fColor4fNormal3fVertex3fSUN_names[] = 
     "ffffffffffff\0" /* Parameter signature */
@@ -1567,6 +1574,13 @@ static const char FragmentLightivSGIX_names[] =
     "";
 #endif
 
+#if defined(need_GL_APPLE_texture_range)
+static const char GetTexParameterPointervAPPLE_names[] = 
+    "iip\0" /* Parameter signature */
+    "glGetTexParameterPointervAPPLE\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_pixel_transform)
 static const char PixelTransformParameterfvEXT_names[] = 
     "iip\0" /* Parameter signature */
@@ -2076,6 +2090,13 @@ static const char Uniform2fvARB_names[] =
     "iip\0" /* Parameter signature */
     "glUniform2fv\0"
     "glUniform2fvARB\0"
+    "";
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const char BufferParameteriAPPLE_names[] = 
+    "iii\0" /* Parameter signature */
+    "glBufferParameteriAPPLE\0"
     "";
 #endif
 
@@ -2800,6 +2821,13 @@ static const char IsProgramNV_names[] =
     "i\0" /* Parameter signature */
     "glIsProgramARB\0"
     "glIsProgramNV\0"
+    "";
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const char FlushMappedBufferRangeAPPLE_names[] = 
+    "iii\0" /* Parameter signature */
+    "glFlushMappedBufferRangeAPPLE\0"
     "";
 #endif
 
@@ -4969,6 +4997,22 @@ static const char WindowPos2fMESA_names[] =
 #if defined(need_GL_3DFX_tbuffer)
 static const struct dri_extension_function GL_3DFX_tbuffer_functions[] = {
     { TbufferMask3DFX_names, TbufferMask3DFX_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_APPLE_flush_buffer_range)
+static const struct dri_extension_function GL_APPLE_flush_buffer_range_functions[] = {
+    { BufferParameteriAPPLE_names, BufferParameteriAPPLE_remap_index, -1 },
+    { FlushMappedBufferRangeAPPLE_names, FlushMappedBufferRangeAPPLE_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_APPLE_texture_range)
+static const struct dri_extension_function GL_APPLE_texture_range_functions[] = {
+    { TextureRangeAPPLE_names, TextureRangeAPPLE_remap_index, -1 },
+    { GetTexParameterPointervAPPLE_names, GetTexParameterPointervAPPLE_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

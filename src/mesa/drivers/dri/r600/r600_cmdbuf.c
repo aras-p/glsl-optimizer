@@ -78,8 +78,7 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
                         struct radeon_bo *bo,
                         uint32_t read_domain,
                         uint32_t write_domain,
-                        uint32_t flags,
-                        offset_modifiers* poffset_mod)
+                        uint32_t flags)
 {
     struct r600_cs_reloc_legacy *relocs;
     int i;
@@ -135,10 +134,6 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
             cs->section_ndw += 2;
             cs->section_cdw += 2;
 
-            relocs[i].offset_mod.shift     = poffset_mod->shift;
-            relocs[i].offset_mod.shiftbits = poffset_mod->shiftbits;
-            relocs[i].offset_mod.mask      = poffset_mod->mask;
-
             return 0;
         }
     }
@@ -160,9 +155,6 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
     {
         return -ENOMEM;
     }
-    relocs[cs->crelocs].offset_mod.shift     = poffset_mod->shift;
-    relocs[cs->crelocs].offset_mod.shiftbits = poffset_mod->shiftbits;
-    relocs[cs->crelocs].offset_mod.mask      = poffset_mod->mask;
 
     relocs[cs->crelocs].indices[0] = cs->cdw - 1;
     relocs[cs->crelocs].reloc_indices[0] = cs->section_cdw;
@@ -255,65 +247,44 @@ static int r600_cs_process_relocs(struct radeon_cs *cs,
     csm = (struct r600_cs_manager_legacy*)cs->csm;
     relocs = (struct r600_cs_reloc_legacy *)cs->relocs;
 restart:
-    for (i = 0; i < cs->crelocs; i++) 
-    {
-        for (j = 0; j < relocs[i].cindices; j++) 
-        {
+    for (i = 0; i < cs->crelocs; i++) {
             uint32_t soffset, eoffset, asicoffset;
 
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
-                                           &soffset, &eoffset);
-	        if (r == -EAGAIN)
-            {
-	             goto restart;
+					  &soffset, &eoffset);
+	    if (r == -EAGAIN) {
+		    goto restart;
             }
-            if (r) 
-            {
-                fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
-                        relocs[i].base.bo, soffset, eoffset);
-                return r;
+            if (r) {
+		    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
+			    relocs[i].base.bo, soffset, eoffset);
+		    return r;
             }
             asicoffset = soffset;
-            if (asicoffset >= eoffset) 
-            {
-	      /*                radeon_bo_debug(relocs[i].base.bo, 12); */
-                fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
-                        relocs[i].base.bo, soffset, eoffset);
-                fprintf(stderr, "above end: %p 0x%08X 0x%08X\n",
-                        relocs[i].base.bo,
-                        cs->packets[relocs[i].indices[j]],
-                        eoffset);
-                exit(0);
-                return -EINVAL;
-            }
-            /* apply offset operator */
-            switch (relocs[i].offset_mod.shift)
-            {
-            case NO_SHIFT:
-                asicoffset = asicoffset & relocs[i].offset_mod.mask;
-                break;
-            case LEFT_SHIFT:
-                asicoffset = (asicoffset << relocs[i].offset_mod.shiftbits) & relocs[i].offset_mod.mask;
-                break;
-            case RIGHT_SHIFT:
-                asicoffset = (asicoffset >> relocs[i].offset_mod.shiftbits) & relocs[i].offset_mod.mask;
-                break;
-            default:
-                break;
-            };              
 
-            /* pkt3 nop header in ib chunk */
-            cs->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
+	    for (j = 0; j < relocs[i].cindices; j++) {
+		    if (asicoffset >= eoffset) {
+			    /*                radeon_bo_debug(relocs[i].base.bo, 12); */
+			    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
+				    relocs[i].base.bo, soffset, eoffset);
+			    fprintf(stderr, "above end: %p 0x%08X 0x%08X\n",
+				    relocs[i].base.bo,
+				    cs->packets[relocs[i].indices[j]],
+				    eoffset);
+			    exit(0);
+			    return -EINVAL;
+		    }
+		    /* pkt3 nop header in ib chunk */
+		    cs->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
+		    /* reloc index in ib chunk */
+		    cs->packets[relocs[i].reloc_indices[j] + 1] = offset_dw;
+	    }
 
-            /* reloc index in ib chunk */
-            cs->packets[relocs[i].reloc_indices[j] + 1] = offset_dw;
-            
-            /* asic offset in reloc chunk */ /* see alex drm r600_nomm_relocate */
-            reloc_chunk[offset_dw] = asicoffset;
-            reloc_chunk[offset_dw + 3] = 0;
+	    /* asic offset in reloc chunk */ /* see alex drm r600_nomm_relocate */
+	    reloc_chunk[offset_dw] = asicoffset;
+	    reloc_chunk[offset_dw + 3] = 0;
 
-            offset_dw += 4;
-        }
+	    offset_dw += 4;
     }
 
     *length_dw_reloc_chunk = offset_dw;
@@ -351,10 +322,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
     struct drm_radeon_cs       cs_cmd;
     struct drm_radeon_cs_chunk cs_chunk[2];
-    drm_radeon_cmd_buffer_t cmd; 
-    /* drm_r300_cmd_header_t age; */
     uint32_t length_dw_reloc_chunk;
-    uint64_t ull;
     uint64_t chunk_ptrs[2];
     uint32_t reloc_chunk[128]; 
     int r;
@@ -363,43 +331,13 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* TODO : put chip level things here if need. */
     /* csm->ctx->vtbl.emit_cs_header(cs, csm->ctx); */
 
-    BATCH_LOCALS(csm->ctx);
-    drm_radeon_getparam_t gp;
-    uint32_t              current_scratchx_age;
-
-    gp.param = RADEON_PARAM_LAST_CLEAR;
-    gp.value = (int *)&current_scratchx_age;
-    r = drmCommandWriteRead(cs->csm->fd, 
-                            DRM_RADEON_GETPARAM,
-                            &gp, 
-                            sizeof(gp));
-    if (r) 
-    {
-        fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
-        exit(1);
-    }
-
-    csm->pending_age = 0;
     csm->pending_count = 1;
 
-    current_scratchx_age++;
-    csm->pending_age = current_scratchx_age;
-
-    BEGIN_BATCH_NO_AUTOSTATE(3);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    R600_OUT_BATCH((SCRATCH_REG2 - R600_SET_CONFIG_REG_OFFSET) >> 2);
-    R600_OUT_BATCH(current_scratchx_age);
-    END_BATCH();
-    COMMIT_BATCH();
-
-    //TODO ioctl to get back cs id assigned in drm
-    //csm->pending_age = cs_id_back;
-    
     r = r600_cs_process_relocs(cs, &(reloc_chunk[0]), &length_dw_reloc_chunk);
     if (r) {
         return 0;
     }
-      
+
     /* raw ib chunk */
     cs_chunk[0].chunk_id   = RADEON_CHUNK_ID_IB;
     cs_chunk[0].length_dw  = cs->cdw;
@@ -428,6 +366,8 @@ static int r600_cs_emit(struct radeon_cs *cs)
     if (r) {
         return r;
     }
+
+    csm->pending_age = cs_cmd.cs_id;
 
     r600_cs_set_age(cs);
 
@@ -514,8 +454,12 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
 void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 {
     radeonContextPtr rmesa = &r600->radeon;
-	
     GLuint size;
+    rmesa->hw.max_state_size = 4000; /* rough estimate */
+
+    rmesa->hw.all_dirty = GL_TRUE;
+    rmesa->hw.is_dirty = GL_TRUE;
+
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");

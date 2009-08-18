@@ -261,6 +261,32 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
 
 
 /**
+ * Clear all texture images of the given texture object.
+ *
+ * \param ctx GL context.
+ * \param t texture object.
+ *
+ * \sa _mesa_clear_texture_image().
+ */
+void
+_mesa_clear_texture_object(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+   GLuint i, j;
+
+   if (texObj->Target == 0)
+      return;
+
+   for (i = 0; i < MAX_FACES; i++) {
+      for (j = 0; j < MAX_TEXTURE_LEVELS; j++) {
+         struct gl_texture_image *texImage = texObj->Image[i][j];
+         if (texImage)
+            _mesa_clear_texture_image(ctx, texImage);
+      }
+   }
+}
+
+
+/**
  * Check if the given texture object is valid by examining its Target field.
  * For debugging only.
  */
@@ -308,7 +334,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_texture_object *oldTex = *ptr;
 
-      assert(valid_texture_object(oldTex));
+      ASSERT(valid_texture_object(oldTex));
 
       _glthread_LOCK_MUTEX(oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
@@ -331,7 +357,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 
    if (tex) {
       /* reference new texture */
-      assert(valid_texture_object(tex));
+      ASSERT(valid_texture_object(tex));
       _glthread_LOCK_MUTEX(tex->Mutex);
       if (tex->RefCount == 0) {
          /* this texture's being deleted (look just above) */
@@ -665,6 +691,24 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
 
 /**
+ * Mark a texture object dirty.  It forces the object to be incomplete
+ * and optionally forces the context to re-validate its state.
+ *
+ * \param ctx GL context.
+ * \param texObj texture object.
+ * \param invalidate_state also invalidate context state.
+ */
+void
+_mesa_dirty_texobj(GLcontext *ctx, struct gl_texture_object *texObj,
+                   GLboolean invalidate_state)
+{
+   texObj->_Complete = GL_FALSE;
+   if (invalidate_state)
+      ctx->NewState |= _NEW_TEXTURE;
+}
+
+
+/**
  * Return pointer to a default/fallback texture.
  * The texture is a 2D 8x8 RGBA texture with all texels = (0,0,0,1).
  * That's the value a sampler should get when sampling from an
@@ -713,7 +757,6 @@ _mesa_get_fallback_texture(GLcontext *ctx)
    }
    return ctx->Shared->FallbackTex;
 }
-
 
 
 /*@}*/
@@ -1160,10 +1203,9 @@ _mesa_IsTexture( GLuint texture )
 
 
 /**
- * Simplest implementation of texture locking: Grab the a new mutex in
- * the shared context.  Examine the shared context state timestamp and
- * if there has been a change, set the appropriate bits in
- * ctx->NewState.
+ * Simplest implementation of texture locking: grab the shared tex
+ * mutex.  Examine the shared context state timestamp and if there has
+ * been a change, set the appropriate bits in ctx->NewState.
  *
  * This is used to deal with synchronizing things when a texture object
  * is used/modified by different contexts (or threads) which are sharing

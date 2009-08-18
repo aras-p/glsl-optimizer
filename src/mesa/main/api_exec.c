@@ -107,6 +107,7 @@
 #include "state.h"
 #include "stencil.h"
 #include "texenv.h"
+#include "texgetimage.h"
 #include "teximage.h"
 #if FEATURE_texgen
 #include "texgen.h"

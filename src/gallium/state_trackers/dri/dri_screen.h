@@ -49,12 +49,6 @@ struct dri_screen
     */
    driOptionCache optionCache;
 
-   /**
-    * Temporary(?) context to use for SwapBuffers or other situations in
-    * which we need a rendering context, but none is currently bound.
-    */
-   struct dri_context *dummyContext;
-
    /* drm */
    int fd;
    drmLock *drmLock;

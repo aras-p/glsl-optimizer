@@ -57,12 +57,19 @@ PUBLIC const char __driConfigOptions[] =
 
    const uint __driNConfigOptions = 3;
 
+static const __DRItexBufferExtension dri2TexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   dri2_set_tex_buffer,
+   dri2_set_tex_buffer2,
+};
+
    static const __DRIextension *dri_screen_extensions[] = {
       &driReadDrawableExtension,
       &driCopySubBufferExtension.base,
       &driSwapControlExtension.base,
       &driFrameTrackingExtension.base,
       &driMediaStreamCounterExtension.base,
+      &dri2TexBufferExtension.base,
       NULL
    };
 

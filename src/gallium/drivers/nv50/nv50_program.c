@@ -251,7 +251,7 @@ alloc_temp4(struct nv50_pc *pc, struct nv50_reg *dst[4], int idx)
 
 	if (pc->r_temp[idx] || pc->r_temp[idx + 1] ||
 	    pc->r_temp[idx + 2] || pc->r_temp[idx + 3])
-		return alloc_temp4(pc, dst, idx + 1);
+		return alloc_temp4(pc, dst, idx + 4);
 
 	for (i = 0; i < 4; i++) {
 		dst[i] = CALLOC_STRUCT(nv50_reg);
@@ -296,7 +296,7 @@ kill_temp_temp(struct nv50_pc *pc)
 static int
 ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 {
-	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * r * sizeof(float)),
+	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(float)),
 			       (pc->immd_nr + 1) * 4 * sizeof(float));
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
@@ -1014,6 +1014,7 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 		break;
 	}
 
+	/* some cards need t[0]'s hw index to be a multiple of 4 */
 	alloc_temp4(pc, t, 0);
 
 	if (proj) {
@@ -1809,10 +1810,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			const struct tgsi_full_immediate *imm =
 				&p.FullToken.FullImmediate;
 
-			ctor_immd(pc, imm->u.ImmediateFloat32[0].Float,
-				      imm->u.ImmediateFloat32[1].Float,
-				      imm->u.ImmediateFloat32[2].Float,
-				      imm->u.ImmediateFloat32[3].Float);
+			ctor_immd(pc, imm->u[0].Float,
+				      imm->u[1].Float,
+				      imm->u[2].Float,
+				      imm->u[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
@@ -2221,9 +2222,9 @@ nv50_program_upload_data(struct nv50_context *nv50, float *map,
 	while (count) {
 		unsigned nr = count > 2047 ? 2047 : count;
 
-		BEGIN_RING(chan, tesla, 0x00000f00, 1);
+		BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 1);
 		OUT_RING  (chan, (cbuf << 0) | (start << 8));
-		BEGIN_RING(chan, tesla, 0x40000f04, nr);
+		BEGIN_RING(chan, tesla, NV50TCL_CB_DATA(0) | 0x40000000, nr);
 		OUT_RINGp (chan, map, nr);
 
 		map += nr;
@@ -2345,7 +2346,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	}
 
 	so = so_new(4,2);
-	so_method(so, nv50->screen->tesla, 0x1280, 3);
+	so_method(so, nv50->screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PUPLOAD << 16) | 0x0800); //(p->exec_size * 4));
@@ -2364,9 +2365,9 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 			continue;
 		}
 
-		BEGIN_RING(chan, tesla, 0x0f00, 1);
+		BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 1);
 		OUT_RING  (chan, (start << 8) | NV50_CB_PUPLOAD);
-		BEGIN_RING(chan, tesla, 0x40000f04, nr);	
+		BEGIN_RING(chan, tesla, NV50TCL_CB_DATA(0) | 0x40000000, nr);
 		OUT_RINGp (chan, up + start, nr);
 
 		start += nr;
@@ -2399,15 +2400,15 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 		      NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, tesla, 0x1650, 2);
+	so_method(so, tesla, NV50TCL_VP_ATTR_EN_0, 2);
 	so_data  (so, p->cfg.vp.attr[0]);
 	so_data  (so, p->cfg.vp.attr[1]);
-	so_method(so, tesla, 0x16b8, 1);
+	so_method(so, tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	so_data  (so, p->cfg.high_result);
-	so_method(so, tesla, 0x16ac, 2);
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 2);
 	so_data  (so, p->cfg.high_result); //8);
 	so_data  (so, p->cfg.high_temp);
-	so_method(so, tesla, 0x140c, 1);
+	so_method(so, tesla, NV50TCL_VP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.vertprog);
 	so_ref(NULL, &so);
@@ -2436,24 +2437,24 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 		      NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, tesla, 0x1904, 4);
+	so_method(so, tesla, NV50TCL_MAP_SEMANTIC_0, 4);
 	so_data  (so, p->cfg.fp.regs[0]); /* 0x01000404 / 0x00040404 */
 	so_data  (so, 0x00000004);
 	so_data  (so, 0x00000000);
 	so_data  (so, 0x00000000);
-	so_method(so, tesla, 0x16bc, p->cfg.fp.high_map);
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), p->cfg.fp.high_map);
 	for (i = 0; i < p->cfg.fp.high_map; i++)
 		so_data(so, p->cfg.fp.map[i]);
-	so_method(so, tesla, 0x1988, 2);
+	so_method(so, tesla, NV50TCL_FP_INTERPOLANT_CTRL, 2);
 	so_data  (so, p->cfg.fp.regs[1]); /* 0x08040404 / 0x0f000401 */
 	so_data  (so, p->cfg.high_temp);
-	so_method(so, tesla, 0x1298, 1);
+	so_method(so, tesla, NV50TCL_FP_RESULT_COUNT, 1);
 	so_data  (so, p->cfg.high_result);
-	so_method(so, tesla, 0x19a8, 1);
+	so_method(so, tesla, NV50TCL_FP_CTRL_UNK19A8, 1);
 	so_data  (so, p->cfg.fp.regs[2]);
-	so_method(so, tesla, 0x196c, 1);
+	so_method(so, tesla, NV50TCL_FP_CTRL_UNK196C, 1);
 	so_data  (so, p->cfg.fp.regs[3]);
-	so_method(so, tesla, 0x1414, 1);
+	so_method(so, tesla, NV50TCL_FP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.fragprog);
 	so_ref(NULL, &so);
@@ -2478,4 +2479,3 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 
 	p->translated = 0;
 }
-

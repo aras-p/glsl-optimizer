@@ -43,4 +43,13 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
 
 
 
+extern void GLAPIENTRY
+_mesa_GetTexImage( GLenum target, GLint level,
+                   GLenum format, GLenum type, GLvoid *pixels );
+
+
+extern void GLAPIENTRY
+_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
+
+
 #endif /* TEXGETIMAGE_H */

@@ -1205,7 +1205,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm)
+GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalized)
 {
     PVSSRC *   texture_coordinate_source;
     PVSSRC *   texture_unit_source;
@@ -1227,10 +1227,18 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm)
     tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg;
 
     tex_instruction_ptr->m_Word1.f.lod_bias     = 0x0;
-    tex_instruction_ptr->m_Word1.f.coord_type_x = SQ_TEX_NORMALIZED;
-    tex_instruction_ptr->m_Word1.f.coord_type_y = SQ_TEX_NORMALIZED;
-    tex_instruction_ptr->m_Word1.f.coord_type_z = SQ_TEX_NORMALIZED;
-    tex_instruction_ptr->m_Word1.f.coord_type_w = SQ_TEX_NORMALIZED;
+    if (normalized) {
+	    tex_instruction_ptr->m_Word1.f.coord_type_x = SQ_TEX_NORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_y = SQ_TEX_NORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_z = SQ_TEX_NORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_w = SQ_TEX_NORMALIZED;
+    } else {
+	    /* XXX: UNNORMALIZED tex coords have limited wrap modes */
+	    tex_instruction_ptr->m_Word1.f.coord_type_x = SQ_TEX_UNNORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_y = SQ_TEX_UNNORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_z = SQ_TEX_UNNORMALIZED;
+	    tex_instruction_ptr->m_Word1.f.coord_type_w = SQ_TEX_UNNORMALIZED;
+    }
 
     tex_instruction_ptr->m_Word2.f.offset_x   = 0x0;
     tex_instruction_ptr->m_Word2.f.offset_y   = 0x0;
@@ -2196,11 +2204,19 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
 
     if( GL_TRUE == IsTex(pILInst->Opcode) )
     {
-        if( GL_FALSE == assemble_tex_instruction(pAsm) ) 
-        {
-            r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling TEX instruction");
-            return GL_FALSE;
-        }
+	    if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX) {
+		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE) ) 
+		    {
+			    r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling TEX instruction");
+			    return GL_FALSE;
+		    }
+	    } else {
+		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE) ) 
+		    {
+			    r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling TEX instruction");
+			    return GL_FALSE;
+		    }
+	    }
     }
     else 
     {   //ALU      
@@ -3823,6 +3839,9 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
     if (export_count == 1) 
     {
         ucWriteMask = pAsm->pucOutMask[starting_register_number - pAsm->starting_export_register_number];
+	/* exports Z as a float into Red channel */
+	if (GL_TRUE == is_depth_export)
+	    ucWriteMask = 0x1;
 
         if( (ucWriteMask & 0x1) != 0)
         {
@@ -4013,6 +4032,22 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
 
         export_starting_index++;
 	}
+
+        unBit = 1 << VERT_RESULT_FOGC;
+        if(OutputsWritten & unBit)
+        {
+        if( GL_FALSE == Process_Export(pR700AsmCode,
+                                       SQ_EXPORT_PARAM,
+                                       export_starting_index,
+                                       1,
+                                       pR700AsmCode->ucVP_OutputMap[VERT_RESULT_FOGC],
+                                       GL_FALSE) )
+        {
+            return GL_FALSE;
+        }
+
+        export_starting_index++;
+        }
 
 	for(i=0; i<8; i++)
 	{

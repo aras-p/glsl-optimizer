@@ -92,6 +92,7 @@ const struct brw_tracked_state brw_clear_batch_cache;
 const struct brw_tracked_state brw_drawing_rect;
 const struct brw_tracked_state brw_indices;
 const struct brw_tracked_state brw_vertices;
+const struct brw_tracked_state brw_index_buffer;
 
 /**
  * Use same key for WM and VS surfaces.

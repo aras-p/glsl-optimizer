@@ -1,0 +1,13 @@
+vs CH18-mandel.vert
+fs CH18-mandel.frag
+uniform LightPosition        GL_FLOAT_VEC3 0.1 0.1 9.0
+uniform SpecularContribution GL_FLOAT 0.5
+uniform DiffuseContribution  GL_FLOAT 0.5
+uniform Shininess            GL_FLOAT 20.0
+uniform Iterations           GL_FLOAT 12
+uniform Zoom                 GL_FLOAT 0.125
+uniform Xcenter              GL_FLOAT -1.5
+uniform Ycenter              GL_FLOAT .005
+uniform InnerColor           GL_FLOAT_VEC3 1 0 0
+uniform OuterColor1          GL_FLOAT_VEC3 0 1 0
+uniform OuterColor2          GL_FLOAT_VEC3 0 0 1

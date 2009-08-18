@@ -6,6 +6,7 @@
 #endif
 
 #include "egltypedefs.h"
+#include "eglhash.h"
 
 
 struct _egl_display 
@@ -26,6 +27,10 @@ struct _egl_display
    /* lists of linked contexts and surface */
    _EGLContext *ContextList;
    _EGLSurface *SurfaceList;
+
+   /* hash table to map surfaces to handles */
+   _EGLHashtable *SurfaceHash;
+
 #ifdef _EGL_PLATFORM_X
    Display *Xdpy;
 #endif
@@ -122,6 +127,27 @@ static INLINE EGLBoolean
 _eglIsSurfaceLinked(_EGLSurface *surf)
 {
    return (EGLBoolean) (_eglGetSurfaceHandle(surf) != EGL_NO_SURFACE);
+}
+
+
+/**
+ * Cast an unsigned int to a pointer.
+ */
+static INLINE void *
+_eglUIntToPointer(unsigned int v)
+{
+   return (void *) ((uintptr_t) v);
+}
+
+
+/**
+ * Cast a pointer to an unsigned int.  The pointer must be one that is
+ * returned by _eglUIntToPointer.
+ */
+static INLINE unsigned int
+_eglPointerToUInt(const void *p)
+{
+   return (unsigned int) ((uintptr_t) p);
 }
 
 

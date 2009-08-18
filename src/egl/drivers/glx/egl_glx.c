@@ -739,7 +739,7 @@ GLX_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    return EGL_TRUE;
    if (surf) {
       _eglUnlinkSurface(surf);
-      if (!surf->IsBound)
+      if (!_eglIsSurfaceBound(surf))
          free(surf);
 
       return EGL_TRUE;

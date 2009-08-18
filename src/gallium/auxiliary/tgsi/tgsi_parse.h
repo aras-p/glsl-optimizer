@@ -73,11 +73,7 @@ struct tgsi_full_declaration
 struct tgsi_full_immediate
 {
    struct tgsi_immediate   Immediate;
-   union
-   {
-      const void                          *Pointer;
-      const struct tgsi_immediate_float32 *ImmediateFloat32;
-   } u;
+   union tgsi_immediate_data u[4];
 };
 
 #define TGSI_FULL_MAX_DST_REGISTERS 2

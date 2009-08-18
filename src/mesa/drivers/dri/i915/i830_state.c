@@ -1047,6 +1047,16 @@ i830_init_packets(struct i830_context *i830)
                                          TEXBIND_SET1(TEXCOORDSRC_VTXSET_1) |
                                          TEXBIND_SET0(TEXCOORDSRC_VTXSET_0));
 
+   i830->state.RasterRules[I830_RASTER_RULES] = (_3DSTATE_RASTER_RULES_CMD |
+						 ENABLE_POINT_RASTER_RULE |
+						 OGL_POINT_RASTER_RULE |
+						 ENABLE_LINE_STRIP_PROVOKE_VRTX |
+						 ENABLE_TRI_FAN_PROVOKE_VRTX |
+						 ENABLE_TRI_STRIP_PROVOKE_VRTX |
+						 LINE_STRIP_PROVOKE_VRTX(1) |
+						 TRI_FAN_PROVOKE_VRTX(2) |
+						 TRI_STRIP_PROVOKE_VRTX(2));
+
 
    i830->state.Stipple[I830_STPREG_ST0] = _3DSTATE_STIPPLE;
 
@@ -1058,6 +1068,27 @@ i830_init_packets(struct i830_context *i830)
    i830->state.Buffer[I830_DESTREG_SR2] = 0;
 }
 
+void
+i830_update_provoking_vertex(GLcontext * ctx)
+{
+   struct i830_context *i830 = i830_context(ctx);
+
+   I830_STATECHANGE(i830, I830_UPLOAD_RASTER_RULES);
+   i830->state.RasterRules[I830_RASTER_RULES] &= ~(LINE_STRIP_PROVOKE_VRTX_MASK |
+						   TRI_FAN_PROVOKE_VRTX_MASK |
+						   TRI_STRIP_PROVOKE_VRTX_MASK);
+
+   /* _NEW_LIGHT */
+   if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION) {
+      i830->state.RasterRules[I830_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(1) |
+						     TRI_FAN_PROVOKE_VRTX(2) |
+						     TRI_STRIP_PROVOKE_VRTX(2));
+   } else {
+      i830->state.RasterRules[I830_RASTER_RULES] |= (LINE_STRIP_PROVOKE_VRTX(0) |
+						     TRI_FAN_PROVOKE_VRTX(1) |
+						     TRI_STRIP_PROVOKE_VRTX(0));
+    }
+}
 
 void
 i830InitStateFuncs(struct dd_function_table *functions)
@@ -1101,6 +1132,7 @@ i830InitState(struct i830_context *i830)
    i830->current = &i830->state;
    i830->state.emitted = 0;
    i830->state.active = (I830_UPLOAD_INVARIENT |
+                         I830_UPLOAD_RASTER_RULES |
                          I830_UPLOAD_TEXBLEND(0) |
                          I830_UPLOAD_STIPPLE |
                          I830_UPLOAD_CTX | I830_UPLOAD_BUFFERS);

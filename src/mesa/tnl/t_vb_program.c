@@ -386,6 +386,9 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 #endif
          COPY_4V(store->results[attr].data[i], machine.Outputs[attr]);
       }
+#ifdef NAN_CHECK
+      ASSERT(machine.Outputs[0][3] != 0.0F);
+#endif
 #if 0
       printf("HPOS: %f %f %f %f\n",
              machine.Outputs[0][0], 

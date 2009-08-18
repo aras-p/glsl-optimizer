@@ -65,11 +65,6 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 
           if (mt->compressed) {
               mt->pitch = ALIGN(mt->width0, align_w);
-              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * mt->pitch * mt->cpp;
-              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * 6;
-          } else {
-              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * mt->pitch * mt->cpp;
-              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * 6;
           }
 
           if (mt->first_level != mt->last_level) {
@@ -89,6 +84,14 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
           }
 
           mt->pitch = intel_miptree_pitch_align(intel, mt, tiling, mt->pitch);
+
+          if (mt->compressed) {
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * mt->pitch * mt->cpp;
+              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * 6;
+          } else {
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * mt->pitch * mt->cpp;
+              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * 6;
+          }
 
           for (level = mt->first_level; level <= mt->last_level; level++) {
               GLuint img_height;

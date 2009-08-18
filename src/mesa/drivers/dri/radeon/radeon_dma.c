@@ -52,7 +52,7 @@ do {						\
 } while (0)
 #endif
 
-static void radeonEmitVec4(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -70,7 +70,7 @@ static void radeonEmitVec4(uint32_t *out, GLvoid * data, int stride, int count)
 		}
 }
 
-void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec8(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -89,7 +89,7 @@ void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
 		}
 }
 
-void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec12(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -110,7 +110,7 @@ void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
 		}
 }
 
-static void radeonEmitVec16(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -132,7 +132,7 @@ static void radeonEmitVec16(uint32_t *out, GLvoid * data, int stride, int count)
 }
 
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
-			 GLvoid * data, int size, int stride, int count)
+			 const GLvoid * data, int size, int stride, int count)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	uint32_t *out;
@@ -185,15 +185,9 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	}
 
 again_alloc:
-#ifdef RADEON_DEBUG_BO
-    rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
-					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
-					    0, "dma.current");
-#else    
 	rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
 					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
 					    0);
-#endif /* RADEON_DEBUG_BO */
 
 	if (!rmesa->dma.current) {
 		rcommonFlushCmdBuf(rmesa, __FUNCTION__);

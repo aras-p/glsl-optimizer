@@ -28,6 +28,7 @@
 
 #include "glheader.h"
 #include "api_arrayelt.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
@@ -1071,7 +1072,7 @@ void _ae_destroy_context( GLcontext *ctx )
 static void check_vbo( AEcontext *actx,
 		       struct gl_buffer_object *vbo )
 {
-   if (vbo->Name && !vbo->Pointer) {
+   if (_mesa_is_bufferobj(vbo) && !_mesa_bufferobj_mapped(vbo)) {
       GLuint i;
       for (i = 0; i < actx->nr_vbos; i++)
 	 if (actx->vbo[i] == vbo)

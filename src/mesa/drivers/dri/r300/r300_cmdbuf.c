@@ -164,47 +164,46 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	int numtmus = packet0_count(r300, r300->hw.tex.offset.cmd);
-	int notexture = 0;
+	int i;
 
-	if (numtmus) {
-		int i;
-
-		for(i = 0; i < numtmus; ++i) {
-		    radeonTexObj *t = r300->hw.textures[i];
-
-		    if (!t)
-			notexture = 1;
-		}
-
-		if (r300->radeon.radeonScreen->kernel_mm && notexture) {
-			return;
-		}
-		for(i = 0; i < numtmus; ++i) {
-		    radeonTexObj *t = r300->hw.textures[i];
-		    if (t && !t->image_override) {
-                BEGIN_BATCH_NO_AUTOSTATE(4);
-                OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-			    OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-					    RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-                END_BATCH();
-		    } else if (!t) {
-                /* Texture unit hasn't a texture bound nothings to do */
-		    } else { /* override cases */
-			    if (t->bo) {
-                    BEGIN_BATCH_NO_AUTOSTATE(4);
-                    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-				    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
-						    RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-                    END_BATCH();
-			    } else if (!r300->radeon.radeonScreen->kernel_mm) {
-                    BEGIN_BATCH_NO_AUTOSTATE(2);
-                    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-				    OUT_BATCH(t->override_offset);
-                    END_BATCH();
-			    } else {
-                    /* Texture unit hasn't a texture bound nothings to do */
-                }
-		    }
+	for(i = 0; i < numtmus; ++i) {
+		radeonTexObj *t = r300->hw.textures[i];
+		if (t && !t->image_override) {
+			BEGIN_BATCH_NO_AUTOSTATE(4);
+			OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+			OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+					RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			END_BATCH();
+		} else if (!t) {
+			/* Texture unit hasn't a texture bound.
+			 * We assign the current color buffer as a fakery to make
+			 * KIL work on KMS (without it, the CS checker will complain).
+			 */
+			if (r300->radeon.radeonScreen->kernel_mm) {
+				struct radeon_renderbuffer *rrb = radeon_get_colorbuffer(&r300->radeon);
+				if (rrb && rrb->bo) {
+					BEGIN_BATCH_NO_AUTOSTATE(4);
+					OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+					OUT_BATCH_RELOC(0, rrb->bo, 0,
+							RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					END_BATCH();
+				}
+			}
+		} else { /* override cases */
+			if (t->bo) {
+				BEGIN_BATCH_NO_AUTOSTATE(4);
+				OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+				OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+						RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+				END_BATCH();
+			} else if (!r300->radeon.radeonScreen->kernel_mm) {
+				BEGIN_BATCH_NO_AUTOSTATE(2);
+				OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+				OUT_BATCH(t->override_offset);
+				END_BATCH();
+			} else {
+				/* Texture unit hasn't a texture bound nothings to do */
+			}
 		}
 	}
 }

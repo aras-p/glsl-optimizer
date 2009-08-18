@@ -191,9 +191,9 @@ enum pipe_texture_target {
  * Transfer object usage flags
  */
 enum pipe_transfer_usage {
-   PIPE_TRANSFER_READ,
-   PIPE_TRANSFER_WRITE,
-   PIPE_TRANSFER_READ_WRITE  /**< Read/modify/write */
+   PIPE_TRANSFER_READ = (1 << 0),
+   PIPE_TRANSFER_WRITE = (1 << 1),
+   PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE /**< Read/modify/write */
 };
 
 

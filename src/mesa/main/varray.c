@@ -135,7 +135,8 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          break;
 #endif
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -186,7 +187,8 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          break;
 #endif
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -265,7 +267,8 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          break;
 #endif
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glColorPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glColorPointer(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -415,7 +418,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
          elementSize = size * sizeof(GLdouble);
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -476,7 +480,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          break;
 #endif
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -610,7 +615,8 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
          elementSize = size * sizeof(GLdouble);
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerNV(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerNV(type=%s)",
+                      _mesa_lookup_enum_by_nr(type));
          return;
    }
 
@@ -1090,6 +1096,29 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
       }
    }
 }
+
+
+/**
+ * Copy one client vertex array to another.
+ */
+void
+_mesa_copy_client_array(GLcontext *ctx,
+                        struct gl_client_array *dst,
+                        struct gl_client_array *src)
+{
+   dst->Size = src->Size;
+   dst->Type = src->Type;
+   dst->Format = src->Format;
+   dst->Stride = src->Stride;
+   dst->StrideB = src->StrideB;
+   dst->Ptr = src->Ptr;
+   dst->Enabled = src->Enabled;
+   dst->Normalized = src->Normalized;
+   dst->_ElementSize = src->_ElementSize;
+   _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
+   dst->_MaxElement = src->_MaxElement;
+}
+
 
 
 /**

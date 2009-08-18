@@ -32,30 +32,30 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	switch (mt->base.format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
 			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
 			    NV50TIC_0_0_FMT_8_8_8_8);
 		break;
 	case PIPE_FORMAT_A1R5G5B5_UNORM:
 		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
 			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
 			    NV50TIC_0_0_FMT_1_5_5_5);
 		break;
 	case PIPE_FORMAT_A4R4G4B4_UNORM:
 		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
 			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
 			    NV50TIC_0_0_FMT_4_4_4_4);
 		break;
 	case PIPE_FORMAT_R5G6B5_UNORM:
 		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
 			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
 			    NV50TIC_0_0_FMT_5_6_5);
 		break;
 	case PIPE_FORMAT_L8_UNORM:
@@ -145,25 +145,28 @@ nv50_tex_validate(struct nv50_context *nv50)
 	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
 
 	so = so_new(push, nv50->miptree_nr * 2);
-	so_method(so, tesla, 0x0f00, 1);
+	so_method(so, tesla, NV50TCL_CB_ADDR, 1);
 	so_data  (so, NV50_CB_TIC);
 	for (unit = 0; unit < nv50->miptree_nr; unit++) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
-		so_method(so, tesla, 0x40000f04, 8);
+		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000, 8);
 		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
 			return;
 		}
 
-		so_method(so, tesla, 0x1458, 1);
-		so_data  (so, (unit << 9) | (unit << 1) | 1);
+		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
+		so_data  (so, (unit << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
+			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
+			NV50TCL_SET_SAMPLER_TEX_VALID);
 	}
 
 	for (; unit < nv50->state.miptree_nr; unit++) {
-		so_method(so, tesla, 0x1458, 1);
-		so_data  (so, (unit << 1) | 0);
+		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
+		so_data  (so,
+			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
 	}
 
 	so_ref(so, &nv50->state.tic_upload);

@@ -147,6 +147,8 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_TGSI_CONT_SUPPORTED:
             /* XXX */
             return 0;
+        case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+            return 1;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
@@ -320,13 +322,14 @@ r300_get_tex_transfer(struct pipe_screen *screen,
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
         pipe_texture_reference(&trans->transfer.texture, texture);
-        trans->transfer.format = trans->transfer.format;
+        trans->transfer.format = texture->format;
         trans->transfer.width = w;
         trans->transfer.height = h;
         trans->transfer.block = texture->block;
         trans->transfer.nblocksx = texture->nblocksx[level];
         trans->transfer.nblocksy = texture->nblocksy[level];
-        trans->transfer.stride = tex->stride;
+        trans->transfer.stride = align(pf_get_stride(&trans->transfer.block,
+                                                     texture->width[level]), 32);
         trans->transfer.usage = usage;
         trans->offset = offset;
     }

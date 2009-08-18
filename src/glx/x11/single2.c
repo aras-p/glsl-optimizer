@@ -147,7 +147,7 @@ __indirect_glGetError(void)
 
 /**
  * Get the selected attribute from the client state.
- * 
+ *
  * \returns
  * On success \c GL_TRUE is returned.  Otherwise, \c GL_FALSE is returned.
  */
@@ -679,7 +679,8 @@ __indirect_glGetString(GLenum name)
     */
 
    (void) __glXFlushRenderBuffer(gc, gc->pc);
-   s = (GLubyte *) __glXGetString(dpy, gc->majorOpcode, gc->currentContextTag, name);
+   s = (GLubyte *) __glXGetString(dpy, gc->majorOpcode, gc->currentContextTag,
+                                  name);
    if (!s) {
       /* Throw data on the floor */
       __glXSetError(gc, GL_OUT_OF_MEMORY);
@@ -753,7 +754,7 @@ __indirect_glGetString(GLenum name)
              * hardware accelerated.  For example, a TNT will show core
              * version 1.5, but most of the post-1.2 functionality is a
              * software fallback.
-             * 
+             *
              * I don't want to break applications that rely on this odd
              * behavior.  At the same time, the code is written and tested,
              * so I didn't want to throw it away.  Therefore, the code is here
@@ -766,7 +767,7 @@ __indirect_glGetString(GLenum name)
              * gc->server_minor are set.  This version may be higher than we
              * can completely support, but it may imply support for some
              * extensions that we can support.
-             * 
+             *
              * For example, at the time of this writing, the client-side
              * library only supports upto core GL version 1.2.  However, cubic
              * textures, multitexture, multisampling, and some other 1.3
@@ -880,50 +881,50 @@ GLboolean
 __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
                                  GLboolean * residences)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    Display *const dpy = gc->currentDpy;
-    GLboolean retval = (GLboolean) 0;
-    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
-    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+   __GLXcontext *const gc = __glXGetCurrentContext();
+   Display *const dpy = gc->currentDpy;
+   GLboolean retval = (GLboolean) 0;
+   const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+   if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
 #ifdef USE_XCB
-        xcb_connection_t *c = XGetXCBConnection(dpy);
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-        xcb_glx_are_textures_resident_reply_t *reply =
-            xcb_glx_are_textures_resident_reply(c,
-                                                xcb_glx_are_textures_resident
-                                                (c, gc->currentContextTag, n,
-                                                 textures), NULL);
-        (void) memcpy(residences, xcb_glx_are_textures_resident_data(reply),
-                      xcb_glx_are_textures_resident_data_length(reply) *
-                      sizeof(GLboolean));
-        retval = reply->ret_val;
-        free(reply);
+      xcb_connection_t *c = XGetXCBConnection(dpy);
+      (void) __glXFlushRenderBuffer(gc, gc->pc);
+      xcb_glx_are_textures_resident_reply_t *reply =
+         xcb_glx_are_textures_resident_reply(c,
+                                             xcb_glx_are_textures_resident
+                                             (c, gc->currentContextTag, n,
+                                              textures), NULL);
+      (void) memcpy(residences, xcb_glx_are_textures_resident_data(reply),
+                    xcb_glx_are_textures_resident_data_length(reply) *
+                    sizeof(GLboolean));
+      retval = reply->ret_val;
+      free(reply);
 #else
-        GLubyte const *pc =
-            __glXSetupSingleRequest(gc, X_GLsop_AreTexturesResident, cmdlen);
-        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-        (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
-        if (n & 3) {
-           /* n is not a multiple of four.
-            * When reply_is_always_array is TRUE, __glXReadReply() will
-            * put a multiple of four bytes into the dest buffer.  If the
-            * caller's buffer is not a multiple of four in size, we'll write
-            * out of bounds.  So use a temporary buffer that's a few bytes
-            * larger.
-            */
-           GLboolean *res4 = malloc((n + 3) & ~3);
-           retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
-           memcpy(residences, res4, n);
-           free(res4);
-        }
-        else {
-           retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
-        }
-        UnlockDisplay(dpy);
-        SyncHandle();
+      GLubyte const *pc =
+         __glXSetupSingleRequest(gc, X_GLsop_AreTexturesResident, cmdlen);
+      (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+      (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+      if (n & 3) {
+         /* n is not a multiple of four.
+          * When reply_is_always_array is TRUE, __glXReadReply() will
+          * put a multiple of four bytes into the dest buffer.  If the
+          * caller's buffer is not a multiple of four in size, we'll write
+          * out of bounds.  So use a temporary buffer that's a few bytes
+          * larger.
+          */
+         GLboolean *res4 = malloc((n + 3) & ~3);
+         retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
+         memcpy(residences, res4, n);
+         free(res4);
+      }
+      else {
+         retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
+      }
+      UnlockDisplay(dpy);
+      SyncHandle();
 #endif /* USE_XCB */
-    }
-    return retval;
+   }
+   return retval;
 }
 
 
@@ -936,36 +937,37 @@ GLboolean
 glAreTexturesResidentEXT(GLsizei n, const GLuint * textures,
                          GLboolean * residences)
 {
-    __GLXcontext *const gc = __glXGetCurrentContext();
+   __GLXcontext *const gc = __glXGetCurrentContext();
 
-    if (gc->isDirect) {
-        return CALL_AreTexturesResident(GET_DISPATCH(),
-                                        (n, textures, residences));
-    } else {
-        __GLXcontext *const gc = __glXGetCurrentContext();
-        Display *const dpy = gc->currentDpy;
-        GLboolean retval = (GLboolean) 0;
-        const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
-        if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
-            GLubyte const *pc =
-                __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
-                                        X_GLvop_AreTexturesResidentEXT,
-                                        cmdlen);
-            (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
-            (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
-            if (n & 3) {
-               /* see comments in __indirect_glAreTexturesResident() */
-               GLboolean *res4 = malloc((n + 3) & ~3);
-               retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
-               memcpy(residences, res4, n);
-               free(res4);
-            }
-            else {
-               retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
-            }
-            UnlockDisplay(dpy);
-            SyncHandle();
-        }
-        return retval;
-    }
+   if (gc->isDirect) {
+      return CALL_AreTexturesResident(GET_DISPATCH(),
+                                      (n, textures, residences));
+   }
+   else {
+      __GLXcontext *const gc = __glXGetCurrentContext();
+      Display *const dpy = gc->currentDpy;
+      GLboolean retval = (GLboolean) 0;
+      const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+      if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+         GLubyte const *pc =
+            __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                    X_GLvop_AreTexturesResidentEXT,
+                                    cmdlen);
+         (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+         (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+         if (n & 3) {
+            /* see comments in __indirect_glAreTexturesResident() */
+            GLboolean *res4 = malloc((n + 3) & ~3);
+            retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
+            memcpy(residences, res4, n);
+            free(res4);
+         }
+         else {
+            retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
+         }
+         UnlockDisplay(dpy);
+         SyncHandle();
+      }
+      return retval;
+   }
 }

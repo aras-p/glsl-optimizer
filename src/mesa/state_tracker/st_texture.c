@@ -32,6 +32,7 @@
 #include "st_cb_fbo.h"
 #include "st_inlines.h"
 #include "main/enums.h"
+#include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
 
@@ -353,25 +354,95 @@ st_texture_image_copy(struct pipe_context *pipe,
    }
 }
 
-/** Bind a pipe surface for use as a texture image */
+
+/**
+ * Bind a pipe surface to a texture object.  After the call,
+ * the texture object is marked dirty and will be (re-)validated.
+ *
+ * If this is the first surface bound, the texture object is said to
+ * switch from normal to surface based.  It will be cleared first in
+ * this case.
+ *
+ * \param ps      pipe surface to be unbound
+ * \param target  texture target
+ * \param level   image level
+ * \param format  internal format of the texture
+ */
 int
-st_set_teximage(struct pipe_texture *pt, int target)
+st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
+                        enum pipe_format format)
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   struct st_texture_object *stObj;
    struct st_texture_image *stImage;
-   int internalFormat;
+   GLenum internalFormat;
 
-   switch (pt->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      internalFormat = GL_RGBA8;
+   switch (target) {
+   case ST_TEXTURE_2D:
+      target = GL_TEXTURE_2D;
+      break;
+   case ST_TEXTURE_RECT:
+      target = GL_TEXTURE_RECTANGLE_ARB;
       break;
    default:
       return 0;
-   };
+   }
+
+   /* map pipe format to base format for now */
+   if (pf_get_component_bits(format, PIPE_FORMAT_COMP_A) > 0)
+      internalFormat = GL_RGBA;
+   else
+      internalFormat = GL_RGB;
+
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   _mesa_lock_texture(ctx, texObj);
+
+   stObj = st_texture_object(texObj);
+   /* switch to surface based */
+   if (!stObj->surface_based) {
+      _mesa_clear_texture_object(ctx, texObj);
+      stObj->surface_based = GL_TRUE;
+   }
+
+   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+   stImage = st_texture_image(texImage);
+
+   _mesa_init_teximage_fields(ctx, target, texImage,
+                              ps->width, ps->height, 1, 0, internalFormat);
+   texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
+                                                GL_RGBA, GL_UNSIGNED_BYTE);
+   _mesa_set_fetch_functions(texImage, 2);
+   pipe_texture_reference(&stImage->pt, ps->texture);
+
+   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+   _mesa_unlock_texture(ctx, texObj);
+   
+   return 1;
+}
+
+
+/**
+ * Unbind a pipe surface from a texture object.  After the call,
+ * the texture object is marked dirty and will be (re-)validated.
+ *
+ * \param ps      pipe surface to be unbound
+ * \param target  texture target
+ * \param level   image level
+ */
+int
+st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint unit = ctx->Texture.CurrentUnit;
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   struct st_texture_object *stObj;
+   struct st_texture_image *stImage;
 
    switch (target) {
    case ST_TEXTURE_2D:
@@ -385,20 +456,27 @@ st_set_teximage(struct pipe_texture *pt, int target)
    }
 
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
+
+   _mesa_lock_texture(ctx, texObj);
+
+   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+   stObj = st_texture_object(texObj);
    stImage = st_texture_image(texImage);
+
+   /* Make sure the pipe surface is still bound.  The texture object is still
+    * considered surface based even if this is the last bound surface. */
+   if (stImage->pt == ps->texture) {
+      pipe_texture_reference(&stImage->pt, NULL);
+      _mesa_clear_texture_image(ctx, texImage);
+
+      _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+   }
+
+   _mesa_unlock_texture(ctx, texObj);
    
-   _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage, pt->width[0],
-                              pt->height[0], 1, 0, internalFormat);
-
-   texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat, GL_RGBA,
-                                                GL_UNSIGNED_BYTE);
-   _mesa_set_fetch_functions(texImage, 2);
-
-   pipe_texture_reference(&stImage->pt, pt);
-
    return 1;
 }
+
 
 /** Redirect rendering into stfb's surface to a texture image */
 int

@@ -34,6 +34,9 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
+struct r300_fragment_shader;
+struct r300_vertex_shader;
+
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control; /* R300_RB3D_ABLEND: 0x4e08 */
@@ -143,69 +146,8 @@ struct r300_constant_buffer {
     /* Buffer of constants */
     /* XXX first number should be raised */
     float constants[32][4];
-    /* Number of user-defined constants */
-    unsigned user_count;
     /* Total number of constants */
     unsigned count;
-};
-
-struct r300_fragment_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-    struct tgsi_shader_info info;
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Pixel stack size */
-    int stack_size;
-
-    /* Are there immediates in this shader?
-     * If not, we can heavily optimize recompilation. */
-    boolean uses_imms;
-};
-
-struct r3xx_fragment_shader {
-    /* Parent class */
-    struct r300_fragment_shader shader;
-
-    /* Number of ALU instructions */
-    int alu_instruction_count;
-
-    /* Number of texture instructions */
-    int tex_instruction_count;
-
-    /* Number of texture indirections */
-    int indirections;
-
-    /* Indirection node offsets */
-    int alu_offset[4];
-
-    /* Machine instructions */
-    struct {
-        uint32_t alu_rgb_inst;
-        uint32_t alu_rgb_addr;
-        uint32_t alu_alpha_inst;
-        uint32_t alu_alpha_addr;
-    } instructions[64]; /* XXX magic num */
-};
-
-struct r5xx_fragment_shader {
-    /* Parent class */
-    struct r300_fragment_shader shader;
-
-    /* Number of used instructions */
-    int instruction_count;
-
-    /* Machine instructions */
-    struct {
-        uint32_t inst0;
-        uint32_t inst1;
-        uint32_t inst2;
-        uint32_t inst3;
-        uint32_t inst4;
-        uint32_t inst5;
-    } instructions[256]; /*< XXX magic number */
 };
 
 struct r300_texture {
@@ -240,33 +182,6 @@ struct r300_vertex_format {
     int vs_tab[16];
     /* Map of rasterizer attributes from GB through RS to US. */
     int fs_tab[16];
-};
-
-struct r300_vertex_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-    struct tgsi_shader_info info;
-
-    /* Fallback shader, because Draw has issues */
-    struct draw_vertex_shader* draw;
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Are there immediates in this shader?
-     * If not, we can heavily optimize recompilation. */
-    boolean uses_imms;
-
-    /* Number of used instructions */
-    int instruction_count;
-
-    /* Machine instructions */
-    struct {
-        uint32_t inst0;
-        uint32_t inst1;
-        uint32_t inst2;
-        uint32_t inst3;
-    } instructions[128]; /*< XXX magic number */
 };
 
 static struct pipe_viewport_state r300_viewport_identity = {

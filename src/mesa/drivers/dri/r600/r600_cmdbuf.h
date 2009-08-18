@@ -132,15 +132,13 @@ struct r600_cs_reloc_legacy {
     uint32_t                cindices;
     uint32_t                *indices;
     uint32_t                *reloc_indices;
-    struct offset_modifiers offset_mod;
 };
 
 extern int r600_cs_write_reloc(struct radeon_cs *cs,
                         struct radeon_bo *bo,
                         uint32_t read_domain,
                         uint32_t write_domain,
-                        uint32_t flags,
-                        offset_modifiers* poffset_mod);
+                        uint32_t flags);
 
 static inline void r600_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
 {
@@ -171,7 +169,7 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
 /**
  * Write a relocated dword to the command buffer.
  */
-#define R600_OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags, offset_mod) 	\
+#define R600_OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) 	\
 	do { 							\
         if (0 && offset) {					\
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",		\
@@ -179,7 +177,7 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
         }							\
         r600_cs_write_dword(b_l_rmesa->cmdbuf.cs, offset);	\
         r600_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
-                              bo, rd, wd, flags, offset_mod);		\
+                              bo, rd, wd, flags);		\
 	} while(0)
 
 /* R600/R700 */

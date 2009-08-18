@@ -31,6 +31,7 @@
 #ifndef _XORG_TRACKER_H_
 #define _XORG_TRACKER_H_
 
+#include <stddef.h>
 #include <stdint.h>
 #include <errno.h>
 #include <drm.h>
@@ -98,7 +99,13 @@ struct pipe_texture *
 xorg_exa_get_texture(PixmapPtr pPixmap);
 
 unsigned
-xorg_exa_get_pixmap_handle(PixmapPtr pPixmap);
+xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride);
+
+int
+xorg_exa_set_displayed_usage(PixmapPtr pPixmap);
+
+int
+xorg_exa_set_shared_usage(PixmapPtr pPixmap);
 
 void *
 xorg_exa_init(ScrnInfoPtr pScrn);

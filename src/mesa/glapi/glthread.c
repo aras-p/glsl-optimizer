@@ -246,57 +246,6 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 
 #endif /* WIN32_THREADS */
 
-
-
-/*
- * XFree86 has its own thread wrapper, Xthreads.h
- * We wrap it again for GL.
- */
-#ifdef USE_XTHREADS
-
-unsigned long
-_glthread_GetID(void)
-{
-   return (unsigned long) xthread_self();
-}
-
-
-void
-_glthread_InitTSD(_glthread_TSD *tsd)
-{
-   if (xthread_key_create(&tsd->key, NULL) != 0) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
-}
-
-
-void *
-_glthread_GetTSD(_glthread_TSD *tsd)
-{
-   void *ptr;
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   xthread_get_specific(tsd->key, &ptr);
-   return ptr;
-}
-
-
-void
-_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
-{
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   xthread_set_specific(tsd->key, ptr);
-}
-
-#endif /* XTHREAD */
-
-
-
 /*
  * BeOS threads
  */

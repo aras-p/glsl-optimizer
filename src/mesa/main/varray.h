@@ -161,6 +161,12 @@ _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
 
 
 extern void
+_mesa_copy_client_array(GLcontext *ctx,
+                        struct gl_client_array *dst,
+                        struct gl_client_array *src);
+
+
+extern void
 _mesa_print_arrays(GLcontext *ctx);
 
 extern void

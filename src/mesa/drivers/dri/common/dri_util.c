@@ -778,7 +778,7 @@ dri2CreateNewScreen(int scrn, int fd,
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
 
-    psp = _mesa_malloc(sizeof(*psp));
+    psp = _mesa_calloc(sizeof(*psp));
     if (!psp)
 	return NULL;
 

@@ -3138,7 +3138,7 @@ _mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
 {
    GLubyte *buf;
 
-   if (unpack->BufferObj->Name == 0) {
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
       /* no PBO */
       return pixels;
    }
@@ -3174,7 +3174,7 @@ _mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
 {
    GLubyte *buf;
 
-   if (packing->BufferObj->Name == 0) {
+   if (!_mesa_is_bufferobj(packing->BufferObj)) {
       /* not using a PBO - return pointer unchanged */
       return pixels;
    }
@@ -3204,7 +3204,7 @@ void
 _mesa_unmap_teximage_pbo(GLcontext *ctx,
                          const struct gl_pixelstore_attrib *unpack)
 {
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
    }

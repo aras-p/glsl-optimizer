@@ -104,7 +104,7 @@ static INLINE uint32_t cmdpacket3(struct radeon_screen *rscrn, int packet)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdcpdelay(struct radeon_screen *rscrn,  
+static INLINE uint32_t cmdcpdelay(struct radeon_screen *rscrn,
                                   unsigned short count)
 {
 	drm_r300_cmd_header_t cmd;
@@ -215,8 +215,6 @@ void static INLINE cp_wait(radeonContextPtr radeon, unsigned char flags)
 		END_BATCH();
 	}
 }
-
-extern GLboolean r300EmitArrays(GLcontext * ctx);
 
 extern int r300PrimitiveType(r300ContextPtr rmesa, int prim);
 extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);

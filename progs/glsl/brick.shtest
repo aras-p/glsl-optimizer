@@ -1,0 +1,8 @@
+vs CH06-brick.vert
+fs CH06-brick.frag
+uniform LightPosition GL_FLOAT_VEC3 0.1 0.1 9.0
+uniform BrickColor GL_FLOAT_VEC3 0.8 0.2 0.2
+uniform MortarColor GL_FLOAT_VEC3 0.6 0.6 0.6
+uniform BrickSize  GL_FLOAT_VEC2 1.0 0.3
+uniform BrickPct GL_FLOAT_VEC2 0.9 0.8
+

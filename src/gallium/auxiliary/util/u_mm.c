@@ -33,29 +33,31 @@
 void
 u_mmDumpMemInfo(const struct mem_block *heap)
 {
-   debug_printf("Memory heap %p:\n", (void *)heap);
+   debug_printf("Memory heap %p:\n", (void *) heap);
    if (heap == 0) {
       debug_printf("  heap == 0\n");
-   } else {
+   }
+   else {
       const struct mem_block *p;
 
-      for(p = heap->next; p != heap; p = p->next) {
-	 debug_printf("  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
-		 p->free ? 'F':'.',
-		 p->reserved ? 'R':'.');
+      for (p = heap->next; p != heap; p = p->next) {
+	 debug_printf("  Offset:%08x, Size:%08x, %c%c\n", p->ofs, p->size,
+                      p->free ? 'F':'.',
+                      p->reserved ? 'R':'.');
       }
 
       debug_printf("\nFree list:\n");
 
-      for(p = heap->next_free; p != heap; p = p->next_free) {
-	 debug_printf(" FREE Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
-		 p->free ? 'F':'.',
-		 p->reserved ? 'R':'.');
+      for (p = heap->next_free; p != heap; p = p->next_free) {
+	 debug_printf(" FREE Offset:%08x, Size:%08x, %c%c\n", p->ofs, p->size,
+                      p->free ? 'F':'.',
+                      p->reserved ? 'R':'.');
       }
 
    }
    debug_printf("End of memory blocks\n");
 }
+
 
 struct mem_block *
 u_mmInit(int ofs, int size)

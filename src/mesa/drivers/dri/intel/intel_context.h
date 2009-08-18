@@ -80,9 +80,13 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 
 #define INTEL_MAX_FIXUP 64
 
+
+/**
+ * intel_context is derived from Mesa's context class: GLcontext.
+ */
 struct intel_context
 {
-   GLcontext ctx;               /* the parent class */
+   GLcontext ctx;  /**< base class, must be first field */
 
    struct
    {
@@ -178,6 +182,7 @@ struct intel_context
    GLboolean ttm;
 
    struct intel_batchbuffer *batch;
+   drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
    unsigned batch_id;
 
@@ -307,7 +312,7 @@ struct intel_context
    __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen;
-   volatile struct drm_i915_sarea *sarea;
+   volatile drm_i915_sarea_t *sarea;
 
    GLuint lastStamp;
 

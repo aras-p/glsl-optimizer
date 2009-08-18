@@ -72,6 +72,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
             alignment, domain, 0);
     if (radeon_buffer->bo == NULL) {
         FREE(radeon_buffer);
+        return NULL;
     }
     return &radeon_buffer->base;
 }

@@ -587,14 +587,15 @@ event_loop(Display *dpy, Window win)
       angle += 2.0;
 
       draw();
+
+      glXSwapBuffers(dpy, win);
+
       if ( get_frame_usage != NULL ) {
 	 GLfloat   temp;
 	 
 	 (*get_frame_usage)( dpy, win, & temp );
 	 frame_usage += temp;
       }
-
-      glXSwapBuffers(dpy, win);
 
       /* calc framerate */
       {

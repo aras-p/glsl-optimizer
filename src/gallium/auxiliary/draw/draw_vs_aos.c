@@ -1758,24 +1758,24 @@ emit_instruction( struct aos_compilation *cp,
    case TGSI_OPCODE_SUB:
       return emit_SUB(cp, inst);
  
-   case TGSI_OPCODE_LERP:
+   case TGSI_OPCODE_LRP:
 //      return emit_LERP(cp, inst);
       return FALSE;
 
-   case TGSI_OPCODE_FRAC:
+   case TGSI_OPCODE_FRC:
       return emit_FRC(cp, inst);
 
    case TGSI_OPCODE_CLAMP:
 //      return emit_CLAMP(cp, inst);
       return FALSE;
 
-   case TGSI_OPCODE_FLOOR:
+   case TGSI_OPCODE_FLR:
       return emit_FLR(cp, inst);
 
    case TGSI_OPCODE_ROUND:
       return emit_RND(cp, inst);
 
-   case TGSI_OPCODE_EXPBASE2:
+   case TGSI_OPCODE_EX2:
 #if FAST_MATH
       return emit_EXPBASE2(cp, inst);
 #elif 0
@@ -1787,13 +1787,13 @@ emit_instruction( struct aos_compilation *cp,
       return FALSE;
 #endif
 
-   case TGSI_OPCODE_LOGBASE2:
+   case TGSI_OPCODE_LG2:
       return emit_LG2(cp, inst);
 
-   case TGSI_OPCODE_POWER:
+   case TGSI_OPCODE_POW:
       return emit_POW(cp, inst);
 
-   case TGSI_OPCODE_CROSSPRODUCT:
+   case TGSI_OPCODE_XPD:
       return emit_XPD(cp, inst);
 
    case TGSI_OPCODE_ABS:
@@ -1891,8 +1891,9 @@ static boolean note_immediate( struct aos_compilation *cp,
    unsigned pos = cp->num_immediates++;
    unsigned j;
 
+   assert( imm->Immediate.NrTokens <= 4 + 1 );
    for (j = 0; j < imm->Immediate.NrTokens - 1; j++) {
-      cp->vaos->machine->immediate[pos][j] = imm->u.ImmediateFloat32[j].Float;
+      cp->vaos->machine->immediate[pos][j] = imm->u[j].Float;
    }
 
    return TRUE;

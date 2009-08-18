@@ -1,0 +1,6 @@
+vs multitex.vert
+fs multitex.frag
+texture 0 ../images/tile.rgb
+texture 1 ../images/tree2.rgba
+uniform tex1  GL_SAMPLER_2D  0
+uniform tex2  GL_SAMPLER_2D  1

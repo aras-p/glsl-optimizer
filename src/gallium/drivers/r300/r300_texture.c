@@ -22,13 +22,6 @@
 
 #include "r300_texture.h"
 
-/* XXX maths need to go to util */
-
-static int minify(int i)
-{
-    return MAX2(1, i >> 1);
-}
-
 static void r300_setup_texture_state(struct r300_texture* tex,
                                      unsigned width,
                                      unsigned height,
@@ -55,6 +48,9 @@ static void r300_setup_texture_state(struct r300_texture* tex,
     if (height > 2048) {
         state->format2 |= R500_TXHEIGHT_BIT11;
     }
+
+    debug_printf("r300: Set texture state (%dx%d, pitch %d, %d levels)\n",
+            width, height, pitch, levels);
 }
 
 static void r300_setup_miptree(struct r300_texture* tex)
@@ -71,19 +67,23 @@ static void r300_setup_miptree(struct r300_texture* tex)
         }
 
         base->nblocksx[i] = pf_get_nblocksx(&base->block, base->width[i]);
-        base->nblocksy[i] = pf_get_nblocksy(&base->block, base->width[i]);
+        base->nblocksy[i] = pf_get_nblocksy(&base->block, base->height[i]);
 
         /* Radeons enjoy things in multiples of 64.
          *
          * XXX
          * POT, uncompressed, unmippmapped textures can be aligned to 32,
          * instead of 64. */
-        stride = align(base->nblocksx[i] * base->block.size, 64);
+        stride = align(pf_get_stride(&base->block, base->width[i]), 32);
         size = stride * base->nblocksy[i] * base->depth[i];
 
-        tex->offset[i] = align(tex->size, 64);
+        tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
 
+        debug_printf("r300: Texture miptree: Level %d "
+                "(%dx%dx%d px, pitch %d bytes)\n",
+                i, base->width[i], base->height[i], base->depth[i],
+                stride);
         /* Save stride of first level to the texture. */
         if (i == 0) {
             tex->stride = stride;
@@ -111,7 +111,7 @@ static struct pipe_texture*
     r300_setup_texture_state(tex, template->width[0], template->height[0],
             template->width[0], template->last_level);
 
-    tex->buffer = screen->buffer_create(screen, 64,
+    tex->buffer = screen->buffer_create(screen, 1024,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
 

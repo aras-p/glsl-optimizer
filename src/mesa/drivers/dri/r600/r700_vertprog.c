@@ -52,7 +52,7 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	unsigned int unBit;
 	unsigned int unTotal = unStart;
 
-    //!!!!!!! THE ORDER MATCH FS INPUT 
+    //!!!!!!! THE ORDER MATCH FS INPUT
 
 	unBit = 1 << VERT_RESULT_HPOS;
 	if(mesa_vp->Base.OutputsWritten & unBit)
@@ -73,31 +73,31 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	}
 
 	//TODO : dealing back face.
-	//unBit = 1 << VERT_RESULT_BFC0;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_COL0] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_BFC0;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_BFC0] = unTotal++;
+	}
 
-	//unBit = 1 << VERT_RESULT_BFC1;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_COL1] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_BFC1;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_BFC1] = unTotal++;
+	}
 
 	//TODO : dealing fog.
-	//unBit = 1 << VERT_RESULT_FOGC;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_FOGC] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_FOGC;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_FOGC] = unTotal++;
+	}
 
 	//TODO : dealing point size.
-	//unBit = 1 << VERT_RESULT_PSIZ;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_PSIZ] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_PSIZ;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_PSIZ] = unTotal++;
+	}
 
 	for(i=0; i<8; i++)
 	{
@@ -335,17 +335,13 @@ void * r700GetActiveVpShaderBo(GLcontext * ctx)
 GLboolean r700SetupVertexProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
-
-    BATCH_LOCALS(&context->radeon);
-
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
+    BATCH_LOCALS(&context->radeon);
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
 
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
-
     unsigned int ui;
 
     if(GL_FALSE == vp->loaded)
@@ -394,7 +390,6 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     */
 
     /* sent out shader constants. */
-
     paramList = vp->mesa_program.Base.Parameters;
 
     if(NULL != paramList)
@@ -403,8 +398,8 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
         unNumParamData = paramList->NumParameters * 4;
 
-        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2); 
-        
+        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2);
+
         R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
         /* assembler map const from very beginning. */
         R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);

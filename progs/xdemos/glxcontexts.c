@@ -378,6 +378,9 @@ make_window( Display *dpy, const char *name,
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
 
+   if (visinfo)
+	   XFree(visinfo);
+
    visinfo = glXChooseVisual( dpy, scrnum, attribs );
    if (!visinfo) {
       printf("Error: couldn't get an RGB, Double-buffered visual\n");

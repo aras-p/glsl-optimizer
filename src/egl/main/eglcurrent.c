@@ -3,39 +3,51 @@
 #include "eglcurrent.h"
 #include "eglcontext.h"
 #include "egllog.h"
+#include "eglmutex.h"
+#include "eglglobals.h"
 
+
+/* This should be kept in sync with _eglInitThreadInfo() */
+#define _EGL_THREAD_INFO_INITIALIZER \
+   { EGL_SUCCESS, { NULL }, 1 }
 
 /* a fallback thread info to guarantee that every thread always has one */
-static _EGLThreadInfo dummy_thread;
+static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;
 
 
 #ifdef GLX_USE_TLS
 static __thread const _EGLThreadInfo *_egl_TSD;
    __attribute__ ((tls_model("initial-exec")));
 
-static INLINE EGLBoolean _eglInitTSD(void) { return EGL_TRUE; }
-static INLINE void _eglFiniTSD(void) { }
-static INLINE void _eglSetTSD(const _EGLThreadInfo *t) { _egl_TSD = t; }
+static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
+{
+   _egl_TSD = t;
+}
 
 static INLINE _EGLThreadInfo *_eglGetTSD(void)
 {
    return (_EGLThreadInfo *) _egl_TSD;
 }
 
+static INLINE void _eglFiniTSD(void)
+{
+}
+
+static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
+{
+   /* TODO destroy TSD */
+   (void) dtor;
+   (void) _eglFiniTSD;
+   return EGL_TRUE;
+}
+
 #elif PTHREADS
 #include <pthread.h>
 
+static _EGL_DECLARE_MUTEX(_egl_TSDMutex);
+static EGLBoolean _egl_TSDInitialized;
 static pthread_key_t _egl_TSD;
-
-static INLINE EGLBoolean _eglInitTSD(void)
-{
-   return (pthread_key_create(&_egl_TSD, NULL) == 0);
-}
-
-static INLINE void _eglFiniTSD(void)
-{
-   pthread_key_delete(_egl_TSD);
-}
+static void (*_egl_FreeTSD)(_EGLThreadInfo *);
 
 static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
 {
@@ -47,17 +59,71 @@ static INLINE _EGLThreadInfo *_eglGetTSD(void)
    return (_EGLThreadInfo *) pthread_getspecific(_egl_TSD);
 }
 
+static INLINE void _eglFiniTSD(void)
+{
+   _eglLockMutex(&_egl_TSDMutex);
+   if (_egl_TSDInitialized) {
+      _EGLThreadInfo *t = _eglGetTSD();
+
+      _egl_TSDInitialized = EGL_FALSE;
+      if (t && _egl_FreeTSD)
+         _egl_FreeTSD((void *) t);
+      pthread_key_delete(_egl_TSD);
+   }
+   _eglUnlockMutex(&_egl_TSDMutex);
+}
+
+static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
+{
+   if (!_egl_TSDInitialized) {
+      _eglLockMutex(&_egl_TSDMutex);
+
+      /* check again after acquiring lock */
+      if (!_egl_TSDInitialized) {
+         if (pthread_key_create(&_egl_TSD, (void (*)(void *)) dtor) != 0) {
+            _eglUnlockMutex(&_egl_TSDMutex);
+            return EGL_FALSE;
+         }
+         _egl_FreeTSD = dtor;
+         _eglAddAtExitCall(_eglFiniTSD);
+         _egl_TSDInitialized = EGL_TRUE;
+      }
+
+      _eglUnlockMutex(&_egl_TSDMutex);
+   }
+
+   return EGL_TRUE;
+}
+
 #else /* PTHREADS */
 static const _EGLThreadInfo *_egl_TSD;
+static void (*_egl_FreeTSD)(_EGLThreadInfo *);
 
-static INLINE EGLBoolean _eglInitTSD(void) { return EGL_TRUE; }
-static INLINE void _eglFiniTSD(void) { }
-static INLINE void _eglSetTSD(const _EGLThreadInfo *t) { _egl_TSD = t; }
+static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
+{
+   _egl_TSD = t;
+}
 
 static INLINE _EGLThreadInfo *_eglGetTSD(void)
 {
    return (_EGLThreadInfo *) _egl_TSD;
 }
+
+static INLINE void _eglFiniTSD(void)
+{
+   if (_egl_FreeTSD && _egl_TSD)
+      _egl_FreeTSD((_EGLThreadInfo *) _egl_TSD);
+}
+
+static INLINE EGLBoolean _eglInitTSD(void (*dtor)(_EGLThreadInfo *))
+{
+   if (!_egl_FreeTSD && dtor) {
+      _egl_FreeTSD = dtor;
+      _eglAddAtExitCall(_eglFiniTSD);
+   }
+   return EGL_TRUE;
+}
+
 #endif /* !PTHREADS */
 
 
@@ -98,24 +164,17 @@ _eglDestroyThreadInfo(_EGLThreadInfo *t)
 
 
 /**
- * Initialize "current thread" management.
+ * Make sure TSD is initialized and return current value.
  */
-EGLBoolean
-_eglInitCurrent(void)
+static INLINE _EGLThreadInfo *
+_eglCheckedGetTSD(void)
 {
-   _eglInitThreadInfo(&dummy_thread);
-   return _eglInitTSD();
-}
+   if (_eglInitTSD(&_eglDestroyThreadInfo) != EGL_TRUE) {
+      _eglLog(_EGL_FATAL, "failed to initialize \"current\" system");
+      return NULL;
+   }
 
-
-/**
- * Finish "current thread" management.
- */
-void
-_eglFiniCurrent(void)
-{
-   /* TODO trace and release all threads... */
-   _eglFiniTSD();
+   return _eglGetTSD();
 }
 
 
@@ -129,7 +188,7 @@ _eglFiniCurrent(void)
 _EGLThreadInfo *
 _eglGetCurrentThread(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    if (!t) {
       t = _eglCreateThreadInfo();
       _eglSetTSD(t);
@@ -145,7 +204,7 @@ _eglGetCurrentThread(void)
 void
 _eglDestroyCurrentThread(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    if (t) {
       _eglDestroyThreadInfo(t);
       _eglSetTSD(NULL);
@@ -162,7 +221,7 @@ _eglDestroyCurrentThread(void)
 EGLBoolean
 _eglIsCurrentThreadDummy(void)
 {
-   _EGLThreadInfo *t = _eglGetTSD();
+   _EGLThreadInfo *t = _eglCheckedGetTSD();
    return (!t || t == &dummy_thread);
 }
 

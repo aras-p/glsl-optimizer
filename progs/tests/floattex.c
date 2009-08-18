@@ -33,7 +33,7 @@ static const char *VertShaderText =
    "} \n";
 
 static struct uniform_info Uniforms[] = {
-   { "tex1",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
+   { "tex1",  1, GL_SAMPLER_2D, { 0, 0, 0, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
@@ -189,7 +189,7 @@ CreateProgram(void)
 
    glUseProgram_func(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
 
    return program;
 }

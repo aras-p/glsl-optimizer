@@ -35,13 +35,13 @@ nv50_format(enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
-		return NV50_2D_DST_FORMAT_32BPP;
+		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
-		return NV50_2D_DST_FORMAT_24BPP;
+		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
 	case PIPE_FORMAT_R5G6B5_UNORM:
-		return NV50_2D_DST_FORMAT_16BPP;
+		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
 	case PIPE_FORMAT_A8_UNORM:
-		return NV50_2D_DST_FORMAT_8BPP;
+		return NV50_2D_DST_FORMAT_R8_UNORM;
 	default:
 		return -1;
 	}
@@ -144,7 +144,7 @@ nv50_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
 
 	assert(src->format == dest->format);
@@ -158,7 +158,7 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;

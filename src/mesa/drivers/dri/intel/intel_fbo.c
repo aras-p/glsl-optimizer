@@ -35,6 +35,7 @@
 #include "main/context.h"
 #include "main/texformat.h"
 #include "main/texrender.h"
+#include "drivers/common/meta.h"
 
 #include "intel_context.h"
 #include "intel_buffers.h"
@@ -700,74 +701,6 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
- * Called from glBlitFramebuffer().
- * For now, we're doing an approximation with glCopyPixels().
- * XXX we need to bypass all the per-fragment operations, except scissor.
- */
-static void
-intel_blit_framebuffer(GLcontext *ctx,
-                       GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                       GLbitfield mask, GLenum filter)
-{
-   const GLfloat xZoomSave = ctx->Pixel.ZoomX;
-   const GLfloat yZoomSave = ctx->Pixel.ZoomY;
-   GLsizei width, height;
-   GLfloat xFlip = 1.0F, yFlip = 1.0F;
-
-   if (srcX1 < srcX0) {
-      GLint tmp = srcX1;
-      srcX1 = srcX0;
-      srcX0 = tmp;
-      xFlip = -1.0F;
-   }
-
-   if (srcY1 < srcY0) {
-      GLint tmp = srcY1;
-      srcY1 = srcY0;
-      srcY0 = tmp;
-      yFlip = -1.0F;
-   }
-
-   width = srcX1 - srcX0;
-   height = srcY1 - srcY0;
-
-   ctx->Pixel.ZoomX = xFlip * (dstX1 - dstX0) / (srcX1 - srcY0);
-   ctx->Pixel.ZoomY = yFlip * (dstY1 - dstY0) / (srcY1 - srcY0);
-
-   if (ctx->Pixel.ZoomX < 0.0F) {
-      dstX0 = MAX2(dstX0, dstX1);
-   }
-   else {
-      dstX0 = MIN2(dstX0, dstX1);
-   }
-
-   if (ctx->Pixel.ZoomY < 0.0F) {
-      dstY0 = MAX2(dstY0, dstY1);
-   }
-   else {
-      dstY0 = MIN2(dstY0, dstY1);
-   }
-
-   if (mask & GL_COLOR_BUFFER_BIT) {
-      ctx->Driver.CopyPixels(ctx, srcX0, srcY0, width, height,
-                             dstX0, dstY0, GL_COLOR);
-   }
-   if (mask & GL_DEPTH_BUFFER_BIT) {
-      ctx->Driver.CopyPixels(ctx, srcX0, srcY0, width, height,
-                             dstX0, dstY0, GL_DEPTH);
-   }
-   if (mask & GL_STENCIL_BUFFER_BIT) {
-      ctx->Driver.CopyPixels(ctx, srcX0, srcY0, width, height,
-                             dstX0, dstY0, GL_STENCIL);
-   }
-      
-   ctx->Pixel.ZoomX = xZoomSave;
-   ctx->Pixel.ZoomY = yZoomSave;
-}
-
-
-/**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.
  */
@@ -782,5 +715,5 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
-   intel->ctx.Driver.BlitFramebuffer = intel_blit_framebuffer;
+   intel->ctx.Driver.BlitFramebuffer = _mesa_meta_blit_framebuffer;
 }

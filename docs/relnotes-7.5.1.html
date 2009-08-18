@@ -1,0 +1,61 @@
+<HTML>
+
+<TITLE>Mesa Release Notes</TITLE>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<body bgcolor="#eeeeee">
+
+<H1>Mesa 7.5.1 Release Notes / (date TBD)</H1>
+
+<p>
+Mesa 7.5.1 is a bug-fix release fixing issues found since the 7.5 release.
+</p>
+<p>
+The main new feature of Mesa 7.5.x is the
+<a href="http://wiki.freedesktop.org/wiki/Software/gallium"
+target="_parent">Gallium3D</a> infrastructure.
+</p>
+<p>
+Mesa 7.5.1 implements the OpenGL 2.1 API, but the version reported by
+glGetString(GL_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 2.1.
+</p>
+<p>
+See the <a href="install.html">Compiling/Installing page</a> for prerequisites
+for DRI hardware acceleration.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+tbd
+</pre>
+
+
+<h2>New features</h2>
+<ul>
+<li>Added configure --with-max-width=W, --with-max-height=H options to specify
+    max framebuffer, viewport size.
+</ul>
+
+
+<h2>Bug fixes</h2>
+<ul>
+<li>Added missing GLEW library to MesaDemos tarballs.
+<li>Fixed swapbuffers jerkiness in Doom3/etc in Intel drivers.
+<li>Fixed front buffer rendering bug in Intel drivers.
+<li>Fixed minor GLX memory leaks.
+<li>Fixed some texture env / fragment program state bugs.
+<li>Fixed some Gallium glBlitFramebuffer() bugs
+</ul>
+
+
+<h2>Changes</h2>
+<ul>
+</ul>
+
+</body>
+</html>

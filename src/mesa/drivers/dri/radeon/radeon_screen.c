@@ -57,7 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
-#include "r300_fragprog.h"
 #include "r300_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 #include "r600_context.h"
@@ -149,6 +148,9 @@ extern const struct dri_extension ATI_fs_extension[];
 extern const struct dri_extension point_extensions[];
 
 #elif RADEON_COMMON && (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+
+#define DRI_CONF_FP_OPTIMIZATION_SPEED   0
+#define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
 
 /* TODO: integrate these into xmlpool.h! */
 #define DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(def,min,max) \
@@ -876,11 +878,14 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
+   case PCI_CHIP_RV730_9480:
    case PCI_CHIP_RV730_9487:
+   case PCI_CHIP_RV730_9488:
    case PCI_CHIP_RV730_9489:
    case PCI_CHIP_RV730_948F:
    case PCI_CHIP_RV730_9490:
    case PCI_CHIP_RV730_9491:
+   case PCI_CHIP_RV730_9495:
    case PCI_CHIP_RV730_9498:
    case PCI_CHIP_RV730_949C:
    case PCI_CHIP_RV730_949E:
@@ -897,15 +902,19 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV710_9552:
    case PCI_CHIP_RV710_9553:
    case PCI_CHIP_RV710_9555:
+   case PCI_CHIP_RV710_9557:
       screen->chip_family = CHIP_FAMILY_RV710;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
    case PCI_CHIP_RV740_94A0:
    case PCI_CHIP_RV740_94A1:
+   case PCI_CHIP_RV740_94A3:
    case PCI_CHIP_RV740_94B1:
    case PCI_CHIP_RV740_94B3:
+   case PCI_CHIP_RV740_94B4:
    case PCI_CHIP_RV740_94B5:
+   case PCI_CHIP_RV740_94B9:
       screen->chip_family = CHIP_FAMILY_RV740;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
@@ -990,6 +999,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsPointSprites = (sPriv->drm_version.minor >= 13);
       screen->drmSupportsCubeMapsR100 = (sPriv->drm_version.minor >= 15);
       screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
+      screen->drmSupportsOcclusionQueries = (sPriv->drm_version.minor >= 30);
    }
 
    ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
@@ -1025,7 +1035,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
    else
 	   screen->scratch = (__volatile__ uint32_t *)
-		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+		   ((GLubyte *)screen->status.map + R600_SCRATCH_REG_OFFSET);
 
    screen->buffers = drmMapBufs( sPriv->fd );
    if ( !screen->buffers ) {
@@ -1085,7 +1095,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    /* +r6/r7 */
    if(screen->chip_family >= CHIP_FAMILY_R600)
    {
-       if (ret) 
+       if (ret)
        {
             FREE( screen );
             fprintf(stderr, "Unable to get fb location need newer drm\n");
@@ -1098,18 +1108,18 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    }
    else
    {
-        if (ret) 
+        if (ret)
         {
             if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
 	            screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
-            else 
+            else
             {
                 FREE( screen );
                 fprintf(stderr, "Unable to get fb location need newer drm\n");
                 return NULL;
             }
-        } 
-        else 
+        }
+        else
         {
             screen->fbLocation = (temp & 0xffff) << 16;
         }
@@ -1289,6 +1299,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->drmSupportsPointSprites = 1;
    screen->drmSupportsCubeMapsR100 = 1;
    screen->drmSupportsVertexProgram = 1;
+   screen->drmSupportsOcclusionQueries = 1;
    screen->irq = 1;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
@@ -1577,19 +1588,9 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-	if (IS_R600_CLASS(screen))
-		return r600CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 	if (IS_R300_CLASS(screen))
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-	if (IS_R200_CLASS(screen))
-		return r200CreateContext(glVisual, driContextPriv, sharedContextPriv);
 #endif
 
 #if !RADEON_COMMON
@@ -1791,8 +1792,16 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen      = radeonInitScreen,
    .DestroyScreen   = radeonDestroyScreen,
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   .CreateContext   = r200CreateContext,
+   .DestroyContext  = r200DestroyContext,
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+   .CreateContext   = r600CreateContext,
+   .DestroyContext  = r600DestroyContext,
+#else
    .CreateContext   = radeonCreateContext,
    .DestroyContext  = radeonDestroyContext,
+#endif
    .CreateBuffer    = radeonCreateBuffer,
    .DestroyBuffer   = radeonDestroyBuffer,
    .SwapBuffers     = radeonSwapBuffers,

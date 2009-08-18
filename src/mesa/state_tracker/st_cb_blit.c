@@ -69,34 +69,107 @@ st_BlitFramebuffer(GLcontext *ctx,
                    GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                    GLbitfield mask, GLenum filter)
 {
+   const GLbitfield depthStencil = (GL_DEPTH_BUFFER_BIT |
+                                    GL_STENCIL_BUFFER_BIT);
    struct st_context *st = ctx->st;
-
    const uint pFilter = ((filter == GL_NEAREST)
                          ? PIPE_TEX_MIPFILTER_NEAREST
                          : PIPE_TEX_MIPFILTER_LINEAR);
+   struct gl_framebuffer *readFB = ctx->ReadBuffer;
+   struct gl_framebuffer *drawFB = ctx->DrawBuffer;
+
+   if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
+                        &dstX0, &dstY0, &dstX1, &dstY1)) {
+      return; /* nothing to draw/blit */
+   }
+
+   if (st_fb_orientation(drawFB) == Y_0_TOP) {
+      /* invert Y for dest */
+      dstY0 = drawFB->Height - dstY0;
+      dstY1 = drawFB->Height - dstY1;
+   }
+
+   if (st_fb_orientation(readFB) == Y_0_TOP) {
+      /* invert Y for src */
+      srcY0 = readFB->Height - srcY0;
+      srcY1 = readFB->Height - srcY1;
+   }
+
+   if (srcY0 > srcY1 && dstY0 > dstY1) {
+      /* Both src and dst are upside down.  Swap Y to make it
+       * right-side up to increase odds of using a fast path.
+       * Recall that all Gallium raster coords have Y=0=top.
+       */
+      GLint tmp;
+      tmp = srcY0;
+      srcY0 = srcY1;
+      srcY1 = tmp;
+      tmp = dstY0;
+      dstY0 = dstY1;
+      dstY1 = tmp;
+   }
 
    if (mask & GL_COLOR_BUFFER_BIT) {
       struct st_renderbuffer *srcRb = 
-         st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+         st_renderbuffer(readFB->_ColorReadBuffer);
       struct st_renderbuffer *dstRb = 
-         st_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
+         st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
       struct pipe_surface *srcSurf = srcRb->surface;
       struct pipe_surface *dstSurf = dstRb->surface;
-
-      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-         /* invert Y */
-         srcY0 = srcRb->Base.Height - srcY0;
-         srcY1 = srcRb->Base.Height - srcY1;
-
-         dstY0 = dstRb->Base.Height - dstY0;
-         dstY1 = dstRb->Base.Height - dstY1;
-      }
 
       util_blit_pixels(st->blit,
                        srcSurf, srcX0, srcY0, srcX1, srcY1,
                        dstSurf, dstX0, dstY0, dstX1, dstY1,
                        0.0, pFilter);
+   }
 
+   if (mask & depthStencil) {
+      /* depth and/or stencil blit */
+
+      /* get src/dst depth surfaces */
+      struct st_renderbuffer *srcDepthRb = 
+         st_renderbuffer(readFB->Attachment[BUFFER_DEPTH].Renderbuffer);
+      struct st_renderbuffer *dstDepthRb = 
+         st_renderbuffer(drawFB->Attachment[BUFFER_DEPTH].Renderbuffer);
+      struct pipe_surface *srcDepthSurf =
+         srcDepthRb ? srcDepthRb->surface : NULL;
+      struct pipe_surface *dstDepthSurf =
+         dstDepthRb ? dstDepthRb->surface : NULL;
+
+      /* get src/dst stencil surfaces */
+      struct st_renderbuffer *srcStencilRb = 
+         st_renderbuffer(readFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+      struct st_renderbuffer *dstStencilRb = 
+         st_renderbuffer(drawFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+      struct pipe_surface *srcStencilSurf =
+         srcStencilRb ? srcStencilRb->surface : NULL;
+      struct pipe_surface *dstStencilSurf =
+         dstStencilRb ? dstStencilRb->surface : NULL;
+
+      if ((mask & depthStencil) == depthStencil &&
+          srcDepthSurf == srcStencilSurf &&
+          dstDepthSurf == dstStencilSurf) {
+         /* Blitting depth and stencil values between combined
+          * depth/stencil buffers.  This is the ideal case for such buffers.
+          */
+         util_blit_pixels(st->blit,
+                          srcDepthSurf, srcX0, srcY0, srcX1, srcY1,
+                          dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
+                          0.0, pFilter);
+      }
+      else {
+         /* blitting depth and stencil separately */
+
+         if (mask & GL_DEPTH_BUFFER_BIT) {
+            /* blit Z only */
+            _mesa_problem(ctx, "st_BlitFramebuffer(DEPTH) not completed");
+         }
+
+         if (mask & GL_STENCIL_BUFFER_BIT) {
+            /* blit stencil only */
+            _mesa_problem(ctx, "st_BlitFramebuffer(STENCIL) not completed");
+         }
+      }
    }
 }
 

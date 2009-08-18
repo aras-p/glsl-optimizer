@@ -350,9 +350,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
 
-   struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
-   GLuint nr_enabled = 0;
-
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
 
@@ -362,12 +359,13 @@ static void brw_prepare_vertices(struct brw_context *brw)
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
    /* Accumulate the list of enabled arrays. */
+   brw->vb.nr_enabled = 0;
    while (vs_inputs) {
       GLuint i = _mesa_ffsll(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~(1 << i);
-      enabled[nr_enabled++] = input;
+      brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
    /* XXX: In the rare cases where this happens we fallback all
@@ -376,16 +374,15 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * cases with > 17 vertex attributes enabled, so it probably
     * isn't an issue at this point.
     */
-   if (nr_enabled >= BRW_VEP_MAX) {
+   if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
       intel->Fallback = 1;
       return;
    }
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
-      input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 
       if (input->glarray->BufferObj->Name != 0) {
 	 struct intel_buffer_object *intel_buffer =
@@ -398,7 +395,23 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 dri_bo_reference(input->bo);
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
+	 input->count = input->glarray->_MaxElement;
+
+	 /* This is a common place to reach if the user mistakenly supplies
+	  * a pointer in place of a VBO offset.  If we just let it go through,
+	  * we may end up dereferencing a pointer beyond the bounds of the
+	  * GTT.  We would hope that the VBO's max_index would save us, but
+	  * Mesa appears to hand us min/max values not clipped to the
+	  * array object's _MaxElement, and _MaxElement frequently appears
+	  * to be wrong anyway.
+	  *
+	  * The VBO spec allows application termination in this case, and it's
+	  * probably a service to the poor programmer to do so rather than
+	  * trying to just not render.
+	  */
+	 assert(input->offset < input->bo->size);
       } else {
+	 input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 	 if (input->bo != NULL) {
 	    /* Already-uploaded vertex data is present from a previous
 	     * prepare_vertices, but we had to re-validate state due to
@@ -466,8 +479,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    brw_prepare_query_begin(brw);
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       brw_add_validated_bo(brw, input->bo);
    }
@@ -477,21 +490,31 @@ static void brw_emit_vertices(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
-   struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint i;
-   GLuint nr_enabled = 0;
-
-  /* Accumulate the list of enabled arrays. */
-   while (vs_inputs) {
-      i = _mesa_ffsll(vs_inputs) - 1;
-      struct brw_vertex_element *input = &brw->vb.inputs[i];
-
-      vs_inputs &= ~(1 << i);
-      enabled[nr_enabled++] = input;
-   }
 
    brw_emit_query_begin(brw);
+
+   /* If the VS doesn't read any inputs (calculating vertex position from
+    * a state variable for some reason, for example), emit a single pad
+    * VERTEX_ELEMENT struct and bail.
+    *
+    * The stale VB state stays in place, but they don't do anything unless
+    * a VE loads from them.
+    */
+   if (brw->vb.nr_enabled == 0) {
+      BEGIN_BATCH(3, IGNORE_CLIPRECTS);
+      OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
+      OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
+		BRW_VE0_VALID |
+		(BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
+		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      OUT_BATCH((BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_0_SHIFT) |
+		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
+		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
+		(BRW_VE1_COMPONENT_STORE_1_FLT << BRW_VE1_COMPONENT_3_SHIFT));
+      ADVANCE_BATCH();
+      return;
+   }
 
    /* Now emit VB and VEP state packets.
     *
@@ -499,12 +522,12 @@ static void brw_emit_vertices(struct brw_context *brw)
     * are interleaved or from the same VBO.  TBD if this makes a
     * performance difference.
     */
-   BEGIN_BATCH(1 + nr_enabled * 4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4, IGNORE_CLIPRECTS);
    OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
-	     ((1 + nr_enabled * 4) - 2));
+	     ((1 + brw->vb.nr_enabled * 4) - 2));
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
 
       OUT_BATCH((i << BRW_VB0_INDEX_SHIFT) |
 		BRW_VB0_ACCESS_VERTEXDATA |
@@ -524,15 +547,15 @@ static void brw_emit_vertices(struct brw_context *brw)
                         input->offset + input->element_size);
           }
       } else
-          OUT_BATCH(brw->vb.max_index);
+          OUT_BATCH(input->stride ? input->count : 0);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
 
-   BEGIN_BATCH(1 + nr_enabled * 2, IGNORE_CLIPRECTS);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr_enabled * 2) - 2));
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = enabled[i];
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2, IGNORE_CLIPRECTS);
+   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      struct brw_vertex_element *input = brw->vb.enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
 					 input->glarray->Size,
 					 input->glarray->Format,
@@ -589,17 +612,20 @@ static void brw_prepare_indices(struct brw_context *brw)
    dri_bo *bo = NULL;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
+   GLuint ib_type_size;
 
    if (index_buffer == NULL)
       return;
 
-   ib_size = get_size(index_buffer->type) * index_buffer->count;
+   ib_type_size = get_size(index_buffer->type);
+   ib_size = ib_type_size * index_buffer->count;
    bufferobj = index_buffer->obj;;
 
    /* Turn into a proper VBO:
     */
    if (!bufferobj->Name) {
-     
+      brw->ib.start_vertex_offset = 0;
+
       /* Get new bufferobj, offset:
        */
       get_space(brw, ib_size, &bo, &offset);
@@ -615,6 +641,7 @@ static void brw_prepare_indices(struct brw_context *brw)
       }
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
+      brw->ib.start_vertex_offset = 0;
 
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
@@ -635,26 +662,50 @@ static void brw_prepare_indices(struct brw_context *brw)
 	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
 				      INTEL_READ);
 	  dri_bo_reference(bo);
+
+	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
+	   * the index buffer state when we're just moving the start index
+	   * of our drawing.
+	   */
+	  brw->ib.start_vertex_offset = offset / ib_type_size;
+	  offset = 0;
+	  ib_size = bo->size;
        }
    }
 
-   dri_bo_unreference(brw->ib.bo);
-   brw->ib.bo = bo;
-   brw->ib.offset = offset;
+   if (brw->ib.bo != bo ||
+       brw->ib.offset != offset ||
+       brw->ib.size != ib_size)
+   {
+      drm_intel_bo_unreference(brw->ib.bo);
+      brw->ib.bo = bo;
+      brw->ib.offset = offset;
+      brw->ib.size = ib_size;
+
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
+   } else {
+      drm_intel_bo_unreference(bo);
+   }
 
    brw_add_validated_bo(brw, brw->ib.bo);
 }
 
-static void brw_emit_indices(struct brw_context *brw)
+const struct brw_tracked_state brw_indices = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_INDICES,
+      .cache = 0,
+   },
+   .prepare = brw_prepare_indices,
+};
+
+static void brw_emit_index_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
-   GLuint ib_size;
 
    if (index_buffer == NULL)
       return;
-
-   ib_size = get_size(index_buffer->type) * index_buffer->count - 1;
 
    /* Emit the indexbuffer packet:
     */
@@ -662,12 +713,11 @@ static void brw_emit_indices(struct brw_context *brw)
       struct brw_indexbuffer ib;
 
       memset(&ib, 0, sizeof(ib));
-   
+
       ib.header.bits.opcode = CMD_INDEX_BUFFER;
       ib.header.bits.length = sizeof(ib)/4 - 2;
       ib.header.bits.index_format = get_index_type(index_buffer->type);
       ib.header.bits.cut_index_enable = 0;
-   
 
       BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
@@ -676,18 +726,17 @@ static void brw_emit_indices(struct brw_context *brw)
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + ib_size);
+		brw->ib.offset + brw->ib.size);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }
 }
 
-const struct brw_tracked_state brw_indices = {
+const struct brw_tracked_state brw_index_buffer = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_INDICES,
+      .brw = BRW_NEW_BATCH | BRW_NEW_INDEX_BUFFER,
       .cache = 0,
    },
-   .prepare = brw_prepare_indices,
-   .emit = brw_emit_indices,
+   .emit = brw_emit_index_buffer,
 };

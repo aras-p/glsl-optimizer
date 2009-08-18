@@ -107,31 +107,37 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 
 void r200EmitScissor(r200ContextPtr rmesa)
 {
+    unsigned x1, y1, x2, y2;
+    struct radeon_renderbuffer *rrb;
     BATCH_LOCALS(&rmesa->radeon);
     if (!rmesa->radeon.radeonScreen->kernel_mm) {
        return;
     }
+    rrb = radeon_get_colorbuffer(&rmesa->radeon);
+    if (!rrb || !rrb->bo)
+	return;
+
     if (rmesa->radeon.state.scissor.enabled) {
-        BEGIN_BATCH(8);
-        OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
-        OUT_BATCH(R200_SCISSOR_ENABLE | rmesa->hw.set.cmd[SET_RE_CNTL]);
-        OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
-        OUT_BATCH(R200_SCISSOR_ENABLE_0);
-        OUT_BATCH(CP_PACKET0(R200_RE_SCISSOR_TL_0, 0));
-        OUT_BATCH((rmesa->radeon.state.scissor.rect.y1 << 16) |
-                  rmesa->radeon.state.scissor.rect.x1);
-        OUT_BATCH(CP_PACKET0(R200_RE_SCISSOR_BR_0, 0));
-        OUT_BATCH(((rmesa->radeon.state.scissor.rect.y2 - 1) << 16) |
-                  (rmesa->radeon.state.scissor.rect.x2 - 1));
-        END_BATCH();
+	x1 = rmesa->radeon.state.scissor.rect.x1;
+	y1 = rmesa->radeon.state.scissor.rect.y1;
+	x2 = rmesa->radeon.state.scissor.rect.x2 - 1;
+	y2 = rmesa->radeon.state.scissor.rect.y2 - 1;
     } else {
-        BEGIN_BATCH(4);
-        OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
-        OUT_BATCH(rmesa->hw.set.cmd[SET_RE_CNTL] & ~R200_SCISSOR_ENABLE);
-        OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
-        OUT_BATCH(0);
-        END_BATCH();
+        x1 = 0;
+        y1 = 0;
+        x2 = rrb->base.Width - 1;
+        y2 = rrb->base.Height - 1;
     }
+    BEGIN_BATCH(8);
+    OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
+    OUT_BATCH(R200_SCISSOR_ENABLE | rmesa->hw.set.cmd[SET_RE_CNTL]);
+    OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
+    OUT_BATCH(0);
+    OUT_BATCH(CP_PACKET0(R200_RE_TOP_LEFT, 0));
+    OUT_BATCH((y1 << 16) | x1);
+    OUT_BATCH(CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0));
+    OUT_BATCH((y2 << 16) | x2);
+    END_BATCH();
 }
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
@@ -234,15 +240,9 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    radeonEmitState(&rmesa->radeon);
 
-#ifdef RADEON_DEBUG_BO
-   rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-					  0, R200_ELT_BUF_SZ, 4,
-						 RADEON_GEM_DOMAIN_GTT, 0, "ELT");
-#else
    rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
 					  0, R200_ELT_BUF_SZ, 4,
 					  RADEON_GEM_DOMAIN_GTT, 0);
-#endif
    rmesa->radeon.tcl.elt_dma_offset = 0;
    rmesa->tcl.elt_used = min_nr * 2;
 

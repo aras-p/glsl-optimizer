@@ -17,6 +17,7 @@ PROGRAMS = \
 	eglgears \
 	eglscreen \
 	peglgears \
+	xeglbindtex \
 	xeglgears \
 	xeglthreads \
 	xegl_tri
@@ -83,6 +84,12 @@ peglgears: peglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 peglgears.o: peglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include peglgears.c
 
+
+xeglbindtex: xeglbindtex.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) xeglbindtex.o -L$(TOP)/$(LIB_DIR) -lEGL -lGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+xeglbindtex.o: xeglbindtex.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include xeglbindtex.c
 
 xeglgears: xeglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 	$(CC) $(CFLAGS) xeglgears.o -L$(TOP)/$(LIB_DIR) -lEGL -lGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@

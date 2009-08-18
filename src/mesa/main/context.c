@@ -150,6 +150,7 @@
 #include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
 #include "shader/program.h"
+#include "shader/prog_print.h"
 #include "shader/shader_api.h"
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
@@ -1573,6 +1574,74 @@ _mesa_set_mvp_with_dp4( GLcontext *ctx,
                         GLboolean flag )
 {
    ctx->mvp_with_dp4 = flag;
+}
+
+
+
+/**
+ * Prior to drawing anything with glBegin, glDrawArrays, etc. this function
+ * is called to see if it's valid to render.  This involves checking that
+ * the current shader is valid and the framebuffer is complete.
+ * If an error is detected it'll be recorded here.
+ * \return GL_TRUE if OK to render, GL_FALSE if not
+ */
+GLboolean
+_mesa_valid_to_render(GLcontext *ctx, const char *where)
+{
+   if (ctx->Shader.CurrentProgram) {
+      /* using shaders */
+      if (!ctx->Shader.CurrentProgram->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(shader not linked), where");
+         return GL_FALSE;
+      }
+   }
+   else {
+      if (ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(vertex program not valid)", where);
+         return GL_FALSE;
+      }
+      if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(fragment program not valid)", where);
+         return GL_FALSE;
+      }
+   }
+
+   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "%s(incomplete framebuffer)", where);
+      return GL_FALSE;
+   }
+
+#ifdef DEBUG
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+      if (shProg) {
+         if (!shProg->_Used) {
+            /* This is the first time this shader is being used.
+             * Append shader's constants/uniforms to log file.
+             */
+            GLuint i;
+            for (i = 0; i < shProg->NumShaders; i++) {
+               struct gl_shader *sh = shProg->Shaders[i];
+               if (sh->Type == GL_VERTEX_SHADER) {
+                  _mesa_append_uniforms_to_file(sh,
+                                                &shProg->VertexProgram->Base);
+               }
+               else if (sh->Type == GL_FRAGMENT_SHADER) {
+                  _mesa_append_uniforms_to_file(sh,
+                                                &shProg->FragmentProgram->Base);
+               }
+            }
+            shProg->_Used = GL_TRUE;
+         }
+      }
+   }
+#endif
+
+   return GL_TRUE;
 }
 
 

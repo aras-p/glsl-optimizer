@@ -1128,6 +1128,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* SU Depth Offset value */
 #define R300_SU_DEPTH_OFFSET                0x42c4
 
+#define R300_SU_REG_DEST		    0x42c8
+#	define R300_RASTER_PIPE_SELECT_0	(1 << 0)
+#	define R300_RASTER_PIPE_SELECT_1	(1 << 1)
+#	define R300_RASTER_PIPE_SELECT_2	(1 << 2)
+#	define R300_RASTER_PIPE_SELECT_3	(1 << 3)
+#	define R300_RASTER_PIPE_SELECT_ALL	0xf
+
 
 /* BEGIN: Rasterization / Interpolators - many guesses */
 
@@ -2014,6 +2021,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_FG_ALPHA_VALUE                0x4be0
 #	define R500_FG_ALPHA_VALUE_MASK 0x0000ffff
 
+#define RV530_FG_ZBREG_DEST                 0x4be8
+#	define RV530_FG_ZBREG_DEST_PIPE_SELECT_0             (1 << 0)
+#	define RV530_FG_ZBREG_DEST_PIPE_SELECT_1             (1 << 1)
+#	define RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL           (3 << 0)
+
 /* gap */
 
 /* Fragment program parameters in 7.16 floating point */
@@ -2666,6 +2678,24 @@ enum {
 	PVS_SRC_ADDR_MODE_1_MASK	= 0x0,
 	PVS_SRC_ADDR_MODE_1_SHIFT	= 32,
 };
+
+
+#define PVS_OP_DST_OPERAND(opcode, math_inst, macro_inst, reg_index, reg_writemask, reg_class)	\
+	 (((opcode & PVS_DST_OPCODE_MASK) << PVS_DST_OPCODE_SHIFT)	\
+	 | ((math_inst & PVS_DST_MATH_INST_MASK) << PVS_DST_MATH_INST_SHIFT)	\
+	 | ((macro_inst & PVS_DST_MACRO_INST_MASK) << PVS_DST_MACRO_INST_SHIFT)	\
+	 | ((reg_index & PVS_DST_OFFSET_MASK) << PVS_DST_OFFSET_SHIFT)	\
+	 | ((reg_writemask & 0xf) << PVS_DST_WE_X_SHIFT)	/* X Y Z W */	\
+	 | ((reg_class & PVS_DST_REG_TYPE_MASK) << PVS_DST_REG_TYPE_SHIFT))
+
+#define PVS_SRC_OPERAND(in_reg_index, comp_x, comp_y, comp_z, comp_w, reg_class, negate)	\
+	(((in_reg_index & PVS_SRC_OFFSET_MASK) << PVS_SRC_OFFSET_SHIFT)				\
+	 | ((comp_x & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT)			\
+	 | ((comp_y & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT)			\
+	 | ((comp_z & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT)			\
+	 | ((comp_w & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT)			\
+	 | ((negate & 0xf) << PVS_SRC_MODIFIER_X_SHIFT)	/* X Y Z W */				\
+	 | ((reg_class & PVS_SRC_REG_TYPE_MASK) << PVS_SRC_REG_TYPE_SHIFT))
 
 /*\}*/
 

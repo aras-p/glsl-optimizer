@@ -260,6 +260,7 @@ struct brw_wm_compile {
    GLuint tmp_index;
    GLuint tmp_max;
    GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
+   GLuint dispatch_width;
 
    /** we may need up to 3 constants per instruction (if use_const_buffer) */
    struct {
@@ -292,6 +293,7 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
+		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);

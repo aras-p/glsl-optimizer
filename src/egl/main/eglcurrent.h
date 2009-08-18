@@ -20,14 +20,6 @@ struct _egl_thread_info
 };
 
 
-extern EGLBoolean
-_eglInitCurrent(void);
-
-
-extern void
-_eglFiniCurrent(void);
-
-
 /**
  * Return true if a client API enum can be converted to an index.
  */

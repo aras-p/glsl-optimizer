@@ -301,14 +301,14 @@ tgsi_exec_machine_bind_shader(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          {
             uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
-            assert( size % 4 == 0 );
-            assert( mach->ImmLimit + size / 4 <= TGSI_EXEC_NUM_IMMEDIATES );
+            assert( size <= 4 );
+            assert( mach->ImmLimit + 1 <= TGSI_EXEC_NUM_IMMEDIATES );
 
             for( i = 0; i < size; i++ ) {
-               mach->Imms[mach->ImmLimit + i / 4][i % 4] = 
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+               mach->Imms[mach->ImmLimit][i] = 
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
-            mach->ImmLimit += size / 4;
+            mach->ImmLimit += 1;
          }
          break;
 
@@ -375,15 +375,9 @@ tgsi_exec_machine_create( void )
    if (!mach)
       goto fail;
 
-   mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
+   memset(mach, 0, sizeof(*mach));
 
-   mach->Samplers = NULL;
-   mach->Consts = NULL;
-   mach->Tokens = NULL;
-   mach->Primitives = NULL;
-   mach->InterpCoefs = NULL;
-   mach->Instructions = NULL;
-   mach->Declarations = NULL;
+   mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
@@ -2020,8 +2014,7 @@ exec_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-   case TGSI_OPCODE_FLOOR:
-   /* TGSI_OPCODE_FLR */
+   case TGSI_OPCODE_FLR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_flr( &r[0], &r[0] );
@@ -2290,8 +2283,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LERP:
-   /* TGSI_OPCODE_LRP */
+   case TGSI_OPCODE_LRP:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
@@ -2325,8 +2317,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_DOT2ADD:
-   /* TGSI_OPCODE_DP2A */
+   case TGSI_OPCODE_DP2A:
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
       micro_mul( &r[0], &r[0], &r[1] );
@@ -2344,18 +2335,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_INDEX:
-      /* XXX: considered for removal */
-      assert (0);
-      break;
-
-   case TGSI_OPCODE_NEGATE:
-      /* XXX: considered for removal */
-      assert (0);
-      break;
-
-   case TGSI_OPCODE_FRAC:
-   /* TGSI_OPCODE_FRC */
+   case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_frc( &r[0], &r[0] );
@@ -2383,8 +2363,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_EXPBASE2:
-   /* TGSI_OPCODE_EX2 */
+   case TGSI_OPCODE_EX2:
       FETCH(&r[0], 0, CHAN_X);
 
 #if FAST_MATH
@@ -2398,8 +2377,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LOGBASE2:
-   /* TGSI_OPCODE_LG2 */
+   case TGSI_OPCODE_LG2:
       FETCH( &r[0], 0, CHAN_X );
       micro_lg2( &r[0], &r[0] );
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2407,8 +2385,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_POWER:
-   /* TGSI_OPCODE_POW */
+   case TGSI_OPCODE_POW:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
@@ -2419,8 +2396,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_CROSSPRODUCT:
-   /* TGSI_OPCODE_XPD */
+   case TGSI_OPCODE_XPD:
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
 
@@ -2461,11 +2437,6 @@ exec_instruction(
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
-
-    case TGSI_OPCODE_MULTIPLYMATRIX:
-       /* XXX: considered for removal */
-       assert (0);
-       break;
 
     case TGSI_OPCODE_ABS:
        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -3110,9 +3081,9 @@ exec_instruction(
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] = 0;
       break;
 
-   case TGSI_OPCODE_LOOP:
+   case TGSI_OPCODE_BGNFOR:
       /* fall-through (for now) */
-   case TGSI_OPCODE_BGNLOOP2:
+   case TGSI_OPCODE_BGNLOOP:
       /* push LoopMask and ContMasks */
       assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
@@ -3120,9 +3091,9 @@ exec_instruction(
       mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       break;
 
-   case TGSI_OPCODE_ENDLOOP:
+   case TGSI_OPCODE_ENDFOR:
       /* fall-through (for now at least) */
-   case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_ENDLOOP:
       /* Restore ContMask, but don't pop */
       assert(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];

@@ -885,7 +885,7 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
 static struct gl_program_parameter *
 get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
 {
-   const struct gl_program *prog;
+   const struct gl_program *prog = NULL;
    GLint progPos;
 
    progPos = shProg->Uniforms->Uniforms[index].VertPos;
@@ -915,7 +915,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLenum *type, GLchar *nameOut)
 {
    const struct gl_shader_program *shProg;
-   const struct gl_program *prog;
+   const struct gl_program *prog = NULL;
    const struct gl_program_parameter *param;
    GLint progPos;
 
@@ -1431,6 +1431,9 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
    }
    sh->Source = source;
    sh->CompileStatus = GL_FALSE;
+#ifdef DEBUG
+   sh->SourceChecksum = _mesa_str_checksum(sh->Source);
+#endif
 }
 
 
@@ -1506,9 +1509,10 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
          GLuint i;
          _mesa_printf("Use Shader %u\n", shProg->Name);
          for (i = 0; i < shProg->NumShaders; i++) {
-            _mesa_printf(" shader %u, type 0x%x\n",
+            _mesa_printf(" shader %u, type 0x%x, checksum %u\n",
                          shProg->Shaders[i]->Name,
-                         shProg->Shaders[i]->Type);
+                         shProg->Shaders[i]->Type,
+                         shProg->Shaders[i]->SourceChecksum);
          }
          if (shProg->VertexProgram)
             printf(" vert prog %u\n", shProg->VertexProgram->Base.Id);

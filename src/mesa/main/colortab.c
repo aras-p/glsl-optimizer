@@ -179,7 +179,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
 			 GLfloat bScale, GLfloat bBias,
 			 GLfloat aScale, GLfloat aBias)
 {
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       /* Get/unpack the color table data from a PBO */
       GLubyte *buf;
       if (!_mesa_validate_pbo_access(1, &ctx->Unpack, count, 1, 1,
@@ -279,7 +279,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
       }
    }
 
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               ctx->Unpack.BufferObj);
    }
@@ -696,7 +696,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       return;
    }
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack color table into PBO */
       GLubyte *buf;
       if (!_mesa_validate_pbo_access(1, &ctx->Pack, table->Size, 1, 1,
@@ -720,7 +720,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    _mesa_pack_rgba_span_float(ctx, table->Size, rgba,
                               format, type, data, &ctx->Pack, 0x0);
 
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                               ctx->Pack.BufferObj);
    }

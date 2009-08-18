@@ -25,7 +25,7 @@ static GLuint program;
 
 static struct uniform_info Uniforms[] = {
    /* vert */
-   { "LightPosition",        3, GL_FLOAT, { 0.1, 0.1, 9.0, 0}, -1 },
+   { "LightPosition",        1, GL_FLOAT_VEC3, { 0.1, 0.1, 9.0, 0}, -1 },
    { "SpecularContribution", 1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
    { "DiffuseContribution",  1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
    { "Shininess",            1, GL_FLOAT, { 20.0, 0, 0, 0 }, -1 },
@@ -34,9 +34,9 @@ static struct uniform_info Uniforms[] = {
    { "Zoom",                 1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
    { "Xcenter",              1, GL_FLOAT, { -1.5, 0, 0, 0 }, -1 },
    { "Ycenter",              1, GL_FLOAT, { .005, 0, 0, 0 }, -1 },
-   { "InnerColor",           3, GL_FLOAT, { 1, 0, 0, 0 }, -1 },
-   { "OuterColor1",          3, GL_FLOAT, { 0, 1, 0, 0 }, -1 },
-   { "OuterColor2",          3, GL_FLOAT, { 0, 0, 1, 0 }, -1 },
+   { "InnerColor",           1, GL_FLOAT_VEC3, { 1, 0, 0, 0 }, -1 },
+   { "OuterColor1",          1, GL_FLOAT_VEC3, { 0, 1, 0, 0 }, -1 },
+   { "OuterColor2",          1, GL_FLOAT_VEC3, { 0, 0, 1, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
@@ -159,7 +159,8 @@ Init(void)
 
    glUseProgram(program);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    uZoom = glGetUniformLocation(program, "Zoom");
    uXcenter = glGetUniformLocation(program, "Xcenter");
@@ -198,7 +199,6 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition( 0, 0);
    glutInitWindowSize(400, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);

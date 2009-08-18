@@ -14,6 +14,8 @@ struct exa_context
 struct exa_pixmap_priv
 {
     int flags;
+    int tex_flags;
+
     struct pipe_texture *tex;
     unsigned int color;
     struct pipe_surface *src_surf; /* for copies */

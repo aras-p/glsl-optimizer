@@ -69,7 +69,7 @@ static const char *TGSI_TOKEN_TYPES[] =
    "TOKEN_TYPE_INSTRUCTION"
 };
 
-static const char *TGSI_FILES[] =
+static const char *TGSI_FILES[TGSI_FILE_COUNT] =
 {
    "FILE_NULL",
    "FILE_CONSTANT",
@@ -78,7 +78,8 @@ static const char *TGSI_FILES[] =
    "FILE_TEMPORARY",
    "FILE_SAMPLER",
    "FILE_ADDRESS",
-   "FILE_IMMEDIATE"
+   "FILE_IMMEDIATE",
+   "FILE_LOOP"
 };
 
 static const char *TGSI_INTERPOLATES[] =
@@ -283,12 +284,13 @@ dump_immediate_verbose(
       UIX( imm->Immediate.Padding );
    }
 
+   assert( imm->Immediate.NrTokens <= 4 + 1 );
    for( i = 0; i < imm->Immediate.NrTokens - 1; i++ ) {
       EOL();
       switch( imm->Immediate.DataType ) {
       case TGSI_IMM_FLOAT32:
          TXT( "\nFloat: " );
-         FLT( imm->u.ImmediateFloat32[i].Float );
+         FLT( imm->u[i].Float );
          break;
 
       default:

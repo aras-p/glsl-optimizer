@@ -24,6 +24,7 @@
 
 #include "glheader.h"
 #include "api_validate.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "imports.h"
 #include "mtypes.h"
@@ -62,7 +63,7 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
    GLuint max = 0;
    GLuint i;
 
-   if (elementBuf->Name) {
+   if (_mesa_is_bufferobj(elementBuf)) {
       /* elements are in a user-defined buffer object.  need to map it */
       map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
                                   GL_READ_ONLY, elementBuf);
@@ -96,14 +97,12 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
 
 
 /**
- * Check if OK to render by examining framebuffer status and vertex arrays.
+ * Check if OK to draw arrays/elements.
  */
 static GLboolean
-check_valid_to_render(GLcontext *ctx, char *function)
+check_valid_to_render(GLcontext *ctx, const char *function)
 {
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glDraw%s(incomplete framebuffer)", function);
+   if (!_mesa_valid_to_render(ctx, function)) {
       return GL_FALSE;
    }
 
@@ -160,11 +159,11 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (!check_valid_to_render(ctx, "Elements"))
+   if (!check_valid_to_render(ctx, "glDrawElements"))
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
@@ -233,11 +232,11 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (!check_valid_to_render(ctx, "RangeElements"))
+   if (!check_valid_to_render(ctx, "glDrawRangeElements"))
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (ctx->Array.ElementArrayBufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
@@ -289,7 +288,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (!check_valid_to_render(ctx, "Arrays"))
+   if (!check_valid_to_render(ctx, "glDrawArrays"))
       return GL_FALSE;
 
    if (ctx->Const.CheckArrayBounds) {

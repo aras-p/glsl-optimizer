@@ -249,6 +249,7 @@ aub_i915_surface_buffer_create(struct pipe_winsys *winsys,
                                unsigned width, unsigned height,
                                enum pipe_format format,
                                unsigned usage,
+                               unsigned tex_usage,
                                unsigned *stride)
 {
    const unsigned alignment = 64;

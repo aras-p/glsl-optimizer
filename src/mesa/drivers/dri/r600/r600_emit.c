@@ -63,26 +63,15 @@ GLboolean r600EmitShader(GLcontext * ctx,
     struct radeon_bo * pbo;
     uint32_t *out;
 
-shader_again_alloc:	
-#ifdef RADEON_DEBUG_BO
-	pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
-					     0, 
-                         sizeinDWORD * 4, 
-                         256, 
-                         RADEON_GEM_DOMAIN_GTT,
-					     0,
-                         szShaderUsage);
-#else
+shader_again_alloc:
     pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
-					     0, 
-                         sizeinDWORD * 4, 
-                         256, 
+			 0,
+                         sizeinDWORD * 4,
+                         256,
                          RADEON_GEM_DOMAIN_GTT,
-					     0);
-#endif /* RADEON_DEBUG_BO */
+			 0);
 
-	if (!pbo) 
-    {
+	if (!pbo) {
 		rcommonFlushCmdBuf(radeonctx, __FUNCTION__);
 		goto shader_again_alloc;
 	}

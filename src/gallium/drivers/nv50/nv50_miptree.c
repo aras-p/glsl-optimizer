@@ -42,9 +42,14 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	mt->base.screen = pscreen;
 
 	switch (pt->format) {
-	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z32_FLOAT:
+		tile_flags = 0x4800;
+		break;
 	case PIPE_FORMAT_Z24S8_UNORM:
-	case PIPE_FORMAT_Z16_UNORM:
+		tile_flags = 0x1800;
+		break;
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8Z24_UNORM:
 		tile_flags = 0x2800;
 		break;
 	default:
@@ -82,20 +87,27 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
 		lvl->pitch = align(pt->width[l] * pt->block.size, 64);
+		lvl->tile_mode = tile_mode;
 
 		width = MAX2(1, width >> 1);
 		height = MAX2(1, height >> 1);
 		depth = MAX2(1, depth >> 1);
+
+		if (tile_mode && height <= (tile_h >> 1)) {
+			tile_mode--;
+			tile_h >>= 1;
+		}
 	}
 
 	for (i = 0; i < mt->image_nr; i++) {
 		for (l = 0; l <= pt->last_level; l++) {
 			struct nv50_miptree_level *lvl = &mt->level[l];
 			int size;
+			tile_h = 1 << (lvl->tile_mode + 2);
 
 			size  = align(pt->width[l], 8) * pt->block.size;
 			size  = align(size, 64);
-			size *= align(pt->height[l], tile_h) * pt->block.size;
+			size *= align(pt->height[l], tile_h);
 
 			lvl->image_offset[i] = mt->total_size;
 
@@ -104,12 +116,12 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	}
 
 	ret = nouveau_bo_new_tile(dev, NOUVEAU_BO_VRAM, 256, mt->total_size,
-				  tile_mode, tile_flags, &mt->bo);
+				  mt->level[0].tile_mode, tile_flags, &mt->bo);
 	if (ret) {
 		FREE(mt);
 		return NULL;
 	}
-			     
+
 	return &mt->base;
 }
 
@@ -146,7 +158,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 	struct nv50_miptree *mt = nv50_miptree(pt);
 
 	nouveau_bo_ref(NULL, &mt->bo);
-        FREE(mt);
+	FREE(mt);
 }
 
 static struct pipe_surface *
@@ -189,8 +201,8 @@ nv50_miptree_surface_del(struct pipe_surface *ps)
 {
 	struct nv50_surface *s = nv50_surface(ps);
 
-        pipe_texture_reference(&ps->texture, NULL);
-        FREE(s);
+	pipe_texture_reference(&ps->texture, NULL);
+	FREE(s);
 }
 
 void

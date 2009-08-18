@@ -30,6 +30,21 @@
 #include "r3xx_fs.h"
 #include "r5xx_fs.h"
 
+#include "radeon_code.h"
+
+struct r300_fragment_shader {
+    /* Parent class */
+    struct pipe_shader_state state;
+    struct tgsi_shader_info info;
+
+    /* Has this shader been translated yet? */
+    boolean translated;
+
+    /* Compiled code */
+    struct rX00_fragment_program_code code;
+};
+
+
 void r300_translate_fragment_shader(struct r300_context* r300,
                                     struct r300_fragment_shader* fs);
 

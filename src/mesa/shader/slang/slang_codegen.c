@@ -46,6 +46,7 @@
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "slang_typeinfo.h"
+#include "slang_builtin.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_label.h"
@@ -339,109 +340,6 @@ slang_operation_identifier(slang_operation *oper,
 {
    oper->type = SLANG_OPER_IDENTIFIER;
    oper->a_id = slang_atom_pool_atom(A->atoms, name);
-}
-
-
-#define SWIZZLE_ZWWW MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
-
-/**
- * Return the VERT_ATTRIB_* or FRAG_ATTRIB_* value that corresponds to
- * a vertex or fragment program input variable.  Return -1 if the input
- * name is invalid.
- * XXX return size too
- */
-static GLint
-_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
-{
-   struct input_info {
-      const char *Name;
-      GLuint Attrib;
-      GLuint Swizzle;
-   };
-   static const struct input_info vertInputs[] = {
-      { "gl_Vertex", VERT_ATTRIB_POS, SWIZZLE_NOOP },
-      { "gl_Normal", VERT_ATTRIB_NORMAL, SWIZZLE_NOOP },
-      { "gl_Color", VERT_ATTRIB_COLOR0, SWIZZLE_NOOP },
-      { "gl_SecondaryColor", VERT_ATTRIB_COLOR1, SWIZZLE_NOOP },
-      { "gl_FogCoord", VERT_ATTRIB_FOG, SWIZZLE_XXXX },
-      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, SWIZZLE_NOOP },
-      { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, SWIZZLE_NOOP },
-      { NULL, 0, SWIZZLE_NOOP }
-   };
-   static const struct input_info fragInputs[] = {
-      { "gl_FragCoord", FRAG_ATTRIB_WPOS, SWIZZLE_NOOP },
-      { "gl_Color", FRAG_ATTRIB_COL0, SWIZZLE_NOOP },
-      { "gl_SecondaryColor", FRAG_ATTRIB_COL1, SWIZZLE_NOOP },
-      { "gl_TexCoord", FRAG_ATTRIB_TEX0, SWIZZLE_NOOP },
-      /* note: we're packing several quantities into the fogcoord vector */
-      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, SWIZZLE_XXXX },
-      { "gl_FrontFacing", FRAG_ATTRIB_FOGC, SWIZZLE_YYYY }, /*XXX*/
-      { "gl_PointCoord", FRAG_ATTRIB_FOGC, SWIZZLE_ZWWW },
-      { NULL, 0, SWIZZLE_NOOP }
-   };
-   GLuint i;
-   const struct input_info *inputs
-      = (target == GL_VERTEX_PROGRAM_ARB) ? vertInputs : fragInputs;
-
-   ASSERT(MAX_TEXTURE_COORD_UNITS == 8); /* if this fails, fix vertInputs above */
-
-   for (i = 0; inputs[i].Name; i++) {
-      if (strcmp(inputs[i].Name, name) == 0) {
-         /* found */
-         *swizzleOut = inputs[i].Swizzle;
-         return inputs[i].Attrib;
-      }
-   }
-   return -1;
-}
-
-
-/**
- * Return the VERT_RESULT_* or FRAG_RESULT_* value that corresponds to
- * a vertex or fragment program output variable.  Return -1 for an invalid
- * output name.
- */
-static GLint
-_slang_output_index(const char *name, GLenum target)
-{
-   struct output_info {
-      const char *Name;
-      GLuint Attrib;
-   };
-   static const struct output_info vertOutputs[] = {
-      { "gl_Position", VERT_RESULT_HPOS },
-      { "gl_FrontColor", VERT_RESULT_COL0 },
-      { "gl_BackColor", VERT_RESULT_BFC0 },
-      { "gl_FrontSecondaryColor", VERT_RESULT_COL1 },
-      { "gl_BackSecondaryColor", VERT_RESULT_BFC1 },
-      { "gl_TexCoord", VERT_RESULT_TEX0 },
-      { "gl_FogFragCoord", VERT_RESULT_FOGC },
-      { "gl_PointSize", VERT_RESULT_PSIZ },
-      { NULL, 0 }
-   };
-   static const struct output_info fragOutputs[] = {
-      { "gl_FragColor", FRAG_RESULT_COLOR },
-      { "gl_FragDepth", FRAG_RESULT_DEPTH },
-      { "gl_FragData", FRAG_RESULT_DATA0 },
-      { NULL, 0 }
-   };
-   GLuint i;
-   const struct output_info *outputs
-      = (target == GL_VERTEX_PROGRAM_ARB) ? vertOutputs : fragOutputs;
-
-   for (i = 0; outputs[i].Name; i++) {
-      if (strcmp(outputs[i].Name, name) == 0) {
-         /* found */
-         return outputs[i].Attrib;
-      }
-   }
-   return -1;
 }
 
 

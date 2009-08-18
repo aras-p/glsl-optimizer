@@ -5,13 +5,12 @@ LIBNAME = xlib
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main
+	-I$(TOP)/src/mesa
 
 C_SOURCES = \
-	glxapi.c \
-	fakeglx.c \
-	fakeglx_fonts.c \
+	glx_api.c \
+	glx_getproc.c \
+	glx_usefont.c \
 	xm_api.c
 
 include ../../../Makefile.template

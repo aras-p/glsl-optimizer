@@ -345,7 +345,9 @@ DRI_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
 
@@ -388,7 +390,17 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/glw.pc.in			\
 	$(DIRECTORY)/src/glw/depend
 
+GLEW_FILES = \
+	$(DIRECTORY)/include/GL/glew.h			\
+	$(DIRECTORY)/include/GL/glxew.h			\
+	$(DIRECTORY)/include/GL/wglew.h			\
+	$(DIRECTORY)/src/glew/*.c			\
+	$(DIRECTORY)/src/glew/Makefile			\
+	$(DIRECTORY)/src/glew/SConscript		\
+	$(DIRECTORY)/src/glew/LICENSE.txt
+
 DEMO_FILES = \
+	$(GLEW_FILES)					\
 	$(DIRECTORY)/progs/beos/*.cpp			\
 	$(DIRECTORY)/progs/beos/Makefile		\
 	$(DIRECTORY)/progs/images/*.rgb			\
@@ -415,6 +427,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/glsl/*.c			\
 	$(DIRECTORY)/progs/glsl/*.frag			\
 	$(DIRECTORY)/progs/glsl/*.vert			\
+	$(DIRECTORY)/progs/glsl/*.shtest		\
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\

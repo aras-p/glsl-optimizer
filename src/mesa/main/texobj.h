@@ -58,12 +58,19 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src );
 
 extern void
+_mesa_clear_texture_object(GLcontext *ctx, struct gl_texture_object *obj);
+
+extern void
 _mesa_reference_texobj(struct gl_texture_object **ptr,
                        struct gl_texture_object *tex);
 
 extern void
 _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *obj );
+
+extern void
+_mesa_dirty_texobj(GLcontext *ctx, struct gl_texture_object *texObj,
+                   GLboolean invalidate_state);
 
 extern struct gl_texture_object *
 _mesa_get_fallback_texture(GLcontext *ctx);
@@ -75,7 +82,6 @@ extern void
 _mesa_lock_context_textures( GLcontext *ctx );
 
 /*@}*/
-
 
 /**
  * \name API functions

@@ -4,7 +4,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/egl/main
+INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/egl/main $(X11_INCLUDES)
 
 
 SOURCES = demo.c

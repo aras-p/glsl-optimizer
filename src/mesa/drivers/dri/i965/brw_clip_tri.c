@@ -119,6 +119,11 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       i++;
    }
 
+   if (c->need_ff_sync) {
+      c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
+      i++;
+   }
+
    c->first_tmp = i;
    c->last_tmp = i;
 
@@ -563,6 +568,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
    brw_clip_tri_alloc_regs(c, 3 + c->key.nr_userclip + 6);
    brw_clip_tri_init_vertices(c);
    brw_clip_init_clipmask(c);
+   brw_clip_init_ff_sync(c);
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
@@ -589,8 +595,6 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
    else 
       maybe_do_clip_tri(c);
 
-   if (c->need_ff_sync)
-	   brw_clip_ff_sync(c);      
    brw_clip_tri_emit_polygon(c);
 
    /* Send an empty message to kill the thread:

@@ -605,7 +605,7 @@ fbDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    fbSurface *fs = Lookup_fbSurface(surface);
    _eglUnlinkSurface(&fs->Base);
-   if (!fs->Base.IsBound)
+   if (!_eglIsSurfaceBound(&fs->Base))
       free(fs);
    return EGL_TRUE;
 }
@@ -616,7 +616,7 @@ fbDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    fbContext *fc = Lookup_fbContext(context);
    _eglUnlinkContext(&fc->Base);
-   if (!fc->Base.IsBound)
+   if (!_eglIsContextBound(&fc->Base))
       free(fc);
    return EGL_TRUE;
 }

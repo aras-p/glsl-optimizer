@@ -193,7 +193,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 void
 _mesa_polygon_stipple(GLcontext *ctx, const GLubyte *pattern)
 {
-   if (ctx->Unpack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
       /* Get/unpack the stipple pattern from a PBO */
       GLubyte *buf;
       if (!_mesa_validate_pbo_access(2, &ctx->Unpack, 32, 32, 1,
@@ -258,7 +258,7 @@ _mesa_GetPolygonStipple( GLubyte *dest )
    /* XXX someday we may put this code into a separate function and call
     * it with ctx->Driver.GetPolygonStipple().
     */
-   if (ctx->Pack.BufferObj->Name) {
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* Put/pack the stipple pattern into a PBO */
       GLubyte *buf;
       if (!_mesa_validate_pbo_access(2, &ctx->Pack, 32, 32, 1,

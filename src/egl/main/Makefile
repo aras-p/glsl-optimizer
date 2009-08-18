@@ -4,7 +4,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi
+INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi $(X11_INCLUDES)
 
 HEADERS = \
 	eglcompiler.h \
@@ -20,6 +20,7 @@ HEADERS = \
 	eglhash.h \
 	eglmisc.h \
 	eglmode.h \
+	eglmutex.h \
 	eglscreen.h \
 	eglstring.h \
 	eglsurface.h \
@@ -74,6 +75,7 @@ install: default
 clean:
 	-rm -f *.o *.so*
 	-rm -f core.*
+	-rm -f depend depend.bak
 
 
 depend: $(SOURCES) $(HEADERS)

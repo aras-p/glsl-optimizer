@@ -59,11 +59,11 @@ struct split_context {
 static void flush_vertex( struct split_context *split )
 {
    GLuint min_index, max_index;
+   GLuint i;
 
    if (!split->dstprim_nr) 
       return;
 
-   GLuint i;
    min_index = split->dstprim[0].start;
    max_index = min_index + split->dstprim[0].count - 1;
 
@@ -85,6 +85,7 @@ static void flush_vertex( struct split_context *split )
 		split->dstprim,
 		split->dstprim_nr,
 		NULL,
+		GL_TRUE,
 		min_index,
 		max_index);
 
