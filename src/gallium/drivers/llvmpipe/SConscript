@@ -2,6 +2,7 @@ Import('*')
 
 env = env.Clone()
 
+env.Tool('udis86')
 env.ParseConfig('llvm-config --cppflags')
 
 llvmpipe = env.ConvenienceLibrary(
@@ -57,7 +58,6 @@ llvmpipe = env.ConvenienceLibrary(
 
 env = env.Clone()
 
-env.Prepend(LIBS = 'udis86')
 env['LINK'] = env['CXX']
 env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
 env.Prepend(LIBS = [llvmpipe] + auxiliaries)

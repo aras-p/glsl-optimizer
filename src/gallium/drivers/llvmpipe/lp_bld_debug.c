@@ -26,7 +26,9 @@
  **************************************************************************/
 
 
+#ifdef HAVE_UDIS86
 #include <udis86.h>
+#endif
 
 #include "util/u_debug.h"
 #include "lp_bld_debug.h"
@@ -35,6 +37,7 @@
 void
 lp_disassemble(const void* func)
 {
+#ifdef HAVE_UDIS86
    ud_t ud_obj;
 
    ud_init(&ud_obj);
@@ -69,4 +72,7 @@ lp_disassemble(const void* func)
          break;
    }
    debug_printf("\n");
+#else
+   (void)func;
+#endif
 }

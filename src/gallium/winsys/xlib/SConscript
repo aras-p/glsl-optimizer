@@ -31,7 +31,7 @@ if env['platform'] == 'linux' \
 
     if 'llvmpipe' in env['drivers']:
         env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
-        env.Prepend(LIBS = 'udis86')
+        env.Tool('udis86')
         env.ParseConfig('llvm-config --libs jit interpreter nativecodegen')
         env['LINK'] = env['CXX']
         sources += ['xlib_llvmpipe.c']
