@@ -41,6 +41,7 @@
 #include "lp_quad.h"
 #include "lp_surface.h"
 #include "lp_tile_cache.h"
+#include "lp_tile_soa.h"
 #include "lp_quad_pipe.h"
 
 
@@ -163,7 +164,7 @@ blend_run(struct quad_stage *qs,
                int y = ity + (j >> 1);
                for (i = 0; i < 4; i++) {
                   src[i][4*k + j] = float_to_ubyte(quad->output.color[cbuf][i][j]);
-                  dst[i][4*k + j] = tile->data.color[i][y][x];
+                  dst[i][4*k + j] = TILE_PIXEL(tile->data.color, x, y, i);
                }
             }
          }
@@ -193,7 +194,7 @@ blend_run(struct quad_stage *qs,
                   int x = itx + (j & 1);
                   int y = ity + (j >> 1);
                   for (i = 0; i < 4; i++) { /* loop over color chans */
-                     tile->data.color[i][y][x] = src[i][4*k + j];
+                     TILE_PIXEL(tile->data.color, x, y, i) = src[i][4*k + j];
                   }
                }
             }

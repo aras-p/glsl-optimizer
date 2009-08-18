@@ -42,7 +42,11 @@
 #include "lp_tile_soa.h"
 
 
-#define PIXEL(_p, _x, _y, _c) ((_p)[(_c)*TILE_SIZE*TILE_SIZE + (_y)*TILE_SIZE + (_x)])
+const unsigned char
+tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH] = {
+   {  0,  1,  4,  5,  8,  9, 12, 13},
+   {  2,  3,  6,  7, 10, 11, 14, 15}
+};
 
 
 
@@ -58,10 +62,10 @@ a8r8g8b8_get_tile_rgba(const unsigned *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
-         PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
-         PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
-         PIXEL(p, j, i, 3) = (pixel >> 24) & 0xff;
+         TILE_PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
+         TILE_PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
+         TILE_PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
+         TILE_PIXEL(p, j, i, 3) = (pixel >> 24) & 0xff;
       }
    }
 }
@@ -77,10 +81,10 @@ a8r8g8b8_put_tile_rgba(unsigned *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = PIXEL(p, j, i, 0);
-         g = PIXEL(p, j, i, 1);
-         b = PIXEL(p, j, i, 2);
-         a = PIXEL(p, j, i, 3);
+         r = TILE_PIXEL(p, j, i, 0);
+         g = TILE_PIXEL(p, j, i, 1);
+         b = TILE_PIXEL(p, j, i, 2);
+         a = TILE_PIXEL(p, j, i, 3);
          *dst++ = (a << 24) | (r << 16) | (g << 8) | b;
       }
    }
@@ -99,10 +103,10 @@ x8r8g8b8_get_tile_rgba(const unsigned *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
-         PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
-         PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
-         PIXEL(p, j, i, 3) = 0xff;
+         TILE_PIXEL(p, j, i, 0) = (pixel >> 16) & 0xff;
+         TILE_PIXEL(p, j, i, 1) = (pixel >>  8) & 0xff;
+         TILE_PIXEL(p, j, i, 2) = (pixel >>  0) & 0xff;
+         TILE_PIXEL(p, j, i, 3) = 0xff;
       }
    }
 }
@@ -118,9 +122,9 @@ x8r8g8b8_put_tile_rgba(unsigned *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b;
-         r = PIXEL(p, j, i, 0);
-         g = PIXEL(p, j, i, 1);
-         b = PIXEL(p, j, i, 2);
+         r = TILE_PIXEL(p, j, i, 0);
+         g = TILE_PIXEL(p, j, i, 1);
+         b = TILE_PIXEL(p, j, i, 2);
          *dst++ = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
    }
@@ -139,10 +143,10 @@ b8g8r8a8_get_tile_rgba(const unsigned *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const unsigned pixel = *src++;
-         PIXEL(p, j, i, 0) = (pixel >>  8) & 0xff;
-         PIXEL(p, j, i, 1) = (pixel >> 16) & 0xff;
-         PIXEL(p, j, i, 2) = (pixel >> 24) & 0xff;
-         PIXEL(p, j, i, 3) = (pixel >>  0) & 0xff;
+         TILE_PIXEL(p, j, i, 0) = (pixel >>  8) & 0xff;
+         TILE_PIXEL(p, j, i, 1) = (pixel >> 16) & 0xff;
+         TILE_PIXEL(p, j, i, 2) = (pixel >> 24) & 0xff;
+         TILE_PIXEL(p, j, i, 3) = (pixel >>  0) & 0xff;
       }
    }
 }
@@ -158,10 +162,10 @@ b8g8r8a8_put_tile_rgba(unsigned *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = PIXEL(p, j, i, 0);
-         g = PIXEL(p, j, i, 1);
-         b = PIXEL(p, j, i, 2);
-         a = PIXEL(p, j, i, 3);
+         r = TILE_PIXEL(p, j, i, 0);
+         g = TILE_PIXEL(p, j, i, 1);
+         b = TILE_PIXEL(p, j, i, 2);
+         a = TILE_PIXEL(p, j, i, 3);
          *dst++ = (b << 24) | (g << 16) | (r << 8) | a;
       }
    }
@@ -180,10 +184,10 @@ a1r5g5b5_get_tile_rgba(const ushort *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >> 10) & 0x1f) * 255 / 31;
-         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x1f) * 255 / 31;
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
-         PIXEL(p, j, i, 3) = ((pixel >> 15)       ) * 255;
+         TILE_PIXEL(p, j, i, 0) = ((pixel >> 10) & 0x1f) * 255 / 31;
+         TILE_PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x1f) * 255 / 31;
+         TILE_PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
+         TILE_PIXEL(p, j, i, 3) = ((pixel >> 15)       ) * 255;
       }
    }
 }
@@ -199,10 +203,10 @@ a1r5g5b5_put_tile_rgba(ushort *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = PIXEL(p, j, i, 0);
-         g = PIXEL(p, j, i, 1);
-         b = PIXEL(p, j, i, 2);
-         a = PIXEL(p, j, i, 3);
+         r = TILE_PIXEL(p, j, i, 0);
+         g = TILE_PIXEL(p, j, i, 1);
+         b = TILE_PIXEL(p, j, i, 2);
+         a = TILE_PIXEL(p, j, i, 3);
          r = r >> 3;  /* 5 bits */
          g = g >> 3;  /* 5 bits */
          b = b >> 3;  /* 5 bits */
@@ -225,10 +229,10 @@ a4r4g4b4_get_tile_rgba(const ushort *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >>  8) & 0xf) * 255 / 15;
-         PIXEL(p, j, i, 1) = ((pixel >>  4) & 0xf) * 255 / 15;
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0xf) * 255 / 15;
-         PIXEL(p, j, i, 3) = ((pixel >> 12)      ) * 255 / 15;
+         TILE_PIXEL(p, j, i, 0) = ((pixel >>  8) & 0xf) * 255 / 15;
+         TILE_PIXEL(p, j, i, 1) = ((pixel >>  4) & 0xf) * 255 / 15;
+         TILE_PIXEL(p, j, i, 2) = ((pixel      ) & 0xf) * 255 / 15;
+         TILE_PIXEL(p, j, i, 3) = ((pixel >> 12)      ) * 255 / 15;
       }
    }
 }
@@ -244,10 +248,10 @@ a4r4g4b4_put_tile_rgba(ushort *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, g, b, a;
-         r = PIXEL(p, j, i, 0);
-         g = PIXEL(p, j, i, 1);
-         b = PIXEL(p, j, i, 2);
-         a = PIXEL(p, j, i, 3);
+         r = TILE_PIXEL(p, j, i, 0);
+         g = TILE_PIXEL(p, j, i, 1);
+         b = TILE_PIXEL(p, j, i, 2);
+         a = TILE_PIXEL(p, j, i, 3);
          r >>= 4;
          g >>= 4;
          b >>= 4;
@@ -270,10 +274,10 @@ r5g6b5_get_tile_rgba(const ushort *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = *src++;
-         PIXEL(p, j, i, 0) = ((pixel >> 11) & 0x1f) * 255 / 31;
-         PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x3f) * 255 / 63;
-         PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
-         PIXEL(p, j, i, 3) = 255;
+         TILE_PIXEL(p, j, i, 0) = ((pixel >> 11) & 0x1f) * 255 / 31;
+         TILE_PIXEL(p, j, i, 1) = ((pixel >>  5) & 0x3f) * 255 / 63;
+         TILE_PIXEL(p, j, i, 2) = ((pixel      ) & 0x1f) * 255 / 31;
+         TILE_PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -288,9 +292,9 @@ r5g6b5_put_tile_rgba(ushort *dst,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         uint r = (uint) PIXEL(p, j, i, 0) * 31 / 255;
-         uint g = (uint) PIXEL(p, j, i, 1) * 63 / 255;
-         uint b = (uint) PIXEL(p, j, i, 2) * 31 / 255;
+         uint r = (uint) TILE_PIXEL(p, j, i, 0) * 31 / 255;
+         uint g = (uint) TILE_PIXEL(p, j, i, 1) * 63 / 255;
+         uint b = (uint) TILE_PIXEL(p, j, i, 2) * 31 / 255;
          *dst++ = (r << 11) | (g << 5) | (b);
       }
    }
@@ -313,10 +317,10 @@ z16_get_tile_rgba(const ushort *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = *src++ * scale;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = *src++ * scale;
       }
    }
 }
@@ -335,10 +339,10 @@ l8_get_tile_rgba(const ubyte *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = *src;
-         PIXEL(p, j, i, 3) = 255;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) = *src;
+         TILE_PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -354,7 +358,7 @@ l8_put_tile_rgba(ubyte *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r;
-         r = PIXEL(p, j, i, 0);
+         r = TILE_PIXEL(p, j, i, 0);
          *dst++ = (ubyte) r;
       }
    }
@@ -373,10 +377,10 @@ a8_get_tile_rgba(const ubyte *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = 0;
-         PIXEL(p, j, i, 3) = *src;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) = 0;
+         TILE_PIXEL(p, j, i, 3) = *src;
       }
    }
 }
@@ -392,7 +396,7 @@ a8_put_tile_rgba(ubyte *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned a;
-         a = PIXEL(p, j, i, 3);
+         a = TILE_PIXEL(p, j, i, 3);
          *dst++ = (ubyte) a;
       }
    }
@@ -411,10 +415,10 @@ r16_get_tile_rgba(const short *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src++) {
-         PIXEL(p, j, i, 0) = MAX2(src[0] >> 7, 0);
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = 0;
-         PIXEL(p, j, i, 3) = 255;
+         TILE_PIXEL(p, j, i, 0) = MAX2(src[0] >> 7, 0);
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) = 0;
+         TILE_PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -429,7 +433,7 @@ r16_put_tile_rgba(short *dst,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, dst++) {
-         dst[0] = PIXEL(p, j, i, 0) << 7;
+         dst[0] = TILE_PIXEL(p, j, i, 0) << 7;
       }
    }
 }
@@ -446,10 +450,10 @@ r16g16b16a16_get_tile_rgba(const short *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src += 4) {
-         PIXEL(p, j, i, 0) = src[0] >> 8;
-         PIXEL(p, j, i, 1) = src[1] >> 8;
-         PIXEL(p, j, i, 2) = src[2] >> 8;
-         PIXEL(p, j, i, 3) = src[3] >> 8;
+         TILE_PIXEL(p, j, i, 0) = src[0] >> 8;
+         TILE_PIXEL(p, j, i, 1) = src[1] >> 8;
+         TILE_PIXEL(p, j, i, 2) = src[2] >> 8;
+         TILE_PIXEL(p, j, i, 3) = src[3] >> 8;
       }
    }
 }
@@ -464,10 +468,10 @@ r16g16b16a16_put_tile_rgba(short *dst,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, dst += 4) {
-         dst[0] = PIXEL(p, j, i, 0) << 8;
-         dst[1] = PIXEL(p, j, i, 1) << 8;
-         dst[2] = PIXEL(p, j, i, 2) << 8;
-         dst[3] = PIXEL(p, j, i, 3) << 8;
+         dst[0] = TILE_PIXEL(p, j, i, 0) << 8;
+         dst[1] = TILE_PIXEL(p, j, i, 1) << 8;
+         dst[2] = TILE_PIXEL(p, j, i, 2) << 8;
+         dst[3] = TILE_PIXEL(p, j, i, 3) << 8;
       }
    }
 }
@@ -485,10 +489,10 @@ i8_get_tile_rgba(const ubyte *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++, src++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = *src;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = *src;
       }
    }
 }
@@ -504,7 +508,7 @@ i8_put_tile_rgba(ubyte *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r;
-         r = PIXEL(p, j, i, 0);
+         r = TILE_PIXEL(p, j, i, 0);
          *dst++ = (ubyte) r;
       }
    }
@@ -523,10 +527,10 @@ a8l8_get_tile_rgba(const ushort *src,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          ushort ra = *src++;
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) = ra & 0xff;
-         PIXEL(p, j, i, 3) = ra >> 8;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) = ra & 0xff;
+         TILE_PIXEL(p, j, i, 3) = ra >> 8;
       }
    }
 }
@@ -542,8 +546,8 @@ a8l8_put_tile_rgba(ushort *dst,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          unsigned r, a;
-         r = PIXEL(p, j, i, 0);
-         a = PIXEL(p, j, i, 3);
+         r = TILE_PIXEL(p, j, i, 0);
+         a = TILE_PIXEL(p, j, i, 3);
          *dst++ = (a << 8) | r;
       }
    }
@@ -567,10 +571,10 @@ z32_get_tile_rgba(const unsigned *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = (float) (*src++ * scale);
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = (float) (*src++ * scale);
       }
    }
 }
@@ -591,10 +595,10 @@ s8z24_get_tile_rgba(const unsigned *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = (float) (scale * (*src++ & 0xffffff));
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = (float) (scale * (*src++ & 0xffffff));
       }
    }
 }
@@ -615,10 +619,10 @@ z24s8_get_tile_rgba(const unsigned *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = (float) (scale * (*src++ >> 8));
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = (float) (scale * (*src++ >> 8));
       }
    }
 }
@@ -638,10 +642,10 @@ z32f_get_tile_rgba(const float *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = *src++;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = *src++;
       }
    }
 }
@@ -683,19 +687,19 @@ ycbcr_get_tile_rgba(const ushort *src,
          r = 1.164f * (y0-16) + 1.596f * (cr-128);
          g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         PIXEL(p, j, i, 0) = r;
-         PIXEL(p, j, i, 1) = g;
-         PIXEL(p, j, i, 2) = b;
-         PIXEL(p, j, i, 3) = 255;
+         TILE_PIXEL(p, j, i, 0) = r;
+         TILE_PIXEL(p, j, i, 1) = g;
+         TILE_PIXEL(p, j, i, 2) = b;
+         TILE_PIXEL(p, j, i, 3) = 255;
 
          /* odd pixel: use y1,cr,cb */
          r = 1.164f * (y1-16) + 1.596f * (cr-128);
          g = 1.164f * (y1-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y1-16) + 2.018f * (cb-128);
-         PIXEL(p, j + 1, i, 0) = r;
-         PIXEL(p, j + 1, i, 1) = g;
-         PIXEL(p, j + 1, i, 2) = b;
-         PIXEL(p, j + 1, i, 3) = 255;
+         TILE_PIXEL(p, j + 1, i, 0) = r;
+         TILE_PIXEL(p, j + 1, i, 1) = g;
+         TILE_PIXEL(p, j + 1, i, 2) = b;
+         TILE_PIXEL(p, j + 1, i, 3) = 255;
       }
       /* do the last texel */
       if (w & 1) {
@@ -718,10 +722,10 @@ ycbcr_get_tile_rgba(const ushort *src,
          r = 1.164f * (y0-16) + 1.596f * (cr-128);
          g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
          b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         PIXEL(p, j, i, 0) = r;
-         PIXEL(p, j, i, 1) = g;
-         PIXEL(p, j, i, 2) = b;
-         PIXEL(p, j, i, 3) = 255;
+         TILE_PIXEL(p, j, i, 0) = r;
+         TILE_PIXEL(p, j, i, 1) = g;
+         TILE_PIXEL(p, j, i, 2) = b;
+         TILE_PIXEL(p, j, i, 3) = 255;
       }
    }
 }
@@ -736,10 +740,10 @@ fake_get_tile_rgba(const ushort *src,
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         PIXEL(p, j, i, 0) =
-         PIXEL(p, j, i, 1) =
-         PIXEL(p, j, i, 2) =
-         PIXEL(p, j, i, 3) = (i ^ j) & 1 ? 255 : 0;
+         TILE_PIXEL(p, j, i, 0) =
+         TILE_PIXEL(p, j, i, 1) =
+         TILE_PIXEL(p, j, i, 2) =
+         TILE_PIXEL(p, j, i, 3) = (i ^ j) & 1 ? 255 : 0;
       }
    }
 }

@@ -218,11 +218,14 @@ clear_tile_rgba(struct llvmpipe_cached_tile *tile,
       memset(tile->data.color, 0, sizeof(tile->data.color));
    }
    else {
-      uint i, x, y;
+      uint8_t c[4];
+      uint x, y, i;
       for (i = 0; i < 4; ++i)
-         for (y = 0; y < TILE_SIZE; y++)
-            for (x = 0; x < TILE_SIZE; x++)
-               tile->data.color[i][y][x] = float_to_ubyte(clear_value[i]);
+         c[i] = float_to_ubyte(clear_value[i]);
+      for (y = 0; y < TILE_SIZE; y++)
+         for (x = 0; x < TILE_SIZE; x++)
+            for (i = 0; i < 4; ++i)
+               TILE_PIXEL(tile->data.color, x, y, i) = c[i];
    }
 }
 

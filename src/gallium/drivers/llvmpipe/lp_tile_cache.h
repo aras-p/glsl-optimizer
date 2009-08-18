@@ -32,16 +32,11 @@
 
 
 #include "pipe/p_compiler.h"
+#include "lp_tile_soa.h"
 
 
 struct llvmpipe_context;
 struct llvmpipe_tile_cache;
-
-
-/**
- * Cache tile size (width and height). This needs to be a power of two.
- */
-#define TILE_SIZE 64
 
 
 /* If we need to support > 4096, just expand this to be a 64 bit
@@ -65,8 +60,8 @@ struct llvmpipe_cached_tile
    union tile_address addr;
    union {
 
-      /** color in SOA format (rrrr, gggg, bbbb, aaaa) */
-      uint8_t color[4][TILE_SIZE][TILE_SIZE];
+      /** color in SOA format */
+      uint8_t color[TILE_SIZE*TILE_SIZE*NUM_CHANNELS];
 
       uint color32[TILE_SIZE][TILE_SIZE];
       uint depth32[TILE_SIZE][TILE_SIZE];
