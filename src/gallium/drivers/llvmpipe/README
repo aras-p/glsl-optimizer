@@ -1,6 +1,38 @@
 LLVMPIPE -- a fork of softpipe that employs LLVM for code generation.
 
 
+Status
+======
+
+Done so far is:
+
+- TGSI -> LLVM fragment shader translation
+  - same level of support as the TGSI SSE2 exec machine
+  - texture sampling via an intrinsic call
+  - done in SoA
+  - input interpolation also code generated
+
+- blend -> LLVM (including logic ops)
+  - SoA and AoS, but only the former used
+
+- code is generic
+  - intermediates can be vectors of floats, ubytes, fixed point, etc, and of
+    any width and length
+  - not all operations are implemented for these types yet though
+
+Most mesa/progs/demos/* work. Speed is on par with Keith's softpipe-opt branch,
+which includes hand written fast implementations for common cases.
+
+To do (probably by this order):
+- code generate the rest of the fragment pipeline, namely the
+  depth/alpha/stencil state
+- concatenate the fragment pipeline (shader + depth/stencil/alpha + blend) in a
+  single function
+- code generate texture sampling
+- translate TGSI control flow instructions
+- code generate the triangle setup and rasterization
+
+
 Requirements
 ============
 
