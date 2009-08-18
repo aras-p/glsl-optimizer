@@ -180,6 +180,10 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		rmesa->dma.flush(rmesa->glCtx);
 	}
 
+	/* unmap old reserved bo */
+	if (!is_empty_list(&rmesa->dma.reserved))
+		radeon_bo_unmap(first_elem(&rmesa->dma.reserved)->bo);
+
 	if (is_empty_list(&rmesa->dma.free)) {
 		struct radeon_dma_bo *dma_bo = CALLOC(sizeof(struct radeon_dma_bo));
 		assert(dma_bo);
