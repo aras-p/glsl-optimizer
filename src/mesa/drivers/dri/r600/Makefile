@@ -36,7 +36,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_cs_legacy.c \
 	radeon_mipmap_tree.c \
 	radeon_span.c \
-	radeon_fbo.c
+	radeon_fbo.c \
+	radeon_queryobj.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
