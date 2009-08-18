@@ -273,7 +273,6 @@ static void r300_emit_query_finish(radeonContextPtr radeon)
 
 static void rv530_emit_query_finish_single_z(radeonContextPtr radeon)
 {
-	r300ContextPtr r300 = (r300ContextPtr)radeon;
 	BATCH_LOCALS(radeon);
 	struct radeon_query_object *query = radeon->query.current;
 
