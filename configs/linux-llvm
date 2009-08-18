@@ -1,14 +1,21 @@
 # -*-makefile-*-
 # Configuration for Linux and LLVM with debugging info
+# Builds the llvmpipe gallium driver
 
 include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-llvm
 
-GALLIUM_AUXILIARY_DIRS += gallivm
+#GALLIUM_AUXILIARY_DIRS += gallivm
+
+# override for LLVM
+GALLIUM_DRIVERS_DIRS = llvmpipe
 
 OPT_FLAGS = -g -ansi -pedantic
-DEFINES += -DDEBUG -DDEBUG_MATH -DMESA_LLVM=1
+DEFINES += -DDEBUG -DDEBUG_MATH -DGALLIUM_LLVMPIPE
+
+# override -std=c99
+CFLAGS += -std=gnu99
 
 LLVM_VERSION := $(shell llvm-config --version)
 
@@ -17,14 +24,14 @@ ifeq ($(LLVM_VERSION),)
   MESA_LLVM=0
 else
   MESA_LLVM=1
-  $(info Using LLVM version: $(LLVM_VERSION))
+#  $(info Using LLVM version: $(LLVM_VERSION))
 endif
 
 ifeq ($(MESA_LLVM),1)
 #  LLVM_CFLAGS=`llvm-config --cflags`
   LLVM_CXXFLAGS=`llvm-config --cxxflags backend bitreader engine ipo interpreter instrumentation` -Wno-long-long
-  LLVM_LDFLAGS=`llvm-config --ldflags backend bitreader engine ipo interpreter instrumentation`
-  LLVM_LIBS=`llvm-config --libs backend bitreader engine ipo interpreter instrumentation`
+  LLVM_LDFLAGS = $(shell llvm-config --ldflags backend bitreader engine ipo interpreter instrumentation)
+  LLVM_LIBS = $(shell llvm-config --libs backend bitreader engine ipo interpreter instrumentation)
   MKLIB_OPTIONS=-cplusplus
 else
   LLVM_CFLAGS=
