@@ -1306,7 +1306,9 @@ static void build_fog( struct tnl_program *p )
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
    }
 
+   /* result.fog = {abs(f),0,0,1}; */
    emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
+   emit_op1(p, OPCODE_MOV, fog, WRITEMASK_YZW, get_identity_param(p));
 }
 
 

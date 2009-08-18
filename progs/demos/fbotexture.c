@@ -498,7 +498,7 @@ SetupFunctionPointers(void)
  * Make FBO to render into given texture.
  */
 static GLuint
-MakeFBO_RenderTexture(GLuint TexObj)
+MakeFBO_RenderTexture(GLuint texObj)
 {
    GLuint fb;
    GLint sizeFudge = 0;
@@ -507,7 +507,7 @@ MakeFBO_RenderTexture(GLuint TexObj)
    glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, fb);
    /* Render color to texture */
    glFramebufferTexture2D_func(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-                             TexTarget, TexObj, TextureLevel);
+                             TexTarget, texObj, TextureLevel);
 
    if (Use_ARB_fbo) {
       /* use a smaller depth buffer to see what happens */
@@ -541,7 +541,7 @@ MakeFBO_RenderTexture(GLuint TexObj)
 
    /* queries */
    {
-      GLint bits, w, h;
+      GLint bits, w, h, name;
 
       glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, DepthRB);
       glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
@@ -559,8 +559,28 @@ MakeFBO_RenderTexture(GLuint TexObj)
       glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_STENCIL_SIZE_EXT, &bits);
       printf("Stencil renderbuffer size = %d bits\n", bits);
-   }
 
+      glGetFramebufferAttachmentParameteriv_func(GL_FRAMEBUFFER_EXT,
+                                      GL_COLOR_ATTACHMENT0,
+                                      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
+                                      &name);
+      printf("Render to texture name: %d\n", texObj);
+      printf("Color attachment[0] name: %d\n", name);
+      assert(texObj == name);
+
+      glGetFramebufferAttachmentParameteriv_func(GL_FRAMEBUFFER_EXT,
+                                      GL_STENCIL_ATTACHMENT,
+                                      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
+                                      &name);
+      printf("Stencil attachment name: %d\n", name);
+
+      glGetFramebufferAttachmentParameteriv_func(GL_FRAMEBUFFER_EXT,
+                                      GL_DEPTH_ATTACHMENT,
+                                      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
+                                      &name);
+      printf("Depth attachment name: %d\n", name);
+
+   }
    /* bind the regular framebuffer */
    glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, 0);
 
