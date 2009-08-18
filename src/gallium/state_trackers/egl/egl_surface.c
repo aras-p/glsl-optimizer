@@ -76,26 +76,8 @@ drm_create_texture(_EGLDriver *drv,
 	struct pipe_surface *surface;
 	struct pipe_texture *texture;
 	struct pipe_texture templat;
-	struct pipe_buffer *buf;
-	unsigned stride = 1024;
+	struct pipe_buffer *buf = NULL;
 	unsigned pitch = 0;
-	unsigned size = 0;
-
-	/* ugly */
-	if (stride < w)
-		stride = 2048;
-
-	pitch = stride * 4;
-	size = h * 2 * pitch;
-
-	buf = pipe_buffer_create(screen,
-	                         0, /* alignment */
-	                         PIPE_BUFFER_USAGE_GPU_READ_WRITE |
-	                         PIPE_BUFFER_USAGE_CPU_READ_WRITE,
-	                         size);
-
-	if (!buf)
-		goto err_buf;
 
 	memset(&templat, 0, sizeof(templat));
 	templat.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
@@ -108,12 +90,15 @@ drm_create_texture(_EGLDriver *drv,
 	templat.height[0] = h;
 	pf_get_block(templat.format, &templat.block);
 
-	texture = screen->texture_blanket(dev->screen,
-	                                  &templat,
-	                                  &pitch,
-	                                  buf);
+	texture = screen->texture_create(dev->screen,
+	                                 &templat);
+
 	if (!texture)
 		goto err_tex;
+
+	dev->api->buffer_from_texture(dev->api, texture, &buf, &pitch);
+	if (!buf)
+		goto err_buf;
 
 	surface = screen->get_tex_surface(screen,
 	                                  texture,
@@ -124,7 +109,6 @@ drm_create_texture(_EGLDriver *drv,
 
 	if (!surface)
 		goto err_surf;
-
 
 	scrn->tex = texture;
 	scrn->surface = surface;
@@ -142,9 +126,9 @@ err_handle:
 	pipe_surface_reference(&surface, NULL);
 err_surf:
 	pipe_texture_reference(&texture, NULL);
+err_buf:
 err_tex:
 	pipe_buffer_reference(&buf, NULL);
-err_buf:
 	return;
 }
 
