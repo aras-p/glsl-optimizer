@@ -98,7 +98,7 @@ struct pipe_context {
     */
    /*@{*/
    struct pipe_query *(*create_query)( struct pipe_context *pipe,
-                                              unsigned query_type );
+                                       unsigned query_type );
 
    void (*destroy_query)(struct pipe_context *pipe,
                          struct pipe_query *q);
@@ -215,10 +215,12 @@ struct pipe_context {
 
    /**
     * Clear the specified set of currently bound buffers to specified values.
+    * The entire buffers are cleared (no scissor, no colormask, etc).
     *
-    * buffers is a bitfield of PIPE_CLEAR_* values.
-    *
-    * rgba is a pointer to an array of one float for each of r, g, b, a.
+    * \param buffers  bitfield of PIPE_CLEAR_* values.
+    * \param rgba  pointer to an array of one float for each of r, g, b, a.
+    * \param depth  depth clear value in [0,1].
+    * \param stencil  stencil clear value
     */
    void (*clear)(struct pipe_context *pipe,
                  unsigned buffers,
@@ -226,7 +228,9 @@ struct pipe_context {
                  double depth,
 		 unsigned stencil);
 
-   /** Flush rendering (flags = bitmask of PIPE_FLUSH_x tokens) */
+   /** Flush rendering
+    * \param flags  bitmask of PIPE_FLUSH_x tokens)
+    */
    void (*flush)( struct pipe_context *pipe,
                   unsigned flags,
                   struct pipe_fence_handle **fence );
@@ -242,10 +246,10 @@ struct pipe_context {
     * \param texture  texture to check.
     * \param face  cubemap face. Use 0 for non-cubemap texture.
     */
-
    unsigned int (*is_texture_referenced) (struct pipe_context *pipe,
 					  struct pipe_texture *texture,
 					  unsigned face, unsigned level);
+
    /**
     * Check whether a buffer is referenced by an unflushed hw command.
     * The state-tracker uses this function to optimize away unnecessary
@@ -255,7 +259,6 @@ struct pipe_context {
     *              checked.
     * \param buf  Buffer to check.
     */
-
    unsigned int (*is_buffer_referenced) (struct pipe_context *pipe,
 					 struct pipe_buffer *buf);
 };
