@@ -197,11 +197,11 @@ xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
 
-   create_configs(drv, dpy);
-
    if (!dpy->Xdpy) {
       dpy->Xdpy = XOpenDisplay(NULL);
    }
+
+   create_configs(drv, dpy);
 
    dpy->ClientAPIsMask = xdrv->apis;
 
