@@ -113,7 +113,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offet, size, 4);
 
-		assert(r300->ind_buf.bo->ptr != NULL)
+		assert(r300->ind_buf.bo->ptr != NULL);
 		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
 
 		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
