@@ -139,7 +139,25 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
 
     info.value = &target;
 
-    /* First, get PCI ID */
+    /* First, get the number of pixel pipes */
+    info.request = RADEON_INFO_NUM_GB_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: New ioctl for GB pipe count failed "
+                "(error number %d), trying classic ioctl...\n",
+                __FUNCTION__, retval);
+        gp.param = RADEON_PARAM_NUM_GB_PIPES;
+        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
+                sizeof(gp));
+        if (retval) {
+            fprintf(stderr, "%s: Failed to get GB pipe count, "
+                    "error number %d\n", __FUNCTION__, retval);
+            exit(1);
+        }
+    }
+    winsys->gb_pipes = target;
+
+    /* Then, get PCI ID */
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
@@ -149,7 +167,7 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     }
     winsys->pci_id = target;
 
-    /* Then, retrieve MM info */
+    /* Finally, retrieve MM info */
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {

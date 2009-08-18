@@ -45,6 +45,9 @@ struct r300_winsys {
     /* PCI ID */
     uint32_t pci_id;
 
+    /* GB pipe count */
+    uint32_t gb_pipes;
+
     /* GART size. */
     uint32_t gart_size;
 
