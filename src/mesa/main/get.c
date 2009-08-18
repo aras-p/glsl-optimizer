@@ -276,6 +276,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_CURRENT_TEXTURE_COORDS:
          {
          const GLuint texUnit = ctx->Texture.CurrentUnit;
+         FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0]);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1]);
          params[2] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2]);
@@ -2102,6 +2103,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_CURRENT_TEXTURE_COORDS:
          {
          const GLuint texUnit = ctx->Texture.CurrentUnit;
+         FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0];
          params[1] = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1];
          params[2] = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2];
@@ -3928,6 +3930,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CURRENT_TEXTURE_COORDS:
          {
          const GLuint texUnit = ctx->Texture.CurrentUnit;
+         FLUSH_CURRENT(ctx, 0);
          params[0] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0]);
          params[1] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1]);
          params[2] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2]);
