@@ -108,6 +108,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 #if MESA_BIG_ENDIAN
 	} else { /* if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) */
+		GLuint size;
 		GLushort *in = (GLushort *)src_ptr;
 		size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
 
