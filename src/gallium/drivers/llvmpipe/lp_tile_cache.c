@@ -88,8 +88,9 @@ lp_create_tile_cache( struct pipe_screen *screen )
    struct llvmpipe_tile_cache *tc;
    uint pos;
 
-   tc = CALLOC_STRUCT( llvmpipe_tile_cache );
+   tc = align_malloc( sizeof(struct llvmpipe_tile_cache), 16 );
    if (tc) {
+      memset(tc, 0, sizeof *tc);
       tc->screen = screen;
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].addr.bits.invalid = 1;
@@ -118,7 +119,7 @@ lp_destroy_tile_cache(struct llvmpipe_tile_cache *tc)
       screen->tex_transfer_destroy(tc->tex_trans);
    }
 
-   FREE( tc );
+   align_free( tc );
 }
 
 

@@ -237,7 +237,7 @@ shade_begin(struct quad_stage *qs)
 static void
 shade_destroy(struct quad_stage *qs)
 {
-   FREE( qs );
+   align_free( qs );
 }
 
 
@@ -246,9 +246,11 @@ lp_quad_shade_stage( struct llvmpipe_context *llvmpipe )
 {
    struct quad_shade_stage *qss;
 
-   qss = CALLOC_STRUCT(quad_shade_stage);
+   qss = align_malloc(sizeof(struct quad_shade_stage), 16);
    if (!qss)
       return NULL;
+
+   memset(qss, 0, sizeof *qss);
 
    qss->stage.llvmpipe = llvmpipe;
    qss->stage.begin = shade_begin;

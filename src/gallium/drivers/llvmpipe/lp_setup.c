@@ -1358,7 +1358,7 @@ void setup_prepare( struct setup_context *setup )
 
 void setup_destroy_context( struct setup_context *setup )
 {
-   FREE( setup );
+   align_free( setup );
 }
 
 
@@ -1367,9 +1367,14 @@ void setup_destroy_context( struct setup_context *setup )
  */
 struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
 {
-   struct setup_context *setup = CALLOC_STRUCT(setup_context);
+   struct setup_context *setup;
    unsigned i;
 
+   setup = align_malloc(sizeof(struct setup_context), 16);
+   if (!setup)
+      return NULL;
+
+   memset(setup, 0, sizeof *setup);
    setup->llvmpipe = llvmpipe;
 
    for (i = 0; i < MAX_QUADS; i++) {

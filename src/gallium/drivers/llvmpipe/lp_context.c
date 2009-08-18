@@ -106,7 +106,7 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       }
    }
 
-   FREE( llvmpipe );
+   align_free( llvmpipe );
 }
 
 static unsigned int
@@ -143,10 +143,16 @@ llvmpipe_is_buffer_referenced( struct pipe_context *pipe,
 struct pipe_context *
 llvmpipe_create( struct pipe_screen *screen )
 {
-   struct llvmpipe_context *llvmpipe = CALLOC_STRUCT(llvmpipe_context);
+   struct llvmpipe_context *llvmpipe;
    uint i;
 
+   llvmpipe = align_malloc(sizeof(struct llvmpipe_context), 16);
+   if (!llvmpipe)
+      return NULL;
+
    util_init_math();
+
+   memset(llvmpipe, 0, sizeof *llvmpipe);
 
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
