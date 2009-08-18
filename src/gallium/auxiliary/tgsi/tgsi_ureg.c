@@ -302,7 +302,7 @@ out:
  */
 struct ureg_src ureg_DECL_constant(struct ureg_program *ureg )
 {
-   return ureg_src_register( TGSI_FILE_TEMPORARY, ureg->nr_constants++ );
+   return ureg_src_register( TGSI_FILE_CONSTANT, ureg->nr_constants++ );
 }
 
 
