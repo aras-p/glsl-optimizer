@@ -95,10 +95,10 @@ struct lp_vertex_shader {
 
 
 typedef void
-(*lp_blend_func)(uint8_t src[][16],
-                 uint8_t dst[][16],
-                 uint8_t con[][16],
-                 uint8_t res[][16]);
+(*lp_blend_func)(const uint8_t *mask,
+                 const uint8_t *src,
+                 const uint8_t *con,
+                 uint8_t *dst);
 
 
 struct lp_blend_state

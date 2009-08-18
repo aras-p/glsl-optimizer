@@ -40,6 +40,7 @@
 
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_logic.h"
 #include "lp_bld_blend.h"
 #include "lp_bld_debug.h"
 
@@ -49,21 +50,25 @@ blend_generate(struct llvmpipe_screen *screen,
                struct lp_blend_state *blend)
 {
    union lp_type type;
+   struct lp_build_context bld;
    LLVMTypeRef vec_type;
-   LLVMTypeRef args[4];
+   LLVMTypeRef int_vec_type;
+   LLVMTypeRef arg_types[4];
+   LLVMTypeRef func_type;
+   LLVMValueRef mask_ptr;
    LLVMValueRef src_ptr;
    LLVMValueRef dst_ptr;
    LLVMValueRef const_ptr;
-   LLVMValueRef res_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
+   LLVMValueRef mask;
    LLVMValueRef src[4];
-   LLVMValueRef dst[4];
    LLVMValueRef con[4];
+   LLVMValueRef dst[4];
    LLVMValueRef res[4];
    char src_name[5] = "src?";
-   char dst_name[5] = "dst?";
    char con_name[5] = "con?";
+   char dst_name[5] = "dst?";
    char res_name[5] = "res?";
    unsigned i;
 
@@ -75,25 +80,35 @@ blend_generate(struct llvmpipe_screen *screen,
    type.length = 16;
 
    vec_type = lp_build_vec_type(type);
+   int_vec_type = lp_build_int_vec_type(type);
 
-   args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
-   blend->function = LLVMAddFunction(screen->module, "blend", LLVMFunctionType(LLVMVoidType(), args, 4, 0));
+   arg_types[0] = LLVMPointerType(int_vec_type, 0); /* mask */
+   arg_types[1] = LLVMPointerType(vec_type, 0);     /* src */
+   arg_types[2] = LLVMPointerType(vec_type, 0);     /* con */
+   arg_types[3] = LLVMPointerType(vec_type, 0);     /* dst */
+   func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
+   blend->function = LLVMAddFunction(screen->module, "blend", func_type);
    LLVMSetFunctionCallConv(blend->function, LLVMCCallConv);
-   src_ptr = LLVMGetParam(blend->function, 0);
-   dst_ptr = LLVMGetParam(blend->function, 1);
+
+   mask_ptr = LLVMGetParam(blend->function, 0);
+   src_ptr = LLVMGetParam(blend->function, 1);
    const_ptr = LLVMGetParam(blend->function, 2);
-   res_ptr = LLVMGetParam(blend->function, 3);
+   dst_ptr = LLVMGetParam(blend->function, 3);
 
    block = LLVMAppendBasicBlock(blend->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
+   lp_build_context_init(&bld, builder, type);
+
+   mask = LLVMBuildLoad(builder, mask_ptr, "mask");
+
    for(i = 0; i < 4; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       con_name[3] = dst_name[3] = src_name[3] = "rgba"[i];
       src[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, src_ptr, &index, 1, ""), src_name);
-      dst[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), dst_name);
       con[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), con_name);
+      dst[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), dst_name);
    }
 
    lp_build_blend_soa(builder, &blend->base, type, src, dst, con, res);
@@ -102,7 +117,8 @@ blend_generate(struct llvmpipe_screen *screen,
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       res_name[3] = "rgba"[i];
       LLVMSetValueName(res[i], res_name);
-      LLVMBuildStore(builder, res[i], LLVMBuildGEP(builder, res_ptr, &index, 1, ""));
+      res[i] = lp_build_select(&bld, mask, res[i], dst[i]);
+      LLVMBuildStore(builder, res[i], LLVMBuildGEP(builder, dst_ptr, &index, 1, ""));
    }
 
    LLVMBuildRetVoid(builder);;

@@ -58,14 +58,15 @@ blend_run(struct quad_stage *qs,
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
    struct lp_blend_state *blend = llvmpipe->blend;
    unsigned cbuf;
-   uint q, i, j, k;
+   uint q, i, j;
 
    for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) 
    {
       unsigned x0 = quads[0]->input.x0;
       unsigned y0 = quads[0]->input.y0;
-      uint8_t ALIGN16_ATTRIB src[4][16];
-      uint8_t ALIGN16_ATTRIB dst[4][16];
+      uint8_t ALIGN16_ATTRIB src[NUM_CHANNELS][TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH];
+      uint8_t ALIGN16_ATTRIB mask[16];
+      uint8_t *dst;
       struct llvmpipe_cached_tile *tile
          = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf], x0, y0);
 
@@ -74,51 +75,41 @@ blend_run(struct quad_stage *qs,
       assert(x0 % TILE_VECTOR_WIDTH == 0);
       assert(y0 % TILE_VECTOR_HEIGHT == 0);
 
-      for (q = 0; q < nr; q += 4) {
-         for (k = 0; k < 4 && q + k < nr; ++k) {
-            struct quad_header *quad = quads[q + k];
-            const int itx = (quad->input.x0 & (TILE_SIZE-1));
-            const int ity = (quad->input.y0 & (TILE_SIZE-1));
+      dst = &TILE_PIXEL(tile->data.color, x0 & (TILE_SIZE-1), y0 & (TILE_SIZE-1), 0);
 
-            /* get/swizzle src/dest colors
-             */
-            for (j = 0; j < QUAD_SIZE; j++) {
-               int x = itx + (j & 1);
-               int y = ity + (j >> 1);
-               for (i = 0; i < 4; i++) {
-                  src[i][4*k + j] = float_to_ubyte(quad->output.color[cbuf][i][j]);
-                  dst[i][4*k + j] = TILE_PIXEL(tile->data.color, x, y, i);
-               }
-            }
-         }
+      for (q = 0; q < nr; ++q) {
+         struct quad_header *quad = quads[q];
+         const int itx = (quad->input.x0 & (TILE_SIZE-1));
+         const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
-         assert(blend->jit_function);
-         assert((((uintptr_t)src) & 0xf) == 0);
-         assert((((uintptr_t)dst) & 0xf) == 0);
-         assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
-         if(blend->jit_function)
-            blend->jit_function( src, dst, llvmpipe->blend_color, src );
+         assert(quad->input.x0 == x0 + q*2);
+         assert(quad->input.y0 == y0);
 
-         /* Output color values
+         /* get/swizzle src/dest colors
           */
-         for (k = 0; k < 4 && q + k < nr; ++k) {
-            struct quad_header *quad = quads[q + k];
-            const int itx = (quad->input.x0 & (TILE_SIZE-1));
-            const int ity = (quad->input.y0 & (TILE_SIZE-1));
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = itx + (j & 1);
+            int y = ity + (j >> 1);
 
-            for (j = 0; j < QUAD_SIZE; j++) {
-               if (quad->inout.mask & (1 << j)) {
-                  int x = itx + (j & 1);
-                  int y = ity + (j >> 1);
-                  assert(x < TILE_SIZE);
-                  assert(y < TILE_SIZE);
-                  for (i = 0; i < 4; i++) { /* loop over color chans */
-                     TILE_PIXEL(tile->data.color, x, y, i) = src[i][4*k + j];
-                  }
-               }
+            assert(x < TILE_SIZE);
+            assert(y < TILE_SIZE);
+
+            for (i = 0; i < 4; i++) {
+               src[i][4*q + j] = float_to_ubyte(quad->output.color[cbuf][i][j]);
             }
+            mask[4*q + j] = quad->inout.mask & (1 << j) ? ~0 : 0;
          }
       }
+
+      assert(blend->jit_function);
+      assert((((uintptr_t)src) & 0xf) == 0);
+      assert((((uintptr_t)dst) & 0xf) == 0);
+      assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
+      if(blend->jit_function)
+         blend->jit_function( mask,
+                              &src[0][0],
+                              &llvmpipe->blend_color[0][0],
+                              dst );
    }
 }
 
