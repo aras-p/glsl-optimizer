@@ -193,7 +193,7 @@ add_blend_test(LLVMModuleRef module,
 
       res = lp_build_blend_aos(builder, blend, type, src, dst, con, 3);
 
-      LLVMSetValueName(res, "res");
+      lp_build_name(res, "res");
 
       LLVMBuildStore(builder, res, res_ptr);
    }
@@ -203,26 +203,23 @@ add_blend_test(LLVMModuleRef module,
       LLVMValueRef dst[4];
       LLVMValueRef con[4];
       LLVMValueRef res[4];
-      char src_name[5] = "src?";
-      char dst_name[5] = "dst?";
-      char con_name[5] = "con?";
-      char res_name[5] = "res?";
       unsigned i;
 
       for(i = 0; i < 4; ++i) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-         con_name[3] = dst_name[3] = src_name[3] = "rgba"[i];
-         src[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, src_ptr, &index, 1, ""), src_name);
-         dst[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), dst_name);
-         con[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), con_name);
+         src[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, src_ptr, &index, 1, ""), "");
+         dst[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), "");
+         con[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), "");
+         lp_build_name(src[i], "src.%c", "rgba"[i]);
+         lp_build_name(con[i], "con.%c", "rgba"[i]);
+         lp_build_name(dst[i], "dst.%c", "rgba"[i]);
       }
 
       lp_build_blend_soa(builder, blend, type, src, dst, con, res);
 
       for(i = 0; i < 4; ++i) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-         res_name[3] = "rgba"[i];
-         LLVMSetValueName(res[i], res_name);
+         lp_build_name(res[i], "res.%c", "rgba"[i]);
          LLVMBuildStore(builder, res[i], LLVMBuildGEP(builder, res_ptr, &index, 1, ""));
       }
    }

@@ -67,7 +67,6 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef mask;
-   char name[32];
    unsigned i, j;
 
    type.value = 0;
@@ -106,14 +105,14 @@ shader_generate(struct llvmpipe_screen *screen,
    mask_ptr = LLVMGetParam(shader->function, 6);
    samplers_ptr = LLVMGetParam(shader->function, 7);
 
-   LLVMSetValueName(pos_ptr, "pos");
-   LLVMSetValueName(a0_ptr, "a0");
-   LLVMSetValueName(dadx_ptr, "dadx");
-   LLVMSetValueName(dady_ptr, "dady");
-   LLVMSetValueName(consts_ptr, "consts");
-   LLVMSetValueName(outputs_ptr, "outputs");
-   LLVMSetValueName(mask_ptr, "mask");
-   LLVMSetValueName(samplers_ptr, "samplers");
+   lp_build_name(pos_ptr, "pos");
+   lp_build_name(a0_ptr, "a0");
+   lp_build_name(dadx_ptr, "dadx");
+   lp_build_name(dady_ptr, "dady");
+   lp_build_name(consts_ptr, "consts");
+   lp_build_name(outputs_ptr, "outputs");
+   lp_build_name(mask_ptr, "mask");
+   lp_build_name(samplers_ptr, "samplers");
 
    block = LLVMAppendBasicBlock(shader->function, "entry");
    builder = LLVMCreateBuilder();
@@ -121,8 +120,8 @@ shader_generate(struct llvmpipe_screen *screen,
 
    for(j = 0; j < NUM_CHANNELS; ++j) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), j, 0);
-      util_snprintf(name, sizeof name, "pos.%c", "xyzw"[j]);
-      pos[j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), name);
+      pos[j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), "");
+      lp_build_name(pos[j], "pos.%c", "xyzw"[j]);
    }
 
    memset(outputs, 0, sizeof outputs);
@@ -135,8 +134,8 @@ shader_generate(struct llvmpipe_screen *screen,
       for(j = 0; j < NUM_CHANNELS; ++j) {
          if(outputs[i][j]) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*NUM_CHANNELS + j, 0);
-            util_snprintf(name, sizeof name, "output%u.%c", i, "xyzw"[j]);
-            LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, name));
+            LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, ""));
+            lp_build_name(pos[j], "output%u.%c", i, "xyzw"[j]);
          }
       }
    }

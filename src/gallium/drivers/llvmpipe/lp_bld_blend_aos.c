@@ -42,6 +42,7 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_blend.h"
+#include "lp_bld_debug.h"
 
 
 /**
@@ -326,10 +327,8 @@ lp_build_blend_aos(LLVMBuilderRef builder,
    src_term = lp_build_blend_factor(&bld, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle);
    dst_term = lp_build_blend_factor(&bld, dst, blend->rgb_dst_factor, blend->alpha_dst_factor, alpha_swizzle);
 
-#ifdef DEBUG
-   LLVMSetValueName(src_term, "src_term");
-   LLVMSetValueName(dst_term, "dst_term");
-#endif
+   lp_build_name(src_term, "src_term");
+   lp_build_name(dst_term, "dst_term");
 
    if(blend->rgb_func == blend->alpha_func) {
       return lp_build_blend_func(&bld.base, blend->rgb_func, src_term, dst_term);

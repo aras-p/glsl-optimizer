@@ -42,6 +42,7 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_debug.h"
 
 
 #define LP_MAX_TEMPS 256
@@ -1353,10 +1354,11 @@ emit_declaration(
                LLVMValueRef a0;
                LLVMValueRef dadx;
                LLVMValueRef dady;
-               char name[32];
 
                switch( decl->Declaration.Interpolate ) {
                case TGSI_INTERPOLATE_PERSPECTIVE:
+                  /* fall-through */
+
                case TGSI_INTERPOLATE_LINEAR: {
                   LLVMValueRef dadx_ptr = LLVMBuildGEP(builder, bld->dadx_ptr, &index, 1, "");
                   LLVMValueRef dady_ptr = LLVMBuildGEP(builder, bld->dady_ptr, &index, 1, "");
@@ -1364,18 +1366,16 @@ emit_declaration(
                   dady = LLVMBuildLoad(builder, dady_ptr, "");
                   dadx = lp_build_broadcast_scalar(&bld->base, dadx);
                   dady = lp_build_broadcast_scalar(&bld->base, dady);
-                  util_snprintf(name, sizeof name, "dadx_%u.%c", attrib, "xyzw"[chan]);
-                  LLVMSetValueName(dadx, name);
-                  util_snprintf(name, sizeof name, "dady_%u.%c", attrib, "xyzw"[chan]);
-                  LLVMSetValueName(dady, name);
+                  lp_build_name(dadx, "dadx_%u.%c", attrib, "xyzw"[chan]);
+                  lp_build_name(dady, "dady_%u.%c", attrib, "xyzw"[chan]);
+                  /* fall-through */
                }
 
                case TGSI_INTERPOLATE_CONSTANT: {
                   LLVMValueRef a0_ptr = LLVMBuildGEP(builder, bld->a0_ptr, &index, 1, "");
                   a0 = LLVMBuildLoad(builder, a0_ptr, "");
                   a0 = lp_build_broadcast_scalar(&bld->base, a0);
-                  util_snprintf(name, sizeof name, "a0_%u.%c", attrib, "xyzw"[chan]);
-                  LLVMSetValueName(a0, name);
+                  lp_build_name(a0, "a0_%u.%c", attrib, "xyzw"[chan]);
                   break;
                }
 
@@ -1397,8 +1397,7 @@ emit_declaration(
                   input = lp_build_mul(&bld->base, input, bld->oow);
                }
 
-               util_snprintf(name, sizeof name, "input%u.%c", attrib, "xyzw"[chan]);
-               LLVMSetValueName(input, name);
+               lp_build_name(input, "input%u.%c", attrib, "xyzw"[chan]);
             }
 
             bld->inputs[attrib][chan] = input;

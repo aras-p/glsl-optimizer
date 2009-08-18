@@ -30,6 +30,29 @@
 #define LP_BLD_DEBUG_H
 
 
+#include <llvm-c/Core.h>
+
+#include "pipe/p_compiler.h"
+#include "util/u_string.h"
+
+
+static INLINE void
+lp_build_name(LLVMValueRef val, const char *format, ...)
+{
+#ifdef DEBUG
+   char name[32];
+   va_list ap;
+   va_start(ap, format);
+   util_vsnprintf(name, sizeof name, format, ap);
+   va_end(ap);
+   LLVMSetValueName(val, name);
+#else
+   (void)val;
+   (void)format;
+#endif
+}
+
+
 void
 lp_disassemble(const void* func);
 
