@@ -91,4 +91,17 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                    LLVMValueRef res[4]);
 
 
+/**
+ * Apply a logic op.
+ *
+ * src/dst parameters are packed values. It should work regardless the inputs
+ * are scalars, or a vector.
+ */
+LLVMValueRef
+lp_build_logicop(LLVMBuilderRef builder,
+                 unsigned logicop_func,
+                 LLVMValueRef src,
+                 LLVMValueRef dst);
+
+
 #endif /* !LP_BLD_BLEND_H */

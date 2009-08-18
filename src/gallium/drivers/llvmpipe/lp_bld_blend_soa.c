@@ -178,7 +178,14 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 
    for (i = 0; i < 4; ++i) {
       if (blend->colormask & (1 << i)) {
-         if (blend->blend_enable) {
+         if (blend->logicop_enable) {
+            if(!type.floating) {
+               res[i] = lp_build_logicop(builder, blend->logicop_func, src[i], dst[i]);
+            }
+            else
+               res[i] = dst[i];
+         }
+         else if (blend->blend_enable) {
             unsigned src_factor = i < 3 ? blend->rgb_src_factor : blend->alpha_src_factor;
             unsigned dst_factor = i < 3 ? blend->rgb_dst_factor : blend->alpha_dst_factor;
             unsigned func = i < 3 ? blend->rgb_func : blend->alpha_func;

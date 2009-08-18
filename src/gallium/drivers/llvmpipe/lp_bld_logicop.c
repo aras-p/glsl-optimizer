@@ -28,7 +28,7 @@
 
 #include "pipe/p_state.h"
 
-#include "lp_bld.h"
+#include "lp_bld_blend.h"
 
 
 LLVMValueRef

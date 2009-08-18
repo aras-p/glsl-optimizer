@@ -45,88 +45,6 @@
 #include "lp_quad_pipe.h"
 
 
-static void
-logicop_quad(struct quad_stage *qs, 
-             uint8_t src[][16],
-             uint8_t dst[][16])
-{
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   uint32_t *src4 = (uint32_t *) src;
-   uint32_t *dst4 = (uint32_t *) dst;
-   uint32_t *res4 = (uint32_t *) src;
-   uint j;
-
-   switch (llvmpipe->blend->base.logicop_func) {
-   case PIPE_LOGICOP_CLEAR:
-      for (j = 0; j < 4; j++)
-         res4[j] = 0;
-      break;
-   case PIPE_LOGICOP_NOR:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~(src4[j] | dst4[j]);
-      break;
-   case PIPE_LOGICOP_AND_INVERTED:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~src4[j] & dst4[j];
-      break;
-   case PIPE_LOGICOP_COPY_INVERTED:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~src4[j];
-      break;
-   case PIPE_LOGICOP_AND_REVERSE:
-      for (j = 0; j < 4; j++)
-         res4[j] = src4[j] & ~dst4[j];
-      break;
-   case PIPE_LOGICOP_INVERT:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~dst4[j];
-      break;
-   case PIPE_LOGICOP_XOR:
-      for (j = 0; j < 4; j++)
-         res4[j] = dst4[j] ^ src4[j];
-      break;
-   case PIPE_LOGICOP_NAND:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~(src4[j] & dst4[j]);
-      break;
-   case PIPE_LOGICOP_AND:
-      for (j = 0; j < 4; j++)
-         res4[j] = src4[j] & dst4[j];
-      break;
-   case PIPE_LOGICOP_EQUIV:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~(src4[j] ^ dst4[j]);
-      break;
-   case PIPE_LOGICOP_NOOP:
-      for (j = 0; j < 4; j++)
-         res4[j] = dst4[j];
-      break;
-   case PIPE_LOGICOP_OR_INVERTED:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~src4[j] | dst4[j];
-      break;
-   case PIPE_LOGICOP_COPY:
-      for (j = 0; j < 4; j++)
-         res4[j] = src4[j];
-      break;
-   case PIPE_LOGICOP_OR_REVERSE:
-      for (j = 0; j < 4; j++)
-         res4[j] = src4[j] | ~dst4[j];
-      break;
-   case PIPE_LOGICOP_OR:
-      for (j = 0; j < 4; j++)
-         res4[j] = src4[j] | dst4[j];
-      break;
-   case PIPE_LOGICOP_SET:
-      for (j = 0; j < 4; j++)
-         res4[j] = ~0;
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
 static void blend_begin(struct quad_stage *qs)
 {
 }
@@ -174,18 +92,12 @@ blend_run(struct quad_stage *qs,
             }
          }
 
-
-         if (blend->base.logicop_enable) {
-            logicop_quad( qs, src, dst );
-         }
-         else {
-            assert(blend->jit_function);
-            assert((((uintptr_t)src) & 0xf) == 0);
-            assert((((uintptr_t)dst) & 0xf) == 0);
-            assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
-            if(blend->jit_function)
-               blend->jit_function( src, dst, llvmpipe->blend_color, src );
-         }
+         assert(blend->jit_function);
+         assert((((uintptr_t)src) & 0xf) == 0);
+         assert((((uintptr_t)dst) & 0xf) == 0);
+         assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
+         if(blend->jit_function)
+            blend->jit_function( src, dst, llvmpipe->blend_color, src );
 
          /* Output color values
           */

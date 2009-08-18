@@ -118,17 +118,5 @@ lp_build_loop_end(LLVMBuilderRef builder,
                   struct lp_build_loop_state *state);
 
 
-/**
- * Apply a logic op.
- *
- * src/dst parameters are packed values. It should work regardless the inputs
- * are scalars, or a vector.
- */
-LLVMValueRef
-lp_build_logicop(LLVMBuilderRef builder,
-                 unsigned logicop_func,
-                 LLVMValueRef src,
-                 LLVMValueRef dst);
-
 
 #endif /* !LP_BLD_H */
