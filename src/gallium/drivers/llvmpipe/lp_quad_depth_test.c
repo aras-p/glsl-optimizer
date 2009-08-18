@@ -579,6 +579,9 @@ depth_stencil_test_quad(struct quad_stage *qs,
          const float *aaaa = quads[i]->output.color[cbuf][3];           \
          unsigned passMask = 0;                                         \
                                                                         \
+         if (!quads[i]->inout.mask)                                     \
+            continue;                                                   \
+                                                                        \
          if (aaaa[0] COMP ref) passMask |= (1 << 0);                    \
          if (aaaa[1] COMP ref) passMask |= (1 << 1);                    \
          if (aaaa[2] COMP ref) passMask |= (1 << 2);                    \
@@ -587,7 +590,7 @@ depth_stencil_test_quad(struct quad_stage *qs,
          quads[i]->inout.mask &= passMask;                              \
                                                                         \
          if (quads[i]->inout.mask)                                      \
-            quads[pass_nr++] = quads[i];                                \
+            ++pass_nr;                                                  \
       }                                                                 \
                                                                         \
       return pass_nr;                                                   \
@@ -657,7 +660,7 @@ depth_test_quads_fallback(struct quad_stage *qs,
 
 
    if (qs->llvmpipe->depth_stencil->alpha.enabled) {
-      nr = alpha_test_quads(qs, quads, nr);
+      alpha_test_quads(qs, quads, nr);
    }
 
    if (qs->llvmpipe->framebuffer.zsbuf && 
@@ -671,6 +674,9 @@ depth_test_quads_fallback(struct quad_stage *qs,
                                      quads[0]->input.y0);
 
       for (i = 0; i < nr; i++) {
+         if(!quads[i]->inout.mask)
+            continue;
+
          get_depth_stencil_values(&data, quads[i]);
 
          if (qs->llvmpipe->depth_stencil->depth.enabled) {
@@ -694,13 +700,11 @@ depth_test_quads_fallback(struct quad_stage *qs,
             write_depth_stencil_values(&data, quads[i]);
 
          qs->llvmpipe->occlusion_count += mask_count[quads[i]->inout.mask];
-         quads[pass++] = quads[i];
+         ++pass;
       }
-
-      nr = pass;
    }
 
-   if (nr)
+   if (pass)
       qs->next->run(qs->next, quads, nr);
 }
 
@@ -771,11 +775,11 @@ depth_interp_z16_less_write(struct quad_stage *qs,
 
       quads[i]->inout.mask = mask;
       if (quads[i]->inout.mask)
-         quads[pass++] = quads[i];
+         ++pass;
    }
 
    if (pass)
-      qs->next->run(qs->next, quads, pass);
+      qs->next->run(qs->next, quads, nr);
 
 }
 

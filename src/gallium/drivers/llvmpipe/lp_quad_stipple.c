@@ -34,6 +34,9 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
       const uint stipple0 = llvmpipe->poly_stipple.stipple[y0 % 32];
       const uint stipple1 = llvmpipe->poly_stipple.stipple[y1 % 32];
 
+      if (!quad->inout.mask)
+         continue;
+
       /* turn off quad mask bits that fail the stipple test */
       if ((stipple0 & (bit31 >> col0)) == 0)
          quad->inout.mask &= ~MASK_TOP_LEFT;
@@ -48,10 +51,11 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
          quad->inout.mask &= ~MASK_BOTTOM_RIGHT;
 
       if (quad->inout.mask)
-         quads[pass++] = quad;
+         ++pass;
    }
 
-   qs->next->run(qs->next, quads, pass);
+   if(pass)
+      qs->next->run(qs->next, quads, nr);
 }
 
 

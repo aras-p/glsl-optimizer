@@ -45,6 +45,7 @@
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "lp_tile_soa.h"
 
 
 #define DEBUG_VERTS 0
@@ -195,7 +196,7 @@ static INLINE int block( int x )
 
 static INLINE int block_x( int x )
 {
-   return x & ~(16-1);
+   return x & ~(TILE_VECTOR_WIDTH - 1);
 }
 
 
@@ -204,7 +205,7 @@ static INLINE int block_x( int x )
  */
 static void flush_spans( struct setup_context *setup )
 {
-   const int step = 16;
+   const int step = TILE_VECTOR_WIDTH;
    const int xleft0 = setup->span.left[0];
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
@@ -222,6 +223,7 @@ static void flush_spans( struct setup_context *setup )
       unsigned skip_right0 = CLAMP(x + step - xright0, 0, step);
       unsigned skip_right1 = CLAMP(x + step - xright1, 0, step);
       unsigned lx = x;
+      const unsigned nr_quads = TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH/QUAD_SIZE;
       unsigned q = 0;
 
       unsigned skipmask_left0 = (1U << skip_left0) - 1U;
@@ -236,21 +238,19 @@ static void flush_spans( struct setup_context *setup )
       unsigned mask1 = ~skipmask_left1 & ~skipmask_right1;
 
       if (mask0 | mask1) {
-         do {
+         for(q = 0; q < nr_quads; ++q) {
             unsigned quadmask = (mask0 & 3) | ((mask1 & 3) << 2);
-            if (quadmask) {
-               setup->quad[q].input.x0 = lx;
-               setup->quad[q].input.y0 = setup->span.y;
-               setup->quad[q].inout.mask = quadmask;
-               setup->quad_ptrs[q] = &setup->quad[q];
-               q++;
-            }
+            setup->quad[q].input.x0 = lx;
+            setup->quad[q].input.y0 = setup->span.y;
+            setup->quad[q].inout.mask = quadmask;
+            setup->quad_ptrs[q] = &setup->quad[q];
             mask0 >>= 2;
             mask1 >>= 2;
             lx += 2;
-         } while (mask0 | mask1);
+         }
+         assert(!(mask0 | mask1));
 
-         pipe->run( pipe, setup->quad_ptrs, q );
+         pipe->run( pipe, setup->quad_ptrs, nr_quads );
       }
    }
 

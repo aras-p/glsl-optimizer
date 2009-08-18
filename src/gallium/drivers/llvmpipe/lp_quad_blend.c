@@ -144,12 +144,17 @@ blend_run(struct quad_stage *qs,
 
    for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) 
    {
+      unsigned x0 = quads[0]->input.x0;
+      unsigned y0 = quads[0]->input.y0;
       uint8_t ALIGN16_ATTRIB src[4][16];
       uint8_t ALIGN16_ATTRIB dst[4][16];
       struct llvmpipe_cached_tile *tile
-         = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf],
-                              quads[0]->input.x0, 
-                              quads[0]->input.y0);
+         = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf], x0, y0);
+
+      assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
+
+      assert(x0 % TILE_VECTOR_WIDTH == 0);
+      assert(y0 % TILE_VECTOR_HEIGHT == 0);
 
       for (q = 0; q < nr; q += 4) {
          for (k = 0; k < 4 && q + k < nr; ++k) {
@@ -193,6 +198,8 @@ blend_run(struct quad_stage *qs,
                if (quad->inout.mask & (1 << j)) {
                   int x = itx + (j & 1);
                   int y = ity + (j >> 1);
+                  assert(x < TILE_SIZE);
+                  assert(y < TILE_SIZE);
                   for (i = 0; i < 4; i++) { /* loop over color chans */
                      TILE_PIXEL(tile->data.color, x, y, i) = src[i][4*k + j];
                   }

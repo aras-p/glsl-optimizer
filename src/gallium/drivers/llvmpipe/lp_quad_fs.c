@@ -204,17 +204,20 @@ shade_quads(struct quad_stage *qs,
    unsigned i, pass = 0;
    
    for (i = 0; i < nr; i++) {
+      if(!quads[i]->inout.mask)
+         continue;
+
       if (!shade_quad(qs, quads[i]))
          continue;
 
       if (/*do_coverage*/ 0)
          coverage_quad( qs, quads[i] );
 
-      quads[pass++] = quads[i];
+      ++pass;
    }
    
    if (pass)
-      qs->next->run(qs->next, quads, pass);
+      qs->next->run(qs->next, quads, nr);
 }
    
 
