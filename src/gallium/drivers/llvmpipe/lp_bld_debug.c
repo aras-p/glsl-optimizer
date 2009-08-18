@@ -53,15 +53,17 @@ lp_disassemble(const void* func)
 
    while (ud_disassemble(&ud_obj)) {
 #ifdef PIPE_ARCH_X86
-      debug_printf("%08lx:\t%s\n",
-                   (unsigned long)ud_insn_off(&ud_obj),
-                   ud_insn_asm(&ud_obj));
+      debug_printf("%08lx: ", (unsigned long)ud_insn_off(&ud_obj));
 #endif
 #ifdef PIPE_ARCH_X86_64
-   debug_printf("%016llx:\t%s\n",
-                (unsigned long long)ud_insn_off(&ud_obj),
-                ud_insn_asm(&ud_obj));
+      debug_printf("%016llx: ", (unsigned long long)ud_insn_off(&ud_obj));
 #endif
+
+#if 0
+      debug_printf("%-16s ", ud_insn_hex(&ud_obj));
+#endif
+
+      debug_printf("%s\n", ud_insn_asm(&ud_obj));
 
       if (ud_obj.mnemonic == UD_Iret)
          break;
