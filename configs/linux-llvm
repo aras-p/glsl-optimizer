@@ -8,8 +8,8 @@ CONFIG_NAME = linux-llvm
 
 #GALLIUM_AUXILIARY_DIRS += gallivm
 
-# override for LLVM
-GALLIUM_DRIVERS_DIRS = llvmpipe
+# Add llvmpipe driver
+GALLIUM_DRIVERS_DIRS += llvmpipe
 
 OPT_FLAGS = -g -ansi -pedantic
 DEFINES += -DDEBUG -DDEBUG_MATH -DGALLIUM_LLVMPIPE
