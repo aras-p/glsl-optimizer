@@ -166,7 +166,7 @@ lp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
     */
    struct setup_context *setup_ctx = lp_draw_setup_context(cvbr->llvmpipe->setup);
    
-   setup_prepare( setup_ctx );
+   llvmpipe_setup_prepare( setup_ctx );
 
    cvbr->llvmpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
@@ -204,14 +204,14 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < nr; i++) {
-         setup_point( setup_ctx,
+         llvmpipe_setup_point( setup_ctx,
                       get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
    case PIPE_PRIM_LINES:
       for (i = 1; i < nr; i += 2) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
@@ -219,7 +219,7 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
@@ -227,12 +227,12 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 
    case PIPE_PRIM_LINE_LOOP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
       if (nr) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[nr-1], stride),
                      get_vert(vertex_buffer, indices[0], stride) );
       }
@@ -241,13 +241,13 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    case PIPE_PRIM_TRIANGLES:
       for (i = 2; i < nr; i += 3) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-2], stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -258,13 +258,13 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    case PIPE_PRIM_TRIANGLE_STRIP:
       for (i = 2; i < nr; i += 1) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i+(i&1)-1], stride),
                        get_vert(vertex_buffer, indices[i-(i&1)], stride),
                        get_vert(vertex_buffer, indices[i-2], stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i+(i&1)-2], stride),
                        get_vert(vertex_buffer, indices[i-(i&1)-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -275,13 +275,13 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    case PIPE_PRIM_TRIANGLE_FAN:
       for (i = 2; i < nr; i += 1) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -292,22 +292,22 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    case PIPE_PRIM_QUADS:
       for (i = 3; i < nr; i += 4) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
 
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -318,21 +318,21 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 3; i < nr; i += 2) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride));
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -347,7 +347,7 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
        * flatshade_first state makes no difference.
        */
       for (i = 2; i < nr; i += 1) {
-         setup_tri( setup_ctx,
+         llvmpipe_setup_tri( setup_ctx,
                     get_vert(vertex_buffer, indices[i-0], stride),
                     get_vert(vertex_buffer, indices[i-1], stride),
                     get_vert(vertex_buffer, indices[0], stride) );
@@ -388,14 +388,14 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < nr; i++) {
-         setup_point( setup_ctx,
+         llvmpipe_setup_point( setup_ctx,
                       get_vert(vertex_buffer, i-0, stride) );
       }
       break;
 
    case PIPE_PRIM_LINES:
       for (i = 1; i < nr; i += 2) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
@@ -403,7 +403,7 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
@@ -411,12 +411,12 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 
    case PIPE_PRIM_LINE_LOOP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
       if (nr) {
-         setup_line( setup_ctx,
+         llvmpipe_setup_line( setup_ctx,
                      get_vert(vertex_buffer, nr-1, stride),
                      get_vert(vertex_buffer, 0, stride) );
       }
@@ -425,13 +425,13 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    case PIPE_PRIM_TRIANGLES:
       for (i = 2; i < nr; i += 3) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-2, stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -442,13 +442,13 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    case PIPE_PRIM_TRIANGLE_STRIP:
       for (i = 2; i < nr; i++) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i+(i&1)-1, stride),
                        get_vert(vertex_buffer, i-(i&1), stride),
                        get_vert(vertex_buffer, i-2, stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i+(i&1)-2, stride),
                        get_vert(vertex_buffer, i-(i&1)-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -459,13 +459,13 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    case PIPE_PRIM_TRIANGLE_FAN:
       for (i = 2; i < nr; i += 1) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, 0, stride),
                        get_vert(vertex_buffer, i-1, stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, 0, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -476,21 +476,21 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    case PIPE_PRIM_QUADS:
       for (i = 3; i < nr; i += 4) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-3, stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -501,21 +501,21 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 3; i < nr; i += 2) {
          if (llvmpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-3, stride) );
          }
          else {
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            setup_tri( setup_ctx,
+            llvmpipe_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -530,7 +530,7 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
        * flatshade_first state makes no difference.
        */
       for (i = 2; i < nr; i += 1) {
-         setup_tri( setup_ctx,
+         llvmpipe_setup_tri( setup_ctx,
                     get_vert(vertex_buffer, i-1, stride),
                     get_vert(vertex_buffer, i-0, stride),
                     get_vert(vertex_buffer, 0, stride) );

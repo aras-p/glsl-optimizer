@@ -763,7 +763,7 @@ calc_det( const float (*v0)[4],
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-void setup_tri( struct setup_context *setup,
+void llvmpipe_setup_tri( struct setup_context *setup,
                 const float (*v0)[4],
                 const float (*v1)[4],
                 const float (*v2)[4] )
@@ -1003,7 +1003,7 @@ plot(struct setup_context *setup, int x, int y)
  * to handle stippling and wide lines.
  */
 void
-setup_line(struct setup_context *setup,
+llvmpipe_setup_line(struct setup_context *setup,
            const float (*v0)[4],
            const float (*v1)[4])
 {
@@ -1135,7 +1135,7 @@ point_persp_coeff(struct setup_context *setup,
  * XXX could optimize a lot for 1-pixel points.
  */
 void
-setup_point( struct setup_context *setup,
+llvmpipe_setup_point( struct setup_context *setup,
              const float (*v0)[4] )
 {
    struct llvmpipe_context *llvmpipe = setup->llvmpipe;
@@ -1332,7 +1332,7 @@ setup_point( struct setup_context *setup,
    }
 }
 
-void setup_prepare( struct setup_context *setup )
+void llvmpipe_setup_prepare( struct setup_context *setup )
 {
    struct llvmpipe_context *lp = setup->llvmpipe;
 
@@ -1356,7 +1356,7 @@ void setup_prepare( struct setup_context *setup )
 
 
 
-void setup_destroy_context( struct setup_context *setup )
+void llvmpipe_setup_destroy_context( struct setup_context *setup )
 {
    align_free( setup );
 }
@@ -1365,7 +1365,7 @@ void setup_destroy_context( struct setup_context *setup )
 /**
  * Create a new primitive setup/render stage.
  */
-struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
+struct setup_context *llvmpipe_setup_create_context( struct llvmpipe_context *llvmpipe )
 {
    struct setup_context *setup;
    unsigned i;

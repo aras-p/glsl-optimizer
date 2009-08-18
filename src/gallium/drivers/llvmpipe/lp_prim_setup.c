@@ -71,7 +71,7 @@ do_tri(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    
-   setup_tri( setup->setup,
+   llvmpipe_setup_tri( setup->setup,
               (cptrf4)prim->v[0]->data,
               (cptrf4)prim->v[1]->data,
               (cptrf4)prim->v[2]->data );
@@ -82,7 +82,7 @@ do_line(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
 
-   setup_line( setup->setup,
+   llvmpipe_setup_line( setup->setup,
                (cptrf4)prim->v[0]->data,
                (cptrf4)prim->v[1]->data );
 }
@@ -92,7 +92,7 @@ do_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
 
-   setup_point( setup->setup,
+   llvmpipe_setup_point( setup->setup,
                 (cptrf4)prim->v[0]->data );
 }
 
@@ -103,7 +103,7 @@ static void setup_begin( struct draw_stage *stage )
 {
    struct setup_stage *setup = setup_stage(stage);
 
-   setup_prepare( setup->setup );
+   llvmpipe_setup_prepare( setup->setup );
 
    stage->point = do_point;
    stage->line = do_line;
@@ -152,7 +152,7 @@ static void reset_stipple_counter( struct draw_stage *stage )
 static void render_destroy( struct draw_stage *stage )
 {
    struct setup_stage *ssetup = setup_stage(stage);
-   setup_destroy_context(ssetup->setup);
+   llvmpipe_setup_destroy_context(ssetup->setup);
    FREE( stage );
 }
 
@@ -164,7 +164,7 @@ struct draw_stage *lp_draw_render_stage( struct llvmpipe_context *llvmpipe )
 {
    struct setup_stage *sstage = CALLOC_STRUCT(setup_stage);
 
-   sstage->setup = setup_create_context(llvmpipe);
+   sstage->setup = llvmpipe_setup_create_context(llvmpipe);
    sstage->stage.draw = llvmpipe->draw;
    sstage->stage.point = setup_first_point;
    sstage->stage.line = setup_first_line;

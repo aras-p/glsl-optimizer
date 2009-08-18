@@ -31,23 +31,23 @@ struct setup_context;
 struct llvmpipe_context;
 
 void 
-setup_tri( struct setup_context *setup,
+llvmpipe_setup_tri( struct setup_context *setup,
 	   const float (*v0)[4],
 	   const float (*v1)[4],
 	   const float (*v2)[4] );
 
 void
-setup_line(struct setup_context *setup,
+llvmpipe_setup_line(struct setup_context *setup,
            const float (*v0)[4],
            const float (*v1)[4]);
 
 void
-setup_point( struct setup_context *setup,
+llvmpipe_setup_point( struct setup_context *setup,
              const float (*v0)[4] );
 
 
-struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe );
-void setup_prepare( struct setup_context *setup );
-void setup_destroy_context( struct setup_context *setup );
+struct setup_context *llvmpipe_setup_create_context( struct llvmpipe_context *llvmpipe );
+void llvmpipe_setup_prepare( struct setup_context *setup );
+void llvmpipe_setup_destroy_context( struct setup_context *setup );
 
 #endif
