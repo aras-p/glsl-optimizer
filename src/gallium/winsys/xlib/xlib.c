@@ -96,6 +96,7 @@ static void _init( void )
 #if defined(GALLIUM_LLVMPIPE)
       xmesa_set_driver( &xlib_llvmpipe_driver );
 #endif
+      break;
    case MODE_SOFTPIPE:
 #if defined(GALLIUM_SOFTPIPE)
       xmesa_set_driver( &xlib_softpipe_driver );
