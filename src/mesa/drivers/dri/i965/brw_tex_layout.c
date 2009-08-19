@@ -194,6 +194,16 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 	 }
 
       }
+      /* The 965's sampler lays cachelines out according to how accesses
+       * in the texture surfaces run, so they may be "vertical" through
+       * memory.  As a result, the docs say in Surface Padding Requirements:
+       * Sampling Engine Surfaces that two extra rows of padding are required.
+       * We don't know of similar requirements for pre-965, but given that
+       * those docs are silent on padding requirements in general, let's play
+       * it safe.
+       */
+      if (mt->target == GL_TEXTURE_CUBE_MAP)
+	 total_height += 2;
       break;
    }
 
