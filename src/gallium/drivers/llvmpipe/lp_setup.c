@@ -167,22 +167,6 @@ quad_clip( struct setup_context *setup, struct quad_header *quad )
 }
 
 
-/**
- * Emit a quad (pass to next stage) with clipping.
- */
-static INLINE void
-clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
-{
-   quad_clip( setup, quad );
-
-   if (quad->inout.mask) {
-      struct llvmpipe_context *lp = setup->llvmpipe;
-
-      lp->quad.first->run( lp->quad.first, &quad, 1 );
-   }
-}
-
-
 
 /**
  * Given an X or Y coordinate, return the block/quad coordinate that it
@@ -196,6 +180,48 @@ static INLINE int block( int x )
 static INLINE int block_x( int x )
 {
    return x & ~(TILE_VECTOR_WIDTH - 1);
+}
+
+
+/**
+ * Emit a quad (pass to next stage) with clipping.
+ */
+static INLINE void
+clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
+{
+   quad_clip( setup, quad );
+
+   if (quad->inout.mask) {
+      struct llvmpipe_context *lp = setup->llvmpipe;
+
+#if 1
+      /* XXX: The blender expects 4 quads. This is far from efficient, but
+       * until we codegenerate single-quad variants of the fragment pipeline
+       * we need this hack. */
+      const unsigned nr_quads = TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH/QUAD_SIZE;
+      struct quad_header quads[nr_quads];
+      struct quad_header *quad_ptrs[nr_quads];
+      int x0 = block_x(quad->input.x0);
+      unsigned i;
+
+      for(i = 0; i < nr_quads; ++i) {
+         int x = x0 + 2*i;
+         if(x == quad->input.x0)
+            memcpy(&quads[i], quad, sizeof quads[i]);
+         else {
+            memset(&quads[i], 0, sizeof quads[i]);
+            quads[i].input.x0 = x;
+            quads[i].input.y0 = quad->input.y0;
+            quads[i].coef = quad->coef;
+         }
+         quad_ptrs[i] = &quads[i];
+      }
+
+      lp->quad.first->run( lp->quad.first, quad_ptrs, nr_quads );
+#else
+      lp->quad.first->run( lp->quad.first, &quad, 1 );
+#endif
+   }
 }
 
 
