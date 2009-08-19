@@ -134,11 +134,11 @@ shader_generate(struct llvmpipe_screen *screen,
    unsigned chan;
 
    type.value = 0;
-   type.floating = TRUE;
-   type.sign = TRUE;
-   type.norm = FALSE;
-   type.width = 32;
-   type.length = 4;
+   type.floating = TRUE; /* floating point values */
+   type.sign = TRUE;     /* values are signed */
+   type.norm = FALSE;    /* values are not limited to [0,1] or [-1,1] */
+   type.width = 32;      /* 32-bit float */
+   type.length = 4;      /* 4 element per vector */
 
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
