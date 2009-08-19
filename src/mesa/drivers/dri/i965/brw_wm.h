@@ -353,6 +353,12 @@ void emit_dph(struct brw_compile *p,
 	      GLuint mask,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_fb_write(struct brw_wm_compile *c,
+		   struct brw_reg *arg0,
+		   struct brw_reg *arg1,
+		   struct brw_reg *arg2,
+		   GLuint target,
+		   GLuint eot);
 void emit_frontfacing(struct brw_compile *p,
 		      const struct brw_reg *dst,
 		      GLuint mask);

@@ -1042,7 +1042,13 @@ static void fire_fb_write( struct brw_wm_compile *c,
 			   GLuint eot )
 {
    struct brw_compile *p = &c->func;
-   
+   struct brw_reg dst;
+
+   if (c->dispatch_width == 16)
+      dst = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+   else
+      dst = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+
    /* Pass through control information:
     */
 /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
@@ -1059,7 +1065,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
    /* Send framebuffer write message: */
 /*  send (16) null.0<1>:uw m0               r0.0<8;8,1>:uw   0x85a04000:ud    { Align1 EOT } */
    brw_fb_WRITE(p,
-		retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW),
+		dst,
 		base_reg,
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
 		target,		
@@ -1091,12 +1097,12 @@ static void emit_aa( struct brw_wm_compile *c,
  * \param arg1  the pass-through depth value
  * \param arg2  the shader-computed depth value
  */
-static void emit_fb_write( struct brw_wm_compile *c,
-			   struct brw_reg *arg0,
-			   struct brw_reg *arg1,
-			   struct brw_reg *arg2,
-			   GLuint target,
-			   GLuint eot)
+void emit_fb_write(struct brw_wm_compile *c,
+		   struct brw_reg *arg0,
+		   struct brw_reg *arg1,
+		   struct brw_reg *arg2,
+		   GLuint target,
+		   GLuint eot)
 {
    struct brw_compile *p = &c->func;
    GLuint nr = 2;
@@ -1110,30 +1116,27 @@ static void emit_fb_write( struct brw_wm_compile *c,
    /* I don't really understand how this achieves the color interleave
     * (ie RGBARGBA) in the result:  [Do the saturation here]
     */
-   {
-      brw_push_insn_state(p);
-      
-      for (channel = 0; channel < 4; channel++) {
-	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-	 /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+   brw_push_insn_state(p);
 
-	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	 brw_MOV(p,
-		 brw_message_reg(nr + channel),
-		 arg0[channel]);
-       
+   for (channel = 0; channel < 4; channel++) {
+      /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
+      /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_MOV(p,
+	      brw_message_reg(nr + channel),
+	      arg0[channel]);
+
+      if (c->dispatch_width == 16) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
 	 brw_MOV(p,
 		 brw_message_reg(nr + channel + 4),
 		 sechalf(arg0[channel]));
       }
-
-      /* skip over the regs populated above:
-       */
-      nr += 8;
-   
-      brw_pop_insn_state(p);
    }
+   /* skip over the regs populated above:
+    */
+   nr += 8;
+   brw_pop_insn_state(p);
 
    if (c->key.source_depth_to_render_target)
    {
@@ -1183,7 +1186,7 @@ static void emit_fb_write( struct brw_wm_compile *c,
 	      get_element_ud(brw_vec8_grf(1,0), 6), 
 	      brw_imm_ud(1<<26)); 
 
-      jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
+      jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
       {
 	 emit_aa(c, arg1, 2);
 	 fire_fb_write(c, 0, nr, target, eot);
@@ -1196,7 +1199,6 @@ static void emit_fb_write( struct brw_wm_compile *c,
       fire_fb_write(c, 1, nr-1, target, eot);
    }
 }
-
 
 /**
  * Move a GPR to scratch memory. 

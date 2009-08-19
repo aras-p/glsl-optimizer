@@ -671,103 +671,6 @@ unalias3(struct brw_wm_compile *c,
     release_tmps(c, mark);
 }
 
-static void fire_fb_write( struct brw_wm_compile *c,
-                           GLuint base_reg,
-                           GLuint nr,
-                           GLuint target,
-                           GLuint eot)
-{
-    struct brw_compile *p = &c->func;
-    /* Pass through control information:
-     */
-    /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
-    {
-	brw_push_insn_state(p);
-	brw_set_mask_control(p, BRW_MASK_DISABLE); /* ? */
-	brw_MOV(p,
-		brw_message_reg(base_reg + 1),
-		brw_vec8_grf(1, 0));
-	brw_pop_insn_state(p);
-    }
-    /* Send framebuffer write message: */
-    brw_fb_WRITE(p,
-	    retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
-	    base_reg,
-	    retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
-	    target,              
-	    nr,
-	    0,
-	    eot);
-}
-
-static void emit_fb_write(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    int nr = 2;
-    int channel;
-    GLuint target, eot;
-    struct brw_reg src0;
-
-    /* Reserve a space for AA - may not be needed:
-     */
-    if (c->key.aa_dest_stencil_reg)
-	nr += 1;
-
-    brw_push_insn_state(p);
-    for (channel = 0; channel < 4; channel++) {
-        src0 = get_src_reg(c,  inst, 0, channel);
-        /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-        /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-        brw_MOV(p, brw_message_reg(nr + channel), src0);
-    }
-    /* skip over the regs populated above: */
-    nr += 8;
-    brw_pop_insn_state(p);
-
-    if (c->key.source_depth_to_render_target) {
-       if (c->key.computes_depth) {
-          src0 = get_src_reg(c, inst, 2, 2);
-          brw_MOV(p, brw_message_reg(nr), src0);
-       }
-       else {
-          src0 = get_src_reg(c, inst, 1, 1);
-          brw_MOV(p, brw_message_reg(nr), src0);
-       }
-
-       nr += 2;
-    }
-
-    if (c->key.dest_depth_reg) {
-        const GLuint comp = c->key.dest_depth_reg / 2;
-        const GLuint off = c->key.dest_depth_reg % 2;
-
-        if (off != 0) {
-            /* XXX this code needs review/testing */
-            struct brw_reg arg1_0 = get_src_reg(c, inst, 1, comp);
-            struct brw_reg arg1_1 = get_src_reg(c, inst, 1, comp+1);
-
-            brw_push_insn_state(p);
-            brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-
-            brw_MOV(p, brw_message_reg(nr), offset(arg1_0, 1));
-            /* 2nd half? */
-            brw_MOV(p, brw_message_reg(nr+1), arg1_1);
-            brw_pop_insn_state(p);
-        }
-        else
-        {
-            struct brw_reg src =  get_src_reg(c, inst, 1, 1);
-            brw_MOV(p, brw_message_reg(nr), src);
-        }
-        nr += 2;
-   }
-
-    target = INST_AUX_GET_TARGET(inst->Aux);
-    eot = inst->Aux & INST_AUX_EOT;
-    fire_fb_write(c, 0, nr, target, eot);
-}
-
 static void emit_arl(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
 {
@@ -2158,7 +2061,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_wpos_xy(c, dst, dst_flags, args[0]);
 		break;
 	    case WM_FB_WRITE:
-		emit_fb_write(c, inst);
+		emit_fb_write(c, args[0], args[1], args[2],
+			      INST_AUX_GET_TARGET(inst->Aux),
+			      inst->Aux & INST_AUX_EOT);
 		break;
 	    case WM_FRONTFACING:
 		emit_frontfacing(p, dst, dst_flags);
