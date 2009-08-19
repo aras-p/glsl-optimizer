@@ -393,7 +393,7 @@ struct ureg_src ureg_DECL_immediate( struct ureg_program *ureg,
                                      unsigned nr )
 {
    unsigned i;
-   unsigned swizzle;
+   unsigned swizzle = 0;
 
    /* Could do a first pass where we examine all existing immediates
     * without expanding.
