@@ -263,7 +263,7 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 {
 	struct radeon_dma_bo *dma_bo;
 	struct radeon_dma_bo *temp;
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & DEBUG_DMA)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	foreach_s(dma_bo, temp, &rmesa->dma.free) {
@@ -308,8 +308,23 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 	struct radeon_dma_bo *temp;
 	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_FREE_TIME;
 	const int time = rmesa->dma.free.expire_counter;
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (RADEON_DEBUG & DEBUG_DMA) {
+		size_t free = 0,
+		       wait = 0,
+		       reserved = 0;
+		foreach(dma_bo, &rmesa->dma.free)
+			++free;
+
+		foreach(dma_bo, &rmesa->dma.wait)
+			++wait;
+
+		foreach(dma_bo, &rmesa->dma.reserved)
+			++reserved;
+
+		fprintf(stderr, "%s: free %u, wait %u, reserved %u, minimum_size: %u\n", 
+		      __FUNCTION__, free, wait, reserved, rmesa->dma.minimum_size);
+	}
 
 	/* move waiting bos to free list.
 	   wait list provides gpu time to handle data before reuse */
