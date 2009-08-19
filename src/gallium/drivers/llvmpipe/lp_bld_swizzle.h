@@ -45,6 +45,12 @@ struct lp_build_context;
 
 
 LLVMValueRef
+lp_build_broadcast(LLVMBuilderRef builder,
+                   LLVMTypeRef vec_type,
+                   LLVMValueRef scalar);
+
+
+LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar);
 

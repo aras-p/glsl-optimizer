@@ -35,6 +35,25 @@
 
 
 LLVMValueRef
+lp_build_broadcast(LLVMBuilderRef builder,
+                   LLVMTypeRef vec_type,
+                   LLVMValueRef scalar)
+{
+   const unsigned n = LLVMGetVectorSize(vec_type);
+   LLVMValueRef res;
+   unsigned i;
+
+   res = LLVMGetUndef(vec_type);
+   for(i = 0; i < n; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildInsertElement(builder, res, scalar, index, "");
+   }
+
+   return res;
+}
+
+
+LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
