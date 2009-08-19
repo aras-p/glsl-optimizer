@@ -79,7 +79,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
-	uint32_t addr, ndw, i;
+	uint32_t addr, ndw;
 
 	if (!r300->radeon.radeonScreen->kernel_mm) {
 		uint32_t dwords;
@@ -110,9 +110,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 		}
 		OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
 		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
-		for (i = 0; i < ndw; i++) {
-			OUT_BATCH(atom->cmd[i+1]);
-		}
+		OUT_BATCH_TABLE(&atom->cmd[1], ndw);
 		OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
 		END_BATCH();
 	}
@@ -123,7 +121,7 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
-	uint32_t addr, ndw, i, sz;
+	uint32_t addr, ndw, sz;
 	int type, clamp, stride;
 
 	if (!r300->radeon.radeonScreen->kernel_mm) {
@@ -153,9 +151,7 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_INDEX, 0));
 		OUT_BATCH(addr);
 		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, ndw-1) | RADEON_ONE_REG_WR);
-		for (i = 0; i < ndw; i++) {
-			OUT_BATCH(atom->cmd[i+1]);
-		}
+		OUT_BATCH_TABLE(&atom->cmd[1], ndw);
 		END_BATCH();
 	}
 }

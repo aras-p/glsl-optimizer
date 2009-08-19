@@ -71,10 +71,7 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
  */
 #define OUT_BATCH_TABLE(ptr,n) \
 	do { \
-		int _i; \
-        for (_i=0; _i < n; _i++) {\
-            radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, ptr[_i]);\
-        }\
+		radeon_cs_write_table(b_l_rmesa->cmdbuf.cs, ptr, n);	\
 	} while(0)
 
 /**
