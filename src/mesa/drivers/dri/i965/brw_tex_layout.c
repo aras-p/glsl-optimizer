@@ -203,7 +203,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
        * it safe.
        */
       if (mt->target == GL_TEXTURE_CUBE_MAP)
-	 total_height += 2;
+	 mt->total_height += 2;
       break;
    }
 
