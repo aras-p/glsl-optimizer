@@ -428,6 +428,13 @@ void emit_tex(struct brw_wm_compile *c,
 	      GLuint tex_idx,
 	      GLuint sampler,
 	      GLboolean shadow);
+void emit_txb(struct brw_wm_compile *c,
+	      struct brw_reg *dst,
+	      GLuint dst_flags,
+	      struct brw_reg *arg,
+	      struct brw_reg depth_payload,
+	      GLuint tex_idx,
+	      GLuint sampler);
 void emit_wpos_xy(struct brw_wm_compile *c,
 		  const struct brw_reg *dst,
 		  GLuint mask,
