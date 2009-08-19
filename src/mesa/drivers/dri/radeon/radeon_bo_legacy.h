@@ -45,5 +45,6 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo);
 struct radeon_bo *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
 					      int size,
 	                                      uint32_t offset);
+void legacy_track_pending(struct radeon_bo_manager *bom, int debug);
 
 #endif

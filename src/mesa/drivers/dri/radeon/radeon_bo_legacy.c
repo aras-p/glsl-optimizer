@@ -235,8 +235,9 @@ static int legacy_wait_pending(struct radeon_bo *bo)
     return 0;
 }
 
-static void legacy_track_pending(struct bo_manager_legacy *boml, int debug)
+void legacy_track_pending(struct radeon_bo_manager *bom, int debug)
 {
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy*) bom;
     struct bo_legacy *bo_legacy;
     struct bo_legacy *next;
 
@@ -244,8 +245,8 @@ static void legacy_track_pending(struct bo_manager_legacy *boml, int debug)
     bo_legacy = boml->pending_bos.pnext;
     while (bo_legacy) {
         if (debug)
-	  fprintf(stderr,"pending %p %d %d %d\n", bo_legacy, bo_legacy->base.size,
-		  boml->current_age, bo_legacy->pending);
+            fprintf(stderr,"pending %p %d %d %d\n", bo_legacy, bo_legacy->base.size,
+                    boml->current_age, bo_legacy->pending);
         next = bo_legacy->pnext;
         if (legacy_is_pending(&(bo_legacy->base))) {
         }
@@ -444,7 +445,7 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
     if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) 
     {
 retry:
-        legacy_track_pending(boml, 0);
+        legacy_track_pending(&boml->base, 0);
         /* dma buffers */
 
         r = bo_dma_alloc(&(bo_legacy->base));
@@ -580,7 +581,7 @@ static int bo_vram_validate(struct radeon_bo *bo,
         if (r) {
 		pending_retry = 0;
 		while(boml->cpendings && pending_retry++ < 10000) {
-			legacy_track_pending(boml, 0);
+			legacy_track_pending(&boml->base, 0);
 			retry_count++;
 			if (retry_count > 2) {
 				free(bo_legacy->tobj);
@@ -706,7 +707,7 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
 
         r = bo_vram_validate(bo, soffset, eoffset);
         if (r) {
-	    legacy_track_pending(boml, 0);
+	    legacy_track_pending(&boml->base, 0);
 	    legacy_kick_all_buffers(boml);
 	    retries++;
 	    if (retries == 2) {
