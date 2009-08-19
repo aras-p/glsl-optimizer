@@ -55,6 +55,10 @@
 #include "lp_bld_arit.h"
 
 
+/**
+ * Generate min(a, b)
+ * No checks for special case values of a or b = 1 or 0 are done.
+ */
 static LLVMValueRef
 lp_build_min_simple(struct lp_build_context *bld,
                     LLVMValueRef a,
@@ -102,6 +106,10 @@ lp_build_min_simple(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate max(a, b)
+ * No checks for special case values of a or b = 1 or 0 are done.
+ */
 static LLVMValueRef
 lp_build_max_simple(struct lp_build_context *bld,
                     LLVMValueRef a,
@@ -149,6 +157,9 @@ lp_build_max_simple(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate 1 - a, or ~a depending on bld->type.
+ */
 LLVMValueRef
 lp_build_comp(struct lp_build_context *bld,
               LLVMValueRef a)
@@ -174,6 +185,9 @@ lp_build_comp(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate a + b
+ */
 LLVMValueRef
 lp_build_add(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -214,13 +228,19 @@ lp_build_add(struct lp_build_context *bld,
    else
       res = LLVMBuildAdd(bld->builder, a, b, "");
 
+   /* clamp to ceiling of 1.0 */
    if(bld->type.norm && (bld->type.floating || bld->type.fixed))
       res = lp_build_min_simple(bld, res, bld->one);
+
+   /* XXX clamp to floor of -1 or 0??? */
 
    return res;
 }
 
 
+/**
+ * Generate a - b
+ */
 LLVMValueRef
 lp_build_sub(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -289,6 +309,9 @@ lp_build_unpack_shuffle(unsigned n, unsigned lo_hi)
 }
 
 
+/**
+ * Build constant int vector of width 'n' and value 'c'.
+ */
 static LLVMValueRef 
 lp_build_const_vec(LLVMTypeRef type, unsigned n, long long c)
 {
@@ -379,6 +402,9 @@ lp_build_mul_u8n(LLVMBuilderRef builder,
 }
 
 
+/**
+ * Generate a * b
+ */
 LLVMValueRef
 lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -448,6 +474,9 @@ lp_build_mul(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate a / b
+ */
 LLVMValueRef
 lp_build_div(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -478,6 +507,10 @@ lp_build_div(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate min(a, b)
+ * Do checks for special cases.
+ */
 LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -502,6 +535,10 @@ lp_build_min(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate max(a, b)
+ * Do checks for special cases.
+ */
 LLVMValueRef
 lp_build_max(struct lp_build_context *bld,
              LLVMValueRef a,
@@ -526,6 +563,9 @@ lp_build_max(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate abs(a)
+ */
 LLVMValueRef
 lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a)
@@ -598,6 +638,9 @@ lp_build_rcp(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate 1/sqrt(a)
+ */
 LLVMValueRef
 lp_build_rsqrt(struct lp_build_context *bld,
                LLVMValueRef a)
@@ -616,6 +659,9 @@ lp_build_rsqrt(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate cos(a)
+ */
 LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
               LLVMValueRef a)
@@ -633,6 +679,9 @@ lp_build_cos(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate sin(a)
+ */
 LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
               LLVMValueRef a)
@@ -650,6 +699,9 @@ lp_build_sin(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate pow(x, y)
+ */
 LLVMValueRef
 lp_build_pow(struct lp_build_context *bld,
              LLVMValueRef x,
@@ -663,6 +715,9 @@ lp_build_pow(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate exp(x)
+ */
 LLVMValueRef
 lp_build_exp(struct lp_build_context *bld,
              LLVMValueRef x)
@@ -674,6 +729,9 @@ lp_build_exp(struct lp_build_context *bld,
 }
 
 
+/**
+ * Generate log(x)
+ */
 LLVMValueRef
 lp_build_log(struct lp_build_context *bld,
              LLVMValueRef x)
@@ -689,6 +747,10 @@ lp_build_log(struct lp_build_context *bld,
 #define LOG_POLY_DEGREE 5
 
 
+/**
+ * Generate polynomial.
+ * Ex:  x^2 * coeffs[0] + x * coeffs[1] + coeffs[2].
+ */
 static LLVMValueRef
 lp_build_polynomial(struct lp_build_context *bld,
                     LLVMValueRef x,
