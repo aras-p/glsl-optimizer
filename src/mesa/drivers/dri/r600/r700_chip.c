@@ -408,7 +408,6 @@ int r700SetupStreams(GLcontext * ctx)
     END_BATCH();
     COMMIT_BATCH();
 
-    context->radeon.tcl.aos_count = 0;
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
@@ -429,9 +428,9 @@ int r700SetupStreams(GLcontext * ctx)
 					      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
 					      (unsigned int)context->radeon.tcl.aos[j].count);
 			j++;
-			context->radeon.tcl.aos_count++;
 		}
 	}
+	context->radeon.tcl.aos_count = j;
 
     return R600_FALLBACK_NONE;
 }
