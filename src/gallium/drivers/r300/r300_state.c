@@ -224,7 +224,8 @@ static void*
         dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
                                      0, 1023);
     } else {
-        dsa->z_buffer_top = R300_ZTOP_ENABLE;
+        /* XXX need to fix this to be dynamically set
+        dsa->z_buffer_top = R300_ZTOP_ENABLE; */
     }
 
     return (void*)dsa;
