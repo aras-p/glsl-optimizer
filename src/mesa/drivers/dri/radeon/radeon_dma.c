@@ -272,7 +272,7 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 		FREE(dma_bo);
 	}
 
-	foreach_s(dma_bo, temp, &rmesa->dma.free) {
+	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
 		FREE(dma_bo);
