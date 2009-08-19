@@ -567,11 +567,11 @@ static void emit_cmp( struct brw_compile *p,
    }
 }
 
-static void emit_max( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_max(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    GLuint i;
 
@@ -591,11 +591,11 @@ static void emit_max( struct brw_compile *p,
    }
 }
 
-static void emit_min( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1 )
+void emit_min(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
 {
    GLuint i;
 

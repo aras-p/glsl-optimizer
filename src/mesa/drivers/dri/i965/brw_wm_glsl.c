@@ -671,6 +671,55 @@ unalias3(struct brw_wm_compile *c,
     release_tmps(c, mark);
 }
 
+/* Workaround for using brw_wm_emit.c's emit functions, which expect
+ * destination regs to be uniquely written.  Moves arguments out to
+ * temporaries as necessary for instructions which use their destination as
+ * a temporary.
+ */
+static void
+unalias2(struct brw_wm_compile *c,
+	 void (*func)(struct brw_compile *c,
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1),
+	 const struct brw_reg *dst,
+	 GLuint mask,
+	 const struct brw_reg *arg0,
+	 const struct brw_reg *arg1)
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg tmp_arg0[4], tmp_arg1[4];
+    int i, j;
+    int mark = mark_tmps(c);
+
+    for (j = 0; j < 4; j++) {
+	tmp_arg0[j] = arg0[j];
+	tmp_arg1[j] = arg1[j];
+    }
+
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    for (j = 0; j < 4; j++) {
+		if (arg0[j].file == dst[i].file &&
+		    dst[i].nr == arg0[j].nr) {
+		    tmp_arg0[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg0[j], arg0[j]);
+		}
+		if (arg1[j].file == dst[i].file &&
+		    dst[i].nr == arg1[j].nr) {
+		    tmp_arg1[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg1[j], arg1[j]);
+		}
+	    }
+	}
+    }
+
+    func(p, dst, mask, tmp_arg0, tmp_arg1);
+
+    release_tmps(c, mark);
+}
+
 static void emit_arl(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
 {
@@ -682,55 +731,6 @@ static void emit_arl(struct brw_wm_compile *c,
     src0 = get_src_reg(c, inst, 0, 0); /* channel 0 */
     brw_MOV(p, addr_reg, src0);
     brw_set_saturate(p, 0);
-}
-
-
-static void emit_min_max(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    const GLuint mask = inst->DstReg.WriteMask;
-    const int mark = mark_tmps(c);
-    int i;
-    brw_push_insn_state(p);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-            struct brw_reg real_dst = get_dst_reg(c, inst, i);
-	    struct brw_reg src0 = get_src_reg(c, inst, 0, i);
-	    struct brw_reg src1 = get_src_reg(c, inst, 1, i);
-            struct brw_reg dst;
-            /* if dst==src0 or dst==src1 we need to use a temp reg */
-            GLboolean use_temp = brw_same_reg(dst, src0) ||
-                                 brw_same_reg(dst, src1);
-            if (use_temp)
-               dst = alloc_tmp(c);
-            else
-               dst = real_dst;
-
-            /*
-            printf("  Min/max: dst %d  src0 %d  src1 %d\n",
-                   dst.nr, src0.nr, src1.nr);
-            */
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_MOV(p, dst, src0);
-	    brw_set_saturate(p, 0);
-
-            if (inst->Opcode == OPCODE_MIN)
-               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, src1, src0);
-            else
-               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, src1, src0);
-
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	    brw_MOV(p, dst, src1);
-	    brw_set_saturate(p, 0);
-	    brw_set_predicate_control_flag_value(p, 0xff);
-            if (use_temp)
-               brw_MOV(p, real_dst, dst);
-	}
-    }
-    brw_pop_insn_state(p);
-    release_tmps(c, mark);
 }
 
 /**
@@ -2122,8 +2122,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MIN:	
+		unalias2(c, emit_min, dst, dst_flags, args[0], args[1]);
+		break;
 	    case OPCODE_MAX:	
-		emit_min_max(c, inst);
+		unalias2(c, emit_max, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DDX:
 	    case OPCODE_DDY:

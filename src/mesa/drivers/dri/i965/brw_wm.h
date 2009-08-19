@@ -390,6 +390,16 @@ void emit_math2(struct brw_wm_compile *c,
 		GLuint mask,
 		const struct brw_reg *arg0,
 		const struct brw_reg *arg1);
+void emit_min(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_max(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
 void emit_pinterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
