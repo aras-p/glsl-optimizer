@@ -45,6 +45,12 @@
 #include "lp_bld_debug.h"
 
 
+/**
+ * Generate blending code according to blend->base state.
+ * The blend function will look like:
+ *    blend(mask, src_color, constant color, dst_color)
+ * dst_color will be modified and contain the result of the blend func.
+ */
 static void
 blend_generate(struct llvmpipe_screen *screen,
                struct lp_blend_state *blend)
@@ -69,11 +75,11 @@ blend_generate(struct llvmpipe_screen *screen,
    unsigned i;
 
    type.value = 0;
-   type.floating = FALSE;
-   type.sign = FALSE;
-   type.norm = TRUE;
-   type.width = 8;
-   type.length = 16;
+   type.floating = FALSE; /* values are integers */
+   type.sign = FALSE;     /* values are unsigned */
+   type.norm = TRUE;      /* values are in [0,1] or [-1,1] */
+   type.width = 8;        /* 8-bit ubyte values */
+   type.length = 16;      /* 16 elements per vector */
 
    vec_type = lp_build_vec_type(type);
    int_vec_type = lp_build_int_vec_type(type);
