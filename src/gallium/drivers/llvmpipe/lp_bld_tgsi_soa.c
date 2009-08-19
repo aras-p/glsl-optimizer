@@ -1353,7 +1353,7 @@ emit_declaration(
             LLVMValueRef input = bld->base.undef;
 
             if( mask & (1 << chan) ) {
-               LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
+               LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), (1 + attrib)*NUM_CHANNELS + chan, 0);
                LLVMValueRef a0;
                LLVMValueRef dadx;
                LLVMValueRef dady;

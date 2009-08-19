@@ -67,37 +67,6 @@ quad_shade_stage(struct quad_stage *qs)
 }
 
 
-static void
-setup_pos_vector(struct quad_shade_stage *qss,
-                 const struct quad_interp_coef *coef,
-                 float x, float y)
-{
-   uint chan;
-
-   /* do X */
-   qss->pos[0].f[0] = x;
-   qss->pos[0].f[1] = x + 1;
-   qss->pos[0].f[2] = x;
-   qss->pos[0].f[3] = x + 1;
-
-   /* do Y */
-   qss->pos[1].f[0] = y;
-   qss->pos[1].f[1] = y;
-   qss->pos[1].f[2] = y + 1;
-   qss->pos[1].f[3] = y + 1;
-
-   /* do Z and W for all fragments in the quad */
-   for (chan = 2; chan < 4; chan++) {
-      const float dadx = coef->dadx[0][chan];
-      const float dady = coef->dady[0][chan];
-      const float a0 = coef->a0[0][chan] + dadx * x + dady * y;
-      qss->pos[chan].f[0] = a0;
-      qss->pos[chan].f[1] = a0 + dadx;
-      qss->pos[chan].f[2] = a0 + dady;
-      qss->pos[chan].f[3] = a0 + dadx + dady;
-   }
-}
-
 
 /**
  * Execute fragment shader for the four fragments in the quad.
@@ -111,12 +80,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct tgsi_sampler **samplers;
    unsigned chan_index;
 
-   /* Compute X, Y, Z, W vals for this quad */
-   setup_pos_vector(qss,
-                    quad->coef,
-                    (float)quad->input.x0, (float)quad->input.y0);
-
-
    constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
    samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
 
@@ -124,10 +87,11 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
       qss->mask[chan_index] = ~0;
 
    /* run shader */
-   llvmpipe->fs->jit_function( qss->pos,
-                               quad->coef->a0 + 1,
-                               quad->coef->dadx + 1,
-                               quad->coef->dady + 1,
+   llvmpipe->fs->jit_function( quad->input.x0,
+                               quad->input.y0,
+                               quad->coef->a0,
+                               quad->coef->dadx,
+                               quad->coef->dady,
                                constants,
                                qss->mask,
                                quad->output.color,

@@ -36,11 +36,71 @@
 #include "tgsi/tgsi_parse.h"
 #include "lp_bld_type.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_swizzle.h"
 #include "lp_bld_debug.h"
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_quad.h"
+
+
+static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
+static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
+
+
+static void
+setup_pos_vector(LLVMBuilderRef builder,
+                 LLVMValueRef x,
+                 LLVMValueRef y,
+                 LLVMValueRef a0_ptr,
+                 LLVMValueRef dadx_ptr,
+                 LLVMValueRef dady_ptr,
+                 LLVMValueRef *pos)
+{
+   LLVMTypeRef int_elem_type = LLVMInt32Type();
+   LLVMTypeRef int_vec_type = LLVMVectorType(int_elem_type, QUAD_SIZE);
+   LLVMTypeRef elem_type = LLVMFloatType();
+   LLVMTypeRef vec_type = LLVMVectorType(elem_type, QUAD_SIZE);
+   LLVMValueRef x_offsets[QUAD_SIZE];
+   LLVMValueRef y_offsets[QUAD_SIZE];
+   unsigned chan;
+   unsigned i;
+
+   x = lp_build_broadcast(builder, int_vec_type, x);
+   y = lp_build_broadcast(builder, int_vec_type, y);
+
+   for(i = 0; i < QUAD_SIZE; ++i) {
+      x_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_x[i], 0);
+      y_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_y[i], 0);
+   }
+
+   x = LLVMBuildAdd(builder, x, LLVMConstVector(x_offsets, QUAD_SIZE), "");
+   y = LLVMBuildAdd(builder, y, LLVMConstVector(y_offsets, QUAD_SIZE), "");
+
+   x = LLVMBuildSIToFP(builder, x, vec_type, "");
+   y = LLVMBuildSIToFP(builder, y, vec_type, "");
+
+   pos[0] = x;
+   pos[1] = y;
+
+   for(chan = 2; chan < NUM_CHANNELS; ++chan) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
+      LLVMValueRef a0   = LLVMBuildLoad(builder, LLVMBuildGEP(builder, a0_ptr,   &index, 1, ""), "");
+      LLVMValueRef dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
+      LLVMValueRef dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
+      LLVMValueRef res;
+      a0   = lp_build_broadcast(builder, vec_type, a0);
+      dadx = lp_build_broadcast(builder, vec_type, dadx);
+      dady = lp_build_broadcast(builder, vec_type, dady);
+      res = a0;
+      res = LLVMBuildAdd(builder, res, LLVMBuildMul(builder, dadx, x, ""), "");
+      res = LLVMBuildAdd(builder, res, LLVMBuildMul(builder, dady, y, ""), "");
+      pos[chan] = res;
+   }
+
+   for(chan = 0; chan < NUM_CHANNELS; ++chan)
+      lp_build_name(pos[chan], "pos.%c", "xyzw"[chan]);
+}
 
 
 static void
@@ -52,9 +112,10 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMTypeRef elem_type;
    LLVMTypeRef vec_type;
    LLVMTypeRef int_vec_type;
-   LLVMTypeRef arg_types[9];
+   LLVMTypeRef arg_types[10];
    LLVMTypeRef func_type;
-   LLVMValueRef pos_ptr;
+   LLVMValueRef x;
+   LLVMValueRef y;
    LLVMValueRef a0_ptr;
    LLVMValueRef dadx_ptr;
    LLVMValueRef dady_ptr;
@@ -83,34 +144,38 @@ shader_generate(struct llvmpipe_screen *screen,
    vec_type = lp_build_vec_type(type);
    int_vec_type = lp_build_int_vec_type(type);
 
-   arg_types[0] = LLVMPointerType(vec_type, 0);        /* pos */
-   arg_types[1] = LLVMPointerType(elem_type, 0);       /* a0 */
-   arg_types[2] = LLVMPointerType(elem_type, 0);       /* dadx */
-   arg_types[3] = LLVMPointerType(elem_type, 0);       /* dady */
-   arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
-   arg_types[5] = LLVMPointerType(int_vec_type, 0);    /* mask */
-   arg_types[6] = LLVMPointerType(vec_type, 0);        /* color */
-   arg_types[7] = LLVMPointerType(vec_type, 0);        /* depth */
-   arg_types[8] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+   arg_types[0] = LLVMInt32Type();                     /* x */
+   arg_types[1] = LLVMInt32Type();                     /* y */
+   arg_types[2] = LLVMPointerType(elem_type, 0);       /* a0 */
+   arg_types[3] = LLVMPointerType(elem_type, 0);       /* dadx */
+   arg_types[4] = LLVMPointerType(elem_type, 0);       /* dady */
+   arg_types[5] = LLVMPointerType(elem_type, 0);       /* consts */
+   arg_types[6] = LLVMPointerType(int_vec_type, 0);    /* mask */
+   arg_types[7] = LLVMPointerType(vec_type, 0);        /* color */
+   arg_types[8] = LLVMPointerType(vec_type, 0);        /* depth */
+   arg_types[9] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
    shader->function = LLVMAddFunction(screen->module, "shader", func_type);
    LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
    for(i = 0; i < Elements(arg_types); ++i)
-      LLVMAddAttribute(LLVMGetParam(shader->function, i), LLVMNoAliasAttribute);
+      if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
+         LLVMAddAttribute(LLVMGetParam(shader->function, i), LLVMNoAliasAttribute);
 
-   pos_ptr = LLVMGetParam(shader->function, 0);
-   a0_ptr = LLVMGetParam(shader->function, 1);
-   dadx_ptr = LLVMGetParam(shader->function, 2);
-   dady_ptr = LLVMGetParam(shader->function, 3);
-   consts_ptr = LLVMGetParam(shader->function, 4);
-   mask_ptr = LLVMGetParam(shader->function, 5);
-   color_ptr = LLVMGetParam(shader->function, 6);
-   depth_ptr = LLVMGetParam(shader->function, 7);
-   samplers_ptr = LLVMGetParam(shader->function, 8);
+   x            = LLVMGetParam(shader->function, 0);
+   y            = LLVMGetParam(shader->function, 1);
+   a0_ptr       = LLVMGetParam(shader->function, 2);
+   dadx_ptr     = LLVMGetParam(shader->function, 3);
+   dady_ptr     = LLVMGetParam(shader->function, 4);
+   consts_ptr   = LLVMGetParam(shader->function, 5);
+   mask_ptr     = LLVMGetParam(shader->function, 6);
+   color_ptr    = LLVMGetParam(shader->function, 7);
+   depth_ptr    = LLVMGetParam(shader->function, 8);
+   samplers_ptr = LLVMGetParam(shader->function, 9);
 
-   lp_build_name(pos_ptr, "pos");
+   lp_build_name(x, "x");
+   lp_build_name(y, "y");
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
@@ -124,11 +189,7 @@ shader_generate(struct llvmpipe_screen *screen,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
-      pos[chan] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), "");
-      lp_build_name(pos[chan], "pos.%c", "xyzw"[chan]);
-   }
+   setup_pos_vector(builder, x, y, a0_ptr, dadx_ptr, dady_ptr, pos);
 
    memset(outputs, 0, sizeof outputs);
 

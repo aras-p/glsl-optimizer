@@ -59,7 +59,8 @@ struct vertex_info;
 
 
 typedef void
-(*lp_shader_fs_func)(const void *pos,
+(*lp_shader_fs_func)(uint32_t x,
+                     uint32_t y,
                      const void *a0,
                      const void *dadx,
                      const void *dady,
