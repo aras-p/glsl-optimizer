@@ -12,7 +12,7 @@ CONFIG_NAME = linux-llvm
 GALLIUM_DRIVERS_DIRS += llvmpipe
 
 OPT_FLAGS = -g -ansi -pedantic
-DEFINES += -DDEBUG -DDEBUG_MATH -DGALLIUM_LLVMPIPE
+DEFINES += -DDEBUG -DDEBUG_MATH -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
 
 # override -std=c99
 CFLAGS += -std=gnu99
@@ -39,4 +39,4 @@ else
 endif
 
 LD = g++
-GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++
+GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++ -ludis86
