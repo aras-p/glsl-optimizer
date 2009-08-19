@@ -69,7 +69,7 @@ quad_shade_stage(struct quad_stage *qs)
 
 static void
 setup_pos_vector(struct quad_shade_stage *qss,
-                 const struct tgsi_interp_coef *coef,
+                 const struct quad_interp_coef *coef,
                  float x, float y)
 {
    uint chan;
@@ -88,9 +88,9 @@ setup_pos_vector(struct quad_shade_stage *qss,
 
    /* do Z and W for all fragments in the quad */
    for (chan = 2; chan < 4; chan++) {
-      const float dadx = coef->dadx[chan];
-      const float dady = coef->dady[chan];
-      const float a0 = coef->a0[chan] + dadx * x + dady * y;
+      const float dadx = coef->dadx[0][chan];
+      const float dady = coef->dady[0][chan];
+      const float a0 = coef->a0[0][chan] + dadx * x + dady * y;
       qss->pos[chan].f[0] = a0;
       qss->pos[chan].f[1] = a0 + dadx;
       qss->pos[chan].f[2] = a0 + dady;
@@ -113,7 +113,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* Compute X, Y, Z, W vals for this quad */
    setup_pos_vector(qss,
-                    quad->posCoef,
+                    quad->coef,
                     (float)quad->input.x0, (float)quad->input.y0);
 
 
@@ -125,9 +125,9 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* run shader */
    llvmpipe->fs->jit_function( qss->pos,
-                               quad->coef->a0,
-                               quad->coef->dadx,
-                               quad->coef->dady,
+                               quad->coef->a0 + 1,
+                               quad->coef->dadx + 1,
+                               quad->coef->dady + 1,
                                constants,
                                qss->mask,
                                quad->output.color,

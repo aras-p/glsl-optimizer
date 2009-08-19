@@ -104,9 +104,9 @@ interpolate_quad_depth( struct quad_header *quad )
 {
    const float fx = (float) quad->input.x0;
    const float fy = (float) quad->input.y0;
-   const float dzdx = quad->posCoef->dadx[2];
-   const float dzdy = quad->posCoef->dady[2];
-   const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+   const float dzdx = quad->coef->dadx[0][2];
+   const float dzdy = quad->coef->dady[0][2];
+   const float z0 = quad->coef->a0[0][2] + dzdx * fx + dzdy * fy;
 
    quad->output.depth[0] = z0;
    quad->output.depth[1] = z0 + dzdx;
@@ -722,9 +722,9 @@ depth_interp_z16_less_write(struct quad_stage *qs,
    const unsigned iy = quads[0]->input.y0;
    const float fx = (float) ix;
    const float fy = (float) iy;
-   const float dzdx = quads[0]->posCoef->dadx[2];
-   const float dzdy = quads[0]->posCoef->dady[2];
-   const float z0 = quads[0]->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+   const float dzdx = quads[0]->coef->dadx[0][2];
+   const float dzdy = quads[0]->coef->dady[0][2];
+   const float z0 = quads[0]->coef->a0[0][2] + dzdx * fx + dzdy * fy;
    struct llvmpipe_cached_tile *tile;
    ushort (*depth16)[TILE_SIZE];
    ushort idepth[4], depth_step;

@@ -93,9 +93,9 @@ struct quad_header_output
  */
 struct quad_interp_coef
 {
-   float ALIGN16_ATTRIB a0[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dadx[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dady[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB a0[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   float ALIGN16_ATTRIB dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 };
 
 
@@ -110,7 +110,6 @@ struct quad_header {
 
    /* Redundant/duplicated:
     */
-   const struct tgsi_interp_coef *posCoef;
    const struct quad_interp_coef *coef;
 };
 
