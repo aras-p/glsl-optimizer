@@ -55,7 +55,6 @@ struct quad_shade_stage
 
    union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
 
-   struct tgsi_exec_vector ALIGN16_ATTRIB outputs[PIPE_MAX_ATTRIBS];
    uint32_t ALIGN16_ATTRIB mask[NUM_CHANNELS];
 };
 
@@ -111,7 +110,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    void *constants;
    struct tgsi_sampler **samplers;
    unsigned chan_index;
-   boolean z_written;
 
    /* Compute X, Y, Z, W vals for this quad */
    setup_pos_vector(qss,
@@ -131,8 +129,9 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
                                quad->coef->dadx,
                                quad->coef->dady,
                                constants,
-                               qss->outputs,
                                qss->mask,
+                               quad->output.color,
+                               quad->output.depth,
                                samplers);
 
    for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
@@ -140,36 +139,6 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
          quad->inout.mask &= ~(1 << chan_index);
    if (quad->inout.mask == 0)
       return FALSE;
-
-   /* store outputs */
-   z_written = FALSE;
-   {
-      const ubyte *sem_name = llvmpipe->fs->info.output_semantic_name;
-      const ubyte *sem_index = llvmpipe->fs->info.output_semantic_index;
-      const uint n = qss->stage.llvmpipe->fs->info.num_outputs;
-      uint i;
-      for (i = 0; i < n; i++) {
-         switch (sem_name[i]) {
-         case TGSI_SEMANTIC_COLOR:
-            {
-               uint cbuf = sem_index[i];
-               memcpy(quad->output.color[cbuf],
-                      &qss->outputs[i].xyzw[0].f[0],
-                      sizeof(quad->output.color[0]) );
-            }
-            break;
-         case TGSI_SEMANTIC_POSITION:
-            {
-               uint j;
-               for (j = 0; j < 4; j++) {
-                  quad->output.depth[j] = qss->outputs[0].xyzw[2].f[j];
-               }
-               z_written = TRUE;
-            }
-            break;
-         }
-      }
-   }
 
    return TRUE;
 }

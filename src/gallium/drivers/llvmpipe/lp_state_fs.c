@@ -52,22 +52,25 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMTypeRef elem_type;
    LLVMTypeRef vec_type;
    LLVMTypeRef int_vec_type;
-   LLVMTypeRef arg_types[8];
+   LLVMTypeRef arg_types[9];
    LLVMTypeRef func_type;
    LLVMValueRef pos_ptr;
    LLVMValueRef a0_ptr;
    LLVMValueRef dadx_ptr;
    LLVMValueRef dady_ptr;
    LLVMValueRef consts_ptr;
-   LLVMValueRef outputs_ptr;
    LLVMValueRef mask_ptr;
+   LLVMValueRef color_ptr;
+   LLVMValueRef depth_ptr;
    LLVMValueRef samplers_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef mask;
-   unsigned i, j;
+   unsigned i;
+   unsigned attrib;
+   unsigned chan;
 
    type.value = 0;
    type.floating = TRUE;
@@ -85,9 +88,10 @@ shader_generate(struct llvmpipe_screen *screen,
    arg_types[2] = LLVMPointerType(elem_type, 0);       /* dadx */
    arg_types[3] = LLVMPointerType(elem_type, 0);       /* dady */
    arg_types[4] = LLVMPointerType(elem_type, 0);       /* consts */
-   arg_types[5] = LLVMPointerType(vec_type, 0);        /* outputs */
-   arg_types[6] = LLVMPointerType(int_vec_type, 0);    /* mask */
-   arg_types[7] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+   arg_types[5] = LLVMPointerType(int_vec_type, 0);    /* mask */
+   arg_types[6] = LLVMPointerType(vec_type, 0);        /* color */
+   arg_types[7] = LLVMPointerType(vec_type, 0);        /* depth */
+   arg_types[8] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -101,27 +105,29 @@ shader_generate(struct llvmpipe_screen *screen,
    dadx_ptr = LLVMGetParam(shader->function, 2);
    dady_ptr = LLVMGetParam(shader->function, 3);
    consts_ptr = LLVMGetParam(shader->function, 4);
-   outputs_ptr = LLVMGetParam(shader->function, 5);
-   mask_ptr = LLVMGetParam(shader->function, 6);
-   samplers_ptr = LLVMGetParam(shader->function, 7);
+   mask_ptr = LLVMGetParam(shader->function, 5);
+   color_ptr = LLVMGetParam(shader->function, 6);
+   depth_ptr = LLVMGetParam(shader->function, 7);
+   samplers_ptr = LLVMGetParam(shader->function, 8);
 
    lp_build_name(pos_ptr, "pos");
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
    lp_build_name(consts_ptr, "consts");
-   lp_build_name(outputs_ptr, "outputs");
    lp_build_name(mask_ptr, "mask");
+   lp_build_name(color_ptr, "color");
+   lp_build_name(depth_ptr, "depth");
    lp_build_name(samplers_ptr, "samplers");
 
    block = LLVMAppendBasicBlock(shader->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   for(j = 0; j < NUM_CHANNELS; ++j) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), j, 0);
-      pos[j] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), "");
-      lp_build_name(pos[j], "pos.%c", "xyzw"[j]);
+   for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
+      pos[chan] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, pos_ptr, &index, 1, ""), "");
+      lp_build_name(pos[chan], "pos.%c", "xyzw"[chan]);
    }
 
    memset(outputs, 0, sizeof outputs);
@@ -130,12 +136,27 @@ shader_generate(struct llvmpipe_screen *screen,
                             pos, a0_ptr, dadx_ptr, dady_ptr,
                             consts_ptr, outputs, samplers_ptr);
 
-   for(i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i) {
-      for(j = 0; j < NUM_CHANNELS; ++j) {
-         if(outputs[i][j]) {
-            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i*NUM_CHANNELS + j, 0);
-            LLVMBuildStore(builder, outputs[i][j], LLVMBuildGEP(builder, outputs_ptr, &index, 1, ""));
-            lp_build_name(pos[j], "output%u.%c", i, "xyzw"[j]);
+   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         if(outputs[attrib][chan]) {
+            lp_build_name(outputs[attrib][chan], "output%u.%c", attrib, "xyzw"[chan]);
+
+            switch (shader->info.output_semantic_name[attrib]) {
+            case TGSI_SEMANTIC_COLOR:
+               {
+                  unsigned cbuf = shader->info.output_semantic_index[attrib];
+                  LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), cbuf*NUM_CHANNELS + chan, 0);
+                  LLVMValueRef output_ptr = LLVMBuildGEP(builder, color_ptr, &index, 1, "");
+                  lp_build_name(outputs[attrib][chan], "color%u.%c", attrib, "rgba"[chan]);
+                  LLVMBuildStore(builder, outputs[attrib][chan], output_ptr);
+                  break;
+               }
+
+            case TGSI_SEMANTIC_POSITION:
+               if(chan == 3)
+                  LLVMBuildStore(builder, outputs[attrib][chan], depth_ptr);
+               break;
+            }
          }
       }
    }
