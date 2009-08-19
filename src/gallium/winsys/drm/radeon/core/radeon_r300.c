@@ -143,17 +143,9 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     info.request = RADEON_INFO_NUM_GB_PIPES;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: New ioctl for GB pipe count failed "
-                "(error number %d), trying classic ioctl...\n",
-                __FUNCTION__, retval);
-        gp.param = RADEON_PARAM_NUM_GB_PIPES;
-        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
-                sizeof(gp));
-        if (retval) {
-            fprintf(stderr, "%s: Failed to get GB pipe count, "
-                    "error number %d\n", __FUNCTION__, retval);
-            exit(1);
-        }
+        fprintf(stderr, "%s: Failed to get GB pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
     }
     winsys->gb_pipes = target;
 
