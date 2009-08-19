@@ -739,8 +739,7 @@ static void copy_instructions( struct ureg_program *ureg )
 
 
 static void
-fixup_header_size(struct ureg_program *ureg,
-                     unsigned insn )
+fixup_header_size(struct ureg_program *ureg )
 {
    union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_DECL, 1 );
 
@@ -768,12 +767,11 @@ emit_header( struct ureg_program *ureg )
 void *ureg_create_shader( struct ureg_program *ureg )
 {
    struct pipe_shader_state state;
-   unsigned insn;
 
    emit_header( ureg );
    emit_decls( ureg );
    copy_instructions( ureg );
-   fixup_header_size( ureg, insn );
+   fixup_header_size( ureg );
    
    if (ureg->domain[0].tokens == error_tokens ||
        ureg->domain[1].tokens == error_tokens) {
