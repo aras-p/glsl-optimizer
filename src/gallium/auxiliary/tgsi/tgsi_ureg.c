@@ -103,6 +103,7 @@ struct ureg_program
 
    unsigned nr_constants;
    unsigned nr_samplers;
+   unsigned nr_instructions;
 
    struct ureg_tokens domain[2];
 };
@@ -525,7 +526,9 @@ ureg_emit_insn(struct ureg_program *ureg,
    out[0].insn.NumSrcRegs = num_src;
    out[0].insn.Padding = 0;
    out[0].insn.Extended = 0;
-
+   
+   ureg->nr_instructions++;
+   
    return ureg->domain[DOMAIN_INSN].count - 1;
 }
 
@@ -544,6 +547,31 @@ ureg_emit_label(struct ureg_program *ureg,
 
    out[0].value = 0;
    out[0].insn_ext_label.Type = TGSI_INSTRUCTION_EXT_TYPE_LABEL;
+   
+   *label_token = ureg->domain[DOMAIN_INSN].count - 1;
+}
+
+/* Will return a number which can be used in a label to point to the
+ * next instruction to be emitted.
+ */
+unsigned
+ureg_get_instruction_number( struct ureg_program *ureg )
+{
+   return ureg->nr_instructions;
+}
+
+/* Patch a given label (expressed as a token number) to point to a
+ * given instruction (expressed as an instruction number).
+ */
+void
+ureg_fixup_label(struct ureg_program *ureg,
+                 unsigned label_token,
+                 unsigned instruction_number )
+{
+   union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_INSN, label_token );
+
+   assert(out->insn_ext_label.Type == TGSI_INSTRUCTION_EXT_TYPE_LABEL);
+   out->insn_ext_label.Label = instruction_number;
 }
 
 
@@ -571,6 +599,7 @@ ureg_fixup_insn_size(struct ureg_program *ureg,
 {
    union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_INSN, insn );
 
+   assert(out->insn.Type == TGSI_TOKEN_TYPE_INSTRUCTION);
    out->insn.NrTokens = ureg->domain[DOMAIN_INSN].count - insn - 1;
 }
 

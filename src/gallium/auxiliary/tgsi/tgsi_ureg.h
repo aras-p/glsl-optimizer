@@ -175,6 +175,33 @@ ureg_DECL_immediate1f( struct ureg_program *ureg,
 }
 
 /***********************************************************************
+ * Functions for patching up labels
+ */
+
+
+/* Will return a number which can be used in a label to point to the
+ * next instruction to be emitted.
+ */
+unsigned
+ureg_get_instruction_number( struct ureg_program *ureg );
+
+
+/* Patch a given label (expressed as a token number) to point to a
+ * given instruction (expressed as an instruction number).
+ *
+ * Labels are obtained from instruction emitters, eg ureg_CAL().
+ * Instruction numbers are obtained from ureg_get_instruction_number(),
+ * above.
+ */
+void
+ureg_fixup_label(struct ureg_program *ureg,
+                 unsigned label_token,
+                 unsigned instruction_number );
+
+
+
+
+/***********************************************************************
  * Internal instruction helpers, don't call these directly:
  */
 
