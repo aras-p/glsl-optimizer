@@ -199,12 +199,17 @@ emit_store(
       break;
 
    case TGSI_SAT_ZERO_ONE:
-      /* assert( 0 ); */
+      value = lp_build_max(&bld->base, value, bld->base.zero);
+      value = lp_build_min(&bld->base, value, bld->base.one);
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
+      value = lp_build_max(&bld->base, value, lp_build_const_uni(bld->base.type, -1.0));
+      value = lp_build_min(&bld->base, value, bld->base.one);
       break;
+
+   default:
+      assert(0);
    }
 
    switch( reg->DstRegister.File ) {
