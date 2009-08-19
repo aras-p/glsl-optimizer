@@ -51,6 +51,8 @@ debug_dump_blend_factor(unsigned value, boolean shortened);
 const char *
 debug_dump_blend_func(unsigned value, boolean shortened);
 
+const char *
+debug_dump_func(unsigned value, boolean shortened);
 
 
 /* FIXME: Move the other debug_dump_xxx functions out of u_debug.h into here. */

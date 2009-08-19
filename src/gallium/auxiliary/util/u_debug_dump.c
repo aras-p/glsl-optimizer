@@ -160,3 +160,30 @@ debug_dump_blend_func_short_names[] = {
 };
 
 DEFINE_DEBUG_DUMP_CONTINUOUS(blend_func)
+
+
+static const char *
+debug_dump_func_names[] = {
+   "PIPE_FUNC_NEVER",
+   "PIPE_FUNC_LESS",
+   "PIPE_FUNC_EQUAL",
+   "PIPE_FUNC_LEQUAL",
+   "PIPE_FUNC_GREATER",
+   "PIPE_FUNC_NOTEQUAL",
+   "PIPE_FUNC_GEQUAL",
+   "PIPE_FUNC_ALWAYS"
+};
+
+static const char *
+debug_dump_func_short_names[] = {
+   "never",
+   "less",
+   "equal",
+   "less_equal",
+   "greater",
+   "not_equal",
+   "greater_equal",
+   "always"
+};
+
+DEFINE_DEBUG_DUMP_CONTINUOUS(func)
