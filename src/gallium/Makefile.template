@@ -41,7 +41,7 @@ depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 
 # Emacs tags
 tags:
-	etags `find . -name \*.[ch]` `find ../include`
+	etags `find . -name \*.[ch]` `find $(TOP)/src/gallium/include -name \*.h`
 
 # Remove .o and backup files
 clean:
