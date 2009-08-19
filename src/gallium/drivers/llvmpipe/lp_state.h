@@ -70,6 +70,28 @@ typedef void
                      void *depth,
                      struct tgsi_sampler **samplers);
 
+
+struct lp_fragment_shader;
+
+
+/**
+ * Subclass of pipe_shader_state (though it doesn't really need to be).
+ *
+ * This is starting to look an awful lot like a quad pipeline stage...
+ */
+struct lp_fragment_shader_variant
+{
+   struct lp_fragment_shader *shader;
+   struct pipe_alpha_state alpha;
+
+   LLVMValueRef function;
+
+   lp_shader_fs_func jit_function;
+
+   struct lp_fragment_shader_variant *next;
+};
+
+
 /**
  * Subclass of pipe_shader_state (though it doesn't really need to be).
  *
@@ -83,9 +105,9 @@ struct lp_fragment_shader
 
    struct llvmpipe_screen *screen;
 
-   LLVMValueRef function;
+   struct lp_fragment_shader_variant *variants;
 
-   lp_shader_fs_func jit_function;
+   struct lp_fragment_shader_variant *current;
 };
 
 
@@ -183,6 +205,7 @@ void llvmpipe_set_vertex_buffers(struct pipe_context *,
                                  unsigned count,
                                  const struct pipe_vertex_buffer *);
 
+void llvmpipe_update_fs(struct llvmpipe_context *lp);
 
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
 

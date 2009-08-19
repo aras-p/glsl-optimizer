@@ -564,75 +564,6 @@ depth_stencil_test_quad(struct quad_stage *qs,
 }
 
 
-#define ALPHATEST( FUNC, COMP )                                         \
-   static int                                                          \
-   alpha_test_quads_##FUNC( struct quad_stage *qs,                      \
-                           struct quad_header *quads[],                 \
-                           unsigned nr )                                \
-   {                                                                    \
-      const float ref = qs->llvmpipe->depth_stencil->alpha.ref_value;   \
-      const uint cbuf = 0; /* only output[0].alpha is tested */         \
-      unsigned pass_nr = 0;                                             \
-      unsigned i;                                                       \
-                                                                        \
-      for (i = 0; i < nr; i++) {                                        \
-         const float *aaaa = quads[i]->output.color[cbuf][3];           \
-         unsigned passMask = 0;                                         \
-                                                                        \
-         if (!quads[i]->inout.mask)                                     \
-            continue;                                                   \
-                                                                        \
-         if (aaaa[0] COMP ref) passMask |= (1 << 0);                    \
-         if (aaaa[1] COMP ref) passMask |= (1 << 1);                    \
-         if (aaaa[2] COMP ref) passMask |= (1 << 2);                    \
-         if (aaaa[3] COMP ref) passMask |= (1 << 3);                    \
-                                                                        \
-         quads[i]->inout.mask &= passMask;                              \
-                                                                        \
-         if (quads[i]->inout.mask)                                      \
-            ++pass_nr;                                                  \
-      }                                                                 \
-                                                                        \
-      return pass_nr;                                                   \
-   }
-
-
-ALPHATEST( LESS,     < )
-ALPHATEST( EQUAL,    == )
-ALPHATEST( LEQUAL,   <= )
-ALPHATEST( GREATER,  > )
-ALPHATEST( NOTEQUAL, != )
-ALPHATEST( GEQUAL,   >= )
-
-
-/* XXX: Incorporate into shader using KILP.
- */
-static int
-alpha_test_quads(struct quad_stage *qs, 
-                 struct quad_header *quads[], 
-                 unsigned nr)
-{
-   switch (qs->llvmpipe->depth_stencil->alpha.func) {
-   case PIPE_FUNC_LESS:
-      return alpha_test_quads_LESS( qs, quads, nr );
-   case PIPE_FUNC_EQUAL:
-      return alpha_test_quads_EQUAL( qs, quads, nr );
-      break;
-   case PIPE_FUNC_LEQUAL:
-      return alpha_test_quads_LEQUAL( qs, quads, nr );
-   case PIPE_FUNC_GREATER:
-      return alpha_test_quads_GREATER( qs, quads, nr );
-   case PIPE_FUNC_NOTEQUAL:
-      return alpha_test_quads_NOTEQUAL( qs, quads, nr );
-   case PIPE_FUNC_GEQUAL:
-      return alpha_test_quads_GEQUAL( qs, quads, nr );
-   case PIPE_FUNC_ALWAYS:
-      return nr;
-   case PIPE_FUNC_NEVER:
-   default:
-      return 0;
-   }
-}
 
 static unsigned mask_count[0x8] = 
 {
@@ -658,10 +589,6 @@ depth_test_quads_fallback(struct quad_stage *qs,
    boolean interp_depth = !fs->info.writes_z;
    struct depth_data data;
 
-
-   if (qs->llvmpipe->depth_stencil->alpha.enabled) {
-      alpha_test_quads(qs, quads, nr);
-   }
 
    if (qs->llvmpipe->framebuffer.zsbuf && 
        (qs->llvmpipe->depth_stencil->depth.enabled ||
@@ -801,8 +728,6 @@ choose_depth_test(struct quad_stage *qs,
 {
    boolean interp_depth = !qs->llvmpipe->fs->info.writes_z;
 
-   boolean alpha = qs->llvmpipe->depth_stencil->alpha.enabled;
-
    boolean depth = (qs->llvmpipe->framebuffer.zsbuf && 
                     qs->llvmpipe->depth_stencil->depth.enabled);
 
@@ -815,13 +740,11 @@ choose_depth_test(struct quad_stage *qs,
 
    qs->run = depth_test_quads_fallback;
 
-   if (!alpha &&
-       !depth &&
+   if (!depth &&
        !stencil) {
       qs->run = depth_noop;
    }
-   else if (!alpha && 
-            interp_depth && 
+   else if (interp_depth &&
             depth && 
             depthfunc == PIPE_FUNC_LESS && 
             depthwrite && 

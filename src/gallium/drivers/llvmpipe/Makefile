@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = llvmpipe
 
 C_SOURCES = \
+	lp_bld_alpha.c \
 	lp_bld_arit.c \
 	lp_bld_blend_aos.c \
 	lp_bld_blend_soa.c \

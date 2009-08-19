@@ -244,6 +244,11 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_FRAMEBUFFER))
       compute_cliprect(llvmpipe);
 
+   if (llvmpipe->dirty & (LP_NEW_FS |
+                          LP_NEW_DEPTH_STENCIL_ALPHA))
+      llvmpipe_update_fs( llvmpipe );
+
+
    if (llvmpipe->dirty & (LP_NEW_BLEND |
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_FRAMEBUFFER |

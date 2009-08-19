@@ -28,6 +28,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
+#include "util/u_debug_dump.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
@@ -36,6 +37,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "lp_bld_type.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_alpha.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_debug.h"
 #include "lp_screen.h"
@@ -103,10 +105,12 @@ setup_pos_vector(LLVMBuilderRef builder,
 }
 
 
-static void
+static struct lp_fragment_shader_variant *
 shader_generate(struct llvmpipe_screen *screen,
-                struct lp_fragment_shader *shader)
+                struct lp_fragment_shader *shader,
+                const struct pipe_alpha_state *alpha)
 {
+   struct lp_fragment_shader_variant *variant;
    const struct tgsi_token *tokens = shader->base.tokens;
    union lp_type type;
    LLVMTypeRef elem_type;
@@ -129,9 +133,24 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef mask;
+   LLVMValueRef fetch_texel;
    unsigned i;
    unsigned attrib;
    unsigned chan;
+
+#ifdef DEBUG
+   tgsi_dump(shader->base.tokens, 0);
+   debug_printf("alpha.enabled = %u\n", alpha->enabled);
+   debug_printf("alpha.func = %s\n", debug_dump_func(alpha->func, TRUE));
+   debug_printf("alpha.ref_value = %f\n", alpha->ref_value);
+#endif
+
+   variant = CALLOC_STRUCT(lp_fragment_shader_variant);
+   if(!variant)
+      return NULL;
+
+   variant->shader = shader;
+   memcpy(&variant->alpha, alpha, sizeof *alpha);
 
    type.value = 0;
    type.floating = TRUE; /* floating point values */
@@ -157,22 +176,22 @@ shader_generate(struct llvmpipe_screen *screen,
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
-   shader->function = LLVMAddFunction(screen->module, "shader", func_type);
-   LLVMSetFunctionCallConv(shader->function, LLVMCCallConv);
+   variant->function = LLVMAddFunction(screen->module, "shader", func_type);
+   LLVMSetFunctionCallConv(variant->function, LLVMCCallConv);
    for(i = 0; i < Elements(arg_types); ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
-         LLVMAddAttribute(LLVMGetParam(shader->function, i), LLVMNoAliasAttribute);
+         LLVMAddAttribute(LLVMGetParam(variant->function, i), LLVMNoAliasAttribute);
 
-   x            = LLVMGetParam(shader->function, 0);
-   y            = LLVMGetParam(shader->function, 1);
-   a0_ptr       = LLVMGetParam(shader->function, 2);
-   dadx_ptr     = LLVMGetParam(shader->function, 3);
-   dady_ptr     = LLVMGetParam(shader->function, 4);
-   consts_ptr   = LLVMGetParam(shader->function, 5);
-   mask_ptr     = LLVMGetParam(shader->function, 6);
-   color_ptr    = LLVMGetParam(shader->function, 7);
-   depth_ptr    = LLVMGetParam(shader->function, 8);
-   samplers_ptr = LLVMGetParam(shader->function, 9);
+   x            = LLVMGetParam(variant->function, 0);
+   y            = LLVMGetParam(variant->function, 1);
+   a0_ptr       = LLVMGetParam(variant->function, 2);
+   dadx_ptr     = LLVMGetParam(variant->function, 3);
+   dady_ptr     = LLVMGetParam(variant->function, 4);
+   consts_ptr   = LLVMGetParam(variant->function, 5);
+   mask_ptr     = LLVMGetParam(variant->function, 6);
+   color_ptr    = LLVMGetParam(variant->function, 7);
+   depth_ptr    = LLVMGetParam(variant->function, 8);
+   samplers_ptr = LLVMGetParam(variant->function, 9);
 
    lp_build_name(x, "x");
    lp_build_name(y, "y");
@@ -185,7 +204,7 @@ shader_generate(struct llvmpipe_screen *screen,
    lp_build_name(depth_ptr, "depth");
    lp_build_name(samplers_ptr, "samplers");
 
-   block = LLVMAppendBasicBlock(shader->function, "entry");
+   block = LLVMAppendBasicBlock(variant->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
@@ -210,6 +229,12 @@ shader_generate(struct llvmpipe_screen *screen,
                   LLVMValueRef output_ptr = LLVMBuildGEP(builder, color_ptr, &index, 1, "");
                   lp_build_name(outputs[attrib][chan], "color%u.%c", attrib, "rgba"[chan]);
                   LLVMBuildStore(builder, outputs[attrib][chan], output_ptr);
+
+                  /* Alpha test */
+                  /* XXX: should the alpha reference value be passed separately? */
+                  if(cbuf == 0 && chan == 3)
+                     mask = lp_build_alpha_test(builder, alpha, type, outputs[attrib][chan], mask);
+
                   break;
                }
 
@@ -228,44 +253,16 @@ shader_generate(struct llvmpipe_screen *screen,
    LLVMBuildRetVoid(builder);;
 
    LLVMDisposeBuilder(builder);
-}
 
-
-void *
-llvmpipe_create_fs_state(struct pipe_context *pipe,
-                         const struct pipe_shader_state *templ)
-{
-   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
-   struct lp_fragment_shader *shader;
-   LLVMValueRef fetch_texel;
-
-   shader = CALLOC_STRUCT(lp_fragment_shader);
-   if (!shader)
-      return NULL;
-
-   /* get/save the summary info for this shader */
-   tgsi_scan_shader(templ->tokens, &shader->info);
-
-   /* we need to keep a local copy of the tokens */
-   shader->base.tokens = tgsi_dup_tokens(templ->tokens);
-
-   shader->screen = screen;
+   LLVMRunFunctionPassManager(screen->pass, variant->function);
 
 #ifdef DEBUG
-   tgsi_dump(templ->tokens, 0);
-#endif
-
-   shader_generate(screen, shader);
-
-   LLVMRunFunctionPassManager(screen->pass, shader->function);
-
-#ifdef DEBUG
-   LLVMDumpValue(shader->function);
+   LLVMDumpValue(variant->function);
    debug_printf("\n");
 #endif
 
-   if(LLVMVerifyFunction(shader->function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(shader->function);
+   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(variant->function);
       abort();
    }
 
@@ -278,11 +275,37 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       }
    }
 
-   shader->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, shader->function);
+   variant->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 
 #ifdef DEBUG
-   lp_disassemble(shader->jit_function);
+   lp_disassemble(variant->jit_function);
 #endif
+
+   variant->next = shader->variants;
+   shader->variants = variant;
+
+   return variant;
+}
+
+
+void *
+llvmpipe_create_fs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
+{
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
+   struct lp_fragment_shader *shader;
+
+   shader = CALLOC_STRUCT(lp_fragment_shader);
+   if (!shader)
+      return NULL;
+
+   /* get/save the summary info for this shader */
+   tgsi_scan_shader(templ->tokens, &shader->info);
+
+   /* we need to keep a local copy of the tokens */
+   shader->base.tokens = tgsi_dup_tokens(templ->tokens);
+
+   shader->screen = screen;
 
    return shader;
 }
@@ -303,14 +326,24 @@ void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct lp_fragment_shader *shader = fs;
+   struct lp_fragment_shader_variant *variant;
    struct llvmpipe_screen *screen = shader->screen;
 
    assert(fs != llvmpipe_context(pipe)->fs);
-   
-   if(shader->function) {
-      if(shader->jit_function)
-         LLVMFreeMachineCodeForFunction(screen->engine, shader->function);
-      LLVMDeleteFunction(shader->function);
+
+   variant = shader->variants;
+   while(variant) {
+      struct lp_fragment_shader_variant *next = variant->next;
+
+      if(variant->function) {
+         if(variant->jit_function)
+            LLVMFreeMachineCodeForFunction(screen->engine, variant->function);
+         LLVMDeleteFunction(variant->function);
+      }
+
+      FREE(variant);
+
+      variant = next;
    }
 
    FREE((void *) shader->base.tokens);
@@ -394,4 +427,25 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 			 buf ? buf->buffer : NULL);
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;
+}
+
+
+void llvmpipe_update_fs(struct llvmpipe_context *lp)
+{
+   struct lp_fragment_shader *shader = lp->fs;
+   const struct pipe_alpha_state *alpha = &lp->depth_stencil->alpha;
+   struct lp_fragment_shader_variant *variant;
+
+   variant = shader->variants;
+   while(variant) {
+      if(memcmp(&variant->alpha, alpha, sizeof *alpha) == 0)
+         break;
+
+      variant = variant->next;
+   }
+
+   if(!variant)
+      variant = shader_generate(shader->screen, shader, alpha);
+
+   shader->current = variant;
 }

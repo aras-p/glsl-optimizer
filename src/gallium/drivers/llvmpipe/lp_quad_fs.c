@@ -76,9 +76,14 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
+   struct lp_fragment_shader *fs = llvmpipe->fs;
    void *constants;
    struct tgsi_sampler **samplers;
    unsigned chan_index;
+
+   assert(fs->current);
+   if(!fs->current)
+      return FALSE;
 
    constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
    samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
@@ -87,16 +92,16 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
       qss->mask[chan_index] = ~0;
 
    /* run shader */
-   llvmpipe->fs->jit_function( quad->input.x0,
-                               quad->input.y0,
-                               quad->coef->a0,
-                               quad->coef->dadx,
-                               quad->coef->dady,
-                               constants,
-                               qss->mask,
-                               quad->output.color,
-                               quad->output.depth,
-                               samplers);
+   fs->current->jit_function( quad->input.x0,
+                              quad->input.y0,
+                              quad->coef->a0,
+                              quad->coef->dadx,
+                              quad->coef->dady,
+                              constants,
+                              qss->mask,
+                              quad->output.color,
+                              quad->output.depth,
+                              samplers);
 
    for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
       if(!qss->mask[chan_index])
