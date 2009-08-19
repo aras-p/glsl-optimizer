@@ -818,24 +818,41 @@ void emit_math2(struct brw_wm_compile *c,
    }
    brw_pop_insn_state(p);
 }
-		     
 
 
-static void emit_tex( struct brw_wm_compile *c,
-		      const struct brw_wm_instruction *inst,
-		      struct brw_reg *dst,
-		      GLuint dst_flags,
-		      struct brw_reg *arg )
+void emit_tex(struct brw_wm_compile *c,
+	      struct brw_reg *dst,
+	      GLuint dst_flags,
+	      struct brw_reg *arg,
+	      struct brw_reg depth_payload,
+	      GLuint tex_idx,
+	      GLuint sampler,
+	      GLboolean shadow)
 {
    struct brw_compile *p = &c->func;
+   struct brw_reg dst_retyped;
    GLuint cur_mrf = 2, response_length;
    GLuint i, nr_texcoords;
    GLuint emit;
    GLuint msg_type;
+   GLuint mrf_per_channel;
+   GLuint simd_mode;
+
+   if (c->dispatch_width == 16) {
+      mrf_per_channel = 2;
+      response_length = 8;
+      dst_retyped = retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW);
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+   } else {
+      mrf_per_channel = 1;
+      response_length = 4;
+      dst_retyped = retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW);
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
+   }
 
    /* How many input regs are there?
     */
-   switch (inst->tex_idx) {
+   switch (tex_idx) {
    case TEXTURE_1D_INDEX:
       emit = WRITEMASK_X;
       nr_texcoords = 1;
@@ -855,56 +872,66 @@ static void emit_tex( struct brw_wm_compile *c,
       abort();
    }
 
-   /* For shadow comparisons, we have to supply u,v,r. */
-   if (inst->tex_shadow)
+   /* Pre-Ironlake, the 8-wide sampler always took u,v,r. */
+   if (!BRW_IS_IGDNG(p->brw) && c->dispatch_width == 8)
       nr_texcoords = 3;
 
+   /* For shadow comparisons, we have to supply u,v,r. */
+   if (shadow)
+      nr_texcoords = 3;
+
+   /* Emit the texcoords. */
    for (i = 0; i < nr_texcoords; i++) {
       if (emit & (1<<i))
 	 brw_MOV(p, brw_message_reg(cur_mrf), arg[i]);
       else
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
-      cur_mrf += 2;
+      cur_mrf += mrf_per_channel;
    }
 
    /* Fill in the shadow comparison reference value. */
-   if (inst->tex_shadow) {
+   if (shadow) {
       if (BRW_IS_IGDNG(p->brw)) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
-	 cur_mrf += 2;
+	 cur_mrf += mrf_per_channel;
+      } else if (c->dispatch_width == 8) {
+	 /* Fill in the LOD bias value. */
+	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
+	 cur_mrf += mrf_per_channel;
       }
       brw_MOV(p, brw_message_reg(cur_mrf), arg[2]);
-      cur_mrf += 2;
+      cur_mrf += mrf_per_channel;
    }
 
-   response_length = 8;		/* always */
-
    if (BRW_IS_IGDNG(p->brw)) {
-       if (inst->tex_shadow)
-           msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
-       else
-           msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG;
+      if (shadow)
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
+      else
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG;
    } else {
-       if (inst->tex_shadow)
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
-       else
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+      /* Note that G45 and older determines shadow compare and dispatch width
+       * from message length for most messages.
+       */
+      if (c->dispatch_width == 16 && shadow)
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
+      else
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
    }
 
    brw_SAMPLE(p,
-	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
+	      dst_retyped,
 	      1,
-	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
-              SURF_INDEX_TEXTURE(inst->tex_unit),
-	      inst->tex_unit,	  /* sampler */
-	      inst->writemask,
+	      retype(depth_payload, BRW_REGISTER_TYPE_UW),
+              SURF_INDEX_TEXTURE(sampler),
+	      sampler,
+	      dst_flags & WRITEMASK_XYZW,
 	      msg_type,
 	      response_length,
 	      cur_mrf - 1,
 	      0,
 	      1,
-	      BRW_SAMPLER_SIMD_MODE_SIMD16);
+	      simd_mode);
 }
 
 
@@ -1530,7 +1557,9 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 /* Texturing operations:
 	  */
       case OPCODE_TEX:
-	 emit_tex(c, inst, dst, dst_flags, args[0]);
+	 emit_tex(c, dst, dst_flags, args[0], c->payload.depth[0].hw_reg,
+		  inst->tex_idx, inst->tex_unit,
+		  inst->tex_shadow);
 	 break;
 
       case OPCODE_TXB:

@@ -1871,94 +1871,6 @@ static void emit_txb(struct brw_wm_compile *c,
                BRW_SAMPLER_SIMD_MODE_SIMD8);	
 }
 
-
-static void emit_tex(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg dst[4], src[4], payload_reg;
-    /* Note: TexSrcUnit was already looked up through SamplerTextures[] */
-    const GLuint unit = inst->TexSrcUnit;
-    GLuint msg_len;
-    GLuint i, nr;
-    GLuint emit;
-    GLboolean shadow = (c->key.shadowtex_mask & (1<<unit)) ? 1 : 0;
-    GLuint msg_type;
-
-    assert(unit < BRW_MAX_TEX_UNIT);
-
-    payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
-
-    for (i = 0; i < 4; i++) 
-	dst[i] = get_dst_reg(c, inst, i);
-    for (i = 0; i < 4; i++)
-	src[i] = get_src_reg(c, inst, 0, i);
-
-    switch (inst->TexSrcTarget) {
-	case TEXTURE_1D_INDEX:
-	    emit = WRITEMASK_X;
-	    nr = 1;
-	    break;
-	case TEXTURE_2D_INDEX:
-	case TEXTURE_RECT_INDEX:
-	    emit = WRITEMASK_XY;
-	    nr = 2;
-	    break;
-	case TEXTURE_3D_INDEX:
-	case TEXTURE_CUBE_INDEX:
-	    emit = WRITEMASK_XYZ;
-	    nr = 3;
-	    break;
-	default:
-           /* invalid target */
-           abort();
-    }
-    msg_len = 1;
-
-    /* move/load S, T, R coords */
-    for (i = 0; i < nr; i++) {
-	static const GLuint swz[4] = {0,1,2,2};
-	if (emit & (1<<i))
-	    brw_MOV(p, brw_message_reg(msg_len+1), src[swz[i]]);
-	else
-	    brw_MOV(p, brw_message_reg(msg_len+1), brw_imm_f(0));
-	msg_len += 1;
-    }
-
-    if (shadow) {
-       brw_MOV(p, brw_message_reg(5), brw_imm_f(0));  /* lod / bias */
-       brw_MOV(p, brw_message_reg(6), src[2]);        /* ref value / R coord */
-    }
-
-    if (BRW_IS_IGDNG(p->brw)) {
-        if (shadow)
-            msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
-        else
-            msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG;
-    } else {
-        /* Does it work for shadow on SIMD8 ? */
-        msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
-    }
-    
-    brw_SAMPLE(p,
-               retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW), /* dest */
-               1,                                          /* msg_reg_nr */
-               retype(payload_reg, BRW_REGISTER_TYPE_UW),  /* src0 */
-               SURF_INDEX_TEXTURE(unit),
-               unit,                                       /* sampler */
-               inst->DstReg.WriteMask,                     /* writemask */
-               msg_type,                                   /* msg_type */
-               4,                                          /* response_length */
-               shadow ? 6 : 4,                             /* msg_length */
-               0,                                          /* eot */
-               1,
-               BRW_SAMPLER_SIMD_MODE_SIMD8);	
-
-    if (shadow)
-	brw_MOV(p, dst[3], brw_imm_f(1.0));
-}
-
-
 /**
  * Resolve subroutine calls after code emit is done.
  */
@@ -2179,7 +2091,12 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_noise4(c, inst);
 		break;
 	    case OPCODE_TEX:
-		emit_tex(c, inst);
+		emit_tex(c, dst, dst_flags, args[0],
+			 get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH,
+				 0, 1, 0, 0),
+			 inst->TexSrcTarget,
+			 inst->TexSrcUnit,
+			 (c->key.shadowtex_mask & (1 << inst->TexSrcUnit)) != 0);
 		break;
 	    case OPCODE_TXB:
 		emit_txb(c, inst);
