@@ -25,14 +25,30 @@
 static struct pipe_query* r300_create_query(struct pipe_context* pipe,
                                             unsigned query_type)
 {
-    struct r300_query* q = CALLOC_STRUCT(r300_query);
+    struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    unsigned query_size = r300screen->caps->num_frag_pipes * 4;
+    struct r300_query* q, * qptr;
+
+    q = CALLOC_STRUCT(r300_query);
 
     q->type = query_type;
     assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
-    /* XXX this is to force winsys to give us a GTT buffer */
-    q->buf = pipe->screen->buffer_create(pipe->screen, 64,
-            PIPE_BUFFER_USAGE_VERTEX, 64);
+    q->active = FALSE;
+
+    if (!r300->query_list) {
+        r300->query_list = q;
+    } else if (!is_empty_list(r300->query_list)) {
+        qptr = last_elem(r300->query_list);
+        q->offset = qptr->offset + query_size;
+        insert_at_tail(r300->query_list, q);
+    }
+
+    /* XXX */
+    if (q->offset >= 4096) {
+        q->offset = 0;
+    }
 
     return (struct pipe_query*)q;
 }
@@ -40,6 +56,9 @@ static struct pipe_query* r300_create_query(struct pipe_context* pipe,
 static void r300_destroy_query(struct pipe_context* pipe,
                                struct pipe_query* query)
 {
+    struct r300_query* q = (struct r300_query*)query;
+
+    remove_from_list(q);
     FREE(query);
 }
 
@@ -49,15 +68,15 @@ static void r300_begin_query(struct pipe_context* pipe,
     uint32_t* map;
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
-    CS_LOCALS(r300);
 
-    map = pipe_buffer_map(pipe->screen, q->buf, PIPE_BUFFER_USAGE_CPU_WRITE);
+    map = pipe->screen->buffer_map(pipe->screen, r300->oqbo,
+            PIPE_BUFFER_USAGE_CPU_WRITE);
+    map += q->offset / 4;
     *map = ~0;
-    pipe_buffer_unmap(pipe->screen, q->buf);
+    pipe->screen->buffer_unmap(pipe->screen, r300->oqbo);
 
-    BEGIN_CS(2);
-    OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
-    END_CS;
+    r300_emit_dirty_state(r300);
+    r300_emit_query_begin(r300, q);
 }
 
 static void r300_end_query(struct pipe_context* pipe,
@@ -65,12 +84,9 @@ static void r300_end_query(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
-    CS_LOCALS(r300);
 
-    BEGIN_CS(4);
-    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(q->buf, 0, 0, RADEON_GEM_DOMAIN_GTT, 0);
-    END_CS;
+    r300_emit_dirty_state(r300);
+    r300_emit_query_end(r300, q);
 }
 
 static boolean r300_get_query_result(struct pipe_context* pipe,
@@ -78,6 +94,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
                                      boolean wait,
                                      uint64_t* result)
 {
+    struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
     uint32_t* map;
     uint32_t temp;
@@ -89,11 +106,15 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         pipe->flush(pipe, 0, NULL);
     }
 
-    map = pipe_buffer_map(pipe->screen, q->buf, PIPE_BUFFER_USAGE_CPU_READ);
-    temp = *map;
-    pipe_buffer_unmap(pipe->screen, q->buf);
 
-    if (temp < 0) {
+    map = pipe->screen->buffer_map(pipe->screen, r300->oqbo,
+            PIPE_BUFFER_USAGE_CPU_WRITE);
+    map += q->offset / 4;
+    temp = *map;
+    *map = ~0;
+    pipe->screen->buffer_unmap(pipe->screen, r300->oqbo);
+
+    if (temp == ~0) {
         /* Our results haven't been written yet... */
         return FALSE;
     }

@@ -319,6 +319,79 @@ void r300_emit_fb_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_query_begin(struct r300_context* r300,
+                           struct r300_query* query)
+{
+    CS_LOCALS(r300);
+
+    /* XXX This will almost certainly not return good results
+     * for overlapping queries. */
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
+    END_CS;
+}
+
+void r300_emit_query_end(struct r300_context* r300,
+                         struct r300_query* query)
+{
+    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    CS_LOCALS(r300);
+
+    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
+                0, RADEON_GEM_DOMAIN_GTT)) {
+        debug_printf("r300: There wasn't room for the OQ buffer!?"
+                " Oh noes!\n");
+    }
+
+    assert(caps->num_frag_pipes);
+    BEGIN_CS(6 * caps->num_frag_pipes + 2);
+    /* I'm not so sure I like this switch, but it's hard to be elegant
+     * when there's so many special cases...
+     *
+     * So here's the basic idea. For each pipe, enable writes to it only,
+     * then put out the relocation for ZPASS_ADDR, taking into account a
+     * 4-byte offset for each pipe. RV380 and older are special; they have
+     * only two pipes, and the second pipe's enable is on bit 3, not bit 1,
+     * so there's a chipset cap for that. */
+    switch (caps->num_frag_pipes) {
+        case 4:
+            /* pipe 3 only */
+            OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
+            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 3),
+                    0, RADEON_GEM_DOMAIN_GTT, 0);
+        case 3:
+            /* pipe 2 only */
+            OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
+            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 2),
+                    0, RADEON_GEM_DOMAIN_GTT, 0);
+        case 2:
+            /* pipe 1 only */
+            /* As mentioned above, accomodate RV380 and older. */
+            OUT_CS_REG(R300_SU_REG_DEST,
+                    1 << (caps->high_second_pipe ? 3 : 1));
+            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 1),
+                    0, RADEON_GEM_DOMAIN_GTT, 0);
+        case 1:
+            /* pipe 0 only */
+            OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
+            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
+                    0, RADEON_GEM_DOMAIN_GTT, 0);
+        default:
+            debug_printf("r300: Implementation error: Chipset reports %d"
+                    " pixel pipes!\n", caps->num_frag_pipes);
+            assert(0);
+    }
+
+    /* And, finally, reset it to normal... */
+    OUT_CS_REG(R300_SU_REG_DEST, 0xF);
+    END_CS;
+
+}
+
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
     CS_LOCALS(r300);
@@ -614,6 +687,12 @@ validate:
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
+    }
+    /* ...occlusion query buffer... */
+    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
+                0, RADEON_GEM_DOMAIN_GTT)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {

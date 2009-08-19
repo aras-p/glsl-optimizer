@@ -25,9 +25,13 @@
 
 #include "draw/draw_context.h"
 #include "draw/draw_vertex.h"
+
 #include "pipe/p_context.h"
+
 #include "tgsi/tgsi_scan.h"
+
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "r300_clear.h"
 #include "r300_query.h"
@@ -150,6 +154,29 @@ struct r300_constant_buffer {
     unsigned count;
 };
 
+/* Query object.
+ *
+ * This is not a subclass of pipe_query because pipe_query is never
+ * actually fully defined. So, rather than have it as a member, and do
+ * subclass-style casting, we treat pipe_query as an opaque, and just
+ * trust that our state tracker does not ever mess up query objects.
+ */
+struct r300_query {
+    /* The kind of query. Currently only OQ is supported. */
+    unsigned type;
+    /* Whether this query is currently active. Only active queries will
+     * get emitted into the command stream, and only active queries get
+     * tallied. */
+    boolean active;
+    /* The current count of this query. Required to be at least 32 bits. */
+    unsigned int count;
+    /* The offset of this query into the query buffer, in bytes. */
+    unsigned offset;
+    /* Linked list members. */
+    struct r300_query* prev;
+    struct r300_query* next;
+};
+
 struct r300_texture {
     /* Parent class */
     struct pipe_texture tex;
@@ -202,6 +229,11 @@ struct r300_context {
     struct pipe_buffer* vbo;
     /* Offset into the VBO. */
     size_t vbo_offset;
+
+    /* Occlusion query buffer. */
+    struct pipe_buffer* oqbo;
+    /* Query list. */
+    struct r300_query* query_list;
 
     /* Various CSO state objects. */
     /* Blend state. */

@@ -3312,6 +3312,10 @@ enum {
 
 #define R200_3D_DRAW_IMMD_2      0xC0003500
 
+/* XXX Oh look, stuff not brought over from docs yet */
+
+#define R300_SU_REG_DEST                    0x42C8
+
 #endif /* _R300_REG_H */
 
 /* *INDENT-ON* */

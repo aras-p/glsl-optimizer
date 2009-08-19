@@ -88,8 +88,20 @@ static boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
 static void r300_destroy_context(struct pipe_context* context) {
     struct r300_context* r300 = r300_context(context);
+    struct r300_query* query, * temp;
 
     draw_destroy(r300->draw);
+
+    /* Free the OQ BO. */
+    context->screen->buffer_destroy(r300->oqbo);
+
+    /* If there are any queries pending or not destroyed, remove them now. */
+    if (r300->query_list) {
+        foreach_s(query, temp, r300->query_list) {
+            remove_from_list(query);
+            FREE(query);
+        }
+    }
 
     FREE(r300->blend_color_state);
     FREE(r300->rs_block);
@@ -145,6 +157,11 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
+    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
+    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
+    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+
     /* Create a Draw. This is used for vert collation and SW TCL. */
     r300->draw = draw_create();
     /* Enable our renderer. */
@@ -155,10 +172,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
      * transform in hardware, always. */
     draw_set_viewport_state(r300->draw, &r300_viewport_identity);
 
-    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
-    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    /* Open up the OQ BO. */
+    r300->oqbo = screen->buffer_create(screen, 4096,
+            PIPE_BUFFER_USAGE_VERTEX, 4096);
 
     r300_init_flush_functions(r300);
 
