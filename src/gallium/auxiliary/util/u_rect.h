@@ -42,13 +42,13 @@ struct pipe_surface;
 
 
 extern void
-pipe_copy_rect(ubyte * dst, const struct pipe_format_block *block,
+util_copy_rect(ubyte * dst, const struct pipe_format_block *block,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, const ubyte * src,
                int src_stride, unsigned src_x, int src_y);
 
 extern void
-pipe_fill_rect(ubyte * dst, const struct pipe_format_block *block,
+util_fill_rect(ubyte * dst, const struct pipe_format_block *block,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, uint32_t value);
 

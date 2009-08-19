@@ -240,7 +240,7 @@ st_surface_data(struct pipe_context *pipe,
    struct pipe_screen *screen = pipe->screen;
    void *map = screen->transfer_map(screen, dst);
 
-   pipe_copy_rect(map,
+   util_copy_rect(map,
                   &dst->block,
                   dst->stride,
                   dstx, dsty, 

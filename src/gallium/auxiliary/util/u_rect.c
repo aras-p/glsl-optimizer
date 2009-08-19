@@ -43,7 +43,7 @@
  * src_pitch may be negative to do vertical flip of pixels from source.
  */
 void
-pipe_copy_rect(ubyte * dst,
+util_copy_rect(ubyte * dst,
                const struct pipe_format_block *block,
                unsigned dst_stride,
                unsigned dst_x,
@@ -91,7 +91,7 @@ pipe_copy_rect(ubyte * dst,
 }
 
 void
-pipe_fill_rect(ubyte * dst,
+util_fill_rect(ubyte * dst,
                const struct pipe_format_block *block,
                unsigned dst_stride,
                unsigned dst_x,
@@ -204,7 +204,7 @@ util_surface_copy(struct pipe_context *pipe,
 
    if (src_map && dst_map) {
       /* If do_flip, invert src_y position and pass negative src stride */
-      pipe_copy_rect(dst_map,
+      util_copy_rect(dst_map,
                      &dst_trans->block,
                      dst_trans->stride,
                      0, 0,
@@ -263,7 +263,7 @@ util_surface_fill(struct pipe_context *pipe,
       case 1:
       case 2:
       case 4:
-         pipe_fill_rect(dst_map, &dst_trans->block, dst_trans->stride,
+         util_fill_rect(dst_map, &dst_trans->block, dst_trans->stride,
                         0, 0, width, height, value);
          break;
       case 8:

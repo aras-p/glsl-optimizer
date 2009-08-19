@@ -62,7 +62,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    if(!src)
       return;
 
-   pipe_copy_rect(dst, &pt->block, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
+   util_copy_rect(dst, &pt->block, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
    screen->transfer_unmap(screen, pt);
 }
@@ -90,7 +90,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
    if(!dst)
       return;
 
-   pipe_copy_rect(dst, &pt->block, pt->stride, x, y, w, h, src, src_stride, 0, 0);
+   util_copy_rect(dst, &pt->block, pt->stride, x, y, w, h, src, src_stride, 0, 0);
 
    screen->transfer_unmap(screen, pt);
 }

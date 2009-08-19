@@ -60,7 +60,7 @@ brw_surface_copy(struct pipe_context *pipe,
                                                        src,
                                                        PIPE_BUFFER_USAGE_CPU_READ );
       
-      pipe_copy_rect(dst_map,
+      util_copy_rect(dst_map,
                      &dst->block,
                      dst->stride,
                      dstx, dsty,
@@ -99,7 +99,7 @@ brw_surface_fill(struct pipe_context *pipe,
                                                  dst,
                                                  PIPE_BUFFER_USAGE_CPU_WRITE );
 
-      pipe_fill_rect(dst_map, &dst->block, dst->stride, dstx, dsty, width, height, value);
+      util_fill_rect(dst_map, &dst->block, dst->stride, dstx, dsty, width, height, value);
 
       pipe->screen->surface_unmap(pipe->screen, dst);
    }

@@ -491,7 +491,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
 					PIPE_TRANSFER_WRITE,
 					0, 0, width, height);
-        pipe_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
+        util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
                        &priv->tex->block, transfer->stride, 0, 0,
                        width, height, pPixData, pPixmap->devKind, 0, 0);
         exa->scrn->transfer_unmap(exa->scrn, transfer);
