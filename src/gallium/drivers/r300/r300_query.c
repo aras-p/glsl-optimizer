@@ -95,23 +95,34 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
                                      uint64_t* result)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_query* q = (struct r300_query*)query;
+    unsigned flags = PIPE_BUFFER_USAGE_CPU_READ;
     uint32_t* map;
     uint32_t temp;
+    unsigned i;
 
     if (wait) {
-        /* Well, we're expected to just sit here and spin, so let's go ahead
-         * and flush so we can be sure that the card's spinning... */
-        /* XXX double-check these params */
         pipe->flush(pipe, 0, NULL);
+    } else {
+        flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
     }
 
-
-    map = pipe->screen->buffer_map(pipe->screen, r300->oqbo,
-            PIPE_BUFFER_USAGE_CPU_WRITE);
+    map = pipe->screen->buffer_map(pipe->screen, r300->oqbo, flags);
     map += q->offset / 4;
-    temp = *map;
-    *map = ~0;
+    for (i = 0; i < r300screen->caps->num_frag_pipes; i++) {
+        if (*map == ~0) {
+            /* Looks like our results aren't ready yet. */
+            if (wait) {
+                debug_printf("r300: Despite waiting, OQ results haven't"
+                        " come in yet.\n");
+            }
+            temp = ~0;
+            break;
+        }
+        temp += *map;
+        map++;
+    }
     pipe->screen->buffer_unmap(pipe->screen, r300->oqbo);
 
     if (temp == ~0) {
