@@ -313,8 +313,9 @@ struct radeon_dma {
 	struct radeon_dma_bo free;
 	struct radeon_dma_bo wait;
 	struct radeon_dma_bo reserved;
-        int current_used; /** Number of bytes allocated and forgotten about */
-        int current_vertexptr; /** End of active vertex region */
+        size_t current_used; /** Number of bytes allocated and forgotten about */
+        size_t current_vertexptr; /** End of active vertex region */
+        size_t minimum_size;
 
         /**
          * If current_vertexptr != current_used then flush must be non-zero.
