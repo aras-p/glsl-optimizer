@@ -155,6 +155,13 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 }
 
 
+/**
+ * Generate blend code in SOA mode.
+ * \param src  src/fragment color
+ * \param dst  dst/framebuffer color
+ * \param con  constant blend color
+ * \param res  the result/output
+ */
 void
 lp_build_blend_soa(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
