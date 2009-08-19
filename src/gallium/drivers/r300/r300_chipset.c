@@ -30,9 +30,10 @@
 void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
+    caps->num_vert_fpus = 4;
     caps->has_tcl = getenv("RADEON_NO_TCL") ? FALSE : TRUE;
     caps->is_r500 = FALSE;
-    caps->num_vert_fpus = 4;
+    caps->high_second_pipe = FALSE;
 
 
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
@@ -41,6 +42,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     switch (caps->pci_id) {
         case 0x4144:
             caps->family = CHIP_FAMILY_R300;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x4145:
@@ -51,6 +53,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4E46:
         case 0x4E47:
             caps->family = CHIP_FAMILY_R300;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x4150:
@@ -67,6 +70,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4E54:
         case 0x4E56:
             caps->family = CHIP_FAMILY_RV350;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x4148:
@@ -77,10 +81,12 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4E49:
         case 0x4E4B:
             caps->family = CHIP_FAMILY_R350;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x4E4A:
             caps->family = CHIP_FAMILY_R360;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x5460:
@@ -92,6 +98,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5B64:
         case 0x5B65:
             caps->family = CHIP_FAMILY_RV370;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x3150:
@@ -100,6 +107,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x3E50:
         case 0x3E54:
             caps->family = CHIP_FAMILY_RV380;
+            caps->high_second_pipe = TRUE;
             break;
 
         case 0x4A48:

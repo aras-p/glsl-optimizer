@@ -44,6 +44,8 @@ struct r300_capabilities {
      * - Blend color is split across two registers
      * - Universal Shader (US) block used for fragment shaders */
     boolean is_r500;
+    /* Whether or not the second pixel pipe is accessed with the high bit */
+    boolean high_second_pipe;
 };
 
 /* Enumerations for legibility and telling which card we're running on. */
