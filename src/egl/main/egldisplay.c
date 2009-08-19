@@ -305,9 +305,10 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
 EGLBoolean
 _eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
 {
-   _EGLContext *cur;
+   _EGLContext *cur = NULL;
 
-   cur = dpy->ContextList;
+   if (dpy)
+      cur = dpy->ContextList;
    while (cur) {
       if (cur == (_EGLContext *) ctx) {
          assert(cur->Display == dpy);
@@ -325,9 +326,10 @@ _eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
 EGLBoolean
 _eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
 {
-   _EGLSurface *cur;
+   _EGLSurface *cur = NULL;
 
-   cur = dpy->SurfaceList;
+   if (dpy)
+      cur = dpy->SurfaceList;
    while (cur) {
       if (cur == (_EGLSurface *) surf) {
          assert(cur->Display == dpy);

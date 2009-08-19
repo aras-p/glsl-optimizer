@@ -125,14 +125,17 @@ _eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy);
 /* Only do a quick check.  This is NOT standard compliant. */
 
 static INLINE EGLBoolean
-_eglCheckDisplayHandle(EGLDisplay dpy) { return EGL_TRUE; }
+_eglCheckDisplayHandle(EGLDisplay dpy)
+{
+   return ((_EGLDisplay *) dpy != NULL);
+}
 
 
 static INLINE EGLBoolean
 _eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
 {
    _EGLContext *c = (_EGLContext *) ctx;
-   return (c && c->Display == dpy);
+   return (dpy && c && c->Display == dpy);
 }
 
 
@@ -140,7 +143,7 @@ static INLINE EGLBoolean
 _eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
 {
    _EGLSurface *s = (_EGLSurface *) surf;
-   return (s && s->Display == dpy);
+   return (dpy && s && s->Display == dpy);
 }
 
 
