@@ -36,6 +36,12 @@ CompileShaderFile(GLenum shaderType, const char *filename);
 extern GLuint
 LinkShaders(GLuint vertShader, GLuint fragShader);
 
+extern GLdouble
+GetShaderCompileTime(void);
+
+extern GLdouble
+GetShaderLinkTime(void);
+
 extern void
 SetUniformValues(GLuint program, struct uniform_info uniforms[]);
 
