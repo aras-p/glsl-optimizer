@@ -188,6 +188,7 @@ typedef struct _RENDER_TARGET_STATE_STRUCT
 	union UINT_FLOAT            	CB_COLOR0_MASK;  /* 0xA040 */
 	union UINT_FLOAT         	CB_BLEND0_CONTROL;  /* 0xA1E0 */
 	GLboolean                         enabled;
+	GLboolean                         dirty;
 } RENDER_TARGET_STATE_STRUCT;
 
 typedef struct _VIEWPORT_STATE_STRUCT
@@ -203,6 +204,7 @@ typedef struct _VIEWPORT_STATE_STRUCT
 	union UINT_FLOAT        PA_CL_VPORT_ZSCALE;        /* 0xA113 */
 	union UINT_FLOAT       	PA_CL_VPORT_ZOFFSET;       /* 0xA114 */
 	GLboolean                         enabled;
+	GLboolean                         dirty;
 } VIEWPORT_STATE_STRUCT;
 
 typedef struct _UCP_STATE_STRUCT
@@ -212,6 +214,7 @@ typedef struct _UCP_STATE_STRUCT
 	union UINT_FLOAT        PA_CL_UCP_0_Z;
 	union UINT_FLOAT        PA_CL_UCP_0_W;
 	GLboolean                         enabled;
+	GLboolean                         dirty;
 } UCP_STATE_STRUCT;
 
 typedef struct _PS_STATE_STRUCT
@@ -220,6 +223,7 @@ typedef struct _PS_STATE_STRUCT
 	union UINT_FLOAT       	        SQ_PGM_RESOURCES_PS       ;  /* 0xA214 */
 	union UINT_FLOAT         	SQ_PGM_EXPORTS_PS         ;  /* 0xA215 */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_PS       ;  /* 0xA233 */
+	GLboolean                         dirty;
 } PS_STATE_STRUCT;
 
 typedef struct _VS_STATE_STRUCT
@@ -227,6 +231,7 @@ typedef struct _VS_STATE_STRUCT
  	union UINT_FLOAT           	SQ_PGM_START_VS           ;  /* 0xA216 */
 	union UINT_FLOAT  		SQ_PGM_RESOURCES_VS       ;  /* 0xA21A */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_VS       ;  /* 0xA234 */
+	GLboolean                         dirty;
 } VS_STATE_STRUCT;
 
 typedef struct _GS_STATE_STRUCT
@@ -234,6 +239,7 @@ typedef struct _GS_STATE_STRUCT
 	union UINT_FLOAT           	SQ_PGM_START_GS           ;  /* 0xA21B */
 	union UINT_FLOAT       	        SQ_PGM_RESOURCES_GS       ;  /* 0xA21F */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_GS       ;  /* 0xA235 */
+	GLboolean                         dirty;
 } GS_STATE_STRUCT;
 
 typedef struct _ES_STATE_STRUCT
@@ -241,6 +247,7 @@ typedef struct _ES_STATE_STRUCT
 	union UINT_FLOAT           	SQ_PGM_START_ES           ;  /* 0xA220 */
 	union UINT_FLOAT       	        SQ_PGM_RESOURCES_ES       ;  /* 0xA224 */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_ES       ;  /* 0xA236 */
+	GLboolean                         dirty;
 } ES_STATE_STRUCT;
 
 typedef struct _FS_STATE_STRUCT
@@ -248,6 +255,7 @@ typedef struct _FS_STATE_STRUCT
 	union UINT_FLOAT           	SQ_PGM_START_FS           ;  /* 0xA225 */
 	union UINT_FLOAT       	        SQ_PGM_RESOURCES_FS       ;  /* 0xA229 */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_FS       ;  /* 0xA237 */
+	GLboolean                         dirty;
 } FS_STATE_STRUCT;
 
 typedef struct _SQ_CONFIG_STRUCT
@@ -260,22 +268,8 @@ typedef struct _SQ_CONFIG_STRUCT
 	union UINT_FLOAT     	        SQ_STACK_RESOURCE_MGMT_2  ;  /* 0x2305 */
 } SQ_CONFIG_STRUCT;
 
-typedef struct ContextState
-{
-    unsigned int * puiValue;
-    unsigned int   unOffset;
-    struct ContextState * pNext;
-} ContextState;
-
 typedef struct _R700_CHIP_CONTEXT
 {
-	// misc
-	union UINT_FLOAT             	TA_CNTL_AUX               ;  /* 0x2542 */
-	union UINT_FLOAT             	VC_ENHANCE                ;  /* 0x25C5 */
-	union UINT_FLOAT             	SQ_DYN_GPR_CNTL_PS_FLUSH_REQ;  /* 0x2363 */
-	union UINT_FLOAT             	DB_DEBUG                  ;  /* 0x260C */
-	union UINT_FLOAT             	DB_WATERMARKS             ;  /* 0x260E */
-
 	// DB
 	union UINT_FLOAT             	DB_DEPTH_SIZE             ;  /* 0xA000 */
 	union UINT_FLOAT             	DB_DEPTH_VIEW             ;  /* 0xA001 */
@@ -292,6 +286,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT          	DB_ALPHA_TO_MASK          ;  /* 0xA351 */
 	union UINT_FLOAT          	DB_DEPTH_CONTROL          ;  /* 0xA200 */
 	union UINT_FLOAT         	DB_SHADER_CONTROL         ;  /* 0xA203 */
+	GLboolean                       db_dirty;
 
 	// SC
 	union UINT_FLOAT   	        PA_SC_SCREEN_SCISSOR_TL   ;  /* 0xA00C */
@@ -311,6 +306,8 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT            	PA_SC_EDGERULE            ;  /* 0xA08C */
 	union UINT_FLOAT  	        PA_SC_GENERIC_SCISSOR_TL  ;  /* 0xA090 */
 	union UINT_FLOAT  	        PA_SC_GENERIC_SCISSOR_BR  ;  /* 0xA091 */
+	GLboolean                       scissor_dirty;
+
 	union UINT_FLOAT        	PA_SC_LINE_STIPPLE        ;  /* 0xA283 */
 	union UINT_FLOAT           	PA_SC_LINE_CNTL           ;  /* 0xA300 */
 	union UINT_FLOAT           	PA_SC_AA_CONFIG           ;  /* 0xA301 */
@@ -319,6 +316,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT 	        PA_SC_AA_SAMPLE_LOCS_MCTX ;  /* 0xA307 */
 	union UINT_FLOAT                PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX; /* 0xA308 */
 	union UINT_FLOAT             	PA_SC_AA_MASK             ;  /* 0xA312 */
+	GLboolean                       sc_dirty;
 
 	// CL
 	union UINT_FLOAT           	PA_CL_CLIP_CNTL           ;  /* 0xA204 */
@@ -329,6 +327,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT    	        PA_CL_GB_VERT_DISC_ADJ    ;  /* 0xA304 */
 	union UINT_FLOAT    	        PA_CL_GB_HORZ_CLIP_ADJ    ;  /* 0xA305 */
 	union UINT_FLOAT    	        PA_CL_GB_HORZ_DISC_ADJ    ;  /* 0xA306 */
+	GLboolean                       cl_dirty;
 
 	// SU
 	union UINT_FLOAT        	PA_SU_SC_MODE_CNTL        ;  /* 0xA205 */
@@ -342,6 +341,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT                PA_SU_POLY_OFFSET_FRONT_OFFSET; /* 0xA381 */
 	union UINT_FLOAT                PA_SU_POLY_OFFSET_BACK_SCALE;    /* 0xA382 */
 	union UINT_FLOAT                PA_SU_POLY_OFFSET_BACK_OFFSET;   /* 0xA383 */
+	GLboolean                       su_dirty;
 
 	VIEWPORT_STATE_STRUCT           viewport[R700_MAX_VIEWPORTS];
 	UCP_STATE_STRUCT                ucp[R700_MAX_UCP];
@@ -367,12 +367,14 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT             	CB_CLRCMP_DST             ;  /* 0xA30E */
 	union UINT_FLOAT             	CB_CLRCMP_MSK             ;  /* 0xA30F */
 	union UINT_FLOAT             	CB_BLEND_CONTROL          ;  /* 0xABD0 */
+	GLboolean                       cb_dirty;
 	RENDER_TARGET_STATE_STRUCT      render_target[R700_MAX_RENDER_TARGETS];
 
 	// SX
 	union UINT_FLOAT                SX_MISC                   ;  /* 0xA0D4 */
 	union UINT_FLOAT     	        SX_ALPHA_TEST_CONTROL     ;  /* 0xA104 */
 	union UINT_FLOAT     	        SX_ALPHA_REF              ;  /* 0xA10E */
+	GLboolean                       sx_dirty;
 
 	// VGT
 	union UINT_FLOAT          	VGT_MAX_VTX_INDX          ;  /* 0xA100 */
@@ -400,6 +402,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT             	VGT_REUSE_OFF             ;  /* 0xA2AD */
 	union UINT_FLOAT             	VGT_VTX_CNT_EN            ;  /* 0xA2AE */
 	union UINT_FLOAT            	VGT_STRMOUT_BUFFER_EN     ;  /* 0xA2C8 */
+	GLboolean                       vgt_dirty;
 
 	// SPI
 	union UINT_FLOAT           	SPI_VS_OUT_ID_0           ;  /* 0xA185 */
@@ -454,8 +457,8 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_29        ;  /* 0xA0FD */
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_30        ;  /* 0xA0FE */
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_31        ;  /* 0xA0FF */
-
-	union UINT_FLOAT       	SPI_PS_INPUT_CNTL[R700_MAX_SHADER_EXPORTS];
+	union UINT_FLOAT       	        SPI_PS_INPUT_CNTL[R700_MAX_SHADER_EXPORTS];
+	GLboolean                       spi_dirty;
 
 	// shaders
 	PS_STATE_STRUCT                 ps;
@@ -466,7 +469,12 @@ typedef struct _R700_CHIP_CONTEXT
 
 	// SQ CONFIG
 	SQ_CONFIG_STRUCT                sq_config;
-
+	// misc
+	union UINT_FLOAT             	TA_CNTL_AUX               ;  /* 0x2542 */
+	union UINT_FLOAT             	VC_ENHANCE                ;  /* 0x25C5 */
+	union UINT_FLOAT             	SQ_DYN_GPR_CNTL_PS_FLUSH_REQ;  /* 0x2363 */
+	union UINT_FLOAT             	DB_DEBUG                  ;  /* 0x260C */
+	union UINT_FLOAT             	DB_WATERMARKS             ;  /* 0x260E */
 	// SQ
 	union UINT_FLOAT     	        SQ_ESGS_RING_ITEMSIZE     ;  /* 0xA22A */
 	union UINT_FLOAT     	        SQ_GSVS_RING_ITEMSIZE     ;  /* 0xA22B */
@@ -477,8 +485,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT     	        SQ_FBUF_RING_ITEMSIZE     ;  /* 0xA230 */
 	union UINT_FLOAT    	        SQ_REDUC_RING_ITEMSIZE    ;  /* 0xA231 */
 	union UINT_FLOAT       	        SQ_GS_VERT_ITEMSIZE       ;  /* 0xA232 */
-
-	ContextState*                   pStateList;
+	GLboolean                       sq_dirty;
 
 	radeonTexObj*                   textures[R700_TEXTURE_NUMBERUNITS];
 

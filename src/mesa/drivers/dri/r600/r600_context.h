@@ -131,15 +131,20 @@ struct r600_context {
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
-extern void r600DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))
 
-extern GLboolean r700InitChipObject(context_t *context);
-extern GLboolean r700SendContextStates(context_t *context);
+extern GLboolean r700SendSPIState(context_t *context);
+extern GLboolean r700SendVGTState(context_t *context);
+extern GLboolean r700SendSXState(context_t *context);
+extern GLboolean r700SendDBState(context_t *context);
+extern GLboolean r700SendCBState(context_t *context);
+extern GLboolean r700SendSUState(context_t *context);
+extern GLboolean r700SendCLState(context_t *context);
+extern GLboolean r700SendSCState(context_t *context);
 extern GLboolean r700SendViewportState(context_t *context, int id);
 extern GLboolean r700SendRenderTargetState(context_t *context, int id);
 extern GLboolean r700SendTextureState(context_t *context);

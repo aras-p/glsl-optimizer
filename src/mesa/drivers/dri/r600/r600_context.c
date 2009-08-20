@@ -247,8 +247,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 */
 	_mesa_init_driver_functions(&functions);
 
-	r700InitChipObject(r600);  /* let the eag... */
-
 	r700InitStateFuncs(&functions);
 	r600InitTextureFuncs(&functions);
 	r700InitShaderFuncs(&functions);
@@ -385,19 +383,5 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 	return GL_TRUE;
 }
-
-/* Clean our own things only, radeonDestroyContext will do every thing else. */
-void
-r600DestroyContext (__DRIcontextPrivate * driContextPriv)
-{
-    GET_CURRENT_CONTEXT (ctx);
-    context_t *context = ctx ? R700_CONTEXT(ctx) : NULL;
-
-    if (context)
-	    FREE(context->hw.pStateList);
-
-    radeonDestroyContext(driContextPriv);
-}
-
 
 

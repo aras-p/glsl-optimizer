@@ -1797,7 +1797,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyContext  = r200DestroyContext,
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
    .CreateContext   = r600CreateContext,
-   .DestroyContext  = r600DestroyContext,
+   .DestroyContext  = radeonDestroyContext,
 #else
    .CreateContext   = radeonCreateContext,
    .DestroyContext  = radeonDestroyContext,

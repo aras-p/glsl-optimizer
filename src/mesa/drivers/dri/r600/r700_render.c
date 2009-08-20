@@ -345,7 +345,14 @@ void r700EmitState(GLcontext * ctx)
 
 	r700SendSQConfig(context);
 	r700SendUCPState(context);
-	r700SendContextStates(context);
+	r700SendSCState(context);
+	r700SendSUState(context);
+	r700SendCLState(context);
+	r700SendCBState(context);
+	r700SendDBState(context);
+	r700SendSXState(context);
+	r700SendVGTState(context);
+	r700SendSPIState(context);
 	r700SendViewportState(context, 0);
 	r700SendRenderTargetState(context, 0);
 	r700SendDepthTargetState(context);
