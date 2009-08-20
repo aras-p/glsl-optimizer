@@ -272,6 +272,14 @@ tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 
 
+void
+tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach);
+
+
+boolean
+tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst);
+
+
 static INLINE void
 tgsi_set_kill_mask(struct tgsi_exec_machine *mach, unsigned mask)
 {
