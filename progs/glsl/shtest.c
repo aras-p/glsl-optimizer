@@ -21,6 +21,8 @@
  * fs shader.frag
  * uniform pi 3.14159
  * uniform v1 1.0 0.5 0.2 0.3
+ * texture 0 texture0.rgb
+ * texture 1 texture1.rgb
  *
  */
 
