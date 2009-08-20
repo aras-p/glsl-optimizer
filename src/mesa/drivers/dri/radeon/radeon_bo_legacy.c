@@ -542,6 +542,18 @@ static int bo_unmap(struct radeon_bo *bo)
     return 0;
 }
 
+static int bo_is_busy(struct radeon_bo *bo, uint32_t *domain)
+{
+    *domain = 0;
+    if (bo->domains & RADEON_GEM_DOMAIN_GTT)
+        *domain = RADEON_GEM_DOMAIN_GTT;
+    else
+        *domain = RADEON_GEM_DOMAIN_CPU;
+    if (legacy_is_pending(bo))
+        return -EBUSY;
+    else
+        return 0;
+}
 
 static int bo_is_static(struct radeon_bo *bo)
 {
@@ -559,6 +571,7 @@ static struct radeon_bo_funcs bo_legacy_funcs = {
     bo_is_static,
     NULL,
     NULL,
+    bo_is_busy
 };
 
 static int bo_vram_validate(struct radeon_bo *bo,

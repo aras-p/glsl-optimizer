@@ -30,6 +30,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+#include <errno.h>
 #include "radeon_common.h"
 #include "main/simple_list.h"
 
@@ -302,7 +303,13 @@ void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes)
 
 static int radeon_bo_is_idle(struct radeon_bo* bo)
 {
-	return bo->cref == 1;
+	uint32_t domain;
+	int ret = radeon_bo_is_busy(bo, &domain);
+	if (ret == -EINVAL) {
+		WARN_ONCE("Your libdrm or kernel doesn't have support for busy query.\n"
+			"This may cause small performance drop for you.\n");
+	}
+	return ret != -EBUSY;
 }
 
 void radeonReleaseDmaRegions(radeonContextPtr rmesa)
