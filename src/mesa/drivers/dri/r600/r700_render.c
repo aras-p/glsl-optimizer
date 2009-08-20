@@ -332,96 +332,28 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 }
 
-static void r700EmitAtoms(GLcontext * ctx, GLboolean dirty)
-{
-	context_t *context = R700_CONTEXT(ctx);
-	radeonContextPtr radeon = &context->radeon;
-	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-
-	if ((r700->sq_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendSQConfig(context);
-	r700SendUCPState(context);
-	if ((r700->sc_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendSCState(context);
-	if ((r700->su_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendSUState(context);
-	if ((r700->cl_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendCLState(context);
-	if ((r700->cb_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendCBState(context);
-	if ((r700->db_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendDBState(context);
-	if ((r700->sx_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendSXState(context);
-	if ((r700->vgt_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendVGTState(context);
-	if ((r700->spi_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendSPIState(context);
-	if ((r700->viewport[0].dirty || radeon->hw.all_dirty) == dirty)
-		r700SendViewportState(context, 0);
-	if ((r700->render_target[0].dirty || radeon->hw.all_dirty) == dirty)
-		r700SendRenderTargetState(context, 0);
-	if ((r700->db_target_dirty || radeon->hw.all_dirty) == dirty)
-		r700SendDepthTargetState(context);
-
-}
-
-void r700EmitState(GLcontext * ctx)
-{
-	context_t *context = R700_CONTEXT(ctx);
-	radeonContextPtr radeon = &context->radeon;
-
-	if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (radeon->vtbl.pre_emit_state)
-		radeon->vtbl.pre_emit_state(radeon);
-
-	if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
-		return;
-
-	rcommonEnsureCmdBufSpace(&context->radeon,
-				 652, __FUNCTION__);
-
-	if (!radeon->cmdbuf.cs->cdw) {
-		if (RADEON_DEBUG & DEBUG_STATE)
-			fprintf(stderr, "Begin reemit state\n");
-
-		r700EmitAtoms(ctx, GL_FALSE);
-	}
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "Begin dirty state\n");
-
-	r700EmitAtoms(ctx, GL_TRUE);
-	radeon->hw.is_dirty = GL_FALSE;
-	radeon->hw.all_dirty = GL_FALSE;
-
-}
-
 static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;
-    unsigned int i, ind_count = 0;
+    unsigned int i, ind_count = 0, id = 0;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
+    struct radeon_renderbuffer *rrb;
 
     for (i = 0; i < vb->PrimitiveCount; i++)
 	    ind_count += vb->Primitive[i].count + 10;
 
     /* just an estimate, need to properly calculate this */
     rcommonEnsureCmdBufSpace(&context->radeon,
-			     radeon->hw.max_state_size + ind_count, __FUNCTION__);
+			     radeon->hw.max_state_size + ind_count + 1000, __FUNCTION__);
 
     r700Start3D(context);
-
     r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupShaders(ctx);
-
-    r700EmitState(ctx);
+    radeonEmitState(radeon);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) {
@@ -433,6 +365,16 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
+
+    rrb = radeon_get_colorbuffer(&context->radeon);
+    if (!rrb || !rrb->bo)
+	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
+			 CB_ACTION_ENA_bit | (1 << (id + 6)));
+
+    rrb = radeon_get_depthbuffer(&context->radeon);
+    if (!rrb || !rrb->bo)
+	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
+			 DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
 
     radeonReleaseArrays(ctx, ~0);
 

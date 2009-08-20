@@ -41,33 +41,10 @@
 #include "r700_ioctl.h"
 #include "r700_clear.h"
 
-static void r700Flush(GLcontext *ctx)
-{
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);
-
-	/* okay if we have no cmds in the buffer &&
-	   we have no DMA flush &&
-	   we have no DMA buffer allocated.
-	   then no point flushing anything at all.
-	*/
-	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && is_empty_list(&radeon->dma.reserved))
-		return;
-
-	if (radeon->dma.flush)
-		radeon->dma.flush( ctx );
-
-	r700EmitState(ctx);
-
-	if (radeon->cmdbuf.cs->cdw)
-		rcommonFlushCmdBuf(radeon, __FUNCTION__);
-}
 
 void r700InitIoctlFuncs(struct dd_function_table *functions)
 {
 	functions->Clear = r700Clear;
 	functions->Finish = radeonFinish;
-	functions->Flush = r700Flush;
+	functions->Flush = radeonFlush;
 }

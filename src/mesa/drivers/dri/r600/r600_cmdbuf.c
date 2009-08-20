@@ -451,12 +451,10 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
 
 void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 {
-    radeonContextPtr rmesa = &r600->radeon;
-    GLuint size;
-    rmesa->hw.max_state_size = 4000; /* rough estimate */
+	radeonContextPtr rmesa = &r600->radeon;
+	GLuint size;
 
-    rmesa->hw.all_dirty = GL_TRUE;
-    rmesa->hw.is_dirty = GL_TRUE;
+	r600InitAtoms(r600);
 
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
@@ -480,7 +478,7 @@ void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 	rmesa->cmdbuf.cs = radeon_cs_create(rmesa->cmdbuf.csm, size);
 	assert(rmesa->cmdbuf.cs != NULL);
 	rmesa->cmdbuf.size = size;
-	
+
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);

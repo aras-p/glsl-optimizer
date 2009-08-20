@@ -153,7 +153,7 @@ void r700UpdateViewportOffset(GLcontext * ctx) //------------------
 		/* Note: this should also modify whatever data the context reset
 		 * code uses...
 		 */
-		R600_STATECHANGE(context, r700->viewport[id].dirty);
+		R600_STATECHANGE(context, vpt);
 		r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
 		r700->viewport[id].PA_CL_VPORT_YOFFSET.f32All = ty;
 	}
@@ -170,8 +170,8 @@ void r700UpdateDrawBuffer(GLcontext * ctx) /* TODO */ //---------------------
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->render_target[0].dirty);
-	R600_STATECHANGE(context, r700->db_target_dirty);
+	R600_STATECHANGE(context, cb_target);
+	R600_STATECHANGE(context, db_target);
 
 	r700SetRenderTarget(context, 0);
 	r700SetDepthTarget(context);
@@ -244,8 +244,8 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 
 	r700UpdateStateParameters(ctx, new_state);
 
-    R600_STATECHANGE(context, r700->cl_dirty);
-    R600_STATECHANGE(context, r700->spi_dirty);
+    R600_STATECHANGE(context, cl);
+    R600_STATECHANGE(context, spi);
 
     if(GL_TRUE == r700->bEnablePerspective)
     {
@@ -278,7 +278,7 @@ static void r700SetDepthState(GLcontext * ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->db_dirty);
+	R600_STATECHANGE(context, db);
 
     if (ctx->Depth.Test)
     {
@@ -346,7 +346,7 @@ static void r700SetAlphaState(GLcontext * ctx)
 	uint32_t alpha_func = REF_ALWAYS;
 	GLboolean really_enabled = ctx->Color.AlphaEnabled;
 
-	R600_STATECHANGE(context, r700->sx_dirty);
+	R600_STATECHANGE(context, sx);
 
 	switch (ctx->Color.AlphaFunc) {
 	case GL_NEVER:
@@ -400,7 +400,7 @@ static void r700BlendColor(GLcontext * ctx, const GLfloat cf[4]) //-------------
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->cb_dirty);
+	R600_STATECHANGE(context, cb);
 
 	r700->CB_BLEND_RED.f32All = cf[0];
 	r700->CB_BLEND_GREEN.f32All = cf[1];
@@ -470,7 +470,7 @@ static void r700SetBlendState(GLcontext * ctx)
 	int id = 0;
 	uint32_t blend_reg = 0, eqn, eqnA;
 
-	R600_STATECHANGE(context, r700->cb_dirty);
+	R600_STATECHANGE(context, cb);
 
 	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
 		SETfield(blend_reg,
@@ -661,7 +661,7 @@ static void r700SetLogicOpState(GLcontext *ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
 
-	R600_STATECHANGE(context, r700->cb_dirty);
+	R600_STATECHANGE(context, cb);
 
 	if (RGBA_LOGICOP_ENABLED(ctx))
 		SETfield(r700->CB_COLOR_CONTROL.u32All,
@@ -685,7 +685,7 @@ static void r700UpdateCulling(GLcontext * ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
 
-    R600_STATECHANGE(context, r700->su_dirty);
+    R600_STATECHANGE(context, su);
 
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit);
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_FRONT_bit);
@@ -733,7 +733,7 @@ static void r700UpdateLineStipple(GLcontext * ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
 
-    R600_STATECHANGE(context, r700->sc_dirty);
+    R600_STATECHANGE(context, sc);
 
     if (ctx->Line.StippleFlag)
     {
@@ -817,7 +817,7 @@ static void r700ColorMask(GLcontext * ctx,
 			     (a ? 8 : 0));
 
 	if (mask != r700->CB_SHADER_MASK.u32All) {
-		R600_STATECHANGE(context, r700->cb_dirty);
+		R600_STATECHANGE(context, cb);
 		SETfield(r700->CB_SHADER_MASK.u32All, mask, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 	}
 }
@@ -875,7 +875,7 @@ static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->spi_dirty);
+	R600_STATECHANGE(context, spi);
 
 	/* also need to set/clear FLAT_SHADE bit per param in SPI_PS_INPUT_CNTL_[0-31] */
 	switch (mode) {
@@ -898,7 +898,7 @@ static void r700PointSize(GLcontext * ctx, GLfloat size)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->su_dirty);
+	R600_STATECHANGE(context, su);
 
 	/* We need to clamp to user defined range here, because
 	 * the HW clamping happens only for per vertex point size. */
@@ -920,7 +920,7 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->su_dirty);
+	R600_STATECHANGE(context, su);
 
 	/* format is 12.4 fixed point */
 	switch (pname) {
@@ -1006,7 +1006,7 @@ static void r700SetStencilState(GLcontext * ctx, GLboolean state)
 	}
 
 	if (hw_stencil) {
-		R600_STATECHANGE(context, r700->db_dirty);
+		R600_STATECHANGE(context, db);
 		if (state)
 			SETbit(r700->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
 		else
@@ -1024,7 +1024,7 @@ static void r700StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	//fixme
 	//r300CatchStencilFallback(ctx);
 
-	R600_STATECHANGE(context, r700->db_dirty);
+	R600_STATECHANGE(context, db);
 
 	//front
 	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.Ref[0],
@@ -1055,7 +1055,7 @@ static void r700StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask) /
 	//fixme
 	//r300CatchStencilFallback(ctx);
 
-	R600_STATECHANGE(context, r700->db_dirty);
+	R600_STATECHANGE(context, db);
 
 	// front
 	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.WriteMask[0],
@@ -1077,7 +1077,7 @@ static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 	//fixme
 	//r300CatchStencilFallback(ctx);
 
-	R600_STATECHANGE(context, r700->db_dirty);
+	R600_STATECHANGE(context, db);
 
 	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.FailFunc[0]),
 		 STENCILFAIL_shift, STENCILFAIL_mask);
@@ -1121,7 +1121,7 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 	GLfloat sz = v[MAT_SZ] * depthScale;
 	GLfloat tz = v[MAT_TZ] * depthScale;
 
-	R600_STATECHANGE(context, r700->viewport[id].dirty);
+	R600_STATECHANGE(context, vpt);
 
 	r700->viewport[id].PA_CL_VPORT_XSCALE.f32All  = sx;
 	r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
@@ -1160,7 +1160,7 @@ static void r700LineWidth(GLcontext * ctx, GLfloat widthf) //---------------
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     uint32_t lineWidth = (uint32_t)((widthf * 0.5) * (1 << 4));
 
-    R600_STATECHANGE(context, r700->su_dirty);
+    R600_STATECHANGE(context, su);
 
     if (lineWidth > 0xFFFF)
 	    lineWidth = 0xFFFF;
@@ -1173,7 +1173,7 @@ static void r700LineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-    R600_STATECHANGE(context, r700->sc_dirty);
+    R600_STATECHANGE(context, sc);
 
     SETfield(r700->PA_SC_LINE_STIPPLE.u32All, pattern, LINE_PATTERN_shift, LINE_PATTERN_mask);
     SETfield(r700->PA_SC_LINE_STIPPLE.u32All, (factor-1), REPEAT_COUNT_shift, REPEAT_COUNT_mask);
@@ -1185,7 +1185,7 @@ static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->su_dirty);
+	R600_STATECHANGE(context, su);
 
 	if (state) {
 		SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_FRONT_ENABLE_bit);
@@ -1215,7 +1215,7 @@ static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //
 
 	factor *= 12.0;
 
-	R600_STATECHANGE(context, r700->su_dirty);
+	R600_STATECHANGE(context, su);
 
 	r700->PA_SU_POLY_OFFSET_FRONT_SCALE.f32All = factor;
 	r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.f32All = constant;
@@ -1228,7 +1228,7 @@ static void r700UpdatePolygonMode(GLcontext * ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, r700->su_dirty);
+	R600_STATECHANGE(context, su);
 
 	SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DISABLE_POLY_MODE, POLY_MODE_shift, POLY_MODE_mask);
 
@@ -1305,7 +1305,7 @@ static void r700ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
 	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
 
-	R600_STATECHANGE(context, r700->ucp[p].dirty);
+	R600_STATECHANGE(context, ucp);
 
 	r700->ucp[p].PA_CL_UCP_0_X.u32All = ip[0];
 	r700->ucp[p].PA_CL_UCP_0_Y.u32All = ip[1];
@@ -1321,7 +1321,7 @@ static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
 
 	p = cap - GL_CLIP_PLANE0;
 
-	R600_STATECHANGE(context, r700->cl_dirty);
+	R600_STATECHANGE(context, cl);
 
 	if (state) {
 		r700->PA_CL_CLIP_CNTL.u32All |= (UCP_ENA_0_bit << p);
@@ -1356,7 +1356,7 @@ void r700SetScissor(context_t *context) //---------------
 		y2 = rrb->dPriv->y + rrb->dPriv->h;
 	}
 
-	R600_STATECHANGE(context, r700->sc_dirty);
+	R600_STATECHANGE(context, sc);
 
 	/* window */
 	SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
@@ -1426,8 +1426,8 @@ static void r700SetRenderTarget(context_t *context, int id)
 	    return;
     }
 
-    R600_STATECHANGE(context, r700->render_target[id].dirty);
-    R600_STATECHANGE(context, r700->cb_dirty);
+    R600_STATECHANGE(context, cb_target);
+    R600_STATECHANGE(context, cb);
 
     /* screen/window/view */
     SETfield(r700->CB_TARGET_MASK.u32All, 0xF, (4 * id), TARGET0_ENABLE_mask);
@@ -1475,8 +1475,7 @@ static void r700SetDepthTarget(context_t *context)
     if (!rrb)
 	    return;
 
-    R600_STATECHANGE(context, r700->db_target_dirty);
-    R600_STATECHANGE(context, r700->db_dirty);
+    R600_STATECHANGE(context, db_target);
 
     /* depth buf */
     r700->DB_DEPTH_SIZE.u32All = 0;
@@ -1538,7 +1537,7 @@ static void r700InitSQConfig(GLcontext * ctx)
     int num_gs_stack_entries;
     int num_es_stack_entries;
 
-    R600_STATECHANGE(context, r700->sq_dirty);
+    R600_STATECHANGE(context, sq);
 
     // SQ
     ps_prio = 0;

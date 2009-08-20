@@ -49,7 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 void r600EmitCacheFlush(context_t *rmesa)
 {
-	BATCH_LOCALS(&rmesa->radeon);
 }
 
 GLboolean r600EmitShader(GLcontext * ctx, 

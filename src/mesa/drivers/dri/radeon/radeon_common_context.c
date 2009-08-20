@@ -298,10 +298,6 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	GET_CURRENT_CONTEXT(ctx);
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-#endif
 
 	if (radeon == current) {
 		radeon_firevertices(radeon);
@@ -338,9 +334,6 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 
 		rcommonDestroyCmdBuf(radeon);
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
-	    if (!IS_R600_CLASS(screen))
-#endif
 		radeon_destroy_atom_list(radeon);
 
 		if (radeon->state.scissor.pClipRects) {
