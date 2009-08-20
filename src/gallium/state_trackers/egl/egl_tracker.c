@@ -6,6 +6,8 @@
 #include <string.h>
 #include "egl_tracker.h"
 
+#include <fcntl.h>
+
 #include "egllog.h"
 #include "state_tracker/drm_api.h"
 
@@ -132,6 +134,14 @@ drm_find_dpms(struct drm_device *dev, struct drm_screen *screen)
 	screen->dpms = p;
 }
 
+static int drm_open_minor(int minor)
+{
+	char buf[64];
+
+	sprintf(buf, DRM_DEV_NAME, DRM_DIR_NAME, minor);
+	return open(buf, O_RDWR, 0);
+}
+
 EGLBoolean
 drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 {
@@ -144,7 +154,8 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	EGLint i;
 	int fd;
 
-	fd = drmOpen("i915", NULL);
+	/* try the first node */
+	fd = drm_open_minor(0);
 	if (fd < 0)
 		goto err_fd;
 
