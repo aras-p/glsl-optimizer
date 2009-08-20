@@ -21,8 +21,9 @@
  * fs shader.frag
  * uniform pi 3.14159
  * uniform v1 1.0 0.5 0.2 0.3
- * texture 0 texture0.rgb
- * texture 1 texture1.rgb
+ * texture 0 2D texture0.rgb
+ * texture 1 CUBE texture1.rgb
+ * texture 2 RECT texture2.rgb
  *
  */
 
@@ -378,13 +379,14 @@ InitUniforms(const struct config_file *conf,
 
 
 static void
-LoadTexture(GLint unit, const char *texFileName)
+LoadTexture(GLint unit, GLenum target, const char *texFileName)
 {
    GLint imgWidth, imgHeight;
    GLenum imgFormat;
    GLubyte *image = NULL;
    GLuint tex;
    GLenum filter = GL_LINEAR;
+   GLenum objTarget;
 
    image = LoadRGBImage(texFileName, &imgWidth, &imgHeight, &imgFormat);
    if (!image) {
@@ -392,21 +394,41 @@ LoadTexture(GLint unit, const char *texFileName)
       exit(1);
    }
 
-   printf("Load Texture: unit %d: %s %d x %d\n",
-          unit, texFileName, imgWidth, imgHeight);
+   printf("Load Texture: unit %d, target 0x%x: %s %d x %d\n",
+          unit, target, texFileName, imgWidth, imgHeight);
+
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z) {
+      objTarget = GL_TEXTURE_CUBE_MAP;
+   }
+   else {
+      objTarget = target;
+   }
 
    glActiveTexture(GL_TEXTURE0 + unit);
    glGenTextures(1, &tex);
-   glBindTexture(GL_TEXTURE_2D, tex);
+   glBindTexture(objTarget, tex);
 
-   gluBuild2DMipmaps(GL_TEXTURE_2D, 4, imgWidth, imgHeight,
-                     imgFormat, GL_UNSIGNED_BYTE, image);
+   if (target == GL_TEXTURE_3D) {
+      /* depth=1 */
+      gluBuild3DMipmaps(target, 4, imgWidth, imgHeight, 1,
+                        imgFormat, GL_UNSIGNED_BYTE, image);
+   }
+   else if (target == GL_TEXTURE_1D) {
+      gluBuild1DMipmaps(target, 4, imgWidth,
+                        imgFormat, GL_UNSIGNED_BYTE, image);
+   }
+   else {
+      gluBuild2DMipmaps(target, 4, imgWidth, imgHeight,
+                        imgFormat, GL_UNSIGNED_BYTE, image);
+   }
+
    free(image);
       
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+   glTexParameteri(objTarget, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(objTarget, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   glTexParameteri(objTarget, GL_TEXTURE_MIN_FILTER, filter);
+   glTexParameteri(objTarget, GL_TEXTURE_MAG_FILTER, filter);
 }
 
 
@@ -425,8 +447,11 @@ TypeFromName(const char *n)
       { "GL_INT_VEC2", GL_INT_VEC2 },
       { "GL_INT_VEC3", GL_INT_VEC3 },
       { "GL_INT_VEC4", GL_INT_VEC4 },
+      { "GL_SAMPLER_1D", GL_SAMPLER_1D },
       { "GL_SAMPLER_2D", GL_SAMPLER_2D },
+      { "GL_SAMPLER_3D", GL_SAMPLER_3D },
       { "GL_SAMPLER_CUBE", GL_SAMPLER_CUBE },
+      { "GL_SAMPLER_2D_RECT", GL_SAMPLER_2D_RECT_ARB },
       { NULL, 0 }
    };
    GLuint i;
@@ -471,11 +496,40 @@ ReadConfigFile(const char *filename, struct config_file *conf)
             FragShaderFile[strlen(FragShaderFile) - 1] = 0;
          }
          else if (strncmp(line, "texture ", 8) == 0) {
-            char texFileName[100];
+            char target[100], texFileName[100];
             int unit, k;
-            k = sscanf(line + 8, "%d %s", &unit, texFileName);
-            assert(k == 2);
-            LoadTexture(unit, texFileName);
+            k = sscanf(line + 8, "%d %s %s", &unit, target, texFileName);
+            assert(k == 3 || k == 8);
+            if (strcmp(target, "CUBE") == 0) {
+               char texFileNames[6][100];
+               k = sscanf(line + 8, "%d %s  %s %s %s %s %s %s",
+                          &unit, target,
+                          texFileNames[0],
+                          texFileNames[1],
+                          texFileNames[2],
+                          texFileNames[3],
+                          texFileNames[4],
+                          texFileNames[5]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_POSITIVE_X, texFileNames[0]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, texFileNames[1]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, texFileNames[2]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, texFileNames[3]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, texFileNames[4]);
+               LoadTexture(unit, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, texFileNames[5]);
+            }
+            else if (!strcmp(target, "2D")) {
+               LoadTexture(unit, GL_TEXTURE_2D, texFileName);
+            }
+            else if (!strcmp(target, "3D")) {
+               LoadTexture(unit, GL_TEXTURE_3D, texFileName);
+            }
+            else if (!strcmp(target, "RECT")) {
+               LoadTexture(unit, GL_TEXTURE_RECTANGLE_ARB, texFileName);
+            }
+            else {
+               printf("Bad texture target: %s\n", target);
+               exit(1);
+            }
          }
          else if (strncmp(line, "uniform ", 8) == 0) {
             char name[1000], typeName[100];
