@@ -350,6 +350,7 @@ struct r300_hw_state {
 	struct radeon_state_atom zb_hiz_offset;	/* (4F44) */
 	struct radeon_state_atom zb_hiz_pitch;	/* (4F54) */
 
+	struct radeon_state_atom vap_flush;
 	struct radeon_state_atom vpi;	/* vp instructions */
 	struct radeon_state_atom vpp;	/* vp parameters */
 	struct radeon_state_atom vps;	/* vertex point size (?) */
@@ -524,7 +525,6 @@ struct r300_context {
 	struct r300_swtcl_info swtcl;
 	struct r300_vertex_buffer vbuf;
 	struct r300_index_buffer ind_buf;
-	GLboolean vap_flush_needed;
 
 	uint32_t fallback;
 

@@ -551,6 +551,7 @@ static void r300EmitClearState(GLcontext * ctx)
         struct radeon_state_atom vpu;
         uint32_t _cmd[10];
 		R300_STATECHANGE(r300, pvs);
+		R300_STATECHANGE(r300, vap_flush);
 		R300_STATECHANGE(r300, vpi);
 
 		BEGIN_BATCH(4);
@@ -592,7 +593,13 @@ static void r300EmitClearState(GLcontext * ctx)
                                       PVS_SRC_REG_INPUT, NEGATE_NONE);
 		vpu.cmd[8] = 0x0;
 
-		r300->vap_flush_needed = GL_TRUE;
+		{
+			int dwords = r300->hw.vap_flush.check(ctx,&r300->hw.vap_flush);
+			BEGIN_BATCH_NO_AUTOSTATE(dwords);
+			OUT_BATCH_TABLE(r300->hw.vap_flush.cmd, dwords);
+			END_BATCH();
+		}
+
 		emit_vpu(ctx, &vpu);
 	}
 }
