@@ -49,55 +49,80 @@ nv50_prim(unsigned mode)
 	return NV50TCL_VERTEX_BEGIN_POINTS;
 }
 
-static INLINE unsigned
-nv50_vtxeltfmt(unsigned pf)
+static INLINE uint32_t
+nv50_vbo_type_to_hw(unsigned type)
 {
-	static const uint8_t vtxelt_32[4] = { 0x90, 0x20, 0x10, 0x08 };
-	static const uint8_t vtxelt_16[4] = { 0xd8, 0x78, 0x28, 0x18 };
-	static const uint8_t vtxelt_08[4] = { 0xe8, 0xc0, 0x98, 0x50 };
-
-	unsigned nf, c = 0;
-
-	switch (pf_type(pf)) {
+	switch (type) {
 	case PIPE_FORMAT_TYPE_FLOAT:
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT; break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
 	case PIPE_FORMAT_TYPE_UNORM:
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM; break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
 	case PIPE_FORMAT_TYPE_SNORM:
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM; break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
 	case PIPE_FORMAT_TYPE_USCALED:
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED; break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
 	case PIPE_FORMAT_TYPE_SSCALED:
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED; break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
+	/*
+	case PIPE_FORMAT_TYPE_UINT:
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT;
+	case PIPE_FORMAT_TYPE_SINT:
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SINT; */
 	default:
-		NOUVEAU_ERR("invalid vbo type %d\n",pf_type(pf));
-		assert(0);
-		nf = NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
-		break;
+		return 0;
+	}
+}
+
+static INLINE uint32_t
+nv50_vbo_size_to_hw(unsigned size, unsigned nr_c)
+{
+	static const uint32_t hw_values[] = {
+		0, 0, 0, 0,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16_16_16,
+		0, 0, 0, 0,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32_32_32 };
+
+	/* we'd also have R11G11B10 and R10G10B10A2 */
+
+	assert(nr_c > 0 && nr_c <= 4);
+
+	if (size > 32)
+		return 0;
+	size >>= (3 - 2);
+
+	return hw_values[size + (nr_c - 1)];
+}
+
+static INLINE uint32_t
+nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
+{
+	uint32_t hw_type, hw_size;
+	enum pipe_format pf = ve->src_format;
+	unsigned size = pf_size_x(pf) << pf_exp2(pf);
+
+	hw_type = nv50_vbo_type_to_hw(pf_type(pf));
+	hw_size = nv50_vbo_size_to_hw(size, ve->nr_components);
+
+	if (!hw_type || !hw_size) {
+		NOUVEAU_ERR("unsupported vbo format: %s\n", pf_name(pf));
+		abort();
+		return 0x24e80000;
 	}
 
-	if (pf_size_y(pf)) c++;
-	if (pf_size_z(pf)) c++;
-	if (pf_size_w(pf)) c++;
+	if (pf_swizzle_x(pf) == 2) /* BGRA */
+		hw_size |= (1 << 31); /* no real swizzle bits :-( */
 
-	if (pf_exp2(pf) == 3) {
-		switch (pf_size_x(pf)) {
-		case 1: return (nf | (vtxelt_08[c] << 16));
-		case 2: return (nf | (vtxelt_16[c] << 16));
-		case 4: return (nf | (vtxelt_32[c] << 16));
-		default:
-			break;
-		}
-	} else
-	if (pf_exp2(pf) == 6 && pf_size_x(pf) == 1) {
-		NOUVEAU_ERR("unsupported vbo component size 64\n");
-		assert(0);
-		return (nf | 0x08000000);
-	}
-
-	NOUVEAU_ERR("invalid vbo format %s\n",pf_name(pf));
-	assert(0);
-	return (nf | 0x08000000);
+	return (hw_type | hw_size);
 }
 
 boolean
@@ -273,8 +298,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		struct pipe_vertex_buffer *vb =
 			&nv50->vtxbuf[ve->vertex_buffer_index];
 		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
+		uint32_t hw = nv50_vbo_vtxelt_to_hw(ve);
 
-		so_data(vtxfmt, nv50_vtxeltfmt(ve->src_format) | i);
+		so_data(vtxfmt, hw | i);
 
 		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_FORMAT(i), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->stride);
