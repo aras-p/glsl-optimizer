@@ -108,6 +108,7 @@ typedef struct radeon_screen {
    const __DRIextension *extensions[16];
 
    int num_gb_pipes;
+   int num_z_pipes;
    int kernel_mm;
    drm_radeon_sarea_t *sarea;	/* Private SAREA data */
    struct radeon_bo_manager *bom;

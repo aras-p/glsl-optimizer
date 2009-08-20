@@ -267,6 +267,9 @@ radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
       case RADEON_PARAM_NUM_GB_PIPES:
           info.request = RADEON_INFO_NUM_GB_PIPES;
           break;
+      case RADEON_PARAM_NUM_Z_PIPES:
+          info.request = RADEON_INFO_NUM_Z_PIPES;
+          break;
       default:
           return -EINVAL;
       }
@@ -1171,6 +1174,15 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        default:
 	   break;
        }
+
+       if ( sPriv->drm_version.minor >= 31 ) {
+	       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_Z_PIPES, &temp);
+	       if (ret)
+		       screen->num_z_pipes = 2;
+	       else
+		       screen->num_z_pipes = temp;
+       } else
+	       screen->num_z_pipes = 2;
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {
@@ -1371,6 +1383,12 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
        default:
 	   break;
        }
+
+       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_Z_PIPES, &temp);
+       if (ret)
+	       screen->num_z_pipes = 2;
+       else
+	       screen->num_z_pipes = temp;
 
    }
 
