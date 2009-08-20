@@ -893,9 +893,8 @@ sp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    unsigned level = samp->level;
    unsigned xpot = 1 << (samp->xpot - level);
    unsigned ypot = 1 << (samp->ypot - level);
-
-   unsigned xmax = MIN2(TILE_SIZE, xpot) - 1;
-   unsigned ymax = MIN2(TILE_SIZE, ypot) - 1;
+   unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
+   unsigned ymax = (ypot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, ypot) - 1; */
       
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
