@@ -477,6 +477,8 @@ tgsi_default_full_instruction( void )
       full_instruction.FullSrcRegisters[i] = tgsi_default_full_src_register();
    }
 
+   full_instruction.Flags = 0x0;
+
    return full_instruction;
 }
 
