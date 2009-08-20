@@ -101,4 +101,8 @@ build/linux-???-debug/gallium/drivers/llvmpipe:
  - lp_test_conv: SIMD vector conversion
  - lp_test_format: pixel unpacking/packing
 
+Some of this tests can output results and benchmarks to a tab-seperated-file
+for posterior analysis, e.g.:
+
+  build/linux-x86_64/gallium/drivers/llvmpipe/lp_test_blend -o blend.tsv
 
