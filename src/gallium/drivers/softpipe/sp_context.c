@@ -230,14 +230,16 @@ softpipe_create( struct pipe_screen *screen )
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      softpipe->tgsi.vert_samplers[i].base.get_samples = sp_get_samples_vertex;
+      softpipe->tgsi.vert_samplers[i].base.get_samples = sp_get_samples;
+      softpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
       softpipe->tgsi.vert_samplers[i].cache = softpipe->tex_cache[i];
       softpipe->tgsi.vert_samplers_list[i] = &softpipe->tgsi.vert_samplers[i];
    }
 
    /* fragment shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples_fragment;
+      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples;
+      softpipe->tgsi.frag_samplers[i].processor = TGSI_PROCESSOR_FRAGMENT;
       softpipe->tgsi.frag_samplers[i].cache = softpipe->tex_cache[i];
       softpipe->tgsi.frag_samplers_list[i] = &softpipe->tgsi.frag_samplers[i];
    }
