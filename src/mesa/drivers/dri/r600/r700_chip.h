@@ -275,6 +275,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT             	DB_DEPTH_VIEW             ;  /* 0xA001 */
 	union UINT_FLOAT             	DB_DEPTH_BASE             ;  /* 0xA003 */
 	union UINT_FLOAT             	DB_DEPTH_INFO             ;  /* 0xA004 */
+	GLboolean                       db_target_dirty;
 	union UINT_FLOAT                DB_HTILE_DATA_BASE        ;  /* 0xA005 */
 	union UINT_FLOAT          	DB_STENCIL_CLEAR          ;  /* 0xA00A */
 	union UINT_FLOAT            	DB_DEPTH_CLEAR            ;  /* 0xA00B */

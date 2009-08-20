@@ -258,6 +258,8 @@ GLboolean r700SendDepthTargetState(context_t *context)
 	r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
 		     DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
 
+	r700->db_target_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -310,6 +312,8 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 	r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
 		     CB_ACTION_ENA_bit | (1 << (id + 6)));
 
+	r700->render_target[id].dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -343,6 +347,8 @@ GLboolean r700SendPSState(context_t *context)
 
 	COMMIT_BATCH();
 
+	r700->ps.dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -374,6 +380,8 @@ GLboolean r700SendVSState(context_t *context)
         END_BATCH();
 
 	COMMIT_BATCH();
+
+	r700->vs.dirty = GL_FALSE;
 
 	return GL_TRUE;
 }
@@ -416,6 +424,8 @@ GLboolean r700SendFSState(context_t *context)
 
 	COMMIT_BATCH();
 
+	r700->fs.dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -447,6 +457,8 @@ GLboolean r700SendViewportState(context_t *context, int id)
         END_BATCH();
 
 	COMMIT_BATCH();
+
+	r700->viewport[id].dirty = GL_FALSE;
 
 	return GL_TRUE;
 }
@@ -485,6 +497,8 @@ GLboolean r700SendSQConfig(context_t *context)
 
 	COMMIT_BATCH();
 
+	r700->sq_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -495,7 +509,7 @@ GLboolean r700SendUCPState(context_t *context)
 	int i;
 
 	for (i = 0; i < R700_MAX_UCP; i++) {
-		if (r700->ucp[i].enabled) {
+		if (r700->ucp[i].enabled && r700->ucp[i].dirty) {
 			BEGIN_BATCH_NO_AUTOSTATE(6);
 			R600_OUT_BATCH_REGSEQ(PA_CL_UCP_0_X + (16 * i), 4);
 			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_X.u32All);
@@ -504,6 +518,7 @@ GLboolean r700SendUCPState(context_t *context)
 			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_W.u32All);
 			END_BATCH();
 			COMMIT_BATCH();
+			r700->ucp[i].dirty = GL_FALSE;
 		}
 	}
 
@@ -582,6 +597,8 @@ GLboolean r700SendSPIState(context_t *context)
 	END_BATCH();
 	COMMIT_BATCH();
 
+	r700->spi_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -628,6 +645,8 @@ GLboolean r700SendVGTState(context_t *context)
 	END_BATCH();
 	COMMIT_BATCH();
 
+	r700->vgt_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -642,6 +661,8 @@ GLboolean r700SendSXState(context_t *context)
 	R600_OUT_BATCH_REGVAL(SX_ALPHA_REF, r700->SX_ALPHA_REF.u32All);
 	END_BATCH();
 	COMMIT_BATCH();
+
+	r700->sx_dirty = GL_FALSE;
 
 	return GL_TRUE;
 }
@@ -674,6 +695,8 @@ GLboolean r700SendDBState(context_t *context)
 
 	END_BATCH();
 	COMMIT_BATCH();
+
+	r700->db_dirty = GL_FALSE;
 
 	return GL_TRUE;
 }
@@ -734,6 +757,8 @@ GLboolean r700SendCBState(context_t *context)
 
 	COMMIT_BATCH();
 
+	r700->cb_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -764,6 +789,8 @@ GLboolean r700SendSUState(context_t *context)
 	END_BATCH();
 	COMMIT_BATCH();
 
+	r700->su_dirty = GL_FALSE;
+
 	return GL_TRUE;
 }
 
@@ -786,6 +813,8 @@ GLboolean r700SendCLState(context_t *context)
 
 	END_BATCH();
 	COMMIT_BATCH();
+
+	r700->cl_dirty = GL_FALSE;
 
 	return GL_TRUE;
 }
@@ -831,6 +860,8 @@ GLboolean r700SendSCState(context_t *context)
 
 	END_BATCH();
 	COMMIT_BATCH();
+
+	r700->sc_dirty = GL_FALSE;
 
 	return GL_TRUE;
 }

@@ -46,12 +46,6 @@ static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
     return GL_FALSE;
 }
 
-#define R600_NEWPRIM( rmesa )			\
-  do {						\
-  if ( rmesa->radeon.dma.flush )			\
-    rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
-  } while (0)
-
 void r700Clear(GLcontext * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);

@@ -332,10 +332,50 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 }
 
+static void r700EmitAtoms(GLcontext * ctx, GLboolean dirty)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	radeonContextPtr radeon = &context->radeon;
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+
+	if ((r700->sq_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendSQConfig(context);
+	r700SendUCPState(context);
+	if ((r700->sc_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendSCState(context);
+	if ((r700->su_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendSUState(context);
+	if ((r700->cl_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendCLState(context);
+	if ((r700->cb_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendCBState(context);
+	if ((r700->db_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendDBState(context);
+	if ((r700->sx_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendSXState(context);
+	if ((r700->vgt_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendVGTState(context);
+	if ((r700->spi_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendSPIState(context);
+	if ((r700->viewport[0].dirty || radeon->hw.all_dirty) == dirty)
+		r700SendViewportState(context, 0);
+	if ((r700->render_target[0].dirty || radeon->hw.all_dirty) == dirty)
+		r700SendRenderTargetState(context, 0);
+	if ((r700->db_target_dirty || radeon->hw.all_dirty) == dirty)
+		r700SendDepthTargetState(context);
+
+}
+
 void r700EmitState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	radeonContextPtr radeon = &context->radeon;
+
+	if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (radeon->vtbl.pre_emit_state)
+		radeon->vtbl.pre_emit_state(radeon);
 
 	if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
 		return;
@@ -343,19 +383,19 @@ void r700EmitState(GLcontext * ctx)
 	rcommonEnsureCmdBufSpace(&context->radeon,
 				 652, __FUNCTION__);
 
-	r700SendSQConfig(context);
-	r700SendUCPState(context);
-	r700SendSCState(context);
-	r700SendSUState(context);
-	r700SendCLState(context);
-	r700SendCBState(context);
-	r700SendDBState(context);
-	r700SendSXState(context);
-	r700SendVGTState(context);
-	r700SendSPIState(context);
-	r700SendViewportState(context, 0);
-	r700SendRenderTargetState(context, 0);
-	r700SendDepthTargetState(context);
+	if (!radeon->cmdbuf.cs->cdw) {
+		if (RADEON_DEBUG & DEBUG_STATE)
+			fprintf(stderr, "Begin reemit state\n");
+
+		r700EmitAtoms(ctx, GL_FALSE);
+	}
+
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "Begin dirty state\n");
+
+	r700EmitAtoms(ctx, GL_TRUE);
+	radeon->hw.is_dirty = GL_FALSE;
+	radeon->hw.all_dirty = GL_FALSE;
 
 }
 

@@ -137,6 +137,19 @@ extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))
 
+#define R600_NEWPRIM( rmesa )			\
+do {						\
+	if ( rmesa->radeon.dma.flush )			\
+		rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
+} while (0)
+
+#define R600_STATECHANGE(r600, atom)			\
+do {							\
+	R600_NEWPRIM(r600);					\
+	(atom) = GL_TRUE;					\
+	r600->radeon.hw.is_dirty = GL_TRUE;			\
+} while(0)
+
 extern GLboolean r700SendSPIState(context_t *context);
 extern GLboolean r700SendVGTState(context_t *context);
 extern GLboolean r700SendSXState(context_t *context);
