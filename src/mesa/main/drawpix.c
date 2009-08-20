@@ -152,7 +152,14 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       return;
    }
 
-   if (type != GL_COLOR && type != GL_DEPTH && type != GL_STENCIL) {
+   /* Note: more detailed 'type' checking is done by the
+    * _mesa_source/dest_buffer_exists() calls below.  That's where we
+    * check if the stencil buffer exists, etc.
+    */
+   if (type != GL_COLOR &&
+       type != GL_DEPTH &&
+       type != GL_STENCIL &&
+       type != GL_DEPTH_STENCIL) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glCopyPixels(type=%s)",
                   _mesa_lookup_enum_by_nr(type));
       return;
