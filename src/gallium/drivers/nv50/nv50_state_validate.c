@@ -204,6 +204,8 @@ nv50_state_emit(struct nv50_context *nv50)
 	if (nv50->state.dirty & NV50_NEW_ARRAYS) {
 		so_emit(chan, nv50->state.vtxfmt);
 		so_emit(chan, nv50->state.vtxbuf);
+		if (nv50->state.vtxattr)
+			so_emit(chan, nv50->state.vtxattr);
 	}
 	nv50->state.dirty = 0;
 

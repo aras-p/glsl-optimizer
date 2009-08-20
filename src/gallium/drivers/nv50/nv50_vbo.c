@@ -277,17 +277,77 @@ nv50_draw_elements(struct pipe_context *pipe,
 	return TRUE;
 }
 
+static INLINE boolean
+nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
+		       struct nouveau_stateobj **pso,
+		       struct pipe_vertex_element *ve,
+		       struct pipe_vertex_buffer *vb)
+
+{
+	struct nouveau_stateobj *so;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nouveau_bo *bo = nouveau_bo(vb->buffer);
+	float *v;
+	int ret;
+	enum pipe_format pf = ve->src_format;
+
+	if ((pf_type(pf) != PIPE_FORMAT_TYPE_FLOAT) ||
+	    (pf_size_x(pf) << pf_exp2(pf)) != 32)
+		return FALSE;
+
+	ret = nouveau_bo_map(bo, NOUVEAU_BO_RD);
+	if (ret)
+		return FALSE;
+	v = (float *)(bo->map + (vb->buffer_offset + ve->src_offset));
+
+	so = *pso;
+	if (!so)
+		*pso = so = so_new(nv50->vtxelt_nr * 5, 0);
+
+	switch (ve->nr_components) {
+	case 4:
+		so_method(so, tesla, NV50TCL_VTX_ATTR_4F_X(attrib), 4);
+		so_data  (so, fui(v[0]));
+		so_data  (so, fui(v[1]));
+		so_data  (so, fui(v[2]));
+		so_data  (so, fui(v[3]));
+		break;
+	case 3:
+		so_method(so, tesla, NV50TCL_VTX_ATTR_3F_X(attrib), 4);
+		so_data  (so, fui(v[0]));
+		so_data  (so, fui(v[1]));
+		so_data  (so, fui(v[2]));
+		break;
+	case 2:
+		so_method(so, tesla, NV50TCL_VTX_ATTR_2F_X(attrib), 4);
+		so_data  (so, fui(v[0]));
+		so_data  (so, fui(v[1]));
+		break;
+	case 1:
+		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 4);
+		so_data  (so, fui(v[0]));
+		break;
+	default:
+		nouveau_bo_unmap(bo);
+		return FALSE;
+	}
+
+	nouveau_bo_unmap(bo);
+	return TRUE;
+}
+
 void
 nv50_vbo_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_stateobj *vtxbuf, *vtxfmt;
+	struct nouveau_stateobj *vtxbuf, *vtxfmt, *vtxattr;
 	unsigned i;
 
 	/* don't validate if Gallium took away our buffers */
 	if (nv50->vtxbuf_nr == 0)
 		return;
 
+	vtxattr = NULL;
 	vtxbuf = so_new(nv50->vtxelt_nr * 7, nv50->vtxelt_nr * 4);
 	vtxfmt = so_new(nv50->vtxelt_nr + 1, 0);
 	so_method(vtxfmt, tesla, NV50TCL_VERTEX_ARRAY_ATTRIB(0),
@@ -300,6 +360,15 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
 		uint32_t hw = nv50_vbo_vtxelt_to_hw(ve);
 
+		if (!vb->stride &&
+		    nv50_vbo_static_attrib(nv50, i, &vtxattr, ve, vb)) {
+			so_data(vtxfmt, hw | (1 << 4));
+
+			so_method(vtxbuf, tesla,
+				  NV50TCL_VERTEX_ARRAY_FORMAT(i), 1);
+			so_data  (vtxbuf, 0);
+			continue;
+		}
 		so_data(vtxfmt, hw | i);
 
 		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_FORMAT(i), 3);
@@ -323,7 +392,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	so_ref (vtxfmt, &nv50->state.vtxfmt);
 	so_ref (vtxbuf, &nv50->state.vtxbuf);
+	so_ref (vtxattr, &nv50->state.vtxattr);
 	so_ref (NULL, &vtxbuf);
 	so_ref (NULL, &vtxfmt);
+	so_ref (NULL, &vtxattr);
 }
 

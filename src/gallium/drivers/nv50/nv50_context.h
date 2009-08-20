@@ -120,6 +120,7 @@ struct nv50_state {
 	struct nouveau_stateobj *fragprog;
 	struct nouveau_stateobj *vtxfmt;
 	struct nouveau_stateobj *vtxbuf;
+	struct nouveau_stateobj *vtxattr;
 };
 
 struct nv50_context {
