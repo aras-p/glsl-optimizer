@@ -341,10 +341,9 @@ void r700EmitState(GLcontext * ctx)
 		return;
 
 	rcommonEnsureCmdBufSpace(&context->radeon,
-				 context->radeon.hw.max_state_size, __FUNCTION__);
+				 652, __FUNCTION__);
 
 	r700SendSQConfig(context);
-
 	r700SendUCPState(context);
 	r700SendContextStates(context);
 	r700SendViewportState(context, 0);
@@ -357,9 +356,17 @@ static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
-    unsigned int i;
+    radeonContextPtr radeon = &context->radeon;
+    unsigned int i, ind_count = 0;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
+
+    for (i = 0; i < vb->PrimitiveCount; i++)
+	    ind_count += vb->Primitive[i].count + 10;
+
+    /* just an estimate, need to properly calculate this */
+    rcommonEnsureCmdBufSpace(&context->radeon,
+			     radeon->hw.max_state_size + ind_count, __FUNCTION__);
 
     r700Start3D(context);
 
