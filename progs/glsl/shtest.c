@@ -566,7 +566,9 @@ ReadConfigFile(const char *filename, struct config_file *conf)
 static void
 Init(void)
 {
+   GLdouble vertTime, fragTime, linkTime;
    struct config_file config;
+
    memset(&config, 0, sizeof(config));
 
    if (ConfigFile)
@@ -586,8 +588,16 @@ Init(void)
       exit(1);
 
    vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertShaderFile);
+   vertTime = GetShaderCompileTime();
    fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragShaderFile);
+   fragTime = GetShaderCompileTime();
+
    Program = LinkShaders(vertShader, fragShader);
+   linkTime = GetShaderLinkTime();
+
+   printf("Time to compile vertex shader: %fs\n", vertTime);
+   printf("Time to compile fragment shader: %fs\n", fragTime);
+   printf("Time to link shaders: %fs\n", linkTime);
 
    glUseProgram(Program);
 
