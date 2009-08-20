@@ -107,6 +107,77 @@ lp_build_cmp(struct lp_build_context *bld,
          res = LLVMBuildBitCast(bld->builder, res, int_vec_type, "");
          return res;
       }
+      else {
+         static const struct {
+            unsigned swap:1;
+            unsigned eq:1;
+            unsigned gt:1;
+            unsigned not:1;
+         } table[] = {
+            {0, 0, 0, 1}, /* PIPE_FUNC_NEVER */
+            {1, 0, 1, 0}, /* PIPE_FUNC_LESS */
+            {0, 1, 0, 0}, /* PIPE_FUNC_EQUAL */
+            {0, 0, 1, 1}, /* PIPE_FUNC_LEQUAL */
+            {0, 0, 1, 0}, /* PIPE_FUNC_GREATER */
+            {0, 1, 0, 1}, /* PIPE_FUNC_NOTEQUAL */
+            {1, 0, 1, 1}, /* PIPE_FUNC_GEQUAL */
+            {0, 0, 0, 0}  /* PIPE_FUNC_ALWAYS */
+         };
+         const char *pcmpeq;
+         const char *pcmpgt;
+         LLVMValueRef args[2];
+         LLVMValueRef res;
+
+         switch (type.width) {
+         case 8:
+            pcmpeq = "llvm.x86.sse2.pcmpeq.b";
+            pcmpgt = "llvm.x86.sse2.pcmpgt.b";
+            break;
+         case 16:
+            pcmpeq = "llvm.x86.sse2.pcmpeq.w";
+            pcmpgt = "llvm.x86.sse2.pcmpgt.w";
+            break;
+         case 32:
+            pcmpeq = "llvm.x86.sse2.pcmpeq.d";
+            pcmpgt = "llvm.x86.sse2.pcmpgt.d";
+            break;
+         default:
+            assert(0);
+            return bld->undef;
+         }
+
+         /* There are no signed byte and unsigned word/dword comparison
+          * instructions. So flip the sign bit so that the results match.
+          */
+         if(table[func].gt &&
+            ((type.width == 8 && type.sign) ||
+             (type.width != 8 && !type.sign))) {
+            LLVMValueRef msb = lp_build_int_const_uni(type, (unsigned long long)1 << (type.width - 1));
+            a = LLVMBuildXor(bld->builder, a, msb, "");
+            b = LLVMBuildXor(bld->builder, b, msb, "");
+         }
+
+         if(table[func].swap) {
+            args[0] = b;
+            args[1] = a;
+         }
+         else {
+            args[0] = a;
+            args[1] = b;
+         }
+
+         if(table[func].eq)
+            res = lp_build_intrinsic(bld->builder, pcmpeq, vec_type, args, 2);
+         else if (table[func].gt)
+            res = lp_build_intrinsic(bld->builder, pcmpgt, vec_type, args, 2);
+         else
+            res = LLVMConstNull(vec_type);
+
+         if(table[func].not)
+            res = LLVMBuildNot(bld->builder, res, "");
+
+         return res;
+      }
    }
 #endif
 
