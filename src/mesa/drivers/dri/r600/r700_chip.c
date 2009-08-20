@@ -276,11 +276,16 @@ GLboolean r700SendTextureState(context_t *context)
 					 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
 					 0, TC_ACTION_ENA_bit);
 
-			    BEGIN_BATCH_NO_AUTOSTATE(9);
+			    BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
 			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
 			    R600_OUT_BATCH(i * 7);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+			    R600_OUT_BATCH(0); /* r700->textures[i]->SQ_TEX_RESOURCE2 */
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
 						 bo,
 						 0,
@@ -289,9 +294,6 @@ GLboolean r700SendTextureState(context_t *context)
 						 bo,
 						 r700->textures[i]->SQ_TEX_RESOURCE3,
 						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
 			    END_BATCH();
 
 			    BEGIN_BATCH_NO_AUTOSTATE(5);
@@ -362,22 +364,21 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     SETfield(uSQ_VTX_CONSTANT_WORD6_0, SQ_TEX_VTX_VALID_BUFFER,
 	     SQ_TEX_RESOURCE_WORD6_0__TYPE_shift, SQ_TEX_RESOURCE_WORD6_0__TYPE_mask);
 
-    BEGIN_BATCH_NO_AUTOSTATE(9);
+    BEGIN_BATCH_NO_AUTOSTATE(9 + 2);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
     R600_OUT_BATCH((nStreamID + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
-
-    R600_OUT_BATCH_RELOC(uSQ_VTX_CONSTANT_WORD0_0,
-                         paos->bo,
-                         uSQ_VTX_CONSTANT_WORD0_0,
-                         RADEON_GEM_DOMAIN_GTT, 0, 0);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD0_0);
     R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD1_0);
     R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD2_0);
     R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD3_0);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD6_0);
-
+    R600_OUT_BATCH_RELOC(uSQ_VTX_CONSTANT_WORD0_0,
+                         paos->bo,
+                         uSQ_VTX_CONSTANT_WORD0_0,
+                         RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_BATCH();
     COMMIT_BATCH();
 
@@ -515,16 +516,17 @@ GLboolean r700SendDepthTargetState(context_t *context)
 		return GL_FALSE;
 	}
 
-        BEGIN_BATCH_NO_AUTOSTATE(8);
+        BEGIN_BATCH_NO_AUTOSTATE(8 + 2);
 	R600_OUT_BATCH_REGSEQ(DB_DEPTH_SIZE, 2);
 	R600_OUT_BATCH(r700->DB_DEPTH_SIZE.u32All);
 	R600_OUT_BATCH(r700->DB_DEPTH_VIEW.u32All);
 	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 2);
+	R600_OUT_BATCH(r700->DB_DEPTH_BASE.u32All);
+	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
 	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_BASE.u32All,
 			     rrb->bo,
 			     r700->DB_DEPTH_BASE.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
-	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
         END_BATCH();
 
 	if ((context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) &&
@@ -561,8 +563,9 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 	if (!r700->render_target[id].enabled)
 		return GL_FALSE;
 
-        BEGIN_BATCH_NO_AUTOSTATE(3);
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(CB_COLOR0_BASE + (4 * id), 1);
+	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_BASE.u32All);
 	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
 			     rrb->bo,
 			     r700->render_target[id].CB_COLOR0_BASE.u32All,
@@ -607,8 +610,9 @@ GLboolean r700SendPSState(context_t *context)
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-        BEGIN_BATCH_NO_AUTOSTATE(3);
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_PS, 1);
+	R600_OUT_BATCH(r700->ps.SQ_PGM_START_PS.u32All);
 	R600_OUT_BATCH_RELOC(r700->ps.SQ_PGM_START_PS.u32All,
 			     pbo,
 			     r700->ps.SQ_PGM_START_PS.u32All,
@@ -639,8 +643,9 @@ GLboolean r700SendVSState(context_t *context)
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-        BEGIN_BATCH_NO_AUTOSTATE(3);
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_VS, 1);
+	R600_OUT_BATCH(r700->vs.SQ_PGM_START_VS.u32All);
 	R600_OUT_BATCH_RELOC(r700->vs.SQ_PGM_START_VS.u32All,
 			     pbo,
 			     r700->vs.SQ_PGM_START_VS.u32All,
@@ -679,8 +684,9 @@ GLboolean r700SendFSState(context_t *context)
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-        BEGIN_BATCH_NO_AUTOSTATE(3);
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_FS, 1);
+	R600_OUT_BATCH(r700->fs.SQ_PGM_START_FS.u32All);
 	R600_OUT_BATCH_RELOC(r700->fs.SQ_PGM_START_FS.u32All,
 			     pbo,
 			     r700->fs.SQ_PGM_START_FS.u32All,

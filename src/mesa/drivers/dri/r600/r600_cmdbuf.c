@@ -129,10 +129,10 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
             }
             relocs[i].indices = indices;
             relocs[i].reloc_indices = reloc_indices;
-            relocs[i].indices[relocs[i].cindices - 1] = cs->cdw - 1;
-            relocs[i].reloc_indices[relocs[i].cindices - 1] = cs->section_cdw;
-            cs->section_ndw += 2;
+            relocs[i].indices[relocs[i].cindices - 1] = cs->cdw;
+            relocs[i].reloc_indices[relocs[i].cindices - 1] = cs->cdw;
             cs->section_cdw += 2;
+	    cs->cdw += 2;
 
             return 0;
         }
@@ -156,10 +156,10 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
         return -ENOMEM;
     }
 
-    relocs[cs->crelocs].indices[0] = cs->cdw - 1;
-    relocs[cs->crelocs].reloc_indices[0] = cs->section_cdw;
-    cs->section_ndw += 2;
+    relocs[cs->crelocs].indices[0] = cs->cdw;
+    relocs[cs->crelocs].reloc_indices[0] = cs->cdw;
     cs->section_cdw += 2;
+    cs->cdw += 2;
     relocs[cs->crelocs].cindices = 1;
     cs->relocs_total_size += radeon_bo_legacy_relocs_size(bo);
     cs->crelocs++;
@@ -183,7 +183,14 @@ static int r600_cs_begin(struct radeon_cs *cs,
         return -EPIPE;
     }
 
-    if (cs->cdw + ndw + 32 > cs->ndw) { /* Left 32 DWORD (8 offset+pitch) spare room for reloc indices */
+    cs->section = 1;
+    cs->section_ndw = ndw;
+    cs->section_cdw = 0;
+    cs->section_file = file;
+    cs->section_func = func;
+    cs->section_line = line;
+
+    if (cs->cdw + ndw > cs->ndw) {
         uint32_t tmp, *ptr;
 	int num = (ndw > 0x3FF) ? ndw : 0x3FF;
 
@@ -195,13 +202,6 @@ static int r600_cs_begin(struct radeon_cs *cs,
         cs->packets = ptr;
         cs->ndw = tmp;
     }
-
-    cs->section = 1;
-    cs->section_ndw = 0; 
-    cs->section_cdw = cs->cdw + ndw; /* start of reloc indices. */
-    cs->section_file = file;
-    cs->section_func = func;
-    cs->section_line = line;
 
     return 0;
 }
@@ -219,8 +219,7 @@ static int r600_cs_end(struct radeon_cs *cs,
     }
     cs->section = 0;
 
-    if ( (cs->section_ndw + cs->cdw) != cs->section_cdw ) 
-    {
+    if ( cs->section_ndw != cs->section_cdw ) {
         fprintf(stderr, "CS section size missmatch start at (%s,%s,%d) %d vs %d\n",
                 cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
         fprintf(stderr, "cs->section_ndw = %d, cs->cdw = %d, cs->section_cdw = %d \n",
@@ -230,7 +229,6 @@ static int r600_cs_end(struct radeon_cs *cs,
         return -EPIPE;
     }
 
-    cs->cdw = cs->section_cdw;
     return 0;
 }
 

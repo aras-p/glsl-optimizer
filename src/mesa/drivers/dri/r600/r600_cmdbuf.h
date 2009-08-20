@@ -143,6 +143,9 @@ extern int r600_cs_write_reloc(struct radeon_cs *cs,
 static inline void r600_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
 {
     cs->packets[cs->cdw++] = dword;
+    if (cs->section) {
+	    cs->section_cdw++;
+    }
 }
 
 struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_context *ctx);
@@ -175,7 +178,6 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",		\
             __FILE__, __FUNCTION__, __LINE__, offset);		\
         }							\
-        r600_cs_write_dword(b_l_rmesa->cmdbuf.cs, offset);	\
         r600_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
                               bo, rd, wd, flags);		\
 	} while(0)
