@@ -87,6 +87,7 @@ struct tgsi_full_instruction
    struct tgsi_instruction_ext_texture InstructionExtTexture;
    struct tgsi_full_dst_register       FullDstRegisters[TGSI_FULL_MAX_DST_REGISTERS];
    struct tgsi_full_src_register       FullSrcRegisters[TGSI_FULL_MAX_SRC_REGISTERS];
+   uint Flags;  /**< user-defined usage */
 };
 
 union tgsi_full_token
