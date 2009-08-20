@@ -985,8 +985,8 @@ sp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
    const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
    unsigned  j;
    unsigned level = samp->level;
-   unsigned xpot = (1<<samp->xpot);
-   unsigned ypot = (1<<samp->ypot);
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
 
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
