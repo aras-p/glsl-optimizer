@@ -282,13 +282,13 @@ nv50_vbo_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *vtxbuf, *vtxfmt;
-	int i;
+	unsigned i;
 
 	/* don't validate if Gallium took away our buffers */
 	if (nv50->vtxbuf_nr == 0)
 		return;
 
-	vtxbuf = so_new(nv50->vtxelt_nr * 4, nv50->vtxelt_nr * 2);
+	vtxbuf = so_new(nv50->vtxelt_nr * 7, nv50->vtxelt_nr * 4);
 	vtxfmt = so_new(nv50->vtxelt_nr + 1, 0);
 	so_method(vtxfmt, tesla, NV50TCL_VERTEX_ARRAY_ATTRIB(0),
 		nv50->vtxelt_nr);
@@ -310,6 +310,15 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+
+		/* vertex array limits */
+		so_method(vtxbuf, tesla, 0x1080 + (i * 8), 2);
+		so_reloc (vtxbuf, bo, vb->buffer->size - 1,
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
+			  NOUVEAU_BO_HIGH, 0, 0);
+		so_reloc (vtxbuf, bo, vb->buffer->size - 1,
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
+			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	so_ref (vtxfmt, &nv50->state.vtxfmt);
