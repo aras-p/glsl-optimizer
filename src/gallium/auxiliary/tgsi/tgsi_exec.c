@@ -62,6 +62,9 @@
 
 #define FAST_MATH 1
 
+/** for tgsi_full_instruction::Flags */
+#define SOA_DEPENDENCY_FLAG 0x1
+
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
 #define TILE_BOTTOM_LEFT  2
@@ -182,7 +185,7 @@ print_temp(const struct tgsi_exec_machine *mach, uint index)
  *   MOV t3, t2;
  * The second instruction will have the wrong value for t0 if executed as-is.
  */
-static boolean
+boolean
 tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
 {
    uint i, chan;
@@ -328,19 +331,24 @@ tgsi_exec_machine_bind_shader(
                                    * sizeof(struct tgsi_full_instruction));
             maxInstructions += 10;
          }
+
+         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+            parse.FullToken.FullInstruction.Flags = SOA_DEPENDENCY_FLAG;
+            /* XXX we only handle SOA dependencies properly for MOV/SWZ
+             * at this time!
+             */
+            if (opcode != TGSI_OPCODE_MOV && opcode != TGSI_OPCODE_SWZ) {
+               debug_printf("Warning: SOA dependency in instruction"
+                            " is not handled:\n");
+               tgsi_dump_instruction(&parse.FullToken.FullInstruction,
+                                     numInstructions);
+            }
+         }
+
          memcpy(instructions + numInstructions,
                 &parse.FullToken.FullInstruction,
                 sizeof(instructions[0]));
-
-#if 0
-         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
-            debug_printf("SOA dependency in instruction:\n");
-            tgsi_dump_instruction(&parse.FullToken.FullInstruction,
-                                  numInstructions);
-         }
-#else
-         (void) tgsi_check_soa_dependencies;
-#endif
 
          numInstructions++;
          break;
@@ -2018,9 +2026,23 @@ exec_instruction(
 
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_SWZ:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         STORE( &r[0], 0, chan_index );
+      if (inst->Flags & SOA_DEPENDENCY_FLAG) {
+         /* Do all fetches into temp regs, then do all stores to avoid
+          * intermediate/accidental clobbering.  This could be done all the
+          * time for MOV but for other instructions we'll need more temps...
+          */
+         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+            FETCH( &r[chan_index], 0, chan_index );
+         }
+         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+            STORE( &r[chan_index], 0, chan_index );
+         }
+      }
+      else {
+         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+            FETCH( &r[0], 0, chan_index );
+            STORE( &r[0], 0, chan_index );
+         }
       }
       break;
 
