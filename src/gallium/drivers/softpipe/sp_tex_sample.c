@@ -894,6 +894,9 @@ sp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    unsigned xpot = 1 << (samp->xpot - level);
    unsigned ypot = 1 << (samp->ypot - level);
 
+   unsigned xmax = MIN2(TILE_SIZE, xpot) - 1;
+   unsigned ymax = MIN2(TILE_SIZE, ypot) - 1;
+      
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
 
@@ -914,8 +917,7 @@ sp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
 
       /* Can we fetch all four at once:
        */
-      if (x0 % TILE_SIZE != TILE_SIZE-1 &&
-          y0 % TILE_SIZE != TILE_SIZE-1)
+      if (x0 < xmax && y0 < ymax)
       {
          get_texel_quad_2d(tgsi_sampler, 0, level, x0, y0, tx);
       }
@@ -1045,72 +1047,22 @@ sp_get_samples_2d_linear_mip_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler
                                            s, t, p, 0, rgba );
    }
    else {
-      float levelBlend = lambda - level0;  /* blending weight between levels */
-      unsigned xpot = 1 << (samp->xpot - level0);
-      unsigned ypot = 1 << (samp->ypot - level0);
-      unsigned xpot1 = 1 << (samp->xpot - (level0+1));
-      unsigned ypot1 = 1 << (samp->ypot - (level0+1));
-      unsigned j;
+      float levelBlend = lambda - level0;
+      float rgba0[4][4];
+      float rgba1[4][4];
+      int c,j;
+
+      samp->level = level0;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba0 );
+
+      samp->level = level0+1;
+      sp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba1 );
 
       for (j = 0; j < QUAD_SIZE; j++) {
-         int c;
-         
-         float u = s[j] * xpot - 0.5F;
-         float v = t[j] * ypot - 0.5F;
-
-         int uflr = util_ifloor(u);
-         int vflr = util_ifloor(v);
-
-         float xw = u - (float)uflr;
-         float yw = v - (float)vflr;
-
-         int x0 = uflr & (xpot - 1);
-         int y0 = vflr & (ypot - 1);
-
-         const float *tx0[4];
-         const float *tx1[4];
-      
-         if (x0 % TILE_SIZE != TILE_SIZE-1 &&
-             y0 % TILE_SIZE != TILE_SIZE-1)
-         {
-            get_texel_quad_2d(tgsi_sampler, 0, level0, x0, y0, tx0);
-         }
-         else 
-         {
-            unsigned x1 = (x0 + 1) & (xpot - 1);
-            unsigned y1 = (y0 + 1) & (ypot - 1);
-            get_texel_quad_2d_mt(tgsi_sampler, 0, level0, 
-                                 x0, y0, x1, y1, tx0);
-         }
-
-         x0 /= 2;
-         y0 /= 2;
-         /* also need to adjust xw, yw?? */
-
-         if (x0 % TILE_SIZE != TILE_SIZE-1 &&
-             y0 % TILE_SIZE != TILE_SIZE-1)
-         {
-            get_texel_quad_2d(tgsi_sampler, 0, level0+1, x0, y0, tx1);
-         }
-         else 
-         {
-            unsigned x1 = (x0 + 1) & (xpot1 - 1);
-            unsigned y1 = (y0 + 1) & (ypot1 - 1);
-            get_texel_quad_2d_mt(tgsi_sampler, 0, level0+1, 
-                                 x0, y0, x1, y1, tx1);
-         }
-
-         /* interpolate R, G, B, A */
          for (c = 0; c < 4; c++) {
-            float rgba0 = lerp_2d(xw, yw, 
-                                  tx0[0][c], tx0[1][c], 
-                                  tx0[2][c], tx0[3][c]);
-
-            float rgba1 = lerp_2d(xw, yw, 
-                                  tx1[0][c], tx1[1][c], 
-                                  tx1[2][c], tx1[3][c]);
-
-            rgba[c][j] = lerp(levelBlend, rgba0, rgba1);
+            rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
          }
       }
    }
@@ -1209,6 +1161,13 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
             if (level0 != level1) {
                /* get texels from second mipmap level and blend */
                float rgba2[4][4];
+
+               /* XXX: This is incorrect -- will often end up with (x0
+                *  == x1 && y0 == y1), meaning that we fetch the same
+                *  texel four times and linearly interpolate between
+                *  identical values.  The correct approach would be to
+                *  call linear_texcoord again for the second level.
+                */
                x0[j] /= 2;
                y0[j] /= 2;
                x1[j] /= 2;
