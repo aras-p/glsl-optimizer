@@ -257,7 +257,7 @@ Redisplay(void)
    glMatrixMode(GL_MODELVIEW);
 
    if (Object == SPHERE) {
-      Sphere(2.0, 20, 10);
+      Sphere(2.5, 20, 10);
    }
    else if (Object == CUBE) {
       Cube(2.0);
@@ -426,6 +426,7 @@ TypeFromName(const char *n)
       { "GL_INT_VEC3", GL_INT_VEC3 },
       { "GL_INT_VEC4", GL_INT_VEC4 },
       { "GL_SAMPLER_2D", GL_SAMPLER_2D },
+      { "GL_SAMPLER_CUBE", GL_SAMPLER_CUBE },
       { NULL, 0 }
    };
    GLuint i;
@@ -613,8 +614,8 @@ ParseOptions(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-   glutInit(&argc, argv);
    glutInitWindowSize(400, 400);
+   glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
    glewInit();
