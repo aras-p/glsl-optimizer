@@ -43,6 +43,13 @@
 union lp_type type;
 
 
+LLVMValueRef
+lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
+                                        union lp_type src_type,
+                                        unsigned dst_width,
+                                        LLVMValueRef src);
+
+
 void
 lp_build_conv(LLVMBuilderRef builder,
               union lp_type src_type,

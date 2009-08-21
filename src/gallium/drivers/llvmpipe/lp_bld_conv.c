@@ -46,12 +46,86 @@
 
 
 #include "util/u_debug.h"
+#include "util/u_math.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_conv.h"
+
+
+LLVMValueRef
+lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
+                                        union lp_type src_type,
+                                        unsigned dst_width,
+                                        LLVMValueRef src)
+{
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(src_type);
+   LLVMValueRef res;
+   unsigned mantissa;
+   unsigned n;
+   unsigned long long ubound;
+   unsigned long long mask;
+   double scale;
+   double bias;
+
+   assert(src_type.floating);
+
+   switch(src_type.width) {
+   case 32:
+      mantissa = 23;
+      break;
+   case 64:
+      mantissa = 53;
+      break;
+   default:
+      assert(0);
+      return LLVMGetUndef(int_vec_type);
+   }
+
+   /* We cannot carry more bits than the mantissa */
+   n = MIN2(mantissa, dst_width);
+
+   /* This magic coefficients will make the desired result to appear in the
+    * lowest significant bits of the mantissa.
+    */
+   ubound = ((unsigned long long)1 << n);
+   mask = ubound - 1;
+   scale = (double)mask/ubound;
+   bias = (double)((unsigned long long)1 << (mantissa - n));
+
+   res = LLVMBuildMul(builder, src, lp_build_const_uni(src_type, scale), "");
+   res = LLVMBuildAdd(builder, res, lp_build_const_uni(src_type, bias), "");
+   res = LLVMBuildBitCast(builder, res, int_vec_type, "");
+
+   if(dst_width < src_type.width)
+      res = LLVMBuildAnd(builder, res, lp_build_int_const_uni(src_type, mask), "");
+
+   if(dst_width > n) {
+      int shift = dst_width - n;
+      res = LLVMBuildShl(builder, res, lp_build_int_const_uni(src_type, shift), "");
+
+      /* Fill in the empty lower bits for added precision? */
+#if 0
+      {
+         LLVMValueRef msb;
+         msb = LLVMBuildLShr(builder, res, lp_build_int_const_uni(src_type, dst_width - 1), "");
+         msb = LLVMBuildShl(builder, msb, lp_build_int_const_uni(src_type, shift), "");
+         msb = LLVMBuildSub(builder, msb, lp_build_int_const_uni(src_type, 1), "");
+         res = LLVMBuildOr(builder, res, msb, "");
+      }
+#elif 0
+      while(shift > 0) {
+         res = LLVMBuildOr(builder, res, LLVMBuildLShr(builder, res, lp_build_int_const_uni(src_type, n), ""), "");
+         shift -= n;
+         n *= 2;
+      }
+#endif
+   }
+
+   return res;
+}
 
 
 /**
@@ -259,28 +333,39 @@ lp_build_conv(LLVMBuilderRef builder,
       /* Nothing to do */
    }
    else if(tmp_type.floating) {
-      double dst_scale = lp_const_scale(dst_type);
-      LLVMTypeRef tmp_vec_type;
-
-      if (dst_scale != 1.0) {
-         LLVMValueRef scale = lp_build_const_uni(tmp_type, dst_scale);
-         for(i = 0; i < num_tmps; ++i)
-            tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
+      if(!dst_type.fixed && !dst_type.sign && dst_type.norm) {
+         for(i = 0; i < num_tmps; ++i) {
+            tmp[i] = lp_build_clamped_float_to_unsigned_norm(builder,
+                                                             tmp_type,
+                                                             dst_type.width,
+                                                             tmp[i]);
+         }
+         tmp_type.floating = FALSE;
       }
+      else {
+         double dst_scale = lp_const_scale(dst_type);
+         LLVMTypeRef tmp_vec_type;
 
-      /* Use an equally sized integer for intermediate computations */
-      tmp_type.floating = FALSE;
-      tmp_vec_type = lp_build_vec_type(tmp_type);
-      for(i = 0; i < num_tmps; ++i) {
+         if (dst_scale != 1.0) {
+            LLVMValueRef scale = lp_build_const_uni(tmp_type, dst_scale);
+            for(i = 0; i < num_tmps; ++i)
+               tmp[i] = LLVMBuildMul(builder, tmp[i], scale, "");
+         }
+
+         /* Use an equally sized integer for intermediate computations */
+         tmp_type.floating = FALSE;
+         tmp_vec_type = lp_build_vec_type(tmp_type);
+         for(i = 0; i < num_tmps; ++i) {
 #if 0
-         if(dst_type.sign)
-            tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
-         else
-            tmp[i] = LLVMBuildFPToUI(builder, tmp[i], tmp_vec_type, "");
+            if(dst_type.sign)
+               tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
+            else
+               tmp[i] = LLVMBuildFPToUI(builder, tmp[i], tmp_vec_type, "");
 #else
-        /* FIXME: there is no SSE counterpart for LLVMBuildFPToUI */
-         tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
+           /* FIXME: there is no SSE counterpart for LLVMBuildFPToUI */
+            tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
 #endif
+         }
       }
    }
    else {

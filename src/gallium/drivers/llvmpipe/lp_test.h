@@ -114,6 +114,10 @@ random_vec(union lp_type type, void *dst);
 
 
 boolean
+compare_vec_with_eps(union lp_type type, const void *res, const void *ref, double eps);
+
+
+boolean
 compare_vec(union lp_type type, const void *res, const void *ref);
 
 
