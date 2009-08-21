@@ -4092,11 +4092,11 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1643 "program_parse.y"
     {
-	   (yyval.vector).count = 4;
+	   (yyval.vector).count = 1;
 	   (yyval.vector).data[0] = (yyvsp[(1) - (1)].real);
-	   (yyval.vector).data[1] = 0.0f;
-	   (yyval.vector).data[2] = 0.0f;
-	   (yyval.vector).data[3] = 1.0f;
+	   (yyval.vector).data[1] = (yyvsp[(1) - (1)].real);
+	   (yyval.vector).data[2] = (yyvsp[(1) - (1)].real);
+	   (yyval.vector).data[3] = (yyvsp[(1) - (1)].real);
 	;}
     break;
 
@@ -4105,11 +4105,11 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1651 "program_parse.y"
     {
-	   (yyval.vector).count = 4;
+	   (yyval.vector).count = 1;
 	   (yyval.vector).data[0] = (float) (yyvsp[(1) - (1)].integer);
-	   (yyval.vector).data[1] = 0.0f;
-	   (yyval.vector).data[2] = 0.0f;
-	   (yyval.vector).data[3] = 1.0f;
+	   (yyval.vector).data[1] = (float) (yyvsp[(1) - (1)].integer);
+	   (yyval.vector).data[2] = (float) (yyvsp[(1) - (1)].integer);
+	   (yyval.vector).data[3] = (float) (yyvsp[(1) - (1)].integer);
 	;}
     break;
 
