@@ -34,17 +34,14 @@
  *   Keith Whitwell
  */
 
-#include "sp_context.h"
-#include "sp_quad.h"
-#include "sp_surface.h"
-#include "sp_texture.h"
-#include "sp_tex_sample.h"
-#include "sp_tile_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "sp_quad.h"   /* only for #define QUAD_* tokens */
+#include "sp_tex_sample.h"
+#include "sp_tile_cache.h"
 
 
 
