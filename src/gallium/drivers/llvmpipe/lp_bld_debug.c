@@ -39,11 +39,14 @@ lp_disassemble(const void* func)
 {
 #ifdef HAVE_UDIS86
    ud_t ud_obj;
+   uint64_t max_jmp_pc;
 
    ud_init(&ud_obj);
 
    ud_set_input_buffer(&ud_obj, (void*)func, 0xffff);
-   ud_set_pc(&ud_obj, (uint64_t) (uintptr_t) func);
+
+   max_jmp_pc = (uint64_t) (uintptr_t) func;
+   ud_set_pc(&ud_obj, max_jmp_pc);
 
 #ifdef PIPE_ARCH_X86
    ud_set_mode(&ud_obj, 32);
@@ -55,6 +58,7 @@ lp_disassemble(const void* func)
    ud_set_syntax(&ud_obj, UD_SYN_ATT);
 
    while (ud_disassemble(&ud_obj)) {
+
 #ifdef PIPE_ARCH_X86
       debug_printf("%08lx: ", (unsigned long)ud_insn_off(&ud_obj));
 #endif
@@ -68,7 +72,33 @@ lp_disassemble(const void* func)
 
       debug_printf("%s\n", ud_insn_asm(&ud_obj));
 
-      if (ud_obj.mnemonic == UD_Iret)
+      if(ud_obj.mnemonic != UD_Icall) {
+         unsigned i;
+         for(i = 0; i < 3; ++i) {
+            const struct ud_operand *op = &ud_obj.operand[i];
+            if (op->type == UD_OP_JIMM){
+               uint64_t pc = ud_obj.pc;
+
+               switch (op->size) {
+               case 8:
+                  pc += op->lval.sbyte;
+                  break;
+               case 16:
+                  pc += op->lval.sword;
+                  break;
+               case 32:
+                  pc += op->lval.sdword;
+                  break;
+               default:
+                  break;
+               }
+               if(pc > max_jmp_pc)
+                  max_jmp_pc = pc;
+            }
+         }
+      }
+
+      if (ud_insn_off(&ud_obj) >= max_jmp_pc && ud_obj.mnemonic == UD_Iret)
          break;
    }
    debug_printf("\n");
