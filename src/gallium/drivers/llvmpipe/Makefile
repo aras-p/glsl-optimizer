@@ -33,7 +33,6 @@ C_SOURCES = \
 	lp_quad_blend.c \
 	lp_quad_pipe.c \
 	lp_quad_fs.c \
-	lp_quad_stipple.c \
 	lp_query.c \
 	lp_screen.c \
 	lp_state_blend.c \
