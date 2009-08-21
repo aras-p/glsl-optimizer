@@ -221,14 +221,16 @@ llvmpipe_create( struct pipe_screen *screen )
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples_vertex;
+      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
+      llvmpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
       llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
    }
 
    /* fragment shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples_fragment;
+      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
+      llvmpipe->tgsi.frag_samplers[i].processor = TGSI_PROCESSOR_FRAGMENT;
       llvmpipe->tgsi.frag_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.frag_samplers_list[i] = &llvmpipe->tgsi.frag_samplers[i];
    }

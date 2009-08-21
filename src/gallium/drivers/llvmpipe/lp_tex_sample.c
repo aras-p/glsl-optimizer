@@ -41,6 +41,7 @@
 #include "lp_tex_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -521,14 +522,19 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
  * This is only done for fragment shaders, not vertex shaders.
  */
 static float
-compute_lambda(const struct pipe_texture *tex,
-               const struct pipe_sampler_state *sampler,
+compute_lambda(struct tgsi_sampler *tgsi_sampler,
                const float s[QUAD_SIZE],
                const float t[QUAD_SIZE],
                const float p[QUAD_SIZE],
                float lodbias)
 {
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
    float rho, lambda;
+
+   if (samp->processor == TGSI_PROCESSOR_VERTEX)
+      return lodbias;
 
    assert(sampler->normalized_coords);
 
@@ -538,7 +544,7 @@ compute_lambda(const struct pipe_texture *tex,
       float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
       dsdx = fabsf(dsdx);
       dsdy = fabsf(dsdy);
-      rho = MAX2(dsdx, dsdy) * tex->width[0];
+      rho = MAX2(dsdx, dsdy) * texture->width[0];
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
@@ -546,7 +552,7 @@ compute_lambda(const struct pipe_texture *tex,
       float max;
       dtdx = fabsf(dtdx);
       dtdy = fabsf(dtdy);
-      max = MAX2(dtdx, dtdy) * tex->height[0];
+      max = MAX2(dtdx, dtdy) * texture->height[0];
       rho = MAX2(rho, max);
    }
    if (p) {
@@ -555,7 +561,7 @@ compute_lambda(const struct pipe_texture *tex,
       float max;
       dpdx = fabsf(dpdx);
       dpdy = fabsf(dpdy);
-      max = MAX2(dpdx, dpdy) * tex->depth[0];
+      max = MAX2(dpdx, dpdy) * texture->depth[0];
       rho = MAX2(rho, max);
    }
 
@@ -579,16 +585,18 @@ compute_lambda(const struct pipe_texture *tex,
  * \param imgFilter  Returns either the min or mag filter, depending on lambda
  */
 static void
-choose_mipmap_levels(const struct pipe_texture *texture,
-                     const struct pipe_sampler_state *sampler,
+choose_mipmap_levels(struct tgsi_sampler *tgsi_sampler,
                      const float s[QUAD_SIZE],
                      const float t[QUAD_SIZE],
                      const float p[QUAD_SIZE],
-                     boolean computeLambda,
                      float lodbias,
                      unsigned *level0, unsigned *level1, float *levelBlend,
                      unsigned *imgFilter)
 {
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+
    if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* no mipmap selection needed */
       *level0 = *level1 = CLAMP((int) sampler->min_lod,
@@ -598,7 +606,7 @@ choose_mipmap_levels(const struct pipe_texture *texture,
          /* non-mipmapped texture, but still need to determine if doing
           * minification or magnification.
           */
-         float lambda = compute_lambda(texture, sampler, s, t, p, lodbias);
+         float lambda = compute_lambda(tgsi_sampler, s, t, p, lodbias);
          if (lambda <= 0.0) {
             *imgFilter = sampler->mag_img_filter;
          }
@@ -611,14 +619,7 @@ choose_mipmap_levels(const struct pipe_texture *texture,
       }
    }
    else {
-      float lambda;
-
-      if (computeLambda)
-         /* fragment shader */
-         lambda = compute_lambda(texture, sampler, s, t, p, lodbias);
-      else
-         /* vertex shader */
-         lambda = lodbias; /* not really a bias, but absolute LOD */
+      float lambda = compute_lambda(tgsi_sampler, s, t, p, lodbias);
 
       if (lambda <= 0.0) { /* XXX threshold depends on the filter */
          /* magnifying */
@@ -663,9 +664,63 @@ choose_mipmap_levels(const struct pipe_texture *texture,
  * lp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
 static void
+get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
+                  unsigned face, unsigned level, int x, int y, 
+                  const float *out[4])
+{
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+
+   const struct llvmpipe_cached_tex_tile *tile
+      = lp_get_cached_tex_tile(samp->cache,
+                               tex_tile_address(x, y, 0, face, level));
+
+   y %= TEX_TILE_SIZE;
+   x %= TEX_TILE_SIZE;
+      
+   out[0] = &tile->color[y  ][x  ][0];
+   out[1] = &tile->color[y  ][x+1][0];
+   out[2] = &tile->color[y+1][x  ][0];
+   out[3] = &tile->color[y+1][x+1][0];
+}
+
+static INLINE const float *
+get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
+                 unsigned face, unsigned level, int x, int y)
+{
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+
+   const struct llvmpipe_cached_tex_tile *tile
+      = lp_get_cached_tex_tile(samp->cache,
+                               tex_tile_address(x, y, 0, face, level));
+
+   y %= TEX_TILE_SIZE;
+   x %= TEX_TILE_SIZE;
+
+   return &tile->color[y][x][0];
+}
+
+
+static void
+get_texel_quad_2d_mt(const struct tgsi_sampler *tgsi_sampler,
+                     unsigned face, unsigned level, 
+                     int x0, int y0, 
+                     int x1, int y1,
+                     const float *out[4])
+{
+   unsigned i;
+
+   for (i = 0; i < 4; i++) {
+      unsigned tx = (i & 1) ? x1 : x0;
+      unsigned ty = (i >> 1) ? y1 : y0;
+
+      out[i] = get_texel_2d_ptr( tgsi_sampler, face, level, tx, ty );
+   }
+}
+
+static void
 get_texel(const struct tgsi_sampler *tgsi_sampler,
-          unsigned face, unsigned level, int x, int y, int z,
-          float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
+                 unsigned face, unsigned level, int x, int y, int z,
+                 float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
    const struct pipe_texture *texture = samp->texture;
@@ -825,16 +880,202 @@ shadow_compare4(const struct pipe_sampler_state *sampler,
 }
 
 
+
+static void
+lp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                    const float s[QUAD_SIZE],
+                                    const float t[QUAD_SIZE],
+                                    const float p[QUAD_SIZE],
+                                    float lodbias,
+                                    float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
+   unsigned xmax = (xpot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, xpot) - 1; */
+   unsigned ymax = (ypot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, ypot) - 1; */
+      
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot - 0.5F;
+      float v = t[j] * ypot - 0.5F;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      float xw = u - (float)uflr;
+      float yw = v - (float)vflr;
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *tx[4];
+      
+
+      /* Can we fetch all four at once:
+       */
+      if (x0 < xmax && y0 < ymax)
+      {
+         get_texel_quad_2d(tgsi_sampler, 0, level, x0, y0, tx);
+      }
+      else 
+      {
+         unsigned x1 = (x0 + 1) & (xpot - 1);
+         unsigned y1 = (y0 + 1) & (ypot - 1);
+         get_texel_quad_2d_mt(tgsi_sampler, 0, level, 
+                              x0, y0, x1, y1, tx);
+      }
+
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw, yw, 
+                              tx[0][c], tx[1][c], 
+                              tx[2][c], tx[3][c]);
+      }
+   }
+}
+
+
+static void
+lp_get_samples_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                     const float s[QUAD_SIZE],
+                                     const float t[QUAD_SIZE],
+                                     const float p[QUAD_SIZE],
+                                     float lodbias,
+                                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+lp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
+                                     const float s[QUAD_SIZE],
+                                     const float t[QUAD_SIZE],
+                                     const float p[QUAD_SIZE],
+                                     float lodbias,
+                                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = 1 << (samp->xpot - level);
+   unsigned ypot = 1 << (samp->ypot - level);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
+
+      int x0, y0;
+      const float *out;
+
+      x0 = util_ifloor(u);
+      if (x0 < 0) 
+         x0 = 0;
+      else if (x0 > xpot - 1)
+         x0 = xpot - 1;
+
+      y0 = util_ifloor(v);
+      if (y0 < 0) 
+         y0 = 0;
+      else if (y0 > ypot - 1)
+         y0 = ypot - 1;
+      
+      out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+lp_get_samples_2d_linear_mip_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                               const float s[QUAD_SIZE],
+                                               const float t[QUAD_SIZE],
+                                               const float p[QUAD_SIZE],
+                                               float lodbias,
+                                               float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   int level0;
+   float lambda;
+
+   lambda = compute_lambda(tgsi_sampler, s, t, p, lodbias);
+   level0 = (int)lambda;
+
+   if (lambda < 0.0) { 
+      samp->level = 0;
+      lp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba );
+   }
+   else if (level0 >= texture->last_level) {
+      samp->level = texture->last_level;
+      lp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba );
+   }
+   else {
+      float levelBlend = lambda - level0;
+      float rgba0[4][4];
+      float rgba1[4][4];
+      int c,j;
+
+      samp->level = level0;
+      lp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba0 );
+
+      samp->level = level0+1;
+      lp_get_samples_2d_linear_repeat_POT( tgsi_sampler,
+                                           s, t, p, 0, rgba1 );
+
+      for (j = 0; j < QUAD_SIZE; j++) {
+         for (c = 0; c < 4; c++) {
+            rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
+         }
+      }
+   }
+}
+
 /**
  * Common code for sampling 1D/2D/cube textures.
  * Could probably extend for 3D...
  */
 static void
-lp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
+lp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
                          const float s[QUAD_SIZE],
                          const float t[QUAD_SIZE],
                          const float p[QUAD_SIZE],
-                         boolean computeLambda,
                          float lodbias,
                          float rgba[NUM_CHANNELS][QUAD_SIZE],
                          const unsigned faces[4])
@@ -846,7 +1087,8 @@ lp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
    int width, height;
    float levelBlend;
 
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
+   choose_mipmap_levels(tgsi_sampler, s, t, p, 
+                        lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
    assert(sampler->normalized_coords);
@@ -918,6 +1160,13 @@ lp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
             if (level0 != level1) {
                /* get texels from second mipmap level and blend */
                float rgba2[4][4];
+
+               /* XXX: This is incorrect -- will often end up with (x0
+                *  == x1 && y0 == y1), meaning that we fetch the same
+                *  texel four times and linearly interpolate between
+                *  identical values.  The correct approach would be to
+                *  call linear_texcoord again for the second level.
+                */
                x0[j] /= 2;
                y0[j] /= 2;
                x1[j] /= 2;
@@ -950,42 +1199,39 @@ lp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
 
 
 static INLINE void
-lp_get_samples_1d(const struct tgsi_sampler *sampler,
+lp_get_samples_1d(struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
-                  boolean computeLambda,
                   float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    static const unsigned faces[4] = {0, 0, 0, 0};
    static const float tzero[4] = {0, 0, 0, 0};
    lp_get_samples_2d_common(sampler, s, tzero, NULL,
-                            computeLambda, lodbias, rgba, faces);
+                            lodbias, rgba, faces);
 }
 
 
 static INLINE void
-lp_get_samples_2d(const struct tgsi_sampler *sampler,
+lp_get_samples_2d(struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
-                  boolean computeLambda,
                   float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    static const unsigned faces[4] = {0, 0, 0, 0};
    lp_get_samples_2d_common(sampler, s, t, p,
-                            computeLambda, lodbias, rgba, faces);
+                            lodbias, rgba, faces);
 }
 
 
 static INLINE void
-lp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
+lp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
-                  boolean computeLambda,
                   float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
@@ -998,7 +1244,8 @@ lp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
    float levelBlend;
    const uint face = 0;
 
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
+   choose_mipmap_levels(tgsi_sampler, s, t, p, 
+                        lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
    assert(sampler->normalized_coords);
@@ -1107,11 +1354,10 @@ lp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-lp_get_samples_cube(const struct tgsi_sampler *sampler,
+lp_get_samples_cube(struct tgsi_sampler *sampler,
                     const float s[QUAD_SIZE],
                     const float t[QUAD_SIZE],
                     const float p[QUAD_SIZE],
-                    boolean computeLambda,
                     float lodbias,
                     float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
@@ -1121,16 +1367,15 @@ lp_get_samples_cube(const struct tgsi_sampler *sampler,
       faces[j] = choose_cube_face(s[j], t[j], p[j], ssss + j, tttt + j);
    }
    lp_get_samples_2d_common(sampler, ssss, tttt, NULL,
-                            computeLambda, lodbias, rgba, faces);
+                            lodbias, rgba, faces);
 }
 
 
 static void
-lp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
+lp_get_samples_rect(struct tgsi_sampler *tgsi_sampler,
                     const float s[QUAD_SIZE],
                     const float t[QUAD_SIZE],
                     const float p[QUAD_SIZE],
-                    boolean computeLambda,
                     float lodbias,
                     float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
@@ -1142,7 +1387,8 @@ lp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
    int width, height;
    float levelBlend;
 
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
+   choose_mipmap_levels(tgsi_sampler, s, t, p, 
+                        lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
    /* texture RECTS cannot be mipmapped */
@@ -1198,90 +1444,137 @@ lp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
 
 
 /**
- * Common code for vertex/fragment program texture sampling.
+ * Error condition handler
  */
 static INLINE void
+lp_get_samples_null(struct tgsi_sampler *tgsi_sampler,
+                    const float s[QUAD_SIZE],
+                    const float t[QUAD_SIZE],
+                    const float p[QUAD_SIZE],
+                    float lodbias,
+                    float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   int i,j;
+
+   for (i = 0; i < 4; i++)
+      for (j = 0; j < 4; j++)
+         rgba[i][j] = 1.0;
+}
+
+/**
+ * Called via tgsi_sampler::get_samples() when using a sampler for the
+ * first time.  Determine the actual sampler function, link it in and
+ * call it.
+ */
+void
 lp_get_samples(struct tgsi_sampler *tgsi_sampler,
                const float s[QUAD_SIZE],
                const float t[QUAD_SIZE],
                const float p[QUAD_SIZE],
-               boolean computeLambda,
                float lodbias,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
+   struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
    const struct pipe_texture *texture = samp->texture;
    const struct pipe_sampler_state *sampler = samp->sampler;
 
-   if (!texture)
-      return;
+   /* Default to the 'undefined' case:
+    */
+   tgsi_sampler->get_samples = lp_get_samples_null;
+
+   if (!texture) {
+      assert(0);                /* is this legal?? */
+      goto out;
+   }
+
+   if (!sampler->normalized_coords) {
+      assert (texture->target == PIPE_TEXTURE_2D);
+      tgsi_sampler->get_samples = lp_get_samples_rect;
+      goto out;
+   }
 
    switch (texture->target) {
    case PIPE_TEXTURE_1D:
-      assert(sampler->normalized_coords);
-      lp_get_samples_1d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      tgsi_sampler->get_samples = lp_get_samples_1d;
       break;
    case PIPE_TEXTURE_2D:
-      if (sampler->normalized_coords)
-         lp_get_samples_2d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
-      else
-         lp_get_samples_rect(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      tgsi_sampler->get_samples = lp_get_samples_2d;
       break;
    case PIPE_TEXTURE_3D:
-      assert(sampler->normalized_coords);
-      lp_get_samples_3d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      tgsi_sampler->get_samples = lp_get_samples_3d;
       break;
    case PIPE_TEXTURE_CUBE:
-      assert(sampler->normalized_coords);
-      lp_get_samples_cube(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      tgsi_sampler->get_samples = lp_get_samples_cube;
       break;
    default:
       assert(0);
+      break;
    }
 
-#if 0 /* DEBUG */
+   /* Do this elsewhere: 
+    */
+   samp->xpot = util_unsigned_logbase2( samp->texture->width[0] );
+   samp->ypot = util_unsigned_logbase2( samp->texture->height[0] );
+
+   /* Try to hook in a faster sampler.  Ultimately we'll have to
+    * code-generate these.  Luckily most of this looks like it is
+    * orthogonal state within the sampler.
+    */
+   if (texture->target == PIPE_TEXTURE_2D &&
+       sampler->min_img_filter == sampler->mag_img_filter &&
+       sampler->wrap_s == sampler->wrap_t &&
+       sampler->compare_mode == FALSE &&
+       sampler->normalized_coords) 
    {
-      int i;
-      printf("Sampled at %f, %f, %f:\n", s[0], t[0], p[0]);
-      for (i = 0; i < 4; i++) {
-         printf("Frag %d: %f %f %f %f\n", i,
-                rgba[0][i],
-                rgba[1][i],
-                rgba[2][i],
-                rgba[3][i]);
+      if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
+         samp->level = CLAMP((int) sampler->min_lod,
+                             0, (int) texture->last_level);
+
+         if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               tgsi_sampler->get_samples = lp_get_samples_2d_nearest_repeat_POT;
+               break;
+            case PIPE_TEX_FILTER_LINEAR:
+               tgsi_sampler->get_samples = lp_get_samples_2d_linear_repeat_POT;
+               break;
+            default:
+               break;
+            }
+         } 
+         else if (sampler->wrap_s == PIPE_TEX_WRAP_CLAMP) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               tgsi_sampler->get_samples = lp_get_samples_2d_nearest_clamp_POT;
+               break;
+            default:
+               break;
+            }
+         }
+      }
+      else if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+         if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT) {
+            switch (sampler->min_img_filter) {
+            case PIPE_TEX_FILTER_LINEAR:
+               tgsi_sampler->get_samples = lp_get_samples_2d_linear_mip_linear_repeat_POT;
+               break;
+            default:
+               break;
+            }
+         } 
       }
    }
-#endif
+   else if (0) {
+      _debug_printf("target %d/%d min_mip %d/%d min_img %d/%d wrap %d/%d compare %d/%d norm %d/%d\n",
+                    texture->target, PIPE_TEXTURE_2D,
+                    sampler->min_mip_filter, PIPE_TEX_MIPFILTER_NONE,
+                    sampler->min_img_filter, sampler->mag_img_filter,
+                    sampler->wrap_s, sampler->wrap_t,
+                    sampler->compare_mode, FALSE,
+                    sampler->normalized_coords, TRUE);
+   }
+
+out:
+   tgsi_sampler->get_samples( tgsi_sampler, s, t, p, lodbias, rgba );
 }
 
-
-/**
- * Called via tgsi_sampler::get_samples() when running a fragment shader.
- * Get four filtered RGBA values from the sampler's texture.
- */
-void
-lp_get_samples_fragment(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        float lodbias,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   lp_get_samples(tgsi_sampler, s, t, p, TRUE, lodbias, rgba);
-}
-
-
-/**
- * Called via tgsi_sampler::get_samples() when running a vertex shader.
- * Get four filtered RGBA values from the sampler's texture.
- */
-void
-lp_get_samples_vertex(struct tgsi_sampler *tgsi_sampler,
-                      const float s[QUAD_SIZE],
-                      const float t[QUAD_SIZE],
-                      const float p[QUAD_SIZE],
-                      float lodbias,
-                      float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   lp_get_samples(tgsi_sampler, s, t, p, FALSE, lodbias, rgba);
-}

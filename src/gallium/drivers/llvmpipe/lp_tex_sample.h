@@ -42,6 +42,14 @@ struct lp_shader_sampler
 {
    struct tgsi_sampler base;  /**< base class */
 
+   unsigned processor;
+
+   /* For lp_get_samples_2d_linear_POT:
+    */
+   unsigned xpot;
+   unsigned ypot;
+   unsigned level;
+
    const struct pipe_texture *texture;
    const struct pipe_sampler_state *sampler;
 
@@ -50,28 +58,21 @@ struct lp_shader_sampler
 
 
 
-static INLINE const struct lp_shader_sampler *
+static INLINE struct lp_shader_sampler *
 lp_shader_sampler(const struct tgsi_sampler *sampler)
 {
-   return (const struct lp_shader_sampler *) sampler;
+   return (struct lp_shader_sampler *) sampler;
 }
 
 
-extern void
-lp_get_samples_fragment(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        float lodbias,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 extern void
-lp_get_samples_vertex(struct tgsi_sampler *tgsi_sampler,
-                      const float s[QUAD_SIZE],
-                      const float t[QUAD_SIZE],
-                      const float p[QUAD_SIZE],
-                      float lodbias,
-                      float rgba[NUM_CHANNELS][QUAD_SIZE]);
+lp_get_samples(struct tgsi_sampler *tgsi_sampler,
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE],
+               float lodbias,
+               float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 
 #endif /* LP_TEX_SAMPLE_H */

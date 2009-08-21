@@ -203,12 +203,14 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->sampler[i];
       llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->texture[i];
+      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
    }
 
    /* fragment shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.frag_samplers[i].sampler = llvmpipe->sampler[i];
       llvmpipe->tgsi.frag_samplers[i].texture = llvmpipe->texture[i];
+      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
