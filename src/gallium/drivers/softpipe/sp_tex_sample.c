@@ -990,7 +990,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
    assert(width > 0);
 
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
-   samp->linear_texcoord_s(t, height, y0, y1, yw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
 
    for (j = 0; j < QUAD_SIZE; j++) {
       float tx[4][4]; /* texels */
@@ -1035,8 +1035,8 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
    assert(depth > 0);
 
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
-   samp->linear_texcoord_s(t, height, y0, y1, yw);
-   samp->linear_texcoord_s(p, depth,  z0, z1, zw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
+   samp->linear_texcoord_p(p, depth,  z0, z1, zw);
 
    for (j = 0; j < QUAD_SIZE; j++) {
       float tx0[4][4], tx1[4][4];
