@@ -328,7 +328,6 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 
 		type = GL_FLOAT;
 
-		r300ConvertAttrib(ctx, count, input, &r300_attr);
 		if (input->StrideB == 0) {
 			r300_attr.stride = 0;
 		} else {
@@ -339,39 +338,12 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	} else {
 		type = input->Type;
 		r300_attr.dwords = (getTypeSize(type) * input->Size + 3)/ 4;
-		if (input->BufferObj->Name) {
-			if (stride % 4 != 0) {
-				assert(((int) input->Ptr) % input->StrideB == 0);
-				r300AlignDataToDword(ctx, input, count, &r300_attr);
-				r300_attr.is_named_bo = GL_FALSE;
-			} else {
-				r300_attr.stride = input->StrideB;
-				r300_attr.bo_offset = (GLuint) input->Ptr;
-				r300_attr.bo = get_radeon_buffer_object(input->BufferObj)->bo;
-				r300_attr.is_named_bo = GL_TRUE;
-			}
-		} else {
-			int size;
-			uint32_t *dst;
+		if (!input->BufferObj->Name) {
 
 			if (input->StrideB == 0) {
-				size = getTypeSize(input->Type) * input->Size;
-				count = 1;
 				r300_attr.stride = 0;
 			} else {
-				size = getTypeSize(input->Type) * input->Size * count;
 				r300_attr.stride = (getTypeSize(type) * input->Size + 3) & ~3;
-			}
-
-			radeonAllocDmaRegion(&r300->radeon, &r300_attr.bo, &r300_attr.bo_offset, size, 32);
-			assert(r300_attr.bo->ptr != NULL);
-			dst = (uint32_t *)ADD_POINTERS(r300_attr.bo->ptr, r300_attr.bo_offset);
-			switch (r300_attr.dwords) {
-				case 1: radeonEmitVec4(dst, input->Ptr, input->StrideB, count); break;
-				case 2: radeonEmitVec8(dst, input->Ptr, input->StrideB, count); break;
-				case 3: radeonEmitVec12(dst, input->Ptr, input->StrideB, count); break;
-				case 4: radeonEmitVec16(dst, input->Ptr, input->StrideB, count); break;
-				default: assert(0); break;
 			}
 
 			r300_attr.is_named_bo = GL_FALSE;
@@ -468,7 +440,6 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-	int ret;
 	{
 		int i, tmp;
 
@@ -492,29 +463,83 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 	r300SwitchFallback(ctx, R300_FALLBACK_AOS_LIMIT, vbuf->num_attribs > R300_MAX_AOS_ARRAYS);
 	if (r300->fallback)
 		return;
+}
 
-	{
-		int i;
+static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *input[], int count)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	struct r300_vertex_buffer *vbuf = &r300->vbuf;
+	GLuint stride;
+	int ret;
+	int i, index;
 
-		for (i = 0; i < vbuf->num_attribs; i++) {
-			struct radeon_aos *aos = &r300->radeon.tcl.aos[i];
+	for (index = 0; index < vbuf->num_attribs; index++) {
+		struct radeon_aos *aos = &r300->radeon.tcl.aos[index];
+		i = vbuf->attribs[index].element;
 
-			aos->count = vbuf->attribs[i].stride == 0 ? 1 : count;
-			aos->stride = vbuf->attribs[i].stride / sizeof(float);
-			aos->offset = vbuf->attribs[i].bo_offset;
-			aos->components = vbuf->attribs[i].dwords;
-			aos->bo = vbuf->attribs[i].bo;
+		stride = (input[i]->StrideB == 0) ? getTypeSize(input[i]->Type) * input[i]->Size : input[i]->StrideB;
 
-			if (vbuf->attribs[i].is_named_bo) {
-				radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs, r300->vbuf.attribs[i].bo, RADEON_GEM_DOMAIN_GTT, 0);
+		if (input[i]->Type == GL_DOUBLE || input[i]->Type == GL_UNSIGNED_INT || input[i]->Type == GL_INT ||
+#if MESA_BIG_ENDIAN
+				getTypeSize(input[i]->Type) != 4 ||
+#endif
+				stride < 4) {
+
+			r300ConvertAttrib(ctx, count, input[i], &vbuf->attribs[index]);
+		} else {
+			if (input[i]->BufferObj->Name) {
+				if (stride % 4 != 0) {
+					assert(((intptr_t) input[i]->Ptr) % input[i]->StrideB == 0);
+					r300AlignDataToDword(ctx, input[i], count, &vbuf->attribs[index]);
+					vbuf->attribs[index].is_named_bo = GL_FALSE;
+				} else {
+					vbuf->attribs[index].stride = input[i]->StrideB;
+					vbuf->attribs[index].bo_offset = (intptr_t) input[i]->Ptr;
+					vbuf->attribs[index].bo = get_radeon_buffer_object(input[i]->BufferObj)->bo;
+					vbuf->attribs[index].is_named_bo = GL_TRUE;
+				}
+			} else {
+
+				int size;
+				int local_count = count;
+				uint32_t *dst;
+
+				if (input[i]->StrideB == 0) {
+					size = getTypeSize(input[i]->Type) * input[i]->Size;
+					local_count = 1;
+				} else {
+					size = getTypeSize(input[i]->Type) * input[i]->Size * local_count;
+				}
+
+				radeonAllocDmaRegion(&r300->radeon, &vbuf->attribs[index].bo, &vbuf->attribs[index].bo_offset, size, 32);
+				assert(vbuf->attribs[index].bo->ptr != NULL);
+				dst = (uint32_t *)ADD_POINTERS(vbuf->attribs[index].bo->ptr, vbuf->attribs[index].bo_offset);
+				switch (vbuf->attribs[index].dwords) {
+					case 1: radeonEmitVec4(dst, input[i]->Ptr, input[i]->StrideB, local_count); break;
+					case 2: radeonEmitVec8(dst, input[i]->Ptr, input[i]->StrideB, local_count); break;
+					case 3: radeonEmitVec12(dst, input[i]->Ptr, input[i]->StrideB, local_count); break;
+					case 4: radeonEmitVec16(dst, input[i]->Ptr, input[i]->StrideB, local_count); break;
+					default: assert(0); break;
+				}
+
 			}
 		}
 
-		r300->radeon.tcl.aos_count = vbuf->num_attribs;
-		ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, first_elem(&r300->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
-		if (ret)
-			r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, GL_TRUE);
+		aos->count = vbuf->attribs[index].stride == 0 ? 1 : count;
+		aos->stride = vbuf->attribs[index].stride / sizeof(float);
+		aos->components = vbuf->attribs[index].dwords;
+		aos->bo = vbuf->attribs[index].bo;
+		aos->offset = vbuf->attribs[index].bo_offset;
+
+		if (vbuf->attribs[index].is_named_bo) {
+			radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs, r300->vbuf.attribs[index].bo, RADEON_GEM_DOMAIN_GTT, 0);
+		}
 	}
+
+	r300->radeon.tcl.aos_count = vbuf->num_attribs;
+	ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs, first_elem(&r300->radeon.dma.reserved)->bo, RADEON_GEM_DOMAIN_GTT, 0);
+	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, ret);
+
 }
 
 static void r300FreeData(GLcontext *ctx)
@@ -553,6 +578,10 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	struct r300_context *r300 = R300_CONTEXT(ctx);
 	GLuint i;
 
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s: %u (%d-%d) cs begin at %d\n", 
+				__FUNCTION__, nr_prims, min_index, max_index, r300->radeon.cmdbuf.cs->cdw );
+
 	if (ctx->NewState)
 		_mesa_update_state( ctx );
 
@@ -569,8 +598,6 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
                            r300->radeon.hw.max_state_size + (60*sizeof(int)),
                           __FUNCTION__);
 
-	r300SetupIndexBuffer(ctx, ib);
-
 	r300SetVertexFormat(ctx, arrays, max_index + 1);
 
 	if (r300->fallback)
@@ -579,6 +606,10 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	r300SetupVAP(ctx, r300->selected_vp->code.InputsRead, r300->selected_vp->code.OutputsWritten);
 
 	r300UpdateShaderStates(r300);
+
+	r300SetupIndexBuffer(ctx, ib);
+
+	r300AllocDmaRegions(ctx, arrays, max_index + 1);
 
 	r300EmitCacheFlush(r300);
 	radeonEmitState(&r300->radeon);
