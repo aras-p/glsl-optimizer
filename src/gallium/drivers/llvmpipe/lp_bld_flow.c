@@ -25,19 +25,14 @@
  *
  **************************************************************************/
 
-#include "lp_bld.h"
-
-
 /**
- * @file
- * Auxiliaries to build loops.
+ * LLVM control flow build helpers.
  *
- * LLVM's IR doesn't represent for-loops directly. Furthermore it
- * it requires creating code blocks, branches, phi variables, so it
- * requires a fair amount of code.
- *
- * @sa http://www.llvm.org/docs/tutorial/LangImpl5.html#for
+ * @author Jose Fonseca <jfonseca@vmware.com>
  */
+
+#include "lp_bld_flow.h"
+
 
 
 void

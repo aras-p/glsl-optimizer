@@ -106,3 +106,12 @@ for posterior analysis, e.g.:
 
   build/linux-x86_64/gallium/drivers/llvmpipe/lp_test_blend -o blend.tsv
 
+
+Development Notes
+=================
+
+- We use LLVM-C bindings for now. They are not documented, but follow the C++
+  interfaces very closely, and appear to be complete enough for code
+  generation. See 
+  http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
+  for a standalone example.

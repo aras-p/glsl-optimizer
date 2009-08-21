@@ -37,7 +37,8 @@
 
 #include "util/u_format.h"
 
-#include "lp_bld.h"
+#include "lp_bld_flow.h"
+#include "lp_bld_format.h"
 
 
 struct pixel_test_case

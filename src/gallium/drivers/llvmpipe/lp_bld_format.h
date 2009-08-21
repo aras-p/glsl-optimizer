@@ -98,25 +98,4 @@ lp_build_store_rgba(LLVMBuilderRef builder,
                     LLVMValueRef rgba);
 
 
-struct lp_build_loop_state
-{
-  LLVMBasicBlockRef block;
-  LLVMValueRef counter;
-};
-
-
-void
-lp_build_loop_begin(LLVMBuilderRef builder,
-                    LLVMValueRef start,
-                    struct lp_build_loop_state *state);
-
-
-void
-lp_build_loop_end(LLVMBuilderRef builder,
-                  LLVMValueRef end,
-                  LLVMValueRef step,
-                  struct lp_build_loop_state *state);
-
-
-
 #endif /* !LP_BLD_H */

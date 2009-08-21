@@ -25,34 +25,45 @@
  *
  **************************************************************************/
 
+/**
+ * LLVM control flow build helpers.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
 
-#include "util/u_format.h"
+#ifndef LP_BLD_FLOW_H
+#define LP_BLD_FLOW_H
 
-#include "lp_bld_format.h"
+
+#include <llvm-c/Core.h>  
+
+
+/**
+ * LLVM's IR doesn't represent for-loops directly. Furthermore it
+ * it requires creating code blocks, branches, phi variables, so it
+ * requires a fair amount of code.
+ *
+ * @sa http://www.llvm.org/docs/tutorial/LangImpl5.html#for
+ */
+struct lp_build_loop_state
+{
+  LLVMBasicBlockRef block;
+  LLVMValueRef counter;
+};
 
 
 void
-lp_build_store_rgba(LLVMBuilderRef builder,
-                    enum pipe_format format,
-                    LLVMValueRef ptr,
-                    LLVMValueRef rgba)
-{
-   const struct util_format_description *desc;
-   LLVMTypeRef type;
-   LLVMValueRef packed;
+lp_build_loop_begin(LLVMBuilderRef builder,
+                    LLVMValueRef start,
+                    struct lp_build_loop_state *state);
 
-   desc = util_format_description(format);
 
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
-   assert(desc->block.width == 1);
-   assert(desc->block.height == 1);
+void
+lp_build_loop_end(LLVMBuilderRef builder,
+                  LLVMValueRef end,
+                  LLVMValueRef step,
+                  struct lp_build_loop_state *state);
 
-   type = LLVMIntType(desc->block.bits);
 
-   packed = lp_build_pack_rgba(builder, format, rgba);
 
-   ptr = LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), "");
-
-   LLVMBuildStore(builder, packed, ptr);
-}
-
+#endif /* !LP_BLD_FLOW_H */

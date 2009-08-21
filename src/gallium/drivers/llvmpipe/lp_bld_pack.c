@@ -28,7 +28,7 @@
 
 #include "util/u_format.h"
 
-#include "lp_bld.h"
+#include "lp_bld_format.h"
 
 
 LLVMValueRef
