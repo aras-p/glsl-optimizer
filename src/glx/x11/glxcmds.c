@@ -1960,7 +1960,7 @@ __glXBeginFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
 {
    int status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
-   int screen;
+   int screen = 0;
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 
@@ -1979,7 +1979,7 @@ __glXEndFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
 {
    int status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
-   int screen;
+   int screen = 0;
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *psc = GetGLXScreenConfigs(dpy, screen);
 
@@ -1999,7 +1999,7 @@ __glXGetFrameUsageMESA(Display * dpy, GLXDrawable drawable, GLfloat * usage)
 {
    int status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
-   int screen;
+   int screen = 0;
    __GLXDRIdrawable *const pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 
@@ -2029,7 +2029,7 @@ __glXQueryFrameTrackingMESA(Display * dpy, GLXDrawable drawable,
 {
    int status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
-   int screen;
+   int screen = 0;
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 
@@ -2213,7 +2213,7 @@ PUBLIC GLXFBConfigSGIX
 glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
 {
    __GLXdisplayPrivate *priv;
-   __GLXscreenConfigs *psc;
+   __GLXscreenConfigs *psc = NULL;
 
    if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
@@ -2432,7 +2432,7 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
                    int64_t * msc, int64_t * sbc)
 {
 #ifdef __DRI_MEDIA_STREAM_COUNTER
-   int screen;
+   int screen = 0;
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
    int ret;
