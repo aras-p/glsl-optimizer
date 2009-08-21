@@ -837,19 +837,21 @@ static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 
 #define ALLOC_STATE( ATOM, SZ, EMIT )					\
 do {									\
-      context->atoms.ATOM.cmd_size = (SZ);					\
-      context->atoms.ATOM.cmd = NULL;					\
-      context->atoms.ATOM.name = #ATOM;					\
-      context->atoms.ATOM.idx = 0;						\
-      context->atoms.ATOM.check = check_always;				\
-      context->atoms.ATOM.dirty = GL_FALSE;				\
-      context->atoms.ATOM.emit = (EMIT);					\
-      context->radeon.hw.max_state_size += (SZ);			\
-      insert_at_tail(&context->radeon.hw.atomlist, &context->atoms.ATOM); \
+	context->atoms.ATOM.cmd_size = (SZ);				\
+	context->atoms.ATOM.cmd = NULL;					\
+	context->atoms.ATOM.name = #ATOM;				\
+	context->atoms.ATOM.idx = 0;					\
+	context->atoms.ATOM.check = check_always;			\
+	context->atoms.ATOM.dirty = GL_FALSE;				\
+	context->atoms.ATOM.emit = (EMIT);				\
+	context->radeon.hw.max_state_size += (SZ);			\
+	insert_at_tail(&context->radeon.hw.atomlist, &context->atoms.ATOM); \
 } while (0)
 
 void r600InitAtoms(context_t *context)
 {
+	/* FIXME: rough estimate for "large" const and shader state */
+	context->radeon.hw.max_state_size = 7500;
 
 	/* Setup the atom linked list */
 	make_empty_list(&context->radeon.hw.atomlist);

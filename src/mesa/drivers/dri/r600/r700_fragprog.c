@@ -305,6 +305,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, fp->shadercode.buf->id);
     */
 
+    R600_STATECHANGE(context, spi);
+
     r700->ps.SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
 
     unNumOfReg = fp->r700Shader.nRegs + 1;
