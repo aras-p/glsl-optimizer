@@ -127,7 +127,7 @@ extern void
 lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
-extern struct llvmpipe_cached_tile *
+extern void *
 lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
                     union tile_address addr );
 
@@ -152,14 +152,14 @@ tile_address( unsigned x,
 
 /* Quickly retrieve tile if it matches last lookup.
  */
-static INLINE struct llvmpipe_cached_tile *
+static INLINE void *
 lp_get_cached_tile(struct llvmpipe_tile_cache *tc, 
                    int x, int y )
 {
    union tile_address addr = tile_address( x, y, 0, 0, 0 );
 
    if (tc->last_tile->addr.value == addr.value)
-      return tc->last_tile;
+      return &tc->last_tile->data.color;
 
    return lp_find_cached_tile( tc, addr );
 }

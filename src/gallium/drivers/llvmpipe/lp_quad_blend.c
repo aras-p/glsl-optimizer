@@ -66,16 +66,15 @@ blend_run(struct quad_stage *qs,
       unsigned y0 = quads[0]->input.y0;
       uint8_t ALIGN16_ATTRIB src[NUM_CHANNELS][TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH];
       uint8_t ALIGN16_ATTRIB mask[16];
+      uint8_t *tile = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf], x0, y0);
       uint8_t *dst;
-      struct llvmpipe_cached_tile *tile
-         = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf], x0, y0);
 
       assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
 
       assert(x0 % TILE_VECTOR_WIDTH == 0);
       assert(y0 % TILE_VECTOR_HEIGHT == 0);
 
-      dst = &TILE_PIXEL(tile->data.color, x0 & (TILE_SIZE-1), y0 & (TILE_SIZE-1), 0);
+      dst = &TILE_PIXEL(tile, x0 & (TILE_SIZE-1), y0 & (TILE_SIZE-1), 0);
 
       for (q = 0; q < nr; ++q) {
          struct quad_header *quad = quads[q];

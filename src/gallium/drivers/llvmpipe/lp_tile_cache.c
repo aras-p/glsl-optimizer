@@ -330,7 +330,7 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
  * Get a tile from the cache.
  * \param x, y  position of tile, in pixels
  */
-struct llvmpipe_cached_tile *
+void *
 lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
                     union tile_address addr )
 {
@@ -368,7 +368,8 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
    }
 
    tc->last_tile = tile;
-   return tile;
+
+   return tile->data.color;
 }
 
 
