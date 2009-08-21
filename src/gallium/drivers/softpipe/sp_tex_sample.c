@@ -1597,7 +1597,7 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
    samp->compute_lambda = get_lambda_func( key );
 
    samp->min_img_filter = get_img_filter(key, sampler->min_img_filter, sampler);
-   samp->mag_img_filter = get_img_filter(key, sampler->min_img_filter, sampler);
+   samp->mag_img_filter = get_img_filter(key, sampler->mag_img_filter, sampler);
 
    switch (sampler->min_mip_filter) {
    case PIPE_TEX_MIPFILTER_NONE:
