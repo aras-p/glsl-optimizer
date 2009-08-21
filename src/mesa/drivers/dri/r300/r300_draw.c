@@ -572,7 +572,7 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
 {
 	struct r300_context *r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-	int flushed;
+	GLboolean flushed;
 	GLuint dwords;
 	GLuint state_size;
 

@@ -928,7 +928,7 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	int i, j, reg, count;
 	int dwords;
 	uint32_t packet0;
-	if (! (DEBUG_CMDBUF || RADEON_DEBUG & DEBUG_STATE))
+	if (! (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) )
 		return;
 
 	if (!radeon->radeonScreen->kernel_mm) {
@@ -1212,7 +1212,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
  *
  * \param dwords The number of dwords we need to be free on the command buffer
  */
-int rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
+GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
 {
    if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size
 	 || radeon_cs_need_flush(rmesa->cmdbuf.cs)) {

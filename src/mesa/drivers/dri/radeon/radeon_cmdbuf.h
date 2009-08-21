@@ -3,7 +3,7 @@
 
 #include "radeon_bocs_wrapper.h"
 
-int rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller);
+GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller);
 int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller);
 int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller);
 void rcommonInitCmdBuf(radeonContextPtr rmesa);
