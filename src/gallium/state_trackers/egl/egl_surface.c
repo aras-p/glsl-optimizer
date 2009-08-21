@@ -351,6 +351,7 @@ drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 EGLBoolean
 drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
+	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_surface *surf = lookup_drm_surface(draw);
 	struct pipe_surface *back_surf;
 
@@ -368,7 +369,6 @@ drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 		st_notify_swapbuffers(surf->stfb);
 
 		if (surf->screen) {
-			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 			surf->user->pipe->surface_copy(surf->user->pipe,
 				surf->screen->surface,
 				0, 0,
@@ -376,7 +376,15 @@ drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 				0, 0,
 				surf->w, surf->h);
 			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
-			/* TODO stuff here */
+
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+			/* TODO query connector property to see if this is needed */
+			drmModeDirtyFB(dev->drmFD, surf->screen->fbID, NULL, 0);
+#else
+			(void)dev;
+#endif
+
+			/* TODO more stuff here */
 		}
 	}
 
