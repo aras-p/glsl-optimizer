@@ -904,6 +904,9 @@ static void radeon_print_state_atom_prekmm(radeonContextPtr radeon, struct radeo
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		if (dwords > state->cmd_size)
+			dwords = state->cmd_size;
+
 		for (i = 0; i < dwords;) {
 			cmd = *((drm_r300_cmd_header_t *) &state->cmd[i]);
 			reg = (cmd.packet0.reghi << 8) | cmd.packet0.reglo;
@@ -938,6 +941,8 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		if (dwords > state->cmd_size)
+			dwords = state->cmd_size;
 		for (i = 0; i < state->cmd_size;) {
 			packet0 = state->cmd[i];
 			reg = (packet0 & 0x1FFF) << 2;
