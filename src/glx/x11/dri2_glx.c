@@ -159,7 +159,7 @@ dri2DestroyDrawable(__GLXDRIdrawable * pdraw)
    const __DRIcoreExtension *core = pdraw->psc->core;
 
    (*core->destroyDrawable) (pdraw->driDrawable);
-   DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->drawable);
+   DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->xDrawable);
    Xfree(pdraw);
 }
 
@@ -189,7 +189,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
                                        config->driConfig, pdraw);
 
    if (!pdraw->base.driDrawable) {
-      DRI2DestroyDrawable(psc->dpy, drawable);
+      DRI2DestroyDrawable(psc->dpy, xDrawable);
       Xfree(pdraw);
       return NULL;
    }
@@ -221,7 +221,7 @@ dri2CopySubBuffer(__GLXDRIdrawable * pdraw,
 
    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
    /* should get a fence ID back from here at some point */
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferBackLeft);
    XFixesDestroyRegion(pdraw->psc->dpy, region);
 
@@ -261,7 +261,7 @@ dri2WaitX(__GLXDRIdrawable * pdraw)
 #endif
 
    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
                   DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
    XFixesDestroyRegion(pdraw->psc->dpy, region);
 }
@@ -287,7 +287,7 @@ dri2WaitGL(__GLXDRIdrawable * pdraw)
 #endif
 
    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
    XFixesDestroyRegion(pdraw->psc->dpy, region);
 }
