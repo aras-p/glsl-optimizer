@@ -34,6 +34,7 @@
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
+#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
@@ -107,6 +108,8 @@ softpipe_create_vs_state(struct pipe_context *pipe,
    state->draw_data = draw_create_vertex_shader(softpipe->draw, templ);
    if (state->draw_data == NULL) 
       goto fail;
+
+   state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
 
    return state;
 

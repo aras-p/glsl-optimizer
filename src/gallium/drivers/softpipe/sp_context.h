@@ -36,7 +36,6 @@
 #include "draw/draw_vertex.h"
 
 #include "sp_quad_pipe.h"
-#include "sp_tex_sample.h"
 
 
 struct softpipe_vbuf_render;
@@ -51,12 +50,12 @@ struct softpipe_context {
    struct pipe_context pipe;  /**< base class */
 
    /** Constant state objects */
-   const struct pipe_blend_state *blend;
-   const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-   const struct pipe_depth_stencil_alpha_state *depth_stencil;
-   const struct pipe_rasterizer_state *rasterizer;
-   const struct sp_fragment_shader *fs;
-   const struct sp_vertex_shader *vs;
+   struct pipe_blend_state *blend;
+   struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_depth_stencil_alpha_state *depth_stencil;
+   struct pipe_rasterizer_state *rasterizer;
+   struct sp_fragment_shader *fs;
+   struct sp_vertex_shader *vs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -123,10 +122,8 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
-      struct sp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler *vert_samplers_list[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler frag_samplers[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
    /** The primitive drawing context */
@@ -154,6 +151,10 @@ softpipe_context( struct pipe_context *pipe )
 {
    return (struct softpipe_context *)pipe;
 }
+
+void
+softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
+
 
 #endif /* SP_CONTEXT_H */
 

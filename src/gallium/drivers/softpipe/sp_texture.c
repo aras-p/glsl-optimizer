@@ -120,15 +120,19 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 
 static struct pipe_texture *
 softpipe_texture_create(struct pipe_screen *screen,
-                        const struct pipe_texture *templat)
+                        const struct pipe_texture *template)
 {
    struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
    if (!spt)
       return NULL;
 
-   spt->base = *templat;
+   spt->base = *template;
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
+
+   spt->pot = (util_is_power_of_two(template->width[0]) &&
+               util_is_power_of_two(template->height[0]) &&
+               util_is_power_of_two(template->depth[0]));
 
    if (spt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
       if (!softpipe_displaytarget_layout(screen, spt))

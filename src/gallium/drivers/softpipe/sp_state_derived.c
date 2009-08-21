@@ -198,19 +198,7 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
 {
    unsigned i;
 
-   /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      softpipe->tgsi.vert_samplers[i].sampler = softpipe->sampler[i];
-      softpipe->tgsi.vert_samplers[i].texture = softpipe->texture[i];
-      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples;
-   }
-
-   /* fragment shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      softpipe->tgsi.frag_samplers[i].sampler = softpipe->sampler[i];
-      softpipe->tgsi.frag_samplers[i].texture = softpipe->texture[i];
-      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples;
-   }
+   softpipe_reset_sampler_varients( softpipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       sp_tile_cache_validate_texture( softpipe->tex_cache[i] );
@@ -232,7 +220,9 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
    }
       
    if (softpipe->dirty & (SP_NEW_SAMPLER |
-                          SP_NEW_TEXTURE))
+                          SP_NEW_TEXTURE |
+                          SP_NEW_FS | 
+                          SP_NEW_VS))
       update_tgsi_samplers( softpipe );
 
    if (softpipe->dirty & (SP_NEW_RASTERIZER |
