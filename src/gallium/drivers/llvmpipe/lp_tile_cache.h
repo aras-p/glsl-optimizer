@@ -77,17 +77,10 @@ struct llvmpipe_tile_cache
    struct pipe_transfer *transfer;
    void *transfer_map;
 
-   struct pipe_texture *texture;  /**< if caching a texture */
-   unsigned timestamp;
-
    struct llvmpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    uint8_t clear_color[4];  /**< for color bufs */
    uint clear_val;        /**< for z+stencil, or packed color clear value */
-
-   struct pipe_transfer *tex_trans;
-   void *tex_trans_map;
-   int tex_face, tex_level, tex_z;
 
    struct llvmpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
 };

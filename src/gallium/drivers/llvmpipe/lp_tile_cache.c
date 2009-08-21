@@ -115,10 +115,6 @@ lp_destroy_tile_cache(struct llvmpipe_tile_cache *tc)
       screen = tc->transfer->texture->screen;
       screen->tex_transfer_destroy(tc->transfer);
    }
-   if (tc->tex_trans) {
-      screen = tc->tex_trans->texture->screen;
-      screen->tex_transfer_destroy(tc->tex_trans);
-   }
 
    align_free( tc );
 }
@@ -131,8 +127,6 @@ void
 lp_tile_cache_set_surface(struct llvmpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   assert(!tc->texture);
-
    if (tc->transfer) {
       struct pipe_screen *screen = tc->transfer->texture->screen;
 
@@ -176,9 +170,6 @@ lp_tile_cache_map_transfers(struct llvmpipe_tile_cache *tc)
 {
    if (tc->transfer && !tc->transfer_map)
       tc->transfer_map = tc->screen->transfer_map(tc->screen, tc->transfer);
-
-   if (tc->tex_trans && !tc->tex_trans_map)
-      tc->tex_trans_map = tc->screen->transfer_map(tc->screen, tc->tex_trans);
 }
 
 
@@ -188,11 +179,6 @@ lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc)
    if (tc->transfer_map) {
       tc->screen->transfer_unmap(tc->screen, tc->transfer);
       tc->transfer_map = NULL;
-   }
-
-   if (tc->tex_trans_map) {
-      tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
-      tc->tex_trans_map = NULL;
    }
 }
 
@@ -294,13 +280,6 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
 #if TILE_CLEAR_OPTIMIZATION
       lp_tile_cache_flush_clear(tc);
 #endif
-   }
-   else if (tc->texture) {
-      /* caching a texture, mark all entries as empty */
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         tc->entries[pos].addr.bits.invalid = 1;
-      }
-      tc->tex_face = -1;
    }
 
 #if 0
