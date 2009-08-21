@@ -22,8 +22,7 @@ HEADERS = \
 	eglmutex.h \
 	eglscreen.h \
 	eglstring.h \
-	eglsurface.h \
-	eglx.h
+	eglsurface.h
 
 SOURCES = \
 	eglapi.c \
@@ -39,8 +38,7 @@ SOURCES = \
 	eglmode.c \
 	eglscreen.c \
 	eglstring.c \
-	eglsurface.c \
-	eglx.c
+	eglsurface.c
 
 OBJECTS = $(SOURCES:.c=.o)
 

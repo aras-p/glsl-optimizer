@@ -105,7 +105,7 @@ GALLIUM_STATE_TRACKERS_DIRS = glx
 # Library dependencies
 #EXTRA_LIB_PATH ?=
 GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
-EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -lX11 -ldl -lpthread
+EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -ldl -lpthread
 OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS   = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lm

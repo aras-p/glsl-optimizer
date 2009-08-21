@@ -22,7 +22,6 @@
 
 #if defined(_EGL_PLATFORM_X)
 #include <dlfcn.h>
-#include "eglx.h"
 #elif defined(_EGL_PLATFORM_WINDOWS)
 /* Use static linking on Windows for now */
 #define WINDOWS_STATIC_LINK
@@ -38,7 +37,6 @@
    /* XXX Need to decide how to do dynamic name lookup on Windows */
    static const char *DefaultDriverName = "TBD";
 #endif
-   static const char *SysFS = NULL;
    typedef HMODULE lib_handle;
 
    static HMODULE
@@ -61,8 +59,7 @@
    }
 
 #elif defined(_EGL_PLATFORM_X)
-   static const char *DefaultDriverName = ":0";
-   static const char *SysFS = "/sys/class";
+   static const char *DefaultDriverName = "egl_softpipe";
 
    typedef void * lib_handle;
 
@@ -80,57 +77,9 @@
    
 #endif
 
-/**
- * Given a card number, use sysfs to determine the DRI driver name.
- */
-const char *
-_eglChooseDRMDriver(int card)
-{
-#if 0
-   return _eglstrdup("libEGLdri");
-#else
-   char path[2000], driverName[2000];
-   FILE *f;
-   int length;
-
-   snprintf(path, sizeof(path), "%s/drm/card%d/dri_library_name", SysFS, card);
-
-   f = fopen(path, "r");
-   if (!f)
-      return NULL;
-
-   fgets(driverName, sizeof(driverName), f);
-   fclose(f);
-
-   if ((length = strlen(driverName)) > 1) {
-      /* remove the trailing newline from sysfs */
-      driverName[length - 1] = '\0';
-      strncat(driverName, "_dri", sizeof(driverName));
-      return _eglstrdup(driverName);
-   }
-   else {
-      return NULL;
-   }   
-#endif
-}
-
 
 /**
- * XXX this function is totally subject change!!!
- *
- *
- * Determine/return the path of the driver to use for the given native display.
- *
- * Try to be clever and determine if nativeDisplay is an Xlib Display
- * ptr or a string (naming a driver or screen number, etc).
- *
- * If the first character is ':' we interpret it as a screen or card index
- * number (i.e. ":0" or ":1", etc)
- * Else if the first character is '!' we interpret it as specific driver name
- * (i.e. "!r200" or "!i830".
- *
- * Whatever follows ':' is interpreted as arguments.
- *
+ * Choose a driver for a given display.
  * The caller may free() the returned strings.
  */
 static char *
@@ -144,42 +93,16 @@ _eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
       path = _eglstrdup(path);
 
 #if defined(_EGL_PLATFORM_X)
-   (void) DefaultDriverName;
-
    if (!path && dpy->NativeDisplay) {
-      const char *dpyString = (const char *) dpy->NativeDisplay;
-      char *p;
-      /* parse the display string */
-      if (dpyString[0] == '!' || dpyString[0] == ':') {
-         if (dpyString[0] == '!') {
-            path = _eglstrdup(dpyString);
-            p = strchr(path, ':');
-            if (p)
-               *p++ = '\0';
-         } else {
-            p = strchr(dpyString, ':');
-            if (p)
-               p++;
-         }
-
-         if (p) {
-            if (!path && p[0] >= '0' && p[0] <= '9' && !p[1]) {
-               int card = atoi(p);
-               path = (char *) _eglChooseDRMDriver(card);
-            }
-            args = p;
-         }
-      }
-      else {
-         path = (char *) _xeglChooseDriver(dpy);
-      }
+      /* assume (wrongly!) that the native display is a display string */
+      path = _eglSplitDisplayString((const char *) dpy->NativeDisplay, &args);
    }
-#elif defined(_EGL_PLATFORM_WINDOWS)
-   if (!path)
-      path = _eglstrdup(DefaultDriverName);
 #endif /* _EGL_PLATFORM_X */
 
-   if (path && argsRet)
+   if (!path)
+      path = _eglstrdup(DefaultDriverName);
+
+   if (argsRet)
       *argsRet = (args) ? _eglstrdup(args) : NULL;
 
    return path;
