@@ -35,9 +35,6 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
-#include "sp_context.h"
-#include "sp_surface.h"
-#include "sp_texture.h"
 #include "sp_tile_cache.h"
 
 
@@ -200,23 +197,24 @@ sp_tile_cache_unmap_transfers(struct softpipe_tile_cache *tc)
    }
 }
 
+
+/**
+ * Invalidate all cached tiles for the cached texture.
+ * Should be called when the texture is modified.
+ */
 void
 sp_tile_cache_validate_texture(struct softpipe_tile_cache *tc)
 {
-   if (tc->texture) {
-      struct softpipe_texture *spt = softpipe_texture(tc->texture);
-      if (spt->timestamp != tc->timestamp) {
-         /* texture was modified, invalidate all cached tiles */
-         uint i;
-         _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
-         for (i = 0; i < NUM_ENTRIES; i++) {
-            tc->entries[i].addr.bits.invalid = 1;
-         }
+   uint i;
 
-         tc->timestamp = spt->timestamp;
-      }
+   assert(tc);
+   assert(tc->texture);
+
+   for (i = 0; i < NUM_ENTRIES; i++) {
+      tc->entries[i].addr.bits.invalid = 1;
    }
 }
+
 
 /**
  * Specify the texture to cache.

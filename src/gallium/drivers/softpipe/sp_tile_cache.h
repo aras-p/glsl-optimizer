@@ -34,7 +34,6 @@
 #include "pipe/p_compiler.h"
 
 
-struct softpipe_context;
 struct softpipe_tile_cache;
 
 
