@@ -36,6 +36,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_tile.h"
+#include "util/u_rect.h"
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -197,51 +198,23 @@ lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc)
 
 
 /**
- * Set pixels in a tile to the given clear color/value, float.
- */
-static void
-clear_tile_rgba(struct llvmpipe_cached_tile *tile,
-                enum pipe_format format,
-                const float clear_value[4])
-{
-   if (clear_value[0] == 0.0 &&
-       clear_value[1] == 0.0 &&
-       clear_value[2] == 0.0 &&
-       clear_value[3] == 0.0) {
-      memset(tile->data.color, 0, sizeof(tile->data.color));
-   }
-   else {
-      uint8_t c[4];
-      uint x, y, i;
-      for (i = 0; i < 4; ++i)
-         c[i] = float_to_ubyte(clear_value[i]);
-      for (y = 0; y < TILE_SIZE; y++)
-         for (x = 0; x < TILE_SIZE; x++)
-            for (i = 0; i < 4; ++i)
-               TILE_PIXEL(tile->data.color, x, y, i) = c[i];
-   }
-}
-
-
-/**
- * Set a tile to a solid value/color.
+ * Set a tile to a solid color.
  */
 static void
 clear_tile(struct llvmpipe_cached_tile *tile,
-           enum pipe_format format,
-           uint clear_value)
+           uint8_t clear_color[4])
 {
-   uint i, j;
-
-   if (clear_value == 0) {
-      memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
+   if (clear_color[0] == clear_color[1] &&
+       clear_color[1] == clear_color[2] &&
+       clear_color[2] == clear_color[3]) {
+      memset(tile->color, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
    }
    else {
-      for (i = 0; i < TILE_SIZE; i++) {
-         for (j = 0; j < TILE_SIZE; j++) {
-            tile->data.color32[i][j] = clear_value;
-         }
-      }
+      uint x, y, chan;
+      for (y = 0; y < TILE_SIZE; y++)
+         for (x = 0; x < TILE_SIZE; x++)
+            for (chan = 0; chan < 4; ++chan)
+               TILE_PIXEL(tile->color, x, y, chan) = clear_color[chan];
    }
 }
 
@@ -253,13 +226,11 @@ static void
 lp_tile_cache_flush_clear(struct llvmpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
+   struct pipe_screen *screen = pt->texture->screen;
    const uint w = tc->transfer->width;
    const uint h = tc->transfer->height;
    uint x, y;
    uint numCleared = 0;
-
-   /* clear the scratch tile to the clear value */
-   clear_tile(&tc->tile, pt->format, tc->clear_val);
 
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
@@ -267,9 +238,21 @@ lp_tile_cache_flush_clear(struct llvmpipe_tile_cache *tc)
          union tile_address addr = tile_address(x, y, 0, 0, 0);
 
          if (is_clear_flag_set(tc->clear_flags, addr)) {
-            pipe_put_tile_raw(pt,
-                              x, y, TILE_SIZE, TILE_SIZE,
-                              tc->tile.data.color32, 0/*STRIDE*/);
+            unsigned tw = TILE_SIZE;
+            unsigned th = TILE_SIZE;
+            void *dst;
+
+            if (pipe_clip_tile(x, y, &tw, &th, pt))
+               continue;
+
+            dst = screen->transfer_map(screen, pt);
+            assert(dst);
+            if(!dst)
+               continue;
+
+            pipe_fill_rect(dst, &pt->block, pt->stride,
+                           x, y, tw,  th,
+                           tc->clear_val);
 
             /* do this? */
             clear_clear_flag(tc->clear_flags, addr);
@@ -302,7 +285,7 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
             lp_put_tile_rgba_soa(pt,
                                  tile->addr.bits.x * TILE_SIZE,
                                  tile->addr.bits.y * TILE_SIZE,
-                                 tile->data.color);
+                                 tile->color);
             tile->addr.bits.invalid = 1;  /* mark as empty */
             inuse++;
          }
@@ -348,14 +331,14 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
          lp_put_tile_rgba_soa(pt,
                               tile->addr.bits.x * TILE_SIZE,
                               tile->addr.bits.y * TILE_SIZE,
-                              tile->data.color);
+                              tile->color);
       }
 
       tile->addr = addr;
 
       if (is_clear_flag_set(tc->clear_flags, addr)) {
          /* don't get tile from framebuffer, just clear it */
-         clear_tile_rgba(tile, pt->format, tc->clear_color);
+         clear_tile(tile, tc->clear_color);
          clear_clear_flag(tc->clear_flags, addr);
       }
       else {
@@ -363,13 +346,13 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
          lp_get_tile_rgba_soa(pt,
                               tile->addr.bits.x * TILE_SIZE,
                               tile->addr.bits.y * TILE_SIZE,
-                              tile->data.color);
+                              tile->color);
       }
    }
 
    tc->last_tile = tile;
 
-   return tile->data.color;
+   return tile->color;
 }
 
 
@@ -402,12 +385,11 @@ void
 lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue)
 {
+   unsigned chan;
    uint pos;
 
-   tc->clear_color[0] = rgba[0];
-   tc->clear_color[1] = rgba[1];
-   tc->clear_color[2] = rgba[2];
-   tc->clear_color[3] = rgba[3];
+   for(chan = 0; chan < 4; ++chan)
+      tc->clear_color[chan] = float_to_ubyte(rgba[chan]);
 
    tc->clear_val = clearValue;
 

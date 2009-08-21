@@ -75,7 +75,6 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
-      static const float zero[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
       struct pipe_surface *ps = llvmpipe->framebuffer.zsbuf;
 
       cv = util_pack_z_stencil(ps->format, depth, stencil);

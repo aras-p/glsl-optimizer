@@ -58,14 +58,8 @@ union tile_address {
 struct llvmpipe_cached_tile
 {
    union tile_address addr;
-   union {
-
-      /** color in SOA format */
-      uint8_t ALIGN16_ATTRIB color[TILE_SIZE*TILE_SIZE*NUM_CHANNELS];
-
-      uint color32[TILE_SIZE][TILE_SIZE];
-      ubyte any[1];
-   } data;
+   /** color in SOA format */
+   uint8_t ALIGN16_ATTRIB color[TILE_SIZE*TILE_SIZE*NUM_CHANNELS];
 };
 
 #define NUM_ENTRIES 50
@@ -88,14 +82,12 @@ struct llvmpipe_tile_cache
 
    struct llvmpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
-   float clear_color[4];  /**< for color bufs */
+   uint8_t clear_color[4];  /**< for color bufs */
    uint clear_val;        /**< for z+stencil, or packed color clear value */
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;
    int tex_face, tex_level, tex_z;
-
-   struct llvmpipe_cached_tile tile;  /**< scratch tile for clears */
 
    struct llvmpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
 };
@@ -159,7 +151,7 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
    union tile_address addr = tile_address( x, y, 0, 0, 0 );
 
    if (tc->last_tile->addr.value == addr.value)
-      return &tc->last_tile->data.color;
+      return &tc->last_tile->color;
 
    return lp_find_cached_tile( tc, addr );
 }
