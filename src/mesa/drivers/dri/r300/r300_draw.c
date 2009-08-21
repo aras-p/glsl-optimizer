@@ -39,6 +39,7 @@
 #include "r300_render.h"
 #include "r300_state.h"
 #include "r300_tex.h"
+#include "r300_cmdbuf.h"
 
 #include "radeon_buffer_objects.h"
 
@@ -567,6 +568,34 @@ static void r300FreeData(GLcontext *ctx)
 	}
 }
 
+static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
+{
+	struct r300_context *r300 = R300_CONTEXT(ctx);
+	struct r300_vertex_buffer *vbuf = &r300->vbuf;
+	int flushed;
+	GLuint dwords;
+	GLuint state_size;
+
+	dwords = 2*CACHE_FLUSH_BUFSZ;
+	dwords += PRE_EMIT_STATE_BUFSZ;
+	dwords += (AOS_BUFSZ(vbuf->num_attribs)
+			+ SCISSORS_BUFSZ
+			+ FIREAOS_BUFSZ )*nr_prims;
+
+	state_size= radeonCountEmitSize(&r300->radeon);
+	flushed = rcommonEnsureCmdBufSpace(&r300->radeon,
+			dwords + state_size,
+			__FUNCTION__);
+	if (flushed)
+		dwords += radeonCountEmitSize(&r300->radeon);
+	else
+		dwords += state_size;
+
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+	return dwords;
+}
+
 static GLboolean r300TryDrawPrims(GLcontext *ctx,
 					 const struct gl_client_array *arrays[],
 					 const struct _mesa_prim *prim,
@@ -592,8 +621,6 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	/* ensure we have the cmd buf space in advance to cover
- 	 * the state + DMA AOS pointers */
 	rcommonEnsureCmdBufSpace(&r300->radeon,
                            r300->radeon.hw.max_state_size + (60*sizeof(int)),
                           __FUNCTION__);
@@ -606,6 +633,10 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	r300SetupVAP(ctx, r300->selected_vp->code.InputsRead, r300->selected_vp->code.OutputsWritten);
 
 	r300UpdateShaderStates(r300);
+
+	/* ensure we have the cmd buf space in advance to cover
+	 * the state + DMA AOS pointers */
+	r300PredictTryDrawPrimsSize(ctx, nr_prims);
 
 	r300SetupIndexBuffer(ctx, ib);
 

@@ -1189,14 +1189,16 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
  *
  * \param dwords The number of dwords we need to be free on the command buffer
  */
-void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
+int rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
 {
    if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size
 	 || radeon_cs_need_flush(rmesa->cmdbuf.cs)) {
       /* If we try to flush empty buffer there is too big rendering operation. */
       assert(rmesa->cmdbuf.cs->cdw);
       rcommonFlushCmdBuf(rmesa, caller);
+      return GL_TRUE;
    }
+   return GL_FALSE;
 }
 
 void rcommonInitCmdBuf(radeonContextPtr rmesa)

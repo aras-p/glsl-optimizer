@@ -38,6 +38,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
+#define CACHE_FLUSH_BUFSZ      (4*2)
+#define PRE_EMIT_STATE_BUFSZ   (2+2)
+#define AOS_BUFSZ(nr)          (3+(nr >>1)*3 + (nr&1)*2 + (nr*2))
+#define FIREAOS_BUFSZ          (3)
+#define SCISSORS_BUFSZ         (3)
+
 extern void r300InitCmdBuf(r300ContextPtr r300);
 void r300_emit_scissor(GLcontext *ctx);
 
