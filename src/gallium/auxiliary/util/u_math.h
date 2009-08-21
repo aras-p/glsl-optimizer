@@ -273,6 +273,14 @@ util_fast_pow(float x, float y)
    return util_fast_exp2(util_fast_log2(x) * y);
 }
 
+/* Note that this counts zero as a power of two.
+ */
+static INLINE boolean
+util_is_power_of_two( unsigned v )
+{
+   return (v & (v-1)) == 0;
+}
+
 
 
 /**
