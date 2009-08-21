@@ -388,7 +388,7 @@ static void radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
 
   {
     /* count the prediction for state size */
-    space_required = radeonCountEmitSize( &rmesa->radeon );
+    space_required = radeonCountStateEmitSize( &rmesa->radeon );
     /* tcl may be changed in radeonEmitArrays so account for it if not dirty */
     if (!rmesa->hw.tcl.dirty)
       space_required += rmesa->hw.tcl.check( rmesa->radeon.glCtx, &rmesa->hw.tcl );

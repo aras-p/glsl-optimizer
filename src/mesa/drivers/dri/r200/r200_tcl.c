@@ -387,7 +387,7 @@ static void r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
 
   {
     /* count the prediction for state size */
-    space_required = radeonCountEmitSize( &rmesa->radeon );
+    space_required = radeonCountStateEmitSize( &rmesa->radeon );
     /* vtx may be changed in r200EmitArrays so account for it if not dirty */
     if (!rmesa->hw.vtx.dirty)
       space_required += rmesa->hw.vtx.check(rmesa->radeon.glCtx, &rmesa->hw.vtx);

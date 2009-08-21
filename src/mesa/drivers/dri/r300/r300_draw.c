@@ -582,12 +582,12 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
 		+ SCISSORS_BUFSZ
 		+ FIREAOS_BUFSZ )*nr_prims;
 
-	state_size= radeonCountEmitSize(&r300->radeon);
+	state_size = radeonCountStateEmitSize(&r300->radeon);
 	flushed = rcommonEnsureCmdBufSpace(&r300->radeon,
 			dwords + state_size,
 			__FUNCTION__);
 	if (flushed)
-		dwords += radeonCountEmitSize(&r300->radeon);
+		dwords += radeonCountStateEmitSize(&r300->radeon);
 	else
 		dwords += state_size;
 

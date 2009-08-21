@@ -895,7 +895,7 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 	ctx->Driver.Viewport = old_viewport;
 }
 
-static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state)
+static void radeon_print_state_atom_prekmm(radeonContextPtr radeon, struct radeon_state_atom *state)
 {
 	int i, j, reg;
 	int dwords = (*state->check) (radeon->glCtx, state);
@@ -920,13 +920,22 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	}
 }
 
-static void radeon_print_state_atom_kmm(radeonContextPtr radeon, struct radeon_state_atom *state)
+static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state)
 {
 	int i, j, reg, count;
-	int dwords = (*state->check) (radeon->glCtx, state);
+	int dwords;
 	uint32_t packet0;
+	if (! (DEBUG_CMDBUF || RADEON_DEBUG & DEBUG_STATE))
+		return;
 
-	fprintf(stderr, "  emit %s %d/%d\n", state->name, state->cmd_size, dwords);
+	if (!radeon->radeonScreen->kernel_mm) {
+		radeon_print_state_atom_prekmm(radeon, state);
+		return;
+	}
+
+	dwords = (*state->check) (radeon->glCtx, state);
+
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
 		for (i = 0; i < state->cmd_size;) {
@@ -949,60 +958,68 @@ static void radeon_print_state_atom_kmm(radeonContextPtr radeon, struct radeon_s
 /**
  * Count total size for next state emit.
  **/
-GLuint radeonCountEmitSize(radeonContextPtr radeon)
+GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 {
-   struct radeon_state_atom *atom;
-   int dwords = 0;
-   /* check if we are going to emit full state */
-   if (radeon->cmdbuf.cs->cdw && !radeon->hw.all_dirty) {
-      if (!radeon->hw.is_dirty)
-	 return dwords;
-      foreach(atom, &radeon->hw.atomlist) {
-         if (atom->dirty)
-            dwords += atom->check(radeon->glCtx, atom);
-      }
-   } else {
-      foreach(atom, &radeon->hw.atomlist) {
-	 dwords += atom->check(radeon->glCtx, atom);
-      }
-   }
-   return dwords;
+	struct radeon_state_atom *atom;
+	int dwords = 0;
+	/* check if we are going to emit full state */
+	if (radeon->cmdbuf.cs->cdw && !radeon->hw.all_dirty) {
+		if (!radeon->hw.is_dirty)
+			return dwords;
+		foreach(atom, &radeon->hw.atomlist) {
+			if (atom->dirty)
+				dwords += atom->check(radeon->glCtx, atom);
+		}
+	} else {
+		foreach(atom, &radeon->hw.atomlist) {
+			dwords += atom->check(radeon->glCtx, atom);
+		}
+	}
+	return dwords;
 }
 
-static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
+static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state_atom *atom)
 {
 	BATCH_LOCALS(radeon);
-	struct radeon_state_atom *atom;
 	int dwords;
+
+	dwords = (*atom->check) (radeon->glCtx, atom);
+	if (dwords) {
+
+		radeon_print_state_atom(radeon, atom);
+
+		if (atom->emit) {
+			(*atom->emit)(radeon->glCtx, atom);
+		} else {
+			BEGIN_BATCH_NO_AUTOSTATE(dwords);
+			OUT_BATCH_TABLE(atom->cmd, dwords);
+			END_BATCH();
+		}
+	} else {
+		if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+			fprintf(stderr, "  skip state %s\n",
+					atom->name);
+		}
+	}
+	atom->dirty = GL_FALSE;
+
+}
+
+static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean emitAll)
+{
+	struct radeon_state_atom *atom;
 
 	if (radeon->vtbl.pre_emit_atoms)
 		radeon->vtbl.pre_emit_atoms(radeon);
 
 	/* Emit actual atoms */
-	foreach(atom, &radeon->hw.atomlist) {
-		if ((atom->dirty || radeon->hw.all_dirty) == dirty) {
-			dwords = (*atom->check) (radeon->glCtx, atom);
-			if (dwords) {
-				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					if (radeon->radeonScreen->kernel_mm)
-						radeon_print_state_atom_kmm(radeon, atom);
-					else
-						radeon_print_state_atom(radeon, atom);
-				}
-				if (atom->emit) {
-					(*atom->emit)(radeon->glCtx, atom);
-				} else {
-					BEGIN_BATCH_NO_AUTOSTATE(dwords);
-					OUT_BATCH_TABLE(atom->cmd, dwords);
-					END_BATCH();
-				}
-				atom->dirty = GL_FALSE;
-			} else {
-				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					fprintf(stderr, "  skip state %s\n",
-						atom->name);
-				}
-			}
+	if (radeon->hw.all_dirty || emitAll) {
+		foreach(atom, &radeon->hw.atomlist)
+			radeon_emit_atom( radeon, atom );
+	} else {
+		foreach(atom, &radeon->hw.atomlist) {
+			if ( atom->dirty )
+				radeon_emit_atom( radeon, atom );
 		}
 	}
 
@@ -1036,16 +1053,17 @@ void radeonEmitState(radeonContextPtr radeon)
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
+		radeonEmitAtoms(radeon, GL_TRUE);
+	} else {
+
+		if (RADEON_DEBUG & DEBUG_STATE)
+			fprintf(stderr, "Begin dirty state\n");
+
 		radeonEmitAtoms(radeon, GL_FALSE);
 	}
 
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "Begin dirty state\n");
-
-	radeonEmitAtoms(radeon, GL_TRUE);
 	radeon->hw.is_dirty = GL_FALSE;
 	radeon->hw.all_dirty = GL_FALSE;
-
 }
 
 

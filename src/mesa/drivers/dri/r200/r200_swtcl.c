@@ -269,7 +269,7 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			    radeonCountEmitSize(&rmesa->radeon) + (12*sizeof(int)),
+			    radeonCountStateEmitSize(&rmesa->radeon) + (12*sizeof(int)),
 			    __FUNCTION__);
 
 

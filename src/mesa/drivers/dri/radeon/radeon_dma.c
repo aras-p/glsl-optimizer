@@ -431,7 +431,7 @@ restart:
         if (!rmesa->dma.flush) {
 		/* make sure we have enough space to use this in cmdbuf */
    		rcommonEnsureCmdBufSpace(rmesa,
-			      radeonCountEmitSize( rmesa ) + (20*sizeof(int)),
+			      radeonCountStateEmitSize( rmesa ) + (20*sizeof(int)),
 			      __FUNCTION__);
 		/* if cmdbuf flushed DMA restart */
 		if (is_empty_list(&rmesa->dma.reserved))
