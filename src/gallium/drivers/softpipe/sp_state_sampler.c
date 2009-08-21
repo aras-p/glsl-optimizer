@@ -32,14 +32,13 @@
 #include "util/u_memory.h"
 
 #include "draw/draw_context.h"
+#include "draw/draw_context.h"
 
-#include "sp_context.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_sample.h"
-#include "draw/draw_context.h"
 
 
 struct sp_sampler {
