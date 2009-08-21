@@ -1476,6 +1476,7 @@ static compute_lambda_func get_lambda_func( const union sp_sampler_key key )
    case PIPE_TEXTURE_1D:
       return compute_lambda_1d;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
       return compute_lambda_2d;
    case PIPE_TEXTURE_3D:
       return compute_lambda_3d;
