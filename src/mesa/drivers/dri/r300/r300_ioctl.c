@@ -507,7 +507,15 @@ static void r300EmitClearState(GLcontext * ctx)
 			R500_ALU_RGBA_A_SWIZ_0;
 
 		r500fp.cmd[7] = 0;
-		emit_r500fp(ctx, &r500fp);
+		if (r300->radeon.radeonScreen->kernel_mm) {
+			emit_r500fp(ctx, &r500fp);
+		} else {
+			int dwords = r500fp.check(ctx,&r500fp);
+			BEGIN_BATCH_NO_AUTOSTATE(dwords);
+			OUT_BATCH_TABLE(r500fp.cmd, dwords);
+			END_BATCH();
+		}
+
 	}
 
 	BEGIN_BATCH(2);
@@ -593,14 +601,19 @@ static void r300EmitClearState(GLcontext * ctx)
                                       PVS_SRC_REG_INPUT, NEGATE_NONE);
 		vpu.cmd[8] = 0x0;
 
-		{
+		if (r300->radeon.radeonScreen->kernel_mm) {
 			int dwords = r300->hw.vap_flush.check(ctx,&r300->hw.vap_flush);
 			BEGIN_BATCH_NO_AUTOSTATE(dwords);
 			OUT_BATCH_TABLE(r300->hw.vap_flush.cmd, dwords);
 			END_BATCH();
+			emit_vpu(ctx, &vpu);
+		} else {
+			int dwords = vpu.check(ctx,&vpu);
+			BEGIN_BATCH_NO_AUTOSTATE(dwords);
+			OUT_BATCH_TABLE(vpu.cmd, dwords);
+			END_BATCH();
 		}
 
-		emit_vpu(ctx, &vpu);
 	}
 }
 
