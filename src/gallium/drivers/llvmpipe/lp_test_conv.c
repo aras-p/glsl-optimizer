@@ -35,6 +35,7 @@
 
 
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 #include "lp_bld_conv.h"
 #include "lp_bld_debug.h"
 #include "lp_test.h"
@@ -160,6 +161,7 @@ test_one(unsigned verbose,
    double cycles_avg = 0.0;
    unsigned num_srcs;
    unsigned num_dsts;
+   double eps;
    unsigned i, j;
 
    if(verbose >= 1)
@@ -178,6 +180,8 @@ test_one(unsigned verbose,
 
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
+
+   eps = MAX2(lp_const_eps(src_type), lp_const_eps(dst_type));
 
    module = LLVMModuleCreateWithName("test");
 
@@ -248,7 +252,7 @@ test_one(unsigned verbose,
       cycles[i] = end_counter - start_counter;
 
       for(j = 0; j < num_dsts; ++j) {
-         if(!compare_vec(dst_type, dst + j*dst_stride, ref + j*dst_stride))
+         if(!compare_vec_with_eps(dst_type, dst + j*dst_stride, ref + j*dst_stride, eps))
             success = FALSE;
       }
 
@@ -263,8 +267,8 @@ test_one(unsigned verbose,
             fprintf(stderr, "\n");
          }
 
-#if 0
-         fprintf(stderr, "  Ref:  ", j);
+#if 1
+         fprintf(stderr, "  Ref: ");
          for(j = 0; j < src_type.length*num_srcs; ++j)
             fprintf(stderr, " %f", fref[j]);
          fprintf(stderr, "\n");

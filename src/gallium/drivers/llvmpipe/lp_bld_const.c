@@ -33,6 +33,7 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
+#include <float.h>
 
 #include "util/u_debug.h"
 
@@ -89,6 +90,27 @@ lp_const_scale(union lp_type type)
    assert((unsigned long long)dscale == llscale);
 
    return dscale;
+}
+
+
+double
+lp_const_eps(union lp_type type)
+{
+   if (type.floating) {
+      switch(type.width) {
+      case 32:
+         return FLT_EPSILON;
+      case 64:
+         return DBL_EPSILON;
+      default:
+         assert(0);
+         return 0.0;
+      }
+   }
+   else {
+      double scale = lp_const_scale(type);
+      return 1.0/scale;
+   }
 }
 
 

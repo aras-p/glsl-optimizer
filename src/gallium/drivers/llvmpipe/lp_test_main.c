@@ -120,6 +120,8 @@ write_elem(union lp_type type, void *dst, unsigned index, double value)
    assert(index < type.length);
    if(!type.sign && value < 0.0)
       value = 0.0;
+   if(type.norm && value < -1.0)
+      value = -1.0;
    if(type.norm && value > 1.0)
       value = 1.0;
    if (type.floating) {
@@ -136,9 +138,10 @@ write_elem(union lp_type type, void *dst, unsigned index, double value)
    }
    else {
       double scale = lp_const_scale(type);
-      long long lvalue = (long long)round(value*scale);
+      value = round(value*scale);
       if(type.sign) {
-         lvalue = MIN2(lvalue, (1 << (type.width - 1)) - 1);
+         long long lvalue = (long long)value;
+         lvalue = MIN2(lvalue, ((long long)1 << (type.width - 1)) - 1);
          switch(type.width) {
          case 8:
             *((int8_t *)dst + index) = (int8_t)lvalue;
@@ -150,14 +153,15 @@ write_elem(union lp_type type, void *dst, unsigned index, double value)
             *((int32_t *)dst + index) = (int32_t)lvalue;
             break;
          case 64:
-            *((int64_t *)dst + index) = (int32_t)lvalue;
+            *((int64_t *)dst + index) = (int64_t)lvalue;
             break;
          default:
             assert(0);
          }
       }
       else {
-         lvalue = MIN2(lvalue, (1 << type.width) - 1);
+         unsigned long long lvalue = (long long)value;
+         lvalue = MIN2(lvalue, ((unsigned long long)1 << type.width) - 1);
          switch(type.width) {
          case 8:
             *((uint8_t *)dst + index) = (uint8_t)lvalue;
@@ -239,30 +243,9 @@ random_vec(union lp_type type, void *dst)
 
 
 boolean
-compare_vec(union lp_type type, const void *res, const void *ref)
+compare_vec_with_eps(union lp_type type, const void *res, const void *ref, double eps)
 {
-   double eps;
    unsigned i;
-
-   if (type.floating) {
-      switch(type.width) {
-      case 32:
-         eps = FLT_EPSILON;
-         break;
-      case 64:
-         eps = DBL_EPSILON;
-         break;
-      default:
-         assert(0);
-         eps = 0.0;
-         break;
-      }
-   }
-   else {
-      double scale = lp_const_scale(type);
-      eps = 1.0/scale;
-   }
-
    for (i = 0; i < type.length; ++i) {
       double res_elem = read_elem(type, res, i);
       double ref_elem = read_elem(type, ref, i);
@@ -272,6 +255,14 @@ compare_vec(union lp_type type, const void *res, const void *ref)
    }
 
    return TRUE;
+}
+
+
+boolean
+compare_vec(union lp_type type, const void *res, const void *ref)
+{
+   double eps = lp_const_eps(type);
+   return compare_vec_with_eps(type, res, ref, eps);
 }
 
 
@@ -298,7 +289,7 @@ dump_vec(FILE *fp, union lp_type type, const void *src)
          fprintf(fp, "%f", value);
       }
       else {
-         if(type.sign) {
+         if(type.sign && !type.norm) {
             long long value;
             const char *format;
             switch(type.width) {
@@ -331,19 +322,19 @@ dump_vec(FILE *fp, union lp_type type, const void *src)
             switch(type.width) {
             case 8:
                value = *((const uint8_t *)src + i);
-               format = "%4llu";
+               format = type.norm ? "%2x" : "%4llu";
                break;
             case 16:
                value = *((const uint16_t *)src + i);
-               format = "%6llu";
+               format = type.norm ? "%4x" : "%6llx";
                break;
             case 32:
                value = *((const uint32_t *)src + i);
-               format = "%11llu";
+               format = type.norm ? "%8x" : "%11llx";
                break;
             case 64:
                value = *((const uint64_t *)src + i);
-               format = "%21llu";
+               format = type.norm ? "%16x" : "%21llx";
                break;
             default:
                assert(0);

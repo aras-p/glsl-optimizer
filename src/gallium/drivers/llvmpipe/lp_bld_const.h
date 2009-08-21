@@ -57,6 +57,10 @@ double
 lp_const_scale(union lp_type type);
 
 
+double
+lp_const_eps(union lp_type type);
+
+
 LLVMValueRef
 lp_build_undef(union lp_type type);
 
