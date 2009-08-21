@@ -62,7 +62,8 @@ union sp_sampler_key {
       unsigned target:3;
       unsigned is_pot:1;
       unsigned processor:2;
-      unsigned pad:26;
+      unsigned unit:4;
+      unsigned pad:22;
    } bits;
    unsigned value;
 };

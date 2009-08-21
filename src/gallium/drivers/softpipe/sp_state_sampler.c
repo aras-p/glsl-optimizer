@@ -123,9 +123,19 @@ softpipe_set_sampler_textures(struct pipe_context *pipe,
 }
 
 
-
+/**
+ * Find/create an sp_sampler_varient object for sampling the given texture,
+ * sampler and tex unit.
+ *
+ * Note that the tex unit is significant.  We can't re-use a sampler
+ * varient for multiple texture units because the sampler varient contains
+ * the texture object pointer.  If the texture object pointer were stored
+ * somewhere outside the sampler varient, we could re-use samplers for
+ * multiple texture units.
+ */
 static struct sp_sampler_varient *
-get_sampler_varient( struct sp_sampler *sampler,
+get_sampler_varient( unsigned unit,
+                     struct sp_sampler *sampler,
                      struct pipe_texture *texture,
                      unsigned processor )
 {
@@ -133,9 +143,13 @@ get_sampler_varient( struct sp_sampler *sampler,
    struct sp_sampler_varient *v = NULL;
    union sp_sampler_key key;
 
+   /* if this fails, widen the key.unit field and update this assertion */
+   assert(PIPE_MAX_SAMPLERS <= 16);
+
    key.bits.target = sp_texture->base.target;
    key.bits.is_pot = sp_texture->pot;
    key.bits.processor = processor;
+   key.bits.unit = unit;
    key.bits.pad = 0;
 
    if (sampler->current && 
@@ -174,7 +188,8 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
    for (i = 0; i <= softpipe->vs->max_sampler; i++) {
       if (softpipe->sampler[i]) {
          softpipe->tgsi.vert_samplers_list[i] = 
-            get_sampler_varient( sp_sampler(softpipe->sampler[i]),
+            get_sampler_varient( i,
+                                 sp_sampler(softpipe->sampler[i]),
                                  softpipe->texture[i],
                                  TGSI_PROCESSOR_VERTEX );
 
@@ -187,7 +202,8 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
       if (softpipe->sampler[i]) {
          softpipe->tgsi.frag_samplers_list[i] =
-            get_sampler_varient( sp_sampler(softpipe->sampler[i]),
+            get_sampler_varient( i,
+                                 sp_sampler(softpipe->sampler[i]),
                                  softpipe->texture[i],
                                  TGSI_PROCESSOR_FRAGMENT );
 

@@ -1545,6 +1545,9 @@ static filter_func get_img_filter( const union sp_sampler_key key,
 }
 
 
+/**
+ * Bind the given texture object and texture cache to the sampler varient.
+ */
 void
 sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
                                  struct softpipe_tile_cache *tex_cache,
