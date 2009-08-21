@@ -611,6 +611,9 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300AllocDmaRegions(ctx, arrays, max_index + 1);
 
+	if (r300->fallback)
+		return GL_FALSE;
+
 	r300EmitCacheFlush(r300);
 	radeonEmitState(&r300->radeon);
 
