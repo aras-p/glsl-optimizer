@@ -41,12 +41,12 @@
 #include "lp_bld_alpha.h"
 
 
-LLVMValueRef
+void
 lp_build_alpha_test(LLVMBuilderRef builder,
                     const struct pipe_alpha_state *state,
                     union lp_type type,
-                    LLVMValueRef alpha,
-                    LLVMValueRef mask)
+                    LLVMValueRef *mask,
+                    LLVMValueRef alpha)
 {
    struct lp_build_context bld;
 
@@ -58,11 +58,6 @@ lp_build_alpha_test(LLVMBuilderRef builder,
 
       lp_build_name(test, "alpha_mask");
 
-      if(mask)
-         mask = LLVMBuildAnd(builder, mask, test, "");
-      else
-         mask = test;
+      lp_build_mask_and(builder, mask, test);
    }
-
-   return mask;
 }

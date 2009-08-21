@@ -88,7 +88,7 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
-   LLVMValueRef mask;
+   LLVMValueRef *mask;
 
    /** Coords/texels store */
    LLVMValueRef store_ptr;
@@ -395,10 +395,7 @@ emit_kil(
 
          mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
 
-         if(bld->mask)
-            bld->mask = LLVMBuildAnd(bld->base.builder, bld->mask, mask, "");
-         else
-            bld->mask = mask;
+         lp_build_mask_and(bld->base.builder, bld->mask, mask);
       }
    }
 }
@@ -1409,19 +1406,12 @@ emit_declaration(
    }
 }
 
-/**
- * Translate a TGSI vertex/fragment shader to SSE2 code.
- * Slightly different things are done for vertex vs. fragment shaders.
- *
- * \param tokens  the TGSI input shader
- * \param bld  the output SSE code/function
- * \param immediates  buffer to place immediates, later passed to SSE bld
- * \param return  1 for success, 0 if translation failed
- */
-LLVMValueRef
+
+void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
+                  LLVMValueRef *mask,
                   LLVMValueRef *pos,
                   LLVMValueRef a0_ptr,
                   LLVMValueRef dadx_ptr,
@@ -1438,6 +1428,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
+   bld.mask = mask;
    bld.x = pos[0];
    bld.y = pos[1];
    bld.w = pos[3];
@@ -1490,7 +1481,5 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    }
 
    tgsi_parse_free( &parse );
-
-   return bld.mask;
 }
 

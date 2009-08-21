@@ -45,6 +45,15 @@ struct lp_build_context;
 
 
 /**
+ * Bitwise AND the mask with the given value, if a previous mask was set.
+ */
+void
+lp_build_mask_and(LLVMBuilderRef builder,
+                  LLVMValueRef *mask,
+                  LLVMValueRef value);
+
+
+/**
  * @param func is one of PIPE_FUNC_xxx
  */
 LLVMValueRef

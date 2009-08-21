@@ -210,11 +210,13 @@ shader_generate(struct llvmpipe_screen *screen,
 
    setup_pos_vector(builder, x, y, a0_ptr, dadx_ptr, dady_ptr, pos);
 
+   mask = LLVMBuildLoad(builder, mask_ptr, "");
+
    memset(outputs, 0, sizeof outputs);
 
-   mask = lp_build_tgsi_soa(builder, tokens, type,
-                            pos, a0_ptr, dadx_ptr, dady_ptr,
-                            consts_ptr, outputs, samplers_ptr);
+   lp_build_tgsi_soa(builder, tokens, type, &mask,
+                     pos, a0_ptr, dadx_ptr, dady_ptr,
+                     consts_ptr, outputs, samplers_ptr);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -233,7 +235,8 @@ shader_generate(struct llvmpipe_screen *screen,
                   /* Alpha test */
                   /* XXX: should the alpha reference value be passed separately? */
                   if(cbuf == 0 && chan == 3)
-                     mask = lp_build_alpha_test(builder, alpha, type, outputs[attrib][chan], mask);
+                     lp_build_alpha_test(builder, &key->alpha, type, &mask,
+                                         outputs[attrib][chan]);
 
                   break;
                }

@@ -33,6 +33,18 @@
 #include "lp_bld_logic.h"
 
 
+void
+lp_build_mask_and(LLVMBuilderRef builder,
+                  LLVMValueRef *mask,
+                  LLVMValueRef value)
+{
+   if(*mask)
+      *mask = LLVMBuildAnd(builder, *mask, value, "");
+   else
+      *mask = value;
+}
+
+
 LLVMValueRef
 lp_build_cmp(struct lp_build_context *bld,
              unsigned func,
