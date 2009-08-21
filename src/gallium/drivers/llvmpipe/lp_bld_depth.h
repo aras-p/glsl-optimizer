@@ -42,6 +42,7 @@
 struct pipe_depth_state;
 struct util_format_description;
 union lp_type;
+struct lp_build_mask_context;
 
 
 /**
@@ -57,7 +58,7 @@ lp_build_depth_test(LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,
                     union lp_type type,
                     const struct util_format_description *format_desc,
-                    LLVMValueRef *mask,
+                    struct lp_build_mask_context *mask,
                     LLVMValueRef src,
                     LLVMValueRef dst_ptr);
 

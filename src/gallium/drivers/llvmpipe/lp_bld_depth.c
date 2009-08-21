@@ -37,6 +37,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_logic.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_depth.h"
 
@@ -83,7 +84,7 @@ lp_build_depth_test(LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,
                     union lp_type type,
                     const struct util_format_description *format_desc,
-                    LLVMValueRef *mask,
+                    struct lp_build_mask_context *mask,
                     LLVMValueRef src,
                     LLVMValueRef dst_ptr)
 {
@@ -165,13 +166,13 @@ lp_build_depth_test(LLVMBuilderRef builder,
    lp_build_name(dst, "zsbuf.z");
 
    test = lp_build_cmp(&bld, state->func, src, dst);
-   lp_build_mask_and(bld.builder, mask, test);
+   lp_build_mask_update(mask, test);
 
    if(state->writemask) {
       if(z_bitmask)
-         z_bitmask = LLVMBuildAnd(builder, *mask, z_bitmask, "");
+         z_bitmask = LLVMBuildAnd(builder, mask->value, z_bitmask, "");
       else
-         z_bitmask = *mask;
+         z_bitmask = mask->value;
 
       dst = lp_build_select(&bld, z_bitmask, src, dst);
       LLVMBuildStore(builder, dst, dst_ptr);

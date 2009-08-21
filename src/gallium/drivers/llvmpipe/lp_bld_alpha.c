@@ -37,6 +37,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_logic.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_alpha.h"
 
@@ -45,7 +46,7 @@ void
 lp_build_alpha_test(LLVMBuilderRef builder,
                     const struct pipe_alpha_state *state,
                     union lp_type type,
-                    LLVMValueRef *mask,
+                    struct lp_build_mask_context *mask,
                     LLVMValueRef alpha)
 {
    struct lp_build_context bld;
@@ -58,6 +59,6 @@ lp_build_alpha_test(LLVMBuilderRef builder,
 
       lp_build_name(test, "alpha_mask");
 
-      lp_build_mask_and(builder, mask, test);
+      lp_build_mask_update(mask, test);
    }
 }

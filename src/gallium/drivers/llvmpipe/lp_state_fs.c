@@ -42,6 +42,7 @@
 #include "lp_bld_tgsi.h"
 #include "lp_bld_alpha.h"
 #include "lp_bld_swizzle.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_debug.h"
 #include "lp_screen.h"
 #include "lp_context.h"
@@ -113,7 +114,7 @@ depth_test_generate(struct llvmpipe_context *lp,
                     LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,
                     union lp_type src_type,
-                    LLVMValueRef *mask,
+                    struct lp_build_mask_context *mask,
                     LLVMValueRef src,
                     LLVMValueRef dst_ptr)
 {
@@ -178,7 +179,8 @@ shader_generate(struct llvmpipe_context *lp,
    LLVMBuilderRef builder;
    LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
-   LLVMValueRef mask;
+   struct lp_build_mask_context mask;
+   boolean early_depth_test;
    LLVMValueRef fetch_texel;
    unsigned i;
    unsigned attrib;
@@ -260,16 +262,20 @@ shader_generate(struct llvmpipe_context *lp,
 
    setup_pos_vector(builder, x, y, a0_ptr, dadx_ptr, dady_ptr, pos);
 
-   mask = LLVMBuildLoad(builder, mask_ptr, "");
+   lp_build_mask_begin(&mask, builder, type,
+                       LLVMBuildLoad(builder, mask_ptr, ""));
 
-   /* FIXME:
    early_depth_test =
       lp->depth_stencil->depth.enabled &&
       lp->framebuffer.zsbuf &&
       !lp->depth_stencil->alpha.enabled &&
       !lp->fs->info.uses_kill &&
       !lp->fs->info.writes_z;
-   */
+
+   if(early_depth_test)
+      depth_test_generate(lp, builder, &key->depth,
+                          type, &mask,
+                          pos[2], depth_ptr);
 
    memset(outputs, 0, sizeof outputs);
 
@@ -294,7 +300,8 @@ shader_generate(struct llvmpipe_context *lp,
                   /* Alpha test */
                   /* XXX: should the alpha reference value be passed separately? */
                   if(cbuf == 0 && chan == 3)
-                     lp_build_alpha_test(builder, &key->alpha, type, &mask,
+                     lp_build_alpha_test(builder, &key->alpha, type,
+                                         &mask,
                                          outputs[attrib][chan]);
 
                   break;
@@ -309,12 +316,14 @@ shader_generate(struct llvmpipe_context *lp,
       }
    }
 
-   depth_test_generate(lp, builder, &key->depth,
-                       type, &mask,
-                       pos[2], depth_ptr);
+   if(!early_depth_test)
+      depth_test_generate(lp, builder, &key->depth,
+                          type, &mask,
+                          pos[2], depth_ptr);
 
-   if(mask)
-      LLVMBuildStore(builder, mask, mask_ptr);
+   lp_build_mask_end(&mask);
+   if(mask.value)
+      LLVMBuildStore(builder, mask.value, mask_ptr);
 
    LLVMBuildRetVoid(builder);;
 

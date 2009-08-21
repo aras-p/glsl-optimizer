@@ -34,6 +34,7 @@
 struct tgsi_token;
 union lp_type;
 struct lp_build_context;
+struct lp_build_mask_context;
 
 void PIPE_CDECL
 lp_build_tgsi_fetch_texel_soa( struct tgsi_sampler **samplers,
@@ -44,7 +45,7 @@ void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
-                  LLVMValueRef *mask,
+                  struct lp_build_mask_context *mask,
                   LLVMValueRef *pos,
                   LLVMValueRef a0_ptr,
                   LLVMValueRef dadx_ptr,

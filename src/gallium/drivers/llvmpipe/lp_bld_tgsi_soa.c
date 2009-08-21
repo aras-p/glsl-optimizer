@@ -41,6 +41,7 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_tgsi.h"
 #include "lp_bld_debug.h"
 
@@ -88,7 +89,7 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
-   LLVMValueRef *mask;
+   struct lp_build_mask_context *mask;
 
    /** Coords/texels store */
    LLVMValueRef store_ptr;
@@ -367,6 +368,7 @@ emit_kil(
 {
    const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[0];
    LLVMValueRef terms[NUM_CHANNELS];
+   LLVMValueRef mask;
    unsigned chan_index;
 
    memset(&terms, 0, sizeof terms);
@@ -389,15 +391,22 @@ emit_kil(
          terms[swizzle] =  emit_fetch(bld, inst, 0, chan_index );
    }
 
+   mask = NULL;
    FOR_EACH_CHANNEL( chan_index ) {
       if(terms[chan_index]) {
-         LLVMValueRef mask;
+         LLVMValueRef chan_mask;
 
-         mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
+         chan_mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
 
-         lp_build_mask_and(bld->base.builder, bld->mask, mask);
+         if(mask)
+            mask = LLVMBuildAnd(bld->base.builder, mask, chan_mask, "");
+         else
+            mask = chan_mask;
       }
    }
+
+   if(mask)
+      lp_build_mask_update(bld->mask, mask);
 }
 
 
@@ -1411,7 +1420,7 @@ void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
-                  LLVMValueRef *mask,
+                  struct lp_build_mask_context *mask,
                   LLVMValueRef *pos,
                   LLVMValueRef a0_ptr,
                   LLVMValueRef dadx_ptr,

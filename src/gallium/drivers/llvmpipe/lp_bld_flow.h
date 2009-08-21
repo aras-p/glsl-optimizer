@@ -38,6 +38,40 @@
 #include <llvm-c/Core.h>  
 
 
+union lp_type;
+
+
+struct lp_build_mask_context
+{
+   LLVMBuilderRef builder;
+
+   LLVMTypeRef reg_type;
+
+   LLVMValueRef value;
+
+   LLVMValueRef phi;
+
+   LLVMBasicBlockRef skip_block;
+};
+
+
+void
+lp_build_mask_begin(struct lp_build_mask_context *mask,
+                    LLVMBuilderRef builder,
+                    union lp_type type,
+                    LLVMValueRef value);
+
+/**
+ * Bitwise AND the mask with the given value, if a previous mask was set.
+ */
+void
+lp_build_mask_update(struct lp_build_mask_context *mask,
+                     LLVMValueRef value);
+
+LLVMValueRef
+lp_build_mask_end(struct lp_build_mask_context *mask);
+
+
 /**
  * LLVM's IR doesn't represent for-loops directly. Furthermore it
  * it requires creating code blocks, branches, phi variables, so it
