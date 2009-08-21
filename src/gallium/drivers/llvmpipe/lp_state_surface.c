@@ -67,14 +67,8 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 
    /* zbuf changing? */
    if (lp->framebuffer.zsbuf != fb->zsbuf) {
-      /* flush old */
-      lp_flush_tile_cache(lp->zsbuf_cache);
-
       /* assign new */
       lp->framebuffer.zsbuf = fb->zsbuf;
-
-      /* update cache */
-      lp_tile_cache_set_surface(lp->zsbuf_cache, fb->zsbuf);
 
       /* Tell draw module how deep the Z/depth buffer is */
       if (lp->framebuffer.zsbuf) {

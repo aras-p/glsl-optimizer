@@ -138,6 +138,11 @@ llvmpipe_is_format_supported( struct pipe_screen *screen,
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 
+   if(format == PIPE_FORMAT_Z16_UNORM)
+      return FALSE;
+   if(format == PIPE_FORMAT_S8_UNORM)
+      return FALSE;
+
    switch(format) {
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:

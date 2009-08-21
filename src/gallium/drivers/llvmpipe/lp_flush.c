@@ -80,8 +80,7 @@ llvmpipe_flush( struct pipe_context *pipe,
          if (llvmpipe->cbuf_cache[i])
             lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
 
-      if (llvmpipe->zsbuf_cache)
-         lp_flush_tile_cache(llvmpipe->zsbuf_cache);
+      /* FIXME: untile zsbuf! */
      
       llvmpipe->dirty_render_cache = FALSE;
    }

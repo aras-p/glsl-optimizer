@@ -133,6 +133,12 @@ llvmpipe_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&lpt->base.reference, 1);
    lpt->base.screen = screen;
 
+   /* XXX: The xlib state tracker is brain-dead and will request
+    * PIPE_FORMAT_Z16_UNORM no matter how much we tell it we don't support it.
+    */
+   if(lpt->base.format == PIPE_FORMAT_Z16_UNORM)
+      lpt->base.format = PIPE_FORMAT_Z32_UNORM;
+
    if (lpt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
       if (!llvmpipe_displaytarget_layout(screen, lpt))
          goto fail;

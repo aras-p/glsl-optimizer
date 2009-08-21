@@ -74,15 +74,18 @@ typedef void
 struct lp_fragment_shader;
 
 
-/**
- * Subclass of pipe_shader_state (though it doesn't really need to be).
- *
- * This is starting to look an awful lot like a quad pipeline stage...
- */
+struct lp_fragment_shader_variant_key
+{
+   struct pipe_depth_state depth;
+   struct pipe_alpha_state alpha;
+};
+
+
 struct lp_fragment_shader_variant
 {
    struct lp_fragment_shader *shader;
-   struct pipe_alpha_state alpha;
+
+   struct lp_fragment_shader_variant_key key;
 
    LLVMValueRef function;
 
@@ -102,8 +105,6 @@ struct lp_fragment_shader
    struct pipe_shader_state base;
 
    struct tgsi_shader_info info;
-
-   struct llvmpipe_screen *screen;
 
    struct lp_fragment_shader_variant *variants;
 

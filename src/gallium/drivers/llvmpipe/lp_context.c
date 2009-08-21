@@ -60,8 +60,6 @@ llvmpipe_map_transfers(struct llvmpipe_context *lp)
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_map_transfers(lp->cbuf_cache[i]);
    }
-
-   lp_tile_cache_map_transfers(lp->zsbuf_cache);
 }
 
 
@@ -76,8 +74,6 @@ llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
    }
-
-   lp_tile_cache_unmap_transfers(lp->zsbuf_cache);
 }
 
 
@@ -90,12 +86,10 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       draw_destroy( llvmpipe->draw );
 
       llvmpipe->quad.shade->destroy( llvmpipe->quad.shade );
-      llvmpipe->quad.depth_test->destroy( llvmpipe->quad.depth_test );
       llvmpipe->quad.blend->destroy( llvmpipe->quad.blend );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
-   lp_destroy_tile_cache(llvmpipe->zsbuf_cache);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       lp_destroy_tex_tile_cache(llvmpipe->tex_cache[i]);
@@ -216,7 +210,6 @@ llvmpipe_create( struct pipe_screen *screen )
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       llvmpipe->cbuf_cache[i] = lp_create_tile_cache( screen );
-   llvmpipe->zsbuf_cache = lp_create_tile_cache( screen );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
@@ -224,7 +217,6 @@ llvmpipe_create( struct pipe_screen *screen )
 
    /* setup quad rendering stages */
       llvmpipe->quad.shade = lp_quad_shade_stage(llvmpipe);
-      llvmpipe->quad.depth_test = lp_quad_depth_test_stage(llvmpipe);
       llvmpipe->quad.blend = lp_quad_blend_stage(llvmpipe);
 
    /* vertex shader samplers */

@@ -79,11 +79,8 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       struct pipe_surface *ps = llvmpipe->framebuffer.zsbuf;
 
       cv = util_pack_z_stencil(ps->format, depth, stencil);
-      lp_tile_cache_clear(llvmpipe->zsbuf_cache, zero, cv);
 
-#if !TILE_CLEAR_OPTIMIZATION
       /* non-cached surface */
       pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
-#endif
-      }
+   }
 }

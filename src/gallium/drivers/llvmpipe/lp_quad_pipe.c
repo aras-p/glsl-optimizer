@@ -42,22 +42,8 @@ lp_push_quad_first( struct llvmpipe_context *lp,
 void
 lp_build_quad_pipeline(struct llvmpipe_context *lp)
 {
-   boolean early_depth_test =
-      lp->depth_stencil->depth.enabled &&
-      lp->framebuffer.zsbuf &&
-      !lp->depth_stencil->alpha.enabled &&
-      !lp->fs->info.uses_kill &&
-      !lp->fs->info.writes_z;
-
    lp->quad.first = lp->quad.blend;
 
-   if (early_depth_test) {
-      lp_push_quad_first( lp, lp->quad.shade );
-      lp_push_quad_first( lp, lp->quad.depth_test );
-   }
-   else {
-      lp_push_quad_first( lp, lp->quad.depth_test );
-      lp_push_quad_first( lp, lp->quad.shade );
-   }
+   lp_push_quad_first( lp, lp->quad.shade );
 }
 

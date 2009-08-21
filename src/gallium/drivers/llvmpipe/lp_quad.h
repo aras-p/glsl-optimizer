@@ -84,7 +84,6 @@ struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
    float ALIGN16_ATTRIB color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
-   float depth[QUAD_SIZE];
 };
 
 

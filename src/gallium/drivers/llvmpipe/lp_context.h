@@ -117,7 +117,6 @@ struct llvmpipe_context {
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;
-      struct quad_stage *depth_test;
       struct quad_stage *blend;
 
       struct quad_stage *first; /**< points to one of the above stages */
@@ -140,7 +139,6 @@ struct llvmpipe_context {
    boolean dirty_render_cache;
    
    struct llvmpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
-   struct llvmpipe_tile_cache *zsbuf_cache;
    
    unsigned tex_timestamp;
    struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];

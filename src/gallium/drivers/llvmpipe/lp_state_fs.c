@@ -28,6 +28,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "util/u_debug_dump.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
@@ -36,6 +37,8 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
 #include "lp_bld_type.h"
+#include "lp_bld_conv.h"
+#include "lp_bld_depth.h"
 #include "lp_bld_tgsi.h"
 #include "lp_bld_alpha.h"
 #include "lp_bld_swizzle.h"
@@ -105,11 +108,54 @@ setup_pos_vector(LLVMBuilderRef builder,
 }
 
 
-static struct lp_fragment_shader_variant *
-shader_generate(struct llvmpipe_screen *screen,
-                struct lp_fragment_shader *shader,
-                const struct pipe_alpha_state *alpha)
+static void
+depth_test_generate(struct llvmpipe_context *lp,
+                    LLVMBuilderRef builder,
+                    const struct pipe_depth_state *state,
+                    union lp_type src_type,
+                    LLVMValueRef *mask,
+                    LLVMValueRef src,
+                    LLVMValueRef dst_ptr)
 {
+   const struct util_format_description *format_desc;
+   union lp_type dst_type;
+
+   if(!lp->framebuffer.zsbuf)
+      return;
+
+   format_desc = util_format_description(lp->framebuffer.zsbuf->format);
+   assert(format_desc);
+
+   dst_type = lp_depth_type(format_desc, src_type.width*src_type.length);
+
+   assert(dst_type.width == src_type.width);
+   assert(dst_type.length == src_type.length);
+
+#if 1
+   src = lp_build_clamped_float_to_unsigned_norm(builder,
+                                                 src_type,
+                                                 dst_type.width,
+                                                 src);
+#else
+   lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
+#endif
+
+   lp_build_depth_test(builder,
+                       state,
+                       dst_type,
+                       format_desc,
+                       mask,
+                       src,
+                       dst_ptr);
+}
+
+
+static struct lp_fragment_shader_variant *
+shader_generate(struct llvmpipe_context *lp,
+                struct lp_fragment_shader *shader,
+                const struct lp_fragment_shader_variant_key *key)
+{
+   struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    struct lp_fragment_shader_variant *variant;
    const struct tgsi_token *tokens = shader->base.tokens;
    union lp_type type;
@@ -140,9 +186,13 @@ shader_generate(struct llvmpipe_screen *screen,
 
 #ifdef DEBUG
    tgsi_dump(shader->base.tokens, 0);
-   debug_printf("alpha.enabled = %u\n", alpha->enabled);
-   debug_printf("alpha.func = %s\n", debug_dump_func(alpha->func, TRUE));
-   debug_printf("alpha.ref_value = %f\n", alpha->ref_value);
+   debug_printf("depth.enabled = %u\n", key->depth.enabled);
+   debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
+   debug_printf("depth.writemask = %u\n", key->depth.writemask);
+   debug_printf("depth.occlusion_count = %u\n", key->depth.occlusion_count);
+   debug_printf("alpha.enabled = %u\n", key->alpha.enabled);
+   debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
+   debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
 #endif
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
@@ -150,7 +200,7 @@ shader_generate(struct llvmpipe_screen *screen,
       return NULL;
 
    variant->shader = shader;
-   memcpy(&variant->alpha, alpha, sizeof *alpha);
+   memcpy(&variant->key, key, sizeof *key);
 
    type.value = 0;
    type.floating = TRUE; /* floating point values */
@@ -171,7 +221,7 @@ shader_generate(struct llvmpipe_screen *screen,
    arg_types[5] = LLVMPointerType(elem_type, 0);       /* consts */
    arg_types[6] = LLVMPointerType(int_vec_type, 0);    /* mask */
    arg_types[7] = LLVMPointerType(vec_type, 0);        /* color */
-   arg_types[8] = LLVMPointerType(vec_type, 0);        /* depth */
+   arg_types[8] = LLVMPointerType(int_vec_type, 0);    /* depth */
    arg_types[9] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
@@ -212,6 +262,15 @@ shader_generate(struct llvmpipe_screen *screen,
 
    mask = LLVMBuildLoad(builder, mask_ptr, "");
 
+   /* FIXME:
+   early_depth_test =
+      lp->depth_stencil->depth.enabled &&
+      lp->framebuffer.zsbuf &&
+      !lp->depth_stencil->alpha.enabled &&
+      !lp->fs->info.uses_kill &&
+      !lp->fs->info.writes_z;
+   */
+
    memset(outputs, 0, sizeof outputs);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
@@ -242,13 +301,17 @@ shader_generate(struct llvmpipe_screen *screen,
                }
 
             case TGSI_SEMANTIC_POSITION:
-               if(chan == 3)
-                  LLVMBuildStore(builder, outputs[attrib][chan], depth_ptr);
+               if(chan == 2)
+                  pos[2] = outputs[attrib][chan];
                break;
             }
          }
       }
    }
+
+   depth_test_generate(lp, builder, &key->depth,
+                       type, &mask,
+                       pos[2], depth_ptr);
 
    if(mask)
       LLVMBuildStore(builder, mask, mask_ptr);
@@ -295,7 +358,6 @@ void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
-   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct lp_fragment_shader *shader;
 
    shader = CALLOC_STRUCT(lp_fragment_shader);
@@ -307,8 +369,6 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
-
-   shader->screen = screen;
 
    return shader;
 }
@@ -328,11 +388,12 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct lp_fragment_shader *shader = fs;
    struct lp_fragment_shader_variant *variant;
-   struct llvmpipe_screen *screen = shader->screen;
 
-   assert(fs != llvmpipe_context(pipe)->fs);
+   assert(fs != llvmpipe->fs);
 
    variant = shader->variants;
    while(variant) {
@@ -436,19 +497,23 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 void llvmpipe_update_fs(struct llvmpipe_context *lp)
 {
    struct lp_fragment_shader *shader = lp->fs;
-   const struct pipe_alpha_state *alpha = &lp->depth_stencil->alpha;
+   struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant;
+
+   memset(&key, 0, sizeof key);
+   memcpy(&key.depth, &lp->depth_stencil->depth, sizeof &key.depth);
+   memcpy(&key.alpha, &lp->depth_stencil->alpha, sizeof &key.alpha);
 
    variant = shader->variants;
    while(variant) {
-      if(memcmp(&variant->alpha, alpha, sizeof *alpha) == 0)
+      if(memcmp(&variant->key, &key, sizeof key) == 0)
          break;
 
       variant = variant->next;
    }
 
    if(!variant)
-      variant = shader_generate(shader->screen, shader, alpha);
+      variant = shader_generate(lp, shader, &key);
 
    shader->current = variant;
 }

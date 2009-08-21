@@ -39,23 +39,21 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_shader_tokens.h"
+#include "pipe/p_screen.h"
 
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_quad.h"
 #include "lp_quad_pipe.h"
 #include "lp_texture.h"
-#include "lp_tex_sample.h"
 
 
 struct quad_shade_stage
 {
    struct quad_stage stage;  /**< base class */
 
-   union tgsi_exec_channel ALIGN16_ATTRIB pos[NUM_CHANNELS];
-
-   uint32_t ALIGN16_ATTRIB mask[NUM_CHANNELS];
+   struct pipe_transfer *transfer;
+   uint8_t *map;
 };
 
 
@@ -79,6 +77,10 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct lp_fragment_shader *fs = llvmpipe->fs;
    void *constants;
    struct tgsi_sampler **samplers;
+   const unsigned x = quad->input.x0;
+   const unsigned y = quad->input.y0;
+   void *depth;
+   uint32_t ALIGN16_ATTRIB mask[NUM_CHANNELS];
    unsigned chan_index;
 
    assert(fs->current);
@@ -89,23 +91,38 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
 
    for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-      qss->mask[chan_index] = ~0;
+      mask[chan_index] = quad->inout.mask & (1 << chan_index) ? ~0 : 0;
+
+   if(qss->map) {
+      assert((x % 2) == 0);
+      assert((y % 2) == 0);
+      depth = qss->map +
+              y*qss->transfer->stride +
+              2*x*qss->transfer->block.size;
+   }
+   else
+      depth = NULL;
+
+   assert((((uintptr_t)mask) & 0xf) == 0);
+   assert((((uintptr_t)quad->output.color) & 0xf) == 0);
+   assert((((uintptr_t)depth) & 0xf) == 0);
 
    /* run shader */
-   fs->current->jit_function( quad->input.x0,
-                              quad->input.y0,
+   fs->current->jit_function( x,
+                              y,
                               quad->coef->a0,
                               quad->coef->dadx,
                               quad->coef->dady,
                               constants,
-                              qss->mask,
+                              mask,
                               quad->output.color,
-                              quad->output.depth,
+                              depth,
                               samplers);
 
    for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-      if(!qss->mask[chan_index])
+      if(!mask[chan_index])
          quad->inout.mask &= ~(1 << chan_index);
+
    if (quad->inout.mask == 0)
       return FALSE;
 
@@ -168,6 +185,31 @@ shade_quads(struct quad_stage *qs,
 static void
 shade_begin(struct quad_stage *qs)
 {
+   struct quad_shade_stage *qss = quad_shade_stage( qs );
+   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
+   struct pipe_screen *screen = llvmpipe->pipe.screen;
+   struct pipe_surface *zsbuf = llvmpipe->framebuffer.zsbuf;
+
+   if(qss->transfer) {
+      if(qss->map) {
+         screen->transfer_unmap(screen, qss->transfer);
+         qss->map = NULL;
+      }
+
+      screen->tex_transfer_destroy(qss->transfer);
+      qss->transfer = NULL;
+   }
+
+   if(zsbuf) {
+      qss->transfer = screen->get_tex_transfer(screen, zsbuf->texture,
+                                               zsbuf->face, zsbuf->level, zsbuf->zslice,
+                                               PIPE_TRANSFER_READ_WRITE,
+                                               0, 0, zsbuf->width, zsbuf->height);
+      if(qss->transfer)
+         qss->map = screen->transfer_map(screen, qss->transfer);
+
+   }
+
    qs->next->begin(qs->next);
 }
 
@@ -175,6 +217,20 @@ shade_begin(struct quad_stage *qs)
 static void
 shade_destroy(struct quad_stage *qs)
 {
+   struct quad_shade_stage *qss = quad_shade_stage( qs );
+   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
+   struct pipe_screen *screen = llvmpipe->pipe.screen;
+
+   if(qss->transfer) {
+      if(qss->map) {
+         screen->transfer_unmap(screen, qss->transfer);
+         qss->map = NULL;
+      }
+
+      screen->tex_transfer_destroy(qss->transfer);
+      qss->transfer = NULL;
+   }
+
    align_free( qs );
 }
 
