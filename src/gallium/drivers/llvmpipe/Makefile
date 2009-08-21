@@ -11,6 +11,7 @@ C_SOURCES = \
 	lp_bld_const.c \
 	lp_bld_conv.c \
 	lp_bld_debug.c \
+	lp_bld_depth.c \
 	lp_bld_intr.c \
 	lp_bld_pack.c \
 	lp_bld_unpack.c \
@@ -31,7 +32,6 @@ C_SOURCES = \
 	lp_setup.c \
 	lp_quad_blend.c \
 	lp_quad_pipe.c \
-	lp_quad_depth_test.c \
 	lp_quad_fs.c \
 	lp_quad_stipple.c \
 	lp_query.c \
