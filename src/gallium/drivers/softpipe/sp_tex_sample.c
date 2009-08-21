@@ -1614,10 +1614,9 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
    case PIPE_TEX_MIPFILTER_LINEAR:
       if (key.bits.is_pot &&
           sampler->min_img_filter == sampler->mag_img_filter &&
-          sampler->wrap_s == sampler->wrap_t &&
           sampler->normalized_coords &&
-          sampler->wrap_s == sampler->wrap_t &&
           sampler->wrap_s == PIPE_TEX_WRAP_REPEAT &&
+          sampler->wrap_t == PIPE_TEX_WRAP_REPEAT &&
           sampler->min_img_filter == PIPE_TEX_FILTER_LINEAR)
       {
          samp->mip_filter = mip_filter_linear_2d_linear_repeat_POT;
