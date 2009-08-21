@@ -64,9 +64,6 @@ struct llvmpipe_cached_tile
       uint8_t ALIGN16_ATTRIB color[TILE_SIZE*TILE_SIZE*NUM_CHANNELS];
 
       uint color32[TILE_SIZE][TILE_SIZE];
-      uint depth32[TILE_SIZE][TILE_SIZE];
-      ushort depth16[TILE_SIZE][TILE_SIZE];
-      ubyte stencil8[TILE_SIZE][TILE_SIZE];
       ubyte any[1];
    } data;
 };
@@ -93,7 +90,6 @@ struct llvmpipe_tile_cache
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    float clear_color[4];  /**< for color bufs */
    uint clear_val;        /**< for z+stencil, or packed color clear value */
-   boolean depth_stencil; /**< Is the surface a depth/stencil format? */
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;

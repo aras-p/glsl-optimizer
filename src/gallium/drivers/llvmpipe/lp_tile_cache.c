@@ -156,14 +156,6 @@ lp_tile_cache_set_surface(struct llvmpipe_tile_cache *tc,
                                               ps->level, ps->zslice,
                                               PIPE_TRANSFER_READ_WRITE,
                                               0, 0, ps->width, ps->height);
-
-      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
-                           ps->format == PIPE_FORMAT_Z24X8_UNORM ||
-                           ps->format == PIPE_FORMAT_Z16_UNORM ||
-                           ps->format == PIPE_FORMAT_Z32_UNORM ||
-                           ps->format == PIPE_FORMAT_S8_UNORM);
    }
 }
 
@@ -241,36 +233,15 @@ clear_tile(struct llvmpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (pf_get_size(format)) {
-   case 1:
-      memset(tile->data.any, 0, TILE_SIZE * TILE_SIZE);
-      break;
-   case 2:
-      if (clear_value == 0) {
-         memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
-      }
-      else {
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth16[i][j] = (ushort) clear_value;
-            }
+   if (clear_value == 0) {
+      memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
+   }
+   else {
+      for (i = 0; i < TILE_SIZE; i++) {
+         for (j = 0; j < TILE_SIZE; j++) {
+            tile->data.color32[i][j] = clear_value;
          }
       }
-      break;
-   case 4:
-      if (clear_value == 0) {
-         memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
-      }
-      else {
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.color32[i][j] = clear_value;
-            }
-         }
-      }
-      break;
-   default:
-      assert(0);
    }
 }
 
@@ -328,19 +299,10 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          struct llvmpipe_cached_tile *tile = tc->entries + pos;
          if (!tile->addr.bits.invalid) {
-            if (tc->depth_stencil) {
-               pipe_put_tile_raw(pt,
-                                 tile->addr.bits.x * TILE_SIZE, 
-                                 tile->addr.bits.y * TILE_SIZE, 
-                                 TILE_SIZE, TILE_SIZE,
-                                 tile->data.depth32, 0/*STRIDE*/);
-            }
-            else {
-               lp_put_tile_rgba_soa(pt,
-                                    tile->addr.bits.x * TILE_SIZE,
-                                    tile->addr.bits.y * TILE_SIZE,
-                                    tile->data.color);
-            }
+            lp_put_tile_rgba_soa(pt,
+                                 tile->addr.bits.x * TILE_SIZE,
+                                 tile->addr.bits.y * TILE_SIZE,
+                                 tile->data.color);
             tile->addr.bits.invalid = 1;  /* mark as empty */
             inuse++;
          }
@@ -383,48 +345,25 @@ lp_find_cached_tile(struct llvmpipe_tile_cache *tc,
 
       if (tile->addr.bits.invalid == 0) {
          /* put dirty tile back in framebuffer */
-         if (tc->depth_stencil) {
-            pipe_put_tile_raw(pt,
+         lp_put_tile_rgba_soa(pt,
                               tile->addr.bits.x * TILE_SIZE,
                               tile->addr.bits.y * TILE_SIZE,
-                              TILE_SIZE, TILE_SIZE,
-                              tile->data.depth32, 0/*STRIDE*/);
-         }
-         else {
-            lp_put_tile_rgba_soa(pt,
-                                 tile->addr.bits.x * TILE_SIZE,
-                                 tile->addr.bits.y * TILE_SIZE,
-                                 tile->data.color);
-         }
+                              tile->data.color);
       }
 
       tile->addr = addr;
 
       if (is_clear_flag_set(tc->clear_flags, addr)) {
          /* don't get tile from framebuffer, just clear it */
-         if (tc->depth_stencil) {
-            clear_tile(tile, pt->format, tc->clear_val);
-         }
-         else {
-            clear_tile_rgba(tile, pt->format, tc->clear_color);
-         }
+         clear_tile_rgba(tile, pt->format, tc->clear_color);
          clear_clear_flag(tc->clear_flags, addr);
       }
       else {
          /* get new tile data from transfer */
-         if (tc->depth_stencil) {
-            pipe_get_tile_raw(pt,
-                              tile->addr.bits.x * TILE_SIZE, 
-                              tile->addr.bits.y * TILE_SIZE, 
-                              TILE_SIZE, TILE_SIZE,
-                              tile->data.depth32, 0/*STRIDE*/);
-         }
-         else {
-            lp_get_tile_rgba_soa(pt,
-                                 tile->addr.bits.x * TILE_SIZE,
-                                 tile->addr.bits.y * TILE_SIZE,
-                                 tile->data.color);
-         }
+         lp_get_tile_rgba_soa(pt,
+                              tile->addr.bits.x * TILE_SIZE,
+                              tile->addr.bits.y * TILE_SIZE,
+                              tile->data.color);
       }
    }
 
