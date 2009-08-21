@@ -87,6 +87,8 @@ _eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
 {
    char *path = NULL;
    const char *args = NULL;
+   const char *suffix = NULL;
+   const char *p;
 
    path = getenv("EGL_DRIVER");
    if (path)
@@ -97,10 +99,29 @@ _eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
       /* assume (wrongly!) that the native display is a display string */
       path = _eglSplitDisplayString((const char *) dpy->NativeDisplay, &args);
    }
+   suffix = "so";
+#elif defined(_EGL_PLATFORM_WINDOWS)
+   suffix = "dll";
 #endif /* _EGL_PLATFORM_X */
 
    if (!path)
       path = _eglstrdup(DefaultDriverName);
+
+   /* append suffix if there isn't */
+   p = strrchr(path, '.');
+   if (!p && suffix) {
+      size_t len = strlen(path);
+      char *tmp = malloc(len + strlen(suffix) + 2);
+      if (tmp) {
+         memcpy(tmp, path, len);
+         tmp[len++] = '.';
+         tmp[len] = '\0';
+         strcat(tmp + len, suffix);
+
+         free(path);
+         path = tmp;
+      }
+   }
 
    if (argsRet)
       *argsRet = (args) ? _eglstrdup(args) : NULL;
@@ -113,13 +134,12 @@ _eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
  * Open the named driver and find its bootstrap function: _eglMain().
  */
 static _EGLMain_t
-_eglOpenLibrary(const char *driverName, lib_handle *handle)
+_eglOpenLibrary(const char *driverPath, lib_handle *handle)
 {
    _EGLMain_t mainFunc;
    lib_handle lib;
-   char driverFilename[1000];
 
-   assert(driverName);
+   assert(driverPath);
 
 #if defined(_EGL_PLATFORM_WINDOWS)
 /* Use static linking on Windows for now */
@@ -128,31 +148,31 @@ _eglOpenLibrary(const char *driverName, lib_handle *handle)
    mainFunc = (_EGLMain_t)_eglMain;
 #else
    /* XXX untested */
-   sprintf(driverFilename, "%s.dll", driverName);
-   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = open_library(driverFilename);
+   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverPath);
+   lib = open_library(driverPath);
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s",
-              driverFilename);
+              driverPath);
       return NULL;
    }
    mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
 #endif
 #elif defined(_EGL_PLATFORM_X)
-   /* XXX also prepend a directory path??? */
-   sprintf(driverFilename, "%s.so", driverName);
-   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = open_library(driverFilename);
+   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverPath);
+   lib = open_library(driverPath);
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s (%s)",
-              driverFilename, dlerror());
+              driverPath, dlerror());
+      if (!getenv("EGL_DRIVER"))
+         _eglLog(_EGL_WARNING,
+                 "The driver can be overridden by setting EGL_DRIVER");
       return NULL;
    }
    mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
 #endif
 
    if (!mainFunc) {
-      _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverFilename);
+      _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverPath);
       if (lib)
          close_library(lib);
       return NULL;
