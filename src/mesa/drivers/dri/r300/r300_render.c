@@ -341,12 +341,6 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	if (type < 0 || num_verts <= 0)
 		return;
 
-	/* Make space for at least 128 dwords.
-	 * This is supposed to ensure that we can get all rendering
-	 * commands into a single command buffer.
-	 */
-	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
-
 	if (rmesa->ind_buf.bo) {
 		GLuint first, incr, offset = 0;
 

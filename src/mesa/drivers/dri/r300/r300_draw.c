@@ -621,10 +621,6 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	rcommonEnsureCmdBufSpace(&r300->radeon,
-                           r300->radeon.hw.max_state_size + (60*sizeof(int)),
-                          __FUNCTION__);
-
 	r300SetVertexFormat(ctx, arrays, max_index + 1);
 
 	if (r300->fallback)
