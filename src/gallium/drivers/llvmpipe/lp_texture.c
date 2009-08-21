@@ -68,6 +68,8 @@ llvmpipe_texture_layout(struct pipe_screen *screen,
 
    unsigned buffer_size = 0;
 
+   pf_get_block(lpt->base.format, &lpt->base.block);
+
    for (level = 0; level <= pt->last_level; level++) {
       pt->width[level] = width;
       pt->height[level] = height;
@@ -101,6 +103,7 @@ llvmpipe_displaytarget_layout(struct pipe_screen *screen,
    unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
                      PIPE_BUFFER_USAGE_GPU_READ_WRITE);
 
+   pf_get_block(lpt->base.format, &lpt->base.block);
    lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
    lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
 
