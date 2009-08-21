@@ -579,8 +579,8 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
 	dwords = 2*CACHE_FLUSH_BUFSZ;
 	dwords += PRE_EMIT_STATE_BUFSZ;
 	dwords += (AOS_BUFSZ(vbuf->num_attribs)
-			+ SCISSORS_BUFSZ
-			+ FIREAOS_BUFSZ )*nr_prims;
+		+ SCISSORS_BUFSZ
+		+ FIREAOS_BUFSZ )*nr_prims;
 
 	state_size= radeonCountEmitSize(&r300->radeon);
 	flushed = rcommonEnsureCmdBufSpace(&r300->radeon,
@@ -655,6 +655,10 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	r300EmitCacheFlush(r300);
 
 	r300FreeData(ctx);
+
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s: %u (%d-%d) cs begin at %d\n", 
+			__FUNCTION__, nr_prims, min_index, max_index, r300->radeon.cmdbuf.cs->cdw );
 
 	return GL_TRUE;
 }
