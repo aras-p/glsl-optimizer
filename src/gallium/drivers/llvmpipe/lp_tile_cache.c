@@ -44,60 +44,17 @@
 #include "lp_tile_cache.h"
 
 
-
-/**
- * Return the position in the cache for the tile that contains win pos (x,y).
- * We currently use a direct mapped cache so this is like a hack key.
- * At some point we should investige something more sophisticated, like
- * a LRU replacement policy.
- */
-#define CACHE_POS(x, y) \
-   (((x) + (y) * 5) % NUM_ENTRIES)
-
-
-
-/**
- * Is the tile at (x,y) in cleared state?
- */
-static INLINE uint
-is_clear_flag_set(const uint *bitvec, union tile_address addr)
-{
-   int pos, bit;
-   pos = addr.bits.y * (MAX_WIDTH / TILE_SIZE) + addr.bits.x;
-   assert(pos / 32 < (MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32);
-   bit = bitvec[pos / 32] & (1 << (pos & 31));
-   return bit;
-}
-   
-
-/**
- * Mark the tile at (x,y) as not cleared.
- */
-static INLINE void
-clear_clear_flag(uint *bitvec, union tile_address addr)
-{
-   int pos;
-   pos = addr.bits.y * (MAX_WIDTH / TILE_SIZE) + addr.bits.x;
-   assert(pos / 32 < (MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32);
-   bitvec[pos / 32] &= ~(1 << (pos & 31));
-}
-   
-
 struct llvmpipe_tile_cache *
 lp_create_tile_cache( struct pipe_screen *screen )
 {
    struct llvmpipe_tile_cache *tc;
-   uint pos;
 
-   tc = align_malloc( sizeof(struct llvmpipe_tile_cache), 16 );
-   if (tc) {
-      memset(tc, 0, sizeof *tc);
-      tc->screen = screen;
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         tc->entries[pos].addr.bits.invalid = 1;
-      }
-      tc->last_tile = &tc->entries[0]; /* any tile */
-   }
+   tc = CALLOC_STRUCT( llvmpipe_tile_cache );
+   if(!tc)
+      return NULL;
+
+   tc->screen = screen;
+
    return tc;
 }
 
@@ -106,17 +63,23 @@ void
 lp_destroy_tile_cache(struct llvmpipe_tile_cache *tc)
 {
    struct pipe_screen *screen;
-   uint pos;
+   unsigned x, y;
 
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      /*assert(tc->entries[pos].x < 0);*/
+   for (y = 0; y < MAX_HEIGHT; y += TILE_SIZE) {
+      for (x = 0; x < MAX_WIDTH; x += TILE_SIZE) {
+         struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
+
+         if(tile->color)
+            align_free(tile->color);
+      }
    }
+
    if (tc->transfer) {
       screen = tc->transfer->texture->screen;
       screen->tex_transfer_destroy(tc->transfer);
    }
 
-   align_free( tc );
+   FREE( tc );
 }
 
 
@@ -146,11 +109,23 @@ lp_tile_cache_set_surface(struct llvmpipe_tile_cache *tc,
 
    if (ps) {
       struct pipe_screen *screen = ps->texture->screen;
+      unsigned x, y;
 
       tc->transfer = screen->get_tex_transfer(screen, ps->texture, ps->face,
                                               ps->level, ps->zslice,
                                               PIPE_TRANSFER_READ_WRITE,
                                               0, 0, ps->width, ps->height);
+
+      for (y = 0; y < ps->height; y += TILE_SIZE) {
+         for (x = 0; x < ps->width; x += TILE_SIZE) {
+            struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
+
+            tile->status = LP_TILE_STATUS_UNDEFINED;
+
+            if(!tile->color)
+               tile->color = align_malloc( TILE_SIZE*TILE_SIZE*NUM_CHANNELS, 16 );
+         }
+      }
    }
 }
 
@@ -206,24 +181,33 @@ clear_tile(struct llvmpipe_cached_tile *tile,
 
 
 /**
- * Actually clear the tiles which were flagged as being in a clear state.
+ * Flush the tile cache: write all dirty tiles back to the transfer.
+ * any tiles "flagged" as cleared will be "really" cleared.
  */
-static void
-lp_tile_cache_flush_clear(struct llvmpipe_tile_cache *tc)
+void
+lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
-   struct pipe_screen *screen = pt->texture->screen;
-   const uint w = tc->transfer->width;
-   const uint h = tc->transfer->height;
-   uint x, y;
-   uint numCleared = 0;
+   unsigned x, y;
+
+   if(!pt)
+      return;
 
    /* push the tile to all positions marked as clear */
-   for (y = 0; y < h; y += TILE_SIZE) {
-      for (x = 0; x < w; x += TILE_SIZE) {
-         union tile_address addr = tile_address(x, y, 0, 0, 0);
+   for (y = 0; y < pt->height; y += TILE_SIZE) {
+      for (x = 0; x < pt->width; x += TILE_SIZE) {
+         struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
 
-         if (is_clear_flag_set(tc->clear_flags, addr)) {
+         switch(tile->status) {
+         case LP_TILE_STATUS_UNDEFINED:
+            break;
+
+         case LP_TILE_STATUS_CLEAR: {
+            /**
+             * Actually clear the tiles which were flagged as being in a clear state.
+             */
+
+            struct pipe_screen *screen = pt->texture->screen;
             unsigned tw = TILE_SIZE;
             unsigned th = TILE_SIZE;
             void *dst;
@@ -240,51 +224,16 @@ lp_tile_cache_flush_clear(struct llvmpipe_tile_cache *tc)
                            x, y, tw,  th,
                            tc->clear_val);
 
-            /* do this? */
-            clear_clear_flag(tc->clear_flags, addr);
+            screen->transfer_unmap(screen, pt);
+            break;
+         }
 
-            numCleared++;
+         case LP_TILE_STATUS_DEFINED:
+            lp_put_tile_rgba_soa(pt, x, y, tile->color);
+            break;
          }
       }
    }
-#if 0
-   debug_printf("num cleared: %u\n", numCleared);
-#endif
-}
-
-
-/**
- * Flush the tile cache: write all dirty tiles back to the transfer.
- * any tiles "flagged" as cleared will be "really" cleared.
- */
-void
-lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
-{
-   struct pipe_transfer *pt = tc->transfer;
-   int inuse = 0, pos;
-
-   if (pt) {
-      /* caching a drawing transfer */
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         struct llvmpipe_cached_tile *tile = tc->entries + pos;
-         if (!tile->addr.bits.invalid) {
-            lp_put_tile_rgba_soa(pt,
-                                 tile->addr.bits.x * TILE_SIZE,
-                                 tile->addr.bits.y * TILE_SIZE,
-                                 tile->color);
-            tile->addr.bits.invalid = 1;  /* mark as empty */
-            inuse++;
-         }
-      }
-
-#if TILE_CLEAR_OPTIMIZATION
-      lp_tile_cache_flush_clear(tc);
-#endif
-   }
-
-#if 0
-   debug_printf("flushed tiles in use: %d\n", inuse);
-#endif
 }
 
 
@@ -293,65 +242,31 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
  * \param x, y  position of tile, in pixels
  */
 void *
-lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
-                    union tile_address addr )
+lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
+                   unsigned x, unsigned y )
 {
+   struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
    struct pipe_transfer *pt = tc->transfer;
    
-   /* cache pos/entry: */
-   const int pos = CACHE_POS(addr.bits.x,
-                             addr.bits.y);
-   struct llvmpipe_cached_tile *tile = tc->entries + pos;
+   switch(tile->status) {
+   case LP_TILE_STATUS_CLEAR:
+      /* don't get tile from framebuffer, just clear it */
+      clear_tile(tile, tc->clear_color);
+      tile->status = LP_TILE_STATUS_DEFINED;
+      break;
 
-   if (addr.value != tile->addr.value) {
+   case LP_TILE_STATUS_UNDEFINED:
+      /* get new tile data from transfer */
+      lp_get_tile_rgba_soa(pt, x, y, tile->color);
+      tile->status = LP_TILE_STATUS_DEFINED;
+      break;
 
-      if (tile->addr.bits.invalid == 0) {
-         /* put dirty tile back in framebuffer */
-         lp_put_tile_rgba_soa(pt,
-                              tile->addr.bits.x * TILE_SIZE,
-                              tile->addr.bits.y * TILE_SIZE,
-                              tile->color);
-      }
-
-      tile->addr = addr;
-
-      if (is_clear_flag_set(tc->clear_flags, addr)) {
-         /* don't get tile from framebuffer, just clear it */
-         clear_tile(tile, tc->clear_color);
-         clear_clear_flag(tc->clear_flags, addr);
-      }
-      else {
-         /* get new tile data from transfer */
-         lp_get_tile_rgba_soa(pt,
-                              tile->addr.bits.x * TILE_SIZE,
-                              tile->addr.bits.y * TILE_SIZE,
-                              tile->color);
-      }
+   case LP_TILE_STATUS_DEFINED:
+      /* nothing to do */
+      break;
    }
 
-   tc->last_tile = tile;
-
    return tile->color;
-}
-
-
-/**
- * Given the texture face, level, zslice, x and y values, compute
- * the cache entry position/index where we'd hope to find the
- * cached texture tile.
- * This is basically a direct-map cache.
- * XXX There's probably lots of ways in which we can improve this.
- */
-static INLINE uint
-tex_cache_pos( union tile_address addr )
-{
-   uint entry = (addr.bits.x + 
-                 addr.bits.y * 9 + 
-                 addr.bits.z * 3 + 
-                 addr.bits.face + 
-                 addr.bits.level * 7);
-
-   return entry % NUM_ENTRIES;
 }
 
 
@@ -364,24 +279,21 @@ void
 lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue)
 {
-   unsigned chan;
-   uint pos;
+   struct pipe_transfer *pt = tc->transfer;
+   const unsigned w = pt->width;
+   const unsigned h = pt->height;
+   unsigned x, y, chan;
 
    for(chan = 0; chan < 4; ++chan)
       tc->clear_color[chan] = float_to_ubyte(rgba[chan]);
 
    tc->clear_val = clearValue;
 
-#if TILE_CLEAR_OPTIMIZATION
-   /* set flags to indicate all the tiles are cleared */
-   memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
-#else
-   /* disable the optimization */
-   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
-#endif
-
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      struct llvmpipe_cached_tile *tile = tc->entries + pos;
-      tile->addr.bits.invalid = 1;
+   /* push the tile to all positions marked as clear */
+   for (y = 0; y < h; y += TILE_SIZE) {
+      for (x = 0; x < w; x += TILE_SIZE) {
+         struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
+         tile->status = LP_TILE_STATUS_CLEAR;
+      }
    }
 }

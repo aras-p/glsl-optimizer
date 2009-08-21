@@ -66,11 +66,6 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
          util_pack_color(rgba, ps->format, &cv);
          lp_tile_cache_clear(llvmpipe->cbuf_cache[i], rgba, cv);
-
-#if !TILE_CLEAR_OPTIMIZATION
-         /* non-cached surface */
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
-#endif
       }
    }
 

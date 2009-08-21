@@ -28,41 +28,26 @@
 #ifndef LP_TILE_CACHE_H
 #define LP_TILE_CACHE_H
 
-#define TILE_CLEAR_OPTIMIZATION 1
-
 
 #include "pipe/p_compiler.h"
 #include "lp_tile_soa.h"
 
 
-struct llvmpipe_context;
-struct llvmpipe_tile_cache;
-
-
-/* If we need to support > 4096, just expand this to be a 64 bit
- * union, or consider tiling in Z as well.
- */
-union tile_address {
-   struct {
-      unsigned x:6;             /* 4096 / TILE_SIZE */
-      unsigned y:6;             /* 4096 / TILE_SIZE */
-      unsigned z:12;            /* 4096 -- z not tiled */
-      unsigned face:3;
-      unsigned level:4;
-      unsigned invalid:1;
-   } bits;
-   unsigned value;
+enum llvmpipe_tile_status
+{
+   LP_TILE_STATUS_UNDEFINED = 0,
+   LP_TILE_STATUS_CLEAR = 1,
+   LP_TILE_STATUS_DEFINED = 2
 };
 
 
 struct llvmpipe_cached_tile
 {
-   union tile_address addr;
-   /** color in SOA format */
-   uint8_t ALIGN16_ATTRIB color[TILE_SIZE*TILE_SIZE*NUM_CHANNELS];
-};
+   enum llvmpipe_tile_status status;
 
-#define NUM_ENTRIES 50
+   /** color in SOA format */
+   uint8_t *color;
+};
 
 
 /** XXX move these */
@@ -77,8 +62,8 @@ struct llvmpipe_tile_cache
    struct pipe_transfer *transfer;
    void *transfer_map;
 
-   struct llvmpipe_cached_tile entries[NUM_ENTRIES];
-   uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
+   struct llvmpipe_cached_tile entries[MAX_WIDTH/TILE_SIZE][MAX_HEIGHT/TILE_SIZE];
+
    uint8_t clear_color[4];  /**< for color bufs */
    uint clear_val;        /**< for z+stencil, or packed color clear value */
 
@@ -113,43 +98,8 @@ lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
 extern void *
-lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
-                    union tile_address addr );
-
-static INLINE const union tile_address
-tile_address( unsigned x,
-              unsigned y,
-              unsigned z,
-              unsigned face,
-              unsigned level )
-{
-   union tile_address addr;
-
-   addr.value = 0;
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
-   addr.bits.z = z;
-   addr.bits.face = face;
-   addr.bits.level = level;
-      
-   return addr;
-}
-
-/* Quickly retrieve tile if it matches last lookup.
- */
-static INLINE void *
-lp_get_cached_tile(struct llvmpipe_tile_cache *tc, 
-                   int x, int y )
-{
-   union tile_address addr = tile_address( x, y, 0, 0, 0 );
-
-   if (tc->last_tile->addr.value == addr.value)
-      return &tc->last_tile->color;
-
-   return lp_find_cached_tile( tc, addr );
-}
-
-
+lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
+                   unsigned x, unsigned y );
 
 
 #endif /* LP_TILE_CACHE_H */
