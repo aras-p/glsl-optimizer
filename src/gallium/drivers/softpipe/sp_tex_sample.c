@@ -1558,6 +1558,14 @@ sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
    samp->level = CLAMP((int) sampler->min_lod, 0, (int) texture->last_level);
 }
 
+
+void
+sp_sampler_varient_destroy( struct sp_sampler_varient *samp )
+{
+   FREE(samp);
+}
+
+
 /* Create a sampler varient for a given set of non-orthogonal state.  Currently the 
  */
 struct sp_sampler_varient *
