@@ -85,13 +85,13 @@ lp_build_one(union lp_type type);
 
 
 LLVMValueRef
-lp_build_const_uni(union lp_type type,
-                   double val);
+lp_build_const_scalar(union lp_type type,
+                      double val);
 
 
 LLVMValueRef
-lp_build_int_const_uni(union lp_type type,
-                       long long val);
+lp_build_int_const_scalar(union lp_type type,
+                          long long val);
 
 
 LLVMValueRef

@@ -159,7 +159,7 @@ lp_build_cmp(struct lp_build_context *bld,
          if(table[func].gt &&
             ((type.width == 8 && type.sign) ||
              (type.width != 8 && !type.sign))) {
-            LLVMValueRef msb = lp_build_int_const_uni(type, (unsigned long long)1 << (type.width - 1));
+            LLVMValueRef msb = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
             a = LLVMBuildXor(bld->builder, a, msb, "");
             b = LLVMBuildXor(bld->builder, b, msb, "");
          }

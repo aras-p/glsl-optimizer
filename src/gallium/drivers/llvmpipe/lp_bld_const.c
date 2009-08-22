@@ -255,7 +255,7 @@ lp_build_one(union lp_type type)
       if(type.sign)
          /* TODO: Unfortunately this caused "Tried to create a shift operation
           * on a non-integer type!" */
-         vec = LLVMConstLShr(vec, lp_build_int_const_uni(type, 1));
+         vec = LLVMConstLShr(vec, lp_build_int_const_scalar(type, 1));
 #endif
 
       return vec;
@@ -269,8 +269,8 @@ lp_build_one(union lp_type type)
                
 
 LLVMValueRef
-lp_build_const_uni(union lp_type type,
-                   double val)
+lp_build_const_scalar(union lp_type type,
+                      double val)
 {
    LLVMTypeRef elem_type = lp_build_elem_type(type);
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
@@ -295,8 +295,8 @@ lp_build_const_uni(union lp_type type,
 
 
 LLVMValueRef
-lp_build_int_const_uni(union lp_type type,
-                       long long val)
+lp_build_int_const_scalar(union lp_type type,
+                          long long val)
 {
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];

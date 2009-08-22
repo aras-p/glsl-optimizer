@@ -723,7 +723,7 @@ lp_build_exp(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log2(e) = 1/log(2) */
-   LLVMValueRef log2e = lp_build_const_uni(bld->type, 1.4426950408889634);
+   LLVMValueRef log2e = lp_build_const_scalar(bld->type, 1.4426950408889634);
 
    return lp_build_mul(bld, log2e, lp_build_exp2(bld, x));
 }
@@ -737,7 +737,7 @@ lp_build_log(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log(2) */
-   LLVMValueRef log2 = lp_build_const_uni(bld->type, 1.4426950408889634);
+   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 1.4426950408889634);
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
@@ -766,7 +766,7 @@ lp_build_polynomial(struct lp_build_context *bld,
       debug_printf("%s: inefficient/imprecise constant arithmetic\n");
 
    for (i = num_coeffs; i--; ) {
-      LLVMValueRef coeff = lp_build_const_uni(type, coeffs[i]);
+      LLVMValueRef coeff = lp_build_const_scalar(type, coeffs[i]);
       if(res)
          res = lp_build_add(bld, coeff, lp_build_mul(bld, x, res));
       else
@@ -821,11 +821,11 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
       assert(type.floating && type.width == 32);
 
-      x = lp_build_min(bld, x, lp_build_const_uni(type,  129.0));
-      x = lp_build_max(bld, x, lp_build_const_uni(type, -126.99999));
+      x = lp_build_min(bld, x, lp_build_const_scalar(type,  129.0));
+      x = lp_build_max(bld, x, lp_build_const_scalar(type, -126.99999));
 
       /* ipart = int(x - 0.5) */
-      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_uni(type, 0.5f), "");
+      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_scalar(type, 0.5f), "");
       ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
 
       /* fpart = x - ipart */
@@ -835,8 +835,8 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
    if(p_exp2_int_part || p_exp2) {
       /* expipart = (float) (1 << ipart) */
-      expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_int_const_uni(type, 127), "");
-      expipart = LLVMBuildShl(bld->builder, expipart, lp_build_int_const_uni(type, 23), "");
+      expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_int_const_scalar(type, 127), "");
+      expipart = LLVMBuildShl(bld->builder, expipart, lp_build_int_const_scalar(type, 23), "");
       expipart = LLVMBuildBitCast(bld->builder, expipart, vec_type, "");
    }
 
@@ -902,8 +902,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
 
-   LLVMValueRef expmask = lp_build_int_const_uni(type, 0x7f800000);
-   LLVMValueRef mantmask = lp_build_int_const_uni(type, 0x007fffff);
+   LLVMValueRef expmask = lp_build_int_const_scalar(type, 0x7f800000);
+   LLVMValueRef mantmask = lp_build_int_const_scalar(type, 0x007fffff);
    LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
 
    LLVMValueRef i = NULL;
@@ -927,8 +927,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    }
 
    if(p_floor_log2 || p_log2) {
-      logexp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_uni(type, 23), "");
-      logexp = LLVMBuildSub(bld->builder, logexp, lp_build_int_const_uni(type, 127), "");
+      logexp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_scalar(type, 23), "");
+      logexp = LLVMBuildSub(bld->builder, logexp, lp_build_int_const_scalar(type, 127), "");
       logexp = LLVMBuildSIToFP(bld->builder, logexp, vec_type, "");
    }
 

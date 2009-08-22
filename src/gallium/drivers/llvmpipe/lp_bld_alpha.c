@@ -54,7 +54,7 @@ lp_build_alpha_test(LLVMBuilderRef builder,
    lp_build_context_init(&bld, builder, type);
 
    if(state->enabled) {
-      LLVMValueRef ref = lp_build_const_uni(type, state->ref_value);
+      LLVMValueRef ref = lp_build_const_scalar(type, state->ref_value);
       LLVMValueRef test = lp_build_cmp(&bld, state->func, alpha, ref);
 
       lp_build_name(test, "alpha_mask");

@@ -215,7 +215,7 @@ emit_store(
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      value = lp_build_max(&bld->base, value, lp_build_const_uni(bld->base.type, -1.0));
+      value = lp_build_max(&bld->base, value, lp_build_const_scalar(bld->base.type, -1.0));
       value = lp_build_min(&bld->base, value, bld->base.one);
       break;
 
@@ -1487,7 +1487,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
             assert(num_immediates < LP_MAX_IMMEDIATES);
             for( i = 0; i < size; ++i )
                bld.immediates[num_immediates][i] =
-                  lp_build_const_uni(type, parse.FullToken.FullImmediate.u[i].Float);
+                  lp_build_const_scalar(type, parse.FullToken.FullImmediate.u[i].Float);
             for( i = size; i < 4; ++i )
                bld.immediates[num_immediates][i] = bld.base.undef;
             num_immediates++;
