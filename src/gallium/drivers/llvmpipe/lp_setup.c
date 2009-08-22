@@ -35,7 +35,6 @@
 #include "lp_context.h"
 #include "lp_prim_setup.h"
 #include "lp_quad.h"
-#include "lp_quad_pipe.h"
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "draw/draw_context.h"
@@ -45,6 +44,7 @@
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "lp_tile_cache.h"
 #include "lp_tile_soa.h"
 
 
@@ -108,6 +108,83 @@ struct setup_context {
 
    unsigned winding;		/* which winding to cull */
 };
+
+
+
+/**
+ * Execute fragment shader for the four fragments in the quad.
+ */
+static void
+shade_quads(struct llvmpipe_context *llvmpipe,
+            struct quad_header *quads[],
+            unsigned nr)
+{
+   struct lp_fragment_shader *fs = llvmpipe->fs;
+   void *constants;
+   struct tgsi_sampler **samplers;
+   struct quad_header *quad = quads[0];
+   const unsigned x = quad->input.x0;
+   const unsigned y = quad->input.y0;
+   uint8_t *tile = lp_get_cached_tile(llvmpipe->cbuf_cache[0], x, y);
+   uint8_t *color;
+   void *depth;
+   uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
+   unsigned chan_index;
+   unsigned q;
+
+   assert(fs->current);
+   if(!fs->current)
+      return;
+
+   /* Sanity checks */
+   assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
+   assert(x % TILE_VECTOR_WIDTH == 0);
+   assert(y % TILE_VECTOR_HEIGHT == 0);
+   for (q = 0; q < nr; ++q) {
+      assert(quads[q]->input.x0 == x + q*2);
+      assert(quads[q]->input.y0 == y);
+   }
+
+   /* mask */
+   for (q = 0; q < 4; ++q)
+      for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+         mask[q][chan_index] = quads[q]->inout.mask & (1 << chan_index) ? ~0 : 0;
+
+   /* color buffer */
+   color = &TILE_PIXEL(tile, x & (TILE_SIZE-1), y & (TILE_SIZE-1), 0);
+
+   /* depth buffer */
+   if(llvmpipe->zsbuf_map) {
+      assert((x % 2) == 0);
+      assert((y % 2) == 0);
+      depth = llvmpipe->zsbuf_map +
+              y*llvmpipe->zsbuf_transfer->stride +
+              2*x*llvmpipe->zsbuf_transfer->block.size;
+   }
+   else
+      depth = NULL;
+
+   constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
+   /* TODO: blend color */
+
+   assert((((uintptr_t)mask) & 0xf) == 0);
+   assert((((uintptr_t)depth) & 0xf) == 0);
+   assert((((uintptr_t)color) & 0xf) == 0);
+   assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
+
+   /* run shader */
+   fs->current->jit_function( x,
+                              y,
+                              quad->coef->a0,
+                              quad->coef->dadx,
+                              quad->coef->dady,
+                              constants,
+                              &mask[0][0],
+                              color,
+                              depth,
+                              samplers);
+}
 
 
 
@@ -217,9 +294,9 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
          quad_ptrs[i] = &quads[i];
       }
 
-      lp->quad.first->run( lp->quad.first, quad_ptrs, nr_quads );
+      shade_quads( lp, quad_ptrs, nr_quads );
 #else
-      lp->quad.first->run( lp->quad.first, &quad, 1 );
+      shade_quads( lp, &quad, 1 );
 #endif
    }
 }
@@ -235,7 +312,6 @@ static void flush_spans( struct setup_context *setup )
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
    const int xright1 = setup->span.right[1];
-   struct quad_stage *pipe = setup->llvmpipe->quad.first;
 
 
    int minleft = block_x(MIN2(xleft0, xleft1));
@@ -275,7 +351,7 @@ static void flush_spans( struct setup_context *setup )
          }
          assert(!(mask0 | mask1));
 
-         pipe->run( pipe, setup->quad_ptrs, nr_quads );
+         shade_quads(setup->llvmpipe, setup->quad_ptrs, nr_quads );
       }
    }
 
@@ -1364,8 +1440,6 @@ void llvmpipe_setup_prepare( struct setup_context *setup )
    if (lp->dirty) {
       llvmpipe_update_derived(lp);
    }
-
-   lp->quad.first->begin( lp->quad.first );
 
    if (lp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
        lp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&

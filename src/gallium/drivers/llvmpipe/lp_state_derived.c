@@ -252,9 +252,5 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       llvmpipe_update_fs( llvmpipe );
 
 
-   if (llvmpipe->dirty & (LP_NEW_FRAMEBUFFER |
-                          LP_NEW_FS))
-      lp_build_quad_pipeline(llvmpipe);
-
    llvmpipe->dirty = 0;
 }

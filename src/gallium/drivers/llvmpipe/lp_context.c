@@ -55,10 +55,23 @@
 void
 llvmpipe_map_transfers(struct llvmpipe_context *lp)
 {
+   struct pipe_screen *screen = lp->pipe.screen;
+   struct pipe_surface *zsbuf = lp->framebuffer.zsbuf;
    unsigned i;
 
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_map_transfers(lp->cbuf_cache[i]);
+   }
+
+   if(zsbuf) {
+      if(!lp->zsbuf_transfer)
+         lp->zsbuf_transfer = screen->get_tex_transfer(screen, zsbuf->texture,
+                                                       zsbuf->face, zsbuf->level, zsbuf->zslice,
+                                                       PIPE_TRANSFER_READ_WRITE,
+                                                       0, 0, zsbuf->width, zsbuf->height);
+      if(lp->zsbuf_transfer && !lp->zsbuf_map)
+         lp->zsbuf_map = screen->transfer_map(screen, lp->zsbuf_transfer);
+
    }
 }
 
@@ -74,6 +87,15 @@ llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
    }
+
+   if(lp->zsbuf_transfer) {
+      struct pipe_screen *screen = lp->pipe.screen;
+
+      if(lp->zsbuf_map) {
+         screen->transfer_unmap(screen, lp->zsbuf_transfer);
+         lp->zsbuf_map = NULL;
+      }
+   }
 }
 
 
@@ -84,8 +106,6 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
-
-      llvmpipe->quad.shade->destroy( llvmpipe->quad.shade );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
@@ -205,7 +225,6 @@ llvmpipe_create( struct pipe_screen *screen )
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.
-    * Must be before quad stage setup!
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       llvmpipe->cbuf_cache[i] = lp_create_tile_cache( screen );
@@ -213,9 +232,6 @@ llvmpipe_create( struct pipe_screen *screen )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
 
-
-   /* setup quad rendering stages */
-      llvmpipe->quad.shade = lp_quad_shade_stage(llvmpipe);
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {

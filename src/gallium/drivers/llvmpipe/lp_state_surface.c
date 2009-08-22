@@ -67,6 +67,19 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 
    /* zbuf changing? */
    if (lp->framebuffer.zsbuf != fb->zsbuf) {
+
+      if(lp->zsbuf_transfer) {
+         struct pipe_screen *screen = pipe->screen;
+
+         if(lp->zsbuf_map) {
+            screen->transfer_unmap(screen, lp->zsbuf_transfer);
+            lp->zsbuf_map = NULL;
+         }
+
+         screen->tex_transfer_destroy(lp->zsbuf_transfer);
+         lp->zsbuf_transfer = NULL;
+      }
+
       /* assign new */
       lp->framebuffer.zsbuf = fb->zsbuf;
 

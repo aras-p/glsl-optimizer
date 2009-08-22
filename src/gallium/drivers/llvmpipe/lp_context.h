@@ -35,7 +35,6 @@
 
 #include "draw/draw_vertex.h"
 
-#include "lp_quad_pipe.h"
 #include "lp_tex_sample.h"
 
 
@@ -114,13 +113,6 @@ struct llvmpipe_context {
 
    unsigned line_stipple_counter;
 
-   /** Software quad rendering pipeline */
-   struct {
-      struct quad_stage *shade;
-
-      struct quad_stage *first; /**< points to one of the above stages */
-   } quad;
-
    /** TGSI exec things */
    struct {
       struct lp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
@@ -139,6 +131,10 @@ struct llvmpipe_context {
    
    struct llvmpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    
+   /* TODO: we shouldn't be using external interfaces internally like this */
+   struct pipe_transfer *zsbuf_transfer;
+   uint8_t *zsbuf_map;
+
    unsigned tex_timestamp;
    struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
