@@ -28,18 +28,17 @@
 
 /**
  * @file
- * Helper
+ * Helpers for emiting intrinsic calls.
  *
- * LLVM IR doesn't support all basic arithmetic operations we care about (most
- * notably min/max and saturated operations), and it is often necessary to
- * resort machine-specific intrinsics directly. The functions here hide all
- * these implementation details from the other modules.
+ * LLVM vanilla IR doesn't represent all basic arithmetic operations we care
+ * about, and it is often necessary to resort target-specific intrinsics for
+ * performance, convenience.
  *
- * We also do simple expressions simplification here. Reasons are:
- * - it is very easy given we have all necessary information readily available
- * - LLVM optimization passes fail to simplify several vector expressions
- * - We often know value constraints which the optimization passes have no way
- *   of knowing, such as when source arguments are known to be in [0, 1] range.
+ * Ideally we would like to stay away from target specific intrinsics and
+ * move all the instruction selection logic into upstream LLVM where it belongs.
+ *
+ * These functions are also used for calling C functions provided by us from
+ * generated LLVM code.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */

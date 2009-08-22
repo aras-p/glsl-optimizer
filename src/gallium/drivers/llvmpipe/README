@@ -6,31 +6,40 @@ Status
 
 Done so far is:
 
-- TGSI -> LLVM fragment shader translation
-  - same level of support as the TGSI SSE2 exec machine
-  - texture sampling via an intrinsic call
-  - done in SoA
-  - input interpolation also code generated
-
-- blend -> LLVM (including logic ops)
-  - SoA and AoS, but only the former used
-
-- code is generic
-  - intermediates can be vectors of floats, ubytes, fixed point, etc, and of
-    any width and length
-  - not all operations are implemented for these types yet though
+ - the whole fragment pipeline is code generated in a single function
+ 
+   - depth testing
+ 
+   - fragment shader TGSI translation
+     - same level of support as the TGSI SSE2 exec machine, with the exception
+       we don't fallback to TGSI interpretation when an unsupported opcode is
+       found, but just ignore it
+     - texture sampling via an intrinsic call
+     - done in SoA layout
+     - input interpolation also code generated
+ 
+   - alpha testing
+ 
+   - blend (including logic ops)
+     - both in SoA and AoS layouts, but only the former used for now
+ 
+ - code is generic
+   - intermediates can be vectors of floats, ubytes, fixed point, etc, and of
+     any width and length
+   - not all operations are implemented for these types yet though
 
 Most mesa/progs/demos/* work. Speed is on par with Keith's softpipe-opt branch,
 which includes hand written fast implementations for common cases.
 
 To do (probably by this order):
-- code generate the rest of the fragment pipeline, namely the
-  depth/alpha/stencil state
-- concatenate the fragment pipeline (shader + depth/stencil/alpha + blend) in a
-  single function
-- code generate texture sampling
-- translate TGSI control flow instructions
-- code generate the triangle setup and rasterization
+
+ - code generate stipple and stencil testing
+
+ - code generate texture sampling
+
+ - translate TGSI control flow instructions, and all other remaining opcodes
+
+ - code generate the triangle setup and rasterization
 
 
 Requirements
@@ -70,7 +79,7 @@ Requirements
    instructions. This is necessary because we emit several SSE intrinsics for
    convenience. See /proc/cpuinfo to know what your CPU supports.
  
- - scons (although it should be straightforward to fix the Makefiles as well)
+ - scons
 
 
 Building
@@ -80,6 +89,12 @@ To build everything invoke scons as:
 
   scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=xlib dri=false -k
 
+Alternatively, you can build it with GNU make, if you prefer, by invoking it as
+
+  make linux-llvm
+
+but the rest of these instructions assume scons is used.
+
 
 Using
 =====
@@ -87,8 +102,11 @@ Using
 Building will create a drop-in alternative for libGL.so. To use it set the
 environment variables:
 
-  export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIBRARY_PATH
   export LD_LIBRARY_PATH=$PWD/build/linux-x86_64-debug/lib:$LD_LIBRARY_PATH
+
+or
+
+  export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIBRARY_PATH
 
 
 Unit testing
@@ -104,11 +122,18 @@ build/linux-???-debug/gallium/drivers/llvmpipe:
 Some of this tests can output results and benchmarks to a tab-seperated-file
 for posterior analysis, e.g.:
 
-  build/linux-x86_64/gallium/drivers/llvmpipe/lp_test_blend -o blend.tsv
+  build/linux-x86_64-debug/gallium/drivers/llvmpipe/lp_test_blend -o blend.tsv
 
 
 Development Notes
 =================
+
+- When looking to this code by the first time start in lp_state_fs.c, and 
+  then skim through the lp_bld_* functions called in there, and the comments
+  at the top of the lp_bld_*.c functions.  
+
+- All lp_bld_*.[ch] are isolated from the rest of the driver, and could/may be 
+  put in a standalone Gallium state -> LLVM IR translation module.
 
 - We use LLVM-C bindings for now. They are not documented, but follow the C++
   interfaces very closely, and appear to be complete enough for code

@@ -26,7 +26,33 @@
  **************************************************************************/
 
 /**
+ * @file
  * Depth/stencil testing to LLVM IR translation.
+ *
+ * To be done accurately/efficiently the depth/stencil test must be done with
+ * the same type/format of the depth/stencil buffer, which implies massaging
+ * the incoming depths to fit into place. Using a more straightforward
+ * type/format for depth/stencil values internally and only convert when
+ * flushing would avoid this, but it would most likely result in depth fighting
+ * artifacts.
+ *
+ * We are free to use a different pixel layout though. Since our basic
+ * processing unit is a quad (2x2 pixel block) we store the depth/stencil
+ * values tiled, a quad at time. That is, a depth buffer containing 
+ *
+ *  Z11 Z12 Z13 Z14 ...
+ *  Z21 Z22 Z23 Z24 ...
+ *  Z31 Z32 Z33 Z34 ...
+ *  Z41 Z42 Z43 Z44 ...
+ *  ... ... ... ... ...
+ *
+ * will actually be stored in memory as
+ *
+ *  Z11 Z12 Z21 Z22 Z13 Z14 Z23 Z24 ...
+ *  Z31 Z32 Z41 Z42 Z33 Z34 Z43 Z44 ...
+ *  ... ... ... ... ... ... ... ... ...
+ *
+ * FIXME: Code generate stencil test
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -42,6 +68,9 @@
 #include "lp_bld_depth.h"
 
 
+/**
+ * Return a type appropriate for depth/stencil testing.
+ */
 union lp_type
 lp_depth_type(const struct util_format_description *format_desc,
               unsigned length)
@@ -79,6 +108,9 @@ lp_depth_type(const struct util_format_description *format_desc,
 }
 
 
+/**
+ * Depth test.
+ */
 void
 lp_build_depth_test(LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,

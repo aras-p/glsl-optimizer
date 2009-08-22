@@ -40,6 +40,9 @@
 #include <llvm-c/Core.h>  
 
 
+/**
+ * Max number of arguments in an intrinsic.
+ */
 #define LP_MAX_FUNC_ARGS 32
 
 

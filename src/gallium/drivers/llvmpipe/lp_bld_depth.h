@@ -45,9 +45,6 @@ union lp_type;
 struct lp_build_mask_context;
 
 
-/**
- * Return a type appropriate for depth testing.
- */
 union lp_type
 lp_depth_type(const struct util_format_description *format_desc,
               unsigned length);

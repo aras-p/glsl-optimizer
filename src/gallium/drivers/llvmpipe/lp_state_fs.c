@@ -26,6 +26,38 @@
  * 
  **************************************************************************/
 
+/**
+ * @file
+ * Code generate the whole fragment pipeline.
+ *
+ * The fragment pipeline consists of the following stages:
+ * - stipple (TBI)
+ * - early depth test
+ * - fragment shader
+ * - alpha test
+ * - depth/stencil test (stencil TBI)
+ * - blending
+ *
+ * This file has only the glue to assembly the fragment pipeline.  The actual
+ * plumbing of converting Gallium state into LLVM IR is done elsewhere, in the
+ * lp_bld_*.[ch] files, and in a complete generic and reusable way. Here we
+ * muster the LLVM JIT execution engine to create a function that follows an
+ * established binary interface and that can be called from C directly.
+ *
+ * A big source of complexity here is that we often want to run different
+ * stages with different precisions and data types and precisions. For example,
+ * the fragment shader needs typically to be done in floats, but the
+ * depth/stencil test and blending is better done in the type that most closely
+ * matches the depth/stencil and color buffer respectively.
+ *
+ * Since the width of a SIMD vector register stays the same regardless of the
+ * element type, different types imply different number of elements, so we must
+ * code generate more instances of the stages with larger types to be able to
+ * feed/consume the stages with smaller types.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
@@ -56,6 +88,14 @@ static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
 static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
 
 
+/**
+ * Generate the position vectors.
+ *
+ * TODO: This should be called only once per fragment pipeline, for the first
+ * quad, and the neighboring quad positions obtained by additions.
+ *
+ * Parameter x, y are the integer values with the quad upper left coordinates.
+ */
 static void
 generate_pos(LLVMBuilderRef builder,
              LLVMValueRef x,
@@ -74,6 +114,11 @@ generate_pos(LLVMBuilderRef builder,
    unsigned chan;
    unsigned i;
 
+   /*
+    * Derive from the quad's upper left scalar coordinates the coordinates for
+    * all other quad pixels
+    */
+
    x = lp_build_broadcast(builder, int_vec_type, x);
    y = lp_build_broadcast(builder, int_vec_type, y);
 
@@ -90,6 +135,10 @@ generate_pos(LLVMBuilderRef builder,
 
    pos[0] = x;
    pos[1] = y;
+
+   /* 
+    * Calculate z and w from the interpolation factors.
+    */
 
    for(chan = 2; chan < NUM_CHANNELS; ++chan) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
@@ -111,6 +160,9 @@ generate_pos(LLVMBuilderRef builder,
 }
 
 
+/**
+ * Generate the depth test.
+ */
 static void
 generate_depth(struct llvmpipe_context *lp,
                LLVMBuilderRef builder,
@@ -129,8 +181,10 @@ generate_depth(struct llvmpipe_context *lp,
    format_desc = util_format_description(lp->framebuffer.zsbuf->format);
    assert(format_desc);
 
+   /* Pick the depth type. */
    dst_type = lp_depth_type(format_desc, src_type.width*src_type.length);
 
+   /* FIXME: Cope with a depth test type with a different bit width. */
    assert(dst_type.width == src_type.width);
    assert(dst_type.length == src_type.length);
 
@@ -154,7 +208,7 @@ generate_depth(struct llvmpipe_context *lp,
 
 
 /**
- * Generate the fragment shader, depth/stencil and alpha tests.
+ * Generate the fragment shader, depth/stencil test, and alpha tests.
  */
 static void
 generate_fs(struct llvmpipe_context *lp,
@@ -258,10 +312,7 @@ generate_fs(struct llvmpipe_context *lp,
 
 
 /**
- * Generate blending code according to blend->base state.
- * The blend function will look like:
- *    blend(mask, src_color, constant color, dst_color)
- * dst_color will be modified and contain the result of the blend func.
+ * Generate color blending and color output.
  */
 static void
 generate_blend(const struct pipe_blend_state *blend,
@@ -310,6 +361,9 @@ generate_blend(const struct pipe_blend_state *blend,
 }
 
 
+/**
+ * Generate the runtime callable function for the whole fragment pipeline.
+ */
 static struct lp_fragment_shader_variant *
 generate_fragment(struct llvmpipe_context *lp,
                   struct lp_fragment_shader *shader,
@@ -379,6 +433,9 @@ generate_fragment(struct llvmpipe_context *lp,
    variant->shader = shader;
    memcpy(&variant->key, key, sizeof *key);
 
+   /* TODO: actually pick these based on the fs and color buffer
+    * characteristics. */
+
    fs_type.value = 0;
    fs_type.floating = TRUE; /* floating point values */
    fs_type.sign = TRUE;     /* values are signed */
@@ -393,6 +450,11 @@ generate_fragment(struct llvmpipe_context *lp,
    blend_type.norm = TRUE;      /* values are in [0,1] or [-1,1] */
    blend_type.width = 8;        /* 8-bit ubyte values */
    blend_type.length = 16;      /* 16 elements per vector */
+
+   /* 
+    * Generate the function prototype. Any change here must be reflected in
+    * lp_state.h's lp_shader_fs_func function pointer type, and vice-versa.
+    */
 
    fs_elem_type = lp_build_elem_type(fs_type);
    fs_vec_type = lp_build_vec_type(fs_type);
@@ -442,6 +504,10 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(depth_ptr, "depth");
    lp_build_name(samplers_ptr, "samplers");
 
+   /*
+    * Function body
+    */
+
    block = LLVMAppendBasicBlock(variant->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
@@ -479,6 +545,10 @@ generate_fragment(struct llvmpipe_context *lp,
          fs_out_color[chan][i] = out_color[chan];
    }
 
+   /* 
+    * Convert the fs's output color and mask to fit to the blending type. 
+    */
+
    for(chan = 0; chan < NUM_CHANNELS; ++chan) {
       lp_build_conv(builder, fs_type, blend_type,
                     fs_out_color[chan], num_fs,
@@ -490,6 +560,10 @@ generate_fragment(struct llvmpipe_context *lp,
                                fs_mask, num_fs,
                                &blend_mask, 1);
 
+   /*
+    * Blending.
+    */
+
    generate_blend(&key->blend,
                   builder,
                   blend_type,
@@ -498,9 +572,13 @@ generate_fragment(struct llvmpipe_context *lp,
                   NULL /* FIXME: blend_const_color */,
                   color_ptr);
 
-   LLVMBuildRetVoid(builder);;
+   LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
+
+   /*
+    * Translate the LLVM IR into machine code.
+    */
 
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 
@@ -514,6 +592,9 @@ generate_fragment(struct llvmpipe_context *lp,
       abort();
    }
 
+   /* Tell where the fetch_texel function is, if the shader refers to it.
+    * TODO: this should be done elsewhere.
+    */
    fetch_texel = LLVMGetNamedFunction(screen->module, "fetch_texel");
    if(fetch_texel) {
       static boolean first_time = TRUE;
@@ -616,11 +697,19 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 }
 
 
-void llvmpipe_update_fs(struct llvmpipe_context *lp)
+void 
+llvmpipe_update_fs(struct llvmpipe_context *lp)
 {
    struct lp_fragment_shader *shader = lp->fs;
    struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant;
+
+   /* We need to generate several variants of the fragment pipeline to match
+    * all the combinations of the contributing state atoms.
+    *
+    * TODO: there is actually no reason to tie this to context state -- the
+    * generated code could be cached globally in the screen.
+    */
 
    memset(&key, 0, sizeof key);
    memcpy(&key.depth, &lp->depth_stencil->depth, sizeof &key.depth);

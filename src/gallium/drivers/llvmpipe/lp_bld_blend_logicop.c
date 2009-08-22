@@ -26,6 +26,14 @@
  **************************************************************************/
 
 
+/**
+ * @file
+ * Blend LLVM IR generation -- logic ops.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
+
 #include "pipe/p_state.h"
 
 #include "lp_bld_blend.h"

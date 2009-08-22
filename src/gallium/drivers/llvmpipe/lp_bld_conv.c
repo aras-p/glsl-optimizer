@@ -28,18 +28,34 @@
 
 /**
  * @file
- * Helper
+ * Helper functions for type conversions.
  *
- * LLVM IR doesn't support all basic arithmetic operations we care about (most
- * notably min/max and saturated operations), and it is often necessary to
- * resort machine-specific intrinsics directly. The functions here hide all
- * these implementation details from the other modules.
+ * We want to use the fastest type for a given computation whenever feasible.
+ * The other side of this is that we need to be able convert between several
+ * types accurately and efficiently.
  *
- * We also do simple expressions simplification here. Reasons are:
- * - it is very easy given we have all necessary information readily available
- * - LLVM optimization passes fail to simplify several vector expressions
- * - We often know value constraints which the optimization passes have no way
- *   of knowing, such as when source arguments are known to be in [0, 1] range.
+ * Conversion between types of different bit width is quite complex since a 
+ *
+ * To remember there are a few invariants in type conversions:
+ *
+ * - register width must remain constant:
+ *
+ *     src_type.width * src_type.length == dst_type.width * dst_type.length
+ *
+ * - total number of elements must remain constant:
+ *
+ *     src_type.length * num_srcs == dst_type.length * num_dsts
+ *
+ * It is not always possible to do the conversion both accurately and
+ * efficiently, usually due to lack of adequate machine instructions. In these
+ * cases it is important not to cut shortcuts here and sacrifice accuracy, as
+ * there this functions can be used anywhere. In the future we might have a
+ * precision parameter which can gauge the accuracy vs efficiency compromise,
+ * but for now if the data conversion between two stages happens to be the
+ * bottleneck, then most likely should just avoid converting at all and run
+ * both stages with the same type.
+ *
+ * Make sure to run lp_test_conv unit test after any change to this file.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -55,6 +71,19 @@
 #include "lp_bld_conv.h"
 
 
+/**
+ * Special case for converting clamped IEEE-754 floats to unsigned norms.
+ *
+ * The mathematical voodoo below may seem excessive but it is actually
+ * paramount we do it this way for several reasons. First, there is no single
+ * precision FP to unsigned integer conversion Intel SSE instruction. Second,
+ * secondly, even if there was, since the FP's mantissa takes only a fraction
+ * of register bits the typically scale and cast approach would require double
+ * precision for accurate results, and therefore half the throughput
+ *
+ * Although the result values can be scaled to an arbitrary bit width specified
+ * by dst_width, the actual result type will have the same width.
+ */
 LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
                                         union lp_type src_type,
@@ -118,7 +147,7 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
 
 
 /**
- * Inverse of lp_build_clamped_float_to_unsigned_norm.
+ * Inverse of lp_build_clamped_float_to_unsigned_norm above.
  */
 LLVMValueRef
 lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
@@ -139,7 +168,6 @@ lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
 
    mantissa = lp_mantissa(dst_type);
 
-   /* We cannot carry more bits than the mantissa */
    n = MIN2(mantissa, src_width);
 
    ubound = ((unsigned long long)1 << n);
@@ -212,6 +240,12 @@ lp_build_const_pack_shuffle(unsigned n)
 }
 
 
+/**
+ * Expand the bit width.
+ *
+ * This will only change the number of bits the values are represented, not the
+ * values themselved.
+ */
 static void
 lp_build_expand(LLVMBuilderRef builder,
                union lp_type src_type,
@@ -270,9 +304,13 @@ lp_build_expand(LLVMBuilderRef builder,
 /**
  * Non-interleaved pack.
  *
- * lo =   __ l0 __ l1 __ l2 __..  __ ln
- * hi  =  __ h0 __ h1 __ h2 __..  __ hn
- * res =  l0 l1 l2 .. ln h0 h1 h2 .. hn
+ * This will move values as
+ *
+ *   lo =   __ l0 __ l1 __ l2 __..  __ ln
+ *   hi =   __ h0 __ h1 __ h2 __..  __ hn
+ *   res =  l0 l1 l2 .. ln h0 h1 h2 .. hn
+ *
+ * TODO: handle saturation consistently.
  */
 static LLVMValueRef
 lp_build_pack2(LLVMBuilderRef builder,
@@ -347,6 +385,11 @@ lp_build_pack2(LLVMBuilderRef builder,
 }
 
 
+/**
+ * Truncate the bit width.
+ *
+ * TODO: Handle saturation consistently.
+ */
 static LLVMValueRef
 lp_build_trunc(LLVMBuilderRef builder,
                union lp_type src_type,
@@ -392,13 +435,10 @@ lp_build_trunc(LLVMBuilderRef builder,
 
 
 /**
- * Convert between two SIMD types.
+ * Generic type conversion.
  *
- * Converting between SIMD types of different element width poses a problem:
- * SIMD registers have a fixed number of bits, so different element widths
- * imply different vector lengths. Therefore we must multiplex the multiple
- * incoming sources into a single destination vector, or demux a single incoming
- * vector into multiple vectors.
+ * TODO: Take a precision argument, or even better, add a new precision member
+ * to the lp_type union.
  */
 void
 lp_build_conv(LLVMBuilderRef builder,
@@ -605,7 +645,14 @@ lp_build_conv(LLVMBuilderRef builder,
 
 
 /**
- * Convenience wrapper around lp_build_conv for bit masks.
+ * Bit mask conversion.
+ *
+ * This will convert the integer masks that match the given types.
+ *
+ * The mask values should 0 or -1, i.e., all bits either set to zero or one.
+ * Any other value will likely cause in unpredictable results.
+ *
+ * This is basically a very trimmed down version of lp_build_conv.
  */
 void
 lp_build_conv_mask(LLVMBuilderRef builder,
@@ -621,6 +668,8 @@ lp_build_conv_mask(LLVMBuilderRef builder,
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
    /*
+    * Drop
+    *
     * We assume all values are 0 or -1
     */
 

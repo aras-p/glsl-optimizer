@@ -26,6 +26,16 @@
  * 
  **************************************************************************/
 
+/**
+ * @file
+ * TGSI to LLVM IR translation -- SoA.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ *
+ * Based on tgsi_sse2.c code written by Michal Krol, Keith Whitwell,
+ * Brian Paul, and others.
+ */
+
 #include "pipe/p_config.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_debug.h"

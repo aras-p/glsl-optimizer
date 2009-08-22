@@ -25,6 +25,13 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * Helper functions for logical operations.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
 
 #include "pipe/p_defines.h"
 #include "lp_bld_type.h"

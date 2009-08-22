@@ -25,6 +25,13 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * TGSI to LLVM IR translation.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
 #ifndef LP_BLD_TGSI_H
 #define LP_BLD_TGSI_H
 

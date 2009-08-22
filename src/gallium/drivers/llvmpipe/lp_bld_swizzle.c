@@ -25,6 +25,13 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * Helper functions for swizzling/shuffling.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
+
 
 #include "util/u_debug.h"
 

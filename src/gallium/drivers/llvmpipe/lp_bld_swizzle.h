@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Helper functions for constant building.
+ * Helper functions for swizzling/shuffling.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */

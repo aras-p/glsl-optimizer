@@ -28,7 +28,41 @@
 
 /**
  * @file
- * Blend LLVM IR generation -- SoA.
+ * Blend LLVM IR generation -- SoA layout.
+ *
+ * Blending in SoA is much faster than AoS, especially when separate rgb/alpha
+ * factors/functions are used, since no channel masking/shuffling is necessary
+ * and we can achieve the full throughput of the SIMD operations. Furthermore
+ * the fragment shader output is also in SoA, so it fits nicely with the rest of
+ * the fragment pipeline.
+ *
+ * The drawback is that to be displayed the color buffer needs to be in AoS
+ * layout, so we need to tile/untile the color buffer before/after rendering.
+ * A color buffer like
+ *
+ *  R11 G11 B11 A11 R12 G12 B12 A12  R13 G13 B13 A13 R14 G14 B14 A14  ...
+ *  R21 G21 B21 A21 R22 G22 B22 A22  R23 G23 B23 A23 R24 G24 B24 A24  ...
+ *
+ *  R31 G31 B31 A31 R32 G32 B32 A32  R33 G33 B33 A33 R34 G34 B34 A34  ...
+ *  R41 G41 B41 A41 R42 G42 B42 A42  R43 G43 B43 A43 R44 G44 B44 A44  ...
+ *
+ *  ... ... ... ... ... ... ... ...  ... ... ... ... ... ... ... ...  ...
+ *
+ * will actually be stored in memory as
+ *
+ *  R11 R12 R21 R22 R13 R14 R23 R24 ... G11 G12 G21 G22 G13 G14 G23 G24 ... B11 B12 B21 B22 B13 B14 B23 B24 ... A11 A12 A21 A22 A13 A14 A23 A24 ...
+ *  R31 R32 R41 R42 R33 R34 R43 R44 ... G31 G32 G41 G42 G33 G34 G43 G44 ... B31 B32 B41 B42 B33 B34 B43 B44 ... A31 A32 A41 A42 A33 A34 A43 A44 ...
+ *  ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ...
+ *
+ * NOTE: Run lp_blend_test after any change to this file.
+ *
+ * You can also run lp_blend_test to obtain AoS vs SoA benchmarks. Invoking it
+ * as:
+ *
+ *  lp_blend_test -o blend.tsv
+ *
+ * will generate a tab-seperated-file with the test results and performance
+ * measurements.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */

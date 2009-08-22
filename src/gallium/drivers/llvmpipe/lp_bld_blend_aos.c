@@ -28,7 +28,16 @@
 
 /**
  * @file
- * Blend LLVM IR generation -- AOS form.
+ * Blend LLVM IR generation -- AoS layout.
+ *
+ * AoS blending is in general much slower than SoA, but there are some cases
+ * where it might be faster. In particular, if a pixel is rendered only once
+ * then the overhead of tiling and untiling will dominate over the speedup that
+ * SoA gives. So we might want to detect such cases and fallback to AoS in the
+ * future, but for now this function is here for historical/benchmarking
+ * purposes.
+ *
+ * Run lp_blend_test after any change to this file.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
