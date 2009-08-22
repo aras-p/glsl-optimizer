@@ -278,6 +278,7 @@ static LLVMValueRef
 lp_build_pack2(LLVMBuilderRef builder,
                union lp_type src_type,
                union lp_type dst_type,
+               boolean clamped,
                LLVMValueRef lo,
                LLVMValueRef hi)
 {
@@ -299,7 +300,7 @@ lp_build_pack2(LLVMBuilderRef builder,
    if(src_type.width * src_type.length == 128) {
       /* All X86 non-interleaved pack instructions all take signed inputs and
        * saturate them, so saturate beforehand. */
-      if(!src_type.sign) {
+      if(!src_type.sign && !clamped) {
          struct lp_build_context bld;
          unsigned dst_bits = dst_type.sign ? dst_type.width - 1 : dst_type.width;
          LLVMValueRef dst_max = lp_build_int_const_uni(src_type, ((unsigned long long)1 << dst_bits) - 1);
@@ -350,6 +351,7 @@ static LLVMValueRef
 lp_build_trunc(LLVMBuilderRef builder,
                union lp_type src_type,
                union lp_type dst_type,
+               boolean clamped,
                const LLVMValueRef *src, unsigned num_srcs)
 {
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
@@ -377,7 +379,8 @@ lp_build_trunc(LLVMBuilderRef builder,
       num_srcs /= 2;
 
       for(i = 0; i < num_srcs; ++i)
-         tmp[i] = lp_build_pack2(builder, src_type, new_type, tmp[2*i + 0], tmp[2*i + 1]);
+         tmp[i] = lp_build_pack2(builder, src_type, new_type, clamped,
+                                 tmp[2*i + 0], tmp[2*i + 1]);
 
       src_type = new_type;
    }
@@ -522,7 +525,7 @@ lp_build_conv(LLVMBuilderRef builder,
 
    if(tmp_type.width > dst_type.width) {
       assert(num_dsts == 1);
-      tmp[0] = lp_build_trunc(builder, tmp_type, dst_type, tmp, num_tmps);
+      tmp[0] = lp_build_trunc(builder, tmp_type, dst_type, TRUE, tmp, num_tmps);
       tmp_type.width = dst_type.width;
       tmp_type.length = dst_type.length;
       num_tmps = 1;
@@ -617,15 +620,19 @@ lp_build_conv_mask(LLVMBuilderRef builder,
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
+   /*
+    * We assume all values are 0 or -1
+    */
+
    src_type.floating = FALSE;
    src_type.fixed = FALSE;
-   src_type.sign = FALSE;
-   src_type.norm = TRUE;
+   src_type.sign = TRUE;
+   src_type.norm = FALSE;
 
    dst_type.floating = FALSE;
    dst_type.fixed = FALSE;
-   dst_type.sign = FALSE;
-   dst_type.norm = TRUE;
+   dst_type.sign = TRUE;
+   dst_type.norm = FALSE;
 
    /*
     * Truncate or expand bit width
@@ -633,7 +640,7 @@ lp_build_conv_mask(LLVMBuilderRef builder,
 
    if(src_type.width > dst_type.width) {
       assert(num_dsts == 1);
-      dst[0] = lp_build_trunc(builder, src_type, dst_type, src, num_srcs);
+      dst[0] = lp_build_trunc(builder, src_type, dst_type, TRUE, src, num_srcs);
    }
    else if(src_type.width < dst_type.width) {
       assert(num_srcs == 1);
