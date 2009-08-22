@@ -714,7 +714,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    memset(&key, 0, sizeof key);
    memcpy(&key.depth, &lp->depth_stencil->depth, sizeof &key.depth);
    memcpy(&key.alpha, &lp->depth_stencil->alpha, sizeof &key.alpha);
-   memcpy(&key.blend, &lp->blend->base, sizeof &key.blend);
+   memcpy(&key.blend, lp->blend, sizeof &key.blend);
 
    variant = shader->variants;
    while(variant) {
