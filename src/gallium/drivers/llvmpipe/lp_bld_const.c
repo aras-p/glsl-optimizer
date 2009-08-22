@@ -41,6 +41,31 @@
 #include "lp_bld_const.h"
 
 
+unsigned
+lp_mantissa(union lp_type type)
+{
+   assert(type.floating);
+
+   if(type.floating) {
+      switch(type.width) {
+      case 32:
+         return 23;
+      case 64:
+         return 53;
+      default:
+         assert(0);
+         return 0;
+      }
+   }
+   else {
+      if(type.sign)
+         return type.width - 1;
+      else
+         return type.width;
+   }
+}
+
+
 /**
  * Shift of the unity.
  *
@@ -90,6 +115,77 @@ lp_const_scale(union lp_type type)
    assert((unsigned long long)dscale == llscale);
 
    return dscale;
+}
+
+
+/**
+ * Minimum value representable by the type.
+ */
+double
+lp_const_min(union lp_type type)
+{
+   unsigned bits;
+
+   if(!type.sign)
+      return 0.0;
+
+   if(type.norm)
+      return -1.0;
+
+   if (type.floating) {
+      switch(type.width) {
+      case 32:
+         return -FLT_MAX;
+      case 64:
+         return -DBL_MAX;
+      default:
+         assert(0);
+         return 0.0;
+      }
+   }
+
+   if(type.fixed)
+      /* FIXME: consider the fractional bits? */
+      bits = type.width / 2 - 1;
+   else
+      bits = type.width - 1;
+
+   return (double)-((long long)1 << bits);
+}
+
+
+/**
+ * Maximum value representable by the type.
+ */
+double
+lp_const_max(union lp_type type)
+{
+   unsigned bits;
+
+   if(type.norm)
+      return 1.0;
+
+   if (type.floating) {
+      switch(type.width) {
+      case 32:
+         return FLT_MAX;
+      case 64:
+         return DBL_MAX;
+      default:
+         assert(0);
+         return 0.0;
+      }
+   }
+
+   if(type.fixed)
+      bits = type.width / 2;
+   else
+      bits = type.width;
+
+   if(type.sign)
+      bits -= 1;
+
+   return (double)(((unsigned long long)1 << bits) - 1);
 }
 
 

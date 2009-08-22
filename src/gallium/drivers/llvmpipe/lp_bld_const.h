@@ -46,6 +46,10 @@ union lp_type type;
 
 
 unsigned
+lp_mantissa(union lp_type type);
+
+
+unsigned
 lp_const_shift(union lp_type type);
 
 
@@ -55,6 +59,13 @@ lp_const_offset(union lp_type type);
 
 double
 lp_const_scale(union lp_type type);
+
+double
+lp_const_min(union lp_type type);
+
+
+double
+lp_const_max(union lp_type type);
 
 
 double

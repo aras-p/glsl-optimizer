@@ -49,6 +49,12 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
                                         unsigned dst_width,
                                         LLVMValueRef src);
 
+LLVMValueRef
+lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
+                                unsigned src_width,
+                                union lp_type dst_type,
+                                LLVMValueRef src);
+
 
 void
 lp_build_conv(LLVMBuilderRef builder,
@@ -57,5 +63,11 @@ lp_build_conv(LLVMBuilderRef builder,
               const LLVMValueRef *srcs, unsigned num_srcs,
               LLVMValueRef *dsts, unsigned num_dsts);
 
+void
+lp_build_conv_mask(LLVMBuilderRef builder,
+                   union lp_type src_type,
+                   union lp_type dst_type,
+                   const LLVMValueRef *src, unsigned num_srcs,
+                   LLVMValueRef *dst, unsigned num_dsts);
 
 #endif /* !LP_BLD_CONV_H */
