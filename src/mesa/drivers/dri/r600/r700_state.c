@@ -168,7 +168,6 @@ void r700UpdateViewportOffset(GLcontext * ctx) //------------------
 void r700UpdateDrawBuffer(GLcontext * ctx) /* TODO */ //---------------------
 {
 	context_t *context = R700_CONTEXT(ctx);
-	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
 	R600_STATECHANGE(context, cb_target);
 	R600_STATECHANGE(context, db_target);
@@ -1422,7 +1421,6 @@ static void r700SetRenderTarget(context_t *context, int id)
 
     rrb = radeon_get_colorbuffer(&context->radeon);
     if (!rrb || !rrb->bo) {
-	    fprintf(stderr, "no rrb\n");
 	    return;
     }
 

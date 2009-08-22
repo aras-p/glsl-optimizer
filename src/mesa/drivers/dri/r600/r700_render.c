@@ -55,7 +55,6 @@
 
 void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
-void r700Start3D(context_t *context);
 GLboolean r700SendTextureState(context_t *context);
 static unsigned int r700PrimitiveType(int prim);
 void r600UpdateTextureState(GLcontext * ctx);
@@ -114,39 +113,6 @@ void r700Start3D(context_t *context)
     COMMIT_BATCH();
 
     r700WaitForIdleClean(context);
-}
-
-static GLboolean r700SetupShaders(GLcontext * ctx)
-{
-    context_t *context = R700_CONTEXT(ctx);
-
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
-    GLuint exportCount;
-
-    r700->ps.SQ_PGM_RESOURCES_PS.u32All = 0;
-    r700->vs.SQ_PGM_RESOURCES_VS.u32All = 0;
-
-    SETbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
-    SETbit(r700->vs.SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
-
-    r700SetupVertexProgram(ctx);
-
-    r700SetupFragmentProgram(ctx);
-
-    exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
-    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
-
-    r600UpdateTextureState(ctx);
-
-    r700SendFSState(context); // FIXME just a place holder for now
-    r700SendPSState(context);
-    r700SendVSState(context);
-
-    r700SendTextureState(context);
-    r700SetupStreams(ctx);
-
-    return GL_TRUE;
 }
 
 GLboolean r700SyncSurf(context_t *context,
@@ -333,7 +299,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 }
 
 static GLboolean r700RunRender(GLcontext * ctx,
-			                   struct tnl_pipeline_stage *stage)
+			       struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;
@@ -347,12 +313,15 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     /* just an estimate, need to properly calculate this */
     rcommonEnsureCmdBufSpace(&context->radeon,
-			     radeon->hw.max_state_size + ind_count + 1000, __FUNCTION__);
+			     radeon->hw.max_state_size + ind_count, __FUNCTION__);
 
-    r700Start3D(context);
     r700UpdateShaders(ctx);
     r700SetScissor(context);
-    r700SetupShaders(ctx);
+    r700SetupVertexProgram(ctx);
+    r700SetupFragmentProgram(ctx);
+    r600UpdateTextureState(ctx);
+    r700SetupStreams(ctx);
+
     radeonEmitState(radeon);
 
     /* richard test code */

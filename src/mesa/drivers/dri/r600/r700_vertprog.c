@@ -336,7 +336,6 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    BATCH_LOCALS(&context->radeon);
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
 
@@ -368,10 +367,14 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, vp->shadercode.buf->id);
     */
 
-    R600_STATECHANGE(context, spi);
+    R600_STATECHANGE(context, vs);
+    R600_STATECHANGE(context, fs); /* hack */
 
-    r700->vs.SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */ 
-    
+    r700->vs.SQ_PGM_RESOURCES_VS.u32All = 0;
+    SETbit(r700->vs.SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
+
+    r700->vs.SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */
+
     SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
 
@@ -381,9 +384,12 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 
-    SETfield(r700->SPI_VS_OUT_CONFIG.u32All, vp->r700Shader.nParamExports ? (vp->r700Shader.nParamExports - 1) : 0,
+    R600_STATECHANGE(context, spi);
+
+    SETfield(r700->SPI_VS_OUT_CONFIG.u32All,
+	     vp->r700Shader.nParamExports ? (vp->r700Shader.nParamExports - 1) : 0,
              VS_EXPORT_COUNT_shift, VS_EXPORT_COUNT_mask);
-	SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, vp->r700Shader.nParamExports,
+    SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, vp->r700Shader.nParamExports,
              NUM_INTERP_shift, NUM_INTERP_mask);
 
     /*
@@ -394,34 +400,26 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     /* sent out shader constants. */
     paramList = vp->mesa_program.Base.Parameters;
 
-    if(NULL != paramList)
-    {
-        _mesa_load_state_parameters(ctx, paramList);
+    if(NULL != paramList) {
+	    _mesa_load_state_parameters(ctx, paramList);
 
-        unNumParamData = paramList->NumParameters * 4;
+	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
+		    return GL_FALSE;
 
-        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2);
+	    R600_STATECHANGE(context, vs_consts);
 
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
-        /* assembler map const from very beginning. */
-        R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
+	    r700->vs.num_consts = paramList->NumParameters;
 
-        unNumParamData = paramList->NumParameters;
+	    unNumParamData = paramList->NumParameters;
 
-        for(ui=0; ui<unNumParamData; ui++)
-        {
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
-        }
-        END_BATCH();
-        COMMIT_BATCH();
-    }
+	    for(ui=0; ui<unNumParamData; ui++) {
+		    r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		    r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		    r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		    r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+	    }
+    } else
+	    r700->vs.num_consts = 0;
 
     return GL_TRUE;
 }
-
-
-
-

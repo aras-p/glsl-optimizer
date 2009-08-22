@@ -46,6 +46,7 @@
 #define R700_MAX_VIEWPORTS       16
 #define R700_MAX_SHADER_EXPORTS  32
 #define R700_MAX_UCP             6
+#define R700_MAX_DX9_CONSTS      256
 
 /* Enum not show in r600_*.h */
 
@@ -224,6 +225,8 @@ typedef struct _PS_STATE_STRUCT
 	union UINT_FLOAT         	SQ_PGM_EXPORTS_PS         ;  /* 0xA215 */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_PS       ;  /* 0xA233 */
 	GLboolean                         dirty;
+	int                             num_consts;
+	union UINT_FLOAT                consts[R700_MAX_DX9_CONSTS][4];
 } PS_STATE_STRUCT;
 
 typedef struct _VS_STATE_STRUCT
@@ -232,6 +235,8 @@ typedef struct _VS_STATE_STRUCT
 	union UINT_FLOAT  		SQ_PGM_RESOURCES_VS       ;  /* 0xA21A */
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_VS       ;  /* 0xA234 */
 	GLboolean                         dirty;
+	int                             num_consts;
+	union UINT_FLOAT                consts[R700_MAX_DX9_CONSTS][4];
 } VS_STATE_STRUCT;
 
 typedef struct _GS_STATE_STRUCT

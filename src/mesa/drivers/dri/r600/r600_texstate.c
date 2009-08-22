@@ -60,6 +60,8 @@ void r600UpdateTextureState(GLcontext * ctx)
 	struct radeon_tex_obj *t;
 	GLuint    unit;
 
+	R600_STATECHANGE(context, tx);
+
 	for (unit = 0; unit < R700_MAX_TEXTURE_UNITS; unit++) {
 		texUnit = &ctx->Texture.Unit[unit];
 		t = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);

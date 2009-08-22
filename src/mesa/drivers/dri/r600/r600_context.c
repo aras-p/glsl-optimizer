@@ -185,7 +185,7 @@ static void r600_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 
 static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-	/* to be enabled */
+	r700Start3D((context_t *)radeon);
 }
 
 static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
