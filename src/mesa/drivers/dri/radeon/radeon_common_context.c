@@ -92,6 +92,7 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_RV620: return "RV620";
 	case CHIP_FAMILY_RV635: return "RV635";
 	case CHIP_FAMILY_RS780: return "RS780";
+	case CHIP_FAMILY_RS880: return "RS880";
 	case CHIP_FAMILY_RV770: return "RV770";
 	case CHIP_FAMILY_RV730: return "RV730";
 	case CHIP_FAMILY_RV710: return "RV710";

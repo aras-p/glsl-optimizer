@@ -1579,6 +1579,7 @@ static void r700InitSQConfig(GLcontext * ctx)
     case CHIP_FAMILY_RV610:
     case CHIP_FAMILY_RV620:
     case CHIP_FAMILY_RS780:
+    case CHIP_FAMILY_RS880:
     default:
 	    num_ps_gprs = 84;
 	    num_vs_gprs = 36;
@@ -1661,6 +1662,7 @@ static void r700InitSQConfig(GLcontext * ctx)
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
         (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS880) ||
         (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
 	    CLEARbit(r700->sq_config.SQ_CONFIG.u32All, VC_ENABLE_bit);
     else

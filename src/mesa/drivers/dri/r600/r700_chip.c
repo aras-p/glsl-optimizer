@@ -127,6 +127,7 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS880) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
     else
