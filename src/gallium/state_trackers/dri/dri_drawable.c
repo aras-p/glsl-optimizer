@@ -44,14 +44,6 @@
 
 #include "util/u_memory.h"
 
-static void
-dri_copy_to_front(__DRIdrawablePrivate * dPriv,
-		  struct pipe_surface *from,
-		  int x, int y, unsigned w, unsigned h)
-{
-   /* TODO send a message to the Xserver to copy to the real front buffer */
-}
-
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,
 			struct pipe_screen *screen,
@@ -159,9 +151,7 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 index = ST_SURFACE_FRONT_LEFT;
-	 format = drawable->color_format;
-	 break;
+	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -233,8 +223,19 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private)
 {
    struct dri_context *ctx = (struct dri_context *)context_private;
+   struct dri_drawable *drawable = dri_drawable(ctx->dPriv);
+   __DRIdrawable *dri_drawable = ctx->dPriv;
+   __DRIscreen *dri_screen = ctx->sPriv;
 
-   dri_copy_to_front(ctx->dPriv, surf, 0, 0, surf->width, surf->height);
+   /* XXX Does this function get called with DRI1? */
+
+   if (ctx->dPriv == NULL) {
+      debug_printf("%s: no drawable bound to context\n", __func__);
+      return;
+   }
+
+   (*dri_screen->dri2.loader->flushFrontBuffer)(dri_drawable,
+						dri_drawable->loaderPrivate);
 }
 
 /**
@@ -312,12 +313,11 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    dPriv->driverPrivate = (void *)drawable;
 
    /* setup dri2 buffers information */
+   /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-#if 0
-   /* TODO incase of double buffer visual, delay fake creation */
    drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
-#endif
+
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
    if (visual->depthBits)
