@@ -46,6 +46,8 @@ struct dri_drawable
    unsigned attachments[8];
    unsigned num_attachments;
 
+   boolean is_pixmap;
+
    __DRIbuffer old[8];
    unsigned old_num;
    unsigned old_w;

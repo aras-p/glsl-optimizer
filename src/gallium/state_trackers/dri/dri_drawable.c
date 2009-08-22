@@ -88,6 +88,35 @@ dri_surface_from_handle(struct drm_api *api,
 }
 
 /**
+ * Pixmaps have will have the same name of fake front and front.
+ */
+static boolean
+dri2_check_if_pixmap(__DRIbuffer *buffers, int count)
+{
+   boolean found = FALSE;
+   boolean is_pixmap = FALSE;
+   unsigned name;
+   int i;
+
+   for (i = 0; i < count; i++) {
+      switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+         if (found) {
+            is_pixmap = buffers[i].name == name;
+         } else {
+            name = buffers[i].name;
+            found = TRUE;
+         }
+      default:
+	 continue;
+      }
+   }
+
+   return is_pixmap;
+}
+
+/**
  * This will be called a drawable is known to have been resized.
  */
 void
@@ -144,6 +173,8 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       drawable->old_h = dri_drawable->h;
       memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
    }
+
+   drawable->is_pixmap = dri2_check_if_pixmap(buffers, count);
 
    for (i = 0; i < count; i++) {
       enum pipe_format format = 0;
@@ -233,6 +264,12 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
       debug_printf("%s: no drawable bound to context\n", __func__);
       return;
    }
+
+#if 0
+   /* TODO if rendering to pixmaps is slow enable this code. */
+   if (drawable->is_pixmap)
+      return;
+#endif
 
    (*dri_screen->dri2.loader->flushFrontBuffer)(dri_drawable,
 						dri_drawable->loaderPrivate);
