@@ -399,7 +399,7 @@ static void r700BlendColor(GLcontext * ctx, const GLfloat cf[4]) //-------------
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-	R600_STATECHANGE(context, cb);
+	R600_STATECHANGE(context, blnd_clr);
 
 	r700->CB_BLEND_RED.f32All = cf[0];
 	r700->CB_BLEND_GREEN.f32All = cf[1];
@@ -469,7 +469,7 @@ static void r700SetBlendState(GLcontext * ctx)
 	int id = 0;
 	uint32_t blend_reg = 0, eqn, eqnA;
 
-	R600_STATECHANGE(context, cb);
+	R600_STATECHANGE(context, blnd);
 
 	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
 		SETfield(blend_reg,
@@ -660,7 +660,7 @@ static void r700SetLogicOpState(GLcontext *ctx)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
 
-	R600_STATECHANGE(context, cb);
+	R600_STATECHANGE(context, blnd);
 
 	if (RGBA_LOGICOP_ENABLED(ctx))
 		SETfield(r700->CB_COLOR_CONTROL.u32All,
@@ -1023,7 +1023,7 @@ static void r700StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	//fixme
 	//r300CatchStencilFallback(ctx);
 
-	R600_STATECHANGE(context, db);
+	R600_STATECHANGE(context, stencil);
 
 	//front
 	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.Ref[0],
@@ -1054,7 +1054,7 @@ static void r700StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask) /
 	//fixme
 	//r300CatchStencilFallback(ctx);
 
-	R600_STATECHANGE(context, db);
+	R600_STATECHANGE(context, stencil);
 
 	// front
 	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.WriteMask[0],
@@ -1214,7 +1214,7 @@ static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //
 
 	factor *= 12.0;
 
-	R600_STATECHANGE(context, su);
+	R600_STATECHANGE(context, poly);
 
 	r700->PA_SU_POLY_OFFSET_FRONT_SCALE.f32All = factor;
 	r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.f32All = constant;
@@ -1355,7 +1355,7 @@ void r700SetScissor(context_t *context) //---------------
 		y2 = rrb->dPriv->y + rrb->dPriv->h;
 	}
 
-	R600_STATECHANGE(context, sc);
+	R600_STATECHANGE(context, scissor);
 
 	/* window */
 	SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);

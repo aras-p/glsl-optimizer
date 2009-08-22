@@ -111,12 +111,20 @@ enum
 struct r600_hw_state {
 	struct radeon_state_atom sq;
 	struct radeon_state_atom db;
+	struct radeon_state_atom stencil;
 	struct radeon_state_atom db_target;
 	struct radeon_state_atom sc;
+	struct radeon_state_atom scissor;
+	struct radeon_state_atom aa;
 	struct radeon_state_atom cl;
+	struct radeon_state_atom gb;
 	struct radeon_state_atom ucp;
 	struct radeon_state_atom su;
+	struct radeon_state_atom poly;
 	struct radeon_state_atom cb;
+	struct radeon_state_atom clrcmp;
+	struct radeon_state_atom blnd;
+	struct radeon_state_atom blnd_clr;
 	struct radeon_state_atom cb_target;
 	struct radeon_state_atom sx;
 	struct radeon_state_atom vgt;
@@ -132,6 +140,8 @@ struct r600_hw_state {
 
 	struct radeon_state_atom vtx;
 	struct radeon_state_atom tx;
+	struct radeon_state_atom tx_smplr;
+	struct radeon_state_atom tx_brdr_clr;
 };
 
 /**

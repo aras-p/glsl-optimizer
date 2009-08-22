@@ -61,6 +61,8 @@ void r600UpdateTextureState(GLcontext * ctx)
 	GLuint    unit;
 
 	R600_STATECHANGE(context, tx);
+	R600_STATECHANGE(context, tx_smplr);
+	R600_STATECHANGE(context, tx_brdr_clr);
 
 	for (unit = 0; unit < R700_MAX_TEXTURE_UNITS; unit++) {
 		texUnit = &ctx->Texture.Unit[unit];
