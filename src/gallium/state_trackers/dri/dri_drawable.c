@@ -297,26 +297,20 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    drawable->color_format = (visual->redBits == 8) ?
       PIPE_FORMAT_A8R8G8B8_UNORM : PIPE_FORMAT_R5G6B5_UNORM;
 
-   debug_printf("Red bits is %d\n", visual->redBits);
-
    switch(visual->depthBits) {
    default:
    case 0:
-      debug_printf("Depth buffer 0.\n");
       drawable->depth_format = PIPE_FORMAT_NONE;
       break;
    case 16:
-      debug_printf("Depth buffer 16.\n");
       drawable->depth_format = PIPE_FORMAT_Z16_UNORM;
       break;
    case 24:
       if (visual->stencilBits == 0) {
-         debug_printf("Depth buffer 24. Stencil 0.\n");
 	 drawable->depth_format = (screen->d_depth_bits_last) ?
 	    PIPE_FORMAT_X8Z24_UNORM:
 	    PIPE_FORMAT_Z24X8_UNORM;
       } else {
-         debug_printf("Combined depth stencil 24 / 8.\n");
 	 drawable->depth_format = (screen->sd_depth_bits_last) ?
 	    PIPE_FORMAT_S8Z24_UNORM:
 	    PIPE_FORMAT_Z24S8_UNORM;
