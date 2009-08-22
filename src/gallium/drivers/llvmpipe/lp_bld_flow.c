@@ -66,6 +66,8 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
    else
       mask->value = value;
 
+   /* FIXME: disabled until we have proper control flow helpers */
+#if 0
    cond = LLVMBuildICmp(mask->builder,
                         LLVMIntEQ,
                         LLVMBuildBitCast(mask->builder, mask->value, mask->reg_type, ""),
@@ -95,6 +97,7 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
    LLVMBuildCondBr(mask->builder, cond, mask->skip_block, new_block);
 
    LLVMPositionBuilderAtEnd(mask->builder, new_block);
+#endif
 }
 
 

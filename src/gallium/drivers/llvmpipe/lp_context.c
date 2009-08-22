@@ -86,7 +86,6 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       draw_destroy( llvmpipe->draw );
 
       llvmpipe->quad.shade->destroy( llvmpipe->quad.shade );
-      llvmpipe->quad.blend->destroy( llvmpipe->quad.blend );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
@@ -217,7 +216,6 @@ llvmpipe_create( struct pipe_screen *screen )
 
    /* setup quad rendering stages */
       llvmpipe->quad.shade = lp_quad_shade_stage(llvmpipe);
-      llvmpipe->quad.blend = lp_quad_blend_stage(llvmpipe);
 
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {

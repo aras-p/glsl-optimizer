@@ -55,14 +55,7 @@ struct quad_stage {
 };
 
 
-struct quad_stage *lp_quad_polygon_stipple_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_earlyz_stage( struct llvmpipe_context *llvmpipe );
 struct quad_stage *lp_quad_shade_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_stencil_test_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_occlusion_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_coverage_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_blend_stage( struct llvmpipe_context *llvmpipe );
-struct quad_stage *lp_quad_output_stage( struct llvmpipe_context *llvmpipe );
 
 void lp_build_quad_pipeline(struct llvmpipe_context *lp);
 

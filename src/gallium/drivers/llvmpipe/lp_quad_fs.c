@@ -46,6 +46,8 @@
 #include "lp_quad.h"
 #include "lp_quad_pipe.h"
 #include "lp_texture.h"
+#include "lp_tile_cache.h"
+#include "lp_tile_soa.h"
 
 
 struct quad_shade_stage
@@ -69,30 +71,48 @@ quad_shade_stage(struct quad_stage *qs)
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
-static boolean
-shade_quad(struct quad_stage *qs, struct quad_header *quad)
+static void
+shade_quads(struct quad_stage *qs,
+                 struct quad_header *quads[],
+                 unsigned nr)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct llvmpipe_context *llvmpipe = qs->llvmpipe;
    struct lp_fragment_shader *fs = llvmpipe->fs;
    void *constants;
    struct tgsi_sampler **samplers;
+   struct quad_header *quad = quads[0];
    const unsigned x = quad->input.x0;
    const unsigned y = quad->input.y0;
+   uint8_t *tile = lp_get_cached_tile(llvmpipe->cbuf_cache[0], x, y);
+   uint8_t *color;
    void *depth;
-   uint32_t ALIGN16_ATTRIB mask[NUM_CHANNELS];
+   uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
    unsigned chan_index;
+   unsigned q;
 
    assert(fs->current);
    if(!fs->current)
-      return FALSE;
+      return;
 
-   constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
-   samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
+   /* Sanity checks */
+   assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
+   assert(x % TILE_VECTOR_WIDTH == 0);
+   assert(y % TILE_VECTOR_HEIGHT == 0);
+   for (q = 0; q < nr; ++q) {
+      assert(quads[q]->input.x0 == x + q*2);
+      assert(quads[q]->input.y0 == y);
+   }
 
-   for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-      mask[chan_index] = quad->inout.mask & (1 << chan_index) ? ~0 : 0;
+   /* mask */
+   for (q = 0; q < 4; ++q)
+      for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+         mask[q][chan_index] = quads[q]->inout.mask & (1 << chan_index) ? ~0 : 0;
 
+   /* color buffer */
+   color = &TILE_PIXEL(tile, x & (TILE_SIZE-1), y & (TILE_SIZE-1), 0);
+
+   /* depth buffer */
    if(qss->map) {
       assert((x % 2) == 0);
       assert((y % 2) == 0);
@@ -103,9 +123,14 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    else
       depth = NULL;
 
+   constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
+   /* TODO: blend color */
+
    assert((((uintptr_t)mask) & 0xf) == 0);
-   assert((((uintptr_t)quad->output.color) & 0xf) == 0);
    assert((((uintptr_t)depth) & 0xf) == 0);
+   assert((((uintptr_t)color) & 0xf) == 0);
+   assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
 
    /* run shader */
    fs->current->jit_function( x,
@@ -114,68 +139,11 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
                               quad->coef->dadx,
                               quad->coef->dady,
                               constants,
-                              mask,
-                              quad->output.color,
+                              &mask[0][0],
+                              color,
                               depth,
                               samplers);
-
-   for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-      if(!mask[chan_index])
-         quad->inout.mask &= ~(1 << chan_index);
-
-   if (quad->inout.mask == 0)
-      return FALSE;
-
-   return TRUE;
 }
-
-
-
-static void
-coverage_quad(struct quad_stage *qs, struct quad_header *quad)
-{
-   struct llvmpipe_context *llvmpipe = qs->llvmpipe;
-   uint cbuf;
-
-   /* loop over colorbuffer outputs */
-   for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) {
-      float (*quadColor)[4] = quad->output.color[cbuf];
-      unsigned j;
-      for (j = 0; j < QUAD_SIZE; j++) {
-         assert(quad->input.coverage[j] >= 0.0);
-         assert(quad->input.coverage[j] <= 1.0);
-         quadColor[3][j] *= quad->input.coverage[j];
-      }
-   }
-}
-
-
-
-static void
-shade_quads(struct quad_stage *qs, 
-                 struct quad_header *quads[],
-                 unsigned nr)
-{
-   unsigned i, pass = 0;
-   
-   for (i = 0; i < nr; i++) {
-      if(!quads[i]->inout.mask)
-         continue;
-
-      if (!shade_quad(qs, quads[i]))
-         continue;
-
-      if (/*do_coverage*/ 0)
-         coverage_quad( qs, quads[i] );
-
-      ++pass;
-   }
-   
-   if (pass)
-      qs->next->run(qs->next, quads, nr);
-}
-   
-
 
 
 
@@ -210,7 +178,6 @@ shade_begin(struct quad_stage *qs)
 
    }
 
-   qs->next->begin(qs->next);
 }
 
 

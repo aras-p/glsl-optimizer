@@ -30,20 +30,9 @@
 #include "lp_state.h"
 #include "pipe/p_shader_tokens.h"
 
-static void
-lp_push_quad_first( struct llvmpipe_context *lp,
-                    struct quad_stage *quad )
-{
-   quad->next = lp->quad.first;
-   lp->quad.first = quad;
-}
-
-
 void
 lp_build_quad_pipeline(struct llvmpipe_context *lp)
 {
-   lp->quad.first = lp->quad.blend;
-
-   lp_push_quad_first( lp, lp->quad.shade );
+   lp->quad.first = lp->quad.shade;
 }
 

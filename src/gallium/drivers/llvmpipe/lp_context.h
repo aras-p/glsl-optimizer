@@ -117,7 +117,6 @@ struct llvmpipe_context {
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;
-      struct quad_stage *blend;
 
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;

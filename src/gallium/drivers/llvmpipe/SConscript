@@ -34,7 +34,6 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_prim_setup.c',
 		'lp_prim_vbuf.c',
 		'lp_setup.c',
-		'lp_quad_blend.c',
 		'lp_quad_pipe.c',
 		'lp_quad_fs.c',
 		'lp_query.c',

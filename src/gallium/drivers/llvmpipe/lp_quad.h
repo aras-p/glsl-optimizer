@@ -105,7 +105,6 @@ struct quad_interp_coef
 struct quad_header {
    struct quad_header_input input;
    struct quad_header_inout inout;
-   struct quad_header_output output;
 
    /* Redundant/duplicated:
     */
