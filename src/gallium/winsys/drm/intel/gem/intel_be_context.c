@@ -57,9 +57,6 @@ intel_be_batch_flush(struct i915_winsys *sws,
 	struct intel_be_context *intel = intel_be_context(sws);
 	struct intel_be_fence **f = (struct intel_be_fence **)fence;
 
-	if (fence && *fence)
-		assert(0);
-
 	intel_be_batchbuffer_flush(intel->batch, f);
 }
 
