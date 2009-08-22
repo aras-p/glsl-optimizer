@@ -597,66 +597,6 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void *
-llvmpipe_create_vs_state(struct pipe_context *pipe,
-                         const struct pipe_shader_state *templ)
-{
-   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct lp_vertex_shader *state;
-
-   state = CALLOC_STRUCT(lp_vertex_shader);
-   if (state == NULL ) 
-      goto fail;
-
-   /* copy shader tokens, the ones passed in will go away.
-    */
-   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-   if (state->shader.tokens == NULL)
-      goto fail;
-
-   state->draw_data = draw_create_vertex_shader(llvmpipe->draw, templ);
-   if (state->draw_data == NULL) 
-      goto fail;
-
-   return state;
-
-fail:
-   if (state) {
-      FREE( (void *)state->shader.tokens );
-      FREE( state->draw_data );
-      FREE( state );
-   }
-   return NULL;
-}
-
-
-void
-llvmpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
-{
-   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-
-   llvmpipe->vs = (const struct lp_vertex_shader *)vs;
-
-   draw_bind_vertex_shader(llvmpipe->draw,
-                           (llvmpipe->vs ? llvmpipe->vs->draw_data : NULL));
-
-   llvmpipe->dirty |= LP_NEW_VS;
-}
-
-
-void
-llvmpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
-{
-   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-
-   struct lp_vertex_shader *state =
-      (struct lp_vertex_shader *)vs;
-
-   draw_delete_vertex_shader(llvmpipe->draw, state->draw_data);
-   FREE( state );
-}
-
-
 
 void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,

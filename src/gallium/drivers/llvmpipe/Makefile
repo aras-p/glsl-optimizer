@@ -42,6 +42,7 @@ C_SOURCES = \
 	lp_state_sampler.c \
 	lp_state_surface.c \
 	lp_state_vertex.c \
+	lp_state_vs.c \
 	lp_surface.c \
 	lp_tex_cache.c \
 	lp_tex_sample.c \
