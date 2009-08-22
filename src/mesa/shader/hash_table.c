@@ -32,6 +32,7 @@
 
 #include <assert.h>
 
+#include "main/imports.h"
 #include "main/simple_list.h"
 #include "hash_table.h"
 
