@@ -1543,9 +1543,12 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
          }
       }
 
-      ssss[j] = ( sc / ma + 1.0F ) * 0.5F;
-      tttt[j] = ( tc / ma + 1.0F ) * 0.5F;
-      samp->faces[j] = face;
+      {
+	 const float ima = 1.0 / ma;
+	 ssss[j] = ( sc * ima + 1.0F ) * 0.5F;
+	 tttt[j] = ( tc * ima + 1.0F ) * 0.5F;
+	 samp->faces[j] = face;
+      }
    }
 
    /* In our little pipeline, the compare stage is next.  If compare
