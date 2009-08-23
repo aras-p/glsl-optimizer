@@ -605,14 +605,14 @@ compute_lambda_vert(const struct sp_sampler_varient *samp,
  */
 static INLINE void
 get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
-                  unsigned face, unsigned level, int x, int y, 
+                  union tex_tile_address addr, 
+		  unsigned x, unsigned y, 
                   const float *out[4])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
 
    const struct softpipe_tex_cached_tile *tile
-      = sp_get_cached_tile_tex(samp->cache,
-                               tex_tile_address(x, y, 0, face, level));
+      = sp_get_cached_tile_tex(samp->cache, addr);
 
    y %= TILE_SIZE;
    x %= TILE_SIZE;
@@ -625,16 +625,17 @@ get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
 
 static INLINE const float *
 get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
-                 unsigned face, unsigned level, int x, int y)
+                 union tex_tile_address addr, int x, int y)
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct softpipe_tex_cached_tile *tile;
 
-   const struct softpipe_tex_cached_tile *tile
-      = sp_get_cached_tile_tex(samp->cache,
-                               tex_tile_address(x, y, 0, face, level));
-
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
    y %= TILE_SIZE;
    x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
 
    return &tile->data.color[y][x][0];
 }
@@ -642,19 +643,15 @@ get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
 
 static INLINE void
 get_texel_quad_2d_mt(const struct tgsi_sampler *tgsi_sampler,
-                     unsigned face, unsigned level, 
+		     union tex_tile_address addr,
                      int x0, int y0, 
                      int x1, int y1,
                      const float *out[4])
 {
-   unsigned i;
-
-   for (i = 0; i < 4; i++) {
-      unsigned tx = (i & 1) ? x1 : x0;
-      unsigned ty = (i >> 1) ? y1 : y0;
-
-      out[i] = get_texel_2d_ptr( tgsi_sampler, face, level, tx, ty );
-   }
+   out[0] = get_texel_2d_ptr( tgsi_sampler, addr, x0, y0 );
+   out[1] = get_texel_2d_ptr( tgsi_sampler, addr, x1, y0 );
+   out[2] = get_texel_2d_ptr( tgsi_sampler, addr, x0, y1 );
+   out[3] = get_texel_2d_ptr( tgsi_sampler, addr, x1, y1 );
 }
 
 static INLINE void
@@ -714,7 +711,12 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    unsigned ypot = 1 << (samp->ypot - level);
    unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
    unsigned ymax = (ypot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, ypot) - 1; */
-      
+   union tex_tile_address addr;
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
 
@@ -730,21 +732,21 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       int x0 = uflr & (xpot - 1);
       int y0 = vflr & (ypot - 1);
 
-      const float *tx[4];
+      const float *tx[4];      
       
-
       /* Can we fetch all four at once:
        */
       if (x0 < xmax && y0 < ymax)
       {
-         get_texel_quad_2d(tgsi_sampler, 0, level, x0, y0, tx);
+	 addr.bits.x = x0 / TILE_SIZE;
+	 addr.bits.y = y0 / TILE_SIZE;
+         get_texel_quad_2d(tgsi_sampler, addr, x0, y0, tx);
       }
       else 
       {
          unsigned x1 = (x0 + 1) & (xpot - 1);
          unsigned y1 = (y0 + 1) & (ypot - 1);
-         get_texel_quad_2d_mt(tgsi_sampler, 0, level, 
-                              x0, y0, x1, y1, tx);
+         get_texel_quad_2d_mt(tgsi_sampler, addr, x0, y0, x1, y1, tx);
       }
 
 
@@ -771,6 +773,10 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    unsigned level = samp->level;
    unsigned xpot = 1 << (samp->xpot - level);
    unsigned ypot = 1 << (samp->ypot - level);
+   union tex_tile_address addr;
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
 
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
@@ -784,7 +790,7 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       int x0 = uflr & (xpot - 1);
       int y0 = vflr & (ypot - 1);
 
-      const float *out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+      const float *out = get_texel_2d_ptr(tgsi_sampler, addr, x0, y0);
 
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
@@ -806,6 +812,10 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
    unsigned level = samp->level;
    unsigned xpot = 1 << (samp->xpot - level);
    unsigned ypot = 1 << (samp->ypot - level);
+   union tex_tile_address addr;
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
 
    for (j = 0; j < QUAD_SIZE; j++) {
       int c;
@@ -828,7 +838,7 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
       else if (y0 > ypot - 1)
          y0 = ypot - 1;
       
-      out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+      out = get_texel_2d_ptr(tgsi_sampler, addr, x0, y0);
 
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
