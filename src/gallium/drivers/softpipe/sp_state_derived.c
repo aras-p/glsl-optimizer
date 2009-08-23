@@ -68,24 +68,19 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
       const struct sp_fragment_shader *spfs = softpipe->fs;
       const enum interp_mode colorInterp
          = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
+      const uint num = draw_num_vs_outputs(softpipe->draw);
       uint i;
 
-      if (softpipe->vbuf) {
-         /* if using the post-transform vertex buffer, tell draw_vbuf to
-          * simply emit the whole post-xform vertex as-is:
-          */
-         struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
-         const uint num = draw_num_vs_outputs(softpipe->draw);
-         uint i;
-
-         /* No longer any need to try and emit draw vertex_header info.
-          */
-         vinfo_vbuf->num_attribs = 0;
-         for (i = 0; i < num; i++) {
-            draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
-         }
-         draw_compute_vertex_size(vinfo_vbuf);
+      /* Tell draw_vbuf to simply emit the whole post-xform vertex
+       * as-is.  No longer any need to try and emit draw vertex_header
+       * info.
+       */
+      vinfo_vbuf->num_attribs = 0;
+      for (i = 0; i < num; i++) {
+	 draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
       }
+      draw_compute_vertex_size(vinfo_vbuf);
 
       /*
        * Loop over fragment shader inputs, searching for the matching output

@@ -31,13 +31,13 @@
  */
 
 #include "draw/draw_context.h"
+#include "draw/draw_vbuf.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
-#include "sp_prim_setup.h"
 #include "sp_prim_vbuf.h"
 #include "sp_state.h"
 #include "sp_surface.h"
@@ -242,21 +242,21 @@ softpipe_create( struct pipe_screen *screen )
                          (struct tgsi_sampler **)
                             softpipe->tgsi.vert_samplers_list);
 
-   softpipe->setup = sp_draw_render_stage(softpipe);
-   if (!softpipe->setup)
-      goto fail;
-
    if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;
 
-   if (debug_get_bool_option( "SP_NO_VBUF", FALSE )) {
-      /* Deprecated path -- vbuf is the intended interface to the draw module:
-       */
-      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
-   }
-   else {
-      sp_init_vbuf(softpipe);
-   }
+   softpipe->vbuf_backend = sp_create_vbuf_backend(softpipe);
+   if (!softpipe->vbuf_backend)
+      goto fail;
+
+   softpipe->vbuf = draw_vbuf_stage(softpipe->draw, softpipe->vbuf_backend);
+   if (!softpipe->vbuf)
+      goto fail;
+
+   draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
+   draw_set_render(softpipe->draw, softpipe->vbuf_backend);
+
+
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);

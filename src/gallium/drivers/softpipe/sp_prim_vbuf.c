@@ -37,10 +37,9 @@
 
 
 #include "sp_context.h"
+#include "sp_setup.h"
 #include "sp_state.h"
 #include "sp_prim_vbuf.h"
-#include "sp_prim_setup.h"
-#include "sp_setup.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "util/u_memory.h"
@@ -59,6 +58,8 @@ struct softpipe_vbuf_render
 {
    struct vbuf_render base;
    struct softpipe_context *softpipe;
+   struct setup_context *setup;
+
    uint prim;
    uint vertex_size;
    uint nr_vertices;
@@ -73,6 +74,11 @@ softpipe_vbuf_render(struct vbuf_render *vbr)
 {
    return (struct softpipe_vbuf_render *) vbr;
 }
+
+
+
+
+
 
 
 static const struct vertex_info *
@@ -105,36 +111,6 @@ sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
 static void
 sp_vbuf_release_vertices(struct vbuf_render *vbr)
 {
-#if 0
-   {
-      struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-      const struct vertex_info *info = 
-         softpipe_get_vbuf_vertex_info(cvbr->softpipe);
-      const float *vtx = (const float *) cvbr->vertex_buffer;
-      uint i, j;
-      debug_printf("%s (vtx_size = %u,  vtx_used = %u)\n",
-             __FUNCTION__, cvbr->vertex_size, cvbr->nr_vertices);
-      for (i = 0; i < cvbr->nr_vertices; i++) {
-         for (j = 0; j < info->num_attribs; j++) {
-            uint k;
-            switch (info->attrib[j].emit) {
-            case EMIT_4F:  k = 4;   break;
-            case EMIT_3F:  k = 3;   break;
-            case EMIT_2F:  k = 2;   break;
-            case EMIT_1F:  k = 1;   break;
-            default: assert(0);
-            }
-            debug_printf("Vert %u attr %u: ", i, j);
-            while (k-- > 0) {
-               debug_printf("%g ", vtx[0]);
-               vtx++;
-            }
-            debug_printf("\n");
-         }
-      }
-   }
-#endif
-
    /* keep the old allocation for next time */
 }
 
@@ -160,11 +136,7 @@ static boolean
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct setup_context *setup_ctx = sp_draw_setup_context(cvbr->softpipe->setup);
+   struct setup_context *setup_ctx = cvbr->setup;
    
    setup_prepare( setup_ctx );
 
@@ -193,13 +165,8 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    struct softpipe_context *softpipe = cvbr->softpipe;
    const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    const void *vertex_buffer = cvbr->vertex_buffer;
+   struct setup_context *setup_ctx = cvbr->setup;
    unsigned i;
-
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct draw_stage *setup = softpipe->setup;
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
@@ -367,11 +334,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    default:
       assert(0);
    }
-
-   /* XXX: why are we calling this???  If we had to call something, it
-    * would be a function in sp_setup.c:
-    */
-   sp_draw_flush( setup );
 }
 
 
@@ -384,16 +346,11 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
+   struct setup_context *setup_ctx = cvbr->setup;
    const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    const void *vertex_buffer =
       (void *) get_vert(cvbr->vertex_buffer, start, stride);
    unsigned i;
-
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct draw_stage *setup = softpipe->setup;
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
@@ -568,40 +525,38 @@ static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   cvbr->softpipe->vbuf_render = NULL;
+   setup_destroy_context(cvbr->setup);
    FREE(cvbr);
 }
 
 
 /**
- * Initialize the post-transform vertex buffer information for the given
- * context.
+ * Create the post-transform vertex handler for the given context.
  */
-void
-sp_init_vbuf(struct softpipe_context *sp)
+struct vbuf_render *
+sp_create_vbuf_backend(struct softpipe_context *sp)
 {
+   struct softpipe_vbuf_render *cvbr = CALLOC_STRUCT(softpipe_vbuf_render);
+
    assert(sp->draw);
 
-   sp->vbuf_render = CALLOC_STRUCT(softpipe_vbuf_render);
 
-   sp->vbuf_render->base.max_indices = SP_MAX_VBUF_INDEXES;
-   sp->vbuf_render->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
+   cvbr->base.max_indices = SP_MAX_VBUF_INDEXES;
+   cvbr->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
 
-   sp->vbuf_render->base.get_vertex_info = sp_vbuf_get_vertex_info;
-   sp->vbuf_render->base.allocate_vertices = sp_vbuf_allocate_vertices;
-   sp->vbuf_render->base.map_vertices = sp_vbuf_map_vertices;
-   sp->vbuf_render->base.unmap_vertices = sp_vbuf_unmap_vertices;
-   sp->vbuf_render->base.set_primitive = sp_vbuf_set_primitive;
-   sp->vbuf_render->base.draw = sp_vbuf_draw;
-   sp->vbuf_render->base.draw_arrays = sp_vbuf_draw_arrays;
-   sp->vbuf_render->base.release_vertices = sp_vbuf_release_vertices;
-   sp->vbuf_render->base.destroy = sp_vbuf_destroy;
+   cvbr->base.get_vertex_info = sp_vbuf_get_vertex_info;
+   cvbr->base.allocate_vertices = sp_vbuf_allocate_vertices;
+   cvbr->base.map_vertices = sp_vbuf_map_vertices;
+   cvbr->base.unmap_vertices = sp_vbuf_unmap_vertices;
+   cvbr->base.set_primitive = sp_vbuf_set_primitive;
+   cvbr->base.draw = sp_vbuf_draw;
+   cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
+   cvbr->base.release_vertices = sp_vbuf_release_vertices;
+   cvbr->base.destroy = sp_vbuf_destroy;
 
-   sp->vbuf_render->softpipe = sp;
+   cvbr->softpipe = sp;
 
-   sp->vbuf = draw_vbuf_stage(sp->draw, &sp->vbuf_render->base);
+   cvbr->setup = setup_create_context(cvbr->softpipe);
 
-   draw_set_rasterize_stage(sp->draw, sp->vbuf);
-
-   draw_set_render(sp->draw, &sp->vbuf_render->base);
+   return &cvbr->base;
 }

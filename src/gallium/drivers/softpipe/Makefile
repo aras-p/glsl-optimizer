@@ -11,7 +11,6 @@ C_SOURCES = \
 	sp_query.c \
 	sp_context.c \
 	sp_draw_arrays.c \
-	sp_prim_setup.c \
 	sp_prim_vbuf.c \
 	sp_quad_pipe.c \
 	sp_quad_stipple.c \
