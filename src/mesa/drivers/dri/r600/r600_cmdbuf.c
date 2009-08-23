@@ -322,7 +322,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     struct drm_radeon_cs_chunk cs_chunk[2];
     uint32_t length_dw_reloc_chunk;
     uint64_t chunk_ptrs[2];
-    uint32_t reloc_chunk[128]; 
+    uint32_t reloc_chunk[256];
     int r;
     int retry = 0;
 
