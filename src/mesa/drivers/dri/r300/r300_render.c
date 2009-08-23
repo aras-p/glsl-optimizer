@@ -396,7 +396,7 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 		GLuint first, incr, offset = 0;
 
 		if (!split_prim_inplace(prim & PRIM_MODE_MASK, &first, &incr) &&
-			num_verts > 65500) {
+			num_verts > 65535) {
 			WARN_ONCE("Fixme: can't handle spliting prim %d\n", prim);
 			return;
 		}
