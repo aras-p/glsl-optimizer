@@ -298,28 +298,54 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 }
 
+/* FIXME: radom values fix with correct */
+#define PRE_EMIT_STATE_BUFSZ 30
+
+static GLuint r700PredictRenderSize(GLcontext* ctx)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *vb = &tnl->vb;
+    GLboolean flushed;
+    GLuint dwords, i;
+    GLuint state_size;
+
+    dwords = PRE_EMIT_STATE_BUFSZ;
+    for (i = 0; i < vb->PrimitiveCount; i++)
+	    dwords += vb->Primitive[i].count + 10;
+    state_size = radeonCountStateEmitSize(&context->radeon);
+    flushed = rcommonEnsureCmdBufSpace(&context->radeon,
+			     dwords + state_size, __FUNCTION__);
+
+    if (flushed)
+	dwords += radeonCountStateEmitSize(&context->radeon);
+    else
+	dwords += state_size;
+
+    if (RADEON_DEBUG & DEBUG_PRIMS)
+	fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+    return dwords;
+}
+
 static GLboolean r700RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;
-    unsigned int i, ind_count = 0, id = 0;
+    unsigned int i, id = 0;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
     struct radeon_renderbuffer *rrb;
 
-    for (i = 0; i < vb->PrimitiveCount; i++)
-	    ind_count += vb->Primitive[i].count + 10;
-
     /* just an estimate, need to properly calculate this */
-    rcommonEnsureCmdBufSpace(&context->radeon,
-			     radeon->hw.max_state_size + ind_count, __FUNCTION__);
 
     r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupVertexProgram(ctx);
     r700SetupFragmentProgram(ctx);
     r600UpdateTextureState(ctx);
+
+    r700PredictRenderSize(ctx);
     r700SetupStreams(ctx);
 
     radeonEmitState(radeon);
