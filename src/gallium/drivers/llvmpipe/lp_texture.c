@@ -76,7 +76,7 @@ llvmpipe_texture_layout(struct pipe_screen *screen,
       pt->depth[level] = depth;
       pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
       pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
-      lpt->stride[level] = pt->nblocksx[level]*pt->block.size;
+      lpt->stride[level] = align(pt->nblocksx[level]*pt->block.size, 16);
 
       lpt->level_offset[level] = buffer_size;
 
