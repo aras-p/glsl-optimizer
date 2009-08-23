@@ -36,24 +36,52 @@
 #define LP_JIT_H
 
 
-#include <llvm-c/Core.h>
+#include "lp_bld_struct.h"
 
 
 struct tgsi_sampler;
 struct llvmpipe_screen;
 
 
+/**
+ * This structure is passed directly to the generated fragment shader.
+ *
+ * It contains the derived state.
+ *
+ * Changes here must be reflected in the lp_jit_context_* macros and
+ * lp_jit_init_types function. Changes to the ordering should be avoided.
+ *
+ * Only use types with a clear size and padding here, in particular prefer the
+ * stdint.h types to the basic integer types.
+ */
+struct lp_jit_context
+{
+   const float *constants;
+
+   struct tgsi_sampler **samplers;
+
+   /* TODO: alpha reference value */
+   /* TODO: blend constant color */
+};
+
+
+#define lp_jit_context_constants(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 0, "context.constants")
+
+#define lp_jit_context_samplers(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 1, "context.samplers")
+
+
 typedef void
-(*lp_jit_frag_func)(uint32_t x,
+(*lp_jit_frag_func)(struct lp_jit_context *context,
+                    uint32_t x,
                     uint32_t y,
                     const void *a0,
                     const void *dadx,
                     const void *dady,
-                    const void *consts,
                     uint32_t *mask,
                     void *color,
-                    void *depth,
-                    struct tgsi_sampler **samplers);
+                    void *depth);
 
 
 void

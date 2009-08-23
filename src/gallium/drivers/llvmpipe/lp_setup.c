@@ -120,8 +120,6 @@ shade_quads(struct llvmpipe_context *llvmpipe,
             unsigned nr)
 {
    struct lp_fragment_shader *fs = llvmpipe->fs;
-   void *constants;
-   struct tgsi_sampler **samplers;
    struct quad_header *quad = quads[0];
    const unsigned x = quad->input.x0;
    const unsigned y = quad->input.y0;
@@ -164,8 +162,6 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    else
       depth = NULL;
 
-   constants = llvmpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
-   samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
    /* TODO: blend color */
 
    assert((((uintptr_t)mask) & 0xf) == 0);
@@ -174,16 +170,14 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
 
    /* run shader */
-   fs->current->jit_function( x,
-                              y,
+   fs->current->jit_function( &llvmpipe->jit_context,
+                              x, y,
                               quad->coef->a0,
                               quad->coef->dadx,
                               quad->coef->dady,
-                              constants,
                               &mask[0][0],
                               color,
-                              depth,
-                              samplers);
+                              depth);
 }
 
 

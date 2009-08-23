@@ -36,6 +36,7 @@
 #include "draw/draw_vertex.h"
 
 #include "lp_tex_sample.h"
+#include "lp_jit.h"
 
 
 struct llvmpipe_vbuf_render;
@@ -139,6 +140,8 @@ struct llvmpipe_context {
    struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
    unsigned no_rast : 1;
+
+   struct lp_jit_context jit_context;
 };
 
 

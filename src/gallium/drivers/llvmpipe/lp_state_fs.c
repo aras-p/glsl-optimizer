@@ -378,8 +378,9 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
    LLVMTypeRef blend_int_vec_type;
-   LLVMTypeRef arg_types[10];
+   LLVMTypeRef arg_types[9];
    LLVMTypeRef func_type;
+   LLVMValueRef context_ptr;
    LLVMValueRef x;
    LLVMValueRef y;
    LLVMValueRef a0_ptr;
@@ -463,16 +464,15 @@ generate_fragment(struct llvmpipe_context *lp,
    blend_vec_type = lp_build_vec_type(blend_type);
    blend_int_vec_type = lp_build_int_vec_type(blend_type);
 
-   arg_types[0] = LLVMInt32Type();                     /* x */
-   arg_types[1] = LLVMInt32Type();                     /* y */
-   arg_types[2] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
-   arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
-   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dady */
-   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* consts */
+   arg_types[0] = screen->context_ptr_type;            /* context */
+   arg_types[1] = LLVMInt32Type();                     /* x */
+   arg_types[2] = LLVMInt32Type();                     /* y */
+   arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
+   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
+   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dady */
    arg_types[6] = LLVMPointerType(fs_int_vec_type, 0); /* mask */
    arg_types[7] = LLVMPointerType(blend_vec_type, 0);  /* color */
    arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
-   arg_types[9] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -482,27 +482,25 @@ generate_fragment(struct llvmpipe_context *lp,
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
          LLVMAddAttribute(LLVMGetParam(variant->function, i), LLVMNoAliasAttribute);
 
-   x            = LLVMGetParam(variant->function, 0);
-   y            = LLVMGetParam(variant->function, 1);
-   a0_ptr       = LLVMGetParam(variant->function, 2);
-   dadx_ptr     = LLVMGetParam(variant->function, 3);
-   dady_ptr     = LLVMGetParam(variant->function, 4);
-   consts_ptr   = LLVMGetParam(variant->function, 5);
+   context_ptr  = LLVMGetParam(variant->function, 0);
+   x            = LLVMGetParam(variant->function, 1);
+   y            = LLVMGetParam(variant->function, 2);
+   a0_ptr       = LLVMGetParam(variant->function, 3);
+   dadx_ptr     = LLVMGetParam(variant->function, 4);
+   dady_ptr     = LLVMGetParam(variant->function, 5);
    mask_ptr     = LLVMGetParam(variant->function, 6);
    color_ptr    = LLVMGetParam(variant->function, 7);
    depth_ptr    = LLVMGetParam(variant->function, 8);
-   samplers_ptr = LLVMGetParam(variant->function, 9);
 
+   lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
    lp_build_name(y, "y");
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
-   lp_build_name(consts_ptr, "consts");
    lp_build_name(mask_ptr, "mask");
    lp_build_name(color_ptr, "color");
    lp_build_name(depth_ptr, "depth");
-   lp_build_name(samplers_ptr, "samplers");
 
    /*
     * Function body
@@ -511,6 +509,9 @@ generate_fragment(struct llvmpipe_context *lp,
    block = LLVMAppendBasicBlock(variant->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
+
+   consts_ptr = lp_jit_context_constants(builder, context_ptr);
+   samplers_ptr = lp_jit_context_samplers(builder, context_ptr);
 
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);

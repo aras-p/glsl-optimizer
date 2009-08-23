@@ -61,6 +61,8 @@ llvmpipe_map_constant_buffers(struct llvmpipe_context *lp)
    else
       size = 0;
 
+   lp->jit_context.constants = lp->mapped_constants[PIPE_SHADER_FRAGMENT];
+
    draw_set_mapped_constant_buffer(lp->draw,
                                    lp->mapped_constants[PIPE_SHADER_VERTEX],
                                    size);
@@ -79,6 +81,8 @@ llvmpipe_unmap_constant_buffers(struct llvmpipe_context *lp)
    draw_flush(lp->draw);
 
    draw_set_mapped_constant_buffer(lp->draw, NULL, 0);
+
+   lp->jit_context.constants = NULL;
 
    for (i = 0; i < 2; i++) {
       if (lp->constants[i].buffer && lp->constants[i].buffer->size)

@@ -216,6 +216,8 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       lp_tex_tile_cache_validate_texture( llvmpipe->tex_cache[i] );
    }
+
+   llvmpipe->jit_context.samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
 }
 
 /* Hopefully this will remain quite simple, otherwise need to pull in

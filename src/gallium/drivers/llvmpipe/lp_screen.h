@@ -1,5 +1,6 @@
 /**************************************************************************
  * 
+ * Copyright 2009 VMware, Inc.
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -25,7 +26,9 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ * @author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef LP_SCREEN_H
@@ -33,6 +36,7 @@
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
+#include <llvm-c/Target.h>
 #include <llvm-c/ExecutionEngine.h>
 
 #include "pipe/p_screen.h"
@@ -46,7 +50,10 @@ struct llvmpipe_screen
    LLVMModuleRef module;
    LLVMExecutionEngineRef engine;
    LLVMModuleProviderRef provider;
+   LLVMTargetDataRef target;
    LLVMPassManagerRef pass;
+
+   LLVMTypeRef context_ptr_type;
 
    /* Increments whenever textures are modified.  Contexts can track
     * this.
