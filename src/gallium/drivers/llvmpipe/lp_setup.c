@@ -167,7 +167,7 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    assert((((uintptr_t)mask) & 0xf) == 0);
    assert((((uintptr_t)depth) & 0xf) == 0);
    assert((((uintptr_t)color) & 0xf) == 0);
-   assert((((uintptr_t)llvmpipe->blend_color) & 0xf) == 0);
+   assert((((uintptr_t)llvmpipe->jit_context.blend_color) & 0xf) == 0);
 
    /* run shader */
    fs->current->jit_function( &llvmpipe->jit_context,

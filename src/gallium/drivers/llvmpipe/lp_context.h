@@ -61,7 +61,7 @@ struct llvmpipe_context {
    const struct lp_vertex_shader *vs;
 
    /** Other rendering state */
-   uint8_t ALIGN16_ATTRIB blend_color[4][16];
+   struct pipe_blend_color blend_color[4][16];
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;

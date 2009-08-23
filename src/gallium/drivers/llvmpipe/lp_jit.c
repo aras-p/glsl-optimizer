@@ -45,11 +45,13 @@ lp_jit_init_types(struct llvmpipe_screen *screen)
 {
    /* struct lp_jit_context */
    {
-      LLVMTypeRef elem_types[2];
+      LLVMTypeRef elem_types[4];
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* constants */
       elem_types[1] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+      elem_types[2] = LLVMFloatType();                     /* alpha_ref_value */
+      elem_types[3] = LLVMPointerType(LLVMInt8Type(), 0);  /* blend_color */
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
@@ -57,6 +59,10 @@ lp_jit_init_types(struct llvmpipe_screen *screen)
                              screen->target, context_type, 0);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, samplers,
                              screen->target, context_type, 1);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, alpha_ref_value,
+                             screen->target, context_type, 2);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, blend_color,
+                             screen->target, context_type, 3);
       LP_CHECK_STRUCT_SIZE(struct lp_jit_context,
                            screen->target, context_type);
 
