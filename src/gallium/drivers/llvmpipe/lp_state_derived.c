@@ -67,24 +67,19 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
       const struct lp_fragment_shader *lpfs = llvmpipe->fs;
       const enum interp_mode colorInterp
          = llvmpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
+      const uint num = draw_num_vs_outputs(llvmpipe->draw);
       uint i;
 
-      if (llvmpipe->vbuf) {
-         /* if using the post-transform vertex buffer, tell draw_vbuf to
-          * simply emit the whole post-xform vertex as-is:
-          */
-         struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
-         const uint num = draw_num_vs_outputs(llvmpipe->draw);
-         uint i;
-
-         /* No longer any need to try and emit draw vertex_header info.
-          */
-         vinfo_vbuf->num_attribs = 0;
-         for (i = 0; i < num; i++) {
-            draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
-         }
-         draw_compute_vertex_size(vinfo_vbuf);
+      /* Tell draw_vbuf to simply emit the whole post-xform vertex
+       * as-is.  No longer any need to try and emit draw vertex_header
+       * info.
+       */
+      vinfo_vbuf->num_attribs = 0;
+      for (i = 0; i < num; i++) {
+	 draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
       }
+      draw_compute_vertex_size(vinfo_vbuf);
 
       /*
        * Loop over fragment shader inputs, searching for the matching output
