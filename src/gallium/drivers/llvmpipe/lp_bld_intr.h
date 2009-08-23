@@ -47,6 +47,13 @@
 
 
 LLVMValueRef
+lp_declare_intrinsic(LLVMModuleRef module,
+                     const char *name,
+                     LLVMTypeRef ret_type,
+                     LLVMTypeRef *arg_types,
+                     unsigned num_args);
+
+LLVMValueRef
 lp_build_intrinsic(LLVMBuilderRef builder,
                    const char *name,
                    LLVMTypeRef ret_type,

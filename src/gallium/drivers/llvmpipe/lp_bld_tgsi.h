@@ -39,6 +39,7 @@
 
 
 struct tgsi_token;
+struct tgsi_sampler;
 union lp_type;
 struct lp_build_context;
 struct lp_build_mask_context;

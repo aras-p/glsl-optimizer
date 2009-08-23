@@ -404,7 +404,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef fs_out_color[NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
    LLVMValueRef blend_in_color[NUM_CHANNELS];
-   LLVMValueRef fetch_texel;
    unsigned num_fs;
    unsigned i;
    unsigned chan;
@@ -590,18 +589,6 @@ generate_fragment(struct llvmpipe_context *lp,
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
       LLVMDumpValue(variant->function);
       abort();
-   }
-
-   /* Tell where the fetch_texel function is, if the shader refers to it.
-    * TODO: this should be done elsewhere.
-    */
-   fetch_texel = LLVMGetNamedFunction(screen->module, "fetch_texel");
-   if(fetch_texel) {
-      static boolean first_time = TRUE;
-      if(first_time) {
-         LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_build_tgsi_fetch_texel_soa);
-         first_time = FALSE;
-      }
    }
 
    variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);

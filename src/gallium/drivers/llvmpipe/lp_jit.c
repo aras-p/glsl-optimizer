@@ -37,11 +37,13 @@
 
 #include "util/u_memory.h"
 #include "lp_screen.h"
+#include "lp_bld_intr.h"
+#include "lp_bld_tgsi.h" /* for lp_build_tgsi_fetch_texel_soa */
 #include "lp_jit.h"
 
 
 static void
-lp_jit_init_types(struct llvmpipe_screen *screen)
+lp_jit_init_globals(struct llvmpipe_screen *screen)
 {
    /* struct lp_jit_context */
    {
@@ -69,6 +71,24 @@ lp_jit_init_types(struct llvmpipe_screen *screen)
       LLVMAddTypeName(screen->module, "context", context_type);
 
       screen->context_ptr_type = LLVMPointerType(context_type, 0);
+   }
+
+   /* fetch_texel
+    */
+   {
+      LLVMTypeRef ret_type;
+      LLVMTypeRef arg_types[3];
+      LLVMValueRef fetch_texel;
+
+      ret_type = LLVMVoidType();
+      arg_types[0] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
+      arg_types[1] = LLVMInt32Type();                     /* unit */
+      arg_types[2] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0); /* store */
+
+      fetch_texel = lp_declare_intrinsic(screen->module, "fetch_texel",
+                                         ret_type, arg_types, Elements(arg_types));
+
+      LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_build_tgsi_fetch_texel_soa);
    }
 
 #ifdef DEBUG
@@ -115,5 +135,5 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    LLVMAddGVNPass(screen->pass);
    LLVMAddCFGSimplificationPass(screen->pass);
 
-   lp_jit_init_types(screen);
+   lp_jit_init_globals(screen);
 }

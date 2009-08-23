@@ -50,6 +50,37 @@
 
 
 LLVMValueRef
+lp_declare_intrinsic(LLVMModuleRef module,
+                     const char *name,
+                     LLVMTypeRef ret_type,
+                     LLVMTypeRef *arg_types,
+                     unsigned num_args)
+{
+   LLVMTypeRef function_type;
+   LLVMValueRef function;
+
+   assert(!LLVMGetNamedFunction(module, name));
+
+   function_type = LLVMFunctionType(ret_type, arg_types, num_args, 0);
+   function = LLVMAddFunction(module, name, function_type);
+
+   LLVMSetFunctionCallConv(function, LLVMCCallConv);
+   LLVMSetLinkage(function, LLVMExternalLinkage);
+
+   assert(LLVMIsDeclaration(function));
+
+   if(name[0] == 'l' &&
+      name[1] == 'l' &&
+      name[2] == 'v' &&
+      name[3] == 'm' &&
+      name[4] == '.')
+      assert(LLVMGetIntrinsicID(function));
+
+   return function;
+}
+
+
+LLVMValueRef
 lp_build_intrinsic(LLVMBuilderRef builder,
                    const char *name,
                    LLVMTypeRef ret_type,
@@ -59,28 +90,20 @@ lp_build_intrinsic(LLVMBuilderRef builder,
    LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
    LLVMValueRef function;
 
-   assert(num_args <= LP_MAX_FUNC_ARGS);
-
    function = LLVMGetNamedFunction(module, name);
    if(!function) {
       LLVMTypeRef arg_types[LP_MAX_FUNC_ARGS];
       unsigned i;
+
+      assert(num_args <= LP_MAX_FUNC_ARGS);
+
       for(i = 0; i < num_args; ++i) {
          assert(args[i]);
          arg_types[i] = LLVMTypeOf(args[i]);
       }
-      function = LLVMAddFunction(module, name, LLVMFunctionType(ret_type, arg_types, num_args, 0));
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMExternalLinkage);
-   }
-   assert(LLVMIsDeclaration(function));
 
-   if(name[0] == 'l' &&
-      name[1] == 'l' &&
-      name[2] == 'v' &&
-      name[3] == 'm' &&
-      name[4] == '.')
-      assert(LLVMGetIntrinsicID(function));
+      function = lp_declare_intrinsic(module, name, ret_type, arg_types, num_args);
+   }
 
    return LLVMBuildCall(builder, function, args, num_args, "");
 }
