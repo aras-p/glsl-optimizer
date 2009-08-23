@@ -41,7 +41,7 @@
 #include "util/u_memory.h"
 #include "sp_quad.h"   /* only for #define QUAD_* tokens */
 #include "sp_tex_sample.h"
-#include "sp_tile_cache.h"
+#include "sp_tex_tile_cache.h"
 
 
 
@@ -600,7 +600,7 @@ compute_lambda_vert(const struct sp_sampler_varient *samp,
  * \param rgba  the quad to put the texel/color into
  * \param j  which element of the rgba quad to write to
  *
- * XXX maybe move this into sp_tile_cache.c and merge with the
+ * XXX maybe move this into sp_tex_tile_cache.c and merge with the
  * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
 static INLINE void
@@ -610,9 +610,9 @@ get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
 
-   const struct softpipe_cached_tile *tile
+   const struct softpipe_tex_cached_tile *tile
       = sp_get_cached_tile_tex(samp->cache,
-                               tile_address(x, y, 0, face, level));
+                               tex_tile_address(x, y, 0, face, level));
 
    y %= TILE_SIZE;
    x %= TILE_SIZE;
@@ -629,9 +629,9 @@ get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
 
-   const struct softpipe_cached_tile *tile
+   const struct softpipe_tex_cached_tile *tile
       = sp_get_cached_tile_tex(samp->cache,
-                               tile_address(x, y, 0, face, level));
+                               tex_tile_address(x, y, 0, face, level));
 
    y %= TILE_SIZE;
    x %= TILE_SIZE;
@@ -677,10 +677,10 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
    else {
       const unsigned tx = x % TILE_SIZE;
       const unsigned ty = y % TILE_SIZE;
-      const struct softpipe_cached_tile *tile;
+      const struct softpipe_tex_cached_tile *tile;
 
       tile = sp_get_cached_tile_tex(samp->cache, 
-                                    tile_address(x, y, z, face, level));
+                                    tex_tile_address(x, y, z, face, level));
 
       rgba[0][j] = tile->data.color[ty][tx][0];
       rgba[1][j] = tile->data.color[ty][tx][1];
@@ -1547,7 +1547,7 @@ static filter_func get_img_filter( const union sp_sampler_key key,
  */
 void
 sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
-                                 struct softpipe_tile_cache *tex_cache,
+                                 struct softpipe_tex_tile_cache *tex_cache,
                                  const struct pipe_texture *texture )
 {
    const struct pipe_sampler_state *sampler = samp->sampler;

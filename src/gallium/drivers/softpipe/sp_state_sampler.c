@@ -37,8 +37,8 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
-#include "sp_tile_cache.h"
 #include "sp_tex_sample.h"
+#include "sp_tex_tile_cache.h"
 
 
 struct sp_sampler {
@@ -113,7 +113,7 @@ softpipe_set_sampler_textures(struct pipe_context *pipe,
       struct pipe_texture *tex = i < num ? texture[i] : NULL;
 
       pipe_texture_reference(&softpipe->texture[i], tex);
-      sp_tile_cache_set_texture(softpipe->tex_cache[i], tex);
+      sp_tex_tile_cache_set_texture(softpipe->tex_cache[i], tex);
    }
 
    softpipe->num_textures = num;

@@ -37,6 +37,7 @@
 #include "sp_surface.h"
 #include "sp_state.h"
 #include "sp_tile_cache.h"
+#include "sp_tex_tile_cache.h"
 #include "sp_winsys.h"
 
 
@@ -52,7 +53,7 @@ softpipe_flush( struct pipe_context *pipe,
 
    if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
       for (i = 0; i < softpipe->num_textures; i++) {
-         sp_flush_tile_cache(softpipe->tex_cache[i]);
+         sp_flush_tex_tile_cache(softpipe->tex_cache[i]);
       }
    }
 

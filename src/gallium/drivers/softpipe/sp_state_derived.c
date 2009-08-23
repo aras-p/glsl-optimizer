@@ -35,7 +35,7 @@
 #include "sp_screen.h"
 #include "sp_state.h"
 #include "sp_texture.h"
-#include "sp_tile_cache.h"
+#include "sp_tex_tile_cache.h"
 
 
 /**
@@ -203,11 +203,11 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
    softpipe_reset_sampler_varients( softpipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct softpipe_tile_cache *tc = softpipe->tex_cache[i];
+      struct softpipe_tex_tile_cache *tc = softpipe->tex_cache[i];
       if (tc->texture) {
          struct softpipe_texture *spt = softpipe_texture(tc->texture);
          if (spt->timestamp != tc->timestamp) {
-            sp_tile_cache_validate_texture( tc );
+	    sp_tex_tile_cache_validate_texture( tc );
             _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
             tc->timestamp = spt->timestamp;
          }
