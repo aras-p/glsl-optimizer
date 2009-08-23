@@ -214,6 +214,6 @@ static inline int radeon_bo_is_static(struct radeon_bo *bo)
 #define radeon_bo_wait(bo) \
     _radeon_bo_wait(bo, __FILE__, __func__, __LINE__)
 #define radeon_bo_is_busy(bo, domain) \
-    _radeon_bo_is_busy(bo, busy, domain, __FILE__, __func__, __LINE__)
+    _radeon_bo_is_busy(bo, domain, __FILE__, __func__, __LINE__)
 
 #endif
