@@ -917,7 +917,42 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
 }
 
 
+static void
+img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
+                      const float s[QUAD_SIZE],
+                      const float t[QUAD_SIZE],
+                      const float p[QUAD_SIZE],
+                      float lodbias,
+                      float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height;
+   int x[4], y[4];
+   union tex_tile_address addr;
 
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+ 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->nearest_texcoord_s(s, width, x);
+   samp->nearest_texcoord_t(t, height, y);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *out = get_texel_2d(samp, addr, x[j], y[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
 
 static inline union tex_tile_address face( union tex_tile_address addr,
 					   unsigned face )
@@ -927,7 +962,7 @@ static inline union tex_tile_address face( union tex_tile_address addr,
 }
 
 static void
-img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
                       const float s[QUAD_SIZE],
                       const float t[QUAD_SIZE],
                       const float p[QUAD_SIZE],
@@ -1047,10 +1082,54 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
 }
 
 
+static void
+img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
+                     const float s[QUAD_SIZE],
+                     const float t[QUAD_SIZE],
+                     const float p[QUAD_SIZE],
+                     float lodbias,
+                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height;
+   int x0[4], y0[4], x1[4], y1[4];
+   float xw[4], yw[4]; /* weights */
+   union tex_tile_address addr;
+
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->linear_texcoord_s(s, width,  x0, x1, xw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *tx0 = get_texel_2d(samp, addr, x0[j], y0[j]);
+      const float *tx1 = get_texel_2d(samp, addr, x1[j], y0[j]);
+      const float *tx2 = get_texel_2d(samp, addr, x0[j], y1[j]);
+      const float *tx3 = get_texel_2d(samp, addr, x1[j], y1[j]);
+      int c;
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw[j], yw[j],
+                              tx0[c], tx1[c],
+                              tx2[c], tx3[c]);
+      }
+   }
+}
 
 
 static void
-img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
                      const float s[QUAD_SIZE],
                      const float t[QUAD_SIZE],
                      const float p[QUAD_SIZE],
@@ -1615,13 +1694,18 @@ static filter_func get_img_filter( const union sp_sampler_key key,
             }
          }
       }
-      /* Fallthrough to default versions:
+      /* Otherwise use default versions:
        */
-   case PIPE_TEXTURE_CUBE:
       if (filter == PIPE_TEX_FILTER_NEAREST) 
          return img_filter_2d_nearest;
       else
          return img_filter_2d_linear;
+      break;
+   case PIPE_TEXTURE_CUBE:
+      if (filter == PIPE_TEX_FILTER_NEAREST) 
+         return img_filter_cube_nearest;
+      else
+         return img_filter_cube_linear;
       break;
    case PIPE_TEXTURE_3D:
       if (filter == PIPE_TEX_FILTER_NEAREST) 
