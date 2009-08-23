@@ -1050,7 +1050,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
 	ALLOC_STATE(db, always, 23, r700SendDBState);
 	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
-	ALLOC_STATE(db_target, always, 19, r700SendDepthTargetState);
+	ALLOC_STATE(db_target, always, 12, r700SendDepthTargetState);
 	ALLOC_STATE(sc, always, 15, r700SendSCState);
 	ALLOC_STATE(scissor, always, 22, r700SendScissorState);
 	ALLOC_STATE(aa, always, 12, r700SendAAState);
@@ -1063,7 +1063,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
 	ALLOC_STATE(blnd, always, 30, r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
-	ALLOC_STATE(cb_target, always, 32, r700SendRenderTargetState);
+	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
 	ALLOC_STATE(vgt, always, 41, r700SendVGTState);
 	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
