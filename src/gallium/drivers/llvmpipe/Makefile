@@ -14,6 +14,7 @@ C_SOURCES = \
 	lp_bld_debug.c \
 	lp_bld_depth.c \
 	lp_bld_flow.c \
+	lp_bld_interp.c \
 	lp_bld_intr.c \
 	lp_bld_pack.c \
 	lp_bld_unpack.c \

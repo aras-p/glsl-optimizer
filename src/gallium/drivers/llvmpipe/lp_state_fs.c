@@ -69,9 +69,11 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
 #include "lp_bld_type.h"
+#include "lp_bld_const.h"
 #include "lp_bld_conv.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_depth.h"
+#include "lp_bld_interp.h"
 #include "lp_bld_tgsi.h"
 #include "lp_bld_alpha.h"
 #include "lp_bld_blend.h"
@@ -88,22 +90,16 @@ static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
 static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
 
 
-/**
- * Generate the position vectors.
- *
- * TODO: This should be called only once per fragment pipeline, for the first
- * quad, and the neighboring quad positions obtained by additions.
- *
- * Parameter x, y are the integer values with the quad upper left coordinates.
+/*
+ * Derive from the quad's upper left scalar coordinates the coordinates for
+ * all other quad pixels
  */
 static void
-generate_pos(LLVMBuilderRef builder,
-             LLVMValueRef x,
-             LLVMValueRef y,
-             LLVMValueRef a0_ptr,
-             LLVMValueRef dadx_ptr,
-             LLVMValueRef dady_ptr,
-             LLVMValueRef *pos)
+generate_pos0(LLVMBuilderRef builder,
+              LLVMValueRef x,
+              LLVMValueRef y,
+              LLVMValueRef *x0,
+              LLVMValueRef *y0)
 {
    LLVMTypeRef int_elem_type = LLVMInt32Type();
    LLVMTypeRef int_vec_type = LLVMVectorType(int_elem_type, QUAD_SIZE);
@@ -111,13 +107,7 @@ generate_pos(LLVMBuilderRef builder,
    LLVMTypeRef vec_type = LLVMVectorType(elem_type, QUAD_SIZE);
    LLVMValueRef x_offsets[QUAD_SIZE];
    LLVMValueRef y_offsets[QUAD_SIZE];
-   unsigned chan;
    unsigned i;
-
-   /*
-    * Derive from the quad's upper left scalar coordinates the coordinates for
-    * all other quad pixels
-    */
 
    x = lp_build_broadcast(builder, int_vec_type, x);
    y = lp_build_broadcast(builder, int_vec_type, y);
@@ -130,33 +120,8 @@ generate_pos(LLVMBuilderRef builder,
    x = LLVMBuildAdd(builder, x, LLVMConstVector(x_offsets, QUAD_SIZE), "");
    y = LLVMBuildAdd(builder, y, LLVMConstVector(y_offsets, QUAD_SIZE), "");
 
-   x = LLVMBuildSIToFP(builder, x, vec_type, "");
-   y = LLVMBuildSIToFP(builder, y, vec_type, "");
-
-   pos[0] = x;
-   pos[1] = y;
-
-   /* 
-    * Calculate z and w from the interpolation factors.
-    */
-
-   for(chan = 2; chan < NUM_CHANNELS; ++chan) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
-      LLVMValueRef a0   = LLVMBuildLoad(builder, LLVMBuildGEP(builder, a0_ptr,   &index, 1, ""), "");
-      LLVMValueRef dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
-      LLVMValueRef dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
-      LLVMValueRef res;
-      a0   = lp_build_broadcast(builder, vec_type, a0);
-      dadx = lp_build_broadcast(builder, vec_type, dadx);
-      dady = lp_build_broadcast(builder, vec_type, dady);
-      res = a0;
-      res = LLVMBuildAdd(builder, res, LLVMBuildMul(builder, dadx, x, ""), "");
-      res = LLVMBuildAdd(builder, res, LLVMBuildMul(builder, dady, y, ""), "");
-      pos[chan] = res;
-   }
-
-   for(chan = 0; chan < NUM_CHANNELS; ++chan)
-      lp_build_name(pos[chan], "pos.%c", "xyzw"[chan]);
+   *x0 = LLVMBuildSIToFP(builder, x, vec_type, "");
+   *y0 = LLVMBuildSIToFP(builder, y, vec_type, "");
 }
 
 
@@ -218,11 +183,7 @@ generate_fs(struct llvmpipe_context *lp,
             union lp_type type,
             LLVMValueRef context_ptr,
             unsigned i,
-            LLVMValueRef x,
-            LLVMValueRef y,
-            LLVMValueRef a0_ptr,
-            LLVMValueRef dadx_ptr,
-            LLVMValueRef dady_ptr,
+            const struct lp_build_interp_soa_context *interp,
             LLVMValueRef *pmask,
             LLVMValueRef *color,
             LLVMValueRef depth_ptr)
@@ -233,8 +194,8 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMTypeRef int_vec_type;
    LLVMValueRef consts_ptr;
    LLVMValueRef samplers_ptr;
-   LLVMValueRef pos[NUM_CHANNELS];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef z = interp->pos[2];
    struct lp_build_mask_context mask;
    boolean early_depth_test;
    unsigned attrib;
@@ -247,8 +208,6 @@ generate_fs(struct llvmpipe_context *lp,
    consts_ptr = lp_jit_context_constants(builder, context_ptr);
    samplers_ptr = lp_jit_context_samplers(builder, context_ptr);
 
-   generate_pos(builder, x, y, a0_ptr, dadx_ptr, dady_ptr, pos);
-
    lp_build_mask_begin(&mask, builder, type, *pmask);
 
    early_depth_test =
@@ -260,14 +219,14 @@ generate_fs(struct llvmpipe_context *lp,
 
    if(early_depth_test)
       generate_depth(lp, builder, &key->depth,
-                          type, &mask,
-                          pos[2], depth_ptr);
+                     type, &mask,
+                     z, depth_ptr);
 
    memset(outputs, 0, sizeof outputs);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
-                     pos, a0_ptr, dadx_ptr, dady_ptr,
-                     consts_ptr, outputs, samplers_ptr);
+                     consts_ptr, interp->pos, interp->inputs,
+                     outputs, samplers_ptr);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -300,7 +259,7 @@ generate_fs(struct llvmpipe_context *lp,
 
             case TGSI_SEMANTIC_POSITION:
                if(chan == 2)
-                  pos[2] = outputs[attrib][chan];
+                  z = outputs[attrib][chan];
                break;
             }
          }
@@ -309,8 +268,8 @@ generate_fs(struct llvmpipe_context *lp,
 
    if(!early_depth_test)
       generate_depth(lp, builder, &key->depth,
-                          type, &mask,
-                          pos[2], depth_ptr);
+                     type, &mask,
+                     z, depth_ptr);
 
    lp_build_mask_end(&mask);
 
@@ -400,6 +359,9 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef depth_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
+   LLVMValueRef x0;
+   LLVMValueRef y0;
+   struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
    LLVMValueRef fs_out_color[NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
@@ -516,14 +478,19 @@ generate_fragment(struct llvmpipe_context *lp,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
+   generate_pos0(builder, x, y, &x0, &y0);
+
+   lp_build_interp_soa_init(&interp, shader->base.tokens, builder, fs_type,
+                            a0_ptr, dadx_ptr, dady_ptr,
+                            x0, y0, 2, 0);
+
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       LLVMValueRef out_color[NUM_CHANNELS];
-      LLVMValueRef x_i;
       LLVMValueRef depth_ptr_i;
 
-      /* TODO: Reuse position interpolation */
-      x_i = LLVMBuildAdd(builder, x, LLVMConstInt(LLVMInt32Type(), 2*i, 0), "");
+      if(i != 0)
+         lp_build_interp_soa_update(&interp);
 
       fs_mask[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, mask_ptr, &index, 1, ""), "");
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");
@@ -533,8 +500,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   fs_type,
                   context_ptr,
                   i,
-                  x_i, y,
-                  a0_ptr, dadx_ptr, dady_ptr,
+                  &interp,
                   &fs_mask[i],
                   out_color,
                   depth_ptr_i);

@@ -83,18 +83,11 @@ struct lp_build_tgsi_soa_context
 {
    struct lp_build_context base;
 
-   LLVMValueRef x, y, w;
-   LLVMValueRef a0_ptr;
-   LLVMValueRef dadx_ptr;
-   LLVMValueRef dady_ptr;
-
    LLVMValueRef consts_ptr;
+   const LLVMValueRef *pos;
+   const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
    LLVMValueRef samplers_ptr;
-
-   LLVMValueRef oow;
-
-   LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
@@ -1350,93 +1343,16 @@ emit_instruction(
    return 1;
 }
 
-static void
-emit_declaration(
-   struct lp_build_tgsi_soa_context *bld,
-   struct tgsi_full_declaration *decl )
-{
-   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-      LLVMBuilderRef builder = bld->base.builder;
-      unsigned first, last, mask;
-      unsigned attrib, chan;
-
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
-      mask = decl->Declaration.UsageMask;
-
-      for( attrib = first; attrib <= last; attrib++ ) {
-         for( chan = 0; chan < NUM_CHANNELS; chan++ ) {
-            LLVMValueRef input = bld->base.undef;
-
-            if( mask & (1 << chan) ) {
-               LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), (1 + attrib)*NUM_CHANNELS + chan, 0);
-               LLVMValueRef a0;
-               LLVMValueRef dadx;
-               LLVMValueRef dady;
-
-               switch( decl->Declaration.Interpolate ) {
-               case TGSI_INTERPOLATE_PERSPECTIVE:
-                  /* fall-through */
-
-               case TGSI_INTERPOLATE_LINEAR: {
-                  LLVMValueRef dadx_ptr = LLVMBuildGEP(builder, bld->dadx_ptr, &index, 1, "");
-                  LLVMValueRef dady_ptr = LLVMBuildGEP(builder, bld->dady_ptr, &index, 1, "");
-                  dadx = LLVMBuildLoad(builder, dadx_ptr, "");
-                  dady = LLVMBuildLoad(builder, dady_ptr, "");
-                  dadx = lp_build_broadcast_scalar(&bld->base, dadx);
-                  dady = lp_build_broadcast_scalar(&bld->base, dady);
-                  lp_build_name(dadx, "dadx_%u.%c", attrib, "xyzw"[chan]);
-                  lp_build_name(dady, "dady_%u.%c", attrib, "xyzw"[chan]);
-                  /* fall-through */
-               }
-
-               case TGSI_INTERPOLATE_CONSTANT: {
-                  LLVMValueRef a0_ptr = LLVMBuildGEP(builder, bld->a0_ptr, &index, 1, "");
-                  a0 = LLVMBuildLoad(builder, a0_ptr, "");
-                  a0 = lp_build_broadcast_scalar(&bld->base, a0);
-                  lp_build_name(a0, "a0_%u.%c", attrib, "xyzw"[chan]);
-                  break;
-               }
-
-               default:
-                  assert(0);
-                  break;
-               }
-
-               input = a0;
-
-               if (decl->Declaration.Interpolate != TGSI_INTERPOLATE_CONSTANT) {
-                  input = lp_build_add(&bld->base, input, lp_build_mul(&bld->base, bld->x, dadx));
-                  input = lp_build_add(&bld->base, input, lp_build_mul(&bld->base, bld->y, dady));
-               }
-
-               if (decl->Declaration.Interpolate == TGSI_INTERPOLATE_PERSPECTIVE) {
-                  if(!bld->oow)
-                     bld->oow = lp_build_rcp(&bld->base, bld->w);
-                  input = lp_build_mul(&bld->base, input, bld->oow);
-               }
-
-               lp_build_name(input, "input%u.%c", attrib, "xyzw"[chan]);
-            }
-
-            bld->inputs[attrib][chan] = input;
-         }
-      }
-   }
-}
-
 
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
                   union lp_type type,
                   struct lp_build_mask_context *mask,
-                  LLVMValueRef *pos,
-                  LLVMValueRef a0_ptr,
-                  LLVMValueRef dadx_ptr,
-                  LLVMValueRef dady_ptr,
                   LLVMValueRef consts_ptr,
-                  LLVMValueRef (*outputs)[4],
+                  const LLVMValueRef *pos,
+                  const LLVMValueRef (*inputs)[NUM_CHANNELS],
+                  LLVMValueRef (*outputs)[NUM_CHANNELS],
                   LLVMValueRef samplers_ptr)
 {
    struct lp_build_tgsi_soa_context bld;
@@ -1448,12 +1364,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
    bld.mask = mask;
-   bld.x = pos[0];
-   bld.y = pos[1];
-   bld.w = pos[3];
-   bld.a0_ptr = a0_ptr;
-   bld.dadx_ptr = dadx_ptr;
-   bld.dady_ptr = dady_ptr;
+   bld.pos = pos;
+   bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.samplers_ptr = samplers_ptr;
@@ -1465,9 +1377,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            emit_declaration( &bld, &parse.FullToken.FullDeclaration );
-         }
+         /* Input already interpolated */
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
