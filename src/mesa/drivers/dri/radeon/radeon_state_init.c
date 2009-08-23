@@ -876,7 +876,7 @@ void radeonInitState( r100ContextPtr rmesa )
       rmesa->hw.glt.emit = vec_emit;
       rmesa->hw.eye.emit = vec_emit;
       
-      for (i = 0; i <= 6; i++)
+      for (i = 0; i < 6; i++)
 	 rmesa->hw.mat[i].emit = vec_emit;
 
       for (i = 0; i < 8; i++)

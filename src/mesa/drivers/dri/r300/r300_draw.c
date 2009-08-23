@@ -109,11 +109,11 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 #if MESA_BIG_ENDIAN
 	} else { /* if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) */
-		GLuint size;
 		GLushort *in = (GLushort *)src_ptr;
-		size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
+		GLuint size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
 
-		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offet, size, 4);
+		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo,
+				     &r300->ind_buf.bo_offset, size, 4);
 
 		assert(r300->ind_buf.bo->ptr != NULL);
 		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);

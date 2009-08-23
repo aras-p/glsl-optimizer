@@ -97,6 +97,11 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	    depth = tex;
+	} else if (attachments[i] == DRI2BufferFakeFrontLeft &&
+		   pDraw->type == DRAWABLE_PIXMAP) {
+	    pPixmap = (PixmapPtr) pDraw;
+	    pPixmap->refcnt++;
+	    tex = xorg_exa_get_texture(pPixmap);
 	} else {
 	    pPixmap = (*pScreen->CreatePixmap)(pScreen, pDraw->width,
 					       pDraw->height,
@@ -171,12 +176,53 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
     GCPtr gc;
     RegionPtr copy_clip;
 
+    /*
+     * In driCreateBuffers we dewrap windows into the
+     * backing pixmaps in order to get to the texture.
+     * We need to use the real drawable in CopyArea
+     * so that cliprects and offsets are correct.
+     */
     src_pixmap = src_priv->pPixmap;
     dst_pixmap = dst_priv->pPixmap;
     if (pSrcBuffer->attachment == DRI2BufferFrontLeft)
 	src_pixmap = (PixmapPtr)pDraw;
     if (pDestBuffer->attachment == DRI2BufferFrontLeft)
 	dst_pixmap = (PixmapPtr)pDraw;
+
+    /*
+     * The clients implements glXWaitX with a copy front to fake and then
+     * waiting on the server to signal its completion of it. While
+     * glXWaitGL is a client side flush and a copy from fake to front.
+     * This is how it is done in the DRI2 protocol, how ever depending
+     * which type of drawables the server does things a bit differently
+     * then what the protocol says as the fake and front are the same.
+     *
+     * for pixmaps glXWaitX is a server flush.
+     * for pixmaps glXWaitGL is a client flush.
+     * for windows glXWaitX is a copy from front to fake then a server flush.
+     * for windows glXWaitGL is a client flush then a copy from fake to front.
+     *
+     * XXX in the windows case this code always flushes but that isn't a
+     * must in the glXWaitGL case but we don't know if this is a glXWaitGL
+     * or a glFlush/glFinish call.
+     */
+    if (dst_pixmap == src_pixmap) {
+	/* pixmap glXWaitX */
+	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
+	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
+	    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS, NULL);
+	    return;
+	}
+	/* pixmap glXWaitGL */
+	if (pDestBuffer->attachment == DRI2BufferFrontLeft &&
+	    pSrcBuffer->attachment == DRI2BufferFakeFrontLeft) {
+	    return;
+	} else {
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		"copying between the same pixmap\n");
+	}
+    }
+
     gc = GetScratchGC(pDraw->depth, pScreen);
     copy_clip = REGION_CREATE(pScreen, NULL, 0);
     REGION_COPY(pScreen, copy_clip, pRegion);

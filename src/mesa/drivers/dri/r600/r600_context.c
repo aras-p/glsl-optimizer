@@ -185,7 +185,13 @@ static void r600_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 
 static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-	/* to be enabled */
+	context_t *context = (context_t *)radeon;
+
+	/* always emit CB base to prevent
+	 * lock ups on some chips.
+	 */
+	R600_STATECHANGE(context, cb_target);
+	r700Start3D(context);
 }
 
 static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)

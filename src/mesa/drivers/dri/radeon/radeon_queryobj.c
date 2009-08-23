@@ -32,7 +32,19 @@
 
 #define DDEBUG 0
 
-#define PAGE_SIZE 4096
+static int radeonQueryIsFlushed(GLcontext *ctx, struct gl_query_object *q)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct radeon_query_object *tmp, *query = (struct radeon_query_object *)q;
+
+	foreach(tmp, &radeon->query.not_flushed_head) {
+		if (tmp == query) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
 
 static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 {
@@ -86,22 +98,11 @@ static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 
 static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	struct radeon_query_object *tmp, *query = (struct radeon_query_object *)q;
+	struct radeon_query_object *query = (struct radeon_query_object *)q;
 
 	/* If the cmdbuf with packets for this query hasn't been flushed yet, do it now */
-	{
-		GLboolean found = GL_FALSE;
-		foreach(tmp, &radeon->query.not_flushed_head) {
-			if (tmp == query) {
-				found = GL_TRUE;
-				break;
-			}
-		}
-
-		if (found)
-			ctx->Driver.Flush(ctx);
-	}
+	if (!radeonQueryIsFlushed(ctx, q))
+		ctx->Driver.Flush(ctx);
 
 	if (DDEBUG) fprintf(stderr, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, q->Id, query->bo, query->curr_offset);
 
@@ -124,7 +125,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 		radeon->dma.flush(radeon->glCtx);
 
 	if (!query->bo) {
-		query->bo = radeon_bo_open(radeon->radeonScreen->bom, 0, PAGE_SIZE, PAGE_SIZE, RADEON_GEM_DOMAIN_GTT, 0);
+		query->bo = radeon_bo_open(radeon->radeonScreen->bom, 0, RADEON_QUERY_PAGE_SIZE, RADEON_QUERY_PAGE_SIZE, RADEON_GEM_DOMAIN_GTT, 0);
 	}
 	query->curr_offset = 0;
 
@@ -168,16 +169,32 @@ static void radeonEndQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeon->query.current = NULL;
 }
 
-/**
- * TODO:
- * should check if bo is idle, bo there's no interface to do it
- * just wait for result now
- */
 static void radeonCheckQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
 
+#ifdef DRM_RADEON_GEM_BUSY
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+
+	if (radeon->radeonScreen->kernel_mm) {
+		struct radeon_query_object *query = (struct radeon_query_object *)q;
+		uint32_t domain;
+
+		/* Need to perform a flush, as per ARB_occlusion_query spec */
+		if (!radeonQueryIsFlushed(ctx, q)) {
+			ctx->Driver.Flush(ctx);
+		}
+
+		if (radeon_bo_is_busy(query->bo, &domain) == 0) {
+			radeonQueryGetResult(ctx, q);
+			query->Base.Ready = GL_TRUE;
+		}
+	} else {
+		radeonWaitQuery(ctx, q);
+	}
+#else
 	radeonWaitQuery(ctx, q);
+#endif
 }
 
 void radeonInitQueryObjFunctions(struct dd_function_table *functions)

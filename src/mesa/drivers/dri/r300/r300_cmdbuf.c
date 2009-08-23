@@ -105,7 +105,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	ndw -= 5;
 	OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
 	OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
-	OUT_BATCH_TABLE(atom->cmd + 1, ndw);
+	OUT_BATCH_TABLE(&atom->cmd[1], ndw);
 	OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
 	END_BATCH();
 }
@@ -134,7 +134,7 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 	OUT_BATCH(addr);
 	ndw-=3;
 	OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, ndw-1) | RADEON_ONE_REG_WR);
-	OUT_BATCH_TABLE(atom->cmd + 1, ndw);
+	OUT_BATCH_TABLE(&atom->cmd[1], ndw);
 	END_BATCH();
 }
 

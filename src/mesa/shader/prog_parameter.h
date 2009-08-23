@@ -84,6 +84,9 @@ struct gl_program_parameter_list
 extern struct gl_program_parameter_list *
 _mesa_new_parameter_list(void);
 
+extern struct gl_program_parameter_list *
+_mesa_new_parameter_list_sized(unsigned size);
+
 extern void
 _mesa_free_parameter_list(struct gl_program_parameter_list *paramList);
 

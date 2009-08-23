@@ -73,6 +73,7 @@ struct radeon_bo_funcs {
 			  uint32_t pitch);
     int (*bo_get_tiling)(struct radeon_bo *bo, uint32_t *tiling_flags,
 			  uint32_t *pitch);
+    int (*bo_is_busy)(struct radeon_bo *bo, uint32_t *domain);
 };
 
 struct radeon_bo_manager {
@@ -170,6 +171,15 @@ static inline int _radeon_bo_wait(struct radeon_bo *bo,
     return bo->bom->funcs->bo_wait(bo);
 }
 
+static inline int _radeon_bo_is_busy(struct radeon_bo *bo,
+				     uint32_t *domain,
+                                     const char *file,
+                                     const char *func,
+                                     int line)
+{
+    return bo->bom->funcs->bo_is_busy(bo, domain);
+}
+
 static inline int radeon_bo_set_tiling(struct radeon_bo *bo,
 				       uint32_t tiling_flags, uint32_t pitch)
 {
@@ -203,5 +213,7 @@ static inline int radeon_bo_is_static(struct radeon_bo *bo)
     _radeon_bo_debug(bo, opcode, __FILE__, __FUNCTION__, __LINE__)
 #define radeon_bo_wait(bo) \
     _radeon_bo_wait(bo, __FILE__, __func__, __LINE__)
+#define radeon_bo_is_busy(bo, domain) \
+    _radeon_bo_is_busy(bo, domain, __FILE__, __func__, __LINE__)
 
 #endif

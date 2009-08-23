@@ -335,6 +335,12 @@
 #define PCI_CHIP_RS780_9615             0x9615
 #define PCI_CHIP_RS780_9616             0x9616
 
+#define PCI_CHIP_RS880_9710             0x9710
+#define PCI_CHIP_RS880_9711             0x9711
+#define PCI_CHIP_RS880_9712             0x9712
+#define PCI_CHIP_RS880_9713             0x9713
+#define PCI_CHIP_RS880_9714             0x9714
+
 #define PCI_CHIP_RV770_9440             0x9440
 #define PCI_CHIP_RV770_9441             0x9441
 #define PCI_CHIP_RV770_9442             0x9442
@@ -421,6 +427,7 @@ enum {
    CHIP_FAMILY_RV620,
    CHIP_FAMILY_RV635,
    CHIP_FAMILY_RS780,
+   CHIP_FAMILY_RS880,
    CHIP_FAMILY_RV770,
    CHIP_FAMILY_RV730,
    CHIP_FAMILY_RV710,

@@ -270,7 +270,6 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    BATCH_LOCALS(&context->radeon);
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
@@ -280,6 +279,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     unsigned int ui, i;
     unsigned int unNumOfReg;
     unsigned int unBit;
+    GLuint exportCount;
 
     if(GL_FALSE == fp->loaded)
     {
@@ -305,7 +305,14 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, fp->shadercode.buf->id);
     */
 
+    R600_STATECHANGE(context, ps);
+
+    r700->ps.SQ_PGM_RESOURCES_PS.u32All = 0;
+    SETbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
+
     r700->ps.SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
+
+    R600_STATECHANGE(context, spi);
 
     unNumOfReg = fp->r700Shader.nRegs + 1;
 
@@ -323,8 +330,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
-    SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
-    
+    SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
+
     CLEARbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
 
     if(fp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
@@ -335,6 +342,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     SETfield(r700->ps.SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
              EXPORT_MODE_shift, EXPORT_MODE_mask);
+
+    R600_STATECHANGE(context, db);
 
     if(fp->r700Shader.killIsUsed)
     {
@@ -347,40 +356,11 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     if(fp->r700Shader.depthIsExported)
     {
-	    SETbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit); 
+	    SETbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
     }
     else
     {
         CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-
-    /* sent out shader constants. */
-    paramList = fp->mesa_program.Base.Parameters;
-
-    if(NULL != paramList)
-    {
-        _mesa_load_state_parameters(ctx, paramList);
-
-        unNumParamData = paramList->NumParameters * 4;
-
-        BEGIN_BATCH_NO_AUTOSTATE(2 + unNumParamData);
-
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
-
-        /* assembler map const from very beginning. */
-        R600_OUT_BATCH(SQ_ALU_CONSTANT_PS_OFFSET * 4);
-
-        unNumParamData = paramList->NumParameters;
-
-        for(ui=0; ui<unNumParamData; ui++)
-        {
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
-        }
-        END_BATCH();
-        COMMIT_BATCH();
     }
 
     // emit ps input map
@@ -448,6 +428,34 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    }
     }
+
+    R600_STATECHANGE(context, cb);
+    exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
+    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
+
+    /* sent out shader constants. */
+    paramList = fp->mesa_program.Base.Parameters;
+
+    if(NULL != paramList) {
+	    _mesa_load_state_parameters(ctx, paramList);
+
+	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
+		    return GL_FALSE;
+
+	    R600_STATECHANGE(context, ps_consts);
+
+	    r700->ps.num_consts = paramList->NumParameters;
+
+	    unNumParamData = paramList->NumParameters;
+
+	    for(ui=0; ui<unNumParamData; ui++) {
+		    r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		    r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		    r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		    r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+	    }
+    } else
+	    r700->ps.num_consts = 0;
 
     return GL_TRUE;
 }

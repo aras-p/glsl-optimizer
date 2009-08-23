@@ -44,14 +44,6 @@
 
 #include "util/u_memory.h"
 
-static void
-dri_copy_to_front(__DRIdrawablePrivate * dPriv,
-		  struct pipe_surface *from,
-		  int x, int y, unsigned w, unsigned h)
-{
-   /* TODO send a message to the Xserver to copy to the real front buffer */
-}
-
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,
 			struct pipe_screen *screen,
@@ -93,6 +85,35 @@ dri_surface_from_handle(struct drm_api *api,
    /* we don't need the texture from this point on */
    pipe_texture_reference(&texture, NULL);
    return surface;
+}
+
+/**
+ * Pixmaps have will have the same name of fake front and front.
+ */
+static boolean
+dri2_check_if_pixmap(__DRIbuffer *buffers, int count)
+{
+   boolean found = FALSE;
+   boolean is_pixmap = FALSE;
+   unsigned name;
+   int i;
+
+   for (i = 0; i < count; i++) {
+      switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+         if (found) {
+            is_pixmap = buffers[i].name == name;
+         } else {
+            name = buffers[i].name;
+            found = TRUE;
+         }
+      default:
+	 continue;
+      }
+   }
+
+   return is_pixmap;
 }
 
 /**
@@ -153,15 +174,15 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
    }
 
+   drawable->is_pixmap = dri2_check_if_pixmap(buffers, count);
+
    for (i = 0; i < count; i++) {
       enum pipe_format format = 0;
       int index = 0;
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 index = ST_SURFACE_FRONT_LEFT;
-	 format = drawable->color_format;
-	 break;
+	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -233,8 +254,25 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private)
 {
    struct dri_context *ctx = (struct dri_context *)context_private;
+   struct dri_drawable *drawable = dri_drawable(ctx->dPriv);
+   __DRIdrawable *dri_drawable = ctx->dPriv;
+   __DRIscreen *dri_screen = ctx->sPriv;
 
-   dri_copy_to_front(ctx->dPriv, surf, 0, 0, surf->width, surf->height);
+   /* XXX Does this function get called with DRI1? */
+
+   if (ctx->dPriv == NULL) {
+      debug_printf("%s: no drawable bound to context\n", __func__);
+      return;
+   }
+
+#if 0
+   /* TODO if rendering to pixmaps is slow enable this code. */
+   if (drawable->is_pixmap)
+      return;
+#endif
+
+   (*dri_screen->dri2.loader->flushFrontBuffer)(dri_drawable,
+						dri_drawable->loaderPrivate);
 }
 
 /**
@@ -259,26 +297,20 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    drawable->color_format = (visual->redBits == 8) ?
       PIPE_FORMAT_A8R8G8B8_UNORM : PIPE_FORMAT_R5G6B5_UNORM;
 
-   debug_printf("Red bits is %d\n", visual->redBits);
-
    switch(visual->depthBits) {
    default:
    case 0:
-      debug_printf("Depth buffer 0.\n");
       drawable->depth_format = PIPE_FORMAT_NONE;
       break;
    case 16:
-      debug_printf("Depth buffer 16.\n");
       drawable->depth_format = PIPE_FORMAT_Z16_UNORM;
       break;
    case 24:
       if (visual->stencilBits == 0) {
-         debug_printf("Depth buffer 24. Stencil 0.\n");
 	 drawable->depth_format = (screen->d_depth_bits_last) ?
 	    PIPE_FORMAT_X8Z24_UNORM:
 	    PIPE_FORMAT_Z24X8_UNORM;
       } else {
-         debug_printf("Combined depth stencil 24 / 8.\n");
 	 drawable->depth_format = (screen->sd_depth_bits_last) ?
 	    PIPE_FORMAT_S8Z24_UNORM:
 	    PIPE_FORMAT_Z24S8_UNORM;
@@ -312,12 +344,11 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    dPriv->driverPrivate = (void *)drawable;
 
    /* setup dri2 buffers information */
+   /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-#if 0
-   /* TODO incase of double buffer visual, delay fake creation */
    drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
-#endif
+
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
    if (visual->depthBits)

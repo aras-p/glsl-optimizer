@@ -41,75 +41,102 @@
 
 #include "radeon_mipmap_tree.h"
 
-GLboolean r700SendTextureState(context_t *context)
+static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
-    unsigned int i;
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    struct radeon_bo *bo = NULL;
-    BATCH_LOCALS(&context->radeon);
+	context_t         *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	struct radeon_bo *bo = NULL;
+	unsigned int i;
+	BATCH_LOCALS(&context->radeon);
 
-    for (i=0; i<R700_TEXTURE_NUMBERUNITS; i++) {
-	    radeonTexObj *t = r700->textures[i];
-	    if (t) {
-		    if (!t->image_override)
-			    bo = t->mt->bo;
-		    else
-			    bo = t->bo;
-		    if (bo) {
+	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
+		radeonTexObj *t = r700->textures[i];
+		if (t) {
+			if (!t->image_override)
+				bo = t->mt->bo;
+			else
+				bo = t->bo;
+			if (bo) {
 
-			    r700SyncSurf(context, bo,
-					 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
-					 0, TC_ACTION_ENA_bit);
+				r700SyncSurf(context, bo,
+					     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
+					     0, TC_ACTION_ENA_bit);
 
-			    BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-			    R600_OUT_BATCH(i * 7);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-			    R600_OUT_BATCH(0); /* r700->textures[i]->SQ_TEX_RESOURCE2 */
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
-						 bo,
-						 0,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
-						 bo,
-						 r700->textures[i]->SQ_TEX_RESOURCE3,
-						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-			    END_BATCH();
-
-			    BEGIN_BATCH_NO_AUTOSTATE(5);
-			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-			    R600_OUT_BATCH(i * 3);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
-			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
-			    END_BATCH();
-
-			    BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
-			    R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
-			    R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
-			    END_BATCH();
-
-			    COMMIT_BATCH();
-		    }
-	    }
-    }
-    return GL_TRUE;
+				BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
+				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
+				R600_OUT_BATCH(i * 7);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
+				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
+						     bo,
+						     0,
+						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
+						     bo,
+						     r700->textures[i]->SQ_TEX_RESOURCE3,
+						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+				END_BATCH();
+				COMMIT_BATCH();
+			}
+		}
+	}
 }
 
-void r700SetupVTXConstants(GLcontext  * ctx,
-			   unsigned int nStreamID,
-			   void *       pAos,
-			   unsigned int size,      /* number of elements in vector */
-			   unsigned int stride,
-			   unsigned int count)     /* number of vectors in stream */
+static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t         *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	unsigned int i;
+	BATCH_LOCALS(&context->radeon);
+
+	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
+		radeonTexObj *t = r700->textures[i];
+		if (t) {
+			BEGIN_BATCH_NO_AUTOSTATE(5);
+			R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
+			R600_OUT_BATCH(i * 3);
+			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
+			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
+			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
+			END_BATCH();
+			COMMIT_BATCH();
+		}
+	}
+}
+
+static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t         *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	unsigned int i;
+	BATCH_LOCALS(&context->radeon);
+
+	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
+		radeonTexObj *t = r700->textures[i];
+		if (t) {
+			BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
+			R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
+			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
+			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
+			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
+			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
+			END_BATCH();
+			COMMIT_BATCH();
+		}
+	}
+}
+
+static void r700SetupVTXConstants(GLcontext  * ctx,
+				  unsigned int nStreamID,
+				  void *       pAos,
+				  unsigned int size,      /* number of elements in vector */
+				  unsigned int stride,
+				  unsigned int count)     /* number of vectors in stream */
 {
     context_t *context = R700_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
@@ -127,6 +154,7 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS880) ||
 	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
     else
@@ -169,19 +197,38 @@ void r700SetupVTXConstants(GLcontext  * ctx,
 
 }
 
-int r700SetupStreams(GLcontext * ctx)
+void r700SetupStreams(GLcontext *ctx)
 {
     context_t         *context = R700_CONTEXT(ctx);
-    BATCH_LOCALS(&context->radeon);
+     struct r700_vertex_program *vpc
+             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *vb = &tnl->vb;
+    unsigned int i, j = 0;
 
+    R600_STATECHANGE(context, vtx);
+
+    for(i=0; i<VERT_ATTRIB_MAX; i++) {
+	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+		    rcommon_emit_vector(ctx,
+					&context->radeon.tcl.aos[j],
+					vb->AttribPtr[i]->data,
+					vb->AttribPtr[i]->size,
+					vb->AttribPtr[i]->stride,
+					vb->Count);
+		    j++;
+	    }
+    }
+    context->radeon.tcl.aos_count = j;
+}
+
+static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+    context_t         *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vpc
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
-
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *vb = &tnl->vb;
-
-    unsigned int unBit;
     unsigned int i, j = 0;
+    BATCH_LOCALS(&context->radeon);
 
     BEGIN_BATCH_NO_AUTOSTATE(6);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
@@ -194,31 +241,18 @@ int r700SetupStreams(GLcontext * ctx)
     END_BATCH();
     COMMIT_BATCH();
 
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
-	{
-		unBit = 1 << i;
-		if(vpc->mesa_program.Base.InputsRead & unBit)
-		{
-			rcommon_emit_vector(ctx,
-					    &context->radeon.tcl.aos[j],
-					    vb->AttribPtr[i]->data,
-					    vb->AttribPtr[i]->size,
-					    vb->AttribPtr[i]->stride,
-					    vb->Count);
-
-			/* currently aos are packed */
-			r700SetupVTXConstants(ctx,
-					      i,
-					      (void*)(&context->radeon.tcl.aos[j]),
-					      (unsigned int)context->radeon.tcl.aos[j].components,
-					      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
-					      (unsigned int)context->radeon.tcl.aos[j].count);
-			j++;
-		}
-	}
-	context->radeon.tcl.aos_count = j;
-
-    return R600_FALLBACK_NONE;
+    for(i=0; i<VERT_ATTRIB_MAX; i++) {
+	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+		    /* currently aos are packed */
+		    r700SetupVTXConstants(ctx,
+					  i,
+					  (void*)(&context->radeon.tcl.aos[j]),
+					  (unsigned int)context->radeon.tcl.aos[j].components,
+					  (unsigned int)context->radeon.tcl.aos[j].stride * 4,
+					  (unsigned int)context->radeon.tcl.aos[j].count);
+		    j++;
+	    }
+    }
 }
 
 static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -309,8 +343,9 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 
 }
 
-GLboolean r700SendPSState(context_t *context)
+static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
+	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
@@ -318,7 +353,7 @@ GLboolean r700SendPSState(context_t *context)
 	pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
 
 	if (!pbo)
-		return GL_FALSE;
+		return;
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
@@ -339,13 +374,11 @@ GLboolean r700SendPSState(context_t *context)
 
 	COMMIT_BATCH();
 
-	r700->ps.dirty = GL_FALSE;
-
-	return GL_TRUE;
 }
 
-GLboolean r700SendVSState(context_t *context)
+static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
+	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
@@ -353,7 +386,7 @@ GLboolean r700SendVSState(context_t *context)
 	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
 
 	if (!pbo)
-		return GL_FALSE;
+		return;
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
@@ -372,14 +405,11 @@ GLboolean r700SendVSState(context_t *context)
         END_BATCH();
 
 	COMMIT_BATCH();
-
-	r700->vs.dirty = GL_FALSE;
-
-	return GL_TRUE;
 }
 
-GLboolean r700SendFSState(context_t *context)
+static void r700SendFSState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
+	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
@@ -396,7 +426,7 @@ GLboolean r700SendFSState(context_t *context)
 	/* XXX */
 
 	if (!pbo)
-		return GL_FALSE;
+		return;
 
 	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
@@ -416,9 +446,6 @@ GLboolean r700SendFSState(context_t *context)
 
 	COMMIT_BATCH();
 
-	r700->fs.dirty = GL_FALSE;
-
-	return GL_TRUE;
 }
 
 static void r700SendViewportState(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -650,16 +677,12 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 
-        BEGIN_BATCH_NO_AUTOSTATE(27);
+        BEGIN_BATCH_NO_AUTOSTATE(23);
 	R600_OUT_BATCH_REGVAL(DB_HTILE_DATA_BASE, r700->DB_HTILE_DATA_BASE.u32All);
 
 	R600_OUT_BATCH_REGSEQ(DB_STENCIL_CLEAR, 2);
 	R600_OUT_BATCH(r700->DB_STENCIL_CLEAR.u32All);
 	R600_OUT_BATCH(r700->DB_DEPTH_CLEAR.u32All);
-
-	R600_OUT_BATCH_REGSEQ(DB_STENCILREFMASK, 2);
-	R600_OUT_BATCH(r700->DB_STENCILREFMASK.u32All);
-	R600_OUT_BATCH(r700->DB_STENCILREFMASK_BF.u32All);
 
 	R600_OUT_BATCH_REGVAL(DB_DEPTH_CONTROL, r700->DB_DEPTH_CONTROL.u32All);
 	R600_OUT_BATCH_REGVAL(DB_SHADER_CONTROL, r700->DB_SHADER_CONTROL.u32All);
@@ -675,15 +698,28 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
+static void r700SendStencilState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+        BEGIN_BATCH_NO_AUTOSTATE(4);
+	R600_OUT_BATCH_REGSEQ(DB_STENCILREFMASK, 2);
+	R600_OUT_BATCH(r700->DB_STENCILREFMASK.u32All);
+	R600_OUT_BATCH(r700->DB_STENCILREFMASK_BF.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
+
 static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
-	unsigned int ui;
 
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
-		BEGIN_BATCH_NO_AUTOSTATE(14);
+		BEGIN_BATCH_NO_AUTOSTATE(11);
 		R600_OUT_BATCH_REGSEQ(CB_CLEAR_RED, 4);
 		R600_OUT_BATCH(r700->CB_CLEAR_RED_R6XX.u32All);
 		R600_OUT_BATCH(r700->CB_CLEAR_GREEN_R6XX.u32All);
@@ -693,30 +729,49 @@ static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
 		R600_OUT_BATCH(r700->CB_FOG_RED_R6XX.u32All);
 		R600_OUT_BATCH(r700->CB_FOG_GREEN_R6XX.u32All);
 		R600_OUT_BATCH(r700->CB_FOG_BLUE_R6XX.u32All);
-		/* R600 does not have per-MRT blend */
-		R600_OUT_BATCH_REGVAL(CB_BLEND_CONTROL, r700->CB_BLEND_CONTROL.u32All);
 		END_BATCH();
 	}
 
-	BEGIN_BATCH_NO_AUTOSTATE(22);
+	BEGIN_BATCH_NO_AUTOSTATE(7);
 	R600_OUT_BATCH_REGSEQ(CB_TARGET_MASK, 2);
 	R600_OUT_BATCH(r700->CB_TARGET_MASK.u32All);
 	R600_OUT_BATCH(r700->CB_SHADER_MASK.u32All);
-
-	R600_OUT_BATCH_REGSEQ(CB_BLEND_RED, 4);
-	R600_OUT_BATCH(r700->CB_BLEND_RED.u32All);
-	R600_OUT_BATCH(r700->CB_BLEND_GREEN.u32All);
-	R600_OUT_BATCH(r700->CB_BLEND_BLUE.u32All);
-	R600_OUT_BATCH(r700->CB_BLEND_ALPHA.u32All);
-
 	R600_OUT_BATCH_REGVAL(R7xx_CB_SHADER_CONTROL, r700->CB_SHADER_CONTROL.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR_CONTROL, r700->CB_COLOR_CONTROL.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
 
+static void r700SendCBCLRCMPState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(6);
 	R600_OUT_BATCH_REGSEQ(CB_CLRCMP_CONTROL, 4);
 	R600_OUT_BATCH(r700->CB_CLRCMP_CONTROL.u32All);
 	R600_OUT_BATCH(r700->CB_CLRCMP_SRC.u32All);
 	R600_OUT_BATCH(r700->CB_CLRCMP_DST.u32All);
 	R600_OUT_BATCH(r700->CB_CLRCMP_MSK.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
+
+static void r700SendCBBlendState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+	unsigned int ui;
+
+	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
+		BEGIN_BATCH_NO_AUTOSTATE(3);
+		R600_OUT_BATCH_REGVAL(CB_BLEND_CONTROL, r700->CB_BLEND_CONTROL.u32All);
+		END_BATCH();
+	}
+
+	BEGIN_BATCH_NO_AUTOSTATE(3);
+	R600_OUT_BATCH_REGVAL(CB_COLOR_CONTROL, r700->CB_COLOR_CONTROL.u32All);
 	END_BATCH();
 
 	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
@@ -731,7 +786,22 @@ static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	}
 
 	COMMIT_BATCH();
+}
 
+static void r700SendCBBlendColorState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(6);
+	R600_OUT_BATCH_REGSEQ(CB_BLEND_RED, 4);
+	R600_OUT_BATCH(r700->CB_BLEND_RED.u32All);
+	R600_OUT_BATCH(r700->CB_BLEND_GREEN.u32All);
+	R600_OUT_BATCH(r700->CB_BLEND_BLUE.u32All);
+	R600_OUT_BATCH(r700->CB_BLEND_ALPHA.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
 }
 
 static void r700SendSUState(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -740,25 +810,33 @@ static void r700SendSUState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 
-	BEGIN_BATCH_NO_AUTOSTATE(19);
+	BEGIN_BATCH_NO_AUTOSTATE(9);
 	R600_OUT_BATCH_REGVAL(PA_SU_SC_MODE_CNTL, r700->PA_SU_SC_MODE_CNTL.u32All);
-
 	R600_OUT_BATCH_REGSEQ(PA_SU_POINT_SIZE, 4);
 	R600_OUT_BATCH(r700->PA_SU_POINT_SIZE.u32All);
 	R600_OUT_BATCH(r700->PA_SU_POINT_MINMAX.u32All);
 	R600_OUT_BATCH(r700->PA_SU_LINE_CNTL.u32All);
 	R600_OUT_BATCH(r700->PA_SU_VTX_CNTL.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
 
+}
+
+static void r700SendPolyState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(10);
 	R600_OUT_BATCH_REGSEQ(PA_SU_POLY_OFFSET_DB_FMT_CNTL, 2);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_DB_FMT_CNTL.u32All);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_CLAMP.u32All);
-
 	R600_OUT_BATCH_REGSEQ(PA_SU_POLY_OFFSET_FRONT_SCALE, 4);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_FRONT_SCALE.u32All);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.u32All);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_BACK_SCALE.u32All);
 	R600_OUT_BATCH(r700->PA_SU_POLY_OFFSET_BACK_OFFSET.u32All);
-
 	END_BATCH();
 	COMMIT_BATCH();
 
@@ -770,35 +848,43 @@ static void r700SendCLState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 
-	BEGIN_BATCH_NO_AUTOSTATE(18);
+	BEGIN_BATCH_NO_AUTOSTATE(12);
 	R600_OUT_BATCH_REGVAL(PA_CL_CLIP_CNTL, r700->PA_CL_CLIP_CNTL.u32All);
 	R600_OUT_BATCH_REGVAL(PA_CL_VTE_CNTL, r700->PA_CL_VTE_CNTL.u32All);
 	R600_OUT_BATCH_REGVAL(PA_CL_VS_OUT_CNTL, r700->PA_CL_VS_OUT_CNTL.u32All);
 	R600_OUT_BATCH_REGVAL(PA_CL_NANINF_CNTL, r700->PA_CL_NANINF_CNTL.u32All);
-
-	R600_OUT_BATCH_REGSEQ(PA_CL_GB_VERT_CLIP_ADJ, 4);
-	R600_OUT_BATCH(r700->PA_CL_GB_VERT_CLIP_ADJ.u32All);
-	R600_OUT_BATCH(r700->PA_CL_GB_VERT_DISC_ADJ.u32All);
-	R600_OUT_BATCH(r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All);
-	R600_OUT_BATCH(r700->PA_CL_GB_HORZ_DISC_ADJ.u32All);
-
 	END_BATCH();
 	COMMIT_BATCH();
 }
 
-// XXX need to split this up
-static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
+static void r700SendGBState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 
-	BEGIN_BATCH_NO_AUTOSTATE(47);
+	BEGIN_BATCH_NO_AUTOSTATE(6);
+	R600_OUT_BATCH_REGSEQ(PA_CL_GB_VERT_CLIP_ADJ, 4);
+	R600_OUT_BATCH(r700->PA_CL_GB_VERT_CLIP_ADJ.u32All);
+	R600_OUT_BATCH(r700->PA_CL_GB_VERT_DISC_ADJ.u32All);
+	R600_OUT_BATCH(r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All);
+	R600_OUT_BATCH(r700->PA_CL_GB_HORZ_DISC_ADJ.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
+
+static void r700SendScissorState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(22);
 	R600_OUT_BATCH_REGSEQ(PA_SC_SCREEN_SCISSOR_TL, 2);
 	R600_OUT_BATCH(r700->PA_SC_SCREEN_SCISSOR_TL.u32All);
 	R600_OUT_BATCH(r700->PA_SC_SCREEN_SCISSOR_BR.u32All);
 
-	R600_OUT_BATCH_REGSEQ(PA_SC_WINDOW_OFFSET, 13);
+	R600_OUT_BATCH_REGSEQ(PA_SC_WINDOW_OFFSET, 12);
 	R600_OUT_BATCH(r700->PA_SC_WINDOW_OFFSET.u32All);
 	R600_OUT_BATCH(r700->PA_SC_WINDOW_SCISSOR_TL.u32All);
 	R600_OUT_BATCH(r700->PA_SC_WINDOW_SCISSOR_BR.u32All);
@@ -811,21 +897,89 @@ static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R600_OUT_BATCH(r700->PA_SC_CLIPRECT_2_BR.u32All);
 	R600_OUT_BATCH(r700->PA_SC_CLIPRECT_3_TL.u32All);
 	R600_OUT_BATCH(r700->PA_SC_CLIPRECT_3_BR.u32All);
-	R600_OUT_BATCH(r700->PA_SC_EDGERULE.u32All);
 
 	R600_OUT_BATCH_REGSEQ(PA_SC_GENERIC_SCISSOR_TL, 2);
 	R600_OUT_BATCH(r700->PA_SC_GENERIC_SCISSOR_TL.u32All);
 	R600_OUT_BATCH(r700->PA_SC_GENERIC_SCISSOR_BR.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
 
+static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(15);
+	R600_OUT_BATCH_REGVAL(R7xx_PA_SC_EDGERULE, r700->PA_SC_EDGERULE.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_LINE_STIPPLE, r700->PA_SC_LINE_STIPPLE.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_MPASS_PS_CNTL, r700->PA_SC_MPASS_PS_CNTL.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_MODE_CNTL, r700->PA_SC_MODE_CNTL.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_LINE_CNTL, r700->PA_SC_LINE_CNTL.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
+
+static void r700SendAAState(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+
+	BEGIN_BATCH_NO_AUTOSTATE(12);
 	R600_OUT_BATCH_REGVAL(PA_SC_AA_CONFIG, r700->PA_SC_AA_CONFIG.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_AA_SAMPLE_LOCS_MCTX, r700->PA_SC_AA_SAMPLE_LOCS_MCTX.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX, r700->PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX.u32All);
 	R600_OUT_BATCH_REGVAL(PA_SC_AA_MASK, r700->PA_SC_AA_MASK.u32All);
+	END_BATCH();
+	COMMIT_BATCH();
+}
 
+static void r700SendPSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	int i;
+	BATCH_LOCALS(&context->radeon);
+
+	if (r700->ps.num_consts == 0)
+		return;
+
+	BEGIN_BATCH_NO_AUTOSTATE(2 + (r700->ps.num_consts * 4));
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, (r700->ps.num_consts * 4)));
+	/* assembler map const from very beginning. */
+	R600_OUT_BATCH(SQ_ALU_CONSTANT_PS_OFFSET * 4);
+	for (i = 0; i < r700->ps.num_consts; i++) {
+		R600_OUT_BATCH(r700->ps.consts[i][0].u32All);
+		R600_OUT_BATCH(r700->ps.consts[i][1].u32All);
+		R600_OUT_BATCH(r700->ps.consts[i][2].u32All);
+		R600_OUT_BATCH(r700->ps.consts[i][3].u32All);
+	}
+	END_BATCH();
+	COMMIT_BATCH();
+}
+
+static void r700SendVSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	int i;
+	BATCH_LOCALS(&context->radeon);
+
+	if (r700->vs.num_consts == 0)
+		return;
+
+	BEGIN_BATCH_NO_AUTOSTATE(2 + (r700->vs.num_consts * 4));
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, (r700->vs.num_consts * 4)));
+	/* assembler map const from very beginning. */
+	R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
+	for (i = 0; i < r700->vs.num_consts; i++) {
+		R600_OUT_BATCH(r700->vs.consts[i][0].u32All);
+		R600_OUT_BATCH(r700->vs.consts[i][1].u32All);
+		R600_OUT_BATCH(r700->vs.consts[i][2].u32All);
+		R600_OUT_BATCH(r700->vs.consts[i][3].u32All);
+	}
 	END_BATCH();
 	COMMIT_BATCH();
 }
@@ -835,39 +989,94 @@ static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 	return atom->cmd_size;
 }
 
-#define ALLOC_STATE( ATOM, SZ, EMIT )					\
+static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+
+	return context->radeon.tcl.aos_count * 18;
+}
+
+static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	unsigned int i, count = 0;
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
+		radeonTexObj *t = r700->textures[i];
+		if (t)
+			count++;
+	}
+	return count * 31;
+}
+
+static int check_ps_consts(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	return 2 + (r700->ps.num_consts * 4);
+}
+
+static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	return 2 + (r700->vs.num_consts * 4);
+}
+
+#define ALLOC_STATE( ATOM, CHK, SZ, EMIT )				\
 do {									\
-      context->atoms.ATOM.cmd_size = (SZ);					\
-      context->atoms.ATOM.cmd = NULL;					\
-      context->atoms.ATOM.name = #ATOM;					\
-      context->atoms.ATOM.idx = 0;						\
-      context->atoms.ATOM.check = check_always;				\
-      context->atoms.ATOM.dirty = GL_FALSE;				\
-      context->atoms.ATOM.emit = (EMIT);					\
-      context->radeon.hw.max_state_size += (SZ);			\
-      insert_at_tail(&context->radeon.hw.atomlist, &context->atoms.ATOM); \
+	context->atoms.ATOM.cmd_size = (SZ);				\
+	context->atoms.ATOM.cmd = NULL;					\
+	context->atoms.ATOM.name = #ATOM;				\
+	context->atoms.ATOM.idx = 0;					\
+	context->atoms.ATOM.check = check_##CHK;			\
+	context->atoms.ATOM.dirty = GL_FALSE;				\
+	context->atoms.ATOM.emit = (EMIT);				\
+	context->radeon.hw.max_state_size += (SZ);			\
+	insert_at_tail(&context->radeon.hw.atomlist, &context->atoms.ATOM); \
 } while (0)
 
 void r600InitAtoms(context_t *context)
 {
+	context->radeon.hw.max_state_size = 10 + 5 + 14; /* start 3d, idle, cb/db flush */
 
 	/* Setup the atom linked list */
 	make_empty_list(&context->radeon.hw.atomlist);
 	context->radeon.hw.atomlist.name = "atom-list";
 
-	ALLOC_STATE(sq, 34, r700SendSQConfig);
-	ALLOC_STATE(db, 27, r700SendDBState);
-	ALLOC_STATE(db_target, 19, r700SendDepthTargetState);
-	ALLOC_STATE(sc, 47, r700SendSCState);
-	ALLOC_STATE(cl, 18, r700SendCLState);
-	ALLOC_STATE(ucp, 36, r700SendUCPState);
-	ALLOC_STATE(su, 19, r700SendSUState);
-	ALLOC_STATE(cb, 39, r700SendCBState);
-	ALLOC_STATE(cb_target, 32, r700SendRenderTargetState);
-	ALLOC_STATE(sx, 9, r700SendSXState);
-	ALLOC_STATE(vgt, 41, r700SendVGTState);
-	ALLOC_STATE(spi, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
-	ALLOC_STATE(vpt, 16, r700SendViewportState);
+	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
+	ALLOC_STATE(db, always, 23, r700SendDBState);
+	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
+	ALLOC_STATE(db_target, always, 12, r700SendDepthTargetState);
+	ALLOC_STATE(sc, always, 15, r700SendSCState);
+	ALLOC_STATE(scissor, always, 22, r700SendScissorState);
+	ALLOC_STATE(aa, always, 12, r700SendAAState);
+	ALLOC_STATE(cl, always, 12, r700SendCLState);
+	ALLOC_STATE(gb, always, 6, r700SendGBState);
+	ALLOC_STATE(ucp, always, 36, r700SendUCPState);
+	ALLOC_STATE(su, always, 9, r700SendSUState);
+	ALLOC_STATE(poly, always, 10, r700SendPolyState);
+	ALLOC_STATE(cb, always, 18, r700SendCBState);
+	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
+	ALLOC_STATE(blnd, always, 30, r700SendCBBlendState);
+	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
+	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
+	ALLOC_STATE(sx, always, 9, r700SendSXState);
+	ALLOC_STATE(vgt, always, 41, r700SendVGTState);
+	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
+	ALLOC_STATE(vpt, always, 16, r700SendViewportState);
+	ALLOC_STATE(fs, always, 18, r700SendFSState);
+	ALLOC_STATE(vs, always, 18, r700SendVSState);
+	ALLOC_STATE(ps, always, 21, r700SendPSState);
+	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
+	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
+	ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
+	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
+	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
+	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);
 
 	context->radeon.hw.is_dirty = GL_TRUE;
 	context->radeon.hw.all_dirty = GL_TRUE;

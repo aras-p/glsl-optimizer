@@ -51,53 +51,55 @@ void r600EmitCacheFlush(context_t *rmesa)
 {
 }
 
-GLboolean r600EmitShader(GLcontext * ctx, 
+GLboolean r600EmitShader(GLcontext * ctx,
                          void ** shaderbo,
-			             GLvoid * data, 
+			 GLvoid * data,
                          int sizeinDWORD,
-                         char * szShaderUsage) 
+                         char * szShaderUsage)
 {
-    radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
-
-    struct radeon_bo * pbo;
-    uint32_t *out;
+	radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
+	struct radeon_bo * pbo;
+	uint32_t *out;
 
 shader_again_alloc:
-    pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
-			 0,
-                         sizeinDWORD * 4,
-                         256,
-                         RADEON_GEM_DOMAIN_GTT,
-			 0);
+	pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
+			     0,
+			     sizeinDWORD * 4,
+			     256,
+			     RADEON_GEM_DOMAIN_GTT,
+			     0);
 
 	if (!pbo) {
 		rcommonFlushCmdBuf(radeonctx, __FUNCTION__);
 		goto shader_again_alloc;
 	}
 
+	radeon_cs_space_add_persistent_bo(radeonctx->cmdbuf.cs,
+					  pbo,
+					  RADEON_GEM_DOMAIN_GTT, 0);
+
         if (radeon_cs_space_check_with_bo(radeonctx->cmdbuf.cs,
                                           pbo,
-                                          RADEON_GEM_DOMAIN_GTT, 0))
+                                          RADEON_GEM_DOMAIN_GTT, 0)) {
                 fprintf(stderr,"failure to revalidate BOs - badness\n");
-
+		return GL_FALSE;
+	}
 
 	radeon_bo_map(pbo, 1);
 
-    radeon_bo_ref(pbo);
+	out = (uint32_t*)(pbo->ptr);
 
-    out = (uint32_t*)(pbo->ptr);
+	memcpy(out, data, sizeinDWORD * 4);
 
-    memcpy(out, data, sizeinDWORD * 4);
+	radeon_bo_unmap(pbo);
 
-    radeon_bo_unmap(pbo); 
+	*shaderbo = (void*)pbo;
 
-    *shaderbo = (void*)pbo;
-
-    return GL_TRUE;
+	return GL_TRUE;
 }
 
-GLboolean r600DeleteShader(GLcontext * ctx, 
-                           void * shaderbo) 
+GLboolean r600DeleteShader(GLcontext * ctx,
+                           void * shaderbo)
 {
     struct radeon_bo * pbo = (struct radeon_bo *)shaderbo;
 

@@ -55,10 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 struct r600_context;
 typedef struct r600_context context_t;
 
-extern GLboolean r700SendPSState(context_t *context);
-extern GLboolean r700SendVSState(context_t *context);
-extern GLboolean r700SendFSState(context_t *context);
-
 #include "main/mm.h"
 
 /************ DMA BUFFERS **************/
@@ -115,17 +111,37 @@ enum
 struct r600_hw_state {
 	struct radeon_state_atom sq;
 	struct radeon_state_atom db;
+	struct radeon_state_atom stencil;
 	struct radeon_state_atom db_target;
 	struct radeon_state_atom sc;
+	struct radeon_state_atom scissor;
+	struct radeon_state_atom aa;
 	struct radeon_state_atom cl;
+	struct radeon_state_atom gb;
 	struct radeon_state_atom ucp;
 	struct radeon_state_atom su;
+	struct radeon_state_atom poly;
 	struct radeon_state_atom cb;
+	struct radeon_state_atom clrcmp;
+	struct radeon_state_atom blnd;
+	struct radeon_state_atom blnd_clr;
 	struct radeon_state_atom cb_target;
 	struct radeon_state_atom sx;
 	struct radeon_state_atom vgt;
 	struct radeon_state_atom spi;
 	struct radeon_state_atom vpt;
+
+	struct radeon_state_atom fs;
+	struct radeon_state_atom vs;
+	struct radeon_state_atom ps;
+
+	struct radeon_state_atom vs_consts;
+	struct radeon_state_atom ps_consts;
+
+	struct radeon_state_atom vtx;
+	struct radeon_state_atom tx;
+	struct radeon_state_atom tx_smplr;
+	struct radeon_state_atom tx_brdr_clr;
 };
 
 /**
@@ -168,22 +184,14 @@ do {							\
 	r600->radeon.hw.is_dirty = GL_TRUE;			\
 } while(0)
 
-extern GLboolean r700SendTextureState(context_t *context);
-
 extern GLboolean r700SyncSurf(context_t *context,
 			      struct radeon_bo *pbo,
 			      uint32_t read_domain,
 			      uint32_t write_domain,
 			      uint32_t sync_type);
 
-extern int       r700SetupStreams(GLcontext * ctx);
-extern void      r700SetupVTXConstants(GLcontext  * ctx, 
-				       unsigned int nStreamID,
-				       void *       pAos,
-				       unsigned int size,      /* number of elements in vector */
-				       unsigned int stride,
-				       unsigned int Count);    /* number of vectors in stream */
-
+extern void r700SetupStreams(GLcontext * ctx);
+extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
 
 #define RADEON_D_CAPTURE 0
