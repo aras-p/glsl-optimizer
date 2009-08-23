@@ -1905,8 +1905,12 @@ choose_cube_face(const struct gl_texture_object *texObj,
       }
    }
 
-   newCoord[0] = ( sc / ma + 1.0F ) * 0.5F;
-   newCoord[1] = ( tc / ma + 1.0F ) * 0.5F;
+   { 
+      const float ima = 1.0F / ma;
+      newCoord[0] = ( sc * ima + 1.0F ) * 0.5F;
+      newCoord[1] = ( tc * ima + 1.0F ) * 0.5F;
+   }
+
    return (const struct gl_texture_image **) texObj->Image[face];
 }
 
