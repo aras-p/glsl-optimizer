@@ -35,6 +35,7 @@
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
+#include "lp_jit.h"
 
 
 #define LP_NEW_VIEWPORT      0x1
@@ -58,19 +59,6 @@ struct tgsi_sampler;
 struct vertex_info;
 
 
-typedef void
-(*lp_shader_fs_func)(uint32_t x,
-                     uint32_t y,
-                     const void *a0,
-                     const void *dadx,
-                     const void *dady,
-                     const void *consts,
-                     uint32_t *mask,
-                     void *color,
-                     void *depth,
-                     struct tgsi_sampler **samplers);
-
-
 struct lp_fragment_shader;
 
 
@@ -90,7 +78,7 @@ struct lp_fragment_shader_variant
 
    LLVMValueRef function;
 
-   lp_shader_fs_func jit_function;
+   lp_jit_frag_func jit_function;
 
    struct lp_fragment_shader_variant *next;
 };

@@ -453,7 +453,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
    /* 
     * Generate the function prototype. Any change here must be reflected in
-    * lp_state.h's lp_shader_fs_func function pointer type, and vice-versa.
+    * lp_jit.h's lp_jit_frag_func function pointer type, and vice-versa.
     */
 
    fs_elem_type = lp_build_elem_type(fs_type);
@@ -604,7 +604,7 @@ generate_fragment(struct llvmpipe_context *lp,
       }
    }
 
-   variant->jit_function = (lp_shader_fs_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
+   variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 
 #ifdef DEBUG
    lp_disassemble(variant->jit_function);
