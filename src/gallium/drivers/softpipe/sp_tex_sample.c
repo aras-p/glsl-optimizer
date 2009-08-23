@@ -592,42 +592,22 @@ compute_lambda_vert(const struct sp_sampler_varient *samp,
 /**
  * Get a texel from a texture, using the texture tile cache.
  *
- * \param face  the cube face in 0..5
- * \param level  the mipmap level
+ * \param addr  the template tex address containing cube, z, face info.
  * \param x  the x coord of texel within 2D image
  * \param y  the y coord of texel within 2D image
- * \param z  which slice of a 3D texture
  * \param rgba  the quad to put the texel/color into
- * \param j  which element of the rgba quad to write to
  *
  * XXX maybe move this into sp_tex_tile_cache.c and merge with the
  * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
-static INLINE void
-get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
-                  union tex_tile_address addr, 
-		  unsigned x, unsigned y, 
-                  const float *out[4])
-{
-   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
 
-   const struct softpipe_tex_cached_tile *tile
-      = sp_get_cached_tile_tex(samp->cache, addr);
 
-   y %= TILE_SIZE;
-   x %= TILE_SIZE;
-      
-   out[0] = &tile->data.color[y  ][x  ][0];
-   out[1] = &tile->data.color[y  ][x+1][0];
-   out[2] = &tile->data.color[y+1][x  ][0];
-   out[3] = &tile->data.color[y+1][x+1][0];
-}
+
 
 static INLINE const float *
-get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
-                 union tex_tile_address addr, int x, int y)
+get_texel_2d_no_border(const struct sp_sampler_varient *samp,
+		       union tex_tile_address addr, int x, int y)
 {
-   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    const struct softpipe_tex_cached_tile *tile;
 
    addr.bits.x = x / TILE_SIZE;
@@ -641,61 +621,119 @@ get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
 }
 
 
-static INLINE void
-get_texel_quad_2d_mt(const struct tgsi_sampler *tgsi_sampler,
-		     union tex_tile_address addr,
-                     int x0, int y0, 
-                     int x1, int y1,
-                     const float *out[4])
+static INLINE const float *
+get_texel_2d(const struct sp_sampler_varient *samp,
+	     union tex_tile_address addr, int x, int y)
 {
-   out[0] = get_texel_2d_ptr( tgsi_sampler, addr, x0, y0 );
-   out[1] = get_texel_2d_ptr( tgsi_sampler, addr, x1, y0 );
-   out[2] = get_texel_2d_ptr( tgsi_sampler, addr, x0, y1 );
-   out[3] = get_texel_2d_ptr( tgsi_sampler, addr, x1, y1 );
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level = addr.bits.level;
+
+   if (x < 0 || x >= (int) texture->width[level] ||
+       y < 0 || y >= (int) texture->height[level]) {
+      return samp->sampler->border_color;
+   }
+   else {
+      return get_texel_2d_no_border( samp, addr, x, y );
+   }
 }
 
+
+/* Gather a quad of adjacent texels within a tile:
+ */
 static INLINE void
-get_texel(const struct tgsi_sampler *tgsi_sampler,
-                 unsigned face, unsigned level, int x, int y, int z,
-                 float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
+get_texel_quad_2d_no_border_single_tile(const struct sp_sampler_varient *samp,
+					union tex_tile_address addr, 
+					unsigned x, unsigned y, 
+					const float *out[4])
 {
-   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct softpipe_tex_cached_tile *tile;
+
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
+      
+   out[0] = &tile->data.color[y  ][x  ][0];
+   out[1] = &tile->data.color[y  ][x+1][0];
+   out[2] = &tile->data.color[y+1][x  ][0];
+   out[3] = &tile->data.color[y+1][x+1][0];
+}
+
+
+/* Gather a quad of potentially non-adjacent texels:
+ */
+static INLINE void
+get_texel_quad_2d_no_border(const struct sp_sampler_varient *samp,
+			    union tex_tile_address addr,
+			    int x0, int y0, 
+			    int x1, int y1,
+			    const float *out[4])
+{
+   out[0] = get_texel_2d_no_border( samp, addr, x0, y0 );
+   out[1] = get_texel_2d_no_border( samp, addr, x1, y0 );
+   out[2] = get_texel_2d_no_border( samp, addr, x0, y1 );
+   out[3] = get_texel_2d_no_border( samp, addr, x1, y1 );
+}
+
+/* Can involve a lot of unnecessary checks for border color:
+ */
+static INLINE void
+get_texel_quad_2d(const struct sp_sampler_varient *samp,
+		  union tex_tile_address addr,
+		  int x0, int y0, 
+		  int x1, int y1,
+		  const float *out[4])
+{
+   out[0] = get_texel_2d( samp, addr, x0, y0 );
+   out[1] = get_texel_2d( samp, addr, x1, y0 );
+   out[3] = get_texel_2d( samp, addr, x1, y1 );
+   out[2] = get_texel_2d( samp, addr, x0, y1 );
+}
+
+
+
+/* 3d varients:
+ */
+static INLINE const float *
+get_texel_3d_no_border(const struct sp_sampler_varient *samp,
+		    union tex_tile_address addr, int x, int y, int z)
+{
+   const struct softpipe_tex_cached_tile *tile;
+
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
+   addr.bits.z = z;
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
+
+   return &tile->data.color[y][x][0];
+}
+
+
+static INLINE const float *
+get_texel_3d(const struct sp_sampler_varient *samp,
+	     union tex_tile_address addr, int x, int y, int z )
+{
    const struct pipe_texture *texture = samp->texture;
-   const struct pipe_sampler_state *sampler = samp->sampler;
+   unsigned level = addr.bits.level;
 
    if (x < 0 || x >= (int) texture->width[level] ||
        y < 0 || y >= (int) texture->height[level] ||
        z < 0 || z >= (int) texture->depth[level]) {
-      rgba[0][j] = sampler->border_color[0];
-      rgba[1][j] = sampler->border_color[1];
-      rgba[2][j] = sampler->border_color[2];
-      rgba[3][j] = sampler->border_color[3];
+      return samp->sampler->border_color;
    }
    else {
-      const unsigned tx = x % TILE_SIZE;
-      const unsigned ty = y % TILE_SIZE;
-      const struct softpipe_tex_cached_tile *tile;
-
-      tile = sp_get_cached_tile_tex(samp->cache, 
-                                    tex_tile_address(x, y, z, face, level));
-
-      rgba[0][j] = tile->data.color[ty][tx][0];
-      rgba[1][j] = tile->data.color[ty][tx][1];
-      rgba[2][j] = tile->data.color[ty][tx][2];
-      rgba[3][j] = tile->data.color[ty][tx][3];
-      if (0)
-      {
-         debug_printf("Get texel %f %f %f %f from %s\n",
-                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j],
-                      pf_name(texture->format));
-      }
+      return get_texel_3d_no_border( samp, addr, x, y, z );
    }
 }
 
 
-
-
-
+/* Some image-filter fastpaths:
+ */
 static INLINE void
 img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                   const float s[QUAD_SIZE],
@@ -738,15 +776,13 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
        */
       if (x0 < xmax && y0 < ymax)
       {
-	 addr.bits.x = x0 / TILE_SIZE;
-	 addr.bits.y = y0 / TILE_SIZE;
-         get_texel_quad_2d(tgsi_sampler, addr, x0, y0, tx);
+         get_texel_quad_2d_no_border_single_tile(samp, addr, x0, y0, tx);
       }
       else 
       {
          unsigned x1 = (x0 + 1) & (xpot - 1);
          unsigned y1 = (y0 + 1) & (ypot - 1);
-         get_texel_quad_2d_mt(tgsi_sampler, addr, x0, y0, x1, y1, tx);
+         get_texel_quad_2d_no_border(samp, addr, x0, y0, x1, y1, tx);
       }
 
 
@@ -790,7 +826,7 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       int x0 = uflr & (xpot - 1);
       int y0 = vflr & (ypot - 1);
 
-      const float *out = get_texel_2d_ptr(tgsi_sampler, addr, x0, y0);
+      const float *out = get_texel_2d_no_border(samp, addr, x0, y0);
 
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
@@ -838,7 +874,7 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
       else if (y0 > ypot - 1)
          y0 = ypot - 1;
       
-      out = get_texel_2d_ptr(tgsi_sampler, addr, x0, y0);
+      out = get_texel_2d_no_border(samp, addr, x0, y0);
 
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
@@ -859,19 +895,36 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
    unsigned level0, j;
    int width;
    int x[4];
+   union tex_tile_address addr;
 
    level0 = samp->level;
    width = texture->width[level0];
 
    assert(width > 0);
 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
    samp->nearest_texcoord_s(s, width, x);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      get_texel(tgsi_sampler, 0, level0, x[j], 0, 0, rgba, j);
+      const float *out = get_texel_2d(samp, addr, x[j], 0);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
    }
 }
 
+
+
+
+static inline union tex_tile_address face( union tex_tile_address addr,
+					   unsigned face )
+{
+   addr.bits.face = face;
+   return addr;
+}
 
 static void
 img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
@@ -887,18 +940,27 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
    unsigned level0, j;
    int width, height;
    int x[4], y[4];
+   union tex_tile_address addr;
+
 
    level0 = samp->level;
    width = texture->width[level0];
    height = texture->height[level0];
 
    assert(width > 0);
+ 
+   addr.value = 0;
+   addr.bits.level = samp->level;
 
    samp->nearest_texcoord_s(s, width, x);
    samp->nearest_texcoord_t(t, height, y);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      get_texel(tgsi_sampler, faces[j], level0, x[j], y[j], 0, rgba, j);
+      const float *out = get_texel_2d(samp, face(addr, faces[j]), x[j], y[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
    }
 }
 
@@ -916,6 +978,7 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
    unsigned level0, j;
    int width, height, depth;
    int x[4], y[4], z[4];
+   union tex_tile_address addr;
 
    level0 = samp->level;
    width = texture->width[level0];
@@ -930,8 +993,15 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
    samp->nearest_texcoord_t(t, height, y);
    samp->nearest_texcoord_p(p, depth,  z);
 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
    for (j = 0; j < QUAD_SIZE; j++) {
-      get_texel(tgsi_sampler, 0, level0, x[j], y[j], z[j], rgba, j);
+      const float *out = get_texel_3d(samp, addr, x[j], y[j], z[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }      
    }
 }
 
@@ -950,6 +1020,7 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
    int width;
    int x0[4], x1[4];
    float xw[4]; /* weights */
+   union tex_tile_address addr;
 
 
    level0 = samp->level;
@@ -957,21 +1028,26 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
 
    assert(width > 0);
 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
    samp->linear_texcoord_s(s, width, x0, x1, xw);
 
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      float tx[4][4]; /* texels */
+      const float *tx0 = get_texel_2d(samp, addr, x0[j], 0);
+      const float *tx1 = get_texel_2d(samp, addr, x1[j], 0);
       int c;
-      get_texel(tgsi_sampler, 0, level0, x0[j], 0, 0, tx, 0);
-      get_texel(tgsi_sampler, 0, level0, x1[j], 0, 0, tx, 1);
 
       /* interpolate R, G, B, A */
       for (c = 0; c < 4; c++) {
-         rgba[c][j] = lerp(xw[j], tx[c][0], tx[c][1]);
+         rgba[c][j] = lerp(xw[j], tx0[c], tx1[c]);
       }
    }
 }
+
+
+
 
 static void
 img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
@@ -988,6 +1064,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
    int width, height;
    int x0[4], y0[4], x1[4], y1[4];
    float xw[4], yw[4]; /* weights */
+   union tex_tile_address addr;
 
 
    level0 = samp->level;
@@ -996,22 +1073,25 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
 
    assert(width > 0);
 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
    samp->linear_texcoord_t(t, height, y0, y1, yw);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      float tx[4][4]; /* texels */
+      union tex_tile_address addrj = face(addr, faces[j]);
+      const float *tx0 = get_texel_2d(samp, addrj, x0[j], y0[j]);
+      const float *tx1 = get_texel_2d(samp, addrj, x1[j], y0[j]);
+      const float *tx2 = get_texel_2d(samp, addrj, x0[j], y1[j]);
+      const float *tx3 = get_texel_2d(samp, addrj, x1[j], y1[j]);
       int c;
-      get_texel(tgsi_sampler, faces[j], level0, x0[j], y0[j], 0, tx, 0);
-      get_texel(tgsi_sampler, faces[j], level0, x1[j], y0[j], 0, tx, 1);
-      get_texel(tgsi_sampler, faces[j], level0, x0[j], y1[j], 0, tx, 2);
-      get_texel(tgsi_sampler, faces[j], level0, x1[j], y1[j], 0, tx, 3);
 
       /* interpolate R, G, B, A */
       for (c = 0; c < 4; c++) {
          rgba[c][j] = lerp_2d(xw[j], yw[j],
-                              tx[c][0], tx[c][1],
-                              tx[c][2], tx[c][3]);
+                              tx0[c], tx1[c],
+                              tx2[c], tx3[c]);
       }
    }
 }
@@ -1031,11 +1111,15 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
    int width, height, depth;
    int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
    float xw[4], yw[4], zw[4]; /* interpolation weights */
+   union tex_tile_address addr;
 
    level0 = samp->level;
    width = texture->width[level0];
    height = texture->height[level0];
    depth = texture->depth[level0];
+
+   addr.value = 0;
+   addr.bits.level = level0;
 
    assert(width > 0);
    assert(height > 0);
@@ -1046,25 +1130,25 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_p(p, depth,  z0, z1, zw);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      float tx0[4][4], tx1[4][4];
       int c;
-      
-      get_texel(tgsi_sampler, 0, level0, x0[j], y0[j], z0[j], tx0, 0);
-      get_texel(tgsi_sampler, 0, level0, x1[j], y0[j], z0[j], tx0, 1);
-      get_texel(tgsi_sampler, 0, level0, x0[j], y1[j], z0[j], tx0, 2);
-      get_texel(tgsi_sampler, 0, level0, x1[j], y1[j], z0[j], tx0, 3);
-      get_texel(tgsi_sampler, 0, level0, x0[j], y0[j], z1[j], tx1, 0);
-      get_texel(tgsi_sampler, 0, level0, x1[j], y0[j], z1[j], tx1, 1);
-      get_texel(tgsi_sampler, 0, level0, x0[j], y1[j], z1[j], tx1, 2);
-      get_texel(tgsi_sampler, 0, level0, x1[j], y1[j], z1[j], tx1, 3);
 
+      const float *tx00 = get_texel_3d(samp, addr, x0[j], y0[j], z0[j]);
+      const float *tx01 = get_texel_3d(samp, addr, x1[j], y0[j], z0[j]);
+      const float *tx02 = get_texel_3d(samp, addr, x0[j], y1[j], z0[j]);
+      const float *tx03 = get_texel_3d(samp, addr, x1[j], y1[j], z0[j]);
+      
+      const float *tx10 = get_texel_3d(samp, addr, x0[j], y0[j], z1[j]);
+      const float *tx11 = get_texel_3d(samp, addr, x1[j], y0[j], z1[j]);
+      const float *tx12 = get_texel_3d(samp, addr, x0[j], y1[j], z1[j]);
+      const float *tx13 = get_texel_3d(samp, addr, x1[j], y1[j], z1[j]);
+      
       /* interpolate R, G, B, A */
       for (c = 0; c < 4; c++) {
          rgba[c][j] = lerp_3d(xw[j], yw[j], zw[j],
-                              tx0[c][0], tx0[c][1],
-                              tx0[c][2], tx0[c][3],
-                              tx1[c][0], tx1[c][1],
-                              tx1[c][2], tx1[c][3]);
+                              tx00[c], tx01[c],
+                              tx02[c], tx03[c],
+                              tx10[c], tx11[c],
+                              tx12[c], tx13[c]);
       }
    }
 }
