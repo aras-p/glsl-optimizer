@@ -468,7 +468,7 @@ ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require
    yylloc->last_column = 1;
    yylloc->position++;
 }
-[ \t]+                    /* eat whitespace */ ;
+[ \t\r]+                  /* eat whitespace */ ;
 #.*$                      /* eat comments */ ;
 .                         { return yytext[0]; }
 %%
