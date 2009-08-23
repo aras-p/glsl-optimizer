@@ -32,8 +32,6 @@
 
 #define DDEBUG 0
 
-#define PAGE_SIZE 4096
-
 static int radeonQueryIsFlushed(GLcontext *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -127,7 +125,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 		radeon->dma.flush(radeon->glCtx);
 
 	if (!query->bo) {
-		query->bo = radeon_bo_open(radeon->radeonScreen->bom, 0, PAGE_SIZE, PAGE_SIZE, RADEON_GEM_DOMAIN_GTT, 0);
+		query->bo = radeon_bo_open(radeon->radeonScreen->bom, 0, RADEON_QUERY_PAGE_SIZE, RADEON_QUERY_PAGE_SIZE, RADEON_GEM_DOMAIN_GTT, 0);
 	}
 	query->curr_offset = 0;
 
