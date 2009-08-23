@@ -201,6 +201,15 @@ static inline void radeon_cs_write_qword(struct radeon_cs *cs, uint64_t qword)
     }
 }
 
+static inline void radeon_cs_write_table(struct radeon_cs *cs, void *data, uint32_t size)
+{
+    memcpy(cs->packets + cs->cdw, data, size * 4);
+    cs->cdw += size;
+    if (cs->section) {
+	    cs->section_cdw += size;
+    }
+}
+
 static inline void radeon_cs_space_set_flush(struct radeon_cs *cs, void (*fn)(void *), void *data)
 {
     cs->space_flush_fn = fn;
