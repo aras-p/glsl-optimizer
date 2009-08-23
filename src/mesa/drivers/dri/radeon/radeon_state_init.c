@@ -213,6 +213,7 @@ static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
 
 CHECK( always, GL_TRUE, 0 )
 CHECK( always_add2, GL_TRUE, 2 )
+CHECK( always_add4, GL_TRUE, 4 )
 CHECK( never, GL_FALSE, 0 )
 CHECK( tex0_mm, ctx->Texture.Unit[0]._ReallyEnabled, 3 )
 CHECK( tex1_mm, ctx->Texture.Unit[1]._ReallyEnabled, 3 )
@@ -707,7 +708,7 @@ void radeonInitState( r100ContextPtr rmesa )
 
    /* Allocate state buffers:
     */
-   ALLOC_STATE( ctx, always, CTX_STATE_SIZE, "CTX/context", 0 );
+   ALLOC_STATE( ctx, always_add4, CTX_STATE_SIZE, "CTX/context", 0 );
    if (rmesa->radeon.radeonScreen->kernel_mm) {
      rmesa->hw.ctx.emit = ctx_emit_cs;
      rmesa->hw.ctx.check = check_always_ctx;
