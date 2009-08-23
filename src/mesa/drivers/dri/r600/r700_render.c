@@ -298,17 +298,21 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 }
 
-/* FIXME: radom values fix with correct */
-#define PRE_EMIT_STATE_BUFSZ 30
+/* start 3d, idle, cb/db flush */
+#define PRE_EMIT_STATE_BUFSZ 10 + 5 + 14
 
 static GLuint r700PredictRenderSize(GLcontext* ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
+     struct r700_vertex_program *vpc
+             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
     struct vertex_buffer *vb = &tnl->vb;
     GLboolean flushed;
     GLuint dwords, i;
     GLuint state_size;
+    /* pre calculate aos count so state prediction works */
+    context->radeon.tcl.aos_count = _mesa_bitcount(vpc->mesa_program.Base.InputsRead);
 
     dwords = PRE_EMIT_STATE_BUFSZ;
     for (i = 0; i < vb->PrimitiveCount; i++)
@@ -337,7 +341,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
     struct vertex_buffer *vb = &tnl->vb;
     struct radeon_renderbuffer *rrb;
 
-    /* just an estimate, need to properly calculate this */
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s: cs begin at %d\n",
+                __func__, context->radeon.cmdbuf.cs->cdw);
 
     r700UpdateShaders(ctx);
     r700SetScissor(context);
@@ -345,7 +351,8 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SetupFragmentProgram(ctx);
     r600UpdateTextureState(ctx);
 
-    r700PredictRenderSize(ctx);
+    GLuint emit_end = r700PredictRenderSize(ctx) 
+        + context->radeon.cmdbuf.cs->cdw;
     r700SetupStreams(ctx);
 
     radeonEmitState(radeon);
@@ -355,7 +362,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
         GLuint start = vb->Primitive[i].start;
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-	r700RunRenderPrimitive(ctx, start, end, prim);
+        r700RunRenderPrimitive(ctx, start, end, prim);
     }
 
     /* Flush render op cached for last several quads. */
@@ -372,6 +379,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 			 DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
 
     radeonReleaseArrays(ctx, ~0);
+    assert(context->radeon.cmdbuf.cs->cdw <= emit_end);
 
     return GL_FALSE;
 }
