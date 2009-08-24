@@ -529,7 +529,6 @@ struct r300_context {
 	uint32_t fallback;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
-	int num_z_pipes;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

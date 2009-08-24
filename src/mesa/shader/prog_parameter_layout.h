@@ -36,6 +36,7 @@
 extern unsigned _mesa_combine_swizzles(unsigned base, unsigned applied);
 
 struct asm_parser_state;
-extern int _mesa_layout_parameters(struct asm_parser_state *state);
+
+extern GLboolean _mesa_layout_parameters(struct asm_parser_state *state);
 
 #endif /* PROG_PARAMETER_LAYOUT_H */

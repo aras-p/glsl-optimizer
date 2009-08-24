@@ -633,10 +633,6 @@ LeaveVT(int scrnIndex, int flags)
 
     RestoreHWState(pScrn);
 
-    if (drmDropMaster(ms->fd))
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		   "drmDropMaster failed: %s\n", strerror(errno));
-
     pScrn->vtSema = FALSE;
 }
 
@@ -648,17 +644,6 @@ EnterVT(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     modesettingPtr ms = modesettingPTR(pScrn);
-
-    if (drmSetMaster(ms->fd)) {
-	if (errno == EINVAL) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: 2.6.29 or newer kernel required for "
-		       "multi-server DRI\n");
-	} else {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: %s\n", strerror(errno));
-	}
-    }
 
     /*
      * Only save state once per server generation since that's what most

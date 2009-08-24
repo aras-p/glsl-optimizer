@@ -868,7 +868,7 @@ static VGboolean transform_cb(struct path *p,
 
    vg_float_to_datatype(td->datatype, common_data, data, num_coords);
 
-   array_append_data(td->segments, &segment, 1);
+   array_append_data(td->segments, &pd->segment, 1);
    array_append_data(td->coords, common_data, num_coords);
    return VG_TRUE;
 }

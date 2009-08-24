@@ -45,11 +45,19 @@ struct drm_radeon_info {
 #define RADEON_PARAM_DEVICE_ID 16
 #endif
 
+#ifndef RADEON_PARAM_NUM_Z_PIPES
+#define RADEON_PARAM_NUM_Z_PIPES 17
+#endif
+
 #ifndef RADEON_INFO_DEVICE_ID
 #define RADEON_INFO_DEVICE_ID 0
 #endif
 #ifndef RADEON_INFO_NUM_GB_PIPES
 #define RADEON_INFO_NUM_GB_PIPES 0
+#endif
+
+#ifndef RADEON_INFO_NUM_Z_PIPES
+#define RADEON_INFO_NUM_Z_PIPES 0
 #endif
 
 #ifndef DRM_RADEON_INFO

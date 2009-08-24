@@ -347,6 +347,13 @@ static GLboolean r700RunRender(GLcontext * ctx,
         fprintf(stderr, "%s: cs begin at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
+    /* always emit CB base to prevent
+     * lock ups on some chips.
+     */
+    R600_STATECHANGE(context, cb_target);
+    /* mark vtx as dirty since it changes per-draw */
+    R600_STATECHANGE(context, vtx);
+
     r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupVertexProgram(ctx);

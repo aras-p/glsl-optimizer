@@ -238,8 +238,8 @@ static void r300_emit_query_finish(radeonContextPtr radeon)
 	struct radeon_query_object *query = radeon->query.current;
 	BATCH_LOCALS(radeon);
 
-	BEGIN_BATCH_NO_AUTOSTATE(3 * 2 *r300->num_z_pipes + 2);
-	switch (r300->num_z_pipes) {
+	BEGIN_BATCH_NO_AUTOSTATE(3 * 2 *r300->radeon.radeonScreen->num_gb_pipes + 2);
+	switch (r300->radeon.radeonScreen->num_gb_pipes) {
 	case 4:
 		OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_3);
 		OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
@@ -265,7 +265,7 @@ static void r300_emit_query_finish(radeonContextPtr radeon)
 	}
 	OUT_BATCH_REGVAL(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_ALL);
 	END_BATCH();
-	query->curr_offset += r300->num_z_pipes * sizeof(uint32_t);
+	query->curr_offset += r300->radeon.radeonScreen->num_gb_pipes * sizeof(uint32_t);
 	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
 	query->emitted_begin = GL_FALSE;
 }
@@ -287,14 +287,12 @@ static void rv530_emit_query_finish_single_z(radeonContextPtr radeon)
 	query->emitted_begin = GL_FALSE;
 }
 
-#if 0
 static void rv530_emit_query_finish_double_z(radeonContextPtr radeon)
 {
-	r300ContextPtr r300 = (r300ContextPtr)radeon;
 	BATCH_LOCALS(radeon);
 	struct radeon_query_object *query = radeon->query.current;
 
-	BEGIN_BATCH_NO_AUTOSTATE(6);
+	BEGIN_BATCH_NO_AUTOSTATE(14);
 	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
 	OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
 	OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
@@ -308,7 +306,6 @@ static void rv530_emit_query_finish_double_z(radeonContextPtr radeon)
 	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
 	query->emitted_begin = GL_FALSE;
 }
-#endif
 
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
@@ -318,11 +315,12 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.swtcl_flush = r300_swtcl_flush;
 	radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r300_fallback;
-	if (radeon->radeonScreen->chip_family == CHIP_FAMILY_RV530)
-		/* single Z gives me correct results on my hw need to check if we ever need
-		 * double z */
-		radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
-	else
+	if (radeon->radeonScreen->chip_family == CHIP_FAMILY_RV530) {
+		if (radeon->radeonScreen->num_z_pipes == 2)
+			radeon->vtbl.emit_query_finish = rv530_emit_query_finish_double_z;
+		else
+			radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
+	} else
 		radeon->vtbl.emit_query_finish = r300_emit_query_finish;
 }
 
@@ -396,10 +394,6 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 		ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
 	}
 
-	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530)
-		r300->num_z_pipes = 2;
-	else
-		r300->num_z_pipes = r300->radeon.radeonScreen->num_gb_pipes;
 }
 
 static void r300ParseOptions(r300ContextPtr r300, radeonScreenPtr screen)
@@ -436,7 +430,7 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (r300->options.stencil_two_side_disabled)
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
-	if (ctx->Mesa_DXTn && !r300->options.s3tc_force_enabled) {
+	if (r300->options.s3tc_force_enabled) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 		_mesa_enable_extension(ctx, "GL_S3_s3tc");
 	} else if (r300->options.s3tc_force_disabled) {

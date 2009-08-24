@@ -42,6 +42,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "cso_cache/cso_context.h"
+
 #include "util/u_rect.h"
 
 /*
@@ -516,6 +518,11 @@ xorg_exa_close(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_context *exa = ms->exa;
 
+    if (exa->cso) {
+       cso_release_all(exa->cso);
+       cso_destroy_context(exa->cso);
+    }
+
     if (exa->ctx)
 	exa->ctx->destroy(exa->ctx);
 
@@ -541,33 +548,35 @@ xorg_exa_init(ScrnInfoPtr pScrn)
     }
 
     memset(pExa, 0, sizeof(*pExa));
-    pExa->exa_major = 2;
-    pExa->exa_minor = 2;
-    pExa->memoryBase = 0;
-    pExa->memorySize = 0;
-    pExa->offScreenBase = 0;
+
+    pExa->exa_major         = 2;
+    pExa->exa_minor         = 2;
+    pExa->memoryBase        = 0;
+    pExa->memorySize        = 0;
+    pExa->offScreenBase     = 0;
     pExa->pixmapOffsetAlign = 0;
-    pExa->pixmapPitchAlign = 1;
-    pExa->flags = EXA_OFFSCREEN_PIXMAPS | EXA_HANDLES_PIXMAPS;
-    pExa->maxX = 8191;		       /* FIXME */
-    pExa->maxY = 8191;		       /* FIXME */
-    pExa->WaitMarker = ExaWaitMarker;
-    pExa->MarkSync = ExaMarkSync;
-    pExa->PrepareSolid = ExaPrepareSolid;
-    pExa->Solid = ExaSolid;
-    pExa->DoneSolid = ExaDone;
-    pExa->PrepareCopy = ExaPrepareCopy;
-    pExa->Copy = ExaCopy;
-    pExa->DoneCopy = ExaDone;
-    pExa->CheckComposite = ExaCheckComposite;
-    pExa->PrepareComposite = ExaPrepareComposite;
-    pExa->Composite = ExaComposite;
-    pExa->DoneComposite = ExaDoneComposite;
-    pExa->PixmapIsOffscreen = ExaPixmapIsOffscreen;
-    pExa->PrepareAccess = ExaPrepareAccess;
-    pExa->FinishAccess = ExaFinishAccess;
-    pExa->CreatePixmap = ExaCreatePixmap;
-    pExa->DestroyPixmap = ExaDestroyPixmap;
+    pExa->pixmapPitchAlign  = 1;
+    pExa->flags             = EXA_OFFSCREEN_PIXMAPS | EXA_HANDLES_PIXMAPS;
+    pExa->maxX              = 8191; /* FIXME */
+    pExa->maxY              = 8191; /* FIXME */
+
+    pExa->WaitMarker         = ExaWaitMarker;
+    pExa->MarkSync           = ExaMarkSync;
+    pExa->PrepareSolid       = ExaPrepareSolid;
+    pExa->Solid              = ExaSolid;
+    pExa->DoneSolid          = ExaDone;
+    pExa->PrepareCopy        = ExaPrepareCopy;
+    pExa->Copy               = ExaCopy;
+    pExa->DoneCopy           = ExaDone;
+    pExa->CheckComposite     = ExaCheckComposite;
+    pExa->PrepareComposite   = ExaPrepareComposite;
+    pExa->Composite          = ExaComposite;
+    pExa->DoneComposite      = ExaDoneComposite;
+    pExa->PixmapIsOffscreen  = ExaPixmapIsOffscreen;
+    pExa->PrepareAccess      = ExaPrepareAccess;
+    pExa->FinishAccess       = ExaFinishAccess;
+    pExa->CreatePixmap       = ExaCreatePixmap;
+    pExa->DestroyPixmap      = ExaDestroyPixmap;
     pExa->ModifyPixmapHeader = ExaModifyPixmapHeader;
 
     if (!exaDriverInit(pScrn->pScreen, pExa)) {
@@ -578,6 +587,8 @@ xorg_exa_init(ScrnInfoPtr pScrn)
     exa->ctx = ms->api->create_context(ms->api, exa->scrn);
     /* Share context with DRI */
     ms->ctx = exa->ctx;
+
+    exa->cso = cso_create_context(exa->ctx);
 
     return (void *)exa;
 

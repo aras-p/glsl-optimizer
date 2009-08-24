@@ -94,6 +94,9 @@ struct bitmap_cache
 
    GLfloat color[4];
 
+   /** Bitmap's Z position */
+   GLfloat zpos;
+
    struct pipe_texture *texture;
    struct pipe_transfer *trans;
 
@@ -104,6 +107,8 @@ struct bitmap_cache
 };
 
 
+/** Epsilon for Z comparisons */
+#define Z_EPSILON 1e-06
 
 
 /**
@@ -538,9 +543,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* draw textured quad */
-   offset = setup_bitmap_vertex_data(st, x, y, width, height,
-                                     ctx->Current.RasterPos[2],
-                                     color);
+   offset = setup_bitmap_vertex_data(st, x, y, width, height, z, color);
 
    util_draw_vertex_buffer(pipe, st->bitmap.vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
@@ -647,7 +650,7 @@ st_flush_bitmap_cache(struct st_context *st)
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
                           cache->ypos,
-                          st->ctx->Current.RasterPos[2],
+                          cache->zpos,
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                           cache->texture,
                           cache->color);
@@ -687,6 +690,7 @@ accum_bitmap(struct st_context *st,
 {
    struct bitmap_cache *cache = st->bitmap.cache;
    int px = -999, py;
+   const GLfloat z = st->ctx->Current.RasterPos[2];
 
    if (width > BITMAP_CACHE_WIDTH ||
        height > BITMAP_CACHE_HEIGHT)
@@ -697,7 +701,8 @@ accum_bitmap(struct st_context *st,
       py = y - cache->ypos;
       if (px < 0 || px + width > BITMAP_CACHE_WIDTH ||
           py < 0 || py + height > BITMAP_CACHE_HEIGHT ||
-          !TEST_EQ_4V(st->ctx->Current.RasterColor, cache->color)) {
+          !TEST_EQ_4V(st->ctx->Current.RasterColor, cache->color) ||
+          ((fabs(z - cache->zpos) > Z_EPSILON))) {
          /* This bitmap would extend beyond cache bounds, or the bitmap
           * color is changing
           * so flush and continue.
@@ -712,6 +717,7 @@ accum_bitmap(struct st_context *st,
       py = (BITMAP_CACHE_HEIGHT - height) / 2;
       cache->xpos = x;
       cache->ypos = y - py;
+      cache->zpos = z;
       cache->empty = GL_FALSE;
       COPY_4FV(cache->color, st->ctx->Current.RasterColor);
    }

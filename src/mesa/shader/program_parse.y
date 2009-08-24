@@ -2287,12 +2287,12 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
       ? & ctx->Const.VertexProgram
       : & ctx->Const.FragmentProgram;
 
-   state->MaxTextureImageUnits = 16;
-   state->MaxTextureCoordUnits = 8;
-   state->MaxTextureUnits = 8;
-   state->MaxClipPlanes = 6;
-   state->MaxLights = 8;
-   state->MaxProgramMatrices = 8;
+   state->MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+   state->MaxTextureCoordUnits = ctx->Const.MaxTextureCoordUnits;
+   state->MaxTextureUnits = ctx->Const.MaxTextureUnits;
+   state->MaxClipPlanes = ctx->Const.MaxClipPlanes;
+   state->MaxLights = ctx->Const.MaxLights;
+   state->MaxProgramMatrices = ctx->Const.MaxProgramMatrices;
 
    state->state_param_enum = (target == GL_VERTEX_PROGRAM_ARB)
       ? STATE_VERTEX_PROGRAM : STATE_FRAGMENT_PROGRAM;
