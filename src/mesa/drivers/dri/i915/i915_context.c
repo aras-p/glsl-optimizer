@@ -166,6 +166,9 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.FragmentProgram.MaxNativeTexIndirections =
       I915_MAX_TEX_INDIRECT;
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
+   ctx->Const.FragmentProgram.MaxEnvParams =
+      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
+	   ctx->Const.FragmentProgram.MaxEnvParams);
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 

@@ -126,7 +126,32 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    /* We want the GLSL compiler to emit code that uses condition codes */
    ctx->Shader.EmitCondCodes = GL_TRUE;
 
-/*    ctx->Const.MaxNativeVertexProgramTemps = 32; */
+   ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
+   ctx->Const.VertexProgram.MaxAluInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexIndirections = 0;
+   ctx->Const.VertexProgram.MaxNativeAluInstructions = 0;
+   ctx->Const.VertexProgram.MaxNativeTexInstructions = 0;
+   ctx->Const.VertexProgram.MaxNativeTexIndirections = 0;
+   ctx->Const.VertexProgram.MaxNativeAttribs = 16;
+   ctx->Const.VertexProgram.MaxNativeTemps = 256;
+   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+   ctx->Const.VertexProgram.MaxNativeParameters = 96;
+   ctx->Const.VertexProgram.MaxEnvParams =
+      MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
+	   ctx->Const.VertexProgram.MaxEnvParams);
+
+   ctx->Const.FragmentProgram.MaxNativeInstructions = (16 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeAluInstructions = (16 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeTexInstructions = (16 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeTexIndirections = (16 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
+   ctx->Const.FragmentProgram.MaxNativeTemps = 256;
+   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+   ctx->Const.FragmentProgram.MaxNativeParameters = 64;
+   ctx->Const.FragmentProgram.MaxEnvParams =
+      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
+	   ctx->Const.FragmentProgram.MaxEnvParams);
 
    brw_init_state( brw );
 

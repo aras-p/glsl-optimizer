@@ -487,7 +487,7 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
 
    if (type == GL_VERTEX_PROGRAM_ARB) {
-      prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
+      prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
    }
@@ -497,15 +497,17 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
    }
 
-   /* copy the above limits to init native limits */
-   prog->MaxNativeInstructions = prog->MaxInstructions;
-   prog->MaxNativeAluInstructions = prog->MaxAluInstructions;
-   prog->MaxNativeTexInstructions = prog->MaxTexInstructions;
-   prog->MaxNativeTexIndirections = prog->MaxTexIndirections;
-   prog->MaxNativeAttribs = prog->MaxAttribs;
-   prog->MaxNativeTemps = prog->MaxTemps;
-   prog->MaxNativeAddressRegs = prog->MaxAddressRegs;
-   prog->MaxNativeParameters = prog->MaxParameters;
+   /* Set the native limits to zero.  This implies that there is no native
+    * support for shaders.  Let the drivers fill in the actual values.
+    */
+   prog->MaxNativeInstructions = 0;
+   prog->MaxNativeAluInstructions = 0;
+   prog->MaxNativeTexInstructions = 0;
+   prog->MaxNativeTexIndirections = 0;
+   prog->MaxNativeAttribs = 0;
+   prog->MaxNativeTemps = 0;
+   prog->MaxNativeAddressRegs = 0;
+   prog->MaxNativeParameters = 0;
 }
 
 
