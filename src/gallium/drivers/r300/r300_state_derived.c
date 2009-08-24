@@ -49,35 +49,8 @@ static void r300_vs_tab_routes(struct r300_context* r300,
 
     assert(info->num_inputs <= 16);
 
-    if (r300screen->caps->has_tcl) {
-        /* Just copy vert attribs over as-is. */
-        for (i = 0; i < info->num_inputs; i++) {
-            tab[i] = i;
-        }
-        for (i = 0; i < info->num_outputs; i++) {
-            switch (info->output_semantic_name[i]) {
-                case TGSI_SEMANTIC_POSITION:
-                    pos = TRUE;
-                    break;
-                case TGSI_SEMANTIC_COLOR:
-                    cols++;
-                    break;
-                case TGSI_SEMANTIC_PSIZE:
-                    psize = TRUE;
-                    break;
-                case TGSI_SEMANTIC_FOG:
-                    fog = TRUE;
-                    /* Fall through */
-                case TGSI_SEMANTIC_GENERIC:
-                    texs++;
-                    break;
-                default:
-                    debug_printf("r300: Unknown vertex output %d\n",
-                        info->output_semantic_name[i]);
-                    break;
-            }
-        }
-    } else {
+    if (!r300screen->caps->has_tcl || !r300->rs_state->enable_vte)
+    {
         for (i = 0; i < info->num_inputs; i++) {
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_POSITION:
@@ -102,6 +75,37 @@ static void r300_vs_tab_routes(struct r300_context* r300,
                 default:
                     debug_printf("r300: Unknown vertex input %d\n",
                         info->input_semantic_name[i]);
+                    break;
+            }
+        }
+    }
+    else
+    {
+        /* Just copy vert attribs over as-is. */
+        for (i = 0; i < info->num_inputs; i++) {
+            tab[i] = i;
+        }
+
+        for (i = 0; i < info->num_outputs; i++) {
+            switch (info->output_semantic_name[i]) {
+                case TGSI_SEMANTIC_POSITION:
+                    pos = TRUE;
+                    break;
+                case TGSI_SEMANTIC_COLOR:
+                    cols++;
+                    break;
+                case TGSI_SEMANTIC_PSIZE:
+                    psize = TRUE;
+                    break;
+                case TGSI_SEMANTIC_FOG:
+                    fog = TRUE;
+                    /* Fall through */
+                case TGSI_SEMANTIC_GENERIC:
+                    texs++;
+                    break;
+                default:
+                    debug_printf("r300: Unknown vertex output %d\n",
+                        info->output_semantic_name[i]);
                     break;
             }
         }
