@@ -74,11 +74,11 @@ static struct radeon_cs * r600_cs_create(struct radeon_cs_manager *csm,
     return cs;
 }
 
-int r600_cs_write_reloc(struct radeon_cs *cs,
-                        struct radeon_bo *bo,
-                        uint32_t read_domain,
-                        uint32_t write_domain,
-                        uint32_t flags)
+static int r600_cs_write_reloc(struct radeon_cs *cs,
+			       struct radeon_bo *bo,
+			       uint32_t read_domain,
+			       uint32_t write_domain,
+			       uint32_t flags)
 {
     struct r600_cs_reloc_legacy *relocs;
     int i;
