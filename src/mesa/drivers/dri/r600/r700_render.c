@@ -369,12 +369,12 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700WaitForIdleClean(context);
 
     rrb = radeon_get_colorbuffer(&context->radeon);
-    if (!rrb || !rrb->bo)
+    if (rrb && rrb->bo)
 	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
 			 CB_ACTION_ENA_bit | (1 << (id + 6)));
 
     rrb = radeon_get_depthbuffer(&context->radeon);
-    if (!rrb || !rrb->bo)
+    if (rrb && rrb->bo)
 	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
 			 DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
 

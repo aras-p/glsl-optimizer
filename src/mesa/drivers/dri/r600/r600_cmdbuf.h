@@ -134,40 +134,23 @@ struct r600_cs_reloc_legacy {
     uint32_t                *reloc_indices;
 };
 
-extern int r600_cs_write_reloc(struct radeon_cs *cs,
-                        struct radeon_bo *bo,
-                        uint32_t read_domain,
-                        uint32_t write_domain,
-                        uint32_t flags);
-
-static inline void r600_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
-{
-    cs->packets[cs->cdw++] = dword;
-    if (cs->section) {
-	    cs->section_cdw++;
-    }
-}
-
 struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_context *ctx);
 
 /**
  * Write one dword to the command buffer.
  */
-#define R600_OUT_BATCH(data) \
-	do { \
-        r600_cs_write_dword(b_l_rmesa->cmdbuf.cs, data);\
-	} while(0)
+#define R600_OUT_BATCH(data)				\
+do {							\
+        radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, data);	\
+} while(0)
 
 /**
  * Write n dwords from ptr to the command buffer.
  */
-#define R600_OUT_BATCH_TABLE(ptr,n) \
-	do { \
-		int _i; \
-        for (_i=0; _i < n; _i++) {\
-            r600_cs_write_dword(b_l_rmesa->cmdbuf.cs, ptr[_i]);\
-        }\
-	} while(0)
+#define R600_OUT_BATCH_TABLE(ptr,n)		\
+do {						     \
+	radeon_cs_write_table(b_l_rmesa->cmdbuf.cs, ptr, n);	\
+} while(0)
 
 /**
  * Write a relocated dword to the command buffer.
@@ -178,7 +161,7 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",		\
             __FILE__, __FUNCTION__, __LINE__, offset);		\
         }							\
-        r600_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
+        radeon_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
                               bo, rd, wd, flags);		\
 	} while(0)
 

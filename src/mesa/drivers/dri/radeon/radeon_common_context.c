@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "vblank.h"
 #include "drirenderbuffer.h"
+#include "drivers/common/meta.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
@@ -207,6 +208,9 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	driContextPriv->driverPrivate = radeon;
 
 	meta_init_metaops(ctx, &radeon->meta);
+
+	_mesa_meta_init(ctx);
+
 	/* DRI fields */
 	radeon->dri.context = driContextPriv;
 	radeon->dri.screen = sPriv;
@@ -300,47 +304,48 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
 
+	assert(radeon);
+
+	_mesa_meta_free(radeon->glCtx);
+
 	if (radeon == current) {
 		radeon_firevertices(radeon);
 		_mesa_make_current(NULL, NULL, NULL);
 	}
 
-	assert(radeon);
-	if (radeon) {
-		if (!is_empty_list(&radeon->dma.reserved)) {
-			rcommonFlushCmdBuf( radeon, __FUNCTION__ );
-		}
+	if (!is_empty_list(&radeon->dma.reserved)) {
+		rcommonFlushCmdBuf( radeon, __FUNCTION__ );
+	}
 
-		radeonFreeDmaRegions(radeon);
-		radeonReleaseArrays(radeon->glCtx, ~0);
-		meta_destroy_metaops(&radeon->meta);
-		if (radeon->vtbl.free_context)
-			radeon->vtbl.free_context(radeon->glCtx);
-		_swsetup_DestroyContext( radeon->glCtx );
-		_tnl_DestroyContext( radeon->glCtx );
-		_vbo_DestroyContext( radeon->glCtx );
-		_swrast_DestroyContext( radeon->glCtx );
+	radeonFreeDmaRegions(radeon);
+	radeonReleaseArrays(radeon->glCtx, ~0);
+	meta_destroy_metaops(&radeon->meta);
+	if (radeon->vtbl.free_context)
+		radeon->vtbl.free_context(radeon->glCtx);
+	_swsetup_DestroyContext( radeon->glCtx );
+	_tnl_DestroyContext( radeon->glCtx );
+	_vbo_DestroyContext( radeon->glCtx );
+	_swrast_DestroyContext( radeon->glCtx );
 
-		/* free atom list */
-		/* free the Mesa context */
-		_mesa_destroy_context(radeon->glCtx);
+	/* free atom list */
+	/* free the Mesa context */
+	_mesa_destroy_context(radeon->glCtx);
 
-		/* _mesa_destroy_context() might result in calls to functions that
-		 * depend on the DriverCtx, so don't set it to NULL before.
-		 *
-		 * radeon->glCtx->DriverCtx = NULL;
-		 */
-		/* free the option cache */
-		driDestroyOptionCache(&radeon->optionCache);
+	/* _mesa_destroy_context() might result in calls to functions that
+	 * depend on the DriverCtx, so don't set it to NULL before.
+	 *
+	 * radeon->glCtx->DriverCtx = NULL;
+	 */
+	/* free the option cache */
+	driDestroyOptionCache(&radeon->optionCache);
 
-		rcommonDestroyCmdBuf(radeon);
+	rcommonDestroyCmdBuf(radeon);
 
-		radeon_destroy_atom_list(radeon);
+	radeon_destroy_atom_list(radeon);
 
-		if (radeon->state.scissor.pClipRects) {
-			FREE(radeon->state.scissor.pClipRects);
-			radeon->state.scissor.pClipRects = 0;
-		}
+	if (radeon->state.scissor.pClipRects) {
+		FREE(radeon->state.scissor.pClipRects);
+		radeon->state.scissor.pClipRects = 0;
 	}
 #ifdef RADEON_BO_TRACK
 	track = fopen("/tmp/tracklog", "w");

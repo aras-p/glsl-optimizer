@@ -59,7 +59,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
    struct ureg_program *ureg;
    uint i;
 
-   ureg = ureg_create( pipe, TGSI_PROCESSOR_VERTEX );
+   ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
    if (ureg == NULL)
       return NULL;
 
@@ -80,7 +80,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    ureg_END( ureg );
 
-   return ureg_create_shader_and_destroy( ureg );
+   return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
 
@@ -99,7 +99,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    struct ureg_src tex;
    struct ureg_dst out;
 
-   ureg = ureg_create( pipe, TGSI_PROCESSOR_FRAGMENT );
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)
       return NULL;
    
@@ -116,7 +116,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    ureg_TEX( ureg, out, TGSI_TEXTURE_2D, tex, sampler );
    ureg_END( ureg );
 
-   return ureg_create_shader_and_destroy( ureg );
+   return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
 
@@ -133,7 +133,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
    struct ureg_src src;
    struct ureg_dst dst;
 
-   ureg = ureg_create( pipe, TGSI_PROCESSOR_FRAGMENT );
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)
       return NULL;
 
@@ -145,7 +145,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
    ureg_MOV( ureg, dst, src );
    ureg_END( ureg );
 
-   return ureg_create_shader_and_destroy( ureg );
+   return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
 

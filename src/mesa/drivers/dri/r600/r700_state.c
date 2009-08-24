@@ -1349,13 +1349,32 @@ void r700SetScissor(context_t *context) //---------------
 		x2 = context->radeon.state.scissor.rect.x2 - 1;
 		y2 = context->radeon.state.scissor.rect.y2 - 1;
 	} else {
-		x1 = rrb->dPriv->x;
-		y1 = rrb->dPriv->y;
-		x2 = rrb->dPriv->x + rrb->dPriv->w;
-		y2 = rrb->dPriv->y + rrb->dPriv->h;
+		if (context->radeon.radeonScreen->driScreen->dri2.enabled) {
+			x1 = 0;
+			y1 = 0;
+			x2 = rrb->base.Width - 1;
+			y2 = rrb->base.Height - 1;
+		} else {
+			x1 = rrb->dPriv->x;
+			y1 = rrb->dPriv->y;
+			x2 = rrb->dPriv->x + rrb->dPriv->w;
+			y2 = rrb->dPriv->y + rrb->dPriv->h;
+		}
 	}
 
 	R600_STATECHANGE(context, scissor);
+
+	/* screen */
+	SETbit(r700->PA_SC_SCREEN_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->PA_SC_SCREEN_SCISSOR_TL.u32All, x1,
+		 PA_SC_SCREEN_SCISSOR_TL__TL_X_shift, PA_SC_SCREEN_SCISSOR_TL__TL_X_mask);
+	SETfield(r700->PA_SC_SCREEN_SCISSOR_TL.u32All, y1,
+		 PA_SC_SCREEN_SCISSOR_TL__TL_Y_shift, PA_SC_SCREEN_SCISSOR_TL__TL_Y_mask);
+
+	SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, x2,
+		 PA_SC_SCREEN_SCISSOR_BR__BR_X_shift, PA_SC_SCREEN_SCISSOR_BR__BR_X_mask);
+	SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, y2,
+		 PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
 
 	/* window */
 	SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
@@ -1749,20 +1768,12 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
+    r700->SPI_VS_OUT_ID_2.u32All  = 0x0b0a0908;
+    r700->SPI_VS_OUT_ID_3.u32All  = 0x0f0e0d0c;
 
     r700->SPI_THREAD_GROUPING.u32All = 0;
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
 	    SETfield(r700->SPI_THREAD_GROUPING.u32All, 1, PS_GROUPING_shift, PS_GROUPING_mask);
-
-    /* screen */
-    r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
-
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All,
-	     ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->width,
-	     PA_SC_SCREEN_SCISSOR_BR__BR_X_shift, PA_SC_SCREEN_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All,
-	     ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->height,
-	     PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
 
     /* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
     r700->PA_SC_CLIPRECT_RULE.u32All = 0;

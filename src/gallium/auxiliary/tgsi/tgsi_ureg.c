@@ -340,8 +340,9 @@ out:
 void ureg_release_temporary( struct ureg_program *ureg,
                              struct ureg_dst tmp )
 {
-   if (tmp.Index < UREG_MAX_TEMP)
-      ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
+   if(tmp.File == TGSI_FILE_TEMPORARY)
+      if (tmp.Index < UREG_MAX_TEMP)
+         ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
 }
 
 
@@ -605,6 +606,29 @@ ureg_fixup_insn_size(struct ureg_program *ureg,
 }
 
 
+void
+ureg_insn(struct ureg_program *ureg,
+          unsigned opcode,
+          const struct ureg_dst *dst,
+          unsigned nr_dst,
+          const struct ureg_src *src,
+          unsigned nr_src )
+{
+   unsigned insn, i;
+   boolean saturate;
+
+   saturate = nr_dst ? dst[0].Saturate : FALSE;
+
+   insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
+
+   for (i = 0; i < nr_dst; i++)
+      ureg_emit_dst( ureg, dst[i] );
+
+   for (i = 0; i < nr_src; i++)
+      ureg_emit_src( ureg, src[i] );
+
+   ureg_fixup_insn_size( ureg, insn );
+}
 
 
 
@@ -765,9 +789,9 @@ emit_header( struct ureg_program *ureg )
 }
 
 
-void *ureg_create_shader( struct ureg_program *ureg )
+const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
 {
-   struct pipe_shader_state state;
+   const struct tgsi_token *tokens;
 
    emit_header( ureg );
    emit_decls( ureg );
@@ -781,31 +805,42 @@ void *ureg_create_shader( struct ureg_program *ureg )
       return NULL;
    }
 
-   state.tokens = (const struct tgsi_token *)ureg->domain[DOMAIN_DECL].tokens;
+   tokens = &ureg->domain[DOMAIN_DECL].tokens[0].token;
 
    if (0) {
       debug_printf("%s: emitted shader %d tokens:\n", __FUNCTION__, 
                    ureg->domain[DOMAIN_DECL].count);
-      tgsi_dump( state.tokens, 0 );
+      tgsi_dump( tokens, 0 );
    }
+   
+   return tokens;
+}
+
+
+void *ureg_create_shader( struct ureg_program *ureg,
+                          struct pipe_context *pipe )
+{
+   struct pipe_shader_state state;
+
+   state.tokens = ureg_finalize(ureg);
+   if(!state.tokens)
+      return NULL;
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX)
-      return ureg->pipe->create_vs_state( ureg->pipe, &state );
+      return pipe->create_vs_state( pipe, &state );
    else
-      return ureg->pipe->create_fs_state( ureg->pipe, &state );
+      return pipe->create_fs_state( pipe, &state );
 }
 
 
 
 
-struct ureg_program *ureg_create( struct pipe_context *pipe,
-                                  unsigned processor )
+struct ureg_program *ureg_create( unsigned processor )
 {
    struct ureg_program *ureg = CALLOC_STRUCT( ureg_program );
    if (ureg == NULL)
       return NULL;
 
-   ureg->pipe = pipe;
    ureg->processor = processor;
    return ureg;
 }
