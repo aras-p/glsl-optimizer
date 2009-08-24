@@ -80,6 +80,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
+#define need_GL_EXT_framebuffer_blit
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_gpu_program_parameters
@@ -143,6 +144,7 @@ const struct dri_extension card_extensions[] = {
 
 
 const struct dri_extension mm_extensions[] = {
+  { "GL_EXT_framebuffer_blit",	GL_EXT_framebuffer_blit_functions },
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
 };

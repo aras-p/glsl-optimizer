@@ -35,6 +35,7 @@
 #include "main/context.h"
 #include "main/texformat.h"
 #include "main/texrender.h"
+#include "drivers/common/meta.h"
 
 #include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
@@ -571,14 +572,6 @@ radeon_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
 }
 
-static void
-radeon_blit_framebuffer(GLcontext *ctx,
-                       GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                       GLbitfield mask, GLenum filter)
-{
-}
-
 void radeon_fbo_init(struct radeon_context *radeon)
 {
   radeon->glCtx->Driver.NewFramebuffer = radeon_new_framebuffer;
@@ -589,7 +582,7 @@ void radeon_fbo_init(struct radeon_context *radeon)
   radeon->glCtx->Driver.FinishRenderTexture = radeon_finish_render_texture;
   radeon->glCtx->Driver.ResizeBuffers = radeon_resize_buffers;
   radeon->glCtx->Driver.ValidateFramebuffer = radeon_validate_framebuffer;
-  radeon->glCtx->Driver.BlitFramebuffer = radeon_blit_framebuffer;
+  radeon->glCtx->Driver.BlitFramebuffer = _mesa_meta_blit_framebuffer;
 }
 
   
