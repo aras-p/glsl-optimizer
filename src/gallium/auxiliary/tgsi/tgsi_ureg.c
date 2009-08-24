@@ -788,9 +788,9 @@ emit_header( struct ureg_program *ureg )
 }
 
 
-void *ureg_create_shader( struct ureg_program *ureg )
+const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
 {
-   struct pipe_shader_state state;
+   const struct tgsi_token *tokens;
 
    emit_header( ureg );
    emit_decls( ureg );
@@ -804,31 +804,42 @@ void *ureg_create_shader( struct ureg_program *ureg )
       return NULL;
    }
 
-   state.tokens = (const struct tgsi_token *)ureg->domain[DOMAIN_DECL].tokens;
+   tokens = &ureg->domain[DOMAIN_DECL].tokens[0].token;
 
    if (0) {
       debug_printf("%s: emitted shader %d tokens:\n", __FUNCTION__, 
                    ureg->domain[DOMAIN_DECL].count);
-      tgsi_dump( state.tokens, 0 );
+      tgsi_dump( tokens, 0 );
    }
+   
+   return tokens;
+}
+
+
+void *ureg_create_shader( struct ureg_program *ureg,
+                          struct pipe_context *pipe )
+{
+   struct pipe_shader_state state;
+
+   state.tokens = ureg_finalize(ureg);
+   if(!state.tokens)
+      return NULL;
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX)
-      return ureg->pipe->create_vs_state( ureg->pipe, &state );
+      return pipe->create_vs_state( pipe, &state );
    else
-      return ureg->pipe->create_fs_state( ureg->pipe, &state );
+      return pipe->create_fs_state( pipe, &state );
 }
 
 
 
 
-struct ureg_program *ureg_create( struct pipe_context *pipe,
-                                  unsigned processor )
+struct ureg_program *ureg_create( unsigned processor )
 {
    struct ureg_program *ureg = CALLOC_STRUCT( ureg_program );
    if (ureg == NULL)
       return NULL;
 
-   ureg->pipe = pipe;
    ureg->processor = processor;
    return ureg;
 }

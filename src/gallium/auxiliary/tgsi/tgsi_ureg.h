@@ -69,11 +69,14 @@ struct ureg_dst
 struct pipe_context;
 
 struct ureg_program *
-ureg_create( struct pipe_context *pipe,
-             unsigned processor );
+ureg_create( unsigned processor );
+
+const struct tgsi_token *
+ureg_finalize( struct ureg_program * );
 
 void *
-ureg_create_shader( struct ureg_program * );
+ureg_create_shader( struct ureg_program *,
+                    struct pipe_context *pipe );
 
 void 
 ureg_destroy( struct ureg_program * );
@@ -82,9 +85,11 @@ ureg_destroy( struct ureg_program * );
 /***********************************************************************
  * Convenience routine:
  */
-static INLINE void *ureg_create_shader_and_destroy( struct ureg_program *p )
+static INLINE void *
+ureg_create_shader_and_destroy( struct ureg_program *p,
+                                struct pipe_context *pipe )
 {
-   void *result = ureg_create_shader( p );
+   void *result = ureg_create_shader( p, pipe );
    ureg_destroy( p );
    return result;
 }
