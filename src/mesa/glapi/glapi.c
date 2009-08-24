@@ -160,26 +160,20 @@ static GLint NoOpUnused(void)
  * the variables \c _glapi_Dispatch and \c _glapi_Context are used for this
  * purpose.
  *
- * In the "normal" threaded case, the variables \c _glapi_Dispatch and
- * \c _glapi_Context will be \c NULL if an application is detected as being
- * multithreaded.  Single-threaded applications will use \c _glapi_Dispatch
- * and \c _glapi_Context just like the case without any threading support.
- * When \c _glapi_Dispatch and \c _glapi_Context are \c NULL, the thread state
- * data \c _gl_DispatchTSD and \c ContextTSD are used.  Drivers and the
- * static dispatch functions access these variables via \c _glapi_get_dispatch
- * and \c _glapi_get_context.
+ * In the "normal" threaded case, the variable \c _glapi_SingleThreaded will be
+ * \c GL_FALSE if an application is detected as being multithreaded.
+ * Single-threaded applications will use \c _glapi_Dispatch and \c
+ * _glapi_Context just like the case without any threading support.  When \c
+ * _glapi_SingleThreaded is \c GL_FALSE, the thread state data \c
+ * _gl_DispatchTSD and \c ContextTSD are used.  Drivers and the static dispatch
+ * functions access these variables via \c _glapi_get_dispatch and \c
+ * _glapi_get_context.
  *
- * There is a race condition in setting \c _glapi_Dispatch to \c NULL.  It is
- * possible for the original thread to be setting it at the same instant a new
- * thread, perhaps running on a different processor, is clearing it.  Because
- * of that, \c ThreadSafe, which can only ever be changed to \c GL_TRUE, is
- * used to determine whether or not the application is multithreaded.
- * 
  * In the TLS case, the variables \c _glapi_Dispatch and \c _glapi_Context are
  * hardcoded to \c NULL.  Instead the TLS variables \c _glapi_tls_Dispatch and
- * \c _glapi_tls_Context are used.  Having \c _glapi_Dispatch and
- * \c _glapi_Context be hardcoded to \c NULL maintains binary compatability
- * between TLS enabled loaders and non-TLS DRI drivers.
+ * \c _glapi_tls_Context are used.  The variable \c _glapi_SingleThreaded,
+ * though not used, is defined and hardcoded to \c GL_FALSE to maintain binary
+ * compatability between TLS enabled loaders and non-TLS DRI drivers.
  */
 /*@{*/
 #if defined(GLX_USE_TLS)
@@ -194,13 +188,26 @@ PUBLIC __thread void * _glapi_tls_Context
 PUBLIC const struct _glapi_table *_glapi_Dispatch = NULL;
 PUBLIC const void *_glapi_Context = NULL;
 
+/* Unused, but maintain binary compatability with non-TLS DRI drivers */
+GLboolean _glapi_SingleThreaded = GL_FALSE;
+
 #else
 
 #if defined(THREADS)
 
-static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
-_glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
-static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
+#ifdef WIN32_THREADS
+/* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
+#define CHECK_MULTITHREAD_LOCK()
+#define CHECK_MULTITHREAD_UNLOCK()
+#else
+_glthread_DECLARE_STATIC_MUTEX(ThreadCheckMutex);
+#define CHECK_MULTITHREAD_LOCK() _glthread_LOCK_MUTEX(ThreadCheckMutex)
+#define CHECK_MULTITHREAD_UNLOCK() _glthread_UNLOCK_MUTEX(ThreadCheckMutex)
+#endif
+
+GLboolean _glapi_SingleThreaded = GL_TRUE;  /**< In single-thread mode? */
+_glthread_TSD _gl_DispatchTSD;              /**< Per-thread dispatch pointer */
+static _glthread_TSD ContextTSD;            /**< Per-thread context pointer */
 
 #if defined(WIN32_THREADS)
 void FreeTSD(_glthread_TSD *p);
@@ -231,23 +238,30 @@ void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS) && !defined(GLX_USE_TLS)
-   if (!ThreadSafe) {
-      static unsigned long knownID;
-      static GLboolean firstCall = GL_TRUE;
-      if (firstCall) {
-         knownID = _glthread_GetID();
-         firstCall = GL_FALSE;
-      }
-      else if (knownID != _glthread_GetID()) {
-         ThreadSafe = GL_TRUE;
-         _glapi_set_dispatch(NULL);
-         _glapi_set_context(NULL);
-      }
+   static unsigned long knownID;
+   static GLboolean firstCall = GL_TRUE;
+
+   if (!_glapi_SingleThreaded)
+      return;
+
+   CHECK_MULTITHREAD_LOCK();
+   if (firstCall) {
+      /* initialize TSDs */
+      (void) _glthread_GetTSD(&ContextTSD);
+      (void) _glthread_GetTSD(&_gl_DispatchTSD);
+
+      knownID = _glthread_GetID();
+      firstCall = GL_FALSE;
    }
-   else if (!_glapi_get_dispatch()) {
-      /* make sure that this thread's dispatch pointer isn't null */
-      _glapi_set_dispatch(NULL);
+   else if (knownID != _glthread_GetID()) {
+      /*
+       * switch to thread-safe mode.  _glapi_Context and _glapi_Dispatch are no
+       * longer accessed after this point, except for raced by the first
+       * thread.  Because of the race, they cannot be reset to NULL.
+       */
+      _glapi_SingleThreaded = GL_FALSE;
    }
+   CHECK_MULTITHREAD_UNLOCK();
 #endif
 }
 
@@ -265,8 +279,10 @@ _glapi_set_context(void *context)
 #if defined(GLX_USE_TLS)
    _glapi_tls_Context = context;
 #elif defined(THREADS)
+   if (_glapi_SingleThreaded)
+      _glapi_Context = context;
+   /* always update TSD because we might switch to it at any time */
    _glthread_SetTSD(&ContextTSD, context);
-   _glapi_Context = (ThreadSafe) ? NULL : context;
 #else
    _glapi_Context = context;
 #endif
@@ -285,12 +301,8 @@ _glapi_get_context(void)
 #if defined(GLX_USE_TLS)
    return _glapi_tls_Context;
 #elif defined(THREADS)
-   if (ThreadSafe) {
-      return _glthread_GetTSD(&ContextTSD);
-   }
-   else {
-      return _glapi_Context;
-   }
+   return (_glapi_SingleThreaded)
+      ? _glapi_Context : _glthread_GetTSD(&ContextTSD);
 #else
    return _glapi_Context;
 #endif
@@ -505,8 +517,9 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #if defined(GLX_USE_TLS)
    _glapi_tls_Dispatch = dispatch;
 #elif defined(THREADS)
+   if (_glapi_SingleThreaded)
+      _glapi_Dispatch = dispatch;
    _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
-   _glapi_Dispatch = (ThreadSafe) ? NULL : dispatch;
 #else /*THREADS*/
    _glapi_Dispatch = dispatch;
 #endif /*THREADS*/
@@ -520,17 +533,15 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 PUBLIC struct _glapi_table *
 _glapi_get_dispatch(void)
 {
-   struct _glapi_table * api;
 #if defined(GLX_USE_TLS)
-   api = _glapi_tls_Dispatch;
+   return _glapi_tls_Dispatch;
 #elif defined(THREADS)
-   api = (ThreadSafe)
-     ? (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD)
-     : _glapi_Dispatch;
+   return (_glapi_SingleThreaded)
+      ? _glapi_Dispatch
+      : (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD);
 #else
-   api = _glapi_Dispatch;
+   return _glapi_Dispatch;
 #endif
-   return api;
 }
 
 

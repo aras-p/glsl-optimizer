@@ -398,7 +398,7 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
       vbo_exec_vtx_unmap( exec );
    }
 
-   if (unmap) 
+   if (unmap || exec->vtx.vertex_size == 0)
       exec->vtx.max_vert = 0;
    else
       exec->vtx.max_vert = ((VBO_VERT_BUFFER_SIZE - exec->vtx.buffer_used) / 

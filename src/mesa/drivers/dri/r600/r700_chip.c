@@ -230,6 +230,9 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
 
+    if (context->radeon.tcl.aos_count == 0)
+	    return;
+
     BEGIN_BATCH_NO_AUTOSTATE(6);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
     R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
@@ -989,11 +992,60 @@ static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 	return atom->cmd_size;
 }
 
+static int check_cb(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	int count = 7;
+
+	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+		count += 11;
+
+	return count;
+}
+
+static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	unsigned int ui;
+	int count = 3;
+
+	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+		count += 3;
+
+	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
+		for (ui = 0; ui < R700_MAX_RENDER_TARGETS; ui++) {
+                        if (r700->render_target[ui].enabled)
+				count += 3;
+		}
+	}
+
+	return count;
+}
+
+static int check_ucp(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	int i;
+	int count = 0;
+
+	for (i = 0; i < R700_MAX_UCP; i++) {
+		if (r700->ucp[i].enabled)
+			count += 6;
+	}
+	return count;
+}
+
 static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
+	int count = context->radeon.tcl.aos_count * 18;
 
-	return context->radeon.tcl.aos_count * 18;
+	if (count)
+		count += 6;
+
+	return count;
 }
 
 static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -1014,16 +1066,24 @@ static int check_ps_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	int count = r700->ps.num_consts * 4;
 
-	return 2 + (r700->ps.num_consts * 4);
+	if (count)
+		count += 2;
+
+	return count;
 }
 
 static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	int count = r700->vs.num_consts * 4;
 
-	return 2 + (r700->vs.num_consts * 4);
+	if (count)
+		count += 2;
+
+	return count;
 }
 
 #define ALLOC_STATE( ATOM, CHK, SZ, EMIT )				\
@@ -1056,12 +1116,12 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(aa, always, 12, r700SendAAState);
 	ALLOC_STATE(cl, always, 12, r700SendCLState);
 	ALLOC_STATE(gb, always, 6, r700SendGBState);
-	ALLOC_STATE(ucp, always, 36, r700SendUCPState);
+	ALLOC_STATE(ucp, ucp, (R700_MAX_UCP * 6), r700SendUCPState);
 	ALLOC_STATE(su, always, 9, r700SendSUState);
 	ALLOC_STATE(poly, always, 10, r700SendPolyState);
-	ALLOC_STATE(cb, always, 18, r700SendCBState);
+	ALLOC_STATE(cb, cb, 18, r700SendCBState);
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
-	ALLOC_STATE(blnd, always, 30, r700SendCBBlendState);
+	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
 	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
@@ -1073,7 +1133,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(ps, always, 21, r700SendPSState);
 	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
 	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
-	ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
+	ALLOC_STATE(vtx, vtx, (6 + (VERT_ATTRIB_MAX * 18)), r700SendVTXState);
 	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
 	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
 	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);

@@ -106,7 +106,11 @@ copy_indirect_accessed_array(struct gl_program_parameter_list *src,
 }
 
 
-int
+/**
+ * XXX description???
+ * \return GL_TRUE for success, GL_FALSE for failure
+ */
+GLboolean
 _mesa_layout_parameters(struct asm_parser_state *state)
 {
    struct gl_program_parameter_list *layout;
@@ -128,12 +132,12 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	     */
 	    if (!inst->SrcReg[i].Symbol->pass1_done) {
 	       const int new_begin =
-		  copy_indirect_accessed_array(state->prog->Parameters, layout, 
+		  copy_indirect_accessed_array(state->prog->Parameters, layout,
 		      inst->SrcReg[i].Symbol->param_binding_begin,
 		      inst->SrcReg[i].Symbol->param_binding_length);
 
 	       if (new_begin < 0) {
-		  return 0;
+		  return GL_FALSE;
 	       }
 
 	       inst->SrcReg[i].Symbol->param_binding_begin = new_begin;
@@ -209,5 +213,5 @@ _mesa_layout_parameters(struct asm_parser_state *state)
    _mesa_free_parameter_list(state->prog->Parameters);
    state->prog->Parameters = layout;
 
-   return 1;
+   return GL_TRUE;
 }

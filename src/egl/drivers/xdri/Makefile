@@ -16,19 +16,24 @@ INCLUDE_DIRS = \
 	$(shell pkg-config --cflags-only-I libdrm) \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/glapi \
-	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/glx/x11
 
-SOURCES = egl_xdri.c
+HEADERS = glxinit.h driinit.h
+SOURCES = egl_xdri.c glxinit.c driinit.c
+
+DRI_SOURCES = dri_common.c XF86dri.c dri2.c dri2_glx.c dri_glx.c
+DRI_SOURCES := $(addprefix ../../../glx/x11/,$(DRI_SOURCES))
+
+SOURCES += $(DRI_SOURCES)
 
 OBJECTS = $(SOURCES:.c=.o)
 
 DRM_LIB = `pkg-config --libs libdrm`
 
-MISC_LIBS = -ldl -lXext -lGL
-
+CFLAGS += -DGLX_DIRECT_RENDERING
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -50,7 +55,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(OBJECTS)
 		-major 1 -minor 0 \
 		-L$(TOP)/$(LIB_DIR) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(OBJECTS) $(DRM_LIB) $(MISC_LIBS)
+		$(OBJECTS) $(DRM_LIB) $(GL_LIB_DEPS)
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
