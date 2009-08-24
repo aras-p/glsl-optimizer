@@ -50,6 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_swtcl.h"
 #include "radeon_maos.h"
+#include "radeon_common_context.h"
 
 
 
@@ -359,12 +360,13 @@ radeonComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
  * Predict total emit size for next rendering operation so there is no flush in middle of rendering
  * Prediction has to aim towards the best possible value that is worse than worst case scenario
  */
-static void radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
+static GLuint radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
 {
   r100ContextPtr rmesa = R100_CONTEXT(ctx);
   TNLcontext *tnl = TNL_CONTEXT(ctx);
   struct vertex_buffer *VB = &tnl->vb;
   GLuint space_required;
+  GLuint state_size;
   GLuint nr_aos = 1; /* radeonEmitArrays does always emit one */
   int i;
   /* list of flags that are allocating aos object */
@@ -388,10 +390,11 @@ static void radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
 
   {
     /* count the prediction for state size */
-    space_required = radeonCountStateEmitSize( &rmesa->radeon );
+    space_required = 0;
+    state_size = radeonCountStateEmitSize( &rmesa->radeon );
     /* tcl may be changed in radeonEmitArrays so account for it if not dirty */
     if (!rmesa->hw.tcl.dirty)
-      space_required += rmesa->hw.tcl.check( rmesa->radeon.glCtx, &rmesa->hw.tcl );
+      state_size += rmesa->hw.tcl.check( rmesa->radeon.glCtx, &rmesa->hw.tcl );
     /* predict size for elements */
     for (i = 0; i < VB->PrimitiveCount; ++i)
     {
@@ -414,7 +417,10 @@ static void radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
     space_required += SCISSOR_BUFSZ;
   }
   /* flush the buffer in case we need more than is left. */
-  rcommonEnsureCmdBufSpace(&rmesa->radeon, space_required, __FUNCTION__);
+  if (rcommonEnsureCmdBufSpace(&rmesa->radeon, space_required, __FUNCTION__))
+    return space_required + radeonCountStateEmitSize( &rmesa->radeon );
+  else
+    return space_required + state_size;
 }
 
 /**********************************************************************/
@@ -467,7 +473,8 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
    }
 
    radeonReleaseArrays( ctx, ~0 );
-   radeonEnsureEmitSize( ctx, inputs );
+   GLuint emit_end = radeonEnsureEmitSize( ctx, inputs )
+     + rmesa->radeon.cmdbuf.cs->cdw;
    radeonEmitArrays( ctx, inputs );
 
    rmesa->tcl.Elts = VB->Elts;
@@ -486,6 +493,10 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
       else
 	 radeonEmitPrimitive( ctx, start, start+length, prim );
    }
+
+   if (emit_end < rmesa->radeon.cmdbuf.cs->cdw)
+      WARN_ONCE("Rendering was %d commands larger than predicted size."
+	  " We might overflow  command buffer.\n", rmesa->radeon.cmdbuf.cs->cdw - emit_end);
 
    return GL_FALSE;		/* finished the pipe */
 }

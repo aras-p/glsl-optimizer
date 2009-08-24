@@ -42,6 +42,7 @@
 #include "r300_cmdbuf.h"
 
 #include "radeon_buffer_objects.h"
+#include "radeon_common_context.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
@@ -632,7 +633,8 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	/* ensure we have the cmd buf space in advance to cover
 	 * the state + DMA AOS pointers */
-	r300PredictTryDrawPrimsSize(ctx, nr_prims);
+	GLuint emit_end = r300PredictTryDrawPrimsSize(ctx, nr_prims)
+		+ r300->radeon.cmdbuf.cs->cdw;
 
 	r300SetupIndexBuffer(ctx, ib);
 
@@ -655,6 +657,10 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s: %u (%d-%d) cs ending at %d\n",
 			__FUNCTION__, nr_prims, min_index, max_index, r300->radeon.cmdbuf.cs->cdw );
+
+	if (emit_end < r300->radeon.cmdbuf.cs->cdw)
+		WARN_ONCE("Rendering was %d commands larger than predicted size."
+				" We might overflow  command buffer.\n", r300->radeon.cmdbuf.cs->cdw - emit_end);
 
 	return GL_TRUE;
 }

@@ -53,6 +53,8 @@
 #include "r700_fragprog.h"
 #include "r700_state.h"
 
+#include "radeon_common_context.h"
+
 void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
 GLboolean r700SendTextureState(context_t *context);
@@ -384,7 +386,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
         fprintf(stderr, "%s: cs end at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
-    assert(context->radeon.cmdbuf.cs->cdw <= emit_end);
+    if ( emit_end < context->radeon.cmdbuf.cs->cdw )
+       WARN_ONCE("Rendering was %d commands larger than predicted size."
+	       " We might overflow  command buffer.\n", context->radeon.cmdbuf.cs->cdw - emit_end);
 
     return GL_FALSE;
 }
