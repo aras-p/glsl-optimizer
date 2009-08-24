@@ -605,6 +605,29 @@ ureg_fixup_insn_size(struct ureg_program *ureg,
 }
 
 
+void
+ureg_insn(struct ureg_program *ureg,
+          unsigned opcode,
+          const struct ureg_dst *dst,
+          unsigned nr_dst,
+          const struct ureg_src *src,
+          unsigned nr_src )
+{
+   unsigned insn, i;
+   boolean saturate;
+
+   saturate = nr_dst ? dst[0].Saturate : FALSE;
+
+   insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
+
+   for (i = 0; i < nr_dst; i++)
+      ureg_emit_dst( ureg, dst[i] );
+
+   for (i = 0; i < nr_src; i++)
+      ureg_emit_src( ureg, src[i] );
+
+   ureg_fixup_insn_size( ureg, insn );
+}
 
 
 

@@ -199,6 +199,16 @@ ureg_fixup_label(struct ureg_program *ureg,
                  unsigned instruction_number );
 
 
+/* Generic instruction emitter.  Use if you need to pass the opcode as
+ * a parameter, rather than using the emit_OP() varients below.
+ */
+void
+ureg_insn(struct ureg_program *ureg,
+          unsigned opcode,
+          const struct ureg_dst *dst,
+          unsigned nr_dst,
+          const struct ureg_src *src,
+          unsigned nr_src );
 
 
 /***********************************************************************
