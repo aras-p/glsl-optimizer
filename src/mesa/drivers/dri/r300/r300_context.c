@@ -295,7 +295,7 @@ static void rv530_emit_query_finish_double_z(radeonContextPtr radeon)
 	BATCH_LOCALS(radeon);
 	struct radeon_query_object *query = radeon->query.current;
 
-	BEGIN_BATCH_NO_AUTOSTATE(6);
+	BEGIN_BATCH_NO_AUTOSTATE(14);
 	OUT_BATCH_REGVAL(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
 	OUT_BATCH_REGSEQ(R300_ZB_ZPASS_ADDR, 1);
 	OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
