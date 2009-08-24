@@ -305,8 +305,8 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
-     struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vpc
+        = (struct r700_vertex_program *)ctx->VertexProgram._Current;
     struct vertex_buffer *vb = &tnl->vb;
     GLboolean flushed;
     GLuint dwords, i;
@@ -316,18 +316,18 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
 
     dwords = PRE_EMIT_STATE_BUFSZ;
     for (i = 0; i < vb->PrimitiveCount; i++)
-	    dwords += vb->Primitive[i].count + 10;
+        dwords += vb->Primitive[i].count + 10;
     state_size = radeonCountStateEmitSize(&context->radeon);
     flushed = rcommonEnsureCmdBufSpace(&context->radeon,
-			     dwords + state_size, __FUNCTION__);
+            dwords + state_size, __FUNCTION__);
 
     if (flushed)
-	dwords += radeonCountStateEmitSize(&context->radeon);
+        dwords += radeonCountStateEmitSize(&context->radeon);
     else
-	dwords += state_size;
+        dwords += state_size;
 
     if (RADEON_DEBUG & DEBUG_PRIMS)
-	fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+        fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
     return dwords;
 }
 
@@ -341,8 +341,8 @@ static GLboolean r700RunRender(GLcontext * ctx,
     struct vertex_buffer *vb = &tnl->vb;
     struct radeon_renderbuffer *rrb;
 
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s: cs begin at %d\n",
+    if (RADEON_DEBUG & DEBUG_PRIMS)
+        fprintf(stderr, "%s: cs begin at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
     r700UpdateShaders(ctx);
@@ -379,6 +379,11 @@ static GLboolean r700RunRender(GLcontext * ctx,
 			 DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
 
     radeonReleaseArrays(ctx, ~0);
+
+    if (RADEON_DEBUG & DEBUG_PRIMS)
+        fprintf(stderr, "%s: cs end at %d\n",
+                __func__, context->radeon.cmdbuf.cs->cdw);
+
     assert(context->radeon.cmdbuf.cs->cdw <= emit_end);
 
     return GL_FALSE;
