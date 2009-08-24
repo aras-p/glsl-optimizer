@@ -315,6 +315,13 @@ static GLboolean r700RunRender(GLcontext * ctx,
     rcommonEnsureCmdBufSpace(&context->radeon,
 			     radeon->hw.max_state_size + ind_count, __FUNCTION__);
 
+    /* always emit CB base to prevent
+     * lock ups on some chips.
+     */
+    R600_STATECHANGE(context, cb_target);
+    /* mark vtx as dirty since it changes per-draw */
+    R600_STATECHANGE(context, vtx);
+
     r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupVertexProgram(ctx);
