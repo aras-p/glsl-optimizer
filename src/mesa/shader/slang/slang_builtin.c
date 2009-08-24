@@ -436,7 +436,7 @@ emit_statevars(const char *name, int array_len,
                struct gl_program_parameter_list *paramList)
 {
    if (type->type == SLANG_SPEC_ARRAY) {
-      GLint i, pos;
+      GLint i, pos = -1;
       assert(array_len > 0);
       if (strcmp(name, "gl_ClipPlane") == 0) {
          tokens[0] = STATE_CLIPPLANE;
