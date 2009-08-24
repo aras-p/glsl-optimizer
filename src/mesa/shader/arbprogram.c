@@ -985,6 +985,9 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
             return;
       }
+   } else {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
+      return;
    }
 }
 
