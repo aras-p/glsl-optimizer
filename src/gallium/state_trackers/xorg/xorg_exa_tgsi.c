@@ -113,7 +113,7 @@ struct xorg_shader xorg_shader_construct(struct exa_context *exa,
                                        dst_picture);
    struct xorg_shader shader = {0};
 
-   ureg = ureg_create(exa->ctx, TGSI_PROCESSOR_FRAGMENT);
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
       return shader;
 
@@ -154,4 +154,5 @@ struct xorg_shader xorg_shader_construct(struct exa_context *exa,
 
    ureg_END(ureg);
 
+   return shader;
 }
