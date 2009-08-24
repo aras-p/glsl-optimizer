@@ -1749,6 +1749,8 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
+    r700->SPI_VS_OUT_ID_2.u32All  = 0x0b0a0908;
+    r700->SPI_VS_OUT_ID_3.u32All  = 0x0f0e0d0c;
 
     r700->SPI_THREAD_GROUPING.u32All = 0;
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
