@@ -121,13 +121,13 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->pR700Shader->depthIsExported = 1;
 	}
 
-    pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);    
+    pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
     for(ui=0; ui<pAsm->number_of_exports; ui++)
     {
         pAsm->pucOutMask[ui] = 0x0;
     }
-	
-	pAsm->uFirstHelpReg = pAsm->number_used_registers;
+
+    pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
 GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
@@ -258,6 +258,19 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	return GL_TRUE;
 }
 
+void r700SelectFragmentShader(GLcontext *ctx)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+	    (ctx->FragmentProgram._Current);
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+    {
+	    fp->r700AsmCode.bR6xx = 1;
+    }
+
+    r700TranslateFragmentShader(fp, &(fp->mesa_program));
+}
+
 void * r700GetActiveFpShaderBo(GLcontext * ctx)
 {
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
@@ -283,7 +296,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     if(GL_FALSE == fp->loaded)
     {
-        if(fp->r700Shader.bNeedsAssembly == GL_TRUE)
+	    if(fp->r700Shader.bNeedsAssembly == GL_TRUE)
 	    {
 		    Assemble( &(fp->r700Shader) );
 	    }

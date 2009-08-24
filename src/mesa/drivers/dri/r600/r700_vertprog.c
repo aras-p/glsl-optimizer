@@ -296,16 +296,16 @@ void r700SelectVertexShader(GLcontext *ctx)
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vpc
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *vb = &tnl->vb;
+    unsigned int unBit;
+    unsigned int i;
+
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         vpc->r700AsmCode.bR6xx = 1;
     }
-    
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *vb = &tnl->vb;
 
-    unsigned int unBit;
-    unsigned int i;
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
@@ -317,11 +317,9 @@ void r700SelectVertexShader(GLcontext *ctx)
 		}
 	}
 
-    if(GL_FALSE == vpc->translated)
-    {
-        r700TranslateVertexShader(vpc,
-		    					  &(vpc->mesa_program) );
-    }
+	if(GL_FALSE == vpc->translated) {
+		r700TranslateVertexShader(vpc, &(vpc->mesa_program) );
+	}
 }
 
 void * r700GetActiveVpShaderBo(GLcontext * ctx)
@@ -345,17 +343,17 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
     if(GL_FALSE == vp->loaded)
     {
-        if(vp->r700Shader.bNeedsAssembly == GL_TRUE)
+	    if(vp->r700Shader.bNeedsAssembly == GL_TRUE)
 	    {
 		    Assemble( &(vp->r700Shader) );
 	    }
 
         /* Load vp to gpu */
-        r600EmitShader(ctx, 
-                       &(vp->shaderbo), 
+        r600EmitShader(ctx,
+                       &(vp->shaderbo),
                        (GLvoid *)(vp->r700Shader.pProgram),
                        vp->r700Shader.uShaderBinaryDWORDSize,
-                       "VS"); 
+                       "VS");
 
         vp->loaded = GL_TRUE;
     }

@@ -71,65 +71,37 @@ void r700SetDefaultStates(context_t *context) //--------------------
 void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
 {
     context_t *context = R700_CONTEXT(ctx);
-
     GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
     GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
     int i;
 
-    if (ctx->FragmentProgram._Current) {
-	    struct r700_fragment_program *fp = (struct r700_fragment_program *)
-		    (ctx->FragmentProgram._Current);
-	    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-	    {
-		    fp->r700AsmCode.bR6xx = 1;
+    /* should only happenen once, just after context is created */
+    /* TODO: shouldn't we fallback to sw here? */
+    if (!ctx->FragmentProgram._Current) {
+	    _mesa_fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+	    return;
+    }
+
+    r700SelectFragmentShader(ctx);
+
+    if (context->radeon.NewGLState) {
+	    for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+		    /* mat states from state var not array for sw */
+		    dummy_attrib[i].stride = 0;
+	            temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
+		    TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &(dummy_attrib[i]);
 	    }
 
-	    if(GL_FALSE == fp->translated)
-	    {
-		    if( GL_FALSE == r700TranslateFragmentShader(fp, &(fp->mesa_program)) )
-		    {
-			    //return GL_TRUE;
-		    }
+	    _tnl_UpdateFixedFunctionProgram(ctx);
+
+	    for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+		    TNL_CONTEXT(ctx)->vb.AttribPtr[i] = temp_attrib[i];
 	    }
     }
 
-    if (context->radeon.NewGLState) 
-    {
-	struct r700_vertex_program *vp;
-        context->radeon.NewGLState = 0;
-
-        for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
-        {
-            /* mat states from state var not array for sw */
-            dummy_attrib[i].stride = 0;
-
-            temp_attrib[i] = TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-            TNL_CONTEXT(ctx)->vb.AttribPtr[i] = &(dummy_attrib[i]);
-        }
-
-        _tnl_UpdateFixedFunctionProgram(ctx);
-
-        for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
-        {
-            TNL_CONTEXT(ctx)->vb.AttribPtr[i] = temp_attrib[i];
-        }
-
-        r700SelectVertexShader(ctx);
-        vp = (struct r700_vertex_program *)ctx->VertexProgram._Current;
-
-        if (vp->translated == GL_FALSE) 
-        {
-            // TODO
-            //fprintf(stderr, "Failing back to sw-tcl\n");
-            //hw_tcl_on = future_hw_tcl_on = 0;
-            //r300ResetHwState(rmesa);
-            //
-            r700UpdateStateParameters(ctx, _NEW_PROGRAM);
-            return;
-        }
-    }
-
-    r700UpdateStateParameters(ctx, _NEW_PROGRAM);
+    r700SelectVertexShader(ctx);
+    r700UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+    context->radeon.NewGLState = 0;
 }
 
 /*
@@ -176,45 +148,25 @@ void r700UpdateDrawBuffer(GLcontext * ctx) /* TODO */ //---------------------
 	r700SetDepthTarget(context);
 }
 
-static void r700FetchStateParameter(GLcontext * ctx,
-			                        const gl_state_index state[STATE_LENGTH],
-			                        GLfloat * value)
-{
-    /* TODO */
-}
-
 void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state) //--------------------
 {
-	struct r700_fragment_program *fp;
+	struct r700_fragment_program *fp =
+		(struct r700_fragment_program *)ctx->FragmentProgram._Current;
 	struct gl_program_parameter_list *paramList;
-	GLuint i;
 
-	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM)))
+	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS)))
 		return;
 
-	fp = (struct r700_fragment_program *)ctx->FragmentProgram._Current;
-	if (!fp)
-    {
+	if (!ctx->FragmentProgram._Current || !fp)
 		return;
-    }
 
-	paramList = fp->mesa_program.Base.Parameters;
+	paramList = ctx->FragmentProgram._Current->Base.Parameters;
 
 	if (!paramList)
-    {
 		return;
-    }
 
-	for (i = 0; i < paramList->NumParameters; i++) 
-    {
-		if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) 
-        {
-			r700FetchStateParameter(ctx,
-						paramList->Parameters[i].
-						StateIndexes,
-						paramList->ParameterValues[i]);
-		}
-	}
+	_mesa_load_state_parameters(ctx, paramList);
+
 }
 
 /**
