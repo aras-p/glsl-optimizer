@@ -966,18 +966,31 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 {
 	struct radeon_state_atom *atom;
-	int dwords = 0;
+	GLuint dwords = 0;
 	/* check if we are going to emit full state */
+	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_VERBOSE)
+		fprintf(stderr, "%s\n", __func__);
+
 	if (radeon->cmdbuf.cs->cdw && !radeon->hw.all_dirty) {
 		if (!radeon->hw.is_dirty)
 			return dwords;
 		foreach(atom, &radeon->hw.atomlist) {
-			if (atom->dirty)
-				dwords += atom->check(radeon->glCtx, atom);
+			if (atom->dirty) {
+				const GLuint atom_size = atom->check(radeon->glCtx, atom);
+				dwords += atom_size;
+				if (DEBUG_CMDBUF && atom_size) {
+					radeon_print_state_atom(radeon, atom);
+				}
+			}
 		}
 	} else {
 		foreach(atom, &radeon->hw.atomlist) {
-			dwords += atom->check(radeon->glCtx, atom);
+			const GLuint atom_size = atom->check(radeon->glCtx, atom);
+			dwords += atom_size;
+			if (DEBUG_CMDBUF && atom_size) {
+				radeon_print_state_atom(radeon, atom);
+			}
+
 		}
 	}
 	return dwords;
