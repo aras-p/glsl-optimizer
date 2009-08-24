@@ -663,14 +663,14 @@ make_variant_key(struct llvmpipe_context *lp,
 {
    memset(key, 0, sizeof *key);
 
-   memcpy(&key->depth, &lp->depth_stencil->depth, sizeof &key->depth);
+   memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
 
    key->alpha.enabled = lp->depth_stencil->alpha.enabled;
    if(key->alpha.enabled)
       key->alpha.func = lp->depth_stencil->alpha.func;
    /* alpha.ref_value is passed in jit_context */
 
-   memcpy(&key->blend, lp->blend, sizeof &key->blend);
+   memcpy(&key->blend, lp->blend, sizeof key->blend);
 }
 
 
