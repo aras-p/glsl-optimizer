@@ -178,12 +178,13 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                                              width, height);
    }
    else {
-     uint32_t size = width * height * cpp;
+     uint32_t size;
      uint32_t pitch = ((cpp * width + 63) & ~63) / cpp;
 
      fprintf(stderr,"Allocating %d x %d radeon RBO (pitch %d)\n", width,
 	  height, pitch);
 
+     size = pitch * height * cpp;
      rrb->pitch = pitch * cpp;
      rrb->cpp = cpp;
      rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
