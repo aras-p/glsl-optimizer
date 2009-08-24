@@ -340,8 +340,9 @@ out:
 void ureg_release_temporary( struct ureg_program *ureg,
                              struct ureg_dst tmp )
 {
-   if (tmp.Index < UREG_MAX_TEMP)
-      ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
+   if(tmp.File == TGSI_FILE_TEMPORARY)
+      if (tmp.Index < UREG_MAX_TEMP)
+         ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
 }
 
 
