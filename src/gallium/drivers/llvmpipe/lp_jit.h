@@ -69,16 +69,16 @@ struct lp_jit_context
 
 
 #define lp_jit_context_constants(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 0, "context.constants")
+   lp_build_struct_get(_builder, _ptr, 0, "constants")
 
 #define lp_jit_context_samplers(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "context.samplers")
+   lp_build_struct_get(_builder, _ptr, 1, "samplers")
 
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "context.alpha")
+   lp_build_struct_get(_builder, _ptr, 2, "alpha_ref_value")
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 3, "context.blend")
+   lp_build_struct_get(_builder, _ptr, 3, "blend_color")
 
 
 typedef void

@@ -37,6 +37,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 
+#include "lp_bld_debug.h"
 #include "lp_bld_struct.h"
 
 
@@ -47,8 +48,12 @@ lp_build_struct_get(LLVMBuilderRef builder,
                     const char *name)
 {
    LLVMValueRef indices[2];
+   LLVMValueRef member_ptr;
+   LLVMValueRef res;
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indices[1] = LLVMConstInt(LLVMInt32Type(), member, 0);
-   ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
-   return LLVMBuildLoad(builder, ptr, name);
+   member_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
+   res = LLVMBuildLoad(builder, member_ptr, "");
+   lp_build_name(res, "%s.%s", LLVMGetValueName(ptr), name);
+   return res;
 }
