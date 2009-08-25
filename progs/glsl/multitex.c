@@ -331,6 +331,8 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
    SetUniformValues(program, uniforms);
    PrintUniforms(Uniforms);
 
+   assert(ValidateShaderProgram(program));
+
    VertCoord_attr = glGetAttribLocation(program, "VertCoord");
    if (VertCoord_attr > 0) {
       /* We want the VertCoord attrib to have position zero so that
