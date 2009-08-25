@@ -288,6 +288,7 @@ link_uniform_vars(GLcontext *ctx,
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       if (_mesa_is_tex_instruction(inst->Opcode)) {
+         /* here, inst->TexSrcUnit is really the sampler unit */
          const GLint oldSampNum = inst->TexSrcUnit;
 
 #if 0
@@ -295,7 +296,6 @@ link_uniform_vars(GLcontext *ctx,
                 inst->TexSrcUnit, samplerMap[ inst->TexSrcUnit ]);
 #endif
 
-         /* here, texUnit is really samplerUnit */
          if (oldSampNum < Elements(samplerMap)) {
             const GLuint newSampNum = samplerMap[oldSampNum];
             inst->TexSrcUnit = newSampNum;
