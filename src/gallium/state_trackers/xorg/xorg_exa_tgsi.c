@@ -56,6 +56,20 @@ src_in_mask(struct ureg_program *ureg,
             ureg_scalar(mask, TGSI_SWIZZLE_W));
 }
 
+static void *
+create_vs(struct pipe_context *ctx,
+          unsigned vs_traits)
+{
+   return NULL;
+}
+
+static void *
+create_fs(struct pipe_context *ctx,
+          unsigned vs_traits)
+{
+   return NULL;
+}
+
 static struct xorg_shader
 xorg_shader_construct(struct exa_context *exa,
                       int op,
@@ -154,11 +168,46 @@ void xorg_shaders_destroy(struct xorg_shaders *sc)
    free(sc);
 }
 
+static INLINE void *
+shader_from_cache(struct pipe_context *pipe,
+                  unsigned type,
+                  struct cso_hash *hash,
+                  unsigned key)
+{
+   void *shader = 0;
+
+   struct cso_hash_iter iter = cso_hash_find(hash, key);
+
+   if (cso_hash_iter_is_null(iter)) {
+      if (type == PIPE_SHADER_VERTEX)
+         shader = create_vs(pipe, key);
+      else
+         shader = create_fs(pipe, key);
+      cso_hash_insert(hash, key, shader);
+   } else
+      shader = (void *)cso_hash_iter_data(iter);
+
+   return shader;
+}
+
 struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
                                     unsigned vs_traits,
                                     unsigned fs_traits)
 {
    struct xorg_shader shader = {0};
+   void *vs, *fs;
+
+   vs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_VERTEX,
+                          sc->vs_hash, vs_traits);
+   fs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_FRAGMENT,
+                          sc->fs_hash, fs_traits);
+
+   debug_assert(vs && fs);
+   if (!vs || !fs)
+      return shader;
+
+   shader.vs = vs;
+   shader.fs = fs;
 
    return shader;
 }
