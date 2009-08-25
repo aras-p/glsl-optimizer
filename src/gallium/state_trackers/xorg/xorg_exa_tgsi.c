@@ -33,32 +33,11 @@ struct shader_id {
  * IN[2]    = pos mask
  * CONST[0] = (0, 0, 0, 1)
  */
-struct xorg_render_ops_tgsi {
-   int op;
-};
-
 
 static const char over_op[] =
    "SUB TEMP[3], CONST[0].wwww, TEMP[1].wwww\n"
    "MUL TEMP[3], TEMP[0], TEMP[3]\n"
    "ADD TEMP[0], TEMP[3], TEMP[0]\n";
-
-static const struct xorg_render_ops_tgsi ops_map[] = {
-   {PictOpClear},
-   {PictOpSrc},
-   {PictOpDst},
-   {PictOpOver},
-   {PictOpOverReverse},
-   {PictOpIn},
-   {PictOpInReverse},
-   {PictOpOut},
-   {PictOpOutReverse},
-   {PictOpAtop},
-   {PictOpAtopReverse},
-   {PictOpXor},
-   {PictOpAdd},
-   {PictOpSaturate},
-};
 
 
 static INLINE void
