@@ -39,15 +39,19 @@
 
 
 struct tgsi_token;
-struct tgsi_sampler;
 union lp_type;
 struct lp_build_context;
 struct lp_build_mask_context;
 
-void PIPE_CDECL
-lp_build_tgsi_fetch_texel_soa( struct tgsi_sampler **samplers,
-                               uint32_t unit,
-                               float *store );
+
+typedef void
+(*lp_emit_fetch_texel_soa_callback)( LLVMBuilderRef builder,
+                                void *context,
+                                unsigned unit,
+                                unsigned num_coords,
+                                const LLVMValueRef *coords,
+                                LLVMValueRef lodbias,
+                                LLVMValueRef *texel);
 
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
@@ -58,7 +62,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
-                  LLVMValueRef samplers_ptr);
+                  lp_emit_fetch_texel_soa_callback emit_fetch_texel,
+                  void *emit_fetch_texel_context);
 
 
 #endif /* LP_BLD_TGSI_H */

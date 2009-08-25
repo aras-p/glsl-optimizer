@@ -38,7 +38,6 @@
 #include "util/u_memory.h"
 #include "lp_screen.h"
 #include "lp_bld_intr.h"
-#include "lp_bld_tgsi.h" /* for lp_build_tgsi_fetch_texel_soa */
 #include "lp_jit.h"
 
 
@@ -88,7 +87,7 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       fetch_texel = lp_declare_intrinsic(screen->module, "fetch_texel",
                                          ret_type, arg_types, Elements(arg_types));
 
-      LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_build_tgsi_fetch_texel_soa);
+      LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_fetch_texel_soa);
    }
 
 #ifdef DEBUG

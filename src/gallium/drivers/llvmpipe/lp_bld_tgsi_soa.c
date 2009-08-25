@@ -87,15 +87,14 @@ struct lp_build_tgsi_soa_context
    const LLVMValueRef *pos;
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
-   LLVMValueRef samplers_ptr;
+
+   lp_emit_fetch_texel_soa_callback emit_fetch_texel;
+   void *emit_fetch_texel_context;
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
    struct lp_build_mask_context *mask;
-
-   /** Coords/texels store */
-   LLVMValueRef store_ptr;
 };
 
 
@@ -236,52 +235,6 @@ emit_store(
 }
 
 
-void PIPE_CDECL
-lp_build_tgsi_fetch_texel_soa( struct tgsi_sampler **samplers,
-                               uint32_t unit,
-                               float *store )
-{
-   struct tgsi_sampler *sampler = samplers[unit];
-
-#if 0
-   uint j;
-
-   debug_printf("%s sampler: %p (%p) store: %p\n", 
-                __FUNCTION__,
-                sampler, *sampler,
-                store );
-
-   debug_printf("lodbias %f\n", store[12]);
-
-   for (j = 0; j < 4; j++)
-      debug_printf("sample %d texcoord %f %f\n", 
-                   j, 
-                   store[0+j],
-                   store[4+j]);
-#endif
-
-   {
-      float rgba[NUM_CHANNELS][QUAD_SIZE];
-      sampler->get_samples(sampler,
-                           &store[0],
-                           &store[4],
-                           &store[8],
-                           0.0f, /*store[12],  lodbias */
-                           rgba);
-      memcpy(store, rgba, sizeof rgba);
-   }
-
-#if 0
-   for (j = 0; j < 4; j++)
-      debug_printf("sample %d result %f %f %f %f\n", 
-                   j, 
-                   store[0+j],
-                   store[4+j],
-                   store[8+j],
-                   store[12+j]);
-#endif
-}
-
 /**
  * High-level instruction translators.
  */
@@ -292,28 +245,28 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           boolean apply_lodbias,
           boolean projected)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(bld->base.type);
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    LLVMValueRef lodbias;
    LLVMValueRef oow;
-   LLVMValueRef args[3];
-   unsigned count;
+   LLVMValueRef coords[3];
+   LLVMValueRef texel[4];
+   unsigned num_coords;
    unsigned i;
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
-      count = 1;
+      num_coords = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
-      count = 2;
+      num_coords = 2;
       break;
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
-      count = 3;
+      num_coords = 3;
       break;
    default:
       assert(0);
@@ -325,41 +278,22 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    else
       lodbias = bld->base.zero;
 
-   if(!bld->store_ptr)
-      bld->store_ptr = LLVMBuildArrayAlloca(bld->base.builder,
-                                            vec_type,
-                                            LLVMConstInt(LLVMInt32Type(), 4, 0),
-                                            "store");
-
    if (projected) {
       oow = emit_fetch( bld, inst, 0, 3 );
       oow = lp_build_rcp(&bld->base, oow);
    }
 
-   for (i = 0; i < count; i++) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef coord_ptr = LLVMBuildGEP(bld->base.builder, bld->store_ptr, &index, 1, "");
-      LLVMValueRef coord;
-
-      coord = emit_fetch( bld, inst, 0, i );
-
+   for (i = 0; i < num_coords; i++) {
+      coords[i] = emit_fetch( bld, inst, 0, i );
       if (projected)
-         coord = lp_build_mul(&bld->base, coord, oow);
-
-      LLVMBuildStore(bld->base.builder, coord, coord_ptr);
+         coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
 
-   args[0] = bld->samplers_ptr;
-   args[1] = LLVMConstInt(LLVMInt32Type(), unit, 0);
-   args[2] = bld->store_ptr;
-
-   lp_build_intrinsic(bld->base.builder, "fetch_texel", LLVMVoidType(), args, 3);
+   bld->emit_fetch_texel(bld->base.builder, bld->emit_fetch_texel_context,
+                         unit, num_coords, coords, lodbias, texel);
 
    FOR_EACH_DST0_ENABLED_CHANNEL( inst, i ) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef res_ptr = LLVMBuildGEP(bld->base.builder, bld->store_ptr, &index, 1, "");
-      LLVMValueRef res = LLVMBuildLoad(bld->base.builder, res_ptr, "");
-      emit_store( bld, inst, 0, i, res );
+      emit_store( bld, inst, 0, i, texel[i] );
    }
 }
 
@@ -1353,7 +1287,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
-                  LLVMValueRef samplers_ptr)
+                  lp_emit_fetch_texel_soa_callback emit_fetch_texel,
+                  void *emit_fetch_texel_context)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
@@ -1368,7 +1303,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
-   bld.samplers_ptr = samplers_ptr;
+   bld.emit_fetch_texel = emit_fetch_texel;
+   bld.emit_fetch_texel_context = emit_fetch_texel_context;
 
    tgsi_parse_init( &parse, tokens );
 
