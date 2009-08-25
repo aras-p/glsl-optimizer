@@ -140,6 +140,25 @@ LinkShaders(GLuint vertShader, GLuint fragShader)
 }
 
 
+GLboolean
+ValidateShaderProgram(GLuint program)
+{
+   GLint stat;
+   glValidateProgramARB(program);
+   glGetProgramiv(program, GL_VALIDATE_STATUS, &stat);
+
+   if (!stat) {
+      GLchar log[1000];
+      GLsizei len;
+      glGetProgramInfoLog(program, 1000, &len, log);
+      fprintf(stderr, "Program validation error:\n%s\n", log);
+      return 0;
+   }
+
+   return (GLboolean) stat;
+}
+
+
 GLdouble
 GetShaderCompileTime(void)
 {
@@ -170,6 +189,7 @@ SetUniformValues(GLuint program, struct uniform_info uniforms[])
       case GL_SAMPLER_3D:
       case GL_SAMPLER_CUBE:
       case GL_SAMPLER_2D_RECT_ARB:
+         assert(uniforms[i].value[0] >= 0.0F);
          glUniform1i(uniforms[i].location,
                      (GLint) uniforms[i].value[0]);
          break;

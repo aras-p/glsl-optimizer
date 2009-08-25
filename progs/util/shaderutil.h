@@ -36,6 +36,9 @@ CompileShaderFile(GLenum shaderType, const char *filename);
 extern GLuint
 LinkShaders(GLuint vertShader, GLuint fragShader);
 
+extern GLboolean
+ValidateShaderProgram(GLuint program);
+
 extern GLdouble
 GetShaderCompileTime(void);
 
