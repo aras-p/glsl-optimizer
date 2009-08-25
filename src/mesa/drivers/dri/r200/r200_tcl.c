@@ -418,7 +418,7 @@ static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
   }
 
   if (RADEON_DEBUG & DEBUG_PRIMS)
-     fprintf(stderr, "%s space %u, aos %d\n", space_required, AOS_BUFSZ(nr_aos) );
+     fprintf(stderr, "%s space %u, aos %d\n", __func__, space_required, AOS_BUFSZ(nr_aos) );
   /* flush the buffer in case we need more than is left. */
   if (rcommonEnsureCmdBufSpace(&rmesa->radeon, space_required + state_size, __FUNCTION__))
     return space_required + radeonCountStateEmitSize( &rmesa->radeon );
