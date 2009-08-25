@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.6
  *
  * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -86,6 +87,11 @@ _mesa_update_shader_textures_used(struct gl_program *prog);
 extern void
 _mesa_use_program(GLcontext *ctx, GLuint program);
 
+
+extern GLboolean
+_mesa_validate_shader_program(GLcontext *ctx,
+                              const struct gl_shader_program *shProg,
+                              char *errMsg);
 
 extern void
 _mesa_init_glsl_driver_functions(struct dd_function_table *driver);

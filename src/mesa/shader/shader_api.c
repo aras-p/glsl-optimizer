@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.6
  *
  * Copyright (C) 2004-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -1966,19 +1966,74 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 }
 
 
-static void
-_mesa_validate_program(GLcontext *ctx, GLuint program)
+/**
+ * Validate a program's samplers.
+ * Specifically, check that there aren't two samplers of different types
+ * pointing to the same texture unit.
+ * \return GL_TRUE if valid, GL_FALSE if invalid
+ */
+static GLboolean
+validate_samplers(GLcontext *ctx, const struct gl_program *prog, char *errMsg)
 {
-   struct gl_shader_program *shProg;
+   static const char *targetName[] = {
+      "TEXTURE_2D_ARRAY",
+      "TEXTURE_1D_ARRAY",
+      "TEXTURE_CUBE",
+      "TEXTURE_3D",
+      "TEXTURE_RECT",
+      "TEXTURE_2D",
+      "TEXTURE_1D",
+   };
+   GLint targetUsed[MAX_TEXTURE_IMAGE_UNITS];
+   GLbitfield samplersUsed = prog->SamplersUsed;
+   GLuint i;
 
-   shProg = _mesa_lookup_shader_program_err(ctx, program, "glValidateProgram");
-   if (!shProg) {
-      return;
+   assert(Elements(targetName) == NUM_TEXTURE_TARGETS);
+
+   if (samplersUsed == 0x0)
+      return GL_TRUE;
+
+   for (i = 0; i < Elements(targetUsed); i++)
+      targetUsed[i] = -1;
+
+   /* walk over bits which are set in 'samplers' */
+   while (samplersUsed) {
+      GLuint unit;
+      gl_texture_index target;
+      GLint sampler = _mesa_ffs(samplersUsed) - 1;
+      assert(sampler >= 0);
+      assert(sampler < MAX_TEXTURE_IMAGE_UNITS);
+      unit = prog->SamplerUnits[sampler];
+      target = prog->SamplerTargets[sampler];
+      if (targetUsed[unit] != -1 && targetUsed[unit] != target) {
+         _mesa_snprintf(errMsg, 100,
+                       "Texture unit %d is accessed both as %s and %s",
+                       unit, targetName[targetUsed[unit]], targetName[target]);
+         return GL_FALSE;
+      }
+      targetUsed[unit] = target;
+      samplersUsed ^= (1 << sampler);
    }
 
+   return GL_TRUE;
+}
+
+
+/**
+ * Do validation of the given shader program.
+ * \param errMsg  returns error message if validation fails.
+ * \return GL_TRUE if valid, GL_FALSE if invalid (and set errMsg)
+ */
+GLboolean
+_mesa_validate_shader_program(GLcontext *ctx,
+                              const struct gl_shader_program *shProg,
+                              char *errMsg)
+{
+   const struct gl_vertex_program *vp = shProg->VertexProgram;
+   const struct gl_fragment_program *fp = shProg->FragmentProgram;
+
    if (!shProg->LinkStatus) {
-      shProg->Validated = GL_FALSE;
-      return;
+      return GL_FALSE;
    }
 
    /* From the GL spec, a program is invalid if any of these are true:
@@ -1996,7 +2051,44 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
      image units allowed.
    */
 
-   shProg->Validated = GL_TRUE;
+
+   /*
+    * Check: any two active samplers in the current program object are of
+    * different types, but refer to the same texture image unit,
+    */
+   if (vp && !validate_samplers(ctx, &vp->Base, errMsg)) {
+      return GL_FALSE;
+   }
+   if (fp && !validate_samplers(ctx, &fp->Base, errMsg)) {
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Called via glValidateProgram()
+ */
+static void
+_mesa_validate_program(GLcontext *ctx, GLuint program)
+{
+   struct gl_shader_program *shProg;
+   char errMsg[100];
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glValidateProgram");
+   if (!shProg) {
+      return;
+   }
+
+   shProg->Validated = _mesa_validate_shader_program(ctx, shProg, errMsg);
+   if (!shProg->Validated) {
+      /* update info log */
+      if (shProg->InfoLog) {
+         _mesa_free(shProg->InfoLog);
+      }
+      shProg->InfoLog = _mesa_strdup(errMsg);
+   }
 }
 
 
