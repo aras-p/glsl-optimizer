@@ -1595,6 +1595,16 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where)
                      "%s(shader not linked), where");
          return GL_FALSE;
       }
+#if 0 /* not normally enabled */
+      {
+         char errMsg[100];
+         if (!_mesa_validate_shader_program(ctx, ctx->Shader.CurrentProgram,
+                                            errMsg)) {
+            _mesa_warning(ctx, "Shader program %u is invalid: %s",
+                          ctx->Shader.CurrentProgram->Name, errMsg);
+         }
+      }
+#endif
    }
    else {
       if (ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) {
