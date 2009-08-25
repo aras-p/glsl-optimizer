@@ -15,14 +15,13 @@
 #include "tgsi/tgsi_ureg.h"
 
 #include "cso_cache/cso_context.h"
+#include "cso_cache/cso_hash.h"
 
-#define UNSUPPORTED_OP 0
+struct xorg_shaders {
+   struct exa_context *exa;
 
-struct shader_id {
-   int op : 8;
-   int mask : 1;
-   int component_alpha : 1;
-   int is_fill : 1;
+   struct cso_hash *vs_hash;
+   struct cso_hash *fs_hash;
 };
 
 /* SAMP[0]  = dst
@@ -57,40 +56,19 @@ src_in_mask(struct ureg_program *ureg,
             ureg_scalar(mask, TGSI_SWIZZLE_W));
 }
 
-static INLINE
-struct shader_id shader_state(int op,
-                              PicturePtr src_picture,
-                              PicturePtr mask_picture,
-                              PicturePtr dst_picture)
+static struct xorg_shader
+xorg_shader_construct(struct exa_context *exa,
+                      int op,
+                      PicturePtr src_picture,
+                      PicturePtr mask_picture,
+                      PicturePtr dst_picture)
 {
-   struct shader_id sid;
-
-   sid.op = op;
-   sid.mask = (mask_picture != 0);
-   sid.component_alpha = (mask_picture->componentAlpha);
-   sid.is_fill = (src_picture->pSourcePict != 0);
-   if (sid.is_fill) {
-      sid.is_fill =
-         (src_picture->pSourcePict->type == SourcePictTypeSolidFill);
-   }
-
-   return sid;
-}
-
-struct xorg_shader xorg_shader_construct(struct exa_context *exa,
-                                         int op,
-                                         PicturePtr src_picture,
-                                         PicturePtr mask_picture,
-                                         PicturePtr dst_picture)
-{
+   struct xorg_shader shader = {0};
+#if 0
    struct ureg_program *ureg;
    struct ureg_src dst_sampler, src_sampler, mask_sampler;
    struct ureg_src dst_pos, src_pos, mask_pos;
    struct ureg_src src, mask;
-   struct shader_id sid = shader_state(op, src_picture,
-                                       mask_picture,
-                                       dst_picture);
-   struct xorg_shader shader = {0};
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -132,6 +110,55 @@ struct xorg_shader xorg_shader_construct(struct exa_context *exa,
    }
 
    ureg_END(ureg);
+
+#endif
+   return shader;
+}
+
+struct xorg_shaders * xorg_shaders_create(struct exa_context *exa)
+{
+   struct xorg_shaders *sc = CALLOC_STRUCT(xorg_shaders);
+
+   sc->exa = exa;
+   sc->vs_hash = cso_hash_create();
+   sc->fs_hash = cso_hash_create();
+
+   return sc;
+}
+
+static void
+cache_destroy(struct cso_context *cso,
+              struct cso_hash *hash,
+              unsigned processor)
+{
+   struct cso_hash_iter iter = cso_hash_first_node(hash);
+   while (!cso_hash_iter_is_null(iter)) {
+      void *shader = (void *)cso_hash_iter_data(iter);
+      if (processor == PIPE_SHADER_FRAGMENT) {
+         cso_delete_fragment_shader(cso, shader);
+      } else if (processor == PIPE_SHADER_VERTEX) {
+         cso_delete_vertex_shader(cso, shader);
+      }
+      iter = cso_hash_erase(hash, iter);
+   }
+   cso_hash_delete(hash);
+}
+
+void xorg_shaders_destroy(struct xorg_shaders *sc)
+{
+   cache_destroy(sc->exa->cso, sc->vs_hash,
+                 PIPE_SHADER_VERTEX);
+   cache_destroy(sc->exa->cso, sc->fs_hash,
+                 PIPE_SHADER_FRAGMENT);
+
+   free(sc);
+}
+
+struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
+                                    unsigned vs_traits,
+                                    unsigned fs_traits)
+{
+   struct xorg_shader shader = {0};
 
    return shader;
 }
