@@ -821,6 +821,29 @@ _mesa_print_program(const struct gl_program *prog)
 
 
 /**
+ * Return binary representation of value (as a string).
+ * Insert a comma to separate each group of 8 bits.
+ * XXX move to imports.[ch] if useful elsewhere.
+ */
+static const char *
+binary(GLbitfield val)
+{
+   static char buf[50];
+   GLint i, len = 0;
+   for (i = 31; i >= 0; --i) {
+      if (val & (1 << i))
+         buf[len++] = '1';
+      else if (len > 0 || i == 0)
+         buf[len++] = '0';
+      if (len > 0 && ((i-1) % 8) == 7)
+         buf[len++] = ',';
+   }
+   buf[len] = '\0';
+   return buf;
+}
+
+
+/**
  * Print all of a program's parameters/fields to given file.
  */
 static void
@@ -830,13 +853,17 @@ _mesa_fprint_program_parameters(FILE *f,
 {
    GLuint i;
 
-   _mesa_fprintf(f, "InputsRead: 0x%x\n", prog->InputsRead);
-   _mesa_fprintf(f, "OutputsWritten: 0x%x\n", prog->OutputsWritten);
+   _mesa_fprintf(f, "InputsRead: 0x%x (0b%s)\n",
+                 prog->InputsRead, binary(prog->InputsRead));
+   _mesa_fprintf(f, "OutputsWritten: 0x%x (0b%s)\n",
+                 prog->OutputsWritten, binary(prog->OutputsWritten));
    _mesa_fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
    _mesa_fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
    _mesa_fprintf(f, "NumParameters=%d\n", prog->NumParameters);
    _mesa_fprintf(f, "NumAttributes=%d\n", prog->NumAttributes);
    _mesa_fprintf(f, "NumAddressRegs=%d\n", prog->NumAddressRegs);
+   _mesa_fprintf(f, "SamplersUsed: 0x%x (0b%s)\n",
+                 prog->SamplersUsed, binary(prog->SamplersUsed));
    _mesa_fprintf(f, "Samplers=[ ");
    for (i = 0; i < MAX_SAMPLERS; i++) {
       _mesa_fprintf(f, "%d ", prog->SamplerUnits[i]);
