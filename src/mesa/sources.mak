@@ -371,5 +371,4 @@ INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary
