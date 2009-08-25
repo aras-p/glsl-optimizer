@@ -304,6 +304,7 @@ static int r600_cs_set_age(struct radeon_cs *cs) /* -------------- */
     return 0;
 }
 
+#if 0
 static void dump_cmdbuf(struct radeon_cs *cs)
 {
 	int i;
@@ -314,6 +315,7 @@ static void dump_cmdbuf(struct radeon_cs *cs)
 	fprintf(stderr,"--end--\n");
 
 }
+#endif
 
 static int r600_cs_emit(struct radeon_cs *cs)
 {

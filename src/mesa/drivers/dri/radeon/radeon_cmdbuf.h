@@ -54,11 +54,12 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
  */
 #define OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) 	\
 	do { 							\
-        if (0 && offset) {					\
+	int  __offset = (offset);				\
+        if (0 && __offset) {					\
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",		\
-            __FILE__, __FUNCTION__, __LINE__, offset);		\
+            __FILE__, __FUNCTION__, __LINE__, __offset);	\
         }							\
-        radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, offset);	\
+        radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, __offset);	\
         radeon_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
                               bo, rd, wd, flags);		\
 	if (!b_l_rmesa->radeonScreen->kernel_mm) 		\

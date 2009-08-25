@@ -333,7 +333,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		foreach(dma_bo, &rmesa->dma.reserved)
 			++reserved;
 
-		fprintf(stderr, "%s: free %u, wait %u, reserved %u, minimum_size: %u\n", 
+		fprintf(stderr, "%s: free %zu, wait %zu, reserved %zu, minimum_size: %zu\n",
 		      __FUNCTION__, free, wait, reserved, rmesa->dma.minimum_size);
 	}
 

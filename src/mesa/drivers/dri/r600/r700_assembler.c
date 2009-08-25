@@ -2132,7 +2132,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                         alu_instruction_ptr->m_Word1_OP2.f6.write_mask = pAsm->D.dst.writew; 
                         break;
                     default: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = SQ_SEL_MASK; 
+                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = 1; //SQ_SEL_MASK;
                         break;
                 }            
                 alu_instruction_ptr->m_Word1_OP2.f6.omod               = SQ_ALU_OMOD_OFF;
@@ -2161,7 +2161,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                         alu_instruction_ptr->m_Word1_OP2.f.write_mask = pAsm->D.dst.writew; 
                         break;
                     default: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = SQ_SEL_MASK; 
+                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = 1; //SQ_SEL_MASK;
                         break;
                 }            
                 alu_instruction_ptr->m_Word1_OP2.f.omod               = SQ_ALU_OMOD_OFF;
