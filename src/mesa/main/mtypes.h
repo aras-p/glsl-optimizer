@@ -1799,7 +1799,7 @@ struct gl_program
    /** Map from sampler unit to texture unit (set by glUniform1i()) */
    GLubyte SamplerUnits[MAX_SAMPLERS];
    /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
-   GLubyte SamplerTargets[MAX_SAMPLERS];
+   gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
    /** Logical counts */
    /*@{*/
