@@ -322,7 +322,7 @@ extern __thread struct _glapi_table * _glapi_tls_Dispatch
 #elif !defined(GL_CALL)
 # if defined(THREADS)
 #  define GET_DISPATCH() \
-   ((__builtin_expect(_glapi_SingleThreaded, 1)) \
+   ((__builtin_expect( _glapi_Dispatch != NULL, 1 )) \
        ? _glapi_Dispatch : _glapi_get_dispatch())
 # else
 #  define GET_DISPATCH() _glapi_Dispatch
