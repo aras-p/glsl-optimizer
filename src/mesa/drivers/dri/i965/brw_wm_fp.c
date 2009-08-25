@@ -199,6 +199,9 @@ static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
 {
    struct prog_instruction *inst = get_fp_inst(c);
       
+   assert(tex_src_unit < BRW_MAX_TEX_UNIT);
+   assert(tex_src_target < NUM_TEXTURE_TARGETS);
+
    memset(inst, 0, sizeof(*inst));
 
    inst->Opcode = op;
@@ -683,6 +686,8 @@ static void precalc_tex( struct brw_wm_compile *c,
    struct prog_dst_register tmpcoord;
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
+   assert(unit < BRW_MAX_TEX_UNIT);
+
    if (inst->TexSrcTarget == TEXTURE_CUBE_INDEX) {
        struct prog_instruction *out;
        struct prog_dst_register tmp0 = get_temp(c);
@@ -1152,6 +1157,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       case OPCODE_TXB:
 	 out = emit_insn(c, inst);
 	 out->TexSrcUnit = fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+         assert(out->TexSrcUnit < BRW_MAX_TEX_UNIT);
 	 break;
 
       case OPCODE_XPD: 

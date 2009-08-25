@@ -2627,6 +2627,8 @@ static void emit_txb(struct brw_wm_compile *c,
     GLuint i;
     GLuint msg_type;
 
+    assert(unit < BRW_MAX_TEX_UNIT);
+
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
 
     for (i = 0; i < 4; i++) 
@@ -2689,6 +2691,8 @@ static void emit_tex(struct brw_wm_compile *c,
     GLuint emit;
     GLboolean shadow = (c->key.shadowtex_mask & (1<<unit)) ? 1 : 0;
     GLuint msg_type;
+
+    assert(unit < BRW_MAX_TEX_UNIT);
 
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
 
