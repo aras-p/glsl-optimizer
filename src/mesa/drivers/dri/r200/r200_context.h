@@ -467,6 +467,15 @@ struct r200_texture_state {
 #define PRF_STATE_SIZE    3
 
 
+#define SCI_CMD_0         0
+#define SCI_RE_AUX        1
+#define SCI_CMD_1         2
+#define SCI_XY_1          3
+#define SCI_CMD_2         4
+#define SCI_XY_2          5
+#define SCI_STATE_SIZE    6
+
+
 struct r200_hw_state {
    /* Hardware state, stored as cmdbuf commands:  
     *   -- Need to doublebuffer for
@@ -475,6 +484,7 @@ struct r200_hw_state {
     */
    struct radeon_state_atom ctx;
    struct radeon_state_atom set;
+   struct radeon_state_atom sci;
    struct radeon_state_atom vte;
    struct radeon_state_atom lin;
    struct radeon_state_atom msk;

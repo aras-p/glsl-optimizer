@@ -49,6 +49,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* The state atoms will be emitted in the order they appear in the atom list,
  * so this step is important.
  */
+#define insert_at_tail_if(atom_list, atom) \
+   do { \
+      struct radeon_state_atom* __atom = (atom); \
+      if (__atom->check) \
+	 insert_at_tail((atom_list), __atom); \
+   } while(0)
+
 void r200SetUpAtomList( r200ContextPtr rmesa )
 {
    int i, mtu;
@@ -58,86 +65,52 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
    make_empty_list(&rmesa->radeon.hw.atomlist);
    rmesa->radeon.hw.atomlist.name = "atom-list";
 
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ctx );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.set );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.lin );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msk );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpt );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vtx );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vap );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vte );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msc );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.cst );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.zbs );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcl );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msl );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcg );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.grd );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.fog );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tam );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tf );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.atf );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.ctx );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.set );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.lin );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.msk );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpt );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vtx );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vap );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vte );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.msc );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.cst );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.zbs );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcl );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.msl );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcg );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.grd );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.fog );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.tam );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.tf );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.atf );
    for (i = 0; i < mtu; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tex[i] );
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.tex[i] );
    for (i = 0; i < mtu; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.cube[i] );
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.cube[i] );
    for (i = 0; i < 6; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.pix[i] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[0] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[1] );
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.pix[i] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[0] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[1] );
    for (i = 0; i < 8; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i] );
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.mat[i] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.eye );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.glt );
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.mat[i] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.eye );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.glt );
    for (i = 0; i < 2; ++i)
-      insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.mtl[i] );
+      insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.mtl[i] );
    for (i = 0; i < 6; ++i)
-       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ucp[i] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.spr );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ptp );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.prf );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.pvs );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[0] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[1] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[0] );
-   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[1] );
-}
-
-static void r200EmitScissor(r200ContextPtr rmesa)
-{
-    unsigned x1, y1, x2, y2;
-    struct radeon_renderbuffer *rrb;
-    BATCH_LOCALS(&rmesa->radeon);
-    if (!rmesa->radeon.radeonScreen->kernel_mm) {
-       return;
-    }
-    rrb = radeon_get_colorbuffer(&rmesa->radeon);
-    if (!rrb || !rrb->bo)
-	return;
-
-    if (rmesa->radeon.state.scissor.enabled) {
-	x1 = rmesa->radeon.state.scissor.rect.x1;
-	y1 = rmesa->radeon.state.scissor.rect.y1;
-	x2 = rmesa->radeon.state.scissor.rect.x2 - 1;
-	y2 = rmesa->radeon.state.scissor.rect.y2 - 1;
-    } else {
-        x1 = 0;
-        y1 = 0;
-        x2 = rrb->base.Width - 1;
-        y2 = rrb->base.Height - 1;
-    }
-    BEGIN_BATCH(8);
-    OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
-    OUT_BATCH(R200_SCISSOR_ENABLE | rmesa->hw.set.cmd[SET_RE_CNTL]);
-    OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
-    OUT_BATCH(0);
-    OUT_BATCH(CP_PACKET0(R200_RE_TOP_LEFT, 0));
-    OUT_BATCH((y1 << 16) | x1);
-    OUT_BATCH(CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0));
-    OUT_BATCH((y2 << 16) | x2);
-    END_BATCH();
+       insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.ucp[i] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.spr );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.ptp );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.prf );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.pvs );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[0] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[1] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[0] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[1] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.sci );
 }
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
@@ -156,7 +129,6 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
       fprintf(stderr, "%s cmd_used/4: %d prim %x nr %d\n", __FUNCTION__,
 	      rmesa->store.cmd_used/4, primitive, vertex_nr);
-   r200EmitScissor(rmesa);
  
    BEGIN_BATCH(3);
    OUT_BATCH_PACKET3_CLIP(R200_CP_CMD_3D_DRAW_VBUF_2, 0);
@@ -170,7 +142,6 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (vertex_count > 0) {
-        r200EmitScissor(rmesa);
 		BEGIN_BATCH(8+2);
 		OUT_BATCH_PACKET3_CLIP(R200_CP_CMD_3D_DRAW_INDX_2, 0);
 		OUT_BATCH(R200_VF_PRIM_WALK_IND |

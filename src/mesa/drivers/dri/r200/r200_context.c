@@ -270,6 +270,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
    radeon->vtbl.swtcl_flush = r200_swtcl_flush;
    radeon->vtbl.fallback = r200Fallback;
+   radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
 }
 
 

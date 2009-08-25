@@ -98,6 +98,16 @@ do {								\
    rmesa->radeon.hw.is_dirty = GL_TRUE;				\
 } while (0)
 
+#define R200_SET_STATE( rmesa, ATOM, index, newvalue ) 	\
+  do {	\
+    uint32_t __index = (index); \
+    uint32_t __dword = (newvalue); \
+    if (__dword != (rmesa)->hw.ATOM.cmd[__index]) { \
+      R200_STATECHANGE( (rmesa), ATOM ); \
+      (rmesa)->hw.ATOM.cmd[__index] = __dword; \
+    } \
+  } while(0)
+
 #define R200_DB_STATE( ATOM )			        \
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)

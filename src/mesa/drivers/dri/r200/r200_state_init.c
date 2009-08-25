@@ -340,6 +340,15 @@ VP_CHECK( tcl_vpp_size_add4, ctx->VertexProgram.Current->Base.NumNativeParameter
     OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_SCALAR_DATA_REG, h.scalars.count - 1));	\
     OUT_BATCH_TABLE((data), h.scalars.count);				\
   } while(0)
+static int check_rrb(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   struct radeon_renderbuffer *rrb;
+   rrb = radeon_get_colorbuffer(&r200->radeon);
+   if (!rrb || !rrb->bo)
+      return 0;
+   return atom->cmd_size;
+}
 
 static void mtl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
@@ -792,9 +801,13 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.idx = IDX;					\
-      rmesa->hw.ATOM.check = check_##CHK;			\
+      if (check_##CHK != check_never) {				\
+         rmesa->hw.ATOM.check = check_##CHK;			\
+         rmesa->radeon.hw.max_state_size += SZ * sizeof(int);	\
+      } else {							\
+         rmesa->hw.ATOM.check = NULL;				\
+      }								\
       rmesa->hw.ATOM.dirty = GL_FALSE;				\
-      rmesa->radeon.hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
 
 
@@ -955,6 +968,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( lit[5], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-5", 5 );
       ALLOC_STATE( lit[6], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-6", 6 );
       ALLOC_STATE( lit[7], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-7", 7 );
+      ALLOC_STATE( sci, rrb, SCI_STATE_SIZE, "SCI/scissor", 0 );
    } else {
       ALLOC_STATE( mtl[0], tcl_lighting, MTL_STATE_SIZE, "MTL0/material0", 0 );
       ALLOC_STATE( mtl[1], tcl_lighting, MTL_STATE_SIZE, "MTL1/material1", 1 );
@@ -985,6 +999,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( lit[5], tcl_light, LIT_STATE_SIZE, "LIT/light-5", 5 );
       ALLOC_STATE( lit[6], tcl_light, LIT_STATE_SIZE, "LIT/light-6", 6 );
       ALLOC_STATE( lit[7], tcl_light, LIT_STATE_SIZE, "LIT/light-7", 7 );
+      ALLOC_STATE( sci, never, SCI_STATE_SIZE, "SCI/scissor", 0 );
    }
    ALLOC_STATE( pix[0], pix_zero, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
    ALLOC_STATE( pix[1], texenv, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
@@ -1095,6 +1110,11 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.vte.cmd[VTE_CMD_0] = cmdpkt(rmesa, R200_EMIT_VTE_CNTL);
    rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TRI_PERF_CNTL);
    rmesa->hw.spr.cmd[SPR_CMD_0] = cmdpkt(rmesa, R200_EMIT_TCL_POINT_SPRITE_CNTL);
+
+   rmesa->hw.sci.cmd[SCI_CMD_0] = CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0);
+   rmesa->hw.sci.cmd[SCI_CMD_1] = CP_PACKET0(R200_RE_TOP_LEFT, 0);
+   rmesa->hw.sci.cmd[SCI_CMD_2] = CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0);
+
    if (rmesa->radeon.radeonScreen->kernel_mm) {
         rmesa->hw.mtl[0].emit = mtl_emit;
         rmesa->hw.mtl[1].emit = mtl_emit;

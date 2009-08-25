@@ -413,7 +413,6 @@ static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
       else
 	space_required += index + elts;
       space_required += AOS_BUFSZ(nr_aos);
-      space_required += SCISSOR_BUFSZ;
     }
   }
 

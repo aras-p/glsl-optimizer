@@ -148,6 +148,9 @@ void radeonRecalcScissorRects(radeonContextPtr radeon)
 			out++;
 		}
 	}
+
+	if (radeon->vtbl.update_scissor)
+	   radeon->vtbl.update_scissor(radeon->glCtx);
 }
 
 void radeon_get_cliprects(radeonContextPtr radeon,

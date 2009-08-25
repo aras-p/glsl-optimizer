@@ -1650,6 +1650,30 @@ void r200UpdateWindow( GLcontext *ctx )
    rmesa->hw.vpt.cmd[VPT_SE_VPORT_ZOFFSET] = tz.ui32;
 }
 
+void r200_vtbl_update_scissor( GLcontext *ctx )
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   unsigned x1, y1, x2, y2;
+   struct radeon_renderbuffer *rrb;
+
+   R200_SET_STATE(r200, set, SET_RE_CNTL, R200_SCISSOR_ENABLE | r200->hw.set.cmd[SET_RE_CNTL]);
+
+   if (r200->radeon.state.scissor.enabled) {
+      x1 = r200->radeon.state.scissor.rect.x1;
+      y1 = r200->radeon.state.scissor.rect.y1;
+      x2 = r200->radeon.state.scissor.rect.x2 - 1;
+      y2 = r200->radeon.state.scissor.rect.y2 - 1;
+   } else {
+      rrb = radeon_get_colorbuffer(&r200->radeon);
+      x1 = 0;
+      y1 = 0;
+      x2 = rrb->base.Width - 1;
+      y2 = rrb->base.Height - 1;
+   }
+
+   R200_SET_STATE(r200, sci, SCI_XY_1, x1 | (y1 << 16));
+   R200_SET_STATE(r200, sci, SCI_XY_2, x2 | (y2 << 16));
+}
 
 
 static void r200Viewport( GLcontext *ctx, GLint x, GLint y,

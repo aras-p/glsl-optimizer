@@ -548,6 +548,7 @@ struct radeon_context {
 	   void (*fallback)(GLcontext *ctx, GLuint bit, GLboolean mode);
 	   void (*free_context)(GLcontext *ctx);
 	   void (*emit_query_finish)(radeonContextPtr radeon);
+	   void (*update_scissor)(GLcontext *ctx);
    } vtbl;
 };
 
