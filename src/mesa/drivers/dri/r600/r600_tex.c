@@ -167,9 +167,9 @@ static void r600SetTexDefaultState(radeonTexObjPtr t)
 }
 
 
+#if 0
 static GLuint aniso_filter(GLfloat anisotropy)
 {
-#if 0
 	if (anisotropy >= 16.0) {
 		return R300_TX_MAX_ANISO_16_TO_1;
 	} else if (anisotropy >= 8.0) {
@@ -181,9 +181,9 @@ static GLuint aniso_filter(GLfloat anisotropy)
 	} else {
 		return R300_TX_MAX_ANISO_1_TO_1;
 	}
-#endif
 	return 0;
 }
+#endif
 
 /**
  * Set the texture magnification and minification modes.

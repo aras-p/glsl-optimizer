@@ -113,7 +113,7 @@ void radeonSetUpAtomList( r100ContextPtr rmesa )
    insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.glt);
 }
 
-void radeonEmitScissor(r100ContextPtr rmesa)
+static void radeonEmitScissor(r100ContextPtr rmesa)
 {
     BATCH_LOCALS(&rmesa->radeon);
     if (!rmesa->radeon.radeonScreen->kernel_mm) {

@@ -259,7 +259,7 @@ radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
   struct drm_radeon_info info = { 0 };
 
   if (sPriv->drm_version.major >= 2) {
-      info.value = (uint64_t)value;
+      info.value = (uint64_t)(uintptr_t)value;
       switch (param) {
       case RADEON_PARAM_DEVICE_ID:
           info.request = RADEON_INFO_DEVICE_ID;
@@ -1604,28 +1604,6 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
     _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
-/**
- * Choose the appropriate CreateContext function based on the chipset.
- * Eventually, all drivers will go through this process.
- */
-static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
-				     __DRIcontextPrivate * driContextPriv,
-				     void *sharedContextPriv)
-{
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-	if (IS_R300_CLASS(screen))
-		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-
-#if !RADEON_COMMON
-	(void)screen;
-	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
-#endif
-	return GL_FALSE;
-}
-
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
@@ -1824,8 +1802,11 @@ const struct __DriverAPIRec driDriverAPI = {
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
    .CreateContext   = r600CreateContext,
    .DestroyContext  = radeonDestroyContext,
+#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+   .CreateContext   = r300CreateContext,
+   .DestroyContext  = radeonDestroyContext,
 #else
-   .CreateContext   = radeonCreateContext,
+   .CreateContext   = r100CreateContext,
    .DestroyContext  = radeonDestroyContext,
 #endif
    .CreateBuffer    = radeonCreateBuffer,

@@ -91,6 +91,7 @@ static struct prog_dst_register dstreg(int file, int index)
 	dst.Index = index;
 	dst.WriteMask = WRITEMASK_XYZW;
 	dst.CondMask = COND_TR;
+	dst.RelAddr = 0;
 	dst.CondSwizzle = SWIZZLE_NOOP;
 	dst.CondSrc = 0;
 	dst.pad = 0;
@@ -99,10 +100,11 @@ static struct prog_dst_register dstreg(int file, int index)
 
 static struct prog_dst_register dstregtmpmask(int index, int mask)
 {
-	struct prog_dst_register dst;
+	struct prog_dst_register dst = {0};
 	dst.File = PROGRAM_TEMPORARY;
 	dst.Index = index;
 	dst.WriteMask = mask;
+	dst.RelAddr = 0;
 	dst.CondMask = COND_TR;
 	dst.CondSwizzle = SWIZZLE_NOOP;
 	dst.CondSrc = 0;

@@ -75,7 +75,7 @@ void DumpHwBinary(int type, void *addr, int size)
     {
         DEBUGP("0x%08x,\t", *pHw);
         if (i%4 == 3)
-            DEBUGP("\n", *pHw);
+            DEBUGP("0x%08x\n", *pHw);
         pHw++;
 
     }

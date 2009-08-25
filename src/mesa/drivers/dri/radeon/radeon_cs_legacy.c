@@ -317,7 +317,7 @@ static int cs_emit(struct radeon_cs *cs)
     if ((!IS_R300_CLASS(csm->ctx->radeonScreen)) &&
         (!IS_R600_CLASS(csm->ctx->radeonScreen))) { /* +r6/r7 : No irq for r6/r7 yet. */
 	drm_radeon_irq_emit_t emit_cmd;
-	emit_cmd.irq_seq = &csm->pending_age;
+	emit_cmd.irq_seq = (int*)&csm->pending_age;
 	r = drmCommandWrite(cs->csm->fd, DRM_RADEON_IRQ_EMIT, &emit_cmd, sizeof(emit_cmd));
 	if (r) {
 		return r;

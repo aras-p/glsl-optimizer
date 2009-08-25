@@ -202,6 +202,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.swtcl_flush = r100_swtcl_flush;
    radeon->vtbl.pre_emit_state = r100_vtbl_pre_emit_state;
    radeon->vtbl.fallback = radeonFallback;
+   radeon->vtbl.free_context = r100_vtbl_free_context;
 }
 
 /* Create the device specific context.

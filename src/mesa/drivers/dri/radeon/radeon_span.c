@@ -55,6 +55,7 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 /* r200 depth buffer is always tiled - this is the formula
    according to the docs unless I typo'ed in it
 */
+#if defined(RADEON_COMMON_FOR_R200)
 static GLubyte *r200_depth_2byte(const struct radeon_renderbuffer * rrb,
 				 GLint x, GLint y)
 {
@@ -103,6 +104,7 @@ static GLubyte *r200_depth_4byte(const struct radeon_renderbuffer * rrb,
     }
     return &ptr[offset];
 }
+#endif
 
 /* radeon tiling on r300-r500 has 4 states,
    macro-linear/micro-linear

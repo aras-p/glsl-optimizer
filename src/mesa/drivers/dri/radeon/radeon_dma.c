@@ -173,6 +173,7 @@ void radeon_init_dma(radeonContextPtr rmesa)
 
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
+	struct radeon_dma_bo *dma_bo = NULL;
 	/* we set minimum sizes to at least requested size
 	   aligned to next 16 bytes. */
 	if (size > rmesa->dma.minimum_size)
@@ -191,7 +192,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 
 	if (is_empty_list(&rmesa->dma.free)
 	      || last_elem(&rmesa->dma.free)->bo->size < size) {
-		struct radeon_dma_bo *dma_bo = CALLOC(sizeof(struct radeon_dma_bo));
+		dma_bo = CALLOC_STRUCT(radeon_dma_bo);
 		assert(dma_bo);
 
 again_alloc:
@@ -208,7 +209,7 @@ again_alloc:
 		/* We push and pop buffers from end of list so we can keep
 		   counter on unused buffers for later freeing them from
 		   begin of list */
-		struct radeon_dma_bo *dma_bo = last_elem(&rmesa->dma.free);
+		dma_bo = last_elem(&rmesa->dma.free);
 		assert(dma_bo->bo->cref == 1);
 		remove_from_list(dma_bo);
 		insert_at_head(&rmesa->dma.reserved, dma_bo);
@@ -265,7 +266,7 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 
 void radeonFreeDmaRegions(radeonContextPtr rmesa)
 {
-	struct radeon_dma_bo *dma_bo;
+	struct radeon_dma_bo *dma_bo = CALLOC_STRUCT(radeon_dma_bo);
 	struct radeon_dma_bo *temp;
 	if (RADEON_DEBUG & DEBUG_DMA)
 		fprintf(stderr, "%s\n", __FUNCTION__);

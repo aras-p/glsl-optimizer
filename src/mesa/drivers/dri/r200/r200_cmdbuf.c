@@ -105,7 +105,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
    insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[1] );
 }
 
-void r200EmitScissor(r200ContextPtr rmesa)
+static void r200EmitScissor(r200ContextPtr rmesa)
 {
     unsigned x1, y1, x2, y2;
     struct radeon_renderbuffer *rrb;
@@ -234,7 +234,6 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 				    GLuint min_nr )
 {
    GLushort *retval;
-   int ret;
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %d prim %x\n", __FUNCTION__, min_nr, primitive);
