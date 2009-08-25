@@ -44,7 +44,7 @@ else:
 opts = Variables('config.py')
 common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
-                     ['mesa', 'python']))
+                     ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell', 'trace', 'r300', 'identity']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
