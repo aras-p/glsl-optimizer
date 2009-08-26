@@ -1601,6 +1601,8 @@
 #       define RADEON_STENCIL_VALUE_MASK      (0xff << 16)
 #       define RADEON_STENCIL_WRITEMASK_SHIFT 24
 #       define RADEON_STENCIL_WRITE_MASK      (0xff << 24)
+#define RADEON_RB3D_ZPASS_DATA              0x3290
+#define RADEON_RB3D_ZPASS_ADDR              0x3294
 #define RADEON_RB3D_ZSTENCILCNTL            0x1c2c
 #       define RADEON_DEPTH_FORMAT_MASK          (0xf << 0)
 #       define RADEON_DEPTH_FORMAT_16BIT_INT_Z   (0  <<  0)

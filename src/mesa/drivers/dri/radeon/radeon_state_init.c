@@ -1143,6 +1143,12 @@ void radeonInitState( r100ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
    
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+      radeon_init_query_stateobj(&rmesa->radeon, R100_QUERYOBJ_CMDSIZE);
+      rmesa->radeon.query.queryobj.cmd[R100_QUERYOBJ_CMD_0] = CP_PACKET0(RADEON_RB3D_ZPASS_DATA, 0);
+      rmesa->radeon.query.queryobj.cmd[R100_QUERYOBJ_DATA_0] = 0;
+   }
+     
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 
    rcommonInitCmdBuf(&rmesa->radeon);

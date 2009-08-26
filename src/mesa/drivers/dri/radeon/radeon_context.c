@@ -62,7 +62,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_tcl.h"
 #include "radeon_maos.h"
+#include "radeon_queryobj.h"
 
+#define need_GL_ARB_occlusion_query
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
@@ -80,6 +82,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
     { "GL_ARB_texture_border_clamp",       NULL },
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_env_combine",        NULL },
@@ -194,6 +197,20 @@ static void r100_vtbl_free_context(GLcontext *ctx)
    _mesa_vector4f_free( &rmesa->tcl.ObjClean );
 }
 
+static void r100_emit_query_finish(radeonContextPtr radeon)
+{
+   BATCH_LOCALS(radeon);
+   struct radeon_query_object *query = radeon->query.current;
+
+   BEGIN_BATCH_NO_AUTOSTATE(4);
+   OUT_BATCH(CP_PACKET0(RADEON_RB3D_ZPASS_ADDR, 0));
+   OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+   END_BATCH();
+   query->curr_offset += sizeof(uint32_t);
+   assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+   query->emitted_begin = GL_FALSE;
+}
+
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
@@ -203,6 +220,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.pre_emit_state = r100_vtbl_pre_emit_state;
    radeon->vtbl.fallback = radeonFallback;
    radeon->vtbl.free_context = r100_vtbl_free_context;
+   radeon->vtbl.emit_query_finish = r100_emit_query_finish;
 }
 
 /* Create the device specific context.
@@ -368,6 +386,9 @@ r100CreateContext( const __GLcontextModes *glVisual,
 
    if (rmesa->radeon.radeonScreen->kernel_mm || rmesa->radeon.dri.drmMinor >= 9)
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
+
+   if (!rmesa->radeon.radeonScreen->kernel_mm)
+      _mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);

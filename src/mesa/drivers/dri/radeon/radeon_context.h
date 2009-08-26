@@ -295,6 +295,10 @@ struct radeon_texture_state {
 #define SHN_SHININESS      1
 #define SHN_STATE_SIZE     2
 
+#define R100_QUERYOBJ_CMD_0  0
+#define R100_QUERYOBJ_DATA_0 1
+#define R100_QUERYOBJ_CMDSIZE  2
+
 struct r100_hw_state {
 	/* Hardware state, stored as cmdbuf commands:  
 	 *   -- Need to doublebuffer for
