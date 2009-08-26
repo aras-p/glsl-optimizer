@@ -277,6 +277,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
     */
    _mesa_init_driver_functions( &functions );
    radeonInitTextureFuncs( &functions );
+   radeonInitQueryObjFunctions(&functions);
 
    if (!radeonInitContext(&rmesa->radeon, &functions,
 			  glVisual, driContextPriv,

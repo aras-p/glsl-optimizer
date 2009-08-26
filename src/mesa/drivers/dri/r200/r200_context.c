@@ -347,6 +347,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitStateFuncs(&functions);
    r200InitTextureFuncs(&functions);
    r200InitShaderFuncs(&functions); 
+   radeonInitQueryObjFunctions(&functions);
 
    if (!radeonInitContext(&rmesa->radeon, &functions,
 			  glVisual, driContextPriv,

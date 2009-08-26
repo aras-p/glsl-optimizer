@@ -44,6 +44,7 @@
 #include "radeon_tcl.h"
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
+#include "radeon_queryobj.h"
 
 #include "../r200/r200_reg.h"
 
