@@ -37,6 +37,7 @@ DEMO_SOURCES = \
 	pointcoord.c \
 	points.c \
 	samplers.c \
+	samplers_array.c \
 	shadow_sampler.c \
 	shtest.c \
 	skinning.c \
@@ -78,6 +79,9 @@ clean:
 
 
 ##### Extra dependencies
+
+samplers_array.o: samplers.c
+	$(APP_CC) $(CFLAGS) -DSAMPLERS_ARRAY $< -c -o $@
 
 extfuncs.h: $(TOP)/progs/util/extfuncs.h
 	cp $< .

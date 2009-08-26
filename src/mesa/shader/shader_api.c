@@ -1632,7 +1632,6 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 
    if (param->Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
-      GLuint texUnit, sampler;
       GLint i;
 
       /* data type for setting samplers must be int */
@@ -1647,8 +1646,9 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
        * common thing...
        */
       for (i = 0; i < count; i++) {
-         sampler = (GLuint) program->Parameters->ParameterValues[index + i][0];
-         texUnit = ((GLuint *) values)[i];
+         GLuint sampler =
+            (GLuint) program->Parameters->ParameterValues[index + offset + i][0];
+         GLuint texUnit = ((GLuint *) values)[i];
 
          /* check that the sampler (tex unit index) is legal */
          if (texUnit >= ctx->Const.MaxTextureImageUnits) {
@@ -1659,6 +1659,10 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 
          /* This maps a sampler to a texture unit: */
          if (sampler < MAX_SAMPLERS) {
+#if 0
+            _mesa_printf("Set program %p sampler %d '%s' to unit %u\n",
+                         program, sampler, param->Name, texUnit);
+#endif
             program->SamplerUnits[sampler] = texUnit;
          }
       }
