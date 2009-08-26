@@ -211,10 +211,18 @@ InitTextures(void)
       for (y = 0; y < stripeSize; y++) {
          for (x = 0; x < size; x++) {
             GLint k = 4 * ((ypos + y) * size + x);
-            texImage[k + 0] = intensity;
-            texImage[k + 1] = intensity;
-            texImage[k + 2] = 0;
-            texImage[k + 3] = 255;
+            if (x < size / 2) {
+               texImage[k + 0] = intensity;
+               texImage[k + 1] = intensity;
+               texImage[k + 2] = 0;
+               texImage[k + 3] = 255;
+            }
+            else {
+               texImage[k + 0] = 255 - intensity;
+               texImage[k + 1] = 0;
+               texImage[k + 2] = 0;
+               texImage[k + 3] = 255;
+            }
          }
       }
 
