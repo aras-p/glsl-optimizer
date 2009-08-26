@@ -2623,7 +2623,8 @@ static void emit_txb(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
-    GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+    /* Note: TexSrcUnit was already looked up through SamplerTextures[] */
+    const GLuint unit = inst->TexSrcUnit;
     GLuint i;
     GLuint msg_type;
 
@@ -2689,7 +2690,8 @@ static void emit_tex(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
-    GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+    /* Note: TexSrcUnit was already looked up through SamplerTextures[] */
+    const GLuint unit = inst->TexSrcUnit;
     GLuint msg_len;
     GLuint i, nr;
     GLuint emit;
