@@ -1612,10 +1612,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
                     GLenum type, GLsizei count, GLint elems,
                     const void *values)
 {
-   struct gl_program_parameter *param =
+   const struct gl_program_parameter *param =
       &program->Parameters->Parameters[index];
-   const GLboolean isUniformBool = is_boolean_type(param->DataType);
-   const GLboolean areIntValues = is_integer_type(type);
 
    assert(offset >= 0);
    assert(elems >= 1);
@@ -1635,17 +1633,10 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       /* This controls which texture unit which is used by a sampler */
       GLint i;
 
-      /* data type for setting samplers must be int */
-      if (type != GL_INT) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glUniform(only glUniform1i can be used "
-                     "to set sampler uniforms)");
-         return;
-      }
+      /* this should have been caught by the compatible_types() check */
+      ASSERT(type == GL_INT);
 
-      /* XXX arrays of samplers haven't been tested much, but it's not a
-       * common thing...
-       */
+      /* loop over number of samplers to change */
       for (i = 0; i < count; i++) {
          GLuint sampler =
             (GLuint) program->Parameters->ParameterValues[index + offset + i][0];
@@ -1674,9 +1665,11 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
    }
    else {
       /* ordinary uniform variable */
-      GLsizei k, i;
+      const GLboolean isUniformBool = is_boolean_type(param->DataType);
+      const GLboolean areIntValues = is_integer_type(type);
       const GLint slots = (param->Size + 3) / 4;
       const GLint typeSize = sizeof_glsl_type(param->DataType);
+      GLsizei k, i;
 
       if (param->Size > typeSize) {
          /* an array */
