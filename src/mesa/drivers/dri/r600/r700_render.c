@@ -143,8 +143,7 @@ GLboolean r700SyncSurf(context_t *context,
     R600_OUT_BATCH_RELOC(0,
 			 pbo,
 			 0,
-			 read_domain, write_domain, 0); // ???
-
+			 read_domain, write_domain, 0);
     END_BATCH();
     COMMIT_BATCH();
 

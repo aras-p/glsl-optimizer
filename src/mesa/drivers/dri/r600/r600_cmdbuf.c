@@ -324,7 +324,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     struct drm_radeon_cs_chunk cs_chunk[2];
     uint32_t length_dw_reloc_chunk;
     uint64_t chunk_ptrs[2];
-    uint32_t reloc_chunk[256];
+    uint32_t *reloc_chunk;
     int r;
     int retry = 0;
 
@@ -333,8 +333,11 @@ static int r600_cs_emit(struct radeon_cs *cs)
 
     csm->pending_count = 1;
 
-    r = r600_cs_process_relocs(cs, &(reloc_chunk[0]), &length_dw_reloc_chunk);
+    reloc_chunk = (uint32_t*)calloc(1, cs->crelocs * 4 * 4);
+
+    r = r600_cs_process_relocs(cs, reloc_chunk, &length_dw_reloc_chunk);
     if (r) {
+	free(reloc_chunk);
         return 0;
     }
 
@@ -346,7 +349,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* reloc chaunk */
     cs_chunk[1].chunk_id   = RADEON_CHUNK_ID_RELOCS;
     cs_chunk[1].length_dw  = length_dw_reloc_chunk;
-    cs_chunk[1].chunk_data = (unsigned long)&(reloc_chunk[0]);
+    cs_chunk[1].chunk_data = (unsigned long)reloc_chunk;
 
     chunk_ptrs[0] = (uint64_t)(unsigned long)&(cs_chunk[0]);
     chunk_ptrs[1] = (uint64_t)(unsigned long)&(cs_chunk[1]);
@@ -364,6 +367,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     } while (r == -EAGAIN && retry < 1000);
 
     if (r) {
+	free(reloc_chunk);
         return r;
     }
 
@@ -374,6 +378,8 @@ static int r600_cs_emit(struct radeon_cs *cs)
     cs->csm->read_used = 0;
     cs->csm->vram_write_used = 0;
     cs->csm->gart_write_used = 0;
+
+    free(reloc_chunk);
 
     return 0;
 }
