@@ -3,7 +3,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-VG_LIBS=-lm -pthread -lEGL -lOpenVG
+VG_LIBS=-lm -pthread -lX11 -lEGL -lOpenVG
 INCLUDE_DIRS = -I$(TOP)/include
 
 PROGRAMS = \

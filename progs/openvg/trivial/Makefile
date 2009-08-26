@@ -5,7 +5,7 @@ TOP = ../../../
 include $(TOP)/configs/current
 
 INCLUDES = -I. -I$(TOP)/include
-LIBS=-L$(TOP)/$(LIB_DIR) -lm -lEGL -lOpenVG -lpthread
+LIBS=-L$(TOP)/$(LIB_DIR) -lm -lX11 -lEGL -lOpenVG -lpthread
 CFLAGS += $(INCLUDES)
 
 HEADERS=eglcommon.h
