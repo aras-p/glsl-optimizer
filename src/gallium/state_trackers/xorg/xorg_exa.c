@@ -31,6 +31,7 @@
 #include "xorg_exa.h"
 #include "xorg_tracker.h"
 #include "xorg_composite.h"
+#include "xorg_exa_tgsi.h"
 
 #include <xorg-server.h>
 #include <xf86.h>
@@ -523,6 +524,10 @@ xorg_exa_close(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_context *exa = ms->exa;
 
+    if (exa->shaders) {
+       xorg_shaders_destroy(exa->shaders);
+    }
+
     if (exa->cso) {
        cso_release_all(exa->cso);
        cso_destroy_context(exa->cso);
@@ -594,6 +599,7 @@ xorg_exa_init(ScrnInfoPtr pScrn)
     ms->ctx = exa->ctx;
 
     exa->cso = cso_create_context(exa->ctx);
+    exa->shaders = xorg_shaders_create(exa);
 
     return (void *)exa;
 

@@ -4,6 +4,7 @@
 #include "xorg_tracker.h"
 
 struct cso_context;
+struct xorg_shaders;
 
 struct exa_context
 {
@@ -11,6 +12,7 @@ struct exa_context
    struct pipe_context *ctx;
    struct pipe_screen *scrn;
    struct cso_context *cso;
+   struct xorg_shaders *shaders;
 };
 
 
