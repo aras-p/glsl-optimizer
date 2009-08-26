@@ -1,10 +1,6 @@
 #ifndef EGLDISPLAY_INCLUDED
 #define EGLDISPLAY_INCLUDED
 
-#ifdef _EGL_PLATFORM_X
-#include <X11/Xlib.h>
-#endif
-
 #include "egltypedefs.h"
 #include "egldefines.h"
 #include "eglcontext.h"
@@ -54,10 +50,6 @@ struct _egl_display
    /* lists of linked contexts and surface */
    _EGLContext *ContextList;
    _EGLSurface *SurfaceList;
-
-#ifdef _EGL_PLATFORM_X
-   Display *Xdpy;
-#endif
 };
 
 
