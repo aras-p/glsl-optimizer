@@ -342,6 +342,7 @@ struct radeon_swtcl_info {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
+	GLuint primitive_counter;
 };
 
 #define RADEON_MAX_AOS_ARRAYS		16

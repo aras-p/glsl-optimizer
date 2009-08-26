@@ -83,6 +83,9 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
 	rmesa->radeon.swtcl.vertex_attr_count = 0;
 
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
+
 	/* We always want non Ndc coords format */
 	VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
 
@@ -462,6 +465,8 @@ static void r300ChooseRenderState( GLcontext *ctx )
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint index = 0;
 	GLuint flags = ctx->_TriangleCaps;
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 
 	if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
@@ -489,6 +494,8 @@ static void r300ChooseRenderState( GLcontext *ctx )
 
 void r300RenderStart(GLcontext *ctx)
 {
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
@@ -500,6 +507,19 @@ void r300RenderStart(GLcontext *ctx)
 	r300ValidateBuffers(ctx);
 
 	r300UpdateShaderStates(rmesa);
+
+	const int vertex_size = 7;
+	const int prim_size = 3;
+
+	if (!rmesa->radeon.swtcl.primitive_counter) {
+		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+					radeonCountStateEmitSize(&rmesa->radeon) +
+					+ vertex_size + prim_size,
+					__FUNCTION__))
+			rmesa->radeon.swtcl.primitive_counter = 0;
+		else
+			rmesa->radeon.swtcl.primitive_counter = 1;
+	}
 
 	r300EmitCacheFlush(rmesa);
 
@@ -516,6 +536,8 @@ void r300RenderFinish(GLcontext *ctx)
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 
 	if (rmesa->radeon.swtcl.hw_primitive != hwprim) {
 		R300_NEWPRIM( rmesa );
@@ -528,6 +550,8 @@ void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->radeon.swtcl.render_primitive = prim;
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 
 	if ((prim == GL_TRIANGLES) && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
 		return;
@@ -537,6 +561,8 @@ void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 void r300ResetLineStipple(GLcontext *ctx)
 {
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 }
 
 void r300InitSwtcl(GLcontext *ctx)
@@ -544,11 +570,14 @@ void r300InitSwtcl(GLcontext *ctx)
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	static int firsttime = 1;
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 
 	if (firsttime) {
 		init_rast_tab();
 		firsttime = 0;
 	}
+	rmesa->radeon.swtcl.primitive_counter = 0;
 
 	tnl->Driver.Render.Start = r300RenderStart;
 	tnl->Driver.Render.Finish = r300RenderFinish;
@@ -597,6 +626,8 @@ static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vert
 {
 	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 
 	type = r300PrimitiveType(rmesa, primitive);
 	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
@@ -609,11 +640,10 @@ static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vert
 
 void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
-			   __FUNCTION__);
 	radeonEmitState(&rmesa->radeon);
     r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
@@ -625,5 +655,6 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		   rmesa->radeon.swtcl.hw_primitive,
 		   rmesa->radeon.swtcl.numverts);
 	r300EmitCacheFlush(rmesa);
+	rmesa->radeon.swtcl.primitive_counter = 0;
 	COMMIT_BATCH();
 }

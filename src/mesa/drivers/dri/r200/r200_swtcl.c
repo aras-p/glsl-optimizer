@@ -204,7 +204,21 @@ static void r200SetVertexFormat( GLcontext *ctx )
 
 static void r200RenderStart( GLcontext *ctx )
 {
+   const int vertex_array_size = 7;
+   const int prim_size = 3;
+   r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200SetVertexFormat( ctx );
+   if (RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s\n", __func__);
+   if (!rmesa->radeon.swtcl.primitive_counter) {
+      if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+	       radeonCountStateEmitSize(&rmesa->radeon) +
+	       vertex_array_size + prim_size,
+	       __FUNCTION__))
+	 rmesa->radeon.swtcl.primitive_counter = 0;
+      else
+	 rmesa->radeon.swtcl.primitive_counter = 1;
+   }
 }
 
 
@@ -268,9 +282,8 @@ void r200ChooseVertexState( GLcontext *ctx )
 void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			    radeonCountStateEmitSize(&rmesa->radeon) + (12*sizeof(int)),
-			    __FUNCTION__);
+   if (RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s\n", __func__);
 
 
    radeonEmitState(&rmesa->radeon);
@@ -283,6 +296,8 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    r200EmitVbufPrim( rmesa,
 		     rmesa->radeon.swtcl.hw_primitive,
 		     rmesa->radeon.swtcl.numverts);
+
+   rmesa->radeon.swtcl.primitive_counter = 0;
 
 }
 
@@ -890,6 +905,7 @@ void r200InitSwtcl( GLcontext *ctx )
       init_rast_tab();
       firsttime = 0;
    }
+   rmesa->radeon.swtcl.primitive_counter = 0;
 
    tnl->Driver.Render.Start = r200RenderStart;
    tnl->Driver.Render.Finish = r200RenderFinish;

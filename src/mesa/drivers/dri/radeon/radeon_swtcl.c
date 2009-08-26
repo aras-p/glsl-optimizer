@@ -223,13 +223,23 @@ static void radeonSetVertexFormat( GLcontext *ctx )
 
 static void radeonRenderStart( GLcontext *ctx )
 {
-   r100ContextPtr rmesa = R100_CONTEXT( ctx );
+    r100ContextPtr rmesa = R100_CONTEXT( ctx );
 
-   radeonSetVertexFormat( ctx );
-   
-   if (rmesa->radeon.dma.flush != 0 && 
-       rmesa->radeon.dma.flush != rcommon_flush_last_swtcl_prim)
-      rmesa->radeon.dma.flush( ctx );
+    radeonSetVertexFormat( ctx );
+
+    if (rmesa->radeon.dma.flush != 0 &&
+            rmesa->radeon.dma.flush != rcommon_flush_last_swtcl_prim)
+        rmesa->radeon.dma.flush( ctx );
+
+    if (!rmesa->radeon.swtcl.primitive_counter) {
+        if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+                    radeonCountStateEmitSize( &rmesa->radeon ) +
+                    (8 + 8 + 7), /* scissor + primis + VertexAOS */
+                    __FUNCTION__))
+            rmesa->radeon.swtcl.primitive_counter = 0;
+        else
+            rmesa->radeon.swtcl.primitive_counter = 1;
+    }
 }
 
 
@@ -284,9 +294,6 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
-   rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			    radeonCountStateEmitSize( &rmesa->radeon ) + (12*sizeof(int)),
-			    __FUNCTION__);
 
 
    radeonEmitState(&rmesa->radeon);
@@ -300,6 +307,9 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		       rmesa->swtcl.vertex_format,
 		       rmesa->radeon.swtcl.hw_primitive,
 		       rmesa->radeon.swtcl.numverts);
+
+
+   rmesa->radeon.swtcl.primitive_counter = 0;
 
 }
 
@@ -804,6 +814,7 @@ void radeonInitSwtcl( GLcontext *ctx )
    if (firsttime) {
       init_rast_tab();
       firsttime = 0;
+      rmesa->radeon.swtcl.primitive_counter = 0;
    }
 
    tnl->Driver.Render.Start = radeonRenderStart;
