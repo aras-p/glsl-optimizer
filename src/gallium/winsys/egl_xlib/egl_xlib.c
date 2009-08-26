@@ -33,6 +33,7 @@
 
 
 #include <dlfcn.h>
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include "pipe/p_compiler.h"
@@ -61,8 +62,15 @@
 struct xlib_egl_driver
 {
    _EGLDriver Base;   /**< base class */
-
    EGLint apis;
+};
+
+
+/** driver data of _EGLDisplay */
+struct xlib_egl_display
+{
+   Display *Dpy;
+
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 };
@@ -95,11 +103,24 @@ struct xlib_egl_surface
 };
 
 
+static void
+flush_frontbuffer(struct pipe_winsys *pws,
+                  struct pipe_surface *psurf,
+                  void *context_private);
+
+
 /** cast wrapper */
 static INLINE struct xlib_egl_driver *
 xlib_egl_driver(_EGLDriver *drv)
 {
    return (struct xlib_egl_driver *) drv;
+}
+
+
+static INLINE struct xlib_egl_display *
+xlib_egl_display(_EGLDisplay *dpy)
+{
+   return (struct xlib_egl_display *) dpy->DriverData;
 }
 
 
@@ -132,7 +153,7 @@ bitcount(unsigned int n)
  * Create the EGLConfigs.  (one per X visual)
  */
 static void
-create_configs(_EGLDriver *drv, _EGLDisplay *disp)
+create_configs(struct xlib_egl_display *xdpy, _EGLDisplay *disp)
 {
    static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
                                    EGL_OPENGL_ES2_BIT |
@@ -142,8 +163,8 @@ create_configs(_EGLDriver *drv, _EGLDisplay *disp)
    int num_visuals, i;
 
    /* get list of all X visuals, create an EGL config for each */
-   visTemplate.screen = DefaultScreen(disp->Xdpy);
-   visInfo = XGetVisualInfo(disp->Xdpy, VisualScreenMask,
+   visTemplate.screen = DefaultScreen(xdpy->Dpy);
+   visInfo = XGetVisualInfo(xdpy->Dpy, VisualScreenMask,
                             &visTemplate, &num_visuals);
    if (!visInfo) {
       printf("egl_xlib.c: couldn't get any X visuals\n");
@@ -185,6 +206,8 @@ create_configs(_EGLDriver *drv, _EGLDisplay *disp)
 
       _eglAddConfig(disp, config);
    }
+
+   XFree(visInfo);
 }
 
 
@@ -193,21 +216,46 @@ create_configs(_EGLDriver *drv, _EGLDisplay *disp)
  */
 static EGLBoolean
 xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
-                   EGLint *minor, EGLint *major)
+                   EGLint *major, EGLint *minor)
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   struct xlib_egl_display *xdpy;
 
-   if (!dpy->Xdpy) {
-      dpy->Xdpy = XOpenDisplay(NULL);
+   xdpy = CALLOC_STRUCT(xlib_egl_display);
+   if (!xdpy)
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+
+   xdpy->Dpy = (Display *) dpy->NativeDisplay;
+   if (!xdpy->Dpy) {
+      xdpy->Dpy = XOpenDisplay(NULL);
+      if (!xdpy->Dpy) {
+         free(xdpy);
+         return EGL_FALSE;
+      }
    }
 
-   create_configs(drv, dpy);
+   /* create winsys and pipe screen */
+   xdpy->winsys = create_sw_winsys();
+   if (!xdpy->winsys) {
+      free(xdpy);
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+   }
+   xdpy->winsys->flush_frontbuffer = flush_frontbuffer;
+   xdpy->screen = softpipe_create_screen(xdpy->winsys);
+   if (!xdpy->screen) {
+      free(xdpy->winsys);
+      free(xdpy);
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+   }
 
+   dpy->DriverData = (void *) xdpy;
    dpy->ClientAPIsMask = xdrv->apis;
 
+   create_configs(xdpy, dpy);
+
    /* we're supporting EGL 1.4 */
-   *minor = 1;
-   *major = 4;
+   *major = 1;
+   *minor = 4;
 
    return EGL_TRUE;
 }
@@ -219,8 +267,18 @@ xlib_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
 static EGLBoolean
 xlib_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
+   struct xlib_egl_display *xdpy = xlib_egl_display(dpy);
+
    _eglReleaseDisplayResources(drv, dpy);
    _eglCleanupDisplay(dpy);
+
+   xdpy->screen->destroy(xdpy->screen);
+   free(xdpy->winsys);
+
+   if (!dpy->NativeDisplay)
+      XCloseDisplay(xdpy->Dpy);
+   free(xdpy);
+
    return EGL_TRUE;
 }
 
@@ -352,7 +410,7 @@ static _EGLContext *
 xlib_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                       _EGLContext *share_list, const EGLint *attrib_list)
 {
-   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   struct xlib_egl_display *xdpy = xlib_egl_display(dpy);
    struct xlib_egl_context *ctx;
    struct st_context *share_ctx = NULL; /* XXX fix */
    __GLcontextModes visual;
@@ -376,7 +434,7 @@ xlib_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       /* fall-through */
    case EGL_OPENGL_API:
       /* create a softpipe context */
-      ctx->pipe = softpipe_create(xdrv->screen);
+      ctx->pipe = softpipe_create(xdpy->screen);
       /* Now do xlib / state tracker inits here */
       _eglConfigToContextModesRec(conf, &visual);
       ctx->Context = st_create_context(ctx->pipe, &visual, share_ctx);
@@ -494,7 +552,7 @@ static _EGLSurface *
 xlib_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                             NativeWindowType window, const EGLint *attrib_list)
 {
-   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   struct xlib_egl_display *xdpy = xlib_egl_display(disp);
    struct xlib_egl_surface *surf;
    __GLcontextModes visual;
    uint width, height;
@@ -514,10 +572,10 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf
     * Now init the Xlib and gallium stuff
     */
    surf->Win = (Window) window;  /* The X window ID */
-   surf->Dpy = disp->Xdpy;  /* The X display */
+   surf->Dpy = xdpy->Dpy;  /* The X display */
    surf->Gc = XCreateGC(surf->Dpy, surf->Win, 0, NULL);
 
-   surf->winsys = xdrv->winsys;
+   surf->winsys = xdpy->winsys;
 
    _eglConfigToContextModesRec(conf, &visual);
    get_drawable_size(surf->Dpy, surf->Win, &width, &height);
@@ -544,7 +602,7 @@ static _EGLSurface *
 xlib_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                              const EGLint *attrib_list)
 {
-   struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
+   struct xlib_egl_display *xdpy = xlib_egl_display(disp);
    struct xlib_egl_surface *surf;
    __GLcontextModes visual;
    uint width, height;
@@ -589,7 +647,7 @@ xlib_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *con
       return NULL;
    }
 
-   surf->winsys = xdrv->winsys;
+   surf->winsys = xdpy->winsys;
 
    _eglConfigToContextModesRec(conf, &visual);
 
@@ -762,8 +820,6 @@ static void
 xlib_Unload(_EGLDriver *drv)
 {
    struct xlib_egl_driver *xdrv = xlib_egl_driver(drv);
-   xdrv->screen->destroy(xdrv->screen);
-   free(xdrv->winsys);
    free(xdrv);
 }
 
@@ -808,12 +864,6 @@ _eglMain(const char *args)
 
    xdrv->Base.Name = "Xlib/softpipe";
    xdrv->Base.Unload = xlib_Unload;
-
-   /* create one winsys and use it for all contexts/surfaces */
-   xdrv->winsys = create_sw_winsys();
-   xdrv->winsys->flush_frontbuffer = flush_frontbuffer;
-
-   xdrv->screen = softpipe_create_screen(xdrv->winsys);
 
    return &xdrv->Base;
 }

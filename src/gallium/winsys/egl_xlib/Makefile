@@ -37,7 +37,7 @@ UNUSED_LIBS = \
 	$(TOP)/src/mesa/libmesagallium.a \
 
 
-LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
+LOCAL_CFLAGS =
 
 
 .c.o:
