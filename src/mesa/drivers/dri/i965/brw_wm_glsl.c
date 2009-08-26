@@ -2648,11 +2648,15 @@ static void emit_txb(struct brw_wm_compile *c,
 	    brw_MOV(p, brw_message_reg(3), src[1]);
 	    brw_MOV(p, brw_message_reg(4), brw_imm_f(0));
 	    break;
-	default:
+	case TEXTURE_3D_INDEX:
+	case TEXTURE_CUBE_INDEX:
 	    brw_MOV(p, brw_message_reg(2), src[0]);
 	    brw_MOV(p, brw_message_reg(3), src[1]);
 	    brw_MOV(p, brw_message_reg(4), src[2]);
 	    break;
+	default:
+            /* invalid target */
+            abort();
     }
     brw_MOV(p, brw_message_reg(5), src[3]);          /* bias */
     brw_MOV(p, brw_message_reg(6), brw_imm_f(0));    /* ref (unused?) */
@@ -2711,10 +2715,14 @@ static void emit_tex(struct brw_wm_compile *c,
 	    emit = WRITEMASK_XY;
 	    nr = 2;
 	    break;
-	default:
+	case TEXTURE_3D_INDEX:
+	case TEXTURE_CUBE_INDEX:
 	    emit = WRITEMASK_XYZ;
 	    nr = 3;
 	    break;
+	default:
+           /* invalid target */
+           abort();
     }
     msg_len = 1;
 
