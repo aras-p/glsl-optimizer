@@ -79,12 +79,18 @@ GLint rc_find_free_temporary(struct radeon_compiler * c)
 
 	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
 		const struct prog_instruction *inst = &rcinst->I;
-		const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
+		const GLuint nsrc = _mesa_num_inst_src_regs(inst->Opcode);
+		const GLuint ndst = _mesa_num_inst_dst_regs(inst->Opcode);
 		GLuint k;
 
-		for (k = 0; k < n; k++) {
+		for (k = 0; k < nsrc; k++) {
 			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
 				used[inst->SrcReg[k].Index] = GL_TRUE;
+		}
+
+		if (ndst) {
+			if (inst->DstReg.File == PROGRAM_TEMPORARY)
+				used[inst->DstReg.Index] = GL_TRUE;
 		}
 	}
 
