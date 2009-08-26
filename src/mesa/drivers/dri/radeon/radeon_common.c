@@ -85,6 +85,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "radeon_queryobj.h"
 
+/**
+ * Enable verbose debug output for emit code.
+ * 0 no output
+ * 1 most output
+ * 2 also print state alues
+ */
 #define DEBUG_CMDBUF         0
 
 /* =============================================================
@@ -906,7 +912,7 @@ static void radeon_print_state_atom_prekmm(radeonContextPtr radeon, struct radeo
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+	if (DEBUG_CMDBUF > 1 && RADEON_DEBUG & DEBUG_VERBOSE) {
 		if (dwords > state->cmd_size)
 			dwords = state->cmd_size;
 
@@ -943,10 +949,10 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+	if (DEBUG_CMDBUF > 1 && RADEON_DEBUG & DEBUG_VERBOSE) {
 		if (dwords > state->cmd_size)
 			dwords = state->cmd_size;
-		for (i = 0; i < state->cmd_size;) {
+		for (i = 0; i < dwords;) {
 			packet0 = state->cmd[i];
 			reg = (packet0 & 0x1FFF) << 2;
 			count = ((packet0 & 0x3FFF0000) >> 16) + 1;
