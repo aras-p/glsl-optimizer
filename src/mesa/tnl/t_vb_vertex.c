@@ -173,7 +173,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 					    &store->proj,
 					    store->clipmask,
 					    &store->ormask,
-					    &store->andmask );
+					    &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
    else {
       VB->NdcPtr = NULL;
@@ -181,7 +182,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 					    NULL,
 					    store->clipmask,
 					    &store->ormask,
-					    &store->andmask );
+					    &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
 
    if (store->andmask)

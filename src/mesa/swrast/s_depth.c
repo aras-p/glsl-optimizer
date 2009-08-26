@@ -497,6 +497,33 @@ depth_test_span32( GLcontext *ctx, GLuint n,
    return passed;
 }
 
+/* Apply ARB_depth_clamp to span of fragments. */
+void
+_swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
+{
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_renderbuffer *rb = fb->_DepthBuffer;
+   const GLuint count = span->end;
+   GLuint *zValues = span->array->z;
+   GLuint near, far;
+   int i;
+
+   if (rb->DataType == GL_UNSIGNED_SHORT) {
+      near = FLOAT_TO_UINT(ctx->Viewport.Near);
+      far = FLOAT_TO_UINT(ctx->Viewport.Far);
+   } else {
+      assert(rb->DataType == GL_UNSIGNED_INT);
+      CLAMPED_FLOAT_TO_USHORT(near, ctx->Viewport.Near);
+      CLAMPED_FLOAT_TO_USHORT(far, ctx->Viewport.Far);
+   }
+   for (i = 0; i < count; i++) {
+      if (zValues[i] < near)
+	 zValues[i] = near;
+      if (zValues[i] > far)
+	 zValues[i] = far;
+   }
+}
+
 
 
 /*

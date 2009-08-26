@@ -1347,6 +1347,7 @@ const struct dri_extension card_extensions[] =
    { "GL_EXT_histogram",		GL_EXT_histogram_functions },
    { "GL_SGI_color_table",		GL_SGI_color_table_functions },
 
+   { "GL_ARB_depth_clamp",		NULL },
    { "GL_ARB_shader_objects",		GL_ARB_shader_objects_functions },
    { "GL_ARB_sync",			GL_ARB_sync_functions },
    { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },

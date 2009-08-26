@@ -1482,6 +1482,7 @@ struct gl_transform_attrib
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
+   GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
 
    GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
    GLfloat CullEyePos[4];
@@ -2475,6 +2476,7 @@ struct gl_extensions
    GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_texture;
+   GLboolean ARB_depth_clamp;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
