@@ -268,7 +268,8 @@ void r700SelectFragmentShader(GLcontext *ctx)
 	    fp->r700AsmCode.bR6xx = 1;
     }
 
-    r700TranslateFragmentShader(fp, &(fp->mesa_program));
+    if (GL_FALSE == fp->translated)
+	    r700TranslateFragmentShader(fp, &(fp->mesa_program));
 }
 
 void * r700GetActiveFpShaderBo(GLcontext * ctx)
