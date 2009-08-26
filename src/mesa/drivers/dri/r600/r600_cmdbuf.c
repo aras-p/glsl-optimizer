@@ -487,6 +487,9 @@ void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 	assert(rmesa->cmdbuf.cs != NULL);
 	rmesa->cmdbuf.size = size;
 
+	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
+				  (void (*)(void *))rmesa->glCtx->Driver.Flush, rmesa->glCtx);
+
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
