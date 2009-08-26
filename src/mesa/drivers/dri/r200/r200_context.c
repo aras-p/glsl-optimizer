@@ -60,9 +60,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 #include "r200_maos.h"
 #include "r200_vertprog.h"
+#include "radeon_queryobj.h"
 
 #include "radeon_span.h"
 
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_vertex_program
 #define need_GL_ATI_fragment_shader
 #define need_GL_EXT_blend_minmax
@@ -116,6 +118,7 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
 const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
     { "GL_ARB_texture_border_clamp",       NULL },
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_env_combine",        NULL },
@@ -262,6 +265,19 @@ static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 {
 }
 
+static void r200_emit_query_finish(radeonContextPtr radeon)
+{
+   BATCH_LOCALS(radeon);
+   struct radeon_query_object *query = radeon->query.current;
+
+   BEGIN_BATCH_NO_AUTOSTATE(4);
+   OUT_BATCH(CP_PACKET0(RADEON_RB3D_ZPASS_ADDR, 0));
+   OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+   END_BATCH();
+   query->curr_offset += sizeof(uint32_t);
+   assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+   query->emitted_begin = GL_FALSE;
+}
 
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
@@ -271,6 +287,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.swtcl_flush = r200_swtcl_flush;
    radeon->vtbl.fallback = r200Fallback;
    radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
+   radeon->vtbl.emit_query_finish = r200_emit_query_finish;
 }
 
 
@@ -458,6 +475,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       driInitSingleExtension( ctx, ATI_fs_extension );
    if (rmesa->radeon.radeonScreen->drmSupportsPointSprites)
       driInitExtensions( ctx, point_extensions, GL_FALSE );
+
+   if (!rmesa->radeon.radeonScreen->kernel_mm)
+      _mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 #if 0
    r200InitDriverFuncs( ctx );
    r200InitIoctlFuncs( ctx );

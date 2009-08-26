@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
+#include "radeon_queryobj.h"
 
 #include "xmlpool.h"
 
@@ -1595,6 +1596,12 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ptp.cmd[PTP_CLAMP_3] = 0;
 
    r200LightingSpaceChange( ctx );
+
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+      radeon_init_query_stateobj(&rmesa->radeon, R200_QUERYOBJ_CMDSIZE);
+      rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_CMD_0] = CP_PACKET0(RADEON_RB3D_ZPASS_DATA, 0);
+      rmesa->radeon.query.queryobj.cmd[R200_QUERYOBJ_DATA_0] = 0;
+   }
 
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 

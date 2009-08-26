@@ -475,6 +475,9 @@ struct r200_texture_state {
 #define SCI_XY_2          5
 #define SCI_STATE_SIZE    6
 
+#define R200_QUERYOBJ_CMD_0  0
+#define R200_QUERYOBJ_DATA_0 1
+#define R200_QUERYOBJ_CMDSIZE  2
 
 struct r200_hw_state {
    /* Hardware state, stored as cmdbuf commands:  
