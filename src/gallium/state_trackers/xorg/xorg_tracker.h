@@ -87,6 +87,8 @@ typedef struct _modesettingRec
     struct drm_api *api;
     struct pipe_screen *screen;
     struct pipe_context *ctx;
+    boolean d_depth_bits_last;
+    boolean ds_depth_bits_last;
 
     /* exa */
     void *exa;

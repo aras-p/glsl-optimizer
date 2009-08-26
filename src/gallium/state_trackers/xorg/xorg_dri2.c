@@ -88,7 +88,8 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    struct pipe_texture template;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    template.format = PIPE_FORMAT_S8Z24_UNORM;
+	    template.format = ms->ds_depth_bits_last ?
+		PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
 	    pf_get_block(template.format, &template.block);
 	    template.width[0] = pDraw->width;
 	    template.height[0] = pDraw->height;
@@ -269,6 +270,15 @@ driScreenInit(ScreenPtr pScreen)
     dri2info.CreateBuffers = driCreateBuffers;
     dri2info.DestroyBuffers = driDestroyBuffers;
     dri2info.CopyRegion = driCopyRegion;
+
+    ms->d_depth_bits_last =
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_X8Z24_UNORM,
+					 PIPE_TEXTURE_2D,
+					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+    ms->ds_depth_bits_last =
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_S8Z24_UNORM,
+					 PIPE_TEXTURE_2D,
+					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
 
     return DRI2ScreenInit(pScreen, &dri2info);
 }
