@@ -1102,6 +1102,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    c->delta_xy = src_undef();
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
+   c->fp->tex_units_used = 0x0;
 
    /* Emit preamble instructions.  This is where special instructions such as
     * WM_CINTERP, WM_LINTERP, WM_PINTERP and WM_WPOSXY are emitted to
