@@ -32,8 +32,6 @@ struct drm_context;
 
 struct drm_device
 {
-	_EGLDriver base; /* base class/object */
-
 	/*
 	 * pipe
 	 */
@@ -136,6 +134,13 @@ struct drm_screen
 };
 
 
+static INLINE struct drm_device *
+lookup_drm_device(_EGLDisplay *d)
+{
+	return (struct drm_device *) d->DriverData;
+}
+
+
 static INLINE struct drm_context *
 lookup_drm_context(_EGLContext *c)
 {
@@ -168,7 +173,7 @@ __GLcontextModes* drm_visual_from_config(_EGLConfig *conf);
  * egl_surface.h
  */
 /*@{*/
-void drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen);
+void drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen);
 /*@}*/
 
 /**

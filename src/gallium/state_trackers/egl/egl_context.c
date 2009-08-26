@@ -86,7 +86,7 @@ const struct dri_extension card_extensions[] = {
 _EGLContext *
 drm_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 	struct drm_context *ctx;
 	struct drm_context *share = NULL;
 	struct st_context *st_share = NULL;

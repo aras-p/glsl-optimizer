@@ -67,11 +67,11 @@ drm_create_framebuffer(const __GLcontextModes *visual,
 }
 
 static void
-drm_create_texture(_EGLDriver *drv,
+drm_create_texture(_EGLDisplay *dpy,
                    struct drm_screen *scrn,
                    unsigned w, unsigned h)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 	struct pipe_screen *screen = dev->screen;
 	struct pipe_surface *surface;
 	struct pipe_texture *texture;
@@ -137,9 +137,9 @@ err_tex:
  */
 
 void
-drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
+drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 
 	screen->surf = NULL;
 
@@ -244,17 +244,17 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy,
                              _EGLScreen *screen,
                              _EGLSurface *surface, _EGLMode *mode)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(screen);
 	int ret;
 	unsigned int i, k;
 
 	if (scrn->shown)
-		drm_takedown_shown_screen(drv, scrn);
+		drm_takedown_shown_screen(dpy, scrn);
 
 
-	drm_create_texture(drv, scrn, mode->Width, mode->Height);
+	drm_create_texture(dpy, scrn, mode->Width, mode->Height);
 	if (!scrn->buffer)
 		return EGL_FALSE;
 
@@ -341,7 +341,7 @@ drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	if (!_eglIsSurfaceBound(&surf->base)) {
 		if (surf->screen)
-			drm_takedown_shown_screen(drv, surf->screen);
+			drm_takedown_shown_screen(dpy, surf->screen);
 		st_unreference_framebuffer(surf->stfb);
 		free(surf);
 	}
@@ -351,7 +351,7 @@ drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 EGLBoolean
 drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 	struct drm_surface *surf = lookup_drm_surface(draw);
 	struct pipe_surface *back_surf;
 

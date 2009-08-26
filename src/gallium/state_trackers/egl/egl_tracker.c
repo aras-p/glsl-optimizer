@@ -26,9 +26,7 @@ extern const struct dri_extension card_extensions[];
 static void
 drm_unload(_EGLDriver *drv)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
-	dev->api->destroy(dev->api);
-	free(dev);
+	free(drv);
 }
 
 /**
@@ -38,35 +36,33 @@ drm_unload(_EGLDriver *drv)
 _EGLDriver *
 _eglMain(const char *args)
 {
-	struct drm_device *drm;
+	_EGLDriver *drv;
 
-	drm = (struct drm_device *) calloc(1, sizeof(struct drm_device));
-	if (!drm) {
+	drv = (_EGLDriver *) calloc(1, sizeof(_EGLDriver));
+	if (!drv) {
 		return NULL;
 	}
 
-	drm->api = drm_api_create();
-
 	/* First fill in the dispatch table with defaults */
-	_eglInitDriverFallbacks(&drm->base);
+	_eglInitDriverFallbacks(drv);
 	/* then plug in our Drm-specific functions */
-	drm->base.API.Initialize = drm_initialize;
-	drm->base.API.Terminate = drm_terminate;
-	drm->base.API.CreateContext = drm_create_context;
-	drm->base.API.MakeCurrent = drm_make_current;
-	drm->base.API.CreateWindowSurface = drm_create_window_surface;
-	drm->base.API.CreatePixmapSurface = drm_create_pixmap_surface;
-	drm->base.API.CreatePbufferSurface = drm_create_pbuffer_surface;
-	drm->base.API.DestroySurface = drm_destroy_surface;
-	drm->base.API.DestroyContext = drm_destroy_context;
-	drm->base.API.CreateScreenSurfaceMESA = drm_create_screen_surface_mesa;
-	drm->base.API.ShowScreenSurfaceMESA = drm_show_screen_surface_mesa;
-	drm->base.API.SwapBuffers = drm_swap_buffers;
+	drv->API.Initialize = drm_initialize;
+	drv->API.Terminate = drm_terminate;
+	drv->API.CreateContext = drm_create_context;
+	drv->API.MakeCurrent = drm_make_current;
+	drv->API.CreateWindowSurface = drm_create_window_surface;
+	drv->API.CreatePixmapSurface = drm_create_pixmap_surface;
+	drv->API.CreatePbufferSurface = drm_create_pbuffer_surface;
+	drv->API.DestroySurface = drm_destroy_surface;
+	drv->API.DestroyContext = drm_destroy_context;
+	drv->API.CreateScreenSurfaceMESA = drm_create_screen_surface_mesa;
+	drv->API.ShowScreenSurfaceMESA = drm_show_screen_surface_mesa;
+	drv->API.SwapBuffers = drm_swap_buffers;
 
-	drm->base.Name = "DRM/Gallium/Win";
-	drm->base.Unload = drm_unload;
+	drv->Name = "DRM/Gallium/Win";
+	drv->Unload = drm_unload;
 
-	return &drm->base;
+	return drv;
 }
 
 static void
@@ -145,7 +141,7 @@ static int drm_open_minor(int minor)
 EGLBoolean
 drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev;
 	struct drm_screen *screen = NULL;
 	drmModeConnectorPtr connector = NULL;
 	drmModeResPtr res = NULL;
@@ -153,6 +149,11 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	int num_screens = 0;
 	EGLint i;
 	int fd;
+
+	dev = (struct drm_device *) calloc(1, sizeof(struct drm_device));
+	if (!dev)
+		return EGL_FALSE;
+	dev->api = drm_api_create();
 
 	/* try the first node */
 	fd = drm_open_minor(0);
@@ -200,6 +201,8 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	}
 	dev->count_screens = num_screens;
 
+	disp->DriverData = dev;
+
 	/* for now we only have one config */
 	_EGLConfig *config = calloc(1, sizeof(*config));
 	memset(config, 1, sizeof(*config));
@@ -227,17 +230,19 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 err_screen:
 	drmClose(fd);
 err_fd:
+	free(dev);
 	return EGL_FALSE;
 }
 
 EGLBoolean
 drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
-	struct drm_device *dev = (struct drm_device *)drv;
+	struct drm_device *dev = lookup_drm_device(dpy);
 	struct drm_screen *screen;
 	int i = 0;
 
 	_eglReleaseDisplayResources(drv, dpy);
+	_eglCleanupDisplay(dpy);
 
 	drmFreeVersion(dev->version);
 
@@ -245,7 +250,7 @@ drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 		screen = dev->screens[i];
 
 		if (screen->shown)
-			drm_takedown_shown_screen(drv, screen);
+			drm_takedown_shown_screen(dpy, screen);
 
 		drmModeFreeProperty(screen->dpms);
 		drmModeFreeConnector(screen->connector);
@@ -258,7 +263,9 @@ drm_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
 	drmClose(dev->drmFD);
 
-	_eglCleanupDisplay(dpy);
+	dev->api->destroy(dev->api);
+	free(dev);
+	dpy->DriverData = NULL;
 
 	return EGL_TRUE;
 }
