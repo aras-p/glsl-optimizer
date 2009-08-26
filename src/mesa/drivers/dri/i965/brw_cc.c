@@ -39,12 +39,14 @@
 
 static void prepare_cc_vp( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_cc_viewport ccv;
 
    memset(&ccv, 0, sizeof(ccv));
 
-   ccv.min_depth = 0.0;
-   ccv.max_depth = 1.0;
+   /* _NEW_VIEWPORT */
+   ccv.min_depth = ctx->Viewport.Near;
+   ccv.max_depth = ctx->Viewport.Far;
 
    dri_bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
@@ -52,7 +54,7 @@ static void prepare_cc_vp( struct brw_context *brw )
 
 const struct brw_tracked_state brw_cc_vp = {
    .dirty = {
-      .mesa = 0,
+      .mesa = _NEW_VIEWPORT,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
