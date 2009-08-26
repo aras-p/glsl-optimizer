@@ -5,8 +5,9 @@
 
 enum xorg_vs_traits {
    VS_COMPOSITE        = 1 << 0,
-   VS_FILL             = 1 << 1
-   /*VS_TRANSFORM      = 1 << 2*/
+   VS_MASK             = 1 << 1,
+   VS_FILL             = 1 << 2
+   /*VS_TRANSFORM      = 1 << 3*/
 };
 
 enum xorg_fs_traits {

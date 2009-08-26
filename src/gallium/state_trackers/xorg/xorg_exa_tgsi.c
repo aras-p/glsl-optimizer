@@ -57,10 +57,33 @@ src_in_mask(struct ureg_program *ureg,
 }
 
 static void *
-create_vs(struct pipe_context *ctx,
+create_vs(struct pipe_context *pipe,
           unsigned vs_traits)
 {
-   return NULL;
+   struct ureg_program *ureg;
+   struct ureg_src src;
+   struct ureg_dst dst;
+
+   ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (ureg == NULL)
+      return 0;
+
+   if ((vs_traits & VS_COMPOSITE)) {
+      src = ureg_DECL_vs_input(ureg,
+                               TGSI_SEMANTIC_POSITION, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 1);
+      ureg_MOV(ureg, dst, src);
+   }
+   if ((vs_traits & VS_MASK)) {
+      src = ureg_DECL_vs_input(ureg,
+                               TGSI_SEMANTIC_POSITION, 2);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
+      ureg_MOV(ureg, dst, src);
+   }
+
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
 }
 
 static void *
@@ -71,6 +94,7 @@ create_fs(struct pipe_context *pipe,
    struct ureg_src dst_sampler, src_sampler, mask_sampler;
    struct ureg_src dst_pos, src_pos, mask_pos;
    struct ureg_src src, mask;
+   struct ureg_dst out;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -90,6 +114,10 @@ create_fs(struct pipe_context *pipe,
                                 1,
                                 TGSI_INTERPOLATE_PERSPECTIVE);
 
+   out = ureg_DECL_output(ureg,
+                          TGSI_SEMANTIC_COLOR,
+                          0);
+
    if ((fs_traits & FS_MASK)) {
       mask_sampler = ureg_DECL_sampler(ureg);
       mask_pos = ureg_DECL_fs_input(ureg,
@@ -98,14 +126,14 @@ create_fs(struct pipe_context *pipe,
                                     TGSI_INTERPOLATE_PERSPECTIVE);
    }
 
-   ureg_TEX(ureg, ureg_dst(src),
-            TGSI_TEXTURE_2D, src_pos, src_sampler);
-
    if ((fs_traits & FS_MASK)) {
       ureg_TEX(ureg, ureg_dst(mask),
                TGSI_TEXTURE_2D, mask_pos, mask_sampler);
       /* src IN mask */
-      src_in_mask(ureg, ureg_dst(src), src, mask);
+      src_in_mask(ureg, out, src, mask);
+   } else {
+      ureg_TEX(ureg, out,
+               TGSI_TEXTURE_2D, src_pos, src_sampler);
    }
 
    ureg_END(ureg);
