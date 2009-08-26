@@ -472,7 +472,11 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	pipe_texture_reference(&priv->tex, NULL);
     }
 
-    if (!priv->tex) {
+    if (!priv->tex
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+	&& priv->flags
+#endif
+	) {
 	struct pipe_texture template;
 
 	memset(&template, 0, sizeof(template));
@@ -488,6 +492,14 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	priv->tex = exa->scrn->texture_create(exa->scrn, &template);
     }
 
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+    if (!priv->tex) {
+	if (pPixData)
+	    pPixmap->devPrivate.ptr = pPixData;
+	else
+	    pPixmap->devPrivate.ptr = xalloc(pPixmap->drawable.height * pPixmap->devKind);
+    } else
+#endif
     if (pPixData) {
 	struct pipe_transfer *transfer =
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,

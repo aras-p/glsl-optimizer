@@ -54,6 +54,7 @@
 
 #include <pciaccess.h>
 
+#include "pipe/p_context.h"
 #include "xorg_tracker.h"
 #include "xorg_winsys.h"
 
@@ -424,6 +425,44 @@ RestoreHWState(ScrnInfoPtr pScrn)
     return TRUE;
 }
 
+static void xorgBlockHandler(int i, pointer blockData, pointer pTimeout,
+                             pointer pReadmask)
+{
+    ScreenPtr pScreen = screenInfo.screens[i];
+    modesettingPtr ms = modesettingPTR(xf86Screens[pScreen->myNum]);
+
+    pScreen->BlockHandler = ms->blockHandler;
+    pScreen->BlockHandler(i, blockData, pTimeout, pReadmask);
+    pScreen->BlockHandler = xorgBlockHandler;
+
+    ms->ctx->flush(ms->ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+    {
+	RegionPtr dirty = DamageRegion(ms->damage);
+	unsigned num_cliprects = REGION_NUM_RECTS(dirty);
+
+	if (num_cliprects) {
+	    drmModeClip *clip = alloca(num_cliprects * sizeof(drmModeClip));
+	    BoxPtr rect = REGION_RECTS(dirty);
+	    int i;
+
+	    for (i = 0; i < num_cliprects; i++, rect++) {
+		clip[i].x = rect->x1;
+		clip[i].y = rect->y1;
+		clip[i].width = rect->x2 - rect->x1;
+		clip[i].height = rect->y2 - rect->y1;
+	    }
+
+	    /* TODO query connector property to see if this is needed */
+	    drmModeDirtyFB(ms->fd, ms->fb_id, clip, num_cliprects);
+
+	    DamageEmpty(ms->damage);
+	}
+    }
+#endif
+}
+
 static Bool
 CreateScreenResources(ScreenPtr pScreen)
 {
@@ -459,6 +498,21 @@ CreateScreenResources(ScreenPtr pScreen)
                  &ms->fb_id);
 
     AdjustFrame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+    ms->damage = DamageCreate(NULL, NULL, DamageReportNone, TRUE,
+                              pScreen, rootPixmap);
+
+    if (ms->damage) {
+       DamageRegister(&rootPixmap->drawable, ms->damage);
+
+       xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Damage tracking initialized\n");
+    } else {
+       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                  "Failed to create screen damage record\n");
+       return FALSE;
+    }
+#endif
 
     return ret;
 }
@@ -536,6 +590,8 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     fbPictureInit(pScreen, NULL, 0);
 
+    ms->blockHandler = pScreen->BlockHandler;
+    pScreen->BlockHandler = xorgBlockHandler;
     ms->createScreenResources = pScreen->CreateScreenResources;
     pScreen->CreateScreenResources = CreateScreenResources;
 
@@ -699,7 +755,16 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
     driCloseScreen(pScreen);
 #endif
 
+    pScreen->BlockHandler = ms->blockHandler;
     pScreen->CreateScreenResources = ms->createScreenResources;
+
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+    if (ms->damage) {
+	DamageUnregister(&pScreen->GetScreenPixmap(pScreen)->drawable, ms->damage);
+	DamageDestroy(ms->damage);
+	ms->damage = NULL;
+    }
+#endif
 
     if (ms->exa)
 	xorg_exa_close(pScrn);

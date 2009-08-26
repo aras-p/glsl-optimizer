@@ -41,6 +41,10 @@
 #include <xf86.h>
 #include <exa.h>
 
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+#include <damage.h>
+#endif
+
 #include "pipe/p_screen.h"
 #include "state_tracker/drm_api.h"
 
@@ -76,6 +80,7 @@ typedef struct _modesettingRec
 
     unsigned int SaveGeneration;
 
+    void (*blockHandler)(int, pointer, pointer, pointer);
     CreateScreenResourcesProcPtr createScreenResources;
 
     /* gallium */
@@ -87,6 +92,9 @@ typedef struct _modesettingRec
     void *exa;
     Bool noEvict;
 
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+    DamagePtr damage;
+#endif
 } modesettingRec, *modesettingPtr;
 
 #define modesettingPTR(p) ((modesettingPtr)((p)->driverPrivate))
