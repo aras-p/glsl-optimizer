@@ -947,9 +947,6 @@ static void r700SetStencilState(GLcontext * ctx, GLboolean state)
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	GLboolean hw_stencil = GL_FALSE;
 
-	//fixme
-	//r300CatchStencilFallback(ctx);
-
 	if (ctx->DrawBuffer) {
 		struct radeon_renderbuffer *rrbStencil
 			= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
@@ -958,9 +955,10 @@ static void r700SetStencilState(GLcontext * ctx, GLboolean state)
 
 	if (hw_stencil) {
 		R600_STATECHANGE(context, db);
-		if (state)
+		if (state) {
 			SETbit(r700->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
-		else
+			SETbit(r700->DB_DEPTH_CONTROL.u32All, BACKFACE_ENABLE_bit);
+		} else
 			CLEARbit(r700->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
 	}
 }
@@ -972,10 +970,8 @@ static void r700StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	const unsigned back = ctx->Stencil._BackFace;
 
-	//fixme
-	//r300CatchStencilFallback(ctx);
-
 	R600_STATECHANGE(context, stencil);
+	R600_STATECHANGE(context, db);
 
 	//front
 	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.Ref[0],
@@ -1003,9 +999,6 @@ static void r700StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask) /
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	const unsigned back = ctx->Stencil._BackFace;
 
-	//fixme
-	//r300CatchStencilFallback(ctx);
-
 	R600_STATECHANGE(context, stencil);
 
 	// front
@@ -1024,9 +1017,6 @@ static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	const unsigned back = ctx->Stencil._BackFace;
-
-	//fixme
-	//r300CatchStencilFallback(ctx);
 
 	R600_STATECHANGE(context, db);
 
