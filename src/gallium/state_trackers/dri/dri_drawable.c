@@ -294,8 +294,14 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    if (drawable == NULL)
       goto fail;
 
-   drawable->color_format = (visual->redBits == 8) ?
-      PIPE_FORMAT_A8R8G8B8_UNORM : PIPE_FORMAT_R5G6B5_UNORM;
+   if (visual->redBits == 8) {
+      if (visual->alphaBits == 8)
+         drawable->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      else
+         drawable->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   } else {
+      drawable->color_format = PIPE_FORMAT_R5G6B5_UNORM;
+   }
 
    switch(visual->depthBits) {
    default:
@@ -315,6 +321,9 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
 	    PIPE_FORMAT_S8Z24_UNORM:
 	    PIPE_FORMAT_Z24S8_UNORM;
       }
+      break;
+   case 32:
+      drawable->depth_format = PIPE_FORMAT_Z32_UNORM;
       break;
    }
 

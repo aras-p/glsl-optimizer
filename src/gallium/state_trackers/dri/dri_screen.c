@@ -79,17 +79,17 @@ static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
 		  unsigned pixel_bits)
 {
-   __DRIconfig **configs;
+   __DRIconfig **configs = NULL;
    unsigned num_modes;
-   uint8_t depth_bits_array[4];
-   uint8_t stencil_bits_array[4];
+   uint8_t depth_bits_array[5];
+   uint8_t stencil_bits_array[5];
    uint8_t msaa_samples_array[1];
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    unsigned msaa_samples_factor;
-   GLenum fb_format;
-   GLenum fb_type;
    struct pipe_screen *p_screen = screen->pipe_screen;
+   boolean pf_r5g6b5, pf_a8r8g8b8, pf_x8r8g8b8;
+   boolean pf_z16, pf_x8z24, pf_z24x8, pf_s8z24, pf_z24s8, pf_z32;
 
    static const GLenum back_buffer_modes[] = {
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -99,39 +99,51 @@ dri_fill_in_modes(struct dri_screen *screen,
    stencil_bits_array[0] = 0;
    depth_buffer_factor = 1;
 
-   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
-				     PIPE_TEXTURE_2D,
-				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+   pf_z16 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
+					  PIPE_TEXTURE_2D,
+					  PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_z32 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z32_UNORM,
+					  PIPE_TEXTURE_2D,
+					  PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_x8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8Z24_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_z24x8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_s8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8Z24_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_z24s8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+   pf_r5g6b5 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_R5G6B5_UNORM,
+					     PIPE_TEXTURE_2D,
+					     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
+   pf_a8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_A8R8G8B8_UNORM,
+					       PIPE_TEXTURE_2D,
+					       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
+   pf_x8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8R8G8B8_UNORM,
+					       PIPE_TEXTURE_2D,
+					       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
+
+   if (pf_z16) {
       depth_bits_array[depth_buffer_factor] = 16;
       stencil_bits_array[depth_buffer_factor++] = 0;
    }
-   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8Z24_UNORM,
-				     PIPE_TEXTURE_2D,
-				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+   if (pf_x8z24 || pf_z24x8) {
       depth_bits_array[depth_buffer_factor] = 24;
       stencil_bits_array[depth_buffer_factor++] = 0;
-      screen->d_depth_bits_last = TRUE;
-   } else if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
-					    PIPE_TEXTURE_2D,
-					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
-					    0)) {
-      depth_bits_array[depth_buffer_factor] = 24;
-      stencil_bits_array[depth_buffer_factor++] = 0;
-      screen->d_depth_bits_last = FALSE;
+      screen->d_depth_bits_last = pf_x8z24;
    }
-   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8Z24_UNORM,
-				     PIPE_TEXTURE_2D,
-				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+   if (pf_s8z24 || pf_z24s8) {
       depth_bits_array[depth_buffer_factor] = 24;
       stencil_bits_array[depth_buffer_factor++] = 8;
-      screen->sd_depth_bits_last = TRUE;
-   } else if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
-					    PIPE_TEXTURE_2D,
-					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
-					    0)) {
-      depth_bits_array[depth_buffer_factor] = 24;
-      stencil_bits_array[depth_buffer_factor++] = 8;
-      screen->sd_depth_bits_last = FALSE;
+      screen->sd_depth_bits_last = pf_s8z24;
+   }
+   if (pf_z32) {
+      depth_bits_array[depth_buffer_factor] = 32;
+      stencil_bits_array[depth_buffer_factor++] = 0;
    }
 
    msaa_samples_array[0] = 0;
@@ -141,29 +153,43 @@ dri_fill_in_modes(struct dri_screen *screen,
    num_modes =
       depth_buffer_factor * back_buffer_factor * msaa_samples_factor * 4;
 
-   if (pixel_bits == 16) {
-      if (!p_screen->is_format_supported(p_screen,
-					 PIPE_FORMAT_R5G6B5_UNORM,
-					 PIPE_TEXTURE_2D,
-					 PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-	 return NULL;
-      fb_format = GL_RGB;
-      fb_type = GL_UNSIGNED_SHORT_5_6_5;
+   if (pixel_bits == 16 && pf_r5g6b5) {
+      configs = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+				 depth_bits_array, stencil_bits_array,
+				 depth_buffer_factor, back_buffer_modes,
+				 back_buffer_factor,
+				 msaa_samples_array, 1);
    } else {
-      if (!p_screen->is_format_supported(p_screen,
-					 PIPE_FORMAT_A8R8G8B8_UNORM,
-					 PIPE_TEXTURE_2D,
-					 PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-	 return NULL;
-      fb_format = GL_BGRA;
-      fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+      __DRIconfig **configs_a8r8g8b8 = NULL;
+      __DRIconfig **configs_x8r8g8b8 = NULL;
+
+      if (pf_a8r8g8b8)
+	 configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+					     depth_bits_array,
+					     stencil_bits_array,
+					     depth_buffer_factor,
+					     back_buffer_modes,
+					     back_buffer_factor,
+					     msaa_samples_array, 1);
+      if (pf_x8r8g8b8)
+	 configs_x8r8g8b8 = driCreateConfigs(GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV,
+					     depth_bits_array,
+					     stencil_bits_array,
+					     depth_buffer_factor,
+					     back_buffer_modes,
+					     back_buffer_factor,
+					     msaa_samples_array, 1);
+
+      if (configs_a8r8g8b8 && configs_x8r8g8b8)
+	 configs = driConcatConfigs(configs_x8r8g8b8, configs_a8r8g8b8);
+      else if (configs_a8r8g8b8)
+	 configs = configs_a8r8g8b8;
+      else if (configs_x8r8g8b8)
+	 configs = configs_x8r8g8b8;
+      else
+	 configs = NULL;
    }
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array,
-			      stencil_bits_array, depth_buffer_factor,
-			      back_buffer_modes, back_buffer_factor,
-			      msaa_samples_array, msaa_samples_factor);
    if (configs == NULL) {
       debug_printf("%s: driCreateConfigs failed\n", __FUNCTION__);
       return NULL;
