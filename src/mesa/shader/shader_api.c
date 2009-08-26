@@ -1631,6 +1631,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 
    if (param->Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
+      GLboolean changed = GL_FALSE;
       GLint i;
 
       /* this should have been caught by the compatible_types() check */
@@ -1655,13 +1656,23 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
             _mesa_printf("Set program %p sampler %d '%s' to unit %u\n",
                          program, sampler, param->Name, texUnit);
 #endif
-            program->SamplerUnits[sampler] = texUnit;
+            if (program->SamplerUnits[sampler] != texUnit) {
+               program->SamplerUnits[sampler] = texUnit;
+               changed = GL_TRUE;
+            }
          }
       }
 
-      _mesa_update_shader_textures_used(program);
-
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      if (changed) {
+         /* When a sampler's value changes it usually requires rewriting
+          * a GPU program's TEX instructions since there may not be a
+          * sampler->texture lookup table.  We signal this with the
+          * ProgramStringNotify() callback.
+          */
+         FLUSH_VERTICES(ctx, _NEW_TEXTURE | _NEW_PROGRAM);
+         _mesa_update_shader_textures_used(program);
+         ctx->Driver.ProgramStringNotify(ctx, program->Target, program);
+      }
    }
    else {
       /* ordinary uniform variable */
