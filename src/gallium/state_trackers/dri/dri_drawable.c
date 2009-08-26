@@ -57,8 +57,10 @@ dri_surface_from_handle(struct drm_api *api,
    struct pipe_buffer *buf = NULL;
 
    buf = api->buffer_from_handle(api, screen, "dri2 buffer", handle);
-   if (!buf)
+   if (!buf) {
+      debug_printf("%s: Failed to get buffer from handle\n", __func__);
       return NULL;
+   }
 
    memset(&templat, 0, sizeof(templat));
    templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
@@ -75,8 +77,10 @@ dri_surface_from_handle(struct drm_api *api,
    /* we don't need the buffer from this point on */
    pipe_buffer_reference(&buf, NULL);
 
-   if (!texture)
+   if (!texture) {
+      debug_printf("%s: Failed to blanket the buffer with a texture\n", __func__);
       return NULL;
+   }
 
    surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
 				     PIPE_BUFFER_USAGE_GPU_READ |
