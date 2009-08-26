@@ -107,10 +107,18 @@ RandomUniformValues(void)
 {
    GLuint i;
    for (i = 0; i < NumUniforms; i++) {
-      if (Uniforms[i].type == GL_FLOAT) {
+      switch (Uniforms[i].type) {
+      case GL_FLOAT:
          Uniforms[i].value[0] = RandomFloat(0.0, 1.0);
-      }
-      else {
+         break;
+      case GL_SAMPLER_1D:
+      case GL_SAMPLER_2D:
+      case GL_SAMPLER_3D:
+      case GL_SAMPLER_CUBE:
+      case GL_SAMPLER_2D_RECT_ARB:
+         /* don't change sampler values - random values are bad */
+         break;
+      default:
          Uniforms[i].value[0] = RandomFloat(-1.0, 2.0);
          Uniforms[i].value[1] = RandomFloat(-1.0, 2.0);
          Uniforms[i].value[2] = RandomFloat(-1.0, 2.0);
@@ -595,9 +603,14 @@ Init(void)
    Program = LinkShaders(vertShader, fragShader);
    linkTime = GetShaderLinkTime();
 
+   printf("Read vert shader %s\n", VertShaderFile);
+   printf("Read frag shader %s\n", FragShaderFile);
+
    printf("Time to compile vertex shader: %fs\n", vertTime);
    printf("Time to compile fragment shader: %fs\n", fragTime);
    printf("Time to link shaders: %fs\n", linkTime);
+
+   assert(ValidateShaderProgram(Program));
 
    glUseProgram(Program);
 
