@@ -1553,10 +1553,11 @@ _mesa_update_shader_textures_used(struct gl_program *prog)
 
    for (s = 0; s < MAX_SAMPLERS; s++) {
       if (prog->SamplersUsed & (1 << s)) {
-         GLuint u = prog->SamplerUnits[s];
-         GLuint t = prog->SamplerTargets[s];
-         assert(u < MAX_TEXTURE_IMAGE_UNITS);
-         prog->TexturesUsed[u] |= (1 << t);
+         GLuint unit = prog->SamplerUnits[s];
+         GLuint tgt = prog->SamplerTargets[s];
+         assert(unit < MAX_TEXTURE_IMAGE_UNITS);
+         assert(tgt < NUM_TEXTURE_TARGETS);
+         prog->TexturesUsed[unit] |= (1 << tgt);
       }
    }
 }
