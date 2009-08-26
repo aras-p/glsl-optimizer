@@ -301,6 +301,11 @@ void r700SelectVertexShader(GLcontext *ctx)
     unsigned int unBit;
     unsigned int i;
 
+    if (context->radeon.NewGLState & (_NEW_PROGRAM_CONSTANTS|_NEW_PROGRAM))
+    {
+	vpc->needUpdateVF = 1;
+    }
+
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         vpc->r700AsmCode.bR6xx = 1;
@@ -340,6 +345,14 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
     unsigned int ui;
+
+    if (vp->needUpdateVF)
+    {
+	vp->loaded = GL_FALSE;
+	vp->r700Shader.bNeedsAssembly = GL_TRUE;
+	Process_Vertex_Program_Vfetch_Instructions(vp, &(vp->mesa_program));
+	r600DeleteShader(ctx, vp->shaderbo);
+    }
 
     if(GL_FALSE == vp->loaded)
     {

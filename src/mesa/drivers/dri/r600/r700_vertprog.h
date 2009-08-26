@@ -45,19 +45,18 @@ struct r700_vertex_program
 {
     struct gl_vertex_program mesa_program; /* Must be first */
 
-	struct r700_vertex_program *next;
+    struct r700_vertex_program *next;
 
     r700_AssemblerBase r700AsmCode;
     R700_Shader        r700Shader;
 
-	GLboolean translated;
+    GLboolean translated;
     GLboolean loaded;
+    GLboolean needUpdateVF;
 	
-	/* ... */
-
     void * shaderbo;
 
-	ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
+    ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
 };
 
 //Internal
