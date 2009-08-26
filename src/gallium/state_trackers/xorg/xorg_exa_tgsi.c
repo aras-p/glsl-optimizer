@@ -64,21 +64,9 @@ create_vs(struct pipe_context *ctx,
 }
 
 static void *
-create_fs(struct pipe_context *ctx,
-          unsigned vs_traits)
+create_fs(struct pipe_context *pipe,
+          unsigned fs_traits)
 {
-   return NULL;
-}
-
-static struct xorg_shader
-xorg_shader_construct(struct exa_context *exa,
-                      int op,
-                      PicturePtr src_picture,
-                      PicturePtr mask_picture,
-                      PicturePtr dst_picture)
-{
-   struct xorg_shader shader = {0};
-#if 0
    struct ureg_program *ureg;
    struct ureg_src dst_sampler, src_sampler, mask_sampler;
    struct ureg_src dst_pos, src_pos, mask_pos;
@@ -86,10 +74,7 @@ xorg_shader_construct(struct exa_context *exa,
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
-      return shader;
-
-   if (sid.is_fill)
-      return shader;
+      return 0;
 
 #if 0  /* unused right now */
    dst_sampler = ureg_DECL_sampler(ureg);
@@ -105,18 +90,18 @@ xorg_shader_construct(struct exa_context *exa,
                                 1,
                                 TGSI_INTERPOLATE_PERSPECTIVE);
 
-   if (sid.mask) {
+   if ((fs_traits & FS_MASK)) {
       mask_sampler = ureg_DECL_sampler(ureg);
-      src_pos = ureg_DECL_fs_input(ureg,
-                                   TGSI_SEMANTIC_POSITION,
-                                   2,
-                                   TGSI_INTERPOLATE_PERSPECTIVE);
+      mask_pos = ureg_DECL_fs_input(ureg,
+                                    TGSI_SEMANTIC_POSITION,
+                                    2,
+                                    TGSI_INTERPOLATE_PERSPECTIVE);
    }
 
    ureg_TEX(ureg, ureg_dst(src),
             TGSI_TEXTURE_2D, src_pos, src_sampler);
 
-   if (sid.mask) {
+   if ((fs_traits & FS_MASK)) {
       ureg_TEX(ureg, ureg_dst(mask),
                TGSI_TEXTURE_2D, mask_pos, mask_sampler);
       /* src IN mask */
@@ -125,8 +110,7 @@ xorg_shader_construct(struct exa_context *exa,
 
    ureg_END(ureg);
 
-#endif
-   return shader;
+   return ureg_create_shader_and_destroy(ureg, pipe);
 }
 
 struct xorg_shaders * xorg_shaders_create(struct exa_context *exa)
