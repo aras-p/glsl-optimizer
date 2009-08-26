@@ -952,7 +952,7 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	if (DEBUG_CMDBUF > 1 && RADEON_DEBUG & DEBUG_VERBOSE) {
 		if (dwords > state->cmd_size)
 			dwords = state->cmd_size;
-		for (i = 0; i < state->cmd_size;) {
+		for (i = 0; i < dwords;) {
 			packet0 = state->cmd[i];
 			reg = (packet0 & 0x1FFF) << 2;
 			count = ((packet0 & 0x3FFF0000) >> 16) + 1;
