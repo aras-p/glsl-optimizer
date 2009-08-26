@@ -60,6 +60,7 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
     DRI2BufferPtr buffers;
     PixmapPtr pPixmap;
     unsigned stride, handle;
+    boolean have_depth = FALSE, have_stencil = FALSE;
     int i;
 
     buffers = xcalloc(count, sizeof *buffers);
@@ -69,6 +70,16 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
     privates = xcalloc(count, sizeof *privates);
     if (!privates)
 	goto fail_privates;
+
+    for (i = 0; i < count; i++) {
+	if (attachments[i] == DRI2BufferDepth)
+	    have_depth = TRUE;
+	else if (attachments[i] == DRI2BufferStencil)
+	    have_stencil = TRUE;
+    }
+
+    if (have_stencil && !have_depth)
+	FatalError("Doesn't support only stencil yet\n");
 
     depth = NULL;
     for (i = 0; i < count; i++) {
@@ -88,8 +99,12 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    struct pipe_texture template;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    template.format = ms->ds_depth_bits_last ?
-		PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+	    if (have_stencil)
+		template.format = ms->ds_depth_bits_last ?
+		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+	    else
+		template.format = ms->d_depth_bits_last ?
+		    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
 	    pf_get_block(template.format, &template.block);
 	    template.width[0] = pDraw->width;
 	    template.height[0] = pDraw->height;
