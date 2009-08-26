@@ -42,6 +42,12 @@
 #include "shader/prog_statevars.h"
 
 
+/** An invalid texture target */
+#define TEX_TARGET_NONE NUM_TEXTURE_TARGETS
+
+/** An invalid texture unit */
+#define TEX_UNIT_NONE BRW_MAX_TEX_UNIT
+
 #define FIRST_INTERNAL_TEMP MAX_NV_FRAGMENT_PROGRAM_TEMPS
 
 #define X    0
@@ -199,8 +205,14 @@ static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
 {
    struct prog_instruction *inst = get_fp_inst(c);
       
-   assert(tex_src_unit < BRW_MAX_TEX_UNIT);
-   assert(tex_src_target < NUM_TEXTURE_TARGETS);
+   assert(tex_src_unit < BRW_MAX_TEX_UNIT ||
+          tex_src_unit == TEX_UNIT_NONE);
+   assert(tex_src_target < NUM_TEXTURE_TARGETS ||
+          tex_src_target == TEX_TARGET_NONE);
+
+   /* update mask of which texture units are referenced by this program */
+   if (tex_src_unit != TEX_UNIT_NONE)
+      c->fp->tex_units_used |= (1 << tex_src_unit);
 
    memset(inst, 0, sizeof(*inst));
 
@@ -226,7 +238,7 @@ static struct prog_instruction * emit_op(struct brw_wm_compile *c,
 				       struct prog_src_register src2 )
 {
    return emit_tex_op(c, op, dest, saturate,
-                      0, 0, 0,  /* tex unit, target, shadow */
+                      TEX_UNIT_NONE, TEX_TARGET_NONE, 0,  /* unit, tgt, shadow */
                       src0, src1, src2);
 }
 
