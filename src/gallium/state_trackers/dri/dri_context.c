@@ -100,7 +100,6 @@ void
 dri_destroy_context(__DRIcontextPrivate * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
-   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
 
    /* No particular reason to wait for command completion before
     * destroying a context, but it is probably worthwhile flushing it
@@ -140,7 +139,6 @@ dri_make_current(__DRIcontextPrivate * cPriv,
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
-      struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
       struct dri_drawable *draw = dri_drawable(driDrawPriv);
       struct dri_drawable *read = dri_drawable(driReadPriv);
       struct st_context *old_st = st_get_current();

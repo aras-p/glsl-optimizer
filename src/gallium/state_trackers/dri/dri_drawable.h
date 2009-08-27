@@ -33,6 +33,7 @@
 struct pipe_surface;
 struct pipe_fence_handle;
 struct st_framebuffer;
+struct dri_context;
 
 #define DRI_SWAP_FENCES_MAX  8
 #define DRI_SWAP_FENCES_MASK 7

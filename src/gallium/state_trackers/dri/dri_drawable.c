@@ -281,6 +281,8 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
    /* TODO if rendering to pixmaps is slow enable this code. */
    if (drawable->is_pixmap)
       return;
+#else
+   (void)drawable;
 #endif
 
    (*dri_screen->dri2.loader->flushFrontBuffer)(dri_drawable,
