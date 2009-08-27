@@ -580,7 +580,7 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
 	dwords = 2*CACHE_FLUSH_BUFSZ;
 	dwords += PRE_EMIT_STATE_BUFSZ;
 	dwords += (AOS_BUFSZ(vbuf->num_attribs)
-		+ SCISSORS_BUFSZ
+		+ SCISSORS_BUFSZ*2
 		+ FIREAOS_BUFSZ )*nr_prims;
 
 	state_size = radeonCountStateEmitSize(&r300->radeon);
