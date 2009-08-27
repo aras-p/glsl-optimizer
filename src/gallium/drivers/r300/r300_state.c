@@ -538,16 +538,16 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
             (state->minx << R300_SCISSORS_X_SHIFT) |
             (state->miny << R300_SCISSORS_Y_SHIFT);
         r300->scissor_state->scissor_bottom_right =
-            (state->maxx << R300_SCISSORS_X_SHIFT) |
-            (state->maxy << R300_SCISSORS_Y_SHIFT);
+            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
+            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
     } else {
         /* Offset of 1440 in non-R500 chipsets. */
         r300->scissor_state->scissor_top_left =
             ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
             ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
         r300->scissor_state->scissor_bottom_right =
-            ((state->maxx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((state->maxy + 1440) << R300_SCISSORS_Y_SHIFT);
+            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
     }
 
     r300->dirty_state |= R300_NEW_SCISSOR;

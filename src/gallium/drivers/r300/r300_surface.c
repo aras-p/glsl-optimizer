@@ -58,13 +58,13 @@ static void r300_surface_setup(struct r300_context* r300,
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     if (caps->is_r500) {
         OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
-        OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((w - 1) << R300_SCISSORS_X_SHIFT) | ((h - 1) << R300_SCISSORS_Y_SHIFT));
     } else {
         /* Non-R500 chipsets have an offset of 1440 in their scissors. */
         OUT_CS(((x + 1440) << R300_SCISSORS_X_SHIFT) |
                 ((y + 1440) << R300_SCISSORS_Y_SHIFT));
-        OUT_CS(((w + 1440) << R300_SCISSORS_X_SHIFT) |
-                ((h + 1440) << R300_SCISSORS_Y_SHIFT));
+        OUT_CS((((w - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+                (((h - 1) + 1440) << R300_SCISSORS_Y_SHIFT));
     }
 
     /* Flush colorbuffer and blend caches. */
