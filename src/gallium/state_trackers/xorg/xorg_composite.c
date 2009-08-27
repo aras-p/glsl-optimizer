@@ -218,8 +218,12 @@ bind_blend_state(struct exa_context *exa, int op,
 }
 
 static void
-bind_rasterizer_state()
+bind_rasterizer_state(struct exa_context *exa)
 {
+   struct pipe_rasterizer_state raster;
+   memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
+   raster.gl_rasterization_rules = 1;
+   cso_set_rasterizer(exa->cso, &raster);
 }
 
 static void
@@ -240,7 +244,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_framebuffer_state(exa, pDstPicture, pDst);
    bind_viewport_state(exa, pDstPicture);
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
-   bind_rasterizer_state();
+   bind_rasterizer_state(exa);
    bind_shaders();
 
    return FALSE;
