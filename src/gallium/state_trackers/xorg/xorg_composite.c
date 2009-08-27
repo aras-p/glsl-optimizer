@@ -14,6 +14,7 @@ struct xorg_composite_blend {
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 };
 
+#define BLEND_OP_OVER 3
 static const struct xorg_composite_blend xorg_blends[] = {
    { PictOpClear,
      PIPE_BLENDFACTOR_CONST_COLOR, PIPE_BLENDFACTOR_CONST_ALPHA,
@@ -57,6 +58,20 @@ static const struct acceleration_info accelerated_ops[] = {
    {PictOpAdd,         1, 0},
    {PictOpSaturate,    1, 0},
 };
+
+static struct xorg_composite_blend
+blend_for_op(int op)
+{
+   const int num_blends =
+      sizeof(xorg_blends)/sizeof(struct xorg_composite_blend);
+   int i;
+
+   for (i = 0; i < num_blends; ++i) {
+      if (xorg_blends[i].op == op)
+         return xorg_blends[i];
+   }
+   return xorg_blends[BLEND_OP_OVER];
+}
 
 static void
 draw_texture(struct exa_context *exa)
@@ -175,8 +190,31 @@ bind_viewport_state(struct exa_context *exa, PicturePtr pDstPicture)
 }
 
 static void
-bind_blend_state()
+bind_blend_state(struct exa_context *exa, int op,
+                 PicturePtr pSrcPicture, PicturePtr pMaskPicture)
 {
+   boolean component_alpha = pSrcPicture->componentAlpha;
+   struct xorg_composite_blend blend_opt;
+   struct pipe_blend_state blend;
+
+   if (component_alpha) {
+      op = PictOpOver;
+   }
+   blend_opt = blend_for_op(op);
+
+   memset(&blend, 0, sizeof(struct pipe_blend_state));
+   blend.blend_enable = 1;
+   blend.colormask |= PIPE_MASK_R;
+   blend.colormask |= PIPE_MASK_G;
+   blend.colormask |= PIPE_MASK_B;
+   blend.colormask |= PIPE_MASK_A;
+
+   blend.rgb_src_factor   = blend_opt.rgb_src_factor;
+   blend.alpha_src_factor = blend_opt.alpha_src_factor;
+   blend.rgb_dst_factor   = blend_opt.rgb_dst_factor;
+   blend.alpha_dst_factor = blend_opt.alpha_dst_factor;
+
+   cso_set_blend(exa->cso, &blend);
 }
 
 static void
@@ -201,7 +239,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
 {
    bind_framebuffer_state(exa, pDstPicture, pDst);
    bind_viewport_state(exa, pDstPicture);
-   bind_blend_state();
+   bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state();
    bind_shaders();
 
