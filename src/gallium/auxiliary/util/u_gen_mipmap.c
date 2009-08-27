@@ -921,11 +921,19 @@ static void
 format_to_type_comps(enum pipe_format pformat,
                      enum dtype *datatype, uint *comps)
 {
+   /* XXX I think this could be implemented in terms of the pf_*() functions */
    switch (pformat) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_X8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
+   case PIPE_FORMAT_R8G8B8X8_SRGB:
+   case PIPE_FORMAT_A8R8G8B8_SRGB:
+   case PIPE_FORMAT_X8R8G8B8_SRGB:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
+   case PIPE_FORMAT_B8G8R8X8_SRGB:
+   case PIPE_FORMAT_R8G8B8_SRGB:
       *datatype = DTYPE_UBYTE;
       *comps = 4;
       return;
@@ -942,12 +950,14 @@ format_to_type_comps(enum pipe_format pformat,
       *comps = 3;
       return;
    case PIPE_FORMAT_L8_UNORM:
+   case PIPE_FORMAT_L8_SRGB:
    case PIPE_FORMAT_A8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
       *datatype = DTYPE_UBYTE;
       *comps = 1;
       return;
    case PIPE_FORMAT_A8L8_UNORM:
+   case PIPE_FORMAT_A8L8_SRGB:
       *datatype = DTYPE_UBYTE;
       *comps = 2;
       return;
