@@ -661,10 +661,6 @@ FreeScreen(int scrnIndex, int flags)
     FreeRec(xf86Screens[scrnIndex]);
 }
 
-/* HACK */
-void
-cursor_destroy(xf86CrtcPtr crtc);
-
 static void
 LeaveVT(int scrnIndex, int flags)
 {
@@ -676,7 +672,7 @@ LeaveVT(int scrnIndex, int flags)
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
 
-	cursor_destroy(crtc);
+	crtc_cursor_destroy(crtc);
 
 	if (crtc->rotatedPixmap || crtc->rotatedData) {
 	    crtc->funcs->shadow_destroy(crtc, crtc->rotatedPixmap,

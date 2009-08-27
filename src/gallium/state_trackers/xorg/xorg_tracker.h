@@ -39,6 +39,7 @@
 #include <xf86drmMode.h>
 #include <xorg-server.h>
 #include <xf86.h>
+#include "xf86Crtc.h"
 #include <exa.h>
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
@@ -139,6 +140,9 @@ driCloseScreen(ScreenPtr pScreen);
  */
 void
 crtc_init(ScrnInfoPtr pScrn);
+
+void
+crtc_cursor_destroy(xf86CrtcPtr crtc);
 
 
 /***********************************************************************

@@ -260,9 +260,8 @@ static const xf86CrtcFuncsRec crtc_funcs = {
 };
 
 void
-cursor_destroy(xf86CrtcPtr crtc)
+crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
-    modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_buf) {
