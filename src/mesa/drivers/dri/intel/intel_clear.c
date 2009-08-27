@@ -150,14 +150,18 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    /* SW fallback clearing */
    swrast_mask = mask & ~tri_mask & ~blit_mask;
 
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      GLuint bufBit = 1 << i;
-      if ((blit_mask | tri_mask) & bufBit) {
+   {
+      /* look for non-Intel renderbuffers (clear them with swrast) */
+      GLbitfield blit_or_tri = blit_mask | tri_mask;
+      while (blit_or_tri) {
+         GLuint i = _mesa_ffs(blit_or_tri) - 1;
+         GLbitfield bufBit = 1 << i;
          if (!fb->Attachment[i].Renderbuffer->ClassID) {
             blit_mask &= ~bufBit;
             tri_mask &= ~bufBit;
             swrast_mask |= bufBit;
          }
+         blit_or_tri ^= bufBit;
       }
    }
 
