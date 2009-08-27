@@ -115,6 +115,10 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
     if (priv->map_count++ == 0)
     {
+	if (exa->ctx->is_texture_referenced(exa->ctx, priv->tex, 0, 0) &
+	    PIPE_REFERENCED_FOR_WRITE)
+	    exa->ctx->flush(exa->ctx, 0, NULL);
+
 	priv->map_transfer =
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
 					PIPE_TRANSFER_READ_WRITE,
