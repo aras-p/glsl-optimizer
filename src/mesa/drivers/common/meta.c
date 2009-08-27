@@ -432,13 +432,23 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    }
 
    if (state & META_VIEWPORT) {
+      /* save viewport state */
       save->ViewportX = ctx->Viewport.X;
       save->ViewportY = ctx->Viewport.Y;
       save->ViewportW = ctx->Viewport.Width;
       save->ViewportH = ctx->Viewport.Height;
-      _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
+      /* set viewport to match window size */
+      if (ctx->Viewport.X != 0 ||
+          ctx->Viewport.Y != 0 ||
+          ctx->Viewport.Width != ctx->DrawBuffer->Width ||
+          ctx->Viewport.Height != ctx->DrawBuffer->Height) {
+         _mesa_set_viewport(ctx, 0, 0,
+                            ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
+      }
+      /* save depth range state */
       save->DepthNear = ctx->Viewport.Near;
       save->DepthFar = ctx->Viewport.Far;
+      /* set depth range to default */
       _mesa_DepthRange(0.0, 1.0);
    }
 
@@ -642,8 +652,13 @@ _mesa_meta_end(GLcontext *ctx)
    }
 
    if (state & META_VIEWPORT) {
-      _mesa_Viewport(save->ViewportX, save->ViewportY,
-                     save->ViewportW, save->ViewportH);
+      if (save->ViewportX != ctx->Viewport.X ||
+          save->ViewportY != ctx->Viewport.Y ||
+          save->ViewportW != ctx->Viewport.Width ||
+          save->ViewportH != ctx->Viewport.Height) {
+         _mesa_set_viewport(ctx, save->ViewportX, save->ViewportY,
+                            save->ViewportW, save->ViewportH);
+      }
       _mesa_DepthRange(save->DepthNear, save->DepthFar);
    }
 
