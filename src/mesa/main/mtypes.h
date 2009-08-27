@@ -2478,6 +2478,7 @@ struct gl_extensions
    GLboolean ARB_depth_texture;
    GLboolean ARB_depth_clamp;
    GLboolean ARB_draw_buffers;
+   GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;

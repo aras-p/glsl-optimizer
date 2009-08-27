@@ -8711,6 +8711,9 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->DrawElements = 0;
    vfmt->DrawRangeElements = 0;
    vfmt->MultiDrawElemementsEXT = 0;
+   vfmt->DrawElementsBaseVertex = 0;
+   vfmt->DrawRangeElementsBaseVertex = 0;
+   vfmt->MultiDrawElemementsBaseVertex = 0;
 #endif
 }
 

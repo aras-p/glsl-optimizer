@@ -44,6 +44,13 @@ extern void GLAPIENTRY
 _mesa_noop_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
 			     const GLvoid **indices, GLsizei primcount);
 
+extern void GLAPIENTRY
+_mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
+				       GLenum type,
+				       const GLvoid **indices,
+				       GLsizei primcount,
+				       const GLint *basevertex);
+
 extern void
 _mesa_noop_vtxfmt_init(GLvertexformat *vfmt);
 

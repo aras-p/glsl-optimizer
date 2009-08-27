@@ -826,6 +826,33 @@ static void GLAPIENTRY _save_DrawRangeElements(GLenum mode,
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawRangeElements" );
 }
 
+static void GLAPIENTRY _save_DrawElementsBaseVertex(GLenum mode,
+						    GLsizei count,
+						    GLenum type,
+						    const GLvoid *indices,
+						    GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) count; (void) type; (void) indices; (void)basevertex;
+
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawElements" );
+}
+
+static void GLAPIENTRY _save_DrawRangeElementsBaseVertex(GLenum mode,
+							 GLuint start,
+							 GLuint end,
+							 GLsizei count,
+							 GLenum type,
+							 const GLvoid *indices,
+							 GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) start; (void) end; (void) count; (void) type;
+   (void) indices; (void)basevertex;
+
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawRangeElements" );
+}
+
 static void GLAPIENTRY _save_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -907,7 +934,7 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
-   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
+   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices, 0 ))
       return;
 
    _ae_map_vbos( ctx );
@@ -948,7 +975,7 @@ static void GLAPIENTRY _save_OBE_DrawRangeElements(GLenum mode,
    GET_CURRENT_CONTEXT(ctx);
    if (_mesa_validate_DrawRangeElements( ctx, mode,
 					 start, end,
-					 count, type, indices ))
+					 count, type, indices, 0 ))
       _save_OBE_DrawElements( mode, count, type, indices );
 }
 
@@ -1039,9 +1066,11 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->DrawArrays = _save_DrawArrays;
    vfmt->DrawElements = _save_DrawElements;
    vfmt->DrawRangeElements = _save_DrawRangeElements;
+   vfmt->DrawElementsBaseVertex = _save_DrawElementsBaseVertex;
+   vfmt->DrawRangeElementsBaseVertex = _save_DrawRangeElementsBaseVertex;
    /* Loops back into vfmt->DrawElements */
    vfmt->MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
-
+   vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
 }
 
 
@@ -1233,6 +1262,7 @@ void vbo_save_api_init( struct vbo_save_context *save )
    ctx->ListState.ListVtxfmt.DrawRangeElements = _save_OBE_DrawRangeElements;
    /* loops back into _save_OBE_DrawElements */
    ctx->ListState.ListVtxfmt.MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
+   ctx->ListState.ListVtxfmt.MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 }
 

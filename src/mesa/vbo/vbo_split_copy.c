@@ -589,28 +589,40 @@ void vbo_split_copy( GLcontext *ctx,
 		     const struct split_limits *limits )
 {
    struct copy_context copy;
-   GLuint i;
+   GLuint i, this_nr_prims;
 
-   memset(&copy, 0, sizeof(copy));
+   for (i = 0; i < nr_prims;) {
+      /* Our SW TNL pipeline doesn't handle basevertex yet, so bind_indices
+       * will rebase the elements to the basevertex, and we'll only
+       * emit strings of prims with the same basevertex in one draw call.
+       */
+      for (this_nr_prims = 1; i + this_nr_prims < nr_prims;
+	   this_nr_prims++) {
+	 if (prim[i].basevertex != prim[i + this_nr_prims].basevertex)
+	    break;
+      }
 
-   /* Require indexed primitives:
-    */
-   assert(ib);
-   
-   copy.ctx = ctx;
-   copy.array = arrays;
-   copy.prim = prim;
-   copy.nr_prims = nr_prims;
-   copy.ib = ib;
-   copy.draw = draw;
-   copy.limits = limits;
+      memset(&copy, 0, sizeof(copy));
 
-   /* Clear the vertex cache:
-    */
-   for (i = 0; i < ELT_TABLE_SIZE; i++)
-      copy.vert_cache[i].in = ~0;
+      /* Require indexed primitives:
+       */
+      assert(ib);
 
-   replay_init(&copy);
-   replay_elts(&copy);
-   replay_finish(&copy);
+      copy.ctx = ctx;
+      copy.array = arrays;
+      copy.prim = &prim[i];
+      copy.nr_prims = this_nr_prims;
+      copy.ib = ib;
+      copy.draw = draw;
+      copy.limits = limits;
+
+      /* Clear the vertex cache:
+       */
+      for (i = 0; i < ELT_TABLE_SIZE; i++)
+	 copy.vert_cache[i].in = ~0;
+
+      replay_init(&copy);
+      replay_elts(&copy);
+      replay_finish(&copy);
+   }
 }

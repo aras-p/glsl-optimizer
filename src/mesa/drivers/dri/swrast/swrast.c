@@ -62,6 +62,7 @@
 #define need_GL_SGI_color_table
 
 /* sw extensions not associated with some GL version */
+#define need_GL_ARB_draw_elements_base_vertex
 #define need_GL_ARB_shader_objects
 #define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_program
@@ -96,6 +97,7 @@ const struct dri_extension card_extensions[] =
     { "GL_SGI_color_table",		GL_SGI_color_table_functions },
 
     { "GL_ARB_depth_clamp",		NULL },
+    { "GL_ARB_draw_elements_base_vertex", GL_ARB_draw_elements_base_vertex_functions },
     { "GL_ARB_shader_objects",		GL_ARB_shader_objects_functions },
     { "GL_ARB_vertex_array_object",	GL_ARB_vertex_array_object_functions },
     { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },
