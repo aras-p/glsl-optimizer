@@ -181,27 +181,25 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
    drawable->is_pixmap = dri2_check_if_pixmap(buffers, count);
 
    for (i = 0; i < count; i++) {
-      enum pipe_format format = 0;
       int index = 0;
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
-	 format = drawable->color_format;
+	 drawable->color_format = buffers[i].flags;
 	 break;
       case __DRI_BUFFER_BACK_LEFT:
 	 index = ST_SURFACE_BACK_LEFT;
-	 format = drawable->color_format;
+	 drawable->color_format = buffers[i].flags;
 	 break;
       case __DRI_BUFFER_DEPTH:
 	 index = ST_SURFACE_DEPTH;
-	 format = drawable->depth_format;
+	 drawable->depth_format = buffers[i].flags;
 	 break;
       case __DRI_BUFFER_STENCIL:
 	 index = ST_SURFACE_DEPTH;
-	 format = drawable->stencil_format;
+	 drawable->stencil_format = buffers[i].flags;
 	 break;
       case __DRI_BUFFER_ACCUM:
       default:
@@ -218,7 +216,7 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       surface = dri_surface_from_handle(api,
 					screen,
 					buffers[i].name,
-					format,
+					buffers[i].flags,
 					dri_drawable->w,
 					dri_drawable->h, buffers[i].pitch);
 
@@ -242,9 +240,7 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
    st_get_framebuffer_surface(drawable->stfb, ST_SURFACE_FRONT_LEFT, &ps);
 
    st_bind_texture_surface(ps, target == GL_TEXTURE_2D ? ST_TEXTURE_2D :
-                           ST_TEXTURE_RECT, 0,
-                           format == GLX_TEXTURE_FORMAT_RGBA_EXT ?
-                           PIPE_FORMAT_R8G8B8A8_UNORM : PIPE_FORMAT_R8G8B8X8_UNORM);
+                           ST_TEXTURE_RECT, 0, drawable->color_format);
 }
 
 void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
