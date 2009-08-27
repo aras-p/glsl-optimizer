@@ -231,25 +231,30 @@ void radeonSetCliprects(radeonContextPtr radeon)
 void radeonUpdateScissor( GLcontext *ctx )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	GLint x = ctx->Scissor.X, y = ctx->Scissor.Y;
+	GLsizei w = ctx->Scissor.Width, h = ctx->Scissor.Height;
+	int x1, y1, x2, y2;
+
+	if (!ctx->DrawBuffer)
+	    return;
 
 	if ( !ctx->DrawBuffer->Name ) {
-		__DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
-
-		int x = ctx->Scissor.X;
-		int y = dPriv->h - ctx->Scissor.Y - ctx->Scissor.Height;
-		int w = ctx->Scissor.X + ctx->Scissor.Width - 1;
-		int h = dPriv->h - ctx->Scissor.Y - 1;
-
-		rmesa->state.scissor.rect.x1 = x + dPriv->x;
-		rmesa->state.scissor.rect.y1 = y + dPriv->y;
-		rmesa->state.scissor.rect.x2 = w + dPriv->x + 1;
-		rmesa->state.scissor.rect.y2 = h + dPriv->y + 1;
+		x1 = x;
+		y1 = ctx->DrawBuffer->Height - (y + h);
+		x2 = x + w - 1;
+		y2 = y1 + h - 1;
 	} else {
-		rmesa->state.scissor.rect.x1 = ctx->Scissor.X;
-		rmesa->state.scissor.rect.y1 = ctx->Scissor.Y;
-		rmesa->state.scissor.rect.x2 = ctx->Scissor.X + ctx->Scissor.Width;
-		rmesa->state.scissor.rect.y2 = ctx->Scissor.Y + ctx->Scissor.Height;
+		x1 = x;
+		y1 = y;
+		x2 = x + w - 1;
+		y2 = y + h - 1;
+
 	}
+
+	rmesa->state.scissor.rect.x1 = CLAMP(x1,  0, ctx->DrawBuffer->Width - 1);
+	rmesa->state.scissor.rect.y1 = CLAMP(y1,  0, ctx->DrawBuffer->Height - 1);
+	rmesa->state.scissor.rect.x2 = CLAMP(x2,  0, ctx->DrawBuffer->Width - 1);
+	rmesa->state.scissor.rect.y2 = CLAMP(y2,  0, ctx->DrawBuffer->Height - 1);
 
 	radeonRecalcScissorRects( rmesa );
 }
