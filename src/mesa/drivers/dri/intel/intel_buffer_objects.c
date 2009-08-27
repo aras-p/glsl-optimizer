@@ -28,9 +28,11 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/macros.h"
 #include "main/bufferobj.h"
 
 #include "intel_context.h"
+#include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
@@ -243,8 +245,10 @@ intel_bufferobj_map(GLcontext * ctx,
       return obj->Pointer;
    }
 
-   if (!read_only)
-      intelFlush(ctx);
+   /* Flush any existing batchbuffer that might have written to this
+    * buffer.
+    */
+   intelFlush(ctx);
 
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
@@ -325,6 +329,90 @@ intel_bufferobj_buffer(struct intel_context *intel,
    return intel_obj->buffer;
 }
 
+static void
+intel_bufferobj_copy_subdata(GLcontext *ctx,
+			     struct gl_buffer_object *src,
+			     struct gl_buffer_object *dst,
+			     GLintptr read_offset, GLintptr write_offset,
+			     GLsizeiptr size)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_buffer_object *intel_src = intel_buffer_object(src);
+   struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
+   drm_intel_bo *src_bo, *dst_bo;
+   GLuint pitch, height;
+
+   if (size == 0)
+      return;
+
+   /* If we're in system memory, just map and memcpy. */
+   if (intel_src->sys_buffer || intel_dst->sys_buffer) {
+      /* The same buffer may be used, but note that regions copied may
+       * not overlap.
+       */
+      if (src == dst) {
+	 char *ptr = intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
+					 GL_READ_WRITE, dst);
+	 memcpy(ptr + write_offset, ptr + read_offset, size);
+	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
+      } else {
+	 const char *src_ptr;
+	 char *dst_ptr;
+
+	 src_ptr =  intel_bufferobj_map(ctx, GL_COPY_READ_BUFFER,
+					GL_READ_ONLY, src);
+	 dst_ptr =  intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
+					GL_WRITE_ONLY, dst);
+
+	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
+
+	 intel_bufferobj_unmap(ctx, GL_COPY_READ_BUFFER, src);
+	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
+      }
+   }
+
+   /* Otherwise, we have real BOs, so blit them.  We don't have a memmove-type
+    * blit like some other hardware, so we'll do a rectangular blit covering
+    * a large space, then emit a scanline blit at the end to cover the last
+    * if we need.
+    */
+
+   dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
+   src_bo = intel_bufferobj_buffer(intel, intel_src, INTEL_READ);
+
+   /* The pitch is a signed value. */
+   pitch = MIN2(size, (1 << 15) - 1);
+   height = size / pitch;
+   intelEmitCopyBlit(intel, 1,
+		     pitch, src_bo, read_offset, I915_TILING_NONE,
+		     pitch, dst_bo, write_offset, I915_TILING_NONE,
+		     0, 0, /* src x/y */
+		     0, 0, /* dst x/y */
+		     pitch, height, /* w, h */
+		     GL_COPY);
+
+   read_offset += pitch * height;
+   write_offset += pitch * height;
+   size -= pitch * height;
+   assert (size < (1 << 15));
+   if (size != 0) {
+      intelEmitCopyBlit(intel, 1,
+			size, src_bo, read_offset, I915_TILING_NONE,
+			size, dst_bo, write_offset, I915_TILING_NONE,
+			0, 0, /* src x/y */
+			0, 0, /* dst x/y */
+			size, 1, /* w, h */
+			GL_COPY);
+   }
+
+   /* Since we've emitted some blits to buffers that will (likely) be used
+    * in rendering operations in other cache domains in this batch, emit a
+    * flush.  Once again, we wish for a domain tracker in libdrm to cover
+    * usage inside of a batchbuffer.
+    */
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+}
+
 void
 intelInitBufferObjectFuncs(struct dd_function_table *functions)
 {
@@ -335,4 +423,5 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->GetBufferSubData = intel_bufferobj_get_subdata;
    functions->MapBuffer = intel_bufferobj_map;
    functions->UnmapBuffer = intel_bufferobj_unmap;
+   functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
 }
