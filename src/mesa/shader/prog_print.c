@@ -529,7 +529,7 @@ void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,
                             const char *opcode_string, GLuint numRegs)
 {
-   fprint_alu_instruction(stdout, inst, opcode_string,
+   fprint_alu_instruction(stderr, inst, opcode_string,
                           numRegs, PROG_PRINT_DEBUG, NULL);
 }
 
@@ -750,7 +750,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst,
                             gl_prog_print_mode mode,
                             const struct gl_program *prog)
 {
-   return _mesa_fprint_instruction_opt(stdout, inst, indent, mode, prog);
+   return _mesa_fprint_instruction_opt(stderr, inst, indent, mode, prog);
 }
 
 
@@ -758,7 +758,7 @@ void
 _mesa_print_instruction(const struct prog_instruction *inst)
 {
    /* note: 4th param should be ignored for PROG_PRINT_DEBUG */
-   _mesa_fprint_instruction_opt(stdout, inst, 0, PROG_PRINT_DEBUG, NULL);
+   _mesa_fprint_instruction_opt(stderr, inst, 0, PROG_PRINT_DEBUG, NULL);
 }
 
 
@@ -804,12 +804,12 @@ _mesa_fprint_program_opt(FILE *f,
 
 
 /**
- * Print program to stdout, default options.
+ * Print program to stderr, default options.
  */
 void
 _mesa_print_program(const struct gl_program *prog)
 {
-   _mesa_fprint_program_opt(stdout, prog, PROG_PRINT_DEBUG, GL_TRUE);
+   _mesa_fprint_program_opt(stderr, prog, PROG_PRINT_DEBUG, GL_TRUE);
 }
 
 
@@ -850,12 +850,12 @@ _mesa_fprint_program_parameters(FILE *f,
 
 
 /**
- * Print all of a program's parameters/fields to stdout.
+ * Print all of a program's parameters/fields to stderr.
  */
 void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 {
-   _mesa_fprint_program_parameters(stdout, ctx, prog);
+   _mesa_fprint_program_parameters(stderr, ctx, prog);
 }
 
 
@@ -895,12 +895,12 @@ _mesa_fprint_parameter_list(FILE *f,
 
 
 /**
- * Print a program parameter list to stdout.
+ * Print a program parameter list to stderr.
  */
 void
 _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
 {
-   _mesa_fprint_parameter_list(stdout, list);
+   _mesa_fprint_parameter_list(stderr, list);
 }
 
 
