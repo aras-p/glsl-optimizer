@@ -96,10 +96,6 @@ drm_create_texture(_EGLDisplay *dpy,
 	if (!texture)
 		goto err_tex;
 
-	dev->api->buffer_from_texture(dev->api, texture, &buf, &pitch);
-	if (!buf)
-		goto err_buf;
-
 	surface = screen->get_tex_surface(screen,
 	                                  texture,
 	                                  0,
@@ -112,11 +108,11 @@ drm_create_texture(_EGLDisplay *dpy,
 
 	scrn->tex = texture;
 	scrn->surface = surface;
-	scrn->buffer = buf;
 	scrn->front.width = w;
 	scrn->front.height = h;
 	scrn->front.pitch = pitch;
-	dev->api->handle_from_buffer(dev->api, screen, scrn->buffer, &scrn->front.handle);
+	dev->api->local_handle_from_texture(dev->api, screen, texture,
+	                                    &scrn->front.pitch, &scrn->front.handle);
 	if (0)
 		goto err_handle;
 
@@ -126,7 +122,6 @@ err_handle:
 	pipe_surface_reference(&surface, NULL);
 err_surf:
 	pipe_texture_reference(&texture, NULL);
-err_buf:
 err_tex:
 	pipe_buffer_reference(&buf, NULL);
 	return;

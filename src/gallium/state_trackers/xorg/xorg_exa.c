@@ -396,7 +396,6 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_pixmap_priv *priv;
-    struct pipe_buffer *buffer = NULL;
     unsigned handle;
     unsigned stride;
 
@@ -412,9 +411,7 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
 	return 0;
     }
 
-    ms->api->buffer_from_texture(ms->api, priv->tex, &buffer, &stride);
-    ms->api->handle_from_buffer(ms->api, ms->screen, buffer, &handle);
-    pipe_buffer_reference(&buffer, NULL);
+    ms->api->local_handle_from_texture(ms->api, ms->screen, priv->tex, &stride, &handle);
     if (stride_out)
 	*stride_out = stride;
 

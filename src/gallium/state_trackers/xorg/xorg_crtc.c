@@ -46,13 +46,14 @@
 #include <X11/extensions/dpms.h>
 
 #include "pipe/p_inlines.h"
+#include "util/u_rect.h"
 
 struct crtc_private
 {
     drmModeCrtcPtr drm_crtc;
 
     /* hwcursor */
-    struct pipe_buffer *cursor_buf;
+    struct pipe_texture *cursor_tex;
     unsigned cursor_handle;
 };
 
@@ -173,8 +174,8 @@ crtc_destroy(xf86CrtcPtr crtc)
 {
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_buf)
-	pipe_buffer_reference(&crtcp->cursor_buf, NULL);
+    if (crtcp->cursor_tex)
+	pipe_texture_reference(&crtcp->cursor_tex, NULL);
 
     drmModeFreeCrtc(crtcp->drm_crtc);
     xfree(crtcp);
@@ -186,25 +187,42 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
     unsigned char *ptr;
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
+    struct pipe_transfer *transfer;
 
-    if (!crtcp->cursor_buf) {
-	crtcp->cursor_buf = pipe_buffer_create(ms->screen,
-					       0,
-					       PIPE_BUFFER_USAGE_CPU_WRITE |
-					       PIPE_BUFFER_USAGE_GPU_READ,
-					       64*64*4);
-	ms->api->handle_from_buffer(ms->api,
-				    ms->screen,
-				    crtcp->cursor_buf,
-				    &crtcp->cursor_handle);
+    if (!crtcp->cursor_tex) {
+	struct pipe_texture templat;
+	unsigned pitch;
+
+	memset(&templat, 0, sizeof(templat));
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+	templat.target = PIPE_TEXTURE_2D;
+	templat.last_level = 0;
+	templat.depth[0] = 1;
+	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	templat.width[0] = 64;
+	templat.height[0] = 64;
+	pf_get_block(templat.format, &templat.block);
+
+	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
+						       &templat);
+	ms->api->local_handle_from_texture(ms->api,
+					   ms->screen,
+					   crtcp->cursor_tex,
+					   &pitch,
+					   &crtcp->cursor_handle);
     }
 
-    ptr = pipe_buffer_map(ms->screen, crtcp->cursor_buf, PIPE_BUFFER_USAGE_CPU_WRITE);
-
-    if (ptr)
-	memcpy(ptr, image, 64 * 64 * 4);
-
-    pipe_buffer_unmap(ms->screen, crtcp->cursor_buf);
+    transfer = ms->screen->get_tex_transfer(ms->screen, crtcp->cursor_tex,
+					    0, 0, 0,
+					    PIPE_TRANSFER_WRITE,
+					    0, 0, 64, 64);
+    ptr = ms->screen->transfer_map(ms->screen, transfer);
+    util_copy_rect(ptr, &crtcp->cursor_tex->block,
+		   transfer->stride, 0, 0,
+		   64, 64, (void*)image, 64 * 4, 0, 0);
+    ms->screen->transfer_unmap(ms->screen, transfer);
+    ms->screen->tex_transfer_destroy(transfer);
 }
 
 static void
@@ -222,7 +240,7 @@ crtc_show_cursor(xf86CrtcPtr crtc)
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_buf)
+    if (crtcp->cursor_tex)
 	drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id,
 			 crtcp->cursor_handle, 64, 64);
 }
@@ -264,8 +282,8 @@ crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_buf) {
-	pipe_buffer_reference(&crtcp->cursor_buf, NULL);
+    if (crtcp->cursor_tex) {
+	pipe_texture_reference(&crtcp->cursor_tex, NULL);
     }
 }
 

@@ -29,6 +29,7 @@
 
 #include "util/u_memory.h"
 #include "identity/id_drm.h"
+#include "identity/id_screen.h"
 #include "identity/id_public.h"
 #include "identity/id_screen.h"
 #include "identity/id_objects.h"
@@ -79,81 +80,59 @@ identity_drm_create_context(struct drm_api *_api,
    return pipe;
 }
 
-static boolean
-identity_drm_buffer_from_texture(struct drm_api *_api,
-                                 struct pipe_texture *_texture,
-                                 struct pipe_buffer **_buffer,
-                                 unsigned *stride)
+static struct pipe_texture *
+identity_drm_texture_from_shared_handle(struct drm_api *_api,
+                                        struct pipe_screen *_screen,
+                                        struct pipe_texture *templ,
+                                        const char *name,
+                                        unsigned stride,
+                                        unsigned handle)
 {
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct identity_drm_api *id_api = identity_drm_api(_api);
+   struct pipe_screen *screen = id_screen->screen;
+   struct drm_api *api = id_api->api;
+   struct pipe_texture *result;
+
+   result = api->texture_from_shared_handle(api, screen, templ, name, stride, handle);
+
+   result = identity_texture_create(identity_screen(_screen), result);
+
+   return result;
+}
+
+static boolean
+identity_drm_shared_handle_from_texture(struct drm_api *_api,
+                                        struct pipe_screen *_screen,
+                                        struct pipe_texture *_texture,
+                                        unsigned *stride,
+                                        unsigned *handle)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
    struct identity_texture *id_texture = identity_texture(_texture);
    struct identity_drm_api *id_api = identity_drm_api(_api);
+   struct pipe_screen *screen = id_screen->screen;
    struct pipe_texture *texture = id_texture->texture;
    struct drm_api *api = id_api->api;
-   struct pipe_buffer *buffer = NULL;
-   boolean result;
 
-   result = api->buffer_from_texture(api, texture, &buffer, stride);
-
-   if (result && _buffer)
-      buffer = identity_buffer_create(identity_screen(texture->screen), buffer);
-
-   if (_buffer)
-      *_buffer = buffer;
-   else
-      pipe_buffer_reference(&buffer, NULL);
-
-   return result;
-}
-
-static struct pipe_buffer *
-identity_drm_buffer_from_handle(struct drm_api *_api,
-                                struct pipe_screen *_screen,
-                                const char *name,
-                                unsigned handle)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_drm_api *id_api = identity_drm_api(_api);
-   struct pipe_screen *screen = id_screen->screen;
-   struct drm_api *api = id_api->api;
-   struct pipe_buffer *result;
-
-   result = api->buffer_from_handle(api, screen, name, handle);
-
-   result = identity_buffer_create(identity_screen(_screen), result);
-
-   return result;
+   return api->shared_handle_from_texture(api, screen, texture, stride, handle);
 }
 
 static boolean
-identity_drm_handle_from_buffer(struct drm_api *_api,
-                                struct pipe_screen *_screen,
-                                struct pipe_buffer *_buffer,
-                                unsigned *handle)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct identity_drm_api *id_api = identity_drm_api(_api);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-   struct drm_api *api = id_api->api;
-
-   return api->handle_from_buffer(api, screen, buffer, handle);
-}
-
-static boolean
-identity_drm_global_handle_from_buffer(struct drm_api *_api,
+identity_drm_local_handle_from_texture(struct drm_api *_api,
                                        struct pipe_screen *_screen,
-                                       struct pipe_buffer *_buffer,
+                                       struct pipe_texture *_texture,
+                                       unsigned *stride,
                                        unsigned *handle)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
+   struct identity_texture *id_texture = identity_texture(_texture);
    struct identity_drm_api *id_api = identity_drm_api(_api);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
+   struct pipe_texture *texture = id_texture->texture;
    struct drm_api *api = id_api->api;
 
-   return api->global_handle_from_buffer(api, screen, buffer, handle);
+   return api->local_handle_from_texture(api, screen, texture, stride, handle);
 }
 
 static void
@@ -169,19 +148,26 @@ identity_drm_destroy(struct drm_api *_api)
 struct drm_api *
 identity_drm_create(struct drm_api *api)
 {
-   struct identity_drm_api *id_api = CALLOC_STRUCT(identity_drm_api);
+   struct identity_drm_api *id_api;
+
+   if (!api)
+      goto error;
+
+   id_api = CALLOC_STRUCT(identity_drm_api);
 
    if (!id_api)
-      return NULL;
+      goto error;
 
    id_api->base.create_screen = identity_drm_create_screen;
    id_api->base.create_context = identity_drm_create_context;
-   id_api->base.buffer_from_texture = identity_drm_buffer_from_texture;
-   id_api->base.buffer_from_handle = identity_drm_buffer_from_handle;
-   id_api->base.handle_from_buffer = identity_drm_handle_from_buffer;
-   id_api->base.global_handle_from_buffer = identity_drm_global_handle_from_buffer;
+   id_api->base.texture_from_shared_handle = identity_drm_texture_from_shared_handle;
+   id_api->base.shared_handle_from_texture = identity_drm_shared_handle_from_texture;
+   id_api->base.local_handle_from_texture = identity_drm_local_handle_from_texture;
    id_api->base.destroy = identity_drm_destroy;
    id_api->api = api;
 
    return &id_api->base;
+
+error:
+   return api;
 }

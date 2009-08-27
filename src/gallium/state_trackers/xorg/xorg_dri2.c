@@ -44,7 +44,6 @@
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
-    struct pipe_buffer *buf;
     struct pipe_fence_handle *fence;
 } *BufferPrivatePtr;
 
@@ -133,8 +132,7 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	if (!tex)
 		FatalError("NO TEXTURE IN DRI2\n");
 
-	ms->api->buffer_from_texture(ms->api, tex, &buf, &stride);
-	ms->api->global_handle_from_buffer(ms->api, ms->screen, buf, &handle);
+	ms->api->shared_handle_from_texture(ms->api, ms->screen, tex, &stride, &handle);
 
 	buffers[i].name = handle;
 	buffers[i].attachment = attachments[i];
@@ -143,7 +141,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	buffers[i].driverPrivate = &privates[i];
 	buffers[i].flags = 0; /* not tiled */
 	privates[i].pPixmap = pPixmap;
-	privates[i].buf = buf;
 	privates[i].tex = tex;
     }
 
@@ -169,7 +166,6 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 	private = buffers[i].driverPrivate;
 
 	pipe_texture_reference(&private->tex, NULL);
-	pipe_buffer_reference(&private->buf, NULL);
         ms->screen->fence_reference(ms->screen, &private->fence, NULL);
 
 	if (private->pPixmap)

@@ -209,25 +209,7 @@ intel_be_surface_buffer_create(struct pipe_winsys *winsys,
 	                              buf_size);
 }
 
-boolean
-intel_be_get_texture_buffer(struct drm_api *api,
-                            struct pipe_texture *texture,
-                            struct pipe_buffer **buffer,
-                            unsigned *stride)
-{
-	struct intel_be_device *dev;
-
-	if (!texture)
-		return FALSE;
-
-	dev = intel_be_device(texture->screen->winsys);
-	if (dev->softpipe)
-		return softpipe_get_texture_buffer(texture, buffer, stride);
-	else
-		return i915_get_texture_buffer(texture, buffer, stride);
-}
-
-struct pipe_buffer *
+static struct pipe_buffer *
 intel_be_buffer_from_handle(struct drm_api *api,
                             struct pipe_screen *screen,
                             const char* name, unsigned handle)
@@ -259,30 +241,60 @@ err:
 	return NULL;
 }
 
-boolean
-intel_be_handle_from_buffer(struct drm_api *api,
-                            struct pipe_screen *screen,
-                            struct pipe_buffer *buffer,
-                            unsigned *handle)
+struct pipe_texture *
+intel_be_texture_from_shared_handle(struct drm_api *api,
+                                    struct pipe_screen *screen,
+                                    struct pipe_texture *templ,
+                                    const char* name,
+                                    unsigned pitch,
+                                    unsigned handle)
 {
+	struct pipe_buffer *buffer;
+
+	buffer = intel_be_buffer_from_handle(api,
+	                                     screen,
+	                                     name,
+	                                     handle);
 	if (!buffer)
+		return NULL;
+
+	return screen->texture_blanket(screen, templ, &pitch, buffer);
+}
+
+static boolean
+intel_be_get_texture_buffer(struct drm_api *api,
+                            struct pipe_texture *texture,
+                            struct pipe_buffer **buffer,
+                            unsigned *stride)
+{
+	struct intel_be_device *dev;
+
+	if (!texture)
 		return FALSE;
 
-	*handle = intel_bo(buffer)->handle;
-	return TRUE;
+	dev = intel_be_device(texture->screen->winsys);
+	if (dev->softpipe)
+		return softpipe_get_texture_buffer(texture, buffer, stride);
+	else
+		return i915_get_texture_buffer(texture, buffer, stride);
 }
 
 boolean
-intel_be_global_handle_from_buffer(struct drm_api *api,
-                                   struct pipe_screen *screen,
-				   struct pipe_buffer *buffer,
-				   unsigned *handle)
+intel_be_shared_handle_from_texture(struct drm_api *api,
+                                    struct pipe_screen *screen,
+                                    struct pipe_texture *texture,
+                                    unsigned *pitch,
+                                    unsigned *handle)
 {
-	struct intel_be_buffer *buf = intel_be_buffer(buffer);
-
-	if (!buffer)
+	struct pipe_buffer *buffer;
+	struct intel_be_buffer *buf;
+	if (!intel_be_get_texture_buffer(api,
+	                                 texture,
+	                                 &buffer,
+	                                 pitch))
 		return FALSE;
 
+	buf = intel_be_buffer(buffer);
 	if (!buf->flinked) {
 		if (drm_intel_bo_flink(intel_bo(buffer), &buf->flink))
 			return FALSE;
@@ -290,6 +302,30 @@ intel_be_global_handle_from_buffer(struct drm_api *api,
 	}
 
 	*handle = buf->flink;
+
+	pipe_buffer_reference(&buffer, NULL);
+
+	return TRUE;
+}
+
+boolean
+intel_be_local_handle_from_texture(struct drm_api *api,
+                                   struct pipe_screen *screen,
+                                   struct pipe_texture *texture,
+                                   unsigned *pitch,
+                                   unsigned *handle)
+{
+	struct pipe_buffer *buffer;
+	if (!intel_be_get_texture_buffer(api,
+	                                 texture,
+	                                 &buffer,
+	                                 pitch))
+		return FALSE;
+
+	*handle = intel_bo(buffer)->handle;
+
+	pipe_buffer_reference(&buffer, NULL);
+
 	return TRUE;
 }
 

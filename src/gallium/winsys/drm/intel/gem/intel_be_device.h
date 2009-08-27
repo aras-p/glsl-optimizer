@@ -57,45 +57,39 @@ struct intel_be_buffer {
 	unsigned flink;
 };
 
-/*
- * Wrapper for driver get_texture_buffer functions.
+/**
+ * Create a texture from a shared drm handle.
  */
-boolean
-intel_be_get_texture_buffer(struct drm_api *api,
-                            struct pipe_texture *texture,
-                            struct pipe_buffer **buffer,
-                            unsigned *stride);
+struct pipe_texture *
+intel_be_texture_from_shared_handle(struct drm_api *api,
+                                    struct pipe_screen *screen,
+                                    struct pipe_texture *templ,
+                                    const char* name,
+                                    unsigned pitch,
+                                    unsigned handle);
 
 /**
- * Create a be buffer from a drm bo handle.
+ * Gets a shared handle from a texture.
  *
- * Takes a reference.
- */
-struct pipe_buffer *
-intel_be_buffer_from_handle(struct drm_api *api,
-                            struct pipe_screen *screen,
-                            const char* name, unsigned handle);
-
-/**
- * Gets a handle from a buffer.
- *
- * If buffer is destroyed handle may become invalid.
+ * If texture is destroyed handle may become invalid.
  */
 boolean
-intel_be_handle_from_buffer(struct drm_api *api,
-                            struct pipe_screen *screen,
-                            struct pipe_buffer *buffer,
-                            unsigned *handle);
+intel_be_shared_handle_from_texture(struct drm_api *api,
+                                    struct pipe_screen *screen,
+                                    struct pipe_texture *texture,
+                                    unsigned *pitch,
+                                    unsigned *handle);
 
 /**
- * Gets the global handle from a buffer.
+ * Gets the local handle from a texture. As used by KMS.
  *
- * If buffer is destroyed handle may become invalid.
+ * If texture is destroyed handle may become invalid.
  */
 boolean
-intel_be_global_handle_from_buffer(struct drm_api *api,
+intel_be_local_handle_from_texture(struct drm_api *api,
                                    struct pipe_screen *screen,
-                                   struct pipe_buffer *buffer,
+                                   struct pipe_texture *texture,
+                                   unsigned *pitch,
                                    unsigned *handle);
 
 static INLINE struct intel_be_buffer *

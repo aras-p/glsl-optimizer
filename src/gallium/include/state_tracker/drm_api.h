@@ -42,21 +42,22 @@ struct drm_api
 	 * Special buffer functions
 	 */
 	/*@{*/
-	boolean (*buffer_from_texture)(struct drm_api *api,
-	                               struct pipe_texture *texture,
-	                               struct pipe_buffer **buffer,
-	                               unsigned *stride);
-	struct pipe_buffer* (*buffer_from_handle)(struct drm_api *api,
-	                                          struct pipe_screen *screen,
-                                                  const char *name,
-                                                  unsigned handle);
-	boolean (*handle_from_buffer)(struct drm_api *api,
-	                              struct pipe_screen *screen,
-	                              struct pipe_buffer *buffer,
-	                              unsigned *handle);
-	boolean (*global_handle_from_buffer)(struct drm_api *api,
+	struct pipe_texture*
+	    (*texture_from_shared_handle)(struct drm_api *api,
+	                                  struct pipe_screen *screen,
+	                                  struct pipe_texture *templ,
+	                                  const char *name,
+	                                  unsigned stride,
+	                                  unsigned handle);
+	boolean (*shared_handle_from_texture)(struct drm_api *api,
+	                                      struct pipe_screen *screen,
+	                                      struct pipe_texture *texture,
+	                                      unsigned *stride,
+	                                      unsigned *handle);
+	boolean (*local_handle_from_texture)(struct drm_api *api,
 	                                     struct pipe_screen *screen,
-	                                     struct pipe_buffer *buffer,
+	                                     struct pipe_texture *texture,
+	                                     unsigned *stride,
 	                                     unsigned *handle);
 	/*@}*/
 

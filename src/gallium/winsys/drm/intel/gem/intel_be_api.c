@@ -15,10 +15,9 @@ struct drm_api intel_be_drm_api =
 	.create_context = intel_be_create_context,
 	/* intel_be_device.c */
 	.create_screen = intel_be_create_screen,
-	.buffer_from_texture = intel_be_get_texture_buffer,
-	.buffer_from_handle = intel_be_buffer_from_handle,
-	.handle_from_buffer = intel_be_handle_from_buffer,
-	.global_handle_from_buffer = intel_be_global_handle_from_buffer,
+	.texture_from_shared_handle = intel_be_texture_from_shared_handle,
+	.shared_handle_from_texture = intel_be_shared_handle_from_texture,
+	.local_handle_from_texture = intel_be_local_handle_from_texture,
 	.destroy = destroy,
 };
 

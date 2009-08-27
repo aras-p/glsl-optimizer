@@ -49,7 +49,7 @@ trace_drm_api(struct drm_api *_api)
 
 static struct pipe_screen *
 trace_drm_create_screen(struct drm_api *_api, int fd,
-                           struct drm_create_screen_arg *arg)
+                        struct drm_create_screen_arg *arg)
 {
    struct trace_drm_api *tr_api = trace_drm_api(_api);
    struct drm_api *api = tr_api->api;
@@ -67,7 +67,7 @@ trace_drm_create_screen(struct drm_api *_api, int fd,
 
 static struct pipe_context *
 trace_drm_create_context(struct drm_api *_api,
-                            struct pipe_screen *_screen)
+                         struct pipe_screen *_screen)
 {
    struct trace_screen *tr_screen = trace_screen(_screen);
    struct trace_drm_api *tr_api = trace_drm_api(_api);
@@ -84,89 +84,65 @@ trace_drm_create_context(struct drm_api *_api,
    return pipe;
 }
 
-static boolean
-trace_drm_buffer_from_texture(struct drm_api *_api,
-                                 struct pipe_texture *_texture,
-                                 struct pipe_buffer **_buffer,
-                                 unsigned *stride)
+static struct pipe_texture *
+trace_drm_texture_from_shared_handle(struct drm_api *_api,
+                                     struct pipe_screen *_screen,
+                                     struct pipe_texture *templ,
+                                     const char *name,
+                                     unsigned stride,
+                                     unsigned handle)
 {
+   struct trace_screen *tr_screen = trace_screen(_screen);
+   struct trace_drm_api *tr_api = trace_drm_api(_api);
+   struct pipe_screen *screen = tr_screen->screen;
+   struct drm_api *api = tr_api->api;
+   struct pipe_texture *result;
+
+   /* TODO trace call */
+
+   result = api->texture_from_shared_handle(api, screen, templ, name, stride, handle);
+
+   result = trace_texture_create(trace_screen(_screen), result);
+
+   return result;
+}
+
+static boolean
+trace_drm_shared_handle_from_texture(struct drm_api *_api,
+                                     struct pipe_screen *_screen,
+                                     struct pipe_texture *_texture,
+                                     unsigned *stride,
+                                     unsigned *handle)
+{
+   struct trace_screen *tr_screen = trace_screen(_screen);
    struct trace_texture *tr_texture = trace_texture(_texture);
    struct trace_drm_api *tr_api = trace_drm_api(_api);
+   struct pipe_screen *screen = tr_screen->screen;
    struct pipe_texture *texture = tr_texture->texture;
    struct drm_api *api = tr_api->api;
-   struct pipe_buffer *buffer = NULL;
-   boolean result;
 
    /* TODO trace call */
 
-   result = api->buffer_from_texture(api, texture, &buffer, stride);
-
-   if (result && _buffer)
-      buffer = trace_buffer_create(trace_screen(_texture->screen), buffer);
-
-   if (_buffer)
-      *_buffer = buffer;
-   else
-      pipe_buffer_reference(&buffer, NULL);
-
-   return result;
-}
-
-static struct pipe_buffer *
-trace_drm_buffer_from_handle(struct drm_api *_api,
-                                struct pipe_screen *_screen,
-                                const char *name,
-                                unsigned handle)
-{
-   struct trace_screen *tr_screen = trace_screen(_screen);
-   struct trace_drm_api *tr_api = trace_drm_api(_api);
-   struct pipe_screen *screen = tr_screen->screen;
-   struct drm_api *api = tr_api->api;
-   struct pipe_buffer *result;
-
-   /* TODO trace call */
-
-   result = api->buffer_from_handle(api, screen, name, handle);
-
-   result = trace_buffer_create(trace_screen(_screen), result);
-
-   return result;
+   return api->shared_handle_from_texture(api, screen, texture, stride, handle);
 }
 
 static boolean
-trace_drm_handle_from_buffer(struct drm_api *_api,
-                                struct pipe_screen *_screen,
-                                struct pipe_buffer *_buffer,
-                                unsigned *handle)
+trace_drm_local_handle_from_texture(struct drm_api *_api,
+                                    struct pipe_screen *_screen,
+                                    struct pipe_texture *_texture,
+                                    unsigned *stride,
+                                    unsigned *handle)
 {
    struct trace_screen *tr_screen = trace_screen(_screen);
-   struct trace_buffer *tr_buffer = trace_buffer(_buffer);
+   struct trace_texture *tr_texture = trace_texture(_texture);
    struct trace_drm_api *tr_api = trace_drm_api(_api);
    struct pipe_screen *screen = tr_screen->screen;
-   struct pipe_buffer *buffer = tr_buffer->buffer;
+   struct pipe_texture *texture = tr_texture->texture;
    struct drm_api *api = tr_api->api;
 
    /* TODO trace call */
 
-   return api->handle_from_buffer(api, screen, buffer, handle);
-}
-
-static boolean
-trace_drm_global_handle_from_buffer(struct drm_api *_api,
-                                       struct pipe_screen *_screen,
-                                       struct pipe_buffer *_buffer,
-                                       unsigned *handle)
-{
-   struct trace_screen *tr_screen = trace_screen(_screen);
-   struct trace_buffer *tr_buffer = trace_buffer(_buffer);
-   struct trace_drm_api *tr_api = trace_drm_api(_api);
-   struct pipe_screen *screen = tr_screen->screen;
-   struct pipe_buffer *buffer = tr_buffer->buffer;
-   struct drm_api *api = tr_api->api;
-
-   /* TODO trace call */
-
-   return api->global_handle_from_buffer(api, screen, buffer, handle);
+   return api->local_handle_from_texture(api, screen, texture, stride, handle);
 }
 
 static void
@@ -197,10 +173,9 @@ trace_drm_create(struct drm_api *api)
 
    tr_api->base.create_screen = trace_drm_create_screen;
    tr_api->base.create_context = trace_drm_create_context;
-   tr_api->base.buffer_from_texture = trace_drm_buffer_from_texture;
-   tr_api->base.buffer_from_handle = trace_drm_buffer_from_handle;
-   tr_api->base.handle_from_buffer = trace_drm_handle_from_buffer;
-   tr_api->base.global_handle_from_buffer = trace_drm_global_handle_from_buffer;
+   tr_api->base.texture_from_shared_handle = trace_drm_texture_from_shared_handle;
+   tr_api->base.shared_handle_from_texture = trace_drm_shared_handle_from_texture;
+   tr_api->base.local_handle_from_texture = trace_drm_local_handle_from_texture;
    tr_api->base.destroy = trace_drm_destroy;
    tr_api->api = api;
 
