@@ -36,6 +36,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_inlines.h"
+#include "main/mtypes.h"
+#include "main/renderbuffer.h"
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
 #include "state_tracker/st_public.h"
@@ -235,6 +237,12 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_surface *ps;
+
+   if (!drawable->stfb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer) {
+      struct gl_renderbuffer *rb =
+         st_new_renderbuffer_fb(drawable->color_format, 0 /*XXX*/, FALSE);
+      _mesa_add_renderbuffer(&drawable->stfb->Base, BUFFER_FRONT_LEFT, rb);
+   }
 
    dri_get_buffers(drawable->dPriv);
    st_get_framebuffer_surface(drawable->stfb, ST_SURFACE_FRONT_LEFT, &ps);
