@@ -136,7 +136,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.VertexProgram.MaxNativeAttribs = 16;
    ctx->Const.VertexProgram.MaxNativeTemps = 256;
    ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
-   ctx->Const.VertexProgram.MaxNativeParameters = 96;
+   ctx->Const.VertexProgram.MaxNativeParameters = 1024;
    ctx->Const.VertexProgram.MaxEnvParams =
       MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
 	   ctx->Const.VertexProgram.MaxEnvParams);
@@ -148,7 +148,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
    ctx->Const.FragmentProgram.MaxNativeTemps = 256;
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
-   ctx->Const.FragmentProgram.MaxNativeParameters = 64;
+   ctx->Const.FragmentProgram.MaxNativeParameters = 1024;
    ctx->Const.FragmentProgram.MaxEnvParams =
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
