@@ -481,6 +481,7 @@ CreateScreenResources(ScreenPtr pScreen)
     rootPixmap = pScreen->GetScreenPixmap(pScreen);
 
     xorg_exa_set_displayed_usage(rootPixmap);
+    xorg_exa_set_shared_usage(rootPixmap);
     if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
 	FatalError("Couldn't adjust screen pixmap\n");
 

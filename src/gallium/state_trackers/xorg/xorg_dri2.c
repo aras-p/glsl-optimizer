@@ -92,7 +92,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    else
 		pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr) pDraw);
 	    pPixmap->refcnt++;
-	    tex = xorg_exa_get_texture(pPixmap);
 	} else if (attachments[i] == DRI2BufferStencil) {
 	    pipe_texture_reference(&tex, depth);
 	} else if (attachments[i] == DRI2BufferDepth) {
@@ -110,19 +109,24 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    template.height[0] = pDraw->height;
 	    template.depth[0] = 1;
 	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+		PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	    depth = tex;
 	} else if (attachments[i] == DRI2BufferFakeFrontLeft &&
 		   pDraw->type == DRAWABLE_PIXMAP) {
 	    pPixmap = (PixmapPtr) pDraw;
 	    pPixmap->refcnt++;
-	    tex = xorg_exa_get_texture(pPixmap);
 	} else {
 	    pPixmap = (*pScreen->CreatePixmap)(pScreen, pDraw->width,
 					       pDraw->height,
 					       pDraw->depth,
 					       0);
+	}
+
+	if (pPixmap) {
+	    xorg_exa_set_shared_usage(pPixmap);
+	    pScreen->ModifyPixmapHeader(pPixmap, 0, 0, 0, 0, 0, NULL);
 	    tex = xorg_exa_get_texture(pPixmap);
 	}
 

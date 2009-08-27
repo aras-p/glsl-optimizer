@@ -373,11 +373,7 @@ xorg_exa_set_displayed_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    if (priv->flags & ~PIPE_TEXTURE_USAGE_PRIMARY) {
-	FatalError("BAD FLAGS\n");
-	return 0;
-    }
-    priv->flags = PIPE_TEXTURE_USAGE_PRIMARY;
+    priv->flags |= PIPE_TEXTURE_USAGE_PRIMARY;
 
     return 0;
 }
@@ -393,11 +389,7 @@ xorg_exa_set_shared_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    if (priv->flags & ~PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
-	FatalError("BAD FLAGS\n");
-	return 0;
-    }
-    priv->flags = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    priv->flags |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
 
     return 0;
 }
