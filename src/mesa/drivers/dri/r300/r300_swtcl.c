@@ -490,6 +490,27 @@ static void r300ChooseRenderState( GLcontext *ctx )
 		rmesa->radeon.swtcl.RenderIndex = index;
 	}
 }
+static void r300_predict_emit_size( GLcontext *ctx )
+{
+	r300ContextPtr rmesa = R300_CONTEXT( ctx );
+	if (!rmesa->radeon.swtcl.emit_prediction) {
+		const int vertex_size = 7;
+		const int prim_size = 3;
+		const int cache_flush_size = 4;
+		const int state_size = radeonCountStateEmitSize(&rmesa->radeon);
+
+		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+					state_size +
+					+ vertex_size + prim_size,
+					__FUNCTION__))
+			rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize(&rmesa->radeon);
+		else
+			rmesa->radeon.swtcl.emit_prediction = state_size;
+
+		rmesa->radeon.swtcl.emit_prediction += rmesa->radeon.cmdbuf.cs->cdw
+			+ vertex_size + prim_size + cache_flush_size * 2;
+	}
+}
 
 
 void r300RenderStart(GLcontext *ctx)
@@ -508,20 +529,7 @@ void r300RenderStart(GLcontext *ctx)
 
 	r300UpdateShaderStates(rmesa);
 
-	const int vertex_size = 7;
-	const int prim_size = 3;
-
-	if (!rmesa->radeon.swtcl.primitive_counter) {
-		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
-					radeonCountStateEmitSize(&rmesa->radeon) +
-					+ vertex_size + prim_size,
-					__FUNCTION__))
-			rmesa->radeon.swtcl.primitive_counter = 0;
-		else
-			rmesa->radeon.swtcl.primitive_counter = 1;
-	}
-
-	r300EmitCacheFlush(rmesa);
+	r300_predict_emit_size( ctx );
 
 	/* investigate if we can put back flush optimisation if needed */
 	if (rmesa->radeon.dma.flush != NULL) {
@@ -577,7 +585,7 @@ void r300InitSwtcl(GLcontext *ctx)
 		init_rast_tab();
 		firsttime = 0;
 	}
-	rmesa->radeon.swtcl.primitive_counter = 0;
+	rmesa->radeon.swtcl.emit_prediction = 0;
 
 	tnl->Driver.Render.Start = r300RenderStart;
 	tnl->Driver.Render.Finish = r300RenderFinish;
@@ -644,6 +652,8 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		fprintf(stderr, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
+	r300EmitCacheFlush(rmesa);
+
 	radeonEmitState(&rmesa->radeon);
     r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
@@ -655,6 +665,11 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		   rmesa->radeon.swtcl.hw_primitive,
 		   rmesa->radeon.swtcl.numverts);
 	r300EmitCacheFlush(rmesa);
-	rmesa->radeon.swtcl.primitive_counter = 0;
+	if ( rmesa->radeon.swtcl.emit_prediction < rmesa->radeon.cmdbuf.cs->cdw )
+		WARN_ONCE("Rendering was %d commands larger than predicted size."
+			" We might overflow  command buffer.\n",
+			rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
+	rmesa->radeon.swtcl.emit_prediction = 0;
+	r300_predict_emit_size( ctx );
 	COMMIT_BATCH();
 }

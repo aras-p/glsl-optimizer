@@ -201,24 +201,32 @@ static void r200SetVertexFormat( GLcontext *ctx )
    }
 }
 
+static void r200_predict_emit_size( GLcontext *ctx )
+{
+   r200ContextPtr rmesa = R200_CONTEXT( ctx );
+   const int vertex_array_size = 7;
+   const int prim_size = 3;
+   if (!rmesa->radeon.swtcl.emit_prediction) {
+      const int state_size = radeonCountStateEmitSize(&rmesa->radeon);
+      if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+	       state_size +
+	       vertex_array_size + prim_size,
+	       __FUNCTION__))
+	 rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize(&rmesa->radeon);
+      else
+	 rmesa->radeon.swtcl.emit_prediction = state_size;
+      rmesa->radeon.swtcl.emit_prediction += vertex_array_size + prim_size
+	 + rmesa->radeon.cmdbuf.cs->cdw;
+   }
+}
+
 
 static void r200RenderStart( GLcontext *ctx )
 {
-   const int vertex_array_size = 7;
-   const int prim_size = 3;
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200SetVertexFormat( ctx );
    if (RADEON_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s\n", __func__);
-   if (!rmesa->radeon.swtcl.primitive_counter) {
-      if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
-	       radeonCountStateEmitSize(&rmesa->radeon) +
-	       vertex_array_size + prim_size,
-	       __FUNCTION__))
-	 rmesa->radeon.swtcl.primitive_counter = 0;
-      else
-	 rmesa->radeon.swtcl.primitive_counter = 1;
-   }
+   r200_predict_emit_size( ctx );
 }
 
 
@@ -296,8 +304,13 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    r200EmitVbufPrim( rmesa,
 		     rmesa->radeon.swtcl.hw_primitive,
 		     rmesa->radeon.swtcl.numverts);
+   if ( rmesa->radeon.swtcl.emit_prediction < rmesa->radeon.cmdbuf.cs->cdw )
+      WARN_ONCE("Rendering was %d commands larger than predicted size."
+	    " We might overflow  command buffer.\n",
+	    rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
 
-   rmesa->radeon.swtcl.primitive_counter = 0;
+   rmesa->radeon.swtcl.emit_prediction = 0;
+   r200_predict_emit_size( ctx );
 
 }
 
@@ -905,7 +918,7 @@ void r200InitSwtcl( GLcontext *ctx )
       init_rast_tab();
       firsttime = 0;
    }
-   rmesa->radeon.swtcl.primitive_counter = 0;
+   rmesa->radeon.swtcl.emit_prediction = 0;
 
    tnl->Driver.Render.Start = r200RenderStart;
    tnl->Driver.Render.Finish = r200RenderFinish;

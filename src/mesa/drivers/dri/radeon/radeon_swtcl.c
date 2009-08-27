@@ -220,6 +220,27 @@ static void radeonSetVertexFormat( GLcontext *ctx )
    }
 }
 
+static void radeon_predict_emit_size( GLcontext* ctx )
+{
+    r100ContextPtr rmesa = R100_CONTEXT( ctx );
+
+    if (!rmesa->radeon.swtcl.emit_prediction) {
+        const int state_size = radeonCountStateEmitSize( &rmesa->radeon );
+        const int scissor_size = 8;
+        const int prims_size = 8;
+        const int vertex_size = 7;
+
+        if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+                    state_size +
+                    (scissor_size + prims_size + vertex_size),
+                    __FUNCTION__))
+            rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize( &rmesa->radeon );
+        else
+            rmesa->radeon.swtcl.emit_prediction = state_size;
+        rmesa->radeon.swtcl.emit_prediction += scissor_size + prims_size + vertex_size
+            + rmesa->radeon.cmdbuf.cs->cdw;
+    }
+}
 
 static void radeonRenderStart( GLcontext *ctx )
 {
@@ -230,16 +251,7 @@ static void radeonRenderStart( GLcontext *ctx )
     if (rmesa->radeon.dma.flush != 0 &&
             rmesa->radeon.dma.flush != rcommon_flush_last_swtcl_prim)
         rmesa->radeon.dma.flush( ctx );
-
-    if (!rmesa->radeon.swtcl.primitive_counter) {
-        if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
-                    radeonCountStateEmitSize( &rmesa->radeon ) +
-                    (8 + 8 + 7), /* scissor + primis + VertexAOS */
-                    __FUNCTION__))
-            rmesa->radeon.swtcl.primitive_counter = 0;
-        else
-            rmesa->radeon.swtcl.primitive_counter = 1;
-    }
+    radeon_predict_emit_size( ctx );
 }
 
 
@@ -307,9 +319,14 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		       rmesa->swtcl.vertex_format,
 		       rmesa->radeon.swtcl.hw_primitive,
 		       rmesa->radeon.swtcl.numverts);
+   if ( rmesa->radeon.swtcl.emit_prediction < rmesa->radeon.cmdbuf.cs->cdw )
+     WARN_ONCE("Rendering was %d commands larger than predicted size."
+	 " We might overflow  command buffer.\n",
+	 rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
 
+   radeon_predict_emit_size( ctx );
 
-   rmesa->radeon.swtcl.primitive_counter = 0;
+   rmesa->radeon.swtcl.emit_prediction = 0;
 
 }
 
@@ -814,8 +831,8 @@ void radeonInitSwtcl( GLcontext *ctx )
    if (firsttime) {
       init_rast_tab();
       firsttime = 0;
-      rmesa->radeon.swtcl.primitive_counter = 0;
    }
+   rmesa->radeon.swtcl.emit_prediction = 0;
 
    tnl->Driver.Render.Start = radeonRenderStart;
    tnl->Driver.Render.Finish = radeonRenderFinish;
