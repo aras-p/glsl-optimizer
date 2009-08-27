@@ -17,14 +17,8 @@
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_hash.h"
 
-struct xorg_shaders {
-   struct exa_context *exa;
-
-   struct cso_hash *vs_hash;
-   struct cso_hash *fs_hash;
-};
-
-/* SAMP[0]  = dst
+/* Fragment shader:
+ * SAMP[0]  = dst
  * SAMP[1]  = src
  * SAMP[2]  = mask
  * IN[0]    = pos dst
@@ -32,6 +26,13 @@ struct xorg_shaders {
  * IN[2]    = pos mask
  * CONST[0] = (0, 0, 0, 1)
  */
+
+struct xorg_shaders {
+   struct exa_context *exa;
+
+   struct cso_hash *vs_hash;
+   struct cso_hash *fs_hash;
+};
 
 static const char over_op[] =
    "SUB TEMP[3], CONST[0].wwww, TEMP[1].wwww\n"

@@ -12,7 +12,10 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                                   int op,
                                   PicturePtr pSrcPicture,
                                   PicturePtr pMaskPicture,
-                                  PicturePtr pDstPicture);
+                                  PicturePtr pDstPicture,
+                                  struct exa_pixmap_priv *pSrc,
+                                  struct exa_pixmap_priv *pMask,
+                                  struct exa_pixmap_priv *pDst);
 
 void xorg_composite(struct exa_context *exa,
                     struct exa_pixmap_priv *dst,

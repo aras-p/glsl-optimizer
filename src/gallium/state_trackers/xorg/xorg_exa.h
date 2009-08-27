@@ -3,6 +3,8 @@
 
 #include "xorg_tracker.h"
 
+#include <pipe/p_state.h>
+
 struct cso_context;
 struct xorg_shaders;
 
@@ -13,6 +15,9 @@ struct exa_context
    struct pipe_screen *scrn;
    struct cso_context *cso;
    struct xorg_shaders *shaders;
+
+   struct pipe_constant_buffer vs_const_buffer;
+   struct pipe_constant_buffer fs_const_buffer;
 };
 
 
@@ -29,6 +34,8 @@ struct exa_pixmap_priv
    unsigned map_count;
 };
 
+struct pipe_surface *
+exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv);
 
 
 #endif
