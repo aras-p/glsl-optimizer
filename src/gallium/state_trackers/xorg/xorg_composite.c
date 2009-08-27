@@ -1,5 +1,7 @@
 #include "xorg_composite.h"
 
+#include "xorg_exa_tgsi.h"
+
 #include <cso_cache/cso_context.h>
 
 #include <pipe/p_inlines.h>
@@ -227,8 +229,25 @@ bind_rasterizer_state(struct exa_context *exa)
 }
 
 static void
-bind_shaders()
+bind_shaders(struct exa_context *exa, int op,
+             PicturePtr pSrcPicture, PicturePtr pMaskPicture)
 {
+   unsigned vs_traits = 0, fs_traits = 0;
+   struct xorg_shader shader;
+
+   if (pSrcPicture) {
+      vs_traits |= VS_COMPOSITE;
+      fs_traits |= FS_COMPOSITE;
+   }
+
+   if (pMaskPicture) {
+      vs_traits |= VS_MASK;
+      fs_traits |= FS_MASK;
+   }
+
+   shader = xorg_shaders_get(exa->shaders, vs_traits, fs_traits);
+   cso_set_vertex_shader_handle(exa->cso, shader.vs);
+   cso_set_fragment_shader_handle(exa->cso, shader.fs);
 }
 
 
@@ -245,7 +264,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_viewport_state(exa, pDstPicture);
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state(exa);
-   bind_shaders();
+   bind_shaders(exa, op, pSrcPicture, pMaskPicture);
 
    return FALSE;
 }
