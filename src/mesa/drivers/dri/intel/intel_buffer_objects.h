@@ -48,6 +48,11 @@ struct intel_buffer_object
    struct intel_region *region; /* Is there a zero-copy texture
                                    associated with this (pixel)
                                    buffer object? */
+
+   drm_intel_bo *range_map_bo;
+   unsigned int range_map_offset;
+   GLsizei range_map_size;
+
    GLboolean mapped_gtt;
 };
 

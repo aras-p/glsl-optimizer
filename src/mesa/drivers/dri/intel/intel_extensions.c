@@ -32,6 +32,7 @@
 
 #define need_GL_ARB_copy_buffer
 #define need_GL_ARB_framebuffer_object
+#define need_GL_ARB_map_buffer_range
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_shader_objects
@@ -72,6 +73,7 @@
 static const struct dri_extension card_extensions[] = {
    { "GL_ARB_copy_buffer",                GL_ARB_copy_buffer_functions },
    { "GL_ARB_half_float_pixel",           NULL },
+   { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },

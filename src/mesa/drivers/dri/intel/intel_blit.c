@@ -636,3 +636,43 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    return GL_TRUE;
 }
+
+/* We don't have a memmove-type blit like some other hardware, so we'll do a
+ * rectangular blit covering a large space, then emit 1-scanline blit at the
+ * end to cover the last if we need.
+ */
+void
+intel_emit_linear_blit(struct intel_context *intel,
+		       drm_intel_bo *dst_bo,
+		       unsigned int dst_offset,
+		       drm_intel_bo *src_bo,
+		       unsigned int src_offset,
+		       unsigned int size)
+{
+   GLuint pitch, height;
+
+   /* The pitch is a signed value. */
+   pitch = MIN2(size, (1 << 15) - 1);
+   height = size / pitch;
+   intelEmitCopyBlit(intel, 1,
+		     pitch, src_bo, src_offset, I915_TILING_NONE,
+		     pitch, dst_bo, dst_offset, I915_TILING_NONE,
+		     0, 0, /* src x/y */
+		     0, 0, /* dst x/y */
+		     pitch, height, /* w, h */
+		     GL_COPY);
+
+   src_offset += pitch * height;
+   dst_offset += pitch * height;
+   size -= pitch * height;
+   assert (size < (1 << 15));
+   if (size != 0) {
+      intelEmitCopyBlit(intel, 1,
+			size, src_bo, src_offset, I915_TILING_NONE,
+			size, dst_bo, dst_offset, I915_TILING_NONE,
+			0, 0, /* src x/y */
+			0, 0, /* dst x/y */
+			size, 1, /* w, h */
+			GL_COPY);
+   }
+}

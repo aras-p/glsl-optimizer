@@ -270,29 +270,155 @@ intel_bufferobj_map(GLcontext * ctx,
    return obj->Pointer;
 }
 
+/**
+ * Called via glMapBufferRange().
+ *
+ * The goal of this extension is to allow apps to accumulate their rendering
+ * at the same time as they accumulate their buffer object.  Without it,
+ * you'd end up blocking on execution of rendering every time you mapped
+ * the buffer to put new data in.
+ *
+ * We support it in 3 ways: If unsynchronized, then don't bother
+ * flushing the batchbuffer before mapping the buffer, which can save blocking
+ * in many cases.  If we would still block, and they allow the whole buffer
+ * to be invalidated, then just allocate a new buffer to replace the old one.
+ * If not, and we'd block, and they allow the subrange of the buffer to be
+ * invalidated, then we can make a new little BO, let them write into that,
+ * and blit it into the real BO at unmap time.
+ */
+static void *
+intel_bufferobj_map_range(GLcontext * ctx,
+			  GLenum target, GLsizei offset, GLsizeiptr length,
+			  GLbitfield access, struct gl_buffer_object *obj)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+
+   assert(intel_obj);
+
+   if (intel_obj->sys_buffer) {
+      obj->Pointer = intel_obj->sys_buffer + offset;
+      return obj->Pointer;
+   }
+
+   if (intel_obj->region)
+      intel_bufferobj_cow(intel, intel_obj);
+
+   /* If the mapping is synchronized with other GL operations, flush
+    * the batchbuffer so that GEM knows about the buffer access for later
+    * syncing.
+    */
+   if ((access & GL_MAP_WRITE_BIT) && !(access & GL_MAP_UNSYNCHRONIZED_BIT))
+      intelFlush(ctx);
+
+   /* _mesa_MapBufferRange (GL entrypoint) sets these, but the vbo module also
+    * internally uses our functions directly.
+    */
+   obj->Offset = offset;
+   obj->Length = length;
+   obj->AccessFlags = access;
+
+   if (intel_obj->buffer == NULL) {
+      obj->Pointer = NULL;
+      return NULL;
+   }
+
+   /* If the user doesn't care about existing buffer contents and mapping
+    * would cause us to block, then throw out the old buffer.
+    */
+   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
+       (access & GL_MAP_INVALIDATE_BUFFER_BIT) &&
+       drm_intel_bo_busy(intel_obj->buffer)) {
+      drm_intel_bo_unreference(intel_obj->buffer);
+      intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
+				       intel_obj->Base.Size, 64);
+   }
+
+   /* If the user is mapping a range of an active buffer object but
+    * doesn't require the current contents of that range, make a new
+    * BO, and we'll copy what they put in there out at unmap or
+    * FlushRange time.
+    */
+   if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
+       drm_intel_bo_busy(intel_obj->buffer)) {
+      intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
+						   "range map",
+						   length, 64);
+      if (!(access & GL_MAP_READ_BIT) &&
+	  intel->intelScreen->kernel_exec_fencing) {
+	 drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
+	 intel_obj->mapped_gtt = GL_TRUE;
+      } else {
+	 drm_intel_bo_map(intel_obj->range_map_bo,
+			  (access & GL_MAP_WRITE_BIT) != 0);
+	 intel_obj->mapped_gtt = GL_FALSE;
+      }
+      obj->Pointer = intel_obj->range_map_bo->virtual;
+      return obj->Pointer;
+   }
+
+   if (!(access & GL_MAP_READ_BIT) &&
+       intel->intelScreen->kernel_exec_fencing) {
+      drm_intel_gem_bo_map_gtt(intel_obj->buffer);
+      intel_obj->mapped_gtt = GL_TRUE;
+   } else {
+      drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
+      intel_obj->mapped_gtt = GL_FALSE;
+   }
+
+   obj->Pointer = intel_obj->buffer->virtual + offset;
+   return obj->Pointer;
+}
+
 
 /**
- * Called via glMapBufferARB().
+ * Called via glUnmapBuffer().
  */
 static GLboolean
 intel_bufferobj_unmap(GLcontext * ctx,
                       GLenum target, struct gl_buffer_object *obj)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
+   assert(obj->Pointer);
    if (intel_obj->sys_buffer != NULL) {
-      assert(obj->Pointer);
-      obj->Pointer = NULL;
+      /* always keep the mapping around. */
+   } else if (intel_obj->range_map_bo != NULL) {
+      if (intel_obj->mapped_gtt) {
+	 drm_intel_gem_bo_unmap_gtt(intel_obj->range_map_bo);
+      } else {
+	 drm_intel_bo_unmap(intel_obj->range_map_bo);
+      }
+
+      /* We ignore the FLUSH_EXPLICIT bit and the calls associated with it.
+       * It would be a small win to support that, but for now we just copy
+       * the whole mapped range into place.
+       */
+      intel_emit_linear_blit(intel,
+			     intel_obj->buffer, obj->Offset,
+			     intel_obj->range_map_bo, 0,
+			     obj->Length);
+
+      /* Since we've emitted some blits to buffers that will (likely) be used
+       * in rendering operations in other cache domains in this batch, emit a
+       * flush.  Once again, we wish for a domain tracker in libdrm to cover
+       * usage inside of a batchbuffer.
+       */
+      intel_batchbuffer_emit_mi_flush(intel->batch);
+
+      drm_intel_bo_unreference(intel_obj->range_map_bo);
+      intel_obj->range_map_bo = NULL;
    } else if (intel_obj->buffer != NULL) {
-      assert(obj->Pointer);
       if (intel_obj->mapped_gtt) {
 	 drm_intel_gem_bo_unmap_gtt(intel_obj->buffer);
       } else {
 	 drm_intel_bo_unmap(intel_obj->buffer);
       }
-      obj->Pointer = NULL;
    }
+   obj->Pointer = NULL;
+
    return GL_TRUE;
 }
 
@@ -340,7 +466,6 @@ intel_bufferobj_copy_subdata(GLcontext *ctx,
    struct intel_buffer_object *intel_src = intel_buffer_object(src);
    struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
    drm_intel_bo *src_bo, *dst_bo;
-   GLuint pitch, height;
 
    if (size == 0)
       return;
@@ -371,39 +496,14 @@ intel_bufferobj_copy_subdata(GLcontext *ctx,
       }
    }
 
-   /* Otherwise, we have real BOs, so blit them.  We don't have a memmove-type
-    * blit like some other hardware, so we'll do a rectangular blit covering
-    * a large space, then emit a scanline blit at the end to cover the last
-    * if we need.
-    */
+   /* Otherwise, we have real BOs, so blit them. */
 
    dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
    src_bo = intel_bufferobj_buffer(intel, intel_src, INTEL_READ);
 
-   /* The pitch is a signed value. */
-   pitch = MIN2(size, (1 << 15) - 1);
-   height = size / pitch;
-   intelEmitCopyBlit(intel, 1,
-		     pitch, src_bo, read_offset, I915_TILING_NONE,
-		     pitch, dst_bo, write_offset, I915_TILING_NONE,
-		     0, 0, /* src x/y */
-		     0, 0, /* dst x/y */
-		     pitch, height, /* w, h */
-		     GL_COPY);
-
-   read_offset += pitch * height;
-   write_offset += pitch * height;
-   size -= pitch * height;
-   assert (size < (1 << 15));
-   if (size != 0) {
-      intelEmitCopyBlit(intel, 1,
-			size, src_bo, read_offset, I915_TILING_NONE,
-			size, dst_bo, write_offset, I915_TILING_NONE,
-			0, 0, /* src x/y */
-			0, 0, /* dst x/y */
-			size, 1, /* w, h */
-			GL_COPY);
-   }
+   intel_emit_linear_blit(intel,
+			  dst_bo, write_offset,
+			  src_bo, read_offset, size);
 
    /* Since we've emitted some blits to buffers that will (likely) be used
     * in rendering operations in other cache domains in this batch, emit a
@@ -422,6 +522,7 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->BufferSubData = intel_bufferobj_subdata;
    functions->GetBufferSubData = intel_bufferobj_get_subdata;
    functions->MapBuffer = intel_bufferobj_map;
+   functions->MapBufferRange = intel_bufferobj_map_range;
    functions->UnmapBuffer = intel_bufferobj_unmap;
    functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
 }
