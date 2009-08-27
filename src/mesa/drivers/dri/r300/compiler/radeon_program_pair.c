@@ -549,7 +549,7 @@ static void emit_all_tex(struct pair_state *s)
 		if (s->Compiler->Base.Debug) {
 			_mesa_printf("   ");
 			_mesa_print_instruction(inst);
-			fflush(stdout);
+			fflush(stderr);
 		}
 
 		struct radeon_pair_texture_instruction rpti;

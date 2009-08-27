@@ -225,7 +225,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	if (compiler.Base.Debug) {
 		fprintf(stderr, "Initial vertex program:\n");
 		_mesa_print_program(&vp->Base->Base);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	if (mesa_vp->IsPositionInvariant) {

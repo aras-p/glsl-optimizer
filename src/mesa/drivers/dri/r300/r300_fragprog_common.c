@@ -212,10 +212,10 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.AllocateHwInputs = &allocate_hw_inputs;
 
 	if (compiler.Base.Debug) {
-		fflush(stdout);
+		fflush(stderr);
 		_mesa_printf("Fragment Program: Initial program:\n");
 		_mesa_print_program(&cont->Base.Base);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	rc_mesa_to_rc_program(&compiler.Base, &cont->Base.Base);

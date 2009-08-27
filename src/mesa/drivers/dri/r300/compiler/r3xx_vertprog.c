@@ -603,7 +603,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
 		rc_print_program(&compiler->Base.Program);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	{
@@ -620,7 +620,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after source conflict resolve:\n");
 		rc_print_program(&compiler->Base.Program);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	{
@@ -637,7 +637,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		if (compiler->Base.Debug) {
 			fprintf(stderr, "Vertex program after NQSSADCE:\n");
 			rc_print_program(&compiler->Base.Program);
-			fflush(stdout);
+			fflush(stderr);
 		}
 	}
 
@@ -649,7 +649,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
 
 	if (compiler->Base.Debug) {
-		printf("Final vertex program code:\n");
+		fprintf(stderr, "Final vertex program code:\n");
 		r300_vertex_program_dump(compiler->code);
 	}
 }

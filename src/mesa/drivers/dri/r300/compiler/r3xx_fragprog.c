@@ -106,7 +106,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	if (c->Base.Debug) {
 		_mesa_printf("Fragment Program: After native rewrite:\n");
 		rc_print_program(&c->Base.Program);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	if (c->is_r500) {
@@ -128,7 +128,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	if (c->Base.Debug) {
 		_mesa_printf("Compiler: after NqSSA-DCE:\n");
 		rc_print_program(&c->Base.Program);
-		fflush(stdout);
+		fflush(stderr);
 	}
 
 	if (c->is_r500) {
