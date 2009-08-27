@@ -27,6 +27,7 @@
 
 #include "i915_context.h"
 #include "main/imports.h"
+#include "main/macros.h"
 #include "intel_tex.h"
 #include "intel_tris.h"
 #include "tnl/t_context.h"
