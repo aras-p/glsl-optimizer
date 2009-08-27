@@ -58,7 +58,7 @@ void
 _swrast_feedback_triangle(GLcontext *ctx, const SWvertex *v0,
                           const SWvertex *v1, const SWvertex *v2)
 {
-   if (_swrast_culltriangle(ctx, v0, v1, v2)) {
+   if (!_swrast_culltriangle(ctx, v0, v1, v2)) {
       _mesa_feedback_token(ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN);
       _mesa_feedback_token(ctx, (GLfloat) 3); /* three vertices */
 
@@ -113,7 +113,7 @@ void
 _swrast_select_triangle(GLcontext *ctx, const SWvertex *v0,
                         const SWvertex *v1, const SWvertex *v2)
 {
-   if (_swrast_culltriangle(ctx, v0, v1, v2)) {
+   if (!_swrast_culltriangle(ctx, v0, v1, v2)) {
       const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
 
       _mesa_update_hitflag( ctx, v0->attrib[FRAG_ATTRIB_WPOS][2] * zs );

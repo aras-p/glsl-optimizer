@@ -44,8 +44,9 @@
 #include "s_triangle.h"
 
 
-/*
- * Just used for feedback mode.
+/**
+ * Test if a triangle should be culled.  Used for feedback and selection mode.
+ * \return GL_TRUE if the triangle is to be culled, GL_FALSE otherwise.
  */
 GLboolean
 _swrast_culltriangle( GLcontext *ctx,
@@ -53,16 +54,17 @@ _swrast_culltriangle( GLcontext *ctx,
                       const SWvertex *v1,
                       const SWvertex *v2 )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLfloat ex = v1->attrib[FRAG_ATTRIB_WPOS][0] - v0->attrib[FRAG_ATTRIB_WPOS][0];
    GLfloat ey = v1->attrib[FRAG_ATTRIB_WPOS][1] - v0->attrib[FRAG_ATTRIB_WPOS][1];
    GLfloat fx = v2->attrib[FRAG_ATTRIB_WPOS][0] - v0->attrib[FRAG_ATTRIB_WPOS][0];
    GLfloat fy = v2->attrib[FRAG_ATTRIB_WPOS][1] - v0->attrib[FRAG_ATTRIB_WPOS][1];
    GLfloat c = ex*fy-ey*fx;
 
-   if (c * SWRAST_CONTEXT(ctx)->_BackfaceCullSign > 0)
-      return 0;
+   if (c * swrast->_BackfaceSign * swrast->_BackfaceCullSign < 0.0F)
+      return GL_FALSE;
 
-   return 1;
+   return GL_TRUE;
 }
 
 
