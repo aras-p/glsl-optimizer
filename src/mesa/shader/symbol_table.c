@@ -287,10 +287,12 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
                               int name_space, const char *name,
                               void *declaration)
 {
+    struct symbol_header *hdr;
+    struct symbol *sym;
+
     check_symbol_table(table);
 
-    struct symbol_header *hdr = find_symbol(table, name);
-    struct symbol *sym;
+    hdr = find_symbol(table, name);
 
     check_symbol_table(table);
 
