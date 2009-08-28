@@ -172,27 +172,10 @@ set_viewport(struct exa_context *exa, int width, int height,
 static void
 bind_viewport_state(struct exa_context *exa, PicturePtr pDstPicture)
 {
-   const int param_bytes = 8 * sizeof(float);
    int width = pDstPicture->pDrawable->width;
    int height = pDstPicture->pDrawable->height;
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-   struct pipe_constant_buffer *cbuf = &exa->vs_const_buffer;
 
    set_viewport(exa, width, height, Y0_BOTTOM);
-
-   pipe_buffer_reference(&cbuf->buffer, NULL);
-   cbuf->buffer = pipe_buffer_create(exa->ctx->screen, 16,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
-
-   if (cbuf->buffer) {
-      pipe_buffer_write(exa->ctx->screen, cbuf->buffer,
-                        0, param_bytes, vs_consts);
-   }
-   exa->ctx->set_constant_buffer(exa->ctx, PIPE_SHADER_VERTEX, 0, cbuf);
 }
 
 static void
@@ -295,6 +278,61 @@ bind_samplers(struct exa_context *exa, int op,
    cso_set_sampler_textures(exa->cso, 3, textures);
 }
 
+static void
+setup_vs_constant_buffer(struct exa_context *exa,
+                         int width, int height)
+{
+   const int param_bytes = 8 * sizeof(float);
+   float vs_consts[8] = {
+      2.f/width, 2.f/height, 1, 1,
+      -1, -1, 0, 0
+   };
+   struct pipe_constant_buffer *cbuf = &exa->vs_const_buffer;
+
+   pipe_buffer_reference(&cbuf->buffer, NULL);
+   cbuf->buffer = pipe_buffer_create(exa->ctx->screen, 16,
+                                     PIPE_BUFFER_USAGE_CONSTANT,
+                                     param_bytes);
+
+   if (cbuf->buffer) {
+      pipe_buffer_write(exa->ctx->screen, cbuf->buffer,
+                        0, param_bytes, vs_consts);
+   }
+   exa->ctx->set_constant_buffer(exa->ctx, PIPE_SHADER_VERTEX, 0, cbuf);
+}
+
+
+static void
+setup_fs_constant_buffer(struct exa_context *exa)
+{
+   const int param_bytes = 4 * sizeof(float);
+   float fs_consts[8] = {
+      0, 0, 0, 1,
+   };
+   struct pipe_constant_buffer *cbuf = &exa->fs_const_buffer;
+
+   pipe_buffer_reference(&cbuf->buffer, NULL);
+   cbuf->buffer = pipe_buffer_create(exa->ctx->screen, 16,
+                                     PIPE_BUFFER_USAGE_CONSTANT,
+                                     param_bytes);
+
+   if (cbuf->buffer) {
+      pipe_buffer_write(exa->ctx->screen, cbuf->buffer,
+                        0, param_bytes, fs_consts);
+   }
+   exa->ctx->set_constant_buffer(exa->ctx, PIPE_SHADER_FRAGMENT, 0, cbuf);
+}
+
+static void
+setup_constant_buffers(struct exa_context *exa, PicturePtr pDstPicture)
+{
+   int width = pDstPicture->pDrawable->width;
+   int height = pDstPicture->pDrawable->height;
+
+   setup_vs_constant_buffer(exa, width, height);
+   setup_fs_constant_buffer(exa);
+}
+
 boolean xorg_composite_bind_state(struct exa_context *exa,
                                   int op,
                                   PicturePtr pSrcPicture,
@@ -311,6 +349,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
    bind_samplers(exa, op, pSrcPicture, pMaskPicture, pDstPicture,
                  pSrc, pMask, pDst);
+
+   setup_constant_buffers(exa, pDstPicture);
 
    return FALSE;
 }
