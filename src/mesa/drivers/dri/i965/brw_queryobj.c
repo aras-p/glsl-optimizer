@@ -146,17 +146,12 @@ static void brw_wait_query(GLcontext *ctx, struct gl_query_object *q)
 
 static void brw_check_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   /* XXX: Need to expose dri_bo_is_idle from bufmgr. */
-#if 0
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   if (dri_bo_is_idle(query->bo)) {
+   if (!drm_intel_bo_busy(query->bo)) {
       brw_queryobj_get_results(query);
       query->Base.Ready = GL_TRUE;
    }
-#else
-   brw_wait_query(ctx, q);
-#endif
 }
 
 /** Called to set up the query BO and account for its aperture space */
