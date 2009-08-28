@@ -10,6 +10,7 @@ void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
 void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask );
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);

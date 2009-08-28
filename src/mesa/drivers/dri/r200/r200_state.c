@@ -764,36 +764,6 @@ static void r200PolygonOffset( GLcontext *ctx,
    rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = constant.ui32;
 }
 
-static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLint i;
-   BATCH_LOCALS(&rmesa->radeon);
-   drm_radeon_stipple_t stipple;
-
-   radeon_firevertices(&rmesa->radeon);
-
-   BEGIN_BATCH_NO_AUTOSTATE(35);
-
-   OUT_BATCH(CP_PACKET0(R200_RE_STIPPLE_ADDR, 0));
-   OUT_BATCH(0x00000000);
-
-   OUT_BATCH(CP_PACKET0_ONE(R200_RE_STIPPLE_DATA, 31));
-
-   /* Must flip pattern upside down.
-    */
-   for ( i = 31 ; i >= 0; i--) {
-      OUT_BATCH(((GLuint *) mask)[i]);
-   }
-
-   END_BATCH();
-
-
-   /* FIXME: Use window x,y offsets into stipple RAM.
-    */
-   stipple.mask = rmesa->state.stipple.mask;
-}
-
 static void r200PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -2532,7 +2502,7 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->LogicOpcode		= r200LogicOpCode;
    functions->PolygonMode		= r200PolygonMode;
    functions->PolygonOffset		= r200PolygonOffset;
-   functions->PolygonStipple		= r200PolygonStipple;
+   functions->PolygonStipple		= radeonPolygonStipple;
    functions->PointParameterfv		= r200PointParameter;
    functions->PointSize			= r200PointSize;
    functions->RenderMode		= r200RenderMode;

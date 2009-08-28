@@ -1663,6 +1663,9 @@
 #       define RADEON_FORCE_Z_DIRTY              (1  << 29)
 #       define RADEON_Z_WRITE_ENABLE             (1  << 30)
 #       define RADEON_Z_DECOMPRESSION_ENABLE     (1  << 31)
+
+#define RADEON_RE_STIPPLE_ADDR              0x1cc8
+#define RADEON_RE_STIPPLE_DATA              0x1ccc
 #define RADEON_RE_LINE_PATTERN              0x1cd0
 #       define RADEON_LINE_PATTERN_MASK             0x0000ffff
 #       define RADEON_LINE_REPEAT_COUNT_SHIFT       16

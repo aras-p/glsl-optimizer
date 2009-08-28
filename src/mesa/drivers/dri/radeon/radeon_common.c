@@ -273,6 +273,31 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	}
 }
 
+void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+{
+   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+   GLint i;
+   BATCH_LOCALS(radeon);
+
+   radeon_firevertices(radeon);
+
+   BEGIN_BATCH_NO_AUTOSTATE(35);
+
+   OUT_BATCH(CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0));
+   OUT_BATCH(0x00000000);
+
+   OUT_BATCH(CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31));
+
+   /* Must flip pattern upside down.
+    */
+   for ( i = 31 ; i >= 0; i--) {
+      OUT_BATCH(((GLuint *) mask)[i]);
+   }
+
+   END_BATCH();
+}
+
+
 
 /* ================================================================
  * SwapBuffers with client-side throttling
