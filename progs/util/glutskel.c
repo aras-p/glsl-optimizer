@@ -11,6 +11,7 @@
 #include <GL/glut.h>
 
 static int Win;
+static int WinWidth = 400, WinHeight = 400;
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_FALSE;
 
@@ -46,6 +47,8 @@ Draw(void)
 static void
 Reshape(int width, int height)
 {
+   WinWidth = width;
+   WinHeight = height;
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
@@ -63,23 +66,23 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
-      case 'a':
-         Anim = !Anim;
-         if (Anim)
-            glutIdleFunc(Idle);
-         else
-            glutIdleFunc(NULL);
-         break;
-      case 'z':
-         Zrot -= step;
-         break;
-      case 'Z':
-         Zrot += step;
-         break;
-      case 27:
-         glutDestroyWindow(Win);
-         exit(0);
-         break;
+   case 'a':
+      Anim = !Anim;
+      if (Anim)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
+      break;
+   case 'z':
+      Zrot -= step;
+      break;
+   case 'Z':
+      Zrot += step;
+      break;
+   case 27:
+      glutDestroyWindow(Win);
+      exit(0);
+      break;
    }
    glutPostRedisplay();
 }
@@ -92,18 +95,18 @@ SpecialKey(int key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
-      case GLUT_KEY_UP:
-         Xrot -= step;
-         break;
-      case GLUT_KEY_DOWN:
-         Xrot += step;
-         break;
-      case GLUT_KEY_LEFT:
-         Yrot -= step;
-         break;
-      case GLUT_KEY_RIGHT:
-         Yrot += step;
-         break;
+   case GLUT_KEY_UP:
+      Xrot -= step;
+      break;
+   case GLUT_KEY_DOWN:
+      Xrot += step;
+      break;
+   case GLUT_KEY_LEFT:
+      Yrot -= step;
+      break;
+   case GLUT_KEY_RIGHT:
+      Yrot += step;
+      break;
    }
    glutPostRedisplay();
 }
@@ -123,8 +126,7 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition(0, 0);
-   glutInitWindowSize(400, 400);
+   glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
