@@ -154,6 +154,7 @@ ExaFinishAccess(PixmapPtr pPix, int index)
 	exa->scrn->transfer_unmap(exa->scrn, priv->map_transfer);
 	exa->scrn->tex_transfer_destroy(priv->map_transfer);
 	priv->map_transfer = NULL;
+	pPix->devPrivate.ptr = NULL;
     }
 }
 
