@@ -496,6 +496,21 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
                        width, height, pPixData, pPixmap->devKind, 0, 0);
         exa->scrn->transfer_unmap(exa->scrn, transfer);
         exa->scrn->tex_transfer_destroy(transfer);
+    } else if (priv->tex && pPixmap->devPrivate.ptr) {
+	struct pipe_transfer *transfer;
+
+	if (priv->map_count != 0)
+	    FatalError("doing ExaModifyPixmapHeader on mapped buffer\n");
+
+	transfer =
+	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+					PIPE_TRANSFER_WRITE,
+					0, 0, width, height);
+        util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
+                       &priv->tex->block, transfer->stride, 0, 0,
+                       width, height, pPixmap->devPrivate.ptr, pPixmap->devKind, 0, 0);
+        exa->scrn->transfer_unmap(exa->scrn, transfer);
+        exa->scrn->tex_transfer_destroy(transfer);
     }
 
     return TRUE;
