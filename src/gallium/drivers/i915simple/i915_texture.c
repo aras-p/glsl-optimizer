@@ -171,26 +171,25 @@ i915_scanout_layout(struct i915_texture *tex)
                                 1 );
    i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
-   if (tex->base.width[0] >= 128) {
-#if 0
+#if 0 /* TODO use this code when backend is smarter */
+   if (tex->base.width[0] >= 240) {
       tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
-#else
-      tex->stride = 2048 * 4; /* TODO fix when backend is smarter */
-#endif
       tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
-#if 0 /* used for tiled textures */
-      tex->tiled = 1;
+#else
+   if (tex->base.width[0] >= 240) {
+      tex->stride = 2048 * 4;
+      tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
 #endif
+   } else if (tex->base.width[0] == 64 && tex->base.height[0] == 64) {
+      tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
+      tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
    } else {
-      tex->stride = round_up(tex->base.nblocksx[0] * pt->block.size, 64);
-      tex->total_nblocksy = tex->base.nblocksy[0];
+      return 0;
    }
 
-   /*
-   printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
+   debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
       tex->base.width[0], tex->base.height[0], pt->block.size,
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
-   */
 
    return 1;
 }
@@ -606,7 +605,9 @@ i915_texture_create(struct pipe_screen *screen,
    tex_size = tex->stride * tex->total_nblocksy;
 
    buf_usage = PIPE_BUFFER_USAGE_PIXEL;
-   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+
+   /* for scanouts and cursors, cursors don't have the scanout tag */
+   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY && templat->width[0] != 64)
       buf_usage |= I915_BUFFER_USAGE_SCANOUT;
 
    tex->buffer = screen->buffer_create(screen, 64, buf_usage, tex_size);
