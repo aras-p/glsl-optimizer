@@ -99,6 +99,10 @@ boolean xorg_composite_accelerated(int op,
    unsigned accel_ops_count =
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
 
+
+   /*FIXME: currently accel is disabled */
+   return FALSE;
+
    if (pSrcPicture) {
       /* component alpha not supported */
       if (pSrcPicture->componentAlpha)
