@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include "drm.h"
 #include "radeon_drm.h"
-#include "radeon_cs.h"
+#include "radeon_cs_gem.h"
 
 #include "r300_winsys.h"
 
