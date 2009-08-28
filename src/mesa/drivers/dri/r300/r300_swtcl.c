@@ -43,9 +43,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
-   rmesa->radeon.swtcl.vertex_attrs[rmesa->radeon.swtcl.vertex_attr_count].attrib = (ATTR);	\
-   rmesa->radeon.swtcl.vertex_attrs[rmesa->radeon.swtcl.vertex_attr_count].format = (STYLE);	\
-   rmesa->radeon.swtcl.vertex_attr_count++;					\
+	rmesa->radeon.swtcl.vertex_attrs[rmesa->radeon.swtcl.vertex_attr_count].attrib = (ATTR);	\
+	rmesa->radeon.swtcl.vertex_attrs[rmesa->radeon.swtcl.vertex_attr_count].format = (STYLE);	\
+	rmesa->radeon.swtcl.vertex_attr_count++;					\
 } while (0)
 
 #define EMIT_PAD( N )							\
@@ -242,6 +242,27 @@ static void r300PrepareVertices(GLcontext *ctx)
 	rmesa->radeon.swtcl.vertex_size /= 4;
 }
 
+static void r300_predict_emit_size( r300ContextPtr rmesa )
+{
+	if (!rmesa->radeon.swtcl.emit_prediction) {
+		const int vertex_size = 7;
+		const int prim_size = 3;
+		const int cache_flush_size = 4;
+		const int state_size = radeonCountStateEmitSize(&rmesa->radeon);
+
+		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
+					state_size +
+					+ vertex_size + prim_size,
+					__FUNCTION__))
+			rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize(&rmesa->radeon);
+		else
+			rmesa->radeon.swtcl.emit_prediction = state_size;
+
+		rmesa->radeon.swtcl.emit_prediction += rmesa->radeon.cmdbuf.cs->cdw
+			+ vertex_size + prim_size + cache_flush_size * 2;
+	}
+}
+
 
 static GLuint reduced_prim[] = {
 	GL_POINTS,
@@ -275,11 +296,21 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        1
 
+static void* r300_alloc_verts(r300ContextPtr rmesa, GLuint n, GLuint size)
+{
+	void *rv;
+	do {
+		r300_predict_emit_size( rmesa );
+		rv = rcommonAllocDmaLowVerts( &rmesa->radeon, n, size * 4 );
+	} while (!rv);
+	return rv;
+}
+
 #undef LOCAL_VARS
 #undef ALLOC_VERTS
 #define CTX_ARG r300ContextPtr rmesa
 #define GET_VERTEX_DWORDS() rmesa->radeon.swtcl.vertex_size
-#define ALLOC_VERTS( n, size ) rcommonAllocDmaLowVerts( &rmesa->radeon, n, size * 4 )
+#define ALLOC_VERTS( n, size ) r300_alloc_verts(rmesa, n, size);
 #define LOCAL_VARS						\
    r300ContextPtr rmesa = R300_CONTEXT(ctx);		\
    const char *r300verts = (char *)rmesa->radeon.swtcl.verts;
@@ -490,28 +521,6 @@ static void r300ChooseRenderState( GLcontext *ctx )
 		rmesa->radeon.swtcl.RenderIndex = index;
 	}
 }
-static void r300_predict_emit_size( GLcontext *ctx )
-{
-	r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	if (!rmesa->radeon.swtcl.emit_prediction) {
-		const int vertex_size = 7;
-		const int prim_size = 3;
-		const int cache_flush_size = 4;
-		const int state_size = radeonCountStateEmitSize(&rmesa->radeon);
-
-		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
-					state_size +
-					+ vertex_size + prim_size,
-					__FUNCTION__))
-			rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize(&rmesa->radeon);
-		else
-			rmesa->radeon.swtcl.emit_prediction = state_size;
-
-		rmesa->radeon.swtcl.emit_prediction += rmesa->radeon.cmdbuf.cs->cdw
-			+ vertex_size + prim_size + cache_flush_size * 2;
-	}
-}
-
 
 void r300RenderStart(GLcontext *ctx)
 {
@@ -529,7 +538,6 @@ void r300RenderStart(GLcontext *ctx)
 
 	r300UpdateShaderStates(rmesa);
 
-	r300_predict_emit_size( ctx );
 
 	/* investigate if we can put back flush optimisation if needed */
 	if (rmesa->radeon.dma.flush != NULL) {
@@ -670,6 +678,5 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 			" We might overflow  command buffer.\n",
 			rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
 	rmesa->radeon.swtcl.emit_prediction = 0;
-	r300_predict_emit_size( ctx );
 	COMMIT_BATCH();
 }

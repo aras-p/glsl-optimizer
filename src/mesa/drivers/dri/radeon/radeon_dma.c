@@ -182,9 +182,6 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (rmesa->dma.flush) {
-		rmesa->dma.flush(rmesa->glCtx);
-	}
 
 	/* unmap old reserved bo */
 	if (!is_empty_list(&rmesa->dma.reserved))
@@ -430,9 +427,15 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 	void *head;
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-	if (is_empty_list(&rmesa->dma.reserved)
-		|| rmesa->dma.current_vertexptr + bytes > first_elem(&rmesa->dma.reserved)->bo->size) {
+	if(is_empty_list(&rmesa->dma.reserved)
+	      ||rmesa->dma.current_vertexptr + bytes > first_elem(&rmesa->dma.reserved)->bo->size) {
+		if (rmesa->dma.flush) {
+			rmesa->dma.flush(rmesa->glCtx);
+		}
+
                 radeonRefillCurrentDmaRegion(rmesa, bytes);
+
+		return NULL;
 	}
 
         if (!rmesa->dma.flush) {

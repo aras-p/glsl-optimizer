@@ -220,9 +220,8 @@ static void radeonSetVertexFormat( GLcontext *ctx )
    }
 }
 
-static void radeon_predict_emit_size( GLcontext* ctx )
+static void radeon_predict_emit_size( r100ContextPtr rmesa )
 {
-    r100ContextPtr rmesa = R100_CONTEXT( ctx );
 
     if (!rmesa->radeon.swtcl.emit_prediction) {
         const int state_size = radeonCountStateEmitSize( &rmesa->radeon );
@@ -251,7 +250,6 @@ static void radeonRenderStart( GLcontext *ctx )
     if (rmesa->radeon.dma.flush != 0 &&
             rmesa->radeon.dma.flush != rcommon_flush_last_swtcl_prim)
         rmesa->radeon.dma.flush( ctx );
-    radeon_predict_emit_size( ctx );
 }
 
 
@@ -324,7 +322,6 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 	 " We might overflow  command buffer.\n",
 	 rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
 
-   radeon_predict_emit_size( ctx );
 
    rmesa->radeon.swtcl.emit_prediction = 0;
 
@@ -369,6 +366,16 @@ radeonDmaPrimitive( r100ContextPtr rmesa, GLenum prim )
    //   assert(rmesa->radeon.dma.current.ptr == rmesa->radeon.dma.current.start);
 }
 
+static void* radeon_alloc_verts( r100ContextPtr rmesa , GLuint nr, GLuint size )
+{
+   void *rv;
+   do {
+     radeon_predict_emit_size( rmesa );
+     rv = rcommonAllocDmaLowVerts( &rmesa->radeon, nr, size );
+   } while (!rv);
+   return rv;
+}
+
 #define LOCAL_VARS r100ContextPtr rmesa = R100_CONTEXT(ctx)
 #define INIT( prim ) radeonDmaPrimitive( rmesa, prim )
 #define FLUSH()  RADEON_NEWPRIM( rmesa )
@@ -376,8 +383,7 @@ radeonDmaPrimitive( r100ContextPtr rmesa, GLenum prim )
 //  (((int)rmesa->radeon.dma.current.end - (int)rmesa->radeon.dma.current.ptr) / (rmesa->radeon.swtcl.vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
   ((RADEON_BUFFER_SIZE) / (rmesa->radeon.swtcl.vertex_size*4))
-#define ALLOC_VERTS( nr ) \
-  rcommonAllocDmaLowVerts( &rmesa->radeon, nr, rmesa->radeon.swtcl.vertex_size * 4 )
+#define ALLOC_VERTS( nr ) radeon_alloc_verts( rmesa, nr, rmesa->radeon.swtcl.vertex_size * 4 )
 #define EMIT_VERTS( ctx, j, nr, buf ) \
   _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf)
 
@@ -470,7 +476,7 @@ static void radeonResetLineStipple( GLcontext *ctx );
 #undef ALLOC_VERTS
 #define CTX_ARG r100ContextPtr rmesa
 #define GET_VERTEX_DWORDS() rmesa->radeon.swtcl.vertex_size
-#define ALLOC_VERTS( n, size ) rcommonAllocDmaLowVerts( &rmesa->radeon, n, (size) * 4 )
+#define ALLOC_VERTS( n, size ) radeon_alloc_verts( rmesa, n, (size) * 4 )
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
    r100ContextPtr rmesa = R100_CONTEXT(ctx);		\

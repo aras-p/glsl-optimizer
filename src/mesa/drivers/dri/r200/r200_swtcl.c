@@ -201,9 +201,10 @@ static void r200SetVertexFormat( GLcontext *ctx )
    }
 }
 
-static void r200_predict_emit_size( GLcontext *ctx )
+static void r200_predict_emit_size( r200ContextPtr rmesa )
 {
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
+   if (RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s\n", __func__);
    const int vertex_array_size = 7;
    const int prim_size = 3;
    if (!rmesa->radeon.swtcl.emit_prediction) {
@@ -226,7 +227,6 @@ static void r200RenderStart( GLcontext *ctx )
    r200SetVertexFormat( ctx );
    if (RADEON_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s\n", __func__);
-   r200_predict_emit_size( ctx );
 }
 
 
@@ -310,7 +310,6 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 	    rmesa->radeon.cmdbuf.cs->cdw - rmesa->radeon.swtcl.emit_prediction );
 
    rmesa->radeon.swtcl.emit_prediction = 0;
-   r200_predict_emit_size( ctx );
 
 }
 
@@ -358,11 +357,21 @@ static void r200ResetLineStipple( GLcontext *ctx );
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        0
 
+static void* r200_alloc_verts( r200ContextPtr rmesa, GLuint n, GLuint size)
+{
+   void *rv;
+   do {
+      r200_predict_emit_size( rmesa );
+      rv = rcommonAllocDmaLowVerts( &rmesa->radeon, n, size * 4 );
+   } while(!rv);
+   return rv;
+}
+
 #undef LOCAL_VARS
 #undef ALLOC_VERTS
 #define CTX_ARG r200ContextPtr rmesa
 #define GET_VERTEX_DWORDS() rmesa->radeon.swtcl.vertex_size
-#define ALLOC_VERTS( n, size ) rcommonAllocDmaLowVerts( &rmesa->radeon, n, size * 4 )
+#define ALLOC_VERTS( n, size ) r200_alloc_verts(rmesa, n, size)
 #define LOCAL_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
    const char *r200verts = (char *)rmesa->radeon.swtcl.verts;
