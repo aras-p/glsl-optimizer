@@ -279,11 +279,8 @@ driScreenInit(ScreenPtr pScreen)
 
     dri2info.version = 1;
     dri2info.fd = ms->fd;
-#if 0
-    dri2info.driverName = pScrn->name;
-#else
-    dri2info.driverName = "i915"; /* FIXME */
-#endif
+
+    dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
     dri2info.CreateBuffers = driCreateBuffers;
