@@ -2,9 +2,10 @@
 
 #include "xorg_exa_tgsi.h"
 
-#include <cso_cache/cso_context.h>
+#include "cso_cache/cso_context.h"
+#include "util/u_draw_quad.h"
 
-#include <pipe/p_inlines.h>
+#include "pipe/p_inlines.h"
 
 struct xorg_composite_blend {
    int op:8;
@@ -75,19 +76,80 @@ blend_for_op(int op)
    return xorg_blends[BLEND_OP_OVER];
 }
 
-static void
-draw_texture(struct exa_context *exa)
+
+static struct pipe_buffer *
+setup_vertex_data_tex(struct exa_context *ctx,
+                      float x0, float y0, float x1, float y1,
+                      float x2, float y2, float x3, float y3,
+                      float s0, float t0, float s1, float t1,
+                      float z)
 {
-#if 0
+   ctx->vertices[0][0][0] = x0;
+   ctx->vertices[0][0][1] = y0;
+   ctx->vertices[0][0][2] = z;
+   ctx->vertices[0][1][0] = s0; /*s*/
+   ctx->vertices[0][1][1] = t0; /*t*/
+
+   ctx->vertices[1][0][0] = x1;
+   ctx->vertices[1][0][1] = y1;
+   ctx->vertices[1][0][2] = z;
+   ctx->vertices[1][1][0] = s1; /*s*/
+   ctx->vertices[1][1][1] = t0; /*t*/
+
+   ctx->vertices[2][0][0] = x2;
+   ctx->vertices[2][0][1] = y2;
+   ctx->vertices[2][0][2] = z;
+   ctx->vertices[2][1][0] = s1;
+   ctx->vertices[2][1][1] = t1;
+
+   ctx->vertices[3][0][0] = x3;
+   ctx->vertices[3][0][1] = y3;
+   ctx->vertices[3][0][2] = z;
+   ctx->vertices[3][1][0] = s0;
+   ctx->vertices[3][1][1] = t1;
+
+   return pipe_user_buffer_create(ctx->ctx->screen,
+                                  ctx->vertices,
+                                  sizeof(ctx->vertices));
+}
+
+static void
+draw_texture(struct exa_context *exa,
+             struct pipe_texture *tex,
+             float x1offset, float y1offset,
+             float x2offset, float y2offset,
+             float x1, float y1,
+             float x2, float y2,
+             float x3, float y3,
+             float x4, float y4)
+{
+   struct pipe_context *pipe = exa->ctx;
+   struct pipe_buffer *buf;
+   float s0, t0, s1, t1;
+
+   assert(tex->width[0] != 0);
+   assert(tex->height[0] != 0);
+
+   s0 = x1offset / tex->width[0];
+   s1 = x2offset / tex->width[0];
+   t0 = y1offset / tex->height[0];
+   t1 = y2offset / tex->height[0];
+
+   /* draw quad */
+   buf = setup_vertex_data_tex(exa, x1, y1, x2, y2, x3, y3, x4, y4,
+                               s0, t0, s1, t1, 0.0f);
+
    if (buf) {
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
                               2); /* attribs/vert */
 
-      pipe_buffer_reference(&buf, NULL);
+      pipe_buffer_reference(&buf,
+                            NULL);
    }
-#endif
+
+   cso_restore_vertex_shader(exa->cso);
 }
 
 boolean xorg_composite_accelerated(int op,

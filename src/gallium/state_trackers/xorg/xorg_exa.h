@@ -18,6 +18,8 @@ struct exa_context
 
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
+
+   float vertices[4][2][4];
 };
 
 
