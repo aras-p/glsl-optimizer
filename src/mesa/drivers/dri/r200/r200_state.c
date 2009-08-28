@@ -1661,8 +1661,8 @@ void r200_vtbl_update_scissor( GLcontext *ctx )
    if (r200->radeon.state.scissor.enabled) {
       x1 = r200->radeon.state.scissor.rect.x1;
       y1 = r200->radeon.state.scissor.rect.y1;
-      x2 = r200->radeon.state.scissor.rect.x2 - 1;
-      y2 = r200->radeon.state.scissor.rect.y2 - 1;
+      x2 = r200->radeon.state.scissor.rect.x2;
+      y2 = r200->radeon.state.scissor.rect.y2;
    } else {
       rrb = radeon_get_colorbuffer(&r200->radeon);
       x1 = 0;

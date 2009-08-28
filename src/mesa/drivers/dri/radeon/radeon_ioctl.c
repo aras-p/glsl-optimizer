@@ -127,8 +127,8 @@ static void radeonEmitScissor(r100ContextPtr rmesa)
         OUT_BATCH((rmesa->radeon.state.scissor.rect.y1 << 16) |
                   rmesa->radeon.state.scissor.rect.x1);
         OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
-        OUT_BATCH(((rmesa->radeon.state.scissor.rect.y2 - 1) << 16) |
-                  (rmesa->radeon.state.scissor.rect.x2 - 1));
+        OUT_BATCH(((rmesa->radeon.state.scissor.rect.y2) << 16) |
+                  (rmesa->radeon.state.scissor.rect.x2));
         END_BATCH();
     } else {
         BEGIN_BATCH(2);

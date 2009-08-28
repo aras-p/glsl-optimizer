@@ -226,8 +226,8 @@ void r300_emit_scissor(GLcontext *ctx)
     if (r300->radeon.state.scissor.enabled) {
         x1 = r300->radeon.state.scissor.rect.x1;
         y1 = r300->radeon.state.scissor.rect.y1;
-        x2 = r300->radeon.state.scissor.rect.x2 - 1;
-        y2 = r300->radeon.state.scissor.rect.y2 - 1;
+        x2 = r300->radeon.state.scissor.rect.x2;
+        y2 = r300->radeon.state.scissor.rect.y2;
     } else {
         x1 = 0;
         y1 = 0;
