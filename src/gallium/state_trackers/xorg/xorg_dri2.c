@@ -141,7 +141,7 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	buffers[i].pitch = stride;
 	buffers[i].cpp = 4;
 	buffers[i].driverPrivate = &privates[i];
-	buffers[i].flags = tex->format;
+	buffers[i].flags = 0; /* not tiled */
 	privates[i].pPixmap = pPixmap;
 	privates[i].buf = buf;
 	privates[i].tex = tex;
