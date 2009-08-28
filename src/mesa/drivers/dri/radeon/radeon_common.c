@@ -234,9 +234,13 @@ void radeonUpdateScissor( GLcontext *ctx )
 	GLint x = ctx->Scissor.X, y = ctx->Scissor.Y;
 	GLsizei w = ctx->Scissor.Width, h = ctx->Scissor.Height;
 	int x1, y1, x2, y2;
+	int min_x, min_y, max_x, max_y;
 
 	if (!ctx->DrawBuffer)
 	    return;
+	min_x = min_y = 0;
+	max_x = ctx->DrawBuffer->Width - 1;
+	max_y = ctx->DrawBuffer->Height - 1;
 
 	if ( !ctx->DrawBuffer->Name ) {
 		x1 = x;
@@ -250,11 +254,24 @@ void radeonUpdateScissor( GLcontext *ctx )
 		y2 = y + h - 1;
 
 	}
+	if (!rmesa->radeonScreen->kernel_mm) {
+	   /* Fix scissors for dri 1 */
 
-	rmesa->state.scissor.rect.x1 = CLAMP(x1,  0, ctx->DrawBuffer->Width - 1);
-	rmesa->state.scissor.rect.y1 = CLAMP(y1,  0, ctx->DrawBuffer->Height - 1);
-	rmesa->state.scissor.rect.x2 = CLAMP(x2,  0, ctx->DrawBuffer->Width - 1);
-	rmesa->state.scissor.rect.y2 = CLAMP(y2,  0, ctx->DrawBuffer->Height - 1);
+	   __DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
+	   x1 += dPriv->x;
+	   x2 += dPriv->x + 1;
+	   min_x += dPriv->x;
+	   max_x += dPriv->x + 1;
+	   y1 += dPriv->y;
+	   y2 += dPriv->y + 1;
+	   min_y += dPriv->y;
+	   max_y += dPriv->y + 1;
+	}
+
+	rmesa->state.scissor.rect.x1 = CLAMP(x1,  min_x, max_x);
+	rmesa->state.scissor.rect.y1 = CLAMP(y1,  min_y, max_y);
+	rmesa->state.scissor.rect.x2 = CLAMP(x2,  min_x, max_x);
+	rmesa->state.scissor.rect.y2 = CLAMP(y2,  min_y, max_y);
 
 	radeonRecalcScissorRects( rmesa );
 }
