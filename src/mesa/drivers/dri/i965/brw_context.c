@@ -167,6 +167,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    brw_draw_init( brw );
 
+   vbo_use_buffer_objects(ctx);
+
    return GL_TRUE;
 }
 
