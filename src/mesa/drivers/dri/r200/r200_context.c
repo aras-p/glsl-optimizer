@@ -327,7 +327,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->radeon.initialMaxAnisotropy = driQueryOptionf(&rmesa->radeon.optionCache,
 							"def_max_anisotropy");
 
-   if ( driQueryOptionb( &rmesa->radeon.optionCache, "hyperz" ) ) {
+   if ( sPriv->drm_version.major == 1
+       && driQueryOptionb( &rmesa->radeon.optionCache, "hyperz" ) ) {
       if ( sPriv->drm_version.minor < 13 )
 	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
 			  "disabling.\n", sPriv->drm_version.minor );
