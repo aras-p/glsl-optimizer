@@ -254,9 +254,41 @@ bind_shaders(struct exa_context *exa, int op,
 static void
 bind_samplers(struct exa_context *exa, int op,
               PicturePtr pSrcPicture, PicturePtr pMaskPicture,
-              PicturePtr pDstPicture)
+              PicturePtr pDstPicture,
+              struct exa_pixmap_priv *pSrc,
+              struct exa_pixmap_priv *pMask,
+              struct exa_pixmap_priv *pDst)
 {
+   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state src_sampler, mask_sampler;
 
+   memset(&src_sampler, 0, sizeof(struct pipe_sampler_state));
+   memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
+
+   if (pSrcPicture && pSrc) {
+      src_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      src_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      src_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      src_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      src_sampler.normalized_coords = 1;
+      samplers[0] = &src_sampler;
+      textures[0] = pSrc->tex;
+   }
+
+   if (pMaskPicture && pMask) {
+      mask_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      mask_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      mask_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      mask_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      mask_sampler.normalized_coords = 1;
+      samplers[1] = &mask_sampler;
+      textures[1] = pMask->tex;
+   }
+
+   cso_set_samplers(exa->cso, 3,
+                    (const struct pipe_sampler_state **)samplers);
+   cso_set_sampler_textures(exa->cso, 3, textures);
 }
 
 boolean xorg_composite_bind_state(struct exa_context *exa,
@@ -273,7 +305,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state(exa);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
-   bind_samplers(exa, op, pSrcPicture, pMaskPicture, pDstPicture); 
+   bind_samplers(exa, op, pSrcPicture, pMaskPicture, pDstPicture,
+                 pSrc, pMask, pDst);
 
    return FALSE;
 }
