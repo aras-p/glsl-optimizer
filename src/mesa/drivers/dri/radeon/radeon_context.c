@@ -395,7 +395,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
    radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
    radeonInitIoctlFuncs( ctx );
-   radeonInitStateFuncs( ctx );
+   radeonInitStateFuncs( ctx , rmesa->radeon.radeonScreen->kernel_mm );
    radeonInitState( rmesa );
    radeonInitSwtcl( ctx );
 

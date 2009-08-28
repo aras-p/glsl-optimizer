@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 extern void radeonInitState( r100ContextPtr rmesa );
-extern void radeonInitStateFuncs( GLcontext *ctx );
+extern void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2);
 
 extern void radeonUpdateMaterial( GLcontext *ctx );
 

@@ -328,7 +328,6 @@ struct r100_hw_state {
 
 
 struct r100_state {
-	struct radeon_stipple_state stipple;
 	struct radeon_texture_state texture;
 };
 

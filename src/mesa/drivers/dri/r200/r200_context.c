@@ -345,7 +345,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _mesa_init_driver_functions(&functions);
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
-   r200InitStateFuncs(&functions);
+   r200InitStateFuncs(&functions, screen->kernel_mm);
    r200InitTextureFuncs(&functions);
    r200InitShaderFuncs(&functions); 
    radeonInitQueryObjFunctions(&functions);

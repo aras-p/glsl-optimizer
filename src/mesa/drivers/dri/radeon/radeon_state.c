@@ -2202,7 +2202,7 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
  * Many of the ctx->Driver functions might have been initialized to
  * software defaults in the earlier _mesa_init_driver_functions() call.
  */
-void radeonInitStateFuncs( GLcontext *ctx )
+void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
 {
    ctx->Driver.UpdateState		= radeonInvalidateState;
    ctx->Driver.LightingSpaceChange      = radeonLightingSpaceChange;
@@ -2235,7 +2235,10 @@ void radeonInitStateFuncs( GLcontext *ctx )
    ctx->Driver.LogicOpcode		= radeonLogicOpCode;
    ctx->Driver.PolygonMode		= radeonPolygonMode;
    ctx->Driver.PolygonOffset		= radeonPolygonOffset;
-   ctx->Driver.PolygonStipple		= radeonPolygonStipple;
+   if (dri2)
+      ctx->Driver.PolygonStipple		= radeonPolygonStipple;
+   else
+      ctx->Driver.PolygonStipple		= radeonPolygonStipplePreKMS;
    ctx->Driver.RenderMode		= radeonRenderMode;
    ctx->Driver.Scissor			= radeonScissor;
    ctx->Driver.ShadeModel		= radeonShadeModel;

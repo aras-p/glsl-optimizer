@@ -158,10 +158,6 @@ struct radeon_stencilbuffer_state {
 	GLuint clear;		/* rb3d_stencilrefmask value */
 };
 
-struct radeon_stipple_state {
-	GLuint mask[32];
-};
-
 struct radeon_state_atom {
 	struct radeon_state_atom *next, *prev;
 	const char *name;	/* for debug */

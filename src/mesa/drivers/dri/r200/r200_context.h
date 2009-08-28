@@ -526,7 +526,6 @@ struct r200_hw_state {
 struct r200_state {
    /* Derived state for internal purposes:
     */
-   struct radeon_stipple_state stipple;
    struct r200_texture_state texture;
    GLuint envneeded;
 };

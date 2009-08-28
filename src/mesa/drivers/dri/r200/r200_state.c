@@ -2468,7 +2468,7 @@ static void r200WrapRunPipeline( GLcontext *ctx )
 
 /* Initialize the driver's state functions.
  */
-void r200InitStateFuncs( struct dd_function_table *functions )
+void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 )
 {
    functions->UpdateState		= r200InvalidateState;
    functions->LightingSpaceChange	= r200LightingSpaceChange;
@@ -2502,7 +2502,10 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->LogicOpcode		= r200LogicOpCode;
    functions->PolygonMode		= r200PolygonMode;
    functions->PolygonOffset		= r200PolygonOffset;
-   functions->PolygonStipple		= radeonPolygonStipple;
+   if (dri2)
+      functions->PolygonStipple		= radeonPolygonStipple;
+   else
+      functions->PolygonStipple		= radeonPolygonStipplePreKMS;
    functions->PointParameterfv		= r200PointParameter;
    functions->PointSize			= r200PointSize;
    functions->RenderMode		= r200RenderMode;
