@@ -218,7 +218,9 @@ vbo_exec_bind_arrays( GLcontext *ctx )
             /* a real buffer obj: Ptr is an offset, not a pointer*/
             GLsizeiptr offset;
             assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
-            offset = (GLbyte *) data - (GLbyte *) exec->vtx.bufferobj->Pointer;
+            offset = (GLbyte *) data -
+	       (GLbyte *) exec->vtx.bufferobj->Pointer +
+	       exec->vtx.bufferobj->Offset;
             assert(offset >= 0);
             arrays[attr].Ptr = (void *) offset;
          }
