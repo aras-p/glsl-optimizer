@@ -26,6 +26,7 @@
 /*
  * Authors:
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
+ *      Joakim Sindholt <opensource@zhasha.com>
  */
 
 #include "radeon_drm.h"
@@ -33,7 +34,7 @@
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
-                     struct drm_create_screen_arg *arg)
+                                         struct drm_create_screen_arg *arg)
 {
     struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
 
@@ -107,12 +108,10 @@ radeon_texture_from_shared_handle(struct drm_api *api,
 {
     struct pipe_buffer *buffer;
 
-    buffer = radeon_buffer_from_handle(api,
-                                       screen,
-                                       name,
-                                       handle);
-    if (!buffer)
+    buffer = radeon_buffer_from_handle(api, screen, name, handle);
+    if (!buffer) {
         return NULL;
+    }
 
     return screen->texture_blanket(screen, templ, &stride, buffer);
 }
@@ -126,7 +125,8 @@ boolean radeon_shared_handle_from_texture(struct drm_api *api,
     int retval, fd;
     struct drm_gem_flink flink;
     struct radeon_pipe_buffer* radeon_buffer;
-    if (!radeon_buffer_from_texture(api, texture, (struct pipe_buffer **)&radeon_buffer, stride)) {
+    struct pipe_buffer* buffer = &radeon_buffer->base;
+    if (!radeon_buffer_from_texture(api, texture, buffer, stride)) {
         return FALSE;
     }
 
