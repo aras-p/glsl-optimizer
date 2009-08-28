@@ -286,7 +286,7 @@ intel_be_shared_handle_from_texture(struct drm_api *api,
                                     unsigned *pitch,
                                     unsigned *handle)
 {
-	struct pipe_buffer *buffer;
+	struct pipe_buffer *buffer = NULL;
 	struct intel_be_buffer *buf;
 	if (!intel_be_get_texture_buffer(api,
 	                                 texture,
@@ -315,7 +315,7 @@ intel_be_local_handle_from_texture(struct drm_api *api,
                                    unsigned *pitch,
                                    unsigned *handle)
 {
-	struct pipe_buffer *buffer;
+	struct pipe_buffer *buffer = NULL;
 	if (!intel_be_get_texture_buffer(api,
 	                                 texture,
 	                                 &buffer,
