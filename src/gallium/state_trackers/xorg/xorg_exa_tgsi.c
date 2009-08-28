@@ -17,14 +17,28 @@
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_hash.h"
 
+/* Vertex shader:
+ * IN[0]    = src_pos
+ * IN[1]    = mask_pos
+ * IN[2]    = dst_pos
+ * CONST[0] = (2/dst_width, 2/dst_height, 1, 1)
+ * CONST[1] = (-1, -1, 0, 0)
+ *
+ * OUT[0]   = src_pos
+ * OUT[1]   = mask_pos
+ * OUT[2]   = dst_pos
+ */
+
 /* Fragment shader:
- * SAMP[0]  = dst
- * SAMP[1]  = src
- * SAMP[2]  = mask
- * IN[0]    = pos dst
- * IN[1]    = pos src
- * IN[2]    = pos mask
+ * SAMP[0]  = src
+ * SAMP[1]  = mask
+ * SAMP[2]  = dst
+ * IN[0]    = pos src
+ * IN[1]    = pos mask
+ * IN[2]    = pos dst
  * CONST[0] = (0, 0, 0, 1)
+ *
+ * OUT[0] = color
  */
 
 struct xorg_shaders {
@@ -57,6 +71,19 @@ src_in_mask(struct ureg_program *ureg,
             ureg_scalar(mask, TGSI_SWIZZLE_W));
 }
 
+static struct ureg_src
+vs_normalize_coords(struct ureg_program *ureg, struct ureg_src coords,
+                    struct ureg_src const0, struct ureg_src const1)
+{
+   struct ureg_dst tmp = ureg_DECL_temporary(ureg);
+   struct ureg_src ret;
+   ureg_MUL(ureg, tmp, coords, const0);
+   ureg_ADD(ureg, tmp, ureg_src(tmp), const1);
+   ret = ureg_src(tmp);
+   ureg_release_temporary(ureg, tmp);
+   return ret;
+}
+
 static void *
 create_vs(struct pipe_context *pipe,
           unsigned vs_traits)
@@ -64,21 +91,27 @@ create_vs(struct pipe_context *pipe,
    struct ureg_program *ureg;
    struct ureg_src src;
    struct ureg_dst dst;
+   struct ureg_src const0, const1;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (ureg == NULL)
       return 0;
 
+   const0 = ureg_DECL_constant(ureg);
+   const1 = ureg_DECL_constant(ureg);
+
    if ((vs_traits & VS_COMPOSITE)) {
       src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_POSITION, 1);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 1);
+                               TGSI_SEMANTIC_POSITION, 0);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+      src = vs_normalize_coords(ureg, src,
+                                const0, const1);
       ureg_MOV(ureg, dst, src);
    }
    if ((vs_traits & VS_MASK)) {
       src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_POSITION, 2);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
+                               TGSI_SEMANTIC_POSITION, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 1);
       ureg_MOV(ureg, dst, src);
    }
 
@@ -101,31 +134,31 @@ create_fs(struct pipe_context *pipe,
    if (ureg == NULL)
       return 0;
 
-#if 0  /* unused right now */
-   dst_sampler = ureg_DECL_sampler(ureg);
-   dst_pos = ureg_DECL_fs_input(ureg,
-                                TGSI_SEMANTIC_POSITION,
-                                0,
-                                TGSI_INTERPOLATE_PERSPECTIVE);
-#endif
+   out = ureg_DECL_output(ureg,
+                          TGSI_SEMANTIC_COLOR,
+                          0);
 
    src_sampler = ureg_DECL_sampler(ureg);
    src_pos = ureg_DECL_fs_input(ureg,
                                 TGSI_SEMANTIC_POSITION,
-                                1,
+                                0,
                                 TGSI_INTERPOLATE_PERSPECTIVE);
-
-   out = ureg_DECL_output(ureg,
-                          TGSI_SEMANTIC_COLOR,
-                          0);
 
    if ((fs_traits & FS_MASK)) {
       mask_sampler = ureg_DECL_sampler(ureg);
       mask_pos = ureg_DECL_fs_input(ureg,
                                     TGSI_SEMANTIC_POSITION,
-                                    2,
+                                    1,
                                     TGSI_INTERPOLATE_PERSPECTIVE);
    }
+
+#if 0  /* unused right now */
+   dst_sampler = ureg_DECL_sampler(ureg);
+   dst_pos = ureg_DECL_fs_input(ureg,
+                                TGSI_SEMANTIC_POSITION,
+                                2,
+                                TGSI_INTERPOLATE_PERSPECTIVE);
+#endif
 
    if ((fs_traits & FS_MASK)) {
       ureg_TEX(ureg, ureg_dst(mask),

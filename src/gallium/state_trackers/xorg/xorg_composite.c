@@ -251,6 +251,14 @@ bind_shaders(struct exa_context *exa, int op,
 }
 
 
+static void
+bind_samplers(struct exa_context *exa, int op,
+              PicturePtr pSrcPicture, PicturePtr pMaskPicture,
+              PicturePtr pDstPicture)
+{
+
+}
+
 boolean xorg_composite_bind_state(struct exa_context *exa,
                                   int op,
                                   PicturePtr pSrcPicture,
@@ -265,6 +273,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state(exa);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
+   bind_samplers(exa, op, pSrcPicture, pMaskPicture, pDstPicture); 
 
    return FALSE;
 }
