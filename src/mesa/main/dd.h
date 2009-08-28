@@ -766,6 +766,8 @@ struct dd_function_table {
    /** Return the value or values of a selected parameter */
    GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
    /** Return the value or values of a selected parameter */
+   GLboolean (*GetInteger64v)(GLcontext *ctx, GLenum pname, GLint64 *result);
+   /** Return the value or values of a selected parameter */
    GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
    /*@}*/
    

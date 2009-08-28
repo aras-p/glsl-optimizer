@@ -20,7 +20,10 @@
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
 
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
+#define BOOLEAN_TO_INT64(B)   ( (GLint64) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
+
+#define ENUM_TO_INT64(E)      ( (GLint64) (E) )
 
 
 /*
@@ -5542,6 +5545,1835 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
 }
+
+#if FEATURE_ARB_sync
+void GLAPIENTRY
+_mesa_GetInteger64v( GLenum pname, GLint64 *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   if (ctx->Driver.GetInteger64v &&
+       ctx->Driver.GetInteger64v(ctx, pname, params))
+      return;
+
+   switch (pname) {
+      case GL_ACCUM_RED_BITS:
+         params[0] = ctx->DrawBuffer->Visual.accumRedBits;
+         break;
+      case GL_ACCUM_GREEN_BITS:
+         params[0] = ctx->DrawBuffer->Visual.accumGreenBits;
+         break;
+      case GL_ACCUM_BLUE_BITS:
+         params[0] = ctx->DrawBuffer->Visual.accumBlueBits;
+         break;
+      case GL_ACCUM_ALPHA_BITS:
+         params[0] = ctx->DrawBuffer->Visual.accumAlphaBits;
+         break;
+      case GL_ACCUM_CLEAR_VALUE:
+         params[0] = FLOAT_TO_INT64(ctx->Accum.ClearColor[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Accum.ClearColor[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Accum.ClearColor[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Accum.ClearColor[3]);
+         break;
+      case GL_ALPHA_BIAS:
+         params[0] = IROUND64(ctx->Pixel.AlphaBias);
+         break;
+      case GL_ALPHA_BITS:
+         params[0] = ctx->DrawBuffer->Visual.alphaBits;
+         break;
+      case GL_ALPHA_SCALE:
+         params[0] = IROUND64(ctx->Pixel.AlphaScale);
+         break;
+      case GL_ALPHA_TEST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Color.AlphaEnabled);
+         break;
+      case GL_ALPHA_TEST_FUNC:
+         params[0] = ENUM_TO_INT64(ctx->Color.AlphaFunc);
+         break;
+      case GL_ALPHA_TEST_REF:
+         params[0] = FLOAT_TO_INT64(ctx->Color.AlphaRef);
+         break;
+      case GL_ATTRIB_STACK_DEPTH:
+         params[0] = ctx->AttribStackDepth;
+         break;
+      case GL_AUTO_NORMAL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.AutoNormal);
+         break;
+      case GL_AUX_BUFFERS:
+         params[0] = ctx->DrawBuffer->Visual.numAuxBuffers;
+         break;
+      case GL_BLEND:
+         params[0] = BOOLEAN_TO_INT64(ctx->Color.BlendEnabled);
+         break;
+      case GL_BLEND_DST:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendDstRGB);
+         break;
+      case GL_BLEND_SRC:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendSrcRGB);
+         break;
+      case GL_BLEND_SRC_RGB_EXT:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendSrcRGB);
+         break;
+      case GL_BLEND_DST_RGB_EXT:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendDstRGB);
+         break;
+      case GL_BLEND_SRC_ALPHA_EXT:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendSrcA);
+         break;
+      case GL_BLEND_DST_ALPHA_EXT:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendDstA);
+         break;
+      case GL_BLEND_EQUATION:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendEquationRGB );
+         break;
+      case GL_BLEND_EQUATION_ALPHA_EXT:
+         params[0] = ENUM_TO_INT64(ctx->Color.BlendEquationA );
+         break;
+      case GL_BLEND_COLOR_EXT:
+         params[0] = FLOAT_TO_INT64(ctx->Color.BlendColor[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Color.BlendColor[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Color.BlendColor[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Color.BlendColor[3]);
+         break;
+      case GL_BLUE_BIAS:
+         params[0] = IROUND64(ctx->Pixel.BlueBias);
+         break;
+      case GL_BLUE_BITS:
+         params[0] = ctx->DrawBuffer->Visual.blueBits;
+         break;
+      case GL_BLUE_SCALE:
+         params[0] = IROUND64(ctx->Pixel.BlueScale);
+         break;
+      case GL_CLIENT_ATTRIB_STACK_DEPTH:
+         params[0] = ctx->ClientAttribStackDepth;
+         break;
+      case GL_CLIP_PLANE0:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 0) & 1);
+         break;
+      case GL_CLIP_PLANE1:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 1) & 1);
+         break;
+      case GL_CLIP_PLANE2:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 2) & 1);
+         break;
+      case GL_CLIP_PLANE3:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 3) & 1);
+         break;
+      case GL_CLIP_PLANE4:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 4) & 1);
+         break;
+      case GL_CLIP_PLANE5:
+         params[0] = BOOLEAN_TO_INT64((ctx->Transform.ClipPlanesEnabled >> 5) & 1);
+         break;
+      case GL_COLOR_CLEAR_VALUE:
+         params[0] = FLOAT_TO_INT64(ctx->Color.ClearColor[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Color.ClearColor[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Color.ClearColor[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Color.ClearColor[3]);
+         break;
+      case GL_COLOR_MATERIAL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.ColorMaterialEnabled);
+         break;
+      case GL_COLOR_MATERIAL_FACE:
+         params[0] = ENUM_TO_INT64(ctx->Light.ColorMaterialFace);
+         break;
+      case GL_COLOR_MATERIAL_PARAMETER:
+         params[0] = ENUM_TO_INT64(ctx->Light.ColorMaterialMode);
+         break;
+      case GL_COLOR_WRITEMASK:
+         params[0] = ctx->Color.ColorMask[RCOMP] ? 1 : 0;
+         params[1] = ctx->Color.ColorMask[GCOMP] ? 1 : 0;
+         params[2] = ctx->Color.ColorMask[BCOMP] ? 1 : 0;
+         params[3] = ctx->Color.ColorMask[ACOMP] ? 1 : 0;
+         break;
+      case GL_CULL_FACE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.CullFlag);
+         break;
+      case GL_CULL_FACE_MODE:
+         params[0] = ENUM_TO_INT64(ctx->Polygon.CullFaceMode);
+         break;
+      case GL_CURRENT_COLOR:
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0]);
+         params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1]);
+         params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2]);
+         params[3] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3]);
+         }
+         break;
+      case GL_CURRENT_INDEX:
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
+         }
+         break;
+      case GL_CURRENT_NORMAL:
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0]);
+         params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1]);
+         params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2]);
+         }
+         break;
+      case GL_CURRENT_RASTER_COLOR:
+         params[0] = FLOAT_TO_INT64(ctx->Current.RasterColor[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Current.RasterColor[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Current.RasterColor[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Current.RasterColor[3]);
+         break;
+      case GL_CURRENT_RASTER_DISTANCE:
+         params[0] = IROUND64(ctx->Current.RasterDistance);
+         break;
+      case GL_CURRENT_RASTER_INDEX:
+         params[0] = IROUND64(ctx->Current.RasterIndex);
+         break;
+      case GL_CURRENT_RASTER_POSITION:
+         params[0] = IROUND64(ctx->Current.RasterPos[0]);
+         params[1] = IROUND64(ctx->Current.RasterPos[1]);
+         params[2] = IROUND64(ctx->Current.RasterPos[2]);
+         params[3] = IROUND64(ctx->Current.RasterPos[3]);
+         break;
+      case GL_CURRENT_RASTER_SECONDARY_COLOR:
+         params[0] = FLOAT_TO_INT64(ctx->Current.RasterSecondaryColor[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Current.RasterSecondaryColor[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Current.RasterSecondaryColor[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Current.RasterSecondaryColor[3]);
+         break;
+      case GL_CURRENT_RASTER_TEXTURE_COORDS:
+         {
+         const GLuint texUnit = ctx->Texture.CurrentUnit;
+         params[0] = IROUND64(ctx->Current.RasterTexCoords[texUnit][0]);
+         params[1] = IROUND64(ctx->Current.RasterTexCoords[texUnit][1]);
+         params[2] = IROUND64(ctx->Current.RasterTexCoords[texUnit][2]);
+         params[3] = IROUND64(ctx->Current.RasterTexCoords[texUnit][3]);
+         }
+         break;
+      case GL_CURRENT_RASTER_POSITION_VALID:
+         params[0] = BOOLEAN_TO_INT64(ctx->Current.RasterPosValid);
+         break;
+      case GL_CURRENT_TEXTURE_COORDS:
+         {
+         const GLuint texUnit = ctx->Texture.CurrentUnit;
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0]);
+         params[1] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1]);
+         params[2] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2]);
+         params[3] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][3]);
+         }
+         break;
+      case GL_DEPTH_BIAS:
+         params[0] = IROUND64(ctx->Pixel.DepthBias);
+         break;
+      case GL_DEPTH_BITS:
+         params[0] = ctx->DrawBuffer->Visual.depthBits;
+         break;
+      case GL_DEPTH_CLEAR_VALUE:
+         params[0] = FLOAT_TO_INT64(((GLfloat) ctx->Depth.Clear));
+         break;
+      case GL_DEPTH_FUNC:
+         params[0] = ENUM_TO_INT64(ctx->Depth.Func);
+         break;
+      case GL_DEPTH_RANGE:
+         params[0] = FLOAT_TO_INT64(ctx->Viewport.Near);
+         params[1] = FLOAT_TO_INT64(ctx->Viewport.Far);
+         break;
+      case GL_DEPTH_SCALE:
+         params[0] = IROUND64(ctx->Pixel.DepthScale);
+         break;
+      case GL_DEPTH_TEST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Depth.Test);
+         break;
+      case GL_DEPTH_WRITEMASK:
+         params[0] = BOOLEAN_TO_INT64(ctx->Depth.Mask);
+         break;
+      case GL_DITHER:
+         params[0] = BOOLEAN_TO_INT64(ctx->Color.DitherFlag);
+         break;
+      case GL_DOUBLEBUFFER:
+         params[0] = BOOLEAN_TO_INT64(ctx->DrawBuffer->Visual.doubleBufferMode);
+         break;
+      case GL_DRAW_BUFFER:
+         params[0] = ENUM_TO_INT64(ctx->DrawBuffer->ColorDrawBuffer[0]);
+         break;
+      case GL_EDGE_FLAG:
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = BOOLEAN_TO_INT64((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
+         }
+         break;
+      case GL_FEEDBACK_BUFFER_SIZE:
+         params[0] = ctx->Feedback.BufferSize;
+         break;
+      case GL_FEEDBACK_BUFFER_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Feedback.Type);
+         break;
+      case GL_FOG:
+         params[0] = BOOLEAN_TO_INT64(ctx->Fog.Enabled);
+         break;
+      case GL_FOG_COLOR:
+         params[0] = FLOAT_TO_INT64(ctx->Fog.Color[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Fog.Color[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Fog.Color[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Fog.Color[3]);
+         break;
+      case GL_FOG_DENSITY:
+         params[0] = IROUND64(ctx->Fog.Density);
+         break;
+      case GL_FOG_END:
+         params[0] = IROUND64(ctx->Fog.End);
+         break;
+      case GL_FOG_HINT:
+         params[0] = ENUM_TO_INT64(ctx->Hint.Fog);
+         break;
+      case GL_FOG_INDEX:
+         params[0] = IROUND64(ctx->Fog.Index);
+         break;
+      case GL_FOG_MODE:
+         params[0] = ENUM_TO_INT64(ctx->Fog.Mode);
+         break;
+      case GL_FOG_START:
+         params[0] = IROUND64(ctx->Fog.Start);
+         break;
+      case GL_FRONT_FACE:
+         params[0] = ENUM_TO_INT64(ctx->Polygon.FrontFace);
+         break;
+      case GL_GREEN_BIAS:
+         params[0] = IROUND64(ctx->Pixel.GreenBias);
+         break;
+      case GL_GREEN_BITS:
+         params[0] = ctx->DrawBuffer->Visual.greenBits;
+         break;
+      case GL_GREEN_SCALE:
+         params[0] = IROUND64(ctx->Pixel.GreenScale);
+         break;
+      case GL_INDEX_BITS:
+         params[0] = ctx->DrawBuffer->Visual.indexBits;
+         break;
+      case GL_INDEX_CLEAR_VALUE:
+         params[0] = ctx->Color.ClearIndex;
+         break;
+      case GL_INDEX_MODE:
+         params[0] = BOOLEAN_TO_INT64(!ctx->DrawBuffer->Visual.rgbMode);
+         break;
+      case GL_INDEX_OFFSET:
+         params[0] = ctx->Pixel.IndexOffset;
+         break;
+      case GL_INDEX_SHIFT:
+         params[0] = ctx->Pixel.IndexShift;
+         break;
+      case GL_INDEX_WRITEMASK:
+         params[0] = ctx->Color.IndexMask;
+         break;
+      case GL_LIGHT0:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[0].Enabled);
+         break;
+      case GL_LIGHT1:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[1].Enabled);
+         break;
+      case GL_LIGHT2:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[2].Enabled);
+         break;
+      case GL_LIGHT3:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[3].Enabled);
+         break;
+      case GL_LIGHT4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[4].Enabled);
+         break;
+      case GL_LIGHT5:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[5].Enabled);
+         break;
+      case GL_LIGHT6:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[6].Enabled);
+         break;
+      case GL_LIGHT7:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Light[7].Enabled);
+         break;
+      case GL_LIGHTING:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Enabled);
+         break;
+      case GL_LIGHT_MODEL_AMBIENT:
+         params[0] = FLOAT_TO_INT64(ctx->Light.Model.Ambient[0]);
+         params[1] = FLOAT_TO_INT64(ctx->Light.Model.Ambient[1]);
+         params[2] = FLOAT_TO_INT64(ctx->Light.Model.Ambient[2]);
+         params[3] = FLOAT_TO_INT64(ctx->Light.Model.Ambient[3]);
+         break;
+      case GL_LIGHT_MODEL_COLOR_CONTROL:
+         params[0] = ENUM_TO_INT64(ctx->Light.Model.ColorControl);
+         break;
+      case GL_LIGHT_MODEL_LOCAL_VIEWER:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Model.LocalViewer);
+         break;
+      case GL_LIGHT_MODEL_TWO_SIDE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.Model.TwoSide);
+         break;
+      case GL_LINE_SMOOTH:
+         params[0] = BOOLEAN_TO_INT64(ctx->Line.SmoothFlag);
+         break;
+      case GL_LINE_SMOOTH_HINT:
+         params[0] = ENUM_TO_INT64(ctx->Hint.LineSmooth);
+         break;
+      case GL_LINE_STIPPLE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Line.StippleFlag);
+         break;
+      case GL_LINE_STIPPLE_PATTERN:
+         params[0] = ctx->Line.StipplePattern;
+         break;
+      case GL_LINE_STIPPLE_REPEAT:
+         params[0] = ctx->Line.StippleFactor;
+         break;
+      case GL_LINE_WIDTH:
+         params[0] = IROUND64(ctx->Line.Width);
+         break;
+      case GL_LINE_WIDTH_GRANULARITY:
+         params[0] = IROUND64(ctx->Const.LineWidthGranularity);
+         break;
+      case GL_LINE_WIDTH_RANGE:
+         params[0] = IROUND64(ctx->Const.MinLineWidthAA);
+         params[1] = IROUND64(ctx->Const.MaxLineWidthAA);
+         break;
+      case GL_ALIASED_LINE_WIDTH_RANGE:
+         params[0] = IROUND64(ctx->Const.MinLineWidth);
+         params[1] = IROUND64(ctx->Const.MaxLineWidth);
+         break;
+      case GL_LIST_BASE:
+         params[0] = ctx->List.ListBase;
+         break;
+      case GL_LIST_INDEX:
+         params[0] = (ctx->ListState.CurrentList ? ctx->ListState.CurrentList->Name : 0);
+         break;
+      case GL_LIST_MODE:
+         {
+         GLenum mode;
+         if (!ctx->CompileFlag)
+            mode = 0;
+         else if (ctx->ExecuteFlag)
+            mode = GL_COMPILE_AND_EXECUTE;
+         else
+            mode = GL_COMPILE;
+         params[0] = ENUM_TO_INT64(mode);
+         }
+         break;
+      case GL_INDEX_LOGIC_OP:
+         params[0] = BOOLEAN_TO_INT64(ctx->Color.IndexLogicOpEnabled);
+         break;
+      case GL_COLOR_LOGIC_OP:
+         params[0] = BOOLEAN_TO_INT64(ctx->Color.ColorLogicOpEnabled);
+         break;
+      case GL_LOGIC_OP_MODE:
+         params[0] = ENUM_TO_INT64(ctx->Color.LogicOp);
+         break;
+      case GL_MAP1_COLOR_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Color4);
+         break;
+      case GL_MAP1_GRID_DOMAIN:
+         params[0] = IROUND64(ctx->Eval.MapGrid1u1);
+         params[1] = IROUND64(ctx->Eval.MapGrid1u2);
+         break;
+      case GL_MAP1_GRID_SEGMENTS:
+         params[0] = ctx->Eval.MapGrid1un;
+         break;
+      case GL_MAP1_INDEX:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Index);
+         break;
+      case GL_MAP1_NORMAL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Normal);
+         break;
+      case GL_MAP1_TEXTURE_COORD_1:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1TextureCoord1);
+         break;
+      case GL_MAP1_TEXTURE_COORD_2:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1TextureCoord2);
+         break;
+      case GL_MAP1_TEXTURE_COORD_3:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1TextureCoord3);
+         break;
+      case GL_MAP1_TEXTURE_COORD_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1TextureCoord4);
+         break;
+      case GL_MAP1_VERTEX_3:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Vertex3);
+         break;
+      case GL_MAP1_VERTEX_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Vertex4);
+         break;
+      case GL_MAP2_COLOR_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2Color4);
+         break;
+      case GL_MAP2_GRID_DOMAIN:
+         params[0] = IROUND64(ctx->Eval.MapGrid2u1);
+         params[1] = IROUND64(ctx->Eval.MapGrid2u2);
+         params[2] = IROUND64(ctx->Eval.MapGrid2v1);
+         params[3] = IROUND64(ctx->Eval.MapGrid2v2);
+         break;
+      case GL_MAP2_GRID_SEGMENTS:
+         params[0] = ctx->Eval.MapGrid2un;
+         params[1] = ctx->Eval.MapGrid2vn;
+         break;
+      case GL_MAP2_INDEX:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2Index);
+         break;
+      case GL_MAP2_NORMAL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2Normal);
+         break;
+      case GL_MAP2_TEXTURE_COORD_1:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2TextureCoord1);
+         break;
+      case GL_MAP2_TEXTURE_COORD_2:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2TextureCoord2);
+         break;
+      case GL_MAP2_TEXTURE_COORD_3:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2TextureCoord3);
+         break;
+      case GL_MAP2_TEXTURE_COORD_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2TextureCoord4);
+         break;
+      case GL_MAP2_VERTEX_3:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2Vertex3);
+         break;
+      case GL_MAP2_VERTEX_4:
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map2Vertex4);
+         break;
+      case GL_MAP_COLOR:
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.MapColorFlag);
+         break;
+      case GL_MAP_STENCIL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.MapStencilFlag);
+         break;
+      case GL_MATRIX_MODE:
+         params[0] = ENUM_TO_INT64(ctx->Transform.MatrixMode);
+         break;
+      case GL_MAX_ATTRIB_STACK_DEPTH:
+         params[0] = MAX_ATTRIB_STACK_DEPTH;
+         break;
+      case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
+         params[0] = MAX_CLIENT_ATTRIB_STACK_DEPTH;
+         break;
+      case GL_MAX_CLIP_PLANES:
+         params[0] = ctx->Const.MaxClipPlanes;
+         break;
+      case GL_MAX_ELEMENTS_VERTICES:
+         params[0] = ctx->Const.MaxArrayLockSize;
+         break;
+      case GL_MAX_ELEMENTS_INDICES:
+         params[0] = ctx->Const.MaxArrayLockSize;
+         break;
+      case GL_MAX_EVAL_ORDER:
+         params[0] = MAX_EVAL_ORDER;
+         break;
+      case GL_MAX_LIGHTS:
+         params[0] = ctx->Const.MaxLights;
+         break;
+      case GL_MAX_LIST_NESTING:
+         params[0] = MAX_LIST_NESTING;
+         break;
+      case GL_MAX_MODELVIEW_STACK_DEPTH:
+         params[0] = MAX_MODELVIEW_STACK_DEPTH;
+         break;
+      case GL_MAX_NAME_STACK_DEPTH:
+         params[0] = MAX_NAME_STACK_DEPTH;
+         break;
+      case GL_MAX_PIXEL_MAP_TABLE:
+         params[0] = MAX_PIXEL_MAP_TABLE;
+         break;
+      case GL_MAX_PROJECTION_STACK_DEPTH:
+         params[0] = MAX_PROJECTION_STACK_DEPTH;
+         break;
+      case GL_MAX_TEXTURE_SIZE:
+         params[0] = 1 << (ctx->Const.MaxTextureLevels - 1);
+         break;
+      case GL_MAX_3D_TEXTURE_SIZE:
+         params[0] = 1 << (ctx->Const.Max3DTextureLevels - 1);
+         break;
+      case GL_MAX_TEXTURE_STACK_DEPTH:
+         params[0] = MAX_TEXTURE_STACK_DEPTH;
+         break;
+      case GL_MAX_VIEWPORT_DIMS:
+         params[0] = ctx->Const.MaxViewportWidth;
+         params[1] = ctx->Const.MaxViewportHeight;
+         break;
+      case GL_MODELVIEW_MATRIX:
+         {
+         const GLfloat *matrix = ctx->ModelviewMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[1]);
+         params[2] = IROUND64(matrix[2]);
+         params[3] = IROUND64(matrix[3]);
+         params[4] = IROUND64(matrix[4]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[6]);
+         params[7] = IROUND64(matrix[7]);
+         params[8] = IROUND64(matrix[8]);
+         params[9] = IROUND64(matrix[9]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[11]);
+         params[12] = IROUND64(matrix[12]);
+         params[13] = IROUND64(matrix[13]);
+         params[14] = IROUND64(matrix[14]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_MODELVIEW_STACK_DEPTH:
+         params[0] = ctx->ModelviewMatrixStack.Depth + 1;
+         break;
+      case GL_NAME_STACK_DEPTH:
+         params[0] = ctx->Select.NameStackDepth;
+         break;
+      case GL_NORMALIZE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Transform.Normalize);
+         break;
+      case GL_PACK_ALIGNMENT:
+         params[0] = ctx->Pack.Alignment;
+         break;
+      case GL_PACK_LSB_FIRST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Pack.LsbFirst);
+         break;
+      case GL_PACK_ROW_LENGTH:
+         params[0] = ctx->Pack.RowLength;
+         break;
+      case GL_PACK_SKIP_PIXELS:
+         params[0] = ctx->Pack.SkipPixels;
+         break;
+      case GL_PACK_SKIP_ROWS:
+         params[0] = ctx->Pack.SkipRows;
+         break;
+      case GL_PACK_SWAP_BYTES:
+         params[0] = BOOLEAN_TO_INT64(ctx->Pack.SwapBytes);
+         break;
+      case GL_PACK_SKIP_IMAGES_EXT:
+         params[0] = ctx->Pack.SkipImages;
+         break;
+      case GL_PACK_IMAGE_HEIGHT_EXT:
+         params[0] = ctx->Pack.ImageHeight;
+         break;
+      case GL_PACK_INVERT_MESA:
+         params[0] = BOOLEAN_TO_INT64(ctx->Pack.Invert);
+         break;
+      case GL_PERSPECTIVE_CORRECTION_HINT:
+         params[0] = ENUM_TO_INT64(ctx->Hint.PerspectiveCorrection);
+         break;
+      case GL_PIXEL_MAP_A_TO_A_SIZE:
+         params[0] = ctx->PixelMaps.AtoA.Size;
+         break;
+      case GL_PIXEL_MAP_B_TO_B_SIZE:
+         params[0] = ctx->PixelMaps.BtoB.Size;
+         break;
+      case GL_PIXEL_MAP_G_TO_G_SIZE:
+         params[0] = ctx->PixelMaps.GtoG.Size;
+         break;
+      case GL_PIXEL_MAP_I_TO_A_SIZE:
+         params[0] = ctx->PixelMaps.ItoA.Size;
+         break;
+      case GL_PIXEL_MAP_I_TO_B_SIZE:
+         params[0] = ctx->PixelMaps.ItoB.Size;
+         break;
+      case GL_PIXEL_MAP_I_TO_G_SIZE:
+         params[0] = ctx->PixelMaps.ItoG.Size;
+         break;
+      case GL_PIXEL_MAP_I_TO_I_SIZE:
+         params[0] = ctx->PixelMaps.ItoI.Size;
+         break;
+      case GL_PIXEL_MAP_I_TO_R_SIZE:
+         params[0] = ctx->PixelMaps.ItoR.Size;
+         break;
+      case GL_PIXEL_MAP_R_TO_R_SIZE:
+         params[0] = ctx->PixelMaps.RtoR.Size;
+         break;
+      case GL_PIXEL_MAP_S_TO_S_SIZE:
+         params[0] = ctx->PixelMaps.StoS.Size;
+         break;
+      case GL_POINT_SIZE:
+         params[0] = IROUND64(ctx->Point.Size);
+         break;
+      case GL_POINT_SIZE_GRANULARITY:
+         params[0] = IROUND64(ctx->Const.PointSizeGranularity);
+         break;
+      case GL_POINT_SIZE_RANGE:
+         params[0] = IROUND64(ctx->Const.MinPointSizeAA);
+         params[1] = IROUND64(ctx->Const.MaxPointSizeAA);
+         break;
+      case GL_ALIASED_POINT_SIZE_RANGE:
+         params[0] = IROUND64(ctx->Const.MinPointSize);
+         params[1] = IROUND64(ctx->Const.MaxPointSize);
+         break;
+      case GL_POINT_SMOOTH:
+         params[0] = BOOLEAN_TO_INT64(ctx->Point.SmoothFlag);
+         break;
+      case GL_POINT_SMOOTH_HINT:
+         params[0] = ENUM_TO_INT64(ctx->Hint.PointSmooth);
+         break;
+      case GL_POINT_SIZE_MIN_EXT:
+         params[0] = IROUND64(ctx->Point.MinSize);
+         break;
+      case GL_POINT_SIZE_MAX_EXT:
+         params[0] = IROUND64(ctx->Point.MaxSize);
+         break;
+      case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
+         params[0] = IROUND64(ctx->Point.Threshold);
+         break;
+      case GL_DISTANCE_ATTENUATION_EXT:
+         params[0] = IROUND64(ctx->Point.Params[0]);
+         params[1] = IROUND64(ctx->Point.Params[1]);
+         params[2] = IROUND64(ctx->Point.Params[2]);
+         break;
+      case GL_POLYGON_MODE:
+         params[0] = ENUM_TO_INT64(ctx->Polygon.FrontMode);
+         params[1] = ENUM_TO_INT64(ctx->Polygon.BackMode);
+         break;
+      case GL_POLYGON_OFFSET_BIAS_EXT:
+         params[0] = IROUND64(ctx->Polygon.OffsetUnits);
+         break;
+      case GL_POLYGON_OFFSET_FACTOR:
+         params[0] = IROUND64(ctx->Polygon.OffsetFactor );
+         break;
+      case GL_POLYGON_OFFSET_UNITS:
+         params[0] = IROUND64(ctx->Polygon.OffsetUnits );
+         break;
+      case GL_POLYGON_OFFSET_POINT:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.OffsetPoint);
+         break;
+      case GL_POLYGON_OFFSET_LINE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.OffsetLine);
+         break;
+      case GL_POLYGON_OFFSET_FILL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.OffsetFill);
+         break;
+      case GL_POLYGON_SMOOTH:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.SmoothFlag);
+         break;
+      case GL_POLYGON_SMOOTH_HINT:
+         params[0] = ENUM_TO_INT64(ctx->Hint.PolygonSmooth);
+         break;
+      case GL_POLYGON_STIPPLE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Polygon.StippleFlag);
+         break;
+      case GL_PROJECTION_MATRIX:
+         {
+         const GLfloat *matrix = ctx->ProjectionMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[1]);
+         params[2] = IROUND64(matrix[2]);
+         params[3] = IROUND64(matrix[3]);
+         params[4] = IROUND64(matrix[4]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[6]);
+         params[7] = IROUND64(matrix[7]);
+         params[8] = IROUND64(matrix[8]);
+         params[9] = IROUND64(matrix[9]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[11]);
+         params[12] = IROUND64(matrix[12]);
+         params[13] = IROUND64(matrix[13]);
+         params[14] = IROUND64(matrix[14]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_PROJECTION_STACK_DEPTH:
+         params[0] = ctx->ProjectionMatrixStack.Depth + 1;
+         break;
+      case GL_READ_BUFFER:
+         params[0] = ENUM_TO_INT64(ctx->ReadBuffer->ColorReadBuffer);
+         break;
+      case GL_RED_BIAS:
+         params[0] = IROUND64(ctx->Pixel.RedBias);
+         break;
+      case GL_RED_BITS:
+         params[0] = ctx->DrawBuffer->Visual.redBits;
+         break;
+      case GL_RED_SCALE:
+         params[0] = IROUND64(ctx->Pixel.RedScale);
+         break;
+      case GL_RENDER_MODE:
+         params[0] = ENUM_TO_INT64(ctx->RenderMode);
+         break;
+      case GL_RESCALE_NORMAL:
+         params[0] = BOOLEAN_TO_INT64(ctx->Transform.RescaleNormals);
+         break;
+      case GL_RGBA_MODE:
+         params[0] = BOOLEAN_TO_INT64(ctx->DrawBuffer->Visual.rgbMode);
+         break;
+      case GL_SCISSOR_BOX:
+         params[0] = ctx->Scissor.X;
+         params[1] = ctx->Scissor.Y;
+         params[2] = ctx->Scissor.Width;
+         params[3] = ctx->Scissor.Height;
+         break;
+      case GL_SCISSOR_TEST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Scissor.Enabled);
+         break;
+      case GL_SELECTION_BUFFER_SIZE:
+         params[0] = ctx->Select.BufferSize;
+         break;
+      case GL_SHADE_MODEL:
+         params[0] = ENUM_TO_INT64(ctx->Light.ShadeModel);
+         break;
+      case GL_SHARED_TEXTURE_PALETTE_EXT:
+         params[0] = BOOLEAN_TO_INT64(ctx->Texture.SharedPalette);
+         break;
+      case GL_STENCIL_BITS:
+         params[0] = ctx->DrawBuffer->Visual.stencilBits;
+         break;
+      case GL_STENCIL_CLEAR_VALUE:
+         params[0] = ctx->Stencil.Clear;
+         break;
+      case GL_STENCIL_FAIL:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.FailFunc[ctx->Stencil.ActiveFace]);
+         break;
+      case GL_STENCIL_FUNC:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.Function[ctx->Stencil.ActiveFace]);
+         break;
+      case GL_STENCIL_PASS_DEPTH_FAIL:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.ZFailFunc[ctx->Stencil.ActiveFace]);
+         break;
+      case GL_STENCIL_PASS_DEPTH_PASS:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace]);
+         break;
+      case GL_STENCIL_REF:
+         params[0] = ctx->Stencil.Ref[ctx->Stencil.ActiveFace];
+         break;
+      case GL_STENCIL_TEST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Stencil.Enabled);
+         break;
+      case GL_STENCIL_VALUE_MASK:
+         params[0] = ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace];
+         break;
+      case GL_STENCIL_WRITEMASK:
+         params[0] = ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace];
+         break;
+      case GL_STEREO:
+         params[0] = BOOLEAN_TO_INT64(ctx->DrawBuffer->Visual.stereoMode);
+         break;
+      case GL_SUBPIXEL_BITS:
+         params[0] = ctx->Const.SubPixelBits;
+         break;
+      case GL_TEXTURE_1D:
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_1D));
+         break;
+      case GL_TEXTURE_2D:
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_2D));
+         break;
+      case GL_TEXTURE_3D:
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_3D));
+         break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
+         break;
+      case GL_TEXTURE_BINDING_1D:
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_INDEX]->Name;
+         break;
+      case GL_TEXTURE_BINDING_2D:
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_INDEX]->Name;
+         break;
+      case GL_TEXTURE_BINDING_3D:
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_3D_INDEX]->Name;
+         break;
+      case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_ARRAY_INDEX]->Name;
+         break;
+      case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_ARRAY_INDEX]->Name;
+         break;
+      case GL_TEXTURE_GEN_S:
+         params[0] = BOOLEAN_TO_INT64(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0));
+         break;
+      case GL_TEXTURE_GEN_T:
+         params[0] = BOOLEAN_TO_INT64(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & T_BIT) ? 1 : 0));
+         break;
+      case GL_TEXTURE_GEN_R:
+         params[0] = BOOLEAN_TO_INT64(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & R_BIT) ? 1 : 0));
+         break;
+      case GL_TEXTURE_GEN_Q:
+         params[0] = BOOLEAN_TO_INT64(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & Q_BIT) ? 1 : 0));
+         break;
+      case GL_TEXTURE_MATRIX:
+         {
+         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[1]);
+         params[2] = IROUND64(matrix[2]);
+         params[3] = IROUND64(matrix[3]);
+         params[4] = IROUND64(matrix[4]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[6]);
+         params[7] = IROUND64(matrix[7]);
+         params[8] = IROUND64(matrix[8]);
+         params[9] = IROUND64(matrix[9]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[11]);
+         params[12] = IROUND64(matrix[12]);
+         params[13] = IROUND64(matrix[13]);
+         params[14] = IROUND64(matrix[14]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_TEXTURE_STACK_DEPTH:
+         params[0] = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Depth + 1;
+         break;
+      case GL_UNPACK_ALIGNMENT:
+         params[0] = ctx->Unpack.Alignment;
+         break;
+      case GL_UNPACK_LSB_FIRST:
+         params[0] = BOOLEAN_TO_INT64(ctx->Unpack.LsbFirst);
+         break;
+      case GL_UNPACK_ROW_LENGTH:
+         params[0] = ctx->Unpack.RowLength;
+         break;
+      case GL_UNPACK_SKIP_PIXELS:
+         params[0] = ctx->Unpack.SkipPixels;
+         break;
+      case GL_UNPACK_SKIP_ROWS:
+         params[0] = ctx->Unpack.SkipRows;
+         break;
+      case GL_UNPACK_SWAP_BYTES:
+         params[0] = BOOLEAN_TO_INT64(ctx->Unpack.SwapBytes);
+         break;
+      case GL_UNPACK_SKIP_IMAGES_EXT:
+         params[0] = ctx->Unpack.SkipImages;
+         break;
+      case GL_UNPACK_IMAGE_HEIGHT_EXT:
+         params[0] = ctx->Unpack.ImageHeight;
+         break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         params[0] = BOOLEAN_TO_INT64(ctx->Unpack.ClientStorage);
+         break;
+      case GL_VIEWPORT:
+         params[0] = ctx->Viewport.X;
+         params[1] = ctx->Viewport.Y;
+         params[2] = ctx->Viewport.Width;
+         params[3] = ctx->Viewport.Height;
+         break;
+      case GL_ZOOM_X:
+         params[0] = IROUND64(ctx->Pixel.ZoomX);
+         break;
+      case GL_ZOOM_Y:
+         params[0] = IROUND64(ctx->Pixel.ZoomY);
+         break;
+      case GL_VERTEX_ARRAY:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->Vertex.Enabled);
+         break;
+      case GL_VERTEX_ARRAY_SIZE:
+         params[0] = ctx->Array.ArrayObj->Vertex.Size;
+         break;
+      case GL_VERTEX_ARRAY_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->Vertex.Type);
+         break;
+      case GL_VERTEX_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->Vertex.Stride;
+         break;
+      case GL_VERTEX_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_NORMAL_ARRAY:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->Normal.Enabled);
+         break;
+      case GL_NORMAL_ARRAY_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->Normal.Type);
+         break;
+      case GL_NORMAL_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->Normal.Stride;
+         break;
+      case GL_NORMAL_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_COLOR_ARRAY:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->Color.Enabled);
+         break;
+      case GL_COLOR_ARRAY_SIZE:
+         params[0] = ctx->Array.ArrayObj->Color.Size;
+         break;
+      case GL_COLOR_ARRAY_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->Color.Type);
+         break;
+      case GL_COLOR_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->Color.Stride;
+         break;
+      case GL_COLOR_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_INDEX_ARRAY:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->Index.Enabled);
+         break;
+      case GL_INDEX_ARRAY_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->Index.Type);
+         break;
+      case GL_INDEX_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->Index.Stride;
+         break;
+      case GL_INDEX_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_TEXTURE_COORD_ARRAY:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled);
+         break;
+      case GL_TEXTURE_COORD_ARRAY_SIZE:
+         params[0] = ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Size;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_TYPE:
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Type);
+         break;
+      case GL_TEXTURE_COORD_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Stride;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_EDGE_FLAG_ARRAY:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->EdgeFlag.Enabled);
+         break;
+      case GL_EDGE_FLAG_ARRAY_STRIDE:
+         params[0] = ctx->Array.ArrayObj->EdgeFlag.Stride;
+         break;
+      case GL_EDGE_FLAG_ARRAY_COUNT_EXT:
+         params[0] = 0;
+         break;
+      case GL_MAX_TEXTURE_UNITS_ARB:
+         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         params[0] = ctx->Const.MaxTextureUnits;
+         break;
+      case GL_ACTIVE_TEXTURE_ARB:
+         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         params[0] = GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit;
+         break;
+      case GL_CLIENT_ACTIVE_TEXTURE_ARB:
+         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         params[0] = GL_TEXTURE0_ARB + ctx->Array.ActiveTexture;
+         break;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB));
+         break;
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_CUBE_INDEX]->Name;
+         break;
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
+         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         params[0] = (1 << (ctx->Const.MaxCubeTextureLevels - 1));
+         break;
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         params[0] = ctx->Hint.TextureCompression;
+         break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
+         params[0] = _mesa_get_compressed_formats(ctx, NULL, GL_FALSE);
+         break;
+      case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
+         {
+         GLint formats[100];
+         GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
+         ASSERT(n <= 100);
+         for (i = 0; i < n; i++)
+            params[i] = ENUM_TO_INT64(formats[i]);
+         }
+         break;
+      case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
+         CHECK_EXT1(EXT_compiled_vertex_array, "GetInteger64v");
+         params[0] = ctx->Array.LockFirst;
+         break;
+      case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
+         CHECK_EXT1(EXT_compiled_vertex_array, "GetInteger64v");
+         params[0] = ctx->Array.LockCount;
+         break;
+      case GL_TRANSPOSE_COLOR_MATRIX_ARB:
+         {
+         const GLfloat *matrix = ctx->ColorMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[4]);
+         params[2] = IROUND64(matrix[8]);
+         params[3] = IROUND64(matrix[12]);
+         params[4] = IROUND64(matrix[1]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[9]);
+         params[7] = IROUND64(matrix[13]);
+         params[8] = IROUND64(matrix[2]);
+         params[9] = IROUND64(matrix[6]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[14]);
+         params[12] = IROUND64(matrix[3]);
+         params[13] = IROUND64(matrix[7]);
+         params[14] = IROUND64(matrix[11]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
+         {
+         const GLfloat *matrix = ctx->ModelviewMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[4]);
+         params[2] = IROUND64(matrix[8]);
+         params[3] = IROUND64(matrix[12]);
+         params[4] = IROUND64(matrix[1]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[9]);
+         params[7] = IROUND64(matrix[13]);
+         params[8] = IROUND64(matrix[2]);
+         params[9] = IROUND64(matrix[6]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[14]);
+         params[12] = IROUND64(matrix[3]);
+         params[13] = IROUND64(matrix[7]);
+         params[14] = IROUND64(matrix[11]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
+         {
+         const GLfloat *matrix = ctx->ProjectionMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[4]);
+         params[2] = IROUND64(matrix[8]);
+         params[3] = IROUND64(matrix[12]);
+         params[4] = IROUND64(matrix[1]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[9]);
+         params[7] = IROUND64(matrix[13]);
+         params[8] = IROUND64(matrix[2]);
+         params[9] = IROUND64(matrix[6]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[14]);
+         params[12] = IROUND64(matrix[3]);
+         params[13] = IROUND64(matrix[7]);
+         params[14] = IROUND64(matrix[11]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
+         {
+         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[4]);
+         params[2] = IROUND64(matrix[8]);
+         params[3] = IROUND64(matrix[12]);
+         params[4] = IROUND64(matrix[1]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[9]);
+         params[7] = IROUND64(matrix[13]);
+         params[8] = IROUND64(matrix[2]);
+         params[9] = IROUND64(matrix[6]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[14]);
+         params[12] = IROUND64(matrix[3]);
+         params[13] = IROUND64(matrix[7]);
+         params[14] = IROUND64(matrix[11]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_COLOR_MATRIX_SGI:
+         {
+         const GLfloat *matrix = ctx->ColorMatrixStack.Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[1]);
+         params[2] = IROUND64(matrix[2]);
+         params[3] = IROUND64(matrix[3]);
+         params[4] = IROUND64(matrix[4]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[6]);
+         params[7] = IROUND64(matrix[7]);
+         params[8] = IROUND64(matrix[8]);
+         params[9] = IROUND64(matrix[9]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[11]);
+         params[12] = IROUND64(matrix[12]);
+         params[13] = IROUND64(matrix[13]);
+         params[14] = IROUND64(matrix[14]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
+         params[0] = ctx->ColorMatrixStack.Depth + 1;
+         break;
+      case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
+         params[0] = MAX_COLOR_STACK_DEPTH;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixScale[0]);
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixScale[1]);
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixScale[2]);
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixScale[3]);
+         break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixBias[0]);
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixBias[1]);
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixBias[2]);
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
+         params[0] = IROUND64(ctx->Pixel.PostColorMatrixBias[3]);
+         break;
+      case GL_CONVOLUTION_1D_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Convolution1DEnabled);
+         break;
+      case GL_CONVOLUTION_2D_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Convolution2DEnabled);
+         break;
+      case GL_SEPARABLE_2D_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Separable2DEnabled);
+         break;
+      case GL_POST_CONVOLUTION_RED_SCALE_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[0]);
+         break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[1]);
+         break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[2]);
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[3]);
+         break;
+      case GL_POST_CONVOLUTION_RED_BIAS_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[0]);
+         break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[1]);
+         break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[2]);
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
+         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[3]);
+         break;
+      case GL_HISTOGRAM:
+         CHECK_EXT1(EXT_histogram, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.HistogramEnabled);
+         break;
+      case GL_MINMAX:
+         CHECK_EXT1(EXT_histogram, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.MinMaxEnabled);
+         break;
+      case GL_COLOR_TABLE_SGI:
+         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
+         break;
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXT1(SGI_texture_color_table, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
+         break;
+      case GL_COLOR_SUM_EXT:
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Fog.ColorSumEnabled);
+         break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
+         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]);
+         params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]);
+         params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2]);
+         params[3] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3]);
+         }
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->SecondaryColor.Enabled);
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
+         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->SecondaryColor.Type);
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
+         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         params[0] = ctx->Array.ArrayObj->SecondaryColor.Stride;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
+         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         params[0] = ctx->Array.ArrayObj->SecondaryColor.Size;
+         break;
+      case GL_CURRENT_FOG_COORDINATE_EXT:
+         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         {
+         FLUSH_CURRENT(ctx, 0);
+         params[0] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
+         }
+         break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->FogCoord.Enabled);
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
+         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->FogCoord.Type);
+         break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
+         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         params[0] = ctx->Array.ArrayObj->FogCoord.Stride;
+         break;
+      case GL_FOG_COORDINATE_SOURCE_EXT:
+         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Fog.FogCoordinateSource);
+         break;
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         CHECK_EXT1(EXT_texture_lod_bias, "GetInteger64v");
+         params[0] = IROUND64(ctx->Const.MaxTextureLodBias);
+         break;
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         CHECK_EXT1(EXT_texture_filter_anisotropic, "GetInteger64v");
+         params[0] = IROUND64(ctx->Const.MaxTextureMaxAnisotropy);
+         break;
+      case GL_MULTISAMPLE_ARB:
+         params[0] = BOOLEAN_TO_INT64(ctx->Multisample.Enabled);
+         break;
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         params[0] = BOOLEAN_TO_INT64(ctx->Multisample.SampleAlphaToCoverage);
+         break;
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         params[0] = BOOLEAN_TO_INT64(ctx->Multisample.SampleAlphaToOne);
+         break;
+      case GL_SAMPLE_COVERAGE_ARB:
+         params[0] = BOOLEAN_TO_INT64(ctx->Multisample.SampleCoverage);
+         break;
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         params[0] = IROUND64(ctx->Multisample.SampleCoverageValue);
+         break;
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         params[0] = BOOLEAN_TO_INT64(ctx->Multisample.SampleCoverageInvert);
+         break;
+      case GL_SAMPLE_BUFFERS_ARB:
+         params[0] = ctx->DrawBuffer->Visual.sampleBuffers;
+         break;
+      case GL_SAMPLES_ARB:
+         params[0] = ctx->DrawBuffer->Visual.samples;
+         break;
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         CHECK_EXT1(IBM_rasterpos_clip, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Transform.RasterPositionUnclipped);
+         break;
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Point.PointSprite);
+         break;
+      case GL_POINT_SPRITE_R_MODE_NV:
+         CHECK_EXT1(NV_point_sprite, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Point.SpriteRMode);
+         break;
+      case GL_POINT_SPRITE_COORD_ORIGIN:
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Point.SpriteOrigin);
+         break;
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         CHECK_EXT1(SGIS_generate_mipmap, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Hint.GenerateMipmap);
+         break;
+      case GL_VERTEX_PROGRAM_BINDING_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = (ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY0_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY1_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[1].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY2_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[2].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY3_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[3].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[4].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY5_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[5].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY6_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[6].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY7_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[7].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY8_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[8].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY9_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[9].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY10_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[10].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY11_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[11].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY12_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[12].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY13_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[13].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY14_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[14].Enabled);
+         break;
+      case GL_VERTEX_ATTRIB_ARRAY15_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[15].Enabled);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB0_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[0]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB1_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[1]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB2_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[2]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB3_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[3]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB4_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[4]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB5_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[5]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB6_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[6]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB7_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[7]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB8_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[8]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB9_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[9]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB10_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[10]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB11_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[11]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB12_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[12]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB13_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[13]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB14_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[14]);
+         break;
+      case GL_MAP1_VERTEX_ATTRIB15_4_NV:
+         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[15]);
+         break;
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->FragmentProgram.Enabled);
+         break;
+      case GL_FRAGMENT_PROGRAM_BINDING_NV:
+         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         params[0] = ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0;
+         break;
+      case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
+         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         params[0] = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+         break;
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV));
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_RECT_INDEX]->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         params[0] = ctx->Const.MaxTextureRectSize;
+         break;
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXT1(EXT_stencil_two_side, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Stencil.TestTwoSide);
+         break;
+      case GL_ACTIVE_STENCIL_FACE_EXT:
+         CHECK_EXT1(EXT_stencil_two_side, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+         break;
+      case GL_MAX_SHININESS_NV:
+         CHECK_EXT1(NV_light_max_exponent, "GetInteger64v");
+         params[0] = IROUND64(ctx->Const.MaxShininess);
+         break;
+      case GL_MAX_SPOT_EXPONENT_NV:
+         CHECK_EXT1(NV_light_max_exponent, "GetInteger64v");
+         params[0] = IROUND64(ctx->Const.MaxSpotExponent);
+         break;
+      case GL_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayBufferObj->Name;
+         break;
+      case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->Vertex.BufferObj->Name;
+         break;
+      case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->Normal.BufferObj->Name;
+         break;
+      case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->Color.BufferObj->Name;
+         break;
+      case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->Index.BufferObj->Name;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name;
+         break;
+      case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->SecondaryColor.BufferObj->Name;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ArrayObj->FogCoord.BufferObj->Name;
+         break;
+      case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
+         params[0] = ctx->Array.ElementArrayBufferObj->Name;
+         break;
+      case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
+         CHECK_EXT1(EXT_pixel_buffer_object, "GetInteger64v");
+         params[0] = ctx->Pack.BufferObj->Name;
+         break;
+      case GL_PIXEL_UNPACK_BUFFER_BINDING_EXT:
+         CHECK_EXT1(EXT_pixel_buffer_object, "GetInteger64v");
+         params[0] = ctx->Unpack.BufferObj->Name;
+         break;
+      case GL_VERTEX_PROGRAM_ARB:
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.Enabled);
+         break;
+      case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.PointSizeEnabled);
+         break;
+      case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.TwoSideEnabled);
+         break;
+      case GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB:
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         params[0] = ctx->Const.MaxProgramMatrixStackDepth;
+         break;
+      case GL_MAX_PROGRAM_MATRICES_ARB:
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         params[0] = ctx->Const.MaxProgramMatrices;
+         break;
+      case GL_CURRENT_MATRIX_STACK_DEPTH_ARB:
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->CurrentStack->Depth + 1);
+         break;
+      case GL_CURRENT_MATRIX_ARB:
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         {
+         const GLfloat *matrix = ctx->CurrentStack->Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[1]);
+         params[2] = IROUND64(matrix[2]);
+         params[3] = IROUND64(matrix[3]);
+         params[4] = IROUND64(matrix[4]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[6]);
+         params[7] = IROUND64(matrix[7]);
+         params[8] = IROUND64(matrix[8]);
+         params[9] = IROUND64(matrix[9]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[11]);
+         params[12] = IROUND64(matrix[12]);
+         params[13] = IROUND64(matrix[13]);
+         params[14] = IROUND64(matrix[14]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetInteger64v");
+         {
+         const GLfloat *matrix = ctx->CurrentStack->Top->m;
+         params[0] = IROUND64(matrix[0]);
+         params[1] = IROUND64(matrix[4]);
+         params[2] = IROUND64(matrix[8]);
+         params[3] = IROUND64(matrix[12]);
+         params[4] = IROUND64(matrix[1]);
+         params[5] = IROUND64(matrix[5]);
+         params[6] = IROUND64(matrix[9]);
+         params[7] = IROUND64(matrix[13]);
+         params[8] = IROUND64(matrix[2]);
+         params[9] = IROUND64(matrix[6]);
+         params[10] = IROUND64(matrix[10]);
+         params[11] = IROUND64(matrix[14]);
+         params[12] = IROUND64(matrix[3]);
+         params[13] = IROUND64(matrix[7]);
+         params[14] = IROUND64(matrix[11]);
+         params[15] = IROUND64(matrix[15]);
+         }
+         break;
+      case GL_MAX_VERTEX_ATTRIBS_ARB:
+         CHECK_EXT1(ARB_vertex_program, "GetInteger64v");
+         params[0] = ctx->Const.VertexProgram.MaxAttribs;
+         break;
+      case GL_PROGRAM_ERROR_POSITION_ARB:
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetInteger64v");
+         params[0] = ctx->Program.ErrorPos;
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXT1(ARB_fragment_program, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->FragmentProgram.Enabled);
+         break;
+      case GL_MAX_TEXTURE_COORDS_ARB:
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         params[0] = ctx->Const.MaxTextureCoordUnits;
+         break;
+      case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         params[0] = ctx->Const.MaxTextureImageUnits;
+         break;
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXT1(EXT_depth_bounds_test, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Depth.BoundsTest);
+         break;
+      case GL_DEPTH_BOUNDS_EXT:
+         CHECK_EXT1(EXT_depth_bounds_test, "GetInteger64v");
+         params[0] = IROUND64(ctx->Depth.BoundsMin);
+         params[1] = IROUND64(ctx->Depth.BoundsMax);
+         break;
+      case GL_MAX_DRAW_BUFFERS_ARB:
+         params[0] = ctx->Const.MaxDrawBuffers;
+         break;
+      case GL_DRAW_BUFFER0_ARB:
+         params[0] = ENUM_TO_INT64(ctx->DrawBuffer->ColorDrawBuffer[0]);
+         break;
+      case GL_DRAW_BUFFER1_ARB:
+         {
+         GLenum buffer;
+         if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
+            return;
+         }
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];
+         params[0] = ENUM_TO_INT64(buffer);
+         }
+         break;
+      case GL_DRAW_BUFFER2_ARB:
+         {
+         GLenum buffer;
+         if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
+            return;
+         }
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];
+         params[0] = ENUM_TO_INT64(buffer);
+         }
+         break;
+      case GL_DRAW_BUFFER3_ARB:
+         {
+         GLenum buffer;
+         if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
+            return;
+         }
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];
+         params[0] = ENUM_TO_INT64(buffer);
+         }
+         break;
+      case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+         CHECK_EXT1(OES_read_format, "GetInteger64v");
+         params[0] = ctx->Const.ColorReadType;
+         break;
+      case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+         CHECK_EXT1(OES_read_format, "GetInteger64v");
+         params[0] = ctx->Const.ColorReadFormat;
+         break;
+      case GL_NUM_FRAGMENT_REGISTERS_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 6;
+         break;
+      case GL_NUM_FRAGMENT_CONSTANTS_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 8;
+         break;
+      case GL_NUM_PASSES_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 2;
+         break;
+      case GL_NUM_INSTRUCTIONS_PER_PASS_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 8;
+         break;
+      case GL_NUM_INSTRUCTIONS_TOTAL_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 16;
+         break;
+      case GL_COLOR_ALPHA_PAIRING_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(GL_TRUE);
+         break;
+      case GL_NUM_LOOPBACK_COMPONENTS_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 3;
+         break;
+      case GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI:
+         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         params[0] = 3;
+         break;
+      case GL_STENCIL_BACK_FUNC:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.Function[1]);
+         break;
+      case GL_STENCIL_BACK_VALUE_MASK:
+         params[0] = ctx->Stencil.ValueMask[1];
+         break;
+      case GL_STENCIL_BACK_WRITEMASK:
+         params[0] = ctx->Stencil.WriteMask[1];
+         break;
+      case GL_STENCIL_BACK_REF:
+         params[0] = ctx->Stencil.Ref[1];
+         break;
+      case GL_STENCIL_BACK_FAIL:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.FailFunc[1]);
+         break;
+      case GL_STENCIL_BACK_PASS_DEPTH_FAIL:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.ZFailFunc[1]);
+         break;
+      case GL_STENCIL_BACK_PASS_DEPTH_PASS:
+         params[0] = ENUM_TO_INT64(ctx->Stencil.ZPassFunc[1]);
+         break;
+      case GL_FRAMEBUFFER_BINDING_EXT:
+         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         params[0] = ctx->DrawBuffer->Name;
+         break;
+      case GL_RENDERBUFFER_BINDING_EXT:
+         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         params[0] = ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
+         break;
+      case GL_MAX_COLOR_ATTACHMENTS_EXT:
+         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         params[0] = ctx->Const.MaxColorAttachments;
+         break;
+      case GL_MAX_RENDERBUFFER_SIZE_EXT:
+         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         params[0] = ctx->Const.MaxRenderbufferSize;
+         break;
+      case GL_READ_FRAMEBUFFER_BINDING_EXT:
+         CHECK_EXT1(EXT_framebuffer_blit, "GetInteger64v");
+         params[0] = ctx->ReadBuffer->Name;
+         break;
+      case GL_PROVOKING_VERTEX_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Light.ProvokingVertex);
+         break;
+      case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Const.QuadsFollowProvokingVertexConvention);
+         break;
+      case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXT1(ARB_fragment_shader, "GetInteger64v");
+         params[0] = ctx->Const.FragmentProgram.MaxUniformComponents;
+         break;
+      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
+         CHECK_EXT1(ARB_fragment_shader, "GetInteger64v");
+         params[0] = ENUM_TO_INT64(ctx->Hint.FragmentShaderDerivative);
+         break;
+      case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         params[0] = ctx->Const.VertexProgram.MaxUniformComponents;
+         break;
+      case GL_MAX_VARYING_FLOATS_ARB:
+         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         params[0] = ctx->Const.MaxVarying * 4;
+         break;
+      case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         params[0] = ctx->Const.MaxVertexTextureImageUnits;
+         break;
+      case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         params[0] = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+         break;
+      case GL_CURRENT_PROGRAM:
+         CHECK_EXT1(ARB_shader_objects, "GetInteger64v");
+         params[0] = ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0;
+         break;
+      case GL_MAX_SAMPLES:
+         CHECK_EXT1(ARB_framebuffer_object, "GetInteger64v");
+         params[0] = ctx->Const.MaxSamples;
+         break;
+      case GL_VERTEX_ARRAY_BINDING_APPLE:
+         CHECK_EXT1(APPLE_vertex_array_object, "GetInteger64v");
+         params[0] = ctx->Array.ArrayObj->Name;
+         break;
+      case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+         CHECK_EXT1(ARB_seamless_cube_map, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Texture.CubeMapSeamless);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);
+   }
+}
+#endif /* FEATURE_ARB_sync */
 
 
 void GLAPIENTRY
