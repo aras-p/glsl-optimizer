@@ -383,6 +383,13 @@ static const char ReplacementCodeuiNormal3fVertex3fSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_sync)
+static const char DeleteSync_names[] = 
+    "i\0" /* Parameter signature */
+    "glDeleteSync\0"
+    "";
+#endif
+
 #if defined(need_GL_SGIX_fragment_lighting)
 static const char FragmentMaterialfvSGIX_names[] = 
     "iip\0" /* Parameter signature */
@@ -1065,6 +1072,13 @@ static const char VertexAttrib1sARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_sync)
+static const char FenceSync_names[] = 
+    "ii\0" /* Parameter signature */
+    "glFenceSync\0"
+    "";
+#endif
+
 #if defined(need_GL_NV_register_combiners)
 static const char FinalCombinerInputNV_names[] = 
     "iiii\0" /* Parameter signature */
@@ -1343,6 +1357,13 @@ static const char TbufferMask3DFX_names[] =
 static const char LoadProgramNV_names[] = 
     "iiip\0" /* Parameter signature */
     "glLoadProgramNV\0"
+    "";
+#endif
+
+#if defined(need_GL_ARB_sync)
+static const char WaitSync_names[] = 
+    "iii\0" /* Parameter signature */
+    "glWaitSync\0"
     "";
 #endif
 
@@ -2216,6 +2237,13 @@ static const char VertexAttrib2dARB_names[] =
     "idd\0" /* Parameter signature */
     "glVertexAttrib2d\0"
     "glVertexAttrib2dARB\0"
+    "";
+#endif
+
+#if defined(need_GL_ARB_sync)
+static const char GetInteger64v_names[] = 
+    "ip\0" /* Parameter signature */
+    "glGetInteger64v\0"
     "";
 #endif
 
@@ -3334,6 +3362,13 @@ static const char VertexAttrib3fvARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_sync)
+static const char GetSynciv_names[] = 
+    "iiipp\0" /* Parameter signature */
+    "glGetSynciv\0"
+    "";
+#endif
+
 #if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char DeleteFramebuffersEXT_names[] = 
     "ip\0" /* Parameter signature */
@@ -4324,6 +4359,13 @@ static const char DrawMeshArraysSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_sync)
+static const char IsSync_names[] = 
+    "i\0" /* Parameter signature */
+    "glIsSync\0"
+    "";
+#endif
+
 #if defined(need_GL_NV_evaluators)
 static const char GetMapControlPointsNV_names[] = 
     "iiiiiip\0" /* Parameter signature */
@@ -4613,6 +4655,13 @@ static const char CreateDebugObjectMESA_names[] =
 static const char GetShaderiv_names[] = 
     "iip\0" /* Parameter signature */
     "glGetShaderiv\0"
+    "";
+#endif
+
+#if defined(need_GL_ARB_sync)
+static const char ClientWaitSync_names[] = 
+    "iii\0" /* Parameter signature */
+    "glClientWaitSync\0"
     "";
 #endif
 
@@ -5156,6 +5205,19 @@ static const struct dri_extension_function GL_ARB_shader_objects_functions[] = {
     { Uniform1fvARB_names, Uniform1fvARB_remap_index, -1 },
     { GetObjectParameterfvARB_names, GetObjectParameterfvARB_remap_index, -1 },
     { GetInfoLogARB_names, GetInfoLogARB_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_sync)
+static const struct dri_extension_function GL_ARB_sync_functions[] = {
+    { DeleteSync_names, DeleteSync_remap_index, -1 },
+    { FenceSync_names, FenceSync_remap_index, -1 },
+    { WaitSync_names, WaitSync_remap_index, -1 },
+    { GetInteger64v_names, GetInteger64v_remap_index, -1 },
+    { GetSynciv_names, GetSynciv_remap_index, -1 },
+    { IsSync_names, IsSync_remap_index, -1 },
+    { ClientWaitSync_names, ClientWaitSync_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
