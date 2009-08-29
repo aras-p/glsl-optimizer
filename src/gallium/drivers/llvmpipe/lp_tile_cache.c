@@ -220,7 +220,7 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
             if(!dst)
                continue;
 
-            pipe_fill_rect(dst, &pt->block, pt->stride,
+            util_fill_rect(dst, &pt->block, pt->stride,
                            x, y, tw,  th,
                            tc->clear_val);
 

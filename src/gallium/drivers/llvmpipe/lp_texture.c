@@ -48,11 +48,6 @@
 /* Simple, maximally packed layout.
  */
 
-static unsigned minify( unsigned d )
-{
-   return MAX2(1, d>>1);
-}
-
 
 /* Conventional allocation path for non-display textures:
  */
@@ -102,6 +97,7 @@ llvmpipe_displaytarget_layout(struct pipe_screen *screen,
 {
    unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
                      PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   unsigned tex_usage = lpt->base.tex_usage;
 
    pf_get_block(lpt->base.format, &lpt->base.block);
    lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
@@ -112,6 +108,7 @@ llvmpipe_displaytarget_layout(struct pipe_screen *screen,
                                                 lpt->base.height[0],
                                                 lpt->base.format,
                                                 usage,
+                                                tex_usage,
                                                 &lpt->stride[0]);
 
    return lpt->buffer != NULL;
@@ -139,7 +136,8 @@ llvmpipe_texture_create(struct pipe_screen *screen,
    if(lpt->base.format == PIPE_FORMAT_Z16_UNORM)
       lpt->base.format = PIPE_FORMAT_Z32_UNORM;
 
-   if (lpt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+   if (lpt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                              PIPE_TEXTURE_USAGE_PRIMARY)) {
       if (!llvmpipe_displaytarget_layout(screen, lpt))
          goto fail;
    }
