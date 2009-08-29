@@ -80,8 +80,8 @@ typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
  **/
 #if defined (GLX_USE_TLS)
 
-const extern void *_glapi_Context;
-const extern struct _glapi_table *_glapi_Dispatch;
+extern const void *_glapi_Context;
+extern const struct _glapi_table *_glapi_Dispatch;
 
 extern __thread void * _glapi_tls_Context
     __attribute__((tls_model("initial-exec")));
