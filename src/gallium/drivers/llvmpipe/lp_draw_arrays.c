@@ -37,6 +37,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_prim.h"
 
+#include "lp_buffer.h"
 #include "lp_context.h"
 #include "lp_state.h"
 
@@ -129,18 +130,13 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     * Map vertex buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
-      void *buf
-         = pipe_buffer_map(pipe->screen,
-                                    lp->vertex_buffer[i].buffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+      void *buf = llvmpipe_buffer(lp->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes
-         = pipe_buffer_map(pipe->screen, indexBuffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+      void *mapped_indexes = llvmpipe_buffer(indexBuffer)->data;
       draw_set_mapped_element_buffer_range(draw, indexSize,
                                            min_index,
                                            max_index,
@@ -160,11 +156,9 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
-      pipe_buffer_unmap(pipe->screen, lp->vertex_buffer[i].buffer);
    }
    if (indexBuffer) {
       draw_set_mapped_element_buffer(draw, 0, NULL);
-      pipe_buffer_unmap(pipe->screen, indexBuffer);
    }
 
 
