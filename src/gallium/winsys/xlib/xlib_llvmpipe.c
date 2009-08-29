@@ -364,6 +364,13 @@ no_xm_dt:
 }
 
 
+static void
+xm_destroy( struct llvmpipe_winsys *ws )
+{
+   FREE(ws);
+}
+
+
 static struct llvmpipe_winsys *
 xlib_create_llvmpipe_winsys( void )
 {
@@ -372,6 +379,8 @@ xlib_create_llvmpipe_winsys( void )
    ws = CALLOC_STRUCT(xmesa_llvmpipe_winsys);
    if (!ws)
       return NULL;
+
+   ws->base.destroy = xm_destroy;
 
    ws->base.is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
 
