@@ -22,6 +22,7 @@ C_SOURCES = \
 	lp_bld_struct.c \
 	lp_bld_tgsi_soa.c \
 	lp_bld_type.c \
+	lp_buffer.c \
 	lp_clear.c \
 	lp_context.c \
 	lp_draw_arrays.c \
