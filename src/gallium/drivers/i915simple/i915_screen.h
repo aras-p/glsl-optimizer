@@ -30,6 +30,7 @@
 #define I915_SCREEN_H
 
 
+#include "pipe/p_state.h"
 #include "pipe/p_screen.h"
 
 
@@ -43,7 +44,7 @@ extern "C" {
  */
 struct i915_screen
 {
-   struct pipe_screen screen;
+   struct pipe_screen base;
 
    boolean is_i945;
    uint pci_id;

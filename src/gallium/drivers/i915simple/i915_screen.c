@@ -328,22 +328,22 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
 
    i915screen->pci_id = pci_id;
 
-   i915screen->screen.winsys = winsys;
+   i915screen->base.winsys = winsys;
 
-   i915screen->screen.destroy = i915_destroy_screen;
+   i915screen->base.destroy = i915_destroy_screen;
 
-   i915screen->screen.get_name = i915_get_name;
-   i915screen->screen.get_vendor = i915_get_vendor;
-   i915screen->screen.get_param = i915_get_param;
-   i915screen->screen.get_paramf = i915_get_paramf;
-   i915screen->screen.is_format_supported = i915_is_format_supported;
-   i915screen->screen.get_tex_transfer = i915_get_tex_transfer;
-   i915screen->screen.tex_transfer_destroy = i915_tex_transfer_destroy;
-   i915screen->screen.transfer_map = i915_transfer_map;
-   i915screen->screen.transfer_unmap = i915_transfer_unmap;
+   i915screen->base.get_name = i915_get_name;
+   i915screen->base.get_vendor = i915_get_vendor;
+   i915screen->base.get_param = i915_get_param;
+   i915screen->base.get_paramf = i915_get_paramf;
+   i915screen->base.is_format_supported = i915_is_format_supported;
+   i915screen->base.get_tex_transfer = i915_get_tex_transfer;
+   i915screen->base.tex_transfer_destroy = i915_tex_transfer_destroy;
+   i915screen->base.transfer_map = i915_transfer_map;
+   i915screen->base.transfer_unmap = i915_transfer_unmap;
 
-   i915_init_screen_texture_functions(&i915screen->screen);
-   u_simple_screen_init(&i915screen->screen);
+   i915_init_screen_texture_functions(&i915screen->base);
+   u_simple_screen_init(&i915screen->base);
 
-   return &i915screen->screen;
+   return &i915screen->base;
 }
