@@ -35,7 +35,7 @@
 struct pipe_context;
 struct pipe_screen;
 struct llvmpipe_context;
-
+struct llvmpipe_displaytarget;
 
 struct llvmpipe_texture
 {
@@ -44,9 +44,16 @@ struct llvmpipe_texture
    unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
    unsigned stride[PIPE_MAX_TEXTURE_LEVELS];
 
-   /* The data is held here:
+   /**
+    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * usage.
     */
-   struct pipe_buffer *buffer;
+   struct llvmpipe_displaytarget *dt;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
 
    unsigned timestamp;
 };

@@ -43,9 +43,14 @@
 #include "pipe/p_defines.h"
 
 
+struct llvmpipe_winsys;
+
+
 struct llvmpipe_screen
 {
    struct pipe_screen base;
+
+   struct llvmpipe_winsys *winsys;
 
    LLVMModuleRef module;
    LLVMExecutionEngineRef engine;

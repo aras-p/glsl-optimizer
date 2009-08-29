@@ -52,7 +52,7 @@
 /* Conventional allocation path for non-display textures:
  */
 static boolean
-llvmpipe_texture_layout(struct pipe_screen *screen,
+llvmpipe_texture_layout(struct llvmpipe_screen *screen,
                         struct llvmpipe_texture * lpt)
 {
    struct pipe_texture *pt = &lpt->base;
@@ -84,34 +84,29 @@ llvmpipe_texture_layout(struct pipe_screen *screen,
       depth = minify(depth);
    }
 
-   lpt->buffer = screen->buffer_create(screen, 32,
-                                       PIPE_BUFFER_USAGE_PIXEL,
-                                       buffer_size);
+   lpt->data = align_malloc(buffer_size, 16);
 
-   return lpt->buffer != NULL;
+   return lpt->data != NULL;
 }
 
 static boolean
-llvmpipe_displaytarget_layout(struct pipe_screen *screen,
+llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                               struct llvmpipe_texture * lpt)
 {
-   unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-   unsigned tex_usage = lpt->base.tex_usage;
+   struct llvmpipe_winsys *winsys = screen->winsys;
 
    pf_get_block(lpt->base.format, &lpt->base.block);
    lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
    lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
 
-   lpt->buffer = screen->surface_buffer_create( screen, 
-                                                lpt->base.width[0], 
-                                                lpt->base.height[0],
-                                                lpt->base.format,
-                                                usage,
-                                                tex_usage,
-                                                &lpt->stride[0]);
+   lpt->dt = winsys->displaytarget_create(winsys,
+                                          lpt->base.format,
+                                          lpt->base.width[0],
+                                          lpt->base.height[0],
+                                          16,
+                                          &lpt->stride[0] );
 
-   return lpt->buffer != NULL;
+   return lpt->dt != NULL;
 }
 
 
@@ -119,16 +114,17 @@ llvmpipe_displaytarget_layout(struct pipe_screen *screen,
 
 
 static struct pipe_texture *
-llvmpipe_texture_create(struct pipe_screen *screen,
+llvmpipe_texture_create(struct pipe_screen *_screen,
                         const struct pipe_texture *templat)
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct llvmpipe_texture *lpt = CALLOC_STRUCT(llvmpipe_texture);
    if (!lpt)
       return NULL;
 
    lpt->base = *templat;
    pipe_reference_init(&lpt->base.reference, 1);
-   lpt->base.screen = screen;
+   lpt->base.screen = &screen->base;
 
    /* XXX: The xlib state tracker is brain-dead and will request
     * PIPE_FORMAT_Z16_UNORM no matter how much we tell it we don't support it.
@@ -160,6 +156,8 @@ llvmpipe_texture_blanket(struct pipe_screen * screen,
                          const unsigned *stride,
                          struct pipe_buffer *buffer)
 {
+   /* FIXME */
+#if 0
    struct llvmpipe_texture *lpt;
    assert(screen);
 
@@ -184,15 +182,25 @@ llvmpipe_texture_blanket(struct pipe_screen * screen,
    pipe_buffer_reference(&lpt->buffer, buffer);
 
    return &lpt->base;
+#else
+   return NULL;
+#endif
 }
 
 
 static void
 llvmpipe_texture_destroy(struct pipe_texture *pt)
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(pt->screen);
    struct llvmpipe_texture *lpt = llvmpipe_texture(pt);
 
-   pipe_buffer_reference(&lpt->buffer, NULL);
+   if(lpt->dt) {
+      struct llvmpipe_winsys *winsys = screen->winsys;
+      winsys->displaytarget_destroy(winsys, lpt->dt);
+   }
+   else
+      align_free(lpt->data);
+
    FREE(lpt);
 }
 
@@ -333,27 +341,34 @@ llvmpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
 
 
 static void *
-llvmpipe_transfer_map( struct pipe_screen *screen,
+llvmpipe_transfer_map( struct pipe_screen *_screen,
                        struct pipe_transfer *transfer )
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    ubyte *map, *xfer_map;
    struct llvmpipe_texture *lpt;
-   unsigned flags = 0;
 
    assert(transfer->texture);
    lpt = llvmpipe_texture(transfer->texture);
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-   }
+   if(lpt->dt) {
+      struct llvmpipe_winsys *winsys = screen->winsys;
+      unsigned flags = 0;
 
-   if (transfer->usage != PIPE_TRANSFER_WRITE) {
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-   }
+      if (transfer->usage != PIPE_TRANSFER_READ) {
+         flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+      }
 
-   map = pipe_buffer_map(screen, lpt->buffer, flags);
-   if (map == NULL)
-      return NULL;
+      if (transfer->usage != PIPE_TRANSFER_WRITE) {
+         flags |= PIPE_BUFFER_USAGE_CPU_READ;
+      }
+
+      map = winsys->displaytarget_map(winsys, lpt->dt, flags);
+      if (map == NULL)
+         return NULL;
+   }
+   else
+      map = lpt->data;
 
    /* May want to different things here depending on read/write nature
     * of the map:
@@ -363,7 +378,7 @@ llvmpipe_transfer_map( struct pipe_screen *screen,
       /* Do something to notify sharing contexts of a texture change.
        * In llvmpipe, that would mean flushing the texture cache.
        */
-      llvmpipe_screen(screen)->timestamp++;
+      screen->timestamp++;
    }
    
    xfer_map = map + llvmpipe_transfer(transfer)->offset +
@@ -375,15 +390,19 @@ llvmpipe_transfer_map( struct pipe_screen *screen,
 
 
 static void
-llvmpipe_transfer_unmap(struct pipe_screen *screen,
+llvmpipe_transfer_unmap(struct pipe_screen *_screen,
                        struct pipe_transfer *transfer)
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct llvmpipe_texture *lpt;
 
    assert(transfer->texture);
    lpt = llvmpipe_texture(transfer->texture);
 
-   pipe_buffer_unmap( screen, lpt->buffer );
+   if(lpt->dt) {
+      struct llvmpipe_winsys *winsys = screen->winsys;
+      winsys->displaytarget_unmap(winsys, lpt->dt);
+   }
 }
 
 
@@ -407,23 +426,4 @@ llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->tex_transfer_destroy = llvmpipe_tex_transfer_destroy;
    screen->transfer_map = llvmpipe_transfer_map;
    screen->transfer_unmap = llvmpipe_transfer_unmap;
-}
-
-
-boolean
-llvmpipe_get_texture_buffer( struct pipe_texture *texture,
-                             struct pipe_buffer **buf,
-                             unsigned *stride )
-{
-   struct llvmpipe_texture *tex = (struct llvmpipe_texture *)texture;
-
-   if (!tex)
-      return FALSE;
-
-   pipe_buffer_reference(buf, tex->buffer);
-
-   if (stride)
-      *stride = tex->stride[0];
-
-   return TRUE;
 }

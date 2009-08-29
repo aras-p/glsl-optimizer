@@ -47,13 +47,13 @@
 static void
 llvmpipe_map_constant_buffers(struct llvmpipe_context *lp)
 {
-   struct pipe_winsys *ws = lp->pipe.winsys;
+   struct pipe_screen *screen = lp->pipe.screen;
    uint i, size;
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (lp->constants[i].buffer && lp->constants[i].buffer->size)
-         lp->mapped_constants[i] = ws->buffer_map(ws, lp->constants[i].buffer,
-                                                  PIPE_BUFFER_USAGE_CPU_READ);
+         lp->mapped_constants[i] = screen->buffer_map(screen, lp->constants[i].buffer,
+                                                      PIPE_BUFFER_USAGE_CPU_READ);
    }
 
    if (lp->constants[PIPE_SHADER_VERTEX].buffer)
@@ -72,7 +72,7 @@ llvmpipe_map_constant_buffers(struct llvmpipe_context *lp)
 static void
 llvmpipe_unmap_constant_buffers(struct llvmpipe_context *lp)
 {
-   struct pipe_winsys *ws = lp->pipe.winsys;
+   struct pipe_screen *screen = lp->pipe.screen;
    uint i;
 
    /* really need to flush all prims since the vert/frag shaders const buffers
@@ -86,7 +86,7 @@ llvmpipe_unmap_constant_buffers(struct llvmpipe_context *lp)
 
    for (i = 0; i < 2; i++) {
       if (lp->constants[i].buffer && lp->constants[i].buffer->size)
-         ws->buffer_unmap(ws, lp->constants[i].buffer);
+         screen->buffer_unmap(screen, lp->constants[i].buffer);
       lp->mapped_constants[i] = NULL;
    }
 }
