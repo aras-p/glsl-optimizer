@@ -148,7 +148,7 @@ static void brw_check_query(GLcontext *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   if (!drm_intel_bo_busy(query->bo)) {
+   if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
       brw_queryobj_get_results(query);
       query->Base.Ready = GL_TRUE;
    }
