@@ -342,7 +342,7 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    i915screen->base.transfer_map = i915_transfer_map;
    i915screen->base.transfer_unmap = i915_transfer_unmap;
 
-   i915_init_screen_texture_functions(&i915screen->base);
+   i915_init_screen_texture_functions(i915screen);
    u_simple_screen_init(&i915screen->base);
 
    return &i915screen->base;

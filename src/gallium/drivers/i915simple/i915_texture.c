@@ -718,12 +718,6 @@ i915_texture_blanket(struct pipe_screen * screen,
    return &tex->base;
 }
 
-void
-i915_init_texture_functions(struct i915_context *i915)
-{
-//   i915->pipe.texture_update = i915_texture_update;
-}
-
 static void
 i915_tex_surface_destroy(struct pipe_surface *surf)
 {
@@ -732,13 +726,13 @@ i915_tex_surface_destroy(struct pipe_surface *surf)
 }
 
 void
-i915_init_screen_texture_functions(struct pipe_screen *screen)
+i915_init_screen_texture_functions(struct i915_screen *is)
 {
-   screen->texture_create = i915_texture_create;
-   screen->texture_destroy = i915_texture_destroy;
-   screen->get_tex_surface = i915_get_tex_surface;
-   screen->texture_blanket = i915_texture_blanket;
-   screen->tex_surface_destroy = i915_tex_surface_destroy;
+   is->base.texture_create = i915_texture_create;
+   is->base.texture_destroy = i915_texture_destroy;
+   is->base.get_tex_surface = i915_get_tex_surface;
+   is->base.texture_blanket = i915_texture_blanket;
+   is->base.tex_surface_destroy = i915_tex_surface_destroy;
 }
 
 boolean i915_get_texture_buffer( struct pipe_texture *texture,
