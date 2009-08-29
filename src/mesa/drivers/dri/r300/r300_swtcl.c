@@ -248,18 +248,19 @@ static void r300_predict_emit_size( r300ContextPtr rmesa )
 		const int vertex_size = 7;
 		const int prim_size = 3;
 		const int cache_flush_size = 4;
+		const int pre_emit_state = 4;
 		const int state_size = radeonCountStateEmitSize(&rmesa->radeon);
 
 		if (rcommonEnsureCmdBufSpace(&rmesa->radeon,
-					state_size +
-					+ vertex_size + prim_size,
+					state_size + pre_emit_state
+					+ vertex_size + prim_size + cache_flush_size * 2,
 					__FUNCTION__))
 			rmesa->radeon.swtcl.emit_prediction = radeonCountStateEmitSize(&rmesa->radeon);
 		else
 			rmesa->radeon.swtcl.emit_prediction = state_size;
 
 		rmesa->radeon.swtcl.emit_prediction += rmesa->radeon.cmdbuf.cs->cdw
-			+ vertex_size + prim_size + cache_flush_size * 2;
+			+ vertex_size + prim_size + cache_flush_size * 2 + pre_emit_state;
 	}
 }
 
