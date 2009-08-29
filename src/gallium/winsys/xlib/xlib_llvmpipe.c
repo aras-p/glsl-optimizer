@@ -53,10 +53,14 @@
  * Subclass of pipe_buffer for Xlib winsys.
  * Low-level OS/window system memory buffer
  */
-struct xm_buffer
+struct xm_displaytarget
 {
-   struct pipe_buffer base;
-   boolean userBuffer;  /** Is this a user-space buffer? */
+   enum pipe_format format;
+   struct pipe_format_block block;
+   unsigned width;
+   unsigned height;
+   unsigned stride;
+
    void *data;
    void *mapped;
 
@@ -69,21 +73,21 @@ struct xm_buffer
 
 
 /**
- * Subclass of pipe_winsys for Xlib winsys
+ * Subclass of llvmpipe_winsys for Xlib winsys
  */
-struct xmesa_pipe_winsys
+struct xmesa_llvmpipe_winsys
 {
-   struct pipe_winsys base;
+   struct llvmpipe_winsys base;
 /*   struct xmesa_visual *xm_visual; */
 };
 
 
 
 /** Cast wrapper */
-static INLINE struct xm_buffer *
-xm_buffer( struct pipe_buffer *buf )
+static INLINE struct xm_displaytarget *
+xm_displaytarget( struct llvmpipe_displaytarget *dt )
 {
-   return (struct xm_buffer *)buf;
+   return (struct xm_displaytarget *)dt;
 }
 
 
@@ -108,7 +112,7 @@ mesaHandleXError(Display *dpy, XErrorEvent *event)
 }
 
 
-static char *alloc_shm(struct xm_buffer *buf, unsigned size)
+static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
 {
    XShmSegmentInfo *const shminfo = & buf->shminfo;
 
@@ -132,7 +136,8 @@ static char *alloc_shm(struct xm_buffer *buf, unsigned size)
  * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
  */
 static void
-alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
+alloc_shm_ximage(struct xm_displaytarget *xm_buffer,
+                 struct xmesa_buffer *xmb,
                  unsigned width, unsigned height)
 {
    /*
@@ -143,15 +148,15 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
     */
    int (*old_handler)(Display *, XErrorEvent *);
 
-   b->tempImage = XShmCreateImage(xmb->xm_visual->display,
+   xm_buffer->tempImage = XShmCreateImage(xmb->xm_visual->display,
                                   xmb->xm_visual->visinfo->visual,
                                   xmb->xm_visual->visinfo->depth,
                                   ZPixmap,
                                   NULL,
-                                  &b->shminfo,
+                                  &xm_buffer->shminfo,
                                   width, height);
-   if (b->tempImage == NULL) {
-      b->shm = 0;
+   if (xm_buffer->tempImage == NULL) {
+      xm_buffer->shm = 0;
       return;
    }
 
@@ -159,71 +164,73 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
    mesaXErrorFlag = 0;
    old_handler = XSetErrorHandler(mesaHandleXError);
    /* This may trigger the X protocol error we're ready to catch: */
-   XShmAttach(xmb->xm_visual->display, &b->shminfo);
+   XShmAttach(xmb->xm_visual->display, &xm_buffer->shminfo);
    XSync(xmb->xm_visual->display, False);
 
    if (mesaXErrorFlag) {
       /* we are on a remote display, this error is normal, don't print it */
       XFlush(xmb->xm_visual->display);
       mesaXErrorFlag = 0;
-      XDestroyImage(b->tempImage);
-      b->tempImage = NULL;
-      b->shm = 0;
+      XDestroyImage(xm_buffer->tempImage);
+      xm_buffer->tempImage = NULL;
+      xm_buffer->shm = 0;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   b->shm = 1;
+   xm_buffer->shm = 1;
 }
 
 #endif /* USE_XSHM */
 
+static boolean
+xm_is_displaytarget_format_supported( struct llvmpipe_winsys *ws,
+                                      enum pipe_format format )
+{
+   /* TODO: check visuals or other sensible thing here */
+   return TRUE;
+}
 
 
-/* Most callbacks map direcly onto dri_bufmgr operations:
- */
 static void *
-xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
-              unsigned flags)
+xm_displaytarget_map(struct llvmpipe_winsys *ws,
+                     struct llvmpipe_displaytarget *dt,
+                     unsigned flags)
 {
-   struct xm_buffer *xm_buf = xm_buffer(buf);
-   xm_buf->mapped = xm_buf->data;
-   return xm_buf->mapped;
+   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
+   xm_dt->mapped = xm_dt->data;
+   return xm_dt->mapped;
 }
 
 static void
-xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
+xm_displaytarget_unmap(struct llvmpipe_winsys *ws,
+                       struct llvmpipe_displaytarget *dt)
 {
-   struct xm_buffer *xm_buf = xm_buffer(buf);
-   xm_buf->mapped = NULL;
+   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
+   xm_dt->mapped = NULL;
 }
 
 static void
-xm_buffer_destroy(struct pipe_buffer *buf)
+xm_displaytarget_destroy(struct llvmpipe_winsys *ws,
+                         struct llvmpipe_displaytarget *dt)
 {
-   struct xm_buffer *oldBuf = xm_buffer(buf);
+   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
 
-   if (oldBuf->data) {
+   if (xm_dt->data) {
 #ifdef USE_XSHM
-      if (oldBuf->shminfo.shmid >= 0) {
-         shmdt(oldBuf->shminfo.shmaddr);
-         shmctl(oldBuf->shminfo.shmid, IPC_RMID, 0);
+      if (xm_dt->shminfo.shmid >= 0) {
+         shmdt(xm_dt->shminfo.shmaddr);
+         shmctl(xm_dt->shminfo.shmid, IPC_RMID, 0);
          
-         oldBuf->shminfo.shmid = -1;
-         oldBuf->shminfo.shmaddr = (char *) -1;
+         xm_dt->shminfo.shmid = -1;
+         xm_dt->shminfo.shmaddr = (char *) -1;
       }
       else
 #endif
-      {
-         if (!oldBuf->userBuffer) {
-            align_free(oldBuf->data);
-         }
-      }
-
-      oldBuf->data = NULL;
+         FREE(xm_dt->data);
    }
 
-   free(oldBuf);
+   FREE(xm_dt);
 }
 
 
@@ -232,12 +239,11 @@ xm_buffer_destroy(struct pipe_buffer *buf)
  * by the XMesaBuffer.
  */
 static void
-xlib_llvmpipe_display_surface(struct xmesa_buffer *b,
-                              struct pipe_surface *surf)
+xm_llvmpipe_display(struct xmesa_buffer *xm_buffer,
+                    struct llvmpipe_displaytarget *dt)
 {
    XImage *ximage;
-   struct llvmpipe_texture *spt = llvmpipe_texture(surf->texture);
-   struct xm_buffer *xm_buf = xm_buffer(spt->buffer);
+   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
    static boolean no_swap = 0;
    static boolean firsttime = 1;
 
@@ -250,212 +256,131 @@ xlib_llvmpipe_display_surface(struct xmesa_buffer *b,
       return;
 
 #ifdef USE_XSHM
-   if (xm_buf->shm)
+   if (xm_dt->shm)
    {
-      if (xm_buf->tempImage == NULL) 
+      if (xm_dt->tempImage == NULL)
       {
-         assert(surf->texture->block.width == 1);
-         assert(surf->texture->block.height == 1);
-         alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
-                          surf->texture->block.size, surf->height);
+         assert(xm_dt->block.width == 1);
+         assert(xm_dt->block.height == 1);
+         alloc_shm_ximage(xm_dt, xm_buffer,
+                          xm_dt->stride / xm_dt->block.size,
+                          xm_dt->height);
       }
 
-      ximage = xm_buf->tempImage;
-      ximage->data = xm_buf->data;
+      ximage = xm_dt->tempImage;
+      ximage->data = xm_dt->data;
 
       /* _debug_printf("XSHM\n"); */
-      XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
-                   ximage, 0, 0, 0, 0, surf->width, surf->height, False);
+      XShmPutImage(xm_buffer->xm_visual->display, xm_buffer->drawable, xm_buffer->gc,
+                   ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height, False);
    }
    else
 #endif
    {
       /* display image in Window */
-      ximage = b->tempImage;
-      ximage->data = xm_buf->data;
+      ximage = xm_dt->tempImage;
+      ximage->data = xm_dt->data;
 
       /* check that the XImage has been previously initialized */
       assert(ximage->format);
       assert(ximage->bitmap_unit);
 
       /* update XImage's fields */
-      ximage->width = surf->width;
-      ximage->height = surf->height;
-      ximage->bytes_per_line = spt->stride[surf->level];
+      ximage->width = xm_dt->width;
+      ximage->height = xm_dt->height;
+      ximage->bytes_per_line = xm_dt->stride;
 
       /* _debug_printf("XPUT\n"); */
-      XPutImage(b->xm_visual->display, b->drawable, b->gc,
-                ximage, 0, 0, 0, 0, surf->width, surf->height);
+      XPutImage(xm_buffer->xm_visual->display, xm_buffer->drawable, xm_buffer->gc,
+                ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height);
    }
 }
-
-
-static void
-xm_flush_frontbuffer(struct pipe_winsys *pws,
-                     struct pipe_surface *surf,
-                     void *context_private)
-{
-   /*
-    * The front color buffer is actually just another XImage buffer.
-    * This function copies that XImage to the actual X Window.
-    */
-   XMesaContext xmctx = (XMesaContext) context_private;
-   xlib_llvmpipe_display_surface(xmctx->xm_buffer, surf);
-}
-
-
-
-static const char *
-xm_get_name(struct pipe_winsys *pws)
-{
-   return "Xlib";
-}
-
-
-static struct pipe_buffer *
-xm_buffer_create(struct pipe_winsys *pws, 
-                 unsigned alignment, 
-                 unsigned usage,
-                 unsigned size)
-{
-   struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-
-   pipe_reference_init(&buffer->base.reference, 1);
-   buffer->base.alignment = alignment;
-   buffer->base.usage = usage;
-   buffer->base.size = size;
-
-   if (buffer->data == NULL) {
-      /* align to 16-byte multiple for Cell */
-      buffer->data = align_malloc(size, max(alignment, 16));
-   }
-
-   return &buffer->base;
-}
-
 
 /**
- * Create buffer which wraps user-space data.
+ * Display/copy the image in the surface into the X window specified
+ * by the XMesaBuffer.
  */
-static struct pipe_buffer *
-xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
+static void
+xm_displaytarget_display(struct llvmpipe_winsys *ws,
+                         struct llvmpipe_displaytarget *dt,
+                         void *context_private)
 {
-   struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-   pipe_reference_init(&buffer->base.reference, 1);
-   buffer->base.size = bytes;
-   buffer->userBuffer = TRUE;
-   buffer->data = ptr;
-
-   return &buffer->base;
+   XMesaContext xmctx = (XMesaContext) context_private;
+   struct xmesa_buffer *xm_buffer = xmctx->xm_buffer;
+   xm_llvmpipe_display(xm_buffer, dt);
 }
 
 
-static struct pipe_buffer *
-xm_surface_buffer_create(struct pipe_winsys *winsys,
-                         unsigned width, unsigned height,
-                         enum pipe_format format,
-                         unsigned usage,
-                         unsigned tex_usage,
-                         unsigned *stride)
+static struct llvmpipe_displaytarget *
+xm_displaytarget_create(struct llvmpipe_winsys *winsys,
+                        enum pipe_format format,
+                        unsigned width, unsigned height,
+                        unsigned alignment,
+                        unsigned *stride)
 {
-   const unsigned alignment = 64;
-   struct pipe_format_block block;
+   struct xm_displaytarget *xm_dt = CALLOC_STRUCT(xm_displaytarget);
    unsigned nblocksx, nblocksy, size;
 
-   pf_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = align(nblocksx * block.size, alignment);
-   size = *stride * nblocksy;
+   xm_dt = CALLOC_STRUCT(xm_displaytarget);
+   if(!xm_dt)
+      goto no_xm_dt;
+
+   xm_dt->format = format;
+   xm_dt->width = width;
+   xm_dt->height = height;
+
+   pf_get_block(format, &xm_dt->block);
+   nblocksx = pf_get_nblocksx(&xm_dt->block, width);
+   nblocksy = pf_get_nblocksy(&xm_dt->block, height);
+   xm_dt->stride = align(nblocksx * xm_dt->block.size, alignment);
+   size = xm_dt->stride * nblocksy;
 
 #ifdef USE_XSHM
    if (!debug_get_bool_option("XLIB_NO_SHM", FALSE))
    {
-      struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-
-      pipe_reference_init(&buffer->base.reference, 1);
-      buffer->base.alignment = alignment;
-      buffer->base.usage = usage;
-      buffer->base.size = size;
-      buffer->userBuffer = FALSE;
-      buffer->shminfo.shmid = -1;
-      buffer->shminfo.shmaddr = (char *) -1;
-      buffer->shm = TRUE;
+      xm_dt->shminfo.shmid = -1;
+      xm_dt->shminfo.shmaddr = (char *) -1;
+      xm_dt->shm = TRUE;
          
-      buffer->data = alloc_shm(buffer, size);
-      if (!buffer->data)
-         goto out;
-
-      return &buffer->base;
-         
-   out:
-      if (buffer)
-         FREE(buffer);
+      xm_dt->data = alloc_shm(xm_dt, size);
+      if(!xm_dt->data)
+         goto no_data;
    }
 #endif
-   
 
-   return winsys->buffer_create(winsys, alignment,
-                                usage,
-                                size);
+   if(!xm_dt->data) {
+      xm_dt->data = align_malloc(size, alignment);
+      if(!xm_dt->data)
+         goto no_data;
+   }
+
+   *stride = xm_dt->stride;
+   return (struct llvmpipe_displaytarget *)xm_dt;
+
+no_data:
+   FREE(xm_dt);
+no_xm_dt:
+   return NULL;
 }
 
 
-/*
- * Fence functions - basically nothing to do, as we don't create any actual
- * fence objects.
- */
-
-static void
-xm_fence_reference(struct pipe_winsys *sws, struct pipe_fence_handle **ptr,
-                   struct pipe_fence_handle *fence)
-{
-}
-
-
-static int
-xm_fence_signalled(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
-                   unsigned flag)
-{
-   return 0;
-}
-
-
-static int
-xm_fence_finish(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
-                unsigned flag)
-{
-   return 0;
-}
-
-
-
-static struct pipe_winsys *
+static struct llvmpipe_winsys *
 xlib_create_llvmpipe_winsys( void )
 {
-   static struct xmesa_pipe_winsys *ws = NULL;
+   struct xmesa_llvmpipe_winsys *ws;
 
-   if (!ws) {
-      ws = CALLOC_STRUCT(xmesa_pipe_winsys);
+   ws = CALLOC_STRUCT(xmesa_llvmpipe_winsys);
+   if (!ws)
+      return NULL;
 
-      /* Fill in this struct with callbacks that pipe will need to
-       * communicate with the window system, buffer manager, etc. 
-       */
-      ws->base.buffer_create = xm_buffer_create;
-      ws->base.user_buffer_create = xm_user_buffer_create;
-      ws->base.buffer_map = xm_buffer_map;
-      ws->base.buffer_unmap = xm_buffer_unmap;
-      ws->base.buffer_destroy = xm_buffer_destroy;
+   ws->base.is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
 
-      ws->base.surface_buffer_create = xm_surface_buffer_create;
+   ws->base.displaytarget_create = xm_displaytarget_create;
+   ws->base.displaytarget_map = xm_displaytarget_map;
+   ws->base.displaytarget_unmap = xm_displaytarget_unmap;
+   ws->base.displaytarget_destroy = xm_displaytarget_destroy;
 
-      ws->base.fence_reference = xm_fence_reference;
-      ws->base.fence_signalled = xm_fence_signalled;
-      ws->base.fence_finish = xm_fence_finish;
-
-      ws->base.flush_frontbuffer = xm_flush_frontbuffer;
-      ws->base.get_name = xm_get_name;
-   }
+   ws->base.displaytarget_display = xm_displaytarget_display;
 
    return &ws->base;
 }
@@ -464,7 +389,7 @@ xlib_create_llvmpipe_winsys( void )
 static struct pipe_screen *
 xlib_create_llvmpipe_screen( void )
 {
-   struct pipe_winsys *winsys;
+   struct llvmpipe_winsys *winsys;
    struct pipe_screen *screen;
 
    winsys = xlib_create_llvmpipe_winsys();
@@ -502,6 +427,19 @@ fail:
    /* Free stuff here */
    return NULL;
 }
+
+
+static void
+xlib_llvmpipe_display_surface(struct xmesa_buffer *xm_buffer,
+                              struct pipe_surface *surf)
+{
+   struct llvmpipe_texture *texture = llvmpipe_texture(surf->texture);
+
+   assert(texture->dt);
+   if (texture->dt)
+      xm_llvmpipe_display(xm_buffer, texture->dt);
+}
+
 
 struct xm_driver xlib_llvmpipe_driver = 
 {
