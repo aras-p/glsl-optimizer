@@ -273,6 +273,8 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :
 				       NV50TCL_SHADE_MODEL_SMOOTH);
+	so_method(so, tesla, 0x1684, 1);
+	so_data  (so, cso->flatshade_first ? 0 : 1);
 
 	so_method(so, tesla, NV50TCL_LINE_WIDTH, 1);
 	so_data  (so, fui(cso->line_width));
