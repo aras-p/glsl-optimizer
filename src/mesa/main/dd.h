@@ -1044,6 +1044,22 @@ struct dd_function_table {
     */
    void (*EndCallList)( GLcontext *ctx );
 
+
+#if FEATURE_ARB_sync
+   /**
+    * \name GL_ARB_sync interfaces
+    */
+   /*@{*/
+   struct gl_sync_object * (*NewSyncObject)(GLcontext *, GLenum);
+   void (*FenceSync)(GLcontext *, struct gl_sync_object *, GLenum, GLbitfield);
+   void (*DeleteSyncObject)(GLcontext *, struct gl_sync_object *);
+   void (*CheckSync)(GLcontext *, struct gl_sync_object *);
+   void (*ClientWaitSync)(GLcontext *, struct gl_sync_object *,
+			  GLbitfield, GLuint64);
+   void (*ServerWaitSync)(GLcontext *, struct gl_sync_object *,
+			  GLbitfield, GLuint64);
+   /*@}*/
+#endif
 };
 
 

@@ -19,6 +19,9 @@
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
 
+#define INT64_TO_BOOLEAN(I)   ( (I) ? GL_TRUE : GL_FALSE )
+#define INT64_TO_INT(I)       ( (GLint)((I > INT_MAX) ? INT_MAX : ((I < INT_MIN) ? INT_MIN : (I))) )
+
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
 #define BOOLEAN_TO_INT64(B)   ( (GLint64) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
@@ -1887,6 +1890,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_seamless_cube_map, "GetBooleanv");
          params[0] = ctx->Texture.CubeMapSeamless;
          break;
+      case GL_MAX_SERVER_WAIT_TIMEOUT:
+         CHECK_EXT1(ARB_sync, "GetBooleanv");
+         params[0] = INT64_TO_BOOLEAN(ctx->Const.MaxServerWaitTimeout);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3713,6 +3720,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
          CHECK_EXT1(ARB_seamless_cube_map, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Texture.CubeMapSeamless);
+         break;
+      case GL_MAX_SERVER_WAIT_TIMEOUT:
+         CHECK_EXT1(ARB_sync, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Const.MaxServerWaitTimeout);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
@@ -5541,6 +5552,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXT1(ARB_seamless_cube_map, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Texture.CubeMapSeamless);
          break;
+      case GL_MAX_SERVER_WAIT_TIMEOUT:
+         CHECK_EXT1(ARB_sync, "GetIntegerv");
+         params[0] = INT64_TO_INT(ctx->Const.MaxServerWaitTimeout);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -7368,6 +7383,10 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
          CHECK_EXT1(ARB_seamless_cube_map, "GetInteger64v");
          params[0] = BOOLEAN_TO_INT64(ctx->Texture.CubeMapSeamless);
+         break;
+      case GL_MAX_SERVER_WAIT_TIMEOUT:
+         CHECK_EXT1(ARB_sync, "GetInteger64v");
+         params[0] = ctx->Const.MaxServerWaitTimeout;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);

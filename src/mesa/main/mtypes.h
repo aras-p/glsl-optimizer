@@ -1986,6 +1986,20 @@ struct gl_query_state
 };
 
 
+/** Sync object state */
+struct gl_sync_object {
+   GLenum Type;               /**< GL_SYNC_FENCE */
+   GLuint Name;               /**< Fence name */
+   GLint RefCount;            /**< Reference count */
+   GLboolean DeletePending;   /**< Object was deleted while there were still
+			       * live references (e.g., sync not yet finished)
+			       */
+   GLenum SyncCondition;
+   GLbitfield Flags;          /**< Flags passed to glFenceSync */
+   GLuint Status:1;           /**< Has the sync object been signaled? */
+};
+
+
 /** Set by #pragma directives */
 struct gl_sl_pragmas
 {
@@ -2435,6 +2449,12 @@ struct gl_constants
 
    GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
 
+   /**
+    * Maximum amount of time, measured in nanseconds, that the server can wait.
+    */
+   GLuint64 MaxServerWaitTimeout;
+
+
    /**< GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
 };
@@ -2467,6 +2487,7 @@ struct gl_extensions
    GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
    GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
+   GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;

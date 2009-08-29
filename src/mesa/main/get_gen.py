@@ -1022,6 +1022,10 @@ StateVars = [
 	# GL_ARB_seamless_cube_map
 	( "GL_TEXTURE_CUBE_MAP_SEAMLESS", GLboolean, ["ctx->Texture.CubeMapSeamless"], "",
 	  ["ARB_seamless_cube_map"] ),
+
+	# GL_ARB_sync
+	( "GL_MAX_SERVER_WAIT_TIMEOUT", GLint64, ["ctx->Const.MaxServerWaitTimeout"], "",
+	  ["ARB_sync"] ),
 ]
 
 
@@ -1156,6 +1160,9 @@ def EmitHeader():
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
+
+#define INT64_TO_BOOLEAN(I)   ( (I) ? GL_TRUE : GL_FALSE )
+#define INT64_TO_INT(I)       ( (GLint)((I > INT_MAX) ? INT_MAX : ((I < INT_MIN) ? INT_MIN : (I))) )
 
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
 #define BOOLEAN_TO_INT64(B)   ( (GLint64) (B) )
