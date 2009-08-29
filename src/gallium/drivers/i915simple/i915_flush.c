@@ -74,5 +74,5 @@ static void i915_flush( struct pipe_context *pipe,
 
 void i915_init_flush_functions( struct i915_context *i915 )
 {
-   i915->pipe.flush = i915_flush;
+   i915->base.flush = i915_flush;
 }

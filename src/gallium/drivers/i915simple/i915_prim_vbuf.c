@@ -116,7 +116,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->pipe.screen;
+   struct pipe_screen *screen = i915->base.screen;
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
    /* FIXME: handle failure */
@@ -155,7 +155,7 @@ i915_vbuf_render_map_vertices( struct vbuf_render *render )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->pipe.screen;
+   struct pipe_screen *screen = i915->base.screen;
 
    if (i915->vbo_flushed)
       debug_printf("%s bad vbo flush occured stalling on hw\n");
@@ -174,7 +174,7 @@ i915_vbuf_render_unmap_vertices( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->pipe.screen;
+   struct pipe_screen *screen = i915->base.screen;
 
    i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
    pipe_buffer_unmap(screen, i915_render->vbo);
@@ -515,7 +515,7 @@ static struct vbuf_render *
 i915_vbuf_render_create( struct i915_context *i915 )
 {
    struct i915_vbuf_render *i915_render = CALLOC_STRUCT(i915_vbuf_render);
-   struct pipe_screen *screen = i915->pipe.screen;
+   struct pipe_screen *screen = i915->base.screen;
 
    i915_render->i915 = i915;
    

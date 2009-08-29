@@ -751,38 +751,38 @@ static void i915_set_edgeflags(struct pipe_context *pipe,
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
-   i915->pipe.set_edgeflags = i915_set_edgeflags;
-   i915->pipe.create_blend_state = i915_create_blend_state;
-   i915->pipe.bind_blend_state = i915_bind_blend_state;
-   i915->pipe.delete_blend_state = i915_delete_blend_state;
+   i915->base.set_edgeflags = i915_set_edgeflags;
+   i915->base.create_blend_state = i915_create_blend_state;
+   i915->base.bind_blend_state = i915_bind_blend_state;
+   i915->base.delete_blend_state = i915_delete_blend_state;
 
-   i915->pipe.create_sampler_state = i915_create_sampler_state;
-   i915->pipe.bind_sampler_states = i915_bind_sampler_states;
-   i915->pipe.delete_sampler_state = i915_delete_sampler_state;
+   i915->base.create_sampler_state = i915_create_sampler_state;
+   i915->base.bind_sampler_states = i915_bind_sampler_states;
+   i915->base.delete_sampler_state = i915_delete_sampler_state;
 
-   i915->pipe.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
-   i915->pipe.bind_depth_stencil_alpha_state = i915_bind_depth_stencil_state;
-   i915->pipe.delete_depth_stencil_alpha_state = i915_delete_depth_stencil_state;
+   i915->base.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
+   i915->base.bind_depth_stencil_alpha_state = i915_bind_depth_stencil_state;
+   i915->base.delete_depth_stencil_alpha_state = i915_delete_depth_stencil_state;
 
-   i915->pipe.create_rasterizer_state = i915_create_rasterizer_state;
-   i915->pipe.bind_rasterizer_state = i915_bind_rasterizer_state;
-   i915->pipe.delete_rasterizer_state = i915_delete_rasterizer_state;
-   i915->pipe.create_fs_state = i915_create_fs_state;
-   i915->pipe.bind_fs_state = i915_bind_fs_state;
-   i915->pipe.delete_fs_state = i915_delete_fs_state;
-   i915->pipe.create_vs_state = i915_create_vs_state;
-   i915->pipe.bind_vs_state = i915_bind_vs_state;
-   i915->pipe.delete_vs_state = i915_delete_vs_state;
+   i915->base.create_rasterizer_state = i915_create_rasterizer_state;
+   i915->base.bind_rasterizer_state = i915_bind_rasterizer_state;
+   i915->base.delete_rasterizer_state = i915_delete_rasterizer_state;
+   i915->base.create_fs_state = i915_create_fs_state;
+   i915->base.bind_fs_state = i915_bind_fs_state;
+   i915->base.delete_fs_state = i915_delete_fs_state;
+   i915->base.create_vs_state = i915_create_vs_state;
+   i915->base.bind_vs_state = i915_bind_vs_state;
+   i915->base.delete_vs_state = i915_delete_vs_state;
 
-   i915->pipe.set_blend_color = i915_set_blend_color;
-   i915->pipe.set_clip_state = i915_set_clip_state;
-   i915->pipe.set_constant_buffer = i915_set_constant_buffer;
-   i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
+   i915->base.set_blend_color = i915_set_blend_color;
+   i915->base.set_clip_state = i915_set_clip_state;
+   i915->base.set_constant_buffer = i915_set_constant_buffer;
+   i915->base.set_framebuffer_state = i915_set_framebuffer_state;
 
-   i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
-   i915->pipe.set_scissor_state = i915_set_scissor_state;
-   i915->pipe.set_sampler_textures = i915_set_sampler_textures;
-   i915->pipe.set_viewport_state = i915_set_viewport_state;
-   i915->pipe.set_vertex_buffers = i915_set_vertex_buffers;
-   i915->pipe.set_vertex_elements = i915_set_vertex_elements;
+   i915->base.set_polygon_stipple = i915_set_polygon_stipple;
+   i915->base.set_scissor_state = i915_set_scissor_state;
+   i915->base.set_sampler_textures = i915_set_sampler_textures;
+   i915->base.set_viewport_state = i915_set_viewport_state;
+   i915->base.set_vertex_buffers = i915_set_vertex_buffers;
+   i915->base.set_vertex_elements = i915_set_vertex_elements;
 }

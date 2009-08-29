@@ -213,7 +213,8 @@ struct i915_batchbuffer;
 
 struct i915_context
 {
-   struct pipe_context pipe;
+   struct pipe_context base;
+
    struct i915_winsys *winsys;
    struct draw_context *draw;
 

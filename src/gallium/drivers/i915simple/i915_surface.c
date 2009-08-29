@@ -89,6 +89,6 @@ i915_surface_fill(struct pipe_context *pipe,
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
-   i915->pipe.surface_copy = i915_surface_copy;
-   i915->pipe.surface_fill = i915_surface_fill;
+   i915->base.surface_copy = i915_surface_copy;
+   i915->base.surface_fill = i915_surface_fill;
 }

@@ -179,20 +179,20 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
       return NULL;
 
    i915->winsys = i915_winsys;
-   i915->pipe.winsys = pipe_winsys;
-   i915->pipe.screen = screen;
+   i915->base.winsys = pipe_winsys;
+   i915->base.screen = screen;
 
-   i915->pipe.destroy = i915_destroy;
+   i915->base.destroy = i915_destroy;
 
-   i915->pipe.clear = i915_clear;
+   i915->base.clear = i915_clear;
 
 
-   i915->pipe.draw_arrays = i915_draw_arrays;
-   i915->pipe.draw_elements = i915_draw_elements;
-   i915->pipe.draw_range_elements = i915_draw_range_elements;
+   i915->base.draw_arrays = i915_draw_arrays;
+   i915->base.draw_elements = i915_draw_elements;
+   i915->base.draw_range_elements = i915_draw_range_elements;
 
-   i915->pipe.is_texture_referenced = i915_is_texture_referenced;
-   i915->pipe.is_buffer_referenced = i915_is_buffer_referenced;
+   i915->base.is_texture_referenced = i915_is_texture_referenced;
+   i915->base.is_buffer_referenced = i915_is_buffer_referenced;
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -211,8 +211,8 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    i915_init_flush_functions(i915);
    i915_init_texture_functions(i915);
 
-   draw_install_aaline_stage(i915->draw, &i915->pipe);
-   draw_install_aapoint_stage(i915->draw, &i915->pipe);
+   draw_install_aaline_stage(i915->draw, &i915->base);
+   draw_install_aapoint_stage(i915->draw, &i915->base);
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;
@@ -222,6 +222,6 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    i915->batch = i915_winsys->batch_get(i915_winsys);
    i915->batch->winsys = i915_winsys;
 
-   return &i915->pipe;
+   return &i915->base;
 }
 
