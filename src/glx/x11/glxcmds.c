@@ -845,6 +845,34 @@ PUBLIC GLXPixmap glXCreateGLXPixmap(Display *dpy, XVisualInfo *vis,
     req->glxpixmap = xid = XAllocID(dpy);
     UnlockDisplay(dpy);
     SyncHandle();
+
+#ifdef GLX_DIRECT_RENDERING
+    do {
+	/* FIXME: Maybe delay __DRIdrawable creation until the drawable
+	 * is actually bound to a context... */
+
+	__GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+	__GLXDRIdrawable *pdraw;
+	__GLXscreenConfigs *psc;
+	__GLcontextModes *modes;
+
+	psc = &priv->screenConfigs[vis->screen];
+	if (psc->driScreen == NULL)
+	    break;
+	modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+	pdraw = psc->driScreen->createDrawable(psc, pixmap, req->glxpixmap, modes);
+	if (pdraw == NULL) {
+	    fprintf(stderr, "failed to create pixmap\n");
+	    break;
+	}
+
+	if (__glxHashInsert(psc->drawHash, req->glxpixmap, pdraw)) {
+	    (*pdraw->destroyDrawable) (pdraw);
+	    return None;           /* FIXME: Check what we're supposed to do here... */
+	}
+    } while (0);
+#endif
+
     return xid;
 }
 
