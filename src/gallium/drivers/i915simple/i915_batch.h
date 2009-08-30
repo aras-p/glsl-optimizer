@@ -109,7 +109,7 @@ i915_batchbuffer_flush( struct i915_batchbuffer *batch,
    i915_batchbuffer_reloc( i915->batch, buf, flags, delta )
 
 #define FLUSH_BATCH(fence) do {				\
-   i915->winsys->batch_flush( i915->winsys, fence );	\
+   i915_batchbuffer_flush( i915->batch, fence );	\
    i915->hardware_dirty = ~0;				\
 } while (0)
 
