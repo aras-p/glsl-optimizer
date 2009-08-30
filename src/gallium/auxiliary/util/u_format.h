@@ -111,4 +111,28 @@ const struct util_format_description *
 util_format_description(enum pipe_format format);
 
 
+void
+util_format_read_4f(enum pipe_format format,
+                    float *dst, unsigned dst_stride, 
+                    const void *src, unsigned src_stride, 
+                    unsigned x, unsigned y, unsigned w, unsigned h);
+
+void
+util_format_write_4f(enum pipe_format format,
+                     const float *src, unsigned src_stride, 
+                     void *dst, unsigned dst_stride, 
+                     unsigned x, unsigned y, unsigned w, unsigned h);
+
+void
+util_format_read_4ub(enum pipe_format format,
+                     uint8_t *dst, unsigned dst_stride, 
+                     const void *src, unsigned src_stride, 
+                     unsigned x, unsigned y, unsigned w, unsigned h);
+
+void
+util_format_write_4ub(enum pipe_format format,
+                      const uint8_t *src, unsigned src_stride, 
+                      void *dst, unsigned dst_stride, 
+                      unsigned x, unsigned y, unsigned w, unsigned h);
+
 #endif /* ! U_FORMAT_H */

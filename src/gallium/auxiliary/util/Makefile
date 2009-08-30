@@ -12,6 +12,7 @@ C_SOURCES = \
 	u_cache.c \
 	u_draw_quad.c \
 	u_format.c \
+	u_format_access.c \
 	u_format_table.c \
 	u_gen_mipmap.c \
 	u_handle_table.c \
@@ -36,5 +37,8 @@ C_SOURCES = \
 
 include ../../Makefile.template
 
-u_format_table.c: u_format_table.py u_format.csv
+u_format_table.c: u_format_table.py u_format_parse.py u_format.csv
 	python u_format_table.py u_format.csv > $@
+
+u_format_access.c: u_format_access.py u_format_parse.py u_format.csv
+	python u_format_access.py u_format.csv > $@

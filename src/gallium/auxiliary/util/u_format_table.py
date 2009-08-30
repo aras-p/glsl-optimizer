@@ -3,7 +3,7 @@
 '''
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -21,7 +21,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -32,76 +32,7 @@
 
 import sys
 
-
-UNSIGNED, SIGNED, FIXED, FLOAT = 'u', 's', 'h', 'f'
-
-
-class Type:
-    
-    def __init__(self, kind, norm, size):
-        self.kind = kind
-        self.norm = norm
-        self.size = size
-
-    def __str__(self):
-        s = str(self.kind)
-        if norm:
-            s += 'n'
-        s += str(self.size)
-        return s
-
-
-class Format:
-
-    def __init__(self, name, layout, block_width, block_height, in_types, out_swizzle, colorspace):
-        self.name = name
-        self.layout = layout
-        self.block_width = block_width
-        self.block_height = block_height
-        self.in_types = in_types
-        self.out_swizzle = out_swizzle
-        self.name = name
-        self.colorspace = colorspace
-
-    def __str__(self):
-        return self.name
-
-    def block_size(self):
-        size = 0
-        for type in self.in_types:
-            size += type.size
-        return size
-
-
-def parse(filename):
-    stream = open(filename)
-    formats = []
-    for line in stream:
-        line = line.rstrip()
-        fields = [field.strip() for field in line.split(',')]
-        name = fields[0]
-        layout = fields[1]
-        block_width, block_height = map(int, fields[2:4])
-        in_types = []
-        for field in fields[4:8]:
-            if field:
-                kind = field[0]
-                if field[1] == 'n':
-                    norm = True
-                    size = int(field[2:])
-                else:
-                    norm = False
-                    size = int(field[1:])
-            else:
-                kind = ''
-                norm = False
-                size = 0
-            in_type = Type(kind, norm, size)
-            in_types.append(in_type)
-        out_swizzle = fields[8]
-        colorspace = fields[9]
-        formats.append(Format(name, layout, block_width, block_height, in_types, out_swizzle, colorspace))
-    return formats
+from u_format_parse import *
 
 
 def layout_map(layout):
@@ -122,12 +53,11 @@ colorspace_channels_map = {
 
 
 kind_map = {
-    '': "UTIL_FORMAT_TYPE_VOID",
-    'x': "UTIL_FORMAT_TYPE_VOID",
+    VOID:     "UTIL_FORMAT_TYPE_VOID",
     UNSIGNED: "UTIL_FORMAT_TYPE_UNSIGNED",
-    SIGNED: "UTIL_FORMAT_TYPE_SIGNED",
-    FIXED: "UTIL_FORMAT_TYPE_FIXED",
-    FLOAT: "UTIL_FORMAT_TYPE_FLOAT",
+    SIGNED:   "UTIL_FORMAT_TYPE_SIGNED",
+    FIXED:    "UTIL_FORMAT_TYPE_FIXED",
+    FLOAT:    "UTIL_FORMAT_TYPE_FLOAT",
 }
 
 
@@ -139,13 +69,13 @@ def bool_map(value):
 
 
 swizzle_map = {
-    'x': "UTIL_FORMAT_SWIZZLE_X",
-    'y': "UTIL_FORMAT_SWIZZLE_Y",
-    'z': "UTIL_FORMAT_SWIZZLE_Z",
-    'w': "UTIL_FORMAT_SWIZZLE_W",
-    '0': "UTIL_FORMAT_SWIZZLE_0",
-    '1': "UTIL_FORMAT_SWIZZLE_1",
-    '_': "UTIL_FORMAT_SWIZZLE_NONE",
+    SWIZZLE_X:    "UTIL_FORMAT_SWIZZLE_X",
+    SWIZZLE_Y:    "UTIL_FORMAT_SWIZZLE_Y",
+    SWIZZLE_Z:    "UTIL_FORMAT_SWIZZLE_Z",
+    SWIZZLE_W:    "UTIL_FORMAT_SWIZZLE_W",
+    SWIZZLE_0:    "UTIL_FORMAT_SWIZZLE_0",
+    SWIZZLE_1:    "UTIL_FORMAT_SWIZZLE_1",
+    SWIZZLE_NONE: "UTIL_FORMAT_SWIZZLE_NONE",
 }
 
 
