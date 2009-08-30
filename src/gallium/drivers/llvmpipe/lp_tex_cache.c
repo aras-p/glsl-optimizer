@@ -201,45 +201,6 @@ lp_tex_tile_cache_set_texture(struct llvmpipe_tex_tile_cache *tc,
 
 
 /**
- * Flush the tile cache: write all dirty tiles back to the transfer.
- * any tiles "flagged" as cleared will be "really" cleared.
- */
-void
-lp_flush_tex_tile_cache(struct llvmpipe_tex_tile_cache *tc)
-{
-   struct pipe_transfer *pt = tc->transfer;
-   int inuse = 0, pos;
-
-   if (pt) {
-      /* caching a drawing transfer */
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         struct llvmpipe_cached_tex_tile *tile = tc->entries + pos;
-         if (!tile->addr.bits.invalid) {
-            pipe_put_tile_rgba(pt,
-                               tile->addr.bits.x * TEX_TILE_SIZE,
-                               tile->addr.bits.y * TEX_TILE_SIZE,
-                               TEX_TILE_SIZE, TEX_TILE_SIZE,
-                               (float *) tile->color);
-            tile->addr.bits.invalid = 1;  /* mark as empty */
-            inuse++;
-         }
-      }
-   }
-   else if (tc->texture) {
-      /* caching a texture, mark all entries as empty */
-      for (pos = 0; pos < NUM_ENTRIES; pos++) {
-         tc->entries[pos].addr.bits.invalid = 1;
-      }
-      tc->tex_face = -1;
-   }
-
-#if 0
-   debug_printf("flushed tiles in use: %d\n", inuse);
-#endif
-}
-
-
-/**
  * Given the texture face, level, zslice, x and y values, compute
  * the cache entry position/index where we'd hope to find the
  * cached texture tile.

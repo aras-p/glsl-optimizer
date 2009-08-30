@@ -111,9 +111,6 @@ lp_tex_tile_cache_set_texture(struct llvmpipe_tex_tile_cache *tc,
 void
 lp_tex_tile_cache_validate_texture(struct llvmpipe_tex_tile_cache *tc);
 
-extern void
-lp_flush_tex_tile_cache(struct llvmpipe_tex_tile_cache *tc);
-
 extern const struct llvmpipe_cached_tex_tile *
 lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
                         union tex_tile_address addr );

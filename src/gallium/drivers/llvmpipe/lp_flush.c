@@ -51,12 +51,6 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    draw_flush(llvmpipe->draw);
 
-   if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      for (i = 0; i < llvmpipe->num_textures; i++) {
-         lp_flush_tex_tile_cache(llvmpipe->tex_cache[i]);
-      }
-   }
-
    if (flags & PIPE_FLUSH_SWAPBUFFERS) {
       /* If this is a swapbuffers, just flush color buffers.
        *
