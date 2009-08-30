@@ -137,25 +137,6 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
    NULL,
 };
 
-static const struct dri_debug_control debug_control[] =
-{
-    { "fall",  DEBUG_FALLBACKS },
-    { "tex",   DEBUG_TEXTURE },
-    { "ioctl", DEBUG_IOCTL },
-    { "prim",  DEBUG_PRIMS },
-    { "vert",  DEBUG_VERTS },
-    { "state", DEBUG_STATE },
-    { "code",  DEBUG_CODEGEN },
-    { "vfmt",  DEBUG_VFMT },
-    { "vtxf",  DEBUG_VFMT },
-    { "verb",  DEBUG_VERBOSE },
-    { "dri",   DEBUG_DRI },
-    { "dma",   DEBUG_DMA },
-    { "san",   DEBUG_SANITY },
-    { "sync",  DEBUG_SYNC },
-    { NULL,    0 }
-};
-
 static void r100_get_lock(radeonContextPtr radeon)
 {
    r100ContextPtr rmesa = (r100ContextPtr)radeon;

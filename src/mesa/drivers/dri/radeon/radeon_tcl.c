@@ -587,7 +587,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
    //      radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
    //			      __FUNCTION__ );
 
-   if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+   if (RADEON_DEBUG & RADEON_FALLBACKS)
       fprintf(stderr, "Radeon end tcl fallback\n");
 }
 
@@ -624,7 +624,7 @@ void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    if (mode) {
       rmesa->radeon.TclFallback |= bit;
       if (oldfallback == 0) {
-	 if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+	 if (RADEON_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "Radeon begin tcl fallback %s\n",
 		    getFallbackString( bit ));
 	 transition_to_swtnl( ctx );
@@ -633,7 +633,7 @@ void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    else {
       rmesa->radeon.TclFallback &= ~bit;
       if (oldfallback == bit) {
-	 if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+	 if (RADEON_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "Radeon end tcl fallback %s\n",
 		    getFallbackString( bit ));
 	 transition_to_hwtnl( ctx );

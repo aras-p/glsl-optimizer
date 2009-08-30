@@ -121,7 +121,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	lvl->faces[face].offset = *curOffset;
 	*curOffset += lvl->size;
 
-	if (RADEON_DEBUG & DEBUG_TEXTURE)
+	if (RADEON_DEBUG & RADEON_TEXTURE)
 	  fprintf(stderr,
 		  "level %d, face %d: rs:%d %dx%d at %d\n",
 		  level, face, lvl->rowstride, lvl->width, lvl->height, lvl->faces[face].offset);

@@ -277,7 +277,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
    assert( (texUnit->_ReallyEnabled == 0)
 	   || (texUnit->_Current != NULL) );
 
-   if ( RADEON_DEBUG & DEBUG_TEXTURE ) {
+   if ( RADEON_DEBUG & RADEON_TEXTURE ) {
       fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
 
@@ -933,7 +933,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
 	    (texUnit->GenS.Mode != texUnit->GenQ.Mode)) ) {
 	 /* Mixed modes, fallback:
 	  */
-	 if (RADEON_DEBUG & DEBUG_FALLBACKS)
+	 if (RADEON_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "fallback mixed texgen\n");
 	 return GL_FALSE;
       }
@@ -941,7 +941,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    }
    else {
    /* some texgen mode not including both S and T bits */
-      if (RADEON_DEBUG & DEBUG_FALLBACKS)
+      if (RADEON_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen/nontexgen\n");
       return GL_FALSE;
    }
@@ -991,7 +991,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    default:
       /* Unsupported mode, fallback:
        */
-      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+      if (RADEON_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback GL_SPHERE_MAP\n");
       return GL_FALSE;
    }

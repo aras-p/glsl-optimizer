@@ -814,7 +814,7 @@ void radeonUpdateMaterial( GLcontext *ctx )
    if (ctx->Light.ColorMaterialEnabled)
       mask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (RADEON_DEBUG & DEBUG_STATE)
+   if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
 
@@ -1548,7 +1548,7 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint p, flag;
 
-   if ( RADEON_DEBUG & DEBUG_STATE )
+   if ( RADEON_DEBUG & RADEON_STATE )
       fprintf( stderr, "%s( %s = %s )\n", __FUNCTION__,
 	       _mesa_lookup_enum_by_nr( cap ),
 	       state ? "GL_TRUE" : "GL_FALSE" );
@@ -1842,7 +1842,7 @@ static void radeonLightingSpaceChange( GLcontext *ctx )
    GLboolean tmp;
    RADEON_STATECHANGE( rmesa, tcl );
 
-   if (RADEON_DEBUG & DEBUG_STATE)
+   if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s %d BEFORE %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL]);
 
@@ -1857,7 +1857,7 @@ static void radeonLightingSpaceChange( GLcontext *ctx )
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] &= ~RADEON_RESCALE_NORMALS;
    }
 
-   if (RADEON_DEBUG & DEBUG_STATE)
+   if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s %d AFTER %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL]);
 }

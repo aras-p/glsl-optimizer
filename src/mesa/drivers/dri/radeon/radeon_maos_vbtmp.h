@@ -54,8 +54,7 @@ static void TAG(emit)( GLcontext *ctx,
 
    union emit_union *v = (union emit_union *)dest;
 
-   if (RADEON_DEBUG & DEBUG_VERTS)
-      fprintf(stderr, "%s\n", __FUNCTION__); 
+   radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __FUNCTION__);
 
    coord = (GLuint (*)[4])VB->ObjPtr->data;
    coord_stride = VB->ObjPtr->stride;

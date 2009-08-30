@@ -363,7 +363,7 @@ GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 
-	if (RADEON_DEBUG & DEBUG_DRI)
+	if (RADEON_DEBUG & RADEON_DRI)
 		fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
 			radeon->glCtx);
 
@@ -527,7 +527,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	char *regname;
 	struct radeon_bo *depth_bo = NULL, *bo;
 
-	if (RADEON_DEBUG & DEBUG_DRI)
+	if (RADEON_DEBUG & RADEON_DRI)
 	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
 	draw = drawable->driverPrivate;
@@ -654,7 +654,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 				continue;
 		}
 
-		if (RADEON_DEBUG & DEBUG_DRI)
+		if (RADEON_DEBUG & RADEON_DRI)
 			fprintf(stderr,
 				"attaching buffer %s, %d, at %d, cpp %d, pitch %d\n",
 				regname, buffers[i].name, buffers[i].attachment,
@@ -667,7 +667,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		rb->has_surface = 0;
 
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
-			if (RADEON_DEBUG & DEBUG_DRI)
+			if (RADEON_DEBUG & RADEON_DRI)
 				fprintf(stderr, "(reusing depth buffer as stencil)\n");
 			bo = depth_bo;
 			radeon_bo_ref(bo);
@@ -740,7 +740,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	struct gl_framebuffer *readfb;
 
 	if (!driContextPriv) {
-		if (RADEON_DEBUG & DEBUG_DRI)
+		if (RADEON_DEBUG & RADEON_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
 		_mesa_make_current(NULL, NULL, NULL);
 		return GL_TRUE;
@@ -762,7 +762,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		radeon_make_renderbuffer_current(radeon, drfb);
 	}
 
-	if (RADEON_DEBUG & DEBUG_DRI)
+	if (RADEON_DEBUG & RADEON_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);
 
 	driUpdateFramebufferSize(radeon->glCtx, driDrawPriv);
@@ -797,7 +797,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	}
 
 
-	if (RADEON_DEBUG & DEBUG_DRI)
+	if (RADEON_DEBUG & RADEON_DRI)
 		fprintf(stderr, "End %s\n", __FUNCTION__);
 
 	return GL_TRUE;

@@ -35,6 +35,7 @@ static const struct dri_debug_control debug_control[] = {
 	{"fall", RADEON_FALLBACKS},
 	{"tex", RADEON_TEXTURE},
 	{"ioctl", RADEON_IOCTL},
+	{"verts", RADEON_RENDER},
 	{"render", RADEON_RENDER},
 	{"swrender", RADEON_SWRENDER},
 	{"state", RADEON_STATE},

@@ -220,30 +220,6 @@ static const GLuint __driNConfigOptions = 17;
 
 extern const struct dri_extension gl_20_extension[];
 
-#ifndef RADEON_DEBUG
-
-static const struct dri_debug_control debug_control[] = {
-	{"fall", DEBUG_FALLBACKS},
-	{"tex", DEBUG_TEXTURE},
-	{"ioctl", DEBUG_IOCTL},
-	{"prim", DEBUG_PRIMS},
-	{"vert", DEBUG_VERTS},
-	{"state", DEBUG_STATE},
-	{"code", DEBUG_CODEGEN},
-	{"vfmt", DEBUG_VFMT},
-	{"vtxf", DEBUG_VFMT},
-	{"verb", DEBUG_VERBOSE},
-	{"dri", DEBUG_DRI},
-	{"dma", DEBUG_DMA},
-	{"san", DEBUG_SANITY},
-	{"sync", DEBUG_SYNC},
-	{"pix", DEBUG_PIXEL},
-	{"mem", DEBUG_MEMORY},
-	{"allmsg", ~DEBUG_SYNC}, /* avoid the term "sync" because the parser uses strstr */
-	{NULL, 0}
-};
-#endif /* RADEON_DEBUG */
-
 #endif /* RADEON_COMMON && defined(RADEON_COMMON_FOR_R300) */
 
 extern const struct dri_extension card_extensions[];
@@ -966,9 +942,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
-#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
-#endif
+   radeon_init_debug();
+
    /* parse information in __driConfigOptions */
    driParseOptionInfo (&screen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
@@ -1301,9 +1276,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
       return NULL;
    }
 
-#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
-#endif
+   radeon_init_debug();
 
    /* parse information in __driConfigOptions */
    driParseOptionInfo (&screen->optionCache,

@@ -49,22 +49,23 @@ typedef enum radeon_debug_levels {
 #endif
 
 typedef enum radeon_debug_types {
-	RADEON_TEXTURE   = 0x0001,
-	RADEON_STATE     = 0x0002,
-	RADEON_IOCTL     = 0x0004,
-	RADEON_RENDER    = 0x0008,
-	RADEON_SWRENDER  = 0x0010,
-	RADEON_FALLBACKS = 0x0020,
-	RADEON_VFMT      = 0x0040,
-	RADEON_SHADER    = 0x0080,
-	RADEON_CS        = 0x0100,
-	RADEON_DRI       = 0x0200,
-	RADEON_DMA       = 0x0400,
-	RADEON_SANITY    = 0x0800,
-	RADEON_SYNC      = 0x1000,
-	RADEON_PIXEL     = 0x2000,
-	RADEON_MEMORY    = 0x4000,
-	RADEON_GENERAL   = 0x8000   /* Used for errors and warnings */
+	RADEON_TEXTURE   = 0x00001,
+	RADEON_STATE     = 0x00002,
+	RADEON_IOCTL     = 0x00004,
+	RADEON_RENDER    = 0x00008,
+	RADEON_SWRENDER  = 0x00010,
+	RADEON_FALLBACKS = 0x00020,
+	RADEON_VFMT      = 0x00040,
+	RADEON_SHADER    = 0x00080,
+	RADEON_CS        = 0x00100,
+	RADEON_DRI       = 0x00200,
+	RADEON_DMA       = 0x00400,
+	RADEON_SANITY    = 0x00800,
+	RADEON_SYNC      = 0x01000,
+	RADEON_PIXEL     = 0x02000,
+	RADEON_MEMORY    = 0x04000,
+	RADEON_VERTS     = 0x08000,
+	RADEON_GENERAL   = 0x10000   /* Used for errors and warnings */
 } radeon_debug_type_t;
 
 extern radeon_debug_type_t radeon_enabled_debug_types;

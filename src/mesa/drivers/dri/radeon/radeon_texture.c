@@ -936,7 +936,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	if (t->validated || t->image_override)
 		return GL_TRUE;
 
-	if (RADEON_DEBUG & DEBUG_TEXTURE)
+	if (RADEON_DEBUG & RADEON_TEXTURE)
 		fprintf(stderr, "%s: Validating texture %p now\n", __FUNCTION__, texObj);
 
 	if (baseimage->base.Border > 0)
@@ -964,7 +964,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	}
 
 	if (!t->mt) {
-		if (RADEON_DEBUG & DEBUG_TEXTURE)
+		if (RADEON_DEBUG & RADEON_TEXTURE)
 			fprintf(stderr, " Allocate new miptree\n");
 		radeon_try_alloc_miptree(rmesa, t, &baseimage->base, 0, texObj->BaseLevel);
 		if (!t->mt) {
@@ -977,16 +977,16 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	for(face = 0; face < t->mt->faces; ++face) {
 		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level) {
 			radeon_texture_image *image = get_radeon_texture_image(texObj->Image[face][level]);
-			if (RADEON_DEBUG & DEBUG_TEXTURE)
+			if (RADEON_DEBUG & RADEON_TEXTURE)
 				fprintf(stderr, " face %i, level %i... %p vs %p ", face, level, t->mt, image->mt);
 			if (t->mt == image->mt) {
-				if (RADEON_DEBUG & DEBUG_TEXTURE)
+				if (RADEON_DEBUG & RADEON_TEXTURE)
 					fprintf(stderr, "OK\n");
 
 				continue;
 			}
 
-			if (RADEON_DEBUG & DEBUG_TEXTURE)
+			if (RADEON_DEBUG & RADEON_TEXTURE)
 				fprintf(stderr, "migrating\n");
 			migrate_image_to_miptree(t->mt, image, face, level);
 		}
