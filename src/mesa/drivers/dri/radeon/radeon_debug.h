@@ -81,6 +81,20 @@ static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
        return RADEON_DEBUG_LEVEL <= level
 		&& (type & radeon_enabled_debug_types);
 }
+/*
+ * define macro for gcc specific __attribute__ if using alternative compiler
+ */
+#ifndef __GNUC__
+#define  __attribute__(x)  /*empty*/
+#endif
+
+/**
+ * Format attribute requires declaration for setting it. Don't ask me why!
+ */
+static inline void radeon_print(const radeon_debug_type_t type,
+	   const radeon_debug_level_t level,
+	   const char* message,
+	   ...) __attribute__((format(printf,3,4)));
 
 /**
  * Print out debug message if channel specified by type is enabled
@@ -101,6 +115,7 @@ static inline void radeon_print(const radeon_debug_type_t type,
 	}
 }
 
+static inline void radeon_error(const char* message, ...)  __attribute__((format(printf,1,2)));
 /**
  * printf style function for writing error messages.
  */
@@ -112,6 +127,7 @@ static inline void radeon_error(const char* message, ...)
        va_end( values );
 }
 
+static inline void radeon_warning(const char* message, ...)  __attribute__((format(printf,1,2)));
 /**
  * printf style function for writing warnings.
  */
