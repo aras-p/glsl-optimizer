@@ -43,6 +43,9 @@ typedef enum radeon_debug_levels {
 
 /**
  * Compile time option to change level of debugging compiled to dri driver.
+ * Selecting critical level is not recommended because perfromance gains are
+ * going to minimal but you will lose a lot of important warnings in case of
+ * errors.
  */
 #ifndef RADEON_DEBUG_LEVEL
 #define RADEON_DEBUG_LEVEL RADEON_VERBOSE
