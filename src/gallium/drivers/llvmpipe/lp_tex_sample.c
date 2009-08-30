@@ -666,7 +666,7 @@ choose_mipmap_levels(struct tgsi_sampler *tgsi_sampler,
 static void
 get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
                   unsigned face, unsigned level, int x, int y, 
-                  const float *out[4])
+                  const uint8_t *out[4])
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
 
@@ -683,7 +683,7 @@ get_texel_quad_2d(const struct tgsi_sampler *tgsi_sampler,
    out[3] = &tile->color[y+1][x+1][0];
 }
 
-static INLINE const float *
+static INLINE const uint8_t *
 get_texel_2d_ptr(const struct tgsi_sampler *tgsi_sampler,
                  unsigned face, unsigned level, int x, int y)
 {
@@ -705,7 +705,7 @@ get_texel_quad_2d_mt(const struct tgsi_sampler *tgsi_sampler,
                      unsigned face, unsigned level, 
                      int x0, int y0, 
                      int x1, int y1,
-                     const float *out[4])
+                     const uint8_t *out[4])
 {
    unsigned i;
 
@@ -742,10 +742,10 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
       tile = lp_get_cached_tex_tile(samp->cache,
                                     tex_tile_address(x, y, z, face, level));
 
-      rgba[0][j] = tile->color[ty][tx][0];
-      rgba[1][j] = tile->color[ty][tx][1];
-      rgba[2][j] = tile->color[ty][tx][2];
-      rgba[3][j] = tile->color[ty][tx][3];
+      rgba[0][j] = ubyte_to_float(tile->color[ty][tx][0]);
+      rgba[1][j] = ubyte_to_float(tile->color[ty][tx][1]);
+      rgba[2][j] = ubyte_to_float(tile->color[ty][tx][2]);
+      rgba[3][j] = ubyte_to_float(tile->color[ty][tx][3]);
       if (0)
       {
          debug_printf("Get texel %f %f %f %f from %s\n",
@@ -912,7 +912,7 @@ lp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       int x0 = uflr & (xpot - 1);
       int y0 = vflr & (ypot - 1);
 
-      const float *tx[4];
+      const uint8_t *tx[4];
       
 
       /* Can we fetch all four at once:
@@ -933,8 +933,8 @@ lp_get_samples_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       /* interpolate R, G, B, A */
       for (c = 0; c < 4; c++) {
          rgba[c][j] = lerp_2d(xw, yw, 
-                              tx[0][c], tx[1][c], 
-                              tx[2][c], tx[3][c]);
+                              ubyte_to_float(tx[0][c]), ubyte_to_float(tx[1][c]),
+                              ubyte_to_float(tx[2][c]), ubyte_to_float(tx[3][c]));
       }
    }
 }
@@ -966,10 +966,10 @@ lp_get_samples_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
       int x0 = uflr & (xpot - 1);
       int y0 = vflr & (ypot - 1);
 
-      const float *out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
+      const uint8_t *out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
 
       for (c = 0; c < 4; c++) {
-         rgba[c][j] = out[c];
+         rgba[c][j] = ubyte_to_float(out[c]);
       }
    }
 }
@@ -996,7 +996,7 @@ lp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
       float v = t[j] * ypot;
 
       int x0, y0;
-      const float *out;
+      const uint8_t *out;
 
       x0 = util_ifloor(u);
       if (x0 < 0) 
@@ -1013,7 +1013,7 @@ lp_get_samples_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
       out = get_texel_2d_ptr(tgsi_sampler, 0, level, x0, y0);
 
       for (c = 0; c < 4; c++) {
-         rgba[c][j] = out[c];
+         rgba[c][j] = ubyte_to_float(out[c]);
       }
    }
 }

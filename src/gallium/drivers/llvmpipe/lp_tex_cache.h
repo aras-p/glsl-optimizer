@@ -61,7 +61,7 @@ union tex_tile_address {
 struct llvmpipe_cached_tex_tile
 {
    union tex_tile_address addr;
-   float color[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
+   uint8_t color[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
 };
 
 #define NUM_ENTRIES 50
