@@ -35,6 +35,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
+#include "util/u_format.h"
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -279,12 +280,22 @@ lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
          tc->tex_z = addr.bits.z;
       }
 
-      /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->tex_trans,
-                         addr.bits.x * TEX_TILE_SIZE,
-                         addr.bits.y * TEX_TILE_SIZE,
-                         TEX_TILE_SIZE, TEX_TILE_SIZE,
-                         (float *) tile->color);
+      {
+         unsigned x = addr.bits.x * TEX_TILE_SIZE;
+         unsigned y = addr.bits.y * TEX_TILE_SIZE;
+         unsigned w = TEX_TILE_SIZE;
+         unsigned h = TEX_TILE_SIZE;
+
+         if (pipe_clip_tile(x, y, &w, &h, tc->tex_trans)) {
+            assert(0);
+         }
+
+         util_format_read_4f(tc->tex_trans->format,
+                             (float *)tile->color, sizeof tile->color[0],
+                             tc->tex_trans_map, tc->tex_trans->stride,
+                             x, y, w, h);
+      }
+
       tile->addr = addr;
    }
 
