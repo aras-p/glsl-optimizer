@@ -29,9 +29,6 @@
  * @file
  *
  * "Not-quite SSA" and Dead-Code Elimination.
- *
- * @note This code uses SWIZZLE_NIL in a source register to indicate that
- * the corresponding component is ignored by the corresponding instruction.
  */
 
 #include "radeon_nqssadce.h"
@@ -43,76 +40,55 @@
  * Return the @ref register_state for the given register (or 0 for untracked
  * registers, i.e. constants).
  */
-static struct register_state *get_reg_state(struct nqssadce_state* s, GLuint file, GLuint index)
+static struct register_state *get_reg_state(struct nqssadce_state* s, rc_register_file file, unsigned int index)
 {
+	if (index >= RC_REGISTER_MAX_INDEX)
+		return 0;
+
 	switch(file) {
-	case PROGRAM_TEMPORARY: return &s->Temps[index];
-	case PROGRAM_OUTPUT: return &s->Outputs[index];
-	case PROGRAM_ADDRESS: return &s->Address;
+	case RC_FILE_TEMPORARY: return &s->Temps[index];
+	case RC_FILE_OUTPUT: return &s->Outputs[index];
+	case RC_FILE_ADDRESS: return &s->Address;
 	default: return 0;
 	}
 }
 
 
-/**
- * Left multiplication of a register with a swizzle
- *
- * @note Works correctly only for X, Y, Z, W swizzles, not for constant swizzles.
- */
-struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg)
-{
-	struct prog_src_register tmp = srcreg;
-	int i;
-	tmp.Swizzle = 0;
-	tmp.Negate = NEGATE_NONE;
-	for(i = 0; i < 4; ++i) {
-		GLuint swz = GET_SWZ(swizzle, i);
-		if (swz < 4) {
-			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
-			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
-		} else {
-			tmp.Swizzle |= swz << (i*3);
-		}
-	}
-	return tmp;
-}
-
-
 static void track_used_srcreg(struct nqssadce_state* s,
-	GLint src, GLuint sourced)
+	int src, unsigned int sourced)
 {
-	struct prog_instruction * inst = &s->IP->I;
+	struct rc_sub_instruction * inst = &s->IP->I;
 	int i;
-	GLuint deswz_source = 0;
+	unsigned int deswz_source = 0;
 
 	for(i = 0; i < 4; ++i) {
 		if (GET_BIT(sourced, i)) {
-			GLuint swz = GET_SWZ(inst->SrcReg[src].Swizzle, i);
+			unsigned int swz = GET_SWZ(inst->SrcReg[src].Swizzle, i);
 			deswz_source |= 1 << swz;
 		} else {
 			inst->SrcReg[src].Swizzle &= ~(7 << (3*i));
-			inst->SrcReg[src].Swizzle |= SWIZZLE_NIL << (3*i);
+			inst->SrcReg[src].Swizzle |= RC_SWIZZLE_UNUSED << (3*i);
 		}
 	}
 
 	if (!s->Descr->IsNativeSwizzle(inst->Opcode, inst->SrcReg[src])) {
-		struct prog_dst_register dstreg = inst->DstReg;
-		dstreg.File = PROGRAM_TEMPORARY;
+		struct rc_dst_register dstreg = inst->DstReg;
+		dstreg.File = RC_FILE_TEMPORARY;
 		dstreg.Index = rc_find_free_temporary(s->Compiler);
 		dstreg.WriteMask = sourced;
 
 		s->Descr->BuildSwizzle(s, dstreg, inst->SrcReg[src]);
 
-		inst->SrcReg[src].File = PROGRAM_TEMPORARY;
+		inst->SrcReg[src].File = RC_FILE_TEMPORARY;
 		inst->SrcReg[src].Index = dstreg.Index;
 		inst->SrcReg[src].Swizzle = 0;
-		inst->SrcReg[src].Negate = NEGATE_NONE;
+		inst->SrcReg[src].Negate = RC_MASK_NONE;
 		inst->SrcReg[src].Abs = 0;
 		for(i = 0; i < 4; ++i) {
 			if (GET_BIT(sourced, i))
 				inst->SrcReg[src].Swizzle |= i << (3*i);
 			else
-				inst->SrcReg[src].Swizzle |= SWIZZLE_NIL << (3*i);
+				inst->SrcReg[src].Swizzle |= RC_SWIZZLE_UNUSED << (3*i);
 		}
 		deswz_source = sourced;
 	}
@@ -120,9 +96,9 @@ static void track_used_srcreg(struct nqssadce_state* s,
 	struct register_state *regstate;
 
 	if (inst->SrcReg[src].RelAddr) {
-		regstate = get_reg_state(s, PROGRAM_ADDRESS, 0);
+		regstate = get_reg_state(s, RC_FILE_ADDRESS, 0);
 		if (regstate)
-			regstate->Sourced |= WRITEMASK_X;
+			regstate->Sourced |= RC_MASK_X;
 	} else {
 		regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
 		if (regstate)
@@ -130,21 +106,21 @@ static void track_used_srcreg(struct nqssadce_state* s,
 	}
 }
 
-static void unalias_srcregs(struct rc_instruction *inst, GLuint oldindex, GLuint newindex)
+static void unalias_srcregs(struct rc_instruction *inst, unsigned int oldindex, unsigned int newindex)
 {
-	int nsrc = _mesa_num_inst_src_regs(inst->I.Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
 	int i;
-	for(i = 0; i < nsrc; ++i)
-		if (inst->I.SrcReg[i].File == PROGRAM_TEMPORARY && inst->I.SrcReg[i].Index == oldindex)
+	for(i = 0; i < opcode->NumSrcRegs; ++i)
+		if (inst->I.SrcReg[i].File == RC_FILE_TEMPORARY && inst->I.SrcReg[i].Index == oldindex)
 			inst->I.SrcReg[i].Index = newindex;
 }
 
-static void unalias_temporary(struct nqssadce_state* s, GLuint oldindex)
+static void unalias_temporary(struct nqssadce_state* s, unsigned int oldindex)
 {
-	GLuint newindex = rc_find_free_temporary(s->Compiler);
+	unsigned int newindex = rc_find_free_temporary(s->Compiler);
 	struct rc_instruction * inst;
 	for(inst = s->Compiler->Program.Instructions.Next; inst != s->IP; inst = inst->Next) {
-		if (inst->I.DstReg.File == PROGRAM_TEMPORARY && inst->I.DstReg.Index == oldindex)
+		if (inst->I.DstReg.File == RC_FILE_TEMPORARY && inst->I.DstReg.Index == oldindex)
 			inst->I.DstReg.Index = newindex;
 		unalias_srcregs(inst, oldindex, newindex);
 	}
@@ -157,13 +133,10 @@ static void unalias_temporary(struct nqssadce_state* s, GLuint oldindex)
  */
 static void process_instruction(struct nqssadce_state* s)
 {
-	struct prog_instruction *inst = &s->IP->I;
-	GLuint WriteMask;
+	struct rc_sub_instruction *inst = &s->IP->I;
+	unsigned int WriteMask;
 
-	if (inst->Opcode == OPCODE_END)
-		return;
-
-	if (inst->Opcode != OPCODE_KIL) {
+	if (inst->Opcode != RC_OPCODE_KIL) {
 		struct register_state *regstate = get_reg_state(s, inst->DstReg.File, inst->DstReg.Index);
 		if (!regstate) {
 			rc_error(s->Compiler, "NqssaDce: bad destination register (%i[%i])\n",
@@ -181,67 +154,67 @@ static void process_instruction(struct nqssadce_state* s)
 			return;
 		}
 
-		if (inst->DstReg.File == PROGRAM_TEMPORARY && !regstate->Sourced)
+		if (inst->DstReg.File == RC_FILE_TEMPORARY && !regstate->Sourced)
 			unalias_temporary(s, inst->DstReg.Index);
 	}
 
 	WriteMask = inst->DstReg.WriteMask;
 
 	switch (inst->Opcode) {
-	case OPCODE_ARL:
-	case OPCODE_DDX:
-	case OPCODE_DDY:
-	case OPCODE_FRC:
-	case OPCODE_MOV:
+	case RC_OPCODE_ARL:
+	case RC_OPCODE_DDX:
+	case RC_OPCODE_DDY:
+	case RC_OPCODE_FRC:
+	case RC_OPCODE_MOV:
 		track_used_srcreg(s, 0, WriteMask);
 		break;
-	case OPCODE_ADD:
-	case OPCODE_MAX:
-	case OPCODE_MIN:
-	case OPCODE_MUL:
-	case OPCODE_SGE:
-	case OPCODE_SLT:
+	case RC_OPCODE_ADD:
+	case RC_OPCODE_MAX:
+	case RC_OPCODE_MIN:
+	case RC_OPCODE_MUL:
+	case RC_OPCODE_SGE:
+	case RC_OPCODE_SLT:
 		track_used_srcreg(s, 0, WriteMask);
 		track_used_srcreg(s, 1, WriteMask);
 		break;
-	case OPCODE_CMP:
-	case OPCODE_MAD:
+	case RC_OPCODE_CMP:
+	case RC_OPCODE_MAD:
 		track_used_srcreg(s, 0, WriteMask);
 		track_used_srcreg(s, 1, WriteMask);
 		track_used_srcreg(s, 2, WriteMask);
 		break;
-	case OPCODE_COS:
-	case OPCODE_EX2:
-	case OPCODE_LG2:
-	case OPCODE_RCP:
-	case OPCODE_RSQ:
-	case OPCODE_SIN:
+	case RC_OPCODE_COS:
+	case RC_OPCODE_EX2:
+	case RC_OPCODE_LG2:
+	case RC_OPCODE_RCP:
+	case RC_OPCODE_RSQ:
+	case RC_OPCODE_SIN:
 		track_used_srcreg(s, 0, 0x1);
 		break;
-	case OPCODE_DP3:
+	case RC_OPCODE_DP3:
 		track_used_srcreg(s, 0, 0x7);
 		track_used_srcreg(s, 1, 0x7);
 		break;
-	case OPCODE_DP4:
+	case RC_OPCODE_DP4:
 		track_used_srcreg(s, 0, 0xf);
 		track_used_srcreg(s, 1, 0xf);
 		break;
-	case OPCODE_KIL:
-	case OPCODE_TEX:
-	case OPCODE_TXB:
-	case OPCODE_TXP:
+	case RC_OPCODE_KIL:
+	case RC_OPCODE_TEX:
+	case RC_OPCODE_TXB:
+	case RC_OPCODE_TXP:
 		track_used_srcreg(s, 0, 0xf);
 		break;
-	case OPCODE_DST:
+	case RC_OPCODE_DST:
 		track_used_srcreg(s, 0, 0x6);
 		track_used_srcreg(s, 1, 0xa);
 		break;
-	case OPCODE_EXP:
-	case OPCODE_LOG:
-	case OPCODE_POW:
+	case RC_OPCODE_EXP:
+	case RC_OPCODE_LOG:
+	case RC_OPCODE_POW:
 		track_used_srcreg(s, 0, 0x3);
 		break;
-	case OPCODE_LIT:
+	case RC_OPCODE_LIT:
 		track_used_srcreg(s, 0, 0xb);
 		break;
 	default:
@@ -261,16 +234,16 @@ void rc_calculate_inputs_outputs(struct radeon_compiler * c)
 
 	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next)
 	{
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
 		int i;
-		int num_src_regs = _mesa_num_inst_src_regs(inst->I.Opcode);
 
-		for (i = 0; i < num_src_regs; ++i) {
-			if (inst->I.SrcReg[i].File == PROGRAM_INPUT)
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->I.SrcReg[i].File == RC_FILE_INPUT)
 				c->Program.InputsRead |= 1 << inst->I.SrcReg[i].Index;
 		}
 
-		if (_mesa_num_inst_dst_regs(inst->I.Opcode)) {
-			if (inst->I.DstReg.File == PROGRAM_OUTPUT)
+		if (opcode->HasDstReg) {
+			if (inst->I.DstReg.File == RC_FILE_OUTPUT)
 				c->Program.OutputsWritten |= 1 << inst->I.DstReg.Index;
 		}
 	}
@@ -280,7 +253,7 @@ void radeonNqssaDce(struct radeon_compiler * c, struct radeon_nqssadce_descr* de
 {
 	struct nqssadce_state s;
 
-	_mesa_bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	s.Compiler = c;
 	s.Descr = descr;
 	s.UserData = data;

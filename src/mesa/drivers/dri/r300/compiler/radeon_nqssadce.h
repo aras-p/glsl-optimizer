@@ -35,7 +35,7 @@ struct register_state {
 	 * Bitmask indicating which components of the register are sourced
 	 * by later instructions.
 	 */
-	GLuint Sourced : 4;
+	unsigned int Sourced : 4;
 };
 
 /**
@@ -54,8 +54,8 @@ struct nqssadce_state {
 	/**
 	 * Which registers are read by subsequent instructions?
 	 */
-	struct register_state Temps[MAX_PROGRAM_TEMPS];
-	struct register_state Outputs[VERT_RESULT_MAX];
+	struct register_state Temps[RC_REGISTER_MAX_INDEX];
+	struct register_state Outputs[RC_REGISTER_MAX_INDEX];
 	struct register_state Address;
 
 	void * UserData;
@@ -75,17 +75,18 @@ struct radeon_nqssadce_descr {
 	/**
 	 * Check whether the given swizzle, absolute and negate combination
 	 * can be implemented natively by the hardware for this opcode.
+	 *
+	 * \return 1 if the swizzle is native for the given opcode
 	 */
-	GLboolean (*IsNativeSwizzle)(GLuint opcode, struct prog_src_register reg);
+	int (*IsNativeSwizzle)(rc_opcode opcode, struct rc_src_register reg);
 
 	/**
 	 * Emit (at the current IP) the instruction MOV dst, src;
 	 * The transformation will work recursively on the emitted instruction(s).
 	 */
-	void (*BuildSwizzle)(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
+	void (*BuildSwizzle)(struct nqssadce_state*, struct rc_dst_register dst, struct rc_src_register src);
 };
 
 void radeonNqssaDce(struct radeon_compiler * c, struct radeon_nqssadce_descr* descr, void * data);
-struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg);
 
 #endif /* __RADEON_PROGRAM_NQSSADCE_H_ */

@@ -10,6 +10,7 @@ C_SOURCES = \
 		radeon_compiler.c \
 		radeon_nqssadce.c \
 		radeon_program.c \
+        radeon_opcodes.c \
 		radeon_program_alu.c \
 		radeon_program_pair.c \
 		r3xx_fragprog.c \

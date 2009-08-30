@@ -27,9 +27,9 @@
 
 #include "radeon_program.h"
 
+#include <stdio.h>
+
 #include "radeon_compiler.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 
 
 /**
@@ -69,37 +69,57 @@ void radeonLocalTransform(
 	}
 }
 
-
-GLint rc_find_free_temporary(struct radeon_compiler * c)
+/**
+ * Left multiplication of a register with a swizzle
+ */
+struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg)
 {
-	GLboolean used[MAX_PROGRAM_TEMPS];
-	GLuint i;
+	struct rc_src_register tmp = srcreg;
+	int i;
+	tmp.Swizzle = 0;
+	tmp.Negate = 0;
+	for(i = 0; i < 4; ++i) {
+		rc_swizzle swz = GET_SWZ(swizzle, i);
+		if (swz < 4) {
+			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
+			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
+		} else {
+			tmp.Swizzle |= swz << (i*3);
+		}
+	}
+	return tmp;
+}
+
+unsigned int rc_find_free_temporary(struct radeon_compiler * c)
+{
+	char used[RC_REGISTER_MAX_INDEX];
+	unsigned int i;
 
 	memset(used, 0, sizeof(used));
 
 	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
-		const struct prog_instruction *inst = &rcinst->I;
-		const GLuint nsrc = _mesa_num_inst_src_regs(inst->Opcode);
-		const GLuint ndst = _mesa_num_inst_dst_regs(inst->Opcode);
-		GLuint k;
+		const struct rc_sub_instruction *inst = &rcinst->I;
+		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->Opcode);
+		unsigned int k;
 
-		for (k = 0; k < nsrc; k++) {
-			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
-				used[inst->SrcReg[k].Index] = GL_TRUE;
+		for (k = 0; k < opcode->NumSrcRegs; k++) {
+			if (inst->SrcReg[k].File == RC_FILE_TEMPORARY)
+				used[inst->SrcReg[k].Index] = 1;
 		}
 
-		if (ndst) {
-			if (inst->DstReg.File == PROGRAM_TEMPORARY)
-				used[inst->DstReg.Index] = GL_TRUE;
+		if (opcode->HasDstReg) {
+			if (inst->DstReg.File == RC_FILE_TEMPORARY)
+				used[inst->DstReg.Index] = 1;
 		}
 	}
 
-	for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+	for (i = 0; i < RC_REGISTER_MAX_INDEX; i++) {
 		if (!used[i])
 			return i;
 	}
 
-	return -1;
+	rc_error(c, "Ran out of temporary registers\n");
+	return 0;
 }
 
 
@@ -107,10 +127,13 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c)
 {
 	struct rc_instruction * inst = memory_pool_malloc(&c->Pool, sizeof(struct rc_instruction));
 
-	inst->Prev = 0;
-	inst->Next = 0;
+	memset(inst, 0, sizeof(struct rc_instruction));
 
-	_mesa_init_instructions(&inst->I, 1);
+	inst->I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
+	inst->I.DstReg.WriteMask = RC_MASK_XYZW;
+	inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+	inst->I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZW;
+	inst->I.SrcReg[2].Swizzle = RC_SWIZZLE_XYZW;
 
 	return inst;
 }
@@ -135,14 +158,142 @@ void rc_remove_instruction(struct rc_instruction * inst)
 	inst->Next->Prev = inst->Prev;
 }
 
+static const char * textarget_to_string(rc_texture_target target)
+{
+	switch(target) {
+	case RC_TEXTURE_2D_ARRAY: return "2D_ARRAY";
+	case RC_TEXTURE_1D_ARRAY: return "1D_ARRAY";
+	case RC_TEXTURE_CUBE: return "CUBE";
+	case RC_TEXTURE_3D: return "3D";
+	case RC_TEXTURE_RECT: return "RECT";
+	case RC_TEXTURE_2D: return "2D";
+	case RC_TEXTURE_1D: return "1D";
+	default: return "BAD_TEXTURE_TARGET";
+	}
+}
+
+static void rc_print_register(FILE * f, rc_register_file file, int index, unsigned int reladdr)
+{
+	if (file == RC_FILE_NONE) {
+		fprintf(f, "none");
+	} else {
+		const char * filename;
+		switch(file) {
+		case RC_FILE_TEMPORARY: filename = "temp"; break;
+		case RC_FILE_INPUT: filename = "input"; break;
+		case RC_FILE_OUTPUT: filename = "output"; break;
+		case RC_FILE_ADDRESS: filename = "addr"; break;
+		case RC_FILE_CONSTANT: filename = "const"; break;
+		default: filename = "BAD FILE"; break;
+		}
+		fprintf(f, "%s[%i%s]", filename, index, reladdr ? " + addr[0]" : "");
+	}
+}
+
+static void rc_print_mask(FILE * f, unsigned int mask)
+{
+	if (mask & RC_MASK_X) fprintf(f, "x");
+	if (mask & RC_MASK_Y) fprintf(f, "y");
+	if (mask & RC_MASK_Z) fprintf(f, "z");
+	if (mask & RC_MASK_W) fprintf(f, "w");
+}
+
+static void rc_print_dst_register(FILE * f, struct rc_dst_register dst)
+{
+	rc_print_register(f, dst.File, dst.Index, dst.RelAddr);
+	if (dst.WriteMask != RC_MASK_XYZW) {
+		fprintf(f, ".");
+		rc_print_mask(f, dst.WriteMask);
+	}
+}
+
+static void rc_print_swizzle(FILE * f, unsigned int swizzle, unsigned int negate)
+{
+	unsigned int comp;
+	for(comp = 0; comp < 4; ++comp) {
+		rc_swizzle swz = GET_SWZ(swizzle, comp);
+		if (GET_BIT(negate, comp))
+			fprintf(f, "-");
+		switch(swz) {
+		case RC_SWIZZLE_X: fprintf(f, "x"); break;
+		case RC_SWIZZLE_Y: fprintf(f, "y"); break;
+		case RC_SWIZZLE_Z: fprintf(f, "z"); break;
+		case RC_SWIZZLE_W: fprintf(f, "w"); break;
+		case RC_SWIZZLE_ZERO: fprintf(f, "0"); break;
+		case RC_SWIZZLE_ONE: fprintf(f, "1"); break;
+		case RC_SWIZZLE_HALF: fprintf(f, "H"); break;
+		case RC_SWIZZLE_UNUSED: fprintf(f, "_"); break;
+		}
+	}
+}
+
+static void rc_print_src_register(FILE * f, struct rc_src_register src)
+{
+	int trivial_negate = (src.Negate == RC_MASK_NONE || src.Negate == RC_MASK_XYZW);
+
+	if (src.Negate == RC_MASK_XYZW)
+		fprintf(f, "-");
+	if (src.Abs)
+		fprintf(f, "|");
+
+	rc_print_register(f, src.File, src.Index, src.RelAddr);
+
+	if (src.Abs && !trivial_negate)
+		fprintf(f, "|");
+
+	if (src.Swizzle != RC_SWIZZLE_XYZW || !trivial_negate) {
+		fprintf(f, ".");
+		rc_print_swizzle(f, src.Swizzle, trivial_negate ? 0 : src.Negate);
+	}
+
+	if (src.Abs && trivial_negate)
+		fprintf(f, "|");
+}
+
+static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+	unsigned int reg;
+
+	fprintf(f, "%s", opcode->Name);
+
+	switch(inst->I.SaturateMode) {
+	case RC_SATURATE_NONE: break;
+	case RC_SATURATE_ZERO_ONE: fprintf(f, "_SAT"); break;
+	case RC_SATURATE_MINUS_PLUS_ONE: fprintf(f, "_SAT2"); break;
+	default: fprintf(f, "_BAD_SAT"); break;
+	}
+
+	if (opcode->HasDstReg) {
+		fprintf(f, " ");
+		rc_print_dst_register(f, inst->I.DstReg);
+		if (opcode->NumSrcRegs)
+			fprintf(f, ",");
+	}
+
+	for(reg = 0; reg < opcode->NumSrcRegs; ++reg) {
+		if (reg > 0)
+			fprintf(f, ",");
+		fprintf(f, " ");
+		rc_print_src_register(f, inst->I.SrcReg[reg]);
+	}
+
+	if (opcode->HasTexture) {
+		fprintf(f, ", %s%s[%u]",
+			textarget_to_string(inst->I.TexSrcTarget),
+			inst->I.TexShadow ? "SHADOW" : "",
+			inst->I.TexSrcUnit);
+	}
+
+	fprintf(f, ";\n");
+}
 
 /**
  * Print program to stderr, default options.
  */
 void rc_print_program(const struct rc_program *prog)
 {
-	GLuint indent = 0;
-	GLuint linenum = 1;
+	unsigned int linenum = 0;
 	struct rc_instruction *inst;
 
 	fprintf(stderr, "# Radeon Compiler Program\n");
@@ -150,11 +301,7 @@ void rc_print_program(const struct rc_program *prog)
 	for(inst = prog->Instructions.Next; inst != &prog->Instructions; inst = inst->Next) {
 		fprintf(stderr, "%3d: ", linenum);
 
-		/* Massive hack: We rely on the fact that the printers do not actually
-		 * use the gl_program argument (last argument) in debug mode */
-		indent = _mesa_fprint_instruction_opt(
-				stderr, &inst->I,
-				indent, PROG_PRINT_DEBUG, 0);
+		rc_print_instruction(stderr, inst);
 
 		linenum++;
 	}

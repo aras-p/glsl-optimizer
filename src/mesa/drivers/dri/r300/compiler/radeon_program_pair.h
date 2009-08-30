@@ -38,43 +38,43 @@ struct r300_fragment_program_compiler;
  * fragment programs.
  */
 struct radeon_pair_instruction_source {
-	GLuint Index:8;
-	GLuint Constant:1;
-	GLuint Used:1;
+	unsigned int Index:8;
+	unsigned int Constant:1;
+	unsigned int Used:1;
 };
 
 struct radeon_pair_instruction_rgb {
-	GLuint Opcode:8;
-	GLuint DestIndex:8;
-	GLuint WriteMask:3;
-	GLuint OutputWriteMask:3;
-	GLuint Saturate:1;
+	unsigned int Opcode:8;
+	unsigned int DestIndex:8;
+	unsigned int WriteMask:3;
+	unsigned int OutputWriteMask:3;
+	unsigned int Saturate:1;
 
 	struct radeon_pair_instruction_source Src[3];
 
 	struct {
-		GLuint Source:2;
-		GLuint Swizzle:9;
-		GLuint Abs:1;
-		GLuint Negate:1;
+		unsigned int Source:2;
+		unsigned int Swizzle:9;
+		unsigned int Abs:1;
+		unsigned int Negate:1;
 	} Arg[3];
 };
 
 struct radeon_pair_instruction_alpha {
-	GLuint Opcode:8;
-	GLuint DestIndex:8;
-	GLuint WriteMask:1;
-	GLuint OutputWriteMask:1;
-	GLuint DepthWriteMask:1;
-	GLuint Saturate:1;
+	unsigned int Opcode:8;
+	unsigned int DestIndex:8;
+	unsigned int WriteMask:1;
+	unsigned int OutputWriteMask:1;
+	unsigned int DepthWriteMask:1;
+	unsigned int Saturate:1;
 
 	struct radeon_pair_instruction_source Src[3];
 
 	struct {
-		GLuint Source:2;
-		GLuint Swizzle:3;
-		GLuint Abs:1;
-		GLuint Negate:1;
+		unsigned int Source:2;
+		unsigned int Swizzle:3;
+		unsigned int Abs:1;
+		unsigned int Negate:1;
 	} Arg[3];
 };
 
@@ -92,16 +92,16 @@ enum {
 };
 
 struct radeon_pair_texture_instruction {
-	GLuint Opcode:2; /**< one of RADEON_OPCODE_xxx */
+	unsigned int Opcode:2; /**< one of RADEON_OPCODE_xxx */
 
-	GLuint DestIndex:8;
-	GLuint WriteMask:4;
+	unsigned int DestIndex:8;
+	unsigned int WriteMask:4;
 
-	GLuint TexSrcUnit:5;
-	GLuint TexSrcTarget:3;
+	unsigned int TexSrcUnit:5;
+	unsigned int TexSrcTarget:3;
 
-	GLuint SrcIndex:8;
-	GLuint SrcSwizzle:12;
+	unsigned int SrcIndex:8;
+	unsigned int SrcSwizzle:12;
 };
 
 
@@ -112,24 +112,24 @@ struct radeon_pair_handler {
 	/**
 	 * Write a paired instruction to the hardware.
 	 *
-	 * @return GL_FALSE on error.
+	 * @return 0 on error.
 	 */
-	GLboolean (*EmitPaired)(void*, struct radeon_pair_instruction*);
+	int (*EmitPaired)(void*, struct radeon_pair_instruction*);
 
 	/**
 	 * Write a texture instruction to the hardware.
 	 * Register indices have already been rewritten to the allocated
 	 * hardware register numbers.
 	 *
-	 * @return GL_FALSE on error.
+	 * @return 0 on error.
 	 */
-	GLboolean (*EmitTex)(void*, struct radeon_pair_texture_instruction*);
+	int (*EmitTex)(void*, struct radeon_pair_texture_instruction*);
 
 	/**
 	 * Called before a block of contiguous, independent texture
 	 * instructions is emitted.
 	 */
-	GLboolean (*BeginTexBlock)(void*);
+	int (*BeginTexBlock)(void*);
 
 	unsigned MaxHwTemps;
 };

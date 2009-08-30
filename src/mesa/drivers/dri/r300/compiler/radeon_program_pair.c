@@ -35,9 +35,10 @@
 
 #include "radeon_program_pair.h"
 
+#include <stdio.h>
+
 #include "memory_pool.h"
 #include "radeon_compiler.h"
-#include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
 	rc_error(&s->Compiler->Base, "%s::%s(): " fmt "\n",	\
@@ -45,19 +46,19 @@
 } while(0)
 
 struct pair_state_instruction {
-	struct prog_instruction Instruction;
-	GLuint IP; /**< Position of this instruction in original program */
+	struct rc_sub_instruction Instruction;
+	unsigned int IP; /**< Position of this instruction in original program */
 
-	GLuint IsTex:1; /**< Is a texture instruction */
-	GLuint NeedRGB:1; /**< Needs the RGB ALU */
-	GLuint NeedAlpha:1; /**< Needs the Alpha ALU */
-	GLuint IsTranscendent:1; /**< Is a special transcendent instruction */
+	unsigned int IsTex:1; /**< Is a texture instruction */
+	unsigned int NeedRGB:1; /**< Needs the RGB ALU */
+	unsigned int NeedAlpha:1; /**< Needs the Alpha ALU */
+	unsigned int IsTranscendent:1; /**< Is a special transcendent instruction */
 
 	/**
 	 * Number of (read and write) dependencies that must be resolved before
 	 * this instruction can be scheduled.
 	 */
-	GLuint NumDependencies:5;
+	unsigned int NumDependencies:5;
 
 	/**
 	 * Next instruction in the linked list of ready instructions.
@@ -81,11 +82,11 @@ struct reg_value_reader {
 
 /**
  * Used to keep track which values are stored in each component of a
- * PROGRAM_TEMPORARY.
+ * RC_FILE_TEMPORARY.
  */
 struct reg_value {
 	struct pair_state_instruction *Writer;
-	struct reg_value *Next; /**< Pointer to the next value to be written to the same PROGRAM_TEMPORARY component */
+	struct reg_value *Next; /**< Pointer to the next value to be written to the same RC_FILE_TEMPORARY component */
 
 	/**
 	 * Unordered linked list of instructions that read from this value.
@@ -98,21 +99,21 @@ struct reg_value {
 	 * When this count reaches zero, the instruction that writes the @ref Next value
 	 * can be scheduled.
 	 */
-	GLuint NumReaders;
+	unsigned int NumReaders;
 };
 
 /**
- * Used to translate a PROGRAM_INPUT or PROGRAM_TEMPORARY Mesa register
+ * Used to translate a RC_FILE_INPUT or RC_FILE_TEMPORARY Mesa register
  * to the proper hardware temporary.
  */
 struct pair_register_translation {
-	GLuint Allocated:1;
-	GLuint HwIndex:8;
-	GLuint RefCount:23; /**< # of times this occurs in an unscheduled instruction SrcReg or DstReg */
+	unsigned int Allocated:1;
+	unsigned int HwIndex:8;
+	unsigned int RefCount:23; /**< # of times this occurs in an unscheduled instruction SrcReg or DstReg */
 
 	/**
 	 * Notes the value that is currently contained in each component
-	 * (only used for PROGRAM_TEMPORARY registers).
+	 * (only used for RC_FILE_TEMPORARY registers).
 	 */
 	struct reg_value *Value[4];
 };
@@ -120,17 +121,17 @@ struct pair_register_translation {
 struct pair_state {
 	struct r300_fragment_program_compiler * Compiler;
 	const struct radeon_pair_handler *Handler;
-	GLboolean Verbose;
+	unsigned int Verbose;
 	void *UserData;
 
 	/**
 	 * Translate Mesa registers to hardware registers
 	 */
-	struct pair_register_translation Inputs[FRAG_ATTRIB_MAX];
-	struct pair_register_translation Temps[MAX_PROGRAM_TEMPS];
+	struct pair_register_translation Inputs[RC_REGISTER_MAX_INDEX];
+	struct pair_register_translation Temps[RC_REGISTER_MAX_INDEX];
 
 	struct {
-		GLuint RefCount; /**< # of times this occurs in an unscheduled SrcReg or DstReg */
+		unsigned int RefCount; /**< # of times this occurs in an unscheduled SrcReg or DstReg */
 	} HwTemps[128];
 
 	/**
@@ -144,28 +145,28 @@ struct pair_state {
 };
 
 
-static struct pair_register_translation *get_register(struct pair_state *s, GLuint file, GLuint index)
+static struct pair_register_translation *get_register(struct pair_state *s, rc_register_file file, unsigned int index)
 {
 	switch(file) {
-	case PROGRAM_TEMPORARY: return &s->Temps[index];
-	case PROGRAM_INPUT: return &s->Inputs[index];
+	case RC_FILE_TEMPORARY: return &s->Temps[index];
+	case RC_FILE_INPUT: return &s->Inputs[index];
 	default: return 0;
 	}
 }
 
-static void alloc_hw_reg(struct pair_state *s, GLuint file, GLuint index, GLuint hwindex)
+static void alloc_hw_reg(struct pair_state *s, rc_register_file file, unsigned int index, unsigned int hwindex)
 {
 	struct pair_register_translation *t = get_register(s, file, index);
-	ASSERT(!s->HwTemps[hwindex].RefCount);
-	ASSERT(!t->Allocated);
+	assert(!s->HwTemps[hwindex].RefCount);
+	assert(!t->Allocated);
 	s->HwTemps[hwindex].RefCount = t->RefCount;
 	t->Allocated = 1;
 	t->HwIndex = hwindex;
 }
 
-static GLuint get_hw_reg(struct pair_state *s, GLuint file, GLuint index)
+static unsigned int get_hw_reg(struct pair_state *s, rc_register_file file, unsigned int index)
 {
-	GLuint hwindex;
+	unsigned int hwindex;
 
 	struct pair_register_translation *t = get_register(s, file, index);
 	if (!t) {
@@ -190,7 +191,7 @@ static GLuint get_hw_reg(struct pair_state *s, GLuint file, GLuint index)
 }
 
 
-static void deref_hw_reg(struct pair_state *s, GLuint hwindex)
+static void deref_hw_reg(struct pair_state *s, unsigned int hwindex)
 {
 	if (!s->HwTemps[hwindex].RefCount) {
 		error("Hwindex %i refcount error", hwindex);
@@ -213,7 +214,7 @@ static void add_pairinst_to_list(struct pair_state_instruction **list, struct pa
 static void instruction_ready(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
 	if (s->Verbose)
-		_mesa_printf("instruction_ready(%i)\n", pairinst->IP);
+		fprintf(stderr, "instruction_ready(%i)\n", pairinst->IP);
 
 	if (pairinst->IsTex)
 		add_pairinst_to_list(&s->ReadyTEX, pairinst);
@@ -230,24 +231,24 @@ static void instruction_ready(struct pair_state *s, struct pair_state_instructio
  * Finally rewrite ADD, MOV, MUL as the appropriate native instruction
  * and reverse the order of arguments for CMP.
  */
-static void final_rewrite(struct pair_state *s, struct prog_instruction *inst)
+static void final_rewrite(struct pair_state *s, struct rc_sub_instruction *inst)
 {
-	struct prog_src_register tmp;
+	struct rc_src_register tmp;
 
 	switch(inst->Opcode) {
-	case OPCODE_ADD:
+	case RC_OPCODE_ADD:
 		inst->SrcReg[2] = inst->SrcReg[1];
-		inst->SrcReg[1].File = PROGRAM_BUILTIN;
-		inst->SrcReg[1].Swizzle = SWIZZLE_1111;
-		inst->SrcReg[1].Negate = NEGATE_NONE;
-		inst->Opcode = OPCODE_MAD;
+		inst->SrcReg[1].File = RC_FILE_NONE;
+		inst->SrcReg[1].Swizzle = RC_SWIZZLE_1111;
+		inst->SrcReg[1].Negate = RC_MASK_NONE;
+		inst->Opcode = RC_OPCODE_MAD;
 		break;
-	case OPCODE_CMP:
+	case RC_OPCODE_CMP:
 		tmp = inst->SrcReg[2];
 		inst->SrcReg[2] = inst->SrcReg[0];
 		inst->SrcReg[0] = tmp;
 		break;
-	case OPCODE_MOV:
+	case RC_OPCODE_MOV:
 		/* AMD say we should use CMP.
 		 * However, when we transform
 		 *  KIL -r0;
@@ -258,16 +259,16 @@ static void final_rewrite(struct pair_state *s, struct prog_instruction *inst)
 		 * It appears that the R500 KIL hardware treats -0.0 as less
 		 * than zero.
 		 */
-		inst->SrcReg[1].File = PROGRAM_BUILTIN;
-		inst->SrcReg[1].Swizzle = SWIZZLE_1111;
-		inst->SrcReg[2].File = PROGRAM_BUILTIN;
-		inst->SrcReg[2].Swizzle = SWIZZLE_0000;
-		inst->Opcode = OPCODE_MAD;
+		inst->SrcReg[1].File = RC_FILE_NONE;
+		inst->SrcReg[1].Swizzle = RC_SWIZZLE_1111;
+		inst->SrcReg[2].File = RC_FILE_NONE;
+		inst->SrcReg[2].Swizzle = RC_SWIZZLE_0000;
+		inst->Opcode = RC_OPCODE_MAD;
 		break;
-	case OPCODE_MUL:
-		inst->SrcReg[2].File = PROGRAM_BUILTIN;
-		inst->SrcReg[2].Swizzle = SWIZZLE_0000;
-		inst->Opcode = OPCODE_MAD;
+	case RC_OPCODE_MUL:
+		inst->SrcReg[2].File = RC_FILE_NONE;
+		inst->SrcReg[2].Swizzle = RC_SWIZZLE_0000;
+		inst->Opcode = RC_OPCODE_MAD;
 		break;
 	default:
 		/* nothing to do */
@@ -282,41 +283,40 @@ static void final_rewrite(struct pair_state *s, struct prog_instruction *inst)
 static void classify_instruction(struct pair_state *s,
 	struct pair_state_instruction *psi)
 {
-	psi->NeedRGB = (psi->Instruction.DstReg.WriteMask & WRITEMASK_XYZ) ? 1 : 0;
-	psi->NeedAlpha = (psi->Instruction.DstReg.WriteMask & WRITEMASK_W) ? 1 : 0;
+	psi->NeedRGB = (psi->Instruction.DstReg.WriteMask & RC_MASK_XYZ) ? 1 : 0;
+	psi->NeedAlpha = (psi->Instruction.DstReg.WriteMask & RC_MASK_W) ? 1 : 0;
 
 	switch(psi->Instruction.Opcode) {
-	case OPCODE_ADD:
-	case OPCODE_CMP:
-	case OPCODE_DDX:
-	case OPCODE_DDY:
-	case OPCODE_FRC:
-	case OPCODE_MAD:
-	case OPCODE_MAX:
-	case OPCODE_MIN:
-	case OPCODE_MOV:
-	case OPCODE_MUL:
+	case RC_OPCODE_ADD:
+	case RC_OPCODE_CMP:
+	case RC_OPCODE_DDX:
+	case RC_OPCODE_DDY:
+	case RC_OPCODE_FRC:
+	case RC_OPCODE_MAD:
+	case RC_OPCODE_MAX:
+	case RC_OPCODE_MIN:
+	case RC_OPCODE_MOV:
+	case RC_OPCODE_MUL:
 		break;
-	case OPCODE_COS:
-	case OPCODE_EX2:
-	case OPCODE_LG2:
-	case OPCODE_RCP:
-	case OPCODE_RSQ:
-	case OPCODE_SIN:
+	case RC_OPCODE_COS:
+	case RC_OPCODE_EX2:
+	case RC_OPCODE_LG2:
+	case RC_OPCODE_RCP:
+	case RC_OPCODE_RSQ:
+	case RC_OPCODE_SIN:
 		psi->IsTranscendent = 1;
 		psi->NeedAlpha = 1;
 		break;
-	case OPCODE_DP4:
+	case RC_OPCODE_DP4:
 		psi->NeedAlpha = 1;
 		/* fall through */
-	case OPCODE_DP3:
+	case RC_OPCODE_DP3:
 		psi->NeedRGB = 1;
 		break;
-	case OPCODE_KIL:
-	case OPCODE_TEX:
-	case OPCODE_TXB:
-	case OPCODE_TXP:
-	case OPCODE_END:
+	case RC_OPCODE_KIL:
+	case RC_OPCODE_TEX:
+	case RC_OPCODE_TXB:
+	case RC_OPCODE_TXP:
 		psi->IsTex = 1;
 		break;
 	default:
@@ -333,7 +333,7 @@ static void classify_instruction(struct pair_state *s,
 static void scan_instructions(struct pair_state *s)
 {
 	struct rc_instruction *source;
-	GLuint ip;
+	unsigned int ip;
 
 	for(source = s->Compiler->Base.Program.Instructions.Next, ip = 0;
 	    source != &s->Compiler->Base.Program.Instructions;
@@ -346,9 +346,9 @@ static void scan_instructions(struct pair_state *s)
 		final_rewrite(s, &pairinst->Instruction);
 		classify_instruction(s, pairinst);
 
-		int nsrc = _mesa_num_inst_src_regs(pairinst->Instruction.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(pairinst->Instruction.Opcode);
 		int j;
-		for(j = 0; j < nsrc; j++) {
+		for(j = 0; j < opcode->NumSrcRegs; j++) {
 			struct pair_register_translation *t =
 				get_register(s, pairinst->Instruction.SrcReg[j].File, pairinst->Instruction.SrcReg[j].Index);
 			if (!t)
@@ -356,10 +356,10 @@ static void scan_instructions(struct pair_state *s)
 
 			t->RefCount++;
 
-			if (pairinst->Instruction.SrcReg[j].File == PROGRAM_TEMPORARY) {
+			if (pairinst->Instruction.SrcReg[j].File == RC_FILE_TEMPORARY) {
 				int i;
 				for(i = 0; i < 4; ++i) {
-					GLuint swz = GET_SWZ(pairinst->Instruction.SrcReg[j].Swizzle, i);
+					unsigned int swz = GET_SWZ(pairinst->Instruction.SrcReg[j].Swizzle, i);
 					if (swz >= 4)
 						continue; /* constant or NIL swizzle */
 					if (!t->Value[swz])
@@ -369,7 +369,7 @@ static void scan_instructions(struct pair_state *s)
 					 * also rewrites the value. The code below adds
 					 * a dependency for the DstReg, which is a superset
 					 * of the SrcReg dependency. */
-					if (pairinst->Instruction.DstReg.File == PROGRAM_TEMPORARY &&
+					if (pairinst->Instruction.DstReg.File == RC_FILE_TEMPORARY &&
 					    pairinst->Instruction.DstReg.Index == pairinst->Instruction.SrcReg[j].Index &&
 					    GET_BIT(pairinst->Instruction.DstReg.WriteMask, swz))
 						continue;
@@ -384,14 +384,13 @@ static void scan_instructions(struct pair_state *s)
 			}
 		}
 
-		int ndst = _mesa_num_inst_dst_regs(pairinst->Instruction.Opcode);
-		if (ndst) {
+		if (opcode->HasDstReg) {
 			struct pair_register_translation *t =
 				get_register(s, pairinst->Instruction.DstReg.File, pairinst->Instruction.DstReg.Index);
 			if (t) {
 				t->RefCount++;
 
-				if (pairinst->Instruction.DstReg.File == PROGRAM_TEMPORARY) {
+				if (pairinst->Instruction.DstReg.File == RC_FILE_TEMPORARY) {
 					int j;
 					for(j = 0; j < 4; ++j) {
 						if (!GET_BIT(pairinst->Instruction.DstReg.WriteMask, j))
@@ -412,15 +411,15 @@ static void scan_instructions(struct pair_state *s)
 		}
 
 		if (s->Verbose)
-			_mesa_printf("scan(%i): NumDeps = %i\n", ip, pairinst->NumDependencies);
+			fprintf(stderr, "scan(%i): NumDeps = %i\n", ip, pairinst->NumDependencies);
 
 		if (!pairinst->NumDependencies)
 			instruction_ready(s, pairinst);
 	}
 
-	/* Clear the PROGRAM_TEMPORARY state */
+	/* Clear the RC_FILE_TEMPORARY state */
 	int i, j;
-	for(i = 0; i < MAX_PROGRAM_TEMPS; ++i) {
+	for(i = 0; i < RC_REGISTER_MAX_INDEX; ++i) {
 		for(j = 0; j < 4; ++j)
 			s->Temps[i].Value[j] = 0;
 	}
@@ -429,7 +428,7 @@ static void scan_instructions(struct pair_state *s)
 
 static void decrement_dependencies(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
-	ASSERT(pairinst->NumDependencies > 0);
+	assert(pairinst->NumDependencies > 0);
 	if (!--pairinst->NumDependencies)
 		instruction_ready(s, pairinst);
 }
@@ -440,12 +439,12 @@ static void decrement_dependencies(struct pair_state *s, struct pair_state_instr
  */
 static void commit_instruction(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
-	struct prog_instruction *inst = &pairinst->Instruction;
+	struct rc_sub_instruction *inst = &pairinst->Instruction;
 
 	if (s->Verbose)
-		_mesa_printf("commit_instruction(%i)\n", pairinst->IP);
+		fprintf(stderr, "commit_instruction(%i)\n", pairinst->IP);
 
-	if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+	if (inst->DstReg.File == RC_FILE_TEMPORARY) {
 		struct pair_register_translation *t = &s->Temps[inst->DstReg.Index];
 		deref_hw_reg(s, t->HwIndex);
 
@@ -467,21 +466,21 @@ static void commit_instruction(struct pair_state *s, struct pair_state_instructi
 		}
 	}
 
-	int nsrc = _mesa_num_inst_src_regs(inst->Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 	int i;
-	for(i = 0; i < nsrc; i++) {
+	for(i = 0; i < opcode->NumSrcRegs; i++) {
 		struct pair_register_translation *t = get_register(s, inst->SrcReg[i].File, inst->SrcReg[i].Index);
 		if (!t)
 			continue;
 
 		deref_hw_reg(s, get_hw_reg(s, inst->SrcReg[i].File, inst->SrcReg[i].Index));
 
-		if (inst->SrcReg[i].File != PROGRAM_TEMPORARY)
+		if (inst->SrcReg[i].File != RC_FILE_TEMPORARY)
 			continue;
 
 		int j;
 		for(j = 0; j < 4; ++j) {
-			GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
+			unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
 			if (swz >= 4)
 				continue;
 			if (!t->Value[swz])
@@ -489,7 +488,7 @@ static void commit_instruction(struct pair_state *s, struct pair_state_instructi
 
 			/* Do not free a dependency if this instruction
 			 * also rewrites the value. See scan_instructions. */
-			if (inst->DstReg.File == PROGRAM_TEMPORARY &&
+			if (inst->DstReg.File == RC_FILE_TEMPORARY &&
 			    inst->DstReg.Index == inst->SrcReg[i].Index &&
 			    GET_BIT(inst->DstReg.WriteMask, swz))
 				continue;
@@ -519,7 +518,7 @@ static void emit_all_tex(struct pair_state *s)
 	struct pair_state_instruction *readytex;
 	struct pair_state_instruction *pairinst;
 
-	ASSERT(s->ReadyTEX);
+	assert(s->ReadyTEX);
 
 	// Don't let the ready list change under us!
 	readytex = s->ReadyTEX;
@@ -527,39 +526,37 @@ static void emit_all_tex(struct pair_state *s)
 
 	// Allocate destination hardware registers in one block to avoid conflicts.
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
-		struct prog_instruction *inst = &pairinst->Instruction;
-		if (inst->Opcode != OPCODE_KIL)
+		struct rc_sub_instruction *inst = &pairinst->Instruction;
+		if (inst->Opcode != RC_OPCODE_KIL)
 			get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 	}
 
 	if (s->Compiler->Base.Debug)
-		_mesa_printf(" BEGIN_TEX\n");
+		fprintf(stderr, " BEGIN_TEX\n");
 
 	if (s->Handler->BeginTexBlock)
 		s->Compiler->Base.Error = s->Compiler->Base.Error || !s->Handler->BeginTexBlock(s->UserData);
 
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
-		struct prog_instruction *inst = &pairinst->Instruction;
+		struct rc_sub_instruction *inst = &pairinst->Instruction;
 		commit_instruction(s, pairinst);
 
-		if (inst->Opcode != OPCODE_KIL)
+		if (inst->Opcode != RC_OPCODE_KIL)
 			inst->DstReg.Index = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 		inst->SrcReg[0].Index = get_hw_reg(s, inst->SrcReg[0].File, inst->SrcReg[0].Index);
 
 		if (s->Compiler->Base.Debug) {
-			_mesa_printf("   ");
-			_mesa_print_instruction(inst);
-			fflush(stderr);
+			/* Should print the TEX instruction here */
 		}
 
 		struct radeon_pair_texture_instruction rpti;
 
 		switch(inst->Opcode) {
-		case OPCODE_TEX: rpti.Opcode = RADEON_OPCODE_TEX; break;
-		case OPCODE_TXB: rpti.Opcode = RADEON_OPCODE_TXB; break;
-		case OPCODE_TXP: rpti.Opcode = RADEON_OPCODE_TXP; break;
+		case RC_OPCODE_TEX: rpti.Opcode = RADEON_OPCODE_TEX; break;
+		case RC_OPCODE_TXB: rpti.Opcode = RADEON_OPCODE_TXB; break;
+		case RC_OPCODE_TXP: rpti.Opcode = RADEON_OPCODE_TXP; break;
 		default:
-		case OPCODE_KIL: rpti.Opcode = RADEON_OPCODE_KIL; break;
+		case RC_OPCODE_KIL: rpti.Opcode = RADEON_OPCODE_KIL; break;
 		}
 
 		rpti.DestIndex = inst->DstReg.Index;
@@ -573,12 +570,12 @@ static void emit_all_tex(struct pair_state *s)
 	}
 
 	if (s->Compiler->Base.Debug)
-		_mesa_printf(" END_TEX\n");
+		fprintf(stderr, " END_TEX\n");
 }
 
 
 static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instruction *pair,
-	struct prog_src_register src, GLboolean rgb, GLboolean alpha)
+	struct rc_src_register src, unsigned int rgb, unsigned int alpha)
 {
 	int candidate = -1;
 	int candidate_quality = -1;
@@ -587,10 +584,10 @@ static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instructio
 	if (!rgb && !alpha)
 		return 0;
 
-	GLuint constant;
-	GLuint index;
+	unsigned int constant;
+	unsigned int index;
 
-	if (src.File == PROGRAM_TEMPORARY || src.File == PROGRAM_INPUT) {
+	if (src.File == RC_FILE_TEMPORARY || src.File == RC_FILE_INPUT) {
 		constant = 0;
 		index = get_hw_reg(s, src.File, src.Index);
 	} else {
@@ -642,37 +639,38 @@ static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instructio
  * Fill the given ALU instruction's opcodes and source operands into the given pair,
  * if possible.
  */
-static GLboolean fill_instruction_into_pair(
+static int fill_instruction_into_pair(
 	struct pair_state *s,
 	struct radeon_pair_instruction *pair,
 	struct pair_state_instruction *pairinst)
 {
-	struct prog_instruction *inst = &pairinst->Instruction;
+	struct rc_sub_instruction *inst = &pairinst->Instruction;
 
-	ASSERT(!pairinst->NeedRGB || pair->RGB.Opcode == OPCODE_NOP);
-	ASSERT(!pairinst->NeedAlpha || pair->Alpha.Opcode == OPCODE_NOP);
+	assert(!pairinst->NeedRGB || pair->RGB.Opcode == RC_OPCODE_NOP);
+	assert(!pairinst->NeedAlpha || pair->Alpha.Opcode == RC_OPCODE_NOP);
 
 	if (pairinst->NeedRGB) {
 		if (pairinst->IsTranscendent)
-			pair->RGB.Opcode = OPCODE_REPL_ALPHA;
+			pair->RGB.Opcode = RC_OPCODE_REPL_ALPHA;
 		else
 			pair->RGB.Opcode = inst->Opcode;
-		if (inst->SaturateMode == SATURATE_ZERO_ONE)
+		if (inst->SaturateMode == RC_SATURATE_ZERO_ONE)
 			pair->RGB.Saturate = 1;
 	}
 	if (pairinst->NeedAlpha) {
 		pair->Alpha.Opcode = inst->Opcode;
-		if (inst->SaturateMode == SATURATE_ZERO_ONE)
+		if (inst->SaturateMode == RC_SATURATE_ZERO_ONE)
 			pair->Alpha.Saturate = 1;
 	}
 
-	int nargs = _mesa_num_inst_src_regs(inst->Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
+	int nargs = opcode->NumSrcRegs;
 	int i;
 
 	/* Special case for DDX/DDY (MDH/MDV). */
-	if (inst->Opcode == OPCODE_DDX || inst->Opcode == OPCODE_DDY) {
+	if (inst->Opcode == RC_OPCODE_DDX || inst->Opcode == RC_OPCODE_DDY) {
 		if (pair->RGB.Src[0].Used || pair->Alpha.Src[0].Used)
-			return GL_FALSE;
+			return 0;
 		else
 			nargs++;
 	}
@@ -680,43 +678,43 @@ static GLboolean fill_instruction_into_pair(
 	for(i = 0; i < nargs; ++i) {
 		int source;
 		if (pairinst->NeedRGB && !pairinst->IsTranscendent) {
-			GLboolean srcrgb = GL_FALSE;
-			GLboolean srcalpha = GL_FALSE;
+			unsigned int srcrgb = 0;
+			unsigned int srcalpha = 0;
 			int j;
 			for(j = 0; j < 3; ++j) {
-				GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
+				unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
 				if (swz < 3)
-					srcrgb = GL_TRUE;
+					srcrgb = 1;
 				else if (swz < 4)
-					srcalpha = GL_TRUE;
+					srcalpha = 1;
 			}
 			source = alloc_pair_source(s, pair, inst->SrcReg[i], srcrgb, srcalpha);
 			if (source < 0)
-				return GL_FALSE;
+				return 0;
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->RGB.Arg[i].Negate = !!(inst->SrcReg[i].Negate & (NEGATE_X | NEGATE_Y | NEGATE_Z));
+			pair->RGB.Arg[i].Negate = !!(inst->SrcReg[i].Negate & (RC_MASK_X | RC_MASK_Y | RC_MASK_Z));
 		}
 		if (pairinst->NeedAlpha) {
-			GLboolean srcrgb = GL_FALSE;
-			GLboolean srcalpha = GL_FALSE;
-			GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, pairinst->IsTranscendent ? 0 : 3);
+			unsigned int srcrgb = 0;
+			unsigned int srcalpha = 0;
+			unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, pairinst->IsTranscendent ? 0 : 3);
 			if (swz < 3)
-				srcrgb = GL_TRUE;
+				srcrgb = 1;
 			else if (swz < 4)
-				srcalpha = GL_TRUE;
+				srcalpha = 1;
 			source = alloc_pair_source(s, pair, inst->SrcReg[i], srcrgb, srcalpha);
 			if (source < 0)
-				return GL_FALSE;
+				return 0;
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->Alpha.Arg[i].Negate = !!(inst->SrcReg[i].Negate & NEGATE_W);
+			pair->Alpha.Arg[i].Negate = !!(inst->SrcReg[i].Negate & RC_MASK_W);
 		}
 	}
 
-	return GL_TRUE;
+	return 1;
 }
 
 
@@ -733,20 +731,20 @@ static void fill_dest_into_pair(
 	struct radeon_pair_instruction *pair,
 	struct pair_state_instruction *pairinst)
 {
-	struct prog_instruction *inst = &pairinst->Instruction;
+	struct rc_sub_instruction *inst = &pairinst->Instruction;
 
-	if (inst->DstReg.File == PROGRAM_OUTPUT) {
+	if (inst->DstReg.File == RC_FILE_OUTPUT) {
 		if (inst->DstReg.Index == s->Compiler->OutputColor) {
-			pair->RGB.OutputWriteMask |= inst->DstReg.WriteMask & WRITEMASK_XYZ;
+			pair->RGB.OutputWriteMask |= inst->DstReg.WriteMask & RC_MASK_XYZ;
 			pair->Alpha.OutputWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
 		} else if (inst->DstReg.Index == s->Compiler->OutputDepth) {
 			pair->Alpha.DepthWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
 		}
 	} else {
-		GLuint hwindex = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
+		unsigned int hwindex = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 		if (pairinst->NeedRGB) {
 			pair->RGB.DestIndex = hwindex;
-			pair->RGB.WriteMask |= inst->DstReg.WriteMask & WRITEMASK_XYZ;
+			pair->RGB.WriteMask |= inst->DstReg.WriteMask & RC_MASK_XYZ;
 		}
 		if (pairinst->NeedAlpha) {
 			pair->Alpha.DestIndex = hwindex;
@@ -780,7 +778,7 @@ static void emit_alu(struct pair_state *s)
 			s->ReadyAlpha = s->ReadyAlpha->NextReady;
 		}
 
-		_mesa_bzero(&pair, sizeof(pair));
+		memset(&pair, 0, sizeof(pair));
 		fill_instruction_into_pair(s, &pair, psi);
 		fill_dest_into_pair(s, &pair, psi);
 		commit_instruction(s, psi);
@@ -794,7 +792,7 @@ static void emit_alu(struct pair_state *s)
 			for(palpha = &s->ReadyAlpha; *palpha; palpha = &(*palpha)->NextReady) {
 				struct pair_state_instruction * psirgb = *prgb;
 				struct pair_state_instruction * psialpha = *palpha;
-				_mesa_bzero(&pair, sizeof(pair));
+				memset(&pair, 0, sizeof(pair));
 				fill_instruction_into_pair(s, &pair, psirgb);
 				if (!fill_instruction_into_pair(s, &pair, psialpha))
 					continue;
@@ -812,7 +810,7 @@ static void emit_alu(struct pair_state *s)
 		psi = s->ReadyRGB;
 		s->ReadyRGB = s->ReadyRGB->NextReady;
 
-		_mesa_bzero(&pair, sizeof(pair));
+		memset(&pair, 0, sizeof(pair));
 		fill_instruction_into_pair(s, &pair, psi);
 		fill_dest_into_pair(s, &pair, psi);
 		commit_instruction(s, psi);
@@ -829,7 +827,7 @@ static void emit_alu(struct pair_state *s)
 static void alloc_helper(void * data, unsigned input, unsigned hwreg)
 {
 	struct pair_state * s = data;
-	alloc_hw_reg(s, PROGRAM_INPUT, input, hwreg);
+	alloc_hw_reg(s, RC_FILE_INPUT, input, hwreg);
 }
 
 void radeonPairProgram(
@@ -838,14 +836,14 @@ void radeonPairProgram(
 {
 	struct pair_state s;
 
-	_mesa_bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	s.Compiler = compiler;
 	s.Handler = handler;
 	s.UserData = userdata;
-	s.Verbose = GL_FALSE && s.Compiler->Base.Debug;
+	s.Verbose = 0 && s.Compiler->Base.Debug;
 
 	if (s.Compiler->Base.Debug)
-		_mesa_printf("Emit paired program\n");
+		fprintf(stderr, "Emit paired program\n");
 
 	scan_instructions(&s);
 	s.Compiler->AllocateHwInputs(s.Compiler, &alloc_helper, &s);
@@ -860,41 +858,36 @@ void radeonPairProgram(
 	}
 
 	if (s.Compiler->Base.Debug)
-		_mesa_printf(" END\n");
+		fprintf(stderr, " END\n");
 }
 
 
 static void print_pair_src(int i, struct radeon_pair_instruction_source* src)
 {
-	_mesa_printf("  Src%i = %s[%i]", i, src->Constant ? "CNST" : "TEMP", src->Index);
+	fprintf(stderr, "  Src%i = %s[%i]", i, src->Constant ? "CNST" : "TEMP", src->Index);
 }
 
-static const char* opcode_string(GLuint opcode)
+static const char* opcode_string(rc_opcode opcode)
 {
-	if (opcode == OPCODE_REPL_ALPHA)
-		return "SOP";
-	else
-		return _mesa_opcode_string(opcode);
+	return rc_get_opcode_info(opcode)->Name;
 }
 
-static int num_pairinst_args(GLuint opcode)
+static int num_pairinst_args(rc_opcode opcode)
 {
-	if (opcode == OPCODE_REPL_ALPHA)
-		return 0;
-	else
-		return _mesa_num_inst_src_regs(opcode);
+	return rc_get_opcode_info(opcode)->NumSrcRegs;
 }
 
-static char swizzle_char(GLuint swz)
+static char swizzle_char(rc_swizzle swz)
 {
 	switch(swz) {
-	case SWIZZLE_X: return 'x';
-	case SWIZZLE_Y: return 'y';
-	case SWIZZLE_Z: return 'z';
-	case SWIZZLE_W: return 'w';
-	case SWIZZLE_ZERO: return '0';
-	case SWIZZLE_ONE: return '1';
-	case SWIZZLE_NIL: return '_';
+	case RC_SWIZZLE_X: return 'x';
+	case RC_SWIZZLE_Y: return 'y';
+	case RC_SWIZZLE_Z: return 'z';
+	case RC_SWIZZLE_W: return 'w';
+	case RC_SWIZZLE_ZERO: return '0';
+	case RC_SWIZZLE_ONE: return '1';
+	case RC_SWIZZLE_HALF: return 'H';
+	case RC_SWIZZLE_UNUSED: return '_';
 	default: return '?';
 	}
 }
@@ -904,27 +897,27 @@ void radeonPrintPairInstruction(struct radeon_pair_instruction *inst)
 	int nargs;
 	int i;
 
-	_mesa_printf("       RGB:  ");
+	fprintf(stderr, "       RGB:  ");
 	for(i = 0; i < 3; ++i) {
 		if (inst->RGB.Src[i].Used)
 			print_pair_src(i, inst->RGB.Src + i);
 	}
-	_mesa_printf("\n");
-	_mesa_printf("       Alpha:");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "       Alpha:");
 	for(i = 0; i < 3; ++i) {
 		if (inst->Alpha.Src[i].Used)
 			print_pair_src(i, inst->Alpha.Src + i);
 	}
-	_mesa_printf("\n");
+	fprintf(stderr, "\n");
 
-	_mesa_printf("  %s%s", opcode_string(inst->RGB.Opcode), inst->RGB.Saturate ? "_SAT" : "");
+	fprintf(stderr, "  %s%s", opcode_string(inst->RGB.Opcode), inst->RGB.Saturate ? "_SAT" : "");
 	if (inst->RGB.WriteMask)
-		_mesa_printf(" TEMP[%i].%s%s%s", inst->RGB.DestIndex,
+		fprintf(stderr, " TEMP[%i].%s%s%s", inst->RGB.DestIndex,
 			(inst->RGB.WriteMask & 1) ? "x" : "",
 			(inst->RGB.WriteMask & 2) ? "y" : "",
 			(inst->RGB.WriteMask & 4) ? "z" : "");
 	if (inst->RGB.OutputWriteMask)
-		_mesa_printf(" COLOR.%s%s%s",
+		fprintf(stderr, " COLOR.%s%s%s",
 			(inst->RGB.OutputWriteMask & 1) ? "x" : "",
 			(inst->RGB.OutputWriteMask & 2) ? "y" : "",
 			(inst->RGB.OutputWriteMask & 4) ? "z" : "");
@@ -932,27 +925,27 @@ void radeonPrintPairInstruction(struct radeon_pair_instruction *inst)
 	for(i = 0; i < nargs; ++i) {
 		const char* abs = inst->RGB.Arg[i].Abs ? "|" : "";
 		const char* neg = inst->RGB.Arg[i].Negate ? "-" : "";
-		_mesa_printf(", %s%sSrc%i.%c%c%c%s", neg, abs, inst->RGB.Arg[i].Source,
+		fprintf(stderr, ", %s%sSrc%i.%c%c%c%s", neg, abs, inst->RGB.Arg[i].Source,
 			swizzle_char(GET_SWZ(inst->RGB.Arg[i].Swizzle, 0)),
 			swizzle_char(GET_SWZ(inst->RGB.Arg[i].Swizzle, 1)),
 			swizzle_char(GET_SWZ(inst->RGB.Arg[i].Swizzle, 2)),
 			abs);
 	}
-	_mesa_printf("\n");
+	fprintf(stderr, "\n");
 
-	_mesa_printf("  %s%s", opcode_string(inst->Alpha.Opcode), inst->Alpha.Saturate ? "_SAT" : "");
+	fprintf(stderr, "  %s%s", opcode_string(inst->Alpha.Opcode), inst->Alpha.Saturate ? "_SAT" : "");
 	if (inst->Alpha.WriteMask)
-		_mesa_printf(" TEMP[%i].w", inst->Alpha.DestIndex);
+		fprintf(stderr, " TEMP[%i].w", inst->Alpha.DestIndex);
 	if (inst->Alpha.OutputWriteMask)
-		_mesa_printf(" COLOR.w");
+		fprintf(stderr, " COLOR.w");
 	if (inst->Alpha.DepthWriteMask)
-		_mesa_printf(" DEPTH.w");
+		fprintf(stderr, " DEPTH.w");
 	nargs = num_pairinst_args(inst->Alpha.Opcode);
 	for(i = 0; i < nargs; ++i) {
 		const char* abs = inst->Alpha.Arg[i].Abs ? "|" : "";
 		const char* neg = inst->Alpha.Arg[i].Negate ? "-" : "";
-		_mesa_printf(", %s%sSrc%i.%c%s", neg, abs, inst->Alpha.Arg[i].Source,
+		fprintf(stderr, ", %s%sSrc%i.%c%s", neg, abs, inst->Alpha.Arg[i].Source,
 			swizzle_char(inst->Alpha.Arg[i].Swizzle), abs);
 	}
-	_mesa_printf("\n");
+	fprintf(stderr, "\n");
 }

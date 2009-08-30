@@ -60,63 +60,63 @@
 	} while(0)
 
 
-static GLuint translate_rgb_op(struct r300_fragment_program_compiler *c, GLuint opcode)
+static unsigned int translate_rgb_op(struct r300_fragment_program_compiler *c, rc_opcode opcode)
 {
 	switch(opcode) {
-	case OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
-	case OPCODE_DDX: return R500_ALU_RGBA_OP_MDH;
-	case OPCODE_DDY: return R500_ALU_RGBA_OP_MDV;
-	case OPCODE_DP3: return R500_ALU_RGBA_OP_DP3;
-	case OPCODE_DP4: return R500_ALU_RGBA_OP_DP4;
-	case OPCODE_FRC: return R500_ALU_RGBA_OP_FRC;
+	case RC_OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
+	case RC_OPCODE_DDX: return R500_ALU_RGBA_OP_MDH;
+	case RC_OPCODE_DDY: return R500_ALU_RGBA_OP_MDV;
+	case RC_OPCODE_DP3: return R500_ALU_RGBA_OP_DP3;
+	case RC_OPCODE_DP4: return R500_ALU_RGBA_OP_DP4;
+	case RC_OPCODE_FRC: return R500_ALU_RGBA_OP_FRC;
 	default:
 		error("translate_rgb_op(%d): unknown opcode\n", opcode);
 		/* fall through */
-	case OPCODE_NOP:
+	case RC_OPCODE_NOP:
 		/* fall through */
-	case OPCODE_MAD: return R500_ALU_RGBA_OP_MAD;
-	case OPCODE_MAX: return R500_ALU_RGBA_OP_MAX;
-	case OPCODE_MIN: return R500_ALU_RGBA_OP_MIN;
-	case OPCODE_REPL_ALPHA: return R500_ALU_RGBA_OP_SOP;
+	case RC_OPCODE_MAD: return R500_ALU_RGBA_OP_MAD;
+	case RC_OPCODE_MAX: return R500_ALU_RGBA_OP_MAX;
+	case RC_OPCODE_MIN: return R500_ALU_RGBA_OP_MIN;
+	case RC_OPCODE_REPL_ALPHA: return R500_ALU_RGBA_OP_SOP;
 	}
 }
 
-static GLuint translate_alpha_op(struct r300_fragment_program_compiler *c, GLuint opcode)
+static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c, rc_opcode opcode)
 {
 	switch(opcode) {
-	case OPCODE_CMP: return R500_ALPHA_OP_CMP;
-	case OPCODE_COS: return R500_ALPHA_OP_COS;
-	case OPCODE_DDX: return R500_ALPHA_OP_MDH;
-	case OPCODE_DDY: return R500_ALPHA_OP_MDV;
-	case OPCODE_DP3: return R500_ALPHA_OP_DP;
-	case OPCODE_DP4: return R500_ALPHA_OP_DP;
-	case OPCODE_EX2: return R500_ALPHA_OP_EX2;
-	case OPCODE_FRC: return R500_ALPHA_OP_FRC;
-	case OPCODE_LG2: return R500_ALPHA_OP_LN2;
+	case RC_OPCODE_CMP: return R500_ALPHA_OP_CMP;
+	case RC_OPCODE_COS: return R500_ALPHA_OP_COS;
+	case RC_OPCODE_DDX: return R500_ALPHA_OP_MDH;
+	case RC_OPCODE_DDY: return R500_ALPHA_OP_MDV;
+	case RC_OPCODE_DP3: return R500_ALPHA_OP_DP;
+	case RC_OPCODE_DP4: return R500_ALPHA_OP_DP;
+	case RC_OPCODE_EX2: return R500_ALPHA_OP_EX2;
+	case RC_OPCODE_FRC: return R500_ALPHA_OP_FRC;
+	case RC_OPCODE_LG2: return R500_ALPHA_OP_LN2;
 	default:
 		error("translate_alpha_op(%d): unknown opcode\n", opcode);
 		/* fall through */
-	case OPCODE_NOP:
+	case RC_OPCODE_NOP:
 		/* fall through */
-	case OPCODE_MAD: return R500_ALPHA_OP_MAD;
-	case OPCODE_MAX: return R500_ALPHA_OP_MAX;
-	case OPCODE_MIN: return R500_ALPHA_OP_MIN;
-	case OPCODE_RCP: return R500_ALPHA_OP_RCP;
-	case OPCODE_RSQ: return R500_ALPHA_OP_RSQ;
-	case OPCODE_SIN: return R500_ALPHA_OP_SIN;
+	case RC_OPCODE_MAD: return R500_ALPHA_OP_MAD;
+	case RC_OPCODE_MAX: return R500_ALPHA_OP_MAX;
+	case RC_OPCODE_MIN: return R500_ALPHA_OP_MIN;
+	case RC_OPCODE_RCP: return R500_ALPHA_OP_RCP;
+	case RC_OPCODE_RSQ: return R500_ALPHA_OP_RSQ;
+	case RC_OPCODE_SIN: return R500_ALPHA_OP_SIN;
 	}
 }
 
-static GLuint fix_hw_swizzle(GLuint swz)
+static unsigned int fix_hw_swizzle(unsigned int swz)
 {
 	if (swz == 5) swz = 6;
-	if (swz == SWIZZLE_NIL) swz = 4;
+	if (swz == RC_SWIZZLE_UNUSED) swz = 4;
 	return swz;
 }
 
-static GLuint translate_arg_rgb(struct radeon_pair_instruction *inst, int arg)
+static unsigned int translate_arg_rgb(struct radeon_pair_instruction *inst, int arg)
 {
-	GLuint t = inst->RGB.Arg[arg].Source;
+	unsigned int t = inst->RGB.Arg[arg].Source;
 	int comp;
 	t |= inst->RGB.Arg[arg].Negate << 11;
 	t |= inst->RGB.Arg[arg].Abs << 12;
@@ -127,22 +127,22 @@ static GLuint translate_arg_rgb(struct radeon_pair_instruction *inst, int arg)
 	return t;
 }
 
-static GLuint translate_arg_alpha(struct radeon_pair_instruction *inst, int i)
+static unsigned int translate_arg_alpha(struct radeon_pair_instruction *inst, int i)
 {
-	GLuint t = inst->Alpha.Arg[i].Source;
+	unsigned int t = inst->Alpha.Arg[i].Source;
 	t |= fix_hw_swizzle(inst->Alpha.Arg[i].Swizzle) << 2;
 	t |= inst->Alpha.Arg[i].Negate << 5;
 	t |= inst->Alpha.Arg[i].Abs << 6;
 	return t;
 }
 
-static void use_temporary(struct r500_fragment_program_code* code, GLuint index)
+static void use_temporary(struct r500_fragment_program_code* code, unsigned int index)
 {
 	if (index > code->max_temp_idx)
 		code->max_temp_idx = index;
 }
 
-static GLuint use_source(struct r500_fragment_program_code* code, struct radeon_pair_instruction_source src)
+static unsigned int use_source(struct r500_fragment_program_code* code, struct radeon_pair_instruction_source src)
 {
 	if (!src.Constant)
 		use_temporary(code, src.Index);
@@ -153,13 +153,13 @@ static GLuint use_source(struct r500_fragment_program_code* code, struct radeon_
 /**
  * Emit a paired ALU instruction.
  */
-static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
+static int emit_paired(void *data, struct radeon_pair_instruction *inst)
 {
 	PROG_CODE;
 
 	if (code->inst_end >= 511) {
 		error("emit_alu: Too many instructions");
-		return GL_FALSE;
+		return 0;
 	}
 
 	int ip = ++code->inst_end;
@@ -177,7 +177,7 @@ static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
 	code->inst[ip].inst0 |= (inst->RGB.OutputWriteMask << 15) | (inst->Alpha.OutputWriteMask << 18);
 	if (inst->Alpha.DepthWriteMask) {
 		code->inst[ip].inst4 |= R500_ALPHA_W_OMASK;
-		c->code->writes_depth = GL_TRUE;
+		c->code->writes_depth = 1;
 	}
 
 	code->inst[ip].inst4 |= R500_ALPHA_ADDRD(inst->Alpha.DestIndex);
@@ -206,12 +206,12 @@ static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 1) << R500_ALPHA_SEL_B_SHIFT;
 	code->inst[ip].inst5 |= translate_arg_alpha(inst, 2) << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT;
 
-	return GL_TRUE;
+	return 1;
 }
 
-static GLuint translate_strq_swizzle(GLuint swizzle)
+static unsigned int translate_strq_swizzle(unsigned int swizzle)
 {
-	GLuint swiz = 0;
+	unsigned int swiz = 0;
 	int i;
 	for (i = 0; i < 4; i++)
 		swiz |= (GET_SWZ(swizzle, i) & 0x3) << i*2;
@@ -221,13 +221,13 @@ static GLuint translate_strq_swizzle(GLuint swizzle)
 /**
  * Emit a single TEX instruction
  */
-static GLboolean emit_tex(void *data, struct radeon_pair_texture_instruction *inst)
+static int emit_tex(void *data, struct radeon_pair_texture_instruction *inst)
 {
 	PROG_CODE;
 
 	if (code->inst_end >= 511) {
 		error("emit_tex: Too many instructions");
-		return GL_FALSE;
+		return 0;
 	}
 
 	int ip = ++code->inst_end;
@@ -238,7 +238,7 @@ static GLboolean emit_tex(void *data, struct radeon_pair_texture_instruction *in
 	code->inst[ip].inst1 = R500_TEX_ID(inst->TexSrcUnit)
 		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
 
-	if (inst->TexSrcTarget == TEXTURE_RECT_INDEX)
+	if (inst->TexSrcTarget == RC_TEXTURE_RECT)
 	        code->inst[ip].inst1 |= R500_TEX_UNSCALED;
 
 	switch (inst->Opcode) {
@@ -264,7 +264,7 @@ static GLboolean emit_tex(void *data, struct radeon_pair_texture_instruction *in
 		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
 		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
 
-	return GL_TRUE;
+	return 1;
 }
 
 static const struct radeon_pair_handler pair_handler = {
@@ -277,7 +277,7 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 {
 	struct r500_fragment_program_code *code = &compiler->code->code.r500;
 
-	_mesa_bzero(code, sizeof(*code));
+	memset(code, 0, sizeof(*code));
 	code->max_temp_idx = 1;
 	code->inst_end = -1;
 
