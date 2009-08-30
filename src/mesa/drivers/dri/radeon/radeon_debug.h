@@ -1,0 +1,145 @@
+/*
+ * Copyright © 2009 Pauli Nieminen
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ */
+/*
+ * Authors:
+ *      Pauli Nieminen <suokkos@gmail.com>
+ */
+
+#ifndef RADEON_DEBUG_H_INCLUDED
+#define RADEON_DEBUG_H_INCLUDED
+
+#include <stdarg.h>
+#include <stdio.h>
+
+typedef enum radeon_debug_levels {
+	RADEON_CRITICAL  = 0, /* Only errors */
+	RADEON_IMPORTANT = 1, /* Important warnings and messages */
+	RADEON_NORMAL    = 2, /* Normal log messages usefull for debugging */
+	RADEON_VERBOSE   = 3, /* Extra details to debugging */
+	RADEON_TRACE     = 4  /* Log about everything that happens */
+} radeon_debug_level_t;
+
+/**
+ * Compile time option to change level of debugging compiled to dri driver.
+ */
+#ifndef RADEON_DEBUG_LEVEL
+#define RADEON_DEBUG_LEVEL RADEON_NORMAL
+#endif
+
+typedef enum radeon_debug_types {
+	RADEON_TEXTURE   = 0x0001,
+	RADEON_STATE     = 0x0002,
+	RADEON_IOCTL     = 0x0004,
+	RADEON_RENDER    = 0x0008,
+	RADEON_SWRENDER  = 0x0010,
+	RADEON_FALLBACKS = 0x0020,
+	RADEON_VFMT      = 0x0040,
+	RADEON_SHADER    = 0x0080,
+	RADEON_CS        = 0x0100,
+	RADEON_DRI       = 0x0200,
+	RADEON_DMA       = 0x0400,
+	RADEON_SANITY    = 0x0800,
+	RADEON_SYNC      = 0x1000,
+	RADEON_PIXEL     = 0x2000,
+	RADEON_MEMORY    = 0x4000,
+	RADEON_GENERAL   = 0x8000   /* Used for errors and warnings */
+} radeon_debug_type_t;
+
+extern radeon_debug_type_t radeon_enabled_debug_types;
+
+/**
+ * Compabibility layer for old debug code
+ **/
+#define RADEON_DEBUG radeon_enabled_debug_types
+
+static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
+	   const radeon_debug_level_t level)
+{
+       return RADEON_DEBUG_LEVEL <= level
+		&& (type & radeon_enabled_debug_types);
+}
+
+/**
+ * Print out debug message if channel specified by type is enabled
+ * and compile time debugging level is at least as high as level parameter
+ */
+static inline void radeon_print(const radeon_debug_type_t type,
+	   const radeon_debug_level_t level,
+	   const char* message,
+	   ...)
+{
+	/* Compile out if level of message is too high */
+	if (radeon_is_debug_enabled(type, level)) {
+
+		va_list values;
+		va_start( values, message );
+		vfprintf(stderr, message, values);
+		va_end( values );
+	}
+}
+
+/**
+ * printf style function for writing error messages.
+ */
+static inline void radeon_error(const char* message, ...)
+{
+       va_list values;
+       va_start( values, message );
+       radeon_print(RADEON_GENERAL, RADEON_CRITICAL, message, values);
+       va_end( values );
+}
+
+/**
+ * printf style function for writing warnings.
+ */
+static inline void radeon_warning(const char* message, ...)
+{
+       va_list values;
+       va_start( values, message );
+       radeon_print(RADEON_GENERAL, RADEON_IMPORTANT, message, values);
+       va_end( values );
+}
+
+
+extern void radeon_init_debug(void);
+
+/* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
+   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
+   with other compilers ... GLUE!
+*/
+#define WARN_ONCE(a, ...)      { \
+       static int warn##__LINE__=1; \
+       if(warn##__LINE__){ \
+               radeon_warning("*********************************WARN_ONCE*********************************\n"); \
+               radeon_warning("File %s function %s line %d\n", \
+                       __FILE__, __FUNCTION__, __LINE__); \
+               radeon_warning(  (a), ## __VA_ARGS__);\
+               radeon_warning("***************************************************************************\n"); \
+               warn##__LINE__=0;\
+               } \
+       }
+
+
+#endif
