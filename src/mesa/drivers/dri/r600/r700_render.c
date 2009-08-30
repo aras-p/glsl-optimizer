@@ -327,8 +327,8 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
     else
         dwords += state_size;
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+    radeon_print(RADEON_RENDER, RADEON_VERBOSE,
+	"%s: total prediction size is %d.\n", __FUNCTION__, dwords);
     return dwords;
 }
 
@@ -342,8 +342,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     struct vertex_buffer *vb = &tnl->vb;
     struct radeon_renderbuffer *rrb;
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: cs begin at %d\n",
+    radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s: cs begin at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
     /* always emit CB base to prevent
@@ -388,8 +387,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     radeonReleaseArrays(ctx, ~0);
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: cs end at %d\n",
+    radeon_print(RADEON_RENDER, RADEON_TRACE, "%s: cs end at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
     if ( emit_end < context->radeon.cmdbuf.cs->cdw )

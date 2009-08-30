@@ -49,6 +49,8 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	unsigned int i;
 	BATCH_LOCALS(&context->radeon);
 
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
+
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
 		radeonTexObj *t = r700->textures[i];
 		if (t) {
@@ -93,6 +95,7 @@ static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *at
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	unsigned int i;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
 		radeonTexObj *t = r700->textures[i];
@@ -115,6 +118,7 @@ static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	unsigned int i;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
 		radeonTexObj *t = r700->textures[i];
@@ -141,6 +145,7 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     context_t *context = R700_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     unsigned int uSQ_VTX_CONSTANT_WORD0_0;
     unsigned int uSQ_VTX_CONSTANT_WORD1_0;
@@ -205,6 +210,7 @@ void r700SetupStreams(GLcontext *ctx)
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
     unsigned int i, j = 0;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     R600_STATECHANGE(context, vtx);
 
@@ -229,6 +235,7 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     if (context->radeon.tcl.aos_count == 0)
 	    return;
@@ -264,6 +271,7 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_renderbuffer *rrb;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	rrb = radeon_get_depthbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
@@ -303,6 +311,7 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 	struct radeon_renderbuffer *rrb;
 	BATCH_LOCALS(&context->radeon);
 	int id = 0;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
@@ -352,6 +361,7 @@ static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
 
@@ -385,6 +395,7 @@ static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
 
@@ -416,6 +427,7 @@ static void r700SendFSState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_bo * pbo;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	/* XXX fixme
 	 * R6xx chips require a FS be emitted, even if it's not used.
@@ -457,6 +469,7 @@ static void r700SendViewportState(GLcontext *ctx, struct radeon_state_atom *atom
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 	int id = 0;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	if (id > R700_MAX_VIEWPORTS)
 		return;
@@ -489,6 +502,7 @@ static void r700SendSQConfig(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
         BEGIN_BATCH_NO_AUTOSTATE(34);
 	R600_OUT_BATCH_REGSEQ(SQ_CONFIG, 6);
@@ -526,6 +540,7 @@ static void r700SendUCPState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 	int i;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_MAX_UCP; i++) {
 		if (r700->ucp[i].enabled) {
@@ -547,6 +562,7 @@ static void r700SendSPIState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 	unsigned int ui;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	BEGIN_BATCH_NO_AUTOSTATE(59 + R700_MAX_SHADER_EXPORTS);
 
@@ -620,6 +636,7 @@ static void r700SendVGTState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
         BEGIN_BATCH_NO_AUTOSTATE(41);
 
@@ -665,6 +682,7 @@ static void r700SendSXState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
         BEGIN_BATCH_NO_AUTOSTATE(9);
 	R600_OUT_BATCH_REGVAL(SX_MISC, r700->SX_MISC.u32All);
@@ -679,6 +697,7 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
         BEGIN_BATCH_NO_AUTOSTATE(23);
 	R600_OUT_BATCH_REGVAL(DB_HTILE_DATA_BASE, r700->DB_HTILE_DATA_BASE.u32All);
@@ -720,6 +739,7 @@ static void r700SendCBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
 		BEGIN_BATCH_NO_AUTOSTATE(11);
@@ -766,6 +786,7 @@ static void r700SendCBBlendState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
 	unsigned int ui;
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
 		BEGIN_BATCH_NO_AUTOSTATE(3);
@@ -796,6 +817,7 @@ static void r700SendCBBlendColorState(GLcontext *ctx, struct radeon_state_atom *
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	BEGIN_BATCH_NO_AUTOSTATE(6);
 	R600_OUT_BATCH_REGSEQ(CB_BLEND_RED, 4);
@@ -850,6 +872,7 @@ static void r700SendCLState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	BEGIN_BATCH_NO_AUTOSTATE(12);
 	R600_OUT_BATCH_REGVAL(PA_CL_CLIP_CNTL, r700->PA_CL_CLIP_CNTL.u32All);
@@ -881,6 +904,7 @@ static void r700SendScissorState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	BEGIN_BATCH_NO_AUTOSTATE(22);
 	R600_OUT_BATCH_REGSEQ(PA_SC_SCREEN_SCISSOR_TL, 2);
@@ -913,6 +937,7 @@ static void r700SendSCState(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	BEGIN_BATCH_NO_AUTOSTATE(15);
 	R600_OUT_BATCH_REGVAL(R7xx_PA_SC_EDGERULE, r700->PA_SC_EDGERULE.u32All);
@@ -969,6 +994,7 @@ static void r700SendVSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	int i;
 	BATCH_LOCALS(&context->radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	if (r700->vs.num_consts == 0)
 		return;
@@ -999,6 +1025,7 @@ static int check_cb(GLcontext *ctx, struct radeon_state_atom *atom)
 
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
 		count += 11;
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 
 	return count;
 }
@@ -1019,6 +1046,7 @@ static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
 				count += 3;
 		}
 	}
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 
 	return count;
 }
@@ -1034,6 +1062,7 @@ static int check_ucp(GLcontext *ctx, struct radeon_state_atom *atom)
 		if (r700->ucp[i].enabled)
 			count += 6;
 	}
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count;
 }
 
@@ -1045,6 +1074,7 @@ static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 	if (count)
 		count += 6;
 
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count;
 }
 
@@ -1059,6 +1089,7 @@ static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
 		if (t)
 			count++;
 	}
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count * 31;
 }
 
@@ -1070,6 +1101,7 @@ static int check_ps_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 
 	if (count)
 		count += 2;
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 
 	return count;
 }
@@ -1082,6 +1114,7 @@ static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 
 	if (count)
 		count += 2;
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 
 	return count;
 }
@@ -1101,6 +1134,7 @@ do {									\
 
 void r600InitAtoms(context_t *context)
 {
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s %p\n", __func__, context);
 	context->radeon.hw.max_state_size = 10 + 5 + 14; /* start 3d, idle, cb/db flush */
 
 	/* Setup the atom linked list */

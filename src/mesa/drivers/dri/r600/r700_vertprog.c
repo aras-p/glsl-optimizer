@@ -38,6 +38,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 
+#include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
@@ -174,7 +175,7 @@ void Map_Vertex_Program(struct r700_vertex_program *vp,
 	// Create VFETCH instructions for inputs
 	if (GL_TRUE != Process_Vertex_Program_Vfetch_Instructions(vp, mesa_vp) ) 
 	{
-		r700_error(ERROR_ASM_VTX_CLAUSE, "Calling Process_Vertex_Program_Vfetch_Instructions return error. \n");
+		radeon_error("Calling Process_Vertex_Program_Vfetch_Instructions return error. \n");
 		return; //error
 	}
 

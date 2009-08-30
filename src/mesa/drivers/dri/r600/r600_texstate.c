@@ -567,7 +567,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 
 	if (!t->image_override) {
 		if (!r600GetTexFormat(texObj, firstImage->TexFormat->MesaFormat)) {
-			_mesa_problem(NULL, "unexpected texture format in %s",
+			radeon_error("unexpected texture format in %s\n",
 				      __FUNCTION__);
 			return;
 		}
@@ -593,7 +593,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 		SETfield(t->SQ_TEX_RESOURCE1, 0, TEX_DEPTH_shift, TEX_DEPTH_mask);
 		break;
         default:
-		_mesa_problem(NULL, "unexpected texture target type in %s", __FUNCTION__);
+		radeon_error("unexpected texture target type in %s\n", __FUNCTION__);
 		return;
 	}
 
@@ -675,9 +675,7 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 			continue;
 
 		if (!r600_validate_texture(ctx, ctx->Texture.Unit[i]._Current)) {
-			_mesa_warning(ctx,
-				      "failed to validate texture for unit %d.\n",
-				      i);
+			radeon_warning("failed to validate texture for unit %d.\n", i);
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 		if (t->image_override && t->bo)
