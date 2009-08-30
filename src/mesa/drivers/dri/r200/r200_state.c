@@ -1028,7 +1028,7 @@ void r200UpdateMaterial( GLcontext *ctx )
    if (ctx->Light.ColorMaterialEnabled)
       mask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (R200_DEBUG & DEBUG_STATE)
+   if (R200_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (mask & MAT_BIT_FRONT_EMISSION) {
@@ -1790,7 +1790,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint p, flag;
 
-   if ( R200_DEBUG & DEBUG_STATE )
+   if ( R200_DEBUG & RADEON_STATE )
       fprintf( stderr, "%s( %s = %s )\n", __FUNCTION__,
 	       _mesa_lookup_enum_by_nr( cap ),
 	       state ? "GL_TRUE" : "GL_FALSE" );
@@ -2174,7 +2174,7 @@ void r200LightingSpaceChange( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLboolean tmp;
 
-   if (R200_DEBUG & DEBUG_STATE)
+   if (R200_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s %d BEFORE %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0]);
 
@@ -2190,7 +2190,7 @@ void r200LightingSpaceChange( GLcontext *ctx )
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~R200_RESCALE_NORMALS;
    }
 
-   if (R200_DEBUG & DEBUG_STATE)
+   if (R200_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s %d AFTER %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0]);
 }
@@ -2233,7 +2233,7 @@ static void update_texturematrix( GLcontext *ctx )
    GLuint compsel = rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL];
    int unit;
 
-   if (R200_DEBUG & DEBUG_STATE)
+   if (R200_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s before COMPSEL: %x\n", __FUNCTION__,
 	      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL]);
 
@@ -2291,7 +2291,7 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
    struct radeon_dma_bo *dma_bo;
    int i, ret;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
    radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 

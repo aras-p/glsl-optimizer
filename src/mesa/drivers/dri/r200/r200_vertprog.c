@@ -423,7 +423,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
       VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
       VERT_BIT_TEX3 | VERT_BIT_TEX4 | VERT_BIT_TEX5)) != 0) {
-      if (R200_DEBUG & DEBUG_FALLBACKS) {
+      if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog inputs 0x%x\n",
 	    mesa_vp->Base.InputsRead);
       }
@@ -436,7 +436,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       (1 << VERT_RESULT_FOGC) | (1 << VERT_RESULT_TEX0) | (1 << VERT_RESULT_TEX1) |
       (1 << VERT_RESULT_TEX2) | (1 << VERT_RESULT_TEX3) | (1 << VERT_RESULT_TEX4) |
       (1 << VERT_RESULT_TEX5) | (1 << VERT_RESULT_PSIZ))) != 0) {
-      if (R200_DEBUG & DEBUG_FALLBACKS) {
+      if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog outputs 0x%x\n",
 	    mesa_vp->Base.OutputsWritten);
       }
@@ -551,7 +551,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       if (mesa_vp->Base.InputsRead & (1 << i)) {
 	 array_count++;
 	 if (array_count > 12) {
-	    if (R200_DEBUG & DEBUG_FALLBACKS) {
+	    if (R200_DEBUG & RADEON_FALLBACKS) {
 	       fprintf(stderr, "more than 12 attribs used in vert prog\n");
 	    }
 	    return GL_FALSE;
@@ -571,13 +571,13 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    }
 
    if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
-      if (R200_DEBUG & DEBUG_FALLBACKS) {
+      if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog without position output\n");
       }
       return GL_FALSE;
    }
    if (free_inputs & 1) {
-      if (R200_DEBUG & DEBUG_FALLBACKS) {
+      if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog without position input\n");
       }
       return GL_FALSE;
@@ -1070,7 +1070,7 @@ else {
 	    mesa_vp->Base.NumTemporaries + u_temp_used;
       }
       if ((mesa_vp->Base.NumTemporaries + u_temp_used) > R200_VSF_MAX_TEMPS) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS) {
+	 if (R200_DEBUG & RADEON_FALLBACKS) {
 	    fprintf(stderr, "Ran out of temps, num temps %d, us %d\n", mesa_vp->Base.NumTemporaries, u_temp_used);
 	 }
 	 return GL_FALSE;
@@ -1078,7 +1078,7 @@ else {
       u_temp_i = R200_VSF_MAX_TEMPS - 1;
       if(o_inst - vp->instr >= R200_VSF_MAX_INST) {
 	 mesa_vp->Base.NumNativeInstructions = 129;
-	 if (R200_DEBUG & DEBUG_FALLBACKS) {
+	 if (R200_DEBUG & RADEON_FALLBACKS) {
 	    fprintf(stderr, "more than 128 native instructions\n");
 	 }
 	 return GL_FALSE;

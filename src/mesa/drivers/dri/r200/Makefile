@@ -18,17 +18,18 @@ CS_SOURCES = radeon_cs_space_drm.c
 endif
 
 RADEON_COMMON_SOURCES = \
-	radeon_texture.c \
+	radeon_bo_legacy.c \
 	radeon_common_context.c \
 	radeon_common.c \
-	radeon_dma.c \
-	radeon_lock.c \
-	radeon_bo_legacy.c \
 	radeon_cs_legacy.c \
-	radeon_mipmap_tree.c \
-	radeon_span.c \
+	radeon_dma.c \
+	radeon_debug.c \
 	radeon_fbo.c \
-	radeon_queryobj.c
+	radeon_lock.c \
+	radeon_mipmap_tree.c \
+	radeon_queryobj.c \
+	radeon_span.c \
+	radeon_texture.c
 
 
 DRIVER_SOURCES = r200_context.c \

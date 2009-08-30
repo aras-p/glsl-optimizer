@@ -53,14 +53,14 @@ check_color( const GLcontext *ctx, GLenum type, GLenum format,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint cpp = rmesa->radeon.radeonScreen->cpp;
 
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (	(pitch & 63) ||
 	ctx->_ImageTransferState ||
 	packing->SwapBytes ||
 	packing->LsbFirst) {
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "%s: failed 1\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -68,12 +68,12 @@ check_color( const GLcontext *ctx, GLenum type, GLenum format,
    if ( type == GL_UNSIGNED_INT_8_8_8_8_REV &&
 	cpp == 4 &&
 	format == GL_BGRA ) {
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "%s: passed 2\n", __FUNCTION__);
       return GL_TRUE;
    }
 
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s: failed\n", __FUNCTION__);
 
    return GL_FALSE;
@@ -159,14 +159,14 @@ r200TryReadPixels( GLcontext *ctx,
    GLuint cpp = rmesa->radeon.radeonScreen->cpp;
    GLint size = width * height * cpp;
 
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    /* Only accelerate reading to GART buffers.
     */
    if ( !r200IsGartMemory(rmesa, pixels,
 			 pitch * height * rmesa->radeon.radeonScreen->cpp ) ) {
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "%s: dest not GART\n", __FUNCTION__);
    }
 
@@ -174,7 +174,7 @@ r200TryReadPixels( GLcontext *ctx,
     * blitter:
     */
    if (!pack->Invert) {
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "%s: MESA_PACK_INVERT not set\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -207,7 +207,7 @@ r200TryReadPixels( GLcontext *ctx,
    if (!clip_pixelrect(ctx, ctx->ReadBuffer, &x, &y, &width, &height,
 		       &size)) {
       UNLOCK_HARDWARE( &rmesa->radeon );
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "%s totally clipped -- nothing to do\n",
 		 __FUNCTION__);
       return GL_TRUE;
@@ -232,7 +232,7 @@ r200TryReadPixels( GLcontext *ctx,
       y += dPriv->y;
 
 
-      if (R200_DEBUG & DEBUG_PIXEL)
+      if (R200_DEBUG & RADEON_PIXEL)
 	 fprintf(stderr, "readpixel blit src_pitch %d dst_pitch %d\n",
 		 src_pitch, dst_pitch);
 
@@ -275,7 +275,7 @@ r200ReadPixels( GLcontext *ctx,
 		 const struct gl_pixelstore_attrib *pack,
 		 GLvoid *pixels )
 {
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!r200TryReadPixels( ctx, x, y, width, height, format, type, pack,
@@ -293,7 +293,7 @@ static void do_draw_pix( GLcontext *ctx,
 			 const void *pixels,
 			 GLuint planemask)
 {
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
 #if 0
@@ -388,7 +388,7 @@ r200TryDrawPixels( GLcontext *ctx,
    GLuint cpp = rmesa->radeon.radeonScreen->cpp;
    GLint size = height * pitch * cpp;
 
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    /* check that we're drawing to exactly one color buffer */
@@ -414,7 +414,7 @@ r200TryDrawPixels( GLcontext *ctx,
       /* Can't do conversions on GART reads/draws.
        */
       if ( !r200IsGartMemory( rmesa, pixels, size ) ) {
-	 if (R200_DEBUG & DEBUG_PIXEL)
+	 if (R200_DEBUG & RADEON_PIXEL)
 	    fprintf(stderr, "%s: not GART memory\n", __FUNCTION__);
 	 return GL_FALSE;
       }
@@ -457,7 +457,7 @@ r200DrawPixels( GLcontext *ctx,
 		 const struct gl_pixelstore_attrib *unpack,
 		 const GLvoid *pixels )
 {
-   if (R200_DEBUG & DEBUG_PIXEL)
+   if (R200_DEBUG & RADEON_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!r200TryDrawPixels( ctx, x, y, width, height, format, type,

@@ -416,8 +416,9 @@ static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
     }
   }
 
-  if (RADEON_DEBUG & DEBUG_PRIMS)
-     fprintf(stderr, "%s space %u, aos %d\n", __func__, space_required, AOS_BUFSZ(nr_aos) );
+  radeon_print(RADEON_RENDER,RADEON_VERBOSE,
+      "%s space %u, aos %d\n",
+      __func__, space_required, AOS_BUFSZ(nr_aos) );
   /* flush the buffer in case we need more than is left. */
   if (rcommonEnsureCmdBufSpace(&rmesa->radeon, space_required + state_size, __FUNCTION__))
     return space_required + radeonCountStateEmitSize( &rmesa->radeon );
@@ -453,8 +454,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    if (rmesa->radeon.TclFallback)
       return GL_TRUE;	/* fallback to software t&l */
 
-   if (R200_DEBUG & DEBUG_PRIMS)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+   radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s\n", __FUNCTION__);
 
    if (VB->Count == 0)
       return GL_FALSE;
@@ -650,7 +650,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] &= ~(R200_VTX_XY_FMT|R200_VTX_Z_FMT);
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] |= R200_VTX_W0_FMT;
 
-   if (R200_DEBUG & DEBUG_FALLBACKS) 
+   if (R200_DEBUG & RADEON_FALLBACKS)
       fprintf(stderr, "R200 end tcl fallback\n");
 }
 
@@ -692,7 +692,7 @@ void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    if (mode) {
       rmesa->radeon.TclFallback |= bit;
       if (oldfallback == 0) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS) 
+	 if (R200_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "R200 begin tcl fallback %s\n",
 		    getFallbackString( bit ));
 	 transition_to_swtnl( ctx );
@@ -701,7 +701,7 @@ void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    else {
       rmesa->radeon.TclFallback &= ~bit;
       if (oldfallback == bit) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS) 
+	 if (R200_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "R200 end tcl fallback %s\n",
 		    getFallbackString( bit ));
 	 transition_to_hwtnl( ctx );
