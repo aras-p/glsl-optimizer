@@ -44,6 +44,7 @@
 
 #include "compiler/radeon_compiler.h"
 
+#include "radeon_mesa_to_rc.h"
 #include "r300_state.h"
 
 
@@ -218,7 +219,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 		fflush(stderr);
 	}
 
-	rc_mesa_to_rc_program(&compiler.Base, &cont->Base.Base);
+	radeon_mesa_to_rc_program(&compiler.Base, &cont->Base.Base);
 
 	insert_WPOS_trailer(&compiler, fp);
 

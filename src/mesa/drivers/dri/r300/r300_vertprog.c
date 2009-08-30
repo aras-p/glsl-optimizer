@@ -42,6 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "compiler/radeon_compiler.h"
 #include "compiler/radeon_nqssadce.h"
+#include "radeon_mesa_to_rc.h"
 #include "r300_context.h"
 #include "r300_state.h"
 
@@ -232,7 +233,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		_mesa_insert_mvp_code(ctx, vp->Base);
 	}
 
-	rc_mesa_to_rc_program(&compiler.Base, &vp->Base->Base);
+	radeon_mesa_to_rc_program(&compiler.Base, &vp->Base->Base);
 
 	rc_move_output(&compiler.Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
 

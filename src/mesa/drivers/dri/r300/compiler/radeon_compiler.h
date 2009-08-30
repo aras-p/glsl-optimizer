@@ -67,8 +67,6 @@ void rc_destroy(struct radeon_compiler * c);
 void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
 void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
-void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program);
-
 void rc_calculate_inputs_outputs(struct radeon_compiler * c);
 
 void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input);

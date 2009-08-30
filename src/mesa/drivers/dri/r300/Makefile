@@ -53,6 +53,7 @@ DRIVER_SOURCES = \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \
 		 r300_shader.c \
+		 radeon_mesa_to_rc.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
 		 $(RADEON_COMMON_SOURCES) \

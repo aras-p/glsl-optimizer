@@ -136,32 +136,6 @@ void rc_remove_instruction(struct rc_instruction * inst)
 }
 
 
-void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program)
-{
-	struct prog_instruction *source;
-	unsigned int i;
-
-	for(source = program->Instructions; source->Opcode != OPCODE_END; ++source) {
-		struct rc_instruction * dest = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
-		dest->I = *source;
-	}
-
-	c->Program.ShadowSamplers = program->ShadowSamplers;
-	c->Program.InputsRead = program->InputsRead;
-	c->Program.OutputsWritten = program->OutputsWritten;
-
-	for(i = 0; i < program->Parameters->NumParameters; ++i) {
-		struct rc_constant constant;
-
-		constant.Type = RC_CONSTANT_EXTERNAL;
-		constant.Size = 4;
-		constant.u.External = i;
-
-		rc_constants_add(&c->Program.Constants, &constant);
-	}
-}
-
-
 /**
  * Print program to stderr, default options.
  */
