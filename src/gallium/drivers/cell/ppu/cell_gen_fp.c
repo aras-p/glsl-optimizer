@@ -1767,7 +1767,7 @@ emit_instruction(struct codegen *gen,
    case TGSI_OPCODE_MAD:
       return emit_MAD(gen, inst);
    case TGSI_OPCODE_LERP:
-      return emit_LERP(gen, inst);
+      return emit_LRP(gen, inst);
    case TGSI_OPCODE_DP3:
       return emit_DP3(gen, inst);
    case TGSI_OPCODE_DP4:
@@ -1810,9 +1810,9 @@ emit_instruction(struct codegen *gen,
       return emit_function_call(gen, inst, "spu_sin", 1, TRUE);
    case TGSI_OPCODE_POW:
       return emit_function_call(gen, inst, "spu_pow", 2, TRUE);
-   case TGSI_OPCODE_EXPBASE2:
+   case TGSI_OPCODE_EX2:
       return emit_function_call(gen, inst, "spu_exp2", 1, TRUE);
-   case TGSI_OPCODE_LOGBASE2:
+   case TGSI_OPCODE_LG2:
       return emit_function_call(gen, inst, "spu_log2", 1, TRUE);
    case TGSI_OPCODE_TEX:
       /* fall-through for now */
