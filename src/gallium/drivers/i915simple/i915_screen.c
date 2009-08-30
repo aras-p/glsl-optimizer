@@ -198,93 +198,6 @@ i915_destroy_screen(struct pipe_screen *screen)
    FREE(screen);
 }
 
-static struct pipe_transfer*
-i915_get_tex_transfer(struct pipe_screen *screen,
-                      struct pipe_texture *texture,
-                      unsigned face, unsigned level, unsigned zslice,
-                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
-                      unsigned w, unsigned h)
-{
-   struct i915_texture *tex = (struct i915_texture *)texture;
-   struct i915_transfer *trans;
-   unsigned offset;  /* in bytes */
-
-   if (texture->target == PIPE_TEXTURE_CUBE) {
-      offset = tex->image_offset[level][face];
-   }
-   else if (texture->target == PIPE_TEXTURE_3D) {
-      offset = tex->image_offset[level][zslice];
-   }
-   else {
-      offset = tex->image_offset[level][0];
-      assert(face == 0);
-      assert(zslice == 0);
-   }
-
-   trans = CALLOC_STRUCT(i915_transfer);
-   if (trans) {
-      pipe_texture_reference(&trans->base.texture, texture);
-      trans->base.format = trans->base.format;
-      trans->base.x = x;
-      trans->base.y = y;
-      trans->base.width = w;
-      trans->base.height = h;
-      trans->base.block = texture->block;
-      trans->base.nblocksx = texture->nblocksx[level];
-      trans->base.nblocksy = texture->nblocksy[level];
-      trans->base.stride = tex->stride;
-      trans->offset = offset;
-      trans->base.usage = usage;
-   }
-   return &trans->base;
-}
-
-static void
-i915_tex_transfer_destroy(struct pipe_transfer *trans)
-{
-   pipe_texture_reference(&trans->texture, NULL);
-   FREE(trans);
-}
-
-static void *
-i915_transfer_map( struct pipe_screen *screen,
-                   struct pipe_transfer *transfer )
-{
-   struct i915_texture *tex = (struct i915_texture *)transfer->texture;
-   char *map;
-   unsigned flags = 0;
-
-   if (transfer->usage != PIPE_TRANSFER_WRITE)
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-
-   if (transfer->usage != PIPE_TRANSFER_READ)
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-
-   map = pipe_buffer_map( screen, tex->buffer, flags );
-   if (map == NULL)
-      return NULL;
-
-   if (transfer->texture &&
-       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
-   {
-      /* Do something to notify contexts of a texture change.  
-       */
-      /* i915_screen(screen)->timestamp++; */
-   }
-   
-   return map + i915_transfer(transfer)->offset +
-      transfer->y / transfer->block.height * transfer->stride +
-      transfer->x / transfer->block.width * transfer->block.size;
-}
-
-static void
-i915_transfer_unmap(struct pipe_screen *screen,
-                    struct pipe_transfer *transfer)
-{
-   struct i915_texture *tex = (struct i915_texture *)transfer->texture;
-   pipe_buffer_unmap( screen, tex->buffer );
-}
-
 /**
  * Create a new i915_screen object
  */
@@ -328,10 +241,6 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    is->base.get_param = i915_get_param;
    is->base.get_paramf = i915_get_paramf;
    is->base.is_format_supported = i915_is_format_supported;
-   is->base.get_tex_transfer = i915_get_tex_transfer;
-   is->base.tex_transfer_destroy = i915_tex_transfer_destroy;
-   is->base.transfer_map = i915_transfer_map;
-   is->base.transfer_unmap = i915_transfer_unmap;
 
    i915_init_screen_texture_functions(is);
    u_simple_screen_init(&is->base);
