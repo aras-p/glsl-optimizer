@@ -44,9 +44,11 @@
 #include "i915_screen.h"
 #include "i915_winsys.h"
 
+
 /*
  * Helper function and arrays
  */
+
 
 /**
  * Initial offset for Cube map.
@@ -487,7 +489,6 @@ i915_miptree_layout(struct i915_texture * tex)
    return TRUE;
 }
 
-
 static boolean
 i945_miptree_layout(struct i915_texture * tex)
 {
@@ -575,6 +576,11 @@ i945_miptree_layout(struct i915_texture * tex)
 }
 
 
+/*
+ * Screen texture functions
+ */
+
+
 static struct pipe_texture *
 i915_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
@@ -629,6 +635,39 @@ fail:
    return NULL;
 }
 
+static struct pipe_texture *
+i915_texture_blanket(struct pipe_screen * screen,
+                     const struct pipe_texture *base,
+                     const unsigned *stride,
+                     struct pipe_buffer *buffer)
+{
+   struct i915_texture *tex;
+   assert(screen);
+
+   /* Only supports one type */
+   if (base->target != PIPE_TEXTURE_2D ||
+       base->last_level != 0 ||
+       base->depth[0] != 1) {
+      return NULL;
+   }
+
+   tex = CALLOC_STRUCT(i915_texture);
+   if (!tex)
+      return NULL;
+
+   tex->base = *base;
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->base.screen = screen;
+
+   tex->stride = stride[0];
+
+   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
+   i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
+
+   pipe_buffer_reference(&tex->buffer, buffer);
+
+   return &tex->base;
+}
 
 static void
 i915_texture_destroy(struct pipe_texture *pt)
@@ -648,6 +687,12 @@ i915_texture_destroy(struct pipe_texture *pt)
 
    FREE(tex);
 }
+
+
+/*
+ * Screen surface functions
+ */
+
 
 static struct pipe_surface *
 i915_get_tex_surface(struct pipe_screen *screen,
@@ -684,40 +729,6 @@ i915_get_tex_surface(struct pipe_screen *screen,
    return ps;
 }
 
-static struct pipe_texture *
-i915_texture_blanket(struct pipe_screen * screen,
-                     const struct pipe_texture *base,
-                     const unsigned *stride,
-                     struct pipe_buffer *buffer)
-{
-   struct i915_texture *tex;
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth[0] != 1) {
-      return NULL;
-   }
-
-   tex = CALLOC_STRUCT(i915_texture);
-   if (!tex)
-      return NULL;
-
-   tex->base = *base;
-   pipe_reference_init(&tex->base.reference, 1);
-   tex->base.screen = screen;
-
-   tex->stride = stride[0];
-
-   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
-   i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
-
-   pipe_buffer_reference(&tex->buffer, buffer);
-
-   return &tex->base;
-}
-
 static void
 i915_tex_surface_destroy(struct pipe_surface *surf)
 {
@@ -725,13 +736,19 @@ i915_tex_surface_destroy(struct pipe_surface *surf)
    FREE(surf);
 }
 
+
+/*
+ * Other texture functions
+ */
+
+
 void
 i915_init_screen_texture_functions(struct i915_screen *is)
 {
    is->base.texture_create = i915_texture_create;
+   is->base.texture_blanket = i915_texture_blanket;
    is->base.texture_destroy = i915_texture_destroy;
    is->base.get_tex_surface = i915_get_tex_surface;
-   is->base.texture_blanket = i915_texture_blanket;
    is->base.tex_surface_destroy = i915_tex_surface_destroy;
 }
 
