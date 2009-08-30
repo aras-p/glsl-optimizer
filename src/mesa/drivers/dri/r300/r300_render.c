@@ -221,7 +221,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
 	int i;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
@@ -447,7 +447,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
-			if (RADEON_DEBUG & DEBUG_FALLBACKS)
+			if (RADEON_DEBUG & RADEON_FALLBACKS)
 				_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
 			fallback_warn |= bit;
 		}

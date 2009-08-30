@@ -274,7 +274,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 		return;
 	}
 
-        if (RADEON_DEBUG & DEBUG_STATE)
+        if (RADEON_DEBUG & RADEON_STATE)
            fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
 	cbpitch = (rrb->pitch / rrb->cpp);
 	if (rrb->cpp == 4)
@@ -494,7 +494,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->radeon.hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
-	if (RADEON_DEBUG & DEBUG_TEXTURE) {
+	if (RADEON_DEBUG & RADEON_TEXTURE) {
 		fprintf(stderr, "Using %d maximum texture units..\n", mtu);
 	}
 

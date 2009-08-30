@@ -202,7 +202,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	struct r300_fragment_program_compiler compiler;
 
 	rc_init(&compiler.Base);
-	compiler.Base.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
+	compiler.Base.Debug = (RADEON_DEBUG & RADEON_PIXEL) ? GL_TRUE : GL_FALSE;
 
 	compiler.code = &fp->code;
 	compiler.state = fp->state;

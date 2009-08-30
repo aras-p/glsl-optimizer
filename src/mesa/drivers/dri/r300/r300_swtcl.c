@@ -80,10 +80,11 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	GLuint fp_reads = rmesa->selected_fp->InputsRead;
 	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
 
+	radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __func__);
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
 	rmesa->radeon.swtcl.vertex_attr_count = 0;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s\n", __func__);
 
 	/* We always want non Ndc coords format */
@@ -229,6 +230,7 @@ static void r300PrepareVertices(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint InputsRead, OutputsWritten;
+	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
 
 	r300ChooseSwtclVertexFormat(ctx, &InputsRead, &OutputsWritten);
 	r300SetupVAP(ctx, InputsRead, OutputsWritten);
@@ -262,6 +264,10 @@ static void r300_predict_emit_size( r300ContextPtr rmesa )
 
 		rmesa->radeon.swtcl.emit_prediction += rmesa->radeon.cmdbuf.cs->cdw
 			+ vertex_size + scissor_size + prim_size + cache_flush_size * 2 + pre_emit_state;
+		radeon_print(RADEON_SWRENDER, RADEON_VERBOSE,
+				"%s, size %d\n",
+				__func__, rmesa->radeon.cmdbuf.cs->cdw
+				+ vertex_size + scissor_size + prim_size + cache_flush_size * 2 + pre_emit_state);
 	}
 }
 
@@ -498,8 +504,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint index = 0;
 	GLuint flags = ctx->_TriangleCaps;
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __func__);
 
 	if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
@@ -526,8 +531,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 
 void r300RenderStart(GLcontext *ctx)
 {
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
@@ -554,8 +558,7 @@ void r300RenderFinish(GLcontext *ctx)
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
 
 	if (rmesa->radeon.swtcl.hw_primitive != hwprim) {
 		R300_NEWPRIM( rmesa );
@@ -568,8 +571,7 @@ void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->radeon.swtcl.render_primitive = prim;
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
 
 	if ((prim == GL_TRIANGLES) && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
 		return;
@@ -579,7 +581,7 @@ void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 void r300ResetLineStipple(GLcontext *ctx)
 {
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s\n", __func__);
 }
 
@@ -588,8 +590,7 @@ void r300InitSwtcl(GLcontext *ctx)
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	static int firsttime = 1;
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_NORMAL, "%s\n", __func__);
 
 	if (firsttime) {
 		init_rast_tab();
@@ -628,8 +629,8 @@ static void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct r
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
+	radeon_print(RADEON_SWRENDER, RADEON_TRACE,
+		"%s:  vertex_size %d, offset 0x%x \n",
 			__FUNCTION__, vertex_size, offset);
 
 	BEGIN_BATCH(7);
@@ -644,7 +645,7 @@ static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vert
 {
 	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s\n", __func__);
 
 	type = r300PrimitiveType(rmesa, primitive);
@@ -658,8 +659,7 @@ static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vert
 
 void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s\n", __func__);
+	radeon_print(RADEON_SWRENDER, RADEON_TRACE, "%s\n", __func__);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	r300EmitCacheFlush(rmesa);
