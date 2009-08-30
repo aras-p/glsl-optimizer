@@ -40,19 +40,18 @@
 
 
 static const char *
-i915_get_vendor( struct pipe_screen *pscreen )
+i915_get_vendor(struct pipe_screen *screen)
 {
    return "Tungsten Graphics, Inc.";
 }
 
-
 static const char *
-i915_get_name( struct pipe_screen *pscreen )
+i915_get_name(struct pipe_screen *screen)
 {
    static char buffer[128];
    const char *chipset;
 
-   switch (i915_screen(pscreen)->pci_id) {
+   switch (i915_screen(screen)->pci_id) {
    case PCI_CHIP_I915_G:
       chipset = "915G";
       break;
@@ -85,7 +84,6 @@ i915_get_name( struct pipe_screen *pscreen )
    util_snprintf(buffer, sizeof(buffer), "i915 (chipset: %s)", chipset);
    return buffer;
 }
-
 
 static int
 i915_get_param(struct pipe_screen *screen, int param)
@@ -122,7 +120,6 @@ i915_get_param(struct pipe_screen *screen, int param)
    }
 }
 
-
 static float
 i915_get_paramf(struct pipe_screen *screen, int param)
 {
@@ -148,13 +145,12 @@ i915_get_paramf(struct pipe_screen *screen, int param)
    }
 }
 
-
 static boolean
-i915_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, 
-                          enum pipe_texture_target target,
-                          unsigned tex_usage, 
-                          unsigned geom_flags )
+i915_is_format_supported(struct pipe_screen *screen,
+                         enum pipe_format format, 
+                         enum pipe_texture_target target,
+                         unsigned tex_usage, 
+                         unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -173,7 +169,6 @@ i915_is_format_supported( struct pipe_screen *screen,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
-      /*PIPE_FORMAT_R16G16B16A16_SNORM,*/
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
@@ -192,9 +187,8 @@ i915_is_format_supported( struct pipe_screen *screen,
    return FALSE;
 }
 
-
 static void
-i915_destroy_screen( struct pipe_screen *screen )
+i915_destroy_screen(struct pipe_screen *screen)
 {
    struct pipe_winsys *winsys = screen->winsys;
 
@@ -203,7 +197,6 @@ i915_destroy_screen( struct pipe_screen *screen )
 
    FREE(screen);
 }
-
 
 static struct pipe_transfer*
 i915_get_tex_transfer(struct pipe_screen *screen,
@@ -292,23 +285,21 @@ i915_transfer_unmap(struct pipe_screen *screen,
    pipe_buffer_unmap( screen, tex->buffer );
 }
 
-
-
 /**
  * Create a new i915_screen object
  */
 struct pipe_screen *
 i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
 {
-   struct i915_screen *i915screen = CALLOC_STRUCT(i915_screen);
+   struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
-   if (!i915screen)
+   if (!is)
       return NULL;
 
    switch (pci_id) {
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
-      i915screen->is_i945 = FALSE;
+      is->is_i945 = FALSE;
       break;
 
    case PCI_CHIP_I945_G:
@@ -317,7 +308,7 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    case PCI_CHIP_G33_G:
    case PCI_CHIP_Q33_G:
    case PCI_CHIP_Q35_G:
-      i915screen->is_i945 = TRUE;
+      is->is_i945 = TRUE;
       break;
 
    default:
@@ -326,24 +317,24 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
       return NULL;
    }
 
-   i915screen->pci_id = pci_id;
+   is->pci_id = pci_id;
 
-   i915screen->base.winsys = winsys;
+   is->base.winsys = winsys;
 
-   i915screen->base.destroy = i915_destroy_screen;
+   is->base.destroy = i915_destroy_screen;
 
-   i915screen->base.get_name = i915_get_name;
-   i915screen->base.get_vendor = i915_get_vendor;
-   i915screen->base.get_param = i915_get_param;
-   i915screen->base.get_paramf = i915_get_paramf;
-   i915screen->base.is_format_supported = i915_is_format_supported;
-   i915screen->base.get_tex_transfer = i915_get_tex_transfer;
-   i915screen->base.tex_transfer_destroy = i915_tex_transfer_destroy;
-   i915screen->base.transfer_map = i915_transfer_map;
-   i915screen->base.transfer_unmap = i915_transfer_unmap;
+   is->base.get_name = i915_get_name;
+   is->base.get_vendor = i915_get_vendor;
+   is->base.get_param = i915_get_param;
+   is->base.get_paramf = i915_get_paramf;
+   is->base.is_format_supported = i915_is_format_supported;
+   is->base.get_tex_transfer = i915_get_tex_transfer;
+   is->base.tex_transfer_destroy = i915_tex_transfer_destroy;
+   is->base.transfer_map = i915_transfer_map;
+   is->base.transfer_unmap = i915_transfer_unmap;
 
-   i915_init_screen_texture_functions(i915screen);
-   u_simple_screen_init(&i915screen->base);
+   i915_init_screen_texture_functions(is);
+   u_simple_screen_init(&is->base);
 
-   return &i915screen->base;
+   return &is->base;
 }

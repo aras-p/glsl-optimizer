@@ -25,18 +25,11 @@
  * 
  **************************************************************************/
 
-
 #ifndef I915_SCREEN_H
 #define I915_SCREEN_H
 
-
 #include "pipe/p_state.h"
 #include "pipe/p_screen.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /**
@@ -50,7 +43,6 @@ struct i915_screen
    uint pci_id;
 };
 
-
 /**
  * Subclass of pipe_transfer
  */
@@ -62,7 +54,11 @@ struct i915_transfer
 };
 
 
-/** cast wrappers */
+/*
+ * Cast wrappers
+ */
+
+
 static INLINE struct i915_screen *
 i915_screen(struct pipe_screen *pscreen)
 {
@@ -70,14 +66,10 @@ i915_screen(struct pipe_screen *pscreen)
 }
 
 static INLINE struct i915_transfer *
-i915_transfer( struct pipe_transfer *transfer )
+i915_transfer(struct pipe_transfer *transfer)
 {
    return (struct i915_transfer *)transfer;
 }
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* I915_SCREEN_H */
