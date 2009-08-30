@@ -42,13 +42,11 @@
 #include "draw/draw_vbuf.h"
 #include "util/u_debug.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
-#include "i915_winsys.h"
 #include "i915_batch.h"
 #include "i915_state.h"
 
@@ -74,7 +72,7 @@ struct i915_vbuf_render {
    unsigned fallback;
 
    /* Stuff for the vbo */
-   struct pipe_buffer *vbo;
+   struct intel_buffer *vbo;
    size_t vbo_size;
    size_t vbo_offset;
    void *vbo_ptr;
@@ -114,7 +112,7 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->base.screen;
+   struct intel_winsys *iws = i915->iws;
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
    /* FIXME: handle failure */
@@ -123,17 +121,17 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
    if (i915_render->vbo_size > size + i915_render->vbo_offset && !i915->vbo_flushed) {
    } else {
       i915->vbo_flushed = 0;
-      if (i915_render->vbo)
-         pipe_buffer_reference(&i915_render->vbo, NULL);
+      if (i915_render->vbo) {
+         iws->buffer_destroy(iws, i915_render->vbo);
+         i915_render->vbo = NULL;
+      }
    }
 
    if (!i915_render->vbo) {
       i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
       i915_render->vbo_offset = 0;
-      i915_render->vbo = pipe_buffer_create(screen,
-                                            64,
-                                            I915_BUFFER_USAGE_LIT_VERTEX,
-                                            i915_render->vbo_size);
+      i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size, 64,
+                                            INTEL_NEW_VERTEX);
 
    }
 
@@ -152,14 +150,12 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->base.screen;
+   struct intel_winsys *iws = i915->iws;
 
    if (i915->vbo_flushed)
       debug_printf("%s bad vbo flush occured stalling on hw\n");
 
-   i915_render->vbo_ptr = pipe_buffer_map(screen,
-                                          i915_render->vbo,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+   i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
 
    return (unsigned char *)i915_render->vbo_ptr + i915->vbo_offset;
 }
@@ -171,10 +167,10 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_screen *screen = i915->base.screen;
+   struct intel_winsys *iws = i915->iws;
 
    i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
-   pipe_buffer_unmap(screen, i915_render->vbo);
+   iws->buffer_unmap(iws, i915_render->vbo);
 }
 
 static boolean
@@ -507,7 +503,7 @@ static struct vbuf_render *
 i915_vbuf_render_create(struct i915_context *i915)
 {
    struct i915_vbuf_render *i915_render = CALLOC_STRUCT(i915_vbuf_render);
-   struct pipe_screen *screen = i915->base.screen;
+   struct intel_winsys *iws = i915->iws;
 
    i915_render->i915 = i915;
    
@@ -531,14 +527,11 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->vbo_alloc_size = 128 * 4096;
    i915_render->vbo_size = i915_render->vbo_alloc_size;
    i915_render->vbo_offset = 0;
-   i915_render->vbo = pipe_buffer_create(screen,
-                                         64,
-                                         I915_BUFFER_USAGE_LIT_VERTEX,
-                                         i915_render->vbo_size);
-   i915_render->vbo_ptr = pipe_buffer_map(screen,
-                                          i915_render->vbo,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE);
-   pipe_buffer_unmap(screen, i915_render->vbo);
+   i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size, 64,
+                                         INTEL_NEW_VERTEX);
+   /* TODO JB: is this realy needed? */
+   i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
+   iws->buffer_unmap(iws, i915_render->vbo);
 
    return &i915_render->base;
 }

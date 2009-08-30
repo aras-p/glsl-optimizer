@@ -42,7 +42,7 @@
 #include "i915_texture.h"
 #include "i915_debug.h"
 #include "i915_screen.h"
-#include "i915_winsys.h"
+#include "intel_winsys.h"
 
 
 /*
@@ -173,27 +173,22 @@ i915_scanout_layout(struct i915_texture *tex)
                                1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-#if 0 /* TODO use this code when backend is smarter */
    if (tex->base.width[0] >= 240) {
       tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
       tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
-#else
-   if (tex->base.width[0] >= 240) {
-      tex->stride = 2048 * 4;
-      tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
-#endif
+      tex->hw_tiled = INTEL_TILE_X;
    } else if (tex->base.width[0] == 64 && tex->base.height[0] == 64) {
       tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
       tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
    } else {
-      return 0;
+      return FALSE;
    }
 
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
       tex->base.width[0], tex->base.height[0], pt->block.size,
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
 
-   return 1;
+   return TRUE;
 }
 
 static void
@@ -596,7 +591,8 @@ static struct pipe_texture *
 i915_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
 {
-   struct i915_screen *i915screen = i915_screen(screen);
+   struct i915_screen *is = i915_screen(screen);
+   struct intel_winsys *iws = is->iws;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
    size_t tex_size;
    unsigned buf_usage = 0;
@@ -611,7 +607,7 @@ i915_texture_create(struct pipe_screen *screen,
    tex->base.nblocksx[0] = pf_get_nblocksx(&tex->base.block, tex->base.width[0]);
    tex->base.nblocksy[0] = pf_get_nblocksy(&tex->base.block, tex->base.height[0]);
    
-   if (i915screen->is_i945) {
+   if (is->is_i945) {
       if (!i945_miptree_layout(tex))
          goto fail;
    } else {
@@ -621,17 +617,25 @@ i915_texture_create(struct pipe_screen *screen,
 
    tex_size = tex->stride * tex->total_nblocksy;
 
-   buf_usage = PIPE_BUFFER_USAGE_PIXEL;
 
-   /* for scanouts and cursors, cursors don't have the scanout tag */
+
+   /* for scanouts and cursors, cursors arn't scanouts */
    if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY && templat->width[0] != 64)
-      buf_usage |= I915_BUFFER_USAGE_SCANOUT;
+      buf_usage = INTEL_NEW_SCANOUT;
+   else
+      buf_usage = INTEL_NEW_TEXTURE;
 
-   tex->buffer = screen->buffer_create(screen, 64, buf_usage, tex_size);
-
+   tex->buffer = iws->buffer_create(iws, tex_size, 64, buf_usage);
    if (!tex->buffer)
       goto fail;
 
+   /* setup any hw fences */
+   if (tex->hw_tiled) {
+      assert(tex->sw_tiled == INTEL_TILE_NONE);
+      iws->buffer_set_fence_reg(iws, tex->buffer, tex->stride, tex->hw_tiled);
+   }
+
+   
 #if 0
    void *ptr = ws->buffer_map(ws, tex->buffer,
       PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -652,6 +656,7 @@ i915_texture_blanket(struct pipe_screen * screen,
                      const unsigned *stride,
                      struct pipe_buffer *buffer)
 {
+#if 0
    struct i915_texture *tex;
    assert(screen);
 
@@ -678,19 +683,23 @@ i915_texture_blanket(struct pipe_screen * screen,
    pipe_buffer_reference(&tex->buffer, buffer);
 
    return &tex->base;
+#else
+   return NULL;
+#endif
 }
 
 static void
 i915_texture_destroy(struct pipe_texture *pt)
 {
    struct i915_texture *tex = (struct i915_texture *)pt;
+   struct intel_winsys *iws = i915_screen(pt->screen)->iws;
    uint i;
 
    /*
      DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
    */
 
-   pipe_buffer_reference(&tex->buffer, NULL);
+   iws->buffer_destroy(iws, tex->buffer);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
       if (tex->image_offset[i])
@@ -799,23 +808,17 @@ i915_transfer_map(struct pipe_screen *screen,
                   struct pipe_transfer *transfer)
 {
    struct i915_texture *tex = (struct i915_texture *)transfer->texture;
+   struct intel_winsys *iws = i915_screen(tex->base.screen)->iws;
    char *map;
-   unsigned flags = 0;
-
-   if (transfer->usage != PIPE_TRANSFER_WRITE)
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+   boolean write = FALSE;
 
    if (transfer->usage != PIPE_TRANSFER_READ)
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+      write = TRUE;
 
-   map = pipe_buffer_map(screen, tex->buffer, flags);
+   map = iws->buffer_map(iws, tex->buffer, write);
    if (map == NULL)
       return NULL;
 
-   if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
-      /* XXX Do something to notify contexts of a texture change. */
-   }
-   
    return map + i915_transfer(transfer)->offset +
       transfer->y / transfer->block.height * transfer->stride +
       transfer->x / transfer->block.width * transfer->block.size;
@@ -826,7 +829,8 @@ i915_transfer_unmap(struct pipe_screen *screen,
                     struct pipe_transfer *transfer)
 {
    struct i915_texture *tex = (struct i915_texture *)transfer->texture;
-   pipe_buffer_unmap(screen, tex->buffer);
+   struct intel_winsys *iws = i915_screen(tex->base.screen)->iws;
+   iws->buffer_unmap(iws, tex->buffer);
 }
 
 static void
@@ -856,19 +860,52 @@ i915_init_screen_texture_functions(struct i915_screen *is)
    is->base.tex_transfer_destroy = i915_tex_transfer_destroy;
 }
 
-boolean i915_get_texture_buffer(struct pipe_texture *texture,
-                                struct pipe_buffer **buf,
-                                unsigned *stride)
+struct pipe_texture *
+i915_texture_blanket_intel(struct pipe_screen *screen,
+                           struct pipe_texture *base,
+                           unsigned stride,
+                           struct intel_buffer *buffer)
+{
+   struct i915_texture *tex;
+   assert(screen);
+
+   /* Only supports one type */
+   if (base->target != PIPE_TEXTURE_2D ||
+       base->last_level != 0 ||
+       base->depth[0] != 1) {
+      return NULL;
+   }
+
+   tex = CALLOC_STRUCT(i915_texture);
+   if (!tex)
+      return NULL;
+
+   tex->base = *base;
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->base.screen = screen;
+
+   tex->stride = stride;
+
+   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
+   i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
+
+   tex->buffer = buffer;
+
+   return &tex->base;
+}
+
+boolean
+i915_get_texture_buffer_intel(struct pipe_texture *texture,
+                              struct intel_buffer **buffer,
+                              unsigned *stride)
 {
    struct i915_texture *tex = (struct i915_texture *)texture;
 
-   if (!tex)
+   if (!texture)
       return FALSE;
 
-   pipe_buffer_reference(buf, tex->buffer);
-
-   if (stride)
-      *stride = tex->stride;
+   *stride = tex->stride;
+   *buffer = tex->buffer;
 
    return TRUE;
 }

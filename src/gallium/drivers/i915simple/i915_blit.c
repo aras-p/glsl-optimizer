@@ -26,7 +26,6 @@
  **************************************************************************/
 
 
-#include "i915_winsys.h"
 #include "i915_blit.h"
 #include "i915_reg.h"
 #include "i915_batch.h"
@@ -38,7 +37,7 @@ void
 i915_fill_blit(struct i915_context *i915,
                unsigned cpp,
                unsigned short dst_pitch,
-               struct pipe_buffer *dst_buffer,
+               struct intel_buffer *dst_buffer,
                unsigned dst_offset,
                short x, short y, 
                short w, short h, 
@@ -78,7 +77,7 @@ i915_fill_blit(struct i915_context *i915,
    OUT_BATCH(BR13);
    OUT_BATCH((y << 16) | x);
    OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer, I915_BUFFER_ACCESS_WRITE, dst_offset);
+   OUT_RELOC(dst_buffer, INTEL_USAGE_2D_TARGET, dst_offset);
    OUT_BATCH(color);
    FLUSH_BATCH(NULL);
 }
@@ -88,10 +87,10 @@ i915_copy_blit(struct i915_context *i915,
                unsigned do_flip,
                unsigned cpp,
                unsigned short src_pitch,
-               struct pipe_buffer *src_buffer,
+               struct intel_buffer *src_buffer,
                unsigned src_offset,
                unsigned short dst_pitch,
-               struct pipe_buffer *dst_buffer,
+               struct intel_buffer *dst_buffer,
                unsigned dst_offset,
                short src_x, short src_y,
                short dst_x, short dst_y, 
@@ -144,9 +143,9 @@ i915_copy_blit(struct i915_context *i915,
    OUT_BATCH(BR13);
    OUT_BATCH((dst_y << 16) | dst_x);
    OUT_BATCH((dst_y2 << 16) | dst_x2);
-   OUT_RELOC(dst_buffer, I915_BUFFER_ACCESS_WRITE, dst_offset);
+   OUT_RELOC(dst_buffer, INTEL_USAGE_2D_TARGET, dst_offset);
    OUT_BATCH((src_y << 16) | src_x);
    OUT_BATCH(((int) src_pitch & 0xffff));
-   OUT_RELOC(src_buffer, I915_BUFFER_ACCESS_READ, src_offset);
+   OUT_RELOC(src_buffer, INTEL_USAGE_2D_SOURCE, src_offset);
    FLUSH_BATCH(NULL);
 }

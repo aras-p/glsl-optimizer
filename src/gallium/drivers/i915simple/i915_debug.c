@@ -27,7 +27,6 @@
 
 #include "i915_reg.h"
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_debug.h"
 #include "i915_batch.h"
 #include "pipe/internal/p_winsys_screen.h"
@@ -864,7 +863,7 @@ static boolean i915_debug_packet( struct debug_stream *stream )
 
 
 void
-i915_dump_batchbuffer( struct i915_batchbuffer *batch )
+i915_dump_batchbuffer( struct intel_batchbuffer *batch )
 {
    struct debug_stream stream;
    unsigned *start = (unsigned*)batch->map;

@@ -28,7 +28,6 @@
 
 #include "i915_reg.h"
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_batch.h"
 #include "i915_reg.h"
 
@@ -183,7 +182,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       
       if(i915->vbo)
          OUT_RELOC(i915->vbo,
-                   I915_BUFFER_ACCESS_READ,
+                   INTEL_USAGE_VERTEX,
                    i915->current.immediate[I915_IMMEDIATE_S0]);
       else
          /* FIXME: we should not do this */
@@ -216,7 +215,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                                     cbuf_surface->texture;
          assert(tex);
 
-         if (tex && tex->tiled) {
+         if (tex && tex->sw_tiled) {
             ctile = BUF_3D_TILED_SURFACE;
          }
 
@@ -227,7 +226,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    ctile);
 
          OUT_RELOC(tex->buffer,
-                   I915_BUFFER_ACCESS_WRITE,
+                   INTEL_USAGE_RENDER,
                    cbuf_surface->offset);
       }
 
@@ -239,7 +238,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                                     depth_surface->texture;
          assert(tex);
 
-         if (tex && tex->tiled) {
+         if (tex && tex->sw_tiled) {
             ztile = BUF_3D_TILED_SURFACE;
          }
 
@@ -250,7 +249,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    ztile);
 
          OUT_RELOC(tex->buffer,
-                   I915_BUFFER_ACCESS_WRITE,
+                   INTEL_USAGE_RENDER,
                    depth_surface->offset);
       }
    
@@ -290,16 +289,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
             OUT_BATCH(enabled);
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
-                  struct pipe_buffer *buf =
-                     i915->texture[unit]->buffer;
+                  struct intel_buffer *buf = i915->texture[unit]->buffer;
                   uint offset = 0;
                   assert(buf);
 
                   count++;
 
-                  OUT_RELOC(buf,
-                            I915_BUFFER_ACCESS_READ,
-                            offset);
+                  OUT_RELOC(buf, INTEL_USAGE_SAMPLER, offset);
                   OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
                   OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
                }

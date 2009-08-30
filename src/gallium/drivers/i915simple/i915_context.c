@@ -26,8 +26,8 @@
  **************************************************************************/
 
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_state.h"
+#include "i915_screen.h"
 #include "i915_batch.h"
 #include "i915_texture.h"
 #include "i915_reg.h"
@@ -178,16 +178,14 @@ static void i915_destroy(struct pipe_context *pipe)
 
    draw_destroy(i915->draw);
    
-   if(i915->winsys->destroy)
-      i915->winsys->destroy(i915->winsys);
+   if(i915->batch)
+      i915->iws->batchbuffer_destroy(i915->batch);
 
    FREE(i915);
 }
 
 struct pipe_context *
-i915_create_context(struct pipe_screen *screen,
-                    struct pipe_winsys *pipe_winsys,
-                    struct i915_winsys *i915_winsys)
+i915_create_context(struct pipe_screen *screen)
 {
    struct i915_context *i915;
 
@@ -195,8 +193,8 @@ i915_create_context(struct pipe_screen *screen,
    if (i915 == NULL)
       return NULL;
 
-   i915->winsys = i915_winsys;
-   i915->base.winsys = pipe_winsys;
+   i915->iws = i915_screen(screen)->iws;
+   i915->base.winsys = NULL;
    i915->base.screen = screen;
 
    i915->base.destroy = i915_destroy;
@@ -233,8 +231,7 @@ i915_create_context(struct pipe_screen *screen,
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
-   i915->batch = i915_winsys->batch_get(i915_winsys);
-   i915->batch->winsys = i915_winsys;
+   i915->batch = i915->iws->batchbuffer_create(i915->iws);
 
    return &i915->base;
 }

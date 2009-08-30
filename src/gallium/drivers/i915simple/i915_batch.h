@@ -28,89 +28,20 @@
 #ifndef I915_BATCH_H
 #define I915_BATCH_H
 
-#include "i915_winsys.h"
+#include "intel_batchbuffer.h"
 
-struct i915_batchbuffer
-{
-   struct pipe_buffer *buffer;
-   struct i915_winsys *winsys;
+#define BEGIN_BATCH(dwords, relocs) \
+   (intel_batchbuffer_check(i915->batch, dwords, relocs))
 
-   unsigned char *map;
-   unsigned char *ptr;
+#define OUT_BATCH(dword) \
+   intel_batchbuffer_dword(i915->batch, dword)
 
-   size_t size;
-   size_t actual_size;
+#define OUT_RELOC(buf, usage, offset) \
+   intel_batchbuffer_reloc(i915->batch, buf, usage, offset)
 
-   size_t relocs;
-   size_t max_relocs;
-};
-
-static INLINE boolean
-i915_batchbuffer_check( struct i915_batchbuffer *batch,
-			size_t dwords,
-			size_t relocs )
-{
-   return dwords * 4 <= batch->size - (batch->ptr - batch->map) &&
-          relocs <= (batch->max_relocs - batch->relocs);
-}
-
-static INLINE size_t
-i915_batchbuffer_space( struct i915_batchbuffer *batch )
-{
-   return batch->size - (batch->ptr - batch->map);
-}
-
-static INLINE void
-i915_batchbuffer_dword( struct i915_batchbuffer *batch,
-			unsigned dword )
-{
-   if (i915_batchbuffer_space(batch) < 4)
-      return;
-
-   *(unsigned *)batch->ptr = dword;
-   batch->ptr += 4;
-}
-
-static INLINE void
-i915_batchbuffer_write( struct i915_batchbuffer *batch,
-			void *data,
-			size_t size )
-{
-   if (i915_batchbuffer_space(batch) < size)
-      return;
-
-   memcpy(data, batch->ptr, size);
-   batch->ptr += size;
-}
-
-static INLINE void
-i915_batchbuffer_reloc( struct i915_batchbuffer *batch,
-			struct pipe_buffer *buffer,
-			size_t flags,
-			size_t offset )
-{
-   batch->winsys->batch_reloc( batch->winsys, buffer, flags, offset );
-}
-
-static INLINE void
-i915_batchbuffer_flush( struct i915_batchbuffer *batch,
-			struct pipe_fence_handle **fence )
-{
-   batch->winsys->batch_flush( batch->winsys, fence );
-}
-
-#define BEGIN_BATCH( dwords, relocs ) \
-   (i915_batchbuffer_check( i915->batch, dwords, relocs ))
-
-#define OUT_BATCH( dword ) \
-   i915_batchbuffer_dword( i915->batch, dword )
-
-#define OUT_RELOC( buf, flags, delta ) \
-   i915_batchbuffer_reloc( i915->batch, buf, flags, delta )
-
-#define FLUSH_BATCH(fence) do {				\
-   i915_batchbuffer_flush( i915->batch, fence );	\
-   i915->hardware_dirty = ~0;				\
+#define FLUSH_BATCH(fence) do {                 \
+   intel_batchbuffer_flush(i915->batch, fence); \
+   i915->hardware_dirty = ~0;                   \
 } while (0)
 
 #endif

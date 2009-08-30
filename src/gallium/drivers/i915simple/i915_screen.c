@@ -26,17 +26,21 @@
  **************************************************************************/
 
 
-#include "util/u_memory.h"
-#include "util/u_simple_screen.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
+#include "util/u_memory.h"
 #include "util/u_string.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_screen.h"
+#include "i915_buffer.h"
 #include "i915_texture.h"
-#include "i915_winsys.h"
+#include "intel_winsys.h"
+
+
+/*
+ * Probe functions
+ */
 
 
 static const char *
@@ -187,22 +191,64 @@ i915_is_format_supported(struct pipe_screen *screen,
    return FALSE;
 }
 
+
+/*
+ * Fence functions
+ */
+
+
+static void
+i915_fence_reference(struct pipe_screen *screen,
+                     struct pipe_fence_handle **ptr,
+                     struct pipe_fence_handle *fence)
+{
+   struct i915_screen *is = i915_screen(screen);
+
+   is->iws->fence_reference(is->iws, ptr, fence);
+}
+
+static int
+i915_fence_signalled(struct pipe_screen *screen,
+                     struct pipe_fence_handle *fence,
+                     unsigned flags)
+{
+   struct i915_screen *is = i915_screen(screen);
+
+   return is->iws->fence_signalled(is->iws, fence);
+}
+
+static int
+i915_fence_finish(struct pipe_screen *screen,
+                  struct pipe_fence_handle *fence,
+                  unsigned flags)
+{
+   struct i915_screen *is = i915_screen(screen);
+
+   return is->iws->fence_finish(is->iws, fence);
+}
+
+
+/*
+ * Generic functions
+ */
+
+
 static void
 i915_destroy_screen(struct pipe_screen *screen)
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct i915_screen *is = i915_screen(screen);
 
-   if(winsys->destroy)
-      winsys->destroy(winsys);
+   if (is->iws)
+      is->iws->destroy(is->iws);
 
-   FREE(screen);
+   FREE(is);
 }
 
 /**
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
+i915_create_screen(struct intel_winsys *iws, uint pci_id)
 {
    struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
@@ -231,8 +277,9 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    }
 
    is->pci_id = pci_id;
+   is->iws = iws;
 
-   is->base.winsys = winsys;
+   is->base.winsys = NULL;
 
    is->base.destroy = i915_destroy_screen;
 
@@ -242,8 +289,12 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    is->base.get_paramf = i915_get_paramf;
    is->base.is_format_supported = i915_is_format_supported;
 
+   is->base.fence_reference = i915_fence_reference;
+   is->base.fence_signalled = i915_fence_signalled;
+   is->base.fence_finish = i915_fence_finish;
+
    i915_init_screen_texture_functions(is);
-   u_simple_screen_init(&is->base);
+   i915_init_screen_buffer_functions(is);
 
    return &is->base;
 }
