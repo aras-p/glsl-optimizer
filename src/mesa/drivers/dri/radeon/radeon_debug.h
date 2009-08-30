@@ -45,7 +45,7 @@ typedef enum radeon_debug_levels {
  * Compile time option to change level of debugging compiled to dri driver.
  */
 #ifndef RADEON_DEBUG_LEVEL
-#define RADEON_DEBUG_LEVEL RADEON_NORMAL
+#define RADEON_DEBUG_LEVEL RADEON_VERBOSE
 #endif
 
 typedef enum radeon_debug_types {
