@@ -231,8 +231,9 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
    GLubyte fail[MAX_WIDTH];
    GLboolean allfail = GL_FALSE;
    GLuint i;
-   GLstencil r, s;
    const GLuint valueMask = ctx->Stencil.ValueMask[face];
+   const GLstencil r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
+   GLstencil s;
 
    ASSERT(n <= MAX_WIDTH);
 
@@ -260,7 +261,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 allfail = GL_TRUE;
 	 break;
       case GL_LESS:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
@@ -279,7 +279,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       case GL_LEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
@@ -298,7 +297,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       case GL_GREATER:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
@@ -317,7 +315,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       case GL_GEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
@@ -336,7 +333,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       case GL_EQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
@@ -355,7 +351,6 @@ do_stencil_test( GLcontext *ctx, GLuint face, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       case GL_NOTEQUAL:
-	 r = (GLstencil) (ctx->Stencil.Ref[face] & valueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & valueMask);
