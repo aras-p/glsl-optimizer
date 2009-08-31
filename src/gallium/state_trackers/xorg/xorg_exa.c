@@ -485,7 +485,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 		exa->scrn->tex_surface_destroy(dst_surf);
 		exa->scrn->tex_surface_destroy(priv->src_surf);
 		priv->src_surf = NULL;
-	    } else {
+	    } else if (pPixmap->devPrivate.ptr) {
 		struct pipe_transfer *transfer;
 
 		if (priv->map_count != 0)
