@@ -445,11 +445,13 @@ _mesa_buffer_map_range( GLcontext *ctx, GLenum target, GLintptr offset,
 {
    (void) ctx;
    (void) target;
-   (void) access;
-   (void) length;
    assert(!_mesa_bufferobj_mapped(bufObj));
    /* Just return a direct pointer to the data */
-   return bufObj->Data + offset;
+   bufObj->Pointer = bufObj->Data + offset;
+   bufObj->Length = length;
+   bufObj->Offset = offset;
+   bufObj->AccessFlags = access;
+   return bufObj->Pointer;
 }
 
 
