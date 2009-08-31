@@ -92,6 +92,12 @@ static void Init(void)
     numObjects = 10;
     InitObjects(numObjects);
     glGetIntegerv(GL_VIEWPORT, vp);
+
+#if 0 /* debug - test culling */
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
+    glEnable(GL_CULL_FACE);
+#endif
 }
 
 static void Reshape(int width, int height)
