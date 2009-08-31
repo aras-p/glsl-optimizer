@@ -7751,18 +7751,6 @@ exec_MultiDrawArraysEXT(GLenum mode, GLint * first,
    CALL_MultiDrawArraysEXT(ctx->Exec, (mode, first, count, primcount));
 }
 
-/* GL_EXT_multi_draw_arrays */
-static void GLAPIENTRY
-exec_MultiDrawElementsEXT(GLenum mode, const GLsizei * count,
-                          GLenum type, const GLvoid ** indices,
-                          GLsizei primcount)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-   CALL_MultiDrawElementsEXT(ctx->Exec,
-                             (mode, count, type, indices, primcount));
-}
-
 /* GL_IBM_multimode_draw_arrays */
 static void GLAPIENTRY
 exec_MultiModeDrawArraysIBM(const GLenum * mode, const GLint * first,
@@ -8108,7 +8096,6 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* 148. GL_EXT_multi_draw_arrays */
    SET_MultiDrawArraysEXT(table, exec_MultiDrawArraysEXT);
-   SET_MultiDrawElementsEXT(table, exec_MultiDrawElementsEXT);
 
    /* 149. GL_EXT_fog_coord */
    SET_FogCoordPointerEXT(table, exec_FogCoordPointerEXT);
@@ -8723,6 +8710,7 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->DrawArrays = 0;
    vfmt->DrawElements = 0;
    vfmt->DrawRangeElements = 0;
+   vfmt->MultiDrawElemementsEXT = 0;
 #endif
 }
 

@@ -73,6 +73,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/dlist.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/api_noop.h"
 #include "main/api_validate.h"
 #include "main/api_arrayelt.h"
 #include "main/vtxfmt.h"
@@ -1038,6 +1039,8 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->DrawArrays = _save_DrawArrays;
    vfmt->DrawElements = _save_DrawElements;
    vfmt->DrawRangeElements = _save_DrawRangeElements;
+   /* Loops back into vfmt->DrawElements */
+   vfmt->MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
 
 }
 
@@ -1228,6 +1231,8 @@ void vbo_save_api_init( struct vbo_save_context *save )
    ctx->ListState.ListVtxfmt.DrawArrays = _save_OBE_DrawArrays;
    ctx->ListState.ListVtxfmt.DrawElements = _save_OBE_DrawElements;
    ctx->ListState.ListVtxfmt.DrawRangeElements = _save_OBE_DrawRangeElements;
+   /* loops back into _save_OBE_DrawElements */
+   ctx->ListState.ListVtxfmt.MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 }
 

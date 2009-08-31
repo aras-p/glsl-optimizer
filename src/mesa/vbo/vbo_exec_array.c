@@ -33,6 +33,7 @@
 #include "main/api_noop.h"
 #include "main/varray.h"
 #include "main/bufferobj.h"
+#include "main/macros.h"
 #include "glapi/dispatch.h"
 
 #include "vbo_context.h"
@@ -721,6 +722,152 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
 				   count, type, indices);
 }
 
+/* Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
+static void
+vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
+				const GLsizei *count, GLenum type,
+				const GLvoid **indices, GLsizei primcount)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   struct _mesa_index_buffer ib;
+   struct _mesa_prim *prim;
+   unsigned int index_type_size = 0;
+   uintptr_t min_index_ptr, max_index_ptr;
+   GLboolean fallback = GL_FALSE;
+   int i;
+
+   if (primcount == 0)
+      return;
+
+   FLUSH_CURRENT( ctx, 0 );
+
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
+
+   if (!_mesa_valid_to_render(ctx, "glMultiDrawElements")) {
+      return;
+   }
+
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
+
+   prim = _mesa_calloc(primcount * sizeof(*prim));
+   if (prim == NULL) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
+      return;
+   }
+
+   /* Decide if we can do this all as one set of primitives sharing the
+    * same index buffer, or if we have to reset the index pointer per primitive.
+    */
+   bind_arrays( ctx );
+
+   switch (type) {
+   case GL_UNSIGNED_INT:
+      index_type_size = 4;
+      break;
+   case GL_UNSIGNED_SHORT:
+      index_type_size = 2;
+      break;
+   case GL_UNSIGNED_BYTE:
+      index_type_size = 1;
+      break;
+   default:
+      assert(0);
+   }
+
+   min_index_ptr = (uintptr_t)indices[0];
+   max_index_ptr = 0;
+   for (i = 0; i < primcount; i++) {
+      min_index_ptr = MIN2(min_index_ptr, (uintptr_t)indices[i]);
+      max_index_ptr = MAX2(max_index_ptr, (uintptr_t)indices[i] +
+			   index_type_size * count[i]);
+   }
+
+   /* Check if we can handle this thing as a bunch of index offsets from the
+    * same index pointer.  If we can't, then we have to fall back to doing
+    * a draw_prims per primitive.
+    */
+   if (index_type_size != 1) {
+      for (i = 0; i < primcount; i++) {
+	 if ((((uintptr_t)indices[i] - min_index_ptr) % index_type_size) != 0) {
+	    fallback = GL_TRUE;
+	    break;
+	 }
+      }
+   }
+
+   /* If the index buffer isn't in a VBO, then treating the application's
+    * subranges of the index buffer as one large index buffer may lead to
+    * us reading unmapped memory.
+    */
+   if (!_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj))
+      fallback = GL_TRUE;
+
+   if (!fallback) {
+      ib.count = (max_index_ptr - min_index_ptr) / index_type_size;
+      ib.type = type;
+      ib.obj = ctx->Array.ElementArrayBufferObj;
+      ib.ptr = (void *)min_index_ptr;
+
+      for (i = 0; i < primcount; i++) {
+	 prim[i].begin = (i == 0);
+	 prim[i].end = (i == primcount - 1);
+	 prim[i].weak = 0;
+	 prim[i].pad = 0;
+	 prim[i].mode = mode;
+	 prim[i].start = ((uintptr_t)indices[i] - min_index_ptr) / index_type_size;
+	 prim[i].count = count[i];
+	 prim[i].indexed = 1;
+      }
+
+      vbo->draw_prims(ctx, exec->array.inputs, prim, primcount, &ib,
+		      GL_FALSE, ~0, ~0);
+   } else {
+      for (i = 0; i < primcount; i++) {
+	 ib.count = count[i];
+	 ib.type = type;
+	 ib.obj = ctx->Array.ElementArrayBufferObj;
+	 ib.ptr = indices[i];
+
+
+	 prim[0].begin = 1;
+	 prim[0].end = 1;
+	 prim[0].weak = 0;
+	 prim[0].pad = 0;
+	 prim[0].mode = mode;
+	 prim[0].start = 0;
+	 prim[0].count = count[i];
+	 prim[0].indexed = 1;
+      }
+
+      vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
+		      GL_FALSE, ~0, ~0);
+   }
+   _mesa_free(prim);
+}
+
+static void GLAPIENTRY
+vbo_exec_MultiDrawElements(GLenum mode,
+			   const GLsizei *count, GLenum type,
+			   const GLvoid **indices,
+			   GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   for (i = 0; i < primcount; i++) {
+      if (!_mesa_validate_DrawElements( ctx, mode, count[i], type, indices[i] ))
+	 return;
+   }
+
+   vbo_validated_multidrawelements(ctx, mode, count, type, indices, primcount);
+}
+
+
 
 /***********************************************************************
  * Initialization
@@ -733,10 +880,12 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
    exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
    exec->vtxfmt.DrawRangeElements = vbo_exec_DrawRangeElements;
+   exec->vtxfmt.MultiDrawElementsEXT = vbo_exec_MultiDrawElements;
 #else
    exec->vtxfmt.DrawArrays = _mesa_noop_DrawArrays;
    exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
    exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
+   exec->vtxfmt.MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
 #endif
 }
 
@@ -771,4 +920,12 @@ _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
                         GLenum type, const GLvoid *indices)
 {
    vbo_exec_DrawRangeElements(mode, start, end, count, type, indices);
+}
+
+/* GL_EXT_multi_draw_arrays */
+void GLAPIENTRY
+_mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
+			   const GLvoid **indices, GLsizei primcount)
+{
+   vbo_exec_MultiDrawElements(mode, count, type, indices, primcount);
 }

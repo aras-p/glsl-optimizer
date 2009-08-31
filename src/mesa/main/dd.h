@@ -1150,7 +1150,11 @@ typedef struct {
    void (GLAPIENTRYP DrawRangeElements)( GLenum mode, GLuint start,
 			      GLuint end, GLsizei count,
 			      GLenum type, const GLvoid *indices );
-   /*@}*/
+   void (GLAPIENTRYP MultiDrawElementsEXT)( GLenum mode, const GLsizei *count,
+					    GLenum type,
+					    const GLvoid **indices,
+					    GLsizei primcount);
+  /*@}*/
 
    /**
     * \name Eval

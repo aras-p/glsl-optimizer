@@ -529,7 +529,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* 148. GL_EXT_multi_draw_arrays */
 #if _HAVE_FULL_GL
    SET_MultiDrawArraysEXT(exec, _mesa_MultiDrawArraysEXT);
-   SET_MultiDrawElementsEXT(exec, _mesa_MultiDrawElementsEXT);
 #endif
 
    /* 173. GL_INGR_blend_func_separate */
