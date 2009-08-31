@@ -29,7 +29,7 @@ static int
 nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 		   struct nv50_miptree *mt, int unit)
 {
-	switch (mt->base.format) {
+	switch (mt->base.base.format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
 			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
@@ -118,18 +118,18 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 		return 1;
 	}
 
-	so_reloc(so, mt->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+	so_reloc(so, mt->base.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 		     NOUVEAU_BO_RD, 0, 0);
 	if (nv50->sampler[unit]->normalized)
-		so_data (so, 0xd0005000 | mt->bo->tile_mode << 22);
+		so_data (so, 0xd0005000 | mt->base.bo->tile_mode << 22);
 	else
-		so_data (so, 0x5001d000 | mt->bo->tile_mode << 22);
+		so_data (so, 0x5001d000 | mt->base.bo->tile_mode << 22);
 	so_data (so, 0x00300000);
-	so_data (so, mt->base.width[0]);
-	so_data (so, (mt->base.last_level << 28) |
-		     (mt->base.depth[0] << 16) | mt->base.height[0]);
+	so_data (so, mt->base.base.width[0]);
+	so_data (so, (mt->base.base.last_level << 28) |
+		     (mt->base.base.depth[0] << 16) | mt->base.base.height[0]);
 	so_data (so, 0x03000000);
-	so_data (so, mt->base.last_level << 4);
+	so_data (so, mt->base.base.last_level << 4);
 
 	return 0;
 }

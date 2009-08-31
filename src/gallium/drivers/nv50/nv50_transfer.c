@@ -148,8 +148,8 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
-	tx->level_width = mt->base.width[level];
-	tx->level_height = mt->base.height[level];
+	tx->level_width = mt->base.base.width[level];
+	tx->level_height = mt->base.base.height[level];
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
 	tx->level_x = x;
@@ -162,7 +162,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	}
 
 	if (usage != PIPE_TRANSFER_WRITE) {
-		nv50_transfer_rect_m2mf(pscreen, mt->bo, tx->level_offset,
+		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
 					x, y,
 					tx->level_width, tx->level_height,
@@ -188,7 +188,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0, tx->base.stride,
 					tx->bo->tile_mode, 0, 0,
 					tx->base.width, tx->base.height,
-					mt->bo, tx->level_offset,
+					mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
 					tx->level_x, tx->level_y,
 					tx->level_width, tx->level_height,

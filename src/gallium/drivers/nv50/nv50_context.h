@@ -75,9 +75,7 @@ struct nv50_miptree_level {
 };
 
 struct nv50_miptree {
-	struct pipe_texture base;
-
-	struct nouveau_bo *bo;
+	struct nouveau_miptree base;
 
 	struct nv50_miptree_level level[PIPE_MAX_TEXTURE_LEVELS];
 	int image_nr;
