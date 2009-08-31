@@ -33,7 +33,6 @@
  */
 
 
-#include "pipe/p_defines.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"

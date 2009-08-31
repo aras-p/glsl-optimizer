@@ -39,6 +39,8 @@
 
 #include <llvm-c/Core.h>  
 
+#include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
+
 
 union lp_type type;
 struct lp_build_context;
