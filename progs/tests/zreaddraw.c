@@ -24,6 +24,8 @@ static void Display(void)
    glClearColor(0.5, 0.5, 0.5, 1.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+   glEnable(GL_DEPTH_TEST);
+
    /* draw a sphere */
    glViewport(0, 0, 100, 100);
    glMatrixMode(GL_PROJECTION);
@@ -46,8 +48,11 @@ static void Display(void)
 
    /* draw depth image with scaling (into z buffer) */
    glPixelZoom(4.0, 4.0);
+   glColor4f(1, 0, 0, 0);
    glWindowPos2i(100, 0);
    glDrawPixels(100, 100, GL_DEPTH_COMPONENT, GL_FLOAT, depth);
+
+   glDisable(GL_DEPTH_TEST);
 
    /* read back scaled depth image */
    glReadPixels(100, 0, 400, 400, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
@@ -96,7 +101,6 @@ static void Init(void)
    glLightfv(GL_LIGHT0, GL_POSITION, pos);
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
-   glEnable(GL_DEPTH_TEST);
 }
 
 
