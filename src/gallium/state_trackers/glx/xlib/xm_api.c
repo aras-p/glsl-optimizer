@@ -286,6 +286,18 @@ choose_pixel_format(XMesaVisual v)
          return PIPE_FORMAT_B8G8R8A8_UNORM;
       }
    }
+   else if (   GET_REDMASK(v)   == 0x0000ff00
+            && GET_GREENMASK(v) == 0x00ff0000
+            && GET_BLUEMASK(v)  == 0xff000000
+            && v->BitsPerPixel == 32) {
+      if (native_byte_order) {
+         /* no byteswapping needed */
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
+      }
+      else {
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
+      }
+   }
    else if (   GET_REDMASK(v)   == 0xf800
             && GET_GREENMASK(v) == 0x07e0
             && GET_BLUEMASK(v)  == 0x001f
