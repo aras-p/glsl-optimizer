@@ -1113,7 +1113,7 @@ static struct ureg
 emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 {
    struct state_key *key = p->state;
-   GLboolean saturate = (unit < p->last_tex_stage);
+   GLboolean saturate;
    GLuint rgb_shift, alpha_shift;
    struct ureg out, shift;
    struct ureg dest;
@@ -1141,6 +1141,11 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       break;
    }
    
+   /* If we'll do rgb/alpha shifting don't saturate in emit_combine().
+    * We don't want to clamp twice.
+    */
+   saturate = !(rgb_shift || alpha_shift);
+
    /* If this is the very last calculation, emit direct to output reg:
     */
    if (key->separate_specular ||
@@ -1189,6 +1194,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    /* Deal with the final shift:
     */
    if (alpha_shift || rgb_shift) {
+      saturate = GL_TRUE;  /* always saturate at this point */
       if (rgb_shift == alpha_shift) {
 	 shift = register_scalar_const(p, (GLfloat)(1<<rgb_shift));
       }
