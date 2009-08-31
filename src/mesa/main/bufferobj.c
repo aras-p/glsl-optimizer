@@ -428,6 +428,8 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
       return NULL;
    }
    bufObj->Pointer = bufObj->Data;
+   bufObj->Length = bufObj->Size;
+   bufObj->Offset = 0;
    return bufObj->Pointer;
 }
 
