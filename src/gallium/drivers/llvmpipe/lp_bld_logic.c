@@ -51,6 +51,8 @@ lp_build_cmp(struct lp_build_context *bld,
    LLVMValueRef zeros = LLVMConstNull(int_vec_type);
    LLVMValueRef ones = LLVMConstAllOnes(int_vec_type);
    LLVMValueRef cond;
+   LLVMValueRef res;
+   unsigned i;
 
    if(func == PIPE_FUNC_NEVER)
       return zeros;
@@ -67,7 +69,6 @@ lp_build_cmp(struct lp_build_context *bld,
          LLVMValueRef args[3];
          unsigned cc;
          boolean swap;
-         LLVMValueRef res;
 
          swap = FALSE;
          switch(func) {
@@ -218,7 +219,28 @@ lp_build_cmp(struct lp_build_context *bld,
          assert(0);
          return bld->undef;
       }
+
+#if 0
+      /* XXX: Although valid IR, no LLVM target currently support this */
       cond = LLVMBuildFCmp(bld->builder, op, a, b, "");
+      res = LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+#else
+      debug_printf("%s: warning: using slow element-wise vector comparison\n",
+                   __FUNCTION__);
+      res = LLVMGetUndef(int_vec_type);
+      for(i = 0; i < type.length; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         cond = LLVMBuildFCmp(bld->builder, op,
+                              LLVMBuildExtractElement(bld->builder, a, index, ""),
+                              LLVMBuildExtractElement(bld->builder, b, index, ""),
+                              "");
+         cond = LLVMBuildSelect(bld->builder, cond,
+                                LLVMConstExtractElement(ones, index),
+                                LLVMConstExtractElement(zeros, index),
+                                "");
+         res = LLVMBuildInsertElement(bld->builder, res, cond, index, "");
+      }
+#endif
    }
    else {
       LLVMIntPredicate op;
@@ -245,10 +267,31 @@ lp_build_cmp(struct lp_build_context *bld,
          assert(0);
          return bld->undef;
       }
+
+#if 0
+      /* XXX: Although valid IR, no LLVM target currently support this */
       cond = LLVMBuildICmp(bld->builder, op, a, b, "");
+      res = LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+#else
+      debug_printf("%s: warning: using slow element-wise vector comparison\n",
+                   __FUNCTION__);
+      res = LLVMGetUndef(int_vec_type);
+      for(i = 0; i < type.length; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         cond = LLVMBuildICmp(bld->builder, op,
+                              LLVMBuildExtractElement(bld->builder, a, index, ""),
+                              LLVMBuildExtractElement(bld->builder, b, index, ""),
+                              "");
+         cond = LLVMBuildSelect(bld->builder, cond,
+                                LLVMConstExtractElement(ones, index),
+                                LLVMConstExtractElement(zeros, index),
+                                "");
+         res = LLVMBuildInsertElement(bld->builder, res, cond, index, "");
+      }
+#endif
    }
 
-   return LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+   return res;
 }
 
 
