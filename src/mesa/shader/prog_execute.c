@@ -922,6 +922,11 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat a[4];
             fetch_vector4(&inst->SrcReg[0], machine, a);
+            if (DEBUG_PROG) {
+               printf("KIL if (%g %g %g %g) <= 0.0\n",
+                      a[0], a[1], a[2], a[3]);
+            }
+
             if (a[0] < 0.0F || a[1] < 0.0F || a[2] < 0.0F || a[3] < 0.0F) {
                return GL_FALSE;
             }
