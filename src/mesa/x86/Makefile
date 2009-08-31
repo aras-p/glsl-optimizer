@@ -21,7 +21,7 @@ clean:
 
 
 gen_matypes: gen_matypes.c
-	$(HOST_CC) $(INCLUDE_DIRS) $(HOST_CFLAGS) gen_matypes.c -o gen_matypes
+	$(HOST_CC) $(ARCH_FLAGS) $(INCLUDE_DIRS) $(HOST_CFLAGS) gen_matypes.c -o gen_matypes
 
 # need some special rules here, unfortunately
 matypes.h: ../main/mtypes.h ../tnl/t_context.h gen_matypes
