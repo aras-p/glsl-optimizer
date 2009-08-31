@@ -69,6 +69,7 @@ GLboolean r700SyncSurf(context_t *context,
 void r700WaitForIdle(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     BEGIN_BATCH_NO_AUTOSTATE(3);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
@@ -82,6 +83,7 @@ void r700WaitForIdle(context_t *context)
 void r700WaitForIdleClean(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     BEGIN_BATCH_NO_AUTOSTATE(5);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
@@ -98,6 +100,7 @@ void r700WaitForIdleClean(context_t *context)
 void r700Start3D(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         BEGIN_BATCH_NO_AUTOSTATE(2);
@@ -124,6 +127,7 @@ GLboolean r700SyncSurf(context_t *context,
 		       uint32_t sync_type)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     uint32_t cp_coher_size;
 
     if (!pbo)
@@ -257,6 +261,10 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 	type = r700PrimitiveType(prim);
 	num_indices = r700NumVerts(end - start, prim);
 
+	radeon_print(RADEON_RENDER, RADEON_TRACE,
+		"%s type %x num_indices %d\n",
+		__func__, type, num_indices);
+
 	if (type < 0 || num_indices <= 0)
 		return;
 
@@ -364,6 +372,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     radeonEmitState(radeon);
 
+    radeon_debug_add_indent();
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) {
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
@@ -371,6 +380,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
         r700RunRenderPrimitive(ctx, start, end, prim);
     }
+    radeon_debug_remove_indent();
 
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
