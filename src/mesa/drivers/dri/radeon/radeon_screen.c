@@ -868,6 +868,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV770_9440:
    case PCI_CHIP_RV770_9441:
    case PCI_CHIP_RV770_9442:
+   case PCI_CHIP_RV770_9443:
    case PCI_CHIP_RV770_9444:
    case PCI_CHIP_RV770_9446:
    case PCI_CHIP_RV770_944A:
