@@ -37,6 +37,11 @@
 #ifndef _SIMPLE_LIST_H
 #define _SIMPLE_LIST_H
 
+struct simple_node {
+   struct simple_node *next;
+   struct simple_node *prev;
+};
+
 /**
  * Remove an element from list.
  *
