@@ -228,7 +228,6 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    uint flags = 0x0;
-   char *map;
 
    if (access & GL_MAP_WRITE_BIT)
       flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
@@ -250,14 +249,15 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
-   if(obj->Pointer) {
+   obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   if (obj->Pointer) {
+      obj->Pointer = (ubyte *) obj->Pointer + offset;
       obj->Offset = offset;
       obj->Length = length;
-      map += offset;
+      obj->AccessFlags = access;
    }
    
-   return map;
+   return obj->Pointer;
 }
 
 
