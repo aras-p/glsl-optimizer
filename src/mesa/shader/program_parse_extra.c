@@ -102,6 +102,17 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
 	    return 1;
 	 }
       }
+   } else if (strncmp(option, "NV_fragment_program", 19) == 0) {
+      option += 19;
+
+      /* Other NV_fragment_program strings may be supported later.
+       */
+      if (option[0] == '\0') {
+	 if (state->ctx->Extensions.NV_fragment_program_option) {
+	    state->option.NV_fragment = 1;
+	    return 1;
+	 }
+      }
    } else if (strncmp(option, "MESA_", 5) == 0) {
       option += 5;
 
