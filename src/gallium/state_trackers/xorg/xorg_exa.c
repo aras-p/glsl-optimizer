@@ -427,7 +427,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_context *exa = ms->exa;
 
-    if (!priv)
+    if (!priv || pPixData)
 	return FALSE;
 
     if (depth <= 0)
@@ -476,24 +476,11 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     }
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
-    if (!priv->tex) {
-	if (pPixData)
-	    pPixmap->devPrivate.ptr = pPixData;
-	else
+    if (!priv->tex)
 	    pPixmap->devPrivate.ptr = xalloc(pPixmap->drawable.height * pPixmap->devKind);
-    } else
 #endif
-    if (pPixData) {
-	struct pipe_transfer *transfer =
-	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
-					PIPE_TRANSFER_WRITE,
-					0, 0, width, height);
-        util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
-                       &priv->tex->block, transfer->stride, 0, 0,
-                       width, height, pPixData, pPixmap->devKind, 0, 0);
-        exa->scrn->transfer_unmap(exa->scrn, transfer);
-        exa->scrn->tex_transfer_destroy(transfer);
-    } else if (priv->tex && pPixmap->devPrivate.ptr) {
+
+    if (priv->tex && pPixmap->devPrivate.ptr) {
 	struct pipe_transfer *transfer;
 
 	if (priv->map_count != 0)
