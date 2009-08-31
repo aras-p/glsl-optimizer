@@ -4,10 +4,10 @@ include $(TOP)/configs/current
 LIBNAME = inteldrm
 
 C_SOURCES = \
-	intel_be_batchbuffer.c \
-	intel_be_context.c \
-	intel_be_device.c \
-	intel_be_api.c
+	intel_drm_batchbuffer.c \
+	intel_drm_buffer.c \
+	intel_drm_fence.c \
+	intel_drm_api.c
 
 LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
 
