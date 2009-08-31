@@ -91,8 +91,11 @@ extern void _radeon_print(const radeon_debug_type_t type,
 	   va_list values)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	// FIXME: Make this multi thread safe
-	fprintf(stderr, "%s", radeon->debug.indent);
+	if (ctx) {
+		radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+		// FIXME: Make this multi thread safe
+		if (radeon->debug.indent_depth)
+			fprintf(stderr, "%s", radeon->debug.indent);
+	}
 	vfprintf(stderr, message, values);
 }
