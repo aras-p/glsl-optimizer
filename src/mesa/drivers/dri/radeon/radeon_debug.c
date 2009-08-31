@@ -30,6 +30,7 @@
 #include "utils.h"
 
 #include "radeon_debug.h"
+#include "radeon_common_context.h"
 
 static const struct dri_debug_control debug_control[] = {
 	{"fall", RADEON_FALLBACKS},
@@ -60,4 +61,38 @@ void radeon_init_debug(void)
 	radeon_enabled_debug_types = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
 
 	radeon_enabled_debug_types |= RADEON_GENERAL;
+}
+
+void _radeon_debug_add_indent(void)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	const size_t length = sizeof(radeon->debug.indent)
+		/ sizeof(radeon->debug.indent[0]);
+	if (radeon->debug.indent_depth < length - 1) {
+		radeon->debug.indent[radeon->debug.indent_depth] = '\t';
+		++radeon->debug.indent_depth;
+	};
+}
+
+void _radeon_debug_remove_indent(void)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	if (radeon->debug.indent_depth > 0) {
+		radeon->debug.indent[radeon->debug.indent_depth] = '\0';
+		--radeon->debug.indent_depth;
+	}
+}
+
+extern void _radeon_print(const radeon_debug_type_t type,
+	   const radeon_debug_level_t level,
+	   const char* message,
+	   va_list values)
+{
+	GET_CURRENT_CONTEXT(ctx);
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	// FIXME: Make this multi thread safe
+	fprintf(stderr, "%s", radeon->debug.indent);
+	vfprintf(stderr, message, values);
 }

@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include "radeon_bocs_wrapper.h"
+#include "radeon_common.h"
 
 struct cs_manager_legacy {
     struct radeon_cs_manager    base;

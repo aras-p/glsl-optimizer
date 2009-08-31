@@ -71,6 +71,13 @@ typedef enum radeon_debug_types {
 	RADEON_GENERAL   = 0x10000   /* Used for errors and warnings */
 } radeon_debug_type_t;
 
+#define RADEON_MAX_INDENT 5
+
+struct radeon_debug {
+       size_t indent_depth;
+       char indent[RADEON_MAX_INDENT];
+};
+
 extern radeon_debug_type_t radeon_enabled_debug_types;
 
 /**
@@ -91,6 +98,11 @@ static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
 #define  __attribute__(x)  /*empty*/
 #endif
 
+
+extern void _radeon_print(const radeon_debug_type_t type,
+	   const radeon_debug_level_t level,
+	   const char* message,
+	   va_list values);
 /**
  * Format attribute requires declaration for setting it. Don't ask me why!
  */
@@ -113,7 +125,7 @@ static inline void radeon_print(const radeon_debug_type_t type,
 
 		va_list values;
 		va_start( values, message );
-		vfprintf(stderr, message, values);
+		_radeon_print(type, level, message, values);
 		va_end( values );
 	}
 }
@@ -142,8 +154,22 @@ static inline void radeon_warning(const char* message, ...)
        va_end( values );
 }
 
-
 extern void radeon_init_debug(void);
+extern void _radeon_debug_add_indent(void);
+extern void _radeon_debug_remove_indent(void);
+
+static inline void radeon_debug_add_indent(void)
+{
+       if (RADEON_DEBUG_LEVEL >= RADEON_VERBOSE) {
+	      _radeon_debug_add_indent();
+       }
+}
+static inline void radeon_debug_remove_indent(void)
+{
+       if (RADEON_DEBUG_LEVEL >= RADEON_VERBOSE) {
+	      _radeon_debug_remove_indent();
+       }
+}
 
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble

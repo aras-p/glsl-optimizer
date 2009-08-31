@@ -467,6 +467,8 @@ struct radeon_context {
 
    struct radeon_cmdbuf cmdbuf;
 
+   struct radeon_debug debug;
+
   drm_clip_rect_t fboRect;
   GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
   GLboolean front_cliprects;
