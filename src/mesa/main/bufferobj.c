@@ -484,6 +484,9 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
    (void) target;
    /* XXX we might assert here that bufObj->Pointer is non-null */
    bufObj->Pointer = NULL;
+   bufObj->Length = 0;
+   bufObj->Offset = 0;
+   bufObj->AccessFlags = 0x0;
    return GL_TRUE;
 }
 
@@ -1095,7 +1098,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
       /* Unmap the existing buffer.  We'll replace it now.  Not an error. */
       ctx->Driver.UnmapBuffer(ctx, target, bufObj);
       bufObj->AccessFlags = DEFAULT_ACCESS;
-      bufObj->Pointer = NULL;
+      ASSERT(bufObj->Pointer == NULL);
    }  
 
    FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
@@ -1304,9 +1307,9 @@ _mesa_UnmapBufferARB(GLenum target)
 
    status = ctx->Driver.UnmapBuffer( ctx, target, bufObj );
    bufObj->AccessFlags = DEFAULT_ACCESS;
-   bufObj->Pointer = NULL;
-   bufObj->Offset = 0;
-   bufObj->Length = 0;
+   ASSERT(bufObj->Pointer == NULL);
+   ASSERT(bufObj->Offset == 0);
+   ASSERT(bufObj->Length == 0);
 
    return status;
 }
