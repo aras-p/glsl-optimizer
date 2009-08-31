@@ -42,6 +42,12 @@ _mesa_init_sync(GLcontext *);
 extern void
 _mesa_free_sync_data(GLcontext *);
 
+extern void
+_mesa_ref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj);
+
+extern void
+_mesa_unref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj);
+
 extern GLboolean
 _mesa_IsSync(GLsync sync);
 

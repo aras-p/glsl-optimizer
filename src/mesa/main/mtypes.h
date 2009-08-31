@@ -40,6 +40,7 @@
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
+#include "main/simple_list.h"	/* struct simple_node */
 
 
 /**
@@ -1988,6 +1989,7 @@ struct gl_query_state
 
 /** Sync object state */
 struct gl_sync_object {
+   struct simple_node link;
    GLenum Type;               /**< GL_SYNC_FENCE */
    GLuint Name;               /**< Fence name */
    GLint RefCount;            /**< Reference count */
@@ -2143,6 +2145,10 @@ struct gl_shared_state
 #if FEATURE_EXT_framebuffer_object
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
+#endif
+
+#if FEATURE_ARB_sync
+   struct simple_node SyncObjects;
 #endif
 
    void *DriverData;  /**< Device driver shared state */

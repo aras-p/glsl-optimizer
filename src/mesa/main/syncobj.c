@@ -25,6 +25,33 @@
  * \file syncobj.c
  * Sync object management.
  *
+ * Unlike textures and other objects that are shared between contexts, sync
+ * objects are not bound to the context.  As a result, the reference counting
+ * and delete behavior of sync objects is slightly different.  References to
+ * sync objects are added:
+ *
+ *    - By \c glFencSynce.  This sets the initial reference count to 1.
+ *    - At the start of \c glClientWaitSync.  The reference is held for the
+ *      duration of the wait call.
+ *
+ * References are removed:
+ *
+ *    - By \c glDeleteSync.
+ *    - At the end of \c glClientWaitSync.
+ *
+ * Additionally, drivers may call \c _mesa_ref_sync_object and
+ * \c _mesa_unref_sync_object as needed to implement \c ServerWaitSync.
+ *
+ * As with shader objects, sync object names become invalid as soon as
+ * \c glDeleteSync is called.  For this reason \c glDeleteSync sets the
+ * \c DeletePending flag.  All functions validate object handles by testing
+ * this flag.
+ *
+ * \note
+ * Only \c GL_ARB_sync objects are shared between contexts.  If support is ever
+ * added for either \c GL_NV_fence or \c GL_APPLE_fence different semantics
+ * will need to be implemented.
+ *
  * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
@@ -130,6 +157,40 @@ _mesa_free_sync_data(GLcontext *ctx)
 }
 
 
+static int
+_mesa_validate_sync(struct gl_sync_object *syncObj)
+{
+   return (syncObj != NULL)
+      && (syncObj->Type == GL_SYNC_FENCE)
+      && !syncObj->DeletePending;
+}
+
+
+void
+_mesa_ref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
+{
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   syncObj->RefCount++;
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+}
+
+
+void
+_mesa_unref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
+{
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   syncObj->RefCount--;
+   if (syncObj->RefCount == 0) {
+      remove_from_list(& syncObj->link);
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
+      (*ctx->Driver.DeleteSyncObject)(ctx, syncObj);
+   } else {
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   }
+}
+
+
 GLboolean
 _mesa_IsSync(GLsync sync)
 {
@@ -138,20 +199,7 @@ _mesa_IsSync(GLsync sync)
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
 
-   return ((syncObj != NULL) && (syncObj->Type == GL_SYNC_FENCE))
-      ? GL_TRUE : GL_FALSE;
-}
-
-
-static void
-_mesa_unref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
-{
-   syncObj->RefCount--;
-   if (syncObj->RefCount == 0) {
-      (*ctx->Driver.DeleteSyncObject)(ctx, syncObj);
-   } else {
-      syncObj->DeletePending = 1;
-   }
+   return _mesa_validate_sync(syncObj) ? GL_TRUE : GL_FALSE;
 }
 
 
@@ -173,7 +221,7 @@ _mesa_DeleteSync(GLsync sync)
       return;
    }
 
-   if (syncObj->Type != GL_SYNC_FENCE) {
+   if (!_mesa_validate_sync(syncObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glDeleteSync");
       return;
    }
@@ -182,6 +230,7 @@ _mesa_DeleteSync(GLsync sync)
    /* If there are no client-waits or server-waits pending on this sync, delete
     * the underlying object.
     */
+   syncObj->DeletePending = GL_TRUE;
    _mesa_unref_sync_object(ctx, syncObj);
 }
 
@@ -224,6 +273,10 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
 
       (*ctx->Driver.FenceSync)(ctx, syncObj, condition, flags);
 
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      insert_at_tail(& ctx->Shared->SyncObjects, & syncObj->link);
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
       return (GLsync) syncObj;
    }
 
@@ -240,7 +293,7 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_WAIT_FAILED);
 
 
-   if ((syncObj == NULL) || (syncObj->Type != GL_SYNC_FENCE)) {
+   if (!_mesa_validate_sync(syncObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glClientWaitSync");
       return GL_WAIT_FAILED;
    }
@@ -251,6 +304,8 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    }
 
 
+   _mesa_ref_sync_object(ctx, syncObj);
+
    /* From the GL_ARB_sync spec:
     *
     *    ClientWaitSync returns one of four status values. A return value of
@@ -259,20 +314,15 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
     *    if <sync> was signaled, even if the value of <timeout> is zero.
     */
    (*ctx->Driver.CheckSync)(ctx, syncObj);
-
    if (syncObj->Status) {
-      return GL_ALREADY_SIGNALED;
+      ret = GL_ALREADY_SIGNALED;
+   } else {
+      (*ctx->Driver.ClientWaitSync)(ctx, syncObj, flags, timeout);
+
+      ret = syncObj->Status ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
    }
 
-
-   (*ctx->Driver.ClientWaitSync)(ctx, syncObj, flags, timeout);
-
-   ret = syncObj->Status ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
-
-   if (syncObj->DeletePending && syncObj->Status) {
-      _mesa_unref_sync_object(ctx, syncObj);
-   }
-
+   _mesa_unref_sync_object(ctx, syncObj);
    return ret;
 }
 
@@ -285,7 +335,7 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
 
-   if ((syncObj == NULL) || (syncObj->Type != GL_SYNC_FENCE)) {
+   if (!_mesa_validate_sync(syncObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glWaitSync");
       return;
    }
@@ -318,7 +368,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
 
-   if ((syncObj == NULL) || (syncObj->Type != GL_SYNC_FENCE)) {
+   if (!_mesa_validate_sync(syncObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetSynciv");
       return;
    }
