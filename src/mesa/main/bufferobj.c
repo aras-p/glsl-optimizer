@@ -1165,6 +1165,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object * bufObj;
    GLbitfield accessFlags;
+   void *map;
+
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    switch (access) {
@@ -1197,14 +1199,21 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    }
 
    ASSERT(ctx->Driver.MapBuffer);
-   bufObj->Pointer = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
-   if (!_mesa_bufferobj_mapped(bufObj)) {
+   map = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
+   if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
    }
 
-   bufObj->AccessFlags = accessFlags;
-   bufObj->Offset = 0;
-   bufObj->Length = bufObj->Size;
+   if (map) {
+      /* The driver callback should have set these fields.
+       * This is important because other modules (like VBO) might call
+       * the driver function directly.
+       */
+      ASSERT(bufObj->Pointer == map);
+      ASSERT(bufObj->Length == bufObj->Size);
+      ASSERT(bufObj->Offset == 0);
+      bufObj->AccessFlags = accessFlags;
+   }
 
    if (access == GL_WRITE_ONLY_ARB || access == GL_READ_WRITE_ARB)
       bufObj->Written = GL_TRUE;
@@ -1455,6 +1464,8 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
+   void *map;
+
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    if (!ctx->Extensions.ARB_map_buffer_range) {
@@ -1518,14 +1529,20 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    }
       
    ASSERT(ctx->Driver.MapBufferRange);
-   bufObj->Pointer = ctx->Driver.MapBufferRange(ctx, target, offset, length,
-                                                access, bufObj);
+   map = ctx->Driver.MapBufferRange(ctx, target, offset, length,
+                                    access, bufObj);
+   if (map) {
+      /* The driver callback should have set all these fields.
+       * This is important because other modules (like VBO) might call
+       * the driver function directly.
+       */
+      ASSERT(bufObj->Pointer == map);
+      ASSERT(bufObj->Length == length);
+      ASSERT(bufObj->Offset == offset);
+      ASSERT(bufObj->AccessFlags == access);
+   }
 
-   bufObj->Offset = offset;
-   bufObj->Length = length;
-   bufObj->AccessFlags = access;
-
-   return bufObj->Pointer;
+   return map;
 }
 
 
