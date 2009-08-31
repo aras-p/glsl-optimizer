@@ -24,9 +24,11 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *screen,
    struct pipe_texture templat;
    struct pipe_buffer *buf = NULL;
 
+/*
    buf = api->buffer_from_handle(api, screen, "front buffer", handle);
    if (!buf)
       return NULL;
+*/
 
    memset(&templat, 0, sizeof(templat));
    templat.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
@@ -269,10 +271,12 @@ nouveau_drm_name_from_pb(struct drm_api *api, struct pipe_screen *pscreen,
 struct drm_api drm_api_hooks = {
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
+#if 0
 	.buffer_from_texture = nouveau_drm_pb_from_pt,
 	.buffer_from_handle = nouveau_drm_pb_from_handle,
 	.handle_from_buffer = nouveau_drm_handle_from_pb,
 	.global_handle_from_buffer = nouveau_drm_name_from_pb,
+#endif
 };
 
 struct drm_api *
