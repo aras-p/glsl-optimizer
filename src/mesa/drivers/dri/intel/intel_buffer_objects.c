@@ -418,6 +418,8 @@ intel_bufferobj_unmap(GLcontext * ctx,
       }
    }
    obj->Pointer = NULL;
+   obj->Offset = 0;
+   obj->Length = 0;
 
    return GL_TRUE;
 }
