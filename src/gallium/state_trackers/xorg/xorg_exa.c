@@ -188,9 +188,6 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
-    if (1)
-        return FALSE;
-
     if (pPixmap->drawable.depth < 15)
 	return FALSE;
 
