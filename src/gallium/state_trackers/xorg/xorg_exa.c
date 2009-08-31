@@ -449,52 +449,69 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 			     bitsPerPixel, devKind, NULL);
 
     /* Deal with screen resize */
-    if (priv->tex && (priv->tex->width[0] != width ||
-		      priv->tex->height[0] != height ||
-		      priv->tex_flags != priv->flags)) {
-	pipe_texture_reference(&priv->tex, NULL);
-    }
-
-    if (!priv->tex
-#ifdef DRM_MODE_FEATURE_DIRTYFB
-	&& priv->flags
-#endif
-	) {
-	struct pipe_texture template;
-
-	memset(&template, 0, sizeof(template));
-	template.target = PIPE_TEXTURE_2D;
-	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
-	pf_get_block(template.format, &template.block);
-	template.width[0] = width;
-	template.height[0] = height;
-	template.depth[0] = 1;
-	template.last_level = 0;
-	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
-	priv->tex_flags = priv->flags;
-	priv->tex = exa->scrn->texture_create(exa->scrn, &template);
-    }
+    if (!priv->tex ||
+        (priv->tex->width[0] != width ||
+         priv->tex->height[0] != height ||
+         priv->tex_flags != priv->flags)) {
+	struct pipe_texture *texture = NULL;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
-    if (!priv->tex)
-	    pPixmap->devPrivate.ptr = xalloc(pPixmap->drawable.height * pPixmap->devKind);
+	if (priv->flags)
+#endif
+	{
+	    struct pipe_texture template;
+
+	    memset(&template, 0, sizeof(template));
+	    template.target = PIPE_TEXTURE_2D;
+	    exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
+	    pf_get_block(template.format, &template.block);
+	    template.width[0] = width;
+	    template.height[0] = height;
+	    template.depth[0] = 1;
+	    template.last_level = 0;
+	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
+	    priv->tex_flags = priv->flags;
+	    texture = exa->scrn->texture_create(exa->scrn, &template);
+
+	    if (priv->tex) {
+		struct pipe_surface *dst_surf;
+
+		dst_surf = exa->scrn->get_tex_surface(exa->scrn, texture, 0, 0, 0,
+						      PIPE_BUFFER_USAGE_GPU_WRITE);
+		priv->src_surf = exa_gpu_surface(exa, priv);
+		exa->ctx->surface_copy(exa->ctx, dst_surf, 0, 0, priv->src_surf,
+				       0, 0, min(width, texture->width[0]),
+				       min(height, texture->height[0]));
+		exa->scrn->tex_surface_destroy(dst_surf);
+		exa->scrn->tex_surface_destroy(priv->src_surf);
+		priv->src_surf = NULL;
+	    } else {
+		struct pipe_transfer *transfer;
+
+		if (priv->map_count != 0)
+		     FatalError("doing ExaModifyPixmapHeader on mapped buffer\n");
+
+		transfer =
+		    exa->scrn->get_tex_transfer(exa->scrn, texture, 0, 0, 0,
+						PIPE_TRANSFER_WRITE,
+						0, 0, width, height);
+		util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
+			       &texture->block, transfer->stride, 0, 0,
+			       width, height, pPixmap->devPrivate.ptr,
+			       pPixmap->devKind, 0, 0);
+		exa->scrn->transfer_unmap(exa->scrn, transfer);
+		exa->scrn->tex_transfer_destroy(transfer);
+	    }
+	}
+#ifdef DRM_MODE_FEATURE_DIRTYFB
+	else {
+	    xfree(pPixmap->devPrivate.ptr);
+	    pPixmap->devPrivate.ptr = xalloc(pPixmap->drawable.height *
+					     pPixmap->devKind);
+	}
 #endif
 
-    if (priv->tex && pPixmap->devPrivate.ptr) {
-	struct pipe_transfer *transfer;
-
-	if (priv->map_count != 0)
-	    FatalError("doing ExaModifyPixmapHeader on mapped buffer\n");
-
-	transfer =
-	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
-					PIPE_TRANSFER_WRITE,
-					0, 0, width, height);
-        util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
-                       &priv->tex->block, transfer->stride, 0, 0,
-                       width, height, pPixmap->devPrivate.ptr, pPixmap->devKind, 0, 0);
-        exa->scrn->transfer_unmap(exa->scrn, transfer);
-        exa->scrn->tex_transfer_destroy(transfer);
+	pipe_texture_reference(&priv->tex, texture);
     }
 
     return TRUE;
