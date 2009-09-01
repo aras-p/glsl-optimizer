@@ -119,20 +119,20 @@ create_vs(struct pipe_context *pipe,
    if (is_composite) {
       src = ureg_DECL_vs_input(ureg,
                                TGSI_SEMANTIC_GENERIC, 1);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 0);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
       ureg_MOV(ureg, dst, src);
    }
    if (is_fill) {
       src = ureg_DECL_vs_input(ureg,
                                TGSI_SEMANTIC_COLOR, 1);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 1);
       ureg_MOV(ureg, dst, src);
    }
 
    if (has_mask) {
       src = ureg_DECL_vs_input(ureg,
                                TGSI_SEMANTIC_GENERIC, 2);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
       ureg_MOV(ureg, dst, src);
    }
 
