@@ -59,6 +59,7 @@
 #include "hash.h"
 #include "imports.h"
 #include "context.h"
+#include "macros.h"
 
 #if FEATURE_ARB_sync
 #include "syncobj.h"
@@ -408,7 +409,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
 
 
    if (size > 0) {
-      const GLsizei copy_count = (size > bufSize) ? bufSize : size;
+      const GLsizei copy_count = MIN2(size, bufSize);
 
       _mesa_memcpy(values, v, sizeof(GLint) * copy_count);
    }
