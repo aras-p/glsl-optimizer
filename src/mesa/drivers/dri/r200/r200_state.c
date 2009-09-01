@@ -2466,6 +2466,21 @@ static void r200WrapRunPipeline( GLcontext *ctx )
 }
 
 
+static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   GLint i;
+
+   radeon_firevertices(&r200->radeon);
+
+   R200_STATECHANGE(r200, stp);
+
+   /* Must flip pattern upside down.
+    */
+   for ( i = 31 ; i >= 0; i--) {
+     r200->hw.stp.cmd[3 + i] = ((GLuint *) mask)[i];
+   }
+}
 /* Initialize the driver's state functions.
  */
 void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 )
@@ -2503,7 +2518,7 @@ void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 )
    functions->PolygonMode		= r200PolygonMode;
    functions->PolygonOffset		= r200PolygonOffset;
    if (dri2)
-      functions->PolygonStipple		= radeonPolygonStipple;
+      functions->PolygonStipple		= r200PolygonStipple;
    else
       functions->PolygonStipple		= radeonPolygonStipplePreKMS;
    functions->PointParameterfv		= r200PointParameter;
