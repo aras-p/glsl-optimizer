@@ -573,7 +573,7 @@ static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    for (j = 0; j < 5; j++) {
 	OUT_BATCH(CP_PACKET0(base_reg + (4 * j), 0));
 	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    }
    END_BATCH();
 }
