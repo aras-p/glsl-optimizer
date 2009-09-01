@@ -26,18 +26,13 @@
  **************************************************************************/
 
 #include "main/glheader.h"
-#include "main/enums.h"
 #include "main/image.h"
 #include "main/state.h"
 #include "main/mtypes.h"
-#include "main/macros.h"
 #include "drivers/common/meta.h"
 
-#include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_blit.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
 
@@ -244,5 +239,6 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
+   /* this will use swrast if needed */
    _mesa_meta_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }
