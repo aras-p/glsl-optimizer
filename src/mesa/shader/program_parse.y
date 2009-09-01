@@ -177,7 +177,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %type <inst> instruction ALU_instruction TexInstruction
 %type <inst> ARL_instruction VECTORop_instruction
 %type <inst> SCALARop_instruction BINSCop_instruction BINop_instruction
-%type <inst> TRIop_instruction SWZ_instruction SAMPLE_instruction
+%type <inst> TRIop_instruction TXD_instruction SWZ_instruction SAMPLE_instruction
 %type <inst> KIL_instruction
 
 %type <dst_reg> dstReg maskedDstReg maskedAddrReg
@@ -347,6 +347,7 @@ ALU_instruction: ARL_instruction
 
 TexInstruction: SAMPLE_instruction
 	| KIL_instruction
+	| TXD_instruction
 	;
 
 ARL_instruction: ARL maskedAddrReg ',' scalarSrcReg
@@ -441,6 +442,51 @@ KIL_instruction: KIL swizzleSrcReg
 	{
 	   $$ = asm_instruction_ctor(OPCODE_KIL, NULL, & $2, NULL, NULL);
 	   state->fragment.UsesKill = 1;
+	}
+	;
+
+TXD_instruction: TXD_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
+	{
+	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, & $8);
+	   if ($$ != NULL) {
+	      const GLbitfield tex_mask = (1U << $10);
+	      GLbitfield shadow_tex = 0;
+	      GLbitfield target_mask = 0;
+
+
+	      $$->Base.SaturateMode = $1.SaturateMode;
+	      $$->Base.TexSrcUnit = $10;
+
+	      if ($12 < 0) {
+		 shadow_tex = tex_mask;
+
+		 $$->Base.TexSrcTarget = -$12;
+		 $$->Base.TexShadow = 1;
+	      } else {
+		 $$->Base.TexSrcTarget = $12;
+	      }
+
+	      target_mask = (1U << $$->Base.TexSrcTarget);
+
+	      /* If this texture unit was previously accessed and that access
+	       * had a different texture target, generate an error.
+	       *
+	       * If this texture unit was previously accessed and that access
+	       * had a different shadow mode, generate an error.
+	       */
+	      if ((state->prog->TexturesUsed[$10] != 0)
+		  && ((state->prog->TexturesUsed[$10] != target_mask)
+		      || ((state->prog->ShadowSamplers & tex_mask)
+			  != shadow_tex))) {
+		 yyerror(& @12, state,
+			 "multiple targets used on one texture image unit");
+		 YYERROR;
+	      }
+
+
+	      state->prog->TexturesUsed[$10] |= target_mask;
+	      state->prog->ShadowSamplers |= shadow_tex;
+	   }
 	}
 	;
 
