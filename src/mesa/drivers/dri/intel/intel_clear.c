@@ -46,6 +46,7 @@
 #include "main/varray.h"
 #include "glapi/dispatch.h"
 #include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
 #include "intel_context.h"
 #include "intel_blit.h"
@@ -186,7 +187,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 	 }
 	 DBG("\n");
       }
-      meta_clear_tris(&intel->meta, tri_mask);
+      _mesa_meta_clear(&intel->ctx, tri_mask);
    }
 
    if (swrast_mask) {
