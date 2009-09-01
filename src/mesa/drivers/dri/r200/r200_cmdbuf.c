@@ -225,7 +225,17 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    return retval;
 }
 
+void r200EmitMaxVtxIndex(r200ContextPtr rmesa, int count)
+{
+   BATCH_LOCALS(&rmesa->radeon);
 
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+	   BEGIN_BATCH_NO_AUTOSTATE(2);
+	   OUT_BATCH(CP_PACKET0(R200_SE_VF_MAX_VTX_INDX, 0));
+	   OUT_BATCH(count);
+	   END_BATCH();
+   }
+}
 
 void r200EmitVertexAOS( r200ContextPtr rmesa,
 			GLuint vertex_size,

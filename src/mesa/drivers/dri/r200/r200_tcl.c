@@ -161,6 +161,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
       r200EmitAOS( rmesa,
 		   rmesa->radeon.tcl.aos_count, 0 );
 
+      r200EmitMaxVtxIndex(rmesa, rmesa->radeon.tcl.aos[0].count);
       return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
    }
 }
