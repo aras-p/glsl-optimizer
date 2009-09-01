@@ -29,6 +29,7 @@
 
 #define require_ARB_vp (yyextra->mode == ARB_vertex)
 #define require_ARB_fp (yyextra->mode == ARB_fragment)
+#define require_NV_fp  (yyextra->option.NV_fragment)
 #define require_shadow (yyextra->option.Shadow)
 #define require_rect   (yyextra->option.TexRect)
 #define require_texarray        (yyextra->option.TexArray)
@@ -159,6 +160,10 @@ CMP_SAT   { return_opcode(require_ARB_fp, TRI_OP, CMP, ZERO_ONE); }
 COS       { return_opcode(require_ARB_fp, SCALAR_OP, COS, OFF); }
 COS_SAT   { return_opcode(require_ARB_fp, SCALAR_OP, COS, ZERO_ONE); }
 
+DDX       { return_opcode(require_NV_fp,  VECTOR_OP, DDX, OFF); }
+DDX_SAT   { return_opcode(require_NV_fp,  VECTOR_OP, DDX, ZERO_ONE); }
+DDY       { return_opcode(require_NV_fp,  VECTOR_OP, DDY, OFF); }
+DDY_SAT   { return_opcode(require_NV_fp,  VECTOR_OP, DDY, ZERO_ONE); }
 DP3       { return_opcode(             1, BIN_OP, DP3, OFF); }
 DP3_SAT   { return_opcode(require_ARB_fp, BIN_OP, DP3, ZERO_ONE); }
 DP4       { return_opcode(             1, BIN_OP, DP4, OFF); }
@@ -198,22 +203,44 @@ MOV_SAT   { return_opcode(require_ARB_fp, VECTOR_OP, MOV, ZERO_ONE); }
 MUL       { return_opcode(             1, BIN_OP, MUL, OFF); }
 MUL_SAT   { return_opcode(require_ARB_fp, BIN_OP, MUL, ZERO_ONE); }
 
+PK2H      { return_opcode(require_NV_fp,  VECTOR_OP, PK2H, OFF); }
+PK2H_SAT  { return_opcode(require_NV_fp,  VECTOR_OP, PK2H, ZERO_ONE); }
+PK2US     { return_opcode(require_NV_fp,  VECTOR_OP, PK2US, OFF); }
+PK2US_SAT { return_opcode(require_NV_fp,  VECTOR_OP, PK2US, ZERO_ONE); }
+PK4B      { return_opcode(require_NV_fp,  VECTOR_OP, PK4B, OFF); }
+PK4B_SAT  { return_opcode(require_NV_fp,  VECTOR_OP, PK4B, ZERO_ONE); }
+PK4UB     { return_opcode(require_NV_fp,  VECTOR_OP, PK4UB, OFF); }
+PK4UB_SAT { return_opcode(require_NV_fp,  VECTOR_OP, PK4UB, ZERO_ONE); }
 POW       { return_opcode(             1, BINSC_OP, POW, OFF); }
 POW_SAT   { return_opcode(require_ARB_fp, BINSC_OP, POW, ZERO_ONE); }
 
 RCP       { return_opcode(             1, SCALAR_OP, RCP, OFF); }
 RCP_SAT   { return_opcode(require_ARB_fp, SCALAR_OP, RCP, ZERO_ONE); }
+RFL       { return_opcode(require_NV_fp,  BIN_OP,    RFL, OFF); }
+RFL_SAT   { return_opcode(require_NV_fp,  BIN_OP,    RFL, ZERO_ONE); }
 RSQ       { return_opcode(             1, SCALAR_OP, RSQ, OFF); }
 RSQ_SAT   { return_opcode(require_ARB_fp, SCALAR_OP, RSQ, ZERO_ONE); }
 
 SCS       { return_opcode(require_ARB_fp, SCALAR_OP, SCS, OFF); }
 SCS_SAT   { return_opcode(require_ARB_fp, SCALAR_OP, SCS, ZERO_ONE); }
+SEQ       { return_opcode(require_NV_fp,  BIN_OP, SEQ, OFF); }
+SEQ_SAT   { return_opcode(require_NV_fp,  BIN_OP, SEQ, ZERO_ONE); }
+SFL       { return_opcode(require_NV_fp,  BIN_OP, SFL, OFF); }
+SFL_SAT   { return_opcode(require_NV_fp,  BIN_OP, SFL, ZERO_ONE); }
 SGE       { return_opcode(             1, BIN_OP, SGE, OFF); }
 SGE_SAT   { return_opcode(require_ARB_fp, BIN_OP, SGE, ZERO_ONE); }
+SGT       { return_opcode(require_NV_fp,  BIN_OP, SGT, OFF); }
+SGT_SAT   { return_opcode(require_NV_fp,  BIN_OP, SGT, ZERO_ONE); }
 SIN       { return_opcode(require_ARB_fp, SCALAR_OP, SIN, OFF); }
 SIN_SAT   { return_opcode(require_ARB_fp, SCALAR_OP, SIN, ZERO_ONE); }
+SLE       { return_opcode(require_NV_fp,  BIN_OP, SLE, OFF); }
+SLE_SAT   { return_opcode(require_NV_fp,  BIN_OP, SLE, ZERO_ONE); }
 SLT       { return_opcode(             1, BIN_OP, SLT, OFF); }
 SLT_SAT   { return_opcode(require_ARB_fp, BIN_OP, SLT, ZERO_ONE); }
+SNE       { return_opcode(require_NV_fp,  BIN_OP, SNE, OFF); }
+SNE_SAT   { return_opcode(require_NV_fp,  BIN_OP, SNE, ZERO_ONE); }
+STR       { return_opcode(require_NV_fp,  BIN_OP, STR, OFF); }
+STR_SAT   { return_opcode(require_NV_fp,  BIN_OP, STR, ZERO_ONE); }
 SUB       { return_opcode(             1, BIN_OP, SUB, OFF); }
 SUB_SAT   { return_opcode(require_ARB_fp, BIN_OP, SUB, ZERO_ONE); }
 SWZ       { return_opcode(             1, SWZ, SWZ, OFF); }
@@ -223,9 +250,18 @@ TEX       { return_opcode(require_ARB_fp, SAMPLE_OP, TEX, OFF); }
 TEX_SAT   { return_opcode(require_ARB_fp, SAMPLE_OP, TEX, ZERO_ONE); }
 TXB       { return_opcode(require_ARB_fp, SAMPLE_OP, TXB, OFF); }
 TXB_SAT   { return_opcode(require_ARB_fp, SAMPLE_OP, TXB, ZERO_ONE); }
+TXD       { return_opcode(require_NV_fp,  TXD_OP, TXD, OFF); }
+TXD_SAT   { return_opcode(require_NV_fp,  TXD_OP, TXD, ZERO_ONE); }
 TXP       { return_opcode(require_ARB_fp, SAMPLE_OP, TXP, OFF); }
 TXP_SAT   { return_opcode(require_ARB_fp, SAMPLE_OP, TXP, ZERO_ONE); }
 
+UP2H      { return_opcode(require_NV_fp,  SCALAR_OP, UP2H, OFF); }
+UP2H_SAT  { return_opcode(require_NV_fp,  SCALAR_OP, UP2H, ZERO_ONE); }
+UP2US     { return_opcode(require_NV_fp,  SCALAR_OP, UP2US, OFF); }
+UP2US_SAT { return_opcode(require_NV_fp,  SCALAR_OP, UP2US, ZERO_ONE); }
+
+X2D       { return_opcode(require_NV_fp,  TRI_OP, X2D, OFF); }
+X2D_SAT   { return_opcode(require_NV_fp,  TRI_OP, X2D, ZERO_ONE); }
 XPD       { return_opcode(             1, BIN_OP, XPD, OFF); }
 XPD_SAT   { return_opcode(require_ARB_fp, BIN_OP, XPD, ZERO_ONE); }
 

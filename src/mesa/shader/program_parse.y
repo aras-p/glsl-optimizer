@@ -142,7 +142,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 
  /* Tokens for instructions */
 %token <temp_inst> BIN_OP BINSC_OP SAMPLE_OP SCALAR_OP TRI_OP VECTOR_OP
-%token <temp_inst> ARL KIL SWZ
+%token <temp_inst> ARL KIL SWZ TXD_OP
 
 %token <integer> INTEGER
 %token <real> REAL
