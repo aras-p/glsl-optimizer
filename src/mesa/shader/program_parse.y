@@ -1492,9 +1492,9 @@ stateOptModMatNum:
 	{
 	   $$ = 0;
 	}
-	| stateModMatNum
+	| '[' stateModMatNum ']'
 	{
-	   $$ = $1;
+	   $$ = $2;
 	}
 	;
 stateModMatNum: INTEGER
