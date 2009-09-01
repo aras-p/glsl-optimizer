@@ -458,15 +458,13 @@ struct ureg {
    GLuint idx:8;
    GLuint negatebase:1;
    GLuint abs:1;
-   GLuint negateabs:1;
    GLuint swz:12;
-   GLuint pad:5;
+   GLuint pad:6;
 };
 
 static const struct ureg undef = { 
    PROGRAM_UNDEFINED,
    ~0,
-   0,
    0,
    0,
    0,
@@ -516,7 +514,6 @@ static struct ureg make_ureg(GLuint file, GLuint idx)
    reg.idx = idx;
    reg.negatebase = 0;
    reg.abs = 0;
-   reg.negateabs = 0;
    reg.swz = SWIZZLE_NOOP;
    reg.pad = 0;
    return reg;
