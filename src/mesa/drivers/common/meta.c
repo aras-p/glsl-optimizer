@@ -43,6 +43,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/polygon.h"
+#include "main/readpix.h"
 #include "main/scissor.h"
 #include "main/shaders.h"
 #include "main/stencil.h"
@@ -83,8 +84,8 @@ struct save_state
    /** META_FOG */
    GLboolean Fog;
 
-   /** META_PIXELSTORE */
-   /* XXX / TO-DO */
+   /** META_PIXEL_STORE */
+   struct gl_pixelstore_attrib Pack, Unpack;
 
    /** META_RASTERIZATION */
    GLenum FrontPolygonMode, BackPolygonMode;
@@ -143,6 +144,7 @@ struct blit_state
 {
    GLuint ArrayObj;
    GLuint VBO;
+   GLuint DepthFP;
 };
 
 
@@ -244,29 +246,26 @@ _mesa_meta_free(GLcontext *ctx)
        * still get freed by _mesa_free_context_data().
        */
 
-      if (meta->TempTex.TexObj) {
-         _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
-      }
+      _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
 
-      if (meta->Blit.VBO) {
-         _mesa_DeleteBuffersARB(1, & meta->Blit.VBO);
-         _mesa_DeleteVertexArraysAPPLE(1, &meta->Blit.ArrayObj);
-      }
+      /* glBlitFramebuffer */
+      _mesa_DeleteBuffersARB(1, & meta->Blit.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->Blit.ArrayObj);
+      _mesa_DeletePrograms(1, &meta->Blit.DepthFP);
 
-      if (meta->Clear.VBO) {
-         _mesa_DeleteBuffersARB(1, & meta->Clear.VBO);
-         _mesa_DeleteVertexArraysAPPLE(1, &meta->Clear.ArrayObj);
-      }
+      /* glClear */
+      _mesa_DeleteBuffersARB(1, & meta->Clear.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->Clear.ArrayObj);
 
-      if (meta->CopyPix.VBO) {
-         _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
-         _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
-      }
+      /* glCopyPixels */
+      _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
 
-      if (meta->DrawPix.VBO) {
-         _mesa_DeleteBuffersARB(1, & meta->DrawPix.VBO);
-         _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
-      }
+      /* glDrawPixels */
+      _mesa_DeleteBuffersARB(1, & meta->DrawPix.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
+      _mesa_DeletePrograms(1, &meta->DrawPix.DepthFP);
+      _mesa_DeletePrograms(1, &meta->DrawPix.StencilFP);
    }
 
    _mesa_free(ctx->Meta);
@@ -322,6 +321,13 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->Fog = ctx->Fog.Enabled;
       if (ctx->Fog.Enabled)
          _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
+   }
+
+   if (state & META_PIXEL_STORE) {
+      save->Pack = ctx->Pack;
+      save->Unpack = ctx->Unpack;
+      ctx->Pack = ctx->DefaultPacking;
+      ctx->Unpack = ctx->DefaultPacking;
    }
 
    if (state & META_RASTERIZATION) {
@@ -512,6 +518,11 @@ _mesa_meta_end(GLcontext *ctx)
 
    if (state & META_FOG) {
       _mesa_set_enable(ctx, GL_FOG, save->Fog);
+   }
+
+   if (state & META_PIXEL_STORE) {
+      ctx->Pack = save->Pack;
+      ctx->Unpack = save->Unpack;
    }
 
    if (state & META_RASTERIZATION) {
@@ -861,6 +872,38 @@ setup_drawpix_texture(struct temp_texture *tex,
 
 
 /**
+ * One-time init for drawing depth pixels.
+ */
+static void
+init_blit_depth_pixels(GLcontext *ctx)
+{
+   static const char *program =
+      "!!ARBfp1.0\n"
+      "TEX result.depth, fragment.texcoord[0], texture[0], %s; \n"
+      "END \n";
+   char program2[200];
+   struct blit_state *blit = &ctx->Meta->Blit;
+   struct temp_texture *tex = get_temp_texture(ctx);
+   const char *texTarget;
+
+   assert(blit->DepthFP == 0);
+
+   /* replace %s with "RECT" or "2D" */
+   assert(strlen(program) + 4 < sizeof(program2));
+   if (tex->Target == GL_TEXTURE_RECTANGLE)
+      texTarget = "RECT";
+   else
+      texTarget = "2D";
+   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+
+   _mesa_GenPrograms(1, &blit->DepthFP);
+   _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
+   _mesa_ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                          strlen(program2), (const GLubyte *) program2);
+}
+
+
+/**
  * Meta implementation of ctx->Driver.BlitFramebuffer() in terms
  * of texture mapping and polygon rendering.
  */
@@ -964,9 +1007,36 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
       mask &= ~GL_COLOR_BUFFER_BIT;
    }
+
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      /* XXX todo (need fragment shader) */
+      GLuint *tmp = (GLuint *) _mesa_malloc(srcW * srcH * sizeof(GLuint));
+      if (tmp) {
+         if (!blit->DepthFP)
+            init_blit_depth_pixels(ctx);
+
+         /* maybe change tex format here */
+         newTex = alloc_texture(tex, srcW, srcH, GL_DEPTH_COMPONENT);
+
+         _mesa_ReadPixels(srcX, srcY, srcW, srcH,
+                          GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
+
+         setup_drawpix_texture(tex, newTex, GL_DEPTH_COMPONENT, srcW, srcH,
+                               GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
+
+         _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
+         _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
+         _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+         _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+         _mesa_DepthFunc(GL_ALWAYS);
+         _mesa_DepthMask(GL_TRUE);
+
+         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+         mask &= ~GL_DEPTH_BUFFER_BIT;
+
+         _mesa_free(tmp);
+      }
    }
+
    if (mask & GL_STENCIL_BUFFER_BIT) {
       /* XXX can't easily do stencil */
    }
@@ -975,8 +1045,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    _mesa_meta_end(ctx);
 
-   /* XXX, TO-DO: try to handle these cases above! */
-   if (mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) {
+   if (mask) {
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
    }
@@ -991,7 +1060,8 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
    GLfloat verts[4][7]; /* four verts of X,Y,Z,R,G,B,A */
-   GLbitfield metaSave = META_ALL - META_SCISSOR; /* all but scissor */
+   /* save all state but scissor, pixel pack/unpack */
+   GLbitfield metaSave = META_ALL - META_SCISSOR - META_PIXEL_STORE;
 
    if (buffers & BUFFER_BITS_COLOR) {
       /* if clearing color buffers, don't save/restore colormask */

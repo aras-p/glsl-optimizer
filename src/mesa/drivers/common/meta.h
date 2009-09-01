@@ -45,6 +45,7 @@
 #define META_TEXTURE       0x400
 #define META_VERTEX        0x800
 #define META_VIEWPORT     0x1000
+#define META_PIXEL_STORE  0x2000
 #define META_ALL            ~0x0
 /*@}*/
 
