@@ -98,7 +98,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_shader_objects",		GL_ARB_shader_objects_functions },
     { "GL_ARB_vertex_array_object",	GL_ARB_vertex_array_object_functions },
     { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },
-    { "GL_ARB_sync",			GL_ARB_sync },
+    { "GL_ARB_sync",			GL_ARB_sync_functions },
     { "GL_APPLE_vertex_array_object",	GL_APPLE_vertex_array_object_functions },
     { "GL_ATI_fragment_shader",		GL_ATI_fragment_shader_functions },
     { "GL_ATI_separate_stencil",	GL_ATI_separate_stencil_functions },
