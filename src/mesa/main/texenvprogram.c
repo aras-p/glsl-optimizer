@@ -109,7 +109,7 @@ struct state_key {
       GLuint NumArgsA:3;
       GLuint ModeA:5;
       struct mode_opt OptA[MAX_COMBINER_TERMS];
-   } unit[8];
+   } unit[MAX_TEXTURE_UNITS];
 };
 
 #define FOG_LINEAR  0
