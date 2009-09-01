@@ -1148,23 +1148,25 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   if (TEST_META_FUNCS)
-      driver->Clear = _mesa_meta_clear;
-   else
-      driver->Clear = clear_buffers;
    driver->Viewport = xmesa_viewport;
-#ifndef XFree86Server
-   driver->CopyPixels = xmesa_CopyPixels;
    if (TEST_META_FUNCS) {
+      driver->Clear = _mesa_meta_clear;
+      driver->CopyPixels = _mesa_meta_copy_pixels;
+      driver->BlitFramebuffer = _mesa_meta_blit_framebuffer;
       driver->DrawPixels = _mesa_meta_draw_pixels;
    }
-   else if (xmvisual->undithered_pf == PF_8R8G8B &&
-            xmvisual->dithered_pf == PF_8R8G8B &&
-            xmvisual->BitsPerPixel == 32) {
-      driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
-   }
-   else if (xmvisual->undithered_pf == PF_5R6G5B) {
-      driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
+   else {
+      driver->Clear = clear_buffers;
+#ifndef XFree86Server
+      driver->CopyPixels = xmesa_CopyPixels;
+      if (xmvisual->undithered_pf == PF_8R8G8B &&
+          xmvisual->dithered_pf == PF_8R8G8B &&
+          xmvisual->BitsPerPixel == 32) {
+         driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
+      }
+      else if (xmvisual->undithered_pf == PF_5R6G5B) {
+         driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
+      }
    }
 #endif
    driver->TestProxyTexImage = test_proxy_teximage;
