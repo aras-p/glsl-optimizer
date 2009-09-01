@@ -1401,7 +1401,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       /* Second pass - emit combine instructions to build final color:
        */
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
-	 if (key->enabled_units & (1<<unit)) {
+	 if (key->unit[unit].enabled) {
 	    p.src_previous = emit_texenv( &p, unit );
             reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
 	    release_temps(ctx, &p);	/* release all temps */
