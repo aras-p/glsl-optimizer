@@ -184,7 +184,7 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_SUB                 17
 #define TGSI_OPCODE_LRP                 18
 #define TGSI_OPCODE_CND                 19
-#define TGSI_OPCODE_CND0                20
+                                /* gap */
 #define TGSI_OPCODE_DP2A                21
                                 /* gap */
 #define TGSI_OPCODE_FRC                 24

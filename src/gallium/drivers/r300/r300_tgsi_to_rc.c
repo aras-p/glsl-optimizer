@@ -53,7 +53,6 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_SUB: return OPCODE_SUB;
         case TGSI_OPCODE_LRP: return OPCODE_LRP;
      /* case TGSI_OPCODE_CND: return OPCODE_CND; */
-     /* case TGSI_OPCODE_CND0: return OPCODE_CND0; */
         case TGSI_OPCODE_DP2A: return OPCODE_DP2A;
                                         /* gap */
         case TGSI_OPCODE_FRC: return OPCODE_FRC;

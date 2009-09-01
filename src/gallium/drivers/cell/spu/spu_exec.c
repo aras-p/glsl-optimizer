@@ -1150,10 +1150,6 @@ exec_instruction(
       ASSERT (0);
       break;
 
-   case TGSI_OPCODE_CND0:
-      ASSERT (0);
-      break;
-
    case TGSI_OPCODE_DP2A:
       ASSERT (0);
       break;

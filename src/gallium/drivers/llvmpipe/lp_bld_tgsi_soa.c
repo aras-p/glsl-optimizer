@@ -687,10 +687,6 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_CND0:
-      return 0;
-      break;
-
    case TGSI_OPCODE_DP2A:
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );  /* xmm0 = src[0].x */
       tmp1 = emit_fetch( bld, inst, 1, CHAN_X );  /* xmm1 = src[1].x */

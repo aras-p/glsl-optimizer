@@ -2089,10 +2089,6 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_CND0:
-      return 0;
-      break;
-
    case TGSI_OPCODE_DP2A:
       FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
       FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
