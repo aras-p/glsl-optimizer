@@ -944,7 +944,7 @@ static GLboolean args_match( const struct state_key *key, GLuint unit )
 {
    GLuint i, numArgs = key->unit[unit].NumArgsRGB;
 
-   for (i = 0 ; i < numArgs ; i++) {
+   for (i = 0; i < numArgs; i++) {
       if (key->unit[unit].OptA[i].Source != key->unit[unit].OptRGB[i].Source) 
 	 return GL_FALSE;
 
@@ -1278,7 +1278,7 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
  * Generate instructions for loading all texture source terms.
  */
 static GLboolean
-load_texunit_sources( struct texenv_fragment_program *p, int unit )
+load_texunit_sources( struct texenv_fragment_program *p, GLuint unit )
 {
    const struct state_key *key = p->state;
    GLuint i;
@@ -1298,7 +1298,7 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
  * Generate instructions for loading bump map textures.
  */
 static GLboolean
-load_texunit_bumpmap( struct texenv_fragment_program *p, int unit )
+load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
 {
    const struct state_key *key = p->state;
    GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
@@ -1314,17 +1314,20 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, int unit )
    texcDst = get_tex_temp( p );
    p->texcoord_tex[bumpedUnitNr] = texcDst;
 
-   /* apply rot matrix and add coords to be available in next phase */
-   /* dest = (Arg0.xxxx * rotMat0 + Arg1) + (Arg0.yyyy * rotMat1) */
-   /* note only 2 coords are affected the rest are left unchanged (mul by 0) */
+   /* Apply rot matrix and add coords to be available in next phase.
+    * dest = (Arg0.xxxx * rotMat0 + Arg1) + (Arg0.yyyy * rotMat1)
+    * note only 2 coords are affected the rest are left unchanged (mul by 0)
+    */
    emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
                swizzle1(bumpMapRes, SWIZZLE_X), rotMat0, texcSrc );
    emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
                swizzle1(bumpMapRes, SWIZZLE_Y), rotMat1, texcDst );
 
-   /* move 0,0,0,1 into bumpmap src if someone (crossbar) is foolish
-      enough to access this later, should optimize away */
-   emit_arith( p, OPCODE_MOV, bumpMapRes, WRITEMASK_XYZW, 0, constdudvcolor, undef, undef );
+   /* Move 0,0,0,1 into bumpmap src if someone (crossbar) is foolish
+    * enough to access this later, should optimize away.
+    */
+   emit_arith( p, OPCODE_MOV, bumpMapRes, WRITEMASK_XYZW, 0,
+               constdudvcolor, undef, undef );
 
    return GL_TRUE;
 }
@@ -1351,17 +1354,17 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     */
    p.program->Base.Instructions = instBuffer;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
-   p.program->Base.NumTexIndirections = 1;
+   p.program->Base.String = NULL;
+   p.program->Base.NumTexIndirections = 1; /* is this right? */
    p.program->Base.NumTexInstructions = 0;
    p.program->Base.NumAluInstructions = 0;
-   p.program->Base.String = NULL;
-   p.program->Base.NumInstructions =
-   p.program->Base.NumTemporaries =
-   p.program->Base.NumParameters =
-   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+   p.program->Base.NumInstructions = 0;
+   p.program->Base.NumTemporaries = 0;
+   p.program->Base.NumParameters = 0;
+   p.program->Base.NumAttributes = 0;
+   p.program->Base.NumAddressRegs = 0;
    p.program->Base.Parameters = _mesa_new_parameter_list();
-
-   p.program->Base.InputsRead = 0;
+   p.program->Base.InputsRead = 0x0;
    p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
 
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -1378,10 +1381,12 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    release_temps(ctx, &p);
 
    if (key->enabled_units) {
-       GLboolean needbumpstage = GL_FALSE;
+      GLboolean needbumpstage = GL_FALSE;
+
       /* Zeroth pass - bump map textures first */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
-	 if (key->unit[unit].enabled && key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+	 if (key->unit[unit].enabled &&
+             key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
 	    needbumpstage = GL_TRUE;
 	    load_texunit_bumpmap( &p, unit );
 	 }
@@ -1392,7 +1397,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * all referenced texture sources and emit texld instructions
        * for each:
        */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->unit[unit].enabled) {
 	    load_texunit_sources( &p, unit );
 	    p.last_tex_stage = unit;
@@ -1400,7 +1405,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
       /* Second pass - emit combine instructions to build final color:
        */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->unit[unit].enabled) {
 	    p.src_previous = emit_texenv( &p, unit );
             reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
@@ -1434,9 +1439,11 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * a reduced value and not what is expected in FogOption
        */
       p.program->FogOption = ctx->Fog.Mode;
-      p.program->Base.InputsRead |= FRAG_BIT_FOGC; /* XXX new */
-   } else
+      p.program->Base.InputsRead |= FRAG_BIT_FOGC;
+   }
+   else {
       p.program->FogOption = GL_NONE;
+   }
 
    if (p.program->Base.NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
       program_error(&p, "Exceeded max nr indirect texture lookups");
