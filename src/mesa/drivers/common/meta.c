@@ -143,7 +143,6 @@ struct blit_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][4]; /**< four verts of X,Y,S,T */
 };
 
 
@@ -154,7 +153,6 @@ struct clear_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][7]; /**< four verts of X,Y,Z,R,G,B,A */
 };
 
 
@@ -165,7 +163,6 @@ struct copypix_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][5]; /**< four verts of X,Y,Z,S,T */
 };
 
 
@@ -176,7 +173,6 @@ struct drawpix_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][5]; /**< four verts of X,Y,Z,S,T */
 
    GLuint StencilFP;  /**< Fragment program for drawing stencil images */
    GLuint DepthFP;  /**< Fragment program for drawing depth images */
@@ -883,6 +879,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
    const GLint srcH = abs(srcY1 - srcY0);
    const GLboolean srcFlipX = srcX1 < srcX0;
    const GLboolean srcFlipY = srcY1 < srcY0;
+   GLfloat verts[4][4]; /* four verts of X,Y,S,T */
    GLboolean newTex;
 
    if (srcW > maxTexSize || srcH > maxTexSize) {
@@ -917,13 +914,13 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &blit->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, blit->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(blit->verts),
-                          blit->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat),
+      _mesa_VertexPointer(2, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (2 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -937,27 +934,26 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    /* vertex positions/texcoords (after texture allocation!) */
    {
-      blit->verts[0][0] = (GLfloat) dstX0;
-      blit->verts[0][1] = (GLfloat) dstY0;
-      blit->verts[1][0] = (GLfloat) dstX1;
-      blit->verts[1][1] = (GLfloat) dstY0;
-      blit->verts[2][0] = (GLfloat) dstX1;
-      blit->verts[2][1] = (GLfloat) dstY1;
-      blit->verts[3][0] = (GLfloat) dstX0;
-      blit->verts[3][1] = (GLfloat) dstY1;
+      verts[0][0] = (GLfloat) dstX0;
+      verts[0][1] = (GLfloat) dstY0;
+      verts[1][0] = (GLfloat) dstX1;
+      verts[1][1] = (GLfloat) dstY0;
+      verts[2][0] = (GLfloat) dstX1;
+      verts[2][1] = (GLfloat) dstY1;
+      verts[3][0] = (GLfloat) dstX0;
+      verts[3][1] = (GLfloat) dstY1;
 
-      blit->verts[0][2] = 0.0F;
-      blit->verts[0][3] = 0.0F;
-      blit->verts[1][2] = tex->Sright;
-      blit->verts[1][3] = 0.0F;
-      blit->verts[2][2] = tex->Sright;
-      blit->verts[2][3] = tex->Ttop;
-      blit->verts[3][2] = 0.0F;
-      blit->verts[3][3] = tex->Ttop;
+      verts[0][2] = 0.0F;
+      verts[0][3] = 0.0F;
+      verts[1][2] = tex->Sright;
+      verts[1][3] = 0.0F;
+      verts[2][2] = tex->Sright;
+      verts[2][3] = tex->Ttop;
+      verts[3][2] = 0.0F;
+      verts[3][3] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(blit->verts), blit->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    _mesa_Enable(tex->Target);
@@ -994,6 +990,7 @@ void
 _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
+   GLfloat verts[4][7]; /* four verts of X,Y,Z,R,G,B,A */
    GLbitfield metaSave = META_ALL - META_SCISSOR; /* all but scissor */
 
    if (buffers & BUFFER_BITS_COLOR) {
@@ -1013,12 +1010,13 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &clear->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(clear->verts),
-                          clear->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, 7 * sizeof(GLfloat), (void *) 0);
-      _mesa_ColorPointer(4, GL_FLOAT, 7 * sizeof(GLfloat),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_ColorPointer(4, GL_FLOAT, sizeof(verts[0]),
                          (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_COLOR_ARRAY);
@@ -1069,27 +1067,26 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
       const GLfloat z = 1.0 - 2.0 * ctx->Depth.Clear;
       GLuint i;
 
-      clear->verts[0][0] = x0;
-      clear->verts[0][1] = y0;
-      clear->verts[0][2] = z;
-      clear->verts[1][0] = x1;
-      clear->verts[1][1] = y0;
-      clear->verts[1][2] = z;
-      clear->verts[2][0] = x1;
-      clear->verts[2][1] = y1;
-      clear->verts[2][2] = z;
-      clear->verts[3][0] = x0;
-      clear->verts[3][1] = y1;
-      clear->verts[3][2] = z;
+      verts[0][0] = x0;
+      verts[0][1] = y0;
+      verts[0][2] = z;
+      verts[1][0] = x1;
+      verts[1][1] = y0;
+      verts[1][2] = z;
+      verts[2][0] = x1;
+      verts[2][1] = y1;
+      verts[2][2] = z;
+      verts[3][0] = x0;
+      verts[3][1] = y1;
+      verts[3][2] = z;
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         COPY_4FV(&clear->verts[i][3], ctx->Color.ClearColor);
+         COPY_4FV(&verts[i][3], ctx->Color.ClearColor);
       }
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(clear->verts), clear->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* draw quad */
@@ -1110,6 +1107,7 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
 {
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
    struct temp_texture *tex = get_temp_texture(ctx);
+   GLfloat verts[4][5]; /* four verts of X,Y,Z,S,T */
    GLboolean newTex;
    GLenum intFormat = GL_RGBA;
 
@@ -1143,13 +1141,13 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &copypix->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, copypix->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(copypix->verts),
-                          copypix->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(copypix->verts[0]),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(copypix->verts[0]),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1169,30 +1167,29 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
       const GLfloat dstY1 = dstY + height * ctx->Pixel.ZoomY;
       const GLfloat z = ctx->Current.RasterPos[2];
 
-      copypix->verts[0][0] = dstX0;
-      copypix->verts[0][1] = dstY0;
-      copypix->verts[0][2] = z;
-      copypix->verts[0][3] = 0.0F;
-      copypix->verts[0][4] = 0.0F;
-      copypix->verts[1][0] = dstX1;
-      copypix->verts[1][1] = dstY0;
-      copypix->verts[1][2] = z;
-      copypix->verts[1][3] = tex->Sright;
-      copypix->verts[1][4] = 0.0F;
-      copypix->verts[2][0] = dstX1;
-      copypix->verts[2][1] = dstY1;
-      copypix->verts[2][2] = z;
-      copypix->verts[2][3] = tex->Sright;
-      copypix->verts[2][4] = tex->Ttop;
-      copypix->verts[3][0] = dstX0;
-      copypix->verts[3][1] = dstY1;
-      copypix->verts[3][2] = z;
-      copypix->verts[3][3] = 0.0F;
-      copypix->verts[3][4] = tex->Ttop;
+      verts[0][0] = dstX0;
+      verts[0][1] = dstY0;
+      verts[0][2] = z;
+      verts[0][3] = 0.0F;
+      verts[0][4] = 0.0F;
+      verts[1][0] = dstX1;
+      verts[1][1] = dstY0;
+      verts[1][2] = z;
+      verts[1][3] = tex->Sright;
+      verts[1][4] = 0.0F;
+      verts[2][0] = dstX1;
+      verts[2][1] = dstY1;
+      verts[2][2] = z;
+      verts[2][3] = tex->Sright;
+      verts[2][4] = tex->Ttop;
+      verts[3][0] = dstX0;
+      verts[3][1] = dstY1;
+      verts[3][2] = z;
+      verts[3][3] = 0.0F;
+      verts[3][4] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(copypix->verts), copypix->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* Alloc/setup texture */
@@ -1362,6 +1359,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
    struct temp_texture *tex = get_temp_texture(ctx);
    const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
+   GLfloat verts[4][5]; /* four verts of X,Y,Z,S,T */
    GLenum texIntFormat;
    GLboolean fallback, newTex;
    GLbitfield metaExtraSave = 0x0;
@@ -1449,13 +1447,13 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &drawpix->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(drawpix->verts),
-                          drawpix->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(drawpix->verts[0]),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(drawpix->verts[0]),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1475,30 +1473,29 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       const GLfloat y1 = y + height * ctx->Pixel.ZoomY;
       const GLfloat z = ctx->Current.RasterPos[2];
 
-      drawpix->verts[0][0] = x0;
-      drawpix->verts[0][1] = y0;
-      drawpix->verts[0][2] = z;
-      drawpix->verts[0][3] = 0.0F;
-      drawpix->verts[0][4] = 0.0F;
-      drawpix->verts[1][0] = x1;
-      drawpix->verts[1][1] = y0;
-      drawpix->verts[1][2] = z;
-      drawpix->verts[1][3] = tex->Sright;
-      drawpix->verts[1][4] = 0.0F;
-      drawpix->verts[2][0] = x1;
-      drawpix->verts[2][1] = y1;
-      drawpix->verts[2][2] = z;
-      drawpix->verts[2][3] = tex->Sright;
-      drawpix->verts[2][4] = tex->Ttop;
-      drawpix->verts[3][0] = x0;
-      drawpix->verts[3][1] = y1;
-      drawpix->verts[3][2] = z;
-      drawpix->verts[3][3] = 0.0F;
-      drawpix->verts[3][4] = tex->Ttop;
+      verts[0][0] = x0;
+      verts[0][1] = y0;
+      verts[0][2] = z;
+      verts[0][3] = 0.0F;
+      verts[0][4] = 0.0F;
+      verts[1][0] = x1;
+      verts[1][1] = y0;
+      verts[1][2] = z;
+      verts[1][3] = tex->Sright;
+      verts[1][4] = 0.0F;
+      verts[2][0] = x1;
+      verts[2][1] = y1;
+      verts[2][2] = z;
+      verts[2][3] = tex->Sright;
+      verts[2][4] = tex->Ttop;
+      verts[3][0] = x0;
+      verts[3][1] = y1;
+      verts[3][2] = z;
+      verts[3][3] = 0.0F;
+      verts[3][4] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(drawpix->verts), drawpix->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* set given unpack params */
