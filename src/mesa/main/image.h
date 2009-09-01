@@ -64,6 +64,9 @@ extern GLboolean
 _mesa_is_depth_format(GLenum format);
 
 extern GLboolean
+_mesa_is_stencil_format(GLenum format);
+
+extern GLboolean
 _mesa_is_ycbcr_format(GLenum format);
 
 extern GLboolean

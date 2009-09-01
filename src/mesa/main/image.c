@@ -689,6 +689,22 @@ _mesa_is_depth_format(GLenum format)
 
 
 /**
+ * Test if the given image format is a stencil format.
+ */
+GLboolean
+_mesa_is_stencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_STENCIL_INDEX:
+      case GL_DEPTH_STENCIL:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
  * Test if the given image format is a YCbCr format.
  */
 GLboolean
