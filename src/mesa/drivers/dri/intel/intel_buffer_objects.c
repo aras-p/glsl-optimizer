@@ -267,6 +267,9 @@ intel_bufferobj_map(GLcontext * ctx,
    }
 
    obj->Pointer = intel_obj->buffer->virtual;
+   obj->Length = obj->Size;
+   obj->Offset = 0;
+
    return obj->Pointer;
 }
 
