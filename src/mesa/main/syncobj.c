@@ -183,7 +183,7 @@ _mesa_unref_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
       remove_from_list(& syncObj->link);
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-      (*ctx->Driver.DeleteSyncObject)(ctx, syncObj);
+      ctx->Driver.DeleteSyncObject(ctx, syncObj);
    } else {
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
    }
@@ -250,7 +250,7 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
       return 0;
    }
 
-   syncObj = (*ctx->Driver.NewSyncObject)(ctx, GL_SYNC_FENCE);
+   syncObj = ctx->Driver.NewSyncObject(ctx, GL_SYNC_FENCE);
    if (syncObj != NULL) {
       syncObj->Type = GL_SYNC_FENCE;
       /* The name is not currently used, and it is never visible to
@@ -265,7 +265,7 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
       syncObj->Flags = flags;
       syncObj->Status = 0;
 
-      (*ctx->Driver.FenceSync)(ctx, syncObj, condition, flags);
+      ctx->Driver.FenceSync(ctx, syncObj, condition, flags);
 
       _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       insert_at_tail(& ctx->Shared->SyncObjects, & syncObj->link);
@@ -305,11 +305,11 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
     *    ClientWaitSync was called. ALREADY_SIGNALED will always be returned
     *    if <sync> was signaled, even if the value of <timeout> is zero.
     */
-   (*ctx->Driver.CheckSync)(ctx, syncObj);
+   ctx->Driver.CheckSync(ctx, syncObj);
    if (syncObj->Status) {
       ret = GL_ALREADY_SIGNALED;
    } else {
-      (*ctx->Driver.ClientWaitSync)(ctx, syncObj, flags, timeout);
+      ctx->Driver.ClientWaitSync(ctx, syncObj, flags, timeout);
 
       ret = syncObj->Status ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
    }
@@ -344,7 +344,7 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
       return;
    }
 
-   (*ctx->Driver.ServerWaitSync)(ctx, syncObj, flags, timeout);
+   ctx->Driver.ServerWaitSync(ctx, syncObj, flags, timeout);
 }
 
 
@@ -379,7 +379,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
        * this call won't block.  It just updates state in the common object
        * data from the current driver state.
        */
-      (*ctx->Driver.CheckSync)(ctx, syncObj);
+      ctx->Driver.CheckSync(ctx, syncObj);
 
       v[0] = (syncObj->Status) ? GL_SIGNALED : GL_UNSIGNALED;
       size = 1;
