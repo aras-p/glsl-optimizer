@@ -83,8 +83,8 @@ texenv_doing_secondary_color(GLcontext *ctx)
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   GLuint Source:4;
-   GLuint Operand:3;
+   GLuint Source:4;  /**< SRC_x */
+   GLuint Operand:3; /**< OPR_x */
 };
 
 struct state_key {
@@ -103,11 +103,11 @@ struct state_key {
       GLuint ScaleShiftA:2;
 
       GLuint NumArgsRGB:3;
-      GLuint ModeRGB:5;
+      GLuint ModeRGB:5;     /**< MODE_x */
       struct mode_opt OptRGB[MAX_COMBINER_TERMS];
 
       GLuint NumArgsA:3;
-      GLuint ModeA:5;
+      GLuint ModeA:5;     /**< MODE_x */
       struct mode_opt OptA[MAX_COMBINER_TERMS];
    } unit[MAX_TEXTURE_UNITS];
 };
@@ -240,7 +240,12 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
    }
 }
 
+
 #define TEXTURE_UNKNOWN_INDEX 7
+
+/**
+ * Translate TEXTURE_x_BIT to TEXTURE_x_INDEX.
+ */
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
    /* make sure number of switch cases is correct */
@@ -258,6 +263,7 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
       return TEXTURE_UNKNOWN_INDEX;
    }
 }
+
 
 #define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
 #define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
@@ -375,51 +381,50 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
    GLbitfield inputs_referenced = FRAG_BIT_COL0;
-   GLbitfield inputs_available = get_fp_input_mask( ctx );
+   const GLbitfield inputs_available = get_fp_input_mask( ctx );
 
    memset(key, 0, sizeof(*key));
 
    /* _NEW_TEXTURE */
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      const struct gl_texture_object *texObj = texUnit->_Current;
+      const struct gl_tex_env_combine_state *comb = texUnit->_CurrentCombine;
       GLenum format;
 
       if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
          continue;
 
-      format = texUnit->_Current->Image[0][texUnit->_Current->BaseLevel]->_BaseFormat;
+      format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
 
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
       key->nr_enabled_units = i+1;
       inputs_referenced |= FRAG_BIT_TEX(i);
 
-      key->unit[i].source_index = 
-	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
-      key->unit[i].shadow = ((texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE) && 
+      key->unit[i].source_index =
+         translate_tex_src_bit(texUnit->_ReallyEnabled);
+
+      key->unit[i].shadow = ((texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
                              ((format == GL_DEPTH_COMPONENT) || 
                               (format == GL_DEPTH_STENCIL_EXT)));
 
-      key->unit[i].NumArgsRGB = texUnit->_CurrentCombine->_NumArgsRGB;
-      key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;
+      key->unit[i].NumArgsRGB = comb->_NumArgsRGB;
+      key->unit[i].NumArgsA = comb->_NumArgsA;
 
       key->unit[i].ModeRGB =
-	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeRGB);
+	 translate_mode(texUnit->EnvMode, comb->ModeRGB);
       key->unit[i].ModeA =
-	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeA);
+	 translate_mode(texUnit->EnvMode, comb->ModeA);
 
-      key->unit[i].ScaleShiftRGB = texUnit->_CurrentCombine->ScaleShiftRGB;
-      key->unit[i].ScaleShiftA = texUnit->_CurrentCombine->ScaleShiftA;
+      key->unit[i].ScaleShiftRGB = comb->ScaleShiftRGB;
+      key->unit[i].ScaleShiftA = comb->ScaleShiftA;
 
       for (j = 0; j < MAX_COMBINER_TERMS; j++) {
-         key->unit[i].OptRGB[j].Operand =
-	    translate_operand(texUnit->_CurrentCombine->OperandRGB[j]);
-         key->unit[i].OptA[j].Operand =
-	    translate_operand(texUnit->_CurrentCombine->OperandA[j]);
-         key->unit[i].OptRGB[j].Source =
-	    translate_source(texUnit->_CurrentCombine->SourceRGB[j]);
-         key->unit[i].OptA[j].Source =
-	    translate_source(texUnit->_CurrentCombine->SourceA[j]);
+         key->unit[i].OptRGB[j].Operand = translate_operand(comb->OperandRGB[j]);
+         key->unit[i].OptA[j].Operand = translate_operand(comb->OperandA[j]);
+         key->unit[i].OptRGB[j].Source = translate_source(comb->SourceRGB[j]);
+         key->unit[i].OptA[j].Source = translate_source(comb->SourceA[j]);
       }
 
       if (key->unit[i].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
@@ -952,6 +957,11 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
    }
 }
 
+/**
+ * Check if the RGB and Alpha sources and operands match for the given
+ * texture unit's combinder state.  When the RGB and A sources and
+ * operands match, we can emit fewer instructions.
+ */
 static GLboolean args_match( const struct state_key *key, GLuint unit )
 {
    GLuint i, nr = key->unit[unit].NumArgsRGB;
@@ -1234,7 +1244,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 
       if (texTarget == TEXTURE_UNKNOWN_INDEX)
          program_error(p, "TexSrcBit");
-			  
+
       /* TODO: Use D0_MASK_XY where possible.
        */
       if (p->state->unit[unit].enabled) {
