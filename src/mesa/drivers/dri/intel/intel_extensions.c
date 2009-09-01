@@ -36,6 +36,7 @@
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_shader_objects
+#define need_GL_ARB_sync
 #define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ARB_vertex_shader
@@ -77,6 +78,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_multitexture",               NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },
+   { "GL_ARB_sync",                       GL_ARB_sync_functions },
    { "GL_ARB_texture_border_clamp",       NULL },
    { "GL_ARB_texture_cube_map",           NULL },
    { "GL_ARB_texture_env_add",            NULL },

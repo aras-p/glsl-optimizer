@@ -80,6 +80,12 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 
 #define INTEL_MAX_FIXUP 64
 
+struct intel_sync_object {
+   struct gl_sync_object Base;
+
+   /** Batch associated with this sync object */
+   drm_intel_bo *bo;
+};
 
 /**
  * intel_context is derived from Mesa's context class: GLcontext.
@@ -469,6 +475,8 @@ extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
+
+void intel_init_syncobj_functions(struct dd_function_table *functions);
 
 
 /* ================================================================

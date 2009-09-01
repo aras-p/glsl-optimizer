@@ -598,6 +598,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
    intelInitBufferObjectFuncs(functions);
+   intel_init_syncobj_functions(functions);
 }
 
 
