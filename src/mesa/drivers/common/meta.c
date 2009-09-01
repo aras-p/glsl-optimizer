@@ -694,7 +694,7 @@ get_temp_texture(GLcontext *ctx)
       /* do one-time init */
 
       /* prefer texture rectangle */
-      if (0*ctx->Extensions.NV_texture_rectangle) {
+      if (ctx->Extensions.NV_texture_rectangle) {
          tex->Target = GL_TEXTURE_RECTANGLE;
          tex->MaxSize = ctx->Const.MaxTextureRectSize;
          tex->NPOT = GL_TRUE;
@@ -703,7 +703,7 @@ get_temp_texture(GLcontext *ctx)
          /* use 2D texture, NPOT if possible */
          tex->Target = GL_TEXTURE_2D;
          tex->MaxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-         tex->NPOT = 0*ctx->Extensions.ARB_texture_non_power_of_two;
+         tex->NPOT = ctx->Extensions.ARB_texture_non_power_of_two;
       }
       assert(tex->MaxSize > 0);
 
