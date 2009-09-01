@@ -2,8 +2,12 @@ Import('*')
 
 env = env.Clone()
 
+env.Tool('llvm')
+if 'LLVM_VERSION' not in env:
+    print 'warning: LLVM not found: not building llvmpipe'
+    Return()
+
 env.Tool('udis86')
-env.ParseConfig('llvm-config --cppflags')
 
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
@@ -57,8 +61,6 @@ llvmpipe = env.ConvenienceLibrary(
 
 env = env.Clone()
 
-env['LINK'] = env['CXX']
-env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
 env.Prepend(LIBS = [llvmpipe] + auxiliaries)
 
 env.Program(
