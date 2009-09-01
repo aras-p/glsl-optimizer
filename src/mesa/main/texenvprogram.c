@@ -27,8 +27,7 @@
  **************************************************************************/
 
 #include "glheader.h"
-#include "macros.h"
-#include "enums.h"
+#include "imports.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_cache.h"
