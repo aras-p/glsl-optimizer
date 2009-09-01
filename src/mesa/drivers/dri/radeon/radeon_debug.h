@@ -88,7 +88,7 @@ extern radeon_debug_type_t radeon_enabled_debug_types;
 static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
 	   const radeon_debug_level_t level)
 {
-       return RADEON_DEBUG_LEVEL <= level
+       return RADEON_DEBUG_LEVEL >= level
 		&& (type & radeon_enabled_debug_types);
 }
 /*
