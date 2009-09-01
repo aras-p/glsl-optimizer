@@ -457,15 +457,13 @@ struct ureg {
    GLuint file:4;
    GLuint idx:8;
    GLuint negatebase:1;
-   GLuint abs:1;
    GLuint swz:12;
-   GLuint pad:6;
+   GLuint pad:7;
 };
 
 static const struct ureg undef = { 
    PROGRAM_UNDEFINED,
    ~0,
-   0,
    0,
    0,
    0
@@ -513,7 +511,6 @@ static struct ureg make_ureg(GLuint file, GLuint idx)
    reg.file = file;
    reg.idx = idx;
    reg.negatebase = 0;
-   reg.abs = 0;
    reg.swz = SWIZZLE_NOOP;
    reg.pad = 0;
    return reg;
@@ -679,7 +676,7 @@ static void emit_arg( struct prog_src_register *reg,
    reg->Index = ureg.idx;
    reg->Swizzle = ureg.swz;
    reg->Negate = ureg.negatebase ? NEGATE_XYZW : NEGATE_NONE;
-   reg->Abs = ureg.abs;
+   reg->Abs = GL_FALSE;
 }
 
 static void emit_dst( struct prog_dst_register *dst,
