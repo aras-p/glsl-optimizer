@@ -474,7 +474,6 @@ static const struct ureg undef = {
  */
 struct texenv_fragment_program {
    struct gl_fragment_program *program;
-   GLcontext *ctx;
    struct state_key *state;
 
    GLbitfield alu_temps;	/**< Track texture indirections, see spec. */
@@ -1345,7 +1344,6 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    struct ureg cf, out;
 
    _mesa_memset(&p, 0, sizeof(p));
-   p.ctx = ctx;
    p.state = key;
    p.program = program;
 
