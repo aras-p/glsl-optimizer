@@ -134,6 +134,13 @@ extern void
 _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
                    GLubyte *dest, const struct gl_pixelstore_attrib *packing );
 
+extern void
+_mesa_expand_bitmap(GLsizei width, GLsizei height,
+                    const struct gl_pixelstore_attrib *unpack,
+                    const GLubyte *bitmap,
+                    GLubyte *destBuffer, GLint destStride,
+                    GLubyte onValue);
+
 
 /** \name Pixel processing functions */
 /*@{*/
