@@ -77,79 +77,189 @@ blend_for_op(int op)
 }
 
 
-static struct pipe_buffer *
-setup_vertex_data_tex(struct exa_context *ctx,
-                      float x0, float y0, float x1, float y1,
-                      float x2, float y2, float x3, float y3,
-                      float s0, float t0, float s1, float t1,
-                      float z)
+static INLINE void
+setup_vertex0(float vertex[2][4], float x, float y,
+              float color[4])
 {
-   ctx->vertices[0][0][0] = x0;
-   ctx->vertices[0][0][1] = y0;
-   ctx->vertices[0][0][2] = z;
-   ctx->vertices[0][1][0] = s0; /*s*/
-   ctx->vertices[0][1][1] = t0; /*t*/
+   vertex[0][0] = x;
+   vertex[0][1] = y;
+   vertex[0][2] = 0.f; /*z*/
+   vertex[0][3] = 1.f; /*w*/
 
-   ctx->vertices[1][0][0] = x1;
-   ctx->vertices[1][0][1] = y1;
-   ctx->vertices[1][0][2] = z;
-   ctx->vertices[1][1][0] = s1; /*s*/
-   ctx->vertices[1][1][1] = t0; /*t*/
-
-   ctx->vertices[2][0][0] = x2;
-   ctx->vertices[2][0][1] = y2;
-   ctx->vertices[2][0][2] = z;
-   ctx->vertices[2][1][0] = s1;
-   ctx->vertices[2][1][1] = t1;
-
-   ctx->vertices[3][0][0] = x3;
-   ctx->vertices[3][0][1] = y3;
-   ctx->vertices[3][0][2] = z;
-   ctx->vertices[3][1][0] = s0;
-   ctx->vertices[3][1][1] = t1;
-
-   return pipe_user_buffer_create(ctx->ctx->screen,
-                                  ctx->vertices,
-                                  sizeof(ctx->vertices));
+   vertex[1][0] = color[0]; /*r*/
+   vertex[1][1] = color[1]; /*g*/
+   vertex[1][2] = color[2]; /*b*/
+   vertex[1][3] = color[3]; /*a*/
 }
 
+static struct pipe_buffer *
+setup_vertex_data0(struct exa_context *ctx,
+                   int srcX, int srcY, int maskX, int maskY,
+                   int dstX, int dstY, int width, int height)
+{
+   float vertices[4][2][4];
+
+   /* 1st vertex */
+   setup_vertex0(vertices[0], dstX, dstY,
+                 ctx->solid_color);
+   /* 2nd vertex */
+   setup_vertex0(vertices[1], dstX + width, dstY,
+                 ctx->solid_color);
+   /* 3rd vertex */
+   setup_vertex0(vertices[2], dstX + width, dstY + height,
+                 ctx->solid_color);
+   /* 4th vertex */
+   setup_vertex0(vertices[3], dstX, dstY + height,
+                 ctx->solid_color);
+
+   return pipe_user_buffer_create(ctx->ctx->screen,
+                                  vertices,
+                                  sizeof(vertices));
+}
+
+static INLINE void
+setup_vertex1(float vertex[2][4], float x, float y, float s, float t)
+{
+   vertex[0][0] = x;
+   vertex[0][1] = y;
+   vertex[0][2] = 0.f; /*z*/
+   vertex[0][3] = 1.f; /*w*/
+
+   vertex[1][0] = s;   /*s*/
+   vertex[1][1] = t;   /*t*/
+   vertex[1][2] = 0.f; /*r*/
+   vertex[1][3] = 1.f; /*q*/
+}
+
+static struct pipe_buffer *
+setup_vertex_data1(struct exa_context *ctx,
+                   int srcX, int srcY, int maskX, int maskY,
+                   int dstX, int dstY, int width, int height)
+{
+   float vertices[4][2][4];
+   float s0, t0, s1, t1;
+   struct pipe_texture *src = ctx->bound_textures[0];
+
+   s0 = srcX / src->width[0];
+   s1 = srcX + width / src->width[0];
+   t0 = srcY / src->height[0];
+   t1 = srcY + height / src->height[0];
+
+   /* 1st vertex */
+   setup_vertex1(vertices[0], dstX, dstY,
+                 s0, t0);
+   /* 2nd vertex */
+   setup_vertex1(vertices[1], dstX + width, dstY,
+                 s1, t0);
+   /* 3rd vertex */
+   setup_vertex1(vertices[2], dstX + width, dstY + height,
+                 s1, t1);
+   /* 4th vertex */
+   setup_vertex1(vertices[3], dstX, dstY + height,
+                 s0, t1);
+
+   return pipe_user_buffer_create(ctx->ctx->screen,
+                                  vertices,
+                                  sizeof(vertices));
+}
+
+
+static INLINE void
+setup_vertex2(float vertex[3][4], float x, float y,
+              float s0, float t0, float s1, float t1)
+{
+   vertex[0][0] = x;
+   vertex[0][1] = y;
+   vertex[0][2] = 0.f; /*z*/
+   vertex[0][3] = 1.f; /*w*/
+
+   vertex[1][0] = s0;  /*s*/
+   vertex[1][1] = t0;  /*t*/
+   vertex[1][2] = 0.f; /*r*/
+   vertex[1][3] = 1.f; /*q*/
+
+   vertex[2][0] = s1;  /*s*/
+   vertex[2][1] = t1;  /*t*/
+   vertex[2][2] = 0.f; /*r*/
+   vertex[2][3] = 1.f; /*q*/
+}
+
+static struct pipe_buffer *
+setup_vertex_data2(struct exa_context *ctx,
+                   int srcX, int srcY, int maskX, int maskY,
+                   int dstX, int dstY, int width, int height)
+{
+   float vertices[4][3][4];
+   float st0[4], st1[4];
+   struct pipe_texture *src = ctx->bound_textures[0];
+   struct pipe_texture *mask = ctx->bound_textures[0];
+
+   st0[0] = srcX / src->width[0];
+   st0[1] = srcY / src->height[0];
+   st0[2] = srcX + width / src->width[0];
+   st0[3] = srcY + height / src->height[0];
+
+   st1[0] = maskX / mask->width[0];
+   st1[1] = maskY / mask->height[0];
+   st1[2] = maskX + width / mask->width[0];
+   st1[3] = maskY + height / mask->height[0];
+
+   /* 1st vertex */
+   setup_vertex2(vertices[0], dstX, dstY,
+                 st0[0], st0[1], st1[0], st1[1]);
+   /* 2nd vertex */
+   setup_vertex2(vertices[1], dstX + width, dstY,
+                 st0[2], st0[1], st1[2], st1[1]);
+   /* 3rd vertex */
+   setup_vertex2(vertices[2], dstX + width, dstY + height,
+                 st0[2], st0[3], st1[2], st1[3]);
+   /* 4th vertex */
+   setup_vertex2(vertices[3], dstX, dstY + height,
+                 st0[0], st0[3], st1[0], st1[3]);
+
+   return pipe_user_buffer_create(ctx->ctx->screen,
+                                  vertices,
+                                  sizeof(vertices));
+}
+
+
 static void
-draw_texture(struct exa_context *exa,
-             struct pipe_texture *tex,
-             float x1offset, float y1offset,
-             float x2offset, float y2offset,
-             float x1, float y1,
-             float x2, float y2,
-             float x3, float y3,
-             float x4, float y4)
+draw_pictures(struct exa_context *exa,
+              int srcX, int srcY, int maskX, int maskY,
+              int dstX, int dstY, int width, int height)
 {
    struct pipe_context *pipe = exa->ctx;
-   struct pipe_buffer *buf;
-   float s0, t0, s1, t1;
+   struct pipe_buffer *buf = 0;
 
-   assert(tex->width[0] != 0);
-   assert(tex->height[0] != 0);
-
-   s0 = x1offset / tex->width[0];
-   s1 = x2offset / tex->width[0];
-   t0 = y1offset / tex->height[0];
-   t1 = y2offset / tex->height[0];
-
-   /* draw quad */
-   buf = setup_vertex_data_tex(exa, x1, y1, x2, y2, x3, y3, x4, y4,
-                               s0, t0, s1, t1, 0.0f);
+   if (exa->num_bound_samplers == 0 ) { /* solid fill */
+      buf = setup_vertex_data0(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   } else if (exa->num_bound_samplers == 1 ) /* src */
+      buf = setup_vertex_data1(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   else if (exa->num_bound_samplers == 2) /* src + mask */
+      buf = setup_vertex_data2(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   else if (exa->num_bound_samplers == 3) { /* src + mask + dst */
+      debug_assert(!"src/mask/dst not handled right now");
+#if 0
+      buf = setup_vertex_data2(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+#endif
+   }
 
    if (buf) {
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
-                              2); /* attribs/vert */
+                              1 + exa->num_bound_samplers); /* attribs/vert */
 
-      pipe_buffer_reference(&buf,
-                            NULL);
+      pipe_buffer_reference(&buf, NULL);
    }
-
-   cso_restore_vertex_shader(exa->cso);
 }
 
 boolean xorg_composite_accelerated(int op,
@@ -309,8 +419,9 @@ bind_samplers(struct exa_context *exa, int op,
               struct exa_pixmap_priv *pDst)
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state src_sampler, mask_sampler;
+
+   exa->num_bound_samplers = 0;
 
    memset(&src_sampler, 0, sizeof(struct pipe_sampler_state));
    memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
@@ -322,7 +433,8 @@ bind_samplers(struct exa_context *exa, int op,
       src_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       src_sampler.normalized_coords = 1;
       samplers[0] = &src_sampler;
-      textures[0] = pSrc->tex;
+      exa->bound_textures[0] = pSrc->tex;
+      ++exa->num_bound_samplers;
    }
 
    if (pMaskPicture && pMask) {
@@ -332,12 +444,14 @@ bind_samplers(struct exa_context *exa, int op,
       mask_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       mask_sampler.normalized_coords = 1;
       samplers[1] = &mask_sampler;
-      textures[1] = pMask->tex;
+      exa->bound_textures[1] = pMask->tex;
+      ++exa->num_bound_samplers;
    }
 
-   cso_set_samplers(exa->cso, 3,
+   cso_set_samplers(exa->cso, exa->num_bound_samplers,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(exa->cso, 3, textures);
+   cso_set_sampler_textures(exa->cso, exa->num_bound_samplers,
+                            exa->bound_textures);
 }
 
 static void
@@ -409,8 +523,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state(exa);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
-   bind_samplers(exa, op, pSrcPicture, pMaskPicture, pDstPicture,
-                 pSrc, pMask, pDst);
+   bind_samplers(exa, op, pSrcPicture, pMaskPicture,
+                 pDstPicture, pSrc, pMask, pDst);
 
    setup_constant_buffers(exa, pDstPicture);
 
@@ -422,5 +536,7 @@ void xorg_composite(struct exa_context *exa,
                     int srcX, int srcY, int maskX, int maskY,
                     int dstX, int dstY, int width, int height)
 {
+   draw_pictures(exa, srcX, srcY, maskX, maskY,
+                 dstX, dstY, width, height);
 }
 

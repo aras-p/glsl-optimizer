@@ -563,7 +563,6 @@ xorg_exa_init(ScrnInfoPtr pScrn)
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa;
    ExaDriverPtr pExa;
-   int i;
 
    exa = xcalloc(1, sizeof(struct exa_context));
    if (!exa)
@@ -614,13 +613,6 @@ xorg_exa_init(ScrnInfoPtr pScrn)
    exa->ctx = ms->api->create_context(ms->api, exa->scrn);
    /* Share context with DRI */
    ms->ctx = exa->ctx;
-
-   /* common vertex data setup */
-   for (i = 0; i < 4; ++i) {
-      exa->vertices[i][0][3] = 1.0f; /* w */
-      exa->vertices[i][1][2] = 0.0f; /* r */
-      exa->vertices[i][1][3] = 1.0f; /* q */
-   }
 
    exa->cso = cso_create_context(exa->ctx);
    exa->shaders = xorg_shaders_create(exa);
