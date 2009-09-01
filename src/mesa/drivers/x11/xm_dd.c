@@ -51,6 +51,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "drivers/common/meta.h"
 #include "xmesaP.h"
 
 
@@ -1147,13 +1148,19 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   driver->Clear = clear_buffers;
+   if (TEST_META_FUNCS)
+      driver->Clear = _mesa_meta_clear;
+   else
+      driver->Clear = clear_buffers;
    driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;
-   if (xmvisual->undithered_pf == PF_8R8G8B &&
-       xmvisual->dithered_pf == PF_8R8G8B &&
-       xmvisual->BitsPerPixel == 32) {
+   if (TEST_META_FUNCS) {
+      driver->DrawPixels = _mesa_meta_draw_pixels;
+   }
+   else if (xmvisual->undithered_pf == PF_8R8G8B &&
+            xmvisual->dithered_pf == PF_8R8G8B &&
+            xmvisual->BitsPerPixel == 32) {
       driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
    }
    else if (xmvisual->undithered_pf == PF_5R6G5B) {
