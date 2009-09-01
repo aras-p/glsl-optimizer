@@ -92,21 +92,21 @@ struct state_key {
    GLuint enabled_units:8;
    GLuint separate_specular:1;
    GLuint fog_enabled:1;
-   GLuint fog_mode:2;
+   GLuint fog_mode:2;          /**< FOG_x */
    GLuint inputs_available:12;
 
    struct {
       GLuint enabled:1;
-      GLuint source_index:3;   /* one of TEXTURE_1D/2D/3D/CUBE/RECT_INDEX */
+      GLuint source_index:3;   /**< TEXTURE_x_INDEX */
       GLuint shadow:1;
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
 
-      GLuint NumArgsRGB:3;
+      GLuint NumArgsRGB:3;  /**< up to MAX_COMBINER_TERMS */
       GLuint ModeRGB:5;     /**< MODE_x */
       struct mode_opt OptRGB[MAX_COMBINER_TERMS];
 
-      GLuint NumArgsA:3;
+      GLuint NumArgsA:3;  /**< up to MAX_COMBINER_TERMS */
       GLuint ModeA:5;     /**< MODE_x */
       struct mode_opt OptA[MAX_COMBINER_TERMS];
    } unit[MAX_TEXTURE_UNITS];
@@ -705,7 +705,7 @@ emit_op(struct texenv_fragment_program *p,
 	struct ureg src1,
 	struct ureg src2 )
 {
-   GLuint nr = p->program->Base.NumInstructions++;
+   const GLuint nr = p->program->Base.NumInstructions++;
    struct prog_instruction *inst = &p->program->Base.Instructions[nr];
 
    assert(nr < MAX_INSTRUCTIONS);
@@ -950,15 +950,15 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
  */
 static GLboolean args_match( const struct state_key *key, GLuint unit )
 {
-   GLuint i, nr = key->unit[unit].NumArgsRGB;
+   GLuint i, numArgs = key->unit[unit].NumArgsRGB;
 
-   for (i = 0 ; i < nr ; i++) {
+   for (i = 0 ; i < numArgs ; i++) {
       if (key->unit[unit].OptA[i].Source != key->unit[unit].OptRGB[i].Source) 
 	 return GL_FALSE;
 
-      switch(key->unit[unit].OptA[i].Operand) {
+      switch (key->unit[unit].OptA[i].Operand) {
       case OPR_SRC_ALPHA: 
-	 switch(key->unit[unit].OptRGB[i].Operand) {
+	 switch (key->unit[unit].OptRGB[i].Operand) {
 	 case OPR_SRC_COLOR: 
 	 case OPR_SRC_ALPHA: 
 	    break;
@@ -967,7 +967,7 @@ static GLboolean args_match( const struct state_key *key, GLuint unit )
 	 }
 	 break;
       case OPR_ONE_MINUS_SRC_ALPHA: 
-	 switch(key->unit[unit].OptRGB[i].Operand) {
+	 switch (key->unit[unit].OptRGB[i].Operand) {
 	 case OPR_ONE_MINUS_SRC_COLOR: 
 	 case OPR_ONE_MINUS_SRC_ALPHA: 
 	    break;
