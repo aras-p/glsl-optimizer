@@ -222,46 +222,6 @@ setup_vertex_data2(struct exa_context *ctx,
                                   sizeof(vertices));
 }
 
-
-static void
-draw_pictures(struct exa_context *exa,
-              int srcX, int srcY, int maskX, int maskY,
-              int dstX, int dstY, int width, int height)
-{
-   struct pipe_context *pipe = exa->ctx;
-   struct pipe_buffer *buf = 0;
-
-   if (exa->num_bound_samplers == 0 ) { /* solid fill */
-      buf = setup_vertex_data0(exa,
-                               srcX, srcY, maskX, maskY,
-                               dstX, dstY, width, height);
-   } else if (exa->num_bound_samplers == 1 ) /* src */
-      buf = setup_vertex_data1(exa,
-                               srcX, srcY, maskX, maskY,
-                               dstX, dstY, width, height);
-   else if (exa->num_bound_samplers == 2) /* src + mask */
-      buf = setup_vertex_data2(exa,
-                               srcX, srcY, maskX, maskY,
-                               dstX, dstY, width, height);
-   else if (exa->num_bound_samplers == 3) { /* src + mask + dst */
-      debug_assert(!"src/mask/dst not handled right now");
-#if 0
-      buf = setup_vertex_data2(exa,
-                               srcX, srcY, maskX, maskY,
-                               dstX, dstY, width, height);
-#endif
-   }
-
-   if (buf) {
-      util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              1 + exa->num_bound_samplers); /* attribs/vert */
-
-      pipe_buffer_reference(&buf, NULL);
-   }
-}
-
 boolean xorg_composite_accelerated(int op,
                                    PicturePtr pSrcPicture,
                                    PicturePtr pMaskPicture,
@@ -536,7 +496,37 @@ void xorg_composite(struct exa_context *exa,
                     int srcX, int srcY, int maskX, int maskY,
                     int dstX, int dstY, int width, int height)
 {
-   draw_pictures(exa, srcX, srcY, maskX, maskY,
-                 dstX, dstY, width, height);
+   struct pipe_context *pipe = exa->ctx;
+   struct pipe_buffer *buf = 0;
+
+   if (exa->num_bound_samplers == 0 ) { /* solid fill */
+      buf = setup_vertex_data0(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   } else if (exa->num_bound_samplers == 1 ) /* src */
+      buf = setup_vertex_data1(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   else if (exa->num_bound_samplers == 2) /* src + mask */
+      buf = setup_vertex_data2(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+   else if (exa->num_bound_samplers == 3) { /* src + mask + dst */
+      debug_assert(!"src/mask/dst not handled right now");
+#if 0
+      buf = setup_vertex_data2(exa,
+                               srcX, srcY, maskX, maskY,
+                               dstX, dstY, width, height);
+#endif
+   }
+
+   if (buf) {
+      util_draw_vertex_buffer(pipe, buf, 0,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              1 + exa->num_bound_samplers); /* attribs/vert */
+
+      pipe_buffer_reference(&buf, NULL);
+   }
 }
 
