@@ -1429,6 +1429,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
    struct temp_texture *tex = get_temp_texture(ctx);
    const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
+   const GLuint origStencilMask = ctx->Stencil.WriteMask[0];
    GLfloat verts[4][5]; /* four verts of X,Y,Z,S,T */
    GLenum texIntFormat;
    GLboolean fallback, newTex;
@@ -1593,14 +1594,15 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
 
       for (bit = 0; bit < ctx->Visual.stencilBits; bit++) {
          const GLuint mask = 1 << bit;
+         if (mask & origStencilMask) {
+            _mesa_StencilFunc(GL_ALWAYS, mask, mask);
+            _mesa_StencilMask(mask);
 
-         _mesa_StencilFunc(GL_ALWAYS, mask, mask);
-         _mesa_StencilMask(mask);
+            _mesa_ProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
+                                             255.0 / mask, 0.5, 0.0, 0.0);
 
-         _mesa_ProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-                                          255.0 / mask, 0.5, 0.0, 0.0);
-
-         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+            _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+         }
       }
    }
    else if (_mesa_is_depth_format(format)) {
