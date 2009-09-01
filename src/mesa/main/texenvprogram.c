@@ -241,27 +241,13 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
 }
 
 
-#define TEXTURE_UNKNOWN_INDEX 7
-
 /**
  * Translate TEXTURE_x_BIT to TEXTURE_x_INDEX.
  */
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
-   /* make sure number of switch cases is correct */
-   assert(NUM_TEXTURE_TARGETS == 7);
-   switch (bit) {
-   case TEXTURE_1D_BIT:   return TEXTURE_1D_INDEX;
-   case TEXTURE_2D_BIT:   return TEXTURE_2D_INDEX;
-   case TEXTURE_RECT_BIT: return TEXTURE_RECT_INDEX;
-   case TEXTURE_3D_BIT:   return TEXTURE_3D_INDEX;
-   case TEXTURE_CUBE_BIT: return TEXTURE_CUBE_INDEX;
-   case TEXTURE_1D_ARRAY_BIT: return TEXTURE_1D_ARRAY_INDEX;
-   case TEXTURE_2D_ARRAY_BIT: return TEXTURE_2D_ARRAY_INDEX;
-   default:
-      assert(0);
-      return TEXTURE_UNKNOWN_INDEX;
-   }
+   ASSERT(bit);
+   return _mesa_ffs(bit) - 1;
 }
 
 
@@ -1230,7 +1216,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    if (is_undef(p->src_texture[unit])) {
-      GLuint texTarget = p->state->unit[unit].source_index;
+      const GLuint texTarget = p->state->unit[unit].source_index;
       struct ureg texcoord;
       struct ureg tmp = get_tex_temp( p );
 
@@ -1241,9 +1227,6 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
          /* might want to reuse this reg for tex output actually */
          texcoord = p->texcoord_tex[unit];
       }
-
-      if (texTarget == TEXTURE_UNKNOWN_INDEX)
-         program_error(p, "TexSrcBit");
 
       /* TODO: Use D0_MASK_XY where possible.
        */
