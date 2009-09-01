@@ -18,22 +18,24 @@
 #include "cso_cache/cso_hash.h"
 
 /* Vertex shader:
- * IN[0]    = src_pos
- * IN[1]    = mask_pos
- * IN[2]    = dst_pos
+ * IN[0]    = vertex pos
+ * IN[1]    = src tex coord | solid fill color
+ * IN[2]    = mask tex coord
+ * IN[3]    = dst tex coord
  * CONST[0] = (2/dst_width, 2/dst_height, 1, 1)
  * CONST[1] = (-1, -1, 0, 0)
  *
- * OUT[0]   = src_pos
- * OUT[1]   = mask_pos
- * OUT[2]   = dst_pos
+ * OUT[0]   = vertex pos
+ * OUT[1]   = src tex coord | solid fill color
+ * OUT[2]   = mask tex coord
+ * OUT[3]   = dst tex coord
  */
 
 /* Fragment shader:
  * SAMP[0]  = src
  * SAMP[1]  = mask
  * SAMP[2]  = dst
- * IN[0]    = pos src
+ * IN[0]    = pos src | solid fill color
  * IN[1]    = pos mask
  * IN[2]    = pos dst
  * CONST[0] = (0, 0, 0, 1)
@@ -92,6 +94,9 @@ create_vs(struct pipe_context *pipe,
    struct ureg_src src;
    struct ureg_dst dst;
    struct ureg_src const0, const1;
+   boolean is_fill = vs_traits & VS_FILL;
+   boolean is_composite = vs_traits & VS_COMPOSITE;
+   boolean has_mask = vs_traits & VS_MASK;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (ureg == NULL)
@@ -100,17 +105,33 @@ create_vs(struct pipe_context *pipe,
    const0 = ureg_DECL_constant(ureg);
    const1 = ureg_DECL_constant(ureg);
 
-   if ((vs_traits & VS_COMPOSITE)) {
+   /* it has to be either a fill or a composite op */
+   debug_assert(is_fill ^ is_composite);
+
+   src = ureg_DECL_vs_input(ureg,
+                            TGSI_SEMANTIC_POSITION, 0);
+   dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+   src = vs_normalize_coords(ureg, src,
+                             const0, const1);
+   ureg_MOV(ureg, dst, src);
+
+
+   if (is_composite) {
       src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_POSITION, 0);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
-      src = vs_normalize_coords(ureg, src,
-                                const0, const1);
+                               TGSI_SEMANTIC_GENERIC, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 0);
       ureg_MOV(ureg, dst, src);
    }
-   if ((vs_traits & VS_MASK)) {
+   if (is_fill) {
       src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_POSITION, 1);
+                               TGSI_SEMANTIC_COLOR, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+      ureg_MOV(ureg, dst, src);
+   }
+
+   if (has_mask) {
+      src = ureg_DECL_vs_input(ureg,
+                               TGSI_SEMANTIC_GENERIC, 2);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 1);
       ureg_MOV(ureg, dst, src);
    }
