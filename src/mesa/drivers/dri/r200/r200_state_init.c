@@ -271,7 +271,7 @@ CHECK( pix_zero, !ctx->ATIFragmentShader._Enabled, 0 )
 CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)), 0 )
 CHECK( afs, ctx->ATIFragmentShader._Enabled, 0 )
 CHECK( tex_cube, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 3 + 3*5 - CUBE_STATE_SIZE )
-CHECK( tex_cube_cs, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 2 + 2*5 - CUBE_STATE_SIZE )
+CHECK( tex_cube_cs, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 2 + 4*5 - CUBE_STATE_SIZE )
 TCL_CHECK( tcl_fog, ctx->Fog.Enabled, 0 )
 TCL_CHECK( tcl_fog_add4, ctx->Fog.Enabled, 4 )
 TCL_CHECK( tcl, GL_TRUE, 0 )
@@ -764,7 +764,7 @@ static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      for (j = 1; j <= 5; j++) {
        OUT_BATCH(CP_PACKET0(R200_PP_CUBIC_OFFSET_F1_0 + (24*i) + (4 * (j-1)), 0));
        OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
      }
    }
    END_BATCH();
