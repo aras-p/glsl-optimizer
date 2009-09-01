@@ -736,7 +736,7 @@ alloc_texture(struct temp_texture *tex,
 {
    GLboolean newTex = GL_FALSE;
 
-   if (1|| width > tex->Width ||
+   if (width > tex->Width ||
        height > tex->Height ||
        intFormat != tex->IntFormat) {
       /* alloc new texture (larger or different format) */
