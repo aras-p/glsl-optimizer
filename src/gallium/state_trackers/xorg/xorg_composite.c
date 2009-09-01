@@ -40,6 +40,24 @@ static const struct xorg_composite_blend xorg_blends[] = {
      PIPE_BLENDFACTOR_INV_SRC_ALPHA, PIPE_BLENDFACTOR_INV_SRC_ALPHA },
 };
 
+static INLINE void
+pixel_to_float4(PictFormatPtr format,
+                CARD32 pixel, float *color)
+{
+   CARD32	    r, g, b, a;
+
+   debug_assert(format->type == PictTypeDirect);
+
+   r = (pixel >> format->direct.red) & format->direct.redMask;
+   g = (pixel >> format->direct.green) & format->direct.greenMask;
+   b = (pixel >> format->direct.blue) & format->direct.blueMask;
+   a = (pixel >> format->direct.alpha) & format->direct.alphaMask;
+   color[0] = ((float)r) / ((float)format->direct.redMask);
+   color[1] = ((float)g) / ((float)format->direct.greenMask);
+   color[2] = ((float)b) / ((float)format->direct.blueMask);
+   color[3] = ((float)a) / ((float)format->direct.alphaMask);
+}
+
 struct acceleration_info {
    int op : 16;
    int with_mask : 1;
@@ -355,8 +373,20 @@ bind_shaders(struct exa_context *exa, int op,
    struct xorg_shader shader;
 
    if (pSrcPicture) {
-      vs_traits |= VS_COMPOSITE;
-      fs_traits |= FS_COMPOSITE;
+      if (pSrcPicture->pSourcePict) {
+         if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
+            fs_traits |= FS_FILL;
+            vs_traits |= VS_FILL;
+            pixel_to_float4(pSrcPicture->pFormat,
+                            pSrcPicture->pSourcePict->solidFill.color,
+                            exa->solid_color);
+         } else {
+            debug_assert("!gradients not supported");
+         }
+      } else {
+         fs_traits |= FS_COMPOSITE;
+         vs_traits |= VS_COMPOSITE;
+      }
    }
 
    if (pMaskPicture) {
