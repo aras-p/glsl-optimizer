@@ -291,7 +291,7 @@ intel_bufferobj_map(GLcontext * ctx,
  */
 static void *
 intel_bufferobj_map_range(GLcontext * ctx,
-			  GLenum target, GLsizei offset, GLsizeiptr length,
+			  GLenum target, GLintptr offset, GLsizeiptr length,
 			  GLbitfield access, struct gl_buffer_object *obj)
 {
    struct intel_context *intel = intel_context(ctx);
