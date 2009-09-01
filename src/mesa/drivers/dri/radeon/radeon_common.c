@@ -58,6 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
 #include "main/blend.h"
 #include "main/bufferobj.h"
@@ -1370,6 +1371,5 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 
 void radeonUserClear(GLcontext *ctx, GLuint mask)
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   meta_clear_tris(&rmesa->meta, mask);
+   _mesa_meta_clear(ctx, mask);
 }
