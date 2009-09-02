@@ -299,6 +299,13 @@ intel_bufferobj_map_range(GLcontext * ctx,
 
    assert(intel_obj);
 
+   /* _mesa_MapBufferRange (GL entrypoint) sets these, but the vbo module also
+    * internally uses our functions directly.
+    */
+   obj->Offset = offset;
+   obj->Length = length;
+   obj->AccessFlags = access;
+
    if (intel_obj->sys_buffer) {
       obj->Pointer = intel_obj->sys_buffer + offset;
       return obj->Pointer;
@@ -313,13 +320,6 @@ intel_bufferobj_map_range(GLcontext * ctx,
     */
    if ((access & GL_MAP_WRITE_BIT) && !(access & GL_MAP_UNSYNCHRONIZED_BIT))
       intelFlush(ctx);
-
-   /* _mesa_MapBufferRange (GL entrypoint) sets these, but the vbo module also
-    * internally uses our functions directly.
-    */
-   obj->Offset = offset;
-   obj->Length = length;
-   obj->AccessFlags = access;
 
    if (intel_obj->buffer == NULL) {
       obj->Pointer = NULL;
