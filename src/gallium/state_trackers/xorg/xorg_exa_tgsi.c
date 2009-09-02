@@ -150,20 +150,34 @@ create_fs(struct pipe_context *pipe,
    struct ureg_src dst_pos, src_pos, mask_pos;
    struct ureg_src src, mask;
    struct ureg_dst out;
+   boolean is_fill = fs_traits & VS_FILL;
+   boolean is_composite = fs_traits & VS_COMPOSITE;
+   boolean has_mask = fs_traits & VS_MASK;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
       return 0;
+
+   /* it has to be either a fill or a composite op */
+   debug_assert(is_fill ^ is_composite);
 
    out = ureg_DECL_output(ureg,
                           TGSI_SEMANTIC_COLOR,
                           0);
 
    src_sampler = ureg_DECL_sampler(ureg);
-   src_pos = ureg_DECL_fs_input(ureg,
-                                TGSI_SEMANTIC_POSITION,
-                                0,
-                                TGSI_INTERPOLATE_PERSPECTIVE);
+   if (is_composite) {
+      src_pos = ureg_DECL_fs_input(ureg,
+                                   TGSI_SEMANTIC_POSITION,
+                                   0,
+                                   TGSI_INTERPOLATE_PERSPECTIVE);
+   }
+   if (is_fill) {
+      src_pos = ureg_DECL_fs_input(ureg,
+                                   TGSI_SEMANTIC_COLOR,
+                                   0,
+                                   TGSI_INTERPOLATE_PERSPECTIVE);
+   }
 
    if ((fs_traits & FS_MASK)) {
       mask_sampler = ureg_DECL_sampler(ureg);
