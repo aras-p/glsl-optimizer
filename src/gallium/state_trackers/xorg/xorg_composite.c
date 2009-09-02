@@ -94,6 +94,24 @@ blend_for_op(int op)
    return xorg_blends[BLEND_OP_OVER];
 }
 
+static INLINE int
+render_repeat_to_gallium(int mode)
+{
+   switch(mode) {
+   case RepeatNone:
+      return PIPE_TEX_WRAP_CLAMP;
+   case RepeatNormal:
+      return PIPE_TEX_WRAP_REPEAT;
+   case RepeatReflect:
+      return PIPE_TEX_WRAP_MIRROR_REPEAT;
+   case RepeatPad:
+      return PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   default:
+      debug_printf("Unsupported repeat mode\n");
+   }
+   return PIPE_TEX_WRAP_REPEAT;
+}
+
 
 static INLINE void
 setup_vertex0(float vertex[2][4], float x, float y,
@@ -417,8 +435,10 @@ bind_samplers(struct exa_context *exa, int op,
    memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
 
    if (pSrcPicture && pSrc) {
-      src_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      src_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      unsigned src_wrap = render_repeat_to_gallium(
+         pSrcPicture->repeatType);
+      src_sampler.wrap_s = src_wrap;
+      src_sampler.wrap_t = src_wrap;
       src_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       src_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       src_sampler.normalized_coords = 1;
@@ -428,8 +448,10 @@ bind_samplers(struct exa_context *exa, int op,
    }
 
    if (pMaskPicture && pMask) {
-      mask_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      mask_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      unsigned mask_wrap = render_repeat_to_gallium(
+         pMaskPicture->repeatType);
+      mask_sampler.wrap_s = mask_wrap;
+      mask_sampler.wrap_t = mask_wrap;
       mask_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       mask_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       mask_sampler.normalized_coords = 1;
