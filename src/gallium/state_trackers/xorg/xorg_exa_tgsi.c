@@ -146,13 +146,13 @@ create_fs(struct pipe_context *pipe,
           unsigned fs_traits)
 {
    struct ureg_program *ureg;
-   struct ureg_src dst_sampler, src_sampler, mask_sampler;
-   struct ureg_src dst_pos, src_pos, mask_pos;
+   struct ureg_src /*dst_sampler,*/ src_sampler, mask_sampler;
+   struct ureg_src /*dst_pos,*/ src_pos, mask_pos;
    struct ureg_src src, mask;
    struct ureg_dst out;
    boolean is_fill = fs_traits & VS_FILL;
    boolean is_composite = fs_traits & VS_COMPOSITE;
-   boolean has_mask = fs_traits & VS_MASK;
+   /*boolean has_mask = fs_traits & VS_MASK;*/
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
