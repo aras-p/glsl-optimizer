@@ -152,11 +152,14 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
 /**
  * Make simple fragment texture shader:
- *  TEX OUT[0], IN[0], SAMP[0], 2D;
+ *  IMM {0,0,0,1}                         // (if writemask != 0xf)
+ *  MOV OUT[0], IMM[0]                    // (if writemask != 0xf)
+ *  TEX OUT[0].writemask, IN[0], SAMP[0], 2D;
  *  END;
  */
 void *
-util_make_fragment_tex_shader(struct pipe_context *pipe)
+util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
+                                        unsigned writemask )
 {
    struct pipe_shader_state shader;
    struct tgsi_token tokens[100];
@@ -217,12 +220,43 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
                                      header,
                                      Elements(tokens) - ti);
 
+
+   if (writemask != TGSI_WRITEMASK_XYZW) {
+      struct tgsi_full_immediate imm;
+      static const float value[4] = { 0, 0, 0, 1 };
+
+      imm = tgsi_default_full_immediate();
+      imm.Immediate.NrTokens += 4;
+      imm.Immediate.DataType = TGSI_IMM_FLOAT32;
+      imm.u.Pointer = value;
+
+      ti += tgsi_build_full_immediate(&imm,
+                                      &tokens[ti],
+                                      header,
+                                      Elements(tokens) - ti );
+
+      /* MOV instruction */
+      inst = tgsi_default_full_instruction();
+      inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+      inst.Instruction.NumDstRegs = 1;
+      inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+      inst.FullDstRegisters[0].DstRegister.Index = 0;
+      inst.Instruction.NumSrcRegs = 1;
+      inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_IMMEDIATE;
+      inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+      ti += tgsi_build_full_instruction(&inst,
+                                        &tokens[ti],
+                                        header,
+                                        Elements(tokens) - ti );
+   }
+
    /* TEX instruction */
    inst = tgsi_default_full_instruction();
    inst.Instruction.Opcode = TGSI_OPCODE_TEX;
    inst.Instruction.NumDstRegs = 1;
    inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
    inst.FullDstRegisters[0].DstRegister.Index = 0;
+   inst.FullDstRegisters[0].DstRegister.WriteMask = writemask;
    inst.Instruction.NumSrcRegs = 2;
    inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
    inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
@@ -251,6 +285,13 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    shader.tokens = tokens;
 
    return pipe->create_fs_state(pipe, &shader);
+}
+
+void *
+util_make_fragment_tex_shader(struct pipe_context *pipe )
+{
+   return util_make_fragment_tex_shader_writemask( pipe,
+                                                   TGSI_WRITEMASK_XYZW );
 }
 
 
