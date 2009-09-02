@@ -79,11 +79,13 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     case DRI2BufferFrontLeft:
 	break;
     case DRI2BufferStencil:
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
     case DRI2BufferDepthStencil:
 	if (exa_priv->depth_stencil_tex &&
 	    !pf_is_depth_stencil(exa_priv->depth_stencil_tex->format))
 	    exa_priv->depth_stencil_tex = NULL;
         /* Fall through */
+#endif
     case DRI2BufferDepth:
 	if (exa_priv->depth_stencil_tex)
 	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
@@ -151,7 +153,7 @@ driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
     (*pScreen->DestroyPixmap)(private->pPixmap);
 }
 
-#if DRI2INFOREC_VERSION > 2
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
 
 static DRI2BufferPtr
 driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
@@ -336,13 +338,17 @@ driScreenInit(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
+#if defined(DRI2INFOREC_VERSION)
     dri2info.version = DRI2INFOREC_VERSION;
+#else
+    dri2info.version = 1;
+#endif
     dri2info.fd = ms->fd;
 
     dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
-#if DRI2INFOREC_VERSION > 2
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
 #else
