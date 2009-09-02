@@ -325,7 +325,7 @@ bind_viewport_state(struct exa_context *exa, PicturePtr pDstPicture)
    int width = pDstPicture->pDrawable->width;
    int height = pDstPicture->pDrawable->height;
 
-   set_viewport(exa, width, height, Y0_BOTTOM);
+   set_viewport(exa, width, height, Y0_TOP);
 }
 
 static void
