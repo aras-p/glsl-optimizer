@@ -82,8 +82,8 @@ texenv_doing_secondary_color(GLcontext *ctx)
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   GLuint Source:4;  /**< SRC_x */
-   GLuint Operand:3; /**< OPR_x */
+   GLubyte Source:4;  /**< SRC_x */
+   GLubyte Operand:3; /**< OPR_x */
 };
 
 struct state_key {
@@ -103,10 +103,11 @@ struct state_key {
 
       GLuint NumArgsRGB:3;  /**< up to MAX_COMBINER_TERMS */
       GLuint ModeRGB:5;     /**< MODE_x */
-      struct mode_opt OptRGB[MAX_COMBINER_TERMS];
 
       GLuint NumArgsA:3;  /**< up to MAX_COMBINER_TERMS */
       GLuint ModeA:5;     /**< MODE_x */
+
+      struct mode_opt OptRGB[MAX_COMBINER_TERMS];
       struct mode_opt OptA[MAX_COMBINER_TERMS];
    } unit[MAX_TEXTURE_UNITS];
 };
@@ -1497,6 +1498,7 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
    struct gl_fragment_program *prog;
    struct state_key key;
 	
+   printf("SIZE OF KEY %d\n", sizeof(key));
    make_state_key(ctx, &key);
       
    prog = (struct gl_fragment_program *)
