@@ -344,19 +344,24 @@ intel_bufferobj_map_range(GLcontext * ctx,
     */
    if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
-      intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
-						   "range map",
-						   length, 64);
-      if (!(access & GL_MAP_READ_BIT) &&
-	  intel->intelScreen->kernel_exec_fencing) {
-	 drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
-	 intel_obj->mapped_gtt = GL_TRUE;
+      if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
+	 intel_obj->range_map_buffer = _mesa_malloc(length);
+	 obj->Pointer = intel_obj->range_map_buffer;
       } else {
-	 drm_intel_bo_map(intel_obj->range_map_bo,
-			  (access & GL_MAP_WRITE_BIT) != 0);
-	 intel_obj->mapped_gtt = GL_FALSE;
+	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
+						      "range map",
+						      length, 64);
+	 if (!(access & GL_MAP_READ_BIT) &&
+	     intel->intelScreen->kernel_exec_fencing) {
+	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
+	    intel_obj->mapped_gtt = GL_TRUE;
+	 } else {
+	    drm_intel_bo_map(intel_obj->range_map_bo,
+			     (access & GL_MAP_WRITE_BIT) != 0);
+	    intel_obj->mapped_gtt = GL_FALSE;
+	 }
+	 obj->Pointer = intel_obj->range_map_bo->virtual;
       }
-      obj->Pointer = intel_obj->range_map_bo->virtual;
       return obj->Pointer;
    }
 
@@ -371,6 +376,38 @@ intel_bufferobj_map_range(GLcontext * ctx,
 
    obj->Pointer = intel_obj->buffer->virtual + offset;
    return obj->Pointer;
+}
+
+/* Ideally we'd use a BO to avoid taking up cache space for the temporary
+ * data, but FlushMappedBufferRange may be followed by further writes to
+ * the pointer, so we would have to re-map after emitting our blit, which
+ * would defeat the point.
+ */
+static void
+intel_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
+				   GLintptr offset, GLsizeiptr length,
+				   struct gl_buffer_object *obj)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   drm_intel_bo *temp_bo;
+
+   /* Unless we're in the range map using a temporary system buffer,
+    * there's no work to do.
+    */
+   if (intel_obj->range_map_buffer == NULL)
+      return;
+
+   temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
+
+   drm_intel_bo_subdata(temp_bo, 0, length, intel_obj->range_map_buffer);
+
+   intel_emit_linear_blit(intel,
+			  intel_obj->buffer, obj->Offset + offset,
+			  temp_bo, 0,
+			  length);
+
+   drm_intel_bo_unreference(temp_bo);
 }
 
 
@@ -388,6 +425,15 @@ intel_bufferobj_unmap(GLcontext * ctx,
    assert(obj->Pointer);
    if (intel_obj->sys_buffer != NULL) {
       /* always keep the mapping around. */
+   } else if (intel_obj->range_map_buffer != NULL) {
+      /* Since we've emitted some blits to buffers that will (likely) be used
+       * in rendering operations in other cache domains in this batch, emit a
+       * flush.  Once again, we wish for a domain tracker in libdrm to cover
+       * usage inside of a batchbuffer.
+       */
+      intel_batchbuffer_emit_mi_flush(intel->batch);
+      free(intel_obj->range_map_buffer);
+      intel_obj->range_map_buffer = NULL;
    } else if (intel_obj->range_map_bo != NULL) {
       if (intel_obj->mapped_gtt) {
 	 drm_intel_gem_bo_unmap_gtt(intel_obj->range_map_bo);
@@ -395,10 +441,6 @@ intel_bufferobj_unmap(GLcontext * ctx,
 	 drm_intel_bo_unmap(intel_obj->range_map_bo);
       }
 
-      /* We ignore the FLUSH_EXPLICIT bit and the calls associated with it.
-       * It would be a small win to support that, but for now we just copy
-       * the whole mapped range into place.
-       */
       intel_emit_linear_blit(intel,
 			     intel_obj->buffer, obj->Offset,
 			     intel_obj->range_map_bo, 0,
@@ -528,6 +570,7 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->GetBufferSubData = intel_bufferobj_get_subdata;
    functions->MapBuffer = intel_bufferobj_map;
    functions->MapBufferRange = intel_bufferobj_map_range;
+   functions->FlushMappedBufferRange = intel_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = intel_bufferobj_unmap;
    functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
 }
