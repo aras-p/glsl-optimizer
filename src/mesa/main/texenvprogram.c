@@ -83,8 +83,8 @@ texenv_doing_secondary_color(GLcontext *ctx)
 
 struct mode_opt {
 #ifdef __GNUC__
-   GLubyte Source:4;  /**< SRC_x */
-   GLubyte Operand:3; /**< OPR_x */
+   __extension__ GLubyte Source:4;  /**< SRC_x */
+   __extension__ GLubyte Operand:3; /**< OPR_x */
 #else
    GLubyte Source;  /**< SRC_x */
    GLubyte Operand; /**< OPR_x */
