@@ -86,8 +86,8 @@ struct mode_opt {
    __extension__ GLubyte Source:4;  /**< SRC_x */
    __extension__ GLubyte Operand:3; /**< OPR_x */
 #else
-   GLuint Source;  /**< SRC_x */
-   GLuint Operand; /**< OPR_x */
+   GLubyte Source;  /**< SRC_x */
+   GLubyte Operand; /**< OPR_x */
 #endif
 };
 
