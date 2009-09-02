@@ -33,6 +33,7 @@
 #include "xf86_OSproc.h"
 
 #include "xorg_tracker.h"
+#include "xorg_exa.h"
 
 #include "dri2.h"
 
@@ -47,19 +48,154 @@ typedef struct {
     struct pipe_fence_handle *fence;
 } *BufferPrivatePtr;
 
-static DRI2BufferPtr
-driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
+static Bool
+driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
 {
-    struct pipe_texture *depth, *tex;
-    struct pipe_buffer *buf;
+    struct pipe_texture *tex = NULL;
     ScreenPtr pScreen = pDraw->pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
-    BufferPrivatePtr privates;
-    DRI2BufferPtr buffers;
+    struct exa_pixmap_priv *exa_priv;
+    BufferPrivatePtr private = buffer->driverPrivate;
     PixmapPtr pPixmap;
     unsigned stride, handle;
-    boolean have_depth = FALSE, have_stencil = FALSE;
+
+    if (pDraw->type == DRAWABLE_PIXMAP)
+	pPixmap = (PixmapPtr) pDraw;
+    else
+	pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr) pDraw);
+    exa_priv = exaGetPixmapDriverPrivate(pPixmap);
+
+    switch (buffer->attachment) {
+    default:
+	if (buffer->attachment != DRI2BufferFakeFrontLeft ||
+	    pDraw->type != DRAWABLE_PIXMAP) {
+	    private->pPixmap = (*pScreen->CreatePixmap)(pScreen, pDraw->width,
+							pDraw->height,
+							pDraw->depth,
+							0);
+	}
+	break;
+    case DRI2BufferFrontLeft:
+	break;
+    case DRI2BufferStencil:
+    case DRI2BufferDepthStencil:
+	if (exa_priv->depth_stencil_tex &&
+	    !pf_is_depth_stencil(exa_priv->depth_stencil_tex->format))
+	    exa_priv->depth_stencil_tex = NULL;
+        /* Fall through */
+    case DRI2BufferDepth:
+	if (exa_priv->depth_stencil_tex)
+	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
+        else {
+	    struct pipe_texture template;
+	    memset(&template, 0, sizeof(template));
+	    template.target = PIPE_TEXTURE_2D;
+	    if (buffer->attachment == DRI2BufferDepth)
+		template.format = ms->ds_depth_bits_last ?
+		    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
+	    else
+		template.format = ms->ds_depth_bits_last ?
+		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+	    pf_get_block(template.format, &template.block);
+	    template.width[0] = pDraw->width;
+	    template.height[0] = pDraw->height;
+	    template.depth[0] = 1;
+	    template.last_level = 0;
+	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+		PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+	    tex = ms->screen->texture_create(ms->screen, &template);
+	    pipe_texture_reference(&exa_priv->depth_stencil_tex, tex);
+	}
+	break;
+    }
+
+    if (!private->pPixmap) {
+	private->pPixmap = pPixmap;
+	pPixmap->refcnt++;
+    }
+
+    if (!tex) {
+	xorg_exa_set_shared_usage(private->pPixmap);
+	pScreen->ModifyPixmapHeader(private->pPixmap, 0, 0, 0, 0, 0, NULL);
+	tex = xorg_exa_get_texture(private->pPixmap);
+    }
+
+    if (!tex)
+	FatalError("NO TEXTURE IN DRI2\n");
+
+    ms->api->shared_handle_from_texture(ms->api, ms->screen, tex, &stride, &handle);
+
+    buffer->name = handle;
+    buffer->pitch = stride;
+    buffer->cpp = 4;
+    buffer->driverPrivate = private;
+    buffer->flags = 0; /* not tiled */
+    private->tex = tex;
+
+    return TRUE;
+}
+
+static void
+driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
+{
+    ScreenPtr pScreen = pDraw->pScreen;
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    modesettingPtr ms = modesettingPTR(pScrn);
+    BufferPrivatePtr private = buffer->driverPrivate;
+    struct exa_pixmap_priv *exa_priv = exaGetPixmapDriverPrivate(private->pPixmap);
+
+    pipe_texture_reference(&private->tex, NULL);
+    ms->screen->fence_reference(ms->screen, &private->fence, NULL);
+    pipe_texture_reference(&exa_priv->depth_stencil_tex, NULL);
+    (*pScreen->DestroyPixmap)(private->pPixmap);
+}
+
+#if DRI2INFOREC_VERSION > 2
+
+static DRI2BufferPtr
+driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
+{
+    DRI2BufferPtr buffer;
+    BufferPrivatePtr private;
+
+    buffer = xcalloc(1, sizeof *buffer);
+    if (!buffer)
+	return NULL;
+
+    private = xcalloc(1, sizeof *private);
+    if (!private) {
+	goto fail;
+    }
+
+    buffer->attachment = attachment;
+    buffer->driverPrivate = private;
+
+    if (driDoCreateBuffer(pDraw, buffer, format))
+	return buffer;
+
+    xfree(private);
+fail:
+    xfree(buffer);
+    return NULL;
+}
+
+static void
+driDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
+{
+    driDoDestroyBuffer(pDraw, buffer);
+
+    xfree(buffer->driverPrivate);
+    xfree(buffer);
+}
+
+#else /* DRI2INFOREC_VERSION <= 2 */
+
+static DRI2BufferPtr
+driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
+{
+    BufferPrivatePtr privates;
+    DRI2BufferPtr buffers;
     int i;
 
     buffers = xcalloc(count, sizeof *buffers);
@@ -71,81 +207,17 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	goto fail_privates;
 
     for (i = 0; i < count; i++) {
-	if (attachments[i] == DRI2BufferDepth)
-	    have_depth = TRUE;
-	else if (attachments[i] == DRI2BufferStencil)
-	    have_stencil = TRUE;
-    }
-
-    if (have_stencil && !have_depth)
-	FatalError("Doesn't support only stencil yet\n");
-
-    depth = NULL;
-    for (i = 0; i < count; i++) {
-	pPixmap = NULL;
-	tex = NULL;
-	buf = NULL;
-	if (attachments[i] == DRI2BufferFrontLeft) {
-	    if (pDraw->type == DRAWABLE_PIXMAP)
-		pPixmap = (PixmapPtr) pDraw;
-	    else
-		pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr) pDraw);
-	    pPixmap->refcnt++;
-	} else if (attachments[i] == DRI2BufferStencil) {
-	    pipe_texture_reference(&tex, depth);
-	} else if (attachments[i] == DRI2BufferDepth) {
-	    struct pipe_texture template;
-	    memset(&template, 0, sizeof(template));
-	    template.target = PIPE_TEXTURE_2D;
-	    if (have_stencil)
-		template.format = ms->ds_depth_bits_last ?
-		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
-	    else
-		template.format = ms->d_depth_bits_last ?
-		    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
-	    pf_get_block(template.format, &template.block);
-	    template.width[0] = pDraw->width;
-	    template.height[0] = pDraw->height;
-	    template.depth[0] = 1;
-	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-		PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
-	    tex = ms->screen->texture_create(ms->screen, &template);
-	    depth = tex;
-	} else if (attachments[i] == DRI2BufferFakeFrontLeft &&
-		   pDraw->type == DRAWABLE_PIXMAP) {
-	    pPixmap = (PixmapPtr) pDraw;
-	    pPixmap->refcnt++;
-	} else {
-	    pPixmap = (*pScreen->CreatePixmap)(pScreen, pDraw->width,
-					       pDraw->height,
-					       pDraw->depth,
-					       0);
-	}
-
-	if (pPixmap) {
-	    xorg_exa_set_shared_usage(pPixmap);
-	    pScreen->ModifyPixmapHeader(pPixmap, 0, 0, 0, 0, 0, NULL);
-	    tex = xorg_exa_get_texture(pPixmap);
-	}
-
-	if (!tex)
-		FatalError("NO TEXTURE IN DRI2\n");
-
-	ms->api->shared_handle_from_texture(ms->api, ms->screen, tex, &stride, &handle);
-
-	buffers[i].name = handle;
 	buffers[i].attachment = attachments[i];
-	buffers[i].pitch = stride;
-	buffers[i].cpp = 4;
 	buffers[i].driverPrivate = &privates[i];
-	buffers[i].flags = 0; /* not tiled */
-	privates[i].pPixmap = pPixmap;
-	privates[i].tex = tex;
+
+	if (!driDoCreateBuffer(pDraw, &buffers[i], 0))
+	    goto fail;
     }
 
     return buffers;
 
+fail:
+    xfree(privates);
 fail_privates:
     xfree(buffers);
 fail_buffers:
@@ -155,21 +227,10 @@ fail_buffers:
 static void
 driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 {
-    ScreenPtr pScreen = pDraw->pScreen;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
-    BufferPrivatePtr private;
     int i;
-    (void)ms;
 
     for (i = 0; i < count; i++) {
-	private = buffers[i].driverPrivate;
-
-	pipe_texture_reference(&private->tex, NULL);
-        ms->screen->fence_reference(ms->screen, &private->fence, NULL);
-
-	if (private->pPixmap)
-	    (*pScreen->DestroyPixmap)(private->pPixmap);
+	driDoDestroyBuffer(pDraw, &buffers[i]);
     }
 
     if (buffers) {
@@ -177,6 +238,8 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 	xfree(buffers);
     }
 }
+
+#endif /* DRI2INFOREC_VERSION */
 
 static void
 driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
@@ -273,15 +336,21 @@ driScreenInit(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
-    dri2info.version = 1;
+    dri2info.version = DRI2INFOREC_VERSION;
     dri2info.fd = ms->fd;
 
     dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
+#if DRI2INFOREC_VERSION > 2
+    dri2info.CreateBuffer = driCreateBuffer;
+    dri2info.DestroyBuffer = driDestroyBuffer;
+#else
     dri2info.CreateBuffers = driCreateBuffers;
     dri2info.DestroyBuffers = driDestroyBuffers;
+#endif
     dri2info.CopyRegion = driCopyRegion;
+    dri2info.Wait = NULL;
 
     ms->d_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_X8Z24_UNORM,
