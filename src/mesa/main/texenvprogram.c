@@ -82,8 +82,13 @@ texenv_doing_secondary_color(GLcontext *ctx)
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
+#ifdef __GNUC__
    GLubyte Source:4;  /**< SRC_x */
    GLubyte Operand:3; /**< OPR_x */
+#else
+   GLubyte Source;  /**< SRC_x */
+   GLubyte Operand; /**< OPR_x */
+#endif
 };
 
 struct state_key {
