@@ -318,7 +318,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
     * the batchbuffer so that GEM knows about the buffer access for later
     * syncing.
     */
-   if ((access & GL_MAP_WRITE_BIT) && !(access & GL_MAP_UNSYNCHRONIZED_BIT))
+   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT))
       intelFlush(ctx);
 
    if (intel_obj->buffer == NULL) {
