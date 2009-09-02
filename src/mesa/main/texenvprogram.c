@@ -1503,7 +1503,6 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
    struct gl_fragment_program *prog;
    struct state_key key;
 	
-   printf("SIZE OF KEY %d\n", sizeof(key));
    make_state_key(ctx, &key);
       
    prog = (struct gl_fragment_program *)
