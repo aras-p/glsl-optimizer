@@ -99,6 +99,7 @@ struct state_key {
    GLuint fog_mode:2;          /**< FOG_x */
    GLuint inputs_available:12;
 
+   /* NOTE: This array of structs must be last! (see "keySize" below) */
    struct {
       GLuint enabled:1;
       GLuint source_index:3;   /**< TEXTURE_x_INDEX */
@@ -368,11 +369,12 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
  * Examine current texture environment state and generate a unique
  * key to identify it.
  */
-static void make_state_key( GLcontext *ctx,  struct state_key *key )
+static GLuint make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
    GLbitfield inputs_referenced = FRAG_BIT_COL0;
    const GLbitfield inputs_available = get_fp_input_mask( ctx );
+   GLuint keySize;
 
    memset(key, 0, sizeof(*key));
 
@@ -390,7 +392,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
-      key->nr_enabled_units = i+1;
+      key->nr_enabled_units = i + 1;
       inputs_referenced |= FRAG_BIT_TEX(i);
 
       key->unit[i].source_index =
@@ -443,7 +445,14 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
    }
 
    key->inputs_available = (inputs_available & inputs_referenced);
+
+   /* compute size of state key, ignoring unused texture units */
+   keySize = sizeof(*key) - sizeof(key->unit)
+      + key->nr_enabled_units * sizeof(key->unit[0]);
+
+   return keySize;
 }
+
 
 /**
  * Use uregs to represent registers internally, translate to Mesa's
@@ -1390,7 +1399,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       GLboolean needbumpstage = GL_FALSE;
 
       /* Zeroth pass - bump map textures first */
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
 	 if (key->unit[unit].enabled &&
              key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
 	    needbumpstage = GL_TRUE;
@@ -1403,7 +1412,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * all referenced texture sources and emit texld instructions
        * for each:
        */
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
 	 if (key->unit[unit].enabled) {
 	    load_texunit_sources( &p, unit );
 	    p.last_tex_stage = unit;
@@ -1411,7 +1420,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
       /* Second pass - emit combine instructions to build final color:
        */
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
 	 if (key->unit[unit].enabled) {
 	    p.src_previous = emit_texenv( &p, unit );
             reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
@@ -1502,12 +1511,13 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
 {
    struct gl_fragment_program *prog;
    struct state_key key;
+   GLuint keySize;
 	
-   make_state_key(ctx, &key);
+   keySize = make_state_key(ctx, &key);
       
    prog = (struct gl_fragment_program *)
       _mesa_search_program_cache(ctx->FragmentProgram.Cache,
-                                 &key, sizeof(key));
+                                 &key, keySize);
 
    if (!prog) {
       prog = (struct gl_fragment_program *) 
@@ -1516,7 +1526,7 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
       create_new_program(ctx, &key, prog);
 
       _mesa_program_cache_insert(ctx, ctx->FragmentProgram.Cache,
-                                 &key, sizeof(key), &prog->Base);
+                                 &key, keySize, &prog->Base);
    }
 
    return prog;
