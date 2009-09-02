@@ -33,10 +33,8 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
-#include "xf86RAC.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
-#include "xf86Resources.h"
 #include "mipointer.h"
 #include "micmap.h"
 #include <X11/extensions/randr.h>
@@ -85,40 +83,8 @@ static const OptionInfoRec Options[] = {
 };
 
 /*
- * Functions that might be needed
- */
-
-static const char *exaSymbols[] = {
-    "exaGetVersion",
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaOffscreenAlloc",
-    "exaOffscreenFree",
-    "exaWaitSync",
-    NULL
-};
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-/*
  * Exported Xorg driver functions to winsys
  */
-
-void
-xorg_tracker_loader_ref_sym_lists()
-{
-    LoaderRefSymLists(exaSymbols, fbSymbols, ddcSymbols, NULL);
-}
 
 const OptionInfoRec *
 xorg_tracker_available_options(int chipid, int busid)
@@ -288,10 +254,6 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     } else
 	ms->entityPrivate = NULL;
 
-    if (xf86RegisterResources(ms->pEnt->index, NULL, ResNone)) {
-	return FALSE;
-    }
-
     if (xf86IsEntityShared(pScrn->entityList[0])) {
 	if (xf86IsPrimInitDone(pScrn->entityList[0])) {
 	    /* do something */
@@ -312,7 +274,6 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     if (ms->fd < 0)
 	return FALSE;
 
-    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP;
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
     pScrn->rgbBits = 8;
@@ -397,8 +358,6 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "fb")) {
 	return FALSE;
     }
-
-    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     xf86LoadSubModule(pScrn, "exa");
 
