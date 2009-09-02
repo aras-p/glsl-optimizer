@@ -1495,6 +1495,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_MOV:
+	case TGSI_OPCODE_SWZ:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
