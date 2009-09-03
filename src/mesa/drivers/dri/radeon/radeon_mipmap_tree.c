@@ -190,13 +190,14 @@ static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_
  * Create a new mipmap tree, calculate its layout and allocate memory.
  */
 radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *t,
-		GLenum target, GLuint firstLevel, GLuint lastLevel,
+		GLenum target, GLenum internal_format, GLuint firstLevel, GLuint lastLevel,
 		GLuint width0, GLuint height0, GLuint depth0,
 		GLuint bpp, GLuint tilebits, GLuint compressed)
 {
 	radeon_mipmap_tree *mt = CALLOC_STRUCT(_radeon_mipmap_tree);
 
 	mt->radeon = rmesa;
+	mt->internal_format = internal_format;
 	mt->refcount = 1;
 	mt->t = t;
 	mt->target = target;
@@ -318,8 +319,8 @@ GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 	if (face >= mt->faces || level < mt->firstLevel || level > mt->lastLevel)
 		return GL_FALSE;
 
-	if ((!texImage->IsCompressed && mt->compressed) ||
-	    (texImage->IsCompressed && !mt->compressed))
+	if (texImage->InternalFormat != mt->internal_format ||
+	    texImage->IsCompressed != mt->compressed)
 		return GL_FALSE;
 
 	if (!texImage->IsCompressed &&
@@ -369,9 +370,9 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
  * given image in the given position.
  */
 void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
-		struct gl_texture_image *texImage, GLuint face, GLuint level)
+		radeon_texture_image *image, GLuint face, GLuint level)
 {
-	GLuint compressed = texImage->IsCompressed ? texImage->TexFormat->MesaFormat : 0;
+	GLuint compressed = image->base.IsCompressed ? image->base.TexFormat->MesaFormat : 0;
 	GLuint numfaces = 1;
 	GLuint firstLevel, lastLevel;
 
@@ -385,9 +386,10 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 		return;
 
 	t->mt = radeon_miptree_create(rmesa, t, t->base.Target,
+		image->base.InternalFormat,
 		firstLevel, lastLevel,
-		texImage->Width, texImage->Height, texImage->Depth,
-		texImage->TexFormat->TexelBytes, t->tile_bits, compressed);
+		image->base.Width, image->base.Height, image->base.Depth,
+		image->base.TexFormat->TexelBytes, t->tile_bits, compressed);
 }
 
 /* Although we use the image_offset[] array to store relative offsets

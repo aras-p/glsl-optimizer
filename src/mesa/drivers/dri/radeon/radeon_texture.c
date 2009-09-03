@@ -579,7 +579,7 @@ static void radeon_teximage(
 	}
 
 	if (!t->mt)
-		radeon_try_alloc_miptree(rmesa, t, texImage, face, level);
+		radeon_try_alloc_miptree(rmesa, t, image, face, level);
 	if (t->mt && radeon_miptree_matches_image(t->mt, texImage, face, level)) {
 		radeon_mipmap_level *lvl;
 		image->mt = t->mt;
@@ -966,7 +966,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	if (!t->mt) {
 		if (RADEON_DEBUG & RADEON_TEXTURE)
 			fprintf(stderr, " Allocate new miptree\n");
-		radeon_try_alloc_miptree(rmesa, t, &baseimage->base, 0, texObj->BaseLevel);
+		radeon_try_alloc_miptree(rmesa, t, baseimage, 0, texObj->BaseLevel);
 		if (!t->mt) {
 			_mesa_problem(ctx, "radeon_validate_texture failed to alloc miptree");
 			return GL_FALSE;
