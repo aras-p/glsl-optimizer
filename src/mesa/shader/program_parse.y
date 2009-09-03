@@ -181,7 +181,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %type <inst> KIL_instruction
 
 %type <dst_reg> dstReg maskedDstReg maskedAddrReg
-%type <src_reg> srcReg scalarSrcReg swizzleSrcReg
+%type <src_reg> srcReg scalarUse scalarSrcReg swizzleSrcReg
 %type <swiz_mask> scalarSuffix swizzleSuffix extendedSwizzle
 %type <ext_swizzle> extSwizComp extSwizSel
 %type <swiz_mask> optionalMask
@@ -523,29 +523,50 @@ SWZ_instruction: SWZ maskedDstReg ',' srcReg ',' extendedSwizzle
 	}
 	;
 
-scalarSrcReg: optionalSign srcReg scalarSuffix
+scalarSrcReg: optionalSign scalarUse
 	{
 	   $$ = $2;
 
 	   if ($1) {
 	      $$.Base.Negate = ~$$.Base.Negate;
 	   }
+	}
+	| optionalSign '|' scalarUse '|'
+	{
+	   $$ = $3;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @2, state, "unexpected character '|'");
+	      YYERROR;
+	   }
+
+	   if ($1) {
+	      $$.Base.Negate = ~$$.Base.Negate;
+	   }
+
+	   $$.Base.Abs = 1;
+	}
+	;
+
+scalarUse:  srcReg scalarSuffix
+	{
+	   $$ = $1;
 
 	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
-						    $3.swizzle);
+						    $2.swizzle);
 	}
-	| optionalSign paramConstScalarUse
+	| paramConstScalarUse
 	{
 	   struct asm_symbol temp_sym;
 
 	   if (!state->option.NV_fragment) {
-	      yyerror(& @2, state, "expected scalar suffix");
+	      yyerror(& @1, state, "expected scalar suffix");
 	      YYERROR;
 	   }
 
 	   memset(& temp_sym, 0, sizeof(temp_sym));
 	   temp_sym.param_binding_begin = ~0;
-	   initialize_symbol_from_const(state->prog, & temp_sym, & $2);
+	   initialize_symbol_from_const(state->prog, & temp_sym, & $1);
 
 	   init_src_reg(& $$);
 	   $$.Base.File = PROGRAM_CONSTANT;
@@ -564,6 +585,24 @@ swizzleSrcReg: optionalSign srcReg swizzleSuffix
 	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
 						    $3.swizzle);
 	}
+	| optionalSign '|' srcReg swizzleSuffix '|'
+	{
+	   $$ = $3;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @2, state, "unexpected character '|'");
+	      YYERROR;
+	   }
+
+	   if ($1) {
+	      $$.Base.Negate = ~$$.Base.Negate;
+	   }
+
+	   $$.Base.Abs = 1;
+	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
+						    $4.swizzle);
+	}
+
 	;
 
 maskedDstReg: dstReg optionalMask
