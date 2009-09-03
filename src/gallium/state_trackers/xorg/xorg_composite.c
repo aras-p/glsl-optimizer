@@ -393,8 +393,8 @@ bind_shaders(struct exa_context *exa, int op,
    if (pSrcPicture) {
       if (pSrcPicture->pSourcePict) {
          if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
-            fs_traits |= FS_FILL;
-            vs_traits |= VS_FILL;
+            fs_traits |= FS_SOLID_FILL;
+            vs_traits |= VS_SOLID_FILL;
             pixel_to_float4(pSrcPicture->pFormat,
                             pSrcPicture->pSourcePict->solidFill.color,
                             exa->solid_color);
