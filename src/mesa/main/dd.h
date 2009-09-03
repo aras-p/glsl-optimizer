@@ -783,9 +783,9 @@ struct dd_function_table {
    
    void (*DeleteBuffer)( GLcontext *ctx, struct gl_buffer_object *obj );
 
-   void (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
-		       const GLvoid *data, GLenum usage,
-		       struct gl_buffer_object *obj );
+   GLboolean (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+                            const GLvoid *data, GLenum usage,
+                            struct gl_buffer_object *obj );
 
    void (*BufferSubData)( GLcontext *ctx, GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,

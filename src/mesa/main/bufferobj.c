@@ -314,9 +314,10 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
  * \param usage   Hints about how the data will be used.
  * \param bufObj  Object to be used.
  *
+ * \return GL_TRUE for success, GL_FALSE for failure
  * \sa glBufferDataARB, dd_function_table::BufferData.
  */
-static void
+static GLboolean
 _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		   const GLvoid * data, GLenum usage,
 		   struct gl_buffer_object * bufObj )
@@ -334,6 +335,11 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
       if (data) {
 	 _mesa_memcpy( bufObj->Data, data, size );
       }
+
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
    }
 }
 
@@ -1107,8 +1113,6 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
 
-   ASSERT(ctx->Driver.BufferData);
-
    bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
@@ -1119,8 +1123,11 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 #ifdef BOUNDS_CHECK
    size += 100;
 #endif
-   /* Give the buffer object to the driver!  <data> may be null! */
-   ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
+
+   ASSERT(ctx->Driver.BufferData);
+   if (!ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj )) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB(access)");
+   }
 }
 
 
@@ -1209,9 +1216,9 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    map = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+      return NULL;
    }
-
-   if (map) {
+   else {
       /* The driver callback should have set these fields.
        * This is important because other modules (like VBO) might call
        * the driver function directly.
@@ -1538,7 +1545,10 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    ASSERT(ctx->Driver.MapBufferRange);
    map = ctx->Driver.MapBufferRange(ctx, target, offset, length,
                                     access, bufObj);
-   if (map) {
+   if (!map) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+   }
+   else {
       /* The driver callback should have set all these fields.
        * This is important because other modules (like VBO) might call
        * the driver function directly.

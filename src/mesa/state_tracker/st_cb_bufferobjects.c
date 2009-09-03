@@ -134,9 +134,10 @@ st_bufferobj_get_subdata(GLcontext *ctx,
  * Allocate space for and store data in a buffer object.  Any data that was
  * previously stored in the buffer object is lost.  If data is NULL,
  * memory will be allocated, but no copy will occur.
- * Called via glBufferDataARB().
+ * Called via ctx->Driver.BufferData().
+ * \return GL_TRUE for success, GL_FALSE if out of memory
  */
-static void
+static GLboolean
 st_bufferobj_data(GLcontext *ctx,
 		  GLenum target,
 		  GLsizeiptrARB size,
@@ -172,13 +173,13 @@ st_bufferobj_data(GLcontext *ctx,
    st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
 
    if (!st_obj->buffer) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB");
-      return;
+      return GL_FALSE;
    }
 
    if (data)
       st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
 				    size, data);
+   return GL_TRUE;
 }
 
 

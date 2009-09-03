@@ -130,9 +130,10 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
  * Allocate space for and store data in a buffer object.  Any data that was
  * previously stored in the buffer object is lost.  If data is NULL,
  * memory will be allocated, but no copy will occur.
- * Called via glBufferDataARB().
+ * Called via ctx->Driver.BufferData().
+ * \return GL_TRUE for success, GL_FALSE if out of memory
  */
-static void
+static GLboolean
 intel_bufferobj_data(GLcontext * ctx,
                      GLenum target,
                      GLsizeiptrARB size,
@@ -167,15 +168,19 @@ intel_bufferobj_data(GLcontext * ctx,
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
 	       memcpy(intel_obj->sys_buffer, data, size);
-	    return;
+	    return GL_TRUE;
 	 }
       }
 #endif
       intel_bufferobj_alloc_buffer(intel, intel_obj);
+      if (!intel_obj->buffer)
+         return GL_FALSE;
 
       if (data != NULL)
 	 dri_bo_subdata(intel_obj->buffer, 0, size, data);
    }
+
+   return GL_TRUE;
 }
 
 
