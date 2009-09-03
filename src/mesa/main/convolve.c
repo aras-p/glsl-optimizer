@@ -761,7 +761,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
    /* get column filter */
    column = _mesa_map_validate_pbo_dest(ctx, 1, &ctx->Pack,
                                         filter->Height, 1, 1,
-                                        format, type, row,
+                                        format, type, column,
                                         "glGetConvolutionFilter");
    if (column) {
       GLvoid *dst = _mesa_image_address1d(&ctx->Pack, column, filter->Height,
@@ -827,7 +827,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    row = _mesa_map_validate_pbo_source(ctx, 1, &ctx->Unpack,
                                        width, 1, 1,
                                        format, type, row,
-                                       "glSeperableFilter2D");
+                                       "glSeparableFilter2D");
    if (row) {
       _mesa_unpack_color_span_float(ctx, width, GL_RGBA,
                                     ctx->Separable2D.Filter,
@@ -849,8 +849,8 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    /* unpack column filter */
    column = _mesa_map_validate_pbo_source(ctx, 1, &ctx->Unpack,
                                           height, 1, 1,
-                                          format, type, row,
-                                          "glSeperableFilter2D");
+                                          format, type, column,
+                                          "glSeparableFilter2D");
    if (column) {
       _mesa_unpack_color_span_float(ctx, height, GL_RGBA,
                                     &ctx->Separable2D.Filter[colStart],
