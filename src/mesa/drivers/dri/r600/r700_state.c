@@ -1451,18 +1451,8 @@ static void r700SetDepthTarget(context_t *context)
 
     if(4 == rrb->cpp)
     {
-        switch (GL_CONTEXT(context)->Visual.depthBits)
-        {
-        case 16:
-        case 24:
-            SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24,
-                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
-            break;
-        default:
-            fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
-                GL_CONTEXT(context)->Visual.depthBits);
-            _mesa_exit(-1);
-        }
+        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24,
+                 DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
     }
     else
     {
