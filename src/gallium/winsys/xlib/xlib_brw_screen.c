@@ -364,7 +364,7 @@ void xlib_brw_buffer_subdata_typed( struct pipe_winsys *pws,
                                     unsigned data_type )
 {
    unsigned aub_type = DW_GENERAL_STATE;
-   unsigned aub_sub_type;
+   unsigned aub_sub_type = 0;
 
    switch (data_type) {
    case BRW_CC_VP:
