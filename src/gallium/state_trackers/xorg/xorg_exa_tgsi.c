@@ -291,12 +291,15 @@ create_fs(struct pipe_context *pipe,
 {
    struct ureg_program *ureg;
    struct ureg_src /*dst_sampler,*/ src_sampler, mask_sampler;
-   struct ureg_src /*dst_pos,*/ src_pos, mask_pos;
-   struct ureg_src src, mask;
+   struct ureg_src /*dst_pos,*/ src_input, mask_pos;
+   struct ureg_dst src, mask;
    struct ureg_dst out;
-   boolean is_fill = fs_traits & VS_FILL;
-   boolean is_composite = fs_traits & VS_COMPOSITE;
-   /*boolean has_mask = fs_traits & VS_MASK;*/
+   boolean has_mask = fs_traits & FS_MASK;
+   boolean is_fill = fs_traits & FS_FILL;
+   boolean is_composite = fs_traits & FS_COMPOSITE;
+   boolean is_solid   = fs_traits & FS_SOLID_FILL;
+   boolean is_lingrad = fs_traits & FS_LINGRAD_FILL;
+   boolean is_radgrad = fs_traits & FS_RADGRAD_FILL;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -311,19 +314,25 @@ create_fs(struct pipe_context *pipe,
 
    if (is_composite) {
       src_sampler = ureg_DECL_sampler(ureg, 0);
-      src_pos = ureg_DECL_fs_input(ureg,
-                                   TGSI_SEMANTIC_POSITION,
-                                   0,
-                                   TGSI_INTERPOLATE_PERSPECTIVE);
+      src_input = ureg_DECL_fs_input(ureg,
+                                     TGSI_SEMANTIC_POSITION,
+                                     0,
+                                     TGSI_INTERPOLATE_PERSPECTIVE);
    }
    if (is_fill) {
-      src_pos = ureg_DECL_fs_input(ureg,
-                                   TGSI_SEMANTIC_COLOR,
-                                   0,
-                                   TGSI_INTERPOLATE_PERSPECTIVE);
+      if (is_solid)
+         src_input = ureg_DECL_fs_input(ureg,
+                                        TGSI_SEMANTIC_COLOR,
+                                        0,
+                                        TGSI_INTERPOLATE_PERSPECTIVE);
+      else
+         src_input = ureg_DECL_fs_input(ureg,
+                                        TGSI_SEMANTIC_POSITION,
+                                        0,
+                                        TGSI_INTERPOLATE_PERSPECTIVE);
    }
 
-   if ((fs_traits & FS_MASK)) {
+   if (has_mask) {
       mask_sampler = ureg_DECL_sampler(ureg, 1);
       mask_pos = ureg_DECL_fs_input(ureg,
                                     TGSI_SEMANTIC_POSITION,
@@ -339,14 +348,56 @@ create_fs(struct pipe_context *pipe,
                                 TGSI_INTERPOLATE_PERSPECTIVE);
 #endif
 
-   if ((fs_traits & FS_MASK)) {
-      ureg_TEX(ureg, ureg_dst(mask),
+   if (is_composite) {
+      if (has_mask)
+         src = ureg_DECL_temporary(ureg);
+      else
+         src = out;
+      ureg_TEX(ureg, src,
+               TGSI_TEXTURE_2D, src_input, src_sampler);
+   } else if (is_fill) {
+      if (is_solid) {
+         if (has_mask)
+            src = ureg_dst(src_input);
+         else
+            ureg_MOV(ureg, out, src_input);
+      } else if (is_lingrad || is_radgrad) {
+         struct ureg_src coords, const0124,
+            matrow0, matrow1, matrow2;
+
+         if (has_mask)
+            src = ureg_DECL_temporary(ureg);
+         else
+            src = out;
+
+         coords = ureg_DECL_constant(ureg);
+         const0124 = ureg_DECL_constant(ureg);
+         matrow0 = ureg_DECL_constant(ureg);
+         matrow1 = ureg_DECL_constant(ureg);
+         matrow2 = ureg_DECL_constant(ureg);
+
+         if (is_lingrad) {
+            linear_gradient(ureg, src,
+                            src_input, src_sampler,
+                            coords, const0124,
+                            matrow0, matrow1, matrow2);
+         } else if (is_radgrad) {
+            radial_gradient(ureg, src,
+                            src_input, src_sampler,
+                            coords, const0124,
+                            matrow0, matrow1, matrow2);
+         }
+      } else
+         debug_assert(!"Unknown fill type!");
+   }
+
+   if (has_mask) {
+      mask = ureg_DECL_temporary(ureg);
+      ureg_TEX(ureg, mask,
                TGSI_TEXTURE_2D, mask_pos, mask_sampler);
       /* src IN mask */
-      src_in_mask(ureg, out, src, mask);
-   } else {
-      ureg_TEX(ureg, out,
-               TGSI_TEXTURE_2D, src_pos, src_sampler);
+      src_in_mask(ureg, out, ureg_src(src), ureg_src(mask));
+      ureg_release_temporary(ureg, mask);
    }
 
    ureg_END(ureg);
