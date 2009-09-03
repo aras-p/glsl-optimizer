@@ -179,21 +179,12 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
 			 GLfloat bScale, GLfloat bBias,
 			 GLfloat aScale, GLfloat aBias)
 {
-   if (!_mesa_validate_pbo_access(1, &ctx->Unpack, count, 1, 1,
-                                  format, type, data)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glColor[Sub]Table(bad PBO access)");
+   data = _mesa_map_validate_pbo_source(ctx, 
+                                        1, &ctx->Unpack, count, 1, 1,
+                                        format, type, data,
+                                        "glColor[Sub]Table");
+   if (!data)
       return;
-   }
-
-   data = _mesa_map_pbo_source(ctx, &ctx->Unpack, data);
-   if (!data) {
-      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glColor[Sub]Table(PBO mapped)");
-      }
-      return;
-   }
 
    {
       /* convert user-provided data to GLfloat values */
@@ -688,22 +679,12 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       return;
    }
 
-   if (!_mesa_validate_pbo_access(1, &ctx->Pack, table->Size, 1, 1,
-                                  format, type, data)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetColorTable(invalid PBO access)");
+   data = _mesa_map_validate_pbo_dest(ctx, 
+                                      1, &ctx->Pack, table->Size, 1, 1,
+                                      format, type, data,
+                                      "glGetColorTable");
+   if (!data)
       return;
-   }
-
-   data = _mesa_map_pbo_dest(ctx, &ctx->Pack, data);
-   if (!data) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetColorTable(PBO is mapped)");
-      }
-      return;
-   }
 
    _mesa_pack_rgba_span_float(ctx, table->Size, rgba,
                               format, type, data, &ctx->Pack, 0x0);

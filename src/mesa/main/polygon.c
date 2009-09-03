@@ -193,21 +193,12 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 void
 _mesa_polygon_stipple(GLcontext *ctx, const GLubyte *pattern)
 {
-   if (!_mesa_validate_pbo_access(2, &ctx->Unpack, 32, 32, 1,
-                                  GL_COLOR_INDEX, GL_BITMAP, pattern)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glPolygonStipple(bad PBO access)");
+   pattern = _mesa_map_validate_pbo_source(ctx, 2,
+                                           &ctx->Unpack, 32, 32, 1,
+                                           GL_COLOR_INDEX, GL_BITMAP, pattern,
+                                           "glPolygonStipple");
+   if (!pattern)
       return;
-   }
-
-   pattern = _mesa_map_pbo_source(ctx, &ctx->Unpack, pattern);
-   if (!pattern) {
-      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glPolygonStipple(PBO mapped)");
-      }
-      return;
-   }
 
    _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
 
@@ -248,21 +239,12 @@ _mesa_GetPolygonStipple( GLubyte *dest )
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glGetPolygonStipple\n");
 
-   if (!_mesa_validate_pbo_access(2, &ctx->Pack, 32, 32, 1,
-                                  GL_COLOR_INDEX, GL_BITMAP, dest)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetPolygonStipple(bad PBO access)");
+   dest = _mesa_map_validate_pbo_dest(ctx, 2,
+                                      &ctx->Pack, 32, 32, 1,
+                                      GL_COLOR_INDEX, GL_BITMAP, dest,
+                                      "glGetPolygonStipple");
+   if (!dest)
       return;
-   }
-
-   dest = _mesa_map_pbo_dest(ctx, &ctx->Pack, dest);
-   if (!dest) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetPolygonStipple(PBO mapped)");
-      }
-      return;
-   }
 
    _mesa_pack_polygon_stipple(ctx->PolygonStipple, dest, &ctx->Pack);
 

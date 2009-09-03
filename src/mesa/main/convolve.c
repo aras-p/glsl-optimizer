@@ -144,21 +144,12 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    ctx->Convolution1D.Width = width;
    ctx->Convolution1D.Height = 1;
 
-   if (!_mesa_validate_pbo_access(1, &ctx->Unpack, width, 1, 1,
-                                  format, type, image)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glConvolutionFilter1D(invalid PBO access)");
+   image = _mesa_map_validate_pbo_source(ctx, 
+                                        1, &ctx->Unpack, width, 1, 1,
+                                        format, type, image,
+                                        "glConvolutionFilter1D");
+   if (!image)
       return;
-   }
-
-   image = _mesa_map_pbo_source(ctx, &ctx->Unpack, image);
-   if (!image) {
-      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glConvolutionFilter1D(PBO is mapped)");
-      }
-      return;
-   }
 
    _mesa_unpack_color_span_float(ctx, width, GL_RGBA,
                                  ctx->Convolution1D.Filter,
@@ -231,21 +222,12 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    ctx->Convolution2D.Width = width;
    ctx->Convolution2D.Height = height;
 
-   if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
-                                  format, type, image)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glConvolutionFilter2D(invalid PBO access)");
+   image = _mesa_map_validate_pbo_source(ctx, 
+                                         2, &ctx->Unpack, width, height, 1,
+                                         format, type, image,
+                                         "glConvolutionFilter2D");
+   if (!image)
       return;
-   }
-
-   image = _mesa_map_pbo_source(ctx, &ctx->Unpack, image);
-   if (!image) {
-      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glConvolutionFilter2D(PBO is mapped)");
-      }
-      return;
-   }
 
    /* Unpack filter image.  We always store filters in RGBA format. */
    for (i = 0; i < height; i++) {
@@ -576,22 +558,12 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
          return;
    }
 
-   if (!_mesa_validate_pbo_access(2, &ctx->Pack,
-                                  filter->Width, filter->Height,
-                                  1, format, type, image)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetConvolutionFilter(invalid PBO access)");
+   image = _mesa_map_validate_pbo_dest(ctx, 2, &ctx->Pack,
+                                       filter->Width, filter->Height, 1,
+                                       format, type, image,
+                                       "glGetConvolutionFilter");
+   if (!image)
       return;
-   }
-
-   image = _mesa_map_pbo_dest(ctx, &ctx->Pack, image);
-   if (!image) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetConvolutionFilter(PBO is mapped)");
-      }
-      return;
-   }
 
    for (row = 0; row < filter->Height; row++) {
       GLvoid *dst = _mesa_image_address2d(&ctx->Pack, image, filter->Width,

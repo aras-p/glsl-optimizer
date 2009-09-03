@@ -649,21 +649,11 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       return;
    }
 
-   if (!_mesa_validate_pbo_access(1, &ctx->Pack, 2, 1, 1,
-                                  format, type, values)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetMinMax(invalid PBO access)");
-      return;
-   }
 
-   values = _mesa_map_pbo_dest(ctx, &ctx->Pack, values);
-   if (!values) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION,"glGetMinMax(PBO is mapped)");
-      }
+   values = _mesa_map_validate_pbo_dest(ctx, 1, &ctx->Pack, 2, 1, 1,
+                                        format, type, values, "glGetMinmax");
+   if (!values)
       return;
-   }
 
    {
       GLfloat minmax[2][4];
@@ -722,20 +712,12 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
       return;
    }
 
-   if (!_mesa_validate_pbo_access(1, &ctx->Pack, ctx->Histogram.Width, 1, 1,
-                                  format, type, values)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetHistogram(invalid PBO access)");
+   values = _mesa_map_validate_pbo_dest(ctx, 1, &ctx->Pack,
+                                        ctx->Histogram.Width, 1, 1,
+                                        format, type, values,
+                                        "glGetHistogram");
+   if (!values)
       return;
-   }
-
-   values = _mesa_map_pbo_dest(ctx, &ctx->Pack, values);
-   if (!values) {
-      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-         _mesa_error(ctx,GL_INVALID_OPERATION,"glGetHistogram(PBO is mapped)");
-      }
-      return;
-   }
 
    pack_histogram(ctx, ctx->Histogram.Width,
                   (CONST GLuint (*)[4]) ctx->Histogram.Count,
