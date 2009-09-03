@@ -534,6 +534,23 @@ scalarSrcReg: optionalSign srcReg scalarSuffix
 	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
 						    $3.swizzle);
 	}
+	| optionalSign paramConstScalarUse
+	{
+	   struct asm_symbol temp_sym;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @2, state, "expected scalar suffix");
+	      YYERROR;
+	   }
+
+	   memset(& temp_sym, 0, sizeof(temp_sym));
+	   temp_sym.param_binding_begin = ~0;
+	   initialize_symbol_from_const(state->prog, & temp_sym, & $2);
+
+	   init_src_reg(& $$);
+	   $$.Base.File = PROGRAM_CONSTANT;
+	   $$.Base.Index = temp_sym.param_binding_begin;
+	}
 	;
 
 swizzleSrcReg: optionalSign srcReg swizzleSuffix
