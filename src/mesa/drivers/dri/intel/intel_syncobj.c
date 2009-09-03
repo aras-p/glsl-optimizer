@@ -94,7 +94,7 @@ static void intel_client_wait_sync(GLcontext *ctx, struct gl_sync_object *s,
 
    if (sync->bo) {
       drm_intel_bo_wait_rendering(sync->bo);
-      s->Status = 1;
+      s->StatusFlag = 1;
       drm_intel_bo_unreference(sync->bo);
       sync->bo = NULL;
    }
@@ -117,7 +117,7 @@ static void intel_check_sync(GLcontext *ctx, struct gl_sync_object *s)
    if (sync->bo && drm_intel_bo_busy(sync->bo)) {
       drm_intel_bo_unreference(sync->bo);
       sync->bo = NULL;
-      s->Status = 1;
+      s->StatusFlag = 1;
    }
 }
 

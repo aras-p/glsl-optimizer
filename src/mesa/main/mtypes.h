@@ -1998,7 +1998,7 @@ struct gl_sync_object {
 			       */
    GLenum SyncCondition;
    GLbitfield Flags;          /**< Flags passed to glFenceSync */
-   GLuint Status:1;           /**< Has the sync object been signaled? */
+   GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
 };
 
 

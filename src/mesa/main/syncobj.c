@@ -90,7 +90,7 @@ _mesa_fence_sync(GLcontext *ctx, struct gl_sync_object *syncObj,
    (void) condition;
    (void) flags;
 
-   syncObj->Status = 1;
+   syncObj->StatusFlag = 1;
 }
 
 
@@ -263,7 +263,7 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
       syncObj->DeletePending = GL_FALSE;
       syncObj->SyncCondition = condition;
       syncObj->Flags = flags;
-      syncObj->Status = 0;
+      syncObj->StatusFlag = 0;
 
       ctx->Driver.FenceSync(ctx, syncObj, condition, flags);
 
@@ -306,12 +306,12 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
     *    if <sync> was signaled, even if the value of <timeout> is zero.
     */
    ctx->Driver.CheckSync(ctx, syncObj);
-   if (syncObj->Status) {
+   if (syncObj->StatusFlag) {
       ret = GL_ALREADY_SIGNALED;
    } else {
       ctx->Driver.ClientWaitSync(ctx, syncObj, flags, timeout);
 
-      ret = syncObj->Status ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
+      ret = syncObj->StatusFlag ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
    }
 
    _mesa_unref_sync_object(ctx, syncObj);
@@ -381,7 +381,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
        */
       ctx->Driver.CheckSync(ctx, syncObj);
 
-      v[0] = (syncObj->Status) ? GL_SIGNALED : GL_UNSIGNALED;
+      v[0] = (syncObj->StatusFlag) ? GL_SIGNALED : GL_UNSIGNALED;
       size = 1;
       break;
 
