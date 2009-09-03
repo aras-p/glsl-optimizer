@@ -30,13 +30,15 @@ import license
 import sys, getopt
 
 class PrintGlOffsets(gl_XML.gl_print_base):
-	def __init__(self):
+	def __init__(self, es=False):
 		gl_XML.gl_print_base.__init__(self)
 
 		self.name = "gl_apitemp.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+
+		self.es = es
 
 		self.undef_list.append( "KEYWORD1" )
 		self.undef_list.append( "KEYWORD1_ALT" )
@@ -82,7 +84,14 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		else:
 			dispatch = "DISPATCH"
 
+		need_proto = False
 		if not f.is_static_entry_point(name):
+			need_proto = True
+		elif self.es:
+			cat, num = api.get_category_for_name(name)
+			if (cat.startswith("es") or cat.startswith("GL_OES")):
+				need_proto = True
+		if need_proto:
 			print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
 			print ''
 
@@ -286,22 +295,26 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-c]" % sys.argv[0]
+	print "-c          Enable compatibility with OpenGL ES."
 	sys.exit(1)
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
     
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:c")
 	except Exception,e:
 		show_usage()
 
+	es = False
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
+		elif arg == "-c":
+			es = True
 
 	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
 
-	printer = PrintGlOffsets()
+	printer = PrintGlOffsets(es)
 	printer.Print(api)

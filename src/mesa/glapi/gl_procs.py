@@ -30,9 +30,10 @@ import gl_XML, glX_XML
 import sys, getopt
 
 class PrintGlProcs(gl_XML.gl_print_base):
-	def __init__(self, long_strings):
+	def __init__(self, long_strings, es=False):
 		gl_XML.gl_print_base.__init__(self)
 
+		self.es = es
 		self.long_strings = long_strings
 		self.name = "gl_procs.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
@@ -141,6 +142,28 @@ typedef struct {
 					print '%s GLAPIENTRY gl_dispatch_stub_%u(%s);' % (func.return_type, func.offset, func.get_parameter_string())
 					break
 
+		if self.es:
+			categories = {}
+			for func in api.functionIterateByOffset():
+				for n in func.entry_points:
+					cat, num = api.get_category_for_name(n)
+					if (cat.startswith("es") or cat.startswith("GL_OES")):
+						if not categories.has_key(cat):
+							categories[cat] = []
+						proto = 'GLAPI %s GLAPIENTRY %s(%s);' \
+								% (func.return_type, "gl" + n, func.get_parameter_string(n))
+						categories[cat].append(proto)
+			if categories:
+				print ''
+				print '/* OpenGL ES specific prototypes */'
+				print ''
+				keys = categories.keys()
+				keys.sort()
+				for key in keys:
+					print '/* category %s */' % key
+					print "\n".join(categories[key])
+				print ''
+
 		print '#endif /* defined(NEED_FUNCTION_POINTER) || defined(GLX_INDIRECT_RENDERING) */'
 
 		print ''
@@ -155,8 +178,9 @@ typedef struct {
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name] [-m mode]" % sys.argv[0]
-	print "mode can be one of:"
+	print "Usage: %s [-f input_file_name] [-m mode] [-c]" % sys.argv[0]
+	print "-c          Enable compatibility with OpenGL ES."
+	print "-m mode     mode can be one of:"
 	print "    long  - Create code for compilers that can handle very"
 	print "            long string constants. (default)"
 	print "    short - Create code for compilers that can only handle"
@@ -167,11 +191,12 @@ if __name__ == '__main__':
 	file_name = "gl_API.xml"
 
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:c")
 	except Exception,e:
 		show_usage()
 
 	long_string = 1
+	es = False
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
@@ -182,7 +207,9 @@ if __name__ == '__main__':
 				long_string = 1
 			else:
 				show_usage()
+		elif arg == "-c":
+		    es = True
 
 	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
-	printer = PrintGlProcs(long_string)
+	printer = PrintGlProcs(long_string, es)
 	printer.Print(api)
