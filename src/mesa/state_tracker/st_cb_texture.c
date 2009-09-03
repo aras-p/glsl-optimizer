@@ -517,9 +517,9 @@ st_TexImage(GLcontext * ctx,
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLint postConvWidth, postConvHeight;
    GLint texelBytes, sizeInBytes;
-   GLuint dstRowStride;
+   GLuint dstRowStride = 0;
    struct gl_pixelstore_attrib unpackNB;
-   enum pipe_transfer_usage transfer_usage;
+   enum pipe_transfer_usage transfer_usage = 0;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
