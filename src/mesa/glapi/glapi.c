@@ -69,9 +69,9 @@
 #include <assert.h>
 #endif
 
-#include "glapi.h"
-#include "glapioffsets.h"
-#include "glapitable.h"
+#include "glapi/glapi.h"
+#include "glapi/glapioffsets.h"
+#include "glapi/glapitable.h"
 
 
 /***** BEGIN NO-OP DISPATCH *****/
@@ -145,7 +145,7 @@ static GLint NoOpUnused(void)
    return 0;
 }
 
-#include "glapitemp.h"
+#include "glapi/glapitemp.h"
 
 /***** END NO-OP DISPATCH *****/
 

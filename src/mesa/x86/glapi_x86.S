@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 
-#include "assyntax.h"
+#include "x86/assyntax.h"
 #include "glapi/glapioffsets.h"
 
 #if defined(STDCALL_API)

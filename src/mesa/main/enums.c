@@ -25,10 +25,10 @@
  * SOFTWARE.
  */
 
-#include "glheader.h"
-#include "mfeatures.h"
-#include "enums.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/mfeatures.h"
+#include "main/enums.h"
+#include "main/imports.h"
 
 typedef struct {
    size_t offset;
