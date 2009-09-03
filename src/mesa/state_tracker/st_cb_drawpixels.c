@@ -842,6 +842,10 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    else
       usage = PIPE_TRANSFER_WRITE;
    
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+      dsty = rbDraw->Base.Height - dsty - height;
+   }
+
    ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
 					   rbDraw->texture, 0, 0, 0,
 					   usage, dstx, dsty,
