@@ -109,6 +109,7 @@ const struct dri_extension card_extensions[] =
     { "GL_MESA_resize_buffers",		GL_MESA_resize_buffers_functions },
     { "GL_NV_vertex_program",		GL_NV_vertex_program_functions },
     { "GL_NV_fragment_program",		GL_NV_fragment_program_functions },
+    { "GL_NV_fragment_program_option",	NULL },
     { NULL,				NULL }
 };
 

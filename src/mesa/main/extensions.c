@@ -306,6 +306,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_NV_fragment_program
    ctx->Extensions.NV_fragment_program = GL_TRUE;
 #endif
+#if FEATURE_NV_fragment_program && FEATURE_ARB_fragment_program
+   ctx->Extensions.NV_fragment_program_option = GL_TRUE;
+#endif
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGI_color_table = GL_TRUE;
    ctx->Extensions.SGI_texture_color_table = GL_TRUE;
