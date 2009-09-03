@@ -1106,10 +1106,10 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 		m = 0xffff7fff;
 		break;
 	case 0x8:
-		/* INTERP */
-		m = ~0x02000000;
-		if (e->inst[0] & 0x02000000)
-			q = 0x00020000;
+		/* INTERP (move centroid, perspective and flat bits) */
+		m = ~0x03000100;
+		q = (e->inst[0] & (3 << 24)) >> (24 - 16);
+		q |= (e->inst[0] & (1 << 8)) << (18 - 8);
 		break;
 	case 0x9:
 		/* RCP */
