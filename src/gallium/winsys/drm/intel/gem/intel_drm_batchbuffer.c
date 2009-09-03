@@ -12,6 +12,8 @@
 #define INTEL_BATCH_NO_CLIPRECTS 0x1
 #define INTEL_BATCH_CLIPRECTS    0x2
 
+#undef INTEL_RUN_SYNC
+
 struct intel_drm_batchbuffer
 {
    struct intel_batchbuffer base;
@@ -172,19 +174,20 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
 
       drm_intel_bo_unmap(batch->bo);
    } else {
-      /* TODO figgure out why the gpu hangs if we don't run sync */
+#ifdef INTEL_RUN_SYNC
       drm_intel_bo_map(batch->bo, FALSE);
       drm_intel_bo_unmap(batch->bo);
+#endif
    }
 
    if (fence) {
       ibatch->iws->fence_reference(ibatch->iws, fence, NULL);
 
-#if 0
-      (*fence) = intel_drm_fence_create(batch->bo);
-#else
+#ifdef INTEL_RUN_SYNC
       /* we run synced to GPU so just pass null */
       (*fence) = intel_drm_fence_create(NULL);
+#else
+      (*fence) = intel_drm_fence_create(batch->bo);
 #endif
    }
 
