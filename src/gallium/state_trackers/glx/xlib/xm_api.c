@@ -668,7 +668,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
     * at a later time.
     */
    v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
-   if(!v->visinfo) {
+   if (!v->visinfo) {
       _mesa_free(v);
       return NULL;
    }
@@ -781,8 +781,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (screen == NULL)
       goto fail;
 
-   pipe = driver.create_pipe_context( screen,
-                                     (void *)c );
+   pipe = driver.create_pipe_context(screen, (void *) c);
    if (pipe == NULL)
       goto fail;
 
@@ -795,23 +794,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx = c->st->ctx;
    c->st->ctx->DriverCtx = c;
 
-#if 00
-   _mesa_enable_sw_extensions(mesaCtx);
-   _mesa_enable_1_3_extensions(mesaCtx);
-   _mesa_enable_1_4_extensions(mesaCtx);
-   _mesa_enable_1_5_extensions(mesaCtx);
-   _mesa_enable_2_0_extensions(mesaCtx);
-#endif
-
    return c;
 
- fail:
+fail:
    if (c->st)
       st_destroy_context(c->st);
    else if (pipe)
       pipe->destroy(pipe);
 
-   FREE(c);
+   _mesa_free(c);
    return NULL;
 }
 
@@ -1165,7 +1156,7 @@ void XMesaFlush( XMesaContext c )
 XMesaBuffer XMesaFindBuffer( Display *dpy, Drawable d )
 {
    XMesaBuffer b;
-   for (b=XMesaBufferList; b; b=b->Next) {
+   for (b = XMesaBufferList; b; b = b->Next) {
       if (b->drawable == d && b->xm_visual->display == dpy) {
          return b;
       }
