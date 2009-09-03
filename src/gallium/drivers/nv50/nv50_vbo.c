@@ -313,18 +313,18 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		so_data  (so, fui(v[3]));
 		break;
 	case 3:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_3F_X(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_3F_X(attrib), 3);
 		so_data  (so, fui(v[0]));
 		so_data  (so, fui(v[1]));
 		so_data  (so, fui(v[2]));
 		break;
 	case 2:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_2F_X(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_2F_X(attrib), 2);
 		so_data  (so, fui(v[0]));
 		so_data  (so, fui(v[1]));
 		break;
 	case 1:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 1);
 		so_data  (so, fui(v[0]));
 		break;
 	default:
