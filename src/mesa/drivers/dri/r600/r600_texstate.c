@@ -50,6 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "r600_tex.h"
 #include "r700_fragprog.h"
+#include "r700_vertprog.h"
 
 void r600UpdateTextureState(GLcontext * ctx);
 
@@ -691,6 +692,12 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 	}
 
 	pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(ctx);
+	if (pbo) {
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, pbo,
+						  RADEON_GEM_DOMAIN_GTT, 0);
+	}
+
+	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(ctx);
 	if (pbo) {
 		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, pbo,
 						  RADEON_GEM_DOMAIN_GTT, 0);
