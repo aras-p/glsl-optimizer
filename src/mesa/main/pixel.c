@@ -136,6 +136,33 @@ store_pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize,
 }
 
 
+/**
+ * Convenience wrapper for _mesa_validate_pbo_access() for gl[Get]PixelMap().
+ */
+static GLboolean
+validate_pbo_access(GLcontext *ctx, struct gl_pixelstore_attrib *pack,
+                    GLsizei mapsize, GLenum format, GLenum type,
+                    const GLvoid *ptr)
+{
+   GLboolean ok;
+
+   /* Note, need to use DefaultPacking and Unpack's buffer object */
+   ctx->DefaultPacking.BufferObj = pack->BufferObj;
+
+   ok = _mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
+                                  format, type, ptr);
+
+   /* restore */
+   ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
+
+   if (!ok) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glPixelMap(invalid PBO access)");
+   }
+   return ok;
+}
+
+
 void GLAPIENTRY
 _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 {
@@ -158,40 +185,23 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* unpack pixelmap from PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Unpack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_FLOAT, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glPixelMapfv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
+                            GL_INTENSITY, GL_FLOAT, values)) {
+      return;
+   }
+
+   values = (const GLfloat *) _mesa_map_pbo_source(ctx, &ctx->Unpack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPixelMapfv(PBO is mapped)");
-         return;
       }
-      values = (const GLfloat *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
    store_pixelmap(ctx, map, mapsize, values);
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 }
 
 
@@ -217,31 +227,17 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* unpack pixelmap from PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Unpack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_UNSIGNED_INT, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glPixelMapuiv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
+                            GL_INTENSITY, GL_UNSIGNED_INT, values)) {
+      return;
+   }
+
+   values = (const GLuint *) _mesa_map_pbo_source(ctx, &ctx->Unpack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPixelMapuiv(PBO is mapped)");
-         return;
       }
-      values = (const GLuint *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
@@ -259,10 +255,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 
    store_pixelmap(ctx, map, mapsize, fvalues);
 }
@@ -290,32 +283,17 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 
    FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* unpack pixelmap from PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Unpack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_UNSIGNED_SHORT,
-                                     values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glPixelMapusv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Unpack, mapsize,
+                            GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {
+      return;
+   }
+
+   values = (const GLushort *) _mesa_map_pbo_source(ctx, &ctx->Unpack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPixelMapusv(PBO is mapped)");
-         return;
       }
-      values = (const GLushort *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
@@ -333,10 +311,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 
    store_pixelmap(ctx, map, mapsize, fvalues);
 }
@@ -359,31 +334,17 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 
    mapsize = pm->Size;
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack pixelmap into PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Pack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_FLOAT, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetPixelMapfv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
+                            GL_INTENSITY, GL_FLOAT, values)) {
+      return;
+   }
+
+   values = (GLfloat *) _mesa_map_pbo_dest(ctx, &ctx->Pack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPixelMapfv(PBO is mapped)");
-         return;
       }
-      values = (GLfloat *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
@@ -397,10 +358,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
       MEMCPY(values, pm->Map, mapsize * sizeof(GLfloat));
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 
@@ -420,31 +378,17 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
    }
    mapsize = pm->Size;
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack pixelmap into PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Pack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_UNSIGNED_INT, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetPixelMapuiv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
+                            GL_INTENSITY, GL_UNSIGNED_INT, values)) {
+      return;
+   }
+
+   values = (GLuint *) _mesa_map_pbo_dest(ctx, &ctx->Pack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPixelMapuiv(PBO is mapped)");
-         return;
       }
-      values = (GLuint *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
@@ -458,10 +402,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 
@@ -481,32 +422,17 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
    }
    mapsize = pm ? pm->Size : 0;
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack pixelmap into PBO */
-      GLubyte *buf;
-      /* Note, need to use DefaultPacking and Pack's buffer object */
-      ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
-                                     GL_INTENSITY, GL_UNSIGNED_SHORT,
-                                     values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetPixelMapusv(invalid PBO access)");
-         return;
-      }
-      /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
+                            GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {
+      return;
+   }
+
+   values = (GLushort *) _mesa_map_pbo_dest(ctx, &ctx->Pack, values);
+   if (!values) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPixelMapusv(PBO is mapped)");
-         return;
       }
-      values = (GLushort *) ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
       return;
    }
 
@@ -528,10 +454,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 

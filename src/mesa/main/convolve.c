@@ -144,27 +144,19 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    ctx->Convolution1D.Width = width;
    ctx->Convolution1D.Height = 1;
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* unpack filter from PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, width, 1, 1,
-                                     format, type, image)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glConvolutionFilter1D(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!_mesa_validate_pbo_access(1, &ctx->Unpack, width, 1, 1,
+                                  format, type, image)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glConvolutionFilter1D(invalid PBO access)");
+      return;
+   }
+
+   image = _mesa_map_pbo_source(ctx, &ctx->Unpack, image);
+   if (!image) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glConvolutionFilter1D(PBO is mapped)");
-         return;
       }
-      image = ADD_POINTERS(buf, image);
-   }
-   else if (!image) {
       return;
    }
 
@@ -173,10 +165,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
                                  format, type, image, &ctx->Unpack,
                                  0); /* transferOps */
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 
    _mesa_scale_and_bias_rgba(width,
                              (GLfloat (*)[4]) ctx->Convolution1D.Filter,
@@ -242,27 +231,19 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    ctx->Convolution2D.Width = width;
    ctx->Convolution2D.Height = height;
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* unpack filter from PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
-                                     format, type, image)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glConvolutionFilter2D(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
+                                  format, type, image)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glConvolutionFilter2D(invalid PBO access)");
+      return;
+   }
+
+   image = _mesa_map_pbo_source(ctx, &ctx->Unpack, image);
+   if (!image) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glConvolutionFilter2D(PBO is mapped)");
-         return;
       }
-      image = ADD_POINTERS(buf, image);
-   }
-   else if (!image) {
       return;
    }
 
@@ -276,10 +257,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
                                     0); /* transferOps */
    }
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 
    _mesa_scale_and_bias_rgba(width * height,
                              (GLfloat (*)[4]) ctx->Convolution2D.Filter,
@@ -598,26 +576,21 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
          return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* Pack the filter into a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, &ctx->Pack,
-                                     filter->Width, filter->Height,
-                                     1, format, type, image)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetConvolutionFilter(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
+   if (!_mesa_validate_pbo_access(2, &ctx->Pack,
+                                  filter->Width, filter->Height,
+                                  1, format, type, image)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetConvolutionFilter(invalid PBO access)");
+      return;
+   }
+
+   image = _mesa_map_pbo_dest(ctx, &ctx->Pack, image);
+   if (!image) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetConvolutionFilter(PBO is mapped)");
-         return;
       }
-      image = ADD_POINTERS(image, buf);
+      return;
    }
 
    for (row = 0; row < filter->Height; row++) {
@@ -629,10 +602,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                                  format, type, dst, &ctx->Pack, 0x0);
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 

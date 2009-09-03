@@ -193,32 +193,25 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 void
 _mesa_polygon_stipple(GLcontext *ctx, const GLubyte *pattern)
 {
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* Get/unpack the stipple pattern from a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, &ctx->Unpack, 32, 32, 1,
-                                     GL_COLOR_INDEX, GL_BITMAP, pattern)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glPolygonStipple(bad PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
+   if (!_mesa_validate_pbo_access(2, &ctx->Unpack, 32, 32, 1,
+                                  GL_COLOR_INDEX, GL_BITMAP, pattern)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glPolygonStipple(bad PBO access)");
+      return;
+   }
+
+   pattern = _mesa_map_pbo_source(ctx, &ctx->Unpack, pattern);
+   if (!pattern) {
+      if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPolygonStipple(PBO mapped)");
-         return;
       }
-      buf = ADD_POINTERS(buf, pattern);
-      _mesa_unpack_polygon_stipple(buf, ctx->PolygonStipple, &ctx->Unpack);
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
+      return;
    }
-   else {
-      /* Get/unpack the stipple pattern from user memory */
-      _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
-   }
+
+   _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
+
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 }
 
 
@@ -255,35 +248,25 @@ _mesa_GetPolygonStipple( GLubyte *dest )
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glGetPolygonStipple\n");
 
-   /* XXX someday we may put this code into a separate function and call
-    * it with ctx->Driver.GetPolygonStipple().
-    */
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* Put/pack the stipple pattern into a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, &ctx->Pack, 32, 32, 1,
-                                     GL_COLOR_INDEX, GL_BITMAP, dest)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetPolygonStipple(bad PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
+   if (!_mesa_validate_pbo_access(2, &ctx->Pack, 32, 32, 1,
+                                  GL_COLOR_INDEX, GL_BITMAP, dest)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetPolygonStipple(bad PBO access)");
+      return;
+   }
+
+   dest = _mesa_map_pbo_dest(ctx, &ctx->Pack, dest);
+   if (!dest) {
+      if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPolygonStipple(PBO mapped)");
-         return;
       }
-      buf = ADD_POINTERS(buf, dest);
-      _mesa_pack_polygon_stipple(ctx->PolygonStipple, buf, &ctx->Pack);
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
+      return;
    }
-   else {
-      /* Put/pack the stipple pattern into user memory */
-      _mesa_pack_polygon_stipple(ctx->PolygonStipple, dest, &ctx->Pack);
-   }
+
+   _mesa_pack_polygon_stipple(ctx->PolygonStipple, dest, &ctx->Pack);
+
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 
