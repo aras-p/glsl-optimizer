@@ -32,6 +32,10 @@
 extern "C" {
 #endif
 
+struct tgsi_src_register;
+struct tgsi_src_register_ext_swz;
+struct tgsi_full_src_register;
+
 void *
 tgsi_align_128bit(
    void *unaligned );

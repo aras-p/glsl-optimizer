@@ -103,7 +103,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    if (ureg == NULL)
       return NULL;
    
-   sampler = ureg_DECL_sampler( ureg );
+   sampler = ureg_DECL_sampler( ureg, 0 );
 
    tex = ureg_DECL_fs_input( ureg, 
                              TGSI_SEMANTIC_GENERIC, 0, 
