@@ -746,6 +746,47 @@ _mesa_map_pbo_source(GLcontext *ctx,
 
 
 /**
+ * Combine PBO-read validation and mapping.
+ * If any GL errors are detected, they'll be recorded and NULL returned.
+ * \sa _mesa_validate_pbo_access
+ * \sa _mesa_map_pbo_source
+ * A call to this function should have a matching call to
+ * _mesa_unmap_pbo_source().
+ */
+const GLvoid *
+_mesa_map_validate_pbo_source(GLcontext *ctx,
+                              GLuint dimensions,
+                              const struct gl_pixelstore_attrib *unpack,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              GLenum format, GLenum type, const GLvoid *ptr,
+                              const char *where)
+{
+   ASSERT(dimensions == 1 || dimensions == 2 || dimensions == 3);
+
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
+      /* non-PBO access: no validation to be done */
+      return ptr;
+   }
+
+   if (!_mesa_validate_pbo_access(dimensions, unpack,
+                                  width, height, depth, format, type, ptr)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(out of bounds PBO access)", where);
+      return NULL;
+   }
+
+   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+      /* buffer is already mapped - that's an error */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
+      return NULL;
+   }
+
+   ptr = _mesa_map_pbo_source(ctx, unpack, ptr);
+   return ptr;
+}
+
+
+/**
  * Counterpart to _mesa_map_pbo_source()
  */
 void
@@ -791,6 +832,47 @@ _mesa_map_pbo_dest(GLcontext *ctx,
    }
 
    return buf;
+}
+
+
+/**
+ * Combine PBO-write validation and mapping.
+ * If any GL errors are detected, they'll be recorded and NULL returned.
+ * \sa _mesa_validate_pbo_access
+ * \sa _mesa_map_pbo_dest
+ * A call to this function should have a matching call to
+ * _mesa_unmap_pbo_dest().
+ */
+GLvoid *
+_mesa_map_validate_pbo_dest(GLcontext *ctx,
+                            GLuint dimensions,
+                            const struct gl_pixelstore_attrib *unpack,
+                            GLsizei width, GLsizei height, GLsizei depth,
+                            GLenum format, GLenum type, GLvoid *ptr,
+                            const char *where)
+{
+   ASSERT(dimensions == 1 || dimensions == 2 || dimensions == 3);
+
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
+      /* non-PBO access: no validation to be done */
+      return ptr;
+   }
+
+   if (!_mesa_validate_pbo_access(dimensions, unpack,
+                                  width, height, depth, format, type, ptr)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(out of bounds PBO access)", where);
+      return NULL;
+   }
+
+   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+      /* buffer is already mapped - that's an error */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
+      return NULL;
+   }
+
+   ptr = _mesa_map_pbo_dest(ctx, unpack, ptr);
+   return ptr;
 }
 
 
