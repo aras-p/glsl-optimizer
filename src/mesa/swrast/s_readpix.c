@@ -574,7 +574,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       return;
    }
 
-   pixels = _mesa_map_readpix_pbo(ctx, &clippedPacking, pixels);
+   pixels = _mesa_map_pbo_dest(ctx, &clippedPacking, pixels);
    if (!pixels)
       return;
   
@@ -616,5 +616,5 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    swrast_render_finish(ctx);
 
-   _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
+   _mesa_unmap_pbo_dest(ctx, &clippedPacking);
 }

@@ -847,7 +847,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-    pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
+    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
     if (!pixels) {
        swrast_render_finish(ctx);
        _mesa_set_vp_override(ctx, save_vp_override);
@@ -892,7 +892,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    swrast_render_finish(ctx);
    _mesa_set_vp_override(ctx, save_vp_override);
 
-   _mesa_unmap_drawpix_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 }
 
 

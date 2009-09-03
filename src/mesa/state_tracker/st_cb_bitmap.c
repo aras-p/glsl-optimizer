@@ -275,7 +275,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    struct pipe_texture *pt;
 
    /* PBO source... */
-   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   bitmap = _mesa_map_pbo_source(ctx, unpack, bitmap);
    if (!bitmap) {
       return NULL;
    }
@@ -287,7 +287,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                           0, width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
-      _mesa_unmap_bitmap_pbo(ctx, unpack);
+      _mesa_unmap_pbo_source(ctx, unpack);
       return NULL;
    }
 
@@ -302,7 +302,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
                  dest, transfer->stride);
 
-   _mesa_unmap_bitmap_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 
    /* Release transfer */
    screen->transfer_unmap(screen, transfer);

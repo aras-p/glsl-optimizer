@@ -870,7 +870,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
 					     PIPE_TRANSFER_READ,
 					     0, 0, width, height);
 
-   pixels = _mesa_map_readpix_pbo(ctx, &ctx->Pack, pixels);
+   pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
 
    /* copy/pack data into user buffer */
    if (st_equal_formats(stImage->pt->format, format, type)) {
@@ -903,7 +903,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
       }
    }
 
-   _mesa_unmap_readpix_pbo(ctx, &ctx->Pack);
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);

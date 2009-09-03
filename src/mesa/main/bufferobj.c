@@ -658,6 +658,8 @@ _mesa_update_default_objects_buffer_objects(GLcontext *ctx)
  * currently mapped.  Whoever calls this function should check for that.
  * Remember, we can't use a PBO when it's mapped!
  *
+ * If we're not using a PBO, this is a no-op.
+ *
  * \param width  width of image to read/write
  * \param height  height of image to read/write
  * \param depth  depth of image to read/write
@@ -676,7 +678,8 @@ _mesa_validate_pbo_access(GLuint dimensions,
    GLvoid *start, *end;
    const GLubyte *sizeAddr; /* buffer size, cast to a pointer */
 
-   ASSERT(_mesa_is_bufferobj(pack->BufferObj));
+   if (!_mesa_is_bufferobj(pack->BufferObj))
+      return GL_TRUE;  /* no PBO, OK */
 
    if (pack->BufferObj->Size == 0)
       /* no buffer! */
@@ -708,17 +711,18 @@ _mesa_validate_pbo_access(GLuint dimensions,
 
 
 /**
- * If the source of glBitmap data is a PBO, check that we won't read out
- * of buffer bounds, then map the buffer.
- * If not sourcing from a PBO, just return the bitmap pointer.
- * This is a helper function for (some) drivers.
- * Return NULL if error.
- * If non-null return, must call _mesa_unmap_bitmap_pbo() when done.
+ * For commands that read from a PBO (glDrawPixels, glTexImage,
+ * glPolygonStipple, etc), if we're reading from a PBO, map it read-only
+ * and return the pointer into the PBO.  If we're not reading from a
+ * PBO, return \p src as-is.
+ * If non-null return, must call _mesa_unmap_pbo_source() when done.
+ *
+ * \return NULL if error, else pointer to start of data
  */
-const GLubyte *
-_mesa_map_bitmap_pbo(GLcontext *ctx,
+const GLvoid *
+_mesa_map_pbo_source(GLcontext *ctx,
                      const struct gl_pixelstore_attrib *unpack,
-                     const GLubyte *bitmap)
+                     const GLvoid *src)
 {
    const GLubyte *buf;
 
@@ -730,11 +734,11 @@ _mesa_map_bitmap_pbo(GLcontext *ctx,
       if (!buf)
          return NULL;
 
-      buf = ADD_POINTERS(buf, bitmap);
+      buf = ADD_POINTERS(buf, src);
    }
    else {
       /* unpack from normal memory */
-      buf = bitmap;
+      buf = src;
    }
 
    return buf;
@@ -742,13 +746,13 @@ _mesa_map_bitmap_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to _mesa_map_bitmap_pbo()
- * This is a helper function for (some) drivers.
+ * Counterpart to _mesa_map_pbo_source()
  */
 void
-_mesa_unmap_bitmap_pbo(GLcontext *ctx,
+_mesa_unmap_pbo_source(GLcontext *ctx,
                        const struct gl_pixelstore_attrib *unpack)
 {
+   ASSERT(unpack != &ctx->Pack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
@@ -757,57 +761,17 @@ _mesa_unmap_bitmap_pbo(GLcontext *ctx,
 
 
 /**
- * \sa _mesa_map_bitmap_pbo
- */
-const GLvoid *
-_mesa_map_drawpix_pbo(GLcontext *ctx,
-                      const struct gl_pixelstore_attrib *unpack,
-                      const GLvoid *pixels)
-{
-   const GLvoid *buf;
-
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      /* unpack from PBO */
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              unpack->BufferObj);
-      if (!buf)
-         return NULL;
-
-      buf = ADD_POINTERS(buf, pixels);
-   }
-   else {
-      /* unpack from normal memory */
-      buf = pixels;
-   }
-
-   return buf;
-}
-
-
-/**
- * \sa _mesa_unmap_bitmap_pbo
- */
-void
-_mesa_unmap_drawpix_pbo(GLcontext *ctx,
-                        const struct gl_pixelstore_attrib *unpack)
-{
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
-}
-
-
-/**
- * If PBO is bound, map the buffer, return dest pointer in mapped buffer.
- * Call _mesa_unmap_readpix_pbo() when finished
- * \return NULL if error
+ * For commands that write to a PBO (glReadPixels, glGetColorTable, etc),
+ * if we're writing to a PBO, map it write-only and return the pointer
+ * into the PBO.  If we're not writing to a PBO, return \p dst as-is.
+ * If non-null return, must call _mesa_unmap_pbo_dest() when done.
+ *
+ * \return NULL if error, else pointer to start of data
  */
 void *
-_mesa_map_readpix_pbo(GLcontext *ctx,
-                      const struct gl_pixelstore_attrib *pack,
-                      GLvoid *dest)
+_mesa_map_pbo_dest(GLcontext *ctx,
+                   const struct gl_pixelstore_attrib *pack,
+                   GLvoid *dest)
 {
    void *buf;
 
@@ -831,12 +795,13 @@ _mesa_map_readpix_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to _mesa_map_readpix_pbo()
+ * Counterpart to _mesa_map_pbo_dest()
  */
 void
-_mesa_unmap_readpix_pbo(GLcontext *ctx,
-                        const struct gl_pixelstore_attrib *pack)
+_mesa_unmap_pbo_dest(GLcontext *ctx,
+                     const struct gl_pixelstore_attrib *pack)
 {
+   ASSERT(pack != &ctx->Unpack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(pack->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT, pack->BufferObj);
    }
