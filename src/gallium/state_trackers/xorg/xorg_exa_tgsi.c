@@ -165,8 +165,8 @@ create_fs(struct pipe_context *pipe,
                           TGSI_SEMANTIC_COLOR,
                           0);
 
-   src_sampler = ureg_DECL_sampler(ureg);
    if (is_composite) {
+      src_sampler = ureg_DECL_sampler(ureg, 0);
       src_pos = ureg_DECL_fs_input(ureg,
                                    TGSI_SEMANTIC_POSITION,
                                    0,
@@ -180,7 +180,7 @@ create_fs(struct pipe_context *pipe,
    }
 
    if ((fs_traits & FS_MASK)) {
-      mask_sampler = ureg_DECL_sampler(ureg);
+      mask_sampler = ureg_DECL_sampler(ureg, 1);
       mask_pos = ureg_DECL_fs_input(ureg,
                                     TGSI_SEMANTIC_POSITION,
                                     1,
@@ -188,7 +188,7 @@ create_fs(struct pipe_context *pipe,
    }
 
 #if 0  /* unused right now */
-   dst_sampler = ureg_DECL_sampler(ureg);
+   dst_sampler = ureg_DECL_sampler(ureg, 2);
    dst_pos = ureg_DECL_fs_input(ureg,
                                 TGSI_SEMANTIC_POSITION,
                                 2,
