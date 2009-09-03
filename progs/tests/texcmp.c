@@ -371,11 +371,11 @@ int main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
 
    if (glutCreateWindow(argv[0]) <= 0) {
-      glewInit();
       printf("Couldn't create window\n");
       exit(0);
    }
 
+   glewInit();
    gl_version = atof( (const char *) glGetString( GL_VERSION ) );
    if ( (gl_version < 1.3) 
 	&& !glutExtensionSupported("GL_ARB_texture_compression") ) {
