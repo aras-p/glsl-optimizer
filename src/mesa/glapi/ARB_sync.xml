@@ -40,7 +40,7 @@
     <function name="FenceSync" offset="assign">
         <param name="condition" type="GLenum"/>
         <param name="flags" type="GLbitfield"/>
-        <return type="GLuint"/>
+        <return type="GLsync"/>
     </function>
 
     <function name="IsSync" offset="assign">
@@ -56,6 +56,7 @@
         <param name="sync" type="GLsync"/>
         <param name="flags" type="GLbitfield"/>
 	<param name="timeout" type="GLuint64"/>
+        <return type="GLenum"/>
     </function>
 
     <function name="WaitSync" offset="assign">

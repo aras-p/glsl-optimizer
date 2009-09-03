@@ -4036,9 +4036,9 @@ KEYWORD1 void KEYWORD2 NAME(CopyBufferSubData)(GLenum readTarget, GLenum writeTa
    DISPATCH(CopyBufferSubData, (readTarget, writeTarget, readOffset, writeOffset, size), (F, "glCopyBufferSubData(0x%x, 0x%x, %d, %d, %d);\n", readTarget, writeTarget, readOffset, writeOffset, size));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ClientWaitSync)(GLsync sync, GLbitfield flags, GLuint64 timeout)
+KEYWORD1 GLenum KEYWORD2 NAME(ClientWaitSync)(GLsync sync, GLbitfield flags, GLuint64 timeout)
 {
-   DISPATCH(ClientWaitSync, (sync, flags, timeout), (F, "glClientWaitSync(%d, %d, %d);\n", sync, flags, timeout));
+   RETURN_DISPATCH(ClientWaitSync, (sync, flags, timeout), (F, "glClientWaitSync(%d, %d, %d);\n", sync, flags, timeout));
 }
 
 KEYWORD1 void KEYWORD2 NAME(DeleteSync)(GLsync sync)
@@ -4046,7 +4046,7 @@ KEYWORD1 void KEYWORD2 NAME(DeleteSync)(GLsync sync)
    DISPATCH(DeleteSync, (sync), (F, "glDeleteSync(%d);\n", sync));
 }
 
-KEYWORD1 GLuint KEYWORD2 NAME(FenceSync)(GLenum condition, GLbitfield flags)
+KEYWORD1 GLsync KEYWORD2 NAME(FenceSync)(GLenum condition, GLbitfield flags)
 {
    RETURN_DISPATCH(FenceSync, (condition, flags), (F, "glFenceSync(0x%x, %d);\n", condition, flags));
 }

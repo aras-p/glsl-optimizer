@@ -607,9 +607,9 @@ struct _glapi_table
    void (GLAPIENTRYP BindVertexArray)(GLuint array); /* 564 */
    void (GLAPIENTRYP GenVertexArrays)(GLsizei n, GLuint * arrays); /* 565 */
    void (GLAPIENTRYP CopyBufferSubData)(GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size); /* 566 */
-   void (GLAPIENTRYP ClientWaitSync)(GLsync sync, GLbitfield flags, GLuint64 timeout); /* 567 */
+   GLenum (GLAPIENTRYP ClientWaitSync)(GLsync sync, GLbitfield flags, GLuint64 timeout); /* 567 */
    void (GLAPIENTRYP DeleteSync)(GLsync sync); /* 568 */
-   GLuint (GLAPIENTRYP FenceSync)(GLenum condition, GLbitfield flags); /* 569 */
+   GLsync (GLAPIENTRYP FenceSync)(GLenum condition, GLbitfield flags); /* 569 */
    void (GLAPIENTRYP GetInteger64v)(GLenum pname, GLint64 * params); /* 570 */
    void (GLAPIENTRYP GetSynciv)(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei * length, GLint * values); /* 571 */
    GLboolean (GLAPIENTRYP IsSync)(GLsync sync); /* 572 */
