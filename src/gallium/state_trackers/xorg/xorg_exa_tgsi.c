@@ -145,6 +145,91 @@ linear_gradient(struct ureg_program *ureg,
    ureg_release_temporary(ureg, temp5);
 }
 
+
+static void
+radial_gradient(struct ureg_program *ureg,
+                struct ureg_dst out,
+                struct ureg_src pos,
+                struct ureg_src sampler,
+                struct ureg_src coords,
+                struct ureg_src const0124,
+                struct ureg_src matrow0,
+                struct ureg_src matrow1,
+                struct ureg_src matrow2)
+{
+   struct ureg_dst temp0 = ureg_DECL_temporary(ureg);
+   struct ureg_dst temp1 = ureg_DECL_temporary(ureg);
+   struct ureg_dst temp2 = ureg_DECL_temporary(ureg);
+   struct ureg_dst temp3 = ureg_DECL_temporary(ureg);
+   struct ureg_dst temp4 = ureg_DECL_temporary(ureg);
+   struct ureg_dst temp5 = ureg_DECL_temporary(ureg);
+
+   ureg_MOV(ureg,
+            ureg_writemask(temp0, TGSI_WRITEMASK_XY),
+            pos);
+   ureg_MOV(ureg,
+            ureg_writemask(temp0, TGSI_WRITEMASK_Z),
+            ureg_scalar(const0124, TGSI_SWIZZLE_Y));
+
+   ureg_DP3(ureg, temp1, matrow0, ureg_src(temp0));
+   ureg_DP3(ureg, temp2, matrow1, ureg_src(temp0));
+   ureg_DP3(ureg, temp3, matrow2, ureg_src(temp0));
+   ureg_RCP(ureg, temp3, ureg_src(temp3));
+   ureg_MUL(ureg, temp1, ureg_src(temp1), ureg_src(temp3));
+   ureg_MUL(ureg, temp2, ureg_src(temp2), ureg_src(temp3));
+
+   ureg_MOV(ureg, ureg_writemask(temp5, TGSI_WRITEMASK_X),
+            ureg_src(temp1));
+   ureg_MOV(ureg, ureg_writemask(temp5, TGSI_WRITEMASK_Y),
+            ureg_src(temp2));
+
+   ureg_MUL(ureg, temp0, ureg_scalar(coords, TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_Y));
+   ureg_MAD(ureg, temp1,
+            ureg_scalar(coords, TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_X),
+            ureg_src(temp0));
+   ureg_ADD(ureg, temp1,
+            ureg_src(temp1), ureg_src(temp1));
+   ureg_MUL(ureg, temp3,
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_Y));
+   ureg_MAD(ureg, temp4,
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp5), TGSI_SWIZZLE_X),
+            ureg_src(temp3));
+   ureg_MOV(ureg, temp4, ureg_negate(ureg_src(temp4)));
+   ureg_MUL(ureg, temp2,
+            ureg_scalar(coords, TGSI_SWIZZLE_Z),
+            ureg_src(temp4));
+   ureg_MUL(ureg, temp0,
+            ureg_scalar(const0124, TGSI_SWIZZLE_W),
+            ureg_src(temp2));
+   ureg_MUL(ureg, temp3,
+            ureg_src(temp1), ureg_src(temp1));
+   ureg_SUB(ureg, temp2,
+            ureg_src(temp3), ureg_src(temp0));
+   ureg_RSQ(ureg, temp2, ureg_abs(ureg_src(temp2)));
+   ureg_RCP(ureg, temp2, ureg_src(temp2));
+   ureg_SUB(ureg, temp1,
+            ureg_src(temp2), ureg_src(temp1));
+   ureg_ADD(ureg, temp0,
+            ureg_scalar(coords, TGSI_SWIZZLE_Z),
+            ureg_scalar(coords, TGSI_SWIZZLE_Z));
+   ureg_RCP(ureg, temp0, ureg_src(temp0));
+   ureg_MUL(ureg, temp2,
+            ureg_src(temp1), ureg_src(temp0));
+   ureg_TEX(ureg, out, TGSI_TEXTURE_1D,
+            ureg_src(temp2), sampler);
+
+   ureg_release_temporary(ureg, temp0);
+   ureg_release_temporary(ureg, temp1);
+   ureg_release_temporary(ureg, temp2);
+   ureg_release_temporary(ureg, temp3);
+   ureg_release_temporary(ureg, temp4);
+   ureg_release_temporary(ureg, temp5);
+}
+
 static void *
 create_vs(struct pipe_context *pipe,
           unsigned vs_traits)
