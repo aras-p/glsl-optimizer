@@ -743,7 +743,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    struct pipe_screen *screen;
-   struct pipe_context *pipe;
+   struct pipe_context *pipe = NULL;
    XMesaContext c;
    GLcontext *mesaCtx;
    uint pf;
