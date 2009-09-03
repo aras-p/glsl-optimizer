@@ -60,7 +60,7 @@ intel_drm_batchbuffer_create(struct intel_winsys *iws)
    batch->base.size = 0;
 
    batch->base.relocs = 0;
-   batch->base.max_relocs = 100;/*INTEL_DEFAULT_RELOCS;*/
+   batch->base.max_relocs = 300;/*INTEL_DEFAULT_RELOCS;*/
 
    batch->base.iws = iws;
 
