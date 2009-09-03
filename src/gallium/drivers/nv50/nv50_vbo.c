@@ -178,7 +178,7 @@ nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 
 		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
 		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[1] << 16) | map[0]);
+			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
 		count -= nr;
 		map += nr;
@@ -207,7 +207,7 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 
 		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
 		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[1] << 16) | map[0]);
+			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
 		count -= nr;
 		map += nr;
