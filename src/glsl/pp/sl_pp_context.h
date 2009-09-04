@@ -50,6 +50,7 @@ struct sl_pp_context {
    char error_msg[SL_PP_MAX_ERROR_MSG];
 
    unsigned int line;
+   unsigned int file;
 };
 
 void

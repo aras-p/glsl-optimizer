@@ -138,9 +138,8 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       (*pi)++;
       return 0;
    }
-   /* TODO: Having the following built-ins hardcoded is a bit lame. */
    if (!strcmp(macro_str, "__FILE__")) {
-      if (!mute && _out_number(context, state, 0)) {
+      if (!mute && _out_number(context, state, context->file)) {
          return -1;
       }
       (*pi)++;

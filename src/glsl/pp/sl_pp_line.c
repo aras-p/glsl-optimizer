@@ -134,7 +134,26 @@ sl_pp_process_line(struct sl_pp_context *context,
       context->line = line;
    }
 
-   /* TODO: Do something with the file number. */
+   if (file_number != -1) {
+      unsigned int file;
+
+      str = sl_pp_context_cstr(context, file_number);
+      if (_parse_integer(str, &file)) {
+         return -1;
+      }
+
+      if (context->file != file) {
+         struct sl_pp_token_info ti;
+
+         ti.token = SL_PP_FILE;
+         ti.data.file = file;
+         if (sl_pp_process_out(pstate, &ti)) {
+            return -1;
+         }
+
+         context->file = file;
+      }
+   }
 
    return 0;
 }
