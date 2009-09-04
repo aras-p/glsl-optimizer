@@ -104,20 +104,23 @@ main(int argc,
       return -1;
    }
 
-   if (sl_pp_process(&context, &tokens[tokens_eaten], &outtokens)) {
+   out = fopen(argv[2], "wb");
+   if (!out) {
       sl_pp_context_destroy(&context);
       free(tokens);
+      return 1;
+   }
+
+   if (sl_pp_process(&context, &tokens[tokens_eaten], &outtokens)) {
+      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+
+      sl_pp_context_destroy(&context);
+      free(tokens);
+      fclose(out);
       return -1;
    }
 
    free(tokens);
-
-   out = fopen(argv[2], "wb");
-   if (!out) {
-      sl_pp_context_destroy(&context);
-      free(outtokens);
-      return 1;
-   }
 
    for (i = 0; outtokens[i].token != SL_PP_EOF; i++) {
       switch (outtokens[i].token) {
