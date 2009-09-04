@@ -200,6 +200,7 @@ struct temp_texture
 {
    GLuint TexObj;
    GLenum Target;         /**< GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE */
+   GLsizei MinSize;       /**< Min texture size to allocate */
    GLsizei MaxSize;       /**< Max possible texture size */
    GLboolean NPOT;        /**< Non-power of two size OK? */
    GLsizei Width, Height; /**< Current texture size */
@@ -719,6 +720,33 @@ _mesa_meta_end(GLcontext *ctx)
 
 
 /**
+ * One-time init for a temp_texture object.
+ * Choose tex target, compute max tex size, etc.
+ */
+static void
+init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
+{
+   /* prefer texture rectangle */
+   if (ctx->Extensions.NV_texture_rectangle) {
+      tex->Target = GL_TEXTURE_RECTANGLE;
+      tex->MaxSize = ctx->Const.MaxTextureRectSize;
+      tex->NPOT = GL_TRUE;
+   }
+   else {
+      /* use 2D texture, NPOT if possible */
+      tex->Target = GL_TEXTURE_2D;
+      tex->MaxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
+      tex->NPOT = ctx->Extensions.ARB_texture_non_power_of_two;
+   }
+   tex->MinSize = 16;  /* 16 x 16 at least */
+   assert(tex->MaxSize > 0);
+
+   _mesa_GenTextures(1, &tex->TexObj);
+   _mesa_BindTexture(tex->Target, tex->TexObj);
+}
+
+
+/**
  * Return pointer to temp_texture info.  This does some one-time init
  * if needed.
  */
@@ -728,24 +756,7 @@ get_temp_texture(GLcontext *ctx)
    struct temp_texture *tex = &ctx->Meta->TempTex;
 
    if (!tex->TexObj) {
-      /* do one-time init */
-
-      /* prefer texture rectangle */
-      if (ctx->Extensions.NV_texture_rectangle) {
-         tex->Target = GL_TEXTURE_RECTANGLE;
-         tex->MaxSize = ctx->Const.MaxTextureRectSize;
-         tex->NPOT = GL_TRUE;
-      }
-      else {
-         /* use 2D texture, NPOT if possible */
-         tex->Target = GL_TEXTURE_2D;
-         tex->MaxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-         tex->NPOT = ctx->Extensions.ARB_texture_non_power_of_two;
-      }
-      assert(tex->MaxSize > 0);
-
-      _mesa_GenTextures(1, &tex->TexObj);
-      _mesa_BindTexture(tex->Target, tex->TexObj);
+      init_temp_texture(ctx, tex);
    }
 
    return tex;
@@ -767,6 +778,9 @@ alloc_texture(struct temp_texture *tex,
 {
    GLboolean newTex = GL_FALSE;
 
+   ASSERT(width <= tex->MaxSize);
+   ASSERT(height <= tex->MaxSize);
+
    if (width > tex->Width ||
        height > tex->Height ||
        intFormat != tex->IntFormat) {
@@ -774,13 +788,13 @@ alloc_texture(struct temp_texture *tex,
 
       if (tex->NPOT) {
          /* use non-power of two size */
-         tex->Width = MIN2(64, width);
-         tex->Height = MIN2(64, height);
+         tex->Width = MAX2(tex->MinSize, width);
+         tex->Height = MAX2(tex->MinSize, height);
       }
       else {
          /* find power of two size */
          GLsizei w, h;
-         w = h = 16;
+         w = h = tex->MinSize;
          while (w < width)
             w *= 2;
          while (h < height)
