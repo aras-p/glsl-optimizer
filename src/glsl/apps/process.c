@@ -320,6 +320,14 @@ main(int argc,
          fprintf(out, "%c", outtokens[i].data.other);
          break;
 
+      case SL_PP_PRAGMA_OPTIMIZE:
+         fprintf(out, "#pragma optimize(%s)", outtokens[i].data.pragma ? "on" : "off");
+         break;
+
+      case SL_PP_PRAGMA_DEBUG:
+         fprintf(out, "#pragma debug(%s)", outtokens[i].data.pragma ? "on" : "off");
+         break;
+
       default:
          assert(0);
       }
