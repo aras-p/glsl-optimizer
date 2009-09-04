@@ -328,6 +328,22 @@ main(int argc,
          fprintf(out, "#pragma debug(%s)", outtokens[i].data.pragma ? "on" : "off");
          break;
 
+      case SL_PP_EXTENSION_REQUIRE:
+         fprintf(out, "#extension %s : require", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         break;
+
+      case SL_PP_EXTENSION_ENABLE:
+         fprintf(out, "#extension %s : enable", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         break;
+
+      case SL_PP_EXTENSION_WARN:
+         fprintf(out, "#extension %s : warn", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         break;
+
+      case SL_PP_EXTENSION_DISABLE:
+         fprintf(out, "#extension %s : disable", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         break;
+
       default:
          assert(0);
       }
