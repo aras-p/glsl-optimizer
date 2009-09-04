@@ -182,6 +182,16 @@ struct drawpix_state
 
 
 /**
+ * State for glBitmap()
+ */
+struct bitmap_state
+{
+   GLuint ArrayObj;
+   GLuint VBO;
+};
+
+
+/**
  * Temporary texture used for glBlitFramebuffer, glDrawPixels, etc.
  * This is currently shared by all the meta ops.  But we could create a
  * separate one for each of glDrawPixel, glBlitFramebuffer, glCopyPixels, etc.
@@ -211,9 +221,9 @@ struct gl_meta_state
    struct clear_state Clear;  /**< For _mesa_meta_clear() */
    struct copypix_state CopyPix;  /**< For _mesa_meta_copy_pixels() */
    struct drawpix_state DrawPix;  /**< For _mesa_meta_draw_pixels() */
+   struct bitmap_state Bitmap;    /**< For _mesa_meta_bitmap() */
 
    /* other possible meta-ops:
-    * glBitmap()
     * glGenerateMipmap()
     */
 };
@@ -382,6 +392,11 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->ClientActiveUnit = ctx->Array.ActiveTexture;
       save->EnvMode = ctx->Texture.Unit[0].EnvMode;
 
+      if (ctx->Texture._EnabledUnits |
+          ctx->Texture._EnabledCoordUnits |
+          ctx->Texture._TexGenEnabled |
+          ctx->Texture._TexMatEnabled) {
+
       /* Disable all texture units */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
@@ -399,6 +414,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
          }
+      }
       }
 
       /* save current texture objects for unit[0] only */
@@ -754,8 +770,8 @@ alloc_texture(struct temp_texture *tex,
 
       if (tex->NPOT) {
          /* use non-power of two size */
-         tex->Width = width;
-         tex->Height = height;
+         tex->Width = MIN2(64, width);
+         tex->Height = MIN2(64, height);
       }
       else {
          /* find power of two size */
@@ -1633,6 +1649,155 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
 
    /* restore unpack params */
    ctx->Unpack = unpackSave;
+
+   _mesa_meta_end(ctx);
+}
+
+
+/**
+ * Do glBitmap with a alpha texture quad.  Use the alpha test to
+ * cull the 'off' bits.  If alpha test is already enabled, fall back
+ * to swrast (should be a rare case).
+ * A bitmap cache as in the gallium/mesa state tracker would
+ * improve performance a lot.
+ */
+void
+_mesa_meta_bitmap(GLcontext *ctx,
+                  GLint x, GLint y, GLsizei width, GLsizei height,
+                  const struct gl_pixelstore_attrib *unpack,
+                  const GLubyte *bitmap1)
+{
+   struct bitmap_state *bitmap = &ctx->Meta->Bitmap;
+   struct temp_texture *tex = get_temp_texture(ctx);
+   const GLenum texIntFormat = GL_ALPHA;
+   const struct gl_pixelstore_attrib unpackSave = *unpack;
+   GLfloat verts[4][9]; /* four verts of X,Y,Z,S,T,R,G,B,A */
+   GLboolean newTex;
+   GLubyte *bitmap8;
+
+   /*
+    * Check if swrast fallback is needed.
+    */
+   if (ctx->_ImageTransferState ||
+       ctx->Color.AlphaEnabled ||
+       ctx->Fog.Enabled ||
+       ctx->Texture._EnabledUnits ||
+       width > tex->MaxSize ||
+       height > tex->MaxSize) {
+      _swrast_Bitmap(ctx, x, y, width, height, unpack, bitmap1);
+      return;
+   }
+
+   /* Most GL state applies to glBitmap (like blending, stencil, etc),
+    * but a there's a few things we need to override:
+    */
+   _mesa_meta_begin(ctx, (META_ALPHA_TEST |
+                          META_PIXEL_STORE |
+                          META_RASTERIZATION |
+                          META_SHADER |
+                          META_TEXTURE |
+                          META_TRANSFORM |
+                          META_VERTEX |
+                          META_VIEWPORT));
+
+   if (bitmap->ArrayObj == 0) {
+      /* one-time setup */
+
+      /* create vertex array object */
+      _mesa_GenVertexArraysAPPLE(1, &bitmap->ArrayObj);
+      _mesa_BindVertexArrayAPPLE(bitmap->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &bitmap->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, bitmap->VBO);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
+
+      /* setup vertex arrays */
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
+                            (void *) (3 * sizeof(GLfloat)));
+      _mesa_ColorPointer(4, GL_FLOAT, sizeof(verts[0]),
+                         (void *) (5 * sizeof(GLfloat)));
+
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+      _mesa_EnableClientState(GL_COLOR_ARRAY);
+   }
+   else {
+      _mesa_BindVertexArray(bitmap->ArrayObj);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, bitmap->VBO);
+   }
+
+   newTex = alloc_texture(tex, width, height, texIntFormat);
+
+   /* vertex positions, texcoords, colors (after texture allocation!) */
+   {
+      const GLfloat x0 = (GLfloat) x;
+      const GLfloat y0 = (GLfloat) y;
+      const GLfloat x1 = (GLfloat) (x + width);
+      const GLfloat y1 = (GLfloat) (y + height);
+      const GLfloat z = ctx->Current.RasterPos[2];
+      GLuint i;
+
+      verts[0][0] = x0;
+      verts[0][1] = y0;
+      verts[0][2] = z;
+      verts[0][3] = 0.0F;
+      verts[0][4] = 0.0F;
+      verts[1][0] = x1;
+      verts[1][1] = y0;
+      verts[1][2] = z;
+      verts[1][3] = tex->Sright;
+      verts[1][4] = 0.0F;
+      verts[2][0] = x1;
+      verts[2][1] = y1;
+      verts[2][2] = z;
+      verts[2][3] = tex->Sright;
+      verts[2][4] = tex->Ttop;
+      verts[3][0] = x0;
+      verts[3][1] = y1;
+      verts[3][2] = z;
+      verts[3][3] = 0.0F;
+      verts[3][4] = tex->Ttop;
+
+      for (i = 0; i < 4; i++) {
+         verts[i][5] = ctx->Current.RasterColor[0];
+         verts[i][6] = ctx->Current.RasterColor[1];
+         verts[i][7] = ctx->Current.RasterColor[2];
+         verts[i][8] = ctx->Current.RasterColor[3];
+      }
+
+      /* upload new vertex data */
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+   }
+
+   bitmap1 = _mesa_map_pbo_source(ctx, &unpackSave, bitmap1);
+   if (!bitmap1)
+      return;
+
+   bitmap8 = (GLubyte *) _mesa_calloc(width * height);
+   if (bitmap8) {
+      _mesa_expand_bitmap(width, height, &unpackSave, bitmap1,
+                          bitmap8, width, 0xff);
+
+      _mesa_set_enable(ctx, tex->Target, GL_TRUE);
+
+      _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_TRUE);
+      _mesa_AlphaFunc(GL_GREATER, 0.0);
+
+      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+                            GL_ALPHA, GL_UNSIGNED_BYTE, bitmap8);
+
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+      _mesa_set_enable(ctx, tex->Target, GL_FALSE);
+
+      _mesa_free(bitmap8);
+   }
+
+   _mesa_unmap_pbo_source(ctx, &unpackSave);
 
    _mesa_meta_end(ctx);
 }

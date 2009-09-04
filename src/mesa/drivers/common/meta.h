@@ -77,5 +77,12 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
 		       const struct gl_pixelstore_attrib *unpack,
 		       const GLvoid *pixels);
 
+extern void
+_mesa_meta_bitmap(GLcontext *ctx,
+                  GLint x, GLint y, GLsizei width, GLsizei height,
+                  const struct gl_pixelstore_attrib *unpack,
+                  const GLubyte *bitmap);
+
+
 
 #endif /* META_H */
