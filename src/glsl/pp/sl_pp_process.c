@@ -154,6 +154,10 @@ sl_pp_process(struct sl_pp_context *context,
                   } else if (!strcmp(name, "error")) {
                      sl_pp_process_error(context, input, first, last);
                      return -1;
+                  } else if (!strcmp(name, "extension")) {
+                     if (sl_pp_process_extension(context, input, first, last, &state)) {
+                        return -1;
+                     }
                   } else if (!strcmp(name, "pragma")) {
                      if (sl_pp_process_pragma(context, input, first, last, &state)) {
                         return -1;

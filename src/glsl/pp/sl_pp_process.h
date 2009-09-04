@@ -106,6 +106,13 @@ sl_pp_process_pragma(struct sl_pp_context *context,
                      struct sl_pp_process_state *state);
 
 int
+sl_pp_process_extension(struct sl_pp_context *context,
+                        const struct sl_pp_token_info *input,
+                        unsigned int first,
+                        unsigned int last,
+                        struct sl_pp_process_state *state);
+
+int
 sl_pp_process_out(struct sl_pp_process_state *state,
                   const struct sl_pp_token_info *token);
 

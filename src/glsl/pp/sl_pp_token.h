@@ -91,6 +91,11 @@ enum sl_pp_token {
    SL_PP_PRAGMA_OPTIMIZE,
    SL_PP_PRAGMA_DEBUG,
 
+   SL_PP_EXTENSION_REQUIRE,
+   SL_PP_EXTENSION_ENABLE,
+   SL_PP_EXTENSION_WARN,
+   SL_PP_EXTENSION_DISABLE,
+
    SL_PP_EOF
 };
 
@@ -99,6 +104,7 @@ union sl_pp_token_data {
    int number;
    char other;
    int pragma;
+   int extension;
 };
 
 struct sl_pp_token_info {
