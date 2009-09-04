@@ -171,6 +171,14 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 	    R600_STATECHANGE(context, db_target);
     }
 
+    if (new_state & (_NEW_LIGHT)) {
+	    R600_STATECHANGE(context, su);
+	    if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION)
+		    SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, PROVOKING_VTX_LAST_bit);
+	    else
+		    CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, PROVOKING_VTX_LAST_bit);
+    }
+
     r700UpdateStateParameters(ctx, new_state);
 
     R600_STATECHANGE(context, cl);
