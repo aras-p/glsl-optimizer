@@ -106,9 +106,44 @@ _purify_backslash(const char *input,
 }
 
 
+struct out_buf {
+   char *out;
+   unsigned int len;
+   unsigned int capacity;
+};
+
+
+static int
+_out_buf_putc(struct out_buf *obuf,
+              char c)
+{
+   if (obuf->len >= obuf->capacity) {
+      unsigned int new_max = obuf->capacity;
+
+      if (new_max < 0x100) {
+         new_max = 0x100;
+      } else if (new_max < 0x10000) {
+         new_max *= 2;
+      } else {
+         new_max += 0x10000;
+      }
+
+      obuf->out = realloc(obuf->out, new_max);
+      if (!obuf->out) {
+         return -1;
+      }
+      obuf->capacity = new_max;
+   }
+
+   obuf->out[obuf->len++] = c;
+
+   return 0;
+}
+
+
 static unsigned int
 _purify_comment(const char *input,
-                char *out)
+                struct out_buf *obuf)
 {
    unsigned int eaten;
    char curr;
@@ -130,7 +165,9 @@ _purify_comment(const char *input,
             eaten += next_eaten;
             input += next_eaten;
             if (next == '\n' || next == '\0') {
-               *out = next;
+               if (_out_buf_putc(obuf, next)) {
+                  return 0;
+               }
                return eaten;
             }
          }
@@ -148,8 +185,15 @@ _purify_comment(const char *input,
                eaten += next_eaten;
                input += next_eaten;
                if (next == '/') {
-                  *out = ' ';
+                  if (_out_buf_putc(obuf, ' ')) {
+                     return 0;
+                  }
                   return eaten;
+               }
+            }
+            if (next == '\n') {
+               if (_out_buf_putc(obuf, '\n')) {
+                  return 0;
                }
             }
             if (next == '\0') {
@@ -158,7 +202,9 @@ _purify_comment(const char *input,
          }
       }
    }
-   *out = curr;
+   if (_out_buf_putc(obuf, curr)) {
+      return 0;
+   }
    return eaten;
 }
 
@@ -168,45 +214,26 @@ sl_pp_purify(const char *input,
              const struct sl_pp_purify_options *options,
              char **output)
 {
-   char *out = NULL;
-   unsigned int out_len = 0;
-   unsigned int out_max = 0;
+   struct out_buf obuf;
+
+   obuf.out = NULL;
+   obuf.len = 0;
+   obuf.capacity = 0;
 
    for (;;) {
-      char c;
       unsigned int eaten;
 
-      eaten = _purify_comment(input, &c);
+      eaten = _purify_comment(input, &obuf);
       if (!eaten) {
          return -1;
       }
       input += eaten;
 
-      if (out_len >= out_max) {
-         unsigned int new_max = out_max;
-
-         if (new_max < 0x100) {
-            new_max = 0x100;
-         } else if (new_max < 0x10000) {
-            new_max *= 2;
-         } else {
-            new_max += 0x10000;
-         }
-
-         out = realloc(out, new_max);
-         if (!out) {
-            return -1;
-         }
-         out_max = new_max;
-      }
-
-      out[out_len++] = c;
-
-      if (c == '\0') {
+      if (obuf.out[obuf.len - 1] == '\0') {
          break;
       }
    }
 
-   *output = out;
+   *output = obuf.out;
    return 0;
 }
