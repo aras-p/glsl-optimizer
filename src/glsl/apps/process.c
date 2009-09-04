@@ -348,6 +348,10 @@ main(int argc,
          fprintf(out, "#line %u", outtokens[i].data.line);
          break;
 
+      case SL_PP_FILE:
+         fprintf(out, " #file %u", outtokens[i].data.file);
+         break;
+
       default:
          assert(0);
       }
