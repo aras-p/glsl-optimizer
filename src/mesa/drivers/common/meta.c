@@ -300,16 +300,16 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    if (state & META_ALPHA_TEST) {
       save->AlphaEnabled = ctx->Color.AlphaEnabled;
       if (ctx->Color.AlphaEnabled)
-         _mesa_Disable(GL_ALPHA_TEST);
+         _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_FALSE);
    }
 
    if (state & META_BLEND) {
       save->BlendEnabled = ctx->Color.BlendEnabled;
       if (ctx->Color.BlendEnabled)
-         _mesa_Disable(GL_BLEND);
+         _mesa_set_enable(ctx, GL_BLEND, GL_FALSE);
       save->ColorLogicOpEnabled = ctx->Color.ColorLogicOpEnabled;
       if (ctx->Color.ColorLogicOpEnabled)
-         _mesa_Disable(GL_COLOR_LOGIC_OP);
+         _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, GL_FALSE);
    }
 
    if (state & META_COLOR_MASK) {
@@ -324,7 +324,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    if (state & META_DEPTH_TEST) {
       save->Depth = ctx->Depth; /* struct copy */
       if (ctx->Depth.Test)
-         _mesa_Disable(GL_DEPTH_TEST);
+         _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_FALSE);
    }
 
    if (state & META_FOG) {
@@ -381,7 +381,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    if (state & META_STENCIL_TEST) {
       save->Stencil = ctx->Stencil; /* struct copy */
       if (ctx->Stencil.Enabled)
-         _mesa_Disable(GL_STENCIL_TEST);
+         _mesa_set_enable(ctx, GL_STENCIL_TEST, GL_FALSE);
       /* NOTE: other stencil state not reset */
    }
 
@@ -1015,7 +1015,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
-   _mesa_Enable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_TRUE);
 
    if (mask & GL_COLOR_BUFFER_BIT) {
       setup_copypix_texture(tex, newTex, srcX, srcY, srcW, srcH,
@@ -1057,7 +1057,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       /* XXX can't easily do stencil */
    }
 
-   _mesa_Disable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_FALSE);
 
    _mesa_meta_end(ctx);
 
@@ -1282,12 +1282,12 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
    setup_copypix_texture(tex, newTex, srcX, srcY, width, height,
                          GL_RGBA, GL_NEAREST);
 
-   _mesa_Enable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_TRUE);
 
    /* draw textured quad */
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   _mesa_Disable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_FALSE);
 
    _mesa_meta_end(ctx);
 }
@@ -1588,7 +1588,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    /* set given unpack params */
    ctx->Unpack = *unpack;
 
-   _mesa_Enable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_TRUE);
 
    if (_mesa_is_stencil_format(format)) {
       /* Drawing stencil */
@@ -1645,7 +1645,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
 
-   _mesa_Disable(tex->Target);
+   _mesa_set_enable(ctx, tex->Target, GL_FALSE);
 
    /* restore unpack params */
    ctx->Unpack = unpackSave;
