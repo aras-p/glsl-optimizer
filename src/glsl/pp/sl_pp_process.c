@@ -151,6 +151,9 @@ sl_pp_process(struct sl_pp_context *context,
                      if (sl_pp_process_define(context, input, first, last)) {
                         return -1;
                      }
+                  } else if (!strcmp(name, "error")) {
+                     sl_pp_process_error(context, input, first, last);
+                     return -1;
                   } else if (!strcmp(name, "undef")) {
                      if (sl_pp_process_undef(context, input, first, last)) {
                         return -1;

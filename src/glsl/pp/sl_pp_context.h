@@ -33,6 +33,8 @@
 
 #define SL_PP_MAX_IF_NESTING  64
 
+#define SL_PP_MAX_ERROR_MSG   1024
+
 struct sl_pp_context {
    char *cstr_pool;
    unsigned int cstr_pool_max;
@@ -44,6 +46,8 @@ struct sl_pp_context {
    unsigned int if_stack[SL_PP_MAX_IF_NESTING];
    unsigned int if_ptr;
    int if_value;
+
+   char error_msg[SL_PP_MAX_ERROR_MSG];
 };
 
 void
