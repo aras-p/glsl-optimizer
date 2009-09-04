@@ -138,6 +138,24 @@ struct save_state
 
 
 /**
+ * Temporary texture used for glBlitFramebuffer, glDrawPixels, etc.
+ * This is currently shared by all the meta ops.  But we could create a
+ * separate one for each of glDrawPixel, glBlitFramebuffer, glCopyPixels, etc.
+ */
+struct temp_texture
+{
+   GLuint TexObj;
+   GLenum Target;         /**< GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE */
+   GLsizei MinSize;       /**< Min texture size to allocate */
+   GLsizei MaxSize;       /**< Max possible texture size */
+   GLboolean NPOT;        /**< Non-power of two size OK? */
+   GLsizei Width, Height; /**< Current texture size */
+   GLenum IntFormat;
+   GLfloat Sright, Ttop;  /**< right, top texcoords */
+};
+
+
+/**
  * State for glBlitFramebufer()
  */
 struct blit_state
@@ -188,24 +206,7 @@ struct bitmap_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-};
-
-
-/**
- * Temporary texture used for glBlitFramebuffer, glDrawPixels, etc.
- * This is currently shared by all the meta ops.  But we could create a
- * separate one for each of glDrawPixel, glBlitFramebuffer, glCopyPixels, etc.
- */
-struct temp_texture
-{
-   GLuint TexObj;
-   GLenum Target;         /**< GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE */
-   GLsizei MinSize;       /**< Min texture size to allocate */
-   GLsizei MaxSize;       /**< Max possible texture size */
-   GLboolean NPOT;        /**< Non-power of two size OK? */
-   GLsizei Width, Height; /**< Current texture size */
-   GLenum IntFormat;
-   GLfloat Sright, Ttop;  /**< right, top texcoords */
+   struct temp_texture Tex;  /**< separate texture from other meta ops */
 };
 
 
@@ -257,6 +258,7 @@ _mesa_meta_free(GLcontext *ctx)
        * still get freed by _mesa_free_context_data().
        */
 
+      /* the temporary texture */
       _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
 
       /* glBlitFramebuffer */
@@ -281,6 +283,7 @@ _mesa_meta_free(GLcontext *ctx)
       /* glBitmap */
       _mesa_DeleteBuffersARB(1, & meta->Bitmap.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->Bitmap.ArrayObj);
+      _mesa_DeleteTextures(1, &meta->Bitmap.Tex.TexObj);
    }
 
    _mesa_free(ctx->Meta);
@@ -747,13 +750,31 @@ init_temp_texture(GLcontext *ctx, struct temp_texture *tex)
 
 
 /**
- * Return pointer to temp_texture info.  This does some one-time init
- * if needed.
+ * Return pointer to temp_texture info for non-bitmap ops.
+ * This does some one-time init if needed.
  */
 static struct temp_texture *
 get_temp_texture(GLcontext *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->TempTex;
+
+   if (!tex->TexObj) {
+      init_temp_texture(ctx, tex);
+   }
+
+   return tex;
+}
+
+
+/**
+ * Return pointer to temp_texture info for _mesa_meta_bitmap().
+ * We use a separate texture for bitmaps to reduce texture
+ * allocation/deallocation.
+ */
+static struct temp_texture *
+get_bitmap_temp_texture(GLcontext *ctx)
+{
+   struct temp_texture *tex = &ctx->Meta->Bitmap.Tex;
 
    if (!tex->TexObj) {
       init_temp_texture(ctx, tex);
@@ -1686,7 +1707,7 @@ _mesa_meta_bitmap(GLcontext *ctx,
                   const GLubyte *bitmap1)
 {
    struct bitmap_state *bitmap = &ctx->Meta->Bitmap;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = get_bitmap_temp_texture(ctx);
    const GLenum texIntFormat = GL_ALPHA;
    const struct gl_pixelstore_attrib unpackSave = *unpack;
    GLfloat verts[4][9]; /* four verts of X,Y,Z,S,T,R,G,B,A */
