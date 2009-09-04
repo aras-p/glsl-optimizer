@@ -130,6 +130,8 @@ sl_pp_process_line(struct sl_pp_context *context,
       if (sl_pp_process_out(pstate, &ti)) {
          return -1;
       }
+
+      context->line = line;
    }
 
    /* TODO: Do something with the file number. */
