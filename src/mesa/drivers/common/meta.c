@@ -276,6 +276,10 @@ _mesa_meta_free(GLcontext *ctx)
       _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
       _mesa_DeletePrograms(1, &meta->DrawPix.DepthFP);
       _mesa_DeletePrograms(1, &meta->DrawPix.StencilFP);
+
+      /* glBitmap */
+      _mesa_DeleteBuffersARB(1, & meta->Bitmap.VBO);
+      _mesa_DeleteVertexArraysAPPLE(1, &meta->Bitmap.ArrayObj);
    }
 
    _mesa_free(ctx->Meta);
