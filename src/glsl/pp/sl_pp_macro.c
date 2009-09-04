@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "sl_pp_macro.h"
 #include "sl_pp_process.h"
 
@@ -94,6 +95,21 @@ skip_whitespace(const struct sl_pp_token_info *input,
    }
 }
 
+static int
+_out_number(struct sl_pp_context *context,
+            struct sl_pp_process_state *state,
+            unsigned int number)
+{
+   char buf[32];
+   struct sl_pp_token_info ti;
+
+   sprintf(buf, "%u", number);
+
+   ti.token = SL_PP_NUMBER;
+   ti.data.number = sl_pp_context_add_unique_str(context, buf);
+   return sl_pp_process_out(state, &ti);
+}
+
 int
 sl_pp_macro_expand(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
@@ -103,6 +119,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                    int mute)
 {
    int macro_name;
+   const char *macro_str;
    struct sl_pp_macro *macro = NULL;
    struct sl_pp_macro *actual_arg = NULL;
    unsigned int j;
@@ -112,6 +129,30 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    }
 
    macro_name = input[*pi].data.identifier;
+   macro_str = sl_pp_context_cstr(context, macro_name);
+
+   /* TODO: Having the following built-ins hardcoded is a bit lame. */
+   if (!strcmp(macro_str, "__LINE__")) {
+      if (!mute && _out_number(context, state, 1)) {
+         return -1;
+      }
+      (*pi)++;
+      return 0;
+   }
+   if (!strcmp(macro_str, "__FILE__")) {
+      if (!mute && _out_number(context, state, 0)) {
+         return -1;
+      }
+      (*pi)++;
+      return 0;
+   }
+   if (!strcmp(macro_str, "__VERSION__")) {
+      if (!mute && _out_number(context, state, 110)) {
+         return -1;
+      }
+      (*pi)++;
+      return 0;
+   }
 
    if (local) {
       for (macro = local; macro; macro = macro->next) {
