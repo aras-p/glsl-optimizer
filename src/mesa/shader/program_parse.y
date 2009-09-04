@@ -68,9 +68,18 @@ static void init_dst_reg(struct prog_dst_register *r);
 
 static void init_src_reg(struct asm_src_register *r);
 
+static void asm_instruction_set_operands(struct asm_instruction *inst,
+    const struct prog_dst_register *dst, const struct asm_src_register *src0,
+    const struct asm_src_register *src1, const struct asm_src_register *src2);
+
 static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
     const struct prog_dst_register *dst, const struct asm_src_register *src0,
     const struct asm_src_register *src1, const struct asm_src_register *src2);
+
+static struct asm_instruction *asm_instruction_copy_ctor(
+    const struct prog_instruction *base, const struct prog_dst_register *dst,
+    const struct asm_src_register *src0, const struct asm_src_register *src1,
+    const struct asm_src_register *src2);
 
 #ifndef FALSE
 #define FALSE 0
@@ -358,51 +367,45 @@ ARL_instruction: ARL maskedAddrReg ',' scalarSrcReg
 
 VECTORop_instruction: VECTOR_OP maskedDstReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
 SCALARop_instruction: SCALAR_OP maskedDstReg ',' scalarSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
 BINSCop_instruction: BINSC_OP maskedDstReg ',' scalarSrcReg ',' scalarSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, NULL);
 	}
 	;
 
 
 BINop_instruction: BIN_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, NULL);
 	}
 	;
 
 TRIop_instruction: TRI_OP maskedDstReg ','
                    swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, & $8);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, & $8);
 	}
 	;
 
 SAMPLE_instruction: SAMPLE_OP maskedDstReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	   if ($$ != NULL) {
 	      const GLbitfield tex_mask = (1U << $6);
 	      GLbitfield shadow_tex = 0;
 	      GLbitfield target_mask = 0;
 
 
-	      $$->Base.SaturateMode = $1.SaturateMode;
 	      $$->Base.TexSrcUnit = $6;
 
 	      if ($8 < 0) {
@@ -447,14 +450,13 @@ KIL_instruction: KIL swizzleSrcReg
 
 TXD_instruction: TXD_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, & $8);
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, & $8);
 	   if ($$ != NULL) {
 	      const GLbitfield tex_mask = (1U << $10);
 	      GLbitfield shadow_tex = 0;
 	      GLbitfield target_mask = 0;
 
 
-	      $$->Base.SaturateMode = $1.SaturateMode;
 	      $$->Base.TexSrcUnit = $10;
 
 	      if ($12 < 0) {
@@ -518,8 +520,7 @@ SWZ_instruction: SWZ maskedDstReg ',' srcReg ',' extendedSwizzle
 	   $4.Base.Swizzle = $6.swizzle;
 	   $4.Base.Negate = $6.mask;
 
-	   $$ = asm_instruction_ctor(OPCODE_SWZ, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
@@ -2028,6 +2029,41 @@ ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
 
 %%
 
+void
+asm_instruction_set_operands(struct asm_instruction *inst,
+			     const struct prog_dst_register *dst,
+			     const struct asm_src_register *src0,
+			     const struct asm_src_register *src1,
+			     const struct asm_src_register *src2)
+{
+   /* In the core ARB extensions only the KIL instruction doesn't have a
+    * destination register.
+    */
+   if (dst == NULL) {
+      init_dst_reg(& inst->Base.DstReg);
+   } else {
+      inst->Base.DstReg = *dst;
+   }
+
+   inst->Base.SrcReg[0] = src0->Base;
+   inst->SrcReg[0] = *src0;
+
+   if (src1 != NULL) {
+      inst->Base.SrcReg[1] = src1->Base;
+      inst->SrcReg[1] = *src1;
+   } else {
+      init_src_reg(& inst->SrcReg[1]);
+   }
+
+   if (src2 != NULL) {
+      inst->Base.SrcReg[2] = src2->Base;
+      inst->SrcReg[2] = *src2;
+   } else {
+      init_src_reg(& inst->SrcReg[2]);
+   }
+}
+
+
 struct asm_instruction *
 asm_instruction_ctor(gl_inst_opcode op,
 		     const struct prog_dst_register *dst,
@@ -2035,37 +2071,34 @@ asm_instruction_ctor(gl_inst_opcode op,
 		     const struct asm_src_register *src1,
 		     const struct asm_src_register *src2)
 {
-   struct asm_instruction *inst = calloc(1, sizeof(struct asm_instruction));
+   struct asm_instruction *inst = CALLOC_STRUCT(asm_instruction);
 
    if (inst) {
       _mesa_init_instructions(& inst->Base, 1);
       inst->Base.Opcode = op;
 
-      /* In the core ARB extensions only the KIL instruction doesn't have a
-       * destination register.
-       */
-      if (dst == NULL) {
-	 init_dst_reg(& inst->Base.DstReg);
-      } else {
-	 inst->Base.DstReg = *dst;
-      }
+      asm_instruction_set_operands(inst, dst, src0, src1, src2);
+   }
 
-      inst->Base.SrcReg[0] = src0->Base;
-      inst->SrcReg[0] = *src0;
+   return inst;
+}
 
-      if (src1 != NULL) {
-	 inst->Base.SrcReg[1] = src1->Base;
-	 inst->SrcReg[1] = *src1;
-      } else {
-	 init_src_reg(& inst->SrcReg[1]);
-      }
 
-      if (src2 != NULL) {
-	 inst->Base.SrcReg[2] = src2->Base;
-	 inst->SrcReg[2] = *src2;
-      } else {
-	 init_src_reg(& inst->SrcReg[2]);
-      }
+struct asm_instruction *
+asm_instruction_copy_ctor(const struct prog_instruction *base,
+			  const struct prog_dst_register *dst,
+			  const struct asm_src_register *src0,
+			  const struct asm_src_register *src1,
+			  const struct asm_src_register *src2)
+{
+   struct asm_instruction *inst = CALLOC_STRUCT(asm_instruction);
+
+   if (inst) {
+      _mesa_init_instructions(& inst->Base, 1);
+      inst->Base.Opcode = base->Opcode;
+      inst->Base.SaturateMode = base->SaturateMode;
+
+      asm_instruction_set_operands(inst, dst, src0, src1, src2);
    }
 
    return inst;
