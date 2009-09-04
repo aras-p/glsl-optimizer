@@ -88,6 +88,9 @@ enum sl_pp_token {
 
    SL_PP_OTHER,
 
+   SL_PP_PRAGMA_OPTIMIZE,
+   SL_PP_PRAGMA_DEBUG,
+
    SL_PP_EOF
 };
 
@@ -95,6 +98,7 @@ union sl_pp_token_data {
    int identifier;
    int number;
    char other;
+   int pragma;
 };
 
 struct sl_pp_token_info {
