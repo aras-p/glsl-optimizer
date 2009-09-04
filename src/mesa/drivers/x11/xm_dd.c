@@ -1167,8 +1167,8 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       else if (xmvisual->undithered_pf == PF_5R6G5B) {
          driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
       }
-   }
 #endif
+   }
    driver->TestProxyTexImage = test_proxy_teximage;
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
