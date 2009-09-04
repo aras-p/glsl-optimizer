@@ -29,9 +29,7 @@ Tool-specific initialization for LLVM
 
 import os
 import os.path
-import subprocess
 
-import SCons.Action
 import SCons.Errors
 import SCons.Util
 
@@ -58,17 +56,10 @@ def generate(env):
         env.PrependENVPath('PATH', llvm_bin_dir)
 
     if env.Detect('llvm-config'):
-        pipe = SCons.Action._subproc(env, 
-                                     ['llvm-config', '--version'],
-                                     stdin = 'devnull',
-                                     stderr = 'devnull',
-                                     stdout = subprocess.PIPE)
-        if pipe.wait() != 0:
-            return
-        line = pipe.stdout.read().strip()
-        if not line:
-            return
-        env['LLVM_VERSION'] = line
+        try:
+            env['LLVM_VERSION'] = env.backtick('llvm-config --version')
+        except NameError:
+            env['LLVM_VERSION'] = 'X.X'
 
         env.ParseConfig('llvm-config --cppflags')
         env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
