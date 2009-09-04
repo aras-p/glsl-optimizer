@@ -344,6 +344,10 @@ main(int argc,
          fprintf(out, "#extension %s : disable", sl_pp_context_cstr(&context, outtokens[i].data.extension));
          break;
 
+      case SL_PP_LINE:
+         fprintf(out, "#line %u", outtokens[i].data.line);
+         break;
+
       default:
          assert(0);
       }
