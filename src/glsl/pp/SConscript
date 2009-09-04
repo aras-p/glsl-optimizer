@@ -14,6 +14,7 @@ glsl = env.StaticLibrary(
         'sl_pp_expression.c',
         'sl_pp_extension.c',
         'sl_pp_if.c',
+        'sl_pp_line.c',
         'sl_pp_macro.c',
         'sl_pp_pragma.c',
         'sl_pp_process.c',

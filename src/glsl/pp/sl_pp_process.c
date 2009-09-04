@@ -155,6 +155,10 @@ sl_pp_process(struct sl_pp_context *context,
                      if (sl_pp_process_extension(context, input, first, last, &state)) {
                         return -1;
                      }
+                  } else if (!strcmp(name, "line")) {
+                     if (sl_pp_process_line(context, input, first, last)) {
+                        return -1;
+                     }
                   } else if (!strcmp(name, "pragma")) {
                      if (sl_pp_process_pragma(context, input, first, last, &state)) {
                         return -1;
@@ -164,7 +168,8 @@ sl_pp_process(struct sl_pp_context *context,
                         return -1;
                      }
                   } else {
-                     /* XXX: Ignore. */
+                     strcpy(context->error_msg, "unrecognised directive name");
+                     return -1;
                   }
                }
 
