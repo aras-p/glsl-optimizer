@@ -87,6 +87,7 @@ sl_pp_process(struct sl_pp_context *context,
                int found_eol = 0;
                unsigned int first;
                unsigned int last;
+               struct sl_pp_token_info endof;
 
                /* Directive name. */
                name = sl_pp_context_cstr(context, input[i].data.identifier);
@@ -99,17 +100,13 @@ sl_pp_process(struct sl_pp_context *context,
                   switch (input[i].token) {
                   case SL_PP_NEWLINE:
                      /* Preserve newline just for the sake of line numbering. */
-                     if (sl_pp_process_out(&state, &input[i])) {
-                        return -1;
-                     }
+                     endof = input[i];
                      i++;
                      found_eol = 1;
                      break;
 
                   case SL_PP_EOF:
-                     if (sl_pp_process_out(&state, &input[i])) {
-                        return -1;
-                     }
+                     endof = input[i];
                      i++;
                      found_eof = 1;
                      found_eol = 1;
@@ -169,6 +166,10 @@ sl_pp_process(struct sl_pp_context *context,
                   } else {
                      /* XXX: Ignore. */
                   }
+               }
+
+               if (sl_pp_process_out(&state, &endof)) {
+                  return -1;
                }
             }
             break;
