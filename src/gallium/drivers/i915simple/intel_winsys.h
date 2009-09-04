@@ -69,8 +69,8 @@ struct intel_batchbuffer {
     * each dword written.
     */
    /*{@*/
-   void *map;
-   void *ptr;
+   uint8_t *map;
+   uint8_t *ptr;
    size_t size;
 
    size_t relocs;
