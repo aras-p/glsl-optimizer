@@ -58,7 +58,7 @@ def generate(env):
     if env.Detect('llvm-config'):
         try:
             env['LLVM_VERSION'] = env.backtick('llvm-config --version')
-        except NameError:
+        except AttributeError:
             env['LLVM_VERSION'] = 'X.X'
 
         env.ParseConfig('llvm-config --cppflags')
