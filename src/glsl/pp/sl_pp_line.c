@@ -29,16 +29,44 @@
 #include "sl_pp_process.h"
 
 
+static int
+_parse_integer(const char *input,
+               unsigned int *number)
+{
+   unsigned int n = 0;
+
+   while (*input >= '0' && *input <= '9') {
+      if (n * 10 < n) {
+         /* Overflow. */
+         return -1;
+      }
+
+      n = n * 10 + (*input++ - '0');
+   }
+
+   if (*input != '\0') {
+      /* Invalid decimal number. */
+      return -1;
+   }
+
+   *number = n;
+   return 0;
+}
+
+
 int
 sl_pp_process_line(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
                    unsigned int first,
-                   unsigned int last)
+                   unsigned int last,
+                   struct sl_pp_process_state *pstate)
 {
    unsigned int i;
    struct sl_pp_process_state state;
    int line_number = -1;
    int file_number = -1;
+   const char *str;
+   unsigned int line;
 
    memset(&state, 0, sizeof(state));
    for (i = first; i < last;) {
@@ -89,7 +117,22 @@ sl_pp_process_line(struct sl_pp_context *context,
 
    free(state.out);
 
-   /* TODO: Do something with line and file numbers. */
+   str = sl_pp_context_cstr(context, line_number);
+   if (_parse_integer(str, &line)) {
+      return -1;
+   }
+
+   if (context->line != line) {
+      struct sl_pp_token_info ti;
+
+      ti.token = SL_PP_LINE;
+      ti.data.line = line;
+      if (sl_pp_process_out(pstate, &ti)) {
+         return -1;
+      }
+   }
+
+   /* TODO: Do something with the file number. */
 
    return 0;
 }

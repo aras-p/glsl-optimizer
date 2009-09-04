@@ -60,6 +60,7 @@ sl_pp_version(struct sl_pp_context *context,
               unsigned int *tokens_eaten)
 {
    unsigned int i = 0;
+   unsigned int line = context->line;
 
    /* Default values if `#version' is not present. */
    *version = 110;
@@ -77,8 +78,10 @@ sl_pp_version(struct sl_pp_context *context,
       /* Skip whitespace and newlines and seek for hash. */
       while (!found_hash) {
          switch (input[i].token) {
-         case SL_PP_WHITESPACE:
          case SL_PP_NEWLINE:
+            line++;
+            /* pass thru */
+         case SL_PP_WHITESPACE:
             i++;
             break;
 
@@ -156,9 +159,12 @@ sl_pp_version(struct sl_pp_context *context,
             break;
 
          case SL_PP_NEWLINE:
+            line++;
+            /* pass thru */
          case SL_PP_EOF:
             i++;
             *tokens_eaten = i;
+            context->line = line;
             found_end = 1;
             break;
 

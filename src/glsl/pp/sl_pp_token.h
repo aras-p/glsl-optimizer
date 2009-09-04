@@ -96,6 +96,8 @@ enum sl_pp_token {
    SL_PP_EXTENSION_WARN,
    SL_PP_EXTENSION_DISABLE,
 
+   SL_PP_LINE,
+
    SL_PP_EOF
 };
 
@@ -105,6 +107,7 @@ union sl_pp_token_data {
    char other;
    int pragma;
    int extension;
+   unsigned int line;
 };
 
 struct sl_pp_token_info {

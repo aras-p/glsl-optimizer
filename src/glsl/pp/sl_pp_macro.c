@@ -131,14 +131,14 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    macro_name = input[*pi].data.identifier;
    macro_str = sl_pp_context_cstr(context, macro_name);
 
-   /* TODO: Having the following built-ins hardcoded is a bit lame. */
    if (!strcmp(macro_str, "__LINE__")) {
-      if (!mute && _out_number(context, state, 1)) {
+      if (!mute && _out_number(context, state, context->line)) {
          return -1;
       }
       (*pi)++;
       return 0;
    }
+   /* TODO: Having the following built-ins hardcoded is a bit lame. */
    if (!strcmp(macro_str, "__FILE__")) {
       if (!mute && _out_number(context, state, 0)) {
          return -1;

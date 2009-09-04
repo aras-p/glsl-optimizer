@@ -75,6 +75,21 @@ sl_pp_process(struct sl_pp_context *context,
 
    memset(&state, 0, sizeof(state));
 
+   if (context->line > 1) {
+      struct sl_pp_token_info ti;
+
+      ti.token = SL_PP_LINE;
+      ti.data.line = context->line - 1;
+      if (sl_pp_process_out(&state, &ti)) {
+         return -1;
+      }
+
+      ti.token = SL_PP_NEWLINE;
+      if (sl_pp_process_out(&state, &ti)) {
+         return -1;
+      }
+   }
+
    while (!found_eof) {
       skip_whitespace(input, &i);
       if (input[i].token == SL_PP_HASH) {
@@ -156,7 +171,7 @@ sl_pp_process(struct sl_pp_context *context,
                         return -1;
                      }
                   } else if (!strcmp(name, "line")) {
-                     if (sl_pp_process_line(context, input, first, last)) {
+                     if (sl_pp_process_line(context, input, first, last, &state)) {
                         return -1;
                      }
                   } else if (!strcmp(name, "pragma")) {
@@ -176,6 +191,7 @@ sl_pp_process(struct sl_pp_context *context,
                if (sl_pp_process_out(&state, &endof)) {
                   return -1;
                }
+               context->line++;
             }
             break;
 
@@ -184,6 +200,7 @@ sl_pp_process(struct sl_pp_context *context,
             if (sl_pp_process_out(&state, &input[i])) {
                return -1;
             }
+            context->line++;
             i++;
             break;
 
@@ -214,6 +231,7 @@ sl_pp_process(struct sl_pp_context *context,
                if (sl_pp_process_out(&state, &input[i])) {
                   return -1;
                }
+               context->line++;
                i++;
                found_eol = 1;
                break;

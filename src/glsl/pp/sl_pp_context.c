@@ -37,6 +37,7 @@ sl_pp_context_init(struct sl_pp_context *context)
    context->if_ptr = SL_PP_MAX_IF_NESTING;
    context->if_value = 1;
    memset(context->error_msg, 0, sizeof(context->error_msg));
+   context->line = 1;
 }
 
 void
