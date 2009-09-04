@@ -2253,6 +2253,14 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 		R300_STATECHANGE(r300, zb);
 	}
 
+	if (new_state & (_NEW_LIGHT)) {
+		R300_STATECHANGE(r300, shade2);
+		if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION)
+			r300->hw.shade2.cmd[1] |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+		else
+			r300->hw.shade2.cmd[1] &= ~R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+	}
+
 	r300->radeon.NewGLState |= new_state;
 }
 
