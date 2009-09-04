@@ -23,6 +23,7 @@
  */
 #include "main/glheader.h"
 #include "prog_instruction.h"
+#include "prog_statevars.h"
 
 #include "program_parser.h"
 #include "program_parse.tab.h"

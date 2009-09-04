@@ -166,7 +166,7 @@ typedef union YYSTYPE
    unsigned attrib;
    int integer;
    float real;
-   unsigned state[5];
+   gl_state_index state[STATE_LENGTH];
    int negate;
    struct asm_vector vector;
    gl_inst_opcode opcode;
