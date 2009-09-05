@@ -545,8 +545,13 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 		       irb->texformat->MesaFormat);
       }
       key.tiling = region->tiling;
-      key.width = region->width;
-      key.height = region->height;
+      if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
+	 key.width = rb->Width;
+	 key.height = rb->Height;
+      } else {
+	 key.width = region->width;
+	 key.height = region->height;
+      }
       key.pitch = region->pitch;
       key.cpp = region->cpp;
       key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
