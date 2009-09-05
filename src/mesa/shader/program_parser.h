@@ -264,4 +264,18 @@ extern int _mesa_ARBvp_parse_option(struct asm_parser_state *state,
 extern int _mesa_ARBfp_parse_option(struct asm_parser_state *state,
     const char *option);
 
+/**
+ * Parses and processes instruction suffixes
+ *
+ * Instruction suffixes, such as \c _SAT, are processed.  The relevant bits
+ * are set in \c inst.  If suffixes are encountered that are either not known
+ * or not supported by the modes and options set in \c state, zero will be
+ * returned.
+ *
+ * \return
+ * Non-zero on success, zero on failure.
+ */
+extern int _mesa_parse_instruction_suffix(const struct asm_parser_state *state,
+    const char *suffix, struct prog_instruction *inst);
+
 /*@}*/

@@ -34,6 +34,67 @@
  */
 
 int
+_mesa_parse_instruction_suffix(const struct asm_parser_state *state,
+			       const char *suffix,
+			       struct prog_instruction *inst)
+{
+   inst->CondUpdate = 0;
+   inst->CondDst = 0;
+   inst->SaturateMode = SATURATE_OFF;
+   inst->Precision = FLOAT32;
+
+
+   /* The first possible suffix element is the precision specifier from
+    * NV_fragment_program_option.
+    */
+   if (state->option.NV_fragment) {
+      switch (suffix[0]) {
+      case 'H':
+	 inst->Precision = FLOAT16;
+	 suffix++;
+	 break;
+      case 'R':
+	 inst->Precision = FLOAT32;
+	 suffix++;
+	 break;
+      case 'X':
+	 inst->Precision = FIXED12;
+	 suffix++;
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   /* The next possible suffix element is the condition code modifier selection
+    * from NV_fragment_program_option.
+    */
+   if (state->option.NV_fragment) {
+      if (suffix[0] == 'C') {
+	 inst->CondUpdate = 1;
+	 suffix++;
+      }
+   }
+
+
+   /* The final possible suffix element is the saturation selector from
+    * ARB_fragment_program.
+    */
+   if (state->mode == ARB_fragment) {
+      if (strcmp(suffix, "_SAT") == 0) {
+	 inst->SaturateMode = SATURATE_ZERO_ONE;
+	 suffix += 4;
+      }
+   }
+
+
+   /* It is an error for all of the suffix string not to be consumed.
+    */
+   return suffix[0] == '\0';
+}
+
+
+int
 _mesa_ARBvp_parse_option(struct asm_parser_state *state, const char *option)
 {
    if (strcmp(option, "ARB_position_invariant") == 0) {
