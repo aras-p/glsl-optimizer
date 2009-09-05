@@ -140,6 +140,9 @@
 #define PIPE_OS_WINDOWS
 #endif
 
+#if defined(__HAIKU__)
+#define PIPE_OS_HAIKU
+#endif
 
 /*
  * Subsystem.
