@@ -1208,7 +1208,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 MIN2(c->nr_outputs + 1 + len_vertext_header, (BRW_MAX_MRF-1)), /* msg len */
 		 0,		/* response len */
 		 eot, 		/* eot */
-		 1, 		/* writes complete */
+		 eot, 		/* writes complete */
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
 

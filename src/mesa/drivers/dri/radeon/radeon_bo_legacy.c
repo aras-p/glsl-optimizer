@@ -640,7 +640,7 @@ static int bo_vram_validate(struct radeon_bo *bo,
 						      &tex,
 						      sizeof(drm_radeon_texture_t));
 			    if (ret) {
-				    if (RADEON_DEBUG & DEBUG_IOCTL)
+				    if (RADEON_DEBUG & RADEON_IOCTL)
 					    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");
 				    usleep(1);
 			    }
@@ -677,7 +677,7 @@ static int bo_vram_validate(struct radeon_bo *bo,
 						      &tex,
 						      sizeof(drm_radeon_texture_t));
 			    if (ret) {
-				    if (RADEON_DEBUG & DEBUG_IOCTL)
+				    if (RADEON_DEBUG & RADEON_IOCTL)
 					    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");
 				    usleep(1);
 			    }

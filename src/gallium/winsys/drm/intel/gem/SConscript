@@ -3,10 +3,10 @@ Import('*')
 env = drienv.Clone()
 
 inteldrm_sources = [
-    'intel_be_api.c',
-    'intel_be_batchbuffer.c',
-    'intel_be_context.c',
-    'intel_be_device.c',
+    'intel_drm_api.c',
+    'intel_drm_batchbuffer.c',
+    'intel_drm_buffer.c',
+    'intel_drm_fence.c',
 ]
 
 inteldrm = env.ConvenienceLibrary(

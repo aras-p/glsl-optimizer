@@ -10,7 +10,6 @@ void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
 void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask );
 void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask );
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);

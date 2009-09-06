@@ -31,15 +31,15 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
-	struct pipe_texture *pt = &mt->base;
+	struct pipe_texture *pt = &mt->base.base;
 	unsigned width = tmp->width[0], height = tmp->height[0];
 	unsigned depth = tmp->depth[0];
 	uint32_t tile_mode, tile_flags, tile_h;
 	int ret, i, l;
 
-	mt->base = *tmp;
-	pipe_reference_init(&mt->base.reference, 1);
-	mt->base.screen = pscreen;
+	*pt = *tmp;
+	pipe_reference_init(&pt->reference, 1);
+	pt->screen = pscreen;
 
 	switch (pt->format) {
 	case PIPE_FORMAT_Z32_FLOAT:
@@ -116,13 +116,14 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	}
 
 	ret = nouveau_bo_new_tile(dev, NOUVEAU_BO_VRAM, 256, mt->total_size,
-				  mt->level[0].tile_mode, tile_flags, &mt->bo);
+				  mt->level[0].tile_mode, tile_flags,
+				  &mt->base.bo);
 	if (ret) {
 		FREE(mt);
 		return NULL;
 	}
 
-	return &mt->base;
+	return pt;
 }
 
 static struct pipe_texture *
@@ -141,15 +142,15 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	if (!mt)
 		return NULL;
 
-	mt->base = *pt;
-	pipe_reference_init(&mt->base.reference, 1);
-	mt->base.screen = pscreen;
+	mt->base.base = *pt;
+	pipe_reference_init(&mt->base.base.reference, 1);
+	mt->base.base.screen = pscreen;
 	mt->image_nr = 1;
 	mt->level[0].pitch = *stride;
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
-	nouveau_bo_ref(bo, &mt->bo);
-	return &mt->base;
+	nouveau_bo_ref(bo, &mt->base.bo);
+	return &mt->base.base;
 }
 
 static void
@@ -157,7 +158,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 {
 	struct nv50_miptree *mt = nv50_miptree(pt);
 
-	nouveau_bo_ref(NULL, &mt->bo);
+	nouveau_bo_ref(NULL, &mt->base.bo);
 	FREE(mt);
 }
 

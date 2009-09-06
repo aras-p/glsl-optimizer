@@ -8,6 +8,7 @@
 #include "tnl/t_context.h"
 #include "main/colormac.h"
 
+#include "radeon_debug.h"
 #include "radeon_screen.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
@@ -17,22 +18,6 @@
 struct radeon_context;
 
 #include "radeon_bocs_wrapper.h"
-
-/* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
-   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
-   with other compilers ... GLUE!
-*/
-#define WARN_ONCE(a, ...)	{ \
-	static int warn##__LINE__=1; \
-	if(warn##__LINE__){ \
-		fprintf(stderr, "*********************************WARN_ONCE*********************************\n"); \
-		fprintf(stderr, "File %s function %s line %d\n", \
-			__FILE__, __FUNCTION__, __LINE__); \
-		fprintf(stderr,  a, ## __VA_ARGS__);\
-		fprintf(stderr, "***************************************************************************\n"); \
-		warn##__LINE__=0;\
-		} \
-	}
 
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
@@ -401,23 +386,6 @@ struct radeon_dri_mirror {
 	int drmMinor;
 };
 
-#define DEBUG_TEXTURE	0x001
-#define DEBUG_STATE	0x002
-#define DEBUG_IOCTL	0x004
-#define DEBUG_PRIMS	0x008
-#define DEBUG_VERTS	0x010
-#define DEBUG_FALLBACKS	0x020
-#define DEBUG_VFMT	0x040
-#define DEBUG_CODEGEN	0x080
-#define DEBUG_VERBOSE	0x100
-#define DEBUG_DRI       0x200
-#define DEBUG_DMA       0x400
-#define DEBUG_SANITY    0x800
-#define DEBUG_SYNC      0x1000
-#define DEBUG_PIXEL     0x2000
-#define DEBUG_MEMORY    0x4000
-
-
 typedef void (*radeon_tri_func) (radeonContextPtr,
 				 radeonVertex *,
 				 radeonVertex *, radeonVertex *);
@@ -498,6 +466,8 @@ struct radeon_context {
    driOptionCache optionCache;
 
    struct radeon_cmdbuf cmdbuf;
+
+   struct radeon_debug debug;
 
   drm_clip_rect_t fboRect;
   GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
@@ -620,16 +590,5 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			    __DRIdrawablePrivate * driDrawPriv,
 			    __DRIdrawablePrivate * driReadPriv);
 extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
-
-/* ================================================================
- * Debugging:
- */
-#define DO_DEBUG		1
-
-#if DO_DEBUG
-extern int RADEON_DEBUG;
-#else
-#define RADEON_DEBUG		0
-#endif
 
 #endif

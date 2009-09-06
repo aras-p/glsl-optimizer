@@ -27,18 +27,19 @@ COMMON_SOURCES = \
 	../common/dri_util.c
 
 RADEON_COMMON_SOURCES = \
-	radeon_texture.c \
+	radeon_bo_legacy.c \
+	radeon_buffer_objects.c \
 	radeon_common_context.c \
 	radeon_common.c \
-	radeon_dma.c \
-	radeon_lock.c \
-	radeon_bo_legacy.c \
 	radeon_cs_legacy.c \
+	radeon_dma.c \
+	radeon_debug.c \
+	radeon_fbo.c \
+	radeon_lock.c \
 	radeon_mipmap_tree.c \
 	radeon_span.c \
-	radeon_fbo.c \
-	radeon_buffer_objects.c \
-	radeon_queryobj.c
+	radeon_queryobj.c \
+	radeon_texture.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \

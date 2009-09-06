@@ -40,7 +40,7 @@
 #include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
 
-#define FILE_DEBUG_FLAG DEBUG_TEXTURE
+#define FILE_DEBUG_FLAG RADEON_TEXTURE
 #define DBG(...) do {                                           \
         if (RADEON_DEBUG & FILE_DEBUG_FLAG)                      \
                 _mesa_printf(__VA_ARGS__);                      \

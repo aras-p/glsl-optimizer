@@ -133,6 +133,7 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_DrawArrays(tab, vfmt->DrawArrays);
    SET_DrawElements(tab, vfmt->DrawElements);
    SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
+   SET_MultiDrawElementsEXT(tab, vfmt->MultiDrawElementsEXT);
    SET_EvalMesh1(tab, vfmt->EvalMesh1);
    SET_EvalMesh2(tab, vfmt->EvalMesh2);
    ASSERT(tab->EvalMesh2);

@@ -263,7 +263,7 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   if ( RADEON_DEBUG & DEBUG_STATE ) {
+   if ( RADEON_DEBUG & RADEON_STATE ) {
       fprintf( stderr, "%s( %s )\n",
 	       __FUNCTION__, _mesa_lookup_enum_by_nr( pname ) );
    }
@@ -325,10 +325,8 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 {
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
-      fprintf( stderr, "%s( %s )\n", __FUNCTION__,
+   radeon_print(RADEON_TEXTURE, RADEON_VERBOSE, "%s( %s )\n", __FUNCTION__,
 	       _mesa_lookup_enum_by_nr( pname ) );
-   }
 
    switch ( pname ) {
    case GL_TEXTURE_MIN_FILTER:
@@ -376,10 +374,9 @@ static void radeonDeleteTexture( GLcontext *ctx,
    radeonTexObj* t = radeon_tex_obj(texObj);
    int i;
 
-   if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
-      fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
+   radeon_print(RADEON_TEXTURE, RADEON_NORMAL,
+	 "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );
-   }
 
    if ( rmesa ) {
      radeon_firevertices(&rmesa->radeon);

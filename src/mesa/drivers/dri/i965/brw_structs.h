@@ -442,8 +442,8 @@ struct brw_urb_fence
    {
       GLuint sf_fence:10;  
       GLuint vf_fence:10;  
-      GLuint cs_fence:10;  
-      GLuint pad:2;
+      GLuint cs_fence:11;  
+      GLuint pad:1;
    } bits1;
 };
 

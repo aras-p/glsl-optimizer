@@ -137,7 +137,7 @@ static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 			| R300_TX_MIN_FILTER_ANISO
 			| R300_TX_MIN_FILTER_MIP_LINEAR
 			| aniso_filter(anisotropy);
-		if (RADEON_DEBUG & DEBUG_TEXTURE)
+		if (RADEON_DEBUG & RADEON_TEXTURE)
 			fprintf(stderr, "Using maximum anisotropy of %f\n", anisotropy);
 		return;
 	}
@@ -197,7 +197,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 {
 	radeonTexObj* t = radeon_tex_obj(texObj);
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
+	if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
 		fprintf(stderr, "%s( %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(pname));
 	}
@@ -260,7 +260,7 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
+	if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
 		fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
 			(void *)texObj,
 			_mesa_lookup_enum_by_nr(texObj->Target));
@@ -302,7 +302,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
+	if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
 		fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
 			t, _mesa_lookup_enum_by_nr(target));
 	}

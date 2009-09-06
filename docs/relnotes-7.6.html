@@ -36,18 +36,25 @@ tbd
 <ul>
 <li><a href="openvg.html">OpenVG</a> front-end (state tracker for Gallium).
 This was written by Zack Rusin at Tungsten Graphics.
-<li>GL_APPLE_vertex_array_object for Gallium drivers and Intel DRI drivers.
-<li>GL_ARB_vertex_array_object for Gallium drivers, software drivers and
-    Intel DRI drivers.
-<li>GL_ARB_copy_buffer extension (supported in Gallium and swrast drivers)
-<LI>GL_ARB_map_buffer_range extension (supported in Gallium and software drivers)
-<li>GL_EXT_provoking_vertex extension (supported in Gallium and software drivers)
+<li>GL_ARB_vertex_array_object and GL_APPLE_vertex_array_object extensions
+    (supported in Gallium drivers, Intel DRI drivers, and software drivers)</li>
+<li>GL_ARB_copy_buffer extension
+    (supported in Gallium drivers, Intel DRI drivers, and software drivers)</li>
+<li>GL_ARB_map_buffer_range extension
+    (supported in Gallium drivers, Intel DRI drivers, and software drivers)</li>
+<li>GL_ARB_seamless_cube_map extension
+    (supported in software drivers and i965 drivers)</li>
+<li>GL_ARB_vertex_array_bgra (ARB synonym for GL_EXT_vertex_array_bgra)</li>
+<li>GL_ARB_sync (supported in software drivers and Intel DRI drivers)</li>
+<li>GL_EXT_provoking_vertex extension (supported in Gallium, i915, i965, and software drivers)
 <li>Rewritten radeon/r200/r300 driver using a buffer manager
 <li>radeon/r200/r300 GL_EXT_framebuffer_object support when used with
     kernel memory manager
 <li>r300 driver support for GL_EXT_vertex_array_bgra, GL_EXT_texture_sRGB
 <li>i915/945 driver support for GL_ARB_point_sprite, GL_EXT_stencil_two_side
     and GL_ATI_separate_stencil extensions
+<li>Rewritten assembler for GL_ARB_vertex_program /
+    GL_ARB_fragment_program.</li>
 <li>Added configure --with-max-width=W, --with-max-height=H options to specify
     max framebuffer, viewport size.
 </ul>

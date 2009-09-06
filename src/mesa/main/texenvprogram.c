@@ -27,8 +27,7 @@
  **************************************************************************/
 
 #include "glheader.h"
-#include "macros.h"
-#include "enums.h"
+#include "imports.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_cache.h"
@@ -83,8 +82,13 @@ texenv_doing_secondary_color(GLcontext *ctx)
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   GLuint Source:4;
-   GLuint Operand:3;
+#ifdef __GNUC__
+   __extension__ GLubyte Source:4;  /**< SRC_x */
+   __extension__ GLubyte Operand:3; /**< OPR_x */
+#else
+   GLubyte Source;  /**< SRC_x */
+   GLubyte Operand; /**< OPR_x */
+#endif
 };
 
 struct state_key {
@@ -92,24 +96,26 @@ struct state_key {
    GLuint enabled_units:8;
    GLuint separate_specular:1;
    GLuint fog_enabled:1;
-   GLuint fog_mode:2;
+   GLuint fog_mode:2;          /**< FOG_x */
    GLuint inputs_available:12;
 
+   /* NOTE: This array of structs must be last! (see "keySize" below) */
    struct {
       GLuint enabled:1;
-      GLuint source_index:3;   /* one of TEXTURE_1D/2D/3D/CUBE/RECT_INDEX */
+      GLuint source_index:3;   /**< TEXTURE_x_INDEX */
       GLuint shadow:1;
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
 
-      GLuint NumArgsRGB:3;
-      GLuint ModeRGB:5;
-      struct mode_opt OptRGB[MAX_COMBINER_TERMS];
+      GLuint NumArgsRGB:3;  /**< up to MAX_COMBINER_TERMS */
+      GLuint ModeRGB:5;     /**< MODE_x */
 
-      GLuint NumArgsA:3;
-      GLuint ModeA:5;
+      GLuint NumArgsA:3;  /**< up to MAX_COMBINER_TERMS */
+      GLuint ModeA:5;     /**< MODE_x */
+
+      struct mode_opt OptRGB[MAX_COMBINER_TERMS];
       struct mode_opt OptA[MAX_COMBINER_TERMS];
-   } unit[8];
+   } unit[MAX_TEXTURE_UNITS];
 };
 
 #define FOG_LINEAR  0
@@ -240,24 +246,16 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
    }
 }
 
-#define TEXTURE_UNKNOWN_INDEX 7
+
+/**
+ * Translate TEXTURE_x_BIT to TEXTURE_x_INDEX.
+ */
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
-   /* make sure number of switch cases is correct */
-   assert(NUM_TEXTURE_TARGETS == 7);
-   switch (bit) {
-   case TEXTURE_1D_BIT:   return TEXTURE_1D_INDEX;
-   case TEXTURE_2D_BIT:   return TEXTURE_2D_INDEX;
-   case TEXTURE_RECT_BIT: return TEXTURE_RECT_INDEX;
-   case TEXTURE_3D_BIT:   return TEXTURE_3D_INDEX;
-   case TEXTURE_CUBE_BIT: return TEXTURE_CUBE_INDEX;
-   case TEXTURE_1D_ARRAY_BIT: return TEXTURE_1D_ARRAY_INDEX;
-   case TEXTURE_2D_ARRAY_BIT: return TEXTURE_2D_ARRAY_INDEX;
-   default:
-      assert(0);
-      return TEXTURE_UNKNOWN_INDEX;
-   }
+   ASSERT(bit);
+   return _mesa_ffs(bit) - 1;
 }
+
 
 #define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
 #define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
@@ -371,55 +369,55 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
  * Examine current texture environment state and generate a unique
  * key to identify it.
  */
-static void make_state_key( GLcontext *ctx,  struct state_key *key )
+static GLuint make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
    GLbitfield inputs_referenced = FRAG_BIT_COL0;
-   GLbitfield inputs_available = get_fp_input_mask( ctx );
+   const GLbitfield inputs_available = get_fp_input_mask( ctx );
+   GLuint keySize;
 
    memset(key, 0, sizeof(*key));
 
    /* _NEW_TEXTURE */
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      const struct gl_texture_object *texObj = texUnit->_Current;
+      const struct gl_tex_env_combine_state *comb = texUnit->_CurrentCombine;
       GLenum format;
 
       if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
          continue;
 
-      format = texUnit->_Current->Image[0][texUnit->_Current->BaseLevel]->_BaseFormat;
+      format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
 
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
-      key->nr_enabled_units = i+1;
+      key->nr_enabled_units = i + 1;
       inputs_referenced |= FRAG_BIT_TEX(i);
 
-      key->unit[i].source_index = 
-	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
-      key->unit[i].shadow = ((texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE) && 
+      key->unit[i].source_index =
+         translate_tex_src_bit(texUnit->_ReallyEnabled);
+
+      key->unit[i].shadow = ((texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
                              ((format == GL_DEPTH_COMPONENT) || 
                               (format == GL_DEPTH_STENCIL_EXT)));
 
-      key->unit[i].NumArgsRGB = texUnit->_CurrentCombine->_NumArgsRGB;
-      key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;
+      key->unit[i].NumArgsRGB = comb->_NumArgsRGB;
+      key->unit[i].NumArgsA = comb->_NumArgsA;
 
       key->unit[i].ModeRGB =
-	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeRGB);
+	 translate_mode(texUnit->EnvMode, comb->ModeRGB);
       key->unit[i].ModeA =
-	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeA);
+	 translate_mode(texUnit->EnvMode, comb->ModeA);
 
-      key->unit[i].ScaleShiftRGB = texUnit->_CurrentCombine->ScaleShiftRGB;
-      key->unit[i].ScaleShiftA = texUnit->_CurrentCombine->ScaleShiftA;
+      key->unit[i].ScaleShiftRGB = comb->ScaleShiftRGB;
+      key->unit[i].ScaleShiftA = comb->ScaleShiftA;
 
       for (j = 0; j < MAX_COMBINER_TERMS; j++) {
-         key->unit[i].OptRGB[j].Operand =
-	    translate_operand(texUnit->_CurrentCombine->OperandRGB[j]);
-         key->unit[i].OptA[j].Operand =
-	    translate_operand(texUnit->_CurrentCombine->OperandA[j]);
-         key->unit[i].OptRGB[j].Source =
-	    translate_source(texUnit->_CurrentCombine->SourceRGB[j]);
-         key->unit[i].OptA[j].Source =
-	    translate_source(texUnit->_CurrentCombine->SourceA[j]);
+         key->unit[i].OptRGB[j].Operand = translate_operand(comb->OperandRGB[j]);
+         key->unit[i].OptA[j].Operand = translate_operand(comb->OperandA[j]);
+         key->unit[i].OptRGB[j].Source = translate_source(comb->SourceRGB[j]);
+         key->unit[i].OptA[j].Source = translate_source(comb->SourceA[j]);
       }
 
       if (key->unit[i].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
@@ -447,7 +445,14 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
    }
 
    key->inputs_available = (inputs_available & inputs_referenced);
+
+   /* compute size of state key, ignoring unused texture units */
+   keySize = sizeof(*key) - sizeof(key->unit)
+      + key->nr_enabled_units * sizeof(key->unit[0]);
+
+   return keySize;
 }
+
 
 /**
  * Use uregs to represent registers internally, translate to Mesa's
@@ -466,17 +471,13 @@ struct ureg {
    GLuint file:4;
    GLuint idx:8;
    GLuint negatebase:1;
-   GLuint abs:1;
-   GLuint negateabs:1;
    GLuint swz:12;
-   GLuint pad:5;
+   GLuint pad:7;
 };
 
 static const struct ureg undef = { 
    PROGRAM_UNDEFINED,
    ~0,
-   0,
-   0,
    0,
    0,
    0
@@ -487,7 +488,6 @@ static const struct ureg undef = {
  */
 struct texenv_fragment_program {
    struct gl_fragment_program *program;
-   GLcontext *ctx;
    struct state_key *state;
 
    GLbitfield alu_temps;	/**< Track texture indirections, see spec. */
@@ -524,8 +524,6 @@ static struct ureg make_ureg(GLuint file, GLuint idx)
    reg.file = file;
    reg.idx = idx;
    reg.negatebase = 0;
-   reg.abs = 0;
-   reg.negateabs = 0;
    reg.swz = SWIZZLE_NOOP;
    reg.pad = 0;
    return reg;
@@ -691,7 +689,7 @@ static void emit_arg( struct prog_src_register *reg,
    reg->Index = ureg.idx;
    reg->Swizzle = ureg.swz;
    reg->Negate = ureg.negatebase ? NEGATE_XYZW : NEGATE_NONE;
-   reg->Abs = ureg.abs;
+   reg->Abs = GL_FALSE;
 }
 
 static void emit_dst( struct prog_dst_register *dst,
@@ -714,7 +712,7 @@ emit_op(struct texenv_fragment_program *p,
 	struct ureg src1,
 	struct ureg src2 )
 {
-   GLuint nr = p->program->Base.NumInstructions++;
+   const GLuint nr = p->program->Base.NumInstructions++;
    struct prog_instruction *inst = &p->program->Base.Instructions[nr];
 
    assert(nr < MAX_INSTRUCTIONS);
@@ -952,17 +950,22 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
    }
 }
 
-static GLboolean args_match( struct state_key *key, GLuint unit )
+/**
+ * Check if the RGB and Alpha sources and operands match for the given
+ * texture unit's combinder state.  When the RGB and A sources and
+ * operands match, we can emit fewer instructions.
+ */
+static GLboolean args_match( const struct state_key *key, GLuint unit )
 {
-   GLuint i, nr = key->unit[unit].NumArgsRGB;
+   GLuint i, numArgs = key->unit[unit].NumArgsRGB;
 
-   for (i = 0 ; i < nr ; i++) {
+   for (i = 0; i < numArgs; i++) {
       if (key->unit[unit].OptA[i].Source != key->unit[unit].OptRGB[i].Source) 
 	 return GL_FALSE;
 
-      switch(key->unit[unit].OptA[i].Operand) {
+      switch (key->unit[unit].OptA[i].Operand) {
       case OPR_SRC_ALPHA: 
-	 switch(key->unit[unit].OptRGB[i].Operand) {
+	 switch (key->unit[unit].OptRGB[i].Operand) {
 	 case OPR_SRC_COLOR: 
 	 case OPR_SRC_ALPHA: 
 	    break;
@@ -971,7 +974,7 @@ static GLboolean args_match( struct state_key *key, GLuint unit )
 	 }
 	 break;
       case OPR_ONE_MINUS_SRC_ALPHA: 
-	 switch(key->unit[unit].OptRGB[i].Operand) {
+	 switch (key->unit[unit].OptRGB[i].Operand) {
 	 case OPR_ONE_MINUS_SRC_COLOR: 
 	 case OPR_ONE_MINUS_SRC_ALPHA: 
 	    break;
@@ -1112,11 +1115,10 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 static struct ureg
 emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 {
-   struct state_key *key = p->state;
-   GLboolean saturate = (unit < p->last_tex_stage);
+   const struct state_key *key = p->state;
+   GLboolean saturate;
    GLuint rgb_shift, alpha_shift;
-   struct ureg out, shift;
-   struct ureg dest;
+   struct ureg out, dest;
 
    if (!key->unit[unit].enabled) {
       return get_source(p, SRC_PREVIOUS, 0);
@@ -1141,6 +1143,11 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       break;
    }
    
+   /* If we'll do rgb/alpha shifting don't saturate in emit_combine().
+    * We don't want to clamp twice.
+    */
+   saturate = !(rgb_shift || alpha_shift);
+
    /* If this is the very last calculation, emit direct to output reg:
     */
    if (key->separate_specular ||
@@ -1163,7 +1170,6 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    }
    else if (key->unit[unit].ModeRGB == MODE_DOT3_RGBA_EXT ||
 	    key->unit[unit].ModeRGB == MODE_DOT3_RGBA) {
-
       out = emit_combine( p, dest, WRITEMASK_XYZW, saturate,
 			  unit,
 			  key->unit[unit].NumArgsRGB,
@@ -1189,6 +1195,10 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    /* Deal with the final shift:
     */
    if (alpha_shift || rgb_shift) {
+      struct ureg shift;
+
+      saturate = GL_TRUE;  /* always saturate at this point */
+
       if (rgb_shift == alpha_shift) {
 	 shift = register_scalar_const(p, (GLfloat)(1<<rgb_shift));
       }
@@ -1213,7 +1223,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    if (is_undef(p->src_texture[unit])) {
-      GLuint texTarget = p->state->unit[unit].source_index;
+      const GLuint texTarget = p->state->unit[unit].source_index;
       struct ureg texcoord;
       struct ureg tmp = get_tex_temp( p );
 
@@ -1225,9 +1235,6 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
          texcoord = p->texcoord_tex[unit];
       }
 
-      if (texTarget == TEXTURE_UNKNOWN_INDEX)
-         program_error(p, "TexSrcBit");
-			  
       /* TODO: Use D0_MASK_XY where possible.
        */
       if (p->state->unit[unit].enabled) {
@@ -1286,9 +1293,9 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
  * Generate instructions for loading all texture source terms.
  */
 static GLboolean
-load_texunit_sources( struct texenv_fragment_program *p, int unit )
+load_texunit_sources( struct texenv_fragment_program *p, GLuint unit )
 {
-   struct state_key *key = p->state;
+   const struct state_key *key = p->state;
    GLuint i;
 
    for (i = 0; i < key->unit[unit].NumArgsRGB; i++) {
@@ -1306,9 +1313,9 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
  * Generate instructions for loading bump map textures.
  */
 static GLboolean
-load_texunit_bumpmap( struct texenv_fragment_program *p, int unit )
+load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
 {
-   struct state_key *key = p->state;
+   const struct state_key *key = p->state;
    GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
    struct ureg texcDst, bumpMapRes;
    struct ureg constdudvcolor = register_const4f(p, 0.0, 0.0, 0.0, 1.0);
@@ -1322,17 +1329,20 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, int unit )
    texcDst = get_tex_temp( p );
    p->texcoord_tex[bumpedUnitNr] = texcDst;
 
-   /* apply rot matrix and add coords to be available in next phase */
-   /* dest = (Arg0.xxxx * rotMat0 + Arg1) + (Arg0.yyyy * rotMat1) */
-   /* note only 2 coords are affected the rest are left unchanged (mul by 0) */
+   /* Apply rot matrix and add coords to be available in next phase.
+    * dest = (Arg0.xxxx * rotMat0 + Arg1) + (Arg0.yyyy * rotMat1)
+    * note only 2 coords are affected the rest are left unchanged (mul by 0)
+    */
    emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
                swizzle1(bumpMapRes, SWIZZLE_X), rotMat0, texcSrc );
    emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
                swizzle1(bumpMapRes, SWIZZLE_Y), rotMat1, texcDst );
 
-   /* move 0,0,0,1 into bumpmap src if someone (crossbar) is foolish
-      enough to access this later, should optimize away */
-   emit_arith( p, OPCODE_MOV, bumpMapRes, WRITEMASK_XYZW, 0, constdudvcolor, undef, undef );
+   /* Move 0,0,0,1 into bumpmap src if someone (crossbar) is foolish
+    * enough to access this later, should optimize away.
+    */
+   emit_arith( p, OPCODE_MOV, bumpMapRes, WRITEMASK_XYZW, 0,
+               constdudvcolor, undef, undef );
 
    return GL_TRUE;
 }
@@ -1351,7 +1361,6 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    struct ureg cf, out;
 
    _mesa_memset(&p, 0, sizeof(p));
-   p.ctx = ctx;
    p.state = key;
    p.program = program;
 
@@ -1360,17 +1369,17 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     */
    p.program->Base.Instructions = instBuffer;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
-   p.program->Base.NumTexIndirections = 1;
+   p.program->Base.String = NULL;
+   p.program->Base.NumTexIndirections = 1; /* is this right? */
    p.program->Base.NumTexInstructions = 0;
    p.program->Base.NumAluInstructions = 0;
-   p.program->Base.String = NULL;
-   p.program->Base.NumInstructions =
-   p.program->Base.NumTemporaries =
-   p.program->Base.NumParameters =
-   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+   p.program->Base.NumInstructions = 0;
+   p.program->Base.NumTemporaries = 0;
+   p.program->Base.NumParameters = 0;
+   p.program->Base.NumAttributes = 0;
+   p.program->Base.NumAddressRegs = 0;
    p.program->Base.Parameters = _mesa_new_parameter_list();
-
-   p.program->Base.InputsRead = 0;
+   p.program->Base.InputsRead = 0x0;
    p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
 
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -1387,10 +1396,12 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    release_temps(ctx, &p);
 
    if (key->enabled_units) {
-       GLboolean needbumpstage = GL_FALSE;
+      GLboolean needbumpstage = GL_FALSE;
+
       /* Zeroth pass - bump map textures first */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
-	 if (key->unit[unit].enabled && key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
+	 if (key->unit[unit].enabled &&
+             key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
 	    needbumpstage = GL_TRUE;
 	    load_texunit_bumpmap( &p, unit );
 	 }
@@ -1401,7 +1412,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * all referenced texture sources and emit texld instructions
        * for each:
        */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
 	 if (key->unit[unit].enabled) {
 	    load_texunit_sources( &p, unit );
 	    p.last_tex_stage = unit;
@@ -1409,8 +1420,8 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
       /* Second pass - emit combine instructions to build final color:
        */
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
-	 if (key->enabled_units & (1<<unit)) {
+      for (unit = 0; unit < key->nr_enabled_units; unit++)
+	 if (key->unit[unit].enabled) {
 	    p.src_previous = emit_texenv( &p, unit );
             reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
 	    release_temps(ctx, &p);	/* release all temps */
@@ -1443,9 +1454,11 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * a reduced value and not what is expected in FogOption
        */
       p.program->FogOption = ctx->Fog.Mode;
-      p.program->Base.InputsRead |= FRAG_BIT_FOGC; /* XXX new */
-   } else
+      p.program->Base.InputsRead |= FRAG_BIT_FOGC;
+   }
+   else {
       p.program->FogOption = GL_NONE;
+   }
 
    if (p.program->Base.NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
       program_error(&p, "Exceeded max nr indirect texture lookups");
@@ -1498,12 +1511,13 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
 {
    struct gl_fragment_program *prog;
    struct state_key key;
+   GLuint keySize;
 	
-   make_state_key(ctx, &key);
+   keySize = make_state_key(ctx, &key);
       
    prog = (struct gl_fragment_program *)
       _mesa_search_program_cache(ctx->FragmentProgram.Cache,
-                                 &key, sizeof(key));
+                                 &key, keySize);
 
    if (!prog) {
       prog = (struct gl_fragment_program *) 
@@ -1512,7 +1526,7 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
       create_new_program(ctx, &key, prog);
 
       _mesa_program_cache_insert(ctx, ctx->FragmentProgram.Cache,
-                                 &key, sizeof(key), &prog->Base);
+                                 &key, keySize, &prog->Base);
    }
 
    return prog;

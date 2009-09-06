@@ -170,7 +170,7 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 			condition = condition_for_function(f, abi, 0)
 			if len(condition):
 				print '#if %s' % (string.join(condition, " || "))
-				print 'static const char %s_names[] = ' % (f.name)
+				print 'static const char %s_names[] =' % (f.name)
 
 				parameter_signature = ''
 				for p in f.parameterIterator():

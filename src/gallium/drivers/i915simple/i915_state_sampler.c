@@ -247,7 +247,7 @@ i915_update_texture(struct i915_context *i915,
    assert(format);
    assert(pitch);
 
-   if (tex->tiled) {
+   if (tex->sw_tiled) {
       assert(!((pitch - 1) & pitch));
       tiled = MS3_TILED_SURFACE;
    }

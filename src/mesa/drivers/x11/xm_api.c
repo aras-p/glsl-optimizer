@@ -79,6 +79,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 
 /**
  * Global X driver lock
@@ -1317,6 +1318,7 @@ xmesa_convert_from_x_visual_type( int visualType )
 
 /* sw extensions not associated with some GL version */
 #define need_GL_ARB_shader_objects
+#define need_GL_ARB_sync
 #define need_GL_ARB_vertex_program
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_ATI_fragment_shader
@@ -1346,6 +1348,7 @@ const struct dri_extension card_extensions[] =
    { "GL_SGI_color_table",		GL_SGI_color_table_functions },
 
    { "GL_ARB_shader_objects",		GL_ARB_shader_objects_functions },
+   { "GL_ARB_sync",			GL_ARB_sync_functions },
    { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },
    { "GL_APPLE_vertex_array_object",	GL_APPLE_vertex_array_object_functions },
    { "GL_ATI_fragment_shader",		GL_ATI_fragment_shader_functions },
@@ -1641,6 +1644,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_register_swrast_functions( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
 
+   if (TEST_META_FUNCS)
+      _mesa_meta_init(mesaCtx);
+
    return c;
 }
 
@@ -1654,6 +1660,9 @@ void XMesaDestroyContext( XMesaContext c )
 #ifdef FX
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
 #endif
+
+   if (TEST_META_FUNCS)
+      _mesa_meta_free( mesaCtx );
 
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );

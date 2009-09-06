@@ -6,16 +6,24 @@
 enum xorg_vs_traits {
    VS_COMPOSITE        = 1 << 0,
    VS_MASK             = 1 << 1,
-   VS_FILL             = 1 << 2
-   /*VS_TRANSFORM      = 1 << 3*/
+   VS_SOLID_FILL       = 1 << 2,
+   VS_LINGRAD_FILL     = 1 << 3,
+   VS_RADGRAD_FILL     = 1 << 4,
+   VS_FILL             = (VS_SOLID_FILL |
+                          VS_LINGRAD_FILL |
+                          VS_RADGRAD_FILL)
+   /*VS_TRANSFORM      = 1 << 5*/
 };
 
 enum xorg_fs_traits {
    FS_COMPOSITE        = 1 << 0,
    FS_MASK             = 1 << 1,
-   FS_FILL             = 1 << 2,
-   FS_LINEAR_GRADIENT  = 1 << 3,
-   FS_RADIAL_GRADIENT  = 1 << 4
+   FS_SOLID_FILL       = 1 << 2,
+   FS_LINGRAD_FILL     = 1 << 3,
+   FS_RADGRAD_FILL     = 1 << 4,
+   FS_FILL             = (FS_SOLID_FILL |
+                          FS_LINGRAD_FILL |
+                          FS_RADGRAD_FILL)
 };
 
 struct xorg_shader {

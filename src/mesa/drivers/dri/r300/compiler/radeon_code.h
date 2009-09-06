@@ -223,3 +223,4 @@ struct r300_vertex_program_code {
 void r300_vertex_program_dump(struct r300_vertex_program_code * vs);
 
 #endif /* RADEON_CODE_H */
+

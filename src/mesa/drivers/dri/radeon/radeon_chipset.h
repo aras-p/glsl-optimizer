@@ -344,6 +344,7 @@
 #define PCI_CHIP_RV770_9440             0x9440
 #define PCI_CHIP_RV770_9441             0x9441
 #define PCI_CHIP_RV770_9442             0x9442
+#define PCI_CHIP_RV770_9443             0x9443
 #define PCI_CHIP_RV770_9444             0x9444
 #define PCI_CHIP_RV770_9446             0x9446
 #define PCI_CHIP_RV770_944A             0x944A

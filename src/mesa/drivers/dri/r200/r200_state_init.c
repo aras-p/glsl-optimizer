@@ -271,7 +271,7 @@ CHECK( pix_zero, !ctx->ATIFragmentShader._Enabled, 0 )
 CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)), 0 )
 CHECK( afs, ctx->ATIFragmentShader._Enabled, 0 )
 CHECK( tex_cube, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 3 + 3*5 - CUBE_STATE_SIZE )
-CHECK( tex_cube_cs, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 2 + 2*5 - CUBE_STATE_SIZE )
+CHECK( tex_cube_cs, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT, 2 + 4*5 - CUBE_STATE_SIZE )
 TCL_CHECK( tcl_fog, ctx->Fog.Enabled, 0 )
 TCL_CHECK( tcl_fog_add4, ctx->Fog.Enabled, 4 )
 TCL_CHECK( tcl, GL_TRUE, 0 )
@@ -764,7 +764,7 @@ static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      for (j = 1; j <= 5; j++) {
        OUT_BATCH(CP_PACKET0(R200_PP_CUBIC_OFFSET_F1_0 + (24*i) + (4 * (j-1)), 0));
        OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
      }
    }
    END_BATCH();
@@ -884,6 +884,10 @@ void r200InitState( r200ContextPtr rmesa )
             ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
          }
       }
+   }
+   /* polygon stipple is done with irq for non-kms */
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+       ALLOC_STATE( stp, always, STP_STATE_SIZE, "STP/stp", 0 );
    }
 
    for (i = 0; i < 6; i++)
@@ -1117,6 +1121,11 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.sci.cmd[SCI_CMD_2] = CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0);
 
    if (rmesa->radeon.radeonScreen->kernel_mm) {
+
+	rmesa->hw.stp.cmd[STP_CMD_0] = CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0);
+	rmesa->hw.stp.cmd[STP_DATA_0] = 0;
+	rmesa->hw.stp.cmd[STP_CMD_1] = CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31);
+
         rmesa->hw.mtl[0].emit = mtl_emit;
         rmesa->hw.mtl[1].emit = mtl_emit;
 

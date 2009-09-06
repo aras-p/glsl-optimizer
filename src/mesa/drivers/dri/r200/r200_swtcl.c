@@ -203,7 +203,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
 
 static void r200_predict_emit_size( r200ContextPtr rmesa )
 {
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s\n", __func__);
    const int vertex_array_size = 7;
    const int prim_size = 3;
@@ -225,7 +225,7 @@ static void r200_predict_emit_size( r200ContextPtr rmesa )
 static void r200RenderStart( GLcontext *ctx )
 {
    r200SetVertexFormat( ctx );
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s\n", __func__);
 }
 
@@ -290,7 +290,7 @@ void r200ChooseVertexState( GLcontext *ctx )
 void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s\n", __func__);
 
 
@@ -377,7 +377,7 @@ static void* r200_alloc_verts( r200ContextPtr rmesa, GLuint n, GLuint size)
    const char *r200verts = (char *)rmesa->radeon.swtcl.verts;
 #define VERT(x) (radeonVertex *)(r200verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX radeonVertex
-#define DO_DEBUG_VERTS (1 && (R200_DEBUG & DEBUG_VERTS))
+#define DO_DEBUG_VERTS (1 && (R200_DEBUG & RADEON_VERTS))
 
 #undef TAG
 #define TAG(x) r200_##x
@@ -688,7 +688,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
 	 rmesa->radeon.swtcl.RenderIndex = ~0;
-         if (R200_DEBUG & DEBUG_FALLBACKS) {
+         if (R200_DEBUG & RADEON_FALLBACKS) {
             fprintf(stderr, "R200 begin rasterization fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }
@@ -720,7 +720,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	    r200ChooseVertexState( ctx );
 	    r200ChooseRenderState( ctx );
 	 }
-         if (R200_DEBUG & DEBUG_FALLBACKS) {
+         if (R200_DEBUG & RADEON_FALLBACKS) {
             fprintf(stderr, "R200 end rasterization fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }

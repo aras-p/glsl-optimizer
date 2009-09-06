@@ -27,7 +27,7 @@
 
 #include "main/mtypes.h"
 
-#include "r700_debug.h"
+#include "radeon_debug.h"
 #include "r700_shaderinst.h"
 
 void Init_R700ControlFlowGenericClause(R700ControlFlowGenericClause* pInst)
@@ -208,16 +208,16 @@ unsigned int GetCFMaxInstructions(ShaderInstType instType)
 GLboolean LinkVertexInstruction(R700ControlFlowGenericClause *pCFGeneric,
 								R700VertexInstruction *pVTXInstruction)
 {
-	if (pCFGeneric->m_pLinkedTEXInstruction != 0) 
-	{
-		r700_error(ERROR_ASM_VTX_CLAUSE, "This instruction is already linked to a texture instruction");
-		return GL_FALSE;
+    if (pCFGeneric->m_pLinkedTEXInstruction != 0)
+    {
+	radeon_error("This instruction is already linked to a texture instruction.\n");
+	return GL_FALSE;
     }
 
     pCFGeneric->m_pLinkedVTXInstruction     = pVTXInstruction;
-	pVTXInstruction->m_pLinkedGenericClause = pCFGeneric;
+    pVTXInstruction->m_pLinkedGenericClause = pCFGeneric;
 
-	return GL_TRUE;
+    return GL_TRUE;
 }
 
 

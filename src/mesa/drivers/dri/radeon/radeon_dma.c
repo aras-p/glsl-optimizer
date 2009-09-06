@@ -58,7 +58,7 @@ void radeonEmitVec4(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
 			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
@@ -76,7 +76,7 @@ void radeonEmitVec8(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
 			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
@@ -95,7 +95,7 @@ void radeonEmitVec12(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
 			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
@@ -116,7 +116,7 @@ void radeonEmitVec16(uint32_t *out, const GLvoid * data, int stride, int count)
 {
 	int i;
 
-	if (RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & RADEON_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
 			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
@@ -179,8 +179,8 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	if (size > rmesa->dma.minimum_size)
 		rmesa->dma.minimum_size = (size + 15) & (~15);
 
-	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
-		fprintf(stderr, "%s\n", __FUNCTION__);
+	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %d\n",
+			__FUNCTION__, size, rmesa->dma.minimum_size);
 
 
 	/* unmap old reserved bo */
@@ -235,7 +235,7 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 			  struct radeon_bo **pbo, int *poffset,
 			  int bytes, int alignment)
 {
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
 
 	if (rmesa->dma.flush)
@@ -265,7 +265,7 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 {
 	struct radeon_dma_bo *dma_bo = CALLOC_STRUCT(radeon_dma_bo);
 	struct radeon_dma_bo *temp;
-	if (RADEON_DEBUG & DEBUG_DMA)
+	if (RADEON_DEBUG & RADEON_DMA)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	foreach_s(dma_bo, temp, &rmesa->dma.free) {
@@ -293,7 +293,7 @@ void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes)
 	if (is_empty_list(&rmesa->dma.reserved))
 		return;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, return_bytes);
 	rmesa->dma.current_used -= return_bytes;
 	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
@@ -317,7 +317,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_FREE_TIME;
 	const int time = rmesa->dma.free.expire_counter;
 
-	if (RADEON_DEBUG & DEBUG_DMA) {
+	if (RADEON_DEBUG & RADEON_DMA) {
 		size_t free = 0,
 		       wait = 0,
 		       reserved = 0;
@@ -399,7 +399,7 @@ void rcommon_flush_last_swtcl_prim( GLcontext *ctx  )
 	struct radeon_dma *dma = &rmesa->dma;
 		
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	dma->flush = NULL;
 
@@ -425,7 +425,7 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 {
 	GLuint bytes = vsize * nverts;
 	void *head;
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	if(is_empty_list(&rmesa->dma.reserved)
 	      ||rmesa->dma.current_vertexptr + bytes > first_elem(&rmesa->dma.reserved)->bo->size) {
@@ -460,7 +460,7 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
    int i;
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (radeon->dma.flush) {

@@ -429,6 +429,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     r300->rs_state = rs;
     r300->dirty_state |= R300_NEW_RASTERIZER;
+    r300->dirty_state |= R300_NEW_RS_BLOCK;
+    r300->dirty_state |= R300_NEW_SCISSOR;
+    r300->dirty_state |= R300_NEW_VIEWPORT;
 }
 
 /* Free rasterizer state. */

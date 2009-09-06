@@ -51,6 +51,7 @@ API_XML = gl_API.xml \
 	ARB_framebuffer_object.xml \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \
+	ARB_sync.xml \
 	ARB_vertex_array_object.xml \
 	APPLE_vertex_array_object.xml \
 	EXT_provoking_vertex.xml

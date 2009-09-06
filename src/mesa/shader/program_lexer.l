@@ -23,6 +23,7 @@
  */
 #include "main/glheader.h"
 #include "prog_instruction.h"
+#include "prog_statevars.h"
 
 #include "program_parser.h"
 #include "program_parse.tab.h"
@@ -267,7 +268,7 @@ result                    { return RESULT; }
 {dot}palette              { return PALETTE; }
 {dot}params               { return PARAMS; }
 {dot}plane                { return PLANE; }
-{dot}point                { return_token_or_DOT(require_ARB_vp, POINT); }
+{dot}point                { return_token_or_DOT(require_ARB_vp, POINT_TOK); }
 {dot}pointsize            { return_token_or_DOT(require_ARB_vp, POINTSIZE); }
 {dot}position             { return POSITION; }
 {dot}primary              { return PRIMARY; }
@@ -277,7 +278,7 @@ result                    { return RESULT; }
 {dot}scenecolor           { return SCENECOLOR; }
 {dot}secondary            { return SECONDARY; }
 {dot}shininess            { return SHININESS; }
-{dot}size                 { return_token_or_DOT(require_ARB_vp, SIZE); }
+{dot}size                 { return_token_or_DOT(require_ARB_vp, SIZE_TOK); }
 {dot}specular             { return SPECULAR; }
 {dot}spot                 { return SPOT; }
 {dot}texcoord             { return TEXCOORD; }

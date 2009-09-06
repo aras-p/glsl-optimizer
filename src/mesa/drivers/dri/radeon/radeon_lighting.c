@@ -195,7 +195,7 @@ void radeonUpdateMaterial( GLcontext *ctx )
    if (ctx->Light.ColorMaterialEnabled)
       mask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (RADEON_DEBUG & DEBUG_STATE)
+   if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
       
@@ -234,7 +234,7 @@ void radeonUpdateMaterial( GLcontext *ctx )
       check_twoside_fallback( ctx );
       update_global_ambient( ctx );
    }
-   else if (RADEON_DEBUG & (DEBUG_PRIMS|DEBUG_STATE))
+   else if (RADEON_DEBUG & (RADEON_PRIMS|DEBUG_STATE))
       fprintf(stderr, "%s: Elided noop material call\n", __FUNCTION__);
 }
 
@@ -624,7 +624,7 @@ static void radeonLightingSpaceChange( GLcontext *ctx )
    GLboolean tmp;
    RADEON_STATECHANGE( rmesa, tcl );
 
-   if (RADEON_DEBUG & DEBUG_STATE)
+   if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s %d\n", __FUNCTION__, ctx->_NeedEyeCoords);
 
    if (ctx->_NeedEyeCoords)

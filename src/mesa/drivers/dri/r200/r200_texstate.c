@@ -321,7 +321,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
    assert( (texUnit->_ReallyEnabled == 0)
 	   || (texUnit->_Current != NULL) );
 
-   if ( R200_DEBUG & DEBUG_TEXTURE ) {
+   if ( R200_DEBUG & RADEON_TEXTURE ) {
       fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
 
@@ -1084,6 +1084,8 @@ static void disable_tex_obj_state( r200ContextPtr rmesa,
    R200_STATECHANGE( rmesa, vtx );
    rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
 
+   R200_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~(R200_TEX_0_ENABLE << unit);
    if (rmesa->radeon.TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
       TCL_FALLBACK( rmesa->radeon.glCtx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
    }
@@ -1276,7 +1278,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    }
 
    if (mixed_fallback) {
-      if (R200_DEBUG & DEBUG_FALLBACKS)
+      if (R200_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen, 0x%x (0x%x 0x%x 0x%x 0x%x)\n",
 		 texUnit->TexGenEnabled, texUnit->GenS.Mode, texUnit->GenT.Mode,
 		 texUnit->GenR.Mode, texUnit->GenQ.Mode);
@@ -1302,7 +1304,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
                                                   texUnit->GenR.ObjectPlane,
                                                   texUnit->GenQ.ObjectPlane );
       if (needtgenable & (S_BIT | T_BIT)) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS)
+	 if (R200_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen / obj plane, 0x%x\n",
 		 texUnit->TexGenEnabled);
 	 return GL_FALSE;
@@ -1330,7 +1332,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
                                                   texUnit->GenR.EyePlane,
                                                   texUnit->GenQ.EyePlane );
       if (needtgenable & (S_BIT | T_BIT)) {
-	 if (R200_DEBUG & DEBUG_FALLBACKS)
+	 if (R200_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen / eye plane, 0x%x\n",
 		 texUnit->TexGenEnabled);
 	 return GL_FALSE;
@@ -1380,7 +1382,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    default:
       /* Unsupported mode, fallback:
        */
-      if (R200_DEBUG & DEBUG_FALLBACKS)
+      if (R200_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "fallback unsupported texgen, %d\n",
 		 texUnit->GenS.Mode);
       return GL_FALSE;

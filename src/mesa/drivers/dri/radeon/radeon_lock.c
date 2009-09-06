@@ -131,7 +131,7 @@ void radeon_lock_hardware(radeonContextPtr radeon
 		if (ATOMIC_INC_AND_FETCH(radeon->dri.hwLockCount) > 1)
 		{
 #ifndef NDEBUG
-			if ( RADEON_DEBUG & DEBUG_SANITY )
+			if ( RADEON_DEBUG & RADEON_SANITY )
 				fprintf(stderr, "*** %d times of recursive call to %s ***\n"
 						"Original call was from %s (file: %s line: %d)\n"
 						"Now call is coming from %s (file: %s line: %d)\n"

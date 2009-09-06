@@ -772,6 +772,20 @@ _mesa_noop_DrawRangeElements(GLenum mode,
        CALL_DrawElements(GET_DISPATCH(), (mode, count, type, indices));
 }
 
+/* GL_EXT_multi_draw_arrays */
+void GLAPIENTRY
+_mesa_noop_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
+			     const GLvoid **indices, GLsizei primcount)
+{
+   GLsizei i;
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+	 CALL_DrawElements(GET_DISPATCH(), (mode, count[i], type, indices[i]));
+      }
+   }
+}
+
 /*
  * Eval Mesh
  */
@@ -980,6 +994,7 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->DrawArrays = _mesa_noop_DrawArrays;
    vfmt->DrawElements = _mesa_noop_DrawElements;
    vfmt->DrawRangeElements = _mesa_noop_DrawRangeElements;
+   vfmt->MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
    vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
    vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }

@@ -241,7 +241,7 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 /**
  * Copy user-provide bitmap bits into texture buffer, expanding
  * bits into texels.
- * "On" bits will set texels to 0xff.
+ * "On" bits will set texels to 0x0.
  * "Off" bits will not modify texels.
  * Note that the image is actually going to be upside down in
  * the texture.  We deal with that with texcoords.
@@ -253,63 +253,10 @@ unpack_bitmap(struct st_context *st,
               const GLubyte *bitmap,
               ubyte *destBuffer, uint destStride)
 {
-   GLint row, col;
+   destBuffer += py * destStride + px;
 
-#define SET_PIXEL(COL, ROW) \
-   destBuffer[(py + (ROW)) * destStride + px + (COL)] = 0x0;
-
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-
-   } /* row */
-
-#undef SET_PIXEL
+   _mesa_expand_bitmap(width, height, unpack, bitmap,
+                       destBuffer, destStride, 0x0);
 }
 
 
@@ -328,7 +275,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    struct pipe_texture *pt;
 
    /* PBO source... */
-   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   bitmap = _mesa_map_pbo_source(ctx, unpack, bitmap);
    if (!bitmap) {
       return NULL;
    }
@@ -340,7 +287,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                           0, width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
-      _mesa_unmap_bitmap_pbo(ctx, unpack);
+      _mesa_unmap_pbo_source(ctx, unpack);
       return NULL;
    }
 
@@ -355,7 +302,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
                  dest, transfer->stride);
 
-   _mesa_unmap_bitmap_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 
    /* Release transfer */
    screen->transfer_unmap(screen, transfer);

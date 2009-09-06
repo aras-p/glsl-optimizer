@@ -73,9 +73,9 @@ static struct r300_rs_state rs_clear_state = {
 };
 
 static struct r300_rs_block r3xx_rs_block_clear_state = {
-    .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
-        R500_RS_SEL_T(R300_RS_SEL_K0) |
-        R500_RS_SEL_R(R300_RS_SEL_K0) |
+    .ip[0] = R500_RS_SEL_S(R300_RS_SEL_C0) |
+        R500_RS_SEL_T(R300_RS_SEL_C0) |
+        R500_RS_SEL_R(R300_RS_SEL_C0) |
         R500_RS_SEL_Q(R300_RS_SEL_K1),
     .inst[0] = R300_RS_INST_COL_CN_WRITE,
     .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,

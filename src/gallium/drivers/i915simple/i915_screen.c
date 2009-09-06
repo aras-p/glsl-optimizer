@@ -26,33 +26,36 @@
  **************************************************************************/
 
 
-#include "util/u_memory.h"
-#include "util/u_simple_screen.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
+#include "util/u_memory.h"
 #include "util/u_string.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_screen.h"
+#include "i915_buffer.h"
 #include "i915_texture.h"
-#include "i915_winsys.h"
+#include "intel_winsys.h"
+
+
+/*
+ * Probe functions
+ */
 
 
 static const char *
-i915_get_vendor( struct pipe_screen *pscreen )
+i915_get_vendor(struct pipe_screen *screen)
 {
    return "Tungsten Graphics, Inc.";
 }
 
-
 static const char *
-i915_get_name( struct pipe_screen *pscreen )
+i915_get_name(struct pipe_screen *screen)
 {
    static char buffer[128];
    const char *chipset;
 
-   switch (i915_screen(pscreen)->pci_id) {
+   switch (i915_screen(screen)->pci_id) {
    case PCI_CHIP_I915_G:
       chipset = "915G";
       break;
@@ -85,7 +88,6 @@ i915_get_name( struct pipe_screen *pscreen )
    util_snprintf(buffer, sizeof(buffer), "i915 (chipset: %s)", chipset);
    return buffer;
 }
-
 
 static int
 i915_get_param(struct pipe_screen *screen, int param)
@@ -122,7 +124,6 @@ i915_get_param(struct pipe_screen *screen, int param)
    }
 }
 
-
 static float
 i915_get_paramf(struct pipe_screen *screen, int param)
 {
@@ -148,13 +149,12 @@ i915_get_paramf(struct pipe_screen *screen, int param)
    }
 }
 
-
 static boolean
-i915_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, 
-                          enum pipe_texture_target target,
-                          unsigned tex_usage, 
-                          unsigned geom_flags )
+i915_is_format_supported(struct pipe_screen *screen,
+                         enum pipe_format format, 
+                         enum pipe_texture_target target,
+                         unsigned tex_usage, 
+                         unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -173,7 +173,6 @@ i915_is_format_supported( struct pipe_screen *screen,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
-      /*PIPE_FORMAT_R16G16B16A16_SNORM,*/
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
@@ -193,122 +192,73 @@ i915_is_format_supported( struct pipe_screen *screen,
 }
 
 
-static void
-i915_destroy_screen( struct pipe_screen *screen )
-{
-   struct pipe_winsys *winsys = screen->winsys;
+/*
+ * Fence functions
+ */
 
-   if(winsys->destroy)
-      winsys->destroy(winsys);
-
-   FREE(screen);
-}
-
-
-static struct pipe_transfer*
-i915_get_tex_transfer(struct pipe_screen *screen,
-                      struct pipe_texture *texture,
-                      unsigned face, unsigned level, unsigned zslice,
-                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
-                      unsigned w, unsigned h)
-{
-   struct i915_texture *tex = (struct i915_texture *)texture;
-   struct i915_transfer *trans;
-   unsigned offset;  /* in bytes */
-
-   if (texture->target == PIPE_TEXTURE_CUBE) {
-      offset = tex->image_offset[level][face];
-   }
-   else if (texture->target == PIPE_TEXTURE_3D) {
-      offset = tex->image_offset[level][zslice];
-   }
-   else {
-      offset = tex->image_offset[level][0];
-      assert(face == 0);
-      assert(zslice == 0);
-   }
-
-   trans = CALLOC_STRUCT(i915_transfer);
-   if (trans) {
-      pipe_texture_reference(&trans->base.texture, texture);
-      trans->base.format = trans->base.format;
-      trans->base.x = x;
-      trans->base.y = y;
-      trans->base.width = w;
-      trans->base.height = h;
-      trans->base.block = texture->block;
-      trans->base.nblocksx = texture->nblocksx[level];
-      trans->base.nblocksy = texture->nblocksy[level];
-      trans->base.stride = tex->stride;
-      trans->offset = offset;
-      trans->base.usage = usage;
-   }
-   return &trans->base;
-}
 
 static void
-i915_tex_transfer_destroy(struct pipe_transfer *trans)
+i915_fence_reference(struct pipe_screen *screen,
+                     struct pipe_fence_handle **ptr,
+                     struct pipe_fence_handle *fence)
 {
-   pipe_texture_reference(&trans->texture, NULL);
-   FREE(trans);
+   struct i915_screen *is = i915_screen(screen);
+
+   is->iws->fence_reference(is->iws, ptr, fence);
 }
 
-static void *
-i915_transfer_map( struct pipe_screen *screen,
-                   struct pipe_transfer *transfer )
+static int
+i915_fence_signalled(struct pipe_screen *screen,
+                     struct pipe_fence_handle *fence,
+                     unsigned flags)
 {
-   struct i915_texture *tex = (struct i915_texture *)transfer->texture;
-   char *map;
-   unsigned flags = 0;
+   struct i915_screen *is = i915_screen(screen);
 
-   if (transfer->usage != PIPE_TRANSFER_WRITE)
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-
-   if (transfer->usage != PIPE_TRANSFER_READ)
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-
-   map = pipe_buffer_map( screen, tex->buffer, flags );
-   if (map == NULL)
-      return NULL;
-
-   if (transfer->texture &&
-       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
-   {
-      /* Do something to notify contexts of a texture change.  
-       */
-      /* i915_screen(screen)->timestamp++; */
-   }
-   
-   return map + i915_transfer(transfer)->offset +
-      transfer->y / transfer->block.height * transfer->stride +
-      transfer->x / transfer->block.width * transfer->block.size;
+   return is->iws->fence_signalled(is->iws, fence);
 }
+
+static int
+i915_fence_finish(struct pipe_screen *screen,
+                  struct pipe_fence_handle *fence,
+                  unsigned flags)
+{
+   struct i915_screen *is = i915_screen(screen);
+
+   return is->iws->fence_finish(is->iws, fence);
+}
+
+
+/*
+ * Generic functions
+ */
+
 
 static void
-i915_transfer_unmap(struct pipe_screen *screen,
-                    struct pipe_transfer *transfer)
+i915_destroy_screen(struct pipe_screen *screen)
 {
-   struct i915_texture *tex = (struct i915_texture *)transfer->texture;
-   pipe_buffer_unmap( screen, tex->buffer );
+   struct i915_screen *is = i915_screen(screen);
+
+   if (is->iws)
+      is->iws->destroy(is->iws);
+
+   FREE(is);
 }
-
-
 
 /**
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
+i915_create_screen(struct intel_winsys *iws, uint pci_id)
 {
-   struct i915_screen *i915screen = CALLOC_STRUCT(i915_screen);
+   struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
-   if (!i915screen)
+   if (!is)
       return NULL;
 
    switch (pci_id) {
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
-      i915screen->is_i945 = FALSE;
+      is->is_i945 = FALSE;
       break;
 
    case PCI_CHIP_I945_G:
@@ -317,7 +267,7 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    case PCI_CHIP_G33_G:
    case PCI_CHIP_Q33_G:
    case PCI_CHIP_Q35_G:
-      i915screen->is_i945 = TRUE;
+      is->is_i945 = TRUE;
       break;
 
    default:
@@ -326,24 +276,25 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
       return NULL;
    }
 
-   i915screen->pci_id = pci_id;
+   is->pci_id = pci_id;
+   is->iws = iws;
 
-   i915screen->screen.winsys = winsys;
+   is->base.winsys = NULL;
 
-   i915screen->screen.destroy = i915_destroy_screen;
+   is->base.destroy = i915_destroy_screen;
 
-   i915screen->screen.get_name = i915_get_name;
-   i915screen->screen.get_vendor = i915_get_vendor;
-   i915screen->screen.get_param = i915_get_param;
-   i915screen->screen.get_paramf = i915_get_paramf;
-   i915screen->screen.is_format_supported = i915_is_format_supported;
-   i915screen->screen.get_tex_transfer = i915_get_tex_transfer;
-   i915screen->screen.tex_transfer_destroy = i915_tex_transfer_destroy;
-   i915screen->screen.transfer_map = i915_transfer_map;
-   i915screen->screen.transfer_unmap = i915_transfer_unmap;
+   is->base.get_name = i915_get_name;
+   is->base.get_vendor = i915_get_vendor;
+   is->base.get_param = i915_get_param;
+   is->base.get_paramf = i915_get_paramf;
+   is->base.is_format_supported = i915_is_format_supported;
 
-   i915_init_screen_texture_functions(&i915screen->screen);
-   u_simple_screen_init(&i915screen->screen);
+   is->base.fence_reference = i915_fence_reference;
+   is->base.fence_signalled = i915_fence_signalled;
+   is->base.fence_finish = i915_fence_finish;
 
-   return &i915screen->screen;
+   i915_init_screen_texture_functions(is);
+   i915_init_screen_buffer_functions(is);
+
+   return &is->base;
 }

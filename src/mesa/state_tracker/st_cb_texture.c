@@ -56,6 +56,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_tile.h"
 #include "util/u_blit.h"
 #include "util/u_surface.h"
@@ -516,9 +517,9 @@ st_TexImage(GLcontext * ctx,
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLint postConvWidth, postConvHeight;
    GLint texelBytes, sizeInBytes;
-   GLuint dstRowStride;
+   GLuint dstRowStride = 0;
    struct gl_pixelstore_attrib unpackNB;
-   enum pipe_transfer_usage transfer_usage;
+   enum pipe_transfer_usage transfer_usage = 0;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -870,7 +871,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
 					     PIPE_TRANSFER_READ,
 					     0, 0, width, height);
 
-   pixels = _mesa_map_readpix_pbo(ctx, &ctx->Pack, pixels);
+   pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
 
    /* copy/pack data into user buffer */
    if (st_equal_formats(stImage->pt->format, format, type)) {
@@ -903,7 +904,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
       }
    }
 
-   _mesa_unmap_readpix_pbo(ctx, &ctx->Pack);
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);
@@ -1393,6 +1394,36 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+static unsigned
+compatible_src_dst_formats(const struct gl_renderbuffer *src,
+                           const struct gl_texture_image *dst)
+{
+   const GLenum srcFormat = src->_BaseFormat;
+   const GLenum dstLogicalFormat = dst->_BaseFormat;
+
+   if (srcFormat == dstLogicalFormat) {
+      /* This is the same as matching_base_formats, which should
+       * always pass, as it did previously.
+       */
+      return TGSI_WRITEMASK_XYZW;
+   }
+   else if (srcFormat == GL_RGBA &&
+            dstLogicalFormat == GL_RGB) {
+      /* Add a single special case to cope with RGBA->RGB transfers,
+       * setting A to 1.0 to cope with situations where the RGB
+       * destination is actually stored as RGBA.
+       */
+      return TGSI_WRITEMASK_XYZ; /* A ==> 1.0 */
+   }
+   else {
+      /* Otherwise fail.
+       */
+      return 0;
+   }
+}
+
+
+
 /**
  * Do a CopyTex[Sub]Image1/2/3D() using a hardware (blit) path if possible.
  * Note that the region to copy has already been clipped so we know we
@@ -1422,6 +1453,9 @@ st_copy_texsubimage(GLcontext *ctx,
    enum pipe_format dest_format, src_format;
    GLboolean use_fallback = GL_TRUE;
    GLboolean matching_base_formats;
+   GLuint format_writemask;
+   struct pipe_surface *dest_surface = NULL;
+   GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
 
    /* any rendering in progress must flushed before we grab the fb image */
    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -1492,13 +1526,14 @@ st_copy_texsubimage(GLcontext *ctx,
     * textured-quad paths.
     */
    matching_base_formats = (strb->Base._BaseFormat == texImage->_BaseFormat);
+   format_writemask = compatible_src_dst_formats(&strb->Base, texImage);
 
-   if (matching_base_formats && ctx->_ImageTransferState == 0x0) {
-      /* try potential hardware path */
-      struct pipe_surface *dest_surface = NULL;
-      boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+   if (ctx->_ImageTransferState == 0x0) {
 
-      if (src_format == dest_format && !do_flip) {
+      if (matching_base_formats && 
+          src_format == dest_format &&
+          !do_flip) 
+      {
          /* use surface_copy() / blit */
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
@@ -1518,7 +1553,8 @@ st_copy_texsubimage(GLcontext *ctx,
                             width, height);
          use_fallback = GL_FALSE;
       }
-      else if (screen->is_format_supported(screen, src_format,
+      else if (format_writemask &&
+               screen->is_format_supported(screen, src_format,
                                            PIPE_TEXTURE_2D, 
                                            PIPE_TEXTURE_USAGE_SAMPLER,
                                            0) &&
@@ -1542,14 +1578,15 @@ st_copy_texsubimage(GLcontext *ctx,
             srcY0 = srcY;
             srcY1 = srcY0 + height;
          }
-         util_blit_pixels(ctx->st->blit,
-                          strb->surface,
-                          srcX, srcY0,
-                          srcX + width, srcY1,
-                          dest_surface,
-                          destX, destY,
-                          destX + width, destY + height,
-                          0.0, PIPE_TEX_MIPFILTER_NEAREST);
+         util_blit_pixels_writemask(ctx->st->blit,
+                                    strb->surface,
+                                    srcX, srcY0,
+                                    srcX + width, srcY1,
+                                    dest_surface,
+                                    destX, destY,
+                                    destX + width, destY + height,
+                                    0.0, PIPE_TEX_MIPFILTER_NEAREST,
+                                    format_writemask);
          use_fallback = GL_FALSE;
       }
 

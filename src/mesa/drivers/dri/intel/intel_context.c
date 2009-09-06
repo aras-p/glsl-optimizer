@@ -598,6 +598,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
    intelInitBufferObjectFuncs(functions);
+   intel_init_syncobj_functions(functions);
 }
 
 
@@ -640,6 +641,10 @@ intelInitContext(struct intel_context *intel,
       intel->maxBatchSize = BATCH_SZ;
 
    intel->bufmgr = intelScreen->bufmgr;
+
+   if (0) /* for debug */
+      drm_intel_bufmgr_set_debug(intel->bufmgr, 1);
+
    intel->ttm = intelScreen->ttm;
    if (intel->ttm) {
       int bo_reuse_mode;

@@ -91,6 +91,10 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 	}
 	src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
 
+	radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
+			"%s: Fixing index buffer format. type %d\n",
+			__func__, mesa_ind_buf->type);
+
 	if (mesa_ind_buf->type == GL_UNSIGNED_BYTE) {
 		GLuint size = sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1);
 		GLubyte *in = (GLubyte *)src_ptr;
@@ -146,6 +150,7 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		r300->ind_buf.bo = NULL;
 		return;
 	}
+	radeon_print(RADEON_RENDER, RADEON_TRACE, "%s\n", __func__);
 
 #if MESA_BIG_ENDIAN
 	if (mesa_ind_buf->type == GL_UNSIGNED_INT) {
@@ -239,10 +244,11 @@ static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_
 	radeonAllocDmaRegion(&r300->radeon, &attr->bo, &attr->bo_offset, sizeof(GLfloat) * input->Size * count, 32);
 	dst_ptr = (GLfloat *)ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
 
-	if (RADEON_DEBUG & DEBUG_FALLBACKS) {
-		fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
-		fprintf(stderr, "stride %d, components %d\n", stride, input->Size);
-	}
+	radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
+			"%s: Converting vertex attributes, attribute data format %x,"
+			"stride %d, components %d\n"
+			, __FUNCTION__, input->Type
+			, stride, input->Size);
 
 	assert(src_ptr != NULL);
 
@@ -293,6 +299,8 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 		mapped_named_bo = GL_TRUE;
 	}
 
+	radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT, "%s. Vertex alignment doesn't match hw requirements.\n", __func__);
+
 	{
 		GLvoid *src_ptr = ADD_POINTERS(input->BufferObj->Pointer, input->Ptr);
 		GLvoid *dst_ptr = ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
@@ -320,6 +328,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	GLenum type;
 	GLuint stride;
 
+	radeon_print(RADEON_RENDER, RADEON_TRACE, "%s\n", __func__);
 	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size : input->StrideB;
 
 	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
@@ -442,6 +451,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
+	radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s\n", __func__);
 	{
 		int i, tmp;
 
@@ -474,6 +484,9 @@ static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *in
 	GLuint stride;
 	int ret;
 	int i, index;
+	radeon_print(RADEON_RENDER, RADEON_VERBOSE,
+			"%s: count %d num_attribs %d\n",
+			__func__, count, vbuf->num_attribs);
 
 	for (index = 0; index < vbuf->num_attribs; index++) {
 		struct radeon_aos *aos = &r300->radeon.tcl.aos[index];
@@ -550,6 +563,7 @@ static void r300FreeData(GLcontext *ctx)
 	 * to prevent double unref in radeonReleaseArrays
 	 * called during context destroy
 	 */
+	radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s\n", __func__);
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	{
 		int i;
@@ -592,8 +606,7 @@ static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
 	else
 		dwords += state_size;
 
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+	radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
 	return dwords;
 }
 
@@ -608,8 +621,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	struct r300_context *r300 = R300_CONTEXT(ctx);
 	GLuint i;
 
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s: %u (%d-%d) cs begin at %d\n", 
+	radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s: %u (%d-%d) cs begin at %d\n",
 				__FUNCTION__, nr_prims, min_index, max_index, r300->radeon.cmdbuf.cs->cdw );
 
 	if (ctx->NewState)
@@ -654,8 +666,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300FreeData(ctx);
 
-	if (RADEON_DEBUG & DEBUG_PRIMS)
-		fprintf(stderr, "%s: %u (%d-%d) cs ending at %d\n",
+	radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s: %u (%d-%d) cs ending at %d\n",
 			__FUNCTION__, nr_prims, min_index, max_index, r300->radeon.cmdbuf.cs->cdw );
 
 	if (emit_end < r300->radeon.cmdbuf.cs->cdw)
@@ -684,6 +695,9 @@ static void r300DrawPrims(GLcontext *ctx,
 	}
 
 	if (min_index) {
+		radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
+				"%s: Rebasing primitives. %p nr_prims %d min_index %u max_index %u\n",
+				__func__, prim, nr_prims, min_index, max_index);
 		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims );
 		return;
 	}

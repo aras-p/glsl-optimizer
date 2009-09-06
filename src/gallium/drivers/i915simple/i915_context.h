@@ -38,6 +38,11 @@
 #include "tgsi/tgsi_scan.h"
 
 
+struct intel_winsys;
+struct intel_buffer;
+struct intel_batchbuffer;
+
+
 #define I915_TEX_UNITS 8
 
 #define I915_DYNAMIC_MODES4       0
@@ -182,7 +187,6 @@ struct i915_sampler_state {
    unsigned maxlod;
 };
 
-
 struct i915_texture {
    struct pipe_texture base;
 
@@ -192,7 +196,8 @@ struct i915_texture {
    unsigned depth_stride;          /* per-image on i945? */
    unsigned total_nblocksy;
 
-   unsigned tiled;
+   unsigned sw_tiled; /**< tiled with software flags */
+   unsigned hw_tiled; /**< tiled with hardware fences */
 
    unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
 
@@ -206,15 +211,15 @@ struct i915_texture {
 
    /* The data is held here:
     */
-   struct pipe_buffer *buffer;
+   struct intel_buffer *buffer;
 };
-
-struct i915_batchbuffer;
 
 struct i915_context
 {
-   struct pipe_context pipe;
-   struct i915_winsys *winsys;
+   struct pipe_context base;
+
+   struct intel_winsys *iws;
+
    struct draw_context *draw;
 
    /* The most recent drawing state as set by the driver:
@@ -243,10 +248,10 @@ struct i915_context
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
-   struct i915_batchbuffer *batch;
+   struct intel_batchbuffer *batch;
 
    /** Vertex buffer */
-   struct pipe_buffer *vbo;
+   struct intel_buffer *vbo;
    size_t vbo_offset;
    unsigned vbo_flushed;
 

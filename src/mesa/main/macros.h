@@ -99,6 +99,9 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 /* a close approximation: */
 #define FLOAT_TO_INT(X)     ( (GLint) (2147483647.0 * (X)) )
 
+/** Convert GLfloat in [-1.0,1.0] to GLint64 in [-(1<<63),(1 << 63) -1] */
+#define FLOAT_TO_INT64(X)     ( (GLint64) (9223372036854775807.0 * (double)(X)) )
+
 
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0], texture/fb data */
 #define INT_TO_FLOAT_TEX(I)    ((I) == -2147483648 ? -1.0F : (I) * (1.0F/2147483647.0))

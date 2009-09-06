@@ -178,7 +178,7 @@ nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 
 		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
 		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[1] << 16) | map[0]);
+			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
 		count -= nr;
 		map += nr;
@@ -207,7 +207,7 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 
 		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
 		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[1] << 16) | map[0]);
+			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
 		count -= nr;
 		map += nr;
@@ -313,18 +313,18 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		so_data  (so, fui(v[3]));
 		break;
 	case 3:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_3F_X(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_3F_X(attrib), 3);
 		so_data  (so, fui(v[0]));
 		so_data  (so, fui(v[1]));
 		so_data  (so, fui(v[2]));
 		break;
 	case 2:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_2F_X(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_2F_X(attrib), 2);
 		so_data  (so, fui(v[0]));
 		so_data  (so, fui(v[1]));
 		break;
 	case 1:
-		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 4);
+		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 1);
 		so_data  (so, fui(v[0]));
 		break;
 	default:

@@ -353,7 +353,7 @@ make_texture(struct st_context *st,
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
-   pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
+   pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)
       return NULL;
 
@@ -381,7 +381,7 @@ make_texture(struct st_context *st,
    pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, ptw, pth, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
-      _mesa_unmap_drawpix_pbo(ctx, unpack);
+      _mesa_unmap_pbo_source(ctx, unpack);
       return NULL;
    }
 
@@ -428,7 +428,7 @@ make_texture(struct st_context *st,
       ctx->_ImageTransferState = imageTransferStateSave;
    }
 
-   _mesa_unmap_drawpix_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 
    return pt;
 }
@@ -681,7 +681,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    stmap = screen->transfer_map(screen, pt);
 
-   pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
+   pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    assert(pixels);
 
    /* if width > MAX_WIDTH, have to process image in chunks */
@@ -775,7 +775,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       skipPixels += spanWidth;
    }
 
-   _mesa_unmap_drawpix_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, pt);
@@ -865,6 +865,10 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
+   
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+      dsty = rbDraw->Base.Height - dsty - height;
+   }
 
    ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
 					   rbDraw->texture, 0, 0, 0,

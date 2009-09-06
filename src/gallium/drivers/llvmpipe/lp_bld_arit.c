@@ -52,6 +52,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_logic.h"
 #include "lp_bld_arit.h"
 
 
@@ -98,11 +99,8 @@ lp_build_min_simple(struct lp_build_context *bld,
    if(intrinsic)
       return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
 
-   if(type.floating)
-      cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
-   else
-      cond = LLVMBuildICmp(bld->builder, type.sign ? LLVMIntSLT : LLVMIntULT, a, b, "");
-   return LLVMBuildSelect(bld->builder, cond, a, b, "");
+   cond = lp_build_cmp(bld, PIPE_FUNC_LESS, a, b);
+   return lp_build_select(bld, cond, a, b);
 }
 
 
@@ -149,11 +147,8 @@ lp_build_max_simple(struct lp_build_context *bld,
    if(intrinsic)
       return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
 
-   if(type.floating)
-      cond = LLVMBuildFCmp(bld->builder, LLVMRealULT, a, b, "");
-   else
-      cond = LLVMBuildICmp(bld->builder, type.sign ? LLVMIntSLT : LLVMIntULT, a, b, "");
-   return LLVMBuildSelect(bld->builder, cond, b, a, "");
+   cond = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, b);
+   return lp_build_select(bld, cond, a, b);
 }
 
 

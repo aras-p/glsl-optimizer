@@ -45,44 +45,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/arrayobj.h"
-#include "main/api_arrayelt.h"
 #include "main/enums.h"
-#include "main/colormac.h"
-#include "main/light.h"
 #include "main/framebuffer.h"
-#include "main/simple_list.h"
 #include "main/renderbuffer.h"
-#include "swrast/swrast.h"
-#include "vbo/vbo.h"
-#include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
-#include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
-#include "main/blend.h"
-#include "main/bufferobj.h"
-#include "main/buffers.h"
-#include "main/depth.h"
-#include "main/polygon.h"
-#include "main/shaders.h"
-#include "main/texstate.h"
-#include "main/varray.h"
-#include "glapi/dispatch.h"
-#include "swrast/swrast.h"
-#include "main/stencil.h"
-#include "main/matrix.h"
-#include "main/attrib.h"
-#include "main/enable.h"
-#include "main/viewport.h"
-
-#include "dri_util.h"
 #include "vblank.h"
 
 #include "radeon_common.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_lock.h"
 #include "radeon_drm.h"
-#include "radeon_mipmap_tree.h"
 #include "radeon_queryobj.h"
 
 /**
@@ -91,7 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 1 most output
  * 2 also print state alues
  */
-#define DEBUG_CMDBUF         0
+#define RADEON_CMDBUF         0
 
 /* =============================================================
  * Scissoring
@@ -312,31 +285,6 @@ void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
    UNLOCK_HARDWARE( radeon );
 }
 
-void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask )
-{
-   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-   GLint i;
-   BATCH_LOCALS(radeon);
-
-   radeon_firevertices(radeon);
-
-   BEGIN_BATCH_NO_AUTOSTATE(35);
-
-   OUT_BATCH(CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0));
-   OUT_BATCH(0x00000000);
-
-   OUT_BATCH(CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31));
-
-   /* Must flip pattern upside down.
-    */
-   for ( i = 31 ; i >= 0; i--) {
-      OUT_BATCH(((GLuint *) mask)[i]);
-   }
-
-   END_BATCH();
-}
-
-
 
 /* ================================================================
  * SwapBuffers with client-side throttling
@@ -521,7 +469,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 
 	rfb = dPriv->driverPrivate;
 
-	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+	if ( RADEON_DEBUG & RADEON_IOCTL ) {
 		fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
 	}
 
@@ -615,7 +563,7 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 
 	LOCK_HARDWARE(radeon);
 
-	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+	if ( RADEON_DEBUG & RADEON_IOCTL ) {
 		fprintf(stderr, "%s: pfCurrentPage: %d %d\n", __FUNCTION__,
 			radeon->sarea->pfCurrentPage, radeon->sarea->pfState);
 	}
@@ -875,7 +823,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
  */
 void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 {
-	if (RADEON_DEBUG & DEBUG_DRI)
+	if (RADEON_DEBUG & RADEON_DRI)
 		fprintf(stderr, "%s %s\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr( mode ));
 
@@ -981,7 +929,7 @@ static void radeon_print_state_atom_prekmm(radeonContextPtr radeon, struct radeo
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
-	if (DEBUG_CMDBUF > 1 && RADEON_DEBUG & DEBUG_VERBOSE) {
+	if (radeon_is_debug_enabled(RADEON_STATE, RADEON_TRACE)) {
 		if (dwords > state->cmd_size)
 			dwords = state->cmd_size;
 
@@ -1006,7 +954,7 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	int i, j, reg, count;
 	int dwords;
 	uint32_t packet0;
-	if (! (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) )
+	if (!radeon_is_debug_enabled(RADEON_STATE, RADEON_VERBOSE) )
 		return;
 
 	if (!radeon->radeonScreen->kernel_mm) {
@@ -1018,7 +966,7 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
-	if (DEBUG_CMDBUF > 1 && RADEON_DEBUG & DEBUG_VERBOSE) {
+	if (radeon_is_debug_enabled(RADEON_STATE, RADEON_TRACE)) {
 		if (dwords > state->cmd_size)
 			dwords = state->cmd_size;
 		for (i = 0; i < dwords;) {
@@ -1046,17 +994,15 @@ GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 	struct radeon_state_atom *atom;
 	GLuint dwords = 0;
 	/* check if we are going to emit full state */
-	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_VERBOSE)
-		fprintf(stderr, "%s\n", __func__);
 
 	if (radeon->cmdbuf.cs->cdw && !radeon->hw.all_dirty) {
 		if (!radeon->hw.is_dirty)
-			return dwords;
+			goto out;
 		foreach(atom, &radeon->hw.atomlist) {
 			if (atom->dirty) {
 				const GLuint atom_size = atom->check(radeon->glCtx, atom);
 				dwords += atom_size;
-				if (DEBUG_CMDBUF && atom_size) {
+				if (RADEON_CMDBUF && atom_size) {
 					radeon_print_state_atom(radeon, atom);
 				}
 			}
@@ -1065,12 +1011,14 @@ GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 		foreach(atom, &radeon->hw.atomlist) {
 			const GLuint atom_size = atom->check(radeon->glCtx, atom);
 			dwords += atom_size;
-			if (DEBUG_CMDBUF && atom_size) {
+			if (RADEON_CMDBUF && atom_size) {
 				radeon_print_state_atom(radeon, atom);
 			}
 
 		}
 	}
+out:
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s %u\n", __func__, dwords);
 	return dwords;
 }
 
@@ -1092,10 +1040,7 @@ static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state
 			END_BATCH();
 		}
 	} else {
-		if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-			fprintf(stderr, "  skip state %s\n",
-					atom->name);
-		}
+		radeon_print(RADEON_STATE, RADEON_VERBOSE, "  skip state %s\n", atom->name);
 	}
 	atom->dirty = GL_FALSE;
 
@@ -1135,8 +1080,7 @@ static GLboolean radeon_revalidate_bos(GLcontext *ctx)
 
 void radeonEmitState(radeonContextPtr radeon)
 {
-	if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
-		fprintf(stderr, "%s\n", __FUNCTION__);
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s\n", __FUNCTION__);
 
 	if (radeon->vtbl.pre_emit_state)
 		radeon->vtbl.pre_emit_state(radeon);
@@ -1146,13 +1090,13 @@ void radeonEmitState(radeonContextPtr radeon)
 		return;
 
 	if (!radeon->cmdbuf.cs->cdw) {
-		if (RADEON_DEBUG & DEBUG_STATE)
+		if (RADEON_DEBUG & RADEON_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
 		radeonEmitAtoms(radeon, GL_TRUE);
 	} else {
 
-		if (RADEON_DEBUG & DEBUG_STATE)
+		if (RADEON_DEBUG & RADEON_STATE)
 			fprintf(stderr, "Begin dirty state\n");
 
 		radeonEmitAtoms(radeon, GL_FALSE);
@@ -1166,7 +1110,7 @@ void radeonEmitState(radeonContextPtr radeon)
 void radeonFlush(GLcontext *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);
 
 	/* okay if we have no cmds in the buffer &&
@@ -1258,7 +1202,7 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 	}
 	rmesa->cmdbuf.flushing = 1;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL) {
+	if (RADEON_DEBUG & RADEON_IOCTL) {
 		fprintf(stderr, "%s from %s - %i cliprects\n",
 			__FUNCTION__, caller, rmesa->numClipRects);
 	}
@@ -1327,15 +1271,13 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	if (size > 64 * 256)
 		size = 64 * 256;
 
-	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
-		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
-			sizeof(drm_r300_cmd_header_t));
-		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%zd\n",
-			sizeof(drm_radeon_cmd_buffer_t));
-		fprintf(stderr,
+	radeon_print(RADEON_CS, RADEON_VERBOSE,
+			"sizeof(drm_r300_cmd_header_t)=%zd\n", sizeof(drm_r300_cmd_header_t));
+	radeon_print(RADEON_CS, RADEON_VERBOSE,
+			"sizeof(drm_radeon_cmd_buffer_t)=%zd\n", sizeof(drm_radeon_cmd_buffer_t));
+	radeon_print(RADEON_CS, RADEON_VERBOSE,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
 			size * 4, rmesa->hw.max_state_size * 4);
-	}
 
 	if (rmesa->radeonScreen->kernel_mm) {
 		int fd = rmesa->radeonScreen->driScreen->fd;
@@ -1388,20 +1330,18 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 		       int line)
 {
 	if (!rmesa->cmdbuf.cs->cdw && dostate) {
-		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr, "Reemit state after flush (from %s)\n", function);
+		radeon_print(RADEON_STATE, RADEON_NORMAL,
+				"Reemit state after flush (from %s)\n", function);
 		radeonEmitState(rmesa);
 	}
 	radeon_cs_begin(rmesa->cmdbuf.cs, n, file, function, line);
 
-        if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_IOCTL)
-                fprintf(stderr, "BEGIN_BATCH(%d) at %d, from %s:%i\n",
+    radeon_print(RADEON_CS, RADEON_VERBOSE, "BEGIN_BATCH(%d) at %d, from %s:%i\n",
                         n, rmesa->cmdbuf.cs->cdw, function, line);
 
 }
 
 void radeonUserClear(GLcontext *ctx, GLuint mask)
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   meta_clear_tris(&rmesa->meta, mask);
+   _mesa_meta_clear(ctx, mask);
 }

@@ -12,51 +12,37 @@
 #include "nouveau/nouveau_screen.h"
 
 static struct pipe_surface *
-dri_surface_from_handle(struct drm_api *api, struct pipe_screen *screen,
-                        unsigned handle,
-                        enum pipe_format format,
-                        unsigned width,
-                        unsigned height,
-                        unsigned pitch)
+dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
+                        unsigned handle, enum pipe_format format,
+                        unsigned width, unsigned height, unsigned pitch)
 {
-   struct pipe_surface *surface = NULL;
-   struct pipe_texture *texture = NULL;
-   struct pipe_texture templat;
-   struct pipe_buffer *buf = NULL;
+	struct pipe_surface *ps = NULL;
+	struct pipe_texture *pt = NULL;
+	struct pipe_texture tmpl;
 
-   buf = api->buffer_from_handle(api, screen, "front buffer", handle);
-   if (!buf)
-      return NULL;
+	memset(&tmpl, 0, sizeof(tmpl));
+	tmpl.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
+			 NOUVEAU_TEXTURE_USAGE_LINEAR;
+	tmpl.target = PIPE_TEXTURE_2D;
+	tmpl.last_level = 0;
+	tmpl.depth[0] = 1;
+	tmpl.format = format;
+	tmpl.width[0] = width;
+	tmpl.height[0] = height;
+	pf_get_block(tmpl.format, &tmpl.block);
 
-   memset(&templat, 0, sizeof(templat));
-   templat.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
-                       NOUVEAU_TEXTURE_USAGE_LINEAR;
-   templat.target = PIPE_TEXTURE_2D;
-   templat.last_level = 0;
-   templat.depth[0] = 1;
-   templat.format = format;
-   templat.width[0] = width;
-   templat.height[0] = height;
-   pf_get_block(templat.format, &templat.block);
+	pt = api->texture_from_shared_handle(api, pscreen, &tmpl,
+					     "front buffer", pitch, handle);
+	if (!pt)
+		return NULL;
 
-   texture = screen->texture_blanket(screen,
-                                     &templat,
-                                     &pitch,
-                                     buf);
+	ps = pscreen->get_tex_surface(pscreen, pt, 0, 0, 0,
+				      PIPE_BUFFER_USAGE_GPU_READ |
+				      PIPE_BUFFER_USAGE_GPU_WRITE);
 
-   /* we don't need the buffer from this point on */
-   pipe_buffer_reference(&buf, NULL);
-
-   if (!texture)
-      return NULL;
-
-   surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
-                                     PIPE_BUFFER_USAGE_GPU_READ |
-                                     PIPE_BUFFER_USAGE_GPU_WRITE);
-
-   /* we don't need the texture from this point on */
-   pipe_texture_reference(&texture, NULL);
-   return surface;
+	/* we don't need the texture from this point on */
+	pipe_texture_reference(&pt, NULL);
+	return ps;
 }
 
 static struct pipe_surface *
@@ -205,16 +191,10 @@ nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 	return nvws->pctx[i];
 }
 
-static boolean
-nouveau_drm_pb_from_pt(struct drm_api *api, struct pipe_texture *pt,
-		       struct pipe_buffer **ppb, unsigned *stride)
-{
-	return false;
-}
-
-static struct pipe_buffer *
-nouveau_drm_pb_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
-			   const char *name, unsigned handle)
+static struct pipe_texture *
+nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
+			 struct pipe_texture *templ, const char *name,
+			 unsigned stride, unsigned handle)
 {
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct pipe_buffer *pb;
@@ -238,41 +218,42 @@ nouveau_drm_pb_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
 		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 	pb->size = nouveau_bo(pb)->size;
-	return pb;
+	return pscreen->texture_blanket(pscreen, templ, &stride, pb);
 }
 
 static boolean
-nouveau_drm_handle_from_pb(struct drm_api *api, struct pipe_screen *pscreen,
-			   struct pipe_buffer *pb, unsigned *handle)
+nouveau_drm_name_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
+			 struct pipe_texture *pt, unsigned *stride,
+			 unsigned *handle)
 {
-	struct nouveau_bo *bo = nouveau_bo(pb);
+	struct nouveau_miptree *mt = nouveau_miptree(pt);
 
-	if (!bo)
-		return FALSE;
+	if (!mt || !mt->bo)
+		return false;
 
-	*handle = bo->handle;
-	return TRUE;
+	return nouveau_bo_handle_get(mt->bo, handle) == 0;
 }
 
 static boolean
-nouveau_drm_name_from_pb(struct drm_api *api, struct pipe_screen *pscreen,
-			 struct pipe_buffer *pb, unsigned *handle)
+nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
+			   struct pipe_texture *pt, unsigned *stride,
+			   unsigned *handle)
 {
-	struct nouveau_bo *bo = nouveau_bo(pb);
+	struct nouveau_miptree *mt = nouveau_miptree(pt);
 
-	if (!bo)
-		return FALSE;
+	if (!mt || !mt->bo)
+		return false;
 
-	return nouveau_bo_handle_get(bo, handle) == 0;
+	*handle = mt->bo->handle;
+	return true;
 }
 
 struct drm_api drm_api_hooks = {
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
-	.buffer_from_texture = nouveau_drm_pb_from_pt,
-	.buffer_from_handle = nouveau_drm_pb_from_handle,
-	.handle_from_buffer = nouveau_drm_handle_from_pb,
-	.global_handle_from_buffer = nouveau_drm_name_from_pb,
+	.texture_from_shared_handle = nouveau_drm_pt_from_name,
+	.shared_handle_from_texture = nouveau_drm_name_from_pt,
+	.local_handle_from_texture = nouveau_drm_handle_from_pt,
 };
 
 struct drm_api *

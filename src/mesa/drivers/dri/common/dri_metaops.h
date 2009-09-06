@@ -25,25 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+
 #ifndef DRI_METAOPS_H
 #define DRI_METAOPS_H
 
-#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
-			      BUFFER_BIT_FRONT_LEFT |			\
-			      BUFFER_BIT_COLOR0 |			\
-			      BUFFER_BIT_COLOR1 |			\
-			      BUFFER_BIT_COLOR2 |			\
-			      BUFFER_BIT_COLOR3 |			\
-			      BUFFER_BIT_COLOR4 |			\
-			      BUFFER_BIT_COLOR5 |			\
-			      BUFFER_BIT_COLOR6 |			\
-			      BUFFER_BIT_COLOR7)
-
-struct dri_meta_clear {
-    struct gl_array_object *arrayObj;
-    GLfloat vertices[4][3];
-    GLfloat color[4][4];
-};
 
 struct dri_metaops {
     GLcontext *ctx;
@@ -69,8 +54,6 @@ struct dri_metaops {
     GLint saved_vp_x, saved_vp_y;
     GLsizei saved_vp_width, saved_vp_height;
     GLenum saved_matrix_mode;
-    
-    struct dri_meta_clear clear;
 };
 
 
@@ -91,9 +74,8 @@ void meta_restore_fragment_program(struct dri_metaops *meta);
 void meta_set_default_texrect(struct dri_metaops *meta);
 
 void meta_restore_texcoords(struct dri_metaops *meta);
-void meta_clear_tris(struct dri_metaops *meta, GLbitfield mask);
 
 void meta_init_metaops(GLcontext *ctx, struct dri_metaops *meta);
 void meta_destroy_metaops(struct dri_metaops *meta);
-#endif
 
+#endif

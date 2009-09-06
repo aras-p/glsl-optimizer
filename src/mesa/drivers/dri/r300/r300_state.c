@@ -1279,7 +1279,7 @@ static void r300SetupTextures(GLcontext * ctx)
 	r300->hw.txe.cmd[R300_TXE_ENABLE] = 0x0;
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
-	if (RADEON_DEBUG & DEBUG_STATE)
+	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "mtu=%d\n", mtu);
 
 	if (mtu > R300_MAX_TEXTURE_UNITS) {
@@ -1304,7 +1304,7 @@ static void r300SetupTextures(GLcontext * ctx)
 				     t->pp_txformat & 0xff);
 			}
 
-			if (RADEON_DEBUG & DEBUG_STATE)
+			if (RADEON_DEBUG & RADEON_STATE)
 				fprintf(stderr,
 					"Activating texture unit %d\n", i);
 
@@ -1390,7 +1390,7 @@ static void r300SetupTextures(GLcontext * ctx)
 
 	r300->vtbl.SetupFragmentShaderTextures(ctx, tmu_mappings);
 
-	if (RADEON_DEBUG & DEBUG_STATE)
+	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
 			r300->hw.txe.cmd[R300_TXE_ENABLE], last_hw_tmu);
 }
@@ -1660,7 +1660,7 @@ void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_STATE)
+	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(cap),
 			state ? "GL_TRUE" : "GL_FALSE");
@@ -1737,7 +1737,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	has_tcl = r300->options.hw_tcl_enabled;
 
-	if (RADEON_DEBUG & DEBUG_STATE)
+	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	radeon_firevertices(&r300->radeon);
@@ -2251,6 +2251,14 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 		R300_STATECHANGE(r300, cb);
 		R300_STATECHANGE(r300, zb);
+	}
+
+	if (new_state & (_NEW_LIGHT)) {
+		R300_STATECHANGE(r300, shade2);
+		if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION)
+			r300->hw.shade2.cmd[1] |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+		else
+			r300->hw.shade2.cmd[1] &= ~R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
 	}
 
 	r300->radeon.NewGLState |= new_state;

@@ -374,6 +374,10 @@ unsigned ffs( unsigned u )
 #define ffs __builtin_ffs
 #endif
 
+#ifdef __MINGW32__
+#define ffs __builtin_ffs
+#endif
+
 
 /* Could also binary search for the highest bit.
  */

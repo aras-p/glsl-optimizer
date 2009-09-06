@@ -56,7 +56,7 @@ static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
    int size = 1;
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s count %d stride %d\n",
 	      __FUNCTION__, count, stride);
 
@@ -87,7 +87,7 @@ static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 static void emit_s0_vec(uint32_t *out, GLvoid *data, int stride, int count)
 {
    int i;
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s count %d stride %d\n",
 	      __FUNCTION__, count, stride);
 
@@ -103,7 +103,7 @@ static void emit_stq_vec(uint32_t *out, GLvoid *data, int stride, int count)
 {
    int i;
 
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s count %d stride %d\n",
 	      __FUNCTION__, count, stride);
 
@@ -126,7 +126,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
    int emitsize;
    uint32_t *out;
 
-   if (RADEON_DEBUG & DEBUG_VERTS)
+   if (RADEON_DEBUG & RADEON_VERTS)
       fprintf(stderr, "%s %d/%d\n", __FUNCTION__, count, size);
 
    switch (size) {
@@ -188,7 +188,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint vtx, unit;
    
 #if 0
-   if (RADEON_DEBUG & DEBUG_VERTS) 
+   if (RADEON_DEBUG & RADEON_VERTS)
       _tnl_print_vert_flags( __FUNCTION__, inputs );
 #endif
 

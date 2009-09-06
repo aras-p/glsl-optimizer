@@ -69,6 +69,7 @@ GLboolean r700SyncSurf(context_t *context,
 void r700WaitForIdle(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     BEGIN_BATCH_NO_AUTOSTATE(3);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
@@ -82,6 +83,7 @@ void r700WaitForIdle(context_t *context)
 void r700WaitForIdleClean(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     BEGIN_BATCH_NO_AUTOSTATE(5);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
@@ -98,6 +100,7 @@ void r700WaitForIdleClean(context_t *context)
 void r700Start3D(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         BEGIN_BATCH_NO_AUTOSTATE(2);
@@ -124,6 +127,7 @@ GLboolean r700SyncSurf(context_t *context,
 		       uint32_t sync_type)
 {
     BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_RENDER | RADEON_STATE, RADEON_TRACE, "%s\n", __func__);
     uint32_t cp_coher_size;
 
     if (!pbo)
@@ -253,9 +257,15 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 	uint32_t vgt_index_type     = 0;
 	uint32_t vgt_primitive_type = 0;
 	uint32_t vgt_num_indices    = 0;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *vb = &tnl->vb;
 
 	type = r700PrimitiveType(prim);
 	num_indices = r700NumVerts(end - start, prim);
+
+	radeon_print(RADEON_RENDER, RADEON_TRACE,
+		"%s type %x num_indices %d\n",
+		__func__, type, num_indices);
 
 	if (type < 0 || num_indices <= 0)
 		return;
@@ -292,7 +302,10 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         R600_OUT_BATCH(vgt_draw_initiator);
 
         for (i = start; i < (start + num_indices); i++) {
-            R600_OUT_BATCH(i);
+		if(vb->Elts)
+			R600_OUT_BATCH(vb->Elts[i]);
+		else
+			R600_OUT_BATCH(i);
         }
         END_BATCH();
         COMMIT_BATCH();
@@ -327,8 +340,8 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
     else
         dwords += state_size;
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+    radeon_print(RADEON_RENDER, RADEON_VERBOSE,
+	"%s: total prediction size is %d.\n", __FUNCTION__, dwords);
     return dwords;
 }
 
@@ -342,8 +355,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     struct vertex_buffer *vb = &tnl->vb;
     struct radeon_renderbuffer *rrb;
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: cs begin at %d\n",
+    radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s: cs begin at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
     /* always emit CB base to prevent
@@ -365,6 +377,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     radeonEmitState(radeon);
 
+    radeon_debug_add_indent();
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) {
         GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
@@ -372,6 +385,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
         r700RunRenderPrimitive(ctx, start, end, prim);
     }
+    radeon_debug_remove_indent();
 
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
@@ -388,8 +402,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     radeonReleaseArrays(ctx, ~0);
 
-    if (RADEON_DEBUG & DEBUG_PRIMS)
-        fprintf(stderr, "%s: cs end at %d\n",
+    radeon_print(RADEON_RENDER, RADEON_TRACE, "%s: cs end at %d\n",
                 __func__, context->radeon.cmdbuf.cs->cdw);
 
     if ( emit_end < context->radeon.cmdbuf.cs->cdw )

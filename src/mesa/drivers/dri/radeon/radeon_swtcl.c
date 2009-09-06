@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_state.h"
 #include "radeon_swtcl.h"
 #include "radeon_tcl.h"
+#include "radeon_debug.h"
 
 
 /* R100: xyzw, c0, c1/fog, stq[0..2]  = 4+1+1+3*3 = 15  right? */
@@ -214,9 +215,8 @@ static void radeonSetVertexFormat( GLcontext *ctx )
 			      NULL, 0 );
       rmesa->radeon.swtcl.vertex_size /= 4;
       RENDERINPUTS_COPY( rmesa->radeon.tnl_index_bitset, index_bitset );
-      if (RADEON_DEBUG & DEBUG_VERTS)
-	 fprintf( stderr, "%s: vertex_size= %d floats\n",
-		  __FUNCTION__, rmesa->radeon.swtcl.vertex_size);
+      radeon_print(RADEON_SWRENDER, RADEON_VERBOSE,
+	  "%s: vertex_size= %d floats\n",  __FUNCTION__, rmesa->radeon.swtcl.vertex_size);
    }
 }
 
@@ -420,8 +420,8 @@ static GLboolean radeon_run_render( GLcontext *ctx,
       if (!length)
 	 continue;
 
-      if (RADEON_DEBUG & DEBUG_PRIMS)
-	 fprintf(stderr, "radeon_render.c: prim %s %d..%d\n", 
+      radeon_print(RADEON_SWRENDER, RADEON_NORMAL,
+	  "radeon_render.c: prim %s %d..%d\n",
 		 _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
 		 start, start+length);
 
@@ -784,7 +784,7 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
 	 rmesa->radeon.swtcl.RenderIndex = ~0;
-         if (RADEON_DEBUG & DEBUG_FALLBACKS) {
+         if (RADEON_DEBUG & RADEON_FALLBACKS) {
             fprintf(stderr, "Radeon begin rasterization fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }
@@ -815,7 +815,7 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	    radeonChooseVertexState( ctx );
 	    radeonChooseRenderState( ctx );
 	 }
-         if (RADEON_DEBUG & DEBUG_FALLBACKS) {
+         if (RADEON_DEBUG & RADEON_FALLBACKS) {
             fprintf(stderr, "Radeon end rasterization fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }

@@ -117,7 +117,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
    unsigned attrib;
    int integer;
    float real;
-   unsigned state[5];
+   gl_state_index state[STATE_LENGTH];
    int negate;
    struct asm_vector vector;
    gl_inst_opcode opcode;
@@ -159,9 +159,9 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %token MATERIAL MAT_PROGRAM MATRIX MATRIXINDEX MODELVIEW MVP
 %token NORMAL
 %token OBJECT
-%token PALETTE PARAMS PLANE POINT POINTSIZE POSITION PRIMARY PROGRAM PROJECTION
+%token PALETTE PARAMS PLANE POINT_TOK POINTSIZE POSITION PRIMARY PROGRAM PROJECTION
 %token RANGE RESULT ROW
-%token SCENECOLOR SECONDARY SHININESS SIZE SPECULAR SPOT STATE
+%token SCENECOLOR SECONDARY SHININESS SIZE_TOK SPECULAR SPOT STATE
 %token TEXCOORD TEXENV TEXGEN TEXGEN_Q TEXGEN_R TEXGEN_S TEXGEN_T TEXTURE TRANSPOSE
 %token TEXTURE_UNIT TEX_1D TEX_2D TEX_3D TEX_CUBE TEX_RECT
 %token TEX_SHADOW1D TEX_SHADOW2D TEX_SHADOWRECT
@@ -1353,14 +1353,14 @@ stateClipPlaneNum: INTEGER
 	}
 	;
 
-statePointItem: POINT statePointProperty
+statePointItem: POINT_TOK statePointProperty
 	{
 	   memset($$, 0, sizeof($$));
 	   $$[0] = $2;
 	}
 	;
 
-statePointProperty: SIZE
+statePointProperty: SIZE_TOK
 	{
 	   $$ = STATE_POINT_SIZE;
 	}
@@ -1492,9 +1492,9 @@ stateOptModMatNum:
 	{
 	   $$ = 0;
 	}
-	| stateModMatNum
+	| '[' stateModMatNum ']'
 	{
-	   $$ = $1;
+	   $$ = $2;
 	}
 	;
 stateModMatNum: INTEGER
@@ -2077,8 +2077,7 @@ int add_state_reference(struct gl_program_parameter_list *param_list,
 
    name = _mesa_program_state_string(tokens);
    index = _mesa_add_parameter(param_list, PROGRAM_STATE_VAR, name,
-                               size, GL_NONE,
-                               NULL, (gl_state_index *) tokens, 0x0);
+                               size, GL_NONE, NULL, tokens, 0x0);
    param_list->StateFlags |= _mesa_program_state_flags(tokens);
 
    /* free name string here since we duplicated it in add_parameter() */

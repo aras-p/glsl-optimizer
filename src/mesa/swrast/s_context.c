@@ -220,6 +220,9 @@ _swrast_update_deferred_texture(GLcontext *ctx)
          /* Z comes from fragment program/shader */
          swrast->_DeferredTexture = GL_FALSE;
       }
+      else if (fprog && fprog->UsesKill) {
+         swrast->_DeferredTexture = GL_FALSE;
+      }
       else if (ctx->Query.CurrentOcclusionObject) {
          /* occlusion query depends on shader discard/kill results */
          swrast->_DeferredTexture = GL_FALSE;

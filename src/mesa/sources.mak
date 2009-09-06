@@ -61,6 +61,7 @@ MAIN_SOURCES = \
 	main/shared.c \
 	main/state.c \
 	main/stencil.c \
+	main/syncobj.c \
 	main/texcompress.c \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \

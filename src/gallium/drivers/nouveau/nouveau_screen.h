@@ -22,4 +22,15 @@ nouveau_bo(struct pipe_buffer *pb)
 int nouveau_screen_init(struct nouveau_screen *, struct nouveau_device *);
 void nouveau_screen_fini(struct nouveau_screen *);
 
+struct nouveau_miptree {
+	struct pipe_texture base;
+	struct nouveau_bo *bo;
+};
+
+static inline struct nouveau_miptree *
+nouveau_miptree(struct pipe_texture *pt)
+{
+	return (struct nouveau_miptree *)pt;
+}
+
 #endif

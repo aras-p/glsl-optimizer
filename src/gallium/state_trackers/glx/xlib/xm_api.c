@@ -286,6 +286,18 @@ choose_pixel_format(XMesaVisual v)
          return PIPE_FORMAT_B8G8R8A8_UNORM;
       }
    }
+   else if (   GET_REDMASK(v)   == 0x0000ff00
+            && GET_GREENMASK(v) == 0x00ff0000
+            && GET_BLUEMASK(v)  == 0xff000000
+            && v->BitsPerPixel == 32) {
+      if (native_byte_order) {
+         /* no byteswapping needed */
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
+      }
+      else {
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
+      }
+   }
    else if (   GET_REDMASK(v)   == 0xf800
             && GET_GREENMASK(v) == 0x07e0
             && GET_BLUEMASK(v)  == 0x001f
@@ -656,7 +668,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
     * at a later time.
     */
    v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
-   if(!v->visinfo) {
+   if (!v->visinfo) {
       _mesa_free(v);
       return NULL;
    }
@@ -743,7 +755,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    static struct pipe_screen *screen = NULL;
-   struct pipe_context *pipe;
+   struct pipe_context *pipe = NULL;
    XMesaContext c;
    GLcontext *mesaCtx;
    uint pf;
@@ -769,8 +781,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (screen == NULL)
       goto fail;
 
-   pipe = driver.create_pipe_context( screen,
-                                     (void *)c );
+   pipe = driver.create_pipe_context(screen, (void *) c);
    if (pipe == NULL)
       goto fail;
 
@@ -783,23 +794,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx = c->st->ctx;
    c->st->ctx->DriverCtx = c;
 
-#if 00
-   _mesa_enable_sw_extensions(mesaCtx);
-   _mesa_enable_1_3_extensions(mesaCtx);
-   _mesa_enable_1_4_extensions(mesaCtx);
-   _mesa_enable_1_5_extensions(mesaCtx);
-   _mesa_enable_2_0_extensions(mesaCtx);
-#endif
-
    return c;
 
- fail:
+fail:
    if (c->st)
       st_destroy_context(c->st);
    else if (pipe)
       pipe->destroy(pipe);
 
-   FREE(c);
+   _mesa_free(c);
    return NULL;
 }
 
@@ -1153,7 +1156,7 @@ void XMesaFlush( XMesaContext c )
 XMesaBuffer XMesaFindBuffer( Display *dpy, Drawable d )
 {
    XMesaBuffer b;
-   for (b=XMesaBufferList; b; b=b->Next) {
+   for (b = XMesaBufferList; b; b = b->Next) {
       if (b->drawable == d && b->xm_visual->display == dpy) {
          return b;
       }

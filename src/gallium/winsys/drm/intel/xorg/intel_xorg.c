@@ -47,8 +47,8 @@ static SymTabRec intel_xorg_chipsets[] = {
 };
 
 static PciChipsets intel_xorg_pci_devices[] = {
-    {PCI_MATCH_ANY, PCI_MATCH_ANY, RES_SHARED_VGA},
-    {-1, -1, RES_UNDEFINED}
+    {PCI_MATCH_ANY, PCI_MATCH_ANY, NULL},
+    {-1, -1, NULL}
 };
 
 static XF86ModuleVersionInfo intel_xorg_version = {
@@ -103,12 +103,6 @@ intel_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = 1;
 	xf86AddDriver(&modesetting, module, HaveDriverFuncs);
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	xorg_tracker_loader_ref_sym_lists();
 
 	/*
 	 * The return value must be non-NULL on success even though there

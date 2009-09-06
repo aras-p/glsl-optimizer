@@ -287,7 +287,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   if ( R200_DEBUG & DEBUG_STATE ) {
+   if ( R200_DEBUG & RADEON_STATE ) {
       fprintf( stderr, "%s( %s )\n",
 	       __FUNCTION__, _mesa_lookup_enum_by_nr( pname ) );
    }
@@ -359,7 +359,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 {
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
+   if ( R200_DEBUG & (RADEON_STATE|RADEON_TEXTURE) ) {
       fprintf( stderr, "%s( %s )\n", __FUNCTION__,
 	       _mesa_lookup_enum_by_nr( pname ) );
    }
@@ -409,7 +409,7 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
+   if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
       fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
 	      (void *)texObj,
 	      _mesa_lookup_enum_by_nr(texObj->Target));
@@ -470,7 +470,7 @@ static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
    radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
-   if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
+   if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
      fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
 	     t, _mesa_lookup_enum_by_nr(target));
    }

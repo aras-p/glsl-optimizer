@@ -649,29 +649,11 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack min/max values into a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(1, &ctx->Pack, 2, 1, 1,
-                                     format, type, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetMinMax(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION,"glGetMinMax(PBO is mapped)");
-         return;
-      }
-      values = ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
-      /* not an error */
+
+   values = _mesa_map_validate_pbo_dest(ctx, 1, &ctx->Pack, 2, 1, 1,
+                                        format, type, values, "glGetMinmax");
+   if (!values)
       return;
-   }
 
    {
       GLfloat minmax[2][4];
@@ -687,10 +669,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
                                  format, type, values, &ctx->Pack, 0x0);
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
    if (reset) {
       _mesa_ResetMinmax(GL_MINMAX);
@@ -733,38 +712,18 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
       return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack min/max values into a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(1, &ctx->Pack, ctx->Histogram.Width, 1, 1,
-                                     format, type, values)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetHistogram(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx,GL_INVALID_OPERATION,"glGetHistogram(PBO is mapped)");
-         return;
-      }
-      values = ADD_POINTERS(buf, values);
-   }
-   else if (!values) {
-      /* not an error */
+   values = _mesa_map_validate_pbo_dest(ctx, 1, &ctx->Pack,
+                                        ctx->Histogram.Width, 1, 1,
+                                        format, type, values,
+                                        "glGetHistogram");
+   if (!values)
       return;
-   }
 
    pack_histogram(ctx, ctx->Histogram.Width,
                   (CONST GLuint (*)[4]) ctx->Histogram.Count,
                   format, type, values, &ctx->Pack);
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
    if (reset) {
       GLuint i;

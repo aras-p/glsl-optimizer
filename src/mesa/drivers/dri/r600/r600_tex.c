@@ -67,7 +67,7 @@ static unsigned int translate_wrap_mode(GLenum wrapmode)
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
 	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return SQ_TEX_MIRROR_ONCE_BORDER;
 	default:
-		_mesa_problem(NULL, "bad wrap mode in %s", __FUNCTION__);
+		radeon_error("bad wrap mode in %s", __FUNCTION__);
 		return 0;
 	}
 }
@@ -208,8 +208,7 @@ static void r600SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 			| R300_TX_MIN_FILTER_ANISO
 			| R300_TX_MIN_FILTER_MIP_LINEAR
 			| aniso_filter(anisotropy);*/
-		if (RADEON_DEBUG & DEBUG_TEXTURE)
-			fprintf(stderr, "Using maximum anisotropy of %f\n", anisotropy);
+		radeon_print(RADEON_TEXTURE, RADEON_NORMAL, "Using maximum anisotropy of %f\n", anisotropy);
 		return;
 	}
 
@@ -288,10 +287,9 @@ static void r600TexParameter(GLcontext * ctx, GLenum target,
 {
 	radeonTexObj* t = radeon_tex_obj(texObj);
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
-		fprintf(stderr, "%s( %s )\n", __FUNCTION__,
+	radeon_print(RADEON_STATE | RADEON_TEXTURE, RADEON_VERBOSE,
+			"%s( %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(pname));
-	}
 
 	switch (pname) {
 	case GL_TEXTURE_MIN_FILTER:
@@ -351,11 +349,10 @@ static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	context_t* rmesa = R700_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
-		fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
+	radeon_print(RADEON_STATE | RADEON_TEXTURE, RADEON_NORMAL,
+		"%s( %p (target = %s) )\n", __FUNCTION__,
 			(void *)texObj,
 			_mesa_lookup_enum_by_nr(texObj->Target));
-	}
 
 	if (rmesa) {
 		int i;
@@ -393,10 +390,9 @@ static struct gl_texture_object *r600NewTextureObject(GLcontext * ctx,
 	radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
-		fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
+	radeon_print(RADEON_STATE | RADEON_TEXTURE, RADEON_NORMAL,
+		"%s( %p (target = %s) )\n", __FUNCTION__,
 			t, _mesa_lookup_enum_by_nr(target));
-	}
 
 	_mesa_initialize_texture_object(&t->base, name, target);
 	t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;

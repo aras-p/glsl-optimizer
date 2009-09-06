@@ -26,8 +26,8 @@
  **************************************************************************/
 
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_state.h"
+#include "i915_screen.h"
 #include "i915_batch.h"
 #include "i915_texture.h"
 #include "i915_reg.h"
@@ -40,66 +40,58 @@
 #include "pipe/p_screen.h"
 
 
-static void i915_destroy( struct pipe_context *pipe )
-{
-   struct i915_context *i915 = i915_context( pipe );
-
-   draw_destroy( i915->draw );
-   
-   if(i915->winsys->destroy)
-      i915->winsys->destroy(i915->winsys);
-
-   FREE( i915 );
-}
+/*
+ * Draw functions
+ */
 
 
 static boolean
 i915_draw_range_elements(struct pipe_context *pipe,
-			     struct pipe_buffer *indexBuffer,
-			     unsigned indexSize,
-			     unsigned min_index,
-			     unsigned max_index,
-			     unsigned prim, unsigned start, unsigned count)
+                         struct pipe_buffer *indexBuffer,
+                         unsigned indexSize,
+                         unsigned min_index,
+                         unsigned max_index,
+                         unsigned prim, unsigned start, unsigned count)
 {
-   struct i915_context *i915 = i915_context( pipe );
+   struct i915_context *i915 = i915_context(pipe);
    struct draw_context *draw = i915->draw;
    unsigned i;
 
    if (i915->dirty)
-      i915_update_derived( i915 );
+      i915_update_derived(i915);
 
    /*
     * Map vertex buffers
     */
    for (i = 0; i < i915->num_vertex_buffers; i++) {
-      void *buf
-         = pipe_buffer_map(pipe->screen,
-                                    i915->vertex_buffer[i].buffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+      void *buf = pipe_buffer_map(pipe->screen, i915->vertex_buffer[i].buffer,
+                                  PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
-   /* Map index buffer, if present */
+
+   /*
+    * Map index buffer, if present
+    */
    if (indexBuffer) {
-      void *mapped_indexes
-         = pipe_buffer_map(pipe->screen, indexBuffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+      void *mapped_indexes = pipe_buffer_map(pipe->screen, indexBuffer,
+                                             PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer_range(draw, indexSize,
-					   min_index,
-					   max_index,
-					   mapped_indexes);
-   }
-   else {
-      /* no index/element buffer */
+                                           min_index,
+                                           max_index,
+                                           mapped_indexes);
+   } else {
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
 
    draw_set_mapped_constant_buffer(draw,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
-                                   ( i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
-                                     4 * sizeof(float) ));
+                                   (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
+                                      4 * sizeof(float)));
 
-   /* draw! */
+   /*
+    * Do the drawing
+    */
    draw_arrays(i915->draw, prim, start, count);
 
    /*
@@ -109,6 +101,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
       pipe_buffer_unmap(pipe->screen, i915->vertex_buffer[i].buffer);
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
+
    if (indexBuffer) {
       pipe_buffer_unmap(pipe->screen, indexBuffer);
       draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
@@ -118,28 +111,34 @@ i915_draw_range_elements(struct pipe_context *pipe,
 }
 
 static boolean
-i915_draw_elements( struct pipe_context *pipe,
-                    struct pipe_buffer *indexBuffer,
-                    unsigned indexSize,
-                    unsigned prim, unsigned start, unsigned count)
+i915_draw_elements(struct pipe_context *pipe,
+                   struct pipe_buffer *indexBuffer,
+                   unsigned indexSize,
+                   unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_range_elements( pipe, indexBuffer,
-					indexSize,
-					0, 0xffffffff,
-					prim, start, count );
+   return i915_draw_range_elements(pipe, indexBuffer,
+                                   indexSize,
+                                   0, 0xffffffff,
+                                   prim, start, count);
 }
 
-static boolean i915_draw_arrays( struct pipe_context *pipe,
-				 unsigned prim, unsigned start, unsigned count)
+static boolean
+i915_draw_arrays(struct pipe_context *pipe,
+                 unsigned prim, unsigned start, unsigned count)
 {
    return i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 
+/*
+ * Is referenced functions
+ */
+
+
 static unsigned int
-i915_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
+i915_is_texture_referenced(struct pipe_context *pipe,
+                           struct pipe_texture *texture,
+                           unsigned face, unsigned level)
 {
    /**
     * FIXME: Return the corrent result. We can't alays return referenced
@@ -153,8 +152,8 @@ i915_is_texture_referenced( struct pipe_context *pipe,
 }
 
 static unsigned int
-i915_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
+i915_is_buffer_referenced(struct pipe_context *pipe,
+                          struct pipe_buffer *buf)
 {
    /**
     * FIXME: Return the corrent result. We can't alays return referenced
@@ -168,9 +167,25 @@ i915_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
-struct pipe_context *i915_create_context( struct pipe_screen *screen,
-                                          struct pipe_winsys *pipe_winsys,
-                                          struct i915_winsys *i915_winsys )
+/*
+ * Generic context functions
+ */
+
+
+static void i915_destroy(struct pipe_context *pipe)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   draw_destroy(i915->draw);
+   
+   if(i915->batch)
+      i915->iws->batchbuffer_destroy(i915->batch);
+
+   FREE(i915);
+}
+
+struct pipe_context *
+i915_create_context(struct pipe_screen *screen)
 {
    struct i915_context *i915;
 
@@ -178,21 +193,20 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    if (i915 == NULL)
       return NULL;
 
-   i915->winsys = i915_winsys;
-   i915->pipe.winsys = pipe_winsys;
-   i915->pipe.screen = screen;
+   i915->iws = i915_screen(screen)->iws;
+   i915->base.winsys = NULL;
+   i915->base.screen = screen;
 
-   i915->pipe.destroy = i915_destroy;
+   i915->base.destroy = i915_destroy;
 
-   i915->pipe.clear = i915_clear;
+   i915->base.clear = i915_clear;
 
+   i915->base.draw_arrays = i915_draw_arrays;
+   i915->base.draw_elements = i915_draw_elements;
+   i915->base.draw_range_elements = i915_draw_range_elements;
 
-   i915->pipe.draw_arrays = i915_draw_arrays;
-   i915->pipe.draw_elements = i915_draw_elements;
-   i915->pipe.draw_range_elements = i915_draw_range_elements;
-
-   i915->pipe.is_texture_referenced = i915_is_texture_referenced;
-   i915->pipe.is_buffer_referenced = i915_is_buffer_referenced;
+   i915->base.is_texture_referenced = i915_is_texture_referenced;
+   i915->base.is_buffer_referenced = i915_is_buffer_referenced;
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -201,27 +215,23 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    assert(i915->draw);
    if (!debug_get_bool_option("I915_NO_VBUF", FALSE)) {
       draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));
-   }
-   else {
+   } else {
       draw_set_rasterize_stage(i915->draw, i915_draw_render_stage(i915));
    }
 
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
-   i915_init_texture_functions(i915);
 
-   draw_install_aaline_stage(i915->draw, &i915->pipe);
-   draw_install_aapoint_stage(i915->draw, &i915->pipe);
+   draw_install_aaline_stage(i915->draw, &i915->base);
+   draw_install_aapoint_stage(i915->draw, &i915->base);
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
-   i915->batch = i915_winsys->batch_get(i915_winsys);
-   i915->batch->winsys = i915_winsys;
+   i915->batch = i915->iws->batchbuffer_create(i915->iws);
 
-   return &i915->pipe;
+   return &i915->base;
 }
-

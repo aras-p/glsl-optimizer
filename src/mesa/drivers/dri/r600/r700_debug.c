@@ -25,31 +25,8 @@
  *   CooperYuan <cooper.yuan@amd.com>, <cooperyuan@gmail.com>
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "main/glheader.h"
-
 #include "r700_debug.h"
-#include "r600_context.h"
-
-void NormalizeLogErrorCode(int nError)
-{
-    //TODO
-}
-
-void r700_error(int nLocalError, char* fmt, ...)
-{
-    va_list args;
-
-    NormalizeLogErrorCode(nLocalError);
-
-	va_start(args, fmt);
-    fprintf(stderr, fmt, args);
-    va_end(args);
-}
+#include "radeon_debug.h"
 
 void DumpHwBinary(int type, void *addr, int size)
 {
@@ -61,21 +38,21 @@ void DumpHwBinary(int type, void *addr, int size)
     switch (type)
     {
         case DUMP_PIXEL_SHADER:
-            DEBUGF("Pixel Shader\n");
+            radeon_print(RADEON_SHADER, RADEON_TRACE, "Pixel Shader\n");
         break;
         case DUMP_VERTEX_SHADER:
-            DEBUGF("Vertex Shader\n");
+            radeon_print(RADEON_SHADER, RADEON_TRACE, "Vertex Shader\n");
         break;
         case DUMP_FETCH_SHADER:
-            DEBUGF("Fetch Shader\n");
+            radeon_print(RADEON_SHADER, RADEON_TRACE, "Fetch Shader\n");
         break;
     }
 
     for (i = 0; i < size; i++)
     {
-        DEBUGP("0x%08x,\t", *pHw);
+        radeon_print(RADEON_SHADER, RADEON_TRACE, "0x%08x,\t", *pHw);
         if (i%4 == 3)
-            DEBUGP("0x%08x\n", *pHw);
+            radeon_print(RADEON_SHADER, RADEON_TRACE, "0x%08x\n", *pHw);
         pHw++;
 
     }

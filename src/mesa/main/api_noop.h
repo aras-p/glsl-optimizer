@@ -40,6 +40,10 @@ _mesa_noop_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2);
 extern void GLAPIENTRY
 _mesa_noop_Materialfv(GLenum face, GLenum pname, const GLfloat *param);
 
+extern void GLAPIENTRY
+_mesa_noop_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
+			     const GLvoid **indices, GLsizei primcount);
+
 extern void
 _mesa_noop_vtxfmt_init(GLvertexformat *vfmt);
 

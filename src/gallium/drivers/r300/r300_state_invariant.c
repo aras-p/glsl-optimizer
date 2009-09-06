@@ -38,7 +38,9 @@ void r300_emit_invariant_state(struct r300_context* r300)
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
-    OUT_CS_REG(R300_GB_ENABLE, 0x0);
+    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
+                               R300_GB_LINE_STUFF_ENABLE  |
+                               R300_GB_TRIANGLE_STUFF_ENABLE);
     /* Subpixel multisampling for AA
      * These are commented out because glisse's CS checker doesn't like them.
      * I presume these will be re-enabled later.

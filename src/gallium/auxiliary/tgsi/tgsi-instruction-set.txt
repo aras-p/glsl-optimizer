@@ -187,11 +187,7 @@ TGSI Instruction Specification
 
 1.2.6  CND0 - Condition Zero
 
-  dst.x = (src2.x >= 0.0) ? src0.x : src1.x
-  dst.y = (src2.y >= 0.0) ? src0.y : src1.y
-  dst.z = (src2.z >= 0.0) ? src0.z : src1.z
-  dst.w = (src2.w >= 0.0) ? src0.w : src1.w
-
+       Removed.  Use (CMP src2, src1, src0) instead.
 
 1.2.7  DOT2ADD - 2-component Dot Product And Add
 
@@ -1031,12 +1027,12 @@ TGSI Instruction Specification
 
 1.18.1  EXPP - Approximate Exponential Base 2
 
-  Alias for EXP.
+  Use EXP. See also 1.19.3.
 
 
 1.18.2  LOGP - Logarithm Base 2
 
-  Alias for LG2.
+  Use LOG. See also 1.19.4.
 
 
 1.19  vs_2_0
@@ -1051,6 +1047,16 @@ TGSI Instruction Specification
 1.19.2  MOVA - Move Address Register
 
   Alias for ARR.
+
+
+1.19.3  EXPP - Approximate Exponential Base 2
+
+  Use EX2.
+
+
+1.19.4  LOGP - Logarithm Base 2
+
+  Use LG2.
 
 
 2  Explanation of symbols used

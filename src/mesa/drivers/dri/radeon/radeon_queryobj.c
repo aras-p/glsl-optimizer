@@ -26,11 +26,10 @@
  */
 #include "radeon_common.h"
 #include "radeon_queryobj.h"
+#include "radeon_debug.h"
 
 #include "main/imports.h"
 #include "main/simple_list.h"
-
-#define DDEBUG 0
 
 static int radeonQueryIsFlushed(GLcontext *ctx, struct gl_query_object *q)
 {
@@ -52,7 +51,9 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 	uint32_t *result;
 	int i;
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d, result %d\n", __FUNCTION__, query->Base.Id, (int) query->Base.Result);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE,
+			"%s: query id %d, result %d\n",
+			__FUNCTION__, query->Base.Id, (int) query->Base.Result);
 
 	radeon_bo_map(query->bo, GL_FALSE);
 
@@ -61,7 +62,7 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 	query->Base.Result = 0;
 	for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
 		query->Base.Result += result[i];
-		if (DDEBUG) fprintf(stderr, "result[%d] = %d\n", i, result[i]);
+		radeon_print(RADEON_STATE, RADEON_TRACE, "result[%d] = %d\n", i, result[i]);
 	}
 
 	radeon_bo_unmap(query->bo);
@@ -78,7 +79,7 @@ static struct gl_query_object * radeonNewQueryObject(GLcontext *ctx, GLuint id)
 	query->Base.Active = GL_FALSE;
 	query->Base.Ready = GL_TRUE;
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, query->Base.Id);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE,"%s: query id %d\n", __FUNCTION__, query->Base.Id);
 
 	return &query->Base;
 }
@@ -87,7 +88,7 @@ static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	if (query->bo) {
 		radeon_bo_unref(query->bo);
@@ -104,7 +105,7 @@ static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)
 	if (!radeonQueryIsFlushed(ctx, q))
 		ctx->Driver.Flush(ctx);
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, q->Id, query->bo, query->curr_offset);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, q->Id, query->bo, query->curr_offset);
 
 	radeonQueryGetResult(ctx, q);
 
@@ -117,7 +118,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	assert(radeon->query.current == NULL);
 
@@ -132,6 +133,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeon->query.current = query;
 
 	radeon->query.queryobj.dirty = GL_TRUE;
+	radeon->hw.is_dirty = GL_TRUE;
 	insert_at_tail(&radeon->query.not_flushed_head, query);
 
 }
@@ -147,7 +149,7 @@ void radeonEmitQueryEnd(GLcontext *ctx)
 	if (query->emitted_begin == GL_FALSE)
 		return;
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, query->Base.Id, query->bo, query->curr_offset);
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, query->Base.Id, query->bo, query->curr_offset);
 
 	radeon_cs_space_check_with_bo(radeon->cmdbuf.cs,
 				      query->bo,
@@ -160,7 +162,7 @@ static void radeonEndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 
-	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
+	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	if (radeon->dma.flush)
 		radeon->dma.flush(radeon->glCtx);
@@ -171,7 +173,7 @@ static void radeonEndQuery(GLcontext *ctx, struct gl_query_object *q)
 
 static void radeonCheckQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-	if (DDEBUG) fprintf(stderr, "%s: query id %d\n", __FUNCTION__, q->Id);
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 #ifdef DRM_RADEON_GEM_BUSY
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);

@@ -43,6 +43,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/polygon.h"
+#include "main/readpix.h"
 #include "main/scissor.h"
 #include "main/shaders.h"
 #include "main/stencil.h"
@@ -54,6 +55,7 @@
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "shader/program.h"
+#include "shader/arbprogram.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -82,8 +84,8 @@ struct save_state
    /** META_FOG */
    GLboolean Fog;
 
-   /** META_PIXELSTORE */
-   /* XXX / TO-DO */
+   /** META_PIXEL_STORE */
+   struct gl_pixelstore_attrib Pack, Unpack;
 
    /** META_RASTERIZATION */
    GLenum FrontPolygonMode, BackPolygonMode;
@@ -142,7 +144,7 @@ struct blit_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][4]; /** four verts of X,Y,S,T */
+   GLuint DepthFP;
 };
 
 
@@ -153,7 +155,6 @@ struct clear_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][7]; /** four verts of X,Y,Z,R,G,B,A */
 };
 
 
@@ -164,7 +165,6 @@ struct copypix_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][5]; /** four verts of X,Y,Z,S,T */
 };
 
 
@@ -175,7 +175,9 @@ struct drawpix_state
 {
    GLuint ArrayObj;
    GLuint VBO;
-   GLfloat verts[4][5]; /** four verts of X,Y,Z,S,T */
+
+   GLuint StencilFP;  /**< Fragment program for drawing stencil images */
+   GLuint DepthFP;  /**< Fragment program for drawing depth images */
 };
 
 
@@ -239,28 +241,31 @@ _mesa_meta_free(GLcontext *ctx)
 {
    struct gl_meta_state *meta = ctx->Meta;
 
-   if (meta->TempTex.TexObj) {
-      _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
-   }
+   if (_mesa_get_current_context()) {
+      /* if there's no current context, these textures, buffers, etc should
+       * still get freed by _mesa_free_context_data().
+       */
 
-   if (meta->Blit.VBO) {
+      _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
+
+      /* glBlitFramebuffer */
       _mesa_DeleteBuffersARB(1, & meta->Blit.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->Blit.ArrayObj);
-   }
+      _mesa_DeletePrograms(1, &meta->Blit.DepthFP);
 
-   if (meta->Clear.VBO) {
+      /* glClear */
       _mesa_DeleteBuffersARB(1, & meta->Clear.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->Clear.ArrayObj);
-   }
 
-   if (meta->CopyPix.VBO) {
+      /* glCopyPixels */
       _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
-   }
 
-   if (meta->DrawPix.VBO) {
+      /* glDrawPixels */
       _mesa_DeleteBuffersARB(1, & meta->DrawPix.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
+      _mesa_DeletePrograms(1, &meta->DrawPix.DepthFP);
+      _mesa_DeletePrograms(1, &meta->DrawPix.StencilFP);
    }
 
    _mesa_free(ctx->Meta);
@@ -316,6 +321,13 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->Fog = ctx->Fog.Enabled;
       if (ctx->Fog.Enabled)
          _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
+   }
+
+   if (state & META_PIXEL_STORE) {
+      save->Pack = ctx->Pack;
+      save->Unpack = ctx->Unpack;
+      ctx->Pack = ctx->DefaultPacking;
+      ctx->Unpack = ctx->DefaultPacking;
    }
 
    if (state & META_RASTERIZATION) {
@@ -508,6 +520,11 @@ _mesa_meta_end(GLcontext *ctx)
       _mesa_set_enable(ctx, GL_FOG, save->Fog);
    }
 
+   if (state & META_PIXEL_STORE) {
+      ctx->Pack = save->Pack;
+      ctx->Unpack = save->Unpack;
+   }
+
    if (state & META_RASTERIZATION) {
       _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
       _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
@@ -694,7 +711,7 @@ get_temp_texture(GLcontext *ctx)
       /* do one-time init */
 
       /* prefer texture rectangle */
-      if (0*ctx->Extensions.NV_texture_rectangle) {
+      if (ctx->Extensions.NV_texture_rectangle) {
          tex->Target = GL_TEXTURE_RECTANGLE;
          tex->MaxSize = ctx->Const.MaxTextureRectSize;
          tex->NPOT = GL_TRUE;
@@ -703,7 +720,7 @@ get_temp_texture(GLcontext *ctx)
          /* use 2D texture, NPOT if possible */
          tex->Target = GL_TEXTURE_2D;
          tex->MaxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-         tex->NPOT = 0*ctx->Extensions.ARB_texture_non_power_of_two;
+         tex->NPOT = ctx->Extensions.ARB_texture_non_power_of_two;
       }
       assert(tex->MaxSize > 0);
 
@@ -855,6 +872,38 @@ setup_drawpix_texture(struct temp_texture *tex,
 
 
 /**
+ * One-time init for drawing depth pixels.
+ */
+static void
+init_blit_depth_pixels(GLcontext *ctx)
+{
+   static const char *program =
+      "!!ARBfp1.0\n"
+      "TEX result.depth, fragment.texcoord[0], texture[0], %s; \n"
+      "END \n";
+   char program2[200];
+   struct blit_state *blit = &ctx->Meta->Blit;
+   struct temp_texture *tex = get_temp_texture(ctx);
+   const char *texTarget;
+
+   assert(blit->DepthFP == 0);
+
+   /* replace %s with "RECT" or "2D" */
+   assert(strlen(program) + 4 < sizeof(program2));
+   if (tex->Target == GL_TEXTURE_RECTANGLE)
+      texTarget = "RECT";
+   else
+      texTarget = "2D";
+   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+
+   _mesa_GenPrograms(1, &blit->DepthFP);
+   _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
+   _mesa_ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                          strlen(program2), (const GLubyte *) program2);
+}
+
+
+/**
  * Meta implementation of ctx->Driver.BlitFramebuffer() in terms
  * of texture mapping and polygon rendering.
  */
@@ -873,6 +922,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
    const GLint srcH = abs(srcY1 - srcY0);
    const GLboolean srcFlipX = srcX1 < srcX0;
    const GLboolean srcFlipY = srcY1 < srcY0;
+   GLfloat verts[4][4]; /* four verts of X,Y,S,T */
    GLboolean newTex;
 
    if (srcW > maxTexSize || srcH > maxTexSize) {
@@ -907,13 +957,13 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &blit->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, blit->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(blit->verts),
-                          blit->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat),
+      _mesa_VertexPointer(2, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (2 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -927,27 +977,26 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    /* vertex positions/texcoords (after texture allocation!) */
    {
-      blit->verts[0][0] = (GLfloat) dstX0;
-      blit->verts[0][1] = (GLfloat) dstY0;
-      blit->verts[1][0] = (GLfloat) dstX1;
-      blit->verts[1][1] = (GLfloat) dstY0;
-      blit->verts[2][0] = (GLfloat) dstX1;
-      blit->verts[2][1] = (GLfloat) dstY1;
-      blit->verts[3][0] = (GLfloat) dstX0;
-      blit->verts[3][1] = (GLfloat) dstY1;
+      verts[0][0] = (GLfloat) dstX0;
+      verts[0][1] = (GLfloat) dstY0;
+      verts[1][0] = (GLfloat) dstX1;
+      verts[1][1] = (GLfloat) dstY0;
+      verts[2][0] = (GLfloat) dstX1;
+      verts[2][1] = (GLfloat) dstY1;
+      verts[3][0] = (GLfloat) dstX0;
+      verts[3][1] = (GLfloat) dstY1;
 
-      blit->verts[0][2] = 0.0F;
-      blit->verts[0][3] = 0.0F;
-      blit->verts[1][2] = tex->Sright;
-      blit->verts[1][3] = 0.0F;
-      blit->verts[2][2] = tex->Sright;
-      blit->verts[2][3] = tex->Ttop;
-      blit->verts[3][2] = 0.0F;
-      blit->verts[3][3] = tex->Ttop;
+      verts[0][2] = 0.0F;
+      verts[0][3] = 0.0F;
+      verts[1][2] = tex->Sright;
+      verts[1][3] = 0.0F;
+      verts[2][2] = tex->Sright;
+      verts[2][3] = tex->Ttop;
+      verts[3][2] = 0.0F;
+      verts[3][3] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(blit->verts), blit->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    _mesa_Enable(tex->Target);
@@ -958,9 +1007,36 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
       mask &= ~GL_COLOR_BUFFER_BIT;
    }
+
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      /* XXX todo (need fragment shader) */
+      GLuint *tmp = (GLuint *) _mesa_malloc(srcW * srcH * sizeof(GLuint));
+      if (tmp) {
+         if (!blit->DepthFP)
+            init_blit_depth_pixels(ctx);
+
+         /* maybe change tex format here */
+         newTex = alloc_texture(tex, srcW, srcH, GL_DEPTH_COMPONENT);
+
+         _mesa_ReadPixels(srcX, srcY, srcW, srcH,
+                          GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
+
+         setup_drawpix_texture(tex, newTex, GL_DEPTH_COMPONENT, srcW, srcH,
+                               GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
+
+         _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
+         _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
+         _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+         _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+         _mesa_DepthFunc(GL_ALWAYS);
+         _mesa_DepthMask(GL_TRUE);
+
+         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+         mask &= ~GL_DEPTH_BUFFER_BIT;
+
+         _mesa_free(tmp);
+      }
    }
+
    if (mask & GL_STENCIL_BUFFER_BIT) {
       /* XXX can't easily do stencil */
    }
@@ -969,8 +1045,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
 
    _mesa_meta_end(ctx);
 
-   /* XXX, TO-DO: try to handle these cases above! */
-   if (mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) {
+   if (mask) {
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
    }
@@ -984,9 +1059,16 @@ void
 _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
+   GLfloat verts[4][7]; /* four verts of X,Y,Z,R,G,B,A */
+   /* save all state but scissor, pixel pack/unpack */
+   GLbitfield metaSave = META_ALL - META_SCISSOR - META_PIXEL_STORE;
 
-   /* only scissor and color mask effects clearing */
-   _mesa_meta_begin(ctx, ~(META_SCISSOR | META_COLOR_MASK));
+   if (buffers & BUFFER_BITS_COLOR) {
+      /* if clearing color buffers, don't save/restore colormask */
+      metaSave -= META_COLOR_MASK;
+   }
+
+   _mesa_meta_begin(ctx, metaSave);
 
    if (clear->ArrayObj == 0) {
       /* one-time setup */
@@ -998,12 +1080,13 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &clear->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(clear->verts),
-                          clear->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, 7 * sizeof(GLfloat), (void *) 0);
-      _mesa_ColorPointer(4, GL_FLOAT, 7 * sizeof(GLfloat),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_ColorPointer(4, GL_FLOAT, sizeof(verts[0]),
                          (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_COLOR_ARRAY);
@@ -1018,6 +1101,7 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
       /* leave colormask, glDrawBuffer state as-is */
    }
    else {
+      ASSERT(metaSave & META_COLOR_MASK);
       _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
    }
 
@@ -1053,27 +1137,26 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
       const GLfloat z = 1.0 - 2.0 * ctx->Depth.Clear;
       GLuint i;
 
-      clear->verts[0][0] = x0;
-      clear->verts[0][1] = y0;
-      clear->verts[0][2] = z;
-      clear->verts[1][0] = x1;
-      clear->verts[1][1] = y0;
-      clear->verts[1][2] = z;
-      clear->verts[2][0] = x1;
-      clear->verts[2][1] = y1;
-      clear->verts[2][2] = z;
-      clear->verts[3][0] = x0;
-      clear->verts[3][1] = y1;
-      clear->verts[3][2] = z;
+      verts[0][0] = x0;
+      verts[0][1] = y0;
+      verts[0][2] = z;
+      verts[1][0] = x1;
+      verts[1][1] = y0;
+      verts[1][2] = z;
+      verts[2][0] = x1;
+      verts[2][1] = y1;
+      verts[2][2] = z;
+      verts[3][0] = x0;
+      verts[3][1] = y1;
+      verts[3][2] = z;
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         COPY_4FV(&clear->verts[i][3], ctx->Color.ClearColor);
+         COPY_4FV(&verts[i][3], ctx->Color.ClearColor);
       }
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(clear->verts), clear->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* draw quad */
@@ -1094,6 +1177,7 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
 {
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
    struct temp_texture *tex = get_temp_texture(ctx);
+   GLfloat verts[4][5]; /* four verts of X,Y,Z,S,T */
    GLboolean newTex;
    GLenum intFormat = GL_RGBA;
 
@@ -1127,13 +1211,13 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &copypix->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, copypix->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(copypix->verts),
-                          copypix->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(copypix->verts[0]),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(copypix->verts[0]),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1153,30 +1237,29 @@ _mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
       const GLfloat dstY1 = dstY + height * ctx->Pixel.ZoomY;
       const GLfloat z = ctx->Current.RasterPos[2];
 
-      copypix->verts[0][0] = dstX0;
-      copypix->verts[0][1] = dstY0;
-      copypix->verts[0][2] = z;
-      copypix->verts[0][3] = 0.0F;
-      copypix->verts[0][4] = 0.0F;
-      copypix->verts[1][0] = dstX1;
-      copypix->verts[1][1] = dstY0;
-      copypix->verts[1][2] = z;
-      copypix->verts[1][3] = tex->Sright;
-      copypix->verts[1][4] = 0.0F;
-      copypix->verts[2][0] = dstX1;
-      copypix->verts[2][1] = dstY1;
-      copypix->verts[2][2] = z;
-      copypix->verts[2][3] = tex->Sright;
-      copypix->verts[2][4] = tex->Ttop;
-      copypix->verts[3][0] = dstX0;
-      copypix->verts[3][1] = dstY1;
-      copypix->verts[3][2] = z;
-      copypix->verts[3][3] = 0.0F;
-      copypix->verts[3][4] = tex->Ttop;
+      verts[0][0] = dstX0;
+      verts[0][1] = dstY0;
+      verts[0][2] = z;
+      verts[0][3] = 0.0F;
+      verts[0][4] = 0.0F;
+      verts[1][0] = dstX1;
+      verts[1][1] = dstY0;
+      verts[1][2] = z;
+      verts[1][3] = tex->Sright;
+      verts[1][4] = 0.0F;
+      verts[2][0] = dstX1;
+      verts[2][1] = dstY1;
+      verts[2][2] = z;
+      verts[2][3] = tex->Sright;
+      verts[2][4] = tex->Ttop;
+      verts[3][0] = dstX0;
+      verts[3][1] = dstY1;
+      verts[3][2] = z;
+      verts[3][3] = 0.0F;
+      verts[3][4] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(copypix->verts), copypix->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* Alloc/setup texture */
@@ -1235,6 +1318,104 @@ tiled_draw_pixels(GLcontext *ctx,
 
 
 /**
+ * One-time init for drawing stencil pixels.
+ */
+static void
+init_draw_stencil_pixels(GLcontext *ctx)
+{
+   /* This program is run eight times, once for each stencil bit.
+    * The stencil values to draw are found in an 8-bit alpha texture.
+    * We read the texture/stencil value and test if bit 'b' is set.
+    * If the bit is not set, use KIL to kill the fragment.
+    * Finally, we use the stencil test to update the stencil buffer.
+    *
+    * The basic algorithm for checking if a bit is set is:
+    *   if (is_odd(value / (1 << bit)))
+    *      result is one (or non-zero).
+    *   else
+    *      result is zero.
+    * The program parameter contains three values:
+    *   parm.x = 255 / (1 << bit)
+    *   parm.y = 0.5
+    *   parm.z = 0.0
+    */
+   static const char *program =
+      "!!ARBfp1.0\n"
+      "PARAM parm = program.local[0]; \n"
+      "TEMP t; \n"
+      "TEX t, fragment.texcoord[0], texture[0], %s; \n"   /* NOTE %s here! */
+      "# t = t * 255 / bit \n"
+      "MUL t.x, t.a, parm.x; \n"
+      "# t = (int) t \n"
+      "FRC t.y, t.x; \n"
+      "SUB t.x, t.x, t.y; \n"
+      "# t = t * 0.5 \n"
+      "MUL t.x, t.x, parm.y; \n"
+      "# t = fract(t.x) \n"
+      "FRC t.x, t.x; # if t.x != 0, then the bit is set \n"
+      "# t.x = (t.x == 0 ? 1 : 0) \n"
+      "SGE t.x, -t.x, parm.z; \n"
+      "KIL -t.x; \n"
+      "# for debug only \n"
+      "#MOV result.color, t.x; \n"
+      "END \n";
+   char program2[1000];
+   struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
+   struct temp_texture *tex = get_temp_texture(ctx);
+   const char *texTarget;
+
+   assert(drawpix->StencilFP == 0);
+
+   /* replace %s with "RECT" or "2D" */
+   assert(strlen(program) + 4 < sizeof(program2));
+   if (tex->Target == GL_TEXTURE_RECTANGLE)
+      texTarget = "RECT";
+   else
+      texTarget = "2D";
+   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+
+   _mesa_GenPrograms(1, &drawpix->StencilFP);
+   _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
+   _mesa_ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                          strlen(program2), (const GLubyte *) program2);
+}
+
+
+/**
+ * One-time init for drawing depth pixels.
+ */
+static void
+init_draw_depth_pixels(GLcontext *ctx)
+{
+   static const char *program =
+      "!!ARBfp1.0\n"
+      "PARAM color = program.local[0]; \n"
+      "TEX result.depth, fragment.texcoord[0], texture[0], %s; \n"
+      "MOV result.color, color; \n"
+      "END \n";
+   char program2[200];
+   struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
+   struct temp_texture *tex = get_temp_texture(ctx);
+   const char *texTarget;
+
+   assert(drawpix->DepthFP == 0);
+
+   /* replace %s with "RECT" or "2D" */
+   assert(strlen(program) + 4 < sizeof(program2));
+   if (tex->Target == GL_TEXTURE_RECTANGLE)
+      texTarget = "RECT";
+   else
+      texTarget = "2D";
+   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+
+   _mesa_GenPrograms(1, &drawpix->DepthFP);
+   _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->DepthFP);
+   _mesa_ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                          strlen(program2), (const GLubyte *) program2);
+}
+
+
+/**
  * Meta implementation of ctx->Driver.DrawPixels() in terms
  * of texture mapping and polygon rendering.
  */
@@ -1248,8 +1429,11 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
    struct temp_texture *tex = get_temp_texture(ctx);
    const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
+   const GLuint origStencilMask = ctx->Stencil.WriteMask[0];
+   GLfloat verts[4][5]; /* four verts of X,Y,Z,S,T */
    GLenum texIntFormat;
    GLboolean fallback, newTex;
+   GLbitfield metaExtraSave = 0x0;
 
    /*
     * Determine if we can do the glDrawPixels with texture mapping.
@@ -1261,7 +1445,38 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    }
 
    if (_mesa_is_color_format(format)) {
-      texIntFormat = GL_RGBA;
+      /* use more compact format when possible */
+      if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
+         texIntFormat = format;
+      else
+         texIntFormat = GL_RGBA;
+   }
+   else if (_mesa_is_stencil_format(format)) {
+      if (ctx->Extensions.ARB_fragment_program &&
+          type == GL_UNSIGNED_BYTE) {
+         /* We'll store stencil as alpha.  This only works for GLubyte
+          * image data because of how incoming values are mapped to alpha
+          * in [0,1].
+          */
+         texIntFormat = GL_ALPHA;
+         metaExtraSave = (META_COLOR_MASK |
+                          META_DEPTH_TEST |
+                          META_SHADER |
+                          META_STENCIL_TEST);
+      }
+      else {
+         fallback = GL_TRUE;
+      }
+   }
+   else if (_mesa_is_depth_format(format)) {
+      if (ctx->Extensions.ARB_depth_texture &&
+          ctx->Extensions.ARB_fragment_program) {
+         texIntFormat = GL_DEPTH_COMPONENT;
+         metaExtraSave = (META_SHADER);
+      }
+      else {
+         fallback = GL_TRUE;
+      }
    }
    else {
       fallback = GL_TRUE;
@@ -1290,7 +1505,8 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
                           META_TEXTURE |
                           META_TRANSFORM |
                           META_VERTEX |
-                          META_VIEWPORT));
+                          META_VIEWPORT |
+                          metaExtraSave));
 
    if (drawpix->ArrayObj == 0) {
       /* one-time setup */
@@ -1302,13 +1518,13 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &drawpix->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(drawpix->verts),
-                          drawpix->verts, GL_STREAM_DRAW_ARB);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(drawpix->verts[0]),
-                          (void*) (0 * sizeof(GLfloat)));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(drawpix->verts[0]),
+      _mesa_VertexPointer(3, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(verts[0]),
                             (void *) (3 * sizeof(GLfloat)));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1328,47 +1544,95 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       const GLfloat y1 = y + height * ctx->Pixel.ZoomY;
       const GLfloat z = ctx->Current.RasterPos[2];
 
-      drawpix->verts[0][0] = x0;
-      drawpix->verts[0][1] = y0;
-      drawpix->verts[0][2] = z;
-      drawpix->verts[0][3] = 0.0F;
-      drawpix->verts[0][4] = 0.0F;
-      drawpix->verts[1][0] = x1;
-      drawpix->verts[1][1] = y0;
-      drawpix->verts[1][2] = z;
-      drawpix->verts[1][3] = tex->Sright;
-      drawpix->verts[1][4] = 0.0F;
-      drawpix->verts[2][0] = x1;
-      drawpix->verts[2][1] = y1;
-      drawpix->verts[2][2] = z;
-      drawpix->verts[2][3] = tex->Sright;
-      drawpix->verts[2][4] = tex->Ttop;
-      drawpix->verts[3][0] = x0;
-      drawpix->verts[3][1] = y1;
-      drawpix->verts[3][2] = z;
-      drawpix->verts[3][3] = 0.0F;
-      drawpix->verts[3][4] = tex->Ttop;
+      verts[0][0] = x0;
+      verts[0][1] = y0;
+      verts[0][2] = z;
+      verts[0][3] = 0.0F;
+      verts[0][4] = 0.0F;
+      verts[1][0] = x1;
+      verts[1][1] = y0;
+      verts[1][2] = z;
+      verts[1][3] = tex->Sright;
+      verts[1][4] = 0.0F;
+      verts[2][0] = x1;
+      verts[2][1] = y1;
+      verts[2][2] = z;
+      verts[2][3] = tex->Sright;
+      verts[2][4] = tex->Ttop;
+      verts[3][0] = x0;
+      verts[3][1] = y1;
+      verts[3][2] = z;
+      verts[3][3] = 0.0F;
+      verts[3][4] = tex->Ttop;
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,
-                             sizeof(drawpix->verts), drawpix->verts);
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
 
    /* set given unpack params */
    ctx->Unpack = *unpack;
 
-   setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
-                         format, type, pixels);
+   _mesa_Enable(tex->Target);
+
+   if (_mesa_is_stencil_format(format)) {
+      /* Drawing stencil */
+      GLint bit;
+
+      if (!drawpix->StencilFP)
+         init_draw_stencil_pixels(ctx);
+
+      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+                            GL_ALPHA, type, pixels);
+
+      _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+      _mesa_set_enable(ctx, GL_STENCIL_TEST, GL_TRUE);
+      _mesa_StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+      _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
+      _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
+
+      for (bit = 0; bit < ctx->Visual.stencilBits; bit++) {
+         const GLuint mask = 1 << bit;
+         if (mask & origStencilMask) {
+            _mesa_StencilFunc(GL_ALWAYS, mask, mask);
+            _mesa_StencilMask(mask);
+
+            _mesa_ProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
+                                             255.0 / mask, 0.5, 0.0, 0.0);
+
+            _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+         }
+      }
+   }
+   else if (_mesa_is_depth_format(format)) {
+      /* Drawing depth */
+      if (!drawpix->DepthFP)
+         init_draw_depth_pixels(ctx);
+
+      _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->DepthFP);
+      _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
+
+      /* polygon color = current raster color */
+      _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
+                                        ctx->Current.RasterColor);
+
+      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+                            format, type, pixels);
+
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   }
+   else {
+      /* Drawing RGBA */
+      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+                            format, type, pixels);
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   }
+
+   _mesa_Disable(tex->Target);
 
    /* restore unpack params */
    ctx->Unpack = unpackSave;
-
-   _mesa_Enable(tex->Target);
-
-   /* draw textured quad */
-   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-   _mesa_Disable(tex->Target);
 
    _mesa_meta_end(ctx);
 }

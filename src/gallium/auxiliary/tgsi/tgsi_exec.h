@@ -232,6 +232,14 @@ struct tgsi_exec_machine
    uint LoopStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int LoopStackTop;
 
+   /** Loop label stack */
+   uint LoopLabelStack[TGSI_EXEC_MAX_LOOP_NESTING];
+   int LoopLabelStackTop;
+
+   /** Loop counter stack (x = count, y = current, z = step) */
+   struct tgsi_exec_vector LoopCounterStack[TGSI_EXEC_MAX_LOOP_NESTING];
+   int LoopCounterStackTop;
+   
    /** Loop continue mask stack (see comments in tgsi_exec.c) */
    uint ContStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int ContStackTop;

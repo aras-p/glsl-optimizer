@@ -45,6 +45,7 @@ static void i915_flush( struct pipe_context *pipe,
 
    draw_flush(i915->draw);
 
+#if 0
    /* Do we need to emit an MI_FLUSH command to flush the hardware
     * caches?
     */
@@ -63,6 +64,13 @@ static void i915_flush( struct pipe_context *pipe,
       }
       OUT_BATCH( flush );
    }
+#endif
+
+#if 0
+   if (i915->batch->map == i915->batch->ptr) {
+      return;
+   }
+#endif
 
    /* If there are no flags, just flush pending commands to hardware:
     */
@@ -74,5 +82,5 @@ static void i915_flush( struct pipe_context *pipe,
 
 void i915_init_flush_functions( struct i915_context *i915 )
 {
-   i915->pipe.flush = i915_flush;
+   i915->base.flush = i915_flush;
 }

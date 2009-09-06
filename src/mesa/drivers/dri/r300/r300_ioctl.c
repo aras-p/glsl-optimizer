@@ -138,7 +138,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 	GLuint cbpitch = 0;
 	r300ContextPtr rmesa = r300;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s: buffer %p (%i,%i %ix%i)\n",
 			__FUNCTION__, rrb, dPriv->x, dPriv->y,
 			dPriv->w, dPriv->h);
@@ -705,7 +705,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	int i, ret;
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "r300Clear\n");
 
 	if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
@@ -767,7 +767,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	}
 
 	if (swrast_mask) {
-		if (RADEON_DEBUG & DEBUG_FALLBACKS)
+		if (RADEON_DEBUG & RADEON_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",
 				__FUNCTION__, swrast_mask);
 		_swrast_Clear(ctx, swrast_mask);

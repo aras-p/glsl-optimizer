@@ -221,26 +221,6 @@ static void r200InitDriverFuncs( struct dd_function_table *functions )
     functions->GetString		= r200GetString;
 }
 
-static const struct dri_debug_control debug_control[] =
-{
-    { "fall",  DEBUG_FALLBACKS },
-    { "tex",   DEBUG_TEXTURE },
-    { "ioctl", DEBUG_IOCTL },
-    { "prim",  DEBUG_PRIMS },
-    { "vert",  DEBUG_VERTS },
-    { "state", DEBUG_STATE },
-    { "code",  DEBUG_CODEGEN },
-    { "vfmt",  DEBUG_VFMT },
-    { "vtxf",  DEBUG_VFMT },
-    { "verb",  DEBUG_VERBOSE },
-    { "dri",   DEBUG_DRI },
-    { "dma",   DEBUG_DMA },
-    { "san",   DEBUG_SANITY },
-    { "sync",  DEBUG_SYNC },
-    { "pix",   DEBUG_PIXEL },
-    { "mem",   DEBUG_MEMORY },
-    { NULL,    0 }
-};
 
 static void r200_get_lock(radeonContextPtr radeon)
 {
@@ -497,13 +477,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
-
-#if DO_DEBUG
-   R200_DEBUG  = driParseDebugString( getenv( "R200_DEBUG" ),
-				      debug_control );
-   R200_DEBUG |= driParseDebugString( getenv( "RADEON_DEBUG" ),
-				      debug_control );
-#endif
 
    tcl_mode = driQueryOptioni(&rmesa->radeon.optionCache, "tcl_mode");
    if (driQueryOptionb(&rmesa->radeon.optionCache, "no_rast")) {

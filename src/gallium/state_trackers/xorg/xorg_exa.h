@@ -8,6 +8,9 @@
 struct cso_context;
 struct xorg_shaders;
 
+/* src + mask + dst */
+#define MAX_EXA_SAMPLERS 3
+
 struct exa_context
 {
    ExaDriverPtr pExa;
@@ -18,6 +21,11 @@ struct exa_context
 
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
+
+   struct pipe_texture *bound_textures[MAX_EXA_SAMPLERS];
+   int num_bound_samplers;
+
+   float solid_color[4];
 };
 
 
@@ -27,6 +35,7 @@ struct exa_pixmap_priv
    int tex_flags;
 
    struct pipe_texture *tex;
+   struct pipe_texture *depth_stencil_tex;
    unsigned int color;
    struct pipe_surface *src_surf; /* for copies */
 

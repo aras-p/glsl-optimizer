@@ -28,16 +28,9 @@
 #ifndef I915_TEXTURE_H
 #define I915_TEXTURE_H
 
-struct i915_context;
-struct pipe_screen;
-
+struct i915_screen;
 
 extern void
-i915_init_texture_functions(struct i915_context *i915);
-
-
-extern void
-i915_init_screen_texture_functions(struct pipe_screen *screen);
-
+i915_init_screen_texture_functions(struct i915_screen *is);
 
 #endif /* I915_TEXTURE_H */

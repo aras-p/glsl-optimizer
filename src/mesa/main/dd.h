@@ -766,6 +766,8 @@ struct dd_function_table {
    /** Return the value or values of a selected parameter */
    GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
    /** Return the value or values of a selected parameter */
+   GLboolean (*GetInteger64v)(GLcontext *ctx, GLenum pname, GLint64 *result);
+   /** Return the value or values of a selected parameter */
    GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
    /*@}*/
    
@@ -783,9 +785,9 @@ struct dd_function_table {
    
    void (*DeleteBuffer)( GLcontext *ctx, struct gl_buffer_object *obj );
 
-   void (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
-		       const GLvoid *data, GLenum usage,
-		       struct gl_buffer_object *obj );
+   GLboolean (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+                            const GLvoid *data, GLenum usage,
+                            struct gl_buffer_object *obj );
 
    void (*BufferSubData)( GLcontext *ctx, GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,
@@ -1042,6 +1044,22 @@ struct dd_function_table {
     */
    void (*EndCallList)( GLcontext *ctx );
 
+
+#if FEATURE_ARB_sync
+   /**
+    * \name GL_ARB_sync interfaces
+    */
+   /*@{*/
+   struct gl_sync_object * (*NewSyncObject)(GLcontext *, GLenum);
+   void (*FenceSync)(GLcontext *, struct gl_sync_object *, GLenum, GLbitfield);
+   void (*DeleteSyncObject)(GLcontext *, struct gl_sync_object *);
+   void (*CheckSync)(GLcontext *, struct gl_sync_object *);
+   void (*ClientWaitSync)(GLcontext *, struct gl_sync_object *,
+			  GLbitfield, GLuint64);
+   void (*ServerWaitSync)(GLcontext *, struct gl_sync_object *,
+			  GLbitfield, GLuint64);
+   /*@}*/
+#endif
 };
 
 
@@ -1150,7 +1168,11 @@ typedef struct {
    void (GLAPIENTRYP DrawRangeElements)( GLenum mode, GLuint start,
 			      GLuint end, GLsizei count,
 			      GLenum type, const GLvoid *indices );
-   /*@}*/
+   void (GLAPIENTRYP MultiDrawElementsEXT)( GLenum mode, const GLsizei *count,
+					    GLenum type,
+					    const GLvoid **indices,
+					    GLsizei primcount);
+  /*@}*/
 
    /**
     * \name Eval

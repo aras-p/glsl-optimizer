@@ -831,11 +831,13 @@ _swrast_DrawPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLboolean save_vp_override = ctx->VertexProgram._Overriden;
 
-   /* We are creating fragments directly, without going through vertex programs.
+   /* We are creating fragments directly, without going through vertex
+    * programs.
     *
-    * This override flag tells the fragment processing code that its input comes
-    * from a non-standard source, and it may therefore not rely on optimizations
-    * that assume e.g. constant color if there is no color vertex array.
+    * This override flag tells the fragment processing code that its input
+    * comes from a non-standard source, and it may therefore not rely on
+    * optimizations that assume e.g. constant color if there is no color
+    * vertex array.
     */
    _mesa_set_vp_override(ctx, GL_TRUE);
 
@@ -847,7 +849,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-    pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
+    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
     if (!pixels) {
        swrast_render_finish(ctx);
        _mesa_set_vp_override(ctx, save_vp_override);
@@ -892,58 +894,5 @@ _swrast_DrawPixels( GLcontext *ctx,
    swrast_render_finish(ctx);
    _mesa_set_vp_override(ctx, save_vp_override);
 
-   _mesa_unmap_drawpix_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 }
-
-
-
-#if 0  /* experimental */
-/*
- * Execute glDrawDepthPixelsMESA().
- */
-void
-_swrast_DrawDepthPixelsMESA( GLcontext *ctx,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height,
-                             GLenum colorFormat, GLenum colorType,
-                             const GLvoid *colors,
-                             GLenum depthType, const GLvoid *depths,
-                             const struct gl_pixelstore_attrib *unpack )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   if (swrast->NewState)
-      _swrast_validate_derived( ctx );
-
-   swrast_render_start(ctx);
-
-   switch (colorFormat) {
-   case GL_COLOR_INDEX:
-      if (ctx->Visual.rgbMode)
-	 draw_rgba_pixels(ctx, x,y, width, height, colorFormat, colorType,
-                          unpack, colors);
-      else
-	 draw_index_pixels(ctx, x, y, width, height, colorType,
-                           unpack, colors);
-      break;
-   case GL_RED:
-   case GL_GREEN:
-   case GL_BLUE:
-   case GL_ALPHA:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE_ALPHA:
-   case GL_RGB:
-   case GL_BGR:
-   case GL_RGBA:
-   case GL_BGRA:
-   case GL_ABGR_EXT:
-      draw_rgba_pixels(ctx, x, y, width, height, colorFormat, colorType,
-                       unpack, colors);
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected format in glDrawDepthPixelsMESA");
-   }
-
-   swrast_render_finish(ctx);
-}
-#endif

@@ -62,7 +62,7 @@ struct blit_state
    struct pipe_viewport_state viewport;
 
    void *vs;
-   void *fs;
+   void *fs[TGSI_WRITEMASK_XYZW + 1];
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -125,7 +125,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    }
 
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe);
+   ctx->fs[TGSI_WRITEMASK_XYZW] = util_make_fragment_tex_shader(pipe);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -146,9 +146,13 @@ void
 util_destroy_blit(struct blit_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
+   unsigned i;
 
    pipe->delete_vs_state(pipe, ctx->vs);
-   pipe->delete_fs_state(pipe, ctx->fs);
+
+   for (i = 0; i < Elements(ctx->fs); i++)
+      if (ctx->fs[i])
+         pipe->delete_fs_state(pipe, ctx->fs[i]);
 
    pipe_buffer_reference(&ctx->vbuf, NULL);
 
@@ -299,14 +303,15 @@ regions_overlap(int srcX0, int srcY0,
  * XXX need some control over blitting Z and/or stencil.
  */
 void
-util_blit_pixels(struct blit_state *ctx,
-                 struct pipe_surface *src,
-                 int srcX0, int srcY0,
-                 int srcX1, int srcY1,
-                 struct pipe_surface *dst,
-                 int dstX0, int dstY0,
-                 int dstX1, int dstY1,
-                 float z, uint filter)
+util_blit_pixels_writemask(struct blit_state *ctx,
+                           struct pipe_surface *src,
+                           int srcX0, int srcY0,
+                           int srcX1, int srcY1,
+                           struct pipe_surface *dst,
+                           int dstX0, int dstY0,
+                           int dstX1, int dstY1,
+                           float z, uint filter,
+                           uint writemask)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -426,8 +431,11 @@ util_blit_pixels(struct blit_state *ctx,
    /* texture */
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
+   if (ctx->fs[writemask] == NULL)
+      ctx->fs[writemask] = util_make_fragment_tex_shader_writemask(pipe, writemask);
+
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* drawing dest */
@@ -459,6 +467,27 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
 
    pipe_texture_reference(&tex, NULL);
+}
+
+
+void
+util_blit_pixels(struct blit_state *ctx,
+                 struct pipe_surface *src,
+                 int srcX0, int srcY0,
+                 int srcX1, int srcY1,
+                 struct pipe_surface *dst,
+                 int dstX0, int dstY0,
+                 int dstX1, int dstY1,
+                 float z, uint filter )
+{
+   util_blit_pixels_writemask( ctx, src, 
+                               srcX0, srcY0,
+                               srcX1, srcY1,
+                               dst,
+                               dstX0, dstY0,
+                               dstX1, dstY1,
+                               z, filter,
+                               TGSI_WRITEMASK_XYZW );
 }
 
 
@@ -535,7 +564,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[TGSI_WRITEMASK_XYZW]);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* drawing dest */

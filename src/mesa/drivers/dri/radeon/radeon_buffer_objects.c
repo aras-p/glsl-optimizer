@@ -78,9 +78,10 @@ radeonDeleteBufferObject(GLcontext * ctx,
  * Allocate space for and store data in a buffer object.  Any data that was
  * previously stored in the buffer object is lost.  If data is NULL,
  * memory will be allocated, but no copy will occur.
- * Called via glBufferDataARB().
+ * Called via ctx->Driver.BufferData().
+ * \return GL_TRUE for success, GL_FALSE if out of memory
  */
-static void
+static GLboolean
 radeonBufferData(GLcontext * ctx,
                  GLenum target,
                  GLsizeiptrARB size,
@@ -107,6 +108,9 @@ radeonBufferData(GLcontext * ctx,
                                         RADEON_GEM_DOMAIN_GTT,
                                         0);
 
+        if (!radeon_obj->bo)
+            return GL_FALSE;
+
         if (data != NULL) {
             radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
@@ -115,6 +119,7 @@ radeonBufferData(GLcontext * ctx,
             radeon_bo_unmap(radeon_obj->bo);
         }
     }
+    return GL_TRUE;
 }
 
 /**

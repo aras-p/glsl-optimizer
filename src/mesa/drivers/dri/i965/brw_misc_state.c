@@ -172,6 +172,7 @@ static void prepare_psp_urb_cbs(struct brw_context *brw)
    brw_add_validated_bo(brw, brw->vs.state_bo);
    brw_add_validated_bo(brw, brw->gs.state_bo);
    brw_add_validated_bo(brw, brw->clip.state_bo);
+   brw_add_validated_bo(brw, brw->sf.state_bo);
    brw_add_validated_bo(brw, brw->wm.state_bo);
    brw_add_validated_bo(brw, brw->cc.state_bo);
 }

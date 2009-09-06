@@ -1277,8 +1277,10 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.set_sampler_textures = trace_context_set_sampler_textures;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_vertex_elements = trace_context_set_vertex_elements;
-   tr_ctx->base.surface_copy = trace_context_surface_copy;
-   tr_ctx->base.surface_fill = trace_context_surface_fill;
+   if (pipe->surface_copy)
+      tr_ctx->base.surface_copy = trace_context_surface_copy;
+   if (pipe->surface_fill)
+      tr_ctx->base.surface_fill = trace_context_surface_fill;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.flush = trace_context_flush;
    tr_ctx->base.is_texture_referenced = trace_is_texture_referenced;

@@ -32,7 +32,6 @@
 #include "util/u_pack_color.h"
 
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_reg.h"
 #include "i915_state.h"
 #include "i915_batch.h"

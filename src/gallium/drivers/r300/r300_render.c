@@ -233,7 +233,8 @@ static void r300_render_draw(struct vbuf_render* render,
     OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS; */
 
-    BEGIN_CS(2 + (count+1)/2);
+    BEGIN_CS(4 + (count+1)/2);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);

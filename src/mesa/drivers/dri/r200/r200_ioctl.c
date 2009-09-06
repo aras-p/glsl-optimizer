@@ -190,7 +190,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    GLuint color_mask = 0;
    GLuint orig_mask = mask;
 
-   if ( R200_DEBUG & DEBUG_IOCTL ) {
+   if ( R200_DEBUG & RADEON_IOCTL ) {
 	   if (rmesa->radeon.sarea)
 	       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
 	   else
@@ -229,7 +229,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    }
 
    if ( mask ) {
-      if (R200_DEBUG & DEBUG_FALLBACKS)
+      if (R200_DEBUG & RADEON_FALLBACKS)
 	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
       _swrast_Clear( ctx, mask );
    }
@@ -274,7 +274,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    drm_radeon_mem_alloc_t alloc;
    int ret;
 
-   if (R200_DEBUG & DEBUG_IOCTL)
+   if (R200_DEBUG & RADEON_IOCTL)
       fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq,
 	      writefreq, priority);
 
@@ -314,7 +314,7 @@ void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
    drm_radeon_mem_free_t memfree;
    int ret;
 
-   if (R200_DEBUG & DEBUG_IOCTL)
+   if (R200_DEBUG & RADEON_IOCTL)
       fprintf(stderr, "%s %p\n", __FUNCTION__, pointer);
 
    if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeon.radeonScreen->gartTextures.map) {
@@ -370,7 +370,7 @@ GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 		offset >= 0 &&
 		offset + size < rmesa->radeon.radeonScreen->gartTextures.size);
 
-   if (R200_DEBUG & DEBUG_IOCTL)
+   if (R200_DEBUG & RADEON_IOCTL)
       fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
 
    return valid;

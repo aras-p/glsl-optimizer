@@ -33,8 +33,8 @@
 #include "main/mtypes.h"
 #include "main/imports.h"
 
+#include "radeon_debug.h"
 #include "r600_context.h"
-#include "r700_debug.h"
 
 #include "r700_assembler.h"
 
@@ -366,8 +366,8 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
     case SQ_OP2_INST_COS:
         return 1;
         
-    default: r700_error(TODO_ASM_NEEDIMPINST, 
-                        "Need instruction operand number. \n");;
+    default: radeon_error(
+		    "Need instruction operand number for %x.\n", pAsm->D.dst.opcode);
     };
 
     return 3;
@@ -531,7 +531,7 @@ int check_current_clause(r700_AssemblerBase* pAsm,
 		case CF_EMPTY_CLAUSE:
 			break;
 		default:
-            r700_error(ERROR_ASM_VTX_CLAUSE,
+            radeon_error(
                        "Unknown CF_CLAUSE_TYPE (%d) in check_current_clause. \n", (int) new_clause_type);
 			return GL_FALSE;
 		}
@@ -565,7 +565,7 @@ int check_current_clause(r700_AssemblerBase* pAsm,
                 }
                 else 
                 {
-                    r700_error(ERROR_ASM_ALLOCEXPORTCF,
+                    radeon_error(
                                "Error allocating new EXPORT CF instruction in check_current_clause. \n");
                     return GL_FALSE;
                 }
@@ -578,7 +578,7 @@ int check_current_clause(r700_AssemblerBase* pAsm,
             pAsm->cf_current_clause_type = CF_OTHER_CLAUSE;
             break;
         default:
-            r700_error(ERROR_ASM_UNKOWNCLAUSE,
+            radeon_error(
                        "Unknown CF_CLAUSE_TYPE (%d) in check_current_clause. \n", (int) new_clause_type);
             return GL_FALSE;
         }
@@ -611,7 +611,7 @@ GLboolean add_vfetch_instruction(r700_AssemblerBase*     pAsm,
 		}
 		else 
 		{
-            r700_error(ERROR_ASM_ALLOCVTXCF, "Could not allocate a new VFetch CF instruction.");
+            radeon_error("Could not allocate a new VFetch CF instruction.\n");
 			return GL_FALSE;
 		}
 
@@ -661,7 +661,7 @@ GLboolean add_tex_instruction(r700_AssemblerBase*     pAsm,
 		}
 		else 
 		{
-            r700_error(ERROR_ASM_ALLOCTEXCF, "Could not allocate a new TEX CF instruction.");
+            radeon_error("Could not allocate a new TEX CF instruction.\n");
 			return GL_FALSE;
 		}
         
@@ -1047,7 +1047,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             }
             break;      
         default:
-            r700_error(ERROR_ASM_SRCARGUMENT, "Invalid source argument type");          
+            radeon_error("Invalid source argument type\n");
             return GL_FALSE;
         }
     } 
@@ -1094,7 +1094,7 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
         }
         break;   
     default:
-        r700_error(ERROR_ASM_DSTARGUMENT, "Invalid destination output argument type");
+        radeon_error("Invalid destination output argument type\n");
         return GL_FALSE;
     }
 
@@ -1134,7 +1134,7 @@ GLboolean tex_dst(r700_AssemblerBase *pAsm)
     }
     else 
     {
-        r700_error(ERROR_ASM_DSTARGUMENT, "Invalid destination output argument type");
+        radeon_error("Invalid destination output argument type\n");
         return GL_FALSE;
     }
 
@@ -1188,7 +1188,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
     }
     else
     {
-        r700_error(ERROR_ASM_BADTEXSRC, "Invalid source texcoord for TEX instruction");
+        radeon_error("Invalid source texcoord for TEX instruction\n");
         return GL_FALSE;
     }
 
@@ -1269,7 +1269,7 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     }
     else 
     {
-        r700_error(ERROR_ASM_TEXDSTBADTYPE, "Only temp destination registers supported for TEX dest regs.");
+        radeon_error("Only temp destination registers supported for TEX dest regs.\n");
         return GL_FALSE;
     }
 
@@ -1362,7 +1362,7 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
         }
         else
         {
-            r700_error(ERROR_ASM_ALUSRCBADTYPE, "Source (%d) register type (%d) not one of TEMP, INPUT, or CONSTANT.", 
+            radeon_error("Source (%d) register type (%d) not one of TEMP, INPUT, or CONSTANT.\n",
                      source_index, pSource->rtype);
             return GL_FALSE;
         }
@@ -1397,7 +1397,7 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
             src_chan = SQ_CHAN_X; 
             break;
         default:
-            r700_error(ERROR_ASM_ALUSRCSELECT, "Unknown source select value (%d) in assemble_alu_src().");
+            radeon_error("Unknown source select value (%d) in assemble_alu_src().\n", channel_swizzle);
             return GL_FALSE;
             break;
     }
@@ -1432,7 +1432,7 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
             alu_instruction_ptr->m_Word1_OP3.f.src2_neg  = src_neg;
             break;
         default:
-            r700_error(ERROR_ASM_ALUSRCNUMBER, "Only three sources allowed in ALU opcodes.");
+            radeon_error("Only three sources allowed in ALU opcodes.\n");
           return GL_FALSE;
           break;
     }
@@ -1467,7 +1467,7 @@ GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
         }
         else 
         {
-            r700_error(ERROR_ASM_ALLOCALUCF, "Could not allocate a new ALU CF instruction.");
+            radeon_error("Could not allocate a new ALU CF instruction.\n");
             return GL_FALSE;
         }
 
@@ -1635,7 +1635,7 @@ GLboolean reserve_cfile(r700_AssemblerBase* pAsm,
     }
     else 
     {
-        r700_error(ERROR_ASM_CONSTCHANNEL, "All cfile read ports are used, cannot reference C$sel, channel $chan.");
+        radeon_error("All cfile read ports are used, cannot reference C$sel, channel $chan.\n");
         return GL_FALSE;
     }
     return GL_TRUE;
@@ -1649,7 +1649,7 @@ GLboolean reserve_gpr(r700_AssemblerBase* pAsm, GLuint sel, GLuint chan, GLuint 
     }
     else if(pAsm->hw_gpr[cycle][chan] != (int)sel) 
     {
-        r700_error(ERROR_ASM_BADGPRRESERVE, "Another scalar operation has already used GPR read port for given channel");
+        radeon_error("Another scalar operation has already used GPR read port for given channel\n");
         return GL_FALSE;
     }
 
@@ -1689,7 +1689,7 @@ GLboolean cycle_for_scalar_bank_swizzle(const int swiz, const int sel, GLuint* p
             }
             break;
         default:
-            r700_error(ERROR_ASM_BADSCALARBZ, "Bad Scalar bank swizzle value");
+            radeon_error("Bad Scalar bank swizzle value\n");
             break;
     }
 
@@ -1737,7 +1737,7 @@ GLboolean cycle_for_vector_bank_swizzle(const int swiz, const int sel, GLuint* p
             }
             break;
         default:
-            r700_error(ERROR_ASM_BADVECTORBZ, "Bad Vec bank swizzle value");
+            radeon_error("Bad Vec bank swizzle value\n");
             return GL_FALSE;
             break;
     }
@@ -2056,7 +2056,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         }
         else 
         {
-            r700_error(ERROR_ASM_ALUDSTBADTYPE, "Only temp destination registers supported for ALU dest regs.");
+            radeon_error("Only temp destination registers supported for ALU dest regs.\n");
             return GL_FALSE;
         }
 
@@ -2207,13 +2207,13 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
 	    if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX) {
 		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE) ) 
 		    {
-			    r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling TEX instruction");
+			    radeon_error("Error assembling TEX instruction\n");
 			    return GL_FALSE;
 		    }
 	    } else {
 		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE) ) 
 		    {
-			    r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling TEX instruction");
+			    radeon_error("Error assembling TEX instruction\n");
 			    return GL_FALSE;
 		    }
 	    }
@@ -2222,7 +2222,7 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
     {   //ALU      
         if( GL_FALSE == assemble_alu_instruction(pAsm) ) 
         {
-            r700_error(ERROR_ASM_TEXINSTRUCTION, "Error assembling ALU instruction");
+            radeon_error("Error assembling ALU instruction\n");
             return GL_FALSE;
         }
     } 
@@ -2367,7 +2367,7 @@ GLboolean assemble_ADD(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_BAD(char *opcode_str) 
 {
-    r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction (%s)", opcode_str);
+    radeon_error("Not yet implemented instruction (%s)\n", opcode_str);
     return GL_FALSE;
 }
 
@@ -3381,7 +3381,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 
     if (GL_TRUE == src_const) 
     {
-        r700_error(TODO_ASM_CONSTTEXADDR, "TODO: Texture coordinates from a constant register not supported.");
+        radeon_error("TODO: Texture coordinates from a constant register not supported.\n");
         return GL_FALSE;
     }
 
@@ -3391,7 +3391,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;            
             break;
         case OPCODE_TXB:            
-            r700_error(TODO_ASM_TXB, "do not support TXB yet");
+            radeon_error("do not support TXB yet\n");
             return GL_FALSE;
             break;
         case OPCODE_TXP:            
@@ -3399,7 +3399,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
             break;
         default:
-            r700_error(ERROR_ASM_BADTEXINST, "Internal error: bad texture op (not TEX)");
+            radeon_error("Internal error: bad texture op (not TEX)\n");
             return GL_FALSE;
             break;
     }
@@ -3581,12 +3581,12 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
             break;  
 
         case OPCODE_ARL: 
-            r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction OPCODE_ARL ");
+            radeon_error("Not yet implemented instruction OPCODE_ARL \n");
             //if ( GL_FALSE == assemble_BAD("ARL") ) 
                 return GL_FALSE;
             break;
         case OPCODE_ARR: 
-            r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction OPCODE_ARR ");
+            radeon_error("Not yet implemented instruction OPCODE_ARR \n");
             //if ( GL_FALSE == assemble_BAD("ARR") ) 
                 return GL_FALSE;
             break;
@@ -3617,7 +3617,7 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
                 return GL_FALSE;
             break;  
         case OPCODE_EXP: 
-            r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction OPCODE_EXP ");
+            radeon_error("Not yet implemented instruction OPCODE_EXP \n");
             //if ( GL_FALSE == assemble_BAD("EXP") ) 
                 return GL_FALSE;
             break; // approx of EX2
@@ -3653,7 +3653,7 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
                 return GL_FALSE;
             break;  
         case OPCODE_LOG: 
-            r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction OPCODE_LOG ");
+            radeon_error("Not yet implemented instruction OPCODE_LOG \n");
             //if ( GL_FALSE == assemble_BAD("LOG") ) 
                 return GL_FALSE;
             break; // approx of LG2
@@ -3752,7 +3752,7 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
                 return GL_FALSE;
             break;
         case OPCODE_ELSE : 
-            r700_error(TODO_ASM_NEEDIMPINST, "Not yet implemented instruction OPCODE_ELSE ");
+            radeon_error("Not yet implemented instruction OPCODE_ELSE \n");
             //if ( GL_FALSE == assemble_BAD("ELSE") ) 
                 return GL_FALSE;
             break;
@@ -3774,7 +3774,7 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
             return GL_TRUE;
 
         default:
-            r700_error(ERROR_ASM_UNKNOWNILINST, "internal: unknown instruction");
+            radeon_error("internal: unknown instruction\n");
             return GL_FALSE;
         }
     }
@@ -3818,7 +3818,7 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
             break;
 
         default:
-            r700_error(ERROR_ASM_BADEXPORTTYPE, "Unknown export type: %d", type);
+            radeon_error("Unknown export type: %d\n", type);
             return GL_FALSE;
             break;
     }
