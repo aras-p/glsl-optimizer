@@ -558,7 +558,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      key.tiling = 0;
+      key.tiling = I915_TILING_X;
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
