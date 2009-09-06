@@ -96,7 +96,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
 
     memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
-    compiler.Base.Debug = 1;
+    compiler.Base.Debug = DBG_ON(r300, DBG_FP);
 
     compiler.code = &fs->code;
     compiler.is_r500 = r300_screen(r300->context.screen)->caps->is_r500;

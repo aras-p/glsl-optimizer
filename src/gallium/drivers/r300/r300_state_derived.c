@@ -195,13 +195,13 @@ static void r300_vertex_psc(struct r300_context* r300,
      * and not on attrib information. */
     if (r300screen->caps->has_tcl) {
         attrib_count = r300->vs->info.num_inputs;
-        debug_printf("r300: routing %d attribs in psc for vs\n",
+        DBG(r300, DBG_DRAW, "r300: routing %d attribs in psc for vs\n",
                 attrib_count);
     } else {
         attrib_count = vinfo->num_attribs;
-        debug_printf("r300: attrib count: %d\n", attrib_count);
+        DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
         for (i = 0; i < attrib_count; i++) {
-            debug_printf("r300: attrib: offset %d, interp %d, size %d,"
+            DBG(r300, DBG_DRAW, "r300: attrib: offset %d, interp %d, size %d,"
                    " tab %d\n", vinfo->attrib[i].src_index,
                    vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
                    tab[i]);
@@ -299,18 +299,18 @@ static void r300_update_fs_tab(struct r300_context* r300)
     }
 
     /* Now that we know where everything is... */
-    debug_printf("r300: fp input count: %d\n", info->num_inputs);
+    DBG(r300, DBG_DRAW, "r300: fp input count: %d\n", info->num_inputs);
     for (i = 0; i < info->num_inputs; i++) {
         switch (tab[i]) {
             case INTERP_LINEAR:
-                debug_printf("r300: attrib: "
+                DBG(r300, DBG_DRAW, "r300: attrib: "
                         "stack offset %d, color,    tab %d\n",
                         i, cols_emitted);
                 tab[i] = cols_emitted;
                 cols_emitted++;
                 break;
             case INTERP_PERSPECTIVE:
-                debug_printf("r300: attrib: "
+                DBG(r300, DBG_DRAW, "r300: attrib: "
                         "stack offset %d, texcoord, tab %d\n",
                         i, cols + texs);
                 tab[i] = cols + texs;

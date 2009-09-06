@@ -490,7 +490,7 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
-    debug_printf("r300: Preparing vertex buffer %p for render, "
+    DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
             "vertex size %d\n", r300->vbo,
             r300->vertex_info.vinfo.size);
     /* Set the pointer to our vertex buffer. The emitted values are this:

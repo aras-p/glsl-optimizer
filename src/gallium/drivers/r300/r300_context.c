@@ -146,6 +146,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.winsys = (struct pipe_winsys*)r300_winsys;
     r300->context.screen = r300_screen(screen);
 
+    r300_init_debug(r300);
+
     r300->context.destroy = r300_destroy_context;
 
     r300->context.clear = r300_clear;
