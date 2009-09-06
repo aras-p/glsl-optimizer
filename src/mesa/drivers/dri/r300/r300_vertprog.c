@@ -41,7 +41,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 
 #include "compiler/radeon_compiler.h"
-#include "compiler/radeon_nqssadce.h"
 #include "radeon_mesa_to_rc.h"
 #include "r300_context.h"
 #include "r300_state.h"

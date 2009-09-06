@@ -93,6 +93,41 @@ void rc_error(struct radeon_compiler * c, const char * fmt, ...)
 	}
 }
 
+int rc_if_fail_helper(struct radeon_compiler * c, const char * file, int line, const char * assertion)
+{
+	rc_error(c, "ICE at %s:%i: assertion failed: %s\n", file, line, assertion);
+	return 1;
+}
+
+/**
+ * Recompute c->Program.InputsRead and c->Program.OutputsWritten
+ * based on which inputs and outputs are actually referenced
+ * in program instructions.
+ */
+void rc_calculate_inputs_outputs(struct radeon_compiler * c)
+{
+	struct rc_instruction *inst;
+
+	c->Program.InputsRead = 0;
+	c->Program.OutputsWritten = 0;
+
+	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next)
+	{
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		int i;
+
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->I.SrcReg[i].File == RC_FILE_INPUT)
+				c->Program.InputsRead |= 1 << inst->I.SrcReg[i].Index;
+		}
+
+		if (opcode->HasDstReg) {
+			if (inst->I.DstReg.File == RC_FILE_OUTPUT)
+				c->Program.OutputsWritten |= 1 << inst->I.DstReg.Index;
+		}
+	}
+}
+
 /**
  * Rewrite the program such that everything that source the given input
  * register will source new_input instead.

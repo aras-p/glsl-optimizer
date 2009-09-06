@@ -34,15 +34,13 @@
 #define __R500_FRAGPROG_H_
 
 #include "radeon_compiler.h"
-#include "radeon_nqssadce.h"
+#include "radeon_swizzle.h"
 
 extern void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
 extern void r500FragmentProgramDump(struct rX00_fragment_program_code *c);
 
-extern int r500FPIsNativeSwizzle(rc_opcode opcode, struct rc_src_register reg);
-
-extern void r500FPBuildSwizzle(struct nqssadce_state *s, struct rc_dst_register dst, struct rc_src_register src);
+extern struct rc_swizzle_caps r500_swizzle_caps;
 
 extern int r500_transform_TEX(
 	struct radeon_compiler * c,

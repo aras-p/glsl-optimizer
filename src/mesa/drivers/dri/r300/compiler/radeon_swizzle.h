@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Nicolai Haehnle.
+ * Copyright (C) 2009 Nicolai Haehnle.
  *
  * All Rights Reserved.
  *
@@ -25,14 +25,33 @@
  *
  */
 
-#ifndef __R300_FRAGPROG_SWIZZLE_H_
-#define __R300_FRAGPROG_SWIZZLE_H_
+#ifndef RADEON_SWIZZLE_H
+#define RADEON_SWIZZLE_H
 
-#include "radeon_swizzle.h"
+#include "radeon_program.h"
 
-extern struct rc_swizzle_caps r300_swizzle_caps;
+struct rc_swizzle_split {
+	unsigned char NumPhases;
+	unsigned char Phase[4];
+};
 
-unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle);
-unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle);
+/**
+ * Describe the swizzling capability of target hardware.
+ */
+struct rc_swizzle_caps {
+	/**
+	 * Check whether the given swizzle, absolute and negate combination
+	 * can be implemented natively by the hardware for this opcode.
+	 *
+	 * \return 1 if the swizzle is native for the given opcode
+	 */
+	int (*IsNative)(rc_opcode opcode, struct rc_src_register reg);
 
-#endif /* __R300_FRAGPROG_SWIZZLE_H_ */
+	/**
+	 * Determine how to split access to the masked channels of the
+	 * given source register to obtain ALU-native swizzles.
+	 */
+	void (*Split)(struct rc_src_register reg, unsigned int mask, struct rc_swizzle_split * split);
+};
+
+#endif /* RADEON_SWIZZLE_H */

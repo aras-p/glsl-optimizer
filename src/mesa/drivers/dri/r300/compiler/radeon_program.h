@@ -33,101 +33,10 @@
 
 #include "radeon_opcodes.h"
 #include "radeon_code.h"
+#include "radeon_program_constants.h"
+#include "radeon_dataflow.h"
 
 struct radeon_compiler;
-
-typedef enum {
-	RC_SATURATE_NONE = 0,
-	RC_SATURATE_ZERO_ONE,
-	RC_SATURATE_MINUS_PLUS_ONE
-} rc_saturate_mode;
-
-typedef enum {
-	RC_TEXTURE_2D_ARRAY,
-	RC_TEXTURE_1D_ARRAY,
-	RC_TEXTURE_CUBE,
-	RC_TEXTURE_3D,
-	RC_TEXTURE_RECT,
-	RC_TEXTURE_2D,
-	RC_TEXTURE_1D
-} rc_texture_target;
-
-typedef enum {
-	/**
-	 * Used to indicate unused register descriptions and
-	 * source register that use a constant swizzle.
-	 */
-	RC_FILE_NONE = 0,
-	RC_FILE_TEMPORARY,
-
-	/**
-	 * Input register.
-	 *
-	 * \note The compiler attaches no implicit semantics to input registers.
-	 * Fragment/vertex program specific semantics must be defined explicitly
-	 * using the appropriate compiler interfaces.
-	 */
-	RC_FILE_INPUT,
-
-	/**
-	 * Output register.
-	 *
-	 * \note The compiler attaches no implicit semantics to input registers.
-	 * Fragment/vertex program specific semantics must be defined explicitly
-	 * using the appropriate compiler interfaces.
-	 */
-	RC_FILE_OUTPUT,
-	RC_FILE_ADDRESS,
-
-	/**
-	 * Indicates a constant from the \ref rc_constant_list .
-	 */
-	RC_FILE_CONSTANT
-} rc_register_file;
-
-#define RC_REGISTER_INDEX_BITS 10
-#define RC_REGISTER_MAX_INDEX (1 << RC_REGISTER_INDEX_BITS)
-
-typedef enum {
-	RC_SWIZZLE_X = 0,
-	RC_SWIZZLE_Y,
-	RC_SWIZZLE_Z,
-	RC_SWIZZLE_W,
-	RC_SWIZZLE_ZERO,
-	RC_SWIZZLE_ONE,
-	RC_SWIZZLE_HALF,
-	RC_SWIZZLE_UNUSED
-} rc_swizzle;
-
-#define RC_MAKE_SWIZZLE(a,b,c,d) (((a)<<0) | ((b)<<3) | ((c)<<6) | ((d)<<9))
-#define RC_MAKE_SWIZZLE_SMEAR(a) RC_MAKE_SWIZZLE((a),(a),(a),(a))
-#define GET_SWZ(swz, idx)      (((swz) >> ((idx)*3)) & 0x7)
-#define GET_BIT(msk, idx)      (((msk) >> (idx)) & 0x1)
-
-#define RC_SWIZZLE_XYZW RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_W)
-#define RC_SWIZZLE_XXXX RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_X)
-#define RC_SWIZZLE_YYYY RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_Y)
-#define RC_SWIZZLE_ZZZZ RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_Z)
-#define RC_SWIZZLE_WWWW RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_W)
-#define RC_SWIZZLE_0000 RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_ZERO)
-#define RC_SWIZZLE_1111 RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_ONE)
-
-/**
- * \name Bitmasks for components of vectors.
- *
- * Used for write masks, negation masks, etc.
- */
-/*@{*/
-#define RC_MASK_NONE 0
-#define RC_MASK_X 1
-#define RC_MASK_Y 2
-#define RC_MASK_Z 4
-#define RC_MASK_W 8
-#define RC_MASK_XY (RC_MASK_X|RC_MASK_Y)
-#define RC_MASK_XYZ (RC_MASK_X|RC_MASK_Y|RC_MASK_Z)
-#define RC_MASK_XYW (RC_MASK_X|RC_MASK_Y|RC_MASK_W)
-#define RC_MASK_XYZW (RC_MASK_X|RC_MASK_Y|RC_MASK_Z|RC_MASK_W)
-/*@}*/
 
 struct rc_src_register {
 	rc_register_file File:3;
@@ -198,6 +107,15 @@ struct rc_instruction {
 	struct rc_instruction * Next;
 
 	struct rc_sub_instruction I;
+
+	/**
+	 * Dataflow annotations.
+	 *
+	 * These are not supplied by the caller of the compiler,
+	 * but filled in during compilation stages that make use of
+	 * dataflow analysis.
+	 */
+	struct rc_instruction_dataflow Dataflow;
 };
 
 struct rc_program {
@@ -292,6 +210,10 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
 struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after);
 void rc_remove_instruction(struct rc_instruction * inst);
 
-void rc_print_program(const struct rc_program *prog);
+enum {
+	RC_PRINT_DATAFLOW = 0x1
+};
+
+void rc_print_program(const struct rc_program *prog, unsigned int flags);
 
 #endif

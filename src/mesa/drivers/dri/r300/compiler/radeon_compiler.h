@@ -27,6 +27,7 @@
 #include "radeon_code.h"
 #include "radeon_program.h"
 
+struct rc_swizzle_caps;
 
 struct radeon_compiler {
 	struct memory_pool Pool;
@@ -34,6 +35,14 @@ struct radeon_compiler {
 	unsigned Debug:1;
 	unsigned Error:1;
 	char * ErrorMsg;
+
+	/**
+	 * Variables used internally, not be touched by callers
+	 * of the compiler
+	 */
+	/*@{*/
+	struct rc_swizzle_caps * SwizzleCaps;
+	/*@}*/
 };
 
 void rc_init(struct radeon_compiler * c);
@@ -41,6 +50,23 @@ void rc_destroy(struct radeon_compiler * c);
 
 void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
 void rc_error(struct radeon_compiler * c, const char * fmt, ...);
+
+int rc_if_fail_helper(struct radeon_compiler * c, const char * file, int line, const char * assertion);
+
+/**
+ * This macro acts like an if-statement that can be used to implement
+ * non-aborting assertions in the compiler.
+ *
+ * It checks whether \p cond is true. If not, an internal compiler error is
+ * flagged and the if-clause is run.
+ *
+ * A typical use-case would be:
+ *
+ *  if (rc_assert(c, condition-that-must-be-true))
+ *  	return;
+ */
+#define rc_assert(c, cond) \
+	(!(cond) && rc_if_fail_helper(c, __FILE__, __LINE__, #cond))
 
 void rc_calculate_inputs_outputs(struct radeon_compiler * c);
 

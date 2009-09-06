@@ -40,13 +40,15 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_ABS,
 		.Name = "ABS",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_ADD,
 		.Name = "ADD",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_ARL,
@@ -58,25 +60,29 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_CMP,
 		.Name = "CMP",
 		.NumSrcRegs = 3,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_COS,
 		.Name = "COS",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_DDX,
 		.Name = "DDX",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_DDY,
 		.Name = "DDY",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_DP3,
@@ -106,7 +112,8 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_EX2,
 		.Name = "EX2",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_EXP,
@@ -118,13 +125,15 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_FLR,
 		.Name = "FLR",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_FRC,
 		.Name = "FRC",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_KIL,
@@ -135,7 +144,8 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_LG2,
 		.Name = "LG2",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_LIT,
@@ -153,55 +163,64 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_LRP,
 		.Name = "LRP",
 		.NumSrcRegs = 3,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_MAD,
 		.Name = "MAD",
 		.NumSrcRegs = 3,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_MAX,
 		.Name = "MAX",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_MIN,
 		.Name = "MIN",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_MOV,
 		.Name = "MOV",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_MUL,
 		.Name = "MUL",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_POW,
 		.Name = "POW",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_RCP,
 		.Name = "RCP",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_RSQ,
 		.Name = "RSQ",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SCS,
@@ -213,61 +232,71 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.Opcode = RC_OPCODE_SEQ,
 		.Name = "SEQ",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SFL,
 		.Name = "SFL",
 		.NumSrcRegs = 0,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SGE,
 		.Name = "SGE",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SGT,
 		.Name = "SGT",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SIN,
 		.Name = "SIN",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsStandardScalar = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SLE,
 		.Name = "SLE",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SLT,
 		.Name = "SLT",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SNE,
 		.Name = "SNE",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SUB,
 		.Name = "SUB",
 		.NumSrcRegs = 2,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_SWZ,
 		.Name = "SWZ",
 		.NumSrcRegs = 1,
-		.HasDstReg = 1
+		.HasDstReg = 1,
+		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_XPD,

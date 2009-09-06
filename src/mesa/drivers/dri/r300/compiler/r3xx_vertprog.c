@@ -26,9 +26,9 @@
 
 #include "../r300_reg.h"
 
-#include "radeon_nqssadce.h"
-#include "radeon_program.h"
+#include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
+#include "radeon_swizzle.h"
 
 
 /*
@@ -545,18 +545,19 @@ static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
 	}
 }
 
-static void nqssadceInit(struct nqssadce_state* s)
+static void dataflow_outputs_mark_used(void * userdata, void * data,
+		void (*callback)(void *, unsigned int, unsigned int))
 {
-	struct r300_vertex_program_compiler * compiler = s->UserData;
+	struct r300_vertex_program_compiler * c = userdata;
 	int i;
 
 	for(i = 0; i < 32; ++i) {
-		if (compiler->RequiredOutputs & (1 << i))
-			s->Outputs[i].Sourced = RC_MASK_XYZW;
+		if (c->RequiredOutputs & (1 << i))
+			callback(data, i, RC_MASK_XYZW);
 	}
 }
 
-static int swizzleIsNative(rc_opcode opcode, struct rc_src_register reg)
+static int swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
 	(void) opcode;
 	(void) reg;
@@ -565,9 +566,16 @@ static int swizzleIsNative(rc_opcode opcode, struct rc_src_register reg)
 }
 
 
+static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
+	.IsNative = &swizzle_is_native,
+	.Split = 0 /* should never be called */
+};
+
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
+	compiler->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
+
 	addArtificialOutputs(compiler);
 
 	{
@@ -579,7 +587,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
-		rc_print_program(&compiler->Base.Program);
+		rc_print_program(&compiler->Base.Program, 0);
 		fflush(stderr);
 	}
 
@@ -596,26 +604,22 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after source conflict resolve:\n");
-		rc_print_program(&compiler->Base.Program);
+		rc_print_program(&compiler->Base.Program, 0);
 		fflush(stderr);
 	}
 
-	{
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadceInit,
-			.IsNativeSwizzle = &swizzleIsNative,
-			.BuildSwizzle = NULL
-		};
-		radeonNqssaDce(&compiler->Base, &nqssadce, compiler);
+	rc_dataflow_annotate(&compiler->Base, &dataflow_outputs_mark_used, compiler);
+	rc_dataflow_dealias(&compiler->Base);
+	rc_dataflow_swizzles(&compiler->Base);
 
-		/* We need this step for reusing temporary registers */
-		allocate_temporary_registers(compiler);
+	/* This invalidates dataflow annotations and should be replaced
+	 * by a future generic register allocation pass. */
+	allocate_temporary_registers(compiler);
 
-		if (compiler->Base.Debug) {
-			fprintf(stderr, "Vertex program after NQSSADCE:\n");
-			rc_print_program(&compiler->Base.Program);
-			fflush(stderr);
-		}
+	if (compiler->Base.Debug) {
+		fprintf(stderr, "Vertex program after dataflow:\n");
+		rc_print_program(&compiler->Base.Program, 0);
+		fflush(stderr);
 	}
 
 	translate_vertex_program(compiler);

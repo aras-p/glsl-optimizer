@@ -187,6 +187,14 @@ struct rc_opcode_info {
 
 	unsigned int NumSrcRegs:2;
 	unsigned int HasDstReg:1;
+
+	/** true if this is a vector instruction that operates on components in parallel
+	 * without any cross-component interaction */
+	unsigned int IsComponentwise:1;
+
+	/** true if this instruction sources only its operands X components
+	 * to compute one result which is smeared across all output channels */
+	unsigned int IsStandardScalar:1;
 };
 
 extern struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE];

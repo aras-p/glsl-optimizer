@@ -24,18 +24,18 @@
 
 #include <stdio.h>
 
-#include "radeon_nqssadce.h"
 #include "radeon_program_alu.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
 
 
-static void nqssadce_init(struct nqssadce_state* s)
+static void dataflow_outputs_mark_use(void * userdata, void * data,
+		void (*callback)(void *, unsigned int, unsigned int))
 {
-	struct r300_fragment_program_compiler * c = s->UserData;
-	s->Outputs[c->OutputColor].Sourced = RC_MASK_XYZW;
-	s->Outputs[c->OutputDepth].Sourced = RC_MASK_W;
+	struct r300_fragment_program_compiler * c = userdata;
+	callback(data, c->OutputColor, RC_MASK_XYZW);
+	callback(data, c->OutputDepth, RC_MASK_W);
 }
 
 static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
@@ -92,6 +92,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &radeonTransformTrigScale, 0 }
 		};
 		radeonLocalTransform(&c->Base, 4, transformations);
+
+		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_TEX, c },
@@ -99,33 +101,23 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(&c->Base, 3, transformations);
+
+		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Fragment Program: After native rewrite:\n");
-		rc_print_program(&c->Base.Program);
+		rc_print_program(&c->Base.Program, 0);
 		fflush(stderr);
 	}
 
-	if (c->is_r500) {
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
-			.BuildSwizzle = &r500FPBuildSwizzle
-		};
-		radeonNqssaDce(&c->Base, &nqssadce, c);
-	} else {
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
-			.BuildSwizzle = &r300FPBuildSwizzle
-		};
-		radeonNqssaDce(&c->Base, &nqssadce, c);
-	}
+	rc_dataflow_annotate(&c->Base, &dataflow_outputs_mark_use, c);
+	rc_dataflow_dealias(&c->Base);
+	rc_dataflow_swizzles(&c->Base);
 
 	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after NqSSA-DCE:\n");
-		rc_print_program(&c->Base.Program);
+		fprintf(stderr, "Compiler: after dataflow passes:\n");
+		rc_print_program(&c->Base.Program, 0);
 		fflush(stderr);
 	}
 

@@ -36,7 +36,6 @@
 #include <stdio.h>
 
 #include "../r300_reg.h"
-#include "radeon_nqssadce.h"
 #include "radeon_compiler.h"
 
 #define MAKE_SWZ3(x, y, z) (RC_MAKE_SWIZZLE(RC_SWIZZLE_##x, RC_SWIZZLE_##y, RC_SWIZZLE_##z, RC_SWIZZLE_ZERO))
@@ -92,7 +91,7 @@ static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
  * Check whether the given instruction supports the swizzle and negate
  * combinations in the given source register.
  */
-int r300FPIsNativeSwizzle(rc_opcode opcode, struct rc_src_register reg)
+static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
 	if (reg.Abs)
 		reg.Negate = RC_MASK_NONE;
@@ -134,15 +133,16 @@ int r300FPIsNativeSwizzle(rc_opcode opcode, struct rc_src_register reg)
 }
 
 
-/**
- * Generate MOV dst, src using only native swizzles.
- */
-void r300FPBuildSwizzle(struct nqssadce_state *s, struct rc_dst_register dst, struct rc_src_register src)
+static void r300_swizzle_split(
+		struct rc_src_register src, unsigned int mask,
+		struct rc_swizzle_split * split)
 {
 	if (src.Abs)
 		src.Negate = RC_MASK_NONE;
 
-	while(dst.WriteMask) {
+	split->NumPhases = 0;
+
+	while(mask) {
 		const struct swizzle_data *best_swizzle = 0;
 		unsigned int best_matchcount = 0;
 		unsigned int best_matchmask = 0;
@@ -153,7 +153,7 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct rc_dst_register dst, st
 			unsigned int matchcount = 0;
 			unsigned int matchmask = 0;
 			for(comp = 0; comp < 3; ++comp) {
-				if (!GET_BIT(dst.WriteMask, comp))
+				if (!GET_BIT(mask, comp))
 					continue;
 				unsigned int swz = GET_SWZ(src.Swizzle, comp);
 				if (swz == RC_SWIZZLE_UNUSED)
@@ -172,22 +172,23 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct rc_dst_register dst, st
 				best_swizzle = sd;
 				best_matchcount = matchcount;
 				best_matchmask = matchmask;
-				if (matchmask == (dst.WriteMask & RC_MASK_XYZ))
+				if (matchmask == (mask & RC_MASK_XYZ))
 					break;
 			}
 		}
 
-		struct rc_instruction *inst = rc_insert_new_instruction(s->Compiler, s->IP->Prev);
-		inst->I.Opcode = RC_OPCODE_MOV;
-		inst->I.DstReg = dst;
-		inst->I.DstReg.WriteMask &= (best_matchmask | RC_MASK_W);
-		inst->I.SrcReg[0] = src;
-		inst->I.SrcReg[0].Negate = (best_matchmask & src.Negate) ? RC_MASK_XYZW : RC_MASK_NONE;
-		/* Note: We rely on NqSSA/DCE to set unused swizzle components to NIL */
+		if (mask & RC_MASK_W)
+			best_matchmask |= RC_MASK_W;
 
-		dst.WriteMask &= ~inst->I.DstReg.WriteMask;
+		split->Phase[split->NumPhases++] = best_matchmask;
+		mask &= ~best_matchmask;
 	}
 }
+
+struct rc_swizzle_caps r300_swizzle_caps = {
+	.IsNative = r300_swizzle_is_native,
+	.Split = r300_swizzle_split
+};
 
 
 /**

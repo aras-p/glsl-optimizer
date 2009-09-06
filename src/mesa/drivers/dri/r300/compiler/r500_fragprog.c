@@ -169,7 +169,7 @@ int r500_transform_TEX(
 	return 1;
 }
 
-int r500FPIsNativeSwizzle(rc_opcode opcode, struct rc_src_register reg)
+static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
 	unsigned int relevant;
 	int i;
@@ -227,36 +227,38 @@ int r500FPIsNativeSwizzle(rc_opcode opcode, struct rc_src_register reg)
 }
 
 /**
- * Implement a MOV with a potentially non-native swizzle.
+ * Split source register access.
  *
  * The only thing we *cannot* do in an ALU instruction is per-component
- * negation. Therefore, we split the MOV into two instructions when necessary.
+ * negation.
  */
-void r500FPBuildSwizzle(struct nqssadce_state *s, struct rc_dst_register dst, struct rc_src_register src)
+static void r500_swizzle_split(struct rc_src_register src, unsigned int usemask,
+		struct rc_swizzle_split * split)
 {
 	unsigned int negatebase[2] = { 0, 0 };
 	int i;
 
 	for(i = 0; i < 4; ++i) {
 		unsigned int swz = GET_SWZ(src.Swizzle, i);
-		if (swz == RC_SWIZZLE_UNUSED)
+		if (swz == RC_SWIZZLE_UNUSED || !GET_BIT(usemask, i))
 			continue;
 		negatebase[GET_BIT(src.Negate, i)] |= 1 << i;
 	}
+
+	split->NumPhases = 0;
 
 	for(i = 0; i <= 1; ++i) {
 		if (!negatebase[i])
 			continue;
 
-		struct rc_instruction *inst = rc_insert_new_instruction(s->Compiler, s->IP->Prev);
-		inst->I.Opcode = RC_OPCODE_MOV;
-		inst->I.DstReg = dst;
-		inst->I.DstReg.WriteMask = negatebase[i];
-		inst->I.SrcReg[0] = src;
-		inst->I.SrcReg[0].Negate = (i == 0) ? RC_MASK_NONE : RC_MASK_XYZW;
+		split->Phase[split->NumPhases++] = negatebase[i];
 	}
 }
 
+struct rc_swizzle_caps r500_swizzle_caps = {
+	.IsNative = r500_swizzle_is_native,
+	.Split = r500_swizzle_split
+};
 
 static char *toswiz(int swiz_val) {
   switch(swiz_val) {
