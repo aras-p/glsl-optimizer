@@ -23,6 +23,7 @@
 #include "r300_state_derived.h"
 
 #include "r300_fs.h"
+#include "r300_state_inlines.h"
 #include "r300_vs.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon

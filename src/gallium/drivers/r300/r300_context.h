@@ -211,10 +211,7 @@ struct r300_vertex_format {
     int fs_tab[16];
 };
 
-static struct pipe_viewport_state r300_viewport_identity = {
-    .scale = {1.0, 1.0, 1.0, 1.0},
-    .translate = {0.0, 0.0, 0.0, 0.0},
-};
+extern struct pipe_viewport_state r300_viewport_identity;
 
 struct r300_context {
     /* Parent class */

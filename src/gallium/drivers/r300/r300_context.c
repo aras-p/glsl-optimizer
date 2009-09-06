@@ -22,6 +22,9 @@
 
 #include "r300_context.h"
 
+#include "r300_flush.h"
+#include "r300_state_invariant.h"
+
 static boolean r300_draw_range_elements(struct pipe_context* pipe,
                                         struct pipe_buffer* indexBuffer,
                                         unsigned indexSize,
