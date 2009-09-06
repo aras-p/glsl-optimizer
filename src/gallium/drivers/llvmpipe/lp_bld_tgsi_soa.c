@@ -88,8 +88,7 @@ struct lp_build_tgsi_soa_context
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
 
-   lp_emit_fetch_texel_soa_callback emit_fetch_texel;
-   void *emit_fetch_texel_context;
+   struct lp_build_sampler_soa *sampler;
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
@@ -289,8 +288,11 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
 
-   bld->emit_fetch_texel(bld->base.builder, bld->emit_fetch_texel_context,
-                         unit, num_coords, coords, lodbias, texel);
+   bld->sampler->emit_fetch_texel(bld->sampler,
+                                  bld->base.builder,
+                                  bld->base.type,
+                                  unit, num_coords, coords, lodbias,
+                                  texel);
 
    FOR_EACH_DST0_ENABLED_CHANNEL( inst, i ) {
       emit_store( bld, inst, 0, i, texel[i] );
@@ -1283,8 +1285,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
-                  lp_emit_fetch_texel_soa_callback emit_fetch_texel,
-                  void *emit_fetch_texel_context)
+                  struct lp_build_sampler_soa *sampler)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
@@ -1299,8 +1300,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
-   bld.emit_fetch_texel = emit_fetch_texel;
-   bld.emit_fetch_texel_context = emit_fetch_texel_context;
+   bld.sampler = sampler;
 
    tgsi_parse_init( &parse, tokens );
 

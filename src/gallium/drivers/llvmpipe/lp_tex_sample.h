@@ -29,6 +29,8 @@
 #define LP_TEX_SAMPLE_H
 
 
+#include <llvm-c/Core.h>
+
 #include "tgsi/tgsi_exec.h"
 
 
@@ -73,6 +75,16 @@ lp_get_samples(struct tgsi_sampler *tgsi_sampler,
                const float p[QUAD_SIZE],
                float lodbias,
                float rgba[NUM_CHANNELS][QUAD_SIZE]);
+
+
+/**
+ * Texture sampling code generator that just calls lp_get_samples C function
+ * for the actual sampling computation.
+ *
+ * @param context_ptr LLVM value with the pointer to the struct lp_jit_context.
+ */
+struct lp_build_sampler_soa *
+lp_c_sampler_soa_create(LLVMValueRef context_ptr);
 
 
 #endif /* LP_TEX_SAMPLE_H */

@@ -85,6 +85,7 @@
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_quad.h"
+#include "lp_tex_sample.h"
 
 
 static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
@@ -173,107 +174,6 @@ generate_depth(struct llvmpipe_context *lp,
 }
 
 
-struct build_fetch_texel_context
-{
-   LLVMValueRef context_ptr;
-
-   LLVMValueRef samplers_ptr;
-
-   /** Coords/texels store */
-   LLVMValueRef store_ptr;
-};
-
-
-void PIPE_CDECL
-lp_fetch_texel_soa( struct tgsi_sampler **samplers,
-                    uint32_t unit,
-                    float *store )
-{
-   struct tgsi_sampler *sampler = samplers[unit];
-
-#if 0
-   uint j;
-
-   debug_printf("%s sampler: %p (%p) store: %p\n",
-                __FUNCTION__,
-                sampler, *sampler,
-                store );
-
-   debug_printf("lodbias %f\n", store[12]);
-
-   for (j = 0; j < 4; j++)
-      debug_printf("sample %d texcoord %f %f\n",
-                   j,
-                   store[0+j],
-                   store[4+j]);
-#endif
-
-   {
-      float rgba[NUM_CHANNELS][QUAD_SIZE];
-      sampler->get_samples(sampler,
-                           &store[0],
-                           &store[4],
-                           &store[8],
-                           0.0f, /*store[12],  lodbias */
-                           rgba);
-      memcpy(store, rgba, sizeof rgba);
-   }
-
-#if 0
-   for (j = 0; j < 4; j++)
-      debug_printf("sample %d result %f %f %f %f\n",
-                   j,
-                   store[0+j],
-                   store[4+j],
-                   store[8+j],
-                   store[12+j]);
-#endif
-}
-
-
-static void
-emit_fetch_texel( LLVMBuilderRef builder,
-                  void *context,
-                  unsigned unit,
-                  unsigned num_coords,
-                  const LLVMValueRef *coords,
-                  LLVMValueRef lodbias,
-                  LLVMValueRef *texel)
-{
-   struct build_fetch_texel_context *bld = context;
-   LLVMTypeRef vec_type = LLVMTypeOf(coords[0]);
-   LLVMValueRef args[3];
-   unsigned i;
-
-   if(!bld->samplers_ptr)
-      bld->samplers_ptr = lp_jit_context_samplers(builder, bld->context_ptr);
-
-   if(!bld->store_ptr)
-      bld->store_ptr = LLVMBuildArrayAlloca(builder,
-                                            vec_type,
-                                            LLVMConstInt(LLVMInt32Type(), 4, 0),
-                                            "texel_store");
-
-   for (i = 0; i < num_coords; i++) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef coord_ptr = LLVMBuildGEP(builder, bld->store_ptr, &index, 1, "");
-      LLVMBuildStore(builder, coords[i], coord_ptr);
-   }
-
-   args[0] = bld->samplers_ptr;
-   args[1] = LLVMConstInt(LLVMInt32Type(), unit, 0);
-   args[2] = bld->store_ptr;
-
-   lp_build_intrinsic(builder, "fetch_texel", LLVMVoidType(), args, 3);
-
-   for (i = 0; i < NUM_CHANNELS; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef texel_ptr = LLVMBuildGEP(builder, bld->store_ptr, &index, 1, "");
-      texel[i] = LLVMBuildLoad(builder, texel_ptr, "");
-   }
-}
-
-
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  */
@@ -286,7 +186,7 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef context_ptr,
             unsigned i,
             const struct lp_build_interp_soa_context *interp,
-            struct build_fetch_texel_context *sampler,
+            struct lp_build_sampler_soa *sampler,
             LLVMValueRef *pmask,
             LLVMValueRef *color,
             LLVMValueRef depth_ptr)
@@ -327,7 +227,7 @@ generate_fs(struct llvmpipe_context *lp,
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
-                     outputs, emit_fetch_texel, sampler);
+                     outputs, sampler);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -462,7 +362,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMBuilderRef builder;
    LLVMValueRef x0;
    LLVMValueRef y0;
-   struct build_fetch_texel_context sampler;
+   struct lp_build_sampler_soa *sampler;
    struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
    LLVMValueRef fs_out_color[NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
@@ -586,8 +486,7 @@ generate_fragment(struct llvmpipe_context *lp,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x0, y0, 2, 0);
 
-   memset(&sampler, 0, sizeof sampler);
-   sampler.context_ptr = context_ptr;
+   sampler = lp_c_sampler_soa_create(context_ptr);
 
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
@@ -606,7 +505,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   context_ptr,
                   i,
                   &interp,
-                  &sampler,
+                  sampler,
                   &fs_mask[i],
                   out_color,
                   depth_ptr_i);
@@ -614,6 +513,8 @@ generate_fragment(struct llvmpipe_context *lp,
       for(chan = 0; chan < NUM_CHANNELS; ++chan)
          fs_out_color[chan][i] = out_color[chan];
    }
+
+   sampler->destroy(sampler);
 
    /* 
     * Convert the fs's output color and mask to fit to the blending type. 
