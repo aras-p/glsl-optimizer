@@ -37,11 +37,14 @@
 #include "main/arrayobj.h"
 #include "main/blend.h"
 #include "main/bufferobj.h"
+#include "main/buffers.h"
 #include "main/depth.h"
 #include "main/enable.h"
+#include "main/fbobject.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
+#include "main/mipmap.h"
 #include "main/polygon.h"
 #include "main/readpix.h"
 #include "main/scissor.h"
@@ -211,6 +214,17 @@ struct bitmap_state
 
 
 /**
+ * State for _mesa_meta_generate_mipmap()
+ */
+struct gen_mipmap_state
+{
+   GLuint ArrayObj;
+   GLuint VBO;
+   GLuint FBO;
+};
+
+
+/**
  * All per-context meta state.
  */
 struct gl_meta_state
@@ -224,10 +238,7 @@ struct gl_meta_state
    struct copypix_state CopyPix;  /**< For _mesa_meta_copy_pixels() */
    struct drawpix_state DrawPix;  /**< For _mesa_meta_draw_pixels() */
    struct bitmap_state Bitmap;    /**< For _mesa_meta_bitmap() */
-
-   /* other possible meta-ops:
-    * glGenerateMipmap()
-    */
+   struct gen_mipmap_state Mipmap;    /**< For _mesa_meta_generate_mipmap() */
 };
 
 
@@ -1839,4 +1850,168 @@ _mesa_meta_bitmap(GLcontext *ctx,
    _mesa_unmap_pbo_source(ctx, &unpackSave);
 
    _mesa_meta_end(ctx);
+}
+
+
+void
+_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
+                           struct gl_texture_object *texObj)
+{
+   struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
+   struct { GLfloat x, y, s, t, r; } verts[4];
+   const GLuint baseLevel = texObj->BaseLevel;
+   const GLuint maxLevel = texObj->MaxLevel;
+   const GLenum minFilterSave = texObj->MinFilter;
+   const GLenum magFilterSave = texObj->MagFilter;
+   const GLuint fboSave = ctx->DrawBuffer->Name;
+   GLenum faceTarget;
+   GLuint level;
+   GLuint border = 0;
+
+   /* check for fallbacks */
+   if (!ctx->Extensions.EXT_framebuffer_object) {
+      _mesa_generate_mipmap(ctx, target, texObj);
+      return;
+   }
+
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z) {
+      faceTarget = target;
+      target = GL_TEXTURE_CUBE_MAP;
+   }
+   else {
+      faceTarget = target;
+   }
+
+   _mesa_meta_begin(ctx, META_ALL);
+
+   if (mipmap->ArrayObj == 0) {
+      /* one-time setup */
+
+      /* create vertex array object */
+      _mesa_GenVertexArraysAPPLE(1, &mipmap->ArrayObj);
+      _mesa_BindVertexArrayAPPLE(mipmap->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &mipmap->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          NULL, GL_DYNAMIC_DRAW_ARB);
+
+      /* setup vertex arrays */
+      _mesa_VertexPointer(2, GL_FLOAT, sizeof(verts[0]),
+                          (void *) (0 * sizeof(GLfloat)));
+      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(verts[0]),
+                            (void *) (2 * sizeof(GLfloat)));
+
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+   else {
+      _mesa_BindVertexArray(mipmap->ArrayObj);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
+   }
+
+   if (!mipmap->FBO) {
+      /* Bind the new renderbuffer to the color attachment point. */
+      _mesa_GenFramebuffersEXT(1, &mipmap->FBO);
+   }
+
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
+
+   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   _mesa_set_enable(ctx, target, GL_TRUE);
+
+   /* setup texcoords once (XXX what about border?) */
+   switch (faceTarget) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+      break;
+   case GL_TEXTURE_2D:
+      verts[0].s = 0.0F;
+      verts[0].t = 0.0F;
+      verts[0].r = 0.0F;
+      verts[1].s = 1.0F;
+      verts[1].t = 0.0F;
+      verts[2].r = 0.0F;
+      verts[3].s = 1.0F;
+      verts[3].t = 1.0F;
+      verts[3].r = 0.0F;
+      verts[4].s = 0.0F;
+      verts[4].t = 1.0F;
+      verts[4].r = 0.0F;
+      break;
+   }
+
+
+   for (level = baseLevel + 1; level <= maxLevel; level++) {
+      const struct gl_texture_image *srcImage;
+      const GLuint srcLevel = level - 1;
+      GLsizei srcWidth, srcHeight;
+      GLsizei newWidth, newHeight;
+      GLenum status;
+
+      srcImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
+      assert(srcImage->Border == 0); /* XXX we can fix this */
+
+      srcWidth = srcImage->Width - 2 * border;
+      srcHeight = srcImage->Height - 2 * border;
+
+      newWidth = MAX2(1, srcWidth / 2) + 2 * border;
+      newHeight = MAX2(1, srcHeight / 2) + 2 * border;
+
+      if (newWidth == srcImage->Width && newHeight == srcImage->Height) {
+	 break;
+      }
+
+      /* Create empty image */
+      _mesa_TexImage2D(GL_TEXTURE_2D, level, srcImage->InternalFormat,
+		       newWidth, newHeight, border,
+		       GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+      /* vertex positions */
+      {
+         verts[0].x = 0.0F;
+         verts[0].y = 0.0F;
+         verts[1].x = (GLfloat) newWidth;
+         verts[1].y = 0.0F;
+         verts[2].x = (GLfloat) newWidth;
+         verts[2].y = (GLfloat) newHeight;
+         verts[3].x = 0.0F;
+         verts[3].y = (GLfloat) newHeight;
+
+         /* upload new vertex data */
+         _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+      }
+
+      /* limit sampling to src level */
+      _mesa_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, srcLevel);
+      _mesa_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, srcLevel);
+
+      /* Set to draw into the current level */
+      _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+                                    GL_COLOR_ATTACHMENT0_EXT,
+                                    target,
+                                    texObj->Name,
+                                    level);
+
+      /* Choose to render to the color attachment. */
+      _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+
+      status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+      if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         abort();
+         break;
+      }
+
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   }
+
+   _mesa_meta_end(ctx);
+
+   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
+
+   /* restore (XXX add to meta_begin/end()? */
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 }

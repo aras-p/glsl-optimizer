@@ -83,6 +83,9 @@ _mesa_meta_bitmap(GLcontext *ctx,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap);
 
+extern void
+_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
+                           struct gl_texture_object *texObj);
 
 
 #endif /* META_H */
