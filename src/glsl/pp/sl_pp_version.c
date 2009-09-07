@@ -137,7 +137,7 @@ sl_pp_version(struct sl_pp_context *context,
                   return -1;
                }
                if (_parse_integer(num, version)) {
-                  /* Expected version number. */
+                  strcpy(context->error_msg, "expected version number after `#version'");
                   return -1;
                }
                i++;
@@ -146,7 +146,7 @@ sl_pp_version(struct sl_pp_context *context,
             break;
 
          default:
-            /* Expected version number. */
+            strcpy(context->error_msg, "expected version number after `#version'");
             return -1;
          }
       }
@@ -169,7 +169,7 @@ sl_pp_version(struct sl_pp_context *context,
             break;
 
          default:
-            /* Expected end of line. */
+            strcpy(context->error_msg, "expected end of line after version number");
             return -1;
          }
       }
