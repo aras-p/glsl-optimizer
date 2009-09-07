@@ -502,6 +502,31 @@ lp_build_div(struct lp_build_context *bld,
 }
 
 
+LLVMValueRef
+lp_build_lerp(struct lp_build_context *bld,
+              LLVMValueRef x,
+              LLVMValueRef v0,
+              LLVMValueRef v1)
+{
+   return lp_build_add(bld, v0, lp_build_mul(bld, x, lp_build_sub(bld, v1, v0)));
+}
+
+
+LLVMValueRef
+lp_build_lerp_2d(struct lp_build_context *bld,
+                 LLVMValueRef x,
+                 LLVMValueRef y,
+                 LLVMValueRef v00,
+                 LLVMValueRef v01,
+                 LLVMValueRef v10,
+                 LLVMValueRef v11)
+{
+   LLVMValueRef v0 = lp_build_lerp(bld, x, v00, v01);
+   LLVMValueRef v1 = lp_build_lerp(bld, x, v10, v11);
+   return lp_build_lerp(bld, y, v0, v1);
+}
+
+
 /**
  * Generate min(a, b)
  * Do checks for special cases.

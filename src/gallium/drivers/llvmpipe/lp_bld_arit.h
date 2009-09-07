@@ -72,6 +72,26 @@ lp_build_div(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_lerp(struct lp_build_context *bld,
+              LLVMValueRef x,
+              LLVMValueRef v0,
+              LLVMValueRef v1);
+
+/**
+ * Bilinear interpolation.
+ *
+ * Values indices are in v_{yx}.
+ */
+LLVMValueRef
+lp_build_lerp_2d(struct lp_build_context *bld,
+                 LLVMValueRef x,
+                 LLVMValueRef y,
+                 LLVMValueRef v00,
+                 LLVMValueRef v01,
+                 LLVMValueRef v10,
+                 LLVMValueRef v11);
+
+LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
