@@ -54,9 +54,7 @@
 #endif
 #include "clear.h"
 #include "clip.h"
-#if FEATURE_colortable
 #include "colortab.h"
-#endif
 #include "context.h"
 #if FEATURE_convolve
 #include "convolve.h"
@@ -385,17 +383,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_BlendEquation(exec, _mesa_BlendEquation);
    SET_BlendEquationSeparateEXT(exec, _mesa_BlendEquationSeparateEXT);
 
-#if FEATURE_colortable
-   SET_ColorSubTable(exec, _mesa_ColorSubTable);
-   SET_ColorTable(exec, _mesa_ColorTable);
-   SET_ColorTableParameterfv(exec, _mesa_ColorTableParameterfv);
-   SET_ColorTableParameteriv(exec, _mesa_ColorTableParameteriv);
-   SET_CopyColorSubTable(exec, _mesa_CopyColorSubTable);
-   SET_CopyColorTable(exec, _mesa_CopyColorTable);
-   SET_GetColorTable(exec, _mesa_GetColorTable);
-   SET_GetColorTableParameterfv(exec, _mesa_GetColorTableParameterfv);
-   SET_GetColorTableParameteriv(exec, _mesa_GetColorTableParameteriv);
-#endif
+   _mesa_init_colortable_dispatch(exec);
 
 #if FEATURE_convolve
    SET_ConvolutionFilter1D(exec, _mesa_ConvolutionFilter1D);

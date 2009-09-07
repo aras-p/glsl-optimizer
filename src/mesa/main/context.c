@@ -90,9 +90,7 @@
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
-#if FEATURE_colortable
 #include "colortab.h"
-#endif
 #include "context.h"
 #include "cpuinfo.h"
 #include "debug.h"
@@ -686,9 +684,7 @@ init_attrib_groups(GLcontext *ctx)
 #endif
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
-#if FEATURE_colortable
    _mesa_init_colortables( ctx );
-#endif
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
@@ -1015,9 +1011,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-#if FEATURE_colortable
    _mesa_free_colortables_data( ctx );
-#endif
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
 #if FEATURE_ARB_occlusion_query
