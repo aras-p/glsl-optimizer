@@ -56,15 +56,17 @@ def generate(env):
         env.PrependENVPath('PATH', llvm_bin_dir)
 
     if env.Detect('llvm-config'):
-        try:
-            env['LLVM_VERSION'] = env.backtick('llvm-config --version')
-        except AttributeError:
-            env['LLVM_VERSION'] = 'X.X'
+        version = env.backtick('llvm-config --version').rstrip()
 
-        env.ParseConfig('llvm-config --cppflags')
-        env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
-        env.ParseConfig('llvm-config --ldflags')
-        env['LINK'] = env['CXX']
+        try:
+            env.ParseConfig('llvm-config --cppflags')
+            env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
+            env.ParseConfig('llvm-config --ldflags')
+        except OSError:
+            print 'llvm-config version %s failed' % version
+        else:
+            env['LINK'] = env['CXX']
+            env['LLVM_VERSION'] = version
 
 def exists(env):
     return True
