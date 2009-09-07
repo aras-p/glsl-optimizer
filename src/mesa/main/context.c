@@ -79,9 +79,7 @@
 #include "glheader.h"
 #include "mfeatures.h"
 #include "imports.h"
-#if FEATURE_accum
 #include "accum.h"
-#endif
 #include "api_exec.h"
 #include "arrayobj.h"
 #if FEATURE_attrib_stack
@@ -676,9 +674,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_extensions( ctx );
 
    /* Attribute Groups */
-#if FEATURE_accum
    _mesa_init_accum( ctx );
-#endif
 #if FEATURE_attrib_stack
    _mesa_init_attrib( ctx );
 #endif

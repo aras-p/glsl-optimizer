@@ -30,9 +30,7 @@
 
 
 #include "mfeatures.h"
-#if FEATURE_accum
 #include "accum.h"
-#endif
 #include "api_loopback.h"
 #include "api_exec.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
@@ -193,10 +191,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_TexParameteri(exec, _mesa_TexParameteri);
    SET_Translatef(exec, _mesa_Translatef);
    SET_Viewport(exec, _mesa_Viewport);
-#if FEATURE_accum
-   SET_Accum(exec, _mesa_Accum);
-   SET_ClearAccum(exec, _mesa_ClearAccum);
-#endif
+
+   _mesa_init_accum_dispatch(exec);
+
 #if FEATURE_dlist
    SET_CallList(exec, _mesa_CallList);
    SET_CallLists(exec, _mesa_CallLists);
