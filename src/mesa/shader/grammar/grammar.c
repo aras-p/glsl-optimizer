@@ -566,7 +566,7 @@ static void emit_destroy (emit **em)
     }
 }
 
-static unsigned int emit_size (emit *_E)
+static unsigned int emit_size (emit *_E, const char *str)
 {
     unsigned int n = 0;
 
@@ -576,7 +576,9 @@ static unsigned int emit_size (emit *_E)
         {
             if (_E->m_emit_type == et_position)
                 n += 4;     /* position is a 32-bit unsigned integer */
-            else
+            else if (_E->m_emit_type == et_stream) {
+               n += strlen(str) + 1;
+            } else
                 n++;
         }
         _E = _E->m_next;
@@ -585,7 +587,7 @@ static unsigned int emit_size (emit *_E)
     return n;
 }
 
-static int emit_push (emit *_E, byte *_P, byte c, unsigned int _Pos, regbyte_ctx **_Ctx)
+static int emit_push (emit *_E, byte *_P, const char *str, unsigned int _Pos, regbyte_ctx **_Ctx)
 {
     while (_E != NULL)
     {
@@ -593,9 +595,10 @@ static int emit_push (emit *_E, byte *_P, byte c, unsigned int _Pos, regbyte_ctx
         {
             if (_E->m_emit_type == et_byte)
                 *_P++ = _E->m_byte;
-            else if (_E->m_emit_type == et_stream)
-                *_P++ = c;
-            else /* _Em->type == et_position */
+            else if (_E->m_emit_type == et_stream) {
+                strcpy(_P, str);
+                _P += strlen(str) + 1;
+            } else /* _Em->type == et_position */
             {
                 *_P++ = (byte) (_Pos);
                 *_P++ = (byte) (_Pos >> 8);
@@ -617,7 +620,7 @@ static int emit_push (emit *_E, byte *_P, byte c, unsigned int _Pos, regbyte_ctx
             if (_E->m_emit_type == et_byte)
                 new_rbc->m_current_value = _E->m_byte;
             else if (_E->m_emit_type == et_stream)
-                new_rbc->m_current_value = c;
+                new_rbc->m_current_value = str[0];
         }
 
         _E = _E->m_next;
@@ -727,6 +730,7 @@ typedef enum spec_type_
 {
     st_false,
     st_true,
+    st_token,
     st_byte,
     st_byte_range,
     st_string,
@@ -741,6 +745,7 @@ typedef enum spec_type_
 typedef struct spec_
 {
     spec_type m_spec_type;
+    enum sl_pp_token m_token;       /* st_token */
     byte m_byte[2];                 /* st_byte, st_byte_range */
     byte *m_string;                 /* st_string */
     struct rule_ *m_rule;           /* st_identifier, st_identifier_loop */
@@ -979,12 +984,12 @@ static int barray_append (barray **ba, barray **nb)
 */
 static int barray_push (barray **ba, emit *em, byte c, unsigned int pos, regbyte_ctx **rbc)
 {
-    unsigned int count = emit_size (em);
+   unsigned int count = emit_size(em, " ");
 
     if (barray_resize (ba, (**ba).len + count))
         return 1;
 
-    return emit_push (em, (**ba).data + ((**ba).len - count), c, pos, rbc);
+   return emit_push (em, (**ba).data + ((**ba).len - count), " ", pos, rbc);
 }
 
 /*
@@ -1967,7 +1972,110 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
         }
         eat_spaces (&t);
 
-        s->m_spec_type = st_string;
+      /* Try to convert string to a token. */
+      if (s->m_string[0] == '@') {
+         s->m_spec_type = st_token;
+         if (!strcmp(s->m_string, "@,")) {
+            s->m_token = SL_PP_COMMA;
+         } else if (!strcmp(s->m_string, "@;")) {
+            s->m_token = SL_PP_SEMICOLON;
+         } else if (!strcmp(s->m_string, "@{")) {
+            s->m_token = SL_PP_LBRACE;
+         } else if (!strcmp(s->m_string, "@}")) {
+            s->m_token = SL_PP_RBRACE;
+         } else if (!strcmp(s->m_string, "@(")) {
+            s->m_token = SL_PP_LPAREN;
+         } else if (!strcmp(s->m_string, "@)")) {
+            s->m_token = SL_PP_RPAREN;
+         } else if (!strcmp(s->m_string, "@[")) {
+            s->m_token = SL_PP_LBRACKET;
+         } else if (!strcmp(s->m_string, "@]")) {
+            s->m_token = SL_PP_RBRACKET;
+         } else if (!strcmp(s->m_string, "@.")) {
+            s->m_token = SL_PP_DOT;
+         } else if (!strcmp(s->m_string, "@++")) {
+            s->m_token = SL_PP_INCREMENT;
+         } else if (!strcmp(s->m_string, "@+=")) {
+            s->m_token = SL_PP_ADDASSIGN;
+         } else if (!strcmp(s->m_string, "@+")) {
+            s->m_token = SL_PP_PLUS;
+         } else if (!strcmp(s->m_string, "@--")) {
+            s->m_token = SL_PP_DECREMENT;
+         } else if (!strcmp(s->m_string, "@-=")) {
+            s->m_token = SL_PP_SUBASSIGN;
+         } else if (!strcmp(s->m_string, "@-")) {
+            s->m_token = SL_PP_MINUS;
+         } else if (!strcmp(s->m_string, "@~")) {
+            s->m_token = SL_PP_BITNOT;
+         } else if (!strcmp(s->m_string, "@!=")) {
+            s->m_token = SL_PP_NOTEQUAL;
+         } else if (!strcmp(s->m_string, "@!")) {
+            s->m_token = SL_PP_NOT;
+         } else if (!strcmp(s->m_string, "@*=")) {
+            s->m_token = SL_PP_MULASSIGN;
+         } else if (!strcmp(s->m_string, "@*")) {
+            s->m_token = SL_PP_STAR;
+         } else if (!strcmp(s->m_string, "@/=")) {
+            s->m_token = SL_PP_DIVASSIGN;
+         } else if (!strcmp(s->m_string, "@/")) {
+            s->m_token = SL_PP_SLASH;
+         } else if (!strcmp(s->m_string, "@%=")) {
+            s->m_token = SL_PP_MODASSIGN;
+         } else if (!strcmp(s->m_string, "@%")) {
+            s->m_token = SL_PP_MODULO;
+         } else if (!strcmp(s->m_string, "@<<=")) {
+            s->m_token = SL_PP_LSHIFTASSIGN;
+         } else if (!strcmp(s->m_string, "@<<")) {
+            s->m_token = SL_PP_LSHIFT;
+         } else if (!strcmp(s->m_string, "@<=")) {
+            s->m_token = SL_PP_LESSEQUAL;
+         } else if (!strcmp(s->m_string, "@<")) {
+            s->m_token = SL_PP_LESS;
+         } else if (!strcmp(s->m_string, "@>>=")) {
+            s->m_token = SL_PP_RSHIFTASSIGN;
+         } else if (!strcmp(s->m_string, "@>>")) {
+            s->m_token = SL_PP_RSHIFT;
+         } else if (!strcmp(s->m_string, "@>=")) {
+            s->m_token = SL_PP_GREATEREQUAL;
+         } else if (!strcmp(s->m_string, "@>")) {
+            s->m_token = SL_PP_GREATER;
+         } else if (!strcmp(s->m_string, "@==")) {
+            s->m_token = SL_PP_EQUAL;
+         } else if (!strcmp(s->m_string, "@=")) {
+            s->m_token = SL_PP_ASSIGN;
+         } else if (!strcmp(s->m_string, "@&&")) {
+            s->m_token = SL_PP_AND;
+         } else if (!strcmp(s->m_string, "@&=")) {
+            s->m_token = SL_PP_BITANDASSIGN;
+         } else if (!strcmp(s->m_string, "@&")) {
+            s->m_token = SL_PP_BITAND;
+         } else if (!strcmp(s->m_string, "@^^")) {
+            s->m_token = SL_PP_XOR;
+         } else if (!strcmp(s->m_string, "@^=")) {
+            s->m_token = SL_PP_BITXORASSIGN;
+         } else if (!strcmp(s->m_string, "@^")) {
+            s->m_token = SL_PP_BITXOR;
+         } else if (!strcmp(s->m_string, "@||")) {
+            s->m_token = SL_PP_OR;
+         } else if (!strcmp(s->m_string, "@|=")) {
+            s->m_token = SL_PP_BITORASSIGN;
+         } else if (!strcmp(s->m_string, "@|")) {
+            s->m_token = SL_PP_BITOR;
+         } else if (!strcmp(s->m_string, "@?")) {
+            s->m_token = SL_PP_QUESTION;
+         } else if (!strcmp(s->m_string, "@:")) {
+            s->m_token = SL_PP_COLON;
+         } else if (!strcmp(s->m_string, "@ID")) {
+            s->m_token = SL_PP_IDENTIFIER;
+         } else if (!strcmp(s->m_string, "@NUM")) {
+            s->m_token = SL_PP_NUMBER;
+         } else {
+            spec_destroy(&s);
+            return 1;
+         }
+      } else {
+         s->m_spec_type = st_string;
+      }
     }
     else if (*t == '.')
     {
@@ -2518,11 +2626,17 @@ match (dict *di, const byte *text, int *index, rule *ru, barray **ba, int filter
 }
 
 static match_result
-fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool *_BP,
-            int filtering_string, regbyte_ctx **rbc)
+fast_match(dict *di,
+           const struct sl_pp_token_info *tokens,
+           int *index,
+           rule *ru,
+           int *_PP,
+           bytepool *_BP,
+           regbyte_ctx **rbc,
+           struct sl_pp_context *context)
 {
    int ind = *index;
-    int _P = filtering_string ? 0 : *_PP;
+   int _P = *_PP;
     int _P2;
     match_result status = mr_not_matched;
     spec *sp = ru->m_specs;
@@ -2531,9 +2645,9 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
     /* for every specifier in the rule */
     while (sp)
     {
-      int i, len, save_ind = ind;
+      int save_ind = ind;
 
-        _P2 = _P + (sp->m_emits ? emit_size (sp->m_emits) : 0);
+      _P2 = _P + (sp->m_emits ? emit_size(sp->m_emits, sl_pp_context_cstr(context, tokens[ind].data.identifier)) : 0);
         if (bytepool_reserve (_BP, _P2))
         {
             free_regbyte_ctx_stack (ctx, *rbc);
@@ -2545,7 +2659,7 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
             switch (sp->m_spec_type)
             {
             case st_identifier:
-                status = fast_match (di, text, &ind, sp->m_rule, &_P2, _BP, filtering_string, &ctx);
+                status = fast_match(di, tokens, &ind, sp->m_rule, &_P2, _BP, &ctx, context);
 
                 if (status == mr_internal_error)
                 {
@@ -2553,58 +2667,38 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
                     return mr_internal_error;
                 }
                 break;
-            case st_string:
-                len = str_length (sp->m_string);
 
-                /* prefilter the stream */
-                if (!filtering_string && di->m_string)
-                {
-               int filter_index = 0;
-                    match_result result;
-                    regbyte_ctx *null_ctx = NULL;
+         case st_token:
+            if (tokens[ind].token == sp->m_token) {
+               status = mr_matched;
+               ind++;
+            } else {
+               status = mr_not_matched;
+            }
+            break;
 
-                    result = fast_match (di, text + ind, &filter_index, di->m_string, NULL, _BP, 1, &null_ctx);
+         case st_string:
+            if (tokens[ind].token != SL_PP_IDENTIFIER) {
+               status = mr_not_matched;
+               break;
+            }
 
-                    if (result == mr_internal_error)
-                    {
-                        free_regbyte_ctx_stack (ctx, *rbc);
-                        return mr_internal_error;
-                    }
+            if (!strcmp(sl_pp_context_cstr(context, tokens[ind].data.identifier), sp->m_string)) {
+               status = mr_matched;
+               ind++;
+            } else {
+               status = mr_not_matched;
+            }
+            break;
 
-                    if (result != mr_matched)
-                    {
-                        status = mr_not_matched;
-                        break;
-                    }
-
-                    if (filter_index != len || !str_equal_n (sp->m_string, text + ind, len))
-                    {
-                        status = mr_not_matched;
-                        break;
-                    }
-
-                    status = mr_matched;
-                    ind += len;
-                }
-                else
-                {
-                    status = mr_matched;
-                    for (i = 0; status == mr_matched && i < len; i++)
-                        if (text[ind + i] != sp->m_string[i])
-                            status = mr_not_matched;
-
-                    if (status == mr_matched)
-                        ind += len;
-                }
-                break;
             case st_byte:
-                status = text[ind] == *sp->m_byte ? mr_matched : mr_not_matched;
+                /**status = text[ind] == *sp->m_byte ? mr_matched : mr_not_matched;**/
                 if (status == mr_matched)
                     ind++;
                 break;
             case st_byte_range:
-                status = (text[ind] >= sp->m_byte[0] && text[ind] <= sp->m_byte[1]) ?
-                    mr_matched : mr_not_matched;
+                /**status = (text[ind] >= sp->m_byte[0] && text[ind] <= sp->m_byte[1]) ?
+                    mr_matched : mr_not_matched;**/
                 if (status == mr_matched)
                     ind++;
                 break;
@@ -2624,7 +2718,7 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
                     match_result result;
 
                     save_ind = ind;
-                    result = fast_match (di, text, &ind, sp->m_rule, &_P2, _BP, filtering_string, &ctx);
+                    result = fast_match(di, tokens, &ind, sp->m_rule, &_P2, _BP, &ctx, context);
 
                     if (result == mr_error_raised)
                     {
@@ -2633,11 +2727,9 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
                     }
                     else if (result == mr_matched)
                     {
-                        if (!filtering_string)
-                        {
                             if (sp->m_emits != NULL)
                             {
-                                if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
+                                if (emit_push (sp->m_emits, _BP->_F + _P, sl_pp_context_cstr(context, tokens[ind - 1].data.identifier), save_ind, &ctx))
                                 {
                                     free_regbyte_ctx_stack (ctx, *rbc);
                                     return mr_internal_error;
@@ -2645,13 +2737,12 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
                             }
 
                             _P = _P2;
-                            _P2 += sp->m_emits ? emit_size (sp->m_emits) : 0;
+                            _P2 += sp->m_emits ? emit_size(sp->m_emits, sl_pp_context_cstr(context, tokens[ind].data.identifier)) : 0;
                             if (bytepool_reserve (_BP, _P2))
                             {
                                 free_regbyte_ctx_stack (ctx, *rbc);
                                 return mr_internal_error;
                             }
-                        }
                     }
                     else if (result == mr_internal_error)
                     {
@@ -2682,8 +2773,8 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
 
             if (sp->m_errtext)
             {
-                set_last_error (sp->m_errtext->m_text, error_get_token (sp->m_errtext, di, text,
-                    ind), ind);
+                /**set_last_error (sp->m_errtext->m_text, error_get_token (sp->m_errtext, di, text,
+                    ind), ind);**/
 
                 return mr_error_raised;
             }
@@ -2694,8 +2785,8 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
         if (status == mr_matched)
         {
             if (sp->m_emits != NULL) {
-                const byte ch = (ind <= 0) ? 0 : text[ind - 1];
-                if (emit_push (sp->m_emits, _BP->_F + _P, ch, save_ind, &ctx))
+                const char *str = (ind <= 0) ? "" : sl_pp_context_cstr(context, tokens[ind - 1].data.identifier);
+                if (emit_push (sp->m_emits, _BP->_F + _P, str, save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
                     return mr_internal_error;
@@ -2710,7 +2801,6 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
         {
             *index = ind;
             *rbc = ctx;
-            if (!filtering_string)
                 *_PP = _P;
             return mr_matched;
         }
@@ -2723,7 +2813,6 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
     {
         *index = ind;
         *rbc = ctx;
-        if (!filtering_string)
             *_PP = _P;
         return mr_matched;
     }
@@ -3021,6 +3110,8 @@ grammar_fast_check (grammar id,
                     unsigned int estimate_prod_size)
 {
    dict *di = NULL;
+   struct sl_pp_context context;
+   struct sl_pp_token_info *tokens;
    int index = 0;
    regbyte_ctx *rbc = NULL;
    bytepool *bp = NULL;
@@ -3038,25 +3129,136 @@ grammar_fast_check (grammar id,
     *prod = NULL;
     *size = 0;
 
-   bytepool_create (&bp, estimate_prod_size);
-   if (bp == NULL)
-      return 0;
+   /*
+    * Preprocess the source string with a GLSL preprocessor.
+    * This is a hack but since nowadays we use grammar only for
+    * GLSL compiler, and that also is going away, we'll do it anyway.
+    */
 
-   if (fast_match (di, text, &index, di->m_syntax, &_P, bp, 0, &rbc) != mr_matched)
    {
+      struct sl_pp_purify_options options;
+      char *outbuf;
+      struct sl_pp_token_info *intokens;
+      unsigned int version;
+      unsigned int tokens_eaten;
+
+      memset(&options, 0, sizeof(options));
+      if (sl_pp_purify((const char *)text, &options, &outbuf)) {
+         return 0;
+      }
+
+      sl_pp_context_init(&context);
+
+      if (sl_pp_tokenise(&context, outbuf, &intokens)) {
+         sl_pp_context_destroy(&context);
+         free(outbuf);
+         return 0;
+      }
+
+      free(outbuf);
+
+      if (sl_pp_version(&context, intokens, &version, &tokens_eaten)) {
+         sl_pp_context_destroy(&context);
+         free(intokens);
+         return 0;
+      }
+
+      if (sl_pp_process(&context, &intokens[tokens_eaten], &tokens)) {
+         sl_pp_context_destroy(&context);
+         free(intokens);
+         return 0;
+      }
+
+      free(intokens);
+
+      /* For the time being we care about only a handful of tokens. */
+      {
+         const struct sl_pp_token_info *src = tokens;
+         struct sl_pp_token_info *dst = tokens;
+
+         while (src->token != SL_PP_EOF) {
+            switch (src->token) {
+            case SL_PP_COMMA:
+            case SL_PP_SEMICOLON:
+            case SL_PP_LBRACE:
+            case SL_PP_RBRACE:
+            case SL_PP_LPAREN:
+            case SL_PP_RPAREN:
+            case SL_PP_LBRACKET:
+            case SL_PP_RBRACKET:
+            case SL_PP_DOT:
+            case SL_PP_INCREMENT:
+            case SL_PP_ADDASSIGN:
+            case SL_PP_PLUS:
+            case SL_PP_DECREMENT:
+            case SL_PP_SUBASSIGN:
+            case SL_PP_MINUS:
+            case SL_PP_BITNOT:
+            case SL_PP_NOTEQUAL:
+            case SL_PP_NOT:
+            case SL_PP_MULASSIGN:
+            case SL_PP_STAR:
+            case SL_PP_DIVASSIGN:
+            case SL_PP_SLASH:
+            case SL_PP_MODASSIGN:
+            case SL_PP_MODULO:
+            case SL_PP_LSHIFTASSIGN:
+            case SL_PP_LSHIFT:
+            case SL_PP_LESSEQUAL:
+            case SL_PP_LESS:
+            case SL_PP_RSHIFTASSIGN:
+            case SL_PP_RSHIFT:
+            case SL_PP_GREATEREQUAL:
+            case SL_PP_GREATER:
+            case SL_PP_EQUAL:
+            case SL_PP_ASSIGN:
+            case SL_PP_AND:
+            case SL_PP_BITANDASSIGN:
+            case SL_PP_BITAND:
+            case SL_PP_XOR:
+            case SL_PP_BITXORASSIGN:
+            case SL_PP_BITXOR:
+            case SL_PP_OR:
+            case SL_PP_BITORASSIGN:
+            case SL_PP_BITOR:
+            case SL_PP_QUESTION:
+            case SL_PP_COLON:
+            case SL_PP_IDENTIFIER:
+            case SL_PP_NUMBER:
+               *dst++ = *src++;
+
+            default:
+               src++;
+            }
+         }
+      }
+   }
+
+   bytepool_create(&bp, estimate_prod_size);
+   if (bp == NULL) {
+      sl_pp_context_destroy(&context);
+      free(tokens);
+      return 0;
+   }
+
+   if (fast_match(di, tokens, &index, di->m_syntax, &_P, bp, &rbc, &context) != mr_matched) {
+      sl_pp_context_destroy(&context);
+      free(tokens);
       bytepool_destroy (&bp);
       free_regbyte_ctx_stack (rbc, NULL);
       return 0;
    }
 
-   free_regbyte_ctx_stack (rbc, NULL);
+   sl_pp_context_destroy(&context);
+   free(tokens);
+   free_regbyte_ctx_stack(rbc, NULL);
 
    *prod = bp->_F;
    *size = _P;
    bp->_F = NULL;
-   bytepool_destroy (&bp);
+   bytepool_destroy(&bp);
 
-    return 1;
+   return 1;
 }
 
 int grammar_destroy (grammar id)
