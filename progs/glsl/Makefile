@@ -190,7 +190,7 @@ samplers: samplers.o $(UTIL_OBJS)
 
 
 samplers_array.o: samplers.c $(UTIL_HEADERS)
-	$(APP_CC) $(CFLAGS) -DSAMPLERS_ARRAY $< -c -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) -DSAMPLERS_ARRAY $< -c -o $@
 
 samplers_array: samplers_array.o $(UTIL_OBJS)
 
