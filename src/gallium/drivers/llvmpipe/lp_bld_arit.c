@@ -591,20 +591,31 @@ lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a)
 {
    const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
 
    if(!type.sign)
       return a;
 
-   /* XXX: is this really necessary? */
+   if(type.floating) {
+      /* Mask out the sign bit */
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long)1 << type.width) - 1);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      a = LLVMBuildAnd(bld->builder, a, mask, "");
+      a = LLVMBuildBitCast(bld->builder, a, vec_type, "");
+      return a;
+   }
+
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(!type.floating && type.width*type.length == 128) {
-      LLVMTypeRef vec_type = lp_build_vec_type(type);
-      if(type.width == 8)
+   if(type.width*type.length == 128) {
+      switch(type.width) {
+      case 8:
          return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.b.128", vec_type, a);
-      if(type.width == 16)
+      case 16:
          return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.w.128", vec_type, a);
-      if(type.width == 32)
+      case 32:
          return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.d.128", vec_type, a);
+      }
    }
 #endif
 
