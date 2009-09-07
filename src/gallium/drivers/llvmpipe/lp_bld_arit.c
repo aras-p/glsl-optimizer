@@ -587,6 +587,89 @@ lp_build_abs(struct lp_build_context *bld,
 }
 
 
+enum lp_build_round_sse41_mode
+{
+   LP_BUILD_ROUND_SSE41_NEAREST = 0,
+   LP_BUILD_ROUND_SSE41_FLOOR = 1,
+   LP_BUILD_ROUND_SSE41_CEIL = 2,
+   LP_BUILD_ROUND_SSE41_TRUNCATE = 3
+};
+
+
+static INLINE LLVMValueRef
+lp_build_round_sse41(struct lp_build_context *bld,
+                     LLVMValueRef a,
+                     enum lp_build_round_sse41_mode mode)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   const char *intrinsic;
+
+   assert(type.floating);
+   assert(type.width*type.length == 128);
+
+   switch(type.width) {
+   case 32:
+      intrinsic = "llvm.x86.sse41.round.ps";
+      break;
+   case 64:
+      intrinsic = "llvm.x86.sse41.round.pd";
+      break;
+   default:
+      assert(0);
+      return bld->undef;
+   }
+
+   return lp_build_intrinsic_binary(bld->builder, intrinsic, vec_type, a,
+                                    LLVMConstInt(LLVMInt32Type(), mode, 0));
+}
+
+
+LLVMValueRef
+lp_build_floor(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   assert(type.floating);
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
+#endif
+
+   /* FIXME */
+   assert(0);
+   return bld->undef;
+}
+
+
+/**
+ * Convert to integer, through whichever rounding method that's fastest,
+ * typically truncating to zero.
+ */
+LLVMValueRef
+lp_build_int(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+
+   assert(type.floating);
+
+   return LLVMBuildFPToSI(bld->builder, a, int_vec_type, "");
+}
+
+
+LLVMValueRef
+lp_build_ifloor(struct lp_build_context *bld,
+                LLVMValueRef a)
+{
+   a = lp_build_floor(bld, a);
+   a = lp_build_int(bld, a);
+   return a;
+}
+
+
 LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
               LLVMValueRef a)

@@ -86,6 +86,18 @@ lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_floor(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
+lp_build_int(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_ifloor(struct lp_build_context *bld,
+                LLVMValueRef a);
+
+LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
               LLVMValueRef a);
 
