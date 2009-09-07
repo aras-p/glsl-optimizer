@@ -157,6 +157,17 @@ lp_build_int_vec_type(union lp_type type)
 }
 
 
+union lp_type
+lp_int_type(union lp_type type)
+{
+   union lp_type int_type;
+   int_type.value = 0;
+   int_type.width = type.width;
+   int_type.length = type.length;
+   return int_type;
+}
+
+
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
