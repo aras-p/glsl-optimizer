@@ -39,9 +39,7 @@
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
 #endif
-#if FEATURE_attrib_stack
 #include "attrib.h"
-#endif
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
@@ -283,12 +281,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_PolygonMode(exec, _mesa_PolygonMode);
    SET_PolygonOffset(exec, _mesa_PolygonOffset);
    SET_PolygonStipple(exec, _mesa_PolygonStipple);
-#if FEATURE_attrib_stack
-   SET_PopAttrib(exec, _mesa_PopAttrib);
-   SET_PushAttrib(exec, _mesa_PushAttrib);
-   SET_PopClientAttrib(exec, _mesa_PopClientAttrib);
-   SET_PushClientAttrib(exec, _mesa_PushClientAttrib);
-#endif
+
+   _mesa_init_attrib_dispatch(exec);
+
 #if FEATURE_drawpix
    SET_RasterPos2f(exec, _mesa_RasterPos2f);
    SET_RasterPos2fv(exec, _mesa_RasterPos2fv);
