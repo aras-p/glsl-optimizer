@@ -486,7 +486,13 @@ generate_fragment(struct llvmpipe_context *lp,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x0, y0, 2, 0);
 
+#if 0
+   /* C texture sampling */
    sampler = lp_c_sampler_soa_create(context_ptr);
+#else
+   /* code generated texture sampling */
+   sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);
+#endif
 
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
@@ -666,8 +672,11 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
  */
 static void
 make_variant_key(struct llvmpipe_context *lp,
+                 struct lp_fragment_shader *shader,
                  struct lp_fragment_shader_variant_key *key)
 {
+   unsigned i;
+
    memset(key, 0, sizeof *key);
 
    memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
@@ -678,6 +687,10 @@ make_variant_key(struct llvmpipe_context *lp,
    /* alpha.ref_value is passed in jit_context */
 
    memcpy(&key->blend, lp->blend, sizeof key->blend);
+
+   for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
+      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
+         lp_sampler_static_state(&key->sampler[i], lp->texture[i], lp->sampler[i]);
 }
 
 
@@ -688,7 +701,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant;
 
-   make_variant_key(lp, &key);
+   make_variant_key(lp, shader, &key);
 
    variant = shader->variants;
    while(variant) {

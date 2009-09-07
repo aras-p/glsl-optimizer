@@ -250,7 +250,9 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
    if (llvmpipe->dirty & (LP_NEW_FS |
                           LP_NEW_BLEND |
-                          LP_NEW_DEPTH_STENCIL_ALPHA))
+                          LP_NEW_DEPTH_STENCIL_ALPHA |
+                          LP_NEW_SAMPLER |
+                          LP_NEW_TEXTURE))
       llvmpipe_update_fs( llvmpipe );
 
 
