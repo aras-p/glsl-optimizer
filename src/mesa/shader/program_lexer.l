@@ -35,6 +35,10 @@
 #define require_rect   (yyextra->option.TexRect)
 #define require_texarray        (yyextra->option.TexArray)
 
+#ifndef HAVE_UNISTD_H
+#define YY_NO_UNISTD_H
+#endif
+
 #define return_token_or_IDENTIFIER(condition, token)	\
    do {							\
       if (condition) {					\
