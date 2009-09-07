@@ -36,13 +36,17 @@
 #include "macros.h"
 #include "pixel.h"
 #include "mtypes.h"
+#include "glapi/dispatch.h"
+
+
+#if FEATURE_pixel_transfer
 
 
 /**********************************************************************/
 /*****                    glPixelZoom                             *****/
 /**********************************************************************/
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -163,7 +167,7 @@ validate_pbo_access(GLcontext *ctx, struct gl_pixelstore_attrib *pack,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -205,7 +209,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
@@ -261,7 +265,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
@@ -317,7 +321,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -362,7 +366,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -406,7 +410,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetPixelMapusv( GLenum map, GLushort *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -468,7 +472,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
  * Implements glPixelTransfer[fi] whether called immediately or from a
  * display list.
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -662,7 +666,7 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_PixelTransferi( GLenum pname, GLint param )
 {
    _mesa_PixelTransferf( pname, (GLfloat) param );
@@ -754,6 +758,24 @@ void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
    if (new_state & _MESA_NEW_TRANSFER_STATE)
       update_image_transfer_state(ctx);
 }
+
+
+void
+_mesa_init_pixel_dispatch(struct _glapi_table *disp)
+{
+   SET_GetPixelMapfv(disp, _mesa_GetPixelMapfv);
+   SET_GetPixelMapuiv(disp, _mesa_GetPixelMapuiv);
+   SET_GetPixelMapusv(disp, _mesa_GetPixelMapusv);
+   SET_PixelMapfv(disp, _mesa_PixelMapfv);
+   SET_PixelMapuiv(disp, _mesa_PixelMapuiv);
+   SET_PixelMapusv(disp, _mesa_PixelMapusv);
+   SET_PixelTransferf(disp, _mesa_PixelTransferf);
+   SET_PixelTransferi(disp, _mesa_PixelTransferi);
+   SET_PixelZoom(disp, _mesa_PixelZoom);
+}
+
+
+#endif /* FEATURE_pixel_transfer */
 
 
 /**********************************************************************/

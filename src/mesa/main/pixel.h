@@ -33,48 +33,35 @@
 #define PIXEL_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
-/** \name API functions */
-/*@{*/
-
-extern void GLAPIENTRY
-_mesa_GetPixelMapfv( GLenum map, GLfloat *values );
-
-extern void GLAPIENTRY
-_mesa_GetPixelMapuiv( GLenum map, GLuint *values );
-
-extern void GLAPIENTRY
-_mesa_GetPixelMapusv( GLenum map, GLushort *values );
-
-extern void GLAPIENTRY
-_mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values );
-
-extern void GLAPIENTRY
-_mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values );
-
-extern void GLAPIENTRY
-_mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values );
-
-extern void GLAPIENTRY
-_mesa_PixelTransferf( GLenum pname, GLfloat param );
-
-extern void GLAPIENTRY
-_mesa_PixelTransferi( GLenum pname, GLint param );
-
-extern void GLAPIENTRY
-_mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor );
-
-/*@}*/
-
+#if FEATURE_pixel_transfer
 
 extern void 
 _mesa_update_pixel( GLcontext *ctx, GLuint newstate );
+
+extern void
+_mesa_init_pixel_dispatch( struct _glapi_table * disp );
+
+#else /* FEATURE_pixel_transfer */
+
+static INLINE void
+_mesa_update_pixel(GLcontext *ctx, GLuint newstate)
+{
+}
+
+static INLINE void
+_mesa_init_pixel_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_pixel_transfer */
+
 
 extern void 
 _mesa_init_pixel( GLcontext * ctx );
 
 /*@}*/
 
-#endif
+#endif /* PIXEL_H */

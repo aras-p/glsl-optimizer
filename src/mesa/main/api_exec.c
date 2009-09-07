@@ -93,9 +93,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
-#if FEATURE_pixel_transfer
 #include "pixel.h"
-#endif
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
@@ -284,17 +282,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_MapGrid2f(exec, _mesa_MapGrid2f);
 #endif
    SET_MultMatrixd(exec, _mesa_MultMatrixd);
-#if FEATURE_pixel_transfer
-   SET_GetPixelMapfv(exec, _mesa_GetPixelMapfv);
-   SET_GetPixelMapuiv(exec, _mesa_GetPixelMapuiv);
-   SET_GetPixelMapusv(exec, _mesa_GetPixelMapusv);
-   SET_PixelMapfv(exec, _mesa_PixelMapfv);
-   SET_PixelMapuiv(exec, _mesa_PixelMapuiv);
-   SET_PixelMapusv(exec, _mesa_PixelMapusv);
-   SET_PixelTransferf(exec, _mesa_PixelTransferf);
-   SET_PixelTransferi(exec, _mesa_PixelTransferi);
-   SET_PixelZoom(exec, _mesa_PixelZoom);
-#endif
+
+   _mesa_init_pixel_dispatch(exec);
+
    SET_PixelStoref(exec, _mesa_PixelStoref);
    SET_PointSize(exec, _mesa_PointSize);
    SET_PolygonMode(exec, _mesa_PolygonMode);
