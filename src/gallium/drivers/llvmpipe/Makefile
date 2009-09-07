@@ -15,6 +15,7 @@ C_SOURCES = \
 	lp_bld_depth.c \
 	lp_bld_flow.c \
 	lp_bld_format_aos.c \
+	lp_bld_format_soa.c \
 	lp_bld_interp.c \
 	lp_bld_intr.c \
 	lp_bld_logic.c \

@@ -31,20 +31,14 @@
 
 /**
  * @file
- * LLVM IR building helpers interfaces.
- *
- * We use LLVM-C bindings for now. They are not documented, but follow the C++
- * interfaces very closely, and appear to be complete enough for code
- * genration. See
- * http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
- * for a standalone example.
+ * Pixel format helpers.
  */
 
 #include <llvm-c/Core.h>  
- 
+
 #include "pipe/p_format.h"
 
-
+struct util_format_description;
 union lp_type;
 
 
@@ -56,9 +50,9 @@ union lp_type;
  * @return RGBA in a 4 floats vector.
  */
 LLVMValueRef
-lp_build_unpack_rgba(LLVMBuilderRef builder,
-                     enum pipe_format format, 
-                     LLVMValueRef packed);
+lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
+                         enum pipe_format format,
+                         LLVMValueRef packed);
 
 
 /**
@@ -67,9 +61,9 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
  * @param rgba 4 float vector with the unpacked components.
  */
 LLVMValueRef
-lp_build_pack_rgba(LLVMBuilderRef builder,
-                   enum pipe_format format,
-                   LLVMValueRef rgba);
+lp_build_pack_rgba_aos(LLVMBuilderRef builder,
+                       enum pipe_format format,
+                       LLVMValueRef rgba);
 
 
 /**
@@ -81,9 +75,9 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
  * @return RGBA in a 4 floats vector.
  */
 LLVMValueRef
-lp_build_load_rgba(LLVMBuilderRef builder,
-                   enum pipe_format format, 
-                   LLVMValueRef ptr);
+lp_build_load_rgba_aos(LLVMBuilderRef builder,
+                       enum pipe_format format,
+                       LLVMValueRef ptr);
 
 
 /**
@@ -92,10 +86,34 @@ lp_build_load_rgba(LLVMBuilderRef builder,
  * @param rgba 4 float vector with the unpacked components.
  */
 void 
-lp_build_store_rgba(LLVMBuilderRef builder,
-                    enum pipe_format format,
-                    LLVMValueRef ptr,
-                    LLVMValueRef rgba);
+lp_build_store_rgba_aos(LLVMBuilderRef builder,
+                        enum pipe_format format,
+                        LLVMValueRef ptr,
+                        LLVMValueRef rgba);
 
+LLVMValueRef
+lp_build_gather(LLVMBuilderRef builder,
+                unsigned length,
+                unsigned src_width,
+                unsigned dst_width,
+                LLVMValueRef base_ptr,
+                LLVMValueRef offsets);
+
+
+void
+lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
+                         const struct util_format_description *format_desc,
+                         union lp_type type,
+                         LLVMValueRef packed,
+                         LLVMValueRef *rgba);
+
+
+void
+lp_build_load_rgba_soa(LLVMBuilderRef builder,
+                       const struct util_format_description *format_desc,
+                       union lp_type type,
+                       LLVMValueRef base_ptr,
+                       LLVMValueRef offsets,
+                       LLVMValueRef *rgba);
 
 #endif /* !LP_BLD_H */
