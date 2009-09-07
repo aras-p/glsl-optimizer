@@ -1412,83 +1412,18 @@ function_definition
  * helper rules, not part of the official language syntax
  */
 
-digit_oct
-    '0'-'7';
-
-digit_dec
-    '0'-'9';
-
-digit_hex
-    '0'-'9' .or 'A'-'F' .or 'a'-'f';
-
-id_character_first
-    'a'-'z' .or 'A'-'Z' .or '_';
-
-id_character_next
-    id_character_first .or digit_dec;
-
 identifier
-    id_character_first .emit * .and .loop id_character_next .emit * .and .true .emit '\0';
+   "@ID" .emit *;
 
 float
-    float_1 .or float_2 .or float_3;
-float_1
-    float_fractional_constant .and float_optional_exponent_part .and optional_f_suffix;
-float_2
-    float_digit_sequence .and .true .emit '\0' .and float_exponent_part .and optional_f_suffix;
-float_3
-    float_digit_sequence .and .true .emit '\0' .and 'f' .emit '\0';
-
-float_fractional_constant
-    float_fractional_constant_1 .or float_fractional_constant_2 .or float_fractional_constant_3;
-float_fractional_constant_1
-    float_digit_sequence .and '.' .and float_digit_sequence;
-float_fractional_constant_2
-    float_digit_sequence .and '.' .and .true .emit '\0';
-float_fractional_constant_3
-    '.' .emit '\0' .and float_digit_sequence;
-
-float_optional_exponent_part
-    float_exponent_part .or .true .emit '\0';
-
-float_digit_sequence
-    digit_dec .emit * .and .loop digit_dec .emit * .and .true .emit '\0';
-
-float_exponent_part
-    float_exponent_part_1 .or float_exponent_part_2;
-float_exponent_part_1
-    'e' .and float_optional_sign .and float_digit_sequence;
-float_exponent_part_2
-    'E' .and float_optional_sign .and float_digit_sequence;
-
-float_optional_sign
-    float_sign .or .true;
-
-float_sign
-    '+' .or '-' .emit '-';
-
-optional_f_suffix
-    'f' .or .true;
-
+   "@NUM" .emit *;
 
 integer
-    integer_hex .or integer_oct .or integer_dec;
-
-integer_hex
-    '0' .and integer_hex_1 .emit 0x10 .and digit_hex .emit * .and .loop digit_hex .emit * .and
-    .true .emit '\0';
-integer_hex_1
-    'x' .or 'X';
-
-integer_oct
-    '0' .emit 8 .emit * .and .loop digit_oct .emit * .and .true .emit '\0';
-
-integer_dec
-    digit_dec .emit 10 .emit * .and .loop digit_dec .emit * .and .true .emit '\0';
+   "@NUM" .emit *;
 
 boolean
-    "true" .emit 2 .emit '1' .emit '\0' .or
-    "false" .emit 2 .emit '0' .emit '\0';
+   "true" .emit '1' .emit '\0' .or
+   "false" .emit '0' .emit '\0';
 
 type_name
     identifier;
@@ -1506,53 +1441,10 @@ boolconstant
     boolean .emit OP_PUSH_BOOL;
 
 optional_space
-    .loop single_space;
+   .true;
 
 space
-    single_space .and .loop single_space;
-
-single_space
-    white_char .or c_style_comment_block .or cpp_style_comment_block;
-
-white_char
-    ' ' .or '\t' .or new_line .or '\v' .or '\f';
-
-new_line
-    cr_lf .or lf_cr .or '\n' .or '\r';
-
-cr_lf
-    '\r' .and '\n';
-
-lf_cr
-    '\n' .and '\r';
-
-c_style_comment_block
-    '/' .and '*' .and c_style_comment_rest;
-
-c_style_comment_rest
-    .loop c_style_comment_char_no_star .and c_style_comment_rest_1;
-c_style_comment_rest_1
-    c_style_comment_end .or c_style_comment_rest_2;
-c_style_comment_rest_2
-    '*' .and c_style_comment_rest;
-
-c_style_comment_char_no_star
-    '\x2B'-'\xFF' .or '\x01'-'\x29';
-
-c_style_comment_end
-    '*' .and '/';
-
-cpp_style_comment_block
-    '/' .and '/' .and cpp_style_comment_block_1;
-cpp_style_comment_block_1
-    cpp_style_comment_block_2 .or cpp_style_comment_block_3;
-cpp_style_comment_block_2
-    .loop cpp_style_comment_char .and new_line;
-cpp_style_comment_block_3
-    .loop cpp_style_comment_char;
-
-cpp_style_comment_char
-    '\x0E'-'\xFF' .or '\x01'-'\x09' .or '\x0B'-'\x0C';
+   .true;
 
 /* lexical rules */
 
@@ -1560,7 +1452,7 @@ cpp_style_comment_char
     optional_space .and '&' .and optional_space;*/
 
 ampersandampersand
-    optional_space .and '&' .and '&' .and optional_space;
+   "@&&";
 
 /*ampersandequals
     optional_space .and '&' .and '=' .and optional_space;*/
@@ -1569,46 +1461,46 @@ ampersandampersand
     optional_space .and '|' .and optional_space;*/
 
 barbar
-    optional_space .and '|' .and '|' .and optional_space;
+   "@||";
 
 /*barequals
     optional_space .and '|' .and '=' .and optional_space;*/
 
 bang
-    optional_space .and '!' .and optional_space;
+   "@!";
 
 bangequals
-    optional_space .and '!' .and '=' .and optional_space;
+   "@!=";
 
 /*caret
     optional_space .and '^' .and optional_space;*/
 
 caretcaret
-    optional_space .and '^' .and '^' .and optional_space;
+   "@^^";
 
 /*caretequals
     optional_space .and '^' .and '=' .and optional_space;*/
 
 colon
-    optional_space .and ':' .and optional_space;
+   "@:";
 
 comma
-    optional_space .and ',' .and optional_space;
+   "@,";
 
 dot
-    optional_space .and '.' .and optional_space;
+   "@.";
 
 equals
-    optional_space .and '=' .and optional_space;
+   "@=";
 
 equalsequals
-    optional_space .and '=' .and '=' .and optional_space;
+   "@==";
 
 greater
-    optional_space .and '>' .and optional_space;
+   "@>";
 
 greaterequals
-    optional_space .and '>' .and '=' .and optional_space;
+   "@>=";
 
 /*greatergreater
     optional_space .and '>' .and '>' .and optional_space;*/
@@ -1617,16 +1509,16 @@ greaterequals
     optional_space .and '>' .and '>' .and '=' .and optional_space;*/
 
 lbrace
-    optional_space .and '{' .and optional_space;
+   "@{";
 
 lbracket
-    optional_space .and '[' .and optional_space;
+   "@[";
 
 less
-    optional_space .and '<' .and optional_space;
+   "@<";
 
 lessequals
-    optional_space .and '<' .and '=' .and optional_space;
+   "@<=";
 
 /*lessless
     optional_space .and '<' .and '<' .and optional_space;*/
@@ -1635,16 +1527,16 @@ lessequals
     optional_space .and '<' .and '<' .and '=' .and optional_space;*/
 
 lparen
-    optional_space .and '(' .and optional_space;
+   "@(";
 
 minus
-    optional_space .and '-' .and optional_space;
+   "@-";
 
 minusequals
-    optional_space .and '-' .and '=' .and optional_space;
+   "@-=";
 
 minusminus
-    optional_space .and '-' .and '-' .and optional_space;
+   "@--";
 
 /*percent
     optional_space .and '%' .and optional_space;*/
@@ -1653,64 +1545,41 @@ minusminus
     optional_space .and '%' .and '=' .and optional_space;*/
 
 plus
-    optional_space .and '+' .and optional_space;
+   "@+";
 
 plusequals
-    optional_space .and '+' .and '=' .and optional_space;
+   "@+=";
 
 plusplus
-    optional_space .and '+' .and '+' .and optional_space;
+   "@++";
 
 question
-    optional_space .and '?' .and optional_space;
+   "@?";
 
 rbrace
-    optional_space .and '}' .and optional_space;
+   "@}";
 
 rbracket
-    optional_space .and ']' .and optional_space;
+   "@]";
 
 rparen
-    optional_space .and ')' .and optional_space;
+   "@)";
 
 semicolon
-    optional_space .and ';' .and optional_space;
+   "@;";
 
 slash
-    optional_space .and '/' .and optional_space;
+   "@/";
 
 slashequals
-    optional_space .and '/' .and '=' .and optional_space;
+   "@/=";
 
 star
-    optional_space .and '*' .and optional_space;
+   "@*";
 
 starequals
-    optional_space .and '*' .and '=' .and optional_space;
+   "@*=";
 
 /*tilde
     optional_space .and '~' .and optional_space;*/
-
-/* string rules - these are used internally by the parser when parsing quoted strings */
-
-.string string_lexer;
-
-string_lexer
-    lex_first_identifier_character .and .loop lex_next_identifier_character;
-
-lex_first_identifier_character
-    'a'-'z' .or 'A'-'Z' .or '_';
-
-lex_next_identifier_character
-    'a'-'z' .or 'A'-'Z' .or '0'-'9' .or '_';
-
-/* error rules - these are used by error messages */
-
-err_token
-    '~' .or '`' .or '!' .or '@' .or '#' .or '$' .or '%' .or '^' .or '&' .or '*' .or '(' .or ')' .or
-    '-' .or '+' .or '=' .or '|' .or '\\' .or '[' .or ']' .or '{' .or '}' .or ':' .or ';' .or '"' .or
-    '\'' .or '<' .or ',' .or '>' .or '.' .or '/' .or '?' .or err_identifier;
-
-err_identifier
-    id_character_first .and .loop id_character_next;
 
