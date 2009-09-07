@@ -3091,11 +3091,6 @@ static int _grammar_check (grammar id, const byte *text, byte **prod, unsigned i
     return 1;
 }
 
-int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size)
-{
-    return _grammar_check (id, text, prod, size, 0, 0);
-}
-
 int grammar_fast_check (grammar id, const byte *text, byte **prod, unsigned int *size,
     unsigned int estimate_prod_size)
 {
