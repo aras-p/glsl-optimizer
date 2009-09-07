@@ -106,9 +106,7 @@
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
-#if FEATURE_histogram
 #include "histogram.h"
-#endif
 #include "hint.h"
 #include "hash.h"
 #include "light.h"
@@ -693,9 +691,7 @@ init_attrib_groups(GLcontext *ctx)
    ctx->RenderMode = GL_RENDER;
 #endif
    _mesa_init_fog( ctx );
-#if FEATURE_histogram
    _mesa_init_histogram( ctx );
-#endif
    _mesa_init_hint( ctx );
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );

@@ -76,9 +76,7 @@
 #include "ffvertex_prog.h"
 #include "framebuffer.h"
 #include "hint.h"
-#if FEATURE_histogram
 #include "histogram.h"
-#endif
 #include "imports.h"
 #include "light.h"
 #include "lines.h"
@@ -375,18 +373,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    _mesa_init_colortable_dispatch(exec);
    _mesa_init_convolve_dispatch(exec);
-#if FEATURE_histogram
-   SET_GetHistogram(exec, _mesa_GetHistogram);
-   SET_GetHistogramParameterfv(exec, _mesa_GetHistogramParameterfv);
-   SET_GetHistogramParameteriv(exec, _mesa_GetHistogramParameteriv);
-   SET_GetMinmax(exec, _mesa_GetMinmax);
-   SET_GetMinmaxParameterfv(exec, _mesa_GetMinmaxParameterfv);
-   SET_GetMinmaxParameteriv(exec, _mesa_GetMinmaxParameteriv);
-   SET_Histogram(exec, _mesa_Histogram);
-   SET_Minmax(exec, _mesa_Minmax);
-   SET_ResetHistogram(exec, _mesa_ResetHistogram);
-   SET_ResetMinmax(exec, _mesa_ResetMinmax);
-#endif
+   _mesa_init_histogram_dispatch(exec);
 
    /* OpenGL 2.0 */
    SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
