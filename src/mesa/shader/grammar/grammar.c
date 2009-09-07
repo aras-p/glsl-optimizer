@@ -3013,14 +3013,18 @@ int grammar_set_reg8 (grammar id, const byte *name, byte value)
     return 1;
 }
 
-/*
-    internal checking function used by both grammar_check and grammar_fast_check functions
-*/
-static int _grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size,
-    unsigned int estimate_prod_size, int use_fast_path)
+int
+grammar_fast_check (grammar id,
+                    const byte *text,
+                    byte **prod,
+                    unsigned int *size,
+                    unsigned int estimate_prod_size)
 {
-    dict *di = NULL;
+   dict *di = NULL;
    int index = 0;
+   regbyte_ctx *rbc = NULL;
+   bytepool *bp = NULL;
+   int _P = 0;
 
     clear_last_error ();
 
@@ -3034,67 +3038,25 @@ static int _grammar_check (grammar id, const byte *text, byte **prod, unsigned i
     *prod = NULL;
     *size = 0;
 
-    if (use_fast_path)
-    {
-        regbyte_ctx *rbc = NULL;
-        bytepool *bp = NULL;
-        int _P = 0;
+   bytepool_create (&bp, estimate_prod_size);
+   if (bp == NULL)
+      return 0;
 
-        bytepool_create (&bp, estimate_prod_size);
-        if (bp == NULL)
-            return 0;
+   if (fast_match (di, text, &index, di->m_syntax, &_P, bp, 0, &rbc) != mr_matched)
+   {
+      bytepool_destroy (&bp);
+      free_regbyte_ctx_stack (rbc, NULL);
+      return 0;
+   }
 
-        if (fast_match (di, text, &index, di->m_syntax, &_P, bp, 0, &rbc) != mr_matched)
-        {
-            bytepool_destroy (&bp);
-            free_regbyte_ctx_stack (rbc, NULL);
-            return 0;
-        }
+   free_regbyte_ctx_stack (rbc, NULL);
 
-        free_regbyte_ctx_stack (rbc, NULL);
-
-        *prod = bp->_F;
-        *size = _P;
-        bp->_F = NULL;
-        bytepool_destroy (&bp);
-    }
-    else
-    {
-        regbyte_ctx *rbc = NULL;
-        barray *ba = NULL;
-
-        barray_create (&ba);
-        if (ba == NULL)
-            return 0;
-
-        if (match (di, text, &index, di->m_syntax, &ba, 0, &rbc) != mr_matched)
-        {
-            barray_destroy (&ba);
-            free_regbyte_ctx_stack (rbc, NULL);
-            return 0;
-        }
-
-        free_regbyte_ctx_stack (rbc, NULL);
-
-        *prod = (byte *) mem_alloc (ba->len * sizeof (byte));
-        if (*prod == NULL)
-        {
-            barray_destroy (&ba);
-            return 0;
-        }
-
-        mem_copy (*prod, ba->data, ba->len * sizeof (byte));
-        *size = ba->len;
-        barray_destroy (&ba);
-    }
+   *prod = bp->_F;
+   *size = _P;
+   bp->_F = NULL;
+   bytepool_destroy (&bp);
 
     return 1;
-}
-
-int grammar_fast_check (grammar id, const byte *text, byte **prod, unsigned int *size,
-    unsigned int estimate_prod_size)
-{
-    return _grammar_check (id, text, prod, size, estimate_prod_size, 1);
 }
 
 int grammar_destroy (grammar id)
