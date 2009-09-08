@@ -100,9 +100,7 @@
 #include "enums.h"
 #include "extensions.h"
 #include "fbobject.h"
-#if FEATURE_feedback
 #include "feedback.h"
-#endif
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
@@ -683,11 +681,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_eval( ctx );
 #endif
    _mesa_init_fbobjects( ctx );
-#if FEATURE_feedback
    _mesa_init_feedback( ctx );
-#else
-   ctx->RenderMode = GL_RENDER;
-#endif
    _mesa_init_fog( ctx );
    _mesa_init_histogram( ctx );
    _mesa_init_hint( ctx );

@@ -64,9 +64,7 @@
 #include "eval.h"
 #endif
 #include "get.h"
-#if FEATURE_feedback
 #include "feedback.h"
-#endif
 #include "fog.h"
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
@@ -209,17 +207,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_DepthRange(exec, _mesa_DepthRange);
 
    _mesa_init_drawpix_dispatch(exec);
+   _mesa_init_feedback_dispatch(exec);
 
-#if FEATURE_feedback
-   SET_InitNames(exec, _mesa_InitNames);
-   SET_FeedbackBuffer(exec, _mesa_FeedbackBuffer);
-   SET_LoadName(exec, _mesa_LoadName);
-   SET_PassThrough(exec, _mesa_PassThrough);
-   SET_PopName(exec, _mesa_PopName);
-   SET_PushName(exec, _mesa_PushName);
-   SET_SelectBuffer(exec, _mesa_SelectBuffer);
-   SET_RenderMode(exec, _mesa_RenderMode);
-#endif
    SET_FogCoordPointerEXT(exec, _mesa_FogCoordPointerEXT);
    SET_Fogf(exec, _mesa_Fogf);
    SET_Fogfv(exec, _mesa_Fogfv);
