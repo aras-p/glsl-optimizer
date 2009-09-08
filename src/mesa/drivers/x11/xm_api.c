@@ -1359,6 +1359,7 @@ const struct dri_extension card_extensions[] =
    { "GL_EXT_gpu_program_parameters",	GL_EXT_gpu_program_parameters_functions },
    { "GL_EXT_paletted_texture",		GL_EXT_paletted_texture_functions },
    { "GL_MESA_resize_buffers",		GL_MESA_resize_buffers_functions },
+   { "GL_NV_depth_clamp",		NULL },
    { "GL_NV_vertex_program",		GL_NV_vertex_program_functions },
    { "GL_NV_fragment_program",		GL_NV_fragment_program_functions },
    { NULL,				NULL }

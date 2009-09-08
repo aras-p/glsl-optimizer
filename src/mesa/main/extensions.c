@@ -163,6 +163,7 @@ static const struct {
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
+   { OFF, "GL_NV_depth_clamp",                 F(ARB_depth_clamp) },
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
