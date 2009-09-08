@@ -3226,11 +3226,15 @@ grammar_fast_check (grammar id,
             case SL_PP_IDENTIFIER:
             case SL_PP_NUMBER:
                *dst++ = *src++;
+               break;
 
             default:
                src++;
             }
          }
+
+         /* The end of stream token. */
+         *dst = *src;
       }
    }
 
