@@ -1,16 +1,11 @@
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/bufferobj.h"
-#include "main/colortab.h"
 #include "main/convolve.h"
 #include "main/context.h"
-#include "main/simple_list.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/texgetimage.h"
