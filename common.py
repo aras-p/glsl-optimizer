@@ -59,7 +59,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
-											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince')))
+											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin')))
 	opts.Add(EnumOption('toolchain', 'compiler toolchain', 'default',
 											 allowed_values=('default', 'crossmingw', 'winsdk', 'winddk')))
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
