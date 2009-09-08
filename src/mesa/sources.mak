@@ -255,7 +255,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_link.c	\
 	shader/slang/slang_log.c	\
 	shader/slang/slang_mem.c	\
-	shader/slang/slang_preprocess.c	\
 	shader/slang/slang_print.c	\
 	shader/slang/slang_simplify.c	\
 	shader/slang/slang_storage.c	\

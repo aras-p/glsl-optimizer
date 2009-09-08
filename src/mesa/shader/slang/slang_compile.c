@@ -38,7 +38,6 @@
 #include "shader/grammar/grammar_mesa.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
-#include "slang_preprocess.h"
 #include "slang_storage.h"
 #include "slang_emit.h"
 #include "slang_log.h"
@@ -2496,8 +2495,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      struct gl_sl_pragmas *pragmas)
 {
    byte *prod;
-   GLuint size, start, version;
-   slang_string preprocessed;
+   GLuint size, version;
    GLuint maxVersion;
 
 #if FEATURE_ARB_shading_language_120
@@ -2509,8 +2507,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
 #endif
 
    /* First retrieve the version number. */
-   if (!_slang_preprocess_version(source, &version, &start, infolog))
-      return GL_FALSE;
+   version = 110;
 
    if (version > maxVersion) {
       slang_info_log_error(infolog,
@@ -2519,23 +2516,13 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       return GL_FALSE;
    }
 
-   /* Now preprocess the source string. */
-   slang_string_init(&preprocessed);
-   if (!_slang_preprocess_directives(&preprocessed, &source[start],
-                                     infolog, extensions, pragmas)) {
-      slang_string_free(&preprocessed);
-      slang_info_log_error(infolog, "failed to preprocess the source.");
-      return GL_FALSE;
-   }
-
    /* Finally check the syntax and generate its binary representation. */
    if (!grammar_fast_check(id,
-                           (const byte *) (slang_string_cstr(&preprocessed)),
+                           (const byte *)source,
                            &prod, &size, 65536)) {
       char buf[1024];
       GLint pos;
 
-      slang_string_free(&preprocessed);
       grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
       slang_info_log_error(infolog, buf);
       /* syntax error (possibly in library code) */
@@ -2551,7 +2538,6 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
 #endif
       return GL_FALSE;
    }
-   slang_string_free(&preprocessed);
 
    /* Syntax is okay - translate it to internal representation. */
    if (!compile_binary(prod, unit, version, type, infolog, builtin,

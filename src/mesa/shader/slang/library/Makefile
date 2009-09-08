@@ -19,7 +19,7 @@ default: syntax builtin
 clean:
 	-rm -f syn_to_c gc_to_bin *_syn.h *_gc.h
 
-syntax: slang_pp_directives_syn.h slang_pp_expression_syn.h slang_shader_syn.h slang_pp_version_syn.h
+syntax: slang_shader_syn.h
 
 builtin: builtin_110 builtin_120
 
@@ -37,17 +37,8 @@ gc_to_bin: gc_to_bin.c slang_shader_syn.h
 # syntax scripts
 #
 
-slang_pp_directives_syn.h: syn_to_c slang_pp_directives.syn
-	./syn_to_c slang_pp_directives.syn > slang_pp_directives_syn.h
-
-slang_pp_expression_syn.h: syn_to_c slang_pp_expression.syn
-	./syn_to_c slang_pp_expression.syn > slang_pp_expression_syn.h
-
 slang_shader_syn.h: syn_to_c slang_shader.syn
 	./syn_to_c slang_shader.syn > slang_shader_syn.h
-
-slang_pp_version_syn.h: syn_to_c slang_pp_version.syn
-	./syn_to_c slang_pp_version.syn > slang_pp_version_syn.h
 
 #
 # builtin library sources
