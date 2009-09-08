@@ -28,6 +28,7 @@ intel_drm_buffer_create(struct intel_winsys *iws,
    } else if (type == INTEL_NEW_VERTEX) {
       name = "gallium3d_vertex";
       pool = idws->pools.gem;
+      buf->map_gtt = TRUE;
    } else if (type == INTEL_NEW_SCANOUT) {
       name = "gallium3d_scanout";
       pool = idws->pools.gem;
