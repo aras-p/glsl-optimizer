@@ -215,7 +215,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;

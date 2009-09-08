@@ -116,9 +116,7 @@
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_ARB_occlusion_query
 #include "queryobj.h"
-#endif
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
@@ -694,9 +692,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
-#if FEATURE_ARB_occlusion_query
-   _mesa_init_query( ctx );
-#endif
+   _mesa_init_queryobj( ctx );
 #if FEATURE_ARB_sync
    _mesa_init_sync( ctx );
 #endif
@@ -990,9 +986,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
-#if FEATURE_ARB_occlusion_query
-   _mesa_free_query_data(ctx);
-#endif
+   _mesa_free_queryobj_data(ctx);
 #if FEATURE_ARB_sync
    _mesa_free_sync_data(ctx);
 #endif

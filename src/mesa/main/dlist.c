@@ -4856,7 +4856,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 #endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
 
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
 
 static void GLAPIENTRY
 save_BeginQueryARB(GLenum target, GLuint id)
@@ -4890,7 +4890,7 @@ save_EndQueryARB(GLenum target)
    }
 }
 
-#endif /* FEATURE_ARB_occlusion_query */
+#endif /* FEATURE_queryobj */
 
 
 static void GLAPIENTRY
@@ -7155,7 +7155,7 @@ execute_list(GLcontext *ctx, GLuint list)
                                                       n[6].f));
             break;
 #endif
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
          case OPCODE_BEGIN_QUERY_ARB:
             CALL_BeginQueryARB(ctx->Exec, (n[1].e, n[2].ui));
             break;
@@ -8924,7 +8924,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_UnmapBufferARB(table, _mesa_UnmapBufferARB);
 #endif
 
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
    SET_BeginQueryARB(table, save_BeginQueryARB);
    SET_EndQueryARB(table, save_EndQueryARB);
    SET_GenQueriesARB(table, _mesa_GenQueriesARB);

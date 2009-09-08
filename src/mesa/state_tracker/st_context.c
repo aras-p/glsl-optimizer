@@ -332,7 +332,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_feedback_functions(functions);
 #endif
    st_init_program_functions(functions);
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
    st_init_query_functions(functions);
 #endif
    st_init_readpixels_functions(functions);

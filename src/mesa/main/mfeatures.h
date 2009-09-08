@@ -83,6 +83,7 @@
 #define FEATURE_histogram  _HAVE_FULL_GL
 #define FEATURE_pixel_transfer  _HAVE_FULL_GL
 #define FEATURE_point_size_array 0
+#define FEATURE_queryobj  _HAVE_FULL_GL
 #define FEATURE_rastpos  _HAVE_FULL_GL
 #define FEATURE_texgen  _HAVE_FULL_GL
 #define FEATURE_texture_fxt1  _HAVE_FULL_GL
@@ -91,7 +92,6 @@
 #define FEATURE_vertex_array_byte 0
 #define FEATURE_es2_glsl 0
 
-#define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL
 #define FEATURE_ARB_fragment_program  _HAVE_FULL_GL
 #define FEATURE_ARB_framebuffer_object  _HAVE_FULL_GL
 #define FEATURE_ARB_map_buffer_range  _HAVE_FULL_GL
@@ -109,7 +109,6 @@
 #define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
 #define FEATURE_EXT_pixel_buffer_object  _HAVE_FULL_GL
 #define FEATURE_EXT_texture_sRGB _HAVE_FULL_GL
-#define FEATURE_EXT_timer_query  _HAVE_FULL_GL
 #define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
 #define FEATURE_NV_fence  _HAVE_FULL_GL
 #define FEATURE_NV_fragment_program  _HAVE_FULL_GL

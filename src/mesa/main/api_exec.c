@@ -83,9 +83,7 @@
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
 #include "queryobj.h"
-#endif
 #include "readpix.h"
 #include "scissor.h"
 #include "state.h"
@@ -625,16 +623,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #endif
 
    /* ARB 29. GL_ARB_occlusion_query */
-#if FEATURE_ARB_occlusion_query
-   SET_GenQueriesARB(exec, _mesa_GenQueriesARB);
-   SET_DeleteQueriesARB(exec, _mesa_DeleteQueriesARB);
-   SET_IsQueryARB(exec, _mesa_IsQueryARB);
-   SET_BeginQueryARB(exec, _mesa_BeginQueryARB);
-   SET_EndQueryARB(exec, _mesa_EndQueryARB);
-   SET_GetQueryivARB(exec, _mesa_GetQueryivARB);
-   SET_GetQueryObjectivARB(exec, _mesa_GetQueryObjectivARB);
-   SET_GetQueryObjectuivARB(exec, _mesa_GetQueryObjectuivARB);
-#endif
+   _mesa_init_queryobj_dispatch(exec);
 
    /* ARB 37. GL_ARB_draw_buffers */
 #if FEATURE_draw_read_buffer
@@ -742,11 +731,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_FramebufferRenderbufferEXT(exec, _mesa_FramebufferRenderbufferEXT);
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
-#endif
-
-#if FEATURE_EXT_timer_query
-   SET_GetQueryObjecti64vEXT(exec, _mesa_GetQueryObjecti64vEXT);
-   SET_GetQueryObjectui64vEXT(exec, _mesa_GetQueryObjectui64vEXT);
 #endif
 
 #if FEATURE_EXT_framebuffer_blit
