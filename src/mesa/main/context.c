@@ -124,9 +124,7 @@
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#if FEATURE_drawpix
 #include "rastpos.h"
-#endif
 #include "scissor.h"
 #include "shared.h"
 #include "simple_list.h"
@@ -708,9 +706,7 @@ init_attrib_groups(GLcontext *ctx)
 #if FEATURE_ARB_sync
    _mesa_init_sync( ctx );
 #endif
-#if FEATURE_drawpix
    _mesa_init_rastpos( ctx );
-#endif
    _mesa_init_scissor( ctx );
    _mesa_init_shader_state( ctx );
    _mesa_init_stencil( ctx );

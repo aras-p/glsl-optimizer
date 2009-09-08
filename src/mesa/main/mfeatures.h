@@ -82,12 +82,12 @@
 #define FEATURE_histogram  _HAVE_FULL_GL
 #define FEATURE_pixel_transfer  _HAVE_FULL_GL
 #define FEATURE_point_size_array 0
+#define FEATURE_rastpos  _HAVE_FULL_GL
 #define FEATURE_texgen  _HAVE_FULL_GL
 #define FEATURE_texture_fxt1  _HAVE_FULL_GL
 #define FEATURE_texture_s3tc  _HAVE_FULL_GL
 #define FEATURE_userclip  _HAVE_FULL_GL
 #define FEATURE_vertex_array_byte 0
-#define FEATURE_windowpos  _HAVE_FULL_GL
 #define FEATURE_es2_glsl 0
 
 #define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL

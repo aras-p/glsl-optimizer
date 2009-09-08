@@ -59,8 +59,8 @@
 #endif
 #if FEATURE_drawpix
 #include "drawpix.h"
-#include "rastpos.h"
 #endif
+#include "rastpos.h"
 #include "enable.h"
 #if FEATURE_evaluators
 #include "eval.h"
@@ -281,33 +281,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_PolygonStipple(exec, _mesa_PolygonStipple);
 
    _mesa_init_attrib_dispatch(exec);
+   _mesa_init_rastpos_dispatch(exec);
 
-#if FEATURE_drawpix
-   SET_RasterPos2f(exec, _mesa_RasterPos2f);
-   SET_RasterPos2fv(exec, _mesa_RasterPos2fv);
-   SET_RasterPos2i(exec, _mesa_RasterPos2i);
-   SET_RasterPos2iv(exec, _mesa_RasterPos2iv);
-   SET_RasterPos2d(exec, _mesa_RasterPos2d);
-   SET_RasterPos2dv(exec, _mesa_RasterPos2dv);
-   SET_RasterPos2s(exec, _mesa_RasterPos2s);
-   SET_RasterPos2sv(exec, _mesa_RasterPos2sv);
-   SET_RasterPos3d(exec, _mesa_RasterPos3d);
-   SET_RasterPos3dv(exec, _mesa_RasterPos3dv);
-   SET_RasterPos3f(exec, _mesa_RasterPos3f);
-   SET_RasterPos3fv(exec, _mesa_RasterPos3fv);
-   SET_RasterPos3i(exec, _mesa_RasterPos3i);
-   SET_RasterPos3iv(exec, _mesa_RasterPos3iv);
-   SET_RasterPos3s(exec, _mesa_RasterPos3s);
-   SET_RasterPos3sv(exec, _mesa_RasterPos3sv);
-   SET_RasterPos4d(exec, _mesa_RasterPos4d);
-   SET_RasterPos4dv(exec, _mesa_RasterPos4dv);
-   SET_RasterPos4f(exec, _mesa_RasterPos4f);
-   SET_RasterPos4fv(exec, _mesa_RasterPos4fv);
-   SET_RasterPos4i(exec, _mesa_RasterPos4i);
-   SET_RasterPos4iv(exec, _mesa_RasterPos4iv);
-   SET_RasterPos4s(exec, _mesa_RasterPos4s);
-   SET_RasterPos4sv(exec, _mesa_RasterPos4sv);
-#endif
    SET_ReadPixels(exec, _mesa_ReadPixels);
    SET_Rotated(exec, _mesa_Rotated);
    SET_Scaled(exec, _mesa_Scaled);
@@ -485,32 +460,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #endif
 
    /* 197. GL_MESA_window_pos */
-#if FEATURE_drawpix
-   SET_WindowPos2dMESA(exec, _mesa_WindowPos2dMESA);
-   SET_WindowPos2dvMESA(exec, _mesa_WindowPos2dvMESA);
-   SET_WindowPos2fMESA(exec, _mesa_WindowPos2fMESA);
-   SET_WindowPos2fvMESA(exec, _mesa_WindowPos2fvMESA);
-   SET_WindowPos2iMESA(exec, _mesa_WindowPos2iMESA);
-   SET_WindowPos2ivMESA(exec, _mesa_WindowPos2ivMESA);
-   SET_WindowPos2sMESA(exec, _mesa_WindowPos2sMESA);
-   SET_WindowPos2svMESA(exec, _mesa_WindowPos2svMESA);
-   SET_WindowPos3dMESA(exec, _mesa_WindowPos3dMESA);
-   SET_WindowPos3dvMESA(exec, _mesa_WindowPos3dvMESA);
-   SET_WindowPos3fMESA(exec, _mesa_WindowPos3fMESA);
-   SET_WindowPos3fvMESA(exec, _mesa_WindowPos3fvMESA);
-   SET_WindowPos3iMESA(exec, _mesa_WindowPos3iMESA);
-   SET_WindowPos3ivMESA(exec, _mesa_WindowPos3ivMESA);
-   SET_WindowPos3sMESA(exec, _mesa_WindowPos3sMESA);
-   SET_WindowPos3svMESA(exec, _mesa_WindowPos3svMESA);
-   SET_WindowPos4dMESA(exec, _mesa_WindowPos4dMESA);
-   SET_WindowPos4dvMESA(exec, _mesa_WindowPos4dvMESA);
-   SET_WindowPos4fMESA(exec, _mesa_WindowPos4fMESA);
-   SET_WindowPos4fvMESA(exec, _mesa_WindowPos4fvMESA);
-   SET_WindowPos4iMESA(exec, _mesa_WindowPos4iMESA);
-   SET_WindowPos4ivMESA(exec, _mesa_WindowPos4ivMESA);
-   SET_WindowPos4sMESA(exec, _mesa_WindowPos4sMESA);
-   SET_WindowPos4svMESA(exec, _mesa_WindowPos4svMESA);
-#endif
+   /* part of _mesa_init_rastpos_dispatch(exec); */
 
    /* 200. GL_IBM_multimode_draw_arrays */
 #if _HAVE_FULL_GL
