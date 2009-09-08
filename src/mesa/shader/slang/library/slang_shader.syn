@@ -274,11 +274,11 @@
 /* any syntax errors... */
 .errtext INVALID_EXTERNAL_DECLARATION               "2001: Syntax error."
 .errtext INVALID_OPERATOR_OVERRIDE                  "2002: Invalid operator override."
-.errtext LBRACE_EXPECTED                            "2003: '{' expected but '$err_token$' found."
-.errtext LPAREN_EXPECTED                            "2004: '(' expected but '$err_token$' found."
-.errtext RPAREN_EXPECTED                            "2005: ')' expected but '$err_token$' found."
-.errtext INVALID_PRECISION                          "2006: Invalid precision specifier '$err_token$'."
-.errtext INVALID_PRECISION_TYPE                     "2007: Invalid precision type '$err_token$'."
+.errtext LBRACE_EXPECTED                            "2003: '{' expected but token found."
+.errtext LPAREN_EXPECTED                            "2004: '(' expected but token found."
+.errtext RPAREN_EXPECTED                            "2005: ')' expected but token found."
+.errtext INVALID_PRECISION                          "2006: Invalid precision specifier."
+.errtext INVALID_PRECISION_TYPE                     "2007: Invalid precision type."
 
 
 /*
