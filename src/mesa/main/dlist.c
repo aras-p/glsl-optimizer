@@ -1876,7 +1876,7 @@ save_Enable(GLenum cap)
 
 
 static void GLAPIENTRY
-_mesa_save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
+save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1894,7 +1894,7 @@ _mesa_save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 
 
 static void GLAPIENTRY
-_mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
+save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -8451,8 +8451,8 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
    SET_EndList(table, _mesa_EndList);
-   SET_EvalMesh1(table, _mesa_save_EvalMesh1);
-   SET_EvalMesh2(table, _mesa_save_EvalMesh2);
+   SET_EvalMesh1(table, save_EvalMesh1);
+   SET_EvalMesh2(table, save_EvalMesh2);
    SET_Finish(table, exec_Finish);
    SET_Flush(table, exec_Flush);
    SET_Fogf(table, save_Fogf);
@@ -9302,12 +9302,9 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->Color4fv = save_Color4fv;
    vfmt->EdgeFlag = save_EdgeFlag;
    vfmt->End = save_End;
-   vfmt->EvalCoord1f = save_EvalCoord1f;
-   vfmt->EvalCoord1fv = save_EvalCoord1fv;
-   vfmt->EvalCoord2f = save_EvalCoord2f;
-   vfmt->EvalCoord2fv = save_EvalCoord2fv;
-   vfmt->EvalPoint1 = save_EvalPoint1;
-   vfmt->EvalPoint2 = save_EvalPoint2;
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, save_);
+
    vfmt->FogCoordfEXT = save_FogCoordfEXT;
    vfmt->FogCoordfvEXT = save_FogCoordfvEXT;
    vfmt->Indexf = save_Indexf;
@@ -9356,8 +9353,6 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib4fARB = save_VertexAttrib4fARB;
    vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
 
-   vfmt->EvalMesh1 = _mesa_save_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_save_EvalMesh2;
    vfmt->Rectf = save_Rectf;
 
    /* The driver is required to implement these as

@@ -72,6 +72,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/dlist.h"
 #include "main/enums.h"
+#include "main/eval.h"
 #include "main/macros.h"
 #include "main/api_noop.h"
 #include "main/api_validate.h"
@@ -1050,18 +1051,12 @@ static void _save_vtxfmt_init( GLcontext *ctx )
     */ 
    vfmt->CallList = _save_CallList; /* inside begin/end */
    vfmt->CallLists = _save_CallLists; /* inside begin/end */
-   vfmt->EvalCoord1f = _save_EvalCoord1f;
-   vfmt->EvalCoord1fv = _save_EvalCoord1fv;
-   vfmt->EvalCoord2f = _save_EvalCoord2f;
-   vfmt->EvalCoord2fv = _save_EvalCoord2fv;
-   vfmt->EvalPoint1 = _save_EvalPoint1;
-   vfmt->EvalPoint2 = _save_EvalPoint2;
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, _save_);
 
    /* These are all errors as we at least know we are in some sort of
     * begin/end pair:
     */
-   vfmt->EvalMesh1 = _save_EvalMesh1;	
-   vfmt->EvalMesh2 = _save_EvalMesh2;
    vfmt->Begin = _save_Begin;
    vfmt->Rectf = _save_Rectf;
    vfmt->DrawArrays = _save_DrawArrays;

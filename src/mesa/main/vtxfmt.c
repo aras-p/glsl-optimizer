@@ -34,6 +34,7 @@
 #include "mtypes.h"
 #include "state.h"
 #include "vtxfmt.h"
+#include "eval.h"
 
 
 /* The neutral vertex format.  This wraps all tnl module functions,
@@ -90,12 +91,9 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_Color4f(tab, vfmt->Color4f);
    SET_Color4fv(tab, vfmt->Color4fv);
    SET_EdgeFlag(tab, vfmt->EdgeFlag);
-   SET_EvalCoord1f(tab, vfmt->EvalCoord1f);
-   SET_EvalCoord1fv(tab, vfmt->EvalCoord1fv);
-   SET_EvalCoord2f(tab, vfmt->EvalCoord2f);
-   SET_EvalCoord2fv(tab, vfmt->EvalCoord2fv);
-   SET_EvalPoint1(tab, vfmt->EvalPoint1);
-   SET_EvalPoint2(tab, vfmt->EvalPoint2);
+
+   _mesa_install_eval_vtxfmt(tab, vfmt);
+
    SET_FogCoordfEXT(tab, vfmt->FogCoordfEXT);
    SET_FogCoordfvEXT(tab, vfmt->FogCoordfvEXT);
    SET_Indexf(tab, vfmt->Indexf);
@@ -139,9 +137,6 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_DrawElementsBaseVertex(tab, vfmt->DrawElementsBaseVertex);
    SET_DrawRangeElementsBaseVertex(tab, vfmt->DrawRangeElementsBaseVertex);
    SET_MultiDrawElementsBaseVertex(tab, vfmt->MultiDrawElementsBaseVertex);
-   SET_EvalMesh1(tab, vfmt->EvalMesh1);
-   SET_EvalMesh2(tab, vfmt->EvalMesh2);
-   ASSERT(tab->EvalMesh2);
 
    /* GL_NV_vertex_program */
    SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);

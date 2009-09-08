@@ -94,9 +94,7 @@
 #if FEATURE_dlist
 #include "dlist.h"
 #endif
-#if FEATURE_evaluators
 #include "eval.h"
-#endif
 #include "enums.h"
 #include "extensions.h"
 #include "fbobject.h"
@@ -675,9 +673,7 @@ init_attrib_groups(GLcontext *ctx)
 #if FEATURE_dlist
    _mesa_init_display_list( ctx );
 #endif
-#if FEATURE_evaluators
    _mesa_init_eval( ctx );
-#endif
    _mesa_init_fbobjects( ctx );
    _mesa_init_feedback( ctx );
    _mesa_init_fog( ctx );
@@ -977,9 +973,7 @@ _mesa_free_context_data( GLcontext *ctx )
 
    _mesa_free_attrib_data(ctx);
    _mesa_free_lighting_data( ctx );
-#if FEATURE_evaluators
    _mesa_free_eval_data( ctx );
-#endif
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );

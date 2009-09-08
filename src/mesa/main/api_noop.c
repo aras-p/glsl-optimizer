@@ -33,6 +33,7 @@
 #if FEATURE_dlist
 #include "dlist.h"
 #endif
+#include "eval.h"
 #include "glapi/dispatch.h"
 
 
@@ -1005,14 +1006,9 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->Color4fv = _mesa_noop_Color4fv;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->End = _mesa_noop_End;
-#if FEATURE_evaluators
-   vfmt->EvalCoord1f = _mesa_noop_EvalCoord1f;
-   vfmt->EvalCoord1fv = _mesa_noop_EvalCoord1fv;
-   vfmt->EvalCoord2f = _mesa_noop_EvalCoord2f;
-   vfmt->EvalCoord2fv = _mesa_noop_EvalCoord2fv;
-   vfmt->EvalPoint1 = _mesa_noop_EvalPoint1;
-   vfmt->EvalPoint2 = _mesa_noop_EvalPoint2;
-#endif
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, _mesa_noop_);
+
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;
    vfmt->Indexf = _mesa_noop_Indexf;
@@ -1070,6 +1066,4 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
    vfmt->DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
    vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
-   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }

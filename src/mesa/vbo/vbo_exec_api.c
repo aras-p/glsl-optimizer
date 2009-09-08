@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if FEATURE_dlist
 #include "main/dlist.h"
 #endif
+#include "main/eval.h"
 #include "main/state.h"
 #include "main/light.h"
 #include "main/api_arrayelt.h"
@@ -392,6 +393,7 @@ do {								\
 
 
 
+#if FEATURE_evaluators
 /* Eval
  */
 static void GLAPIENTRY vbo_exec_EvalCoord1f( GLfloat u )
@@ -485,6 +487,12 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
    vbo_exec_EvalCoord2f( u, v );
 }
 
+/* use noop eval mesh */
+#define vbo_exec_EvalMesh1 _mesa_noop_EvalMesh1
+#define vbo_exec_EvalMesh2 _mesa_noop_EvalMesh2
+
+#endif /* FEATURE_evaluators */
+
 
 /* Build a list of primitives on the fly.  Keep
  * ctx->Driver.CurrentExecPrimitive uptodate as well.
@@ -565,17 +573,10 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->CallLists = _mesa_CallLists;
 #endif
    vfmt->End = vbo_exec_End;
-   vfmt->EvalCoord1f = vbo_exec_EvalCoord1f;
-   vfmt->EvalCoord1fv = vbo_exec_EvalCoord1fv;
-   vfmt->EvalCoord2f = vbo_exec_EvalCoord2f;
-   vfmt->EvalCoord2fv = vbo_exec_EvalCoord2fv;
-   vfmt->EvalPoint1 = vbo_exec_EvalPoint1;
-   vfmt->EvalPoint2 = vbo_exec_EvalPoint2;
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
 
    vfmt->Rectf = _mesa_noop_Rectf;
-   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
-
 
    /* from attrib_tmp.h:
     */

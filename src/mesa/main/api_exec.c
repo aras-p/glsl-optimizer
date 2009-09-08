@@ -60,9 +60,7 @@
 #include "drawpix.h"
 #include "rastpos.h"
 #include "enable.h"
-#if FEATURE_evaluators
 #include "eval.h"
-#endif
 #include "get.h"
 #include "feedback.h"
 #include "fog.h"
@@ -238,19 +236,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_Lighti(exec, _mesa_Lighti);
    SET_Lightiv(exec, _mesa_Lightiv);
    SET_LoadMatrixd(exec, _mesa_LoadMatrixd);
-#if FEATURE_evaluators
-   SET_GetMapdv(exec, _mesa_GetMapdv);
-   SET_GetMapfv(exec, _mesa_GetMapfv);
-   SET_GetMapiv(exec, _mesa_GetMapiv);
-   SET_Map1d(exec, _mesa_Map1d);
-   SET_Map1f(exec, _mesa_Map1f);
-   SET_Map2d(exec, _mesa_Map2d);
-   SET_Map2f(exec, _mesa_Map2f);
-   SET_MapGrid1d(exec, _mesa_MapGrid1d);
-   SET_MapGrid1f(exec, _mesa_MapGrid1f);
-   SET_MapGrid2d(exec, _mesa_MapGrid2d);
-   SET_MapGrid2f(exec, _mesa_MapGrid2f);
-#endif
+
+   _mesa_init_eval_dispatch(exec);
+
    SET_MultMatrixd(exec, _mesa_MultMatrixd);
 
    _mesa_init_pixel_dispatch(exec);
