@@ -1280,8 +1280,8 @@ void r700SetScissor(context_t *context) //---------------
 		if (context->radeon.radeonScreen->driScreen->dri2.enabled) {
 			x1 = 0;
 			y1 = 0;
-			x2 = rrb->base.Width - 1;
-			y2 = rrb->base.Height - 1;
+			x2 = rrb->base.Width;
+			y2 = rrb->base.Height;
 		} else {
 			x1 = rrb->dPriv->x;
 			y1 = rrb->dPriv->y;
