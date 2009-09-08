@@ -25,7 +25,6 @@
  * 
  **************************************************************************/
 
-#include <stdlib.h>
 
 #include "main/glheader.h"
 #include "main/bufferobj.h"

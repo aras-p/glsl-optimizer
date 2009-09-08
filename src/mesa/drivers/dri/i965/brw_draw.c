@@ -25,13 +25,15 @@
  * 
  **************************************************************************/
 
-#include <stdlib.h>
 
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
+#include "tnl/tnl.h"
+#include "vbo/vbo_context.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -41,11 +43,6 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-
-#include "tnl/tnl.h"
-#include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
