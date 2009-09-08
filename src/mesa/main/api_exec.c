@@ -57,9 +57,7 @@
 #if FEATURE_dlist
 #include "dlist.h"
 #endif
-#if FEATURE_drawpix
 #include "drawpix.h"
-#endif
 #include "rastpos.h"
 #include "enable.h"
 #if FEATURE_evaluators
@@ -209,11 +207,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
    SET_DepthRange(exec, _mesa_DepthRange);
-#if FEATURE_drawpix
-   SET_Bitmap(exec, _mesa_Bitmap);
-   SET_CopyPixels(exec, _mesa_CopyPixels);
-   SET_DrawPixels(exec, _mesa_DrawPixels);
-#endif
+
+   _mesa_init_drawpix_dispatch(exec);
+
 #if FEATURE_feedback
    SET_InitNames(exec, _mesa_InitNames);
    SET_FeedbackBuffer(exec, _mesa_FeedbackBuffer);
