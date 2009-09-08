@@ -601,7 +601,7 @@
 " variable_identifier .and dot .and field_selection .emit OP_FIELD;\n"
 "translation_unit\n"
 " .true .emit REVISION .and external_declaration .error INVALID_EXTERNAL_DECLARATION .and\n"
-" .loop external_declaration .and '\\0' .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;\n"
+" .loop external_declaration .and \"@EOF\" .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;\n"
 "external_declaration\n"
 " precision_stmt .emit DEFAULT_PRECISION .or\n"
 " function_definition .emit EXTERNAL_FUNCTION_DEFINITION .or\n"

@@ -1291,7 +1291,7 @@ var_with_field
  */
 translation_unit
     .true .emit REVISION .and external_declaration .error INVALID_EXTERNAL_DECLARATION .and
-    .loop external_declaration .and '\0' .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;
+    .loop external_declaration .and "@EOF" .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;
 
 
 /*

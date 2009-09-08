@@ -2069,6 +2069,8 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             s->m_token = SL_PP_IDENTIFIER;
          } else if (!strcmp(s->m_string, "@NUM")) {
             s->m_token = SL_PP_NUMBER;
+         } else if (!strcmp(s->m_string, "@EOF")) {
+            s->m_token = SL_PP_EOF;
          } else {
             spec_destroy(&s);
             return 1;
