@@ -37,6 +37,10 @@
 #include "main/texgen.h"
 #include "main/texstate.h"
 #include "math/m_matrix.h"
+#include "glapi/dispatch.h"
+
+
+#if FEATURE_texgen
 
 
 /**
@@ -162,7 +166,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
@@ -179,7 +183,7 @@ _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 {
    GLfloat p = (GLfloat) param;
@@ -187,7 +191,7 @@ _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
@@ -204,7 +208,7 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
    _mesa_TexGenfv(coord, pname, &param);
@@ -219,7 +223,7 @@ _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
    struct gl_texture_unit *texUnit;
@@ -257,7 +261,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    struct gl_texture_unit *texUnit;
@@ -295,7 +299,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
    struct gl_texture_unit *texUnit;
@@ -338,3 +342,19 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 }
 
 
+void
+_mesa_init_texgen_dispatch(struct _glapi_table *disp)
+{
+   SET_GetTexGendv(disp, _mesa_GetTexGendv);
+   SET_GetTexGenfv(disp, _mesa_GetTexGenfv);
+   SET_GetTexGeniv(disp, _mesa_GetTexGeniv);
+   SET_TexGend(disp, _mesa_TexGend);
+   SET_TexGendv(disp, _mesa_TexGendv);
+   SET_TexGenf(disp, _mesa_TexGenf);
+   SET_TexGenfv(disp, _mesa_TexGenfv);
+   SET_TexGeni(disp, _mesa_TexGeni);
+   SET_TexGeniv(disp, _mesa_TexGeniv);
+}
+
+
+#endif /* FEATURE_texgen */

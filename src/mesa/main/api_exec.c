@@ -93,9 +93,7 @@
 #include "texenv.h"
 #include "texgetimage.h"
 #include "teximage.h"
-#if FEATURE_texgen
 #include "texgen.h"
-#endif
 #include "texobj.h"
 #include "texparam.h"
 #include "texstate.h"
@@ -275,17 +273,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_TexEnvf(exec, _mesa_TexEnvf);
    SET_TexEnviv(exec, _mesa_TexEnviv);
 
-#if FEATURE_texgen
-   SET_GetTexGendv(exec, _mesa_GetTexGendv);
-   SET_GetTexGenfv(exec, _mesa_GetTexGenfv);
-   SET_GetTexGeniv(exec, _mesa_GetTexGeniv);
-   SET_TexGend(exec, _mesa_TexGend);
-   SET_TexGendv(exec, _mesa_TexGendv);
-   SET_TexGenf(exec, _mesa_TexGenf);
-   SET_TexGenfv(exec, _mesa_TexGenfv);
-   SET_TexGeni(exec, _mesa_TexGeni);
-   SET_TexGeniv(exec, _mesa_TexGeniv);
-#endif
+   _mesa_init_texgen_dispatch(exec);
 
    SET_TexImage1D(exec, _mesa_TexImage1D);
    SET_TexParameterf(exec, _mesa_TexParameterf);
