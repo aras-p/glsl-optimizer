@@ -6,6 +6,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
+#include "main/bufferobj.h"
 #include "main/colortab.h"
 #include "main/convolve.h"
 #include "main/context.h"
@@ -206,7 +207,7 @@ try_pbo_upload(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (unpack->BufferObj->Name == 0 ||
+   if (!_mesa_is_bufferobj(unpack->BufferObj) ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -264,7 +265,7 @@ try_pbo_zcopy(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (unpack->BufferObj->Name == 0 ||
+   if (!_mesa_is_bufferobj(unpack->BufferObj) ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -427,7 +428,7 @@ intelTexImage(GLcontext * ctx,
     */
    if (dims <= 2 &&
        intelImage->mt &&
-       unpack->BufferObj->Name != 0 &&
+       _mesa_is_bufferobj(unpack->BufferObj) &&
        check_pbo_format(internalFormat, format,
                         type, intelImage->base.TexFormat)) {
 
