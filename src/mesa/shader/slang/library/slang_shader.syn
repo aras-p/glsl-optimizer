@@ -692,11 +692,7 @@ function_header_with_parameters_1
  * <function_header> ::= <fully_specified_type> <identifier> "("
  */
 function_header
-    function_header_nospace .or function_header_space;
-function_header_space
-    fully_specified_type_space .and space .and function_decl_identifier .and lparen;
-function_header_nospace
-    fully_specified_type_nospace .and function_decl_identifier .and lparen;
+    fully_specified_type .and function_decl_identifier .and lparen;
 
 /*
  * <function_decl_identifier> ::= "__constructor"
@@ -793,11 +789,7 @@ overriden_operator
  *                          | <type_specifier> <identifier> "[" <constant_expression> "]"
  */
 parameter_declarator
-    parameter_declarator_nospace .or parameter_declarator_space;
-parameter_declarator_nospace
-    type_specifier_nospace .and identifier .and parameter_declarator_1;
-parameter_declarator_space
-    type_specifier_space .and space .and identifier .and parameter_declarator_1;
+    type_specifier .and identifier .and parameter_declarator_1;
 parameter_declarator_1
     parameter_declarator_2 .emit PARAMETER_ARRAY_PRESENT .or
     .true .emit PARAMETER_ARRAY_NOT_PRESENT;
@@ -825,15 +817,13 @@ parameter_declaration
 parameter_declaration_1
     parameter_declaration_2 .or parameter_declaration_3;
 parameter_declaration_2
-    type_qualifier .and space .and parameter_qualifier .and parameter_declaration_4;
+    type_qualifier .and parameter_qualifier .and parameter_declaration_4;
 parameter_declaration_3
     parameter_qualifier .emit TYPE_QUALIFIER_NONE .and parameter_declaration_4;
 parameter_declaration_4
     parameter_declaration_optprec .and parameter_declaration_rest;
 parameter_declaration_optprec
-    parameter_declaration_prec .or .true .emit PRECISION_DEFAULT;
-parameter_declaration_prec
-    precision .and space;
+    precision .or .true .emit PRECISION_DEFAULT;
 parameter_declaration_rest
     parameter_declarator .or parameter_type_specifier;
 
@@ -846,8 +836,6 @@ parameter_declaration_rest
 parameter_qualifier
     parameter_qualifier_1 .or .true .emit PARAM_QUALIFIER_IN;
 parameter_qualifier_1
-    parameter_qualifier_2 .and space;
-parameter_qualifier_2
     "in" .emit PARAM_QUALIFIER_IN .or
     "out" .emit PARAM_QUALIFIER_OUT .or
     "inout" .emit PARAM_QUALIFIER_INOUT;
@@ -857,9 +845,7 @@ parameter_qualifier_2
  *                              | <type_specifier> "[" <constant_expression> "]"
  */
 parameter_type_specifier
-    parameter_type_specifier_1 .and .true .emit '\0' .and parameter_type_specifier_2;
-parameter_type_specifier_1
-    type_specifier_nospace .or type_specifier_space;
+    type_specifier .and .true .emit '\0' .and parameter_type_specifier_2;
 parameter_type_specifier_2
     parameter_type_specifier_3 .emit PARAMETER_ARRAY_PRESENT .or
     .true .emit PARAMETER_ARRAY_NOT_PRESENT;
@@ -895,18 +881,10 @@ init_declarator_list_5
  *                        | <fully_specified_type> <identifier> "=" <initializer>
  */
 single_declaration
-    single_declaration_nospace .or single_declaration_space;
-single_declaration_space
-    fully_specified_type_space .and single_declaration_space_1;
-single_declaration_nospace
-    fully_specified_type_nospace .and single_declaration_nospace_1;
-single_declaration_space_1
-    single_declaration_space_2 .emit VARIABLE_IDENTIFIER .or .true .emit VARIABLE_NONE;
-single_declaration_nospace_1
-    single_declaration_nospace_2 .emit VARIABLE_IDENTIFIER .or .true .emit VARIABLE_NONE;
-single_declaration_space_2
-    space .and identifier .and single_declaration_3;
-single_declaration_nospace_2
+    fully_specified_type .and single_declaration_1;
+single_declaration_1
+    single_declaration_2 .emit VARIABLE_IDENTIFIER .or .true .emit VARIABLE_NONE;
+single_declaration_2
     identifier .and single_declaration_3;
 single_declaration_3
     single_declaration_4 .or single_declaration_5 .or .true .emit VARIABLE_NONE;
@@ -922,26 +900,16 @@ single_declaration_6
  *
  * Example: "invariant varying highp vec3"
  */
-fully_specified_type_space
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
-fully_specified_type_nospace
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+fully_specified_type
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier;
 fully_specified_type_optinvariant
-    fully_specified_type_invariant .or .true .emit TYPE_VARIANT;
-fully_specified_type_invariant
-    invariant_qualifier .and space;
+    invariant_qualifier .or .true .emit TYPE_VARIANT;
 fully_specified_type_optcentroid
-    fully_specified_type_centroid .or .true .emit TYPE_CENTER;
-fully_specified_type_centroid
-    centroid_qualifier .and space;
+    centroid_qualifier .or .true .emit TYPE_CENTER;
 fully_specified_type_optqual
-    fully_specified_type_qual .or .true .emit TYPE_QUALIFIER_NONE;
-fully_specified_type_qual
-    type_qualifier .and space;
+    type_qualifier .or .true .emit TYPE_QUALIFIER_NONE;
 fully_specified_type_optprec
-    fully_specified_type_prec .or .true .emit PRECISION_DEFAULT;
-fully_specified_type_prec
-    precision .and space;
+    precision .or .true .emit PRECISION_DEFAULT;
 
 /*
  * <invariant_qualifier> ::= "invariant"
@@ -1006,7 +974,8 @@ type_qualifier
  *                             | <struct_specifier>
  *                             | <type_name>
  */
-type_specifier_nonarray_space
+type_specifier_nonarray
+    struct_specifier .emit TYPE_SPECIFIER_STRUCT .or
     "void" .emit TYPE_SPECIFIER_VOID .or
     "float" .emit TYPE_SPECIFIER_FLOAT .or
     "int" .emit TYPE_SPECIFIER_INT .or
@@ -1038,22 +1007,16 @@ type_specifier_nonarray_space
     "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
     "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
-type_specifier_nonarray_nospace
-    struct_specifier .emit TYPE_SPECIFIER_STRUCT;
-type_specifier_nonarray
-    type_specifier_nonarray_nospace .or type_specifier_nonarray_space;
 
 /*
  * <type_specifier> ::= <type_specifier_nonarray>
  *                    | <type_specifier_nonarray> "[" <constant_expression> "]"
  */
-type_specifier_space
-    type_specifier_nonarray_space .and .true .emit TYPE_SPECIFIER_NONARRAY;
-type_specifier_nospace
-    type_specifier_nospace_array .or type_specifier_nospace_1;
-type_specifier_nospace_1
-    type_specifier_nonarray_nospace .and .true .emit TYPE_SPECIFIER_NONARRAY;
-type_specifier_nospace_array
+type_specifier
+    type_specifier_array .or type_specifier_1;
+type_specifier_1
+    type_specifier_nonarray .and .true .emit TYPE_SPECIFIER_NONARRAY;
+type_specifier_array
     type_specifier_nonarray .and lbracket .emit TYPE_SPECIFIER_ARRAY .and constant_expression .and rbracket;
 
 /*
@@ -1061,12 +1024,10 @@ type_specifier_nospace_array
  *                      | "struct" "{" <struct_declaration_list> "}"
  */
 struct_specifier
-    "struct" .and struct_specifier_1 .and optional_space .and lbrace .error LBRACE_EXPECTED .and
+    "struct" .and struct_specifier_1 .and lbrace .error LBRACE_EXPECTED .and
     struct_declaration_list .and rbrace .emit FIELD_NONE;
 struct_specifier_1
-    struct_specifier_2 .or .true .emit '\0';
-struct_specifier_2
-    space .and identifier;
+    identifier .or .true .emit '\0';
 
 /*
  * <struct_declaration_list> ::= <struct_declaration>
@@ -1079,11 +1040,7 @@ struct_declaration_list
  * <struct_declaration> ::= <type_specifier> <struct_declarator_list> ";"
  */
 struct_declaration
-    struct_declaration_nospace .or struct_declaration_space;
-struct_declaration_space
-    type_specifier_space .and space .and struct_declarator_list .and semicolon .emit FIELD_NONE;
-struct_declaration_nospace
-    type_specifier_nospace .and struct_declarator_list .and semicolon .emit FIELD_NONE;
+    type_specifier .and struct_declarator_list .and semicolon .emit FIELD_NONE;
 
 /*
  * <struct_declarator_list> ::= <struct_declarator>
@@ -1123,10 +1080,6 @@ declaration_statement
  */
 statement
     compound_statement .or simple_statement;
-statement_space
-    compound_statement .or statement_space_1;
-statement_space_1
-    space .and simple_statement;
 
 /*
  * <simple_statement> ::= <__asm_statement>
@@ -1209,7 +1162,7 @@ selection_rest_statement
 selection_rest_statement_1
     selection_rest_statement_2 .or .true .emit OP_EXPRESSION .emit OP_PUSH_VOID .emit OP_END;
 selection_rest_statement_2
-    "else" .and optional_space .and statement;
+    "else" .and statement;
 
 /*
  * <condition> ::= <expression>
@@ -1220,17 +1173,11 @@ selection_rest_statement_2
  */
 condition
     condition_1 .emit OP_DECLARE .emit DECLARATION_INIT_DECLARATOR_LIST .or
-    condition_3 .emit OP_EXPRESSION;
+    condition_2 .emit OP_EXPRESSION;
 condition_1
-    condition_1_nospace .or condition_1_space;
-condition_1_nospace
-    fully_specified_type_nospace .and condition_2;
-condition_1_space
-    fully_specified_type_space .and space .and condition_2;
+    fully_specified_type .and identifier .emit VARIABLE_IDENTIFIER .and
+    equals .emit VARIABLE_INITIALIZER .and initializer .and .true .emit DECLARATOR_NONE;
 condition_2
-    identifier .emit VARIABLE_IDENTIFIER .and equals .emit VARIABLE_INITIALIZER .and
-    initializer .and .true .emit DECLARATOR_NONE;
-condition_3
     expression .and .true .emit OP_END;
 
 /*
@@ -1244,7 +1191,7 @@ iteration_statement_1
     "while" .emit OP_WHILE .and lparen .error LPAREN_EXPECTED .and condition .and
     rparen .error RPAREN_EXPECTED .and statement;
 iteration_statement_2
-    "do" .emit OP_DO .and statement_space .and "while" .and lparen .error LPAREN_EXPECTED .and
+    "do" .emit OP_DO .and statement .and "while" .and lparen .error LPAREN_EXPECTED .and
     expression .and rparen .error RPAREN_EXPECTED .emit OP_END .and semicolon;
 iteration_statement_3
     "for" .emit OP_FOR .and lparen .error LPAREN_EXPECTED .and for_init_statement .and
@@ -1295,7 +1242,7 @@ jump_statement_1
 jump_statement_2
     "break" .and semicolon .emit OP_BREAK;
 jump_statement_3
-    "return" .emit OP_RETURN .and optional_space .and expression .and semicolon .emit OP_END;
+    "return" .emit OP_RETURN .and expression .and semicolon .emit OP_END;
 jump_statement_4
     "return" .emit OP_RETURN .and semicolon .emit OP_PUSH_VOID .emit OP_END;
 jump_statement_5
@@ -1308,7 +1255,7 @@ jump_statement_5
  * normally slang disallows __asm statements
  */
 __asm_statement
-    "__asm" .and space .and identifier .and space .and asm_arguments .and semicolon .emit OP_END;
+    "__asm" .and identifier .and asm_arguments .and semicolon .emit OP_END;
 
 /*
  * <asm_arguments> ::= <asm_argument>
@@ -1343,9 +1290,8 @@ var_with_field
  *                      | <translation_unit> <external_declaration>
  */
 translation_unit
-    optional_space .emit REVISION .and external_declaration .error INVALID_EXTERNAL_DECLARATION .and
-    .loop external_declaration .and optional_space .and
-    '\0' .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;
+    .true .emit REVISION .and external_declaration .error INVALID_EXTERNAL_DECLARATION .and
+    .loop external_declaration .and '\0' .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;
 
 
 /*
@@ -1363,7 +1309,7 @@ external_declaration
  * <precision_stmt> ::= "precision" <precision> <prectype>
  */
 precision_stmt
-    "precision" .and space .and precision .error INVALID_PRECISION .and space .and prectype .error INVALID_PRECISION_TYPE .and semicolon;
+    "precision" .and precision .error INVALID_PRECISION .and prectype .error INVALID_PRECISION_TYPE .and semicolon;
 
 /*
  * <precision> ::= "lowp"
@@ -1397,7 +1343,7 @@ prectype
  * <invariant_stmt> ::= "invariant" identifier;
  */
 invariant_stmt
-    "invariant" .and space .and identifier .and semicolon;
+    "invariant" .and identifier .and semicolon;
 
 
 /*
@@ -1439,12 +1385,6 @@ intconstant
 
 boolconstant
     boolean .emit OP_PUSH_BOOL;
-
-optional_space
-   .true;
-
-space
-   .true;
 
 /* lexical rules */
 
