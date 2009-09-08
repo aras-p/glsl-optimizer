@@ -563,6 +563,9 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 			       pPixmap->devKind, 0, 0);
 		exa->scrn->transfer_unmap(exa->scrn, transfer);
 		exa->scrn->tex_transfer_destroy(transfer);
+
+		xfree(pPixmap->devPrivate.ptr);
+		pPixmap->devPrivate.ptr = NULL;
 	    }
 	}
 #ifdef DRM_MODE_FEATURE_DIRTYFB
@@ -645,6 +648,12 @@ xorg_exa_init(ScrnInfoPtr pScrn)
    pExa->pixmapOffsetAlign = 0;
    pExa->pixmapPitchAlign  = 1;
    pExa->flags             = EXA_OFFSCREEN_PIXMAPS | EXA_HANDLES_PIXMAPS;
+#ifdef EXA_SUPPORTS_PREPARE_AUX
+   pExa->flags            |= EXA_SUPPORTS_PREPARE_AUX;
+#endif
+#ifdef EXA_MIXED_PIXMAPS
+   pExa->flags            |= EXA_MIXED_PIXMAPS;
+#endif
    pExa->maxX              = 8191; /* FIXME */
    pExa->maxY              = 8191; /* FIXME */
 
