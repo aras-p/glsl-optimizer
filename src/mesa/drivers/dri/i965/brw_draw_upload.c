@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "main/glheader.h"
+#include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/state.h"
 #include "main/api_validate.h"
@@ -384,7 +385,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
 
-      if (input->glarray->BufferObj->Name != 0) {
+      if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
 	    intel_buffer_object(input->glarray->BufferObj);
 
@@ -623,7 +624,7 @@ static void brw_prepare_indices(struct brw_context *brw)
 
    /* Turn into a proper VBO:
     */
-   if (!bufferobj->Name) {
+   if (!_mesa_is_bufferobj(bufferobj)) {
       brw->ib.start_vertex_offset = 0;
 
       /* Get new bufferobj, offset:
