@@ -183,22 +183,102 @@ parse_identifier(slang_parse_ctx * C)
 }
 
 static int
+is_hex_digit(char c)
+{
+   return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+static int
+parse_general_number(slang_parse_ctx *ctx, float *number)
+{
+   char *flt = NULL;
+
+   if (*ctx->I == '0') {
+      int value = 0;
+      const byte *pi;
+
+      if (ctx->I[1] == 'x' || ctx->I[1] == 'X') {
+         ctx->I += 2;
+         if (!is_hex_digit(*ctx->I)) {
+            return 0;
+         }
+         do {
+            int digit;
+
+            if (*ctx->I >= '0' && *ctx->I <= '9') {
+               digit = (int)(*ctx->I - '0');
+            } else if (*ctx->I >= 'a' && *ctx->I <= 'f') {
+               digit = (int)(*ctx->I - 'a') + 10;
+            } else {
+               digit = (int)(*ctx->I - 'A') + 10;
+            }
+            value = value * 0x10 + digit;
+            ctx->I++;
+         } while (is_hex_digit(*ctx->I));
+         if (*ctx->I != '\0') {
+            return 0;
+         }
+         ctx->I++;
+         *number = (float)value;
+         return 1;
+      }
+
+      pi = ctx->I;
+      pi++;
+      while (*pi >= '0' && *pi <= '7') {
+         int digit;
+
+         digit = (int)(*pi - '0');
+         value = value * 010 + digit;
+         pi++;
+      }
+      if (*pi == '\0') {
+         pi++;
+         ctx->I = pi;
+         *number = (float)value;
+         return 1;
+      }
+   }
+
+   parse_identifier_str(ctx, &flt);
+   flt = strdup(flt);
+   if (!flt) {
+      return 0;
+   }
+   if (flt[strlen(flt) - 1] == 'f' || flt[strlen(flt) - 1] == 'F') {
+      flt[strlen(flt) - 1] = '\0';
+   }
+   *number = (float)_mesa_strtod(flt, (char **)NULL);
+   free(flt);
+
+   return 1;
+}
+
+static int
 parse_number(slang_parse_ctx * C, int *number)
 {
    const int radix = (int) (*C->I++);
-   *number = 0;
-   while (*C->I != '\0') {
-      int digit;
-      if (*C->I >= '0' && *C->I <= '9')
-         digit = (int) (*C->I - '0');
-      else if (*C->I >= 'A' && *C->I <= 'Z')
-         digit = (int) (*C->I - 'A') + 10;
-      else
-         digit = (int) (*C->I - 'a') + 10;
-      *number = *number * radix + digit;
+
+   if (radix == 1) {
+      float f = 0.0f;
+
+      parse_general_number(C, &f);
+      *number = (int)f;
+   } else {
+      *number = 0;
+      while (*C->I != '\0') {
+         int digit;
+         if (*C->I >= '0' && *C->I <= '9')
+            digit = (int) (*C->I - '0');
+         else if (*C->I >= 'A' && *C->I <= 'Z')
+            digit = (int) (*C->I - 'A') + 10;
+         else
+            digit = (int) (*C->I - 'a') + 10;
+         *number = *number * radix + digit;
+         C->I++;
+      }
       C->I++;
    }
-   C->I++;
    if (*number > 65535)
       slang_info_log_warning(C->L, "%d: literal integer overflow.", *number);
    return 1;
@@ -207,32 +287,37 @@ parse_number(slang_parse_ctx * C, int *number)
 static int
 parse_float(slang_parse_ctx * C, float *number)
 {
-   char *integral = NULL;
-   char *fractional = NULL;
-   char *exponent = NULL;
-   char *whole = NULL;
+   if (*C->I == 1) {
+      C->I++;
+      parse_general_number(C, number);
+   } else {
+      char *integral = NULL;
+      char *fractional = NULL;
+      char *exponent = NULL;
+      char *whole = NULL;
 
-   parse_identifier_str(C, &integral);
-   parse_identifier_str(C, &fractional);
-   parse_identifier_str(C, &exponent);
+      parse_identifier_str(C, &integral);
+      parse_identifier_str(C, &fractional);
+      parse_identifier_str(C, &exponent);
 
-   whole = (char *) _slang_alloc((_mesa_strlen(integral) +
-                                  _mesa_strlen(fractional) +
-                                  _mesa_strlen(exponent) + 3) * sizeof(char));
-   if (whole == NULL) {
-      slang_info_log_memory(C->L);
-      RETURN0;
+      whole = (char *) _slang_alloc((_mesa_strlen(integral) +
+                                     _mesa_strlen(fractional) +
+                                     _mesa_strlen(exponent) + 3) * sizeof(char));
+      if (whole == NULL) {
+         slang_info_log_memory(C->L);
+         RETURN0;
+      }
+
+      slang_string_copy(whole, integral);
+      slang_string_concat(whole, ".");
+      slang_string_concat(whole, fractional);
+      slang_string_concat(whole, "E");
+      slang_string_concat(whole, exponent);
+
+      *number = (float) (_mesa_strtod(whole, (char **) NULL));
+
+      _slang_free(whole);
    }
-
-   slang_string_copy(whole, integral);
-   slang_string_concat(whole, ".");
-   slang_string_concat(whole, fractional);
-   slang_string_concat(whole, "E");
-   slang_string_concat(whole, exponent);
-
-   *number = (float) (_mesa_strtod(whole, (char **) NULL));
-
-   _slang_free(whole);
 
    return 1;
 }

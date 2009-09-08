@@ -1416,10 +1416,10 @@ identifier
    "@ID" .emit *;
 
 float
-   "@NUM" .emit *;
+   "@NUM" .emit 1 .emit *;
 
 integer
-   "@NUM" .emit *;
+   "@NUM" .emit 1 .emit *;
 
 boolean
    "true" .emit '1' .emit '\0' .or
