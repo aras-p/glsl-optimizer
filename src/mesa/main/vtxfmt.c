@@ -27,6 +27,7 @@
  */
 
 #include "glheader.h"
+#include "api_arrayelt.h"
 #include "api_loopback.h"
 #include "context.h"
 #include "imports.h"
@@ -82,7 +83,8 @@
 static void
 install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
 {
-   SET_ArrayElement(tab, vfmt->ArrayElement);
+   _mesa_install_arrayelt_vtxfmt(tab, vfmt);
+
    SET_Color3f(tab, vfmt->Color3f);
    SET_Color3fv(tab, vfmt->Color3fv);
    SET_Color4f(tab, vfmt->Color4f);

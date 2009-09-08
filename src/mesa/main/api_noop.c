@@ -992,7 +992,8 @@ _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 void
 _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
 {
-   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = _mesa_noop_Begin;
 #if FEATURE_dlist
    vfmt->CallList = _mesa_CallList;

@@ -9291,7 +9291,8 @@ mesa_print_display_list(GLuint list)
 void
 _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
 {
-   vfmt->ArrayElement = _ae_loopback_array_elt; /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = save_Begin;
    vfmt->CallList = _mesa_save_CallList;
    vfmt->CallLists = _mesa_save_CallLists;

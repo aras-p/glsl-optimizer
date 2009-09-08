@@ -988,7 +988,8 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLvertexformat *vfmt = &save->vtxfmt;
 
-   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = _save_Begin;
    vfmt->Color3f = _save_Color3f;
    vfmt->Color3fv = _save_Color3fv;
