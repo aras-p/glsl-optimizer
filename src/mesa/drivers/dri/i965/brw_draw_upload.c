@@ -422,7 +422,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
-	 if (i == 0) {
+	 if (input->attrib == VERT_ATTRIB_POS) {
 	    /* Position array not properly enabled:
 	     */
             if (input->glarray->StrideB == 0) {

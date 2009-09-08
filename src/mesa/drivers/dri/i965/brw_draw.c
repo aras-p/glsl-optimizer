@@ -185,6 +185,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].glarray = arrays[i];
+      brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
 
       if (arrays[i]->StrideB != 0)
 	 brw->vb.info.varying |= 1 << i;
