@@ -14,7 +14,7 @@ struct xorg_shaders;
 struct exa_context
 {
    ExaDriverPtr pExa;
-   struct pipe_context *ctx;
+   struct pipe_context *pipe;
    struct pipe_screen *scrn;
    struct cso_context *cso;
    struct xorg_shaders *shaders;

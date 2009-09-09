@@ -165,7 +165,7 @@ setup_vertex_data0(struct exa_context *ctx,
    setup_vertex0(vertices[3], dstX, dstY + height,
                  ctx->solid_color);
 
-   return pipe_user_buffer_create(ctx->ctx->screen,
+   return pipe_user_buffer_create(ctx->pipe->screen,
                                   vertices,
                                   sizeof(vertices));
 }
@@ -211,7 +211,7 @@ setup_vertex_data1(struct exa_context *ctx,
    setup_vertex1(vertices[3], dstX, dstY + height,
                  s0, t1);
 
-   return pipe_user_buffer_create(ctx->ctx->screen,
+   return pipe_user_buffer_create(ctx->pipe->screen,
                                   vertices,
                                   sizeof(vertices));
 }
@@ -237,7 +237,7 @@ setup_vertex_data_tex(struct exa_context *ctx,
    setup_vertex1(vertices[3], x0, y1,
                  s0, t1);
 
-   return pipe_user_buffer_create(ctx->ctx->screen,
+   return pipe_user_buffer_create(ctx->pipe->screen,
                                   vertices,
                                   sizeof(vertices));
 }
@@ -297,7 +297,7 @@ setup_vertex_data2(struct exa_context *ctx,
    setup_vertex2(vertices[3], dstX, dstY + height,
                  st0[0], st0[3], st1[0], st1[3]);
 
-   return pipe_user_buffer_create(ctx->ctx->screen,
+   return pipe_user_buffer_create(ctx->pipe->screen,
                                   vertices,
                                   sizeof(vertices));
 }
@@ -532,15 +532,15 @@ setup_vs_constant_buffer(struct exa_context *exa,
    struct pipe_constant_buffer *cbuf = &exa->vs_const_buffer;
 
    pipe_buffer_reference(&cbuf->buffer, NULL);
-   cbuf->buffer = pipe_buffer_create(exa->ctx->screen, 16,
+   cbuf->buffer = pipe_buffer_create(exa->pipe->screen, 16,
                                      PIPE_BUFFER_USAGE_CONSTANT,
                                      param_bytes);
 
    if (cbuf->buffer) {
-      pipe_buffer_write(exa->ctx->screen, cbuf->buffer,
+      pipe_buffer_write(exa->pipe->screen, cbuf->buffer,
                         0, param_bytes, vs_consts);
    }
-   exa->ctx->set_constant_buffer(exa->ctx, PIPE_SHADER_VERTEX, 0, cbuf);
+   exa->pipe->set_constant_buffer(exa->pipe, PIPE_SHADER_VERTEX, 0, cbuf);
 }
 
 
@@ -554,15 +554,15 @@ setup_fs_constant_buffer(struct exa_context *exa)
    struct pipe_constant_buffer *cbuf = &exa->fs_const_buffer;
 
    pipe_buffer_reference(&cbuf->buffer, NULL);
-   cbuf->buffer = pipe_buffer_create(exa->ctx->screen, 16,
+   cbuf->buffer = pipe_buffer_create(exa->pipe->screen, 16,
                                      PIPE_BUFFER_USAGE_CONSTANT,
                                      param_bytes);
 
    if (cbuf->buffer) {
-      pipe_buffer_write(exa->ctx->screen, cbuf->buffer,
+      pipe_buffer_write(exa->pipe->screen, cbuf->buffer,
                         0, param_bytes, fs_consts);
    }
-   exa->ctx->set_constant_buffer(exa->ctx, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   exa->pipe->set_constant_buffer(exa->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
 }
 
 static void
@@ -602,7 +602,7 @@ void xorg_composite(struct exa_context *exa,
                     int srcX, int srcY, int maskX, int maskY,
                     int dstX, int dstY, int width, int height)
 {
-   struct pipe_context *pipe = exa->ctx;
+   struct pipe_context *pipe = exa->pipe;
    struct pipe_buffer *buf = 0;
 
    if (exa->num_bound_samplers == 0 ) { /* solid fill */
@@ -687,7 +687,7 @@ void xorg_solid(struct exa_context *exa,
                 struct exa_pixmap_priv *pixmap,
                 int x0, int y0, int x1, int y1)
 {
-   struct pipe_context *pipe = exa->ctx;
+   struct pipe_context *pipe = exa->pipe;
    struct pipe_buffer *buf = 0;
    float vertices[4][2][4];
 
@@ -707,7 +707,7 @@ void xorg_solid(struct exa_context *exa,
    setup_vertex0(vertices[3], x0, y1,
                  exa->solid_color);
 
-   buf = pipe_user_buffer_create(exa->ctx->screen,
+   buf = pipe_user_buffer_create(exa->pipe->screen,
                                  vertices,
                                  sizeof(vertices));
 
@@ -829,7 +829,7 @@ static void renderer_copy_texture(struct exa_context *exa,
                                   float dx1, float dy1,
                                   float dx2, float dy2)
 {
-   struct pipe_context *pipe = exa->ctx;
+   struct pipe_context *pipe = exa->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_buffer *buf;
    struct pipe_surface *dst_surf = screen->get_tex_surface(
@@ -935,7 +935,7 @@ static void renderer_copy_texture(struct exa_context *exa,
                                0.0f);
 
    if (buf) {
-      util_draw_vertex_buffer(exa->ctx, buf, 0,
+      util_draw_vertex_buffer(exa->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
                               2); /* attribs/vert */

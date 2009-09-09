@@ -473,9 +473,9 @@ struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
    struct xorg_shader shader = {0};
    void *vs, *fs;
 
-   vs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_VERTEX,
+   vs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_VERTEX,
                           sc->vs_hash, vs_traits);
-   fs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_FRAGMENT,
+   fs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_FRAGMENT,
                           sc->fs_hash, fs_traits);
 
    debug_assert(vs && fs);
