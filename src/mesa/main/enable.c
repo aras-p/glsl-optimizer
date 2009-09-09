@@ -36,8 +36,6 @@
 #include "simple_list.h"
 #include "mtypes.h"
 #include "enums.h"
-#include "math/m_matrix.h"
-#include "math/m_xform.h"
 #include "api_arrayelt.h"
 
 
@@ -951,12 +949,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       case GL_DEPTH_CLAMP:
          if (ctx->Transform.DepthClamp == state)
             return;
-	 /* Neither the x86 nor sparc asm cliptest functions have been updated
-	  * for ARB_depth_clamp, so force the C paths.
-	  */
-	 if (state)
-	    init_c_cliptest();
-
 	 CHECK_EXTENSION(ARB_depth_clamp, cap);
          FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
 	 ctx->Transform.DepthClamp = state;
