@@ -340,6 +340,7 @@ def generate(env):
                 '-m32',
                 #'-march=pentium4',
                 '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                '-mstackrealign', # ensure stack is aligned -- do not enabled -msse without it!
                 #'-mfpmath=sse',
             ]
         if env['machine'] == 'x86_64':
