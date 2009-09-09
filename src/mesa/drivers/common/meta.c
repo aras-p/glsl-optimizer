@@ -1446,7 +1446,10 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
 
    if (_mesa_is_color_format(format)) {
       /* use more compact format when possible */
-      if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
+      /* XXX disable special case for GL_LUMINANCE for now to work around
+       * apparent i965 driver bug (see bug #23670).
+       */
+      if (/*format == GL_LUMINANCE ||*/ format == GL_LUMINANCE_ALPHA)
          texIntFormat = format;
       else
          texIntFormat = GL_RGBA;
