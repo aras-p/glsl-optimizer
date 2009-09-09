@@ -53,6 +53,7 @@ struct lp_sampler_static_state
 {
    /* pipe_texture's state */
    enum pipe_format format;
+   unsigned target:2;
    unsigned pot_width:1;
    unsigned pot_height:1;
    unsigned pot_depth:1;

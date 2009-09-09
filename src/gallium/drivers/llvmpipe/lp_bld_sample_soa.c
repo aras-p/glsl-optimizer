@@ -322,6 +322,9 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    height = lp_build_broadcast_scalar(&bld.int_coord_bld, height);
    stride = lp_build_broadcast_scalar(&bld.int_coord_bld, stride);
 
+   if(static_state->target == PIPE_TEXTURE_1D)
+      t = bld.coord_bld.zero;
+
    if(static_state->normalized_coords) {
       LLVMTypeRef coord_vec_type = lp_build_vec_type(bld.coord_type);
       LLVMValueRef fp_width = LLVMBuildSIToFP(builder, width, coord_vec_type, "");
