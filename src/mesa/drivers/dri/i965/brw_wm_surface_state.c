@@ -634,7 +634,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 drm_intel_bo_emit_reloc(brw->wm.surf_bo[unit],
 				 offsetof(struct brw_surface_state, ss1),
 				 region_bo,
-				 surf.ss1.base_addr,
+				 surf.ss1.base_addr - region_bo->offset,
 				 I915_GEM_DOMAIN_RENDER,
 				 I915_GEM_DOMAIN_RENDER);
       }
