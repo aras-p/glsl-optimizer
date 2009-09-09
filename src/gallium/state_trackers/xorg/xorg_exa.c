@@ -233,8 +233,10 @@ ExaDone(PixmapPtr pPixmap)
 	return;
 
     exa->ctx->flush(exa->ctx, PIPE_FLUSH_RENDER_CACHE, &fence);
+#if 0
     exa->ctx->screen->fence_finish(exa->ctx->screen, fence, 0);
     exa->ctx->screen->fence_reference(exa->ctx->screen, &fence, NULL);
+#endif
 
     if (priv->src_surf)
 	exa->scrn->tex_surface_destroy(priv->src_surf);

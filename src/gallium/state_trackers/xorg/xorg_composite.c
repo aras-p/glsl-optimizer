@@ -656,7 +656,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    cso_set_vertex_shader_handle(exa->cso, shader.vs);
    cso_set_fragment_shader_handle(exa->cso, shader.fs);
 
-   return TRUE;
+   return FALSE;
 }
 
 void xorg_solid(struct exa_context *exa,
