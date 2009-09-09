@@ -30,9 +30,7 @@
 #include "context.h"
 #include "light.h"
 #include "macros.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
 #include "eval.h"
 #include "glapi/dispatch.h"
 
@@ -996,10 +994,9 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
 
    vfmt->Begin = _mesa_noop_Begin;
-#if FEATURE_dlist
-   vfmt->CallList = _mesa_CallList;
-   vfmt->CallLists = _mesa_CallLists;
-#endif
+
+   _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
+
    vfmt->Color3f = _mesa_noop_Color3f;
    vfmt->Color3fv = _mesa_noop_Color3fv;
    vfmt->Color4f = _mesa_noop_Color4f;

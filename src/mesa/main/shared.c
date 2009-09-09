@@ -37,9 +37,7 @@
 #include "shared.h"
 #include "shader/program.h"
 #include "shader/shader_api.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
 #endif
@@ -143,11 +141,9 @@ _mesa_alloc_shared_state(GLcontext *ctx)
 static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
-#if FEATURE_dlist
    struct gl_display_list *list = (struct gl_display_list *) data;
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_list(ctx, list);
-#endif
 }
 
 

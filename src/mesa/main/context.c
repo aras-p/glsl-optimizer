@@ -91,9 +91,7 @@
 #include "cpuinfo.h"
 #include "debug.h"
 #include "depth.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
 #include "eval.h"
 #include "enums.h"
 #include "extensions.h"
@@ -670,9 +668,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
-#if FEATURE_dlist
    _mesa_init_display_list( ctx );
-#endif
    _mesa_init_eval( ctx );
    _mesa_init_fbobjects( ctx );
    _mesa_init_feedback( ctx );
@@ -869,10 +865,12 @@ _mesa_initialize_context(GLcontext *ctx,
    _mesa_init_exec_table(ctx->Exec);
 #endif
    ctx->CurrentDispatch = ctx->Exec;
+
 #if FEATURE_dlist
-   _mesa_init_dlist_table(ctx->Save);
+   _mesa_init_save_table(ctx->Save);
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 #endif
+
    /* Neutral tnl module stuff */
    _mesa_init_exec_vtxfmt( ctx ); 
    ctx->TnlModule.Current = NULL;

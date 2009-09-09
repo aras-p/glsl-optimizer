@@ -54,9 +54,7 @@
 #include "context.h"
 #include "convolve.h"
 #include "depth.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
 #include "drawpix.h"
 #include "rastpos.h"
 #include "enable.h"
@@ -179,17 +177,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_Viewport(exec, _mesa_Viewport);
 
    _mesa_init_accum_dispatch(exec);
+   _mesa_init_dlist_dispatch(exec);
 
-#if FEATURE_dlist
-   SET_CallList(exec, _mesa_CallList);
-   SET_CallLists(exec, _mesa_CallLists);
-   SET_DeleteLists(exec, _mesa_DeleteLists);
-   SET_EndList(exec, _mesa_EndList);
-   SET_GenLists(exec, _mesa_GenLists);
-   SET_IsList(exec, _mesa_IsList);
-   SET_ListBase(exec, _mesa_ListBase);
-   SET_NewList(exec, _mesa_NewList);
-#endif
    SET_ClearDepth(exec, _mesa_ClearDepth);
    SET_ClearIndex(exec, _mesa_ClearIndex);
    SET_ClipPlane(exec, _mesa_ClipPlane);

@@ -35,9 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/vtxfmt.h"
-#if FEATURE_dlist
 #include "main/dlist.h"
-#endif
 #include "main/eval.h"
 #include "main/state.h"
 #include "main/light.h"
@@ -568,12 +566,9 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
 
    vfmt->Begin = vbo_exec_Begin;
-#if FEATURE_dlist
-   vfmt->CallList = _mesa_CallList;
-   vfmt->CallLists = _mesa_CallLists;
-#endif
    vfmt->End = vbo_exec_End;
 
+   _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
    _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
 
    vfmt->Rectf = _mesa_noop_Rectf;

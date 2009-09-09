@@ -35,6 +35,7 @@
 #include "state.h"
 #include "vtxfmt.h"
 #include "eval.h"
+#include "dlist.h"
 
 
 /* The neutral vertex format.  This wraps all tnl module functions,
@@ -125,8 +126,9 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_Vertex3fv(tab, vfmt->Vertex3fv);
    SET_Vertex4f(tab, vfmt->Vertex4f);
    SET_Vertex4fv(tab, vfmt->Vertex4fv);
-   SET_CallList(tab, vfmt->CallList);
-   SET_CallLists(tab, vfmt->CallLists);
+
+   _mesa_install_dlist_vtxfmt(tab, vfmt);
+
    SET_Begin(tab, vfmt->Begin);
    SET_End(tab, vfmt->End);
    SET_Rectf(tab, vfmt->Rectf);
