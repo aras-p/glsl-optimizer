@@ -608,6 +608,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	int firstlevel = t->mt ? t->mt->firstLevel : 0;
 	GLuint uTexelPitch, row_align;
 
+	if ( t->bo ) {
+		return GL_TRUE;
+	}
+
 	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override) {
