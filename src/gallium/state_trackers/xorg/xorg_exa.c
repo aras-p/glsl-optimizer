@@ -227,15 +227,14 @@ ExaDone(PixmapPtr pPixmap)
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
-    struct pipe_fence_handle *fence = NULL;
 
     if (!priv)
 	return;
 
-    exa->ctx->flush(exa->ctx, PIPE_FLUSH_RENDER_CACHE, &fence);
-#if 0
-    exa->ctx->screen->fence_finish(exa->ctx->screen, fence, 0);
-    exa->ctx->screen->fence_reference(exa->ctx->screen, &fence, NULL);
+#if 1
+    xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
+#else
+    xorg_finish(exa);
 #endif
 
     if (priv->src_surf)
@@ -726,5 +725,21 @@ exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv)
                                      PIPE_BUFFER_USAGE_GPU_READ |
                                      PIPE_BUFFER_USAGE_GPU_WRITE);
 
+}
+
+void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
+                    struct pipe_fence_handle **fence)
+{
+   exa->ctx->flush(exa->ctx, pipeFlushFlags, fence);
+}
+
+void xorg_exa_finish(struct exa_context *exa)
+{
+   struct pipe_fence_handle *fence = NULL;
+
+   xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, &fence);
+
+   exa->ctx->screen->fence_finish(exa->ctx->screen, fence, 0);
+   exa->ctx->screen->fence_reference(exa->ctx->screen, &fence, NULL);
 }
 

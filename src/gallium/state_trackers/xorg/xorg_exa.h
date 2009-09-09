@@ -46,5 +46,8 @@ struct exa_pixmap_priv
 struct pipe_surface *
 exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv);
 
+void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
+                    struct pipe_fence_handle **fence);
+void xorg_exa_finish(struct exa_context *exa);
 
 #endif
