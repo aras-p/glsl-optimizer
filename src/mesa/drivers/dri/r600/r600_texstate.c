@@ -69,7 +69,7 @@ void r600UpdateTextureState(GLcontext * ctx)
 	for (unit = 0; unit < R700_MAX_TEXTURE_UNITS; unit++) {
 		texUnit = &ctx->Texture.Unit[unit];
 		t = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
-
+		r700->textures[unit] = NULL;
 		if (texUnit->_ReallyEnabled) {
 			if (!t)
 				continue;
