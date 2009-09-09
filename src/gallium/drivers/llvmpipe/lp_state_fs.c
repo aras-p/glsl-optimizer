@@ -131,9 +131,8 @@ generate_pos0(LLVMBuilderRef builder,
  * Generate the depth test.
  */
 static void
-generate_depth(struct llvmpipe_context *lp,
-               LLVMBuilderRef builder,
-               const struct pipe_depth_state *state,
+generate_depth(LLVMBuilderRef builder,
+               const struct lp_fragment_shader_variant_key *key,
                union lp_type src_type,
                struct lp_build_mask_context *mask,
                LLVMValueRef src,
@@ -142,10 +141,10 @@ generate_depth(struct llvmpipe_context *lp,
    const struct util_format_description *format_desc;
    union lp_type dst_type;
 
-   if(!lp->framebuffer.zsbuf)
+   if(!key->depth.enabled)
       return;
 
-   format_desc = util_format_description(lp->framebuffer.zsbuf->format);
+   format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
 
    /* Pick the depth type. */
@@ -165,7 +164,7 @@ generate_depth(struct llvmpipe_context *lp,
 #endif
 
    lp_build_depth_test(builder,
-                       state,
+                       &key->depth,
                        dst_type,
                        format_desc,
                        mask,
@@ -212,14 +211,13 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_mask_begin(&mask, builder, type, *pmask);
 
    early_depth_test =
-      lp->depth_stencil->depth.enabled &&
-      lp->framebuffer.zsbuf &&
-      !lp->depth_stencil->alpha.enabled &&
-      !lp->fs->info.uses_kill &&
-      !lp->fs->info.writes_z;
+      key->depth.enabled &&
+      !key->alpha.enabled &&
+      !shader->info.uses_kill &&
+      !shader->info.writes_z;
 
    if(early_depth_test)
-      generate_depth(lp, builder, &key->depth,
+      generate_depth(builder, key,
                      type, &mask,
                      z, depth_ptr);
 
@@ -268,7 +266,7 @@ generate_fs(struct llvmpipe_context *lp,
    }
 
    if(!early_depth_test)
-      generate_depth(lp, builder, &key->depth,
+      generate_depth(builder, key,
                      type, &mask,
                      z, depth_ptr);
 
@@ -679,7 +677,11 @@ make_variant_key(struct llvmpipe_context *lp,
 
    memset(key, 0, sizeof *key);
 
-   memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+   if(lp->framebuffer.zsbuf &&
+      lp->depth_stencil->depth.enabled) {
+      key->zsbuf_format = lp->framebuffer.zsbuf->format;
+      memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+   }
 
    key->alpha.enabled = lp->depth_stencil->alpha.enabled;
    if(key->alpha.enabled)

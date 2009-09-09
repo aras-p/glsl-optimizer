@@ -66,6 +66,7 @@ struct lp_fragment_shader;
 
 struct lp_fragment_shader_variant_key
 {
+   enum pipe_format zsbuf_format;
    struct pipe_depth_state depth;
    struct pipe_alpha_state alpha;
    struct pipe_blend_state blend;
