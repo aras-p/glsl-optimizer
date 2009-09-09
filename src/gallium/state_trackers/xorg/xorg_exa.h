@@ -26,6 +26,7 @@ struct exa_context
    int num_bound_samplers;
 
    float solid_color[4];
+   boolean has_solid_color;
 };
 
 
@@ -36,7 +37,6 @@ struct exa_pixmap_priv
 
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;
-   float solid_color[4];
    struct pipe_surface *src_surf; /* for copies */
 
    struct pipe_transfer *map_transfer;

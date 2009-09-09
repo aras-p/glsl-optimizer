@@ -40,6 +40,22 @@ static const struct xorg_composite_blend xorg_blends[] = {
      PIPE_BLENDFACTOR_INV_SRC_ALPHA, PIPE_BLENDFACTOR_INV_SRC_ALPHA },
 };
 
+
+static INLINE void
+pixel_to_float4(Pixel pixel, float *color)
+{
+   CARD32	    r, g, b, a;
+
+   a = (pixel >> 24) & 0xff;
+   r = (pixel >> 16) & 0xff;
+   g = (pixel >>  8) & 0xff;
+   b = (pixel >>  0) & 0xff;
+   color[0] = ((float)r) / 255.;
+   color[1] = ((float)g) / 255.;
+   color[2] = ((float)b) / 255.;
+   color[3] = ((float)a) / 255.;
+}
+
 static INLINE void
 render_pixel_to_float4(PictFormatPtr format,
                        CARD32 pixel, float *color)
@@ -291,6 +307,15 @@ boolean xorg_composite_accelerated(int op,
 }
 
 static void
+bind_clip_state(struct exa_context *exa)
+{
+   struct pipe_depth_stencil_alpha_state dsa;
+
+   memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+   cso_set_depth_stencil_alpha(exa->cso, &dsa);
+}
+
+static void
 bind_framebuffer_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
    unsigned i;
@@ -342,6 +367,8 @@ bind_viewport_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
    int width = pDst->tex->width[0];
    int height = pDst->tex->height[0];
 
+   debug_printf("Bind viewport (%d, %d)\n", width, height);
+
    set_viewport(exa, width, height, Y0_TOP);
 }
 
@@ -349,7 +376,8 @@ static void
 bind_blend_state(struct exa_context *exa, int op,
                  PicturePtr pSrcPicture, PicturePtr pMaskPicture)
 {
-   boolean component_alpha = pSrcPicture->componentAlpha;
+   boolean component_alpha = (pSrcPicture) ?
+                             pSrcPicture->componentAlpha : FALSE;
    struct xorg_composite_blend blend_opt;
    struct pipe_blend_state blend;
 
@@ -389,6 +417,8 @@ bind_shaders(struct exa_context *exa, int op,
    unsigned vs_traits = 0, fs_traits = 0;
    struct xorg_shader shader;
 
+   exa->has_solid_color = FALSE;
+
    if (pSrcPicture) {
       if (pSrcPicture->pSourcePict) {
          if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
@@ -397,6 +427,7 @@ bind_shaders(struct exa_context *exa, int op,
             render_pixel_to_float4(pSrcPicture->pFormat,
                                    pSrcPicture->pSourcePict->solidFill.color,
                                    exa->solid_color);
+            exa->has_solid_color = TRUE;
          } else {
             debug_assert("!gradients not supported");
          }
@@ -511,10 +542,10 @@ setup_fs_constant_buffer(struct exa_context *exa)
 }
 
 static void
-setup_constant_buffers(struct exa_context *exa, PicturePtr pDstPicture)
+setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
-   int width = pDstPicture->pDrawable->width;
-   int height = pDstPicture->pDrawable->height;
+   int width = pDst->tex->width[0];
+   int height = pDst->tex->height[0];
 
    setup_vs_constant_buffer(exa, width, height);
    setup_fs_constant_buffer(exa);
@@ -536,8 +567,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
    bind_samplers(exa, op, pSrcPicture, pMaskPicture,
                  pDstPicture, pSrc, pMask, pDst);
-
-   setup_constant_buffers(exa, pDstPicture);
+   bind_clip_state(exa);
+   setup_constant_buffers(exa, pDst);
 
    return FALSE;
 }
@@ -572,10 +603,15 @@ void xorg_composite(struct exa_context *exa,
    }
 
    if (buf) {
+      int num_attribs = 1; /*pos*/
+      num_attribs += exa->num_bound_samplers;
+      if (exa->has_solid_color)
+         ++num_attribs;
+
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
-                              1 + exa->num_bound_samplers); /* attribs/vert */
+                              num_attribs); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
    }
@@ -585,7 +621,41 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
                               struct exa_pixmap_priv *pixmap,
                               Pixel fg)
 {
-   
+   unsigned vs_traits, fs_traits;
+   struct xorg_shader shader;
+
+   pixel_to_float4(fg, exa->solid_color);
+   exa->has_solid_color = TRUE;
+
+   exa->solid_color[3] = 1.f;
+
+   debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",
+                (fg >> 24) & 0xff, (fg >> 16) & 0xff,
+                (fg >> 8) & 0xff,  (fg >> 0) & 0xff,
+                exa->solid_color[0], exa->solid_color[1],
+                exa->solid_color[2], exa->solid_color[3]);
+
+#if 0
+   exa->solid_color[0] = 1.f;
+   exa->solid_color[1] = 0.f;
+   exa->solid_color[2] = 0.f;
+   exa->solid_color[3] = 1.f;
+#endif
+
+   vs_traits = VS_SOLID_FILL;
+   fs_traits = FS_SOLID_FILL;
+
+   bind_framebuffer_state(exa, pixmap);
+   bind_viewport_state(exa, pixmap);
+   bind_rasterizer_state(exa);
+   bind_blend_state(exa, PictOpSrc, NULL, NULL);
+   setup_constant_buffers(exa, pixmap);
+   bind_clip_state(exa);
+
+   shader = xorg_shaders_get(exa->shaders, vs_traits, fs_traits);
+   cso_set_vertex_shader_handle(exa->cso, shader.vs);
+   cso_set_fragment_shader_handle(exa->cso, shader.fs);
+
    return TRUE;
 }
 
@@ -593,5 +663,39 @@ void xorg_solid(struct exa_context *exa,
                 struct exa_pixmap_priv *pixmap,
                 int x0, int y0, int x1, int y1)
 {
+   struct pipe_context *pipe = exa->ctx;
+   struct pipe_buffer *buf = 0;
+   float vertices[4][2][4];
+
+   x0 = 10; y0 = 10;
+   x1 = 300; y1 = 300;
+
+   /* 1st vertex */
+   setup_vertex0(vertices[0], x0, y0,
+                 exa->solid_color);
+   /* 2nd vertex */
+   setup_vertex0(vertices[1], x1, y0,
+                 exa->solid_color);
+   /* 3rd vertex */
+   setup_vertex0(vertices[2], x1, y1,
+                 exa->solid_color);
+   /* 4th vertex */
+   setup_vertex0(vertices[3], x0, y1,
+                 exa->solid_color);
+
+   buf = pipe_user_buffer_create(exa->ctx->screen,
+                                 vertices,
+                                 sizeof(vertices));
+
+
+   if (buf) {
+      debug_printf("Drawing buf is %p\n", buf);
+      util_draw_vertex_buffer(pipe, buf, 0,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              2); /* attribs/vert */
+
+      pipe_buffer_reference(&buf, NULL);
+   }
 }
 

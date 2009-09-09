@@ -82,22 +82,6 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
     }
 }
 
-
-static INLINE void
-pixel_to_float4(Pixel pixel, float *color)
-{
-   CARD32	    r, g, b, a;
-
-   a = (pixel >> 24) & 0xff;
-   r = (pixel >> 16) & 0xff;
-   g = (pixel >>  8) & 0xff;
-   b = (pixel >>  0) & 0xff;
-   color[0] = ((float)r) / 255.;
-   color[1] = ((float)g) / 255.;
-   color[2] = ((float)b) / 255.;
-   color[3] = ((float)a) / 255.;
-}
-
 /*
  * Static exported EXA functions
  */
@@ -243,9 +227,14 @@ ExaDone(PixmapPtr pPixmap)
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
+    struct pipe_fence_handle *fence = NULL;
 
     if (!priv)
 	return;
+
+    exa->ctx->flush(exa->ctx, PIPE_FLUSH_RENDER_CACHE, &fence);
+    exa->ctx->screen->fence_finish(exa->ctx->screen, fence, 0);
+    exa->ctx->screen->fence_reference(exa->ctx->screen, &fence, NULL);
 
     if (priv->src_surf)
 	exa->scrn->tex_surface_destroy(priv->src_surf);
@@ -266,7 +255,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
-    debug_printf("ExaPrepareSolid\n");
+    debug_printf("ExaPrepareSolid - test\n");
     if (pPixmap->drawable.depth < 15)
 	return FALSE;
 
@@ -282,6 +271,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     if (!exa->ctx)
 	return FALSE;
 
+    debug_printf("  ExaPrepareSolid(0x%x)\n", fg);
     return xorg_solid_bind_state(exa, priv, fg);
 }
 
@@ -293,8 +283,17 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     struct exa_context *exa = ms->exa;
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
 
-    debug_printf("\tExaSolid\n");
-    xorg_solid(exa, priv, x0, y0, x1, y1) ;
+    debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
+
+#if 0
+    if (x0 == 0 && y0 == 0 &&
+        x1 == priv->tex->width[0] &&
+        y1 == priv->tex->height[0]) {
+       exa->ctx->clear(exa->ctx, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
+                       exa->solid_color, 1., 0);
+    } else
+#endif
+       xorg_solid(exa, priv, x0, y0, x1, y1) ;
 }
 
 static Bool
@@ -358,7 +357,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
 
-    debug_printf("ExaPrepareComposite\n");
+   debug_printf("ExaPrepareComposite\n");
 
    return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
@@ -376,7 +375,7 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDst);
 
-    debug_printf("\tExaComposite\n");
+   debug_printf("\tExaComposite\n");
 
    xorg_composite(exa, priv, srcX, srcY, maskX, maskY,
                   dstX, dstY, width, height);

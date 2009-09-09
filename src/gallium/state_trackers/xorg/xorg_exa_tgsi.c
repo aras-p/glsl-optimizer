@@ -268,8 +268,8 @@ create_vs(struct pipe_context *pipe,
    }
    if (is_fill) {
       src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_COLOR, 1);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 1);
+                               TGSI_SEMANTIC_COLOR, 0);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
       ureg_MOV(ureg, dst, src);
    }
 
