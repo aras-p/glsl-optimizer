@@ -1722,6 +1722,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMin);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMax);
          break;
+      case GL_DEPTH_CLAMP:
+         CHECK_EXT1(ARB_depth_clamp, "GetBooleanv");
+         params[0] = ctx->Transform.DepthClamp;
+         break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxDrawBuffers);
          break;
@@ -3552,6 +3556,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(EXT_depth_bounds_test, "GetFloatv");
          params[0] = ctx->Depth.BoundsMin;
          params[1] = ctx->Depth.BoundsMax;
+         break;
+      case GL_DEPTH_CLAMP:
+         CHECK_EXT1(ARB_depth_clamp, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.DepthClamp);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = (GLfloat)(ctx->Const.MaxDrawBuffers);
@@ -5384,6 +5392,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Depth.BoundsMin);
          params[1] = IROUND(ctx->Depth.BoundsMax);
          break;
+      case GL_DEPTH_CLAMP:
+         CHECK_EXT1(ARB_depth_clamp, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(ctx->Transform.DepthClamp);
+         break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = ctx->Const.MaxDrawBuffers;
          break;
@@ -7215,6 +7227,10 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          CHECK_EXT1(EXT_depth_bounds_test, "GetInteger64v");
          params[0] = IROUND64(ctx->Depth.BoundsMin);
          params[1] = IROUND64(ctx->Depth.BoundsMax);
+         break;
+      case GL_DEPTH_CLAMP:
+         CHECK_EXT1(ARB_depth_clamp, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->Transform.DepthClamp);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = ctx->Const.MaxDrawBuffers;
