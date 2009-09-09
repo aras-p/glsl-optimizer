@@ -83,6 +83,16 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 }
 
 static void
+xorg_exa_init_state(struct exa_context *exa)
+{
+   struct pipe_depth_stencil_alpha_state dsa;
+
+   /* set common initial clip state */
+   memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+   cso_set_depth_stencil_alpha(exa->cso, &dsa);
+}
+
+static void
 xorg_exa_common_done(struct exa_context *exa)
 {
    exa->copy.src = NULL;
@@ -722,6 +732,8 @@ xorg_exa_init(ScrnInfoPtr pScrn)
 
    exa->cso = cso_create_context(exa->ctx);
    exa->shaders = xorg_shaders_create(exa);
+
+   xorg_exa_init_state(exa);
 
    return (void *)exa;
 

@@ -4,6 +4,7 @@
 
 #include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h"
+#include "util/u_math.h"
 
 #include "pipe/p_inlines.h"
 
@@ -215,6 +216,33 @@ setup_vertex_data1(struct exa_context *ctx,
                                   sizeof(vertices));
 }
 
+static struct pipe_buffer *
+setup_vertex_data_tex(struct exa_context *ctx,
+                      float x0, float y0, float x1, float y1,
+                      float s0, float t0, float s1, float t1,
+                      float z)
+{
+   float vertices[4][2][4];
+
+   /* 1st vertex */
+   setup_vertex1(vertices[0], x0, y0,
+                 s0, t0);
+   /* 2nd vertex */
+   setup_vertex1(vertices[1], x1, y0,
+                 s1, t0);
+   /* 3rd vertex */
+   setup_vertex1(vertices[2], x1, y1,
+                 s1, t1);
+   /* 4th vertex */
+   setup_vertex1(vertices[3], x0, y1,
+                 s0, t1);
+
+   return pipe_user_buffer_create(ctx->ctx->screen,
+                                  vertices,
+                                  sizeof(vertices));
+}
+
+
 
 static INLINE void
 setup_vertex2(float vertex[3][4], float x, float y,
@@ -309,10 +337,6 @@ boolean xorg_composite_accelerated(int op,
 static void
 bind_clip_state(struct exa_context *exa)
 {
-   struct pipe_depth_stencil_alpha_state dsa;
-
-   memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
-   cso_set_depth_stencil_alpha(exa->cso, &dsa);
 }
 
 static void
@@ -699,11 +723,297 @@ void xorg_solid(struct exa_context *exa,
    }
 }
 
+
+static INLINE void shift_rectx(float coords[4],
+                               const float *bounds,
+                               const float shift)
+{
+   coords[0] += shift;
+   coords[2] -= shift;
+   if (bounds) {
+      coords[2] = MIN2(coords[2], bounds[2]);
+      /* bound x/y + width/height */
+      if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
+         coords[2] = (bounds[0] + bounds[2]) - coords[0];
+      }
+   }
+}
+
+static INLINE void shift_recty(float coords[4],
+                               const float *bounds,
+                               const float shift)
+{
+   coords[1] += shift;
+   coords[3] -= shift;
+   if (bounds) {
+      coords[3] = MIN2(coords[3], bounds[3]);
+      if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
+         coords[3] = (bounds[1] + bounds[3]) - coords[1];
+      }
+   }
+}
+
+static INLINE void bound_rect(float coords[4],
+                              const float bounds[4],
+                              float shift[4])
+{
+   /* if outside the bounds */
+   if (coords[0] > (bounds[0] + bounds[2]) ||
+       coords[1] > (bounds[1] + bounds[3]) ||
+       (coords[0] + coords[2]) < bounds[0] ||
+       (coords[1] + coords[3]) < bounds[1]) {
+      coords[0] = 0.f;
+      coords[1] = 0.f;
+      coords[2] = 0.f;
+      coords[3] = 0.f;
+      shift[0] = 0.f;
+      shift[1] = 0.f;
+      return;
+   }
+
+   /* bound x */
+   if (coords[0] < bounds[0]) {
+      shift[0] = bounds[0] - coords[0];
+      coords[2] -= shift[0];
+      coords[0] = bounds[0];
+   } else
+      shift[0] = 0.f;
+
+   /* bound y */
+   if (coords[1] < bounds[1]) {
+      shift[1] = bounds[1] - coords[1];
+      coords[3] -= shift[1];
+      coords[1] = bounds[1];
+   } else
+      shift[1] = 0.f;
+
+   shift[2] = bounds[2] - coords[2];
+   shift[3] = bounds[3] - coords[3];
+   /* bound width/height */
+   coords[2] = MIN2(coords[2], bounds[2]);
+   coords[3] = MIN2(coords[3], bounds[3]);
+
+   /* bound x/y + width/height */
+   if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
+      coords[2] = (bounds[0] + bounds[2]) - coords[0];
+   }
+   if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
+      coords[3] = (bounds[1] + bounds[3]) - coords[1];
+   }
+
+   /* if outside the bounds */
+   if ((coords[0] + coords[2]) < bounds[0] ||
+       (coords[1] + coords[3]) < bounds[1]) {
+      coords[0] = 0.f;
+      coords[1] = 0.f;
+      coords[2] = 0.f;
+      coords[3] = 0.f;
+      return;
+   }
+}
+
+static INLINE void sync_size(float *src_loc, float *dst_loc)
+{
+   src_loc[2] = MIN2(src_loc[2], dst_loc[2]);
+   src_loc[3] = MIN2(src_loc[3], dst_loc[3]);
+   dst_loc[2] = src_loc[2];
+   dst_loc[3] = src_loc[3];
+}
+
+
+static void renderer_copy_texture(struct exa_context *exa,
+                                  struct pipe_texture *src,
+                                  float sx1, float sy1,
+                                  float sx2, float sy2,
+                                  struct pipe_texture *dst,
+                                  float dx1, float dy1,
+                                  float dx2, float dy2)
+{
+   struct pipe_context *pipe = exa->ctx;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_buffer *buf;
+   struct pipe_surface *dst_surf = screen->get_tex_surface(
+      screen, dst, 0, 0, 0,
+      PIPE_BUFFER_USAGE_GPU_WRITE);
+   struct pipe_framebuffer_state fb;
+   float s0, t0, s1, t1;
+   struct xorg_shader shader;
+
+   assert(src->width[0] != 0);
+   assert(src->height[0] != 0);
+   assert(dst->width[0] != 0);
+   assert(dst->height[0] != 0);
+
+#if 0
+   debug_printf("copy texture [%f, %f, %f, %f], [%f, %f, %f, %f]\n",
+                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
+#endif
+
+#if 1
+   s0 = sx1 / src->width[0];
+   s1 = sx2 / src->width[0];
+   t0 = sy1 / src->height[0];
+   t1 = sy2 / src->height[0];
+#else
+   s0 = 0;
+   s1 = 1;
+   t0 = 0;
+   t1 = 1;
+#endif
+
+   assert(screen->is_format_supported(screen, dst_surf->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+
+   /* save state (restored below) */
+   cso_save_blend(exa->cso);
+   cso_save_samplers(exa->cso);
+   cso_save_sampler_textures(exa->cso);
+   cso_save_framebuffer(exa->cso);
+   cso_save_fragment_shader(exa->cso);
+   cso_save_vertex_shader(exa->cso);
+
+   cso_save_viewport(exa->cso);
+
+
+   /* set misc state we care about */
+   {
+      struct pipe_blend_state blend;
+      memset(&blend, 0, sizeof(blend));
+      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.colormask = PIPE_MASK_RGBA;
+      cso_set_blend(exa->cso, &blend);
+   }
+
+   /* sampler */
+   {
+      struct pipe_sampler_state sampler;
+      memset(&sampler, 0, sizeof(sampler));
+      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+      sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+      sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+      sampler.normalized_coords = 1;
+      cso_single_sampler(exa->cso, 0, &sampler);
+      cso_single_sampler_done(exa->cso);
+   }
+
+   set_viewport(exa, dst_surf->width, dst_surf->height, Y0_TOP);
+
+   /* texture */
+   cso_set_sampler_textures(exa->cso, 1, &src);
+
+   /* shaders */
+   shader = xorg_shaders_get(exa->shaders,
+                             VS_COMPOSITE,
+                             FS_COMPOSITE);
+   cso_set_vertex_shader_handle(exa->cso, shader.vs);
+   cso_set_fragment_shader_handle(exa->cso, shader.fs);
+
+   /* drawing dest */
+   memset(&fb, 0, sizeof(fb));
+   fb.width = dst_surf->width;
+   fb.height = dst_surf->height;
+   fb.nr_cbufs = 1;
+   fb.cbufs[0] = dst_surf;
+   {
+      int i;
+      for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
+         fb.cbufs[i] = 0;
+   }
+   cso_set_framebuffer(exa->cso, &fb);
+
+   /* draw quad */
+   buf = setup_vertex_data_tex(exa,
+                               dx1, dy1,
+                               dx2, dy2,
+                               s0, t0, s1, t1,
+                               0.0f);
+
+   if (buf) {
+      util_draw_vertex_buffer(exa->ctx, buf, 0,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              2); /* attribs/vert */
+
+      pipe_buffer_reference(&buf, NULL);
+   }
+
+   /* restore state we changed */
+   cso_restore_blend(exa->cso);
+   cso_restore_samplers(exa->cso);
+   cso_restore_sampler_textures(exa->cso);
+   cso_restore_framebuffer(exa->cso);
+   cso_restore_vertex_shader(exa->cso);
+   cso_restore_fragment_shader(exa->cso);
+   cso_restore_viewport(exa->cso);
+
+   pipe_surface_reference(&dst_surf, NULL);
+}
+
 void xorg_copy_pixmap(struct exa_context *ctx,
-                      struct exa_pixmap_priv *dst, int dx, int dy,
-                      struct exa_pixmap_priv *src, int sx, int sy,
+                      struct exa_pixmap_priv *dst_priv, int dx, int dy,
+                      struct exa_pixmap_priv *src_priv, int sx, int sy,
                       int width, int height)
 {
-    
+   float dst_loc[4], src_loc[4];
+   float dst_bounds[4], src_bounds[4];
+   float src_shift[4], dst_shift[4], shift[4];
+   struct pipe_texture *dst = dst_priv->tex;
+   struct pipe_texture *src = src_priv->tex;
+
+   dst_loc[0] = dx;
+   dst_loc[1] = dy;
+   dst_loc[2] = width;
+   dst_loc[3] = height;
+   dst_bounds[0] = 0.f;
+   dst_bounds[1] = 0.f;
+   dst_bounds[2] = dst->width[0];
+   dst_bounds[3] = dst->height[0];
+
+   src_loc[0] = sx;
+   src_loc[1] = sy;
+   src_loc[2] = width;
+   src_loc[3] = height;
+   src_bounds[0] = 0.f;
+   src_bounds[1] = 0.f;
+   src_bounds[2] = src->width[0];
+   src_bounds[3] = src->height[0];
+
+   bound_rect(src_loc, src_bounds, src_shift);
+   bound_rect(dst_loc, dst_bounds, dst_shift);
+   shift[0] = src_shift[0] - dst_shift[0];
+   shift[1] = src_shift[1] - dst_shift[1];
+
+   if (shift[0] < 0)
+      shift_rectx(src_loc, src_bounds, -shift[0]);
+   else
+      shift_rectx(dst_loc, dst_bounds, shift[0]);
+
+   if (shift[1] < 0)
+      shift_recty(src_loc, src_bounds, -shift[1]);
+   else
+      shift_recty(dst_loc, dst_bounds, shift[1]);
+
+   sync_size(src_loc, dst_loc);
+
+   if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
+       dst_loc[2] >= 0 && dst_loc[3] >= 0) {
+      renderer_copy_texture(ctx,
+                            src,
+                            src_loc[0],
+                            src_loc[1] + src_loc[3],
+                            src_loc[0] + src_loc[2],
+                            src_loc[1],
+                            dst,
+                            dst_loc[0],
+                            dst_loc[1] + dst_loc[3],
+                            dst_loc[0] + dst_loc[2],
+                            dst_loc[1]);
+   }
 }
 
