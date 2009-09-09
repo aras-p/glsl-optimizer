@@ -27,6 +27,11 @@ struct exa_context
 
    float solid_color[4];
    boolean has_solid_color;
+
+   struct {
+      struct exa_pixmap_priv *src;
+      struct exa_pixmap_priv *dst;
+   } copy;
 };
 
 
@@ -37,7 +42,6 @@ struct exa_pixmap_priv
 
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;
-   struct pipe_surface *src_surf; /* for copies */
 
    struct pipe_transfer *map_transfer;
    unsigned map_count;
