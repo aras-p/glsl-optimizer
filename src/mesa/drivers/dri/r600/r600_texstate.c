@@ -608,9 +608,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	int firstlevel = t->mt ? t->mt->firstLevel : 0;
 	GLuint uTexelPitch, row_align;
 
-	if ( t->bo ) {
-		return GL_TRUE;
-	}
+	if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled &&
+	    t->image_override &&
+	    t->bo)
+		return;
 
 	firstImage = t->base.Image[0][firstlevel];
 
