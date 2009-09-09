@@ -33,9 +33,9 @@ else:
 	default_machine = _platform.machine()
 default_machine = _machine_map.get(default_machine, 'generic')
 
-if default_platform in ('linux', 'freebsd', 'darwin'):
+if default_platform in ('linux', 'freebsd'):
 	default_dri = 'yes'
-elif default_platform in ('winddk', 'windows', 'wince'):
+elif default_platform in ('winddk', 'windows', 'wince', 'darwin'):
 	default_dri = 'no'
 else:
 	default_dri = 'no'

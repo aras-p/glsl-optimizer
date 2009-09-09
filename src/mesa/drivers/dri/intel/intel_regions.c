@@ -196,6 +196,13 @@ intel_region_alloc(struct intel_context *intel,
    else
       height = ALIGN(height, 2);
 
+   /* If we're untiled, we have to align to 2 rows high because the
+    * data port accesses 2x2 blocks even if the bottom row isn't to be
+    * rendered, so failure to align means we could walk off the end of the
+    * GTT and fault.
+    */
+   height = ALIGN(height, 2);
+
    if (expect_accelerated_upload) {
       buffer = drm_intel_bo_alloc_for_render(intel->bufmgr, "region",
 					     pitch * cpp * height, 64);
