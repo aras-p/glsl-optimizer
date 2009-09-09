@@ -390,6 +390,8 @@ struct brw_cached_batch_item {
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
 
+   /** The corresponding Mesa vertex attribute */
+   gl_vert_attrib attrib;
    /** Size of a complete element */
    GLuint element_size;
    /** Number of uploaded elements for this input. */

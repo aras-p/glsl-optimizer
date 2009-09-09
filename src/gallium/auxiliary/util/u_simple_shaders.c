@@ -131,8 +131,6 @@ util_make_fragment_tex_shader(struct pipe_context *pipe )
 
 
 
-
-
 /**
  * Make simple fragment color pass-through shader.
  */
