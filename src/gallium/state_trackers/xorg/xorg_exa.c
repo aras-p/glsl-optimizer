@@ -350,7 +350,8 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
 
-    return TRUE;
+    /*XXX disabled until some issues with syncing are fixed */
+    return FALSE;
 }
 
 static void
