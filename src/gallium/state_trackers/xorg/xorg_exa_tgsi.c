@@ -318,8 +318,8 @@ create_fs(struct pipe_context *pipe,
                                      TGSI_SEMANTIC_POSITION,
                                      0,
                                      TGSI_INTERPOLATE_PERSPECTIVE);
-   }
-   if (is_fill) {
+   } else {
+      debug_assert(is_fill);
       if (is_solid)
          src_input = ureg_DECL_fs_input(ureg,
                                         TGSI_SEMANTIC_COLOR,

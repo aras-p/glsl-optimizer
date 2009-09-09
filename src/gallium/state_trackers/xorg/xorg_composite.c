@@ -41,8 +41,8 @@ static const struct xorg_composite_blend xorg_blends[] = {
 };
 
 static INLINE void
-pixel_to_float4(PictFormatPtr format,
-                CARD32 pixel, float *color)
+render_pixel_to_float4(PictFormatPtr format,
+                       CARD32 pixel, float *color)
 {
    CARD32	    r, g, b, a;
 
@@ -291,16 +291,15 @@ boolean xorg_composite_accelerated(int op,
 }
 
 static void
-bind_framebuffer_state(struct exa_context *exa, PicturePtr pDstPicture,
-                       struct exa_pixmap_priv *pDst)
+bind_framebuffer_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
    unsigned i;
    struct pipe_framebuffer_state state;
    struct pipe_surface *surface = exa_gpu_surface(exa, pDst);
    memset(&state, 0, sizeof(struct pipe_framebuffer_state));
 
-   state.width  = pDstPicture->pDrawable->width;
-   state.height = pDstPicture->pDrawable->height;
+   state.width  = pDst->tex->width[0];
+   state.height = pDst->tex->height[0];
 
    state.nr_cbufs = 1;
    state.cbufs[0] = surface;
@@ -338,10 +337,10 @@ set_viewport(struct exa_context *exa, int width, int height,
 }
 
 static void
-bind_viewport_state(struct exa_context *exa, PicturePtr pDstPicture)
+bind_viewport_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
-   int width = pDstPicture->pDrawable->width;
-   int height = pDstPicture->pDrawable->height;
+   int width = pDst->tex->width[0];
+   int height = pDst->tex->height[0];
 
    set_viewport(exa, width, height, Y0_TOP);
 }
@@ -395,9 +394,9 @@ bind_shaders(struct exa_context *exa, int op,
          if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
             fs_traits |= FS_SOLID_FILL;
             vs_traits |= VS_SOLID_FILL;
-            pixel_to_float4(pSrcPicture->pFormat,
-                            pSrcPicture->pSourcePict->solidFill.color,
-                            exa->solid_color);
+            render_pixel_to_float4(pSrcPicture->pFormat,
+                                   pSrcPicture->pSourcePict->solidFill.color,
+                                   exa->solid_color);
          } else {
             debug_assert("!gradients not supported");
          }
@@ -530,8 +529,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                                   struct exa_pixmap_priv *pMask,
                                   struct exa_pixmap_priv *pDst)
 {
-   bind_framebuffer_state(exa, pDstPicture, pDst);
-   bind_viewport_state(exa, pDstPicture);
+   bind_framebuffer_state(exa, pDst);
+   bind_viewport_state(exa, pDst);
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture);
    bind_rasterizer_state(exa);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture);
@@ -580,5 +579,19 @@ void xorg_composite(struct exa_context *exa,
 
       pipe_buffer_reference(&buf, NULL);
    }
+}
+
+boolean xorg_solid_bind_state(struct exa_context *exa,
+                              struct exa_pixmap_priv *pixmap,
+                              Pixel fg)
+{
+   
+   return TRUE;
+}
+
+void xorg_solid(struct exa_context *exa,
+                struct exa_pixmap_priv *pixmap,
+                int x0, int y0, int x1, int y1)
+{
 }
 

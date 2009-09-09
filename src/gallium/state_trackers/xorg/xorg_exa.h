@@ -36,7 +36,7 @@ struct exa_pixmap_priv
 
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;
-   unsigned int color;
+   float solid_color[4];
    struct pipe_surface *src_surf; /* for copies */
 
    struct pipe_transfer *map_transfer;
