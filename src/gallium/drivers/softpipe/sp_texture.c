@@ -30,27 +30,21 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
-#include "sp_tile_cache.h"
 #include "sp_screen.h"
 #include "sp_winsys.h"
 
 
-/* Simple, maximally packed layout.
- */
-
-
 /**
  * Conventional allocation path for non-display textures:
+ * Use a simple, maximally packed layout.
  */
 static boolean
 softpipe_texture_layout(struct pipe_screen *screen,
