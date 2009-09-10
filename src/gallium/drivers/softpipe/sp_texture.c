@@ -49,7 +49,8 @@
  */
 
 
-/* Conventional allocation path for non-display textures:
+/**
+ * Conventional allocation path for non-display textures:
  */
 static boolean
 softpipe_texture_layout(struct pipe_screen *screen,
@@ -89,6 +90,10 @@ softpipe_texture_layout(struct pipe_screen *screen,
    return spt->buffer != NULL;
 }
 
+
+/**
+ * Texture layout for simple color buffers.
+ */
 static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
                               struct softpipe_texture * spt)
@@ -110,9 +115,6 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 
    return spt->buffer != NULL;
 }
-
-
-
 
 
 static struct pipe_texture *
@@ -342,14 +344,13 @@ softpipe_transfer_map( struct pipe_screen *screen,
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
-   {
+   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
        */
       softpipe_screen(screen)->timestamp++;
    }
-   
+
    xfer_map = map + softpipe_transfer(transfer)->offset +
       transfer->y / transfer->block.height * transfer->stride +
       transfer->x / transfer->block.width * transfer->block.size;
@@ -360,7 +361,7 @@ softpipe_transfer_map( struct pipe_screen *screen,
 
 static void
 softpipe_transfer_unmap(struct pipe_screen *screen,
-                       struct pipe_transfer *transfer)
+                        struct pipe_transfer *transfer)
 {
    struct softpipe_texture *spt;
 
@@ -404,7 +405,7 @@ softpipe_get_texture_buffer( struct pipe_texture *texture,
                              struct pipe_buffer **buf,
                              unsigned *stride )
 {
-   struct softpipe_texture *tex = (struct softpipe_texture *)texture;
+   struct softpipe_texture *tex = (struct softpipe_texture *) texture;
 
    if (!tex)
       return FALSE;
