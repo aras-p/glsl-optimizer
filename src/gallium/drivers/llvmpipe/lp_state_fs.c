@@ -216,24 +216,11 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_flow_scope_begin(flow);
 
    /* Declare the color and z variables */
-   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-         boolean declare = FALSE;
-         switch (shader->info.output_semantic_name[attrib]) {
-         case TGSI_SEMANTIC_COLOR:
-            declare = TRUE;
-            break;
-         case TGSI_SEMANTIC_POSITION:
-            if(chan == 2)
-               declare = TRUE;
-            break;
-         }
-         if(declare) {
-            outputs[attrib][chan] = LLVMGetUndef(vec_type);
-            lp_build_flow_scope_declare(flow, &outputs[attrib][chan]);
-         }
-      }
+   for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+      color[chan] = LLVMGetUndef(vec_type);
+      lp_build_flow_scope_declare(flow, &color[chan]);
    }
+   lp_build_flow_scope_declare(flow, &z);
 
    lp_build_mask_begin(&mask, flow, type, *pmask);
 
@@ -251,15 +238,6 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
                      outputs, sampler);
-
-   if(!early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     z, depth_ptr);
-
-   lp_build_mask_end(&mask);
-
-   lp_build_flow_scope_end(flow);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -298,6 +276,15 @@ generate_fs(struct llvmpipe_context *lp,
          }
       }
    }
+
+   if(!early_depth_test)
+      generate_depth(builder, key,
+                     type, &mask,
+                     z, depth_ptr);
+
+   lp_build_mask_end(&mask);
+
+   lp_build_flow_scope_end(flow);
 
    lp_build_flow_destroy(flow);
 
