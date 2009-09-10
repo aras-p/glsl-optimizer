@@ -52,8 +52,7 @@ pass_user_buffer_create(struct pipe_screen *screen,
                         unsigned bytes)
 {
    struct pipe_buffer *buffer =
-      screen->winsys->user_buffer_create(screen->winsys,
-                                             ptr, bytes);
+      screen->winsys->user_buffer_create(screen->winsys, ptr, bytes);
 
    buffer->screen = screen;
 
@@ -69,9 +68,8 @@ pass_surface_buffer_create(struct pipe_screen *screen,
                            unsigned *stride)
 {
    struct pipe_buffer *buffer =
-      screen->winsys->surface_buffer_create(screen->winsys,
-                                                width, height,
-                                                format, usage, tex_usage, stride);
+      screen->winsys->surface_buffer_create(screen->winsys, width, height,
+                                            format, usage, tex_usage, stride);
 
    buffer->screen = screen;
 
@@ -83,8 +81,7 @@ pass_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return screen->winsys->buffer_map(screen->winsys,
-                                     buf, usage);
+   return screen->winsys->buffer_map(screen->winsys, buf, usage);
 }
 
 static void
@@ -106,8 +103,7 @@ pass_flush_frontbuffer(struct pipe_screen *screen,
                        struct pipe_surface *surf,
                        void *context_private)
 {
-   screen->winsys->flush_frontbuffer(screen->winsys,
-                                     surf, context_private);
+   screen->winsys->flush_frontbuffer(screen->winsys, surf, context_private);
 }
 
 static void
@@ -115,8 +111,7 @@ pass_fence_reference(struct pipe_screen *screen,
                      struct pipe_fence_handle **ptr,
                      struct pipe_fence_handle *fence)
 {
-   screen->winsys->fence_reference(screen->winsys,
-                                   ptr, fence);
+   screen->winsys->fence_reference(screen->winsys, ptr, fence);
 }
 
 static int
@@ -124,8 +119,7 @@ pass_fence_signalled(struct pipe_screen *screen,
                      struct pipe_fence_handle *fence,
                      unsigned flag)
 {
-   return screen->winsys->fence_signalled(screen->winsys,
-                                          fence, flag);
+   return screen->winsys->fence_signalled(screen->winsys, fence, flag);
 }
 
 static int
@@ -133,11 +127,11 @@ pass_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
                   unsigned flag)
 {
-   return screen->winsys->fence_finish(screen->winsys,
-                                       fence, flag);
+   return screen->winsys->fence_finish(screen->winsys, fence, flag);
 }
 
-void u_simple_screen_init(struct pipe_screen *screen)
+void
+u_simple_screen_init(struct pipe_screen *screen)
 {
    screen->buffer_create = pass_buffer_create;
    screen->user_buffer_create = pass_user_buffer_create;
@@ -152,7 +146,8 @@ void u_simple_screen_init(struct pipe_screen *screen)
    screen->fence_finish = pass_fence_finish;
 }
 
-const char* u_simple_screen_winsys_name(struct pipe_screen *screen)
+const char *
+u_simple_screen_winsys_name(struct pipe_screen *screen)
 {
    return screen->winsys->get_name(screen->winsys);
 }
