@@ -1402,7 +1402,7 @@ static boolean
 nv50_program_tx_insn(struct nv50_pc *pc,
 		     const struct tgsi_full_instruction *inst)
 {
-	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
+	struct nv50_reg *rdst[4], *dst[4], *brdc, *src[3][4], *temp;
 	unsigned mask, sat, unit;
 	int i, c;
 
@@ -1435,6 +1435,12 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 				src[i][c] = tgsi_src(pc, c, fs, neg_supp);
 	}
 
+	brdc = temp = pc->r_brdc;
+	if (brdc && brdc->type != P_TEMP) {
+		temp = temp_temp(pc);
+		if (sat)
+			brdc = temp;
+	} else
 	if (sat) {
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)) || dst[c]->type == P_TEMP)
@@ -1443,6 +1449,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			dst[c] = temp_temp(pc);
 		}
 	}
+
+	assert(brdc || !is_scalar_op(inst->Instruction.Opcode));
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -1470,63 +1478,35 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_DP3:
-		temp = temp_temp(pc);
 		emit_mul(pc, temp, src[0][0], src[1][0]);
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
-		emit_mad(pc, temp, src[0][2], src[1][2], temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_mad(pc, brdc, src[0][2], src[1][2], temp);
 		break;
 	case TGSI_OPCODE_DP4:
-		temp = temp_temp(pc);
 		emit_mul(pc, temp, src[0][0], src[1][0]);
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
 		emit_mad(pc, temp, src[0][2], src[1][2], temp);
-		emit_mad(pc, temp, src[0][3], src[1][3], temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_mad(pc, brdc, src[0][3], src[1][3], temp);
 		break;
 	case TGSI_OPCODE_DPH:
-		temp = temp_temp(pc);
 		emit_mul(pc, temp, src[0][0], src[1][0]);
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
 		emit_mad(pc, temp, src[0][2], src[1][2], temp);
-		emit_add(pc, temp, src[1][3], temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_add(pc, brdc, src[1][3], temp);
 		break;
 	case TGSI_OPCODE_DST:
-	{
-		struct nv50_reg *one = alloc_immd(pc, 1.0);
-		if (mask & (1 << 0))
-			emit_mov(pc, dst[0], one);
 		if (mask & (1 << 1))
 			emit_mul(pc, dst[1], src[0][1], src[1][1]);
 		if (mask & (1 << 2))
 			emit_mov(pc, dst[2], src[0][2]);
 		if (mask & (1 << 3))
 			emit_mov(pc, dst[3], src[1][3]);
-		FREE(one);
-	}
+		if (mask & (1 << 0))
+			emit_mov_immdval(pc, dst[0], 1.0f);
 		break;
 	case TGSI_OPCODE_EX2:
-		temp = temp_temp(pc);
 		emit_preex2(pc, temp, src[0][0]);
-		emit_flop(pc, 6, temp, temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_flop(pc, 6, brdc, temp);
 		break;
 	case TGSI_OPCODE_FLR:
 		for (c = 0; c < 4; c++) {
@@ -1555,13 +1535,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
-		temp = temp_temp(pc);
-		emit_flop(pc, 3, temp, src[0][0]);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_flop(pc, 3, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_LRP:
 		temp = temp_temp(pc);
@@ -1609,31 +1583,18 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_POW:
-		temp = temp_temp(pc);
-		emit_pow(pc, temp, src[0][0], src[1][0]);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
-		}
+		emit_pow(pc, brdc, src[0][0], src[1][0]);
 		break;
 	case TGSI_OPCODE_RCP:
-		for (c = 3; c >= 0; c--) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_flop(pc, 0, dst[c], src[0][0]);
-		}
+		emit_flop(pc, 0, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_RSQ:
-		for (c = 3; c >= 0; c--) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_flop(pc, 2, dst[c], src[0][0]);
-		}
+		emit_flop(pc, 2, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_SCS:
 		temp = temp_temp(pc);
-		emit_precossin(pc, temp, src[0][0]);
+		if (mask & 3)
+			emit_precossin(pc, temp, src[0][0]);
 		if (mask & (1 << 0))
 			emit_flop(pc, 5, dst[0], temp);
 		if (mask & (1 << 1))
@@ -1706,6 +1667,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		return FALSE;
 	}
 
+	if (brdc) {
+		if (sat)
+			emit_sat(pc, brdc, brdc);
+		for (c = 0; c < 4; c++)
+			if ((mask & (1 << c)) && dst[c] != brdc)
+				emit_mov(pc, dst[c], brdc);
+	} else
 	if (sat) {
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
