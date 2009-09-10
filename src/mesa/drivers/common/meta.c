@@ -1522,6 +1522,8 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
    }
    else if (_mesa_is_stencil_format(format)) {
       if (ctx->Extensions.ARB_fragment_program &&
+          ctx->Pixel.IndexShift == 0 &&
+          ctx->Pixel.IndexOffset == 0 &&
           type == GL_UNSIGNED_BYTE) {
          /* We'll store stencil as alpha.  This only works for GLubyte
           * image data because of how incoming values are mapped to alpha
@@ -1656,6 +1658,13 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
       _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
       _mesa_set_enable(ctx, GL_STENCIL_TEST, GL_TRUE);
+
+      /* set all stencil bits to 0 */
+      _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+      _mesa_StencilFunc(GL_ALWAYS, 0, 255);
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+  
+      /* set stencil bits to 1 where needed */
       _mesa_StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
       _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);

@@ -1234,7 +1234,9 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 	UNLOCK_HARDWARE(rmesa);
 
 	if (ret) {
-		fprintf(stderr, "drmRadeonCmdBuffer: %d\n", ret);
+		fprintf(stderr, "drmRadeonCmdBuffer: %d. Kernel failed to "
+				"parse or rejected command stream. See dmesg "
+				"for more info.\n", ret);
 		_mesa_exit(ret);
 	}
 
