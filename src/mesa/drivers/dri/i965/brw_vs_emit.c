@@ -1270,9 +1270,27 @@ post_vs_emit( struct brw_vs_compile *c,
 }
 
 static uint32_t
-get_predicate(uint32_t swizzle)
+get_predicate(const struct prog_instruction *inst)
 {
-   switch (swizzle) {
+   if (inst->DstReg.CondMask == COND_TR)
+      return BRW_PREDICATE_NONE;
+
+   /* All of GLSL only produces predicates for COND_NE and one channel per
+    * vector.  Fail badly if someone starts doing something else, as it might
+    * mean infinite looping or something.
+    *
+    * We'd like to support all the condition codes, but our hardware doesn't
+    * quite match the Mesa IR, which is modeled after the NV extensions.  For
+    * those, the instruction may update the condition codes or not, then any
+    * later instruction may use one of those condition codes.  For gen4, the
+    * instruction may update the flags register based on one of the condition
+    * codes output by the instruction, and then further instructions may
+    * predicate on that.  We can probably support this, but it won't
+    * necessarily be easy.
+    */
+   assert(inst->DstReg.CondMask == COND_NE);
+
+   switch (inst->DstReg.CondSwizzle) {
    case SWIZZLE_XXXX:
       return BRW_PREDICATE_ALIGN16_REPLICATE_X;
    case SWIZZLE_YYYY:
@@ -1282,7 +1300,8 @@ get_predicate(uint32_t swizzle)
    case SWIZZLE_WWWW:
       return BRW_PREDICATE_ALIGN16_REPLICATE_W;
    default:
-      _mesa_problem(NULL, "Unexpected predicate: 0x%08x\n", swizzle);
+      _mesa_problem(NULL, "Unexpected predicate: 0x%08x\n",
+		    inst->DstReg.CondMask);
       return BRW_PREDICATE_NORMAL;
    }
 }
@@ -1294,6 +1313,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_depth = 0, loop_depth = 0;
    GLuint end_offset = 0;
@@ -1492,8 +1512,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_IF:
 	 assert(if_depth < MAX_IF_DEPTH);
 	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
-	 if_inst[if_depth]->header.predicate_control =
-	    get_predicate(inst->DstReg.CondSwizzle);
+	 /* Note that brw_IF smashes the predicate_control field. */
+	 if_inst[if_depth]->header.predicate_control = get_predicate(inst);
 	 if_depth++;
 	 break;
       case OPCODE_ELSE:
@@ -1503,45 +1523,48 @@ void brw_vs_emit(struct brw_vs_compile *c )
          assert(if_depth > 0);
 	 brw_ENDIF(p, if_inst[--if_depth]);
 	 break;			
-#if 0
       case OPCODE_BGNLOOP:
          loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
          break;
       case OPCODE_BRK:
+	 brw_set_predicate_control(p, get_predicate(inst));
          brw_BREAK(p);
-         brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_CONT:
+	 brw_set_predicate_control(p, get_predicate(inst));
          brw_CONT(p);
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_ENDLOOP: 
          {
             struct brw_instruction *inst0, *inst1;
+	    GLuint br = 1;
+
             loop_depth--;
+
+	    if (BRW_IS_IGDNG(brw))
+	       br = 2;
+
             inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
             /* patch all the BREAK/CONT instructions from last BEGINLOOP */
             while (inst0 > loop_inst[loop_depth]) {
                inst0--;
                if (inst0->header.opcode == BRW_OPCODE_BREAK) {
-                  inst0->bits3.if_else.jump_count = inst1 - inst0 + 1;
+                  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
                   inst0->bits3.if_else.pop_count = 0;
                }
                else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
-                  inst0->bits3.if_else.jump_count = inst1 - inst0;
+                  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                   inst0->bits3.if_else.pop_count = 0;
                }
             }
          }
          break;
-#else
-         (void) loop_inst;
-         (void) loop_depth;
-#endif
       case OPCODE_BRA:
-         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+	 brw_set_predicate_control(p, get_predicate(inst));
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         brw_set_predicate_control_flag_value(p, 0xff);
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
