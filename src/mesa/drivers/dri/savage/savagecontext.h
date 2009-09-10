@@ -31,7 +31,6 @@ typedef struct savage_context_t savageContext;
 typedef struct savage_context_t *savageContextPtr;
 typedef struct savage_texture_object_t *savageTextureObjectPtr;
 
-#include <X11/Xlibint.h>
 #include "dri_util.h"
 #include "main/mtypes.h"
 #include "xf86drm.h"

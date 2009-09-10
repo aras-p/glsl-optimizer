@@ -118,6 +118,22 @@ static void (*(usercliptab[5]))( GLcontext *,
 };
 
 
+void
+tnl_clip_prepare(GLcontext *ctx)
+{
+   /* Neither the x86 nor sparc asm cliptest functions have been updated
+    * for ARB_depth_clamp, so force the C paths.
+    */
+   if (ctx->Transform.DepthClamp) {
+      static GLboolean c_funcs_installed = GL_FALSE;
+      if (!c_funcs_installed) {
+         init_c_cliptest();
+         c_funcs_installed = GL_TRUE;
+      }
+   }
+}
+
+
 
 static GLboolean run_vertex_stage( GLcontext *ctx,
 				   struct tnl_pipeline_stage *stage )
@@ -128,6 +144,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
    if (ctx->VertexProgram._Current) 
       return GL_TRUE;
+
+   tnl_clip_prepare(ctx);
 
    if (ctx->_NeedEyeCoords) {
       /* Separate modelview transformation:
@@ -173,7 +191,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 					    &store->proj,
 					    store->clipmask,
 					    &store->ormask,
-					    &store->andmask );
+					    &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
    else {
       VB->NdcPtr = NULL;
@@ -181,7 +200,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 					    NULL,
 					    store->clipmask,
 					    &store->ormask,
-					    &store->andmask );
+					    &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
 
    if (store->andmask)

@@ -192,9 +192,9 @@ static int r600_cs_begin(struct radeon_cs *cs,
 
     if (cs->cdw + ndw > cs->ndw) {
         uint32_t tmp, *ptr;
-	int num = (ndw > 0x3FF) ? ndw : 0x3FF;
+	int num = (ndw > 0x400) ? ndw : 0x400;
 
-        tmp = (cs->cdw + 1 + num) & (~num);
+        tmp = (cs->cdw + num + 0x3FF) & (~0x3FF);
         ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
         if (ptr == NULL) {
             return -ENOMEM;
@@ -227,6 +227,14 @@ static int r600_cs_end(struct radeon_cs *cs,
         fprintf(stderr, "CS section end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
+    }
+
+    if (cs->cdw > cs->ndw) {
+	    fprintf(stderr, "CS section overflow at (%s,%s,%d) cdw %d ndw %d\n",
+		    cs->section_file, cs->section_func, cs->section_line,cs->cdw,cs->ndw);
+	    fprintf(stderr, "CS section end at (%s,%s,%d)\n",
+		    file, func, line);
+	    assert(0);
     }
 
     return 0;

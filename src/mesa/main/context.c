@@ -129,6 +129,9 @@
 #if FEATURE_ARB_occlusion_query
 #include "queryobj.h"
 #endif
+#if FEATURE_ARB_sync
+#include "syncobj.h"
+#endif
 #if FEATURE_drawpix
 #include "rastpos.h"
 #endif
@@ -592,6 +595,9 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ARB_framebuffer_object */
    ctx->Const.MaxSamples = 0;
 
+   /* GL_ARB_sync */
+   ctx->Const.MaxServerWaitTimeout = (GLuint64) ~0;
+
    /* GL_ATI_envmap_bumpmap */
    ctx->Const.SupportedBumpUnits = SUPPORTED_ATI_BUMP_UNITS;
 
@@ -714,6 +720,9 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_program( ctx );
 #if FEATURE_ARB_occlusion_query
    _mesa_init_query( ctx );
+#endif
+#if FEATURE_ARB_sync
+   _mesa_init_sync( ctx );
 #endif
 #if FEATURE_drawpix
    _mesa_init_rastpos( ctx );
@@ -1013,6 +1022,9 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_shader_state(ctx);
 #if FEATURE_ARB_occlusion_query
    _mesa_free_query_data(ctx);
+#endif
+#if FEATURE_ARB_sync
+   _mesa_free_sync_data(ctx);
 #endif
    _mesa_free_varray_data(ctx);
 

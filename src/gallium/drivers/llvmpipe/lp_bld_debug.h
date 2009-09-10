@@ -53,6 +53,10 @@ lp_build_name(LLVMValueRef val, const char *format, ...)
 }
 
 
+boolean
+lp_check_alignment(const void *ptr, unsigned alignment);
+
+
 void
 lp_disassemble(const void* func);
 

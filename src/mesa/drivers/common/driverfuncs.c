@@ -45,6 +45,9 @@
 #include "main/fbobject.h"
 #include "main/texrender.h"
 #endif
+#if FEATURE_ARB_sync
+#include "main/syncobj.h"
+#endif
 
 #include "shader/program.h"
 #include "shader/prog_execute.h"
@@ -200,6 +203,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->GetDoublev = NULL;
    driver->GetFloatv = NULL;
    driver->GetIntegerv = NULL;
+   driver->GetInteger64v = NULL;
    driver->GetPointerv = NULL;
    
    /* buffer objects */
@@ -207,6 +211,10 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    /* query objects */
    _mesa_init_query_object_functions(driver);
+
+#if FEATURE_ARB_sync
+   _mesa_init_sync_object_functions(driver);
+#endif
 
 #if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;

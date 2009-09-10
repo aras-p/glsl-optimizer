@@ -63,8 +63,7 @@ struct dri_drawable
    unsigned int cur_fences;
 
    enum pipe_format color_format;
-   enum pipe_format depth_format;
-   enum pipe_format stencil_format;
+   enum pipe_format depth_stencil_format;
 };
 
 static INLINE struct dri_drawable *

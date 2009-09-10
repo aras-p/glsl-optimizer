@@ -127,7 +127,7 @@ Init( void )
 
    if (!glutExtensionSupported("GL_EXT_framebuffer_object")) {
       printf("GL_EXT_framebuffer_object not found!\n");
-      /*exit(0);*/
+      exit(0);
    }
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 

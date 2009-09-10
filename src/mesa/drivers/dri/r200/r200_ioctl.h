@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "radeon_drm.h"
 
+extern void r200EmitMaxVtxIndex(r200ContextPtr rmesa, int count);
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,
 			       GLuint vertex_size,
 			       struct radeon_bo *bo,

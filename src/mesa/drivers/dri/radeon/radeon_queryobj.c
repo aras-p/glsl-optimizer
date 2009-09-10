@@ -133,6 +133,7 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 	radeon->query.current = query;
 
 	radeon->query.queryobj.dirty = GL_TRUE;
+	radeon->hw.is_dirty = GL_TRUE;
 	insert_at_tail(&radeon->query.not_flushed_head, query);
 
 }

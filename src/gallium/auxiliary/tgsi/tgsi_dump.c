@@ -43,6 +43,7 @@ struct dump_ctx
    struct tgsi_iterate_context iter;
 
    uint instno;
+   int indent;
    
    uint indentation;
 
@@ -335,14 +336,6 @@ tgsi_dump_immediate(
    iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
 }
 
-static void
-indent(struct dump_ctx *ctx)
-{
-   uint i;
-   for (i = 0; i < ctx->indentation; i++)
-      TXT(" ");
-}
-
 static boolean
 iter_instruction(
    struct tgsi_iterate_context *iter,
@@ -350,22 +343,19 @@ iter_instruction(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
    uint instno = ctx->instno++;
-   
+   const struct tgsi_opcode_info *info = tgsi_get_opcode_info( inst->Instruction.Opcode );
    uint i;
    boolean first_reg = TRUE;
 
    INSTID( instno );
    TXT( ": " );
-
-   /* update indentation */
-   if (inst->Instruction.Opcode == TGSI_OPCODE_ENDIF ||
-       inst->Instruction.Opcode == TGSI_OPCODE_ENDFOR ||
-       inst->Instruction.Opcode == TGSI_OPCODE_ENDLOOP) {
-      ctx->indentation -= indent_spaces;
-   }
-   indent(ctx);
-
-   TXT( tgsi_get_opcode_info( inst->Instruction.Opcode )->mnemonic );
+   
+   ctx->indent -= info->pre_dedent;
+   for(i = 0; (int)i < ctx->indent; ++i)
+      TXT( "  " );
+   ctx->indent += info->post_indent;
+   
+   TXT( info->mnemonic );
 
    switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
@@ -526,6 +516,7 @@ tgsi_dump_instruction(
    struct dump_ctx ctx;
 
    ctx.instno = instno;
+   ctx.indent = 0;
    ctx.printf = dump_ctx_printf;
    ctx.indentation = 0;
 
@@ -559,6 +550,7 @@ tgsi_dump(
    ctx.iter.epilog = NULL;
 
    ctx.instno = 0;
+   ctx.indent = 0;
    ctx.printf = dump_ctx_printf;
    ctx.indentation = 0;
 
@@ -612,6 +604,7 @@ tgsi_dump_str(
    ctx.base.iter.epilog = NULL;
 
    ctx.base.instno = 0;
+   ctx.base.indent = 0;
    ctx.base.printf = &str_dump_ctx_printf;
    ctx.base.indentation = 0;
 

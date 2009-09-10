@@ -20,10 +20,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
 
-#include "util/u_debug.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "pipe/p_config.h"
 #include "pipe/internal/p_winsys_screen.h"
@@ -429,6 +430,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     r300->rs_state = rs;
     r300->dirty_state |= R300_NEW_RASTERIZER;
+    r300->dirty_state |= R300_NEW_RS_BLOCK;
+    r300->dirty_state |= R300_NEW_SCISSOR;
+    r300->dirty_state |= R300_NEW_VIEWPORT;
 }
 
 /* Free rasterizer state. */

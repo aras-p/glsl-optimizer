@@ -590,7 +590,9 @@ static void r300SetDepthState(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, zs);
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_STENCIL_ENABLE|R300_STENCIL_FRONT_BACK;
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= (R300_STENCIL_ENABLE |
+					    R300_STENCIL_FRONT_BACK |
+					    R500_STENCIL_REFMASK_FRONT_BACK);
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
 	if (ctx->Depth.Test) {
@@ -604,11 +606,16 @@ static void r300SetDepthState(GLcontext * ctx)
 
 static void r300CatchStencilFallback(GLcontext *ctx)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
 
-	if (ctx->Stencil._Enabled && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
-		|| ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[back]
-		|| ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[back])) {
+	if (rmesa->radeon.radeonScreen->kernel_mm &&
+	    (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)) {
+		r300SwitchFallback(ctx, R300_FALLBACK_STENCIL_TWOSIDE, GL_FALSE);
+	} else if (ctx->Stencil._Enabled &&
+		   (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
+		    || ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[back]
+		    || ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[back])) {
 		r300SwitchFallback(ctx, R300_FALLBACK_STENCIL_TWOSIDE, GL_TRUE);
 	} else {
 		r300SwitchFallback(ctx, R300_FALLBACK_STENCIL_TWOSIDE, GL_FALSE);
@@ -915,11 +922,24 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 	    (flag << R300_S_BACK_FUNC_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
+
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_0] |= R500_STENCIL_REFMASK_FRONT_BACK;
+		R300_STATECHANGE(rmesa, zsb);
+		refmask = ((ctx->Stencil.Ref[back] & 0xff) << R300_STENCILREF_SHIFT)
+			| ((ctx->Stencil.ValueMask[back] & 0xff) << R300_STENCILMASK_SHIFT);
+
+		rmesa->hw.zsb.cmd[R300_ZSB_CNTL_0] &=
+			~((R300_STENCILREF_MASK << R300_STENCILREF_SHIFT) |
+			  (R300_STENCILREF_MASK << R300_STENCILMASK_SHIFT));
+		rmesa->hw.zsb.cmd[R300_ZSB_CNTL_0] |= refmask;
+	}
 }
 
 static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	const unsigned back = ctx->Stencil._BackFace;
 
 	r300CatchStencilFallback(ctx);
 
@@ -931,6 +951,13 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 	    (ctx->Stencil.
 	     WriteMask[0] & R300_STENCILREF_MASK) <<
 	     R300_STENCILWRITEMASK_SHIFT;
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		R300_STATECHANGE(rmesa, zsb);
+		rmesa->hw.zsb.cmd[R300_ZSB_CNTL_0] |=
+			(ctx->Stencil.
+			 WriteMask[back] & R300_STENCILREF_MASK) <<
+			R300_STENCILWRITEMASK_SHIFT;
+	}
 }
 
 static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
@@ -2251,6 +2278,14 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 		R300_STATECHANGE(r300, cb);
 		R300_STATECHANGE(r300, zb);
+	}
+
+	if (new_state & (_NEW_LIGHT)) {
+		R300_STATECHANGE(r300, shade2);
+		if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION)
+			r300->hw.shade2.cmd[1] |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+		else
+			r300->hw.shade2.cmd[1] &= ~R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
 	}
 
 	r300->radeon.NewGLState |= new_state;

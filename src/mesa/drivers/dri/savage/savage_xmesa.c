@@ -23,7 +23,6 @@
  */
 
 
-#include <X11/Xlibint.h>
 #include <stdio.h>
 
 #include "main/context.h"
@@ -180,7 +179,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    /* Allocate the private area */
-   savageScreen = (savageScreenPrivate *)Xmalloc(sizeof(savageScreenPrivate));
+   savageScreen = (savageScreenPrivate *)_mesa_malloc(sizeof(savageScreenPrivate));
    if (!savageScreen)
       return GL_FALSE;
 
@@ -227,7 +226,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 		  savageScreen->agpTextures.handle,
 		  savageScreen->agpTextures.size,
 		  (drmAddress *)&(savageScreen->agpTextures.map)) != 0) {
-	   Xfree(savageScreen);
+	   _mesa_free(savageScreen);
 	   sPriv->private = NULL;
 	   return GL_FALSE;
        }
@@ -247,7 +246,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 	      savageScreen->aperture.size, 
 	      (drmAddress *)&savageScreen->aperture.map) != 0) 
    {
-      Xfree(savageScreen);
+      _mesa_free(savageScreen);
       sPriv->private = NULL;
       return GL_FALSE;
    }
@@ -283,7 +282,7 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
    /* free all option information */
    driDestroyOptionInfo (&savageScreen->optionCache);
 
-   Xfree(savageScreen);
+   _mesa_free(savageScreen);
    sPriv->private = NULL;
 }
 
@@ -301,7 +300,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 						 savageScreen->sarea_priv_offset);
    int textureSize[SAVAGE_NR_TEX_HEAPS];
    int i;
-   imesa = (savageContextPtr)Xcalloc(sizeof(savageContext), 1);
+   imesa = (savageContextPtr)_mesa_calloc(sizeof(savageContext));
    if (!imesa) {
       return GL_FALSE;
    }
@@ -318,7 +317,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
       shareCtx = NULL;
    ctx = _mesa_create_context(mesaVis, shareCtx, &functions, imesa);
    if (!ctx) {
-      Xfree(imesa);
+      _mesa_free(imesa);
       return GL_FALSE;
    }
    driContextPriv->driverPrivate = imesa;

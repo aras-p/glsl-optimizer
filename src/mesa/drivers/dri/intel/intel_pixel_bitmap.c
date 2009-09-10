@@ -93,19 +93,12 @@ static const GLubyte *map_pbo( GLcontext *ctx,
    return ADD_POINTERS(buf, bitmap);
 }
 
-static GLboolean test_bit( const GLubyte *src,
-			    GLuint bit )
+static GLboolean test_bit( const GLubyte *src, GLuint bit )
 {
    return (src[bit/8] & (1<<(bit % 8))) ? 1 : 0;
 }
 
-static GLboolean test_msb_bit(const GLubyte *src, GLuint bit)
-{
-   return (src[bit/8] & (1<<(7 - (bit % 8)))) ? 1 : 0;
-}
-
-static void set_bit( GLubyte *dest,
-			  GLuint bit )
+static void set_bit( GLubyte *dest, GLuint bit )
 {
    dest[bit/8] |= 1 << (bit % 8);
 }
@@ -216,7 +209,7 @@ do_blit_bitmap( GLcontext *ctx,
    if (!dst)
        return GL_FALSE;
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
 	 return GL_TRUE;	/* even though this is an error, we're done */
@@ -336,7 +329,7 @@ out:
    if (INTEL_DEBUG & DEBUG_SYNC)
       intel_batchbuffer_flush(intel->batch);
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
@@ -365,9 +358,7 @@ intel_texture_bitmap(GLcontext * ctx,
    GLuint texname;
    GLfloat vertices[4][4];
    GLint old_active_texture;
-   GLubyte *unpacked_bitmap;
    GLubyte *a8_bitmap;
-   int x, y;
    GLfloat dst_z;
 
    /* We need a fragment program for the KIL effect */
@@ -427,23 +418,17 @@ intel_texture_bitmap(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   /* Convert the A1 bitmap to an A8 format suitable for glTexImage */
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
 	 return GL_TRUE;	/* even though this is an error, we're done */
    }
-   unpacked_bitmap = _mesa_unpack_bitmap(width, height, bitmap,
-					 unpack);
+
+   /* Convert the A1 bitmap to an A8 format suitable for glTexImage */
    a8_bitmap = _mesa_calloc(width * height);
-   for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-	 if (test_msb_bit(unpacked_bitmap, ALIGN(width, 8) * y + x))
-	    a8_bitmap[y * width + x] = 0xff;
-      }
-   }
-   _mesa_free(unpacked_bitmap);
-   if (unpack->BufferObj->Name) {
+   _mesa_expand_bitmap(width, height, unpack, bitmap, a8_bitmap, width, 0xff);
+
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);

@@ -32,6 +32,9 @@
 #include "radeon_debug.h"
 #include "radeon_common_context.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 static const struct dri_debug_control debug_control[] = {
 	{"fall", RADEON_FALLBACKS},
 	{"tex", RADEON_TEXTURE},
@@ -85,10 +88,10 @@ void _radeon_debug_remove_indent(void)
 	}
 }
 
-extern void _radeon_print(const radeon_debug_type_t type,
+void _radeon_print(const radeon_debug_type_t type,
 	   const radeon_debug_level_t level,
 	   const char* message,
-	   va_list values)
+	   ...)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	if (ctx) {
@@ -97,5 +100,8 @@ extern void _radeon_print(const radeon_debug_type_t type,
 		if (radeon->debug.indent_depth)
 			fprintf(stderr, "%s", radeon->debug.indent);
 	}
+	va_list values;
+	va_start( values, message );
 	vfprintf(stderr, message, values);
+	va_end( values );
 }

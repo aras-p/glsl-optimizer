@@ -314,9 +314,10 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
  * \param usage   Hints about how the data will be used.
  * \param bufObj  Object to be used.
  *
+ * \return GL_TRUE for success, GL_FALSE for failure
  * \sa glBufferDataARB, dd_function_table::BufferData.
  */
-static void
+static GLboolean
 _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		   const GLvoid * data, GLenum usage,
 		   struct gl_buffer_object * bufObj )
@@ -334,6 +335,11 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
       if (data) {
 	 _mesa_memcpy( bufObj->Data, data, size );
       }
+
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
    }
 }
 
@@ -652,6 +658,8 @@ _mesa_update_default_objects_buffer_objects(GLcontext *ctx)
  * currently mapped.  Whoever calls this function should check for that.
  * Remember, we can't use a PBO when it's mapped!
  *
+ * If we're not using a PBO, this is a no-op.
+ *
  * \param width  width of image to read/write
  * \param height  height of image to read/write
  * \param depth  depth of image to read/write
@@ -670,7 +678,8 @@ _mesa_validate_pbo_access(GLuint dimensions,
    GLvoid *start, *end;
    const GLubyte *sizeAddr; /* buffer size, cast to a pointer */
 
-   ASSERT(_mesa_is_bufferobj(pack->BufferObj));
+   if (!_mesa_is_bufferobj(pack->BufferObj))
+      return GL_TRUE;  /* no PBO, OK */
 
    if (pack->BufferObj->Size == 0)
       /* no buffer! */
@@ -702,17 +711,18 @@ _mesa_validate_pbo_access(GLuint dimensions,
 
 
 /**
- * If the source of glBitmap data is a PBO, check that we won't read out
- * of buffer bounds, then map the buffer.
- * If not sourcing from a PBO, just return the bitmap pointer.
- * This is a helper function for (some) drivers.
- * Return NULL if error.
- * If non-null return, must call _mesa_unmap_bitmap_pbo() when done.
+ * For commands that read from a PBO (glDrawPixels, glTexImage,
+ * glPolygonStipple, etc), if we're reading from a PBO, map it read-only
+ * and return the pointer into the PBO.  If we're not reading from a
+ * PBO, return \p src as-is.
+ * If non-null return, must call _mesa_unmap_pbo_source() when done.
+ *
+ * \return NULL if error, else pointer to start of data
  */
-const GLubyte *
-_mesa_map_bitmap_pbo(GLcontext *ctx,
+const GLvoid *
+_mesa_map_pbo_source(GLcontext *ctx,
                      const struct gl_pixelstore_attrib *unpack,
-                     const GLubyte *bitmap)
+                     const GLvoid *src)
 {
    const GLubyte *buf;
 
@@ -724,11 +734,11 @@ _mesa_map_bitmap_pbo(GLcontext *ctx,
       if (!buf)
          return NULL;
 
-      buf = ADD_POINTERS(buf, bitmap);
+      buf = ADD_POINTERS(buf, src);
    }
    else {
       /* unpack from normal memory */
-      buf = bitmap;
+      buf = src;
    }
 
    return buf;
@@ -736,56 +746,54 @@ _mesa_map_bitmap_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to _mesa_map_bitmap_pbo()
- * This is a helper function for (some) drivers.
- */
-void
-_mesa_unmap_bitmap_pbo(GLcontext *ctx,
-                       const struct gl_pixelstore_attrib *unpack)
-{
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
-}
-
-
-/**
- * \sa _mesa_map_bitmap_pbo
+ * Combine PBO-read validation and mapping.
+ * If any GL errors are detected, they'll be recorded and NULL returned.
+ * \sa _mesa_validate_pbo_access
+ * \sa _mesa_map_pbo_source
+ * A call to this function should have a matching call to
+ * _mesa_unmap_pbo_source().
  */
 const GLvoid *
-_mesa_map_drawpix_pbo(GLcontext *ctx,
-                      const struct gl_pixelstore_attrib *unpack,
-                      const GLvoid *pixels)
+_mesa_map_validate_pbo_source(GLcontext *ctx,
+                              GLuint dimensions,
+                              const struct gl_pixelstore_attrib *unpack,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              GLenum format, GLenum type, const GLvoid *ptr,
+                              const char *where)
 {
-   const GLvoid *buf;
+   ASSERT(dimensions == 1 || dimensions == 2 || dimensions == 3);
 
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      /* unpack from PBO */
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              unpack->BufferObj);
-      if (!buf)
-         return NULL;
-
-      buf = ADD_POINTERS(buf, pixels);
-   }
-   else {
-      /* unpack from normal memory */
-      buf = pixels;
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
+      /* non-PBO access: no validation to be done */
+      return ptr;
    }
 
-   return buf;
+   if (!_mesa_validate_pbo_access(dimensions, unpack,
+                                  width, height, depth, format, type, ptr)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(out of bounds PBO access)", where);
+      return NULL;
+   }
+
+   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+      /* buffer is already mapped - that's an error */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
+      return NULL;
+   }
+
+   ptr = _mesa_map_pbo_source(ctx, unpack, ptr);
+   return ptr;
 }
 
 
 /**
- * \sa _mesa_unmap_bitmap_pbo
+ * Counterpart to _mesa_map_pbo_source()
  */
 void
-_mesa_unmap_drawpix_pbo(GLcontext *ctx,
-                        const struct gl_pixelstore_attrib *unpack)
+_mesa_unmap_pbo_source(GLcontext *ctx,
+                       const struct gl_pixelstore_attrib *unpack)
 {
+   ASSERT(unpack != &ctx->Pack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
@@ -794,14 +802,17 @@ _mesa_unmap_drawpix_pbo(GLcontext *ctx,
 
 
 /**
- * If PBO is bound, map the buffer, return dest pointer in mapped buffer.
- * Call _mesa_unmap_readpix_pbo() when finished
- * \return NULL if error
+ * For commands that write to a PBO (glReadPixels, glGetColorTable, etc),
+ * if we're writing to a PBO, map it write-only and return the pointer
+ * into the PBO.  If we're not writing to a PBO, return \p dst as-is.
+ * If non-null return, must call _mesa_unmap_pbo_dest() when done.
+ *
+ * \return NULL if error, else pointer to start of data
  */
 void *
-_mesa_map_readpix_pbo(GLcontext *ctx,
-                      const struct gl_pixelstore_attrib *pack,
-                      GLvoid *dest)
+_mesa_map_pbo_dest(GLcontext *ctx,
+                   const struct gl_pixelstore_attrib *pack,
+                   GLvoid *dest)
 {
    void *buf;
 
@@ -825,12 +836,54 @@ _mesa_map_readpix_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to _mesa_map_readpix_pbo()
+ * Combine PBO-write validation and mapping.
+ * If any GL errors are detected, they'll be recorded and NULL returned.
+ * \sa _mesa_validate_pbo_access
+ * \sa _mesa_map_pbo_dest
+ * A call to this function should have a matching call to
+ * _mesa_unmap_pbo_dest().
+ */
+GLvoid *
+_mesa_map_validate_pbo_dest(GLcontext *ctx,
+                            GLuint dimensions,
+                            const struct gl_pixelstore_attrib *unpack,
+                            GLsizei width, GLsizei height, GLsizei depth,
+                            GLenum format, GLenum type, GLvoid *ptr,
+                            const char *where)
+{
+   ASSERT(dimensions == 1 || dimensions == 2 || dimensions == 3);
+
+   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
+      /* non-PBO access: no validation to be done */
+      return ptr;
+   }
+
+   if (!_mesa_validate_pbo_access(dimensions, unpack,
+                                  width, height, depth, format, type, ptr)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(out of bounds PBO access)", where);
+      return NULL;
+   }
+
+   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+      /* buffer is already mapped - that's an error */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
+      return NULL;
+   }
+
+   ptr = _mesa_map_pbo_dest(ctx, unpack, ptr);
+   return ptr;
+}
+
+
+/**
+ * Counterpart to _mesa_map_pbo_dest()
  */
 void
-_mesa_unmap_readpix_pbo(GLcontext *ctx,
-                        const struct gl_pixelstore_attrib *pack)
+_mesa_unmap_pbo_dest(GLcontext *ctx,
+                     const struct gl_pixelstore_attrib *pack)
 {
+   ASSERT(pack != &ctx->Unpack); /* catch pack/unpack mismatch */
    if (_mesa_is_bufferobj(pack->BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT, pack->BufferObj);
    }
@@ -1107,8 +1160,6 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
 
-   ASSERT(ctx->Driver.BufferData);
-
    bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
@@ -1119,8 +1170,11 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 #ifdef BOUNDS_CHECK
    size += 100;
 #endif
-   /* Give the buffer object to the driver!  <data> may be null! */
-   ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
+
+   ASSERT(ctx->Driver.BufferData);
+   if (!ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj )) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB(access)");
+   }
 }
 
 
@@ -1209,9 +1263,9 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    map = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
    if (!map) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+      return NULL;
    }
-
-   if (map) {
+   else {
       /* The driver callback should have set these fields.
        * This is important because other modules (like VBO) might call
        * the driver function directly.
@@ -1538,7 +1592,10 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    ASSERT(ctx->Driver.MapBufferRange);
    map = ctx->Driver.MapBufferRange(ctx, target, offset, length,
                                     access, bufObj);
-   if (map) {
+   if (!map) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+   }
+   else {
       /* The driver callback should have set all these fields.
        * This is important because other modules (like VBO) might call
        * the driver function directly.

@@ -880,6 +880,9 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       stipple_polygon_span(ctx, span);
    }
 
+   if (ctx->Transform.DepthClamp)
+      _swrast_depth_clamp_span(ctx, span);
+
    /* Stencil and Z testing */
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))

@@ -291,6 +291,7 @@ long iround(float f);
 #define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
 #endif
 
+#define IROUND64(f)  ((GLint64) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
 
 /***
  *** IROUND_POS: return (as an integer) positive float rounded to nearest int

@@ -179,26 +179,12 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
 			 GLfloat bScale, GLfloat bBias,
 			 GLfloat aScale, GLfloat aBias)
 {
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      /* Get/unpack the color table data from a PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, count, 1, 1,
-                                     format, type, data)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glColor[Sub]Table(bad PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              ctx->Unpack.BufferObj);
-      if (!buf) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glColor[Sub]Table(PBO mapped)");
-         return;
-      }
-      data = ADD_POINTERS(buf, data);
-   }
-
+   data = _mesa_map_validate_pbo_source(ctx, 
+                                        1, &ctx->Unpack, count, 1, 1,
+                                        format, type, data,
+                                        "glColor[Sub]Table");
+   if (!data)
+      return;
 
    {
       /* convert user-provided data to GLfloat values */
@@ -279,10 +265,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Unpack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              ctx->Unpack.BufferObj);
-   }
+   _mesa_unmap_pbo_source(ctx, &ctx->Unpack);
 }
 
 
@@ -696,34 +679,17 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      /* pack color table into PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(1, &ctx->Pack, table->Size, 1, 1,
-                                     format, type, data)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetColorTable(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              ctx->Pack.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetColorTable(PBO is mapped)");
-         return;
-      }
-      data = ADD_POINTERS(buf, data);
-   }
+   data = _mesa_map_validate_pbo_dest(ctx, 
+                                      1, &ctx->Pack, table->Size, 1, 1,
+                                      format, type, data,
+                                      "glGetColorTable");
+   if (!data)
+      return;
 
    _mesa_pack_rgba_span_float(ctx, table->Size, rgba,
                               format, type, data, &ctx->Pack, 0x0);
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              ctx->Pack.BufferObj);
-   }
+   _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }
 
 

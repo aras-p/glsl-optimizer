@@ -48,6 +48,9 @@ extern void GLAPIENTRY
 _mesa_GetIntegerv( GLenum pname, GLint *params );
 
 extern void GLAPIENTRY
+_mesa_GetInteger64v( GLenum pname, GLint64 *params );
+
+extern void GLAPIENTRY
 _mesa_GetPointerv( GLenum pname, GLvoid **params );
 
 extern const GLubyte * GLAPIENTRY

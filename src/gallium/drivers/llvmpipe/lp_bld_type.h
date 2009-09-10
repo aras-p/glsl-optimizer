@@ -165,6 +165,10 @@ LLVMTypeRef
 lp_build_int_vec_type(union lp_type type);
 
 
+union lp_type
+lp_int_type(union lp_type type);
+
+
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,

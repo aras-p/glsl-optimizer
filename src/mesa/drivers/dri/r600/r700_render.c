@@ -257,6 +257,8 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 	uint32_t vgt_index_type     = 0;
 	uint32_t vgt_primitive_type = 0;
 	uint32_t vgt_num_indices    = 0;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *vb = &tnl->vb;
 
 	type = r700PrimitiveType(prim);
 	num_indices = r700NumVerts(end - start, prim);
@@ -300,7 +302,10 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         R600_OUT_BATCH(vgt_draw_initiator);
 
         for (i = start; i < (start + num_indices); i++) {
-            R600_OUT_BATCH(i);
+		if(vb->Elts)
+			R600_OUT_BATCH(vb->Elts[i]);
+		else
+			R600_OUT_BATCH(i);
         }
         END_BATCH();
         COMMIT_BATCH();

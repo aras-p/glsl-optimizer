@@ -15,9 +15,11 @@ C_SOURCES = \
 	lp_bld_depth.c \
 	lp_bld_flow.c \
 	lp_bld_format_aos.c \
+	lp_bld_format_soa.c \
 	lp_bld_interp.c \
 	lp_bld_intr.c \
 	lp_bld_logic.c \
+	lp_bld_sample_soa.c \
 	lp_bld_swizzle.c \
 	lp_bld_struct.c \
 	lp_bld_tgsi_soa.c \
@@ -44,7 +46,8 @@ C_SOURCES = \
 	lp_state_vs.c \
 	lp_surface.c \
 	lp_tex_cache.c \
-	lp_tex_sample.c \
+	lp_tex_sample_c.c \
+	lp_tex_sample_llvm.c \
 	lp_texture.c \
 	lp_tile_cache.c \
 	lp_tile_soa.c

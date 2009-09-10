@@ -581,4 +581,8 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
 
+
+#define TEST_META_FUNCS 0
+
+
 #endif

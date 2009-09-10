@@ -22,6 +22,9 @@
 
 #include "r300_context.h"
 
+#include "r300_flush.h"
+#include "r300_state_invariant.h"
+
 static boolean r300_draw_range_elements(struct pipe_context* pipe,
                                         struct pipe_buffer* indexBuffer,
                                         unsigned indexSize,
@@ -145,6 +148,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.winsys = (struct pipe_winsys*)r300_winsys;
     r300->context.screen = r300_screen(screen);
+
+    r300_init_debug(r300);
 
     r300->context.destroy = r300_destroy_context;
 

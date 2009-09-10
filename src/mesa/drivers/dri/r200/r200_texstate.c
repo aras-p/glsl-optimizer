@@ -1084,6 +1084,8 @@ static void disable_tex_obj_state( r200ContextPtr rmesa,
    R200_STATECHANGE( rmesa, vtx );
    rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
 
+   R200_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~(R200_TEX_0_ENABLE << unit);
    if (rmesa->radeon.TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
       TCL_FALLBACK( rmesa->radeon.glCtx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
    }

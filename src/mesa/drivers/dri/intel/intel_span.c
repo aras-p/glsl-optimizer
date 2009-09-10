@@ -444,23 +444,32 @@ intel_renderbuffer_unmap(struct intel_context *intel,
  * _ColorReadBuffer, _DepthBuffer or _StencilBuffer fields.
  */
 static void
-intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
+intel_map_unmap_framebuffer(struct intel_context *intel,
+			    struct gl_framebuffer *fb,
+			    GLboolean map)
 {
    GLcontext *ctx = &intel->ctx;
    GLuint i, j;
 
-   /* color draw buffers */
-   for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++) {
+   /* color buffers */
+   if (fb == ctx->DrawBuffer) {
+      for (j = 0; j < fb->_NumColorDrawBuffers; j++) {
+	 if (map)
+	    intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[j]);
+	 else
+	    intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[j]);
+      }
+   } else {
       if (map)
-	 intel_renderbuffer_map(intel, ctx->DrawBuffer->_ColorDrawBuffers[j]);
+	 intel_renderbuffer_map(intel, fb->_ColorReadBuffer);
       else
-	 intel_renderbuffer_unmap(intel, ctx->DrawBuffer->_ColorDrawBuffers[j]);
+	 intel_renderbuffer_unmap(intel, fb->_ColorReadBuffer);
    }
 
    /* check for render to textures */
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att =
-         ctx->DrawBuffer->Attachment + i;
+         fb->Attachment + i;
       struct gl_texture_object *tex = att->Texture;
       if (tex) {
          /* render to texture */
@@ -472,33 +481,25 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       }
    }
 
-   /* color read buffers */
-   if (map)
-      intel_renderbuffer_map(intel, ctx->ReadBuffer->_ColorReadBuffer);
-   else
-      intel_renderbuffer_unmap(intel, ctx->ReadBuffer->_ColorReadBuffer);
-
    /* depth buffer (Note wrapper!) */
-   if (ctx->DrawBuffer->_DepthBuffer) {
+   if (fb->_DepthBuffer) {
       if (map)
-	 intel_renderbuffer_map(intel, ctx->DrawBuffer->_DepthBuffer->Wrapped);
+	 intel_renderbuffer_map(intel, fb->_DepthBuffer->Wrapped);
       else
 	 intel_renderbuffer_unmap(intel,
-				  ctx->DrawBuffer->_DepthBuffer->Wrapped);
+				  fb->_DepthBuffer->Wrapped);
    }
 
    /* stencil buffer (Note wrapper!) */
-   if (ctx->DrawBuffer->_StencilBuffer) {
+   if (fb->_StencilBuffer) {
       if (map)
 	 intel_renderbuffer_map(intel,
-				ctx->DrawBuffer->_StencilBuffer->Wrapped);
+				fb->_StencilBuffer->Wrapped);
       else
 	 intel_renderbuffer_unmap(intel,
-				  ctx->DrawBuffer->_StencilBuffer->Wrapped);
+				  fb->_StencilBuffer->Wrapped);
    }
 }
-
-
 
 /**
  * Prepare for software rendering.  Map current read/draw framebuffers'
@@ -522,7 +523,8 @@ intelSpanRenderStart(GLcontext * ctx)
       }
    }
 
-   intel_map_unmap_buffers(intel, GL_TRUE);
+   intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_TRUE);
+   intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_TRUE);
 }
 
 /**
@@ -544,7 +546,8 @@ intelSpanRenderFinish(GLcontext * ctx)
       }
    }
 
-   intel_map_unmap_buffers(intel, GL_FALSE);
+   intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_FALSE);
+   intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
 
    UNLOCK_HARDWARE(intel);
 }
@@ -711,6 +714,9 @@ intel_set_span_functions(struct intel_context *intel,
 	    intel_YTile_InitStencilPointers_z24_s8(rb);
 	    break;
 	 }
+      } else {
+	 _mesa_problem(NULL,
+		       "Unexpected ActualFormat in intelSetSpanFunctions");
       }
       break;
    default:

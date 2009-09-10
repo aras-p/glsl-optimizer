@@ -56,7 +56,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    ASSERT(ctx->RenderMode == GL_RENDER);
 
-   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   bitmap = (const GLubyte *) _mesa_map_pbo_source(ctx, unpack, bitmap);
    if (!bitmap)
       return;
 
@@ -133,7 +133,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    swrast_render_finish(ctx);
 
-   _mesa_unmap_bitmap_pbo(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, unpack);
 }
 
 

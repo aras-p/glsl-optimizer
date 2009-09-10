@@ -2329,16 +2329,6 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_CND0:
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         FETCH(&r[0], 0, chan_index);
-         FETCH(&r[1], 1, chan_index);
-         FETCH(&r[2], 2, chan_index);
-         micro_le(&r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[2], &r[0], &r[1]);
-         STORE(&r[0], 0, chan_index);
-      }
-      break;
-
    case TGSI_OPCODE_DP2A:
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
@@ -2766,19 +2756,32 @@ exec_instruction(
       if (mach->ExecMask) {
          /* do the call */
 
-         /* push the Cond, Loop, Cont stacks */
+         /* First, record the depths of the execution stacks.
+          * This is important for deeply nested/looped return statements.
+          * We have to unwind the stacks by the correct amount.  For a
+          * real code generator, we could determine the number of entries
+          * to pop off each stack with simple static analysis and avoid
+          * implementing this data structure at run time.
+          */
+         mach->CallStack[mach->CallStackTop].CondStackTop = mach->CondStackTop;
+         mach->CallStack[mach->CallStackTop].LoopStackTop = mach->LoopStackTop;
+         mach->CallStack[mach->CallStackTop].ContStackTop = mach->ContStackTop;
+         /* note that PC was already incremented above */
+         mach->CallStack[mach->CallStackTop].ReturnAddr = *pc;
+
+         mach->CallStackTop++;
+
+         /* Second, push the Cond, Loop, Cont, Func stacks */
          assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
          mach->CondStack[mach->CondStackTop++] = mach->CondMask;
          assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
          assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->ContStack[mach->ContStackTop++] = mach->ContMask;
-
          assert(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
          mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
 
-         /* note that PC was already incremented above */
-         mach->CallStack[mach->CallStackTop++] = *pc;
+         /* Finally, jump to the subroutine */
          *pc = inst->InstructionExtLabel.Label;
       }
       break;
@@ -2795,17 +2798,23 @@ exec_instruction(
             *pc = -1;
             return;
          }
-         *pc = mach->CallStack[--mach->CallStackTop];
 
-         /* pop the Cond, Loop, Cont stacks */
-         assert(mach->CondStackTop > 0);
-         mach->CondMask = mach->CondStack[--mach->CondStackTop];
-         assert(mach->LoopStackTop > 0);
-         mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-         assert(mach->ContStackTop > 0);
-         mach->ContMask = mach->ContStack[--mach->ContStackTop];
+         assert(mach->CallStackTop > 0);
+         mach->CallStackTop--;
+
+         mach->CondStackTop = mach->CallStack[mach->CallStackTop].CondStackTop;
+         mach->CondMask = mach->CondStack[mach->CondStackTop];
+
+         mach->LoopStackTop = mach->CallStack[mach->CallStackTop].LoopStackTop;
+         mach->LoopMask = mach->LoopStack[mach->LoopStackTop];
+
+         mach->ContStackTop = mach->CallStack[mach->CallStackTop].ContStackTop;
+         mach->ContMask = mach->ContStack[mach->ContStackTop];
+
          assert(mach->FuncStackTop > 0);
          mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
+
+         *pc = mach->CallStack[mach->CallStackTop].ReturnAddr;
 
          UPDATE_EXEC_MASK(mach);
       }
@@ -3104,6 +3113,12 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_BGNFOR:
+      assert(mach->LoopCounterStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      for (chan_index = 0; chan_index < 3; chan_index++) {
+         FETCH( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[chan_index], 0, chan_index );
+      }
+      STORE( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[CHAN_Y], 0, CHAN_X );
+      ++mach->LoopCounterStackTop;
       /* fall-through (for now) */
    case TGSI_OPCODE_BGNLOOP:
       /* push LoopMask and ContMasks */
@@ -3111,18 +3126,42 @@ exec_instruction(
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
       assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->ContStack[mach->ContStackTop++] = mach->ContMask;
+      assert(mach->LoopLabelStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      mach->LoopLabelStack[mach->LoopLabelStackTop++] = *pc - 1;
       break;
 
    case TGSI_OPCODE_ENDFOR:
-      /* fall-through (for now at least) */
-   case TGSI_OPCODE_ENDLOOP:
+      assert(mach->LoopCounterStackTop > 0);
+      micro_sub( &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X], 
+                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X],
+                 &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+      /* update LoopMask */
+      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[0] <= 0) {
+         mach->LoopMask &= ~0x1;
+      }
+      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[1] <= 0 ) {
+         mach->LoopMask &= ~0x2;
+      }
+      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[2] <= 0 ) {
+         mach->LoopMask &= ~0x4;
+      }
+      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[3] <= 0 ) {
+         mach->LoopMask &= ~0x8;
+      }
+      micro_add( &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y], 
+                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y], 
+                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Z]);
+      assert(mach->LoopLabelStackTop > 0);
+      inst = mach->Instructions + mach->LoopLabelStack[mach->LoopLabelStackTop - 1];
+      STORE( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[CHAN_Y], 0, CHAN_X );
       /* Restore ContMask, but don't pop */
       assert(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
       UPDATE_EXEC_MASK(mach);
       if (mach->ExecMask) {
          /* repeat loop: jump to instruction just past BGNLOOP */
-         *pc = inst->InstructionExtLabel.Label + 1;
+         assert(mach->LoopLabelStackTop > 0);
+         *pc = mach->LoopLabelStack[mach->LoopLabelStackTop - 1] + 1;
       }
       else {
          /* exit loop: pop LoopMask */
@@ -3131,6 +3170,33 @@ exec_instruction(
          /* pop ContMask */
          assert(mach->ContStackTop > 0);
          mach->ContMask = mach->ContStack[--mach->ContStackTop];
+         assert(mach->LoopLabelStackTop > 0);
+         --mach->LoopLabelStackTop;
+         assert(mach->LoopCounterStackTop > 0);
+         --mach->LoopCounterStackTop;
+      }
+      UPDATE_EXEC_MASK(mach);
+      break;
+      
+   case TGSI_OPCODE_ENDLOOP:
+      /* Restore ContMask, but don't pop */
+      assert(mach->ContStackTop > 0);
+      mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
+      UPDATE_EXEC_MASK(mach);
+      if (mach->ExecMask) {
+         /* repeat loop: jump to instruction just past BGNLOOP */
+         assert(mach->LoopLabelStackTop > 0);
+         *pc = mach->LoopLabelStack[mach->LoopLabelStackTop - 1] + 1;
+      }
+      else {
+         /* exit loop: pop LoopMask */
+         assert(mach->LoopStackTop > 0);
+         mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
+         /* pop ContMask */
+         assert(mach->ContStackTop > 0);
+         mach->ContMask = mach->ContStack[--mach->ContStackTop];
+         assert(mach->LoopLabelStackTop > 0);
+         --mach->LoopLabelStackTop;
       }
       UPDATE_EXEC_MASK(mach);
       break;
@@ -3198,7 +3264,6 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
-   mach->CondStackTop = 0; /* temporarily subvert this assertion */
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);

@@ -37,7 +37,6 @@
 
 #include "xorg-server.h"
 #include "xf86.h"
-#include "xf86Resources.h"
 #include "pciaccess.h"
 
 #ifndef XSERVER_LIBPCIACCESS
@@ -46,6 +45,5 @@
 
 void xorg_tracker_set_functions(ScrnInfoPtr scrn);
 const OptionInfoRec * xorg_tracker_available_options(int chipid, int busid);
-void xorg_tracker_loader_ref_sym_lists(void);
 
 #endif

@@ -31,11 +31,13 @@
 
 
 #define need_GL_ARB_copy_buffer
+#define need_GL_ARB_draw_elements_base_vertex
 #define need_GL_ARB_framebuffer_object
 #define need_GL_ARB_map_buffer_range
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_shader_objects
+#define need_GL_ARB_sync
 #define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ARB_vertex_shader
@@ -72,11 +74,13 @@
  */
 static const struct dri_extension card_extensions[] = {
    { "GL_ARB_copy_buffer",                GL_ARB_copy_buffer_functions },
+   { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },
+   { "GL_ARB_sync",                       GL_ARB_sync_functions },
    { "GL_ARB_texture_border_clamp",       NULL },
    { "GL_ARB_texture_cube_map",           NULL },
    { "GL_ARB_texture_env_add",            NULL },
@@ -137,6 +141,7 @@ static const struct dri_extension i915_extensions[] = {
 
 /** i965-only extensions */
 static const struct dri_extension brw_extensions[] = {
+   { "GL_ARB_depth_clamp",                NULL },
    { "GL_ARB_depth_texture",              NULL },
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },

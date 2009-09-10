@@ -137,7 +137,7 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     int target = 0;
     int retval;
 
-    info.value = &target;
+    info.value = (unsigned long)&target;
 
     /* First, get the number of pixel pipes */
     info.request = RADEON_INFO_NUM_GB_PIPES;

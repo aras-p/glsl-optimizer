@@ -1690,6 +1690,8 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
    driInitSingleExtension( NULL, NV_vp_extension );
    driInitSingleExtension( NULL, ATI_fs_extension );
    driInitExtensions( NULL, point_extensions, GL_FALSE );
+#elif (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+   driInitSingleExtension( NULL, gl_20_extension );
 #endif
 
    if (!radeonInitDriver(psp)) {

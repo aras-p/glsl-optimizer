@@ -27,25 +27,9 @@
  **************************************************************************/
 
 #include "main/glheader.h"
-#include "main/enums.h"
-#include "main/image.h"
 #include "main/mtypes.h"
-#include "main/arrayobj.h"
-#include "main/attrib.h"
-#include "main/blend.h"
-#include "main/bufferobj.h"
-#include "main/buffers.h"
-#include "main/depth.h"
-#include "main/enable.h"
-#include "main/macros.h"
-#include "main/matrix.h"
-#include "main/polygon.h"
-#include "main/texstate.h"
-#include "main/shaders.h"
-#include "main/stencil.h"
-#include "main/varray.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
 #include "intel_context.h"
 #include "intel_blit.h"
@@ -140,7 +124,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
     * buffer with it.
     */
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      int color_bit = _mesa_ffs(mask & TRI_CLEAR_COLOR_BITS);
+      int color_bit = _mesa_ffs(mask & BUFFER_BITS_COLOR);
       if (color_bit != 0) {
 	 tri_mask |= blit_mask & (1 << (color_bit - 1));
 	 blit_mask &= ~(1 << (color_bit - 1));
@@ -186,7 +170,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 	 }
 	 DBG("\n");
       }
-      meta_clear_tris(&intel->meta, tri_mask);
+      _mesa_meta_clear(&intel->ctx, tri_mask);
    }
 
    if (swrast_mask) {

@@ -30,8 +30,7 @@
 #ifndef RADEON_DEBUG_H_INCLUDED
 #define RADEON_DEBUG_H_INCLUDED
 
-#include <stdarg.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 typedef enum radeon_debug_levels {
 	RADEON_CRITICAL  = 0, /* Only errors */
@@ -88,7 +87,7 @@ extern radeon_debug_type_t radeon_enabled_debug_types;
 static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
 	   const radeon_debug_level_t level)
 {
-       return RADEON_DEBUG_LEVEL <= level
+       return RADEON_DEBUG_LEVEL >= level
 		&& (type & radeon_enabled_debug_types);
 }
 /*
@@ -102,57 +101,36 @@ static inline int radeon_is_debug_enabled(const radeon_debug_type_t type,
 extern void _radeon_print(const radeon_debug_type_t type,
 	   const radeon_debug_level_t level,
 	   const char* message,
-	   va_list values);
-/**
- * Format attribute requires declaration for setting it. Don't ask me why!
- */
-static inline void radeon_print(const radeon_debug_type_t type,
-	   const radeon_debug_level_t level,
-	   const char* message,
-	   ...) __attribute__((format(printf,3,4)));
-
+	   ...)  __attribute__((format(printf,3,4)));
 /**
  * Print out debug message if channel specified by type is enabled
  * and compile time debugging level is at least as high as level parameter
  */
-static inline void radeon_print(const radeon_debug_type_t type,
-	   const radeon_debug_level_t level,
-	   const char* message,
-	   ...)
-{
-	/* Compile out if level of message is too high */
-	if (radeon_is_debug_enabled(type, level)) {
+#define radeon_print(type, level, message, ...) do {		\
+	const radeon_debug_level_t _debug_level = (level);	\
+	const radeon_debug_type_t _debug_type = (type);		\
+	/* Compile out if level of message is too high */	\
+	if (radeon_is_debug_enabled(type, level)) {		\
+		_radeon_print(_debug_type, _debug_level,	\
+			(message), ## __VA_ARGS__);		\
+	}							\
+} while(0)
 
-		va_list values;
-		va_start( values, message );
-		_radeon_print(type, level, message, values);
-		va_end( values );
-	}
-}
-
-static inline void radeon_error(const char* message, ...)  __attribute__((format(printf,1,2)));
 /**
  * printf style function for writing error messages.
  */
-static inline void radeon_error(const char* message, ...)
-{
-       va_list values;
-       va_start( values, message );
-       radeon_print(RADEON_GENERAL, RADEON_CRITICAL, message, values);
-       va_end( values );
-}
+#define radeon_error(message, ...) do {				\
+	radeon_print(RADEON_GENERAL, RADEON_CRITICAL,		\
+		(message), ## __VA_ARGS__);			\
+} while(0)
 
-static inline void radeon_warning(const char* message, ...)  __attribute__((format(printf,1,2)));
 /**
  * printf style function for writing warnings.
  */
-static inline void radeon_warning(const char* message, ...)
-{
-       va_list values;
-       va_start( values, message );
-       radeon_print(RADEON_GENERAL, RADEON_IMPORTANT, message, values);
-       va_end( values );
-}
+#define radeon_warning(message, ...) do {			\
+	radeon_print(RADEON_GENERAL, RADEON_IMPORTANT,		\
+		(message), ## __VA_ARGS__);			\
+} while(0)
 
 extern void radeon_init_debug(void);
 extern void _radeon_debug_add_indent(void);

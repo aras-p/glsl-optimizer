@@ -23,6 +23,12 @@
 
 #include "r300_state_invariant.h"
 
+
+struct pipe_viewport_state r300_viewport_identity = {
+    .scale = {1.0, 1.0, 1.0, 1.0},
+    .translate = {0.0, 0.0, 0.0, 0.0},
+};
+
 /* Calculate and emit invariant state. This is data that the 3D engine
  * will probably want at the beginning of every CS, but it's not currently
  * handled by any CSO setup, and in addition it doesn't really change much.
@@ -38,7 +44,9 @@ void r300_emit_invariant_state(struct r300_context* r300)
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
-    OUT_CS_REG(R300_GB_ENABLE, 0x0);
+    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
+                               R300_GB_LINE_STUFF_ENABLE  |
+                               R300_GB_TRIANGLE_STUFF_ENABLE);
     /* Subpixel multisampling for AA
      * These are commented out because glisse's CS checker doesn't like them.
      * I presume these will be re-enabled later.

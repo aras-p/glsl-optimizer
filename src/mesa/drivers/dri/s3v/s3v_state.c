@@ -2,7 +2,6 @@
  * Author: Max Lingua <sunmax@libero.it>
  */
 
-#include <X11/Xlibint.h>
 #include "s3v_context.h"
 #include "s3v_macros.h"
 #include "s3v_dri.h"
@@ -24,7 +23,7 @@
 static void s3vUpdateAlphaMode( GLcontext *ctx )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-	CARD32 cmd = vmesa->CMD;
+	uint32_t cmd = vmesa->CMD;
 	cmd &= ~ALPHA_BLEND_MASK;
 
 	if ( ctx->Color.BlendEnabled ) {
@@ -173,7 +172,7 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask )
 static void s3vUpdateZMode( GLcontext *ctx )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-	CARD32 cmd = vmesa->CMD;
+	uint32_t cmd = vmesa->CMD;
 
 	DEBUG(("Depth.Test = %i\n", ctx->Depth.Test));
 	DEBUG(("CMD was = 0x%x ", cmd));

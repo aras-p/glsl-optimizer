@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_jit.h"
+#include "lp_bld_sample.h" /* for struct lp_sampler_static_state */
 
 
 #define LP_NEW_VIEWPORT      0x1
@@ -57,16 +58,20 @@
 
 struct tgsi_sampler;
 struct vertex_info;
-
+struct pipe_context;
+struct llvmpipe_context;
 
 struct lp_fragment_shader;
 
 
 struct lp_fragment_shader_variant_key
 {
+   enum pipe_format zsbuf_format;
    struct pipe_depth_state depth;
    struct pipe_alpha_state alpha;
    struct pipe_blend_state blend;
+
+   struct lp_sampler_static_state sampler[PIPE_MAX_SAMPLERS];
 };
 
 

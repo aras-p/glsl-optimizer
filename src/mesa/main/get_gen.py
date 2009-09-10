@@ -35,6 +35,7 @@ GLfloat = 3
 GLdouble = 4
 GLboolean = 5
 GLfloatN = 6    # A normalized value, such as a color or depth range
+GLint64 = 7
 
 
 TypeStrings = {
@@ -42,7 +43,8 @@ TypeStrings = {
 	GLenum : "GLenum",
 	GLfloat : "GLfloat",
 	GLdouble : "GLdouble",
-	GLboolean : "GLboolean"
+	GLboolean : "GLboolean",
+	GLint64 : "GLint64"
 }
 
 
@@ -903,6 +905,10 @@ StateVars = [
 	  ["ctx->Depth.BoundsMin", "ctx->Depth.BoundsMax"],
 	  "", ["EXT_depth_bounds_test"] ),
 
+	# GL_ARB_depth_clamp
+	( "GL_DEPTH_CLAMP", GLboolean, ["ctx->Transform.DepthClamp"], "",
+	  ["ARB_depth_clamp"] ),
+
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
 	  ["ctx->Const.MaxDrawBuffers"], "", None ),
@@ -1020,6 +1026,10 @@ StateVars = [
 	# GL_ARB_seamless_cube_map
 	( "GL_TEXTURE_CUBE_MAP_SEAMLESS", GLboolean, ["ctx->Texture.CubeMapSeamless"], "",
 	  ["ARB_seamless_cube_map"] ),
+
+	# GL_ARB_sync
+	( "GL_MAX_SERVER_WAIT_TIMEOUT", GLint64, ["ctx->Const.MaxServerWaitTimeout"], "",
+	  ["ARB_sync"] ),
 ]
 
 
@@ -1029,9 +1039,15 @@ def ConversionFunc(fromType, toType):
 		return ""
 	elif fromType == GLfloat and toType == GLint:
 		return "IROUND"
+	elif fromType == GLfloat and toType == GLint64:
+		return "IROUND64"
 	elif fromType == GLfloatN and toType == GLfloat:
 		return ""
 	elif fromType == GLint and toType == GLfloat: # but not GLfloatN!
+		return "(GLfloat)"
+	elif fromType == GLint and toType == GLint64:
+		return ""
+	elif fromType == GLint64 and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	else:
 		if fromType == GLfloatN:
@@ -1047,6 +1063,7 @@ def EmitGetFunction(stateVars, returnType):
 	"""Emit the code to implement glGetBooleanv, glGetIntegerv or glGetFloatv."""
 	assert (returnType == GLboolean or
 			returnType == GLint or
+			returnType == GLint64 or
 			returnType == GLfloat)
 
 	strType = TypeStrings[returnType]
@@ -1057,8 +1074,13 @@ def EmitGetFunction(stateVars, returnType):
 		function = "GetBooleanv"
 	elif returnType == GLfloat:
 		function = "GetFloatv"
+	elif returnType == GLint64:
+		function = "GetInteger64v"
 	else:
 		abort()
+
+	if returnType == GLint64:
+		print "#if FEATURE_ARB_sync"
 
 	print "void GLAPIENTRY"
 	print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
@@ -1113,6 +1135,8 @@ def EmitGetFunction(stateVars, returnType):
 	print '         _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(pname=0x%%x)", pname);' % function
 	print "   }"
 	print "}"
+	if returnType == GLint64:
+		print "#endif /* FEATURE_ARB_sync */"
 	print ""
 	return
 
@@ -1141,8 +1165,14 @@ def EmitHeader():
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
 
+#define INT64_TO_BOOLEAN(I)   ( (I) ? GL_TRUE : GL_FALSE )
+#define INT64_TO_INT(I)       ( (GLint)((I > INT_MAX) ? INT_MAX : ((I < INT_MIN) ? INT_MIN : (I))) )
+
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
+#define BOOLEAN_TO_INT64(B)   ( (GLint64) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
+
+#define ENUM_TO_INT64(E)      ( (GLint64) (E) )
 
 
 /*
@@ -1221,5 +1251,6 @@ EmitHeader()
 EmitGetFunction(StateVars, GLboolean)
 EmitGetFunction(StateVars, GLfloat)
 EmitGetFunction(StateVars, GLint)
+EmitGetFunction(StateVars, GLint64)
 EmitGetDoublev()
 

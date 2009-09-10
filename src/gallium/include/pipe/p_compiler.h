@@ -93,9 +93,11 @@ typedef int     _Bool;
 #endif
 
 
+#ifndef __HAIKU__
 typedef unsigned int       uint;
-typedef unsigned char      ubyte;
 typedef unsigned short     ushort;
+#endif
+typedef unsigned char      ubyte;
 
 #if 0
 #define boolean bool

@@ -60,13 +60,13 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  	format = nv50_format(ps->format);
  	if (format < 0)
  		return 1;
-  
+
  	if (!bo->tile_flags) {
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
  		BEGIN_RING(chan, eng2d, mthd + 0x14, 5);
- 		OUT_RING  (chan, mt->level[0].pitch);
+		OUT_RING  (chan, mt->level[ps->level].pitch);
  		OUT_RING  (chan, ps->width);
  		OUT_RING  (chan, ps->height);
  		OUT_RELOCh(chan, bo, ps->offset, flags);
@@ -75,7 +75,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
- 		OUT_RING  (chan, bo->tile_mode << 4);
+		OUT_RING  (chan, mt->level[ps->level].tile_mode << 4);
  		OUT_RING  (chan, 1);
  		OUT_RING  (chan, 0);
  		BEGIN_RING(chan, eng2d, mthd + 0x18, 4);

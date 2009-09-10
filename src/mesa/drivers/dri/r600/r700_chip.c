@@ -52,38 +52,40 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			if (!t->image_override)
-				bo = t->mt->bo;
-			else
-				bo = t->bo;
-			if (bo) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				if (!t->image_override)
+					bo = t->mt->bo;
+				else
+					bo = t->bo;
+				if (bo) {
 
-				r700SyncSurf(context, bo,
-					     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
-					     0, TC_ACTION_ENA_bit);
+					r700SyncSurf(context, bo,
+						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
+						     0, TC_ACTION_ENA_bit);
 
-				BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
-				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-				R600_OUT_BATCH(i * 7);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
-				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
-						     bo,
-						     0,
-						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
-						     bo,
-						     r700->textures[i]->SQ_TEX_RESOURCE3,
-						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				END_BATCH();
-				COMMIT_BATCH();
+					BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
+					R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
+					R600_OUT_BATCH(i * 7);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
+					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
+							     bo,
+							     0,
+							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
+							     bo,
+							     r700->textures[i]->SQ_TEX_RESOURCE3,
+							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					END_BATCH();
+					COMMIT_BATCH();
+				}
 			}
 		}
 	}
@@ -98,16 +100,18 @@ static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *at
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			BEGIN_BATCH_NO_AUTOSTATE(5);
-			R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-			R600_OUT_BATCH(i * 3);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
-			END_BATCH();
-			COMMIT_BATCH();
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				BEGIN_BATCH_NO_AUTOSTATE(5);
+				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
+				R600_OUT_BATCH(i * 3);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
+				END_BATCH();
+				COMMIT_BATCH();
+			}
 		}
 	}
 }
@@ -121,16 +125,18 @@ static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
-			R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
-			END_BATCH();
-			COMMIT_BATCH();
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
+				R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
+				END_BATCH();
+				COMMIT_BATCH();
+			}
 		}
 	}
 }
@@ -265,6 +271,93 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     }
 }
 
+static void r700SetRenderTarget(context_t *context, int id)
+{
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    struct radeon_renderbuffer *rrb;
+    unsigned int nPitchInPixel;
+
+    rrb = radeon_get_colorbuffer(&context->radeon);
+    if (!rrb || !rrb->bo) {
+	    return;
+    }
+
+    R600_STATECHANGE(context, cb_target);
+
+    /* color buffer */
+    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
+
+    nPitchInPixel = rrb->pitch/rrb->cpp;
+    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
+             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
+    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
+    r700->render_target[id].CB_COLOR0_BASE.u32All = 0;
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
+             CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
+    if(4 == rrb->cpp)
+    {
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
+                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, SWAP_ALT, COMP_SWAP_shift, COMP_SWAP_mask);
+    }
+    else
+    {
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, COLOR_5_6_5,
+                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, SWAP_ALT_REV,
+                 COMP_SWAP_shift, COMP_SWAP_mask);
+    }
+    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
+    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
+
+    r700->render_target[id].enabled = GL_TRUE;
+}
+
+static void r700SetDepthTarget(context_t *context)
+{
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    struct radeon_renderbuffer *rrb;
+    unsigned int nPitchInPixel;
+
+    rrb = radeon_get_depthbuffer(&context->radeon);
+    if (!rrb)
+	    return;
+
+    R600_STATECHANGE(context, db_target);
+
+    /* depth buf */
+    r700->DB_DEPTH_SIZE.u32All = 0;
+    r700->DB_DEPTH_BASE.u32All = 0;
+    r700->DB_DEPTH_INFO.u32All = 0;
+    r700->DB_DEPTH_VIEW.u32All = 0;
+
+    nPitchInPixel = rrb->pitch/rrb->cpp;
+
+    SETfield(r700->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
+             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
+    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
+
+    if(4 == rrb->cpp)
+    {
+        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24,
+                 DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
+    }
+    else
+    {
+        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16,
+                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
+    }
+    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1,
+             DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask);
+    /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
+}
+
 static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t *context = R700_CONTEXT(ctx);
@@ -278,6 +371,8 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
+
+	r700SetDepthTarget(context);
 
         BEGIN_BATCH_NO_AUTOSTATE(8 + 2);
 	R600_OUT_BATCH_REGSEQ(DB_DEPTH_SIZE, 2);
@@ -318,6 +413,8 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
+
+	r700SetRenderTarget(context, 0);
 
 	if (id > R700_MAX_RENDER_TARGETS)
 		return;
@@ -1085,9 +1182,11 @@ static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t)
-			count++;
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t)
+				count++;
+		}
 	}
 	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count * 31;

@@ -731,7 +731,7 @@ _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
-   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
+   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices, 0 ))
       return;
 
    CALL_Begin(GET_DISPATCH(), (mode));
@@ -757,6 +757,43 @@ _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    CALL_End(GET_DISPATCH(), ());
 }
 
+static void GLAPIENTRY
+_mesa_noop_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
+				  const GLvoid *indices, GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices,
+				     basevertex ))
+      return;
+
+   CALL_Begin(GET_DISPATCH(), (mode));
+
+   switch (type) {
+   case GL_UNSIGNED_BYTE:
+      for (i = 0 ; i < count ; i++)
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLubyte *)indices)[i] +
+					      basevertex));
+      break;
+   case GL_UNSIGNED_SHORT:
+      for (i = 0 ; i < count ; i++)
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLushort *)indices)[i] +
+					      basevertex ));
+      break;
+   case GL_UNSIGNED_INT:
+      for (i = 0 ; i < count ; i++)
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLuint *)indices)[i] +
+					      basevertex ));
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElementsBaseVertex(type)" );
+      break;
+   }
+
+   CALL_End(GET_DISPATCH(), ());
+}
+
 
 static void GLAPIENTRY
 _mesa_noop_DrawRangeElements(GLenum mode,
@@ -768,8 +805,56 @@ _mesa_noop_DrawRangeElements(GLenum mode,
 
    if (_mesa_validate_DrawRangeElements( ctx, mode,
 					 start, end,
-					 count, type, indices ))
+					 count, type, indices, 0 ))
        CALL_DrawElements(GET_DISPATCH(), (mode, count, type, indices));
+}
+
+/* GL_EXT_multi_draw_arrays */
+void GLAPIENTRY
+_mesa_noop_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
+			     const GLvoid **indices, GLsizei primcount)
+{
+   GLsizei i;
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+	 CALL_DrawElements(GET_DISPATCH(), (mode, count[i], type, indices[i]));
+      }
+   }
+}
+
+static void GLAPIENTRY
+_mesa_noop_DrawRangeElementsBaseVertex(GLenum mode,
+				       GLuint start, GLuint end,
+				       GLsizei count, GLenum type,
+				       const GLvoid *indices, GLint basevertex)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (_mesa_validate_DrawRangeElements( ctx, mode,
+					 start, end,
+					 count, type, indices, basevertex ))
+      CALL_DrawElementsBaseVertex(GET_DISPATCH(), (mode, count, type, indices,
+						   basevertex));
+}
+
+/* GL_EXT_multi_draw_arrays */
+void GLAPIENTRY
+_mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
+				       GLenum type,
+				       const GLvoid **indices,
+				       GLsizei primcount,
+				       const GLint *basevertex)
+{
+   GLsizei i;
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+	 CALL_DrawElementsBaseVertex(GET_DISPATCH(), (mode, count[i], type,
+						      indices[i],
+						      basevertex[i]));
+      }
+   }
 }
 
 /*
@@ -980,6 +1065,10 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->DrawArrays = _mesa_noop_DrawArrays;
    vfmt->DrawElements = _mesa_noop_DrawElements;
    vfmt->DrawRangeElements = _mesa_noop_DrawRangeElements;
+   vfmt->MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
+   vfmt->DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
+   vfmt->DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
+   vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
    vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
    vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }

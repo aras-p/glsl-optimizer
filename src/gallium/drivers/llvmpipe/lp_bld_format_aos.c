@@ -32,9 +32,9 @@
 
 
 LLVMValueRef
-lp_build_unpack_rgba(LLVMBuilderRef builder,
-                     enum pipe_format format,
-                     LLVMValueRef packed)
+lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
+                         enum pipe_format format,
+                         LLVMValueRef packed)
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
@@ -152,9 +152,9 @@ lp_build_unpack_rgba(LLVMBuilderRef builder,
 
 
 LLVMValueRef
-lp_build_pack_rgba(LLVMBuilderRef builder,
-                   enum pipe_format format,
-                   LLVMValueRef rgba)
+lp_build_pack_rgba_aos(LLVMBuilderRef builder,
+                       enum pipe_format format,
+                       LLVMValueRef rgba)
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
@@ -250,9 +250,9 @@ lp_build_pack_rgba(LLVMBuilderRef builder,
 
 
 LLVMValueRef
-lp_build_load_rgba(LLVMBuilderRef builder,
-                   enum pipe_format format,
-                   LLVMValueRef ptr)
+lp_build_load_rgba_aos(LLVMBuilderRef builder,
+                       enum pipe_format format,
+                       LLVMValueRef ptr)
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
@@ -272,15 +272,15 @@ lp_build_load_rgba(LLVMBuilderRef builder,
 
    packed = LLVMBuildLoad(builder, ptr, "");
 
-   return lp_build_unpack_rgba(builder, format, packed);
+   return lp_build_unpack_rgba_aos(builder, format, packed);
 }
 
 
 void
-lp_build_store_rgba(LLVMBuilderRef builder,
-                    enum pipe_format format,
-                    LLVMValueRef ptr,
-                    LLVMValueRef rgba)
+lp_build_store_rgba_aos(LLVMBuilderRef builder,
+                        enum pipe_format format,
+                        LLVMValueRef ptr,
+                        LLVMValueRef rgba)
 {
    const struct util_format_description *desc;
    LLVMTypeRef type;
@@ -294,7 +294,7 @@ lp_build_store_rgba(LLVMBuilderRef builder,
 
    type = LLVMIntType(desc->block.bits);
 
-   packed = lp_build_pack_rgba(builder, format, rgba);
+   packed = lp_build_pack_rgba_aos(builder, format, rgba);
 
    ptr = LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), "");
 

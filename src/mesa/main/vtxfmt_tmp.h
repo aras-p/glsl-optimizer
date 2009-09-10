@@ -335,12 +335,61 @@ static void GLAPIENTRY TAG(DrawElements)( GLenum mode, GLsizei count, GLenum typ
    CALL_DrawElements(GET_DISPATCH(), ( mode, count, type, indices ));
 }
 
+static void GLAPIENTRY TAG(MultiDrawElementsEXT)( GLenum mode,
+						  const GLsizei *count,
+						  GLenum type,
+						  const GLvoid **indices,
+						  GLsizei primcount)
+{
+   PRE_LOOPBACK( MultiDrawElementsEXT );
+   CALL_MultiDrawElementsEXT(GET_DISPATCH(), ( mode, count, type, indices,
+					       primcount ));
+}
+
 static void GLAPIENTRY TAG(DrawRangeElements)( GLenum mode, GLuint start,
 				    GLuint end, GLsizei count,
 				    GLenum type, const GLvoid *indices )
 {
    PRE_LOOPBACK( DrawRangeElements );
    CALL_DrawRangeElements(GET_DISPATCH(), ( mode, start, end, count, type, indices ));
+}
+
+static void GLAPIENTRY TAG(DrawElementsBaseVertex)( GLenum mode,
+						    GLsizei count,
+						    GLenum type,
+						    const GLvoid *indices,
+						    GLint basevertex)
+{
+   PRE_LOOPBACK( DrawElementsBaseVertex );
+   CALL_DrawElementsBaseVertex(GET_DISPATCH(), ( mode, count, type,
+						 indices, basevertex ));
+}
+
+static void GLAPIENTRY TAG(DrawRangeElementsBaseVertex)( GLenum mode,
+							 GLuint start,
+							 GLuint end,
+							 GLsizei count,
+							 GLenum type,
+							 const GLvoid *indices,
+							 GLint basevertex)
+{
+   PRE_LOOPBACK( DrawRangeElementsBaseVertex );
+   CALL_DrawRangeElementsBaseVertex(GET_DISPATCH(), ( mode, start, end,
+						      count, type, indices,
+						      basevertex ));
+}
+
+static void GLAPIENTRY TAG(MultiDrawElementsBaseVertex)( GLenum mode,
+							 const GLsizei *count,
+							 GLenum type,
+							 const GLvoid **indices,
+							 GLsizei primcount,
+							 const GLint *basevertex)
+{
+   PRE_LOOPBACK( MultiDrawElementsBaseVertex );
+   CALL_MultiDrawElementsBaseVertex(GET_DISPATCH(), ( mode, count, type,
+						      indices,
+						      primcount, basevertex ));
 }
 
 static void GLAPIENTRY TAG(EvalMesh1)( GLenum mode, GLint i1, GLint i2 )
@@ -522,6 +571,10 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(DrawArrays),
    TAG(DrawElements),
    TAG(DrawRangeElements),
+   TAG(MultiDrawElementsEXT),
+   TAG(DrawElementsBaseVertex),
+   TAG(DrawRangeElementsBaseVertex),
+   TAG(MultiDrawElementsBaseVertex),
    TAG(EvalMesh1),
    TAG(EvalMesh2)
 };

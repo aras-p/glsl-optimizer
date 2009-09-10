@@ -40,6 +40,7 @@
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
+#include "main/simple_list.h"	/* struct simple_node */
 
 
 /**
@@ -1481,6 +1482,7 @@ struct gl_transform_attrib
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
+   GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
 
    GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
    GLfloat CullEyePos[4];
@@ -1986,6 +1988,21 @@ struct gl_query_state
 };
 
 
+/** Sync object state */
+struct gl_sync_object {
+   struct simple_node link;
+   GLenum Type;               /**< GL_SYNC_FENCE */
+   GLuint Name;               /**< Fence name */
+   GLint RefCount;            /**< Reference count */
+   GLboolean DeletePending;   /**< Object was deleted while there were still
+			       * live references (e.g., sync not yet finished)
+			       */
+   GLenum SyncCondition;
+   GLbitfield Flags;          /**< Flags passed to glFenceSync */
+   GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
+};
+
+
 /** Set by #pragma directives */
 struct gl_sl_pragmas
 {
@@ -2129,6 +2146,10 @@ struct gl_shared_state
 #if FEATURE_EXT_framebuffer_object
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
+#endif
+
+#if FEATURE_ARB_sync
+   struct simple_node SyncObjects;
 #endif
 
    void *DriverData;  /**< Device driver shared state */
@@ -2435,6 +2456,12 @@ struct gl_constants
 
    GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
 
+   /**
+    * Maximum amount of time, measured in nanseconds, that the server can wait.
+    */
+   GLuint64 MaxServerWaitTimeout;
+
+
    /**< GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
 };
@@ -2449,7 +2476,9 @@ struct gl_extensions
    GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_texture;
+   GLboolean ARB_depth_clamp;
    GLboolean ARB_draw_buffers;
+   GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
@@ -2467,6 +2496,7 @@ struct gl_extensions
    GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
    GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
+   GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;

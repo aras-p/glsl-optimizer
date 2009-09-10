@@ -2197,6 +2197,22 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
    }
 }
 
+static void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+{
+   r100ContextPtr r100 = R100_CONTEXT(ctx);
+   GLint i;
+
+   radeon_firevertices(&r100->radeon);
+
+   RADEON_STATECHANGE(r100, stp);
+
+   /* Must flip pattern upside down.
+    */
+   for ( i = 31 ; i >= 0; i--) {
+     r100->hw.stp.cmd[3 + i] = ((GLuint *) mask)[i];
+   }
+}
+
 
 /* Initialize the driver's state functions.
  * Many of the ctx->Driver functions might have been initialized to

@@ -94,7 +94,7 @@
      PALETTE = 310,
      PARAMS = 311,
      PLANE = 312,
-     POINT = 313,
+     POINT_TOK = 313,
      POINTSIZE = 314,
      POSITION = 315,
      PRIMARY = 316,
@@ -106,7 +106,7 @@
      SCENECOLOR = 322,
      SECONDARY = 323,
      SHININESS = 324,
-     SIZE = 325,
+     SIZE_TOK = 325,
      SPECULAR = 326,
      SPOT = 327,
      STATE = 328,
@@ -168,7 +168,7 @@ typedef union YYSTYPE
    unsigned attrib;
    int integer;
    float real;
-   unsigned state[5];
+   gl_state_index state[STATE_LENGTH];
    int negate;
    struct asm_vector vector;
    gl_inst_opcode opcode;

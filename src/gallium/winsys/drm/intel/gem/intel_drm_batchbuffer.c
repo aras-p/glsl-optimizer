@@ -12,6 +12,9 @@
 #define INTEL_BATCH_NO_CLIPRECTS 0x1
 #define INTEL_BATCH_CLIPRECTS    0x2
 
+#undef INTEL_RUN_SYNC
+#undef INTEL_MAP_BATCHBUFFER
+
 struct intel_drm_batchbuffer
 {
    struct intel_batchbuffer base;
@@ -38,8 +41,11 @@ intel_drm_batchbuffer_reset(struct intel_drm_batchbuffer *batch)
                                   "gallium3d_batchbuffer",
                                   batch->actual_size,
                                   4096);
+
+#ifdef INTEL_MAP_BATCHBUFFER
    drm_intel_bo_map(batch->bo, TRUE);
    batch->base.map = batch->bo->virtual;
+#endif
 
    memset(batch->base.map, 0, batch->actual_size);
    batch->base.ptr = batch->base.map;
@@ -53,16 +59,20 @@ intel_drm_batchbuffer_create(struct intel_winsys *iws)
    struct intel_drm_winsys *idws = intel_drm_winsys(iws);
    struct intel_drm_batchbuffer *batch = CALLOC_STRUCT(intel_drm_batchbuffer);
 
+   batch->actual_size = idws->max_batch_size;
+
+#ifdef INTEL_MAP_BATCHBUFFER
    batch->base.map = NULL;
+#else
+   batch->base.map = MALLOC(batch->actual_size);
+#endif
    batch->base.ptr = NULL;
    batch->base.size = 0;
 
    batch->base.relocs = 0;
-   batch->base.max_relocs = 100;/*INTEL_DEFAULT_RELOCS;*/
+   batch->base.max_relocs = 300;/*INTEL_DEFAULT_RELOCS;*/
 
    batch->base.iws = iws;
-
-   batch->actual_size = idws->max_batch_size;
 
    intel_drm_batchbuffer_reset(batch);
 
@@ -154,7 +164,11 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
 
    used = batch->base.ptr - batch->base.map;
 
+#ifdef INTEL_MAP_BATCHBUFFER
    drm_intel_bo_unmap(batch->bo);
+#else
+   drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
+#endif
 
    /* Do the sending to HW */
    ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
@@ -172,19 +186,20 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
 
       drm_intel_bo_unmap(batch->bo);
    } else {
-      /* TODO figgure out why the gpu hangs if we don't run sync */
+#ifdef INTEL_RUN_SYNC
       drm_intel_bo_map(batch->bo, FALSE);
       drm_intel_bo_unmap(batch->bo);
+#endif
    }
 
    if (fence) {
       ibatch->iws->fence_reference(ibatch->iws, fence, NULL);
 
-#if 0
-      (*fence) = intel_drm_fence_create(batch->bo);
-#else
+#ifdef INTEL_RUN_SYNC
       /* we run synced to GPU so just pass null */
       (*fence) = intel_drm_fence_create(NULL);
+#else
+      (*fence) = intel_drm_fence_create(batch->bo);
 #endif
    }
 
@@ -199,7 +214,10 @@ intel_drm_batchbuffer_destroy(struct intel_batchbuffer *ibatch)
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
 
-   free(batch);
+#ifndef INTEL_MAP_BATCHBUFFER
+   FREE(batch->base.map);
+#endif
+   FREE(batch);
 }
 
 void intel_drm_winsys_init_batchbuffer_functions(struct intel_drm_winsys *idws)

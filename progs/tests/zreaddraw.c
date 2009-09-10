@@ -12,6 +12,7 @@
 #include <GL/glut.h>
 
 static GLint WinWidth = 500, WinHeight = 500;
+static GLboolean Invert = GL_FALSE;
 
 
 static void Display(void)
@@ -23,6 +24,8 @@ static void Display(void)
 
    glClearColor(0.5, 0.5, 0.5, 1.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   glEnable(GL_DEPTH_TEST);
 
    /* draw a sphere */
    glViewport(0, 0, 100, 100);
@@ -46,8 +49,19 @@ static void Display(void)
 
    /* draw depth image with scaling (into z buffer) */
    glPixelZoom(4.0, 4.0);
+   glColor4f(1, 0, 0, 0);
    glWindowPos2i(100, 0);
+   if (Invert) {
+      glPixelTransferf(GL_DEPTH_SCALE, -1.0);
+      glPixelTransferf(GL_DEPTH_BIAS, 1.0);
+   }
    glDrawPixels(100, 100, GL_DEPTH_COMPONENT, GL_FLOAT, depth);
+   if (Invert) {
+      glPixelTransferf(GL_DEPTH_SCALE, 1.0);
+      glPixelTransferf(GL_DEPTH_BIAS, 0.0);
+   }
+
+   glDisable(GL_DEPTH_TEST);
 
    /* read back scaled depth image */
    glReadPixels(100, 0, 400, 400, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
@@ -72,6 +86,9 @@ static void Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
+      case 'i':
+         Invert = !Invert;
+         break;
       case 27:
          exit(0);
          break;
@@ -96,7 +113,6 @@ static void Init(void)
    glLightfv(GL_LIGHT0, GL_POSITION, pos);
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
-   glEnable(GL_DEPTH_TEST);
 }
 
 

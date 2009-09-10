@@ -51,6 +51,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "drivers/common/meta.h"
 #include "xmesaP.h"
 
 
@@ -1147,19 +1148,28 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   driver->Clear = clear_buffers;
    driver->Viewport = xmesa_viewport;
+   if (TEST_META_FUNCS) {
+      driver->Clear = _mesa_meta_clear;
+      driver->CopyPixels = _mesa_meta_copy_pixels;
+      driver->BlitFramebuffer = _mesa_meta_blit_framebuffer;
+      driver->DrawPixels = _mesa_meta_draw_pixels;
+      driver->Bitmap = _mesa_meta_bitmap;
+   }
+   else {
+      driver->Clear = clear_buffers;
 #ifndef XFree86Server
-   driver->CopyPixels = xmesa_CopyPixels;
-   if (xmvisual->undithered_pf == PF_8R8G8B &&
-       xmvisual->dithered_pf == PF_8R8G8B &&
-       xmvisual->BitsPerPixel == 32) {
-      driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
-   }
-   else if (xmvisual->undithered_pf == PF_5R6G5B) {
-      driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
-   }
+      driver->CopyPixels = xmesa_CopyPixels;
+      if (xmvisual->undithered_pf == PF_8R8G8B &&
+          xmvisual->dithered_pf == PF_8R8G8B &&
+          xmvisual->BitsPerPixel == 32) {
+         driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
+      }
+      else if (xmvisual->undithered_pf == PF_5R6G5B) {
+         driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
+      }
 #endif
+   }
    driver->TestProxyTexImage = test_proxy_teximage;
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;

@@ -26,6 +26,7 @@
 
 #include "r300_cs.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_state_derived.h"
 
@@ -34,7 +35,7 @@
 struct r300_render {
     /* Parent class */
     struct vbuf_render base;
-    
+
     /* Pipe context */
     struct r300_context* r300;
 
@@ -77,7 +78,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     if (r300render->vbo && (size > r300render->vbo_alloc_size)) {
         pipe_buffer_reference(&r300render->vbo, NULL);
     }
-    
+
     if (!r300render->vbo) {
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
@@ -184,7 +185,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     prepare_render(r300render, count);
 
-    debug_printf("r300: Doing vbuf render, count %d\n", count);
+    DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
     BEGIN_CS(2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
@@ -233,7 +234,8 @@ static void r300_render_draw(struct vbuf_render* render,
     OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS; */
 
-    BEGIN_CS(2 + (count+1)/2);
+    BEGIN_CS(4 + (count+1)/2);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);

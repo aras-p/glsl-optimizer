@@ -129,6 +129,11 @@ extern void GLAPIENTRY
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
                             const GLvoid **indices, GLsizei primcount );
 
+extern void GLAPIENTRY
+_mesa_MultiDrawElementsBaseVertex( GLenum mode,
+				   const GLsizei *count, GLenum type,
+				   const GLvoid **indices, GLsizei primcount,
+				   const GLint *basevertex);
 
 extern void GLAPIENTRY
 _mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
@@ -158,6 +163,16 @@ _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
 extern void GLAPIENTRY
 _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
                         GLenum type, const GLvoid *indices);
+
+extern void GLAPIENTRY
+_mesa_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
+			     const GLvoid *indices, GLint basevertex);
+
+extern void GLAPIENTRY
+_mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
+				  GLsizei count, GLenum type,
+				  const GLvoid *indices,
+				  GLint basevertex);
 
 
 extern void

@@ -573,7 +573,7 @@ static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    for (j = 0; j < 5; j++) {
 	OUT_BATCH(CP_PACKET0(base_reg + (4 * j), 0));
 	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    }
    END_BATCH();
 }
@@ -781,6 +781,10 @@ void radeonInitState( r100ContextPtr rmesa )
       ALLOC_STATE( ucp[5], tcl_ucp5, UCP_STATE_SIZE, "UCP/userclip-5", 1 );
    }
 
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+       ALLOC_STATE( stp, always, STP_STATE_SIZE, "STP/stp", 0 );
+   }
+   
    for (i = 0; i < 3; i++) {
       if (rmesa->radeon.radeonScreen->kernel_mm)
           rmesa->hw.tex[i].emit = tex_emit_cs;
@@ -873,6 +877,10 @@ void radeonInitState( r100ContextPtr rmesa )
    }
 
    if (rmesa->radeon.radeonScreen->kernel_mm) {
+      rmesa->hw.stp.cmd[STP_CMD_0] = CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0);
+      rmesa->hw.stp.cmd[STP_DATA_0] = 0;
+      rmesa->hw.stp.cmd[STP_CMD_1] = CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31);
+
       rmesa->hw.grd.emit = scl_emit;
       rmesa->hw.fog.emit = vec_emit;
       rmesa->hw.glt.emit = vec_emit;
@@ -1143,7 +1151,7 @@ void radeonInitState( r100ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Y] = 0;
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
-   
+
    if (rmesa->radeon.radeonScreen->kernel_mm) {
       radeon_init_query_stateobj(&rmesa->radeon, R100_QUERYOBJ_CMDSIZE);
       rmesa->radeon.query.queryobj.cmd[R100_QUERYOBJ_CMD_0] = CP_PACKET0(RADEON_RB3D_ZPASS_DATA, 0);

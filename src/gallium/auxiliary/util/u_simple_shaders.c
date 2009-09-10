@@ -88,11 +88,14 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
 /**
  * Make simple fragment texture shader:
- *  TEX OUT[0], IN[0], SAMP[0], 2D;
+ *  IMM {0,0,0,1}                         // (if writemask != 0xf)
+ *  MOV OUT[0], IMM[0]                    // (if writemask != 0xf)
+ *  TEX OUT[0].writemask, IN[0], SAMP[0], 2D;
  *  END;
  */
 void *
-util_make_fragment_tex_shader(struct pipe_context *pipe)
+util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
+                                        unsigned writemask )
 {
    struct ureg_program *ureg;
    struct ureg_src sampler;
@@ -103,7 +106,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    if (ureg == NULL)
       return NULL;
    
-   sampler = ureg_DECL_sampler( ureg );
+   sampler = ureg_DECL_sampler( ureg, 0 );
 
    tex = ureg_DECL_fs_input( ureg, 
                              TGSI_SEMANTIC_GENERIC, 0, 
@@ -119,7 +122,12 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
-
+void *
+util_make_fragment_tex_shader(struct pipe_context *pipe )
+{
+   return util_make_fragment_tex_shader_writemask( pipe,
+                                                   TGSI_WRITEMASK_XYZW );
+}
 
 
 

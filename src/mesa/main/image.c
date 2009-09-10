@@ -689,6 +689,22 @@ _mesa_is_depth_format(GLenum format)
 
 
 /**
+ * Test if the given image format is a stencil format.
+ */
+GLboolean
+_mesa_is_stencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_STENCIL_INDEX:
+      case GL_DEPTH_STENCIL:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
  * Test if the given image format is a YCbCr format.
  */
 GLboolean
@@ -1240,6 +1256,91 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
       }
       src += width_in_bytes;
    }
+}
+
+
+/**
+ * "Expand" a bitmap from 1-bit per pixel to 8-bits per pixel.
+ * This is typically used to convert a bitmap into a GLubyte/pixel texture.
+ * "On" bits will set texels to \p onValue.
+ * "Off" bits will not modify texels.
+ * \param width  src bitmap width in pixels
+ * \param height  src bitmap height in pixels
+ * \param unpack  bitmap unpacking state
+ * \param bitmap  the src bitmap data
+ * \param destBuffer  start of dest buffer
+ * \param destStride  row stride in dest buffer
+ * \param onValue  if bit is 1, set destBuffer pixel to this value
+ */
+void
+_mesa_expand_bitmap(GLsizei width, GLsizei height,
+                    const struct gl_pixelstore_attrib *unpack,
+                    const GLubyte *bitmap,
+                    GLubyte *destBuffer, GLint destStride,
+                    GLubyte onValue)
+{
+   const GLubyte *srcRow = (const GLubyte *)
+      _mesa_image_address2d(unpack, bitmap, width, height,
+                            GL_COLOR_INDEX, GL_BITMAP, 0, 0);
+   const GLint srcStride = _mesa_image_row_stride(unpack, width,
+                                                  GL_COLOR_INDEX, GL_BITMAP);
+   GLint row, col;
+
+#define SET_PIXEL(COL, ROW) \
+   destBuffer[(ROW) * destStride + (COL)] = onValue;
+
+   for (row = 0; row < height; row++) {
+      const GLubyte *src = srcRow;
+
+      if (unpack->LsbFirst) {
+         /* Lsb first */
+         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 128U) {
+               src++;
+               mask = 1U;
+            }
+            else {
+               mask = mask << 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 1)
+            src++;
+      }
+      else {
+         /* Msb first */
+         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 1U) {
+               src++;
+               mask = 128U;
+            }
+            else {
+               mask = mask >> 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 128)
+            src++;
+      }
+
+      srcRow += srcStride;
+   } /* row */
+
+#undef SET_PIXEL
 }
 
 

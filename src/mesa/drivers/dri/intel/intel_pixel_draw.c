@@ -29,8 +29,6 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/mtypes.h"
-#include "main/macros.h"
-#include "main/bufferobj.h"
 #include "main/teximage.h"
 #include "main/texenv.h"
 #include "main/texobj.h"
@@ -41,163 +39,22 @@
 #include "main/enable.h"
 #include "main/buffers.h"
 #include "main/fbobject.h"
-#include "main/renderbuffer.h"
 #include "main/depth.h"
 #include "main/hash.h"
 #include "main/blend.h"
-#include "main/viewport.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
+#include "drivers/common/meta.h"
 
-#include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
-#include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
-static GLboolean
-intel_texture_drawpixels(GLcontext * ctx,
-			 GLint x, GLint y,
-			 GLsizei width, GLsizei height,
-			 GLenum format,
-			 GLenum type,
-			 const struct gl_pixelstore_attrib *unpack,
-			 const GLvoid *pixels)
-{
-   struct intel_context *intel = intel_context(ctx);
-   GLuint texname;
-   GLfloat vertices[4][4];
-   GLfloat z;
-   GLint old_active_texture;
-   GLenum internalFormat;
 
-   /* We're going to mess with texturing with no regard to existing texture
-    * state, so if there is some set up we have to bail.
-    */
-   if (ctx->Texture._EnabledUnits != 0) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glDrawPixels() fallback: texturing enabled\n");
-      return GL_FALSE;
-   }
-
-   /* Can't do textured DrawPixels with a fragment program, unless we were
-    * to generate a new program that sampled our texture and put the results
-    * in the fragment color before the user's program started.
-    */
-   if (ctx->FragmentProgram.Enabled) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glDrawPixels() fallback: fragment program enabled\n");
-      return GL_FALSE;
-   }
-
-   /* We don't have a way to generate fragments with stencil values which
-    * will set the resulting stencil value.
-    */
-   if (format == GL_STENCIL_INDEX || format == GL_DEPTH_STENCIL)
-      return GL_FALSE;
-
-   /* Check that we can load in a texture this big. */
-   if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
-       height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glDrawPixels() fallback: bitmap too large (%dx%d)\n",
-		 width, height);
-      return GL_FALSE;
-   }
-
-   /* To do DEPTH_COMPONENT, we would need to change our setup to not draw to
-    * the color buffer, and sample the texture values into the fragment depth
-    * in a program.
-    */
-   if (format == GL_DEPTH_COMPONENT) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr,
-		 "glDrawPixels() fallback: format == GL_DEPTH_COMPONENT\n");
-      return GL_FALSE;
-   }
-
-   if (!ctx->Extensions.ARB_texture_non_power_of_two &&
-       (!is_power_of_two(width) || !is_power_of_two(height))) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr,
-		 "glDrawPixels() fallback: NPOT texture\n");
-      return GL_FALSE;
-   }
-
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
-		    GL_CURRENT_BIT | GL_VIEWPORT_BIT);
-   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
-
-   /* XXX: pixel store stuff */
-   _mesa_Disable(GL_POLYGON_STIPPLE);
-
-   old_active_texture = ctx->Texture.CurrentUnit;
-   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB);
-   _mesa_Enable(GL_TEXTURE_2D);
-   _mesa_GenTextures(1, &texname);
-   _mesa_BindTexture(GL_TEXTURE_2D, texname);
-   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-   if (type == GL_ALPHA)
-      internalFormat = GL_ALPHA;
-   else
-      internalFormat = GL_RGBA;
-   _mesa_TexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
-		    type, pixels);
-
-   meta_set_passthrough_transform(&intel->meta);
-
-   /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
-   z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
-
-   /* RasterPos[2] already takes into account the DepthRange mapping. */
-   _mesa_DepthRange(0.0, 1.0);
-
-   /* Create the vertex buffer based on the current raster pos.  The x and y
-    * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.
-    * We also apply the depth.  However, the W component is already multiplied
-    * into ctx->Current.RasterPos[0,1,2] and we can ignore it at this point.
-    */
-   vertices[0][0] = x;
-   vertices[0][1] = y;
-   vertices[0][2] = z;
-   vertices[0][3] = 1.0;
-   vertices[1][0] = x + width * ctx->Pixel.ZoomX;
-   vertices[1][1] = y;
-   vertices[1][2] = z;
-   vertices[1][3] = 1.0;
-   vertices[2][0] = x + width * ctx->Pixel.ZoomX;
-   vertices[2][1] = y + height * ctx->Pixel.ZoomY;
-   vertices[2][2] = z;
-   vertices[2][3] = 1.0;
-   vertices[3][0] = x;
-   vertices[3][1] = y + height * ctx->Pixel.ZoomY;
-   vertices[3][2] = z;
-   vertices[3][3] = 1.0;
-
-   _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
-   _mesa_Enable(GL_VERTEX_ARRAY);
-   meta_set_default_texrect(&intel->meta);
-
-   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-   meta_restore_texcoords(&intel->meta);
-   meta_restore_transform(&intel->meta);
-
-   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
-   _mesa_PopClientAttrib();
-   _mesa_PopAttrib();
-
-   _mesa_DeleteTextures(1, &texname);
-
-   return GL_TRUE;
-}
-
+/** XXX compare perf of this vs. _mesa_meta_draw_pixels(STENCIL) */
 static GLboolean
 intel_stencil_drawpixels(GLcontext * ctx,
 			 GLint x, GLint y,
@@ -404,17 +261,25 @@ intelDrawPixels(GLcontext * ctx,
                 const struct gl_pixelstore_attrib *unpack,
                 const GLvoid * pixels)
 {
-   if (intel_texture_drawpixels(ctx, x, y, width, height, format, type,
-				unpack, pixels))
-      return;
-
+#if 0
+   /* XXX this function doesn't seem to work reliably even when all
+    * the pre-requisite conditions are met.
+    * Note that this function is never hit with conform.
+    * Fall back to swrast because even the _mesa_meta_draw_pixels() approach
+    * isn't working because of an apparent stencil bug.
+    */
    if (intel_stencil_drawpixels(ctx, x, y, width, height, format, type,
 				unpack, pixels))
       return;
+#else
+   (void) intel_stencil_drawpixels; /* silence warning */
+   if (format == GL_STENCIL_INDEX) {
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
+                         unpack, pixels);
+      return;
+   }
+#endif
 
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
-
-   _swrast_DrawPixels(ctx, x, y, width, height, format, type,
-		      unpack, pixels);
+   _mesa_meta_draw_pixels(ctx, x, y, width, height, format, type,
+                          unpack, pixels);
 }

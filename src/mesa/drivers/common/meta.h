@@ -45,6 +45,7 @@
 #define META_TEXTURE       0x400
 #define META_VERTEX        0x800
 #define META_VIEWPORT     0x1000
+#define META_PIXEL_STORE  0x2000
 #define META_ALL            ~0x0
 /*@}*/
 
@@ -75,6 +76,16 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
 		       GLenum format, GLenum type,
 		       const struct gl_pixelstore_attrib *unpack,
 		       const GLvoid *pixels);
+
+extern void
+_mesa_meta_bitmap(GLcontext *ctx,
+                  GLint x, GLint y, GLsizei width, GLsizei height,
+                  const struct gl_pixelstore_attrib *unpack,
+                  const GLubyte *bitmap);
+
+extern void
+_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
+                           struct gl_texture_object *texObj);
 
 
 #endif /* META_H */

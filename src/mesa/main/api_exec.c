@@ -129,6 +129,9 @@
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
 #endif
+#if FEATURE_ARB_sync
+#include "syncobj.h"
+#endif
 #include "debug.h"
 #include "glapi/dispatch.h"
 
@@ -529,7 +532,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* 148. GL_EXT_multi_draw_arrays */
 #if _HAVE_FULL_GL
    SET_MultiDrawArraysEXT(exec, _mesa_MultiDrawArraysEXT);
-   SET_MultiDrawElementsEXT(exec, _mesa_MultiDrawElementsEXT);
 #endif
 
    /* 173. GL_INGR_blend_func_separate */
@@ -823,6 +825,17 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
    SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
 #endif    /* FEATURE_ARB_vertex_shader */
+
+   /* GL_ARB_sync */
+#if FEATURE_ARB_sync
+   SET_IsSync(exec, _mesa_IsSync);
+   SET_DeleteSync(exec, _mesa_DeleteSync);
+   SET_FenceSync(exec, _mesa_FenceSync);
+   SET_ClientWaitSync(exec, _mesa_ClientWaitSync);
+   SET_WaitSync(exec, _mesa_WaitSync);
+   SET_GetInteger64v(exec, _mesa_GetInteger64v);
+   SET_GetSynciv(exec, _mesa_GetSynciv);
+#endif
 
   /* GL_ATI_fragment_shader */
 #if FEATURE_ATI_fragment_shader

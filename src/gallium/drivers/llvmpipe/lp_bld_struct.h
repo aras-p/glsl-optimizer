@@ -53,6 +53,18 @@
              offsetof(_ctype, _cmember))
 
 
+/**
+ * Get value pointer to a structure member.
+ */
+LLVMValueRef
+lp_build_struct_get_ptr(LLVMBuilderRef builder,
+                        LLVMValueRef ptr,
+                        unsigned member,
+                        const char *name);
+
+/**
+ * Get the value of a structure member.
+ */
 LLVMValueRef
 lp_build_struct_get(LLVMBuilderRef builder,
                     LLVMValueRef ptr,

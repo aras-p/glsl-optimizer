@@ -479,6 +479,11 @@ struct r200_texture_state {
 #define R200_QUERYOBJ_DATA_0 1
 #define R200_QUERYOBJ_CMDSIZE  2
 
+#define STP_CMD_0 0
+#define STP_DATA_0 1
+#define STP_CMD_1 2
+#define STP_STATE_SIZE 35
+
 struct r200_hw_state {
    /* Hardware state, stored as cmdbuf commands:  
     *   -- Need to doublebuffer for
@@ -521,6 +526,7 @@ struct r200_hw_state {
    struct radeon_state_atom atf;
    struct radeon_state_atom spr;
    struct radeon_state_atom ptp;
+   struct radeon_state_atom stp;
 };
 
 struct r200_state {

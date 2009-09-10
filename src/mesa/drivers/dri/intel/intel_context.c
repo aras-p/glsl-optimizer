@@ -162,6 +162,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_G41_G:
          chipset = "Intel(R) G41";
          break;
+      case PCI_CHIP_B43_G:
+         chipset = "Intel(R) B43";
+         break;
       case PCI_CHIP_ILD_G:
          chipset = "Intel(R) IGDNG_D";
          break;
@@ -598,6 +601,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
    intelInitBufferObjectFuncs(functions);
+   intel_init_syncobj_functions(functions);
 }
 
 

@@ -1578,3 +1578,136 @@ out:
    tgsi_sampler->get_samples( tgsi_sampler, s, t, p, lodbias, rgba );
 }
 
+
+void PIPE_CDECL
+lp_fetch_texel_soa( struct tgsi_sampler **samplers,
+                    uint32_t unit,
+                    float *store )
+{
+   struct tgsi_sampler *sampler = samplers[unit];
+
+#if 0
+   uint j;
+
+   debug_printf("%s sampler: %p (%p) store: %p\n",
+                __FUNCTION__,
+                sampler, *sampler,
+                store );
+
+   debug_printf("lodbias %f\n", store[12]);
+
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d texcoord %f %f\n",
+                   j,
+                   store[0+j],
+                   store[4+j]);
+#endif
+
+   {
+      float rgba[NUM_CHANNELS][QUAD_SIZE];
+      sampler->get_samples(sampler,
+                           &store[0],
+                           &store[4],
+                           &store[8],
+                           0.0f, /*store[12],  lodbias */
+                           rgba);
+      memcpy(store, rgba, sizeof rgba);
+   }
+
+#if 0
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d result %f %f %f %f\n",
+                   j,
+                   store[0+j],
+                   store[4+j],
+                   store[8+j],
+                   store[12+j]);
+#endif
+}
+
+
+#include "lp_bld_type.h"
+#include "lp_bld_intr.h"
+#include "lp_bld_tgsi.h"
+
+
+struct lp_c_sampler_soa
+{
+   struct lp_build_sampler_soa base;
+
+   LLVMValueRef context_ptr;
+
+   LLVMValueRef samplers_ptr;
+
+   /** Coords/texels store */
+   LLVMValueRef store_ptr;
+};
+
+
+static void
+lp_c_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
+{
+   FREE(sampler);
+}
+
+
+static void
+lp_c_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *_sampler,
+                                  LLVMBuilderRef builder,
+                                  union lp_type type,
+                                  unsigned unit,
+                                  unsigned num_coords,
+                                  const LLVMValueRef *coords,
+                                  LLVMValueRef lodbias,
+                                  LLVMValueRef *texel)
+{
+   struct lp_c_sampler_soa *sampler = (struct lp_c_sampler_soa *)_sampler;
+   LLVMTypeRef vec_type = LLVMTypeOf(coords[0]);
+   LLVMValueRef args[3];
+   unsigned i;
+
+   if(!sampler->samplers_ptr)
+      sampler->samplers_ptr = lp_jit_context_samplers(builder, sampler->context_ptr);
+
+   if(!sampler->store_ptr)
+      sampler->store_ptr = LLVMBuildArrayAlloca(builder,
+                                            vec_type,
+                                            LLVMConstInt(LLVMInt32Type(), 4, 0),
+                                            "texel_store");
+
+   for (i = 0; i < num_coords; i++) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef coord_ptr = LLVMBuildGEP(builder, sampler->store_ptr, &index, 1, "");
+      LLVMBuildStore(builder, coords[i], coord_ptr);
+   }
+
+   args[0] = sampler->samplers_ptr;
+   args[1] = LLVMConstInt(LLVMInt32Type(), unit, 0);
+   args[2] = sampler->store_ptr;
+
+   lp_build_intrinsic(builder, "fetch_texel", LLVMVoidType(), args, 3);
+
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef texel_ptr = LLVMBuildGEP(builder, sampler->store_ptr, &index, 1, "");
+      texel[i] = LLVMBuildLoad(builder, texel_ptr, "");
+   }
+}
+
+
+struct lp_build_sampler_soa *
+lp_c_sampler_soa_create(LLVMValueRef context_ptr)
+{
+   struct lp_c_sampler_soa *sampler;
+
+   sampler = CALLOC_STRUCT(lp_c_sampler_soa);
+   if(!sampler)
+      return NULL;
+
+   sampler->base.destroy = lp_c_sampler_soa_destroy;
+   sampler->base.emit_fetch_texel = lp_c_sampler_soa_emit_fetch_texel;
+   sampler->context_ptr = context_ptr;
+
+   return &sampler->base;
+}
+

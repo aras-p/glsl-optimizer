@@ -42,17 +42,30 @@
 
 
 LLVMValueRef
+lp_build_struct_get_ptr(LLVMBuilderRef builder,
+                        LLVMValueRef ptr,
+                        unsigned member,
+                        const char *name)
+{
+   LLVMValueRef indices[2];
+   LLVMValueRef member_ptr;
+   indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indices[1] = LLVMConstInt(LLVMInt32Type(), member, 0);
+   member_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
+   lp_build_name(member_ptr, "%s.%s_ptr", LLVMGetValueName(ptr), name);
+   return member_ptr;
+}
+
+
+LLVMValueRef
 lp_build_struct_get(LLVMBuilderRef builder,
                     LLVMValueRef ptr,
                     unsigned member,
                     const char *name)
 {
-   LLVMValueRef indices[2];
    LLVMValueRef member_ptr;
    LLVMValueRef res;
-   indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   indices[1] = LLVMConstInt(LLVMInt32Type(), member, 0);
-   member_ptr = LLVMBuildGEP(builder, ptr, indices, Elements(indices), "");
+   member_ptr = lp_build_struct_get_ptr(builder, ptr, member, name);
    res = LLVMBuildLoad(builder, member_ptr, "");
    lp_build_name(res, "%s.%s", LLVMGetValueName(ptr), name);
    return res;

@@ -46,6 +46,9 @@
 #include "shader/prog_statevars.h"
 
 
+/** Max of number of lights and texture coord units */
+#define NUM_UNITS MAX2(MAX_TEXTURE_COORD_UNITS, MAX_LIGHTS)
+
 struct state_key {
    unsigned light_color_material_mask:12;
    unsigned light_global_enabled:1;
@@ -77,7 +80,7 @@ struct state_key {
       unsigned texgen_mode1:4;
       unsigned texgen_mode2:4;
       unsigned texgen_mode3:4;
-   } unit[8];
+   } unit[NUM_UNITS];
 };
 
 

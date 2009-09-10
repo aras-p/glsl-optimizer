@@ -69,8 +69,8 @@ struct intel_batchbuffer {
     * each dword written.
     */
    /*{@*/
-   void *map;
-   void *ptr;
+   uint8_t *map;
+   uint8_t *ptr;
    size_t size;
 
    size_t relocs;
@@ -149,6 +149,17 @@ struct intel_winsys {
     */
    void (*buffer_unmap)(struct intel_winsys *iws,
                         struct intel_buffer *buffer);
+
+   /**
+    * Write to a buffer.
+    *
+    * Arguments follows pwrite(2)
+    */
+   int (*buffer_write)(struct intel_winsys *iws,
+                       struct intel_buffer *dst,
+                       const void *src,
+                       size_t size,
+                       size_t offset);
 
    void (*buffer_destroy)(struct intel_winsys *iws,
                           struct intel_buffer *buffer);
