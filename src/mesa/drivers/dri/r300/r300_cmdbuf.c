@@ -684,11 +684,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
 	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_AARESOLVE_CTL, 1);
-	if ((r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ||
-	      ( !r300->radeon.radeonScreen->kernel_mm && (
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS400) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420) ) ) ) {
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350) {
 		ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
 	} else {
 		ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, never, 3, 0);
