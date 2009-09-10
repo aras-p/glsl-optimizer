@@ -1322,30 +1322,69 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	return r;
 }
 
-/* returns TRUE if instruction can overwrite sources before they're read */
+/* return TRUE for ops that produce only a single result */
 static boolean
-direct2dest_op(const struct tgsi_full_instruction *insn)
+is_scalar_op(unsigned op)
 {
-	if (insn->Instruction.Saturate)
-		return FALSE;
-
-	switch (insn->Instruction.Opcode) {
-	case TGSI_OPCODE_COS:
+	switch (op) {
+	case TGSI_OPCODE_DP2:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
 	case TGSI_OPCODE_DPH:
-	case TGSI_OPCODE_KIL:
-	case TGSI_OPCODE_LIT:
+	case TGSI_OPCODE_EX2:
+	case TGSI_OPCODE_LG2:
 	case TGSI_OPCODE_POW:
 	case TGSI_OPCODE_RCP:
 	case TGSI_OPCODE_RSQ:
+		/*
+	case TGSI_OPCODE_COS:
+	case TGSI_OPCODE_KIL:
+	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_SIN:
+		*/
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+
+/* Returns a bitmask indicating which dst components depend
+ * on source s, component c (reverse of nv50_tgsi_src_mask).
+ */
+static unsigned
+nv50_tgsi_dst_revdep(unsigned op, int s, int c)
+{
+	if (is_scalar_op(op))
+		return 0x1;
+
+	switch (op) {
+	case TGSI_OPCODE_DST:
+		return (1 << c) & (s ? 0xa : 0x6);
+	case TGSI_OPCODE_XPD:
+		switch (c) {
+		case 0: return 0x6;
+		case 1: return 0x5;
+		case 2: return 0x3;
+		case 3: return 0x0;
+		default:
+			assert(0);
+			return 0x0;
+		}
+	case TGSI_OPCODE_LIT:
+	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_TEX:
 	case TGSI_OPCODE_TXP:
-		return FALSE;
+		/* these take care of dangerous swizzles themselves */
+		return 0x0;
+	case TGSI_OPCODE_IF:
+	case TGSI_OPCODE_KIL:
+		/* don't call this function for these ops */
+		assert(0);
+		return 0;
 	default:
-		return TRUE;
+		/* linear vector instruction */
+		return (1 << c);
 	}
 }
 
@@ -1392,25 +1431,6 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++) {
 			rdst[c] = dst[c];
 			dst[c] = temp_temp(pc);
-		}
-	} else
-	if (direct2dest_op(inst)) {
-		for (c = 0; c < 4; c++) {
-			if (!dst[c] || dst[c]->type != P_TEMP)
-				continue;
-
-			for (i = c + 1; i < 4; i++) {
-				if (dst[c] == src[0][i] ||
-				    dst[c] == src[1][i] ||
-				    dst[c] == src[2][i])
-					break;
-			}
-			if (i == 4)
-				continue;
-
-			assimilate = TRUE;
-			rdst[c] = dst[c];
-			dst[c] = alloc_temp(pc, NULL);
 		}
 	}
 
@@ -1766,6 +1786,74 @@ prep_inspect_insn(struct nv50_pc *pc, const union tgsi_full_token *tok,
 			}
 		}
 	}
+}
+
+/* Returns a bitmask indicating which dst components need to be
+ * written to temporaries first to avoid 'corrupting' sources.
+ *
+ * m[i]   (out) indicate component to write in the i-th position
+ * rdep[c] (in) bitmasks of dst[i] that require dst[c] as source
+ */
+static unsigned
+nv50_revdep_reorder(unsigned m[4], unsigned rdep[4])
+{
+	unsigned i, c, x, unsafe;
+
+	for (c = 0; c < 4; c++)
+		m[c] = c;
+
+	/* Swap as long as a dst component written earlier is depended on
+	 * by one written later, but the next one isn't depended on by it.
+	 */
+	for (c = 0; c < 3; c++) {
+		if (rdep[m[c + 1]] & (1 << m[c]))
+			continue; /* if next one is depended on by us */
+		for (i = c + 1; i < 4; i++)
+			/* if we are depended on by a later one */
+			if (rdep[m[c]] & (1 << m[i]))
+				break;
+		if (i == 4)
+			continue;
+		/* now, swap */
+		x = m[c];
+		m[c] = m[c + 1];
+		m[c + 1] = x;
+
+		/* restart */
+		c = 0;
+	}
+
+	/* mark dependencies that could not be resolved by reordering */
+	for (i = 0; i < 3; ++i)
+		for (c = i + 1; c < 4; ++c)
+			if (rdep[m[i]] & (1 << m[c]))
+				unsafe |= (1 << i);
+
+	/* NOTE: $unsafe is with respect to order, not component */
+	return unsafe;
+}
+
+/* Select a suitable dst register for broadcasting scalar results,
+ * or return NULL if we have to allocate an extra TEMP.
+ *
+ * If e.g. only 1 component is written, we may also emit the final
+ * result to a write-only register.
+ */
+static struct nv50_reg *
+tgsi_broadcast_dst(struct nv50_pc *pc,
+		   const struct tgsi_full_dst_register *fd, unsigned mask)
+{
+	if (fd->DstRegister.File == TGSI_FILE_TEMPORARY) {
+		int c = ffs(~mask & fd->DstRegister.WriteMask);
+		if (c)
+			return tgsi_dst(pc, c - 1, fd);
+	} else {
+		int c = ffs(fd->DstRegister.WriteMask) - 1;
+		if ((1 << c) == fd->DstRegister.WriteMask)
+			return tgsi_dst(pc, c, fd);
+	}
+
+	return NULL;
 }
 
 static unsigned
