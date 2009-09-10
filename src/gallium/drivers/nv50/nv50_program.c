@@ -1159,6 +1159,70 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	}
 }
 
+/* Return a read mask for source registers deduced from opcode & write mask. */
+static unsigned
+nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
+{
+	unsigned x, mask = insn->FullDstRegisters[0].DstRegister.WriteMask;
+
+	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_COS:
+	case TGSI_OPCODE_SIN:
+		return (mask & 0x8) | ((mask & 0x7) ? 0x1 : 0x0);
+	case TGSI_OPCODE_DP3:
+		return 0x7;
+	case TGSI_OPCODE_DP4:
+	case TGSI_OPCODE_DPH:
+	case TGSI_OPCODE_KIL: /* WriteMask ignored */
+		return 0xf;
+	case TGSI_OPCODE_DST:
+		return mask & (c ? 0xa : 0x6);
+	case TGSI_OPCODE_EX2:
+	case TGSI_OPCODE_LG2:
+	case TGSI_OPCODE_POW:
+	case TGSI_OPCODE_RCP:
+	case TGSI_OPCODE_RSQ:
+	case TGSI_OPCODE_SCS:
+		return 0x1;
+	case TGSI_OPCODE_LIT:
+		return 0xb;
+	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXP:
+	{
+		const struct tgsi_instruction_ext_texture *tex;
+
+		assert(insn->Instruction.Extended);
+		tex = &insn->InstructionExtTexture;
+
+		mask = 0x7;
+		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
+			mask |= 0x8;
+
+		switch (tex->Texture) {
+		case TGSI_TEXTURE_1D:
+			mask &= 0x9;
+			break;
+		case TGSI_TEXTURE_2D:
+			mask &= 0xb;
+			break;
+		default:
+			break;
+		}
+	}
+		return mask;
+	case TGSI_OPCODE_XPD:
+		x = 0;
+		if (mask & 1) x |= 0x6;
+		if (mask & 2) x |= 0x5;
+		if (mask & 4) x |= 0x3;
+		return x;
+	default:
+		break;
+	}
+
+	return mask;
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -1310,13 +1374,18 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
+		unsigned src_mask;
+		boolean neg_supp;
+
+		src_mask = nv50_tgsi_src_mask(inst, i);
+		neg_supp = negate_supported(inst, i);
 
 		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
 			unit = fs->SrcRegister.Index;
 
 		for (c = 0; c < 4; c++)
-			src[i][c] = tgsi_src(pc, c, fs,
-					     negate_supported(inst, i));
+			if (src_mask & (1 << c))
+				src[i][c] = tgsi_src(pc, c, fs, neg_supp);
 	}
 
 	if (sat) {
@@ -1636,49 +1705,6 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	return TRUE;
 }
 
-/* Adjust a bitmask that indicates what components of a source are used,
- * we use this in tx_prep so we only load interpolants that are needed.
- */
-static void
-insn_adjust_mask(const struct tgsi_full_instruction *insn, unsigned *mask)
-{
-	const struct tgsi_instruction_ext_texture *tex;
-
-	switch (insn->Instruction.Opcode) {
-	case TGSI_OPCODE_DP3:
-		*mask = 0x7;
-		break;
-	case TGSI_OPCODE_DP4:
-	case TGSI_OPCODE_DPH:
-		*mask = 0xF;
-		break;
-	case TGSI_OPCODE_LIT:
-		*mask = 0xB;
-		break;
-	case TGSI_OPCODE_RCP:
-	case TGSI_OPCODE_RSQ:
-		*mask = 0x1;
-		break;
-	case TGSI_OPCODE_TEX:
-	case TGSI_OPCODE_TXP:
-		assert(insn->Instruction.Extended);
-		tex = &insn->InstructionExtTexture;
-
-		*mask = 0x7;
-		if (tex->Texture == TGSI_TEXTURE_1D)
-			*mask = 0x1;
-		else
-		if (tex->Texture == TGSI_TEXTURE_2D)
-			*mask = 0x3;
-
-		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
-			*mask |= 0x8;
-		break;
-	default:
-		break;
-	}
-}
-
 static void
 prep_inspect_insn(struct nv50_pc *pc, const union tgsi_full_token *tok,
 		  unsigned *r_usage[2])
@@ -1720,7 +1746,7 @@ prep_inspect_insn(struct nv50_pc *pc, const union tgsi_full_token *tok,
 			continue;
 		}
 
-		insn_adjust_mask(insn, &mask);
+		mask = nv50_tgsi_src_mask(insn, i);
 
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
