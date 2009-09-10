@@ -319,6 +319,8 @@ generate_blend(const struct pipe_blend_state *blend,
                LLVMValueRef dst_ptr)
 {
    struct lp_build_context bld;
+   struct lp_build_flow_context *flow;
+   struct lp_build_mask_context mask_ctx;
    LLVMTypeRef vec_type;
    LLVMTypeRef int_vec_type;
    LLVMValueRef const_ptr;
@@ -327,10 +329,13 @@ generate_blend(const struct pipe_blend_state *blend,
    LLVMValueRef res[4];
    unsigned chan;
 
+   lp_build_context_init(&bld, builder, type);
+
+   flow = lp_build_flow_create(builder);
+   lp_build_mask_begin(&mask_ctx, flow, type, mask);
+
    vec_type = lp_build_vec_type(type);
    int_vec_type = lp_build_int_vec_type(type);
-
-   lp_build_context_init(&bld, builder, type);
 
    const_ptr = lp_jit_context_blend_color(builder, context_ptr);
    const_ptr = LLVMBuildBitCast(builder, const_ptr,
@@ -354,6 +359,9 @@ generate_blend(const struct pipe_blend_state *blend,
       res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
       LLVMBuildStore(builder, res[chan], LLVMBuildGEP(builder, dst_ptr, &index, 1, ""));
    }
+
+   lp_build_mask_end(&mask_ctx);
+   lp_build_flow_destroy(flow);
 }
 
 
