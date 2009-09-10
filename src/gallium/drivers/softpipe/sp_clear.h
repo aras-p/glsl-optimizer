@@ -32,7 +32,6 @@
 #ifndef SP_CLEAR_H
 #define SP_CLEAR_H
 
-#include "pipe/p_state.h"
 struct pipe_context;
 
 extern void

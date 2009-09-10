@@ -36,8 +36,6 @@
 #include "util/u_pack_color.h"
 #include "sp_clear.h"
 #include "sp_context.h"
-#include "sp_surface.h"
-#include "sp_state.h"
 #include "sp_tile_cache.h"
 
 
