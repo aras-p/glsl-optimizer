@@ -34,14 +34,8 @@
 
 
 #include "pipe/p_context.h"
-#include "util/u_debug.h"
-#include "pipe/p_defines.h"
-#include "pipe/p_screen.h"
 #include "pipe/p_shader_tokens.h"
-
-#include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
-
 #include "tgsi/tgsi_ureg.h"
 
 
