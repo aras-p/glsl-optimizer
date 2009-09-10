@@ -1936,13 +1936,13 @@ _mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
       verts[0].r = 0.0F;
       verts[1].s = 1.0F;
       verts[1].t = 0.0F;
+      verts[1].r = 0.0F;
+      verts[2].s = 1.0F;
+      verts[2].t = 1.0F;
       verts[2].r = 0.0F;
-      verts[3].s = 1.0F;
+      verts[3].s = 0.0F;
       verts[3].t = 1.0F;
       verts[3].r = 0.0F;
-      verts[4].s = 0.0F;
-      verts[4].t = 1.0F;
-      verts[4].r = 0.0F;
       break;
    }
 
