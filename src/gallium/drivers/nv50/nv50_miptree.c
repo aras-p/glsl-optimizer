@@ -148,6 +148,7 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->image_nr = 1;
 	mt->level[0].pitch = *stride;
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
+	mt->level[0].tile_mode = bo->tile_mode;
 
 	nouveau_bo_ref(bo, &mt->base.bo);
 	return &mt->base.base;
