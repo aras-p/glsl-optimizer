@@ -83,6 +83,30 @@ lp_build_gather(LLVMBuilderRef builder,
 }
 
 
+static LLVMValueRef
+lp_build_format_swizzle(union lp_type type,
+                        const LLVMValueRef *inputs,
+                        enum util_format_swizzle swizzle)
+{
+   switch (swizzle) {
+   case UTIL_FORMAT_SWIZZLE_X:
+   case UTIL_FORMAT_SWIZZLE_Y:
+   case UTIL_FORMAT_SWIZZLE_Z:
+   case UTIL_FORMAT_SWIZZLE_W:
+      return inputs[swizzle];
+   case UTIL_FORMAT_SWIZZLE_0:
+      return lp_build_zero(type);
+   case UTIL_FORMAT_SWIZZLE_1:
+      return lp_build_one(type);
+   case UTIL_FORMAT_SWIZZLE_NONE:
+      return lp_build_undef(type);
+   default:
+      assert(0);
+      return lp_build_undef(type);
+   }
+}
+
+
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
@@ -146,25 +170,16 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
       start = stop;
    }
 
-   for (chan = 0; chan < 4; ++chan) {
-      enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-
-      switch (swizzle) {
-      case UTIL_FORMAT_SWIZZLE_X:
-      case UTIL_FORMAT_SWIZZLE_Y:
-      case UTIL_FORMAT_SWIZZLE_Z:
-      case UTIL_FORMAT_SWIZZLE_W:
-         rgba[chan] = inputs[swizzle];
-         break;
-      case UTIL_FORMAT_SWIZZLE_0:
-         rgba[chan] = lp_build_zero(type);
-         break;
-      case UTIL_FORMAT_SWIZZLE_1:
-         rgba[chan] = lp_build_one(type);
-         break;
-      case UTIL_FORMAT_SWIZZLE_NONE:
-         rgba[chan] = lp_build_undef(type);
-         break;
+   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      enum util_format_swizzle swizzle = format_desc->swizzle[0];
+      LLVMValueRef depth = lp_build_format_swizzle(type, inputs, swizzle);
+      rgba[2] = rgba[1] = rgba[0] = depth;
+      rgba[3] = lp_build_one(type);
+   }
+   else {
+      for (chan = 0; chan < 4; ++chan) {
+         enum util_format_swizzle swizzle = format_desc->swizzle[chan];
+         rgba[chan] = lp_build_format_swizzle(type, inputs, swizzle);
       }
    }
 }

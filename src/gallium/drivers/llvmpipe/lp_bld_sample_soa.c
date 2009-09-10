@@ -42,6 +42,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
@@ -72,8 +73,10 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->min_img_filter    = sampler->min_img_filter;
    state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
-   state->compare_mode      = sampler->compare_mode;
-   state->compare_func      = sampler->compare_func;
+   if(sampler->compare_mode) {
+      state->compare_mode      = sampler->compare_mode;
+      state->compare_func      = sampler->compare_func;
+   }
    state->normalized_coords = sampler->normalized_coords;
    state->prefilter         = sampler->prefilter;
 }
@@ -115,17 +118,52 @@ lp_build_sample_texel(struct lp_build_sample_context *bld,
                       LLVMValueRef data_ptr,
                       LLVMValueRef *texel)
 {
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef x_stride;
-   LLVMValueRef x_offset;
-   LLVMValueRef y_offset;
    LLVMValueRef offset;
 
    x_stride = lp_build_const_scalar(bld->int_coord_type, bld->format_desc->block.bits/8);
 
-   x_offset = lp_build_mul(&bld->int_coord_bld, x, x_stride);
-   y_offset = lp_build_mul(&bld->int_coord_bld, y, y_stride);
+   if(bld->format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      LLVMValueRef x_lo, x_hi;
+      LLVMValueRef y_lo, y_hi;
+      LLVMValueRef x_stride_lo, x_stride_hi;
+      LLVMValueRef y_stride_lo, y_stride_hi;
+      LLVMValueRef x_offset_lo, x_offset_hi;
+      LLVMValueRef y_offset_lo, y_offset_hi;
+      LLVMValueRef offset_lo, offset_hi;
 
-   offset = lp_build_add(&bld->int_coord_bld, x_offset, y_offset);
+      x_lo = LLVMBuildAnd(bld->builder, x, int_coord_bld->one, "");
+      y_lo = LLVMBuildAnd(bld->builder, y, int_coord_bld->one, "");
+
+      x_hi = LLVMBuildLShr(bld->builder, x, int_coord_bld->one, "");
+      y_hi = LLVMBuildLShr(bld->builder, y, int_coord_bld->one, "");
+
+      x_stride_lo = x_stride;
+      y_stride_lo = lp_build_const_scalar(bld->int_coord_type, 2*bld->format_desc->block.bits/8);
+
+      x_stride_hi = lp_build_const_scalar(bld->int_coord_type, 4*bld->format_desc->block.bits/8);
+      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, int_coord_bld->one, "");
+
+      x_offset_lo = lp_build_mul(int_coord_bld, x_lo, x_stride_lo);
+      y_offset_lo = lp_build_mul(int_coord_bld, y_lo, y_stride_lo);
+      offset_lo = lp_build_add(int_coord_bld, x_offset_lo, y_offset_lo);
+
+      x_offset_hi = lp_build_mul(int_coord_bld, x_hi, x_stride_hi);
+      y_offset_hi = lp_build_mul(int_coord_bld, y_hi, y_stride_hi);
+      offset_hi = lp_build_add(int_coord_bld, x_offset_hi, y_offset_hi);
+
+      offset = lp_build_add(int_coord_bld, offset_hi, offset_lo);
+   }
+   else {
+      LLVMValueRef x_offset;
+      LLVMValueRef y_offset;
+
+      x_offset = lp_build_mul(int_coord_bld, x, x_stride);
+      y_offset = lp_build_mul(int_coord_bld, y, y_stride);
+
+      offset = lp_build_add(int_coord_bld, x_offset, y_offset);
+   }
 
    lp_build_load_rgba_soa(bld->builder,
                           bld->format_desc,
@@ -249,30 +287,48 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
-      switch(bld->format_desc->swizzle[chan]) {
-      case UTIL_FORMAT_SWIZZLE_X:
-      case UTIL_FORMAT_SWIZZLE_Y:
-      case UTIL_FORMAT_SWIZZLE_Z:
-      case UTIL_FORMAT_SWIZZLE_W:
-         texel[chan] = lp_build_lerp_2d(&bld->texel_bld,
-                                        s_fpart, t_fpart,
-                                        neighbors[0][0][chan],
-                                        neighbors[0][1][chan],
-                                        neighbors[1][0][chan],
-                                        neighbors[1][1][chan]);
-         break;
-      case UTIL_FORMAT_SWIZZLE_0:
-         texel[chan] = bld->texel_bld.zero;
-         break;
-      case UTIL_FORMAT_SWIZZLE_1:
-         texel[chan] = bld->texel_bld.one;
-         break;
-      default:
-         assert(0);
-         texel[chan] = bld->texel_bld.undef;
-         break;
-      }
+      texel[chan] = lp_build_lerp_2d(&bld->texel_bld,
+                                     s_fpart, t_fpart,
+                                     neighbors[0][0][chan],
+                                     neighbors[0][1][chan],
+                                     neighbors[1][0][chan],
+                                     neighbors[1][1][chan]);
    }
+}
+
+
+static void
+lp_build_sample_compare(struct lp_build_sample_context *bld,
+                        LLVMValueRef p,
+                        LLVMValueRef *texel)
+{
+   struct lp_build_context *texel_bld = &bld->texel_bld;
+   LLVMValueRef res;
+   unsigned chan;
+
+   if(!bld->static_state->compare_mode)
+      return;
+
+   /* TODO: Compare before swizzling, to avoid redundant computations */
+   res = NULL;
+   for(chan = 0; chan < 4; ++chan) {
+      LLVMValueRef cmp;
+      cmp = lp_build_cmp(texel_bld, bld->static_state->compare_func, p, texel[chan]);
+      cmp = lp_build_select(texel_bld, cmp, texel_bld->one, texel_bld->zero);
+
+      if(res)
+         res = lp_build_add(texel_bld, res, cmp);
+      else
+         res = cmp;
+   }
+
+   assert(res);
+   res = lp_build_mul(texel_bld, res, lp_build_const_scalar(texel_bld->type, 0.25));
+
+   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
+   for(chan = 0; chan < 3; ++chan)
+      texel[chan] = res;
+   texel[3] = texel_bld->one;
 }
 
 
@@ -343,4 +399,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       lp_build_sample_2d_linear_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
    }
+
+   lp_build_sample_compare(&bld, p, texel);
 }
