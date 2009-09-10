@@ -202,6 +202,8 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 %type <sym> addrReg
 %type <swiz_mask> addrComponent addrWriteMask
 
+%type <dst_reg> ccMaskRule ccTest ccMaskRule2 ccTest2 optionalCcMask
+
 %type <result> resultBinding resultColBinding
 %type <integer> optFaceType optColorType
 %type <integer> optResultFaceType optResultColorType
@@ -447,6 +449,14 @@ KIL_instruction: KIL swizzleSrcReg
 	   $$ = asm_instruction_ctor(OPCODE_KIL, NULL, & $2, NULL, NULL);
 	   state->fragment.UsesKill = 1;
 	}
+	| KIL ccTest
+	{
+	   $$ = asm_instruction_ctor(OPCODE_KIL_NV, NULL, NULL, NULL, NULL);
+	   $$->Base.DstReg.CondMask = $2.CondMask;
+	   $$->Base.DstReg.CondSwizzle = $2.CondSwizzle;
+	   $$->Base.DstReg.CondSrc = $2.CondSrc;
+	   state->fragment.UsesKill = 1;
+	}
 	;
 
 TXD_instruction: TXD_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
@@ -607,10 +617,13 @@ swizzleSrcReg: optionalSign srcReg swizzleSuffix
 
 	;
 
-maskedDstReg: dstReg optionalMask
+maskedDstReg: dstReg optionalMask optionalCcMask
 	{
 	   $$ = $1;
 	   $$.WriteMask = $2.mask;
+	   $$.CondMask = $3.CondMask;
+	   $$.CondSwizzle = $3.CondSwizzle;
+	   $$.CondSrc = $3.CondSrc;
 
 	   if ($$.File == PROGRAM_OUTPUT) {
 	      /* Technically speaking, this should check that it is in
@@ -982,6 +995,82 @@ swizzleSuffix: MASK1
 
 optionalMask: MASK4 | MASK3 | MASK2 | MASK1 
 	|              { $$.swizzle = SWIZZLE_NOOP; $$.mask = WRITEMASK_XYZW; }
+	;
+
+optionalCcMask: '(' ccTest ')'
+	{
+	   $$ = $2;
+	}
+	| '(' ccTest2 ')'
+	{
+	   $$ = $2;
+	}
+	|
+	{
+	   $$.CondMask = COND_TR;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
+	;
+
+ccTest: ccMaskRule swizzleSuffix
+	{
+	   $$ = $1;
+	   $$.CondSwizzle = $2.swizzle;
+	}
+	;
+
+ccTest2: ccMaskRule2 swizzleSuffix
+	{
+	   $$ = $1;
+	   $$.CondSwizzle = $2.swizzle;
+	}
+	;
+
+ccMaskRule: IDENTIFIER
+	{
+	   const int cond = _mesa_parse_cc($1);
+	   if ((cond == 0) || ($1[2] != '\0')) {
+	      char *const err_str =
+		 make_error_string("invalid condition code \"%s\"", $1);
+
+	      yyerror(& @1, state, (err_str != NULL)
+		      ? err_str : "invalid condition code");
+
+	      if (err_str != NULL) {
+		 _mesa_free(err_str);
+	      }
+
+	      YYERROR;
+	   }
+
+	   $$.CondMask = cond;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
+	;
+
+ccMaskRule2: USED_IDENTIFIER
+	{
+	   const int cond = _mesa_parse_cc($1);
+	   if ((cond == 0) || ($1[2] != '\0')) {
+	      char *const err_str =
+		 make_error_string("invalid condition code \"%s\"", $1);
+
+	      yyerror(& @1, state, (err_str != NULL)
+		      ? err_str : "invalid condition code");
+
+	      if (err_str != NULL) {
+		 _mesa_free(err_str);
+	      }
+
+	      YYERROR;
+	   }
+
+	   $$.CondMask = cond;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
 	;
 
 namingStatement: ATTRIB_statement
@@ -2089,8 +2178,15 @@ asm_instruction_set_operands(struct asm_instruction *inst,
       inst->Base.DstReg = *dst;
    }
 
-   inst->Base.SrcReg[0] = src0->Base;
-   inst->SrcReg[0] = *src0;
+   /* The only instruction that doesn't have any source registers is the
+    * condition-code based KIL instruction added by NV_fragment_program_option.
+    */
+   if (src0 != NULL) {
+      inst->Base.SrcReg[0] = src0->Base;
+      inst->SrcReg[0] = *src0;
+   } else {
+      init_src_reg(& inst->SrcReg[0]);
+   }
 
    if (src1 != NULL) {
       inst->Base.SrcReg[1] = src1->Base;

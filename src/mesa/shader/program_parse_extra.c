@@ -95,6 +95,60 @@ _mesa_parse_instruction_suffix(const struct asm_parser_state *state,
 
 
 int
+_mesa_parse_cc(const char *s)
+{
+   int cond = 0;
+
+   switch (s[0]) {
+   case 'E':
+      if (s[1] == 'Q') {
+	 cond = COND_EQ;
+      }
+      break;
+
+   case 'F':
+      if (s[1] == 'L') {
+	 cond = COND_FL;
+      }
+      break;
+
+   case 'G':
+      if (s[1] == 'E') {
+	 cond = COND_GE;
+      } else if (s[1] == 'T') {
+	 cond = COND_GT;
+      }
+      break;
+
+   case 'L':
+      if (s[1] == 'E') {
+	 cond = COND_LE;
+      } else if (s[1] == 'T') {
+	 cond = COND_LT;
+      }
+      break;
+
+   case 'N':
+      if (s[1] == 'E') {
+	 cond = COND_NE;
+      }
+      break;
+
+   case 'T':
+      if (s[1] == 'R') {
+	 cond = COND_TR;
+      }
+      break;
+
+   default:
+      break;
+   }
+
+   return ((cond == 0) || (s[2] != '\0')) ? 0 : cond;
+}
+
+
+int
 _mesa_ARBvp_parse_option(struct asm_parser_state *state, const char *option)
 {
    if (strcmp(option, "ARB_position_invariant") == 0) {
