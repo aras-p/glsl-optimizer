@@ -261,7 +261,6 @@ do_blit_readpixels(GLcontext * ctx,
          if (!intel_intersect_cliprects(&rect, &src_rect, &box[i]))
             continue;
 
-<<<<<<< HEAD:src/mesa/drivers/dri/intel/intel_pixel_read.c
          if (!intelEmitCopyBlit(intel,
 				src->cpp,
 				src->pitch, src->buffer, 0, src->tiling,
@@ -275,18 +274,6 @@ do_blit_readpixels(GLcontext * ctx,
 	    UNLOCK_HARDWARE(intel);
 	    return GL_FALSE;
 	 }
-=======
-         intelEmitCopyBlit(intel,
-                           src->cpp,
-                           src->pitch, src->buffer, 0, src->tiling,
-                           rowLength, dst_buffer, dst_offset, GL_FALSE,
-                           rect.x1,
-                           rect.y1,
-                           rect.x1 - src_rect.x1,
-                           rect.y2 - src_rect.y2,
-                           rect.x2 - rect.x1, rect.y2 - rect.y1,
-			   GL_COPY);
->>>>>>> mesa_7_5_branch:src/mesa/drivers/dri/intel/intel_pixel_read.c
       }
    }
    UNLOCK_HARDWARE(intel);
