@@ -94,7 +94,7 @@ util_time_timeout(const struct util_time *start,
                   const struct util_time *end,
                   const struct util_time *curr);
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
 #define util_time_sleep usleep
 #else
 void
