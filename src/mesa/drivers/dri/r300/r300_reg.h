@@ -2313,6 +2313,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_Z_WRITE_ENABLE		 (1 << 2)
 #	define R300_Z_SIGNED_COMPARE		 (1 << 3)
 #	define R300_STENCIL_FRONT_BACK		 (1 << 4)
+#	define R400_ZSIGNED_MAGNITUDE		 (1 << 5)
+#	define R500_STENCIL_REFMASK_FRONT_BACK	 (1 << 6)
 
 #define R300_ZB_ZSTENCILCNTL                   0x4f04
 	/* functions */

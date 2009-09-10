@@ -697,6 +697,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_ZB_CNTL, 3);
+	if (is_r500) {
+		if (r300->radeon.radeonScreen->kernel_mm)
+			ALLOC_STATE(zsb, always, R300_ZSB_CMDSIZE, 0);
+		else
+			ALLOC_STATE(zsb, never, R300_ZSB_CMDSIZE, 0);
+		r300->hw.zsb.cmd[R300_ZSB_CMD_0] =
+			cmdpacket0(r300->radeon.radeonScreen, R500_ZB_STENCILREFMASK_BF, 1);
+	}
 
 	ALLOC_STATE(zstencil_format, always, 5, 0);
 	r300->hw.zstencil_format.cmd[0] =
