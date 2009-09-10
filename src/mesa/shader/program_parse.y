@@ -178,7 +178,8 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 %token VERTEX VTXATTRIB
 %token WEIGHT
 
-%token <string> IDENTIFIER
+%token <string> IDENTIFIER USED_IDENTIFIER
+%type <string> string
 %token <swiz_mask> MASK4 MASK3 MASK2 MASK1 SWIZZLE
 %token DOT_DOT
 %token DOT
@@ -289,7 +290,7 @@ optionSequence: optionSequence option
 	|
 	;
 
-option: OPTION IDENTIFIER ';'
+option: OPTION string ';'
 	{
 	   int valid = 0;
 
@@ -692,7 +693,7 @@ extSwizSel: INTEGER
 	   $$.xyzw_valid = 1;
 	   $$.rgba_valid = 1;
 	}
-	| IDENTIFIER
+	| string
 	{
 	   if (strlen($1) > 1) {
 	      yyerror(& @1, state, "invalid extended swizzle selector");
@@ -742,7 +743,7 @@ extSwizSel: INTEGER
 	}
 	;
 
-srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
+srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
@@ -832,7 +833,7 @@ dstReg: resultBinding
 	   $$.File = PROGRAM_OUTPUT;
 	   $$.Index = $1;
 	}
-	| IDENTIFIER /* temporaryReg | vertexResultReg */
+	| USED_IDENTIFIER /* temporaryReg | vertexResultReg */
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
@@ -863,7 +864,7 @@ dstReg: resultBinding
 	}
 	;
 
-progParamArray: IDENTIFIER
+progParamArray: USED_IDENTIFIER
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
@@ -930,7 +931,7 @@ addrRegNegOffset: INTEGER
 	}
 	;
 
-addrReg: IDENTIFIER
+addrReg: USED_IDENTIFIER
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
@@ -1814,7 +1815,7 @@ optionalSign: '+'        { $$ = FALSE; }
 TEMP_statement: optVarSize TEMP { $<integer>$ = $2; } varNameList
 	;
 
-optVarSize: IDENTIFIER
+optVarSize: string
 	{
 	   /* NV_fragment_program_option defines the size qualifiers in a
 	    * fairly broken way.  "SHORT" or "LONG" can optionally be used
@@ -2045,7 +2046,7 @@ legacyTexUnitNum: INTEGER
 	}
 	;
 
-ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
+ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 	{
 	   struct asm_symbol *exist = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $2);
@@ -2064,6 +2065,10 @@ ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
 	      _mesa_symbol_table_add_symbol(state->st, 0, $2, target);
 	   }
 	}
+	;
+
+string: IDENTIFIER
+	| USED_IDENTIFIER
 	;
 
 %%

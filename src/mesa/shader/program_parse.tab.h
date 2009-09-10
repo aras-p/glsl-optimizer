@@ -136,13 +136,14 @@
      VTXATTRIB = 352,
      WEIGHT = 353,
      IDENTIFIER = 354,
-     MASK4 = 355,
-     MASK3 = 356,
-     MASK2 = 357,
-     MASK1 = 358,
-     SWIZZLE = 359,
-     DOT_DOT = 360,
-     DOT = 361
+     USED_IDENTIFIER = 355,
+     MASK4 = 356,
+     MASK3 = 357,
+     MASK2 = 358,
+     MASK1 = 359,
+     SWIZZLE = 360,
+     DOT_DOT = 361,
+     DOT = 362
    };
 #endif
 
@@ -182,7 +183,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 186 "program_parse.tab.h"
+#line 187 "program_parse.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

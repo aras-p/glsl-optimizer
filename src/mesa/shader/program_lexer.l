@@ -39,8 +39,7 @@
       if (condition) {					\
 	 return token;					\
       } else {						\
-	 yylval->string = strdup(yytext);		\
-	 return IDENTIFIER;				\
+	 return handle_ident(yyextra, yytext, yylval);	\
       }							\
    } while (0)
 
@@ -64,8 +63,7 @@
 	 yylval->temp_inst.Opcode = OPCODE_ ## opcode;	\
 	 return token;					\
       } else {						\
-	 yylval->string = strdup(yytext);		\
-	 return IDENTIFIER;				\
+	 return handle_ident(yyextra, yytext, yylval);	\
       }							\
    } while (0)
 
@@ -112,6 +110,15 @@ swiz_from_char(char c)
    }
 
    return 0;
+}
+
+static int
+handle_ident(struct asm_parser_state *state, const char *text, YYSTYPE *lval)
+{
+   lval->string = strdup(text);
+
+   return (_mesa_symbol_table_find_symbol(state->st, 0, text) == NULL)
+      ? IDENTIFIER : USED_IDENTIFIER;
 }
 
 #define YY_USER_ACTION							\
@@ -299,10 +306,7 @@ ARRAY2D                   { return_token_or_IDENTIFIER(require_ARB_fp && require
 ARRAYSHADOW1D             { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_texarray, TEX_ARRAYSHADOW1D); }
 ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_texarray, TEX_ARRAYSHADOW2D); }
 
-[_a-zA-Z$][_a-zA-Z0-9$]*  {
-   yylval->string = strdup(yytext);
-   return IDENTIFIER;
-}
+[_a-zA-Z$][_a-zA-Z0-9$]*  { return handle_ident(yyextra, yytext, yylval); }
 
 ".."                      { return DOT_DOT; }
 
