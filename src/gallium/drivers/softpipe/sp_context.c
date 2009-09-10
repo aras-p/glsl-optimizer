@@ -236,7 +236,6 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
-   softpipe_init_texture_funcs( softpipe );
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.

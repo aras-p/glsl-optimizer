@@ -372,12 +372,6 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 
 
 void
-softpipe_init_texture_funcs(struct softpipe_context *sp)
-{
-}
-
-
-void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
