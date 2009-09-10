@@ -354,10 +354,12 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_blend_soa(builder, blend, type, src, dst, con, res);
 
    for(chan = 0; chan < 4; ++chan) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
-      lp_build_name(res[chan], "res.%c", "rgba"[chan]);
-      res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
-      LLVMBuildStore(builder, res[chan], LLVMBuildGEP(builder, dst_ptr, &index, 1, ""));
+      if(blend->colormask & (1 << chan)) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
+         lp_build_name(res[chan], "res.%c", "rgba"[chan]);
+         res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
+         LLVMBuildStore(builder, res[chan], LLVMBuildGEP(builder, dst_ptr, &index, 1, ""));
+      }
    }
 
    lp_build_mask_end(&mask_ctx);
@@ -725,7 +727,23 @@ make_variant_key(struct llvmpipe_context *lp,
       key->alpha.func = lp->depth_stencil->alpha.func;
    /* alpha.ref_value is passed in jit_context */
 
-   memcpy(&key->blend, lp->blend, sizeof key->blend);
+   if(lp->framebuffer.cbufs[0]) {
+      const struct util_format_description *format_desc;
+      unsigned chan;
+
+      memcpy(&key->blend, lp->blend, sizeof key->blend);
+
+      format_desc = util_format_description(lp->framebuffer.cbufs[0]->format);
+      assert(format_desc->layout == UTIL_FORMAT_COLORSPACE_RGB ||
+             format_desc->layout == UTIL_FORMAT_COLORSPACE_SRGB);
+
+      /* mask out color channels not present in the color buffer */
+      for(chan = 0; chan < 4; ++chan) {
+         enum util_format_swizzle swizzle = format_desc->swizzle[chan];
+         if(swizzle > 4)
+            key->blend.colormask &= ~(1 << chan);
+      }
+   }
 
    for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
       if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
