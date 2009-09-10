@@ -197,6 +197,7 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z = interp->pos[2];
+   struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
    boolean early_depth_test;
    unsigned attrib;
@@ -208,7 +209,33 @@ generate_fs(struct llvmpipe_context *lp,
 
    consts_ptr = lp_jit_context_constants(builder, context_ptr);
 
-   lp_build_mask_begin(&mask, builder, type, *pmask);
+   flow = lp_build_flow_create(builder);
+
+   memset(outputs, 0, sizeof outputs);
+
+   lp_build_flow_scope_begin(flow);
+
+   /* Declare the color and z variables */
+   for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         boolean declare = FALSE;
+         switch (shader->info.output_semantic_name[attrib]) {
+         case TGSI_SEMANTIC_COLOR:
+            declare = TRUE;
+            break;
+         case TGSI_SEMANTIC_POSITION:
+            if(chan == 2)
+               declare = TRUE;
+            break;
+         }
+         if(declare) {
+            outputs[attrib][chan] = LLVMGetUndef(vec_type);
+            lp_build_flow_scope_declare(flow, &outputs[attrib][chan]);
+         }
+      }
+   }
+
+   lp_build_mask_begin(&mask, flow, type, *pmask);
 
    early_depth_test =
       key->depth.enabled &&
@@ -221,11 +248,18 @@ generate_fs(struct llvmpipe_context *lp,
                      type, &mask,
                      z, depth_ptr);
 
-   memset(outputs, 0, sizeof outputs);
-
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
                      outputs, sampler);
+
+   if(!early_depth_test)
+      generate_depth(builder, key,
+                     type, &mask,
+                     z, depth_ptr);
+
+   lp_build_mask_end(&mask);
+
+   lp_build_flow_scope_end(flow);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -265,12 +299,7 @@ generate_fs(struct llvmpipe_context *lp,
       }
    }
 
-   if(!early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     z, depth_ptr);
-
-   lp_build_mask_end(&mask);
+   lp_build_flow_destroy(flow);
 
    *pmask = mask.value;
 
