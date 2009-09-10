@@ -1499,6 +1499,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_add(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
+	case TGSI_OPCODE_CEIL:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVTOP_CEIL, CVT_F32_F32);
+		}
+		break;
 	case TGSI_OPCODE_COS:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
@@ -1677,6 +1685,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_TXP:
 		emit_tex(pc, dst, mask, src[0], unit,
 			 inst->InstructionExtTexture.Texture, TRUE);
+		break;
+	case TGSI_OPCODE_TRUNC:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVTOP_TRUNC, CVT_F32_F32);
+		}
 		break;
 	case TGSI_OPCODE_XPD:
 		temp = temp_temp(pc);
