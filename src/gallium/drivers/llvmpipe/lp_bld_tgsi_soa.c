@@ -167,6 +167,7 @@ emit_fetch(
       break;
 
    case TGSI_UTIL_SIGN_SET:
+      /* TODO: Use bitwese OR for floating point */
       res = lp_build_abs( &bld->base, res );
       res = LLVMBuildNeg( bld->base.builder, res, "" );
       break;
@@ -349,14 +350,6 @@ emit_kil(
 }
 
 
-static void
-emit_kilp(
-   struct lp_build_tgsi_soa_context *bld )
-{
-   /* XXX todo / fix me */
-}
-
-
 /**
  * Check if inst src/dest regs use indirect addressing into temporary
  * register file.
@@ -398,6 +391,7 @@ emit_instruction(
    switch (inst->Instruction.Opcode) {
 #if 0
    case TGSI_OPCODE_ARL:
+      /* FIXME */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
          emit_flr(bld, 0, 0);
@@ -686,6 +680,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CND:
+      /* FIXME */
       return 0;
       break;
 
@@ -849,13 +844,11 @@ emit_instruction(
       return 0;
       break;
 
-#if 0
    case TGSI_OPCODE_KILP:
       /* predicated kill */
-      emit_kilp( bld );
-      return 0; /* XXX fix me */
+      /* FIXME */
+      return 0;
       break;
-#endif
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
@@ -1309,7 +1302,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         /* Input already interpolated */
+         /* Inputs already interpolated */
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:

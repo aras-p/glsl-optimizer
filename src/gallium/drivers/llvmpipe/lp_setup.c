@@ -163,8 +163,6 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    else
       depth = NULL;
 
-   /* TODO: blend color */
-
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(mask, 16));
 

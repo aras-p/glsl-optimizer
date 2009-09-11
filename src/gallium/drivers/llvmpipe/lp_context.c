@@ -141,8 +141,6 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
          return PIPE_REFERENCED_FOR_WRITE;
    }
    
-   /* FIXME: we also need to do the same for the texture cache */
-   
    return PIPE_UNREFERENCED;
 }
 

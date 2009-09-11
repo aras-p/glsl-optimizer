@@ -211,5 +211,6 @@ lp_build_depth_test(LLVMBuilderRef builder,
       LLVMBuildStore(builder, dst, dst_ptr);
    }
 
+   /* FIXME */
    assert(!state->occlusion_count);
 }

@@ -313,8 +313,6 @@ lp_build_select(struct lp_build_context *bld,
       b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
    }
 
-   /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
-
    a = LLVMBuildAnd(bld->builder, a, mask, "");
 
    /* This often gets translated to PANDN, but sometimes the NOT is
@@ -376,9 +374,9 @@ lp_build_select_aos(struct lp_build_context *bld,
 
       return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
    }
+   else {
 #if 0
-   else if(0) {
-      /* FIXME: Unfortunately select of vectors do not work */
+      /* XXX: Unfortunately select of vectors do not work */
       /* Use a select */
       LLVMTypeRef elem_type = LLVMInt1Type();
       LLVMValueRef cond[LP_MAX_VECTOR_LENGTH];
@@ -388,10 +386,9 @@ lp_build_select_aos(struct lp_build_context *bld,
             cond[j + i] = LLVMConstInt(elem_type, cond[i] ? 1 : 0, 0);
 
       return LLVMBuildSelect(bld->builder, LLVMConstVector(cond, n), a, b, "");
-   }
-#endif
-   else {
+#else
       LLVMValueRef mask = lp_build_const_mask_aos(type, cond);
       return lp_build_select(bld, mask, a, b);
+#endif
    }
 }

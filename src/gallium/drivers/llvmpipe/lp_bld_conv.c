@@ -122,7 +122,7 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
       int shift = dst_width - n;
       res = LLVMBuildShl(builder, res, lp_build_int_const_scalar(src_type, shift), "");
 
-      /* Fill in the empty lower bits for added precision? */
+      /* TODO: Fill in the empty lower bits for additional precision? */
 #if 0
       {
          LLVMValueRef msb;
@@ -244,7 +244,7 @@ lp_build_const_pack_shuffle(unsigned n)
  * Expand the bit width.
  *
  * This will only change the number of bits the values are represented, not the
- * values themselved.
+ * values themselves.
  */
 static void
 lp_build_expand(LLVMBuilderRef builder,

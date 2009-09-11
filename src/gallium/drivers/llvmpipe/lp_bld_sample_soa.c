@@ -207,6 +207,7 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      /* FIXME */
    default:
       assert(0);
    }
@@ -398,7 +399,13 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    case PIPE_TEX_FILTER_ANISO:
       lp_build_sample_2d_linear_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
+   default:
+      assert(0);
    }
+
+   /* FIXME: respect static_state->min_mip_filter */;
+   /* FIXME: respect static_state->mag_img_filter */;
+   /* FIXME: respect static_state->prefilter */;
 
    lp_build_sample_compare(&bld, p, texel);
 }

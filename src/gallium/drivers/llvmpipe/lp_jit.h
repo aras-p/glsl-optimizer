@@ -80,10 +80,9 @@ struct lp_jit_context
 
    struct tgsi_sampler **samplers;
 
-   /* TODO: alpha reference value */
    float alpha_ref_value;
 
-   /* TODO: blend constant color */
+   /* FIXME: store (also?) in floats */
    uint8_t *blend_color;
 
    struct lp_jit_texture textures[PIPE_MAX_SAMPLERS];
