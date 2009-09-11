@@ -211,8 +211,7 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 void r700SetupStreams(GLcontext *ctx)
 {
     context_t         *context = R700_CONTEXT(ctx);
-     struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vp = context->selected_vp;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
     unsigned int i, j = 0;
@@ -221,7 +220,7 @@ void r700SetupStreams(GLcontext *ctx)
     R600_STATECHANGE(context, vtx);
 
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
-	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+	    if(vp->mesa_program->Base.InputsRead & (1 << i)) {
 		    rcommon_emit_vector(ctx,
 					&context->radeon.tcl.aos[j],
 					vb->AttribPtr[i]->data,
@@ -237,8 +236,7 @@ void r700SetupStreams(GLcontext *ctx)
 static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
     context_t         *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vp = context->selected_vp;
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
@@ -258,7 +256,7 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
-	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+	    if(vp->mesa_program->Base.InputsRead & (1 << i)) {
 		    /* currently aos are packed */
 		    r700SetupVTXConstants(ctx,
 					  i,
