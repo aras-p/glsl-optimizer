@@ -43,7 +43,7 @@ typedef struct ArrayDesc //TEMP
 
 struct r700_vertex_program 
 {
-    struct gl_vertex_program mesa_program; /* Must be first */
+    struct gl_vertex_program *mesa_program; /* Must be first */
 
     struct r700_vertex_program *next;
 
@@ -57,6 +57,13 @@ struct r700_vertex_program
     void * shaderbo;
 
     ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
+};
+
+struct r700_vertex_program_cont
+{
+    struct gl_vertex_program mesa_program;
+
+    struct r700_vertex_program *progs;
 };
 
 //Internal
@@ -74,7 +81,7 @@ void Map_Vertex_Program(struct r700_vertex_program *vp,
 GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
 					   struct gl_vertex_program   *mesa_vp);
 
-GLboolean r700TranslateVertexShader(struct r700_vertex_program *vp,
+struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 				    struct gl_vertex_program   *mesa_vp);
 
 /* Interface */

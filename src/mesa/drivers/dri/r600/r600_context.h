@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r700_chip.h"
 #include "r600_tex.h"
 #include "r700_oglprog.h"
+#include "r700_vertprog.h"
 
 struct r600_context;
 typedef struct r600_context context_t;
@@ -154,6 +155,8 @@ struct r600_context {
 	R700_CHIP_CONTEXT hw;
 
 	struct r600_hw_state atoms;
+
+	struct r700_vertex_program *selected_vp;
 
 	/* Vertex buffers
 	 */
