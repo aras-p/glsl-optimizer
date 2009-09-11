@@ -38,6 +38,8 @@
 #include "brw_context.h"
 #include "brw_eu.h"
 
+#define SATURATE (1<<5)
+
 /* A big lookup table is used to figure out which and how many
  * additional regs will inserted before the main payload in the WM
  * program execution.  These mainly relate to depth and stencil
@@ -203,7 +205,6 @@ struct brw_wm_compile {
    GLuint fp_temp;
    GLuint fp_interp_emitted;
    GLuint fp_fragcolor_emitted;
-   GLuint fp_deriv_emitted;
 
    struct prog_src_register pixel_xy;
    struct prog_src_register delta_xy;
@@ -299,5 +300,10 @@ void brw_wm_lookup_iz( GLuint line_aa,
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
+void emit_ddxy(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       GLboolean is_ddx,
+	       const struct brw_reg *arg0);
 
 #endif

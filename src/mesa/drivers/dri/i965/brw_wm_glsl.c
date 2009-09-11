@@ -22,6 +22,7 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
+
     for (i = 0; i < fp->Base.NumInstructions; i++) {
 	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
@@ -31,8 +32,6 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 	    case OPCODE_CAL:
 	    case OPCODE_BRK:
 	    case OPCODE_RET:
-	    case OPCODE_DDX:
-	    case OPCODE_DDY:
 	    case OPCODE_NOISE1:
 	    case OPCODE_NOISE2:
 	    case OPCODE_NOISE3:
@@ -293,7 +292,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
     int i, j;
     struct brw_reg reg;
     int urb_read_length = 0;
-    GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
+    GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted;
     GLuint reg_index = 0;
 
     memset(c->used_grf, GL_FALSE, sizeof(c->used_grf));
@@ -1472,61 +1471,6 @@ static void emit_sne(struct brw_wm_compile *c,
                      const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_NEQ);
-}
-
-static void emit_ddx(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg interp[4];
-    struct brw_reg dst;
-    struct brw_reg src0, w;
-    GLuint nr, i;
-    src0 = get_src_reg(c, inst, 0, 0);
-    w = get_src_reg(c, inst, 1, 3);
-    nr = src0.nr;
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for(i = 0; i < 4; i++ ) {
-        if (mask & (1<<i)) {
-            dst = get_dst_reg(c, inst, i);
-            brw_MOV(p, dst, interp[i]);
-            brw_MUL(p, dst, dst, w);
-        }
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_ddy(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg interp[4];
-    struct brw_reg dst;
-    struct brw_reg src0, w;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    nr = src0.nr;
-    w = get_src_reg(c, inst, 1, 3);
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for(i = 0; i < 4; i++ ) {
-        if (mask & (1<<i)) {
-            dst = get_dst_reg(c, inst, i);
-            brw_MOV(p, dst, suboffset(interp[i], 1));
-            brw_MUL(p, dst, dst, w);
-        }
-    }
-    brw_set_saturate(p, 0);
 }
 
 static INLINE struct brw_reg high_words( struct brw_reg reg )
@@ -2780,6 +2724,21 @@ static void post_wm_emit( struct brw_wm_compile *c )
     brw_resolve_cals(&c->func);
 }
 
+static void
+get_argument_regs(struct brw_wm_compile *c,
+		  const struct prog_instruction *inst,
+		  int index,
+		  struct brw_reg *regs,
+		  int mask)
+{
+    int i;
+
+    for (i = 0; i < 4; i++) {
+	if (mask & (1 << i))
+	    regs[i] = get_src_reg(c, inst, index, i);
+    }
+}
+
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 {
 #define MAX_IF_DEPTH 32
@@ -2797,6 +2756,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
     for (i = 0; i < c->nr_fp_insns; i++) {
         const struct prog_instruction *inst = &c->prog_instructions[i];
+	int dst_flags;
+	struct brw_reg args[3][4], dst[4];
+	int j;
 
         c->cur_inst = i;
 
@@ -2813,6 +2775,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+
+	dst_flags = inst->DstReg.WriteMask;
+	if (inst->SaturateMode == SATURATE_ZERO_ONE)
+	    dst_flags |= SATURATE;
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
@@ -2899,10 +2865,16 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_min_max(c, inst);
 		break;
 	    case OPCODE_DDX:
-		emit_ddx(c, inst);
-		break;
 	    case OPCODE_DDY:
-                emit_ddy(c, inst);
+		for (j = 0; j < 4; j++) {
+		    if (inst->DstReg.WriteMask & (1 << j))
+			dst[j] = get_dst_reg(c, inst, j);
+		    else
+			dst[j] = brw_null_reg();
+		}
+		get_argument_regs(c, inst, 0, args[0], WRITEMASK_XYZW);
+		emit_ddxy(p, dst, dst_flags, (inst->Opcode == OPCODE_DDX),
+			  args[0]);
                 break;
 	    case OPCODE_SLT:
 		emit_slt(c, inst);
