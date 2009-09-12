@@ -49,9 +49,6 @@
 #include "cso_cache/cso_context.h"
 
 
-#define ST_MAX_SHADER_TOKENS (8 * 1024)
-
-
 #define TGSI_DEBUG 0
 
 
@@ -70,12 +67,9 @@ st_translate_vertex_program(struct st_context *st,
                             const ubyte *outputSemanticIndex)
 {
    struct pipe_context *pipe = st->pipe;
-   struct tgsi_token *tokens;
    GLuint defaultOutputMapping[VERT_RESULT_MAX];
-   struct pipe_shader_state vs;
    GLuint attr, i;
    GLuint num_generic = 0;
-   GLuint num_tokens;
 
    ubyte vs_input_semantic_name[PIPE_MAX_SHADER_INPUTS];
    ubyte vs_input_semantic_index[PIPE_MAX_SHADER_INPUTS];
@@ -88,14 +82,7 @@ st_translate_vertex_program(struct st_context *st,
    GLbitfield input_flags[MAX_PROGRAM_INPUTS];
    GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
 
-   tokens =  (struct tgsi_token *)MALLOC(ST_MAX_SHADER_TOKENS * sizeof *tokens);
-   if(!tokens) {
-      /* FIXME: propagate error to the caller */
-      assert(0);
-      return;
-   }
-
-   memset(&vs, 0, sizeof(vs));
+//   memset(&vs, 0, sizeof(vs));
    memset(input_flags, 0, sizeof(input_flags));
    memset(output_flags, 0, sizeof(output_flags));
 
@@ -338,43 +325,32 @@ st_translate_vertex_program(struct st_context *st,
       stvp->driver_shader = NULL;
    }
 
-   /* XXX: fix static allocation of tokens:
-    */
-   num_tokens = st_translate_mesa_program(st->ctx,
-                                          TGSI_PROCESSOR_VERTEX,
-                                          &stvp->Base.Base,
-                                          /* inputs */
-                                          vs_num_inputs,
-                                          stvp->input_to_index,
-                                          vs_input_semantic_name,
-                                          vs_input_semantic_index,
-                                          NULL,
-                                          input_flags,
-                                          /* outputs */
-                                          vs_num_outputs,
-                                          outputMapping,
-                                          vs_output_semantic_name,
-                                          vs_output_semantic_index,
-                                          output_flags,
-                                          /* tokenized result */
-                                          tokens, ST_MAX_SHADER_TOKENS);
-
-   assert(num_tokens < ST_MAX_SHADER_TOKENS);
-
-   vs.tokens = (struct tgsi_token *)
-      _mesa_realloc(tokens,
-                    ST_MAX_SHADER_TOKENS * sizeof *tokens,
-                    num_tokens * sizeof *tokens);
+   stvp->state.tokens = 
+      st_translate_mesa_program(st->ctx,
+                                TGSI_PROCESSOR_VERTEX,
+                                &stvp->Base.Base,
+                                /* inputs */
+                                vs_num_inputs,
+                                stvp->input_to_index,
+                                vs_input_semantic_name,
+                                vs_input_semantic_index,
+                                NULL,
+                                input_flags,
+                                /* outputs */
+                                vs_num_outputs,
+                                outputMapping,
+                                vs_output_semantic_name,
+                                vs_output_semantic_index,
+                                output_flags );
 
    stvp->num_inputs = vs_num_inputs;
-   stvp->state = vs; /* struct copy */
-   stvp->driver_shader = pipe->create_vs_state(pipe, &vs);
+   stvp->driver_shader = pipe->create_vs_state(pipe, &stvp->state);
 
    if (0)
       _mesa_print_program(&stvp->Base.Base);
 
    if (TGSI_DEBUG)
-      tgsi_dump( vs.tokens, 0 );
+      tgsi_dump( stvp->state.tokens, 0 );
 }
 
 
@@ -383,7 +359,6 @@ st_translate_vertex_program(struct st_context *st,
  * Translate a Mesa fragment shader into a TGSI shader.
  * \param inputMapping  to map fragment program input registers to TGSI
  *                      input slots
- * \param tokensOut  destination for TGSI tokens
  * \return  pointer to cached pipe_shader object.
  */
 void
@@ -392,16 +367,13 @@ st_translate_fragment_program(struct st_context *st,
                               const GLuint inputMapping[])
 {
    struct pipe_context *pipe = st->pipe;
-   struct tgsi_token *tokens;
    GLuint outputMapping[FRAG_RESULT_MAX];
    GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
-   struct pipe_shader_state fs;
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
    GLuint vslot = 0;
    GLuint num_generic = 0;
-   GLuint num_tokens;
 
    uint fs_num_inputs = 0;
 
@@ -412,14 +384,7 @@ st_translate_fragment_program(struct st_context *st,
    GLbitfield input_flags[MAX_PROGRAM_INPUTS];
    GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
 
-   tokens =  (struct tgsi_token *)MALLOC(ST_MAX_SHADER_TOKENS * sizeof *tokens);
-   if(!tokens) {
-      /* FIXME: propagate error to the caller */
-      assert(0);
-      return;
-   }
-
-   memset(&fs, 0, sizeof(fs));
+//   memset(&fs, 0, sizeof(fs));
    memset(input_flags, 0, sizeof(input_flags));
    memset(output_flags, 0, sizeof(output_flags));
 
@@ -541,42 +506,31 @@ st_translate_fragment_program(struct st_context *st,
    if (!inputMapping)
       inputMapping = defaultInputMapping;
 
-   /* XXX: fix static allocation of tokens:
-    */
-   num_tokens = st_translate_mesa_program(st->ctx,
-                                          TGSI_PROCESSOR_FRAGMENT,
-                                          &stfp->Base.Base,
-                                          /* inputs */
-                                          fs_num_inputs,
-                                          inputMapping,
-                                          stfp->input_semantic_name,
-                                          stfp->input_semantic_index,
-                                          interpMode,
-                                          input_flags,
-                                          /* outputs */
-                                          fs_num_outputs,
-                                          outputMapping,
-                                          fs_output_semantic_name,
-                                          fs_output_semantic_index,
-                                          output_flags,
-                                          /* tokenized result */
-                                          tokens, ST_MAX_SHADER_TOKENS);
+   stfp->state.tokens = 
+      st_translate_mesa_program(st->ctx,
+                                TGSI_PROCESSOR_FRAGMENT,
+                                &stfp->Base.Base,
+                                /* inputs */
+                                fs_num_inputs,
+                                inputMapping,
+                                stfp->input_semantic_name,
+                                stfp->input_semantic_index,
+                                interpMode,
+                                input_flags,
+                                /* outputs */
+                                fs_num_outputs,
+                                outputMapping,
+                                fs_output_semantic_name,
+                                fs_output_semantic_index,
+                                output_flags );
 
-   assert(num_tokens < ST_MAX_SHADER_TOKENS);
-
-   fs.tokens = (struct tgsi_token *)
-      _mesa_realloc(tokens,
-                    ST_MAX_SHADER_TOKENS * sizeof *tokens,
-                    num_tokens * sizeof *tokens);
-
-   stfp->state = fs; /* struct copy */
-   stfp->driver_shader = pipe->create_fs_state(pipe, &fs);
+   stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
 
    if (0)
       _mesa_print_program(&stfp->Base.Base);
 
    if (TGSI_DEBUG)
-      tgsi_dump( fs.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( stfp->state.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
 }
 
 
