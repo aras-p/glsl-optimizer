@@ -38,6 +38,9 @@
 #include "dlist.h"
 
 
+#if FEATURE_beginend
+
+
 /* The neutral vertex format.  This wraps all tnl module functions,
  * verifying that the currently-installed module is valid and then
  * installing the function pointers in a lazy fashion.  It records the
@@ -195,3 +198,6 @@ void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
 
    tnl->SwapCount = 0;
 }
+
+
+#endif /* FEATURE_beginend */

@@ -25,8 +25,9 @@
 #ifndef _API_NOOP_H
 #define _API_NOOP_H
 
-#include "mtypes.h"
-#include "context.h"
+#include "main/mtypes.h"
+
+#if FEATURE_beginend
 
 extern void GLAPIENTRY
 _mesa_noop_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
@@ -54,4 +55,6 @@ _mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
 extern void
 _mesa_noop_vtxfmt_init(GLvertexformat *vfmt);
 
-#endif
+#endif /* FEATURE_beginend */
+
+#endif /* _API_NOOP_H */

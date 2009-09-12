@@ -43,6 +43,9 @@
  */
 
 
+#if FEATURE_beginend
+
+
 static void GLAPIENTRY _mesa_noop_EdgeFlag( GLboolean b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1064,3 +1067,6 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
    vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
 }
+
+
+#endif /* FEATURE_beginend */

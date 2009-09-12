@@ -35,6 +35,9 @@
 #include "vbo_context.h"
 
 
+#if FEATURE_beginend
+
+
 static void
 vbo_exec_debug_verts( struct vbo_exec_context *exec )
 {
@@ -411,3 +414,6 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
    exec->vtx.prim_count = 0;
    exec->vtx.vert_count = 0;
 }
+
+
+#endif /* FEATURE_beginend */

@@ -71,10 +71,12 @@
 #define FEATURE_accum  _HAVE_FULL_GL
 #define FEATURE_arrayelt  _HAVE_FULL_GL
 #define FEATURE_attrib_stack  _HAVE_FULL_GL
+/* this disables vtxfmt, api_loopback, and api_noop completely */
+#define FEATURE_beginend  _HAVE_FULL_GL
 #define FEATURE_colortable  _HAVE_FULL_GL
 #define FEATURE_convolve  _HAVE_FULL_GL
 #define FEATURE_dispatch  _HAVE_FULL_GL
-#define FEATURE_dlist  (_HAVE_FULL_GL && FEATURE_arrayelt)
+#define FEATURE_dlist  (_HAVE_FULL_GL && FEATURE_arrayelt && FEATURE_beginend)
 #define FEATURE_draw_read_buffer  _HAVE_FULL_GL
 #define FEATURE_drawpix  _HAVE_FULL_GL
 #define FEATURE_evaluators  _HAVE_FULL_GL
