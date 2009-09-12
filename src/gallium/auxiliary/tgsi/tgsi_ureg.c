@@ -120,6 +120,9 @@ static union tgsi_any_token error_tokens[32];
 
 static void tokens_error( struct ureg_tokens *tokens )
 {
+   if (tokens->tokens && tokens->tokens != error_tokens)
+      FREE(tokens->tokens);
+
    tokens->tokens = error_tokens;
    tokens->size = Elements(error_tokens);
    tokens->count = 0;
