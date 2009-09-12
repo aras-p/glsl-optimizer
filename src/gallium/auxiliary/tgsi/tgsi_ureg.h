@@ -129,7 +129,8 @@ ureg_DECL_immediate( struct ureg_program *,
                      unsigned nr );
 
 struct ureg_src
-ureg_DECL_constant( struct ureg_program * );
+ureg_DECL_constant( struct ureg_program *,
+                    unsigned index );
 
 struct ureg_dst
 ureg_DECL_temporary( struct ureg_program * );

@@ -247,8 +247,8 @@ create_vs(struct pipe_context *pipe,
    if (ureg == NULL)
       return 0;
 
-   const0 = ureg_DECL_constant(ureg);
-   const1 = ureg_DECL_constant(ureg);
+   const0 = ureg_DECL_constant(ureg, 0);
+   const1 = ureg_DECL_constant(ureg, 1);
 
    /* it has to be either a fill or a composite op */
    debug_assert(is_fill ^ is_composite);

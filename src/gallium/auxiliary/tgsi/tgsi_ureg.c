@@ -308,8 +308,11 @@ out:
  * value or manage any constant_buffer contents -- that's the
  * resposibility of the calling code.
  */
-struct ureg_src ureg_DECL_constant(struct ureg_program *ureg )
+struct ureg_src ureg_DECL_constant(struct ureg_program *ureg, 
+                                   unsigned index )
 {
+   
+
    return ureg_src_register( TGSI_FILE_CONSTANT, ureg->nr_constants++ );
 }
 
