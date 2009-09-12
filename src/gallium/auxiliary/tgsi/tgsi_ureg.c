@@ -31,6 +31,7 @@
 #include "tgsi/tgsi_ureg.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_sanity.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
@@ -890,6 +891,15 @@ const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
                    ureg->domain[DOMAIN_DECL].count);
       tgsi_dump( tokens, 0 );
    }
+
+#if DEBUG
+   if (tokens && !tgsi_sanity_check(tokens)) {
+      debug_printf("tgsi_ureg.c, sanity check failed on generated tokens:\n");
+      tgsi_dump(tokens, 0);
+      assert(0);
+   }
+#endif
+
    
    return tokens;
 }
