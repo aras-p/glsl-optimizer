@@ -564,6 +564,19 @@ ureg_emit_dst( struct ureg_program *ureg,
 }
 
 
+static void validate( unsigned opcode,
+                      unsigned nr_dst,
+                      unsigned nr_src )
+{
+#ifdef DEBUG
+   const struct tgsi_opcode_info *info = tgsi_get_opcode_info( opcode );
+   assert(info);
+   if(info) {
+      assert(nr_dst == info->num_dst);
+      assert(nr_src == info->num_src);
+   }
+#endif
+}
 
 unsigned
 ureg_emit_insn(struct ureg_program *ureg,
@@ -574,6 +587,8 @@ ureg_emit_insn(struct ureg_program *ureg,
 {
    union tgsi_any_token *out;
 
+   validate( opcode, num_dst, num_src );
+   
    out = get_tokens( ureg, DOMAIN_INSN, 1 );
    out[0].value = 0;
    out[0].insn.Type = TGSI_TOKEN_TYPE_INSTRUCTION;
@@ -676,23 +691,59 @@ ureg_insn(struct ureg_program *ureg,
    unsigned insn, i;
    boolean saturate;
 
-#ifdef DEBUG
-   {
-      const struct tgsi_opcode_info *info = tgsi_get_opcode_info( opcode );
-      assert(info);
-      if(info) {
-         assert(nr_dst == info->num_dst);
-         assert(nr_src == info->num_src);
-      }
-   }
-#endif
-   
    saturate = nr_dst ? dst[0].Saturate : FALSE;
 
    insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );
+
+   for (i = 0; i < nr_src; i++)
+      ureg_emit_src( ureg, src[i] );
+
+   ureg_fixup_insn_size( ureg, insn );
+}
+
+void
+ureg_tex_insn(struct ureg_program *ureg,
+              unsigned opcode,
+              const struct ureg_dst *dst,
+              unsigned nr_dst,
+              unsigned target,
+              const struct ureg_src *src,
+              unsigned nr_src )
+{
+   unsigned insn, i;
+   boolean saturate;
+
+   saturate = nr_dst ? dst[0].Saturate : FALSE;
+
+   insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
+
+   ureg_emit_texture( ureg, insn, target );                             \
+
+   for (i = 0; i < nr_dst; i++)
+      ureg_emit_dst( ureg, dst[i] );
+
+   for (i = 0; i < nr_src; i++)
+      ureg_emit_src( ureg, src[i] );
+
+   ureg_fixup_insn_size( ureg, insn );
+}
+
+
+void
+ureg_label_insn(struct ureg_program *ureg,
+                unsigned opcode,
+                const struct ureg_src *src,
+                unsigned nr_src,
+                unsigned *label_token )
+{
+   unsigned insn, i;
+
+   insn = ureg_emit_insn( ureg, opcode, FALSE, 0, nr_src );
+
+   ureg_emit_label( ureg, insn, label_token );                  \
 
    for (i = 0; i < nr_src; i++)
       ureg_emit_src( ureg, src[i] );

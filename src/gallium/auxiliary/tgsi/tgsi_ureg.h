@@ -233,6 +233,24 @@ ureg_insn(struct ureg_program *ureg,
           unsigned nr_src );
 
 
+void
+ureg_tex_insn(struct ureg_program *ureg,
+              unsigned opcode,
+              const struct ureg_dst *dst,
+              unsigned nr_dst,
+              unsigned target,
+              const struct ureg_src *src,
+              unsigned nr_src );
+
+
+void
+ureg_label_insn(struct ureg_program *ureg,
+                unsigned opcode,
+                const struct ureg_src *src,
+                unsigned nr_src,
+                unsigned *label);
+
+
 /***********************************************************************
  * Internal instruction helpers, don't call these directly:
  */
