@@ -978,6 +978,25 @@ void *ureg_create_shader( struct ureg_program *ureg,
 }
 
 
+const struct tgsi_token *ureg_get_tokens( struct ureg_program *ureg,
+                                          unsigned *nr_tokens )
+{
+   const struct tgsi_token *tokens;
+
+   ureg_finalize(ureg);
+
+   tokens = &ureg->domain[DOMAIN_DECL].tokens[0].token;
+
+   if (nr_tokens) 
+      *nr_tokens = ureg->domain[DOMAIN_DECL].size;
+
+   ureg->domain[DOMAIN_DECL].tokens = 0;
+   ureg->domain[DOMAIN_DECL].size = 0;
+   ureg->domain[DOMAIN_DECL].order = 0;
+   ureg->domain[DOMAIN_DECL].count = 0;
+
+   return tokens;
+}
 
 
 struct ureg_program *ureg_create( unsigned processor )

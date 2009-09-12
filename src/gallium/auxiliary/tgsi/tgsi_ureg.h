@@ -82,9 +82,20 @@ ureg_create( unsigned processor );
 const struct tgsi_token *
 ureg_finalize( struct ureg_program * );
 
+/* Create and return a shader:
+ */
 void *
 ureg_create_shader( struct ureg_program *,
                     struct pipe_context *pipe );
+
+
+/* Alternately, return the built token stream and hand ownership of
+ * that memory to the caller:
+ */
+const struct tgsi_token *
+ureg_get_tokens( struct ureg_program *ureg,
+                 unsigned *nr_tokens );
+
 
 void 
 ureg_destroy( struct ureg_program * );
