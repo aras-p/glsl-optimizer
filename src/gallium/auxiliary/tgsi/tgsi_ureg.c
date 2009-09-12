@@ -71,6 +71,7 @@ struct ureg_tokens {
 
 #define UREG_MAX_INPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_OUTPUT PIPE_MAX_ATTRIBS
+#define UREG_MAX_CONSTANT_RANGE 32
 #define UREG_MAX_IMMEDIATE 32
 #define UREG_MAX_TEMP 256
 #define UREG_MAX_ADDR 2
@@ -110,9 +111,13 @@ struct ureg_program
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
 
-   unsigned nr_addrs;
+   struct {
+      unsigned first;
+      unsigned last;
+   } constant_range[UREG_MAX_CONSTANT_RANGE];
+   unsigned nr_constant_ranges;
 
-   unsigned nr_constants;
+   unsigned nr_addrs;
    unsigned nr_instructions;
 
    struct ureg_tokens domain[2];
@@ -311,9 +316,54 @@ out:
 struct ureg_src ureg_DECL_constant(struct ureg_program *ureg, 
                                    unsigned index )
 {
-   
+   unsigned minconst = index, maxconst = index;
+   unsigned i;
 
-   return ureg_src_register( TGSI_FILE_CONSTANT, ureg->nr_constants++ );
+   /* Inside existing range?
+    */
+   for (i = 0; i < ureg->nr_constant_ranges; i++) {
+      if (ureg->constant_range[i].first <= index &&
+          ureg->constant_range[i].last >= index)
+         goto out;
+   }
+
+   /* Extend existing range?
+    */
+   for (i = 0; i < ureg->nr_constant_ranges; i++) {
+      if (ureg->constant_range[i].last == index - 1) {
+         ureg->constant_range[i].last = index;
+         goto out;
+      }
+
+      if (ureg->constant_range[i].first == index + 1) {
+         ureg->constant_range[i].first = index;
+         goto out;
+      }
+
+      minconst = MIN2(minconst, ureg->constant_range[i].first);
+      maxconst = MAX2(maxconst, ureg->constant_range[i].last);
+   }
+
+   /* Create new range?
+    */
+   if (ureg->nr_constant_ranges < UREG_MAX_CONSTANT_RANGE) {
+      i = ureg->nr_constant_ranges++;
+      ureg->constant_range[i].first = index;
+      ureg->constant_range[i].last = index;
+   }
+
+   /* Collapse all ranges down to one:
+    */
+   i = 0;
+   ureg->constant_range[0].first = minconst;
+   ureg->constant_range[0].last = maxconst;
+   ureg->nr_constant_ranges = 1;
+
+out:
+   assert(i < ureg->nr_constant_ranges);
+   assert(ureg->constant_range[i].first <= index);
+   assert(ureg->constant_range[i].last >= index);
+   return ureg_src_register( TGSI_FILE_CONSTANT, index );
 }
 
 
@@ -859,10 +909,13 @@ static void emit_decls( struct ureg_program *ureg )
                        ureg->sampler[i].Index, 1 );
    }
 
-   if (ureg->nr_constants) {
-      emit_decl_range( ureg,
-                       TGSI_FILE_CONSTANT,
-                       0, ureg->nr_constants );
+   if (ureg->nr_constant_ranges) {
+      for (i = 0; i < ureg->nr_constant_ranges; i++)
+         emit_decl_range( ureg,
+                          TGSI_FILE_CONSTANT,
+                          ureg->constant_range[i].first, 
+                          (ureg->constant_range[i].last + 1 -
+                           ureg->constant_range[i].first) );
    }
 
    if (ureg->nr_temps) {
