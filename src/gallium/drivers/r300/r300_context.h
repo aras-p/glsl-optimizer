@@ -184,8 +184,15 @@ struct r300_texture {
     /* Offsets into the buffer. */
     unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
 
-    /* Stride (pitch?) of this texture in bytes */
-    unsigned stride;
+    /**
+     * If non-zero, override the natural texture layout with
+     * a custom stride (in bytes).
+     *
+     * \note Mipmapping fails for textures with a non-natural layout!
+     *
+     * \sa r300_texture_get_stride
+     */
+    unsigned stride_override;
 
     /* Total size of this texture, in bytes. */
     unsigned size;

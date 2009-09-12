@@ -25,7 +25,6 @@
 static void r300_setup_texture_state(struct r300_texture* tex,
                                      unsigned width,
                                      unsigned height,
-                                     unsigned pitch,
                                      unsigned levels)
 {
     struct r300_texture_state* state = &tex->state;
@@ -38,7 +37,7 @@ static void r300_setup_texture_state(struct r300_texture* tex,
     /* XXX */
     state->format1 = r300_translate_texformat(tex->tex.format);
 
-    state->format2 = pitch - 1;
+    state->format2 = r300_texture_get_stride(tex, 0);
 
     /* Assume (somewhat foolishly) that oversized textures will
      * not be permitted by the state tracker. */
@@ -50,13 +49,30 @@ static void r300_setup_texture_state(struct r300_texture* tex,
     }
 
     debug_printf("r300: Set texture state (%dx%d, pitch %d, %d levels)\n",
-            width, height, pitch, levels);
+            width, height, levels);
+}
+
+/**
+ * Return the stride, in bytes, of the texture images of the given texture
+ * at the given level.
+ */
+unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
+{
+    if (tex->stride_override)
+        return tex->stride_override;
+
+    if (level > tex->tex.last_level) {
+        debug_printf("%s: level (%u) > last_level (%u)\n", level, tex->tex.last_level);
+        return 0;
+    }
+
+    return align(pf_get_stride(&tex->tex.block, tex->tex.width[level]), 32);
 }
 
 static void r300_setup_miptree(struct r300_texture* tex)
 {
     struct pipe_texture* base = &tex->tex;
-    int stride, size, offset;
+    int stride, size;
     int i;
 
     for (i = 0; i <= base->last_level; i++) {
@@ -74,7 +90,7 @@ static void r300_setup_miptree(struct r300_texture* tex)
          * XXX
          * POT, uncompressed, unmippmapped textures can be aligned to 32,
          * instead of 64. */
-        stride = align(pf_get_stride(&base->block, base->width[i]), 32);
+        stride = r300_texture_get_stride(tex, i);
         size = stride * base->nblocksy[i] * base->depth[i];
 
         tex->offset[i] = align(tex->size, 32);
@@ -84,10 +100,6 @@ static void r300_setup_miptree(struct r300_texture* tex)
                 "(%dx%dx%d px, pitch %d bytes)\n",
                 i, base->width[i], base->height[i], base->depth[i],
                 stride);
-        /* Save stride of first level to the texture. */
-        if (i == 0) {
-            tex->stride = stride;
-        }
     }
 }
 
@@ -109,7 +121,7 @@ static struct pipe_texture*
     r300_setup_miptree(tex);
 
     r300_setup_texture_state(tex, template->width[0], template->height[0],
-            template->width[0], template->last_level);
+                             template->last_level);
 
     tex->buffer = screen->buffer_create(screen, 1024,
                                         PIPE_BUFFER_USAGE_PIXEL,
@@ -189,11 +201,10 @@ static struct pipe_texture*
     pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
-    tex->stride = *stride;
+    tex->stride_override = *stride;
 
     /* XXX */
-    r300_setup_texture_state(tex, tex->tex.width[0], tex->tex.height[0],
-            tex->stride, 0);
+    r300_setup_texture_state(tex, tex->tex.width[0], tex->tex.height[0], 0);
 
     pipe_buffer_reference(&tex->buffer, buffer);
 
@@ -221,7 +232,7 @@ boolean r300_get_texture_buffer(struct pipe_texture* texture,
     pipe_buffer_reference(buffer, tex->buffer);
 
     if (stride) {
-        *stride = tex->stride;
+        *stride = r300_texture_get_stride(tex, 0);
     }
 
     return TRUE;
