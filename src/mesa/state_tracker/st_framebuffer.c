@@ -66,7 +66,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
       else {
          /* Only allocate front buffer right now if we're single buffered.
           * If double-buffered, allocate front buffer on demand later.
-          * See check_create_front_buffers().
+          * See check_create_front_buffers() and st_set_framebuffer_surface().
           */
          struct gl_renderbuffer *rb
             = st_new_renderbuffer_fb(colorFormat, samples, FALSE);
@@ -170,8 +170,20 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
 
    strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
 
-   /* fail */
-   if (!strb) return;
+   if (!strb) {
+      if (surfIndex == ST_SURFACE_FRONT_LEFT) {
+         /* Delayed creation when the window system supplies a fake front buffer */
+         struct st_renderbuffer *strb_back
+            = st_renderbuffer(stfb->Base.Attachment[ST_SURFACE_BACK_LEFT].Renderbuffer);
+         struct gl_renderbuffer *rb
+            = st_new_renderbuffer_fb(surf->format, strb_back->Base.NumSamples, FALSE);
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
+         strb = st_renderbuffer(rb);
+      } else {
+         /* fail */
+         return;
+      }
+   }
 
    /* replace the renderbuffer's surface/texture pointers */
    pipe_surface_reference( &strb->surface, surf );
