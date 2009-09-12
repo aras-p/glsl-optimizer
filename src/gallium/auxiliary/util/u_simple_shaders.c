@@ -61,9 +61,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       struct ureg_src src;
       struct ureg_dst dst;
 
-      src = ureg_DECL_vs_input( ureg,
-                                semantic_names[i],
-                                semantic_indexes[i]);
+      src = ureg_DECL_vs_input( ureg, i );
       
       dst = ureg_DECL_output( ureg,
                               semantic_names[i],

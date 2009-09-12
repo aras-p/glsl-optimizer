@@ -241,6 +241,7 @@ create_vs(struct pipe_context *pipe,
    boolean is_fill = vs_traits & VS_FILL;
    boolean is_composite = vs_traits & VS_COMPOSITE;
    boolean has_mask = vs_traits & VS_MASK;
+   unsigned input_slot = 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (ureg == NULL)
@@ -252,30 +253,26 @@ create_vs(struct pipe_context *pipe,
    /* it has to be either a fill or a composite op */
    debug_assert(is_fill ^ is_composite);
 
-   src = ureg_DECL_vs_input(ureg,
-                            TGSI_SEMANTIC_POSITION, 0);
+   src = ureg_DECL_vs_input(ureg, input_slot++);
    dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
    src = vs_normalize_coords(ureg, src,
                              const0, const1);
    ureg_MOV(ureg, dst, src);
 
-
    if (is_composite) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_GENERIC, 1);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
       ureg_MOV(ureg, dst, src);
    }
+
    if (is_fill) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_COLOR, 0);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
       ureg_MOV(ureg, dst, src);
    }
 
    if (has_mask) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_GENERIC, 2);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
       ureg_MOV(ureg, dst, src);
    }

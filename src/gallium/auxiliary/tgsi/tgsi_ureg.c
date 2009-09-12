@@ -87,8 +87,10 @@ struct ureg_program
       unsigned semantic_name;
       unsigned semantic_index;
       unsigned interp;
-   } input[UREG_MAX_INPUT];
-   unsigned nr_inputs;
+   } fs_input[UREG_MAX_INPUT];
+   unsigned nr_fs_inputs;
+
+   unsigned vs_inputs[UREG_MAX_INPUT/32];
 
    struct {
       unsigned semantic_name;
@@ -232,25 +234,25 @@ ureg_src_register( unsigned file,
 
 
 
-static struct ureg_src 
-ureg_DECL_input( struct ureg_program *ureg,
-                 unsigned name,
-                 unsigned index,
-                 unsigned interp_mode )
+struct ureg_src 
+ureg_DECL_fs_input( struct ureg_program *ureg,
+                    unsigned name,
+                    unsigned index,
+                    unsigned interp_mode )
 {
    unsigned i;
 
-   for (i = 0; i < ureg->nr_inputs; i++) {
-      if (ureg->input[i].semantic_name == name &&
-          ureg->input[i].semantic_index == index) 
+   for (i = 0; i < ureg->nr_fs_inputs; i++) {
+      if (ureg->fs_input[i].semantic_name == name &&
+          ureg->fs_input[i].semantic_index == index) 
          goto out;
    }
 
-   if (ureg->nr_inputs < UREG_MAX_INPUT) {
-      ureg->input[i].semantic_name = name;
-      ureg->input[i].semantic_index = index;
-      ureg->input[i].interp = interp_mode;
-      ureg->nr_inputs++;
+   if (ureg->nr_fs_inputs < UREG_MAX_INPUT) {
+      ureg->fs_input[i].semantic_name = name;
+      ureg->fs_input[i].semantic_index = index;
+      ureg->fs_input[i].interp = interp_mode;
+      ureg->nr_fs_inputs++;
    }
    else {
       set_bad( ureg );
@@ -261,25 +263,14 @@ out:
 }
 
 
-
-struct ureg_src 
-ureg_DECL_fs_input( struct ureg_program *ureg,
-                    unsigned name,
-                    unsigned index,
-                    unsigned interp )
-{
-   assert(ureg->processor == TGSI_PROCESSOR_FRAGMENT);
-   return ureg_DECL_input( ureg, name, index, interp );
-}
-
-
 struct ureg_src 
 ureg_DECL_vs_input( struct ureg_program *ureg,
-                    unsigned name,
                     unsigned index )
 {
    assert(ureg->processor == TGSI_PROCESSOR_VERTEX);
-   return ureg_DECL_input( ureg, name, index, TGSI_INTERPOLATE_CONSTANT );
+   
+   ureg->vs_inputs[index/32] |= 1 << (index % 32);
+   return ureg_src_register( TGSI_FILE_INPUT, index );
 }
 
 
@@ -781,13 +772,22 @@ static void emit_decls( struct ureg_program *ureg )
 {
    unsigned i;
 
-   for (i = 0; i < ureg->nr_inputs; i++) {
-      emit_decl( ureg, 
-                 TGSI_FILE_INPUT, 
-                 i,
-                 ureg->input[i].semantic_name,
-                 ureg->input[i].semantic_index,
-                 ureg->input[i].interp );
+   if (ureg->processor == TGSI_PROCESSOR_VERTEX) {
+      for (i = 0; i < UREG_MAX_INPUT; i++) {
+         if (ureg->vs_inputs[i/32] & (1 << (i%32))) {
+            emit_decl_range( ureg, TGSI_FILE_INPUT, i, 1 );
+         }
+      }
+   }
+   else {
+      for (i = 0; i < ureg->nr_fs_inputs; i++) {
+         emit_decl( ureg, 
+                    TGSI_FILE_INPUT, 
+                    i,
+                    ureg->fs_input[i].semantic_name,
+                    ureg->fs_input[i].semantic_index,
+                    ureg->fs_input[i].interp );
+      }
    }
 
    for (i = 0; i < ureg->nr_outputs; i++) {

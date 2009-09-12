@@ -116,8 +116,7 @@ ureg_DECL_fs_input( struct ureg_program *,
 
 struct ureg_src
 ureg_DECL_vs_input( struct ureg_program *,
-                    unsigned semantic_name,
-                    unsigned semantic_index );
+                    unsigned index );
 
 struct ureg_dst
 ureg_DECL_output( struct ureg_program *,
