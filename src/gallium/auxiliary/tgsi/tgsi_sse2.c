@@ -1360,6 +1360,32 @@ emit_store(
    const struct tgsi_full_instruction *inst,
    unsigned chan_index )
 {
+   switch( inst->Instruction.Saturate ) {
+   case TGSI_SAT_NONE:
+      break;
+
+   case TGSI_SAT_ZERO_ONE:
+      sse_maxps(
+         func,
+         make_xmm( xmm ),
+         get_temp(
+            TGSI_EXEC_TEMP_00000000_I,
+            TGSI_EXEC_TEMP_00000000_C ) );
+
+      sse_minps(
+         func,
+         make_xmm( xmm ),
+         get_temp(
+            TGSI_EXEC_TEMP_ONE_I,
+            TGSI_EXEC_TEMP_ONE_C ) );
+      break;
+
+   case TGSI_SAT_MINUS_PLUS_ONE:
+      assert( 0 );
+      break;
+   }
+
+
    switch( reg->DstRegister.File ) {
    case TGSI_FILE_OUTPUT:
       emit_output(
@@ -1387,19 +1413,6 @@ emit_store(
 
    default:
       assert( 0 );
-   }
-
-   switch( inst->Instruction.Saturate ) {
-   case TGSI_SAT_NONE:
-      break;
-
-   case TGSI_SAT_ZERO_ONE:
-      /* assert( 0 ); */
-      break;
-
-   case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
-      break;
    }
 }
 
@@ -1745,10 +1758,6 @@ emit_instruction(
 
    /* we can't handle indirect addressing into temp register file yet */
    if (indirect_temp_reference(inst))
-      return FALSE;
-
-   /* we don't handle saturation/clamping yet */
-   if (inst->Instruction.Saturate != TGSI_SAT_NONE)
       return FALSE;
 
    /* need to use extra temps to fix SOA dependencies : */

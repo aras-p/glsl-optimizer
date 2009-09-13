@@ -1,0 +1,6 @@
+!!ARBfp1.0
+TEMP R0;
+MOV R0, fragment.color;
+ADD_SAT R0, R0, R0;
+MUL result.color, {0.5}.x, R0;
+END
