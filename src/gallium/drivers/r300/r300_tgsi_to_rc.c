@@ -158,7 +158,6 @@ static unsigned translate_saturate(unsigned saturate)
     switch(saturate) {
         case TGSI_SAT_NONE: return SATURATE_OFF;
         case TGSI_SAT_ZERO_ONE: return SATURATE_ZERO_ONE;
-        case TGSI_SAT_MINUS_PLUS_ONE: return SATURATE_PLUS_MINUS_ONE;
     }
 
     fprintf(stderr, "Unknown saturate mode: %i\n", saturate);
