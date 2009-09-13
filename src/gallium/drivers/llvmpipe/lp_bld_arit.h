@@ -106,7 +106,23 @@ lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_sgn(struct lp_build_context *bld,
+             LLVMValueRef a);
+
+LLVMValueRef
+lp_build_round(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
 lp_build_floor(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
+lp_build_ceil(struct lp_build_context *bld,
+              LLVMValueRef a);
+
+LLVMValueRef
+lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef

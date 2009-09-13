@@ -623,6 +623,47 @@ lp_build_abs(struct lp_build_context *bld,
 }
 
 
+LLVMValueRef
+lp_build_sgn(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMValueRef cond;
+   LLVMValueRef res;
+
+   /* Handle non-zero case */
+   if(!type.sign) {
+      /* if not zero then sign must be positive */
+      res = bld->one;
+   }
+   else if(type.floating) {
+      /* Take the sign bit and add it to 1 constant */
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      LLVMValueRef mask = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+      LLVMValueRef sign;
+      LLVMValueRef one;
+      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      sign = LLVMBuildAnd(bld->builder, sign, mask, "");
+      one = LLVMConstBitCast(bld->one, int_vec_type);
+      res = LLVMBuildOr(bld->builder, sign, one, "");
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+   else
+   {
+      LLVMValueRef minus_one = lp_build_const_scalar(type, -1.0);
+      cond = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, bld->zero);
+      res = lp_build_select(bld, cond, bld->one, minus_one);
+   }
+
+   /* Handle zero */
+   cond = lp_build_cmp(bld, PIPE_FUNC_EQUAL, a, bld->zero);
+   res = lp_build_select(bld, cond, bld->zero, bld->one);
+
+   return res;
+}
+
+
 enum lp_build_round_sse41_mode
 {
    LP_BUILD_ROUND_SSE41_NEAREST = 0,
@@ -662,6 +703,24 @@ lp_build_round_sse41(struct lp_build_context *bld,
 
 
 LLVMValueRef
+lp_build_round(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   assert(type.floating);
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
+#endif
+
+   /* FIXME */
+   assert(0);
+   return bld->undef;
+}
+
+
+LLVMValueRef
 lp_build_floor(struct lp_build_context *bld,
                LLVMValueRef a)
 {
@@ -671,6 +730,42 @@ lp_build_floor(struct lp_build_context *bld,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
+#endif
+
+   /* FIXME */
+   assert(0);
+   return bld->undef;
+}
+
+
+LLVMValueRef
+lp_build_ceil(struct lp_build_context *bld,
+              LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   assert(type.floating);
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
+#endif
+
+   /* FIXME */
+   assert(0);
+   return bld->undef;
+}
+
+
+LLVMValueRef
+lp_build_trunc(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   const union lp_type type = bld->type;
+
+   assert(type.floating);
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_TRUNCATE);
 #endif
 
    /* FIXME */
