@@ -391,11 +391,11 @@ lp_build_pack2(LLVMBuilderRef builder,
  * TODO: Handle saturation consistently.
  */
 static LLVMValueRef
-lp_build_trunc(LLVMBuilderRef builder,
-               union lp_type src_type,
-               union lp_type dst_type,
-               boolean clamped,
-               const LLVMValueRef *src, unsigned num_srcs)
+lp_build_pack(LLVMBuilderRef builder,
+              union lp_type src_type,
+              union lp_type dst_type,
+              boolean clamped,
+              const LLVMValueRef *src, unsigned num_srcs)
 {
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned i;
@@ -565,7 +565,7 @@ lp_build_conv(LLVMBuilderRef builder,
 
    if(tmp_type.width > dst_type.width) {
       assert(num_dsts == 1);
-      tmp[0] = lp_build_trunc(builder, tmp_type, dst_type, TRUE, tmp, num_tmps);
+      tmp[0] = lp_build_pack(builder, tmp_type, dst_type, TRUE, tmp, num_tmps);
       tmp_type.width = dst_type.width;
       tmp_type.length = dst_type.length;
       num_tmps = 1;
@@ -689,7 +689,7 @@ lp_build_conv_mask(LLVMBuilderRef builder,
 
    if(src_type.width > dst_type.width) {
       assert(num_dsts == 1);
-      dst[0] = lp_build_trunc(builder, src_type, dst_type, TRUE, src, num_srcs);
+      dst[0] = lp_build_pack(builder, src_type, dst_type, TRUE, src, num_srcs);
    }
    else if(src_type.width < dst_type.width) {
       assert(num_srcs == 1);
