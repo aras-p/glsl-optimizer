@@ -78,6 +78,11 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
+#define QUAD_TOP_LEFT     0
+#define QUAD_TOP_RIGHT    1
+#define QUAD_BOTTOM_LEFT  2
+#define QUAD_BOTTOM_RIGHT 3
+
 
 struct lp_build_tgsi_soa_context
 {
@@ -95,6 +100,51 @@ struct lp_build_tgsi_soa_context
 
    struct lp_build_mask_context *mask;
 };
+
+
+static const unsigned char
+swizzle_left[4] = {
+   QUAD_TOP_LEFT,     QUAD_TOP_LEFT,
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_LEFT
+};
+
+static const unsigned char
+swizzle_right[4] = {
+   QUAD_TOP_RIGHT,    QUAD_TOP_RIGHT,
+   QUAD_BOTTOM_RIGHT, QUAD_BOTTOM_RIGHT
+};
+
+static const unsigned char
+swizzle_top[4] = {
+   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT,
+   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT
+};
+
+static const unsigned char
+swizzle_bottom[4] = {
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT,
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT
+};
+
+
+static LLVMValueRef
+emit_ddx(struct lp_build_tgsi_soa_context *bld,
+         LLVMValueRef src)
+{
+   LLVMValueRef src_left  = lp_build_swizzle1_aos(&bld->base, src, swizzle_left);
+   LLVMValueRef src_right = lp_build_swizzle1_aos(&bld->base, src, swizzle_right);
+   return lp_build_sub(&bld->base, src_right, src_left);
+}
+
+
+static LLVMValueRef
+emit_ddy(struct lp_build_tgsi_soa_context *bld,
+         LLVMValueRef src)
+{
+   LLVMValueRef src_top    = lp_build_swizzle1_aos(&bld->base, src, swizzle_top);
+   LLVMValueRef src_bottom = lp_build_swizzle1_aos(&bld->base, src, swizzle_bottom);
+   return lp_build_sub(&bld->base, src_top, src_bottom);
+}
 
 
 /**
@@ -185,6 +235,36 @@ emit_fetch(
 
 
 /**
+ * Register fetch with derivatives.
+ */
+static void
+emit_fetch_deriv(
+   struct lp_build_tgsi_soa_context *bld,
+   const struct tgsi_full_instruction *inst,
+   unsigned index,
+   const unsigned chan_index,
+   LLVMValueRef *res,
+   LLVMValueRef *ddx,
+   LLVMValueRef *ddy)
+{
+   LLVMValueRef src;
+
+   src = emit_fetch(bld, inst, index, chan_index);
+
+   if(res)
+      *res = src;
+
+   /* TODO: use interpolation coeffs for inputs */
+
+   if(ddx)
+      *ddx = emit_ddx(bld, src);
+
+   if(ddy)
+      *ddy = emit_ddy(bld, src);
+}
+
+
+/**
  * Register store.
  */
 static void
@@ -238,6 +318,7 @@ emit_store(
 /**
  * High-level instruction translators.
  */
+
 
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
@@ -833,13 +914,15 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DDX:
-      /* FIXME */
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         emit_fetch_deriv( bld, inst, 0, chan_index, NULL, &dst0[chan_index], NULL);
+      }
       break;
 
    case TGSI_OPCODE_DDY:
-      /* FIXME */
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         emit_fetch_deriv( bld, inst, 0, chan_index, NULL, NULL, &dst0[chan_index]);
+      }
       break;
 
    case TGSI_OPCODE_KILP:
