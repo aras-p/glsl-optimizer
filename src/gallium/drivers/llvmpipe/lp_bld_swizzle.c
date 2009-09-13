@@ -161,7 +161,7 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_swizzle1_aos(struct lp_build_context *bld,
                       LLVMValueRef a,
-                      unsigned char swizzle[4])
+                      const unsigned char swizzle[4])
 {
    const unsigned n = bld->type.length;
    unsigned i, j;
@@ -192,7 +192,7 @@ LLVMValueRef
 lp_build_swizzle2_aos(struct lp_build_context *bld,
                       LLVMValueRef a,
                       LLVMValueRef b,
-                      unsigned char swizzle[4])
+                      const unsigned char swizzle[4])
 {
    const unsigned n = bld->type.length;
    unsigned i, j;
@@ -201,11 +201,12 @@ lp_build_swizzle2_aos(struct lp_build_context *bld,
       return lp_build_swizzle1_aos(bld, a, swizzle);
 
    if(a == b) {
-      swizzle[0] %= 4;
-      swizzle[1] %= 4;
-      swizzle[2] %= 4;
-      swizzle[3] %= 4;
-      return lp_build_swizzle1_aos(bld, a, swizzle);
+      unsigned char swizzle1[4];
+      swizzle1[0] = swizzle[0] % 4;
+      swizzle1[1] = swizzle[1] % 4;
+      swizzle1[2] = swizzle[2] % 4;
+      swizzle1[3] = swizzle[3] % 4;
+      return lp_build_swizzle1_aos(bld, a, swizzle1);
    }
 
    if(swizzle[0] % 4 == 0 &&

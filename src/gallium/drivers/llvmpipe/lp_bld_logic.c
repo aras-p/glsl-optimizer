@@ -337,7 +337,7 @@ LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b,
-                    boolean cond[4])
+                    const boolean cond[4])
 {
    const union lp_type type = bld->type;
    const unsigned n = type.length;
