@@ -77,7 +77,7 @@ struct st_translate {
    unsigned insn_size;
    unsigned insn_count;
 
-   GLenum procType;
+   unsigned procType;  /**< TGSI_PROCESSOR_VERTEX/FRAGMENT */
 
    boolean error;
 };
@@ -126,7 +126,6 @@ static void set_insn_start( struct st_translate *t,
 }
 
 
-
 /*
  * Map mesa register file to TGSI register file.
  */
@@ -156,7 +155,6 @@ dst_register( struct st_translate *t,
       return ureg_dst_undef();
    }
 }
-
 
 
 static struct ureg_src
@@ -195,7 +193,7 @@ src_register( struct st_translate *t,
 }
 
 
-/*
+/**
  * Map mesa texture target to TGSI texture target.
  */
 static unsigned
@@ -224,7 +222,6 @@ translate_texture_target( GLuint textarget,
 }
 
 
-
 static struct ureg_dst
 translate_dst( struct st_translate *t,
                const struct prog_dst_register *DstReg,
@@ -245,9 +242,6 @@ translate_dst( struct st_translate *t,
 
    return dst;
 }
-
-
-
 
 
 static struct ureg_src
@@ -274,6 +268,7 @@ translate_src( struct st_translate *t,
    return src;
 }
 
+
 static struct ureg_src swizzle_4v( struct ureg_src src,
                                    const unsigned *swz )
 {
@@ -281,7 +276,8 @@ static struct ureg_src swizzle_4v( struct ureg_src src,
 }
 
 
-/* Translate SWZ instructions into a single MAD.  EG:
+/**
+ * Translate SWZ instructions into a single MAD.  EG:
  *
  *   SWZ dst, src.x-y10 
  * 
@@ -603,7 +599,6 @@ compile_instruction(
                      src, num_src );
       return;
 
-
    case OPCODE_SCS:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XY );
       ureg_insn( ureg, 
@@ -627,13 +622,7 @@ compile_instruction(
                  src, num_src );
       break;
    }
-   
 }
-
-
-
-
-
 
 
 /**
@@ -680,8 +669,6 @@ emit_inverted_wpos( struct st_translate *t,
 }
 
 
-
-
 /**
  * Translate Mesa program to TGSI format.
  * \param program  the program to translate
@@ -689,14 +676,15 @@ emit_inverted_wpos( struct st_translate *t,
  * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
  *                      input indexes
  * \param inputSemanticName  the TGSI_SEMANTIC flag for each input
- * \param inputSemanticIndex  the semantic index (ex: which texcoord) for each input
+ * \param inputSemanticIndex  the semantic index (ex: which texcoord) for
+ *                            each input
  * \param interpMode  the TGSI_INTERPOLATE_LINEAR/PERSP mode for each input
-
  * \param numOutputs  number of output registers used
  * \param outputMapping  maps Mesa fragment program outputs to TGSI
  *                       generic outputs
  * \param outputSemanticName  the TGSI_SEMANTIC flag for each output
- * \param outputSemanticIndex  the semantic index (ex: which texcoord) for each output
+ * \param outputSemanticIndex  the semantic index (ex: which texcoord) for
+ *                             each output
  *
  * \return  array of translated tokens, caller's responsibility to free
  */
