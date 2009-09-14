@@ -2704,6 +2704,52 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_ref(NULL, &so);
 }
 
+static void
+nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
+{
+	struct nv50_program *fp = nv50->fragprog;
+	struct nv50_program *vp = nv50->vertprog;
+	unsigned i, c, m = base;
+
+	/* XXX: This can't work correctly in all cases yet, we either
+	 * have to create TGSI_SEMANTIC_PNTC or sprite_coord_mode has
+	 * to be per FP input instead of per VP output
+	 */
+	memset(pntc, 0, 8 * sizeof(uint32_t));
+
+	for (i = 0; i < fp->cfg.io_nr; i++) {
+		uint8_t sn, si;
+		uint8_t j = fp->cfg.io[i].id_vp, k = fp->cfg.io[i].id_fp;
+		unsigned n = popcnt4(fp->cfg.io[i].mask);
+
+		if (fp->info.input_semantic_name[k] != TGSI_SEMANTIC_GENERIC) {
+			m += n;
+			continue;
+		}
+
+		sn = vp->info.input_semantic_name[j];
+		si = vp->info.input_semantic_index[j];
+
+		if (j < fp->cfg.io_nr && sn == TGSI_SEMANTIC_GENERIC) {
+			ubyte mode =
+				nv50->rasterizer->pipe.sprite_coord_mode[si];
+
+			if (mode == PIPE_SPRITE_COORD_NONE) {
+				m += n;
+				continue;
+			}
+		}
+
+		/* this is either PointCoord or replaced by sprite coords */
+		for (c = 0; c < 4; c++) {
+			if (!(fp->cfg.io[i].mask & (1 << c)))
+				continue;
+			pntc[m / 8] |= (c + 1) << ((m % 8) * 4);
+			++m;
+		}
+	}
+}
+
 static int
 nv50_sreg4_map(uint32_t *p_map, int mid, uint32_t lin[4],
 	       struct nv50_sreg4 *fpi, struct nv50_sreg4 *vpo)
@@ -2736,7 +2782,7 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	struct nouveau_stateobj *so;
 	struct nv50_sreg4 dummy, *vpo;
 	int i, n, c, m = 0;
-	uint32_t map[16], lin[4], reg[5];
+	uint32_t map[16], lin[4], reg[5], pcrd[8];
 
 	memset(map, 0, sizeof(map));
 	memset(lin, 0, sizeof(lin));
@@ -2812,6 +2858,13 @@ nv50_linkage_validate(struct nv50_context *nv50)
 
 	so_method(so, tesla, 0x1540, 4);
 	so_datap (so, lin, 4);
+
+	if (nv50->rasterizer->pipe.point_sprite) {
+		nv50_pntc_replace(nv50, pcrd, (reg[4] >> 8) & 0xff);
+
+		so_method(so, tesla, NV50TCL_POINT_COORD_REPLACE_MAP(0), 8);
+		so_datap (so, pcrd, 8);
+	}
 
         so_ref(so, &nv50->state.programs);
         so_ref(NULL, &so);
