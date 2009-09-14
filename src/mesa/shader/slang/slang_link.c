@@ -540,6 +540,32 @@ _slang_update_inputs_outputs(struct gl_program *prog)
 
 
 
+/**
+ * Remove extra #version directives from the concatenated source string.
+ * Disable the extra ones by converting first two chars to //, a comment.
+ * This is a bit of hack to work around a preprocessor bug that only
+ * allows one #version directive per source.
+ */
+static void
+remove_extra_version_directives(GLchar *source)
+{
+   GLuint verCount = 0;
+   while (1) {
+      char *ver = _mesa_strstr(source, "#version");
+      if (ver) {
+         verCount++;
+         if (verCount > 1) {
+            ver[0] = '/';
+            ver[1] = '/';
+         }
+         source += 8;
+      }
+      else {
+         break;
+      }
+   }
+}
+
 
 
 /**
@@ -586,6 +612,8 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    /*
    _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
    */
+
+   remove_extra_version_directives(source);
 
    newShader = CALLOC_STRUCT(gl_shader);
    newShader->Type = shaderType;
