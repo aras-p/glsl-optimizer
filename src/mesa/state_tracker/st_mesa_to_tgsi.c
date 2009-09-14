@@ -583,13 +583,6 @@ compile_instruction(
    case OPCODE_ENDLOOP:
    case OPCODE_IF:
       assert(num_dst == 0);
-
-      /* Currently assuming a 1:1 relationship between mesa
-       * instructions and TGSI instructions.  That won't always be the
-       * case, and to be generic we'll have to make a table of labels
-       * that get fixed up afterwards.  Or make labels symbolic in
-       * TGSI.
-       */
       ureg_label_insn( ureg,
                        translate_opcode( inst->Opcode ),
                        src, num_src,
