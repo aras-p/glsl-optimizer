@@ -84,7 +84,10 @@ main(int argc,
 
    free(inbuf);
 
-   sl_pp_context_init(&context);
+   if (sl_pp_context_init(&context)) {
+      free(outbuf);
+      return 1;
+   }
 
    if (sl_pp_tokenise(&context, outbuf, &tokens)) {
       sl_pp_context_destroy(&context);
