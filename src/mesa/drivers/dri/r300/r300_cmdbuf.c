@@ -684,11 +684,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
 	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_AARESOLVE_CTL, 1);
-	if ((r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ||
-	      ( !r300->radeon.radeonScreen->kernel_mm && (
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS400) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420) ) ) ) {
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350) {
 		ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
 	} else {
 		ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, never, 3, 0);
@@ -697,6 +693,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_ZB_CNTL, 3);
+	if (is_r500) {
+		if (r300->radeon.radeonScreen->kernel_mm)
+			ALLOC_STATE(zsb, always, R300_ZSB_CMDSIZE, 0);
+		else
+			ALLOC_STATE(zsb, never, R300_ZSB_CMDSIZE, 0);
+		r300->hw.zsb.cmd[R300_ZSB_CMD_0] =
+			cmdpacket0(r300->radeon.radeonScreen, R500_ZB_STENCILREFMASK_BF, 1);
+	}
 
 	ALLOC_STATE(zstencil_format, always, 5, 0);
 	r300->hw.zstencil_format.cmd[0] =

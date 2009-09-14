@@ -26,9 +26,6 @@
  **************************************************************************/
 
 
-#include <stdio.h>
-#include <errno.h>
-
 #include "main/mtypes.h"
 #include "main/context.h"
 #include "main/enums.h"

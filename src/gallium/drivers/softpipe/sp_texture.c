@@ -30,26 +30,21 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
-#include "sp_tile_cache.h"
 #include "sp_screen.h"
 #include "sp_winsys.h"
 
 
-/* Simple, maximally packed layout.
- */
-
-
-/* Conventional allocation path for non-display textures:
+/**
+ * Conventional allocation path for non-display textures:
+ * Use a simple, maximally packed layout.
  */
 static boolean
 softpipe_texture_layout(struct pipe_screen *screen,
@@ -89,6 +84,10 @@ softpipe_texture_layout(struct pipe_screen *screen,
    return spt->buffer != NULL;
 }
 
+
+/**
+ * Texture layout for simple color buffers.
+ */
 static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
                               struct softpipe_texture * spt)
@@ -110,9 +109,6 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 
    return spt->buffer != NULL;
 }
-
-
-
 
 
 static struct pipe_texture *
@@ -342,14 +338,13 @@ softpipe_transfer_map( struct pipe_screen *screen,
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
-   {
+   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
        */
       softpipe_screen(screen)->timestamp++;
    }
-   
+
    xfer_map = map + softpipe_transfer(transfer)->offset +
       transfer->y / transfer->block.height * transfer->stride +
       transfer->x / transfer->block.width * transfer->block.size;
@@ -360,7 +355,7 @@ softpipe_transfer_map( struct pipe_screen *screen,
 
 static void
 softpipe_transfer_unmap(struct pipe_screen *screen,
-                       struct pipe_transfer *transfer)
+                        struct pipe_transfer *transfer)
 {
    struct softpipe_texture *spt;
 
@@ -373,12 +368,6 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
       /* Mark the texture as dirty to expire the tile caches. */
       spt->modified = TRUE;
    }
-}
-
-
-void
-softpipe_init_texture_funcs(struct softpipe_context *sp)
-{
 }
 
 
@@ -404,7 +393,7 @@ softpipe_get_texture_buffer( struct pipe_texture *texture,
                              struct pipe_buffer **buf,
                              unsigned *stride )
 {
-   struct softpipe_texture *tex = (struct softpipe_texture *)texture;
+   struct softpipe_texture *tex = (struct softpipe_texture *) texture;
 
    if (!tex)
       return FALSE;

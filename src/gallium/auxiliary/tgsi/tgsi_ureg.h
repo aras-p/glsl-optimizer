@@ -82,9 +82,20 @@ ureg_create( unsigned processor );
 const struct tgsi_token *
 ureg_finalize( struct ureg_program * );
 
+/* Create and return a shader:
+ */
 void *
 ureg_create_shader( struct ureg_program *,
                     struct pipe_context *pipe );
+
+
+/* Alternately, return the built token stream and hand ownership of
+ * that memory to the caller:
+ */
+const struct tgsi_token *
+ureg_get_tokens( struct ureg_program *ureg,
+                 unsigned *nr_tokens );
+
 
 void 
 ureg_destroy( struct ureg_program * );
@@ -116,8 +127,7 @@ ureg_DECL_fs_input( struct ureg_program *,
 
 struct ureg_src
 ureg_DECL_vs_input( struct ureg_program *,
-                    unsigned semantic_name,
-                    unsigned semantic_index );
+                    unsigned index );
 
 struct ureg_dst
 ureg_DECL_output( struct ureg_program *,
@@ -130,7 +140,8 @@ ureg_DECL_immediate( struct ureg_program *,
                      unsigned nr );
 
 struct ureg_src
-ureg_DECL_constant( struct ureg_program * );
+ureg_DECL_constant( struct ureg_program *,
+                    unsigned index );
 
 struct ureg_dst
 ureg_DECL_temporary( struct ureg_program * );
@@ -231,6 +242,24 @@ ureg_insn(struct ureg_program *ureg,
           unsigned nr_dst,
           const struct ureg_src *src,
           unsigned nr_src );
+
+
+void
+ureg_tex_insn(struct ureg_program *ureg,
+              unsigned opcode,
+              const struct ureg_dst *dst,
+              unsigned nr_dst,
+              unsigned target,
+              const struct ureg_src *src,
+              unsigned nr_src );
+
+
+void
+ureg_label_insn(struct ureg_program *ureg,
+                unsigned opcode,
+                const struct ureg_src *src,
+                unsigned nr_src,
+                unsigned *label);
 
 
 /***********************************************************************

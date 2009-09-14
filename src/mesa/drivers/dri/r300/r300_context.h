@@ -234,6 +234,10 @@ typedef struct r300_context *r300ContextPtr;
 #define R300_ZS_CNTL_2		3
 #define R300_ZS_CMDSIZE		4
 
+#define R300_ZSB_CMD_0		0
+#define R300_ZSB_CNTL_0		1
+#define R300_ZSB_CMDSIZE	2
+
 #define R300_ZB_CMD_0		0
 #define R300_ZB_OFFSET		1
 #define R300_ZB_PITCH		2
@@ -343,6 +347,7 @@ struct r300_hw_state {
 	struct radeon_state_atom rb3d_aaresolve_ctl;	/* (4E88) */
 	struct radeon_state_atom rb3d_discard_src_pixel_lte_threshold;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct radeon_state_atom zs;	/* zstencil control (4F00) */
+	struct radeon_state_atom zsb;	/* zstencil bf */
 	struct radeon_state_atom zstencil_format;
 	struct radeon_state_atom zb;	/* z buffer (4F20) */
 	struct radeon_state_atom zb_depthclearvalue;	/* (4F28) */

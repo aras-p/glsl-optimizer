@@ -8,13 +8,16 @@ Done so far is:
 
  - the whole fragment pipeline is code generated in a single function
  
+   - input interpolation
+   
    - depth testing
  
+   - texture sampling (not all state/formats are supported) 
+   
    - fragment shader TGSI translation
      - same level of support as the TGSI SSE2 exec machine, with the exception
        we don't fallback to TGSI interpretation when an unsupported opcode is
        found, but just ignore it
-     - texture sampling via an intrinsic call
      - done in SoA layout
      - input interpolation also code generated
  
@@ -28,16 +31,17 @@ Done so far is:
      any width and length
    - not all operations are implemented for these types yet though
 
-Most mesa/progs/demos/* work. Speed is on par with Keith's softpipe-opt branch,
-which includes hand written fast implementations for common cases.
+Most mesa/progs/demos/* work. 
 
 To do (probably by this order):
 
  - code generate stipple and stencil testing
 
- - code generate texture sampling
+ - translate the remaining bits of texture sampling state
 
  - translate TGSI control flow instructions, and all other remaining opcodes
+ 
+ - integrate with the draw module for VS code generation
 
  - code generate the triangle setup and rasterization
 
@@ -93,7 +97,7 @@ Alternatively, you can build it with GNU make, if you prefer, by invoking it as
 
   make linux-llvm
 
-but the rest of these instructions assume scons is used.
+but the rest of these instructions assume that scons is used.
 
 
 Using
@@ -108,6 +112,9 @@ or
 
   export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib:$LD_LIBRARY_PATH
 
+For performance evaluation pass debug=no to scons, and use the corresponding
+lib directory without the "-debug" suffix.
+
 
 Unit testing
 ============
@@ -119,7 +126,7 @@ build/linux-???-debug/gallium/drivers/llvmpipe:
  - lp_test_conv: SIMD vector conversion
  - lp_test_format: pixel unpacking/packing
 
-Some of this tests can output results and benchmarks to a tab-seperated-file
+Some of this tests can output results and benchmarks to a tab-separated-file
 for posterior analysis, e.g.:
 
   build/linux-x86_64-debug/gallium/drivers/llvmpipe/lp_test_blend -o blend.tsv
@@ -133,10 +140,10 @@ Development Notes
   at the top of the lp_bld_*.c functions.  
 
 - All lp_bld_*.[ch] are isolated from the rest of the driver, and could/may be 
-  put in a standalone Gallium state -> LLVM IR translation module.
+  put in a stand-alone Gallium state -> LLVM IR translation module.
 
 - We use LLVM-C bindings for now. They are not documented, but follow the C++
   interfaces very closely, and appear to be complete enough for code
   generation. See 
   http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
-  for a standalone example.
+  for a stand-alone example.

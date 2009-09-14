@@ -52,38 +52,40 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			if (!t->image_override)
-				bo = t->mt->bo;
-			else
-				bo = t->bo;
-			if (bo) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				if (!t->image_override)
+					bo = t->mt->bo;
+				else
+					bo = t->bo;
+				if (bo) {
 
-				r700SyncSurf(context, bo,
-					     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
-					     0, TC_ACTION_ENA_bit);
+					r700SyncSurf(context, bo,
+						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
+						     0, TC_ACTION_ENA_bit);
 
-				BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
-				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-				R600_OUT_BATCH(i * 7);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
-				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
-				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
-						     bo,
-						     0,
-						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
-						     bo,
-						     r700->textures[i]->SQ_TEX_RESOURCE3,
-						     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				END_BATCH();
-				COMMIT_BATCH();
+					BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
+					R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
+					R600_OUT_BATCH(i * 7);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE3);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
+					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
+					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
+							     bo,
+							     0,
+							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
+							     bo,
+							     r700->textures[i]->SQ_TEX_RESOURCE3,
+							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					END_BATCH();
+					COMMIT_BATCH();
+				}
 			}
 		}
 	}
@@ -98,16 +100,18 @@ static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *at
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			BEGIN_BATCH_NO_AUTOSTATE(5);
-			R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-			R600_OUT_BATCH(i * 3);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
-			R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
-			END_BATCH();
-			COMMIT_BATCH();
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				BEGIN_BATCH_NO_AUTOSTATE(5);
+				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
+				R600_OUT_BATCH(i * 3);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
+				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
+				END_BATCH();
+				COMMIT_BATCH();
+			}
 		}
 	}
 }
@@ -121,16 +125,18 @@ static void r700SendTexBorderColorState(GLcontext *ctx, struct radeon_state_atom
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t) {
-			BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
-			R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
-			R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
-			END_BATCH();
-			COMMIT_BATCH();
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t) {
+				BEGIN_BATCH_NO_AUTOSTATE(2 + 4);
+				R600_OUT_BATCH_REGSEQ((TD_PS_SAMPLER0_BORDER_RED + (i * 16)), 4);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_RED);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_GREEN);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_BLUE);
+				R600_OUT_BATCH(r700->textures[i]->TD_PS_SAMPLER0_BORDER_ALPHA);
+				END_BATCH();
+				COMMIT_BATCH();
+			}
 		}
 	}
 }
@@ -205,8 +211,7 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 void r700SetupStreams(GLcontext *ctx)
 {
     context_t         *context = R700_CONTEXT(ctx);
-     struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vp = context->selected_vp;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
     unsigned int i, j = 0;
@@ -215,7 +220,7 @@ void r700SetupStreams(GLcontext *ctx)
     R600_STATECHANGE(context, vtx);
 
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
-	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+	    if(vp->mesa_program->Base.InputsRead & (1 << i)) {
 		    rcommon_emit_vector(ctx,
 					&context->radeon.tcl.aos[j],
 					vb->AttribPtr[i]->data,
@@ -231,8 +236,7 @@ void r700SetupStreams(GLcontext *ctx)
 static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
     context_t         *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vp = context->selected_vp;
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
@@ -252,7 +256,7 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
-	    if(vpc->mesa_program.Base.InputsRead & (1 << i)) {
+	    if(vp->mesa_program->Base.InputsRead & (1 << i)) {
 		    /* currently aos are packed */
 		    r700SetupVTXConstants(ctx,
 					  i,
@@ -1176,9 +1180,11 @@ static int check_tx(GLcontext *ctx, struct radeon_state_atom *atom)
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		radeonTexObj *t = r700->textures[i];
-		if (t)
-			count++;
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+			radeonTexObj *t = r700->textures[i];
+			if (t)
+				count++;
+		}
 	}
 	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count * 31;

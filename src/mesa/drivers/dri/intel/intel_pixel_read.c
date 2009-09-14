@@ -180,16 +180,7 @@ do_blit_readpixels(GLcontext * ctx,
    if (!src)
       return GL_FALSE;
 
-   if (pack->BufferObj->Name) {
-      /* XXX This validation should be done by core mesa:
-       */
-      if (!_mesa_validate_pbo_access(2, pack, width, height, 1,
-                                     format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels");
-         return GL_TRUE;
-      }
-   }
-   else {
+   if (!_mesa_is_bufferobj(pack->BufferObj)) {
       /* PBO only for now:
        */
       if (INTEL_DEBUG & DEBUG_PIXEL)

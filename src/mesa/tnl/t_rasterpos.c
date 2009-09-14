@@ -46,11 +46,10 @@
  * \return zero if outside view volume, or one if inside.
  */
 static GLuint
-viewclip_point( const GLfloat v[] )
+viewclip_point_xy( const GLfloat v[] )
 {
    if (   v[0] > v[3] || v[0] < -v[3]
-       || v[1] > v[3] || v[1] < -v[3]
-       || v[2] > v[3] || v[2] < -v[3] ) {
+       || v[1] > v[3] || v[1] < -v[3] ) {
       return 0;
    }
    else {
@@ -408,18 +407,18 @@ _tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4])
       /* apply projection matrix:  clip = Proj * eye */
       TRANSFORM_POINT( clip, ctx->ProjectionMatrixStack.Top->m, eye );
 
-      /* clip to view volume */
-      if (ctx->Transform.RasterPositionUnclipped) {
-         /* GL_IBM_rasterpos_clip: only clip against Z */
+      /* clip to view volume. */
+      if (!ctx->Transform.DepthClamp) {
          if (viewclip_point_z(clip) == 0) {
             ctx->Current.RasterPosValid = GL_FALSE;
             return;
          }
       }
-      else if (viewclip_point(clip) == 0) {
-         /* Normal OpenGL behaviour */
-         ctx->Current.RasterPosValid = GL_FALSE;
-         return;
+      if (!ctx->Transform.RasterPositionUnclipped) {
+         if (viewclip_point_xy(clip) == 0) {
+            ctx->Current.RasterPosValid = GL_FALSE;
+            return;
+         }
       }
 
       /* clip to user clipping planes */
@@ -442,6 +441,12 @@ _tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4])
                                    + ctx->Viewport._WindowMap.m[MAT_TZ])
                                   / ctx->DrawBuffer->_DepthMaxF;
       ctx->Current.RasterPos[3] = clip[3];
+
+      if (ctx->Transform.DepthClamp) {
+	 ctx->Current.RasterPos[3] = CLAMP(ctx->Current.RasterPos[3],
+					   ctx->Viewport.Near,
+					   ctx->Viewport.Far);
+      }
 
       /* compute raster distance */
       if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)

@@ -323,13 +323,14 @@ r300_get_tex_transfer(struct pipe_screen *screen,
     if (trans) {
         pipe_texture_reference(&trans->transfer.texture, texture);
         trans->transfer.format = texture->format;
+        trans->transfer.x = x;
+        trans->transfer.y = y;
         trans->transfer.width = w;
         trans->transfer.height = h;
         trans->transfer.block = texture->block;
         trans->transfer.nblocksx = texture->nblocksx[level];
         trans->transfer.nblocksy = texture->nblocksy[level];
-        trans->transfer.stride = align(pf_get_stride(&trans->transfer.block,
-                                                     texture->width[level]), 32);
+        trans->transfer.stride = r300_texture_get_stride(tex, level);
         trans->transfer.usage = usage;
         trans->offset = offset;
     }
@@ -356,7 +357,7 @@ static void* r300_transfer_map(struct pipe_screen* screen,
     if (transfer->usage != PIPE_TRANSFER_READ) {
         flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
     }
-    
+
     map = pipe_buffer_map(screen, tex->buffer, flags);
 
     if (!map) {

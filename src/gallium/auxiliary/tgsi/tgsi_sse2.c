@@ -39,8 +39,9 @@
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
-#include "tgsi_exec.h"
-#include "tgsi_sse2.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_sse2.h"
 
 #include "rtasm/rtasm_x86sse.h"
 
@@ -1360,6 +1361,32 @@ emit_store(
    const struct tgsi_full_instruction *inst,
    unsigned chan_index )
 {
+   switch( inst->Instruction.Saturate ) {
+   case TGSI_SAT_NONE:
+      break;
+
+   case TGSI_SAT_ZERO_ONE:
+      sse_maxps(
+         func,
+         make_xmm( xmm ),
+         get_temp(
+            TGSI_EXEC_TEMP_00000000_I,
+            TGSI_EXEC_TEMP_00000000_C ) );
+
+      sse_minps(
+         func,
+         make_xmm( xmm ),
+         get_temp(
+            TGSI_EXEC_TEMP_ONE_I,
+            TGSI_EXEC_TEMP_ONE_C ) );
+      break;
+
+   case TGSI_SAT_MINUS_PLUS_ONE:
+      assert( 0 );
+      break;
+   }
+
+
    switch( reg->DstRegister.File ) {
    case TGSI_FILE_OUTPUT:
       emit_output(
@@ -1387,19 +1414,6 @@ emit_store(
 
    default:
       assert( 0 );
-   }
-
-   switch( inst->Instruction.Saturate ) {
-   case TGSI_SAT_NONE:
-      break;
-
-   case TGSI_SAT_ZERO_ONE:
-      /* assert( 0 ); */
-      break;
-
-   case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
-      break;
    }
 }
 
@@ -1747,14 +1761,6 @@ emit_instruction(
    if (indirect_temp_reference(inst))
       return FALSE;
 
-   /* we don't handle saturation/clamping yet */
-   if (inst->Instruction.Saturate != TGSI_SAT_NONE)
-      return FALSE;
-
-   /* need to use extra temps to fix SOA dependencies : */
-   if (tgsi_check_soa_dependencies(inst))
-      return FALSE;
-
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -1768,8 +1774,10 @@ emit_instruction(
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( func, *inst, 0, 0, chan_index );
-         STORE( func, *inst, 0, 0, chan_index );
+         FETCH( func, *inst, 4 + chan_index, 0, chan_index );
+      }
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 4 + chan_index, 0, chan_index );
       }
       break;
 
@@ -2929,6 +2937,22 @@ tgsi_emit_sse2(
                          parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
                          "vertex shader" : "fragment shader");
 	 }
+
+         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
+            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+
+            /* XXX: we only handle src/dst aliasing in a few opcodes
+             * currently.  Need to use an additional temporay to hold
+             * the result in the cases where the code is too opaque to
+             * fix.
+             */
+            if (opcode != TGSI_OPCODE_MOV &&
+                opcode != TGSI_OPCODE_SWZ) {
+               debug_printf("Warning: src/dst aliasing in instruction"
+                            " is not handled:\n");
+               tgsi_dump_instruction(&parse.FullToken.FullInstruction, 1);
+            }
+         }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:

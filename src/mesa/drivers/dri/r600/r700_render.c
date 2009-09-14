@@ -319,14 +319,13 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
-    struct r700_vertex_program *vpc
-        = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    struct r700_vertex_program *vp = context->selected_vp;
     struct vertex_buffer *vb = &tnl->vb;
     GLboolean flushed;
     GLuint dwords, i;
     GLuint state_size;
     /* pre calculate aos count so state prediction works */
-    context->radeon.tcl.aos_count = _mesa_bitcount(vpc->mesa_program.Base.InputsRead);
+    context->radeon.tcl.aos_count = _mesa_bitcount(vp->mesa_program->Base.InputsRead);
 
     dwords = PRE_EMIT_STATE_BUFSZ;
     for (i = 0; i < vb->PrimitiveCount; i++)
@@ -365,7 +364,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* mark vtx as dirty since it changes per-draw */
     R600_STATECHANGE(context, vtx);
 
-    r700UpdateShaders(ctx);
     r700SetScissor(context);
     r700SetupVertexProgram(ctx);
     r700SetupFragmentProgram(ctx);
@@ -427,7 +425,10 @@ static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
 
     /* TODO : sw fallback */
 
+    /* Need shader bo's setup before bo check */
+    r700UpdateShaders(ctx);
     /**
+
     * Ensure all enabled and complete textures are uploaded along with any buffers being used.
     */
     if(!r600ValidateBuffers(ctx))

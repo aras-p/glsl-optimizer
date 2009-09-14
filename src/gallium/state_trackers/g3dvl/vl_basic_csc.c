@@ -425,7 +425,7 @@ static int vlCreateVertexShader
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst4(TGSI_OPCODE_MADD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
+		inst = vl_inst4(TGSI_OPCODE_MAD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 

@@ -12,8 +12,9 @@ drivers = [
     trace,
 ]
 
-env.SharedLibrary(
+env.LoadableModule(
     target ='i915_dri.so',
     source = COMMON_GALLIUM_SOURCES,
     LIBS = drivers + mesa + auxiliaries + env['LIBS'],
+    SHLIBPREFIX = '',
 )

@@ -182,7 +182,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.6-devel
+VERSION=7.7-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -325,6 +325,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*.csv				\
 	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\

@@ -25,13 +25,15 @@
  * 
  **************************************************************************/
 
-#include <stdlib.h>
 
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
+#include "tnl/tnl.h"
+#include "vbo/vbo_context.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -41,11 +43,6 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-
-#include "tnl/tnl.h"
-#include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
@@ -145,7 +142,7 @@ static void brw_emit_prim(struct brw_context *brw,
       prim_packet.start_vert_location += brw->ib.start_vertex_offset;
    prim_packet.instance_count = 1;
    prim_packet.start_instance_location = 0;
-   prim_packet.base_vert_location = 0;
+   prim_packet.base_vert_location = prim->basevertex;
 
    /* Can't wrap here, since we rely on the validated state. */
    brw->no_batch_wrap = GL_TRUE;
@@ -187,6 +184,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].glarray = arrays[i];
+      brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
 
       if (arrays[i]->StrideB != 0)
 	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<

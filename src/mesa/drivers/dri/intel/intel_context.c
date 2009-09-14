@@ -162,6 +162,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_G41_G:
          chipset = "Intel(R) G41";
          break;
+      case PCI_CHIP_B43_G:
+         chipset = "Intel(R) B43";
+         break;
       case PCI_CHIP_ILD_G:
          chipset = "Intel(R) IGDNG_D";
          break;
@@ -641,10 +644,6 @@ intelInitContext(struct intel_context *intel,
       intel->maxBatchSize = BATCH_SZ;
 
    intel->bufmgr = intelScreen->bufmgr;
-
-   if (0) /* for debug */
-      drm_intel_bufmgr_set_debug(intel->bufmgr, 1);
-
    intel->ttm = intelScreen->ttm;
    if (intel->ttm) {
       int bo_reuse_mode;

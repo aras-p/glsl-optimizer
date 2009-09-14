@@ -40,7 +40,7 @@ extern "C" {
  */
 boolean
 tgsi_sanity_check(
-   struct tgsi_token *tokens );
+   const struct tgsi_token *tokens );
 
 #if defined __cplusplus
 }

@@ -241,41 +241,38 @@ create_vs(struct pipe_context *pipe,
    boolean is_fill = vs_traits & VS_FILL;
    boolean is_composite = vs_traits & VS_COMPOSITE;
    boolean has_mask = vs_traits & VS_MASK;
+   unsigned input_slot = 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (ureg == NULL)
       return 0;
 
-   const0 = ureg_DECL_constant(ureg);
-   const1 = ureg_DECL_constant(ureg);
+   const0 = ureg_DECL_constant(ureg, 0);
+   const1 = ureg_DECL_constant(ureg, 1);
 
    /* it has to be either a fill or a composite op */
    debug_assert(is_fill ^ is_composite);
 
-   src = ureg_DECL_vs_input(ureg,
-                            TGSI_SEMANTIC_POSITION, 0);
+   src = ureg_DECL_vs_input(ureg, input_slot++);
    dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
    src = vs_normalize_coords(ureg, src,
                              const0, const1);
    ureg_MOV(ureg, dst, src);
 
-
    if (is_composite) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_GENERIC, 1);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
       ureg_MOV(ureg, dst, src);
    }
+
    if (is_fill) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_COLOR, 1);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 1);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
       ureg_MOV(ureg, dst, src);
    }
 
    if (has_mask) {
-      src = ureg_DECL_vs_input(ureg,
-                               TGSI_SEMANTIC_GENERIC, 2);
+      src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
       ureg_MOV(ureg, dst, src);
    }
@@ -318,8 +315,8 @@ create_fs(struct pipe_context *pipe,
                                      TGSI_SEMANTIC_POSITION,
                                      0,
                                      TGSI_INTERPOLATE_PERSPECTIVE);
-   }
-   if (is_fill) {
+   } else {
+      debug_assert(is_fill);
       if (is_solid)
          src_input = ureg_DECL_fs_input(ureg,
                                         TGSI_SEMANTIC_COLOR,
@@ -473,9 +470,9 @@ struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
    struct xorg_shader shader = {0};
    void *vs, *fs;
 
-   vs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_VERTEX,
+   vs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_VERTEX,
                           sc->vs_hash, vs_traits);
-   fs = shader_from_cache(sc->exa->ctx, PIPE_SHADER_FRAGMENT,
+   fs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_FRAGMENT,
                           sc->fs_hash, fs_traits);
 
    debug_assert(vs && fs);

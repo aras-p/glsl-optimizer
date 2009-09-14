@@ -179,12 +179,13 @@ lp_build_depth_test(LLVMBuilderRef builder,
       padding_right = 0;
       for(chan = 0; chan < z_swizzle; ++chan)
          padding_right += format_desc->channel[chan].size;
-      padding_left = format_desc->block.bits - format_desc->channel[z_swizzle].size;
+      padding_left = format_desc->block.bits -
+                     (padding_right + format_desc->channel[z_swizzle].size);
 
       if(padding_left || padding_right) {
-         const long long mask_left = ((long long)1 << (format_desc->block.bits - padding_left)) - 1;
-         const long long mask_right = ((long long)1 << (padding_right)) - 1;
-         z_bitmask = lp_build_int_const_scalar(type, mask_left & mask_right);
+         const unsigned long long mask_left = ((unsigned long long)1 << (format_desc->block.bits - padding_left)) - 1;
+         const unsigned long long mask_right = ((unsigned long long)1 << (padding_right)) - 1;
+         z_bitmask = lp_build_int_const_scalar(type, mask_left ^ mask_right);
       }
 
       if(padding_left)
@@ -210,5 +211,6 @@ lp_build_depth_test(LLVMBuilderRef builder,
       LLVMBuildStore(builder, dst, dst_ptr);
    }
 
+   /* FIXME */
    assert(!state->occlusion_count);
 }

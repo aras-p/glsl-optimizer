@@ -14,7 +14,7 @@ struct xorg_shaders;
 struct exa_context
 {
    ExaDriverPtr pExa;
-   struct pipe_context *ctx;
+   struct pipe_context *pipe;
    struct pipe_screen *scrn;
    struct cso_context *cso;
    struct xorg_shaders *shaders;
@@ -26,6 +26,12 @@ struct exa_context
    int num_bound_samplers;
 
    float solid_color[4];
+   boolean has_solid_color;
+
+   struct {
+      struct exa_pixmap_priv *src;
+      struct exa_pixmap_priv *dst;
+   } copy;
 };
 
 
@@ -36,8 +42,6 @@ struct exa_pixmap_priv
 
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;
-   unsigned int color;
-   struct pipe_surface *src_surf; /* for copies */
 
    struct pipe_transfer *map_transfer;
    unsigned map_count;
@@ -46,5 +50,8 @@ struct exa_pixmap_priv
 struct pipe_surface *
 exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv);
 
+void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
+                    struct pipe_fence_handle **fence);
+void xorg_exa_finish(struct exa_context *exa);
 
 #endif

@@ -67,7 +67,8 @@ static GLvector4f *ref_cliptest_points4( GLvector4f *clip_vec,
 					 GLvector4f *proj_vec,
 					 GLubyte clipMask[],
 					 GLubyte *orMask,
-					 GLubyte *andMask )
+					 GLubyte *andMask,
+					 GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -87,8 +88,10 @@ static GLvector4f *ref_cliptest_points4( GLvector4f *clip_vec,
       if (  cx + cw < 0 ) mask |= CLIP_LEFT_BIT;
       if ( -cy + cw < 0 ) mask |= CLIP_TOP_BIT;
       if (  cy + cw < 0 ) mask |= CLIP_BOTTOM_BIT;
-      if ( -cz + cw < 0 ) mask |= CLIP_FAR_BIT;
-      if (  cz + cw < 0 ) mask |= CLIP_NEAR_BIT;
+      if (viewport_z_clip) {
+	 if ( -cz + cw < 0 ) mask |= CLIP_FAR_BIT;
+	 if (  cz + cw < 0 ) mask |= CLIP_NEAR_BIT;
+      }
       clipMask[i] = mask;
       if ( mask ) {
 	 c++;
@@ -122,7 +125,8 @@ static GLvector4f *ref_cliptest_points3( GLvector4f *clip_vec,
 					 GLvector4f *proj_vec,
 					 GLubyte clipMask[],
 					 GLubyte *orMask,
-					 GLubyte *andMask )
+					 GLubyte *andMask,
+                                         GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -138,8 +142,10 @@ static GLvector4f *ref_cliptest_points3( GLvector4f *clip_vec,
       else if ( cx < -1.0 )	mask |= CLIP_LEFT_BIT;
       if ( cy >  1.0 )		mask |= CLIP_TOP_BIT;
       else if ( cy < -1.0 )	mask |= CLIP_BOTTOM_BIT;
-      if ( cz >  1.0 )		mask |= CLIP_FAR_BIT;
-      else if ( cz < -1.0 )	mask |= CLIP_NEAR_BIT;
+      if (viewport_z_clip) {
+         if ( cz >  1.0 )		mask |= CLIP_FAR_BIT;
+         else if ( cz < -1.0 )	mask |= CLIP_NEAR_BIT;
+      }
       clipMask[i] = mask;
       tmpOrMask |= mask;
       tmpAndMask &= mask;
@@ -154,7 +160,8 @@ static GLvector4f * ref_cliptest_points2( GLvector4f *clip_vec,
 					  GLvector4f *proj_vec,
 					  GLubyte clipMask[],
 					  GLubyte *orMask,
-					  GLubyte *andMask )
+					  GLubyte *andMask,
+                                          GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -163,6 +170,9 @@ static GLvector4f * ref_cliptest_points2( GLvector4f *clip_vec,
    GLubyte tmpOrMask = *orMask;
    GLubyte tmpAndMask = *andMask;
    GLuint i;
+
+   (void) viewport_z_clip;
+
    for ( i = 0 ; i < count ; i++, STRIDE_F(from, stride) ) {
       const GLfloat cx = from[0], cy = from[1];
       GLubyte mask = 0;
@@ -208,6 +218,7 @@ static int test_cliptest_function( clip_func func, int np,
 #ifdef  RUN_DEBUG_BENCHMARK
    int cycle_i;                /* the counter for the benchmarks we run */
 #endif
+   GLboolean viewport_z_clip = GL_TRUE;
 
    (void) cycles;
 
@@ -247,15 +258,15 @@ static int test_cliptest_function( clip_func func, int np,
    dco = rco = 0;
    dca = rca = CLIP_FRUSTUM_BITS;
 
-   ref_cliptest[psize]( source, ref, rm, &rco, &rca );
+   ref_cliptest[psize]( source, ref, rm, &rco, &rca, viewport_z_clip );
 
    if ( mesa_profile ) {
       BEGIN_RACE( *cycles );
-      func( source, dest, dm, &dco, &dca );
+      func( source, dest, dm, &dco, &dca, viewport_z_clip );
       END_RACE( *cycles );
    }
    else {
-      func( source, dest, dm, &dco, &dca );
+      func( source, dest, dm, &dco, &dca, viewport_z_clip );
    }
 
    if ( dco != rco ) {

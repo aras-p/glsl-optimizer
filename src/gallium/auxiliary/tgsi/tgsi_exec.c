@@ -2756,19 +2756,32 @@ exec_instruction(
       if (mach->ExecMask) {
          /* do the call */
 
-         /* push the Cond, Loop, Cont stacks */
+         /* First, record the depths of the execution stacks.
+          * This is important for deeply nested/looped return statements.
+          * We have to unwind the stacks by the correct amount.  For a
+          * real code generator, we could determine the number of entries
+          * to pop off each stack with simple static analysis and avoid
+          * implementing this data structure at run time.
+          */
+         mach->CallStack[mach->CallStackTop].CondStackTop = mach->CondStackTop;
+         mach->CallStack[mach->CallStackTop].LoopStackTop = mach->LoopStackTop;
+         mach->CallStack[mach->CallStackTop].ContStackTop = mach->ContStackTop;
+         /* note that PC was already incremented above */
+         mach->CallStack[mach->CallStackTop].ReturnAddr = *pc;
+
+         mach->CallStackTop++;
+
+         /* Second, push the Cond, Loop, Cont, Func stacks */
          assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
          mach->CondStack[mach->CondStackTop++] = mach->CondMask;
          assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
          assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->ContStack[mach->ContStackTop++] = mach->ContMask;
-
          assert(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
          mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
 
-         /* note that PC was already incremented above */
-         mach->CallStack[mach->CallStackTop++] = *pc;
+         /* Finally, jump to the subroutine */
          *pc = inst->InstructionExtLabel.Label;
       }
       break;
@@ -2785,17 +2798,23 @@ exec_instruction(
             *pc = -1;
             return;
          }
-         *pc = mach->CallStack[--mach->CallStackTop];
 
-         /* pop the Cond, Loop, Cont stacks */
-         assert(mach->CondStackTop > 0);
-         mach->CondMask = mach->CondStack[--mach->CondStackTop];
-         assert(mach->LoopStackTop > 0);
-         mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-         assert(mach->ContStackTop > 0);
-         mach->ContMask = mach->ContStack[--mach->ContStackTop];
+         assert(mach->CallStackTop > 0);
+         mach->CallStackTop--;
+
+         mach->CondStackTop = mach->CallStack[mach->CallStackTop].CondStackTop;
+         mach->CondMask = mach->CondStack[mach->CondStackTop];
+
+         mach->LoopStackTop = mach->CallStack[mach->CallStackTop].LoopStackTop;
+         mach->LoopMask = mach->LoopStack[mach->LoopStackTop];
+
+         mach->ContStackTop = mach->CallStack[mach->CallStackTop].ContStackTop;
+         mach->ContMask = mach->ContStack[mach->ContStackTop];
+
          assert(mach->FuncStackTop > 0);
          mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
+
+         *pc = mach->CallStack[mach->CallStackTop].ReturnAddr;
 
          UPDATE_EXEC_MASK(mach);
       }
@@ -3245,7 +3264,6 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
-   mach->CondStackTop = 0; /* temporarily subvert this assertion */
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);

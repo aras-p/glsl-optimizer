@@ -545,15 +545,20 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 		       irb->texformat->MesaFormat);
       }
       key.tiling = region->tiling;
-      key.width = region->width;
-      key.height = region->height;
+      if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
+	 key.width = rb->Width;
+	 key.height = rb->Height;
+      } else {
+	 key.width = region->width;
+	 key.height = region->height;
+      }
       key.pitch = region->pitch;
       key.cpp = region->cpp;
       key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      key.tiling = 0;
+      key.tiling = I915_TILING_X;
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
@@ -629,7 +634,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 drm_intel_bo_emit_reloc(brw->wm.surf_bo[unit],
 				 offsetof(struct brw_surface_state, ss1),
 				 region_bo,
-				 surf.ss1.base_addr,
+				 surf.ss1.base_addr - region_bo->offset,
 				 I915_GEM_DOMAIN_RENDER,
 				 I915_GEM_DOMAIN_RENDER);
       }

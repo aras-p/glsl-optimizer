@@ -173,8 +173,6 @@ convert_sat(
       return TGSI_SAT_NONE;
    case SATURATE_ZERO_ONE:
       return TGSI_SAT_ZERO_ONE;
-   case SATURATE_PLUS_MINUS_ONE:
-      return TGSI_SAT_MINUS_PLUS_ONE;
    default:
       assert( 0 );
       return TGSI_SAT_NONE;

@@ -58,7 +58,8 @@ clip_table:
 	.byte	31, 29, 31, 30, 27, 25, 27, 26
 
 /* GLvector4f *clip_vec, GLvector4f *proj_vec, 
-   GLubyte clipMask[], GLubyte *orMask, GLubyte *andMask */
+   GLubyte clipMask[], GLubyte *orMask, GLubyte *andMask,
+   GLboolean viewport_z_enable */
 
 	.align		64
 __pc_tramp:

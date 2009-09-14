@@ -248,6 +248,40 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
 
 
 /**
+ * Do we need to clamp the results of the given texture env/combine mode?
+ * If the inputs to the mode are in [0,1] we don't always have to clamp
+ * the results.
+ */
+static GLboolean
+need_saturate( GLuint mode )
+{
+   switch (mode) {
+   case MODE_REPLACE:
+   case MODE_MODULATE:
+   case MODE_INTERPOLATE:
+      return GL_FALSE;
+   case MODE_ADD:
+   case MODE_ADD_SIGNED:
+   case MODE_SUBTRACT:
+   case MODE_DOT3_RGB:
+   case MODE_DOT3_RGB_EXT:
+   case MODE_DOT3_RGBA:
+   case MODE_DOT3_RGBA_EXT:
+   case MODE_MODULATE_ADD_ATI:
+   case MODE_MODULATE_SIGNED_ADD_ATI:
+   case MODE_MODULATE_SUBTRACT_ATI:
+   case MODE_ADD_PRODUCTS:
+   case MODE_ADD_PRODUCTS_SIGNED:
+   case MODE_BUMP_ENVMAP_ATI:
+      return GL_TRUE;
+   default:
+      assert(0);
+   }
+}
+
+
+
+/**
  * Translate TEXTURE_x_BIT to TEXTURE_x_INDEX.
  */
 static GLuint translate_tex_src_bit( GLbitfield bit )
@@ -1116,7 +1150,7 @@ static struct ureg
 emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 {
    const struct state_key *key = p->state;
-   GLboolean saturate;
+   GLboolean rgb_saturate, alpha_saturate;
    GLuint rgb_shift, alpha_shift;
    struct ureg out, dest;
 
@@ -1146,7 +1180,19 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    /* If we'll do rgb/alpha shifting don't saturate in emit_combine().
     * We don't want to clamp twice.
     */
-   saturate = !(rgb_shift || alpha_shift);
+   if (rgb_shift)
+      rgb_saturate = GL_FALSE;  /* saturate after rgb shift */
+   else if (need_saturate(key->unit[unit].ModeRGB))
+      rgb_saturate = GL_TRUE;
+   else
+      rgb_saturate = GL_FALSE;
+
+   if (alpha_shift)
+      alpha_saturate = GL_FALSE;  /* saturate after alpha shift */
+   else if (need_saturate(key->unit[unit].ModeA))
+      alpha_saturate = GL_TRUE;
+   else
+      alpha_saturate = GL_FALSE;
 
    /* If this is the very last calculation, emit direct to output reg:
     */
@@ -1162,7 +1208,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
     */
    if (key->unit[unit].ModeRGB == key->unit[unit].ModeA &&
        args_match(key, unit)) {
-      out = emit_combine( p, dest, WRITEMASK_XYZW, saturate,
+      out = emit_combine( p, dest, WRITEMASK_XYZW, rgb_saturate,
 			  unit,
 			  key->unit[unit].NumArgsRGB,
 			  key->unit[unit].ModeRGB,
@@ -1170,7 +1216,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    }
    else if (key->unit[unit].ModeRGB == MODE_DOT3_RGBA_EXT ||
 	    key->unit[unit].ModeRGB == MODE_DOT3_RGBA) {
-      out = emit_combine( p, dest, WRITEMASK_XYZW, saturate,
+      out = emit_combine( p, dest, WRITEMASK_XYZW, rgb_saturate,
 			  unit,
 			  key->unit[unit].NumArgsRGB,
 			  key->unit[unit].ModeRGB,
@@ -1180,12 +1226,12 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       /* Need to do something to stop from re-emitting identical
        * argument calculations here:
        */
-      out = emit_combine( p, dest, WRITEMASK_XYZ, saturate,
+      out = emit_combine( p, dest, WRITEMASK_XYZ, rgb_saturate,
 			  unit,
 			  key->unit[unit].NumArgsRGB,
 			  key->unit[unit].ModeRGB,
 			  key->unit[unit].OptRGB);
-      out = emit_combine( p, dest, WRITEMASK_W, saturate,
+      out = emit_combine( p, dest, WRITEMASK_W, alpha_saturate,
 			  unit,
 			  key->unit[unit].NumArgsA,
 			  key->unit[unit].ModeA,
@@ -1196,8 +1242,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
     */
    if (alpha_shift || rgb_shift) {
       struct ureg shift;
-
-      saturate = GL_TRUE;  /* always saturate at this point */
+      GLboolean saturate = GL_TRUE;  /* always saturate at this point */
 
       if (rgb_shift == alpha_shift) {
 	 shift = register_scalar_const(p, (GLfloat)(1<<rgb_shift));

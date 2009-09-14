@@ -44,7 +44,8 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
                                                      GLvector4f *proj_vec,
                                                      GLubyte clipMask[],
                                                      GLubyte *orMask,
-                                                     GLubyte *andMask )
+                                                     GLubyte *andMask,
+						     GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLfloat *from = (GLfloat *)clip_vec->start;
@@ -66,16 +67,20 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
       mask |= (((cw < -cx) << CLIP_LEFT_SHIFT));
       mask |= (((cw < cy) << CLIP_TOP_SHIFT));
       mask |= (((cw < -cy) << CLIP_BOTTOM_SHIFT));
-      mask |= (((cw < cz) << CLIP_FAR_SHIFT));
-      mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+      if (viewport_z_clip) {
+	 mask |= (((cw < cz) << CLIP_FAR_SHIFT));
+	 mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+      }
 #else /* !defined(macintosh)) */
       GLubyte mask = 0;
       if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
       if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
       if (-cy + cw < 0) mask |= CLIP_TOP_BIT;
       if ( cy + cw < 0) mask |= CLIP_BOTTOM_BIT;
-      if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
-      if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+      if (viewport_z_clip) {
+	 if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
+	 if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+      }
 #endif /* defined(macintosh) */
 
       clipMask[i] = mask;
@@ -119,7 +124,8 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 							GLvector4f *proj_vec,
 							GLubyte clipMask[],
 							GLubyte *orMask,
-							GLubyte *andMask )
+							GLubyte *andMask,
+							GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -141,16 +147,20 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
       mask |= (((cw < -cx) << CLIP_LEFT_SHIFT));
       mask |= (((cw < cy) << CLIP_TOP_SHIFT));
       mask |= (((cw < -cy) << CLIP_BOTTOM_SHIFT));
-      mask |= (((cw < cz) << CLIP_FAR_SHIFT));
-      mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+      if (viewport_z_clip) {
+	 mask |= (((cw < cz) << CLIP_FAR_SHIFT));
+	 mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+      }
 #else /* !defined(macintosh)) */
       GLubyte mask = 0;
       if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
       if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
       if (-cy + cw < 0) mask |= CLIP_TOP_BIT;
       if ( cy + cw < 0) mask |= CLIP_BOTTOM_BIT;
-      if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
-      if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+      if (viewport_z_clip) {
+	 if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
+	 if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+      }
 #endif /* defined(macintosh) */
 
       clipMask[i] = mask;
@@ -171,7 +181,8 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec,
                                                      GLvector4f *proj_vec,
                                                      GLubyte clipMask[],
                                                      GLubyte *orMask,
-                                                     GLubyte *andMask )
+                                                     GLubyte *andMask,
+						     GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -187,8 +198,10 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec,
       else if (cx < -1.0)  mask |= CLIP_LEFT_BIT;
       if (cy >  1.0)       mask |= CLIP_TOP_BIT;
       else if (cy < -1.0)  mask |= CLIP_BOTTOM_BIT;
-      if (cz >  1.0)       mask |= CLIP_FAR_BIT;
-      else if (cz < -1.0)  mask |= CLIP_NEAR_BIT;
+      if (viewport_z_clip) {
+	 if (cz >  1.0)       mask |= CLIP_FAR_BIT;
+	 else if (cz < -1.0)  mask |= CLIP_NEAR_BIT;
+      }
       clipMask[i] = mask;
       tmpOrMask |= mask;
       tmpAndMask &= mask;
@@ -204,7 +217,8 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec,
                                                      GLvector4f *proj_vec,
                                                      GLubyte clipMask[],
                                                      GLubyte *orMask,
-                                                     GLubyte *andMask )
+                                                     GLubyte *andMask,
+						     GLboolean viewport_z_clip )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -231,7 +245,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec,
 }
 
 
-static void TAG(init_c_cliptest)( void )
+void TAG(init_c_cliptest)( void )
 {
    _mesa_clip_tab[4] = TAG(cliptest_points4);
    _mesa_clip_tab[3] = TAG(cliptest_points3);

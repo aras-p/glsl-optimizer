@@ -44,15 +44,47 @@
 static void
 lp_jit_init_globals(struct llvmpipe_screen *screen)
 {
-   /* struct lp_jit_context */
+   LLVMTypeRef texture_type;
+
+   /* struct lp_jit_texture */
    {
       LLVMTypeRef elem_types[4];
+
+      elem_types[LP_JIT_TEXTURE_WIDTH]  = LLVMInt32Type();
+      elem_types[LP_JIT_TEXTURE_HEIGHT] = LLVMInt32Type();
+      elem_types[LP_JIT_TEXTURE_STRIDE] = LLVMInt32Type();
+      elem_types[LP_JIT_TEXTURE_DATA]   = LLVMPointerType(LLVMInt8Type(), 0);
+
+      texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
+
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, width,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_WIDTH);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, height,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_HEIGHT);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, stride,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_STRIDE);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, data,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_DATA);
+      LP_CHECK_STRUCT_SIZE(struct lp_jit_texture,
+                           screen->target, texture_type);
+
+      LLVMAddTypeName(screen->module, "texture", texture_type);
+   }
+
+   /* struct lp_jit_context */
+   {
+      LLVMTypeRef elem_types[5];
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* constants */
       elem_types[1] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
       elem_types[2] = LLVMFloatType();                     /* alpha_ref_value */
       elem_types[3] = LLVMPointerType(LLVMInt8Type(), 0);  /* blend_color */
+      elem_types[4] = LLVMArrayType(texture_type, PIPE_MAX_SAMPLERS); /* textures */
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
@@ -64,6 +96,9 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
                              screen->target, context_type, 2);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, blend_color,
                              screen->target, context_type, 3);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, textures,
+                             screen->target, context_type,
+                             LP_JIT_CONTEXT_TEXTURES_INDEX);
       LP_CHECK_STRUCT_SIZE(struct lp_jit_context,
                            screen->target, context_type);
 

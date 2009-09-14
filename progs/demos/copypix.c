@@ -26,6 +26,7 @@ static int Scissor = 0;
 static float Xzoom, Yzoom;
 static GLboolean DrawFront = GL_FALSE;
 static GLboolean Dither = GL_TRUE;
+static GLboolean Invert = GL_FALSE;
 
 
 static void Reset( void )
@@ -59,6 +60,15 @@ static void Display( void )
    if (Scissor)
       glEnable(GL_SCISSOR_TEST);
 
+   if (Invert) {
+      glPixelTransferf(GL_RED_SCALE, -1.0);
+      glPixelTransferf(GL_GREEN_SCALE, -1.0);
+      glPixelTransferf(GL_BLUE_SCALE, -1.0);
+      glPixelTransferf(GL_RED_BIAS, 1.0);
+      glPixelTransferf(GL_GREEN_BIAS, 1.0);
+      glPixelTransferf(GL_BLUE_BIAS, 1.0);
+   }
+
    /* draw copy */
    glPixelZoom(Xzoom, Yzoom);
    glWindowPos2iARB(Xpos, Ypos);
@@ -66,6 +76,15 @@ static void Display( void )
    glPixelZoom(1, 1);
 
    glDisable(GL_SCISSOR_TEST);
+
+   if (Invert) {
+      glPixelTransferf(GL_RED_SCALE, 1.0);
+      glPixelTransferf(GL_GREEN_SCALE, 1.0);
+      glPixelTransferf(GL_BLUE_SCALE, 1.0);
+      glPixelTransferf(GL_RED_BIAS, 0.0);
+      glPixelTransferf(GL_GREEN_BIAS, 0.0);
+      glPixelTransferf(GL_BLUE_BIAS, 0.0);
+   }
 
    if (DrawFront)
       glFinish();
@@ -104,6 +123,9 @@ static void Key( unsigned char key, int x, int y )
             glEnable(GL_DITHER);
          else
             glDisable(GL_DITHER);
+         break;
+      case 'i':
+         Invert = !Invert;
          break;
       case 's':
          Scissor = !Scissor;

@@ -131,13 +131,16 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
    store->ormask = 0;
    store->andmask = CLIP_FRUSTUM_BITS;
 
+   tnl_clip_prepare(ctx);
+
    if (tnl->NeedNdcCoords) {
       VB->NdcPtr =
          _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                             &store->ndcCoords,
                                             store->clipmask,
                                             &store->ormask,
-                                            &store->andmask );
+                                            &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
    else {
       VB->NdcPtr = NULL;
@@ -145,7 +148,8 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
                                             NULL,
                                             store->clipmask,
                                             &store->ormask,
-                                            &store->andmask );
+                                            &store->andmask,
+					    !ctx->Transform.DepthClamp );
    }
 
    if (store->andmask) {

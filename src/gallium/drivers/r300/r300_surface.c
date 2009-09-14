@@ -29,7 +29,7 @@ static void r300_surface_setup(struct r300_context* r300,
                                unsigned w, unsigned h)
 {
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
-    unsigned pixpitch = dest->stride / dest->tex.block.size;
+    unsigned pixpitch = r300_texture_get_stride(dest, 0) / dest->tex.block.size;
     CS_LOCALS(r300);
 
     r300_emit_blend_state(r300, &blend_clear_state);
@@ -100,7 +100,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
-    unsigned pixpitch = tex->stride / tex->tex.block.size;
+    unsigned pixpitch = r300_texture_get_stride(tex, 0) / tex->tex.block.size;
     boolean invalid = FALSE;
     CS_LOCALS(r300);
 
@@ -233,7 +233,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* srctex = (struct r300_texture*)src->texture;
     struct r300_texture* desttex = (struct r300_texture*)dest->texture;
-    unsigned pixpitch = srctex->stride / srctex->tex.block.size;
+    unsigned pixpitch = r300_texture_get_stride(srctex, 0) / srctex->tex.block.size;
     boolean invalid = FALSE;
     float fsrcx = srcx, fsrcy = srcy, fdestx = destx, fdesty = desty;
     CS_LOCALS(r300);

@@ -30,7 +30,11 @@
 #include "r300_context.h"
 #include "r300_reg.h"
 
+struct r300_texture;
+
 void r300_init_screen_texture_functions(struct pipe_screen* screen);
+
+unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level);
 
 /* Note the signature of R300_EASY_TX_FORMAT(A, R, G, B, FORMAT)... */
 static INLINE uint32_t r300_translate_texformat(enum pipe_format format)

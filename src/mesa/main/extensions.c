@@ -47,7 +47,9 @@ static const struct {
 } default_extensions[] = {
    { OFF, "GL_ARB_copy_buffer",                F(ARB_copy_buffer) },
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
+   { OFF, "GL_ARB_depth_clamp",                F(ARB_depth_clamp) },
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
+   { OFF, "GL_ARB_draw_elements_base_vertex",  F(ARB_draw_elements_base_vertex) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_fragment_program_shadow",    F(ARB_fragment_program_shadow) },
    { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
@@ -162,6 +164,7 @@ static const struct {
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
+   { OFF, "GL_NV_depth_clamp",                 F(ARB_depth_clamp) },
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
@@ -192,8 +195,10 @@ void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_copy_buffer = GL_TRUE;
+   ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    /*ctx->Extensions.ARB_draw_buffers = GL_TRUE;*/
+   ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;
 #if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
