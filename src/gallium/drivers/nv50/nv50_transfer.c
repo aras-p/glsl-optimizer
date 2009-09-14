@@ -89,14 +89,14 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		if (src_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf,
 				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_IN, 1);
-			OUT_RING  (chan, (sy << 16) | sx);
+			OUT_RING  (chan, (sy << 16) | (sx * cpp));
 		} else {
 			src_offset += (line_count * src_pitch);
 		}
 		if (dst_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf,
 				NV50_MEMORY_TO_MEMORY_FORMAT_TILING_POSITION_OUT, 1);
-			OUT_RING  (chan, (dy << 16) | dx);
+			OUT_RING  (chan, (dy << 16) | (dx * cpp));
 		} else {
 			dst_offset += (line_count * dst_pitch);
 		}
