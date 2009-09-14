@@ -1366,6 +1366,7 @@ enum {
 	DB_DEPTH_INFO__READ_SIZE_bit                      = 1 << 3,
 	DB_DEPTH_INFO__ARRAY_MODE_mask                    = 0x0f << 15,
 	DB_DEPTH_INFO__ARRAY_MODE_shift                   = 15,
+	    ARRAY_1D_TILED_THIN1                          = 0x02,
 	    ARRAY_2D_TILED_THIN1                          = 0x04,
 	TILE_SURFACE_ENABLE_bit                           = 1 << 25,
 	TILE_COMPACT_bit                                  = 1 << 26,
@@ -1449,6 +1450,7 @@ enum {
 	CB_COLOR0_INFO__ARRAY_MODE_shift                  = 8,
 	    ARRAY_LINEAR_GENERAL                          = 0x00,
 	    ARRAY_LINEAR_ALIGNED                          = 0x01,
+/*	    ARRAY_1D_TILED_THIN1                          = 0x02, */
 /* 	    ARRAY_2D_TILED_THIN1                          = 0x04, */
 	NUMBER_TYPE_mask                                  = 0x07 << 12,
 	NUMBER_TYPE_shift                                 = 12,
