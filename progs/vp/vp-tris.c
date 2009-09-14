@@ -119,6 +119,12 @@ static void Init( void )
       glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
       glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
 		        sz, (const GLubyte *) buf);
+      if (glGetError()) {
+         printf("Program failed to compile:\n%s\n", buf);
+         printf("Error: %s\n",
+                (char *) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+         exit(1);
+      }
       assert(glIsProgramARB(prognum));
    }
 
