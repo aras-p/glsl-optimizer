@@ -25,48 +25,22 @@
  * 
  **************************************************************************/
 
-#ifndef SL_PP_CONTEXT_H
-#define SL_PP_CONTEXT_H
+#ifndef SL_PP_DICT_H
+#define SL_PP_DICT_H
 
-#include "sl_pp_dict.h"
-#include "sl_pp_macro.h"
+struct sl_pp_dict {
+   int all;
+   int _GL_ARB_draw_buffers;
+   int _GL_ARB_texture_rectangle;
 
-
-#define SL_PP_MAX_IF_NESTING  64
-
-#define SL_PP_MAX_ERROR_MSG   1024
-
-struct sl_pp_context {
-   char *cstr_pool;
-   unsigned int cstr_pool_max;
-   unsigned int cstr_pool_len;
-   struct sl_pp_dict dict;
-
-   struct sl_pp_macro *macro;
-   struct sl_pp_macro **macro_tail;
-
-   unsigned int if_stack[SL_PP_MAX_IF_NESTING];
-   unsigned int if_ptr;
-   int if_value;
-
-   char error_msg[SL_PP_MAX_ERROR_MSG];
-
-   unsigned int line;
-   unsigned int file;
+   int require;
+   int enable;
+   int warn;
+   int disable;
 };
 
-int
-sl_pp_context_init(struct sl_pp_context *context);
-
-void
-sl_pp_context_destroy(struct sl_pp_context *context);
 
 int
-sl_pp_context_add_unique_str(struct sl_pp_context *context,
-                             const char *str);
+sl_pp_dict_init(struct sl_pp_context *context);
 
-const char *
-sl_pp_context_cstr(const struct sl_pp_context *context,
-                   int offset);
-
-#endif /* SL_PP_CONTEXT_H */
+#endif /* SL_PP_DICT_H */

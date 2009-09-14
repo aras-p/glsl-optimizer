@@ -10,6 +10,7 @@ glsl = env.StaticLibrary(
     source = [
         'sl_pp_context.c',
         'sl_pp_define.c',
+        'sl_pp_dict.c',
         'sl_pp_error.c',
         'sl_pp_expression.c',
         'sl_pp_extension.c',
