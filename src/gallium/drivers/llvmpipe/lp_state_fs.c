@@ -133,13 +133,13 @@ generate_pos0(LLVMBuilderRef builder,
 static void
 generate_depth(LLVMBuilderRef builder,
                const struct lp_fragment_shader_variant_key *key,
-               union lp_type src_type,
+               struct lp_type src_type,
                struct lp_build_mask_context *mask,
                LLVMValueRef src,
                LLVMValueRef dst_ptr)
 {
    const struct util_format_description *format_desc;
-   union lp_type dst_type;
+   struct lp_type dst_type;
 
    if(!key->depth.enabled)
       return;
@@ -181,7 +181,7 @@ generate_fs(struct llvmpipe_context *lp,
             struct lp_fragment_shader *shader,
             const struct lp_fragment_shader_variant_key *key,
             LLVMBuilderRef builder,
-            union lp_type type,
+            struct lp_type type,
             LLVMValueRef context_ptr,
             unsigned i,
             const struct lp_build_interp_soa_context *interp,
@@ -299,7 +299,7 @@ generate_fs(struct llvmpipe_context *lp,
 static void
 generate_blend(const struct pipe_blend_state *blend,
                LLVMBuilderRef builder,
-               union lp_type type,
+               struct lp_type type,
                LLVMValueRef context_ptr,
                LLVMValueRef mask,
                LLVMValueRef *src,
@@ -364,8 +364,8 @@ generate_fragment(struct llvmpipe_context *lp,
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    struct lp_fragment_shader_variant *variant;
-   union lp_type fs_type;
-   union lp_type blend_type;
+   struct lp_type fs_type;
+   struct lp_type blend_type;
    LLVMTypeRef fs_elem_type;
    LLVMTypeRef fs_vec_type;
    LLVMTypeRef fs_int_vec_type;
@@ -431,7 +431,7 @@ generate_fragment(struct llvmpipe_context *lp,
    /* TODO: actually pick these based on the fs and color buffer
     * characteristics. */
 
-   fs_type.value = 0;
+   memset(&fs_type, 0, sizeof fs_type);
    fs_type.floating = TRUE; /* floating point values */
    fs_type.sign = TRUE;     /* values are signed */
    fs_type.norm = FALSE;    /* values are not limited to [0,1] or [-1,1] */
@@ -439,7 +439,7 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_type.length = 4;      /* 4 element per vector */
    num_fs = 4;
 
-   blend_type.value = 0;
+   memset(&blend_type, 0, sizeof blend_type);
    blend_type.floating = FALSE; /* values are integers */
    blend_type.sign = FALSE;     /* values are unsigned */
    blend_type.norm = TRUE;      /* values are in [0,1] or [-1,1] */

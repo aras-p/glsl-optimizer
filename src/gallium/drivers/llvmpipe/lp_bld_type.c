@@ -33,7 +33,7 @@
 
 
 LLVMTypeRef
-lp_build_elem_type(union lp_type type)
+lp_build_elem_type(struct lp_type type)
 {
    if (type.floating) {
       switch(type.width) {
@@ -55,7 +55,7 @@ lp_build_elem_type(union lp_type type)
 
 
 LLVMTypeRef
-lp_build_vec_type(union lp_type type)
+lp_build_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_elem_type(type);
    return LLVMVectorType(elem_type, type.length);
@@ -69,7 +69,7 @@ lp_build_vec_type(union lp_type type)
  * type and check for identity.
  */
 boolean
-lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type) 
+lp_check_elem_type(struct lp_type type, LLVMTypeRef elem_type) 
 {
    LLVMTypeKind elem_kind;
 
@@ -107,7 +107,7 @@ lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type)
 
 
 boolean
-lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type) 
+lp_check_vec_type(struct lp_type type, LLVMTypeRef vec_type) 
 {
    LLVMTypeRef elem_type;
 
@@ -128,7 +128,7 @@ lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type)
 
 
 boolean
-lp_check_value(union lp_type type, LLVMValueRef val) 
+lp_check_value(struct lp_type type, LLVMValueRef val) 
 {
    LLVMTypeRef vec_type;
 
@@ -143,25 +143,26 @@ lp_check_value(union lp_type type, LLVMValueRef val)
 
 
 LLVMTypeRef
-lp_build_int_elem_type(union lp_type type)
+lp_build_int_elem_type(struct lp_type type)
 {
    return LLVMIntType(type.width);
 }
 
 
 LLVMTypeRef
-lp_build_int_vec_type(union lp_type type)
+lp_build_int_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
    return LLVMVectorType(elem_type, type.length);
 }
 
 
-union lp_type
-lp_int_type(union lp_type type)
+struct lp_type
+lp_int_type(struct lp_type type)
 {
-   union lp_type int_type;
-   int_type.value = 0;
+   struct lp_type int_type;
+
+   memset(&int_type, 0, sizeof int_type);
    int_type.width = type.width;
    int_type.length = type.length;
    return int_type;
@@ -171,7 +172,7 @@ lp_int_type(union lp_type type)
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
-                      union lp_type type)
+                      struct lp_type type)
 {
    bld->builder = builder;
    bld->type = type;

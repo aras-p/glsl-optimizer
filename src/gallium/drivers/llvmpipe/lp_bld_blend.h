@@ -46,7 +46,7 @@
 
 
 struct pipe_blend_state;
-union lp_type;
+struct lp_type;
 struct lp_build_context;
 
 
@@ -74,7 +74,7 @@ lp_build_blend_func(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_blend_aos(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
-                   union lp_type type,
+                   struct lp_type type,
                    LLVMValueRef src,
                    LLVMValueRef dst,
                    LLVMValueRef const_,
@@ -84,7 +84,7 @@ lp_build_blend_aos(LLVMBuilderRef builder,
 void
 lp_build_blend_soa(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
-                   union lp_type type,
+                   struct lp_type type,
                    LLVMValueRef src[4],
                    LLVMValueRef dst[4],
                    LLVMValueRef const_[4],

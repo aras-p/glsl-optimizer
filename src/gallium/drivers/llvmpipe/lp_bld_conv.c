@@ -86,7 +86,7 @@
  */
 LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
-                                        union lp_type src_type,
+                                        struct lp_type src_type,
                                         unsigned dst_width,
                                         LLVMValueRef src)
 {
@@ -152,7 +152,7 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
 LLVMValueRef
 lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
                                 unsigned src_width,
-                                union lp_type dst_type,
+                                struct lp_type dst_type,
                                 LLVMValueRef src)
 {
    LLVMTypeRef vec_type = lp_build_vec_type(dst_type);
@@ -248,8 +248,8 @@ lp_build_const_pack_shuffle(unsigned n)
  */
 static void
 lp_build_expand(LLVMBuilderRef builder,
-               union lp_type src_type,
-               union lp_type dst_type,
+               struct lp_type src_type,
+               struct lp_type dst_type,
                LLVMValueRef src,
                LLVMValueRef *dst, unsigned num_dsts)
 {
@@ -266,7 +266,7 @@ lp_build_expand(LLVMBuilderRef builder,
    dst[0] = src;
 
    while(src_type.width < dst_type.width) {
-      union lp_type new_type = src_type;
+      struct lp_type new_type = src_type;
       LLVMTypeRef new_vec_type;
 
       new_type.width *= 2;
@@ -314,8 +314,8 @@ lp_build_expand(LLVMBuilderRef builder,
  */
 static LLVMValueRef
 lp_build_pack2(LLVMBuilderRef builder,
-               union lp_type src_type,
-               union lp_type dst_type,
+               struct lp_type src_type,
+               struct lp_type dst_type,
                boolean clamped,
                LLVMValueRef lo,
                LLVMValueRef hi)
@@ -392,8 +392,8 @@ lp_build_pack2(LLVMBuilderRef builder,
  */
 static LLVMValueRef
 lp_build_pack(LLVMBuilderRef builder,
-              union lp_type src_type,
-              union lp_type dst_type,
+              struct lp_type src_type,
+              struct lp_type dst_type,
               boolean clamped,
               const LLVMValueRef *src, unsigned num_srcs)
 {
@@ -410,7 +410,7 @@ lp_build_pack(LLVMBuilderRef builder,
       tmp[i] = src[i];
 
    while(src_type.width > dst_type.width) {
-      union lp_type new_type = src_type;
+      struct lp_type new_type = src_type;
 
       new_type.width /= 2;
       new_type.length *= 2;
@@ -442,12 +442,12 @@ lp_build_pack(LLVMBuilderRef builder,
  */
 void
 lp_build_conv(LLVMBuilderRef builder,
-              union lp_type src_type,
-              union lp_type dst_type,
+              struct lp_type src_type,
+              struct lp_type dst_type,
               const LLVMValueRef *src, unsigned num_srcs,
               LLVMValueRef *dst, unsigned num_dsts)
 {
-   union lp_type tmp_type;
+   struct lp_type tmp_type;
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned num_tmps;
    unsigned i;
@@ -470,7 +470,7 @@ lp_build_conv(LLVMBuilderRef builder,
     * Clamp if necessary
     */
 
-   if(src_type.value != dst_type.value) {
+   if(memcmp(&src_type, &dst_type, sizeof src_type) != 0) {
       struct lp_build_context bld;
       double src_min = lp_const_min(src_type);
       double dst_min = lp_const_min(dst_type);
@@ -656,8 +656,8 @@ lp_build_conv(LLVMBuilderRef builder,
  */
 void
 lp_build_conv_mask(LLVMBuilderRef builder,
-                   union lp_type src_type,
-                   union lp_type dst_type,
+                   struct lp_type src_type,
+                   struct lp_type dst_type,
                    const LLVMValueRef *src, unsigned num_srcs,
                    LLVMValueRef *dst, unsigned num_dsts)
 {

@@ -39,7 +39,7 @@
 #include "pipe/p_format.h"
 
 struct util_format_description;
-union lp_type;
+struct lp_type;
 
 
 /**
@@ -103,7 +103,7 @@ lp_build_gather(LLVMBuilderRef builder,
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
-                         union lp_type type,
+                         struct lp_type type,
                          LLVMValueRef packed,
                          LLVMValueRef *rgba);
 
@@ -111,7 +111,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 void
 lp_build_load_rgba_soa(LLVMBuilderRef builder,
                        const struct util_format_description *format_desc,
-                       union lp_type type,
+                       struct lp_type type,
                        LLVMValueRef base_ptr,
                        LLVMValueRef offsets,
                        LLVMValueRef *rgba);

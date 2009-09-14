@@ -97,15 +97,15 @@ struct lp_build_sample_context
    const struct util_format_description *format_desc;
 
    /** Incoming coordinates type and build context */
-   union lp_type coord_type;
+   struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
    /** Integer coordinates */
-   union lp_type int_coord_type;
+   struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
 
    /** Output texels type and build context */
-   union lp_type texel_type;
+   struct lp_type texel_type;
    struct lp_build_context texel_bld;
 };
 
@@ -337,7 +337,7 @@ void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,
                     struct lp_sampler_dynamic_state *dynamic_state,
-                    union lp_type type,
+                    struct lp_type type,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,

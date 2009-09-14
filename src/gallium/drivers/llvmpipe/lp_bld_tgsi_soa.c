@@ -1415,7 +1415,7 @@ emit_instruction(
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
-                  union lp_type type,
+                  struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *pos,

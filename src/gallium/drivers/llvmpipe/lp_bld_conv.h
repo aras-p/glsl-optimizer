@@ -40,33 +40,33 @@
 #include <llvm-c/Core.h>  
 
 
-union lp_type type;
+struct lp_type type;
 
 
 LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
-                                        union lp_type src_type,
+                                        struct lp_type src_type,
                                         unsigned dst_width,
                                         LLVMValueRef src);
 
 LLVMValueRef
 lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
                                 unsigned src_width,
-                                union lp_type dst_type,
+                                struct lp_type dst_type,
                                 LLVMValueRef src);
 
 
 void
 lp_build_conv(LLVMBuilderRef builder,
-              union lp_type src_type,
-              union lp_type dst_type,
+              struct lp_type src_type,
+              struct lp_type dst_type,
               const LLVMValueRef *srcs, unsigned num_srcs,
               LLVMValueRef *dsts, unsigned num_dsts);
 
 void
 lp_build_conv_mask(LLVMBuilderRef builder,
-                   union lp_type src_type,
-                   union lp_type dst_type,
+                   struct lp_type src_type,
+                   struct lp_type dst_type,
                    const LLVMValueRef *src, unsigned num_srcs,
                    LLVMValueRef *dst, unsigned num_dsts);
 

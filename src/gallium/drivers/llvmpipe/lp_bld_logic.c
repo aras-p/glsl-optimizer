@@ -45,7 +45,7 @@ lp_build_cmp(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef zeros = LLVMConstNull(int_vec_type);
@@ -301,7 +301,7 @@ lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef a,
                 LLVMValueRef b)
 {
-   union lp_type type = bld->type;
+   struct lp_type type = bld->type;
    LLVMValueRef res;
 
    if(a == b)
@@ -339,7 +339,7 @@ lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef b,
                     const boolean cond[4])
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
 
