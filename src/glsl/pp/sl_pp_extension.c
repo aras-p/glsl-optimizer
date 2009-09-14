@@ -36,86 +36,101 @@ sl_pp_process_extension(struct sl_pp_context *context,
                         unsigned int last,
                         struct sl_pp_process_state *state)
 {
-   int all_extensions = -1;
-   const char *extension_name = NULL;
-   const char *behavior = NULL;
+   int extensions[] = {
+      context->dict.all,
+      context->dict._GL_ARB_draw_buffers,
+      context->dict._GL_ARB_texture_rectangle,
+      -1
+   };
+   int extension_name = -1;
+   int *ext;
+   int behavior = -1;
    struct sl_pp_token_info out;
 
-   all_extensions = sl_pp_context_add_unique_str(context, "all");
-   if (all_extensions == -1) {
-      return -1;
-   }
-
+   /* Grab the extension name. */
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
-      extension_name = sl_pp_context_cstr(context, input[first].data.identifier);
+      extension_name = input[first].data.identifier;
       first++;
    }
-   if (!extension_name) {
+   if (extension_name == -1) {
       strcpy(context->error_msg, "expected identifier after `#extension'");
       return -1;
    }
 
-   if (!strcmp(extension_name, "all")) {
-      out.data.extension = all_extensions;
-   } else {
-      out.data.extension = -1;
+   /* Make sure the extension is supported. */
+   out.data.extension = -1;
+   for (ext = extensions; *ext != -1; ext++) {
+      if (extension_name == *ext) {
+         out.data.extension = extension_name;
+         break;
+      }
    }
 
+   /* Grab the colon separating the extension name and behavior. */
    while (first < last && input[first].token == SL_PP_WHITESPACE) {
       first++;
    }
-
    if (first < last && input[first].token == SL_PP_COLON) {
       first++;
    } else {
       strcpy(context->error_msg, "expected `:' after extension name");
       return -1;
    }
-
    while (first < last && input[first].token == SL_PP_WHITESPACE) {
       first++;
    }
 
+   /* Grab the behavior name. */
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
-      behavior = sl_pp_context_cstr(context, input[first].data.identifier);
+      behavior = input[first].data.identifier;
       first++;
    }
-   if (!behavior) {
+   if (behavior == -1) {
       strcpy(context->error_msg, "expected identifier after `:'");
       return -1;
    }
 
-   if (!strcmp(behavior, "require")) {
-      strcpy(context->error_msg, "unable to enable required extension");
-      return -1;
-   } else if (!strcmp(behavior, "enable")) {
-      if (out.data.extension == all_extensions) {
-         strcpy(context->error_msg, "unable to enable all extensions");
+   if (behavior == context->dict.require) {
+      if (out.data.extension == -1) {
+         strcpy(context->error_msg, "the required extension is not supported");
          return -1;
-      } else {
+      }
+      if (out.data.extension == context->dict.all) {
+         strcpy(context->error_msg, "invalid behavior for `all' extension: `require'");
+         return -1;
+      }
+      out.token = SL_PP_EXTENSION_REQUIRE;
+   } else if (behavior == context->dict.enable) {
+      if (out.data.extension == -1) {
+         /* Warning: the extension cannot be enabled. */
          return 0;
       }
-   } else if (!strcmp(behavior, "warn")) {
-      if (out.data.extension == all_extensions) {
-         out.token = SL_PP_EXTENSION_WARN;
-      } else {
+      if (out.data.extension == context->dict.all) {
+         strcpy(context->error_msg, "invalid behavior for `all' extension: `enable'");
+         return -1;
+      }
+      out.token = SL_PP_EXTENSION_ENABLE;
+   } else if (behavior == context->dict.warn) {
+      if (out.data.extension == -1) {
+         /* Warning: the extension is not supported. */
          return 0;
       }
-   } else if (!strcmp(behavior, "disable")) {
-      if (out.data.extension == all_extensions) {
-         out.token = SL_PP_EXTENSION_DISABLE;
-      } else {
+      out.token = SL_PP_EXTENSION_WARN;
+   } else if (behavior == context->dict.disable) {
+      if (out.data.extension == -1) {
+         /* Warning: the extension is not supported. */
          return 0;
       }
+      out.token = SL_PP_EXTENSION_DISABLE;
    } else {
       strcpy(context->error_msg, "unrecognised behavior name");
       return -1;
    }
 
+   /* Grab the end of line. */
    while (first < last && input[first].token == SL_PP_WHITESPACE) {
       first++;
    }
-
    if (first < last) {
       strcpy(context->error_msg, "expected end of line after behavior name");
       return -1;
