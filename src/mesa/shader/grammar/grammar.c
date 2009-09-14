@@ -3149,7 +3149,10 @@ grammar_fast_check (grammar id,
          return 0;
       }
 
-      sl_pp_context_init(&context);
+      if (sl_pp_context_init(&context)) {
+         free(outbuf);
+         return 1;
+      }
 
       if (sl_pp_tokenise(&context, outbuf, &intokens)) {
          sl_pp_context_destroy(&context);
