@@ -3387,6 +3387,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         break;
     case PROGRAM_TEMPORARY:
     case PROGRAM_INPUT:
+    default:
         src_const = GL_FALSE;
 	break;
     }
