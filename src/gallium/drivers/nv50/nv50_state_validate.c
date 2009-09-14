@@ -212,6 +212,12 @@ nv50_state_emit(struct nv50_context *nv50)
 			so_emit(chan, nv50->state.vtxattr);
 	}
 	nv50->state.dirty = 0;
+}
+
+void
+nv50_state_flush_notify(struct nouveau_channel *chan)
+{
+	struct nv50_context *nv50 = chan->user_private;
 
 	so_emit_reloc_markers(chan, nv50->state.fb);
 	so_emit_reloc_markers(chan, nv50->state.vertprog);
