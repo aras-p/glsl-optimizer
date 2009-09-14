@@ -2051,6 +2051,11 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 				si = d->Semantic.SemanticIndex;
 				switch (d->Semantic.SemanticName) {
+				case TGSI_SEMANTIC_BCOLOR:
+					p->cfg.two_side[si].hw = first;
+					if (p->cfg.io_nr > first)
+						p->cfg.io_nr = first;
+					break;
 					/*
 				case TGSI_SEMANTIC_CLIP_DISTANCE:
 					p->cfg.clpd = MIN2(p->cfg.clpd, first);
@@ -2128,6 +2133,11 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				p->cfg.io[i].mask |= 1 << c;
 			}
 		}
+
+		for (c = 0; c < 2; ++c)
+			if (p->cfg.two_side[c].hw < 0x40)
+				p->cfg.two_side[c] = p->cfg.io[
+					p->cfg.two_side[c].hw];
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
 		int rid, aid;
@@ -2741,6 +2751,15 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	}
 
 	reg[0] |= m << 8; /* adjust BFC0 id */
+
+	/* if light_twoside is active, it seems FFC0_ID == BFC0_ID is bad */
+	if (nv50->rasterizer->pipe.light_twoside) {
+		vpo = &vp->cfg.two_side[0];
+
+		m = nv50_sreg4_map(map, m, lin, &fp->cfg.two_side[0], &vpo[0]);
+		m = nv50_sreg4_map(map, m, lin, &fp->cfg.two_side[1], &vpo[1]);
+	}
+
 	reg[0] += m - 4; /* adjust FFC0 id */
 	reg[4] |= m << 8; /* set mid where 'normal' FP inputs start */
 

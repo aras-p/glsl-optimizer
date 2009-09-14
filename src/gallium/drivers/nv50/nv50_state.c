@@ -276,6 +276,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_method(so, tesla, 0x1684, 1);
 	so_data  (so, cso->flatshade_first ? 0 : 1);
 
+	so_method(so, tesla, NV50TCL_VERTEX_TWO_SIDE_ENABLE, 1);
+	so_data  (so, cso->light_twoside);
+
 	so_method(so, tesla, NV50TCL_LINE_WIDTH, 1);
 	so_data  (so, fui(cso->line_width));
 	so_method(so, tesla, NV50TCL_LINE_SMOOTH_ENABLE, 1);
