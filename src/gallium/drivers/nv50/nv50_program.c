@@ -139,6 +139,14 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->acc = 0;
 }
 
+static INLINE unsigned
+popcnt4(uint32_t val)
+{
+	static const unsigned cnt[16]
+	= { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+	return cnt[val & 0xf];
+}
+
 static void
 alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 {
@@ -1975,59 +1983,48 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	return TRUE;
 }
 
-static unsigned
-load_fp_attrib(struct nv50_pc *pc, int i, int *mid, int *aid, int *p_oid)
+static void
+load_interpolant(struct nv50_pc *pc, struct nv50_reg *reg)
 {
-	struct nv50_reg *iv;
-	int oid, c, n;
-	unsigned mask = 0;
+	struct nv50_reg *iv, **ppiv;
+	unsigned mode = pc->interp_mode[reg->index];
 
-	iv = (pc->interp_mode[i] & INTERP_CENTROID) ? pc->iv_c : pc->iv_p;
+	ppiv = (mode & INTERP_CENTROID) ? &pc->iv_c : &pc->iv_p;
+	iv = *ppiv;
 
-	for (c = 0, n = i * 4; c < 4; c++, n++) {
-		oid = (*p_oid)++;
+	if ((mode & INTERP_PERSPECTIVE) && !iv) {
+		iv = *ppiv = alloc_temp(pc, NULL);
+		iv->rhw = popcnt4(pc->p->cfg.regs[1] >> 24) - 1;
 
-		if (!pc->attr[n].acc)
-			continue;
-		mask |= (1 << c);
+		emit_interp(pc, iv, NULL, mode & INTERP_CENTROID);
+		emit_flop(pc, 0, iv, iv);
 
-		alloc_reg(pc, &pc->attr[n]);
-
-		pc->attr[n].rhw = (*aid)++;
-		emit_interp(pc, &pc->attr[n], iv, pc->interp_mode[i]);
-
-		pc->p->cfg.fp.map[(*mid) / 4] |= oid << (8 * ((*mid) % 4));
-		(*mid)++;
-		pc->p->cfg.fp.regs[1] += 0x00010001;
+		/* XXX: when loading interpolants dynamically, move these
+		 * to the program head, or make sure it can't be skipped.
+		 */
 	}
 
-	return mask;
+	emit_interp(pc, reg, iv, mode);
 }
 
 static boolean
 nv50_program_tx_prep(struct nv50_pc *pc)
 {
-	struct tgsi_parse_context p;
+	struct tgsi_parse_context tp;
+	struct nv50_program *p = pc->p;
 	boolean ret = FALSE;
-	unsigned i, c;
-	unsigned fcol, bcol, fcrd;
+	unsigned i, c, flat_nr = 0;
 
-	/* count (centroid) perspective interpolations */
-	unsigned centroid_loads = 0;
-	unsigned perspect_loads = 0;
+	tgsi_parse_init(&tp, pc->p->pipe.tokens);
+	while (!tgsi_parse_end_of_tokens(&tp)) {
+		const union tgsi_full_token *tok = &tp.FullToken;
 
-	fcol = bcol = fcrd = ~0;
-
-	tgsi_parse_init(&p, pc->p->pipe.tokens);
-	while (!tgsi_parse_end_of_tokens(&p)) {
-		const union tgsi_full_token *tok = &p.FullToken;
-
-		tgsi_parse_token(&p);
+		tgsi_parse_token(&tp);
 		switch (tok->Token.Type) {
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 		{
 			const struct tgsi_full_immediate *imm =
-				&p.FullToken.FullImmediate;
+				&tp.FullToken.FullImmediate;
 
 			ctor_immd(pc, imm->u[0].Float,
 				      imm->u[1].Float,
@@ -2038,9 +2035,9 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		case TGSI_TOKEN_TYPE_DECLARATION:
 		{
 			const struct tgsi_full_declaration *d;
-			unsigned last, first, mode;
+			unsigned si, last, first, mode;
 
-			d = &p.FullToken.FullDeclaration;
+			d = &tp.FullToken.FullDeclaration;
 			first = d->DeclarationRange.First;
 			last = d->DeclarationRange.Last;
 
@@ -2048,43 +2045,41 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			case TGSI_FILE_TEMPORARY:
 				break;
 			case TGSI_FILE_OUTPUT:
+				if (!d->Declaration.Semantic ||
+				    p->type == PIPE_SHADER_FRAGMENT)
+					break;
+
+				si = d->Semantic.SemanticIndex;
+				switch (d->Semantic.SemanticName) {
+					/*
+				case TGSI_SEMANTIC_CLIP_DISTANCE:
+					p->cfg.clpd = MIN2(p->cfg.clpd, first);
+					break;
+					*/
+				default:
+					break;
+				}
 				break;
 			case TGSI_FILE_INPUT:
 			{
-				if (pc->p->type != PIPE_SHADER_FRAGMENT)
+				if (p->type != PIPE_SHADER_FRAGMENT)
 					break;
 
 				switch (d->Declaration.Interpolate) {
 				case TGSI_INTERPOLATE_CONSTANT:
 					mode = INTERP_FLAT;
+					flat_nr++;
 					break;
 				case TGSI_INTERPOLATE_PERSPECTIVE:
 					mode = INTERP_PERSPECTIVE;
+					p->cfg.regs[1] |= 0x08 << 24;
 					break;
 				default:
 					mode = INTERP_LINEAR;
 					break;
 				}
-
-				if (d->Declaration.Semantic) {
-					switch (d->Semantic.SemanticName) {
-					case TGSI_SEMANTIC_POSITION:
-						fcrd = first;
-						break;
-					case TGSI_SEMANTIC_COLOR:
-						fcol = first;
-						mode = INTERP_PERSPECTIVE;
-						break;
-					}
-				}
-
-				if (d->Declaration.Centroid) {
+				if (d->Declaration.Centroid)
 					mode |= INTERP_CENTROID;
-					if (mode & INTERP_PERSPECTIVE)
-						centroid_loads++;
-				} else
-				if (mode & INTERP_PERSPECTIVE)
-					perspect_loads++;
 
 				assert(last < 32);
 				for (i = first; i <= last; i++)
@@ -2111,92 +2106,117 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		}
 	}
 
-	if (pc->attr_nr) {
-		int oid = 4, mid = 4, aid = 0;
-		/* oid = VP output id
-		 * aid = FP attribute/interpolant id
-		 * mid = VP output mapping field ID
+	if (p->type == PIPE_SHADER_VERTEX) {
+		int rid = 0;
+
+		for (i = 0; i < pc->attr_nr * 4; ++i) {
+			if (pc->attr[i].acc) {
+				pc->attr[i].hw = rid++;
+				p->cfg.attr[i / 32] |= 1 << (i % 32);
+			}
+		}
+
+		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
+			p->cfg.io[i].hw = rid;
+			p->cfg.io[i].id_vp = i;
+
+			for (c = 0; c < 4; ++c) {
+				int n = i * 4 + c;
+				if (!pc->result[n].acc)
+					continue;
+				pc->result[n].hw = rid++;
+				p->cfg.io[i].mask |= 1 << c;
+			}
+		}
+	} else
+	if (p->type == PIPE_SHADER_FRAGMENT) {
+		int rid, aid;
+		unsigned n = 0, m = pc->attr_nr - flat_nr;
+
+		int base = (TGSI_SEMANTIC_POSITION ==
+			    p->info.input_semantic_name[0]) ? 0 : 1;
+
+		/* non-flat interpolants have to be mapped to
+		 * the lower hardware IDs, so sort them:
 		 */
-		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
-			/* position should be loaded first */
-			if (fcrd < 0x40) {
-				unsigned mask;
-				mid = 0;
-				mask = load_fp_attrib(pc, fcrd, &mid, &aid,
-						      &oid);
-				pc->p->cfg.fp.regs[1] |= (mask << 24);
-				pc->p->cfg.fp.map[0] += 0x04040404 * fcrd;
-			}
-
-			/* should do MAD fcrd.xy, fcrd, SOME_CONST, fcrd */
-
-			if (perspect_loads) {
-				pc->iv_p = alloc_temp(pc, NULL);
-
-				if (!(pc->p->cfg.fp.regs[1] & 0x08000000)) {
-					pc->p->cfg.fp.regs[1] |= 0x08000000;
-					pc->iv_p->rhw = aid++;
-					emit_interp(pc, pc->iv_p, NULL,
-						    INTERP_LINEAR);
-					emit_flop(pc, 0, pc->iv_p, pc->iv_p);
-				} else {
-					pc->iv_p->rhw = aid - 1;
-					emit_flop(pc, 0, pc->iv_p,
-						  &pc->attr[fcrd * 4 + 3]);
-				}
-			}
-
-			if (centroid_loads) {
-				pc->iv_c = alloc_temp(pc, NULL);
-				pc->iv_c->rhw = pc->iv_p ? aid - 1 : aid++;
-				emit_interp(pc, pc->iv_c, NULL,
-					    INTERP_CENTROID);
-				emit_flop(pc, 0, pc->iv_c, pc->iv_c);
-				pc->p->cfg.fp.regs[1] |= 0x08000000;
-			}
-
-			for (c = 0; c < 4; c++) {
-				/* XXX: secondary colour, tbd */
-				if (fcol < 0x40 && pc->attr[fcol * 4 + c].acc)
-					pc->p->cfg.fp.regs[0] += 0x00010000;
-			}
-
-			for (i = ((fcrd < 0x40) ? 1 : 0); i < pc->attr_nr; i++)
-				load_fp_attrib(pc, i, &mid, &aid, &oid);
-
-			if (pc->iv_p)
-				free_temp(pc, pc->iv_p);
-			if (pc->iv_c)
-				free_temp(pc, pc->iv_c);
-
-			pc->p->cfg.fp.high_map = (mid / 4);
-			pc->p->cfg.fp.high_map += ((mid % 4) ? 1 : 0);
-		} else {
-			/* vertex program */
-			for (i = 0; i < pc->attr_nr * 4; i++) {
-				pc->p->cfg.vp.attr[aid / 32] |=
-					(1 << (aid % 32));
-				pc->attr[i].hw = aid++;
+		for (i = 0; i < pc->attr_nr; i++) {
+			if (pc->interp_mode[i] == INTERP_FLAT) {
+				p->cfg.io[m].id_vp = i + base;
+				p->cfg.io[m++].id_fp = i;
+			} else {
+				if (!(pc->interp_mode[i] & INTERP_PERSPECTIVE))
+					p->cfg.io[n].linear = TRUE;
+				p->cfg.io[n].id_vp = i + base;
+				p->cfg.io[n++].id_fp = i;
 			}
 		}
-	}
 
-	if (pc->result_nr) {
-		if (pc->p->type == PIPE_SHADER_VERTEX) {
-			for (i = 0; i < pc->result_nr * 4; i++)
-				pc->result[i].hw = i;
-		} else {
-			/* type == PIPE_SHADER_FRAGMENT
-			 * FragDepth is always first TGSI and last HW output
-			 */
-			int rid = 0;
-			i = pc->p->info.writes_z ? 4 : 0;
+		if (!base) /* set w-coordinate mask from perspective interp */
+			p->cfg.io[0].mask |= p->cfg.regs[1] >> 24;
 
-			for (; i < pc->result_nr * 4; i++)
-				pc->result[i].rhw = rid++;
-			if (pc->p->info.writes_z)
-				pc->result[2].rhw = rid;
+		aid = popcnt4( /* if fcrd isn't contained in cfg.io */
+			base ? (p->cfg.regs[1] >> 24) : p->cfg.io[0].mask);
+
+		for (n = 0; n < pc->attr_nr; ++n) {
+			p->cfg.io[n].hw = rid = aid;
+			i = p->cfg.io[n].id_fp;
+
+			for (c = 0; c < 4; ++c) {
+				if (!pc->attr[i * 4 + c].acc)
+					continue;
+				pc->attr[i * 4 + c].rhw = rid++;
+				p->cfg.io[n].mask |= 1 << c;
+
+				load_interpolant(pc, &pc->attr[i * 4 + c]);
+			}
+			aid += popcnt4(p->cfg.io[n].mask);
 		}
+
+		if (!base)
+			p->cfg.regs[1] |= p->cfg.io[0].mask << 24;
+
+		m = popcnt4(p->cfg.regs[1] >> 24);
+
+		/* set count of non-position inputs and of non-flat
+		 * non-position inputs for FP_INTERPOLANT_CTRL
+		 */
+		p->cfg.regs[1] |= aid - m;
+
+		if (flat_nr) {
+			i = p->cfg.io[pc->attr_nr - flat_nr].hw;
+			p->cfg.regs[1] |= (i - m) << 16;
+		} else
+			p->cfg.regs[1] |= p->cfg.regs[1] << 16;
+
+		/* mark color semantic for light-twoside */
+		n = 0x40;
+		for (i = 0; i < pc->attr_nr; i++) {
+			ubyte si, sn;
+
+			sn = p->info.input_semantic_name[p->cfg.io[i].id_fp];
+			si = p->info.input_semantic_index[p->cfg.io[i].id_fp];
+
+			if (sn == TGSI_SEMANTIC_COLOR) {
+				p->cfg.two_side[si] = p->cfg.io[i];
+
+				/* increase colour count */
+				p->cfg.regs[0] += popcnt4(
+					p->cfg.two_side[si].mask) << 16;
+
+				n = MIN2(n, p->cfg.io[i].hw - m);
+			}
+		}
+		if (n < 0x40)
+			p->cfg.regs[0] += n;
+
+		/* Initialize FP results:
+		 * FragDepth is always first TGSI and last hw output
+		 */
+		i = p->info.writes_z ? 4 : 0;
+		for (rid = 0; i < pc->result_nr * 4; i++)
+			pc->result[i].rhw = rid++;
+		if (p->info.writes_z)
+			pc->result[2].rhw = rid;
 	}
 
 	if (pc->immd_nr) {
@@ -2214,7 +2234,12 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 	ret = TRUE;
 out_err:
-	tgsi_parse_free(&p);
+	if (pc->iv_p)
+		free_temp(pc, pc->iv_p);
+	if (pc->iv_c)
+		free_temp(pc, pc->iv_c);
+
+	tgsi_parse_free(&tp);
 	return ret;
 }
 
@@ -2249,24 +2274,26 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 
 	p->cfg.high_temp = 4;
 
+	p->cfg.two_side[0].hw = 0x40;
+	p->cfg.two_side[1].hw = 0x40;
+
 	switch (p->type) {
 	case PIPE_SHADER_VERTEX:
+		p->cfg.clpd = 0x40;
+		p->cfg.io_nr = pc->result_nr;
 		break;
 	case PIPE_SHADER_FRAGMENT:
-		p->cfg.fp.regs[0] = 0x01000404;
-		p->cfg.fp.regs[1] = 0x00000400;
-
-		p->cfg.fp.map[0] = 0x03020100;
-		p->cfg.fp.high_map = 1;
-
 		rtype[0] = rtype[1] = P_TEMP;
 
+		p->cfg.regs[0] = 0x01000004;
+		p->cfg.io_nr = pc->attr_nr;
+
 		if (p->info.writes_z) {
-			p->cfg.fp.regs[2] |= 0x00000100;
-			p->cfg.fp.regs[3] |= 0x00000011;
+			p->cfg.regs[2] |= 0x00000100;
+			p->cfg.regs[3] |= 0x00000011;
 		}
 		if (p->info.uses_kill)
-			p->cfg.fp.regs[2] |= 0x00100000;
+			p->cfg.regs[2] |= 0x00100000;
 		break;
 	}
 
@@ -2609,8 +2636,8 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, NV50TCL_VP_ATTR_EN_0, 2);
-	so_data  (so, p->cfg.vp.attr[0]);
-	so_data  (so, p->cfg.vp.attr[1]);
+	so_data  (so, p->cfg.attr[0]);
+	so_data  (so, p->cfg.attr[1]);
 	so_method(so, tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	so_data  (so, p->cfg.high_result);
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 2);
@@ -2628,7 +2655,6 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program *p = nv50->fragprog;
 	struct nouveau_stateobj *so;
-	unsigned i;
 
 	if (!p->translated) {
 		nv50_program_validate(nv50, p);
@@ -2645,27 +2671,117 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 		      NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, tesla, NV50TCL_MAP_SEMANTIC_0, 4);
-	so_data  (so, p->cfg.fp.regs[0]); /* 0x01000404 / 0x00040404 */
-	so_data  (so, 0x00000004);
-	so_data  (so, 0x00000000);
-	so_data  (so, 0x00000000);
-	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), p->cfg.fp.high_map);
-	for (i = 0; i < p->cfg.fp.high_map; i++)
-		so_data(so, p->cfg.fp.map[i]);
-	so_method(so, tesla, NV50TCL_FP_INTERPOLANT_CTRL, 2);
-	so_data  (so, p->cfg.fp.regs[1]); /* 0x08040404 / 0x0f000401 */
+	so_method(so, tesla, NV50TCL_FP_REG_ALLOC_TEMP, 1);
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_FP_RESULT_COUNT, 1);
 	so_data  (so, p->cfg.high_result);
 	so_method(so, tesla, NV50TCL_FP_CTRL_UNK19A8, 1);
-	so_data  (so, p->cfg.fp.regs[2]);
+	so_data  (so, p->cfg.regs[2]);
 	so_method(so, tesla, NV50TCL_FP_CTRL_UNK196C, 1);
-	so_data  (so, p->cfg.fp.regs[3]);
+	so_data  (so, p->cfg.regs[3]);
 	so_method(so, tesla, NV50TCL_FP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.fragprog);
 	so_ref(NULL, &so);
+}
+
+static int
+nv50_sreg4_map(uint32_t *p_map, int mid, uint32_t lin[4],
+	       struct nv50_sreg4 *fpi, struct nv50_sreg4 *vpo)
+{
+	int c;
+	uint8_t mv = vpo->mask, mf = fpi->mask, oid = vpo->hw;
+	uint8_t *map = (uint8_t *)p_map;
+
+	for (c = 0; c < 4; ++c) {
+		if (mf & 1) {
+			if (fpi->linear == TRUE)
+				lin[mid / 32] |= 1 << (mid % 32);
+			map[mid++] = (mv & 1) ? oid : ((c == 3) ? 0x41 : 0x40);
+		}
+
+		oid += mv & 1;
+		mf >>= 1;
+		mv >>= 1;
+	}
+
+	return mid;
+}
+
+void
+nv50_linkage_validate(struct nv50_context *nv50)
+{
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nv50_program *vp = nv50->vertprog;
+	struct nv50_program *fp = nv50->fragprog;
+	struct nouveau_stateobj *so;
+	struct nv50_sreg4 dummy, *vpo;
+	int i, n, c, m = 0;
+	uint32_t map[16], lin[4], reg[5];
+
+	memset(map, 0, sizeof(map));
+	memset(lin, 0, sizeof(lin));
+
+	reg[1] = 0x00000004; /* low and high clip distance map ids */
+	reg[2] = 0x00000000; /* layer index map id (disabled, GP only) */
+	reg[3] = 0x00000000; /* point size map id & enable */
+	reg[0] = fp->cfg.regs[0]; /* colour semantic reg */
+	reg[4] = fp->cfg.regs[1]; /* interpolant info */
+
+	dummy.linear = FALSE;
+	dummy.mask = 0xf; /* map all components of HPOS */
+	m = nv50_sreg4_map(map, m, lin, &dummy, &vp->cfg.io[0]);
+
+	dummy.mask = 0x0;
+
+	if (vp->cfg.clpd < 0x40) {
+		for (c = 0; c < vp->cfg.clpd_nr; ++c)
+			map[m++] = vp->cfg.clpd + c;
+		reg[1] = (m << 8);
+	}
+
+	reg[0] |= m << 8; /* adjust BFC0 id */
+	reg[0] += m - 4; /* adjust FFC0 id */
+	reg[4] |= m << 8; /* set mid where 'normal' FP inputs start */
+
+	i = 0;
+	if (fp->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION)
+		i = 1;
+	for (; i < fp->cfg.io_nr; i++) {
+		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id_fp];
+		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id_fp];
+
+		n = fp->cfg.io[i].id_vp;
+		if (n >= vp->cfg.io_nr ||
+		    vp->info.output_semantic_name[n] != sn ||
+		    vp->info.output_semantic_index[n] != si)
+			vpo = &dummy;
+		else
+			vpo = &vp->cfg.io[n];
+
+		m = nv50_sreg4_map(map, m, lin, &fp->cfg.io[i], vpo);
+	}
+
+	/* now fill the stateobj */
+	so = so_new(64, 0);
+
+	n = (m + 3) / 4;
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
+	so_data  (so, m);
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), n);
+	so_datap (so, map, n);
+
+	so_method(so, tesla, NV50TCL_MAP_SEMANTIC_0, 4);
+	so_datap (so, reg, 4);
+
+	so_method(so, tesla, NV50TCL_FP_INTERPOLANT_CTRL, 1);
+	so_data  (so, reg[4]);
+
+	so_method(so, tesla, 0x1540, 4);
+	so_datap (so, lin, 4);
+
+        so_ref(so, &nv50->state.programs);
+        so_ref(NULL, &so);
 }
 
 void
