@@ -653,17 +653,12 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
 
    exa->solid_color[3] = 1.f;
 
+#if 0
    debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",
                 (fg >> 24) & 0xff, (fg >> 16) & 0xff,
                 (fg >> 8) & 0xff,  (fg >> 0) & 0xff,
                 exa->solid_color[0], exa->solid_color[1],
                 exa->solid_color[2], exa->solid_color[3]);
-
-#if 0
-   exa->solid_color[0] = 1.f;
-   exa->solid_color[1] = 0.f;
-   exa->solid_color[2] = 0.f;
-   exa->solid_color[3] = 1.f;
 #endif
 
    vs_traits = VS_SOLID_FILL;
@@ -690,9 +685,6 @@ void xorg_solid(struct exa_context *exa,
    struct pipe_context *pipe = exa->pipe;
    struct pipe_buffer *buf = 0;
    float vertices[4][2][4];
-
-   x0 = 10; y0 = 10;
-   x1 = 300; y1 = 300;
 
    /* 1st vertex */
    setup_vertex0(vertices[0], x0, y0,
@@ -861,8 +853,10 @@ static void renderer_copy_texture(struct exa_context *exa,
    t1 = 1;
 #endif
 
-   assert(screen->is_format_supported(screen, dst_surf->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+   assert(screen->is_format_supported(screen, dst_surf->format,
+                                      PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                      0));
 
    /* save state (restored below) */
    cso_save_blend(exa->cso);
@@ -965,6 +959,8 @@ void xorg_copy_pixmap(struct exa_context *ctx,
    float src_shift[4], dst_shift[4], shift[4];
    struct pipe_texture *dst = dst_priv->tex;
    struct pipe_texture *src = src_priv->tex;
+
+   xorg_exa_finish(ctx);
 
    dst_loc[0] = dx;
    dst_loc[1] = dy;

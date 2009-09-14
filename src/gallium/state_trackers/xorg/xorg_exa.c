@@ -47,6 +47,8 @@
 
 #include "util/u_rect.h"
 
+#define DEBUG_SOLID 0
+
 /*
  * Helper functions
  */
@@ -253,7 +255,7 @@ ExaDone(PixmapPtr pPixmap)
 #if 1
     xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
 #else
-    xorg_finish(exa);
+    xorg_exa_finish(exa);
 #endif
     xorg_exa_common_done(exa);
 }
@@ -276,7 +278,9 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
+#if 0
     debug_printf("ExaPrepareSolid - test\n");
+#endif
     if (pPixmap->drawable.depth < 15)
 	return FALSE;
 
@@ -292,7 +296,14 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     if (!exa->pipe)
 	return FALSE;
 
+
+#if DEBUG_SOLID
+    fg = 0xffff0000;
+#endif
+
+#if 1
     debug_printf("  ExaPrepareSolid(0x%x)\n", fg);
+#endif
     return xorg_solid_bind_state(exa, priv, fg);
 }
 
@@ -310,11 +321,23 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     if (x0 == 0 && y0 == 0 &&
         x1 == priv->tex->width[0] &&
         y1 == priv->tex->height[0]) {
-       exa->ctx->clear(exa->ctx, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
+       exa->ctx->clear(exa->pipe, PIPE_CLEAR_COLOR,
                        exa->solid_color, 1., 0);
     } else
 #endif
-       xorg_solid(exa, priv, x0, y0, x1, y1) ;
+
+#if DEBUG_SOLID
+    xorg_solid(exa, priv, 0, 0, 300, 300);
+    xorg_solid(exa, priv, 300, 300, 350, 350);
+    xorg_solid(exa, priv, 350, 350, 500, 500);
+    xorg_solid(exa, priv,
+               priv->tex->width[0] - 10,
+               priv->tex->height[0] - 10,
+               priv->tex->width[0],
+               priv->tex->height[0]);
+#else
+    xorg_solid(exa, priv, x0, y0, x1, y1) ;
+#endif
 }
 
 static Bool
