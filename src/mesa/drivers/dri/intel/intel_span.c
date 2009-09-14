@@ -448,14 +448,14 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
 			    struct gl_framebuffer *fb,
 			    GLboolean map)
 {
-   GLuint i, j;
+   GLuint i;
 
    /* color draw buffers */
-   for (j = 0; j < fb->_NumColorDrawBuffers; j++) {
+   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
       if (map)
-         intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[j]);
+         intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[i]);
       else
-         intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[j]);
+         intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[i]);
    }
 
    /* color read buffer */
@@ -482,20 +482,17 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
    /* depth buffer (Note wrapper!) */
    if (fb->_DepthBuffer) {
       if (map)
-	 intel_renderbuffer_map(intel, fb->_DepthBuffer->Wrapped);
+         intel_renderbuffer_map(intel, fb->_DepthBuffer->Wrapped);
       else
-	 intel_renderbuffer_unmap(intel,
-				  fb->_DepthBuffer->Wrapped);
+         intel_renderbuffer_unmap(intel, fb->_DepthBuffer->Wrapped);
    }
 
    /* stencil buffer (Note wrapper!) */
    if (fb->_StencilBuffer) {
       if (map)
-	 intel_renderbuffer_map(intel,
-				fb->_StencilBuffer->Wrapped);
+         intel_renderbuffer_map(intel, fb->_StencilBuffer->Wrapped);
       else
-	 intel_renderbuffer_unmap(intel,
-				  fb->_StencilBuffer->Wrapped);
+         intel_renderbuffer_unmap(intel, fb->_StencilBuffer->Wrapped);
    }
 }
 
