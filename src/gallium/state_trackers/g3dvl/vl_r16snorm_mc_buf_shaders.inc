@@ -615,7 +615,7 @@ static int vlCreateFragmentShaderFieldPMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* floor t3, t3			; Get rid of fractional part */
-	inst = vl_inst2(TGSI_OPCODE_FLOOR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
+	inst = vl_inst2(TGSI_OPCODE_FLR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* mul t3, t3, c1.y		; Multiply by 2 */
@@ -632,7 +632,7 @@ static int vlCreateFragmentShaderFieldPMB
 
 	/* TODO: Move to conditional tex fetch on t3 instead of lerp */
 	/* lerp t1, t3, t1, t2		; Choose between top and bottom fields based on Y % 2 */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* add o0, t0, t1		; Add ref and differential to form final output */
@@ -969,7 +969,7 @@ static int vlCreateFragmentShaderFrameBMB
 	}
 
 	/* lerp t1, c1.x, t1, t2	; Blend past and future texels */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
@@ -1116,7 +1116,7 @@ static int vlCreateFragmentShaderFieldBMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* floor t3, t3			; Get rid of fractional part */
-	inst = vl_inst2(TGSI_OPCODE_FLOOR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
+	inst = vl_inst2(TGSI_OPCODE_FLR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* mul t3, t3, c1.y		; Multiply by 2 */
@@ -1143,7 +1143,7 @@ static int vlCreateFragmentShaderFieldBMB
 
 	/* TODO: Move to conditional tex fetch on t3 instead of lerp */
 	/* lerp t1, t3, t1, t2		; Choose between top and bottom fields based on Y % 2 */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/*
@@ -1158,11 +1158,11 @@ static int vlCreateFragmentShaderFieldBMB
 
 	/* TODO: Move to conditional tex fetch on t3 instead of lerp */
 	/* lerp t2, t3, t4, t5		; Choose between top and bottom fields based on Y % 2 */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 2, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_TEMPORARY, 5);
+	inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 2, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_TEMPORARY, 5);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* lerp t1, c1.x, t1, t2	; Blend past and future texels */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
