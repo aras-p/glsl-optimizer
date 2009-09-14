@@ -367,11 +367,11 @@ create_fs(struct pipe_context *pipe,
          else
             src = out;
 
-         coords = ureg_DECL_constant(ureg);
-         const0124 = ureg_DECL_constant(ureg);
-         matrow0 = ureg_DECL_constant(ureg);
-         matrow1 = ureg_DECL_constant(ureg);
-         matrow2 = ureg_DECL_constant(ureg);
+         coords = ureg_DECL_constant(ureg, 0);
+         const0124 = ureg_DECL_constant(ureg, 1);
+         matrow0 = ureg_DECL_constant(ureg, 2);
+         matrow1 = ureg_DECL_constant(ureg, 3);
+         matrow2 = ureg_DECL_constant(ureg, 4);
 
          if (is_lingrad) {
             linear_gradient(ureg, src,
