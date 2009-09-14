@@ -448,23 +448,21 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
 			    struct gl_framebuffer *fb,
 			    GLboolean map)
 {
-   GLcontext *ctx = &intel->ctx;
    GLuint i, j;
 
-   /* color buffers */
-   if (fb == ctx->DrawBuffer) {
-      for (j = 0; j < fb->_NumColorDrawBuffers; j++) {
-	 if (map)
-	    intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[j]);
-	 else
-	    intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[j]);
-      }
-   } else {
+   /* color draw buffers */
+   for (j = 0; j < fb->_NumColorDrawBuffers; j++) {
       if (map)
-	 intel_renderbuffer_map(intel, fb->_ColorReadBuffer);
+         intel_renderbuffer_map(intel, fb->_ColorDrawBuffers[j]);
       else
-	 intel_renderbuffer_unmap(intel, fb->_ColorReadBuffer);
+         intel_renderbuffer_unmap(intel, fb->_ColorDrawBuffers[j]);
    }
+
+   /* color read buffer */
+   if (map)
+      intel_renderbuffer_map(intel, fb->_ColorReadBuffer);
+   else
+      intel_renderbuffer_unmap(intel, fb->_ColorReadBuffer);
 
    /* check for render to textures */
    for (i = 0; i < BUFFER_COUNT; i++) {
@@ -524,7 +522,8 @@ intelSpanRenderStart(GLcontext * ctx)
    }
 
    intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_TRUE);
-   intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_TRUE);
+   if (ctx->ReadBuffer != ctx->DrawBuffer)
+      intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_TRUE);
 }
 
 /**
@@ -547,7 +546,8 @@ intelSpanRenderFinish(GLcontext * ctx)
    }
 
    intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_FALSE);
-   intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
+   if (ctx->ReadBuffer != ctx->DrawBuffer)
+      intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
 
    UNLOCK_HARDWARE(intel);
 }
