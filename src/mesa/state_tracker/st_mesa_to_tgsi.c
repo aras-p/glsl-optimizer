@@ -722,7 +722,7 @@ st_translate_mesa_program(
 
    ureg = t->ureg;
 
-   _mesa_print_program(program);
+   /*_mesa_print_program(program);*/
 
    /*
     * Declare input attributes.
