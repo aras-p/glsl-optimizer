@@ -2161,36 +2161,34 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 	 if (!texImage) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-	    goto out;
 	 }
-      
-	 if (texImage->Data) {
-	    ctx->Driver.FreeTexImageData( ctx, texImage );
-	 }
+         else {
+            if (texImage->Data) {
+               ctx->Driver.FreeTexImageData( ctx, texImage );
+            }
 
-	 ASSERT(texImage->Data == NULL);
+            ASSERT(texImage->Data == NULL);
 
-	 clear_teximage_fields(texImage); /* not really needed, but helpful */
-	 _mesa_init_teximage_fields(ctx, target, texImage,
-				    postConvWidth, 1, 1,
-				    border, internalFormat);
-	 
-	 ASSERT(ctx->Driver.TexImage1D);
+            clear_teximage_fields(texImage); /* not really needed, but helpful */
+            _mesa_init_teximage_fields(ctx, target, texImage,
+                                       postConvWidth, 1, 1,
+                                       border, internalFormat);
 
-	 /* Give the texture to the driver!  <pixels> may be null! */
-	 (*ctx->Driver.TexImage1D)(ctx, target, level, internalFormat,
-				   width, border, format, type, pixels,
-				   &ctx->Unpack, texObj, texImage);
-	 
-	 ASSERT(texImage->TexFormat);
+            /* Give the texture to the driver.  <pixels> may be null. */
+            ASSERT(ctx->Driver.TexImage1D);
+            ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                                   width, border, format, type, pixels,
+                                   &ctx->Unpack, texObj, texImage);
 
-	 update_fbo_texture(ctx, texObj, face, level);
-	 
-	 /* state update */
-	 texObj->_Complete = GL_FALSE;
-	 ctx->NewState |= _NEW_TEXTURE;
+            ASSERT(texImage->TexFormat);
+
+            update_fbo_texture(ctx, texObj, face, level);
+
+            /* state update */
+            texObj->_Complete = GL_FALSE;
+            ctx->NewState |= _NEW_TEXTURE;
+         }
       }
-   out:
       _mesa_unlock_texture(ctx, texObj);
    }
    else if (target == GL_PROXY_TEXTURE_1D) {
@@ -2269,35 +2267,33 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 	 if (!texImage) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-	    goto out;
 	 }
-	 
-	 if (texImage->Data) {
-	    ctx->Driver.FreeTexImageData( ctx, texImage );
-	 }
-	 
-	 ASSERT(texImage->Data == NULL);
-	 clear_teximage_fields(texImage); /* not really needed, but helpful */
-	 _mesa_init_teximage_fields(ctx, target, texImage,
-				    postConvWidth, postConvHeight, 1,
-				    border, internalFormat);
-	 
-	 ASSERT(ctx->Driver.TexImage2D);
+         else {
+            if (texImage->Data) {
+               ctx->Driver.FreeTexImageData( ctx, texImage );
+            }
 
-	 /* Give the texture to the driver!  <pixels> may be null! */
-	 (*ctx->Driver.TexImage2D)(ctx, target, level, internalFormat,
-				   width, height, border, format, type, pixels,
-				   &ctx->Unpack, texObj, texImage);
-	 
-	 ASSERT(texImage->TexFormat);
+            ASSERT(texImage->Data == NULL);
+            clear_teximage_fields(texImage); /* not really needed, but helpful */
+            _mesa_init_teximage_fields(ctx, target, texImage,
+                                       postConvWidth, postConvHeight, 1,
+                                       border, internalFormat);
 
-	 update_fbo_texture(ctx, texObj, face, level);
+            /* Give the texture to the driver.  <pixels> may be null. */
+            ASSERT(ctx->Driver.TexImage2D);
+            ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                                   width, height, border, format, type,
+                                   pixels, &ctx->Unpack, texObj, texImage);
 
-	 /* state update */
-	 texObj->_Complete = GL_FALSE;
-	 ctx->NewState |= _NEW_TEXTURE;
+            ASSERT(texImage->TexFormat);
+
+            update_fbo_texture(ctx, texObj, face, level);
+
+            /* state update */
+            texObj->_Complete = GL_FALSE;
+            ctx->NewState |= _NEW_TEXTURE;
+         }
       }
-   out:
       _mesa_unlock_texture(ctx, texObj);
    }
    else if (target == GL_PROXY_TEXTURE_2D ||
@@ -2372,35 +2368,33 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 	 if (!texImage) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
-	    goto out;
 	 }
-	 
-	 if (texImage->Data) {
-	    ctx->Driver.FreeTexImageData( ctx, texImage );
-	 }
-	 
-	 ASSERT(texImage->Data == NULL);
-	 clear_teximage_fields(texImage); /* not really needed, but helpful */
-	 _mesa_init_teximage_fields(ctx, target, texImage,
-				    width, height, depth,
-				    border, internalFormat);
+         else {
+            if (texImage->Data) {
+               ctx->Driver.FreeTexImageData( ctx, texImage );
+            }
 
-	 ASSERT(ctx->Driver.TexImage3D);
+            ASSERT(texImage->Data == NULL);
+            clear_teximage_fields(texImage); /* not really needed, but helpful */
+            _mesa_init_teximage_fields(ctx, target, texImage,
+                                       width, height, depth,
+                                       border, internalFormat);
 
-	 /* Give the texture to the driver!  <pixels> may be null! */
-	 (*ctx->Driver.TexImage3D)(ctx, target, level, internalFormat,
-				   width, height, depth, border, format, type,
-				   pixels, &ctx->Unpack, texObj, texImage);
+            /* Give the texture to the driver.  <pixels> may be null. */
+            ASSERT(ctx->Driver.TexImage3D);
+            ctx->Driver.TexImage3D(ctx, target, level, internalFormat,
+                                   width, height, depth, border, format, type,
+                                   pixels, &ctx->Unpack, texObj, texImage);
 
-	 ASSERT(texImage->TexFormat);
+            ASSERT(texImage->TexFormat);
 
-	 update_fbo_texture(ctx, texObj, face, level);
+            update_fbo_texture(ctx, texObj, face, level);
 
-	 /* state update */
-	 texObj->_Complete = GL_FALSE;
-	 ctx->NewState |= _NEW_TEXTURE;
+            /* state update */
+            texObj->_Complete = GL_FALSE;
+            ctx->NewState |= _NEW_TEXTURE;
+         }
       }
-   out:
       _mesa_unlock_texture(ctx, texObj);
    }
    else if (target == GL_PROXY_TEXTURE_3D ||
@@ -2484,17 +2478,16 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
 	 goto out;   /* error was detected */
       }
 
-      if (width == 0)
-	 goto out;  /* no-op, not an error */
+      if (width > 0) {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
 
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-
-      ASSERT(ctx->Driver.TexSubImage1D);
-      (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
-				   format, type, pixels, &ctx->Unpack,
-				   texObj, texImage);
-      ctx->NewState |= _NEW_TEXTURE;
+         ASSERT(ctx->Driver.TexSubImage1D);
+         ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+                                   format, type, pixels, &ctx->Unpack,
+                                   texObj, texImage);
+         ctx->NewState |= _NEW_TEXTURE;
+      }
    }
  out:
    _mesa_unlock_texture(ctx, texObj);
@@ -2543,18 +2536,17 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
 	 goto out;   /* error was detected */
       }
 
-      if (width == 0 || height == 0)
-	 goto out;  /* no-op, not an error */
+      if (width > 0 && height >= 0) {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
+         yoffset += texImage->Border;
 
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-      yoffset += texImage->Border;
-      
-      ASSERT(ctx->Driver.TexSubImage2D);
-      (*ctx->Driver.TexSubImage2D)(ctx, target, level, xoffset, yoffset,
-				   width, height, format, type, pixels,
-				   &ctx->Unpack, texObj, texImage);
-      ctx->NewState |= _NEW_TEXTURE;
+         ASSERT(ctx->Driver.TexSubImage2D);
+         ctx->Driver.TexSubImage2D(ctx, target, level, xoffset, yoffset,
+                                   width, height, format, type, pixels,
+                                   &ctx->Unpack, texObj, texImage);
+         ctx->NewState |= _NEW_TEXTURE;
+      }
    }
  out:
    _mesa_unlock_texture(ctx, texObj);
@@ -2595,21 +2587,20 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
 	 goto out;   /* error was detected */
       }
 
-      if (width == 0 || height == 0 || height == 0)
-	 goto out;  /* no-op, not an error */
+      if (width > 0 && height > 0 && height > 0) {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
+         yoffset += texImage->Border;
+         zoffset += texImage->Border;
 
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-      yoffset += texImage->Border;
-      zoffset += texImage->Border;
-
-      ASSERT(ctx->Driver.TexSubImage3D);
-      (*ctx->Driver.TexSubImage3D)(ctx, target, level,
-				   xoffset, yoffset, zoffset,
-				   width, height, depth,
-				   format, type, pixels,
-				   &ctx->Unpack, texObj, texImage );
-      ctx->NewState |= _NEW_TEXTURE;
+         ASSERT(ctx->Driver.TexSubImage3D);
+         ctx->Driver.TexSubImage3D(ctx, target, level,
+                                   xoffset, yoffset, zoffset,
+                                   width, height, depth,
+                                   format, type, pixels,
+                                   &ctx->Unpack, texObj, texImage );
+         ctx->NewState |= _NEW_TEXTURE;
+      }
    }
  out:
    _mesa_unlock_texture(ctx, texObj);
