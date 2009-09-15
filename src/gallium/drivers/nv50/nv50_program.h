@@ -33,8 +33,8 @@ struct nv50_program {
 	struct nv50_program_exec *exec_head;
 	struct nv50_program_exec *exec_tail;
 	unsigned exec_size;
-	struct nouveau_resource *data[2];
-	unsigned data_start[2];
+	struct nouveau_resource *data[1];
+	unsigned data_start[1];
 
 	struct nouveau_bo *bo;
 

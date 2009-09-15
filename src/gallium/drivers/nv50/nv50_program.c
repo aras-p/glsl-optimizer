@@ -2511,30 +2511,19 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 					 p->immd_nr, NV50_CB_PMISC);
 	}
 
-	if (!p->data[1] && p->param_nr) {
-		struct nouveau_resource *heap =
-			nv50->screen->parm_heap[p->type];
-
-		if (nouveau_resource_alloc(heap, p->param_nr, p, &p->data[1])) {
-			while (heap->next && heap->size < p->param_nr) {
-				struct nv50_program *evict = heap->next->priv;
-				nouveau_resource_free(&evict->data[1]);
-			}
-
-			if (nouveau_resource_alloc(heap, p->param_nr, p,
-						   &p->data[1]))
-				assert(0);
-		}
-	}
+	assert(p->param_nr <= 128);
 
 	if (p->param_nr) {
-		unsigned cbuf = NV50_CB_PVP;
+		unsigned cb;
 		float *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
 					     PIPE_BUFFER_USAGE_CPU_READ);
-		if (p->type == PIPE_SHADER_FRAGMENT)
-			cbuf = NV50_CB_PFP;
-		nv50_program_upload_data(nv50, map, p->data[1]->start,
-					 p->param_nr, cbuf);
+
+		if (p->type == PIPE_SHADER_VERTEX)
+			cb = NV50_CB_PVP;
+		else
+			cb = NV50_CB_PFP;
+
+		nv50_program_upload_data(nv50, map, 0, p->param_nr, cb);
 		pipe_buffer_unmap(pscreen, nv50->constbuf[p->type]);
 	}
 }
@@ -2556,32 +2545,30 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 		upload = TRUE;
 	}
 
-	if ((p->data[0] && p->data[0]->start != p->data_start[0]) ||
-		(p->data[1] && p->data[1]->start != p->data_start[1])) {
-		for (e = p->exec_head; e; e = e->next) {
-			unsigned ei, ci, bs;
-
-			if (e->param.index < 0)
-				continue;
-			bs = (e->inst[1] >> 22) & 0x07;
-			assert(bs < 2);
-			ei = e->param.shift >> 5;
-			ci = e->param.index + p->data[bs]->start;
-
-			e->inst[ei] &= ~e->param.mask;
-			e->inst[ei] |= (ci << e->param.shift);
-		}
-
-		if (p->data[0])
-			p->data_start[0] = p->data[0]->start;
-		if (p->data[1])
-			p->data_start[1] = p->data[1]->start;
-
+	if (p->data[0] && p->data[0]->start != p->data_start[0])
 		upload = TRUE;
-	}
 
 	if (!upload)
 		return;
+
+	for (e = p->exec_head; e; e = e->next) {
+		unsigned ei, ci, bs;
+
+		if (e->param.index < 0)
+			continue;
+		bs = (e->inst[1] >> 22) & 0x07;
+		assert(bs < 2);
+		ei = e->param.shift >> 5;
+		ci = e->param.index;
+		if (bs == 0)
+			ci += p->data[bs]->start;
+
+		e->inst[ei] &= ~e->param.mask;
+		e->inst[ei] |= (ci << e->param.shift);
+	}
+
+	if (p->data[0])
+		p->data_start[0] = p->data[0]->start;
 
 #ifdef NV50_PROGRAM_DUMP
 	NOUVEAU_ERR("-------\n");
@@ -2885,7 +2872,6 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	nouveau_bo_ref(NULL, &p->bo);
 
 	nouveau_resource_free(&p->data[0]);
-	nouveau_resource_free(&p->data[1]);
 
 	p->translated = 0;
 }
