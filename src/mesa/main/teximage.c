@@ -2474,11 +2474,11 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (subtexture_error_check2(ctx, 1, target, level, xoffset, 0, 0,
-				  postConvWidth, 1, 1, format, type, texImage)) {
-	 goto out;   /* error was detected */
+				  postConvWidth, 1, 1,
+                                  format, type, texImage)) {
+         /* error was recorded */
       }
-
-      if (width > 0) {
+      else if (width > 0) {
          /* If we have a border, xoffset=-1 is legal.  Bias by border width */
          xoffset += texImage->Border;
 
@@ -2489,7 +2489,6 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
@@ -2526,17 +2525,17 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
 
    texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
       if (subtexture_error_check2(ctx, 2, target, level, xoffset, yoffset, 0,
-				  postConvWidth, postConvHeight, 1, format, type, 
-				  texImage)) {
-	 goto out;   /* error was detected */
+				  postConvWidth, postConvHeight, 1,
+                                  format, type, texImage)) {
+	 /* error was recorded */
       }
-
-      if (width > 0 && height >= 0) {
+      else if (width > 0 && height >= 0) {
          /* If we have a border, xoffset=-1 is legal.  Bias by border width */
          xoffset += texImage->Border;
          yoffset += texImage->Border;
@@ -2548,7 +2547,6 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
@@ -2582,12 +2580,13 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
-      if (subtexture_error_check2(ctx, 3, target, level, xoffset, yoffset, zoffset,
-				  width, height, depth, format, type, texImage)) {
-	 goto out;   /* error was detected */
+      if (subtexture_error_check2(ctx, 3, target, level,
+                                  xoffset, yoffset, zoffset,
+				  width, height, depth,
+                                  format, type, texImage)) {
+         /* error was recorded */
       }
-
-      if (width > 0 && height > 0 && height > 0) {
+      else if (width > 0 && height > 0 && height > 0) {
          /* If we have a border, xoffset=-1 is legal.  Bias by border width */
          xoffset += texImage->Border;
          yoffset += texImage->Border;
@@ -2602,7 +2601,6 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
@@ -2637,6 +2635,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
    texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_get_tex_image(ctx, texObj, target, level);
@@ -2773,23 +2772,22 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
 
       if (copytexsubimage_error_check2(ctx, 1, target, level,
 				       xoffset, 0, 0, postConvWidth, 1,
-				       texImage))
-	 goto out;
-      
-
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-
-      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
-                                     &width, &height)) {
-         ASSERT(ctx->Driver.CopyTexSubImage1D);
-         ctx->Driver.CopyTexSubImage1D(ctx, target, level,
-                                       xoffset, x, y, width);
+				       texImage)) {
+         /* error was recorded */
       }
+      else {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
 
-      ctx->NewState |= _NEW_TEXTURE;
+         if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                        &width, &height)) {
+            ASSERT(ctx->Driver.CopyTexSubImage1D);
+            ctx->Driver.CopyTexSubImage1D(ctx, target, level,
+                                          xoffset, x, y, width);
+            ctx->NewState |= _NEW_TEXTURE;
+         }
+      }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
@@ -2827,24 +2825,26 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       }
 #endif
 
-      if (copytexsubimage_error_check2(ctx, 2, target, level, xoffset, yoffset, 0,
-				       postConvWidth, postConvHeight, texImage))
-	 goto out;
-
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-      yoffset += texImage->Border;
-
-      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
-                                     &width, &height)) {
-         ASSERT(ctx->Driver.CopyTexSubImage2D);
-         ctx->Driver.CopyTexSubImage2D(ctx, target, level,
-				       xoffset, yoffset, x, y, width, height);
+      if (copytexsubimage_error_check2(ctx, 2, target, level,
+                                       xoffset, yoffset, 0,
+				       postConvWidth, postConvHeight,
+                                       texImage)) {
+         /* error was recorded */
       }
+      else {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
+         yoffset += texImage->Border;
 
-      ctx->NewState |= _NEW_TEXTURE;
+         if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                        &width, &height)) {
+            ASSERT(ctx->Driver.CopyTexSubImage2D);
+            ctx->Driver.CopyTexSubImage2D(ctx, target, level, xoffset, yoffset,
+                                          x, y, width, height);
+            ctx->NewState |= _NEW_TEXTURE;
+         }
+      }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
@@ -2884,25 +2884,25 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 
       if (copytexsubimage_error_check2(ctx, 3, target, level, xoffset, yoffset,
 				       zoffset, postConvWidth, postConvHeight,
-				       texImage))
-	 goto out;
-
-      /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-      xoffset += texImage->Border;
-      yoffset += texImage->Border;
-      zoffset += texImage->Border;
-      
-      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
-                                     &width, &height)) {
-         ASSERT(ctx->Driver.CopyTexSubImage3D);
-         ctx->Driver.CopyTexSubImage3D(ctx, target, level,
-				       xoffset, yoffset, zoffset,
-				       x, y, width, height);
+				       texImage)) {
+         /* error was recored */
       }
+      else {
+         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+         xoffset += texImage->Border;
+         yoffset += texImage->Border;
+         zoffset += texImage->Border;
 
-      ctx->NewState |= _NEW_TEXTURE;
+         if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                        &width, &height)) {
+            ASSERT(ctx->Driver.CopyTexSubImage3D);
+            ctx->Driver.CopyTexSubImage3D(ctx, target, level,
+                                          xoffset, yoffset, zoffset,
+                                          x, y, width, height);
+            ctx->NewState |= _NEW_TEXTURE;
+         }
+      }
    }
- out:
    _mesa_unlock_texture(ctx, texObj);
 }
 
