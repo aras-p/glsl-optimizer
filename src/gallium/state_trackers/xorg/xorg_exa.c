@@ -309,6 +309,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 #if 1
     debug_printf("  ExaPrepareSolid(0x%x)\n", fg);
 #endif
+
     return xorg_solid_bind_state(exa, priv, fg);
 }
 
@@ -332,6 +333,15 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
 #endif
 
 #if DEBUG_SOLID
+       exa->solid_color[0] = 0.f;
+       exa->solid_color[1] = 1.f;
+       exa->solid_color[2] = 0.f;
+       exa->solid_color[3] = 1.f;
+    xorg_solid(exa, priv, 0, 0, 1024, 768);
+       exa->solid_color[0] = 1.f;
+       exa->solid_color[1] = 0.f;
+       exa->solid_color[2] = 0.f;
+       exa->solid_color[3] = 1.f;
     xorg_solid(exa, priv, 0, 0, 300, 300);
     xorg_solid(exa, priv, 300, 300, 350, 350);
     xorg_solid(exa, priv, 350, 350, 500, 500);
@@ -340,6 +350,12 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
                priv->tex->height[0] - 10,
                priv->tex->width[0],
                priv->tex->height[0]);
+
+    ExaPrepareCopy(pPixmap, pPixmap, 0, 0, GXcopy, 0xffffffff);
+    ExaCopy(pPixmap, 350, 350, 510, 350, 150, 150);
+    ExaCopy(pPixmap, 350, 350, 510, 190, 150, 150);
+    xorg_exa_finish(exa);
+    ExaCopy(pPixmap, 0, 0, 0, 0, 1024, 768);
 #else
     xorg_solid(exa, priv, x0, y0, x1, y1) ;
 #endif
@@ -613,8 +629,8 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 		struct pipe_surface *dst_surf;
                 struct pipe_surface *src_surf;
 
-		dst_surf = exa->scrn->get_tex_surface(exa->scrn, texture, 0, 0, 0,
-						      PIPE_BUFFER_USAGE_GPU_WRITE);
+		dst_surf = exa->scrn->get_tex_surface(
+                   exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
 		src_surf = exa_gpu_surface(exa, priv);
 		exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
                                         0, 0, min(width, texture->width[0]),

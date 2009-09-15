@@ -12,9 +12,9 @@ struct xorg_composite_blend {
    int op:8;
 
    unsigned rgb_src_factor:5;    /**< PIPE_BLENDFACTOR_x */
-   unsigned rgb_dst_factor:5;    /**< PIPE_BLENDFACTOR_x */
-
    unsigned alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
+
+   unsigned rgb_dst_factor:5;    /**< PIPE_BLENDFACTOR_x */
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 };
 
@@ -836,11 +836,6 @@ static void renderer_copy_texture(struct exa_context *exa,
    assert(dst->width[0] != 0);
    assert(dst->height[0] != 0);
 
-#if 0
-   debug_printf("copy texture [%f, %f, %f, %f], [%f, %f, %f, %f]\n",
-                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
-#endif
-
 #if 1
    s0 = sx1 / src->width[0];
    s1 = sx2 / src->width[0];
@@ -851,6 +846,12 @@ static void renderer_copy_texture(struct exa_context *exa,
    s1 = 1;
    t0 = 0;
    t1 = 1;
+#endif
+
+#if 1
+   debug_printf("copy texture src=[%f, %f, %f, %f], dst=[%f, %f, %f, %f], tex=[%f, %f, %f, %f]\n",
+                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2,
+                s0, t0, s1, t1);
 #endif
 
    assert(screen->is_format_supported(screen, dst_surf->format,
@@ -920,6 +921,8 @@ static void renderer_copy_texture(struct exa_context *exa,
          fb.cbufs[i] = 0;
    }
    cso_set_framebuffer(exa->cso, &fb);
+   setup_vs_constant_buffer(exa, fb.width, fb.height);
+   setup_fs_constant_buffer(exa);
 
    /* draw quad */
    buf = setup_vertex_data_tex(exa,
@@ -1002,14 +1005,14 @@ void xorg_copy_pixmap(struct exa_context *ctx,
       renderer_copy_texture(ctx,
                             src,
                             src_loc[0],
-                            src_loc[1] + src_loc[3],
-                            src_loc[0] + src_loc[2],
                             src_loc[1],
+                            src_loc[0] + src_loc[2],
+                            src_loc[1] + src_loc[3],
                             dst,
                             dst_loc[0],
-                            dst_loc[1] + dst_loc[3],
+                            dst_loc[1],
                             dst_loc[0] + dst_loc[2],
-                            dst_loc[1]);
+                            dst_loc[1] + dst_loc[3]);
    }
 }
 
