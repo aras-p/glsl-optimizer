@@ -58,6 +58,7 @@ static GLint ClampIndex = 0;
 static GLboolean supportFBO = GL_FALSE;
 static GLboolean supportSeamless = GL_FALSE;
 static GLboolean seamless = GL_FALSE;
+static GLuint TexObj = 0;
 
 
 static struct {
@@ -542,6 +543,10 @@ static void init( GLboolean useImageFiles )
    supportSeamless = glutExtensionSupported("GL_ARB_seamless_cube_map");
 
    printf("GL_RENDERER: %s\n", (char *) glGetString(GL_RENDERER));
+
+
+   glGenTextures(1, &TexObj);
+   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, TexObj);
 
    if (useImageFiles) {
       load_envmaps();
