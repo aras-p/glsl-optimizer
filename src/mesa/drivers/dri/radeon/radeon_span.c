@@ -113,8 +113,8 @@ static GLubyte *r200_depth_4byte(const struct radeon_renderbuffer * rrb,
  * only 1D tiling is implemented below
  */
 #if defined(RADEON_COMMON_FOR_R600)
-static GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
-				 GLint x, GLint y, GLint is_depth, GLint is_stencil)
+static inline GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
+					GLint x, GLint y, GLint is_depth, GLint is_stencil)
 {
     GLint element_bytes = rrb->cpp;
     GLint num_samples = 1;
@@ -138,7 +138,7 @@ static GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
     GLint offset = 0;
 
     tile_bytes = tile_width * tile_height * tile_thickness * element_bytes * num_samples;
-    tiles_per_row = pitch_elements /tile_width;
+    tiles_per_row = pitch_elements / tile_width;
     tiles_per_slice = tiles_per_row * (height / tile_height);
     slice_offset = (z / tile_thickness) * tiles_per_slice * tile_bytes;
     tile_row_index = y / tile_height;
@@ -157,7 +157,6 @@ static GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
 	    switch (element_bytes) {
 	    case 2:
 		    pixel_offset = pixel_number * element_bytes * num_samples;
-		    element_offset = pixel_offset + (sample_number * element_bytes);
 		    break;
 	    case 4:
 		    /* stencil and depth data are stored separately within a tile.
