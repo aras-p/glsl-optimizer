@@ -169,6 +169,13 @@ pipe_transfer_unmap( struct pipe_transfer *transf )
    screen->transfer_unmap(screen, transf);
 }
 
+static INLINE void
+pipe_transfer_destroy( struct pipe_transfer *transf )
+{
+   struct pipe_screen *screen = transf->texture->screen;
+   return screen->tex_transfer_destroy(transf);
+}
+
 #ifdef __cplusplus
 }
 #endif
