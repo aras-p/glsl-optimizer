@@ -2056,6 +2056,11 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					if (p->cfg.io_nr > first)
 						p->cfg.io_nr = first;
 					break;
+				case TGSI_SEMANTIC_PSIZE:
+					p->cfg.psiz = first;
+					if (p->cfg.io_nr > first)
+						p->cfg.io_nr = first;
+					break;
 					/*
 				case TGSI_SEMANTIC_CLIP_DISTANCE:
 					p->cfg.clpd = MIN2(p->cfg.clpd, first);
@@ -2138,6 +2143,9 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			if (p->cfg.two_side[c].hw < 0x40)
 				p->cfg.two_side[c] = p->cfg.io[
 					p->cfg.two_side[c].hw];
+
+		if (p->cfg.psiz < 0x40)
+			p->cfg.psiz = p->cfg.io[p->cfg.psiz].hw;
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
 		int rid, aid;
@@ -2289,6 +2297,7 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 
 	switch (p->type) {
 	case PIPE_SHADER_VERTEX:
+		p->cfg.psiz = 0x40;
 		p->cfg.clpd = 0x40;
 		p->cfg.io_nr = pc->result_nr;
 		break;
@@ -2779,6 +2788,11 @@ nv50_linkage_validate(struct nv50_context *nv50)
 			vpo = &vp->cfg.io[n];
 
 		m = nv50_sreg4_map(map, m, lin, &fp->cfg.io[i], vpo);
+	}
+
+	if (nv50->rasterizer->pipe.point_size_per_vertex) {
+		map[m / 4] |= vp->cfg.psiz << ((m % 4) * 8);
+		reg[3] = (m++ << 4) | 1;
 	}
 
 	/* now fill the stateobj */

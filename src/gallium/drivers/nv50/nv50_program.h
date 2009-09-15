@@ -58,6 +58,7 @@ struct nv50_program {
 
 		/* VP only */
 		uint8_t clpd, clpd_nr;
+		uint8_t psiz;
 	} cfg;
 };
 
