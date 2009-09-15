@@ -23,6 +23,7 @@ HOST_CC = $(CC)
 CFLAGS = -O
 CXXFLAGS = -O
 LDFLAGS =
+HOST_CFLAGS = $(CFLAGS)
 GLU_CFLAGS = 
 
 # Compiler for building demos/tests/etc
