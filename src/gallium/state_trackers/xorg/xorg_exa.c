@@ -466,14 +466,11 @@ static void
 ExaDestroyPixmap(ScreenPtr pScreen, void *dPriv)
 {
     struct exa_pixmap_priv *priv = (struct exa_pixmap_priv *)dPriv;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
 
     if (!priv)
 	return;
 
-    if (priv->tex)
-	ms->screen->texture_destroy(priv->tex);
+    pipe_texture_reference(&priv->tex, NULL);
 
     xfree(priv);
 }
