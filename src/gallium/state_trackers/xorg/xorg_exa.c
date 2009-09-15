@@ -284,13 +284,15 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 #if 0
     debug_printf("ExaPrepareSolid - test\n");
 #endif
-    if (pPixmap->drawable.depth < 15)
-	return FALSE;
-
     if (!EXA_PM_IS_SOLID(&pPixmap->drawable, planeMask))
 	return FALSE;
 
     if (!priv || !priv->tex)
+	return FALSE;
+
+    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                        priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
 	return FALSE;
 
     if (alu != GXcopy)
@@ -358,13 +360,18 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     if (alu != GXcopy)
 	return FALSE;
 
-    if (pSrcPixmap->drawable.depth < 15 || pDstPixmap->drawable.depth < 15)
-	return FALSE;
-
     if (!EXA_PM_IS_SOLID(&pSrcPixmap->drawable, planeMask))
 	return FALSE;
 
     if (!priv || !src_priv)
+	return FALSE;
+
+    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                        priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0) ||
+        !exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
+                                        src_priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_SAMPLER, 0))
 	return FALSE;
 
     if (!priv->tex || !src_priv->tex)
