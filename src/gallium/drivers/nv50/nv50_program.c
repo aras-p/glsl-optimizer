@@ -854,12 +854,14 @@ static void
 emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
+	static const unsigned cc_swapped[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+
 	struct nv50_program_exec *e = exec(pc);
 	struct nv50_reg *rdst;
 
 	assert(ccode < 16);
 	if (check_swap_src_0_1(pc, &src0, &src1))
-		ccode = ccode ^ 0x7;
+		ccode = cc_swapped[ccode & 7] | (ccode & 8);
 
 	rdst = dst;
 	if (dst && dst->type != P_TEMP)
