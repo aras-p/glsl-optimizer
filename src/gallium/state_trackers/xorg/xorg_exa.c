@@ -342,20 +342,24 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
        exa->solid_color[1] = 0.f;
        exa->solid_color[2] = 0.f;
        exa->solid_color[3] = 1.f;
-    xorg_solid(exa, priv, 0, 0, 300, 300);
-    xorg_solid(exa, priv, 300, 300, 350, 350);
-    xorg_solid(exa, priv, 350, 350, 500, 500);
-    xorg_solid(exa, priv,
+       xorg_solid(exa, priv, 0, 0, 300, 300);
+       xorg_solid(exa, priv, 300, 300, 350, 350);
+       xorg_solid(exa, priv, 350, 350, 500, 500);
+
+       xorg_solid(exa, priv,
                priv->tex->width[0] - 10,
                priv->tex->height[0] - 10,
                priv->tex->width[0],
                priv->tex->height[0]);
 
+    exa->solid_color[0] = 0.f;
+    exa->solid_color[1] = 0.f;
+    exa->solid_color[2] = 1.f;
+    exa->solid_color[3] = 1.f;
+
+    exa->has_solid_color = FALSE;
     ExaPrepareCopy(pPixmap, pPixmap, 0, 0, GXcopy, 0xffffffff);
-    ExaCopy(pPixmap, 350, 350, 510, 350, 150, 150);
-    ExaCopy(pPixmap, 350, 350, 510, 190, 150, 150);
-    xorg_exa_finish(exa);
-    ExaCopy(pPixmap, 0, 0, 0, 0, 1024, 768);
+    ExaCopy(pPixmap, 0, 0, 50, 50, 500, 500);
 #else
     xorg_solid(exa, priv, x0, y0, x1, y1) ;
 #endif

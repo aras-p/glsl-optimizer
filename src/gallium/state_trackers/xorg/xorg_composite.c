@@ -952,6 +952,61 @@ static void renderer_copy_texture(struct exa_context *exa,
    pipe_surface_reference(&dst_surf, NULL);
 }
 
+
+static struct pipe_texture *
+create_sampler_texture(struct exa_context *ctx,
+                       struct pipe_texture *src)
+{
+   enum pipe_format format;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_texture *pt;
+   struct pipe_texture templ;
+
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* the coming in texture should already have that invariance */
+   debug_assert(screen->is_format_supported(screen, src->format,
+                                            PIPE_TEXTURE_2D,
+                                            PIPE_TEXTURE_USAGE_SAMPLER, 0));
+
+   format = src->format;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.format = format;
+   templ.last_level = 0;
+   templ.width[0] = src->width[0];
+   templ.height[0] = src->height[0];
+   templ.depth[0] = 1;
+   pf_get_block(format, &templ.block);
+   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+
+   pt = screen->texture_create(screen, &templ);
+
+   debug_assert(!pt || pipe_is_referenced(&pt->reference));
+
+   if (!pt)
+      return NULL;
+
+   {
+      /* copy source framebuffer surface into texture */
+      struct pipe_surface *ps_read = screen->get_tex_surface(
+         screen, src, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+      struct pipe_surface *ps_tex = screen->get_tex_surface(
+         screen, pt, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE );
+      pipe->surface_copy(pipe,
+			 ps_tex, /* dest */
+			 0, 0, /* destx/y */
+			 ps_read,
+			 0, 0, src->width[0], src->height[0]);
+      pipe_surface_reference(&ps_read, NULL);
+      pipe_surface_reference(&ps_tex, NULL);
+   }
+
+   return pt;
+}
+
 void xorg_copy_pixmap(struct exa_context *ctx,
                       struct exa_pixmap_priv *dst_priv, int dx, int dy,
                       struct exa_pixmap_priv *src_priv, int sx, int sy,
@@ -1002,8 +1057,13 @@ void xorg_copy_pixmap(struct exa_context *ctx,
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
+      struct pipe_texture *temp_src = src;
+
+      if (src == dst)
+         temp_src = create_sampler_texture(ctx, src);
+
       renderer_copy_texture(ctx,
-                            src,
+                            temp_src,
                             src_loc[0],
                             src_loc[1],
                             src_loc[0] + src_loc[2],
@@ -1013,6 +1073,9 @@ void xorg_copy_pixmap(struct exa_context *ctx,
                             dst_loc[1],
                             dst_loc[0] + dst_loc[2],
                             dst_loc[1] + dst_loc[3]);
+
+      if (src == dst)
+         pipe_texture_reference(&temp_src, NULL);
    }
 }
 

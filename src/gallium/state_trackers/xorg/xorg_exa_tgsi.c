@@ -259,7 +259,7 @@ create_vs(struct pipe_context *pipe,
 
    if (is_composite) {
       src = ureg_DECL_vs_input(ureg, input_slot++);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 0);
       ureg_MOV(ureg, dst, src);
    }
 
@@ -310,7 +310,7 @@ create_fs(struct pipe_context *pipe,
    if (is_composite) {
       src_sampler = ureg_DECL_sampler(ureg, 0);
       src_input = ureg_DECL_fs_input(ureg,
-                                     TGSI_SEMANTIC_POSITION,
+                                     TGSI_SEMANTIC_GENERIC,
                                      0,
                                      TGSI_INTERPOLATE_PERSPECTIVE);
    } else {
