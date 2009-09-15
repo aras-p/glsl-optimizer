@@ -46,6 +46,10 @@
 #include "texstore.h"
 
 
+/** Set this to 1 to help debug FBO incompleteness problems */
+#define DEBUG_FBO 0
+
+
 /**
  * Notes:
  *
@@ -308,12 +312,29 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 static void
 att_incomplete(const char *msg)
 {
-#if 0
-   _mesa_printf("attachment incomplete: %s\n", msg);
+#if DEBUG_FBO
+   _mesa_debug(NULL, "attachment incomplete: %s\n", msg);
 #else
    (void) msg;
 #endif
 }
+
+
+/**
+ * For debug only.
+ */
+static void
+fbo_incomplete(const char *msg, int index)
+{
+#if DEBUG_FBO
+   _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
+#else
+   (void) msg;
+   (void) index;
+#endif
+}
+
+
 
 
 /**
@@ -464,20 +485,6 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       /* complete */
       return;
    }
-}
-
-
-/**
- * Helpful for debugging
- */
-static void
-fbo_incomplete(const char *msg, int index)
-{
-   (void) msg;
-   (void) index;
-   /*
-   _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
-   */
 }
 
 
