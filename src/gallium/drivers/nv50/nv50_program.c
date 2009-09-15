@@ -1337,6 +1337,7 @@ static boolean
 is_scalar_op(unsigned op)
 {
 	switch (op) {
+	case TGSI_OPCODE_COS:
 	case TGSI_OPCODE_DP2:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
@@ -1346,12 +1347,11 @@ is_scalar_op(unsigned op)
 	case TGSI_OPCODE_POW:
 	case TGSI_OPCODE_RCP:
 	case TGSI_OPCODE_RSQ:
+	case TGSI_OPCODE_SIN:
 		/*
-	case TGSI_OPCODE_COS:
 	case TGSI_OPCODE_KIL:
 	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
-	case TGSI_OPCODE_SIN:
 		*/
 		return TRUE;
 	default:
@@ -1468,14 +1468,16 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_COS:
-		temp = temp_temp(pc);
-		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 5, temp, temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
+		if (mask & 8) {
+			emit_precossin(pc, temp, src[0][3]);
+			emit_flop(pc, 5, dst[3], temp);
+			if (!(mask &= 7))
+				break;
+			if (temp == dst[3])
+				temp = brdc = temp_temp(pc);
 		}
+		emit_precossin(pc, temp, src[0][0]);
+		emit_flop(pc, 5, brdc, temp);
 		break;
 	case TGSI_OPCODE_DP3:
 		emit_mul(pc, temp, src[0][0], src[1][0]);
@@ -1612,14 +1614,16 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_SIN:
-		temp = temp_temp(pc);
-		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 4, temp, temp);
-		for (c = 0; c < 4; c++) {
-			if (!(mask & (1 << c)))
-				continue;
-			emit_mov(pc, dst[c], temp);
+		if (mask & 8) {
+			emit_precossin(pc, temp, src[0][3]);
+			emit_flop(pc, 4, dst[3], temp);
+			if (!(mask &= 7))
+				break;
+			if (temp == dst[3])
+				temp = brdc = temp_temp(pc);
 		}
+		emit_precossin(pc, temp, src[0][0]);
+		emit_flop(pc, 4, brdc, temp);
 		break;
 	case TGSI_OPCODE_SLT:
 		for (c = 0; c < 4; c++) {
