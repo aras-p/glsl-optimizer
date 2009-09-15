@@ -331,6 +331,7 @@ typedef enum
 
    /* GL_ARB_shader_objects */
    OPCODE_USE_PROGRAM,
+   OPCODE_UNIFORM_4F,  /* XXX many more glUniform functions */
 
    /* GL_EXT_framebuffer_blit */
    OPCODE_BLIT_FRAMEBUFFER,
@@ -5803,6 +5804,26 @@ save_UseProgramObjectARB(GLhandleARB program)
 }
 
 
+static void GLAPIENTRY
+save_Uniform4fARB(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_UNIFORM_4F, 5);
+   if (n) {
+      n[1].i = location;
+      n[2].f = x;
+      n[3].f = y;
+      n[4].f = z;
+      n[5].f = w;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_Uniform4fARB(ctx->Exec, (location, x, y, z, w));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -6638,6 +6659,10 @@ execute_list(GLcontext *ctx, GLuint list)
 
 	 case OPCODE_USE_PROGRAM:
 	    CALL_UseProgramObjectARB(ctx->Exec, (n[1].ui));
+	    break;
+	 case OPCODE_UNIFORM_4F:
+	    CALL_Uniform4fARB(ctx->Exec,
+                              (n[1].i, n[2].f, n[3].f, n[4].f, n[5].f));
 	    break;
 
          case OPCODE_TEX_BUMP_PARAMETER_ATI:
@@ -8324,6 +8349,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* GL_ARB_shader_objects */
    SET_UseProgramObjectARB(table, save_UseProgramObjectARB);
+   SET_Uniform4fARB(table, save_Uniform4fARB);
 
    /* ARB 30/31/32. GL_ARB_shader_objects, GL_ARB_vertex/fragment_shader */
    SET_BindAttribLocationARB(table, exec_BindAttribLocationARB);
