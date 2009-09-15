@@ -239,7 +239,7 @@ static GLubyte *r600_ptr_color(const struct radeon_renderbuffer * rrb,
     return &ptr[offset];
 }
 
-#endif
+#else
 
 /* radeon tiling on r300-r500 has 4 states,
    macro-linear/micro-linear
@@ -332,7 +332,10 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
     return &ptr[offset];
 }
 
+#endif
+
 #ifndef COMPILE_R300
+#ifndef COMPILE_R600
 static uint32_t
 z24s8_to_s8z24(uint32_t val)
 {
@@ -344,6 +347,7 @@ s8z24_to_z24s8(uint32_t val)
 {
    return (val >> 24) | (val << 8);
 }
+#endif
 #endif
 
 /*
