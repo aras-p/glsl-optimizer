@@ -52,8 +52,7 @@ struct xorg_shaders {
 
 static const char over_op[] =
    "SUB TEMP[3], CONST[0].wwww, TEMP[1].wwww\n"
-   "MUL TEMP[3], TEMP[0], TEMP[3]\n"
-   "ADD TEMP[0], TEMP[3], TEMP[0]\n";
+   "MAD TEMP[3], TEMP[0], TEMP[3], TEMP[0]\n";
 
 
 static INLINE void
@@ -79,8 +78,7 @@ vs_normalize_coords(struct ureg_program *ureg, struct ureg_src coords,
 {
    struct ureg_dst tmp = ureg_DECL_temporary(ureg);
    struct ureg_src ret;
-   ureg_MUL(ureg, tmp, coords, const0);
-   ureg_ADD(ureg, tmp, ureg_src(tmp), const1);
+   ureg_MAD(ureg, tmp, coords, const0, const1);
    ret = ureg_src(tmp);
    ureg_release_temporary(ureg, tmp);
    return ret;
