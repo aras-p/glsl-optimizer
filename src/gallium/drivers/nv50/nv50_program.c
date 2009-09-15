@@ -1575,7 +1575,6 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_kil(pc, src[0][1]);
 		emit_kil(pc, src[0][2]);
 		emit_kil(pc, src[0][3]);
-		pc->p->cfg.fp.regs[2] |= 0x00100000;
 		break;
 	case TGSI_OPCODE_LIT:
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
@@ -1754,64 +1753,52 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 }
 
 static void
-prep_inspect_insn(struct nv50_pc *pc, const union tgsi_full_token *tok,
-		  unsigned *r_usage[2])
+prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 {
-	const struct tgsi_full_instruction *insn;
+	struct nv50_reg *reg = NULL;
 	const struct tgsi_full_src_register *src;
 	const struct tgsi_dst_register *dst;
+	unsigned i, c, k, mask;
 
-	unsigned i, c, k, n, mask, *acc_p;
-
-	insn = &tok->FullInstruction;
 	dst = &insn->FullDstRegisters[0].DstRegister;
 	mask = dst->WriteMask;
 
-	if (!r_usage[0])
-		r_usage[0] = CALLOC(pc->temp_nr * 4, sizeof(unsigned));
-	if (!r_usage[1])
-		r_usage[1] = CALLOC(pc->attr_nr * 4, sizeof(unsigned));
+        if (dst->File == TGSI_FILE_TEMPORARY)
+                reg = pc->temp;
+        else
+        if (dst->File == TGSI_FILE_OUTPUT)
+                reg = pc->result;
 
-	if (dst->File == TGSI_FILE_TEMPORARY) {
+	if (reg) {
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			r_usage[0][dst->Index * 4 + c] = pc->insn_nr;
+			reg[dst->Index * 4 + c].acc = pc->insn_nr;
 		}
 	}
 
 	for (i = 0; i < insn->Instruction.NumSrcRegs; i++) {
 		src = &insn->FullSrcRegisters[i];
 
-		switch (src->SrcRegister.File) {
-		case TGSI_FILE_TEMPORARY:
-			acc_p = r_usage[0];
-			break;
-		case TGSI_FILE_INPUT:
-			acc_p = r_usage[1];
-			break;
-		default:
+		if (src->SrcRegister.File == TGSI_FILE_TEMPORARY)
+			reg = pc->temp;
+		else
+		if (src->SrcRegister.File == TGSI_FILE_INPUT)
+			reg = pc->attr;
+		else
 			continue;
-		}
 
 		mask = nv50_tgsi_src_mask(insn, i);
 
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-
 			k = tgsi_util_get_full_src_register_extswizzle(src, c);
-			switch (k) {
-			case TGSI_EXTSWIZZLE_X:
-			case TGSI_EXTSWIZZLE_Y:
-			case TGSI_EXTSWIZZLE_Z:
-			case TGSI_EXTSWIZZLE_W:
-				n = src->SrcRegister.Index * 4 + k;
-				acc_p[n] = pc->insn_nr;
-				break;
-			default:
-				break;
-			}
+
+			if (k > TGSI_EXTSWIZZLE_W)
+				continue;
+
+			reg[src->SrcRegister.Index * 4 + k].acc = pc->insn_nr;
 		}
 	}
 }
@@ -1989,8 +1976,7 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 }
 
 static unsigned
-load_fp_attrib(struct nv50_pc *pc, int i, unsigned *acc, int *mid,
-	       int *aid, int *p_oid)
+load_fp_attrib(struct nv50_pc *pc, int i, int *mid, int *aid, int *p_oid)
 {
 	struct nv50_reg *iv;
 	int oid, c, n;
@@ -2000,15 +1986,11 @@ load_fp_attrib(struct nv50_pc *pc, int i, unsigned *acc, int *mid,
 
 	for (c = 0, n = i * 4; c < 4; c++, n++) {
 		oid = (*p_oid)++;
-		pc->attr[n].type = P_TEMP;
-		pc->attr[n].index = i;
 
-		if (pc->attr[n].acc == acc[n])
+		if (!pc->attr[n].acc)
 			continue;
 		mask |= (1 << c);
 
-		pc->attr[n].acc = acc[n];
-		pc->attr[n].rhw = pc->attr[n].hw = -1;
 		alloc_reg(pc, &pc->attr[n]);
 
 		pc->attr[n].rhw = (*aid)++;
@@ -2028,23 +2010,13 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	struct tgsi_parse_context p;
 	boolean ret = FALSE;
 	unsigned i, c;
-	unsigned fcol, bcol, fcrd, depr;
+	unsigned fcol, bcol, fcrd;
 
 	/* count (centroid) perspective interpolations */
 	unsigned centroid_loads = 0;
 	unsigned perspect_loads = 0;
 
-	/* track register access for temps and attrs */
-	unsigned *r_usage[2];
-	r_usage[0] = NULL;
-	r_usage[1] = NULL;
-
-	depr = fcol = bcol = fcrd = 0xffff;
-
-	if (pc->p->type == PIPE_SHADER_FRAGMENT) {
-		pc->p->cfg.fp.regs[0] = 0x01000404;
-		pc->p->cfg.fp.regs[1] = 0x00000400;
-	}
+	fcol = bcol = fcrd = ~0;
 
 	tgsi_parse_init(&p, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
@@ -2074,32 +2046,11 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 			switch (d->Declaration.File) {
 			case TGSI_FILE_TEMPORARY:
-				if (pc->temp_nr < (last + 1))
-					pc->temp_nr = last + 1;
 				break;
 			case TGSI_FILE_OUTPUT:
-				if (pc->result_nr < (last + 1))
-					pc->result_nr = last + 1;
-
-				if (!d->Declaration.Semantic)
-					break;
-
-				switch (d->Semantic.SemanticName) {
-				case TGSI_SEMANTIC_POSITION:
-					depr = first;
-					pc->p->cfg.fp.regs[2] |= 0x00000100;
-					pc->p->cfg.fp.regs[3] |= 0x00000011;
-					break;
-				default:
-					break;
-				}
-
 				break;
 			case TGSI_FILE_INPUT:
 			{
-				if (pc->attr_nr < (last + 1))
-					pc->attr_nr = last + 1;
-
 				if (pc->p->type != PIPE_SHADER_FRAGMENT)
 					break;
 
@@ -2124,10 +2075,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 						fcol = first;
 						mode = INTERP_PERSPECTIVE;
 						break;
-					case TGSI_SEMANTIC_BCOLOR:
-						bcol = first;
-						mode = INTERP_PERSPECTIVE;
-						break;
 					}
 				}
 
@@ -2145,8 +2092,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 				break;
 			case TGSI_FILE_CONSTANT:
-				if (pc->param_nr < (last + 1))
-					pc->param_nr = last + 1;
 				break;
 			case TGSI_FILE_SAMPLER:
 				break;
@@ -2159,23 +2104,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 			pc->insn_nr++;
-			prep_inspect_insn(pc, tok, r_usage);
+			prep_inspect_insn(pc, &tok->FullInstruction);
 			break;
 		default:
 			break;
-		}
-	}
-
-	if (pc->temp_nr) {
-		pc->temp = MALLOC(pc->temp_nr * 4 * sizeof(struct nv50_reg));
-		if (!pc->temp)
-			goto out_err;
-
-		for (i = 0; i < pc->temp_nr; i++) {
-			for (c = 0; c < 4; c++) {
-				ctor_reg(&pc->temp[i*4+c], P_TEMP, i, -1);
-				pc->temp[i*4+c].acc = r_usage[0][i*4+c];
-			}
 		}
 	}
 
@@ -2185,23 +2117,16 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		 * aid = FP attribute/interpolant id
 		 * mid = VP output mapping field ID
 		 */
-
-		pc->attr = CALLOC(pc->attr_nr * 4, sizeof(struct nv50_reg));
-		if (!pc->attr)
-			goto out_err;
-
 		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 			/* position should be loaded first */
-			if (fcrd != 0xffff) {
+			if (fcrd < 0x40) {
 				unsigned mask;
 				mid = 0;
-				mask = load_fp_attrib(pc, fcrd, r_usage[1],
-						      &mid, &aid, &oid);
-				oid = 0;
+				mask = load_fp_attrib(pc, fcrd, &mid, &aid,
+						      &oid);
 				pc->p->cfg.fp.regs[1] |= (mask << 24);
-				pc->p->cfg.fp.map[0] = 0x04040404 * fcrd;
+				pc->p->cfg.fp.map[0] += 0x04040404 * fcrd;
 			}
-			pc->p->cfg.fp.map[0] += 0x03020100;
 
 			/* should do MAD fcrd.xy, fcrd, SOME_CONST, fcrd */
 
@@ -2231,18 +2156,13 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 
 			for (c = 0; c < 4; c++) {
-				/* I don't know what these values do, but
-				 * let's set them like the blob does:
-				 */
-				if (fcol != 0xffff && r_usage[1][fcol * 4 + c])
-					pc->p->cfg.fp.regs[0] += 0x00010000;
-				if (bcol != 0xffff && r_usage[1][bcol * 4 + c])
+				/* XXX: secondary colour, tbd */
+				if (fcol < 0x40 && pc->attr[fcol * 4 + c].acc)
 					pc->p->cfg.fp.regs[0] += 0x00010000;
 			}
 
-			for (i = 0; i < pc->attr_nr; i++)
-				load_fp_attrib(pc, i, r_usage[1],
-					       &mid, &aid, &oid);
+			for (i = ((fcrd < 0x40) ? 1 : 0); i < pc->attr_nr; i++)
+				load_fp_attrib(pc, i, &mid, &aid, &oid);
 
 			if (pc->iv_p)
 				free_temp(pc, pc->iv_p);
@@ -2256,48 +2176,26 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			for (i = 0; i < pc->attr_nr * 4; i++) {
 				pc->p->cfg.vp.attr[aid / 32] |=
 					(1 << (aid % 32));
-				ctor_reg(&pc->attr[i], P_ATTR, i / 4, aid++);
+				pc->attr[i].hw = aid++;
 			}
 		}
 	}
 
 	if (pc->result_nr) {
-		unsigned nr = pc->result_nr * 4;
-		int rid = 0;
-
-		pc->result = MALLOC(nr * sizeof(struct nv50_reg));
-		if (!pc->result)
-			goto out_err;
-
 		if (pc->p->type == PIPE_SHADER_VERTEX) {
-			for (i = 0; i < nr; i++)
-				ctor_reg(&pc->result[i], P_RESULT, i / 4, i);
+			for (i = 0; i < pc->result_nr * 4; i++)
+				pc->result[i].hw = i;
 		} else {
-			/* pc->p->type == PIPE_SHADER_FRAGMENT */
-			for (i = 0; i < pc->result_nr; i++) {
-				for (c = 0; c < 4; c++) {
-					ctor_reg(&pc->result[i*4+c],
-						 P_TEMP, i, -1);
-					if (i != depr)
-						pc->result[i*4+c].rhw = rid++;
-				}
-			}
+			/* type == PIPE_SHADER_FRAGMENT
+			 * FragDepth is always first TGSI and last HW output
+			 */
+			int rid = 0;
+			i = pc->p->info.writes_z ? 4 : 0;
 
-			if (depr != 0xffff)
-				pc->result[depr*4+2].rhw = rid++;
-		}
-	}
-
-	if (pc->param_nr) {
-		int rid = 0;
-
-		pc->param = MALLOC(pc->param_nr * 4 * sizeof(struct nv50_reg));
-		if (!pc->param)
-			goto out_err;
-
-		for (i = 0; i < pc->param_nr; i++) {
-			for (c = 0; c < 4; c++, rid++)
-				ctor_reg(&pc->param[rid], P_CONST, i, rid);
+			for (; i < pc->result_nr * 4; i++)
+				pc->result[i].rhw = rid++;
+			if (pc->p->info.writes_z)
+				pc->result[2].rhw = rid;
 		}
 	}
 
@@ -2316,11 +2214,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 	ret = TRUE;
 out_err:
-	if (r_usage[0])
-		FREE(r_usage[0]);
-	if (r_usage[1])
-		FREE(r_usage[1]);
-
 	tgsi_parse_free(&p);
 	return ret;
 }
@@ -2343,6 +2236,85 @@ free_nv50_pc(struct nv50_pc *pc)
 }
 
 static boolean
+ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
+{
+	int i, c;
+	unsigned rtype[2] = { P_ATTR, P_RESULT };
+
+	pc->p = p;
+	pc->temp_nr = p->info.file_max[TGSI_FILE_TEMPORARY] + 1;
+	pc->attr_nr = p->info.file_max[TGSI_FILE_INPUT] + 1;
+	pc->result_nr = p->info.file_max[TGSI_FILE_OUTPUT] + 1;
+	pc->param_nr = p->info.file_max[TGSI_FILE_CONSTANT] + 1;
+
+	p->cfg.high_temp = 4;
+
+	switch (p->type) {
+	case PIPE_SHADER_VERTEX:
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		p->cfg.fp.regs[0] = 0x01000404;
+		p->cfg.fp.regs[1] = 0x00000400;
+
+		p->cfg.fp.map[0] = 0x03020100;
+		p->cfg.fp.high_map = 1;
+
+		rtype[0] = rtype[1] = P_TEMP;
+
+		if (p->info.writes_z) {
+			p->cfg.fp.regs[2] |= 0x00000100;
+			p->cfg.fp.regs[3] |= 0x00000011;
+		}
+		if (p->info.uses_kill)
+			p->cfg.fp.regs[2] |= 0x00100000;
+		break;
+	}
+
+	if (pc->temp_nr) {
+		pc->temp = MALLOC(pc->temp_nr * 4 * sizeof(struct nv50_reg));
+		if (!pc->temp)
+			return FALSE;
+
+		for (i = 0; i < pc->temp_nr * 4; ++i)
+			ctor_reg(&pc->temp[i], P_TEMP, i / 4, -1);
+	}
+
+	if (pc->attr_nr) {
+		pc->attr = MALLOC(pc->attr_nr * 4 * sizeof(struct nv50_reg));
+		if (!pc->attr)
+			return FALSE;
+
+		for (i = 0; i < pc->attr_nr * 4; ++i)
+			ctor_reg(&pc->attr[i], rtype[0], i / 4, -1);
+	}
+
+	if (pc->result_nr) {
+		unsigned nr = pc->result_nr * 4;
+
+		pc->result = MALLOC(nr * sizeof(struct nv50_reg));
+		if (!pc->result)
+			return FALSE;
+
+		for (i = 0; i < nr; ++i)
+			ctor_reg(&pc->result[i], rtype[1], i / 4, -1);
+	}
+
+	if (pc->param_nr) {
+		int rid = 0;
+
+		pc->param = MALLOC(pc->param_nr * 4 * sizeof(struct nv50_reg));
+		if (!pc->param)
+			return FALSE;
+
+		for (i = 0; i < pc->param_nr; ++i)
+			for (c = 0; c < 4; ++c, ++rid)
+				ctor_reg(&pc->param[rid], P_CONST, i, rid);
+	}
+
+	return TRUE;
+}
+
+static boolean
 nv50_program_tx(struct nv50_program *p)
 {
 	struct tgsi_parse_context parse;
@@ -2353,8 +2325,10 @@ nv50_program_tx(struct nv50_program *p)
 	pc = CALLOC_STRUCT(nv50_pc);
 	if (!pc)
 		return FALSE;
-	pc->p = p;
-	pc->p->cfg.high_temp = 4;
+
+	ret = ctor_nv50_pc(pc, p);
+	if (ret == FALSE)
+		goto out_cleanup;
 
 	ret = nv50_program_tx_prep(pc);
 	if (ret == FALSE)
