@@ -128,6 +128,17 @@ struct nv50_pc {
 	boolean allow32;
 };
 
+static INLINE void
+ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
+{
+	reg->type = type;
+	reg->index = index;
+	reg->hw = hw;
+	reg->neg = 0;
+	reg->rhw = -1;
+	reg->acc = 0;
+}
+
 static void
 alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 {
@@ -188,11 +199,8 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 
 	for (i = 0; i < NV50_SU_MAX_TEMP; i++) {
 		if (!pc->r_temp[i]) {
-			r = CALLOC_STRUCT(nv50_reg);
-			r->type = P_TEMP;
-			r->index = -1;
-			r->hw = i;
-			r->rhw = -1;
+			r = MALLOC_STRUCT(nv50_reg);
+			ctor_reg(r, P_TEMP, -1, i);
 			pc->r_temp[i] = r;
 			return r;
 		}
@@ -258,10 +266,8 @@ alloc_temp4(struct nv50_pc *pc, struct nv50_reg *dst[4], int idx)
 		return alloc_temp4(pc, dst, idx + 4);
 
 	for (i = 0; i < 4; i++) {
-		dst[i] = CALLOC_STRUCT(nv50_reg);
-		dst[i]->type = P_TEMP;
-		dst[i]->index = -1;
-		dst[i]->hw = idx + i;
+		dst[i] = MALLOC_STRUCT(nv50_reg);
+		ctor_reg(dst[i], P_TEMP, -1, idx + i);
 		pc->r_temp[idx + i] = dst[i];
 	}
 
@@ -313,7 +319,7 @@ ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 static struct nv50_reg *
 alloc_immd(struct nv50_pc *pc, float f)
 {
-	struct nv50_reg *r = CALLOC_STRUCT(nv50_reg);
+	struct nv50_reg *r = MALLOC_STRUCT(nv50_reg);
 	unsigned hw;
 
 	for (hw = 0; hw < pc->immd_nr * 4; hw++)
@@ -323,9 +329,7 @@ alloc_immd(struct nv50_pc *pc, float f)
 	if (hw == pc->immd_nr * 4)
 		hw = ctor_immd(pc, f, -f, 0.5 * f, 0) * 4;
 
-	r->type = P_IMMD;
-	r->hw = hw;
-	r->index = -1;
+	ctor_reg(r, P_IMMD, -1, hw);
 	return r;
 }
 
@@ -2163,16 +2167,13 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->temp_nr) {
-		pc->temp = CALLOC(pc->temp_nr * 4, sizeof(struct nv50_reg));
+		pc->temp = MALLOC(pc->temp_nr * 4 * sizeof(struct nv50_reg));
 		if (!pc->temp)
 			goto out_err;
 
 		for (i = 0; i < pc->temp_nr; i++) {
 			for (c = 0; c < 4; c++) {
-				pc->temp[i*4+c].type = P_TEMP;
-				pc->temp[i*4+c].hw = -1;
-				pc->temp[i*4+c].rhw = -1;
-				pc->temp[i*4+c].index = i;
+				ctor_reg(&pc->temp[i*4+c], P_TEMP, i, -1);
 				pc->temp[i*4+c].acc = r_usage[0][i*4+c];
 			}
 		}
@@ -2255,71 +2256,61 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			for (i = 0; i < pc->attr_nr * 4; i++) {
 				pc->p->cfg.vp.attr[aid / 32] |=
 					(1 << (aid % 32));
-				pc->attr[i].type = P_ATTR;
-				pc->attr[i].hw = aid++;
-				pc->attr[i].index = i / 4;
+				ctor_reg(&pc->attr[i], P_ATTR, i / 4, aid++);
 			}
 		}
 	}
 
 	if (pc->result_nr) {
+		unsigned nr = pc->result_nr * 4;
 		int rid = 0;
 
-		pc->result = CALLOC(pc->result_nr * 4, sizeof(struct nv50_reg));
+		pc->result = MALLOC(nr * sizeof(struct nv50_reg));
 		if (!pc->result)
 			goto out_err;
 
-		for (i = 0; i < pc->result_nr; i++) {
-			for (c = 0; c < 4; c++) {
-				if (pc->p->type == PIPE_SHADER_FRAGMENT) {
-					pc->result[i*4+c].type = P_TEMP;
-					pc->result[i*4+c].hw = -1;
-					pc->result[i*4+c].rhw = (i == depr) ?
-						-1 : rid++;
-				} else {
-					pc->result[i*4+c].type = P_RESULT;
-					pc->result[i*4+c].hw = rid++;
+		if (pc->p->type == PIPE_SHADER_VERTEX) {
+			for (i = 0; i < nr; i++)
+				ctor_reg(&pc->result[i], P_RESULT, i / 4, i);
+		} else {
+			/* pc->p->type == PIPE_SHADER_FRAGMENT */
+			for (i = 0; i < pc->result_nr; i++) {
+				for (c = 0; c < 4; c++) {
+					ctor_reg(&pc->result[i*4+c],
+						 P_TEMP, i, -1);
+					if (i != depr)
+						pc->result[i*4+c].rhw = rid++;
 				}
-				pc->result[i*4+c].index = i;
 			}
 
-			if (pc->p->type == PIPE_SHADER_FRAGMENT &&
-			    depr != 0xffff) {
-				pc->result[depr * 4 + 2].rhw =
-					(pc->result_nr - 1) * 4;
-			}
+			if (depr != 0xffff)
+				pc->result[depr*4+2].rhw = rid++;
 		}
 	}
 
 	if (pc->param_nr) {
 		int rid = 0;
 
-		pc->param = CALLOC(pc->param_nr * 4, sizeof(struct nv50_reg));
+		pc->param = MALLOC(pc->param_nr * 4 * sizeof(struct nv50_reg));
 		if (!pc->param)
 			goto out_err;
 
 		for (i = 0; i < pc->param_nr; i++) {
-			for (c = 0; c < 4; c++) {
-				pc->param[i*4+c].type = P_CONST;
-				pc->param[i*4+c].hw = rid++;
-				pc->param[i*4+c].index = i;
-			}
+			for (c = 0; c < 4; c++, rid++)
+				ctor_reg(&pc->param[rid], P_CONST, i, rid);
 		}
 	}
 
 	if (pc->immd_nr) {
 		int rid = 0;
 
-		pc->immd = CALLOC(pc->immd_nr * 4, sizeof(struct nv50_reg));
+		pc->immd = MALLOC(pc->immd_nr * 4 * sizeof(struct nv50_reg));
 		if (!pc->immd)
 			goto out_err;
 
 		for (i = 0; i < pc->immd_nr; i++) {
-			for (c = 0; c < 4; c++) {
-				pc->immd[i*4+c].type = P_IMMD;
-				pc->immd[i*4+c].hw = rid++;
-				pc->immd[i*4+c].index = i;
-			}
+			for (c = 0; c < 4; c++, rid++)
+				ctor_reg(&pc->immd[rid], P_IMMD, i, rid);
 		}
 	}
 
@@ -2394,8 +2385,8 @@ nv50_program_tx(struct nv50_program *p)
 
 	if (p->type == PIPE_SHADER_FRAGMENT) {
 		struct nv50_reg out;
+		ctor_reg(&out, P_TEMP, -1, -1);
 
-		out.type = P_TEMP;
 		for (k = 0; k < pc->result_nr * 4; k++) {
 			if (pc->result[k].rhw == -1)
 				continue;
