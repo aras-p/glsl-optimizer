@@ -118,7 +118,7 @@ pipe_buffer_write(struct pipe_screen *screen,
                   unsigned offset, unsigned size,
                   const void *data)
 {
-   uint8_t *map;
+   void *map;
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
@@ -129,7 +129,7 @@ pipe_buffer_write(struct pipe_screen *screen,
                                PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
    assert(map);
    if(map) {
-      memcpy(map + offset, data, size);
+      memcpy((uint8_t *)map + offset, data, size);
       pipe_buffer_flush_mapped_range(screen, buf, offset, size);
       pipe_buffer_unmap(screen, buf);
    }
@@ -141,7 +141,7 @@ pipe_buffer_read(struct pipe_screen *screen,
                  unsigned offset, unsigned size,
                  void *data)
 {
-   uint8_t *map;
+   void *map;
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
@@ -150,7 +150,7 @@ pipe_buffer_read(struct pipe_screen *screen,
    map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_READ);
    assert(map);
    if(map) {
-      memcpy(data, map + offset, size);
+      memcpy(data, (const uint8_t *)map + offset, size);
       pipe_buffer_unmap(screen, buf);
    }
 }
