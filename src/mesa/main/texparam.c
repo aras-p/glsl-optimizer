@@ -70,7 +70,7 @@ validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
       return GL_TRUE;
    }
 
-   _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)", wrap );
+   _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)", wrap );
    return GL_FALSE;
 }
 
@@ -210,7 +210,7 @@ set_tex_parameteri(GLcontext *ctx,
          }
          /* fall-through */
       default:
-         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)",
+         _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)",
                       params[0] );
       }
       return GL_FALSE;
@@ -225,7 +225,7 @@ set_tex_parameteri(GLcontext *ctx,
          texObj->MagFilter = params[0];
          return GL_TRUE;
       default:
-         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)",
+         _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)",
                       params[0]);
       }
       return GL_FALSE;
