@@ -74,6 +74,9 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 	assert(*bbp == 16);
 	break;
     case 8:
+	*format = PIPE_FORMAT_A8_UNORM;
+	assert(*bbp == 8);
+	break;
     case 4:
     case 1:
 	*format = PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
