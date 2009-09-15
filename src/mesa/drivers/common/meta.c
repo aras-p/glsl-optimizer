@@ -415,11 +415,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       save->ClientActiveUnit = ctx->Array.ActiveTexture;
       save->EnvMode = ctx->Texture.Unit[0].EnvMode;
 
-      if (ctx->Texture._EnabledUnits |
-          ctx->Texture._EnabledCoordUnits |
-          ctx->Texture._TexGenEnabled |
-          ctx->Texture._TexMatEnabled) {
-
       /* Disable all texture units */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
@@ -437,7 +432,6 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
          }
-      }
       }
 
       /* save current texture objects for unit[0] only */
