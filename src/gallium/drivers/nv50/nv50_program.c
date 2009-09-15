@@ -112,6 +112,10 @@ struct nv50_pc {
 	struct nv50_reg *temp_temp[16];
 	unsigned temp_temp_nr;
 
+	/* broadcast and destination replacement regs */
+	struct nv50_reg *r_brdc;
+	struct nv50_reg *r_dst[4];
+
 	unsigned interp_mode[32];
 	/* perspective interpolation registers */
 	struct nv50_reg *iv_p;
@@ -890,6 +894,12 @@ emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit_cvt(pc, dst, src, -1, CVTOP_ABS, CVT_F32_F32);
 }
 
+static INLINE void
+emit_sat(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	emit_cvt(pc, dst, src, -1, CVTOP_SAT, CVT_F32_F32);
+}
+
 static void
 emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	 struct nv50_reg **src)
@@ -1389,26 +1399,24 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 }
 
 static boolean
-nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
+nv50_program_tx_insn(struct nv50_pc *pc,
+		     const struct tgsi_full_instruction *inst)
 {
-	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
 	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
 	unsigned mask, sat, unit;
-	boolean assimilate = FALSE;
 	int i, c;
 
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
 	sat = inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE;
 
+	memset(src, 0, sizeof(src));
+
 	for (c = 0; c < 4; c++) {
-		if (mask & (1 << c))
+		if ((mask & (1 << c)) && !pc->r_dst[c])
 			dst[c] = tgsi_dst(pc, c, &inst->FullDstRegisters[0]);
 		else
-			dst[c] = NULL;
-		rdst[c] = NULL;
-		src[0][c] = NULL;
-		src[1][c] = NULL;
-		src[2][c] = NULL;
+			dst[c] = pc->r_dst[c];
+		rdst[c] = dst[c];
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
@@ -1429,6 +1437,8 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 	if (sat) {
 		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)) || dst[c]->type == P_TEMP)
+				continue;
 			rdst[c] = dst[c];
 			dst[c] = temp_temp(pc);
 		}
@@ -1700,13 +1710,11 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_cvt(pc, rdst[c], dst[c], -1, CVTOP_SAT,
-				 CVT_F32_F32);
+			/* in this case we saturate later */
+			if (dst[c]->type == P_TEMP && dst[c]->index < 0)
+				continue;
+			emit_sat(pc, rdst[c], dst[c]);
 		}
-	} else if (assimilate) {
-		for (c = 0; c < 4; c++)
-			if (rdst[c])
-				assimilate_temp(pc, rdst[c], dst[c]);
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
@@ -1715,9 +1723,6 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 				continue;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
-			else
-			if (src[i][c]->acc == pc->insn_cur)
-				release_hw(pc, src[i][c]);
 		}
 	}
 
@@ -1854,6 +1859,110 @@ tgsi_broadcast_dst(struct nv50_pc *pc,
 	}
 
 	return NULL;
+}
+
+/* Scan source swizzles and return a bitmask indicating dst regs that
+ * also occur among the src regs, and fill rdep for nv50_revdep_reoder.
+ */
+static unsigned
+nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
+		       unsigned rdep[4])
+{
+	const struct tgsi_full_dst_register *fd = &insn->FullDstRegisters[0];
+	const struct tgsi_full_src_register *fs;
+	unsigned i, deqs = 0;
+
+	for (i = 0; i < 4; ++i)
+		rdep[i] = 0;
+
+	for (i = 0; i < insn->Instruction.NumSrcRegs; i++) {
+		unsigned chn, mask = nv50_tgsi_src_mask(insn, i);
+		boolean neg_supp = negate_supported(insn, i);
+
+		fs = &insn->FullSrcRegisters[i];
+		if (fs->SrcRegister.File != fd->DstRegister.File ||
+		    fs->SrcRegister.Index != fd->DstRegister.Index)
+			continue;
+
+		for (chn = 0; chn < 4; ++chn) {
+			unsigned s, c;
+
+			if (!(mask & (1 << chn))) /* src is not read */
+				continue;
+			c = tgsi_util_get_full_src_register_extswizzle(fs, chn);
+			s = tgsi_util_get_full_src_register_sign_mode(fs, chn);
+
+			if (c > TGSI_EXTSWIZZLE_W ||
+			    !(fd->DstRegister.WriteMask & (1 << c)))
+				continue;
+
+			/* no danger if src is copied to TEMP first */
+			if ((s != TGSI_UTIL_SIGN_KEEP) &&
+			    (s != TGSI_UTIL_SIGN_TOGGLE || !neg_supp))
+				continue;
+
+			rdep[c] |= nv50_tgsi_dst_revdep(
+				insn->Instruction.Opcode, i, chn);
+			deqs |= (1 << c);
+		}
+	}
+
+	return deqs;
+}
+
+static boolean
+nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
+{
+	struct tgsi_full_instruction insn = tok->FullInstruction;
+	const struct tgsi_full_dst_register *fd;
+	unsigned i, deqs, rdep[4], m[4];
+
+	fd = &tok->FullInstruction.FullDstRegisters[0];
+	deqs = nv50_tgsi_scan_swizzle(&insn, rdep);
+
+	if (is_scalar_op(insn.Instruction.Opcode)) {
+		pc->r_brdc = tgsi_broadcast_dst(pc, fd, deqs);
+		if (!pc->r_brdc)
+			pc->r_brdc = temp_temp(pc);
+		return nv50_program_tx_insn(pc, &insn);
+	}
+	pc->r_brdc = NULL;
+
+	if (!deqs)
+		return nv50_program_tx_insn(pc, &insn);
+
+	deqs = nv50_revdep_reorder(m, rdep);
+
+	for (i = 0; i < 4; ++i) {
+		assert(pc->r_dst[m[i]] == NULL);
+
+		insn.FullDstRegisters[0].DstRegister.WriteMask =
+			fd->DstRegister.WriteMask & (1 << m[i]);
+
+		if (!insn.FullDstRegisters[0].DstRegister.WriteMask)
+			continue;
+
+		if (deqs & (1 << i))
+			pc->r_dst[m[i]] = alloc_temp(pc, NULL);
+
+		if (!nv50_program_tx_insn(pc, &insn))
+			return FALSE;
+	}
+
+	for (i = 0; i < 4; i++) {
+		struct nv50_reg *reg = pc->r_dst[i];
+		if (!reg)
+			continue;
+		pc->r_dst[i] = NULL;
+
+		if (insn.Instruction.Saturate == TGSI_SAT_ZERO_ONE)
+			emit_sat(pc, tgsi_dst(pc, i, fd), reg);
+		else
+			emit_mov(pc, tgsi_dst(pc, i, fd), reg);
+		free_temp(pc, reg);
+	}
+
+	return TRUE;
 }
 
 static unsigned
@@ -2255,7 +2364,7 @@ nv50_program_tx(struct nv50_program *p)
 		switch (tok->Token.Type) {
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 			++pc->insn_cur;
-			ret = nv50_program_tx_insn(pc, tok);
+			ret = nv50_tgsi_insn(pc, tok);
 			if (ret == FALSE)
 				goto out_err;
 			break;
