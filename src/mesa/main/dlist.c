@@ -329,6 +329,9 @@ typedef enum
    OPCODE_STENCIL_OP_SEPARATE,
    OPCODE_STENCIL_MASK_SEPARATE,
 
+   /* GL_ARB_shader_objects */
+   OPCODE_USE_PROGRAM,
+
    /* GL_EXT_framebuffer_blit */
    OPCODE_BLIT_FRAMEBUFFER,
 
@@ -5783,6 +5786,23 @@ save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 #endif
 
 
+/* aka UseProgram() */
+static void GLAPIENTRY
+save_UseProgramObjectARB(GLhandleARB program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_USE_PROGRAM, 1);
+   if (n) {
+      n[1].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_UseProgramObjectARB(ctx->Exec, (program));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -6615,6 +6635,11 @@ execute_list(GLcontext *ctx, GLuint list)
                                                 n[9].i, n[10].e));
 	    break;
 #endif
+
+	 case OPCODE_USE_PROGRAM:
+	    CALL_UseProgramObjectARB(ctx->Exec, (n[1].ui));
+	    break;
+
          case OPCODE_TEX_BUMP_PARAMETER_ATI:
             {
                GLfloat values[4];
@@ -8296,6 +8321,9 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 #if FEATURE_EXT_framebuffer_blit
    SET_BlitFramebufferEXT(table, save_BlitFramebufferEXT);
 #endif
+
+   /* GL_ARB_shader_objects */
+   SET_UseProgramObjectARB(table, save_UseProgramObjectARB);
 
    /* ARB 30/31/32. GL_ARB_shader_objects, GL_ARB_vertex/fragment_shader */
    SET_BindAttribLocationARB(table, exec_BindAttribLocationARB);
