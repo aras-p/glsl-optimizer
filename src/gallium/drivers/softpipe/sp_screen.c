@@ -141,6 +141,7 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
+   case PIPE_FORMAT_Z32_FLOAT:
       return FALSE;
    default:
       return TRUE;
