@@ -208,6 +208,11 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       /* FIXME */
+      _debug_printf("warning: failed to translate texture wrap mode %u\n", wrap_mode);
+      coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
+      coord = lp_build_min(int_coord_bld, coord, length_minus_one);
+      break;
+
    default:
       assert(0);
    }
