@@ -1117,7 +1117,6 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    RADEON_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= 
      (RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit;
-   fprintf(stderr,"enabling tex %d\n", unit);
    RADEON_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
 
@@ -1174,7 +1173,6 @@ void radeonUpdateTextureState( GLcontext *ctx )
    GLboolean ok;
 
    /* set the ctx all textures off */
-   fprintf(stderr,"resetting tex\n");
    RADEON_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~((RADEON_TEX_ENABLE_MASK) | (RADEON_TEX_BLEND_ENABLE_MASK));
 
