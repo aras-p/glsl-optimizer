@@ -121,26 +121,33 @@ struct __GLXDRIdisplayRec
                                     __GLXdisplayPrivate * priv);
 };
 
-struct __GLXDRIscreenRec
-{
+struct __GLXDRIscreenRec {
 
-   void (*destroyScreen) (__GLXscreenConfigs * psc);
+   void (*destroyScreen)(__GLXscreenConfigs *psc);
 
-   __GLXDRIcontext *(*createContext) (__GLXscreenConfigs * psc,
-                                      const __GLcontextModes * mode,
-                                      GLXContext gc,
-                                      GLXContext shareList, int renderType);
+   __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
+				     const __GLcontextModes *mode,
+				     GLXContext gc,
+				     GLXContext shareList, int renderType);
 
-   __GLXDRIdrawable *(*createDrawable) (__GLXscreenConfigs * psc,
-                                        XID drawable,
-                                        GLXDrawable glxDrawable,
-                                        const __GLcontextModes * modes);
+   __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
+				       XID drawable,
+				       GLXDrawable glxDrawable,
+				       const __GLcontextModes *modes);
 
-   void (*swapBuffers) (__GLXDRIdrawable * pdraw);
-   void (*copySubBuffer) (__GLXDRIdrawable * pdraw,
-                          int x, int y, int width, int height);
-   void (*waitX) (__GLXDRIdrawable * pdraw);
-   void (*waitGL) (__GLXDRIdrawable * pdraw);
+   int64_t (*swapBuffers)(__GLXDRIdrawable *pdraw, int64_t target_msc,
+			  int64_t divisor, int64_t remainder);
+   void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
+			 int x, int y, int width, int height);
+   void (*waitX)(__GLXDRIdrawable *pdraw);
+   void (*waitGL)(__GLXDRIdrawable *pdraw);
+   int (*getDrawableMSC)(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
+			 int64_t *ust, int64_t *msc, int64_t *sbc);
+   int (*waitForMSC)(__GLXDRIdrawable *pdraw, int64_t target_msc,
+		     int64_t divisor, int64_t remainder, int64_t *ust,
+		     int64_t *msc, int64_t *sbc);
+   int (*waitForSBC)(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
+		     int64_t *msc, int64_t *sbc);
 };
 
 struct __GLXDRIcontextRec

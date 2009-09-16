@@ -620,10 +620,12 @@ driCreateDrawable(__GLXscreenConfigs * psc,
    return pdraw;
 }
 
-static void
-driSwapBuffers(__GLXDRIdrawable * pdraw)
+static int64_t
+driSwapBuffers(__GLXDRIdrawable * pdraw, int64_t unused1, int64_t unused2,
+	       int64_t unused3)
 {
    (*pdraw->psc->core->swapBuffers) (pdraw->driDrawable);
+   return 0;
 }
 
 static void
@@ -683,9 +685,9 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
 
    for (i = 0; extensions[i]; i++) {
       if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
-         psc->core = (__DRIcoreExtension *) extensions[i];
+	 psc->core = (__DRIcoreExtension *) extensions[i];
       if (strcmp(extensions[i]->name, __DRI_LEGACY) == 0)
-         psc->legacy = (__DRIlegacyExtension *) extensions[i];
+	 psc->legacy = (__DRIlegacyExtension *) extensions[i];
    }
 
    if (psc->core == NULL || psc->legacy == NULL) {
@@ -701,7 +703,9 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
       return NULL;
    }
 
-   driBindExtensions(psc, 0);
+   driBindExtensions(psc);
+   driBindCommonExtensions(psc);
+
    if (psc->driCopySubBuffer)
       psp->copySubBuffer = driCopySubBuffer;
 

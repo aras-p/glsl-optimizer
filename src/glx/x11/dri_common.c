@@ -336,8 +336,9 @@ driConvertConfigs(const __DRIcoreExtension * core,
    return head.next;
 }
 
+/* Bind DRI1 specific extensions */
 _X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs * psc, int dri2)
+driBindExtensions(__GLXscreenConfigs *psc)
 {
    const __DRIextension **extensions;
    int i;
@@ -345,35 +346,13 @@ driBindExtensions(__GLXscreenConfigs * psc, int dri2)
    extensions = psc->core->getExtensions(psc->__driScreen);
 
    for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-         psc->driCopySubBuffer =
-            (__DRIcopySubBufferExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
-      }
-#endif
-
 #ifdef __DRI_SWAP_CONTROL
       /* No DRI2 support for swap_control at the moment, since SwapBuffers
        * is done by the X server */
-      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0 && !dri2) {
-         psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-         __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-      }
-#endif
-
-#ifdef __DRI_ALLOCATE
-      if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-         psc->allocate = (__DRIallocateExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
-      }
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-      if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-         psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
+      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
+	 psc->swapControl = (__DRIswapControlExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
+	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
       }
 #endif
 
@@ -390,23 +369,77 @@ driBindExtensions(__GLXscreenConfigs * psc, int dri2)
        * GLX_OML_sync_control if implemented. */
 #endif
 
-#ifdef __DRI_READ_DRAWABLE
-      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-         __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
+      /* Ignore unknown extensions */
+   }
+}
+
+/* Bind DRI2 specific extensions */
+_X_HIDDEN void
+dri2BindExtensions(__GLXscreenConfigs *psc)
+{
+   const __DRIextension **extensions;
+   int i;
+
+   extensions = psc->core->getExtensions(psc->__driScreen);
+
+   for (i = 0; extensions[i]; i++) {
+#ifdef __DRI_TEX_BUFFER
+      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
+	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
       }
 #endif
 
-#ifdef __DRI_TEX_BUFFER
-      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0) && dri2) {
-         psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
+#ifdef __DRI2_MEDIA_STREAM_COUNTER
+      if (strcmp(extensions[i]->name, __DRI2_MEDIA_STREAM_COUNTER) == 0) {
+	 psc->msc = (__DRI2mediaStreamCounterExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
       }
 #endif
 
 #ifdef __DRI2_FLUSH
-      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0) && dri2) {
-         psc->f = (__DRI2flushExtension *) extensions[i];
-         /* internal driver extension, no GL extension exposed */
+      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
+	 psc->f = (__DRI2flushExtension *) extensions[i];
+	 /* internal driver extension, no GL extension exposed */
+      }
+#endif
+   }
+}
+
+/* Bind extensions common to DRI1 and DRI2 */
+_X_HIDDEN void
+driBindCommonExtensions(__GLXscreenConfigs *psc)
+{
+   const __DRIextension **extensions;
+   int i;
+
+   extensions = psc->core->getExtensions(psc->__driScreen);
+
+   for (i = 0; extensions[i]; i++) {
+#ifdef __DRI_COPY_SUB_BUFFER
+      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
+	 psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
+      }
+#endif
+
+#ifdef __DRI_ALLOCATE
+      if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
+	 psc->allocate = (__DRIallocateExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
+      }
+#endif
+
+#ifdef __DRI_FRAME_TRACKING
+      if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
+	 psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
+	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
+      }
+#endif
+
+#ifdef __DRI_READ_DRAWABLE
+      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
+	 __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
       }
 #endif
 
