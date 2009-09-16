@@ -299,11 +299,6 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
                              &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
 }
 
 
@@ -375,11 +370,6 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
                              &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
 }
 
 
@@ -443,11 +433,6 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
                                 format, type, image,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
-   }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 }
 
@@ -520,11 +505,6 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
    }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
 }
 
 
@@ -592,10 +572,5 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
                                 format, type, image,
                                 &ctx->DefaultPacking, texObj, texImage);
       _mesa_free(image);
-   }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 }
