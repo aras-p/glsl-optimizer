@@ -764,9 +764,9 @@ st_TexImage(GLcontext * ctx,
       }
    }
 
+done:
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
-done:
    if (stImage->pt && texImage->Data) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
@@ -1107,7 +1107,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
-      return;
+      goto done;
    }
 
    src = (const GLubyte *) pixels;
@@ -1138,9 +1138,9 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       }
    }
 
+done:
    _mesa_unmap_teximage_pbo(ctx, packing);
 
-done:
    if (stImage->pt) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
