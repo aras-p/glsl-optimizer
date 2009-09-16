@@ -47,6 +47,7 @@ _tokenise_identifier(struct sl_pp_context *context,
           (*input >= '0' && *input <= '9') ||
           (*input == '_')) {
       if (i >= sizeof(identifier) - 1) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
       identifier[i++] = *input++;
@@ -85,6 +86,7 @@ _tokenise_number(struct sl_pp_context *context,
           (*input == '-') ||
           (*input == '.')) {
       if (i >= sizeof(number) - 1) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
       number[i++] = *input++;
@@ -384,6 +386,7 @@ sl_pp_tokenise(struct sl_pp_context *context,
 
          out = realloc(out, new_max * sizeof(struct sl_pp_token_info));
          if (!out) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
          out_max = new_max;
