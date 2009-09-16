@@ -15,8 +15,6 @@ nv10_screen_get_param(struct pipe_screen *screen, int param)
 		return 0;
 	case PIPE_CAP_GLSL:
 		return 0;
-	case PIPE_CAP_S3TC:
-		return 0;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
 	case PIPE_CAP_POINT_SPRITE:
