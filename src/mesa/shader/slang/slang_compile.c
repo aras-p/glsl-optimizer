@@ -2597,15 +2597,18 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
 
    memset(&options, 0, sizeof(options));
    if (sl_pp_purify(source, &options, &outbuf)) {
+      slang_info_log_error(infolog, "unable to preprocess the source");
       return GL_FALSE;
    }
 
    if (sl_pp_context_init(&context)) {
+      slang_info_log_error(infolog, "out of memory");
       free(outbuf);
       return GL_FALSE;
    }
 
    if (sl_pp_tokenise(&context, outbuf, &intokens)) {
+      slang_info_log_error(infolog, "%s", context.error_msg);
       sl_pp_context_destroy(&context);
       free(outbuf);
       return GL_FALSE;
@@ -2614,12 +2617,14 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    free(outbuf);
 
    if (sl_pp_version(&context, intokens, &version, &tokens_eaten)) {
+      slang_info_log_error(infolog, "%s", context.error_msg);
       sl_pp_context_destroy(&context);
       free(intokens);
       return GL_FALSE;
    }
 
    if (sl_pp_process(&context, &intokens[tokens_eaten], &tokens)) {
+      slang_info_log_error(infolog, "%s", context.error_msg);
       sl_pp_context_destroy(&context);
       free(intokens);
       return GL_FALSE;
