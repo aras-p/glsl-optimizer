@@ -1960,13 +1960,13 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
    _mesa_lock_texture(ctx, texObj);
    if (target == GL_TEXTURE_CUBE_MAP) {
-      int face;
-
+      GLuint face;
       for (face = 0; face < 6; face++)
 	 ctx->Driver.GenerateMipmap(ctx,
 				    GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face,
 				    texObj);
-   } else {
+   }
+   else {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
    _mesa_unlock_texture(ctx, texObj);
