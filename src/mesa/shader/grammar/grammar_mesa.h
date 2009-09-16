@@ -27,10 +27,6 @@
 
 
 #include "../../glsl/pp/sl_pp_context.h"
-#include "../../glsl/pp/sl_pp_purify.h"
-#include "../../glsl/pp/sl_pp_version.h"
-#include "../../glsl/pp/sl_pp_process.h"
-
 
 #include "main/imports.h"
 /* NOTE: include Mesa 3-D specific headers here */

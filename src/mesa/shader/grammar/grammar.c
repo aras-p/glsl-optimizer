@@ -3106,14 +3106,13 @@ int grammar_set_reg8 (grammar id, const byte *name, byte value)
 
 int
 grammar_fast_check (grammar id,
-                    const byte *text,
+                    struct sl_pp_context *context,
+                    struct sl_pp_token_info *tokens,
                     byte **prod,
                     unsigned int *size,
                     unsigned int estimate_prod_size)
 {
    dict *di = NULL;
-   struct sl_pp_context context;
-   struct sl_pp_token_info *tokens;
    int index = 0;
    regbyte_ctx *rbc = NULL;
    bytepool *bp = NULL;
@@ -3131,135 +3130,17 @@ grammar_fast_check (grammar id,
     *prod = NULL;
     *size = 0;
 
-   /*
-    * Preprocess the source string with a GLSL preprocessor.
-    * This is a hack but since nowadays we use grammar only for
-    * GLSL compiler, and that also is going away, we'll do it anyway.
-    */
-
-   {
-      struct sl_pp_purify_options options;
-      char *outbuf;
-      struct sl_pp_token_info *intokens;
-      unsigned int version;
-      unsigned int tokens_eaten;
-
-      memset(&options, 0, sizeof(options));
-      if (sl_pp_purify((const char *)text, &options, &outbuf)) {
-         return 0;
-      }
-
-      if (sl_pp_context_init(&context)) {
-         free(outbuf);
-         return 1;
-      }
-
-      if (sl_pp_tokenise(&context, outbuf, &intokens)) {
-         sl_pp_context_destroy(&context);
-         free(outbuf);
-         return 0;
-      }
-
-      free(outbuf);
-
-      if (sl_pp_version(&context, intokens, &version, &tokens_eaten)) {
-         sl_pp_context_destroy(&context);
-         free(intokens);
-         return 0;
-      }
-
-      if (sl_pp_process(&context, &intokens[tokens_eaten], &tokens)) {
-         sl_pp_context_destroy(&context);
-         free(intokens);
-         return 0;
-      }
-
-      free(intokens);
-
-      /* For the time being we care about only a handful of tokens. */
-      {
-         const struct sl_pp_token_info *src = tokens;
-         struct sl_pp_token_info *dst = tokens;
-
-         while (src->token != SL_PP_EOF) {
-            switch (src->token) {
-            case SL_PP_COMMA:
-            case SL_PP_SEMICOLON:
-            case SL_PP_LBRACE:
-            case SL_PP_RBRACE:
-            case SL_PP_LPAREN:
-            case SL_PP_RPAREN:
-            case SL_PP_LBRACKET:
-            case SL_PP_RBRACKET:
-            case SL_PP_DOT:
-            case SL_PP_INCREMENT:
-            case SL_PP_ADDASSIGN:
-            case SL_PP_PLUS:
-            case SL_PP_DECREMENT:
-            case SL_PP_SUBASSIGN:
-            case SL_PP_MINUS:
-            case SL_PP_BITNOT:
-            case SL_PP_NOTEQUAL:
-            case SL_PP_NOT:
-            case SL_PP_MULASSIGN:
-            case SL_PP_STAR:
-            case SL_PP_DIVASSIGN:
-            case SL_PP_SLASH:
-            case SL_PP_MODASSIGN:
-            case SL_PP_MODULO:
-            case SL_PP_LSHIFTASSIGN:
-            case SL_PP_LSHIFT:
-            case SL_PP_LESSEQUAL:
-            case SL_PP_LESS:
-            case SL_PP_RSHIFTASSIGN:
-            case SL_PP_RSHIFT:
-            case SL_PP_GREATEREQUAL:
-            case SL_PP_GREATER:
-            case SL_PP_EQUAL:
-            case SL_PP_ASSIGN:
-            case SL_PP_AND:
-            case SL_PP_BITANDASSIGN:
-            case SL_PP_BITAND:
-            case SL_PP_XOR:
-            case SL_PP_BITXORASSIGN:
-            case SL_PP_BITXOR:
-            case SL_PP_OR:
-            case SL_PP_BITORASSIGN:
-            case SL_PP_BITOR:
-            case SL_PP_QUESTION:
-            case SL_PP_COLON:
-            case SL_PP_IDENTIFIER:
-            case SL_PP_NUMBER:
-               *dst++ = *src++;
-               break;
-
-            default:
-               src++;
-            }
-         }
-
-         /* The end of stream token. */
-         *dst = *src;
-      }
-   }
-
    bytepool_create(&bp, estimate_prod_size);
    if (bp == NULL) {
-      sl_pp_context_destroy(&context);
-      free(tokens);
       return 0;
    }
 
-   if (fast_match(di, tokens, &index, di->m_syntax, &_P, bp, &rbc, &context) != mr_matched) {
-      sl_pp_context_destroy(&context);
-      free(tokens);
+   if (fast_match(di, tokens, &index, di->m_syntax, &_P, bp, &rbc, context) != mr_matched) {
       bytepool_destroy (&bp);
       free_regbyte_ctx_stack (rbc, NULL);
       return 0;
    }
 
-   sl_pp_context_destroy(&context);
-   free(tokens);
    free_regbyte_ctx_stack(rbc, NULL);
 
    *prod = bp->_F;

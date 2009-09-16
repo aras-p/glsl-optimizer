@@ -36,6 +36,10 @@
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
+#include "../../glsl/pp/sl_pp_context.h"
+#include "../../glsl/pp/sl_pp_purify.h"
+#include "../../glsl/pp/sl_pp_version.h"
+#include "../../glsl/pp/sl_pp_process.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"
@@ -2579,9 +2583,115 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      const struct gl_extensions *extensions,
                      struct gl_sl_pragmas *pragmas)
 {
+   struct sl_pp_context context;
+   struct sl_pp_token_info *tokens;
    byte *prod;
-   GLuint size, version;
-   GLuint maxVersion;
+   GLuint size;
+   unsigned int version;
+   unsigned int maxVersion;
+   int result;
+   struct sl_pp_purify_options options;
+   char *outbuf;
+   struct sl_pp_token_info *intokens;
+   unsigned int tokens_eaten;
+
+   memset(&options, 0, sizeof(options));
+   if (sl_pp_purify(source, &options, &outbuf)) {
+      return GL_FALSE;
+   }
+
+   if (sl_pp_context_init(&context)) {
+      free(outbuf);
+      return GL_FALSE;
+   }
+
+   if (sl_pp_tokenise(&context, outbuf, &intokens)) {
+      sl_pp_context_destroy(&context);
+      free(outbuf);
+      return GL_FALSE;
+   }
+
+   free(outbuf);
+
+   if (sl_pp_version(&context, intokens, &version, &tokens_eaten)) {
+      sl_pp_context_destroy(&context);
+      free(intokens);
+      return GL_FALSE;
+   }
+
+   if (sl_pp_process(&context, &intokens[tokens_eaten], &tokens)) {
+      sl_pp_context_destroy(&context);
+      free(intokens);
+      return GL_FALSE;
+   }
+
+   free(intokens);
+
+   /* For the time being we care about only a handful of tokens. */
+   {
+      const struct sl_pp_token_info *src = tokens;
+      struct sl_pp_token_info *dst = tokens;
+
+      while (src->token != SL_PP_EOF) {
+         switch (src->token) {
+         case SL_PP_COMMA:
+         case SL_PP_SEMICOLON:
+         case SL_PP_LBRACE:
+         case SL_PP_RBRACE:
+         case SL_PP_LPAREN:
+         case SL_PP_RPAREN:
+         case SL_PP_LBRACKET:
+         case SL_PP_RBRACKET:
+         case SL_PP_DOT:
+         case SL_PP_INCREMENT:
+         case SL_PP_ADDASSIGN:
+         case SL_PP_PLUS:
+         case SL_PP_DECREMENT:
+         case SL_PP_SUBASSIGN:
+         case SL_PP_MINUS:
+         case SL_PP_BITNOT:
+         case SL_PP_NOTEQUAL:
+         case SL_PP_NOT:
+         case SL_PP_MULASSIGN:
+         case SL_PP_STAR:
+         case SL_PP_DIVASSIGN:
+         case SL_PP_SLASH:
+         case SL_PP_MODASSIGN:
+         case SL_PP_MODULO:
+         case SL_PP_LSHIFTASSIGN:
+         case SL_PP_LSHIFT:
+         case SL_PP_LESSEQUAL:
+         case SL_PP_LESS:
+         case SL_PP_RSHIFTASSIGN:
+         case SL_PP_RSHIFT:
+         case SL_PP_GREATEREQUAL:
+         case SL_PP_GREATER:
+         case SL_PP_EQUAL:
+         case SL_PP_ASSIGN:
+         case SL_PP_AND:
+         case SL_PP_BITANDASSIGN:
+         case SL_PP_BITAND:
+         case SL_PP_XOR:
+         case SL_PP_BITXORASSIGN:
+         case SL_PP_BITXOR:
+         case SL_PP_OR:
+         case SL_PP_BITORASSIGN:
+         case SL_PP_BITOR:
+         case SL_PP_QUESTION:
+         case SL_PP_COLON:
+         case SL_PP_IDENTIFIER:
+         case SL_PP_NUMBER:
+            *dst++ = *src++;
+            break;
+
+         default:
+            src++;
+         }
+      }
+
+      /* The end of stream token. */
+      *dst = *src;
+   }
 
 #if FEATURE_ARB_shading_language_120
    maxVersion = 120;
@@ -2591,20 +2701,23 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    maxVersion = 110;
 #endif
 
-   /* First retrieve the version number. */
-   version = 110;
-
-   if (version > maxVersion) {
+   if (version > maxVersion ||
+       (version != 100 && version != 110 && version != 120)) {
       slang_info_log_error(infolog,
                            "language version %.2f is not supported.",
                            version * 0.01);
+      sl_pp_context_destroy(&context);
+      free(tokens);
       return GL_FALSE;
    }
 
    /* Finally check the syntax and generate its binary representation. */
-   if (!grammar_fast_check(id,
-                           (const byte *)source,
-                           &prod, &size, 65536)) {
+   result = grammar_fast_check(id, &context, tokens, &prod, &size, 65536);
+
+   sl_pp_context_destroy(&context);
+   free(tokens);
+
+   if (!result) {
       char buf[1024];
       GLint pos;
 

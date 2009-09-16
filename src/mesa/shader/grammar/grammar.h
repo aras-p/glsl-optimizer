@@ -69,8 +69,13 @@ int grammar_set_reg8 (grammar id, const byte *name, byte value);
     <estimate_prod_size> is a hint - the initial production buffer size will be of this size,
     but if more room is needed it will be safely resized; set it to 0x1000 or so
 */
-int grammar_fast_check (grammar id, const byte *text, byte **prod, unsigned int *size,
-    unsigned int estimate_prod_size);
+int
+grammar_fast_check (grammar id,
+                    struct sl_pp_context *context,
+                    struct sl_pp_token_info *tokens,
+                    byte **prod,
+                    unsigned int *size,
+                    unsigned int estimate_prod_size);
 
 /*
     destroys grammar object identified by <id>
