@@ -55,7 +55,7 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 /* r200 depth buffer is always tiled - this is the formula
    according to the docs unless I typo'ed in it
 */
-#if defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
 static GLubyte *r200_depth_2byte(const struct radeon_renderbuffer * rrb,
 				 GLint x, GLint y)
 {
@@ -112,7 +112,7 @@ static GLubyte *r200_depth_4byte(const struct radeon_renderbuffer * rrb,
  * - 2D (akin to macro-tiled/micro-tiled on older asics)
  * only 1D tiling is implemented below
  */
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 static inline GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
 					GLint x, GLint y, GLint is_depth, GLint is_stencil)
 {
@@ -334,8 +334,8 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #endif
 
-#ifndef COMPILE_R300
-#ifndef COMPILE_R600
+#ifndef RADEON_R300
+#ifndef RADEON_R600
 static uint32_t
 z24s8_to_s8z24(uint32_t val)
 {
@@ -409,7 +409,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 #define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
 #else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
@@ -423,7 +423,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB1555
 #define TAG2(x,y) radeon##x##_ARGB1555##y
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 #define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
 #else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
@@ -437,7 +437,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB4444
 #define TAG2(x,y) radeon##x##_ARGB4444##y
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 #define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
 #else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
@@ -451,7 +451,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_xRGB8888
 #define TAG2(x,y) radeon##x##_xRGB8888##y
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 #define GET_VALUE(_x, _y) ((*(GLuint*)(r600_ptr_color(rrb, _x + x_off, _y + y_off)) | 0xff000000))
 #define PUT_VALUE(_x, _y, d) { \
    GLuint *_ptr = (GLuint*)r600_ptr_color( rrb, _x + x_off, _y + y_off );		\
@@ -473,7 +473,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#if defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 #define GET_VALUE(_x, _y) (*(GLuint*)(r600_ptr_color(rrb, _x + x_off, _y + y_off)))
 #define PUT_VALUE(_x, _y, d) { \
    GLuint *_ptr = (GLuint*)r600_ptr_color( rrb, _x + x_off, _y + y_off );		\
@@ -506,10 +506,10 @@ s8z24_to_z24s8(uint32_t val)
  */
 #define VALUE_TYPE GLushort
 
-#if defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
    *(GLushort *)r200_depth_2byte(rrb, _x + x_off, _y + y_off) = d
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
    *(GLushort *)r600_ptr_depth(rrb, _x + x_off, _y + y_off) = d
 #else
@@ -517,10 +517,10 @@ s8z24_to_z24s8(uint32_t val)
    *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x + x_off, _y + y_off) = d
 #endif
 
-#if defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLushort *)r200_depth_2byte(rrb, _x + x_off, _y + y_off)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLushort *)r600_ptr_depth(rrb, _x + x_off, _y + y_off)
 #else
@@ -538,7 +538,7 @@ s8z24_to_z24s8(uint32_t val)
  */
 #define VALUE_TYPE GLuint
 
-#if defined(COMPILE_R300)
+#if defined(RADEON_R300)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
@@ -547,7 +547,7 @@ do {									\
    tmp |= ((d << 8) & 0xffffff00);					\
    *_ptr = tmp;					\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_depth( rrb, _x + x_off, _y + y_off );		\
@@ -556,7 +556,7 @@ do {									\
    tmp |= ((d) & 0x00ffffff);					\
    *_ptr = tmp;					\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
@@ -576,17 +576,17 @@ do {									\
 } while (0)
 #endif
 
-#if defined(COMPILE_R300)
+#if defined(RADEON_R300)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
     d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
   }while(0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
     d = (*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off)) & 0x00ffffff); \
   }while(0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
     d = *(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off)) & 0x00ffffff; \
@@ -607,13 +607,13 @@ do {									\
  */
 #define VALUE_TYPE GLuint
 
-#if defined(COMPILE_R300)
+#if defined(RADEON_R300)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    *_ptr = d;								\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_depth( rrb, _x + x_off, _y + y_off );		\
@@ -627,7 +627,7 @@ do {									\
    tmp |= (d) & 0xff;							\
    *_ptr = tmp;					\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
@@ -643,18 +643,18 @@ do {									\
 } while (0)
 #endif
 
-#if defined(COMPILE_R300)
+#if defined(RADEON_R300)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
     d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
   }while(0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
     d = ((*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off))) << 8) & 0xffffff00; \
     d |= (*(GLuint*)(r600_ptr_stencil(rrb, _x + x_off, _y + y_off))) & 0x000000ff;	\
   }while(0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
     d = s8z24_to_z24s8(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off)));	\
@@ -674,7 +674,7 @@ do {									\
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
-#ifdef COMPILE_R300
+#ifdef RADEON_R300
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
@@ -683,7 +683,7 @@ do {									\
    tmp |= (d) & 0xff;							\
    *_ptr = tmp;					\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_stencil(rrb, _x + x_off, _y + y_off);		\
@@ -692,7 +692,7 @@ do {									\
    tmp |= (d) & 0xff;							\
    *_ptr = tmp;					\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte(rrb, _x + x_off, _y + y_off);		\
@@ -712,21 +712,21 @@ do {									\
 } while (0)
 #endif
 
-#ifdef COMPILE_R300
+#ifdef RADEON_R300
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = tmp & 0x000000ff;						\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_stencil( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = tmp & 0x000000ff;						\
 } while (0)
-#elif defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\

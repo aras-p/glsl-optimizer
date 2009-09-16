@@ -385,9 +385,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 	if (driQueryOptionb(&r600->radeon.optionCache, "no_rast")) {
 		radeon_warning("disabling 3D acceleration\n");
-#if R200_MERGED
-		FALLBACK(&r600->radeon, RADEON_FALLBACK_DISABLE, 1);
-#endif
 	}
 
 	return GL_TRUE;
