@@ -188,7 +188,7 @@ random_elem(struct lp_type type, void *dst, unsigned index)
 {
    double value;
    assert(index < type.length);
-   value = (double)random()/(double)RAND_MAX;
+   value = (double)rand()/(double)RAND_MAX;
    if(!type.norm) {
       unsigned long long mask;
       if (type.floating)
@@ -199,10 +199,10 @@ random_elem(struct lp_type type, void *dst, unsigned index)
          mask = ((unsigned long long)1 << (type.width - 1)) - 1;
       else
          mask = ((unsigned long long)1 << type.width) - 1;
-      value += (double)(mask & random());
+      value += (double)(mask & rand());
    }
    if(!type.sign)
-      if(random() & 1)
+      if(rand() & 1)
          value = -value;
    write_elem(type, dst, index, value);
 }
@@ -229,7 +229,7 @@ write_vec(struct lp_type type, void *dst, const double *src)
 float
 random_float(void)
 {
-    return (float)((double)random()/(double)RAND_MAX);
+    return (float)((double)rand()/(double)RAND_MAX);
 }
 
 

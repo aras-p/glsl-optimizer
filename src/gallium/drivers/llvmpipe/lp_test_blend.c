@@ -846,22 +846,22 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    bool success = TRUE;
 
    for(i = 0; i < n; ++i) {
-      rgb_func = &blend_funcs[random() % num_funcs];
-      alpha_func = &blend_funcs[random() % num_funcs];
-      rgb_src_factor = &blend_factors[random() % num_factors];
-      alpha_src_factor = &blend_factors[random() % num_factors];
+      rgb_func = &blend_funcs[rand() % num_funcs];
+      alpha_func = &blend_funcs[rand() % num_funcs];
+      rgb_src_factor = &blend_factors[rand() % num_factors];
+      alpha_src_factor = &blend_factors[rand() % num_factors];
       
       do {
-         rgb_dst_factor = &blend_factors[random() % num_factors];
+         rgb_dst_factor = &blend_factors[rand() % num_factors];
       } while(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
       do {
-         alpha_dst_factor = &blend_factors[random() % num_factors];
+         alpha_dst_factor = &blend_factors[rand() % num_factors];
       } while(*alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
-      mode = random() & 1;
+      mode = rand() & 1;
 
-      type = &blend_types[random() % num_types];
+      type = &blend_types[rand() % num_types];
 
       memset(&blend, 0, sizeof blend);
       blend.blend_enable      = 1;

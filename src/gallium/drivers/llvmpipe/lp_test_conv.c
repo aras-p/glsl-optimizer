@@ -413,10 +413,10 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    bool success = TRUE;
 
    for(i = 0; i < n; ++i) {
-      src_type = &conv_types[random() % num_types];
+      src_type = &conv_types[rand() % num_types];
       
       do {
-         dst_type = &conv_types[random() % num_types];
+         dst_type = &conv_types[rand() % num_types];
       } while (src_type == dst_type || src_type->norm != dst_type->norm);
 
       if(!test_one(verbose, fp, *src_type, *dst_type))

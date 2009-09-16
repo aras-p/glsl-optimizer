@@ -51,7 +51,9 @@ def generate(env):
 
         llvm_bin_dir = os.path.join(llvm_dir, llvm_subdir, 'bin')
         if not os.path.isdir(llvm_bin_dir):
-            raise SCons.Errors.InternalError, "LLVM build directory not found"
+            llvm_bin_dir = os.path.join(llvm_dir, 'bin')
+            if not os.path.isdir(llvm_bin_dir):
+                raise SCons.Errors.InternalError, "LLVM binary directory not found"
 
         env.PrependENVPath('PATH', llvm_bin_dir)
 
@@ -65,6 +67,8 @@ def generate(env):
         except OSError:
             print 'llvm-config version %s failed' % version
         else:
+            if env['platform'] == 'windows':
+                env.Append(LIBS = ['imagehlp', 'psapi'])
             env['LINK'] = env['CXX']
             env['LLVM_VERSION'] = version
 
