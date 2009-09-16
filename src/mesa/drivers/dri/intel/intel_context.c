@@ -926,6 +926,14 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
+   struct intel_context *intel =
+      (struct intel_context *) driContextPriv->driverPrivate;
+
+   /* Deassociate the context with the drawables.
+    */
+   intel->driDrawable = NULL;
+   intel->driReadDrawable = NULL;
+
    return GL_TRUE;
 }
 
