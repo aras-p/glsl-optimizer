@@ -81,11 +81,13 @@ sl_pp_process(struct sl_pp_context *context,
       ti.token = SL_PP_LINE;
       ti.data.line = context->line - 1;
       if (sl_pp_process_out(&state, &ti)) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
 
       ti.token = SL_PP_NEWLINE;
       if (sl_pp_process_out(&state, &ti)) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
    }
@@ -189,6 +191,7 @@ sl_pp_process(struct sl_pp_context *context,
                }
 
                if (sl_pp_process_out(&state, &endof)) {
+                  strcpy(context->error_msg, "out of memory");
                   return -1;
                }
                context->line++;
@@ -198,6 +201,7 @@ sl_pp_process(struct sl_pp_context *context,
          case SL_PP_NEWLINE:
             /* Empty directive. */
             if (sl_pp_process_out(&state, &input[i])) {
+               strcpy(context->error_msg, "out of memory");
                return -1;
             }
             context->line++;
@@ -207,6 +211,7 @@ sl_pp_process(struct sl_pp_context *context,
          case SL_PP_EOF:
             /* Empty directive. */
             if (sl_pp_process_out(&state, &input[i])) {
+               strcpy(context->error_msg, "out of memory");
                return -1;
             }
             i++;
@@ -214,6 +219,7 @@ sl_pp_process(struct sl_pp_context *context,
             break;
 
          default:
+            strcpy(context->error_msg, "expected a directive name");
             return -1;
          }
       } else {
@@ -229,6 +235,7 @@ sl_pp_process(struct sl_pp_context *context,
             case SL_PP_NEWLINE:
                /* Preserve newline just for the sake of line numbering. */
                if (sl_pp_process_out(&state, &input[i])) {
+                  strcpy(context->error_msg, "out of memory");
                   return -1;
                }
                context->line++;
@@ -238,6 +245,7 @@ sl_pp_process(struct sl_pp_context *context,
 
             case SL_PP_EOF:
                if (sl_pp_process_out(&state, &input[i])) {
+                  strcpy(context->error_msg, "out of memory");
                   return -1;
                }
                i++;
@@ -254,6 +262,7 @@ sl_pp_process(struct sl_pp_context *context,
             default:
                if (context->if_value) {
                   if (sl_pp_process_out(&state, &input[i])) {
+                     strcpy(context->error_msg, "out of memory");
                      return -1;
                   }
                }
@@ -264,7 +273,7 @@ sl_pp_process(struct sl_pp_context *context,
    }
 
    if (context->if_ptr != SL_PP_MAX_IF_NESTING) {
-      /* #endif expected. */
+      strcpy(context->error_msg, "expected `#endif' directive");
       return -1;
    }
 
