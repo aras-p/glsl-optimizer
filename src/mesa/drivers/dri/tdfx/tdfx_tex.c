@@ -176,6 +176,54 @@ logbase2(int n)
 }
 
 
+static void
+tdfxGenerateMipmap(GLcontext *ctx, GLenum target,
+                   struct gl_texture_object *texObj)
+{
+   GLint mipWidth, mipHeight;
+   tdfxMipMapLevel *mip;
+   struct gl_texture_image *mipImage; /* the new/next image */
+   struct gl_texture_image *texImage;
+   const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
+   GLint level = texObj->BaseLevel;
+   GLsizei width, height, texelBytes;
+   const tdfxMipMapLevel *mml;
+
+   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+   assert(!texImage->IsCompressed);
+
+   mml = TDFX_TEXIMAGE_DATA(texImage);
+
+   width = texImage->Width;
+   height = texImage->Height;
+   while (level < texObj->MaxLevel && level < maxLevels - 1) {
+      mipWidth = width / 2;
+      if (!mipWidth) {
+         mipWidth = 1;
+      }
+      mipHeight = height / 2;
+      if (!mipHeight) {
+         mipHeight = 1;
+      }
+      if ((mipWidth == width) && (mipHeight == height)) {
+         break;
+      }
+      ++level;
+      mipImage = _mesa_select_tex_image(ctx, texObj, target, level);
+      mip = TDFX_TEXIMAGE_DATA(mipImage);
+      _mesa_halve2x2_teximage2d(ctx,
+                                texImage,
+                                texelBytes,
+                                mml->width, mml->height,
+                                texImage->Data, mipImage->Data);
+      texImage = mipImage;
+      mml = mip;
+      width = mipWidth;
+      height = mipHeight;
+   }
+}
+
+
 /*
  * Compute various texture image parameters.
  * Input:  w, h - source texture width and height
@@ -1397,45 +1445,6 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                                           width, height, 1,
                                           format, type, pixels, packing);
        }
-
-      /* GL_SGIS_generate_mipmap */
-      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-         GLint mipWidth, mipHeight;
-         tdfxMipMapLevel *mip;
-         struct gl_texture_image *mipImage;
-         const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
-   
-         assert(!texImage->IsCompressed);
-   
-         while (level < texObj->MaxLevel && level < maxLevels - 1) {
-            mipWidth = width / 2;
-            if (!mipWidth) {
-               mipWidth = 1;
-            }
-            mipHeight = height / 2;
-            if (!mipHeight) {
-               mipHeight = 1;
-            }
-            if ((mipWidth == width) && (mipHeight == height)) {
-               break;
-            }
-            _mesa_TexImage2D(target, ++level, internalFormat,
-                             mipWidth, mipHeight, border,
-                             format, type,
-                             NULL);
-            mipImage = _mesa_select_tex_image(ctx, texObj, target, level);
-            mip = TDFX_TEXIMAGE_DATA(mipImage);
-            _mesa_halve2x2_teximage2d(ctx,
-                                      texImage,
-                                      texelBytes,
-                                      mml->width, mml->height,
-                                      texImage->Data, mipImage->Data);
-            texImage = mipImage;
-            mml = mip;
-            width = mipWidth;
-            height = mipHeight;
-         }
-      }
     }
 
     RevalidateTexture(ctx, texObj);
@@ -1506,44 +1515,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                         width, height, 1,
                                         format, type, pixels, packing);
     }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      GLint mipWidth, mipHeight;
-      tdfxMipMapLevel *mip;
-      struct gl_texture_image *mipImage;
-      const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
-
-      assert(!texImage->IsCompressed);
-
-      width = texImage->Width;
-      height = texImage->Height;
-      while (level < texObj->MaxLevel && level < maxLevels - 1) {
-         mipWidth = width / 2;
-         if (!mipWidth) {
-            mipWidth = 1;
-         }
-         mipHeight = height / 2;
-         if (!mipHeight) {
-            mipHeight = 1;
-         }
-         if ((mipWidth == width) && (mipHeight == height)) {
-            break;
-         }
-         ++level;
-         mipImage = _mesa_select_tex_image(ctx, texObj, target, level);
-         mip = TDFX_TEXIMAGE_DATA(mipImage);
-         _mesa_halve2x2_teximage2d(ctx,
-                                   texImage,
-                                   texelBytes,
-                                   mml->width, mml->height,
-                                   texImage->Data, mipImage->Data);
-         texImage = mipImage;
-         mml = mip;
-         width = mipWidth;
-         height = mipHeight;
-      }
-   }
 
     ti->reloadImages = GL_TRUE; /* signal the image needs to be reloaded */
     fxMesa->new_state |= TDFX_NEW_TEXTURE;  /* XXX this might be a bit much */
@@ -1703,11 +1674,6 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
        MEMCPY(texImage->Data, data, texImage->CompressedSize);
     }
 
-    /* GL_SGIS_generate_mipmap */
-    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-       assert(!texImage->IsCompressed);
-    }
-
     RevalidateTexture(ctx, texObj);
 
     ti->reloadImages = GL_TRUE;
@@ -1768,11 +1734,6 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
                                 destRowStride, mml->height / 4,
                                 1, texImage->Data, destRowStride,
                                 texImage->Data);
-    }
-
-    /* GL_SGIS_generate_mipmap */
-    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-       assert(!texImage->IsCompressed);
     }
 
     RevalidateTexture(ctx, texObj);
@@ -1914,4 +1875,5 @@ void tdfxInitTextureFuncs( struct dd_function_table *functions )
    functions->CompressedTexImage2D	= tdfxCompressedTexImage2D;
    functions->CompressedTexSubImage2D	= tdfxCompressedTexSubImage2D;
    functions->UpdateTexturePalette      = tdfxUpdateTexturePalette;
+   functions->GenerateMipmap            = tdfxGenerateMipmap;
 }

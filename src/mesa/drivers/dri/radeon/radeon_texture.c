@@ -659,11 +659,6 @@ static void radeon_teximage(
 			if (dims == 3)
 				_mesa_free(dstImageOffsets);
 		}
-
-		/* SGIS_generate_mipmap */
-		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-			radeon_generate_mipmap(ctx, target, texObj);
-		}
 	}
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -791,11 +786,6 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 							     width, height, depth,
 							     format, type, pixels, packing))
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
-		}
-
-		/* GL_SGIS_generate_mipmap */
-		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-			radeon_generate_mipmap(ctx, target, texObj);
 		}
 	}
 

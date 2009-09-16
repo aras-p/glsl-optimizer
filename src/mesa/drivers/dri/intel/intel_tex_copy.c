@@ -90,7 +90,6 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
-   struct gl_texture_object *texObj = intelImage->base.TexObject;
    const struct intel_region *src =
       get_teximage_source(intel, internalFormat);
 
@@ -169,11 +168,6 @@ do_copy_texsubimage(struct intel_context *intel,
    }
 
    UNLOCK_HARDWARE(intel);
-
-   /* GL_SGIS_generate_mipmap */
-   if (intelImage->level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
-   }
 
    return GL_TRUE;
 }

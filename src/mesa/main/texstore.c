@@ -3403,11 +3403,6 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       }
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
@@ -3481,11 +3476,6 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       }
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
@@ -3555,11 +3545,6 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       }
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
@@ -3599,11 +3584,6 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
       if (!success) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
       }
-   }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 
    _mesa_unmap_teximage_pbo(ctx, packing);
@@ -3654,11 +3634,6 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
       }
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
@@ -3705,11 +3680,6 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
       if (!success) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage3D");
       }
-   }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 
    _mesa_unmap_teximage_pbo(ctx, packing);
@@ -3780,11 +3750,6 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    /* copy the data */
    ASSERT(texImage->CompressedSize == (GLuint) imageSize);
    MEMCPY(texImage->Data, data, imageSize);
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
 }
@@ -3889,11 +3854,6 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
       MEMCPY(dest, src, bytesPerRow);
       dest += destRowStride;
       src += srcRowStride;
-   }
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);

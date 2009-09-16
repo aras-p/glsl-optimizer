@@ -546,11 +546,6 @@ intelTexImage(GLcontext * ctx,
    }
 
    UNLOCK_HARDWARE(intel);
-
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
-   }
 }
 
 

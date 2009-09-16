@@ -2075,6 +2075,23 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
 }
 
 
+/**
+ * If the texture object's GenerateMipmap flag is set and we've
+ * changed the texture base level image, regenerate the rest of the
+ * mipmap levels now.
+ */
+static INLINE void
+check_gen_mipmap(GLcontext *ctx, GLenum target,
+                 struct gl_texture_object *texObj, GLint level)
+{
+   ASSERT(target != GL_TEXTURE_CUBE_MAP);
+   if (texObj->GenerateMipmap && level == texObj->BaseLevel) {
+      ASSERT(ctx->Driver.GenerateMipmap);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
+   }
+}
+
+
 /** Debug helper: override the user-requested internal format */
 static GLenum
 override_internal_format(GLenum internalFormat, GLint width, GLint height)
@@ -2182,6 +2199,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
             ASSERT(texImage->TexFormat);
 
+            check_gen_mipmap(ctx, target, texObj, level);
+
             update_fbo_texture(ctx, texObj, face, level);
 
             /* state update */
@@ -2287,6 +2306,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
             ASSERT(texImage->TexFormat);
 
+            check_gen_mipmap(ctx, target, texObj, level);
+
             update_fbo_texture(ctx, texObj, face, level);
 
             /* state update */
@@ -2388,6 +2409,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
             ASSERT(texImage->TexFormat);
 
+            check_gen_mipmap(ctx, target, texObj, level);
+
             update_fbo_texture(ctx, texObj, face, level);
 
             /* state update */
@@ -2486,6 +2509,9 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
          ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
                                    format, type, pixels, &ctx->Unpack,
                                    texObj, texImage);
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
@@ -2544,6 +2570,9 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
          ctx->Driver.TexSubImage2D(ctx, target, level, xoffset, yoffset,
                                    width, height, format, type, pixels,
                                    &ctx->Unpack, texObj, texImage);
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
@@ -2598,6 +2627,9 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                                    width, height, depth,
                                    format, type, pixels,
                                    &ctx->Unpack, texObj, texImage );
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
          ctx->NewState |= _NEW_TEXTURE;
       }
    }
@@ -2658,6 +2690,8 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
                                     x, y, width, border);
 
          ASSERT(texImage->TexFormat);
+
+         check_gen_mipmap(ctx, target, texObj, level);
 
          update_fbo_texture(ctx, texObj, face, level);
 
@@ -2726,6 +2760,8 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 
          ASSERT(texImage->TexFormat);
 
+         check_gen_mipmap(ctx, target, texObj, level);
+
          update_fbo_texture(ctx, texObj, face, level);
 
          /* state update */
@@ -2784,6 +2820,9 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
             ASSERT(ctx->Driver.CopyTexSubImage1D);
             ctx->Driver.CopyTexSubImage1D(ctx, target, level,
                                           xoffset, x, y, width);
+
+            check_gen_mipmap(ctx, target, texObj, level);
+
             ctx->NewState |= _NEW_TEXTURE;
          }
       }
@@ -2841,6 +2880,9 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
             ASSERT(ctx->Driver.CopyTexSubImage2D);
             ctx->Driver.CopyTexSubImage2D(ctx, target, level, xoffset, yoffset,
                                           x, y, width, height);
+
+            check_gen_mipmap(ctx, target, texObj, level);
+
             ctx->NewState |= _NEW_TEXTURE;
          }
       }
@@ -2899,6 +2941,9 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
             ctx->Driver.CopyTexSubImage3D(ctx, target, level,
                                           xoffset, yoffset, zoffset,
                                           x, y, width, height);
+
+            check_gen_mipmap(ctx, target, texObj, level);
+
             ctx->NewState |= _NEW_TEXTURE;
          }
       }
@@ -3146,6 +3191,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                                              imageSize, data,
                                              texObj, texImage);
 
+            check_gen_mipmap(ctx, target, texObj, level);
+
             /* state update */
             texObj->_Complete = GL_FALSE;
             ctx->NewState |= _NEW_TEXTURE;
@@ -3241,6 +3288,8 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                                              internalFormat, width, height,
                                              border, imageSize, data,
                                              texObj, texImage);
+
+            check_gen_mipmap(ctx, target, texObj, level);
 
             /* state update */
             texObj->_Complete = GL_FALSE;
@@ -3338,6 +3387,8 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                                              border, imageSize, data,
                                              texObj, texImage);
 
+            check_gen_mipmap(ctx, target, texObj, level);
+
             /* state update */
             texObj->_Complete = GL_FALSE;
             ctx->NewState |= _NEW_TEXTURE;
@@ -3430,8 +3481,11 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                                 format, imageSize, data,
                                                 texObj, texImage);
          }
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
+         ctx->NewState |= _NEW_TEXTURE;
       }
-      ctx->NewState |= _NEW_TEXTURE;
    }
    _mesa_unlock_texture(ctx, texObj);
 }
@@ -3485,8 +3539,11 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 						format, imageSize, data,
 						texObj, texImage);
          }
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
+         ctx->NewState |= _NEW_TEXTURE;
       }
-      ctx->NewState |= _NEW_TEXTURE;
    }
    _mesa_unlock_texture(ctx, texObj);
 }
@@ -3542,8 +3599,11 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 						format, imageSize, data,
 						texObj, texImage);
          }
+
+         check_gen_mipmap(ctx, target, texObj, level);
+
+         ctx->NewState |= _NEW_TEXTURE;
       }
-      ctx->NewState |= _NEW_TEXTURE;
    }
    _mesa_unlock_texture(ctx, texObj);
 }
