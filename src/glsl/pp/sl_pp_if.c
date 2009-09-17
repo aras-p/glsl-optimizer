@@ -59,7 +59,7 @@ _parse_defined(struct sl_pp_context *context,
    }
 
    if (input[*pi].token != SL_PP_IDENTIFIER) {
-      /* Identifier expected. */
+      strcpy(context->error_msg, "expected an identifier");
       return -1;
    }
 
@@ -75,7 +75,7 @@ _parse_defined(struct sl_pp_context *context,
    if (parens) {
       skip_whitespace(input, pi);
       if (input[*pi].token != SL_PP_RPAREN) {
-         /* `)' expected */
+         strcpy(context->error_msg, "expected `)'");
          return -1;
       }
       (*pi)++;
@@ -91,10 +91,15 @@ _parse_defined(struct sl_pp_context *context,
       return -1;
    }
 
-   return sl_pp_process_out(state, &result);
+   if (sl_pp_process_out(state, &result)) {
+      strcpy(context->error_msg, "out of memory");
+      return -1;
+   }
+
+   return 0;
 }
 
-static int
+static unsigned int
 _evaluate_if_stack(struct sl_pp_context *context)
 {
    unsigned int i;
@@ -119,7 +124,7 @@ _parse_if(struct sl_pp_context *context,
    int result;
 
    if (!context->if_ptr) {
-      /* #if nesting too deep. */
+      strcpy(context->error_msg, "`#if' nesting too deep");
       return -1;
    }
 
@@ -151,6 +156,7 @@ _parse_if(struct sl_pp_context *context,
 
       default:
          if (sl_pp_process_out(&state, &input[i])) {
+            strcpy(context->error_msg, "out of memory");
             free(state.out);
             return -1;
          }
@@ -160,6 +166,7 @@ _parse_if(struct sl_pp_context *context,
 
    eof.token = SL_PP_EOF;
    if (sl_pp_process_out(&state, &eof)) {
+      strcpy(context->error_msg, "out of memory");
       free(state.out);
       return -1;
    }
@@ -182,13 +189,13 @@ static int
 _parse_else(struct sl_pp_context *context)
 {
    if (context->if_ptr == SL_PP_MAX_IF_NESTING) {
-      /* No matching #if. */
+      strcpy(context->error_msg, "no matching `#if'");
       return -1;
    }
 
    /* Bit b1 indicates we already went through #else. */
    if (context->if_stack[context->if_ptr] & 2) {
-      /* No matching #if. */
+      strcpy(context->error_msg, "no matching `#if'");
       return -1;
    }
 
@@ -217,7 +224,7 @@ sl_pp_process_ifdef(struct sl_pp_context *context,
    unsigned int i;
 
    if (!context->if_ptr) {
-      /* #if nesting too deep. */
+      strcpy(context->error_msg, "`#if' nesting too deep");
       return -1;
    }
 
@@ -246,12 +253,12 @@ sl_pp_process_ifdef(struct sl_pp_context *context,
          break;
 
       default:
-         /* Expected an identifier. */
+         strcpy(context->error_msg, "expected an identifier");
          return -1;
       }
    }
 
-   /* Expected an identifier. */
+   strcpy(context->error_msg, "expected an identifier");
    return -1;
 }
 
@@ -264,7 +271,7 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
    unsigned int i;
 
    if (!context->if_ptr) {
-      /* #if nesting too deep. */
+      strcpy(context->error_msg, "`#if' nesting too deep");
       return -1;
    }
 
@@ -293,12 +300,12 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
          break;
 
       default:
-         /* Expected an identifier. */
+         strcpy(context->error_msg, "expected an identifier");
          return -1;
       }
    }
 
-   /* Expected an identifier. */
+   strcpy(context->error_msg, "expected an identifier");
    return -1;
 }
 
@@ -341,7 +348,7 @@ sl_pp_process_endif(struct sl_pp_context *context,
                     unsigned int last)
 {
    if (context->if_ptr == SL_PP_MAX_IF_NESTING) {
-      /* No matching #if. */
+      strcpy(context->error_msg, "no matching `#if'");
       return -1;
    }
 

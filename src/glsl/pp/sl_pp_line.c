@@ -29,31 +29,6 @@
 #include "sl_pp_process.h"
 
 
-static int
-_parse_integer(const char *input,
-               unsigned int *number)
-{
-   unsigned int n = 0;
-
-   while (*input >= '0' && *input <= '9') {
-      if (n * 10 < n) {
-         /* Overflow. */
-         return -1;
-      }
-
-      n = n * 10 + (*input++ - '0');
-   }
-
-   if (*input != '\0') {
-      /* Invalid decimal number. */
-      return -1;
-   }
-
-   *number = n;
-   return 0;
-}
-
-
 int
 sl_pp_process_line(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
@@ -65,7 +40,6 @@ sl_pp_process_line(struct sl_pp_context *context,
    struct sl_pp_process_state state;
    int line_number = -1;
    int file_number = -1;
-   const char *str;
    unsigned int line;
 
    memset(&state, 0, sizeof(state));
@@ -84,6 +58,7 @@ sl_pp_process_line(struct sl_pp_context *context,
 
       default:
          if (sl_pp_process_out(&state, &input[i])) {
+            strcpy(context->error_msg, "out of memory");
             free(state.out);
             return -1;
          }
@@ -94,7 +69,7 @@ sl_pp_process_line(struct sl_pp_context *context,
    if (state.out_len > 0 && state.out[0].token == SL_PP_NUMBER) {
       line_number = state.out[0].data.number;
    } else {
-      strcpy(context->error_msg, "expected number after `#line'");
+      strcpy(context->error_msg, "expected a number after `#line'");
       free(state.out);
       return -1;
    }
@@ -103,13 +78,13 @@ sl_pp_process_line(struct sl_pp_context *context,
       if (state.out[1].token == SL_PP_NUMBER) {
          file_number = state.out[1].data.number;
       } else {
-         strcpy(context->error_msg, "expected number after line number");
+         strcpy(context->error_msg, "expected a number after line number");
          free(state.out);
          return -1;
       }
 
       if (state.out_len > 2) {
-         strcpy(context->error_msg, "expected end of line after file number");
+         strcpy(context->error_msg, "expected an end of line after file number");
          free(state.out);
          return -1;
       }
@@ -117,10 +92,7 @@ sl_pp_process_line(struct sl_pp_context *context,
 
    free(state.out);
 
-   str = sl_pp_context_cstr(context, line_number);
-   if (_parse_integer(str, &line)) {
-      return -1;
-   }
+   line = atoi(sl_pp_context_cstr(context, line_number));
 
    if (context->line != line) {
       struct sl_pp_token_info ti;
@@ -128,6 +100,7 @@ sl_pp_process_line(struct sl_pp_context *context,
       ti.token = SL_PP_LINE;
       ti.data.line = line;
       if (sl_pp_process_out(pstate, &ti)) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
 
@@ -137,10 +110,7 @@ sl_pp_process_line(struct sl_pp_context *context,
    if (file_number != -1) {
       unsigned int file;
 
-      str = sl_pp_context_cstr(context, file_number);
-      if (_parse_integer(str, &file)) {
-         return -1;
-      }
+      file_number = atoi(sl_pp_context_cstr(context, file_number));
 
       if (context->file != file) {
          struct sl_pp_token_info ti;
@@ -148,6 +118,7 @@ sl_pp_process_line(struct sl_pp_context *context,
          ti.token = SL_PP_FILE;
          ti.data.file = file;
          if (sl_pp_process_out(pstate, &ti)) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
 

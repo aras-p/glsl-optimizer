@@ -25,32 +25,8 @@
  * 
  **************************************************************************/
 
+#include <stdlib.h>
 #include "sl_pp_version.h"
-
-
-static int
-_parse_integer(const char *input,
-               unsigned int *number)
-{
-   unsigned int n = 0;
-
-   while (*input >= '0' && *input <= '9') {
-      if (n * 10 < n) {
-         /* Overflow. */
-         return -1;
-      }
-
-      n = n * 10 + (*input++ - '0');
-   }
-
-   if (*input != '\0') {
-      /* Invalid decimal number. */
-      return -1;
-   }
-
-   *number = n;
-   return 0;
-}
 
 
 int
@@ -130,19 +106,9 @@ sl_pp_version(struct sl_pp_context *context,
             break;
 
          case SL_PP_NUMBER:
-            {
-               const char *num = sl_pp_context_cstr(context, input[i].data.number);
-
-               if (!num) {
-                  return -1;
-               }
-               if (_parse_integer(num, version)) {
-                  strcpy(context->error_msg, "expected version number after `#version'");
-                  return -1;
-               }
-               i++;
-               found_number = 1;
-            }
+            *version = atoi(sl_pp_context_cstr(context, input[i].data.number));
+            i++;
+            found_number = 1;
             break;
 
          default:

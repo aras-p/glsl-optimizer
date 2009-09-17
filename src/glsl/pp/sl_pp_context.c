@@ -85,6 +85,7 @@ sl_pp_context_add_unique_str(struct sl_pp_context *context,
    }
 
    if (!context->cstr_pool) {
+      strcpy(context->error_msg, "out of memory");
       return -1;
    }
 

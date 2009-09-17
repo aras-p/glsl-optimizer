@@ -107,7 +107,12 @@ _out_number(struct sl_pp_context *context,
 
    ti.token = SL_PP_NUMBER;
    ti.data.number = sl_pp_context_add_unique_str(context, buf);
-   return sl_pp_process_out(state, &ti);
+   if (sl_pp_process_out(state, &ti)) {
+      strcpy(context->error_msg, "out of memory");
+      return -1;
+   }
+
+   return 0;
 }
 
 int
@@ -125,6 +130,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    unsigned int j;
 
    if (input[*pi].token != SL_PP_IDENTIFIER) {
+      strcpy(context->error_msg, "expected an identifier");
       return -1;
    }
 
@@ -172,6 +178,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    if (!macro) {
       if (!mute) {
          if (sl_pp_process_out(state, &input[*pi])) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
       }
@@ -184,6 +191,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    if (macro->num_args >= 0) {
       skip_whitespace(input, pi);
       if (input[*pi].token != SL_PP_LPAREN) {
+         strcpy(context->error_msg, "expected `('");
          return -1;
       }
       (*pi)++;
@@ -203,6 +211,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
          *pmacro = sl_pp_macro_new();
          if (!*pmacro) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
 
@@ -219,6 +228,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                   if (j < (unsigned int)macro->num_args - 1) {
                      done = 1;
                   } else {
+                     strcpy(context->error_msg, "too many actual macro arguments");
                      return -1;
                   }
                } else {
@@ -236,6 +246,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                   if (j == (unsigned int)macro->num_args - 1) {
                      done = 1;
                   } else {
+                     strcpy(context->error_msg, "too few actual macro arguments");
                      return -1;
                   }
                } else {
@@ -245,6 +256,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                break;
 
             case SL_PP_EOF:
+               strcpy(context->error_msg, "too few actual macro arguments");
                return -1;
 
             default:
@@ -254,6 +266,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
          (**pmacro).body = malloc(sizeof(struct sl_pp_token_info) * body_len);
          if (!(**pmacro).body) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
 
@@ -301,6 +314,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    if (macro->num_args == 0) {
       skip_whitespace(input, pi);
       if (input[*pi].token != SL_PP_RPAREN) {
+         strcpy(context->error_msg, "expected `)'");
          return -1;
       }
       (*pi)++;
@@ -310,6 +324,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       switch (macro->body[j].token) {
       case SL_PP_NEWLINE:
          if (sl_pp_process_out(state, &macro->body[j])) {
+            strcpy(context->error_msg, "out of memory");
             return -1;
          }
          j++;
@@ -328,6 +343,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       default:
          if (!mute) {
             if (sl_pp_process_out(state, &macro->body[j])) {
+               strcpy(context->error_msg, "out of memory");
                return -1;
             }
          }

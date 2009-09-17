@@ -41,7 +41,8 @@ skip_whitespace(const struct sl_pp_token_info *input,
 
 
 static int
-_parse_formal_args(const struct sl_pp_token_info *input,
+_parse_formal_args(struct sl_pp_context *context,
+                   const struct sl_pp_token_info *input,
                    unsigned int *first,
                    unsigned int last,
                    struct sl_pp_macro *macro)
@@ -57,7 +58,7 @@ _parse_formal_args(const struct sl_pp_token_info *input,
          return 0;
       }
    } else {
-      /* Expected either an identifier or `)'. */
+      strcpy(context->error_msg, "expected either an identifier or `)'");
       return -1;
    }
 
@@ -65,12 +66,13 @@ _parse_formal_args(const struct sl_pp_token_info *input,
 
    for (;;) {
       if (*first < last && input[*first].token != SL_PP_IDENTIFIER) {
-         /* Expected an identifier. */
+         strcpy(context->error_msg, "expected an identifier");
          return -1;
       }
 
       *arg = malloc(sizeof(struct sl_pp_macro_formal_arg));
       if (!*arg) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
 
@@ -90,14 +92,16 @@ _parse_formal_args(const struct sl_pp_token_info *input,
             (*first)++;
             return 0;
          } else {
-            /* Expected either `,' or `)'. */
+            strcpy(context->error_msg, "expected either `,' or `)'");
             return -1;
          }
       } else {
-         /* Expected either `,' or `)'. */
+         strcpy(context->error_msg, "expected either `,' or `)'");
          return -1;
       }
    }
+
+   /* Should not gete here. */
 }
 
 
@@ -118,6 +122,7 @@ sl_pp_process_define(struct sl_pp_context *context,
       first++;
    }
    if (macro_name == -1) {
+      strcpy(context->error_msg, "expected an identifier");
       return -1;
    }
 
@@ -130,6 +135,7 @@ sl_pp_process_define(struct sl_pp_context *context,
    if (!macro) {
       macro = sl_pp_macro_new();
       if (!macro) {
+         strcpy(context->error_msg, "out of memory");
          return -1;
       }
 
@@ -149,7 +155,7 @@ sl_pp_process_define(struct sl_pp_context *context,
     */
    if (first < last && input[first].token == SL_PP_LPAREN) {
       first++;
-      if (_parse_formal_args(input, &first, last, macro)) {
+      if (_parse_formal_args(context, input, &first, last, macro)) {
          return -1;
       }
    }
@@ -164,6 +170,7 @@ sl_pp_process_define(struct sl_pp_context *context,
 
    macro->body = malloc(sizeof(struct sl_pp_token_info) * body_len);
    if (!macro->body) {
+      strcpy(context->error_msg, "out of memory");
       return -1;
    }
 

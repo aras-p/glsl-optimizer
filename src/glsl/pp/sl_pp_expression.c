@@ -47,6 +47,7 @@ _parse_primary(struct parse_context *ctx,
       ctx->input++;
    } else {
       if (ctx->input->token != SL_PP_LPAREN) {
+         strcpy(ctx->context->error_msg, "expected `('");
          return -1;
       }
       ctx->input++;
@@ -54,6 +55,7 @@ _parse_primary(struct parse_context *ctx,
          return -1;
       }
       if (ctx->input->token != SL_PP_RPAREN) {
+         strcpy(ctx->context->error_msg, "expected `)'");
          return -1;
       }
       ctx->input++;

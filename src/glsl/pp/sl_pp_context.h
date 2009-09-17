@@ -47,7 +47,7 @@ struct sl_pp_context {
 
    unsigned int if_stack[SL_PP_MAX_IF_NESTING];
    unsigned int if_ptr;
-   int if_value;
+   unsigned int if_value;
 
    char error_msg[SL_PP_MAX_ERROR_MSG];
 

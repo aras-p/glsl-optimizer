@@ -99,6 +99,7 @@ sl_pp_process_pragma(struct sl_pp_context *context,
    /* Ignore the tokens that follow. */
 
    if (sl_pp_process_out(state, &out)) {
+      strcpy(context->error_msg, "out of memory");
       return -1;
    }
 
