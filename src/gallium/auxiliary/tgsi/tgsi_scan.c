@@ -132,6 +132,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
                   info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
                   info->num_inputs++;
                }
                else if (file == TGSI_FILE_OUTPUT) {
