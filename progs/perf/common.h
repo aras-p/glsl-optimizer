@@ -31,5 +31,9 @@ extern double
 PerfMeasureRate(PerfRateFunc f);
 
 
+extern void
+perf_printf(const char *format, ...);
+
+
 #endif /* COMMON_H */
 

@@ -116,17 +116,18 @@ PerfDraw(void)
    double rate0, rate1, rate2, overhead;
 
    rate0 = PerfMeasureRate(DrawNoStateChange);
-   printf("   Draw only: %.1f draws/second\n", rate0);
+   perf_printf("   Draw only: %.1f draws/second\n", rate0);
+   
 
    rate1 = PerfMeasureRate(DrawNopStateChange);
    overhead = 1000.0 * (1.0 / rate1 - 1.0 / rate0);
-   printf("   Draw w/ nop state change: %.1f draws/sec (overhead: %f ms/draw)\n",
-          rate1, overhead);
+   perf_printf("   Draw w/ nop state change: %.1f draws/sec (overhead: %f ms/draw)\n",
+               rate1, overhead);
 
    rate2 = PerfMeasureRate(DrawStateChange);
    overhead = 1000.0 * (1.0 / rate2 - 1.0 / rate0);
-   printf("   Draw w/ state change: %.1f draws/sec (overhead: %f ms/draw)\n",
-          rate2, overhead);
+   perf_printf("   Draw w/ state change: %.1f draws/sec (overhead: %f ms/draw)\n",
+               rate2, overhead);
 
    exit(0);
 }

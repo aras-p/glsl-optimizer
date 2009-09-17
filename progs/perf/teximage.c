@@ -50,8 +50,11 @@ static const struct vertex vertices[1] = {
    { 0.0, 0.0, 0.5, 0.5 },
 };
 
-
+#if 0
 #define VOFFSET(F) ((void *) offsetof(struct vertex, F))
+#else
+#define VOFFSET(F) ((void *) &((struct vertex *)NULL)->F)
+#endif
 
 /** Called from test harness/main */
 void
@@ -196,10 +199,10 @@ PerfDraw(void)
 
             mbPerSec = rate * bytesPerImage / (1024.0 * 1024.0);
 
-            printf("  glTex%sImage2D(%s %d x %d): "
-                   "%.1f images/sec, %.1f MB/sec\n",
-                   (subImage ? "Sub" : ""),
-                   SrcFormats[fmt].name, TexSize, TexSize, rate, mbPerSec);
+            perf_printf("  glTex%sImage2D(%s %d x %d): "
+                        "%.1f images/sec, %.1f MB/sec\n",
+                        (subImage ? "Sub" : ""),
+                        SrcFormats[fmt].name, TexSize, TexSize, rate, mbPerSec);
 
             free(TexImage);
          }

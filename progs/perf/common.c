@@ -26,6 +26,28 @@
 #include "common.h"
 #include "glmain.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+
+/* Need to add a fflush windows console with mingw, otherwise nothing
+ * shows up until program exit.  May want to add logging here.
+ */
+void
+perf_printf(const char *format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+
+   fflush(stdout);
+   vfprintf(stdout, format, ap);
+   fflush(stdout);
+
+   va_end(ap);
+}
+
+
 
 /**
  * Run function 'f' for enough iterations to reach a steady state.
@@ -52,7 +74,7 @@ PerfMeasureRate(PerfRateFunc f)
          subiters *= 2;
       } while (t1 - t0 < 0.1 * minDuration);
    }
-   /*printf("initial subIters = %u\n", subiters);*/
+   /*perf_printf("initial subIters = %u\n", subiters);*/
 
    while (1) {
       const double t0 = PerfGetTime();
@@ -68,7 +90,7 @@ PerfMeasureRate(PerfRateFunc f)
       rate = iters / (t1 - t0);
 
       if (0)
-         printf("prevRate %f  rate  %f  ratio %f  iters %u\n",
+         perf_printf("prevRate %f  rate  %f  ratio %f  iters %u\n",
                 prevRate, rate, rate/prevRate, iters);
 
       /* Try and speed the search up by skipping a few steps:
@@ -86,7 +108,7 @@ PerfMeasureRate(PerfRateFunc f)
    }
 
    if (0)
-      printf("%s returning iters %u  rate %f\n", __FUNCTION__, subiters, rate);
+      perf_printf("%s returning iters %u  rate %f\n", __FUNCTION__, subiters, rate);
    return rate;
 }
 

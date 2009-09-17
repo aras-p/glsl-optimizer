@@ -127,8 +127,8 @@ PerfDraw(void)
 
          mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
 
-         printf("  glBuffer%sDataARB(size = %d): %.1f MB/sec\n",
-                (sub ? "Sub" : ""), VBOSize, mbPerSec);
+         perf_printf("  glBuffer%sDataARB(size = %d): %.1f MB/sec\n",
+                     (sub ? "Sub" : ""), VBOSize, mbPerSec);
 
          free(VBOData);
       }
