@@ -110,7 +110,7 @@ sl_pp_process_line(struct sl_pp_context *context,
    if (file_number != -1) {
       unsigned int file;
 
-      file_number = atoi(sl_pp_context_cstr(context, file_number));
+      file = atoi(sl_pp_context_cstr(context, file_number));
 
       if (context->file != file) {
          struct sl_pp_token_info ti;
