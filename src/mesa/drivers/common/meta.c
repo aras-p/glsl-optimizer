@@ -656,7 +656,6 @@ _mesa_meta_end(GLcontext *ctx)
 
       _mesa_MatrixMode(save->MatrixMode);
 
-      save->ClipPlanesEnabled = ctx->Transform.ClipPlanesEnabled;
       if (save->ClipPlanesEnabled) {
          GLuint i;
          for (i = 0; i < ctx->Const.MaxClipPlanes; i++) {
@@ -691,9 +690,6 @@ _mesa_meta_end(GLcontext *ctx)
    /* misc */
    if (save->Lighting) {
       _mesa_set_enable(ctx, GL_LIGHTING, GL_TRUE);
-   }
-   if (save->Fog) {
-      _mesa_set_enable(ctx, GL_FOG, GL_TRUE);
    }
 }
 
