@@ -52,5 +52,32 @@ sl_pp_dict_init(struct sl_pp_context *context)
    ADD_NAME(context, warn);
    ADD_NAME(context, disable);
 
+   ADD_NAME(context, defined);
+
+   ADD_NAME_STR(context, ___LINE__, "__LINE__");
+   ADD_NAME_STR(context, ___FILE__, "__FILE__");
+   ADD_NAME(context, __VERSION__);
+
+   ADD_NAME(context, optimize);
+   ADD_NAME(context, debug);
+
+   ADD_NAME(context, off);
+   ADD_NAME(context, on);
+
+   ADD_NAME(context, define);
+   ADD_NAME(context, elif);
+   ADD_NAME_STR(context, _else, "else");
+   ADD_NAME(context, endif);
+   ADD_NAME(context, error);
+   ADD_NAME(context, extension);
+   ADD_NAME_STR(context, _if, "if");
+   ADD_NAME(context, ifdef);
+   ADD_NAME(context, ifndef);
+   ADD_NAME(context, line);
+   ADD_NAME(context, pragma);
+   ADD_NAME(context, undef);
+
+   ADD_NAME(context, version);
+
    return 0;
 }

@@ -100,14 +100,14 @@ sl_pp_process(struct sl_pp_context *context,
          switch (input[i].token) {
          case SL_PP_IDENTIFIER:
             {
-               const char *name;
+               int name;
                int found_eol = 0;
                unsigned int first;
                unsigned int last;
                struct sl_pp_token_info endof;
 
                /* Directive name. */
-               name = sl_pp_context_cstr(context, input[i].data.identifier);
+               name = input[i].data.identifier;
                i++;
                skip_whitespace(input, &i);
 
@@ -136,51 +136,51 @@ sl_pp_process(struct sl_pp_context *context,
 
                last = i - 1;
 
-               if (!strcmp(name, "if")) {
+               if (name == context->dict._if) {
                   if (sl_pp_process_if(context, input, first, last)) {
                      return -1;
                   }
-               } else if (!strcmp(name, "ifdef")) {
+               } else if (name == context->dict.ifdef) {
                   if (sl_pp_process_ifdef(context, input, first, last)) {
                      return -1;
                   }
-               } else if (!strcmp(name, "ifndef")) {
+               } else if (name == context->dict.ifndef) {
                   if (sl_pp_process_ifndef(context, input, first, last)) {
                      return -1;
                   }
-               } else if (!strcmp(name, "elif")) {
+               } else if (name == context->dict.elif) {
                   if (sl_pp_process_elif(context, input, first, last)) {
                      return -1;
                   }
-               } else if (!strcmp(name, "else")) {
+               } else if (name == context->dict._else) {
                   if (sl_pp_process_else(context, input, first, last)) {
                      return -1;
                   }
-               } else if (!strcmp(name, "endif")) {
+               } else if (name == context->dict.endif) {
                   if (sl_pp_process_endif(context, input, first, last)) {
                      return -1;
                   }
                } else if (context->if_value) {
-                  if (!strcmp(name, "define")) {
+                  if (name == context->dict.define) {
                      if (sl_pp_process_define(context, input, first, last)) {
                         return -1;
                      }
-                  } else if (!strcmp(name, "error")) {
+                  } else if (name == context->dict.error) {
                      sl_pp_process_error(context, input, first, last);
                      return -1;
-                  } else if (!strcmp(name, "extension")) {
+                  } else if (name == context->dict.extension) {
                      if (sl_pp_process_extension(context, input, first, last, &state)) {
                         return -1;
                      }
-                  } else if (!strcmp(name, "line")) {
+                  } else if (name == context->dict.line) {
                      if (sl_pp_process_line(context, input, first, last, &state)) {
                         return -1;
                      }
-                  } else if (!strcmp(name, "pragma")) {
+                  } else if (name == context->dict.pragma) {
                      if (sl_pp_process_pragma(context, input, first, last, &state)) {
                         return -1;
                      }
-                  } else if (!strcmp(name, "undef")) {
+                  } else if (name == context->dict.undef) {
                      if (sl_pp_process_undef(context, input, first, last)) {
                         return -1;
                      }

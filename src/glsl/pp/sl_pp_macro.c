@@ -124,7 +124,6 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                    int mute)
 {
    int macro_name;
-   const char *macro_str;
    struct sl_pp_macro *macro = NULL;
    struct sl_pp_macro *actual_arg = NULL;
    unsigned int j;
@@ -135,23 +134,22 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    }
 
    macro_name = input[*pi].data.identifier;
-   macro_str = sl_pp_context_cstr(context, macro_name);
 
-   if (!strcmp(macro_str, "__LINE__")) {
+   if (macro_name == context->dict.___LINE__) {
       if (!mute && _out_number(context, state, context->line)) {
          return -1;
       }
       (*pi)++;
       return 0;
    }
-   if (!strcmp(macro_str, "__FILE__")) {
+   if (macro_name == context->dict.___FILE__) {
       if (!mute && _out_number(context, state, context->file)) {
          return -1;
       }
       (*pi)++;
       return 0;
    }
-   if (!strcmp(macro_str, "__VERSION__")) {
+   if (macro_name == context->dict.__VERSION__) {
       if (!mute && _out_number(context, state, 110)) {
          return -1;
       }

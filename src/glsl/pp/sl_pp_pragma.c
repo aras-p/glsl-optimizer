@@ -36,21 +36,21 @@ sl_pp_process_pragma(struct sl_pp_context *context,
                      unsigned int last,
                      struct sl_pp_process_state *state)
 {
-   const char *pragma_name = NULL;
+   int pragma_name = -1;
    struct sl_pp_token_info out;
-   const char *arg_name = NULL;
+   int arg_name = -1;
 
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
-      pragma_name = sl_pp_context_cstr(context, input[first].data.identifier);
+      pragma_name = input[first].data.identifier;
       first++;
    }
-   if (!pragma_name) {
+   if (pragma_name == -1) {
       return 0;
    }
 
-   if (!strcmp(pragma_name, "optimize")) {
+   if (pragma_name == context->dict.optimize) {
       out.token = SL_PP_PRAGMA_OPTIMIZE;
-   } else if (!strcmp(pragma_name, "debug")) {
+   } else if (pragma_name == context->dict.debug) {
       out.token = SL_PP_PRAGMA_DEBUG;
    } else {
       return 0;
@@ -71,16 +71,16 @@ sl_pp_process_pragma(struct sl_pp_context *context,
    }
 
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
-      arg_name = sl_pp_context_cstr(context, input[first].data.identifier);
+      arg_name = input[first].data.identifier;
       first++;
    }
-   if (!arg_name) {
+   if (arg_name == -1) {
       return 0;
    }
 
-   if (!strcmp(arg_name, "off")) {
+   if (arg_name == context->dict.off) {
       out.data.pragma = 0;
-   } else if (!strcmp(arg_name, "on")) {
+   } else if (arg_name == context->dict.on) {
       out.data.pragma = 1;
    } else {
       return 0;

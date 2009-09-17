@@ -37,6 +37,33 @@ struct sl_pp_dict {
    int enable;
    int warn;
    int disable;
+
+   int defined;
+
+   int ___LINE__;
+   int ___FILE__;
+   int __VERSION__;
+
+   int optimize;
+   int debug;
+
+   int off;
+   int on;
+
+   int define;
+   int elif;
+   int _else;
+   int endif;
+   int error;
+   int extension;
+   int _if;
+   int ifdef;
+   int ifndef;
+   int line;
+   int pragma;
+   int undef;
+
+   int version;
 };
 
 

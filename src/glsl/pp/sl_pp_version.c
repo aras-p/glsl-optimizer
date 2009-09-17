@@ -79,18 +79,11 @@ sl_pp_version(struct sl_pp_context *context,
             break;
 
          case SL_PP_IDENTIFIER:
-            {
-               const char *id = sl_pp_context_cstr(context, input[i].data.identifier);
-
-               if (!id) {
-                  return -1;
-               }
-               if (strcmp(id, "version")) {
-                  return 0;
-               }
-               i++;
-               found_version = 1;
+            if (input[i].data.identifier != context->dict.version) {
+               return 0;
             }
+            i++;
+            found_version = 1;
             break;
 
          default:
