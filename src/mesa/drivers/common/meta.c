@@ -68,6 +68,29 @@
 
 
 /**
+ * Flags passed to _mesa_meta_begin().
+ */
+/*@{*/
+#define META_ALL              ~0x0
+#define META_ALPHA_TEST        0x1
+#define META_BLEND             0x2  /**< includes logicop */
+#define META_COLOR_MASK        0x4
+#define META_DEPTH_TEST        0x8
+#define META_FOG              0x10
+#define META_PIXEL_STORE      0x20
+#define META_PIXEL_TRANSFER   0x40
+#define META_RASTERIZATION    0x80
+#define META_SCISSOR         0x100
+#define META_SHADER          0x200
+#define META_STENCIL_TEST    0x400
+#define META_TRANSFORM       0x800 /**< modelview, projection, clip planes */
+#define META_TEXTURE        0x1000
+#define META_VERTEX         0x2000
+#define META_VIEWPORT       0x4000
+/*@}*/
+
+
+/**
  * State which we may save/restore across meta ops.
  * XXX this may be incomplete...
  */
@@ -93,6 +116,17 @@ struct save_state
 
    /** META_PIXEL_STORE */
    struct gl_pixelstore_attrib Pack, Unpack;
+
+   /** META_PIXEL_TRANSFER */
+   GLfloat RedBias, RedScale;
+   GLfloat GreenBias, GreenScale;
+   GLfloat BlueBias, BlueScale;
+   GLfloat AlphaBias, AlphaScale;
+   GLfloat DepthBias, DepthScale;
+   GLboolean MapColorFlag;
+   GLboolean Convolution1DEnabled;
+   GLboolean Convolution2DEnabled;
+   GLboolean Separable2DEnabled;
 
    /** META_RASTERIZATION */
    GLenum FrontPolygonMode, BackPolygonMode;
@@ -363,6 +397,35 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       ctx->Unpack = ctx->DefaultPacking;
    }
 
+   if (state & META_PIXEL_TRANSFER) {
+      save->RedScale = ctx->Pixel.RedScale;
+      save->RedBias = ctx->Pixel.RedBias;
+      save->GreenScale = ctx->Pixel.GreenScale;
+      save->GreenBias = ctx->Pixel.GreenBias;
+      save->BlueScale = ctx->Pixel.BlueScale;
+      save->BlueBias = ctx->Pixel.BlueBias;
+      save->AlphaScale = ctx->Pixel.AlphaScale;
+      save->AlphaBias = ctx->Pixel.AlphaBias;
+      save->MapColorFlag = ctx->Pixel.MapColorFlag;
+      save->Convolution1DEnabled = ctx->Pixel.Convolution1DEnabled;
+      save->Convolution2DEnabled = ctx->Pixel.Convolution2DEnabled;
+      save->Separable2DEnabled = ctx->Pixel.Separable2DEnabled;
+      ctx->Pixel.RedScale = 1.0F;
+      ctx->Pixel.RedBias = 0.0F;
+      ctx->Pixel.GreenScale = 1.0F;
+      ctx->Pixel.GreenBias = 0.0F;
+      ctx->Pixel.BlueScale = 1.0F;
+      ctx->Pixel.BlueBias = 0.0F;
+      ctx->Pixel.AlphaScale = 1.0F;
+      ctx->Pixel.AlphaBias = 0.0F;
+      ctx->Pixel.MapColorFlag = GL_FALSE;
+      ctx->Pixel.Convolution1DEnabled = GL_FALSE;
+      ctx->Pixel.Convolution2DEnabled = GL_FALSE;
+      ctx->Pixel.Separable2DEnabled = GL_FALSE;
+      /* XXX more state */
+      ctx->NewState |=_NEW_PIXEL;
+   }
+
    if (state & META_RASTERIZATION) {
       save->FrontPolygonMode = ctx->Polygon.FrontMode;
       save->BackPolygonMode = ctx->Polygon.BackMode;
@@ -556,6 +619,23 @@ _mesa_meta_end(GLcontext *ctx)
    if (state & META_PIXEL_STORE) {
       ctx->Pack = save->Pack;
       ctx->Unpack = save->Unpack;
+   }
+
+   if (state & META_PIXEL_TRANSFER) {
+      ctx->Pixel.RedScale = save->RedScale;
+      ctx->Pixel.RedBias = save->RedBias;
+      ctx->Pixel.GreenScale = save->GreenScale;
+      ctx->Pixel.GreenBias = save->GreenBias;
+      ctx->Pixel.BlueScale = save->BlueScale;
+      ctx->Pixel.BlueBias = save->BlueBias;
+      ctx->Pixel.AlphaScale = save->AlphaScale;
+      ctx->Pixel.AlphaBias = save->AlphaBias;
+      ctx->Pixel.MapColorFlag = save->MapColorFlag;
+      ctx->Pixel.Convolution1DEnabled = save->Convolution1DEnabled;
+      ctx->Pixel.Convolution2DEnabled = save->Convolution2DEnabled;
+      ctx->Pixel.Separable2DEnabled = save->Separable2DEnabled;
+      /* XXX more state */
+      ctx->NewState |=_NEW_PIXEL;
    }
 
    if (state & META_RASTERIZATION) {
@@ -2030,4 +2110,232 @@ _mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
 
    /* restore (XXX add to meta_begin/end()? */
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
+}
+
+
+/**
+ * Determine the GL data type to use for the temporary image read with
+ * ReadPixels() and passed to Tex[Sub]Image().
+ */
+static GLenum
+get_temp_image_type(GLcontext *ctx, GLenum baseFormat)
+{
+   switch (baseFormat) {
+   case GL_RGBA:
+   case GL_RGB:
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+   case GL_INTENSITY:
+      if (ctx->DrawBuffer->Visual.redBits <= 8)
+         return GL_UNSIGNED_BYTE;
+      else if (ctx->DrawBuffer->Visual.redBits <= 8)
+         return GL_UNSIGNED_SHORT;
+      else
+         return GL_FLOAT;
+   case GL_DEPTH_COMPONENT:
+      return GL_UNSIGNED_INT;
+   case GL_DEPTH_STENCIL:
+      return GL_UNSIGNED_INT_24_8;
+   default:
+      _mesa_problem(ctx, "Unexpected format in get_temp_image_type()");
+      return 0;
+   }
+}
+
+
+/**
+ * Helper for _mesa_meta_CopyTexImage1/2D() functions.
+ * Have to be careful with locking and meta state for pixel transfer.
+ */
+static void
+copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
+               GLenum internalFormat, GLint x, GLint y,
+               GLsizei width, GLsizei height, GLint border)
+{
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLenum format, type;
+   GLint bpp;
+   void *buf;
+
+   texUnit = _mesa_get_current_tex_unit(ctx);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+
+   format = _mesa_base_tex_format(ctx, internalFormat);
+   type = get_temp_image_type(ctx, format);
+   bpp = _mesa_bytes_per_pixel(format, type);
+   if (bpp <= 0) {
+      _mesa_problem(ctx, "Bad bpp in meta copy_tex_image()");
+      return;
+   }
+
+   /*
+    * Alloc image buffer (XXX could use a PBO)
+    */
+   buf = _mesa_malloc(width * height * bpp);
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage%uD", dims);
+      return;
+   }
+
+   _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   ctx->Driver.ReadPixels(ctx, x, y, width, height,
+			  format, type, &ctx->Pack, buf);
+   _mesa_meta_end(ctx);
+
+   /*
+    * Store texture data (with pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE);
+   if (target == GL_TEXTURE_1D) {
+      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                             width, border, format, type,
+                             buf, &ctx->Unpack, texObj, texImage);
+   }
+   else {
+      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                             width, height, border, format, type,
+                             buf, &ctx->Unpack, texObj, texImage);
+   }
+   _mesa_meta_end(ctx);
+
+   _mesa_lock_texture(ctx, texObj); /* re-lock */
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
+                          GLenum internalFormat, GLint x, GLint y,
+                          GLsizei width, GLint border)
+{
+   copy_tex_image(ctx, 1, target, level, internalFormat, x, y,
+                  width, 1, border);
+}
+
+
+void
+_mesa_meta_CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+                          GLenum internalFormat, GLint x, GLint y,
+                          GLsizei width, GLsizei height, GLint border)
+{
+   copy_tex_image(ctx, 2, target, level, internalFormat, x, y,
+                  width, height, border);
+}
+
+
+
+/**
+ * Helper for _mesa_meta_CopyTexSubImage1/2/3D() functions.
+ * Have to be careful with locking and meta state for pixel transfer.
+ */
+static void
+copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
+                   GLint xoffset, GLint yoffset, GLint zoffset,
+                   GLint x, GLint y,
+                   GLsizei width, GLsizei height)
+{
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLenum format, type;
+   GLint bpp;
+   void *buf;
+
+   texUnit = _mesa_get_current_tex_unit(ctx);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+   format = texImage->TexFormat->BaseFormat;
+   type = get_temp_image_type(ctx, format);
+   bpp = _mesa_bytes_per_pixel(format, type);
+   if (bpp <= 0) {
+      _mesa_problem(ctx, "Bad bpp in meta copy_tex_sub_image()");
+      return;
+   }
+
+   /*
+    * Alloc image buffer (XXX could use a PBO)
+    */
+   buf = _mesa_malloc(width * height * bpp);
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage%uD", dims);
+      return;
+   }
+
+   _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   ctx->Driver.ReadPixels(ctx, x, y, width, height,
+			  format, type, &ctx->Pack, buf);
+   _mesa_meta_end(ctx);
+
+   /*
+    * Store texture data (with pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE);
+   if (target == GL_TEXTURE_1D) {
+      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset,
+                                width, format, type, buf,
+                                &ctx->Unpack, texObj, texImage);
+   }
+   else if (target == GL_TEXTURE_3D) {
+      ctx->Driver.TexSubImage3D(ctx, target, level, xoffset, yoffset, zoffset,
+                                width, height, 1, format, type, buf,
+                                &ctx->Unpack, texObj, texImage);
+   }
+   else {
+      ctx->Driver.TexSubImage2D(ctx, target, level, xoffset, yoffset,
+                                width, height, format, type, buf,
+                                &ctx->Unpack, texObj, texImage);
+   }
+   _mesa_meta_end(ctx);
+
+   _mesa_lock_texture(ctx, texObj); /* re-lock */
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_meta_CopyTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset,
+                             GLint x, GLint y, GLsizei width)
+{
+   copy_tex_sub_image(ctx, 1, target, level, xoffset, 0, 0,
+                      x, y, width, 1);
+}
+
+
+void
+_mesa_meta_CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset, GLint yoffset,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height)
+{
+   copy_tex_sub_image(ctx, 2, target, level, xoffset, yoffset, 0,
+                      x, y, width, height);
+}
+
+
+void
+_mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset, GLint yoffset, GLint zoffset,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height)
+{
+   copy_tex_sub_image(ctx, 3, target, level, xoffset, yoffset, zoffset,
+                      x, y, width, height);
 }
