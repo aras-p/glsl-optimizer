@@ -3,7 +3,7 @@ Import('*')
 env = env.Clone()
 
 env.Tool('llvm')
-if env.has_key('LLVM_VERSION') is False:
+if not env.has_key('LLVM_VERSION'):
     print 'warning: LLVM not found: not building llvmpipe'
     Return()
 

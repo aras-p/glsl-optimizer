@@ -48,17 +48,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 #include "radeon_common.h"
 #include "radeon_span.h"
-#if !RADEON_COMMON
+#if defined(RADEON_R100)
 #include "radeon_context.h"
 #include "radeon_tex.h"
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_tex.h"
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#elif defined(RADEON_R300)
 #include "r300_context.h"
 #include "r300_tex.h"
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
 #include "r600_context.h"
 #include "r700_driconf.h" /* +r6/r7 */
 #include "r600_tex.h"     /* +r6/r7 */
@@ -82,7 +82,7 @@ DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Grösse des Befehlspuffers (in KB)") \
 DRI_CONF_OPT_END
 
-#if !RADEON_COMMON	/* R100 */
+#if defined(RADEON_R100)	/* R100 */
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
@@ -109,7 +109,7 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 15;
 
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
 
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
@@ -147,7 +147,7 @@ extern const struct dri_extension NV_vp_extension[];
 extern const struct dri_extension ATI_fs_extension[];
 extern const struct dri_extension point_extensions[];
 
-#elif RADEON_COMMON && (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+#elif defined(RADEON_R300) || defined(RADEON_R600)
 
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
 #define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
@@ -220,7 +220,7 @@ static const GLuint __driNConfigOptions = 17;
 
 extern const struct dri_extension gl_20_extension[];
 
-#endif /* RADEON_COMMON && defined(RADEON_COMMON_FOR_R300) */
+#endif
 
 extern const struct dri_extension card_extensions[];
 extern const struct dri_extension mm_extensions[];
@@ -337,7 +337,7 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     return (const __DRIconfig **) configs;
 }
 
-#if !RADEON_COMMON
+#if defined(RADEON_R100)
 static const __DRItexOffsetExtension radeonTexOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
     radeonSetTexOffset,
@@ -350,7 +350,7 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
 };
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
 static const __DRIallocateExtension r200AllocateExtension = {
     { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
     r200AllocateMemoryMESA,
@@ -370,7 +370,7 @@ static const __DRItexBufferExtension r200TexBufferExtension = {
 };
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#if defined(RADEON_R300)
 static const __DRItexOffsetExtension r300texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r300SetTexOffset,
@@ -383,7 +383,7 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 };
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
 static const __DRItexOffsetExtension r600texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r600SetTexOffset, /* +r6/r7 */
@@ -1222,22 +1222,22 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
 
-#if !RADEON_COMMON
+#if defined(RADEON_R100)
    screen->extensions[i++] = &radeonTexOffsetExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
    if (IS_R200_CLASS(screen))
       screen->extensions[i++] = &r200AllocateExtension.base;
 
    screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#if defined(RADEON_R300)
    screen->extensions[i++] = &r300texOffsetExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
    screen->extensions[i++] = &r600texOffsetExtension.base;
 #endif
 
@@ -1376,22 +1376,22 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
 
-#if !RADEON_COMMON
+#if defined(RADEON_R100)
    screen->extensions[i++] = &radeonTexBufferExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
    if (IS_R200_CLASS(screen))
        screen->extensions[i++] = &r200AllocateExtension.base;
 
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#if defined(RADEON_R300)
    screen->extensions[i++] = &r300TexBufferExtension.base;
 #endif
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#if defined(RADEON_R600)
    screen->extensions[i++] = &r600TexBufferExtension.base;
 #endif
 
@@ -1589,22 +1589,22 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 static const __DRIconfig **
 radeonInitScreen(__DRIscreenPrivate *psp)
 {
-#if !RADEON_COMMON
+#if defined(RADEON_R100)
    static const char *driver_name = "Radeon";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 6, 0 };
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#elif defined(RADEON_R200)
    static const char *driver_name = "R200";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 6, 0 };
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#elif defined(RADEON_R300)
    static const char *driver_name = "R300";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 24, 0 };
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
    static const char *driver_name = "R600";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -1630,13 +1630,13 @@ radeonInitScreen(__DRIscreenPrivate *psp)
     * Hello chicken.  Hello egg.  How are you two today?
     */
    driInitExtensions( NULL, card_extensions, GL_FALSE );
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
    driInitExtensions( NULL, blend_extensions, GL_FALSE );
    driInitSingleExtension( NULL, ARB_vp_extension );
    driInitSingleExtension( NULL, NV_vp_extension );
    driInitSingleExtension( NULL, ATI_fs_extension );
    driInitExtensions( NULL, point_extensions, GL_FALSE );
-#elif (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+#elif (defined(RADEON_R300) || defined(RADEON_R600))
    driInitSingleExtension( NULL, gl_20_extension );
 #endif
 
@@ -1684,13 +1684,13 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
     */
    driInitExtensions( NULL, card_extensions, GL_FALSE );
    driInitExtensions( NULL, mm_extensions, GL_FALSE );
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
    driInitExtensions( NULL, blend_extensions, GL_FALSE );
    driInitSingleExtension( NULL, ARB_vp_extension );
    driInitSingleExtension( NULL, NV_vp_extension );
    driInitSingleExtension( NULL, ATI_fs_extension );
    driInitExtensions( NULL, point_extensions, GL_FALSE );
-#elif (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+#elif (defined(RADEON_R300) || defined(RADEON_R600))
    driInitSingleExtension( NULL, gl_20_extension );
 #endif
 
@@ -1772,13 +1772,13 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen      = radeonInitScreen,
    .DestroyScreen   = radeonDestroyScreen,
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+#if defined(RADEON_R200)
    .CreateContext   = r200CreateContext,
    .DestroyContext  = r200DestroyContext,
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
+#elif defined(RADEON_R600)
    .CreateContext   = r600CreateContext,
    .DestroyContext  = radeonDestroyContext,
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+#elif defined(RADEON_R300)
    .CreateContext   = r300CreateContext,
    .DestroyContext  = radeonDestroyContext,
 #else

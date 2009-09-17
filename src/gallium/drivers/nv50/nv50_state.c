@@ -276,6 +276,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_method(so, tesla, 0x1684, 1);
 	so_data  (so, cso->flatshade_first ? 0 : 1);
 
+	so_method(so, tesla, NV50TCL_VERTEX_TWO_SIDE_ENABLE, 1);
+	so_data  (so, cso->light_twoside);
+
 	so_method(so, tesla, NV50TCL_LINE_WIDTH, 1);
 	so_data  (so, fui(cso->line_width));
 	so_method(so, tesla, NV50TCL_LINE_SMOOTH_ENABLE, 1);
@@ -293,6 +296,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 
 	so_method(so, tesla, NV50TCL_POINT_SIZE, 1);
 	so_data  (so, fui(cso->point_size));
+
+	so_method(so, tesla, NV50TCL_POINT_SPRITE_ENABLE, 1);
+	so_data  (so, cso->point_sprite);
 
 	so_method(so, tesla, NV50TCL_POLYGON_MODE_FRONT, 3);
 	if (cso->front_winding == PIPE_WINDING_CCW) {

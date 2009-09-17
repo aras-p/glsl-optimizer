@@ -97,15 +97,15 @@ struct lp_build_sample_context
    const struct util_format_description *format_desc;
 
    /** Incoming coordinates type and build context */
-   union lp_type coord_type;
+   struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
    /** Integer coordinates */
-   union lp_type int_coord_type;
+   struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
 
    /** Output texels type and build context */
-   union lp_type texel_type;
+   struct lp_type texel_type;
    struct lp_build_context texel_bld;
 };
 
@@ -208,6 +208,11 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       /* FIXME */
+      _debug_printf("warning: failed to translate texture wrap mode %u\n", wrap_mode);
+      coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
+      coord = lp_build_min(int_coord_bld, coord, length_minus_one);
+      break;
+
    default:
       assert(0);
    }
@@ -337,7 +342,7 @@ void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,
                     struct lp_sampler_dynamic_state *dynamic_state,
-                    union lp_type type,
+                    struct lp_type type,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,

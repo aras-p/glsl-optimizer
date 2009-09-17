@@ -10,16 +10,15 @@ LIB_DEP = \
 	$(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) \
 	$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
-LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
-
-INCLUDE_DIRS = -I$(TOP)/progs/util
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) \
+	-l$(GL_LIB) $(APP_LIB_DEPS)
 
 # using : to avoid APP_CC pointing to CC loop
-CC:=$(APP_CC)
+CC := $(APP_CC)
 CFLAGS += -I$(INCDIR)
-LDLIBS=$(LIBS)
+LDLIBS = $(LIBS)
 
-DEMO_SOURCES = \
+PROG_SOURCES = \
 	array.c \
 	bitmap.c \
 	brick.c \
@@ -59,8 +58,8 @@ UTIL_SOURCES = \
 	readtex.c
 
 UTIL_OBJS = $(UTIL_SOURCES:.c=.o)
-PROG_OBJS = $(DEMO_SOURCES:.c=.o)
-PROGS = $(DEMO_SOURCES:%.c=%)
+PROG_OBJS = $(PROG_SOURCES:.c=.o)
+PROGS = $(PROG_SOURCES:%.c=%)
 
 ##### TARGETS #####
 

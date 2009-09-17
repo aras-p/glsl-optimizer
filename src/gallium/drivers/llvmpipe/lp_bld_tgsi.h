@@ -39,7 +39,7 @@
 
 
 struct tgsi_token;
-union lp_type;
+struct lp_type;
 struct lp_build_context;
 struct lp_build_mask_context;
 
@@ -60,7 +60,7 @@ struct lp_build_sampler_soa
    void
    (*emit_fetch_texel)( struct lp_build_sampler_soa *sampler,
                         LLVMBuilderRef builder,
-                        union lp_type type,
+                        struct lp_type type,
                         unsigned unit,
                         unsigned num_coords,
                         const LLVMValueRef *coords,
@@ -72,7 +72,7 @@ struct lp_build_sampler_soa
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
-                  union lp_type type,
+                  struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *pos,

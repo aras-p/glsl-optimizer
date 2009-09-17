@@ -587,11 +587,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
-   functions->CopyColorTable = _swrast_CopyColorTable;
-   functions->CopyColorSubTable = _swrast_CopyColorSubTable;
-   functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
    intelInitTextureFuncs(functions);
    intelInitTextureImageFuncs(functions);
    intelInitTextureSubImageFuncs(functions);
@@ -922,6 +917,14 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
+   struct intel_context *intel =
+      (struct intel_context *) driContextPriv->driverPrivate;
+
+   /* Deassociate the context with the drawables.
+    */
+   intel->driDrawable = NULL;
+   intel->driReadDrawable = NULL;
+
    return GL_TRUE;
 }
 

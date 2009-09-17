@@ -149,7 +149,7 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
 static void
 lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,
-                                     union lp_type type,
+                                     struct lp_type type,
                                      unsigned unit,
                                      unsigned num_coords,
                                      const LLVMValueRef *coords,

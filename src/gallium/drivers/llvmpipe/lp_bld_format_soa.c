@@ -84,7 +84,7 @@ lp_build_gather(LLVMBuilderRef builder,
 
 
 static LLVMValueRef
-lp_build_format_swizzle(union lp_type type,
+lp_build_format_swizzle(struct lp_type type,
                         const LLVMValueRef *inputs,
                         enum util_format_swizzle swizzle)
 {
@@ -110,7 +110,7 @@ lp_build_format_swizzle(union lp_type type,
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
-                         union lp_type type,
+                         struct lp_type type,
                          LLVMValueRef packed,
                          LLVMValueRef *rgba)
 {
@@ -188,7 +188,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 void
 lp_build_load_rgba_soa(LLVMBuilderRef builder,
                        const struct util_format_description *format_desc,
-                       union lp_type type,
+                       struct lp_type type,
                        LLVMValueRef base_ptr,
                        LLVMValueRef offsets,
                        LLVMValueRef *rgba)

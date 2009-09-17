@@ -2,6 +2,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xvlib.h>
 #include <X11/extensions/XvMC.h>
+#include <X11/Xlibint.h>
 
 Status XvMCCreateSubpicture
 (
@@ -13,6 +14,7 @@ Status XvMCCreateSubpicture
 	int xvimage_id
 )
 {
+	Display *dpy = display;
 	assert(display);
 	
 	if (!context)
@@ -38,7 +40,8 @@ Status XvMCCreateSubpicture
 	subpicture->component_order[2] = 0;
 	subpicture->component_order[3] = 0;
 	/* TODO: subpicture->privData = ;*/
-	
+
+	SyncHandle();
 	return Success;
 }
 

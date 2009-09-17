@@ -71,11 +71,11 @@
 /**
  * Return a type appropriate for depth/stencil testing.
  */
-union lp_type
+struct lp_type
 lp_depth_type(const struct util_format_description *format_desc,
               unsigned length)
 {
-   union lp_type type;
+   struct lp_type type;
    unsigned swizzle;
 
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
@@ -85,7 +85,7 @@ lp_depth_type(const struct util_format_description *format_desc,
    swizzle = format_desc->swizzle[0];
    assert(swizzle < 4);
 
-   type.value = 0;
+   memset(&type, 0, sizeof type);
    type.width = format_desc->block.bits;
 
    if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
@@ -114,7 +114,7 @@ lp_depth_type(const struct util_format_description *format_desc,
 void
 lp_build_depth_test(LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,
-                    union lp_type type,
+                    struct lp_type type,
                     const struct util_format_description *format_desc,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef src,

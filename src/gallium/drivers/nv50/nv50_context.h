@@ -116,6 +116,7 @@ struct nv50_state {
 	unsigned miptree_nr;
 	struct nouveau_stateobj *vertprog;
 	struct nouveau_stateobj *fragprog;
+	struct nouveau_stateobj *programs;
 	struct nouveau_stateobj *vtxfmt;
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
@@ -190,10 +191,12 @@ extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
 /* nv50_program.c */
 extern void nv50_vertprog_validate(struct nv50_context *nv50);
 extern void nv50_fragprog_validate(struct nv50_context *nv50);
+extern void nv50_linkage_validate(struct nv50_context *nv50);
 extern void nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p);
 
 /* nv50_state_validate.c */
 extern boolean nv50_state_validate(struct nv50_context *nv50);
+extern void nv50_state_flush_notify(struct nouveau_channel *chan);
 
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);

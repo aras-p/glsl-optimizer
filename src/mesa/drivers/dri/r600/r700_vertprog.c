@@ -42,6 +42,7 @@
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
+#include "shader/programopt.c"
 
 #include "r700_debug.h"
 #include "r700_vertprog.h"
@@ -272,6 +273,11 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 	vp = _mesa_calloc(sizeof(*vp));
 	vp->mesa_program = (struct gl_vertex_program *)_mesa_clone_program(ctx, &mesa_vp->Base);
 
+	if (mesa_vp->IsPositionInvariant)
+	{
+                _mesa_insert_mvp_code(ctx, vp->mesa_program);
+        }
+
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
@@ -290,21 +296,21 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 
 	//Init_Program
 	Init_r700_AssemblerBase(SPT_VP, &(vp->r700AsmCode), &(vp->r700Shader) );
-	Map_Vertex_Program( vp, mesa_vp );
+	Map_Vertex_Program( vp, vp->mesa_program );
 
-	if(GL_FALSE == Find_Instruction_Dependencies_vp(vp, mesa_vp))
+	if(GL_FALSE == Find_Instruction_Dependencies_vp(vp, vp->mesa_program))
 	{
 		return NULL;
     }
 
-	if(GL_FALSE == AssembleInstr(mesa_vp->Base.NumInstructions,
-                                 &(mesa_vp->Base.Instructions[0]), 
+	if(GL_FALSE == AssembleInstr(vp->mesa_program->Base.NumInstructions,
+                                 &(vp->mesa_program->Base.Instructions[0]), 
                                  &(vp->r700AsmCode)) )
 	{
 		return NULL;
 	} 
 
-    if(GL_FALSE == Process_Vertex_Exports(&(vp->r700AsmCode), mesa_vp->Base.OutputsWritten) )
+    if(GL_FALSE == Process_Vertex_Exports(&(vp->r700AsmCode), vp->mesa_program->Base.OutputsWritten) )
     {
         return NULL;
     }
@@ -329,23 +335,23 @@ void r700SelectVertexShader(GLcontext *ctx)
     unsigned int unBit;
     unsigned int i;
     GLboolean match;
+    GLbitfield InputsRead;
 
     vpc = (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
 
-#if 0
-    if (context->radeon.NewGLState & (_NEW_PROGRAM_CONSTANTS|_NEW_PROGRAM))
+    InputsRead = vpc->mesa_program.Base.InputsRead;
+    if (vpc->mesa_program.IsPositionInvariant)
     {
-	vpc->needUpdateVF = 1;
-    }
-#endif
-
+	InputsRead |= VERT_BIT_POS;
+    } 
+    
     for (vp = vpc->progs; vp; vp = vp->next)
     {
 	match = GL_TRUE;	
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
-                if(vpc->mesa_program.Base.InputsRead & unBit)
+		if(InputsRead & unBit)
 		{
 			if (vp->aos_desc[i].size != vb->AttribPtr[i]->size)
 				match = GL_FALSE;

@@ -40,7 +40,7 @@
 
 struct pipe_texture;
 struct pipe_sampler_state;
-union lp_type;
+struct lp_type;
 
 
 /**
@@ -123,7 +123,7 @@ void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,
                     struct lp_sampler_dynamic_state *dynamic_state,
-                    union lp_type fp_type,
+                    struct lp_type fp_type,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMC.h>
+#include <X11/Xlibint.h>
 #include <vl_display.h>
 #include <vl_screen.h>
 #include <vl_context.h>
@@ -61,6 +62,7 @@ Status XvMCCreateSurface(Display *display, XvMCContext *context, XvMCSurface *su
 {
 	struct vlContext *vl_ctx;
 	struct vlSurface *vl_sfc;
+	Display *dpy = display;
 
 	assert(display);
 
@@ -90,6 +92,7 @@ Status XvMCCreateSurface(Display *display, XvMCContext *context, XvMCSurface *su
 	surface->height = context->height;
 	surface->privData = vl_sfc;
 
+	SyncHandle();
 	return Success;
 }
 

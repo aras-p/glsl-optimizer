@@ -351,7 +351,7 @@ static void r700SetDepthTarget(context_t *context)
         SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16,
                      DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
     }
-    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1,
+    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_1D_TILED_THIN1,
              DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask);
     /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
 }

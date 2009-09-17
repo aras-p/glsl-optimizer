@@ -199,7 +199,7 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 void
 lp_build_blend_soa(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
-                   union lp_type type,
+                   struct lp_type type,
                    LLVMValueRef src[4],
                    LLVMValueRef dst[4],
                    LLVMValueRef con[4],

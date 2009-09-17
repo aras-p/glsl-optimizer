@@ -65,8 +65,6 @@ softpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_GLSL:
       return 1;
-   case PIPE_CAP_S3TC:
-      return 0;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:
@@ -141,6 +139,7 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
+   case PIPE_FORMAT_Z32_FLOAT:
       return FALSE;
    default:
       return TRUE;

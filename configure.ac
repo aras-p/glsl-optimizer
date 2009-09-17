@@ -1202,7 +1202,7 @@ if test "x$enable_gallium_radeon" = xyes; then
 fi
 
 dnl
-dnl Gallium Radeon configuration
+dnl Gallium Nouveau configuration
 dnl
 AC_ARG_ENABLE([gallium-nouveau],
     [AS_HELP_STRING([--enable-gallium-nouveau],

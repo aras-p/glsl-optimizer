@@ -51,6 +51,7 @@ static int vlResizeFrameBuffer
 	struct vlBasicCSC	*basic_csc;
 	struct pipe_context	*pipe;
 	struct pipe_texture	template;
+	float			clear_color[4];
 
 	assert(csc);
 
@@ -68,7 +69,12 @@ static int vlResizeFrameBuffer
 	basic_csc->viewport.translate[1] = 0;
 	basic_csc->viewport.translate[2] = 0;
 	basic_csc->viewport.translate[3] = 0;
-	
+
+	clear_color[0]	= 0.0f;
+	clear_color[1]  = 0.0f;
+	clear_color[2]  = 0.0f;
+	clear_color[3]  = 0.0f;
+
 	if (basic_csc->framebuffer_tex)
 	{
 		pipe_surface_reference(&basic_csc->framebuffer.cbufs[0], NULL);
@@ -98,7 +104,7 @@ static int vlResizeFrameBuffer
 
 	/* Clear to black, in case video doesn't fill the entire window */
 	pipe->set_framebuffer_state(pipe, &basic_csc->framebuffer);
-	pipe->clear(pipe, PIPE_CLEAR_COLOR, 0, 0.0f, 0);
+	pipe->clear(pipe, PIPE_CLEAR_COLOR, clear_color, 0.0f, 0);
 
 	return 0;
 }

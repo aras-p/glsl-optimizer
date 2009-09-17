@@ -760,10 +760,6 @@ done:
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }
-
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
 }
 
 
@@ -1133,10 +1129,6 @@ done:
    if (stImage->pt) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
-   }
-
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 }
 
@@ -1600,10 +1592,6 @@ st_copy_texsubimage(GLcontext *ctx,
                                 strb, stImage, texBaseFormat,
                                 destX, destY, destZ,
                                 srcX, srcY, width, height);
-   }
-
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 }
 

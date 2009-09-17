@@ -83,7 +83,7 @@ void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct tgsi_token *tokens,
                          LLVMBuilderRef builder,
-                         union lp_type type,
+                         struct lp_type type,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,

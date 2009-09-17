@@ -536,24 +536,13 @@ void s3vInitTextureFuncs( GLcontext *ctx )
 #endif
 
 	ctx->Driver.TexEnv = s3vTexEnv;
-	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
 	ctx->Driver.TexImage2D = s3vTexImage2D;
-	ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-	ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
 	ctx->Driver.TexSubImage2D = s3vTexSubImage2D;
-	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
 	ctx->Driver.BindTexture = s3vBindTexture;
 	ctx->Driver.DeleteTexture = s3vDeleteTexture;
 	ctx->Driver.TexParameter = s3vTexParameter;
 	ctx->Driver.UpdateTexturePalette = 0;
 	ctx->Driver.IsTextureResident = s3vIsTextureResident;
-	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
 	s3vInitTextureObjects( ctx );
 }

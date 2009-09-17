@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
+#if defined(RADEON_R600)
 #include "r600_context.h"
 #endif
 

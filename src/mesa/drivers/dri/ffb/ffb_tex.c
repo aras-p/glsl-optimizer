@@ -30,24 +30,6 @@
 #include "ffb_tex.h"
 
 /* No texture unit, all software. */
-/* XXX this function isn't needed since _mesa_init_driver_functions()
- * will make all these assignments.
- */
 void ffbDDInitTexFuncs(GLcontext *ctx)
 {
-        /*
-	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-	ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-	ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-	ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-	ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-	*/
 }

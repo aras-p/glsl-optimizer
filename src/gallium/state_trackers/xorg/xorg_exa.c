@@ -47,6 +47,8 @@
 
 #include "util/u_rect.h"
 
+#define DEBUG_SOLID 0
+
 /*
  * Helper functions
  */
@@ -72,6 +74,9 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 	assert(*bbp == 16);
 	break;
     case 8:
+	*format = PIPE_FORMAT_A8_UNORM;
+	assert(*bbp == 8);
+	break;
     case 4:
     case 1:
 	*format = PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
@@ -253,7 +258,7 @@ ExaDone(PixmapPtr pPixmap)
 #if 1
     xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
 #else
-    xorg_finish(exa);
+    xorg_exa_finish(exa);
 #endif
     xorg_exa_common_done(exa);
 }
@@ -276,14 +281,18 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
+#if 0
     debug_printf("ExaPrepareSolid - test\n");
-    if (pPixmap->drawable.depth < 15)
-	return FALSE;
-
+#endif
     if (!EXA_PM_IS_SOLID(&pPixmap->drawable, planeMask))
 	return FALSE;
 
     if (!priv || !priv->tex)
+	return FALSE;
+
+    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                        priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
 	return FALSE;
 
     if (alu != GXcopy)
@@ -292,7 +301,15 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     if (!exa->pipe)
 	return FALSE;
 
+
+#if DEBUG_SOLID
+    fg = 0xffff0000;
+#endif
+
+#if 1
     debug_printf("  ExaPrepareSolid(0x%x)\n", fg);
+#endif
+
     return xorg_solid_bind_state(exa, priv, fg);
 }
 
@@ -310,11 +327,42 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     if (x0 == 0 && y0 == 0 &&
         x1 == priv->tex->width[0] &&
         y1 == priv->tex->height[0]) {
-       exa->ctx->clear(exa->ctx, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
+       exa->ctx->clear(exa->pipe, PIPE_CLEAR_COLOR,
                        exa->solid_color, 1., 0);
     } else
 #endif
-       xorg_solid(exa, priv, x0, y0, x1, y1) ;
+
+#if DEBUG_SOLID
+       exa->solid_color[0] = 0.f;
+       exa->solid_color[1] = 1.f;
+       exa->solid_color[2] = 0.f;
+       exa->solid_color[3] = 1.f;
+    xorg_solid(exa, priv, 0, 0, 1024, 768);
+       exa->solid_color[0] = 1.f;
+       exa->solid_color[1] = 0.f;
+       exa->solid_color[2] = 0.f;
+       exa->solid_color[3] = 1.f;
+       xorg_solid(exa, priv, 0, 0, 300, 300);
+       xorg_solid(exa, priv, 300, 300, 350, 350);
+       xorg_solid(exa, priv, 350, 350, 500, 500);
+
+       xorg_solid(exa, priv,
+               priv->tex->width[0] - 10,
+               priv->tex->height[0] - 10,
+               priv->tex->width[0],
+               priv->tex->height[0]);
+
+    exa->solid_color[0] = 0.f;
+    exa->solid_color[1] = 0.f;
+    exa->solid_color[2] = 1.f;
+    exa->solid_color[3] = 1.f;
+
+    exa->has_solid_color = FALSE;
+    ExaPrepareCopy(pPixmap, pPixmap, 0, 0, GXcopy, 0xffffffff);
+    ExaCopy(pPixmap, 0, 0, 50, 50, 500, 500);
+#else
+    xorg_solid(exa, priv, x0, y0, x1, y1) ;
+#endif
 }
 
 static Bool
@@ -332,13 +380,18 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     if (alu != GXcopy)
 	return FALSE;
 
-    if (pSrcPixmap->drawable.depth < 15 || pDstPixmap->drawable.depth < 15)
-	return FALSE;
-
     if (!EXA_PM_IS_SOLID(&pSrcPixmap->drawable, planeMask))
 	return FALSE;
 
     if (!priv || !src_priv)
+	return FALSE;
+
+    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                        priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0) ||
+        !exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
+                                        src_priv->tex->target,
+                                        PIPE_TEXTURE_USAGE_SAMPLER, 0))
 	return FALSE;
 
     if (!priv->tex || !src_priv->tex)
@@ -433,14 +486,11 @@ static void
 ExaDestroyPixmap(ScreenPtr pScreen, void *dPriv)
 {
     struct exa_pixmap_priv *priv = (struct exa_pixmap_priv *)dPriv;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
 
     if (!priv)
 	return;
 
-    if (priv->tex)
-	ms->screen->texture_destroy(priv->tex);
+    pipe_texture_reference(&priv->tex, NULL);
 
     xfree(priv);
 }
@@ -583,8 +633,8 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 		struct pipe_surface *dst_surf;
                 struct pipe_surface *src_surf;
 
-		dst_surf = exa->scrn->get_tex_surface(exa->scrn, texture, 0, 0, 0,
-						      PIPE_BUFFER_USAGE_GPU_WRITE);
+		dst_surf = exa->scrn->get_tex_surface(
+                   exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
 		src_surf = exa_gpu_surface(exa, priv);
 		exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
                                         0, 0, min(width, texture->width[0]),

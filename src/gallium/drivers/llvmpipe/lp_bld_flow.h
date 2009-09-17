@@ -38,7 +38,7 @@
 #include <llvm-c/Core.h>  
 
 
-union lp_type;
+struct lp_type;
 
 
 struct lp_build_flow_context;
@@ -84,7 +84,7 @@ struct lp_build_mask_context
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
                     struct lp_build_flow_context *flow,
-                    union lp_type type,
+                    struct lp_type type,
                     LLVMValueRef value);
 
 /**

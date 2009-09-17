@@ -105,6 +105,7 @@ static struct pipe_buffer* xsp_surface_buffer_create
 	unsigned height,
 	enum pipe_format format,
 	unsigned usage,
+	unsigned tex_usage,
 	unsigned *stride
 )
 {

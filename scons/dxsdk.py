@@ -52,11 +52,20 @@ def generate(env):
         target_cpu = 'x64'
     else:
         raise SCons.Errors.InternalError, "Unsupported target machine"
-    include_dir = 'Include'
+
+    include_dir = os.path.join(dxsdk_root, 'Include')
+    lib_dir = os.path.join(dxsdk_root, 'Lib', target_cpu)
 
     env.Append(CPPDEFINES = [('HAVE_DXSDK', '1')])
-    env.Prepend(CPPPATH = [os.path.join(dxsdk_root, 'Include')])
-    env.Prepend(LIBPATH = [os.path.join(dxsdk_root, 'Lib', target_cpu)])
+
+    gcc = 'gcc' in os.path.basename(env['CC']).split('-')
+    if gcc:
+        # Make GCC more forgiving towards Microsoft's headers
+        env.Prepend(CPPFLAGS = ['-isystem', include_dir])
+    else:
+        env.Prepend(CPPPATH = [include_dir])
+
+    env.Prepend(LIBPATH = [lib_dir])
 
 def exists(env):
     return get_dxsdk_root(env) is not None

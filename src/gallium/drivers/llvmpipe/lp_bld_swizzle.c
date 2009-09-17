@@ -64,7 +64,7 @@ LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMValueRef res;
    unsigned i;
 
@@ -83,7 +83,7 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
                        LLVMValueRef a,
                        unsigned channel)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
 
@@ -115,7 +115,7 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
        *   YY00 YY00 .... YY00
        *   YYYY YYYY .... YYYY  <= output
        */
-      union lp_type type4 = type;
+      struct lp_type type4 = type;
       const char shifts[4][2] = {
          { 1,  2},
          {-1,  2},

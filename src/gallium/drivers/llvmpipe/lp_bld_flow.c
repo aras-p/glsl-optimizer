@@ -405,7 +405,7 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
                     struct lp_build_flow_context *flow,
-                    union lp_type type,
+                    struct lp_type type,
                     LLVMValueRef value)
 {
    memset(mask, 0, sizeof *mask);

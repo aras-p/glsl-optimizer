@@ -80,7 +80,7 @@ static void
 write_tsv_row(FILE *fp,
               const struct pipe_blend_state *blend,
               enum vector_mode mode,
-              union lp_type type,
+              struct lp_type type,
               double cycles,
               boolean success)
 {
@@ -125,7 +125,7 @@ static void
 dump_blend_type(FILE *fp,
                 const struct pipe_blend_state *blend,
                 enum vector_mode mode,
-                union lp_type type)
+                struct lp_type type)
 {
    fprintf(fp, "%s", mode ? "soa" : "aos");
 
@@ -153,7 +153,7 @@ static LLVMValueRef
 add_blend_test(LLVMModuleRef module,
                const struct pipe_blend_state *blend,
                enum vector_mode mode,
-               union lp_type type)
+               struct lp_type type)
 {
    LLVMTypeRef ret_type;
    LLVMTypeRef vec_type;
@@ -467,7 +467,7 @@ test_one(unsigned verbose,
          FILE *fp,
          const struct pipe_blend_state *blend,
          enum vector_mode mode,
-         union lp_type type)
+         struct lp_type type)
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef func = NULL;
@@ -765,10 +765,10 @@ blend_funcs[] = {
 };
 
 
-const union lp_type blend_types[] = {
+const struct lp_type blend_types[] = {
    /* float, fixed,  sign,  norm, width, len */
-   {{  TRUE, FALSE, FALSE,  TRUE,    32,   4 }}, /* f32 x 4 */
-   {{ FALSE, FALSE, FALSE,  TRUE,     8,  16 }}, /* u8n x 16 */
+   {   TRUE, FALSE, FALSE,  TRUE,    32,   4 }, /* f32 x 4 */
+   {  FALSE, FALSE, FALSE,  TRUE,     8,  16 }, /* u8n x 16 */
 };
 
 
@@ -788,7 +788,7 @@ test_all(unsigned verbose, FILE *fp)
    const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
    enum vector_mode mode;
-   const union lp_type *type;
+   const struct lp_type *type;
    bool success = TRUE;
 
    for(rgb_func = blend_funcs; rgb_func < &blend_funcs[num_funcs]; ++rgb_func) {
@@ -841,27 +841,27 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    const unsigned *alpha_dst_factor;
    struct pipe_blend_state blend;
    enum vector_mode mode;
-   const union lp_type *type;
+   const struct lp_type *type;
    unsigned long i;
    bool success = TRUE;
 
    for(i = 0; i < n; ++i) {
-      rgb_func = &blend_funcs[random() % num_funcs];
-      alpha_func = &blend_funcs[random() % num_funcs];
-      rgb_src_factor = &blend_factors[random() % num_factors];
-      alpha_src_factor = &blend_factors[random() % num_factors];
+      rgb_func = &blend_funcs[rand() % num_funcs];
+      alpha_func = &blend_funcs[rand() % num_funcs];
+      rgb_src_factor = &blend_factors[rand() % num_factors];
+      alpha_src_factor = &blend_factors[rand() % num_factors];
       
       do {
-         rgb_dst_factor = &blend_factors[random() % num_factors];
+         rgb_dst_factor = &blend_factors[rand() % num_factors];
       } while(*rgb_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
       do {
-         alpha_dst_factor = &blend_factors[random() % num_factors];
+         alpha_dst_factor = &blend_factors[rand() % num_factors];
       } while(*alpha_dst_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE);
 
-      mode = random() & 1;
+      mode = rand() & 1;
 
-      type = &blend_types[random() % num_types];
+      type = &blend_types[rand() % num_types];
 
       memset(&blend, 0, sizeof blend);
       blend.blend_enable      = 1;

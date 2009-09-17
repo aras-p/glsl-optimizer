@@ -27,29 +27,6 @@
 #define META_H
 
 
-/**
- * Flags passed to _mesa_meta_begin().
- * XXX these flags may evolve...
- */
-/*@{*/
-#define META_ALPHA_TEST      0x1
-#define META_BLEND           0x2  /**< includes logicop */
-#define META_COLOR_MASK      0x4
-#define META_DEPTH_TEST      0x8
-#define META_FOG            0x10
-#define META_RASTERIZATION  0x20
-#define META_SCISSOR        0x40
-#define META_SHADER         0x80
-#define META_STENCIL_TEST  0x100
-#define META_TRANSFORM     0x200 /**< modelview, projection */
-#define META_TEXTURE       0x400
-#define META_VERTEX        0x800
-#define META_VIEWPORT     0x1000
-#define META_PIXEL_STORE  0x2000
-#define META_ALL            ~0x0
-/*@}*/
-
-
 extern void
 _mesa_meta_init(GLcontext *ctx);
 
@@ -86,6 +63,33 @@ _mesa_meta_bitmap(GLcontext *ctx,
 extern void
 _mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
                            struct gl_texture_object *texObj);
+
+extern void
+_mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
+                          GLenum internalFormat, GLint x, GLint y,
+                          GLsizei width, GLint border);
+
+extern void
+_mesa_meta_CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+                          GLenum internalFormat, GLint x, GLint y,
+                          GLsizei width, GLsizei height, GLint border);
+
+extern void
+_mesa_meta_CopyTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset,
+                             GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset, GLint yoffset,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height);
+
+extern void
+_mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+                             GLint xoffset, GLint yoffset, GLint zoffset,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height);
 
 
 #endif /* META_H */

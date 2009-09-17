@@ -152,7 +152,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    screen->provider = LLVMCreateModuleProviderForExistingModule(screen->module);
 
    if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
-      fprintf(stderr, "%s\n", error);
+      _debug_printf("%s\n", error);
       LLVMDisposeMessage(error);
       abort();
    }

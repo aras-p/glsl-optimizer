@@ -42,67 +42,67 @@
 #include <pipe/p_compiler.h>
 
 
-union lp_type type;
+struct lp_type type;
 
 
 unsigned
-lp_mantissa(union lp_type type);
+lp_mantissa(struct lp_type type);
 
 
 unsigned
-lp_const_shift(union lp_type type);
+lp_const_shift(struct lp_type type);
 
 
 unsigned
-lp_const_offset(union lp_type type);
+lp_const_offset(struct lp_type type);
 
 
 double
-lp_const_scale(union lp_type type);
+lp_const_scale(struct lp_type type);
 
 double
-lp_const_min(union lp_type type);
-
-
-double
-lp_const_max(union lp_type type);
+lp_const_min(struct lp_type type);
 
 
 double
-lp_const_eps(union lp_type type);
+lp_const_max(struct lp_type type);
+
+
+double
+lp_const_eps(struct lp_type type);
 
 
 LLVMValueRef
-lp_build_undef(union lp_type type);
+lp_build_undef(struct lp_type type);
 
 
 LLVMValueRef
-lp_build_zero(union lp_type type);
+lp_build_zero(struct lp_type type);
 
 
 LLVMValueRef
-lp_build_one(union lp_type type);
+lp_build_one(struct lp_type type);
 
 
 LLVMValueRef
-lp_build_const_scalar(union lp_type type,
+lp_build_const_scalar(struct lp_type type,
                       double val);
 
 
 LLVMValueRef
-lp_build_int_const_scalar(union lp_type type,
+lp_build_int_const_scalar(struct lp_type type,
                           long long val);
 
 
 LLVMValueRef
-lp_build_const_aos(union lp_type type, 
+lp_build_const_aos(struct lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle);
 
 
 LLVMValueRef
-lp_build_const_mask_aos(union lp_type type,
-                        boolean cond[4]);
+lp_build_const_mask_aos(struct lp_type type,
+                        const boolean cond[4]);
 
 
 #endif /* !LP_BLD_CONST_H */

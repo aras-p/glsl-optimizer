@@ -303,7 +303,7 @@ lp_build_blend_func(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_blend_aos(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
-                   union lp_type type,
+                   struct lp_type type,
                    LLVMValueRef src,
                    LLVMValueRef dst,
                    LLVMValueRef const_,

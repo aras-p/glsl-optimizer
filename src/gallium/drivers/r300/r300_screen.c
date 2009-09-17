@@ -93,8 +93,6 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
-        case PIPE_CAP_S3TC:
-            return 1;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             return 1;
         case PIPE_CAP_POINT_SPRITE:

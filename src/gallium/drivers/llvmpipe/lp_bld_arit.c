@@ -65,7 +65,7 @@ lp_build_min_simple(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    const char *intrinsic = NULL;
    LLVMValueRef cond;
 
@@ -113,7 +113,7 @@ lp_build_max_simple(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    const char *intrinsic = NULL;
    LLVMValueRef cond;
 
@@ -159,7 +159,7 @@ LLVMValueRef
 lp_build_comp(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    if(a == bld->one)
       return bld->zero;
@@ -188,7 +188,7 @@ lp_build_add(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMValueRef res;
 
    if(a == bld->zero)
@@ -241,7 +241,7 @@ lp_build_sub(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMValueRef res;
 
    if(b == bld->zero)
@@ -405,7 +405,7 @@ lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    if(a == bld->zero)
       return bld->zero;
@@ -477,7 +477,7 @@ lp_build_div(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    if(a == bld->zero)
       return bld->zero;
@@ -590,7 +590,7 @@ LLVMValueRef
 lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
 
    if(!type.sign)
@@ -627,7 +627,7 @@ LLVMValueRef
 lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMValueRef cond;
    LLVMValueRef res;
@@ -678,7 +678,7 @@ lp_build_round_sse41(struct lp_build_context *bld,
                      LLVMValueRef a,
                      enum lp_build_round_sse41_mode mode)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    const char *intrinsic;
 
@@ -706,7 +706,7 @@ LLVMValueRef
 lp_build_round(struct lp_build_context *bld,
                LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    assert(type.floating);
 
@@ -724,7 +724,7 @@ LLVMValueRef
 lp_build_floor(struct lp_build_context *bld,
                LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    assert(type.floating);
 
@@ -742,7 +742,7 @@ LLVMValueRef
 lp_build_ceil(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    assert(type.floating);
 
@@ -760,7 +760,7 @@ LLVMValueRef
 lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    assert(type.floating);
 
@@ -782,7 +782,7 @@ LLVMValueRef
 lp_build_int(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
 
    assert(type.floating);
@@ -805,7 +805,7 @@ LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
 
@@ -823,7 +823,7 @@ LLVMValueRef
 lp_build_rcp(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    if(a == bld->zero)
       return bld->undef;
@@ -854,7 +854,7 @@ LLVMValueRef
 lp_build_rsqrt(struct lp_build_context *bld,
                LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
 
    assert(type.floating);
 
@@ -875,7 +875,7 @@ LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
 
@@ -895,7 +895,7 @@ LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
 
@@ -966,7 +966,7 @@ lp_build_polynomial(struct lp_build_context *bld,
                     const double *coeffs,
                     unsigned num_coeffs)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMValueRef res = NULL;
    unsigned i;
 
@@ -1014,7 +1014,7 @@ lp_build_exp2_approx(struct lp_build_context *bld,
                      LLVMValueRef *p_frac_part,
                      LLVMValueRef *p_exp2)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef ipart = NULL;
@@ -1107,7 +1107,7 @@ lp_build_log2_approx(struct lp_build_context *bld,
                      LLVMValueRef *p_floor_log2,
                      LLVMValueRef *p_log2)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
 

@@ -263,7 +263,7 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 
 void radeonFreeDmaRegions(radeonContextPtr rmesa)
 {
-	struct radeon_dma_bo *dma_bo = CALLOC_STRUCT(radeon_dma_bo);
+	struct radeon_dma_bo *dma_bo;
 	struct radeon_dma_bo *temp;
 	if (RADEON_DEBUG & RADEON_DMA)
 		fprintf(stderr, "%s\n", __FUNCTION__);

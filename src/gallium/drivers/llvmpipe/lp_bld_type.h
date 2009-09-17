@@ -56,58 +56,55 @@
  * on the types used for intermediate computations, such as signed vs unsigned,
  * normalized values, or fixed point.
  */
-union lp_type {
-   struct {
-      /** 
-       * Floating-point. Cannot be used with fixed. Integer numbers are
-       * represented by this zero.
-       */
-      unsigned floating:1;
+struct lp_type {
+   /**
+    * Floating-point. Cannot be used with fixed. Integer numbers are
+    * represented by this zero.
+    */
+   unsigned floating:1;
 
-      /** 
-       * Fixed-point. Cannot be used with floating. Integer numbers are
-       * represented by this zero.
-       */
-      unsigned fixed:1;
-      
-      /** 
-       * Whether it can represent negative values or not.
-       *
-       * If this is not set for floating point, it means that all values are
-       * assumed to be positive.
-       */
-      unsigned sign:1;
+   /**
+    * Fixed-point. Cannot be used with floating. Integer numbers are
+    * represented by this zero.
+    */
+   unsigned fixed:1;
 
-      /**
-       * Whether values are normalized to fit [0, 1] interval, or [-1, 1]
-       * interval for signed types.
-       *
-       * For integer types it means the representable integer range should be
-       * interpreted as the interval above.
-       *
-       * For floating and fixed point formats it means the values should be
-       * clamped to the interval above.
-       */
-      unsigned norm:1;
+   /**
+    * Whether it can represent negative values or not.
+    *
+    * If this is not set for floating point, it means that all values are
+    * assumed to be positive.
+    */
+   unsigned sign:1;
 
-      /**
-       * Element width.
-       *
-       * For fixed point values, the fixed point is assumed to be at half the
-       * width.
-       */
-      unsigned width:14;
+   /**
+    * Whether values are normalized to fit [0, 1] interval, or [-1, 1]
+    * interval for signed types.
+    *
+    * For integer types it means the representable integer range should be
+    * interpreted as the interval above.
+    *
+    * For floating and fixed point formats it means the values should be
+    * clamped to the interval above.
+    */
+   unsigned norm:1;
 
-      /** 
-       * Vector length.
-       *
-       * width*length should be a power of two greater or equal to eight.
-       *
-       * @sa LP_MAX_VECTOR_LENGTH
-       */
-      unsigned length:14;
-   };
-   uint32_t value;
+   /**
+    * Element width.
+    *
+    * For fixed point values, the fixed point is assumed to be at half the
+    * width.
+    */
+   unsigned width:14;
+
+   /**
+    * Vector length.
+    *
+    * width*length should be a power of two greater or equal to eight.
+    *
+    * @sa LP_MAX_VECTOR_LENGTH
+    */
+   unsigned length:14;
 };
 
 
@@ -124,7 +121,7 @@ struct lp_build_context
     * This not only describes the input/output LLVM types, but also whether
     * to normalize/clamp the results.
     */
-   union lp_type type;
+   struct lp_type type;
 
    /** Same as lp_build_undef(type) */
    LLVMValueRef undef;
@@ -138,41 +135,41 @@ struct lp_build_context
 
 
 LLVMTypeRef
-lp_build_elem_type(union lp_type type);
+lp_build_elem_type(struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_vec_type(union lp_type type);
+lp_build_vec_type(struct lp_type type);
 
 
 boolean
-lp_check_elem_type(union lp_type type, LLVMTypeRef elem_type);
+lp_check_elem_type(struct lp_type type, LLVMTypeRef elem_type);
 
 
 boolean
-lp_check_vec_type(union lp_type type, LLVMTypeRef vec_type);
+lp_check_vec_type(struct lp_type type, LLVMTypeRef vec_type);
 
 
 boolean
-lp_check_value(union lp_type type, LLVMValueRef val);
+lp_check_value(struct lp_type type, LLVMValueRef val);
 
 
 LLVMTypeRef
-lp_build_int_elem_type(union lp_type type);
+lp_build_int_elem_type(struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_int_vec_type(union lp_type type);
+lp_build_int_vec_type(struct lp_type type);
 
 
-union lp_type
-lp_int_type(union lp_type type);
+struct lp_type
+lp_int_type(struct lp_type type);
 
 
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
-                      union lp_type type);
+                      struct lp_type type);
 
 
 #endif /* !LP_BLD_TYPE_H */

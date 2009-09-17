@@ -13,14 +13,16 @@
 
 static GLint WinWidth = 500, WinHeight = 500;
 static GLboolean Invert = GL_FALSE;
+static GLboolean TestPacking = GL_FALSE;
+static GLboolean TestList = GL_FALSE;
 
 
 static void Display(void)
 {
-   GLfloat depth[100 * 100];
-   GLfloat depth2[400 * 400];
-   GLfloat min, max;
-   int i;
+   GLfloat depth[100 * 100 * 2];
+   GLfloat depth2[400 * 400]; /* *2 to test pixelstore stuff */
+   GLuint list;
+   GLenum depthType = GL_FLOAT;
 
    glClearColor(0.5, 0.5, 0.5, 1.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -36,16 +38,32 @@ static void Display(void)
    glLoadIdentity();
    glutSolidSphere(1.0, 20, 10);
 
-   /* read the depth image */
-   glReadPixels(0, 0, 100, 100, GL_DEPTH_COMPONENT, GL_FLOAT, depth);
-   min = max = depth[0];
-   for (i = 1; i < 100 * 100; i++) {
-      if (depth[i] < min)
-         min = depth[i];
-      if (depth[i] > max)
-         max = depth[i];
+   if (TestPacking) {
+      glPixelStorei(GL_PACK_ROW_LENGTH, 120);
+      glPixelStorei(GL_PACK_SKIP_PIXELS, 5);
    }
-   printf("Depth value range: [%f, %f]\n", min, max);
+
+   /* read the depth image */
+   glReadPixels(0, 0, 100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+   if (depthType == GL_FLOAT) {
+      GLfloat min, max;
+      int i;
+      min = max = depth[0];
+      for (i = 1; i < 100 * 100; i++) {
+         if (depth[i] < min)
+            min = depth[i];
+         if (depth[i] > max)
+            max = depth[i];
+      }
+      printf("Depth value range: [%f, %f]\n", min, max);
+   }
+
+   if (TestPacking) {
+      glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+      glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, 120);
+      glPixelStorei(GL_UNPACK_SKIP_PIXELS, 5);
+   }
 
    /* draw depth image with scaling (into z buffer) */
    glPixelZoom(4.0, 4.0);
@@ -55,10 +73,25 @@ static void Display(void)
       glPixelTransferf(GL_DEPTH_SCALE, -1.0);
       glPixelTransferf(GL_DEPTH_BIAS, 1.0);
    }
-   glDrawPixels(100, 100, GL_DEPTH_COMPONENT, GL_FLOAT, depth);
+   if (TestList) {
+      list = glGenLists(1);
+      glNewList(list, GL_COMPILE);
+      glDrawPixels(100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+      glEndList();
+      glCallList(list);
+      glDeleteLists(list, 1);
+   }
+   else {
+      glDrawPixels(100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+   }
    if (Invert) {
       glPixelTransferf(GL_DEPTH_SCALE, 1.0);
       glPixelTransferf(GL_DEPTH_BIAS, 0.0);
+   }
+
+   if (TestPacking) {
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+      glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
    }
 
    glDisable(GL_DEPTH_TEST);
@@ -88,6 +121,14 @@ static void Key(unsigned char key, int x, int y)
    switch (key) {
       case 'i':
          Invert = !Invert;
+         break;
+      case 'p':
+         TestPacking = !TestPacking;
+         printf("Test pixel pack/unpack: %d\n", TestPacking);
+         break;
+      case 'l':
+         TestList = !TestList;
+         printf("Test dlist: %d\n", TestList);
          break;
       case 27:
          exit(0);

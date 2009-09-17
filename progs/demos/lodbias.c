@@ -43,6 +43,7 @@ static GLboolean Anim = GL_TRUE;
 static GLint Bias = 0, BiasStepSign = +1; /* ints avoid fp precision problem */
 static GLint BiasMin = -400, BiasMax = 400;
 static int win = 0;
+static GLuint TexObj = 0;
 
 
 static void
@@ -213,6 +214,9 @@ static void Init( void )
    }
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+   glGenTextures(1, &TexObj);
+   glBindTexture(GL_TEXTURE_2D, TexObj);
 
    if (glutExtensionSupported("GL_SGIS_generate_mipmap")) {
       /* test auto mipmap generation */

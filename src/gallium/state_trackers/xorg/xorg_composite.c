@@ -12,9 +12,9 @@ struct xorg_composite_blend {
    int op:8;
 
    unsigned rgb_src_factor:5;    /**< PIPE_BLENDFACTOR_x */
-   unsigned rgb_dst_factor:5;    /**< PIPE_BLENDFACTOR_x */
-
    unsigned alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
+
+   unsigned rgb_dst_factor:5;    /**< PIPE_BLENDFACTOR_x */
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 };
 
@@ -653,17 +653,12 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
 
    exa->solid_color[3] = 1.f;
 
+#if 0
    debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",
                 (fg >> 24) & 0xff, (fg >> 16) & 0xff,
                 (fg >> 8) & 0xff,  (fg >> 0) & 0xff,
                 exa->solid_color[0], exa->solid_color[1],
                 exa->solid_color[2], exa->solid_color[3]);
-
-#if 0
-   exa->solid_color[0] = 1.f;
-   exa->solid_color[1] = 0.f;
-   exa->solid_color[2] = 0.f;
-   exa->solid_color[3] = 1.f;
 #endif
 
    vs_traits = VS_SOLID_FILL;
@@ -690,9 +685,6 @@ void xorg_solid(struct exa_context *exa,
    struct pipe_context *pipe = exa->pipe;
    struct pipe_buffer *buf = 0;
    float vertices[4][2][4];
-
-   x0 = 10; y0 = 10;
-   x1 = 300; y1 = 300;
 
    /* 1st vertex */
    setup_vertex0(vertices[0], x0, y0,
@@ -844,11 +836,6 @@ static void renderer_copy_texture(struct exa_context *exa,
    assert(dst->width[0] != 0);
    assert(dst->height[0] != 0);
 
-#if 0
-   debug_printf("copy texture [%f, %f, %f, %f], [%f, %f, %f, %f]\n",
-                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
-#endif
-
 #if 1
    s0 = sx1 / src->width[0];
    s1 = sx2 / src->width[0];
@@ -861,8 +848,16 @@ static void renderer_copy_texture(struct exa_context *exa,
    t1 = 1;
 #endif
 
-   assert(screen->is_format_supported(screen, dst_surf->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+#if 1
+   debug_printf("copy texture src=[%f, %f, %f, %f], dst=[%f, %f, %f, %f], tex=[%f, %f, %f, %f]\n",
+                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2,
+                s0, t0, s1, t1);
+#endif
+
+   assert(screen->is_format_supported(screen, dst_surf->format,
+                                      PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                      0));
 
    /* save state (restored below) */
    cso_save_blend(exa->cso);
@@ -926,6 +921,8 @@ static void renderer_copy_texture(struct exa_context *exa,
          fb.cbufs[i] = 0;
    }
    cso_set_framebuffer(exa->cso, &fb);
+   setup_vs_constant_buffer(exa, fb.width, fb.height);
+   setup_fs_constant_buffer(exa);
 
    /* draw quad */
    buf = setup_vertex_data_tex(exa,
@@ -955,6 +952,61 @@ static void renderer_copy_texture(struct exa_context *exa,
    pipe_surface_reference(&dst_surf, NULL);
 }
 
+
+static struct pipe_texture *
+create_sampler_texture(struct exa_context *ctx,
+                       struct pipe_texture *src)
+{
+   enum pipe_format format;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_texture *pt;
+   struct pipe_texture templ;
+
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* the coming in texture should already have that invariance */
+   debug_assert(screen->is_format_supported(screen, src->format,
+                                            PIPE_TEXTURE_2D,
+                                            PIPE_TEXTURE_USAGE_SAMPLER, 0));
+
+   format = src->format;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.format = format;
+   templ.last_level = 0;
+   templ.width[0] = src->width[0];
+   templ.height[0] = src->height[0];
+   templ.depth[0] = 1;
+   pf_get_block(format, &templ.block);
+   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+
+   pt = screen->texture_create(screen, &templ);
+
+   debug_assert(!pt || pipe_is_referenced(&pt->reference));
+
+   if (!pt)
+      return NULL;
+
+   {
+      /* copy source framebuffer surface into texture */
+      struct pipe_surface *ps_read = screen->get_tex_surface(
+         screen, src, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+      struct pipe_surface *ps_tex = screen->get_tex_surface(
+         screen, pt, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE );
+      pipe->surface_copy(pipe,
+			 ps_tex, /* dest */
+			 0, 0, /* destx/y */
+			 ps_read,
+			 0, 0, src->width[0], src->height[0]);
+      pipe_surface_reference(&ps_read, NULL);
+      pipe_surface_reference(&ps_tex, NULL);
+   }
+
+   return pt;
+}
+
 void xorg_copy_pixmap(struct exa_context *ctx,
                       struct exa_pixmap_priv *dst_priv, int dx, int dy,
                       struct exa_pixmap_priv *src_priv, int sx, int sy,
@@ -965,6 +1017,8 @@ void xorg_copy_pixmap(struct exa_context *ctx,
    float src_shift[4], dst_shift[4], shift[4];
    struct pipe_texture *dst = dst_priv->tex;
    struct pipe_texture *src = src_priv->tex;
+
+   xorg_exa_finish(ctx);
 
    dst_loc[0] = dx;
    dst_loc[1] = dy;
@@ -1003,17 +1057,25 @@ void xorg_copy_pixmap(struct exa_context *ctx,
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
+      struct pipe_texture *temp_src = src;
+
+      if (src == dst)
+         temp_src = create_sampler_texture(ctx, src);
+
       renderer_copy_texture(ctx,
-                            src,
+                            temp_src,
                             src_loc[0],
-                            src_loc[1] + src_loc[3],
-                            src_loc[0] + src_loc[2],
                             src_loc[1],
+                            src_loc[0] + src_loc[2],
+                            src_loc[1] + src_loc[3],
                             dst,
                             dst_loc[0],
-                            dst_loc[1] + dst_loc[3],
+                            dst_loc[1],
                             dst_loc[0] + dst_loc[2],
-                            dst_loc[1]);
+                            dst_loc[1] + dst_loc[3]);
+
+      if (src == dst)
+         pipe_texture_reference(&temp_src, NULL);
    }
 }
 

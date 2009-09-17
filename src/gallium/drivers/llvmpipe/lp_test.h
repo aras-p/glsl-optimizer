@@ -86,43 +86,43 @@ random_float(void);
 
 
 void
-dump_type(FILE *fp, union lp_type type);
+dump_type(FILE *fp, struct lp_type type);
 
 
 double
-read_elem(union lp_type type, const void *src, unsigned index);
+read_elem(struct lp_type type, const void *src, unsigned index);
 
 
 void
-write_elem(union lp_type type, void *dst, unsigned index, double src);
+write_elem(struct lp_type type, void *dst, unsigned index, double src);
 
 
 void
-random_elem(union lp_type type, void *dst, unsigned index);
+random_elem(struct lp_type type, void *dst, unsigned index);
 
 
 void
-read_vec(union lp_type type, const void *src, double *dst);
+read_vec(struct lp_type type, const void *src, double *dst);
 
 
 void
-write_vec(union lp_type type, void *dst, const double *src);
+write_vec(struct lp_type type, void *dst, const double *src);
 
 
 void
-random_vec(union lp_type type, void *dst);
+random_vec(struct lp_type type, void *dst);
 
 
 boolean
-compare_vec_with_eps(union lp_type type, const void *res, const void *ref, double eps);
+compare_vec_with_eps(struct lp_type type, const void *res, const void *ref, double eps);
 
 
 boolean
-compare_vec(union lp_type type, const void *res, const void *ref);
+compare_vec(struct lp_type type, const void *res, const void *ref);
 
 
 void
-dump_vec(FILE *fp, union lp_type type, const void *src);
+dump_vec(FILE *fp, struct lp_type type, const void *src);
 
 
 #endif /* !LP_TEST_H */
