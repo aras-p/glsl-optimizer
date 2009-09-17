@@ -93,6 +93,23 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
       vinfo->num_attribs = 0;
       for (i = 0; i < lpfs->info.num_inputs; i++) {
          int src;
+         enum interp_mode interp;
+
+         switch (lpfs->info.input_interpolate[i]) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            interp = INTERP_CONSTANT;
+            break;
+         case TGSI_INTERPOLATE_LINEAR:
+            interp = INTERP_LINEAR;
+            break;
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            interp = INTERP_PERSPECTIVE;
+            break;
+         default:
+            assert(0);
+            interp = INTERP_LINEAR;
+         }
+
          switch (lpfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
             src = draw_find_vs_output(llvmpipe->draw,
@@ -108,7 +125,7 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
 
          case TGSI_SEMANTIC_FOG:
             src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
             break;
 
          case TGSI_SEMANTIC_GENERIC:
@@ -116,7 +133,7 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
             /* this includes texcoords and varying vars */
             src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_GENERIC,
                                       lpfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
             break;
 
          default:
