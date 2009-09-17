@@ -3302,32 +3302,9 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 }
 
 
-/**
- * Choose the actual storage format for a new texture image.
- * Mainly, this is a wrapper for the driver's ChooseTextureFormat() function.
- * Also set some other texImage fields related to texture compression, etc.
- * \param ctx  rendering context
- * \param texImage  the gl_texture_image
- * \param dims  texture dimensions (1, 2 or 3)
- * \param format  the user-specified format parameter
- * \param type  the user-specified type parameter
- * \param internalFormat  the user-specified internal format hint
- */
 static void
-choose_texture_format(GLcontext *ctx, struct gl_texture_image *texImage,
-                      GLuint dims,
-                      GLenum format, GLenum type, GLint internalFormat)
+compute_texture_size(GLcontext *ctx, struct gl_texture_image *texImage)
 {
-   ASSERT(dims == 1 || dims == 2 || dims == 3);
-   ASSERT(ctx->Driver.ChooseTextureFormat);
-
-   texImage->TexFormat
-      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
-
-   ASSERT(texImage->TexFormat);
-
-   _mesa_set_fetch_functions(texImage, dims);
-
    if (texImage->TexFormat->TexelBytes == 0) {
       /* must be a compressed format */
       texImage->IsCompressed = GL_TRUE;
@@ -3365,7 +3342,12 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    GLint sizeInBytes;
    (void) border;
 
-   choose_texture_format(ctx, texImage, 1, format, type, internalFormat);
+   texImage->TexFormat
+      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+   ASSERT(texImage->TexFormat);
+
+   _mesa_set_fetch_functions(texImage, 1);
+   compute_texture_size(ctx, texImage);
 
    /* allocate memory */
    if (texImage->IsCompressed)
@@ -3429,7 +3411,12 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    GLint texelBytes, sizeInBytes;
    (void) border;
 
-   choose_texture_format(ctx, texImage, 2, format, type, internalFormat);
+   texImage->TexFormat
+      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+   ASSERT(texImage->TexFormat);
+
+   _mesa_set_fetch_functions(texImage, 2);
+   compute_texture_size(ctx, texImage);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -3498,7 +3485,12 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    GLint texelBytes, sizeInBytes;
    (void) border;
 
-   choose_texture_format(ctx, texImage, 3, format, type, internalFormat);
+   texImage->TexFormat
+      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+   ASSERT(texImage->TexFormat);
+
+   _mesa_set_fetch_functions(texImage, 3);
+   compute_texture_size(ctx, texImage);
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -3732,7 +3724,12 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->Depth == 1);
    ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
 
-   choose_texture_format(ctx, texImage, 2, 0, 0, internalFormat);
+   texImage->TexFormat
+      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, 0, 0);
+   ASSERT(texImage->TexFormat);
+
+   _mesa_set_fetch_functions(texImage, 2);
+   compute_texture_size(ctx, texImage);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);
