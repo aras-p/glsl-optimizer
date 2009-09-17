@@ -60,14 +60,26 @@ main(int argc,
    size = ftell(in);
    fseek(in, 0, SEEK_SET);
 
+   out = fopen(argv[2], "wb");
+   if (!out) {
+      fclose(in);
+      return 1;
+   }
+
    inbuf = malloc(size + 1);
    if (!inbuf) {
+      fprintf(out, "$OOMERROR\n");
+
+      fclose(out);
       fclose(in);
       return 1;
    }
 
    if (fread(inbuf, 1, size, in) != size) {
+      fprintf(out, "$READERROR\n");
+
       free(inbuf);
+      fclose(out);
       fclose(in);
       return 1;
    }
@@ -78,38 +90,45 @@ main(int argc,
    memset(&options, 0, sizeof(options));
 
    if (sl_pp_purify(inbuf, &options, &outbuf)) {
+      fprintf(out, "$PURIFYERROR\n");
+
       free(inbuf);
+      fclose(out);
       return 1;
    }
 
    free(inbuf);
 
    if (sl_pp_context_init(&context)) {
+      fprintf(out, "$CONTEXERROR\n");
+
       free(outbuf);
+      fclose(out);
       return 1;
    }
 
    if (sl_pp_tokenise(&context, outbuf, &tokens)) {
+      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+
       sl_pp_context_destroy(&context);
       free(outbuf);
+      fclose(out);
       return 1;
    }
 
    free(outbuf);
 
    if (sl_pp_version(&context, tokens, &version, &tokens_eaten)) {
+      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+
       sl_pp_context_destroy(&context);
       free(tokens);
+      fclose(out);
       return -1;
    }
 
    sl_pp_context_destroy(&context);
    free(tokens);
-
-   out = fopen(argv[2], "wb");
-   if (!out) {
-      return 1;
-   }
 
    fprintf(out,
            "%u\n%u\n",

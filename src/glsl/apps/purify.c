@@ -54,14 +54,26 @@ main(int argc,
    size = ftell(in);
    fseek(in, 0, SEEK_SET);
 
+   out = fopen(argv[2], "wb");
+   if (!out) {
+      fclose(in);
+      return 1;
+   }
+
    inbuf = malloc(size + 1);
    if (!inbuf) {
+      fprintf(out, "$OOMERROR\n");
+
+      fclose(out);
       fclose(in);
       return 1;
    }
 
    if (fread(inbuf, 1, size, in) != size) {
+      fprintf(out, "$READERROR\n");
+
       free(inbuf);
+      fclose(out);
       fclose(in);
       return 1;
    }
@@ -72,17 +84,14 @@ main(int argc,
    memset(&options, 0, sizeof(options));
 
    if (sl_pp_purify(inbuf, &options, &outbuf)) {
+      fprintf(out, "$PURIFYERROR\n");
+
       free(inbuf);
+      fclose(out);
       return 1;
    }
 
    free(inbuf);
-
-   out = fopen(argv[2], "wb");
-   if (!out) {
-      free(outbuf);
-      return 1;
-   }
 
    fwrite(outbuf, 1, strlen(outbuf), out);
 
