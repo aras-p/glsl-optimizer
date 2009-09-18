@@ -26,17 +26,23 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include "sl_pp_public.h"
 #include "sl_pp_context.h"
 
 
-int
-sl_pp_context_init(struct sl_pp_context *context)
+struct sl_pp_context *
+sl_pp_context_create(void)
 {
-   memset(context, 0, sizeof(struct sl_pp_context));
+   struct sl_pp_context *context;
+
+   context = calloc(1, sizeof(struct sl_pp_context));
+   if (!context) {
+      return NULL;
+   }
 
    if (sl_pp_dict_init(context)) {
       sl_pp_context_destroy(context);
-      return -1;
+      return NULL;
    }
 
    context->macro_tail = &context->macro;
@@ -46,14 +52,23 @@ sl_pp_context_init(struct sl_pp_context *context)
    context->line = 1;
    context->file = 0;
 
-   return 0;
+   return context;
 }
 
 void
 sl_pp_context_destroy(struct sl_pp_context *context)
 {
-   free(context->cstr_pool);
-   sl_pp_macro_free(context->macro);
+   if (context) {
+      free(context->cstr_pool);
+      sl_pp_macro_free(context->macro);
+      free(context);
+   }
+}
+
+const char *
+sl_pp_context_error_message(const struct sl_pp_context *context)
+{
+   return context->error_msg;
 }
 
 int

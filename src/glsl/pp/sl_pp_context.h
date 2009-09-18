@@ -56,17 +56,7 @@ struct sl_pp_context {
 };
 
 int
-sl_pp_context_init(struct sl_pp_context *context);
-
-void
-sl_pp_context_destroy(struct sl_pp_context *context);
-
-int
 sl_pp_context_add_unique_str(struct sl_pp_context *context,
                              const char *str);
-
-const char *
-sl_pp_context_cstr(const struct sl_pp_context *context,
-                   int offset);
 
 #endif /* SL_PP_CONTEXT_H */

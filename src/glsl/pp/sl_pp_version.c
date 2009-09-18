@@ -26,7 +26,8 @@
  **************************************************************************/
 
 #include <stdlib.h>
-#include "sl_pp_version.h"
+#include "sl_pp_public.h"
+#include "sl_pp_context.h"
 
 
 int

@@ -40,11 +40,6 @@ struct sl_pp_process_state {
 };
 
 int
-sl_pp_process(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
-              struct sl_pp_token_info **output);
-
-int
 sl_pp_process_define(struct sl_pp_context *context,
                      const struct sl_pp_token_info *input,
                      unsigned int first,

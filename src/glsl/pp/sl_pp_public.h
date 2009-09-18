@@ -25,12 +25,29 @@
  * 
  **************************************************************************/
 
-#ifndef SL_PP_VERSION_H
-#define SL_PP_VERSION_H
+#ifndef SL_PP_PUBLIC_H
+#define SL_PP_PUBLIC_H
 
-#include "sl_pp_context.h"
+
+struct sl_pp_context;
+
+
+#include "sl_pp_purify.h"
 #include "sl_pp_token.h"
 
+
+struct sl_pp_context *
+sl_pp_context_create(void);
+
+void
+sl_pp_context_destroy(struct sl_pp_context *context);
+
+const char *
+sl_pp_context_error_message(const struct sl_pp_context *context);
+
+const char *
+sl_pp_context_cstr(const struct sl_pp_context *context,
+                   int offset);
 
 int
 sl_pp_version(struct sl_pp_context *context,
@@ -38,4 +55,9 @@ sl_pp_version(struct sl_pp_context *context,
               unsigned int *version,
               unsigned int *tokens_eaten);
 
-#endif /* SL_PP_VERSION_H */
+int
+sl_pp_process(struct sl_pp_context *context,
+              const struct sl_pp_token_info *input,
+              struct sl_pp_token_info **output);
+
+#endif /* SL_PP_PUBLIC_H */

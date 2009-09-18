@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include "sl_pp_public.h"
 #include "sl_pp_process.h"
 
 
