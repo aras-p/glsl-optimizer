@@ -36,10 +36,7 @@
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
-#include "../../glsl/pp/sl_pp_context.h"
-#include "../../glsl/pp/sl_pp_purify.h"
-#include "../../glsl/pp/sl_pp_version.h"
-#include "../../glsl/pp/sl_pp_process.h"
+#include "../../glsl/pp/sl_pp_public.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"
@@ -2583,7 +2580,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      const struct gl_extensions *extensions,
                      struct gl_sl_pragmas *pragmas)
 {
-   struct sl_pp_context context;
+   struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    byte *prod;
    GLuint size;
@@ -2601,31 +2598,32 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       return GL_FALSE;
    }
 
-   if (sl_pp_context_init(&context)) {
+   context = sl_pp_context_create();
+   if (!context) {
       slang_info_log_error(infolog, "out of memory");
       free(outbuf);
       return GL_FALSE;
    }
 
-   if (sl_pp_tokenise(&context, outbuf, &intokens)) {
-      slang_info_log_error(infolog, "%s", context.error_msg);
-      sl_pp_context_destroy(&context);
+   if (sl_pp_tokenise(context, outbuf, &intokens)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
       free(outbuf);
       return GL_FALSE;
    }
 
    free(outbuf);
 
-   if (sl_pp_version(&context, intokens, &version, &tokens_eaten)) {
-      slang_info_log_error(infolog, "%s", context.error_msg);
-      sl_pp_context_destroy(&context);
+   if (sl_pp_version(context, intokens, &version, &tokens_eaten)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
       free(intokens);
       return GL_FALSE;
    }
 
-   if (sl_pp_process(&context, &intokens[tokens_eaten], &tokens)) {
-      slang_info_log_error(infolog, "%s", context.error_msg);
-      sl_pp_context_destroy(&context);
+   if (sl_pp_process(context, &intokens[tokens_eaten], &tokens)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
       free(intokens);
       return GL_FALSE;
    }
@@ -2711,15 +2709,15 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       slang_info_log_error(infolog,
                            "language version %.2f is not supported.",
                            version * 0.01);
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(tokens);
       return GL_FALSE;
    }
 
    /* Finally check the syntax and generate its binary representation. */
-   result = grammar_fast_check(id, &context, tokens, &prod, &size, 65536);
+   result = grammar_fast_check(id, context, tokens, &prod, &size, 65536);
 
-   sl_pp_context_destroy(&context);
+   sl_pp_context_destroy(context);
    free(tokens);
 
    if (!result) {
