@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../pp/sl_pp_purify.h"
+#include "../pp/sl_pp_public.h"
 
 
 int

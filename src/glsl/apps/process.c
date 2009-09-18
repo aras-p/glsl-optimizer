@@ -28,10 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "../pp/sl_pp_context.h"
-#include "../pp/sl_pp_purify.h"
-#include "../pp/sl_pp_version.h"
-#include "../pp/sl_pp_process.h"
+#include "../pp/sl_pp_public.h"
 
 
 int
@@ -43,7 +40,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
-   struct sl_pp_context context;
+   struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    unsigned int version;
    unsigned int tokens_eaten;
@@ -103,7 +100,8 @@ main(int argc,
 
    free(inbuf);
 
-   if (sl_pp_context_init(&context)) {
+   context = sl_pp_context_create();
+   if (!context) {
       fprintf(out, "$CONTEXERROR\n");
 
       free(outbuf);
@@ -111,10 +109,10 @@ main(int argc,
       return 1;
    }
 
-   if (sl_pp_tokenise(&context, outbuf, &tokens)) {
-      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+   if (sl_pp_tokenise(context, outbuf, &tokens)) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(outbuf);
       fclose(out);
       return 1;
@@ -122,19 +120,19 @@ main(int argc,
 
    free(outbuf);
 
-   if (sl_pp_version(&context, tokens, &version, &tokens_eaten)) {
-      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+   if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(tokens);
       fclose(out);
       return -1;
    }
 
-   if (sl_pp_process(&context, &tokens[tokens_eaten], &outtokens)) {
-      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+   if (sl_pp_process(context, &tokens[tokens_eaten], &outtokens)) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(tokens);
       fclose(out);
       return -1;
@@ -329,11 +327,11 @@ main(int argc,
          break;
 
       case SL_PP_IDENTIFIER:
-         fprintf(out, "%s ", sl_pp_context_cstr(&context, outtokens[i].data.identifier));
+         fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data.identifier));
          break;
 
       case SL_PP_NUMBER:
-         fprintf(out, "%s ", sl_pp_context_cstr(&context, outtokens[i].data.number));
+         fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data.number));
          break;
 
       case SL_PP_OTHER:
@@ -349,19 +347,19 @@ main(int argc,
          break;
 
       case SL_PP_EXTENSION_REQUIRE:
-         fprintf(out, "#extension %s : require", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         fprintf(out, "#extension %s : require", sl_pp_context_cstr(context, outtokens[i].data.extension));
          break;
 
       case SL_PP_EXTENSION_ENABLE:
-         fprintf(out, "#extension %s : enable", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         fprintf(out, "#extension %s : enable", sl_pp_context_cstr(context, outtokens[i].data.extension));
          break;
 
       case SL_PP_EXTENSION_WARN:
-         fprintf(out, "#extension %s : warn", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         fprintf(out, "#extension %s : warn", sl_pp_context_cstr(context, outtokens[i].data.extension));
          break;
 
       case SL_PP_EXTENSION_DISABLE:
-         fprintf(out, "#extension %s : disable", sl_pp_context_cstr(&context, outtokens[i].data.extension));
+         fprintf(out, "#extension %s : disable", sl_pp_context_cstr(context, outtokens[i].data.extension));
          break;
 
       case SL_PP_LINE:
@@ -377,7 +375,7 @@ main(int argc,
       }
    }
 
-   sl_pp_context_destroy(&context);
+   sl_pp_context_destroy(context);
    free(outtokens);
    fclose(out);
 

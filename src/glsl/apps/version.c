@@ -28,8 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "../pp/sl_pp_purify.h"
-#include "../pp/sl_pp_version.h"
+#include "../pp/sl_pp_public.h"
 
 
 int
@@ -41,7 +40,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
-   struct sl_pp_context context;
+   struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    unsigned int version;
    unsigned int tokens_eaten;
@@ -99,7 +98,8 @@ main(int argc,
 
    free(inbuf);
 
-   if (sl_pp_context_init(&context)) {
+   context = sl_pp_context_create();
+   if (!context) {
       fprintf(out, "$CONTEXERROR\n");
 
       free(outbuf);
@@ -107,10 +107,10 @@ main(int argc,
       return 1;
    }
 
-   if (sl_pp_tokenise(&context, outbuf, &tokens)) {
-      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+   if (sl_pp_tokenise(context, outbuf, &tokens)) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(outbuf);
       fclose(out);
       return 1;
@@ -118,16 +118,16 @@ main(int argc,
 
    free(outbuf);
 
-   if (sl_pp_version(&context, tokens, &version, &tokens_eaten)) {
-      fprintf(out, "$ERROR: `%s'\n", context.error_msg);
+   if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
-      sl_pp_context_destroy(&context);
+      sl_pp_context_destroy(context);
       free(tokens);
       fclose(out);
       return -1;
    }
 
-   sl_pp_context_destroy(&context);
+   sl_pp_context_destroy(context);
    free(tokens);
 
    fprintf(out,
