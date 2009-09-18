@@ -464,7 +464,7 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
    unsigned face;
    float sc, tc, ma;
 
-   if (arx > ary && arx > arz) {
+   if (arx >= ary && arx >= arz) {
       if (rx >= 0.0F) {
          face = PIPE_TEX_FACE_POS_X;
          sc = -rz;
@@ -478,7 +478,7 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
          ma = arx;
       }
    }
-   else if (ary > arx && ary > arz) {
+   else if (ary >= arx && ary >= arz) {
       if (ry >= 0.0F) {
          face = PIPE_TEX_FACE_POS_Y;
          sc = rx;
