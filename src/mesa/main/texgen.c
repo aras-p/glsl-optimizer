@@ -35,6 +35,7 @@
 #include "main/enums.h"
 #include "main/macros.h"
 #include "main/texgen.h"
+#include "main/texstate.h"
 #include "math/m_matrix.h"
 
 
@@ -79,7 +80,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    texgen = get_texgen(texUnit, coord);
    if (!texgen) {
@@ -231,7 +232,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    texgen = get_texgen(texUnit, coord);
    if (!texgen) {
@@ -269,7 +270,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    texgen = get_texgen(texUnit, coord);
    if (!texgen) {
@@ -307,7 +308,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
 
    texgen = get_texgen(texUnit, coord);
    if (!texgen) {
