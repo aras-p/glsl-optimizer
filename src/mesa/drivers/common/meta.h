@@ -91,5 +91,24 @@ _mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height);
 
+extern void
+_mesa_meta_CopyColorTable(GLcontext *ctx,
+                          GLenum target, GLenum internalformat,
+                          GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+                             GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat,
+                                   GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat, GLint x, GLint y,
+                                   GLsizei width, GLsizei height);
+
 
 #endif /* META_H */

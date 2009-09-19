@@ -38,6 +38,7 @@
 #include "main/blend.h"
 #include "main/bufferobj.h"
 #include "main/buffers.h"
+#include "main/colortab.h"
 #include "main/convolve.h"
 #include "main/depth.h"
 #include "main/enable.h"
@@ -2364,4 +2365,125 @@ _mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
 {
    copy_tex_sub_image(ctx, 3, target, level, xoffset, yoffset, zoffset,
                       x, y, width, height);
+}
+
+
+void
+_mesa_meta_CopyColorTable(GLcontext *ctx,
+                          GLenum target, GLenum internalformat,
+                          GLint x, GLint y, GLsizei width)
+{
+   GLfloat *buf;
+
+   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyColorTable");
+      return;
+   }
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   ctx->Driver.ReadPixels(ctx, x, y, width, 1,
+                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
+
+   _mesa_ColorTable(target, internalformat, width, GL_RGBA, GL_FLOAT, buf);
+
+   _mesa_meta_end(ctx);
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+                             GLint x, GLint y, GLsizei width)
+{
+   GLfloat *buf;
+
+   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyColorSubTable");
+      return;
+   }
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   ctx->Driver.ReadPixels(ctx, x, y, width, 1,
+                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
+
+   _mesa_ColorSubTable(target, start, width, GL_RGBA, GL_FLOAT, buf);
+
+   _mesa_meta_end(ctx);
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat,
+                                   GLint x, GLint y, GLsizei width)
+{
+   GLfloat *buf;
+
+   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
+      return;
+   }
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   _mesa_update_state(ctx);
+   ctx->Driver.ReadPixels(ctx, x, y, width, 1,
+                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
+
+   _mesa_ConvolutionFilter1D(target, internalFormat, width,
+                             GL_RGBA, GL_FLOAT, buf);
+
+   _mesa_meta_end(ctx);
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat, GLint x, GLint y,
+                                   GLsizei width, GLsizei height)
+{
+   GLfloat *buf;
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
+
+   buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+   if (!buf) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
+      return;
+   }
+
+   /*
+    * Read image from framebuffer (disable pixel transfer ops)
+    */
+   _mesa_meta_begin(ctx, META_PIXEL_STORE | META_PIXEL_TRANSFER);
+   _mesa_update_state(ctx);
+
+   ctx->Driver.ReadPixels(ctx, x, y, width, height,
+                          GL_RGBA, GL_FLOAT, &ctx->Pack, buf);
+
+   _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
+                             GL_RGBA, GL_FLOAT, buf);
+
+   _mesa_meta_end(ctx);
+
+   _mesa_free(buf);
 }
