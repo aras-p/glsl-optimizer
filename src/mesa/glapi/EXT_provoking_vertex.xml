@@ -19,4 +19,17 @@
 
 </category>
 
+<category name="GL_ARB_provoking_vertex" number="64">
+
+    <enum name="FIRST_VERTEX_CONVENTION"                  value="0x8E4D"/>
+    <enum name="LAST_VERTEX_CONVENTION"                   value="0x8E4E"/>
+    <enum name="PROVOKING_VERTEX"                         value="0x8E4F"/>
+    <enum name="QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION" value="0x8E4C"/>
+
+    <function name="ProvokingVertex" alias="ProvokingVertexEXT">
+        <param name="mode" type="GLenum"/>
+    </function>
+
+</category>
+
 </OpenGLAPI>
