@@ -1122,20 +1122,25 @@ static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	GLfloat constant = units;
+	GLchar depth = 0;
+
+	R600_STATECHANGE(context, poly);
 
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		constant *= 4.0;
+		depth = -16;
 		break;
 	case 24:
 		constant *= 2.0;
+		depth = -24;
 		break;
 	}
 
 	factor *= 12.0;
-
-	R600_STATECHANGE(context, poly);
-
+	SETfield(r700->PA_SU_POLY_OFFSET_DB_FMT_CNTL.u32All, depth,
+		 POLY_OFFSET_NEG_NUM_DB_BITS_shift, POLY_OFFSET_NEG_NUM_DB_BITS_mask);
+	//r700->PA_SU_POLY_OFFSET_CLAMP.f32All = constant; //???
 	r700->PA_SU_POLY_OFFSET_FRONT_SCALE.f32All = factor;
 	r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.f32All = constant;
 	r700->PA_SU_POLY_OFFSET_BACK_SCALE.f32All = factor;
