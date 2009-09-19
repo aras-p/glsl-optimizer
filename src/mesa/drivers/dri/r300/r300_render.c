@@ -475,7 +475,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 
 		/* update only if we have disabled all tcl fallbacks */
 		if (rmesa->options.hw_tcl_enabled) {
-			if ((old_fallback & R300_RASTER_FALLBACK_MASK) == bit) {
+			if ((old_fallback & R300_TCL_FALLBACK_MASK) == bit) {
 				R300_STATECHANGE(rmesa, vap_cntl_status);
 				rmesa->hw.vap_cntl_status.cmd[1] &= ~R300_VAP_TCL_BYPASS;
 			}
