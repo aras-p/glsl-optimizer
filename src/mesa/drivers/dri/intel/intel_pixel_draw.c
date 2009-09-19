@@ -54,7 +54,7 @@
 #include "intel_fbo.h"
 
 
-/** XXX compare perf of this vs. _mesa_meta_draw_pixels(STENCIL) */
+/** XXX compare perf of this vs. _mesa_meta_DrawPixels(STENCIL) */
 static GLboolean
 intel_stencil_drawpixels(GLcontext * ctx,
 			 GLint x, GLint y,
@@ -265,7 +265,7 @@ intelDrawPixels(GLcontext * ctx,
    /* XXX this function doesn't seem to work reliably even when all
     * the pre-requisite conditions are met.
     * Note that this function is never hit with conform.
-    * Fall back to swrast because even the _mesa_meta_draw_pixels() approach
+    * Fall back to swrast because even the _mesa_meta_DrawPixels() approach
     * isn't working because of an apparent stencil bug.
     */
    if (intel_stencil_drawpixels(ctx, x, y, width, height, format, type,
@@ -280,6 +280,6 @@ intelDrawPixels(GLcontext * ctx,
    }
 #endif
 
-   _mesa_meta_draw_pixels(ctx, x, y, width, height, format, type,
-                          unpack, pixels);
+   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
+                         unpack, pixels);
 }

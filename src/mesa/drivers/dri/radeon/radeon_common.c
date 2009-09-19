@@ -1345,5 +1345,5 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 
 void radeonUserClear(GLcontext *ctx, GLuint mask)
 {
-   _mesa_meta_clear(ctx, mask);
+   _mesa_meta_Clear(ctx, mask);
 }

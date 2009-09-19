@@ -34,35 +34,35 @@ extern void
 _mesa_meta_free(GLcontext *ctx);
 
 extern void
-_mesa_meta_blit_framebuffer(GLcontext *ctx,
-                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                            GLbitfield mask, GLenum filter);
+_mesa_meta_BlitFramebuffer(GLcontext *ctx,
+                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                           GLbitfield mask, GLenum filter);
 
 extern void
-_mesa_meta_clear(GLcontext *ctx, GLbitfield buffers);
+_mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers);
 
 extern void
-_mesa_meta_copy_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
-                       GLsizei width, GLsizei height,
-                       GLint dstx, GLint dsty, GLenum type);
+_mesa_meta_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
+                      GLsizei width, GLsizei height,
+                      GLint dstx, GLint dsty, GLenum type);
 
 extern void
-_mesa_meta_draw_pixels(GLcontext *ctx,
-		       GLint x, GLint y, GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       const struct gl_pixelstore_attrib *unpack,
-		       const GLvoid *pixels);
+_mesa_meta_DrawPixels(GLcontext *ctx,
+                      GLint x, GLint y, GLsizei width, GLsizei height,
+                      GLenum format, GLenum type,
+                      const struct gl_pixelstore_attrib *unpack,
+                      const GLvoid *pixels);
 
 extern void
-_mesa_meta_bitmap(GLcontext *ctx,
+_mesa_meta_Bitmap(GLcontext *ctx,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap);
 
 extern void
-_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
-                           struct gl_texture_object *texObj);
+_mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
+                          struct gl_texture_object *texObj);
 
 extern void
 _mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,

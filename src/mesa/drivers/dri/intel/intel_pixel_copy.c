@@ -240,5 +240,5 @@ intelCopyPixels(GLcontext * ctx,
       return;
 
    /* this will use swrast if needed */
-   _mesa_meta_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type);
+   _mesa_meta_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }

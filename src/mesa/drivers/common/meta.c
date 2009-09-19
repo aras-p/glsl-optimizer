@@ -274,12 +274,12 @@ struct gl_meta_state
 
    struct temp_texture TempTex;
 
-   struct blit_state Blit;    /**< For _mesa_meta_blit_framebuffer() */
-   struct clear_state Clear;  /**< For _mesa_meta_clear() */
-   struct copypix_state CopyPix;  /**< For _mesa_meta_copy_pixels() */
-   struct drawpix_state DrawPix;  /**< For _mesa_meta_draw_pixels() */
-   struct bitmap_state Bitmap;    /**< For _mesa_meta_bitmap() */
-   struct gen_mipmap_state Mipmap;    /**< For _mesa_meta_generate_mipmap() */
+   struct blit_state Blit;    /**< For _mesa_meta_BlitFramebuffer() */
+   struct clear_state Clear;  /**< For _mesa_meta_Clear() */
+   struct copypix_state CopyPix;  /**< For _mesa_meta_CopyPixels() */
+   struct drawpix_state DrawPix;  /**< For _mesa_meta_DrawPixels() */
+   struct bitmap_state Bitmap;    /**< For _mesa_meta_Bitmap() */
+   struct gen_mipmap_state Mipmap;    /**< For _mesa_meta_GenerateMipmap() */
 };
 
 
@@ -1055,10 +1055,10 @@ init_blit_depth_pixels(GLcontext *ctx)
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_blit_framebuffer(GLcontext *ctx,
-                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                            GLbitfield mask, GLenum filter)
+_mesa_meta_BlitFramebuffer(GLcontext *ctx,
+                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                           GLbitfield mask, GLenum filter)
 {
    struct blit_state *blit = &ctx->Meta->Blit;
    struct temp_texture *tex = get_temp_texture(ctx);
@@ -1204,7 +1204,7 @@ _mesa_meta_blit_framebuffer(GLcontext *ctx,
  * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
  */
 void
-_mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
+_mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
    struct vertex {
@@ -1323,9 +1323,9 @@ _mesa_meta_clear(GLcontext *ctx, GLbitfield buffers)
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_copy_pixels(GLcontext *ctx, GLint srcX, GLint srcY,
-                       GLsizei width, GLsizei height,
-                       GLint dstX, GLint dstY, GLenum type)
+_mesa_meta_CopyPixels(GLcontext *ctx, GLint srcX, GLint srcY,
+                      GLsizei width, GLsizei height,
+                      GLint dstX, GLint dstY, GLenum type)
 {
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
    struct temp_texture *tex = get_temp_texture(ctx);
@@ -1462,9 +1462,8 @@ tiled_draw_pixels(GLcontext *ctx,
 
          tileUnpack.SkipRows = unpack->SkipRows + j;
 
-         _mesa_meta_draw_pixels(ctx, tileX, tileY,
-                                tileWidth, tileHeight,
-                                format, type, &tileUnpack, pixels);
+         _mesa_meta_DrawPixels(ctx, tileX, tileY, tileWidth, tileHeight,
+                               format, type, &tileUnpack, pixels);
       }
    }
 }
@@ -1573,11 +1572,11 @@ init_draw_depth_pixels(GLcontext *ctx)
  * of texture mapping and polygon rendering.
  */
 void
-_mesa_meta_draw_pixels(GLcontext *ctx,
-		       GLint x, GLint y, GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       const struct gl_pixelstore_attrib *unpack,
-		       const GLvoid *pixels)
+_mesa_meta_DrawPixels(GLcontext *ctx,
+                      GLint x, GLint y, GLsizei width, GLsizei height,
+                      GLenum format, GLenum type,
+                      const struct gl_pixelstore_attrib *unpack,
+                      const GLvoid *pixels)
 {
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
    struct temp_texture *tex = get_temp_texture(ctx);
@@ -1812,7 +1811,7 @@ _mesa_meta_draw_pixels(GLcontext *ctx,
  * improve performance a lot.
  */
 void
-_mesa_meta_bitmap(GLcontext *ctx,
+_mesa_meta_Bitmap(GLcontext *ctx,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap1)
@@ -1953,8 +1952,8 @@ _mesa_meta_bitmap(GLcontext *ctx,
 
 
 void
-_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
-                           struct gl_texture_object *texObj)
+_mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
+                          struct gl_texture_object *texObj)
 {
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
    struct vertex {
