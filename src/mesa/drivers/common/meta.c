@@ -38,6 +38,7 @@
 #include "main/blend.h"
 #include "main/bufferobj.h"
 #include "main/buffers.h"
+#include "main/convolve.h"
 #include "main/depth.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
@@ -49,6 +50,7 @@
 #include "main/readpix.h"
 #include "main/scissor.h"
 #include "main/shaders.h"
+#include "main/state.h"
 #include "main/stencil.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
@@ -2156,6 +2158,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GLsizei postConvWidth = width, postConvHeight = height;
    GLenum format, type;
    GLint bpp;
    void *buf;
@@ -2192,9 +2195,30 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    _mesa_meta_end(ctx);
 
    /*
+    * Prepare for new texture image size/data
+    */
+#if FEATURE_convolve
+   if (_mesa_is_color_format(internalFormat)) {
+      _mesa_adjust_image_for_convolution(ctx, 2,
+                                         &postConvWidth, &postConvHeight);
+   }
+#endif
+
+   if (texImage->Data) {
+      ctx->Driver.FreeTexImageData(ctx, texImage);
+   }
+
+   _mesa_init_teximage_fields(ctx, target, texImage,
+                              postConvWidth, postConvHeight, 1,
+                              border, internalFormat);
+
+   /*
     * Store texture data (with pixel transfer ops)
     */
    _mesa_meta_begin(ctx, META_PIXEL_STORE);
+
+   _mesa_update_state(ctx); /* to update pixel transfer state */
+
    if (target == GL_TEXTURE_1D) {
       ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
                              width, border, format, type,
@@ -2281,6 +2305,8 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, buf);
    _mesa_meta_end(ctx);
+
+   _mesa_update_state(ctx); /* to update pixel transfer state */
 
    /*
     * Store texture data (with pixel transfer ops)
