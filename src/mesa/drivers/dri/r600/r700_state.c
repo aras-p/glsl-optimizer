@@ -845,9 +845,9 @@ static void r700PointSize(GLcontext * ctx, GLfloat size)
 	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
 	/* format is 12.4 fixed point */
-	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 8.0),
 		 PA_SU_POINT_SIZE__HEIGHT_shift, PA_SU_POINT_SIZE__HEIGHT_mask);
-	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 8.0),
 		 PA_SU_POINT_SIZE__WIDTH_shift, PA_SU_POINT_SIZE__WIDTH_mask);
 
 }
@@ -862,11 +862,11 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	/* format is 12.4 fixed point */
 	switch (pname) {
 	case GL_POINT_SIZE_MIN:
-		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 16.0),
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 8.0),
 			 MIN_SIZE_shift, MIN_SIZE_mask);
 		break;
 	case GL_POINT_SIZE_MAX:
-		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 16.0),
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 8.0),
 			 MAX_SIZE_shift, MAX_SIZE_mask);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
