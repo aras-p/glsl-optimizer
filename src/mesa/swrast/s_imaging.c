@@ -42,11 +42,6 @@ _swrast_CopyColorTable( GLcontext *ctx,
    GLchan data[MAX_WIDTH][4];
    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
-
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
 
@@ -75,11 +70,6 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
 {
    GLchan data[MAX_WIDTH][4];
    struct gl_buffer_object *bufferSave;
-
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
 
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
@@ -111,11 +101,6 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
    GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
-
    swrast_render_start(ctx);
 
    /* read the data from framebuffer */
@@ -146,11 +131,6 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
    GLint i;
    struct gl_buffer_object *bufferSave;
-
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
 
    swrast_render_start(ctx);
    

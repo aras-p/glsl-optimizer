@@ -543,7 +543,10 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   /* Select buffer to read from */
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
+   }
+
    ctx->Driver.CopyColorTable( ctx, target, internalformat, x, y, width );
 }
 
@@ -555,6 +558,10 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
+   }
 
    ctx->Driver.CopyColorSubTable( ctx, target, start, x, y, width );
 }

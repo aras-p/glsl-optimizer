@@ -482,6 +482,10 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
       return;
    }
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
+   }
+
    ctx->Driver.CopyConvolutionFilter1D( ctx, target, 
 					internalFormat, x, y, width);
 }
@@ -512,6 +516,10 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(height)");
       return;
+   }
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
    }
 
    ctx->Driver.CopyConvolutionFilter2D( ctx, target, internalFormat, x, y, 
