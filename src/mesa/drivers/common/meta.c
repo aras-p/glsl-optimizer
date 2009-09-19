@@ -2459,11 +2459,6 @@ _mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
 {
    GLfloat *buf;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
-
    buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
