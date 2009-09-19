@@ -99,8 +99,8 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler,
 {
 	int i;
 
+	fp->wpos_attr = FRAG_ATTRIB_MAX;
 	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_WPOS)) {
-		fp->wpos_attr = FRAG_ATTRIB_MAX;
 		return;
 	}
 
@@ -110,6 +110,13 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler,
 			fp->wpos_attr = i;
 			break;
 		}
+	}
+
+	/* No free texcoord found, fall-back to software rendering */
+	if (fp->wpos_attr == FRAG_ATTRIB_MAX)
+	{
+		compiler->Base.Error = 1;
+		return;
 	}
 
 	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, fp->wpos_attr);
@@ -127,8 +134,8 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler, struct r
 	struct prog_src_register src;
 	int i;
 
+	fp->fog_attr = FRAG_ATTRIB_MAX;
 	if (!(compiler->Base.Program.InputsRead & FRAG_BIT_FOGC)) {
-		fp->fog_attr = FRAG_ATTRIB_MAX;
 		return;
 	}
 
@@ -138,6 +145,13 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler, struct r
 			fp->fog_attr = i;
 			break;
 		}
+	}
+
+	/* No free texcoord found, fall-back to software rendering */
+	if (fp->fog_attr == FRAG_ATTRIB_MAX)
+	{
+		compiler->Base.Error = 1;
+		return;
 	}
 
 	memset(&src, 0, sizeof(src));
