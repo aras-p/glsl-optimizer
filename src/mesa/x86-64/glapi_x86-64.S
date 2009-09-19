@@ -30393,6 +30393,7 @@ GL_PREFIX(_dispatch_stub_794):
 	.globl GL_PREFIX(RenderbufferStorage) ; .set GL_PREFIX(RenderbufferStorage), GL_PREFIX(RenderbufferStorageEXT)
 	.globl GL_PREFIX(BlitFramebuffer) ; .set GL_PREFIX(BlitFramebuffer), GL_PREFIX(_dispatch_stub_783)
 	.globl GL_PREFIX(FramebufferTextureLayer) ; .set GL_PREFIX(FramebufferTextureLayer), GL_PREFIX(FramebufferTextureLayerEXT)
+	.globl GL_PREFIX(ProvokingVertex) ; .set GL_PREFIX(ProvokingVertex), GL_PREFIX(ProvokingVertexEXT)
 
 #if defined(GLX_USE_TLS) && defined(__linux__)
 	.section ".note.ABI-tag", "a"

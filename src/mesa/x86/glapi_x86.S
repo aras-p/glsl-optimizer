@@ -1316,6 +1316,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(IsRenderbuffer, _gloffset_IsRenderbufferEXT, IsRenderbuffer@4, IsRenderbufferEXT, IsRenderbufferEXT@4)
 	GL_STUB_ALIAS(RenderbufferStorage, _gloffset_RenderbufferStorageEXT, RenderbufferStorage@16, RenderbufferStorageEXT, RenderbufferStorageEXT@16)
 	GL_STUB_ALIAS(FramebufferTextureLayer, _gloffset_FramebufferTextureLayerEXT, FramebufferTextureLayer@20, FramebufferTextureLayerEXT, FramebufferTextureLayerEXT@20)
+	GL_STUB_ALIAS(ProvokingVertex, _gloffset_ProvokingVertexEXT, ProvokingVertex@4, ProvokingVertexEXT, ProvokingVertexEXT@4)
 
 		GLOBL	GLNAME(gl_dispatch_functions_end)
 		HIDDEN(GLNAME(gl_dispatch_functions_end))

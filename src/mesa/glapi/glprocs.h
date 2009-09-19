@@ -1147,6 +1147,7 @@ static const char gl_string_table[] =
     "glRenderbufferStorage\0"
     "glBlitFramebuffer\0"
     "glFramebufferTextureLayer\0"
+    "glProvokingVertex\0"
     ;
 
 
@@ -2353,6 +2354,7 @@ static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET(19722, glRenderbufferStorageEXT, glRenderbufferStorageEXT, NULL, _gloffset_RenderbufferStorageEXT),
     NAME_FUNC_OFFSET(19744, gl_dispatch_stub_783, gl_dispatch_stub_783, NULL, _gloffset_BlitFramebufferEXT),
     NAME_FUNC_OFFSET(19762, glFramebufferTextureLayerEXT, glFramebufferTextureLayerEXT, NULL, _gloffset_FramebufferTextureLayerEXT),
+    NAME_FUNC_OFFSET(19788, glProvokingVertexEXT, glProvokingVertexEXT, NULL, _gloffset_ProvokingVertexEXT),
     NAME_FUNC_OFFSET(-1, NULL, NULL, NULL, 0)
 };
 

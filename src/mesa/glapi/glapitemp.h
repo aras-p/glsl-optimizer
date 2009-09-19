@@ -5677,6 +5677,11 @@ KEYWORD1 void KEYWORD2 NAME(ProvokingVertexEXT)(GLenum mode)
    DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertexEXT(0x%x);\n", mode));
 }
 
+KEYWORD1 void KEYWORD2 NAME(ProvokingVertex)(GLenum mode)
+{
+   DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertex(0x%x);\n", mode));
+}
+
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params);
 
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params)
@@ -6923,6 +6928,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(RenderbufferStorage),
    TABLE_ENTRY(BlitFramebuffer),
    TABLE_ENTRY(FramebufferTextureLayer),
+   TABLE_ENTRY(ProvokingVertex),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

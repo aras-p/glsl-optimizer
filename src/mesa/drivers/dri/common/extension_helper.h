@@ -4417,10 +4417,11 @@ static const char SpriteParameterivSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_provoking_vertex)
+#if defined(need_GL_EXT_provoking_vertex) || defined(need_GL_ARB_provoking_vertex)
 static const char ProvokingVertexEXT_names[] =
     "i\0" /* Parameter signature */
     "glProvokingVertexEXT\0"
+    "glProvokingVertex\0"
     "";
 #endif
 
@@ -5190,6 +5191,13 @@ static const struct dri_extension_function GL_ARB_occlusion_query_functions[] = 
 static const struct dri_extension_function GL_ARB_point_parameters_functions[] = {
     { PointParameterfEXT_names, PointParameterfEXT_remap_index, -1 },
     { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_provoking_vertex)
+static const struct dri_extension_function GL_ARB_provoking_vertex_functions[] = {
+    { ProvokingVertexEXT_names, ProvokingVertexEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
