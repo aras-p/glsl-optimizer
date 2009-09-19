@@ -36,6 +36,7 @@
 #if FEATURE_convolve
 #include "convolve.h"
 #endif
+#include "enums.h"
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "hash.h"
@@ -2131,6 +2132,13 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexImage1D %s %d %s %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat), width, border,
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
+
    internalFormat = override_internal_format(internalFormat, width, 1);
 
 #if FEATURE_convolve
@@ -2229,6 +2237,13 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexImage2D %s %d %s %d %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat), width, height,
+                  border, _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
 
    internalFormat = override_internal_format(internalFormat, width, height);
 
@@ -2346,6 +2361,13 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexImage3D %s %d %s %d %d %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat), width, height,
+                  depth, border, _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
+
    internalFormat = override_internal_format(internalFormat, width, height);
 
    if (target == GL_TEXTURE_3D ||
@@ -2455,6 +2477,12 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexSubImage1D %s %d %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  xoffset, width, _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
+
    if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
@@ -2514,6 +2542,13 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexSubImage2D %s %d %d %d %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  xoffset, yoffset, width, height,
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
 
    if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
@@ -2575,6 +2610,13 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexSubImage3D %s %d %d %d %d %d %d %d %s %s %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  xoffset, yoffset, zoffset, width, height, depth,
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type), pixels);
+
    if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
@@ -2630,6 +2672,12 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCopyTexImage1D %s %d %s %d %d %d %d\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  x, y, width, border);
 
    if (ctx->NewState & NEW_COPY_TEX_STATE)
       _mesa_update_state(ctx);
@@ -2695,6 +2743,12 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCopyTexImage2D %s %d %s %d %d %d %d %d\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  x, y, width, height, border);
 
    if (ctx->NewState & NEW_COPY_TEX_STATE)
       _mesa_update_state(ctx);
@@ -2764,6 +2818,11 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCopyTexSubImage1D %s %d %d %d %d %d\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  level, xoffset, x, y, width);
+
    if (ctx->NewState & NEW_COPY_TEX_STATE)
       _mesa_update_state(ctx);
 
@@ -2819,6 +2878,11 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCopyTexSubImage2D %s %d %d %d %d %d %d %d\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  level, xoffset, yoffset, x, y, width, height);
+
    if (ctx->NewState & NEW_COPY_TEX_STATE)
       _mesa_update_state(ctx);
 
@@ -2873,6 +2937,11 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCopyTexSubImage3D %s %d %d %d %d %d %d %d %d\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  level, xoffset, yoffset, zoffset, x, y, width, height);
 
    if (ctx->NewState & NEW_COPY_TEX_STATE)
       _mesa_update_state(ctx);
@@ -3122,6 +3191,12 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCompressedTexImage1DARB %s %d %s %d %d %d %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  width, border, imageSize, data);
+
    if (target == GL_TEXTURE_1D) {
       /* non-proxy target */
       struct gl_texture_unit *texUnit;
@@ -3215,6 +3290,12 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCompressedTexImage2DARB %s %d %s %d %d %d %d %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  width, height, border, imageSize, data);
 
    if (target == GL_TEXTURE_2D ||
        (ctx->Extensions.ARB_texture_cube_map &&
@@ -3314,6 +3395,12 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glCompressedTexImage3DARB %s %d %s %d %d %d %d %d %p\n",
+                  _mesa_lookup_enum_by_nr(target), level,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  width, height, depth, border, imageSize, data);
 
    if (target == GL_TEXTURE_3D) {
       /* non-proxy target */
