@@ -130,10 +130,10 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UpdateTexturePalette = NULL;
 
    /* imaging */
-   driver->CopyColorTable = _swrast_CopyColorTable;
-   driver->CopyColorSubTable = _swrast_CopyColorSubTable;
-   driver->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   driver->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+   driver->CopyColorTable = _mesa_meta_CopyColorTable;
+   driver->CopyColorSubTable = _mesa_meta_CopyColorSubTable;
+   driver->CopyConvolutionFilter1D = _mesa_meta_CopyConvolutionFilter1D;
+   driver->CopyConvolutionFilter2D = _mesa_meta_CopyConvolutionFilter2D;
 
    /* Vertex/fragment programs */
    driver->BindProgram = NULL;
