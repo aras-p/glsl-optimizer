@@ -823,10 +823,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_texstore.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_triangle.c"
 				>
 			</File>

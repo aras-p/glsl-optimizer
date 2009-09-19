@@ -125,7 +125,6 @@ SWRAST_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texcombine.c \
 	swrast/s_texfilter.c \
-	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 
