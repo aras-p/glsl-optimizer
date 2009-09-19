@@ -75,6 +75,11 @@ EXPORTS
 	_mesa_strcmp
 	_mesa_test_proxy_teximage
 	_mesa_Viewport
+	_mesa_meta_CopyTexImage1D
+	_mesa_meta_CopyTexImage2D
+	_mesa_meta_CopyTexSubImage1D
+	_mesa_meta_CopyTexSubImage2D
+	_mesa_meta_CopyTexSubImage3D
 	_swrast_Accum
 	_swrast_Bitmap
 	_swrast_CopyPixels
@@ -88,11 +93,6 @@ EXPORTS
 	_swrast_CopyColorTable
 	_swrast_CopyConvolutionFilter1D
 	_swrast_CopyConvolutionFilter2D
-	_swrast_copy_teximage1d
-	_swrast_copy_teximage2d
-	_swrast_copy_texsubimage1d
-	_swrast_copy_texsubimage2d
-	_swrast_copy_texsubimage3d
 	_swrast_CreateContext
 	_swrast_DestroyContext
 	_swrast_InvalidateState

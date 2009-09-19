@@ -943,6 +943,11 @@ EXPORTS
 	_mesa_update_framebuffer_visual
 	_mesa_use_program
 	_mesa_Viewport
+	_mesa_meta_CopyTexImage1D
+	_mesa_meta_CopyTexImage2D
+	_mesa_meta_CopyTexSubImage1D
+	_mesa_meta_CopyTexSubImage2D
+	_mesa_meta_CopyTexSubImage3D
 	_mesa_wait_query
 	_swrast_Accum
 	_swrast_Bitmap
@@ -957,11 +962,6 @@ EXPORTS
 	_swrast_CopyColorTable
 	_swrast_CopyConvolutionFilter1D
 	_swrast_CopyConvolutionFilter2D
-	_swrast_copy_teximage1d
-	_swrast_copy_teximage2d
-	_swrast_copy_texsubimage1d
-	_swrast_copy_texsubimage2d
-	_swrast_copy_texsubimage3d
 	_swrast_CreateContext
 	_swrast_DestroyContext
 	_swrast_exec_fragment_program
