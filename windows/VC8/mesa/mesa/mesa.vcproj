@@ -783,10 +783,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_imaging.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_lines.c"
 				>
 			</File>

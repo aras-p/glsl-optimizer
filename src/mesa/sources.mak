@@ -115,7 +115,6 @@ SWRAST_SOURCES = \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
 	swrast/s_fragprog.c \
-	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
