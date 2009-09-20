@@ -334,7 +334,11 @@ def generate(env):
         else:
             ccflags += ['-O3', '-g3']
         if env['profile']:
-            ccflags += ['-pg']
+            # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
+            ccflags += [
+                '-fno-omit-frame-pointer',
+                '-fno-optimize-sibling-calls',
+            ]
         if env['machine'] == 'x86':
             ccflags += [
                 '-m32',
