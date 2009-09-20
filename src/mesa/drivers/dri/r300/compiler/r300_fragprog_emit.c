@@ -352,7 +352,7 @@ void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	if (emit.current_node < 3) {
 		int shift = 3 - emit.current_node;
 		int i;
-		for(i = 0; i <= emit.current_node; ++i)
+		for(i = emit.current_node; i >= 0; --i)
 			code->code_addr[shift + i] = code->code_addr[i];
 		for(i = 0; i < shift; ++i)
 			code->code_addr[i] = 0;
