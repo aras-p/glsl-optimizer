@@ -658,8 +658,10 @@ st_TexImage(GLcontext * ctx,
 					   format, type,
 					   pixels, unpack, "glTexImage");
    }
-   if (!pixels)
-      return;
+
+   /* Note: we can't check for pixels==NULL until after we've allocated
+    * memory for the texture.
+    */
 
    /* See if we can do texture compression with a blit/render.
     */
@@ -670,6 +672,9 @@ st_TexImage(GLcontext * ctx,
                                    stImage->pt->format,
                                    stImage->pt->target,
                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+      if (!pixels)
+         goto done;
+
       if (compress_with_blit(ctx, target, level, 0, 0, 0, width, height, depth,
                              format, type, pixels, unpack, texImage)) {
          goto done;
@@ -710,6 +715,9 @@ st_TexImage(GLcontext * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
       return;
    }
+
+   if (!pixels)
+      goto done;
 
    DBG("Upload image %dx%dx%d row_len %x pitch %x\n",
        width, height, depth, width * texelBytes, dstRowStride);
@@ -753,9 +761,9 @@ st_TexImage(GLcontext * ctx,
       }
    }
 
+done:
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
-done:
    if (stImage->pt && texImage->Data) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
@@ -1096,7 +1104,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
-      return;
+      goto done;
    }
 
    src = (const GLubyte *) pixels;
@@ -1127,9 +1135,9 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       }
    }
 
+done:
    _mesa_unmap_teximage_pbo(ctx, packing);
 
-done:
    if (stImage->pt) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;

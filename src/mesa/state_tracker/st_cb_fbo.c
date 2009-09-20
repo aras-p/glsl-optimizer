@@ -258,6 +258,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
    strb->format = format;
+   init_renderbuffer_bits(strb, format);
    strb->software = sw;
    
    switch (format) {
