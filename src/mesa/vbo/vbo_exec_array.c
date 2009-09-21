@@ -678,6 +678,12 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                                           type, indices, basevertex ))
       return;
 
+   /* NOTE: It's important that 'end' is a reasonable value.
+    * in _tnl_draw_prims(), we use end to determine how many vertices
+    * to transform.  If it's too large, we can unnecessarily split prims
+    * or we can read/write out of memory in several different places!
+    */
+
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
