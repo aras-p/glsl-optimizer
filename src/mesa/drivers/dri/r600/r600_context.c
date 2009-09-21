@@ -330,16 +330,16 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_pixel_fog(ctx, GL_FALSE);
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-	/* currently bogus data */
+	/* 256 for reg-based consts, inline consts also supported */
 	ctx->Const.VertexProgram.MaxInstructions = 8192; /* in theory no limit */
 	ctx->Const.VertexProgram.MaxNativeInstructions = 8192;
 	ctx->Const.VertexProgram.MaxNativeAttribs = 160;
-	ctx->Const.VertexProgram.MaxTemps = 256; /* 256 for reg-based constants, inline consts also supported */
-	ctx->Const.VertexProgram.MaxNativeTemps = 256;
-	ctx->Const.VertexProgram.MaxNativeParameters = 256; /* ??? */
+	ctx->Const.VertexProgram.MaxTemps = 128;
+	ctx->Const.VertexProgram.MaxNativeTemps = 128;
+	ctx->Const.VertexProgram.MaxNativeParameters = 256;
 	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1; /* ??? */
 
-	ctx->Const.FragmentProgram.MaxNativeTemps = 256;
+	ctx->Const.FragmentProgram.MaxNativeTemps = 128;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 32;
 	ctx->Const.FragmentProgram.MaxNativeParameters = 256;
 	ctx->Const.FragmentProgram.MaxNativeAluInstructions = 8192;
