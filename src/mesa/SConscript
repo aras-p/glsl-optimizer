@@ -234,11 +234,16 @@ if env['platform'] != 'winddk':
 		'shader/slang/slang_utility.c',
 	]
 	
+	driver_sources = [
+		'drivers/common/meta.c'
+	]
+
 	mesa_sources = (
 		main_sources +
 		math_sources +
 		vbo_sources +
 		vf_sources +
+		driver_soruces + 
 		statetracker_sources +
 		shader_sources +
 		slang_sources
