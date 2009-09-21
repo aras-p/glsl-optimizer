@@ -681,11 +681,11 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
-                    "type 0x%x, indices=%p)\n"
+                    "type 0x%x, indices %p, base %d)\n"
                     "\tend is out of bounds (max=%u)  "
                     "Element Buffer %u (size %d)\n"
                     "\tThis should probably be fixed in the application.",
-                    start, end, count, type, indices,
+                    start, end, count, type, indices, basevertex,
                     ctx->Array.ArrayObj->_MaxElement - 1,
                     ctx->Array.ElementArrayBufferObj->Name,
                     ctx->Array.ElementArrayBufferObj->Size);
@@ -706,11 +706,12 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                                              ctx->Array.ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
             _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, "
-                          "count %d, type 0x%x, indices=%p)\n"
+                          "count %d, type 0x%x, indices %p, base %p)\n"
                           "\tindex=%u is out of bounds (max=%u)  "
                           "Element Buffer %u (size %d)\n"
                           "\tSkipping the glDrawRangeElements() call",
-                          start, end, count, type, indices, max,
+                          start, end, count, type, indices, basevertex,
+                          max,
                           ctx->Array.ArrayObj->_MaxElement - 1,
                           ctx->Array.ElementArrayBufferObj->Name,
                           ctx->Array.ElementArrayBufferObj->Size);
