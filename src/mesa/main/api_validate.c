@@ -54,10 +54,10 @@ index_bytes(GLenum type, GLsizei count)
 /**
  * Find the max index in the given element/index buffer
  */
-static GLuint
-max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
-                 const void *indices,
-                 struct gl_buffer_object *elementBuf)
+GLuint
+_mesa_max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
+                       const void *indices,
+                       struct gl_buffer_object *elementBuf)
 {
    const GLubyte *map = NULL;
    GLuint max = 0;
@@ -179,8 +179,8 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 
    if (ctx->Const.CheckArrayBounds) {
       /* find max array index */
-      GLuint max = max_buffer_index(ctx, count, type, indices,
-                                    ctx->Array.ElementArrayBufferObj);
+      GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
+                                          ctx->Array.ElementArrayBufferObj);
       if (max >= ctx->Array.ArrayObj->_MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
          _mesa_warning(ctx, "glDrawElements() index=%u is "
@@ -251,8 +251,8 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    }
 
    if (ctx->Const.CheckArrayBounds) {
-      GLuint max = max_buffer_index(ctx, count, type, indices,
-                                    ctx->Array.ElementArrayBufferObj);
+      GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
+                                          ctx->Array.ElementArrayBufferObj);
       if (max >= ctx->Array.ArrayObj->_MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
          return GL_FALSE;

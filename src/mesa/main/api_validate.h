@@ -30,6 +30,12 @@
 
 #include "mtypes.h"
 
+
+extern GLuint
+_mesa_max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
+                       const void *indices,
+                       struct gl_buffer_object *elementBuf);
+
 extern GLboolean
 _mesa_validate_DrawArrays(GLcontext *ctx,
 			  GLenum mode, GLint start, GLsizei count);
