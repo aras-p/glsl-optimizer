@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "vblank.h"
 #include "drirenderbuffer.h"
+#include "drivers/common/meta.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
@@ -208,6 +209,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 
 	meta_init_metaops(ctx, &radeon->meta);
 
+	_mesa_meta_init(ctx);
+
 	/* DRI fields */
 	radeon->dri.context = driContextPriv;
 	radeon->dri.screen = sPriv;
@@ -302,6 +305,8 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
 
 	assert(radeon);
+
+	_mesa_meta_free(radeon->glCtx);
 
 	if (radeon == current) {
 		radeon_firevertices(radeon);

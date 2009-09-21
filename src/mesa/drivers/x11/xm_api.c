@@ -79,6 +79,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 
 /**
  * Global X driver lock
@@ -1647,6 +1648,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_register_swrast_functions( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
 
+   if (TEST_META_FUNCS)
+      _mesa_meta_init(mesaCtx);
+
    return c;
 }
 
@@ -1660,6 +1664,9 @@ void XMesaDestroyContext( XMesaContext c )
 #ifdef FX
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
 #endif
+
+   if (TEST_META_FUNCS)
+      _mesa_meta_free( mesaCtx );
 
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );

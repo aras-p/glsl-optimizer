@@ -149,7 +149,6 @@
 #include "version.h"
 #include "viewport.h"
 #include "vtxfmt.h"
-#include "drivers/common/meta.h"
 #include "glapi/glthread.h"
 #include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
@@ -927,8 +926,6 @@ _mesa_initialize_context(GLcontext *ctx,
    _mesa_initialize_context_extra(ctx);
 #endif
 
-   _mesa_meta_init(ctx);
-
    ctx->FirstTimeCurrent = GL_TRUE;
 
    return GL_TRUE;
@@ -993,8 +990,6 @@ _mesa_free_context_data( GLcontext *ctx )
        */
       _mesa_make_current(ctx, NULL, NULL);
    }
-
-   _mesa_meta_free(ctx);
 
    /* unreference WinSysDraw/Read buffers */
    _mesa_reference_framebuffer(&ctx->WinSysDrawBuffer, NULL);
