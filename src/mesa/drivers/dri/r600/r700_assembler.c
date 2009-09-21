@@ -2024,7 +2024,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             return GL_FALSE;
         }
    
-        if (pAsm->D.dst.math == 0) 
+        if (uNumSrc > 1) 
         {            
             // Process source 1            
             current_source_index = 1;
@@ -2880,6 +2880,11 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
     /* dst.y = max(src.x, 0.0) */
     pAsm->D.dst.opcode   = SQ_OP2_INST_MAX;
     pAsm->D.dst.rtype    = dstType;
@@ -2891,11 +2896,6 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_X;
-    pAsm->S[0].src.swizzley = SQ_SEL_X;
-    pAsm->S[0].src.swizzlez = SQ_SEL_X;
-    pAsm->S[0].src.swizzlew = SQ_SEL_X;
     pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
     pAsm->S[1].src.reg   = tmp;
     setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
@@ -2909,34 +2909,47 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    /* before: dst.w = log(src.y)
-     * after : dst.x = log(src.y)
-     * why change dest register is that dst.w has been initialized as 1 before
-     */
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
+    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y);
+
+    /* dst.z = log(src.y) */
     pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
     pAsm->D.dst.math     = 1;
     pAsm->D.dst.rtype    = dstType;
     pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 1;
+    pAsm->D.dst.writex   = 0;
     pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
+    pAsm->D.dst.writez   = 1;
     pAsm->D.dst.writew   = 0;
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_Y;
-    pAsm->S[0].src.swizzley = SQ_SEL_Y;
-    pAsm->S[0].src.swizzlez = SQ_SEL_Y;
-    pAsm->S[0].src.swizzlew = SQ_SEL_Y;
     if( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }
 
-    /* before: tmp.x = amd MUL_LIT(src.w, dst.w, src.x ) */
-    /* after : tmp.x = amd MUL_LIT(src.w, dst.x, src.x ) */
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == assemble_src(pAsm, 0, 2) )
+    {
+        return GL_FALSE;
+    }
+
+    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_W, SQ_SEL_W, SQ_SEL_W, SQ_SEL_W);
+
+    swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
+
+    /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
     pAsm->D.dst.opcode   = SQ_OP3_INST_MUL_LIT;
+    pAsm->D.dst.math     = 1;
     pAsm->D.dst.op3      = 1;
     pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
     pAsm->D.dst.reg      = tmp;
@@ -2948,29 +2961,19 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_W;
-    pAsm->S[0].src.swizzley = SQ_SEL_W;
-    pAsm->S[0].src.swizzlez = SQ_SEL_W;
-    pAsm->S[0].src.swizzlew = SQ_SEL_W;
 
     pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
     pAsm->S[1].src.reg   = dstReg;
     setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
     noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_X;
-    pAsm->S[1].src.swizzley = SQ_SEL_X;
-    pAsm->S[1].src.swizzlez = SQ_SEL_X;
-    pAsm->S[1].src.swizzlew = SQ_SEL_X;
+    pAsm->S[1].src.swizzlex = SQ_SEL_Z;
+    pAsm->S[1].src.swizzley = SQ_SEL_Z;
+    pAsm->S[1].src.swizzlez = SQ_SEL_Z;
+    pAsm->S[1].src.swizzlew = SQ_SEL_Z;
 
     pAsm->S[2].src.rtype = srcType;
     pAsm->S[2].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[2].src));
-    pAsm->S[2].src.swizzlex = SQ_SEL_X;
-    pAsm->S[2].src.swizzley = SQ_SEL_X;
-    pAsm->S[2].src.swizzlez = SQ_SEL_X;
-    pAsm->S[2].src.swizzlew = SQ_SEL_X;
 
     if( GL_FALSE == next_ins(pAsm) )
     {
