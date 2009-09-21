@@ -15,6 +15,7 @@ LDLIBS = $(LIBS)
 
 PROG_SOURCES = \
 	drawoverhead.c \
+	fill.c \
 	teximage.c \
 	vbo.c \
 	vertexrate.c \
