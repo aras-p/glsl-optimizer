@@ -241,31 +241,31 @@ PerfDraw(void)
 
    rate = PerfMeasureRate(DrawImmediate);
    rate *= NumVerts;
-   perf_printf("  Immediate mode: %.1f verts/sec\n", rate);
+   perf_printf("  Immediate mode: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawArraysMem);
    rate *= NumVerts;
-   perf_printf("  glDrawArrays: %.1f verts/sec\n", rate);
+   perf_printf("  glDrawArrays: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawArraysVBO);
    rate *= NumVerts;
-   perf_printf("  VBO glDrawArrays: %.1f verts/sec\n", rate);
+   perf_printf("  VBO glDrawArrays: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawElementsMem);
    rate *= NumVerts;
-   perf_printf("  glDrawElements: %.1f verts/sec\n", rate);
+   perf_printf("  glDrawElements: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawElementsBO);
    rate *= NumVerts;
-   perf_printf("  VBO glDrawElements: %.1f verts/sec\n", rate);
+   perf_printf("  VBO glDrawElements: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawRangeElementsMem);
    rate *= NumVerts;
-   perf_printf("  glDrawRangeElements: %.1f verts/sec\n", rate);
+   perf_printf("  glDrawRangeElements: %s verts/sec\n", PerfHumanFloat(rate));
 
    rate = PerfMeasureRate(DrawRangeElementsBO);
    rate *= NumVerts;
-   perf_printf("  VBO glDrawRangeElements: %.1f verts/sec\n", rate);
+   perf_printf("  VBO glDrawRangeElements: %s verts/sec\n", PerfHumanFloat(rate));
 
    exit(0);
 }
