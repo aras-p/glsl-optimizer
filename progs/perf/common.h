@@ -30,6 +30,8 @@ typedef void (*PerfRateFunc)(unsigned count);
 extern double
 PerfMeasureRate(PerfRateFunc f);
 
+const char *
+PerfHumanFloat( double d );
 
 extern void
 perf_printf(const char *format, ...);
