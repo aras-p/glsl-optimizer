@@ -511,23 +511,23 @@ static void sincos_constants(struct radeon_compiler* c, GLuint *constants)
  * MAD dest, tmp.y, weight, tmp.x
  */
 static void sin_approx(
-	struct radeon_compiler* c, struct rc_instruction * after,
+	struct radeon_compiler* c, struct rc_instruction * before,
 	struct prog_dst_register dst, struct prog_src_register src, const GLuint* constants)
 {
 	GLuint tempreg = rc_find_free_temporary(c);
 
-	emit2(c, after->Prev, OPCODE_MUL, 0, dstregtmpmask(tempreg, WRITEMASK_XY),
+	emit2(c, before->Prev, OPCODE_MUL, 0, dstregtmpmask(tempreg, WRITEMASK_XY),
 		swizzle(src, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
 		srcreg(PROGRAM_CONSTANT, constants[0]));
-	emit3(c, after->Prev, OPCODE_MAD, 0, dstregtmpmask(tempreg, WRITEMASK_X),
+	emit3(c, before->Prev, OPCODE_MAD, 0, dstregtmpmask(tempreg, WRITEMASK_X),
 		swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
 		absolute(swizzle(src, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)),
 		swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X));
-	emit3(c, after->Prev, OPCODE_MAD, 0, dstregtmpmask(tempreg, WRITEMASK_Y),
+	emit3(c, before->Prev, OPCODE_MAD, 0, dstregtmpmask(tempreg, WRITEMASK_Y),
 		swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
 		absolute(swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)),
 		negate(swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)));
-	emit3(c, after->Prev, OPCODE_MAD, 0, dst,
+	emit3(c, before->Prev, OPCODE_MAD, 0, dst,
 		swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
 		swizzle(srcreg(PROGRAM_CONSTANT, constants[0]), SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
 		swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X));
@@ -567,7 +567,7 @@ GLboolean radeonTransformTrigSimple(struct radeon_compiler* c,
 			swizzle(srcreg(PROGRAM_CONSTANT, constants[1]), SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
 			negate(swizzle(srcreg(PROGRAM_CONSTANT, constants[0]), SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z)));
 
-		sin_approx(c, inst->Prev, inst->I.DstReg,
+		sin_approx(c, inst, inst->I.DstReg,
 			swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
 			constants);
 	} else if (inst->I.Opcode == OPCODE_SIN) {
@@ -582,7 +582,7 @@ GLboolean radeonTransformTrigSimple(struct radeon_compiler* c,
 			swizzle(srcreg(PROGRAM_CONSTANT, constants[1]), SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
 			negate(swizzle(srcreg(PROGRAM_CONSTANT, constants[0]), SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z)));
 
-		sin_approx(c, inst->Prev, inst->I.DstReg,
+		sin_approx(c, inst, inst->I.DstReg,
 			swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
 			constants);
 	} else {
@@ -600,12 +600,12 @@ GLboolean radeonTransformTrigSimple(struct radeon_compiler* c,
 		struct prog_dst_register dst = inst->I.DstReg;
 
 		dst.WriteMask = inst->I.DstReg.WriteMask & WRITEMASK_X;
-		sin_approx(c, inst->Prev, dst,
+		sin_approx(c, inst, dst,
 			swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
 			constants);
 
 		dst.WriteMask = inst->I.DstReg.WriteMask & WRITEMASK_Y;
-		sin_approx(c, inst->Prev, dst,
+		sin_approx(c, inst, dst,
 			swizzle(srcreg(PROGRAM_TEMPORARY, tempreg), SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
 			constants);
 	}

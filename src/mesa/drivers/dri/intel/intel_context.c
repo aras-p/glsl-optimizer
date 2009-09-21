@@ -507,7 +507,8 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
       if (screen->dri2.loader &&
           (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL)) {
+	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
+          intel->driDrawable && intel->driDrawable->loaderPrivate) {
 	 (*screen->dri2.loader->flushFrontBuffer)(intel->driDrawable,
 						  intel->driDrawable->loaderPrivate);
 
