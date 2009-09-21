@@ -1148,6 +1148,11 @@ yes)
         if test "$tracker" = egl && test "x$enable_egl" != xyes; then
             AC_MSG_ERROR([cannot build egl state tracker without EGL library])
         fi
+        if test "$tracker" = xorg; then
+	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
+                  HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71"
+                  HAVE_XEXTPROTO_71="no")
+	fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
