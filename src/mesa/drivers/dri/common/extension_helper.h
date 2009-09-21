@@ -316,6 +316,13 @@ static const char CombinerOutputNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_NV_vertex_program)
+static const char VertexAttribs3fvNV_names[] =
+    "iip\0" /* Parameter signature */
+    "glVertexAttribs3fvNV\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_shader_objects)
 static const char Uniform2fARB_names[] =
     "iff\0" /* Parameter signature */
@@ -572,6 +579,13 @@ static const char ImageTransformParameterfHP_names[] =
 static const char MatrixIndexusvARB_names[] =
     "ip\0" /* Parameter signature */
     "glMatrixIndexusvARB\0"
+    "";
+#endif
+
+#if defined(need_GL_ARB_draw_elements_base_vertex)
+static const char DrawElementsBaseVertex_names[] =
+    "iiipi\0" /* Parameter signature */
+    "glDrawElementsBaseVertex\0"
     "";
 #endif
 
@@ -970,10 +984,10 @@ static const char GlobalAlphaFactordSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_NV_vertex_program)
-static const char VertexAttribs3fvNV_names[] =
+#if defined(need_GL_NV_register_combiners)
+static const char GetFinalCombinerInputParameterfvNV_names[] =
     "iip\0" /* Parameter signature */
-    "glVertexAttribs3fvNV\0"
+    "glGetFinalCombinerInputParameterfvNV\0"
     "";
 #endif
 
@@ -3918,6 +3932,13 @@ static const char MapBufferARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_draw_elements_base_vertex)
+static const char MultiDrawElementsBaseVertex_names[] =
+    "ipipip\0" /* Parameter signature */
+    "glMultiDrawElementsBaseVertex\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_coordinate_frame)
 static const char Binormal3svEXT_names[] =
     "p\0" /* Parameter signature */
@@ -4396,10 +4417,11 @@ static const char SpriteParameterivSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_provoking_vertex)
+#if defined(need_GL_EXT_provoking_vertex) || defined(need_GL_ARB_provoking_vertex)
 static const char ProvokingVertexEXT_names[] =
     "i\0" /* Parameter signature */
     "glProvokingVertexEXT\0"
+    "glProvokingVertex\0"
     "";
 #endif
 
@@ -4554,10 +4576,10 @@ static const char UniformMatrix3x4fv_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_coordinate_frame)
-static const char Binormal3fvEXT_names[] =
-    "p\0" /* Parameter signature */
-    "glBinormal3fvEXT\0"
+#if defined(need_GL_ARB_draw_elements_base_vertex)
+static const char DrawRangeElementsBaseVertex_names[] =
+    "iiiiipi\0" /* Parameter signature */
+    "glDrawRangeElementsBaseVertex\0"
     "";
 #endif
 
@@ -4710,10 +4732,10 @@ static const char GetFragmentLightfvSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_NV_register_combiners)
-static const char GetFinalCombinerInputParameterfvNV_names[] =
-    "iip\0" /* Parameter signature */
-    "glGetFinalCombinerInputParameterfvNV\0"
+#if defined(need_GL_EXT_coordinate_frame)
+static const char Binormal3fvEXT_names[] =
+    "p\0" /* Parameter signature */
+    "glBinormal3fvEXT\0"
     "";
 #endif
 
@@ -5090,6 +5112,15 @@ static const struct dri_extension_function GL_ARB_draw_buffers_functions[] = {
 };
 #endif
 
+#if defined(need_GL_ARB_draw_elements_base_vertex)
+static const struct dri_extension_function GL_ARB_draw_elements_base_vertex_functions[] = {
+    { DrawElementsBaseVertex_names, DrawElementsBaseVertex_remap_index, -1 },
+    { MultiDrawElementsBaseVertex_names, MultiDrawElementsBaseVertex_remap_index, -1 },
+    { DrawRangeElementsBaseVertex_names, DrawRangeElementsBaseVertex_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
 #if defined(need_GL_ARB_framebuffer_object)
 static const struct dri_extension_function GL_ARB_framebuffer_object_functions[] = {
     { BlitFramebufferEXT_names, BlitFramebufferEXT_remap_index, -1 },
@@ -5160,6 +5191,13 @@ static const struct dri_extension_function GL_ARB_occlusion_query_functions[] = 
 static const struct dri_extension_function GL_ARB_point_parameters_functions[] = {
     { PointParameterfEXT_names, PointParameterfEXT_remap_index, -1 },
     { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_provoking_vertex)
+static const struct dri_extension_function GL_ARB_provoking_vertex_functions[] = {
+    { ProvokingVertexEXT_names, ProvokingVertexEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5520,8 +5558,8 @@ static const struct dri_extension_function GL_EXT_coordinate_frame_functions[] =
     { Binormal3dvEXT_names, Binormal3dvEXT_remap_index, -1 },
     { Tangent3iEXT_names, Tangent3iEXT_remap_index, -1 },
     { Tangent3bvEXT_names, Tangent3bvEXT_remap_index, -1 },
-    { Binormal3fvEXT_names, Binormal3fvEXT_remap_index, -1 },
     { Tangent3bEXT_names, Tangent3bEXT_remap_index, -1 },
+    { Binormal3fvEXT_names, Binormal3fvEXT_remap_index, -1 },
     { BinormalPointerEXT_names, BinormalPointerEXT_remap_index, -1 },
     { Tangent3svEXT_names, Tangent3svEXT_remap_index, -1 },
     { Binormal3bEXT_names, Binormal3bEXT_remap_index, -1 },
@@ -5963,6 +6001,7 @@ static const struct dri_extension_function GL_NV_point_sprite_functions[] = {
 static const struct dri_extension_function GL_NV_register_combiners_functions[] = {
     { CombinerOutputNV_names, CombinerOutputNV_remap_index, -1 },
     { CombinerParameterfvNV_names, CombinerParameterfvNV_remap_index, -1 },
+    { GetFinalCombinerInputParameterfvNV_names, GetFinalCombinerInputParameterfvNV_remap_index, -1 },
     { GetCombinerOutputParameterfvNV_names, GetCombinerOutputParameterfvNV_remap_index, -1 },
     { FinalCombinerInputNV_names, FinalCombinerInputNV_remap_index, -1 },
     { GetCombinerInputParameterfvNV_names, GetCombinerInputParameterfvNV_remap_index, -1 },
@@ -5971,7 +6010,6 @@ static const struct dri_extension_function GL_NV_register_combiners_functions[] 
     { GetFinalCombinerInputParameterivNV_names, GetFinalCombinerInputParameterivNV_remap_index, -1 },
     { CombinerInputNV_names, CombinerInputNV_remap_index, -1 },
     { CombinerParameterfNV_names, CombinerParameterfNV_remap_index, -1 },
-    { GetFinalCombinerInputParameterfvNV_names, GetFinalCombinerInputParameterfvNV_remap_index, -1 },
     { GetCombinerInputParameterivNV_names, GetCombinerInputParameterivNV_remap_index, -1 },
     { CombinerParameterivNV_names, CombinerParameterivNV_remap_index, -1 },
     { NULL, 0, 0 }
@@ -5998,6 +6036,7 @@ static const struct dri_extension_function GL_NV_vertex_array_range_functions[] 
 static const struct dri_extension_function GL_NV_vertex_program_functions[] = {
     { VertexAttrib4ubvNV_names, VertexAttrib4ubvNV_remap_index, -1 },
     { VertexAttrib4svNV_names, VertexAttrib4svNV_remap_index, -1 },
+    { VertexAttribs3fvNV_names, VertexAttribs3fvNV_remap_index, -1 },
     { VertexAttribs1dvNV_names, VertexAttribs1dvNV_remap_index, -1 },
     { VertexAttrib1fvNV_names, VertexAttrib1fvNV_remap_index, -1 },
     { VertexAttrib4fNV_names, VertexAttrib4fNV_remap_index, -1 },
@@ -6006,7 +6045,6 @@ static const struct dri_extension_function GL_NV_vertex_program_functions[] = {
     { VertexAttribs3dvNV_names, VertexAttribs3dvNV_remap_index, -1 },
     { VertexAttribs4fvNV_names, VertexAttribs4fvNV_remap_index, -1 },
     { VertexAttrib2sNV_names, VertexAttrib2sNV_remap_index, -1 },
-    { VertexAttribs3fvNV_names, VertexAttribs3fvNV_remap_index, -1 },
     { ProgramEnvParameter4fvARB_names, ProgramEnvParameter4fvARB_remap_index, -1 },
     { LoadProgramNV_names, LoadProgramNV_remap_index, -1 },
     { VertexAttrib4fvNV_names, VertexAttrib4fvNV_remap_index, -1 },

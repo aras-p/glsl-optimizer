@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
+#include <X11/Xlibint.h>
 #include <pipe/p_context.h>
 #include <vl_display.h>
 #include <vl_screen.h>
@@ -137,6 +138,7 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 	struct vlScreen		*vl_scrn;
 	struct vlContext	*vl_ctx;
 	struct pipe_context	*pipe;
+	Display			*dpy = display;
 
 	assert(display);
 
@@ -176,6 +178,7 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 	context->port = port;
 	context->privData = vl_ctx;
 
+	SyncHandle();
 	return Success;
 }
 

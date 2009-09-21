@@ -225,11 +225,14 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
                            tc->clear_val);
 
             screen->transfer_unmap(screen, pt);
+
+            tile->status = LP_TILE_STATUS_UNDEFINED;
             break;
          }
 
          case LP_TILE_STATUS_DEFINED:
             lp_put_tile_rgba_soa(pt, x, y, tile->color);
+            tile->status = LP_TILE_STATUS_UNDEFINED;
             break;
          }
       }
@@ -257,7 +260,7 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
 
    case LP_TILE_STATUS_UNDEFINED:
       /* get new tile data from transfer */
-      lp_get_tile_rgba_soa(pt, x, y, tile->color);
+      lp_get_tile_rgba_soa(pt, x & ~(TILE_SIZE - 1), y & ~(TILE_SIZE - 1), tile->color);
       tile->status = LP_TILE_STATUS_DEFINED;
       break;
 

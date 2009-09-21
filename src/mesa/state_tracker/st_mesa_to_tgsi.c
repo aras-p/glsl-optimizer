@@ -27,834 +27,646 @@
 
 /*
  * \author
- * Michal Krol
+ * Michal Krol,
+ * Keith Whitwell
  */
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_build.h"
-#include "tgsi/tgsi_util.h"
-#include "tgsi/tgsi_dump.h"
-#include "tgsi/tgsi_sanity.h"
+#include "pipe/p_state.h"
+#include "tgsi/tgsi_ureg.h"
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+struct label {
+   unsigned branch_target;
+   unsigned token;
+};
+
+struct st_translate {
+   struct ureg_program *ureg;
+
+   struct ureg_dst temps[MAX_PROGRAM_TEMPS];
+   struct ureg_src *constants;
+   struct ureg_dst outputs[PIPE_MAX_SHADER_OUTPUTS];
+   struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
+   struct ureg_dst address[1];
+   struct ureg_src samplers[PIPE_MAX_SAMPLERS];
+
+   const GLuint *inputMapping;
+   const GLuint *outputMapping;
+
+   /* For every instruction that contains a label (eg CALL), keep
+    * details so that we can go back afterwards and emit the correct
+    * tgsi instruction number for each label.
+    */
+   struct label *labels;
+   unsigned labels_size;
+   unsigned labels_count;
+
+   /* Keep a record of the tgsi instruction number that each mesa
+    * instruction starts at, will be used to fix up labels after
+    * translation.
+    */
+   unsigned *insn;
+   unsigned insn_size;
+   unsigned insn_count;
+
+   unsigned procType;  /**< TGSI_PROCESSOR_VERTEX/FRAGMENT */
+
+   boolean error;
+};
+
+
+static unsigned *get_label( struct st_translate *t,
+                            unsigned branch_target )
+{
+   unsigned i;
+
+   if (t->labels_count + 1 >= t->labels_size) {
+      unsigned old_size = t->labels_size;
+      t->labels_size = 1 << (util_logbase2(t->labels_size) + 1);
+      t->labels = REALLOC( t->labels, 
+                           old_size * sizeof t->labels[0], 
+                           t->labels_size * sizeof t->labels[0] );
+      if (t->labels == NULL) {
+         static unsigned dummy;
+         t->error = TRUE;
+         return &dummy;
+      }
+   }
+
+   i = t->labels_count++;
+   t->labels[i].branch_target = branch_target;
+   return &t->labels[i].token;
+}
+
+
+static void set_insn_start( struct st_translate *t,
+                            unsigned start )
+{
+   if (t->insn_count + 1 >= t->insn_size) {
+      unsigned old_size = t->insn_size;
+      t->insn_size = 1 << (util_logbase2(t->insn_size) + 1);
+      t->insn = REALLOC( t->insn, 
+                         old_size * sizeof t->insn[0], 
+                         t->insn_size * sizeof t->insn[0] );
+      if (t->insn == NULL) {
+         t->error = TRUE;
+         return;
+      }
+   }
+
+   t->insn[t->insn_count++] = start;
+}
+
 
 /*
  * Map mesa register file to TGSI register file.
  */
-static GLuint
-map_register_file(
-   gl_register_file file,
-   GLuint index,
-   const GLuint immediateMapping[],
-   GLboolean indirectAccess )
+static struct ureg_dst
+dst_register( struct st_translate *t,
+              gl_register_file file,
+              GLuint index )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
-      return TGSI_FILE_NULL;
-   case PROGRAM_TEMPORARY:
-      return TGSI_FILE_TEMPORARY;
-   /*case PROGRAM_LOCAL_PARAM:*/
-   /*case PROGRAM_ENV_PARAM:*/
+      return ureg_dst_undef();
 
-      /* Because of the longstanding problem with mesa arb shaders
-       * where constants, immediates and state variables are all
-       * bundled together as PROGRAM_STATE_VAR, we can't tell from the
-       * mesa register file whether this is a CONSTANT or an
-       * IMMEDIATE, hence we need all the other information.
-       */
+   case PROGRAM_TEMPORARY:
+      if (ureg_dst_is_undef(t->temps[index]))
+         t->temps[index] = ureg_DECL_temporary( t->ureg );
+
+      return t->temps[index];
+
+   case PROGRAM_OUTPUT:
+      return t->outputs[t->outputMapping[index]];
+
+   case PROGRAM_ADDRESS:
+      return t->address[index];
+
+   default:
+      assert( 0 );
+      return ureg_dst_undef();
+   }
+}
+
+
+static struct ureg_src
+src_register( struct st_translate *t,
+              gl_register_file file,
+              GLuint index )
+{
+   switch( file ) {
+   case PROGRAM_UNDEFINED:
+      return ureg_src_undef();
+
+   case PROGRAM_TEMPORARY:
+      if (ureg_dst_is_undef(t->temps[index]))
+         t->temps[index] = ureg_DECL_temporary( t->ureg );
+      return ureg_src(t->temps[index]);
+
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      if (!indirectAccess && immediateMapping && immediateMapping[index] != ~0)
-         return TGSI_FILE_IMMEDIATE;
-      else
-	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
-      if (indirectAccess)
-         return TGSI_FILE_CONSTANT;
-      assert(immediateMapping[index] != ~0);
-      return TGSI_FILE_IMMEDIATE;
+      return t->constants[index];
+
    case PROGRAM_INPUT:
-      return TGSI_FILE_INPUT;
+      return t->inputs[t->inputMapping[index]];
+
    case PROGRAM_OUTPUT:
-      return TGSI_FILE_OUTPUT;
+      return ureg_src(t->outputs[t->outputMapping[index]]); /* not needed? */
+
    case PROGRAM_ADDRESS:
-      return TGSI_FILE_ADDRESS;
+      return ureg_src(t->address[index]);
+
    default:
       assert( 0 );
-      return TGSI_FILE_NULL;
+      return ureg_src_undef();
    }
 }
+
 
 /**
- * Map mesa register file index to TGSI index.
- * Take special care when processing input and output indices.
- * \param file  one of TGSI_FILE_x
- * \param index  the mesa register file index
- * \param inputMapping  maps Mesa input indexes to TGSI input indexes
- * \param outputMapping  maps Mesa output indexes to TGSI output indexes
- */
-static GLuint
-map_register_file_index(
-   GLuint procType,
-   GLuint file,
-   GLuint index,
-   GLuint *swizzle,
-   const GLuint inputMapping[],
-   const GLuint outputMapping[],
-   const GLuint immediateMapping[],
-   GLboolean indirectAccess )
-{
-   switch( file ) {
-   case TGSI_FILE_INPUT:
-      /* inputs are mapped according to the user-defined map */
-      return inputMapping[index];
-
-   case TGSI_FILE_OUTPUT:
-      return outputMapping[index];
-
-   case TGSI_FILE_IMMEDIATE:
-      if (indirectAccess)
-         return index;
-      assert(immediateMapping[index] != ~0);
-      return immediateMapping[index];
-
-   default:
-      return index;
-   }
-}
-
-/*
  * Map mesa texture target to TGSI texture target.
  */
-static GLuint
-map_texture_target(
-    GLuint textarget,
-    GLboolean shadow )
+static unsigned
+translate_texture_target( GLuint textarget,
+                          GLboolean shadow )
 {
+   if (shadow) {
+      switch( textarget ) {
+      case TEXTURE_1D_INDEX:   return TGSI_TEXTURE_SHADOW1D;
+      case TEXTURE_2D_INDEX:   return TGSI_TEXTURE_SHADOW2D;
+      case TEXTURE_RECT_INDEX: return TGSI_TEXTURE_SHADOWRECT;
+      default: break;
+      }
+   }
+
    switch( textarget ) {
-   case TEXTURE_1D_INDEX:
-      if (shadow)
-         return TGSI_TEXTURE_SHADOW1D;
-      else
-         return TGSI_TEXTURE_1D;
-   case TEXTURE_2D_INDEX:
-      if (shadow)
-         return TGSI_TEXTURE_SHADOW2D;
-      else
-         return TGSI_TEXTURE_2D;
-   case TEXTURE_3D_INDEX:
-      return TGSI_TEXTURE_3D;
-   case TEXTURE_CUBE_INDEX:
-      return TGSI_TEXTURE_CUBE;
-   case TEXTURE_RECT_INDEX:
-      if (shadow)
-         return TGSI_TEXTURE_SHADOWRECT;
-      else
-         return TGSI_TEXTURE_RECT;
+   case TEXTURE_1D_INDEX:   return TGSI_TEXTURE_1D;
+   case TEXTURE_2D_INDEX:   return TGSI_TEXTURE_2D;
+   case TEXTURE_3D_INDEX:   return TGSI_TEXTURE_3D;
+   case TEXTURE_CUBE_INDEX: return TGSI_TEXTURE_CUBE;
+   case TEXTURE_RECT_INDEX: return TGSI_TEXTURE_RECT;
    default:
       assert( 0 );
-   }
-
-   return TGSI_TEXTURE_1D;
-}
-
-static GLuint
-convert_sat(
-   GLuint sat )
-{
-   switch( sat ) {
-   case SATURATE_OFF:
-      return TGSI_SAT_NONE;
-   case SATURATE_ZERO_ONE:
-      return TGSI_SAT_ZERO_ONE;
-   case SATURATE_PLUS_MINUS_ONE:
-      return TGSI_SAT_MINUS_PLUS_ONE;
-   default:
-      assert( 0 );
-      return TGSI_SAT_NONE;
+      return TGSI_TEXTURE_1D;
    }
 }
 
-static GLuint
-convert_writemask(
-   GLuint writemask )
-{
-   assert( WRITEMASK_X == TGSI_WRITEMASK_X );
-   assert( WRITEMASK_Y == TGSI_WRITEMASK_Y );
-   assert( WRITEMASK_Z == TGSI_WRITEMASK_Z );
-   assert( WRITEMASK_W == TGSI_WRITEMASK_W );
-   assert( (writemask & ~TGSI_WRITEMASK_XYZW) == 0 );
 
-   return writemask;
+static struct ureg_dst
+translate_dst( struct st_translate *t,
+               const struct prog_dst_register *DstReg,
+               boolean saturate )
+{
+   struct ureg_dst dst = dst_register( t, 
+                                       DstReg->File,
+                                       DstReg->Index );
+
+   dst = ureg_writemask( dst, 
+                         DstReg->WriteMask );
+   
+   if (saturate)
+      dst = ureg_saturate( dst );
+
+   if (DstReg->RelAddr)
+      dst = ureg_dst_indirect( dst, ureg_src(t->address[0]) );
+
+   return dst;
 }
 
-static struct tgsi_full_immediate
-make_immediate(const float *value, uint size)
+
+static struct ureg_src
+translate_src( struct st_translate *t,
+               const struct prog_src_register *SrcReg )
 {
-   struct tgsi_full_immediate imm;
+   struct ureg_src src = src_register( t, SrcReg->File, SrcReg->Index );
+
+   src = ureg_swizzle( src,
+                       GET_SWZ( SrcReg->Swizzle, 0 ) & 0x3,
+                       GET_SWZ( SrcReg->Swizzle, 1 ) & 0x3,
+                       GET_SWZ( SrcReg->Swizzle, 2 ) & 0x3,
+                       GET_SWZ( SrcReg->Swizzle, 3 ) & 0x3);
+
+   if (SrcReg->Negate == NEGATE_XYZW)
+      src = ureg_negate(src);
+
+   if (SrcReg->Abs) 
+      src = ureg_abs(src);
+
+   if (SrcReg->RelAddr) 
+      src = ureg_src_indirect( src, ureg_src(t->address[0]));
+   
+   return src;
+}
+
+
+static struct ureg_src swizzle_4v( struct ureg_src src,
+                                   const unsigned *swz )
+{
+   return ureg_swizzle( src, swz[0], swz[1], swz[2], swz[3] );
+}
+
+
+/**
+ * Translate SWZ instructions into a single MAD.  EG:
+ *
+ *   SWZ dst, src.x-y10 
+ * 
+ * becomes:
+ *
+ *   MAD dst {1,-1,0,0}, src.xyxx, {0,0,1,0}
+ */
+static void emit_swz( struct st_translate *t,
+                      struct ureg_dst dst,
+                      const struct prog_src_register *SrcReg )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_src src = src_register( t, SrcReg->File, SrcReg->Index );
+
+   unsigned negate_mask =  SrcReg->Negate;
+
+   unsigned one_mask = ((GET_SWZ(SrcReg->Swizzle, 0) == SWIZZLE_ONE) << 0 |
+                        (GET_SWZ(SrcReg->Swizzle, 1) == SWIZZLE_ONE) << 1 |
+                        (GET_SWZ(SrcReg->Swizzle, 2) == SWIZZLE_ONE) << 2 |
+                        (GET_SWZ(SrcReg->Swizzle, 3) == SWIZZLE_ONE) << 3);
+
+   unsigned zero_mask = ((GET_SWZ(SrcReg->Swizzle, 0) == SWIZZLE_ZERO) << 0 |
+                         (GET_SWZ(SrcReg->Swizzle, 1) == SWIZZLE_ZERO) << 1 |
+                         (GET_SWZ(SrcReg->Swizzle, 2) == SWIZZLE_ZERO) << 2 |
+                         (GET_SWZ(SrcReg->Swizzle, 3) == SWIZZLE_ZERO) << 3);
+
+   unsigned negative_one_mask = one_mask & negate_mask;
+   unsigned positive_one_mask = one_mask & ~negate_mask;
+   
+   struct ureg_src imm;
    unsigned i;
+   unsigned mul_swizzle[4] = {0,0,0,0};
+   unsigned add_swizzle[4] = {0,0,0,0};
+   unsigned src_swizzle[4] = {0,0,0,0};
+   boolean need_add = FALSE;
+   boolean need_mul = FALSE;
 
-   imm = tgsi_default_full_immediate();
-   imm.Immediate.NrTokens += size;
-   imm.Immediate.DataType = TGSI_IMM_FLOAT32;
+   if (dst.WriteMask == 0)
+      return;
 
-   for (i = 0; i < size; i++)
-      imm.u[i].Float = value[i];
+   /* Is this just a MOV?
+    */
+   if (zero_mask == 0 &&
+       one_mask == 0 &&
+       (negate_mask == 0 || negate_mask == TGSI_WRITEMASK_XYZW)) 
+   {
+      ureg_MOV( ureg, dst, translate_src( t, SrcReg ));
+      return;
+   }
 
-   return imm;
+#define IMM_ZERO    0
+#define IMM_ONE     1
+#define IMM_NEG_ONE 2
+
+   imm = ureg_imm3f( ureg, 0, 1, -1 );
+
+   for (i = 0; i < 4; i++) {
+      unsigned bit = 1 << i;
+
+      if (dst.WriteMask & bit) {
+         if (positive_one_mask & bit) {
+            mul_swizzle[i] = IMM_ZERO;
+            add_swizzle[i] = IMM_ONE;
+            need_add = TRUE;
+         }
+         else if (negative_one_mask & bit) {
+            mul_swizzle[i] = IMM_ZERO;
+            add_swizzle[i] = IMM_NEG_ONE;
+            need_add = TRUE;
+         }
+         else if (zero_mask & bit) {
+            mul_swizzle[i] = IMM_ZERO;
+            add_swizzle[i] = IMM_ZERO;
+            need_add = TRUE;
+         }
+         else {
+            add_swizzle[i] = IMM_ZERO;
+            src_swizzle[i] = GET_SWZ(SrcReg->Swizzle, i);
+            need_mul = TRUE;
+            if (negate_mask & bit) {
+               mul_swizzle[i] = IMM_NEG_ONE;
+            }
+            else {
+               mul_swizzle[i] = IMM_ONE;
+            }
+         }
+      }
+   }
+
+   if (need_mul && need_add) {
+      ureg_MAD( ureg, 
+                dst,
+                swizzle_4v( src, src_swizzle ),
+                swizzle_4v( imm, mul_swizzle ),
+                swizzle_4v( imm, add_swizzle ) );
+   }
+   else if (need_mul) {
+      ureg_MUL( ureg, 
+                dst,
+                swizzle_4v( src, src_swizzle ),
+                swizzle_4v( imm, mul_swizzle ) );
+   }
+   else if (need_add) {
+      ureg_MOV( ureg, 
+                dst,
+                swizzle_4v( imm, add_swizzle ) );
+   }
+   else {
+      assert(0);
+   }
+
+#undef IMM_ZERO
+#undef IMM_ONE
+#undef IMM_NEG_ONE
 }
+
+
+
+static unsigned
+translate_opcode( unsigned op )
+{
+   switch( op ) {
+   case OPCODE_ARL:
+      return TGSI_OPCODE_ARL;
+   case OPCODE_ABS:
+      return TGSI_OPCODE_ABS;
+   case OPCODE_ADD:
+      return TGSI_OPCODE_ADD;
+   case OPCODE_BGNLOOP:
+      return TGSI_OPCODE_BGNLOOP;
+   case OPCODE_BGNSUB:
+      return TGSI_OPCODE_BGNSUB;
+   case OPCODE_BRA:
+      return TGSI_OPCODE_BRA;
+   case OPCODE_BRK:
+      return TGSI_OPCODE_BRK;
+   case OPCODE_CAL:
+      return TGSI_OPCODE_CAL;
+   case OPCODE_CMP:
+      return TGSI_OPCODE_CMP;
+   case OPCODE_CONT:
+      return TGSI_OPCODE_CONT;
+   case OPCODE_COS:
+      return TGSI_OPCODE_COS;
+   case OPCODE_DDX:
+      return TGSI_OPCODE_DDX;
+   case OPCODE_DDY:
+      return TGSI_OPCODE_DDY;
+   case OPCODE_DP2:
+      return TGSI_OPCODE_DP2;
+   case OPCODE_DP2A:
+      return TGSI_OPCODE_DP2A;
+   case OPCODE_DP3:
+      return TGSI_OPCODE_DP3;
+   case OPCODE_DP4:
+      return TGSI_OPCODE_DP4;
+   case OPCODE_DPH:
+      return TGSI_OPCODE_DPH;
+   case OPCODE_DST:
+      return TGSI_OPCODE_DST;
+   case OPCODE_ELSE:
+      return TGSI_OPCODE_ELSE;
+   case OPCODE_ENDIF:
+      return TGSI_OPCODE_ENDIF;
+   case OPCODE_ENDLOOP:
+      return TGSI_OPCODE_ENDLOOP;
+   case OPCODE_ENDSUB:
+      return TGSI_OPCODE_ENDSUB;
+   case OPCODE_EX2:
+      return TGSI_OPCODE_EX2;
+   case OPCODE_EXP:
+      return TGSI_OPCODE_EXP;
+   case OPCODE_FLR:
+      return TGSI_OPCODE_FLR;
+   case OPCODE_FRC:
+      return TGSI_OPCODE_FRC;
+   case OPCODE_IF:
+      return TGSI_OPCODE_IF;
+   case OPCODE_TRUNC:
+      return TGSI_OPCODE_TRUNC;
+   case OPCODE_KIL:
+      return TGSI_OPCODE_KIL;
+   case OPCODE_KIL_NV:
+      return TGSI_OPCODE_KILP;
+   case OPCODE_LG2:
+      return TGSI_OPCODE_LG2;
+   case OPCODE_LOG:
+      return TGSI_OPCODE_LOG;
+   case OPCODE_LIT:
+      return TGSI_OPCODE_LIT;
+   case OPCODE_LRP:
+      return TGSI_OPCODE_LRP;
+   case OPCODE_MAD:
+      return TGSI_OPCODE_MAD;
+   case OPCODE_MAX:
+      return TGSI_OPCODE_MAX;
+   case OPCODE_MIN:
+      return TGSI_OPCODE_MIN;
+   case OPCODE_MOV:
+      return TGSI_OPCODE_MOV;
+   case OPCODE_MUL:
+      return TGSI_OPCODE_MUL;
+   case OPCODE_NOISE1:
+      return TGSI_OPCODE_NOISE1;
+   case OPCODE_NOISE2:
+      return TGSI_OPCODE_NOISE2;
+   case OPCODE_NOISE3:
+      return TGSI_OPCODE_NOISE3;
+   case OPCODE_NOISE4:
+      return TGSI_OPCODE_NOISE4;
+   case OPCODE_NOP:
+      return TGSI_OPCODE_NOP;
+   case OPCODE_NRM3:
+      return TGSI_OPCODE_NRM;
+   case OPCODE_NRM4:
+      return TGSI_OPCODE_NRM4;
+   case OPCODE_POW:
+      return TGSI_OPCODE_POW;
+   case OPCODE_RCP:
+      return TGSI_OPCODE_RCP;
+   case OPCODE_RET:
+      return TGSI_OPCODE_RET;
+   case OPCODE_RSQ:
+      return TGSI_OPCODE_RSQ;
+   case OPCODE_SCS:
+      return TGSI_OPCODE_SCS;
+   case OPCODE_SEQ:
+      return TGSI_OPCODE_SEQ;
+   case OPCODE_SGE:
+      return TGSI_OPCODE_SGE;
+   case OPCODE_SGT:
+      return TGSI_OPCODE_SGT;
+   case OPCODE_SIN:
+      return TGSI_OPCODE_SIN;
+   case OPCODE_SLE:
+      return TGSI_OPCODE_SLE;
+   case OPCODE_SLT:
+      return TGSI_OPCODE_SLT;
+   case OPCODE_SNE:
+      return TGSI_OPCODE_SNE;
+   case OPCODE_SSG:
+      return TGSI_OPCODE_SSG;
+   case OPCODE_SUB:
+      return TGSI_OPCODE_SUB;
+   case OPCODE_SWZ:
+      return TGSI_OPCODE_SWZ;
+   case OPCODE_TEX:
+      return TGSI_OPCODE_TEX;
+   case OPCODE_TXB:
+      return TGSI_OPCODE_TXB;
+   case OPCODE_TXD:
+      return TGSI_OPCODE_TXD;
+   case OPCODE_TXL:
+      return TGSI_OPCODE_TXL;
+   case OPCODE_TXP:
+      return TGSI_OPCODE_TXP;
+   case OPCODE_XPD:
+      return TGSI_OPCODE_XPD;
+   case OPCODE_END:
+      return TGSI_OPCODE_END;
+   default:
+      assert( 0 );
+      return TGSI_OPCODE_NOP;
+   }
+}
+
 
 static void
 compile_instruction(
-   const struct prog_instruction *inst,
-   struct tgsi_full_instruction *fullinst,
-   const GLuint inputMapping[],
-   const GLuint outputMapping[],
-   const GLuint immediateMapping[],
-   GLboolean indirectAccess,
-   GLuint preamble_size,
-   GLuint procType,
-   GLboolean *insideSubroutine,
-   GLint wposTemp)
+   struct st_translate *t,
+   const struct prog_instruction *inst )
 {
+   struct ureg_program *ureg = t->ureg;
    GLuint i;
-   struct tgsi_full_dst_register *fulldst;
-   struct tgsi_full_src_register *fullsrc;
+   struct ureg_dst dst[1];
+   struct ureg_src src[4];
+   unsigned num_dst;
+   unsigned num_src;
 
-   *fullinst = tgsi_default_full_instruction();
+   num_dst = _mesa_num_inst_dst_regs( inst->Opcode );
+   num_src = _mesa_num_inst_src_regs( inst->Opcode );
 
-   fullinst->Instruction.Saturate = convert_sat( inst->SaturateMode );
-   fullinst->Instruction.NumDstRegs = _mesa_num_inst_dst_regs( inst->Opcode );
-   fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
+   if (num_dst) 
+      dst[0] = translate_dst( t, 
+                              &inst->DstReg,
+                              inst->SaturateMode );
 
-   fulldst = &fullinst->FullDstRegisters[0];
-   fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL, GL_FALSE );
-   fulldst->DstRegister.Index = map_register_file_index(
-      procType,
-      fulldst->DstRegister.File,
-      inst->DstReg.Index,
-      NULL,
-      inputMapping,
-      outputMapping,
-      NULL,
-      GL_FALSE );
-   fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
-   if (inst->DstReg.RelAddr) {
-      fulldst->DstRegister.Indirect = 1;
-      fulldst->DstRegisterInd.File = TGSI_FILE_ADDRESS;
-      fulldst->DstRegisterInd.Index = 0;
-   }
-
-   for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
-      GLuint j;
-      GLuint swizzle = inst->SrcReg[i].Swizzle;
-
-      fullsrc = &fullinst->FullSrcRegisters[i];
-
-      if (procType == TGSI_PROCESSOR_FRAGMENT &&
-          inst->SrcReg[i].File == PROGRAM_INPUT &&
-          inst->SrcReg[i].Index == FRAG_ATTRIB_WPOS) {
-         /* special case of INPUT[WPOS] */
-         fullsrc->SrcRegister.File = TGSI_FILE_TEMPORARY;
-         fullsrc->SrcRegister.Index = wposTemp;
-      }
-      else {
-         /* any other src register */
-         fullsrc->SrcRegister.File = map_register_file(
-            inst->SrcReg[i].File,
-            inst->SrcReg[i].Index,
-            immediateMapping,
-            indirectAccess );
-         fullsrc->SrcRegister.Index = map_register_file_index(
-            procType,
-            fullsrc->SrcRegister.File,
-            inst->SrcReg[i].Index,
-            &swizzle,
-            inputMapping,
-            outputMapping,
-            immediateMapping,
-            indirectAccess );
-      }
-
-      /* swizzle (ext swizzle also depends on negation) */
-      {
-         GLuint swz[4];
-         GLboolean extended = (inst->SrcReg[i].Negate != NEGATE_NONE &&
-                               inst->SrcReg[i].Negate != NEGATE_XYZW);
-         for( j = 0; j < 4; j++ ) {
-            swz[j] = GET_SWZ( swizzle, j );
-            if (swz[j] > SWIZZLE_W)
-               extended = GL_TRUE;
-         }
-         if (extended) {
-            for (j = 0; j < 4; j++) {
-               tgsi_util_set_src_register_extswizzle(&fullsrc->SrcRegisterExtSwz,
-                                                     swz[j], j);
-            }
-         }
-         else {
-            for (j = 0; j < 4; j++) {
-               tgsi_util_set_src_register_swizzle(&fullsrc->SrcRegister,
-                                                  swz[j], j);
-            }
-         }
-      }
-
-      if( inst->SrcReg[i].Negate == NEGATE_XYZW ) {
-         fullsrc->SrcRegister.Negate = 1;
-      }
-      else if( inst->SrcReg[i].Negate != NEGATE_NONE ) {
-         if( inst->SrcReg[i].Negate & NEGATE_X ) {
-            fullsrc->SrcRegisterExtSwz.NegateX = 1;
-         }
-         if( inst->SrcReg[i].Negate & NEGATE_Y ) {
-            fullsrc->SrcRegisterExtSwz.NegateY = 1;
-         }
-         if( inst->SrcReg[i].Negate & NEGATE_Z ) {
-            fullsrc->SrcRegisterExtSwz.NegateZ = 1;
-         }
-         if( inst->SrcReg[i].Negate & NEGATE_W ) {
-            fullsrc->SrcRegisterExtSwz.NegateW = 1;
-         }
-      }
-
-      if( inst->SrcReg[i].Abs ) {
-         fullsrc->SrcRegisterExtMod.Absolute = 1;
-      }
-
-      if( inst->SrcReg[i].RelAddr ) {
-         fullsrc->SrcRegister.Indirect = 1;
-
-         fullsrc->SrcRegisterInd.File = TGSI_FILE_ADDRESS;
-         fullsrc->SrcRegisterInd.Index = 0;
-      }
-   }
+   for (i = 0; i < num_src; i++) 
+      src[i] = translate_src( t, &inst->SrcReg[i] );
 
    switch( inst->Opcode ) {
-   case OPCODE_ARL:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ARL;
-      break;
-   case OPCODE_ABS:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ABS;
-      break;
-   case OPCODE_ADD:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ADD;
-      break;
-   case OPCODE_BGNLOOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNLOOP;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
-      break;
-   case OPCODE_BGNSUB:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
-      *insideSubroutine = GL_TRUE;
-      break;
-   case OPCODE_BRA:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BRA;
-      break;
-   case OPCODE_BRK:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BRK;
-      break;
-   case OPCODE_CAL:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_CAL;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
-      break;
-   case OPCODE_CMP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_CMP;
-      break;
-   case OPCODE_CONT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_CONT;
-      break;
-   case OPCODE_COS:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_COS;
-      break;
-   case OPCODE_DDX:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DDX;
-      break;
-   case OPCODE_DDY:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DDY;
-      break;
-   case OPCODE_DP2:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DP2;
-      break;
-   case OPCODE_DP2A:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DP2A;
-      break;
-   case OPCODE_DP3:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
-      break;
-   case OPCODE_DP4:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DP4;
-      break;
-   case OPCODE_DPH:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DPH;
-      break;
-   case OPCODE_DST:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DST;
-      break;
-   case OPCODE_ELSE:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ELSE;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
-      break;
-   case OPCODE_ENDIF:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDIF;
-      break;
-   case OPCODE_ENDLOOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDLOOP;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
-      break;
-   case OPCODE_ENDSUB:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;
-      *insideSubroutine = GL_FALSE;
-      break;
-   case OPCODE_EX2:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_EX2;
-      break;
-   case OPCODE_EXP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_EXP;
-      break;
-   case OPCODE_FLR:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_FLR;
-      break;
-   case OPCODE_FRC:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_FRC;
-      break;
-   case OPCODE_IF:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
-      break;
-   case OPCODE_TRUNC:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TRUNC;
-      break;
-   case OPCODE_KIL:
-      /* conditional */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_KIL;
-      break;
-   case OPCODE_KIL_NV:
-      /* predicated */
-      assert(inst->DstReg.CondMask == COND_TR);
-      fullinst->Instruction.Opcode = TGSI_OPCODE_KILP;
-      break;
-   case OPCODE_LG2:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_LG2;
-      break;
-   case OPCODE_LOG:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_LOG;
-      break;
-   case OPCODE_LIT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_LIT;
-      break;
-   case OPCODE_LRP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_LRP;
-      break;
-   case OPCODE_MAD:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_MAD;
-      break;
-   case OPCODE_MAX:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_MAX;
-      break;
-   case OPCODE_MIN:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_MIN;
-      break;
-   case OPCODE_MOV:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_MOV;
-      break;
-   case OPCODE_MUL:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_MUL;
-      break;
-   case OPCODE_NOISE1:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE1;
-      break;
-   case OPCODE_NOISE2:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE2;
-      break;
-   case OPCODE_NOISE3:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE3;
-      break;
-   case OPCODE_NOISE4:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE4;
-      break;
-   case OPCODE_NOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOP;
-      break;
-   case OPCODE_NRM3:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NRM;
-      break;
-   case OPCODE_NRM4:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NRM4;
-      break;
-   case OPCODE_POW:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_POW;
-      break;
-   case OPCODE_RCP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_RCP;
-      break;
-   case OPCODE_RET:
-      /* If RET is used inside main (not a real subroutine) we may want
-       * to execute END instead of RET.  TBD...
-       */
-      if (1 /*  *insideSubroutine */) {
-         fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
-      }
-      else {
-         /* inside main() pseudo-function */
-         fullinst->Instruction.Opcode = TGSI_OPCODE_END;
-      }
-      break;
-   case OPCODE_RSQ:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
-      break;
-   case OPCODE_SCS:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
-      fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XY;
-      break;
-   case OPCODE_SEQ:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SEQ;
-      break;
-   case OPCODE_SGE:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SGE;
-      break;
-   case OPCODE_SGT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SGT;
-      break;
-   case OPCODE_SIN:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SIN;
-      break;
-   case OPCODE_SLE:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SLE;
-      break;
-   case OPCODE_SLT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SLT;
-      break;
-   case OPCODE_SNE:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SNE;
-      break;
-   case OPCODE_SSG:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SSG;
-      break;
-   case OPCODE_SUB:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SUB;
-      break;
    case OPCODE_SWZ:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_SWZ;
-      break;
+      emit_swz( t, dst[0], &inst->SrcReg[0] );
+      return;
+
+   case OPCODE_BGNLOOP:
+   case OPCODE_CAL:
+   case OPCODE_ELSE:
+   case OPCODE_ENDLOOP:
+   case OPCODE_IF:
+      assert(num_dst == 0);
+      ureg_label_insn( ureg,
+                       translate_opcode( inst->Opcode ),
+                       src, num_src,
+                       get_label( t, inst->BranchTarget ));
+      return;
+
    case OPCODE_TEX:
-      /* ordinary texture lookup */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
-      fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture =
-         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
-      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
-      break;
    case OPCODE_TXB:
-      /* texture lookup with LOD bias */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TXB;
-      fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture =
-         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
-      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
-      break;
    case OPCODE_TXD:
-      /* texture lookup with explicit partial derivatives */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TXD;
-      fullinst->Instruction.NumSrcRegs = 4;
-      fullinst->InstructionExtTexture.Texture =
-         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
-      /* src[0] = coord, src[1] = d[strq]/dx, src[2] = d[strq]/dy */
-      fullinst->FullSrcRegisters[3].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[3].SrcRegister.Index = inst->TexSrcUnit;
-      break;
    case OPCODE_TXL:
-      /* texture lookup with explicit LOD */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TXL;
-      fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture =
-         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
-      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
-      break;
    case OPCODE_TXP:
-      /* texture lookup with divide by Q component */
-      /* convert to TEX w/ special flag for division */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TXP;
-      fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture =
-         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
-      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      src[num_src++] = t->samplers[inst->TexSrcUnit];
+      ureg_tex_insn( ureg,
+                     translate_opcode( inst->Opcode ),
+                     dst, num_dst, 
+                     translate_texture_target( inst->TexSrcTarget,
+                                               inst->TexShadow ),
+                     src, num_src );
+      return;
+
+   case OPCODE_SCS:
+      dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XY );
+      ureg_insn( ureg, 
+                 translate_opcode( inst->Opcode ), 
+                 dst, num_dst, 
+                 src, num_src );
       break;
+
    case OPCODE_XPD:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_XPD;
-      fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
+      dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XYZ );
+      ureg_insn( ureg, 
+                 translate_opcode( inst->Opcode ), 
+                 dst, num_dst, 
+                 src, num_src );
       break;
-   case OPCODE_END:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_END;
-      break;
+
    default:
-      assert( 0 );
+      ureg_insn( ureg, 
+                 translate_opcode( inst->Opcode ), 
+                 dst, num_dst, 
+                 src, num_src );
+      break;
    }
 }
-
-/**
- * \param usage_mask  bitfield of TGSI_WRITEMASK_{XYZW} tokens
- */
-static struct tgsi_full_declaration
-make_input_decl(
-   GLuint index,
-   GLboolean interpolate_info,
-   GLuint interpolate,
-   GLuint usage_mask,
-   GLboolean semantic_info,
-   GLuint semantic_name,
-   GLbitfield semantic_index,
-   GLbitfield input_flags)
-{
-   struct tgsi_full_declaration decl;
-
-   assert(semantic_name < TGSI_SEMANTIC_COUNT);
-
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   decl.Declaration.UsageMask = usage_mask;
-   decl.Declaration.Semantic = semantic_info;
-   decl.DeclarationRange.First = index;
-   decl.DeclarationRange.Last = index;
-   if (semantic_info) {
-      decl.Semantic.SemanticName = semantic_name;
-      decl.Semantic.SemanticIndex = semantic_index;
-   }
-   if (interpolate_info) {
-      decl.Declaration.Interpolate = interpolate;
-   }
-   if (input_flags & PROG_PARAM_BIT_CENTROID)
-      decl.Declaration.Centroid = 1;
-   if (input_flags & PROG_PARAM_BIT_INVARIANT)
-      decl.Declaration.Invariant = 1;
-
-   return decl;
-}
-
-/**
- * \param usage_mask  bitfield of TGSI_WRITEMASK_{XYZW} tokens
- */
-static struct tgsi_full_declaration
-make_output_decl(
-   GLuint index,
-   GLuint semantic_name,
-   GLuint semantic_index,
-   GLuint usage_mask,
-   GLbitfield output_flags)
-{
-   struct tgsi_full_declaration decl;
-
-   assert(semantic_name < TGSI_SEMANTIC_COUNT);
-
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.UsageMask = usage_mask;
-   decl.Declaration.Semantic = 1;
-   decl.DeclarationRange.First = index;
-   decl.DeclarationRange.Last = index;
-   decl.Semantic.SemanticName = semantic_name;
-   decl.Semantic.SemanticIndex = semantic_index;
-   if (output_flags & PROG_PARAM_BIT_CENTROID)
-      decl.Declaration.Centroid = 1;
-   if (output_flags & PROG_PARAM_BIT_INVARIANT)
-      decl.Declaration.Invariant = 1;
-
-   return decl;
-}
-
-
-static struct tgsi_full_declaration
-make_temp_decl(
-   GLuint start_index,
-   GLuint end_index )
-{
-   struct tgsi_full_declaration decl;
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_TEMPORARY;
-   decl.DeclarationRange.First = start_index;
-   decl.DeclarationRange.Last = end_index;
-   return decl;
-}
-
-static struct tgsi_full_declaration
-make_addr_decl(
-   GLuint start_index,
-   GLuint end_index )
-{
-   struct tgsi_full_declaration decl;
-
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_ADDRESS;
-   decl.DeclarationRange.First = start_index;
-   decl.DeclarationRange.Last = end_index;
-   return decl;
-}
-
-static struct tgsi_full_declaration
-make_sampler_decl(GLuint index)
-{
-   struct tgsi_full_declaration decl;
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.DeclarationRange.First = index;
-   decl.DeclarationRange.Last = index;
-   return decl;
-}
-
-/** Reference into a constant buffer */
-static struct tgsi_full_declaration
-make_constant_decl(GLuint first, GLuint last)
-{
-   struct tgsi_full_declaration decl;
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_CONSTANT;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
-   return decl;
-}
-
-
-
-/**
- * Find the temporaries which are used in the given program.
- */
-static void
-find_temporaries(const struct gl_program *program,
-                 GLboolean tempsUsed[MAX_PROGRAM_TEMPS])
-{
-   GLuint i, j;
-
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++)
-      tempsUsed[i] = GL_FALSE;
-
-   for (i = 0; i < program->NumInstructions; i++) {
-      const struct prog_instruction *inst = program->Instructions + i;
-      const GLuint n = _mesa_num_inst_src_regs( inst->Opcode );
-      for (j = 0; j < n; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_TEMPORARY)
-            tempsUsed[inst->SrcReg[j].Index] = GL_TRUE;
-         if (inst->DstReg.File == PROGRAM_TEMPORARY)
-            tempsUsed[inst->DstReg.Index] = GL_TRUE;
-      }
-   }
-}
-
-
-/**
- * Find an unused temporary in the tempsUsed array.
- */
-static int
-find_free_temporary(GLboolean tempsUsed[MAX_PROGRAM_TEMPS])
-{
-   int i;
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-      if (!tempsUsed[i]) {
-         tempsUsed[i] = GL_TRUE;
-         return i;
-      }
-   }
-   return -1;
-}
-
-
-/** helper for building simple TGSI instruction, one src register */
-static void
-build_tgsi_instruction1(struct tgsi_full_instruction *inst,
-                        int opcode,
-                        int dstFile, int dstIndex, int writemask,
-                        int srcFile1, int srcIndex1)
-{
-   *inst = tgsi_default_full_instruction();
-
-   inst->Instruction.Opcode = opcode;
-
-   inst->Instruction.NumDstRegs = 1;
-   inst->FullDstRegisters[0].DstRegister.File = dstFile;
-   inst->FullDstRegisters[0].DstRegister.Index = dstIndex;
-   inst->FullDstRegisters[0].DstRegister.WriteMask = writemask;
-
-   inst->Instruction.NumSrcRegs = 1;
-   inst->FullSrcRegisters[0].SrcRegister.File = srcFile1;
-   inst->FullSrcRegisters[0].SrcRegister.Index = srcIndex1;
-}
-
-
-/** helper for building simple TGSI instruction, two src registers */
-static void
-build_tgsi_instruction2(struct tgsi_full_instruction *inst,
-                        int opcode,
-                        int dstFile, int dstIndex, int writemask,
-                        int srcFile1, int srcIndex1,
-                        int srcFile2, int srcIndex2)
-{
-   *inst = tgsi_default_full_instruction();
-
-   inst->Instruction.Opcode = opcode;
-
-   inst->Instruction.NumDstRegs = 1;
-   inst->FullDstRegisters[0].DstRegister.File = dstFile;
-   inst->FullDstRegisters[0].DstRegister.Index = dstIndex;
-   inst->FullDstRegisters[0].DstRegister.WriteMask = writemask;
-
-   inst->Instruction.NumSrcRegs = 2;
-   inst->FullSrcRegisters[0].SrcRegister.File = srcFile1;
-   inst->FullSrcRegisters[0].SrcRegister.Index = srcIndex1;
-   inst->FullSrcRegisters[1].SrcRegister.File = srcFile2;
-   inst->FullSrcRegisters[1].SrcRegister.Index = srcIndex2;
-}
-
 
 
 /**
  * Emit the TGSI instructions for inverting the WPOS y coordinate.
  */
-static int
-emit_inverted_wpos(struct tgsi_token *tokens,
-                   int wpos_temp,
-                   int winsize_const,
-                   int wpos_input,
-                   struct tgsi_header *header, int maxTokens)
+static void
+emit_inverted_wpos( struct st_translate *t,
+                    const struct gl_program *program )
 {
-   struct tgsi_full_instruction fullinst;
-   int ti = 0;
+   struct ureg_program *ureg = t->ureg;
 
-   /* MOV wpos_temp.xzw, input[wpos]; */
-   build_tgsi_instruction1(&fullinst,
-                           TGSI_OPCODE_MOV,
-                           TGSI_FILE_TEMPORARY, wpos_temp, WRITEMASK_XZW,
-                           TGSI_FILE_INPUT, 0);
+   /* Fragment program uses fragment position input.
+    * Need to replace instances of INPUT[WPOS] with temp T
+    * where T = INPUT[WPOS] by y is inverted.
+    */
+   static const gl_state_index winSizeState[STATE_LENGTH]
+      = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0 };
+   
+   /* XXX: note we are modifying the incoming shader here!  Need to
+    * do this before emitting the constant decls below, or this
+    * will be missed:
+    */
+   unsigned winHeightConst = _mesa_add_state_reference(program->Parameters,
+                                                       winSizeState);
 
-   ti += tgsi_build_full_instruction(&fullinst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
+   struct ureg_src winsize = ureg_DECL_constant( ureg, winHeightConst );
+   struct ureg_dst wpos_temp = ureg_DECL_temporary( ureg );
+   struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
 
-   /* SUB wpos_temp.y, const[winsize_const] - input[wpos_input]; */
-   build_tgsi_instruction2(&fullinst,
-                           TGSI_OPCODE_SUB,
-                           TGSI_FILE_TEMPORARY, wpos_temp, WRITEMASK_Y,
-                           TGSI_FILE_CONSTANT, winsize_const,
-                           TGSI_FILE_INPUT, wpos_input);
+   /* MOV wpos_temp, input[wpos]
+    */
+   ureg_MOV( ureg, wpos_temp, wpos_input );
 
-   ti += tgsi_build_full_instruction(&fullinst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
+   /* SUB wpos_temp.y, winsize_const, wpos_input
+    */
+   ureg_SUB( ureg,
+             ureg_writemask(wpos_temp, TGSI_WRITEMASK_Y ),
+             winsize,
+             wpos_input);
 
-   return ti;
+   /* Use wpos_temp as position input from here on:
+    */
+   t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
 }
-
-
 
 
 /**
@@ -864,20 +676,19 @@ emit_inverted_wpos(struct tgsi_token *tokens,
  * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
  *                      input indexes
  * \param inputSemanticName  the TGSI_SEMANTIC flag for each input
- * \param inputSemanticIndex  the semantic index (ex: which texcoord) for each input
+ * \param inputSemanticIndex  the semantic index (ex: which texcoord) for
+ *                            each input
  * \param interpMode  the TGSI_INTERPOLATE_LINEAR/PERSP mode for each input
-
  * \param numOutputs  number of output registers used
  * \param outputMapping  maps Mesa fragment program outputs to TGSI
  *                       generic outputs
  * \param outputSemanticName  the TGSI_SEMANTIC flag for each output
- * \param outputSemanticIndex  the semantic index (ex: which texcoord) for each output
- * \param tokens  array to store translated tokens in
- * \param maxTokens  size of the tokens array
+ * \param outputSemanticIndex  the semantic index (ex: which texcoord) for
+ *                             each output
  *
- * \return number of tokens placed in 'tokens' buffer, or zero if error
+ * \return  array of translated tokens, caller's responsibility to free
  */
-GLuint
+const struct tgsi_token *
 st_translate_mesa_program(
    GLcontext *ctx,
    uint procType,
@@ -892,252 +703,124 @@ st_translate_mesa_program(
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
    const ubyte outputSemanticIndex[],
-   const GLbitfield outputFlags[],
-   struct tgsi_token *tokens,
-   GLuint maxTokens )
+   const GLbitfield outputFlags[] )
 {
-   GLuint i;
-   GLuint ti;  /* token index */
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   GLuint preamble_size = 0;
-   GLuint immediates[1000];
-   GLuint numImmediates = 0;
-   GLboolean insideSubroutine = GL_FALSE;
-   GLboolean indirectAccess = GL_FALSE;
-   GLboolean tempsUsed[MAX_PROGRAM_TEMPS + 1];
-   GLint wposTemp = -1, winHeightConst = -1;
+   struct st_translate translate, *t;
+   struct ureg_program *ureg;
+   const struct tgsi_token *tokens = NULL;
+   unsigned i;
 
-   assert(procType == TGSI_PROCESSOR_FRAGMENT ||
-          procType == TGSI_PROCESSOR_VERTEX);
+   t = &translate;
+   memset(t, 0, sizeof *t);
 
-   find_temporaries(program, tempsUsed);
+   t->procType = procType;
+   t->inputMapping = inputMapping;
+   t->outputMapping = outputMapping;
+   t->ureg = ureg_create( procType );
+   if (t->ureg == NULL)
+      return NULL;
 
-   if (procType == TGSI_PROCESSOR_FRAGMENT) {
-      if (program->InputsRead & FRAG_BIT_WPOS) {
-         /* Fragment program uses fragment position input.
-          * Need to replace instances of INPUT[WPOS] with temp T
-          * where T = INPUT[WPOS] by y is inverted.
-          */
-         static const gl_state_index winSizeState[STATE_LENGTH]
-            = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0 };
-         winHeightConst = _mesa_add_state_reference(program->Parameters,
-                                                    winSizeState);
-         wposTemp = find_free_temporary(tempsUsed);
-      }
-   }
+   ureg = t->ureg;
 
-
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
-
-   ti = 3;
+   /*_mesa_print_program(program);*/
 
    /*
     * Declare input attributes.
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < numInputs; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_input_decl(i,
-                                    GL_TRUE, interpMode[i],
-                                    TGSI_WRITEMASK_XYZW,
-                                    GL_TRUE, inputSemanticName[i],
-                                    inputSemanticIndex[i],
-                                    inputFlags[i]);
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
+         t->inputs[i] = ureg_DECL_fs_input(ureg,
+                                           inputSemanticName[i],
+                                           inputSemanticIndex[i],
+                                           interpMode[i]);
       }
-   }
-   else {
-      /* vertex prog */
-      /* XXX: this could probaby be merged with the clause above.
-       * the only difference is the semantic tags.
-       */
-      for (i = 0; i < numInputs; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_input_decl(i,
-                                    GL_FALSE, 0,
-                                    TGSI_WRITEMASK_XYZW,
-                                    GL_FALSE, 0, 0,
-                                    inputFlags[i]);
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-      }
-   }
 
-   /*
-    * Declare output attributes.
-    */
-   if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      if (program->InputsRead & FRAG_BIT_WPOS) {
+         /* Must do this after setting up t->inputs, and before
+          * emitting constant references, below:
+          */
+         emit_inverted_wpos( t, program );
+      }
+
+      /*
+       * Declare output attributes.
+       */
       for (i = 0; i < numOutputs; i++) {
-         struct tgsi_full_declaration fulldecl;
          switch (outputSemanticName[i]) {
          case TGSI_SEMANTIC_POSITION:
-            fulldecl = make_output_decl(i,
-                                        TGSI_SEMANTIC_POSITION, /* Z / Depth */
-                                        outputSemanticIndex[i],
-                                        TGSI_WRITEMASK_Z,
-                                        outputFlags[i]);
+            t->outputs[i] = ureg_DECL_output( ureg,
+                                              TGSI_SEMANTIC_POSITION, /* Z / Depth */
+                                              outputSemanticIndex[i] );
+
+            t->outputs[i] = ureg_writemask( t->outputs[i],
+                                            TGSI_WRITEMASK_Z );
             break;
          case TGSI_SEMANTIC_COLOR:
-            fulldecl = make_output_decl(i,
-                                        TGSI_SEMANTIC_COLOR,
-                                        outputSemanticIndex[i],
-                                        TGSI_WRITEMASK_XYZW,
-                                        outputFlags[i]);
+            t->outputs[i] = ureg_DECL_output( ureg,
+                                              TGSI_SEMANTIC_COLOR,
+                                              outputSemanticIndex[i] );
             break;
          default:
             assert(0);
             return 0;
          }
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
       }
    }
    else {
-      /* vertex prog */
-      for (i = 0; i < numOutputs; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_output_decl(i,
-                                     outputSemanticName[i],
-                                     outputSemanticIndex[i],
-                                     TGSI_WRITEMASK_XYZW,
-                                     outputFlags[i]);
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
+      for (i = 0; i < numInputs; i++) {
+         t->inputs[i] = ureg_DECL_vs_input(ureg, i);
       }
-   }
 
-   /* temporary decls */
-   {
-      GLboolean inside_range = GL_FALSE;
-      GLuint start_range = 0;
-
-      tempsUsed[MAX_PROGRAM_TEMPS] = GL_FALSE;
-      for (i = 0; i < MAX_PROGRAM_TEMPS + 1; i++) {
-         if (tempsUsed[i] && !inside_range) {
-            inside_range = GL_TRUE;
-            start_range = i;
-         }
-         else if (!tempsUsed[i] && inside_range) {
-            struct tgsi_full_declaration fulldecl;
-
-            inside_range = GL_FALSE;
-            fulldecl = make_temp_decl( start_range, i - 1 );
-            ti += tgsi_build_full_declaration(
-               &fulldecl,
-               &tokens[ti],
-               header,
-               maxTokens - ti );
-         }
+      for (i = 0; i < numOutputs; i++) {
+         t->outputs[i] = ureg_DECL_output( ureg,
+                                           outputSemanticName[i],
+                                           outputSemanticIndex[i] );
       }
    }
 
    /* Declare address register.
-   */
-   if (program->NumAddressRegs > 0) {
-      struct tgsi_full_declaration fulldecl;
-
-      assert( program->NumAddressRegs == 1 );
-
-      fulldecl = make_addr_decl( 0, 0 );
-      ti += tgsi_build_full_declaration(
-         &fulldecl,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-
-      indirectAccess = GL_TRUE;
-   }
-
-   /* immediates/literals */
-   memset(immediates, ~0, sizeof(immediates));
-
-   /* Emit immediates only when there is no address register in use.
-    * FIXME: Be smarter and recognize param arrays -- indirect addressing is
-    *        only valid within the referenced array.
     */
-   if (program->Parameters && !indirectAccess) {
-      for (i = 0; i < program->Parameters->NumParameters; i++) {
-         if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
-            struct tgsi_full_immediate fullimm;
-
-            fullimm = make_immediate( program->Parameters->ParameterValues[i], 4 );
-            ti += tgsi_build_full_immediate(
-               &fullimm,
-               &tokens[ti],
-               header,
-               maxTokens - ti );
-            immediates[i] = numImmediates;
-            numImmediates++;
-         }
-      }
+   if (program->NumAddressRegs > 0) {
+      assert( program->NumAddressRegs == 1 );
+      t->address[0] = ureg_DECL_address( ureg );
    }
 
-   /* constant buffer refs */
+
+   /* Emit constants and immediates.  Mesa uses a single index space
+    * for these, so we put all the translated regs in t->constants.
+    */
    if (program->Parameters) {
-      GLint start = -1, end = -1;
-
+      
+      t->constants = CALLOC( program->Parameters->NumParameters,
+                             sizeof t->constants[0] );
+      if (t->constants == NULL)
+         goto out;
+      
       for (i = 0; i < program->Parameters->NumParameters; i++) {
-         GLboolean emit = (i == program->Parameters->NumParameters - 1);
-         GLboolean matches;
-
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
          case PROGRAM_STATE_VAR:
          case PROGRAM_NAMED_PARAM:
          case PROGRAM_UNIFORM:
-            matches = GL_TRUE;
+            t->constants[i] = ureg_DECL_constant( ureg, i );
             break;
+
+            /* Emit immediates only when there is no address register
+             * in use.  FIXME: Be smarter and recognize param arrays:
+             * indirect addressing is only valid within the referenced
+             * array.
+             */
          case PROGRAM_CONSTANT:
-            matches = indirectAccess;
+            if (program->NumAddressRegs > 0) 
+               t->constants[i] = ureg_DECL_constant( ureg, i );
+            else
+               t->constants[i] = 
+                  ureg_DECL_immediate( ureg,
+                                       program->Parameters->ParameterValues[i],
+                                       4 );
             break;
          default:
-            matches = GL_FALSE;
-         }
-
-         if (matches) {
-            if (start == -1) {
-               /* begin a sequence */
-               start = i;
-               end = i;
-            }
-            else {
-               /* continue sequence */
-               end = i;
-            }
-         }
-         else {
-            if (start != -1) {
-               /* end of sequence */
-               emit = GL_TRUE;
-            }
-         }
-
-         if (emit && start >= 0) {
-            struct tgsi_full_declaration fulldecl;
-
-            fulldecl = make_constant_decl( start, end );
-            ti += tgsi_build_full_declaration(
-               &fulldecl,
-               &tokens[ti],
-               header,
-               maxTokens - ti );
-            start = end = -1;
+            break;
          }
       }
    }
@@ -1145,58 +828,44 @@ st_translate_mesa_program(
    /* texture samplers */
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (program->SamplersUsed & (1 << i)) {
-         struct tgsi_full_declaration fulldecl;
-
-         fulldecl = make_sampler_decl( i );
-         ti += tgsi_build_full_declaration(
-            &fulldecl,
-            &tokens[ti],
-            header,
-            maxTokens - ti );
+         t->samplers[i] = ureg_DECL_sampler( ureg, i );
       }
    }
 
-   /* invert WPOS fragment input */
-   if (wposTemp >= 0) {
-      ti += emit_inverted_wpos(&tokens[ti], wposTemp, winHeightConst,
-                               inputMapping[FRAG_ATTRIB_WPOS],
-                               header, maxTokens - ti);
-      preamble_size = 2; /* two instructions added */
-   }
-
+   /* Emit each instruction in turn:
+    */
    for (i = 0; i < program->NumInstructions; i++) {
-      struct tgsi_full_instruction fullinst;
-
-      compile_instruction(
-         &program->Instructions[i],
-         &fullinst,
-         inputMapping,
-         outputMapping,
-         immediates,
-         indirectAccess,
-         preamble_size,
-         procType,
-         &insideSubroutine,
-         wposTemp);
-
-      ti += tgsi_build_full_instruction(
-         &fullinst,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
+      set_insn_start( t, ureg_get_instruction_number( ureg ));
+      compile_instruction( t, &program->Instructions[i] );
    }
 
-#if DEBUG
-   if(!tgsi_sanity_check(tokens)) {
-      debug_printf("Due to sanity check failure(s) above the following shader program is invalid:\n");
-      debug_printf("\nOriginal program:\n%s", program->String);
-      debug_printf("\nMesa program:\n");
+   /* Fix up all emitted labels:
+    */
+   for (i = 0; i < t->labels_count; i++) {
+      ureg_fixup_label( ureg,
+                        t->labels[i].token,
+                        t->insn[t->labels[i].branch_target] );
+   }
+
+   tokens = ureg_get_tokens( ureg, NULL );
+   ureg_destroy( ureg );
+
+out:
+   FREE(t->insn);
+   FREE(t->labels);
+   FREE(t->constants);
+
+   if (t->error) {
+      debug_printf("%s: translate error flag set\n", __FUNCTION__);
+      FREE((void *)tokens);
+      tokens = NULL;
+   }
+
+   if (!tokens) {
+      debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
       _mesa_print_program(program);
-      debug_printf("\nTGSI program:\n");
-      tgsi_dump(tokens, 0);
       assert(0);
    }
-#endif
 
-   return ti;
+   return tokens;
 }

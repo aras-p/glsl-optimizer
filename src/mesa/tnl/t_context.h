@@ -548,4 +548,8 @@ typedef struct
 #define MAX_TYPES TYPE_IDX(GL_DOUBLE)+1      /* 0xa + 1 */
 
 
+extern void
+tnl_clip_prepare(GLcontext *ctx);
+
+
 #endif

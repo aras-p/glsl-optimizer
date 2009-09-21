@@ -1150,10 +1150,11 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Enable = enable;
    driver->Viewport = xmesa_viewport;
    if (TEST_META_FUNCS) {
-      driver->Clear = _mesa_meta_clear;
-      driver->CopyPixels = _mesa_meta_copy_pixels;
-      driver->BlitFramebuffer = _mesa_meta_blit_framebuffer;
-      driver->DrawPixels = _mesa_meta_draw_pixels;
+      driver->Clear = _mesa_meta_Clear;
+      driver->CopyPixels = _mesa_meta_CopyPixels;
+      driver->BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+      driver->DrawPixels = _mesa_meta_DrawPixels;
+      driver->Bitmap = _mesa_meta_Bitmap;
    }
    else {
       driver->Clear = clear_buffers;
@@ -1167,8 +1168,8 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       else if (xmvisual->undithered_pf == PF_5R6G5B) {
          driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
       }
-   }
 #endif
+   }
    driver->TestProxyTexImage = test_proxy_teximage;
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;

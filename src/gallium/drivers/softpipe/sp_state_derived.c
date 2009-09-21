@@ -91,6 +91,23 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
       vinfo->num_attribs = 0;
       for (i = 0; i < spfs->info.num_inputs; i++) {
          int src;
+         enum interp_mode interp;
+
+         switch (spfs->info.input_interpolate[i]) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            interp = INTERP_CONSTANT;
+            break;
+         case TGSI_INTERPOLATE_LINEAR:
+            interp = INTERP_LINEAR;
+            break;
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            interp = INTERP_PERSPECTIVE;
+            break;
+         default:
+            assert(0);
+            interp = INTERP_LINEAR;
+         }
+
          switch (spfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
             src = draw_find_vs_output(softpipe->draw,
@@ -106,7 +123,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
          case TGSI_SEMANTIC_FOG:
             src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
             break;
 
          case TGSI_SEMANTIC_GENERIC:
@@ -114,7 +131,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
             /* this includes texcoords and varying vars */
             src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
                                       spfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
             break;
 
          default:

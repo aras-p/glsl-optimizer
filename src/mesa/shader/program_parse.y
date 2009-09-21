@@ -806,8 +806,10 @@ addrRegRelOffset:              { $$ = 0; }
 addrRegPosOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 63)) {
-	      yyerror(& @1, state,
-		      "relative address offset too large (positive)");
+              char s[100];
+              _mesa_snprintf(s, sizeof(s),
+                             "relative address offset too large (%d)", $1);
+	      yyerror(& @1, state, s);
 	      YYERROR;
 	   } else {
 	      $$ = $1;
@@ -818,8 +820,10 @@ addrRegPosOffset: INTEGER
 addrRegNegOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 64)) {
-	      yyerror(& @1, state,
-		      "relative address offset too large (negative)");
+              char s[100];
+              _mesa_snprintf(s, sizeof(s),
+                             "relative address offset too large (%d)", $1);
+	      yyerror(& @1, state, s);
 	      YYERROR;
 	   } else {
 	      $$ = $1;

@@ -87,9 +87,13 @@
 
 #define HASH_ALLOC malloc
 #define HASH_FREE  free
-#define HASH_RANDOM_DECL
-#define HASH_RANDOM_INIT(seed)  srandom(seed)
-#define HASH_RANDOM             random()
+#define HASH_RANDOM_DECL	struct random_data rd; int32_t rv; char rs[256]
+#define HASH_RANDOM_INIT(seed)					\
+   do {								\
+      (void) memset(&rd, 0, sizeof(rd));			\
+      (void) initstate_r(seed, rs, sizeof(rs), &rd);		\
+   } while(0)
+#define HASH_RANDOM             ((void) random_r(&rd, &rv), rv)
 #define HASH_RANDOM_DESTROY
 
 typedef struct __glxHashBucket

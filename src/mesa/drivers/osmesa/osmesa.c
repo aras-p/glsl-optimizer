@@ -50,6 +50,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 #include "vbo/vbo.h"
 
 
@@ -1258,6 +1259,8 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       osmesa->bInd = bind;
       osmesa->aInd = aind;
 
+      _mesa_meta_init(&osmesa->mesa);
+
       /* Initialize the software rasterizer and helper modules. */
       {
 	 GLcontext *ctx = &osmesa->mesa;
@@ -1303,6 +1306,8 @@ OSMesaDestroyContext( OSMesaContext osmesa )
    if (osmesa) {
       if (osmesa->rb)
          _mesa_reference_renderbuffer(&osmesa->rb, NULL);
+
+      _mesa_meta_free( &osmesa->mesa );
 
       _swsetup_DestroyContext( &osmesa->mesa );
       _tnl_DestroyContext( &osmesa->mesa );

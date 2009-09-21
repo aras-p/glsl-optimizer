@@ -2,7 +2,7 @@ PIPE_FORMAT_A8R8G8B8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , zyxw, 
 PIPE_FORMAT_X8R8G8B8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
 PIPE_FORMAT_B8G8R8A8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , yzwx, rgb
 PIPE_FORMAT_B8G8R8X8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
-PIPE_FORMAT_A1R5G5B5_UNORM        , arith , 1, 1, un1 , un5 , un5 , un5 , zyxw, rgb
+PIPE_FORMAT_A1R5G5B5_UNORM        , arith , 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
 PIPE_FORMAT_A4R4G4B4_UNORM        , arith , 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_R5G6B5_UNORM          , arith , 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
 PIPE_FORMAT_A2B10G10R10_UNORM     , arith , 1, 1, un10, un10, un10, un2 , xyzw, rgb
@@ -14,10 +14,10 @@ PIPE_FORMAT_L16_UNORM             , arith , 1, 1, un16,     ,     ,     , xxx1, 
 PIPE_FORMAT_Z16_UNORM             , array , 1, 1, un16,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_UNORM             , array , 1, 1, un32,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_FLOAT             , array , 1, 1, f32 ,     ,     ,     , x___, zs 
-PIPE_FORMAT_S8Z24_UNORM           , arith , 1, 1, un8 , un24,     ,     , yx__, zs 
-PIPE_FORMAT_Z24S8_UNORM           , arith , 1, 1, un24, un8 ,     ,     , xy__, zs 
-PIPE_FORMAT_X8Z24_UNORM           , arith , 1, 1, un8 , un24,     ,     , y___, zs 
-PIPE_FORMAT_Z24X8_UNORM           , arith , 1, 1, un24, un8 ,     ,     , x___, zs 
+PIPE_FORMAT_S8Z24_UNORM           , arith , 1, 1, un24, un8 ,     ,     , xy__, zs 
+PIPE_FORMAT_Z24S8_UNORM           , arith , 1, 1, un8 , un24,     ,     , yx__, zs 
+PIPE_FORMAT_X8Z24_UNORM           , arith , 1, 1, un24, un8 ,     ,     , x___, zs 
+PIPE_FORMAT_Z24X8_UNORM           , arith , 1, 1, un8 , un24,     ,     , y___, zs 
 PIPE_FORMAT_S8_UNORM              , array , 1, 1, un8 ,     ,     ,     , _x__, zs 
 PIPE_FORMAT_R64_FLOAT             , array , 1, 1, f64 ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R64G64_FLOAT          , array , 1, 1, f64 , f64 ,     ,     , xy01, rgb

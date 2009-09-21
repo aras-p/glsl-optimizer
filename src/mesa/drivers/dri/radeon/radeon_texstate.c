@@ -833,11 +833,14 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
    cmd[TEX_PP_TXFORMAT] |= texobj->pp_txformat & TEXOBJ_TXFORMAT_MASK;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
 
-   if (texobj->base.Target == GL_TEXTURE_RECTANGLE_NV) {
-      GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
+   if (texobj->pp_txformat & RADEON_TXFORMAT_NON_POWER2) {
+      uint32_t *txr_cmd = &rmesa->hw.txr[unit].cmd[TXR_CMD_0];
       txr_cmd[TXR_PP_TEX_SIZE] = texobj->pp_txsize; /* NPOT only! */
       txr_cmd[TXR_PP_TEX_PITCH] = texobj->pp_txpitch; /* NPOT only! */
-      RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.txr[unit] );
+      RADEON_STATECHANGE( rmesa, txr[unit] );
+   }
+
+   if (texobj->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       se_coord_fmt |= RADEON_VTX_ST0_NONPARAMETRIC << unit;
    }
    else {
@@ -1114,7 +1117,6 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    RADEON_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= 
      (RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit;
-
    RADEON_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
 

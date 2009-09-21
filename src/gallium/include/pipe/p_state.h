@@ -307,7 +307,7 @@ struct pipe_transfer
    unsigned nblocksx;            /**< allocated width in blocks */
    unsigned nblocksy;            /**< allocated height in blocks */
    unsigned stride;              /**< stride in bytes between rows of blocks */
-   unsigned usage;               /**< PIPE_TRANSFER_*  */
+   enum pipe_transfer_usage usage; /**< PIPE_TRANSFER_*  */
 
    struct pipe_texture *texture; /**< texture to transfer to/from  */
    unsigned face;

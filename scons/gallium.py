@@ -334,12 +334,17 @@ def generate(env):
         else:
             ccflags += ['-O3', '-g3']
         if env['profile']:
-            ccflags += ['-pg']
+            # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
+            ccflags += [
+                '-fno-omit-frame-pointer',
+                '-fno-optimize-sibling-calls',
+            ]
         if env['machine'] == 'x86':
             ccflags += [
                 '-m32',
                 #'-march=pentium4',
                 '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                '-mstackrealign', # ensure stack is aligned -- do not enabled -msse without it!
                 #'-mfpmath=sse',
             ]
         if env['machine'] == 'x86_64':

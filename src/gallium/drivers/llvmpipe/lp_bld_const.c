@@ -42,7 +42,7 @@
 
 
 unsigned
-lp_mantissa(union lp_type type)
+lp_mantissa(struct lp_type type)
 {
    assert(type.floating);
 
@@ -72,7 +72,7 @@ lp_mantissa(union lp_type type)
  * Same as lp_const_scale(), but in terms of shifts.
  */
 unsigned
-lp_const_shift(union lp_type type)
+lp_const_shift(struct lp_type type)
 {
    if(type.floating)
       return 0;
@@ -86,7 +86,7 @@ lp_const_shift(union lp_type type)
 
 
 unsigned
-lp_const_offset(union lp_type type)
+lp_const_offset(struct lp_type type)
 {
    if(type.floating || type.fixed)
       return 0;
@@ -104,7 +104,7 @@ lp_const_offset(union lp_type type)
  * else for the fixed points types and normalized integers.
  */
 double
-lp_const_scale(union lp_type type)
+lp_const_scale(struct lp_type type)
 {
    unsigned long long llscale;
    double dscale;
@@ -122,7 +122,7 @@ lp_const_scale(union lp_type type)
  * Minimum value representable by the type.
  */
 double
-lp_const_min(union lp_type type)
+lp_const_min(struct lp_type type)
 {
    unsigned bits;
 
@@ -158,7 +158,7 @@ lp_const_min(union lp_type type)
  * Maximum value representable by the type.
  */
 double
-lp_const_max(union lp_type type)
+lp_const_max(struct lp_type type)
 {
    unsigned bits;
 
@@ -190,7 +190,7 @@ lp_const_max(union lp_type type)
 
 
 double
-lp_const_eps(union lp_type type)
+lp_const_eps(struct lp_type type)
 {
    if (type.floating) {
       switch(type.width) {
@@ -211,7 +211,7 @@ lp_const_eps(union lp_type type)
 
 
 LLVMValueRef
-lp_build_undef(union lp_type type)
+lp_build_undef(struct lp_type type)
 {
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    return LLVMGetUndef(vec_type);
@@ -219,7 +219,7 @@ lp_build_undef(union lp_type type)
                
 
 LLVMValueRef
-lp_build_zero(union lp_type type)
+lp_build_zero(struct lp_type type)
 {
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    return LLVMConstNull(vec_type);
@@ -227,7 +227,7 @@ lp_build_zero(union lp_type type)
                
 
 LLVMValueRef
-lp_build_one(union lp_type type)
+lp_build_one(struct lp_type type)
 {
    LLVMTypeRef elem_type;
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
@@ -269,7 +269,7 @@ lp_build_one(union lp_type type)
                
 
 LLVMValueRef
-lp_build_const_scalar(union lp_type type,
+lp_build_const_scalar(struct lp_type type,
                       double val)
 {
    LLVMTypeRef elem_type = lp_build_elem_type(type);
@@ -295,7 +295,7 @@ lp_build_const_scalar(union lp_type type,
 
 
 LLVMValueRef
-lp_build_int_const_scalar(union lp_type type,
+lp_build_int_const_scalar(struct lp_type type,
                           long long val)
 {
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
@@ -312,7 +312,7 @@ lp_build_int_const_scalar(union lp_type type,
 
 
 LLVMValueRef
-lp_build_const_aos(union lp_type type, 
+lp_build_const_aos(struct lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle)
 {
@@ -352,8 +352,8 @@ lp_build_const_aos(union lp_type type,
 
 
 LLVMValueRef
-lp_build_const_mask_aos(union lp_type type,
-                        boolean cond[4])
+lp_build_const_mask_aos(struct lp_type type,
+                        const boolean cond[4])
 {
    LLVMTypeRef elem_type = LLVMIntType(type.width);
    LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];

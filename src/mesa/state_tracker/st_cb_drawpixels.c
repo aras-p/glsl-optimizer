@@ -98,7 +98,7 @@ is_passthrough_program(const struct gl_fragment_program *prog)
 static struct st_fragment_program *
 combined_drawpix_fragment_program(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp;
 
    if (st->pixel_xfer.program->serialNo == st->pixel_xfer.xfer_prog_sn
@@ -445,8 +445,8 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1, const GLfloat *color,
           GLboolean invertTex, GLfloat maxXcoord, GLfloat maxYcoord)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
 
    /* setup vertex data */
@@ -540,9 +540,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    const GLfloat *color,
                    GLboolean invertTex)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct cso_context *cso = ctx->st->cso_context;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+   struct cso_context *cso = st->cso_context;
    GLfloat x0, y0, x1, y1;
    GLsizei maxSize;
 
@@ -652,7 +652,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                     const struct gl_pixelstore_attrib *unpack,
                     const GLvoid *pixels)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *strb;
@@ -793,7 +793,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 {
    struct st_fragment_program *stfp;
    struct st_vertex_program *stvp;
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_surface *ps;
    const GLfloat *color;
 
@@ -811,21 +811,21 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zsbuf;
-      stfp = make_fragment_shader_z(ctx->st);
-      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
+      stfp = make_fragment_shader_z(st);
+      stvp = st_make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
+      stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
    }
 
    /* draw with textured quad */
    {
       struct pipe_texture *pt
-         = make_texture(ctx->st, width, height, format, type, unpack, pixels);
+         = make_texture(st, width, height, format, type, unpack, pixels);
       if (pt) {
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
@@ -942,7 +942,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
               GLsizei width, GLsizei height,
               GLint dstx, GLint dsty, GLenum type)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
@@ -995,14 +995,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
+      stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-      stfp = make_fragment_shader_z(ctx->st);
-      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
+      stfp = make_fragment_shader_z(st);
+      stvp = st_make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
    srcFormat = rbRead->texture->format;
@@ -1059,7 +1059,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       assert(pth <= maxSize);
    }
 
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, texFormat, 0,
                           ptw, pth, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt)

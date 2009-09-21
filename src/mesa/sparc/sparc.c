@@ -78,13 +78,15 @@ extern GLvector4f  *_mesa_sparc_cliptest_points4(GLvector4f *clip_vec,
 						 GLvector4f *proj_vec,
 						 GLubyte clipMask[],
 						 GLubyte *orMask,
-						 GLubyte *andMask);
+						 GLubyte *andMask,
+						 GLboolean viewport_z_clip);
 
 extern GLvector4f  *_mesa_sparc_cliptest_points4_np(GLvector4f *clip_vec,
 						    GLvector4f *proj_vec,
 						    GLubyte clipMask[],
 						    GLubyte *orMask,
-						    GLubyte *andMask);
+						    GLubyte *andMask,
+						    GLboolean viewport_z_clip);
 
 #define NORM_ARGS	const GLmatrix *mat,				\
 			GLfloat scale,					\

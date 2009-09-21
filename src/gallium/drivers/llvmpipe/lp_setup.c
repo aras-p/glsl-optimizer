@@ -44,6 +44,7 @@
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "lp_bld_debug.h"
 #include "lp_tile_cache.h"
 #include "lp_tile_soa.h"
 
@@ -162,12 +163,12 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    else
       depth = NULL;
 
-   /* TODO: blend color */
+   /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
+   assert(lp_check_alignment(mask, 16));
 
-   assert((((uintptr_t)mask) & 0xf) == 0);
-   assert((((uintptr_t)depth) & 0xf) == 0);
-   assert((((uintptr_t)color) & 0xf) == 0);
-   assert((((uintptr_t)llvmpipe->jit_context.blend_color) & 0xf) == 0);
+   assert(lp_check_alignment(depth, 16));
+   assert(lp_check_alignment(color, 16));
+   assert(lp_check_alignment(llvmpipe->jit_context.blend_color, 16));
 
    /* run shader */
    fs->current->jit_function( &llvmpipe->jit_context,

@@ -209,7 +209,7 @@ do_blit_bitmap( GLcontext *ctx,
    if (!dst)
        return GL_FALSE;
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
 	 return GL_TRUE;	/* even though this is an error, we're done */
@@ -329,7 +329,7 @@ out:
    if (INTEL_DEBUG & DEBUG_SYNC)
       intel_batchbuffer_flush(intel->batch);
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
@@ -418,7 +418,7 @@ intel_texture_bitmap(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
       if (bitmap == NULL)
 	 return GL_TRUE;	/* even though this is an error, we're done */
@@ -428,7 +428,7 @@ intel_texture_bitmap(GLcontext * ctx,
    a8_bitmap = _mesa_calloc(width * height);
    _mesa_expand_bitmap(width, height, unpack, bitmap, a8_bitmap, width, 0xff);
 
-   if (unpack->BufferObj->Name) {
+   if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);

@@ -116,7 +116,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     /* Setup the compiler */
     rc_init(&compiler.Base);
 
-    compiler.Base.Debug = 1;
+    compiler.Base.Debug = DBG_ON(r300, DBG_VP);
     compiler.code = &vs->code;
     compiler.UserData = vs;
 

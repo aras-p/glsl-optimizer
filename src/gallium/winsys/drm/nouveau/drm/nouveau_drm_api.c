@@ -112,7 +112,7 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 		return NULL;
 	}
 
-	if (arg->mode == DRM_CREATE_DRI1) {
+	if (arg && arg->mode == DRM_CREATE_DRI1) {
 		struct nouveau_dri *nvdri = dri1->ddx_info;
 		enum pipe_format format;
 

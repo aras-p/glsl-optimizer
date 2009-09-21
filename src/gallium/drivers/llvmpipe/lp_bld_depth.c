@@ -71,11 +71,11 @@
 /**
  * Return a type appropriate for depth/stencil testing.
  */
-union lp_type
+struct lp_type
 lp_depth_type(const struct util_format_description *format_desc,
               unsigned length)
 {
-   union lp_type type;
+   struct lp_type type;
    unsigned swizzle;
 
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
@@ -85,7 +85,7 @@ lp_depth_type(const struct util_format_description *format_desc,
    swizzle = format_desc->swizzle[0];
    assert(swizzle < 4);
 
-   type.value = 0;
+   memset(&type, 0, sizeof type);
    type.width = format_desc->block.bits;
 
    if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
@@ -114,7 +114,7 @@ lp_depth_type(const struct util_format_description *format_desc,
 void
 lp_build_depth_test(LLVMBuilderRef builder,
                     const struct pipe_depth_state *state,
-                    union lp_type type,
+                    struct lp_type type,
                     const struct util_format_description *format_desc,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef src,
@@ -179,12 +179,13 @@ lp_build_depth_test(LLVMBuilderRef builder,
       padding_right = 0;
       for(chan = 0; chan < z_swizzle; ++chan)
          padding_right += format_desc->channel[chan].size;
-      padding_left = format_desc->block.bits - format_desc->channel[z_swizzle].size;
+      padding_left = format_desc->block.bits -
+                     (padding_right + format_desc->channel[z_swizzle].size);
 
       if(padding_left || padding_right) {
-         const long long mask_left = ((long long)1 << (format_desc->block.bits - padding_left)) - 1;
-         const long long mask_right = ((long long)1 << (padding_right)) - 1;
-         z_bitmask = lp_build_int_const_scalar(type, mask_left & mask_right);
+         const unsigned long long mask_left = ((unsigned long long)1 << (format_desc->block.bits - padding_left)) - 1;
+         const unsigned long long mask_right = ((unsigned long long)1 << (padding_right)) - 1;
+         z_bitmask = lp_build_int_const_scalar(type, mask_left ^ mask_right);
       }
 
       if(padding_left)
@@ -210,5 +211,6 @@ lp_build_depth_test(LLVMBuilderRef builder,
       LLVMBuildStore(builder, dst, dst_ptr);
    }
 
+   /* FIXME */
    assert(!state->occlusion_count);
 }

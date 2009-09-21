@@ -1474,6 +1474,21 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
+
+   /* debug code */
+   if (0) {
+      GLuint i;
+
+      _mesa_printf("Link %u shaders in program %u: %s\n",
+                   shProg->NumShaders, shProg->Name,
+                   shProg->LinkStatus ? "Success" : "Failed");
+
+      for (i = 0; i < shProg->NumShaders; i++) {
+         _mesa_printf(" shader %u, type 0x%x\n",
+                      shProg->Shaders[i]->Name,
+                      shProg->Shaders[i]->Type);
+      }
+   }
 }
 
 

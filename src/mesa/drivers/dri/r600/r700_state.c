@@ -845,9 +845,9 @@ static void r700PointSize(GLcontext * ctx, GLfloat size)
 	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
 	/* format is 12.4 fixed point */
-	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 8.0),
 		 PA_SU_POINT_SIZE__HEIGHT_shift, PA_SU_POINT_SIZE__HEIGHT_mask);
-	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 8.0),
 		 PA_SU_POINT_SIZE__WIDTH_shift, PA_SU_POINT_SIZE__WIDTH_mask);
 
 }
@@ -862,11 +862,11 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	/* format is 12.4 fixed point */
 	switch (pname) {
 	case GL_POINT_SIZE_MIN:
-		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 16.0),
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 8.0),
 			 MIN_SIZE_shift, MIN_SIZE_mask);
 		break;
 	case GL_POINT_SIZE_MAX:
-		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 16.0),
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 8.0),
 			 MAX_SIZE_shift, MAX_SIZE_mask);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
@@ -1130,20 +1130,25 @@ static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	GLfloat constant = units;
+	GLchar depth = 0;
+
+	R600_STATECHANGE(context, poly);
 
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		constant *= 4.0;
+		depth = -16;
 		break;
 	case 24:
 		constant *= 2.0;
+		depth = -24;
 		break;
 	}
 
 	factor *= 12.0;
-
-	R600_STATECHANGE(context, poly);
-
+	SETfield(r700->PA_SU_POLY_OFFSET_DB_FMT_CNTL.u32All, depth,
+		 POLY_OFFSET_NEG_NUM_DB_BITS_shift, POLY_OFFSET_NEG_NUM_DB_BITS_mask);
+	//r700->PA_SU_POLY_OFFSET_CLAMP.f32All = constant; //???
 	r700->PA_SU_POLY_OFFSET_FRONT_SCALE.f32All = factor;
 	r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.f32All = constant;
 	r700->PA_SU_POLY_OFFSET_BACK_SCALE.f32All = factor;
@@ -1280,8 +1285,8 @@ void r700SetScissor(context_t *context) //---------------
 		if (context->radeon.radeonScreen->driScreen->dri2.enabled) {
 			x1 = 0;
 			y1 = 0;
-			x2 = rrb->base.Width - 1;
-			y2 = rrb->base.Height - 1;
+			x2 = rrb->base.Width;
+			y2 = rrb->base.Height;
 		} else {
 			x1 = rrb->dPriv->x;
 			y1 = rrb->dPriv->y;

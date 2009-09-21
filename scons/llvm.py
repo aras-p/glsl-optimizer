@@ -51,20 +51,26 @@ def generate(env):
 
         llvm_bin_dir = os.path.join(llvm_dir, llvm_subdir, 'bin')
         if not os.path.isdir(llvm_bin_dir):
-            raise SCons.Errors.InternalError, "LLVM build directory not found"
+            llvm_bin_dir = os.path.join(llvm_dir, 'bin')
+            if not os.path.isdir(llvm_bin_dir):
+                raise SCons.Errors.InternalError, "LLVM binary directory not found"
 
         env.PrependENVPath('PATH', llvm_bin_dir)
 
     if env.Detect('llvm-config'):
-        try:
-            env['LLVM_VERSION'] = env.backtick('llvm-config --version')
-        except AttributeError:
-            env['LLVM_VERSION'] = 'X.X'
+        version = env.backtick('llvm-config --version').rstrip()
 
-        env.ParseConfig('llvm-config --cppflags')
-        env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
-        env.ParseConfig('llvm-config --ldflags')
-        env['LINK'] = env['CXX']
+        try:
+            env.ParseConfig('llvm-config --cppflags')
+            env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
+            env.ParseConfig('llvm-config --ldflags')
+        except OSError:
+            print 'llvm-config version %s failed' % version
+        else:
+            if env['platform'] == 'windows':
+                env.Append(LIBS = ['imagehlp', 'psapi'])
+            env['LINK'] = env['CXX']
+            env['LLVM_VERSION'] = version
 
 def exists(env):
     return True

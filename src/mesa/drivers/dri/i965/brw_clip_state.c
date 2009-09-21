@@ -43,11 +43,14 @@ struct brw_clip_unit_key {
    unsigned int curbe_offset;
 
    unsigned int nr_urb_entries, urb_size;
+
+   GLboolean depth_clamp;
 };
 
 static void
 clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_CLIP_PROG */
@@ -62,6 +65,9 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    /* BRW_NEW_URB_FENCE */
    key->nr_urb_entries = brw->urb.nr_clip_entries;
    key->urb_size = brw->urb.vsize;
+
+   /* _NEW_TRANSOFORM */
+   key->depth_clamp = ctx->Transform.DepthClamp;
 }
 
 static dri_bo *
@@ -117,7 +123,8 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.clip5.userclip_enable_flags = 0x7f;
    clip.clip5.userclip_must_clip = 1;
    clip.clip5.guard_band_enable = 0;
-   clip.clip5.viewport_z_clip_enable = 1;
+   if (!key->depth_clamp)
+      clip.clip5.viewport_z_clip_enable = 1;
    clip.clip5.viewport_xy_clip_enable = 1;
    clip.clip5.vertex_position_space = BRW_CLIP_NDCSPACE;
    clip.clip5.api_mode = BRW_CLIP_API_OGL;
@@ -168,7 +175,7 @@ static void upload_clip_unit( struct brw_context *brw )
 
 const struct brw_tracked_state brw_clip_unit = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_CLIP_PROG

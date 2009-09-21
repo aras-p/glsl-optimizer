@@ -88,6 +88,7 @@ _debug_printf(const char *format, ...)
  * - avoid outputing large strings (512 bytes is the current maximum length 
  * that is guaranteed to be printed in all platforms)
  */
+#if !defined(PIPE_OS_HAIKU)
 static INLINE void
 debug_printf(const char *format, ...)
 {
@@ -101,6 +102,7 @@ debug_printf(const char *format, ...)
 #endif
 }
 
+#endif /* !PIPE_OS_HAIKU */
 
 /*
  * ... isn't portable so we need to pass arguments in parentheses.

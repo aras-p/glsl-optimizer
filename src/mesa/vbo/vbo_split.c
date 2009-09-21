@@ -50,6 +50,7 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/macros.h"
 
 #include "vbo_split.h"
 #include "vbo.h"
@@ -107,7 +108,12 @@ void vbo_split_prims( GLcontext *ctx,
 		      vbo_draw_func draw,
 		      const struct split_limits *limits )
 {
-  
+   GLuint max_basevertex = prim->basevertex;
+   GLuint i;
+
+   for (i = 1; i < nr_prims; i++)
+      max_basevertex = MAX2(max_basevertex, prim[i].basevertex);
+
    if (ib) {
       if (limits->max_indices == 0) {
 	 /* Could traverse the indices, re-emitting vertices in turn.

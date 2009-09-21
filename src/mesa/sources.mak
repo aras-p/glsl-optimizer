@@ -115,7 +115,6 @@ SWRAST_SOURCES = \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
 	swrast/s_fragprog.c \
-	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
@@ -125,7 +124,6 @@ SWRAST_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texcombine.c \
 	swrast/s_texfilter.c \
-	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 

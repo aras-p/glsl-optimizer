@@ -316,22 +316,27 @@ static void bind_indices( GLcontext *ctx,
 
    ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
 
-   if (ib->type == GL_UNSIGNED_INT) {
+   if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
       VB->Elts = (GLuint *) ptr;
    }
    else {
       GLuint *elts = (GLuint *)get_space(ctx, ib->count * sizeof(GLuint));
       VB->Elts = elts;
 
-      if (ib->type == GL_UNSIGNED_SHORT) {
+      if (ib->type == GL_UNSIGNED_INT) {
+	 const GLuint *in = (GLuint *)ptr;
+	 for (i = 0; i < ib->count; i++)
+	    *elts++ = (GLuint)(*in++) + VB->Primitive[0].basevertex;
+      }
+      else if (ib->type == GL_UNSIGNED_SHORT) {
 	 const GLushort *in = (GLushort *)ptr;
 	 for (i = 0; i < ib->count; i++) 
-	    *elts++ = (GLuint)(*in++);
+	    *elts++ = (GLuint)(*in++) + VB->Primitive[0].basevertex;
       }
       else {
 	 const GLubyte *in = (GLubyte *)ptr;
 	 for (i = 0; i < ib->count; i++) 
-	    *elts++ = (GLuint)(*in++);
+	    *elts++ = (GLuint)(*in++) + VB->Primitive[0].basevertex;
       }
    }
 }
@@ -390,10 +395,14 @@ void _tnl_draw_prims( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const GLuint TEST_SPLIT = 0;
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
+   GLuint max_basevertex = prim->basevertex;
+   GLuint i;
+
+   for (i = 1; i < nr_prims; i++)
+      max_basevertex = MAX2(max_basevertex, prim[i].basevertex);
 
    if (0)
    {
-      GLuint i;
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
       for (i = 0; i < nr_prims; i++)
 	 _mesa_printf("prim %d: %s start %d count %d\n", i, 
@@ -410,7 +419,7 @@ void _tnl_draw_prims( GLcontext *ctx,
 			_tnl_vbo_draw_prims );
       return;
    }
-   else if (max_index > max) {
+   else if (max_index + max_basevertex > max) {
       /* The software TNL pipeline has a fixed amount of storage for
        * vertices and it is necessary to split incoming drawing commands
        * if they exceed that limit.
@@ -424,7 +433,7 @@ void _tnl_draw_prims( GLcontext *ctx,
        * recursively call back into this function.
        */
       vbo_split_prims( ctx, arrays, prim, nr_prims, ib, 
-		       0, max_index,
+		       0, max_index + prim->basevertex,
 		       _tnl_vbo_draw_prims,
 		       &limits );
    }
@@ -435,17 +444,34 @@ void _tnl_draw_prims( GLcontext *ctx,
       struct gl_buffer_object *bo[VERT_ATTRIB_MAX + 1];
       GLuint nr_bo = 0;
 
-      /* Binding inputs may imply mapping some vertex buffer objects.
-       * They will need to be unmapped below.
-       */
-      bind_inputs(ctx, arrays, max_index+1, bo, &nr_bo);
-      bind_indices(ctx, ib, bo, &nr_bo);
-      bind_prims(ctx, prim, nr_prims );
+      for (i = 0; i < nr_prims;) {
+	 GLuint this_nr_prims;
 
-      TNL_CONTEXT(ctx)->Driver.RunPipeline(ctx);
+	 /* Our SW TNL pipeline doesn't handle basevertex yet, so bind_indices
+	  * will rebase the elements to the basevertex, and we'll only
+	  * emit strings of prims with the same basevertex in one draw call.
+	  */
+	 for (this_nr_prims = 1; i + this_nr_prims < nr_prims;
+	      this_nr_prims++) {
+	    if (prim[i].basevertex != prim[i + this_nr_prims].basevertex)
+	       break;
+	 }
 
-      unmap_vbos(ctx, bo, nr_bo);
-      free_space(ctx);
+	 /* Binding inputs may imply mapping some vertex buffer objects.
+	  * They will need to be unmapped below.
+	  */
+	 bind_prims(ctx, &prim[i], this_nr_prims);
+	 bind_inputs(ctx, arrays, max_index + prim[i].basevertex + 1,
+		     bo, &nr_bo);
+	 bind_indices(ctx, ib, bo, &nr_bo);
+
+	 TNL_CONTEXT(ctx)->Driver.RunPipeline(ctx);
+
+	 unmap_vbos(ctx, bo, nr_bo);
+	 free_space(ctx);
+
+	 i += this_nr_prims;
+      }
    }
 }
 

@@ -45,7 +45,7 @@ lp_build_cmp(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef zeros = LLVMConstNull(int_vec_type);
@@ -301,7 +301,7 @@ lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef a,
                 LLVMValueRef b)
 {
-   union lp_type type = bld->type;
+   struct lp_type type = bld->type;
    LLVMValueRef res;
 
    if(a == b)
@@ -312,8 +312,6 @@ lp_build_select(struct lp_build_context *bld,
       a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
    }
-
-   /* TODO: On SSE4 we could do this with a single instruction -- PBLENDVB */
 
    a = LLVMBuildAnd(bld->builder, a, mask, "");
 
@@ -339,9 +337,9 @@ LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b,
-                    boolean cond[4])
+                    const boolean cond[4])
 {
-   const union lp_type type = bld->type;
+   const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
 
@@ -376,9 +374,9 @@ lp_build_select_aos(struct lp_build_context *bld,
 
       return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
    }
+   else {
 #if 0
-   else if(0) {
-      /* FIXME: Unfortunately select of vectors do not work */
+      /* XXX: Unfortunately select of vectors do not work */
       /* Use a select */
       LLVMTypeRef elem_type = LLVMInt1Type();
       LLVMValueRef cond[LP_MAX_VECTOR_LENGTH];
@@ -388,10 +386,9 @@ lp_build_select_aos(struct lp_build_context *bld,
             cond[j + i] = LLVMConstInt(elem_type, cond[i] ? 1 : 0, 0);
 
       return LLVMBuildSelect(bld->builder, LLVMConstVector(cond, n), a, b, "");
-   }
-#endif
-   else {
+#else
       LLVMValueRef mask = lp_build_const_mask_aos(type, cond);
       return lp_build_select(bld, mask, a, b);
+#endif
    }
 }

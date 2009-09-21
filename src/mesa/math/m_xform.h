@@ -43,7 +43,8 @@
 
 extern void
 _math_init_transformation(void);
-
+extern void
+init_c_cliptest(void);
 
 /* KW: Clip functions now do projective divide as well.  The projected
  * coordinates are very useful to us because they let us cull
@@ -102,7 +103,8 @@ typedef GLvector4f * (_XFORMAPIP clip_func)( GLvector4f *vClip,
 					     GLvector4f *vProj,
 					     GLubyte clipMask[],
 					     GLubyte *orMask,
-					     GLubyte *andMask );
+					     GLubyte *andMask,
+					     GLboolean viewport_z_clip );
 
 typedef void (*dotprod_func)( GLfloat *out,
 			      GLuint out_stride,

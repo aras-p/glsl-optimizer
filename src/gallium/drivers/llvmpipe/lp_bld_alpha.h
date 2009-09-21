@@ -38,14 +38,14 @@
 #include <llvm-c/Core.h>  
 
 struct pipe_alpha_state;
-union lp_type;
+struct lp_type;
 struct lp_build_mask_context;
 
 
 void
 lp_build_alpha_test(LLVMBuilderRef builder,
                     const struct pipe_alpha_state *state,
-                    union lp_type type,
+                    struct lp_type type,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef alpha,
                     LLVMValueRef ref);

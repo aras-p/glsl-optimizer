@@ -25,6 +25,7 @@
 #include "r300_emit.h"
 
 #include "r300_fs.h"
+#include "r300_state_derived.h"
 #include "r300_vs.h"
 
 void r300_emit_blend_state(struct r300_context* r300,
@@ -282,7 +283,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        pixpitch = tex->stride / tex->tex.block.size;
+        pixpitch = r300_texture_get_stride(tex, 0) / tex->tex.block.size;
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -299,7 +300,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     if (fb->zsbuf) {
         tex = (struct r300_texture*)fb->zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        pixpitch = tex->stride / tex->tex.block.size;
+        pixpitch = r300_texture_get_stride(tex, 0) / tex->tex.block.size;
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -490,7 +491,7 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
-    debug_printf("r300: Preparing vertex buffer %p for render, "
+    DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
             "vertex size %d\n", r300->vbo,
             r300->vertex_info.vinfo.size);
     /* Set the pointer to our vertex buffer. The emitted values are this:

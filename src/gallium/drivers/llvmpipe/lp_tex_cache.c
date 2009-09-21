@@ -154,7 +154,7 @@ lp_tex_tile_cache_validate_texture(struct llvmpipe_tex_tile_cache *tc)
       if (lpt->timestamp != tc->timestamp) {
          /* texture was modified, invalidate all cached tiles */
          uint i;
-         _debug_printf("INV %d %d\n", tc->timestamp, lpt->timestamp);
+         debug_printf("INV %d %d\n", tc->timestamp, lpt->timestamp);
          for (i = 0; i < NUM_ENTRIES; i++) {
             tc->entries[i].addr.bits.invalid = 1;
          }

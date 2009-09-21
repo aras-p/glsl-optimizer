@@ -207,60 +207,6 @@ extern void
 _swrast_print_vertex( GLcontext *ctx, const SWvertex *v );
 
 
-/*
- * Imaging fallbacks (a better solution should be found, perhaps
- * moving all the imaging fallback code to a new module) 
- */
-extern void
-_swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target, 
-				GLenum internalFormat, 
-				GLint x, GLint y, GLsizei width, 
-				GLsizei height);
-extern void
-_swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target, 
-				GLenum internalFormat, 
-				GLint x, GLint y, GLsizei width);
-extern void
-_swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
-			   GLint x, GLint y, GLsizei width);
-extern void
-_swrast_CopyColorTable( GLcontext *ctx, 
-			GLenum target, GLenum internalformat,
-			GLint x, GLint y, GLsizei width);
-
-
-/*
- * Texture fallbacks.  Could also live in a new module
- * with the rest of the texture store fallbacks?
- */
-extern void
-_swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
-                        GLenum internalFormat,
-                        GLint x, GLint y, GLsizei width, GLint border);
-
-extern void
-_swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
-                        GLenum internalFormat,
-                        GLint x, GLint y, GLsizei width, GLsizei height,
-                        GLint border);
-
-
-extern void
-_swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
-                           GLint xoffset, GLint x, GLint y, GLsizei width);
-
-extern void
-_swrast_copy_texsubimage2d(GLcontext *ctx,
-                           GLenum target, GLint level,
-                           GLint xoffset, GLint yoffset,
-                           GLint x, GLint y, GLsizei width, GLsizei height);
-
-extern void
-_swrast_copy_texsubimage3d(GLcontext *ctx,
-                           GLenum target, GLint level,
-                           GLint xoffset, GLint yoffset, GLint zoffset,
-                           GLint x, GLint y, GLsizei width, GLsizei height);
-
 
 extern void
 _swrast_eject_texture_images(GLcontext *ctx);

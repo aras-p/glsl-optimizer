@@ -22,6 +22,8 @@
 
 #include "r300_query.h"
 
+#include "r300_emit.h"
+
 static struct pipe_query* r300_create_query(struct pipe_context* pipe,
                                             unsigned query_type)
 {

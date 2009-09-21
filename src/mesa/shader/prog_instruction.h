@@ -121,7 +121,6 @@
 /*@{*/
 #define SATURATE_OFF            0
 #define SATURATE_ZERO_ONE       1
-#define SATURATE_PLUS_MINUS_ONE 2
 /*@}*/
 
 

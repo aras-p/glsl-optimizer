@@ -30,7 +30,8 @@
 #include "main/image.h"
 #include "main/teximage.h"
 #include "main/mipmap.h"
-#include "swrast/swrast.h"
+
+#include "drivers/common/meta.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
@@ -90,7 +91,6 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
-   struct gl_texture_object *texObj = intelImage->base.TexObject;
    const struct intel_region *src =
       get_teximage_source(intel, internalFormat);
 
@@ -170,11 +170,6 @@ do_copy_texsubimage(struct intel_context *intel,
 
    UNLOCK_HARDWARE(intel);
 
-   /* GL_SGIS_generate_mipmap */
-   if (intelImage->level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
-   }
-
    return GL_TRUE;
 }
 
@@ -221,8 +216,8 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
-   _swrast_copy_teximage1d(ctx, target, level, internalFormat, x, y,
-                           width, border);
+   _mesa_meta_CopyTexImage1D(ctx, target, level, internalFormat, x, y,
+                             width, border);
 }
 
 
@@ -269,8 +264,8 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
-   _swrast_copy_teximage2d(ctx, target, level, internalFormat, x, y,
-                           width, height, border);
+   _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
+                             width, height, border);
 }
 
 
@@ -294,7 +289,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
-      _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
+      _mesa_meta_CopyTexSubImage1D(ctx, target, level, xoffset, x, y, width);
    }
 }
 
@@ -320,10 +315,10 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
 
-      DBG("%s - fallback to swrast\n", __FUNCTION__);
+      DBG("%s - fallback to _mesa_meta_CopyTexSubImage2D\n", __FUNCTION__);
 
-      _swrast_copy_texsubimage2d(ctx, target, level,
-                                 xoffset, yoffset, x, y, width, height);
+      _mesa_meta_CopyTexSubImage2D(ctx, target, level,
+                                   xoffset, yoffset, x, y, width, height);
    }
 }
 

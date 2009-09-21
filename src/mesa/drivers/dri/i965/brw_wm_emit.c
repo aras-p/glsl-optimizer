@@ -34,8 +34,6 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
-#define SATURATE (1<<5)
-
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.
  */
@@ -279,6 +277,79 @@ static void emit_frontfacing( struct brw_compile *p,
       }
    }
    brw_set_predicate_control_flag_value(p, 0xff);
+}
+
+/* For OPCODE_DDX and OPCODE_DDY, per channel of output we've got input
+ * looking like:
+ *
+ * arg0: ss0.tl ss0.tr ss0.bl ss0.br ss1.tl ss1.tr ss1.bl ss1.br
+ *
+ * and we're trying to produce:
+ *
+ *           DDX                     DDY
+ * dst: (ss0.tr - ss0.tl)     (ss0.tl - ss0.bl)
+ *      (ss0.tr - ss0.tl)     (ss0.tr - ss0.br)
+ *      (ss0.br - ss0.bl)     (ss0.tl - ss0.bl)
+ *      (ss0.br - ss0.bl)     (ss0.tr - ss0.br)
+ *      (ss1.tr - ss1.tl)     (ss1.tl - ss1.bl)
+ *      (ss1.tr - ss1.tl)     (ss1.tr - ss1.br)
+ *      (ss1.br - ss1.bl)     (ss1.tl - ss1.bl)
+ *      (ss1.br - ss1.bl)     (ss1.tr - ss1.br)
+ *
+ * and add another set of two more subspans if in 16-pixel dispatch mode.
+ *
+ * For DDX, it ends up being easy: width = 2, horiz=0 gets us the same result
+ * for each pair, and vertstride = 2 jumps us 2 elements after processing a
+ * pair. But for DDY, it's harder, as we want to produce the pairs swizzled
+ * between each other.  We could probably do it like ddx and swizzle the right
+ * order later, but bail for now and just produce
+ * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
+ */
+void emit_ddxy(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       GLboolean is_ddx,
+	       const struct brw_reg *arg0)
+{
+   int i;
+   struct brw_reg src0, src1;
+
+   if (mask & SATURATE)
+      brw_set_saturate(p, 1);
+   for (i = 0; i < 4; i++ ) {
+      if (mask & (1<<i)) {
+	 if (is_ddx) {
+	    src0 = brw_reg(arg0[i].file, arg0[i].nr, 1,
+			   BRW_REGISTER_TYPE_F,
+			   BRW_VERTICAL_STRIDE_2,
+			   BRW_WIDTH_2,
+			   BRW_HORIZONTAL_STRIDE_0,
+			   BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+	    src1 = brw_reg(arg0[i].file, arg0[i].nr, 0,
+			   BRW_REGISTER_TYPE_F,
+			   BRW_VERTICAL_STRIDE_2,
+			   BRW_WIDTH_2,
+			   BRW_HORIZONTAL_STRIDE_0,
+			   BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+	 } else {
+	    src0 = brw_reg(arg0[i].file, arg0[i].nr, 0,
+			   BRW_REGISTER_TYPE_F,
+			   BRW_VERTICAL_STRIDE_4,
+			   BRW_WIDTH_4,
+			   BRW_HORIZONTAL_STRIDE_0,
+			   BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+	    src1 = brw_reg(arg0[i].file, arg0[i].nr, 2,
+			   BRW_REGISTER_TYPE_F,
+			   BRW_VERTICAL_STRIDE_4,
+			   BRW_WIDTH_4,
+			   BRW_HORIZONTAL_STRIDE_0,
+			   BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+	 }
+	 brw_ADD(p, dst[i], src0, negate(src1));
+      }
+   }
+   if (mask & SATURATE)
+      brw_set_saturate(p, 0);
 }
 
 static void emit_alu1( struct brw_compile *p, 
@@ -1270,6 +1341,14 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case OPCODE_FLR:
 	 emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
+	 break;
+
+      case OPCODE_DDX:
+	 emit_ddxy(p, dst, dst_flags, GL_TRUE, args[0]);
+	 break;
+
+      case OPCODE_DDY:
+	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
 	 break;
 
       case OPCODE_DP3:

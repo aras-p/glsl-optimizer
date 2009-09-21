@@ -48,6 +48,7 @@ SERVER_OUTPUTS = \
 API_XML = gl_API.xml \
 	EXT_framebuffer_object.xml \
 	ARB_copy_buffer.xml \
+	ARB_depth_clamp.xml \
 	ARB_framebuffer_object.xml \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \

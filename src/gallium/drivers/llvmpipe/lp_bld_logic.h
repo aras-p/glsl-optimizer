@@ -42,7 +42,7 @@
 #include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
 
 
-union lp_type type;
+struct lp_type type;
 struct lp_build_context;
 
 
@@ -66,7 +66,7 @@ LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b,
-                    boolean cond[4]);
+                    const boolean cond[4]);
 
 
 #endif /* !LP_BLD_LOGIC_H */

@@ -66,7 +66,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
 			break;
 		}
-		so_data(so, bo->tile_mode << 4);
+		so_data(so, nv50_miptree(pt)->
+				level[fb->cbufs[i]->level].tile_mode << 4);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1224, 1);
@@ -110,7 +111,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
 			break;
 		}
-		so_data(so, bo->tile_mode << 4);
+		so_data(so, nv50_miptree(pt)->
+				level[fb->zsbuf->level].tile_mode << 4);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1538, 1);
@@ -187,6 +189,8 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
 		so_emit(chan, nv50->state.fragprog);
+	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+		so_emit(chan, nv50->state.programs);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
 		so_emit(chan, nv50->state.rast);
 	if (nv50->state.dirty & NV50_NEW_BLEND_COLOUR)
@@ -208,6 +212,12 @@ nv50_state_emit(struct nv50_context *nv50)
 			so_emit(chan, nv50->state.vtxattr);
 	}
 	nv50->state.dirty = 0;
+}
+
+void
+nv50_state_flush_notify(struct nouveau_channel *chan)
+{
+	struct nv50_context *nv50 = chan->user_private;
 
 	so_emit_reloc_markers(chan, nv50->state.fb);
 	so_emit_reloc_markers(chan, nv50->state.vertprog);
@@ -237,6 +247,9 @@ nv50_state_validate(struct nv50_context *nv50)
 
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
 		nv50_fragprog_validate(nv50);
+
+	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+		nv50_linkage_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
 		so_ref(nv50->rasterizer->so, &nv50->state.rast);

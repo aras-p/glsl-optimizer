@@ -223,10 +223,6 @@ fail:
  *
  * The texture object's miptree must be mapped.
  *
- * It would be really nice if this was just called by Mesa whenever mipmaps
- * needed to be regenerated, rather than us having to remember to do so in
- * each texture image modification path.
- *
  * This function should also include an accelerated path.
  */
 void

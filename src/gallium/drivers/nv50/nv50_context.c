@@ -37,11 +37,12 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 
 	/* We need this in the ddx for reliable composite, not sure what we're
 	 * actually flushing. We generate all our own flushes with flags = 0. */
-	WAIT_RING(chan, 3);
+	WAIT_RING(chan, 2);
 	BEGIN_RING(chan, eng2d, 0x0110, 1);
 	OUT_RING  (chan, 0);
 
-	FIRE_RING(chan);
+	if (flags & PIPE_FLUSH_FRAME)
+		FIRE_RING(chan);
 }
 
 static void
@@ -109,6 +110,9 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv50->pipe.is_texture_referenced = nv50_is_texture_referenced;
 	nv50->pipe.is_buffer_referenced = nv50_is_buffer_referenced;
+
+	screen->base.channel->user_private = nv50;
+	screen->base.channel->flush_notify = nv50_state_flush_notify;
 
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);

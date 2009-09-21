@@ -1149,41 +1149,49 @@ GLboolean tex_dst(r700_AssemblerBase *pAsm)
 GLboolean tex_src(r700_AssemblerBase *pAsm)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
- 
+
     GLboolean bValidTexCoord = GL_FALSE;
 
-    switch (pILInst->SrcReg[0].File)
-    {
+    switch (pILInst->SrcReg[0].File) {
+    case PROGRAM_CONSTANT:
+    case PROGRAM_LOCAL_PARAM:
+    case PROGRAM_ENV_PARAM:
+    case PROGRAM_STATE_VAR:
+	    bValidTexCoord = GL_TRUE;
+	    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+	    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+	    pAsm->S[0].src.reg   = pAsm->aArgSubst[1];
+	    break;
     case PROGRAM_TEMPORARY:
-        bValidTexCoord = GL_TRUE;
-
-        pAsm->S[0].src.reg   = pILInst->SrcReg[0].Index + pAsm->starting_temp_register_number;
-        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-
-        break;
+	    bValidTexCoord = GL_TRUE;
+	    pAsm->S[0].src.reg   = pILInst->SrcReg[0].Index +
+		    pAsm->starting_temp_register_number;
+	    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+       break;
     case PROGRAM_INPUT:
-        switch (pILInst->SrcReg[0].Index)
-        {
-        case FRAG_ATTRIB_COL0:
-        case FRAG_ATTRIB_COL1:
-        case FRAG_ATTRIB_TEX0:
-        case FRAG_ATTRIB_TEX1:
-        case FRAG_ATTRIB_TEX2:
-        case FRAG_ATTRIB_TEX3:
-        case FRAG_ATTRIB_TEX4:
-        case FRAG_ATTRIB_TEX5:
-        case FRAG_ATTRIB_TEX6:
-        case FRAG_ATTRIB_TEX7:
-            bValidTexCoord = GL_TRUE;
-
-            pAsm->S[0].src.reg   = pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-            pAsm->S[0].src.rtype = SRC_REG_INPUT;
-        }
-        break;
+	    switch (pILInst->SrcReg[0].Index)
+	    {
+	    case FRAG_ATTRIB_COL0:
+	    case FRAG_ATTRIB_COL1:
+	    case FRAG_ATTRIB_TEX0:
+	    case FRAG_ATTRIB_TEX1:
+	    case FRAG_ATTRIB_TEX2:
+	    case FRAG_ATTRIB_TEX3:
+	    case FRAG_ATTRIB_TEX4:
+	    case FRAG_ATTRIB_TEX5:
+	    case FRAG_ATTRIB_TEX6:
+	    case FRAG_ATTRIB_TEX7:
+		    bValidTexCoord = GL_TRUE;
+		    pAsm->S[0].src.reg   =
+			    pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
+		    pAsm->S[0].src.rtype = SRC_REG_INPUT;
+		    break;
+	    }
+	    break;
     }
 
     if(GL_TRUE == bValidTexCoord)
-    { 
+    {
         setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
     }
     else
@@ -1201,7 +1209,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
     pAsm->S[0].src.negy = (pILInst->SrcReg[0].Negate >> 1) & 0x1;
     pAsm->S[0].src.negz = (pILInst->SrcReg[0].Negate >> 2) & 0x1;
     pAsm->S[0].src.negw = (pILInst->SrcReg[0].Negate >> 3) & 0x1;
-     
+
     return GL_TRUE;
 }
 
@@ -2202,7 +2210,9 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
 
-    if( GL_TRUE == IsTex(pILInst->Opcode) )
+    if( GL_TRUE == IsTex(pILInst->Opcode) &&
+        /* handle const moves to temp register */ 
+        !(pAsm->D.dst.opcode == SQ_OP2_INST_MOV) )
     {
 	    if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX) {
 		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE) ) 
@@ -3374,28 +3384,31 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
     case PROGRAM_ENV_PARAM:
     case PROGRAM_STATE_VAR:
         src_const = GL_TRUE;
+        break;
     case PROGRAM_TEMPORARY:
     case PROGRAM_INPUT:
+    default:
         src_const = GL_FALSE;
+	break;
     }
 
-    if (GL_TRUE == src_const) 
+    if (GL_TRUE == src_const)
     {
-        radeon_error("TODO: Texture coordinates from a constant register not supported.\n");
-        return GL_FALSE;
+	    if ( GL_FALSE == mov_temp(pAsm, 0) )
+		    return GL_FALSE;
     }
 
-    switch (pAsm->pILInst[pAsm->uiCurInst].Opcode) 
+    switch (pAsm->pILInst[pAsm->uiCurInst].Opcode)
     {
         case OPCODE_TEX:
-            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;            
+            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
             break;
-        case OPCODE_TXB:            
+        case OPCODE_TXB:
             radeon_error("do not support TXB yet\n");
             return GL_FALSE;
             break;
-        case OPCODE_TXP:            
-            /* TODO : tex proj version : divid first 3 components by 4th */ 
+        case OPCODE_TXP:
+            /* TODO : tex proj version : divid first 3 components by 4th */
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
             break;
         default:
@@ -3418,13 +3431,13 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
     {
         return GL_FALSE;
     }
- 
+
     if( GL_FALSE == tex_src(pAsm) )
     {
         return GL_FALSE;
     }
 
-    if ( GL_FALSE == next_ins(pAsm) ) 
+    if ( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }

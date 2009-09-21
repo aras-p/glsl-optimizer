@@ -23,11 +23,7 @@
 #ifndef R300_STATE_DERIVED_H
 #define R300_STATE_DERIVED_H
 
-#include "draw/draw_vertex.h"
-
-#include "r300_context.h"
-#include "r300_reg.h"
-#include "r300_state_inlines.h"
+struct r300_context;
 
 void r300_update_derived_state(struct r300_context* r300);
 

@@ -83,7 +83,8 @@ softpipe_unmap_transfers(struct softpipe_context *sp)
 }
 
 
-static void softpipe_destroy( struct pipe_context *pipe )
+static void
+softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    uint i;
@@ -121,6 +122,15 @@ static void softpipe_destroy( struct pipe_context *pipe )
    FREE( softpipe );
 }
 
+
+/**
+ * if (the texture is being used as a framebuffer surface)
+ *    return PIPE_REFERENCED_FOR_WRITE
+ * else if (the texture is a bound texture source)
+ *    return PIPE_REFERENCED_FOR_READ  XXX not done yet
+ * else
+ *    return PIPE_UNREFERENCED
+ */
 static unsigned int
 softpipe_is_texture_referenced( struct pipe_context *pipe,
 				struct pipe_texture *texture,
@@ -129,15 +139,17 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context( pipe );
    unsigned i;
 
-   if(softpipe->dirty_render_cache) {
+   if (softpipe->dirty_render_cache) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
-         if(softpipe->framebuffer.cbufs[i] && 
-            softpipe->framebuffer.cbufs[i]->texture == texture)
+         if (softpipe->framebuffer.cbufs[i] && 
+             softpipe->framebuffer.cbufs[i]->texture == texture) {
             return PIPE_REFERENCED_FOR_WRITE;
+         }
       }
-      if(softpipe->framebuffer.zsbuf && 
-         softpipe->framebuffer.zsbuf->texture == texture)
+      if (softpipe->framebuffer.zsbuf && 
+          softpipe->framebuffer.zsbuf->texture == texture) {
          return PIPE_REFERENCED_FOR_WRITE;
+      }
    }
    
    /* FIXME: we also need to do the same for the texture cache */
@@ -145,12 +157,14 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
    return PIPE_UNREFERENCED;
 }
 
+
 static unsigned int
 softpipe_is_buffer_referenced( struct pipe_context *pipe,
 			       struct pipe_buffer *buf)
 {
    return PIPE_UNREFERENCED;
 }
+
 
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen )
@@ -222,7 +236,6 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
-   softpipe_init_texture_funcs( softpipe );
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.

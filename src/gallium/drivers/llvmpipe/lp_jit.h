@@ -38,9 +38,29 @@
 
 #include "lp_bld_struct.h"
 
+#include "pipe/p_state.h"
+
 
 struct tgsi_sampler;
 struct llvmpipe_screen;
+
+
+struct lp_jit_texture
+{
+   uint32_t width;
+   uint32_t height;
+   uint32_t stride;
+   const void *data;
+};
+
+
+enum {
+   LP_JIT_TEXTURE_WIDTH = 0,
+   LP_JIT_TEXTURE_HEIGHT,
+   LP_JIT_TEXTURE_STRIDE,
+   LP_JIT_TEXTURE_DATA
+};
+
 
 
 /**
@@ -60,11 +80,12 @@ struct lp_jit_context
 
    struct tgsi_sampler **samplers;
 
-   /* TODO: alpha reference value */
    float alpha_ref_value;
 
-   /* TODO: blend constant color */
+   /* FIXME: store (also?) in floats */
    uint8_t *blend_color;
+
+   struct lp_jit_texture textures[PIPE_MAX_SAMPLERS];
 };
 
 
@@ -79,6 +100,11 @@ struct lp_jit_context
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 3, "blend_color")
+
+#define LP_JIT_CONTEXT_TEXTURES_INDEX 4
+
+#define lp_jit_context_textures(_builder, _ptr) \
+   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES_INDEX, "textures")
 
 
 typedef void

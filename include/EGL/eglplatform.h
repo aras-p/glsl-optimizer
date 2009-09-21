@@ -69,7 +69,8 @@ typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;
 /** END Added for Windows **/
 
-#elif defined(__gnu_linux__) || defined(__FreeBSD__) || defined(__sun)
+#elif defined(__gnu_linux__) || defined(__FreeBSD__) || defined(__sun) || defined(__APPLE__)
+
 
 /** BEGIN Added for X (Mesa) **/
 #ifndef EGLAPI

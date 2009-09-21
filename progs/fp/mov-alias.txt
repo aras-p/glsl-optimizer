@@ -1,0 +1,6 @@
+!!ARBfp1.0
+TEMP R0;
+MOV R0, fragment.color;
+MOV R0, R0.zyxw;
+MOV result.color, R0;
+END

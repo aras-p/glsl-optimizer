@@ -40,7 +40,7 @@
 #include <llvm-c/Core.h>  
 
 
-union lp_type type;
+struct lp_type type;
 struct lp_build_context;
 
 
@@ -73,7 +73,7 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_swizzle1_aos(struct lp_build_context *bld,
                       LLVMValueRef a,
-                      unsigned char swizzle[4]);
+                      const unsigned char swizzle[4]);
 
 
 /**
@@ -85,7 +85,7 @@ LLVMValueRef
 lp_build_swizzle2_aos(struct lp_build_context *bld,
                       LLVMValueRef a,
                       LLVMValueRef b,
-                      unsigned char swizzle[4]);
+                      const unsigned char swizzle[4]);
 
 
 #endif /* !LP_BLD_SWIZZLE_H */

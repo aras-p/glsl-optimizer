@@ -32,6 +32,8 @@
 
 #include "radeon_buffer.h"
 
+#include "radeon_bo_gem.h"
+
 static const char *radeon_get_name(struct pipe_winsys *ws)
 {
     return "Radeon/GEM+KMS";
@@ -99,6 +101,7 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
                                                         unsigned height,
                                                         enum pipe_format format,
                                                         unsigned usage,
+                                                        unsigned tex_usage,
                                                         unsigned *stride)
 {
     struct pipe_format_block block;
@@ -134,8 +137,11 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
-    if (!(flags & PIPE_BUFFER_USAGE_DONTBLOCK)) {
-        radeon_bo_wait(radeon_buffer->bo);
+    if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+        uint32_t domain;
+
+        if (radeon_bo_is_busy(radeon_buffer->bo, &domain))
+            return NULL;
     }
     if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
         write = 1;
@@ -187,7 +193,6 @@ static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
 struct radeon_winsys* radeon_pipe_winsys(int fd)
 {
     struct radeon_winsys* radeon_ws;
-    struct radeon_bo_manager* bom;
 
     radeon_ws = CALLOC_STRUCT(radeon_winsys);
     if (radeon_ws == NULL) {

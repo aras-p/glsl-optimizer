@@ -341,10 +341,22 @@ util_is_inf_or_nan(float x)
 
 
 /**
+ * Test whether x is a power of two.
+ */
+static INLINE boolean
+util_is_pot(unsigned x)
+{
+   return (x & (x - 1)) == 0;
+}
+
+
+/**
  * Find first bit set in word.  Least significant bit is 1.
  * Return 0 if no bits set.
  */
-#if defined(_MSC_VER) && _MSC_VER >= 1300
+#if defined(_MSC_VER) && _MSC_VER >= 1300 && (_M_IX86 || _M_AMD64 || _M_IA64)
+unsigned char _BitScanForward(unsigned long* Index, unsigned long Mask);
+#pragma intrinsic(_BitScanForward)
 static INLINE
 unsigned long ffs( unsigned long u )
 {

@@ -46,7 +46,7 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 {
 	struct gl_program *pProgram = NULL;
 
-    struct r700_vertex_program *vp;
+    struct r700_vertex_program_cont *vpc;
 	struct r700_fragment_program *fp;
 
 	radeon_print(RADEON_SHADER, RADEON_VERBOSE,
@@ -56,16 +56,11 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-        vp       = CALLOC_STRUCT(r700_vertex_program);
+        vpc       = CALLOC_STRUCT(r700_vertex_program_cont);
 	    pProgram = _mesa_init_vertex_program(ctx, 
-                                             &vp->mesa_program,
+                                             &vpc->mesa_program,
 					                         target, 
                                              id);
-        vp->translated = GL_FALSE;
-        vp->loaded     = GL_FALSE;
- 
-        vp->shaderbo   = NULL;
-
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
@@ -89,7 +84,8 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 
 static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
-    struct r700_vertex_program   * vp;
+    struct r700_vertex_program_cont   * vpc;
+    struct r700_vertex_program *vp, *tmp;
     struct r700_fragment_program * fp;
 
 	radeon_print(RADEON_SHADER, RADEON_VERBOSE,
@@ -99,14 +95,20 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-        vp = (struct r700_vertex_program*)prog;
-        /* Release DMA region */
+        vpc = (struct r700_vertex_program_cont*)prog;
+        vp = vpc->progs;
+	while (vp) {
+		tmp = vp->next;
+		/* Release DMA region */
+	 
+	        r600DeleteShader(ctx, vp->shaderbo);
 
-        r600DeleteShader(ctx, vp->shaderbo);
-
-        /* Clean up */
-        Clean_Up_Assembler(&(vp->r700AsmCode));
-        Clean_Up_Shader(&(vp->r700Shader));
+	        /* Clean up */
+	        Clean_Up_Assembler(&(vp->r700AsmCode));
+	        Clean_Up_Shader(&(vp->r700Shader));
+		_mesa_free(vp);
+		vp = tmp;
+	}
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:

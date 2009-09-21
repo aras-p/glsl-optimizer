@@ -38,27 +38,53 @@
 #include <llvm-c/Core.h>  
 
 
-union lp_type;
+struct lp_type;
+
+
+struct lp_build_flow_context;
+
+
+struct lp_build_flow_context *
+lp_build_flow_create(LLVMBuilderRef builder);
+
+void
+lp_build_flow_destroy(struct lp_build_flow_context *flow);
+
+void
+lp_build_flow_scope_begin(struct lp_build_flow_context *flow);
+
+void
+lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
+                            LLVMValueRef *variable);
+
+void
+lp_build_flow_scope_end(struct lp_build_flow_context *flow);
+
+void
+lp_build_flow_skip_begin(struct lp_build_flow_context *flow);
+
+void
+lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
+                              LLVMValueRef cond);
+
+void
+lp_build_flow_skip_end(struct lp_build_flow_context *flow);
 
 
 struct lp_build_mask_context
 {
-   LLVMBuilderRef builder;
+   struct lp_build_flow_context *flow;
 
    LLVMTypeRef reg_type;
 
    LLVMValueRef value;
-
-   LLVMValueRef phi;
-
-   LLVMBasicBlockRef skip_block;
 };
 
 
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    LLVMBuilderRef builder,
-                    union lp_type type,
+                    struct lp_build_flow_context *flow,
+                    struct lp_type type,
                     LLVMValueRef value);
 
 /**

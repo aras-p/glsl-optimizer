@@ -85,8 +85,6 @@ def get_winddk_paths(env, version, root):
         else:
             # TODO: take in consideration the host cpu
             bin_dir = os.path.join(root, 'bin', 'win64', 'x86', cpu_bin(target_cpu))
-
-    env.PrependENVPath('PATH', [bin_dir])
     
     crt_inc_dir = os.path.join(root, 'inc', 'crt')
     if version_major >= 6000:
@@ -98,17 +96,33 @@ def get_winddk_paths(env, version, root):
         sdk_inc_dir = os.path.join(root, 'inc', target_os)
         wdm_inc_dir = os.path.join(root, 'inc', 'ddk', 'wdm', target_os)
 
-    env.PrependENVPath('INCLUDE', [
-        wdm_inc_dir,
-        ddk_inc_dir,
-        crt_inc_dir,
-        sdk_inc_dir,
-    ])
+    if env['toolchain'] == 'winddk':
+        env.PrependENVPath('PATH', [bin_dir])
+        env.PrependENVPath('INCLUDE', [
+            wdm_inc_dir,
+            ddk_inc_dir,
+            crt_inc_dir,
+            sdk_inc_dir,
+        ])
+        env.PrependENVPath('LIB', [
+            os.path.join(root, 'lib', 'crt', target_cpu),
+            os.path.join(root, 'lib', target_os, target_cpu),
+        ])
+    elif env['toolchain'] == 'crossmingw':
+        env.Prepend(CPPFLAGS = [
+            '-isystem', ddk_inc_dir,
+            '-isystem', sdk_inc_dir,
+        ])
+    else:
+        env.Prepend(CPPPATH = [
+            wdm_inc_dir,
+            ddk_inc_dir,
+            sdk_inc_dir,
+        ])
+        env.Prepend(LIBPATH = [
+            os.path.join(root, 'lib', target_os, target_cpu),
+        ])
 
-    env.PrependENVPath('LIB', [
-        os.path.join(root, 'lib', 'crt', target_cpu),
-        os.path.join(root, 'lib', target_os, target_cpu),
-    ])
 
 def generate(env):
     if not env.has_key('ENV'):
@@ -120,9 +134,10 @@ def generate(env):
             get_winddk_paths(env, version, root)
             break
 
-    msvc_sa.generate(env)
-    mslib_sa.generate(env)
-    mslink_sa.generate(env)
+    if env['toolchain'] == 'winddk':
+        msvc_sa.generate(env)
+        mslib_sa.generate(env)
+        mslink_sa.generate(env)
 
 def exists(env):
     for version in versions:

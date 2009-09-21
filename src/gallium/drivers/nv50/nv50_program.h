@@ -15,6 +15,15 @@ struct nv50_program_exec {
 	} param;
 };
 
+struct nv50_sreg4 {
+	uint8_t hw;
+	uint8_t id_vp;
+	uint8_t id_fp;
+
+	uint8_t mask;
+	boolean linear;
+};
+
 struct nv50_program {
 	struct pipe_shader_state pipe;
 	struct tgsi_shader_info info;
@@ -24,8 +33,8 @@ struct nv50_program {
 	struct nv50_program_exec *exec_head;
 	struct nv50_program_exec *exec_tail;
 	unsigned exec_size;
-	struct nouveau_resource *data[2];
-	unsigned data_start[2];
+	struct nouveau_resource *data[1];
+	unsigned data_start[1];
 
 	struct nouveau_bo *bo;
 
@@ -36,14 +45,20 @@ struct nv50_program {
 	struct {
 		unsigned high_temp;
 		unsigned high_result;
-		struct {
-			unsigned attr[2];
-		} vp;
-		struct {
-			unsigned regs[4];
-			unsigned map[5];
-			unsigned high_map;
-		} fp;
+
+		uint32_t attr[2];
+		uint32_t regs[4];
+
+		/* for VPs, io_nr doesn't count 'private' results (PSIZ etc.) */
+		unsigned io_nr;
+		struct nv50_sreg4 io[PIPE_MAX_SHADER_OUTPUTS];
+
+		/* FP colour inputs, VP/GP back colour outputs */
+		struct nv50_sreg4 two_side[2];
+
+		/* VP only */
+		uint8_t clpd, clpd_nr;
+		uint8_t psiz;
 	} cfg;
 };
 

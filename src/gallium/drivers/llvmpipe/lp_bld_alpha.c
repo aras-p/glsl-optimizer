@@ -45,7 +45,7 @@
 void
 lp_build_alpha_test(LLVMBuilderRef builder,
                     const struct pipe_alpha_state *state,
-                    union lp_type type,
+                    struct lp_type type,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef alpha,
                     LLVMValueRef ref)

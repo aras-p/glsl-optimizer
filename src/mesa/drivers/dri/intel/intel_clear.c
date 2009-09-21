@@ -38,6 +38,7 @@
 #include "intel_fbo.h"
 #include "intel_pixel.h"
 #include "intel_regions.h"
+#include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
@@ -170,7 +171,9 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 	 }
 	 DBG("\n");
       }
-      _mesa_meta_clear(&intel->ctx, tri_mask);
+
+      _mesa_meta_Clear(&intel->ctx, tri_mask);
+      intel_batchbuffer_flush(intel->batch);
    }
 
    if (swrast_mask) {

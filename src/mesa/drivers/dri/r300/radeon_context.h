@@ -51,26 +51,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_screen.h"
 
-#if R200_MERGED
-extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
-
-#define FALLBACK( radeon, bit, mode ) do {			\
-   if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",	\
-		     __FUNCTION__, bit, mode );			\
-   radeonFallback( (radeon)->glCtx, bit, mode );		\
-} while (0)
-#else
 #define FALLBACK( radeon, bit, mode ) fprintf(stderr, "%s:%s\n", __LINE__, __FILE__);
-#endif
 
 /* TCL fallbacks */
 extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 
-#if R200_MERGED
-#define TCL_FALLBACK( ctx, bit, mode )	radeonTclFallback( ctx, bit, mode )
-#else
 #define TCL_FALLBACK( ctx, bit, mode )	;
-#endif
 
 
 #endif				/* __RADEON_CONTEXT_H__ */

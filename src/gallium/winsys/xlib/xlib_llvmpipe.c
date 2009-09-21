@@ -33,6 +33,8 @@
  */
 
 
+#if defined(GALLIUM_LLVMPIPE)
+
 #include "xm_api.h"
 
 #undef ASSERT
@@ -459,3 +461,4 @@ struct xm_driver xlib_llvmpipe_driver =
 
 
 
+#endif /* GALLIUM_LLVMPIPE */

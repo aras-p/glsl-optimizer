@@ -74,6 +74,7 @@ struct gl_enable_attrib
    GLboolean Convolution2D;
    GLboolean Separable2D;
    GLboolean CullFace;
+   GLboolean DepthClamp;
    GLboolean DepthTest;
    GLboolean Dither;
    GLboolean Fog;
@@ -265,6 +266,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
       attr->Separable2D = ctx->Pixel.Separable2DEnabled;
       attr->CullFace = ctx->Polygon.CullFlag;
+      attr->DepthClamp = ctx->Transform.DepthClamp;
       attr->DepthTest = ctx->Depth.Test;
       attr->Dither = ctx->Color.DitherFlag;
       attr->Fog = ctx->Fog.Enabled;
@@ -514,6 +516,8 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    enable->ColorTable[COLORTABLE_POSTCOLORMATRIX],
                    GL_POST_COLOR_MATRIX_COLOR_TABLE);
    TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
+   TEST_AND_UPDATE(ctx->Transform.DepthClamp, enable->DepthClamp,
+		   GL_DEPTH_CLAMP);
    TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
    TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
    TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D,
@@ -1221,6 +1225,9 @@ _mesa_PopAttrib(void)
                if (xform->RescaleNormals != ctx->Transform.RescaleNormals)
                   _mesa_set_enable(ctx, GL_RESCALE_NORMAL_EXT,
                                    ctx->Transform.RescaleNormals);
+               if (xform->DepthClamp != ctx->Transform.DepthClamp)
+                  _mesa_set_enable(ctx, GL_DEPTH_CLAMP,
+                                   ctx->Transform.DepthClamp);
             }
             break;
          case GL_TEXTURE_BIT:

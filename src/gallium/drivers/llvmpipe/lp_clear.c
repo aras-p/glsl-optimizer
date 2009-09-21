@@ -67,6 +67,7 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
          util_pack_color(rgba, ps->format, &cv);
          lp_tile_cache_clear(llvmpipe->cbuf_cache[i], rgba, cv);
       }
+      llvmpipe->dirty_render_cache = TRUE;
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {

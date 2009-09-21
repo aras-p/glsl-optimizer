@@ -30,8 +30,25 @@
 #include <udis86.h>
 #endif
 
+#include "util/u_math.h"
 #include "util/u_debug.h"
 #include "lp_bld_debug.h"
+
+
+/**
+ * Check alignment.
+ *
+ * It is important that this check is not implemented as a macro or inlined
+ * function, as the compiler assumptions in respect to alignment of global
+ * and stack variables would often make the check a no op, defeating the
+ * whole purpose of the exercise.
+ */
+boolean
+lp_check_alignment(const void *ptr, unsigned alignment)
+{
+   assert(util_is_pot(alignment));
+   return ((uintptr_t)ptr & (alignment - 1)) == 0;
+}
 
 
 void

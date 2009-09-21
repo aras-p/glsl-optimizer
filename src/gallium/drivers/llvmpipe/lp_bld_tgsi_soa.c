@@ -78,6 +78,11 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
+#define QUAD_TOP_LEFT     0
+#define QUAD_TOP_RIGHT    1
+#define QUAD_BOTTOM_LEFT  2
+#define QUAD_BOTTOM_RIGHT 3
+
 
 struct lp_build_tgsi_soa_context
 {
@@ -88,14 +93,58 @@ struct lp_build_tgsi_soa_context
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
 
-   lp_emit_fetch_texel_soa_callback emit_fetch_texel;
-   void *emit_fetch_texel_context;
+   struct lp_build_sampler_soa *sampler;
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
    struct lp_build_mask_context *mask;
 };
+
+
+static const unsigned char
+swizzle_left[4] = {
+   QUAD_TOP_LEFT,     QUAD_TOP_LEFT,
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_LEFT
+};
+
+static const unsigned char
+swizzle_right[4] = {
+   QUAD_TOP_RIGHT,    QUAD_TOP_RIGHT,
+   QUAD_BOTTOM_RIGHT, QUAD_BOTTOM_RIGHT
+};
+
+static const unsigned char
+swizzle_top[4] = {
+   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT,
+   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT
+};
+
+static const unsigned char
+swizzle_bottom[4] = {
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT,
+   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT
+};
+
+
+static LLVMValueRef
+emit_ddx(struct lp_build_tgsi_soa_context *bld,
+         LLVMValueRef src)
+{
+   LLVMValueRef src_left  = lp_build_swizzle1_aos(&bld->base, src, swizzle_left);
+   LLVMValueRef src_right = lp_build_swizzle1_aos(&bld->base, src, swizzle_right);
+   return lp_build_sub(&bld->base, src_right, src_left);
+}
+
+
+static LLVMValueRef
+emit_ddy(struct lp_build_tgsi_soa_context *bld,
+         LLVMValueRef src)
+{
+   LLVMValueRef src_top    = lp_build_swizzle1_aos(&bld->base, src, swizzle_top);
+   LLVMValueRef src_bottom = lp_build_swizzle1_aos(&bld->base, src, swizzle_bottom);
+   return lp_build_sub(&bld->base, src_top, src_bottom);
+}
 
 
 /**
@@ -168,6 +217,7 @@ emit_fetch(
       break;
 
    case TGSI_UTIL_SIGN_SET:
+      /* TODO: Use bitwese OR for floating point */
       res = lp_build_abs( &bld->base, res );
       res = LLVMBuildNeg( bld->base.builder, res, "" );
       break;
@@ -181,6 +231,36 @@ emit_fetch(
    }
 
    return res;
+}
+
+
+/**
+ * Register fetch with derivatives.
+ */
+static void
+emit_fetch_deriv(
+   struct lp_build_tgsi_soa_context *bld,
+   const struct tgsi_full_instruction *inst,
+   unsigned index,
+   const unsigned chan_index,
+   LLVMValueRef *res,
+   LLVMValueRef *ddx,
+   LLVMValueRef *ddy)
+{
+   LLVMValueRef src;
+
+   src = emit_fetch(bld, inst, index, chan_index);
+
+   if(res)
+      *res = src;
+
+   /* TODO: use interpolation coeffs for inputs */
+
+   if(ddx)
+      *ddx = emit_ddx(bld, src);
+
+   if(ddy)
+      *ddy = emit_ddy(bld, src);
 }
 
 
@@ -239,17 +319,18 @@ emit_store(
  * High-level instruction translators.
  */
 
+
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
           boolean apply_lodbias,
-          boolean projected)
+          boolean projected,
+          LLVMValueRef *texel)
 {
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    LLVMValueRef lodbias;
    LLVMValueRef oow;
    LLVMValueRef coords[3];
-   LLVMValueRef texel[4];
    unsigned num_coords;
    unsigned i;
 
@@ -289,12 +370,11 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
 
-   bld->emit_fetch_texel(bld->base.builder, bld->emit_fetch_texel_context,
-                         unit, num_coords, coords, lodbias, texel);
-
-   FOR_EACH_DST0_ENABLED_CHANNEL( inst, i ) {
-      emit_store( bld, inst, 0, i, texel[i] );
-   }
+   bld->sampler->emit_fetch_texel(bld->sampler,
+                                  bld->base.builder,
+                                  bld->base.type,
+                                  unit, num_coords, coords, lodbias,
+                                  texel);
 }
 
 
@@ -347,14 +427,6 @@ emit_kil(
 }
 
 
-static void
-emit_kilp(
-   struct lp_build_tgsi_soa_context *bld )
-{
-   /* XXX todo / fix me */
-}
-
-
 /**
  * Check if inst src/dest regs use indirect addressing into temporary
  * register file.
@@ -382,25 +454,35 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 static int
 emit_instruction(
    struct lp_build_tgsi_soa_context *bld,
-   struct tgsi_full_instruction *inst )
+   const struct tgsi_full_instruction *inst,
+   const struct tgsi_opcode_info *info)
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
    LLVMValueRef tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
-   LLVMValueRef dst0;
+   LLVMValueRef res;
+   LLVMValueRef dst0[NUM_CHANNELS];
 
    /* we can't handle indirect addressing into temp register file yet */
    if (indirect_temp_reference(inst))
       return FALSE;
 
+   assert(info->num_dst <= 1);
+   if(info->num_dst) {
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         dst0[chan_index] = bld->base.undef;
+      }
+   }
+
    switch (inst->Instruction.Opcode) {
 #if 0
    case TGSI_OPCODE_ARL:
+      /* FIXME */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
          emit_flr(bld, 0, 0);
          emit_f2it( bld, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 #endif
@@ -408,19 +490,17 @@ emit_instruction(
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = emit_fetch( bld, inst, 0, chan_index );
       }
       break;
 
    case TGSI_OPCODE_LIT:
       if( IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) ) {
-         emit_store( bld, inst, 0, CHAN_X, bld->base.one);
+         dst0[CHAN_X] = bld->base.one;
       }
       if( IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) ) {
          src0 = emit_fetch( bld, inst, 0, CHAN_X );
-         dst0 = lp_build_max( &bld->base, src0, bld->base.zero);
-         emit_store( bld, inst, 0, CHAN_Y, dst0);
+         dst0[CHAN_Y] = lp_build_max( &bld->base, src0, bld->base.zero);
       }
       if( IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ) ) {
          /* XMM[1] = SrcReg[0].yyyy */
@@ -432,20 +512,19 @@ emit_instruction(
          tmp1 = lp_build_pow( &bld->base, tmp1, tmp2);
          tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
          tmp2 = lp_build_cmp(&bld->base, PIPE_FUNC_GREATER, tmp0, bld->base.zero);
-         dst0 = lp_build_select(&bld->base, tmp2, tmp1, bld->base.zero);
-         emit_store( bld, inst, 0, CHAN_Z, dst0);
+         dst0[CHAN_Z] = lp_build_select(&bld->base, tmp2, tmp1, bld->base.zero);
       }
       if( IS_DST0_CHANNEL_ENABLED( inst, CHAN_W ) ) {
-         emit_store( bld, inst, 0, CHAN_W, bld->base.one);
+         dst0[CHAN_W] = bld->base.one;
       }
       break;
 
    case TGSI_OPCODE_RCP:
    /* TGSI_OPCODE_RECIP */
       src0 = emit_fetch( bld, inst, 0, CHAN_X );
-      dst0 = lp_build_rcp(&bld->base, src0);
+      res = lp_build_rcp(&bld->base, src0);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, dst0 );
+         dst0[chan_index] = res;
       }
       break;
 
@@ -453,9 +532,9 @@ emit_instruction(
    /* TGSI_OPCODE_RECIPSQRT */
       src0 = emit_fetch( bld, inst, 0, CHAN_X );
       src0 = lp_build_abs(&bld->base, src0);
-      dst0 = lp_build_rsqrt(&bld->base, src0);
+      res = lp_build_rsqrt(&bld->base, src0);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, dst0 );
+         dst0[chan_index] = res;
       }
       break;
 
@@ -479,16 +558,15 @@ emit_instruction(
          lp_build_exp2_approx(&bld->base, src0, p_exp2_int_part, p_frac_part, p_exp2);
 
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ))
-            emit_store( bld, inst, 0, CHAN_X, tmp0);
+            dst0[CHAN_X] = tmp0;
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ))
-            emit_store( bld, inst, 0, CHAN_Y, tmp1);
+            dst0[CHAN_Y] = tmp1;
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ))
-            emit_store( bld, inst, 0, CHAN_Z, tmp2);
+            dst0[CHAN_Z] = tmp2;
       }
       /* dst.w = 1.0 */
       if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_W )) {
-         tmp0 = bld->base.one;
-         emit_store( bld, inst, 0, CHAN_W, tmp0);
+         dst0[CHAN_W] = bld->base.one;
       }
       break;
 
@@ -514,20 +592,18 @@ emit_instruction(
 
          /* dst.x = floor(lg2(abs(src.x))) */
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ))
-            emit_store( bld, inst, 0, CHAN_X, tmp0);
+            dst0[CHAN_X] = tmp0;
          /* dst.y = abs(src)/ex2(floor(lg2(abs(src.x)))) */
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y )) {
-            tmp1 = lp_build_div( &bld->base, src0, tmp1);
-            emit_store( bld, inst, 0, CHAN_Y, tmp1);
+            dst0[CHAN_Y] = lp_build_div( &bld->base, src0, tmp1);
          }
          /* dst.z = lg2(abs(src.x)) */
          if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ))
-            emit_store( bld, inst, 0, CHAN_Z, tmp2);
+            dst0[CHAN_Z] = tmp2;
       }
       /* dst.w = 1.0 */
       if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_W )) {
-         tmp0 = bld->base.one;
-         emit_store( bld, inst, 0, CHAN_W, tmp0);
+         dst0[CHAN_W] = bld->base.one;
       }
       break;
 
@@ -535,8 +611,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
-         dst0 = lp_build_mul(&bld->base, src0, src1);
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_mul(&bld->base, src0, src1);
       }
       break;
 
@@ -544,8 +619,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
-         dst0 = lp_build_add(&bld->base, src0, src1);
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_add(&bld->base, src0, src1);
       }
       break;
 
@@ -563,7 +637,7 @@ emit_instruction(
       tmp1 = lp_build_mul( &bld->base, tmp1, tmp2);
       tmp0 = lp_build_add( &bld->base, tmp0, tmp1);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
@@ -585,28 +659,24 @@ emit_instruction(
       tmp1 = lp_build_mul( &bld->base, tmp1, tmp2);
       tmp0 = lp_build_add( &bld->base, tmp0, tmp1);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
    case TGSI_OPCODE_DST:
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) {
-         tmp0 = bld->base.one;
-         emit_store( bld, inst, 0, CHAN_X, tmp0);
+         dst0[CHAN_X] = bld->base.one;
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) {
          tmp0 = emit_fetch( bld, inst, 0, CHAN_Y );
          tmp1 = emit_fetch( bld, inst, 1, CHAN_Y );
-         tmp0 = lp_build_mul( &bld->base, tmp0, tmp1);
-         emit_store( bld, inst, 0, CHAN_Y, tmp0);
+         dst0[CHAN_Y] = lp_build_mul( &bld->base, tmp0, tmp1);
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ) {
-         tmp0 = emit_fetch( bld, inst, 0, CHAN_Z );
-         emit_store( bld, inst, 0, CHAN_Z, tmp0);
+         dst0[CHAN_Z] = emit_fetch( bld, inst, 0, CHAN_Z );
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_W ) {
-         tmp0 = emit_fetch( bld, inst, 1, CHAN_W );
-         emit_store( bld, inst, 0, CHAN_W, tmp0);
+         dst0[CHAN_W] = emit_fetch( bld, inst, 1, CHAN_W );
       }
       break;
 
@@ -614,8 +684,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
-         dst0 = lp_build_min( &bld->base, src0, src1 );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_min( &bld->base, src0, src1 );
       }
       break;
 
@@ -623,8 +692,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
-         dst0 = lp_build_max( &bld->base, src0, src1 );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_max( &bld->base, src0, src1 );
       }
       break;
 
@@ -634,8 +702,7 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_LESS, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
@@ -645,8 +712,7 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_GEQUAL, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
@@ -658,7 +724,7 @@ emit_instruction(
          tmp2 = emit_fetch( bld, inst, 2, chan_index );
          tmp0 = lp_build_mul( &bld->base, tmp0, tmp1);
          tmp0 = lp_build_add( &bld->base, tmp0, tmp2);
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
@@ -666,8 +732,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
          tmp1 = emit_fetch( bld, inst, 1, chan_index );
-         tmp0 = lp_build_sub( &bld->base, tmp0, tmp1);
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_sub( &bld->base, tmp0, tmp1);
       }
       break;
 
@@ -678,13 +743,19 @@ emit_instruction(
          src2 = emit_fetch( bld, inst, 2, chan_index );
          tmp0 = lp_build_sub( &bld->base, src1, src2 );
          tmp0 = lp_build_mul( &bld->base, src0, tmp0 );
-         dst0 = lp_build_add( &bld->base, tmp0, src2 );
-         emit_store( bld, inst, 0, chan_index, dst0 );
+         dst0[chan_index] = lp_build_add( &bld->base, tmp0, src2 );
       }
       break;
 
    case TGSI_OPCODE_CND:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         src0 = emit_fetch( bld, inst, 0, chan_index );
+         src1 = emit_fetch( bld, inst, 1, chan_index );
+         src2 = emit_fetch( bld, inst, 2, chan_index );
+         tmp1 = lp_build_const_scalar(bld->base.type, 0.5);
+         tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_GREATER, src2, tmp1);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, src0, src1 );
+      }
       break;
 
    case TGSI_OPCODE_DP2A:
@@ -698,45 +769,49 @@ emit_instruction(
       tmp1 = emit_fetch( bld, inst, 2, CHAN_X );  /* xmm1 = src[2].x */
       tmp0 = lp_build_add( &bld->base, tmp0, tmp1);              /* xmm0 = xmm0 + xmm1 */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);  /* dest[ch] = xmm0 */
+         dst0[chan_index] = tmp0;  /* dest[ch] = xmm0 */
       }
       break;
 
-#if 0
    case TGSI_OPCODE_FRC:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_frc( bld, 0, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         src0 = emit_fetch( bld, inst, 0, chan_index );
+         tmp0 = lp_build_floor(&bld->base, src0);
+         tmp0 = lp_build_sub(&bld->base, tmp0, src0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
    case TGSI_OPCODE_CLAMP:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         tmp0 = emit_fetch( bld, inst, 0, chan_index );
+         src1 = emit_fetch( bld, inst, 1, chan_index );
+         src2 = emit_fetch( bld, inst, 2, chan_index );
+         tmp0 = lp_build_max(&bld->base, tmp0, src1);
+         tmp0 = lp_build_min(&bld->base, tmp0, src2);
+         dst0[chan_index] = tmp0;
+      }
       break;
 
    case TGSI_OPCODE_FLR:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_flr( bld, 0, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_floor(&bld->base, tmp0);
       }
       break;
 
    case TGSI_OPCODE_ROUND:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_rnd( bld, 0, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_round(&bld->base, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_EX2: {
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
       tmp0 = lp_build_exp2( &bld->base, tmp0);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
    }
@@ -745,16 +820,16 @@ emit_instruction(
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
       tmp0 = lp_build_log2( &bld->base, tmp0);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
    case TGSI_OPCODE_POW:
       src0 = emit_fetch( bld, inst, 0, CHAN_X );
       src1 = emit_fetch( bld, inst, 1, CHAN_X );
-      dst0 = lp_build_pow( &bld->base, src0, src1 );
+      res = lp_build_pow( &bld->base, src0, src1 );
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, dst0 );
+         dst0[chan_index] = res;
       }
       break;
 
@@ -775,7 +850,7 @@ emit_instruction(
          tmp5 = tmp3;
          tmp5 = lp_build_mul( &bld->base, tmp5, tmp4);
          tmp2 = lp_build_sub( &bld->base, tmp2, tmp5);
-         emit_store( bld, inst, 0, CHAN_X, tmp2);
+         dst0[CHAN_X] = tmp2;
       }
       if( IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ) ) {
@@ -786,31 +861,30 @@ emit_instruction(
          tmp3 = lp_build_mul( &bld->base, tmp3, tmp2);
          tmp1 = lp_build_mul( &bld->base, tmp1, tmp5);
          tmp3 = lp_build_sub( &bld->base, tmp3, tmp1);
-         emit_store( bld, inst, 0, CHAN_Y, tmp3);
+         dst0[CHAN_Y] = tmp3;
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ) {
          tmp5 = lp_build_mul( &bld->base, tmp5, tmp4);
          tmp0 = lp_build_mul( &bld->base, tmp0, tmp2);
          tmp5 = lp_build_sub( &bld->base, tmp5, tmp0);
-         emit_store( bld, inst, 0, CHAN_Z, tmp5);
+         dst0[CHAN_Z] = tmp5;
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_W ) {
-         tmp0 = bld->base.one;
-         emit_store( bld, inst, 0, CHAN_W, tmp0);
+         dst0[CHAN_W] = bld->base.one;
       }
       break;
 
    case TGSI_OPCODE_ABS:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         tmp0 = lp_build_abs( &bld->base, tmp0 ) ;
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_abs( &bld->base, tmp0 );
       }
       break;
 
    case TGSI_OPCODE_RCC:
+      /* deprecated? */
+      assert(0);
       return 0;
-      break;
 
    case TGSI_OPCODE_DPH:
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
@@ -827,7 +901,7 @@ emit_instruction(
       tmp1 = emit_fetch( bld, inst, 1, CHAN_W );
       tmp0 = lp_build_add( &bld->base, tmp0, tmp1);
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
@@ -835,25 +909,27 @@ emit_instruction(
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
       tmp0 = lp_build_cos( &bld->base, tmp0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
    case TGSI_OPCODE_DDX:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         emit_fetch_deriv( bld, inst, 0, chan_index, NULL, &dst0[chan_index], NULL);
+      }
       break;
 
    case TGSI_OPCODE_DDY:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         emit_fetch_deriv( bld, inst, 0, chan_index, NULL, NULL, &dst0[chan_index]);
+      }
       break;
 
-#if 0
    case TGSI_OPCODE_KILP:
       /* predicated kill */
-      emit_kilp( bld );
-      return 0; /* XXX fix me */
+      /* FIXME */
+      return 0;
       break;
-#endif
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
@@ -885,13 +961,14 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_EQUAL, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
    case TGSI_OPCODE_SFL:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         dst0[chan_index] = bld->base.zero;
+      }
       break;
 
    case TGSI_OPCODE_SGT:
@@ -899,8 +976,7 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_GREATER, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
@@ -908,7 +984,7 @@ emit_instruction(
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
       tmp0 = lp_build_sin( &bld->base, tmp0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 
@@ -917,8 +993,7 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_LEQUAL, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
@@ -927,85 +1002,99 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_NOTEQUAL, src0, src1 );
-         dst0 = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, bld->base.one, bld->base.zero );
       }
       break;
 
    case TGSI_OPCODE_STR:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         dst0[chan_index] = bld->base.one;
+      }
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex( bld, inst, FALSE, FALSE );
+      emit_tex( bld, inst, FALSE, FALSE, dst0 );
       break;
 
    case TGSI_OPCODE_TXD:
+      /* FIXME */
       return 0;
       break;
 
    case TGSI_OPCODE_UP2H:
+      /* deprecated */
+      assert (0);
       return 0;
       break;
 
    case TGSI_OPCODE_UP2US:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_UP4B:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_UP4UB:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_X2D:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_ARA:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
 #if 0
    case TGSI_OPCODE_ARR:
+      /* FIXME */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
          emit_rnd( bld, 0, 0 );
          emit_f2it( bld, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = tmp0;
       }
       break;
 #endif
 
    case TGSI_OPCODE_BRA:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_CAL:
+      /* FIXME */
       return 0;
       break;
 
-#if 0
    case TGSI_OPCODE_RET:
-      emit_ret( bld );
+      /* FIXME */
+      return 0;
       break;
-#endif
 
    case TGSI_OPCODE_END:
       break;
 
-#if 0
    case TGSI_OPCODE_SSG:
    /* TGSI_OPCODE_SGN */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_sgn( bld, 0, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_sgn( &bld->base, tmp0 );
       }
       break;
-#endif
 
    case TGSI_OPCODE_CMP:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
@@ -1013,34 +1102,29 @@ emit_instruction(
          src1 = emit_fetch( bld, inst, 1, chan_index );
          src2 = emit_fetch( bld, inst, 2, chan_index );
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_LESS, src0, bld->base.zero );
-         dst0 = lp_build_select( &bld->base, tmp0, src1, src2);
-         emit_store( bld, inst, 0, chan_index, dst0);
+         dst0[chan_index] = lp_build_select( &bld->base, tmp0, src1, src2);
       }
       break;
 
    case TGSI_OPCODE_SCS:
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) {
          tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
-         tmp0 = lp_build_cos( &bld->base, tmp0 );
-         emit_store( bld, inst, 0, CHAN_X, tmp0);
+         dst0[CHAN_X] = lp_build_cos( &bld->base, tmp0 );
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) {
          tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
-         tmp0 = lp_build_sin( &bld->base, tmp0 );
-         emit_store( bld, inst, 0, CHAN_Y, tmp0);
+         dst0[CHAN_Y] = lp_build_sin( &bld->base, tmp0 );
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z ) {
-         tmp0 = bld->base.zero;
-         emit_store( bld, inst, 0, CHAN_Z, tmp0);
+         dst0[CHAN_Z] = bld->base.zero;
       }
       IF_IS_DST0_CHANNEL_ENABLED( inst, CHAN_W ) {
-         tmp0 = bld->base.one;
-         emit_store( bld, inst, 0, CHAN_W, tmp0);
+         dst0[CHAN_W] = bld->base.one;
       }
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex( bld, inst, TRUE, FALSE );
+      emit_tex( bld, inst, TRUE, FALSE, dst0 );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -1099,38 +1183,35 @@ emit_instruction(
 
             /* dst.x = xmm1 * src.x */
             if (IS_DST0_CHANNEL_ENABLED(inst, CHAN_X)) {
-               tmp4 = lp_build_mul( &bld->base, tmp4, tmp1);
-               emit_store(bld, inst, 0, CHAN_X, tmp4);
+               dst0[CHAN_X] = lp_build_mul( &bld->base, tmp4, tmp1);
             }
 
             /* dst.y = xmm1 * src.y */
             if (IS_DST0_CHANNEL_ENABLED(inst, CHAN_Y)) {
-               tmp5 = lp_build_mul( &bld->base, tmp5, tmp1);
-               emit_store(bld, inst, 0, CHAN_Y, tmp5);
+               dst0[CHAN_Y] = lp_build_mul( &bld->base, tmp5, tmp1);
             }
 
             /* dst.z = xmm1 * src.z */
             if (IS_DST0_CHANNEL_ENABLED(inst, CHAN_Z)) {
-               tmp6 = lp_build_mul( &bld->base, tmp6, tmp1);
-               emit_store(bld, inst, 0, CHAN_Z, tmp6);
+               dst0[CHAN_Z] = lp_build_mul( &bld->base, tmp6, tmp1);
             }
 
             /* dst.w = xmm1 * src.w */
             if (IS_DST0_CHANNEL_ENABLED(inst, CHAN_X) && dims == 4) {
-               tmp7 = lp_build_mul( &bld->base, tmp7, tmp1);
-               emit_store(bld, inst, 0, CHAN_W, tmp7);
+               dst0[CHAN_W] = lp_build_mul( &bld->base, tmp7, tmp1);
             }
          }
 
-         /* dst0.w = 1.0 */
+         /* dst.w = 1.0 */
          if (IS_DST0_CHANNEL_ENABLED(inst, CHAN_W) && dims == 3) {
-            tmp0 = bld->base.one;
-            emit_store(bld, inst, 0, CHAN_W, tmp0);
+            dst0[CHAN_W] = bld->base.one;
          }
       }
       break;
 
    case TGSI_OPCODE_DIV:
+      /* deprecated */
+      assert( 0 );
       return 0;
       break;
 
@@ -1143,118 +1224,157 @@ emit_instruction(
       tmp1 = lp_build_mul( &bld->base, tmp1, tmp2);              /* xmm1 = xmm1 * xmm2 */
       tmp0 = lp_build_add( &bld->base, tmp0, tmp1);              /* xmm0 = xmm0 + xmm1 */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, tmp0);  /* dest[ch] = xmm0 */
+         dst0[chan_index] = tmp0;  /* dest[ch] = xmm0 */
       }
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( bld, inst, TRUE, FALSE );
+      emit_tex( bld, inst, TRUE, FALSE, dst0 );
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex( bld, inst, FALSE, TRUE );
+      emit_tex( bld, inst, FALSE, TRUE, dst0 );
       break;
       
    case TGSI_OPCODE_BRK:
+      /* FIXME */
       return 0;
       break;
 
    case TGSI_OPCODE_IF:
+      /* FIXME */
       return 0;
       break;
 
    case TGSI_OPCODE_BGNFOR:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_REP:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_ELSE:
+      /* FIXME */
       return 0;
       break;
 
    case TGSI_OPCODE_ENDIF:
+      /* FIXME */
       return 0;
       break;
 
    case TGSI_OPCODE_ENDFOR:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_ENDREP:
+      /* deprecated */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_PUSHA:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_POPA:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_CEIL:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         tmp0 = emit_fetch( bld, inst, 0, chan_index );
+         dst0[chan_index] = lp_build_ceil(&bld->base, tmp0);
+      }
       break;
 
    case TGSI_OPCODE_I2F:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_NOT:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
-#if 0
    case TGSI_OPCODE_TRUNC:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_f2it( bld, 0 );
-         emit_i2f( bld, 0 );
-         emit_store( bld, inst, 0, chan_index, tmp0);
+         dst0[chan_index] = lp_build_trunc(&bld->base, tmp0);
       }
       break;
-#endif
 
    case TGSI_OPCODE_SHL:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_SHR:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_AND:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_OR:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_MOD:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_XOR:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_SAD:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_TXF:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_TXQ:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
    case TGSI_OPCODE_CONT:
+      /* deprecated? */
+      assert(0);
       return 0;
       break;
 
@@ -1266,10 +1386,28 @@ emit_instruction(
       return 0;
       break;
 
+   case TGSI_OPCODE_NOISE1:
+   case TGSI_OPCODE_NOISE2:
+   case TGSI_OPCODE_NOISE3:
+   case TGSI_OPCODE_NOISE4:
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         dst0[chan_index] = bld->base.zero;
+      }
+      break;
+
+   case TGSI_OPCODE_NOP:
+      break;
+
    default:
       return 0;
    }
    
+   if(info->num_dst) {
+      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
+         emit_store( bld, inst, 0, chan_index, dst0[chan_index]);
+      }
+   }
+
    return 1;
 }
 
@@ -1277,14 +1415,13 @@ emit_instruction(
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
-                  union lp_type type,
+                  struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
-                  lp_emit_fetch_texel_soa_callback emit_fetch_texel,
-                  void *emit_fetch_texel_context)
+                  struct lp_build_sampler_soa *sampler)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
@@ -1299,8 +1436,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
-   bld.emit_fetch_texel = emit_fetch_texel;
-   bld.emit_fetch_texel_context = emit_fetch_texel_context;
+   bld.sampler = sampler;
 
    tgsi_parse_init( &parse, tokens );
 
@@ -1309,16 +1445,18 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         /* Input already interpolated */
+         /* Inputs already interpolated */
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (!emit_instruction( &bld, &parse.FullToken.FullInstruction )) {
+         {
             unsigned opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
             const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
-	    _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
-	                  info ? info->mnemonic : "<invalid>");
-	 }
+            if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, info ))
+               _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
+                             info ? info->mnemonic : "<invalid>");
+         }
+
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:

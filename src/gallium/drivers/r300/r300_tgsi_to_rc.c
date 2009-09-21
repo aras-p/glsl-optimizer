@@ -161,7 +161,6 @@ static unsigned translate_saturate(unsigned saturate)
             /* fall-through */
         case TGSI_SAT_NONE: return RC_SATURATE_NONE;
         case TGSI_SAT_ZERO_ONE: return RC_SATURATE_ZERO_ONE;
-        case TGSI_SAT_MINUS_PLUS_ONE: return RC_SATURATE_MINUS_PLUS_ONE;
     }
 }
 

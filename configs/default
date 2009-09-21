@@ -9,7 +9,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=7
-MESA_MINOR=6
+MESA_MINOR=7
 MESA_TINY=0
 MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
@@ -23,6 +23,7 @@ HOST_CC = $(CC)
 CFLAGS = -O
 CXXFLAGS = -O
 LDFLAGS =
+HOST_CFLAGS = $(CFLAGS)
 GLU_CFLAGS = 
 
 # Compiler for building demos/tests/etc

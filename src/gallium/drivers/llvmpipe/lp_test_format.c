@@ -119,7 +119,7 @@ add_load_rgba_test(LLVMModuleRef module,
 
    lp_build_loop_begin(builder, LLVMConstInt(LLVMInt32Type(), 1, 0), &loop);
 
-   rgba = lp_build_load_rgba(builder, format, ptr);
+   rgba = lp_build_load_rgba_aos(builder, format, ptr);
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
    lp_build_loop_end(builder, LLVMConstInt(LLVMInt32Type(), 4, 0), NULL, &loop);
@@ -160,7 +160,7 @@ add_store_rgba_test(LLVMModuleRef module,
 
    rgba = LLVMBuildLoad(builder, rgba_ptr, "");
 
-   lp_build_store_rgba(builder, format, ptr, rgba);
+   lp_build_store_rgba_aos(builder, format, ptr, rgba);
 
    LLVMBuildRetVoid(builder);
 

@@ -20,10 +20,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
 
-#include "util/u_debug.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "pipe/p_config.h"
 #include "pipe/internal/p_winsys_screen.h"

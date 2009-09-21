@@ -170,7 +170,7 @@ x8r8g8b8_get_tile_rgba(const unsigned *src,
          pRow[0] = ubyte_to_float((pixel >> 16) & 0xff);
          pRow[1] = ubyte_to_float((pixel >>  8) & 0xff);
          pRow[2] = ubyte_to_float((pixel >>  0) & 0xff);
-         pRow[3] = ubyte_to_float(0xff);
+         pRow[3] = 1.0F;
       }
       p += dst_stride;
    }
@@ -387,6 +387,52 @@ r5g6b5_put_tile_rgba(ushort *dst,
          uint g = (uint) (CLAMP(pRow[1], 0.0, 1.0) * 63.0);
          uint b = (uint) (CLAMP(pRow[2], 0.0, 1.0) * 31.0);
          *dst++ = (r << 11) | (g << 5) | (b);
+      }
+      p += src_stride;
+   }
+}
+
+
+
+/*** PIPE_FORMAT_R8G8B8_UNORM ***/
+
+static void
+r8g8b8_get_tile_rgba(const ubyte *src,
+                     unsigned w, unsigned h,
+                     float *p,
+                     unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         pRow[0] = ubyte_to_float(src[0]);
+         pRow[1] = ubyte_to_float(src[1]);
+         pRow[2] = ubyte_to_float(src[2]);
+         pRow[3] = 1.0f;
+         src += 3;
+      }
+      p += dst_stride;
+   }
+}
+
+
+static void
+r8g8b8_put_tile_rgba(ubyte *dst,
+                     unsigned w, unsigned h,
+                     const float *p,
+                     unsigned src_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         dst[0] = float_to_ubyte(pRow[0]);
+         dst[1] = float_to_ubyte(pRow[1]);
+         dst[2] = float_to_ubyte(pRow[2]);
+         dst += 3;
       }
       p += src_stride;
    }
@@ -1106,6 +1152,9 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
    case PIPE_FORMAT_R5G6B5_UNORM:
       r5g6b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
       break;
+   case PIPE_FORMAT_R8G8B8_UNORM:
+      r8g8b8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
+      break;
    case PIPE_FORMAT_L8_UNORM:
       l8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
       break;
@@ -1221,6 +1270,9 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
       r5g6b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
+      break;
+   case PIPE_FORMAT_R8G8B8_UNORM:
+      r8g8b8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       assert(0);

@@ -905,6 +905,10 @@ StateVars = [
 	  ["ctx->Depth.BoundsMin", "ctx->Depth.BoundsMax"],
 	  "", ["EXT_depth_bounds_test"] ),
 
+	# GL_ARB_depth_clamp
+	( "GL_DEPTH_CLAMP", GLboolean, ["ctx->Transform.DepthClamp"], "",
+	  ["ARB_depth_clamp"] ),
+
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
 	  ["ctx->Const.MaxDrawBuffers"], "", None ),

@@ -81,6 +81,7 @@ static unsigned long t_src_class(rc_register_file file)
 	default:
 		fprintf(stderr, "%s: Bad register file %i\n", __FUNCTION__, file);
 		/* fall-through */
+	case RC_FILE_NONE:
 	case RC_FILE_TEMPORARY:
 		return PVS_SRC_REG_TEMPORARY;
 	case RC_FILE_INPUT:

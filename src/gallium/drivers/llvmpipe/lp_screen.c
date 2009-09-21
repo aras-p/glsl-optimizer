@@ -27,8 +27,6 @@
 
 
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
@@ -67,8 +65,6 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_GLSL:
       return 1;
-   case PIPE_CAP_S3TC:
-      return 0;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:
@@ -196,8 +192,7 @@ static void
 llvmpipe_destroy_screen( struct pipe_screen *_screen )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-
-   struct pipe_winsys *winsys = _screen->winsys;
+   struct llvmpipe_winsys *winsys = screen->winsys;
 
    lp_jit_screen_cleanup(screen);
 

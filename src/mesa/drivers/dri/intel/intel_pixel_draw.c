@@ -42,6 +42,7 @@
 #include "main/depth.h"
 #include "main/hash.h"
 #include "main/blend.h"
+#include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
@@ -53,7 +54,7 @@
 #include "intel_fbo.h"
 
 
-/** XXX compare perf of this vs. _mesa_meta_draw_pixels(STENCIL) */
+/** XXX compare perf of this vs. _mesa_meta_DrawPixels(STENCIL) */
 static GLboolean
 intel_stencil_drawpixels(GLcontext * ctx,
 			 GLint x, GLint y,
@@ -260,10 +261,25 @@ intelDrawPixels(GLcontext * ctx,
                 const struct gl_pixelstore_attrib *unpack,
                 const GLvoid * pixels)
 {
+#if 0
+   /* XXX this function doesn't seem to work reliably even when all
+    * the pre-requisite conditions are met.
+    * Note that this function is never hit with conform.
+    * Fall back to swrast because even the _mesa_meta_DrawPixels() approach
+    * isn't working because of an apparent stencil bug.
+    */
    if (intel_stencil_drawpixels(ctx, x, y, width, height, format, type,
 				unpack, pixels))
       return;
+#else
+   (void) intel_stencil_drawpixels; /* silence warning */
+   if (format == GL_STENCIL_INDEX) {
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
+                         unpack, pixels);
+      return;
+   }
+#endif
 
-   _mesa_meta_draw_pixels(ctx, x, y, width, height, format, type,
-                          unpack, pixels);
+   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
+                         unpack, pixels);
 }

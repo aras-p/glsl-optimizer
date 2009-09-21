@@ -39,31 +39,46 @@
 
 
 struct tgsi_token;
-union lp_type;
+struct lp_type;
 struct lp_build_context;
 struct lp_build_mask_context;
 
 
-typedef void
-(*lp_emit_fetch_texel_soa_callback)( LLVMBuilderRef builder,
-                                void *context,
-                                unsigned unit,
-                                unsigned num_coords,
-                                const LLVMValueRef *coords,
-                                LLVMValueRef lodbias,
-                                LLVMValueRef *texel);
+/**
+ * Sampler code generation interface.
+ *
+ * Although texture sampling is a requirement for TGSI translation, it is
+ * a very different problem with several different approaches to it. This
+ * structure establishes an interface for texture sampling code generation, so
+ * that we can easily use different texture sampling strategies.
+ */
+struct lp_build_sampler_soa
+{
+   void
+   (*destroy)( struct lp_build_sampler_soa *sampler );
+
+   void
+   (*emit_fetch_texel)( struct lp_build_sampler_soa *sampler,
+                        LLVMBuilderRef builder,
+                        struct lp_type type,
+                        unsigned unit,
+                        unsigned num_coords,
+                        const LLVMValueRef *coords,
+                        LLVMValueRef lodbias,
+                        LLVMValueRef *texel);
+};
+
 
 void
 lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const struct tgsi_token *tokens,
-                  union lp_type type,
+                  struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
-                  lp_emit_fetch_texel_soa_callback emit_fetch_texel,
-                  void *emit_fetch_texel_context);
+                  struct lp_build_sampler_soa *sampler);
 
 
 #endif /* LP_BLD_TGSI_H */
