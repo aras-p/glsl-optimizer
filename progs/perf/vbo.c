@@ -142,6 +142,10 @@ static const GLsizei Sizes[] = {
    0 /* end of list */
 };
 
+void
+PerfNextRound(void)
+{
+}
 
 /** Called from test harness/main */
 void

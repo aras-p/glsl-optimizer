@@ -228,6 +228,11 @@ DrawRangeElementsBO(unsigned count)
    PerfSwapBuffers();
 }
 
+void
+PerfNextRound(void)
+{
+}
+
 
 /** Called from test harness/main */
 void

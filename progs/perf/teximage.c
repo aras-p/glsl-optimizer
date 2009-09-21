@@ -155,6 +155,10 @@ static const struct {
    { 0, 0, NULL }
 };
 
+void
+PerfNextRound(void)
+{
+}
 
 
 /** Called from test harness/main */

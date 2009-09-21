@@ -46,11 +46,17 @@ PerfCheckerTexture(GLsizei width, GLsizei height);
 extern GLuint
 PerfShaderProgram(const char *vertShader, const char *fragShader);
 
+extern int
+PerfReshapeWindow( unsigned w, unsigned h );
+
 
 /** Test programs must implement these functions **/
 
 extern void
 PerfInit(void);
+
+extern void
+PerfNextRound(void);
 
 extern void
 PerfDraw(void);

@@ -33,7 +33,6 @@
 
 static int Win;
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
-static GLboolean Anim = GL_FALSE;
 
 
 /** Return time in seconds */
@@ -153,13 +152,23 @@ PerfShaderProgram(const char *vertShader, const char *fragShader)
 }
 
 
+int
+PerfReshapeWindow( unsigned w, unsigned h )
+{
+   if (glutGet(GLUT_SCREEN_WIDTH) < w ||
+       glutGet(GLUT_SCREEN_HEIGHT) < h)
+      return 0;
+
+   glutReshapeWindow( w, h );
+   glutPostRedisplay();
+   return 1;
+}
+
+
 static void
 Idle(void)
 {
-   Xrot += 3.0;
-   Yrot += 4.0;
-   Zrot += 2.0;
-   glutPostRedisplay();
+   PerfNextRound();
 }
 
 
@@ -193,13 +202,6 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
-   case 'a':
-      Anim = !Anim;
-      if (Anim)
-         glutIdleFunc(Idle);
-      else
-         glutIdleFunc(NULL);
-      break;
    case 'z':
       Zrot -= step;
       break;
@@ -251,8 +253,7 @@ main(int argc, char *argv[])
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
    glutDisplayFunc(Draw);
-   if (Anim)
-      glutIdleFunc(Idle);
+   glutIdleFunc(Idle);
    PerfInit();
    glutMainLoop();
    return 0;

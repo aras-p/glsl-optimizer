@@ -38,6 +38,7 @@
 
 
 int WinWidth = 100, WinHeight = 100;
+int real_WinWidth, real_WinHeight; /* don't know whats going on here */
 
 static GLuint VBO;
 
@@ -70,69 +71,97 @@ PerfInit(void)
    glAlphaFunc(GL_ALWAYS, 0.0);
 }
 
-
 static void
-DrawNoStateChange(unsigned count)
+SwapNaked(unsigned count)
 {
    unsigned i;
    for (i = 0; i < count; i++) {
-      glDrawArrays(GL_POINTS, 0, 4);
+      PerfSwapBuffers();
    }
-   glFinish();
 }
 
 
 static void
-DrawNopStateChange(unsigned count)
+SwapClear(unsigned count)
 {
    unsigned i;
    for (i = 0; i < count; i++) {
-      glDisable(GL_ALPHA_TEST);
-      glDrawArrays(GL_POINTS, 0, 4);
+      glClear(GL_COLOR_BUFFER_BIT);
+      PerfSwapBuffers();
    }
-   glFinish();
 }
-
 
 static void
-DrawStateChange(unsigned count)
+SwapClearPoint(unsigned count)
 {
    unsigned i;
    for (i = 0; i < count; i++) {
-      if (i & 1)
-         glEnable(GL_TEXTURE_GEN_S);
-      else
-         glDisable(GL_TEXTURE_GEN_S);
+      glClear(GL_COLOR_BUFFER_BIT);
       glDrawArrays(GL_POINTS, 0, 4);
+      PerfSwapBuffers();
    }
-   glFinish();
 }
+
+
+static const struct {
+   unsigned w;
+   unsigned h;
+} sizes[] = {
+   { 320, 240 },
+   { 640, 480 },
+   { 1024, 768 },
+   { 1200, 1024 },
+   { 1600, 1200 }
+};
 
 void
 PerfNextRound(void)
 {
+   static unsigned i;
+   
+   if (i < sizeof(sizes) / sizeof(sizes[0])) {
+      perf_printf("Reshape %dx%d\n", sizes[i].w, sizes[i].h);
+      PerfReshapeWindow( sizes[i].w, sizes[i].h );
+      real_WinWidth = sizes[i].w;
+      real_WinHeight = sizes[i].h;
+      i++;
+   }
+   else {
+      exit(0);
+   }
 }
+
+
+
 
 /** Called from test harness/main */
 void
 PerfDraw(void)
 {
-   double rate0, rate1, rate2, overhead;
+   double rate0;
 
-   rate0 = PerfMeasureRate(DrawNoStateChange);
-   perf_printf("   Draw only: %s draws/second\n", 
+   rate0 = PerfMeasureRate(SwapNaked);
+   perf_printf("   Swapbuffers (Bare) %dx%d: %s swaps/second", 
+               real_WinWidth, real_WinHeight,
                PerfHumanFloat(rate0));
-   
-   rate1 = PerfMeasureRate(DrawNopStateChange);
-   overhead = 1000.0 * (1.0 / rate1 - 1.0 / rate0);
-   perf_printf("   Draw w/ nop state change: %s draws/sec (overhead: %f ms/draw)\n",
-               PerfHumanFloat(rate1), overhead);
+   perf_printf(" %s pixels/second\n",
+               PerfHumanFloat(rate0 * real_WinWidth * real_WinHeight));
 
-   rate2 = PerfMeasureRate(DrawStateChange);
-   overhead = 1000.0 * (1.0 / rate2 - 1.0 / rate0);
-   perf_printf("   Draw w/ state change: %s draws/sec (overhead: %f ms/draw)\n",
-               PerfHumanFloat(rate2), overhead);
 
-   exit(0);
+
+   rate0 = PerfMeasureRate(SwapClear);
+   perf_printf("   Swapbuffers + Clear %dx%d: %s swaps/second", 
+               real_WinWidth, real_WinHeight,
+               PerfHumanFloat(rate0));
+   perf_printf(" %s pixels/second\n",
+               PerfHumanFloat(rate0 * real_WinWidth * real_WinHeight));
+
+
+   rate0 = PerfMeasureRate(SwapClearPoint);
+   perf_printf("   Swapbuffers + Clear + DrawPoint %dx%d: %s swaps/second", 
+               real_WinWidth, real_WinHeight,
+               PerfHumanFloat(rate0));
+   perf_printf(" %s pixels/second\n",
+               PerfHumanFloat(rate0 * real_WinWidth * real_WinHeight));
 }
 
