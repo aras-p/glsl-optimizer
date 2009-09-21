@@ -56,6 +56,9 @@ st_translate_mesa_program(
    const ubyte outputSemanticIndex[],
    const GLbitfield outputFlags[] );
 
+void
+st_free_tokens(const struct tgsi_token *tokens);
+
 
 #if defined __cplusplus
 } /* extern "C" */
