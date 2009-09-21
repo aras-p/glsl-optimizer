@@ -1863,7 +1863,7 @@ choose_cube_face(const struct gl_texture_object *texObj,
    GLuint face;
    GLfloat sc, tc, ma;
 
-   if (arx > ary && arx > arz) {
+   if (arx >= ary && arx >= arz) {
       if (rx >= 0.0F) {
          face = FACE_POS_X;
          sc = -rz;
@@ -1877,7 +1877,7 @@ choose_cube_face(const struct gl_texture_object *texObj,
          ma = arx;
       }
    }
-   else if (ary > arx && ary > arz) {
+   else if (ary >= arx && ary >= arz) {
       if (ry >= 0.0F) {
          face = FACE_POS_Y;
          sc = rx;
