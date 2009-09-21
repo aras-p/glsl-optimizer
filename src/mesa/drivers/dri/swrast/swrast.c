@@ -43,6 +43,7 @@
 #include "tnl/t_pipeline.h"
 #include "vbo/vbo.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 #include "utils.h"
 
 #include "swrast_priv.h"
@@ -649,6 +650,8 @@ driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
     _mesa_enable_2_0_extensions(mesaCtx);
     _mesa_enable_2_1_extensions(mesaCtx);
 
+    _mesa_meta_init(mesaCtx);
+
     return ctx;
 }
 
@@ -660,6 +663,7 @@ driDestroyContext(__DRIcontext *ctx)
 
     if (ctx) {
 	mesaCtx = &ctx->Base;
+        _mesa_meta_free(mesaCtx);
 	_swsetup_DestroyContext( mesaCtx );
 	_swrast_DestroyContext( mesaCtx );
 	_tnl_DestroyContext( mesaCtx );
