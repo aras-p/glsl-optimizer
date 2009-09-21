@@ -203,6 +203,34 @@ static void t_inputs_outputs(struct r300_vertex_program_compiler * c)
 	}
 }
 
+/**
+ * The NV_vertex_program spec mandates that all registers be
+ * initialized to zero. We do this here unconditionally.
+ *
+ * \note We rely on dead-code elimination in the compiler.
+ */
+static void initialize_NV_registers(struct radeon_compiler * compiler)
+{
+	unsigned int reg;
+	struct rc_instruction * inst;
+
+	for(reg = 0; reg < 12; ++reg) {
+		inst = rc_insert_new_instruction(compiler, &compiler->Program.Instructions);
+		inst->I.Opcode = OPCODE_MOV;
+		inst->I.DstReg.File = PROGRAM_TEMPORARY;
+		inst->I.DstReg.Index = reg;
+		inst->I.SrcReg[0].File = PROGRAM_BUILTIN;
+		inst->I.SrcReg[0].Swizzle = SWIZZLE_0000;
+	}
+
+	inst = rc_insert_new_instruction(compiler, &compiler->Program.Instructions);
+	inst->I.Opcode = OPCODE_ARL;
+	inst->I.DstReg.File = PROGRAM_ADDRESS;
+	inst->I.DstReg.Index = 0;
+	inst->I.DstReg.WriteMask = WRITEMASK_X;
+	inst->I.SrcReg[0].File = PROGRAM_BUILTIN;
+	inst->I.SrcReg[0].Swizzle = SWIZZLE_0000;
+}
 
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
@@ -233,6 +261,9 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	}
 
 	rc_mesa_to_rc_program(&compiler.Base, &vp->Base->Base);
+
+	if (mesa_vp->IsNVProgram)
+		initialize_NV_registers(&compiler.Base);
 
 	rc_move_output(&compiler.Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
 
