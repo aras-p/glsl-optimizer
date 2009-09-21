@@ -150,14 +150,37 @@ void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * progr
 	c->Program.InputsRead = program->InputsRead;
 	c->Program.OutputsWritten = program->OutputsWritten;
 
-	for(i = 0; i < program->Parameters->NumParameters; ++i) {
-		struct rc_constant constant;
+	int isNVProgram = 0;
 
-		constant.Type = RC_CONSTANT_EXTERNAL;
-		constant.Size = 4;
-		constant.u.External = i;
+	if (program->Target == GL_VERTEX_PROGRAM_ARB) {
+		struct gl_vertex_program * vp = (struct gl_vertex_program *) program;
+		isNVProgram = vp->IsNVProgram;
+	}
 
-		rc_constants_add(&c->Program.Constants, &constant);
+	if (isNVProgram) {
+		/* NV_vertex_program has a fixed-sized constant environment.
+		 * This could be handled more efficiently for programs that
+		 * do not use relative addressing.
+		 */
+		for(i = 0; i < 96; ++i) {
+			struct rc_constant constant;
+
+			constant.Type = RC_CONSTANT_EXTERNAL;
+			constant.Size = 4;
+			constant.u.External = i;
+
+			rc_constants_add(&c->Program.Constants, &constant);
+		}
+	} else {
+		for(i = 0; i < program->Parameters->NumParameters; ++i) {
+			struct rc_constant constant;
+
+			constant.Type = RC_CONSTANT_EXTERNAL;
+			constant.Size = 4;
+			constant.u.External = i;
+
+			rc_constants_add(&c->Program.Constants, &constant);
+		}
 	}
 }
 

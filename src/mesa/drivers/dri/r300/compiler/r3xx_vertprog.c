@@ -89,6 +89,7 @@ static unsigned long t_dst_index(struct r300_vertex_program_code *vp,
 static unsigned long t_src_class(gl_register_file file)
 {
 	switch (file) {
+	case PROGRAM_BUILTIN:
 	case PROGRAM_TEMPORARY:
 		return PVS_SRC_REG_TEMPORARY;
 	case PROGRAM_INPUT:
