@@ -284,8 +284,8 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	ctx->Const.MaxTextureLevels = 13;
-	ctx->Const.MaxTextureRectSize = 4096;
+	ctx->Const.MaxTextureLevels = 13; /* hw support 14 */
+	ctx->Const.MaxTextureRectSize = 4096; /* hw support 8192 */
 
 	ctx->Const.MinPointSize   = 0x0001 / 8.0;
 	ctx->Const.MinPointSizeAA = 0x0001 / 8.0;
@@ -331,25 +331,26 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
-	ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeInstructions =
-		VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
-	ctx->Const.VertexProgram.MaxTemps = 32;
-	ctx->Const.VertexProgram.MaxNativeTemps =
-		/*VSF_MAX_FRAGMENT_TEMPS */ 32;
-	ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
-	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+	ctx->Const.VertexProgram.MaxInstructions = 8192; /* in theory no limit */
+	ctx->Const.VertexProgram.MaxNativeInstructions = 8192;
+	ctx->Const.VertexProgram.MaxNativeAttribs = 160;
+	ctx->Const.VertexProgram.MaxTemps = 256; /* 256 for reg-based constants, inline consts also supported */
+	ctx->Const.VertexProgram.MaxNativeTemps = 256;
+	ctx->Const.VertexProgram.MaxNativeParameters = 256; /* ??? */
+	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1; /* ??? */
 
-	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
-	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
-	ctx->Const.FragmentProgram.MaxNativeParameters = PFS_NUM_CONST_REGS;
-	ctx->Const.FragmentProgram.MaxNativeAluInstructions = PFS_MAX_ALU_INST;
-	ctx->Const.FragmentProgram.MaxNativeTexInstructions = PFS_MAX_TEX_INST;
-	ctx->Const.FragmentProgram.MaxNativeInstructions =
-	    PFS_MAX_ALU_INST + PFS_MAX_TEX_INST;
-	ctx->Const.FragmentProgram.MaxNativeTexIndirections =
-	    PFS_MAX_TEX_INDIRECT;
+	ctx->Const.FragmentProgram.MaxNativeTemps = 256;
+	ctx->Const.FragmentProgram.MaxNativeAttribs = 32;
+	ctx->Const.FragmentProgram.MaxNativeParameters = 256;
+	ctx->Const.FragmentProgram.MaxNativeAluInstructions = 8192;
+	/* 8 per clause on r6xx, 16 on rv670/r7xx */
+	if ((screen->chip_family == CHIP_FAMILY_RV670) ||
+	    (screen->chip_family >= CHIP_FAMILY_RV770))
+		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 16;
+	else
+		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 8;
+	ctx->Const.FragmentProgram.MaxNativeInstructions = 8192;
+	ctx->Const.FragmentProgram.MaxNativeTexIndirections = 8; /* ??? */
 	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;	/* and these are?? */
 	ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
