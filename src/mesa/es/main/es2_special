@@ -1,0 +1,5 @@
+# GetString must always have its own implementation, so we return our
+# implementation values instead of Mesa's.
+GetString
+CompressedTexImage2D
+RenderbufferStorage
