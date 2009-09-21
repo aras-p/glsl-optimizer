@@ -40,6 +40,12 @@ PerfGetTime(void);
 extern void
 PerfSwapBuffers(void);
 
+extern GLuint
+PerfCheckerTexture(GLsizei width, GLsizei height);
+
+extern GLuint
+PerfShaderProgram(const char *vertShader, const char *fragShader);
+
 
 /** Test programs must implement these functions **/
 

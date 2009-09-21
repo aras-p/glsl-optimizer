@@ -26,6 +26,7 @@
  */
 
 
+#include <stdio.h>
 #include "glmain.h"
 #include <GL/glut.h>
 
@@ -47,6 +48,108 @@ void
 PerfSwapBuffers(void)
 {
    glutSwapBuffers();
+}
+
+
+/** make simple checkerboard texture object */
+GLuint
+PerfCheckerTexture(GLsizei width, GLsizei height)
+{
+   const GLenum filter = GL_NEAREST;
+   GLubyte *img = (GLubyte *) malloc(width * height * 4);
+   GLint i, j, k;
+   GLuint obj;
+
+   k = 0;
+   for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j++) {
+         GLubyte color;
+         if (((i / 8) ^ (j / 8)) & 1) {
+            color = 0xff;
+         }
+         else {
+            color = 0x0;
+         }
+         img[k++] = color;
+         img[k++] = color;
+         img[k++] = color;
+         img[k++] = color;
+      }
+   }
+
+   glGenTextures(1, &obj);
+   glBindTexture(GL_TEXTURE_2D, obj);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, img);
+   free(img);
+
+   return obj;
+}
+
+
+static GLuint
+CompileShader(GLenum type, const char *shader)
+{
+   GLuint sh;
+   GLint stat;
+
+   sh = glCreateShader(type);
+   glShaderSource(sh, 1, (const GLchar **) &shader, NULL);
+
+   glCompileShader(sh);
+      
+   glGetShaderiv(sh, GL_COMPILE_STATUS, &stat);
+   if (!stat) {
+      GLchar log[1000];
+      GLsizei len;
+      glGetShaderInfoLog(sh, 1000, &len, log);
+      fprintf(stderr, "Error: problem compiling shader: %s\n", log);
+      exit(1);
+   }
+
+   return sh;
+}
+
+
+/** Make shader program from given vert/frag shader text */
+GLuint
+PerfShaderProgram(const char *vertShader, const char *fragShader)
+{
+   GLuint prog;
+   GLint stat;
+
+   {
+      const char *version = (const char *) glGetString(GL_VERSION);
+      if (version[0] != '2' || version[1] != '.') {
+         fprintf(stderr, "Error: GL version 2.x required\n");
+         exit(1);
+      }
+   }
+
+   prog = glCreateProgram();
+
+   if (vertShader) {
+      GLuint vs = CompileShader(GL_VERTEX_SHADER, vertShader);
+      glAttachShader(prog, vs);
+   }
+   if (fragShader) {
+      GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragShader);
+      glAttachShader(prog, fs);
+   }
+
+   glLinkProgram(prog);
+   glGetProgramiv(prog, GL_LINK_STATUS, &stat);
+   if (!stat) {
+      GLchar log[1000];
+      GLsizei len;
+      glGetProgramInfoLog(prog, 1000, &len, log);
+      fprintf(stderr, "Shader link error:\n%s\n", log);
+      exit(1);
+   }
+
+   return prog;
 }
 
 
