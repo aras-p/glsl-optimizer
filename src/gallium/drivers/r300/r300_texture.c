@@ -48,7 +48,7 @@ static void r300_setup_texture_state(struct r300_texture* tex,
         state->format2 |= R500_TXHEIGHT_BIT11;
     }
 
-    debug_printf("r300: Set texture state (%dx%d, pitch %d, %d levels)\n",
+    debug_printf("r300: Set texture state (%dx%d, %d levels)\n",
             width, height, levels);
 }
 
@@ -62,7 +62,7 @@ unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
         return tex->stride_override;
 
     if (level > tex->tex.last_level) {
-        debug_printf("%s: level (%u) > last_level (%u)\n", level, tex->tex.last_level);
+        debug_printf("%s: level (%u) > last_level (%u)\n", __FUNCTION__, level, tex->tex.last_level);
         return 0;
     }
 
