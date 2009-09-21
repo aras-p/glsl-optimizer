@@ -24,6 +24,9 @@
 #define COMMON_H
 
 
+#include <stddef.h> /* for offsetof() */
+
+
 typedef void (*PerfRateFunc)(unsigned count);
 
 

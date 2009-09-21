@@ -50,11 +50,8 @@ static const struct vertex vertices[1] = {
    { 0.0, 0.0, 0.5, 0.5 },
 };
 
-#if 0
 #define VOFFSET(F) ((void *) offsetof(struct vertex, F))
-#else
-#define VOFFSET(F) ((void *) &((struct vertex *)NULL)->F)
-#endif
+
 
 /** Called from test harness/main */
 void
