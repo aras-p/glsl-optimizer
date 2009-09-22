@@ -43,7 +43,7 @@
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
 #include "llvmpipe/lp_texture.h"
-#include "shared/stw_winsys.h"
+#include "stw_winsys.h"
 
 
 struct gdi_llvmpipe_displaytarget
