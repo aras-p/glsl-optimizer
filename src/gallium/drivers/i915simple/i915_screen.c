@@ -46,7 +46,7 @@
 static const char *
 i915_get_vendor(struct pipe_screen *screen)
 {
-   return "Tungsten Graphics, Inc.";
+   return "VMware, Inc.";
 }
 
 static const char *
