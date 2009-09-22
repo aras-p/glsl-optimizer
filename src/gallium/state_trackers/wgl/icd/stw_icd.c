@@ -59,7 +59,7 @@ DrvCreateLayerContext(
    r = stw_create_layer_context( hdc, iLayerPlane );
    
    if (DBG)
-      debug_printf( "%s( %p, %i ) = %u\n",
+      debug_printf( "%s( %p, %i ) = %lu\n",
                     __FUNCTION__, hdc, iLayerPlane, r );
    
    return r;
@@ -81,7 +81,7 @@ DrvDeleteContext(
    r = stw_delete_context( dhglrc );
    
    if (DBG)
-      debug_printf( "%s( %u ) = %u\n",
+      debug_printf( "%s( %lu ) = %u\n",
                     __FUNCTION__, dhglrc, r );
    
    return r;
@@ -113,7 +113,7 @@ DrvDescribePixelFormat(
    r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
    if (DBG)
-      debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
+      debug_printf( "%s( %p, %i, %lu, %p ) = %li\n",
                     __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
@@ -537,7 +537,7 @@ DrvSetContext(
       r = NULL;
       
    if (DBG)
-      debug_printf( "%s( 0x%p, %u, 0x%p ) = %p\n", 
+      debug_printf( "%s( 0x%p, %lu, 0x%p ) = %p\n",
                     __FUNCTION__, hdc, dhglrc, pfnSetProcTable, r );
 
    return r;
@@ -567,7 +567,7 @@ DrvSetPixelFormat(
    r = stw_pixelformat_set( hdc, iPixelFormat );
 
    if (DBG)
-      debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
+      debug_printf( "%s( %p, %li ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 
    return r;
 }
@@ -609,7 +609,7 @@ DrvValidateVersion(
    ULONG ulVersion )
 {
    if (DBG)
-      debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
+      debug_printf( "%s( %lu )\n", __FUNCTION__, ulVersion );
 
    /* TODO: get the expected version from the winsys */
    
