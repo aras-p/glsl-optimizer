@@ -36,10 +36,25 @@ static GLuint VBO;
 static GLuint TexObj = 0;
 static GLubyte *TexImage = NULL;
 static GLsizei TexSize;
-static GLenum TexSrcFormat, TexSrcType;
+static GLenum TexIntFormat, TexSrcFormat, TexSrcType;
 
 static const GLboolean DrawPoint = GL_TRUE;
 static const GLboolean TexSubImage4 = GL_TRUE;
+
+enum {
+   MODE_CREATE_TEXIMAGE,
+   MODE_TEXIMAGE,
+   MODE_TEXSUBIMAGE
+};
+
+static const char *mode_name[] = 
+{
+   "Create_TexImage",
+   "TexImage",
+   "TexSubImage"
+};
+
+
 
 struct vertex
 {
@@ -76,6 +91,32 @@ PerfInit(void)
 }
 
 
+
+
+static void
+CreateUploadTexImage2D(unsigned count)
+{
+   unsigned i;
+   for (i = 0; i < count; i++) {
+      if (TexObj)
+         glDeleteTextures(1, &TexObj);
+
+      glGenTextures(1, &TexObj);
+      glBindTexture(GL_TEXTURE_2D, TexObj);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+      glTexImage2D(GL_TEXTURE_2D, 0, TexIntFormat,
+                   TexSize, TexSize, 0,
+                   TexSrcFormat, TexSrcType, TexImage);
+
+      if (DrawPoint)
+         glDrawArrays(GL_POINTS, 0, 1);
+   }
+   glFinish();
+}
+
+
 static void
 UploadTexImage2D(unsigned count)
 {
@@ -86,7 +127,7 @@ UploadTexImage2D(unsigned count)
        * in Mesa but may be optimized in other drivers.  Note sure how
        * much difference that might make.
        */
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+      glTexImage2D(GL_TEXTURE_2D, 0, TexIntFormat,
                    TexSize, TexSize, 0,
                    TexSrcFormat, TexSrcType, TexImage);
       if (DrawPoint)
@@ -101,7 +142,7 @@ UploadTexSubImage2D(unsigned count)
 {
    unsigned i;
    for (i = 0; i < count; i++) {
-      if (TexSubImage4) {
+      if (0  && TexSubImage4) {
          GLsizei halfSize = (TexSize == 1) ? 1 : TexSize / 2;
          GLsizei halfPos = TexSize - halfSize;
          /* do glTexSubImage2D in four pieces */
@@ -150,11 +191,17 @@ UploadTexSubImage2D(unsigned count)
 /* XXX any other formats to measure? */
 static const struct {
    GLenum format, type;
+   GLenum internal_format;
    const char *name;
+   GLuint texel_size;
+   GLboolean full_test;
 } SrcFormats[] = {
-   { GL_RGBA, GL_UNSIGNED_BYTE, "GL_RGBA/GLubyte" },
-   { GL_BGRA, GL_UNSIGNED_BYTE, "GL_BGRA/GLubyte" },
-   { 0, 0, NULL }
+   { GL_RGBA, GL_UNSIGNED_BYTE,       GL_RGBA, "RGBA/ubyte", 4, GL_TRUE },
+   { GL_RGB, GL_UNSIGNED_BYTE,        GL_RGB, "RGB/ubyte",  3, GL_FALSE },
+   { GL_RGB, GL_UNSIGNED_SHORT_5_6_5, GL_RGB, "RGB/565",    2, GL_FALSE },
+   { GL_BGRA, GL_UNSIGNED_BYTE,       GL_RGBA, "BGRA/ubyte", 4, GL_FALSE },
+   { GL_LUMINANCE, GL_UNSIGNED_BYTE,  GL_LUMINANCE, "L/ubyte",    1, GL_FALSE },
+   { 0, 0, 0, NULL, 0, 0 }
 };
 
 void
@@ -169,56 +216,90 @@ PerfDraw(void)
 {
    GLint maxSize;
    double rate;
-   GLint fmt, subImage;
+   GLint fmt, mode;
 
    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
 
    /* loop over source data formats */
    for (fmt = 0; SrcFormats[fmt].format; fmt++) {
+      TexIntFormat = SrcFormats[fmt].internal_format;
       TexSrcFormat = SrcFormats[fmt].format;
       TexSrcType = SrcFormats[fmt].type;
 
       /* loop over glTexImage, glTexSubImage */
-      for (subImage = 0; subImage < 2; subImage++) {
+      for (mode = 0; mode < 3; mode++) {
+         GLuint minsz, maxsz;
+
+         if (SrcFormats[fmt].full_test) {
+            minsz = 16;
+            maxsz = 4096;
+         }
+         else {
+            minsz = maxsz = 256;
+            if (mode == MODE_CREATE_TEXIMAGE)
+               continue;
+         }
 
          /* loop over a defined range of texture sizes, test only the
           * ones which are legal for this driver.
           */
-         for (TexSize = 16; TexSize <= 4096; TexSize *= 4) {
+         for (TexSize = minsz; TexSize <= maxsz; TexSize *= 4) {
             double mbPerSec;
 
             if (TexSize <= maxSize) {
                GLint bytesPerImage;
 
-               bytesPerImage = TexSize * TexSize * 4;
+               bytesPerImage = TexSize * TexSize * SrcFormats[fmt].texel_size;
                TexImage = malloc(bytesPerImage);
 
-               if (subImage) {
+               switch (mode) {
+               case MODE_TEXIMAGE:
+                  rate = PerfMeasureRate(UploadTexImage2D);
+                  break;
+
+               case MODE_CREATE_TEXIMAGE:
+                  rate = PerfMeasureRate(CreateUploadTexImage2D);
+                  break;
+                  
+               case MODE_TEXSUBIMAGE:
                   /* create initial, empty texture */
-                  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                  glTexImage2D(GL_TEXTURE_2D, 0, TexIntFormat,
                                TexSize, TexSize, 0,
                                TexSrcFormat, TexSrcType, NULL);
                   rate = PerfMeasureRate(UploadTexSubImage2D);
-               }
-               else {
-                  rate = PerfMeasureRate(UploadTexImage2D);
+                  break;
+
+               default:
+                  exit(1);
                }
 
                mbPerSec = rate * bytesPerImage / (1024.0 * 1024.0);
                free(TexImage);
+
+
+               {
+                  unsigned err;
+                  err = glGetError();
+                  if (err) {
+                     perf_printf("non-zero glGetError() %d\n", err);
+                     exit(1);
+                  }
+               }  
+
             }
             else {
                rate = 0;
                mbPerSec = 0;
             }
 
-            perf_printf("  glTex%sImage2D(%s %d x %d): "
+            perf_printf("  %s(%s %d x %d): "
                         "%.1f images/sec, %.1f MB/sec\n",
-                        (subImage ? "Sub" : ""),
+                        mode_name[mode],
                         SrcFormats[fmt].name, TexSize, TexSize, rate, mbPerSec);
          }
 
-         perf_printf("\n");
+         if (SrcFormats[fmt].full_test) 
+            perf_printf("\n");
       }
    }
 
