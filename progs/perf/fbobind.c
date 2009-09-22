@@ -105,6 +105,8 @@ PerfInit(void)
       /* clear the FBO */
       glClear(GL_COLOR_BUFFER_BIT);
    }
+
+   glEnable(GL_TEXTURE_2D);
 }
 
 
