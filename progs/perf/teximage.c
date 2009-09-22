@@ -181,34 +181,44 @@ PerfDraw(void)
       /* loop over glTexImage, glTexSubImage */
       for (subImage = 0; subImage < 2; subImage++) {
 
-         /* loop over texture sizes */
-         for (TexSize = 16; TexSize <= maxSize; TexSize *= 4) {
-            GLint bytesPerImage;
+         /* loop over a defined range of texture sizes, test only the
+          * ones which are legal for this driver.
+          */
+         for (TexSize = 16; TexSize <= 4096; TexSize *= 4) {
             double mbPerSec;
 
-            bytesPerImage = TexSize * TexSize * 4;
-            TexImage = malloc(bytesPerImage);
+            if (TexSize <= maxSize) {
+               GLint bytesPerImage;
 
-            if (subImage) {
-               /* create initial, empty texture */
-               glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                            TexSize, TexSize, 0,
-                            TexSrcFormat, TexSrcType, NULL);
-               rate = PerfMeasureRate(UploadTexSubImage2D);
+               bytesPerImage = TexSize * TexSize * 4;
+               TexImage = malloc(bytesPerImage);
+
+               if (subImage) {
+                  /* create initial, empty texture */
+                  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                               TexSize, TexSize, 0,
+                               TexSrcFormat, TexSrcType, NULL);
+                  rate = PerfMeasureRate(UploadTexSubImage2D);
+               }
+               else {
+                  rate = PerfMeasureRate(UploadTexImage2D);
+               }
+
+               mbPerSec = rate * bytesPerImage / (1024.0 * 1024.0);
+               free(TexImage);
             }
             else {
-               rate = PerfMeasureRate(UploadTexImage2D);
+               rate = 0;
+               mbPerSec = 0;
             }
-
-            mbPerSec = rate * bytesPerImage / (1024.0 * 1024.0);
 
             perf_printf("  glTex%sImage2D(%s %d x %d): "
                         "%.1f images/sec, %.1f MB/sec\n",
                         (subImage ? "Sub" : ""),
                         SrcFormats[fmt].name, TexSize, TexSize, rate, mbPerSec);
-
-            free(TexImage);
          }
+
+         perf_printf("\n");
       }
    }
 
