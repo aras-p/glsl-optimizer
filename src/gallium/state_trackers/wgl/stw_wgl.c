@@ -28,7 +28,7 @@
 #include <windows.h>
 
 #include "util/u_debug.h"
-#include "shared/stw_public.h"
+#include "stw_public.h"
 #include "stw_wgl.h"
 
 

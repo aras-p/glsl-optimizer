@@ -37,12 +37,12 @@
 #include "trace/tr_texture.h"
 #endif
 
-#include "shared/stw_device.h"
-#include "shared/stw_winsys.h"
-#include "shared/stw_pixelformat.h"
-#include "shared/stw_public.h"
-#include "shared/stw_tls.h"
-#include "shared/stw_framebuffer.h"
+#include "stw_device.h"
+#include "stw_winsys.h"
+#include "stw_pixelformat.h"
+#include "stw_public.h"
+#include "stw_tls.h"
+#include "stw_framebuffer.h"
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;

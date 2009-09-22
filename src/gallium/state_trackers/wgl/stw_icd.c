@@ -33,8 +33,8 @@
 #include "util/u_debug.h"
 #include "pipe/p_thread.h"
 
-#include "shared/stw_public.h"
-#include "icd/stw_icd.h"
+#include "stw_public.h"
+#include "stw_icd.h"
 
 #define DBG 0
 
