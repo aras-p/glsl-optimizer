@@ -44,8 +44,8 @@
 
 
 /** XXX move these */
-#define MAX_WIDTH 2048
-#define MAX_HEIGHT 2048
+#define MAX_WIDTH 4096
+#define MAX_HEIGHT 4096
 
 
 struct softpipe_tile_cache
