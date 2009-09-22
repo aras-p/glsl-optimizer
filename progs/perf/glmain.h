@@ -49,6 +49,9 @@ PerfShaderProgram(const char *vertShader, const char *fragShader);
 extern int
 PerfReshapeWindow( unsigned w, unsigned h );
 
+extern GLboolean
+PerfExtensionSupported(const char *ext);
+
 
 /** Test programs must implement these functions **/
 

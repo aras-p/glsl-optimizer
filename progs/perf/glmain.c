@@ -165,6 +165,13 @@ PerfReshapeWindow( unsigned w, unsigned h )
 }
 
 
+GLboolean
+PerfExtensionSupported(const char *ext)
+{
+   return glutExtensionSupported(ext);
+}
+
+
 static void
 Idle(void)
 {
