@@ -412,6 +412,8 @@ checkdependentparam pname GL_TEXTURE_WRAP_T params GLES1.1:GL_MIRRORED_REPEAT_OE
 dependentvector	params 1 pname  GL_TEXTURE_MAX_ANISOTROPY_EXT
 # OES_texture_3D
 checkdependentparam pname GL_TEXTURE_WRAP_R_OES params GLES2.0:GL_CLAMP_TO_EDGE GLES2.0:GL_REPEAT GLES2.0:GL_MIRRORED_REPEAT
+# OES_draw_texture - not in gl2ext.h
+dependentvector	params 4 pname GLES1.1:GL_TEXTURE_CROP_RECT_OES
 category	GLES1.1 GLES2.0
 
 name		TexParameteri
@@ -457,6 +459,8 @@ checkdependentparam pname GL_TEXTURE_WRAP_T params GLES1.1:GL_MIRRORED_REPEAT_OE
 dependentvector params 1 pname  GL_TEXTURE_MAX_ANISOTROPY_EXT
 # OES_texture_3D
 checkdependentparam pname GL_TEXTURE_WRAP_R_OES params GLES2.0:GL_CLAMP_TO_EDGE GLES2.0:GL_REPEAT GLES2.0:GL_MIRRORED_REPEAT
+# OES_draw_texture - not in gl2ext.h
+dependentvector	params 4 pname GLES1.1:GL_TEXTURE_CROP_RECT_OES
 category	GLES1.1 GLES2.0
 
 name		TexParameterx
@@ -498,6 +502,8 @@ checkdependentparam pname GL_TEXTURE_MAG_FILTER params GL_NEAREST GL_LINEAR
 checkdependentparam pname GL_GENERATE_MIPMAP params GL_TRUE GL_FALSE
 convertalias	TexParameterfv
 convertparams   GLfloat         params
+# OES_draw_texture
+dependentvector	params 4 pname GL_TEXTURE_CROP_RECT_OES
 # OES_texture_cube_map
 checkparam      target          GL_TEXTURE_CUBE_MAP_OES
 # OES_texture_mirrored_repeat
@@ -1352,6 +1358,8 @@ param		pname		GLenum
 param		params		GLfloat *
 dependentvector params 1 pname GL_TEXTURE_WRAP_S GL_TEXTURE_WRAP_T GL_TEXTURE_MIN_FILTER GL_TEXTURE_MAG_FILTER GLES1.1:GL_GENERATE_MIPMAP
 props		get
+# OES_draw_texture - not in gl2ext.h
+dependentvector	params 4 pname  GLES1.1:GL_TEXTURE_CROP_RECT_OES
 # OES_texture_cube_map
 checkparam      target          GLES1.1:GL_TEXTURE_CUBE_MAP_OES
 category	GLES1.1 GLES2.0
@@ -1366,6 +1374,8 @@ dependentvector params 1 pname GL_TEXTURE_WRAP_S GL_TEXTURE_WRAP_T GL_TEXTURE_MI
 props		get
 # OES_texture_cube_map
 checkparam      target          GLES1.1:GL_TEXTURE_CUBE_MAP_OES
+# OES_draw_texture - not in gl2ext.h
+dependentvector	params 4 pname GLES1.1:GL_TEXTURE_CROP_RECT_OES
 # OES_texture_3D
 checkparam      target          GLES2.0:GL_TEXTURE_3D_OES
 category	GLES1.1 GLES2.0
@@ -1383,6 +1393,8 @@ dependentnovalueconvert params pname GL_TEXTURE_WRAP_S GL_TEXTURE_WRAP_T GL_TEXT
 props		get
 # OES_texture_cube_map
 checkparam      target          GL_TEXTURE_CUBE_MAP_OES
+# OES_draw_texture
+dependentvector	params 4 pname GL_TEXTURE_CROP_RECT_OES
 category	GLES1.1 GLES1.1:OES_fixed_point
 
 # GLES1.1 and GLES2.0 have different capabilities
@@ -2866,6 +2878,71 @@ param           exponent        GLint *
 vector		exponent        16
 props           get
 category        GLES1.1:OES_query_matrix
+
+# OES_draw_texture
+name            DrawTexf
+return          void
+param           x               GLfloat
+param           y               GLfloat
+param           z               GLfloat
+param           w               GLfloat
+param           h               GLfloat
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexi
+return          void
+param           x               GLint
+param           y               GLint
+param           z               GLint
+param           w               GLint
+param           h               GLint
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexs
+return          void
+param           x               GLshort
+param           y               GLshort
+param           z               GLshort
+param           w               GLshort
+param           h               GLshort
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexx
+return          void
+param           x               GLfixed
+param           y               GLfixed
+param           z               GLfixed
+param           w               GLfixed
+param           h               GLfixed
+convertalias    DrawTexf
+convertparams   GLfloat        x y z w h
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexfv
+return          void
+param           coords          const GLfloat *
+vector          coords          5
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexiv
+return          void
+param           coords          const GLint *
+vector          coords          5
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexsv
+return          void
+param           coords          const GLshort *
+vector          coords          5
+category        GLES1.1:OES_draw_texture
+
+name            DrawTexxv
+return          void
+param           coords          const GLfixed *
+vector          coords          5
+convertalias    DrawTexfv
+convertparams   GLfloat         coords
+category        GLES1.1:OES_draw_texture
 
 # We don't support OES_get_program_binary yet either
 #name GetProgramBinary

@@ -4,6 +4,7 @@ include $(MESA)/sources.mak
 
 LOCAL_ES1_SOURCES :=			\
 	main/api_exec_es1.c		\
+	main/drawtex.c			\
 	main/get_es1.c			\
 	main/specials_es1.c		\
 	main/drawtex.c			\
@@ -14,7 +15,8 @@ LOCAL_ES1_SOURCES :=			\
 	glapi/glapi-es1/main/enums.c
 
 LOCAL_ES1_GALLIUM_SOURCES :=		\
-	$(LOCAL_ES1_SOURCES)
+	$(LOCAL_ES1_SOURCES)		\
+	state_tracker/st_cb_drawtex.c
 
 # always use local version of GLAPI_ASM_SOURCES
 LOCAL_ES1_API_ASM := $(addprefix glapi/glapi-es1/, $(GLAPI_ASM_SOURCES))
