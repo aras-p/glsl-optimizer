@@ -1040,7 +1040,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    ASSERT(ctx->Driver.MapBuffer);
    bufObj->Pointer = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
    if (!bufObj->Pointer) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(map failed)");
    }
 
    bufObj->Access = access;
