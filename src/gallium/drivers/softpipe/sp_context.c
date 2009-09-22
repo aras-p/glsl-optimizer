@@ -262,10 +262,8 @@ softpipe_create( struct pipe_screen *screen )
    draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
    draw_install_aapoint_stage(softpipe->draw, &softpipe->pipe);
 
-#if USE_DRAW_STAGE_PSTIPPLE
    /* Do polygon stipple w/ texture map + frag prog? */
    draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
-#endif
 
    sp_init_surface_functions(softpipe);
 
