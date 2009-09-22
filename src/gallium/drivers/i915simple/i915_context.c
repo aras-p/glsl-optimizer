@@ -175,11 +175,18 @@ i915_is_buffer_referenced(struct pipe_context *pipe,
 static void i915_destroy(struct pipe_context *pipe)
 {
    struct i915_context *i915 = i915_context(pipe);
+   int i;
 
    draw_destroy(i915->draw);
    
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);
+
+   /* unbind framebuffer */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&i915->framebuffer.cbufs[i], NULL);
+   }
+   pipe_surface_reference(&i915->framebuffer.zsbuf, NULL);
 
    FREE(i915);
 }
