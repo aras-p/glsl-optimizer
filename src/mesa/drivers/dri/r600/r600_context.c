@@ -59,6 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "radeon_common_context.h"
+#include "radeon_buffer_objects.h"
 #include "radeon_span.h"
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
