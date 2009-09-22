@@ -169,14 +169,31 @@ static void
 DrawQuad(unsigned count)
 {
    unsigned i;
+   glClear(GL_COLOR_BUFFER_BIT);
+
    for (i = 0; i < count; i++) {
       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+      /* Avoid sending command buffers with huge numbers of fullscreen
+       * quads.  Graphics schedulers don't always cope well with
+       * this...
+       */
+      if (i % 128 == 0) {
+         PerfSwapBuffers();
+         glClear(GL_COLOR_BUFFER_BIT);
+      }
    }
+
    glFinish();
-   if (0)
+
+   if (1)
       PerfSwapBuffers();
 }
 
+void
+PerfNextRound(void)
+{
+}
 
 /** Called from test harness/main */
 void
