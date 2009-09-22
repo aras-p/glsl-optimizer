@@ -39,6 +39,13 @@
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 
+#define WARN_ONCE_GLX_1_3(a, b) {		\
+		static int warned=1;		\
+		if(warned) {			\
+			warn_GLX_1_3((a), b );	\
+			warned=0;		\
+		}				\
+	}
 
 /**
  * Emit a warning when clients use GLX 1.3 functions on pre-1.3 systems.
@@ -576,7 +583,7 @@ glXCreatePbuffer(Display * dpy, GLXFBConfig config, const int *attrib_list)
    width = 0;
    height = 0;
 
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
 
    for (i = 0; attrib_list[i * 2]; i++) {
       switch (attrib_list[i * 2]) {
@@ -611,7 +618,7 @@ PUBLIC void
 glXQueryDrawable(Display * dpy, GLXDrawable drawable,
                  int attribute, unsigned int *value)
 {
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
    GetDrawableAttribute(dpy, drawable, attribute, value);
 }
 
@@ -665,7 +672,7 @@ PUBLIC GLXPixmap
 glXCreatePixmap(Display * dpy, GLXFBConfig config, Pixmap pixmap,
                 const int *attrib_list)
 {
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
 
    return CreateDrawable(dpy, (__GLcontextModes *) config,
                          (Drawable) pixmap, attrib_list, X_GLXCreatePixmap);
@@ -676,7 +683,7 @@ PUBLIC GLXWindow
 glXCreateWindow(Display * dpy, GLXFBConfig config, Window win,
                 const int *attrib_list)
 {
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
 
    return CreateDrawable(dpy, (__GLcontextModes *) config,
                          (Drawable) win, attrib_list, X_GLXCreateWindow);
@@ -686,7 +693,7 @@ glXCreateWindow(Display * dpy, GLXFBConfig config, Window win,
 PUBLIC void
 glXDestroyPixmap(Display * dpy, GLXPixmap pixmap)
 {
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
 
    DestroyDrawable(dpy, (GLXDrawable) pixmap, X_GLXDestroyPixmap);
 }
@@ -695,7 +702,7 @@ glXDestroyPixmap(Display * dpy, GLXPixmap pixmap)
 PUBLIC void
 glXDestroyWindow(Display * dpy, GLXWindow win)
 {
-   warn_GLX_1_3(dpy, __func__);
+   WARN_ONCE_GLX_1_3(dpy, __func__);
 
    DestroyDrawable(dpy, (GLXDrawable) win, X_GLXDestroyWindow);
 }
@@ -716,3 +723,4 @@ GLX_ALIAS_VOID(glXGetSelectedEventSGIX,
                (Display * dpy, GLXDrawable drawable,
                 unsigned long *mask), (dpy, drawable, mask),
                glXGetSelectedEvent)
+
