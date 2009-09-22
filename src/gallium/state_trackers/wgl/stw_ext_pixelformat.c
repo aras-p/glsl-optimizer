@@ -43,7 +43,6 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "stw_public.h"
 #include "stw_pixelformat.h"
 
 

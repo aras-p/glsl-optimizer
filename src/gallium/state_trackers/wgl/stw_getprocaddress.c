@@ -33,7 +33,6 @@
 #include <GL/wglext.h>
 
 #include "glapi/glapi.h"
-#include "stw_public.h"
 #include "stw_ext_gallium.h"
 
 struct stw_extension_entry
@@ -68,8 +67,8 @@ static const struct stw_extension_entry stw_extension_entries[] = {
    { NULL, NULL }
 };
 
-PROC
-stw_get_proc_address(
+PROC APIENTRY
+DrvGetProcAddress(
    LPCSTR lpszProc )
 {
    const struct stw_extension_entry *entry;

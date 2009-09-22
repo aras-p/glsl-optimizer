@@ -38,9 +38,9 @@
 #include "trace/tr_texture.h"
 #endif
 
+#include "stw_icd.h"
 #include "stw_framebuffer.h"
 #include "stw_device.h"
-#include "stw_public.h"
 #include "stw_winsys.h"
 #include "stw_tls.h"
 
@@ -379,10 +379,10 @@ stw_framebuffer_from_hwnd(
 }
 
 
-BOOL
-stw_pixelformat_set(
+BOOL APIENTRY
+DrvSetPixelFormat(
    HDC hdc,
-   int iPixelFormat )
+   LONG iPixelFormat )
 {
    uint count;
    uint index;
@@ -435,8 +435,8 @@ stw_pixelformat_get(
 }
 
 
-BOOL
-stw_swap_buffers(
+BOOL APIENTRY
+DrvSwapBuffers(
    HDC hdc )
 {
    struct stw_framebuffer *fb;
@@ -481,13 +481,13 @@ stw_swap_buffers(
 }
 
 
-BOOL
-stw_swap_layer_buffers(
+BOOL APIENTRY
+DrvSwapLayerBuffers(
    HDC hdc,
    UINT fuPlanes )
 {
    if(fuPlanes & WGL_SWAP_MAIN_PLANE)
-      return stw_swap_buffers(hdc);
+      return DrvSwapBuffers(hdc);
 
    return FALSE;
 }

@@ -39,11 +39,11 @@
 #include "trace/tr_context.h"
 #endif
 
+#include "stw_icd.h"
 #include "stw_device.h"
 #include "stw_winsys.h"
 #include "stw_framebuffer.h"
 #include "stw_pixelformat.h"
-#include "stw_public.h"
 #include "stw_context.h"
 #include "stw_tls.h"
 
@@ -70,11 +70,11 @@ stw_current_context(void)
    }
 }
 
-BOOL
-stw_copy_context(
-   UINT_PTR hglrcSrc,
-   UINT_PTR hglrcDst,
-   UINT mask )
+BOOL APIENTRY
+DrvCopyContext(
+   DHGLRC dhrcSource,
+   DHGLRC dhrcDest,
+   UINT fuMask )
 {
    struct stw_context *src;
    struct stw_context *dst;
@@ -82,15 +82,15 @@ stw_copy_context(
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
    
-   src = stw_lookup_context_locked( hglrcSrc );
-   dst = stw_lookup_context_locked( hglrcDst );
+   src = stw_lookup_context_locked( dhrcSource );
+   dst = stw_lookup_context_locked( dhrcDest );
 
    if (src && dst) { 
       /* FIXME */
       assert(0);
       (void) src;
       (void) dst;
-      (void) mask;
+      (void) fuMask;
    }
 
    pipe_mutex_unlock( stw_dev->ctx_mutex );
@@ -98,10 +98,10 @@ stw_copy_context(
    return ret;
 }
 
-BOOL
-stw_share_lists(
-   UINT_PTR hglrc1, 
-   UINT_PTR hglrc2 )
+BOOL APIENTRY
+DrvShareLists(
+   DHGLRC dhglrc1,
+   DHGLRC dhglrc2 )
 {
    struct stw_context *ctx1;
    struct stw_context *ctx2;
@@ -109,8 +109,8 @@ stw_share_lists(
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
    
-   ctx1 = stw_lookup_context_locked( hglrc1 );
-   ctx2 = stw_lookup_context_locked( hglrc2 );
+   ctx1 = stw_lookup_context_locked( dhglrc1 );
+   ctx2 = stw_lookup_context_locked( dhglrc2 );
 
    if (ctx1 && ctx2 &&
        ctx1->iPixelFormat == ctx2->iPixelFormat) { 
@@ -136,10 +136,17 @@ stw_viewport(GLcontext * glctx, GLint x, GLint y,
    }
 }
 
-UINT_PTR
-stw_create_layer_context(
+DHGLRC APIENTRY
+DrvCreateContext(
+   HDC hdc )
+{
+   return DrvCreateLayerContext( hdc, 0 );
+}
+
+DHGLRC APIENTRY
+DrvCreateLayerContext(
    HDC hdc,
-   int iLayerPlane )
+   INT iLayerPlane )
 {
    int iPixelFormat;
    const struct stw_pixelformat_info *pfi;
@@ -198,12 +205,12 @@ stw_create_layer_context(
    ctx->st->ctx->Driver.Viewport = stw_viewport;
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
-   ctx->hglrc = handle_table_add(stw_dev->ctx_table, ctx);
+   ctx->dhglrc = handle_table_add(stw_dev->ctx_table, ctx);
    pipe_mutex_unlock( stw_dev->ctx_mutex );
-   if (!ctx->hglrc)
+   if (!ctx->dhglrc)
       goto no_hglrc;
 
-   return ctx->hglrc;
+   return ctx->dhglrc;
 
 no_hglrc:
    st_destroy_context(ctx->st);
@@ -216,9 +223,9 @@ no_ctx:
    return 0;
 }
 
-BOOL
-stw_delete_context(
-   UINT_PTR hglrc )
+BOOL APIENTRY
+DrvDeleteContext(
+   DHGLRC dhglrc )
 {
    struct stw_context *ctx ;
    BOOL ret = FALSE;
@@ -227,8 +234,8 @@ stw_delete_context(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
-   ctx = stw_lookup_context_locked(hglrc);
-   handle_table_remove(stw_dev->ctx_table, hglrc);
+   ctx = stw_lookup_context_locked(dhglrc);
+   handle_table_remove(stw_dev->ctx_table, dhglrc);
    pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    if (ctx) {
@@ -247,9 +254,9 @@ stw_delete_context(
    return ret;
 }
 
-BOOL
-stw_release_context(
-   UINT_PTR hglrc )
+BOOL APIENTRY
+DrvReleaseContext(
+   DHGLRC dhglrc )
 {
    struct stw_context *ctx;
 
@@ -257,7 +264,7 @@ stw_release_context(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
-   ctx = stw_lookup_context_locked( hglrc );
+   ctx = stw_lookup_context_locked( dhglrc );
    pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    if (!ctx)
@@ -277,7 +284,7 @@ stw_release_context(
 }
 
 
-UINT_PTR
+DHGLRC
 stw_get_current_context( void )
 {
    struct stw_context *ctx;
@@ -286,7 +293,7 @@ stw_get_current_context( void )
    if(!ctx)
       return 0;
    
-   return ctx->hglrc;
+   return ctx->dhglrc;
 }
 
 HDC
@@ -304,7 +311,7 @@ stw_get_current_dc( void )
 BOOL
 stw_make_current(
    HDC hdc,
-   UINT_PTR hglrc )
+   DHGLRC dhglrc )
 {
    struct stw_context *curctx = NULL;
    struct stw_context *ctx = NULL;
@@ -315,23 +322,23 @@ stw_make_current(
 
    curctx = stw_current_context();
    if (curctx != NULL) {
-      if (curctx->hglrc != hglrc)
+      if (curctx->dhglrc != dhglrc)
 	 st_flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       
       /* Return if already current. */
-      if (curctx->hglrc == hglrc && curctx->hdc == hdc) {
+      if (curctx->dhglrc == dhglrc && curctx->hdc == hdc) {
          ctx = curctx;
          fb = stw_framebuffer_from_hdc( hdc );
          goto success;
       }
    }
 
-   if (hdc == NULL || hglrc == 0) {
+   if (hdc == NULL || dhglrc == 0) {
       return st_make_current( NULL, NULL, NULL );
    }
 
    pipe_mutex_lock( stw_dev->ctx_mutex ); 
-   ctx = stw_lookup_context_locked( hglrc );
+   ctx = stw_lookup_context_locked( dhglrc );
    pipe_mutex_unlock( stw_dev->ctx_mutex ); 
    if(!ctx)
       goto fail;
@@ -379,4 +386,364 @@ fail:
       stw_framebuffer_release(fb);
    st_make_current( NULL, NULL, NULL );
    return FALSE;
+}
+
+/**
+ * Although WGL allows different dispatch entrypoints per context
+ */
+static const GLCLTPROCTABLE cpt =
+{
+   OPENGL_VERSION_110_ENTRIES,
+   {
+      &glNewList,
+      &glEndList,
+      &glCallList,
+      &glCallLists,
+      &glDeleteLists,
+      &glGenLists,
+      &glListBase,
+      &glBegin,
+      &glBitmap,
+      &glColor3b,
+      &glColor3bv,
+      &glColor3d,
+      &glColor3dv,
+      &glColor3f,
+      &glColor3fv,
+      &glColor3i,
+      &glColor3iv,
+      &glColor3s,
+      &glColor3sv,
+      &glColor3ub,
+      &glColor3ubv,
+      &glColor3ui,
+      &glColor3uiv,
+      &glColor3us,
+      &glColor3usv,
+      &glColor4b,
+      &glColor4bv,
+      &glColor4d,
+      &glColor4dv,
+      &glColor4f,
+      &glColor4fv,
+      &glColor4i,
+      &glColor4iv,
+      &glColor4s,
+      &glColor4sv,
+      &glColor4ub,
+      &glColor4ubv,
+      &glColor4ui,
+      &glColor4uiv,
+      &glColor4us,
+      &glColor4usv,
+      &glEdgeFlag,
+      &glEdgeFlagv,
+      &glEnd,
+      &glIndexd,
+      &glIndexdv,
+      &glIndexf,
+      &glIndexfv,
+      &glIndexi,
+      &glIndexiv,
+      &glIndexs,
+      &glIndexsv,
+      &glNormal3b,
+      &glNormal3bv,
+      &glNormal3d,
+      &glNormal3dv,
+      &glNormal3f,
+      &glNormal3fv,
+      &glNormal3i,
+      &glNormal3iv,
+      &glNormal3s,
+      &glNormal3sv,
+      &glRasterPos2d,
+      &glRasterPos2dv,
+      &glRasterPos2f,
+      &glRasterPos2fv,
+      &glRasterPos2i,
+      &glRasterPos2iv,
+      &glRasterPos2s,
+      &glRasterPos2sv,
+      &glRasterPos3d,
+      &glRasterPos3dv,
+      &glRasterPos3f,
+      &glRasterPos3fv,
+      &glRasterPos3i,
+      &glRasterPos3iv,
+      &glRasterPos3s,
+      &glRasterPos3sv,
+      &glRasterPos4d,
+      &glRasterPos4dv,
+      &glRasterPos4f,
+      &glRasterPos4fv,
+      &glRasterPos4i,
+      &glRasterPos4iv,
+      &glRasterPos4s,
+      &glRasterPos4sv,
+      &glRectd,
+      &glRectdv,
+      &glRectf,
+      &glRectfv,
+      &glRecti,
+      &glRectiv,
+      &glRects,
+      &glRectsv,
+      &glTexCoord1d,
+      &glTexCoord1dv,
+      &glTexCoord1f,
+      &glTexCoord1fv,
+      &glTexCoord1i,
+      &glTexCoord1iv,
+      &glTexCoord1s,
+      &glTexCoord1sv,
+      &glTexCoord2d,
+      &glTexCoord2dv,
+      &glTexCoord2f,
+      &glTexCoord2fv,
+      &glTexCoord2i,
+      &glTexCoord2iv,
+      &glTexCoord2s,
+      &glTexCoord2sv,
+      &glTexCoord3d,
+      &glTexCoord3dv,
+      &glTexCoord3f,
+      &glTexCoord3fv,
+      &glTexCoord3i,
+      &glTexCoord3iv,
+      &glTexCoord3s,
+      &glTexCoord3sv,
+      &glTexCoord4d,
+      &glTexCoord4dv,
+      &glTexCoord4f,
+      &glTexCoord4fv,
+      &glTexCoord4i,
+      &glTexCoord4iv,
+      &glTexCoord4s,
+      &glTexCoord4sv,
+      &glVertex2d,
+      &glVertex2dv,
+      &glVertex2f,
+      &glVertex2fv,
+      &glVertex2i,
+      &glVertex2iv,
+      &glVertex2s,
+      &glVertex2sv,
+      &glVertex3d,
+      &glVertex3dv,
+      &glVertex3f,
+      &glVertex3fv,
+      &glVertex3i,
+      &glVertex3iv,
+      &glVertex3s,
+      &glVertex3sv,
+      &glVertex4d,
+      &glVertex4dv,
+      &glVertex4f,
+      &glVertex4fv,
+      &glVertex4i,
+      &glVertex4iv,
+      &glVertex4s,
+      &glVertex4sv,
+      &glClipPlane,
+      &glColorMaterial,
+      &glCullFace,
+      &glFogf,
+      &glFogfv,
+      &glFogi,
+      &glFogiv,
+      &glFrontFace,
+      &glHint,
+      &glLightf,
+      &glLightfv,
+      &glLighti,
+      &glLightiv,
+      &glLightModelf,
+      &glLightModelfv,
+      &glLightModeli,
+      &glLightModeliv,
+      &glLineStipple,
+      &glLineWidth,
+      &glMaterialf,
+      &glMaterialfv,
+      &glMateriali,
+      &glMaterialiv,
+      &glPointSize,
+      &glPolygonMode,
+      &glPolygonStipple,
+      &glScissor,
+      &glShadeModel,
+      &glTexParameterf,
+      &glTexParameterfv,
+      &glTexParameteri,
+      &glTexParameteriv,
+      &glTexImage1D,
+      &glTexImage2D,
+      &glTexEnvf,
+      &glTexEnvfv,
+      &glTexEnvi,
+      &glTexEnviv,
+      &glTexGend,
+      &glTexGendv,
+      &glTexGenf,
+      &glTexGenfv,
+      &glTexGeni,
+      &glTexGeniv,
+      &glFeedbackBuffer,
+      &glSelectBuffer,
+      &glRenderMode,
+      &glInitNames,
+      &glLoadName,
+      &glPassThrough,
+      &glPopName,
+      &glPushName,
+      &glDrawBuffer,
+      &glClear,
+      &glClearAccum,
+      &glClearIndex,
+      &glClearColor,
+      &glClearStencil,
+      &glClearDepth,
+      &glStencilMask,
+      &glColorMask,
+      &glDepthMask,
+      &glIndexMask,
+      &glAccum,
+      &glDisable,
+      &glEnable,
+      &glFinish,
+      &glFlush,
+      &glPopAttrib,
+      &glPushAttrib,
+      &glMap1d,
+      &glMap1f,
+      &glMap2d,
+      &glMap2f,
+      &glMapGrid1d,
+      &glMapGrid1f,
+      &glMapGrid2d,
+      &glMapGrid2f,
+      &glEvalCoord1d,
+      &glEvalCoord1dv,
+      &glEvalCoord1f,
+      &glEvalCoord1fv,
+      &glEvalCoord2d,
+      &glEvalCoord2dv,
+      &glEvalCoord2f,
+      &glEvalCoord2fv,
+      &glEvalMesh1,
+      &glEvalPoint1,
+      &glEvalMesh2,
+      &glEvalPoint2,
+      &glAlphaFunc,
+      &glBlendFunc,
+      &glLogicOp,
+      &glStencilFunc,
+      &glStencilOp,
+      &glDepthFunc,
+      &glPixelZoom,
+      &glPixelTransferf,
+      &glPixelTransferi,
+      &glPixelStoref,
+      &glPixelStorei,
+      &glPixelMapfv,
+      &glPixelMapuiv,
+      &glPixelMapusv,
+      &glReadBuffer,
+      &glCopyPixels,
+      &glReadPixels,
+      &glDrawPixels,
+      &glGetBooleanv,
+      &glGetClipPlane,
+      &glGetDoublev,
+      &glGetError,
+      &glGetFloatv,
+      &glGetIntegerv,
+      &glGetLightfv,
+      &glGetLightiv,
+      &glGetMapdv,
+      &glGetMapfv,
+      &glGetMapiv,
+      &glGetMaterialfv,
+      &glGetMaterialiv,
+      &glGetPixelMapfv,
+      &glGetPixelMapuiv,
+      &glGetPixelMapusv,
+      &glGetPolygonStipple,
+      &glGetString,
+      &glGetTexEnvfv,
+      &glGetTexEnviv,
+      &glGetTexGendv,
+      &glGetTexGenfv,
+      &glGetTexGeniv,
+      &glGetTexImage,
+      &glGetTexParameterfv,
+      &glGetTexParameteriv,
+      &glGetTexLevelParameterfv,
+      &glGetTexLevelParameteriv,
+      &glIsEnabled,
+      &glIsList,
+      &glDepthRange,
+      &glFrustum,
+      &glLoadIdentity,
+      &glLoadMatrixf,
+      &glLoadMatrixd,
+      &glMatrixMode,
+      &glMultMatrixf,
+      &glMultMatrixd,
+      &glOrtho,
+      &glPopMatrix,
+      &glPushMatrix,
+      &glRotated,
+      &glRotatef,
+      &glScaled,
+      &glScalef,
+      &glTranslated,
+      &glTranslatef,
+      &glViewport,
+      &glArrayElement,
+      &glBindTexture,
+      &glColorPointer,
+      &glDisableClientState,
+      &glDrawArrays,
+      &glDrawElements,
+      &glEdgeFlagPointer,
+      &glEnableClientState,
+      &glIndexPointer,
+      &glIndexub,
+      &glIndexubv,
+      &glInterleavedArrays,
+      &glNormalPointer,
+      &glPolygonOffset,
+      &glTexCoordPointer,
+      &glVertexPointer,
+      &glAreTexturesResident,
+      &glCopyTexImage1D,
+      &glCopyTexImage2D,
+      &glCopyTexSubImage1D,
+      &glCopyTexSubImage2D,
+      &glDeleteTextures,
+      &glGenTextures,
+      &glGetPointerv,
+      &glIsTexture,
+      &glPrioritizeTextures,
+      &glTexSubImage1D,
+      &glTexSubImage2D,
+      &glPopClientAttrib,
+      &glPushClientAttrib
+   }
+};
+
+PGLCLTPROCTABLE APIENTRY
+DrvSetContext(
+   HDC hdc,
+   DHGLRC dhglrc,
+   PFN_SETPROCTABLE pfnSetProcTable )
+{
+   PGLCLTPROCTABLE r = (PGLCLTPROCTABLE)&cpt;
+
+   if (!stw_make_current( hdc, dhglrc ))
+      r = NULL;
+
+   return r;
 }

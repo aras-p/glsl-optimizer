@@ -26,7 +26,6 @@ if env['platform'] in ['windows']:
         'stw_ext_swapinterval.c',
         'stw_framebuffer.c',
         'stw_getprocaddress.c',
-        'stw_icd.c',
         'stw_pixelformat.c',
         'stw_tls.c',
         'stw_wgl.c',

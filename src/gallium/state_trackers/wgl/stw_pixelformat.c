@@ -34,9 +34,9 @@
 
 #include "util/u_debug.h"
 
+#include "stw_icd.h"
 #include "stw_device.h"
 #include "stw_pixelformat.h"
-#include "stw_public.h"
 #include "stw_tls.h"
 
 
@@ -288,12 +288,12 @@ stw_pixelformat_visual(GLvisual *visual,
 }
 
 
-int
-stw_pixelformat_describe(
+LONG APIENTRY
+DrvDescribePixelFormat(
    HDC hdc,
-   int iPixelFormat,
-   UINT nBytes,
-   LPPIXELFORMATDESCRIPTOR ppfd )
+   INT iPixelFormat,
+   ULONG cjpfd,
+   PIXELFORMATDESCRIPTOR *ppfd )
 {
    uint count;
    uint index;
@@ -306,7 +306,7 @@ stw_pixelformat_describe(
 
    if (ppfd == NULL)
       return count;
-   if (index >= count || nBytes != sizeof( PIXELFORMATDESCRIPTOR ))
+   if (index >= count || cjpfd != sizeof( PIXELFORMATDESCRIPTOR ))
       return 0;
 
    pfi = stw_pixelformat_get_info( index );
@@ -314,6 +314,52 @@ stw_pixelformat_describe(
    memcpy(ppfd, &pfi->pfd, sizeof( PIXELFORMATDESCRIPTOR ));
 
    return count;
+}
+
+BOOL APIENTRY
+DrvDescribeLayerPlane(
+   HDC hdc,
+   INT iPixelFormat,
+   INT iLayerPlane,
+   UINT nBytes,
+   LPLAYERPLANEDESCRIPTOR plpd )
+{
+   assert(0);
+   return FALSE;
+}
+
+int APIENTRY
+DrvGetLayerPaletteEntries(
+   HDC hdc,
+   INT iLayerPlane,
+   INT iStart,
+   INT cEntries,
+   COLORREF *pcr )
+{
+   assert(0);
+   return 0;
+}
+
+int APIENTRY
+DrvSetLayerPaletteEntries(
+   HDC hdc,
+   INT iLayerPlane,
+   INT iStart,
+   INT cEntries,
+   CONST COLORREF *pcr )
+{
+   assert(0);
+   return 0;
+}
+
+BOOL APIENTRY
+DrvRealizeLayerPalette(
+   HDC hdc,
+   INT iLayerPlane,
+   BOOL bRealize )
+{
+   assert(0);
+   return FALSE;
 }
 
 /* Only used by the wgl code, but have it here to avoid exporting the

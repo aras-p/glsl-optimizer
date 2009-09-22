@@ -62,4 +62,11 @@ void
 stw_pixelformat_visual(GLvisual *visual, 
                        const struct stw_pixelformat_info *pfi );
 
+int
+stw_pixelformat_choose( HDC hdc,
+                        CONST PIXELFORMATDESCRIPTOR *ppfd );
+
+int
+stw_pixelformat_get(HDC hdc);
+
 #endif /* STW_PIXELFORMAT_H */

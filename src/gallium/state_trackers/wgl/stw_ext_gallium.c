@@ -27,7 +27,6 @@
 
 
 #include "pipe/p_screen.h"
-#include "stw_public.h"
 #include "stw_device.h"
 #include "stw_winsys.h"
 #include "stw_ext_gallium.h"

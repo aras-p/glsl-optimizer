@@ -29,11 +29,10 @@
 #define STW_DEVICE_H_
 
 
-#include <windows.h>
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_thread.h"
 #include "util/u_handle_table.h"
+#include "stw_icd.h"
 #include "stw_pixelformat.h"
 
 
@@ -69,7 +68,7 @@ struct stw_device
 };
 
 struct stw_context *
-stw_lookup_context_locked( UINT_PTR hglrc );
+stw_lookup_context_locked( DHGLRC hglrc );
 
 extern struct stw_device *stw_dev;
 

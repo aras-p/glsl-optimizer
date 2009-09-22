@@ -28,7 +28,9 @@
 #include <windows.h>
 
 #include "util/u_debug.h"
-#include "stw_public.h"
+#include "stw_icd.h"
+#include "stw_context.h"
+#include "stw_pixelformat.h"
 #include "stw_wgl.h"
 
 
@@ -38,16 +40,16 @@ wglCopyContext(
    HGLRC hglrcDst,
    UINT mask )
 {
-   return stw_copy_context( (UINT_PTR)hglrcSrc, 
-                            (UINT_PTR)hglrcDst, 
-                            mask );
+   return DrvCopyContext( (DHGLRC)(UINT_PTR)hglrcSrc,
+                          (DHGLRC)(UINT_PTR)hglrcDst,
+                          mask );
 }
 
 WINGDIAPI HGLRC APIENTRY
 wglCreateContext(
    HDC hdc )
 {
-   return wglCreateLayerContext(hdc, 0);
+   return (HGLRC) DrvCreateContext(hdc);
 }
 
 WINGDIAPI HGLRC APIENTRY
@@ -55,21 +57,21 @@ wglCreateLayerContext(
    HDC hdc,
    int iLayerPlane )
 {
-   return (HGLRC) stw_create_layer_context( hdc, iLayerPlane );
+   return (HGLRC) DrvCreateLayerContext( hdc, iLayerPlane );
 }
 
 WINGDIAPI BOOL APIENTRY
 wglDeleteContext(
    HGLRC hglrc )
 {
-   return stw_delete_context( (UINT_PTR)hglrc );
+   return DrvDeleteContext((DHGLRC)(UINT_PTR)hglrc );
 }
 
 
 WINGDIAPI HGLRC APIENTRY
 wglGetCurrentContext( VOID )
 {
-   return (HGLRC)stw_get_current_context();
+   return (HGLRC)(UINT_PTR)stw_get_current_context();
 }
 
 WINGDIAPI HDC APIENTRY
@@ -83,7 +85,7 @@ wglMakeCurrent(
    HDC hdc,
    HGLRC hglrc )
 {
-   return stw_make_current( hdc, (UINT_PTR)hglrc );
+   return DrvSetContext( hdc, (DHGLRC)(UINT_PTR)hglrc, NULL ) ? TRUE : FALSE;
 }
 
 
@@ -91,7 +93,7 @@ WINGDIAPI BOOL APIENTRY
 wglSwapBuffers(
    HDC hdc )
 {
-   return stw_swap_buffers( hdc );
+   return DrvSwapBuffers( hdc );
 }
 
 
@@ -100,14 +102,14 @@ wglSwapLayerBuffers(
    HDC hdc,
    UINT fuPlanes )
 {
-   return stw_swap_layer_buffers( hdc, fuPlanes );
+   return DrvSwapLayerBuffers( hdc, fuPlanes );
 }
 
 WINGDIAPI PROC APIENTRY
 wglGetProcAddress(
     LPCSTR lpszProc )
 {
-   return stw_get_proc_address( lpszProc );
+   return DrvGetProcAddress( lpszProc );
 }
 
 
@@ -141,7 +143,7 @@ wglDescribePixelFormat(
    UINT nBytes,
    LPPIXELFORMATDESCRIPTOR ppfd )
 {
-   return stw_pixelformat_describe( hdc, iPixelFormat, nBytes, ppfd );
+   return DrvDescribePixelFormat( hdc, iPixelFormat, nBytes, ppfd );
 }
 
 WINGDIAPI int APIENTRY
@@ -160,7 +162,7 @@ wglSetPixelFormat(
    if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
       return FALSE;
 
-   return stw_pixelformat_set( hdc, iPixelFormat );
+   return DrvSetPixelFormat( hdc, iPixelFormat );
 }
 
 
@@ -186,7 +188,8 @@ wglShareLists(
    HGLRC hglrc1,
    HGLRC hglrc2 )
 {
-   return stw_share_lists( (UINT_PTR)hglrc1, (UINT_PTR)hglrc2);;
+   return DrvShareLists((DHGLRC)(UINT_PTR)hglrc1,
+                        (DHGLRC)(UINT_PTR)hglrc2);
 }
 
 WINGDIAPI BOOL APIENTRY
@@ -264,15 +267,7 @@ wglDescribeLayerPlane(
    UINT nBytes,
    LPLAYERPLANEDESCRIPTOR plpd )
 {
-   (void) hdc;
-   (void) iPixelFormat;
-   (void) iLayerPlane;
-   (void) nBytes;
-   (void) plpd;
-
-   assert( 0 );
-
-   return FALSE;
+   return DrvDescribeLayerPlane(hdc, iPixelFormat, iLayerPlane, nBytes, plpd);
 }
 
 WINGDIAPI int APIENTRY
@@ -283,15 +278,7 @@ wglSetLayerPaletteEntries(
    int cEntries,
    CONST COLORREF *pcr )
 {
-   (void) hdc;
-   (void) iLayerPlane;
-   (void) iStart;
-   (void) cEntries;
-   (void) pcr;
-
-   assert( 0 );
-
-   return 0;
+   return DrvSetLayerPaletteEntries(hdc, iLayerPlane, iStart, cEntries, pcr);
 }
 
 WINGDIAPI int APIENTRY
@@ -302,15 +289,7 @@ wglGetLayerPaletteEntries(
    int cEntries,
    COLORREF *pcr )
 {
-   (void) hdc;
-   (void) iLayerPlane;
-   (void) iStart;
-   (void) cEntries;
-   (void) pcr;
-
-   assert( 0 );
-
-   return 0;
+   return DrvGetLayerPaletteEntries(hdc, iLayerPlane, iStart, cEntries, pcr);
 }
 
 WINGDIAPI BOOL APIENTRY

@@ -35,9 +35,15 @@ struct st_context;
 struct stw_context
 {
    struct st_context *st;
-   UINT_PTR hglrc;
+   DHGLRC dhglrc;
    int iPixelFormat;
    HDC hdc;
 };
+
+DHGLRC stw_get_current_context( void );
+
+HDC stw_get_current_dc( void );
+
+BOOL stw_make_current( HDC hdc, DHGLRC dhglrc );
 
 #endif /* STW_CONTEXT_H */

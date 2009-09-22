@@ -40,7 +40,7 @@
 #include "stw_device.h"
 #include "stw_winsys.h"
 #include "stw_pixelformat.h"
-#include "stw_public.h"
+#include "stw_icd.h"
 #include "stw_tls.h"
 #include "stw_framebuffer.h"
 
@@ -182,7 +182,7 @@ stw_cleanup(void)
       /* Ensure all contexts are destroyed */
       i = handle_table_get_first_handle(stw_dev->ctx_table);
       while (i) {
-         stw_delete_context(i);
+         DrvDeleteContext(i);
          i = handle_table_get_next_handle(stw_dev->ctx_table, i);
       }
       handle_table_destroy(stw_dev->ctx_table);
@@ -212,7 +212,7 @@ stw_cleanup(void)
 
 
 struct stw_context *
-stw_lookup_context_locked( UINT_PTR dhglrc )
+stw_lookup_context_locked( DHGLRC dhglrc )
 {
    if (dhglrc == 0)
       return NULL;
@@ -223,3 +223,20 @@ stw_lookup_context_locked( UINT_PTR dhglrc )
    return (struct stw_context *) handle_table_get(stw_dev->ctx_table, dhglrc);
 }
 
+
+void APIENTRY
+DrvSetCallbackProcs(
+   INT nProcs,
+   PROC *pProcs )
+{
+   return;
+}
+
+
+BOOL APIENTRY
+DrvValidateVersion(
+   ULONG ulVersion )
+{
+   /* TODO: get the expected version from the winsys */
+   return ulVersion == 1;
+}
