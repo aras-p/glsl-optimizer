@@ -42,8 +42,8 @@ static int
 _parse_primary(struct parse_context *ctx,
                int *result)
 {
-   if (ctx->input->token == SL_PP_NUMBER) {
-      *result = atoi(sl_pp_context_cstr(ctx->context, ctx->input->data.number));
+   if (ctx->input->token == SL_PP_UINT) {
+      *result = atoi(sl_pp_context_cstr(ctx->context, ctx->input->data._uint));
       ctx->input++;
    } else {
       if (ctx->input->token != SL_PP_LPAREN) {

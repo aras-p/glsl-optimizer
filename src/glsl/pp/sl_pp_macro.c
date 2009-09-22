@@ -105,8 +105,8 @@ _out_number(struct sl_pp_context *context,
 
    sprintf(buf, "%u", number);
 
-   ti.token = SL_PP_NUMBER;
-   ti.data.number = sl_pp_context_add_unique_str(context, buf);
+   ti.token = SL_PP_UINT;
+   ti.data._uint = sl_pp_context_add_unique_str(context, buf);
    if (sl_pp_process_out(state, &ti)) {
       strcpy(context->error_msg, "out of memory");
       return -1;

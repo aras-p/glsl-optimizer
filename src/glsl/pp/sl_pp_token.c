@@ -271,6 +271,7 @@ _tokenise_number(struct sl_pp_context *context,
 {
    const char *input = *pinput;
    unsigned int eaten;
+   unsigned int is_float = 0;
    char number[256];   /* XXX: Remove this artifical limit. */
 
    eaten = _parse_float(input);
@@ -282,6 +283,8 @@ _tokenise_number(struct sl_pp_context *context,
             eaten = _parse_dec(input);
          }
       }
+   } else {
+      is_float = 1;
    }
 
    if (!eaten || _is_identifier_char(input[eaten])) {
@@ -297,10 +300,18 @@ _tokenise_number(struct sl_pp_context *context,
    memcpy(number, input, eaten);
    number[eaten] = '\0';
 
-   info->token = SL_PP_NUMBER;
-   info->data.number = sl_pp_context_add_unique_str(context, number);
-   if (info->data.number == -1) {
-      return -1;
+   if (is_float) {
+      info->token = SL_PP_FLOAT;
+      info->data._float = sl_pp_context_add_unique_str(context, number);
+      if (info->data._float == -1) {
+         return -1;
+      }
+   } else {
+      info->token = SL_PP_UINT;
+      info->data._uint = sl_pp_context_add_unique_str(context, number);
+      if (info->data._uint == -1) {
+         return -1;
+      }
    }
 
    *pinput = input + eaten;

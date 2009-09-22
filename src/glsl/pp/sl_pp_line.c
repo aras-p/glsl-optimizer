@@ -67,8 +67,8 @@ sl_pp_process_line(struct sl_pp_context *context,
       }
    }
 
-   if (state.out_len > 0 && state.out[0].token == SL_PP_NUMBER) {
-      line_number = state.out[0].data.number;
+   if (state.out_len > 0 && state.out[0].token == SL_PP_UINT) {
+      line_number = state.out[0].data._uint;
    } else {
       strcpy(context->error_msg, "expected a number after `#line'");
       free(state.out);
@@ -76,8 +76,8 @@ sl_pp_process_line(struct sl_pp_context *context,
    }
 
    if (state.out_len > 1) {
-      if (state.out[1].token == SL_PP_NUMBER) {
-         file_number = state.out[1].data.number;
+      if (state.out[1].token == SL_PP_UINT) {
+         file_number = state.out[1].data._uint;
       } else {
          strcpy(context->error_msg, "expected a number after line number");
          free(state.out);

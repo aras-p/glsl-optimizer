@@ -239,8 +239,12 @@ sl_pp_process_error(struct sl_pp_context *context,
          s = sl_pp_context_cstr(context, input[i].data.identifier);
          break;
 
-      case SL_PP_NUMBER:
-         s = sl_pp_context_cstr(context, input[i].data.number);
+      case SL_PP_UINT:
+         s = sl_pp_context_cstr(context, input[i].data._uint);
+         break;
+
+      case SL_PP_FLOAT:
+         s = sl_pp_context_cstr(context, input[i].data._float);
          break;
 
       case SL_PP_OTHER:

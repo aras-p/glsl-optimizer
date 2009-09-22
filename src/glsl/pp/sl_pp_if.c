@@ -81,13 +81,13 @@ _parse_defined(struct sl_pp_context *context,
       (*pi)++;
    }
 
-   result.token = SL_PP_NUMBER;
+   result.token = SL_PP_UINT;
    if (defined) {
-      result.data.number = sl_pp_context_add_unique_str(context, "1");
+      result.data._uint = sl_pp_context_add_unique_str(context, "1");
    } else {
-      result.data.number = sl_pp_context_add_unique_str(context, "0");
+      result.data._uint = sl_pp_context_add_unique_str(context, "0");
    }
-   if (result.data.number == -1) {
+   if (result.data._uint == -1) {
       return -1;
    }
 

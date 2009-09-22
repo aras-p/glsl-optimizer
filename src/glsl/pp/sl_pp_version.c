@@ -99,8 +99,8 @@ sl_pp_version(struct sl_pp_context *context,
             i++;
             break;
 
-         case SL_PP_NUMBER:
-            *version = atoi(sl_pp_context_cstr(context, input[i].data.number));
+         case SL_PP_UINT:
+            *version = atoi(sl_pp_context_cstr(context, input[i].data._uint));
             i++;
             found_number = 1;
             break;

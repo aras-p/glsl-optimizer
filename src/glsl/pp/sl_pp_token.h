@@ -82,7 +82,8 @@ enum sl_pp_token {
 
    SL_PP_IDENTIFIER,
 
-   SL_PP_NUMBER,
+   SL_PP_UINT,
+   SL_PP_FLOAT,
 
    SL_PP_OTHER,
 
@@ -102,7 +103,8 @@ enum sl_pp_token {
 
 union sl_pp_token_data {
    int identifier;
-   int number;
+   int _uint;
+   int _float;
    char other;
    int pragma;
    int extension;
