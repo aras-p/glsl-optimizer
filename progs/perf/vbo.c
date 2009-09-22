@@ -41,7 +41,7 @@ static GLuint VBO;
 
 static GLsizei VBOSize = 0;
 static GLsizei SubSize = 0;
-static GLubyte *VBOData = NULL;
+static GLubyte *VBOData = NULL;  /* array[DATA_SIZE] */
 
 static const GLboolean DrawPoint = GL_TRUE;
 static const GLboolean BufferSubDataInHalves = GL_TRUE;
@@ -107,6 +107,7 @@ UploadSubVBO(unsigned count)
    glFinish();
 }
 
+
 /* Do multiple small SubData uploads, then call DrawArrays.  This may be a
  * fairer comparison to back-to-back BufferData calls:
  */
@@ -127,6 +128,31 @@ BatchUploadSubVBO(unsigned count)
 
       src += SubSize;
       src %= DATA_SIZE;
+   }
+   glFinish();
+}
+
+
+/**
+ * Test the sequence:
+ *    create/load VBO
+ *    draw
+ *    destroy VBO
+ */
+static void
+CreateDrawDestroyVBO(unsigned count)
+{
+   unsigned i;
+   for (i = 0; i < count; i++) {
+      GLuint vbo;
+      /* create/load */
+      glGenBuffersARB(1, &vbo);
+      glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
+      /* draw */
+      glVertexPointer(2, GL_FLOAT, sizeof(Vertex0), (void *) 0);
+      glDrawArrays(GL_POINTS, 0, 1);
+      /* destroy */
+      glDeleteBuffersARB(1, &vbo);
    }
    glFinish();
 }
@@ -163,7 +189,6 @@ PerfDraw(void)
              Vertex0, 
              sizeof(Vertex0));
    }
-
 
    /* glBufferDataARB()
     */
@@ -204,6 +229,16 @@ PerfDraw(void)
       mbPerSec = rate * SubSize / (1024.0 * 1024.0);
       perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d), batched: %.1f MB/sec\n",
                   SubSize, VBOSize, mbPerSec);
+   }
+
+   /* Create/Draw/Destroy
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(CreateDrawDestroyVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  VBO Create/Draw/Destroy(size = %d): %.1f MB/sec, %.1f draws/sec\n",
+                  VBOSize, mbPerSec, rate);
    }
 
    exit(0);
