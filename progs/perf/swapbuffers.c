@@ -20,17 +20,10 @@
  */
 
 /**
- * Measure drawing overhead
+ * Measure SwapBuffers.
  *
- * This is the first in a series of simple performance benchmarks.
- * The code in this file should be as simple as possible to make it
- * easily portable to other APIs.
- *
- * All the window-system stuff should be contained in glmain.c (or TBDmain.c).
- * All the re-usable, generic code should be in common.c (XXX not done yet).
- *
- * Brian Paul
- * 15 Sep 2009
+ * Keith Whitwell
+ * 22 Sep 2009
  */
 
 #include "glmain.h"

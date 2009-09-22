@@ -27,7 +27,6 @@
  * easily portable to other APIs.
  *
  * All the window-system stuff should be contained in glmain.c (or TBDmain.c).
- * All the re-usable, generic code should be in common.c (XXX not done yet).
  *
  * Brian Paul
  * 15 Sep 2009
