@@ -236,7 +236,6 @@ struct copypix_state
 struct drawpix_state
 {
    GLuint ArrayObj;
-   GLuint VBO;
 
    GLuint StencilFP;  /**< Fragment program for drawing stencil images */
    GLuint DepthFP;  /**< Fragment program for drawing depth images */
@@ -327,7 +326,6 @@ _mesa_meta_free(GLcontext *ctx)
       _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
 
       /* glDrawPixels */
-      _mesa_DeleteBuffersARB(1, & meta->DrawPix.VBO);
       _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
       _mesa_DeletePrograms(1, &meta->DrawPix.DepthFP);
       _mesa_DeletePrograms(1, &meta->DrawPix.StencilFP);
@@ -1585,6 +1583,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
    GLenum texIntFormat;
    GLboolean fallback, newTex;
    GLbitfield metaExtraSave = 0x0;
+   GLuint vbo;
 
    /*
     * Determine if we can do the glDrawPixels with texture mapping.
@@ -1664,30 +1663,6 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
                           META_VIEWPORT |
                           metaExtraSave));
 
-   if (drawpix->ArrayObj == 0) {
-      /* one-time setup */
-
-      /* create vertex array object */
-      _mesa_GenVertexArrays(1, &drawpix->ArrayObj);
-      _mesa_BindVertexArray(drawpix->ArrayObj);
-
-      /* create vertex array buffer */
-      _mesa_GenBuffersARB(1, &drawpix->VBO);
-      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                          NULL, GL_DYNAMIC_DRAW_ARB);
-
-      /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
-      _mesa_EnableClientState(GL_VERTEX_ARRAY);
-      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-   }
-   else {
-      _mesa_BindVertexArray(drawpix->ArrayObj);
-      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, drawpix->VBO);
-   }
-
    newTex = alloc_texture(tex, width, height, texIntFormat);
 
    /* vertex positions, texcoords (after texture allocation!) */
@@ -1718,10 +1693,25 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       verts[3].z = z;
       verts[3].s = 0.0F;
       verts[3].t = tex->Ttop;
-
-      /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
+
+   if (drawpix->ArrayObj == 0) {
+      /* one-time setup: create vertex array object */
+      _mesa_GenVertexArrays(1, &drawpix->ArrayObj);
+   }
+   _mesa_BindVertexArray(drawpix->ArrayObj);
+
+   /* create vertex array buffer */
+   _mesa_GenBuffersARB(1, &vbo);
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, vbo);
+   _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                       verts, GL_DYNAMIC_DRAW_ARB);
+
+   /* setup vertex arrays */
+   _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
+   _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
+   _mesa_EnableClientState(GL_VERTEX_ARRAY);
+   _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
 
    /* set given unpack params */
    ctx->Unpack = *unpack;
@@ -1791,6 +1781,8 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
    }
 
    _mesa_set_enable(ctx, tex->Target, GL_FALSE);
+
+   _mesa_DeleteBuffersARB(1, &vbo);
 
    /* restore unpack params */
    ctx->Unpack = unpackSave;

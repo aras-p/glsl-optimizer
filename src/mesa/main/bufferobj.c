@@ -1173,7 +1173,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    ASSERT(ctx->Driver.BufferData);
    if (!ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj )) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB(access)");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB()");
    }
 }
 
@@ -1262,7 +1262,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    ASSERT(ctx->Driver.MapBuffer);
    map = ctx->Driver.MapBuffer( ctx, target, access, bufObj );
    if (!map) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(map failed)");
       return NULL;
    }
    else {
@@ -1593,7 +1593,7 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    map = ctx->Driver.MapBufferRange(ctx, target, offset, length,
                                     access, bufObj);
    if (!map) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(map failed)");
    }
    else {
       /* The driver callback should have set all these fields.

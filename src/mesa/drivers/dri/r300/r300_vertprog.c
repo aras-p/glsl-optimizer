@@ -43,6 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "compiler/radeon_compiler.h"
 #include "compiler/radeon_nqssadce.h"
 #include "r300_context.h"
+#include "r300_fragprog_common.h"
 #include "r300_state.h"
 
 /**
@@ -298,6 +299,20 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 	struct r300_vertex_program *vp;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
+
+	if (!r300->selected_fp) {
+		/* This can happen when GetProgramiv is called to check
+		 * whether the program runs natively.
+		 *
+		 * To be honest, this is not a very good solution,
+		 * but solving the problem of reporting good values
+		 * for those queries is tough anyway considering that
+		 * we recompile vertex programs based on the precise
+		 * fragment program that is in use.
+		 */
+		r300SelectAndTranslateFragmentShader(ctx);
+	}
+
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
