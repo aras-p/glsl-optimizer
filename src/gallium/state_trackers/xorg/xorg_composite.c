@@ -150,24 +150,22 @@ setup_vertex_data0(struct exa_context *ctx,
                    int srcX, int srcY, int maskX, int maskY,
                    int dstX, int dstY, int width, int height)
 {
-   float vertices[4][2][4];
-
    /* 1st vertex */
-   setup_vertex0(vertices[0], dstX, dstY,
+   setup_vertex0(ctx->vertices2[0], dstX, dstY,
                  ctx->solid_color);
    /* 2nd vertex */
-   setup_vertex0(vertices[1], dstX + width, dstY,
+   setup_vertex0(ctx->vertices2[1], dstX + width, dstY,
                  ctx->solid_color);
    /* 3rd vertex */
-   setup_vertex0(vertices[2], dstX + width, dstY + height,
+   setup_vertex0(ctx->vertices2[2], dstX + width, dstY + height,
                  ctx->solid_color);
    /* 4th vertex */
-   setup_vertex0(vertices[3], dstX, dstY + height,
+   setup_vertex0(ctx->vertices2[3], dstX, dstY + height,
                  ctx->solid_color);
 
    return pipe_user_buffer_create(ctx->pipe->screen,
-                                  vertices,
-                                  sizeof(vertices));
+                                  ctx->vertices2,
+                                  sizeof(ctx->vertices2));
 }
 
 static INLINE void
@@ -189,7 +187,6 @@ setup_vertex_data1(struct exa_context *ctx,
                    int srcX, int srcY, int maskX, int maskY,
                    int dstX, int dstY, int width, int height)
 {
-   float vertices[4][2][4];
    float s0, t0, s1, t1;
    struct pipe_texture *src = ctx->bound_textures[0];
 
@@ -199,21 +196,21 @@ setup_vertex_data1(struct exa_context *ctx,
    t1 = srcY + height / src->height[0];
 
    /* 1st vertex */
-   setup_vertex1(vertices[0], dstX, dstY,
+   setup_vertex1(ctx->vertices2[0], dstX, dstY,
                  s0, t0);
    /* 2nd vertex */
-   setup_vertex1(vertices[1], dstX + width, dstY,
+   setup_vertex1(ctx->vertices2[1], dstX + width, dstY,
                  s1, t0);
    /* 3rd vertex */
-   setup_vertex1(vertices[2], dstX + width, dstY + height,
+   setup_vertex1(ctx->vertices2[2], dstX + width, dstY + height,
                  s1, t1);
    /* 4th vertex */
-   setup_vertex1(vertices[3], dstX, dstY + height,
+   setup_vertex1(ctx->vertices2[3], dstX, dstY + height,
                  s0, t1);
 
    return pipe_user_buffer_create(ctx->pipe->screen,
-                                  vertices,
-                                  sizeof(vertices));
+                                  ctx->vertices2,
+                                  sizeof(ctx->vertices2));
 }
 
 static struct pipe_buffer *
@@ -222,24 +219,22 @@ setup_vertex_data_tex(struct exa_context *ctx,
                       float s0, float t0, float s1, float t1,
                       float z)
 {
-   float vertices[4][2][4];
-
    /* 1st vertex */
-   setup_vertex1(vertices[0], x0, y0,
+   setup_vertex1(ctx->vertices2[0], x0, y0,
                  s0, t0);
    /* 2nd vertex */
-   setup_vertex1(vertices[1], x1, y0,
+   setup_vertex1(ctx->vertices2[1], x1, y0,
                  s1, t0);
    /* 3rd vertex */
-   setup_vertex1(vertices[2], x1, y1,
+   setup_vertex1(ctx->vertices2[2], x1, y1,
                  s1, t1);
    /* 4th vertex */
-   setup_vertex1(vertices[3], x0, y1,
+   setup_vertex1(ctx->vertices2[3], x0, y1,
                  s0, t1);
 
    return pipe_user_buffer_create(ctx->pipe->screen,
-                                  vertices,
-                                  sizeof(vertices));
+                                  ctx->vertices2,
+                                  sizeof(ctx->vertices2));
 }
 
 
@@ -269,7 +264,6 @@ setup_vertex_data2(struct exa_context *ctx,
                    int srcX, int srcY, int maskX, int maskY,
                    int dstX, int dstY, int width, int height)
 {
-   float vertices[4][3][4];
    float st0[4], st1[4];
    struct pipe_texture *src = ctx->bound_textures[0];
    struct pipe_texture *mask = ctx->bound_textures[0];
@@ -285,21 +279,21 @@ setup_vertex_data2(struct exa_context *ctx,
    st1[3] = maskY + height / mask->height[0];
 
    /* 1st vertex */
-   setup_vertex2(vertices[0], dstX, dstY,
+   setup_vertex2(ctx->vertices3[0], dstX, dstY,
                  st0[0], st0[1], st1[0], st1[1]);
    /* 2nd vertex */
-   setup_vertex2(vertices[1], dstX + width, dstY,
+   setup_vertex2(ctx->vertices3[1], dstX + width, dstY,
                  st0[2], st0[1], st1[2], st1[1]);
    /* 3rd vertex */
-   setup_vertex2(vertices[2], dstX + width, dstY + height,
+   setup_vertex2(ctx->vertices3[2], dstX + width, dstY + height,
                  st0[2], st0[3], st1[2], st1[3]);
    /* 4th vertex */
-   setup_vertex2(vertices[3], dstX, dstY + height,
+   setup_vertex2(ctx->vertices3[3], dstX, dstY + height,
                  st0[0], st0[3], st1[0], st1[3]);
 
    return pipe_user_buffer_create(ctx->pipe->screen,
-                                  vertices,
-                                  sizeof(vertices));
+                                  ctx->vertices3,
+                                  sizeof(ctx->vertices3));
 }
 
 boolean xorg_composite_accelerated(int op,
@@ -687,24 +681,23 @@ void xorg_solid(struct exa_context *exa,
 {
    struct pipe_context *pipe = exa->pipe;
    struct pipe_buffer *buf = 0;
-   float vertices[4][2][4];
 
    /* 1st vertex */
-   setup_vertex0(vertices[0], x0, y0,
+   setup_vertex0(exa->vertices2[0], x0, y0,
                  exa->solid_color);
    /* 2nd vertex */
-   setup_vertex0(vertices[1], x1, y0,
+   setup_vertex0(exa->vertices2[1], x1, y0,
                  exa->solid_color);
    /* 3rd vertex */
-   setup_vertex0(vertices[2], x1, y1,
+   setup_vertex0(exa->vertices2[2], x1, y1,
                  exa->solid_color);
    /* 4th vertex */
-   setup_vertex0(vertices[3], x0, y1,
+   setup_vertex0(exa->vertices2[3], x0, y1,
                  exa->solid_color);
 
    buf = pipe_user_buffer_create(exa->pipe->screen,
-                                 vertices,
-                                 sizeof(vertices));
+                                 exa->vertices2,
+                                 sizeof(exa->vertices2));
 
 
    if (buf) {

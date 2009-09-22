@@ -32,8 +32,11 @@ struct exa_context
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;
    } copy;
-};
 
+   /* we should combine these two */
+   float vertices2[4][2][4];
+   float vertices3[4][2][4];
+};
 
 struct exa_pixmap_priv
 {
