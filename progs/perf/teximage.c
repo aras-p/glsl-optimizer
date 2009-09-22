@@ -131,6 +131,8 @@ UploadTexSubImage2D(unsigned count)
          glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
          glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
          glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
       }
       else {
          /* replace whole texture image at once */
@@ -180,7 +182,7 @@ PerfDraw(void)
       for (subImage = 0; subImage < 2; subImage++) {
 
          /* loop over texture sizes */
-         for (TexSize = 16; TexSize <= maxSize; TexSize *= 2) {
+         for (TexSize = 16; TexSize <= maxSize; TexSize *= 4) {
             GLint bytesPerImage;
             double mbPerSec;
 
