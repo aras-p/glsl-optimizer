@@ -240,6 +240,7 @@ static void flush_spans( struct setup_context *setup )
             if (quadmask) {
                setup->quad[q].input.x0 = lx;
                setup->quad[q].input.y0 = setup->span.y;
+               setup->quad[q].input.facing = setup->facing;
                setup->quad[q].inout.mask = quadmask;
                setup->quad_ptrs[q] = &setup->quad[q];
                q++;
