@@ -9,6 +9,7 @@ env.Prepend(LIBS = ['$GLUT_LIB'])
 
 progs = [
       'drawoverhead',
+      'fbobind',
       'fill',
       'teximage',
       'swapbuffers',
