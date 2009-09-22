@@ -92,7 +92,25 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
 	    }
     }
 
-    r700SelectVertexShader(ctx);
+    r700SelectVertexShader(ctx, 1);
+    r700UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+    context->radeon.NewGLState = 0;
+}
+
+void r700UpdateShaders2(GLcontext * ctx)  
+{
+    context_t *context = R700_CONTEXT(ctx);
+
+    /* should only happenen once, just after context is created */
+    /* TODO: shouldn't we fallback to sw here? */
+    if (!ctx->FragmentProgram._Current) {
+	    _mesa_fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+	    return;
+    }
+
+    r700SelectFragmentShader(ctx);
+
+    r700SelectVertexShader(ctx, 2);
     r700UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
     context->radeon.NewGLState = 0;
 }

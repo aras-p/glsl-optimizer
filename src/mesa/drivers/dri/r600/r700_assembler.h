@@ -411,6 +411,14 @@ GLboolean assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
 								GLuint number_of_elements,
                                 GLenum dataElementType,
 								VTX_FETCH_METHOD* pFetchMethod);
+GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
+                                       GLuint              destination_register,								       
+                                       GLenum              type,
+                                       GLint               size,
+                                       GLubyte             element,
+                                       GLuint              _signed,
+                                       GLboolean           normalize,
+                                       VTX_FETCH_METHOD  * pFetchMethod);
 GLuint gethelpr(r700_AssemblerBase* pAsm);
 void resethelpr(r700_AssemblerBase* pAsm);
 void checkop_init(r700_AssemblerBase* pAsm);

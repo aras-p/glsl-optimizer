@@ -208,6 +208,80 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 
 }
 
+extern int getTypeSize(GLenum type);
+static void r700SetupVTXConstants2(GLcontext  * ctx,
+				                   void *       pAos,
+                                   StreamDesc * pStreamDesc)     
+{
+    context_t *context = R700_CONTEXT(ctx);
+    struct radeon_aos * paos = (struct radeon_aos *)pAos;
+    unsigned int nVBsize;
+    BATCH_LOCALS(&context->radeon);
+
+    unsigned int uSQ_VTX_CONSTANT_WORD0_0;
+    unsigned int uSQ_VTX_CONSTANT_WORD1_0;
+    unsigned int uSQ_VTX_CONSTANT_WORD2_0 = 0;
+    unsigned int uSQ_VTX_CONSTANT_WORD3_0 = 0;
+    unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
+
+    if (!paos->bo)
+	    return;
+
+    if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS880) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
+    else
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
+
+    if(0 == pStreamDesc->stride)
+    {
+        nVBsize = paos->count * pStreamDesc->size * getTypeSize(pStreamDesc->type);
+    }
+    else
+    {
+        nVBsize = paos->count * pStreamDesc->stride;
+    }
+
+    uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
+    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize - 1;
+
+    SETfield(uSQ_VTX_CONSTANT_WORD2_0, 0, BASE_ADDRESS_HI_shift, BASE_ADDRESS_HI_mask); /* TODO */
+    SETfield(uSQ_VTX_CONSTANT_WORD2_0, pStreamDesc->stride, SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift,
+	     SQ_VTX_CONSTANT_WORD2_0__STRIDE_mask);
+    SETfield(uSQ_VTX_CONSTANT_WORD2_0, GetSurfaceFormat(pStreamDesc->type, pStreamDesc->size, NULL),
+	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_shift,
+	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_mask); /* TODO : trace back api for initial data type, not only GL_FLOAT */
+    SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_SCALED,
+	     SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_shift, SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_mask);
+    SETbit(uSQ_VTX_CONSTANT_WORD2_0, SQ_VTX_CONSTANT_WORD2_0__FORMAT_COMP_ALL_bit);
+
+    SETfield(uSQ_VTX_CONSTANT_WORD3_0, 1, MEM_REQUEST_SIZE_shift, MEM_REQUEST_SIZE_mask);
+    SETfield(uSQ_VTX_CONSTANT_WORD6_0, SQ_TEX_VTX_VALID_BUFFER,
+	     SQ_TEX_RESOURCE_WORD6_0__TYPE_shift, SQ_TEX_RESOURCE_WORD6_0__TYPE_mask);
+
+    BEGIN_BATCH_NO_AUTOSTATE(9 + 2);
+
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
+    R600_OUT_BATCH((pStreamDesc->element + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD0_0);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD1_0);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD2_0);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD3_0);
+    R600_OUT_BATCH(0);
+    R600_OUT_BATCH(0);
+    R600_OUT_BATCH(uSQ_VTX_CONSTANT_WORD6_0);
+    R600_OUT_BATCH_RELOC(uSQ_VTX_CONSTANT_WORD0_0,
+                         paos->bo,
+                         uSQ_VTX_CONSTANT_WORD0_0,
+                         RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_BATCH();
+    COMMIT_BATCH();
+
+}
+
 void r700SetupStreams(GLcontext *ctx)
 {
     context_t         *context = R700_CONTEXT(ctx);
@@ -256,14 +330,24 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     COMMIT_BATCH();
 
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
-	    if(vp->mesa_program->Base.InputsRead & (1 << i)) {
-		    /* currently aos are packed */
-		    r700SetupVTXConstants(ctx,
-					  i,
-					  (void*)(&context->radeon.tcl.aos[j]),
-					  (unsigned int)context->radeon.tcl.aos[j].components,
-					  (unsigned int)context->radeon.tcl.aos[j].stride * 4,
-					  (unsigned int)context->radeon.tcl.aos[j].count);
+	    if(vp->mesa_program->Base.InputsRead & (1 << i)) 
+        {
+		    if(1 == context->selected_vp->uiVersion)
+            {
+		        /* currently aos are packed */
+		        r700SetupVTXConstants(ctx,
+					      i,
+					      (void*)(&context->radeon.tcl.aos[j]),
+					      (unsigned int)context->radeon.tcl.aos[j].components,
+					      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
+					      (unsigned int)context->radeon.tcl.aos[j].count);
+            }
+            else
+            {   /* context->selected_vp->uiVersion == 2 : aos not always packed */                
+                r700SetupVTXConstants2(ctx,					    
+					      (void*)(&context->radeon.tcl.aos[j]),
+					      &(context->stream_desc[j]));
+            }
 		    j++;
 	    }
     }

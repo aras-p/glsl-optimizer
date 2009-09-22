@@ -257,6 +257,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r600InitTextureFuncs(&functions);
 	r700InitShaderFuncs(&functions);
 	r700InitIoctlFuncs(&functions);
+    radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
@@ -374,6 +375,8 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	{
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
+
+    r700InitDraw(ctx);
 
 	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );

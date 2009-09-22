@@ -786,6 +786,133 @@ GLboolean assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
 	return GL_TRUE;
 }
 
+GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
+                                       GLuint              destination_register,								       
+                                       GLenum              type,
+                                       GLint               size,
+                                       GLubyte             element,
+                                       GLuint              _signed,
+                                       GLboolean           normalize,
+                                       VTX_FETCH_METHOD  * pFetchMethod)
+{
+    GLuint client_size_inbyte;
+	GLuint data_format;
+    GLuint mega_fetch_count;
+	GLuint is_mega_fetch_flag;
+
+	R700VertexGenericFetch*   vfetch_instruction_ptr;
+	R700VertexGenericFetch*   assembled_vfetch_instruction_ptr 
+                                     = pAsm->vfetch_instruction_ptr_array[element];
+
+	if (assembled_vfetch_instruction_ptr == NULL) 
+	{
+		vfetch_instruction_ptr = (R700VertexGenericFetch*) CALLOC_STRUCT(R700VertexGenericFetch);
+		if (vfetch_instruction_ptr == NULL) 
+		{
+			return GL_FALSE;
+		}
+        Init_R700VertexGenericFetch(vfetch_instruction_ptr);
+    }
+	else 
+	{
+		vfetch_instruction_ptr = assembled_vfetch_instruction_ptr;
+	}
+
+    data_format = GetSurfaceFormat(type, size, &client_size_inbyte);	
+
+	if(GL_TRUE == pFetchMethod->bEnableMini) //More conditions here
+	{
+		//TODO : mini fetch
+	}
+	else
+	{
+		mega_fetch_count = MEGA_FETCH_BYTES - 1;
+		is_mega_fetch_flag       = 0x1;
+		pFetchMethod->mega_fetch_remainder = MEGA_FETCH_BYTES - client_size_inbyte;
+	}
+
+	vfetch_instruction_ptr->m_Word0.f.vtx_inst         = SQ_VTX_INST_FETCH;
+	vfetch_instruction_ptr->m_Word0.f.fetch_type       = SQ_VTX_FETCH_VERTEX_DATA;
+	vfetch_instruction_ptr->m_Word0.f.fetch_whole_quad = 0x0;
+
+	vfetch_instruction_ptr->m_Word0.f.buffer_id        = element;
+	vfetch_instruction_ptr->m_Word0.f.src_gpr          = 0x0; 
+	vfetch_instruction_ptr->m_Word0.f.src_rel          = SQ_ABSOLUTE;
+	vfetch_instruction_ptr->m_Word0.f.src_sel_x        = SQ_SEL_X;
+	vfetch_instruction_ptr->m_Word0.f.mega_fetch_count = mega_fetch_count;
+
+	vfetch_instruction_ptr->m_Word1.f.dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_X;
+	vfetch_instruction_ptr->m_Word1.f.dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
+	vfetch_instruction_ptr->m_Word1.f.dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_Z;
+	vfetch_instruction_ptr->m_Word1.f.dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+
+	vfetch_instruction_ptr->m_Word1.f.use_const_fields = 1;
+    vfetch_instruction_ptr->m_Word1.f.data_format      = data_format;
+    vfetch_instruction_ptr->m_Word2.f.endian_swap      = SQ_ENDIAN_NONE;
+
+    if(1 == _signed)
+    {
+        vfetch_instruction_ptr->m_Word1.f.format_comp_all  = SQ_FORMAT_COMP_SIGNED;
+    }
+    else
+    {
+        vfetch_instruction_ptr->m_Word1.f.format_comp_all  = SQ_FORMAT_COMP_UNSIGNED;
+    }
+
+    if(GL_TRUE == normalize)
+    {
+        vfetch_instruction_ptr->m_Word1.f.num_format_all   = SQ_NUM_FORMAT_NORM;
+    }
+    else
+    {
+        vfetch_instruction_ptr->m_Word1.f.num_format_all   = SQ_NUM_FORMAT_INT;
+    }
+
+	// Destination register
+	vfetch_instruction_ptr->m_Word1_GPR.f.dst_gpr = destination_register; 
+	vfetch_instruction_ptr->m_Word1_GPR.f.dst_rel = SQ_ABSOLUTE;
+
+	vfetch_instruction_ptr->m_Word2.f.offset              = 0;
+	vfetch_instruction_ptr->m_Word2.f.const_buf_no_stride = 0x0;
+
+	vfetch_instruction_ptr->m_Word2.f.mega_fetch          = is_mega_fetch_flag;
+
+	if (assembled_vfetch_instruction_ptr == NULL) 
+	{
+		if ( GL_FALSE == add_vfetch_instruction(pAsm, (R700VertexInstruction *)vfetch_instruction_ptr) ) 
+        {   
+			return GL_FALSE;
+		}
+
+		if (pAsm->vfetch_instruction_ptr_array[element] != NULL) 
+		{
+			return GL_FALSE;
+		}
+		else 
+		{
+			pAsm->vfetch_instruction_ptr_array[element] = vfetch_instruction_ptr;
+		}
+	}
+
+	return GL_TRUE;
+}
+
+GLboolean cleanup_vfetch_instructions(r700_AssemblerBase* pAsm)
+{
+    GLint i;
+    pAsm->cf_current_clause_type    = CF_EMPTY_CLAUSE;
+    pAsm->cf_current_vtx_clause_ptr = NULL;
+
+    for (i=0; i<VERT_ATTRIB_MAX; i++) 
+	{
+		pAsm->vfetch_instruction_ptr_array[ i ] = NULL;
+	}
+
+    cleanup_vfetch_shaderinst(pAsm->pR700Shader);
+    
+    return GL_TRUE;
+}
+
 GLuint gethelpr(r700_AssemblerBase* pAsm) 
 {
     GLuint r = pAsm->uHelpReg;

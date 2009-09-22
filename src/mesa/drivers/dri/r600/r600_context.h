@@ -126,6 +126,34 @@ struct r600_hw_state {
 	struct radeon_state_atom tx_brdr_clr;
 };
 
+typedef struct StreamDesc 
+{
+	GLint   size;   //number of data element
+	GLenum  type;  //data element type
+	GLsizei stride;
+
+    struct radeon_bo *bo;
+    GLint  bo_offset;
+
+    GLuint    dwords;
+	GLuint    dst_loc;
+	GLuint    _signed;
+	GLboolean normalize;
+    GLboolean is_named_bo;
+    GLubyte   element;
+} StreamDesc;
+
+typedef struct r700_index_buffer 
+{
+    struct radeon_bo *bo;
+    int    bo_offset;
+
+    GLboolean is_32bit;
+    GLuint    count;
+
+    GLboolean bHostIb;
+} r700_index_buffer;
+
 /**
  * \brief R600 context structure.
  */
@@ -144,6 +172,9 @@ struct r600_context {
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
+    GLint      nNumActiveAos;
+	StreamDesc stream_desc[VERT_ATTRIB_MAX];
+    struct r700_index_buffer ind_buf;
 };
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
@@ -177,6 +208,7 @@ extern GLboolean r700SyncSurf(context_t *context,
 extern void r700SetupStreams(GLcontext * ctx);
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
+extern void r700InitDraw(GLcontext *ctx);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1
