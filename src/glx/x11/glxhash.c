@@ -77,6 +77,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define HASH_MAGIC 0xdeadbeef
 #define HASH_DEBUG 0
