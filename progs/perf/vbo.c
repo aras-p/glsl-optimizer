@@ -152,9 +152,10 @@ void
 PerfDraw(void)
 {
    double rate, mbPerSec;
-   int sub, sz;
-   int i;
+   int i, sz;
 
+   /* Load VBOData buffer with duplicated Vertex0.
+    */
    VBOData = calloc(DATA_SIZE, 1);
 
    for (i = 0; i < DATA_SIZE / sizeof(Vertex0); i++) {
@@ -164,51 +165,45 @@ PerfDraw(void)
    }
 
 
-   /* loop over whole/sub buffer upload */
-   for (sub = 0; sub < 3; sub++) {
+   /* glBufferDataARB()
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferDataARB(size = %d): %.1f MB/sec\n",
+                  VBOSize, mbPerSec);
+   }
 
-      if (sub == 2) {
-         VBOSize = 1024 * 1024;
+   /* glBufferSubDataARB()
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadSubVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d): %.1f MB/sec\n",
+                  VBOSize, mbPerSec);
+   }
 
-         glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
+   /* Batch upload
+    */
+   VBOSize = 1024 * 1024;
+   glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
 
-         for (sz = 0; Sizes[sz] < VBOSize; sz++) {
-            SubSize = Sizes[sz];
-            rate = PerfMeasureRate(UploadSubVBO);
+   for (sz = 0; Sizes[sz] < VBOSize; sz++) {
+      SubSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadSubVBO);
+      mbPerSec = rate * SubSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d): %.1f MB/sec\n",
+                  SubSize, VBOSize, mbPerSec);
+   }
 
-            mbPerSec = rate * SubSize / (1024.0 * 1024.0);
-         
-            perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d): %.1f MB/sec\n",
-                        SubSize, VBOSize, mbPerSec);
-         }
-
-         for (sz = 0; Sizes[sz] < VBOSize; sz++) {
-            SubSize = Sizes[sz];
-            rate = PerfMeasureRate(BatchUploadSubVBO);
-
-            mbPerSec = rate * SubSize / (1024.0 * 1024.0);
-         
-            perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d), batched: %.1f MB/sec\n",
-                        SubSize, VBOSize, mbPerSec);
-         }
-      }
-      else {
-
-         /* loop over VBO sizes */
-         for (sz = 0; Sizes[sz]; sz++) {
-            SubSize = VBOSize = Sizes[sz];
-
-            if (sub == 1)
-               rate = PerfMeasureRate(UploadSubVBO);
-            else
-               rate = PerfMeasureRate(UploadVBO);
-
-            mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
-
-            perf_printf("  glBuffer%sDataARB(size = %d): %.1f MB/sec\n",
-                        (sub ? "Sub" : ""), VBOSize, mbPerSec);
-         }
-      }
+   for (sz = 0; Sizes[sz] < VBOSize; sz++) {
+      SubSize = Sizes[sz];
+      rate = PerfMeasureRate(BatchUploadSubVBO);
+      mbPerSec = rate * SubSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d), batched: %.1f MB/sec\n",
+                  SubSize, VBOSize, mbPerSec);
    }
 
    exit(0);
