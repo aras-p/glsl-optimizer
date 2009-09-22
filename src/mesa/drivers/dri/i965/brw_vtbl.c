@@ -69,8 +69,6 @@ static void brw_destroy_context( struct intel_context *intel )
 
    _mesa_free(brw->wm.compile_data);
 
-   brw_FrameBufferTexDestroy( brw );
-
    for (i = 0; i < brw->state.nr_color_regions; i++)
       intel_region_release(&brw->state.color_regions[i]);
    brw->state.nr_color_regions = 0;
