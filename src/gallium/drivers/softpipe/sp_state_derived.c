@@ -203,7 +203,9 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
          struct softpipe_texture *spt = softpipe_texture(tc->texture);
          if (spt->timestamp != tc->timestamp) {
 	    sp_tex_tile_cache_validate_texture( tc );
+            /*
             _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
+            */
             tc->timestamp = spt->timestamp;
          }
       }
