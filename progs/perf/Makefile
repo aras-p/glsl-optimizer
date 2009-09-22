@@ -14,6 +14,7 @@ CFLAGS += -I$(INCDIR)
 LDLIBS = $(LIBS)
 
 PROG_SOURCES = \
+	copytex.c \
 	drawoverhead.c \
 	fbobind.c \
 	fill.c \

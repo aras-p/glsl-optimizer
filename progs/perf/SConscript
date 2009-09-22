@@ -8,6 +8,7 @@ env = env.Clone()
 env.Prepend(LIBS = ['$GLUT_LIB'])
 
 progs = [
+      'copytex',
       'drawoverhead',
       'fbobind',
       'fill',
