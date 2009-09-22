@@ -631,7 +631,7 @@ alpha_test_quads(struct quad_stage *qs,
    }
 }
 
-static unsigned mask_count[0x8] = 
+static unsigned mask_count[16] = 
 {
    0,                           /* 0x0 */
    1,                           /* 0x1 */
@@ -641,6 +641,14 @@ static unsigned mask_count[0x8] =
    2,                           /* 0x5 */
    2,                           /* 0x6 */
    3,                           /* 0x7 */
+   1,                           /* 0x8 */
+   2,                           /* 0x9 */
+   2,                           /* 0xa */
+   3,                           /* 0xb */
+   2,                           /* 0xc */
+   3,                           /* 0xd */
+   3,                           /* 0xe */
+   4,                           /* 0xf */
 };
 
 
@@ -693,11 +701,15 @@ depth_test_quads_fallback(struct quad_stage *qs,
              qs->softpipe->depth_stencil->depth.writemask)
             write_depth_stencil_values(&data, quads[i]);
 
-         qs->softpipe->occlusion_count += mask_count[quads[i]->inout.mask];
          quads[pass++] = quads[i];
       }
 
       nr = pass;
+   }
+
+   if (qs->softpipe->active_query_count) {
+      for (i = 0; i < nr; i++) 
+         qs->softpipe->occlusion_count += mask_count[quads[i]->inout.mask];
    }
 
    if (nr)
@@ -883,6 +895,8 @@ choose_depth_test(struct quad_stage *qs,
 
    boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
 
+   boolean occlusion = qs->softpipe->active_query_count;
+
 
    if (!alpha &&
        !depth &&
@@ -893,6 +907,7 @@ choose_depth_test(struct quad_stage *qs,
             interp_depth && 
             depth && 
             depthwrite && 
+            !occlusion &&
             !stencil) 
    {
       switch (depthfunc) {
