@@ -359,6 +359,9 @@ bind_framebuffer_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
    state.zsbuf = 0;
 
    cso_set_framebuffer(exa->cso, &state);
+
+   /* we do fire and forget for the framebuffer, this is the forget part */
+   pipe_surface_reference(&surface, NULL);
 }
 
 enum AxisOrientation {

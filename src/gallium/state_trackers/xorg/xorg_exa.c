@@ -671,6 +671,8 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 #endif
 
 	pipe_texture_reference(&priv->tex, texture);
+	/* the texture we create has one reference */
+	pipe_texture_reference(&texture, NULL);
     }
 
     return TRUE;
