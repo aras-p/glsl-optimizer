@@ -938,6 +938,7 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
    height = texture->height[level0];
 
    assert(width > 0);
+   assert(height > 0);
  
    addr.value = 0;
    addr.bits.level = samp->level;
@@ -983,6 +984,7 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
    height = texture->height[level0];
 
    assert(width > 0);
+   assert(height > 0);
  
    addr.value = 0;
    addr.bits.level = samp->level;
@@ -1104,6 +1106,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
    height = texture->height[level0];
 
    assert(width > 0);
+   assert(height > 0);
 
    addr.value = 0;
    addr.bits.level = samp->level;
@@ -1151,6 +1154,7 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
    height = texture->height[level0];
 
    assert(width > 0);
+   assert(height > 0);
 
    addr.value = 0;
    addr.bits.level = samp->level;
