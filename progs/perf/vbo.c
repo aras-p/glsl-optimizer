@@ -107,7 +107,7 @@ UploadSubVBO(unsigned count)
    glFinish();
 }
 
-/* Do multiple small SubData uploads, the a DrawArrays.  This may be a
+/* Do multiple small SubData uploads, then call DrawArrays.  This may be a
  * fairer comparison to back-to-back BufferData calls:
  */
 static void
