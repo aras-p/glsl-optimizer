@@ -7,6 +7,7 @@
 #include "i915simple/i915_context.h"
 #include "i915simple/i915_screen.h"
 
+#include "trace/tr_drm.h"
 
 /*
  * Helper functions
@@ -198,5 +199,5 @@ struct drm_api intel_drm_api =
 struct drm_api *
 drm_api_create()
 {
-   return &intel_drm_api;
+   return trace_drm_create(&intel_drm_api);
 }
