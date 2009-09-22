@@ -330,8 +330,12 @@ main(int argc,
          fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data.identifier));
          break;
 
-      case SL_PP_NUMBER:
-         fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data.number));
+      case SL_PP_UINT:
+         fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data._uint));
+         break;
+
+      case SL_PP_FLOAT:
+         fprintf(out, "%s ", sl_pp_context_cstr(context, outtokens[i].data._float));
          break;
 
       case SL_PP_OTHER:
