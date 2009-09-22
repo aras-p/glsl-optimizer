@@ -1362,10 +1362,10 @@ identifier
    "@ID" .emit *;
 
 float
-   "@NUM" .emit 1 .emit *;
+   "@FLOAT" .emit 1 .emit *;
 
 integer
-   "@NUM" .emit 1 .emit *;
+   "@UINT" .emit 1 .emit *;
 
 boolean
    "true" .emit '1' .emit '\0' .or

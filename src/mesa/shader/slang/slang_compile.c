@@ -2683,7 +2683,8 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
          case SL_PP_QUESTION:
          case SL_PP_COLON:
          case SL_PP_IDENTIFIER:
-         case SL_PP_NUMBER:
+         case SL_PP_UINT:
+         case SL_PP_FLOAT:
             *dst++ = *src++;
             break;
 
