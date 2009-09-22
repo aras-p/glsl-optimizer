@@ -498,7 +498,7 @@ depth_test_quad(struct quad_stage *qs,
  * Do stencil (and depth) testing.  Stenciling depends on the outcome of
  * depth testing.
  */
-static boolean
+static void
 depth_stencil_test_quad(struct quad_stage *qs, 
                         struct depth_data *data,
                         struct quad_header *quad)
@@ -545,13 +545,13 @@ depth_stencil_test_quad(struct quad_stage *qs,
 
          /* update stencil buffer values according to z pass/fail result */
          if (zFailOp != PIPE_STENCIL_OP_KEEP) {
-            const unsigned failMask = origMask & ~quad->inout.mask;
-            apply_stencil_op(data, failMask, zFailOp, ref, wrtMask);
+            const unsigned zFailMask = origMask & ~quad->inout.mask;
+            apply_stencil_op(data, zFailMask, zFailOp, ref, wrtMask);
          }
 
          if (zPassOp != PIPE_STENCIL_OP_KEEP) {
-            const unsigned passMask = origMask & quad->inout.mask;
-            apply_stencil_op(data, passMask, zPassOp, ref, wrtMask);
+            const unsigned zPassMask = origMask & quad->inout.mask;
+            apply_stencil_op(data, zPassMask, zPassOp, ref, wrtMask);
          }
       }
       else {
@@ -559,8 +559,6 @@ depth_stencil_test_quad(struct quad_stage *qs,
          apply_stencil_op(data, quad->inout.mask, zPassOp, ref, wrtMask);
       }
    }
-
-   return quad->inout.mask != 0;
 }
 
 
@@ -689,17 +687,17 @@ depth_test_quads_fallback(struct quad_stage *qs,
          }
 
          if (qs->softpipe->depth_stencil->stencil[0].enabled) {
-            if (!depth_stencil_test_quad(qs, &data, quads[i]))
-               continue;
+            depth_stencil_test_quad(qs, &data, quads[i]);
+            write_depth_stencil_values(&data, quads[i]);
          }
          else {
             if (!depth_test_quad(qs, &data, quads[i]))
                continue;
+
+            if (qs->softpipe->depth_stencil->depth.writemask)
+               write_depth_stencil_values(&data, quads[i]);
          }
 
-         if (qs->softpipe->depth_stencil->stencil[0].enabled ||
-             qs->softpipe->depth_stencil->depth.writemask)
-            write_depth_stencil_values(&data, quads[i]);
 
          quads[pass++] = quads[i];
       }
