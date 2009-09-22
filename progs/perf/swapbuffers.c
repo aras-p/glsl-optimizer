@@ -119,9 +119,10 @@ PerfNextRound(void)
 {
    static unsigned i;
    
-   if (i < sizeof(sizes) / sizeof(sizes[0])) {
+   if (i < sizeof(sizes) / sizeof(sizes[0]) &&
+      PerfReshapeWindow( sizes[i].w, sizes[i].h )) 
+   {
       perf_printf("Reshape %dx%d\n", sizes[i].w, sizes[i].h);
-      PerfReshapeWindow( sizes[i].w, sizes[i].h );
       real_WinWidth = sizes[i].w;
       real_WinHeight = sizes[i].h;
       i++;
@@ -141,7 +142,7 @@ PerfDraw(void)
    double rate0;
 
    rate0 = PerfMeasureRate(SwapNaked);
-   perf_printf("   Swapbuffers (Bare) %dx%d: %s swaps/second", 
+   perf_printf("   Swapbuffers      %dx%d: %s swaps/second", 
                real_WinWidth, real_WinHeight,
                PerfHumanFloat(rate0));
    perf_printf(" %s pixels/second\n",
@@ -150,7 +151,7 @@ PerfDraw(void)
 
 
    rate0 = PerfMeasureRate(SwapClear);
-   perf_printf("   Swapbuffers + Clear %dx%d: %s swaps/second", 
+   perf_printf("   Swap/Clear       %dx%d: %s swaps/second", 
                real_WinWidth, real_WinHeight,
                PerfHumanFloat(rate0));
    perf_printf(" %s pixels/second\n",
@@ -158,7 +159,7 @@ PerfDraw(void)
 
 
    rate0 = PerfMeasureRate(SwapClearPoint);
-   perf_printf("   Swapbuffers + Clear + DrawPoint %dx%d: %s swaps/second", 
+   perf_printf("   Swap/Clear/Draw  %dx%d: %s swaps/second", 
                real_WinWidth, real_WinHeight,
                PerfHumanFloat(rate0));
    perf_printf(" %s pixels/second\n",
