@@ -20,7 +20,7 @@
  */
 
 /**
- * Measure glTexSubImage2D rate
+ * Measure glTex[Sub]Image2D() and glGetTexImage() rate
  *
  * Brian Paul
  * 16 Sep 2009
@@ -44,14 +44,17 @@ static const GLboolean TexSubImage4 = GL_TRUE;
 enum {
    MODE_CREATE_TEXIMAGE,
    MODE_TEXIMAGE,
-   MODE_TEXSUBIMAGE
+   MODE_TEXSUBIMAGE,
+   MODE_GETTEXIMAGE,
+   MODE_COUNT
 };
 
-static const char *mode_name[] = 
+static const char *mode_name[MODE_COUNT] = 
 {
    "Create_TexImage",
    "TexImage",
-   "TexSubImage"
+   "TexSubImage",
+   "GetTexImage"
 };
 
 
@@ -170,10 +173,8 @@ UploadTexSubImage2D(unsigned count)
                          TexSrcFormat, TexSrcType, TexImage);
          /* reset the unpacking state */
          glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-         glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
          glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
       }
       else {
          /* replace whole texture image at once */
@@ -188,6 +189,20 @@ UploadTexSubImage2D(unsigned count)
 }
 
 
+static void
+GetTexImage2D(unsigned count)
+{
+   unsigned i;
+   GLubyte *buf = (GLubyte *) malloc(TexSize * TexSize * 4);
+   for (i = 0; i < count; i++) {
+      glGetTexImage(GL_TEXTURE_2D, 0,
+                    TexSrcFormat, TexSrcType, buf);
+   }
+   glFinish();
+   free(buf);
+}
+
+
 /* XXX any other formats to measure? */
 static const struct {
    GLenum format, type;
@@ -196,14 +211,16 @@ static const struct {
    GLuint texel_size;
    GLboolean full_test;
 } SrcFormats[] = {
-   { GL_RGBA, GL_UNSIGNED_BYTE,       GL_RGBA, "RGBA/ubyte", 4, GL_TRUE },
-   { GL_RGB, GL_UNSIGNED_BYTE,        GL_RGB, "RGB/ubyte",  3, GL_FALSE },
-   { GL_RGB, GL_UNSIGNED_SHORT_5_6_5, GL_RGB, "RGB/565",    2, GL_FALSE },
-   { GL_BGRA, GL_UNSIGNED_BYTE,       GL_RGBA, "BGRA/ubyte", 4, GL_FALSE },
-   { GL_LUMINANCE, GL_UNSIGNED_BYTE,  GL_LUMINANCE, "L/ubyte",    1, GL_FALSE },
+   { GL_RGBA, GL_UNSIGNED_BYTE,       GL_RGBA, "RGBA/ubyte", 4,   GL_TRUE },
+   { GL_RGB, GL_UNSIGNED_BYTE,        GL_RGB, "RGB/ubyte", 3,     GL_FALSE },
+   { GL_RGB, GL_UNSIGNED_SHORT_5_6_5, GL_RGB, "RGB/565", 2,       GL_FALSE },
+   { GL_BGRA, GL_UNSIGNED_BYTE,       GL_RGBA, "BGRA/ubyte", 4,   GL_FALSE },
+   { GL_LUMINANCE, GL_UNSIGNED_BYTE,  GL_LUMINANCE, "L/ubyte", 1, GL_FALSE },
    { 0, 0, 0, NULL, 0, 0 }
 };
 
+
+/** Called from test harness/main */
 void
 PerfNextRound(void)
 {
@@ -227,7 +244,7 @@ PerfDraw(void)
       TexSrcType = SrcFormats[fmt].type;
 
       /* loop over glTexImage, glTexSubImage */
-      for (mode = 0; mode < 3; mode++) {
+      for (mode = 0; mode < MODE_COUNT; mode++) {
          GLuint minsz, maxsz;
 
          if (SrcFormats[fmt].full_test) {
@@ -267,6 +284,13 @@ PerfDraw(void)
                                TexSize, TexSize, 0,
                                TexSrcFormat, TexSrcType, NULL);
                   rate = PerfMeasureRate(UploadTexSubImage2D);
+                  break;
+
+               case MODE_GETTEXIMAGE:
+                  glTexImage2D(GL_TEXTURE_2D, 0, TexIntFormat,
+                               TexSize, TexSize, 0,
+                               TexSrcFormat, TexSrcType, TexImage);
+                  rate = PerfMeasureRate(GetTexImage2D);
                   break;
 
                default:
