@@ -402,12 +402,10 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 /* start 3d, idle, cb/db flush */
 #define PRE_EMIT_STATE_BUFSZ 10 + 5 + 14
 
-static GLuint r700PredictRenderSize(GLcontext* ctx)
+static GLuint r700PredictRenderSize(GLcontext* ctx, GLuint nr_prims)
 {
     context_t *context = R700_CONTEXT(ctx);
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct r700_vertex_program *vp = context->selected_vp;
-    struct vertex_buffer *vb = &tnl->vb;
     GLboolean flushed;
     GLuint dwords, i;
     GLuint state_size;
@@ -415,8 +413,15 @@ static GLuint r700PredictRenderSize(GLcontext* ctx)
     context->radeon.tcl.aos_count = _mesa_bitcount(vp->mesa_program->Base.InputsRead);
 
     dwords = PRE_EMIT_STATE_BUFSZ;
-    for (i = 0; i < vb->PrimitiveCount; i++)
-        dwords += vb->Primitive[i].count + 10;
+    if (nr_prims)
+	    dwords += nr_prims * 14;
+    else {
+	    TNLcontext *tnl = TNL_CONTEXT(ctx);
+	    struct vertex_buffer *vb = &tnl->vb;
+
+	    for (i = 0; i < vb->PrimitiveCount; i++)
+		    dwords += vb->Primitive[i].count + 10;
+    }
     state_size = radeonCountStateEmitSize(&context->radeon);
     flushed = rcommonEnsureCmdBufSpace(&context->radeon,
             dwords + state_size, __FUNCTION__);
@@ -456,7 +461,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SetupFragmentProgram(ctx);
     r600UpdateTextureState(ctx);
 
-    GLuint emit_end = r700PredictRenderSize(ctx) 
+    GLuint emit_end = r700PredictRenderSize(ctx, 0)
         + context->radeon.cmdbuf.cs->cdw;
     r700SetupStreams(ctx);
 
@@ -1044,7 +1049,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
 
     r600UpdateTextureState(ctx);
 
-    GLuint emit_end = r700PredictRenderSize(ctx) 
+    GLuint emit_end = r700PredictRenderSize(ctx, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
 
     r700SetupIndexBuffer(ctx, ib);
