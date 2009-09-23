@@ -262,6 +262,16 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
+    GLboolean bUseDrawIndex;
+    if( (NULL != context->ind_buf.bo) && (GL_TRUE != context->ind_buf.bHostIb) )
+    {
+        bUseDrawIndex = GL_TRUE;
+    }
+    else
+    {
+        bUseDrawIndex = GL_FALSE;
+    }
+
 	type = r700PrimitiveType(prim);
 	num_indices = r700NumVerts(end - start, prim);
 
@@ -272,10 +282,20 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 	if (type < 0 || num_indices <= 0)
 		return;
 
-    total_emit =   3 /* VGT_PRIMITIVE_TYPE */
-	     + 2 /* VGT_INDEX_TYPE */
-	     + 2 /* NUM_INSTANCES */
+    if(GL_TRUE == bUseDrawIndex)
+    {
+        total_emit =   3  /* VGT_PRIMITIVE_TYPE */
+	                 + 2  /* VGT_INDEX_TYPE */
+	                 + 2  /* NUM_INSTANCES */
+                     + 5+2; /* DRAW_INDEX */
+    }
+    else
+    {
+        total_emit =   3 /* VGT_PRIMITIVE_TYPE */
+	         + 2 /* VGT_INDEX_TYPE */
+	         + 2 /* NUM_INSTANCES */
                  + num_indices + 3; /* DRAW_INDEX_IMMD */
+    }
 
     BEGIN_BATCH_NO_AUTOSTATE(total_emit);
 	// prim
@@ -287,6 +307,15 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 	// index type
     SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
+
+    if(GL_TRUE == bUseDrawIndex)
+    {
+        if(GL_TRUE != context->ind_buf.is_32bit)
+        {
+            SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
+        }
+    }
+
     R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
     R600_OUT_BATCH(vgt_index_type);
 
@@ -296,12 +325,36 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 
 	// draw packet
     vgt_num_indices = num_indices;
-    SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+
+    if(GL_TRUE == bUseDrawIndex)
+    {
+        SETfield(vgt_draw_initiator, DI_SRC_SEL_DMA, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+    }
+    else
+    {
+        SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+    }
+
 	SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
-    R600_OUT_BATCH(vgt_num_indices);
-    R600_OUT_BATCH(vgt_draw_initiator);
+    if(GL_TRUE == bUseDrawIndex)
+    {
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX, 3));
+        R600_OUT_BATCH(context->ind_buf.bo_offset);
+        R600_OUT_BATCH(0);
+        R600_OUT_BATCH(vgt_num_indices);
+        R600_OUT_BATCH(vgt_draw_initiator);
+        R600_OUT_BATCH_RELOC(context->ind_buf.bo_offset,
+                             context->ind_buf.bo,
+                             context->ind_buf.bo_offset,
+                             RADEON_GEM_DOMAIN_GTT, 0, 0);
+    }
+    else
+    {
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
+        R600_OUT_BATCH(vgt_num_indices);
+        R600_OUT_BATCH(vgt_draw_initiator);
+    }
 
     if(NULL == context->ind_buf.bo)
     {
@@ -339,10 +392,6 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
                     pIndex++;
                 }
             }
-        }
-        else
-        {
-            /* TODO : hw ib draw */
         }
     }
 
@@ -899,7 +948,7 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
         return;
     }
 
-    context->ind_buf.bHostIb = GL_TRUE;
+    context->ind_buf.bHostIb = GL_FALSE;
 
 #if MESA_BIG_ENDIAN
     if (mesa_ind_buf->type == GL_UNSIGNED_INT) 
