@@ -2078,9 +2078,9 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
     GLuint contiguous_slots_needed;
 
     GLuint    uNumSrc = r700GetNumOperands(pAsm);
-    GLuint    channel_swizzle, j;
-    GLuint    chan_counter[4] = {0, 0, 0, 0};
-    PVSSRC *  pSource[3];
+    //GLuint    channel_swizzle, j;
+    //GLuint    chan_counter[4] = {0, 0, 0, 0};
+    //PVSSRC *  pSource[3];
     GLboolean bSplitInst = GL_FALSE;
 
     if (1 == pAsm->D.dst.math) 

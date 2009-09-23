@@ -423,6 +423,7 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
                                        GLuint              _signed,
                                        GLboolean           normalize,
                                        VTX_FETCH_METHOD  * pFetchMethod);
+GLboolean cleanup_vfetch_instructions(r700_AssemblerBase* pAsm);
 GLuint gethelpr(r700_AssemblerBase* pAsm);
 void resethelpr(r700_AssemblerBase* pAsm);
 void checkop_init(r700_AssemblerBase* pAsm);
