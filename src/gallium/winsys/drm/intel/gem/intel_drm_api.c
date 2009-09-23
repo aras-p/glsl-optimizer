@@ -41,6 +41,7 @@ intel_drm_buffer_from_handle(struct intel_drm_winsys *idws,
                              const char* name, unsigned handle)
 {
    struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
+   uint32_t tile = 0, swizzle = 0;
 
    if (!buf)
       return NULL;
@@ -52,6 +53,10 @@ intel_drm_buffer_from_handle(struct intel_drm_winsys *idws,
 
    if (!buf->bo)
       goto err;
+
+   drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
+   if (tile != INTEL_TILE_NONE)
+      buf->map_gtt = TRUE;
 
    return (struct intel_buffer *)buf;
 
