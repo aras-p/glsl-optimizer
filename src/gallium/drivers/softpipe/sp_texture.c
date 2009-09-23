@@ -113,15 +113,19 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 
 static struct pipe_texture *
 softpipe_texture_create(struct pipe_screen *screen,
-                        const struct pipe_texture *templat)
+                        const struct pipe_texture *template)
 {
    struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
    if (!spt)
       return NULL;
 
-   spt->base = *templat;
+   spt->base = *template;
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
+
+   spt->pot = (util_is_power_of_two(template->width[0]) &&
+               util_is_power_of_two(template->height[0]) &&
+               util_is_power_of_two(template->depth[0]));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
                               PIPE_TEXTURE_USAGE_PRIMARY)) {
@@ -217,6 +221,13 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
          ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
+                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
+         /* Mark the surface as dirty.  The tile cache will look for this. */
+         spt->timestamp++;
+         softpipe_screen(screen)->timestamp++;
+      }
 
       ps->face = face;
       ps->level = level;
@@ -366,7 +377,7 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 
    if (transfer->usage != PIPE_TRANSFER_READ) {
       /* Mark the texture as dirty to expire the tile caches. */
-      spt->modified = TRUE;
+      spt->timestamp++;
    }
 }
 

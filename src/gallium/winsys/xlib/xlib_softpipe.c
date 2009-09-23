@@ -75,9 +75,6 @@ struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
 /*   struct xmesa_visual *xm_visual; */
-#ifdef USE_XSHM
-   int shm;
-#endif
 };
 
 
@@ -93,11 +90,6 @@ xm_buffer( struct pipe_buffer *buf )
 /**
  * X Shared Memory Image extension code
  */
-#ifdef USE_XSHM
-#define XSHM_ENABLED(b) ((b)->shm)
-#else
-#define XSHM_ENABLED(b) 0
-#endif
 
 #ifdef USE_XSHM
 
@@ -116,23 +108,23 @@ mesaHandleXError(Display *dpy, XErrorEvent *event)
 }
 
 
-static GLboolean alloc_shm(struct xm_buffer *buf, unsigned size)
+static char *alloc_shm(struct xm_buffer *buf, unsigned size)
 {
    XShmSegmentInfo *const shminfo = & buf->shminfo;
 
    shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT|0777);
    if (shminfo->shmid < 0) {
-      return GL_FALSE;
+      return NULL;
    }
 
    shminfo->shmaddr = (char *) shmat(shminfo->shmid, 0, 0);
    if (shminfo->shmaddr == (char *) -1) {
       shmctl(shminfo->shmid, IPC_RMID, 0);
-      return GL_FALSE;
+      return NULL;
    }
 
    shminfo->readOnly = False;
-   return GL_TRUE;
+   return shminfo->shmaddr;
 }
 
 
@@ -258,25 +250,30 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
       return;
 
 #ifdef USE_XSHM
-   if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
-      assert(surf->texture->block.width == 1);
-      assert(surf->texture->block.height == 1);
-      alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
-                       surf->texture->block.size, surf->height);
-   }
-#endif
+   if (xm_buf->shm)
+   {
+      if (xm_buf->tempImage == NULL) 
+      {
+         assert(surf->texture->block.width == 1);
+         assert(surf->texture->block.height == 1);
+         alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
+                          surf->texture->block.size, surf->height);
+      }
 
-   ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
-   ximage->data = xm_buf->data;
+      ximage = xm_buf->tempImage;
+      ximage->data = xm_buf->data;
 
-   /* display image in Window */
-#ifdef USE_XSHM
-   if (XSHM_ENABLED(xm_buf)) {
+      /* _debug_printf("XSHM\n"); */
       XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
                    ximage, 0, 0, 0, 0, surf->width, surf->height, False);
-   } else
+   }
+   else
 #endif
    {
+      /* display image in Window */
+      ximage = b->tempImage;
+      ximage->data = xm_buf->data;
+
       /* check that the XImage has been previously initialized */
       assert(ximage->format);
       assert(ximage->bitmap_unit);
@@ -286,6 +283,7 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
       ximage->height = surf->height;
       ximage->bytes_per_line = spt->stride[surf->level];
 
+      /* _debug_printf("XPUT\n"); */
       XPutImage(b->xm_visual->display, b->drawable, b->gc,
                 ximage, 0, 0, 0, 0, surf->width, surf->height);
    }
@@ -322,21 +320,6 @@ xm_buffer_create(struct pipe_winsys *pws,
                  unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-#ifdef USE_XSHM
-   struct xmesa_pipe_winsys *xpws = (struct xmesa_pipe_winsys *) pws;
-
-   buffer->shminfo.shmid = -1;
-   buffer->shminfo.shmaddr = (char *) -1;
-
-   if (xpws->shm && (usage & PIPE_BUFFER_USAGE_PIXEL) != 0) {
-      buffer->shm = xpws->shm;
-
-      if (alloc_shm(buffer, size)) {
-         buffer->data = buffer->shminfo.shmaddr;
-         buffer->shm = 1;
-      }
-   }
-#endif
 
    pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.alignment = alignment;
@@ -363,9 +346,6 @@ xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
-#ifdef USE_XSHM
-   buffer->shm = 0;
-#endif
 
    return &buffer->base;
 }
@@ -381,16 +361,44 @@ xm_surface_buffer_create(struct pipe_winsys *winsys,
 {
    const unsigned alignment = 64;
    struct pipe_format_block block;
-   unsigned nblocksx, nblocksy;
+   unsigned nblocksx, nblocksy, size;
 
    pf_get_block(format, &block);
    nblocksx = pf_get_nblocksx(&block, width);
    nblocksy = pf_get_nblocksy(&block, height);
    *stride = align(nblocksx * block.size, alignment);
+   size = *stride * nblocksy;
+
+#ifdef USE_XSHM
+   if (!debug_get_bool_option("XLIB_NO_SHM", FALSE))
+   {
+      struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
+
+      pipe_reference_init(&buffer->base.reference, 1);
+      buffer->base.alignment = alignment;
+      buffer->base.usage = usage;
+      buffer->base.size = size;
+      buffer->userBuffer = FALSE;
+      buffer->shminfo.shmid = -1;
+      buffer->shminfo.shmaddr = (char *) -1;
+      buffer->shm = TRUE;
+         
+      buffer->data = alloc_shm(buffer, size);
+      if (!buffer->data)
+         goto out;
+
+      return &buffer->base;
+         
+   out:
+      if (buffer)
+         FREE(buffer);
+   }
+#endif
+   
 
    return winsys->buffer_create(winsys, alignment,
                                 usage,
-                                *stride * nblocksy);
+                                size);
 }
 
 
