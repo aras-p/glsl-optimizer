@@ -511,6 +511,34 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
 
 
 
+void
+_mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program)
+{
+   int i;
+
+   program->NumTemporaries = 0;
+   for (i = 0; i < program->NumInstructions; i++) {
+      struct prog_instruction *inst = &program->Instructions[i];
+
+      if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+	 program->NumTemporaries = MAX2(program->NumTemporaries,
+					inst->DstReg.Index + 1);
+      }
+      if (inst->SrcReg[0].File == PROGRAM_TEMPORARY) {
+	 program->NumTemporaries = MAX2(program->NumTemporaries,
+					inst->SrcReg[0].Index + 1);
+      }
+      if (inst->SrcReg[1].File == PROGRAM_TEMPORARY) {
+	 program->NumTemporaries = MAX2(program->NumTemporaries,
+					inst->SrcReg[1].Index + 1);
+      }
+      if (inst->SrcReg[2].File == PROGRAM_TEMPORARY) {
+	 program->NumTemporaries = MAX2(program->NumTemporaries,
+					inst->SrcReg[2].Index + 1);
+      }
+   }
+}
+
 /**
  * Load/parse/compile a program.
  * \note Called from the GL API dispatcher.

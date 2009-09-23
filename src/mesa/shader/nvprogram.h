@@ -103,5 +103,7 @@ extern void GLAPIENTRY
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params);
 
+extern void
+_mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program);
 
 #endif
