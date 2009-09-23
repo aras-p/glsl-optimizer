@@ -147,6 +147,7 @@ CreateDrawDestroyVBO(unsigned count)
       GLuint vbo;
       /* create/load */
       glGenBuffersARB(1, &vbo);
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbo);
       glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
       /* draw */
       glVertexPointer(2, GL_FLOAT, sizeof(Vertex0), (void *) 0);
