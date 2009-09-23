@@ -473,10 +473,13 @@ ExaCheckComposite(int op,
 		  PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 		  PicturePtr pDstPicture)
 {
-   return xorg_composite_accelerated(op,
-                                     pSrcPicture,
-                                     pMaskPicture,
-                                     pDstPicture);
+   boolean accelerated = xorg_composite_accelerated(op,
+                                                    pSrcPicture,
+                                                    pMaskPicture,
+                                                    pDstPicture);
+   debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
+                op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
+   return accelerated;
 }
 
 static void *
