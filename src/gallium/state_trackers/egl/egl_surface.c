@@ -152,7 +152,6 @@ drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen)
 
 	pipe_surface_reference(&screen->surface, NULL);
 	pipe_texture_reference(&screen->tex, NULL);
-	pipe_buffer_reference(&screen->buffer, NULL);
 
 	screen->shown = 0;
 }
@@ -250,8 +249,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy,
 
 
 	drm_create_texture(dpy, scrn, mode->Width, mode->Height);
-	if (!scrn->buffer)
-		return EGL_FALSE;
+	if (!scrn->tex)
+		goto err_tex;
 
 	ret = drmModeAddFB(dev->drmFD,
 	                   scrn->front.width, scrn->front.height,
@@ -325,8 +324,8 @@ err_fb:
 err_bo:
 	pipe_surface_reference(&scrn->surface, NULL);
 	pipe_texture_reference(&scrn->tex, NULL);
-	pipe_buffer_reference(&scrn->buffer, NULL);
 
+err_tex:
 	return EGL_FALSE;
 }
 

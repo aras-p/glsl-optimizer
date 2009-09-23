@@ -94,7 +94,6 @@ struct drm_screen
 	 * pipe
 	 */
 
-	struct pipe_buffer *buffer;
 	struct pipe_texture *tex;
 	struct pipe_surface *surface;
 
