@@ -374,6 +374,10 @@ typedef struct r700_AssemblerBase
     struct prog_instruction * pILInst;
     GLuint             uiCurInst;
     GLboolean   bR6xx;
+    /* helper to decide which type of instruction to assemble */
+    GLboolean is_tex;
+    /* we inserted helper intructions and need barrier on next TEX ins */ 
+    GLboolean need_tex_barrier; 
 } r700_AssemblerBase;
 
 //Internal use
