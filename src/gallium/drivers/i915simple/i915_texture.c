@@ -165,7 +165,7 @@ i915_scanout_layout(struct i915_texture *tex)
    struct pipe_texture *pt = &tex->base;
 
    if (pt->last_level > 0 || pt->block.size != 4)
-      return 0;
+      return FALSE;
 
    i915_miptree_set_level_info(tex, 0, 1,
                                tex->base.width[0],
