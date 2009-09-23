@@ -26,7 +26,7 @@
 #define GRAMMAR_MESA_H
 
 
-#include "../../glsl/pp/sl_pp_context.h"
+#include "../../glsl/pp/sl_pp_public.h"
 
 #include "main/imports.h"
 /* NOTE: include Mesa 3-D specific headers here */
