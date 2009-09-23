@@ -46,13 +46,18 @@
 
 
 /*
- * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
- * see 1-pixel bands of improperly weighted linear-filtered textures.
+ * Return fractional part of 'f'.  Used for computing interpolation weights.
+ * Need to be careful with negative values.
+ * Note, if this function isn't perfect you'll sometimes see 1-pixel bands
+ * of improperly weighted linear-filtered textures.
  * The tests/texwrap.c demo is a good test.
- * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
- * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
  */
-#define FRAC(f)  ((f) - util_ifloor(f))
+static INLINE float
+frac(float f)
+{
+   return f - util_ifloor(f);
+}
+
 
 
 /**
@@ -99,10 +104,16 @@ lerp_3d(float a, float b, float c,
 
 
 /**
- * If A is a signed integer, A % B doesn't give the right value for A < 0
- * (in terms of texture repeat).  Just casting to unsigned fixes that.
+ * Compute coord % size for repeat wrap modes.
+ * Note that if coord is a signed integer, coord % size doesn't give
+ * the right value for coord < 0 (in terms of texture repeat).  Just
+ * casting to unsigned fixes that.
  */
-#define REMAINDER(A, B) ((unsigned) (A) % (unsigned) (B))
+static INLINE int
+repeat(int coord, unsigned size)
+{
+   return (int) ((unsigned) coord % size);
+}
 
 
 /**
@@ -122,7 +133,7 @@ wrap_nearest_repeat(const float s[4], unsigned size, int icoord[4])
    /* i limited to [0,size-1] */
    for (ch = 0; ch < 4; ch++) {
       int i = util_ifloor(s[ch] * size);
-      icoord[ch] = REMAINDER(i, size);
+      icoord[ch] = repeat(i, size);
    }
 }
 
@@ -282,9 +293,9 @@ wrap_linear_repeat(const float s[4], unsigned size,
    uint ch;
    for (ch = 0; ch < 4; ch++) {
       float u = s[ch] * size - 0.5F;
-      icoord0[ch] = REMAINDER(util_ifloor(u), size);
-      icoord1[ch] = REMAINDER(icoord0[ch] + 1, size);
-      w[ch] = FRAC(u);
+      icoord0[ch] = repeat(util_ifloor(u), size);
+      icoord1[ch] = repeat(icoord0[ch] + 1, size);
+      w[ch] = frac(u);
    }
 }
 
@@ -299,7 +310,7 @@ wrap_linear_clamp(const float s[4], unsigned size,
       u = u * size - 0.5f;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -318,7 +329,7 @@ wrap_linear_clamp_to_edge(const float s[4], unsigned size,
          icoord0[ch] = 0;
       if (icoord1[ch] >= (int) size)
          icoord1[ch] = size - 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -335,7 +346,7 @@ wrap_linear_clamp_to_border(const float s[4], unsigned size,
       u = u * size - 0.5f;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -359,7 +370,7 @@ wrap_linear_mirror_repeat(const float s[4], unsigned size,
          icoord0[ch] = 0;
       if (icoord1[ch] >= (int) size)
          icoord1[ch] = size - 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -378,7 +389,7 @@ wrap_linear_mirror_clamp(const float s[4], unsigned size,
       u -= 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -401,7 +412,7 @@ wrap_linear_mirror_clamp_to_edge(const float s[4], unsigned size,
          icoord0[ch] = 0;
       if (icoord1[ch] >= (int) size)
          icoord1[ch] = size - 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -424,7 +435,7 @@ wrap_linear_mirror_clamp_to_border(const float s[4], unsigned size,
       u -= 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -472,7 +483,7 @@ wrap_linear_unorm_clamp(const float s[4], unsigned size,
       float u = CLAMP(s[ch] - 0.5F, 0.0f, (float) size - 1.0f);
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
@@ -489,7 +500,7 @@ wrap_linear_unorm_clamp_to_border(const float s[4], unsigned size,
       icoord1[ch] = icoord0[ch] + 1;
       if (icoord1[ch] > (int) size - 1)
          icoord1[ch] = size - 1;
-      w[ch] = FRAC(u);
+      w[ch] = frac(u);
    }
 }
 
