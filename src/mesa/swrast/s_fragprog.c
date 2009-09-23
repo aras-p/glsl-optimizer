@@ -108,7 +108,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 
       lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
                                       texdx[1], texdy[1], /* dt/dx, dt/dy */
-                                      texdx[3], texdy[2], /* dq/dx, dq/dy */
+                                      texdx[3], texdy[3], /* dq/dx, dq/dy */
                                       texW, texH,
                                       texcoord[0], texcoord[1], texcoord[3],
                                       1.0F / texcoord[3]) + lodBias;
