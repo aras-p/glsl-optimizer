@@ -39,7 +39,7 @@ static GLsizei TexSize;
 static GLenum TexIntFormat, TexSrcFormat, TexSrcType;
 
 static const GLboolean DrawPoint = GL_TRUE;
-static const GLboolean TexSubImage4 = GL_TRUE;
+static const GLboolean TexSubImage4 = GL_FALSE;
 
 enum {
    MODE_CREATE_TEXIMAGE,
@@ -145,7 +145,7 @@ UploadTexSubImage2D(unsigned count)
 {
    unsigned i;
    for (i = 0; i < count; i++) {
-      if (0  && TexSubImage4) {
+      if (TexSubImage4) {
          GLsizei halfSize = (TexSize == 1) ? 1 : TexSize / 2;
          GLsizei halfPos = TexSize - halfSize;
          /* do glTexSubImage2D in four pieces */
