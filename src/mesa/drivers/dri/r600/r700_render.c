@@ -855,7 +855,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
         if(context->ind_buf.bHostIb != GL_TRUE)
         {
-            radeonAllocDmaRegion(&context->radeon, &r300->ind_buf.bo,
+            radeonAllocDmaRegion(&context->radeon, &context->ind_buf.bo,
                                  &context->ind_buf.bo_offset, size, 4);
 
             assert(context->ind_buf.bo->ptr != NULL);
