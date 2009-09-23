@@ -26,7 +26,9 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include <string.h>
 #include "sl_pp_process.h"
+#include "sl_pp_public.h"
 
 
 static void
@@ -124,6 +126,20 @@ sl_pp_process_define(struct sl_pp_context *context,
    if (macro_name == -1) {
       strcpy(context->error_msg, "expected an identifier");
       return -1;
+   }
+
+   /* Check for reserved macro names */
+   {
+      const char *name = sl_pp_context_cstr(context, macro_name);
+
+      if (strstr(name, "__")) {
+         strcpy(context->error_msg, "macro names containing `__' are reserved");
+         return 1;
+      }
+      if (name[0] == 'G' && name[1] == 'L' && name[2] == '_') {
+         strcpy(context->error_msg, "macro names prefixed with `GL_' are reserved");
+         return 1;
+      }
    }
 
    for (macro = context->macro; macro; macro = macro->next) {
