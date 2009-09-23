@@ -2775,7 +2775,7 @@ _slang_gen_while(slang_assemble_ctx * A, slang_operation *oper)
     *    body code (child[1])
     */
    slang_ir_node *loop, *breakIf, *body;
-   GLboolean isConst, constTrue;
+   GLboolean isConst, constTrue = GL_FALSE;
 
    if (!A->EmitContReturn) {
       /* We don't want to emit CONT instructions.  If this while-loop has
