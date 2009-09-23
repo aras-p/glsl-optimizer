@@ -732,6 +732,20 @@ get_texel_3d(const struct sp_sampler_varient *samp,
 }
 
 
+/**
+ * Given the logbase2 of a mipmap's base level size and a mipmap level,
+ * return the size (in texels) of that mipmap level.
+ * For example, if level[0].width = 256 then base_pot will be 8.
+ * If level = 2, then we'll return 64 (the width at level=2).
+ * Return 1 if level > base_pot.
+ */
+static INLINE unsigned
+pot_level_size(unsigned base_pot, unsigned level)
+{
+   return (base_pot >= level) ? (1 << (base_pot - level)) : 1;
+}
+
+
 /* Some image-filter fastpaths:
  */
 static INLINE void
@@ -745,8 +759,8 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned  j;
    unsigned level = samp->level;
-   unsigned xpot = 1 << (samp->xpot - level);
-   unsigned ypot = 1 << (samp->ypot - level);
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
    unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
    unsigned ymax = (ypot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, ypot) - 1; */
    union tex_tile_address addr;
@@ -807,8 +821,8 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned  j;
    unsigned level = samp->level;
-   unsigned xpot = 1 << (samp->xpot - level);
-   unsigned ypot = 1 << (samp->ypot - level);
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
    union tex_tile_address addr;
 
    addr.value = 0;
@@ -846,8 +860,8 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned  j;
    unsigned level = samp->level;
-   unsigned xpot = 1 << (samp->xpot - level);
-   unsigned ypot = 1 << (samp->ypot - level);
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
    union tex_tile_address addr;
 
    addr.value = 0;
@@ -1311,6 +1325,14 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
       samp->level = MIN2(samp->level, (int)texture->last_level);
       samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba );
    }
+
+#if 0
+   printf("RGBA %g %g %g %g, %g %g %g %g, %g %g %g %g, %g %g %g %g\n",
+          rgba[0][0], rgba[1][0], rgba[2][0], rgba[3][0],
+          rgba[0][1], rgba[1][1], rgba[2][1], rgba[3][1],
+          rgba[0][2], rgba[1][2], rgba[2][2], rgba[3][2],
+          rgba[0][3], rgba[1][3], rgba[2][3], rgba[3][3]);
+#endif
 }
 
 
