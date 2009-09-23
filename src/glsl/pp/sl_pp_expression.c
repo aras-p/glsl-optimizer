@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include "sl_pp_expression.h"
+#include "sl_pp_public.h"
 
 
 struct parse_context {
