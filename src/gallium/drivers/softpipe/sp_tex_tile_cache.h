@@ -68,12 +68,6 @@ struct softpipe_tex_cached_tile
 
 #define NUM_ENTRIES 50
 
-
-/** XXX move these */
-#define MAX_WIDTH 2048
-#define MAX_HEIGHT 2048
-
-
 struct softpipe_tex_tile_cache
 {
    struct pipe_screen *screen;
