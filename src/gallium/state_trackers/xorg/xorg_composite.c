@@ -388,7 +388,7 @@ bind_viewport_state(struct exa_context *exa, struct exa_pixmap_priv *pDst)
    int width = pDst->tex->width[0];
    int height = pDst->tex->height[0];
 
-   debug_printf("Bind viewport (%d, %d)\n", width, height);
+   /*debug_printf("Bind viewport (%d, %d)\n", width, height);*/
 
    set_viewport(exa, width, height, Y0_TOP);
 }
@@ -672,7 +672,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    cso_set_vertex_shader_handle(exa->cso, shader.vs);
    cso_set_fragment_shader_handle(exa->cso, shader.fs);
 
-   return FALSE;
+   return TRUE;
 }
 
 void xorg_solid(struct exa_context *exa,
@@ -701,7 +701,6 @@ void xorg_solid(struct exa_context *exa,
 
 
    if (buf) {
-      debug_printf("Drawing buf is %p\n", buf);
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */

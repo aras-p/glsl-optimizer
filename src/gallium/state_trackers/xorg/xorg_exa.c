@@ -48,6 +48,7 @@
 #include "util/u_rect.h"
 
 #define DEBUG_SOLID 0
+#define DISABLE_ACCEL 1
 
 /*
  * Helper functions
@@ -281,8 +282,8 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
-#if 0
-    debug_printf("ExaPrepareSolid - test\n");
+#if 1
+    debug_printf("ExaPrepareSolid(0x%x)\n", fg);
 #endif
     if (!EXA_PM_IS_SOLID(&pPixmap->drawable, planeMask))
 	return FALSE;
@@ -306,11 +307,11 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     fg = 0xffff0000;
 #endif
 
-#if 1
-    debug_printf("  ExaPrepareSolid(0x%x)\n", fg);
-#endif
-
+#if DISABLE_ACCEL
+    return FALSE;
+#else
     return xorg_solid_bind_state(exa, priv, fg);
+#endif
 }
 
 static void
@@ -403,8 +404,11 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
 
-    /*XXX disabled until some issues with syncing are fixed */
+#if DISABLE_ACCEL
     return FALSE;
+#else
+    return TRUE;
+#endif
 }
 
 static void
@@ -437,11 +441,16 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 
    debug_printf("ExaPrepareComposite\n");
 
+#if DISABLE_ACCEL
+   (void) exa;
+   return FALSE;
+#else
    return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
                                     exaGetPixmapDriverPrivate(pSrc),
                                     exaGetPixmapDriverPrivate(pMask),
                                     exaGetPixmapDriverPrivate(pDst));
+#endif
 }
 
 static void
