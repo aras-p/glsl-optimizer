@@ -1019,7 +1019,6 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;
     GLuint i, id = 0;
-    GLboolean bValidedbuffer;
     struct radeon_renderbuffer *rrb;
 
     if (ctx->NewState)
@@ -1027,7 +1026,13 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
         _mesa_update_state( ctx );
     }
 
-    bValidedbuffer = r600ValidateBuffers(ctx);
+    _tnl_UpdateFixedFunctionProgram(ctx);
+    r700SetVertexFormat(ctx, arrays, max_index + 1);
+    r700SetupIndexBuffer(ctx, ib);
+    /* shaders need to be updated before buffers are validated */
+    r700UpdateShaders2(ctx);
+    if (!r600ValidateBuffers(ctx))
+	    return GL_FALSE;
 
     /* always emit CB base to prevent
      * lock ups on some chips.
@@ -1036,34 +1041,28 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     /* mark vtx as dirty since it changes per-draw */
     R600_STATECHANGE(context, vtx);
 
-    _tnl_UpdateFixedFunctionProgram(ctx);
-    r700SetVertexFormat(ctx, arrays, max_index + 1);
-	r700SetupStreams2(ctx, arrays, max_index + 1);
-    r700UpdateShaders2(ctx);
-
     r700SetScissor(context);
-
     r700SetupVertexProgram(ctx);
-
     r700SetupFragmentProgram(ctx);
-
     r600UpdateTextureState(ctx);
 
     GLuint emit_end = r700PredictRenderSize(ctx, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
 
-    r700SetupIndexBuffer(ctx, ib);
+    r700SetupStreams2(ctx, arrays, max_index + 1);
 
     radeonEmitState(radeon);
 
-    for (i = 0; i < nr_prims; ++i) 
+    radeon_debug_add_indent();
+    for (i = 0; i < nr_prims; ++i)
     {
-	    r700RunRenderPrimitive(ctx, 
-                               prim[i].start, 
-                               prim[i].start + prim[i].count, 
+	    r700RunRenderPrimitive(ctx,
+                               prim[i].start,
+                               prim[i].start + prim[i].count,
                                prim[i].mode);
     }
- 
+    radeon_debug_remove_indent();
+
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
 
