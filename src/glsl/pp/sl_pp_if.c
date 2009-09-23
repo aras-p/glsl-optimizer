@@ -82,14 +82,7 @@ _parse_defined(struct sl_pp_context *context,
    }
 
    result.token = SL_PP_UINT;
-   if (defined) {
-      result.data._uint = sl_pp_context_add_unique_str(context, "1");
-   } else {
-      result.data._uint = sl_pp_context_add_unique_str(context, "0");
-   }
-   if (result.data._uint == -1) {
-      return -1;
-   }
+   result.data._uint = (defined ? context->dict._1 : context->dict._0);
 
    if (sl_pp_process_out(state, &result)) {
       strcpy(context->error_msg, "out of memory");

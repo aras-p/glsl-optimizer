@@ -79,5 +79,8 @@ sl_pp_dict_init(struct sl_pp_context *context)
 
    ADD_NAME(context, version);
 
+   ADD_NAME_STR(context, _0, "0");
+   ADD_NAME_STR(context, _1, "1");
+
    return 0;
 }

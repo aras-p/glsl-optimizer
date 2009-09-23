@@ -64,6 +64,9 @@ struct sl_pp_dict {
    int undef;
 
    int version;
+
+   int _0;
+   int _1;
 };
 
 
