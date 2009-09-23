@@ -56,9 +56,7 @@
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"
-#if FEATURE_convolve
 #include "convolve.h"
-#endif
 #include "depth.h"
 #if FEATURE_dlist
 #include "dlist.h"
@@ -384,21 +382,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_BlendEquationSeparateEXT(exec, _mesa_BlendEquationSeparateEXT);
 
    _mesa_init_colortable_dispatch(exec);
-
-#if FEATURE_convolve
-   SET_ConvolutionFilter1D(exec, _mesa_ConvolutionFilter1D);
-   SET_ConvolutionFilter2D(exec, _mesa_ConvolutionFilter2D);
-   SET_ConvolutionParameterf(exec, _mesa_ConvolutionParameterf);
-   SET_ConvolutionParameterfv(exec, _mesa_ConvolutionParameterfv);
-   SET_ConvolutionParameteri(exec, _mesa_ConvolutionParameteri);
-   SET_ConvolutionParameteriv(exec, _mesa_ConvolutionParameteriv);
-   SET_CopyConvolutionFilter1D(exec, _mesa_CopyConvolutionFilter1D);
-   SET_CopyConvolutionFilter2D(exec, _mesa_CopyConvolutionFilter2D);
-   SET_GetConvolutionFilter(exec, _mesa_GetConvolutionFilter);
-   SET_GetConvolutionParameterfv(exec, _mesa_GetConvolutionParameterfv);
-   SET_GetConvolutionParameteriv(exec, _mesa_GetConvolutionParameteriv);
-   SET_SeparableFilter2D(exec, _mesa_SeparableFilter2D);
-#endif
+   _mesa_init_convolve_dispatch(exec);
 #if FEATURE_histogram
    SET_GetHistogram(exec, _mesa_GetHistogram);
    SET_GetHistogramParameterfv(exec, _mesa_GetHistogramParameterfv);
@@ -406,7 +390,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetMinmax(exec, _mesa_GetMinmax);
    SET_GetMinmaxParameterfv(exec, _mesa_GetMinmaxParameterfv);
    SET_GetMinmaxParameteriv(exec, _mesa_GetMinmaxParameteriv);
-   SET_GetSeparableFilter(exec, _mesa_GetSeparableFilter);
    SET_Histogram(exec, _mesa_Histogram);
    SET_Minmax(exec, _mesa_Minmax);
    SET_ResetHistogram(exec, _mesa_ResetHistogram);

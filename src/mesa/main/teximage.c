@@ -33,9 +33,7 @@
 #include "glheader.h"
 #include "bufferobj.h"
 #include "context.h"
-#if FEATURE_convolve
 #include "convolve.h"
-#endif
 #include "enums.h"
 #include "fbobject.h"
 #include "framebuffer.h"
