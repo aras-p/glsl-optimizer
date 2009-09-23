@@ -1527,17 +1527,12 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_TXB:         /* GL_ARB_fragment_program only */
          /* Texel lookup with LOD bias */
          {
-            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
-            const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
             GLfloat texcoord[4], color[4], lodBias;
 
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
 
             /* texcoord[3] is the bias to add to lambda */
-            lodBias = texUnit->LodBias + texcoord[3];
-            if (texUnit->_Current) {
-               lodBias += texUnit->_Current->LodBias;
-            }
+            lodBias = texcoord[3];
 
             fetch_texel(ctx, machine, inst, texcoord, lodBias, color);
 
