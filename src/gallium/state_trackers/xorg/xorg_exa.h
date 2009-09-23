@@ -35,7 +35,7 @@ struct exa_context
 
    /* we should combine these two */
    float vertices2[4][2][4];
-   float vertices3[4][2][4];
+   float vertices3[4][3][4];
 };
 
 struct exa_pixmap_priv
