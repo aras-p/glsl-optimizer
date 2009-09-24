@@ -232,13 +232,13 @@ void radeonUpdateScissor( GLcontext *ctx )
 
 	   __DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
 	   x1 += dPriv->x;
-	   x2 += dPriv->x + 1;
+	   x2 += dPriv->x;
 	   min_x += dPriv->x;
-	   max_x += dPriv->x + 1;
+	   max_x += dPriv->x;
 	   y1 += dPriv->y;
-	   y2 += dPriv->y + 1;
+	   y2 += dPriv->y;
 	   min_y += dPriv->y;
-	   max_y += dPriv->y + 1;
+	   max_y += dPriv->y;
 	}
 
 	rmesa->state.scissor.rect.x1 = CLAMP(x1,  min_x, max_x);

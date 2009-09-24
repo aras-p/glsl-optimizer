@@ -1269,10 +1269,11 @@ void r700SetScissor(context_t *context) //---------------
 		return;
 	}
 	if (context->radeon.state.scissor.enabled) {
+		/* r600 has exclusive scissors */
 		x1 = context->radeon.state.scissor.rect.x1;
 		y1 = context->radeon.state.scissor.rect.y1;
-		x2 = context->radeon.state.scissor.rect.x2;
-		y2 = context->radeon.state.scissor.rect.y2;
+		x2 = context->radeon.state.scissor.rect.x2 + 1;
+		y2 = context->radeon.state.scissor.rect.y2 + 1;
 	} else {
 		if (context->radeon.radeonScreen->driScreen->dri2.enabled) {
 			x1 = 0;
