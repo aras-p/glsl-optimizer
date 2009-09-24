@@ -107,7 +107,7 @@ union sl_pp_token_data {
    char other;
    int pragma;
    int extension;
-   union {
+   struct {
       unsigned int lineno: 24;
       unsigned int fileno: 8;
    } line;
