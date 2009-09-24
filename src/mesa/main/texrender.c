@@ -398,6 +398,14 @@ texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 static void
+store_nop(struct gl_texture_image *texImage,
+          GLint col, GLint row, GLint img,
+          const void *texel)
+{
+}
+
+
+static void
 delete_texture_wrapper(struct gl_renderbuffer *rb)
 {
    ASSERT(rb->RefCount == 0);
@@ -462,7 +470,10 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    ASSERT(trb->TexImage);
 
    trb->Store = trb->TexImage->TexFormat->StoreTexel;
-   ASSERT(trb->Store);
+   if (!trb->Store) {
+      /* we'll never draw into some textures (compressed formats) */
+      trb->Store = store_nop;
+   }
 
    if (att->Texture->Target == GL_TEXTURE_1D_ARRAY_EXT) {
       trb->Yoffset = att->Zoffset;
