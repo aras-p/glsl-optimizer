@@ -248,6 +248,9 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
 
+      if (brw->vertex_program->IsNVProgram)
+	 _mesa_load_tracked_matrices(ctx);
+
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.
        */
