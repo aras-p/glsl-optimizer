@@ -983,7 +983,7 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
 }
 
 
-static inline union tex_tile_address
+static INLINE union tex_tile_address
 face(union tex_tile_address addr, unsigned face )
 {
    addr.bits.face = face;
