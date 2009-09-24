@@ -231,7 +231,7 @@ enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
    const GLuint newenabled = (!state)
        ? (texUnit->Enabled & ~bit) :  (texUnit->Enabled | bit);
 
-   if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
+   if (texUnit->Enabled == newenabled)
        return GL_FALSE;
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
