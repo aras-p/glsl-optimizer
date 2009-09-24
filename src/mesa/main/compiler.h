@@ -107,8 +107,7 @@ extern "C" {
 /**
  * finite macro.
  */
-#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-#  define __WIN32__
+#if defined(_MSC_VER)
 #  define finite _finite
 #elif defined(__WATCOMC__)
 #  define finite _finite
