@@ -128,7 +128,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
                     union tile_address addr );
 
 
-static INLINE const union tile_address
+static INLINE union tile_address
 tile_address( unsigned x,
               unsigned y )
 {

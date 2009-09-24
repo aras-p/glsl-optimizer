@@ -116,7 +116,7 @@ extern const struct softpipe_tex_cached_tile *
 sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
                          union tex_tile_address addr );
 
-static INLINE const union tex_tile_address
+static INLINE union tex_tile_address
 tex_tile_address( unsigned x,
 		  unsigned y,
 		  unsigned z,
