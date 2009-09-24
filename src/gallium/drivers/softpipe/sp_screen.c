@@ -84,7 +84,7 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return 12; /* max 2Kx2K */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      return 9;  /* max 256x256x256 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 12; /* max 2Kx2K */
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
