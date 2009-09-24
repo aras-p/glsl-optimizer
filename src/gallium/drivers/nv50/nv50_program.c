@@ -90,6 +90,9 @@ struct nv50_reg {
 	int acc; /* instruction where this reg is last read (first insn == 1) */
 };
 
+/* arbitrary limit */
+#define MAX_IF_DEPTH 4
+
 struct nv50_pc {
 	struct nv50_program *p;
 
@@ -120,6 +123,11 @@ struct nv50_pc {
 	/* perspective interpolation registers */
 	struct nv50_reg *iv_p;
 	struct nv50_reg *iv_c;
+
+	struct nv50_program_exec *if_cond;
+	struct nv50_program_exec *if_insn[MAX_IF_DEPTH];
+	struct nv50_program_exec *br_join[MAX_IF_DEPTH];
+	int if_lvl;
 
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
@@ -890,6 +898,7 @@ emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 	set_src_1(pc, src1, e);
 
 	emit(pc, e);
+	pc->if_cond = pc->p->exec_tail; /* record for OPCODE_IF */
 
 	/* cvt.f32.u32/s32 (?) if we didn't only write the predicate */
 	if (rdst)
@@ -1146,6 +1155,38 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			free_temp(pc, t[c]);
 	}
 #endif
+}
+
+static void
+emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
+	    struct nv50_program_exec **join)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	if (join) {
+		set_long(pc, e);
+		e->inst[0] |= 0xa0000002;
+		emit(pc, e);
+		*join = e;
+		e = exec(pc);
+	}
+
+	set_long(pc, e);
+	e->inst[0] |= 0x10000002;
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+	emit(pc, e);
+}
+
+static void
+emit_nop(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xf0000000;
+	set_long(pc, e);
+	e->inst[1] = 0xe0000000;
+	emit(pc, e);
 }
 
 static void
@@ -1560,6 +1601,24 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		if (mask & (1 << 0))
 			emit_mov_immdval(pc, dst[0], 1.0f);
 		break;
+	case TGSI_OPCODE_ELSE:
+		emit_branch(pc, -1, 0, NULL);
+		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
+		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
+		break;
+	case TGSI_OPCODE_ENDIF:
+		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
+
+		if (pc->br_join[pc->if_lvl]) {
+			pc->br_join[pc->if_lvl]->param.index = pc->p->exec_size;
+			pc->br_join[pc->if_lvl] = NULL;
+		}
+		/* emit a NOP as join point, we could set it on the next
+		 * one, but would have to make sure it is long and !immd
+		 */
+		emit_nop(pc);
+		pc->p->exec_tail->inst[1] |= 2;
+		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
 		emit_flop(pc, 6, brdc, temp);
@@ -1579,6 +1638,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_flr(pc, temp, src[0][c]);
 			emit_sub(pc, dst[c], src[0][c], temp);
 		}
+		break;
+	case TGSI_OPCODE_IF:
+		/* emitting a join_at may not be necessary */
+		assert(pc->if_lvl < MAX_IF_DEPTH);
+		set_pred_wr(pc, 1, 0, pc->if_cond);
+		emit_branch(pc, 0, 2, &pc->br_join[pc->if_lvl]);
+		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
 		break;
 	case TGSI_OPCODE_KIL:
 		emit_kil(pc, src[0][0]);
@@ -2237,6 +2303,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			pc->result[i].rhw = rid++;
 		if (p->info.writes_z)
 			pc->result[2].rhw = rid;
+
+		p->cfg.high_result = rid;
 	}
 
 	if (pc->immd_nr) {
@@ -2362,12 +2430,75 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 	return TRUE;
 }
 
+static void
+nv50_fp_move_results(struct nv50_pc *pc)
+{
+	struct nv50_reg reg;
+	unsigned i;
+
+	ctor_reg(&reg, P_TEMP, -1, -1);
+
+	for (i = 0; i < pc->result_nr * 4; ++i) {
+		if (pc->result[i].rhw < 0 || pc->result[i].hw < 0)
+			continue;
+		if (pc->result[i].rhw != pc->result[i].hw) {
+			reg.hw = pc->result[i].rhw;
+			emit_mov(pc, &reg, &pc->result[i]);
+		}
+	}
+}
+
+static void
+nv50_program_fixup_insns(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e, *prev = NULL, **bra_list;
+	unsigned i, n, pos;
+
+	bra_list = CALLOC(pc->p->exec_size, sizeof(struct nv50_program_exec *));
+
+	/* Collect branch instructions, we need to adjust their offsets
+	 * when converting 32 bit instructions to 64 bit ones
+	 */
+	for (n = 0, e = pc->p->exec_head; e; e = e->next)
+		if (e->param.index >= 0 && !e->param.mask)
+			bra_list[n++] = e;
+
+	/* Make sure we don't have any single 32 bit instructions. */
+	for (e = pc->p->exec_head, pos = 0; e; e = e->next) {
+		pos += is_long(e) ? 2 : 1;
+
+		if ((pos & 1) && (!e->next || is_long(e->next))) {
+			for (i = 0; i < n; ++i)
+				if (bra_list[i]->param.index >= pos)
+					bra_list[i]->param.index += 1;
+			convert_to_long(pc, e);
+			++pos;
+		}
+		if (e->next)
+			prev = e;
+	}
+
+	assert(!is_immd(pc->p->exec_head));
+	assert(!is_immd(pc->p->exec_tail));
+
+	/* last instruction must be long so it can have the end bit set */
+	if (!is_long(pc->p->exec_tail)) {
+		convert_to_long(pc, pc->p->exec_tail);
+		if (prev)
+			convert_to_long(pc, prev);
+	}
+	assert(!(pc->p->exec_tail->inst[1] & 2));
+	/* set the end-bit */
+	pc->p->exec_tail->inst[1] |= 1;
+
+	FREE(bra_list);
+}
+
 static boolean
 nv50_program_tx(struct nv50_program *p)
 {
 	struct tgsi_parse_context parse;
 	struct nv50_pc *pc;
-	unsigned k;
 	boolean ret;
 
 	pc = CALLOC_STRUCT(nv50_pc);
@@ -2405,48 +2536,10 @@ nv50_program_tx(struct nv50_program *p)
 		}
 	}
 
-	if (p->type == PIPE_SHADER_FRAGMENT) {
-		struct nv50_reg out;
-		ctor_reg(&out, P_TEMP, -1, -1);
+	if (pc->p->type == PIPE_SHADER_FRAGMENT)
+		nv50_fp_move_results(pc);
 
-		for (k = 0; k < pc->result_nr * 4; k++) {
-			if (pc->result[k].rhw == -1)
-				continue;
-			if (pc->result[k].hw != pc->result[k].rhw) {
-				out.hw = pc->result[k].rhw;
-				emit_mov(pc, &out, &pc->result[k]);
-			}
-			if (pc->p->cfg.high_result < (pc->result[k].rhw + 1))
-				pc->p->cfg.high_result = pc->result[k].rhw + 1;
-		}
-	}
-
-	/* look for single half instructions and make them long */
-	struct nv50_program_exec *e, *e_prev;
-
-	for (k = 0, e = pc->p->exec_head, e_prev = NULL; e; e = e->next) {
-		if (!is_long(e))
-			k++;
-
-		if (!e->next || is_long(e->next)) {
-			if (k & 1)
-				convert_to_long(pc, e);
-			k = 0;
-		}
-
-		if (e->next)
-			e_prev = e;
-	}
-
-	if (!is_long(pc->p->exec_tail)) {
-		/* this may occur if moving FP results */
-		assert(e_prev && !is_long(e_prev));
-		convert_to_long(pc, e_prev);
-		convert_to_long(pc, pc->p->exec_tail);
-	}
-
-	assert(is_long(pc->p->exec_tail) && !is_immd(pc->p->exec_head));
-	pc->p->exec_tail->inst[1] |= 0x00000001;
+	nv50_program_fixup_insns(pc);
 
 	p->param_nr = pc->param_nr * 4;
 	p->immd_nr = pc->immd_nr * 4;
@@ -2558,6 +2651,17 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 
 		if (e->param.index < 0)
 			continue;
+
+		if (e->param.mask == 0) {
+			assert(!(e->param.index & 1));
+			/* seem to be 8 byte steps */
+			ei = (e->param.index >> 1) + 0 /* START_ID */;
+
+			e->inst[0] &= 0xf0000fff;
+			e->inst[0] |= ei << 12;
+			continue;
+		}
+
 		bs = (e->inst[1] >> 22) & 0x07;
 		assert(bs < 2);
 		ei = e->param.shift >> 5;
