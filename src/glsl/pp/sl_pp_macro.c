@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "sl_pp_macro.h"
 #include "sl_pp_process.h"
 
@@ -149,7 +150,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       (*pi)++;
       return 0;
    }
-   if (macro_name == context->dict.__VERSION__) {
+   if (macro_name == context->dict.___VERSION__) {
       if (!mute && _out_number(context, state, 110)) {
          return -1;
       }

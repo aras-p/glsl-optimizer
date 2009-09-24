@@ -56,7 +56,7 @@ sl_pp_dict_init(struct sl_pp_context *context)
 
    ADD_NAME_STR(context, ___LINE__, "__LINE__");
    ADD_NAME_STR(context, ___FILE__, "__FILE__");
-   ADD_NAME(context, __VERSION__);
+   ADD_NAME_STR(context, ___VERSION__, "__VERSION__");
 
    ADD_NAME(context, optimize);
    ADD_NAME(context, debug);

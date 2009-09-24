@@ -28,6 +28,9 @@
 #ifndef SL_PP_DICT_H
 #define SL_PP_DICT_H
 
+
+struct sl_pp_context;
+
 struct sl_pp_dict {
    int all;
    int _GL_ARB_draw_buffers;
@@ -42,7 +45,7 @@ struct sl_pp_dict {
 
    int ___LINE__;
    int ___FILE__;
-   int __VERSION__;
+   int ___VERSION__;
 
    int optimize;
    int debug;
