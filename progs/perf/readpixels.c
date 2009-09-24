@@ -105,10 +105,10 @@ static const GLsizei Sizes[] = {
 
 
 static const struct {
-   GLenum format, type;
+   GLenum format;
+   GLenum type;
    const char *name;
    GLuint pixel_size;
-   GLboolean full_test;
 } DstFormats[] = {
    { GL_RGBA, GL_UNSIGNED_BYTE,           "RGBA/ubyte", 4 },
    { GL_BGRA, GL_UNSIGNED_BYTE,           "BGRA/ubyte", 4 },
@@ -116,7 +116,7 @@ static const struct {
    { GL_LUMINANCE, GL_UNSIGNED_BYTE,      "L/ubyte", 1 },
    { GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, "Z/uint", 4 },
    { GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT, "Z+S/uint", 4 },
-   { 0, 0, NULL, 0, 0 }
+   { 0, 0, NULL, 0 }
 };
 
 
