@@ -151,5 +151,11 @@ crtc_cursor_destroy(xf86CrtcPtr crtc);
 void
 output_init(ScrnInfoPtr pScrn);
 
+/***********************************************************************
+ * xorg_xv.c
+ */
+void
+xorg_init_video(ScreenPtr pScreen);
+
 
 #endif /* _XORG_TRACKER_H_ */
