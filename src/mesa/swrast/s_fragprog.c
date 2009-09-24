@@ -89,6 +89,8 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
  * Fetch a texel with the given partial derivatives to compute a level
  * of detail in the mipmap.
  * Called via machine->FetchTexelDeriv()
+ * \param lodBias  the lod bias which may be specified by a TXB instruction,
+ *                 otherwise zero.
  */
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
@@ -96,7 +98,8 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
                    GLfloat lodBias, GLuint unit, GLfloat color[4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+   const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   const struct gl_texture_object *texObj = texUnit->_Current;
 
    if (texObj) {
       const struct gl_texture_image *texImg =
@@ -108,10 +111,12 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 
       lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
                                       texdx[1], texdy[1], /* dt/dx, dt/dy */
-                                      texdx[3], texdy[2], /* dq/dx, dq/dy */
+                                      texdx[3], texdy[3], /* dq/dx, dq/dy */
                                       texW, texH,
                                       texcoord[0], texcoord[1], texcoord[3],
-                                      1.0F / texcoord[3]) + lodBias;
+                                      1.0F / texcoord[3]);
+
+      lambda += lodBias + texUnit->LodBias + texObj->LodBias;
 
       lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
