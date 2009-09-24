@@ -574,6 +574,22 @@ check_swap_src_0_1(struct nv50_pc *pc,
 }
 
 static void
+set_src_0_restricted(struct nv50_pc *pc, struct nv50_reg *src,
+		     struct nv50_program_exec *e)
+{
+	struct nv50_reg *temp;
+
+	if (src->type != P_TEMP) {
+		temp = temp_temp(pc);
+		emit_mov(pc, temp, src);
+		src = temp;
+	}
+
+	alloc_reg(pc, src);
+	e->inst[0] |= (src->hw << 9);
+}
+
+static void
 set_src_0(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
 	if (src->type == P_ATTR) {
@@ -775,7 +791,11 @@ emit_flop(struct nv50_pc *pc, unsigned sub,
 	}
 
 	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
+
+	if (sub == 0 || sub == 2)
+		set_src_0_restricted(pc, src, e);
+	else
+		set_src_0(pc, src, e);
 
 	emit(pc, e);
 }
