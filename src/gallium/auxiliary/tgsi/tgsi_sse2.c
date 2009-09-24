@@ -1431,11 +1431,11 @@ fetch_texel( struct tgsi_sampler **sampler,
    {
       float rgba[NUM_CHANNELS][QUAD_SIZE];
       (*sampler)->get_samples(*sampler, 
-                              &store[0], 
-                              &store[4], 
-                              &store[8], 
-                              0.0f, /*store[12],  lodbias */
-                              rgba);
+                              &store[0],  /* s */
+                              &store[4],  /* t */
+                              &store[8],  /* r */
+                              store[12],  /* lodbias */
+                              rgba);      /* results */
 
       memcpy( store, rgba, 16 * sizeof(float));
    }
