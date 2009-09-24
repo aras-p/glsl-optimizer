@@ -350,7 +350,7 @@ pb_debug_manager_dump(struct pb_debug_manager *mgr)
       buf = LIST_ENTRY(struct pb_debug_buffer, curr, head);
 
       debug_printf("buffer = %p\n", buf);
-      debug_printf("    .size = %p\n", buf->base.base.size);
+      debug_printf("    .size = 0x%x\n", buf->base.base.size);
       debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
       
       curr = next; 
