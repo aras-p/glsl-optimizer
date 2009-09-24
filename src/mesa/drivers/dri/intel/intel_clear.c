@@ -173,7 +173,6 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       }
 
       _mesa_meta_clear(&intel->ctx, tri_mask);
-      intel_batchbuffer_flush(intel->batch);
    }
 
    if (swrast_mask) {
