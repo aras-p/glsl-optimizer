@@ -234,9 +234,9 @@ gdi_llvmpipe_context_create(struct pipe_screen *screen)
 
 
 static void
-gdi_llvmpipe_flush_frontbuffer(struct pipe_screen *screen,
-                               struct pipe_surface *surface,
-                               HDC hDC)
+gdi_llvmpipe_present(struct pipe_screen *screen,
+                     struct pipe_surface *surface,
+                     HDC hDC)
 {
     struct llvmpipe_texture *texture;
     struct gdi_llvmpipe_displaytarget *gdt;
@@ -254,7 +254,11 @@ gdi_llvmpipe_flush_frontbuffer(struct pipe_screen *screen,
 static const struct stw_winsys stw_winsys = {
    &gdi_llvmpipe_screen_create,
    &gdi_llvmpipe_context_create,
-   &gdi_llvmpipe_flush_frontbuffer
+   &gdi_llvmpipe_present,
+   NULL, /* get_adapter_luid */
+   NULL, /* shared_surface_open */
+   NULL, /* shared_surface_close */
+   NULL  /* compose */
 };
 
 
