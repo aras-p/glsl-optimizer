@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include "../pp/sl_pp_public.h"
 
@@ -219,11 +220,11 @@ main(int argc,
          break;
 
       case SL_PP_MODASSIGN:
-         fprintf(out, "%= ");
+         fprintf(out, "%%= ");
          break;
 
       case SL_PP_MODULO:
-         fprintf(out, "% ");
+         fprintf(out, "%% ");
          break;
 
       case SL_PP_LSHIFTASSIGN:
