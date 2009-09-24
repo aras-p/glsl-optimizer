@@ -1,8 +1,5 @@
 Import('*')
 
-if env['platform'] not in ['windows']:
-    Return()
-
 env = env.Clone()
 
 if env['platform'] == 'windows':
