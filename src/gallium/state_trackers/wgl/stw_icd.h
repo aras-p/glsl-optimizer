@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008-2009 Vmware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -388,6 +388,113 @@ typedef struct _GLCLTPROCTABLE
 
 typedef VOID (APIENTRY * PFN_SETPROCTABLE)(PGLCLTPROCTABLE);
 
+/**
+ * Presentation data passed to opengl32!wglCbPresentBuffers.
+ *
+ * Pure software drivers don't need to worry about this -- if they stick to the
+ * GDI API then will integrate with the Desktop Window Manager (DWM) without
+ * problems. Hardware drivers, however, cannot present directly to the primary
+ * surface while the DWM is active, as DWM gets exclusive access to the primary
+ * surface.
+ *
+ * Proper DWM integration requires:
+ * - advertise the PFD_SUPPORT_COMPOSITION flag
+ * - redirect glFlush/glfinish/wglSwapBuffers into a surface shared with the
+ * DWM process.
+ *
+ * @sa http://www.opengl.org/pipeline/article/vol003_7/
+ * @sa http://blogs.msdn.com/greg_schechter/archive/2006/05/02/588934.aspx
+ */
+typedef struct _GLCBPRESENTBUFFERSDATA
+{
+   /**
+    * wglCbPresentBuffers enforces this to be 2.
+    */
+   DWORD magic1;
+
+   /**
+    * wglCbPresentBuffers enforces to be 0 or 1, but it is most commonly
+    * set to 0.
+    */
+   DWORD magic2;
+
+   /**
+    * Locally unique identifier (LUID) of the graphics adapter.
+    *
+    * This should contain the value returned by D3DKMTOpenAdapterFromHdc. It
+    * is passed to dwmapi!DwmpDxGetWindowSharedSurface in order to obtain
+    * the shared surface handle for the bound drawable (window).
+    *
+    * @sa http://msdn.microsoft.com/en-us/library/ms799177.aspx
+    */
+   LUID AdapterLuid;
+
+   /**
+    * This is passed unmodified to DrvPresentBuffers
+    */
+   LPVOID pPrivateData;
+
+   /**
+    * Client area rectangle to update, relative to the window upper-left corner.
+    */
+   RECT rect;
+} GLCBPRESENTBUFFERSDATA, *PGLCBPRESENTBUFFERSDATA;
+
+/**
+ * Callbacks supplied to DrvSetCallbackProcs by the OpenGL runtime.
+ *
+ * Pointers to several callback functions in opengl32.dll.
+ */
+typedef struct _GLCALLBACKTABLE
+{
+   /** Unused */
+   PROC wglCbSetCurrentValue;
+
+   /** Unused */
+   PROC wglCbGetCurrentValue;
+
+   /** Unused */
+   PROC wglCbGetDhglrc;
+
+   /** Unused */
+   PROC wglCbGetDdHandle;
+
+   /**
+    * Queue a present composition.
+    *
+    * Makes the runtime call DrvPresentBuffers with the composition information.
+    */
+   BOOL (APIENTRY *wglCbPresentBuffers)(HDC hdc, PGLCBPRESENTBUFFERSDATA data);
+
+} GLCALLBACKTABLE;
+
+typedef struct _GLPRESENTBUFFERSDATA
+{
+   /**
+    * The shared surface handle.
+    *
+    * Return by dwmapi!DwmpDxGetWindowSharedSurface.
+    *
+    * @sa http://channel9.msdn.com/forums/TechOff/251261-Help-Getting-the-shared-window-texture-out-of-DWM-/
+    */
+   HANDLE hSharedSurface;
+
+   LUID AdapterLuid;
+
+   /**
+    * Present history token.
+    *
+    * This is returned by dwmapi!DwmpDxGetWindowSharedSurface and
+    * should be passed to D3DKMTRender in D3DKMT_RENDER::PresentHistoryToken.
+    *
+    * @sa http://msdn.microsoft.com/en-us/library/ms799176.aspx
+    */
+   ULONGLONG PresentHistoryToken;
+
+   /** Same as GLCBPRESENTBUFFERSDATA::pPrivateData */
+   LPVOID pPrivateData;
+} GLPRESENTBUFFERSDATA, *PGLPRESENTBUFFERSDATA;
+
 BOOL APIENTRY
 DrvCopyContext(
    DHGLRC dhrcSource,
@@ -433,6 +540,9 @@ DrvGetLayerPaletteEntries(
 PROC APIENTRY
 DrvGetProcAddress(
    LPCSTR lpszProc );
+
+BOOL APIENTRY
+DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data);
 
 BOOL APIENTRY
 DrvRealizeLayerPalette(

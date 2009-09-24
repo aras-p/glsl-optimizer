@@ -73,9 +73,20 @@ struct stw_framebuffer
    
    /* FIXME: Make this work for multiple contexts bound to the same framebuffer */
    boolean must_resize;
+
    unsigned width;
    unsigned height;
    
+   /**
+    * Client area rectangle, relative to the window upper-left corner.
+    *
+    * @sa GLCBPRESENTBUFFERSDATA::rect.
+    */
+   RECT client_rect;
+
+   HANDLE hSharedSurface;
+   struct stw_shared_surface *shared_surface;
+
    /** 
     * This is protected by stw_device::fb_mutex, not the mutex above.
     * 
@@ -125,6 +136,11 @@ stw_framebuffer_from_hdc(
 BOOL
 stw_framebuffer_allocate(
    struct stw_framebuffer *fb );
+
+BOOL
+stw_framebuffer_present_locked(HDC hdc,
+                               struct stw_framebuffer *fb,
+                               unsigned surface_index);
 
 void
 stw_framebuffer_update(

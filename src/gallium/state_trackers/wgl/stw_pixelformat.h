@@ -30,6 +30,10 @@
 
 #include <windows.h>
 
+#ifndef PFD_SUPPORT_COMPOSITION
+#define PFD_SUPPORT_COMPOSITION 0x00008000
+#endif
+
 #include "main/mtypes.h"
 
 #include "pipe/p_compiler.h"

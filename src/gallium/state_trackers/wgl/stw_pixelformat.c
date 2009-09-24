@@ -154,8 +154,11 @@ stw_pixelformat_add(
    pfi->pfd.dwFlags = PFD_SUPPORT_OPENGL;
    
    /* TODO: also support non-native pixel formats */
-   pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW ;
-   
+   pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW;
+
+   /* See http://www.opengl.org/pipeline/article/vol003_7/ */
+   pfi->pfd.dwFlags |= PFD_SUPPORT_COMPOSITION;
+
    if (doublebuffer)
       pfi->pfd.dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
    

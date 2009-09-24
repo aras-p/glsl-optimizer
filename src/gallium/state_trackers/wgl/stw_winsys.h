@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008-2009 Vmware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -36,6 +36,8 @@ struct pipe_screen;
 struct pipe_context;
 struct pipe_surface;
 
+struct stw_shared_surface;
+
 struct stw_winsys
 {
    struct pipe_screen *
@@ -44,10 +46,52 @@ struct stw_winsys
    struct pipe_context *
    (*create_context)( struct pipe_screen *screen );
 
+   /**
+    * Present the color buffer to the window associated with the device context.
+    */
    void
-   (*flush_frontbuffer)( struct pipe_screen *screen,
-                         struct pipe_surface *surf,
-                         HDC hDC );
+   (*present)( struct pipe_screen *screen,
+               struct pipe_surface *surf,
+               HDC hDC );
+
+   /**
+    * Locally unique identifier (LUID) of the graphics adapter.
+    *
+    * @sa GLCBPRESENTBUFFERSDATA::AdapterLuid;
+    */
+   boolean
+   (*get_adapter_luid)( struct pipe_screen *screen,
+                        LUID *pAdapterLuid );
+
+   /**
+    * Open a shared surface (optional).
+    *
+    * @sa GLCBPRESENTBUFFERSDATA::hSharedSurface;
+    */
+   struct stw_shared_surface *
+   (*shared_surface_open)(struct pipe_screen *screen,
+                          HANDLE hSharedSurface);
+
+   /**
+    * Open a shared surface (optional).
+    */
+   void
+   (*shared_surface_close)(struct pipe_screen *screen,
+                           struct stw_shared_surface *surface);
+
+   /**
+    * Compose into a shared (optional).
+    *
+    * Blit the color buffer into a shared surface.
+    *
+    * @sa GLPRESENTBUFFERSDATA::PresentHistoryToken.
+    */
+   void
+   (*compose)( struct pipe_screen *screen,
+               struct pipe_surface *src,
+               struct stw_shared_surface *dest,
+               LPCRECT pRect,
+               ULONGLONG PresentHistoryToken );
 };
 
 boolean

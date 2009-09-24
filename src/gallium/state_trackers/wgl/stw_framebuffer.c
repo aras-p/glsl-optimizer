@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2008-2009 Vmware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,19 +10,19 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <windows.h>
@@ -83,6 +83,9 @@ stw_framebuffer_destroy_locked(
    *link = fb->next;
    fb->next = NULL;
 
+   if(fb->shared_surface)
+      stw_dev->stw_winsys->shared_surface_close(stw_dev->screen, fb->shared_surface);
+
    st_unreference_framebuffer(fb->stfb);
    
    pipe_mutex_unlock( fb->mutex );
@@ -106,13 +109,18 @@ static INLINE void
 stw_framebuffer_get_size( struct stw_framebuffer *fb )
 {
    unsigned width, height;
-   RECT rect;
+   RECT client_rect;
+   RECT window_rect;
+   POINT client_pos;
 
    assert(fb->hWnd);
    
-   GetClientRect( fb->hWnd, &rect );
-   width = rect.right - rect.left;
-   height = rect.bottom - rect.top;
+   /* Get the client area size. */
+   GetClientRect( fb->hWnd, &client_rect );
+   assert(client_rect.left == 0);
+   assert(client_rect.top == 0);
+   width = client_rect.right - client_rect.left;
+   height = client_rect.bottom - client_rect.top;
 
    if(width < 1)
       width = 1;
@@ -124,6 +132,31 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
       fb->width = width; 
       fb->height = height; 
    }
+
+   client_pos.x = 0;
+   client_pos.y = 0;
+   ClientToScreen(fb->hWnd, &client_pos);
+
+   GetWindowRect(fb->hWnd, &window_rect);
+
+   fb->client_rect.left = client_pos.x - window_rect.left;
+   fb->client_rect.top =  client_pos.y - window_rect.top;
+   fb->client_rect.right = fb->client_rect.left + fb->width;
+   fb->client_rect.bottom = fb->client_rect.top + fb->height;
+
+#if 0
+   debug_printf("\n");
+   debug_printf("%s: client_position = (%i, %i)\n",
+                __FUNCTION__, client_pos.x, client_pos.y);
+   debug_printf("%s: window_rect = (%i, %i) - (%i, %i)\n",
+                __FUNCTION__,
+                window_rect.left, window_rect.top,
+                window_rect.right, window_rect.bottom);
+   debug_printf("%s: client_rect = (%i, %i) - (%i, %i)\n",
+                __FUNCTION__,
+                fb->client_rect.left, fb->client_rect.top,
+                fb->client_rect.right, fb->client_rect.bottom);
+#endif
 }
 
 
@@ -155,6 +188,7 @@ stw_call_window_proc(
        * can be masked out by the application. */
       LPWINDOWPOS lpWindowPos = (LPWINDOWPOS)pParams->lParam;
       if((lpWindowPos->flags & SWP_SHOWWINDOW) || 
+         !(lpWindowPos->flags & SWP_NOMOVE) ||
          !(lpWindowPos->flags & SWP_NOSIZE)) {
          fb = stw_framebuffer_from_hwnd( pParams->hwnd );
          if(fb) {
@@ -436,12 +470,126 @@ stw_pixelformat_get(
 
 
 BOOL APIENTRY
-DrvSwapBuffers(
-   HDC hdc )
+DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 {
    struct stw_framebuffer *fb;
    struct pipe_screen *screen;
    struct pipe_surface *surface;
+   unsigned surface_index;
+   BOOL ret = FALSE;
+
+   fb = stw_framebuffer_from_hdc( hdc );
+   if (fb == NULL)
+      return FALSE;
+
+   screen = stw_dev->screen;
+
+   surface_index = (unsigned)(uintptr_t)data->pPrivateData;
+   if(!st_get_framebuffer_surface( fb->stfb, surface_index, &surface ))
+      goto fail;
+
+#ifdef DEBUG
+   if(stw_dev->trace_running) {
+      screen = trace_screen(screen)->screen;
+      surface = trace_surface(surface)->surface;
+   }
+#endif
+
+   if(data->hSharedSurface != fb->hSharedSurface) {
+      if(fb->shared_surface) {
+         stw_dev->stw_winsys->shared_surface_close(screen, fb->shared_surface);
+         fb->shared_surface = NULL;
+      }
+
+      fb->hSharedSurface = data->hSharedSurface;
+
+      if(data->hSharedSurface &&
+         stw_dev->stw_winsys->shared_surface_open) {
+         fb->shared_surface = stw_dev->stw_winsys->shared_surface_open(screen, fb->hSharedSurface);
+      }
+   }
+
+   if(fb->shared_surface) {
+      stw_dev->stw_winsys->compose(screen,
+                                   surface,
+                                   fb->shared_surface,
+                                   &fb->client_rect,
+                                   data->PresentHistoryToken);
+   }
+   else {
+      stw_dev->stw_winsys->present( screen, surface, hdc );
+   }
+
+   ret = TRUE;
+
+fail:
+
+   stw_framebuffer_update(fb);
+
+   stw_framebuffer_release(fb);
+
+   return ret;
+}
+
+
+/**
+ * Queue a composition.
+ *
+ * It will drop the lock on success.
+ */
+BOOL
+stw_framebuffer_present_locked(HDC hdc,
+                               struct stw_framebuffer *fb,
+                               unsigned surface_index)
+{
+   if(stw_dev->callbacks.wglCbPresentBuffers &&
+      stw_dev->stw_winsys->compose) {
+      GLCBPRESENTBUFFERSDATA data;
+
+      memset(&data, 0, sizeof data);
+      data.magic1 = 2;
+      data.magic2 = 0;
+      data.AdapterLuid = stw_dev->AdapterLuid;
+      data.rect = fb->client_rect;
+      data.pPrivateData = (void *)(uintptr_t)surface_index;
+
+      stw_framebuffer_release(fb);
+
+      return stw_dev->callbacks.wglCbPresentBuffers(hdc, &data);
+   }
+   else {
+      struct pipe_screen *screen = stw_dev->screen;
+      struct pipe_surface *surface;
+
+      if(!st_get_framebuffer_surface( fb->stfb, surface_index, &surface )) {
+         /* FIXME: this shouldn't happen, but does on glean */
+         stw_framebuffer_release(fb);
+         return FALSE;
+      }
+
+#ifdef DEBUG
+      if(stw_dev->trace_running) {
+         screen = trace_screen(screen)->screen;
+         surface = trace_surface(surface)->surface;
+      }
+#endif
+
+      stw_dev->stw_winsys->present( screen, surface, hdc );
+
+      stw_framebuffer_update(fb);
+
+      stw_framebuffer_release(fb);
+
+      return TRUE;
+   }
+}
+
+
+BOOL APIENTRY
+DrvSwapBuffers(
+   HDC hdc )
+{
+   struct stw_framebuffer *fb;
 
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -457,27 +605,7 @@ DrvSwapBuffers(
     */
    st_notify_swapbuffers( fb->stfb );
 
-   screen = stw_dev->screen;
-   
-   if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surface )) {
-      /* FIXME: this shouldn't happen, but does on glean */
-      stw_framebuffer_release(fb);
-      return FALSE;
-   }
-
-#ifdef DEBUG
-   if(stw_dev->trace_running) {
-      screen = trace_screen(screen)->screen;
-      surface = trace_surface(surface)->surface;
-   }
-#endif
-
-   stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
-   
-   stw_framebuffer_update(fb);
-   stw_framebuffer_release(fb);
-   
-   return TRUE;
+   return stw_framebuffer_present_locked(hdc, fb, ST_SURFACE_BACK_LEFT);
 }
 
 

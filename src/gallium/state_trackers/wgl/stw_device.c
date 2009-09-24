@@ -29,6 +29,7 @@
 
 #include "glapi/glthread.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 #include "pipe/p_screen.h"
 #include "state_tracker/st_public.h"
 
@@ -62,38 +63,28 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
                      struct pipe_surface *surface,
                      void *context_private )
 {
-   const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
    HDC hdc = (HDC)context_private;
    struct stw_framebuffer *fb;
    
    fb = stw_framebuffer_from_hdc( hdc );
-   /* fb can be NULL if window was destroyed already */
-   if (fb) {
+   if (!fb) {
+      /* fb can be NULL if window was destroyed already */
+      return;
+   }
+
 #if DEBUG
-      {
-         struct pipe_surface *surface2;
-   
-         if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
-            assert(0);
-         else
-            assert(surface2 == surface);
-      }
+   {
+      /* ensure that a random surface was not passed to us */
+      struct pipe_surface *surface2;
+
+      if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
+         assert(0);
+      else
+         assert(surface2 == surface);
+   }
 #endif
 
-#ifdef DEBUG
-      if(stw_dev->trace_running) {
-         screen = trace_screen(screen)->screen;
-         surface = trace_surface(surface)->surface;
-      }
-#endif
-   }
-   
-   stw_winsys->flush_frontbuffer(screen, surface, hdc);
-   
-   if(fb) {
-      stw_framebuffer_update(fb);
-      stw_framebuffer_release(fb);
-   }
+   stw_framebuffer_present_locked(hdc, fb, ST_SURFACE_FRONT_LEFT);
 }
 
 
@@ -125,6 +116,9 @@ stw_init(const struct stw_winsys *stw_winsys)
    screen = stw_winsys->create_screen();
    if(!screen)
       goto error1;
+
+   if(stw_winsys->get_adapter_luid)
+      stw_winsys->get_adapter_luid(screen, &stw_dev->AdapterLuid);
 
 #ifdef DEBUG
    stw_dev->screen = trace_screen_create(screen);
@@ -229,6 +223,14 @@ DrvSetCallbackProcs(
    INT nProcs,
    PROC *pProcs )
 {
+   size_t size;
+
+   if (stw_dev == NULL)
+      return;
+
+   size = MIN2(nProcs * sizeof *pProcs, sizeof stw_dev->callbacks);
+   memcpy(&stw_dev->callbacks, pProcs, size);
+
    return;
 }
 

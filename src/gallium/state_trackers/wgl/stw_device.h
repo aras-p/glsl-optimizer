@@ -52,9 +52,13 @@ struct stw_device
    boolean trace_running;
 #endif
 
+   LUID AdapterLuid;
+
    struct stw_pixelformat_info pixelformats[STW_MAX_PIXELFORMATS];
    unsigned pixelformat_count;
    unsigned pixelformat_extended_count;
+
+   GLCALLBACKTABLE callbacks;
 
    pipe_mutex ctx_mutex;
    struct handle_table *ctx_table;
