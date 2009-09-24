@@ -367,11 +367,7 @@ main(int argc,
          break;
 
       case SL_PP_LINE:
-         fprintf(out, "#line %u", outtokens[i].data.line);
-         break;
-
-      case SL_PP_FILE:
-         fprintf(out, " #file %u", outtokens[i].data.file);
+         fprintf(out, "#line %u %u", outtokens[i].data.line.lineno, outtokens[i].data.line.fileno);
          break;
 
       default:
