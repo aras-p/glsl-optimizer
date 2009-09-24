@@ -233,7 +233,7 @@ enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
    const GLbitfield newenabled = state
       ? (texUnit->Enabled | texBit) : (texUnit->Enabled & ~texBit);
 
-   if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
+   if (texUnit->Enabled == newenabled)
        return GL_FALSE;
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -935,11 +935,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       /* GL_EXT_depth_bounds_test */
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXTENSION(EXT_depth_bounds_test, cap);
-         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
-            _mesa_warning(ctx,
-                   "glEnable(GL_DEPTH_BOUNDS_TEST_EXT) but no depth buffer");
-            return;
-         }
          if (ctx->Depth.BoundsTest == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_DEPTH);

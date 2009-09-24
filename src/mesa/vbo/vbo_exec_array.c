@@ -672,6 +672,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				     const GLvoid *indices,
 				     GLint basevertex)
 {
+   static GLuint warnCount = 0;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
@@ -686,15 +687,19 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
-      _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
-                    "type 0x%x, indices %p, base %d)\n"
-                    "\tend is out of bounds (max=%u)  "
-                    "Element Buffer %u (size %d)\n"
-                    "\tThis should probably be fixed in the application.",
-                    start, end, count, type, indices, basevertex,
-                    ctx->Array.ArrayObj->_MaxElement - 1,
-                    ctx->Array.ElementArrayBufferObj->Name,
-                    ctx->Array.ElementArrayBufferObj->Size);
+      warnCount++;
+
+      if (warnCount < 10) {
+         _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
+                       "type 0x%x, indices=%p)\n"
+                       "\tend is out of bounds (max=%u)  "
+                       "Element Buffer %u (size %d)\n"
+                       "\tThis should probably be fixed in the application.",
+                       start, end, count, type, indices,
+                       ctx->Array.ArrayObj->_MaxElement - 1,
+                       ctx->Array.ElementArrayBufferObj->Name,
+                       ctx->Array.ElementArrayBufferObj->Size);
+      }
 
       if (0)
          dump_element_buffer(ctx, type);
@@ -711,16 +716,17 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
                                              ctx->Array.ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
-            _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, "
-                          "count %d, type 0x%x, indices %p, base %p)\n"
-                          "\tindex=%u is out of bounds (max=%u)  "
-                          "Element Buffer %u (size %d)\n"
-                          "\tSkipping the glDrawRangeElements() call",
-                          start, end, count, type, indices, basevertex,
-                          max,
-                          ctx->Array.ArrayObj->_MaxElement - 1,
-                          ctx->Array.ElementArrayBufferObj->Name,
-                          ctx->Array.ElementArrayBufferObj->Size);
+            if (warnCount < 10) {
+               _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, "
+                             "count %d, type 0x%x, indices=%p)\n"
+                             "\tindex=%u is out of bounds (max=%u)  "
+                             "Element Buffer %u (size %d)\n"
+                             "\tSkipping the glDrawRangeElements() call",
+                             start, end, count, type, indices, max,
+                             ctx->Array.ArrayObj->_MaxElement - 1,
+                             ctx->Array.ElementArrayBufferObj->Name,
+                             ctx->Array.ElementArrayBufferObj->Size);
+            }
             return;
          }
          /* XXX we could also find the min index and compare to 'start'

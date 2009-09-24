@@ -125,6 +125,8 @@ intel_generate_mipmap_2d(GLcontext *ctx,
    GLuint fb_name;
    GLboolean success = GL_FALSE;
    struct gl_framebuffer *saved_fbo = NULL;
+   struct gl_buffer_object *saved_array_buffer = NULL;
+   struct gl_buffer_object *saved_element_buffer = NULL;
 
    _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
 		    GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT |
@@ -132,6 +134,16 @@ intel_generate_mipmap_2d(GLcontext *ctx,
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    old_active_texture = ctx->Texture.CurrentUnit;
    _mesa_reference_framebuffer(&saved_fbo, ctx->DrawBuffer);
+
+   /* use default array/index buffers */
+   _mesa_reference_buffer_object(ctx, &saved_array_buffer,
+                                 ctx->Array.ArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
+                                 ctx->Shared->NullBufferObj);   
+   _mesa_reference_buffer_object(ctx, &saved_element_buffer,
+                                 ctx->Array.ElementArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj,
+                                 ctx->Shared->NullBufferObj);   
 
    _mesa_Disable(GL_POLYGON_STIPPLE);
    _mesa_Disable(GL_DEPTH_TEST);
@@ -204,6 +216,15 @@ intel_generate_mipmap_2d(GLcontext *ctx,
 fail:
    meta_restore_fragment_program(&intel->meta);
    meta_restore_vertex_program(&intel->meta);
+
+   /* restore array/index buffers */
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
+                                 saved_array_buffer);
+   _mesa_reference_buffer_object(ctx, &saved_array_buffer, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj,
+                                 saved_element_buffer);
+   _mesa_reference_buffer_object(ctx, &saved_element_buffer, NULL);
+
 
    _mesa_DeleteFramebuffersEXT(1, &fb_name);
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);

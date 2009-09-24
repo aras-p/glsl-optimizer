@@ -125,6 +125,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    ctx->Shader.EmitCondCodes = GL_TRUE;
+   ctx->Shader.EmitNVTempInitialization = GL_TRUE;
 
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
    ctx->Const.VertexProgram.MaxAluInstructions = 0;

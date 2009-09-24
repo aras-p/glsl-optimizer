@@ -100,6 +100,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
  * \param type  type of parameter, such as 
  * \param name  the parameter name, will be duplicated/copied!
  * \param size  number of elements in 'values' vector (1..4, or more)
+ * \param datatype  GL_FLOAT, GL_FLOAT_VECx, GL_INT, GL_INT_VECx or GL_NONE.
  * \param values  initial parameter value, up to 4 GLfloats, or NULL
  * \param state  state indexes, or NULL
  * \return  index of new parameter in the list, or -1 if error (out of mem)
