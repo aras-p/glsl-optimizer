@@ -42,6 +42,7 @@ sl_pp_process_line(struct sl_pp_context *context,
    int line_number = -1;
    int file_number = -1;
    unsigned int line;
+   unsigned int file;
 
    memset(&state, 0, sizeof(state));
    for (i = first; i < last;) {
@@ -94,37 +95,25 @@ sl_pp_process_line(struct sl_pp_context *context,
    free(state.out);
 
    line = atoi(sl_pp_context_cstr(context, line_number));
+   if (file_number != -1) {
+      file = atoi(sl_pp_context_cstr(context, file_number));
+   } else {
+      file = context->file;
+   }
 
-   if (context->line != line) {
+   if (context->line != line || context->file != file) {
       struct sl_pp_token_info ti;
 
       ti.token = SL_PP_LINE;
-      ti.data.line = line;
+      ti.data.line.lineno = line;
+      ti.data.line.fileno = file;
       if (sl_pp_process_out(pstate, &ti)) {
          strcpy(context->error_msg, "out of memory");
          return -1;
       }
 
       context->line = line;
-   }
-
-   if (file_number != -1) {
-      unsigned int file;
-
-      file = atoi(sl_pp_context_cstr(context, file_number));
-
-      if (context->file != file) {
-         struct sl_pp_token_info ti;
-
-         ti.token = SL_PP_FILE;
-         ti.data.file = file;
-         if (sl_pp_process_out(pstate, &ti)) {
-            strcpy(context->error_msg, "out of memory");
-            return -1;
-         }
-
-         context->file = file;
-      }
+      context->file = file;
    }
 
    return 0;

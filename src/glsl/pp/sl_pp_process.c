@@ -79,7 +79,8 @@ sl_pp_process(struct sl_pp_context *context,
       struct sl_pp_token_info ti;
 
       ti.token = SL_PP_LINE;
-      ti.data.line = context->line - 1;
+      ti.data.line.lineno = context->line - 1;
+      ti.data.line.fileno = context->file;
       if (sl_pp_process_out(&state, &ti)) {
          strcpy(context->error_msg, "out of memory");
          return -1;
