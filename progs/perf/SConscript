@@ -12,7 +12,7 @@ progs = [
       'drawoverhead',
       'fbobind',
       'fill',
-      "readpixels',
+      'readpixels',
       'swapbuffers',
       'teximage',
       'vbo',
