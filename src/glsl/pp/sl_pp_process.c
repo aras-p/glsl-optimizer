@@ -26,7 +26,9 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include <string.h>
 #include "sl_pp_process.h"
+#include "sl_pp_public.h"
 
 
 static void
