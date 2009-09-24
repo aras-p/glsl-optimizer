@@ -1855,7 +1855,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RCP:
-   /* TGSI_OPCODE_RECIP */
       FETCH( func, *inst, 0, 0, CHAN_X );
       emit_rcp( func, 0, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -1864,7 +1863,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RSQ:
-   /* TGSI_OPCODE_RECIPSQRT */
       FETCH( func, *inst, 0, 0, CHAN_X );
       emit_abs( func, 0 );
       emit_rsqrt( func, 1, 0 );
@@ -1962,7 +1960,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DP3:
-   /* TGSI_OPCODE_DOT3 */
       FETCH( func, *inst, 0, 0, CHAN_X );
       FETCH( func, *inst, 1, 1, CHAN_X );
       emit_mul( func, 0, 1 );
@@ -1980,7 +1977,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DP4:
-   /* TGSI_OPCODE_DOT4 */
       FETCH( func, *inst, 0, 0, CHAN_X );
       FETCH( func, *inst, 1, 1, CHAN_X );
       emit_mul( func, 0, 1 );
@@ -2051,17 +2047,14 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_SLT:
-   /* TGSI_OPCODE_SETLT */
       emit_setcc( func, inst, cc_LessThan );
       break;
 
    case TGSI_OPCODE_SGE:
-   /* TGSI_OPCODE_SETGE */
       emit_setcc( func, inst, cc_NotLessThan );
       break;
 
    case TGSI_OPCODE_MAD:
-   /* TGSI_OPCODE_MADD */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          FETCH( func, *inst, 1, 1, chan_index );
@@ -2379,7 +2372,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-   /* TGSI_OPCODE_SGN */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_sgn( func, 0, 0 );
