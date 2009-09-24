@@ -29,6 +29,8 @@
 #define SL_PP_TOKEN_H
 
 
+struct sl_pp_context;
+
 enum sl_pp_token {
    SL_PP_WHITESPACE,
    SL_PP_NEWLINE,

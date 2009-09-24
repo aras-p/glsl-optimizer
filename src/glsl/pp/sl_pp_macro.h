@@ -31,6 +31,9 @@
 #include "sl_pp_token.h"
 
 
+struct sl_pp_context;
+struct sl_pp_process_state;
+
 struct sl_pp_macro_formal_arg {
    int name;
    struct sl_pp_macro_formal_arg *next;
