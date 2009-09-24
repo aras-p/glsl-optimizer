@@ -351,13 +351,6 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       _mesa_free_parameter_list(prog->Attributes);
    }
 
-   /* XXX this is a little ugly */
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
-      if (vprog->TnlData)
-         _mesa_free(vprog->TnlData);
-   }
-
    _mesa_free(prog);
 }
 

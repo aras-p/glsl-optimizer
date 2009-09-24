@@ -1834,7 +1834,6 @@ struct gl_vertex_program
    struct gl_program Base;   /**< base class */
    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
-   void *TnlData;		/**< should probably use Base.DriverData */
 };
 
 
