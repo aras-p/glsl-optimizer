@@ -825,7 +825,8 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 #define CVT_F32_U32 0x64
 #define CVT_S32_F32 0x8c
 #define CVT_S32_S32 0x0c
-#define CVT_F32_F32_ROP 0xcc
+#define CVT_NEG     0x20
+#define CVT_RI      0x08
 
 static void
 emit_cvt(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
@@ -933,7 +934,7 @@ map_tgsi_setop_cc(unsigned op)
 static INLINE void
 emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	emit_cvt(pc, dst, src, -1, CVTOP_FLOOR, CVT_F32_F32_ROP);
+	emit_cvt(pc, dst, src, -1, CVTOP_FLOOR, CVT_F32_F32 | CVT_RI);
 }
 
 static void
@@ -1623,7 +1624,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1,
-				 CVTOP_CEIL, CVT_F32_F32);
+				 CVTOP_CEIL, CVT_F32_F32 | CVT_RI);
 		}
 		break;
 	case TGSI_OPCODE_COS:
@@ -1843,7 +1844,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1,
-				 CVTOP_TRUNC, CVT_F32_F32);
+				 CVTOP_TRUNC, CVT_F32_F32 | CVT_RI);
 		}
 		break;
 	case TGSI_OPCODE_XPD:
