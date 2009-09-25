@@ -27,6 +27,7 @@
 
 
 #include "main/imports.h"
+#include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
 #include "main/texformat.h"
@@ -161,6 +162,43 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 }
 
 
+/**
+ * Compute the expected number of mipmap levels in the texture given
+ * the width/height/depth of the base image and the GL_TEXTURE_BASE_LEVEL/
+ * GL_TEXTURE_MAX_LEVEL settings.  This will tell us how many mipmap
+ * level should be generated.
+ */
+static GLuint
+compute_num_levels(GLcontext *ctx,
+                   struct gl_texture_object *texObj,
+                   GLenum target)
+{
+   if (target == GL_TEXTURE_RECTANGLE_ARB) {
+      return 1;
+   }
+   else {
+      const GLuint maxLevels = texObj->MaxLevel - texObj->BaseLevel + 1;
+      const struct gl_texture_image *baseImage = 
+         _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
+      GLuint size, numLevels;
+
+      size = MAX2(baseImage->Width2, baseImage->Height2);
+      size = MAX2(size, baseImage->Depth2);
+
+      numLevels = 0;
+
+      while (size > 0) {
+         numLevels++;
+         size >>= 1;
+      }
+
+      numLevels = MIN2(numLevels, maxLevels);
+
+      return numLevels;
+   }
+}
+
+
 void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
                    struct gl_texture_object *texObj)
@@ -174,9 +212,49 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    if (!pt)
       return;
 
-   lastLevel = pt->last_level;
+   /* find expected last mipmap level */
+   lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
-   if (!st_render_mipmap(st, target, pt, baseLevel, lastLevel)) {
+   if (pt->last_level < lastLevel) {
+      /* The current gallium texture doesn't have space for all the
+       * mipmap levels we need to generate.  So allocate a new texture.
+       */
+      struct st_texture_object *stObj = st_texture_object(texObj);
+      struct pipe_texture *oldTex = stObj->pt;
+      GLboolean needFlush;
+
+      /* create new texture with space for more levels */
+      stObj->pt = st_texture_create(st,
+                                    oldTex->target,
+                                    oldTex->format,
+                                    lastLevel,
+                                    oldTex->width[0],
+                                    oldTex->height[0],
+                                    oldTex->depth[0],
+                                    oldTex->tex_usage);
+
+      /* The texture isn't in a "complete" state yet so set the expected
+       * lastLevel here, since it won't get done in st_finalize_texture().
+       */
+      stObj->lastLevel = lastLevel;
+
+      /* This will copy the old texture's base image into the new texture
+       * which we just allocated.
+       */
+      st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
+
+      /* release the old tex (will likely be freed too) */
+      pipe_texture_reference(&oldTex, NULL);
+
+      pt = stObj->pt;
+   }
+
+   assert(lastLevel <= pt->last_level);
+
+   /* Recall that the Mesa BaseLevel image is stored in the gallium
+    * texture's level[0] position.  So pass baseLevel=0 here.
+    */
+   if (!st_render_mipmap(st, target, pt, 0, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 
