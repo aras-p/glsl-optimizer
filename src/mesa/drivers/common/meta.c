@@ -1939,6 +1939,10 @@ _mesa_meta_Bitmap(GLcontext *ctx,
 }
 
 
+/**
+ * Called via ctx->Driver.GenerateMipmap()
+ * Note: texture borders and 3D texture support not yet complete.
+ */
 void
 _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
                           struct gl_texture_object *texObj)
@@ -1952,13 +1956,20 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
    const GLuint maxLevel = texObj->MaxLevel;
    const GLenum minFilterSave = texObj->MinFilter;
    const GLenum magFilterSave = texObj->MagFilter;
+   const GLint baseLevelSave = texObj->BaseLevel;
+   const GLint maxLevelSave = texObj->MaxLevel;
+   const GLboolean genMipmapSave = texObj->GenerateMipmap;
+   const GLenum wrapSSave = texObj->WrapS;
+   const GLenum wrapTSave = texObj->WrapT;
+   const GLenum wrapRSave = texObj->WrapR;
    const GLuint fboSave = ctx->DrawBuffer->Name;
    GLenum faceTarget;
-   GLuint level;
+   GLuint dstLevel;
    GLuint border = 0;
 
    /* check for fallbacks */
-   if (!ctx->Extensions.EXT_framebuffer_object) {
+   if (!ctx->Extensions.EXT_framebuffer_object ||
+       target == GL_TEXTURE_3D) {
       _mesa_generate_mipmap(ctx, target, texObj);
       return;
    }
@@ -2007,12 +2018,16 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
 
    _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
    _mesa_set_enable(ctx, target, GL_TRUE);
 
    /* setup texcoords once (XXX what about border?) */
    switch (faceTarget) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-      break;
+   case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
       verts[0].s = 0.0F;
       verts[0].t = 0.0F;
@@ -2027,63 +2042,180 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
       verts[3].t = 1.0F;
       verts[3].r = 0.0F;
       break;
+   case GL_TEXTURE_3D:
+      abort();
+      break;
+   default:
+      /* cube face */
+      {
+         static const GLfloat st[4][2] = {
+            {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
+         };
+         GLuint i;
+
+         /* loop over quad verts */
+         for (i = 0; i < 4; i++) {
+            /* Compute sc = +/-scale and tc = +/-scale.
+             * Not +/-1 to avoid cube face selection ambiguity near the edges,
+             * though that can still sometimes happen with this scale factor...
+             */
+            const GLfloat scale = 0.9999f;
+            const GLfloat sc = (2.0f * st[i][0] - 1.0f) * scale;
+            const GLfloat tc = (2.0f * st[i][1] - 1.0f) * scale;
+
+            switch (faceTarget) {
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+               verts[i].s = 1.0f;
+               verts[i].t = -tc;
+               verts[i].r = -sc;
+               break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+               verts[i].s = -1.0f;
+               verts[i].t = -tc;
+               verts[i].r = sc;
+               break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+               verts[i].s = sc;
+               verts[i].t = 1.0f;
+               verts[i].r = tc;
+               break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+               verts[i].s = sc;
+               verts[i].t = -1.0f;
+               verts[i].r = -tc;
+               break;
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+               verts[i].s = sc;
+               verts[i].t = -tc;
+               verts[i].r = 1.0f;
+               break;
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+               verts[i].s = -sc;
+               verts[i].t = -tc;
+               verts[i].r = -1.0f;
+               break;
+            default:
+               assert(0);
+            }
+         }
+      }
    }
 
+   _mesa_set_enable(ctx, target, GL_TRUE);
 
-   for (level = baseLevel + 1; level <= maxLevel; level++) {
+   /* texture is already locked, unlock now */
+   _mesa_unlock_texture(ctx, texObj);
+
+   for (dstLevel = baseLevel + 1; dstLevel <= maxLevel; dstLevel++) {
       const struct gl_texture_image *srcImage;
-      const GLuint srcLevel = level - 1;
-      GLsizei srcWidth, srcHeight;
-      GLsizei newWidth, newHeight;
+      const GLuint srcLevel = dstLevel - 1;
+      GLsizei srcWidth, srcHeight, srcDepth;
+      GLsizei dstWidth, dstHeight, dstDepth;
       GLenum status;
 
-      srcImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
+      srcImage = _mesa_select_tex_image(ctx, texObj, faceTarget, srcLevel);
       assert(srcImage->Border == 0); /* XXX we can fix this */
 
+      /* src size w/out border */
       srcWidth = srcImage->Width - 2 * border;
       srcHeight = srcImage->Height - 2 * border;
+      srcDepth = srcImage->Depth - 2 * border;
 
-      newWidth = MAX2(1, srcWidth / 2) + 2 * border;
-      newHeight = MAX2(1, srcHeight / 2) + 2 * border;
+      /* new dst size w/ border */
+      dstWidth = MAX2(1, srcWidth / 2) + 2 * border;
+      dstHeight = MAX2(1, srcHeight / 2) + 2 * border;
+      dstDepth = MAX2(1, srcDepth / 2) + 2 * border;
 
-      if (newWidth == srcImage->Width && newHeight == srcImage->Height) {
-	 break;
+      if (dstWidth == srcImage->Width &&
+          dstHeight == srcImage->Height &&
+          dstDepth == srcImage->Depth) {
+         /* all done */
+         break;
       }
 
-      /* Create empty image */
-      _mesa_TexImage2D(GL_TEXTURE_2D, level, srcImage->InternalFormat,
-		       newWidth, newHeight, border,
-		       GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      /* Create empty dest image */
+      if (target == GL_TEXTURE_1D) {
+         _mesa_TexImage1D(target, dstLevel, srcImage->InternalFormat,
+                          dstWidth, border,
+                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      }
+      else if (target == GL_TEXTURE_3D) {
+         _mesa_TexImage3D(target, dstLevel, srcImage->InternalFormat,
+                          dstWidth, dstHeight, dstDepth, border,
+                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      }
+      else {
+         /* 2D or cube */
+         _mesa_TexImage2D(faceTarget, dstLevel, srcImage->InternalFormat,
+                          dstWidth, dstHeight, border,
+                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-      /* vertex positions */
+         if (target == GL_TEXTURE_CUBE_MAP) {
+            /* If texturing from a cube, we need to make sure all src faces
+             * have been defined (even if we're not sampling from them.)
+             * Otherwise the texture object will be 'incomplete' and
+             * texturing from it will not be allowed.
+             */
+            GLuint face;
+            for (face = 0; face < 6; face++) {
+               if (!texObj->Image[face][srcLevel] ||
+                   texObj->Image[face][srcLevel]->Width != srcWidth) {
+                  _mesa_TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+                                   srcLevel, srcImage->InternalFormat,
+                                   srcWidth, srcHeight, border,
+                                   GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+               }
+            }
+         }
+      }
+
+      /* setup vertex positions */
       {
          verts[0].x = 0.0F;
          verts[0].y = 0.0F;
-         verts[1].x = (GLfloat) newWidth;
+         verts[1].x = (GLfloat) dstWidth;
          verts[1].y = 0.0F;
-         verts[2].x = (GLfloat) newWidth;
-         verts[2].y = (GLfloat) newHeight;
+         verts[2].x = (GLfloat) dstWidth;
+         verts[2].y = (GLfloat) dstHeight;
          verts[3].x = 0.0F;
-         verts[3].y = (GLfloat) newHeight;
+         verts[3].y = (GLfloat) dstHeight;
 
          /* upload new vertex data */
          _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
       }
 
       /* limit sampling to src level */
-      _mesa_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, srcLevel);
-      _mesa_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, srcLevel);
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
 
-      /* Set to draw into the current level */
-      _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
-                                    GL_COLOR_ATTACHMENT0_EXT,
-                                    target,
-                                    texObj->Name,
-                                    level);
+      /* Set to draw into the current dstLevel */
+      if (target == GL_TEXTURE_1D) {
+         _mesa_FramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT,
+                                       GL_COLOR_ATTACHMENT0_EXT,
+                                       target,
+                                       texObj->Name,
+                                       dstLevel);
+      }
+      else if (target == GL_TEXTURE_3D) {
+         GLint zoffset = 0; /* XXX unfinished */
+         _mesa_FramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
+                                       GL_COLOR_ATTACHMENT0_EXT,
+                                       target,
+                                       texObj->Name,
+                                       dstLevel, zoffset);
+      }
+      else {
+         /* 2D / cube */
+         _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+                                       GL_COLOR_ATTACHMENT0_EXT,
+                                       faceTarget,
+                                       texObj->Name,
+                                       dstLevel);
+      }
 
-      /* Choose to render to the color attachment. */
       _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
+      /* sanity check */
       status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
          abort();
@@ -2093,12 +2225,19 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
 
+   _mesa_lock_texture(ctx, texObj); /* relock */
+
    _mesa_meta_end(ctx);
 
    _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
    _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
+   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, wrapRSave);
 
-   /* restore (XXX add to meta_begin/end()? */
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 }
 
