@@ -465,6 +465,12 @@ bind_samplers(struct exa_context *exa, int op,
    memset(&src_sampler, 0, sizeof(struct pipe_sampler_state));
    memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
 
+   if ((pSrc && exa->pipe->is_texture_referenced(exa->pipe, pSrc->tex, 0, 0) &
+        PIPE_REFERENCED_FOR_WRITE) ||
+       (pMask && exa->pipe->is_texture_referenced(exa->pipe, pMask->tex, 0, 0) &
+        PIPE_REFERENCED_FOR_WRITE))
+      exa->pipe->flush(exa->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
    if (pSrcPicture && pSrc) {
       unsigned src_wrap = render_repeat_to_gallium(
          pSrcPicture->repeatType);
@@ -995,7 +1001,9 @@ void xorg_copy_pixmap(struct exa_context *ctx,
    struct pipe_texture *dst = dst_priv->tex;
    struct pipe_texture *src = src_priv->tex;
 
-   xorg_exa_finish(ctx);
+   if (ctx->pipe->is_texture_referenced(ctx->pipe, src, 0, 0) &
+       PIPE_REFERENCED_FOR_WRITE)
+      ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    dst_loc[0] = dx;
    dst_loc[1] = dy;
