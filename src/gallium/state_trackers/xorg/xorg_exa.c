@@ -438,8 +438,34 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
+   struct exa_pixmap_priv *priv;
 
    debug_printf("ExaPrepareComposite\n");
+
+   priv = exaGetPixmapDriverPrivate(pDst);
+   if (!priv || !priv->tex ||
+       !exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                       priv->tex->target,
+                                       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+      return FALSE;
+
+   if (pSrc) {
+      priv = exaGetPixmapDriverPrivate(pSrc);
+      if (!priv || !priv->tex ||
+          !exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                          priv->tex->target,
+                                          PIPE_TEXTURE_USAGE_SAMPLER, 0))
+         return FALSE;
+   }
+
+   if (pMask) {
+      priv = exaGetPixmapDriverPrivate(pMask);
+      if (!priv || !priv->tex ||
+          !exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
+                                          priv->tex->target,
+                                          PIPE_TEXTURE_USAGE_SAMPLER, 0))
+         return FALSE;
+   }
 
 #if DISABLE_ACCEL
    (void) exa;
@@ -447,8 +473,8 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 #else
    return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
-                                    exaGetPixmapDriverPrivate(pSrc),
-                                    exaGetPixmapDriverPrivate(pMask),
+                                    pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
+                                    pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,
                                     exaGetPixmapDriverPrivate(pDst));
 #endif
 }
