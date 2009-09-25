@@ -12,6 +12,7 @@ progs = [
       'drawoverhead',
       'fbobind',
       'fill',
+      'genmipmap',
       'readpixels',
       'swapbuffers',
       'teximage',

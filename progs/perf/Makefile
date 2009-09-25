@@ -18,6 +18,7 @@ PROG_SOURCES = \
 	drawoverhead.c \
 	fbobind.c \
 	fill.c \
+	genmipmap.c \
 	readpixels.c \
 	swapbuffers.c \
 	teximage.c \
