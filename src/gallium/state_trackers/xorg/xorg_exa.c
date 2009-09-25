@@ -48,7 +48,7 @@
 #include "util/u_rect.h"
 
 #define DEBUG_SOLID 0
-#define DISABLE_ACCEL 1
+#define DISABLE_ACCEL 0
 
 /*
  * Helper functions
