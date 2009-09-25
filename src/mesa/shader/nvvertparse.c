@@ -1415,9 +1415,10 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
        * upload everything, _mesa_layout_parameters is the answer.
        */
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS; i++) {
+	 GLint index;
 	 state_tokens[2] = i;
-	 int index = _mesa_add_state_reference(program->Base.Parameters,
-					       state_tokens);
+	 index = _mesa_add_state_reference(program->Base.Parameters,
+					   state_tokens);
 	 assert(index == i);
       }
       program->Base.NumParameters = program->Base.Parameters->NumParameters;
