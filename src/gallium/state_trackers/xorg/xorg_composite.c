@@ -57,24 +57,6 @@ pixel_to_float4(Pixel pixel, float *color)
    color[3] = ((float)a) / 255.;
 }
 
-static INLINE void
-render_pixel_to_float4(PictFormatPtr format,
-                       CARD32 pixel, float *color)
-{
-   CARD32	    r, g, b, a;
-
-   debug_assert(format->type == PictTypeDirect);
-
-   r = (pixel >> format->direct.red) & format->direct.redMask;
-   g = (pixel >> format->direct.green) & format->direct.greenMask;
-   b = (pixel >> format->direct.blue) & format->direct.blueMask;
-   a = (pixel >> format->direct.alpha) & format->direct.alphaMask;
-   color[0] = ((float)r) / ((float)format->direct.redMask);
-   color[1] = ((float)g) / ((float)format->direct.greenMask);
-   color[2] = ((float)b) / ((float)format->direct.blueMask);
-   color[3] = ((float)a) / ((float)format->direct.alphaMask);
-}
-
 struct acceleration_info {
    int op : 16;
    int with_mask : 1;
@@ -433,9 +415,9 @@ bind_shaders(struct exa_context *exa, int op,
          if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
             fs_traits |= FS_SOLID_FILL;
             vs_traits |= VS_SOLID_FILL;
-            render_pixel_to_float4(pSrcPicture->pFormat,
-                                   pSrcPicture->pSourcePict->solidFill.color,
-                                   exa->solid_color);
+            debug_assert(pSrcPicture->format == PICT_a8r8g8b8);
+            pixel_to_float4(pSrcPicture->pSourcePict->solidFill.color,
+                            exa->solid_color);
             exa->has_solid_color = TRUE;
          } else {
             debug_assert("!gradients not supported");
