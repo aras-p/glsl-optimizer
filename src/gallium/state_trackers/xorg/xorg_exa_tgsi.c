@@ -465,7 +465,7 @@ struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
                                     unsigned vs_traits,
                                     unsigned fs_traits)
 {
-   struct xorg_shader shader = {0};
+   struct xorg_shader shader = { NULL, NULL };
    void *vs, *fs;
 
    vs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_VERTEX,
