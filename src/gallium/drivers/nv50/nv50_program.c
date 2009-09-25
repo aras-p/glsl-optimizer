@@ -90,8 +90,9 @@ struct nv50_reg {
 	int acc; /* instruction where this reg is last read (first insn == 1) */
 };
 
-/* arbitrary limit */
+/* arbitrary limits */
 #define MAX_IF_DEPTH 4
+#define MAX_LOOP_DEPTH 4
 
 struct nv50_pc {
 	struct nv50_program *p;
@@ -127,7 +128,9 @@ struct nv50_pc {
 	struct nv50_program_exec *if_cond;
 	struct nv50_program_exec *if_insn[MAX_IF_DEPTH];
 	struct nv50_program_exec *br_join[MAX_IF_DEPTH];
-	int if_lvl;
+	struct nv50_program_exec *br_loop[MAX_LOOP_DEPTH]; /* for BRK branch */
+	int if_lvl, loop_lvl;
+	unsigned loop_pos[MAX_LOOP_DEPTH];
 
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
@@ -204,6 +207,10 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 	assert(0);
 }
 
+/* XXX: For shaders that aren't executed linearly (e.g. shaders that
+ * contain loops), we need to assign all hw regs to TGSI TEMPs early,
+ * lest we risk temp_temps overwriting regs alloc'd "later".
+ */
 static struct nv50_reg *
 alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 {
@@ -1485,6 +1492,55 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 	}
 }
 
+static INLINE boolean
+has_pred(struct nv50_program_exec *e, unsigned cc)
+{
+	if (!is_long(e) || is_immd(e))
+		return FALSE;
+	return ((e->inst[1] & 0x780) == (cc << 7));
+}
+
+/* on ENDIF see if we can do "@p0.neu single_op" instead of:
+ *        join_at ENDIF
+ *        @p0.eq bra ENDIF
+ *        single_op
+ * ENDIF: nop.join
+ */
+static boolean
+nv50_kill_branch(struct nv50_pc *pc)
+{
+	int lvl = pc->if_lvl;
+
+	if (pc->if_insn[lvl]->next != pc->p->exec_tail)
+		return FALSE;
+
+	/* if ccode == 'true', the BRA is from an ELSE and the predicate
+	 * reg may no longer be valid, since we currently always use $p0
+	 */
+	if (has_pred(pc->if_insn[lvl], 0xf))
+		return FALSE;
+	assert(pc->if_insn[lvl] && pc->br_join[lvl]);
+
+	/* We'll use the exec allocated for JOIN_AT (as we can't easily
+	 * update prev's next); if exec_tail is BRK, update the pointer.
+	 */
+	if (pc->loop_lvl && pc->br_loop[pc->loop_lvl - 1] == pc->p->exec_tail)
+		pc->br_loop[pc->loop_lvl - 1] = pc->br_join[lvl];
+
+	pc->p->exec_size -= 4; /* remove JOIN_AT and BRA */
+
+	*pc->br_join[lvl] = *pc->p->exec_tail;
+
+	FREE(pc->if_insn[lvl]);
+	FREE(pc->p->exec_tail);
+
+	pc->p->exec_tail = pc->br_join[lvl];
+	pc->p->exec_tail->next = NULL;
+	set_pred(pc, 0xd, 0, pc->p->exec_tail);
+
+	return TRUE;
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc,
 		     const struct tgsi_full_instruction *inst)
@@ -1554,6 +1610,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_add(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
+	case TGSI_OPCODE_BGNLOOP:
+		pc->loop_pos[pc->loop_lvl++] = pc->p->exec_size;
+		break;
+	case TGSI_OPCODE_BRK:
+		emit_branch(pc, -1, 0, NULL);
+		assert(pc->loop_lvl > 0);
+		pc->br_loop[pc->loop_lvl - 1] = pc->p->exec_tail;
+		break;
 	case TGSI_OPCODE_CEIL:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
@@ -1609,6 +1673,10 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_ENDIF:
 		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
 
+		/* try to replace branch over 1 insn with a predicated insn */
+		if (nv50_kill_branch(pc) == TRUE)
+			break;
+
 		if (pc->br_join[pc->if_lvl]) {
 			pc->br_join[pc->if_lvl]->param.index = pc->p->exec_size;
 			pc->br_join[pc->if_lvl] = NULL;
@@ -1618,6 +1686,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		 */
 		emit_nop(pc);
 		pc->p->exec_tail->inst[1] |= 2;
+		break;
+	case TGSI_OPCODE_ENDLOOP:
+		emit_branch(pc, -1, 0, NULL);
+		pc->p->exec_tail->param.index = pc->loop_pos[--pc->loop_lvl];
+		pc->br_loop[pc->loop_lvl]->param.index = pc->p->exec_size;
 		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
