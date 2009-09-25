@@ -1519,6 +1519,17 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    uint zslice = 0;
    uint offset;
 
+   /* The texture object should have room for the levels which we're
+    * about to generate.
+    */
+   assert(lastLevel <= pt->last_level);
+
+   /* If this fails, why are we here? */
+   assert(lastLevel > baseLevel);
+
+   assert(filter == PIPE_TEX_FILTER_LINEAR ||
+          filter == PIPE_TEX_FILTER_NEAREST);
+
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, pt->format, PIPE_TEXTURE_2D,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
