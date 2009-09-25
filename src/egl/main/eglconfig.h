@@ -108,7 +108,27 @@ _eglAddConfig(_EGLDisplay *display, _EGLConfig *config);
 
 
 extern EGLBoolean
-_eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list);
+_eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching);
+
+
+extern EGLBoolean
+_eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria);
+
+
+extern EGLBoolean
+_eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list);
+
+
+extern EGLint
+_eglCompareConfigs(const _EGLConfig *conf1, const _EGLConfig *conf2,
+                   const _EGLConfig *criteria, EGLBoolean compare_id);
+
+
+extern void
+_eglSortConfigs(const _EGLConfig **configs, EGLint count,
+                EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
+                                  void *),
+                void *priv_data);
 
 
 extern EGLBoolean
