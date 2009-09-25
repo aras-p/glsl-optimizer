@@ -1166,10 +1166,11 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	emit(pc, e);
 
 #if 1
-	if (mask & 1) emit_mov(pc, dst[0], t[0]);
-	if (mask & 2) emit_mov(pc, dst[1], t[1]);
-	if (mask & 4) emit_mov(pc, dst[2], t[2]);
-	if (mask & 8) emit_mov(pc, dst[3], t[3]);
+	c = 0;
+	if (mask & 1) emit_mov(pc, dst[0], t[c++]);
+	if (mask & 2) emit_mov(pc, dst[1], t[c++]);
+	if (mask & 4) emit_mov(pc, dst[2], t[c++]);
+	if (mask & 8) emit_mov(pc, dst[3], t[c]);
 
 	free_temp4(pc, t);
 #else
