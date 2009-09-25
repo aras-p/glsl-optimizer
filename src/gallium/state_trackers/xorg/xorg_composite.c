@@ -305,15 +305,15 @@ boolean xorg_composite_accelerated(int op,
    unsigned accel_ops_count =
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
 
-   if (pSrcPicture) {
-      /* component alpha not supported */
-      if (pSrcPicture->componentAlpha)
-         return FALSE;
-   }
-
    for (i = 0; i < accel_ops_count; ++i) {
       if (op == accelerated_ops[i].op) {
-         if (pMaskPicture && !accelerated_ops[i].with_mask)
+         /* Check for unsupported component alpha */
+         if ((pSrcPicture->componentAlpha &&
+              !accelerated_ops[i].component_alpha) ||
+             (pMaskPicture &&
+              (!accelerated_ops[i].with_mask ||
+               (pMaskPicture->componentAlpha &&
+                !accelerated_ops[i].component_alpha))))
             return FALSE;
          return TRUE;
       }
@@ -390,14 +390,9 @@ static void
 bind_blend_state(struct exa_context *exa, int op,
                  PicturePtr pSrcPicture, PicturePtr pMaskPicture)
 {
-   boolean component_alpha = (pSrcPicture) ?
-                             pSrcPicture->componentAlpha : FALSE;
    struct xorg_composite_blend blend_opt;
    struct pipe_blend_state blend;
 
-   if (component_alpha) {
-      op = PictOpOver;
-   }
    blend_opt = blend_for_op(op);
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
