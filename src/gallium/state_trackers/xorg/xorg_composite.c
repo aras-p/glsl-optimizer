@@ -287,6 +287,16 @@ boolean xorg_composite_accelerated(int op,
    unsigned accel_ops_count =
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
 
+   if (pSrcPicture->pSourcePict) {
+      /* Gradients not yet supported */
+      if (pSrcPicture->pSourcePict->type != SourcePictTypeSolidFill)
+         return FALSE;
+
+      /* Solid source with mask not yet handled properly */
+      if (pMaskPicture)
+         return FALSE;
+   }
+
    for (i = 0; i < accel_ops_count; ++i) {
       if (op == accelerated_ops[i].op) {
          /* Check for unsupported component alpha */
