@@ -867,6 +867,8 @@ static void renderer_copy_texture(struct exa_context *exa,
    /* texture */
    cso_set_sampler_textures(exa->cso, 1, &src);
 
+   bind_rasterizer_state(exa);
+
    /* shaders */
    shader = xorg_shaders_get(exa->shaders,
                              VS_COMPOSITE,
