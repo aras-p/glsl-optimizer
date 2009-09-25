@@ -17,15 +17,6 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
-void
-_eglSetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val)
-{
-   assert(attr >= FIRST_ATTRIB);
-   assert(attr < FIRST_ATTRIB + MAX_ATTRIBS);
-   config->Attrib[attr - FIRST_ATTRIB] = val;
-}
-
-
 /**
  * Init the given _EGLconfig to default values.
  * \param id  the configuration's ID.
@@ -128,21 +119,16 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
    EGLint i;
 
    /* set all config attribs to EGL_DONT_CARE */
-   for (i = 0; i < MAX_ATTRIBS; i++) {
-      config->Attrib[i] = EGL_DONT_CARE;
-   }
+   _eglResetConfigKeys(config, EGL_DONT_CARE);
 
    /* by default choose windows unless otherwise specified */
-   config->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] = EGL_WINDOW_BIT;
+   SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       const EGLint attr = attrib_list[i];
       if (attr >= EGL_BUFFER_SIZE &&
           attr <= EGL_MAX_SWAP_INTERVAL) {
-         EGLint k = attr - FIRST_ATTRIB;
-         assert(k >= 0);
-         assert(k < MAX_ATTRIBS);
-         config->Attrib[k] = attrib_list[++i];
+         SET_CONFIG_ATTRIB(config, attr, attrib_list[++i]);
       }
 #ifdef EGL_VERSION_1_2
       else if (attr == EGL_COLOR_BUFFER_TYPE) {
@@ -368,9 +354,9 @@ EGLBoolean
 _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                     EGLint attribute, EGLint *value)
 {
-   const EGLint k = attribute - FIRST_ATTRIB;
-   if (k >= 0 && k < MAX_ATTRIBS) {
-      *value = conf->Attrib[k];
+   const EGLint k = attribute - _EGL_CONFIG_FIRST_ATTRIB;
+   if (k >= 0 && k < _EGL_CONFIG_NUM_ATTRIBS) {
+      *value = GET_CONFIG_ATTRIB(conf, k);
       return EGL_TRUE;
    }
    else {

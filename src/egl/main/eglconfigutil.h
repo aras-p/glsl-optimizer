@@ -1,12 +1,10 @@
-
 #ifndef EGLCONFIGUTIL_INCLUDED
 #define EGLCONFIGUTIL_INCLUDED
 
-#include "eglconfig.h"
+
+#include "GLES/gl.h"
 #include "GL/internal/glcore.h"
-#if (!defined(WIN32) && !defined(_WIN32_WCE))
-#include "stdint.h"
-#endif
+#include "eglconfig.h"
 
 
 extern void
