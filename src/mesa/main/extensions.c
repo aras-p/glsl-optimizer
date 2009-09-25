@@ -167,6 +167,7 @@ static const struct {
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
    { OFF, "GL_NV_depth_clamp",                 F(ARB_depth_clamp) },
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
+   { OFF, "GL_NV_fragment_program_option",     F(NV_fragment_program_option) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
    { OFF, "GL_NV_texture_env_combine4",        F(NV_texture_env_combine4) },
@@ -314,6 +315,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
 #if FEATURE_NV_fragment_program
    ctx->Extensions.NV_fragment_program = GL_TRUE;
+#endif
+#if FEATURE_NV_fragment_program && FEATURE_ARB_fragment_program
+   ctx->Extensions.NV_fragment_program_option = GL_TRUE;
 #endif
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGI_color_table = GL_TRUE;

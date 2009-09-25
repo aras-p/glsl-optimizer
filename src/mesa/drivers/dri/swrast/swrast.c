@@ -116,6 +116,7 @@ const struct dri_extension card_extensions[] =
     { "GL_NV_depth_clamp",		NULL },
     { "GL_NV_vertex_program",		GL_NV_vertex_program_functions },
     { "GL_NV_fragment_program",		GL_NV_fragment_program_functions },
+    { "GL_NV_fragment_program_option",	NULL },
     { NULL,				NULL }
 };
 
