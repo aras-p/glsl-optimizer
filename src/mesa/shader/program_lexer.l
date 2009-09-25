@@ -232,6 +232,8 @@ TXP{cc}{sat}       { return_opcode(require_ARB_fp, SAMPLE_OP, TXP, 3); }
 
 UP2H{cc}{sat}      { return_opcode(require_NV_fp,  SCALAR_OP, UP2H, 4); }
 UP2US{cc}{sat}     { return_opcode(require_NV_fp,  SCALAR_OP, UP2US, 5); }
+UP4B{cc}{sat}      { return_opcode(require_NV_fp,  SCALAR_OP, UP4B, 4); }
+UP4UB{cc}{sat}     { return_opcode(require_NV_fp,  SCALAR_OP, UP4UB, 5); }
 
 X2D{szf}{cc}{sat}  { return_opcode(require_NV_fp,  TRI_OP, X2D, 3); }
 XPD{sat}           { return_opcode(             1, BIN_OP, XPD, 3); }
