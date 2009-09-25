@@ -207,8 +207,12 @@ intel_bufferobj_subdata(GLcontext * ctx,
 
    if (intel_obj->sys_buffer)
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
-   else
+   else {
+      /* Flush any existing batchbuffer that might reference this data. */
+      intelFlush(ctx);
+
       dri_bo_subdata(intel_obj->buffer, offset, size, data);
+   }
 }
 
 

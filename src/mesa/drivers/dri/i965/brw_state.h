@@ -86,9 +86,6 @@ const struct brw_tracked_state brw_psp_urb_cbs;
 
 const struct brw_tracked_state brw_pipe_control;
 
-const struct brw_tracked_state brw_clear_surface_cache;
-const struct brw_tracked_state brw_clear_batch_cache;
-
 const struct brw_tracked_state brw_drawing_rect;
 const struct brw_tracked_state brw_indices;
 const struct brw_tracked_state brw_vertices;
@@ -165,7 +162,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 				   const void *data,
 				   GLuint sz );
 void brw_destroy_batch_cache( struct brw_context *brw );
-void brw_clear_batch_cache_flush( struct brw_context *brw );
+void brw_clear_batch_cache( struct brw_context *brw );
 
 /* brw_wm_surface_state.c */
 dri_bo *
