@@ -30,7 +30,6 @@ void
 _eglInitConfig(_EGLConfig *config, EGLint id)
 {
    memset(config, 0, sizeof(*config));
-   config->Handle = (EGLConfig) _eglUIntToPointer((unsigned int) id);
 
    /* some attributes take non-zero default values */
    SET_CONFIG_ATTRIB(config, EGL_CONFIG_ID,               id);
@@ -44,61 +43,61 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
 
 
 /**
- * Return the public handle for an internal _EGLConfig.
- * This is the inverse of _eglLookupConfig().
- */
-EGLConfig
-_eglGetConfigHandle(_EGLConfig *config)
-{
-   return config ? config->Handle : 0;
-}
-
-
-/**
- * Given an EGLConfig handle, return the corresponding _EGLConfig object.
- * This is the inverse of _eglGetConfigHandle().
- */
-_EGLConfig *
-_eglLookupConfig(EGLConfig config, _EGLDisplay *disp)
-{
-   EGLint i;
-   for (i = 0; i < disp->NumConfigs; i++) {
-      if (disp->Configs[i]->Handle == config) {
-          return disp->Configs[i];
-      }
-   }
-   return NULL;
-}
-
-
-/**
- * Add the given _EGLConfig to the given display.
+ * Link a config to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ *
  * Note that we just save the ptr to the config (we don't copy the config).
  */
-_EGLConfig *
-_eglAddConfig(_EGLDisplay *display, _EGLConfig *config)
+EGLConfig
+_eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 {
-   _EGLConfig **newConfigs;
-   EGLint n;
+   _EGLConfig **configs;
 
    /* sanity check */
-   assert(GET_CONFIG_ATTRIB(config, EGL_CONFIG_ID) > 0);
+   assert(GET_CONFIG_ATTRIB(conf, EGL_CONFIG_ID) > 0);
 
-   n = display->NumConfigs;
+   configs = dpy->Configs;
+   if (dpy->NumConfigs >= dpy->MaxConfigs) {
+      EGLint new_size = dpy->MaxConfigs + 16;
+      assert(dpy->NumConfigs < new_size);
 
-   /* realloc array of ptrs */
-   newConfigs = (_EGLConfig **) realloc(display->Configs,
-                                        (n + 1) * sizeof(_EGLConfig *));
-   if (newConfigs) {
-      display->Configs = newConfigs;
-      display->Configs[n] = config;
-      display->NumConfigs++;
-      return config;
+      configs = realloc(dpy->Configs, new_size * sizeof(dpy->Configs[0]));
+      if (!configs)
+         return (EGLConfig) NULL;
+
+      dpy->Configs = configs;
+      dpy->MaxConfigs = new_size;
    }
-   else {
-      return NULL;
-   }
+
+   conf->Display = dpy;
+   dpy->Configs[dpy->NumConfigs++] = conf;
+
+   return (EGLConfig) conf;
 }
+
+
+#ifndef _EGL_SKIP_HANDLE_CHECK
+
+
+EGLBoolean
+_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
+{
+   _EGLConfig *conf = NULL;
+   EGLint i;
+
+   for (i = 0; dpy && i < dpy->NumConfigs; i++) {
+      conf = dpy->Configs[i];
+      if (conf == (_EGLConfig *) config) {
+         assert(conf->Display == dpy);
+         break;
+      }
+   }
+
+   return (conf != NULL);
+}
+
+
+#endif /* _EGL_SKIP_HANDLE_CHECK */
 
 
 enum {
@@ -755,7 +754,7 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
                       _eglFallbackCompare, (void *) &criteria);
       count = MIN2(count, config_size);
       for (i = 0; i < count; i++)
-         configs[i] = configList[i]->Handle;
+         configs[i] = _eglGetConfigHandle(configList[i]);
    }
 
    free(configList);
@@ -818,9 +817,8 @@ _eglGetConfigs(_EGLDriver *drv, _EGLDisplay *disp, EGLConfig *configs,
    if (configs) {
       EGLint i;
       *num_config = MIN2(disp->NumConfigs, config_size);
-      for (i = 0; i < *num_config; i++) {
-         configs[i] = disp->Configs[i]->Handle;
-      }
+      for (i = 0; i < *num_config; i++)
+         configs[i] = _eglGetConfigHandle(disp->Configs[i]);
    }
    else {
       /* just return total number of supported configs */

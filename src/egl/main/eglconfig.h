@@ -16,7 +16,7 @@
 
 struct _egl_config
 {
-   EGLConfig Handle;   /* the public/opaque handle which names this config */
+   _EGLDisplay *Display;
    EGLint Storage[_EGL_CONFIG_STORAGE_SIZE];
 };
 
@@ -96,15 +96,52 @@ _eglInitConfig(_EGLConfig *config, EGLint id);
 
 
 extern EGLConfig
-_eglGetConfigHandle(_EGLConfig *config);
+_eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf);
 
 
-extern _EGLConfig *
-_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy);
+#ifndef _EGL_SKIP_HANDLE_CHECK
 
 
-extern _EGLConfig *
-_eglAddConfig(_EGLDisplay *display, _EGLConfig *config);
+extern EGLBoolean
+_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy);
+
+
+#else
+
+
+static INLINE EGLBoolean
+_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
+{
+   _EGLConfig *conf = (_EGLConfig *) config;
+   return (dpy && conf && conf->Display == dpy);
+}
+
+
+#endif /* _EGL_SKIP_HANDLE_CHECK */
+
+
+/**
+ * Lookup a handle to find the linked config.
+ * Return NULL if the handle has no corresponding linked config.
+ */
+static INLINE _EGLConfig *
+_eglLookupConfig(EGLConfig config, _EGLDisplay *dpy)
+{
+   _EGLConfig *conf = (_EGLConfig *) config;
+   if (!_eglCheckConfigHandle(config, dpy))
+      conf = NULL;
+   return conf;
+}
+
+
+/**
+ * Return the handle of a linked config, or NULL.
+ */
+static INLINE EGLConfig
+_eglGetConfigHandle(_EGLConfig *conf)
+{
+   return (EGLConfig) ((conf && conf->Display) ? conf : NULL);
+}
 
 
 extern EGLBoolean
