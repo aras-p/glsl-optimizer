@@ -250,6 +250,21 @@ myReshape(int w, int h)
    glLoadIdentity();
 }
 
+
+static void
+usage(void)
+{
+   printf("usage:\n");
+   printf("  b/B    decrease/increase GL_TEXTURE_BASE_LEVEL\n");
+   printf("  m/M    decrease/increase GL_TEXTURE_MAX_LEVEL\n");
+   printf("  n/N    decrease/increase GL_TEXTURE_MIN_LOD\n");
+   printf("  x/X    decrease/increase GL_TEXTURE_MAX_LOD\n");
+   printf("  l/L    decrease/increase GL_TEXTURE_LOD_BIAS\n");
+   printf("  f      toggle nearest/linear filtering\n");
+   printf("  t      toggle texture color/image\n");
+   printf("  SPACE  reset values\n");
+}
+
 static void
 key(unsigned char k, int x, int y)
 {
@@ -305,6 +320,9 @@ key(unsigned char k, int x, int y)
       break;
    case ' ':
       InitValues();
+      /* fall-through */
+   case 'u':
+      usage();
       break;
    case 27:                    /* Escape */
       exit(0);
@@ -313,21 +331,6 @@ key(unsigned char k, int x, int y)
       return;
    }
    glutPostRedisplay();
-}
-
-
-static void
-usage(void)
-{
-   printf("usage:\n");
-   printf("  b/B    decrease/increase GL_TEXTURE_BASE_LEVEL\n");
-   printf("  m/M    decrease/increase GL_TEXTURE_MAX_LEVEL\n");
-   printf("  n/N    decrease/increase GL_TEXTURE_MIN_LOD\n");
-   printf("  x/X    decrease/increase GL_TEXTURE_MAX_LOD\n");
-   printf("  l/L    decrease/increase GL_TEXTURE_LOD_BIAS\n");
-   printf("  f      toggle nearest/linear filtering\n");
-   printf("  t      toggle texture color/image\n");
-   printf("  SPACE  reset values\n");
 }
 
 
