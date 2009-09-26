@@ -29,11 +29,18 @@ static void r300_setup_texture_state(struct r300_texture* tex)
 
     state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
         R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff) |
+        R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
         R300_TX_NUM_LEVELS(pt->last_level) |
         R300_TX_PITCH_EN;
 
     /* XXX */
     state->format1 = r300_translate_texformat(pt->format);
+    if (pt->target == PIPE_TEXTURE_CUBE) {
+	state->format1 |= R300_TX_FORMAT_CUBIC_MAP;
+    }
+    if (pt->target == PIPE_TEXTURE_3D) {
+	state->format1 |= R300_TX_FORMAT_3D;
+    }
 
     state->format2 = (r300_texture_get_stride(tex, 0) / pt->block.size) - 1;
 
