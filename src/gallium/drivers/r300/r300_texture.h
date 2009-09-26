@@ -75,6 +75,8 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 	/* Z5_Y6_X5 */
         case PIPE_FORMAT_R16_SNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, Z5Y6X5);
+        case PIPE_FORMAT_Z16_UNORM:
+	    return R300_EASY_TX_FORMAT(X, X, X, X, X16);
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported texture format %s in %s\n",
