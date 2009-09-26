@@ -37,6 +37,7 @@
 
 
 #include "mtypes.h"
+#include "formats.h"
 
 
 extern GLboolean _mesa_texstore_rgba(TEXSTORE_PARAMS);
@@ -152,6 +153,10 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           const struct gl_pixelstore_attrib *packing,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage);
+
+
+extern StoreTexImageFunc
+_mesa_get_texstore_func(gl_format format);
 
 
 extern void

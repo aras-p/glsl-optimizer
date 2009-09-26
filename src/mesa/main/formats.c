@@ -566,68 +566,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 };
 
 
-static struct {
-   gl_format Name;
-   StoreTexImageFunc Store;
-}
-texstore_funcs[MESA_FORMAT_COUNT] =
-{
-   { MESA_FORMAT_RGBA, _mesa_texstore_rgba },
-   { MESA_FORMAT_RGB, _mesa_texstore_rgba },
-   { MESA_FORMAT_ALPHA, _mesa_texstore_rgba },
-   { MESA_FORMAT_LUMINANCE, _mesa_texstore_rgba },
-   { MESA_FORMAT_LUMINANCE_ALPHA, _mesa_texstore_rgba },
-   { MESA_FORMAT_INTENSITY, _mesa_texstore_rgba },
-   { MESA_FORMAT_SRGB8, _mesa_texstore_srgb8 },
-   { MESA_FORMAT_SRGBA8, _mesa_texstore_srgba8 },
-   { MESA_FORMAT_SARGB8, _mesa_texstore_sargb8 },
-   { MESA_FORMAT_SL8, _mesa_texstore_sl8 },
-   { MESA_FORMAT_SLA8, _mesa_texstore_sla8 },
-   { MESA_FORMAT_RGBA_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_RGBA_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_RGB_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_RGB_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_ALPHA_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_ALPHA_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_LUMINANCE_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_LUMINANCE_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_INTENSITY_FLOAT32, _mesa_texstore_rgba_float32 },
-   { MESA_FORMAT_INTENSITY_FLOAT16, _mesa_texstore_rgba_float16 },
-   { MESA_FORMAT_DUDV8, _mesa_texstore_dudv8 },
-   { MESA_FORMAT_SIGNED_RGBA8888, _mesa_texstore_signed_rgba8888 },
-   { MESA_FORMAT_SIGNED_RGBA8888_REV, _mesa_texstore_signed_rgba8888 },
-   { MESA_FORMAT_RGBA8888, _mesa_texstore_rgba8888 },
-   { MESA_FORMAT_RGBA8888_REV, _mesa_texstore_rgba8888 },
-   { MESA_FORMAT_ARGB8888, _mesa_texstore_argb8888 },
-   { MESA_FORMAT_ARGB8888_REV, _mesa_texstore_argb8888 },
-   { MESA_FORMAT_RGB888, _mesa_texstore_rgb888 },
-   { MESA_FORMAT_BGR888, _mesa_texstore_bgr888 },
-   { MESA_FORMAT_RGB565, _mesa_texstore_rgb565 },
-   { MESA_FORMAT_RGB565_REV, _mesa_texstore_rgb565 },
-   { MESA_FORMAT_RGBA4444, _mesa_texstore_rgba4444 },
-   { MESA_FORMAT_ARGB4444, _mesa_texstore_argb4444 },
-   { MESA_FORMAT_ARGB4444_REV, _mesa_texstore_argb4444 },
-   { MESA_FORMAT_RGBA5551, _mesa_texstore_rgba5551 },
-   { MESA_FORMAT_ARGB1555, _mesa_texstore_argb1555 },
-   { MESA_FORMAT_ARGB1555_REV, _mesa_texstore_argb1555 },
-   { MESA_FORMAT_AL88, _mesa_texstore_al88 },
-   { MESA_FORMAT_AL88_REV, _mesa_texstore_al88 },
-   { MESA_FORMAT_RGB332, _mesa_texstore_rgb332 },
-   { MESA_FORMAT_A8, _mesa_texstore_a8 },
-   { MESA_FORMAT_L8, _mesa_texstore_a8 },
-   { MESA_FORMAT_I8, _mesa_texstore_a8 },
-   { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
-   { MESA_FORMAT_YCBCR, _mesa_texstore_ycbcr },
-   { MESA_FORMAT_YCBCR_REV, _mesa_texstore_ycbcr },
-   { MESA_FORMAT_Z24_S8, _mesa_texstore_z24_s8 },
-   { MESA_FORMAT_S8_Z24, _mesa_texstore_s8_z24 },
-   { MESA_FORMAT_Z16, _mesa_texstore_z16 },
-   { MESA_FORMAT_Z32, _mesa_texstore_z32 },
-   { MESA_FORMAT_S8, NULL/*_mesa_texstore_s8*/ },
-};
-
 
 static const struct gl_format_info *
 _mesa_get_format_info(gl_format format)
@@ -660,19 +598,6 @@ _mesa_is_format_compressed(gl_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return info->BlockWidth > 1 || info->BlockHeight > 1;
-}
-
-
-/* XXX move to texstore.c */
-StoreTexImageFunc
-_mesa_get_texstore_func(gl_format format)
-{
-   GLuint i;
-   for (i = 0; i < MESA_FORMAT_COUNT; i++) {
-      if (texstore_funcs[i].Name == format)
-         return texstore_funcs[i].Store;
-   }
-   return NULL;
 }
 
 
