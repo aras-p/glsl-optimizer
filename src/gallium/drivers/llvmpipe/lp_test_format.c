@@ -264,6 +264,11 @@ int main(int argc, char **argv)
    unsigned i;
    int ret;
 
+#ifdef LLVM_NATIVE_ARCH
+   LLVMLinkInJIT();
+   LLVMInitializeNativeTarget();
+#endif
+
    for (i = 0; i < sizeof(test_cases)/sizeof(test_cases[0]); ++i)
       if(!test_format(&test_cases[i]))
         ret = 1;

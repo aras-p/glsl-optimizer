@@ -147,6 +147,11 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
    char *error = NULL;
 
+#ifdef LLVM_NATIVE_ARCH
+   LLVMLinkInJIT();
+   LLVMInitializeNativeTarget();
+#endif
+
    screen->module = LLVMModuleCreateWithName("llvmpipe");
 
    screen->provider = LLVMCreateModuleProviderForExistingModule(screen->module);
