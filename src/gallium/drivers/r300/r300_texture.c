@@ -22,34 +22,32 @@
 
 #include "r300_texture.h"
 
-static void r300_setup_texture_state(struct r300_texture* tex,
-                                     unsigned width,
-                                     unsigned height,
-                                     unsigned levels)
+static void r300_setup_texture_state(struct r300_texture* tex)
 {
     struct r300_texture_state* state = &tex->state;
+    struct pipe_texture *pt = &tex->tex;
 
-    state->format0 = R300_TX_WIDTH((width - 1) & 0x7ff) |
-        R300_TX_HEIGHT((height - 1) & 0x7ff) |
-        R300_TX_NUM_LEVELS(levels) |
+    state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
+        R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff) |
+        R300_TX_NUM_LEVELS(pt->last_level) |
         R300_TX_PITCH_EN;
 
     /* XXX */
-    state->format1 = r300_translate_texformat(tex->tex.format);
+    state->format1 = r300_translate_texformat(pt->format);
 
-    state->format2 = (r300_texture_get_stride(tex, 0) / tex->tex.block.size) - 1;
+    state->format2 = (r300_texture_get_stride(tex, 0) / pt->block.size) - 1;
 
     /* Assume (somewhat foolishly) that oversized textures will
      * not be permitted by the state tracker. */
-    if (width > 2048) {
+    if (pt->width[0] > 2048) {
         state->format2 |= R500_TXWIDTH_BIT11;
     }
-    if (height > 2048) {
+    if (pt->height[0] > 2048) {
         state->format2 |= R500_TXHEIGHT_BIT11;
     }
 
     debug_printf("r300: Set texture state (%dx%d, %d levels)\n",
-            width, height, levels);
+		 pt->width[0], pt->height[0], pt->last_level);
 }
 
 /**
@@ -120,8 +118,7 @@ static struct pipe_texture*
 
     r300_setup_miptree(tex);
 
-    r300_setup_texture_state(tex, template->width[0], template->height[0],
-                             template->last_level);
+    r300_setup_texture_state(tex);
 
     tex->buffer = screen->buffer_create(screen, 1024,
                                         PIPE_BUFFER_USAGE_PIXEL,
@@ -204,7 +201,7 @@ static struct pipe_texture*
     tex->stride_override = *stride;
 
     /* XXX */
-    r300_setup_texture_state(tex, tex->tex.width[0], tex->tex.height[0], 0);
+    r300_setup_texture_state(tex);
 
     pipe_buffer_reference(&tex->buffer, buffer);
 
