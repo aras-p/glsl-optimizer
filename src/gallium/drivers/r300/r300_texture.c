@@ -37,7 +37,7 @@ static void r300_setup_texture_state(struct r300_texture* tex,
     /* XXX */
     state->format1 = r300_translate_texformat(tex->tex.format);
 
-    state->format2 = r300_texture_get_stride(tex, 0);
+    state->format2 = (r300_texture_get_stride(tex, 0) / tex->tex.block.size) - 1;
 
     /* Assume (somewhat foolishly) that oversized textures will
      * not be permitted by the state tracker. */
