@@ -33,6 +33,7 @@ MAIN_SOURCES = \
 	main/feedback.c \
 	main/ffvertex_prog.c \
 	main/fog.c \
+	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
 	main/getstring.c \
