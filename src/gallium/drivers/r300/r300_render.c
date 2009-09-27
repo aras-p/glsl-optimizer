@@ -81,6 +81,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
 
     if (size + r300render->vbo_offset > r300render->vbo_size) 
     {
+        pipe_buffer_reference(&r300->vbo, NULL);
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
                                              PIPE_BUFFER_USAGE_VERTEX,
@@ -129,7 +130,6 @@ static void r300_render_release_vertices(struct vbuf_render* render)
 
     r300render->vbo_offset += r300render->vbo_max_used;
     r300render->vbo_max_used = 0;
-    r300->vbo = NULL;
 }
 
 static boolean r300_render_set_primitive(struct vbuf_render* render,
