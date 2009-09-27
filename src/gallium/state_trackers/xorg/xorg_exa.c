@@ -47,6 +47,7 @@
 
 #include "util/u_rect.h"
 
+#define DEBUG_PRINT 0
 #define DEBUG_SOLID 0
 #define DISABLE_ACCEL 0
 
@@ -282,7 +283,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
     struct exa_context *exa = ms->exa;
 
-#if 1
+#if DEBUG_PRINT
     debug_printf("ExaPrepareSolid(0x%x)\n", fg);
 #endif
     if (!EXA_PM_IS_SOLID(&pPixmap->drawable, planeMask))
@@ -322,7 +323,9 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     struct exa_context *exa = ms->exa;
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
 
+#if DEBUG_PRINT
     debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
+#endif
 
 #if 0
     if (x0 == 0 && y0 == 0 &&
@@ -376,7 +379,9 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDstPixmap);
     struct exa_pixmap_priv *src_priv = exaGetPixmapDriverPrivate(pSrcPixmap);
 
+#if DEBUG_PRINT
     debug_printf("ExaPrepareCopy\n");
+#endif
 
     if (alu != GXcopy)
 	return FALSE;
@@ -420,8 +425,10 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDstPixmap);
 
+#if DEBUG_PRINT
    debug_printf("\tExaCopy(srcx=%d, srcy=%d, dstX=%d, dstY=%d, w=%d, h=%d)\n",
                 srcX, srcY, dstX, dstY, width, height);
+#endif
 
    debug_assert(priv == exa->copy.dst);
 
@@ -440,7 +447,9 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv;
 
+#if DEBUG_PRINT
    debug_printf("ExaPrepareComposite\n");
+#endif
 
    priv = exaGetPixmapDriverPrivate(pDst);
    if (!priv || !priv->tex ||
@@ -488,7 +497,9 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDst);
 
+#if DEBUG_PRINT
    debug_printf("\tExaComposite\n");
+#endif
 
    xorg_composite(exa, priv, srcX, srcY, maskX, maskY,
                   dstX, dstY, width, height);
@@ -503,8 +514,10 @@ ExaCheckComposite(int op,
                                                     pSrcPicture,
                                                     pMaskPicture,
                                                     pDstPicture);
+#if DEBUG_PRINT
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
+#endif
    return accelerated;
 }
 

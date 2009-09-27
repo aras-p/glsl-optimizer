@@ -829,7 +829,7 @@ static void renderer_copy_texture(struct exa_context *exa,
    t1 = 1;
 #endif
 
-#if 1
+#if 0
    debug_printf("copy texture src=[%f, %f, %f, %f], dst=[%f, %f, %f, %f], tex=[%f, %f, %f, %f]\n",
                 sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2,
                 s0, t0, s1, t1);
