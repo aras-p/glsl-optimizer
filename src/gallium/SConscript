@@ -23,6 +23,7 @@ SConscript([
 	'auxiliary/pipebuffer/SConscript',
 	'auxiliary/indices/SConscript',
 	'auxiliary/rbug/SConscript',
+	'auxiliary/vl/SConscript',
 ])
 
 for driver in env['drivers']:

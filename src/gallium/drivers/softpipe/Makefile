@@ -31,6 +31,7 @@ C_SOURCES = \
 	sp_tex_sample.c \
 	sp_tex_tile_cache.c \
 	sp_tile_cache.c \
-	sp_surface.c 
+	sp_surface.c \
+	sp_video_context.c
 
 include ../../Makefile.template
