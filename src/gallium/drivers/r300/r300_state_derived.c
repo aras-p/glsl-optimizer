@@ -334,48 +334,37 @@ static void r300_update_rs_block(struct r300_context* r300)
     struct r300_rs_block* rs = r300->rs_block;
     struct tgsi_shader_info* info = &r300->fs->info;
     int* tab = r300->vertex_info.fs_tab;
-    int col_count = 0, fp_offset = 0, i, memory_pos, tex_count = 0;
-
+    int col_count = 0, fp_offset = 0, i, tex_count = 0;
+    int rs_tex_comp = 0;
     memset(rs, 0, sizeof(struct r300_rs_block));
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
         for (i = 0; i < info->num_inputs; i++) {
             assert(tab[i] != -1);
-            memory_pos = tab[i] * 4;
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
-                        R500_RS_COL_PTR(memory_pos) |
+                        R500_RS_COL_PTR(col_count) |
                         R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
                 case TGSI_SEMANTIC_GENERIC:
                     rs->ip[tex_count] |=
-                        R500_RS_SEL_S(memory_pos) |
-                        R500_RS_SEL_T(memory_pos + 1) |
-                        R500_RS_SEL_R(memory_pos + 2) |
-                        R500_RS_SEL_Q(memory_pos + 3);
+                        R500_RS_SEL_S(rs_tex_comp) |
+                        R500_RS_SEL_T(rs_tex_comp + 1) |
+                        R500_RS_SEL_R(rs_tex_comp + 2) |
+                        R500_RS_SEL_Q(rs_tex_comp + 3);
                     tex_count++;
+                    rs_tex_comp += 4;
                     break;
                 default:
                     break;
             }
         }
 
-        if (col_count == 0) {
-            rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
-        }
-
-        if (tex_count == 0) {
-            rs->ip[0] |=
-                R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
-        }
-
         /* Rasterize at least one color, or bad things happen. */
         if ((col_count == 0) && (tex_count == 0)) {
+            rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
             col_count++;
         }
 
@@ -393,22 +382,22 @@ static void r300_update_rs_block(struct r300_context* r300)
     } else {
         for (i = 0; i < info->num_inputs; i++) {
             assert(tab[i] != -1);
-            memory_pos = tab[i] * 4;
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
-                        R300_RS_COL_PTR(memory_pos) |
+                        R300_RS_COL_PTR(col_count) |
                         R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
                 case TGSI_SEMANTIC_GENERIC:
                     rs->ip[tex_count] |=
-                        R300_RS_TEX_PTR(memory_pos) |
+                        R300_RS_TEX_PTR(rs_tex_count) |
                         R300_RS_SEL_S(R300_RS_SEL_C0) |
                         R300_RS_SEL_T(R300_RS_SEL_C1) |
                         R300_RS_SEL_R(R300_RS_SEL_C2) |
                         R300_RS_SEL_Q(R300_RS_SEL_C3);
                     tex_count++;
+                    rs_tex_count+=4;
                     break;
                 default:
                     break;
@@ -445,7 +434,7 @@ static void r300_update_rs_block(struct r300_context* r300)
         }
     }
 
-    rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |
+    rs->count = (rs_tex_comp) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
     rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
