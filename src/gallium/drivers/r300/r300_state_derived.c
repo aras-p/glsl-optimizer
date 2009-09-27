@@ -391,13 +391,13 @@ static void r300_update_rs_block(struct r300_context* r300)
                     break;
                 case TGSI_SEMANTIC_GENERIC:
                     rs->ip[tex_count] |=
-                        R300_RS_TEX_PTR(rs_tex_count) |
+                        R300_RS_TEX_PTR(rs_tex_comp) |
                         R300_RS_SEL_S(R300_RS_SEL_C0) |
                         R300_RS_SEL_T(R300_RS_SEL_C1) |
                         R300_RS_SEL_R(R300_RS_SEL_C2) |
                         R300_RS_SEL_Q(R300_RS_SEL_C3);
                     tex_count++;
-                    rs_tex_count+=4;
+                    rs_tex_comp+=4;
                     break;
                 default:
                     break;
