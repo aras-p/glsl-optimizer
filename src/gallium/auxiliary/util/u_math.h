@@ -471,6 +471,26 @@ util_logbase2(unsigned n)
 
 
 /**
+ * Returns the smallest power of two >= x
+ */
+static INLINE unsigned
+util_next_power_of_two(unsigned x)
+{
+   unsigned i;
+
+   if (x == 0)
+      return 1;
+
+   --x;
+
+   for (i = 1; i < sizeof(unsigned) * 8; i <<= 1)
+      x |= x >> i;
+
+   return x + 1;
+}
+
+
+/**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
  */
