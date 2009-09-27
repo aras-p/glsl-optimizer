@@ -3058,16 +3058,14 @@ GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
-   StoreTexImageFunc store;
    GLboolean k;
 
    ASSERT(dstFormat == &_mesa_texformat_srgb8);
 
    /* reuse normal rgb texstore code */
    newDstFormat = &_mesa_texformat_rgb888;
-   store = _mesa_texstore_rgb888;
 
-   k = store(ctx, dims, baseInternalFormat,
+   k = _mesa_texstore_rgb888(ctx, dims, baseInternalFormat,
              newDstFormat, dstAddr,
              dstXoffset, dstYoffset, dstZoffset,
              dstRowStride, dstImageOffsets,
