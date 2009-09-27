@@ -1147,9 +1147,7 @@ void r700InitDraw(GLcontext *ctx)
 	struct vbo_context *vbo = vbo_context(ctx);
 	
 	/* to be enabled */
-	/*
 	vbo->draw_prims = r700DrawPrims;
-	*/
 }
 
 
