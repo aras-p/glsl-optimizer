@@ -164,7 +164,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         vinfo->hwfmt[3] |= (4 << (3 * i));
     }
 
-    for (i; i < texs; i++) {
+    for (; i < texs; i++) {
         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
             draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
         vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
