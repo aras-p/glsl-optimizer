@@ -55,6 +55,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         for (i = 0; i < info->num_inputs; i++) {
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_POSITION:
+                    assert(pos == FALSE);
                     pos = TRUE;
                     tab[i] = 0;
                     break;
@@ -63,10 +64,12 @@ static void r300_vs_tab_routes(struct r300_context* r300,
                     cols++;
                     break;
                 case TGSI_SEMANTIC_PSIZE:
+                    assert(psize == FALSE);
                     psize = TRUE;
                     tab[i] = 15;
                     break;
                 case TGSI_SEMANTIC_FOG:
+                    assert(fog == FALSE);
                     fog = TRUE;
                     /* Fall through */
                 case TGSI_SEMANTIC_GENERIC:
