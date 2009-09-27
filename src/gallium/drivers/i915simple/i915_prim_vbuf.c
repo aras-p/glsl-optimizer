@@ -198,7 +198,7 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
    struct intel_winsys *iws = i915->iws;
 
    if (i915->vbo_flushed)
-      debug_printf("%s bad vbo flush occured stalling on hw\n");
+      debug_printf("%s bad vbo flush occured stalling on hw\n", __func__);
 
    i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
 
