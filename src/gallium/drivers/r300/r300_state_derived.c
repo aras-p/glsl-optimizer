@@ -50,7 +50,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
 
     assert(info->num_inputs <= 16);
 
-    if (!r300screen->caps->has_tcl || !r300->rs_state->enable_vte)
+    if (!r300screen->caps->has_tcl)
     {
         for (i = 0; i < info->num_inputs; i++) {
             switch (info->input_semantic_name[i]) {
