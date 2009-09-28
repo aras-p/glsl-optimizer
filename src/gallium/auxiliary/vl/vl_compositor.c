@@ -151,6 +151,8 @@ create_vert_shader(struct vl_compositor *c)
 
    unsigned ti;
 
+   unsigned i;
+
    assert(c);
 
    tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
@@ -165,7 +167,7 @@ create_vert_shader(struct vl_compositor *c)
     * decl i0             ; Vertex pos
     * decl i1             ; Vertex texcoords
     */
-   for (unsigned i = 0; i < 2; i++) {
+   for (i = 0; i < 2; i++) {
       decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -183,7 +185,7 @@ create_vert_shader(struct vl_compositor *c)
     * decl o0             ; Vertex pos
     * decl o1             ; Vertex texcoords
     */
-   for (unsigned i = 0; i < 2; i++) {
+   for (i = 0; i < 2; i++) {
       decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -196,7 +198,7 @@ create_vert_shader(struct vl_compositor *c)
     * mad o0, i0, c0, c1  ; Scale and translate unit output rect to destination size and pos
     * mad o1, i1, c2, c3  ; Scale and translate unit texcoord rect to source size and pos
     */
-   for (unsigned i = 0; i < 2; ++i) {
+   for (i = 0; i < 2; ++i) {
       inst = vl_inst4(TGSI_OPCODE_MAD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -225,6 +227,8 @@ create_frag_shader(struct vl_compositor *c)
    struct tgsi_full_instruction inst;
 
    unsigned ti;
+
+   unsigned i;
 
    assert(c);
 
@@ -272,7 +276,7 @@ create_frag_shader(struct vl_compositor *c)
     * dp4 o0.y, t0, c2
     * dp4 o0.z, t0, c3
     */
-   for (unsigned i = 0; i < 3; ++i) {
+   for (i = 0; i < 3; ++i) {
       inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i + 1);
       inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -453,9 +457,11 @@ init_buffers(struct vl_compositor *c)
 static void
 cleanup_buffers(struct vl_compositor *c)
 {
+   unsigned i;
+
    assert(c);
 	
-   for (unsigned i = 0; i < 2; ++i)
+   for (i = 0; i < 2; ++i)
       pipe_buffer_reference(&c->vertex_bufs[i].buffer, NULL);
 
    pipe_buffer_reference(&c->vs_const_buf.buffer, NULL);

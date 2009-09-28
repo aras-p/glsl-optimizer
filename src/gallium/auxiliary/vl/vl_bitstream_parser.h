@@ -1,7 +1,7 @@
 #ifndef vl_bitstream_parser_h
 #define vl_bitstream_parser_h
 
-#include <stdbool.h>
+#include "pipe/p_compiler.h"
 
 struct vl_bitstream_parser
 {

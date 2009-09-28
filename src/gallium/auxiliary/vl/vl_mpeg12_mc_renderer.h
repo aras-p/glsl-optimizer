@@ -1,7 +1,7 @@
 #ifndef vl_mpeg12_mc_renderer_h
 #define vl_mpeg12_mc_renderer_h
 
-#include <stdbool.h>
+#include <pipe/p_compiler.h>
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 
