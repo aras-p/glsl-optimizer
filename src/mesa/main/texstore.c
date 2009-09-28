@@ -62,6 +62,8 @@
 #include "mipmap.h"
 #include "imports.h"
 #include "texcompress.h"
+#include "texcompress_fxt1.h"
+#include "texcompress_s3tc.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
@@ -3227,6 +3229,8 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
    { MESA_FORMAT_YCBCR, _mesa_texstore_ycbcr },
    { MESA_FORMAT_YCBCR_REV, _mesa_texstore_ycbcr },
+   { MESA_FORMAT_RGB_FXT1, _mesa_texstore_rgb_fxt1 },
+   { MESA_FORMAT_RGBA_FXT1, _mesa_texstore_rgba_fxt1 },
    { MESA_FORMAT_Z24_S8, _mesa_texstore_z24_s8 },
    { MESA_FORMAT_S8_Z24, _mesa_texstore_s8_z24 },
    { MESA_FORMAT_Z16, _mesa_texstore_z16 },
@@ -3399,22 +3403,8 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
    ASSERT(dims == 1 || dims == 2 || dims == 3);
    ASSERT(texImage->TexFormat);
 
-   switch (dims) {
-   case 1:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
-      break;
-   case 2:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
-      break;
-   case 3:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
-      break;
-   default:
-      ;
-   }
+   texImage->FetchTexelf =
+      _mesa_get_texel_fetch_func(texImage->TexFormat->MesaFormat, dims);
 
    /* now check if we need to use a float/chan adaptor */
    if (!texImage->FetchTexelc) {

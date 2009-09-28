@@ -154,5 +154,11 @@ extern void
 _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
                                GLenum *datatype, GLuint *comps);
 
+extern FetchTexelFuncF
+_mesa_get_texel_fetch_func(GLuint format, GLuint dims);
+
+extern StoreTexelFunc
+_mesa_get_texel_store_func(GLuint format);
+
 
 #endif
