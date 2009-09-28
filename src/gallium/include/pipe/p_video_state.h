@@ -63,10 +63,9 @@ u_reduce_video_profile(enum pipe_video_profile profile)
          return PIPE_VIDEO_CODEC_MPEG4_AVC;
 
       default:
-         assert(false);
+         assert(0);
+         return PIPE_VIDEO_CODEC_UNKNOWN;
    }
-
-   return -1;
 }
 
 enum pipe_mpeg12_picture_type

@@ -318,6 +318,7 @@ enum pipe_transfer_usage {
 
 enum pipe_video_codec
 {
+   PIPE_VIDEO_CODEC_UNKNOWN = 0,
    PIPE_VIDEO_CODEC_MPEG12,   /**< MPEG1, MPEG2 */
    PIPE_VIDEO_CODEC_MPEG4,    /**< DIVX, XVID */
    PIPE_VIDEO_CODEC_VC1,      /**< WMV */
