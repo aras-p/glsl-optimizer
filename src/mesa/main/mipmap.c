@@ -28,6 +28,7 @@
  */
 
 #include "imports.h"
+#include "formats.h"
 #include "mipmap.h"
 #include "texcompress.h"
 #include "texformat.h"
@@ -1641,7 +1642,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          ASSERT(dstData);
       }
       else {
-         bytesPerTexel = dstImage->TexFormat->TexelBytes;
+         bytesPerTexel = _mesa_get_format_bytes(dstImage->TexFormat->MesaFormat);
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
          dstImage->Data = _mesa_alloc_texmemory(dstWidth * dstHeight
                                                 * dstDepth * bytesPerTexel);
