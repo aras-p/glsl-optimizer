@@ -819,7 +819,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = 0;
          else {
             *params = _mesa_get_format_bits(texFormat, pname);
-            if (img->TexFormat->LuminanceBits == 0) {
+            if (*params == 0) {
                /* luminance probably stored as rgb texture */
                *params = MIN2(_mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE),
                               _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE));
