@@ -581,12 +581,12 @@ const struct gl_texture_format _mesa_texformat_rgb_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgb_dxt1,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgb_dxt1, 		/* FetchTexel2D */
+   NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_rgb_dxt1, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -605,12 +605,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt1,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgba_dxt1, 		/* FetchTexel2D */
+   NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_rgba_dxt1, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -629,12 +629,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt3 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt3,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgba_dxt3, 		/* FetchTexel2D */
+   NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_rgba_dxt3, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -653,12 +653,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt5 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt5,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgba_dxt5, 		/* FetchTexel2D */
+   NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_rgba_dxt5, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -678,12 +678,12 @@ const struct gl_texture_format _mesa_texformat_srgb_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgb_dxt1,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_srgb_dxt1,	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -702,12 +702,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt1,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_srgba_dxt1, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -726,12 +726,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt3 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt3,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_srgba_dxt3, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -750,12 +750,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt5 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   _mesa_texstore_rgba_dxt5,		/* StoreTexImageFunc */
+   NULL,				/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   _mesa_fetch_texel_2d_f_srgba_dxt5, 	/* FetchTexel2Df */
+   NULL, 				/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
