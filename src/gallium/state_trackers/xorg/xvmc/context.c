@@ -7,11 +7,13 @@
 #include <pipe/p_state.h>
 #include <vl_winsys.h>
 #include <util/u_memory.h>
+#include <util/u_debug.h>
 #include "xvmc_private.h"
 
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                        unsigned int width, unsigned int height, int flags,
-                       bool *found_port, int *screen, int *chroma_format, int *mc_type)
+                       bool *found_port, int *screen, int *chroma_format,
+                       int *mc_type, int *surface_flags)
 {
    bool found_surface = false;
    XvAdaptorInfo *adaptor_info;
@@ -25,6 +27,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
    assert(screen);
    assert(chroma_format);
    assert(mc_type);
+   assert(surface_flags);
 
    *found_port = false;
 
@@ -57,6 +60,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                max_height = surface_info[l].max_height;
                *chroma_format = surface_info[l].chroma_format;
                *mc_type = surface_info[l].mc_type;
+               *surface_flags = surface_info[l].flags;
                *screen = i;
             }
 
@@ -118,6 +122,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    int scrn;
    int chroma_format;
    int mc_type;
+   int surface_flags;
    Status ret;
    struct pipe_screen *screen;
    struct pipe_video_context *vpipe;
@@ -129,11 +134,25 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return XvMCBadContext;
 
    ret = Validate(dpy, port, surface_type_id, width, height, flags,
-                  &found_port, &scrn, &chroma_format, &mc_type);
+                  &found_port, &scrn, &chroma_format, &mc_type, &surface_flags);
 
    /* Success and XvBadPort have the same value */
    if (ret != Success || !found_port)
       return ret;
+
+   /* XXX: Current limits */
+   if (chroma_format != XVMC_CHROMA_FORMAT_420) {
+      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Unsupported chroma format.\n");
+      return BadImplementation;
+   }
+   if (mc_type != (XVMC_MOCOMP | XVMC_MPEG_2)) {
+      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Non-MPEG2/Mocomp acceleration unsupported.\n");
+      return BadImplementation;
+   }
+   if (!(surface_flags & XVMC_INTRA_UNSIGNED)) {
+      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Signed intra unsupported.\n");
+      return BadImplementation;
+   }
 
    context_priv = CALLOC(1, sizeof(XvMCContextPrivate));
    if (!context_priv)
