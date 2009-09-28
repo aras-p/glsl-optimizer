@@ -35,6 +35,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "fbobject.h"
+#include "formats.h"
 #include "framebuffer.h"
 #include "hash.h"
 #include "macros.h"
@@ -356,6 +357,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
    if (att->Type == GL_TEXTURE) {
       const struct gl_texture_object *texObj = att->Texture;
       struct gl_texture_image *texImage;
+      GLenum baseFormat;
 
       if (!texObj) {
          att_incomplete("no texobj");
@@ -382,26 +384,28 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          return;
       }
 
+      baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
+
       if (format == GL_COLOR) {
-         if (texImage->TexFormat->BaseFormat != GL_RGB &&
-             texImage->TexFormat->BaseFormat != GL_RGBA) {
+         if (baseFormat != GL_RGB &&
+             baseFormat != GL_RGBA) {
             att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
          }
-         if (texImage->TexFormat->TexelBytes == 0) {
+         if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
             att_incomplete("compressed internalformat");
             att->Complete = GL_FALSE;
             return;
          }
       }
       else if (format == GL_DEPTH) {
-         if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+         if (baseFormat == GL_DEPTH_COMPONENT) {
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
                   ctx->Extensions.ARB_depth_texture &&
-                  texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
+                  baseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
          else {

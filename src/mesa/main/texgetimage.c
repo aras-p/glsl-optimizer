@@ -160,15 +160,16 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
             if (format == GL_COLOR_INDEX) {
                GLuint indexRow[MAX_WIDTH];
                GLint col;
+               GLuint indexBits = _mesa_get_format_bits(texImage->TexFormat->MesaFormat, GL_TEXTURE_INDEX_SIZE_EXT);
                /* Can't use FetchTexel here because that returns RGBA */
-               if (texImage->TexFormat->IndexBits == 8) {
+               if (indexBits == 8) {
                   const GLubyte *src = (const GLubyte *) texImage->Data;
                   src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
                      indexRow[col] = src[col];
                   }
                }
-               else if (texImage->TexFormat->IndexBits == 16) {
+               else if (indexBits == 16) {
                   const GLushort *src = (const GLushort *) texImage->Data;
                   src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
@@ -257,6 +258,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLfloat rgba[MAX_WIDTH][4];
                GLint col;
                GLbitfield transferOps = 0x0;
+               GLenum dataType =
+                  _mesa_get_format_datatype(texImage->TexFormat->MesaFormat);
 
                /* clamp does not apply to GetTexImage (final conversion)?
                 * Looks like we need clamp though when going from format
@@ -265,8 +268,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
                   transferOps |= IMAGE_CLAMP_BIT;
                else if (!type_with_negative_values(type) &&
-                        (texImage->TexFormat->DataType == GL_FLOAT ||
-                         texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
+                        (dataType == GL_FLOAT ||
+                         dataType == GL_SIGNED_NORMALIZED))
                   transferOps |= IMAGE_CLAMP_BIT;
 
                for (col = 0; col < width; col++) {
@@ -372,6 +375,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
+   GLenum baseFormat;
 
    if (maxLevels == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target=0x%x)", target);
@@ -434,40 +438,42 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       /* out of memory */
       return GL_TRUE;
    }
+
+   baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
       
    /* Make sure the requested image format is compatible with the
     * texture's format.  Note that a color index texture can be converted
     * to RGBA so that combo is allowed.
     */
    if (_mesa_is_color_format(format)
-       && !_mesa_is_color_format(texImage->TexFormat->BaseFormat)
-       && !_mesa_is_index_format(texImage->TexFormat->BaseFormat)) {
+       && !_mesa_is_color_format(baseFormat)
+       && !_mesa_is_index_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_index_format(format)
-            && !_mesa_is_index_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_index_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_depth_format(format)
-            && !_mesa_is_depth_format(texImage->TexFormat->BaseFormat)
-            && !_mesa_is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_depth_format(baseFormat)
+            && !_mesa_is_depthstencil_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_ycbcr_format(format)
-            && !_mesa_is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_ycbcr_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_depthstencil_format(format)
-            && !_mesa_is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_depthstencil_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_dudv_format(format)
-            && !_mesa_is_dudv_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_dudv_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
