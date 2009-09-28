@@ -30,6 +30,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
+#include "main/formats.h"
 #include "main/colortab.h"
 #include "main/convolve.h"
 #include "main/context.h"
@@ -689,15 +690,9 @@ static void viaTexImage(GLcontext *ctx,
 
    assert(texImage->TexFormat);
 
-   if (dims == 1) {
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
-   }
-   else {
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
-   }
-   texelBytes = texImage->TexFormat->TexelBytes;
+   _mesa_set_fetch_functions(texImage, dims);
+
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
    if (texelBytes == 0) {
       /* compressed format */
@@ -804,7 +799,7 @@ static void viaTexImage(GLcontext *ctx,
          dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
-         dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
+         dstRowStride = postConvWidth * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       }
       ASSERT(storeImage);
       success = storeImage(ctx, dims,
