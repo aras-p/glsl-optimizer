@@ -239,15 +239,7 @@ const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
    0,					/* IndexBits */
    0,					/* DepthBits */
    0,					/* StencilBits */
-   0,					/* TexelBytes */
-   NULL,				/* StoreTexImageFunc */
-   NULL, /*impossible*/ 		/* FetchTexel1D */
-   NULL, 				/* FetchTexel2D */
-   NULL, /*impossible*/ 		/* FetchTexel3D */
-   NULL, /*impossible*/ 		/* FetchTexel1Df */
-   NULL, 				/* FetchTexel2Df */
-   NULL, /*impossible*/ 		/* FetchTexel3Df */
-   NULL					/* StoreTexel */
+   0					/* TexelBytes */
 };
 
 const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
@@ -263,15 +255,7 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
    0,					/* IndexBits */
    0,					/* DepthBits */
    0,					/* StencilBits */
-   0,					/* TexelBytes */
-   NULL,				/* StoreTexImageFunc */
-   NULL, /*impossible*/ 		/* FetchTexel1D */
-   NULL, 				/* FetchTexel2D */
-   NULL, /*impossible*/ 		/* FetchTexel3D */
-   NULL, /*impossible*/ 		/* FetchTexel1Df */
-   NULL, 				/* FetchTexel2Df */
-   NULL, /*impossible*/ 		/* FetchTexel3Df */
-   NULL					/* StoreTexel */
+   0					/* TexelBytes */
 };
 
 

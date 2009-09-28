@@ -1167,22 +1167,6 @@ struct gl_texture_format
    /*@}*/
 
    GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
-
-   void *StoreImage;
-
-   /**
-    * \name Texel fetch function pointers
-    */
-   /*@{*/
-   void *FetchTexel1D;
-   void *FetchTexel2D;
-   void *FetchTexel3D;
-   void *FetchTexel1Df;
-   void *FetchTexel2Df;
-   void *FetchTexel3Df;
-   /*@}*/
-
-   void *toreTexel;
 };
 
 
