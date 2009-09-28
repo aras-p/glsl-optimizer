@@ -90,17 +90,6 @@ nonlinear_to_linear(GLubyte cs8)
  *
  * Have to have this so the FetchTexel function pointer is never NULL.
  */
-static void fetch_null_texel( const struct gl_texture_image *texImage,
-			      GLint i, GLint j, GLint k, GLchan *texel )
-{
-   (void) texImage; (void) i; (void) j; (void) k;
-   texel[RCOMP] = 0;
-   texel[GCOMP] = 0;
-   texel[BCOMP] = 0;
-   texel[ACOMP] = 0;
-   _mesa_warning(NULL, "fetch_null_texel() called!");
-}
-
 static void fetch_null_texelf( const struct gl_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1451,13 +1440,13 @@ const struct gl_texture_format _mesa_null_texformat = {
    0,					/* StencilBits */
    0,					/* TexelBytes */
    NULL,				/* StoreTexImageFunc */
-   fetch_null_texel,			/* FetchTexel1D */
-   fetch_null_texel,			/* FetchTexel1D */
-   fetch_null_texel,			/* FetchTexel1D */
-   fetch_null_texelf,			/* FetchTexel1Df */
-   fetch_null_texelf,			/* FetchTexel1Df */
-   fetch_null_texelf,			/* FetchTexel1Df */
-   store_null_texel			/* StoreTexel */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel1Df */
+   NULL,				/* FetchTexel1Df */
+   NULL,				/* FetchTexel1Df */
+   NULL,				/* StoreTexel */
 };
 
 /*@}*/
@@ -2453,18 +2442,25 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 FetchTexelFuncF
 _mesa_get_texel_fetch_func(GLuint format, GLuint dims)
 {
+   FetchTexelFuncF f;
    GLuint i;
    /* XXX replace loop with direct table lookup */
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {
       if (texfetch_funcs[i].Name == format) {
          switch (dims) {
          case 1:
-            return texfetch_funcs[i].Fetch1D;
+            f = texfetch_funcs[i].Fetch1D;
+            break;
          case 2:
-            return texfetch_funcs[i].Fetch2D;
+            f = texfetch_funcs[i].Fetch2D;
+            break;
          case 3:
-            return texfetch_funcs[i].Fetch3D;
+            f = texfetch_funcs[i].Fetch3D;
+            break;
          }
+         if (!f)
+            f = fetch_null_texelf;
+         return f;
       }
    }
    return NULL;
@@ -2478,7 +2474,10 @@ _mesa_get_texel_store_func(GLuint format)
    /* XXX replace loop with direct table lookup */
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {
       if (texfetch_funcs[i].Name == format) {
-         return texfetch_funcs[i].StoreTexel;
+         if (texfetch_funcs[i].StoreTexel)
+            return texfetch_funcs[i].StoreTexel;
+         else
+            return store_null_texel;
       }
    }
    return NULL;
