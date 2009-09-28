@@ -50,6 +50,15 @@ struct exa_pixmap_priv
    unsigned map_count;
 };
 
+#define XORG_FALLBACK(s, arg...)              \
+do {                                          \
+   if (ms->debug_fallback) {                  \
+      xf86DrvMsg(pScrn->scrnIndex, X_INFO,    \
+                 "fallback: " s "\n", ##arg); \
+   }                                          \
+   return FALSE;                              \
+} while(0)
+
 struct pipe_surface *
 exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv);
 

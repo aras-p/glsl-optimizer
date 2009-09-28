@@ -94,6 +94,7 @@ typedef struct _modesettingRec
     /* exa */
     void *exa;
     Bool noEvict;
+    Bool debug_fallback;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
