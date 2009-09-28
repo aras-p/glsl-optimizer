@@ -107,7 +107,7 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
    }
    assert(t->format == image->_BaseFormat);
 
-   texel_size = image->TexFormat->TexelBytes;
+   texel_size = _mesa_get_format_bytes(image->TexFormat->MesaFormat);
    size = image->Width * image->Height * texel_size + TEXTURE_HW_PLUS;
 
    addr = sisAllocFB( smesa, size, &t->image[level].handle );

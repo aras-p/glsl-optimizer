@@ -131,7 +131,7 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	 break;
 
       size = texImage->Width * texImage->Height *
-         baseImage->TexFormat->TexelBytes;
+         _mesa_get_format_bytes(baseImage->TexFormat->MesaFormat);
 
       t->offsets[i] = totalSize;
       t->base.dirty_images[0] |= (1<<i);

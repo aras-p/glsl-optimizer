@@ -123,7 +123,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
 
       totalSize += (tObj->Image[0][i]->Height *
 		    tObj->Image[0][i]->Width *
-		    tObj->Image[0][i]->TexFormat->TexelBytes);
+		    _mesa_get_format_bytes(tObj->Image[0][i]->TexFormat->MesaFormat));
 
       /* Offsets must be 32-byte aligned for host data blits and tiling */
       totalSize = (totalSize + 31) & ~31;

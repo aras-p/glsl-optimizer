@@ -347,6 +347,7 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
 	GLuint compressed;
 	GLuint numfaces = 1;
 	GLuint firstLevel, lastLevel;
+	GLuint texelBytes;
 
 	calculate_first_last_level(texObj, &firstLevel, &lastLevel, 0, texObj->BaseLevel);
 	if (texObj->Target == GL_TEXTURE_CUBE_MAP)
@@ -354,6 +355,7 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
 
 	firstImage = texObj->Image[0][firstLevel];
 	compressed = firstImage->IsCompressed ? firstImage->TexFormat->MesaFormat : 0;
+	texelBytes = _mesa_get_format_bytes(firstImage->TexFormat->MesaFormat);
 
 	return (mt->firstLevel == firstLevel &&
 	        mt->lastLevel == lastLevel &&
@@ -361,7 +363,7 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
 	        mt->height0 == firstImage->Height &&
 	        mt->depth0 == firstImage->Depth &&
 	        mt->compressed == compressed &&
-	        (!mt->compressed ? (mt->bpp == firstImage->TexFormat->TexelBytes) : 1));
+	        (!mt->compressed ? (mt->bpp == texelBytes) : 1));
 }
 
 
@@ -375,6 +377,7 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 	GLuint compressed = image->base.IsCompressed ? image->base.TexFormat->MesaFormat : 0;
 	GLuint numfaces = 1;
 	GLuint firstLevel, lastLevel;
+	GLuint texelBytes;
 
 	assert(!t->mt);
 
@@ -385,11 +388,13 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 	if (level != firstLevel || face >= numfaces)
 		return;
 
+	texelBytes = _mesa_get_format_bytes(image->base.TexFormat->MesaFormat);
+
 	t->mt = radeon_miptree_create(rmesa, t, t->base.Target,
 		image->base.InternalFormat,
 		firstLevel, lastLevel,
 		image->base.Width, image->base.Height, image->base.Depth,
-		image->base.TexFormat->TexelBytes, t->tile_bits, compressed);
+		texelBytes, t->tile_bits, compressed);
 }
 
 /* Although we use the image_offset[] array to store relative offsets

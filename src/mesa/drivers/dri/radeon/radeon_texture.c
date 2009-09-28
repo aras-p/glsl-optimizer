@@ -900,7 +900,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 			srcrowstride = _mesa_compressed_row_stride(image->base.TexFormat->MesaFormat, image->base.Width);
 		} else {
 			height = image->base.Height * image->base.Depth;
-			srcrowstride = image->base.Width * image->base.TexFormat->TexelBytes;
+			srcrowstride = image->base.Width * _mesa_get_format_bytes(image->base.TexFormat->MesaFormat);
 		}
 
 //		if (mt->tilebits)

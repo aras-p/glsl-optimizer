@@ -169,7 +169,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       cpp = comp_byte;
    }
-   else cpp = firstImage->base.TexFormat->TexelBytes;
+   else
+      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat->MesaFormat);
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.

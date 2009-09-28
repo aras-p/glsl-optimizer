@@ -70,6 +70,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    GLuint depth = intelImage->base.Depth;
    GLuint l2width, l2height, l2depth;
    GLuint i, comp_byte = 0;
+   GLuint texelBytes;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -126,6 +127,9 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    assert(!intelObj->mt);
    if (intelImage->base.IsCompressed)
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
+
+   texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat->MesaFormat);
+
    intelObj->mt = intel_miptree_create(intel,
                                        intelObj->base.Target,
                                        intelImage->base._BaseFormat,
@@ -135,7 +139,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
                                        width,
                                        height,
                                        depth,
-                                       intelImage->base.TexFormat->TexelBytes,
+                                       texelBytes,
                                        comp_byte,
 				       expect_accelerated_upload);
 
@@ -399,11 +403,13 @@ intelTexImage(GLcontext * ctx,
       assert(intelImage->mt);
    } else if (intelImage->base.Border == 0) {
       int comp_byte = 0;
+      GLuint texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat->MesaFormat);
 
       if (intelImage->base.IsCompressed) {
 	 comp_byte =
 	    intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
       }
+
 
       /* Didn't fit in the object miptree, but it's suitable for inclusion in
        * a miptree, so create one just for our level and store it in the image.
@@ -414,7 +420,7 @@ intelTexImage(GLcontext * ctx,
 					    internalFormat,
 					    level, level,
 					    width, height, depth,
-					    intelImage->base.TexFormat->TexelBytes,
+					    texelBytes,
 					    comp_byte, pixels == NULL);
 
    }

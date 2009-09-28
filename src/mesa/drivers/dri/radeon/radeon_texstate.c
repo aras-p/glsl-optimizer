@@ -1031,7 +1031,7 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
-   texelBytes = firstImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat->MesaFormat);
 
    if (!t->image_override) {
       if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {

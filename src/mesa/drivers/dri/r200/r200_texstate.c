@@ -1437,7 +1437,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
-   texelBytes = firstImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat->MesaFormat);
 
 
    if (!t->image_override) {

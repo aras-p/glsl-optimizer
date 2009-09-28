@@ -89,7 +89,7 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
 
    totalSize = ( baseImage->Height *
 		 baseImage->Width *
-		 baseImage->TexFormat->TexelBytes );
+		 _mesa_get_format_bytes(baseImage->TexFormat->MesaFormat) );
 
    totalSize = (totalSize + 31) & ~31;
 
