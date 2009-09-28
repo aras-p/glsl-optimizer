@@ -40,6 +40,42 @@
 #include "formats.h"
 
 
+/**
+ * This macro defines the (many) parameters to the texstore functions.
+ * \param dims  either 1 or 2 or 3
+ * \param baseInternalFormat  user-specified base internal format
+ * \param dstFormat  destination Mesa texture format
+ * \param dstAddr  destination image address
+ * \param dstX/Y/Zoffset  destination x/y/z offset (ala TexSubImage), in texels
+ * \param dstRowStride  destination image row stride, in bytes
+ * \param dstImageOffsets  offset of each 2D slice within 3D texture, in texels
+ * \param srcWidth/Height/Depth  source image size, in pixels
+ * \param srcFormat  incoming image format
+ * \param srcType  incoming image data type
+ * \param srcAddr  source image address
+ * \param srcPacking  source image packing parameters
+ */
+#define TEXSTORE_PARAMS \
+	GLcontext *ctx, GLuint dims, \
+	GLenum baseInternalFormat, \
+	const struct gl_texture_format *dstFormat, \
+	GLvoid *dstAddr, \
+	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
+	GLint dstRowStride, const GLuint *dstImageOffsets, \
+	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
+	GLenum srcFormat, GLenum srcType, \
+	const GLvoid *srcAddr, \
+	const struct gl_pixelstore_attrib *srcPacking
+
+
+
+/**
+ * Texture image storage function.
+ */
+typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
+
+
+
 extern GLboolean _mesa_texstore_rgba(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_color_index(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba8888(TEXSTORE_PARAMS);

@@ -25,6 +25,8 @@
 #ifndef TEXCOMPRESS_FXT1_H
 #define TEXCOMPRESS_FXT1_H
 
+#include "texstore.h"
+
 extern GLboolean
 _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
 

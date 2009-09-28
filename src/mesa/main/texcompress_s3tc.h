@@ -25,6 +25,8 @@
 #ifndef TEXCOMPRESS_S3TC_H
 #define TEXCOMPRESS_S3TC_H
 
+#include "texstore.h"
+
 extern GLboolean
 _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS);
 
