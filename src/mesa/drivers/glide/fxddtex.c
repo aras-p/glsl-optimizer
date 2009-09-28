@@ -40,6 +40,7 @@
 
 #include "fxdrv.h"
 #include "main/enums.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
@@ -1396,7 +1397,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
    /*if (!fxMesa->HaveTexFmt) assert(texelBytes == 1 || texelBytes == 2);*/
 
    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
@@ -1531,7 +1532,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->Data);	/* must have an existing texture image! */
    assert(texImage->_BaseFormat);
 
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
    if (texImage->IsCompressed) {
       dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, mml->width);
    } else {
