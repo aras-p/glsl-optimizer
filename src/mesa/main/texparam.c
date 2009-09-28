@@ -31,9 +31,10 @@
 
 
 #include "main/glheader.h"
+#include "main/colormac.h"
 #include "main/context.h"
 #include "main/enums.h"
-#include "main/colormac.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "main/texcompress.h"
 #include "main/texparam.h"
@@ -782,20 +783,10 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Border;
          break;
       case GL_TEXTURE_RED_SIZE:
-         if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
-            *params = img->TexFormat->RedBits;
-         else
-            *params = 0;
-         break;
       case GL_TEXTURE_GREEN_SIZE:
-         if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
-            *params = img->TexFormat->GreenBits;
-         else
-            *params = 0;
-         break;
       case GL_TEXTURE_BLUE_SIZE:
          if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
-            *params = img->TexFormat->BlueBits;
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
          else
             *params = 0;
          break;
@@ -803,36 +794,44 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          if (img->_BaseFormat == GL_ALPHA ||
              img->_BaseFormat == GL_LUMINANCE_ALPHA ||
              img->_BaseFormat == GL_RGBA)
-            *params = img->TexFormat->AlphaBits;
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
          else
             *params = 0;
          break;
       case GL_TEXTURE_INTENSITY_SIZE:
          if (img->_BaseFormat != GL_INTENSITY)
             *params = 0;
-         else if (img->TexFormat->IntensityBits > 0)
-            *params = img->TexFormat->IntensityBits;
-         else /* intensity probably stored as rgb texture */
-            *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
+         else {
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            if (*params == 0) {
+               /* intensity probably stored as rgb texture */
+               *params = MIN2(_mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_RED_SIZE),
+                              _mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_GREEN_SIZE));
+            }
+         }
          break;
       case GL_TEXTURE_LUMINANCE_SIZE:
          if (img->_BaseFormat != GL_LUMINANCE &&
              img->_BaseFormat != GL_LUMINANCE_ALPHA)
             *params = 0;
-         else if (img->TexFormat->LuminanceBits > 0)
-            *params = img->TexFormat->LuminanceBits;
-         else /* luminance probably stored as rgb texture */
-            *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
+         else {
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            if (img->TexFormat->LuminanceBits == 0) {
+               /* luminance probably stored as rgb texture */
+               *params = MIN2(_mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_RED_SIZE),
+                              _mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_GREEN_SIZE));
+            }
+         }
          break;
       case GL_TEXTURE_INDEX_SIZE_EXT:
          if (img->_BaseFormat == GL_COLOR_INDEX)
-            *params = img->TexFormat->IndexBits;
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
          else
             *params = 0;
          break;
       case GL_TEXTURE_DEPTH_SIZE_ARB:
          if (ctx->Extensions.ARB_depth_texture)
-            *params = img->TexFormat->DepthBits;
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
          else
             _mesa_error(ctx, GL_INVALID_ENUM,
                         "glGetTexLevelParameter[if]v(pname)");
@@ -840,7 +839,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_STENCIL_SIZE_EXT:
          if (ctx->Extensions.EXT_packed_depth_stencil ||
              ctx->Extensions.ARB_framebuffer_object) {
-            *params = img->TexFormat->StencilBits;
+            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
