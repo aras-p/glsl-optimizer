@@ -136,6 +136,9 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
    macro_name = input[*pi].data.identifier;
 
+   /* First look for predefined macros.
+    */
+
    if (macro_name == context->dict.___LINE__) {
       if (!mute && _out_number(context, state, context->line)) {
          return -1;
@@ -207,55 +210,73 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       struct sl_pp_macro **pmacro = &actual_arg;
 
       for (j = 0; j < (unsigned int)macro->num_args; j++) {
-         unsigned int body_len;
+         struct sl_pp_process_state arg_state;
          unsigned int i;
          int done = 0;
          unsigned int paren_nesting = 0;
-         unsigned int k;
+         struct sl_pp_token_info eof;
 
-         *pmacro = sl_pp_macro_new();
-         if (!*pmacro) {
-            strcpy(context->error_msg, "out of memory");
-            return -1;
-         }
+         memset(&arg_state, 0, sizeof(arg_state));
 
-         (**pmacro).name = formal_arg->name;
-
-         body_len = 1;
-         for (i = *pi; !done; i++) {
+         for (i = *pi; !done;) {
             switch (input[i].token) {
             case SL_PP_WHITESPACE:
+               i++;
                break;
 
             case SL_PP_COMMA:
                if (!paren_nesting) {
                   if (j < (unsigned int)macro->num_args - 1) {
                      done = 1;
+                     i++;
                   } else {
                      strcpy(context->error_msg, "too many actual macro arguments");
                      return -1;
                   }
                } else {
-                  body_len++;
+                  if (sl_pp_process_out(&arg_state, &input[i])) {
+                     strcpy(context->error_msg, "out of memory");
+                     free(arg_state.out);
+                     return -1;
+                  }
+                  i++;
                }
                break;
 
             case SL_PP_LPAREN:
                paren_nesting++;
-               body_len++;
+               if (sl_pp_process_out(&arg_state, &input[i])) {
+                  strcpy(context->error_msg, "out of memory");
+                  free(arg_state.out);
+                  return -1;
+               }
+               i++;
                break;
 
             case SL_PP_RPAREN:
                if (!paren_nesting) {
                   if (j == (unsigned int)macro->num_args - 1) {
                      done = 1;
+                     i++;
                   } else {
                      strcpy(context->error_msg, "too few actual macro arguments");
                      return -1;
                   }
                } else {
                   paren_nesting--;
-                  body_len++;
+                  if (sl_pp_process_out(&arg_state, &input[i])) {
+                     strcpy(context->error_msg, "out of memory");
+                     free(arg_state.out);
+                     return -1;
+                  }
+                  i++;
+               }
+               break;
+
+            case SL_PP_IDENTIFIER:
+               if (sl_pp_macro_expand(context, input, &i, local, &arg_state, 0)) {
+                  free(arg_state.out);
+                  return -1;
                }
                break;
 
@@ -264,50 +285,33 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                return -1;
 
             default:
-               body_len++;
+               if (sl_pp_process_out(&arg_state, &input[i])) {
+                  strcpy(context->error_msg, "out of memory");
+                  free(arg_state.out);
+                  return -1;
+               }
+               i++;
             }
          }
 
-         (**pmacro).body = malloc(sizeof(struct sl_pp_token_info) * body_len);
-         if (!(**pmacro).body) {
+         (*pi) = i;
+
+         eof.token = SL_PP_EOF;
+         if (sl_pp_process_out(&arg_state, &eof)) {
             strcpy(context->error_msg, "out of memory");
+            free(arg_state.out);
             return -1;
          }
 
-         for (done = 0, k = 0, i = *pi; !done; i++) {
-            switch (input[i].token) {
-            case SL_PP_WHITESPACE:
-               break;
-
-            case SL_PP_COMMA:
-               if (!paren_nesting && j < (unsigned int)macro->num_args - 1) {
-                  done = 1;
-               } else {
-                  (**pmacro).body[k++] = input[i];
-               }
-               break;
-
-            case SL_PP_LPAREN:
-               paren_nesting++;
-               (**pmacro).body[k++] = input[i];
-               break;
-
-            case SL_PP_RPAREN:
-               if (!paren_nesting && j == (unsigned int)macro->num_args - 1) {
-                  done = 1;
-               } else {
-                  paren_nesting--;
-                  (**pmacro).body[k++] = input[i];
-               }
-               break;
-
-            default:
-               (**pmacro).body[k++] = input[i];
-            }
+         *pmacro = sl_pp_macro_new();
+         if (!*pmacro) {
+            strcpy(context->error_msg, "out of memory");
+            free(arg_state.out);
+            return -1;
          }
 
-         (**pmacro).body[k++].token = SL_PP_EOF;
-         (*pi) = i;
+         (**pmacro).name = formal_arg->name;
+         (**pmacro).body = arg_state.out;
 
          formal_arg = formal_arg->next;
          pmacro = &(**pmacro).next;
