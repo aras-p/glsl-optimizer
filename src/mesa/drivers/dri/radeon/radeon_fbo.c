@@ -387,6 +387,8 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 		     struct gl_texture_image *texImage)
 {
 	int retry = 0;
+	gl_format texFormat;
+
 restart:
 	if (texImage->TexFormat == &_mesa_texformat_argb8888) {
 		rrb->cpp = 4;
@@ -438,24 +440,25 @@ restart:
 			return GL_FALSE;
 		}
 		texImage->TexFormat = radeonChooseTextureFormat(ctx, texImage->InternalFormat, 0,
-								texImage->TexFormat->DataType,
+								_mesa_get_format_datatype(texImage->TexFormat->MesaFormat),
 								1);
 
 		retry++;
 		goto restart;
 	}
 	
+	texFormat = texImage->TexFormat->MesaFormat;
+
 	rrb->pitch = texImage->Width * rrb->cpp;
 	rrb->base.InternalFormat = rrb->base._ActualFormat;
 	rrb->base.Width = texImage->Width;
 	rrb->base.Height = texImage->Height;
-	rrb->base.RedBits = texImage->TexFormat->RedBits;
-	rrb->base.GreenBits = texImage->TexFormat->GreenBits;
-	rrb->base.BlueBits = texImage->TexFormat->BlueBits;
-	rrb->base.AlphaBits = texImage->TexFormat->AlphaBits;
-	rrb->base.DepthBits = texImage->TexFormat->DepthBits;
-	rrb->base.StencilBits = texImage->TexFormat->StencilBits;
-	
+	rrb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
+	rrb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
+	rrb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
+	rrb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
+	rrb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
+	rrb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
 	rrb->base.Delete = radeon_delete_renderbuffer;
 	rrb->base.AllocStorage = radeon_nop_alloc_storage;
 	

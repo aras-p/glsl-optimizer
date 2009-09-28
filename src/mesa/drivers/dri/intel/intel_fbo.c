@@ -466,6 +466,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
 		     struct gl_texture_image *texImage)
 {
    irb->texformat = texImage->TexFormat;
+   gl_format texFormat;
 
    if (texImage->TexFormat == &_mesa_texformat_argb8888) {
       irb->Base._ActualFormat = GL_RGBA8;
@@ -509,15 +510,17 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       return GL_FALSE;
    }
 
+   texFormat = texImage->TexFormat->MesaFormat;
+
    irb->Base.InternalFormat = irb->Base._ActualFormat;
    irb->Base.Width = texImage->Width;
    irb->Base.Height = texImage->Height;
-   irb->Base.RedBits = texImage->TexFormat->RedBits;
-   irb->Base.GreenBits = texImage->TexFormat->GreenBits;
-   irb->Base.BlueBits = texImage->TexFormat->BlueBits;
-   irb->Base.AlphaBits = texImage->TexFormat->AlphaBits;
-   irb->Base.DepthBits = texImage->TexFormat->DepthBits;
-   irb->Base.StencilBits = texImage->TexFormat->StencilBits;
+   irb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
+   irb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
+   irb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
+   irb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
+   irb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
+   irb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;

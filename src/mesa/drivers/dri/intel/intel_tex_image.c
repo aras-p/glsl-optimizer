@@ -404,19 +404,18 @@ intelTexImage(GLcontext * ctx,
    } else if (intelImage->base.Border == 0) {
       int comp_byte = 0;
       GLuint texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat->MesaFormat);
-
+      GLenum baseFormat = _mesa_get_format_base_format(intelImage->base.TexFormat->MesaFormat);
       if (intelImage->base.IsCompressed) {
 	 comp_byte =
 	    intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
       }
-
 
       /* Didn't fit in the object miptree, but it's suitable for inclusion in
        * a miptree, so create one just for our level and store it in the image.
        * It'll get moved into the object miptree at validate time.
        */
       intelImage->mt = intel_miptree_create(intel, target,
-					    intelImage->base.TexFormat->BaseFormat,
+					    baseFormat,
 					    internalFormat,
 					    level, level,
 					    width, height, depth,

@@ -209,7 +209,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 
 	if (!t->image_override
 	    && VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
-		if (firstImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
 			t->pp_txformat = tx_table[firstImage->TexFormat->MesaFormat].format;
