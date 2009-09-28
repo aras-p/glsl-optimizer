@@ -727,6 +727,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_image *img = NULL;
    GLboolean isProxy;
    GLint maxLevels;
+   gl_format texFormat;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -764,6 +765,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       goto out;
    }
 
+   texFormat = img->TexFormat->MesaFormat;
+
    isProxy = _mesa_is_proxy_texture(target);
 
    switch (pname) {
@@ -786,7 +789,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_GREEN_SIZE:
       case GL_TEXTURE_BLUE_SIZE:
          if (img->_BaseFormat == GL_RGB || img->_BaseFormat == GL_RGBA)
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
          else
             *params = 0;
          break;
@@ -794,7 +797,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          if (img->_BaseFormat == GL_ALPHA ||
              img->_BaseFormat == GL_LUMINANCE_ALPHA ||
              img->_BaseFormat == GL_RGBA)
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
          else
             *params = 0;
          break;
@@ -802,11 +805,11 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          if (img->_BaseFormat != GL_INTENSITY)
             *params = 0;
          else {
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
             if (*params == 0) {
                /* intensity probably stored as rgb texture */
-               *params = MIN2(_mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_RED_SIZE),
-                              _mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_GREEN_SIZE));
+               *params = MIN2(_mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE),
+                              _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE));
             }
          }
          break;
@@ -815,23 +818,23 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
              img->_BaseFormat != GL_LUMINANCE_ALPHA)
             *params = 0;
          else {
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
             if (img->TexFormat->LuminanceBits == 0) {
                /* luminance probably stored as rgb texture */
-               *params = MIN2(_mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_RED_SIZE),
-                              _mesa_get_format_bits(img->TexFormat->MesaFormat, GL_TEXTURE_GREEN_SIZE));
+               *params = MIN2(_mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE),
+                              _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE));
             }
          }
          break;
       case GL_TEXTURE_INDEX_SIZE_EXT:
          if (img->_BaseFormat == GL_COLOR_INDEX)
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
          else
             *params = 0;
          break;
       case GL_TEXTURE_DEPTH_SIZE_ARB:
          if (ctx->Extensions.ARB_depth_texture)
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
          else
             _mesa_error(ctx, GL_INVALID_ENUM,
                         "glGetTexLevelParameter[if]v(pname)");
@@ -839,7 +842,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_STENCIL_SIZE_EXT:
          if (ctx->Extensions.EXT_packed_depth_stencil ||
              ctx->Extensions.ARB_framebuffer_object) {
-            *params = _mesa_get_format_bits(img->TexFormat->MesaFormat, pname);
+            *params = _mesa_get_format_bits(texFormat, pname);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -855,7 +858,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 	     */
 	    *params = _mesa_compressed_texture_size(ctx, img->Width,
 						    img->Height, img->Depth,
-						    img->TexFormat->MesaFormat);
+						    texFormat);
 	 }
 	 else {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -869,7 +872,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       /* GL_ARB_texture_float */
       case GL_TEXTURE_RED_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->RedBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -878,7 +882,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_GREEN_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->GreenBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -887,7 +892,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_BLUE_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->BlueBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -896,7 +902,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_ALPHA_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->AlphaBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -905,7 +912,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_LUMINANCE_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->LuminanceBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_LUMINANCE_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -914,7 +922,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_INTENSITY_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->IntensityBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_INTENSITY_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -923,7 +932,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          break;
       case GL_TEXTURE_DEPTH_TYPE_ARB:
          if (ctx->Extensions.ARB_texture_float) {
-            *params = img->TexFormat->DepthBits ? img->TexFormat->DataType : GL_NONE;
+            *params = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE) ?
+               _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
