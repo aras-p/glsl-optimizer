@@ -558,32 +558,66 @@ eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, NativePixmapType target)
 
 
 EGLBoolean EGLAPIENTRY
-eglWaitGL(void)
+eglWaitClient(void)
 {
-   _EGLDisplay *disp = _eglGetCurrentDisplay();
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLDisplay *disp;
    _EGLDriver *drv;
 
-   if (!disp)
+   if (!ctx)
       return EGL_TRUE;
+   /* let bad current context imply bad current surface */
+   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+      return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
 
-   /* a current display is always initialized */
+   /* a valid current context implies an initialized current display */
+   disp = ctx->Display;
    drv = disp->Driver;
+   assert(drv);
 
-   return drv->API.WaitGL(drv, disp);
+   return drv->API.WaitClient(drv, disp, ctx);
+}
+
+
+EGLBoolean EGLAPIENTRY
+eglWaitGL(void)
+{
+#ifdef EGL_VERSION_1_2
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   EGLint api_index = t->CurrentAPIIndex;
+   EGLint es_index = _eglConvertApiToIndex(EGL_OPENGL_ES_API);
+   EGLBoolean ret;
+
+   if (api_index != es_index && _eglIsCurrentThreadDummy())
+      return _eglError(EGL_BAD_ALLOC, "eglWaitGL");
+
+   t->CurrentAPIIndex = es_index;
+   ret = eglWaitClient();
+   t->CurrentAPIIndex = api_index;
+   return ret;
+#else
+   return eglWaitClient();
+#endif
 }
 
 
 EGLBoolean EGLAPIENTRY
 eglWaitNative(EGLint engine)
 {
-   _EGLDisplay *disp = _eglGetCurrentDisplay();
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLDisplay *disp;
    _EGLDriver *drv;
 
-   if (!disp)
+   if (!ctx)
       return EGL_TRUE;
+   /* let bad current context imply bad current surface */
+   if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
+      return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
 
-   /* a current display is always initialized */
+   /* a valid current context implies an initialized current display */
+   disp = ctx->Display;
    drv = disp->Driver;
+   assert(drv);
 
    return drv->API.WaitNative(drv, disp, engine);
 }
@@ -955,22 +989,6 @@ eglReleaseThread(void)
 
    _eglDestroyCurrentThread();
    return EGL_TRUE;
-}
-
-
-EGLBoolean
-eglWaitClient(void)
-{
-   _EGLDisplay *disp = _eglGetCurrentDisplay();
-   _EGLDriver *drv;
-
-   if (!disp)
-      return EGL_TRUE;
-
-   /* a current display is always initialized */
-   drv = disp->Driver;
-
-   return drv->API.WaitClient(drv, disp);
 }
 
 

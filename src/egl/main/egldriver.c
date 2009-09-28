@@ -408,7 +408,7 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.CopyBuffers = _eglCopyBuffers;
 
    drv->API.QueryString = _eglQueryString;
-   drv->API.WaitGL = _eglWaitGL;
+   drv->API.WaitClient = _eglWaitClient;
    drv->API.WaitNative = _eglWaitNative;
 
 #ifdef EGL_MESA_screen_surface

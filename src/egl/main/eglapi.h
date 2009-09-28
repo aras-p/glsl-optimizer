@@ -41,7 +41,7 @@ typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurfa
 
 /* misc funcs */
 typedef const char *(*QueryString_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name);
-typedef EGLBoolean (*WaitGL_t)(_EGLDriver *drv, _EGLDisplay *dpy);
+typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
 typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine);
 
 typedef _EGLProc (*GetProcAddress_t)(const char *procname);
@@ -65,7 +65,6 @@ typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy,
 
 
 #ifdef EGL_VERSION_1_2
-typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, _EGLDisplay *dpy);
 typedef _EGLSurface *(*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum buftype, EGLClientBuffer buffer, _EGLConfig *config, const EGLint *attrib_list);
 #endif /* EGL_VERSION_1_2 */
 
@@ -101,7 +100,7 @@ struct _egl_api
    CopyBuffers_t CopyBuffers;
 
    QueryString_t QueryString;
-   WaitGL_t WaitGL;
+   WaitClient_t WaitClient;
    WaitNative_t WaitNative;
    GetProcAddress_t GetProcAddress;
 
@@ -120,7 +119,6 @@ struct _egl_api
    QueryModeStringMESA_t QueryModeStringMESA;
 
 #ifdef EGL_VERSION_1_2
-   WaitClient_t WaitClient;
    CreatePbufferFromClientBuffer_t CreatePbufferFromClientBuffer;
 #endif
 };
