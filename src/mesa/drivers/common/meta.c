@@ -974,7 +974,8 @@ setup_copypix_texture(struct temp_texture *tex,
  * Setup/load texture for glDrawPixels.
  */
 static void
-setup_drawpix_texture(struct temp_texture *tex,
+setup_drawpix_texture(GLcontext *ctx,
+		      struct temp_texture *tex,
                       GLboolean newTex,
                       GLenum texIntFormat,
                       GLsizei width, GLsizei height,
@@ -995,9 +996,17 @@ setup_drawpix_texture(struct temp_texture *tex,
                           tex->Width, tex->Height, 0, format, type, pixels);
       }
       else {
+	 struct gl_buffer_object *save_unpack_obj = NULL;
+
+	 _mesa_reference_buffer_object(ctx, &save_unpack_obj,
+				       ctx->Unpack.BufferObj);
+	 _mesa_BindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
          /* create empty texture */
          _mesa_TexImage2D(tex->Target, 0, tex->IntFormat,
                           tex->Width, tex->Height, 0, format, type, NULL);
+	 if (save_unpack_obj != NULL)
+	    _mesa_BindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+				save_unpack_obj->Name);
          /* load image */
          _mesa_TexSubImage2D(tex->Target, 0,
                              0, 0, width, height, format, type, pixels);
@@ -1162,7 +1171,7 @@ _mesa_meta_BlitFramebuffer(GLcontext *ctx,
          _mesa_ReadPixels(srcX, srcY, srcW, srcH,
                           GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
 
-         setup_drawpix_texture(tex, newTex, GL_DEPTH_COMPONENT, srcW, srcH,
+         setup_drawpix_texture(ctx, tex, newTex, GL_DEPTH_COMPONENT, srcW, srcH,
                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
 
          _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
@@ -1725,7 +1734,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       if (!drawpix->StencilFP)
          init_draw_stencil_pixels(ctx);
 
-      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
                             GL_ALPHA, type, pixels);
 
       _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1768,14 +1777,14 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
                                         ctx->Current.RasterColor);
 
-      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
                             format, type, pixels);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
    else {
       /* Drawing RGBA */
-      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
                             format, type, pixels);
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
@@ -1923,7 +1932,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
       _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_TRUE);
       _mesa_AlphaFunc(GL_GREATER, 0.0);
 
-      setup_drawpix_texture(tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
                             GL_ALPHA, GL_UNSIGNED_BYTE, bitmap8);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
