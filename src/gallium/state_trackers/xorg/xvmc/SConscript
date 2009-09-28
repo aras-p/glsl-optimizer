@@ -1,0 +1,27 @@
+#######################################################################
+# SConscript for xvmc state_tracker
+
+Import('*')
+
+if 'xorg/xvmc' in env['statetrackers']:
+
+    env = env.Clone()
+    
+    env.Append(CPPPATH = [
+	'#/src/gallium/include',
+	'#/src/gallium/auxiliary',
+	'#/src/gallium/winsys/g3dvl',
+    ])
+
+    env.ParseConfig('pkg-config --cflags --libs xvmc')
+
+    st_xvmc = env.ConvenienceLibrary(
+	target = 'st_xvmc',
+	source = [ 'block.c',
+		'surface.c',
+		'context.c',
+		'subpicture.c',
+		'attributes.c',
+		]
+    )
+    Export('st_xvmc')

@@ -20,9 +20,9 @@ DEFINES += -DGALLIUM_SOFTPIPE \
 
 SOURCES = xsp_winsys.c
 
-# XXX: Hack, if we include libXvMCapi.a in LIBS none of the symbols are
+# XXX: Hack, if we include libxvmctracker.a in LIBS none of the symbols are
 # pulled in by the linker because xsp_winsys.c doesn't refer to them
-OBJECTS = $(SOURCES:.c=.o) $(TOP)/src/xvmc/*.o
+OBJECTS = $(SOURCES:.c=.o) $(TOP)/src/gallium/state_trackers/xorg/xvmc/*.o
 
 LIBS = $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
        $(TOP)/src/gallium/auxiliary/vl/libvl.a \
