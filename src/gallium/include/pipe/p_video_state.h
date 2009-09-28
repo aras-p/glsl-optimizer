@@ -2,8 +2,8 @@
 #define PIPE_VIDEO_STATE_H
 
 /* u_reduce_video_profile() needs these */
-#include <assert.h>
 #include <pipe/p_compiler.h>
+#include <util/u_debug.h>
 
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>
