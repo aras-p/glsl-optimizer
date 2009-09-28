@@ -493,10 +493,10 @@ static void r700SetBlendState(GLcontext * ctx)
 		 eqn, COLOR_COMB_FCN_shift, COLOR_COMB_FCN_mask);
 
 	SETfield(blend_reg,
-		 blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE),
+		 blend_factor(ctx->Color.BlendSrcA, GL_TRUE),
 		 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
 	SETfield(blend_reg,
-		 blend_factor(ctx->Color.BlendDstRGB, GL_FALSE),
+		 blend_factor(ctx->Color.BlendDstA, GL_FALSE),
 		 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
 
 	switch (ctx->Color.BlendEquationA) {
