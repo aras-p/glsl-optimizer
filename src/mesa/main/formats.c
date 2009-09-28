@@ -24,6 +24,7 @@
  */
 
 
+#include "imports.h"
 #include "formats.h"
 #include "config.h"
 #include "texstore.h"
@@ -785,3 +786,33 @@ _mesa_format_to_type_and_comps2(gl_format format,
    }
 }
 
+
+GLint
+_mesa_get_format_bits(gl_format format, GLenum pname)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+
+   switch (pname) {
+   case GL_TEXTURE_RED_SIZE:
+      return info->RedBits;
+   case GL_TEXTURE_GREEN_SIZE:
+      return info->GreenBits;
+   case GL_TEXTURE_BLUE_SIZE:
+      return info->BlueBits;
+   case GL_TEXTURE_ALPHA_SIZE:
+      return info->AlphaBits;
+   case GL_TEXTURE_INTENSITY_SIZE:
+      return info->IntensityBits;
+   case GL_TEXTURE_LUMINANCE_SIZE:
+      return info->LuminanceBits;
+   case GL_TEXTURE_INDEX_SIZE_EXT:
+      return info->IndexBits;
+   case GL_TEXTURE_DEPTH_SIZE_ARB:
+      return info->DepthBits;
+   case GL_TEXTURE_STENCIL_SIZE_EXT:
+      return info->StencilBits;
+   default:
+      _mesa_problem(NULL, "bad pname in _mesa_get_format_bits()");
+      return 0;
+   }
+}
