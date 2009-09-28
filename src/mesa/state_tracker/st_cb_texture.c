@@ -417,7 +417,7 @@ compress_with_blit(GLcontext * ctx,
    struct pipe_surface *dst_surface;
    struct pipe_transfer *tex_xfer;
    void *map;
-
+   StoreTexImageFunc storeImage;
 
    if (!stImage->pt) {
       /* XXX: Can this happen? Should we assert? */
@@ -464,15 +464,18 @@ compress_with_blit(GLcontext * ctx,
 					     0, 0, width, height); /* x, y, w, h */
    map = screen->transfer_map(screen, tex_xfer);
 
-   mesa_format->StoreImage(ctx, 2, GL_RGBA, mesa_format,
-                           map,              /* dest ptr */
-                           0, 0, 0,          /* dest x/y/z offset */
-                           tex_xfer->stride, /* dest row stride (bytes) */
-                           dstImageOffsets,  /* image offsets (for 3D only) */
-                           width, height, 1, /* size */
-                           format, type,     /* source format/type */
-                           pixels,           /* source data */
-                           unpack);          /* source data packing */
+   storeImage = _mesa_get_texstore_func(mesa_format->MesaFormat);
+
+
+   storeImage(ctx, 2, GL_RGBA, mesa_format,
+              map,              /* dest ptr */
+              0, 0, 0,          /* dest x/y/z offset */
+              tex_xfer->stride, /* dest row stride (bytes) */
+              dstImageOffsets,  /* image offsets (for 3D only) */
+              width, height, 1, /* size */
+              format, type,     /* source format/type */
+              pixels,           /* source data */
+              unpack);          /* source data packing */
 
    screen->transfer_unmap(screen, tex_xfer);
    screen->tex_transfer_destroy(tex_xfer);
@@ -734,17 +737,19 @@ st_TexImage(GLcontext * ctx,
          _mesa_image_image_stride(unpack, width, height, format, type);
       GLint i;
       const GLubyte *src = (const GLubyte *) pixels;
+      StoreTexImageFunc storeImage =
+         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
 
       for (i = 0; i < depth; i++) {
-	 if (!texImage->TexFormat->StoreImage(ctx, dims, 
-					      texImage->_BaseFormat, 
-					      texImage->TexFormat, 
-					      texImage->Data,
-					      0, 0, 0, /* dstX/Y/Zoffset */
-					      dstRowStride,
-					      texImage->ImageOffsets,
-					      width, height, 1,
-					      format, type, src, unpack)) {
+	 if (!storeImage(ctx, dims, 
+                         texImage->_BaseFormat, 
+                         texImage->TexFormat, 
+                         texImage->Data,
+                         0, 0, 0, /* dstX/Y/Zoffset */
+                         dstRowStride,
+                         texImage->ImageOffsets,
+                         width, height, 1,
+                         format, type, src, unpack)) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 	 }
 
@@ -1051,6 +1056,9 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
    const GLubyte *src;
    /* init to silence warning only: */
    enum pipe_transfer_usage transfer_usage = PIPE_TRANSFER_WRITE;
+   StoreTexImageFunc storeImage =
+      _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
+
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -1107,14 +1115,14 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
    dstRowStride = stImage->transfer->stride;
 
    for (i = 0; i < depth; i++) {
-      if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
-					   texImage->TexFormat,
-					   texImage->Data,
-					   0, 0, 0,
-					   dstRowStride,
-					   texImage->ImageOffsets,
-					   width, height, 1,
-					   format, type, src, packing)) {
+      if (!storeImage(ctx, dims, texImage->_BaseFormat,
+                      texImage->TexFormat,
+                      texImage->Data,
+                      0, 0, 0,
+                      dstRowStride,
+                      texImage->ImageOffsets,
+                      width, height, 1,
+                      format, type, src, packing)) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
       }
 
@@ -1353,6 +1361,8 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
          const GLint dstRowStride = stImage->transfer->stride;
          struct gl_texture_image *texImage = &stImage->base;
          struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
+         StoreTexImageFunc storeImage =
+            _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
 
          if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
             unpack.Invert = GL_TRUE;
@@ -1370,16 +1380,16 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
           * is actually RGBA but the user created the texture as GL_RGB we
           * need to fill-in/override the alpha channel with 1.0.
           */
-         texImage->TexFormat->StoreImage(ctx, dims,
-                                         texImage->_BaseFormat, 
-                                         texImage->TexFormat, 
-                                         texDest,
-                                         0, 0, 0,
-                                         dstRowStride,
-                                         texImage->ImageOffsets,
-                                         width, height, 1,
-                                         GL_RGBA, GL_FLOAT, tempSrc, /* src */
-                                         &unpack);
+         storeImage(ctx, dims,
+                    texImage->_BaseFormat, 
+                    texImage->TexFormat, 
+                    texDest,
+                    0, 0, 0,
+                    dstRowStride,
+                    texImage->ImageOffsets,
+                    width, height, 1,
+                    GL_RGBA, GL_FLOAT, tempSrc, /* src */
+                    &unpack);
       }
       else {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
