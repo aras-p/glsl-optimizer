@@ -594,6 +594,45 @@ _mesa_get_format_bytes(gl_format format)
 }
 
 
+GLint
+_mesa_get_format_bits(gl_format format, GLenum pname)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+
+   switch (pname) {
+   case GL_TEXTURE_RED_SIZE:
+      return info->RedBits;
+   case GL_TEXTURE_GREEN_SIZE:
+      return info->GreenBits;
+   case GL_TEXTURE_BLUE_SIZE:
+      return info->BlueBits;
+   case GL_TEXTURE_ALPHA_SIZE:
+      return info->AlphaBits;
+   case GL_TEXTURE_INTENSITY_SIZE:
+      return info->IntensityBits;
+   case GL_TEXTURE_LUMINANCE_SIZE:
+      return info->LuminanceBits;
+   case GL_TEXTURE_INDEX_SIZE_EXT:
+      return info->IndexBits;
+   case GL_TEXTURE_DEPTH_SIZE_ARB:
+      return info->DepthBits;
+   case GL_TEXTURE_STENCIL_SIZE_EXT:
+      return info->StencilBits;
+   default:
+      _mesa_problem(NULL, "bad pname in _mesa_get_format_bits()");
+      return 0;
+   }
+}
+
+
+GLenum
+_mesa_get_format_datatype(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return info->DataType;
+}
+
+
 GLenum
 _mesa_get_format_base_format(gl_format format)
 {
@@ -784,43 +823,4 @@ _mesa_format_to_type_and_comps2(gl_format format,
       *comps = 1;
       *datatype = GL_UNSIGNED_BYTE;
    }
-}
-
-
-GLint
-_mesa_get_format_bits(gl_format format, GLenum pname)
-{
-   const struct gl_format_info *info = _mesa_get_format_info(format);
-
-   switch (pname) {
-   case GL_TEXTURE_RED_SIZE:
-      return info->RedBits;
-   case GL_TEXTURE_GREEN_SIZE:
-      return info->GreenBits;
-   case GL_TEXTURE_BLUE_SIZE:
-      return info->BlueBits;
-   case GL_TEXTURE_ALPHA_SIZE:
-      return info->AlphaBits;
-   case GL_TEXTURE_INTENSITY_SIZE:
-      return info->IntensityBits;
-   case GL_TEXTURE_LUMINANCE_SIZE:
-      return info->LuminanceBits;
-   case GL_TEXTURE_INDEX_SIZE_EXT:
-      return info->IndexBits;
-   case GL_TEXTURE_DEPTH_SIZE_ARB:
-      return info->DepthBits;
-   case GL_TEXTURE_STENCIL_SIZE_EXT:
-      return info->StencilBits;
-   default:
-      _mesa_problem(NULL, "bad pname in _mesa_get_format_bits()");
-      return 0;
-   }
-}
-
-
-GLenum
-_mesa_get_format_datatype(gl_format format)
-{
-   const struct gl_format_info *info = _mesa_get_format_info(format);
-   return info->DataType;
 }

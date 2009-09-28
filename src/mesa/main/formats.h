@@ -198,6 +198,12 @@ struct gl_format_info
 extern GLuint
 _mesa_get_format_bytes(gl_format format);
 
+extern GLint
+_mesa_get_format_bits(gl_format format, GLenum pname);
+
+extern GLenum
+_mesa_get_format_datatype(gl_format format);
+
 extern GLenum
 _mesa_get_format_base_format(gl_format format);
 
@@ -207,13 +213,6 @@ _mesa_is_format_compressed(gl_format format);
 extern void
 _mesa_format_to_type_and_comps2(gl_format format,
                                 GLenum *datatype, GLuint *comps);
-
-extern GLint
-_mesa_get_format_bits(gl_format format, GLenum pname);
-
-extern GLenum
-_mesa_get_format_datatype(gl_format format);
-
 
 extern void
 _mesa_test_formats(void);
