@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
 	const unsigned int	width = 16, height = 16;
 	const unsigned int	mc_types[2] = {XVMC_MOCOMP | XVMC_MPEG_2, XVMC_IDCT | XVMC_MPEG_2};
-	
+
 	Display			*display;
 	XvPortID		port_num;
 	int			surface_type_id;
@@ -14,9 +14,9 @@ int main(int argc, char **argv)
 	int			colorkey;
 	XvMCContext		context;
 	XvMCSurface		surface = {0};
-	
+
 	display = XOpenDisplay(NULL);
-	
+
 	if (!GetPort
 	(
 		display,
@@ -34,15 +34,15 @@ int main(int argc, char **argv)
 		XCloseDisplay(display);
 		error(1, 0, "Error, unable to find a good port.\n");
 	}
-	
+
 	if (is_overlay)
 	{
 		Atom xv_colorkey = XInternAtom(display, "XV_COLORKEY", 0);
 		XvGetPortAttribute(display, port_num, xv_colorkey, &colorkey);
 	}
-	
+
 	assert(XvMCCreateContext(display, port_num, surface_type_id, width, height, XVMC_DIRECT, &context) == Success);
-	
+
 	/* Test NULL context */
 	assert(XvMCCreateSurface(display, NULL, &surface) == XvMCBadContext);
 	/* Test NULL surface */
@@ -61,12 +61,11 @@ int main(int argc, char **argv)
 	assert(XvMCDestroySurface(display, &surface) == Success);
 	/* Test NULL surface */
 	assert(XvMCDestroySurface(display, NULL) == XvMCBadSurface);
-	
+
 	assert(XvMCDestroyContext(display, &context) == Success);
-	
+
 	XvUngrabPort(display, port_num, CurrentTime);
 	XCloseDisplay(display);
-	
+
 	return 0;
 }
-

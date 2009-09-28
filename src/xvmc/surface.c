@@ -1,290 +1,369 @@
 #include <assert.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/XvMC.h>
 #include <X11/Xlibint.h>
-#include <vl_display.h>
-#include <vl_screen.h>
-#include <vl_context.h>
-#include <vl_surface.h>
-#include <vl_types.h>
+#include <pipe/p_video_context.h>
+#include <pipe/p_video_state.h>
+#include <pipe/p_state.h>
+#include <util/u_memory.h>
+#include "xvmc_private.h"
 
-static enum vlMacroBlockType TypeToVL(int xvmc_mb_type)
+static enum pipe_mpeg12_macroblock_type TypeToPipe(int xvmc_mb_type)
 {
-	if (xvmc_mb_type & XVMC_MB_TYPE_INTRA)
-		return vlMacroBlockTypeIntra;
-	if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_FORWARD)
-		return vlMacroBlockTypeFwdPredicted;
-	if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_BACKWARD)
-		return vlMacroBlockTypeBkwdPredicted;
-	if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD))
-		return vlMacroBlockTypeBiPredicted;
+   if (xvmc_mb_type & XVMC_MB_TYPE_INTRA)
+      return PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
+   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_FORWARD)
+      return PIPE_MPEG12_MACROBLOCK_TYPE_FWD;
+   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_BACKWARD)
+      return PIPE_MPEG12_MACROBLOCK_TYPE_BKWD;
+   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD))
+      return PIPE_MPEG12_MACROBLOCK_TYPE_BI;
 
-	assert(0);
+   assert(0);
 
-	return -1;
+   return -1;
 }
 
-static enum vlPictureType PictureToVL(int xvmc_pic)
+static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
 {
-	switch (xvmc_pic)
-	{
-		case XVMC_TOP_FIELD:
-			return vlPictureTypeTopField;
-		case XVMC_BOTTOM_FIELD:
-			return vlPictureTypeBottomField;
-		case XVMC_FRAME_PICTURE:
-			return vlPictureTypeFrame;
-		default:
-			assert(0);
-	}
+   switch (xvmc_pic)
+   {
+      case XVMC_TOP_FIELD:
+         return PIPE_MPEG12_PICTURE_TYPE_FIELD_TOP;
+      case XVMC_BOTTOM_FIELD:
+         return PIPE_MPEG12_PICTURE_TYPE_FIELD_BOTTOM;
+      case XVMC_FRAME_PICTURE:
+         return PIPE_MPEG12_PICTURE_TYPE_FRAME;
+      default:
+         assert(0);
+   }
 
-	return -1;
+   return -1;
 }
 
-static enum vlMotionType MotionToVL(int xvmc_motion_type, int xvmc_dct_type)
+static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_dct_type)
 {
-	switch (xvmc_motion_type)
-	{
-		case XVMC_PREDICTION_FRAME:
-			return xvmc_dct_type == XVMC_DCT_TYPE_FIELD ? vlMotionType16x8 : vlMotionTypeFrame;
-		case XVMC_PREDICTION_FIELD:
-			return vlMotionTypeField;
-		case XVMC_PREDICTION_DUAL_PRIME:
-			return vlMotionTypeDualPrime;
-		default:
-			assert(0);
-	}
+   switch (xvmc_motion_type)
+   {
+      case XVMC_PREDICTION_FRAME:
+         return xvmc_dct_type == XVMC_DCT_TYPE_FIELD ?
+            PIPE_MPEG12_MOTION_TYPE_16x8 : PIPE_MPEG12_MOTION_TYPE_FRAME;
+      case XVMC_PREDICTION_FIELD:
+         return PIPE_MPEG12_MOTION_TYPE_FIELD;
+      case XVMC_PREDICTION_DUAL_PRIME:
+         return PIPE_MPEG12_MOTION_TYPE_DUALPRIME;
+      default:
+         assert(0);
+   }
 
-	return -1;
+   return -1;
 }
 
-Status XvMCCreateSurface(Display *display, XvMCContext *context, XvMCSurface *surface)
+static bool
+CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, unsigned int height,
+                         struct pipe_surface **backbuffer)
 {
-	struct vlContext *vl_ctx;
-	struct vlSurface *vl_sfc;
-	Display *dpy = display;
+   struct pipe_texture template;
+   struct pipe_texture *tex;
 
-	assert(display);
+   assert(vpipe);
 
-	if (!context)
-		return XvMCBadContext;
-	if (!surface)
-		return XvMCBadSurface;
+   if (*backbuffer)
+   {
+      if ((*backbuffer)->width != width || (*backbuffer)->height != height)
+         pipe_surface_reference(backbuffer, NULL);
+      else
+         return true;
+   }
 
-	vl_ctx = context->privData;
+   memset(&template, 0, sizeof(struct pipe_texture));
+   template.target = PIPE_TEXTURE_2D;
+   /* XXX: Needs to match the drawable's format? */
+   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.last_level = 0;
+   template.width[0] = width;
+   template.height[0] = height;
+   template.depth[0] = 1;
+   pf_get_block(template.format, &template.block);
+   template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
 
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
+   tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   if (!tex)
+      return false;
 
-	if (vlCreateSurface(vlContextGetScreen(vl_ctx),
-	                    context->width, context->height,
-	                    vlGetPictureFormat(vl_ctx),
-	                    &vl_sfc))
-	{
-		return BadAlloc;
-	}
+   *backbuffer = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
+                                                PIPE_BUFFER_USAGE_GPU_READ |
+                                                PIPE_BUFFER_USAGE_GPU_WRITE);
+   pipe_texture_reference(&tex, NULL);
 
-	vlBindToContext(vl_sfc, vl_ctx);
+   if (!*backbuffer)
+      return false;
 
-	surface->surface_id = XAllocID(display);
-	surface->context_id = context->context_id;
-	surface->surface_type_id = context->surface_type_id;
-	surface->width = context->width;
-	surface->height = context->height;
-	surface->privData = vl_sfc;
+   /* Clear the backbuffer in case the video doesn't cover the whole window */
+   /* FIXME: Need to clear every time a frame moves and leaves dirty rects */
+   vpipe->clear_surface(vpipe, 0, 0, width, height, 0, *backbuffer);
 
-	SyncHandle();
-	return Success;
+   return true;
 }
 
-Status XvMCRenderSurface
-(
-	Display *display,
-	XvMCContext *context,
-	unsigned int picture_structure,
-	XvMCSurface *target_surface,
-	XvMCSurface *past_surface,
-	XvMCSurface *future_surface,
-	unsigned int flags,
-	unsigned int num_macroblocks,
-	unsigned int first_macroblock,
-	XvMCMacroBlockArray *macroblocks,
-	XvMCBlockArray *blocks
+static void
+MacroBlocksToPipe(const XvMCMacroBlockArray *xvmc_macroblocks,
+                  const XvMCBlockArray *xvmc_blocks,
+                  unsigned int first_macroblock,
+                  unsigned int num_macroblocks,
+                  struct pipe_mpeg12_macroblock *pipe_macroblocks)
+{
+   unsigned int i, j, k, l;
+   XvMCMacroBlock *xvmc_mb;
+
+   assert(xvmc_macroblocks);
+   assert(xvmc_blocks);
+   assert(pipe_macroblocks);
+   assert(num_macroblocks);
+
+   xvmc_mb = xvmc_macroblocks->macro_blocks + first_macroblock;
+
+   for (i = 0; i < num_macroblocks; ++i)
+   {
+      pipe_macroblocks->base.codec = PIPE_VIDEO_CODEC_MPEG12;
+      pipe_macroblocks->mbx = xvmc_mb->x;
+      pipe_macroblocks->mby = xvmc_mb->y;
+      pipe_macroblocks->mb_type = TypeToPipe(xvmc_mb->macroblock_type);
+      if (pipe_macroblocks->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA)
+         pipe_macroblocks->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_mb->dct_type);
+      /* Get rid of Valgrind 'undefined' warnings */
+      else
+         pipe_macroblocks->mo_type = -1;
+      pipe_macroblocks->dct_type = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
+         PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
+
+      for (j = 0; j < 2; ++j)
+         for (k = 0; k < 2; ++k)
+            for (l = 0; l < 2; ++l)
+               pipe_macroblocks->pmv[j][k][l] = xvmc_mb->PMV[j][k][l];
+
+      pipe_macroblocks->cbp = xvmc_mb->coded_block_pattern;
+      pipe_macroblocks->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
+
+      ++pipe_macroblocks;
+      ++xvmc_mb;
+   }
+}
+
+Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surface)
+{
+   XvMCContextPrivate *context_priv;
+   struct pipe_video_context *vpipe;
+   XvMCSurfacePrivate *surface_priv;
+   struct pipe_video_surface *vsfc;
+
+   assert(dpy);
+
+   if (!context)
+      return XvMCBadContext;
+   if (!surface)
+      return XvMCBadSurface;
+
+   context_priv = context->privData;
+   vpipe = context_priv->vpipe;
+
+   surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
+   if (!surface_priv)
+      return BadAlloc;
+
+   vsfc = vpipe->screen->video_surface_create(vpipe->screen, vpipe->chroma_format,
+                                              vpipe->width, vpipe->height);
+   if (!vsfc)
+   {
+      FREE(surface_priv);
+      return BadAlloc;
+   }
+
+   surface_priv->pipe_vsfc = vsfc;
+   surface_priv->context = context;
+
+   surface->surface_id = XAllocID(dpy);
+   surface->context_id = context->context_id;
+   surface->surface_type_id = context->surface_type_id;
+   surface->width = context->width;
+   surface->height = context->height;
+   surface->privData = surface_priv;
+
+   SyncHandle();
+
+   return Success;
+}
+
+Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int picture_structure,
+                         XvMCSurface *target_surface, XvMCSurface *past_surface, XvMCSurface *future_surface,
+                         unsigned int flags, unsigned int num_macroblocks, unsigned int first_macroblock,
+                         XvMCMacroBlockArray *macroblocks, XvMCBlockArray *blocks
 )
 {
-	struct vlContext		*vl_ctx;
-	struct vlSurface		*target_vl_surface;
-	struct vlSurface		*past_vl_surface;
-	struct vlSurface		*future_vl_surface;
-	struct vlMpeg2MacroBlockBatch	batch;
-	struct vlMpeg2MacroBlock	vl_macroblocks[num_macroblocks];
-	unsigned int			i;
+   struct pipe_video_context *vpipe;
+   struct pipe_surface *t_vsfc;
+   struct pipe_surface *p_vsfc;
+   struct pipe_surface *f_vsfc;
+   XvMCContextPrivate *context_priv;
+   XvMCSurfacePrivate *target_surface_priv;
+   XvMCSurfacePrivate *past_surface_priv;
+   XvMCSurfacePrivate *future_surface_priv;
+   struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
 
-	assert(display);
+   assert(dpy);
 
-	if (!context)
-		return XvMCBadContext;
-	if (!target_surface)
-		return XvMCBadSurface;
+   if (!context || !context->privData)
+      return XvMCBadContext;
+   if (!target_surface || !target_surface->privData)
+      return XvMCBadSurface;
 
-	if
-	(
-		picture_structure != XVMC_TOP_FIELD &&
-		picture_structure != XVMC_BOTTOM_FIELD &&
-		picture_structure != XVMC_FRAME_PICTURE
-	)
-		return BadValue;
-	if (future_surface && !past_surface)
-		return BadMatch;
+   if (picture_structure != XVMC_TOP_FIELD &&
+       picture_structure != XVMC_BOTTOM_FIELD &&
+       picture_structure != XVMC_FRAME_PICTURE)
+      return BadValue;
+   /* Bkwd pred equivalent to fwd (past && !future) */
+   if (future_surface && !past_surface)
+      return BadMatch;
 
-	vl_ctx = context->privData;
+   assert(context->context_id == target_surface->context_id);
+   assert(!past_surface || context->context_id == past_surface->context_id);
+   assert(!future_surface || context->context_id == future_surface->context_id);
 
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
+   assert(macroblocks);
+   assert(blocks);
 
-	target_vl_surface = target_surface->privData;
-	past_vl_surface = past_surface ? past_surface->privData : NULL;
-	future_vl_surface = future_surface ? future_surface->privData : NULL;
+   assert(macroblocks->context_id == context->context_id);
+   assert(blocks->context_id == context->context_id);
 
-	assert(context->context_id == target_surface->context_id);
-	assert(!past_surface || context->context_id == past_surface->context_id);
-	assert(!future_surface || context->context_id == future_surface->context_id);
+   assert(flags == 0 || flags == XVMC_SECOND_FIELD);
 
-	assert(macroblocks);
-	assert(blocks);
+   target_surface_priv = target_surface->privData;
+   past_surface_priv = past_surface ? past_surface->privData : NULL;
+   future_surface_priv = future_surface ? future_surface->privData : NULL;
 
-	assert(macroblocks->context_id == context->context_id);
-	assert(blocks->context_id == context->context_id);
+   assert(target_surface_priv->context == context);
+   assert(!past_surface || past_surface_priv->context == context);
+   assert(!future_surface || future_surface_priv->context == context);
 
-	assert(flags == 0 || flags == XVMC_SECOND_FIELD);
+   context_priv = context->privData;
+   vpipe = context_priv->vpipe;
 
-	batch.past_surface = past_vl_surface;
-	batch.future_surface = future_vl_surface;
-	batch.picture_type = PictureToVL(picture_structure);
-	batch.field_order = flags & XVMC_SECOND_FIELD ? vlFieldOrderSecond : vlFieldOrderFirst;
-	batch.num_macroblocks = num_macroblocks;
-	batch.macroblocks = vl_macroblocks;
+   t_vsfc = target_surface_priv->pipe_vsfc;
+   p_vsfc = past_surface ? past_surface_priv->pipe_vsfc : NULL;
+   f_vsfc = future_surface ? future_surface_priv->pipe_vsfc : NULL;
 
-	for (i = 0; i < num_macroblocks; ++i)
-	{
-		unsigned int j = first_macroblock + i;
+   MacroBlocksToPipe(macroblocks, blocks, first_macroblock,
+                     num_macroblocks, pipe_macroblocks);
 
-		unsigned int k, l, m;
+   vpipe->set_decode_target(vpipe, t_vsfc);
+   vpipe->decode_macroblocks(vpipe, p_vsfc, f_vsfc, num_macroblocks,
+                             &pipe_macroblocks->base, target_surface_priv->render_fence);
 
-		batch.macroblocks[i].mbx = macroblocks->macro_blocks[j].x;
-		batch.macroblocks[i].mby = macroblocks->macro_blocks[j].y;
-		batch.macroblocks[i].mb_type = TypeToVL(macroblocks->macro_blocks[j].macroblock_type);
-		if (batch.macroblocks[i].mb_type != vlMacroBlockTypeIntra)
-			batch.macroblocks[i].mo_type = MotionToVL(macroblocks->macro_blocks[j].motion_type, macroblocks->macro_blocks[j].dct_type);
-		batch.macroblocks[i].dct_type = macroblocks->macro_blocks[j].dct_type == XVMC_DCT_TYPE_FIELD ? vlDCTTypeFieldCoded : vlDCTTypeFrameCoded;
-
-		for (k = 0; k < 2; ++k)
-			for (l = 0; l < 2; ++l)
-				for (m = 0; m < 2; ++m)
-					batch.macroblocks[i].PMV[k][l][m] = macroblocks->macro_blocks[j].PMV[k][l][m];
-
-		batch.macroblocks[i].cbp = macroblocks->macro_blocks[j].coded_block_pattern;
-		batch.macroblocks[i].blocks = blocks->blocks + (macroblocks->macro_blocks[j].index * 64);
-	}
-
-	vlRenderMacroBlocksMpeg2(&batch, target_vl_surface);
-
-	return Success;
+   return Success;
 }
 
-Status XvMCFlushSurface(Display *display, XvMCSurface *surface)
+Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
 {
+#if 0
 	struct vlSurface *vl_sfc;
 
-	assert(display);
+	assert(dpy);
 
 	if (!surface)
 		return XvMCBadSurface;
 
 	vl_sfc = surface->privData;
-
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
 	vlSurfaceFlush(vl_sfc);
-
-	return Success;
+#endif
+   return Success;
 }
 
-Status XvMCSyncSurface(Display *display, XvMCSurface *surface)
+Status XvMCSyncSurface(Display *dpy, XvMCSurface *surface)
 {
+#if 0
 	struct vlSurface *vl_sfc;
 
-	assert(display);
+	assert(dpy);
 
 	if (!surface)
 		return XvMCBadSurface;
 
 	vl_sfc = surface->privData;
-
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
 	vlSurfaceSync(vl_sfc);
-
-	return Success;
+#endif
+   return Success;
 }
 
-Status XvMCPutSurface
-(
-	Display *display,
-	XvMCSurface *surface,
-	Drawable drawable,
-	short srcx,
-	short srcy,
-	unsigned short srcw,
-	unsigned short srch,
-	short destx,
-	short desty,
-	unsigned short destw,
-	unsigned short desth,
-	int flags
-)
+Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
+                      short srcx, short srcy, unsigned short srcw, unsigned short srch,
+                      short destx, short desty, unsigned short destw, unsigned short desth,
+                      int flags)
 {
-	Window			root;
-	int			x, y;
-	unsigned int		width, height;
-	unsigned int		border_width;
-	unsigned int		depth;
-	struct vlSurface	*vl_sfc;
+   Window root;
+   int x, y;
+   unsigned int width, height;
+   unsigned int border_width;
+   unsigned int depth;
+   struct pipe_video_context *vpipe;
+   XvMCSurfacePrivate *surface_priv;
+   XvMCContextPrivate *context_priv;
+   XvMCContext *context;
+   struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
+   struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
 
-	assert(display);
+   assert(dpy);
 
-	if (!surface)
-		return XvMCBadSurface;
+   if (!surface || !surface->privData)
+      return XvMCBadSurface;
 
-	if (XGetGeometry(display, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
-		return BadDrawable;
+   if (XGetGeometry(dpy, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
+      return BadDrawable;
 
-	assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
+   assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
+   assert(srcx + srcw - 1 < surface->width);
+   assert(srcy + srch - 1 < surface->height);
+   /*
+    * Some apps (mplayer) hit these asserts because they call
+    * this function after the window has been resized by the WM
+    * but before they've handled the corresponding XEvent and
+    * know about the new dimensions. The output should be clipped
+    * until the app updates destw and desth.
+    */
+   /*
+   assert(destx + destw - 1 < width);
+   assert(desty + desth - 1 < height);
+    */
 
-	/* TODO: Correct for negative srcx,srcy & destx,desty by clipping */
+   surface_priv = surface->privData;
+   context = surface_priv->context;
+   context_priv = context->privData;
+   vpipe = context_priv->vpipe;
 
-	assert(srcx + srcw - 1 < surface->width);
-	assert(srcy + srch - 1 < surface->height);
-	/* XXX: Some apps (mplayer) hit these asserts because they call
-	 * this function after the window has been resized by the WM
-	 * but before they've handled the corresponding XEvent and
-	 * know about the new dimensions. The output will be clipped
-	 * for a few frames until the app updates destw and desth.
-	 */
-	/*assert(destx + destw - 1 < width);
-	assert(desty + desth - 1 < height);*/
+   if (!CreateOrResizeBackBuffer(vpipe, width, height, &context_priv->backbuffer))
+      return BadAlloc;
 
-	vl_sfc = surface->privData;
+   vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
+                         context_priv->backbuffer, &dst_rect, surface_priv->disp_fence);
 
-	vlPutPicture(vl_sfc, drawable, srcx, srcy, srcw, srch, destx, desty, destw, desth, width, height, PictureToVL(flags));
+   vl_video_bind_drawable(vpipe, drawable);
+	
+   vpipe->screen->flush_frontbuffer
+   (
+      vpipe->screen,
+      context_priv->backbuffer,
+      vpipe->priv
+   );
 
-	return Success;
+   return Success;
 }
 
-Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
+Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 {
+#if 0
 	struct vlSurface	*vl_sfc;
 	enum vlResourceStatus	res_status;
 
-	assert(display);
+	assert(dpy);
 
 	if (!surface)
 		return XvMCBadSurface;
@@ -292,8 +371,6 @@ Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
 	assert(status);
 
 	vl_sfc = surface->privData;
-
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
 	vlSurfaceGetStatus(vl_sfc, &res_status);
 
@@ -317,42 +394,36 @@ Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
 		default:
 			assert(0);
 	}
-
-	return Success;
+#endif
+   *status = 0;
+   return Success;
 }
 
-Status XvMCDestroySurface(Display *display, XvMCSurface *surface)
+Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
 {
-	struct vlSurface *vl_sfc;
+   XvMCSurfacePrivate *surface_priv;
 
-	assert(display);
+   assert(dpy);
 
-	if (!surface)
-		return XvMCBadSurface;
+   if (!surface || !surface->privData)
+      return XvMCBadSurface;
 
-	vl_sfc = surface->privData;
+   surface_priv = surface->privData;
+   pipe_video_surface_reference(&surface_priv->pipe_vsfc, NULL);
+   FREE(surface_priv);
+   surface->privData = NULL;
 
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
-
-	vlDestroySurface(vl_sfc);
-
-	return Success;
+   return Success;
 }
 
-Status XvMCHideSurface(Display *display, XvMCSurface *surface)
+Status XvMCHideSurface(Display *dpy, XvMCSurface *surface)
 {
-	struct vlSurface *vl_sfc;
+   assert(dpy);
 
-	assert(display);
+   if (!surface || !surface->privData)
+      return XvMCBadSurface;
 
-	if (!surface)
-		return XvMCBadSurface;
+   /* No op, only for overlaid rendering */
 
-	vl_sfc = surface->privData;
-
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
-
-	/* No op, only for overlaid rendering */
-
-	return Success;
+   return Success;
 }

@@ -1,73 +1,45 @@
-TARGET		= libXvMCg3dvl.so
-SONAME		= libXvMCg3dvl.so.1
-GALLIUMDIR	= ../gallium
+TOP = ../..
+include $(TOP)/configs/current
 
-OBJECTS         = block.o surface.o context.o subpicture.o attributes.o
+#DEFINES += -DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\"
 
-ifeq (${DRIVER}, softpipe)
-OBJECTS         += ${GALLIUMDIR}/winsys/g3dvl/xsp_winsys.o
-endif
+SOURCES = block.c \
+          surface.c \
+          context.c \
+          subpicture.c \
+          attributes.c
 
-CFLAGS	+= -g -fPIC -Wall -Werror=implicit-function-declaration	\
-	   -I${GALLIUMDIR}/state_trackers/g3dvl		\
-	   -I${GALLIUMDIR}/winsys/g3dvl			\
-	   -I${GALLIUMDIR}/include			\
-	   -I${GALLIUMDIR}/auxiliary			\
-	   -I${GALLIUMDIR}/drivers
+OBJECTS = $(SOURCES:.c=.o)
 
-ifeq (${DRIVER}, softpipe)
-LDFLAGS	+= -L${GALLIUMDIR}/state_trackers/g3dvl		\
-	   -L${GALLIUMDIR}/drivers/softpipe		\
-	   -L${GALLIUMDIR}/auxiliary/tgsi		\
-	   -L${GALLIUMDIR}/auxiliary/draw		\
-	   -L${GALLIUMDIR}/auxiliary/translate		\
-	   -L${GALLIUMDIR}/auxiliary/cso_cache		\
-	   -L${GALLIUMDIR}/auxiliary/util		\
-	   -L${GALLIUMDIR}/auxiliary/rtasm
-else
-LDFLAGS	+= -L${GALLIUMDIR}/state_trackers/g3dvl		\
-   	   -L${GALLIUMDIR}/winsys/g3dvl/nouveau		\
-   	   -L${GALLIUMDIR}/auxiliary/util
-endif
+INCLUDES = -I$(TOP)/src/gallium/include \
+           -I$(TOP)/src/gallium/auxiliary \
+           -I$(TOP)/src/gallium/winsys/g3dvl
 
-ifeq (${DRIVER}, softpipe)
-LIBS	+= -lg3dvl -lsoftpipe -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lutil -lm
-else
-LIBS	+= -lg3dvl -lnouveau_dri -lutil
-endif
+##### RULES #####
 
-#############################################
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
 
-ifeq (${DRIVER}, softpipe)
-.PHONY	= all clean g3dvl
-else
-.PHONY	= all clean g3dvl nouveau_winsys
-endif
+.S.o:
+	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
 
-all: ${TARGET}
+##### TARGETS #####
 
-ifeq (${DRIVER}, softpipe)
-${TARGET}: ${OBJECTS} g3dvl
-	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ ${OBJECTS} ${LIBS}
+.PHONY: default clean
 
-g3dvl:
-	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
+default: depend libXvMCapi.a
 
-clean:
-	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
-	rm -rf ${OBJECTS} ${TARGET}
-else
-${TARGET}: ${OBJECTS} g3dvl nouveau_winsys
-	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ ${OBJECTS} ${LIBS}
+libXvMCapi.a: $(OBJECTS) Makefile
+	$(MKLIB) -o XvMCapi $(MKLIB_OPTIONS) -static $(OBJECTS)
 
-g3dvl:
-	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
+depend: $(SOURCES) Makefile
+	$(RM) depend
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDES) $(SOURCES)
 
-nouveau_winsys:
-	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE}
+clean: Makefile
+	$(RM) libXvMCapi.a
+	$(RM) *.o *~
+	$(RM) depend depend.bak
 
-clean:
-	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
-	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE} clean
-	rm -rf ${OBJECTS} ${TARGET}
-endif
+-include depend

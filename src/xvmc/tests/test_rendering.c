@@ -23,6 +23,9 @@
 #define DEFAULT_OUTPUT_HEIGHT		INPUT_HEIGHT
 #define DEFAULT_ACCEPTABLE_ERR		0.01
 
+void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt);
+void Gradient(short *block, unsigned int start, unsigned int stop, int horizontal);
+
 void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt)
 {
 	int fail = 0;

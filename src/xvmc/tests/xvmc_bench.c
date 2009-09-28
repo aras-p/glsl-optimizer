@@ -32,6 +32,8 @@ struct Config
 	unsigned int reps;
 };
 
+void ParseArgs(int argc, char **argv, struct Config *config);
+
 void ParseArgs(int argc, char **argv, struct Config *config)
 {
 	int fail = 0;

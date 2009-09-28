@@ -1,79 +1,61 @@
 #include <assert.h>
 #include <X11/Xlib.h>
-#include <X11/extensions/XvMC.h>
+#include <X11/extensions/XvMClib.h>
 #include <util/u_memory.h>
-#include <vl_display.h>
-#include <vl_screen.h>
-#include <vl_context.h>
+#include "xvmc_private.h"
 
-#define BLOCK_SIZE (64 * 2)
-
-Status XvMCCreateBlocks(Display *display, XvMCContext *context, unsigned int num_blocks, XvMCBlockArray *blocks)
+Status XvMCCreateBlocks(Display *dpy, XvMCContext *context, unsigned int num_blocks, XvMCBlockArray *blocks)
 {
-	struct vlContext *vl_ctx;
+   assert(dpy);
 
-	assert(display);
+   if (!context)
+      return XvMCBadContext;
+   if (num_blocks == 0)
+      return BadValue;
 
-	if (!context)
-		return XvMCBadContext;
-	if (num_blocks == 0)
-		return BadValue;
+   assert(blocks);
 
-	assert(blocks);
+   blocks->context_id = context->context_id;
+   blocks->num_blocks = num_blocks;
+   blocks->blocks = MALLOC(BLOCK_SIZE_BYTES * num_blocks);
+   blocks->privData = NULL;
 
-	vl_ctx = context->privData;
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
-
-	blocks->context_id = context->context_id;
-	blocks->num_blocks = num_blocks;
-	blocks->blocks = MALLOC(BLOCK_SIZE * num_blocks);
-	/* Since we don't have a VL type for blocks, set privData to the display so we can catch mismatches */
-	blocks->privData = display;
-
-	return Success;
+   return Success;
 }
 
-Status XvMCDestroyBlocks(Display *display, XvMCBlockArray *blocks)
+Status XvMCDestroyBlocks(Display *dpy, XvMCBlockArray *blocks)
 {
-	assert(display);
-	assert(blocks);
-	assert(display == blocks->privData);
-	FREE(blocks->blocks);
+   assert(dpy);
+   assert(blocks);
+   FREE(blocks->blocks);
 
-	return Success;
+   return Success;
 }
 
-Status XvMCCreateMacroBlocks(Display *display, XvMCContext *context, unsigned int num_blocks, XvMCMacroBlockArray *blocks)
+Status XvMCCreateMacroBlocks(Display *dpy, XvMCContext *context, unsigned int num_blocks, XvMCMacroBlockArray *blocks)
 {
-	struct vlContext *vl_ctx;
+   assert(dpy);
 
-	assert(display);
+   if (!context)
+      return XvMCBadContext;
+   if (num_blocks == 0)
+      return BadValue;
 
-	if (!context)
-		return XvMCBadContext;
-	if (num_blocks == 0)
-		return BadValue;
+   assert(blocks);
 
-	assert(blocks);
+   blocks->context_id = context->context_id;
+   blocks->num_blocks = num_blocks;
+   blocks->macro_blocks = MALLOC(sizeof(XvMCMacroBlock) * num_blocks);
+   blocks->privData = NULL;
 
-	vl_ctx = context->privData;
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
-
-	blocks->context_id = context->context_id;
-	blocks->num_blocks = num_blocks;
-	blocks->macro_blocks = MALLOC(sizeof(XvMCMacroBlock) * num_blocks);
-	/* Since we don't have a VL type for blocks, set privData to the display so we can catch mismatches */
-	blocks->privData = display;
-
-	return Success;
+   return Success;
 }
 
-Status XvMCDestroyMacroBlocks(Display *display, XvMCMacroBlockArray *blocks)
+Status XvMCDestroyMacroBlocks(Display *dpy, XvMCMacroBlockArray *blocks)
 {
-	assert(display);
-	assert(blocks);
-	assert(display == blocks->privData);
-	FREE(blocks->macro_blocks);
+   assert(dpy);
+   assert(blocks);
+   FREE(blocks->macro_blocks);
 
-	return Success;
+   return Success;
 }

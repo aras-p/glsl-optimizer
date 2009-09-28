@@ -1,210 +1,203 @@
 #include <assert.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/XvMClib.h>
 #include <X11/Xlibint.h>
-#include <pipe/p_context.h>
-#include <vl_display.h>
-#include <vl_screen.h>
-#include <vl_context.h>
+#include <X11/extensions/XvMClib.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_video_context.h>
+#include <pipe/p_video_state.h>
+#include <pipe/p_state.h>
 #include <vl_winsys.h>
+#include <util/u_memory.h>
+#include "xvmc_private.h"
 
-static Status Validate
-(
-	Display *display,
-	XvPortID port,
-	int surface_type_id,
-	unsigned int width,
-	unsigned int height,
-	int flags,
-	int *found_port,
-	int *chroma_format,
-	int *mc_type
-)
+static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
+                       unsigned int width, unsigned int height, int flags,
+                       bool *found_port, int *screen, int *chroma_format, int *mc_type)
 {
-	unsigned int	found_surface = 0;
-	XvAdaptorInfo	*adaptor_info;
-	unsigned int	num_adaptors;
-	int		num_types;
-	unsigned int	max_width, max_height;
-	Status		ret;
-	unsigned int	i, j, k;
+   bool found_surface = false;
+   XvAdaptorInfo *adaptor_info;
+   unsigned int num_adaptors;
+   int num_types;
+   unsigned int max_width, max_height;
+   Status ret;
 
-	assert(display && chroma_format);
+   assert(dpy);
+   assert(found_port);
+   assert(screen);
+   assert(chroma_format);
+   assert(mc_type);
 
-	*found_port = 0;
+   *found_port = false;
 
-	ret = XvQueryAdaptors(display, XDefaultRootWindow(display), &num_adaptors, &adaptor_info);
-	if (ret != Success)
-		return ret;
+   for (unsigned int i = 0; i < XScreenCount(dpy); ++i)
+   {
+      ret = XvQueryAdaptors(dpy, XRootWindow(dpy, i), &num_adaptors, &adaptor_info);
+      if (ret != Success)
+         return ret;
 
-	/* Scan through all adaptors looking for this port and surface */
-	for (i = 0; i < num_adaptors && !*found_port; ++i)
-	{
-		/* Scan through all ports of this adaptor looking for our port */
-		for (j = 0; j < adaptor_info[i].num_ports && !*found_port; ++j)
-		{
-			/* If this is our port, scan through all its surfaces looking for our surface */
-			if (adaptor_info[i].base_id + j == port)
-			{
-				XvMCSurfaceInfo *surface_info;
+      for (unsigned int j = 0; j < num_adaptors && !*found_port; ++j)
+      {
+         for (unsigned int k = 0; k < adaptor_info[j].num_ports && !*found_port; ++k)
+         {
+            XvMCSurfaceInfo *surface_info;
 
-				*found_port = 1;
-				surface_info = XvMCListSurfaceTypes(display, adaptor_info[i].base_id, &num_types);
+            if (adaptor_info[j].base_id + k != port)
+               continue;
 
-				if (surface_info)
-				{
-					for (k = 0; k < num_types && !found_surface; ++k)
-					{
-						if (surface_info[k].surface_type_id == surface_type_id)
-						{
-							found_surface = 1;
-							max_width = surface_info[k].max_width;
-							max_height = surface_info[k].max_height;
-							*chroma_format = surface_info[k].chroma_format;
-							*mc_type = surface_info[k].mc_type;
-						}
-					}
+            *found_port = true;
 
-					XFree(surface_info);
-				}
-				else
-				{
-					XvFreeAdaptorInfo(adaptor_info);
-					return BadAlloc;
-				}
-			}
-		}
-	}
+            surface_info = XvMCListSurfaceTypes(dpy, adaptor_info[j].base_id, &num_types);
+            if (!surface_info)
+            {
+               XvFreeAdaptorInfo(adaptor_info);
+               return BadAlloc;
+            }
 
-	XvFreeAdaptorInfo(adaptor_info);
+            for (unsigned int l = 0; l < num_types && !found_surface; ++l)
+            {
+               if (surface_info[l].surface_type_id != surface_type_id)
+                  continue;
 
-	if (!*found_port)
-		return XvBadPort;
-	if (!found_surface)
-		return BadMatch;
-	if (width > max_width || height > max_height)
-		return BadValue;
-	if (flags != XVMC_DIRECT && flags != 0)
-		return BadValue;
+               found_surface = true;
+               max_width = surface_info[l].max_width;
+               max_height = surface_info[l].max_height;
+               *chroma_format = surface_info[l].chroma_format;
+               *mc_type = surface_info[l].mc_type;
+               *screen = i;
+            }
 
-	return Success;
+         XFree(surface_info);
+         }
+      }
+
+      XvFreeAdaptorInfo(adaptor_info);
+   }
+
+   if (!*found_port)
+      return XvBadPort;
+   if (!found_surface)
+      return BadMatch;
+   if (width > max_width || height > max_height)
+      return BadValue;
+   if (flags != XVMC_DIRECT && flags != 0)
+      return BadValue;
+
+   return Success;
 }
 
-static enum vlProfile ProfileToVL(int xvmc_profile)
+static enum pipe_video_profile ProfileToPipe(int xvmc_profile)
 {
-	if (xvmc_profile & XVMC_MPEG_1)
-		assert(0);
-	else if (xvmc_profile & XVMC_MPEG_2)
-		return vlProfileMpeg2Main;
-	else if (xvmc_profile & XVMC_H263)
-		assert(0);
-	else if (xvmc_profile & XVMC_MPEG_4)
-		assert(0);
-	else
-		assert(0);
+   if (xvmc_profile & XVMC_MPEG_1)
+      assert(0);
+   if (xvmc_profile & XVMC_MPEG_2)
+      return PIPE_VIDEO_PROFILE_MPEG2_MAIN;
+   if (xvmc_profile & XVMC_H263)
+      assert(0);
+   if (xvmc_profile & XVMC_MPEG_4)
+      assert(0);
+	
+   assert(0);
 
-	return -1;
+   return -1;
 }
 
-static enum vlEntryPoint EntryToVL(int xvmc_entry)
+static enum pipe_video_chroma_format FormatToPipe(int xvmc_format)
 {
-	return xvmc_entry & XVMC_IDCT ? vlEntryPointIDCT : vlEntryPointMC;
+   switch (xvmc_format)
+   {
+      case XVMC_CHROMA_FORMAT_420:
+         return PIPE_VIDEO_CHROMA_FORMAT_420;
+      case XVMC_CHROMA_FORMAT_422:
+         return PIPE_VIDEO_CHROMA_FORMAT_422;
+      case XVMC_CHROMA_FORMAT_444:
+         return PIPE_VIDEO_CHROMA_FORMAT_444;
+      default:
+         assert(0);
+   }
+
+   return -1;
 }
 
-static enum vlFormat FormatToVL(int xvmc_format)
+Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
+                         int width, int height, int flags, XvMCContext *context)
 {
-	switch (xvmc_format)
-	{
-		case XVMC_CHROMA_FORMAT_420:
-			return vlFormatYCbCr420;
-		case XVMC_CHROMA_FORMAT_422:
-			return vlFormatYCbCr422;
-		case XVMC_CHROMA_FORMAT_444:
-			return vlFormatYCbCr444;
-		default:
-			assert(0);
-	}
+   bool found_port;
+   int scrn;
+   int chroma_format;
+   int mc_type;
+   Status ret;
+   struct pipe_screen *screen;
+   struct pipe_video_context *vpipe;
+   XvMCContextPrivate *context_priv;
 
-	return -1;
+   assert(dpy);
+
+   if (!context)
+      return XvMCBadContext;
+
+   ret = Validate(dpy, port, surface_type_id, width, height, flags,
+                  &found_port, &scrn, &chroma_format, &mc_type);
+
+   /* Success and XvBadPort have the same value */
+   if (ret != Success || !found_port)
+      return ret;
+
+   context_priv = CALLOC(1, sizeof(XvMCContextPrivate));
+   if (!context_priv)
+      return BadAlloc;
+
+   /* TODO: Reuse screen if process creates another context */
+   screen = vl_screen_create(dpy, scrn);
+
+   if (!screen)
+   {
+      FREE(context_priv);
+      return BadAlloc;
+   }
+
+   vpipe = vl_video_create(screen, ProfileToPipe(mc_type),
+                           FormatToPipe(chroma_format), width, height);
+
+   if (!vpipe)
+   {
+      screen->destroy(screen);
+      FREE(context_priv);
+      return BadAlloc;
+   }
+
+   context_priv->vpipe = vpipe;
+
+   context->context_id = XAllocID(dpy);
+   context->surface_type_id = surface_type_id;
+   context->width = width;
+   context->height = height;
+   context->flags = flags;
+   context->port = port;
+   context->privData = context_priv;
+	
+   SyncHandle();
+
+   return Success;
 }
 
-Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, int width, int height, int flags, XvMCContext *context)
+Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 {
-	int			found_port;
-	int			chroma_format;
-	int			mc_type;
-	Status			ret;
-	struct vlDisplay	*vl_dpy;
-	struct vlScreen		*vl_scrn;
-	struct vlContext	*vl_ctx;
-	struct pipe_context	*pipe;
-	Display			*dpy = display;
+   struct pipe_screen *screen;
+   struct pipe_video_context *vpipe;
+   XvMCContextPrivate *context_priv;
 
-	assert(display);
+   assert(dpy);
 
-	if (!context)
-		return XvMCBadContext;
+   if (!context || !context->privData)
+      return XvMCBadContext;
 
-	ret = Validate(display, port, surface_type_id, width, height, flags, &found_port, &chroma_format, &mc_type);
+   context_priv = context->privData;
+   vpipe = context_priv->vpipe;
+   pipe_surface_reference(&context_priv->backbuffer, NULL);
+   screen = vpipe->screen;
+   vpipe->destroy(vpipe);
+   screen->destroy(screen);
+   FREE(context_priv);
+   context->privData = NULL;
 
-	/* XXX: Success and XvBadPort have the same value */
-	if (ret != Success || !found_port)
-		return ret;
-
-	/* XXX: Assumes default screen, should check which screen port is on */
-	pipe = create_pipe_context(display, XDefaultScreen(display));
-
-	assert(pipe);
-
-	vlCreateDisplay(display, &vl_dpy);
-	vlCreateScreen(vl_dpy, XDefaultScreen(display), pipe->screen, &vl_scrn);
-	vlCreateContext
-	(
-		vl_scrn,
-		pipe,
-		width,
-		height,
-		FormatToVL(chroma_format),
-		ProfileToVL(mc_type),
-		EntryToVL(mc_type),
-		&vl_ctx
-	);
-
-	context->context_id = XAllocID(display);
-	context->surface_type_id = surface_type_id;
-	context->width = width;
-	context->height = height;
-	context->flags = flags;
-	context->port = port;
-	context->privData = vl_ctx;
-
-	SyncHandle();
-	return Success;
-}
-
-Status XvMCDestroyContext(Display *display, XvMCContext *context)
-{
-	struct vlContext	*vl_ctx;
-	struct vlScreen		*vl_screen;
-	struct vlDisplay	*vl_dpy;
-	struct pipe_context	*pipe;
-
-	assert(display);
-
-	if (!context)
-		return XvMCBadContext;
-
-	vl_ctx = context->privData;
-
-	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
-
-	pipe = vlGetPipeContext(vl_ctx);
-	vl_screen = vlContextGetScreen(vl_ctx);
-	vl_dpy = vlGetDisplay(vl_screen);
-	vlDestroyContext(vl_ctx);
-	vlDestroyScreen(vl_screen);
-	vlDestroyDisplay(vl_dpy);
-	destroy_pipe_context(pipe);
-
-	return Success;
+   return Success;
 }

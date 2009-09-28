@@ -1,20 +1,19 @@
 #include <assert.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xvlib.h>
-#include <X11/extensions/XvMC.h>
+#include <X11/extensions/XvMClib.h>
 
-XvAttribute* XvMCQueryAttributes(Display *display, XvMCContext *context, int *number)
+XvAttribute* XvMCQueryAttributes(Display *dpy, XvMCContext *context, int *number)
 {
-	return NULL;
+   return NULL;
 }
 
-Status XvMCSetAttribute(Display *display, XvMCContext *context, Atom attribute, int value)
+Status XvMCSetAttribute(Display *dpy, XvMCContext *context, Atom attribute, int value)
 {
-	return BadImplementation;
+   return BadImplementation;
 }
 
-Status XvMCGetAttribute(Display *display, XvMCContext *context, Atom attribute, int *value)
+Status XvMCGetAttribute(Display *dpy, XvMCContext *context, Atom attribute, int *value)
 {
-	return BadImplementation;
+   return BadImplementation;
 }
-

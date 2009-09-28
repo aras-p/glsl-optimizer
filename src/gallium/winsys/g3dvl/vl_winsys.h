@@ -2,13 +2,22 @@
 #define vl_winsys_h
 
 #include <X11/Xlib.h>
+#include <pipe/p_defines.h>
+#include <pipe/p_format.h>
 
-struct pipe_context;
+struct pipe_screen;
+struct pipe_video_context;
 
-struct pipe_context* create_pipe_context(Display *display, int screen);
-int destroy_pipe_context(struct pipe_context *pipe);
-int bind_pipe_drawable(struct pipe_context *pipe, Drawable drawable);
-int unbind_pipe_drawable(struct pipe_context *pipe);
+struct pipe_screen*
+vl_screen_create(Display *display, int screen);
+
+struct pipe_video_context*
+vl_video_create(struct pipe_screen *screen,
+                enum pipe_video_profile profile,
+                enum pipe_video_chroma_format chroma_format,
+                unsigned width, unsigned height);
+
+Drawable
+vl_video_bind_drawable(struct pipe_video_context *vpipe, Drawable drawable);
 
 #endif
-
