@@ -115,7 +115,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
-   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
+   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat->MesaFormat,
                                   &datatype, &comps);
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {

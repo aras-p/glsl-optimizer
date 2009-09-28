@@ -151,7 +151,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 
 extern void
-_mesa_format_to_type_and_comps(const struct gl_texture_format *format,
+_mesa_format_to_type_and_comps(gl_format format,
                                GLenum *datatype, GLuint *comps);
 
 extern FetchTexelFuncF

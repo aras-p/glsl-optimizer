@@ -1351,14 +1351,13 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 
 /**
- * Return datatype and number of components per texel for the
- * given gl_texture_format.
+ * Return datatype and number of components per texel for the given gl_format.
  */
 void
-_mesa_format_to_type_and_comps(const struct gl_texture_format *format,
+_mesa_format_to_type_and_comps(gl_format format,
                                GLenum *datatype, GLuint *comps)
 {
-   switch (format->MesaFormat) {
+   switch (format) {
    case MESA_FORMAT_RGBA8888:
    case MESA_FORMAT_RGBA8888_REV:
    case MESA_FORMAT_ARGB8888:
