@@ -507,13 +507,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Base._ActualFormat = trb->TexImage->InternalFormat;
       trb->Base.DataType = CHAN_TYPE;
    }
-   trb->Base._BaseFormat = trb->TexImage->TexFormat->BaseFormat;
-#if 0
-   /* fix/avoid this assertion someday */
-   ASSERT(trb->Base._BaseFormat == GL_RGB ||
-          trb->Base._BaseFormat == GL_RGBA ||
-          trb->Base._BaseFormat == GL_DEPTH_COMPONENT);
-#endif
+   trb->Base._BaseFormat = trb->TexImage->_BaseFormat;
    trb->Base.Data = trb->TexImage->Data;
 
    trb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
