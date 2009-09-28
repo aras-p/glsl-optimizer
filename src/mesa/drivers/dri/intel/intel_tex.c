@@ -162,7 +162,6 @@ void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = intelChooseTextureFormat;
-   functions->GenerateMipmap = intel_generate_mipmap;
 
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;
