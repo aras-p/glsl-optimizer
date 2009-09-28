@@ -115,6 +115,8 @@ static void Display( void )
 
    glPopMatrix();
 
+   glDisable(GL_TEXTURE_2D);
+
    /* info */
    glColor4f(1, 1, 1, 1);
 
