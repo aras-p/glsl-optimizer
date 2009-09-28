@@ -328,10 +328,13 @@ guess_and_alloc_texture(struct st_context *st,
         stObj->base.MinFilter == GL_LINEAR ||
         stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
         stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
+       !stObj->base.GenerateMipmap &&
        stImage->level == firstLevel) {
+      /* only alloc space for a single mipmap level */
       lastLevel = firstLevel;
    }
    else {
+      /* alloc space for a full mipmap */
       GLuint l2width = util_logbase2(width);
       GLuint l2height = util_logbase2(height);
       GLuint l2depth = util_logbase2(depth);
