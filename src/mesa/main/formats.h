@@ -211,6 +211,9 @@ _mesa_format_to_type_and_comps2(gl_format format,
 extern GLint
 _mesa_get_format_bits(gl_format format, GLenum pname);
 
+extern GLenum
+_mesa_get_format_datatype(gl_format format);
+
 
 extern void
 _mesa_test_formats(void);

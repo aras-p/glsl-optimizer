@@ -816,3 +816,11 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
       return 0;
    }
 }
+
+
+GLenum
+_mesa_get_format_datatype(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return info->DataType;
+}
