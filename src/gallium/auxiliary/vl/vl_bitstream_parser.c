@@ -27,7 +27,7 @@ show_bits(unsigned cursor, unsigned how_many_bits, const unsigned *bitstream)
       unsigned lower = grab_bits(cur_bit, sizeof(unsigned) * CHAR_BIT - cur_bit,
                                  bitstream[cur_int]);
       unsigned upper = grab_bits(0, cur_bit + how_many_bits - sizeof(unsigned) * CHAR_BIT,
-                                 bitstream[cur_int + 1])
+                                 bitstream[cur_int + 1]);
       return lower | upper << (sizeof(unsigned) * CHAR_BIT - cur_bit);
    }
    else
