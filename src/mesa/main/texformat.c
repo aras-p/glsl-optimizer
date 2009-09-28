@@ -163,7 +163,7 @@ const struct gl_texture_format _mesa_texformat_rgba = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgba			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb = {
@@ -187,7 +187,7 @@ const struct gl_texture_format _mesa_texformat_rgb = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgb			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_alpha = {
@@ -211,7 +211,7 @@ const struct gl_texture_format _mesa_texformat_alpha = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_alpha			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance = {
@@ -235,7 +235,7 @@ const struct gl_texture_format _mesa_texformat_luminance = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance_alpha = {
@@ -259,7 +259,7 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance_alpha		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_intensity = {
@@ -283,7 +283,7 @@ const struct gl_texture_format _mesa_texformat_intensity = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_intensity		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 
@@ -310,7 +310,7 @@ const struct gl_texture_format _mesa_texformat_srgb8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_srgb8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_srgba8 = {
@@ -334,7 +334,7 @@ const struct gl_texture_format _mesa_texformat_srgba8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_srgba8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_sargb8 = {
@@ -358,7 +358,7 @@ const struct gl_texture_format _mesa_texformat_sargb8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_sargb8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_sl8 = {
@@ -382,7 +382,7 @@ const struct gl_texture_format _mesa_texformat_sl8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_sl8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 /* Note: this format name looks like a misnomer, make it sal8? */
@@ -407,7 +407,7 @@ const struct gl_texture_format _mesa_texformat_sla8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_sla8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 #endif /* FEATURE_EXT_texture_sRGB */
@@ -433,7 +433,7 @@ const struct gl_texture_format _mesa_texformat_rgba_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_rgba_f32			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgba_float16 = {
@@ -457,7 +457,7 @@ const struct gl_texture_format _mesa_texformat_rgba_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_rgba_f16			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb_float32 = {
@@ -481,7 +481,7 @@ const struct gl_texture_format _mesa_texformat_rgb_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_rgb_f32			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb_float16 = {
@@ -505,7 +505,7 @@ const struct gl_texture_format _mesa_texformat_rgb_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_rgb_f16			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_alpha_float32 = {
@@ -529,7 +529,7 @@ const struct gl_texture_format _mesa_texformat_alpha_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_alpha_f32		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_alpha_float16 = {
@@ -553,7 +553,7 @@ const struct gl_texture_format _mesa_texformat_alpha_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_alpha_f16		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance_float32 = {
@@ -577,7 +577,7 @@ const struct gl_texture_format _mesa_texformat_luminance_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance_f32		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance_float16 = {
@@ -601,7 +601,7 @@ const struct gl_texture_format _mesa_texformat_luminance_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance_f16		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance_alpha_float32 = {
@@ -625,7 +625,7 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance_alpha_f32	/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_luminance_alpha_float16 = {
@@ -649,7 +649,7 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_luminance_alpha_f16	/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_intensity_float32 = {
@@ -673,7 +673,7 @@ const struct gl_texture_format _mesa_texformat_intensity_float32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_intensity_f32		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_intensity_float16 = {
@@ -697,7 +697,7 @@ const struct gl_texture_format _mesa_texformat_intensity_float16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_intensity_f16		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_dudv8 = {
@@ -747,7 +747,7 @@ const struct gl_texture_format _mesa_texformat_signed_rgba8888 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_signed_rgba8888		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_signed_rgba8888_rev = {
@@ -771,7 +771,7 @@ const struct gl_texture_format _mesa_texformat_signed_rgba8888_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_signed_rgba8888_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 /*@}*/
@@ -802,7 +802,7 @@ const struct gl_texture_format _mesa_texformat_rgba8888 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgba8888			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgba8888_rev = {
@@ -826,7 +826,7 @@ const struct gl_texture_format _mesa_texformat_rgba8888_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgba8888_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb8888 = {
@@ -850,7 +850,7 @@ const struct gl_texture_format _mesa_texformat_argb8888 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb8888			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb8888_rev = {
@@ -874,7 +874,7 @@ const struct gl_texture_format _mesa_texformat_argb8888_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb8888_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb888 = {
@@ -898,7 +898,7 @@ const struct gl_texture_format _mesa_texformat_rgb888 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgb888			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_bgr888 = {
@@ -922,7 +922,7 @@ const struct gl_texture_format _mesa_texformat_bgr888 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_bgr888			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb565 = {
@@ -946,7 +946,7 @@ const struct gl_texture_format _mesa_texformat_rgb565 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgb565			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb565_rev = {
@@ -970,7 +970,7 @@ const struct gl_texture_format _mesa_texformat_rgb565_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgb565_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgba4444 = {
@@ -994,7 +994,7 @@ const struct gl_texture_format _mesa_texformat_rgba4444 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgba4444			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb4444 = {
@@ -1018,7 +1018,7 @@ const struct gl_texture_format _mesa_texformat_argb4444 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb4444			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb4444_rev = {
@@ -1042,7 +1042,7 @@ const struct gl_texture_format _mesa_texformat_argb4444_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb4444_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgba5551 = {
@@ -1066,7 +1066,7 @@ const struct gl_texture_format _mesa_texformat_rgba5551 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgba5551			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb1555 = {
@@ -1090,7 +1090,7 @@ const struct gl_texture_format _mesa_texformat_argb1555 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb1555			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb1555_rev = {
@@ -1114,7 +1114,7 @@ const struct gl_texture_format _mesa_texformat_argb1555_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_argb1555_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_al88 = {
@@ -1138,7 +1138,7 @@ const struct gl_texture_format _mesa_texformat_al88 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_al88			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_al88_rev = {
@@ -1162,7 +1162,7 @@ const struct gl_texture_format _mesa_texformat_al88_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_al88_rev			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_rgb332 = {
@@ -1186,7 +1186,7 @@ const struct gl_texture_format _mesa_texformat_rgb332 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_rgb332			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_a8 = {
@@ -1210,7 +1210,7 @@ const struct gl_texture_format _mesa_texformat_a8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_a8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_l8 = {
@@ -1234,7 +1234,7 @@ const struct gl_texture_format _mesa_texformat_l8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_l8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_i8 = {
@@ -1258,7 +1258,7 @@ const struct gl_texture_format _mesa_texformat_i8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_i8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_ci8 = {
@@ -1282,7 +1282,7 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_ci8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_ycbcr = {
@@ -1306,7 +1306,7 @@ const struct gl_texture_format _mesa_texformat_ycbcr = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_ycbcr			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_ycbcr_rev = {
@@ -1330,7 +1330,7 @@ const struct gl_texture_format _mesa_texformat_ycbcr_rev = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_ycbcr_rev		/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_z24_s8 = {
@@ -1354,7 +1354,7 @@ const struct gl_texture_format _mesa_texformat_z24_s8 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_z24_s8			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_s8_z24 = {
@@ -1378,7 +1378,7 @@ const struct gl_texture_format _mesa_texformat_s8_z24 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
-   store_texel_s8_z24			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_z16 = {
@@ -1402,7 +1402,7 @@ const struct gl_texture_format _mesa_texformat_z16 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_z16			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_z32 = {
@@ -1426,7 +1426,7 @@ const struct gl_texture_format _mesa_texformat_z32 = {
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
    NULL,				/* FetchTexel1Df */
-   store_texel_z32			/* StoreTexel */
+   NULL					/* StoreTexel */
 };
 
 /*@}*/

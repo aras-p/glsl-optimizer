@@ -469,7 +469,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->TexImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    ASSERT(trb->TexImage);
 
-   trb->Store = trb->TexImage->TexFormat->StoreTexel;
+   trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat->MesaFormat);
    if (!trb->Store) {
       /* we'll never draw into some textures (compressed formats) */
       trb->Store = store_nop;
