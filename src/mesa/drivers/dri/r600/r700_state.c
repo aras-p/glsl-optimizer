@@ -771,9 +771,9 @@ static void r700ColorMask(GLcontext * ctx,
 			     (b ? 4 : 0) |
 			     (a ? 8 : 0));
 
-	if (mask != r700->CB_SHADER_MASK.u32All) {
+	if (mask != r700->CB_TARGET_MASK.u32All) {
 		R600_STATECHANGE(context, cb);
-		SETfield(r700->CB_SHADER_MASK.u32All, mask, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
+		SETfield(r700->CB_TARGET_MASK.u32All, mask, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
 	}
 }
 
@@ -1780,7 +1780,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_CLRCMP_MSK.u32All = 0xFFFFFFFF;
 
     /* screen/window/view */
-    SETfield(r700->CB_TARGET_MASK.u32All, 0xF, (4 * id), TARGET0_ENABLE_mask);
+    SETfield(r700->CB_SHADER_MASK.u32All, 0xF, (4 * id), OUTPUT0_ENABLE_mask);
 
     context->radeon.hw.all_dirty = GL_TRUE;
 
