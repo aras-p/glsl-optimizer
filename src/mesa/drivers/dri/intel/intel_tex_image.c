@@ -8,6 +8,7 @@
 #include "main/context.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
+#include "main/texstore.h"
 #include "main/texgetimage.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
@@ -513,6 +514,9 @@ intelTexImage(GLcontext * ctx,
     * conversion and copy:
     */
    if (pixels) {
+      StoreTexImageFunc storeImage =
+         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
+
        if (compressed) {
 	   if (intelImage->mt) {
 	       struct intel_region *dst = intelImage->mt->region;
@@ -525,14 +529,14 @@ intelTexImage(GLcontext * ctx,
 			       0, 0);
 	   } else
 	       memcpy(texImage->Data, pixels, imageSize);
-       } else if (!texImage->TexFormat->StoreImage(ctx, dims, 
-						   texImage->_BaseFormat, 
-						   texImage->TexFormat, 
-						   texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-						   dstRowStride,
-						   texImage->ImageOffsets,
-						   width, height, depth,
-						   format, type, pixels, unpack)) {
+       } else if (!storeImage(ctx, dims, 
+                              texImage->_BaseFormat, 
+                              texImage->TexFormat, 
+                              texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
+                              dstRowStride,
+                              texImage->ImageOffsets,
+                              width, height, depth,
+                              format, type, pixels, unpack)) {
 	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
        }
    }

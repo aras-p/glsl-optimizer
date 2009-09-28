@@ -797,22 +797,25 @@ static void viaTexImage(GLcontext *ctx,
    else {
       GLint dstRowStride;
       GLboolean success;
+      StoreTexImageFunc storeImage =
+         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
+
       if (texImage->IsCompressed) {
          dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
          dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
       }
-      ASSERT(texImage->TexFormat->StoreImage);
-      success = texImage->TexFormat->StoreImage(ctx, dims,
-                                                texImage->_BaseFormat,
-                                                texImage->TexFormat,
-                                                texImage->Data,
-                                                0, 0, 0,  /* dstX/Y/Zoffset */
-                                                dstRowStride,
-                                                texImage->ImageOffsets,
-                                                width, height, 1,
-                                                format, type, pixels, packing);
+      ASSERT(storeImage);
+      success = storeImage(ctx, dims,
+                           texImage->_BaseFormat,
+                           texImage->TexFormat,
+                           texImage->Data,
+                           0, 0, 0,  /* dstX/Y/Zoffset */
+                           dstRowStride,
+                           texImage->ImageOffsets,
+                           width, height, 1,
+                           format, type, pixels, packing);
       if (!success) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
       }
