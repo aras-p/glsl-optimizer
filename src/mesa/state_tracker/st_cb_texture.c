@@ -563,7 +563,7 @@ st_TexImage(GLcontext * ctx,
 
    _mesa_set_fetch_functions(texImage, dims);
 
-   if (texImage->TexFormat->TexelBytes == 0) {
+   if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
       /* must be a compressed format */
       texelBytes = 0;
       texImage->IsCompressed = GL_TRUE;
@@ -573,7 +573,7 @@ st_TexImage(GLcontext * ctx,
 					   texImage->TexFormat->MesaFormat);
    }
    else {
-      texelBytes = texImage->TexFormat->TexelBytes;
+      texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       
       /* Minimum pitch of 32 bytes */
       if (postConvWidth * texelBytes < 32) {
@@ -1838,7 +1838,7 @@ st_finalize_texture(GLcontext *ctx,
       cpp = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
    }
    else {
-      cpp = firstImage->base.TexFormat->TexelBytes;
+      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat->MesaFormat);
    }
 
    /* If we already have a gallium texture, check that it matches the texture
