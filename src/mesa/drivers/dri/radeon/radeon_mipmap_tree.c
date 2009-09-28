@@ -325,7 +325,7 @@ GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 
 	if (!texImage->IsCompressed &&
 	    !mt->compressed &&
-	    texImage->TexFormat->TexelBytes != mt->bpp)
+	    _mesa_get_format_bytes(texImage->TexFormat->MesaFormat) != mt->bpp)
 		return GL_FALSE;
 
 	lvl = &mt->levels[level - mt->firstLevel];

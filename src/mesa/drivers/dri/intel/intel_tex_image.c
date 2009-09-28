@@ -333,8 +333,7 @@ intelTexImage(GLcontext * ctx,
 
    _mesa_set_fetch_functions(texImage, dims);
 
-   if (texImage->TexFormat->TexelBytes == 0) {
-      /* must be a compressed format */
+   if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
       texelBytes = 0;
       texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
@@ -342,7 +341,7 @@ intelTexImage(GLcontext * ctx,
 					   texImage->Height, texImage->Depth,
 					   texImage->TexFormat->MesaFormat);
    } else {
-      texelBytes = texImage->TexFormat->TexelBytes;
+      texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       
       /* Minimum pitch of 32 bytes */
       if (postConvWidth * texelBytes < 32) {

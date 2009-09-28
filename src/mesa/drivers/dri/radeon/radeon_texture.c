@@ -544,7 +544,7 @@ static void radeon_teximage(
 	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type, 0);
 	_mesa_set_fetch_functions(texImage, dims);
 
-	if (texImage->TexFormat->TexelBytes == 0) {
+	if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
 		texelBytes = 0;
 		texImage->IsCompressed = GL_TRUE;
 		texImage->CompressedSize =
@@ -555,7 +555,7 @@ static void radeon_teximage(
 		texImage->IsCompressed = GL_FALSE;
 		texImage->CompressedSize = 0;
 
-		texelBytes = texImage->TexFormat->TexelBytes;
+		texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 		/* Minimum pitch of 32 bytes */
 		if (postConvWidth * texelBytes < 32) {
 		  postConvWidth = 32 / texelBytes;
@@ -593,7 +593,7 @@ static void radeon_teximage(
 		if (texImage->IsCompressed) {
 			size = texImage->CompressedSize;
 		} else {
-			size = texImage->Width * texImage->Height * texImage->Depth * texImage->TexFormat->TexelBytes;
+			size = texImage->Width * texImage->Height * texImage->Depth * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 		}
 		texImage->Data = _mesa_alloc_texmemory(size);
 	}
@@ -631,7 +631,7 @@ static void radeon_teximage(
 				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 				dstRowStride = lvl->rowstride;
 			} else {
-				dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
+				dstRowStride = texImage->Width * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 			}
 
 			if (dims == 3) {
@@ -642,7 +642,7 @@ static void radeon_teximage(
 					_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 
 				for (i = 0; i < depth; ++i) {
-					dstImageOffsets[i] = dstRowStride/texImage->TexFormat->TexelBytes * height * i;
+					dstImageOffsets[i] = dstRowStride/_mesa_get_format_bytes(texImage->TexFormat->MesaFormat) * height * i;
 				}
 			} else {
 				dstImageOffsets = texImage->ImageOffsets;
@@ -757,7 +757,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 			radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 			dstRowStride = lvl->rowstride;
 		} else {
-			dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+			dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 		}
 
 		if (compressed) {

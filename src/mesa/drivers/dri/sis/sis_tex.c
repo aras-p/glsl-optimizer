@@ -425,7 +425,7 @@ static void sisTexSubImage1D( GLcontext *ctx,
 
    /* Upload the texture */
    WaitEngIdle(smesa);
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
    copySize = width * texelBytes;
    src = (char *)texImage->Data + xoffset * texelBytes;
@@ -513,7 +513,7 @@ static void sisTexSubImage2D( GLcontext *ctx,
 
    /* Upload the texture */
    WaitEngIdle(smesa);
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
    copySize = width * texelBytes;
    src = (char *)texImage->Data + (xoffset + yoffset * texImage->Width) *

@@ -91,7 +91,7 @@ intelTexSubimage(GLcontext * ctx,
          assert(dims != 3);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       }
    }
 

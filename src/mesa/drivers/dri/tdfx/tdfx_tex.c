@@ -1407,7 +1407,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     mml->glideFormat = fxGlideFormat(mesaFormat);
     ti->info.format = mml->glideFormat;
     texImage->FetchTexelc = fxFetchFunction(mesaFormat);
-    texelBytes = texImage->TexFormat->TexelBytes;
+    texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
     if (texImage->IsCompressed) {
        texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
@@ -1494,7 +1494,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     assert(texImage->Data);	/* must have an existing texture image! */
     assert(texImage->_BaseFormat);
 
-    texelBytes = texImage->TexFormat->TexelBytes;
+    texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
     if (texImage->IsCompressed) {
        dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, mml->width);
     } else {
