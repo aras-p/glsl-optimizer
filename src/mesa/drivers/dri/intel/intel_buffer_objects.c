@@ -229,7 +229,10 @@ intel_bufferobj_get_subdata(GLcontext * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   dri_bo_get_subdata(intel_obj->buffer, offset, size, data);
+   if (intel_obj->sys_buffer)
+      memcpy(data, (char *)intel_obj->sys_buffer + offset, size);
+   else
+      dri_bo_get_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
