@@ -11,15 +11,15 @@ struct pipe_video_surface;
 
 struct sp_mpeg12_context
 {
-	struct pipe_video_context base;
-	struct pipe_context *pipe;
-	struct pipe_video_surface *decode_target;
-	struct vl_mpeg12_mc_renderer mc_renderer;
-	struct vl_compositor compositor;
+   struct pipe_video_context base;
+   struct pipe_context *pipe;
+   struct pipe_video_surface *decode_target;
+   struct vl_mpeg12_mc_renderer mc_renderer;
+   struct vl_compositor compositor;
 
-	void *rast;
-	void *dsa;
-	void *blend;
+   void *rast;
+   void *dsa;
+   void *blend;
 };
 
 struct pipe_video_context *

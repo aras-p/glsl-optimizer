@@ -23,12 +23,12 @@ show_bits(unsigned cursor, unsigned how_many_bits, const unsigned *bitstream)
 	
    assert(bitstream);
 	
-   if (cur_bit + how_many_bits > sizeof(unsigned) * CHAR_BIT)
-   {
-      return grab_bits(cur_bit, sizeof(unsigned) * CHAR_BIT - cur_bit,
-                       bitstream[cur_int]) |
-             grab_bits(0, cur_bit + how_many_bits - sizeof(unsigned) * CHAR_BIT,
-                       bitstream[cur_int + 1]) << (sizeof(unsigned) * CHAR_BIT - cur_bit);
+   if (cur_bit + how_many_bits > sizeof(unsigned) * CHAR_BIT) {
+      unsigned lower = grab_bits(cur_bit, sizeof(unsigned) * CHAR_BIT - cur_bit,
+                                 bitstream[cur_int]);
+      unsigned upper = grab_bits(0, cur_bit + how_many_bits - sizeof(unsigned) * CHAR_BIT,
+                                 bitstream[cur_int + 1])
+      return lower | upper << (sizeof(unsigned) * CHAR_BIT - cur_bit);
    }
    else
       return grab_bits(cur_bit, how_many_bits, bitstream[cur_int]);
@@ -87,16 +87,14 @@ vl_bitstream_parser_show_bits(struct vl_bitstream_parser *parser,
    cursor = parser->cursor;
    cur_bitstream = parser->cur_bitstream;
 
-   while (1)
-   {
+   while (1) {
       unsigned bits_left = parser->sizes[cur_bitstream] * CHAR_BIT - cursor;
       unsigned bits_to_show = how_many_bits > bits_left ? bits_left : how_many_bits;
 
       bits |= show_bits(cursor, bits_to_show,
                         parser->bitstreams[cur_bitstream]) << shift;
 		
-      if (how_many_bits > bits_to_show)
-      {
+      if (how_many_bits > bits_to_show) {
          how_many_bits -= bits_to_show;
          cursor = 0;
          ++cur_bitstream;
@@ -117,8 +115,7 @@ void vl_bitstream_parser_forward(struct vl_bitstream_parser *parser,
 
    parser->cursor += how_many_bits;
 
-   while (parser->cursor > parser->sizes[parser->cur_bitstream] * CHAR_BIT)
-   {
+   while (parser->cursor > parser->sizes[parser->cur_bitstream] * CHAR_BIT) {
       parser->cursor -= parser->sizes[parser->cur_bitstream++] * CHAR_BIT;
       assert(parser->cur_bitstream < parser->num_bitstreams);
    }
@@ -134,8 +131,7 @@ void vl_bitstream_parser_rewind(struct vl_bitstream_parser *parser,
 	
    c = parser->cursor - how_many_bits;
 
-   while (c < 0)
-   {
+   while (c < 0) {
       c += parser->sizes[parser->cur_bitstream--] * CHAR_BIT;
       assert(parser->cur_bitstream < parser->num_bitstreams);
    }

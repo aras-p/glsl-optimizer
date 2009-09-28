@@ -24,8 +24,7 @@ static enum pipe_mpeg12_macroblock_type TypeToPipe(int xvmc_mb_type)
 
 static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
 {
-   switch (xvmc_pic)
-   {
+   switch (xvmc_pic) {
       case XVMC_TOP_FIELD:
          return PIPE_MPEG12_PICTURE_TYPE_FIELD_TOP;
       case XVMC_BOTTOM_FIELD:
@@ -41,8 +40,7 @@ static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
 
 static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_dct_type)
 {
-   switch (xvmc_motion_type)
-   {
+   switch (xvmc_motion_type) {
       case XVMC_PREDICTION_FRAME:
          return xvmc_dct_type == XVMC_DCT_TYPE_FIELD ?
             PIPE_MPEG12_MOTION_TYPE_16x8 : PIPE_MPEG12_MOTION_TYPE_FRAME;
@@ -66,8 +64,7 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
 
    assert(vpipe);
 
-   if (*backbuffer)
-   {
+   if (*backbuffer) {
       if ((*backbuffer)->width != width || (*backbuffer)->height != height)
          pipe_surface_reference(backbuffer, NULL);
       else
@@ -121,8 +118,7 @@ MacroBlocksToPipe(const XvMCMacroBlockArray *xvmc_macroblocks,
 
    xvmc_mb = xvmc_macroblocks->macro_blocks + first_macroblock;
 
-   for (i = 0; i < num_macroblocks; ++i)
-   {
+   for (i = 0; i < num_macroblocks; ++i) {
       pipe_macroblocks->base.codec = PIPE_VIDEO_CODEC_MPEG12;
       pipe_macroblocks->mbx = xvmc_mb->x;
       pipe_macroblocks->mby = xvmc_mb->y;
@@ -171,8 +167,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
 
    vsfc = vpipe->screen->video_surface_create(vpipe->screen, vpipe->chroma_format,
                                               vpipe->width, vpipe->height);
-   if (!vsfc)
-   {
+   if (!vsfc) {
       FREE(surface_priv);
       return BadAlloc;
    }
@@ -262,35 +257,21 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 
 Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
 {
-#if 0
-	struct vlSurface *vl_sfc;
+   assert(dpy);
 
-	assert(dpy);
+   if (!surface)
+      return XvMCBadSurface;
 
-	if (!surface)
-		return XvMCBadSurface;
-
-	vl_sfc = surface->privData;
-
-	vlSurfaceFlush(vl_sfc);
-#endif
    return Success;
 }
 
 Status XvMCSyncSurface(Display *dpy, XvMCSurface *surface)
 {
-#if 0
-	struct vlSurface *vl_sfc;
+   assert(dpy);
 
-	assert(dpy);
+   if (!surface)
+      return XvMCBadSurface;
 
-	if (!surface)
-		return XvMCBadSurface;
-
-	vl_sfc = surface->privData;
-
-	vlSurfaceSync(vl_sfc);
-#endif
    return Success;
 }
 
@@ -359,43 +340,15 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
 Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 {
-#if 0
-	struct vlSurface	*vl_sfc;
-	enum vlResourceStatus	res_status;
+   assert(dpy);
 
-	assert(dpy);
+   if (!surface)
+      return XvMCBadSurface;
 
-	if (!surface)
-		return XvMCBadSurface;
+   assert(status);
 
-	assert(status);
-
-	vl_sfc = surface->privData;
-
-	vlSurfaceGetStatus(vl_sfc, &res_status);
-
-	switch (res_status)
-	{
-		case vlResourceStatusFree:
-		{
-			*status = 0;
-			break;
-		}
-		case vlResourceStatusRendering:
-		{
-			*status = XVMC_RENDERING;
-			break;
-		}
-		case vlResourceStatusDisplaying:
-		{
-			*status = XVMC_DISPLAYING;
-			break;
-		}
-		default:
-			assert(0);
-	}
-#endif
    *status = 0;
+
    return Success;
 }
 

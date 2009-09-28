@@ -99,8 +99,7 @@ create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i2              ; Chroma Cb texcoords
     * decl i3              ; Chroma Cr texcoords
     */
-   for (unsigned i = 0; i < 4; i++)
-   {
+   for (unsigned i = 0; i < 4; i++) {
       decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -111,8 +110,7 @@ create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl o2              ; Chroma Cb texcoords
     * decl o3              ; Chroma Cr texcoords
     */
-   for (unsigned i = 0; i < 4; i++)
-   {
+   for (unsigned i = 0; i < 4; i++) {
       decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -123,8 +121,7 @@ create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * mov o2, i2           ; Move input chroma Cb texcoords to output
     * mov o3, i3           ; Move input chroma Cr texcoords to output
     */
-   for (unsigned i = 0; i < 4; ++i)
-   {
+   for (unsigned i = 0; i < 4; ++i) {
       inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -169,8 +166,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i1                      ; Chroma Cb texcoords
     * decl i2                      ; Chroma Cr texcoords
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -192,8 +188,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl s1                      ; Sampler for chroma Cb texture
     * decl s2                      ; Sampler for chroma Cr texture
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       decl = vl_decl_samplers(i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -206,8 +201,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
     * mov t0.z, t1.x               ; Move Cr sample into .z component
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
@@ -266,8 +260,7 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i4              ; Ref surface top field texcoords
     * decl i5              ; Ref surface bottom field texcoords (unused, packed in the same stream)
     */
-   for (unsigned i = 0; i < 6; i++)
-   {
+   for (unsigned i = 0; i < 6; i++) {
       decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -279,8 +272,7 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl o3              ; Chroma Cr texcoords
     * decl o4              ; Ref macroblock texcoords
     */
-   for (unsigned i = 0; i < 5; i++)
-   {
+   for (unsigned i = 0; i < 5; i++) {
       decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -291,8 +283,7 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * mov o2, i2           ; Move input chroma Cb texcoords to output
     * mov o3, i3           ; Move input chroma Cr texcoords to output
     */
-   for (unsigned i = 0; i < 4; ++i)
-   {
+   for (unsigned i = 0; i < 4; ++i) {
         inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
         ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -348,8 +339,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i2                      ; Chroma Cr texcoords
     * decl i3                      ; Ref macroblock texcoords
     */
-   for (unsigned i = 0; i < 4; ++i)
-   {
+   for (unsigned i = 0; i < 4; ++i) {
       decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -372,8 +362,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl s2                      ; Sampler for chroma Cr texture
     * decl s3                      ; Sampler for ref surface texture
     */
-   for (unsigned i = 0; i < 4; ++i)
-   {
+   for (unsigned i = 0; i < 4; ++i) {
       decl = vl_decl_samplers(i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -386,8 +375,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
     * mov t0.z, t1.x               ; Move Cr sample into .z component
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
@@ -462,8 +450,7 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i6              ; Second ref macroblock top field texcoords
     * decl i7              ; Second ref macroblock bottom field texcoords (unused, packed in the same stream)
     */
-   for (unsigned i = 0; i < 8; i++)
-   {
+   for (unsigned i = 0; i < 8; i++) {
       decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -476,8 +463,7 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * decl o4              ; First ref macroblock texcoords
     * decl o5              ; Second ref macroblock texcoords
     */
-   for (unsigned i = 0; i < 6; i++)
-   {
+   for (unsigned i = 0; i < 6; i++) {
       decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -488,8 +474,7 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * mov o2, i2           ; Move input chroma Cb texcoords to output
     * mov o3, i3           ; Move input chroma Cr texcoords to output
     */
-   for (unsigned i = 0; i < 4; ++i)
-   {
+   for (unsigned i = 0; i < 4; ++i) {
       inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -498,8 +483,7 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * add o4, i0, i4       ; Translate vertex pos by motion vec to form first ref macroblock texcoords
     * add o5, i0, i6       ; Translate vertex pos by motion vec to form second ref macroblock texcoords
     */
-   for (unsigned i = 0; i < 2; ++i)
-   {
+   for (unsigned i = 0; i < 2; ++i) {
       inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, (i + 2) * 2);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -552,8 +536,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl i3                      ; First ref macroblock texcoords
     * decl i4                      ; Second ref macroblock texcoords
     */
-   for (unsigned i = 0; i < 5; ++i)
-   {
+   for (unsigned i = 0; i < 5; ++i) {
       decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -580,8 +563,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * decl s3                      ; Sampler for first ref surface texture
     * decl s4                      ; Sampler for second ref surface texture
     */
-   for (unsigned i = 0; i < 5; ++i)
-   {
+   for (unsigned i = 0; i < 5; ++i) {
       decl = vl_decl_samplers(i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -594,8 +576,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
     * mov t0.z, t1.x               ; Move Cr sample into .z component
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
@@ -615,8 +596,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
     * tex2d t1, i3, s3             ; Read texel from first ref macroblock
     * tex2d t2, i4, s4             ; Read texel from second ref macroblock
     */
-   for (unsigned i = 0; i < 2; ++i)
-   {
+   for (unsigned i = 0; i < 2; ++i) {
       inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, i + 3);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -655,8 +635,7 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
 {
    assert(r);
 
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       r->tex_transfer[i] = r->pipe->screen->get_tex_transfer
       (
          r->pipe->screen, r->textures.all[i],
@@ -673,8 +652,7 @@ xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
 {
    assert(r);
 
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       r->pipe->screen->transfer_unmap(r->pipe->screen, r->tex_transfer[i]);
       r->pipe->screen->tex_transfer_destroy(r->tex_transfer[i]);
    }
@@ -710,13 +688,11 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    filters[0] = PIPE_TEX_FILTER_NEAREST;
    /* Chroma filters */
    if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 ||
-       r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE)
-   {
+       r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
       filters[1] = PIPE_TEX_FILTER_NEAREST;
       filters[2] = PIPE_TEX_FILTER_NEAREST;
    }
-   else
-   {
+   else {
       filters[1] = PIPE_TEX_FILTER_LINEAR;
       filters[2] = PIPE_TEX_FILTER_LINEAR;
    }
@@ -724,8 +700,7 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    filters[3] = PIPE_TEX_FILTER_LINEAR;
    filters[4] = PIPE_TEX_FILTER_LINEAR;
 
-   for (unsigned i = 0; i < 5; ++i)
-   {
+   for (unsigned i = 0; i < 5; ++i) {
       sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -817,8 +792,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    r->textures.individual.y = r->pipe->screen->texture_create(r->pipe->screen, &template);
 
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420)
-   {
+   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       template.width[0] = r->pot_buffers ?
          util_next_power_of_two(r->picture_width / 2) :
          r->picture_width / 2;
@@ -847,8 +821,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       sizeof(struct vertex2f) * 4 * 24 * r->macroblocks_per_batch
    );
 
-   for (unsigned i = 1; i < 3; ++i)
-   {
+   for (unsigned i = 1; i < 3; ++i) {
       r->vertex_bufs.all[i].stride = sizeof(struct vertex2f) * 2;
       r->vertex_bufs.all[i].max_index = 24 * r->macroblocks_per_batch - 1;
       r->vertex_bufs.all[i].buffer_offset = 0;
@@ -957,8 +930,7 @@ get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
 {
    assert(mb);
 
-   switch (mb->mb_type)
-   {
+   switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
          return MACROBLOCK_TYPE_INTRA;
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
@@ -1058,8 +1030,7 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
    assert(ycbcr_vb);
    assert(pos < r->macroblocks_per_batch);
 
-   switch (mb->mb_type)
-   {
+   switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
       {
          struct vertex2f *vb;
@@ -1071,21 +1042,17 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
          mo_vec[0].x = mb->pmv[0][1][0] * 0.5f * r->surface_tex_inv_size.x;
          mo_vec[0].y = mb->pmv[0][1][1] * 0.5f * r->surface_tex_inv_size.y;
 
-         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME)
-         {
-            for (unsigned i = 0; i < 24 * 2; i += 2)
-            {
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+            for (unsigned i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
                vb[i].y = mo_vec[0].y;
             }
          }
-         else
-         {
+         else {
             mo_vec[1].x = mb->pmv[1][1][0] * 0.5f * r->surface_tex_inv_size.x;
             mo_vec[1].y = mb->pmv[1][1][1] * 0.5f * r->surface_tex_inv_size.y;
 
-            for (unsigned i = 0; i < 24 * 2; i += 2)
-            {
+            for (unsigned i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
                vb[i].y = mo_vec[0].y;
                vb[i + 1].x = mo_vec[1].x;
@@ -1104,41 +1071,33 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
 
          vb = ref_vb[0] + pos * 2 * 24;
 
-         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD)
-         {
+         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
              mo_vec[0].x = mb->pmv[0][1][0] * 0.5f * r->surface_tex_inv_size.x;
              mo_vec[0].y = mb->pmv[0][1][1] * 0.5f * r->surface_tex_inv_size.y;
 
-             if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD)
-             {
+             if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
                 mo_vec[1].x = mb->pmv[1][1][0] * 0.5f * r->surface_tex_inv_size.x;
                 mo_vec[1].y = mb->pmv[1][1][1] * 0.5f * r->surface_tex_inv_size.y;
              }
          }
-         else
-         {
+         else {
             mo_vec[0].x = mb->pmv[0][0][0] * 0.5f * r->surface_tex_inv_size.x;
             mo_vec[0].y = mb->pmv[0][0][1] * 0.5f * r->surface_tex_inv_size.y;
 
-            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD)
-            {
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
                mo_vec[1].x = mb->pmv[1][0][0] * 0.5f * r->surface_tex_inv_size.x;
                mo_vec[1].y = mb->pmv[1][0][1] * 0.5f * r->surface_tex_inv_size.y;
             }
          }
 
-         if (mb->mb_type == PIPE_MPEG12_MOTION_TYPE_FRAME)
-         {
-            for (unsigned i = 0; i < 24 * 2; i += 2)
-            {
+         if (mb->mb_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+            for (unsigned i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
                vb[i].y = mo_vec[0].y;
             }
          }
-         else
-         {
-            for (unsigned i = 0; i < 24 * 2; i += 2)
-            {
+         else {
+            for (unsigned i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
                vb[i].y = mo_vec[0].y;
                vb[i + 1].x = mo_vec[1].x;
@@ -1198,8 +1157,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
    assert(r);
    assert(num_macroblocks);
 
-   for (unsigned i = 0; i < r->num_macroblocks; ++i)
-   {
+   for (unsigned i = 0; i < r->num_macroblocks; ++i) {
       enum MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
       ++num_macroblocks[mb_type];
    }
@@ -1224,8 +1182,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
          PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
       );
 
-   for (unsigned i = 0; i < r->num_macroblocks; ++i)
-   {
+   for (unsigned i = 0; i < r->num_macroblocks; ++i) {
       enum MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
 
       gen_macroblock_verts(r, &r->macroblock_buf[i], offset[mb_type],
@@ -1276,8 +1233,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_FRAGMENT, 0,
                                 &r->fs_const_buf);
 
-   if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0)
-   {
+   if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 4, r->vertex_elems);
       r->pipe->set_sampler_textures(r->pipe, 3, r->textures.all);
@@ -1290,8 +1246,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0)
-   {
+   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
@@ -1305,8 +1260,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0 */ )
-   {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
@@ -1320,8 +1274,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0)
-   {
+   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->future;
@@ -1335,8 +1288,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0 */ )
-   {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->future;
@@ -1350,8 +1302,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0)
-   {
+   if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
@@ -1366,8 +1317,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0 */ )
-   {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
@@ -1436,20 +1386,15 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    tex_pitch = r->tex_transfer[0]->stride / r->tex_transfer[0]->block.size;
    texels = r->texels[0] + mbpy * tex_pitch + mbpx;
 
-   for (unsigned y = 0; y < 2; ++y)
-   {
-      for (unsigned x = 0; x < 2; ++x, ++tb)
-      {
-         if ((cbp >> (5 - tb)) & 1)
-         {
-            if (dct_type == PIPE_MPEG12_DCT_TYPE_FRAME)
-            {
+   for (unsigned y = 0; y < 2; ++y) {
+      for (unsigned x = 0; x < 2; ++x, ++tb) {
+         if ((cbp >> (5 - tb)) & 1) {
+            if (dct_type == PIPE_MPEG12_DCT_TYPE_FRAME) {
                grab_frame_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT,
                                       texels + y * tex_pitch * BLOCK_WIDTH +
                                       x * BLOCK_WIDTH, tex_pitch);
             }
-            else
-            {
+            else {
                grab_field_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT,
                                       texels + y * tex_pitch + x * BLOCK_WIDTH,
                                       tex_pitch);
@@ -1457,14 +1402,11 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
             ++sb;
          }
-         else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE)
-         {
+         else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
             if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
-                ZERO_BLOCK_IS_NIL(r->zero_block[0]))
-            {
+                ZERO_BLOCK_IS_NIL(r->zero_block[0])) {
                fill_zero_block(texels + y * tex_pitch * BLOCK_WIDTH + x * BLOCK_WIDTH, tex_pitch);
-               if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE)
-               {
+               if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
                   r->zero_block[0].x = (mbpx + x * 8) * r->surface_tex_inv_size.x;
                   r->zero_block[0].y = (mbpy + y * 8) * r->surface_tex_inv_size.y;
                }
@@ -1479,24 +1421,19 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    mbpx /= 2;
    mbpy /= 2;
 
-   for (tb = 0; tb < 2; ++tb)
-   {
+   for (tb = 0; tb < 2; ++tb) {
       tex_pitch = r->tex_transfer[tb + 1]->stride / r->tex_transfer[tb + 1]->block.size;
       texels = r->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
-      if ((cbp >> (1 - tb)) & 1)
-      {
+      if ((cbp >> (1 - tb)) & 1) {
          grab_frame_coded_block(blocks + sb * BLOCK_WIDTH * BLOCK_HEIGHT, texels, tex_pitch);
          ++sb;
       }
-      else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE)
-      {
+      else if (r->eb_handling != VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE) {
          if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL ||
-             ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1]))
-         {
+             ZERO_BLOCK_IS_NIL(r->zero_block[tb + 1])) {
             fill_zero_block(texels, tex_pitch);
-            if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE)
-            {
+            if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE) {
                r->zero_block[tb + 1].x = (mbpx << 1) * r->surface_tex_inv_size.x;
                r->zero_block[tb + 1].y = (mbpy << 1) * r->surface_tex_inv_size.y;
             }
@@ -1553,13 +1490,11 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
    if (!init_pipe_state(renderer))
       return false;
-   if (!init_shaders(renderer))
-   {
+   if (!init_shaders(renderer)) {
       cleanup_pipe_state(renderer);
       return false;
    }
-   if (!init_buffers(renderer))
-   {
+   if (!init_buffers(renderer)) {
       cleanup_shaders(renderer);
       cleanup_pipe_state(renderer);
       return false;
@@ -1607,12 +1542,9 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
    assert(num_macroblocks);
    assert(mpeg12_macroblocks);
 
-   if (renderer->surface)
-   {
-      if (surface != renderer->surface)
-      {
-         if (renderer->num_macroblocks > 0)
-         {
+   if (renderer->surface) {
+      if (surface != renderer->surface) {
+         if (renderer->num_macroblocks > 0) {
             xfer_buffers_unmap(renderer);
             flush(renderer);
          }
@@ -1627,8 +1559,7 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
    else
       new_surface = true;
 
-   if (new_surface)
-   {
+   if (new_surface) {
       renderer->surface = surface;
       renderer->past = past;
       renderer->future = future;
@@ -1637,21 +1568,18 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       renderer->surface_tex_inv_size.y = 1.0f / surface->height[0];
    }
 
-   while (num_macroblocks)
-   {
+   while (num_macroblocks) {
       unsigned left_in_batch = renderer->macroblocks_per_batch - renderer->num_macroblocks;
       unsigned num_to_submit = MIN2(num_macroblocks, left_in_batch);
 
-      for (unsigned i = 0; i < num_to_submit; ++i)
-      {
+      for (unsigned i = 0; i < num_to_submit; ++i) {
          assert(mpeg12_macroblocks[i].base.codec == PIPE_VIDEO_CODEC_MPEG12);
          grab_macroblock(renderer, &mpeg12_macroblocks[i]);
       }
 
       num_macroblocks -= num_to_submit;
 
-      if (renderer->num_macroblocks == renderer->macroblocks_per_batch)
-      {
+      if (renderer->num_macroblocks == renderer->macroblocks_per_batch) {
          xfer_buffers_unmap(renderer);
          flush(renderer);
          xfer_buffers_map(renderer);

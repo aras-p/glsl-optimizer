@@ -28,16 +28,13 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
 
    *found_port = false;
 
-   for (unsigned int i = 0; i < XScreenCount(dpy); ++i)
-   {
+   for (unsigned int i = 0; i < XScreenCount(dpy); ++i) {
       ret = XvQueryAdaptors(dpy, XRootWindow(dpy, i), &num_adaptors, &adaptor_info);
       if (ret != Success)
          return ret;
 
-      for (unsigned int j = 0; j < num_adaptors && !*found_port; ++j)
-      {
-         for (unsigned int k = 0; k < adaptor_info[j].num_ports && !*found_port; ++k)
-         {
+      for (unsigned int j = 0; j < num_adaptors && !*found_port; ++j) {
+         for (unsigned int k = 0; k < adaptor_info[j].num_ports && !*found_port; ++k) {
             XvMCSurfaceInfo *surface_info;
 
             if (adaptor_info[j].base_id + k != port)
@@ -46,14 +43,12 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
             *found_port = true;
 
             surface_info = XvMCListSurfaceTypes(dpy, adaptor_info[j].base_id, &num_types);
-            if (!surface_info)
-            {
+            if (!surface_info) {
                XvFreeAdaptorInfo(adaptor_info);
                return BadAlloc;
             }
 
-            for (unsigned int l = 0; l < num_types && !found_surface; ++l)
-            {
+            for (unsigned int l = 0; l < num_types && !found_surface; ++l) {
                if (surface_info[l].surface_type_id != surface_type_id)
                   continue;
 
@@ -65,7 +60,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                *screen = i;
             }
 
-         XFree(surface_info);
+            XFree(surface_info);
          }
       }
 
@@ -102,8 +97,7 @@ static enum pipe_video_profile ProfileToPipe(int xvmc_profile)
 
 static enum pipe_video_chroma_format FormatToPipe(int xvmc_format)
 {
-   switch (xvmc_format)
-   {
+   switch (xvmc_format) {
       case XVMC_CHROMA_FORMAT_420:
          return PIPE_VIDEO_CHROMA_FORMAT_420;
       case XVMC_CHROMA_FORMAT_422:
@@ -148,8 +142,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    /* TODO: Reuse screen if process creates another context */
    screen = vl_screen_create(dpy, scrn);
 
-   if (!screen)
-   {
+   if (!screen) {
       FREE(context_priv);
       return BadAlloc;
    }
@@ -157,8 +150,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    vpipe = vl_video_create(screen, ProfileToPipe(mc_type),
                            FormatToPipe(chroma_format), width, height);
 
-   if (!vpipe)
-   {
+   if (!vpipe) {
       screen->destroy(screen);
       FREE(context_priv);
       return BadAlloc;

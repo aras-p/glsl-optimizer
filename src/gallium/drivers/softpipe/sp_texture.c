@@ -415,8 +415,7 @@ softpipe_video_surface_create(struct pipe_screen *screen,
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
    sp_vsfc->tex = screen->texture_create(screen, &template);
-   if (!sp_vsfc->tex)
-   {
+   if (!sp_vsfc->tex) {
       FREE(sp_vsfc);
       return NULL;
    }

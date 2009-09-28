@@ -162,30 +162,28 @@ create_vert_shader(struct vl_compositor *c)
    ti = 3;
 
    /*
-    * decl i0		; Vertex pos
-    * decl i1		; Vertex texcoords
+    * decl i0             ; Vertex pos
+    * decl i1             ; Vertex texcoords
     */
-   for (unsigned i = 0; i < 2; i++)
-   {
+   for (unsigned i = 0; i < 2; i++) {
       decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
 
    /*
-    * decl c0		; Scaling vector to scale vertex pos rect to destination size
-    * decl c1		; Translation vector to move vertex pos rect into position
-    * decl c2		; Scaling vector to scale texcoord rect to source size
-    * decl c3		; Translation vector to move texcoord rect into position
+    * decl c0             ; Scaling vector to scale vertex pos rect to destination size
+    * decl c1             ; Translation vector to move vertex pos rect into position
+    * decl c2             ; Scaling vector to scale texcoord rect to source size
+    * decl c3             ; Translation vector to move texcoord rect into position
     */
    decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 3);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
    /*
-    * decl o0		; Vertex pos
-    * decl o1		; Vertex texcoords
+    * decl o0             ; Vertex pos
+    * decl o1             ; Vertex texcoords
     */
-   for (unsigned i = 0; i < 2; i++)
-   {
+   for (unsigned i = 0; i < 2; i++) {
       decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
       ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
    }
@@ -195,11 +193,10 @@ create_vert_shader(struct vl_compositor *c)
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
    /*
-    * mad o0, i0, c0, c1	; Scale and translate unit output rect to destination size and pos
-    * mad o1, i1, c2, c3	; Scale and translate unit texcoord rect to source size and pos
+    * mad o0, i0, c0, c1  ; Scale and translate unit output rect to destination size and pos
+    * mad o1, i1, c2, c3  ; Scale and translate unit texcoord rect to source size and pos
     */
-   for (unsigned i = 0; i < 2; ++i)
-   {
+   for (unsigned i = 0; i < 2; ++i) {
       inst = vl_inst4(TGSI_OPCODE_MAD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -239,18 +236,18 @@ create_frag_shader(struct vl_compositor *c)
 
    ti = 3;
 
-   /* decl i0		; Texcoords for s0 */
+   /* decl i0             ; Texcoords for s0 */
    decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
    /*
-    * decl c0		; Bias vector for CSC
-    * decl c1-c4		; CSC matrix c1-c4
+    * decl c0             ; Bias vector for CSC
+    * decl c1-c4          ; CSC matrix c1-c4
     */
    decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 4);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
-   /* decl o0		; Fragment color */
+   /* decl o0             ; Fragment color */
    decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
@@ -258,25 +255,24 @@ create_frag_shader(struct vl_compositor *c)
    decl = vl_decl_temps(0, 0);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
-   /* decl s0		; Sampler for tex containing picture to display */
+   /* decl s0             ; Sampler for tex containing picture to display */
    decl = vl_decl_samplers(0, 0);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
-   /* tex2d t0, i0, s0	; Read src pixel */
+   /* tex2d t0, i0, s0    ; Read src pixel */
    inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, 0);
    ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
-   /* sub t0, t0, c0	; Subtract bias vector from pixel */
+   /* sub t0, t0, c0      ; Subtract bias vector from pixel */
    inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
    ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
    /*
-    * dp4 o0.x, t0, c1	; Multiply pixel by the color conversion matrix
+    * dp4 o0.x, t0, c1    ; Multiply pixel by the color conversion matrix
     * dp4 o0.y, t0, c2
     * dp4 o0.z, t0, c3
     */
-   for (unsigned i = 0; i < 3; ++i)
-   {
+   for (unsigned i = 0; i < 3; ++i) {
       inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i + 1);
       inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -365,10 +361,10 @@ init_buffers(struct vl_compositor *c)
    c->vertex_bufs[0].buffer_offset = 0;
    c->vertex_bufs[0].buffer = pipe_buffer_create
    (
-   c->pipe->screen,
-   1,
-   PIPE_BUFFER_USAGE_VERTEX,
-   sizeof(struct vertex2f) * 4
+      c->pipe->screen,
+      1,
+      PIPE_BUFFER_USAGE_VERTEX,
+      sizeof(struct vertex2f) * 4
    );
 
    memcpy
@@ -476,13 +472,11 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 
    if (!init_pipe_state(compositor))
       return false;
-   if (!init_shaders(compositor))
-   {
+   if (!init_shaders(compositor)) {
       cleanup_pipe_state(compositor);
       return false;
    }
-   if (!init_buffers(compositor))
-   {
+   if (!init_buffers(compositor)) {
       cleanup_shaders(compositor);
       cleanup_pipe_state(compositor);
       return false;

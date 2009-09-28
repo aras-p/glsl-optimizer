@@ -30,9 +30,9 @@ struct tgsi_full_declaration vl_decl_interpolated_input
 
    assert
    (
-   interpolation == TGSI_INTERPOLATE_CONSTANT ||
-   interpolation == TGSI_INTERPOLATE_LINEAR ||
-   interpolation == TGSI_INTERPOLATE_PERSPECTIVE
+      interpolation == TGSI_INTERPOLATE_CONSTANT ||
+      interpolation == TGSI_INTERPOLATE_LINEAR ||
+      interpolation == TGSI_INTERPOLATE_PERSPECTIVE
    );
 
    decl.Declaration.File = TGSI_FILE_INPUT;
