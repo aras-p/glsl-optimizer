@@ -75,6 +75,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
    case GL_RGBA:
    case GL_RGBA8:
    case GL_RGB:
+   case GL_RGB8:
       return intel_readbuf_region(intel);
    default:
       return NULL;

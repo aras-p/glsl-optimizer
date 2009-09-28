@@ -1693,53 +1693,6 @@ st_CopyTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-/**
- * Compute which mipmap levels that really need to be sent to the hardware.
- * This depends on the base image size, GL_TEXTURE_MIN_LOD,
- * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
- */
-static void
-calculate_first_last_level(struct st_texture_object *stObj)
-{
-   struct gl_texture_object *tObj = &stObj->base;
-
-   /* These must be signed values.  MinLod and MaxLod can be negative numbers,
-    * and having firstLevel and lastLevel as signed prevents the need for
-    * extra sign checks.
-    */
-   GLint firstLevel;
-   GLint lastLevel;
-
-   /* Yes, this looks overly complicated, but it's all needed.
-    */
-   switch (tObj->Target) {
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-   case GL_TEXTURE_3D:
-   case GL_TEXTURE_CUBE_MAP:
-      if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
-         /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
-          */
-         firstLevel = lastLevel = tObj->BaseLevel;
-      }
-      else {
-         firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel,
-                          (int) tObj->Image[0][tObj->BaseLevel]->WidthLog2);
-      }
-      break;
-   case GL_TEXTURE_RECTANGLE_NV:
-   case GL_TEXTURE_4D_SGIS:
-      firstLevel = lastLevel = 0;
-      break;
-   default:
-      return;
-   }
-
-   stObj->lastLevel = lastLevel;
-}
-
-
 static void
 copy_image_data_to_texture(struct st_context *st,
 			   struct st_texture_object *stObj,
@@ -1803,13 +1756,16 @@ st_finalize_texture(GLcontext *ctx,
 
    *needFlush = GL_FALSE;
 
-   /* We know/require this is true by now: 
-    */
-   assert(stObj->base._Complete);
+   if (stObj->base._Complete) {
+      /* The texture is complete and we know exactly how many mipmap levels
+       * are present/needed.  This is conditional because we may be called
+       * from the st_generate_mipmap() function when the texture object is
+       * incomplete.  In that case, we'll have set stObj->lastLevel before
+       * we get here.
+       */
+      stObj->lastLevel = stObj->base._MaxLevel - stObj->base.BaseLevel;
+   }
 
-   /* What levels must the texture include at a minimum?
-    */
-   calculate_first_last_level(stObj);
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
    /* If both firstImage and stObj point to a texture which can contain
