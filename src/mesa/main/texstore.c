@@ -3352,10 +3352,12 @@ fetch_texel_float_to_chan(const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texelOut)
 {
    GLfloat temp[4];
+   GLenum baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
+
    ASSERT(texImage->FetchTexelf);
    texImage->FetchTexelf(texImage, i, j, k, temp);
-   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
-       texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
+   if (baseFormat == GL_DEPTH_COMPONENT ||
+       baseFormat == GL_DEPTH_STENCIL_EXT) {
       /* just one channel */
       UNCLAMPED_FLOAT_TO_CHAN(texelOut[0], temp[0]);
    }
@@ -3377,10 +3379,12 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texelOut)
 {
    GLchan temp[4];
+   GLenum baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
+
    ASSERT(texImage->FetchTexelc);
    texImage->FetchTexelc(texImage, i, j, k, temp);
-   if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
-       texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
+   if (baseFormat == GL_DEPTH_COMPONENT ||
+       baseFormat == GL_DEPTH_STENCIL_EXT) {
       /* just one channel */
       texelOut[0] = CHAN_TO_FLOAT(temp[0]);
    }
@@ -3423,9 +3427,10 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 static void
 compute_texture_size(GLcontext *ctx, struct gl_texture_image *texImage)
 {
-   if (texImage->TexFormat->TexelBytes == 0) {
-      /* must be a compressed format */
-      texImage->IsCompressed = GL_TRUE;
+   texImage->IsCompressed =
+      _mesa_is_format_compressed(texImage->TexFormat->MesaFormat);
+
+   if (texImage->IsCompressed) {
       texImage->CompressedSize =
          ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
                                            texImage->Height, texImage->Depth,
@@ -3433,7 +3438,6 @@ compute_texture_size(GLcontext *ctx, struct gl_texture_image *texImage)
    }
    else {
       /* non-compressed format */
-      texImage->IsCompressed = GL_FALSE;
       texImage->CompressedSize = 0;
    }
 }
@@ -3471,7 +3475,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    if (texImage->IsCompressed)
       sizeInBytes = texImage->CompressedSize;
    else
-      sizeInBytes = texImage->Width * texImage->TexFormat->TexelBytes;
+      sizeInBytes = texImage->Width * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
@@ -3540,7 +3544,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    _mesa_set_fetch_functions(texImage, 2);
    compute_texture_size(ctx, texImage);
 
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
    /* allocate memory */
    if (texImage->IsCompressed)
@@ -3574,7 +3578,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
             = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride * texelBytes;
       }
 
       success = storeImage(ctx, 2, texImage->_BaseFormat,
@@ -3619,7 +3623,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    _mesa_set_fetch_functions(texImage, 3);
    compute_texture_size(ctx, texImage);
 
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
 
    /* allocate memory */
    if (texImage->IsCompressed)
@@ -3653,7 +3657,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
             = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride * texelBytes;
       }
 
       success = storeImage(ctx, 3, texImage->_BaseFormat,
@@ -3751,7 +3755,8 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                                                     texImage->Width);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride *
+            _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       }
 
       success = storeImage(ctx, 2, texImage->_BaseFormat,
@@ -3804,7 +3809,8 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                                                     texImage->Width);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride *
+            _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
       }
 
       success = storeImage(ctx, 3, texImage->_BaseFormat,
@@ -3964,7 +3970,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    GLint i, rows;
    GLubyte *dest;
    const GLubyte *src;
-   const GLuint mesaFormat = texImage->TexFormat->MesaFormat;
+   const gl_format texFormat = texImage->TexFormat->MesaFormat;
 
    (void) format;
 
@@ -3981,12 +3987,12 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    if (!data)
       return;
 
-   srcRowStride = _mesa_compressed_row_stride(mesaFormat, width);
+   srcRowStride = _mesa_compressed_row_stride(texFormat, width);
    src = (const GLubyte *) data;
 
-   destRowStride = _mesa_compressed_row_stride(mesaFormat, texImage->Width);
+   destRowStride = _mesa_compressed_row_stride(texFormat, texImage->Width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                         texImage->TexFormat->MesaFormat,
+                                         texFormat,
                                          texImage->Width,
                                          (GLubyte *) texImage->Data);
 
