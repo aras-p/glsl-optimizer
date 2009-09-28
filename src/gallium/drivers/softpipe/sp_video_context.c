@@ -115,6 +115,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    struct pipe_rasterizer_state rast;
    struct pipe_blend_state blend;
    struct pipe_depth_stencil_alpha_state dsa;
+   unsigned i;
 
    assert(ctx);
 	
@@ -167,7 +168,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    dsa.depth.writemask = 0;
    dsa.depth.func = PIPE_FUNC_ALWAYS;
    dsa.depth.occlusion_count = 0;
-   for (unsigned i = 0; i < 2; ++i) {
+   for (i = 0; i < 2; ++i) {
       dsa.stencil[i].enabled = 0;
       dsa.stencil[i].func = PIPE_FUNC_ALWAYS;
       dsa.stencil[i].fail_op = PIPE_STENCIL_OP_KEEP;
