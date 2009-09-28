@@ -41,6 +41,7 @@
 #include "dlopen.h"
 #include "image.h"
 #include "texcompress.h"
+#include "texcompress_s3tc.h"
 #include "texformat.h"
 #include "texstore.h"
 
@@ -155,8 +156,8 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
 /**
  * Called via TexFormat->StoreImage to store an RGB_DXT1 texture.
  */
-static GLboolean
-texstore_rgb_dxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -218,8 +219,8 @@ texstore_rgb_dxt1(TEXSTORE_PARAMS)
 /**
  * Called via TexFormat->StoreImage to store an RGBA_DXT1 texture.
  */
-static GLboolean
-texstore_rgba_dxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -280,8 +281,8 @@ texstore_rgba_dxt1(TEXSTORE_PARAMS)
 /**
  * Called via TexFormat->StoreImage to store an RGBA_DXT3 texture.
  */
-static GLboolean
-texstore_rgba_dxt3(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -341,8 +342,8 @@ texstore_rgba_dxt3(TEXSTORE_PARAMS)
 /**
  * Called via TexFormat->StoreImage to store an RGBA_DXT5 texture.
  */
-static GLboolean
-texstore_rgba_dxt5(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -414,9 +415,9 @@ fetch_texel_2d_rgb_dxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_f_rgb_dxt1( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgb_dxt1(const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -442,9 +443,9 @@ fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_f_rgba_dxt1( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgba_dxt1(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -471,9 +472,9 @@ fetch_texel_2d_rgba_dxt3( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_f_rgba_dxt3( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgba_dxt3(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -499,9 +500,9 @@ fetch_texel_2d_rgba_dxt5( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_f_rgba_dxt5( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgba_dxt5(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -513,9 +514,9 @@ fetch_texel_2d_f_rgba_dxt5( const struct gl_texture_image *texImage,
 }
 
 #if FEATURE_EXT_texture_sRGB
-static void
-fetch_texel_2d_f_srgb_dxt1( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_srgb_dxt1( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -526,9 +527,9 @@ fetch_texel_2d_f_srgb_dxt1( const struct gl_texture_image *texImage,
    texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
 }
 
-static void
-fetch_texel_2d_f_srgba_dxt1( const struct gl_texture_image *texImage,
-                             GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_srgba_dxt1(const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -539,9 +540,9 @@ fetch_texel_2d_f_srgba_dxt1( const struct gl_texture_image *texImage,
    texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
 }
 
-static void
-fetch_texel_2d_f_srgba_dxt3( const struct gl_texture_image *texImage,
-                             GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_srgba_dxt3(const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -552,9 +553,9 @@ fetch_texel_2d_f_srgba_dxt3( const struct gl_texture_image *texImage,
    texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
 }
 
-static void
-fetch_texel_2d_f_srgba_dxt5( const struct gl_texture_image *texImage,
-                             GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_srgba_dxt5(const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -580,12 +581,12 @@ const struct gl_texture_format _mesa_texformat_rgb_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgb_dxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgb_dxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    fetch_texel_2d_rgb_dxt1, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgb_dxt1, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgb_dxt1, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -604,12 +605,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    fetch_texel_2d_rgba_dxt1, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgba_dxt1, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgba_dxt1, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -628,12 +629,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt3 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt3,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt3,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    fetch_texel_2d_rgba_dxt3, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgba_dxt3, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgba_dxt3, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -652,12 +653,12 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt5 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt5,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt5,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    fetch_texel_2d_rgba_dxt5, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgba_dxt5, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgba_dxt5, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -677,12 +678,12 @@ const struct gl_texture_format _mesa_texformat_srgb_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgb_dxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgb_dxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_srgb_dxt1, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_srgb_dxt1,	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -701,12 +702,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_srgba_dxt1, 	/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_srgba_dxt1, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -725,12 +726,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt3 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt3,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt3,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_srgba_dxt3, 	/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_srgba_dxt3, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -749,12 +750,12 @@ const struct gl_texture_format _mesa_texformat_srgba_dxt5 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_dxt5,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_dxt5,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
    NULL, 				/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_srgba_dxt5, 	/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_srgba_dxt5, 	/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };

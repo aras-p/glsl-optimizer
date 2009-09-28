@@ -37,6 +37,7 @@
 #include "image.h"
 #include "mipmap.h"
 #include "texcompress.h"
+#include "texcompress_fxt1.h"
 #include "texformat.h"
 #include "texstore.h"
 
@@ -64,8 +65,8 @@ _mesa_init_texture_fxt1( GLcontext *ctx )
 /**
  * Called via TexFormat->StoreImage to store an RGB_FXT1 texture.
  */
-static GLboolean
-texstore_rgb_fxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -121,8 +122,8 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
 /**
  * Called via TexFormat->StoreImage to store an RGBA_FXT1 texture.
  */
-static GLboolean
-texstore_rgba_fxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -175,18 +176,18 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
 }
 
 
-static void
-fetch_texel_2d_rgba_fxt1( const struct gl_texture_image *texImage,
-                          GLint i, GLint j, GLint k, GLchan *texel )
+void
+_mesa_fetch_texel_2d_rgba_fxt1( const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLchan *texel )
 {
    (void) k;
    fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
 }
 
 
-static void
-fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -199,9 +200,9 @@ fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
-                         GLint i, GLint j, GLint k, GLchan *texel )
+void
+_mesa_fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLchan *texel )
 {
    (void) k;
    fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
@@ -209,9 +210,9 @@ fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
-                           GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -239,12 +240,12 @@ const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgb_fxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgb_fxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgb_fxt1, 		/* FetchTexel2D */
+   _mesa_fetch_texel_2d_rgb_fxt1, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgb_fxt1, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgb_fxt1, 		/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
@@ -263,12 +264,12 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
    0,					/* DepthBits */
    0,					/* StencilBits */
    0,					/* TexelBytes */
-   texstore_rgba_fxt1,			/* StoreTexImageFunc */
+   _mesa_texstore_rgba_fxt1,		/* StoreTexImageFunc */
    NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgba_fxt1, 		/* FetchTexel2D */
+   _mesa_fetch_texel_2d_rgba_fxt1, 		/* FetchTexel2D */
    NULL, /*impossible*/ 		/* FetchTexel3D */
    NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgba_fxt1, 		/* FetchTexel2Df */
+   _mesa_fetch_texel_2d_f_rgba_fxt1, 		/* FetchTexel2Df */
    NULL, /*impossible*/ 		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
