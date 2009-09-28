@@ -42,6 +42,7 @@
  */
 typedef enum
 {
+   MESA_FORMAT_NONE = 0,
    /** 
     * \name Basic hardware formats
     */

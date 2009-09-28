@@ -37,6 +37,14 @@
 static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 {
    {
+      MESA_FORMAT_NONE,            /* Name */
+      GL_NONE,                     /* BaseFormat */
+      GL_NONE,                     /* DataType */
+      0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      0, 0, 0                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_RGBA8888,        /* Name */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
@@ -616,6 +624,9 @@ _mesa_test_formats(void)
       assert(info);
 
       assert(info->Name == i);
+
+      if (info->Name == MESA_FORMAT_NONE)
+         continue;
 
       if (info->BlockWidth == 1 && info->BlockHeight == 1) {
          if (info->RedBits > 0) {
