@@ -63,7 +63,7 @@ _mesa_init_texture_fxt1( GLcontext *ctx )
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGB_FXT1 texture.
+ * Store user's image in rgb_fxt1 format.
  */
 GLboolean
 _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
@@ -120,7 +120,7 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGBA_FXT1 texture.
+ * Store user's image in rgba_fxt1 format.
  */
 GLboolean
 _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)

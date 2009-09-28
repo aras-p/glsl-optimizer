@@ -154,7 +154,7 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
 }
 
 /**
- * Called via TexFormat->StoreImage to store an RGB_DXT1 texture.
+ * Store user's image in rgb_dxt1 format.
  */
 GLboolean
 _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
@@ -217,7 +217,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGBA_DXT1 texture.
+ * Store user's image in rgba_dxt1 format.
  */
 GLboolean
 _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
@@ -279,7 +279,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGBA_DXT3 texture.
+ * Store user's image in rgba_dxt3 format.
  */
 GLboolean
 _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
@@ -340,7 +340,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGBA_DXT5 texture.
+ * Store user's image in rgba_dxt5 format.
  */
 GLboolean
 _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
