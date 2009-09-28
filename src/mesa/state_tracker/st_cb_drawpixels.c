@@ -35,6 +35,7 @@
 #include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "main/texstore.h"
 #include "main/state.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
@@ -391,6 +392,8 @@ make_texture(struct st_context *st,
       GLboolean success;
       GLubyte *dest;
       const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
+      const StoreTexImageFunc storeImage =
+         _mesa_get_texstore_func(mformat->MesaFormat);
 
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
@@ -402,21 +405,22 @@ make_texture(struct st_context *st,
       /* map texture transfer */
       dest = screen->transfer_map(screen, transfer);
 
+
       /* Put image into texture transfer.
        * Note that the image is actually going to be upside down in
        * the texture.  We deal with that with texcoords.
        */
-      success = mformat->StoreImage(ctx, 2,           /* dims */
-                                    baseFormat,       /* baseInternalFormat */
-                                    mformat,          /* gl_texture_format */
-                                    dest,             /* dest */
-                                    0, 0, 0,          /* dstX/Y/Zoffset */
-                                    transfer->stride, /* dstRowStride, bytes */
-                                    &dstImageOffsets, /* dstImageOffsets */
-                                    width, height, 1, /* size */
-                                    format, type,     /* src format/type */
-                                    pixels,           /* data source */
-                                    unpack);
+      success = storeImage(ctx, 2,           /* dims */
+                           baseFormat,       /* baseInternalFormat */
+                           mformat,          /* gl_texture_format */
+                           dest,             /* dest */
+                           0, 0, 0,          /* dstX/Y/Zoffset */
+                           transfer->stride, /* dstRowStride, bytes */
+                           &dstImageOffsets, /* dstImageOffsets */
+                           width, height, 1, /* size */
+                           format, type,     /* src format/type */
+                           pixels,           /* data source */
+                           unpack);
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
