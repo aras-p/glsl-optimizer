@@ -44,6 +44,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texstore.h"
+#include "texstate.h"
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */
@@ -1955,7 +1956,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);

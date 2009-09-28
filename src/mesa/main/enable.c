@@ -37,6 +37,7 @@
 #include "mtypes.h"
 #include "enums.h"
 #include "api_arrayelt.h"
+#include "texstate.h"
 
 
 
@@ -228,8 +229,7 @@ get_texcoord_unit(GLcontext *ctx)
 static GLboolean
 enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
 {
-   const GLuint curr = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    const GLbitfield newenabled = state
       ? (texUnit->Enabled | texBit) : (texUnit->Enabled & ~texBit);
 
