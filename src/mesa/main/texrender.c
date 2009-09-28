@@ -462,6 +462,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
+   gl_format texFormat;
 
    (void) ctx;
    ASSERT(trb);
@@ -483,6 +484,8 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Yoffset = 0;
       trb->Zoffset = att->Zoffset;
    }
+
+   texFormat = trb->TexImage->TexFormat->MesaFormat;
 
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
@@ -513,12 +516,12 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
 #endif
    trb->Base.Data = trb->TexImage->Data;
 
-   trb->Base.RedBits = trb->TexImage->TexFormat->RedBits;
-   trb->Base.GreenBits = trb->TexImage->TexFormat->GreenBits;
-   trb->Base.BlueBits = trb->TexImage->TexFormat->BlueBits;
-   trb->Base.AlphaBits = trb->TexImage->TexFormat->AlphaBits;
-   trb->Base.DepthBits = trb->TexImage->TexFormat->DepthBits;
-   trb->Base.StencilBits = trb->TexImage->TexFormat->StencilBits;
+   trb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
+   trb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
+   trb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
+   trb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
+   trb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
+   trb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
 }
 
 
