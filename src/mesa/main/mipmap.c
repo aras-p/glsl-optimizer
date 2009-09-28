@@ -32,6 +32,7 @@
 #include "texcompress.h"
 #include "texformat.h"
 #include "teximage.h"
+#include "texstore.h"
 #include "image.h"
 
 
@@ -1665,16 +1666,21 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          const GLenum srcFormat = convertFormat->BaseFormat;
          GLint dstRowStride
             = _mesa_compressed_row_stride(dstImage->TexFormat->MesaFormat, dstWidth);
+         const StoreTexImageFunc storeImage =
+            _mesa_get_texstore_func(dstImage->TexFormat->MesaFormat);
+
          ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
-         dstImage->TexFormat->StoreImage(ctx, 2, dstImage->_BaseFormat,
-                                         dstImage->TexFormat,
-                                         dstImage->Data,
-                                         0, 0, 0, /* dstX/Y/Zoffset */
-                                         dstRowStride, 0, /* strides */
-                                         dstWidth, dstHeight, 1, /* size */
-                                         srcFormat, CHAN_TYPE,
-                                         dstData, /* src data, actually */
-                                         &ctx->DefaultPacking);
+
+         storeImage(ctx, 2, dstImage->_BaseFormat,
+                    dstImage->TexFormat,
+                    dstImage->Data,
+                    0, 0, 0, /* dstX/Y/Zoffset */
+                    dstRowStride, 0, /* strides */
+                    dstWidth, dstHeight, 1, /* size */
+                    srcFormat, CHAN_TYPE,
+                    dstData, /* src data, actually */
+                    &ctx->DefaultPacking);
+
          /* swap src and dest pointers */
          temp = (GLubyte *) srcData;
          srcData = dstData;
