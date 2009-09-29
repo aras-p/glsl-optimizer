@@ -10,6 +10,7 @@ C_SOURCES = \
 	u_debug_stack.c \
 	u_blit.c \
 	u_cache.c \
+	u_cpu_detect.c \
 	u_draw_quad.c \
 	u_format.c \
 	u_format_access.c \
