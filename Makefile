@@ -182,7 +182,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.6
+VERSION=7.6.1
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
