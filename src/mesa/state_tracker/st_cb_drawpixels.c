@@ -392,8 +392,6 @@ make_texture(struct st_context *st,
       GLboolean success;
       GLubyte *dest;
       const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
-      const StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(mformat->MesaFormat);
 
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
@@ -410,17 +408,17 @@ make_texture(struct st_context *st,
        * Note that the image is actually going to be upside down in
        * the texture.  We deal with that with texcoords.
        */
-      success = storeImage(ctx, 2,           /* dims */
-                           baseFormat,       /* baseInternalFormat */
-                           mformat,          /* gl_texture_format */
-                           dest,             /* dest */
-                           0, 0, 0,          /* dstX/Y/Zoffset */
-                           transfer->stride, /* dstRowStride, bytes */
-                           &dstImageOffsets, /* dstImageOffsets */
-                           width, height, 1, /* size */
-                           format, type,     /* src format/type */
-                           pixels,           /* data source */
-                           unpack);
+      success = _mesa_texstore(ctx, 2,           /* dims */
+                               baseFormat,       /* baseInternalFormat */
+                               mformat,          /* gl_texture_format */
+                               dest,             /* dest */
+                               0, 0, 0,          /* dstX/Y/Zoffset */
+                               transfer->stride, /* dstRowStride, bytes */
+                               &dstImageOffsets, /* dstImageOffsets */
+                               width, height, 1, /* size */
+                               format, type,     /* src format/type */
+                               pixels,           /* data source */
+                               unpack);
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
