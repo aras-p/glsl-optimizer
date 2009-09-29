@@ -18,9 +18,10 @@ struct _egl_global _eglGlobal =
    0,                      /* NumDrivers */
    { NULL },               /* Drivers */
    2,                      /* NumAtExitCalls */
-   {                       /* AtExitCalls */
-      _eglFiniDisplay,
-      _eglUnloadDrivers
+   {
+      /* default AtExitCalls, called in reverse order */
+      _eglUnloadDrivers, /* always called last */
+      _eglFiniDisplay
    },
 };
 
