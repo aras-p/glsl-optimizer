@@ -126,11 +126,18 @@ lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef
-lp_build_int(struct lp_build_context *bld,
-             LLVMValueRef a);
+lp_build_ifloor(struct lp_build_context *bld,
+                LLVMValueRef a);
+LLVMValueRef
+lp_build_iceil(struct lp_build_context *bld,
+               LLVMValueRef a);
 
 LLVMValueRef
-lp_build_ifloor(struct lp_build_context *bld,
+lp_build_iround(struct lp_build_context *bld,
+                LLVMValueRef a);
+
+LLVMValueRef
+lp_build_itrunc(struct lp_build_context *bld,
                 LLVMValueRef a);
 
 LLVMValueRef

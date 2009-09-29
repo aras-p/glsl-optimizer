@@ -274,8 +274,8 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    s_fpart = lp_build_sub(&bld->coord_bld, s, s_ipart);
    t_fpart = lp_build_sub(&bld->coord_bld, t, t_ipart);
 
-   x0 = lp_build_int(&bld->coord_bld, s_ipart);
-   y0 = lp_build_int(&bld->coord_bld, t_ipart);
+   x0 = lp_build_itrunc(&bld->coord_bld, s_ipart);
+   y0 = lp_build_itrunc(&bld->coord_bld, t_ipart);
 
    x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
