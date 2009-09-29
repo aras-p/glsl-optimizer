@@ -518,9 +518,6 @@ intelTexImage(GLcontext * ctx,
     * conversion and copy:
     */
    if (pixels) {
-      StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
        if (compressed) {
 	   if (intelImage->mt) {
 	       struct intel_region *dst = intelImage->mt->region;
@@ -531,17 +528,20 @@ intelTexImage(GLcontext * ctx,
 			       pixels,
 			       srcRowStride,
 			       0, 0);
-	   } else
+	   }
+           else {
 	       memcpy(texImage->Data, pixels, imageSize);
-       } else if (!storeImage(ctx, dims, 
-                              texImage->_BaseFormat, 
-                              texImage->TexFormat, 
-                              texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-                              dstRowStride,
-                              texImage->ImageOffsets,
-                              width, height, depth,
-                              format, type, pixels, unpack)) {
-	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+           }
+       }
+       else if (!_mesa_texstore(ctx, dims, 
+                                texImage->_BaseFormat, 
+                                texImage->TexFormat, 
+                                texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
+                                dstRowStride,
+                                texImage->ImageOffsets,
+                                width, height, depth,
+                                format, type, pixels, unpack)) {
+          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
        }
    }
 

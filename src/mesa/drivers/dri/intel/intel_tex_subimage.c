@@ -105,21 +105,20 @@ intelTexSubimage(GLcontext * ctx,
                          xoffset, yoffset / 4,
                          (width + 3)  & ~3, (height + 3) / 4,
                          pixels, (width + 3) & ~3, 0, 0);
-      } else
+      }
+      else {
         memcpy(texImage->Data, pixels, imageSize);
+      }
    }
    else {
-      StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
-      if (!storeImage(ctx, dims, texImage->_BaseFormat,
-                      texImage->TexFormat,
-                      texImage->Data,
-                      xoffset, yoffset, zoffset,
-                      dstRowStride,
-                      texImage->ImageOffsets,
-                      width, height, depth,
-                      format, type, pixels, packing)) {
+      if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
+                          texImage->TexFormat,
+                          texImage->Data,
+                          xoffset, yoffset, zoffset,
+                          dstRowStride,
+                          texImage->ImageOffsets,
+                          width, height, depth,
+                          format, type, pixels, packing)) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
       }
    }

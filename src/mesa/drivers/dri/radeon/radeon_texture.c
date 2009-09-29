@@ -624,8 +624,6 @@ static void radeon_teximage(
 		} else {
 			GLuint dstRowStride;
 			GLuint *dstImageOffsets;
-			StoreTexImageFunc storeImage =
-				_mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
 
 			if (image->mt) {
 				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
@@ -648,15 +646,16 @@ static void radeon_teximage(
 				dstImageOffsets = texImage->ImageOffsets;
 			}
 
-			if (!storeImage(ctx, dims,
-						texImage->_BaseFormat,
-						texImage->TexFormat,
-						texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-						dstRowStride,
-						dstImageOffsets,
-						width, height, depth,
-						format, type, pixels, packing))
+			if (!_mesa_texstore(ctx, dims,
+					    texImage->_BaseFormat,
+					    texImage->TexFormat,
+					    texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
+					    dstRowStride,
+					    dstImageOffsets,
+					    width, height, depth,
+					    format, type, pixels, packing)) {
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+			}
 
 			if (dims == 3)
 				_mesa_free(dstImageOffsets);
@@ -779,18 +778,17 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 
 			copy_rows(img_start, dstRowStride,  pixels, srcRowStride, rows,  bytesPerRow);
 			
-		} else {
-			StoreTexImageFunc storeImage =
-				_mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
-			if (!storeImage(ctx, dims, texImage->_BaseFormat,
-							     texImage->TexFormat, texImage->Data,
-							     xoffset, yoffset, zoffset,
-							     dstRowStride,
-							     texImage->ImageOffsets,
-							     width, height, depth,
-							     format, type, pixels, packing))
+		}
+		else {
+			if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
+					    texImage->TexFormat, texImage->Data,
+					    xoffset, yoffset, zoffset,
+					    dstRowStride,
+					    texImage->ImageOffsets,
+					    width, height, depth,
+					    format, type, pixels, packing)) {
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
+			}
 		}
 	}
 

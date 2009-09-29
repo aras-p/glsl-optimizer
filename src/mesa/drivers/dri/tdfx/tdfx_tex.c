@@ -138,18 +138,15 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
    }
 
    if (bpt) {
-      StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
       src = _s;
       dst = _d;
-      storeImage(ctx, 2, texImage->_BaseFormat,
-                                      texImage->TexFormat, dstImage,
-                                      0, 0, 0, /* dstX/Y/Zoffset */
-                                      dstWidth * bpt,
-                                      &dstImageOffsets,
-                                      dstWidth, dstHeight, 1,
-                                      GL_BGRA, CHAN_TYPE, dst, &ctx->DefaultPacking);
+      _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                     texImage->TexFormat, dstImage,
+                     0, 0, 0, /* dstX/Y/Zoffset */
+                     dstWidth * bpt,
+                     &dstImageOffsets,
+                     dstWidth, dstHeight, 1,
+                     GL_BGRA, CHAN_TYPE, dst, &ctx->DefaultPacking);
       FREE(dst);
       FREE(src);
    }
@@ -1231,21 +1228,19 @@ adjust2DRatio (GLcontext *ctx,
 
    if (!texImage->IsCompressed) {
       GLubyte *destAddr;
-      StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
 
       tempImage = MALLOC(width * height * texelBytes);
       if (!tempImage) {
          return GL_FALSE;
       }
 
-      storeImage(ctx, 2, texImage->_BaseFormat,
-                 texImage->TexFormat, tempImage,
-                 0, 0, 0, /* dstX/Y/Zoffset */
-                 width * texelBytes, /* dstRowStride */
-                 &dstImageOffsets,
-                 width, height, 1,
-                 format, type, pixels, packing);
+      _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                     texImage->TexFormat, tempImage,
+                     0, 0, 0, /* dstX/Y/Zoffset */
+                     width * texelBytes, /* dstRowStride */
+                     &dstImageOffsets,
+                     width, height, 1,
+                     format, type, pixels, packing);
 
       /* now rescale */
       /* compute address of dest subimage within the overal tex image */
@@ -1262,8 +1257,6 @@ adjust2DRatio (GLcontext *ctx,
    } else {
       const GLint rawBytes = 4;
       GLvoid *rawImage = MALLOC(width * height * rawBytes);
-      StoreTexImageFunc storeImage =
-         _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
 
       if (!rawImage) {
          return GL_FALSE;
@@ -1287,13 +1280,13 @@ adjust2DRatio (GLcontext *ctx,
                                width, height, /* src */
                                newWidth, newHeight, /* dst */
                                rawImage /*src*/, tempImage /*dst*/ );
-      storeImage(ctx, 2, texImage->_BaseFormat,
-                 texImage->TexFormat, texImage->Data,
-                 xoffset * mml->wScale, yoffset * mml->hScale, 0, /* dstX/Y/Zoffset */
-                 dstRowStride,
-                 &dstImageOffsets,
-                 newWidth, newHeight, 1,
-                 GL_RGBA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
+      _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                     texImage->TexFormat, texImage->Data,
+                     xoffset * mml->wScale, yoffset * mml->hScale, 0, /* dstX/Y/Zoffset */
+                     dstRowStride,
+                     &dstImageOffsets,
+                     newWidth, newHeight, 1,
+                     GL_RGBA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
       FREE(rawImage);
    }
 
@@ -1446,16 +1439,13 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
        else {
           /* no rescaling needed */
           /* unpack image, apply transfer ops and store in texImage->Data */
-          StoreTexImageFunc storeImage =
-             _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
-          storeImage(ctx, 2, texImage->_BaseFormat,
-                     texImage->TexFormat, texImage->Data,
-                     0, 0, 0, /* dstX/Y/Zoffset */
-                     dstRowStride,
-                     texImage->ImageOffsets,
-                     width, height, 1,
-                     format, type, pixels, packing);
+          _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                         texImage->TexFormat, texImage->Data,
+                         0, 0, 0, /* dstX/Y/Zoffset */
+                         dstRowStride,
+                         texImage->ImageOffsets,
+                         width, height, 1,
+                         format, type, pixels, packing);
        }
     }
 
@@ -1519,16 +1509,13 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     }
     else {
         /* no rescaling needed */
-       StoreTexImageFunc storeImage =
-          _mesa_get_texstore_func(texImage->TexFormat->MesaFormat);
-
-        storeImage(ctx, 2, texImage->_BaseFormat,
-                   texImage->TexFormat, texImage->Data,
-                   xoffset, yoffset, 0,
-                   dstRowStride,
-                   texImage->ImageOffsets,
-                   width, height, 1,
-                   format, type, pixels, packing);
+       _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                      texImage->TexFormat, texImage->Data,
+                      xoffset, yoffset, 0,
+                      dstRowStride,
+                      texImage->ImageOffsets,
+                      width, height, 1,
+                      format, type, pixels, packing);
     }
 
     ti->reloadImages = GL_TRUE; /* signal the image needs to be reloaded */
