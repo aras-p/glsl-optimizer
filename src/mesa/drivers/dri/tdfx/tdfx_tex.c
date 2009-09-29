@@ -93,13 +93,13 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
       }
       _s = src = MALLOC(srcRowStride * srcHeight);
       _d = dst = MALLOC(dstWidth * bytesPerPixel * dstHeight);
-      _mesa_texstore_rgba8888(ctx, 2, GL_RGBA,
-                              &_mesa_texformat_rgba8888_rev, src,
-                              0, 0, 0, /* dstX/Y/Zoffset */
-                              srcRowStride, /* dstRowStride */
-                              &dstImageOffsets,
-                              srcWidth, srcHeight, 1,
-                              texImage->_BaseFormat, _t, srcImage, &ctx->DefaultPacking);
+      _mesa_texstore(ctx, 2, GL_RGBA,
+                     &_mesa_texformat_rgba8888_rev, src,
+                     0, 0, 0, /* dstX/Y/Zoffset */
+                     srcRowStride, /* dstRowStride */
+                     &dstImageOffsets,
+                     srcWidth, srcHeight, 1,
+                     texImage->_BaseFormat, _t, srcImage, &ctx->DefaultPacking);
    }
 
    if (srcHeight == 1) {
@@ -1267,13 +1267,13 @@ adjust2DRatio (GLcontext *ctx,
          return GL_FALSE;
       }
       /* unpack image, apply transfer ops and store in rawImage */
-      _mesa_texstore_rgba8888(ctx, 2, GL_RGBA,
-                              &_mesa_texformat_rgba8888_rev, rawImage,
-                              0, 0, 0, /* dstX/Y/Zoffset */
-                              width * rawBytes, /* dstRowStride */
-                              &dstImageOffsets,
-                              width, height, 1,
-                              format, type, pixels, packing);
+      _mesa_texstore(ctx, 2, GL_RGBA,
+                     &_mesa_texformat_rgba8888_rev, rawImage,
+                     0, 0, 0, /* dstX/Y/Zoffset */
+                     width * rawBytes, /* dstRowStride */
+                     &dstImageOffsets,
+                     width, height, 1,
+                     format, type, pixels, packing);
       _mesa_rescale_teximage2d(rawBytes,
                                width,
                                newWidth * rawBytes, /* dst stride */
