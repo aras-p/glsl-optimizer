@@ -4,8 +4,8 @@
 #include "intel_drm_winsys.h"
 #include "util/u_memory.h"
 
-#include "i915simple/i915_context.h"
-#include "i915simple/i915_screen.h"
+#include "i915/i915_context.h"
+#include "i915/i915_screen.h"
 
 #include "trace/tr_drm.h"
 
