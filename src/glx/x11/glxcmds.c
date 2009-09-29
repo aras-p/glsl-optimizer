@@ -398,6 +398,10 @@ CreateContext(Display * dpy, XVisualInfo * vis,
                _XError(dpy, &error);
                return None;
             }
+            if (renderType == 0) {
+               /* Initialize renderType now */
+               renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+            }
          }
          else {
             mode = fbconfig;
@@ -483,6 +487,8 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       gc->xid = contextID;
       gc->imported = GL_TRUE;
    }
+
+   gc->renderType = renderType;
 
    return gc;
 }
