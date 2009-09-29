@@ -48,6 +48,7 @@
 #include "util/u_memory.h"
 #include "util/u_debug.h"
 #include "util/u_string.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -119,30 +120,28 @@ lp_build_max_simple(struct lp_build_context *bld,
 
    /* TODO: optimize the constant case */
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating) {
-         if(type.width == 32)
+         if(type.width == 32 && util_cpu_caps.has_sse)
             intrinsic = "llvm.x86.sse.max.ps";
-         if(type.width == 64)
+         if(type.width == 64 && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.max.pd";
       }
       else {
-         if(type.width == 8 && !type.sign)
+         if(type.width == 8 && !type.sign && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.pmaxu.b";
-         if(type.width == 8 && type.sign)
+         if(type.width == 8 && type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pmaxsb";
-         if(type.width == 16 && !type.sign)
+         if(type.width == 16 && !type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pmaxuw";
-         if(type.width == 16 && type.sign)
+         if(type.width == 16 && type.sign && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.pmaxs.w";
-         if(type.width == 32 && !type.sign)
+         if(type.width == 32 && !type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pmaxud";
-         if(type.width == 32 && type.sign)
+         if(type.width == 32 && type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pmaxsd";
       }
    }
-#endif
 
    if(intrinsic)
       return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
@@ -204,15 +203,14 @@ lp_build_add(struct lp_build_context *bld,
       if(a == bld->one || b == bld->one)
         return bld->one;
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-      if(type.width * type.length == 128 &&
+      if(util_cpu_caps.has_sse2 &&
+         type.width * type.length == 128 &&
          !type.floating && !type.fixed) {
          if(type.width == 8)
             intrinsic = type.sign ? "llvm.x86.sse2.padds.b" : "llvm.x86.sse2.paddus.b";
          if(type.width == 16)
             intrinsic = type.sign ? "llvm.x86.sse2.padds.w" : "llvm.x86.sse2.paddus.w";
       }
-#endif
    
       if(intrinsic)
          return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
@@ -257,15 +255,14 @@ lp_build_sub(struct lp_build_context *bld,
       if(b == bld->one)
         return bld->zero;
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-      if(type.width * type.length == 128 &&
+      if(util_cpu_caps.has_sse2 &&
+         type.width * type.length == 128 &&
          !type.floating && !type.fixed) {
          if(type.width == 8)
             intrinsic = type.sign ? "llvm.x86.sse2.psubs.b" : "llvm.x86.sse2.psubus.b";
          if(type.width == 16)
             intrinsic = type.sign ? "llvm.x86.sse2.psubs.w" : "llvm.x86.sse2.psubus.w";
       }
-#endif
    
       if(intrinsic)
          return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
@@ -419,8 +416,7 @@ lp_build_mul(struct lp_build_context *bld,
       return bld->undef;
 
    if(!type.floating && !type.fixed && type.norm) {
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-      if(type.width == 8 && type.length == 16) {
+      if(util_cpu_caps.has_sse2 && type.width == 8 && type.length == 16) {
          LLVMTypeRef i16x8 = LLVMVectorType(LLVMInt16Type(), 8);
          LLVMTypeRef i8x16 = LLVMVectorType(LLVMInt8Type(), 16);
          static LLVMValueRef ml = NULL;
@@ -456,7 +452,6 @@ lp_build_mul(struct lp_build_context *bld,
          
          return ab;
       }
-#endif
 
       /* FIXME */
       assert(0);
@@ -493,10 +488,8 @@ lp_build_div(struct lp_build_context *bld,
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       return LLVMConstFDiv(a, b);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(type.width == 32 && type.length == 4)
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
       return lp_build_mul(bld, a, lp_build_rcp(bld, b));
-#endif
 
    return LLVMBuildFDiv(bld->builder, a, b, "");
 }
@@ -606,8 +599,7 @@ lp_build_abs(struct lp_build_context *bld,
       return a;
    }
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(type.width*type.length == 128) {
+   if(type.width*type.length == 128 && util_cpu_caps.has_ssse3) {
       switch(type.width) {
       case 8:
          return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.b.128", vec_type, a);
@@ -617,7 +609,6 @@ lp_build_abs(struct lp_build_context *bld,
          return lp_build_intrinsic_unary(bld->builder, "llvm.x86.ssse3.pabs.d.128", vec_type, a);
       }
    }
-#endif
 
    return lp_build_max(bld, a, LLVMBuildNeg(bld->builder, a, ""));
 }
@@ -710,9 +701,8 @@ lp_build_round(struct lp_build_context *bld,
 
    assert(type.floating);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
-#endif
+   if(util_cpu_caps.has_sse4_1)
+      return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_NEAREST);
 
    /* FIXME */
    assert(0);
@@ -728,9 +718,8 @@ lp_build_floor(struct lp_build_context *bld,
 
    assert(type.floating);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
-#endif
+   if(util_cpu_caps.has_sse4_1)
+      return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
 
    /* FIXME */
    assert(0);
@@ -746,9 +735,8 @@ lp_build_ceil(struct lp_build_context *bld,
 
    assert(type.floating);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
-#endif
+   if(util_cpu_caps.has_sse4_1)
+      return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
 
    /* FIXME */
    assert(0);
@@ -764,9 +752,8 @@ lp_build_trunc(struct lp_build_context *bld,
 
    assert(type.floating);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_TRUNCATE);
-#endif
+   if(util_cpu_caps.has_sse4_1)
+      return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_TRUNCATE);
 
    /* FIXME */
    assert(0);
@@ -837,11 +824,9 @@ lp_build_rcp(struct lp_build_context *bld,
    if(LLVMIsConstant(a))
       return LLVMConstFDiv(bld->one, a);
 
-   /* XXX: is this really necessary? */
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(type.width == 32 && type.length == 4)
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
+      /* FIXME: improve precision */
       return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
-#endif
 
    return LLVMBuildFDiv(bld->builder, bld->one, a, "");
 }
@@ -858,11 +843,8 @@ lp_build_rsqrt(struct lp_build_context *bld,
 
    assert(type.floating);
 
-   /* XXX: is this really necessary? */
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(type.width == 32 && type.length == 4)
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
       return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rsqrt.ps", lp_build_vec_type(type), a);
-#endif
 
    return lp_build_rcp(bld, lp_build_sqrt(bld, a));
 }

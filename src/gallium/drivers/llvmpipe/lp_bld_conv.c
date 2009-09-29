@@ -63,6 +63,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -334,8 +335,7 @@ lp_build_pack2(LLVMBuilderRef builder,
    assert(!src_type.floating);
    assert(!dst_type.floating);
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   if(src_type.width * src_type.length == 128) {
+   if(util_cpu_caps.has_sse2 && src_type.width * src_type.length == 128) {
       /* All X86 non-interleaved pack instructions all take signed inputs and
        * saturate them, so saturate beforehand. */
       if(!src_type.sign && !clamped) {
@@ -349,7 +349,7 @@ lp_build_pack2(LLVMBuilderRef builder,
 
       switch(src_type.width) {
       case 32:
-         if(dst_type.sign)
+         if(dst_type.sign || !util_cpu_caps.has_sse4_1)
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", src_vec_type, lo, hi);
          else
             /* PACKUSDW is the only instrinsic with a consistent signature */
@@ -372,7 +372,6 @@ lp_build_pack2(LLVMBuilderRef builder,
       res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
       return res;
    }
-#endif
 
    lo = LLVMBuildBitCast(builder, lo, dst_vec_type, "");
    hi = LLVMBuildBitCast(builder, hi, dst_vec_type, "");

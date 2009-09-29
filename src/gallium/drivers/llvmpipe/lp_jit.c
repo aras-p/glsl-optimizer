@@ -36,6 +36,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include "util/u_memory.h"
+#include "util/u_cpu_detect.h"
 #include "lp_screen.h"
 #include "lp_bld_intr.h"
 #include "lp_jit.h"
@@ -146,6 +147,8 @@ void
 lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
    char *error = NULL;
+
+   util_cpu_detect();
 
 #ifdef LLVM_NATIVE_ARCH
    LLVMLinkInJIT();
