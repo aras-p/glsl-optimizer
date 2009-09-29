@@ -75,49 +75,6 @@
 typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
 
 
-
-extern GLboolean _mesa_texstore_rgba(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_color_index(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba8888(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_argb8888(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb888(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_bgr888(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb565(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb565_rev(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba4444(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_argb4444(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_argb4444_rev(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba5551(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_argb1555(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_argb1555_rev(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_al88(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_al88_rev(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb332(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_a8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_ci8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_ycbcr(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_z24_s8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_s8_z24(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_z16(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_z32(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_float32(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_float16(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
-#if FEATURE_EXT_texture_sRGB
-extern GLboolean _mesa_texstore_srgb8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_srgba8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_sargb8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_sl8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_sla8(TEXSTORE_PARAMS);
-#endif
-extern GLboolean _mesa_texstore_dudv8(TEXSTORE_PARAMS);
-extern GLboolean _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS);
-
 extern GLchan *
 _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
                            GLenum logicalBaseFormat,

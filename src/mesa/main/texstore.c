@@ -1007,7 +1007,7 @@ memcpy_texture(GLcontext *ctx,
  *   _mesa_texformat_intensity
  * 
  */
-GLboolean
+static GLboolean
 _mesa_texstore_rgba(TEXSTORE_PARAMS)
 {
    const GLint components = _mesa_components_in_format(baseInternalFormat);
@@ -1158,7 +1158,7 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 /**
  * Store a 32-bit integer depth component texture image.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_z32(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffffff;
@@ -1207,7 +1207,7 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
 /**
  * Store a 16-bit integer depth component texture image.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_z16(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffff;
@@ -1256,7 +1256,7 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
 /**
  * Store an rgb565 or rgb565_rev texture image.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -1365,7 +1365,7 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 /**
  * Store a texture in MESA_FORMAT_RGBA8888 or MESA_FORMAT_RGBA8888_REV.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -1490,7 +1490,7 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -1683,7 +1683,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -1810,7 +1810,7 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -1917,7 +1917,7 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-GLboolean
+static GLboolean
 _mesa_texstore_rgba4444(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -1975,7 +1975,7 @@ _mesa_texstore_rgba4444(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-GLboolean
+static GLboolean
 _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2045,7 +2045,7 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-GLboolean
+static GLboolean
 _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2103,7 +2103,7 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-GLboolean
+static GLboolean
 _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2174,7 +2174,7 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_al88(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -2277,7 +2277,7 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2335,7 +2335,7 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 /**
  * Texstore for _mesa_texformat_a8, _mesa_texformat_l8, _mesa_texformat_i8.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_a8(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2420,7 +2420,7 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
 
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_ci8(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2467,7 +2467,7 @@ _mesa_texstore_ci8(TEXSTORE_PARAMS)
 /**
  * Texstore for _mesa_texformat_ycbcr or _mesa_texformat_ycbcr_rev.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -2513,7 +2513,7 @@ _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-GLboolean
+static GLboolean
 _mesa_texstore_dudv8(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -2607,7 +2607,7 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
 /**
  * Store a texture in MESA_FORMAT_SIGNED_RGBA8888 or MESA_FORMAT_SIGNED_RGBA8888_REV
  */
-GLboolean
+static GLboolean
 _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
@@ -2728,7 +2728,7 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 /**
  * Store a combined depth/stencil texture image.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 {
    const GLfloat depthScale = (GLfloat) 0xffffff;
@@ -2829,7 +2829,7 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 /**
  * Store a combined depth/stencil texture image.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffff;
@@ -2918,7 +2918,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
  *   _mesa_texformat_luminance_alpha_float32
  *   _mesa_texformat_intensity_float32
  */
-GLboolean
+static GLboolean
 _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -2987,7 +2987,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 /**
  * As above, but store 16-bit floats.
  */
-GLboolean
+static GLboolean
 _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat->MesaFormat);
@@ -3056,7 +3056,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 
 
 #if FEATURE_EXT_texture_sRGB
-GLboolean
+static GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
@@ -3078,7 +3078,7 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
@@ -3088,7 +3088,6 @@ _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 
    /* reuse normal rgba texstore code */
    newDstFormat = &_mesa_texformat_rgba8888;
-
    k = _mesa_texstore_rgba8888(ctx, dims, baseInternalFormat,
                                newDstFormat, dstAddr,
                                dstXoffset, dstYoffset, dstZoffset,
@@ -3100,7 +3099,7 @@ _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_sargb8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
@@ -3122,7 +3121,7 @@ _mesa_texstore_sargb8(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_sl8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
@@ -3144,7 +3143,7 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
 {
    const struct gl_texture_format *newDstFormat;
