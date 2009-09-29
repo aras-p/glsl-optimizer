@@ -68,11 +68,8 @@
 	const struct gl_pixelstore_attrib *srcPacking
 
 
-
-/**
- * Texture image storage function.
- */
-typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
+extern GLboolean
+_mesa_texstore(TEXSTORE_PARAMS);
 
 
 extern GLchan *
@@ -146,13 +143,6 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           const struct gl_pixelstore_attrib *packing,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage);
-
-
-extern StoreTexImageFunc
-_mesa_get_texstore_func(gl_format format);
-
-extern GLboolean
-_mesa_texstore(TEXSTORE_PARAMS);
 
 
 extern void

@@ -77,6 +77,12 @@ enum {
 
 
 /**
+ * Texture image storage function.
+ */
+typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
+
+
+/**
  * Return GL_TRUE if the given image format is one that be converted
  * to another format by swizzling.
  */
@@ -3250,7 +3256,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
 /**
  * Return the StoreTexImageFunc pointer to store an image in the given format.
  */
-StoreTexImageFunc
+static StoreTexImageFunc
 _mesa_get_texstore_func(gl_format format)
 {
    GLuint i;
