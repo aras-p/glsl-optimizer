@@ -1575,7 +1575,7 @@ GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
  * This function dynamically determines whether to use the EXT_import_context
  * version of the protocol or the GLX 1.3 version of the protocol.
  */
-     static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
+static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    xGLXQueryContextReply reply;
@@ -1713,7 +1713,7 @@ GLX_ALIAS(int, glXQueryContextInfoEXT,
           (Display * dpy, GLXContext ctx, int attribute, int *value),
           (dpy, ctx, attribute, value), glXQueryContext)
 
-     PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
+PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
 {
    return ctx->xid;
 }
@@ -2159,18 +2159,19 @@ GLX_ALIAS(int, glXGetFBConfigAttribSGIX,
           (Display * dpy, GLXFBConfigSGIX config, int attribute, int *value),
           (dpy, config, attribute, value), glXGetFBConfigAttrib)
 
-     PUBLIC GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
-                      (Display * dpy, int screen, int *attrib_list,
-                       int *nelements), (dpy, screen, attrib_list, nelements),
-                      glXChooseFBConfig)
+PUBLIC GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
+                 (Display * dpy, int screen, int *attrib_list,
+                  int *nelements), (dpy, screen, attrib_list, nelements),
+                 glXChooseFBConfig)
 
-     PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
-                      (Display * dpy, GLXFBConfigSGIX config),
-                      (dpy, config), glXGetVisualFromFBConfig)
+PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
+                 (Display * dpy, GLXFBConfigSGIX config),
+                 (dpy, config), glXGetVisualFromFBConfig)
 
-     PUBLIC GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
-                                                       GLXFBConfigSGIX config,
-                                                       Pixmap pixmap)
+PUBLIC GLXPixmap
+glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
+                                 GLXFBConfigSGIX config,
+                                 Pixmap pixmap)
 {
    xGLXVendorPrivateWithReplyReq *vpreq;
    xGLXCreateGLXPixmapWithConfigSGIXReq *req;
