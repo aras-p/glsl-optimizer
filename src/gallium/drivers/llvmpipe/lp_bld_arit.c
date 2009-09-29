@@ -54,6 +54,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_logic.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
 
 
@@ -72,30 +73,28 @@ lp_build_min_simple(struct lp_build_context *bld,
 
    /* TODO: optimize the constant case */
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating) {
-         if(type.width == 32)
+         if(type.width == 32 && util_cpu_caps.has_sse)
             intrinsic = "llvm.x86.sse.min.ps";
-         if(type.width == 64)
+         if(type.width == 64 && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.min.pd";
       }
       else {
-         if(type.width == 8 && !type.sign)
+         if(type.width == 8 && !type.sign && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.pminu.b";
-         if(type.width == 8 && type.sign)
+         if(type.width == 8 && type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pminsb";
-         if(type.width == 16 && !type.sign)
+         if(type.width == 16 && !type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pminuw";
-         if(type.width == 16 && type.sign)
+         if(type.width == 16 && type.sign && util_cpu_caps.has_sse2)
             intrinsic = "llvm.x86.sse2.pmins.w";
-         if(type.width == 32 && !type.sign)
+         if(type.width == 32 && !type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pminud";
-         if(type.width == 32 && type.sign)
+         if(type.width == 32 && type.sign && util_cpu_caps.has_sse4_1)
             intrinsic = "llvm.x86.sse41.pminsd";
       }
    }
-#endif
 
    if(intrinsic)
       return lp_build_intrinsic_binary(bld->builder, intrinsic, lp_build_vec_type(bld->type), a, b);
