@@ -99,16 +99,22 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       dst->Texture.Unit[u].BumpTarget = src->Texture.Unit[u].BumpTarget;
       COPY_4V(dst->Texture.Unit[u].RotMatrix, src->Texture.Unit[u].RotMatrix);
 
+      /*
+       * XXX strictly speaking, we should compare texture names/ids and
+       * bind textures in the dest context according to id.  For now, only
+       * copy bindings if the contexts share the same pool of textures to
+       * avoid refcounting bugs.
+       */
+      if (dst->Shared == src->Shared) {
+         /* copy texture object bindings, not contents of texture objects */
+         _mesa_lock_context_textures(dst);
 
-      /* copy texture object bindings, not contents of texture objects */
-      _mesa_lock_context_textures(dst);
-
-      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
-         _mesa_reference_texobj(&dst->Texture.Unit[u].CurrentTex[tex],
-                                src->Texture.Unit[u].CurrentTex[tex]);
+         for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+            _mesa_reference_texobj(&dst->Texture.Unit[u].CurrentTex[tex],
+                                   src->Texture.Unit[u].CurrentTex[tex]);
+         }
+         _mesa_unlock_context_textures(dst);
       }
-
-      _mesa_unlock_context_textures(dst);
    }
 }
 
