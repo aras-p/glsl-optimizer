@@ -380,6 +380,10 @@ get_shader_flags(void)
          flags |= GLSL_DUMP;
       if (_mesa_strstr(env, "log"))
          flags |= GLSL_LOG;
+      if (_mesa_strstr(env, "nopvert"))
+         flags |= GLSL_NOP_VERT;
+      if (_mesa_strstr(env, "nopfrag"))
+         flags |= GLSL_NOP_FRAG;
       if (_mesa_strstr(env, "nopt"))
          flags |= GLSL_NO_OPT;
       else if (_mesa_strstr(env, "opt"))

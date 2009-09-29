@@ -2066,6 +2066,8 @@ struct gl_shader_program
 #define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
 #define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
 #define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+#define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
+#define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
 
 
 /**

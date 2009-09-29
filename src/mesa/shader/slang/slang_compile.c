@@ -2814,6 +2814,16 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
           (ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
          _mesa_optimize_program(ctx, shader->Program);
       }
+      if ((ctx->Shader.Flags & GLSL_NOP_VERT) &&
+          shader->Program->Target == GL_VERTEX_PROGRAM_ARB) {
+         _mesa_nop_vertex_program(ctx,
+                                  (struct gl_vertex_program *) shader->Program);
+      }
+      if ((ctx->Shader.Flags & GLSL_NOP_FRAG) &&
+          shader->Program->Target == GL_FRAGMENT_PROGRAM_ARB) {
+         _mesa_nop_fragment_program(ctx,
+                                (struct gl_fragment_program *) shader->Program);
+      }
    }
 
    if (ctx->Shader.Flags & GLSL_LOG) {
