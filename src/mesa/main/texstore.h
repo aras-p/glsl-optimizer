@@ -194,6 +194,9 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
 extern StoreTexImageFunc
 _mesa_get_texstore_func(gl_format format);
 
+extern GLboolean
+_mesa_texstore(TEXSTORE_PARAMS);
+
 
 extern void
 _mesa_store_compressed_teximage1d(GLcontext *ctx, GLenum target, GLint level,
