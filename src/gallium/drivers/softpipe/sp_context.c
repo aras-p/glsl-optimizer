@@ -105,12 +105,17 @@ static void softpipe_destroy( struct pipe_context *pipe )
       softpipe->quad[i].output->destroy( softpipe->quad[i].output );
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
+      pipe_surface_reference(&softpipe->framebuffer.cbufs[i], NULL);
+   }
    sp_destroy_tile_cache(softpipe->zsbuf_cache);
+   pipe_surface_reference(&softpipe->framebuffer.zsbuf, NULL);
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       sp_destroy_tile_cache(softpipe->tex_cache[i]);
+      pipe_texture_reference(&softpipe->texture[i], NULL);
+   }
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {

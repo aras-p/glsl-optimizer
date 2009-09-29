@@ -56,7 +56,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
          sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
 
          /* assign new */
-         sp->framebuffer.cbufs[i] = fb->cbufs[i];
+         pipe_surface_reference(&sp->framebuffer.cbufs[i], fb->cbufs[i]);
 
          /* update cache */
          sp_tile_cache_set_surface(sp->cbuf_cache[i], fb->cbufs[i]);
@@ -71,7 +71,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       sp_flush_tile_cache(sp, sp->zsbuf_cache);
 
       /* assign new */
-      sp->framebuffer.zsbuf = fb->zsbuf;
+      pipe_surface_reference(&sp->framebuffer.zsbuf, fb->zsbuf);
 
       /* update cache */
       sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
