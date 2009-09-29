@@ -130,6 +130,11 @@ sp_create_tile_cache( struct pipe_screen *screen )
          tc->entries[pos].x =
          tc->entries[pos].y = -1;
       }
+
+#if TILE_CLEAR_OPTIMIZATION
+      /* set flags to indicate all the tiles are cleared */
+      memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
+#endif
    }
    return tc;
 }
