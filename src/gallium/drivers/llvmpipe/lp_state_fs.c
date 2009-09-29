@@ -582,17 +582,17 @@ generate_fragment(struct llvmpipe_context *lp,
     * Translate the LLVM IR into machine code.
     */
 
+   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(variant->function);
+      abort();
+   }
+
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 
 #ifdef DEBUG
    LLVMDumpValue(variant->function);
    debug_printf("\n");
 #endif
-
-   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(variant->function);
-      abort();
-   }
 
    variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 
