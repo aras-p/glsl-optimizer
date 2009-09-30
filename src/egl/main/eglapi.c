@@ -568,8 +568,26 @@ eglGetCurrentContext(void)
 EGLSurface EGLAPIENTRY
 eglGetCurrentSurface(EGLint readdraw)
 {
-   _EGLSurface *s = _eglGetCurrentSurface(readdraw);
-   return _eglGetSurfaceHandle(s);
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLSurface *surf;
+
+   if (!ctx)
+      return EGL_NO_SURFACE;
+
+   switch (readdraw) {
+   case EGL_DRAW:
+      surf = ctx->DrawSurface;
+      break;
+   case EGL_READ:
+      surf = ctx->ReadSurface;
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, __FUNCTION__);
+      surf = NULL;
+      break;
+   }
+
+   return _eglGetSurfaceHandle(surf);
 }
 
 
