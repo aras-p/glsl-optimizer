@@ -388,7 +388,7 @@ main(int argc, char *argv[])
 	}
 	
 	/* DBR : Create EGL context/surface etc */
-	d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
+	d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	assert(d);
 
 	if (!eglInitialize(d, &maj, &min)) {

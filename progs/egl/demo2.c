@@ -119,10 +119,7 @@ main(int argc, char *argv[])
    EGLScreenMESA screen;
    EGLint count;
 
-   /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-   */
-   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType) "!EGL_i915");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {
