@@ -126,6 +126,19 @@
 #endif
 
 #if defined(__FreeBSD__)
+#define PIPE_OS_FREEBSD
+#define PIPE_OS_BSD
+#define PIPE_OS_UNIX
+#endif
+
+#if defined(__OpenBSD__)
+#define PIPE_OS_OPENBSD
+#define PIPE_OS_BSD
+#define PIPE_OS_UNIX
+#endif
+
+#if defined(__NetBSD__)
+#define PIPE_OS_NETBSD
 #define PIPE_OS_BSD
 #define PIPE_OS_UNIX
 #endif
