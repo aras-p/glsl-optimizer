@@ -138,7 +138,6 @@ drm_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *context)
 	struct drm_context *c = lookup_drm_context(context);
 	if (!_eglIsContextBound(&c->base)) {
 		st_destroy_context(c->st);
-		c->pipe->destroy(c->pipe);
 		free(c);
 	}
 	return EGL_TRUE;
