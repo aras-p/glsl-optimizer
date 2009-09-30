@@ -2287,6 +2287,7 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_POW:
    /* trinary operators */
    case IR_LRP:
+   case IR_CMP:
       return emit_arith(emitInfo, n);
 
    case IR_EQUAL:

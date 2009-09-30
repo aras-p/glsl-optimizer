@@ -91,6 +91,7 @@ typedef enum
    IR_CLAMP,
    IR_MIN,
    IR_MAX,
+   IR_CMP,     /* = (op0 < 0) ? op1 : op2 */
    IR_SEQUAL,  /* Set if args are equal (vector) */
    IR_SNEQUAL, /* Set if args are not equal (vector) */
    IR_SGE,     /* Set if greater or equal (vector) */

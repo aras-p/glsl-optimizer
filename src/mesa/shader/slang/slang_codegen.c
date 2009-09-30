@@ -422,6 +422,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_lrp", IR_LRP, 1, 3 },
    { "vec4_min", IR_MIN, 1, 2 },
    { "vec4_max", IR_MAX, 1, 2 },
+   { "vec4_cmp", IR_CMP, 1, 3 },
    { "vec4_clamp", IR_CLAMP, 1, 3 },
    { "vec4_seq", IR_SEQUAL, 1, 2 },
    { "vec4_sne", IR_SNEQUAL, 1, 2 },
