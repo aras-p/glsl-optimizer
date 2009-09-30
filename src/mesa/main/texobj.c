@@ -491,7 +491,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 	     t->Image[face][baseLevel]->Width2 != w ||
 	     t->Image[face][baseLevel]->Height2 != h) {
 	    t->_Complete = GL_FALSE;
-	    incomplete(t, "Non-quare cubemap image");
+	    incomplete(t, "Cube face missing or mismatched size");
 	    return;
 	 }
       }
