@@ -9,12 +9,27 @@
  * heterogeneous hardware devices in the future.
  *
  * The EGLDisplay, EGLConfig, EGLContext and EGLSurface types are
- * opaque handles implemented with 32-bit unsigned integers.
- * It's up to the driver function or fallback function to look up the
- * handle and get an object.
- * By using opaque handles, we leave open the possibility of having
- * indirect rendering in the future, like GLX.
+ * opaque handles. Internal objects are linked to a display to
+ * create the handles.
  *
+ * For each public API entry point, the opaque handles are looked up
+ * before being dispatched to the drivers.  When it fails to look up
+ * a handle, one of
+ *
+ * EGL_BAD_DISPLAY
+ * EGL_BAD_CONFIG
+ * EGL_BAD_CONTEXT
+ * EGL_BAD_SURFACE
+ * EGL_BAD_SCREEN_MESA
+ * EGL_BAD_MODE_MESA
+ *
+ * is generated and the driver function is not called. An
+ * uninitialized EGLDisplay has no driver associated with it. When
+ * such display is detected,
+ *
+ * EGL_NOT_INITIALIZED
+ *
+ * is generated.
  *
  * Notes on naming conventions:
  *
