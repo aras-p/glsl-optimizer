@@ -352,24 +352,21 @@ drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 	if (!surf)
 		return EGL_FALSE;
 
-	/* error checking */
-	if (!_eglSwapBuffers(drv, dpy, draw))
-		return EGL_FALSE;
-
 	st_get_framebuffer_surface(surf->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
 
 	if (back_surf) {
+		struct drm_context *ctx = lookup_drm_context(draw->Binding);
 
 		st_notify_swapbuffers(surf->stfb);
 
-		if (surf->screen) {
-			surf->user->pipe->surface_copy(surf->user->pipe,
+		if (ctx && surf->screen) {
+			ctx->pipe->surface_copy(ctx->pipe,
 				surf->screen->surface,
 				0, 0,
 				back_surf,
 				0, 0,
 				surf->w, surf->h);
-			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
+			ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
 			/* TODO query connector property to see if this is needed */

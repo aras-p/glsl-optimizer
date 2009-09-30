@@ -69,7 +69,6 @@ struct drm_surface
 	 * drm
 	 */
 
-	struct drm_context *user;
 	struct drm_screen *screen;
 
 	int w;

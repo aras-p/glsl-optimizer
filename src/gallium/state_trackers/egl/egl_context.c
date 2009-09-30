@@ -160,18 +160,12 @@ drm_make_current(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurfa
 		if (!drawSurf || !readSurf)
 			return EGL_FALSE;
 
-		drawSurf->user = ctx;
-		readSurf->user = ctx;
-
 		st_make_current(ctx->st, drawSurf->stfb, readSurf->stfb);
 
 		/* st_resize_framebuffer needs a bound context to work */
 		st_resize_framebuffer(drawSurf->stfb, drawSurf->w, drawSurf->h);
 		st_resize_framebuffer(readSurf->stfb, readSurf->w, readSurf->h);
 	} else {
-		drawSurf->user = NULL;
-		readSurf->user = NULL;
-
 		st_make_current(NULL, NULL, NULL);
 	}
 
