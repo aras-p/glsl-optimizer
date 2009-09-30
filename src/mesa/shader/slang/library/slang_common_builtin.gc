@@ -602,42 +602,50 @@ vec4 exp2(const vec4 a)
 
 float sqrt(const float x)
 {
+   const float nx = -x;
    float r;
    __asm float_rsq r, x;
-   __asm float_rcp __retVal, r;
+   __asm float_rcp r, r;
+   __asm vec4_cmp __retVal, nx, r, 0.0;
 }
 
-vec2 sqrt(const vec2 v)
+vec2 sqrt(const vec2 x)
 {
-   float r;
-   __asm float_rsq r, v.x;
-   __asm float_rcp __retVal.x, r;
-   __asm float_rsq r, v.y;
-   __asm float_rcp __retVal.y, r;
+   const vec2 nx = -x, zero = vec2(0.0);
+   vec2 r;
+   __asm float_rsq r.x, x.x;
+   __asm float_rsq r.y, x.y;
+   __asm float_rcp r.x, r.x;
+   __asm float_rcp r.y, r.y;
+   __asm vec4_cmp __retVal, nx, r, zero;
 }
 
-vec3 sqrt(const vec3 v)
+vec3 sqrt(const vec3 x)
 {
-   float r;
-   __asm float_rsq r, v.x;
-   __asm float_rcp __retVal.x, r;
-   __asm float_rsq r, v.y;
-   __asm float_rcp __retVal.y, r;
-   __asm float_rsq r, v.z;
-   __asm float_rcp __retVal.z, r;
+   const vec3 nx = -x, zero = vec3(0.0);
+   vec3 r;
+   __asm float_rsq r.x, x.x;
+   __asm float_rsq r.y, x.y;
+   __asm float_rsq r.z, x.z;
+   __asm float_rcp r.x, r.x;
+   __asm float_rcp r.y, r.y;
+   __asm float_rcp r.z, r.z;
+   __asm vec4_cmp __retVal, nx, r, zero;
 }
 
-vec4 sqrt(const vec4 v)
+vec4 sqrt(const vec4 x)
 {
-   float r;
-   __asm float_rsq r, v.x;
-   __asm float_rcp __retVal.x, r;
-   __asm float_rsq r, v.y;
-   __asm float_rcp __retVal.y, r;
-   __asm float_rsq r, v.z;
-   __asm float_rcp __retVal.z, r;
-   __asm float_rsq r, v.w;
-   __asm float_rcp __retVal.w, r;
+   const vec4 nx = -x, zero = vec4(0.0);
+   vec4 r;
+   __asm float_rsq r.x, x.x;
+   __asm float_rsq r.y, x.y;
+   __asm float_rsq r.z, x.z;
+   __asm float_rsq r.w, x.w;
+   __asm float_rcp r.x, r.x;
+   __asm float_rcp r.y, r.y;
+   __asm float_rcp r.z, r.z;
+   __asm float_rcp r.w, r.w;
+   __asm vec4_cmp __retVal, nx, r, zero;
 }
 
 
