@@ -13,3 +13,11 @@ The bobcat.obj model comes from http://www.sharecg.com/v/24771/3D-Model/Bobcat,3
 The .obj file reader code in glm.c isn't perfect.  Not all .obj files are
 parsed correctly.  There are often mistakes in material-to-triangle assignments.
 
+
+Mouse:
+   Left = rotate
+   Middle = scale
+   Right = menu
+
+Keyboard:
+   See pop-up menu for keyboard shortcuts, or press 'h'.
