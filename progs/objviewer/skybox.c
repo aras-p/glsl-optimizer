@@ -173,12 +173,9 @@ DrawSkyBoxCubeTexture(GLuint tex)
    glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
    glEnable(GL_TEXTURE_CUBE_MAP);
 
-   //glDisable(GL_LIGHTING);
    glDisable(GL_BLEND);
 
    glDrawArrays(GL_QUADS, 0, 24);
-
-   //glEnable(GL_LIGHTING);
 
    glDisable(GL_TEXTURE_CUBE_MAP);
 
