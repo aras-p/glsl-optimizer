@@ -2,7 +2,7 @@
 #define EGLCONFIGUTIL_INCLUDED
 
 
-#include "GLES/gl.h"
+#include "GL/gl.h"
 #include "GL/internal/glcore.h"
 #include "eglconfig.h"
 
