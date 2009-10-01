@@ -1137,40 +1137,6 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
 
 
 /**
- * Texture format record 
- */
-struct gl_texture_format
-{
-   GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
-
-   GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
-				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 *   GL_INTENSITY, GL_COLOR_INDEX or
-				 *   GL_DEPTH_COMPONENT.
-				 */
-   GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-
-   /**
-    * Bits per texel component.  These are just rough approximations
-    * for compressed texture formats.
-    */
-   /*@{*/
-   GLubyte RedBits;
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte LuminanceBits;
-   GLubyte IntensityBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
-   /*@}*/
-
-   GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
-};
-
-
-/**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
  */

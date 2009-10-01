@@ -226,39 +226,6 @@ _mesa_fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
 
 
 
-const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
-   MESA_FORMAT_RGB_FXT1,		/* MesaFormat */
-   GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   4, /*approx*/			/* RedBits */
-   4, /*approx*/			/* GreenBits */
-   4, /*approx*/			/* BlueBits */
-   0,					/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   0,					/* DepthBits */
-   0,					/* StencilBits */
-   0					/* TexelBytes */
-};
-
-const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
-   MESA_FORMAT_RGBA_FXT1,		/* MesaFormat */
-   GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   4, /*approx*/			/* RedBits */
-   4, /*approx*/			/* GreenBits */
-   4, /*approx*/			/* BlueBits */
-   1, /*approx*/			/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   0,					/* DepthBits */
-   0,					/* StencilBits */
-   0					/* TexelBytes */
-};
-
-
 /***************************************************************************\
  * FXT1 encoder
  *
