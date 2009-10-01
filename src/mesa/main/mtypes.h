@@ -1200,7 +1200,7 @@ struct gl_texture_image
    GLboolean IsClientData;	/**< Data owned by client? */
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
-   const struct gl_texture_format *TexFormat;
+   GLuint TexFormat; /**< XXX Really gl_format */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
 

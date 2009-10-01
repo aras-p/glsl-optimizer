@@ -256,9 +256,9 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 
 
 /* try to find a format which will only need a memcopy */
-static const struct gl_texture_format *radeonChoose8888TexFormat(radeonContextPtr rmesa,
-								 GLenum srcFormat,
-								 GLenum srcType, GLboolean fbo)
+static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
+					   GLenum srcFormat,
+					   GLenum srcType, GLboolean fbo)
 {
 	const GLuint ui = 1;
 	const GLubyte littleEndian = *((const GLubyte *)&ui);
@@ -271,37 +271,37 @@ static const struct gl_texture_format *radeonChoose8888TexFormat(radeonContextPt
 	    (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
 	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
 	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && littleEndian)) {
-		return &_mesa_texformat_rgba8888;
+		return MESA_FORMAT_RGBA8888;
 	} else if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
 		   (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && littleEndian) ||
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
-		return &_mesa_texformat_rgba8888_rev;
+		return MESA_FORMAT_RGBA8888_REV;
 	} else if (IS_R200_CLASS(rmesa->radeonScreen)) {
 		return _dri_texformat_argb8888;
 	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
 					    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
-		return &_mesa_texformat_argb8888_rev;
+		return MESA_FORMAT_ARGB8888_REV;
 	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
 					    srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
-		return &_mesa_texformat_argb8888;
+		return MESA_FORMAT_ARGB8888;
 	} else
 		return _dri_texformat_argb8888;
 }
 
-const struct gl_texture_format *radeonChooseTextureFormat_mesa(GLcontext * ctx,
-							  GLint internalFormat,
-							  GLenum format,
-							  GLenum type)
+gl_format radeonChooseTextureFormat_mesa(GLcontext * ctx,
+					 GLint internalFormat,
+					 GLenum format,
+					 GLenum type)
 {
 	return radeonChooseTextureFormat(ctx, internalFormat, format,
 					 type, 0);
 }
 
-const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
-							  GLint internalFormat,
-							  GLenum format,
-							  GLenum type, GLboolean fbo)
+gl_format radeonChooseTextureFormat(GLcontext * ctx,
+				    GLint internalFormat,
+				    GLenum format,
+				    GLenum type, GLboolean fbo)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	const GLboolean do32bpt =
@@ -425,50 +425,50 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_YCBCR_MESA:
 		if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
 		    type == GL_UNSIGNED_BYTE)
-			return &_mesa_texformat_ycbcr;
+			return MESA_FORMAT_YCBCR;
 		else
-			return &_mesa_texformat_ycbcr_rev;
+			return MESA_FORMAT_YCBCR_REV;
 
 	case GL_RGB_S3TC:
 	case GL_RGB4_S3TC:
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-		return &_mesa_texformat_rgb_dxt1;
+		return MESA_FORMAT_RGB_DXT1;
 
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-		return &_mesa_texformat_rgba_dxt1;
+		return MESA_FORMAT_RGBA_DXT1;
 
 	case GL_RGBA_S3TC:
 	case GL_RGBA4_S3TC:
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		return &_mesa_texformat_rgba_dxt3;
+		return MESA_FORMAT_RGBA_DXT3;
 
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-		return &_mesa_texformat_rgba_dxt5;
+		return MESA_FORMAT_RGBA_DXT5;
 
 	case GL_ALPHA16F_ARB:
-		return &_mesa_texformat_alpha_float16;
+		return MESA_FORMAT_ALPHA_FLOAT16;
 	case GL_ALPHA32F_ARB:
-		return &_mesa_texformat_alpha_float32;
+		return MESA_FORMAT_ALPHA_FLOAT32;
 	case GL_LUMINANCE16F_ARB:
-		return &_mesa_texformat_luminance_float16;
+		return MESA_FORMAT_LUMINANCE_FLOAT16;
 	case GL_LUMINANCE32F_ARB:
-		return &_mesa_texformat_luminance_float32;
+		return MESA_FORMAT_LUMINANCE_FLOAT32;
 	case GL_LUMINANCE_ALPHA16F_ARB:
-		return &_mesa_texformat_luminance_alpha_float16;
+		return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16;
 	case GL_LUMINANCE_ALPHA32F_ARB:
-		return &_mesa_texformat_luminance_alpha_float32;
+		return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32;
 	case GL_INTENSITY16F_ARB:
-		return &_mesa_texformat_intensity_float16;
+		return MESA_FORMAT_INTENSITY_FLOAT16;
 	case GL_INTENSITY32F_ARB:
-		return &_mesa_texformat_intensity_float32;
+		return MESA_FORMAT_INTENSITY_FLOAT32;
 	case GL_RGB16F_ARB:
-		return &_mesa_texformat_rgba_float16;
+		return MESA_FORMAT_RGBA_FLOAT16;
 	case GL_RGB32F_ARB:
-		return &_mesa_texformat_rgba_float32;
+		return MESA_FORMAT_RGBA_FLOAT32;
 	case GL_RGBA16F_ARB:
-		return &_mesa_texformat_rgba_float16;
+		return MESA_FORMAT_RGBA_FLOAT16;
 	case GL_RGBA32F_ARB:
-		return &_mesa_texformat_rgba_float32;
+		return MESA_FORMAT_RGBA_FLOAT32;
 
 	case GL_DEPTH_COMPONENT:
 	case GL_DEPTH_COMPONENT16:
@@ -476,7 +476,7 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_DEPTH_COMPONENT32:
 	case GL_DEPTH_STENCIL_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
-		return &_mesa_texformat_s8_z24;
+		return MESA_FORMAT_S8_Z24;
 
 	/* EXT_texture_sRGB */
 	case GL_SRGB:
@@ -485,26 +485,26 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_SRGB8_ALPHA8:
 	case GL_COMPRESSED_SRGB:
 	case GL_COMPRESSED_SRGB_ALPHA:
-		return &_mesa_texformat_srgba8;
+		return MESA_FORMAT_SRGBA8;
 
 	case GL_SLUMINANCE:
 	case GL_SLUMINANCE8:
 	case GL_COMPRESSED_SLUMINANCE:
-		return &_mesa_texformat_sl8;
+		return MESA_FORMAT_SL8;
 
 	case GL_SLUMINANCE_ALPHA:
 	case GL_SLUMINANCE8_ALPHA8:
 	case GL_COMPRESSED_SLUMINANCE_ALPHA:
-		return &_mesa_texformat_sla8;
+		return MESA_FORMAT_SLA8;
 
 	default:
 		_mesa_problem(ctx,
 			      "unexpected internalFormat 0x%x in %s",
 			      (int)internalFormat, __func__);
-		return NULL;
+		return MESA_FORMAT_NONE;
 	}
 
-	return NULL;		/* never get here */
+	return MESA_FORMAT_NONE;		/* never get here */
 }
 
 /**
@@ -544,18 +544,18 @@ static void radeon_teximage(
 	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type, 0);
 	_mesa_set_fetch_functions(texImage, dims);
 
-	if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
+	if (_mesa_is_format_compressed(texImage->TexFormat)) {
 		texelBytes = 0;
 		texImage->IsCompressed = GL_TRUE;
 		texImage->CompressedSize =
 			ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
-					   texImage->TexFormat->MesaFormat);
+					   texImage->TexFormat);
 	} else {
 		texImage->IsCompressed = GL_FALSE;
 		texImage->CompressedSize = 0;
 
-		texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+		texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 		/* Minimum pitch of 32 bytes */
 		if (postConvWidth * texelBytes < 32) {
 		  postConvWidth = 32 / texelBytes;
@@ -593,7 +593,7 @@ static void radeon_teximage(
 		if (texImage->IsCompressed) {
 			size = texImage->CompressedSize;
 		} else {
-			size = texImage->Width * texImage->Height * texImage->Depth * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+			size = texImage->Width * texImage->Height * texImage->Depth * _mesa_get_format_bytes(texImage->TexFormat);
 		}
 		texImage->Data = _mesa_alloc_texmemory(size);
 	}
@@ -613,7 +613,7 @@ static void radeon_teximage(
 		if (compressed) {
 			if (image->mt) {
 				uint32_t srcRowStride, bytesPerRow, rows;
-				srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+				srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
 				bytesPerRow = srcRowStride;
 				rows = (height + 3) / 4;
 				copy_rows(texImage->Data, image->mt->levels[level].rowstride,
@@ -629,7 +629,7 @@ static void radeon_teximage(
 				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 				dstRowStride = lvl->rowstride;
 			} else {
-				dstRowStride = texImage->Width * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+				dstRowStride = texImage->Width * _mesa_get_format_bytes(texImage->TexFormat);
 			}
 
 			if (dims == 3) {
@@ -640,7 +640,7 @@ static void radeon_teximage(
 					_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 
 				for (i = 0; i < depth; ++i) {
-					dstImageOffsets[i] = dstRowStride/_mesa_get_format_bytes(texImage->TexFormat->MesaFormat) * height * i;
+					dstImageOffsets[i] = dstRowStride/_mesa_get_format_bytes(texImage->TexFormat) * height * i;
 				}
 			} else {
 				dstImageOffsets = texImage->ImageOffsets;
@@ -756,23 +756,23 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 			radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 			dstRowStride = lvl->rowstride;
 		} else {
-			dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+			dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat);
 		}
 
 		if (compressed) {
 			uint32_t srcRowStride, bytesPerRow, rows;
 			GLubyte *img_start;
 			if (!image->mt) {
-				dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, texImage->Width);
+				dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, texImage->Width);
 				img_start = _mesa_compressed_image_address(xoffset, yoffset, 0,
-									   texImage->TexFormat->MesaFormat,
+									   texImage->TexFormat,
 									   texImage->Width, texImage->Data);
 			}
 			else {
 				uint32_t blocks_x = dstRowStride / (image->mt->bpp * 4);
 				img_start = texImage->Data + image->mt->bpp * 4 * (blocks_x * (yoffset / 4) + xoffset / 4);
 			}
-			srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+			srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
 			bytesPerRow = srcRowStride;
 			rows = (height + 3) / 4;
 
@@ -895,10 +895,10 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 		/* need to confirm this value is correct */
 		if (mt->compressed) {
 			height = (image->base.Height + 3) / 4;
-			srcrowstride = _mesa_compressed_row_stride(image->base.TexFormat->MesaFormat, image->base.Width);
+			srcrowstride = _mesa_compressed_row_stride(image->base.TexFormat, image->base.Width);
 		} else {
 			height = image->base.Height * image->base.Depth;
-			srcrowstride = image->base.Width * _mesa_get_format_bytes(image->base.TexFormat->MesaFormat);
+			srcrowstride = image->base.Width * _mesa_get_format_bytes(image->base.TexFormat);
 		}
 
 //		if (mt->tilebits)

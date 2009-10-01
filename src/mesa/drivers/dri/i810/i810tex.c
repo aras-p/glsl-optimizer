@@ -440,7 +440,7 @@ static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
  * The i810 only supports 5 texture modes that are useful to Mesa.  That
  * makes this routine pretty simple.
  */
-static const struct gl_texture_format *
+static gl_format
 i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			 GLenum format, GLenum type )
 {
@@ -458,9 +458,9 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       if ( ((format == GL_BGRA) && (type == GL_UNSIGNED_SHORT_1_5_5_5_REV))
 	   || ((format == GL_RGBA) && (type == GL_UNSIGNED_SHORT_5_5_5_1))
 	   || (internalFormat == GL_RGB5_A1) ) {
-	 return &_mesa_texformat_argb1555;
+	 return MESA_FORMAT_ARGB1555;
       }
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
 
    case 3:
    case GL_RGB:
@@ -472,7 +472,7 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -502,21 +502,21 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      return &_mesa_texformat_al88;
+      return MESA_FORMAT_AL88;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
 	  type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    default:
       fprintf(stderr, "unexpected texture format in %s\n", __FUNCTION__);
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 
-   return NULL; /* never get here */
+   return MESA_FORMAT_NONE; /* never get here */
 }
 
 /**

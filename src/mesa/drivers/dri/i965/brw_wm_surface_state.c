@@ -287,7 +287,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
       key.bo = NULL;
       key.offset = intelObj->textureOffset;
    } else {
-      key.format = firstImage->TexFormat->MesaFormat;
+      key.format = firstImage->TexFormat;
       key.internal_format = firstImage->InternalFormat;
       key.pitch = intelObj->mt->pitch;
       key.depth = firstImage->Depth;
@@ -527,7 +527,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
@@ -541,8 +541,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->texformat);
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {

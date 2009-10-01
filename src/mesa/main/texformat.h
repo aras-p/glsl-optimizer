@@ -39,7 +39,7 @@
 #include "mtypes.h"
 #include "formats.h"
 
-
+#if 0
 /** GLchan-valued formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgba;
@@ -143,9 +143,9 @@ extern const struct gl_texture_format _mesa_texformat_rgba_dxt5;
 /*@{*/
 extern const struct gl_texture_format _mesa_null_texformat;
 /*@}*/
+#endif
 
-
-extern const struct gl_texture_format *
+extern gl_format
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type );
 

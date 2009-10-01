@@ -765,7 +765,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       goto out;
    }
 
-   texFormat = img->TexFormat->MesaFormat;
+   texFormat = img->TexFormat;
 
    isProxy = _mesa_is_proxy_texture(target);
 

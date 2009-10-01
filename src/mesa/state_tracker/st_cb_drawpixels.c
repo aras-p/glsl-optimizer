@@ -338,7 +338,7 @@ make_texture(struct st_context *st,
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   const struct gl_texture_format *mformat;
+   gl_format mformat;
    struct pipe_texture *pt;
    enum pipe_format pipeFormat;
    GLuint cpp;
@@ -350,7 +350,7 @@ make_texture(struct st_context *st,
    mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
    assert(mformat);
 
-   pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
+   pipeFormat = st_mesa_format_to_pipe_format(mformat);
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 

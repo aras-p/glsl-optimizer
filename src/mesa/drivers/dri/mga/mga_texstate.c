@@ -94,14 +94,14 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	return;
     }
 #else
-    if ( (baseImage->TexFormat->MesaFormat >= TMC_nr_tformat)
-	 || (TMC_tformat[ baseImage->TexFormat->MesaFormat ] == 0) )
+    if ( (baseImage->TexFormat >= TMC_nr_tformat)
+	 || (TMC_tformat[ baseImage->TexFormat ] == 0) )
     {
 	_mesa_problem(NULL, "unexpected texture format in %s", __FUNCTION__);
 	return;
     }
 
-    txformat = TMC_tformat[ baseImage->TexFormat->MesaFormat ];
+    txformat = TMC_tformat[ baseImage->TexFormat ];
 
 #endif /* MGA_USE_TABLE_FOR_FORMAT */
 
@@ -131,7 +131,7 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	 break;
 
       size = texImage->Width * texImage->Height *
-         _mesa_get_format_bytes(baseImage->TexFormat->MesaFormat);
+         _mesa_get_format_bytes(baseImage->TexFormat);
 
       t->offsets[i] = totalSize;
       t->base.dirty_images[0] |= (1<<i);

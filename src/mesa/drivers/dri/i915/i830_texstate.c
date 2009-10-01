@@ -166,7 +166,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 								0, intelObj->
 								firstLevel);
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat,
+      format = translate_texture_format(firstImage->TexFormat,
 					firstImage->InternalFormat);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
    }

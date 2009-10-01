@@ -1437,11 +1437,11 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
-   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
 
 
    if (!t->image_override) {
-      if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
+      if (VALID_FORMAT(firstImage->TexFormat)) {
 	 const struct tx_table *table = _mesa_little_endian() ? tx_table_le :
 	    tx_table_be;
 	 
@@ -1449,8 +1449,8 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 			     R200_TXFORMAT_ALPHA_IN_MAP);
 	 t->pp_txfilter &= ~R200_YUV_TO_RGB;
 	 
-	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
-	 t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
+	 t->pp_txformat |= table[ firstImage->TexFormat ].format;
+	 t->pp_txfilter |= table[ firstImage->TexFormat ].filter;
       } else {
 	 _mesa_problem(NULL, "unexpected texture format in %s",
 		       __FUNCTION__);

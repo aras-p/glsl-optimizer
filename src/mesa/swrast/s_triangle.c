@@ -1055,11 +1055,11 @@ _swrast_choose_triangle( GLcontext *ctx )
          const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
          GLenum minFilter, magFilter, envMode;
-         GLint format;
+         gl_format format;
          texObj2D = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
-         format = texImg ? texImg->TexFormat->MesaFormat : -1;
+         format = texImg ? texImg->TexFormat : -1;
          minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
          magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
          envMode = ctx->Texture.Unit[0].EnvMode;

@@ -307,7 +307,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
    if (!image->IsCompressed &&
        !mt->compressed &&
-       _mesa_get_format_bytes(image->TexFormat->MesaFormat) != mt->cpp)
+       _mesa_get_format_bytes(image->TexFormat) != mt->cpp)
       return GL_FALSE;
 
    /* Test image dimensions against the base level image adjusted for

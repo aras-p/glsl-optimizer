@@ -55,7 +55,7 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
    if ( MACH64_DEBUG & DEBUG_VERBOSE_API )
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, tObj );
 
-   switch (baseImage->TexFormat->MesaFormat) {
+   switch (baseImage->TexFormat) {
    case MESA_FORMAT_ARGB8888:
       t->textureFormat = MACH64_DATATYPE_ARGB8888;
       break;
@@ -89,7 +89,7 @@ static void mach64SetTexImages( mach64ContextPtr mmesa,
 
    totalSize = ( baseImage->Height *
 		 baseImage->Width *
-		 _mesa_get_format_bytes(baseImage->TexFormat->MesaFormat) );
+		 _mesa_get_format_bytes(baseImage->TexFormat) );
 
    totalSize = (totalSize + 31) & ~31;
 

@@ -87,11 +87,11 @@ intelTexSubimage(GLcontext * ctx,
    else {
       if (texImage->IsCompressed) {
          dstRowStride =
-            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+            _mesa_compressed_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
       }
       else {
-         dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+         dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat);
       }
    }
 

@@ -390,42 +390,42 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 	gl_format texFormat;
 
 restart:
-	if (texImage->TexFormat == &_mesa_texformat_argb8888) {
+	if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
 		rrb->cpp = 4;
 		rrb->base._ActualFormat = GL_RGBA8;
 		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGBA8 texture OK\n");
 	}
-	else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
+	else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_RGB5;
 		rrb->base._BaseFormat = GL_RGB;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGB5 texture OK\n");
 	}
-	else if (texImage->TexFormat == &_mesa_texformat_argb1555) {
+	else if (texImage->TexFormat == MESA_FORMAT_ARGB1555) {
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_RGB5_A1;
 		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to ARGB1555 texture OK\n");
 	}
-	else if (texImage->TexFormat == &_mesa_texformat_argb4444) {
+	else if (texImage->TexFormat == MESA_FORMAT_ARGB4444) {
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_RGBA4;
 		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to ARGB1555 texture OK\n");
 	}
-	else if (texImage->TexFormat == &_mesa_texformat_z16) {
+	else if (texImage->TexFormat == MESA_FORMAT_Z16) {
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_DEPTH_COMPONENT16;
 		rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 		rrb->base.DataType = GL_UNSIGNED_SHORT;
 		DBG("Render to DEPTH16 texture OK\n");
 	}
-	else if (texImage->TexFormat == &_mesa_texformat_s8_z24) {
+	else if (texImage->TexFormat == MESA_FORMAT_S8_Z24) {
 		rrb->cpp = 4;
 		rrb->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
 		rrb->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
@@ -436,29 +436,30 @@ restart:
 		/* try redoing the FBO */
 		if (retry == 1) {
 			DBG("Render to texture BAD FORMAT %d\n",
-			    texImage->TexFormat->MesaFormat);
+			    texImage->TexFormat);
 			return GL_FALSE;
 		}
 		texImage->TexFormat = radeonChooseTextureFormat(ctx, texImage->InternalFormat, 0,
-								_mesa_get_format_datatype(texImage->TexFormat->MesaFormat),
+								_mesa_get_format_datatype(texImage->TexFormat),
 								1);
 
 		retry++;
 		goto restart;
 	}
 	
-	texFormat = texImage->TexFormat->MesaFormat;
+	texFormat = texImage->TexFormat;
 
 	rrb->pitch = texImage->Width * rrb->cpp;
 	rrb->base.InternalFormat = rrb->base._ActualFormat;
 	rrb->base.Width = texImage->Width;
 	rrb->base.Height = texImage->Height;
-	rrb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
-	rrb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
-	rrb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
-	rrb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
-	rrb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
-	rrb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
+	rrb->base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
+	rrb->base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
+	rrb->base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
+	rrb->base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
+	rrb->base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
+	rrb->base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
+	
 	rrb->base.Delete = radeon_delete_renderbuffer;
 	rrb->base.AllocStorage = radeon_nop_alloc_storage;
 	

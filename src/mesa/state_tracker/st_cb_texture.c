@@ -95,9 +95,9 @@ gl_target_to_pipe(GLenum target)
  * format.
  */
 static GLuint
-compressed_num_bytes(GLuint mesaFormat)
+compressed_num_bytes(gl_format format)
 {
-   switch(mesaFormat) {
+   switch (format) {
 #if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
@@ -117,9 +117,9 @@ compressed_num_bytes(GLuint mesaFormat)
 
 
 static GLboolean
-is_compressed_mesa_format(const struct gl_texture_format *format)
+is_compressed_mesa_format(gl_format format)
 {
-   switch (format->MesaFormat) {
+   switch (format) {
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
@@ -338,7 +338,7 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
-   fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
+   fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat);
 
    usage = default_usage(fmt);
 
@@ -411,7 +411,7 @@ compress_with_blit(GLcontext * ctx,
    const GLuint dstImageOffsets[1] = {0};
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_screen *screen = ctx->st->pipe->screen;
-   const struct gl_texture_format *mesa_format;
+   gl_format mesa_format;
    struct pipe_texture templ;
    struct pipe_texture *src_tex;
    struct pipe_surface *dst_surface;
@@ -443,7 +443,7 @@ compress_with_blit(GLcontext * ctx,
     */
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
-   templ.format = st_mesa_format_to_pipe_format(mesa_format->MesaFormat);
+   templ.format = st_mesa_format_to_pipe_format(mesa_format);
    pf_get_block(templ.format, &templ.block);
    templ.width[0] = width;
    templ.height[0] = height;
@@ -559,17 +559,17 @@ st_TexImage(GLcontext * ctx,
 
    _mesa_set_fetch_functions(texImage, dims);
 
-   if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
+   if (_mesa_is_format_compressed(texImage->TexFormat)) {
       /* must be a compressed format */
       texelBytes = 0;
       texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
 	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
-					   texImage->TexFormat->MesaFormat);
+					   texImage->TexFormat);
    }
    else {
-      texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+      texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
       
       /* Minimum pitch of 32 bytes */
       if (postConvWidth * texelBytes < 32) {
@@ -699,7 +699,7 @@ st_TexImage(GLcontext * ctx,
       if (texImage->IsCompressed) {
          sizeInBytes = texImage->CompressedSize;
          dstRowStride =
-            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+            _mesa_compressed_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
       }
       else {
@@ -1824,10 +1824,10 @@ st_finalize_texture(GLcontext *ctx,
 
    /* FIXME: determine format block instead of cpp */
    if (firstImage->base.IsCompressed) {
-      cpp = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
+      cpp = compressed_num_bytes(firstImage->base.TexFormat);
    }
    else {
-      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat->MesaFormat);
+      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
    }
 
    /* If we already have a gallium texture, check that it matches the texture
@@ -1835,7 +1835,7 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (stObj->pt) {
       const enum pipe_format fmt =
-         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
       if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
           stObj->pt->format != fmt ||
           stObj->pt->last_level < stObj->lastLevel ||
@@ -1854,7 +1854,7 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (!stObj->pt) {
       const enum pipe_format fmt =
-         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
       GLuint usage = default_usage(fmt);
 
       stObj->pt = st_texture_create(ctx->st,

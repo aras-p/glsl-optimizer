@@ -165,7 +165,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgb_dxt1);
+   ASSERT(dstFormat == MESA_FORMAT_RGB_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -179,7 +179,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
       /* convert image to RGB/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                             _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -197,7 +197,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
 
    if (ext_tx_compress_dxtn) {
@@ -228,7 +228,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgba_dxt1);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -242,7 +242,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
       /* convert image to RGBA/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                             _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -260,7 +260,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
       (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,
@@ -290,7 +290,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgba_dxt3);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT3);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -304,7 +304,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
       /* convert image to RGBA/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                             _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -321,7 +321,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
       (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,
@@ -351,7 +351,7 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgba_dxt5);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_DXT5);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -365,7 +365,7 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
       /* convert image to RGBA/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                   	     _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -382,7 +382,7 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
       (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,

@@ -184,8 +184,8 @@ struct dd_function_table {
     * functions.  The driver should examine \p internalFormat and return a
     * pointer to an appropriate gl_texture_format.
     */
-   const struct gl_texture_format *(*ChooseTextureFormat)( GLcontext *ctx,
-                      GLint internalFormat, GLenum srcFormat, GLenum srcType );
+   GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
+                                     GLenum srcFormat, GLenum srcType );
 
    /**
     * Called by glTexImage1D().

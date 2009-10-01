@@ -58,7 +58,7 @@
 #define TEXSTORE_PARAMS \
 	GLcontext *ctx, GLuint dims, \
 	GLenum baseInternalFormat, \
-	const struct gl_texture_format *dstFormat, \
+	gl_format dstFormat, \
 	GLvoid *dstAddr, \
 	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
 	GLint dstRowStride, const GLuint *dstImageOffsets, \

@@ -97,7 +97,7 @@ static void i810UploadTexLevel( i810ContextPtr imesa,
    if (!image || !image->Data)
       return;
 
-   texelBytes = _mesa_get_format_bytes(image->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(image->TexFormat);
 
    if (image->Width * texelBytes == t->Pitch) {
 	 GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[hwlevel].offset);

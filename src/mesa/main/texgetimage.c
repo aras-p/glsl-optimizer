@@ -49,7 +49,7 @@
 static GLboolean
 is_srgb_teximage(const struct gl_texture_image *texImage)
 {
-   switch (texImage->TexFormat->MesaFormat) {
+   switch (texImage->TexFormat) {
    case MESA_FORMAT_SRGB8:
    case MESA_FORMAT_SRGBA8:
    case MESA_FORMAT_SARGB8:
@@ -160,7 +160,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
             if (format == GL_COLOR_INDEX) {
                GLuint indexRow[MAX_WIDTH];
                GLint col;
-               GLuint indexBits = _mesa_get_format_bits(texImage->TexFormat->MesaFormat, GL_TEXTURE_INDEX_SIZE_EXT);
+               GLuint indexBits = _mesa_get_format_bits(texImage->TexFormat, GL_TEXTURE_INDEX_SIZE_EXT);
                /* Can't use FetchTexel here because that returns RGBA */
                if (indexBits == 8) {
                   const GLubyte *src = (const GLubyte *) texImage->Data;
@@ -210,9 +210,9 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                       (const GLushort *) texImage->Data + row * rowstride,
                       width * sizeof(GLushort));
                /* check for byte swapping */
-               if ((texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR
+               if ((texImage->TexFormat == MESA_FORMAT_YCBCR
                     && type == GL_UNSIGNED_SHORT_8_8_REV_MESA) ||
-                   (texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR_REV
+                   (texImage->TexFormat == MESA_FORMAT_YCBCR_REV
                     && type == GL_UNSIGNED_SHORT_8_8_MESA)) {
                   if (!ctx->Pack.SwapBytes)
                      _mesa_swap2((GLushort *) dest, width);
@@ -259,7 +259,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLint col;
                GLbitfield transferOps = 0x0;
                GLenum dataType =
-                  _mesa_get_format_datatype(texImage->TexFormat->MesaFormat);
+                  _mesa_get_format_datatype(texImage->TexFormat);
 
                /* clamp does not apply to GetTexImage (final conversion)?
                 * Looks like we need clamp though when going from format
@@ -350,7 +350,7 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
    /* don't use texImage->CompressedSize since that may be padded out */
    size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
                                         texImage->Depth,
-                                        texImage->TexFormat->MesaFormat);
+                                        texImage->TexFormat);
 
    /* just memcpy, no pixelstore or pixel transfer */
    _mesa_memcpy(img, texImage->Data, size);
@@ -439,7 +439,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
+   baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
       
    /* Make sure the requested image format is compatible with the
     * texture's format.  Note that a color index texture can be converted

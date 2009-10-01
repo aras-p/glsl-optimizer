@@ -1561,7 +1561,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    }
    else {
       /* uncompressed */
-      convertFormat = srcImage->TexFormat->MesaFormat;
+      convertFormat = srcImage->TexFormat;
    }
 
    _mesa_format_to_type_and_comps(convertFormat, &datatype, &comps);
@@ -1620,7 +1620,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
             = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
                                               dstImage->Height,
                                               dstImage->Depth,
-                                              dstImage->TexFormat->MesaFormat);
+                                              dstImage->TexFormat);
          ASSERT(dstImage->CompressedSize > 0);
       }
 
@@ -1642,7 +1642,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          ASSERT(dstData);
       }
       else {
-         bytesPerTexel = _mesa_get_format_bytes(dstImage->TexFormat->MesaFormat);
+         bytesPerTexel = _mesa_get_format_bytes(dstImage->TexFormat);
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
          dstImage->Data = _mesa_alloc_texmemory(dstWidth * dstHeight
                                                 * dstDepth * bytesPerTexel);
@@ -1666,7 +1666,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          /* compress image from dstData into dstImage->Data */
          const GLenum srcFormat = _mesa_get_format_base_format(convertFormat);
          GLint dstRowStride
-            = _mesa_compressed_row_stride(dstImage->TexFormat->MesaFormat, dstWidth);
+            = _mesa_compressed_row_stride(dstImage->TexFormat, dstWidth);
          ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
 
          _mesa_texstore(ctx, 2, dstImage->_BaseFormat,

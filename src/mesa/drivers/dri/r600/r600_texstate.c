@@ -591,7 +591,7 @@ void r600SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat);
+	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat);
 
 }
 
@@ -616,7 +616,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override) {
-		if (!r600GetTexFormat(texObj, firstImage->TexFormat->MesaFormat)) {
+		if (!r600GetTexFormat(texObj, firstImage->TexFormat)) {
 			radeon_error("unexpected texture format in %s\n",
 				      __FUNCTION__);
 			return;

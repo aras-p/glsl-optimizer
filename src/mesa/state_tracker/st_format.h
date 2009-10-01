@@ -29,6 +29,7 @@
 #ifndef ST_FORMAT_H
 #define ST_FORMAT_H
 
+#include "main/formats.h"
 
 struct pipe_format_info
 {
@@ -71,7 +72,7 @@ extern enum pipe_format
 st_choose_renderbuffer_format(struct pipe_context *pipe, GLenum internalFormat);
 
 
-extern const struct gl_texture_format *
+extern gl_format
 st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
                        GLenum format, GLenum type);
 

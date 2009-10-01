@@ -470,7 +470,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->TexImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    ASSERT(trb->TexImage);
 
-   trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat->MesaFormat);
+   trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat);
    if (!trb->Store) {
       /* we'll never draw into some textures (compressed formats) */
       trb->Store = store_nop;
@@ -485,21 +485,21 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Zoffset = att->Zoffset;
    }
 
-   texFormat = trb->TexImage->TexFormat->MesaFormat;
+   texFormat = trb->TexImage->TexFormat;
 
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat;
    /* XXX may need more special cases here */
-   if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z24_S8) {
+   if (trb->TexImage->TexFormat == MESA_FORMAT_Z24_S8) {
       trb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
    }
-   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z16) {
+   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
       trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
       trb->Base.DataType = GL_UNSIGNED_SHORT;
    }
-   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z32) {
+   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z32) {
       trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
       trb->Base.DataType = GL_UNSIGNED_INT;
    }

@@ -61,7 +61,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
    if ( R128_DEBUG & DEBUG_VERBOSE_API )
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *) tObj );
 
-   switch (baseImage->TexFormat->MesaFormat) {
+   switch (baseImage->TexFormat) {
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_ARGB8888_REV:
       t->textureFormat = R128_DATATYPE_ARGB8888;
@@ -123,7 +123,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
 
       totalSize += (tObj->Image[0][i]->Height *
 		    tObj->Image[0][i]->Width *
-		    _mesa_get_format_bytes(tObj->Image[0][i]->TexFormat->MesaFormat));
+		    _mesa_get_format_bytes(tObj->Image[0][i]->TexFormat));
 
       /* Offsets must be 32-byte aligned for host data blits and tiling */
       totalSize = (totalSize + 31) & ~31;

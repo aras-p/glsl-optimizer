@@ -315,7 +315,7 @@ dump_texture_cb(GLuint id, void *data, void *userData)
       if (texImg) {
          _mesa_printf("  Image %u: %d x %d x %d, format %u at %p\n", i,
                       texImg->Width, texImg->Height, texImg->Depth,
-                      texImg->TexFormat->MesaFormat, texImg->Data);
+                      texImg->TexFormat, texImg->Data);
          if (DumpImages && !written) {
             GLuint face = 0;
             write_texture_image(texObj, face, i);

@@ -49,7 +49,7 @@
 #include "via_ioctl.h"
 #include "via_3d_reg.h"
 
-static const struct gl_texture_format *
+static gl_format
 viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
 		    GLenum format, GLenum type )
 {
@@ -66,56 +66,56 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
       if ( format == GL_BGRA ) {
 	 if ( type == GL_UNSIGNED_INT_8_8_8_8_REV ||
 	      type == GL_UNSIGNED_BYTE ) {
-	    return &_mesa_texformat_argb8888;
+	    return MESA_FORMAT_ARGB8888;
 	 }
          else if ( type == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
-            return &_mesa_texformat_argb4444;
+            return MESA_FORMAT_ARGB4444;
 	 }
          else if ( type == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-	    return &_mesa_texformat_argb1555;
+	    return MESA_FORMAT_ARGB1555;
 	 }
       }
       else if ( type == GL_UNSIGNED_BYTE ||
 		type == GL_UNSIGNED_INT_8_8_8_8_REV ||
 		type == GL_UNSIGNED_INT_8_8_8_8 ) {
-	 return &_mesa_texformat_argb8888;
+	 return MESA_FORMAT_ARGB8888;
       }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
 
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
       if ( format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5 ) {
-	 return &_mesa_texformat_rgb565;
+	 return MESA_FORMAT_RGB565;
       }
       else if ( type == GL_UNSIGNED_BYTE ) {
-	 return &_mesa_texformat_argb8888;
+	 return MESA_FORMAT_ARGB8888;
       }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_RGB565;
 
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      return &_mesa_texformat_argb8888;
+      return MESA_FORMAT_ARGB8888;
 
    case GL_RGBA4:
    case GL_RGBA2:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
 
    case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      return MESA_FORMAT_ARGB1555;
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return &_mesa_texformat_argb8888;
+      return MESA_FORMAT_ARGB8888;
 
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -123,7 +123,7 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_a8;
+      return MESA_FORMAT_A8;
 
    case 1:
    case GL_LUMINANCE:
@@ -132,7 +132,7 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_l8;
+      return MESA_FORMAT_L8;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -143,7 +143,7 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      return &_mesa_texformat_al88;
+      return MESA_FORMAT_AL88;
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -151,35 +151,35 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      return &_mesa_texformat_i8;
+      return MESA_FORMAT_I8;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
 	  type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    case GL_COMPRESSED_RGB_FXT1_3DFX:
-      return &_mesa_texformat_rgb_fxt1;
+      return MESA_FORMAT_RGB_FXT1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return &_mesa_texformat_rgba_fxt1;
+      return MESA_FORMAT_RGBA_FXT1;
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgb_dxt1;
+      return MESA_FORMAT_RGB_DXT1;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
+      return MESA_FORMAT_RGBA_DXT1;
 
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return &_mesa_texformat_rgba_dxt3;
+      return MESA_FORMAT_RGBA_DXT3;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
+      return MESA_FORMAT_RGBA_DXT5;
 
    case GL_COLOR_INDEX:	
    case GL_COLOR_INDEX1_EXT:	
@@ -188,16 +188,16 @@ viaChooseTexFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COLOR_INDEX8_EXT:	
    case GL_COLOR_INDEX12_EXT:	    
    case GL_COLOR_INDEX16_EXT:
-      return &_mesa_texformat_ci8;    
+      return MESA_FORMAT_CI8;
 
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n", 
 	      _mesa_lookup_enum_by_nr(internalFormat),
 	      __FUNCTION__);
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 
-   return NULL; /* never get here */
+   return MESA_FORMAT_NONE; /* never get here */
 }
 
 static int logbase2(int n)
@@ -458,7 +458,7 @@ static GLboolean viaSetTexImages(GLcontext *ctx,
    GLuint widthExp = 0;
    GLuint heightExp = 0;    
 
-   switch (baseImage->image.TexFormat->MesaFormat) {
+   switch (baseImage->image.TexFormat) {
    case MESA_FORMAT_ARGB8888:
       texFormat = HC_HTXnFM_ARGB8888;
       break;
@@ -692,7 +692,7 @@ static void viaTexImage(GLcontext *ctx,
 
    _mesa_set_fetch_functions(texImage, dims);
 
-   texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    if (texelBytes == 0) {
       /* compressed format */
@@ -700,7 +700,7 @@ static void viaTexImage(GLcontext *ctx,
       texImage->CompressedSize =
          ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
                                            texImage->Height, texImage->Depth,
-                                           texImage->TexFormat->MesaFormat);
+                                           texImage->TexFormat);
    }
 
    /* Minimum pitch of 32 bytes */
@@ -794,10 +794,10 @@ static void viaTexImage(GLcontext *ctx,
       GLboolean success;
 
       if (texImage->IsCompressed) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
       }
       else {
-         dstRowStride = postConvWidth * _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+         dstRowStride = postConvWidth * _mesa_get_format_bytes(texImage->TexFormat);
       }
       success = _mesa_texstore(ctx, dims,
                                texImage->_BaseFormat,

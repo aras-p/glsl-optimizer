@@ -745,7 +745,7 @@ get_border_color(const struct gl_texture_object *tObj,
                  const struct gl_texture_image *img,
                  GLfloat rgba[4])
 {
-   switch (img->TexFormat->BaseFormat) {
+   switch (img->_BaseFormat) {
    case GL_RGB:
       rgba[0] = tObj->BorderColor[0];
       rgba[1] = tObj->BorderColor[1];
@@ -1152,7 +1152,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
    linear_repeat_texel_location(width,  texcoord[0], &i0, &i1, &wi);
@@ -1343,7 +1343,7 @@ opt_sample_rgb_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGB);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGB);
    ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
@@ -1384,7 +1384,7 @@ opt_sample_rgba_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGBA);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGBA);
    ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
@@ -1414,7 +1414,7 @@ sample_lambda_2d(GLcontext *ctx,
    const GLboolean repeatNoBorderPOT = (tObj->WrapS == GL_REPEAT)
       && (tObj->WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->TexFormat->BaseFormat != GL_COLOR_INDEX)
+      && (tImg->_BaseFormat != GL_COLOR_INDEX)
       && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
@@ -1427,7 +1427,7 @@ sample_lambda_2d(GLcontext *ctx,
       switch (tObj->MinFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->TexFormat->MesaFormat) {
+            switch (tImg->TexFormat) {
             case MESA_FORMAT_RGB:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
@@ -1484,7 +1484,7 @@ sample_lambda_2d(GLcontext *ctx,
       switch (tObj->MagFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->TexFormat->MesaFormat) {
+            switch (tImg->TexFormat) {
             case MESA_FORMAT_RGB:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
@@ -2152,7 +2152,7 @@ sample_nearest_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint row, col;
@@ -2186,7 +2186,7 @@ sample_linear_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint i0, j0, i1, j1;
@@ -2973,8 +2973,8 @@ sample_depth_texture( GLcontext *ctx,
 
    (void) lambda;
 
-   ASSERT(img->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
-          img->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT);
+   ASSERT(img->_BaseFormat == GL_DEPTH_COMPONENT ||
+          img->_BaseFormat == GL_DEPTH_STENCIL_EXT);
 
    ASSERT(tObj->Target == GL_TEXTURE_1D ||
           tObj->Target == GL_TEXTURE_2D ||
@@ -3154,7 +3154,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
    }
    else {
       const GLboolean needLambda = (GLboolean) (t->MinFilter != t->MagFilter);
-      const GLenum format = t->Image[0][t->BaseLevel]->TexFormat->BaseFormat;
+      const GLenum format = t->Image[0][t->BaseLevel]->_BaseFormat;
 
       switch (t->Target) {
       case GL_TEXTURE_1D:
@@ -3189,14 +3189,14 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
                 t->WrapT == GL_REPEAT &&
                 img->_IsPowerOfTwo &&
                 img->Border == 0 &&
-                img->TexFormat->MesaFormat == MESA_FORMAT_RGB) {
+                img->TexFormat == MESA_FORMAT_RGB) {
                return &opt_sample_rgb_2d;
             }
             else if (t->WrapS == GL_REPEAT &&
                      t->WrapT == GL_REPEAT &&
                      img->_IsPowerOfTwo &&
                      img->Border == 0 &&
-                     img->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
+                     img->TexFormat == MESA_FORMAT_RGBA) {
                return &opt_sample_rgba_2d;
             }
             else {

@@ -629,74 +629,74 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLenum internalFormat)
 }
 
 
-static const struct gl_texture_format *
+static gl_format
 translate_gallium_format_to_mesa_format(enum pipe_format format)
 {
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return &_mesa_texformat_argb8888;
+      return MESA_FORMAT_ARGB8888;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
-      return &_mesa_texformat_argb1555;
+      return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
    case PIPE_FORMAT_A8L8_UNORM:
-      return &_mesa_texformat_al88;
+      return MESA_FORMAT_AL88;
    case PIPE_FORMAT_A8_UNORM:
-      return &_mesa_texformat_a8;
+      return MESA_FORMAT_A8;
    case PIPE_FORMAT_L8_UNORM:
-      return &_mesa_texformat_l8;
+      return MESA_FORMAT_L8;
    case PIPE_FORMAT_I8_UNORM:
-      return &_mesa_texformat_i8;
+      return MESA_FORMAT_I8;
    case PIPE_FORMAT_Z16_UNORM:
-      return &_mesa_texformat_z16;
+      return MESA_FORMAT_Z16;
    case PIPE_FORMAT_Z32_UNORM:
-      return &_mesa_texformat_z32;
+      return MESA_FORMAT_Z32;
    case PIPE_FORMAT_Z24S8_UNORM:
-      return &_mesa_texformat_z24_s8;
+      return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_S8Z24_UNORM:
-      return &_mesa_texformat_s8_z24;
+      return MESA_FORMAT_S8_Z24;
    case PIPE_FORMAT_YCBCR:
-      return &_mesa_texformat_ycbcr;
+      return MESA_FORMAT_YCBCR;
    case PIPE_FORMAT_YCBCR_REV:
-      return &_mesa_texformat_ycbcr_rev;
+      return MESA_FORMAT_YCBCR_REV;
 #if FEATURE_texture_s3tc
    case PIPE_FORMAT_DXT1_RGB:
-      return &_mesa_texformat_rgb_dxt1;
+      return MESA_FORMAT_RGB_DXT1;
    case PIPE_FORMAT_DXT1_RGBA:
-      return &_mesa_texformat_rgba_dxt1;
+      return MESA_FORMAT_RGBA_DXT1;
    case PIPE_FORMAT_DXT3_RGBA:
-      return &_mesa_texformat_rgba_dxt3;
+      return MESA_FORMAT_RGBA_DXT3;
    case PIPE_FORMAT_DXT5_RGBA:
-      return &_mesa_texformat_rgba_dxt5;
+      return MESA_FORMAT_RGBA_DXT5;
 #if FEATURE_EXT_texture_sRGB
    case PIPE_FORMAT_DXT1_SRGB:
-      return &_mesa_texformat_srgb_dxt1;
+      return MESA_FORMAT_SRGB_DXT1;
    case PIPE_FORMAT_DXT1_SRGBA:
-      return &_mesa_texformat_srgba_dxt1;
+      return MESA_FORMAT_SRGBA_DXT1;
    case PIPE_FORMAT_DXT3_SRGBA:
-      return &_mesa_texformat_srgba_dxt3;
+      return MESA_FORMAT_SRGBA_DXT3;
    case PIPE_FORMAT_DXT5_SRGBA:
-      return &_mesa_texformat_srgba_dxt5;
+      return MESA_FORMAT_SRGBA_DXT5;
 #endif
 #endif
 #if FEATURE_EXT_texture_sRGB
    case PIPE_FORMAT_A8L8_SRGB:
-      return &_mesa_texformat_sla8;
+      return MESA_FORMAT_SLA8;
    case PIPE_FORMAT_L8_SRGB:
-      return &_mesa_texformat_sl8;
+      return MESA_FORMAT_SL8;
    case PIPE_FORMAT_R8G8B8_SRGB:
-      return &_mesa_texformat_srgb8;
+      return MESA_FORMAT_SRGB8;
    case PIPE_FORMAT_R8G8B8A8_SRGB:
-      return &_mesa_texformat_srgba8;
+      return MESA_FORMAT_SRGBA8;
    case PIPE_FORMAT_A8R8G8B8_SRGB:
-      return &_mesa_texformat_sargb8;
+      return MESA_FORMAT_SARGB8;
 #endif
    /* XXX add additional cases */
    default:
       assert(0);
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 
@@ -704,7 +704,7 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
 /**
  * Called via ctx->Driver.chooseTextureFormat().
  */
-const struct gl_texture_format *
+gl_format
 st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
 {
@@ -716,7 +716,7 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    pFormat = st_choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE_2D, 
                               PIPE_TEXTURE_USAGE_SAMPLER);
    if (pFormat == PIPE_FORMAT_NONE)
-      return NULL;
+      return MESA_FORMAT_NONE;
 
    return translate_gallium_format_to_mesa_format(pFormat);
 }

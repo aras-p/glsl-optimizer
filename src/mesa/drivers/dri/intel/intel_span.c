@@ -578,7 +578,7 @@ intel_set_span_functions(struct intel_context *intel,
    else
       tiling = I915_TILING_NONE;
 
-   switch (irb->texformat->MesaFormat) {
+   switch (irb->texformat) {
    case MESA_FORMAT_RGB565:
       switch (tiling) {
       case I915_TILING_NONE:

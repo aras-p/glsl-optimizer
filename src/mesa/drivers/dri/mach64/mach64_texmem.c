@@ -86,7 +86,7 @@ static void mach64UploadAGPSubImage( mach64ContextPtr mmesa,
    if ( !image )
       return;
 
-   texelBytes = _mesa_get_format_bytes(image->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(image->TexFormat);
 
    switch ( texelBytes ) {
    case 1: texelsPerDword = 4; break;
@@ -153,7 +153,7 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
    if ( !image )
       return;
 
-   texelBytes = _mesa_get_format_bytes(image->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(image->TexFormat);
 
    switch ( texelBytes ) {
    case 1: texelsPerDword = 4; break;

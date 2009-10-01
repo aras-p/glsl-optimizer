@@ -1031,18 +1031,18 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
-   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
 
    if (!t->image_override) {
-      if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
+      if (VALID_FORMAT(firstImage->TexFormat)) {
 	const struct tx_table *table = tx_table;
 
 	 t->pp_txformat &= ~(RADEON_TXFORMAT_FORMAT_MASK |
 			     RADEON_TXFORMAT_ALPHA_IN_MAP);
 	 t->pp_txfilter &= ~RADEON_YUV_TO_RGB;	 
 	 
-	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
-	 t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
+	 t->pp_txformat |= table[ firstImage->TexFormat ].format;
+	 t->pp_txfilter |= table[ firstImage->TexFormat ].filter;
       } else {
 	 _mesa_problem(NULL, "unexpected texture format in %s",
 		       __FUNCTION__);

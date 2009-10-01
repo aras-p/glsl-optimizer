@@ -1016,7 +1016,7 @@ PrintTexture(int w, int h, int c, const GLubyte * data)
 #endif
 
 
-const struct gl_texture_format *
+gl_format
 fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum srcFormat, GLenum srcType )
 {
@@ -1033,31 +1033,31 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case 3:
    case GL_RGB:
      if ( srcFormat == GL_RGB && srcType == GL_UNSIGNED_SHORT_5_6_5 ) {
-       return &_mesa_texformat_rgb565;
+       return MESA_FORMAT_RGB565;
      }
      /* intentional fall through */
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return (allow32bpt) ? &_mesa_texformat_argb8888
-                          : &_mesa_texformat_rgb565;
+      return (allow32bpt) ? MESA_FORMAT_ARGB8888
+                          : MESA_FORMAT_RGB565;
    case GL_RGBA2:
    case GL_RGBA4:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
    case GL_COMPRESSED_RGBA:
      /* intentional fall through */
    case 4:
    case GL_RGBA:
      if ( srcFormat == GL_BGRA ) {
        if ( srcType == GL_UNSIGNED_INT_8_8_8_8_REV ) {
-         return &_mesa_texformat_argb8888;
+         return MESA_FORMAT_ARGB8888;
        }
        else if ( srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
-         return &_mesa_texformat_argb4444;
+         return MESA_FORMAT_ARGB4444;
        }
        else if ( srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-         return &_mesa_texformat_argb1555;
+         return MESA_FORMAT_ARGB1555;
        }
      }
      /* intentional fall through */
@@ -1065,15 +1065,15 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      return (allow32bpt) ? &_mesa_texformat_argb8888
-                          : &_mesa_texformat_argb4444;
+      return (allow32bpt) ? MESA_FORMAT_ARGB8888
+                          : MESA_FORMAT_ARGB4444;
    case GL_INTENSITY:
    case GL_INTENSITY4:
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      return &_mesa_texformat_i8;
+      return MESA_FORMAT_I8;
    case 1:
    case GL_LUMINANCE:
    case GL_LUMINANCE4:
@@ -1081,14 +1081,14 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_l8;
+      return MESA_FORMAT_L8;
    case GL_ALPHA:
    case GL_ALPHA4:
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_a8;
+      return MESA_FORMAT_A8;
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
    case GL_COLOR_INDEX2_EXT:
@@ -1096,7 +1096,7 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
-      return &_mesa_texformat_ci8;
+      return MESA_FORMAT_CI8;
    case 2:
    case GL_LUMINANCE_ALPHA:
    case GL_LUMINANCE4_ALPHA4:
@@ -1106,35 +1106,35 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      return &_mesa_texformat_al88;
+      return MESA_FORMAT_AL88;
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
    case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      return MESA_FORMAT_ARGB1555;
    /* GL_EXT_texture_compression_s3tc */
    /* GL_S3_s3tc */
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
-      return &_mesa_texformat_rgb_dxt1;
+      return MESA_FORMAT_RGB_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
+      return MESA_FORMAT_RGBA_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
-      return &_mesa_texformat_rgba_dxt3;
+      return MESA_FORMAT_RGBA_DXT3;
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
+      return MESA_FORMAT_RGBA_DXT5;
    /* GL_3DFX_texture_compression_FXT1 */
    case GL_COMPRESSED_RGB_FXT1_3DFX:
-      return &_mesa_texformat_rgb_fxt1;
+      return MESA_FORMAT_RGB_FXT1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return &_mesa_texformat_rgba_fxt1;
+      return MESA_FORMAT_RGBA_FXT1;
    default:
       _mesa_problem(NULL, "unexpected format in fxDDChooseTextureFormat");
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 

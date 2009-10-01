@@ -1019,15 +1019,15 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 /**
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
-static const struct gl_texture_format *
+static gl_format
 choose_tex_format( GLcontext *ctx, GLint internalFormat,
                    GLenum format, GLenum type )
 {
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_ARB:
-         return &_mesa_texformat_rgb;
+         return MESA_FORMAT_RGB;
       case GL_COMPRESSED_RGBA_ARB:
-         return &_mesa_texformat_rgba;
+         return MESA_FORMAT_RGBA;
       default:
          return _mesa_choose_tex_format(ctx, internalFormat, format, type);
    }

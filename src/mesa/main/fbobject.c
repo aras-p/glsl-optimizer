@@ -384,7 +384,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          return;
       }
 
-      baseFormat = _mesa_get_format_base_format(texImage->TexFormat->MesaFormat);
+      baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
 
       if (format == GL_COLOR) {
          if (baseFormat != GL_RGB &&
@@ -393,7 +393,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
             att->Complete = GL_FALSE;
             return;
          }
-         if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
+         if (_mesa_is_format_compressed(texImage->TexFormat)) {
             att_incomplete("compressed internalformat");
             att->Complete = GL_FALSE;
             return;

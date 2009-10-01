@@ -156,7 +156,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
+	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat) {
 	case MESA_FORMAT_Z16:
 		format = formats[0];
 		break;
@@ -208,14 +208,14 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override
-	    && VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
+	    && VALID_FORMAT(firstImage->TexFormat)) {
 		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->pp_txformat = tx_table[firstImage->TexFormat->MesaFormat].format;
+			t->pp_txformat = tx_table[firstImage->TexFormat].format;
 		}
 
-		t->pp_txfilter |= tx_table[firstImage->TexFormat->MesaFormat].filter;
+		t->pp_txfilter |= tx_table[firstImage->TexFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);

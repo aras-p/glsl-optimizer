@@ -166,11 +166,11 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    }
 
    if (firstImage->base.IsCompressed) {
-      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
+      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat);
       cpp = comp_byte;
    }
    else
-      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat->MesaFormat);
+      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.

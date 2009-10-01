@@ -126,9 +126,9 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
 
    assert(!intelObj->mt);
    if (intelImage->base.IsCompressed)
-      comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
+      comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat);
 
-   texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat->MesaFormat);
+   texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
 
    intelObj->mt = intel_miptree_create(intel,
                                        intelObj->base.Target,
@@ -171,7 +171,7 @@ target_to_face(GLenum target)
 static GLboolean
 check_pbo_format(GLint internalFormat,
                  GLenum format, GLenum type,
-                 const struct gl_texture_format *mesa_format)
+                 gl_format mesa_format)
 {
    switch (internalFormat) {
    case 4:
@@ -179,12 +179,12 @@ check_pbo_format(GLint internalFormat,
       return (format == GL_BGRA &&
               (type == GL_UNSIGNED_BYTE ||
                type == GL_UNSIGNED_INT_8_8_8_8_REV) &&
-              mesa_format == &_mesa_texformat_argb8888);
+              mesa_format == MESA_FORMAT_ARGB8888);
    case 3:
    case GL_RGB:
       return (format == GL_RGB &&
               type == GL_UNSIGNED_SHORT_5_6_5 &&
-              mesa_format == &_mesa_texformat_rgb565);
+              mesa_format == MESA_FORMAT_RGB565);
    case GL_YCBCR_MESA:
       return (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE);
    default:
@@ -337,15 +337,15 @@ intelTexImage(GLcontext * ctx,
 
    _mesa_set_fetch_functions(texImage, dims);
 
-   if (_mesa_is_format_compressed(texImage->TexFormat->MesaFormat)) {
+   if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
       texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
 	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
-					   texImage->TexFormat->MesaFormat);
+					   texImage->TexFormat);
    } else {
-      texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
+      texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
       
       /* Minimum pitch of 32 bytes */
       if (postConvWidth * texelBytes < 32) {
@@ -403,11 +403,11 @@ intelTexImage(GLcontext * ctx,
       assert(intelImage->mt);
    } else if (intelImage->base.Border == 0) {
       int comp_byte = 0;
-      GLuint texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat->MesaFormat);
-      GLenum baseFormat = _mesa_get_format_base_format(intelImage->base.TexFormat->MesaFormat);
+      GLuint texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
+      GLenum baseFormat = _mesa_get_format_base_format(intelImage->base.TexFormat);
       if (intelImage->base.IsCompressed) {
 	 comp_byte =
-	    intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
+	    intel_compressed_num_bytes(intelImage->base.TexFormat);
       }
 
       /* Didn't fit in the object miptree, but it's suitable for inclusion in
@@ -497,7 +497,7 @@ intelTexImage(GLcontext * ctx,
       if (texImage->IsCompressed) {
          sizeInBytes = texImage->CompressedSize;
          dstRowStride =
-            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+            _mesa_compressed_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
       }
       else {

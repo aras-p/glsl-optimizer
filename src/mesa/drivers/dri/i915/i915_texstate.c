@@ -177,7 +177,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 								 0, intelObj->
 								 firstLevel);
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat, 
+      format = translate_texture_format(firstImage->TexFormat,
 					firstImage->InternalFormat,
 					tObj->DepthMode);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
@@ -263,8 +263,8 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
       /* YUV conversion:
        */
-      if (firstImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR ||
-          firstImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR_REV)
+      if (firstImage->TexFormat == MESA_FORMAT_YCBCR ||
+          firstImage->TexFormat == MESA_FORMAT_YCBCR_REV)
          state[I915_TEXREG_SS2] |= SS2_COLORSPACE_CONVERSION;
 
       /* Shadow:
