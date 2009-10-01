@@ -34,6 +34,7 @@
 #include "imports.h"
 #include "colormac.h"
 #include "context.h"
+#include "formats.h"
 #include "image.h"
 #include "mipmap.h"
 #include "texcompress.h"
@@ -116,9 +117,10 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 
 /**
  * Return number of bytes needed to store a texture of the given size
- * using the specified compressed format.
+ * using the specified (compressed?) format.
  * This is called via the ctx->Driver.CompressedTextureSize function,
- * unless a device driver overrides it.
+ * unless a device driver overrides it.  A driver might override this
+ * if it needs to use an unusual or padded texture memory layout.
  *
  * \param width texture width in texels.
  * \param height texture height in texels.
@@ -132,62 +134,7 @@ _mesa_compressed_texture_size( GLcontext *ctx,
                                GLsizei width, GLsizei height, GLsizei depth,
                                GLuint mesaFormat )
 {
-   GLuint size;
-
-   ASSERT(depth == 1);
-   (void) depth;
-   (void) size;
-
-   switch (mesaFormat) {
-#if FEATURE_texture_fxt1
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-      /* round up width to next multiple of 8, height to next multiple of 4 */
-      width = (width + 7) & ~7;
-      height = (height + 3) & ~3;
-      /* 16 bytes per 8x4 tile of RGB[A] texels */
-      size = width * height / 2;
-      /* Textures smaller than 8x4 will effectively be made into 8x4 and
-       * take 16 bytes.
-       */
-      return size;
-#endif
-#if FEATURE_texture_s3tc
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-#endif
-      /* round up width, height to next multiple of 4 */
-      width = (width + 3) & ~3;
-      height = (height + 3) & ~3;
-      /* 8 bytes per 4x4 tile of RGB[A] texels */
-      size = width * height / 2;
-      /* Textures smaller than 4x4 will effectively be made into 4x4 and
-       * take 8 bytes.
-       */
-      return size;
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-#endif
-      /* round up width, height to next multiple of 4 */
-      width = (width + 3) & ~3;
-      height = (height + 3) & ~3;
-      /* 16 bytes per 4x4 tile of RGBA texels */
-      size = width * height; /* simple! */
-      /* Textures smaller than 4x4 will effectively be made into 4x4 and
-       * take 16 bytes.
-       */
-      return size;
-#endif
-   default:
-      _mesa_problem(ctx, "bad mesaFormat in _mesa_compressed_texture_size");
-      return 0;
-   }
+   return _mesa_format_image_size(mesaFormat, width, height, depth);
 }
 
 
@@ -205,7 +152,7 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
                                      GLsizei width, GLsizei height,
                                      GLsizei depth, GLenum glformat)
 {
-   GLuint mesaFormat;
+   gl_format mesaFormat;
 
    switch (glformat) {
 #if FEATURE_texture_fxt1
@@ -252,7 +199,7 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
       return 0;
    }
 
-   return _mesa_compressed_texture_size(ctx, width, height, depth, mesaFormat);
+   return _mesa_format_image_size(mesaFormat, width, height, depth);
 }
 
 
@@ -297,6 +244,8 @@ _mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
       _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_row_stride");
       return 0;
    }
+
+   assert(stride == _mesa_format_row_stride(mesaFormat, width));
 
    return stride;
 }
