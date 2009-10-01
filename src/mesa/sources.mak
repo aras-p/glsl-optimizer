@@ -68,6 +68,7 @@ MAIN_SOURCES = \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
 	main/texenvprogram.c \
+	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
 	main/texgetimage.c \

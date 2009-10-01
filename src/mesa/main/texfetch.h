@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.75
+ * Version:  7.7
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
- * Copyright (c) 2008-2009 VMware, Inc.
+ * Copyright (c) 2009 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,21 +23,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef TEXFORMAT_H
-#define TEXFORMAT_H
 
+#ifndef TEXFETCH_H
+#define TEXFETCH_H
 
 #include "mtypes.h"
 #include "formats.h"
 
 
-extern gl_format
-_mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
-                         GLenum format, GLenum type );
+extern FetchTexelFuncF
+_mesa_get_texel_fetch_func(gl_format format, GLuint dims);
 
+extern StoreTexelFunc
+_mesa_get_texel_store_func(gl_format format);
 
-extern void
-_mesa_format_to_type_and_comps(gl_format format,
-                               GLenum *datatype, GLuint *comps);
 
 #endif

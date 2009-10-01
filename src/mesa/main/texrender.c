@@ -1,7 +1,7 @@
 
 #include "context.h"
 #include "fbobject.h"
-#include "texformat.h"
+#include "texfetch.h"
 #include "texrender.h"
 #include "renderbuffer.h"
 

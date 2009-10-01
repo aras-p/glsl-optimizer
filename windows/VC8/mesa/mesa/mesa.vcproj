@@ -1027,6 +1027,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texfetch.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\texformat.c"
 				>
 			</File>
@@ -1873,6 +1877,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\texfetch.h"
 				>
 			</File>
 			<File

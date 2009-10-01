@@ -64,6 +64,7 @@
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"
+#include "texfetch.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
