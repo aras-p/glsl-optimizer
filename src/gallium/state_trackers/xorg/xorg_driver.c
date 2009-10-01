@@ -560,6 +560,8 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ms->exa = xorg_exa_init(pScrn);
     ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
 
+    xorg_init_video(pScreen);
+
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);

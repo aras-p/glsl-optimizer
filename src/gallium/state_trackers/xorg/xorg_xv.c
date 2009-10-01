@@ -40,26 +40,54 @@ static XF86ImageRec Images[NUM_IMAGES] = {
 
 struct xorg_xv_port_priv {
    RegionRec clip;
+
+   int brightness;
+   int contrast;
 };
 
 
 static void
 stop_video(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
+   struct xorg_xv_port_priv *priv = (struct xorg_xv_port_priv *)data;
+
+   REGION_EMPTY(pScrn->pScreen, &priv->clip);
 }
 
 static int
 set_port_attribute(ScrnInfoPtr pScrn,
                    Atom attribute, INT32 value, pointer data)
 {
-   return 0;
+   struct xorg_xv_port_priv *priv = (struct xorg_xv_port_priv *)data;
+
+   if (attribute == xvBrightness) {
+      if ((value < -128) || (value > 127))
+         return BadValue;
+      priv->brightness = value;
+   } else if (attribute == xvContrast) {
+      if ((value < 0) || (value > 255))
+         return BadValue;
+      priv->contrast = value;
+   } else
+      return BadMatch;
+
+   return Success;
 }
 
 static int
 get_port_attribute(ScrnInfoPtr pScrn,
                    Atom attribute, INT32 * value, pointer data)
 {
-   return 0;
+   struct xorg_xv_port_priv *priv = (struct xorg_xv_port_priv *)data;
+
+   if (attribute == xvBrightness)
+      *value = priv->brightness;
+   else if (attribute == xvContrast)
+      *value = priv->contrast;
+   else
+      return BadMatch;
+
+   return Success;
 }
 
 static void
@@ -69,6 +97,13 @@ query_best_size(ScrnInfoPtr pScrn,
                 short drw_w, short drw_h,
                 unsigned int *p_w, unsigned int *p_h, pointer data)
 {
+   if (vid_w > (drw_w << 1))
+      drw_w = vid_w >> 1;
+   if (vid_h > (drw_h << 1))
+      drw_h = vid_h >> 1;
+
+   *p_w = drw_w;
+   *p_h = drw_h;
 }
 
 static int
@@ -91,7 +126,29 @@ query_image_attributes(ScrnInfoPtr pScrn,
                        unsigned short *w, unsigned short *h,
                        int *pitches, int *offsets)
 {
-   return 0;
+   int size;
+
+   if (*w > IMAGE_MAX_WIDTH)
+      *w = IMAGE_MAX_WIDTH;
+   if (*h > IMAGE_MAX_HEIGHT)
+      *h = IMAGE_MAX_HEIGHT;
+
+   *w = (*w + 1) & ~1;
+   if (offsets)
+      offsets[0] = 0;
+
+   switch (id) {
+   case FOURCC_UYVY:
+   case FOURCC_YUY2:
+   default:
+      size = *w << 1;
+      if (pitches)
+	 pitches[0] = size;
+      size *= *h;
+      break;
+   }
+
+   return size;
 }
 
 static struct xorg_xv_port_priv *
@@ -106,7 +163,7 @@ port_priv_create(ScreenPtr pScreen)
    if (!priv)
       return NULL;
 
-    REGION_NULL(pScreen, &priv->clip);
+   REGION_NULL(pScreen, &priv->clip);
 
    return priv;
 }
