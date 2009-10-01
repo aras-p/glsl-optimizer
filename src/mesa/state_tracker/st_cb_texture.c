@@ -1766,7 +1766,11 @@ st_finalize_texture(GLcontext *ctx,
        * incomplete.  In that case, we'll have set stObj->lastLevel before
        * we get here.
        */
-      stObj->lastLevel = stObj->base._MaxLevel - stObj->base.BaseLevel;
+      if (stObj->base.MinFilter == GL_LINEAR ||
+          stObj->base.MinFilter == GL_NEAREST)
+         stObj->lastLevel = stObj->base.BaseLevel;
+      else
+         stObj->lastLevel = stObj->base._MaxLevel - stObj->base.BaseLevel;
    }
 
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
