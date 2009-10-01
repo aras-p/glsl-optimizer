@@ -1766,63 +1766,6 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
-static GLboolean
-_mesa_texstore_rgba4444(TEXSTORE_PARAMS)
-{
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
-   ASSERT(dstFormat == MESA_FORMAT_RGBA4444);
-   ASSERT(texelBytes == 2);
-
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_RGBA4444 &&
-       baseInternalFormat == GL_RGBA &&
-       srcFormat == GL_RGBA &&
-       srcType == GL_UNSIGNED_SHORT_4_4_4_4){
-      /* simple memcpy path */
-      memcpy_texture(ctx, dims,
-                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
-                     dstRowStride,
-                     dstImageOffsets,
-                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
-                     srcAddr, srcPacking);
-   }
-   else {
-      /* general path */
-      const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLchan *src = tempImage;
-      GLint img, row, col;
-      if (!tempImage)
-         return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-      for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
-            + dstImageOffsets[dstZoffset + img] * texelBytes
-            + dstYoffset * dstRowStride
-            + dstXoffset * texelBytes;
-         for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
-	    for (col = 0; col < srcWidth; col++) {
-	      dstUS[col] = PACK_COLOR_4444( CHAN_TO_UBYTE(src[RCOMP]),
-					    CHAN_TO_UBYTE(src[GCOMP]),
-					    CHAN_TO_UBYTE(src[BCOMP]),
-					    CHAN_TO_UBYTE(src[ACOMP]) );
-	      src += 4;
-            }
-            dstRow += dstRowStride;
-         }
-      }
-      _mesa_free((void *) tempImage);
-   }
-   return GL_TRUE;
-}
 
 static GLboolean
 _mesa_texstore_argb4444(TEXSTORE_PARAMS)
@@ -3037,7 +2980,6 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_BGR888, _mesa_texstore_bgr888 },
    { MESA_FORMAT_RGB565, _mesa_texstore_rgb565 },
    { MESA_FORMAT_RGB565_REV, _mesa_texstore_rgb565 },
-   { MESA_FORMAT_RGBA4444, _mesa_texstore_rgba4444 },
    { MESA_FORMAT_ARGB4444, _mesa_texstore_argb4444 },
    { MESA_FORMAT_ARGB4444_REV, _mesa_texstore_argb4444 },
    { MESA_FORMAT_RGBA5551, _mesa_texstore_rgba5551 },

@@ -58,7 +58,6 @@ typedef enum
    MESA_FORMAT_BGR888,		/*           BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
    MESA_FORMAT_RGB565_REV,	/*                     GGGB BBBB RRRR RGGG */
-   MESA_FORMAT_RGBA4444,        /*                     RRRR GGGG BBBB AAAA */
    MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
    MESA_FORMAT_ARGB4444_REV,	/*                     GGGG BBBB AAAA RRRR */
    MESA_FORMAT_RGBA5551,        /*                     RRRR RGGG GGBB BBBA */

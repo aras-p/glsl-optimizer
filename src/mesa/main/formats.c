@@ -110,14 +110,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2                      /* BlockWidth/Height,Bytes */
    },
    {
-      MESA_FORMAT_RGBA4444,        /* Name */
-      GL_RGBA,                     /* BaseFormat */
-      GL_UNSIGNED_NORMALIZED,      /* DataType */
-      4, 4, 4, 4,                  /* Red/Green/Blue/AlphaBits */
-      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
-      1, 1, 2                      /* BlockWidth/Height,Bytes */
-   },
-   {
       MESA_FORMAT_ARGB4444,        /* Name */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
