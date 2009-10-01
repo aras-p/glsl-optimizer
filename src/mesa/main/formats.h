@@ -43,6 +43,7 @@
 typedef enum
 {
    MESA_FORMAT_NONE = 0,
+
    /** 
     * \name Basic hardware formats
     */
@@ -112,18 +113,6 @@ typedef enum
    MESA_FORMAT_RGBA_DXT3,
    MESA_FORMAT_RGBA_DXT5,
 #endif
-   /*@}*/
-
-   /**
-    * \name Generic GLchan-based formats. (XXX obsolete!)
-    */
-   /*@{*/
-   MESA_FORMAT_RGBA,
-   MESA_FORMAT_RGB,
-   MESA_FORMAT_ALPHA,
-   MESA_FORMAT_LUMINANCE,
-   MESA_FORMAT_LUMINANCE_ALPHA,
-   MESA_FORMAT_INTENSITY,
    /*@}*/
 
    /**

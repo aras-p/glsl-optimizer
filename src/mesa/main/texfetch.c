@@ -128,48 +128,6 @@ static struct {
 texfetch_funcs[MESA_FORMAT_COUNT] =
 {
    {
-      MESA_FORMAT_RGBA,
-      fetch_texel_1d_f_rgba,
-      fetch_texel_2d_f_rgba,
-      fetch_texel_3d_f_rgba,
-      store_texel_rgba
-   },
-   {
-      MESA_FORMAT_RGB,
-      fetch_texel_1d_f_rgb,
-      fetch_texel_2d_f_rgb,
-      fetch_texel_3d_f_rgb,
-      store_texel_rgb
-   },
-   {
-      MESA_FORMAT_ALPHA,
-      fetch_texel_1d_f_alpha,
-      fetch_texel_2d_f_alpha,
-      fetch_texel_3d_f_alpha,
-      store_texel_alpha
-   },
-   {
-      MESA_FORMAT_LUMINANCE,
-      fetch_texel_1d_f_luminance,
-      fetch_texel_2d_f_luminance,
-      fetch_texel_3d_f_luminance,
-      store_texel_luminance
-   },
-   {
-      MESA_FORMAT_LUMINANCE_ALPHA,
-      fetch_texel_1d_f_luminance_alpha,
-      fetch_texel_2d_f_luminance_alpha,
-      fetch_texel_3d_f_luminance_alpha,
-      store_texel_luminance_alpha
-   },
-   {
-      MESA_FORMAT_INTENSITY,
-      fetch_texel_1d_f_intensity,
-      fetch_texel_2d_f_intensity,
-      fetch_texel_3d_f_intensity,
-      store_texel_intensity
-   },
-   {
       MESA_FORMAT_SRGB8,
       fetch_texel_1d_srgb8,
       fetch_texel_2d_srgb8,

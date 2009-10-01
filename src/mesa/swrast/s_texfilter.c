@@ -1343,17 +1343,17 @@ opt_sample_rgb_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat == MESA_FORMAT_RGB);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGB888);
    ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
-      GLchan *texel = ((GLchan *) img->Data) + 3*pos;
-      rgba[k][RCOMP] = CHAN_TO_FLOAT(texel[0]);
-      rgba[k][GCOMP] = CHAN_TO_FLOAT(texel[1]);
-      rgba[k][BCOMP] = CHAN_TO_FLOAT(texel[2]);
+      GLubyte *texel = ((GLubyte *) img->Data) + 3*pos;
+      rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[0]);
+      rgba[k][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
+      rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[2]);
    }
 }
 
@@ -1384,18 +1384,18 @@ opt_sample_rgba_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat == MESA_FORMAT_RGBA);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGBA8888);
    ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
-      const GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
-      rgba[i][RCOMP] = CHAN_TO_FLOAT(texel[0]);
-      rgba[i][GCOMP] = CHAN_TO_FLOAT(texel[1]);
-      rgba[i][BCOMP] = CHAN_TO_FLOAT(texel[2]);
-      rgba[i][ACOMP] = CHAN_TO_FLOAT(texel[3]);
+      const GLubyte *texel = ((GLubyte *) img->Data) + (pos << 2);    /* pos*4 */
+      rgba[i][RCOMP] = UBYTE_TO_FLOAT(texel[0]);
+      rgba[i][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
+      rgba[i][BCOMP] = UBYTE_TO_FLOAT(texel[2]);
+      rgba[i][ACOMP] = UBYTE_TO_FLOAT(texel[3]);
    }
 }
 
@@ -1428,11 +1428,11 @@ sample_lambda_2d(GLcontext *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat) {
-            case MESA_FORMAT_RGB:
+            case MESA_FORMAT_RGB888:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
                break;
-            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + minStart,
                                   NULL, rgba + minStart);
                break;
@@ -1485,11 +1485,11 @@ sample_lambda_2d(GLcontext *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat) {
-            case MESA_FORMAT_RGB:
+            case MESA_FORMAT_RGB888:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
                break;
-            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + magStart,
                                   NULL, rgba + magStart);
                break;
@@ -3137,7 +3137,7 @@ null_sample_func( GLcontext *ctx,
       rgba[i][RCOMP] = 0;
       rgba[i][GCOMP] = 0;
       rgba[i][BCOMP] = 0;
-      rgba[i][ACOMP] = CHAN_MAX;
+      rgba[i][ACOMP] = 1.0;
    }
 }
 
@@ -3189,14 +3189,14 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
                 t->WrapT == GL_REPEAT &&
                 img->_IsPowerOfTwo &&
                 img->Border == 0 &&
-                img->TexFormat == MESA_FORMAT_RGB) {
+                img->TexFormat == MESA_FORMAT_RGB888) {
                return &opt_sample_rgb_2d;
             }
             else if (t->WrapS == GL_REPEAT &&
                      t->WrapT == GL_REPEAT &&
                      img->_IsPowerOfTwo &&
                      img->Border == 0 &&
-                     img->TexFormat == MESA_FORMAT_RGBA) {
+                     img->TexFormat == MESA_FORMAT_RGBA8888) {
                return &opt_sample_rgba_2d;
             }
             else {

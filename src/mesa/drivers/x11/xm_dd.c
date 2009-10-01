@@ -1025,9 +1025,9 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 {
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_ARB:
-         return MESA_FORMAT_RGB;
+         return MESA_FORMAT_RGB888;
       case GL_COMPRESSED_RGBA_ARB:
-         return MESA_FORMAT_RGBA;
+         return MESA_FORMAT_RGBA8888;
       default:
          return _mesa_choose_tex_format(ctx, internalFormat, format, type);
    }

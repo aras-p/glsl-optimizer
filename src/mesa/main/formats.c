@@ -402,54 +402,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 #endif
 
    {
-      MESA_FORMAT_RGBA,
-      GL_RGBA,
-      GL_UNSIGNED_NORMALIZED,    
-      CHAN_BITS, CHAN_BITS, CHAN_BITS, CHAN_BITS,
-      0, 0, 0, 0, 0,
-      1, 1, 4 * CHAN_BITS / 8
-   },
-   {
-      MESA_FORMAT_RGB,
-      GL_RGB,
-      GL_UNSIGNED_NORMALIZED,    
-      CHAN_BITS, CHAN_BITS, CHAN_BITS, 0,
-      0, 0, 0, 0, 0,
-      1, 1, 3 * CHAN_BITS / 8
-   },
-   {
-      MESA_FORMAT_ALPHA,
-      GL_ALPHA,
-      GL_UNSIGNED_NORMALIZED,    
-      0, 0, 0, CHAN_BITS,
-      0, 0, 0, 0, 0,
-      1, 1, 1 * CHAN_BITS / 8
-   },
-   {
-      MESA_FORMAT_LUMINANCE,
-      GL_LUMINANCE,
-      GL_UNSIGNED_NORMALIZED,    
-      0, 0, 0, 0,
-      CHAN_BITS, 0, 0, 0, 0,
-      1, 1, 1 * CHAN_BITS / 8
-   },
-   {
-      MESA_FORMAT_LUMINANCE_ALPHA,
-      GL_LUMINANCE_ALPHA,
-      GL_UNSIGNED_NORMALIZED,    
-      0, 0, 0, CHAN_BITS,
-      CHAN_BITS, 0, 0, 0, 0,
-      1, 1, 2 * CHAN_BITS / 8
-   },
-   {
-      MESA_FORMAT_INTENSITY,
-      GL_INTENSITY,
-      GL_UNSIGNED_NORMALIZED,
-      0, 0, 0, 0,
-      0, CHAN_BITS, 0, 0, 0,
-      1, 1, 1 * CHAN_BITS / 8
-   },
-   {
       MESA_FORMAT_RGBA_FLOAT32,
       GL_RGBA,
       GL_FLOAT,

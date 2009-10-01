@@ -140,7 +140,7 @@ _swrast_culltriangle( GLcontext *ctx,
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
    const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
-   const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
+   const GLubyte *texture = (const GLubyte *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
    if (!rb || !texture) {						\
@@ -149,7 +149,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;								\
-   GLchan rgb[MAX_WIDTH][3];						\
+   GLubyte rgb[MAX_WIDTH][3];						\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -192,7 +192,7 @@ _swrast_culltriangle( GLcontext *ctx,
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
    const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
-   const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
+   const GLubyte *texture = (const GLubyte *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
    if (!rb || !texture) {						\
@@ -201,7 +201,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;				    				\
-   GLchan rgb[MAX_WIDTH][3];						\
+   GLubyte rgb[MAX_WIDTH][3];						\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -1075,7 +1075,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && texImg->_IsPowerOfTwo
              && texImg->Border == 0
              && texImg->Width == texImg->RowStride
-             && (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
+             && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_RGBA8888)
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
              && !swrast->_FogEnabled
@@ -1083,7 +1083,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && ctx->Texture.Unit[0].EnvMode != GL_COMBINE4_NV) {
 	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
 	       if (minFilter == GL_NEAREST
-		   && format == MESA_FORMAT_RGB
+		   && format == MESA_FORMAT_RGB888
 		   && (envMode == GL_REPLACE || envMode == GL_DECAL)
 		   && ((swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)
 			&& ctx->Depth.Func == GL_LESS

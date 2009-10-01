@@ -69,7 +69,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_RGB10_A2:
       case GL_RGBA12:
       case GL_RGBA16:
-         return MESA_FORMAT_RGBA;
       case GL_RGBA8:
          return MESA_FORMAT_RGBA8888;
       case GL_RGB5_A1:
@@ -85,7 +84,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_RGB10:
       case GL_RGB12:
       case GL_RGB16:
-         return MESA_FORMAT_RGB;
       case GL_RGB8:
          return MESA_FORMAT_RGB888;
       case GL_R3_G3_B2:
@@ -100,7 +98,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_ALPHA4:
       case GL_ALPHA12:
       case GL_ALPHA16:
-         return MESA_FORMAT_ALPHA;
       case GL_ALPHA8:
          return MESA_FORMAT_A8;
 
@@ -110,7 +107,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_LUMINANCE4:
       case GL_LUMINANCE12:
       case GL_LUMINANCE16:
-         return MESA_FORMAT_LUMINANCE;
       case GL_LUMINANCE8:
          return MESA_FORMAT_L8;
 
@@ -122,7 +118,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_LUMINANCE12_ALPHA4:
       case GL_LUMINANCE12_ALPHA12:
       case GL_LUMINANCE16_ALPHA16:
-         return MESA_FORMAT_LUMINANCE_ALPHA;
       case GL_LUMINANCE8_ALPHA8:
          return MESA_FORMAT_AL88;
 
@@ -130,7 +125,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_INTENSITY4:
       case GL_INTENSITY12:
       case GL_INTENSITY16:
-         return MESA_FORMAT_INTENSITY;
       case GL_INTENSITY8:
          return MESA_FORMAT_I8;
 
@@ -162,13 +156,13 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
    switch (internalFormat) {
       case GL_COMPRESSED_ALPHA_ARB:
-         return MESA_FORMAT_ALPHA;
+         return MESA_FORMAT_A8;
       case GL_COMPRESSED_LUMINANCE_ARB:
-         return MESA_FORMAT_LUMINANCE;
+         return MESA_FORMAT_L8;
       case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
-         return MESA_FORMAT_LUMINANCE_ALPHA;
+         return MESA_FORMAT_AL88;
       case GL_COMPRESSED_INTENSITY_ARB:
-         return MESA_FORMAT_INTENSITY;
+         return MESA_FORMAT_I8;
       case GL_COMPRESSED_RGB_ARB:
 #if FEATURE_texture_fxt1
          if (ctx->Extensions.TDFX_texture_compression_FXT1)
@@ -179,7 +173,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
              ctx->Extensions.S3_s3tc)
             return MESA_FORMAT_RGB_DXT1;
 #endif
-         return MESA_FORMAT_RGB;
+         return MESA_FORMAT_RGB888;
       case GL_COMPRESSED_RGBA_ARB:
 #if FEATURE_texture_fxt1
          if (ctx->Extensions.TDFX_texture_compression_FXT1)
@@ -190,7 +184,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
              ctx->Extensions.S3_s3tc)
             return MESA_FORMAT_RGBA_DXT3; /* Not rgba_dxt1, see spec */
 #endif
-         return MESA_FORMAT_RGBA;
+         return MESA_FORMAT_RGBA8888;
       default:
          ; /* fallthrough */
    }
@@ -503,25 +497,6 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 0;
       return;
 #endif
-
-   case MESA_FORMAT_RGBA:
-      *datatype = CHAN_TYPE;
-      *comps = 4;
-      return;
-   case MESA_FORMAT_RGB:
-      *datatype = CHAN_TYPE;
-      *comps = 3;
-      return;
-   case MESA_FORMAT_LUMINANCE_ALPHA:
-      *datatype = CHAN_TYPE;
-      *comps = 2;
-      return;
-   case MESA_FORMAT_ALPHA:
-   case MESA_FORMAT_LUMINANCE:
-   case MESA_FORMAT_INTENSITY:
-      *datatype = CHAN_TYPE;
-      *comps = 1;
-      return;
 
    case MESA_FORMAT_RGBA_FLOAT32:
       *datatype = GL_FLOAT;

@@ -1521,11 +1521,11 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
              texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
 
       if (srcImage->_BaseFormat == GL_RGB) {
-         convertFormat = MESA_FORMAT_RGB;
+         convertFormat = MESA_FORMAT_RGB888;
          components = 3;
       }
       else if (srcImage->_BaseFormat == GL_RGBA) {
-         convertFormat = MESA_FORMAT_RGBA;
+         convertFormat = MESA_FORMAT_RGBA8888;
          components = 4;
       }
       else {
