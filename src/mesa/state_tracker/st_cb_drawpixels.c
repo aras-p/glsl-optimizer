@@ -410,7 +410,7 @@ make_texture(struct st_context *st,
        */
       success = _mesa_texstore(ctx, 2,           /* dims */
                                baseFormat,       /* baseInternalFormat */
-                               mformat,          /* gl_texture_format */
+                               mformat,          /* gl_format */
                                dest,             /* dest */
                                0, 0, 0,          /* dstX/Y/Zoffset */
                                transfer->stride, /* dstRowStride, bytes */
