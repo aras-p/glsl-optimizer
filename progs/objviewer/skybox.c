@@ -80,6 +80,10 @@ LoadSkyBoxCubeTexture(const char *filePosX,
    glGenTextures(1, &tex);
    glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
 
+   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+                   GL_LINEAR_MIPMAP_NEAREST);
+
    if (!load(GL_TEXTURE_CUBE_MAP_POSITIVE_X, filePosX, GL_TRUE, GL_TRUE))
       return 0;
    if (!load(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, fileNegX, GL_TRUE, GL_TRUE))
