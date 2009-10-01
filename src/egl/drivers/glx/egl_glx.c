@@ -616,8 +616,7 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-#ifdef GLX_VERSION_1_3
-   if (GLX_dpy->fbconfigs)
+   if (GLX_dpy->have_fbconfig)
       GLX_ctx->context =
          glXCreateNewContext(GLX_dpy->dpy,
                              GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
@@ -625,7 +624,6 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                              GLX_ctx_shared ? GLX_ctx_shared->context : NULL,
                              GL_TRUE);
    else
-#endif
       GLX_ctx->context =
          glXCreateContext(GLX_dpy->dpy,
                           &GLX_dpy->visuals[GLX_egl_config_index(conf)],
@@ -635,15 +633,6 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       free(GLX_ctx);
       return NULL;
    }
-
-#if 1
-   /* (maybe?) need to have a direct rendering context */
-   if (!glXIsDirect(GLX_dpy->dpy, GLX_ctx->context)) {
-      glXDestroyContext(GLX_dpy->dpy, GLX_ctx->context);
-      free(GLX_ctx);
-      return NULL;
-   }
-#endif
 
    return &GLX_ctx->Base;
 }
@@ -670,13 +659,10 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    rdraw = (GLX_rsurf) ? GLX_rsurf->glx_drawable : None;
    cctx = (GLX_ctx) ? GLX_ctx->context : NULL;
 
-#ifdef GLX_VERSION_1_3
-   if (glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx))
-      return EGL_TRUE;
-#endif
-
-   if (ddraw == rdraw && glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx))
-      return EGL_TRUE;
+   if (GLX_dpy->have_make_current_read)
+      return glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
+   else if (ddraw == rdraw)
+      return glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
    return EGL_FALSE;
 }
