@@ -562,7 +562,6 @@ st_TexImage(GLcontext * ctx,
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       /* must be a compressed format */
       texelBytes = 0;
-      texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
 	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
@@ -696,7 +695,7 @@ st_TexImage(GLcontext * ctx,
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
-      if (texImage->IsCompressed) {
+      if (_mesa_is_format_compressed(texImage->TexFormat)) {
          sizeInBytes = texImage->CompressedSize;
          dstRowStride =
             _mesa_compressed_row_stride(texImage->TexFormat, width);
@@ -1823,7 +1822,7 @@ st_finalize_texture(GLcontext *ctx,
    }
 
    /* FIXME: determine format block instead of cpp */
-   if (firstImage->base.IsCompressed) {
+   if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
       cpp = compressed_num_bytes(firstImage->base.TexFormat);
    }
    else {

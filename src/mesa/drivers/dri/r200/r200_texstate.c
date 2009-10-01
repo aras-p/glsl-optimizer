@@ -1504,7 +1504,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 		   | ((firstImage->Height - 1) << R200_PP_TX_HEIGHTMASK_SHIFT));
 
    if ( !t->image_override ) {
-      if (firstImage->IsCompressed)
+      if (_mesa_is_format_compressed(firstImage->TexFormat))
          t->pp_txpitch = (firstImage->Width + 63) & ~(63);
       else
          t->pp_txpitch = ((firstImage->Width * texelBytes) + 63) & ~(63);

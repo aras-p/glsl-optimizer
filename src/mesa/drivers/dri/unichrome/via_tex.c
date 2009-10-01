@@ -696,7 +696,6 @@ static void viaTexImage(GLcontext *ctx,
 
    if (texelBytes == 0) {
       /* compressed format */
-      texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
          ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
                                            texImage->Height, texImage->Depth,
@@ -713,7 +712,7 @@ static void viaTexImage(GLcontext *ctx,
    viaImage->pitchLog2 = logbase2(postConvWidth * texelBytes);
 
    /* allocate memory */
-   if (texImage->IsCompressed)
+   if (_mesa_is_format_compressed(texImage->TexFormat))
       sizeInBytes = texImage->CompressedSize;
    else
       sizeInBytes = postConvWidth * postConvHeight * texelBytes;
@@ -793,7 +792,7 @@ static void viaTexImage(GLcontext *ctx,
       GLint dstRowStride;
       GLboolean success;
 
-      if (texImage->IsCompressed) {
+      if (_mesa_is_format_compressed(texImage->TexFormat)) {
          dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
       }
       else {

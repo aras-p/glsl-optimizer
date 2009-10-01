@@ -125,7 +125,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    }
 
    assert(!intelObj->mt);
-   if (intelImage->base.IsCompressed)
+   if (_mesa_is_format_compressed(intelImage->base.TexFormat))
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat);
 
    texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
@@ -339,7 +339,6 @@ intelTexImage(GLcontext * ctx,
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
-      texImage->IsCompressed = GL_TRUE;
       texImage->CompressedSize =
 	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
@@ -405,7 +404,7 @@ intelTexImage(GLcontext * ctx,
       int comp_byte = 0;
       GLuint texelBytes = _mesa_get_format_bytes(intelImage->base.TexFormat);
       GLenum baseFormat = _mesa_get_format_base_format(intelImage->base.TexFormat);
-      if (intelImage->base.IsCompressed) {
+      if (_mesa_is_format_compressed(intelImage->base.TexFormat)) {
 	 comp_byte =
 	    intel_compressed_num_bytes(intelImage->base.TexFormat);
       }
@@ -494,7 +493,7 @@ intelTexImage(GLcontext * ctx,
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
-      if (texImage->IsCompressed) {
+      if (_mesa_is_format_compressed(texImage->TexFormat)) {
          sizeInBytes = texImage->CompressedSize;
          dstRowStride =
             _mesa_compressed_row_stride(texImage->TexFormat, width);

@@ -191,7 +191,6 @@ tdfxGenerateMipmap(GLcontext *ctx, GLenum target,
 
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-   assert(!texImage->IsCompressed);
 
    mml = TDFX_TEXIMAGE_DATA(texImage);
 
@@ -1233,7 +1232,7 @@ adjust2DRatio (GLcontext *ctx,
    GLvoid *tempImage;
    GLuint dstImageOffsets = 0;
 
-   if (!texImage->IsCompressed) {
+   if (!_mesa_is_format_compressed(texImage->TexFormat)) {
       GLubyte *destAddr;
 
       tempImage = MALLOC(width * height * texelBytes);
@@ -1366,7 +1365,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
      * be correct, since it would mess with "compressedSize".
      * Ditto for GL_RGBA[4]_S3TC, which is always mapped to DXT3.
      */
-    if (texImage->IsCompressed) {
+    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       switch (internalFormat) {
       case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
       case GL_RGB_S3TC:
@@ -1393,7 +1392,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
        }
        if (texNapalm) {
           texImage->InternalFormat = internalFormat = texNapalm;
-          texImage->IsCompressed = GL_TRUE;
+          _mesa_is_format_compressed(texImage->TexFormat) = GL_TRUE;
        }
     }
 #endif
@@ -1409,7 +1408,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     texImage->FetchTexelc = fxFetchFunction(mesaFormat);
     texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
-    if (texImage->IsCompressed) {
+    if (_mesa_is_format_compressed(texImage->TexFormat)) {
        texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
                                                         	mml->width,
                                                         	mml->height,
@@ -1492,7 +1491,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     assert(texImage->_BaseFormat);
 
     texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-    if (texImage->IsCompressed) {
+    if (_mesa_is_format_compressed(texImage->TexFormat)) {
        dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, mml->width);
     } else {
        dstRowStride = mml->width * texelBytes;
@@ -1593,8 +1592,6 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
        _mesa_problem(NULL, "tdfx: unsupported texture in tdfxCompressedTexImg()\n");
        return;
     }
-
-    assert(texImage->IsCompressed);
 
     ti = TDFX_TEXTURE_DATA(texObj);
     if (!ti) {

@@ -1234,7 +1234,7 @@ adjust2DRatio (GLcontext *ctx,
    const GLint newHeight = height * mml->hScale;
    GLvoid *tempImage;
 
-   if (!texImage->IsCompressed) {
+   if (!_mesa_is_format_compressed(texImage->TexFormat)) {
       GLubyte *destAddr;
 
       tempImage = MALLOC(width * height * texelBytes);
@@ -1353,7 +1353,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 #if FX_COMPRESS_S3TC_AS_FXT1_HACK
    /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
-   if (!ctx->Mesa_DXTn && texImage->IsCompressed) {
+   if (!ctx->Mesa_DXTn && _mesa_is_format_compressed(texImage->TexFormat)) {
      switch (internalFormat) {
      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
      case GL_RGB_S3TC:
@@ -1380,7 +1380,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       }
       if (texNapalm) {
          texImage->InternalFormat = internalFormat = texNapalm;
-         texImage->IsCompressed = GL_TRUE;
       }
    }
 #endif
@@ -1397,7 +1396,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
    /* allocate mipmap buffer */
    assert(!texImage->Data);
-   if (texImage->IsCompressed) {
+   if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
                                                                mml->width,
                                                                mml->height,
@@ -1451,7 +1450,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
          const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
 
-         assert(!texImage->IsCompressed);
+         assert(!_mesa_is_format_compressed(texImage->TexFormat));
 
          while (level < texObj->MaxLevel && level < maxLevels - 1) {
             mipWidth = width / 2;
@@ -1523,7 +1522,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->_BaseFormat);
 
    texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
-   if (texImage->IsCompressed) {
+   if (_mesa_is_format_compressed(texImage->TexFormat)) {
       dstRowStride = _mesa_compressed_row_stride(texImage->InternalFormat, mml->width);
    } else {
       dstRowStride = mml->width * texelBytes;
@@ -1564,7 +1563,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
 
-      assert(!texImage->IsCompressed);
+      assert(!_mesa_is_format_compressed(texImage->TexFormat));
 
       width = texImage->Width;
       height = texImage->Height;
@@ -1620,7 +1619,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
                        width, height);
    }
 
-   assert(texImage->IsCompressed);
+   assert(_mesa_is_format_compressed(texImage->TexFormat));
 
    if (!fxIsTexSupported(target, internalFormat, texImage)) {
       _mesa_problem(NULL, "fx Driver: unsupported texture in fxDDCompressedTexImg()\n");
@@ -1712,7 +1711,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      assert(!texImage->IsCompressed);
+      assert(!_mesa_is_format_compressed(texImage->TexFormat));
    }
 
    fxTexInvalidate(ctx, texObj);
@@ -1777,7 +1776,7 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      assert(!texImage->IsCompressed);
+      assert(!_mesa_is_format_compressed(texImage->TexFormat));
    }
 
    if (ti->validated && ti->isInTM)

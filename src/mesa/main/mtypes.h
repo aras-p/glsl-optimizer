@@ -1173,7 +1173,6 @@ struct gl_texture_image
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
 
-   GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
    GLuint CompressedSize;	/**< GL_ARB_texture_compression */
 
    GLuint RowStride;		/**< Padded width in units of texels */

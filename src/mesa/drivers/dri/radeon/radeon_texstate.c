@@ -81,8 +81,10 @@ struct tx_table {
    GLuint format, filter;
 };
 
+/* XXX verify this table against MESA_FORMAT_x values */
 static const struct tx_table tx_table[] =
 {
+   0, /* MESA_FORMAT_NONE */
    _ALPHA(RGBA8888),
    _ALPHA_REV(RGBA8888),
    _ALPHA(ARGB8888),
@@ -1083,7 +1085,7 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 		   | ((firstImage->Height - 1) << RADEON_TEX_VSIZE_SHIFT));
 
    if ( !t->image_override ) {
-      if (firstImage->IsCompressed)
+      if (_mesa_is_format_compressed(firstImage->TexFormat))
          t->pp_txpitch = (firstImage->Width + 63) & ~(63);
       else
          t->pp_txpitch = ((firstImage->Width * texelBytes) + 63) & ~(63);

@@ -903,7 +903,6 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->TexFormat = MESA_FORMAT_NONE;
    img->FetchTexelc = NULL;
    img->FetchTexelf = NULL;
-   img->IsCompressed = 0;
    img->CompressedSize = 0;
 }
 
@@ -967,7 +966,6 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
 
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
 
-   img->IsCompressed = GL_FALSE;
    img->CompressedSize = 0;
 
    if ((width == 1 || _mesa_is_pow_two(img->Width2)) &&
@@ -1589,7 +1587,7 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
    }
 #endif
 
-   if (destTex->IsCompressed) {
+   if (_mesa_is_format_compressed(destTex->TexFormat)) {
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glTexSubImage%D(target)", dimensions);
@@ -1951,7 +1949,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-   if (teximage->IsCompressed) {
+   if (_mesa_is_format_compressed(teximage->TexFormat)) {
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexSubImage%d(target)", dimensions);

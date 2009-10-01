@@ -1511,7 +1511,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    ASSERT(maxLevels > 0);  /* bad target */
 
    /* Find convertFormat - the format that do_row() will process */
-   if (srcImage->IsCompressed) {
+   if (_mesa_is_format_compressed(srcImage->TexFormat)) {
       /* setup for compressed textures */
       GLuint row;
       GLint  components, size;
@@ -1589,7 +1589,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                                          &dstWidth, &dstHeight, &dstDepth);
       if (!nextLevel) {
          /* all done */
-         if (srcImage->IsCompressed) {
+         if (_mesa_is_format_compressed(srcImage->TexFormat)) {
             _mesa_free((void *) srcData);
             _mesa_free(dstData);
          }
@@ -1614,8 +1614,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexelc = srcImage->FetchTexelc;
       dstImage->FetchTexelf = srcImage->FetchTexelf;
-      dstImage->IsCompressed = srcImage->IsCompressed;
-      if (dstImage->IsCompressed) {
+      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
          dstImage->CompressedSize
             = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
                                               dstImage->Height,
@@ -1631,7 +1630,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       /* Alloc new teximage data buffer.
        * Setup src and dest data pointers.
        */
-      if (dstImage->IsCompressed) {
+      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
          dstImage->Data = _mesa_alloc_texmemory(dstImage->CompressedSize);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
@@ -1661,7 +1660,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                                   dstData, dstImage->RowStride);
 
 
-      if (dstImage->IsCompressed) {
+      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
          GLubyte *temp;
          /* compress image from dstData into dstImage->Data */
          const GLenum srcFormat = _mesa_get_format_base_format(convertFormat);

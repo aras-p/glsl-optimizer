@@ -567,7 +567,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
       if (texImage) {
-         if (texImage->IsCompressed) {
+         if (_mesa_is_format_compressed(texImage->TexFormat)) {
             /* this typically calls _mesa_get_compressed_teximage() */
             ctx->Driver.GetCompressedTexImage(ctx, target, level, img,
                                               texObj, texImage);
