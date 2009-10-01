@@ -726,8 +726,10 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
     if (ms->exa)
 	xorg_exa_close(pScrn);
 
+    if (ms->api->destroy)
 	ms->api->destroy(ms->api);
-	ms->api = NULL;
+    ms->api = NULL;
+
     drmClose(ms->fd);
     ms->fd = -1;
 
