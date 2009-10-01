@@ -1956,6 +1956,9 @@ save_Fogiv(GLenum pname, const GLint *params)
    case GL_FOG_END:
    case GL_FOG_INDEX:
       p[0] = (GLfloat) *params;
+      p[1] = 0.0f;
+      p[2] = 0.0f;
+      p[3] = 0.0f;
       break;
    case GL_FOG_COLOR:
       p[0] = INT_TO_FLOAT(params[0]);
@@ -2244,6 +2247,9 @@ save_LightModeliv(GLenum pname, const GLint *params)
    case GL_LIGHT_MODEL_TWO_SIDE:
    case GL_LIGHT_MODEL_COLOR_CONTROL:
       fparam[0] = (GLfloat) params[0];
+      fparam[1] = 0.0F;
+      fparam[2] = 0.0F;
+      fparam[3] = 0.0F;
       break;
    default:
       /* Error will be caught later in gl_LightModelfv */
