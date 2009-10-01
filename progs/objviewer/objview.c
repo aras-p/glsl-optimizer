@@ -148,7 +148,7 @@ init_model(void)
    glmFacetNormals(Model);
    if (Model->numnormals == 0) {
       GLfloat smoothing_angle = 90.0;
-      printf("Generating normals.");
+      printf("Generating normals.\n");
       glmVertexNormals(Model, smoothing_angle);
    }
 
@@ -432,6 +432,32 @@ Motion(int x, int y)
 }
 
 
+static void
+DoFeatureChecks(void)
+{
+   char *version = (char *) glGetString(GL_VERSION);
+   if (version[0] == '1') {
+      /* check for individual extensions */
+      if (!glutExtensionSupported("GL_ARB_texture_cube_map")) {
+         printf("Sorry, GL_ARB_texture_cube_map is required.\n");
+         exit(1);
+      }
+      if (!glutExtensionSupported("GL_ARB_vertex_shader")) {
+         printf("Sorry, GL_ARB_vertex_shader is required.\n");
+         exit(1);
+      }
+      if (!glutExtensionSupported("GL_ARB_fragment_shader")) {
+         printf("Sorry, GL_ARB_fragment_shader is required.\n");
+         exit(1);
+      }
+      if (!glutExtensionSupported("GL_ARB_vertex_buffer_object")) {
+         printf("Sorry, GL_ARB_vertex_buffer_object is required.\n");
+         exit(1);
+      }
+   }
+}
+
+
 int
 main(int argc, char** argv)
 {
@@ -451,6 +477,8 @@ main(int argc, char** argv)
    glutCreateWindow("objview");
 
    glewInit();
+
+   DoFeatureChecks();
 
    glutReshapeFunc(reshape);
    glutDisplayFunc(display);
