@@ -202,6 +202,10 @@ extern void
 _mesa_format_to_type_and_comps2(gl_format format,
                                 GLenum *datatype, GLuint *comps);
 
+extern GLuint
+_mesa_format_image_size(gl_format format, GLsizei width,
+                        GLsizei height, GLsizei depth);
+
 extern void
 _mesa_test_formats(void);
 

@@ -594,6 +594,33 @@ _mesa_is_format_compressed(gl_format format)
 
 
 /**
+ * Return number of bytes needed to store an image of the given size
+ * in the given format.
+ */
+GLuint
+_mesa_format_image_size(gl_format format, GLsizei width,
+                        GLsizei height, GLsizei depth)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   if (info->BlockWidth > 1 || info->BlockHeight > 1) {
+      /* compressed format */
+      const GLuint bw = info->BlockWidth, bh = info->BlockHeight;
+      const GLuint wblocks = (width + bw - 1) / bw;
+      const GLuint hblocks = (height + bh - 1) / bh;
+      const GLuint sz  = wblocks * hblocks * info->BytesPerBlock;
+      return sz;
+   }
+   else {
+      /* non-compressed */
+      const GLuint sz = width * height * depth * info->BytesPerBlock;
+      return sz;
+   }
+}
+
+
+
+
+/**
  * Do sanity checking of the format info table.
  */
 void
