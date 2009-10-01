@@ -292,6 +292,9 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
             return R300_COLOR_FORMAT_ARGB4444;
         /* 32-bit buffers */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_COLOR_FORMAT_ARGB8888;
         /* XXX Not in pipe_format
@@ -338,10 +341,16 @@ static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
 {
     switch (format) {
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_US_OUT_FMT_C4_8 |
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+            return R300_US_OUT_FMT_C4_8 |
+                R300_C0_SEL_A | R300_C1_SEL_B |
+                R300_C2_SEL_G | R300_C3_SEL_R;
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported output format %s in %s\n",
