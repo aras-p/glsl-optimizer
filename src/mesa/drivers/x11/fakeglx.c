@@ -2477,9 +2477,9 @@ Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
       break;
    case GLX_RENDER_TYPE:
       if (xmctx->xm_visual->mesa_visual.rgbMode)
-         *value = GLX_RGBA_BIT;
+         *value = GLX_RGBA_TYPE;
       else
-         *value = GLX_COLOR_INDEX_BIT;
+         *value = GLX_COLOR_INDEX_TYPE;
       break;
    case GLX_SCREEN:
       *value = 0;

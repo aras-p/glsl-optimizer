@@ -517,6 +517,55 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    brw->state.dirty.cache |= ~0;
 }
 
+/* Clear all entries from the cache that point to the given bo.
+ *
+ * This lets us release memory for reuse earlier for known-dead buffers,
+ * at the cost of walking the entire hash table.
+ */
+void
+brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
+{
+   struct brw_cache_item **prev;
+   GLuint i;
+
+   if (INTEL_DEBUG & DEBUG_STATE)
+      _mesa_printf("%s\n", __FUNCTION__);
+
+   for (i = 0; i < cache->size; i++) {
+      for (prev = &cache->items[i]; *prev;) {
+	 struct brw_cache_item *c = *prev;
+	 int j;
+
+	 for (j = 0; j < c->nr_reloc_bufs; j++) {
+	    if (c->reloc_bufs[j] == bo)
+	       break;
+	 }
+
+	 if (j != c->nr_reloc_bufs) {
+
+	    *prev = c->next;
+
+	    for (j = 0; j < c->nr_reloc_bufs; j++)
+	       dri_bo_unreference(c->reloc_bufs[j]);
+	    dri_bo_unreference(c->bo);
+	    free((void *)c->key);
+	    free(c);
+	    cache->n_items--;
+
+	    /* Delete up the tree.  Notably we're trying to get from
+	     * a request to delete the surface, to deleting the surface state
+	     * object, to deleting the binding table.  We're slack and restart
+	     * the deletion process when we do this because the other delete
+	     * may kill our *prev.
+	     */
+	    brw_state_cache_bo_delete(cache, c->bo);
+	    prev = &cache->items[i];
+	 } else {
+	    prev = &(*prev)->next;
+	 }
+      }
+   }
+}
 
 void
 brw_state_cache_check_size(struct brw_context *brw)

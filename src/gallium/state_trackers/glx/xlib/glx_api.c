@@ -1538,9 +1538,9 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          if (!fbconfig)
             return GLX_BAD_ATTRIBUTE;
          if (xmvis->mesa_visual.rgbMode)
-            *value = GLX_RGBA_BIT;
+            *value = GLX_RGBA_TYPE;
          else
-            *value = GLX_COLOR_INDEX_BIT;
+            *value = GLX_COLOR_INDEX_TYPE;
          break;
       case GLX_X_RENDERABLE_SGIX:
          if (!fbconfig)
@@ -2120,9 +2120,9 @@ glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
       break;
    case GLX_RENDER_TYPE:
       if (xmctx->xm_visual->mesa_visual.rgbMode)
-         *value = GLX_RGBA_BIT;
+         *value = GLX_RGBA_TYPE;
       else
-         *value = GLX_COLOR_INDEX_BIT;
+         *value = GLX_COLOR_INDEX_TYPE;
       break;
    case GLX_SCREEN:
       *value = 0;

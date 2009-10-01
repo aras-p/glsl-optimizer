@@ -939,7 +939,7 @@ _mesa_execute_program(GLcontext * ctx,
 	    /* The fast LOG2 macro doesn't meet the precision requirements.
 	     */
             if (a[0] == 0.0F) {
-               val = 0.0F;
+               val = -FLT_MAX;
             }
             else {
                val = log(a[0]) * 1.442695F;
