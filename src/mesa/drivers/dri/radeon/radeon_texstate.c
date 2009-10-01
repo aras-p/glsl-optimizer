@@ -84,7 +84,7 @@ struct tx_table {
 /* XXX verify this table against MESA_FORMAT_x values */
 static const struct tx_table tx_table[] =
 {
-   0, /* MESA_FORMAT_NONE */
+   _INVALID(NONE), /* MESA_FORMAT_NONE */
    _ALPHA(RGBA8888),
    _ALPHA_REV(RGBA8888),
    _ALPHA(ARGB8888),
