@@ -252,7 +252,6 @@ void
 glmDrawVBO(GLMmodel *model)
 {
    GLMgroup* group;
-   int mode = GLM_MATERIAL;
 
    assert(model->vbo);
 
@@ -279,38 +278,14 @@ glmDrawVBO(GLMmodel *model)
    glScalef(model->scale, model->scale, model->scale);
 
    for (group = model->groups; group; group = group->next) {
-      if (0&&strcmp(group->name, "Fuselage") != 0)
-         continue;
-
       if (group->numtriangles > 0) {
 
-         if (model->materials && (mode & GLM_MATERIAL)) {
-#if 0
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, 
-                         model->materials[group->material].ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, 
-                         model->materials[group->material].diffuse);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, 
-                         model->materials[group->material].specular);
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 
-                        model->materials[group->material].shininess);
-#else
-            glmShaderMaterial(&model->materials[group->material]);
-#endif
-         }
+         glmShaderMaterial(&model->materials[group->material]);
 
-
-#if 0
-         glDrawElements(GL_TRIANGLES, 3 * group->numtriangles,
-                        GL_UNSIGNED_INT, group->triIndexes);
-#else
          glDrawRangeElements(GL_TRIANGLES,
                              group->minIndex, group->maxIndex,
                              3 * group->numtriangles,
                              GL_UNSIGNED_INT, group->triIndexes);
-#endif
-
-         glDisable(GL_BLEND);
       }
    }
 
