@@ -37,7 +37,6 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <GL/glx.h>
-#include <dlfcn.h>
 
 #include "eglconfigutil.h"
 #include "eglconfig.h"
@@ -902,21 +901,7 @@ GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 static _EGLProc
 GLX_eglGetProcAddress(const char *procname)
 {
-   /* This is a bit of a hack to get at the gallium/Mesa state tracker
-    * function st_get_proc_address().  This will probably change at
-    * some point.
-    */
-   _EGLProc (*get_proc_addr)(const char *procname);
-   _EGLProc proc_addr;
-   get_proc_addr = dlsym(NULL, "st_get_proc_address");
-   if (get_proc_addr)
-      return get_proc_addr(procname);
-
-   proc_addr = glXGetProcAddress((const GLubyte *)procname);
-   if (proc_addr)
-      return proc_addr;
-
-   return (_EGLProc)dlsym(NULL, procname);
+   return (_EGLProc) glXGetProcAddress((const GLubyte *) procname);
 }
 
 
