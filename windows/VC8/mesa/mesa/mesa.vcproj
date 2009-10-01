@@ -1888,7 +1888,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\texformat_tmp.h"
+				RelativePath="..\..\..\..\src\mesa\main\texfetch_tmp.h"
 				>
 			</File>
 			<File

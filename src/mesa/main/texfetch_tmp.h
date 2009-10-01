@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.7
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
- * Copyright (c) 2008 VMware, Inc.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008-2009  VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,17 +25,15 @@
 
 
 /**
- * \file texformat_tmp.h
+ * \file texfetch_tmp.h
  * Texel fetch functions template.
  * 
- * This template file is used by texformat.c to generate texel fetch functions
+ * This template file is used by texfetch.c to generate texel fetch functions
  * for 1-D, 2-D and 3-D texture images. 
  *
  * It should be expanded by defining \p DIM as the number texture dimensions
  * (1, 2 or 3).  According to the value of \p DIM a series of macros is defined
  * for the texel lookup in the gl_texture_image::Data.
- * 
- * \sa texformat.c and FetchTexel.
  * 
  * \author Gareth Hughes
  * \author Brian Paul

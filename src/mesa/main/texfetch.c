@@ -77,13 +77,13 @@ nonlinear_to_linear(GLubyte cs8)
 /* Texel fetch routines for all supported formats
  */
 #define DIM 1
-#include "texformat_tmp.h"
+#include "texfetch_tmp.h"
 
 #define DIM 2
-#include "texformat_tmp.h"
+#include "texfetch_tmp.h"
 
 #define DIM 3
-#include "texformat_tmp.h"
+#include "texfetch_tmp.h"
 
 /**
  * Null texel fetch function.
