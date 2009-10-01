@@ -1351,9 +1351,9 @@ opt_sample_rgb_2d(GLcontext *ctx,
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
       GLubyte *texel = ((GLubyte *) img->Data) + 3*pos;
-      rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[0]);
+      rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[2]);
       rgba[k][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
-      rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[2]);
+      rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[0]);
    }
 }
 
@@ -1392,10 +1392,10 @@ opt_sample_rgba_2d(GLcontext *ctx,
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
       const GLubyte *texel = ((GLubyte *) img->Data) + (pos << 2);    /* pos*4 */
-      rgba[i][RCOMP] = UBYTE_TO_FLOAT(texel[0]);
-      rgba[i][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
-      rgba[i][BCOMP] = UBYTE_TO_FLOAT(texel[2]);
-      rgba[i][ACOMP] = UBYTE_TO_FLOAT(texel[3]);
+      rgba[i][RCOMP] = UBYTE_TO_FLOAT(texel[3]);
+      rgba[i][GCOMP] = UBYTE_TO_FLOAT(texel[2]);
+      rgba[i][BCOMP] = UBYTE_TO_FLOAT(texel[1]);
+      rgba[i][ACOMP] = UBYTE_TO_FLOAT(texel[0]);
    }
 }
 

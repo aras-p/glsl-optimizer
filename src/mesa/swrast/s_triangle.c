@@ -276,25 +276,29 @@ affine_span(GLcontext *ctx, SWspan *span,
     * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
     */
 
-#define NEAREST_RGB			\
-   sample[RCOMP] = tex00[RCOMP];	\
-   sample[GCOMP] = tex00[GCOMP];	\
-   sample[BCOMP] = tex00[BCOMP];	\
-   sample[ACOMP] = CHAN_MAX
-
-#define LINEAR_RGB							\
-   sample[RCOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0]);\
-   sample[GCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
-   sample[BCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
+#define NEAREST_RGB		\
+   sample[RCOMP] = tex00[2];	\
+   sample[GCOMP] = tex00[1];	\
+   sample[BCOMP] = tex00[0];	\
    sample[ACOMP] = CHAN_MAX;
 
-#define NEAREST_RGBA  COPY_CHAN4(sample, tex00)
+#define LINEAR_RGB							\
+   sample[RCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
+   sample[GCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
+   sample[BCOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0]);\
+   sample[ACOMP] = CHAN_MAX;
+
+#define NEAREST_RGBA  \
+   sample[RCOMP] = tex00[3];	\
+   sample[GCOMP] = tex00[2];	\
+   sample[BCOMP] = tex00[1];	\
+   sample[ACOMP] = tex00[0];
 
 #define LINEAR_RGBA							\
-   sample[RCOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0]);\
-   sample[GCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
-   sample[BCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
-   sample[ACOMP] = ilerp_2d(sf, tf, tex00[3], tex01[3], tex10[3], tex11[3])
+   sample[RCOMP] = ilerp_2d(sf, tf, tex00[3], tex01[3], tex10[3], tex11[3]);\
+   sample[GCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
+   sample[BCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
+   sample[ACOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0])
 
 #define MODULATE							  \
    dest[RCOMP] = span->red   * (sample[RCOMP] + 1u) >> (FIXED_SHIFT + 8); \
@@ -345,7 +349,11 @@ affine_span(GLcontext *ctx, SWspan *span,
    dest[2] = sample[2];			\
    dest[3] = FixedToInt(span->alpha);
 
-#define NEAREST_RGBA_REPLACE  COPY_CHAN4(dest, tex00)
+#define NEAREST_RGBA_REPLACE  \
+   dest[RCOMP] = tex00[3]; \
+   dest[GCOMP] = tex00[2]; \
+   dest[BCOMP] = tex00[1]; \
+   dest[ACOMP] = tex00[0]
 
 #define SPAN_NEAREST(DO_TEX, COMPS)					\
 	for (i = 0; i < span->end; i++) {				\
@@ -406,7 +414,7 @@ affine_span(GLcontext *ctx, SWspan *span,
    switch (info->filter) {
    case GL_NEAREST:
       switch (info->format) {
-      case GL_RGB:
+      case MESA_FORMAT_RGB888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
@@ -426,7 +434,7 @@ affine_span(GLcontext *ctx, SWspan *span,
             return;
          }
          break;
-      case GL_RGBA:
+      case MESA_FORMAT_RGBA8888:
          switch(info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
@@ -455,7 +463,7 @@ affine_span(GLcontext *ctx, SWspan *span,
       span->intTex[0] -= FIXED_HALF;
       span->intTex[1] -= FIXED_HALF;
       switch (info->format) {
-      case GL_RGB:
+      case MESA_FORMAT_RGB888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
@@ -475,7 +483,7 @@ affine_span(GLcontext *ctx, SWspan *span,
             return;
          }
          break;
-      case GL_RGBA:
+      case MESA_FORMAT_RGBA8888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
@@ -537,7 +545,7 @@ affine_span(GLcontext *ctx, SWspan *span,
    info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->_BaseFormat;				\
+   info.format = obj->Image[0][b]->TexFormat;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
    span.arrayMask |= SPAN_RGBA;						\
@@ -555,18 +563,18 @@ affine_span(GLcontext *ctx, SWspan *span,
    }									\
 									\
    switch (info.format) {						\
-   case GL_ALPHA:							\
-   case GL_LUMINANCE:							\
-   case GL_INTENSITY:							\
+   case MESA_FORMAT_A8:							\
+   case MESA_FORMAT_L8:							\
+   case MESA_FORMAT_I8:							\
       info.tbytesline = obj->Image[0][b]->Width;			\
       break;								\
-   case GL_LUMINANCE_ALPHA:						\
+   case MESA_FORMAT_AL88:						\
       info.tbytesline = obj->Image[0][b]->Width * 2;			\
       break;								\
-   case GL_RGB:								\
+   case MESA_FORMAT_RGB888:						\
       info.tbytesline = obj->Image[0][b]->Width * 3;			\
       break;								\
-   case GL_RGBA:							\
+   case MESA_FORMAT_RGBA8888:						\
       info.tbytesline = obj->Image[0][b]->Width * 4;			\
       break;								\
    default:								\
@@ -680,7 +688,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    switch (info->filter) {
    case GL_NEAREST:
       switch (info->format) {
-      case GL_RGB:
+      case MESA_FORMAT_RGB888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
@@ -700,7 +708,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
             return;
          }
          break;
-      case GL_RGBA:
+      case MESA_FORMAT_RGBA8888:
          switch(info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
@@ -727,7 +735,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
    case GL_LINEAR:
       switch (info->format) {
-      case GL_RGB:
+      case MESA_FORMAT_RGB888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
@@ -747,7 +755,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
             return;
          }
          break;
-      case GL_RGBA:
+      case MESA_FORMAT_RGBA8888:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
@@ -806,7 +814,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->_BaseFormat;				\
+   info.format = obj->Image[0][b]->TexFormat;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
 									\
@@ -823,18 +831,18 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    }									\
 									\
    switch (info.format) {						\
-   case GL_ALPHA:							\
-   case GL_LUMINANCE:							\
-   case GL_INTENSITY:							\
+   case MESA_FORMAT_A8:							\
+   case MESA_FORMAT_L8:							\
+   case MESA_FORMAT_I8:							\
       info.tbytesline = obj->Image[0][b]->Width;			\
       break;								\
-   case GL_LUMINANCE_ALPHA:						\
+   case MESA_FORMAT_AL88:						\
       info.tbytesline = obj->Image[0][b]->Width * 2;			\
       break;								\
-   case GL_RGB:								\
+   case MESA_FORMAT_RGB888:						\
       info.tbytesline = obj->Image[0][b]->Width * 3;			\
       break;								\
-   case GL_RGBA:							\
+   case MESA_FORMAT_RGBA8888:						\
       info.tbytesline = obj->Image[0][b]->Width * 4;			\
       break;								\
    default:								\
