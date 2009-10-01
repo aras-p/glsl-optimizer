@@ -598,15 +598,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* viewport state: viewport matching window dims */
    {
-      const float width = (float) ctx->DrawBuffer->Width;
-      const float height = (float) ctx->DrawBuffer->Height;
+      const float w = (float) ctx->DrawBuffer->Width;
+      const float h = (float) ctx->DrawBuffer->Height;
       struct pipe_viewport_state vp;
-      vp.scale[0] =  0.5f * width;
-      vp.scale[1] = -0.5f * height;
+      vp.scale[0] =  0.5f * w;
+      vp.scale[1] = -0.5f * h;
       vp.scale[2] = 1.0f;
       vp.scale[3] = 1.0f;
-      vp.translate[0] = 0.5f * width;
-      vp.translate[1] = 0.5f * height;
+      vp.translate[0] = 0.5f * w;
+      vp.translate[1] = 0.5f * h;
       vp.translate[2] = 0.0f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
