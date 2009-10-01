@@ -1427,6 +1427,7 @@ set_vertex_data(struct gen_mipmap_state *ctx,
             rz = -1.0f;
             break;
          default:
+            rx = ry = rz = 0.0f;
             assert(0);
          }
 
