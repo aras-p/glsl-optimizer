@@ -206,6 +206,10 @@ extern GLuint
 _mesa_format_image_size(gl_format format, GLsizei width,
                         GLsizei height, GLsizei depth);
 
+extern GLint
+_mesa_format_row_stride(gl_format format, GLsizei width);
+
+
 extern void
 _mesa_test_formats(void);
 

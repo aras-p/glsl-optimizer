@@ -602,12 +602,13 @@ _mesa_format_image_size(gl_format format, GLsizei width,
                         GLsizei height, GLsizei depth)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
+   /* Strictly speaking, a conditional isn't needed here */
    if (info->BlockWidth > 1 || info->BlockHeight > 1) {
       /* compressed format */
       const GLuint bw = info->BlockWidth, bh = info->BlockHeight;
       const GLuint wblocks = (width + bw - 1) / bw;
       const GLuint hblocks = (height + bh - 1) / bh;
-      const GLuint sz  = wblocks * hblocks * info->BytesPerBlock;
+      const GLuint sz = wblocks * hblocks * info->BytesPerBlock;
       return sz;
    }
    else {
@@ -617,6 +618,25 @@ _mesa_format_image_size(gl_format format, GLsizei width,
    }
 }
 
+
+
+GLint
+_mesa_format_row_stride(gl_format format, GLsizei width)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   /* Strictly speaking, a conditional isn't needed here */
+   if (info->BlockWidth > 1 || info->BlockHeight > 1) {
+      /* compressed format */
+      const GLuint bw = info->BlockWidth;
+      const GLuint wblocks = (width + bw - 1) / bw;
+      const GLint stride = wblocks * info->BytesPerBlock;
+      return stride;
+   }
+   else {
+      const GLint stride = width * info->BytesPerBlock;
+      return stride;
+   }
+}
 
 
 
