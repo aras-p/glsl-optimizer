@@ -197,7 +197,6 @@ struct pipe_depth_state
    unsigned enabled:1;         /**< depth test enabled? */
    unsigned writemask:1;       /**< allow depth buffer writes? */
    unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
-   unsigned occlusion_count:1; /**< do occlusion counting? */
 };
 
 

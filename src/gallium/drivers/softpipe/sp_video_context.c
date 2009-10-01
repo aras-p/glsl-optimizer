@@ -167,7 +167,6 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    dsa.depth.enabled = 0;
    dsa.depth.writemask = 0;
    dsa.depth.func = PIPE_FUNC_ALWAYS;
-   dsa.depth.occlusion_count = 0;
    for (i = 0; i < 2; ++i) {
       dsa.stencil[i].enabled = 0;
       dsa.stencil[i].func = PIPE_FUNC_ALWAYS;

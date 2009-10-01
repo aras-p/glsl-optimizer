@@ -210,7 +210,4 @@ lp_build_depth_test(LLVMBuilderRef builder,
       dst = lp_build_select(&bld, z_bitmask, src, dst);
       LLVMBuildStore(builder, dst, dst_ptr);
    }
-
-   /* FIXME */
-   assert(!state->occlusion_count);
 }
