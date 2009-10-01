@@ -142,7 +142,7 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
-
+   ctx->Const.MaxVarying = I915_TEX_UNITS;
 
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:
