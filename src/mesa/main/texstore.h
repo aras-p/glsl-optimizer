@@ -83,10 +83,6 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 
 
 extern void
-_mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims);
-
-
-extern void
 _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint border,

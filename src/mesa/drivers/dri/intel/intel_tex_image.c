@@ -7,6 +7,7 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/texcompress.h"
+#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"

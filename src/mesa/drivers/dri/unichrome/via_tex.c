@@ -37,6 +37,7 @@
 #include "main/mipmap.h"
 #include "main/simple_list.h"
 #include "main/texcompress.h"
+#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
