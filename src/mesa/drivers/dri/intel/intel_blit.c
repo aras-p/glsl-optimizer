@@ -371,8 +371,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
       skipBuffers = BUFFER_BIT_STENCIL;
    }
 
-   /* XXX Move this flush/lock into the following conditional? */
-   intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
