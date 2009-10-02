@@ -863,7 +863,7 @@ unbind_texobj_from_texunits(GLcontext *ctx, struct gl_texture_object *texObj)
       for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
          if (texObj == unit->CurrentTex[tex]) {
             _mesa_reference_texobj(&unit->CurrentTex[tex],
-                                   ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
+                                   ctx->Shared->DefaultTex[tex]);
             ASSERT(unit->CurrentTex[tex]);
             break;
          }
