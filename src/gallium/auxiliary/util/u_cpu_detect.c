@@ -268,7 +268,7 @@ static void check_os_katmai_support(void)
 	 * and therefore to be safe I'm going to leave this test in here.
 	 */
 	if (__cpu_detect_caps.hasSSE) {
-		//      test_os_katmai_exception_support();
+           /* test_os_katmai_exception_support(); */
 	}
 
 	/* Restore the original signal handlers.

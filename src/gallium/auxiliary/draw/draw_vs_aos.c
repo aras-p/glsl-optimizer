@@ -891,7 +891,7 @@ static void x87_emit_ex2( struct aos_compilation *cp )
    struct x86_reg st1 = x86_make_reg(file_x87, 1);
    int stack = cp->func->x87_stack;
 
-//   set_fpu_round_neg_inf( cp );
+   /* set_fpu_round_neg_inf( cp ); */
 
    x87_fld(cp->func, st0);      /* a a */
    x87_fprndint( cp->func );	/* int(a) a*/
@@ -1759,14 +1759,14 @@ emit_instruction( struct aos_compilation *cp,
       return emit_SUB(cp, inst);
  
    case TGSI_OPCODE_LRP:
-//      return emit_LERP(cp, inst);
+      /*return emit_LERP(cp, inst);*/
       return FALSE;
 
    case TGSI_OPCODE_FRC:
       return emit_FRC(cp, inst);
 
    case TGSI_OPCODE_CLAMP:
-//      return emit_CLAMP(cp, inst);
+      /*return emit_CLAMP(cp, inst);*/
       return FALSE;
 
    case TGSI_OPCODE_FLR:

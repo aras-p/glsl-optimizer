@@ -584,7 +584,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    }
 
 #ifdef DEBUG
-   //assert(!fenced_list->numUnfenced);
+   /*assert(!fenced_list->numUnfenced);*/
 #endif
       
    pipe_mutex_unlock(fenced_list->mutex);
