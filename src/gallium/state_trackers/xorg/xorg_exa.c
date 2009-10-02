@@ -202,7 +202,7 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
     if (!priv->tex)
 	return FALSE;
 
-    if (priv->map_count++ == 0)
+    if (priv->map_count == 0)
     {
 	if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
 	    PIPE_REFERENCED_FOR_WRITE)
@@ -210,13 +210,20 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
 	priv->map_transfer =
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+#ifdef EXA_MIXED_PIXMAPS
+					PIPE_TRANSFER_MAP_DIRECTLY |
+#endif
 					PIPE_TRANSFER_READ_WRITE,
 					0, 0, priv->tex->width[0], priv->tex->height[0]);
+        if (!priv->map_transfer)
+	    return FALSE;
 
 	pPix->devPrivate.ptr =
 	    exa->scrn->transfer_map(exa->scrn, priv->map_transfer);
 	pPix->devKind = priv->map_transfer->stride;
     }
+
+    priv->map_count++;
 
     return TRUE;
 }
@@ -670,65 +677,33 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
          priv->tex->height[0] != height ||
          priv->tex_flags != priv->flags)) {
 	struct pipe_texture *texture = NULL;
+	struct pipe_texture template;
 
-#ifdef DRM_MODE_FEATURE_DIRTYFB
-	if (priv->flags)
-#endif
-	{
-	    struct pipe_texture template;
+	memset(&template, 0, sizeof(template));
+	template.target = PIPE_TEXTURE_2D;
+	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
+	pf_get_block(template.format, &template.block);
+	template.width[0] = width;
+	template.height[0] = height;
+	template.depth[0] = 1;
+	template.last_level = 0;
+	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
+	priv->tex_flags = priv->flags;
+	texture = exa->scrn->texture_create(exa->scrn, &template);
 
-	    memset(&template, 0, sizeof(template));
-	    template.target = PIPE_TEXTURE_2D;
-	    exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
-	    pf_get_block(template.format, &template.block);
-	    template.width[0] = width;
-	    template.height[0] = height;
-	    template.depth[0] = 1;
-	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
-	    priv->tex_flags = priv->flags;
-	    texture = exa->scrn->texture_create(exa->scrn, &template);
+	if (priv->tex) {
+	    struct pipe_surface *dst_surf;
+	    struct pipe_surface *src_surf;
 
-	    if (priv->tex) {
-		struct pipe_surface *dst_surf;
-                struct pipe_surface *src_surf;
-
-		dst_surf = exa->scrn->get_tex_surface(
-                   exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
-		src_surf = exa_gpu_surface(exa, priv);
-		exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
-                                        0, 0, min(width, texture->width[0]),
-                                        min(height, texture->height[0]));
-		exa->scrn->tex_surface_destroy(dst_surf);
-		exa->scrn->tex_surface_destroy(src_surf);
-	    } else if (pPixmap->devPrivate.ptr) {
-		struct pipe_transfer *transfer;
-
-		if (priv->map_count != 0)
-		     FatalError("doing ExaModifyPixmapHeader on mapped buffer\n");
-
-		transfer =
-		    exa->scrn->get_tex_transfer(exa->scrn, texture, 0, 0, 0,
-						PIPE_TRANSFER_WRITE,
-						0, 0, width, height);
-		util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
-			       &texture->block, transfer->stride, 0, 0,
-			       width, height, pPixmap->devPrivate.ptr,
-			       pPixmap->devKind, 0, 0);
-		exa->scrn->transfer_unmap(exa->scrn, transfer);
-		exa->scrn->tex_transfer_destroy(transfer);
-
-		xfree(pPixmap->devPrivate.ptr);
-		pPixmap->devPrivate.ptr = NULL;
-	    }
+	    dst_surf = exa->scrn->get_tex_surface(
+		exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
+	    src_surf = exa_gpu_surface(exa, priv);
+	    exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
+				    0, 0, min(width, texture->width[0]),
+				    min(height, texture->height[0]));
+	    exa->scrn->tex_surface_destroy(dst_surf);
+	    exa->scrn->tex_surface_destroy(src_surf);
 	}
-#ifdef DRM_MODE_FEATURE_DIRTYFB
-	else {
-	    xfree(pPixmap->devPrivate.ptr);
-	    pPixmap->devPrivate.ptr = xalloc(pPixmap->drawable.height *
-					     pPixmap->devKind);
-	}
-#endif
 
 	pipe_texture_reference(&priv->tex, texture);
 	/* the texture we create has one reference */
