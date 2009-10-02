@@ -8,6 +8,7 @@
 #include <vl_winsys.h>
 #include <util/u_memory.h>
 #include <util/u_debug.h>
+#include <vl/vl_csc.h>
 #include "xvmc_private.h"
 
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
@@ -127,6 +128,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    struct pipe_screen *screen;
    struct pipe_video_context *vpipe;
    XvMCContextPrivate *context_priv;
+   float csc[16];
 
    assert(dpy);
 
@@ -174,6 +176,15 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       FREE(context_priv);
       return BadAlloc;
    }
+
+   /* TODO: Define some Xv attribs to allow users to specify color standard, procamp */
+   vl_csc_get_matrix
+   (
+      debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
+      VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
+      NULL, true, csc
+   );
+   vpipe->set_csc_matrix(vpipe, csc);
 
    context_priv->vpipe = vpipe;
 
