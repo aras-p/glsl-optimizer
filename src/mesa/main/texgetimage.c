@@ -322,10 +322,15 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
 {
    GLuint size;
 
+   /* don't use texImage->CompressedSize since that may be padded out */
+   size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
+                                        texImage->Depth,
+                                        texImage->TexFormat);
+
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
       GLubyte *buf;
-      if ((const GLubyte *) img + texImage->CompressedSize >
+      if ((const GLubyte *) img + size >
           (const GLubyte *) ctx->Pack.BufferObj->Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetCompressedTexImage(invalid PBO access)");
@@ -346,11 +351,6 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       /* not an error */
       return;
    }
-
-   /* don't use texImage->CompressedSize since that may be padded out */
-   size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
-                                        texImage->Depth,
-                                        texImage->TexFormat);
 
    /* just memcpy, no pixelstore or pixel transfer */
    _mesa_memcpy(img, texImage->Data, size);
