@@ -534,14 +534,9 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
    for (i = 0; i < cache->size; i++) {
       for (prev = &cache->items[i]; *prev;) {
 	 struct brw_cache_item *c = *prev;
-	 int j;
 
-	 for (j = 0; j < c->nr_reloc_bufs; j++) {
-	    if (c->reloc_bufs[j] == bo)
-	       break;
-	 }
-
-	 if (j != c->nr_reloc_bufs) {
+	 if (drm_intel_bo_references(c->bo, bo)) {
+	    int j;
 
 	    *prev = c->next;
 
@@ -551,17 +546,8 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
 	    free((void *)c->key);
 	    free(c);
 	    cache->n_items--;
-
-	    /* Delete up the tree.  Notably we're trying to get from
-	     * a request to delete the surface, to deleting the surface state
-	     * object, to deleting the binding table.  We're slack and restart
-	     * the deletion process when we do this because the other delete
-	     * may kill our *prev.
-	     */
-	    brw_state_cache_bo_delete(cache, c->bo);
-	    prev = &cache->items[i];
 	 } else {
-	    prev = &(*prev)->next;
+	    prev = &c->next;
 	 }
       }
    }
