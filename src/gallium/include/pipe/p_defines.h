@@ -193,7 +193,18 @@ enum pipe_texture_target {
 enum pipe_transfer_usage {
    PIPE_TRANSFER_READ = (1 << 0),
    PIPE_TRANSFER_WRITE = (1 << 1),
-   PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE /**< Read/modify/write */
+   /** Read/modify/write */
+   PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE,
+   /** 
+    * The transfer should map the texture storage directly. The driver may
+    * return NULL if that isn't possible, and the state tracker needs to cope
+    * with that and use an alternative path without this flag.
+    *
+    * E.g. the state tracker could have a simpler path which maps textures and
+    * does read/modify/write cycles on them directly, and a more complicated
+    * path which uses minimal read and write transfers.
+    */
+   PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2)
 };
 
 
