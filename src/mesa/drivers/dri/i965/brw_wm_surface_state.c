@@ -660,7 +660,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
 
    if (bind_bo == NULL) {
       GLuint data_size = brw->wm.nr_surfaces * sizeof(GLuint);
-      uint32_t *data = malloc(data_size);
+      uint32_t data[BRW_WM_MAX_SURF];
       int i;
 
       for (i = 0; i < brw->wm.nr_surfaces; i++)
@@ -685,8 +685,6 @@ brw_wm_get_binding_table(struct brw_context *brw)
 			      brw->wm.surf_bo[i]);
 	 }
       }
-
-      free(data);
    }
 
    return bind_bo;
