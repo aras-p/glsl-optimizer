@@ -5,6 +5,7 @@
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
 #include <util/u_memory.h>
+#include "vl_csc.h"
 #include "vl_shader_build.h"
 
 struct vertex2f
@@ -27,7 +28,6 @@ struct vertex_shader_consts
 
 struct fragment_shader_consts
 {
-   struct vertex4f bias;
    float matrix[16];
 };
 
@@ -48,94 +48,6 @@ static const struct vertex2f surface_verts[4] =
  * TODO: Duplicate these in the shader, no need to create a buffer.
  */
 static const struct vertex2f *surface_texcoords = surface_verts;
-
-/*
- * Identity color conversion constants, for debugging
- */
-static const struct fragment_shader_consts identity =
-{
-   {
-      0.0f, 0.0f, 0.0f, 0.0f
-   },
-   {
-      1.0f, 0.0f, 0.0f, 0.0f,
-      0.0f, 1.0f, 0.0f, 0.0f,
-      0.0f, 0.0f, 1.0f, 0.0f,
-      0.0f, 0.0f, 0.0f, 1.0f
-   }
-};
-
-/*
- * Converts ITU-R BT.601 YCbCr pixels to RGB pixels where:
- * Y is in [16,235], Cb and Cr are in [16,240]
- * R, G, and B are in [16,235]
- */
-static const struct fragment_shader_consts bt_601 =
-{
-   {
-      0.0f, 0.501960784f, 0.501960784f,	0.0f
-   },
-   {
-      1.0f, 0.0f,   1.371f,   0.0f,
-      1.0f, -0.336f, -0.698f, 0.0f,
-      1.0f, 1.732f, 0.0f,     0.0f,
-      0.0f, 0.0f,   0.0f,     1.0f
-   }
-};
-
-/*
- * Converts ITU-R BT.601 YCbCr pixels to RGB pixels where:
- * Y is in [16,235], Cb and Cr are in [16,240]
- * R, G, and B are in [0,255]
- */
-static const struct fragment_shader_consts bt_601_full =
-{
-   {
-      0.062745098f, 0.501960784f, 0.501960784f,	0.0f
-   },
-   {
-      1.164f, 0.0f,    1.596f,  0.0f,
-      1.164f, -0.391f, -0.813f, 0.0f,
-      1.164f, 2.018f,  0.0f,    0.0f,
-      0.0f,   0.0f,    0.0f,    1.0f
-   }
-};
-
-/*
- * Converts ITU-R BT.709 YCbCr pixels to RGB pixels where:
- * Y is in [16,235], Cb and Cr are in [16,240]
- * R, G, and B are in [16,235]
- */
-static const struct fragment_shader_consts bt_709 =
-{
-   {
-      0.0f, 0.501960784f, 0.501960784f,	0.0f
-   },
-   {
-      1.0f, 0.0f,    1.540f,  0.0f,
-      1.0f, -0.183f, -0.459f, 0.0f,
-      1.0f, 1.816f,  0.0f,    0.0f,
-      0.0f, 0.0f,    0.0f,    1.0f
-   }
-};
-
-/*
- * Converts ITU-R BT.709 YCbCr pixels to RGB pixels where:
- * Y is in [16,235], Cb and Cr are in [16,240]
- * R, G, and B are in [0,255]
- */
-const struct fragment_shader_consts bt_709_full =
-{
-   {
-      0.062745098f, 0.501960784f, 0.501960784f,	0.0f
-   },
-   {
-      1.164f, 0.0f,    1.793f,  0.0f,
-      1.164f, -0.213f, -0.534f,	0.0f,
-      1.164f, 2.115f,  0.0f,    0.0f,
-      0.0f,   0.0f,    0.0f,    1.0f
-   }
-};
 
 static void
 create_vert_shader(struct vl_compositor *c)
@@ -245,10 +157,9 @@ create_frag_shader(struct vl_compositor *c)
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
    /*
-    * decl c0             ; Bias vector for CSC
-    * decl c1-c4          ; CSC matrix c1-c4
+    * decl c0-c3          ; CSC matrix c0-c3
     */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 4);
+   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 3);
    ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
    /* decl o0             ; Fragment color */
@@ -267,17 +178,14 @@ create_frag_shader(struct vl_compositor *c)
    inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, 0);
    ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
-   /* sub t0, t0, c0      ; Subtract bias vector from pixel */
-   inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
    /*
-    * dp4 o0.x, t0, c1    ; Multiply pixel by the color conversion matrix
-    * dp4 o0.y, t0, c2
-    * dp4 o0.z, t0, c3
+    * dp4 o0.x, t0, c0    ; Multiply pixel by the color conversion matrix
+    * dp4 o0.y, t0, c1
+    * dp4 o0.z, t0, c2
+    * dp4 o0.w, t0, c3
     */
-   for (i = 0; i < 3; ++i) {
-      inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i + 1);
+   for (i = 0; i < 4; ++i) {
+      inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i);
       inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
@@ -352,6 +260,8 @@ static void cleanup_shaders(struct vl_compositor *c)
 static bool
 init_buffers(struct vl_compositor *c)
 {
+   struct fragment_shader_consts fsc;
+
    assert(c);
 	
    /*
@@ -438,18 +348,9 @@ init_buffers(struct vl_compositor *c)
       sizeof(struct fragment_shader_consts)
    );
 
-   /*
-    * TODO: Refactor this into a seperate function,
-    * allow changing the CSC matrix at runtime to switch between regular & full versions
-    */
-   memcpy
-   (
-      pipe_buffer_map(c->pipe->screen, c->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-      &bt_601_full,
-      sizeof(struct fragment_shader_consts)
-   );
+   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, fsc.matrix);
 
-   pipe_buffer_unmap(c->pipe->screen, c->fs_const_buf.buffer);
+   vl_compositor_set_csc_matrix(c, fsc.matrix);
 
    return true;
 }
@@ -587,4 +488,18 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->flush(compositor->pipe, PIPE_FLUSH_RENDER_CACHE, fence);
 
    pipe_surface_reference(&compositor->fb_state.cbufs[0], NULL);
+}
+
+void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat)
+{
+   assert(compositor);
+
+   memcpy
+   (
+      pipe_buffer_map(compositor->pipe->screen, compositor->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+      mat,
+      sizeof(struct fragment_shader_consts)
+   );
+
+   pipe_buffer_unmap(compositor->pipe->screen, compositor->fs_const_buf.buffer);
 }

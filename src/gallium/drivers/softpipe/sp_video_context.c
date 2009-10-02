@@ -109,6 +109,15 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    pipe_video_surface_reference(&ctx->decode_target, dt);
 }
 
+static void sp_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+
+   vl_compositor_set_csc_matrix(&ctx->compositor, mat);
+}
+
 static bool
 init_pipe_state(struct sp_mpeg12_context *ctx)
 {
@@ -211,6 +220,7 @@ sp_mpeg12_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    ctx->base.clear_surface = sp_mpeg12_clear_surface;
    ctx->base.render_picture = sp_mpeg12_render_picture;
    ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
+   ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
 
    ctx->pipe = softpipe_create(screen);
    if (!ctx->pipe) {

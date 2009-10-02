@@ -80,7 +80,9 @@ struct pipe_video_context
    void (*set_decode_target)(struct pipe_video_context *vpipe,
                              struct pipe_video_surface *dt);
 
-   /* TODO: Interface for CSC matrix, scaling modes, post-processing, etc. */
+   void (*set_csc_matrix)(struct pipe_video_context *vpipe, const float *mat);
+
+   /* TODO: Interface for scaling modes, post-processing, etc. */
    /*@}*/
 };
 

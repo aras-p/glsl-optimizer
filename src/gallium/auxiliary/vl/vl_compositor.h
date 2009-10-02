@@ -44,4 +44,6 @@ void vl_compositor_render(struct vl_compositor          *compositor,
                           struct pipe_video_rect        *layer_dst_areas,*/
                           struct pipe_fence_handle      **fence);
 
+void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat);
+
 #endif /* vl_compositor_h */
