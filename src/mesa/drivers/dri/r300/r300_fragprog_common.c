@@ -239,6 +239,19 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	rewriteFog(&compiler, fp);
 
 	r3xx_compile_fragment_program(&compiler);
+
+	if (compiler.is_r500) {
+		/* We need to support the non-KMS DRM interface, which
+		 * artificially limits the number of instructions and
+		 * constants which are available to us.
+		 *
+		 * See also the comment in r300_context.c where we
+		 * set the MAX_NATIVE_xxx values.
+		 */
+		if (fp->code.code.r500.inst_end >= 255 || fp->code.constants.Count > 255)
+			rc_error(&compiler.Base, "Program is too big (upgrade to r300g to avoid this limitation).\n");
+	}
+
 	fp->error = compiler.Base.Error;
 
 	fp->InputsRead = compiler.Base.Program.InputsRead;
