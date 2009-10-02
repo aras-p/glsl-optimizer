@@ -212,14 +212,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       vs->prepare(vs, draw);
    }
-   
-
-   //return TRUE;
 }
-
-
-
-
 
 
 
