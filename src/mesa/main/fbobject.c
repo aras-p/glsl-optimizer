@@ -650,6 +650,8 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          return;
       }
    }
+#else
+   (void) j;
 #endif
 
    if (numImages == 0) {

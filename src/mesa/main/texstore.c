@@ -277,16 +277,6 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
 }
 
 
-#if !FEATURE_convolve
-static void
-_mesa_adjust_image_for_convolution(GLcontext *ctx, GLuint dims,
-                                   GLsizei *srcWidth, GLsizei *srcHeight)
-{
-   /* no-op */
-}
-#endif
-
-
 /**
  * Make a temporary (color) texture image with GLfloat components.
  * Apply all needed pixel unpacking and pixel transfer operations.
@@ -353,7 +343,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
       const GLuint postConvTransferOps
          = (transferOps & IMAGE_POST_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT;
       GLint img, row;
-      GLint convWidth, convHeight;
+      GLint convWidth = srcWidth, convHeight = srcHeight;
       GLfloat *convImage;
 
       /* pre-convolution image buffer (3D) */
@@ -3003,6 +2993,15 @@ _mesa_texstore_sla8(TEXSTORE_PARAMS)
                            srcAddr, srcPacking);
    return k;
 }
+
+#else
+
+/* these are used only in texstore_funcs[] below */
+#define _mesa_texstore_srgb8 NULL
+#define _mesa_texstore_srgba8 NULL
+#define _mesa_texstore_sargb8 NULL
+#define _mesa_texstore_sl8 NULL
+#define _mesa_texstore_sla8 NULL
 
 #endif /* FEATURE_EXT_texture_sRGB */
 

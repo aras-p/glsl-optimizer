@@ -600,7 +600,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          iparams[1] = (GLint) params[1];
          iparams[2] = (GLint) params[2];
          iparams[3] = (GLint) params[3];
-         need_update = set_tex_parameteri(ctx, target, iparams);
+         need_update = set_tex_parameteri(ctx, texObj, pname, iparams);
       }
       break;
 #endif
