@@ -353,17 +353,9 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
 
    if(lpt->dt) {
       struct llvmpipe_winsys *winsys = screen->winsys;
-      unsigned flags = 0;
 
-      if (transfer->usage != PIPE_TRANSFER_READ) {
-         flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-      }
-
-      if (transfer->usage != PIPE_TRANSFER_WRITE) {
-         flags |= PIPE_BUFFER_USAGE_CPU_READ;
-      }
-
-      map = winsys->displaytarget_map(winsys, lpt->dt, flags);
+      map = winsys->displaytarget_map(winsys, lpt->dt,
+                                      pipe_transfer_buffer_flags(transfer));
       if (map == NULL)
          return NULL;
    }
@@ -373,7 +365,7 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
+   if (transfer->texture && (transfer->usage & PIPE_TRANSFER_WRITE))
    {
       /* Do something to notify sharing contexts of a texture change.
        * In llvmpipe, that would mean flushing the texture cache.

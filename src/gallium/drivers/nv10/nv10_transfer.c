@@ -13,22 +13,6 @@ struct nv10_transfer {
 	bool direct;
 };
 
-static unsigned nv10_usage_tx_to_buf(unsigned tx_usage)
-{
-	switch (tx_usage) {
-		case PIPE_TRANSFER_READ:
-			return PIPE_BUFFER_USAGE_CPU_READ;
-		case PIPE_TRANSFER_WRITE:
-			return PIPE_BUFFER_USAGE_CPU_WRITE;
-		case PIPE_TRANSFER_READ_WRITE:
-			return PIPE_BUFFER_USAGE_CPU_READ_WRITE;
-		default:
-			assert(0);
-	}
-
-	return -1;
-}
-
 static void
 nv10_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
                              struct pipe_texture *template)
@@ -86,7 +70,7 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		tx->direct = true;
 		tx->surface = pscreen->get_tex_surface(pscreen, pt,
 	                                               0, 0, 0,
-	                                               nv10_usage_tx_to_buf(usage));
+	                                               pipe_transfer_buffer_flags(&tx->base));
 		return &tx->base;
 	}
 
@@ -103,7 +87,7 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	tx->surface = pscreen->get_tex_surface(pscreen, tx_tex,
 	                                       face, level, zslice,
-	                                       nv10_usage_tx_to_buf(usage));
+	                                       pipe_transfer_buffer_flags(&tx->base));
 
 	pipe_texture_reference(&tx_tex, NULL);
 
@@ -114,7 +98,7 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	}
 
-	if (usage != PIPE_TRANSFER_WRITE) {
+	if (usage & PIPE_TRANSFER_READ) {
 		struct nv10_screen *nvscreen = nv10_screen(pscreen);
 		struct pipe_surface *src;
 
@@ -140,7 +124,7 @@ nv10_transfer_del(struct pipe_transfer *ptx)
 {
 	struct nv10_transfer *tx = (struct nv10_transfer *)ptx;
 
-	if (!tx->direct && ptx->usage != PIPE_TRANSFER_READ) {
+	if (!tx->direct && (ptx->usage & PIPE_TRANSFER_WRITE)) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
 		struct nv10_screen *nvscreen = nv10_screen(pscreen);
 		struct pipe_surface *dst;
@@ -170,7 +154,7 @@ nv10_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 	struct nv04_surface *ns = (struct nv04_surface *)tx->surface;
 	struct nv10_miptree *mt = (struct nv10_miptree *)tx->surface->texture;
 	void *map = pipe_buffer_map(pscreen, mt->buffer,
-	                            nv10_usage_tx_to_buf(ptx->usage));
+	                            pipe_transfer_buffer_flags(ptx));
 
 	return map + ns->base.offset +
 	       ptx->y * ns->pitch + ptx->x * ptx->block.size;

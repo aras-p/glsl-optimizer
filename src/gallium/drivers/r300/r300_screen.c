@@ -345,16 +345,9 @@ static void* r300_transfer_map(struct pipe_screen* screen,
 {
     struct r300_texture* tex = (struct r300_texture*)transfer->texture;
     char* map;
-    unsigned flags = 0;
 
-    if (transfer->usage != PIPE_TRANSFER_WRITE) {
-        flags |= PIPE_BUFFER_USAGE_CPU_READ;
-    }
-    if (transfer->usage != PIPE_TRANSFER_READ) {
-        flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-    }
-
-    map = pipe_buffer_map(screen, tex->buffer, flags);
+    map = pipe_buffer_map(screen, tex->buffer,
+                          pipe_transfer_buffer_flags(transfer));
 
     if (!map) {
         return NULL;

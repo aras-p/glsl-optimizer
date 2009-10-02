@@ -859,7 +859,7 @@ i915_transfer_map(struct pipe_screen *screen,
    char *map;
    boolean write = FALSE;
 
-   if (transfer->usage != PIPE_TRANSFER_READ)
+   if (transfer->usage & PIPE_TRANSFER_WRITE)
       write = TRUE;
 
    map = iws->buffer_map(iws, tex->buffer, write);

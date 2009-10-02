@@ -241,7 +241,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 						xpos, ypos,
 						width, height);
 
-   if (usage != PIPE_TRANSFER_WRITE)
+   if (usage & PIPE_TRANSFER_READ)
       pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
 
    switch (acc_strb->format) {

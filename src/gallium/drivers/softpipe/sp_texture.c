@@ -329,27 +329,18 @@ softpipe_transfer_map( struct pipe_screen *screen,
 {
    ubyte *map, *xfer_map;
    struct softpipe_texture *spt;
-   unsigned flags = 0;
 
    assert(transfer->texture);
    spt = softpipe_texture(transfer->texture);
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-   }
-
-   if (transfer->usage != PIPE_TRANSFER_WRITE) {
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-   }
-
-   map = pipe_buffer_map(screen, spt->buffer, flags);
+   map = pipe_buffer_map(screen, spt->buffer, pipe_transfer_buffer_flags(transfer));
    if (map == NULL)
       return NULL;
 
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) {
+   if (transfer->texture && (transfer->usage & PIPE_TRANSFER_WRITE)) {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
        */
@@ -375,7 +366,7 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 
    pipe_buffer_unmap( screen, spt->buffer );
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
+   if (transfer->usage & PIPE_TRANSFER_WRITE) {
       /* Mark the texture as dirty to expire the tile caches. */
       spt->timestamp++;
    }
