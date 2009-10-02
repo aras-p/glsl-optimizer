@@ -330,7 +330,18 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLfloat clip_y0 = (GLfloat)(y0 / fb_height * 2.0 - 1.0);
    const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
    const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
-   const GLuint max_slots = 4096 / sizeof(st->bitmap.vertices);
+
+   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
+    * no_flush) updates to buffers where we know there is no conflict
+    * with previous data.  Currently using max_slots > 1 will cause
+    * synchronous rendering if the driver flushes its command buffers
+    * between one bitmap and the next.  Our flush hook below isn't
+    * sufficient to catch this as the driver doesn't tell us when it
+    * flushes its own command buffers.  Until this gets fixed, pay the
+    * price of allocating a new buffer for each bitmap cache-flush to
+    * avoid synchronous rendering.
+    */
+   const GLuint max_slots = 1; /* 4096 / sizeof(st->bitmap.vertices); */
    GLuint i;
 
    if (st->bitmap.vbuf_slot >= max_slots) {
