@@ -201,6 +201,9 @@ try_pbo_upload(struct intel_context *intel,
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
+   dri_bo *dst_buffer = intel_region_buffer(intel,
+					    intelImage->mt->region,
+					    INTEL_WRITE_FULL);
 
    if (!_mesa_is_bufferobj(unpack->BufferObj) ||
        intel->ctx._ImageTransferState ||
@@ -223,7 +226,8 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_stride = intelImage->mt->pitch;
 
-   intelFlush(&intel->ctx);
+   if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
+      intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
@@ -315,8 +319,6 @@ intelTexImage(GLcontext * ctx,
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
-
-   intelFlush(ctx);
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
@@ -478,13 +480,20 @@ intelTexImage(GLcontext * ctx,
    LOCK_HARDWARE(intel);
 
    if (intelImage->mt) {
-      if (pixels != NULL)
+      if (pixels != NULL) {
+	 /* Flush any queued rendering with the texture before mapping. */
+	 if (drm_intel_bo_references(intel->batch->buf,
+				     intelImage->mt->region->buffer)) {
+	    intelFlush(ctx);
+	 }
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
                                                   intelImage->face,
                                                   intelImage->level,
                                                   &dstRowStride,
                                                   intelImage->base.ImageOffsets);
+      }
+
       texImage->RowStride = dstRowStride / intelImage->mt->cpp;
    }
    else {

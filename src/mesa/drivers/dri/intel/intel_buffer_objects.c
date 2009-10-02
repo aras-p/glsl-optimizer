@@ -209,7 +209,8 @@ intel_bufferobj_subdata(GLcontext * ctx,
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
    else {
       /* Flush any existing batchbuffer that might reference this data. */
-      intelFlush(ctx);
+      if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
+	 intelFlush(ctx);
 
       dri_bo_subdata(intel_obj->buffer, offset, size, data);
    }
@@ -257,10 +258,9 @@ intel_bufferobj_map(GLcontext * ctx,
       return obj->Pointer;
    }
 
-   /* Flush any existing batchbuffer that might have written to this
-    * buffer.
-    */
-   intelFlush(ctx);
+   /* Flush any existing batchbuffer that might reference this data. */
+   if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
+      intelFlush(ctx);
 
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
@@ -330,7 +330,8 @@ intel_bufferobj_map_range(GLcontext * ctx,
     * the batchbuffer so that GEM knows about the buffer access for later
     * syncing.
     */
-   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT))
+   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
+       drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
       intelFlush(ctx);
 
    if (intel_obj->buffer == NULL) {
