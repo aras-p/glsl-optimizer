@@ -1207,9 +1207,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   if (ctx->Driver.Flush) {  
-      ctx->Driver.Flush(ctx);
-   }
 
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
