@@ -126,32 +126,30 @@ struct r600_hw_state {
 	struct radeon_state_atom tx_brdr_clr;
 };
 
-typedef struct StreamDesc 
+typedef struct StreamDesc
 {
 	GLint   size;   //number of data element
 	GLenum  type;  //data element type
 	GLsizei stride;
 
-    struct radeon_bo *bo;
-    GLint  bo_offset;
+	struct radeon_bo *bo;
+	GLint  bo_offset;
 
-    GLuint    dwords;
+	GLuint    dwords;
 	GLuint    dst_loc;
 	GLuint    _signed;
 	GLboolean normalize;
-    GLboolean is_named_bo;
-    GLubyte   element;
+	GLboolean is_named_bo;
+	GLubyte   element;
 } StreamDesc;
 
-typedef struct r700_index_buffer 
+typedef struct r700_index_buffer
 {
-    struct radeon_bo *bo;
-    int    bo_offset;
+	struct radeon_bo *bo;
+	int    bo_offset;
 
-    GLboolean is_32bit;
-    GLuint    count;
-
-    GLboolean bHostIb;
+	GLboolean is_32bit;
+	GLuint    count;
 } r700_index_buffer;
 
 /**
@@ -172,7 +170,7 @@ struct r600_context {
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
-    GLint      nNumActiveAos;
+	GLint      nNumActiveAos;
 	StreamDesc stream_desc[VERT_ATTRIB_MAX];
     struct r700_index_buffer ind_buf;
 };
