@@ -1054,6 +1054,124 @@ init_blit_depth_pixels(GLcontext *ctx)
 
 
 /**
+ * Try to do a glBiltFramebuffer using no-copy texturing.
+ * We can do this when the src renderbuffer is actually a texture.
+ * But if the src buffer == dst buffer we cannot do this.
+ *
+ * \return new buffer mask indicating the buffers left to blit using the
+ *         normal path.
+ */
+static GLbitfield
+blitframebuffer_texture(GLcontext *ctx,
+                        GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                        GLbitfield mask, GLenum filter)
+{
+   if (mask & GL_COLOR_BUFFER_BIT) {
+      const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
+      const struct gl_framebuffer *readFb = ctx->ReadBuffer;
+      const struct gl_renderbuffer_attachment *drawAtt =
+         &drawFb->Attachment[drawFb->_ColorDrawBufferIndexes[0]];
+      const struct gl_renderbuffer_attachment *readAtt =
+         &readFb->Attachment[readFb->_ColorReadBufferIndex];
+
+      if (readAtt && readAtt->Texture) {
+         const struct gl_texture_object *texObj = readAtt->Texture;
+         const GLenum minFilterSave = texObj->MinFilter;
+         const GLenum magFilterSave = texObj->MagFilter;
+         const GLenum target = texObj->Target;
+
+         if (drawAtt->Texture == readAtt->Texture) {
+            /* Can't use same texture as both the source and dest.  We need
+             * to handle overlapping blits and besides, some hw may not
+             * support this.
+             */
+            return mask;
+         }
+
+         if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB) {
+            /* Can't handle other texture types at this time */
+            return mask;
+         }
+
+         /*
+         printf("Blit from texture!\n");
+         printf("  srcAtt %p  dstAtt %p\n", readAtt, drawAtt);
+         printf("  srcTex %p  dstText %p\n", texObj, drawAtt->Texture);
+         */
+
+         /* Prepare src texture state */
+         _mesa_BindTexture(target, texObj->Name);
+         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+         /*_mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);*/
+         _mesa_set_enable(ctx, target, GL_TRUE);
+
+         /* Prepare vertex data (the VBO was previously created and bound) */
+         {
+            struct vertex {
+               GLfloat x, y, s, t;
+            };
+            struct vertex verts[4];
+            GLfloat s0, t0, s1, t1;
+
+            if (target == GL_TEXTURE_2D) {
+               const struct gl_texture_image *texImage
+                   = _mesa_select_tex_image(ctx, texObj, target,
+                                            readAtt->TextureLevel);
+               s0 = srcX0 / (float) texImage->Width;
+               s1 = srcX1 / (float) texImage->Width;
+               t0 = srcY0 / (float) texImage->Height;
+               t1 = srcY1 / (float) texImage->Height;
+            }
+            else {
+               assert(target == GL_TEXTURE_RECTANGLE_ARB);
+               s0 = srcX0;
+               s1 = srcX1;
+               t0 = srcY0;
+               t1 = srcY1;
+            }
+
+            verts[0].x = (GLfloat) dstX0;
+            verts[0].y = (GLfloat) dstY0;
+            verts[1].x = (GLfloat) dstX1;
+            verts[1].y = (GLfloat) dstY0;
+            verts[2].x = (GLfloat) dstX1;
+            verts[2].y = (GLfloat) dstY1;
+            verts[3].x = (GLfloat) dstX0;
+            verts[3].y = (GLfloat) dstY1;
+
+            verts[0].s = s0;
+            verts[0].t = t0;
+            verts[1].s = s1;
+            verts[1].t = t0;
+            verts[2].s = s1;
+            verts[2].t = t1;
+            verts[3].s = s0;
+            verts[3].t = t1;
+
+            _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+         }
+
+         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+         /* Restore texture's filter state, the texture binding will
+          * be restored by _mesa_meta_end().
+          */
+         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
+
+         /* Done with color buffer */
+         mask &= ~GL_COLOR_BUFFER_BIT;
+      }
+   }
+
+   return mask;
+}
+
+
+/**
  * Meta implementation of ctx->Driver.BlitFramebuffer() in terms
  * of texture mapping and polygon rendering.
  */
@@ -1123,6 +1241,18 @@ _mesa_meta_BlitFramebuffer(GLcontext *ctx,
       _mesa_BindVertexArray(blit->ArrayObj);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, blit->VBO);
    }
+
+   /* Try faster, direct texture approach first */
+   mask = blitframebuffer_texture(ctx, srcX0, srcY0, srcX1, srcY1,
+                                  dstX0, dstY0, dstX1, dstY1, mask, filter);
+   if (mask == 0x0) {
+      _mesa_meta_end(ctx);
+      return;
+   }
+
+   /* Continue with "normal" approach which involves copying the src rect
+    * into a temporary texture and is "blitted" by drawing a textured quad.
+    */
 
    newTex = alloc_texture(tex, srcW, srcH, GL_RGBA);
 
