@@ -904,6 +904,21 @@ GLX_eglGetProcAddress(const char *procname)
    return (_EGLProc) glXGetProcAddress((const GLubyte *) procname);
 }
 
+static EGLBoolean
+GLX_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+{
+   glXWaitGL();
+   return EGL_TRUE;
+}
+
+static EGLBoolean
+GLX_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
+{
+   if (engine != EGL_CORE_NATIVE_ENGINE)
+      return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
+   glXWaitX();
+   return EGL_TRUE;
+}
 
 static void
 GLX_Unload(_EGLDriver *drv)
@@ -936,6 +951,8 @@ _eglMain(const char *args)
    GLX_drv->Base.API.DestroySurface = GLX_eglDestroySurface;
    GLX_drv->Base.API.SwapBuffers = GLX_eglSwapBuffers;
    GLX_drv->Base.API.GetProcAddress = GLX_eglGetProcAddress;
+   GLX_drv->Base.API.WaitClient = GLX_eglWaitClient;
+   GLX_drv->Base.API.WaitNative = GLX_eglWaitNative;
 
    GLX_drv->Base.Name = "GLX";
    GLX_drv->Base.Unload = GLX_Unload;
