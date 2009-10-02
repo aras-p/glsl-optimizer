@@ -1538,9 +1538,9 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          if (!fbconfig)
             return GLX_BAD_ATTRIBUTE;
          if (xmvis->mesa_visual.rgbMode)
-            *value = GLX_RGBA_TYPE;
+            *value = GLX_RGBA_BIT;
          else
-            *value = GLX_COLOR_INDEX_TYPE;
+            *value = GLX_COLOR_INDEX_BIT;
          break;
       case GLX_X_RENDERABLE_SGIX:
          if (!fbconfig)
