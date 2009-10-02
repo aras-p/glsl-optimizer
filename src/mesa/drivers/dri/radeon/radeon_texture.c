@@ -547,13 +547,7 @@ static void radeon_teximage(
 
 	if (_mesa_is_format_compressed(texImage->TexFormat)) {
 		texelBytes = 0;
-		texImage->CompressedSize =
-			ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
-					   texImage->Height, texImage->Depth,
-					   texImage->TexFormat);
 	} else {
-		texImage->CompressedSize = 0;
-
 		texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 		/* Minimum pitch of 32 bytes */
 		if (postConvWidth * texelBytes < 32) {
@@ -590,7 +584,12 @@ static void radeon_teximage(
 	} else {
 		int size;
 		if (_mesa_is_format_compressed(texImage->TexFormat)) {
-			size = texImage->CompressedSize;
+                        size = ctx->Driver.CompressedTextureSize(ctx,
+                                                         texImage->Width,
+                                                         texImage->Height,
+                                                         texImage->Depth,
+                                                         texImage->TexFormat);
+
 		} else {
 			size = texImage->Width * texImage->Height * texImage->Depth * _mesa_get_format_bytes(texImage->TexFormat);
 		}

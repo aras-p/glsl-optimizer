@@ -1173,8 +1173,6 @@ struct gl_texture_image
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
 
-   GLuint CompressedSize;	/**< GL_ARB_texture_compression */
-
    GLuint RowStride;		/**< Padded width in units of texels */
    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */

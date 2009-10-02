@@ -903,7 +903,6 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->TexFormat = MESA_FORMAT_NONE;
    img->FetchTexelc = NULL;
    img->FetchTexelf = NULL;
-   img->CompressedSize = 0;
 }
 
 
@@ -965,8 +964,6 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    }
 
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
-
-   img->CompressedSize = 0;
 
    if ((width == 1 || _mesa_is_pow_two(img->Width2)) &&
        (height == 1 || _mesa_is_pow_two(img->Height2)) &&

@@ -481,7 +481,7 @@ struct dd_function_table {
     */
    GLuint (*CompressedTextureSize)( GLcontext *ctx, GLsizei width,
                                     GLsizei height, GLsizei depth,
-                                    GLenum format );
+                                    GLuint mesaFormat );
    /*@}*/
 
    /**

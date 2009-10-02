@@ -674,6 +674,7 @@ static void viaTexImage(GLcontext *ctx,
    struct via_texture_object *viaObj = (struct via_texture_object *)texObj;
    struct via_texture_image *viaImage = (struct via_texture_image *)texImage;
    int heaps[3], nheaps, i;
+   GLuint compressedSize;
 
    if (!is_empty_list(&vmesa->freed_tex_buffers)) {
       viaCheckBreadcrumb(vmesa, 0);
@@ -697,7 +698,7 @@ static void viaTexImage(GLcontext *ctx,
 
    if (texelBytes == 0) {
       /* compressed format */
-      texImage->CompressedSize =
+      compressedSize =
          ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
                                            texImage->Height, texImage->Depth,
                                            texImage->TexFormat);
@@ -714,7 +715,7 @@ static void viaTexImage(GLcontext *ctx,
 
    /* allocate memory */
    if (_mesa_is_format_compressed(texImage->TexFormat))
-      sizeInBytes = texImage->CompressedSize;
+      sizeInBytes = compressedSize;
    else
       sizeInBytes = postConvWidth * postConvHeight * texelBytes;
 

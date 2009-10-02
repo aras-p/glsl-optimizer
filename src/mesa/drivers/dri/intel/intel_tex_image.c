@@ -340,11 +340,8 @@ intelTexImage(GLcontext * ctx,
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
-      texImage->CompressedSize =
-	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
-					   texImage->Height, texImage->Depth,
-					   texImage->TexFormat);
-   } else {
+   }
+   else {
       texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
       
       /* Minimum pitch of 32 bytes */
@@ -495,7 +492,11 @@ intelTexImage(GLcontext * ctx,
    else {
       /* Allocate regular memory and store the image there temporarily.   */
       if (_mesa_is_format_compressed(texImage->TexFormat)) {
-         sizeInBytes = texImage->CompressedSize;
+         sizeInBytes = ctx->Driver.CompressedTextureSize(ctx,
+                                                         texImage->Width,
+                                                         texImage->Height,
+                                                         texImage->Depth,
+                                                         texImage->TexFormat);
          dstRowStride =
             _mesa_compressed_row_stride(texImage->TexFormat, width);
          assert(dims != 3);

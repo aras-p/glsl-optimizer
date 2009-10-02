@@ -3159,34 +3159,12 @@ _mesa_unmap_teximage_pbo(GLcontext *ctx,
 }
 
 
-static void
-compute_texture_size(GLcontext *ctx, struct gl_texture_image *texImage)
-{
-   if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      texImage->CompressedSize =
-         ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
-                                           texImage->Height, texImage->Depth,
-                                           texImage->TexFormat);
-   }
-   else {
-      /* non-compressed format */
-      texImage->CompressedSize = 0;
-   }
-}
-
-
 /** Return texture size in bytes */
 static GLuint
 texture_size(const struct gl_texture_image *texImage)
 {
-   GLuint sz;
-
-   if (_mesa_is_format_compressed(texImage->TexFormat))
-      sz = texImage->CompressedSize;
-   else
-      sz = texImage->Width * texImage->Height * texImage->Depth *
-         _mesa_get_format_bytes(texImage->TexFormat);
-
+   GLuint sz = _mesa_format_image_size(texImage->TexFormat, texImage->Width,
+                                       texImage->Height, texImage->Depth);
    return sz;
 }
 
@@ -3228,7 +3206,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint sizeInBytes;
+   GLuint sizeInBytes;
    (void) border;
 
    texImage->TexFormat
@@ -3236,11 +3214,9 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->TexFormat);
 
    _mesa_set_fetch_functions(texImage, 1);
-   compute_texture_size(ctx, texImage);
 
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
-
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
@@ -3293,7 +3269,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint texelBytes, sizeInBytes;
+   GLuint sizeInBytes;
    (void) border;
 
    texImage->TexFormat
@@ -3301,9 +3277,6 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->TexFormat);
 
    _mesa_set_fetch_functions(texImage, 2);
-   compute_texture_size(ctx, texImage);
-
-   texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
@@ -3355,7 +3328,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint texelBytes, sizeInBytes;
+   GLuint sizeInBytes;
    (void) border;
 
    texImage->TexFormat
@@ -3363,9 +3336,6 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->TexFormat);
 
    _mesa_set_fetch_functions(texImage, 3);
-   compute_texture_size(ctx, texImage);
-
-   texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
@@ -3570,7 +3540,6 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->TexFormat);
 
    _mesa_set_fetch_functions(texImage, 2);
-   compute_texture_size(ctx, texImage);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);
@@ -3586,7 +3555,6 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
 
    /* copy the data */
-   ASSERT(texImage->CompressedSize == (GLuint) imageSize);
    MEMCPY(texImage->Data, data, imageSize);
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);

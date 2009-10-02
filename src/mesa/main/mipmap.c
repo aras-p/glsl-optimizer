@@ -1614,24 +1614,19 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexelc = srcImage->FetchTexelc;
       dstImage->FetchTexelf = srcImage->FetchTexelf;
-      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         dstImage->CompressedSize
-            = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
-                                              dstImage->Height,
-                                              dstImage->Depth,
-                                              dstImage->TexFormat);
-         ASSERT(dstImage->CompressedSize > 0);
-      }
-
-      ASSERT(dstImage->TexFormat);
-      ASSERT(dstImage->FetchTexelc);
-      ASSERT(dstImage->FetchTexelf);
 
       /* Alloc new teximage data buffer.
        * Setup src and dest data pointers.
        */
       if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         dstImage->Data = _mesa_alloc_texmemory(dstImage->CompressedSize);
+         GLuint dstCompressedSize
+            = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
+                                              dstImage->Height,
+                                              dstImage->Depth,
+                                              dstImage->TexFormat);
+         ASSERT(dstCompressedSize > 0);
+
+         dstImage->Data = _mesa_alloc_texmemory(dstCompressedSize);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
             return;
@@ -1652,6 +1647,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          srcData = (const GLubyte *) srcImage->Data;
          dstData = (GLubyte *) dstImage->Data;
       }
+
+      ASSERT(dstImage->TexFormat);
+      ASSERT(dstImage->FetchTexelc);
+      ASSERT(dstImage->FetchTexelf);
 
       _mesa_generate_mipmap_level(target, datatype, comps, border,
                                   srcWidth, srcHeight, srcDepth, 
