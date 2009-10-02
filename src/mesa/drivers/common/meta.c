@@ -1949,6 +1949,29 @@ _mesa_meta_Bitmap(GLcontext *ctx,
 
 
 /**
+ * Check if the call to _mesa_meta_GenerateMipmap() will require a
+ * software fallback.  The fallback path will require that the texture
+ * images are mapped.
+ */
+GLboolean
+_mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
+                                          struct gl_texture_object *texObj)
+{
+   struct gl_texture_image *baseImage =
+      _mesa_select_tex_image(ctx, texObj, target, texObj->BaseLevel);
+
+   /* check for fallbacks */
+   if (!ctx->Extensions.EXT_framebuffer_object ||
+       target == GL_TEXTURE_3D ||
+       !baseImage ||
+       baseImage->IsCompressed) {
+      return GL_TRUE;
+   }
+   return GL_FALSE;
+}
+
+
+/**
  * Called via ctx->Driver.GenerateMipmap()
  * Note: texture borders and 3D texture support not yet complete.
  */
@@ -1976,9 +1999,7 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
    GLuint dstLevel;
    GLuint border = 0;
 
-   /* check for fallbacks */
-   if (!ctx->Extensions.EXT_framebuffer_object ||
-       target == GL_TEXTURE_3D) {
+   if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
       return;
    }
