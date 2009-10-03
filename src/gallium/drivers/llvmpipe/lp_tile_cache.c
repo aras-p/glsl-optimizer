@@ -294,6 +294,9 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
    struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
    struct pipe_transfer *pt = tc->transfer;
    
+   assert(tc->surface);
+   assert(tc->transfer);
+
    switch(tile->status) {
    case LP_TILE_STATUS_CLEAR:
       /* don't get tile from framebuffer, just clear it */
