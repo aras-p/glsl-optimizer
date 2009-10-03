@@ -55,6 +55,7 @@
 #include "main/stencil.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
+#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"
@@ -2470,6 +2471,12 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage%uD", dims);
       return;
    }
+
+   if (texImage->TexFormat == &_mesa_null_texformat)
+	texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
+							      internalFormat,
+							      format,
+							      type);
 
    _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
 
