@@ -79,13 +79,14 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
 
-    if (size + r300render->vbo_offset > r300render->vbo_size) 
+    if (size + r300render->vbo_offset > r300render->vbo_size)
     {
         pipe_buffer_reference(&r300->vbo, NULL);
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
                                              PIPE_BUFFER_USAGE_VERTEX,
                                              R300_MAX_VBO_SIZE);
+        r300render->vbo_offset = 0;
         r300render->vbo_size = R300_MAX_VBO_SIZE;
     }
 
@@ -118,7 +119,7 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max);
     END_CS;
 
-    r300render->vbo_max_used = MAX2(r300render->vbo_max_used, 
+    r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
     pipe_buffer_unmap(screen, r300render->vbo);
 }
