@@ -126,9 +126,14 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
     if (compiler.Base.Error) {
-        /* Todo: Fail gracefully */
-        fprintf(stderr, "r300 FP: Compiler error\n");
-        abort();
+        /* Todo: Fallback to software rendering gracefully? */
+        fprintf(stderr, "r300 FP: Compiler error: %s\n", compiler.Base.ErrorMsg);
+
+        if (compiler.is_r500) {
+            memcpy(compiler.code, &r5xx_passthrough_fragment_shader, sizeof(r5xx_passthrough_fragment_shader));
+        } else {
+            memcpy(compiler.code, &r3xx_passthrough_fragment_shader, sizeof(r3xx_passthrough_fragment_shader));
+        }
     }
 
     /* And, finally... */

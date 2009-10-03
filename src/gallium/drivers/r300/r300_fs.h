@@ -48,4 +48,4 @@ struct r300_fragment_shader {
 void r300_translate_fragment_shader(struct r300_context* r300,
                                     struct r300_fragment_shader* fs);
 
-    #endif /* R300_FS_H */
+#endif /* R300_FS_H */
