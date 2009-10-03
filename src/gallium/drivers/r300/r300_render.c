@@ -223,13 +223,6 @@ static void r300_render_draw(struct vbuf_render* render,
 
     r300_prepare_render(r300render, count);
 
-    /* Send our indices into an index buffer. */
-    index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
-                                      count * 2);
-    if (!index_buffer) {
-        return;
-    }
-
     BEGIN_CS(2 + (count+1)/2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
