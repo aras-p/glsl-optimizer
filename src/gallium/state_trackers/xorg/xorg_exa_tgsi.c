@@ -271,7 +271,7 @@ create_vs(struct pipe_context *pipe,
 
    if (has_mask) {
       src = ureg_DECL_vs_input(ureg, input_slot++);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 2);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 2);
       ureg_MOV(ureg, dst, src);
    }
 
@@ -330,7 +330,7 @@ create_fs(struct pipe_context *pipe,
    if (has_mask) {
       mask_sampler = ureg_DECL_sampler(ureg, 1);
       mask_pos = ureg_DECL_fs_input(ureg,
-                                    TGSI_SEMANTIC_POSITION,
+                                    TGSI_SEMANTIC_GENERIC,
                                     1,
                                     TGSI_INTERPOLATE_PERSPECTIVE);
    }
@@ -465,7 +465,7 @@ struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
                                     unsigned vs_traits,
                                     unsigned fs_traits)
 {
-   struct xorg_shader shader = {0};
+   struct xorg_shader shader = { NULL, NULL };
    void *vs, *fs;
 
    vs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_VERTEX,

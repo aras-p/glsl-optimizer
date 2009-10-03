@@ -94,6 +94,7 @@ typedef struct _modesettingRec
     /* exa */
     void *exa;
     Bool noEvict;
+    Bool debug_fallback;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
@@ -150,6 +151,12 @@ crtc_cursor_destroy(xf86CrtcPtr crtc);
  */
 void
 output_init(ScrnInfoPtr pScrn);
+
+/***********************************************************************
+ * xorg_xv.c
+ */
+void
+xorg_init_video(ScreenPtr pScreen);
 
 
 #endif /* _XORG_TRACKER_H_ */

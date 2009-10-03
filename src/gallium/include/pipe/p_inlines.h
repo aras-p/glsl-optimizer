@@ -176,6 +176,22 @@ pipe_transfer_destroy( struct pipe_transfer *transf )
    screen->tex_transfer_destroy(transf);
 }
 
+static INLINE unsigned
+pipe_transfer_buffer_flags( struct pipe_transfer *transf )
+{
+   switch (transf->usage & PIPE_TRANSFER_READ_WRITE) {
+   case PIPE_TRANSFER_READ_WRITE:
+      return PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE;
+   case PIPE_TRANSFER_READ:
+      return PIPE_BUFFER_USAGE_CPU_READ;
+   case PIPE_TRANSFER_WRITE:
+      return PIPE_BUFFER_USAGE_CPU_WRITE;
+   default:
+      debug_assert(0);
+      return 0;
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif

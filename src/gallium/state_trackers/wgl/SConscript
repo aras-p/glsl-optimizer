@@ -18,20 +18,17 @@ if env['platform'] in ['windows']:
     ])
      
     sources = [
-        'icd/stw_icd.c',
-
-        'wgl/stw_wgl.c',
-
-        'shared/stw_context.c',
-        'shared/stw_device.c',
-        'shared/stw_framebuffer.c',
-        'shared/stw_pixelformat.c',
-        'shared/stw_extensionsstring.c',
-        'shared/stw_extswapinterval.c',
-        'shared/stw_getprocaddress.c',
-        'shared/stw_extgallium.c',
-        'shared/stw_arbpixelformat.c',
-        'shared/stw_tls.c',
+        'stw_context.c',
+        'stw_device.c',
+        'stw_ext_extensionsstring.c',
+        'stw_ext_gallium.c',
+        'stw_ext_pixelformat.c',
+        'stw_ext_swapinterval.c',
+        'stw_framebuffer.c',
+        'stw_getprocaddress.c',
+        'stw_pixelformat.c',
+        'stw_tls.c',
+        'stw_wgl.c',
     ]
 
     wgl = env.ConvenienceLibrary(

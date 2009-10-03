@@ -287,6 +287,7 @@ void brw_validate_state( struct brw_context *brw )
    if (brw->emit_state_always) {
       state->mesa |= ~0;
       state->brw |= ~0;
+      state->cache |= ~0;
    }
 
    if (brw->fragment_program != ctx->FragmentProgram._Current) {
@@ -305,7 +306,7 @@ void brw_validate_state( struct brw_context *brw )
       return;
 
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
-      brw_clear_batch_cache_flush(brw);
+      brw_clear_batch_cache(brw);
 
    brw->intel.Fallback = 0;
 

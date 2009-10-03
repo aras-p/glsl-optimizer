@@ -27,7 +27,6 @@
  * easily portable to other APIs.
  *
  * All the window-system stuff should be contained in glmain.c (or TBDmain.c).
- * All the re-usable, generic code should be in common.c (XXX not done yet).
  *
  * Brian Paul
  * 15 Sep 2009
@@ -108,6 +107,10 @@ DrawStateChange(unsigned count)
    glFinish();
 }
 
+void
+PerfNextRound(void)
+{
+}
 
 /** Called from test harness/main */
 void
@@ -116,18 +119,18 @@ PerfDraw(void)
    double rate0, rate1, rate2, overhead;
 
    rate0 = PerfMeasureRate(DrawNoStateChange);
-   perf_printf("   Draw only: %.1f draws/second\n", rate0);
+   perf_printf("   Draw only: %s draws/second\n", 
+               PerfHumanFloat(rate0));
    
-
    rate1 = PerfMeasureRate(DrawNopStateChange);
    overhead = 1000.0 * (1.0 / rate1 - 1.0 / rate0);
-   perf_printf("   Draw w/ nop state change: %.1f draws/sec (overhead: %f ms/draw)\n",
-               rate1, overhead);
+   perf_printf("   Draw w/ nop state change: %s draws/sec (overhead: %f ms/draw)\n",
+               PerfHumanFloat(rate1), overhead);
 
    rate2 = PerfMeasureRate(DrawStateChange);
    overhead = 1000.0 * (1.0 / rate2 - 1.0 / rate0);
-   perf_printf("   Draw w/ state change: %.1f draws/sec (overhead: %f ms/draw)\n",
-               rate2, overhead);
+   perf_printf("   Draw w/ state change: %s draws/sec (overhead: %f ms/draw)\n",
+               PerfHumanFloat(rate2), overhead);
 
    exit(0);
 }

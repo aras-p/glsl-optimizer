@@ -32,6 +32,10 @@
 #include "state.h"
 #include "teximage.h"
 #include "texstate.h"
+#include "glapi/dispatch.h"
+
+
+#if FEATURE_colortable
 
 
 /**
@@ -536,7 +540,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CopyColorTable(GLenum target, GLenum internalformat,
                      GLint x, GLint y, GLsizei width)
 {
@@ -552,7 +556,7 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CopyColorSubTable(GLenum target, GLsizei start,
                         GLint x, GLint y, GLsizei width)
 {
@@ -568,7 +572,7 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetColorTable( GLenum target, GLenum format,
                      GLenum type, GLvoid *data )
 {
@@ -702,7 +706,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GLfloat *scale, *bias;
@@ -747,7 +751,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GLfloat fparams[4];
@@ -770,7 +774,7 @@ _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -897,7 +901,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1051,6 +1055,25 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          return;
    }
 }
+
+
+void
+_mesa_init_colortable_dispatch(struct _glapi_table *disp)
+{
+   SET_ColorSubTable(disp, _mesa_ColorSubTable);
+   SET_ColorTable(disp, _mesa_ColorTable);
+   SET_ColorTableParameterfv(disp, _mesa_ColorTableParameterfv);
+   SET_ColorTableParameteriv(disp, _mesa_ColorTableParameteriv);
+   SET_CopyColorSubTable(disp, _mesa_CopyColorSubTable);
+   SET_CopyColorTable(disp, _mesa_CopyColorTable);
+   SET_GetColorTable(disp, _mesa_GetColorTable);
+   SET_GetColorTableParameterfv(disp, _mesa_GetColorTableParameterfv);
+   SET_GetColorTableParameteriv(disp, _mesa_GetColorTableParameteriv);
+}
+
+
+#endif /* FEATURE_colortable */
+
 
 /**********************************************************************/
 /*****                      Initialization                        *****/

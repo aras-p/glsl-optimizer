@@ -374,6 +374,10 @@ typedef struct r700_AssemblerBase
     struct prog_instruction * pILInst;
     GLuint             uiCurInst;
     GLboolean   bR6xx;
+    /* helper to decide which type of instruction to assemble */
+    GLboolean is_tex;
+    /* we inserted helper intructions and need barrier on next TEX ins */ 
+    GLboolean need_tex_barrier; 
 } r700_AssemblerBase;
 
 //Internal use
@@ -411,6 +415,15 @@ GLboolean assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
 								GLuint number_of_elements,
                                 GLenum dataElementType,
 								VTX_FETCH_METHOD* pFetchMethod);
+GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
+                                       GLuint              destination_register,								       
+                                       GLenum              type,
+                                       GLint               size,
+                                       GLubyte             element,
+                                       GLuint              _signed,
+                                       GLboolean           normalize,
+                                       VTX_FETCH_METHOD  * pFetchMethod);
+GLboolean cleanup_vfetch_instructions(r700_AssemblerBase* pAsm);
 GLuint gethelpr(r700_AssemblerBase* pAsm);
 void resethelpr(r700_AssemblerBase* pAsm);
 void checkop_init(r700_AssemblerBase* pAsm);

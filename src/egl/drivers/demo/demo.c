@@ -177,7 +177,7 @@ demoCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, Nat
       }
    }
 
-   if (conf->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] == 0) {
+   if (GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) == 0) {
       _eglError(EGL_BAD_MATCH, "eglCreatePixmapSurface");
       return NULL;
    }

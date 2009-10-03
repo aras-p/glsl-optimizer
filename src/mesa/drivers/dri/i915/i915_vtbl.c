@@ -54,8 +54,7 @@ i915_render_prevalidate(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
 
-   if (!intel->Fallback)
-       i915ValidateFragmentProgram(i915);
+   i915ValidateFragmentProgram(i915);
 }
 
 static void

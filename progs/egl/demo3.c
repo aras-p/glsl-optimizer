@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 
@@ -551,15 +552,6 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
    }
 }
 
-#include "../../src/egl/main/egldisplay.h"
-
-typedef struct fb_display
-{
-   _EGLDisplay Base;  /* base class/object */
-   void *pFB;
-} fbDisplay;
-
-
 int
 main(int argc, char *argv[])
 {
@@ -571,16 +563,14 @@ main(int argc, char *argv[])
    EGLModeMESA mode;
    EGLint numConfigs, count;
    EGLBoolean b;
+   const GLubyte *bitmap;
    const EGLint screenAttribs[] = {
       EGL_WIDTH, 1024,
       EGL_HEIGHT, 768,
       EGL_NONE
    };
 
-   /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-   */
-   EGLDisplay d = eglGetDisplay("!EGL_i915");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {
@@ -590,6 +580,11 @@ main(int argc, char *argv[])
 
    printf("EGL version = %d.%d\n", maj, min);
    printf("EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
+   if (!strstr(eglQueryString(d, EGL_EXTENSIONS),
+               "EGL_MESA_screen_surface")) {
+      printf("EGL_MESA_screen_surface is not supported\n");
+      exit(1);
+   }
 
    eglGetConfigs(d, configs, 10, &numConfigs);
    eglGetScreensMESA(d, &screen, 1, &count);
@@ -620,17 +615,24 @@ main(int argc, char *argv[])
    Init();
    Reshape(1024, 768);
 
+   /* some drivers crash when rendering to front buffer */
+#if 0
    glDrawBuffer( GL_FRONT );
    glClearColor( 0, 1.0, 0, 1);
 
    glClear( GL_COLOR_BUFFER_BIT );
+#endif
 
    doubleBuffer = 1;
    glDrawBuffer( GL_BACK );
 
    Draw(d, screen_surf);
+   sleep(2);
 
-   write_ppm("dump.ppm", ((struct fb_display *)_eglLookupDisplay(d))->pFB, 1024, 768);
+   /* TODO EGL_KHR_lock_surface */
+   bitmap = NULL;
+   if (bitmap)
+      write_ppm("dump.ppm", bitmap, 1024, 768);
 
    eglDestroySurface(d, screen_surf);
    eglDestroyContext(d, ctx);

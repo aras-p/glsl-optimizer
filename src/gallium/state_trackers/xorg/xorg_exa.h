@@ -32,8 +32,11 @@ struct exa_context
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;
    } copy;
-};
 
+   /* we should combine these two */
+   float vertices2[4][2][4];
+   float vertices3[4][3][4];
+};
 
 struct exa_pixmap_priv
 {
@@ -46,6 +49,15 @@ struct exa_pixmap_priv
    struct pipe_transfer *map_transfer;
    unsigned map_count;
 };
+
+#define XORG_FALLBACK(s, arg...)              \
+do {                                          \
+   if (ms->debug_fallback) {                  \
+      xf86DrvMsg(pScrn->scrnIndex, X_INFO,    \
+                 "fallback: " s "\n", ##arg); \
+   }                                          \
+   return FALSE;                              \
+} while(0)
 
 struct pipe_surface *
 exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv);

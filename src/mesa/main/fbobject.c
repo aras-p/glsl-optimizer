@@ -44,6 +44,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texstore.h"
+#include "texstate.h"
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */
@@ -717,12 +718,6 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
    }
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   /* The above doesn't fully flush the drivers in the way that a
-    * glFlush does, but that is required here:
-    */
-   if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx);
-
 
    if (renderbuffer) {
       newRb = _mesa_lookup_renderbuffer(ctx, renderbuffer);
@@ -1212,9 +1207,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   if (ctx->Driver.Flush) {  
-      ctx->Driver.Flush(ctx);
-   }
 
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
@@ -1293,11 +1285,6 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   /* The above doesn't fully flush the drivers in the way that a
-    * glFlush does, but that is required here:
-    */
-   if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx);
 
    for (i = 0; i < n; i++) {
       if (framebuffers[i] > 0) {
@@ -1531,11 +1518,6 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
    }
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   /* The above doesn't fully flush the drivers in the way that a
-    * glFlush does, but that is required here:
-    */
-   if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx);
 
    _glthread_LOCK_MUTEX(fb->Mutex);
    if (texObj) {
@@ -1712,11 +1694,6 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
 
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   /* The above doesn't fully flush the drivers in the way that a
-    * glFlush does, but that is required here:
-    */
-   if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx);
 
    assert(ctx->Driver.FramebufferRenderbuffer);
    ctx->Driver.FramebufferRenderbuffer(ctx, fb, attachment, rb);
@@ -1793,11 +1770,6 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    }
 
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-   /* The above doesn't fully flush the drivers in the way that a
-    * glFlush does, but that is required here:
-    */
-   if (ctx->Driver.Flush)
-      ctx->Driver.Flush(ctx);
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
@@ -1955,7 +1927,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
       return;
    }
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    _mesa_lock_texture(ctx, texObj);

@@ -31,29 +31,33 @@
  *
  * Authors:
  *   Brian Paul
+ *   Keith Whitwell
  */
 
-#include "sp_context.h"
-#include "sp_quad.h"
-#include "sp_surface.h"
-#include "sp_texture.h"
-#include "sp_tex_sample.h"
-#include "sp_tile_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "sp_quad.h"   /* only for #define QUAD_* tokens */
+#include "sp_tex_sample.h"
+#include "sp_tex_tile_cache.h"
 
 
 
 /*
- * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
- * see 1-pixel bands of improperly weighted linear-filtered textures.
+ * Return fractional part of 'f'.  Used for computing interpolation weights.
+ * Need to be careful with negative values.
+ * Note, if this function isn't perfect you'll sometimes see 1-pixel bands
+ * of improperly weighted linear-filtered textures.
  * The tests/texwrap.c demo is a good test.
- * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
- * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
  */
-#define FRAC(f)  ((f) - util_ifloor(f))
+static INLINE float
+frac(float f)
+{
+   return f - util_ifloor(f);
+}
+
 
 
 /**
@@ -100,10 +104,16 @@ lerp_3d(float a, float b, float c,
 
 
 /**
- * If A is a signed integer, A % B doesn't give the right value for A < 0
- * (in terms of texture repeat).  Just casting to unsigned fixes that.
+ * Compute coord % size for repeat wrap modes.
+ * Note that if coord is a signed integer, coord % size doesn't give
+ * the right value for coord < 0 (in terms of texture repeat).  Just
+ * casting to unsigned fixes that.
  */
-#define REMAINDER(A, B) ((unsigned) (A) % (unsigned) (B))
+static INLINE int
+repeat(int coord, unsigned size)
+{
+   return (int) ((unsigned) coord % size);
+}
 
 
 /**
@@ -115,133 +125,153 @@ lerp_3d(float a, float b, float c,
  * \param icoord  returns the integer texcoords
  * \return  integer texture index
  */
-static INLINE void
-nearest_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
-                   int icoord[4])
+static void
+wrap_nearest_repeat(const float s[4], unsigned size, int icoord[4])
 {
    uint ch;
-   switch (wrapMode) {
-   case PIPE_TEX_WRAP_REPEAT:
-      /* s limited to [0,1) */
-      /* i limited to [0,size-1] */
-      for (ch = 0; ch < 4; ch++) {
-         int i = util_ifloor(s[ch] * size);
-         icoord[ch] = REMAINDER(i, size);
-      }
-      return;
-   case PIPE_TEX_WRAP_CLAMP:
+   /* s limited to [0,1) */
+   /* i limited to [0,size-1] */
+   for (ch = 0; ch < 4; ch++) {
+      int i = util_ifloor(s[ch] * size);
+      icoord[ch] = repeat(i, size);
+   }
+}
+
+
+static void
+wrap_nearest_clamp(const float s[4], unsigned size, int icoord[4])
+{
+   uint ch;
+   /* s limited to [0,1] */
+   /* i limited to [0,size-1] */
+   for (ch = 0; ch < 4; ch++) {
+      if (s[ch] <= 0.0F)
+         icoord[ch] = 0;
+      else if (s[ch] >= 1.0F)
+         icoord[ch] = size - 1;
+      else
+         icoord[ch] = util_ifloor(s[ch] * size);
+   }
+}
+
+
+static void
+wrap_nearest_clamp_to_edge(const float s[4], unsigned size, int icoord[4])
+{
+   uint ch;
+   /* s limited to [min,max] */
+   /* i limited to [0, size-1] */
+   const float min = 1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   for (ch = 0; ch < 4; ch++) {
+      if (s[ch] < min)
+         icoord[ch] = 0;
+      else if (s[ch] > max)
+         icoord[ch] = size - 1;
+      else
+         icoord[ch] = util_ifloor(s[ch] * size);
+   }
+}
+
+
+static void
+wrap_nearest_clamp_to_border(const float s[4], unsigned size, int icoord[4])
+{
+   uint ch;
+   /* s limited to [min,max] */
+   /* i limited to [-1, size] */
+   const float min = -1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   for (ch = 0; ch < 4; ch++) {
+      if (s[ch] <= min)
+         icoord[ch] = -1;
+      else if (s[ch] >= max)
+         icoord[ch] = size;
+      else
+         icoord[ch] = util_ifloor(s[ch] * size);
+   }
+}
+
+
+static void
+wrap_nearest_mirror_repeat(const float s[4], unsigned size, int icoord[4])
+{
+   uint ch;
+   const float min = 1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   for (ch = 0; ch < 4; ch++) {
+      const int flr = util_ifloor(s[ch]);
+      float u;
+      if (flr & 1)
+         u = 1.0F - (s[ch] - (float) flr);
+      else
+         u = s[ch] - (float) flr;
+      if (u < min)
+         icoord[ch] = 0;
+      else if (u > max)
+         icoord[ch] = size - 1;
+      else
+         icoord[ch] = util_ifloor(u * size);
+   }
+}
+
+
+static void
+wrap_nearest_mirror_clamp(const float s[4], unsigned size, int icoord[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
       /* s limited to [0,1] */
       /* i limited to [0,size-1] */
-      for (ch = 0; ch < 4; ch++) {
-         if (s[ch] <= 0.0F)
-            icoord[ch] = 0;
-         else if (s[ch] >= 1.0F)
-            icoord[ch] = size - 1;
-         else
-            icoord[ch] = util_ifloor(s[ch] * size);
-      }
-      return;
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      {
-         /* s limited to [min,max] */
-         /* i limited to [0, size-1] */
-         const float min = 1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            if (s[ch] < min)
-               icoord[ch] = 0;
-            else if (s[ch] > max)
-               icoord[ch] = size - 1;
-            else
-               icoord[ch] = util_ifloor(s[ch] * size);
-         }
-      }
-      return;
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      {
-         /* s limited to [min,max] */
-         /* i limited to [-1, size] */
-         const float min = -1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            if (s[ch] <= min)
-               icoord[ch] = -1;
-            else if (s[ch] >= max)
-               icoord[ch] = size;
-            else
-               icoord[ch] = util_ifloor(s[ch] * size);
-         }
-      }
-      return;
-   case PIPE_TEX_WRAP_MIRROR_REPEAT:
-      {
-         const float min = 1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            const int flr = util_ifloor(s[ch]);
-            float u;
-            if (flr & 1)
-               u = 1.0F - (s[ch] - (float) flr);
-            else
-               u = s[ch] - (float) flr;
-            if (u < min)
-               icoord[ch] = 0;
-            else if (u > max)
-               icoord[ch] = size - 1;
-            else
-               icoord[ch] = util_ifloor(u * size);
-         }
-      }
-      return;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      for (ch = 0; ch < 4; ch++) {
-         /* s limited to [0,1] */
-         /* i limited to [0,size-1] */
-         const float u = fabsf(s[ch]);
-         if (u <= 0.0F)
-            icoord[ch] = 0;
-         else if (u >= 1.0F)
-            icoord[ch] = size - 1;
-         else
-            icoord[ch] = util_ifloor(u * size);
-      }
-      return;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      {
-         /* s limited to [min,max] */
-         /* i limited to [0, size-1] */
-         const float min = 1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            const float u = fabsf(s[ch]);
-            if (u < min)
-               icoord[ch] = 0;
-            else if (u > max)
-               icoord[ch] = size - 1;
-            else
-               icoord[ch] = util_ifloor(u * size);
-         }
-      }
-      return;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-      {
-         /* s limited to [min,max] */
-         /* i limited to [0, size-1] */
-         const float min = -1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            const float u = fabsf(s[ch]);
-            if (u < min)
-               icoord[ch] = -1;
-            else if (u > max)
-               icoord[ch] = size;
-            else
-               icoord[ch] = util_ifloor(u * size);
-         }
-      }
-      return;
-   default:
-      assert(0);
+      const float u = fabsf(s[ch]);
+      if (u <= 0.0F)
+         icoord[ch] = 0;
+      else if (u >= 1.0F)
+         icoord[ch] = size - 1;
+      else
+         icoord[ch] = util_ifloor(u * size);
+   }
+}
+
+
+static void
+wrap_nearest_mirror_clamp_to_edge(const float s[4], unsigned size,
+                                  int icoord[4])
+{
+   uint ch;
+   /* s limited to [min,max] */
+   /* i limited to [0, size-1] */
+   const float min = 1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   for (ch = 0; ch < 4; ch++) {
+      const float u = fabsf(s[ch]);
+      if (u < min)
+         icoord[ch] = 0;
+      else if (u > max)
+         icoord[ch] = size - 1;
+      else
+         icoord[ch] = util_ifloor(u * size);
+   }
+}
+
+
+static void
+wrap_nearest_mirror_clamp_to_border(const float s[4], unsigned size,
+                                    int icoord[4])
+{
+   uint ch;
+   /* s limited to [min,max] */
+   /* i limited to [0, size-1] */
+   const float min = -1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   for (ch = 0; ch < 4; ch++) {
+      const float u = fabsf(s[ch]);
+      if (u < min)
+         icoord[ch] = -1;
+      else if (u > max)
+         icoord[ch] = size;
+      else
+         icoord[ch] = util_ifloor(u * size);
    }
 }
 
@@ -256,125 +286,156 @@ nearest_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
  * \param w  returns blend factor/weight between texture indexes
  * \param icoord  returns the computed integer texture coords
  */
-static INLINE void
-linear_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
+static void
+wrap_linear_repeat(const float s[4], unsigned size,
+                   int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = s[ch] * size - 0.5F;
+      icoord0[ch] = repeat(util_ifloor(u), size);
+      icoord1[ch] = repeat(icoord0[ch] + 1, size);
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_clamp(const float s[4], unsigned size,
                   int icoord0[4], int icoord1[4], float w[4])
 {
    uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], 0.0F, 1.0F);
+      u = u * size - 0.5f;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      w[ch] = frac(u);
+   }
+}
 
-   switch (wrapMode) {
-   case PIPE_TEX_WRAP_REPEAT:
-      for (ch = 0; ch < 4; ch++) {
-         float u = s[ch] * size - 0.5F;
-         icoord0[ch] = REMAINDER(util_ifloor(u), size);
-         icoord1[ch] = REMAINDER(icoord0[ch] + 1, size);
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_CLAMP:
-      for (ch = 0; ch < 4; ch++) {
-         float u = CLAMP(s[ch], 0.0F, 1.0F);
-         u = u * size - 0.5f;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      for (ch = 0; ch < 4; ch++) {
-         float u = CLAMP(s[ch], 0.0F, 1.0F);
-         u = u * size - 0.5f;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         if (icoord0[ch] < 0)
-            icoord0[ch] = 0;
-         if (icoord1[ch] >= (int) size)
-            icoord1[ch] = size - 1;
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      {
-         const float min = -1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            float u = CLAMP(s[ch], min, max);
-            u = u * size - 0.5f;
-            icoord0[ch] = util_ifloor(u);
-            icoord1[ch] = icoord0[ch] + 1;
-            w[ch] = FRAC(u);
-         }
-      }
-      break;;
-   case PIPE_TEX_WRAP_MIRROR_REPEAT:
-      for (ch = 0; ch < 4; ch++) {
-         const int flr = util_ifloor(s[ch]);
-         float u;
-         if (flr & 1)
-            u = 1.0F - (s[ch] - (float) flr);
-         else
-            u = s[ch] - (float) flr;
-         u = u * size - 0.5F;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         if (icoord0[ch] < 0)
-            icoord0[ch] = 0;
-         if (icoord1[ch] >= (int) size)
-            icoord1[ch] = size - 1;
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      for (ch = 0; ch < 4; ch++) {
-         float u = fabsf(s[ch]);
-         if (u >= 1.0F)
-            u = (float) size;
-         else
-            u *= size;
-         u -= 0.5F;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      for (ch = 0; ch < 4; ch++) {
-         float u = fabsf(s[ch]);
-         if (u >= 1.0F)
-            u = (float) size;
-         else
-            u *= size;
-         u -= 0.5F;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         if (icoord0[ch] < 0)
-            icoord0[ch] = 0;
-         if (icoord1[ch] >= (int) size)
-            icoord1[ch] = size - 1;
-         w[ch] = FRAC(u);
-      }
-      break;;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-      {
-         const float min = -1.0F / (2.0F * size);
-         const float max = 1.0F - min;
-         for (ch = 0; ch < 4; ch++) {
-            float u = fabsf(s[ch]);
-            if (u <= min)
-               u = min * size;
-            else if (u >= max)
-               u = max * size;
-            else
-               u *= size;
-            u -= 0.5F;
-            icoord0[ch] = util_ifloor(u);
-            icoord1[ch] = icoord0[ch] + 1;
-            w[ch] = FRAC(u);
-         }
-      }
-      break;;
-   default:
-      assert(0);
+
+static void
+wrap_linear_clamp_to_edge(const float s[4], unsigned size,
+                          int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], 0.0F, 1.0F);
+      u = u * size - 0.5f;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord0[ch] < 0)
+         icoord0[ch] = 0;
+      if (icoord1[ch] >= (int) size)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_clamp_to_border(const float s[4], unsigned size,
+                            int icoord0[4], int icoord1[4], float w[4])
+{
+   const float min = -1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], min, max);
+      u = u * size - 0.5f;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_mirror_repeat(const float s[4], unsigned size,
+                          int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      const int flr = util_ifloor(s[ch]);
+      float u;
+      if (flr & 1)
+         u = 1.0F - (s[ch] - (float) flr);
+      else
+         u = s[ch] - (float) flr;
+      u = u * size - 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord0[ch] < 0)
+         icoord0[ch] = 0;
+      if (icoord1[ch] >= (int) size)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_mirror_clamp(const float s[4], unsigned size,
+                         int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = fabsf(s[ch]);
+      if (u >= 1.0F)
+         u = (float) size;
+      else
+         u *= size;
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_mirror_clamp_to_edge(const float s[4], unsigned size,
+                                 int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = fabsf(s[ch]);
+      if (u >= 1.0F)
+         u = (float) size;
+      else
+         u *= size;
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord0[ch] < 0)
+         icoord0[ch] = 0;
+      if (icoord1[ch] >= (int) size)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+static void
+wrap_linear_mirror_clamp_to_border(const float s[4], unsigned size,
+                                   int icoord0[4], int icoord1[4], float w[4])
+{
+   const float min = -1.0F / (2.0F * size);
+   const float max = 1.0F - min;
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = fabsf(s[ch]);
+      if (u <= min)
+         u = min * size;
+      else if (u >= max)
+         u = max * size;
+      else
+         u *= size;
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      w[ch] = frac(u);
    }
 }
 
@@ -383,27 +444,27 @@ linear_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
  * For RECT textures / unnormalized texcoords
  * Only a subset of wrap modes supported.
  */
-static INLINE void
-nearest_texcoord_unnorm_4(unsigned wrapMode, const float s[4], unsigned size,
-                          int icoord[4])
+static void
+wrap_nearest_unorm_clamp(const float s[4], unsigned size, int icoord[4])
 {
    uint ch;
-   switch (wrapMode) {
-   case PIPE_TEX_WRAP_CLAMP:
-      for (ch = 0; ch < 4; ch++) {
-         int i = util_ifloor(s[ch]);
-         icoord[ch]= CLAMP(i, 0, (int) size-1);
-      }
-      return;
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      /* fall-through */
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      for (ch = 0; ch < 4; ch++) {
-         icoord[ch]= util_ifloor( CLAMP(s[ch], 0.5F, (float) size - 0.5F) );
-      }
-      return;
-   default:
-      assert(0);
+   for (ch = 0; ch < 4; ch++) {
+      int i = util_ifloor(s[ch]);
+      icoord[ch]= CLAMP(i, 0, (int) size-1);
+   }
+}
+
+
+/**
+ * Handles clamp_to_edge and clamp_to_border:
+ */
+static void
+wrap_nearest_unorm_clamp_to_border(const float s[4], unsigned size,
+                                   int icoord[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      icoord[ch]= util_ifloor( CLAMP(s[ch], 0.5F, (float) size - 0.5F) );
    }
 }
 
@@ -412,152 +473,113 @@ nearest_texcoord_unnorm_4(unsigned wrapMode, const float s[4], unsigned size,
  * For RECT textures / unnormalized texcoords.
  * Only a subset of wrap modes supported.
  */
-static INLINE void
-linear_texcoord_unnorm_4(unsigned wrapMode, const float s[4], unsigned size,
-                         int icoord0[4], int icoord1[4], float w[4])
+static void
+wrap_linear_unorm_clamp(const float s[4], unsigned size,
+                        int icoord0[4], int icoord1[4], float w[4])
 {
    uint ch;
-   switch (wrapMode) {
-   case PIPE_TEX_WRAP_CLAMP:
-      for (ch = 0; ch < 4; ch++) {
-         /* Not exactly what the spec says, but it matches NVIDIA output */
-         float u = CLAMP(s[ch] - 0.5F, 0.0f, (float) size - 1.0f);
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         w[ch] = FRAC(u);
-      }
-      return;
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      /* fall-through */
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      for (ch = 0; ch < 4; ch++) {
-         float u = CLAMP(s[ch], 0.5F, (float) size - 0.5F);
-         u -= 0.5F;
-         icoord0[ch] = util_ifloor(u);
-         icoord1[ch] = icoord0[ch] + 1;
-         if (icoord1[ch] > (int) size - 1)
-            icoord1[ch] = size - 1;
-         w[ch] = FRAC(u);
-      }
-      break;
-   default:
-      assert(0);
+   for (ch = 0; ch < 4; ch++) {
+      /* Not exactly what the spec says, but it matches NVIDIA output */
+      float u = CLAMP(s[ch] - 0.5F, 0.0f, (float) size - 1.0f);
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      w[ch] = frac(u);
    }
 }
 
 
-static unsigned
-choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
+static void
+wrap_linear_unorm_clamp_to_border(const float s[4], unsigned size,
+                                  int icoord0[4], int icoord1[4], float w[4])
 {
-   /*
-      major axis
-      direction     target                             sc     tc    ma
-      ----------    -------------------------------    ---    ---   ---
-       +rx          TEXTURE_CUBE_MAP_POSITIVE_X_EXT    -rz    -ry   rx
-       -rx          TEXTURE_CUBE_MAP_NEGATIVE_X_EXT    +rz    -ry   rx
-       +ry          TEXTURE_CUBE_MAP_POSITIVE_Y_EXT    +rx    +rz   ry
-       -ry          TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT    +rx    -rz   ry
-       +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
-       -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
-   */
-   const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
-   unsigned face;
-   float sc, tc, ma;
-
-   if (arx >= ary && arx >= arz) {
-      if (rx >= 0.0F) {
-         face = PIPE_TEX_FACE_POS_X;
-         sc = -rz;
-         tc = -ry;
-         ma = arx;
-      }
-      else {
-         face = PIPE_TEX_FACE_NEG_X;
-         sc = rz;
-         tc = -ry;
-         ma = arx;
-      }
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], 0.5F, (float) size - 0.5F);
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord1[ch] > (int) size - 1)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
    }
-   else if (ary >= arx && ary >= arz) {
-      if (ry >= 0.0F) {
-         face = PIPE_TEX_FACE_POS_Y;
-         sc = rx;
-         tc = rz;
-         ma = ary;
-      }
-      else {
-         face = PIPE_TEX_FACE_NEG_Y;
-         sc = rx;
-         tc = -rz;
-         ma = ary;
-      }
-   }
-   else {
-      if (rz > 0.0F) {
-         face = PIPE_TEX_FACE_POS_Z;
-         sc = rx;
-         tc = -ry;
-         ma = arz;
-      }
-      else {
-         face = PIPE_TEX_FACE_NEG_Z;
-         sc = -rx;
-         tc = -ry;
-         ma = arz;
-      }
-   }
-
-   *newS = ( sc / ma + 1.0F ) * 0.5F;
-   *newT = ( tc / ma + 1.0F ) * 0.5F;
-
-   return face;
 }
+
 
 
 /**
  * Examine the quad's texture coordinates to compute the partial
  * derivatives w.r.t X and Y, then compute lambda (level of detail).
- *
- * This is only done for fragment shaders, not vertex shaders.
  */
 static float
-compute_lambda(const struct pipe_texture *tex,
-               const struct pipe_sampler_state *sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               float lodbias)
+compute_lambda_1d(const struct sp_sampler_varient *samp,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias)
 {
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+   float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
+   float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
+   float rho = MAX2(dsdx, dsdy) * texture->width[0];
+   float lambda;
+
+   lambda = util_fast_log2(rho);
+   lambda += lodbias + sampler->lod_bias;
+   lambda = CLAMP(lambda, sampler->min_lod, sampler->max_lod);
+
+   return lambda;
+}
+
+
+static float
+compute_lambda_2d(const struct sp_sampler_varient *samp,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias)
+{
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+   float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
+   float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
+   float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
+   float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
+   float maxx = MAX2(dsdx, dsdy) * texture->width[0];
+   float maxy = MAX2(dtdx, dtdy) * texture->height[0];
+   float rho  = MAX2(maxx, maxy);
+   float lambda;
+
+   lambda = util_fast_log2(rho);
+   lambda += lodbias + sampler->lod_bias;
+   lambda = CLAMP(lambda, sampler->min_lod, sampler->max_lod);
+
+   return lambda;
+}
+
+
+static float
+compute_lambda_3d(const struct sp_sampler_varient *samp,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias)
+{
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
+   float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
+   float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
+   float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
+   float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
+   float dpdx = fabsf(p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT]);
+   float dpdy = fabsf(p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT]);
+   float maxx = MAX2(dsdx, dsdy) * texture->width[0];
+   float maxy = MAX2(dtdx, dtdy) * texture->height[0];
+   float maxz = MAX2(dpdx, dpdy) * texture->depth[0];
    float rho, lambda;
 
-   assert(sampler->normalized_coords);
-
-   assert(s);
-   {
-      float dsdx = s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT];
-      float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
-      dsdx = fabsf(dsdx);
-      dsdy = fabsf(dsdy);
-      rho = MAX2(dsdx, dsdy) * tex->width[0];
-   }
-   if (t) {
-      float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
-      float dtdy = t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT];
-      float max;
-      dtdx = fabsf(dtdx);
-      dtdy = fabsf(dtdy);
-      max = MAX2(dtdx, dtdy) * tex->height[0];
-      rho = MAX2(rho, max);
-   }
-   if (p) {
-      float dpdx = p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT];
-      float dpdy = p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT];
-      float max;
-      dpdx = fabsf(dpdx);
-      dpdy = fabsf(dpdy);
-      max = MAX2(dpdx, dpdy) * tex->depth[0];
-      rho = MAX2(rho, max);
-   }
+   rho = MAX2(maxx, maxy);
+   rho = MAX2(rho, maxz);
 
    lambda = util_fast_log2(rho);
    lambda += lodbias + sampler->lod_bias;
@@ -568,201 +590,853 @@ compute_lambda(const struct pipe_texture *tex,
 
 
 /**
- * Do several things here:
- * 1. Compute lambda from the texcoords, if needed
- * 2. Determine if we're minifying or magnifying
- * 3. If minifying, choose mipmap levels
- * 4. Return image filter to use within mipmap images
- * \param level0  Returns first mipmap level to sample from
- * \param level1  Returns second mipmap level to sample from
- * \param levelBlend  Returns blend factor between levels, in [0,1]
- * \param imgFilter  Returns either the min or mag filter, depending on lambda
+ * Compute lambda for a vertex texture sampler.
+ * Since there aren't derivatives to use, just return the LOD bias.
  */
-static void
-choose_mipmap_levels(const struct pipe_texture *texture,
-                     const struct pipe_sampler_state *sampler,
-                     const float s[QUAD_SIZE],
-                     const float t[QUAD_SIZE],
-                     const float p[QUAD_SIZE],
-                     boolean computeLambda,
-                     float lodbias,
-                     unsigned *level0, unsigned *level1, float *levelBlend,
-                     unsigned *imgFilter)
+static float
+compute_lambda_vert(const struct sp_sampler_varient *samp,
+                    const float s[QUAD_SIZE],
+                    const float t[QUAD_SIZE],
+                    const float p[QUAD_SIZE],
+                    float lodbias)
 {
-   if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
-      /* no mipmap selection needed */
-      *level0 = *level1 = CLAMP((int) sampler->min_lod,
-                                0, (int) texture->last_level);
-
-      if (sampler->min_img_filter != sampler->mag_img_filter) {
-         /* non-mipmapped texture, but still need to determine if doing
-          * minification or magnification.
-          */
-         float lambda = compute_lambda(texture, sampler, s, t, p, lodbias);
-         if (lambda <= 0.0) {
-            *imgFilter = sampler->mag_img_filter;
-         }
-         else {
-            *imgFilter = sampler->min_img_filter;
-         }
-      }
-      else {
-         *imgFilter = sampler->mag_img_filter;
-      }
-   }
-   else {
-      float lambda;
-
-      if (computeLambda)
-         /* fragment shader */
-         lambda = compute_lambda(texture, sampler, s, t, p, lodbias);
-      else
-         /* vertex shader */
-         lambda = lodbias; /* not really a bias, but absolute LOD */
-
-      if (lambda <= 0.0) { /* XXX threshold depends on the filter */
-         /* magnifying */
-         *imgFilter = sampler->mag_img_filter;
-         *level0 = *level1 = 0;
-      }
-      else {
-         /* minifying */
-         *imgFilter = sampler->min_img_filter;
-
-         /* choose mipmap level(s) and compute the blend factor between them */
-         if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
-            /* Nearest mipmap level */
-            const int lvl = (int) (lambda + 0.5);
-            *level0 =
-            *level1 = CLAMP(lvl, 0, (int) texture->last_level);
-         }
-         else {
-            /* Linear interpolation between mipmap levels */
-            const int lvl = (int) lambda;
-            *level0 = CLAMP(lvl,     0, (int) texture->last_level);
-            *level1 = CLAMP(lvl + 1, 0, (int) texture->last_level);
-            *levelBlend = FRAC(lambda);  /* blending weight between levels */
-         }
-      }
-   }
+   return lodbias;
 }
+
 
 
 /**
  * Get a texel from a texture, using the texture tile cache.
  *
- * \param face  the cube face in 0..5
- * \param level  the mipmap level
+ * \param addr  the template tex address containing cube, z, face info.
  * \param x  the x coord of texel within 2D image
  * \param y  the y coord of texel within 2D image
- * \param z  which slice of a 3D texture
  * \param rgba  the quad to put the texel/color into
- * \param j  which element of the rgba quad to write to
  *
- * XXX maybe move this into sp_tile_cache.c and merge with the
+ * XXX maybe move this into sp_tex_tile_cache.c and merge with the
  * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
-static void
-get_texel(const struct tgsi_sampler *tgsi_sampler,
-          unsigned face, unsigned level, int x, int y, int z,
-          float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
+
+
+
+
+static INLINE const float *
+get_texel_2d_no_border(const struct sp_sampler_varient *samp,
+		       union tex_tile_address addr, int x, int y)
 {
-   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   struct softpipe_context *sp = samp->sp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = sp->texture[unit];
-   const struct pipe_sampler_state *sampler = sp->sampler[unit];
+   const struct softpipe_tex_cached_tile *tile;
+
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
+
+   return &tile->data.color[y][x][0];
+}
+
+
+static INLINE const float *
+get_texel_2d(const struct sp_sampler_varient *samp,
+	     union tex_tile_address addr, int x, int y)
+{
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level = addr.bits.level;
+
+   if (x < 0 || x >= (int) texture->width[level] ||
+       y < 0 || y >= (int) texture->height[level]) {
+      return samp->sampler->border_color;
+   }
+   else {
+      return get_texel_2d_no_border( samp, addr, x, y );
+   }
+}
+
+
+/* Gather a quad of adjacent texels within a tile:
+ */
+static INLINE void
+get_texel_quad_2d_no_border_single_tile(const struct sp_sampler_varient *samp,
+					union tex_tile_address addr, 
+					unsigned x, unsigned y, 
+					const float *out[4])
+{
+   const struct softpipe_tex_cached_tile *tile;
+
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
+      
+   out[0] = &tile->data.color[y  ][x  ][0];
+   out[1] = &tile->data.color[y  ][x+1][0];
+   out[2] = &tile->data.color[y+1][x  ][0];
+   out[3] = &tile->data.color[y+1][x+1][0];
+}
+
+
+/* Gather a quad of potentially non-adjacent texels:
+ */
+static INLINE void
+get_texel_quad_2d_no_border(const struct sp_sampler_varient *samp,
+			    union tex_tile_address addr,
+			    int x0, int y0, 
+			    int x1, int y1,
+			    const float *out[4])
+{
+   out[0] = get_texel_2d_no_border( samp, addr, x0, y0 );
+   out[1] = get_texel_2d_no_border( samp, addr, x1, y0 );
+   out[2] = get_texel_2d_no_border( samp, addr, x0, y1 );
+   out[3] = get_texel_2d_no_border( samp, addr, x1, y1 );
+}
+
+/* Can involve a lot of unnecessary checks for border color:
+ */
+static INLINE void
+get_texel_quad_2d(const struct sp_sampler_varient *samp,
+		  union tex_tile_address addr,
+		  int x0, int y0, 
+		  int x1, int y1,
+		  const float *out[4])
+{
+   out[0] = get_texel_2d( samp, addr, x0, y0 );
+   out[1] = get_texel_2d( samp, addr, x1, y0 );
+   out[3] = get_texel_2d( samp, addr, x1, y1 );
+   out[2] = get_texel_2d( samp, addr, x0, y1 );
+}
+
+
+
+/* 3d varients:
+ */
+static INLINE const float *
+get_texel_3d_no_border(const struct sp_sampler_varient *samp,
+                       union tex_tile_address addr, int x, int y, int z)
+{
+   const struct softpipe_tex_cached_tile *tile;
+
+   addr.bits.x = x / TILE_SIZE;
+   addr.bits.y = y / TILE_SIZE;
+   addr.bits.z = z;
+   y %= TILE_SIZE;
+   x %= TILE_SIZE;
+
+   tile = sp_get_cached_tile_tex(samp->cache, addr);
+
+   return &tile->data.color[y][x][0];
+}
+
+
+static INLINE const float *
+get_texel_3d(const struct sp_sampler_varient *samp,
+	     union tex_tile_address addr, int x, int y, int z)
+{
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level = addr.bits.level;
 
    if (x < 0 || x >= (int) texture->width[level] ||
        y < 0 || y >= (int) texture->height[level] ||
        z < 0 || z >= (int) texture->depth[level]) {
-      rgba[0][j] = sampler->border_color[0];
-      rgba[1][j] = sampler->border_color[1];
-      rgba[2][j] = sampler->border_color[2];
-      rgba[3][j] = sampler->border_color[3];
+      return samp->sampler->border_color;
    }
    else {
-      const int tx = x % TILE_SIZE;
-      const int ty = y % TILE_SIZE;
-      const struct softpipe_cached_tile *tile
-         = sp_get_cached_tile_tex(sp, samp->cache,
-                                  x, y, z, face, level);
-      rgba[0][j] = tile->data.color[ty][tx][0];
-      rgba[1][j] = tile->data.color[ty][tx][1];
-      rgba[2][j] = tile->data.color[ty][tx][2];
-      rgba[3][j] = tile->data.color[ty][tx][3];
-      if (0)
-      {
-         debug_printf("Get texel %f %f %f %f from %s\n",
-                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j],
-                      pf_name(texture->format));
+      return get_texel_3d_no_border( samp, addr, x, y, z );
+   }
+}
+
+
+/**
+ * Given the logbase2 of a mipmap's base level size and a mipmap level,
+ * return the size (in texels) of that mipmap level.
+ * For example, if level[0].width = 256 then base_pot will be 8.
+ * If level = 2, then we'll return 64 (the width at level=2).
+ * Return 1 if level > base_pot.
+ */
+static INLINE unsigned
+pot_level_size(unsigned base_pot, unsigned level)
+{
+   return (base_pot >= level) ? (1 << (base_pot - level)) : 1;
+}
+
+
+/* Some image-filter fastpaths:
+ */
+static INLINE void
+img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                const float s[QUAD_SIZE],
+                                const float t[QUAD_SIZE],
+                                const float p[QUAD_SIZE],
+                                float lodbias,
+                                float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
+   unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
+   unsigned ymax = (ypot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, ypot) - 1; */
+   union tex_tile_address addr;
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot - 0.5F;
+      float v = t[j] * ypot - 0.5F;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      float xw = u - (float)uflr;
+      float yw = v - (float)vflr;
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *tx[4];      
+      
+      /* Can we fetch all four at once:
+       */
+      if (x0 < xmax && y0 < ymax) {
+         get_texel_quad_2d_no_border_single_tile(samp, addr, x0, y0, tx);
+      }
+      else {
+         unsigned x1 = (x0 + 1) & (xpot - 1);
+         unsigned y1 = (y0 + 1) & (ypot - 1);
+         get_texel_quad_2d_no_border(samp, addr, x0, y0, x1, y1, tx);
+      }
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw, yw, 
+                              tx[0][c], tx[1][c], 
+                              tx[2][c], tx[3][c]);
       }
    }
 }
 
 
-/**
- * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
- * When we sampled the depth texture, the depth value was put into all
- * RGBA channels.  We look at the red channel here.
- * \param rgba  quad of (depth) texel values
- * \param p  texture 'P' components for four pixels in quad
- * \param j  which pixel in the quad to test [0..3]
- */
 static INLINE void
-shadow_compare(const struct pipe_sampler_state *sampler,
-               float rgba[NUM_CHANNELS][QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               uint j)
+img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+                                 const float s[QUAD_SIZE],
+                                 const float t[QUAD_SIZE],
+                                 const float p[QUAD_SIZE],
+                                 float lodbias,
+                                 float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   int k;
-   switch (sampler->compare_func) {
-   case PIPE_FUNC_LESS:
-      k = p[j] < rgba[0][j];
-      break;
-   case PIPE_FUNC_LEQUAL:
-      k = p[j] <= rgba[0][j];
-      break;
-   case PIPE_FUNC_GREATER:
-      k = p[j] > rgba[0][j];
-      break;
-   case PIPE_FUNC_GEQUAL:
-      k = p[j] >= rgba[0][j];
-      break;
-   case PIPE_FUNC_EQUAL:
-      k = p[j] == rgba[0][j];
-      break;
-   case PIPE_FUNC_NOTEQUAL:
-      k = p[j] != rgba[0][j];
-      break;
-   case PIPE_FUNC_ALWAYS:
-      k = 1;
-      break;
-   case PIPE_FUNC_NEVER:
-      k = 0;
-      break;
-   default:
-      k = 0;
-      assert(0);
-      break;
-   }
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
+   union tex_tile_address addr;
 
-   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
-   rgba[0][j] = rgba[1][j] = rgba[2][j] = (float) k;
-   rgba[3][j] = 1.0F;
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
+
+      int uflr = util_ifloor(u);
+      int vflr = util_ifloor(v);
+
+      int x0 = uflr & (xpot - 1);
+      int y0 = vflr & (ypot - 1);
+
+      const float *out = get_texel_2d_no_border(samp, addr, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
 }
 
 
-/**
- * As above, but do four z/texture comparisons.
- */
 static INLINE void
-shadow_compare4(const struct pipe_sampler_state *sampler,
-                float rgba[NUM_CHANNELS][QUAD_SIZE],
-                const float p[QUAD_SIZE])
+img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
+                                const float s[QUAD_SIZE],
+                                const float t[QUAD_SIZE],
+                                const float p[QUAD_SIZE],
+                                float lodbias,
+                                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   unsigned  j;
+   unsigned level = samp->level;
+   unsigned xpot = pot_level_size(samp->xpot, level);
+   unsigned ypot = pot_level_size(samp->ypot, level);
+   union tex_tile_address addr;
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      float u = s[j] * xpot;
+      float v = t[j] * ypot;
+
+      int x0, y0;
+      const float *out;
+
+      x0 = util_ifloor(u);
+      if (x0 < 0) 
+         x0 = 0;
+      else if (x0 > xpot - 1)
+         x0 = xpot - 1;
+
+      y0 = util_ifloor(v);
+      if (y0 < 0) 
+         y0 = 0;
+      else if (y0 > ypot - 1)
+         y0 = ypot - 1;
+      
+      out = get_texel_2d_no_border(samp, addr, x0, y0);
+
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
+                        const float s[QUAD_SIZE],
+                        const float t[QUAD_SIZE],
+                        const float p[QUAD_SIZE],
+                        float lodbias,
+                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width;
+   int x[4];
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+
+   assert(width > 0);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->nearest_texcoord_s(s, width, x);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *out = get_texel_2d(samp, addr, x[j], 0);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
+                      const float s[QUAD_SIZE],
+                      const float t[QUAD_SIZE],
+                      const float p[QUAD_SIZE],
+                      float lodbias,
+                      float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height;
+   int x[4], y[4];
+   union tex_tile_address addr;
+
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+   assert(height > 0);
+ 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->nearest_texcoord_s(s, width, x);
+   samp->nearest_texcoord_t(t, height, y);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *out = get_texel_2d(samp, addr, x[j], y[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static INLINE union tex_tile_address
+face(union tex_tile_address addr, unsigned face )
+{
+   addr.bits.face = face;
+   return addr;
+}
+
+
+static void
+img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
+                        const float s[QUAD_SIZE],
+                        const float t[QUAD_SIZE],
+                        const float p[QUAD_SIZE],
+                        float lodbias,
+                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const unsigned *faces = samp->faces; /* zero when not cube-mapping */
+   unsigned level0, j;
+   int width, height;
+   int x[4], y[4];
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+   assert(height > 0);
+ 
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->nearest_texcoord_s(s, width, x);
+   samp->nearest_texcoord_t(t, height, y);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *out = get_texel_2d(samp, face(addr, faces[j]), x[j], y[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }
+   }
+}
+
+
+static void
+img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
+                      const float s[QUAD_SIZE],
+                      const float t[QUAD_SIZE],
+                      const float p[QUAD_SIZE],
+                      float lodbias,
+                      float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height, depth;
+   int x[4], y[4], z[4];
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+   depth = texture->depth[level0];
+
+   assert(width > 0);
+   assert(height > 0);
+   assert(depth > 0);
+
+   samp->nearest_texcoord_s(s, width,  x);
+   samp->nearest_texcoord_t(t, height, y);
+   samp->nearest_texcoord_p(p, depth,  z);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *out = get_texel_3d(samp, addr, x[j], y[j], z[j]);
+      int c;
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = out[c];
+      }      
+   }
+}
+
+
+static void
+img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
+                     const float s[QUAD_SIZE],
+                     const float t[QUAD_SIZE],
+                     const float p[QUAD_SIZE],
+                     float lodbias,
+                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width;
+   int x0[4], x1[4];
+   float xw[4]; /* weights */
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+
+   assert(width > 0);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->linear_texcoord_s(s, width, x0, x1, xw);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *tx0 = get_texel_2d(samp, addr, x0[j], 0);
+      const float *tx1 = get_texel_2d(samp, addr, x1[j], 0);
+      int c;
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp(xw[j], tx0[c], tx1[c]);
+      }
+   }
+}
+
+
+static void
+img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
+                     const float s[QUAD_SIZE],
+                     const float t[QUAD_SIZE],
+                     const float p[QUAD_SIZE],
+                     float lodbias,
+                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height;
+   int x0[4], y0[4], x1[4], y1[4];
+   float xw[4], yw[4]; /* weights */
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+   assert(height > 0);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->linear_texcoord_s(s, width,  x0, x1, xw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float *tx0 = get_texel_2d(samp, addr, x0[j], y0[j]);
+      const float *tx1 = get_texel_2d(samp, addr, x1[j], y0[j]);
+      const float *tx2 = get_texel_2d(samp, addr, x0[j], y1[j]);
+      const float *tx3 = get_texel_2d(samp, addr, x1[j], y1[j]);
+      int c;
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw[j], yw[j],
+                              tx0[c], tx1[c],
+                              tx2[c], tx3[c]);
+      }
+   }
+}
+
+
+static void
+img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
+                       const float s[QUAD_SIZE],
+                       const float t[QUAD_SIZE],
+                       const float p[QUAD_SIZE],
+                       float lodbias,
+                       float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   const unsigned *faces = samp->faces; /* zero when not cube-mapping */
+   unsigned level0, j;
+   int width, height;
+   int x0[4], y0[4], x1[4], y1[4];
+   float xw[4], yw[4]; /* weights */
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+
+   assert(width > 0);
+   assert(height > 0);
+
+   addr.value = 0;
+   addr.bits.level = samp->level;
+
+   samp->linear_texcoord_s(s, width,  x0, x1, xw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      union tex_tile_address addrj = face(addr, faces[j]);
+      const float *tx0 = get_texel_2d(samp, addrj, x0[j], y0[j]);
+      const float *tx1 = get_texel_2d(samp, addrj, x1[j], y0[j]);
+      const float *tx2 = get_texel_2d(samp, addrj, x0[j], y1[j]);
+      const float *tx3 = get_texel_2d(samp, addrj, x1[j], y1[j]);
+      int c;
+
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_2d(xw[j], yw[j],
+                              tx0[c], tx1[c],
+                              tx2[c], tx3[c]);
+      }
+   }
+}
+
+
+static void
+img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
+                     const float s[QUAD_SIZE],
+                     const float t[QUAD_SIZE],
+                     const float p[QUAD_SIZE],
+                     float lodbias,
+                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   unsigned level0, j;
+   int width, height, depth;
+   int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
+   float xw[4], yw[4], zw[4]; /* interpolation weights */
+   union tex_tile_address addr;
+
+   level0 = samp->level;
+   width = texture->width[level0];
+   height = texture->height[level0];
+   depth = texture->depth[level0];
+
+   addr.value = 0;
+   addr.bits.level = level0;
+
+   assert(width > 0);
+   assert(height > 0);
+   assert(depth > 0);
+
+   samp->linear_texcoord_s(s, width,  x0, x1, xw);
+   samp->linear_texcoord_t(t, height, y0, y1, yw);
+   samp->linear_texcoord_p(p, depth,  z0, z1, zw);
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int c;
+
+      const float *tx00 = get_texel_3d(samp, addr, x0[j], y0[j], z0[j]);
+      const float *tx01 = get_texel_3d(samp, addr, x1[j], y0[j], z0[j]);
+      const float *tx02 = get_texel_3d(samp, addr, x0[j], y1[j], z0[j]);
+      const float *tx03 = get_texel_3d(samp, addr, x1[j], y1[j], z0[j]);
+      
+      const float *tx10 = get_texel_3d(samp, addr, x0[j], y0[j], z1[j]);
+      const float *tx11 = get_texel_3d(samp, addr, x1[j], y0[j], z1[j]);
+      const float *tx12 = get_texel_3d(samp, addr, x0[j], y1[j], z1[j]);
+      const float *tx13 = get_texel_3d(samp, addr, x1[j], y1[j], z1[j]);
+      
+      /* interpolate R, G, B, A */
+      for (c = 0; c < 4; c++) {
+         rgba[c][j] = lerp_3d(xw[j], yw[j], zw[j],
+                              tx00[c], tx01[c],
+                              tx02[c], tx03[c],
+                              tx10[c], tx11[c],
+                              tx12[c], tx13[c]);
+      }
+   }
+}
+
+
+static void
+mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias,
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   int level0;
+   float lambda;
+
+   lambda = samp->compute_lambda(samp, s, t, p, lodbias);
+   level0 = (int)lambda;
+
+   if (lambda < 0.0) { 
+      samp->level = 0;
+      samp->mag_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+   else if (level0 >= texture->last_level) {
+      samp->level = texture->last_level;
+      samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+   else {
+      float levelBlend = lambda - level0;
+      float rgba0[4][4];
+      float rgba1[4][4];
+      int c,j;
+
+      samp->level = level0;
+      samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba0 );
+
+      samp->level = level0+1;
+      samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba1 );
+
+      for (j = 0; j < QUAD_SIZE; j++) {
+         for (c = 0; c < 4; c++) {
+            rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
+         }
+      }
+   }
+}
+
+
+static void
+mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
+                   const float s[QUAD_SIZE],
+                   const float t[QUAD_SIZE],
+                   const float p[QUAD_SIZE],
+                   float lodbias,
+                   float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   float lambda;
+
+   lambda = samp->compute_lambda(samp, s, t, p, lodbias);
+
+   if (lambda < 0.0) { 
+      samp->level = 0;
+      samp->mag_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+   else {
+      samp->level = (int)(lambda + 0.5) ;
+      samp->level = MIN2(samp->level, (int)texture->last_level);
+      samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+
+#if 0
+   printf("RGBA %g %g %g %g, %g %g %g %g, %g %g %g %g, %g %g %g %g\n",
+          rgba[0][0], rgba[1][0], rgba[2][0], rgba[3][0],
+          rgba[0][1], rgba[1][1], rgba[2][1], rgba[3][1],
+          rgba[0][2], rgba[1][2], rgba[2][2], rgba[3][2],
+          rgba[0][3], rgba[1][3], rgba[2][3], rgba[3][3]);
+#endif
+}
+
+
+static void
+mip_filter_none(struct tgsi_sampler *tgsi_sampler,
+                const float s[QUAD_SIZE],
+                const float t[QUAD_SIZE],
+                const float p[QUAD_SIZE],
+                float lodbias,
+                float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   float lambda = samp->compute_lambda(samp, s, t, p, lodbias);
+
+   if (lambda < 0.0) { 
+      samp->mag_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+   else {
+      samp->min_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+   }
+}
+
+
+
+/**
+ * Specialized version of mip_filter_linear with hard-wired calls to
+ * 2d lambda calculation and 2d_linear_repeat_POT img filters.
+ */
+static void
+mip_filter_linear_2d_linear_repeat_POT(
+   struct tgsi_sampler *tgsi_sampler,
+   const float s[QUAD_SIZE],
+   const float t[QUAD_SIZE],
+   const float p[QUAD_SIZE],
+   float lodbias,
+   float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_texture *texture = samp->texture;
+   int level0;
+   float lambda;
+
+   lambda = compute_lambda_2d(samp, s, t, p, lodbias);
+   level0 = (int)lambda;
+
+   /* Catches both negative and large values of level0:
+    */
+   if ((unsigned)level0 >= texture->last_level) { 
+      if (level0 < 0)
+         samp->level = 0;
+      else
+         samp->level = texture->last_level;
+
+      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, 0, rgba );
+   }
+   else {
+      float levelBlend = lambda - level0;
+      float rgba0[4][4];
+      float rgba1[4][4];
+      int c,j;
+
+      samp->level = level0;
+      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, 0, rgba0 );
+
+      samp->level = level0+1;
+      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, 0, rgba1 );
+
+      for (j = 0; j < QUAD_SIZE; j++) {
+         for (c = 0; c < 4; c++) {
+            rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
+         }
+      }
+   }
+}
+
+
+
+/**
+ * Do shadow/depth comparisons.
+ */
+static void
+sample_compare(struct tgsi_sampler *tgsi_sampler,
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE],
+               float lodbias,
+               float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   const struct pipe_sampler_state *sampler = samp->sampler;
    int j, k0, k1, k2, k3;
    float val;
+
+   samp->mip_filter( tgsi_sampler, s, t, p, lodbias, rgba );
+
+   /**
+    * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
+    * When we sampled the depth texture, the depth value was put into all
+    * RGBA channels.  We look at the red channel here.
+    */
 
    /* compare four texcoords vs. four texture samples */
    switch (sampler->compare_func) {
@@ -826,470 +1500,392 @@ shadow_compare4(const struct pipe_sampler_state *sampler,
 
 
 /**
- * Common code for sampling 1D/2D/cube textures.
- * Could probably extend for 3D...
+ * Compute which cube face is referenced by each texcoord and put that
+ * info into the sampler faces[] array.  Then sample the cube faces
  */
 static void
-sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
-                         const float s[QUAD_SIZE],
-                         const float t[QUAD_SIZE],
-                         const float p[QUAD_SIZE],
-                         boolean computeLambda,
-                         float lodbias,
-                         float rgba[NUM_CHANNELS][QUAD_SIZE],
-                         const unsigned faces[4])
+sample_cube(struct tgsi_sampler *tgsi_sampler,
+            const float s[QUAD_SIZE],
+            const float t[QUAD_SIZE],
+            const float p[QUAD_SIZE],
+            float lodbias,
+            float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   const struct softpipe_context *sp = samp->sp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = sp->texture[unit];
-   const struct pipe_sampler_state *sampler = sp->sampler[unit];
-   unsigned level0, level1, j, imgFilter;
-   int width, height;
-   float levelBlend;
-
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
-                        &level0, &level1, &levelBlend, &imgFilter);
-
-   assert(sampler->normalized_coords);
-
-   width = texture->width[level0];
-   height = texture->height[level0];
-
-   assert(width > 0);
-
-   switch (imgFilter) {
-   case PIPE_TEX_FILTER_NEAREST:
-      {
-         int x[4], y[4];
-         nearest_texcoord_4(sampler->wrap_s, s, width, x);
-         nearest_texcoord_4(sampler->wrap_t, t, height, y);
-
-         for (j = 0; j < QUAD_SIZE; j++) {
-            get_texel(tgsi_sampler, faces[j], level0, x[j], y[j], 0, rgba, j);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(sampler, rgba, p, j);
-            }
-
-            if (level0 != level1) {
-               /* get texels from second mipmap level and blend */
-               float rgba2[4][4];
-               unsigned c;
-               x[j] /= 2;
-               y[j] /= 2;
-               get_texel(tgsi_sampler, faces[j], level1, x[j], y[j], 0,
-                         rgba2, j);
-               if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
-                  shadow_compare(sampler, rgba2, p, j);
-               }
-
-               for (c = 0; c < NUM_CHANNELS; c++) {
-                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
-               }
-            }
-         }
-      }
-      break;
-   case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
-      {
-         int x0[4], y0[4], x1[4], y1[4];
-         float xw[4], yw[4]; /* weights */
-
-         linear_texcoord_4(sampler->wrap_s, s, width, x0, x1, xw);
-         linear_texcoord_4(sampler->wrap_t, t, height, y0, y1, yw);
-
-         for (j = 0; j < QUAD_SIZE; j++) {
-            float tx[4][4]; /* texels */
-            int c;
-            get_texel(tgsi_sampler, faces[j], level0, x0[j], y0[j], 0, tx, 0);
-            get_texel(tgsi_sampler, faces[j], level0, x1[j], y0[j], 0, tx, 1);
-            get_texel(tgsi_sampler, faces[j], level0, x0[j], y1[j], 0, tx, 2);
-            get_texel(tgsi_sampler, faces[j], level0, x1[j], y1[j], 0, tx, 3);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare4(sampler, tx, p);
-            }
-
-            /* interpolate R, G, B, A */
-            for (c = 0; c < 4; c++) {
-               rgba[c][j] = lerp_2d(xw[j], yw[j],
-                                    tx[c][0], tx[c][1],
-                                    tx[c][2], tx[c][3]);
-            }
-
-            if (level0 != level1) {
-               /* get texels from second mipmap level and blend */
-               float rgba2[4][4];
-               x0[j] /= 2;
-               y0[j] /= 2;
-               x1[j] /= 2;
-               y1[j] /= 2;
-               get_texel(tgsi_sampler, faces[j], level1, x0[j], y0[j], 0, tx, 0);
-               get_texel(tgsi_sampler, faces[j], level1, x1[j], y0[j], 0, tx, 1);
-               get_texel(tgsi_sampler, faces[j], level1, x0[j], y1[j], 0, tx, 2);
-               get_texel(tgsi_sampler, faces[j], level1, x1[j], y1[j], 0, tx, 3);
-               if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
-                  shadow_compare4(sampler, tx, p);
-               }
-
-               /* interpolate R, G, B, A */
-               for (c = 0; c < 4; c++) {
-                  rgba2[c][j] = lerp_2d(xw[j], yw[j],
-                                        tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
-               }
-
-               for (c = 0; c < NUM_CHANNELS; c++) {
-                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
-               }
-            }
-         }
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
-static INLINE void
-sp_get_samples_1d(const struct tgsi_sampler *sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  boolean computeLambda,
-                  float lodbias,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   static const unsigned faces[4] = {0, 0, 0, 0};
-   static const float tzero[4] = {0, 0, 0, 0};
-   sp_get_samples_2d_common(sampler, s, tzero, NULL,
-                            computeLambda, lodbias, rgba, faces);
-}
-
-
-static INLINE void
-sp_get_samples_2d(const struct tgsi_sampler *sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  boolean computeLambda,
-                  float lodbias,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   static const unsigned faces[4] = {0, 0, 0, 0};
-   sp_get_samples_2d_common(sampler, s, t, p,
-                            computeLambda, lodbias, rgba, faces);
-}
-
-
-static INLINE void
-sp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  boolean computeLambda,
-                  float lodbias,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   const struct softpipe_context *sp = samp->sp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = sp->texture[unit];
-   const struct pipe_sampler_state *sampler = sp->sampler[unit];
-   /* get/map pipe_surfaces corresponding to 3D tex slices */
-   unsigned level0, level1, j, imgFilter;
-   int width, height, depth;
-   float levelBlend;
-   const uint face = 0;
-
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
-                        &level0, &level1, &levelBlend, &imgFilter);
-
-   assert(sampler->normalized_coords);
-
-   width = texture->width[level0];
-   height = texture->height[level0];
-   depth = texture->depth[level0];
-
-   assert(width > 0);
-   assert(height > 0);
-   assert(depth > 0);
-
-   switch (imgFilter) {
-   case PIPE_TEX_FILTER_NEAREST:
-      {
-         int x[4], y[4], z[4];
-         nearest_texcoord_4(sampler->wrap_s, s, width, x);
-         nearest_texcoord_4(sampler->wrap_t, t, height, y);
-         nearest_texcoord_4(sampler->wrap_r, p, depth, z);
-         for (j = 0; j < QUAD_SIZE; j++) {
-            get_texel(tgsi_sampler, face, level0, x[j], y[j], z[j], rgba, j);
-            if (level0 != level1) {
-               /* get texels from second mipmap level and blend */
-               float rgba2[4][4];
-               unsigned c;
-               x[j] /= 2;
-               y[j] /= 2;
-               z[j] /= 2;
-               get_texel(tgsi_sampler, face, level1, x[j], y[j], z[j], rgba2, j);
-               for (c = 0; c < NUM_CHANNELS; c++) {
-                  rgba[c][j] = lerp(levelBlend, rgba2[c][j], rgba[c][j]);
-               }
-            }
-         }
-      }
-      break;
-   case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
-      {
-         int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
-         float xw[4], yw[4], zw[4]; /* interpolation weights */
-         linear_texcoord_4(sampler->wrap_s, s, width,  x0, x1, xw);
-         linear_texcoord_4(sampler->wrap_t, t, height, y0, y1, yw);
-         linear_texcoord_4(sampler->wrap_r, p, depth,  z0, z1, zw);
-
-         for (j = 0; j < QUAD_SIZE; j++) {
-            int c;
-            float tx0[4][4], tx1[4][4];
-            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], z0[j], tx0, 0);
-            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], z0[j], tx0, 1);
-            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], z0[j], tx0, 2);
-            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], z0[j], tx0, 3);
-            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], z1[j], tx1, 0);
-            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], z1[j], tx1, 1);
-            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], z1[j], tx1, 2);
-            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], z1[j], tx1, 3);
-
-            /* interpolate R, G, B, A */
-            for (c = 0; c < 4; c++) {
-               rgba[c][j] = lerp_3d(xw[j], yw[j], zw[j],
-                                    tx0[c][0], tx0[c][1],
-                                    tx0[c][2], tx0[c][3],
-                                    tx1[c][0], tx1[c][1],
-                                    tx1[c][2], tx1[c][3]);
-            }
-
-            if (level0 != level1) {
-               /* get texels from second mipmap level and blend */
-               float rgba2[4][4];
-               x0[j] /= 2;
-               y0[j] /= 2;
-               z0[j] /= 2;
-               x1[j] /= 2;
-               y1[j] /= 2;
-               z1[j] /= 2;
-               get_texel(tgsi_sampler, face, level1, x0[j], y0[j], z0[j], tx0, 0);
-               get_texel(tgsi_sampler, face, level1, x1[j], y0[j], z0[j], tx0, 1);
-               get_texel(tgsi_sampler, face, level1, x0[j], y1[j], z0[j], tx0, 2);
-               get_texel(tgsi_sampler, face, level1, x1[j], y1[j], z0[j], tx0, 3);
-               get_texel(tgsi_sampler, face, level1, x0[j], y0[j], z1[j], tx1, 0);
-               get_texel(tgsi_sampler, face, level1, x1[j], y0[j], z1[j], tx1, 1);
-               get_texel(tgsi_sampler, face, level1, x0[j], y1[j], z1[j], tx1, 2);
-               get_texel(tgsi_sampler, face, level1, x1[j], y1[j], z1[j], tx1, 3);
-
-               /* interpolate R, G, B, A */
-               for (c = 0; c < 4; c++) {
-                  rgba2[c][j] = lerp_3d(xw[j], yw[j], zw[j],
-                                        tx0[c][0], tx0[c][1],
-                                        tx0[c][2], tx0[c][3],
-                                        tx1[c][0], tx1[c][1],
-                                        tx1[c][2], tx1[c][3]);
-               }
-
-               /* blend mipmap levels */
-               for (c = 0; c < NUM_CHANNELS; c++) {
-                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
-               }
-            }
-         }
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
-static void
-sp_get_samples_cube(const struct tgsi_sampler *sampler,
-                    const float s[QUAD_SIZE],
-                    const float t[QUAD_SIZE],
-                    const float p[QUAD_SIZE],
-                    boolean computeLambda,
-                    float lodbias,
-                    float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   unsigned faces[QUAD_SIZE], j;
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   unsigned j;
    float ssss[4], tttt[4];
+
+   /*
+     major axis
+     direction     target                             sc     tc    ma
+     ----------    -------------------------------    ---    ---   ---
+     +rx          TEXTURE_CUBE_MAP_POSITIVE_X_EXT    -rz    -ry   rx
+     -rx          TEXTURE_CUBE_MAP_NEGATIVE_X_EXT    +rz    -ry   rx
+     +ry          TEXTURE_CUBE_MAP_POSITIVE_Y_EXT    +rx    +rz   ry
+     -ry          TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT    +rx    -rz   ry
+     +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
+     -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
+   */
    for (j = 0; j < QUAD_SIZE; j++) {
-      faces[j] = choose_cube_face(s[j], t[j], p[j], ssss + j, tttt + j);
+      float rx = s[j];
+      float ry = t[j];
+      float rz = p[j];
+      const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
+      unsigned face;
+      float sc, tc, ma;
+
+      if (arx >= ary && arx >= arz) {
+         if (rx >= 0.0F) {
+            face = PIPE_TEX_FACE_POS_X;
+            sc = -rz;
+            tc = -ry;
+            ma = arx;
+         }
+         else {
+            face = PIPE_TEX_FACE_NEG_X;
+            sc = rz;
+            tc = -ry;
+            ma = arx;
+         }
+      }
+      else if (ary >= arx && ary >= arz) {
+         if (ry >= 0.0F) {
+            face = PIPE_TEX_FACE_POS_Y;
+            sc = rx;
+            tc = rz;
+            ma = ary;
+         }
+         else {
+            face = PIPE_TEX_FACE_NEG_Y;
+            sc = rx;
+            tc = -rz;
+            ma = ary;
+         }
+      }
+      else {
+         if (rz > 0.0F) {
+            face = PIPE_TEX_FACE_POS_Z;
+            sc = rx;
+            tc = -ry;
+            ma = arz;
+         }
+         else {
+            face = PIPE_TEX_FACE_NEG_Z;
+            sc = -rx;
+            tc = -ry;
+            ma = arz;
+         }
+      }
+
+      {
+	 const float ima = 1.0 / ma;
+	 ssss[j] = ( sc * ima + 1.0F ) * 0.5F;
+	 tttt[j] = ( tc * ima + 1.0F ) * 0.5F;
+	 samp->faces[j] = face;
+      }
    }
-   sp_get_samples_2d_common(sampler, ssss, tttt, NULL,
-                            computeLambda, lodbias, rgba, faces);
+
+   /* In our little pipeline, the compare stage is next.  If compare
+    * is not active, this will point somewhere deeper into the
+    * pipeline, eg. to mip_filter or even img_filter.
+    */
+   samp->compare(tgsi_sampler, ssss, tttt, NULL, lodbias, rgba);
 }
 
 
-static void
-sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
-                    const float s[QUAD_SIZE],
-                    const float t[QUAD_SIZE],
-                    const float p[QUAD_SIZE],
-                    boolean computeLambda,
-                    float lodbias,
-                    float rgba[NUM_CHANNELS][QUAD_SIZE])
+
+static wrap_nearest_func
+get_nearest_unorm_wrap(unsigned mode)
 {
-   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   const struct softpipe_context *sp = samp->sp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = sp->texture[unit];
-   const struct pipe_sampler_state *sampler = sp->sampler[unit];
-   const uint face = 0;
-   unsigned level0, level1, j, imgFilter;
-   int width, height;
-   float levelBlend;
-
-   choose_mipmap_levels(texture, sampler, s, t, p, computeLambda, lodbias,
-                        &level0, &level1, &levelBlend, &imgFilter);
-
-   /* texture RECTS cannot be mipmapped */
-   assert(level0 == level1);
-
-   width = texture->width[level0];
-   height = texture->height[level0];
-
-   assert(width > 0);
-
-   switch (imgFilter) {
-   case PIPE_TEX_FILTER_NEAREST:
-      {
-         int x[4], y[4];
-         nearest_texcoord_unnorm_4(sampler->wrap_s, s, width, x);
-         nearest_texcoord_unnorm_4(sampler->wrap_t, t, height, y);
-         for (j = 0; j < QUAD_SIZE; j++) {
-            get_texel(tgsi_sampler, face, level0, x[j], y[j], 0, rgba, j);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(sampler, rgba, p, j);
-            }
-         }
-      }
-      break;
-   case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
-      {
-         int x0[4], y0[4], x1[4], y1[4];
-         float xw[4], yw[4]; /* weights */
-         linear_texcoord_unnorm_4(sampler->wrap_s, s, width,  x0, x1, xw);
-         linear_texcoord_unnorm_4(sampler->wrap_t, t, height, y0, y1, yw);
-         for (j = 0; j < QUAD_SIZE; j++) {
-            float tx[4][4]; /* texels */
-            int c;
-            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], 0, tx, 0);
-            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], 0, tx, 1);
-            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], 0, tx, 2);
-            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], 0, tx, 3);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare4(sampler, tx, p);
-            }
-            for (c = 0; c < 4; c++) {
-               rgba[c][j] = lerp_2d(xw[j], yw[j],
-                                    tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
-            }
-         }
-      }
-      break;
+   switch (mode) {
+   case PIPE_TEX_WRAP_CLAMP:
+      return wrap_nearest_unorm_clamp;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return wrap_nearest_unorm_clamp_to_border;
    default:
       assert(0);
+      return wrap_nearest_unorm_clamp;
    }
 }
 
 
-/**
- * Common code for vertex/fragment program texture sampling.
- */
-static INLINE void
-sp_get_samples(struct tgsi_sampler *tgsi_sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               boolean computeLambda,
-               float lodbias,
-               float rgba[NUM_CHANNELS][QUAD_SIZE])
+static wrap_nearest_func
+get_nearest_wrap(unsigned mode)
 {
-   const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   const struct softpipe_context *sp = samp->sp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = sp->texture[unit];
-   const struct pipe_sampler_state *sampler = sp->sampler[unit];
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+      return wrap_nearest_repeat;
+   case PIPE_TEX_WRAP_CLAMP:
+      return wrap_nearest_clamp;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_nearest_clamp_to_edge;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return wrap_nearest_clamp_to_border;
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+      return wrap_nearest_mirror_repeat;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      return wrap_nearest_mirror_clamp;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      return wrap_nearest_mirror_clamp_to_edge;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      return wrap_nearest_mirror_clamp_to_border;
+   default:
+      assert(0);
+      return wrap_nearest_repeat;
+   }
+}
 
-   if (!texture)
-      return;
 
-   switch (texture->target) {
+static wrap_linear_func
+get_linear_unorm_wrap(unsigned mode)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_CLAMP:
+      return wrap_linear_unorm_clamp;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return wrap_linear_unorm_clamp_to_border;
+   default:
+      assert(0);
+      return wrap_linear_unorm_clamp;
+   }
+}
+
+
+static wrap_linear_func
+get_linear_wrap(unsigned mode)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+      return wrap_linear_repeat;
+   case PIPE_TEX_WRAP_CLAMP:
+      return wrap_linear_clamp;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_linear_clamp_to_edge;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return wrap_linear_clamp_to_border;
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+      return wrap_linear_mirror_repeat;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      return wrap_linear_mirror_clamp;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      return wrap_linear_mirror_clamp_to_edge;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      return wrap_linear_mirror_clamp_to_border;
+   default:
+      assert(0);
+      return wrap_linear_repeat;
+   }
+}
+
+
+static compute_lambda_func
+get_lambda_func(const union sp_sampler_key key)
+{
+   if (key.bits.processor == TGSI_PROCESSOR_VERTEX)
+      return compute_lambda_vert;
+   
+   switch (key.bits.target) {
    case PIPE_TEXTURE_1D:
-      assert(sampler->normalized_coords);
-      sp_get_samples_1d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      return compute_lambda_1d;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
+      return compute_lambda_2d;
+   case PIPE_TEXTURE_3D:
+      return compute_lambda_3d;
+   default:
+      assert(0);
+      return compute_lambda_1d;
+   }
+}
+
+
+static filter_func
+get_img_filter(const union sp_sampler_key key,
+               unsigned filter,
+               const struct pipe_sampler_state *sampler)
+{
+   switch (key.bits.target) {
+   case PIPE_TEXTURE_1D:
+      if (filter == PIPE_TEX_FILTER_NEAREST) 
+         return img_filter_1d_nearest;
+      else
+         return img_filter_1d_linear;
       break;
    case PIPE_TEXTURE_2D:
-      if (sampler->normalized_coords)
-         sp_get_samples_2d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      /* Try for fast path:
+       */
+      if (key.bits.is_pot &&
+          sampler->wrap_s == sampler->wrap_t &&
+          sampler->normalized_coords) 
+      {
+         switch (sampler->wrap_s) {
+         case PIPE_TEX_WRAP_REPEAT:
+            switch (filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               return img_filter_2d_nearest_repeat_POT;
+            case PIPE_TEX_FILTER_LINEAR:
+               return img_filter_2d_linear_repeat_POT;
+            default:
+               break;
+            }
+            break;
+         case PIPE_TEX_WRAP_CLAMP:
+            switch (filter) {
+            case PIPE_TEX_FILTER_NEAREST:
+               return img_filter_2d_nearest_clamp_POT;
+            default:
+               break;
+            }
+         }
+      }
+      /* Otherwise use default versions:
+       */
+      if (filter == PIPE_TEX_FILTER_NEAREST) 
+         return img_filter_2d_nearest;
       else
-         sp_get_samples_rect(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
-      break;
-   case PIPE_TEXTURE_3D:
-      assert(sampler->normalized_coords);
-      sp_get_samples_3d(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+         return img_filter_2d_linear;
       break;
    case PIPE_TEXTURE_CUBE:
-      assert(sampler->normalized_coords);
-      sp_get_samples_cube(tgsi_sampler, s, t, p, computeLambda, lodbias, rgba);
+      if (filter == PIPE_TEX_FILTER_NEAREST) 
+         return img_filter_cube_nearest;
+      else
+         return img_filter_cube_linear;
+      break;
+   case PIPE_TEXTURE_3D:
+      if (filter == PIPE_TEX_FILTER_NEAREST) 
+         return img_filter_3d_nearest;
+      else
+         return img_filter_3d_linear;
       break;
    default:
       assert(0);
+      return img_filter_1d_nearest;
    }
+}
 
-#if 0 /* DEBUG */
-   {
-      int i;
-      printf("Sampled at %f, %f, %f:\n", s[0], t[0], p[0]);
-      for (i = 0; i < 4; i++) {
-         printf("Frag %d: %f %f %f %f\n", i,
-                rgba[0][i],
-                rgba[1][i],
-                rgba[2][i],
-                rgba[3][i]);
+
+/**
+ * Bind the given texture object and texture cache to the sampler varient.
+ */
+void
+sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
+                                 struct softpipe_tex_tile_cache *tex_cache,
+                                 const struct pipe_texture *texture )
+{
+   const struct pipe_sampler_state *sampler = samp->sampler;
+
+   samp->texture = texture;
+   samp->cache = tex_cache;
+   samp->xpot = util_unsigned_logbase2( texture->width[0] );
+   samp->ypot = util_unsigned_logbase2( texture->height[0] );
+   samp->level = CLAMP((int) sampler->min_lod, 0, (int) texture->last_level);
+}
+
+
+void
+sp_sampler_varient_destroy( struct sp_sampler_varient *samp )
+{
+   FREE(samp);
+}
+
+
+/**
+ * Create a sampler varient for a given set of non-orthogonal state.
+ */
+struct sp_sampler_varient *
+sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
+                           const union sp_sampler_key key )
+{
+   struct sp_sampler_varient *samp = CALLOC_STRUCT(sp_sampler_varient);
+   if (!samp)
+      return NULL;
+
+   samp->sampler = sampler;
+   samp->key = key;
+
+   /* Note that (for instance) linear_texcoord_s and
+    * nearest_texcoord_s may be active at the same time, if the
+    * sampler min_img_filter differs from its mag_img_filter.
+    */
+   if (sampler->normalized_coords) {
+      samp->linear_texcoord_s = get_linear_wrap( sampler->wrap_s );
+      samp->linear_texcoord_t = get_linear_wrap( sampler->wrap_t );
+      samp->linear_texcoord_p = get_linear_wrap( sampler->wrap_r );
+      
+      samp->nearest_texcoord_s = get_nearest_wrap( sampler->wrap_s );
+      samp->nearest_texcoord_t = get_nearest_wrap( sampler->wrap_t );
+      samp->nearest_texcoord_p = get_nearest_wrap( sampler->wrap_r );
+   }
+   else {
+      samp->linear_texcoord_s = get_linear_unorm_wrap( sampler->wrap_s );
+      samp->linear_texcoord_t = get_linear_unorm_wrap( sampler->wrap_t );
+      samp->linear_texcoord_p = get_linear_unorm_wrap( sampler->wrap_r );
+      
+      samp->nearest_texcoord_s = get_nearest_unorm_wrap( sampler->wrap_s );
+      samp->nearest_texcoord_t = get_nearest_unorm_wrap( sampler->wrap_t );
+      samp->nearest_texcoord_p = get_nearest_unorm_wrap( sampler->wrap_r );
+   }
+   
+   samp->compute_lambda = get_lambda_func( key );
+
+   samp->min_img_filter = get_img_filter(key, sampler->min_img_filter, sampler);
+   samp->mag_img_filter = get_img_filter(key, sampler->mag_img_filter, sampler);
+
+   switch (sampler->min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
+      if (sampler->min_img_filter == sampler->mag_img_filter) 
+         samp->mip_filter = samp->min_img_filter;         
+      else
+         samp->mip_filter = mip_filter_none;
+      break;
+
+   case PIPE_TEX_MIPFILTER_NEAREST:
+      samp->mip_filter = mip_filter_nearest;
+      break;
+
+   case PIPE_TEX_MIPFILTER_LINEAR:
+      if (key.bits.is_pot &&
+          sampler->min_img_filter == sampler->mag_img_filter &&
+          sampler->normalized_coords &&
+          sampler->wrap_s == PIPE_TEX_WRAP_REPEAT &&
+          sampler->wrap_t == PIPE_TEX_WRAP_REPEAT &&
+          sampler->min_img_filter == PIPE_TEX_FILTER_LINEAR)
+      {
+         samp->mip_filter = mip_filter_linear_2d_linear_repeat_POT;
       }
+      else 
+      {
+         samp->mip_filter = mip_filter_linear;
+      }
+      break;
    }
-#endif
-}
 
+   if (sampler->compare_mode != FALSE) {
+      samp->compare = sample_compare;
+   }
+   else {
+      /* Skip compare operation by promoting the mip_filter function
+       * pointer:
+       */
+      samp->compare = samp->mip_filter;
+   }
+   
+   if (key.bits.target == PIPE_TEXTURE_CUBE) {
+      samp->base.get_samples = sample_cube;
+   }
+   else {
+      samp->faces[0] = 0;
+      samp->faces[1] = 0;
+      samp->faces[2] = 0;
+      samp->faces[3] = 0;
 
-/**
- * Called via tgsi_sampler::get_samples() when running a fragment shader.
- * Get four filtered RGBA values from the sampler's texture.
- */
-void
-sp_get_samples_fragment(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        float lodbias,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   sp_get_samples(tgsi_sampler, s, t, p, TRUE, lodbias, rgba);
-}
+      /* Skip cube face determination by promoting the compare
+       * function pointer:
+       */
+      samp->base.get_samples = samp->compare;
+   }
 
-
-/**
- * Called via tgsi_sampler::get_samples() when running a vertex shader.
- * Get four filtered RGBA values from the sampler's texture.
- */
-void
-sp_get_samples_vertex(struct tgsi_sampler *tgsi_sampler,
-                      const float s[QUAD_SIZE],
-                      const float t[QUAD_SIZE],
-                      const float p[QUAD_SIZE],
-                      float lodbias,
-                      float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-   sp_get_samples(tgsi_sampler, s, t, p, FALSE, lodbias, rgba);
+   return samp;
 }

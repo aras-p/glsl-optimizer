@@ -415,6 +415,12 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/README			\
 	$(DIRECTORY)/progs/fbdev/Makefile		\
 	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
+	$(DIRECTORY)/progs/objviewer/*.[ch]		\
+	$(DIRECTORY)/progs/objviewer/*.obj		\
+	$(DIRECTORY)/progs/objviewer/*.mtl		\
+	$(DIRECTORY)/progs/objviewer/*.rgb		\
+	$(DIRECTORY)/progs/objviewer/Makefile		\
+	$(DIRECTORY)/progs/objviewer/README.txt		\
 	$(DIRECTORY)/progs/osdemos/Makefile		\
 	$(DIRECTORY)/progs/osdemos/*.c			\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\

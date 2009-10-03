@@ -283,6 +283,14 @@ util_fast_pow(float x, float y)
    return util_fast_exp2(util_fast_log2(x) * y);
 }
 
+/* Note that this counts zero as a power of two.
+ */
+static INLINE boolean
+util_is_power_of_two( unsigned v )
+{
+   return (v & (v-1)) == 0;
+}
+
 
 /**
  * Floor(x), returned as int.
@@ -459,6 +467,26 @@ util_logbase2(unsigned n)
    while (n >>= 1)
       ++log2;
    return log2;
+}
+
+
+/**
+ * Returns the smallest power of two >= x
+ */
+static INLINE unsigned
+util_next_power_of_two(unsigned x)
+{
+   unsigned i;
+
+   if (x == 0)
+      return 1;
+
+   --x;
+
+   for (i = 1; i < sizeof(unsigned) * 8; i <<= 1)
+      x |= x >> i;
+
+   return x + 1;
 }
 
 

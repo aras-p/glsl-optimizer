@@ -113,15 +113,19 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 
 static struct pipe_texture *
 softpipe_texture_create(struct pipe_screen *screen,
-                        const struct pipe_texture *templat)
+                        const struct pipe_texture *template)
 {
    struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
    if (!spt)
       return NULL;
 
-   spt->base = *templat;
+   spt->base = *template;
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
+
+   spt->pot = (util_is_power_of_two(template->width[0]) &&
+               util_is_power_of_two(template->height[0]) &&
+               util_is_power_of_two(template->depth[0]));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
                               PIPE_TEXTURE_USAGE_PRIMARY)) {
@@ -217,6 +221,13 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
          ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
+                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
+         /* Mark the surface as dirty.  The tile cache will look for this. */
+         spt->timestamp++;
+         softpipe_screen(screen)->timestamp++;
+      }
 
       ps->face = face;
       ps->level = level;
@@ -318,27 +329,18 @@ softpipe_transfer_map( struct pipe_screen *screen,
 {
    ubyte *map, *xfer_map;
    struct softpipe_texture *spt;
-   unsigned flags = 0;
 
    assert(transfer->texture);
    spt = softpipe_texture(transfer->texture);
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-   }
-
-   if (transfer->usage != PIPE_TRANSFER_WRITE) {
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-   }
-
-   map = pipe_buffer_map(screen, spt->buffer, flags);
+   map = pipe_buffer_map(screen, spt->buffer, pipe_transfer_buffer_flags(transfer));
    if (map == NULL)
       return NULL;
 
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) {
+   if (transfer->texture && (transfer->usage & PIPE_TRANSFER_WRITE)) {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
        */
@@ -364,10 +366,62 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 
    pipe_buffer_unmap( screen, spt->buffer );
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
+   if (transfer->usage & PIPE_TRANSFER_WRITE) {
       /* Mark the texture as dirty to expire the tile caches. */
-      spt->modified = TRUE;
+      spt->timestamp++;
    }
+}
+
+static struct pipe_video_surface*
+softpipe_video_surface_create(struct pipe_screen *screen,
+                              enum pipe_video_chroma_format chroma_format,
+                              unsigned width, unsigned height)
+{
+   struct softpipe_video_surface *sp_vsfc;
+   struct pipe_texture template;
+
+   assert(screen);
+   assert(width && height);
+
+   sp_vsfc = CALLOC_STRUCT(softpipe_video_surface);
+   if (!sp_vsfc)
+      return NULL;
+
+   pipe_reference_init(&sp_vsfc->base.reference, 1);
+   sp_vsfc->base.screen = screen;
+   sp_vsfc->base.chroma_format = chroma_format;
+   /*sp_vsfc->base.surface_format = PIPE_VIDEO_SURFACE_FORMAT_VUYA;*/
+   sp_vsfc->base.width = width;
+   sp_vsfc->base.height = height;
+
+   memset(&template, 0, sizeof(struct pipe_texture));
+   template.target = PIPE_TEXTURE_2D;
+   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.last_level = 0;
+   /* vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true */
+   template.width[0] = util_next_power_of_two(width);
+   template.height[0] = util_next_power_of_two(height);
+   template.depth[0] = 1;
+   pf_get_block(template.format, &template.block);
+   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+   sp_vsfc->tex = screen->texture_create(screen, &template);
+   if (!sp_vsfc->tex) {
+      FREE(sp_vsfc);
+      return NULL;
+   }
+
+   return &sp_vsfc->base;
+}
+
+
+static void
+softpipe_video_surface_destroy(struct pipe_video_surface *vsfc)
+{
+   struct softpipe_video_surface *sp_vsfc = softpipe_video_surface(vsfc);
+
+   pipe_texture_reference(&sp_vsfc->tex, NULL);
+   FREE(sp_vsfc);
 }
 
 
@@ -385,6 +439,9 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->tex_transfer_destroy = softpipe_tex_transfer_destroy;
    screen->transfer_map = softpipe_transfer_map;
    screen->transfer_unmap = softpipe_transfer_unmap;
+
+   screen->video_surface_create = softpipe_video_surface_create;
+   screen->video_surface_destroy = softpipe_video_surface_destroy;
 }
 
 

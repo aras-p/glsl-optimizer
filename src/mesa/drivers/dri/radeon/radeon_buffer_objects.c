@@ -187,7 +187,11 @@ radeonMapBuffer(GLcontext * ctx,
 
     radeon_bo_map(radeon_obj->bo, access == GL_WRITE_ONLY_ARB);
 
-    return obj->Pointer = radeon_obj->bo->ptr;
+    obj->Pointer = radeon_obj->bo->ptr;
+    obj->Length = obj->Size;
+    obj->Offset = 0;
+
+    return obj->Pointer;
 }
 
 
@@ -203,8 +207,11 @@ radeonUnmapBuffer(GLcontext * ctx,
 
     if (radeon_obj->bo != NULL) {
         radeon_bo_unmap(radeon_obj->bo);
-        obj->Pointer = NULL;
     }
+
+    obj->Pointer = NULL;
+    obj->Offset = 0;
+    obj->Length = 0;
 
     return GL_TRUE;
 }

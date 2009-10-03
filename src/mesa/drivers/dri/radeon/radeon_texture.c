@@ -101,7 +101,12 @@ void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
 /* Set Data pointer and additional data for mapped texture image */
 static void teximage_set_map_data(radeon_texture_image *image)
 {
-	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+	radeon_mipmap_level *lvl;
+
+	if (!image->mt)
+		return;
+
+	lvl = &image->mt->levels[image->mtlevel];
 
 	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
 	image->base.RowStride = lvl->rowstride / image->mt->bpp;
@@ -969,7 +974,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 			radeon_texture_image *image = get_radeon_texture_image(texObj->Image[face][level]);
 			if (RADEON_DEBUG & RADEON_TEXTURE)
 				fprintf(stderr, " face %i, level %i... %p vs %p ", face, level, t->mt, image->mt);
-			if (t->mt == image->mt) {
+			if (t->mt == image->mt || (!image->mt && !image->base.Data)) {
 				if (RADEON_DEBUG & RADEON_TEXTURE)
 					fprintf(stderr, "OK\n");
 

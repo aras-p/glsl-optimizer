@@ -125,11 +125,11 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
    } else if ((tr_ctx->draw_rule.blocker & flag) &&
               (tr_ctx->draw_blocker & 4)) {
       boolean block = FALSE;
-      debug_printf("%s (%lu %lu) (%lu %lu) (%lu %u) (%lu %u)\n", __FUNCTION__,
-					tr_ctx->draw_rule.fs, tr_ctx->curr.fs,
-					tr_ctx->draw_rule.vs, tr_ctx->curr.vs,
-					tr_ctx->draw_rule.surf, 0,
-					tr_ctx->draw_rule.tex, 0);
+      debug_printf("%s (%p %p) (%p %p) (%p %u) (%p %u)\n", __FUNCTION__,
+                   (void *) tr_ctx->draw_rule.fs, (void *) tr_ctx->curr.fs,
+                   (void *) tr_ctx->draw_rule.vs, (void *) tr_ctx->curr.vs,
+                   (void *) tr_ctx->draw_rule.surf, 0,
+                   (void *) tr_ctx->draw_rule.tex, 0);
       if (tr_ctx->draw_rule.fs &&
           tr_ctx->draw_rule.fs == tr_ctx->curr.fs)
          block = TRUE;

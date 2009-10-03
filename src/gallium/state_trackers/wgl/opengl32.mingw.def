@@ -375,6 +375,7 @@ EXPORTS
 	DrvDescribePixelFormat = DrvDescribePixelFormat@16
 	DrvGetLayerPaletteEntries = DrvGetLayerPaletteEntries@20
 	DrvGetProcAddress = DrvGetProcAddress@4
+	DrvPresentBuffers = DrvPresentBuffers@8
 	DrvRealizeLayerPalette = DrvRealizeLayerPalette@12
 	DrvReleaseContext = DrvReleaseContext@4
 	DrvSetCallbackProcs = DrvSetCallbackProcs@8

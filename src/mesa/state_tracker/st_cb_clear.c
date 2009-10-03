@@ -116,7 +116,18 @@ draw_quad(GLcontext *ctx,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
-   const GLuint max_slots = 1024 / sizeof(st->clear.vertices);
+
+   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
+    * no_flush) updates to buffers where we know there is no conflict
+    * with previous data.  Currently using max_slots > 1 will cause
+    * synchronous rendering if the driver flushes its command buffers
+    * between one bitmap and the next.  Our flush hook below isn't
+    * sufficient to catch this as the driver doesn't tell us when it
+    * flushes its own command buffers.  Until this gets fixed, pay the
+    * price of allocating a new buffer for each bitmap cache-flush to
+    * avoid synchronous rendering.
+    */
+   const GLuint max_slots = 1; /* 1024 / sizeof(st->clear.vertices); */
    GLuint i;
 
    if (st->clear.vbuf_slot >= max_slots) {

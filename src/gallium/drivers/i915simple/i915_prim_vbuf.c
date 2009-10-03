@@ -198,7 +198,7 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
    struct intel_winsys *iws = i915->iws;
 
    if (i915->vbo_flushed)
-      debug_printf("%s bad vbo flush occured stalling on hw\n");
+      debug_printf("%s bad vbo flush occured stalling on hw\n", __FUNCTION__);
 
    i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
 
@@ -389,14 +389,43 @@ i915_vbuf_render_draw_arrays(struct vbuf_render *render,
                              uint nr)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
 
    if (i915_render->fallback) {
       draw_arrays_fallback(render, start, nr);
       return;
    }
 
-   /* JB: TODO submit direct cmds */
-   draw_arrays_fallback(render, start, nr);
+   if (i915->dirty)
+      i915_update_derived(i915);
+
+   if (i915->hardware_dirty)
+      i915_emit_hardware_state(i915);
+
+   if (!BEGIN_BATCH(2, 0)) {
+      FLUSH_BATCH(NULL);
+
+      /* Make sure state is re-emitted after a flush:
+       */
+      i915_update_derived(i915);
+      i915_emit_hardware_state(i915);
+      i915->vbo_flushed = 1;
+
+      if (!BEGIN_BATCH(2, 0)) {
+         assert(0);
+         goto out;
+      }
+   }
+
+   OUT_BATCH(_3DPRIMITIVE |
+             PRIM_INDIRECT |
+             PRIM_INDIRECT_SEQUENTIAL |
+             i915_render->hwprim |
+             nr);
+   OUT_BATCH(start); /* Beginning vertex index */
+
+out:
+   return;
 }
 
 /**

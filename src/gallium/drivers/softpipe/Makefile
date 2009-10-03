@@ -6,26 +6,17 @@ LIBNAME = softpipe
 C_SOURCES = \
 	sp_fs_exec.c \
 	sp_fs_sse.c \
-	sp_fs_llvm.c \
 	sp_clear.c \
 	sp_flush.c \
 	sp_query.c \
 	sp_context.c \
 	sp_draw_arrays.c \
-	sp_prim_setup.c \
 	sp_prim_vbuf.c \
 	sp_quad_pipe.c \
-	sp_quad_alpha_test.c \
-	sp_quad_blend.c \
-	sp_quad_colormask.c \
-	sp_quad_coverage.c \
-	sp_quad_depth_test.c \
-	sp_quad_earlyz.c \
-	sp_quad_fs.c \
-	sp_quad_occlusion.c \
-	sp_quad_output.c \
-	sp_quad_stencil.c \
 	sp_quad_stipple.c \
+	sp_quad_depth_test.c \
+	sp_quad_fs.c \
+	sp_quad_blend.c \
 	sp_screen.c \
         sp_setup.c \
 	sp_state_blend.c \
@@ -38,7 +29,9 @@ C_SOURCES = \
 	sp_state_vertex.c \
 	sp_texture.c \
 	sp_tex_sample.c \
+	sp_tex_tile_cache.c \
 	sp_tile_cache.c \
-	sp_surface.c 
+	sp_surface.c \
+	sp_video_context.c
 
 include ../../Makefile.template

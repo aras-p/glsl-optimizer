@@ -254,9 +254,6 @@ struct intel_context
    intel_line_func draw_line;
    intel_tri_func draw_tri;
 
-   /* These refer to the current drawing buffer:
-    */
-   struct gl_texture_object *frame_buffer_texobj;
    /**
     * Set to true if a single constant cliprect should be used in the
     * batchbuffer.  Otherwise, cliprects must be calculated at batchbuffer
@@ -296,7 +293,6 @@ struct intel_context
 
    GLboolean use_texture_tiling;
    GLboolean use_early_z;
-
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;

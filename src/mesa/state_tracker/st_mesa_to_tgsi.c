@@ -869,3 +869,14 @@ out:
 
    return tokens;
 }
+
+
+/**
+ * Tokens cannot be free with _mesa_free otherwise the builtin gallium
+ * malloc debugging will get confused.
+ */
+void
+st_free_tokens(const struct tgsi_token *tokens)
+{
+   FREE((void *)tokens);
+}

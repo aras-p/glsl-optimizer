@@ -161,8 +161,26 @@ void vbo_exec_array_destroy( struct vbo_exec_context *exec );
 
 void vbo_exec_vtx_init( struct vbo_exec_context *exec );
 void vbo_exec_vtx_destroy( struct vbo_exec_context *exec );
+
+#if FEATURE_beginend
+
 void vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap );
 void vbo_exec_vtx_map( struct vbo_exec_context *exec );
+
+#else /* FEATURE_beginend */
+
+static INLINE void
+vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
+{
+}
+
+static INLINE void
+vbo_exec_vtx_map( struct vbo_exec_context *exec )
+{
+}
+
+#endif /* FEATURE_beginend */
+
 void vbo_exec_vtx_wrap( struct vbo_exec_context *exec );
 
 void vbo_exec_eval_update( struct vbo_exec_context *exec );

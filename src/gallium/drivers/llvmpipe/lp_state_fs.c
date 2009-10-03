@@ -401,7 +401,6 @@ generate_fragment(struct llvmpipe_context *lp,
    if(key->depth.enabled) {
       debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
       debug_printf("depth.writemask = %u\n", key->depth.writemask);
-      debug_printf("depth.occlusion_count = %u\n", key->depth.occlusion_count);
    }
    if(key->alpha.enabled) {
       debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
@@ -582,17 +581,17 @@ generate_fragment(struct llvmpipe_context *lp,
     * Translate the LLVM IR into machine code.
     */
 
+   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(variant->function);
+      abort();
+   }
+
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 
 #ifdef DEBUG
    LLVMDumpValue(variant->function);
    debug_printf("\n");
 #endif
-
-   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(variant->function);
-      abort();
-   }
 
    variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 

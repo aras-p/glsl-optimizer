@@ -376,6 +376,7 @@ EXPORTS
 	DrvDescribePixelFormat
 	DrvGetLayerPaletteEntries
 	DrvGetProcAddress
+	DrvPresentBuffers
 	DrvRealizeLayerPalette
 	DrvReleaseContext
 	DrvSetCallbackProcs

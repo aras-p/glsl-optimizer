@@ -69,7 +69,6 @@ struct drm_surface
 	 * drm
 	 */
 
-	struct drm_context *user;
 	struct drm_screen *screen;
 
 	int w;
@@ -94,7 +93,6 @@ struct drm_screen
 	 * pipe
 	 */
 
-	struct pipe_buffer *buffer;
 	struct pipe_texture *tex;
 	struct pipe_surface *surface;
 

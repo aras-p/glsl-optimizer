@@ -33,6 +33,8 @@
  */
 
 
+#include "util/u_cpu_detect.h"
+
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
@@ -65,7 +67,7 @@ lp_build_cmp(struct lp_build_context *bld,
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
-      if(type.floating) {
+      if(type.floating && util_cpu_caps.has_sse) {
          LLVMValueRef args[3];
          unsigned cc;
          boolean swap;
@@ -114,7 +116,7 @@ lp_build_cmp(struct lp_build_context *bld,
          res = LLVMBuildBitCast(bld->builder, res, int_vec_type, "");
          return res;
       }
-      else {
+      else if(util_cpu_caps.has_sse2) {
          static const struct {
             unsigned swap:1;
             unsigned eq:1;

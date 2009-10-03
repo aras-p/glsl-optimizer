@@ -77,6 +77,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define HASH_MAGIC 0xdeadbeef
 #define HASH_DEBUG 0
@@ -87,6 +88,12 @@
 
 #define HASH_ALLOC malloc
 #define HASH_FREE  free
+#ifndef __GLIBC__
+#define HASH_RANDOM_DECL	char *ps, rs[256]
+#define HASH_RANDOM_INIT(seed)	ps = initstate(seed, rs, sizeof(rs))
+#define HASH_RANDOM		random()
+#define HASH_RANDOM_DESTROY	setstate(ps)
+#else
 #define HASH_RANDOM_DECL	struct random_data rd; int32_t rv; char rs[256]
 #define HASH_RANDOM_INIT(seed)					\
    do {								\
@@ -95,6 +102,7 @@
    } while(0)
 #define HASH_RANDOM             ((void) random_r(&rd, &rv), rv)
 #define HASH_RANDOM_DESTROY
+#endif
 
 typedef struct __glxHashBucket
 {

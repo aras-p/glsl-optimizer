@@ -381,6 +381,7 @@ void r300_emit_query_end(struct r300_context* r300,
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
                     0, RADEON_GEM_DOMAIN_GTT, 0);
+	    break;
         default:
             debug_printf("r300: Implementation error: Chipset reports %d"
                     " pixel pipes!\n", caps->num_frag_pipes);

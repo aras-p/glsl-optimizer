@@ -30,9 +30,7 @@
 
 
 #include "mfeatures.h"
-#if FEATURE_accum
 #include "accum.h"
-#endif
 #include "api_loopback.h"
 #include "api_exec.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
@@ -41,9 +39,7 @@
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
 #endif
-#if FEATURE_attrib_stack
 #include "attrib.h"
-#endif
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
@@ -54,29 +50,17 @@
 #endif
 #include "clear.h"
 #include "clip.h"
-#if FEATURE_colortable
 #include "colortab.h"
-#endif
 #include "context.h"
-#if FEATURE_convolve
 #include "convolve.h"
-#endif
 #include "depth.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
-#if FEATURE_drawpix
 #include "drawpix.h"
 #include "rastpos.h"
-#endif
 #include "enable.h"
-#if FEATURE_evaluators
 #include "eval.h"
-#endif
 #include "get.h"
-#if FEATURE_feedback
 #include "feedback.h"
-#endif
 #include "fog.h"
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
@@ -84,24 +68,18 @@
 #include "ffvertex_prog.h"
 #include "framebuffer.h"
 #include "hint.h"
-#if FEATURE_histogram
 #include "histogram.h"
-#endif
 #include "imports.h"
 #include "light.h"
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
-#if FEATURE_pixel_transfer
 #include "pixel.h"
-#endif
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
 #include "queryobj.h"
-#endif
 #include "readpix.h"
 #include "scissor.h"
 #include "state.h"
@@ -109,9 +87,7 @@
 #include "texenv.h"
 #include "texgetimage.h"
 #include "teximage.h"
-#if FEATURE_texgen
 #include "texgen.h"
-#endif
 #include "texobj.h"
 #include "texparam.h"
 #include "texstate.h"
@@ -199,20 +175,10 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_TexParameteri(exec, _mesa_TexParameteri);
    SET_Translatef(exec, _mesa_Translatef);
    SET_Viewport(exec, _mesa_Viewport);
-#if FEATURE_accum
-   SET_Accum(exec, _mesa_Accum);
-   SET_ClearAccum(exec, _mesa_ClearAccum);
-#endif
-#if FEATURE_dlist
-   SET_CallList(exec, _mesa_CallList);
-   SET_CallLists(exec, _mesa_CallLists);
-   SET_DeleteLists(exec, _mesa_DeleteLists);
-   SET_EndList(exec, _mesa_EndList);
-   SET_GenLists(exec, _mesa_GenLists);
-   SET_IsList(exec, _mesa_IsList);
-   SET_ListBase(exec, _mesa_ListBase);
-   SET_NewList(exec, _mesa_NewList);
-#endif
+
+   _mesa_init_accum_dispatch(exec);
+   _mesa_init_dlist_dispatch(exec);
+
    SET_ClearDepth(exec, _mesa_ClearDepth);
    SET_ClearIndex(exec, _mesa_ClearIndex);
    SET_ClipPlane(exec, _mesa_ClipPlane);
@@ -222,21 +188,10 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
    SET_DepthRange(exec, _mesa_DepthRange);
-#if FEATURE_drawpix
-   SET_Bitmap(exec, _mesa_Bitmap);
-   SET_CopyPixels(exec, _mesa_CopyPixels);
-   SET_DrawPixels(exec, _mesa_DrawPixels);
-#endif
-#if FEATURE_feedback
-   SET_InitNames(exec, _mesa_InitNames);
-   SET_FeedbackBuffer(exec, _mesa_FeedbackBuffer);
-   SET_LoadName(exec, _mesa_LoadName);
-   SET_PassThrough(exec, _mesa_PassThrough);
-   SET_PopName(exec, _mesa_PopName);
-   SET_PushName(exec, _mesa_PushName);
-   SET_SelectBuffer(exec, _mesa_SelectBuffer);
-   SET_RenderMode(exec, _mesa_RenderMode);
-#endif
+
+   _mesa_init_drawpix_dispatch(exec);
+   _mesa_init_feedback_dispatch(exec);
+
    SET_FogCoordPointerEXT(exec, _mesa_FogCoordPointerEXT);
    SET_Fogf(exec, _mesa_Fogf);
    SET_Fogfv(exec, _mesa_Fogfv);
@@ -270,68 +225,22 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_Lighti(exec, _mesa_Lighti);
    SET_Lightiv(exec, _mesa_Lightiv);
    SET_LoadMatrixd(exec, _mesa_LoadMatrixd);
-#if FEATURE_evaluators
-   SET_GetMapdv(exec, _mesa_GetMapdv);
-   SET_GetMapfv(exec, _mesa_GetMapfv);
-   SET_GetMapiv(exec, _mesa_GetMapiv);
-   SET_Map1d(exec, _mesa_Map1d);
-   SET_Map1f(exec, _mesa_Map1f);
-   SET_Map2d(exec, _mesa_Map2d);
-   SET_Map2f(exec, _mesa_Map2f);
-   SET_MapGrid1d(exec, _mesa_MapGrid1d);
-   SET_MapGrid1f(exec, _mesa_MapGrid1f);
-   SET_MapGrid2d(exec, _mesa_MapGrid2d);
-   SET_MapGrid2f(exec, _mesa_MapGrid2f);
-#endif
+
+   _mesa_init_eval_dispatch(exec);
+
    SET_MultMatrixd(exec, _mesa_MultMatrixd);
-#if FEATURE_pixel_transfer
-   SET_GetPixelMapfv(exec, _mesa_GetPixelMapfv);
-   SET_GetPixelMapuiv(exec, _mesa_GetPixelMapuiv);
-   SET_GetPixelMapusv(exec, _mesa_GetPixelMapusv);
-   SET_PixelMapfv(exec, _mesa_PixelMapfv);
-   SET_PixelMapuiv(exec, _mesa_PixelMapuiv);
-   SET_PixelMapusv(exec, _mesa_PixelMapusv);
-   SET_PixelTransferf(exec, _mesa_PixelTransferf);
-   SET_PixelTransferi(exec, _mesa_PixelTransferi);
-   SET_PixelZoom(exec, _mesa_PixelZoom);
-#endif
+
+   _mesa_init_pixel_dispatch(exec);
+
    SET_PixelStoref(exec, _mesa_PixelStoref);
    SET_PointSize(exec, _mesa_PointSize);
    SET_PolygonMode(exec, _mesa_PolygonMode);
    SET_PolygonOffset(exec, _mesa_PolygonOffset);
    SET_PolygonStipple(exec, _mesa_PolygonStipple);
-#if FEATURE_attrib_stack
-   SET_PopAttrib(exec, _mesa_PopAttrib);
-   SET_PushAttrib(exec, _mesa_PushAttrib);
-   SET_PopClientAttrib(exec, _mesa_PopClientAttrib);
-   SET_PushClientAttrib(exec, _mesa_PushClientAttrib);
-#endif
-#if FEATURE_drawpix
-   SET_RasterPos2f(exec, _mesa_RasterPos2f);
-   SET_RasterPos2fv(exec, _mesa_RasterPos2fv);
-   SET_RasterPos2i(exec, _mesa_RasterPos2i);
-   SET_RasterPos2iv(exec, _mesa_RasterPos2iv);
-   SET_RasterPos2d(exec, _mesa_RasterPos2d);
-   SET_RasterPos2dv(exec, _mesa_RasterPos2dv);
-   SET_RasterPos2s(exec, _mesa_RasterPos2s);
-   SET_RasterPos2sv(exec, _mesa_RasterPos2sv);
-   SET_RasterPos3d(exec, _mesa_RasterPos3d);
-   SET_RasterPos3dv(exec, _mesa_RasterPos3dv);
-   SET_RasterPos3f(exec, _mesa_RasterPos3f);
-   SET_RasterPos3fv(exec, _mesa_RasterPos3fv);
-   SET_RasterPos3i(exec, _mesa_RasterPos3i);
-   SET_RasterPos3iv(exec, _mesa_RasterPos3iv);
-   SET_RasterPos3s(exec, _mesa_RasterPos3s);
-   SET_RasterPos3sv(exec, _mesa_RasterPos3sv);
-   SET_RasterPos4d(exec, _mesa_RasterPos4d);
-   SET_RasterPos4dv(exec, _mesa_RasterPos4dv);
-   SET_RasterPos4f(exec, _mesa_RasterPos4f);
-   SET_RasterPos4fv(exec, _mesa_RasterPos4fv);
-   SET_RasterPos4i(exec, _mesa_RasterPos4i);
-   SET_RasterPos4iv(exec, _mesa_RasterPos4iv);
-   SET_RasterPos4s(exec, _mesa_RasterPos4s);
-   SET_RasterPos4sv(exec, _mesa_RasterPos4sv);
-#endif
+
+   _mesa_init_attrib_dispatch(exec);
+   _mesa_init_rastpos_dispatch(exec);
+
    SET_ReadPixels(exec, _mesa_ReadPixels);
    SET_Rotated(exec, _mesa_Rotated);
    SET_Scaled(exec, _mesa_Scaled);
@@ -339,17 +248,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_TexEnvf(exec, _mesa_TexEnvf);
    SET_TexEnviv(exec, _mesa_TexEnviv);
 
-#if FEATURE_texgen
-   SET_GetTexGendv(exec, _mesa_GetTexGendv);
-   SET_GetTexGenfv(exec, _mesa_GetTexGenfv);
-   SET_GetTexGeniv(exec, _mesa_GetTexGeniv);
-   SET_TexGend(exec, _mesa_TexGend);
-   SET_TexGendv(exec, _mesa_TexGendv);
-   SET_TexGenf(exec, _mesa_TexGenf);
-   SET_TexGenfv(exec, _mesa_TexGenfv);
-   SET_TexGeni(exec, _mesa_TexGeni);
-   SET_TexGeniv(exec, _mesa_TexGeniv);
-#endif
+   _mesa_init_texgen_dispatch(exec);
 
    SET_TexImage1D(exec, _mesa_TexImage1D);
    SET_TexParameterf(exec, _mesa_TexParameterf);
@@ -395,45 +294,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_BlendEquation(exec, _mesa_BlendEquation);
    SET_BlendEquationSeparateEXT(exec, _mesa_BlendEquationSeparateEXT);
 
-#if FEATURE_colortable
-   SET_ColorSubTable(exec, _mesa_ColorSubTable);
-   SET_ColorTable(exec, _mesa_ColorTable);
-   SET_ColorTableParameterfv(exec, _mesa_ColorTableParameterfv);
-   SET_ColorTableParameteriv(exec, _mesa_ColorTableParameteriv);
-   SET_CopyColorSubTable(exec, _mesa_CopyColorSubTable);
-   SET_CopyColorTable(exec, _mesa_CopyColorTable);
-   SET_GetColorTable(exec, _mesa_GetColorTable);
-   SET_GetColorTableParameterfv(exec, _mesa_GetColorTableParameterfv);
-   SET_GetColorTableParameteriv(exec, _mesa_GetColorTableParameteriv);
-#endif
-
-#if FEATURE_convolve
-   SET_ConvolutionFilter1D(exec, _mesa_ConvolutionFilter1D);
-   SET_ConvolutionFilter2D(exec, _mesa_ConvolutionFilter2D);
-   SET_ConvolutionParameterf(exec, _mesa_ConvolutionParameterf);
-   SET_ConvolutionParameterfv(exec, _mesa_ConvolutionParameterfv);
-   SET_ConvolutionParameteri(exec, _mesa_ConvolutionParameteri);
-   SET_ConvolutionParameteriv(exec, _mesa_ConvolutionParameteriv);
-   SET_CopyConvolutionFilter1D(exec, _mesa_CopyConvolutionFilter1D);
-   SET_CopyConvolutionFilter2D(exec, _mesa_CopyConvolutionFilter2D);
-   SET_GetConvolutionFilter(exec, _mesa_GetConvolutionFilter);
-   SET_GetConvolutionParameterfv(exec, _mesa_GetConvolutionParameterfv);
-   SET_GetConvolutionParameteriv(exec, _mesa_GetConvolutionParameteriv);
-   SET_SeparableFilter2D(exec, _mesa_SeparableFilter2D);
-#endif
-#if FEATURE_histogram
-   SET_GetHistogram(exec, _mesa_GetHistogram);
-   SET_GetHistogramParameterfv(exec, _mesa_GetHistogramParameterfv);
-   SET_GetHistogramParameteriv(exec, _mesa_GetHistogramParameteriv);
-   SET_GetMinmax(exec, _mesa_GetMinmax);
-   SET_GetMinmaxParameterfv(exec, _mesa_GetMinmaxParameterfv);
-   SET_GetMinmaxParameteriv(exec, _mesa_GetMinmaxParameteriv);
-   SET_GetSeparableFilter(exec, _mesa_GetSeparableFilter);
-   SET_Histogram(exec, _mesa_Histogram);
-   SET_Minmax(exec, _mesa_Minmax);
-   SET_ResetHistogram(exec, _mesa_ResetHistogram);
-   SET_ResetMinmax(exec, _mesa_ResetMinmax);
-#endif
+   _mesa_init_colortable_dispatch(exec);
+   _mesa_init_convolve_dispatch(exec);
+   _mesa_init_histogram_dispatch(exec);
 
    /* OpenGL 2.0 */
    SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
@@ -545,32 +408,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #endif
 
    /* 197. GL_MESA_window_pos */
-#if FEATURE_drawpix
-   SET_WindowPos2dMESA(exec, _mesa_WindowPos2dMESA);
-   SET_WindowPos2dvMESA(exec, _mesa_WindowPos2dvMESA);
-   SET_WindowPos2fMESA(exec, _mesa_WindowPos2fMESA);
-   SET_WindowPos2fvMESA(exec, _mesa_WindowPos2fvMESA);
-   SET_WindowPos2iMESA(exec, _mesa_WindowPos2iMESA);
-   SET_WindowPos2ivMESA(exec, _mesa_WindowPos2ivMESA);
-   SET_WindowPos2sMESA(exec, _mesa_WindowPos2sMESA);
-   SET_WindowPos2svMESA(exec, _mesa_WindowPos2svMESA);
-   SET_WindowPos3dMESA(exec, _mesa_WindowPos3dMESA);
-   SET_WindowPos3dvMESA(exec, _mesa_WindowPos3dvMESA);
-   SET_WindowPos3fMESA(exec, _mesa_WindowPos3fMESA);
-   SET_WindowPos3fvMESA(exec, _mesa_WindowPos3fvMESA);
-   SET_WindowPos3iMESA(exec, _mesa_WindowPos3iMESA);
-   SET_WindowPos3ivMESA(exec, _mesa_WindowPos3ivMESA);
-   SET_WindowPos3sMESA(exec, _mesa_WindowPos3sMESA);
-   SET_WindowPos3svMESA(exec, _mesa_WindowPos3svMESA);
-   SET_WindowPos4dMESA(exec, _mesa_WindowPos4dMESA);
-   SET_WindowPos4dvMESA(exec, _mesa_WindowPos4dvMESA);
-   SET_WindowPos4fMESA(exec, _mesa_WindowPos4fMESA);
-   SET_WindowPos4fvMESA(exec, _mesa_WindowPos4fvMESA);
-   SET_WindowPos4iMESA(exec, _mesa_WindowPos4iMESA);
-   SET_WindowPos4ivMESA(exec, _mesa_WindowPos4ivMESA);
-   SET_WindowPos4sMESA(exec, _mesa_WindowPos4sMESA);
-   SET_WindowPos4svMESA(exec, _mesa_WindowPos4svMESA);
-#endif
+   /* part of _mesa_init_rastpos_dispatch(exec); */
 
    /* 200. GL_IBM_multimode_draw_arrays */
 #if _HAVE_FULL_GL
@@ -762,16 +600,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #endif
 
    /* ARB 29. GL_ARB_occlusion_query */
-#if FEATURE_ARB_occlusion_query
-   SET_GenQueriesARB(exec, _mesa_GenQueriesARB);
-   SET_DeleteQueriesARB(exec, _mesa_DeleteQueriesARB);
-   SET_IsQueryARB(exec, _mesa_IsQueryARB);
-   SET_BeginQueryARB(exec, _mesa_BeginQueryARB);
-   SET_EndQueryARB(exec, _mesa_EndQueryARB);
-   SET_GetQueryivARB(exec, _mesa_GetQueryivARB);
-   SET_GetQueryObjectivARB(exec, _mesa_GetQueryObjectivARB);
-   SET_GetQueryObjectuivARB(exec, _mesa_GetQueryObjectuivARB);
-#endif
+   _mesa_init_queryobj_dispatch(exec);
 
    /* ARB 37. GL_ARB_draw_buffers */
 #if FEATURE_draw_read_buffer
@@ -879,11 +708,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_FramebufferRenderbufferEXT(exec, _mesa_FramebufferRenderbufferEXT);
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
-#endif
-
-#if FEATURE_EXT_timer_query
-   SET_GetQueryObjecti64vEXT(exec, _mesa_GetQueryObjecti64vEXT);
-   SET_GetQueryObjectui64vEXT(exec, _mesa_GetQueryObjectui64vEXT);
 #endif
 
 #if FEATURE_EXT_framebuffer_blit

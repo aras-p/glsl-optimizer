@@ -904,7 +904,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -912,7 +911,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* we have to wait until after occlusion to do this test */
    if (ctx->Color.IndexMask == 0) {
@@ -1376,7 +1374,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -1384,7 +1381,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.

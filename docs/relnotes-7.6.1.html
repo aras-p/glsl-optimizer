@@ -1,0 +1,46 @@
+<HTML>
+
+<TITLE>Mesa Release Notes</TITLE>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<body bgcolor="#eeeeee">
+
+<H1>Mesa 7.6.1 Release Notes, (date tbd)</H1>
+
+<p>
+Mesa 7.6.1 is a bug-fix release fixing issues since version 7.6.
+</p>
+<p>
+Mesa 7.6.1 implements the OpenGL 2.1 API, but the version reported by
+glGetString(GL_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 2.1.
+</p>
+<p>
+See the <a href="install.html">Compiling/Installing page</a> for prerequisites
+for DRI hardware acceleration.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+tbd
+</pre>
+
+
+<h2>New features</h2>
+<ul>
+</ul>
+
+
+<h2>Bug fixes</h2>
+<ul>
+<li>Fixed crash caused by glXCopyContext() and glXDestroyContext(), bug 24217
+<li>glXQueryContext(GLX_RENDER_TYPE) returned wrong values (bug 24211)
+<li>GLSL sqrt(0) returned unpredictable results
+</ul>
+
+</body>
+</html>

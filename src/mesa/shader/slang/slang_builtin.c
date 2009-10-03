@@ -741,7 +741,7 @@ static const struct input_info vertInputs[] = {
    { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { NULL, 0, SWIZZLE_NOOP }
+   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
 };
 
 /** Predefined fragment shader inputs */
@@ -754,7 +754,7 @@ static const struct input_info fragInputs[] = {
    { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW },
-   { NULL, 0, SWIZZLE_NOOP }
+   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
 };
 
 

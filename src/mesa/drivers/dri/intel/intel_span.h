@@ -36,5 +36,7 @@ void intel_renderbuffer_map(struct intel_context *intel,
 			    struct gl_renderbuffer *rb);
 void intel_renderbuffer_unmap(struct intel_context *intel,
 			      struct gl_renderbuffer *rb);
+void intel_map_vertex_shader_textures(GLcontext *ctx);
+void intel_unmap_vertex_shader_textures(GLcontext *ctx);
 
 #endif

@@ -20,6 +20,8 @@ LIBS = \
 	$(GALLIUMDIR)/state_trackers/xorg/libxorgtracker.a \
 	$(GALLIUMDIR)/winsys/drm/radeon/core/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a \
+	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(GALLIUM_AUXILIARIES)
 
 #############################################

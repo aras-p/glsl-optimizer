@@ -80,6 +80,7 @@ static const slang_ir_info IrInfo[] = {
    { IR_NOISE4, "IR_NOISE4", OPCODE_NOISE4, 1, 1 },
 
    /* other */
+   { IR_CMP, "IR_CMP", OPCODE_CMP, 4, 3 },  /* compare/select */
    { IR_SEQ, "IR_SEQ", OPCODE_NOP, 0, 0 },
    { IR_SCOPE, "IR_SCOPE", OPCODE_NOP, 0, 0 },
    { IR_LABEL, "IR_LABEL", OPCODE_NOP, 0, 0 },

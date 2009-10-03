@@ -73,6 +73,7 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "vtxfmt.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "shader/arbprogram.h"
 #include "shader/program.h"
@@ -437,6 +438,10 @@ typedef union gl_dlist_node Node;
  * Sizes for dynamically allocated opcodes are stored in the context struct.
  */
 static GLuint InstSize[OPCODE_END_OF_LIST + 1];
+
+
+#if FEATURE_dlist
+
 
 void mesa_print_display_list(GLuint list);
 
@@ -1047,8 +1052,8 @@ static void invalidate_saved_current_state( GLcontext *ctx )
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 }
 
-void GLAPIENTRY
-_mesa_save_CallList(GLuint list)
+static void GLAPIENTRY
+save_CallList(GLuint list)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1070,8 +1075,8 @@ _mesa_save_CallList(GLuint list)
 }
 
 
-void GLAPIENTRY
-_mesa_save_CallLists(GLsizei num, GLenum type, const GLvoid * lists)
+static void GLAPIENTRY
+save_CallLists(GLsizei num, GLenum type, const GLvoid * lists)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -1876,7 +1881,7 @@ save_Enable(GLenum cap)
 
 
 static void GLAPIENTRY
-_mesa_save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
+save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1894,7 +1899,7 @@ _mesa_save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 
 
 static void GLAPIENTRY
-_mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
+save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -4856,7 +4861,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 #endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
 
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
 
 static void GLAPIENTRY
 save_BeginQueryARB(GLenum target, GLuint id)
@@ -4890,7 +4895,7 @@ save_EndQueryARB(GLenum target)
    }
 }
 
-#endif /* FEATURE_ARB_occlusion_query */
+#endif /* FEATURE_queryobj */
 
 
 static void GLAPIENTRY
@@ -7155,7 +7160,7 @@ execute_list(GLcontext *ctx, GLuint list)
                                                       n[6].f));
             break;
 #endif
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
          case OPCODE_BEGIN_QUERY_ARB:
             CALL_BeginQueryARB(ctx->Exec, (n[1].e, n[2].ui));
             break;
@@ -7426,7 +7431,7 @@ execute_list(GLcontext *ctx, GLuint list)
 /**
  * Test if a display list number is valid.
  */
-GLboolean GLAPIENTRY
+static GLboolean GLAPIENTRY
 _mesa_IsList(GLuint list)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7439,7 +7444,7 @@ _mesa_IsList(GLuint list)
 /**
  * Delete a sequence of consecutive display lists.
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DeleteLists(GLuint list, GLsizei range)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7461,7 +7466,7 @@ _mesa_DeleteLists(GLuint list, GLsizei range)
  * Return a display list number, n, such that lists n through n+range-1
  * are free.
  */
-GLuint GLAPIENTRY
+static GLuint GLAPIENTRY
 _mesa_GenLists(GLsizei range)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7501,7 +7506,7 @@ _mesa_GenLists(GLsizei range)
 /**
  * Begin a new display list.
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_NewList(GLuint name, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7551,7 +7556,7 @@ _mesa_NewList(GLuint name, GLenum mode)
 /**
  * End definition of current display list. 
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_EndList(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7685,7 +7690,7 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
 /**
  * Set the offset added to list numbers in glCallLists.
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ListBase(GLuint base)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8420,7 +8425,7 @@ exec_MultiModeDrawElementsIBM(const GLenum * mode,
  * struct.
  */
 void
-_mesa_init_dlist_table(struct _glapi_table *table)
+_mesa_init_save_table(struct _glapi_table *table)
 {
    _mesa_loopback_init_api_table(table);
 
@@ -8429,8 +8434,8 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_AlphaFunc(table, save_AlphaFunc);
    SET_Bitmap(table, save_Bitmap);
    SET_BlendFunc(table, save_BlendFunc);
-   SET_CallList(table, _mesa_save_CallList);
-   SET_CallLists(table, _mesa_save_CallLists);
+   SET_CallList(table, save_CallList);
+   SET_CallLists(table, save_CallLists);
    SET_Clear(table, save_Clear);
    SET_ClearAccum(table, save_ClearAccum);
    SET_ClearColor(table, save_ClearColor);
@@ -8451,8 +8456,8 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
    SET_EndList(table, _mesa_EndList);
-   SET_EvalMesh1(table, _mesa_save_EvalMesh1);
-   SET_EvalMesh2(table, _mesa_save_EvalMesh2);
+   SET_EvalMesh1(table, save_EvalMesh1);
+   SET_EvalMesh2(table, save_EvalMesh2);
    SET_Finish(table, exec_Finish);
    SET_Flush(table, exec_Flush);
    SET_Fogf(table, save_Fogf);
@@ -8924,7 +8929,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_UnmapBufferARB(table, _mesa_UnmapBufferARB);
 #endif
 
-#if FEATURE_ARB_occlusion_query
+#if FEATURE_queryobj
    SET_BeginQueryARB(table, save_BeginQueryARB);
    SET_EndQueryARB(table, save_EndQueryARB);
    SET_GenQueriesARB(table, _mesa_GenQueriesARB);
@@ -9291,22 +9296,21 @@ mesa_print_display_list(GLuint list)
 void
 _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
 {
-   vfmt->ArrayElement = _ae_loopback_array_elt; /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = save_Begin;
-   vfmt->CallList = _mesa_save_CallList;
-   vfmt->CallLists = _mesa_save_CallLists;
+
+   _MESA_INIT_DLIST_VTXFMT(vfmt, save_);
+
    vfmt->Color3f = save_Color3f;
    vfmt->Color3fv = save_Color3fv;
    vfmt->Color4f = save_Color4f;
    vfmt->Color4fv = save_Color4fv;
    vfmt->EdgeFlag = save_EdgeFlag;
    vfmt->End = save_End;
-   vfmt->EvalCoord1f = save_EvalCoord1f;
-   vfmt->EvalCoord1fv = save_EvalCoord1fv;
-   vfmt->EvalCoord2f = save_EvalCoord2f;
-   vfmt->EvalCoord2fv = save_EvalCoord2fv;
-   vfmt->EvalPoint1 = save_EvalPoint1;
-   vfmt->EvalPoint2 = save_EvalPoint2;
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, save_);
+
    vfmt->FogCoordfEXT = save_FogCoordfEXT;
    vfmt->FogCoordfvEXT = save_FogCoordfvEXT;
    vfmt->Indexf = save_Indexf;
@@ -9355,8 +9359,6 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib4fARB = save_VertexAttrib4fARB;
    vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
 
-   vfmt->EvalMesh1 = _mesa_save_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_save_EvalMesh2;
    vfmt->Rectf = save_Rectf;
 
    /* The driver is required to implement these as
@@ -9375,6 +9377,32 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->MultiDrawElemementsBaseVertex = 0;
 #endif
 }
+
+
+void
+_mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
+                           const GLvertexformat *vfmt)
+{
+   SET_CallList(disp, vfmt->CallList);
+   SET_CallLists(disp, vfmt->CallLists);
+}
+
+
+void _mesa_init_dlist_dispatch(struct _glapi_table *disp)
+{
+   SET_CallList(disp, _mesa_CallList);
+   SET_CallLists(disp, _mesa_CallLists);
+
+   SET_DeleteLists(disp, _mesa_DeleteLists);
+   SET_EndList(disp, _mesa_EndList);
+   SET_GenLists(disp, _mesa_GenLists);
+   SET_IsList(disp, _mesa_IsList);
+   SET_ListBase(disp, _mesa_ListBase);
+   SET_NewList(disp, _mesa_NewList);
+}
+
+
+#endif /* FEATURE_dlist */
 
 
 /**
@@ -9401,5 +9429,7 @@ _mesa_init_display_list(GLcontext *ctx)
    /* Display List group */
    ctx->List.ListBase = 0;
 
+#if FEATURE_dlist
    _mesa_save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
+#endif
 }

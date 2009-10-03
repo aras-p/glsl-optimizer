@@ -29,9 +29,7 @@
 
 
 #include "mfeatures.h"
-#if FEATURE_colortable
 #include "colortab.h"
-#endif
 #include "context.h"
 #include "enums.h"
 #include "fbobject.h"
@@ -194,9 +192,7 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
     */
    texObj->Target = 0x99;
 
-#if FEATURE_colortable
    _mesa_free_colortable_data(&texObj->Palette);
-#endif
 
    /* free the texture images */
    for (face = 0; face < 6; face++) {
@@ -495,7 +491,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 	     t->Image[face][baseLevel]->Width2 != w ||
 	     t->Image[face][baseLevel]->Height2 != h) {
 	    t->_Complete = GL_FALSE;
-	    incomplete(t, "Non-quare cubemap image");
+	    incomplete(t, "Cube face missing or mismatched size");
 	    return;
 	 }
       }

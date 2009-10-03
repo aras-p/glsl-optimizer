@@ -577,7 +577,6 @@ st_teximage_flush_before_map(struct st_context *st,
       pipe->is_texture_referenced(pipe, pt, face, level);
 
    if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      usage == PIPE_TRANSFER_WRITE ||
-		      usage == PIPE_TRANSFER_READ_WRITE))
+		      (usage & PIPE_TRANSFER_WRITE)))
       st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 }

@@ -65,6 +65,11 @@ extern "C" {
 #define __FUNCTION__ "???"
 #endif
 
+#if defined(__GNUC__)
+#define _util_printf_format(fmt, list) __attribute__ ((format (printf, fmt, list)))
+#else
+#define _util_printf_format(fmt, list)
+#endif
 
 void _debug_vprintf(const char *format, va_list ap);
    
@@ -82,13 +87,16 @@ _debug_printf(const char *format, ...)
 /**
  * Print debug messages.
  *
- * The actual channel used to output debug message is platform specific. To 
- * avoid misformating or truncation, follow these rules of thumb:   
+ * The actual channel used to output debug message is platform specific. To
+ * avoid misformating or truncation, follow these rules of thumb:
  * - output whole lines
- * - avoid outputing large strings (512 bytes is the current maximum length 
+ * - avoid outputing large strings (512 bytes is the current maximum length
  * that is guaranteed to be printed in all platforms)
  */
 #if !defined(PIPE_OS_HAIKU)
+static INLINE void
+debug_printf(const char *format, ...) _util_printf_format(1,2);
+
 static INLINE void
 debug_printf(const char *format, ...)
 {

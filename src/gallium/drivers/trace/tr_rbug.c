@@ -44,7 +44,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define sleep Sleep
-#elif defined(PIPE_OS_LINUX)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 void usleep(int);
 #  define sleep usleep
 #else

@@ -365,6 +365,11 @@ int main(int argc, char **argv)
          n = atoi(argv[i]);
    }
 
+#ifdef LLVM_NATIVE_ARCH
+   LLVMLinkInJIT();
+   LLVMInitializeNativeTarget();
+#endif
+
    if(fp) {
       /* Warm up the caches */
       test_some(0, NULL, 100);

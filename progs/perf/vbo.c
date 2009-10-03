@@ -31,13 +31,17 @@
 #include "glmain.h"
 #include "common.h"
 
+/* Copy data out of a large array to avoid caching effects:
+ */
+#define DATA_SIZE (16*1024*1024)
 
 int WinWidth = 100, WinHeight = 100;
 
 static GLuint VBO;
 
 static GLsizei VBOSize = 0;
-static GLubyte *VBOData = NULL;
+static GLsizei SubSize = 0;
+static GLubyte *VBOData = NULL;  /* array[DATA_SIZE] */
 
 static const GLboolean DrawPoint = GL_TRUE;
 static const GLboolean BufferSubDataInHalves = GL_TRUE;
@@ -61,11 +65,23 @@ static void
 UploadVBO(unsigned count)
 {
    unsigned i;
-   for (i = 0; i < count; i++) {
-      glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
+   unsigned total = 0;
+   unsigned src = 0;
 
-      if (DrawPoint)
-         glDrawArrays(GL_POINTS, 0, 1);
+   for (i = 0; i < count; i++) {
+      glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData + src, GL_STREAM_DRAW_ARB);
+      glDrawArrays(GL_POINTS, 0, 1);
+
+      /* Throw in an occasional flush to work around a driver crash:
+       */
+      total += VBOSize;
+      if (total >= 16*1024*1024) {
+         glFlush();
+         total = 0;
+      }
+
+      src += VBOSize;
+      src %= DATA_SIZE;
    }
    glFinish();
 }
@@ -75,18 +91,69 @@ static void
 UploadSubVBO(unsigned count)
 {
    unsigned i;
+   unsigned src = 0;
+
    for (i = 0; i < count; i++) {
-      if (BufferSubDataInHalves) {
-         GLsizei half = VBOSize / 2;
-         glBufferSubDataARB(GL_ARRAY_BUFFER, 0, half, VBOData);
-         glBufferSubDataARB(GL_ARRAY_BUFFER, half, half, VBOData + half);
-      }
-      else {
-         glBufferSubDataARB(GL_ARRAY_BUFFER, 0, VBOSize, VBOData);
+      unsigned offset = (i * SubSize) % VBOSize;
+      glBufferSubDataARB(GL_ARRAY_BUFFER, offset, SubSize, VBOData + src);
+
+      if (DrawPoint) {
+         glDrawArrays(GL_POINTS, offset / sizeof(Vertex0), 1);
       }
 
-      if (DrawPoint)
-         glDrawArrays(GL_POINTS, 0, 1);
+      src += SubSize;
+      src %= DATA_SIZE;
+   }
+   glFinish();
+}
+
+
+/* Do multiple small SubData uploads, then call DrawArrays.  This may be a
+ * fairer comparison to back-to-back BufferData calls:
+ */
+static void
+BatchUploadSubVBO(unsigned count)
+{
+   unsigned i = 0, j;
+   unsigned period = VBOSize / SubSize;
+   unsigned src = 0;
+
+   while (i < count) {
+      for (j = 0; j < period && i < count; j++, i++) {
+         unsigned offset = j * SubSize;
+         glBufferSubDataARB(GL_ARRAY_BUFFER, offset, SubSize, VBOData + src);
+      }
+
+      glDrawArrays(GL_POINTS, 0, 1);
+
+      src += SubSize;
+      src %= DATA_SIZE;
+   }
+   glFinish();
+}
+
+
+/**
+ * Test the sequence:
+ *    create/load VBO
+ *    draw
+ *    destroy VBO
+ */
+static void
+CreateDrawDestroyVBO(unsigned count)
+{
+   unsigned i;
+   for (i = 0; i < count; i++) {
+      GLuint vbo;
+      /* create/load */
+      glGenBuffersARB(1, &vbo);
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbo);
+      glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
+      /* draw */
+      glVertexPointer(2, GL_FLOAT, sizeof(Vertex0), (void *) 0);
+      glDrawArrays(GL_POINTS, 0, 1);
+      /* destroy */
+      glDeleteBuffersARB(1, &vbo);
    }
    glFinish();
 }
@@ -102,36 +169,77 @@ static const GLsizei Sizes[] = {
    0 /* end of list */
 };
 
+void
+PerfNextRound(void)
+{
+}
 
 /** Called from test harness/main */
 void
 PerfDraw(void)
 {
    double rate, mbPerSec;
-   int sub, sz;
+   int i, sz;
 
-   /* loop over whole/sub buffer upload */
-   for (sub = 0; sub < 2; sub++) {
+   /* Load VBOData buffer with duplicated Vertex0.
+    */
+   VBOData = calloc(DATA_SIZE, 1);
 
-      /* loop over VBO sizes */
-      for (sz = 0; Sizes[sz]; sz++) {
-         VBOSize = Sizes[sz];
+   for (i = 0; i < DATA_SIZE / sizeof(Vertex0); i++) {
+      memcpy(VBOData + i * sizeof(Vertex0), 
+             Vertex0, 
+             sizeof(Vertex0));
+   }
 
-         VBOData = malloc(VBOSize);
-         memcpy(VBOData, Vertex0, sizeof(Vertex0));
+   /* glBufferDataARB()
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferDataARB(size = %d): %.1f MB/sec\n",
+                  VBOSize, mbPerSec);
+   }
 
-         if (sub)
-            rate = PerfMeasureRate(UploadSubVBO);
-         else
-            rate = PerfMeasureRate(UploadVBO);
+   /* glBufferSubDataARB()
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadSubVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d): %.1f MB/sec\n",
+                  VBOSize, mbPerSec);
+   }
 
-         mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+   /* Batch upload
+    */
+   VBOSize = 1024 * 1024;
+   glBufferDataARB(GL_ARRAY_BUFFER, VBOSize, VBOData, GL_STREAM_DRAW_ARB);
 
-         perf_printf("  glBuffer%sDataARB(size = %d): %.1f MB/sec\n",
-                     (sub ? "Sub" : ""), VBOSize, mbPerSec);
+   for (sz = 0; Sizes[sz] < VBOSize; sz++) {
+      SubSize = Sizes[sz];
+      rate = PerfMeasureRate(UploadSubVBO);
+      mbPerSec = rate * SubSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d): %.1f MB/sec\n",
+                  SubSize, VBOSize, mbPerSec);
+   }
 
-         free(VBOData);
-      }
+   for (sz = 0; Sizes[sz] < VBOSize; sz++) {
+      SubSize = Sizes[sz];
+      rate = PerfMeasureRate(BatchUploadSubVBO);
+      mbPerSec = rate * SubSize / (1024.0 * 1024.0);
+      perf_printf("  glBufferSubDataARB(size = %d, VBOSize = %d), batched: %.1f MB/sec\n",
+                  SubSize, VBOSize, mbPerSec);
+   }
+
+   /* Create/Draw/Destroy
+    */
+   for (sz = 0; Sizes[sz]; sz++) {
+      SubSize = VBOSize = Sizes[sz];
+      rate = PerfMeasureRate(CreateDrawDestroyVBO);
+      mbPerSec = rate * VBOSize / (1024.0 * 1024.0);
+      perf_printf("  VBO Create/Draw/Destroy(size = %d): %.1f MB/sec, %.1f draws/sec\n",
+                  VBOSize, mbPerSec, rate);
    }
 
    exit(0);

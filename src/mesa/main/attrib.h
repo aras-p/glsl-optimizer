@@ -26,10 +26,10 @@
 #define ATTRIB_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
-#if _HAVE_FULL_GL
+#if FEATURE_attrib_stack
 
 extern void GLAPIENTRY
 _mesa_PushAttrib( GLbitfield mask );
@@ -43,18 +43,34 @@ _mesa_PushClientAttrib( GLbitfield mask );
 extern void GLAPIENTRY
 _mesa_PopClientAttrib( void );
 
+extern void
+_mesa_init_attrib_dispatch(struct _glapi_table *disp);
+
+#else /* FEATURE_attrib_stack */
+
+static INLINE void
+_mesa_PushClientAttrib( GLbitfield mask )
+{
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_PopClientAttrib( void )
+{
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_init_attrib_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_attrib_stack */
+
 extern void 
 _mesa_init_attrib( GLcontext *ctx );
 
 extern void 
 _mesa_free_attrib_data( GLcontext *ctx );
 
-#else
-
-/** No-op */
-#define _mesa_init_attrib( c ) ((void)0)
-#define _mesa_free_attrib_data( c ) ((void)0)
-
-#endif
-
-#endif
+#endif /* ATTRIB_H */

@@ -89,7 +89,8 @@ src_vector(struct i915_fragment_program *p,
        */
    case PROGRAM_TEMPORARY:
       if (source->Index >= I915_MAX_TEMPORARY) {
-         i915_program_error(p, "Exceeded max temporary reg");
+         i915_program_error(p, "Exceeded max temporary reg: %d/%d",
+			    source->Index, I915_MAX_TEMPORARY);
          return 0;
       }
       src = UREG(REG_TYPE_R, source->Index);
@@ -121,10 +122,23 @@ src_vector(struct i915_fragment_program *p,
          src = i915_emit_decl(p, REG_TYPE_T,
                               T_TEX0 + (source->Index - FRAG_ATTRIB_TEX0),
                               D0_CHANNEL_ALL);
+	 break;
+
+      case FRAG_ATTRIB_VAR0:
+      case FRAG_ATTRIB_VAR0 + 1:
+      case FRAG_ATTRIB_VAR0 + 2:
+      case FRAG_ATTRIB_VAR0 + 3:
+      case FRAG_ATTRIB_VAR0 + 4:
+      case FRAG_ATTRIB_VAR0 + 5:
+      case FRAG_ATTRIB_VAR0 + 6:
+      case FRAG_ATTRIB_VAR0 + 7:
+         src = i915_emit_decl(p, REG_TYPE_T,
+                              T_TEX0 + (source->Index - FRAG_ATTRIB_VAR0),
+                              D0_CHANNEL_ALL);
          break;
 
       default:
-         i915_program_error(p, "Bad source->Index");
+         i915_program_error(p, "Bad source->Index: %d", source->Index);
          return 0;
       }
       break;
@@ -146,6 +160,7 @@ src_vector(struct i915_fragment_program *p,
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
+   case PROGRAM_UNIFORM:
       src =
          i915_emit_param4fv(p,
                             program->Base.Parameters->ParameterValues[source->
@@ -153,7 +168,7 @@ src_vector(struct i915_fragment_program *p,
       break;
 
    default:
-      i915_program_error(p, "Bad source->File");
+      i915_program_error(p, "Bad source->File: %d", source->File);
       return 0;
    }
 
@@ -186,13 +201,14 @@ get_result_vector(struct i915_fragment_program *p,
          p->depth_written = 1;
          return UREG(REG_TYPE_OD, 0);
       default:
-         i915_program_error(p, "Bad inst->DstReg.Index");
+         i915_program_error(p, "Bad inst->DstReg.Index: %d",
+			    inst->DstReg.Index);
          return 0;
       }
    case PROGRAM_TEMPORARY:
       return UREG(REG_TYPE_R, inst->DstReg.Index);
    default:
-      i915_program_error(p, "Bad inst->DstReg.File");
+      i915_program_error(p, "Bad inst->DstReg.File: %d", inst->DstReg.File);
       return 0;
    }
 }
@@ -231,7 +247,7 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
    case TEXTURE_CUBE_INDEX:
       return D0_SAMPLE_TYPE_CUBE;
    default:
-      i915_program_error(p, "TexSrcBit");
+      i915_program_error(p, "TexSrcBit: %d", bit);
       return 0;
    }
 }
@@ -351,7 +367,7 @@ upload_program(struct i915_fragment_program *p)
 
    while (1) {
       GLuint src0, src1, src2, flags;
-      GLuint tmp = 0, consts0 = 0, consts1 = 0;
+      GLuint tmp = 0, dst, consts0 = 0, consts1 = 0;
 
       switch (inst->Opcode) {
       case OPCODE_ABS:
@@ -503,6 +519,10 @@ upload_program(struct i915_fragment_program *p)
          EMIT_1ARG_ARITH(A0_FLR);
          break;
 
+      case OPCODE_TRUNC:
+	 EMIT_1ARG_ARITH(A0_TRC);
+	 break;
+
       case OPCODE_FRC:
          EMIT_1ARG_ARITH(A0_FRC);
          break;
@@ -515,6 +535,22 @@ upload_program(struct i915_fragment_program *p)
                          tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
                          0, src0, T0_TEXKILL);
          break;
+
+      case OPCODE_KIL_NV:
+	 if (inst->DstReg.CondMask == COND_TR) {
+	    tmp = i915_get_utemp(p);
+
+	    i915_emit_texld(p, get_live_regs(p, inst),
+			    tmp, A0_DEST_CHANNEL_ALL,
+			    0, /* use a dummy dest reg */
+			    swizzle(tmp, ONE, ONE, ONE, ONE), /* always */
+			    T0_TEXKILL);
+	 } else {
+	    p->error = 1;
+	    i915_program_error(p, "Unsupported KIL_NV condition code: %d",
+			       inst->DstReg.CondMask);
+	 }
+	 break;
 
       case OPCODE_LG2:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -614,6 +650,20 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_MUL:
          EMIT_2ARG_ARITH(A0_MUL);
          break;
+
+      case OPCODE_NOISE1:
+      case OPCODE_NOISE2:
+      case OPCODE_NOISE3:
+      case OPCODE_NOISE4:
+	 /* Don't implement noise because we just don't have the instructions
+	  * to spare.  We aren't the first vendor to do so.
+	  */
+	 i915_program_error(p, "Stubbed-out noise functions");
+	 i915_emit_arith(p,
+			 A0_MOV,
+			 get_result_vector(p, inst),
+			 get_result_flags(inst), 0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0, 0);
 
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -721,9 +771,38 @@ upload_program(struct i915_fragment_program *p)
          }
          break;
 
-      case OPCODE_SGE:
-         EMIT_2ARG_ARITH(A0_SGE);
-         break;
+      case OPCODE_SEQ:
+	 tmp = i915_get_utemp(p);
+	 flags = get_result_flags(inst);
+	 dst = get_result_vector(p, inst);
+
+	 /* dst = src1 >= src2 */
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 dst,
+			 flags, 0,
+			 src_vector(p, &inst->SrcReg[0], program),
+			 src_vector(p, &inst->SrcReg[1], program),
+			 0);
+	 /* tmp = src1 <= src2 */
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 tmp,
+			 flags, 0,
+			 negate(src_vector(p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector(p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+	 /* dst = tmp && dst */
+	 i915_emit_arith(p,
+			 A0_MUL,
+			 dst,
+			 flags, 0,
+			 dst,
+			 tmp,
+			 0);
+	 break;
 
       case OPCODE_SIN:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -809,8 +888,69 @@ upload_program(struct i915_fragment_program *p)
 
          break;
 
+      case OPCODE_SGE:
+	 EMIT_2ARG_ARITH(A0_SGE);
+	 break;
+
+      case OPCODE_SGT:
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 get_result_vector( p, inst ),
+			 get_result_flags( inst ), 0,
+			 negate(src_vector( p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector( p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+         break;
+
+      case OPCODE_SLE:
+	 i915_emit_arith(p,
+			 A0_SGE,
+			 get_result_vector( p, inst ),
+			 get_result_flags( inst ), 0,
+			 negate(src_vector( p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector( p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+         break;
+
       case OPCODE_SLT:
          EMIT_2ARG_ARITH(A0_SLT);
+         break;
+
+      case OPCODE_SNE:
+	 tmp = i915_get_utemp(p);
+	 flags = get_result_flags(inst);
+	 dst = get_result_vector(p, inst);
+
+	 /* dst = src1 < src2 */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 dst,
+			 flags, 0,
+			 src_vector(p, &inst->SrcReg[0], program),
+			 src_vector(p, &inst->SrcReg[1], program),
+			 0);
+	 /* tmp = src1 > src2 */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 tmp,
+			 flags, 0,
+			 negate(src_vector(p, &inst->SrcReg[0], program),
+				1, 1, 1, 1),
+			 negate(src_vector(p, &inst->SrcReg[1], program),
+				1, 1, 1, 1),
+			 0);
+	 /* dst = tmp || dst */
+	 i915_emit_arith(p,
+			 A0_ADD,
+			 dst,
+			 flags | A0_DEST_SATURATE, 0,
+			 dst,
+			 tmp,
+			 0);
          break;
 
       case OPCODE_SUB:
@@ -869,8 +1009,39 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_END:
          return;
 
+      case OPCODE_BGNLOOP:
+      case OPCODE_BGNSUB:
+      case OPCODE_BRA:
+      case OPCODE_BRK:
+      case OPCODE_CAL:
+      case OPCODE_CONT:
+      case OPCODE_DDX:
+      case OPCODE_DDY:
+      case OPCODE_ELSE:
+      case OPCODE_ENDIF:
+      case OPCODE_ENDLOOP:
+      case OPCODE_ENDSUB:
+      case OPCODE_IF:
+      case OPCODE_RET:
+	 p->error = 1;
+	 i915_program_error(p, "Unsupported opcode: %s",
+			    _mesa_opcode_string(inst->Opcode));
+	 return;
+
+      case OPCODE_EXP:
+      case OPCODE_LOG:
+	 /* These opcodes are claimed as GLSL, NV_vp, and ARB_vp in
+	  * prog_instruction.h, but apparently GLSL doesn't ever emit them.
+	  * Instead, it translates to EX2 or LG2.
+	  */
+      case OPCODE_TXD:
+      case OPCODE_TXL:
+	 /* These opcodes are claimed by GLSL in prog_instruction.h, but
+	  * only NV_vp/fp appears to emit them.
+	  */
       default:
-         i915_program_error(p, "bad opcode");
+         i915_program_error(p, "bad opcode: %s",
+			    _mesa_opcode_string(inst->Opcode));
          return;
       }
 
@@ -906,7 +1077,7 @@ check_wpos(struct i915_fragment_program *p)
    p->wpos_tex = -1;
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
-      if (inputs & FRAG_BIT_TEX(i))
+      if (inputs & (FRAG_BIT_TEX(i) | FRAG_BIT_VAR(i)))
          continue;
       else if (inputs & FRAG_BIT_WPOS) {
          p->wpos_tex = i;
@@ -1055,6 +1226,28 @@ i915ProgramStringNotify(GLcontext * ctx,
    _tnl_program_string(ctx, target, prog);
 }
 
+void
+i915_update_program(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct i915_context *i915 = i915_context(&intel->ctx);
+   struct i915_fragment_program *fp =
+      (struct i915_fragment_program *) ctx->FragmentProgram._Current;
+
+   if (i915->current_program != fp) {
+      if (i915->current_program) {
+         i915->current_program->on_hardware = 0;
+         i915->current_program->params_uptodate = 0;
+      }
+
+      i915->current_program = fp;
+   }
+
+   if (!fp->translated)
+      translate_program(fp);
+
+   FALLBACK(&i915->intel, I915_FALLBACK_PROGRAM, fp->error);
+}
 
 void
 i915ValidateFragmentProgram(struct i915_context *i915)
@@ -1071,16 +1264,6 @@ i915ValidateFragmentProgram(struct i915_context *i915)
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
    GLuint s2 = S2_TEXCOORD_NONE;
    int i, offset = 0;
-
-   if (i915->current_program != p) {
-      if (i915->current_program) {
-         i915->current_program->on_hardware = 0;
-         i915->current_program->params_uptodate = 0;
-      }
-
-      i915->current_program = p;
-   }
-
 
    /* Important:
     */
@@ -1124,6 +1307,14 @@ i915ValidateFragmentProgram(struct i915_context *i915)
          s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(sz));
 
          EMIT_ATTR(_TNL_ATTRIB_TEX0 + i, EMIT_SZ(sz), 0, sz * 4);
+      }
+      else if (inputsRead & FRAG_BIT_VAR(i)) {
+         int sz = VB->AttribPtr[_TNL_ATTRIB_GENERIC0 + i]->size;
+
+         s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
+         s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(sz));
+
+         EMIT_ATTR(_TNL_ATTRIB_GENERIC0 + i, EMIT_SZ(sz), 0, sz * 4);
       }
       else if (i == p->wpos_tex) {
 

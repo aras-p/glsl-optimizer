@@ -403,7 +403,7 @@ trace_screen_transfer_map(struct pipe_screen *_screen,
 
    map = screen->transfer_map(screen, transfer);
    if(map) {
-      if(transfer->usage != PIPE_TRANSFER_READ) {
+      if(transfer->usage & PIPE_TRANSFER_WRITE) {
          assert(!tr_trans->map);
          tr_trans->map = map;
       }

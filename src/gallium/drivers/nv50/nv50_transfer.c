@@ -161,7 +161,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	}
 
-	if (usage != PIPE_TRANSFER_WRITE) {
+	if (usage & PIPE_TRANSFER_READ) {
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
 					x, y,
@@ -183,7 +183,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 
-	if (ptx->usage != PIPE_TRANSFER_READ) {
+	if (ptx->usage & PIPE_TRANSFER_WRITE) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0, tx->base.stride,
 					tx->bo->tile_mode, 0, 0,

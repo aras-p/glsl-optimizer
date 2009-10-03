@@ -165,7 +165,7 @@ i915_scanout_layout(struct i915_texture *tex)
    struct pipe_texture *pt = &tex->base;
 
    if (pt->last_level > 0 || pt->block.size != 4)
-      return 0;
+      return FALSE;
 
    i915_miptree_set_level_info(tex, 0, 1,
                                tex->base.width[0],
@@ -191,6 +191,38 @@ i915_scanout_layout(struct i915_texture *tex)
    return TRUE;
 }
 
+/**
+ * Special case to deal with shared textures.
+ */
+static boolean
+i915_display_target_layout(struct i915_texture *tex)
+{
+   struct pipe_texture *pt = &tex->base;
+
+   if (pt->last_level > 0 || pt->block.size != 4)
+      return FALSE;
+
+   /* fallback to normal textures for small textures */
+   if (tex->base.width[0] < 240)
+      return FALSE;
+
+   i915_miptree_set_level_info(tex, 0, 1,
+                               tex->base.width[0],
+                               tex->base.height[0],
+                               1);
+   i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
+
+   tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
+   tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
+   tex->hw_tiled = INTEL_TILE_X;
+
+   debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
+      tex->base.width[0], tex->base.height[0], pt->block.size,
+      tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
+
+   return TRUE;
+}
+
 static void
 i915_miptree_layout_2d(struct i915_texture *tex)
 {
@@ -200,6 +232,16 @@ i915_miptree_layout_2d(struct i915_texture *tex)
    unsigned height = pt->height[0];
    unsigned nblocksx = pt->nblocksx[0];
    unsigned nblocksy = pt->nblocksy[0];
+
+   /* used for scanouts that need special layouts */
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+      if (i915_scanout_layout(tex))
+         return;
+
+   /* for shared buffers we use some very like scanout */
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+      if (i915_display_target_layout(tex))
+         return;
 
    tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
    tex->total_nblocksy = 0;
@@ -349,6 +391,11 @@ i945_miptree_layout_2d(struct i915_texture *tex)
    /* used for scanouts that need special layouts */
    if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
       if (i915_scanout_layout(tex))
+         return;
+
+   /* for shared buffers we use some very like scanout */
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+      if (i915_display_target_layout(tex))
          return;
 
    tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
@@ -812,7 +859,7 @@ i915_transfer_map(struct pipe_screen *screen,
    char *map;
    boolean write = FALSE;
 
-   if (transfer->usage != PIPE_TRANSFER_READ)
+   if (transfer->usage & PIPE_TRANSFER_WRITE)
       write = TRUE;
 
    map = iws->buffer_map(iws, tex->buffer, write);

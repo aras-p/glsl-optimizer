@@ -53,7 +53,10 @@ extern "C" {
 struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_buffer;
-
+struct pipe_texture;
+struct pipe_surface;
+struct pipe_video_surface;
+struct pipe_transfer;
 
 
 /**
@@ -251,6 +254,17 @@ struct pipe_screen {
                          struct pipe_buffer *buf );
 
    void (*buffer_destroy)( struct pipe_buffer *buf );
+
+   /**
+    * Create a video surface suitable for use as a decoding target by the
+    * driver's pipe_video_context.
+    */
+   struct pipe_video_surface*
+   (*video_surface_create)( struct pipe_screen *screen,
+                            enum pipe_video_chroma_format chroma_format,
+                            unsigned width, unsigned height );
+
+   void (*video_surface_destroy)( struct pipe_video_surface *vsfc );
 
 
    /**

@@ -341,6 +341,11 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
         SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
     }
+    else
+    {
+        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+        CLEARbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
+    }
 
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 

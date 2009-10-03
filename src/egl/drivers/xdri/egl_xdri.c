@@ -48,6 +48,7 @@
 #include "glapi/glapi.h" /* for glapi functions */
 
 #include "eglconfig.h"
+#include "eglconfigutil.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egldriver.h"
@@ -104,6 +105,7 @@ struct xdri_egl_config
    _EGLConfig Base;   /**< base class */
 
    const __GLcontextModes *mode;  /**< corresponding GLX mode */
+   EGLint window_render_buffer;
 };
 
 
@@ -162,46 +164,76 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
 }
 
 
+static EGLBoolean
+convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
+{
+   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
+                                   EGL_OPENGL_ES2_BIT |
+                                   EGL_OPENVG_BIT |
+                                   EGL_OPENGL_BIT);
+   EGLint val;
+
+   _eglInitConfig(conf, id);
+   if (!_eglConfigFromContextModesRec(conf, m, all_apis, all_apis))
+      return EGL_FALSE;
+
+   if (m->doubleBufferMode) {
+      /* pixmap and pbuffer surfaces are always single-buffered */
+      val = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
+      val &= ~(EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
+      SET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE, val);
+   }
+   else {
+      /* EGL requires OpenGL ES context to be double-buffered */
+      val = GET_CONFIG_ATTRIB(conf, EGL_RENDERABLE_TYPE);
+      val &= ~(EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT);
+      SET_CONFIG_ATTRIB(conf, EGL_RENDERABLE_TYPE, val);
+   }
+   /* skip "empty" config */
+   if (!val)
+      return EGL_FALSE;
+
+   val = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
+   if (!(val & EGL_PBUFFER_BIT)) {
+      /* bind-to-texture cannot be EGL_TRUE without pbuffer bit */
+      SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGB, EGL_FALSE);
+      SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGBA, EGL_FALSE);
+   }
+
+   /* EGL_NATIVE_RENDERABLE is a boolean */
+   val = GET_CONFIG_ATTRIB(conf, EGL_NATIVE_RENDERABLE);
+   if (val != EGL_TRUE)
+      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_RENDERABLE, EGL_FALSE);
+
+   return _eglValidateConfig(conf, EGL_FALSE);
+}
+
+
 /**
  * Produce a set of EGL configs.
  */
 static EGLint
 create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
 {
-   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
-                                   EGL_OPENGL_ES2_BIT |
-                                   EGL_OPENVG_BIT |
-                                   EGL_OPENGL_BIT);
    int id = first_id;
 
    for (; m; m = m->next) {
-      /* add double buffered visual */
-      if (m->doubleBufferMode) {
-         struct xdri_egl_config *config = CALLOC_STRUCT(xdri_egl_config);
+      struct xdri_egl_config *xdri_conf;
+      _EGLConfig conf;
+      EGLint rb;
 
-         _eglInitConfig(&config->Base, id++);
+      if (!convert_config(&conf, id, m))
+         continue;
 
-         SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, m->rgbBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, m->redBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_GREEN_SIZE, m->greenBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_BLUE_SIZE, m->blueBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_ALPHA_SIZE, m->alphaBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_DEPTH_SIZE, m->depthBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_STENCIL_SIZE, m->stencilBits);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLES, m->samples);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLE_BUFFERS, m->sampleBuffers);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, m->visualID);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_TYPE, m->visualType);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_RENDERABLE_TYPE, all_apis);
-         SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+      rb = (m->doubleBufferMode) ? EGL_BACK_BUFFER : EGL_SINGLE_BUFFER;
 
-         /* XXX possibly other things to init... */
-
-         /* Ptr from EGL config to GLcontextMode.  Used in CreateContext(). */
-         config->mode = m;
-
-         _eglAddConfig(disp, &config->Base);
+      xdri_conf = CALLOC_STRUCT(xdri_egl_config);
+      if (xdri_conf) {
+         memcpy(&xdri_conf->Base, &conf, sizeof(conf));
+         xdri_conf->mode = m;
+         xdri_conf->window_render_buffer = rb;
+         _eglAddConfig(disp, &xdri_conf->Base);
+         id++;
       }
    }
 
@@ -362,6 +394,9 @@ xdri_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       free(xdri_ctx);
       return NULL;
    }
+
+   /* the config decides the render buffer for the context */
+   xdri_ctx->Base.WindowRenderBuffer = xdri_config->window_render_buffer;
 
    xdri_ctx->driContext =
       psc->driScreen->createContext(psc,

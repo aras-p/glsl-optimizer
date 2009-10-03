@@ -40,7 +40,7 @@
 static const char *
 softpipe_get_vendor(struct pipe_screen *screen)
 {
-   return "Tungsten Graphics, Inc.";
+   return "VMware, Inc.";
 }
 
 
@@ -82,7 +82,7 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return 13; /* max 4Kx4K */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      return 9;  /* max 256x256x256 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 13; /* max 4Kx4K */
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
@@ -135,6 +135,9 @@ softpipe_is_format_supported( struct pipe_screen *screen,
           target == PIPE_TEXTURE_CUBE);
 
    switch(format) {
+   case PIPE_FORMAT_L16_UNORM:
+   case PIPE_FORMAT_YCBCR_REV:
+   case PIPE_FORMAT_YCBCR:
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:

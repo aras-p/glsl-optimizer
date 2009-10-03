@@ -56,9 +56,7 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
-#if FEATURE_convolve
 #include "convolve.h"
-#endif
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"

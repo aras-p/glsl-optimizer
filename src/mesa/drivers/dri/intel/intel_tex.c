@@ -2,6 +2,7 @@
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/mipmap.h"
+#include "drivers/common/meta.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -158,11 +159,36 @@ timed_memcpy(void *dest, const void *src, size_t n)
 }
 #endif /* DO_DEBUG */
 
+
+/**
+ * Called via ctx->Driver.GenerateMipmap()
+ * This is basically a wrapper for _mesa_meta_GenerateMipmap() which checks
+ * if we'll be using software mipmap generation.  In that case, we need to
+ * map/unmap the base level texture image.
+ */
+static void
+intelGenerateMipmap(GLcontext *ctx, GLenum target,
+                    struct gl_texture_object *texObj)
+{
+   if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
+      /* sw path: need to map texture images */
+      struct intel_context *intel = intel_context(ctx);
+      struct intel_texture_object *intelObj = intel_texture_object(texObj);
+      intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
+      _mesa_generate_mipmap(ctx, target, texObj);
+      intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
+   }
+   else {
+      _mesa_meta_GenerateMipmap(ctx, target, texObj);
+   }
+}
+
+
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = intelChooseTextureFormat;
-   functions->GenerateMipmap = intel_generate_mipmap;
+   functions->GenerateMipmap = intelGenerateMipmap;
 
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;

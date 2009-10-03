@@ -39,6 +39,7 @@
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_shader_objects
 #define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_array_object
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ARB_vertex_shader
@@ -52,6 +53,7 @@
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
+#define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
@@ -79,6 +81,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_env_dot3", NULL},
    {"GL_ARB_texture_mirrored_repeat", NULL},
    {"GL_ARB_texture_rectangle", NULL},
+   {"GL_ARB_vertex_array_object", GL_ARB_vertex_array_object_functions},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
    {"GL_ARB_vertex_shader", GL_ARB_vertex_shader_functions},
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
@@ -103,6 +106,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_EXT_texture_lod_bias", NULL},
    {"GL_3DFX_texture_compression_FXT1", NULL},
    {"GL_APPLE_client_storage", NULL},
+   {"GL_APPLE_vertex_array_object", GL_APPLE_vertex_array_object_functions},
    {"GL_MESA_pack_invert", NULL},
    {"GL_MESA_ycbcr_texture", NULL},
    {"GL_NV_blend_square", NULL},

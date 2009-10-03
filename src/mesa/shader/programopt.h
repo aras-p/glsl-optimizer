@@ -42,4 +42,11 @@ _mesa_count_texture_instructions(struct gl_program *prog);
 extern void
 _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type);
 
+extern void
+_mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog);
+
+extern void
+_mesa_nop_vertex_program(GLcontext *ctx, struct gl_vertex_program *prog);
+
+
 #endif /* PROGRAMOPT_H */

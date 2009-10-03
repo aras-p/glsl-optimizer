@@ -45,7 +45,7 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->blend = (const struct pipe_blend_state *)blend;
+   softpipe->blend = (struct pipe_blend_state *)blend;
 
    softpipe->dirty |= SP_NEW_BLEND;
 }
@@ -86,7 +86,7 @@ softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
+   softpipe->depth_stencil = (struct pipe_depth_stencil_alpha_state *)depth_stencil;
 
    softpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
 }

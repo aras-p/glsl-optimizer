@@ -152,7 +152,6 @@ drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen)
 
 	pipe_surface_reference(&screen->surface, NULL);
 	pipe_texture_reference(&screen->tex, NULL);
-	pipe_buffer_reference(&screen->buffer, NULL);
 
 	screen->shown = 0;
 }
@@ -250,8 +249,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy,
 
 
 	drm_create_texture(dpy, scrn, mode->Width, mode->Height);
-	if (!scrn->buffer)
-		return EGL_FALSE;
+	if (!scrn->tex)
+		goto err_tex;
 
 	ret = drmModeAddFB(dev->drmFD,
 	                   scrn->front.width, scrn->front.height,
@@ -325,8 +324,8 @@ err_fb:
 err_bo:
 	pipe_surface_reference(&scrn->surface, NULL);
 	pipe_texture_reference(&scrn->tex, NULL);
-	pipe_buffer_reference(&scrn->buffer, NULL);
 
+err_tex:
 	return EGL_FALSE;
 }
 
@@ -353,24 +352,21 @@ drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 	if (!surf)
 		return EGL_FALSE;
 
-	/* error checking */
-	if (!_eglSwapBuffers(drv, dpy, draw))
-		return EGL_FALSE;
-
 	st_get_framebuffer_surface(surf->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
 
 	if (back_surf) {
+		struct drm_context *ctx = lookup_drm_context(draw->Binding);
 
 		st_notify_swapbuffers(surf->stfb);
 
-		if (surf->screen) {
-			surf->user->pipe->surface_copy(surf->user->pipe,
+		if (ctx && surf->screen) {
+			ctx->pipe->surface_copy(ctx->pipe,
 				surf->screen->surface,
 				0, 0,
 				back_surf,
 				0, 0,
 				surf->w, surf->h);
-			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
+			ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
 			/* TODO query connector property to see if this is needed */

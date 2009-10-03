@@ -389,22 +389,14 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
    const uint texWidth = pt->width[level];
    const uint texHeight = pt->height[level];
    const uint stride = ct->stride[level];
-   unsigned flags = 0x0;
    unsigned size;
 
    assert(transfer->texture);
 
-   if (transfer->usage != PIPE_TRANSFER_READ) {
-      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
-   }
-
-   if (transfer->usage != PIPE_TRANSFER_WRITE) {
-      flags |= PIPE_BUFFER_USAGE_CPU_READ;
-   }
-
    if (!ct->mapped) {
       /* map now */
-      ct->mapped = pipe_buffer_map(screen, ct->buffer, flags);
+      ct->mapped = pipe_buffer_map(screen, ct->buffer,
+                                   pipe_transfer_buffer_flags(transfer));
    }
 
    /*
@@ -417,8 +409,7 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
    if (!ctrans->map)
       return NULL; /* out of memory */
 
-   if (transfer->usage == PIPE_TRANSFER_READ ||
-       transfer->usage == PIPE_TRANSFER_READ_WRITE) {
+   if (transfer->usage & PIPE_TRANSFER_READ) {
       /* need to untwiddle the texture to make a linear version */
       const uint bpp = pf_get_size(ct->base.format);
       if (bpp == 4) {
@@ -459,8 +450,7 @@ cell_transfer_unmap(struct pipe_screen *screen,
                                    PIPE_BUFFER_USAGE_CPU_READ);
    }
 
-   if (transfer->usage == PIPE_TRANSFER_WRITE ||
-       transfer->usage == PIPE_TRANSFER_READ_WRITE) {
+   if (transfer->usage & PIPE_TRANSFER_WRITE) {
       /* The user wrote new texture data into the mapped buffer.
        * We need to convert the new linear data into the twiddled/tiled format.
        */

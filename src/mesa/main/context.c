@@ -79,42 +79,28 @@
 #include "glheader.h"
 #include "mfeatures.h"
 #include "imports.h"
-#if FEATURE_accum
 #include "accum.h"
-#endif
 #include "api_exec.h"
 #include "arrayobj.h"
-#if FEATURE_attrib_stack
 #include "attrib.h"
-#endif
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
-#if FEATURE_colortable
 #include "colortab.h"
-#endif
 #include "context.h"
 #include "cpuinfo.h"
 #include "debug.h"
 #include "depth.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
-#if FEATURE_evaluators
 #include "eval.h"
-#endif
 #include "enums.h"
 #include "extensions.h"
 #include "fbobject.h"
-#if FEATURE_feedback
 #include "feedback.h"
-#endif
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
-#if FEATURE_histogram
 #include "histogram.h"
-#endif
 #include "hint.h"
 #include "hash.h"
 #include "light.h"
@@ -126,15 +112,11 @@
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_ARB_occlusion_query
 #include "queryobj.h"
-#endif
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#if FEATURE_drawpix
 #include "rastpos.h"
-#endif
 #include "scissor.h"
 #include "shared.h"
 #include "simple_list.h"
@@ -678,36 +660,20 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_extensions( ctx );
 
    /* Attribute Groups */
-#if FEATURE_accum
    _mesa_init_accum( ctx );
-#endif
-#if FEATURE_attrib_stack
    _mesa_init_attrib( ctx );
-#endif
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
-#if FEATURE_colortable
    _mesa_init_colortables( ctx );
-#endif
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
-#if FEATURE_dlist
    _mesa_init_display_list( ctx );
-#endif
-#if FEATURE_evaluators
    _mesa_init_eval( ctx );
-#endif
    _mesa_init_fbobjects( ctx );
-#if FEATURE_feedback
    _mesa_init_feedback( ctx );
-#else
-   ctx->RenderMode = GL_RENDER;
-#endif
    _mesa_init_fog( ctx );
-#if FEATURE_histogram
    _mesa_init_histogram( ctx );
-#endif
    _mesa_init_hint( ctx );
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
@@ -718,15 +684,11 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
-#if FEATURE_ARB_occlusion_query
-   _mesa_init_query( ctx );
-#endif
+   _mesa_init_queryobj( ctx );
 #if FEATURE_ARB_sync
    _mesa_init_sync( ctx );
 #endif
-#if FEATURE_drawpix
    _mesa_init_rastpos( ctx );
-#endif
    _mesa_init_scissor( ctx );
    _mesa_init_shader_state( ctx );
    _mesa_init_stencil( ctx );
@@ -903,10 +865,12 @@ _mesa_initialize_context(GLcontext *ctx,
    _mesa_init_exec_table(ctx->Exec);
 #endif
    ctx->CurrentDispatch = ctx->Exec;
+
 #if FEATURE_dlist
-   _mesa_init_dlist_table(ctx->Save);
+   _mesa_init_save_table(ctx->Save);
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 #endif
+
    /* Neutral tnl module stuff */
    _mesa_init_exec_vtxfmt( ctx ); 
    ctx->TnlModule.Current = NULL;
@@ -1005,24 +969,16 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
-#if FEATURE_attrib_stack
    _mesa_free_attrib_data(ctx);
-#endif
    _mesa_free_lighting_data( ctx );
-#if FEATURE_evaluators
    _mesa_free_eval_data( ctx );
-#endif
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-#if FEATURE_colortable
    _mesa_free_colortables_data( ctx );
-#endif
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
-#if FEATURE_ARB_occlusion_query
-   _mesa_free_query_data(ctx);
-#endif
+   _mesa_free_queryobj_data(ctx);
 #if FEATURE_ARB_sync
    _mesa_free_sync_data(ctx);
 #endif

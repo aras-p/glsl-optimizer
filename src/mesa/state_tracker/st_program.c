@@ -317,7 +317,7 @@ st_translate_vertex_program(struct st_context *st,
 
    /* free old shader state, if any */
    if (stvp->state.tokens) {
-      _mesa_free((void *) stvp->state.tokens);
+      st_free_tokens(stvp->state.tokens);
       stvp->state.tokens = NULL;
    }
    if (stvp->driver_shader) {

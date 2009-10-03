@@ -660,7 +660,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
 
    if (bind_bo == NULL) {
       GLuint data_size = brw->wm.nr_surfaces * sizeof(GLuint);
-      uint32_t *data = malloc(data_size);
+      uint32_t data[BRW_WM_MAX_SURF];
       int i;
 
       for (i = 0; i < brw->wm.nr_surfaces; i++)
@@ -685,8 +685,6 @@ brw_wm_get_binding_table(struct brw_context *brw)
 			      brw->wm.surf_bo[i]);
 	 }
       }
-
-      free(data);
    }
 
    return bind_bo;
@@ -724,17 +722,8 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
       if (texUnit->_ReallyEnabled) {
-         if (texUnit->_Current == intel->frame_buffer_texobj) {
-            /* render to texture */
-            dri_bo_unreference(brw->wm.surf_bo[surf]);
-            brw->wm.surf_bo[surf] = brw->wm.surf_bo[0];
-            dri_bo_reference(brw->wm.surf_bo[surf]);
-            brw->wm.nr_surfaces = surf + 1;
-         } else {
-            /* regular texture */
-            brw_update_texture_surface(ctx, i);
-            brw->wm.nr_surfaces = surf + 1;
-         }
+	 brw_update_texture_surface(ctx, i);
+	 brw->wm.nr_surfaces = surf + 1;
       } else {
          dri_bo_unreference(brw->wm.surf_bo[surf]);
          brw->wm.surf_bo[surf] = NULL;

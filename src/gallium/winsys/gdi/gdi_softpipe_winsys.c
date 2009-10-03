@@ -46,7 +46,7 @@
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 #include "softpipe/sp_texture.h"
-#include "shared/stw_winsys.h"
+#include "stw_winsys.h"
 
 
 struct gdi_softpipe_buffer
@@ -269,9 +269,9 @@ gdi_softpipe_context_create(struct pipe_screen *screen)
 
 
 static void
-gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
-                               struct pipe_surface *surface,
-                               HDC hDC)
+gdi_softpipe_present(struct pipe_screen *screen,
+                     struct pipe_surface *surface,
+                     HDC hDC)
 {
     struct softpipe_texture *texture;
     struct gdi_softpipe_buffer *buffer;
@@ -304,7 +304,11 @@ gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
 static const struct stw_winsys stw_winsys = {
    &gdi_softpipe_screen_create,
    &gdi_softpipe_context_create,
-   &gdi_softpipe_flush_frontbuffer
+   &gdi_softpipe_present,
+   NULL, /* get_adapter_luid */
+   NULL, /* shared_surface_open */
+   NULL, /* shared_surface_close */
+   NULL  /* compose */
 };
 
 

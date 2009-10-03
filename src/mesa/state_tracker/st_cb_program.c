@@ -45,6 +45,7 @@
 #include "st_context.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
+#include "st_mesa_to_tgsi.h"
 #include "st_cb_program.h"
 
 
@@ -152,7 +153,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
 
          if (stvp->state.tokens) {
-            _mesa_free((void *) stvp->state.tokens);
+            st_free_tokens(stvp->state.tokens);
             stvp->state.tokens = NULL;
          }
       }
@@ -167,7 +168,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
          
          if (stfp->state.tokens) {
-            _mesa_free((void *) stfp->state.tokens);
+            st_free_tokens(stfp->state.tokens);
             stfp->state.tokens = NULL;
          }
 
@@ -214,7 +215,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stfp->state.tokens) {
-         _mesa_free((void *) stfp->state.tokens);
+         st_free_tokens(stfp->state.tokens);
          stfp->state.tokens = NULL;
       }
 
@@ -242,7 +243,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stvp->state.tokens) {
-         _mesa_free((void *) stvp->state.tokens);
+         st_free_tokens(stvp->state.tokens);
          stvp->state.tokens = NULL;
       }
 

@@ -177,7 +177,7 @@ def generate(env):
     # default in recent gcc versions
     env.AppendUnique(CFLAGS = ['-gstabs'])
 
-    env.AppendUnique(LIBS = ['iberty'])
+    #env.AppendUnique(LIBS = ['iberty'])
     env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
     #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
 

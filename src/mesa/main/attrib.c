@@ -57,6 +57,7 @@
 #include "varray.h"
 #include "viewport.h"
 #include "mtypes.h"
+#include "glapi/dispatch.h"
 
 
 /**
@@ -172,6 +173,9 @@ struct texture_state
     */
    struct gl_texture_object *SavedTexRef[MAX_TEXTURE_UNITS][NUM_TEXTURE_TARGETS];
 };
+
+
+#if FEATURE_attrib_stack
 
 
 /**
@@ -1462,6 +1466,19 @@ _mesa_PopClientAttrib(void)
       node = next;
    }
 }
+
+
+void
+_mesa_init_attrib_dispatch(struct _glapi_table *disp)
+{
+   SET_PopAttrib(disp, _mesa_PopAttrib);
+   SET_PushAttrib(disp, _mesa_PushAttrib);
+   SET_PopClientAttrib(disp, _mesa_PopClientAttrib);
+   SET_PushClientAttrib(disp, _mesa_PushClientAttrib);
+}
+
+
+#endif /* FEATURE_attrib_stack */
 
 
 /**

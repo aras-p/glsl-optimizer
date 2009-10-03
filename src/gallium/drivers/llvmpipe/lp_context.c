@@ -107,11 +107,16 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
+      pipe_surface_reference(&llvmpipe->framebuffer.cbufs[i], NULL);
+   }
+   pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       lp_destroy_tex_tile_cache(llvmpipe->tex_cache[i]);
+      pipe_texture_reference(&llvmpipe->texture[i], NULL);
+   }
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       if (llvmpipe->constants[i].buffer) {

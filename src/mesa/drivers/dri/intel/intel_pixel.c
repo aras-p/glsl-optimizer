@@ -129,20 +129,6 @@ intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
    return GL_TRUE;
 }
 
-
-GLboolean
-intel_check_meta_tex_fragment_ops(GLcontext * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* Some of _ImageTransferState (scale, bias) could be done with
-    * fragment programs on i915.
-    */
-   return !(ctx->_ImageTransferState || ctx->Fog.Enabled ||     /* not done yet */
-            ctx->Texture._EnabledUnits || ctx->FragmentProgram._Enabled);
-}
-
 /* The intel_region struct doesn't really do enough to capture the
  * format of the pixels in the region.  For now this code assumes that
  * the region is a display surface and hence is either ARGB8888 or

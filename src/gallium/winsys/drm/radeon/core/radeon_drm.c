@@ -107,13 +107,18 @@ radeon_texture_from_shared_handle(struct drm_api *api,
                                   unsigned handle)
 {
     struct pipe_buffer *buffer;
+    struct pipe_texture *blanket;
 
     buffer = radeon_buffer_from_handle(api, screen, name, handle);
     if (!buffer) {
         return NULL;
     }
 
-    return screen->texture_blanket(screen, templ, &stride, buffer);
+    blanket = screen->texture_blanket(screen, templ, &stride, buffer);
+
+    pipe_buffer_reference(&buffer, NULL);
+
+    return blanket;
 }
 
 static boolean radeon_shared_handle_from_texture(struct drm_api *api,

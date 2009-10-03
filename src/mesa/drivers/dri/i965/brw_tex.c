@@ -39,38 +39,6 @@
 #include "intel_tex.h"
 #include "brw_context.h"
 
-
-void brw_FrameBufferTexInit( struct brw_context *brw,
-			     struct intel_region *region )
-{
-   struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
-   struct gl_texture_object *obj;
-   struct gl_texture_image *img;
-   
-   intel->frame_buffer_texobj = obj =
-      ctx->Driver.NewTextureObject( ctx, (GLuint) -1, GL_TEXTURE_2D );
-
-   obj->MinFilter = GL_NEAREST;
-   obj->MagFilter = GL_NEAREST;
-
-   img = ctx->Driver.NewTextureImage( ctx );
-
-   _mesa_init_teximage_fields( ctx, GL_TEXTURE_2D, img,
-			       region->pitch, region->height, 1, 0,
-			       region->cpp == 4 ? GL_RGBA : GL_RGB );
-   
-   _mesa_set_tex_image( obj, GL_TEXTURE_2D, 0, img );
-}
-
-void brw_FrameBufferTexDestroy( struct brw_context *brw )
-{
-   if (brw->intel.frame_buffer_texobj != NULL)
-      brw->intel.ctx.Driver.DeleteTexture( &brw->intel.ctx,
-					   brw->intel.frame_buffer_texobj );
-   brw->intel.frame_buffer_texobj = NULL;
-}
-
 /**
  * Finalizes all textures, completing any rendering that needs to be done
  * to prepare them.

@@ -79,12 +79,14 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
 
-    if (size + r300render->vbo_offset > r300render->vbo_size) 
+    if (size + r300render->vbo_offset > r300render->vbo_size)
     {
+        pipe_buffer_reference(&r300->vbo, NULL);
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
                                              PIPE_BUFFER_USAGE_VERTEX,
                                              R300_MAX_VBO_SIZE);
+        r300render->vbo_offset = 0;
         r300render->vbo_size = R300_MAX_VBO_SIZE;
     }
 
@@ -117,7 +119,7 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max);
     END_CS;
 
-    r300render->vbo_max_used = MAX2(r300render->vbo_max_used, 
+    r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
     pipe_buffer_unmap(screen, r300render->vbo);
 }
@@ -129,7 +131,6 @@ static void r300_render_release_vertices(struct vbuf_render* render)
 
     r300render->vbo_offset += r300render->vbo_max_used;
     r300render->vbo_max_used = 0;
-    r300->vbo = NULL;
 }
 
 static boolean r300_render_set_primitive(struct vbuf_render* render,
@@ -221,13 +222,6 @@ static void r300_render_draw(struct vbuf_render* render,
     CS_LOCALS(r300);
 
     r300_prepare_render(r300render, count);
-
-    /* Send our indices into an index buffer. */
-    index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
-                                      count * 2);
-    if (!index_buffer) {
-        return;
-    }
 
     BEGIN_CS(2 + (count+1)/2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);

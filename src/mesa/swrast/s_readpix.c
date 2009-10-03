@@ -555,14 +555,14 @@ _swrast_ReadPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib clippedPacking = *packing;
 
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    /* Need to do swrast_render_start() before clipping or anything else
     * since this is where a driver may grab the hw lock and get an updated
     * window size.
     */
    swrast_render_start(ctx);
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );

@@ -92,7 +92,25 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
 	    }
     }
 
-    r700SelectVertexShader(ctx);
+    r700SelectVertexShader(ctx, 1);
+    r700UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+    context->radeon.NewGLState = 0;
+}
+
+void r700UpdateShaders2(GLcontext * ctx)  
+{
+    context_t *context = R700_CONTEXT(ctx);
+
+    /* should only happenen once, just after context is created */
+    /* TODO: shouldn't we fallback to sw here? */
+    if (!ctx->FragmentProgram._Current) {
+	    _mesa_fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+	    return;
+    }
+
+    r700SelectFragmentShader(ctx);
+
+    r700SelectVertexShader(ctx, 2);
     r700UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
     context->radeon.NewGLState = 0;
 }
@@ -475,10 +493,10 @@ static void r700SetBlendState(GLcontext * ctx)
 		 eqn, COLOR_COMB_FCN_shift, COLOR_COMB_FCN_mask);
 
 	SETfield(blend_reg,
-		 blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE),
+		 blend_factor(ctx->Color.BlendSrcA, GL_TRUE),
 		 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
 	SETfield(blend_reg,
-		 blend_factor(ctx->Color.BlendDstRGB, GL_FALSE),
+		 blend_factor(ctx->Color.BlendDstA, GL_FALSE),
 		 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
 
 	switch (ctx->Color.BlendEquationA) {
@@ -753,9 +771,9 @@ static void r700ColorMask(GLcontext * ctx,
 			     (b ? 4 : 0) |
 			     (a ? 8 : 0));
 
-	if (mask != r700->CB_SHADER_MASK.u32All) {
+	if (mask != r700->CB_TARGET_MASK.u32All) {
 		R600_STATECHANGE(context, cb);
-		SETfield(r700->CB_SHADER_MASK.u32All, mask, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
+		SETfield(r700->CB_TARGET_MASK.u32All, mask, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
 	}
 }
 
@@ -1277,10 +1295,11 @@ void r700SetScissor(context_t *context) //---------------
 		return;
 	}
 	if (context->radeon.state.scissor.enabled) {
+		/* r600 has exclusive scissors */
 		x1 = context->radeon.state.scissor.rect.x1;
 		y1 = context->radeon.state.scissor.rect.y1;
-		x2 = context->radeon.state.scissor.rect.x2;
-		y2 = context->radeon.state.scissor.rect.y2;
+		x2 = context->radeon.state.scissor.rect.x2 + 1;
+		y2 = context->radeon.state.scissor.rect.y2 + 1;
 	} else {
 		if (context->radeon.radeonScreen->driScreen->dri2.enabled) {
 			x1 = 0;
@@ -1761,7 +1780,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_CLRCMP_MSK.u32All = 0xFFFFFFFF;
 
     /* screen/window/view */
-    SETfield(r700->CB_TARGET_MASK.u32All, 0xF, (4 * id), TARGET0_ENABLE_mask);
+    SETfield(r700->CB_SHADER_MASK.u32All, 0xF, (4 * id), OUTPUT0_ENABLE_mask);
 
     context->radeon.hw.all_dirty = GL_TRUE;
 

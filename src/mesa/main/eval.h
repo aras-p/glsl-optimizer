@@ -37,13 +37,22 @@
 #define EVAL_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
-#if _HAVE_FULL_GL
 
-extern void _mesa_init_eval( GLcontext *ctx );
-extern void _mesa_free_eval_data( GLcontext *ctx );
+#if FEATURE_evaluators
 
+#define _MESA_INIT_EVAL_VTXFMT(vfmt, impl)         \
+   do {                                            \
+      (vfmt)->EvalCoord1f  = impl ## EvalCoord1f;  \
+      (vfmt)->EvalCoord1fv = impl ## EvalCoord1fv; \
+      (vfmt)->EvalCoord2f  = impl ## EvalCoord2f;  \
+      (vfmt)->EvalCoord2fv = impl ## EvalCoord2fv; \
+      (vfmt)->EvalPoint1   = impl ## EvalPoint1;   \
+      (vfmt)->EvalPoint2   = impl ## EvalPoint2;   \
+      (vfmt)->EvalMesh1    = impl ## EvalMesh1;    \
+      (vfmt)->EvalMesh2    = impl ## EvalMesh2;    \
+   } while (0)
 
 extern GLuint _mesa_evaluator_components( GLenum target );
 
@@ -70,59 +79,32 @@ extern GLfloat *_mesa_copy_map_points2d(GLenum target,
                                      GLint vstride, GLint vorder,
                                      const GLdouble *points );
 
+extern void
+_mesa_install_eval_vtxfmt(struct _glapi_table *disp,
+                          const GLvertexformat *vfmt);
+
+extern void
+_mesa_init_eval_dispatch(struct _glapi_table *disp);
+
+#else /* FEATURE_evaluators */
+
+#define _MESA_INIT_EVAL_VTXFMT(vfmt, impl) do { } while (0)
+
+static INLINE void
+_mesa_install_eval_vtxfmt(struct _glapi_table *disp,
+                          const GLvertexformat *vfmt)
+{
+}
+
+static INLINE void
+_mesa_init_eval_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_evaluators */
+
+extern void _mesa_init_eval( GLcontext *ctx );
+extern void _mesa_free_eval_data( GLcontext *ctx );
 
 
-extern void GLAPIENTRY
-_mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
-             GLint order, const GLfloat *points );
-
-extern void GLAPIENTRY
-_mesa_Map2f( GLenum target,
-             GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
-             GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-             const GLfloat *points );
-
-extern void GLAPIENTRY
-_mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
-             GLint order, const GLdouble *points );
-
-extern void GLAPIENTRY
-_mesa_Map2d( GLenum target,
-             GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
-             GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
-             const GLdouble *points );
-
-extern void GLAPIENTRY
-_mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 );
-
-extern void GLAPIENTRY
-_mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 );
-
-extern void GLAPIENTRY
-_mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
-                 GLint vn, GLfloat v1, GLfloat v2 );
-
-extern void GLAPIENTRY
-_mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
-                 GLint vn, GLdouble v1, GLdouble v2 );
-
-extern void GLAPIENTRY
-_mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v );
-
-extern void GLAPIENTRY
-_mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v );
-
-extern void GLAPIENTRY
-_mesa_GetMapiv( GLenum target, GLenum query, GLint *v );
-
-#else
-
-/** No-op */
-#define _mesa_init_eval( c ) ((void)0)
-
-/** No-op */
-#define _mesa_free_eval_data( c ) ((void)0)
-
-#endif
-
-#endif
+#endif /* EVAL_H */

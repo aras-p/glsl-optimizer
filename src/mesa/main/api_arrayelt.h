@@ -27,16 +27,57 @@
 #ifndef API_ARRAYELT_H
 #define API_ARRAYELT_H
 
-#include "mtypes.h"
+
+#include "main/mtypes.h"
+
+#if FEATURE_arrayelt
+
+#define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl)     \
+   do {                                            \
+      (vfmt)->ArrayElement = impl ## ArrayElement; \
+   } while (0)
 
 extern GLboolean _ae_create_context( GLcontext *ctx );
 extern void _ae_destroy_context( GLcontext *ctx );
 extern void _ae_invalidate_state( GLcontext *ctx, GLuint new_state );
-extern void GLAPIENTRY _ae_loopback_array_elt( GLint elt );
+extern void GLAPIENTRY _ae_ArrayElement( GLint elt );
 
 /* May optionally be called before a batch of element calls:
  */
 extern void _ae_map_vbos( GLcontext *ctx );
 extern void _ae_unmap_vbos( GLcontext *ctx );
 
-#endif
+extern void
+_mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
+                              const GLvertexformat *vfmt);
+
+#else /* FEATURE_arrayelt */
+
+#define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl) do { } while (0)
+
+static INLINE GLboolean
+_ae_create_context( GLcontext *ctx )
+{
+   return GL_TRUE;
+}
+
+static INLINE void
+_ae_destroy_context( GLcontext *ctx )
+{
+}
+
+static INLINE void
+_ae_invalidate_state( GLcontext *ctx, GLuint new_state )
+{
+}
+
+static INLINE void
+_mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
+                              const GLvertexformat *vfmt)
+{
+}
+
+#endif /* FEATURE_arrayelt */
+
+
+#endif /* API_ARRAYELT_H */

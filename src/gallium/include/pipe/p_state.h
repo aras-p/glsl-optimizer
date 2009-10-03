@@ -114,11 +114,29 @@ struct pipe_rasterizer_state
     * the vertex shader, clipping and viewport processing.  Note that
     * a vertex shader is still needed though, to indicate the mapping
     * from vertex elements to fragment shader input semantics.
+    *
+    * XXX: considered for removal.
     */
    unsigned bypass_vs_clip_and_viewport:1;
 
-   unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
-   unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
+   /** 
+    * Use the first vertex of a primitive as the provoking vertex for
+    * flat shading.
+    */
+   unsigned flatshade_first:1;   
+
+   /** 
+    * When true, triangle rasterization uses (0.5, 0.5) pixel centers
+    * for determining pixel ownership.
+    *
+    * When false, triangle rasterization uses (0,0) pixel centers for
+    * determining pixel ownership.
+    *
+    * Triangle rasterization always uses a 'top,left' rule for pixel
+    * ownership, this just alters which point we consider the pixel
+    * center for that test.
+    */
+   unsigned gl_rasterization_rules:1;
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
@@ -179,7 +197,6 @@ struct pipe_depth_state
    unsigned enabled:1;         /**< depth test enabled? */
    unsigned writemask:1;       /**< allow depth buffer writes? */
    unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
-   unsigned occlusion_count:1; /**< do occlusion counting? */
 };
 
 

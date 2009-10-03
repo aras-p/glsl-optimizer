@@ -31,8 +31,8 @@
 
 struct softpipe_context;
 
-extern void
-sp_init_vbuf(struct softpipe_context *softpipe);
+extern struct vbuf_render *
+sp_create_vbuf_backend(struct softpipe_context *softpipe);
 
 
 #endif /* SP_VBUF_H */

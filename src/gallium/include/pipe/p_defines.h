@@ -193,7 +193,18 @@ enum pipe_texture_target {
 enum pipe_transfer_usage {
    PIPE_TRANSFER_READ = (1 << 0),
    PIPE_TRANSFER_WRITE = (1 << 1),
-   PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE /**< Read/modify/write */
+   /** Read/modify/write */
+   PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE,
+   /** 
+    * The transfer should map the texture storage directly. The driver may
+    * return NULL if that isn't possible, and the state tracker needs to cope
+    * with that and use an alternative path without this flag.
+    *
+    * E.g. the state tracker could have a simpler path which maps textures and
+    * does read/modify/write cycles on them directly, and a more complicated
+    * path which uses minimal read and write transfers.
+    */
+   PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2)
 };
 
 
@@ -314,6 +325,31 @@ enum pipe_transfer_usage {
 #define PIPE_UNREFERENCED         0
 #define PIPE_REFERENCED_FOR_READ  (1 << 0)
 #define PIPE_REFERENCED_FOR_WRITE (1 << 1)
+
+
+enum pipe_video_codec
+{
+   PIPE_VIDEO_CODEC_UNKNOWN = 0,
+   PIPE_VIDEO_CODEC_MPEG12,   /**< MPEG1, MPEG2 */
+   PIPE_VIDEO_CODEC_MPEG4,    /**< DIVX, XVID */
+   PIPE_VIDEO_CODEC_VC1,      /**< WMV */
+   PIPE_VIDEO_CODEC_MPEG4_AVC /**< H.264 */
+};
+
+enum pipe_video_profile
+{
+   PIPE_VIDEO_PROFILE_MPEG1,
+   PIPE_VIDEO_PROFILE_MPEG2_SIMPLE,
+   PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+   PIPE_VIDEO_PROFILE_MPEG4_SIMPLE,
+   PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE,
+   PIPE_VIDEO_PROFILE_VC1_SIMPLE,
+   PIPE_VIDEO_PROFILE_VC1_MAIN,
+   PIPE_VIDEO_PROFILE_VC1_ADVANCED,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN,
+   PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
+};
 
 #ifdef __cplusplus
 }

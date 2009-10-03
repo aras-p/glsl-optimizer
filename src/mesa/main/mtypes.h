@@ -1834,7 +1834,6 @@ struct gl_vertex_program
    struct gl_program Base;   /**< base class */
    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
-   void *TnlData;		/**< should probably use Base.DriverData */
 };
 
 
@@ -2067,6 +2066,8 @@ struct gl_shader_program
 #define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
 #define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
 #define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+#define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
+#define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
 
 
 /**
@@ -2080,6 +2081,7 @@ struct gl_shader_state
    GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
+   GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
    void *MemPool;
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
@@ -2583,6 +2585,7 @@ struct gl_extensions
    GLboolean MESA_texture_signed_rgba;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
+   GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_texgen_reflection;

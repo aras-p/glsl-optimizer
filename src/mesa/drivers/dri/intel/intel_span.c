@@ -558,6 +558,43 @@ intelInitSpanFuncs(GLcontext * ctx)
    swdd->SpanRenderFinish = intelSpanRenderFinish;
 }
 
+void
+intel_map_vertex_shader_textures(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   int i;
+
+   if (ctx->VertexProgram._Current == NULL)
+      return;
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_tex_map_images(intel, intel_texture_object(texObj));
+      }
+   }
+}
+
+void
+intel_unmap_vertex_shader_textures(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   int i;
+
+   if (ctx->VertexProgram._Current == NULL)
+      return;
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_tex_unmap_images(intel, intel_texture_object(texObj));
+      }
+   }
+}
 
 /**
  * Plug in appropriate span read/write functions for the given renderbuffer.

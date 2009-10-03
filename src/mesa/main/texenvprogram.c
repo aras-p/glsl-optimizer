@@ -276,6 +276,7 @@ need_saturate( GLuint mode )
       return GL_TRUE;
    default:
       assert(0);
+      return GL_FALSE;
    }
 }
 

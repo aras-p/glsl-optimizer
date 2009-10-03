@@ -312,7 +312,7 @@ scissor_uptodate:
 			goto viewport_uptodate;
 		nv50->state.viewport_bypass = bypass;
 
-		so = so_new(12, 0);
+		so = so_new(14, 0);
 		if (!bypass) {
 			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE(0), 3);
 			so_data  (so, fui(nv50->viewport.translate[0]));
@@ -325,12 +325,21 @@ scissor_uptodate:
 
 			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
 			so_data  (so, 1);
+			/* 0x0000 = remove whole primitive only (xyz)
+			 * 0x1018 = remove whole primitive only (xy), clamp z
+			 * 0x1080 = clip primitive (xyz)
+			 * 0x1098 = clip primitive (xy), clamp z
+			 */
+			so_method(so, tesla, NV50TCL_VIEW_VOLUME_CLIP_CTRL, 1);
+			so_data  (so, 0x1080);
 			/* no idea what 0f90 does */
 			so_method(so, tesla, 0x0f90, 1);
 			so_data  (so, 0);
 		} else {
 			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
 			so_data  (so, 0);
+			so_method(so, tesla, NV50TCL_VIEW_VOLUME_CLIP_CTRL, 1);
+			so_data  (so, 0x0000);
 			so_method(so, tesla, 0x0f90, 1);
 			so_data  (so, 1);
 		}

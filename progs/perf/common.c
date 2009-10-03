@@ -113,3 +113,21 @@ PerfMeasureRate(PerfRateFunc f)
 }
 
 
+/* Note static buffer, can only use once per printf.
+ */
+const char *
+PerfHumanFloat( double d )
+{
+   static char buf[80];
+
+   if (d > 1000000000.0)
+      snprintf(buf, sizeof(buf), "%.1f billion", d / 1000000000.0);
+   else if (d > 1000000.0)
+      snprintf(buf, sizeof(buf), "%.1f million", d / 1000000.0);
+   else if (d > 1000.0)
+      snprintf(buf, sizeof(buf), "%.1f thousand", d / 1000.0);
+   else
+      snprintf(buf, sizeof(buf), "%.1f", d);
+
+   return buf;
+}
