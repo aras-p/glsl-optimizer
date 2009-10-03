@@ -24,11 +24,6 @@
 
 #include <stdio.h>
 
-static void print_comment(FILE * f)
-{
-	fprintf(f, "               # ");
-}
-
 static const char * textarget_to_string(rc_texture_target target)
 {
 	switch(target) {
@@ -121,19 +116,7 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 		fprintf(f, "|");
 }
 
-static void rc_print_ref(FILE * f, struct rc_dataflow_ref * ref)
-{
-	fprintf(f, "ref(%p", ref->Vector);
-
-	if (ref->UseMask != RC_MASK_XYZW) {
-		fprintf(f, ".");
-		rc_print_mask(f, ref->UseMask);
-	}
-
-	fprintf(f, ")");
-}
-
-static void rc_print_instruction(FILE * f, unsigned int flags, struct rc_instruction * inst)
+static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 {
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
 	unsigned int reg;
@@ -169,45 +152,22 @@ static void rc_print_instruction(FILE * f, unsigned int flags, struct rc_instruc
 	}
 
 	fprintf(f, ";\n");
-
-	if (flags & RC_PRINT_DATAFLOW) {
-		print_comment(f);
-
-		fprintf(f, "Dst = %p", inst->Dataflow.DstReg);
-		if (inst->Dataflow.DstRegAliased)
-			fprintf(f, " aliased");
-		if (inst->Dataflow.DstRegPrev) {
-			fprintf(f, " from ");
-			rc_print_ref(f, inst->Dataflow.DstRegPrev);
-		}
-
-		for(reg = 0; reg < opcode->NumSrcRegs; ++reg) {
-			fprintf(f, ", ");
-			if (inst->Dataflow.SrcReg[reg])
-				rc_print_ref(f, inst->Dataflow.SrcReg[reg]);
-			else
-				fprintf(f, "<no ref>");
-		}
-
-		fprintf(f, "\n");
-	}
 }
 
 /**
  * Print program to stderr, default options.
  */
-void rc_print_program(const struct rc_program *prog, unsigned int flags)
+void rc_print_program(const struct rc_program *prog)
 {
 	unsigned int linenum = 0;
 	struct rc_instruction *inst;
 
-	fprintf(stderr, "# Radeon Compiler Program%s\n",
-			flags & RC_PRINT_DATAFLOW ? " (with dataflow annotations)" : "");
+	fprintf(stderr, "# Radeon Compiler Program\n");
 
 	for(inst = prog->Instructions.Next; inst != &prog->Instructions; inst = inst->Next) {
 		fprintf(stderr, "%3d: ", linenum);
 
-		rc_print_instruction(stderr, flags, inst);
+		rc_print_instruction(stderr, inst);
 
 		linenum++;
 	}

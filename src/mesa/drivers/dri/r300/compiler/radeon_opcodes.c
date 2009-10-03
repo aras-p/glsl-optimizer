@@ -27,6 +27,8 @@
 
 #include "radeon_opcodes.h"
 
+#include "radeon_program_constants.h"
+
 struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_NOP,
@@ -340,8 +342,84 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.HasDstReg = 1
 	},
 	{
+		.Opcode = RC_OPCODE_IF,
+		.Name = "IF",
+		.IsControlFlow = 1,
+		.NumSrcRegs = 1
+	},
+	{
+		.Opcode = RC_OPCODE_ELSE,
+		.Name = "ELSE",
+		.IsControlFlow = 1,
+		.NumSrcRegs = 0
+	},
+	{
+		.Opcode = RC_OPCODE_ENDIF,
+		.Name = "ENDIF",
+		.IsControlFlow = 1,
+		.NumSrcRegs = 0
+	},
+	{
 		.Opcode = RC_OPCODE_REPL_ALPHA,
 		.Name = "REPL_ALPHA",
 		.HasDstReg = 1
 	}
 };
+
+void rc_compute_sources_for_writemask(
+		const struct rc_opcode_info * opcode,
+		unsigned int writemask,
+		unsigned int *srcmasks)
+{
+	srcmasks[0] = 0;
+	srcmasks[1] = 0;
+	srcmasks[2] = 0;
+
+	if (opcode->Opcode == RC_OPCODE_KIL)
+		srcmasks[0] |= RC_MASK_XYZW;
+	else if (opcode->Opcode == RC_OPCODE_IF)
+		srcmasks[0] |= RC_MASK_X;
+
+	if (!writemask)
+		return;
+
+	if (opcode->IsComponentwise) {
+		for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src)
+			srcmasks[src] |= writemask;
+	} else if (opcode->IsStandardScalar) {
+		for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src)
+			srcmasks[src] |= RC_MASK_X;
+	} else {
+		switch(opcode->Opcode) {
+		case RC_OPCODE_ARL:
+			srcmasks[0] |= RC_MASK_X;
+			break;
+		case RC_OPCODE_DP3:
+			srcmasks[0] |= RC_MASK_XYZ;
+			srcmasks[1] |= RC_MASK_XYZ;
+			break;
+		case RC_OPCODE_DP4:
+			srcmasks[0] |= RC_MASK_XYZW;
+			srcmasks[1] |= RC_MASK_XYZW;
+			break;
+		case RC_OPCODE_TEX:
+		case RC_OPCODE_TXB:
+		case RC_OPCODE_TXP:
+			srcmasks[0] |= RC_MASK_XYZW;
+			break;
+		case RC_OPCODE_DST:
+			srcmasks[0] |= 0x6;
+			srcmasks[1] |= 0xa;
+			break;
+		case RC_OPCODE_EXP:
+		case RC_OPCODE_LOG:
+			srcmasks[0] |= RC_MASK_XY;
+			break;
+		case RC_OPCODE_LIT:
+			srcmasks[0] |= 0xb;
+			break;
+		default:
+			break;
+		}
+	}
+}

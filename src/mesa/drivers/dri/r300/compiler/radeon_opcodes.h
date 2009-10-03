@@ -166,6 +166,18 @@ typedef enum {
 	RC_OPCODE_TXL,
 	RC_OPCODE_TXP,
 
+	/** branch instruction:
+	 * If src0.x != 0.0, continue with the next instruction;
+	 * otherwise, jump to matching RC_OPCODE_ELSE or RC_OPCODE_ENDIF.
+	 */
+	RC_OPCODE_IF,
+
+	/** branch instruction: jump to matching RC_OPCODE_ENDIF */
+	RC_OPCODE_ELSE,
+
+	/** branch instruction: has no effect */
+	RC_OPCODE_ENDIF,
+
 	/** special instruction, used in R300-R500 fragment program pair instructions
 	 * indicates that the result of the alpha operation shall be replicated
 	 * across all other channels */
@@ -188,6 +200,9 @@ struct rc_opcode_info {
 	unsigned int NumSrcRegs:2;
 	unsigned int HasDstReg:1;
 
+	/** true if this instruction affects control flow */
+	unsigned int IsControlFlow:1;
+
 	/** true if this is a vector instruction that operates on components in parallel
 	 * without any cross-component interaction */
 	unsigned int IsComponentwise:1;
@@ -206,5 +221,10 @@ static inline const struct rc_opcode_info * rc_get_opcode_info(rc_opcode opcode)
 
 	return &rc_opcodes[opcode];
 }
+
+void rc_compute_sources_for_writemask(
+		const struct rc_opcode_info * opcode,
+		unsigned int writemask,
+		unsigned int *srcmasks);
 
 #endif /* RADEON_OPCODES_H */

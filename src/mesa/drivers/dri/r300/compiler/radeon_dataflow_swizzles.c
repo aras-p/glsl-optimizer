@@ -37,8 +37,6 @@ static void rewrite_source(struct radeon_compiler * c,
 	struct rc_swizzle_split split;
 	unsigned int tempreg = rc_find_free_temporary(c);
 	unsigned int usemask;
-	struct rc_dataflow_ref * oldref = inst->Dataflow.SrcReg[src];
-	struct rc_dataflow_vector * vector = 0;
 
 	usemask = 0;
 	for(unsigned int chan = 0; chan < 4; ++chan) {
@@ -75,29 +73,7 @@ static void rewrite_source(struct radeon_compiler * c,
 		else if (masked_negate == split.Phase[phase])
 			mov->I.SrcReg[0].Negate = RC_MASK_XYZW;
 
-		if (oldref) {
-			mov->Dataflow.SrcReg[0] = rc_dataflow_create_ref(c, oldref->Vector, mov);
-			mov->Dataflow.SrcReg[0]->UseMask = phase_refmask;
-		}
-
-		mov->Dataflow.DstReg = rc_dataflow_create_vector(c, RC_FILE_TEMPORARY, tempreg, mov);
-		mov->Dataflow.DstReg->ValidMask = split.Phase[phase];
-
-		if (vector) {
-			mov->Dataflow.DstRegPrev = rc_dataflow_create_ref(c, vector, mov);
-			mov->Dataflow.DstRegPrev->UseMask = vector->ValidMask;
-			mov->Dataflow.DstReg->ValidMask |= vector->ValidMask;
-			mov->Dataflow.DstRegAliased = 1;
-		}
-
-		mov->Dataflow.DstReg->UseMask = mov->Dataflow.DstReg->ValidMask;
-		vector = mov->Dataflow.DstReg;
 	}
-
-	if (oldref)
-		rc_dataflow_remove_ref(oldref);
-	inst->Dataflow.SrcReg[src] = rc_dataflow_create_ref(c, vector, inst);
-	inst->Dataflow.SrcReg[src]->UseMask = usemask;
 
 	inst->I.SrcReg[src].File = RC_FILE_TEMPORARY;
 	inst->I.SrcReg[src].Index = tempreg;

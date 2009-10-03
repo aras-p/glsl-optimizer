@@ -34,7 +34,6 @@
 #include "radeon_opcodes.h"
 #include "radeon_code.h"
 #include "radeon_program_constants.h"
-#include "radeon_dataflow.h"
 
 struct radeon_compiler;
 
@@ -73,33 +72,33 @@ struct rc_dst_register {
  * instruction types may be valid.
  */
 struct rc_sub_instruction {
-		struct rc_src_register SrcReg[3];
-		struct rc_dst_register DstReg;
+	struct rc_src_register SrcReg[3];
+	struct rc_dst_register DstReg;
 
-		/**
-		 * Opcode of this instruction, according to \ref rc_opcode enums.
-		 */
-		rc_opcode Opcode:8;
+	/**
+	 * Opcode of this instruction, according to \ref rc_opcode enums.
+	 */
+	rc_opcode Opcode:8;
 
-		/**
-		 * Saturate each value of the result to the range [0,1] or [-1,1],
-		 * according to \ref rc_saturate_mode enums.
-		 */
-		rc_saturate_mode SaturateMode:2;
+	/**
+	 * Saturate each value of the result to the range [0,1] or [-1,1],
+	 * according to \ref rc_saturate_mode enums.
+	 */
+	rc_saturate_mode SaturateMode:2;
 
-		/**
-		 * \name Extra fields for TEX, TXB, TXD, TXL, TXP instructions.
-		 */
-		/*@{*/
-		/** Source texture unit. */
-		unsigned int TexSrcUnit:5;
+	/**
+	 * \name Extra fields for TEX, TXB, TXD, TXL, TXP instructions.
+	 */
+	/*@{*/
+	/** Source texture unit. */
+	unsigned int TexSrcUnit:5;
 
-		/** Source texture target, one of the \ref rc_texture_target enums */
-		rc_texture_target TexSrcTarget:3;
+	/** Source texture target, one of the \ref rc_texture_target enums */
+	rc_texture_target TexSrcTarget:3;
 
-		/** True if tex instruction should do shadow comparison */
-		unsigned int TexShadow:1;
-		/*@}*/
+	/** True if tex instruction should do shadow comparison */
+	unsigned int TexShadow:1;
+	/*@}*/
 };
 
 struct rc_instruction {
@@ -109,13 +108,11 @@ struct rc_instruction {
 	struct rc_sub_instruction I;
 
 	/**
-	 * Dataflow annotations.
-	 *
-	 * These are not supplied by the caller of the compiler,
-	 * but filled in during compilation stages that make use of
-	 * dataflow analysis.
+	 * Warning: IPs are not stable. If you want to use them,
+	 * you need to recompute them at the beginning of each pass
+	 * using \ref rc_recompute_ips
 	 */
-	struct rc_instruction_dataflow Dataflow;
+	unsigned int IP;
 };
 
 struct rc_program {
@@ -210,10 +207,8 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
 struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after);
 void rc_remove_instruction(struct rc_instruction * inst);
 
-enum {
-	RC_PRINT_DATAFLOW = 0x1
-};
+unsigned int rc_recompute_ips(struct radeon_compiler * c);
 
-void rc_print_program(const struct rc_program *prog, unsigned int flags);
+void rc_print_program(const struct rc_program *prog);
 
 #endif

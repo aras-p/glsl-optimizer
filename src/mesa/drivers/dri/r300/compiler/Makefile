@@ -14,8 +14,7 @@ C_SOURCES = \
 		radeon_program_alu.c \
 		radeon_program_pair.c \
 		radeon_dataflow.c \
-		radeon_dataflow_annotate.c \
-		radeon_dataflow_dealias.c \
+		radeon_dataflow_deadcode.c \
 		radeon_dataflow_swizzles.c \
 		r3xx_fragprog.c \
 		r300_fragprog.c \

@@ -154,7 +154,24 @@ struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, str
 
 void rc_remove_instruction(struct rc_instruction * inst)
 {
-	rc_dataflow_remove_instruction(inst);
 	inst->Prev->Next = inst->Next;
 	inst->Next->Prev = inst->Prev;
+}
+
+/**
+ * Return the number of instructions in the program.
+ */
+unsigned int rc_recompute_ips(struct radeon_compiler * c)
+{
+	unsigned int ip = 0;
+
+	for(struct rc_instruction * inst = c->Program.Instructions.Next;
+	    inst != &c->Program.Instructions;
+	    inst = inst->Next) {
+		inst->IP = ip++;
+	}
+
+	c->Program.Instructions.IP = 0xcafedead;
+
+	return ip;
 }

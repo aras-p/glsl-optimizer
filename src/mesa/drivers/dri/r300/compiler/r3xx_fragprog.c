@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
@@ -107,17 +108,23 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Fragment Program: After native rewrite:\n");
-		rc_print_program(&c->Base.Program, 0);
+		rc_print_program(&c->Base.Program);
 		fflush(stderr);
 	}
 
-	rc_dataflow_annotate(&c->Base, &dataflow_outputs_mark_use, c);
-	rc_dataflow_dealias(&c->Base);
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Fragment Program: After deadcode:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
 	rc_dataflow_swizzles(&c->Base);
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Compiler: after dataflow passes:\n");
-		rc_print_program(&c->Base.Program, 0);
+		rc_print_program(&c->Base.Program);
 		fflush(stderr);
 	}
 

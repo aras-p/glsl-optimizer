@@ -588,7 +588,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
-		rc_print_program(&compiler->Base.Program, 0);
+		rc_print_program(&compiler->Base.Program);
 		fflush(stderr);
 	}
 
@@ -605,21 +605,25 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after source conflict resolve:\n");
-		rc_print_program(&compiler->Base.Program, 0);
+		rc_print_program(&compiler->Base.Program);
 		fflush(stderr);
 	}
 
-	rc_dataflow_annotate(&compiler->Base, &dataflow_outputs_mark_used, compiler);
-	rc_dataflow_dealias(&compiler->Base);
+	rc_dataflow_deadcode(&compiler->Base, &dataflow_outputs_mark_used, compiler);
+
+	if (compiler->Base.Debug) {
+		fprintf(stderr, "Vertex program after deadcode:\n");
+		rc_print_program(&compiler->Base.Program);
+		fflush(stderr);
+	}
+
 	rc_dataflow_swizzles(&compiler->Base);
 
-	/* This invalidates dataflow annotations and should be replaced
-	 * by a future generic register allocation pass. */
 	allocate_temporary_registers(compiler);
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Vertex program after dataflow:\n");
-		rc_print_program(&compiler->Base.Program, 0);
+		rc_print_program(&compiler->Base.Program);
 		fflush(stderr);
 	}
 
