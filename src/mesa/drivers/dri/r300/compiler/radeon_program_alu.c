@@ -344,12 +344,55 @@ static void transform_RSQ(struct radeon_compiler* c,
 	inst->U.I.SrcReg[0] = absolute(inst->U.I.SrcReg[0]);
 }
 
+static void transform_SEQ(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	int tempreg = rc_find_free_temporary(c);
+
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), inst->U.I.SrcReg[0], negate(inst->U.I.SrcReg[1]));
+	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
+		negate(absolute(srcreg(RC_FILE_TEMPORARY, tempreg))), builtin_zero, builtin_one);
+
+	rc_remove_instruction(inst);
+}
+
+static void transform_SFL(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	emit1(c, inst->Prev, RC_OPCODE_MOV, inst->U.I.SaturateMode, inst->U.I.DstReg, builtin_zero);
+	rc_remove_instruction(inst);
+}
+
 static void transform_SGE(struct radeon_compiler* c,
 	struct rc_instruction* inst)
 {
 	int tempreg = rc_find_free_temporary(c);
 
 	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), inst->U.I.SrcReg[0], negate(inst->U.I.SrcReg[1]));
+	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
+		srcreg(RC_FILE_TEMPORARY, tempreg), builtin_zero, builtin_one);
+
+	rc_remove_instruction(inst);
+}
+
+static void transform_SGT(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	int tempreg = rc_find_free_temporary(c);
+
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), negate(inst->U.I.SrcReg[0]), inst->U.I.SrcReg[1]);
+	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
+		srcreg(RC_FILE_TEMPORARY, tempreg), builtin_one, builtin_zero);
+
+	rc_remove_instruction(inst);
+}
+
+static void transform_SLE(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	int tempreg = rc_find_free_temporary(c);
+
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), negate(inst->U.I.SrcReg[0]), inst->U.I.SrcReg[1]);
 	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
 		srcreg(RC_FILE_TEMPORARY, tempreg), builtin_zero, builtin_one);
 
@@ -364,6 +407,18 @@ static void transform_SLT(struct radeon_compiler* c,
 	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), inst->U.I.SrcReg[0], negate(inst->U.I.SrcReg[1]));
 	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
 		srcreg(RC_FILE_TEMPORARY, tempreg), builtin_one, builtin_zero);
+
+	rc_remove_instruction(inst);
+}
+
+static void transform_SNE(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	int tempreg = rc_find_free_temporary(c);
+
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0, dstreg(RC_FILE_TEMPORARY, tempreg), inst->U.I.SrcReg[0], negate(inst->U.I.SrcReg[1]));
+	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode, inst->U.I.DstReg,
+		negate(absolute(srcreg(RC_FILE_TEMPORARY, tempreg))), builtin_one, builtin_zero);
 
 	rc_remove_instruction(inst);
 }
@@ -403,7 +458,7 @@ static void transform_XPD(struct radeon_compiler* c,
  * no userData necessary.
  *
  * Eliminates the following ALU instructions:
- *  ABS, DPH, DST, FLR, LIT, LRP, POW, SGE, SLT, SUB, SWZ, XPD
+ *  ABS, DPH, DST, FLR, LIT, LRP, POW, SEQ, SFL, SGE, SGT, SLE, SLT, SNE, SUB, SWZ, XPD
  * using:
  *  MOV, ADD, MUL, MAD, FRC, DP3, LG2, EX2, CMP
  *
@@ -426,8 +481,13 @@ int radeonTransformALU(
 	case RC_OPCODE_LRP: transform_LRP(c, inst); return 1;
 	case RC_OPCODE_POW: transform_POW(c, inst); return 1;
 	case RC_OPCODE_RSQ: transform_RSQ(c, inst); return 1;
+	case RC_OPCODE_SEQ: transform_SEQ(c, inst); return 1;
+	case RC_OPCODE_SFL: transform_SFL(c, inst); return 1;
 	case RC_OPCODE_SGE: transform_SGE(c, inst); return 1;
+	case RC_OPCODE_SGT: transform_SGT(c, inst); return 1;
+	case RC_OPCODE_SLE: transform_SLE(c, inst); return 1;
 	case RC_OPCODE_SLT: transform_SLT(c, inst); return 1;
+	case RC_OPCODE_SNE: transform_SNE(c, inst); return 1;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;
