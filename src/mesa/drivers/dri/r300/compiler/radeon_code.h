@@ -182,6 +182,8 @@ struct r500_fragment_program_code {
 	int inst_end; /* Number of instructions - 1; also, last instruction to be executed */
 
 	int max_temp_idx;
+
+	uint32_t us_fc_ctrl;
 };
 
 struct rX00_fragment_program_code {

@@ -344,19 +344,19 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_IF,
 		.Name = "IF",
-		.IsControlFlow = 1,
+		.IsFlowControl = 1,
 		.NumSrcRegs = 1
 	},
 	{
 		.Opcode = RC_OPCODE_ELSE,
 		.Name = "ELSE",
-		.IsControlFlow = 1,
+		.IsFlowControl = 1,
 		.NumSrcRegs = 0
 	},
 	{
 		.Opcode = RC_OPCODE_ENDIF,
 		.Name = "ENDIF",
-		.IsControlFlow = 1,
+		.IsFlowControl = 1,
 		.NumSrcRegs = 0
 	},
 	{

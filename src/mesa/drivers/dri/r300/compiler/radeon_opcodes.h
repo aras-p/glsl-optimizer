@@ -206,7 +206,7 @@ struct rc_opcode_info {
 	unsigned int HasDstReg:1;
 
 	/** true if this instruction affects control flow */
-	unsigned int IsControlFlow:1;
+	unsigned int IsFlowControl:1;
 
 	/** true if this is a vector instruction that operates on components in parallel
 	 * without any cross-component interaction */

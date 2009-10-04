@@ -454,7 +454,7 @@ static int is_controlflow(struct rc_instruction * inst)
 {
 	if (inst->Type == RC_INSTRUCTION_NORMAL) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
-		return opcode->IsControlFlow;
+		return opcode->IsFlowControl;
 	}
 	return 0;
 }

@@ -213,7 +213,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	    inst = inst->Prev) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (opcode->IsControlFlow) {
+		if (opcode->IsFlowControl) {
 			if (opcode->Opcode == RC_OPCODE_ENDIF) {
 				push_branch(&s);
 			} else {

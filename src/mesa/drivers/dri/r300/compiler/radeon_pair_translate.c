@@ -241,7 +241,7 @@ void rc_pair_translate(struct r300_fragment_program_compiler *c)
 
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (opcode->HasTexture || opcode->IsControlFlow || opcode->Opcode == RC_OPCODE_KIL)
+		if (opcode->HasTexture || opcode->IsFlowControl || opcode->Opcode == RC_OPCODE_KIL)
 			continue;
 
 		struct rc_sub_instruction copy = inst->U.I;
