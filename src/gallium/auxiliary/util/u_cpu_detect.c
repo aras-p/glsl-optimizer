@@ -336,22 +336,34 @@ cpuid(unsigned int ax, unsigned int *p)
 {
    int ret = -1;
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-#if defined(PIPE_CC_GCC)
-   __asm __volatile
-      ("movl %%ebx, %%esi\n\t"
-       "cpuid\n\t"
-       "xchgl %%ebx, %%esi"
-       : "=a" (p[0]), "=S" (p[1]),
-       "=c" (p[2]), "=d" (p[3])
-       : "0" (ax));
-
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
+   __asm __volatile (
+     "movl %%ebx, %%esi\n\t"
+     "cpuid\n\t"
+     "xchgl %%ebx, %%esi"
+     : "=a" (p[0]),
+       "=S" (p[1]),
+       "=c" (p[2]),
+       "=d" (p[3])
+     : "0" (ax)
+   );
+   ret = 0;
+#elif defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64)
+   __asm __volatile (
+     "movq %%rbx, %%rsi\n\t"
+     "cpuid\n\t"
+     "xchgq %%rbx, %%rsi"
+     : "=a" (p[0]),
+       "=S" (p[1]),
+       "=c" (p[2]),
+       "=d" (p[3])
+     : "0" (ax)
+   );
    ret = 0;
 #elif defined(PIPE_CC_MSVC)
    __cpuid(ax, p);
 
    ret = 0;
-#endif
 #endif
 
    return ret;
