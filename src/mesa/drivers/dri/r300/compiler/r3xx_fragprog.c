@@ -88,11 +88,12 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r500_transform_TEX, c },
+			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(&c->Base, 4, transformations);
+		radeonLocalTransform(&c->Base, 5, transformations);
 
 		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {

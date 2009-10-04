@@ -169,6 +169,34 @@ int r500_transform_TEX(
 	return 1;
 }
 
+/**
+ * Rewrite IF instructions to use the ALU result special register.
+ */
+int r500_transform_IF(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	void* data)
+{
+	if (inst->I.Opcode != RC_OPCODE_IF)
+		return 0;
+
+	struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
+	inst_mov->I.Opcode = RC_OPCODE_MOV;
+	inst_mov->I.DstReg.WriteMask = 0;
+	inst_mov->I.WriteALUResult = RC_ALURESULT_W;
+	inst_mov->I.ALUResultCompare = RC_COMPARE_FUNC_NOTEQUAL;
+	inst_mov->I.SrcReg[0] = inst->I.SrcReg[0];
+	inst_mov->I.SrcReg[0].Swizzle = combine_swizzles4(inst_mov->I.SrcReg[0].Swizzle,
+			RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_X);
+
+	inst->I.SrcReg[0].File = RC_FILE_SPECIAL;
+	inst->I.SrcReg[0].Index = RC_SPECIAL_ALU_RESULT;
+	inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+	inst->I.SrcReg[0].Negate = 0;
+
+	return 1;
+}
+
 static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
 	unsigned int relevant;

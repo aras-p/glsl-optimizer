@@ -87,6 +87,14 @@ struct rc_sub_instruction {
 	rc_saturate_mode SaturateMode:2;
 
 	/**
+	 * Writing to the special register RC_SPECIAL_ALU_RESULT
+	 */
+	/*@{*/
+	rc_write_aluresult WriteALUResult:2;
+	rc_compare_func ALUResultCompare:3;
+	/*@}*/
+
+	/**
 	 * \name Extra fields for TEX, TXB, TXD, TXL, TXP instructions.
 	 */
 	/*@{*/

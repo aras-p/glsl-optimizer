@@ -74,8 +74,21 @@ typedef enum {
 	/**
 	 * Indicates a constant from the \ref rc_constant_list .
 	 */
-	RC_FILE_CONSTANT
+	RC_FILE_CONSTANT,
+
+	/**
+	 * Indicates a special register, see RC_SPECIAL_xxx.
+	 */
+	RC_FILE_SPECIAL
 } rc_register_file;
+
+enum {
+	/** R500 fragment program ALU result "register" */
+	RC_SPECIAL_ALU_RESULT = 0,
+
+	/** Must be last */
+	RC_NUM_SPECIAL_REGISTERS
+};
 
 #define RC_REGISTER_INDEX_BITS 10
 #define RC_REGISTER_MAX_INDEX (1 << RC_REGISTER_INDEX_BITS)
@@ -124,5 +137,11 @@ typedef enum {
 #define RC_MASK_XYW (RC_MASK_X|RC_MASK_Y|RC_MASK_W)
 #define RC_MASK_XYZW (RC_MASK_X|RC_MASK_Y|RC_MASK_Z|RC_MASK_W)
 /*@}*/
+
+typedef enum {
+	RC_ALURESULT_NONE = 0,
+	RC_ALURESULT_X,
+	RC_ALURESULT_W
+} rc_write_aluresult;
 
 #endif /* RADEON_PROGRAM_CONSTANTS_H */

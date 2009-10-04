@@ -34,10 +34,12 @@ struct updatemask_state {
 	unsigned char Output[RC_REGISTER_MAX_INDEX];
 	unsigned char Temporary[RC_REGISTER_MAX_INDEX];
 	unsigned char Address;
+	unsigned char Special[RC_NUM_SPECIAL_REGISTERS];
 };
 
 struct instruction_state {
-	unsigned char WriteMask;
+	unsigned char WriteMask:4;
+	unsigned char WriteALUResult:1;
 	unsigned char SrcReg[3];
 };
 
@@ -69,6 +71,9 @@ static void or_updatemasks(
 		dst->Output[i] = a->Output[i] | b->Output[i];
 		dst->Temporary[i] = a->Temporary[i] | b->Temporary[i];
 	}
+
+	for(unsigned int i = 0; i < RC_NUM_SPECIAL_REGISTERS; ++i)
+		dst->Special[i] = a->Special[i] | b->Special[i];
 
 	dst->Address = a->Address | b->Address;
 }
@@ -108,6 +113,13 @@ static unsigned char * get_used_ptr(struct deadcode_state *s, rc_register_file f
 			return &s->R.Temporary[index];
 	} else if (file == RC_FILE_ADDRESS) {
 		return &s->R.Address;
+	} else if (file == RC_FILE_SPECIAL) {
+		if (index >= RC_NUM_SPECIAL_REGISTERS) {
+			rc_error(s->C, "%s: special file index %i out of bounds\n", __FUNCTION__, index);
+			return 0;
+		}
+
+		return &s->R.Special[index];
 	}
 
 	return 0;
@@ -135,6 +147,19 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 	}
 
 	insts->WriteMask |= usedmask;
+
+	if (inst->I.WriteALUResult) {
+		unsigned char * pused = get_used_ptr(s, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT);
+		if (pused && *pused) {
+			if (inst->I.WriteALUResult == RC_ALURESULT_X)
+				usedmask |= RC_MASK_X;
+			else if (inst->I.WriteALUResult == RC_ALURESULT_W)
+				usedmask |= RC_MASK_W;
+
+			*pused = 0;
+			insts->WriteALUResult = 1;
+		}
+	}
 
 	unsigned int srcmasks[3];
 	rc_compute_sources_for_writemask(opcode, usedmask, srcmasks);
@@ -225,21 +250,38 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	for(struct rc_instruction * inst = c->Program.Instructions.Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next, ++ip) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);\
+		int dead = 1;
 
-		if (opcode->HasDstReg) {
-			if (s.Instructions[ip].WriteMask) {
-				inst->I.DstReg.WriteMask = s.Instructions[ip].WriteMask;
-			} else {
-				struct rc_instruction * todelete = inst;
-				inst = inst->Prev;
-				rc_remove_instruction(todelete);
-				continue;
-			}
+		if (!opcode->HasDstReg) {
+			dead = 0;
+		} else {
+			inst->I.DstReg.WriteMask = s.Instructions[ip].WriteMask;
+			if (s.Instructions[ip].WriteMask)
+				dead = 0;
+
+			if (s.Instructions[ip].WriteALUResult)
+				dead = 0;
+			else
+				inst->I.WriteALUResult = RC_ALURESULT_NONE;
+		}
+
+		if (dead) {
+			struct rc_instruction * todelete = inst;
+			inst = inst->Prev;
+			rc_remove_instruction(todelete);
+			continue;
 		}
 
 		unsigned int srcmasks[3];
-		rc_compute_sources_for_writemask(opcode, s.Instructions[ip].WriteMask, srcmasks);
+		unsigned int usemask = s.Instructions[ip].WriteMask;
+
+		if (inst->I.WriteALUResult == RC_ALURESULT_X)
+			usemask |= RC_MASK_X;
+		else if (inst->I.WriteALUResult == RC_ALURESULT_W)
+			usemask |= RC_MASK_W;
+
+		rc_compute_sources_for_writemask(opcode, usemask, srcmasks);
 
 		for(unsigned int src = 0; src < 3; ++src) {
 			for(unsigned int chan = 0; chan < 4; ++chan) {

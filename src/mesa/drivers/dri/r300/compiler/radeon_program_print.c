@@ -38,10 +38,36 @@ static const char * textarget_to_string(rc_texture_target target)
 	}
 }
 
+static void rc_print_comparefunc(FILE * f, const char * lhs, rc_compare_func func, const char * rhs)
+{
+	if (func == RC_COMPARE_FUNC_NEVER) {
+		fprintf(f, "false");
+	} else if (func == RC_COMPARE_FUNC_ALWAYS) {
+		fprintf(f, "true");
+	} else {
+		const char * op;
+		switch(func) {
+		case RC_COMPARE_FUNC_LESS: op = "<"; break;
+		case RC_COMPARE_FUNC_EQUAL: op = "=="; break;
+		case RC_COMPARE_FUNC_LEQUAL: op = "<="; break;
+		case RC_COMPARE_FUNC_GREATER: op = ">"; break;
+		case RC_COMPARE_FUNC_NOTEQUAL: op = "!="; break;
+		case RC_COMPARE_FUNC_GEQUAL: op = ">="; break;
+		default: op = "???"; break;
+		}
+		fprintf(f, "%s %s %s", lhs, op, rhs);
+	}
+}
+
 static void rc_print_register(FILE * f, rc_register_file file, int index, unsigned int reladdr)
 {
 	if (file == RC_FILE_NONE) {
 		fprintf(f, "none");
+	} else if (file == RC_FILE_SPECIAL) {
+		switch(index) {
+		case RC_SPECIAL_ALU_RESULT: fprintf(f, "aluresult"); break;
+		default: fprintf(f, "special[%i]", index); break;
+		}
 	} else {
 		const char * filename;
 		switch(file) {
@@ -151,7 +177,17 @@ static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 			inst->I.TexSrcUnit);
 	}
 
-	fprintf(f, ";\n");
+	fprintf(f, ";");
+
+	if (inst->I.WriteALUResult) {
+		fprintf(f, " [aluresult = (");
+		rc_print_comparefunc(f,
+			(inst->I.WriteALUResult == RC_ALURESULT_X) ? "x" : "w",
+			inst->I.ALUResultCompare, "0");
+		fprintf(f, ")]");
+	}
+
+	fprintf(f, "\n");
 }
 
 /**

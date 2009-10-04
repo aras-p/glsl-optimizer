@@ -47,4 +47,9 @@ extern int r500_transform_TEX(
 	struct rc_instruction * inst,
 	void* data);
 
+extern int r500_transform_IF(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	void* data);
+
 #endif
