@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef LP_BLD_H
-#define LP_BLD_H
+#ifndef LP_BLD_FORMAT_H
+#define LP_BLD_FORMAT_H
 
 
 /**
@@ -116,4 +116,4 @@ lp_build_load_rgba_soa(LLVMBuilderRef builder,
                        LLVMValueRef offsets,
                        LLVMValueRef *rgba);
 
-#endif /* !LP_BLD_H */
+#endif /* !LP_BLD_FORMAT_H */
