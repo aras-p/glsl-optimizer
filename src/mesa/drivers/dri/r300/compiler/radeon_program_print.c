@@ -99,6 +99,21 @@ static void rc_print_dst_register(FILE * f, struct rc_dst_register dst)
 	}
 }
 
+static char rc_swizzle_char(unsigned int swz)
+{
+	switch(swz) {
+	case RC_SWIZZLE_X: return 'x';
+	case RC_SWIZZLE_Y: return 'y';
+	case RC_SWIZZLE_Z: return 'z';
+	case RC_SWIZZLE_W: return 'w';
+	case RC_SWIZZLE_ZERO: return '0';
+	case RC_SWIZZLE_ONE: return '1';
+	case RC_SWIZZLE_HALF: return 'H';
+	case RC_SWIZZLE_UNUSED: return '_';
+	}
+	return '?';
+}
+
 static void rc_print_swizzle(FILE * f, unsigned int swizzle, unsigned int negate)
 {
 	unsigned int comp;
@@ -106,16 +121,7 @@ static void rc_print_swizzle(FILE * f, unsigned int swizzle, unsigned int negate
 		rc_swizzle swz = GET_SWZ(swizzle, comp);
 		if (GET_BIT(negate, comp))
 			fprintf(f, "-");
-		switch(swz) {
-		case RC_SWIZZLE_X: fprintf(f, "x"); break;
-		case RC_SWIZZLE_Y: fprintf(f, "y"); break;
-		case RC_SWIZZLE_Z: fprintf(f, "z"); break;
-		case RC_SWIZZLE_W: fprintf(f, "w"); break;
-		case RC_SWIZZLE_ZERO: fprintf(f, "0"); break;
-		case RC_SWIZZLE_ONE: fprintf(f, "1"); break;
-		case RC_SWIZZLE_HALF: fprintf(f, "H"); break;
-		case RC_SWIZZLE_UNUSED: fprintf(f, "_"); break;
-		}
+		fprintf(f, "%c", rc_swizzle_char(swz));
 	}
 }
 
@@ -142,7 +148,7 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 		fprintf(f, "|");
 }
 
-static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
+static void rc_print_normal_instruction(FILE * f, struct rc_instruction * inst)
 {
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int reg;
@@ -190,6 +196,87 @@ static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 	fprintf(f, "\n");
 }
 
+static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst)
+{
+	struct rc_pair_instruction * inst = &fullinst->U.P;
+	int printedsrc = 0;
+
+	for(unsigned int src = 0; src < 3; ++src) {
+		if (inst->RGB.Src[src].Used) {
+			if (printedsrc)
+				fprintf(f, ", ");
+			fprintf(f, "src%i.xyz = ", src);
+			rc_print_register(f, inst->RGB.Src[src].File, inst->RGB.Src[src].Index, 0);
+			printedsrc = 1;
+		}
+		if (inst->Alpha.Src[src].Used) {
+			if (printedsrc)
+				fprintf(f, ", ");
+			fprintf(f, "src%i.w = ", src);
+			rc_print_register(f, inst->Alpha.Src[src].File, inst->Alpha.Src[src].Index, 0);
+			printedsrc = 1;
+		}
+	}
+	fprintf(f, "\n");
+
+	if (inst->RGB.Opcode != RC_OPCODE_NOP) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->RGB.Opcode);
+
+		fprintf(f, "     %s%s", opcode->Name, inst->RGB.Saturate ? "_SAT" : "");
+		if (inst->RGB.WriteMask)
+			fprintf(f, " temp[%i].%s%s%s", inst->RGB.DestIndex,
+				(inst->RGB.WriteMask & 1) ? "x" : "",
+				(inst->RGB.WriteMask & 2) ? "y" : "",
+				(inst->RGB.WriteMask & 4) ? "z" : "");
+		if (inst->RGB.OutputWriteMask)
+			fprintf(f, " color.%s%s%s",
+				(inst->RGB.OutputWriteMask & 1) ? "x" : "",
+				(inst->RGB.OutputWriteMask & 2) ? "y" : "",
+				(inst->RGB.OutputWriteMask & 4) ? "z" : "");
+		if (inst->WriteALUResult == RC_ALURESULT_X)
+			fprintf(f, " aluresult");
+
+		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
+			const char* abs = inst->RGB.Arg[arg].Abs ? "|" : "";
+			const char* neg = inst->RGB.Arg[arg].Negate ? "-" : "";
+			fprintf(f, ", %s%ssrc%i.%c%c%c%s", neg, abs, inst->RGB.Arg[arg].Source,
+				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 0)),
+				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 1)),
+				rc_swizzle_char(GET_SWZ(inst->RGB.Arg[arg].Swizzle, 2)),
+				abs);
+		}
+		fprintf(f, "\n");
+	}
+
+	if (inst->Alpha.Opcode != RC_OPCODE_NOP) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Alpha.Opcode);
+
+		fprintf(f, "     %s%s", opcode->Name, inst->Alpha.Saturate ? "_SAT" : "");
+		if (inst->Alpha.WriteMask)
+			fprintf(f, " temp[%i].w", inst->Alpha.DestIndex);
+		if (inst->Alpha.OutputWriteMask)
+			fprintf(f, " color.w");
+		if (inst->Alpha.DepthWriteMask)
+			fprintf(f, " depth.w");
+		if (inst->WriteALUResult == RC_ALURESULT_W)
+			fprintf(f, " aluresult");
+
+		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
+			const char* abs = inst->Alpha.Arg[arg].Abs ? "|" : "";
+			const char* neg = inst->Alpha.Arg[arg].Negate ? "-" : "";
+			fprintf(f, ", %s%ssrc%i.%c%s", neg, abs, inst->Alpha.Arg[arg].Source,
+				rc_swizzle_char(inst->Alpha.Arg[arg].Swizzle), abs);
+		}
+		fprintf(f, "\n");
+	}
+
+	if (inst->WriteALUResult) {
+		fprintf(f, "      [aluresult = (");
+		rc_print_comparefunc(f, "result", inst->ALUResultCompare, "0");
+		fprintf(f, ")]\n");
+	}
+}
+
 /**
  * Print program to stderr, default options.
  */
@@ -203,7 +290,10 @@ void rc_print_program(const struct rc_program *prog)
 	for(inst = prog->Instructions.Next; inst != &prog->Instructions; inst = inst->Next) {
 		fprintf(stderr, "%3d: ", linenum);
 
-		rc_print_instruction(stderr, inst);
+		if (inst->Type == RC_INSTRUCTION_PAIR)
+			rc_print_pair_instruction(stderr, inst);
+		else
+			rc_print_normal_instruction(stderr, inst);
 
 		linenum++;
 	}

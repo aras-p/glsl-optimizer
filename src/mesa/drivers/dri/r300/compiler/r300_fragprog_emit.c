@@ -56,7 +56,6 @@ struct r300_emit_state {
 };
 
 #define PROG_CODE \
-	struct r300_emit_state * emit = (struct r300_emit_state*)data; \
 	struct r300_fragment_program_compiler *c = emit->compiler; \
 	struct r300_fragment_program_code *code = &c->code->code.r300
 
@@ -73,6 +72,18 @@ static void use_temporary(struct r300_fragment_program_code *code, unsigned int 
 {
 	if (index > code->pixsize)
 		code->pixsize = index;
+}
+
+static unsigned int use_source(struct r300_fragment_program_code* code, struct radeon_pair_instruction_source src)
+{
+	if (src.File == RC_FILE_CONSTANT) {
+		return src.Index | (1 << 5);
+	} else if (src.File == RC_FILE_TEMPORARY) {
+		use_temporary(code, src.Index);
+		return src.Index;
+	}
+
+	return 0;
 }
 
 
@@ -120,7 +131,7 @@ static unsigned int translate_alpha_opcode(struct r300_fragment_program_compiler
 /**
  * Emit one paired ALU instruction.
  */
-static int emit_alu(void* data, struct radeon_pair_instruction* inst)
+static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* inst)
 {
 	PROG_CODE;
 
@@ -136,14 +147,10 @@ static int emit_alu(void* data, struct radeon_pair_instruction* inst)
 	code->alu.inst[ip].alpha_inst = translate_alpha_opcode(c, inst->Alpha.Opcode);
 
 	for(j = 0; j < 3; ++j) {
-		unsigned int src = inst->RGB.Src[j].Index | (inst->RGB.Src[j].Constant << 5);
-		if (!inst->RGB.Src[j].Constant)
-			use_temporary(code, inst->RGB.Src[j].Index);
+		unsigned int src = use_source(code, inst->RGB.Src[j]);
 		code->alu.inst[ip].rgb_addr |= src << (6*j);
 
-		src = inst->Alpha.Src[j].Index | (inst->Alpha.Src[j].Constant << 5);
-		if (!inst->Alpha.Src[j].Constant)
-			use_temporary(code, inst->Alpha.Src[j].Index);
+		src = use_source(code, inst->Alpha.Src[j]);
 		code->alu.inst[ip].alpha_addr |= src << (6*j);
 
 		unsigned int arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
@@ -203,7 +210,7 @@ static int finish_node(struct r300_emit_state * emit)
 
 	if (code->alu.length == emit->node_first_alu) {
 		/* Generate a single NOP for this node */
-		struct radeon_pair_instruction inst;
+		struct rc_pair_instruction inst;
 		memset(&inst, 0, sizeof(inst));
 		if (!emit_alu(emit, &inst))
 			return 0;
@@ -248,7 +255,7 @@ static int finish_node(struct r300_emit_state * emit)
  * Begin a block of texture instructions.
  * Create the necessary indirection.
  */
-static int begin_tex(void* data)
+static int begin_tex(struct r300_emit_state * emit)
 {
 	PROG_CODE;
 
@@ -273,7 +280,7 @@ static int begin_tex(void* data)
 }
 
 
-static int emit_tex(void* data, struct radeon_pair_texture_instruction* inst)
+static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 {
 	PROG_CODE;
 
@@ -282,44 +289,37 @@ static int emit_tex(void* data, struct radeon_pair_texture_instruction* inst)
 		return 0;
 	}
 
-	unsigned int unit = inst->TexSrcUnit;
-	unsigned int dest = inst->DestIndex;
+	unsigned int unit = inst->U.I.TexSrcUnit;
+	unsigned int dest = inst->U.I.DstReg.Index;
 	unsigned int opcode;
 
-	switch(inst->Opcode) {
-	case RADEON_OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;
-	case RADEON_OPCODE_TEX: opcode = R300_TEX_OP_LD; break;
-	case RADEON_OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
-	case RADEON_OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
+	switch(inst->U.I.Opcode) {
+	case RC_OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;
+	case RC_OPCODE_TEX: opcode = R300_TEX_OP_LD; break;
+	case RC_OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
+	case RC_OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
 	default:
-		error("Unknown texture opcode %i", inst->Opcode);
+		error("Unknown texture opcode %i", inst->U.I.Opcode);
 		return 0;
 	}
 
-	if (inst->Opcode == RADEON_OPCODE_KIL) {
+	if (inst->U.I.Opcode == RC_OPCODE_KIL) {
 		unit = 0;
 		dest = 0;
 	} else {
 		use_temporary(code, dest);
 	}
 
-	use_temporary(code, inst->SrcIndex);
+	use_temporary(code, inst->U.I.SrcReg[0].Index);
 
 	code->tex.inst[code->tex.length++] =
-		(inst->SrcIndex << R300_SRC_ADDR_SHIFT) |
+		(inst->U.I.SrcReg[0].Index << R300_SRC_ADDR_SHIFT) |
 		(dest << R300_DST_ADDR_SHIFT) |
 		(unit << R300_TEX_ID_SHIFT) |
 		(opcode << R300_TEX_INST_SHIFT);
 	return 1;
 }
 
-
-static const struct radeon_pair_handler pair_handler = {
-	.EmitPaired = &emit_alu,
-	.EmitTex = &emit_tex,
-	.BeginTexBlock = &begin_tex,
-	.MaxHwTemps = R300_PFS_NUM_TEMP_REGS
-};
 
 /**
  * Final compilation step: Turn the intermediate radeon_program into
@@ -335,7 +335,24 @@ void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 
 	memset(code, 0, sizeof(struct r300_fragment_program_code));
 
-	radeonPairProgram(compiler, &pair_handler, &emit);
+	for(struct rc_instruction * inst = compiler->Base.Program.Instructions.Next;
+	    inst != &compiler->Base.Program.Instructions && !compiler->Base.Error;
+	    inst = inst->Next) {
+		if (inst->Type == RC_INSTRUCTION_NORMAL) {
+			if (inst->U.I.Opcode == RC_OPCODE_BEGIN_TEX) {
+				begin_tex(&emit);
+				continue;
+			}
+
+			emit_tex(&emit, inst);
+		} else {
+			emit_alu(&emit, &inst->U.P);
+		}
+	}
+
+	if (code->pixsize >= R300_PFS_NUM_TEMP_REGS)
+		rc_error(&compiler->Base, "Too many hardware temporaries used.\n");
+
 	if (compiler->Base.Error)
 		return;
 

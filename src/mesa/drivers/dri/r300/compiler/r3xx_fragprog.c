@@ -114,6 +114,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	}
 
 	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
+	if (c->Base.Error)
+		return;
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Fragment Program: After deadcode:\n");
@@ -122,9 +124,45 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	}
 
 	rc_dataflow_swizzles(&c->Base);
+	if (c->Base.Error)
+		return;
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Compiler: after dataflow passes:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	rc_pair_translate(c);
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair translate:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	rc_pair_schedule(c);
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair scheduling:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	if (c->is_r500)
+		rc_pair_regalloc(c, 128);
+	else
+		rc_pair_regalloc(c, R300_PFS_NUM_TEMP_REGS);
+
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair register allocation:\n");
 		rc_print_program(&c->Base.Program);
 		fflush(stderr);
 	}

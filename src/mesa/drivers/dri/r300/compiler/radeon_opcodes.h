@@ -183,6 +183,11 @@ typedef enum {
 	 * across all other channels */
 	RC_OPCODE_REPL_ALPHA,
 
+	/** special instruction, used in R300-R500 fragment programs
+	 * to indicate the start of a block of texture instructions that
+	 * can run simultaneously. */
+	RC_OPCODE_BEGIN_TEX,
+
 	MAX_RC_OPCODE
 } rc_opcode;
 

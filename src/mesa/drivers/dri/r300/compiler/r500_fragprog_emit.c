@@ -37,10 +37,6 @@
  *
  * \author Corbin Simpson <MostAwesomeDude@gmail.com>
  *
- * \todo Depth write, WPOS/FOGC inputs
- *
- * \todo FogOption
- *
  */
 
 #include "r500_fragprog.h"
@@ -51,7 +47,6 @@
 
 
 #define PROG_CODE \
-	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
 	struct r500_fragment_program_code *code = &c->code->code.r500
 
 #define error(fmt, args...) do {			\
@@ -114,7 +109,7 @@ static unsigned int fix_hw_swizzle(unsigned int swz)
 	return swz;
 }
 
-static unsigned int translate_arg_rgb(struct radeon_pair_instruction *inst, int arg)
+static unsigned int translate_arg_rgb(struct rc_pair_instruction *inst, int arg)
 {
 	unsigned int t = inst->RGB.Arg[arg].Source;
 	int comp;
@@ -127,7 +122,7 @@ static unsigned int translate_arg_rgb(struct radeon_pair_instruction *inst, int 
 	return t;
 }
 
-static unsigned int translate_arg_alpha(struct radeon_pair_instruction *inst, int i)
+static unsigned int translate_arg_alpha(struct rc_pair_instruction *inst, int i)
 {
 	unsigned int t = inst->Alpha.Arg[i].Source;
 	t |= fix_hw_swizzle(inst->Alpha.Arg[i].Swizzle) << 2;
@@ -144,16 +139,21 @@ static void use_temporary(struct r500_fragment_program_code* code, unsigned int 
 
 static unsigned int use_source(struct r500_fragment_program_code* code, struct radeon_pair_instruction_source src)
 {
-	if (!src.Constant)
+	if (src.File == RC_FILE_CONSTANT) {
+		return src.Index | 0x100;
+	} else if (src.File == RC_FILE_TEMPORARY) {
 		use_temporary(code, src.Index);
-	return src.Index | src.Constant << 8;
+		return src.Index;
+	}
+
+	return 0;
 }
 
 
 /**
  * Emit a paired ALU instruction.
  */
-static int emit_paired(void *data, struct radeon_pair_instruction *inst)
+static int emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair_instruction *inst)
 {
 	PROG_CODE;
 
@@ -221,7 +221,7 @@ static unsigned int translate_strq_swizzle(unsigned int swizzle)
 /**
  * Emit a single TEX instruction
  */
-static int emit_tex(void *data, struct radeon_pair_texture_instruction *inst)
+static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_instruction *inst)
 {
 	PROG_CODE;
 
@@ -233,45 +233,43 @@ static int emit_tex(void *data, struct radeon_pair_texture_instruction *inst)
 	int ip = ++code->inst_end;
 
 	code->inst[ip].inst0 = R500_INST_TYPE_TEX
-		| (inst->WriteMask << 11)
+		| (inst->DstReg.WriteMask << 11)
 		| R500_INST_TEX_SEM_WAIT;
 	code->inst[ip].inst1 = R500_TEX_ID(inst->TexSrcUnit)
 		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
 
 	if (inst->TexSrcTarget == RC_TEXTURE_RECT)
-	        code->inst[ip].inst1 |= R500_TEX_UNSCALED;
+		code->inst[ip].inst1 |= R500_TEX_UNSCALED;
 
 	switch (inst->Opcode) {
-	case RADEON_OPCODE_KIL:
+	case RC_OPCODE_KIL:
 		code->inst[ip].inst1 |= R500_TEX_INST_TEXKILL;
 		break;
-	case RADEON_OPCODE_TEX:
+	case RC_OPCODE_TEX:
 		code->inst[ip].inst1 |= R500_TEX_INST_LD;
 		break;
-	case RADEON_OPCODE_TXB:
+	case RC_OPCODE_TXB:
 		code->inst[ip].inst1 |= R500_TEX_INST_LODBIAS;
 		break;
-	case RADEON_OPCODE_TXP:
+	case RC_OPCODE_TXP:
 		code->inst[ip].inst1 |= R500_TEX_INST_PROJ;
 		break;
 	default:
 		error("emit_tex can't handle opcode %x\n", inst->Opcode);
 	}
 
-	code->inst[ip].inst2 = R500_TEX_SRC_ADDR(inst->SrcIndex)
-		| (translate_strq_swizzle(inst->SrcSwizzle) << 8)
-		| R500_TEX_DST_ADDR(inst->DestIndex)
+	use_temporary(code, inst->SrcReg[0].Index);
+	if (inst->Opcode != RC_OPCODE_KIL)
+		use_temporary(code, inst->DstReg.Index);
+
+	code->inst[ip].inst2 = R500_TEX_SRC_ADDR(inst->SrcReg[0].Index)
+		| (translate_strq_swizzle(inst->SrcReg[0].Swizzle) << 8)
+		| R500_TEX_DST_ADDR(inst->DstReg.Index)
 		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
 		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
 
 	return 1;
 }
-
-static const struct radeon_pair_handler pair_handler = {
-	.EmitPaired = emit_paired,
-	.EmitTex = emit_tex,
-	.MaxHwTemps = 128
-};
 
 void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
@@ -281,7 +279,22 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	code->max_temp_idx = 1;
 	code->inst_end = -1;
 
-	radeonPairProgram(compiler, &pair_handler, compiler);
+	for(struct rc_instruction * inst = compiler->Base.Program.Instructions.Next;
+	    inst != &compiler->Base.Program.Instructions && !compiler->Base.Error;
+	    inst = inst->Next) {
+		if (inst->Type == RC_INSTRUCTION_NORMAL) {
+			if (inst->U.I.Opcode == RC_OPCODE_BEGIN_TEX)
+				continue;
+
+			emit_tex(compiler, &inst->U.I);
+		} else {
+			emit_paired(compiler, &inst->U.P);
+		}
+	}
+
+	if (code->max_temp_idx >= 128)
+		rc_error(&compiler->Base, "Too many hardware temporaries used");
+
 	if (compiler->Base.Error)
 		return;
 

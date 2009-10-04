@@ -34,6 +34,7 @@
 #include "radeon_opcodes.h"
 #include "radeon_code.h"
 #include "radeon_program_constants.h"
+#include "radeon_program_pair.h"
 
 struct radeon_compiler;
 
@@ -121,6 +122,7 @@ struct rc_instruction {
 	rc_instruction_type Type;
 	union {
 		struct rc_sub_instruction I;
+		struct rc_pair_instruction P;
 	} U;
 
 	/**
@@ -221,6 +223,7 @@ unsigned int rc_find_free_temporary(struct radeon_compiler * c);
 
 struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
 struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after);
+void rc_insert_instruction(struct rc_instruction * after, struct rc_instruction * inst);
 void rc_remove_instruction(struct rc_instruction * inst);
 
 unsigned int rc_recompute_ips(struct radeon_compiler * c);

@@ -13,6 +13,9 @@ C_SOURCES = \
 		radeon_opcodes.c \
 		radeon_program_alu.c \
 		radeon_program_pair.c \
+		radeon_pair_translate.c \
+		radeon_pair_schedule.c \
+		radeon_pair_regalloc.c \
 		radeon_dataflow.c \
 		radeon_dataflow_deadcode.c \
 		radeon_dataflow_swizzles.c \

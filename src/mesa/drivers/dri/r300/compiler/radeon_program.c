@@ -138,16 +138,20 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c)
 	return inst;
 }
 
-
-struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after)
+void rc_insert_instruction(struct rc_instruction * after, struct rc_instruction * inst)
 {
-	struct rc_instruction * inst = rc_alloc_instruction(c);
-
 	inst->Prev = after;
 	inst->Next = after->Next;
 
 	inst->Prev->Next = inst;
 	inst->Next->Prev = inst;
+}
+
+struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after)
+{
+	struct rc_instruction * inst = rc_alloc_instruction(c);
+
+	rc_insert_instruction(after, inst);
 
 	return inst;
 }
