@@ -9,6 +9,13 @@ if not env.has_key('LLVM_VERSION'):
 
 env.Tool('udis86')
 
+env.CodeGenerate(
+	target = 'lp_tile_soa.c',
+	script = 'lp_tile_soa.py',
+	source = ['#src/gallium/auxiliary/util/u_format.csv'],
+	command = 'python $SCRIPT $SOURCE > $TARGET'
+)
+
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
