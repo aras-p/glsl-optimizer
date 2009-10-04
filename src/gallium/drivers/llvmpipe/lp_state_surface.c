@@ -53,6 +53,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* check if changing cbuf */
       if (lp->framebuffer.cbufs[i] != fb->cbufs[i]) {
          /* flush old */
+         lp_tile_cache_map_transfers(lp->cbuf_cache[i]);
          lp_flush_tile_cache(lp->cbuf_cache[i]);
 
          /* assign new */

@@ -236,6 +236,8 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
    if(!pt)
       return;
 
+   assert(tc->transfer_map);
+
    /* push the tile to all positions marked as clear */
    for (y = 0; y < pt->height; y += TILE_SIZE) {
       for (x = 0; x < pt->width; x += TILE_SIZE) {

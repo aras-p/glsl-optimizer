@@ -58,8 +58,10 @@ llvmpipe_flush( struct pipe_context *pipe,
        * in the hope that a later clear will wipe them out.
        */
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i])
+         if (llvmpipe->cbuf_cache[i]) {
+            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
             lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
+         }
 
       /* Need this call for hardware buffers before swapbuffers.
        *
@@ -71,8 +73,10 @@ llvmpipe_flush( struct pipe_context *pipe,
    }
    else if (flags & PIPE_FLUSH_RENDER_CACHE) {
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i])
+         if (llvmpipe->cbuf_cache[i]) {
+            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
             lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
+         }
 
       /* FIXME: untile zsbuf! */
      
