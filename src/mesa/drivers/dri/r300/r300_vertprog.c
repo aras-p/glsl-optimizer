@@ -217,20 +217,20 @@ static void initialize_NV_registers(struct radeon_compiler * compiler)
 
 	for(reg = 0; reg < 12; ++reg) {
 		inst = rc_insert_new_instruction(compiler, &compiler->Program.Instructions);
-		inst->I.Opcode = RC_OPCODE_MOV;
-		inst->I.DstReg.File = RC_FILE_TEMPORARY;
-		inst->I.DstReg.Index = reg;
-		inst->I.SrcReg[0].File = RC_FILE_NONE;
-		inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
+		inst->U.I.Opcode = RC_OPCODE_MOV;
+		inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst->U.I.DstReg.Index = reg;
+		inst->U.I.SrcReg[0].File = RC_FILE_NONE;
+		inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
 	}
 
 	inst = rc_insert_new_instruction(compiler, &compiler->Program.Instructions);
-	inst->I.Opcode = RC_OPCODE_ARL;
-	inst->I.DstReg.File = RC_FILE_ADDRESS;
-	inst->I.DstReg.Index = 0;
-	inst->I.DstReg.WriteMask = WRITEMASK_X;
-	inst->I.SrcReg[0].File = RC_FILE_NONE;
-	inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
+	inst->U.I.Opcode = RC_OPCODE_ARL;
+	inst->U.I.DstReg.File = RC_FILE_ADDRESS;
+	inst->U.I.DstReg.Index = 0;
+	inst->U.I.DstReg.WriteMask = WRITEMASK_X;
+	inst->U.I.SrcReg[0].File = RC_FILE_NONE;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
 }
 
 static struct r300_vertex_program *build_program(GLcontext *ctx,

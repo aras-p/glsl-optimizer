@@ -341,7 +341,7 @@ static void scan_instructions(struct pair_state *s)
 		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Compiler->Base.Pool, sizeof(*pairinst));
 		memset(pairinst, 0, sizeof(struct pair_state_instruction));
 
-		pairinst->Instruction = source->I;
+		pairinst->Instruction = source->U.I;
 		pairinst->IP = ip;
 		final_rewrite(s, &pairinst->Instruction);
 		classify_instruction(s, pairinst);

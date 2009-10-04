@@ -28,8 +28,6 @@
 #ifndef __RADEON_PROGRAM_PAIR_H_
 #define __RADEON_PROGRAM_PAIR_H_
 
-#include "radeon_program.h"
-
 struct r300_fragment_program_compiler;
 
 

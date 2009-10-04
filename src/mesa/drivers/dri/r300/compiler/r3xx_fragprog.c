@@ -44,7 +44,7 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	struct rc_instruction *rci;
 
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
-		struct rc_sub_instruction * inst = &rci->I;
+		struct rc_sub_instruction * inst = &rci->U.I;
 
 		if (inst->DstReg.File != RC_FILE_OUTPUT || inst->DstReg.Index != c->OutputDepth)
 			continue;

@@ -134,26 +134,26 @@ static void mark_used(struct deadcode_state * s, rc_register_file file, unsigned
 
 static void update_instruction(struct deadcode_state * s, struct rc_instruction * inst)
 {
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	struct instruction_state * insts = &s->Instructions[inst->IP];
 	unsigned int usedmask = 0;
 
 	if (opcode->HasDstReg) {
-		unsigned char * pused = get_used_ptr(s, inst->I.DstReg.File, inst->I.DstReg.Index);
+		unsigned char * pused = get_used_ptr(s, inst->U.I.DstReg.File, inst->U.I.DstReg.Index);
 		if (pused) {
-			usedmask = *pused & inst->I.DstReg.WriteMask;
+			usedmask = *pused & inst->U.I.DstReg.WriteMask;
 			*pused &= ~usedmask;
 		}
 	}
 
 	insts->WriteMask |= usedmask;
 
-	if (inst->I.WriteALUResult) {
+	if (inst->U.I.WriteALUResult) {
 		unsigned char * pused = get_used_ptr(s, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT);
 		if (pused && *pused) {
-			if (inst->I.WriteALUResult == RC_ALURESULT_X)
+			if (inst->U.I.WriteALUResult == RC_ALURESULT_X)
 				usedmask |= RC_MASK_X;
-			else if (inst->I.WriteALUResult == RC_ALURESULT_W)
+			else if (inst->U.I.WriteALUResult == RC_ALURESULT_W)
 				usedmask |= RC_MASK_W;
 
 			*pused = 0;
@@ -171,7 +171,7 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 
 		for(unsigned int chan = 0; chan < 4; ++chan) {
 			if (GET_BIT(newsrcmask, chan))
-				refmask |= 1 << GET_SWZ(inst->I.SrcReg[src].Swizzle, chan);
+				refmask |= 1 << GET_SWZ(inst->U.I.SrcReg[src].Swizzle, chan);
 		}
 
 		/* get rid of spurious bits from ZERO, ONE, etc. swizzles */
@@ -180,9 +180,9 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 		if (!refmask)
 			continue;
 
-		mark_used(s, inst->I.SrcReg[src].File, inst->I.SrcReg[src].Index, refmask);
+		mark_used(s, inst->U.I.SrcReg[src].File, inst->U.I.SrcReg[src].Index, refmask);
 
-		if (inst->I.SrcReg[src].RelAddr)
+		if (inst->U.I.SrcReg[src].RelAddr)
 			mark_used(s, RC_FILE_ADDRESS, 0, RC_MASK_X);
 	}
 }
@@ -211,7 +211,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	for(struct rc_instruction * inst = c->Program.Instructions.Prev;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Prev) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		if (opcode->IsControlFlow) {
 			if (opcode->Opcode == RC_OPCODE_ENDIF) {
@@ -250,20 +250,20 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	for(struct rc_instruction * inst = c->Program.Instructions.Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next, ++ip) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);\
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);\
 		int dead = 1;
 
 		if (!opcode->HasDstReg) {
 			dead = 0;
 		} else {
-			inst->I.DstReg.WriteMask = s.Instructions[ip].WriteMask;
+			inst->U.I.DstReg.WriteMask = s.Instructions[ip].WriteMask;
 			if (s.Instructions[ip].WriteMask)
 				dead = 0;
 
 			if (s.Instructions[ip].WriteALUResult)
 				dead = 0;
 			else
-				inst->I.WriteALUResult = RC_ALURESULT_NONE;
+				inst->U.I.WriteALUResult = RC_ALURESULT_NONE;
 		}
 
 		if (dead) {
@@ -276,9 +276,9 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 		unsigned int srcmasks[3];
 		unsigned int usemask = s.Instructions[ip].WriteMask;
 
-		if (inst->I.WriteALUResult == RC_ALURESULT_X)
+		if (inst->U.I.WriteALUResult == RC_ALURESULT_X)
 			usemask |= RC_MASK_X;
-		else if (inst->I.WriteALUResult == RC_ALURESULT_W)
+		else if (inst->U.I.WriteALUResult == RC_ALURESULT_W)
 			usemask |= RC_MASK_W;
 
 		rc_compute_sources_for_writemask(opcode, usemask, srcmasks);
@@ -286,7 +286,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 		for(unsigned int src = 0; src < 3; ++src) {
 			for(unsigned int chan = 0; chan < 4; ++chan) {
 				if (!GET_BIT(srcmasks[src], chan))
-					SET_SWZ(inst->I.SrcReg[src].Swizzle, chan, RC_SWIZZLE_UNUSED);
+					SET_SWZ(inst->U.I.SrcReg[src].Swizzle, chan, RC_SWIZZLE_UNUSED);
 			}
 		}
 	}

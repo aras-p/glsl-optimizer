@@ -98,7 +98,7 @@ unsigned int rc_find_free_temporary(struct radeon_compiler * c)
 	memset(used, 0, sizeof(used));
 
 	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
-		const struct rc_sub_instruction *inst = &rcinst->I;
+		const struct rc_sub_instruction *inst = &rcinst->U.I;
 		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->Opcode);
 		unsigned int k;
 
@@ -129,11 +129,11 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c)
 
 	memset(inst, 0, sizeof(struct rc_instruction));
 
-	inst->I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
-	inst->I.DstReg.WriteMask = RC_MASK_XYZW;
-	inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
-	inst->I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZW;
-	inst->I.SrcReg[2].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
+	inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_XYZW;
 
 	return inst;
 }

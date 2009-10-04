@@ -144,12 +144,12 @@ static void rc_print_src_register(FILE * f, struct rc_src_register src)
 
 static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 {
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int reg;
 
 	fprintf(f, "%s", opcode->Name);
 
-	switch(inst->I.SaturateMode) {
+	switch(inst->U.I.SaturateMode) {
 	case RC_SATURATE_NONE: break;
 	case RC_SATURATE_ZERO_ONE: fprintf(f, "_SAT"); break;
 	case RC_SATURATE_MINUS_PLUS_ONE: fprintf(f, "_SAT2"); break;
@@ -158,7 +158,7 @@ static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 
 	if (opcode->HasDstReg) {
 		fprintf(f, " ");
-		rc_print_dst_register(f, inst->I.DstReg);
+		rc_print_dst_register(f, inst->U.I.DstReg);
 		if (opcode->NumSrcRegs)
 			fprintf(f, ",");
 	}
@@ -167,23 +167,23 @@ static void rc_print_instruction(FILE * f, struct rc_instruction * inst)
 		if (reg > 0)
 			fprintf(f, ",");
 		fprintf(f, " ");
-		rc_print_src_register(f, inst->I.SrcReg[reg]);
+		rc_print_src_register(f, inst->U.I.SrcReg[reg]);
 	}
 
 	if (opcode->HasTexture) {
 		fprintf(f, ", %s%s[%u]",
-			textarget_to_string(inst->I.TexSrcTarget),
-			inst->I.TexShadow ? "SHADOW" : "",
-			inst->I.TexSrcUnit);
+			textarget_to_string(inst->U.I.TexSrcTarget),
+			inst->U.I.TexShadow ? "SHADOW" : "",
+			inst->U.I.TexSrcUnit);
 	}
 
 	fprintf(f, ";");
 
-	if (inst->I.WriteALUResult) {
+	if (inst->U.I.WriteALUResult) {
 		fprintf(f, " [aluresult = (");
 		rc_print_comparefunc(f,
-			(inst->I.WriteALUResult == RC_ALURESULT_X) ? "x" : "w",
-			inst->I.ALUResultCompare, "0");
+			(inst->U.I.WriteALUResult == RC_ALURESULT_X) ? "x" : "w",
+			inst->U.I.ALUResultCompare, "0");
 		fprintf(f, ")]");
 	}
 

@@ -109,11 +109,19 @@ struct rc_sub_instruction {
 	/*@}*/
 };
 
+typedef enum {
+	RC_INSTRUCTION_NORMAL = 0,
+	RC_INSTRUCTION_PAIR
+} rc_instruction_type;
+
 struct rc_instruction {
 	struct rc_instruction * Prev;
 	struct rc_instruction * Next;
 
-	struct rc_sub_instruction I;
+	rc_instruction_type Type;
+	union {
+		struct rc_sub_instruction I;
+	} U;
 
 	/**
 	 * Warning: IPs are not stable. If you want to use them,

@@ -226,31 +226,31 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
 {
     switch(src.Texture) {
         case TGSI_TEXTURE_1D:
-            dst->I.TexSrcTarget = RC_TEXTURE_1D;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_1D;
             break;
         case TGSI_TEXTURE_2D:
-            dst->I.TexSrcTarget = RC_TEXTURE_2D;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_2D;
             break;
         case TGSI_TEXTURE_3D:
-            dst->I.TexSrcTarget = RC_TEXTURE_3D;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_3D;
             break;
         case TGSI_TEXTURE_CUBE:
-            dst->I.TexSrcTarget = RC_TEXTURE_CUBE;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_CUBE;
             break;
         case TGSI_TEXTURE_RECT:
-            dst->I.TexSrcTarget = RC_TEXTURE_RECT;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_RECT;
             break;
         case TGSI_TEXTURE_SHADOW1D:
-            dst->I.TexSrcTarget = RC_TEXTURE_1D;
-            dst->I.TexShadow = 1;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_1D;
+            dst->U.I.TexShadow = 1;
             break;
         case TGSI_TEXTURE_SHADOW2D:
-            dst->I.TexSrcTarget = RC_TEXTURE_2D;
-            dst->I.TexShadow = 1;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_2D;
+            dst->U.I.TexShadow = 1;
             break;
         case TGSI_TEXTURE_SHADOWRECT:
-            dst->I.TexSrcTarget = RC_TEXTURE_RECT;
-            dst->I.TexShadow = 1;
+            dst->U.I.TexSrcTarget = RC_TEXTURE_RECT;
+            dst->U.I.TexShadow = 1;
             break;
     }
 }
@@ -263,17 +263,17 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     struct rc_instruction * dst = rc_insert_new_instruction(ttr->compiler, ttr->compiler->Program.Instructions.Prev);
     int i;
 
-    dst->I.Opcode = translate_opcode(src->Instruction.Opcode);
-    dst->I.SaturateMode = translate_saturate(src->Instruction.Saturate);
+    dst->U.I.Opcode = translate_opcode(src->Instruction.Opcode);
+    dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
 
     if (src->Instruction.NumDstRegs)
-        transform_dstreg(ttr, &dst->I.DstReg, &src->FullDstRegisters[0]);
+        transform_dstreg(ttr, &dst->U.I.DstReg, &src->FullDstRegisters[0]);
 
     for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
         if (src->FullSrcRegisters[i].SrcRegister.File == TGSI_FILE_SAMPLER)
-            dst->I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
+            dst->U.I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
         else
-            transform_srcreg(ttr, &dst->I.SrcReg[i], &src->FullSrcRegisters[i]);
+            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->FullSrcRegisters[i]);
     }
 
     /* Texturing. */

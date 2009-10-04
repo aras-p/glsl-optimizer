@@ -341,7 +341,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 	compiler->SetHwInputOutput(compiler);
 
 	for(rci = compiler->Base.Program.Instructions.Next; rci != &compiler->Base.Program.Instructions; rci = rci->Next) {
-		struct rc_sub_instruction *vpi = &rci->I;
+		struct rc_sub_instruction *vpi = &rci->U.I;
 		unsigned int *inst = compiler->code->body.d + compiler->code->length;
 
 		/* Skip instructions writing to non-existing destination */
@@ -405,19 +405,19 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 
 	/* Pass 1: Count original temporaries and allocate structures */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->I.SrcReg[i].File == RC_FILE_TEMPORARY) {
-				if (inst->I.SrcReg[i].Index >= num_orig_temps)
-					num_orig_temps = inst->I.SrcReg[i].Index + 1;
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+				if (inst->U.I.SrcReg[i].Index >= num_orig_temps)
+					num_orig_temps = inst->U.I.SrcReg[i].Index + 1;
 			}
 		}
 
 		if (opcode->HasDstReg) {
-			if (inst->I.DstReg.File == RC_FILE_TEMPORARY) {
-				if (inst->I.DstReg.Index >= num_orig_temps)
-					num_orig_temps = inst->I.DstReg.Index + 1;
+			if (inst->U.I.DstReg.File == RC_FILE_TEMPORARY) {
+				if (inst->U.I.DstReg.Index >= num_orig_temps)
+					num_orig_temps = inst->U.I.DstReg.Index + 1;
 			}
 		}
 	}
@@ -428,22 +428,22 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 
 	/* Pass 2: Determine original temporary lifetimes */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->I.SrcReg[i].File == RC_FILE_TEMPORARY)
-				ta[inst->I.SrcReg[i].Index].LastRead = inst;
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY)
+				ta[inst->U.I.SrcReg[i].Index].LastRead = inst;
 		}
 	}
 
 	/* Pass 3: Register allocation */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->I.SrcReg[i].File == RC_FILE_TEMPORARY) {
-				unsigned int orig = inst->I.SrcReg[i].Index;
-				inst->I.SrcReg[i].Index = ta[orig].HwTemp;
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+				unsigned int orig = inst->U.I.SrcReg[i].Index;
+				inst->U.I.SrcReg[i].Index = ta[orig].HwTemp;
 
 				if (ta[orig].Allocated && inst == ta[orig].LastRead)
 					hwtemps[ta[orig].HwTemp] = 0;
@@ -451,8 +451,8 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 		}
 
 		if (opcode->HasDstReg) {
-			if (inst->I.DstReg.File == RC_FILE_TEMPORARY) {
-				unsigned int orig = inst->I.DstReg.Index;
+			if (inst->U.I.DstReg.File == RC_FILE_TEMPORARY) {
+				unsigned int orig = inst->U.I.DstReg.Index;
 
 				if (!ta[orig].Allocated) {
 					for(j = 0; j < VSF_MAX_FRAGMENT_TEMPS; ++j) {
@@ -471,7 +471,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 					}
 				}
 
-				inst->I.DstReg.Index = ta[orig].HwTemp;
+				inst->U.I.DstReg.Index = ta[orig].HwTemp;
 			}
 		}
 	}
@@ -487,36 +487,36 @@ static int transform_source_conflicts(
 	struct rc_instruction* inst,
 	void* unused)
 {
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
 	if (opcode->NumSrcRegs == 3) {
-		if (t_src_conflict(inst->I.SrcReg[1], inst->I.SrcReg[2])
-		    || t_src_conflict(inst->I.SrcReg[0], inst->I.SrcReg[2])) {
+		if (t_src_conflict(inst->U.I.SrcReg[1], inst->U.I.SrcReg[2])
+		    || t_src_conflict(inst->U.I.SrcReg[0], inst->U.I.SrcReg[2])) {
 			int tmpreg = rc_find_free_temporary(c);
 			struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
-			inst_mov->I.Opcode = RC_OPCODE_MOV;
-			inst_mov->I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_mov->I.DstReg.Index = tmpreg;
-			inst_mov->I.SrcReg[0] = inst->I.SrcReg[2];
+			inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+			inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_mov->U.I.DstReg.Index = tmpreg;
+			inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[2];
 
-			reset_srcreg(&inst->I.SrcReg[2]);
-			inst->I.SrcReg[2].File = RC_FILE_TEMPORARY;
-			inst->I.SrcReg[2].Index = tmpreg;
+			reset_srcreg(&inst->U.I.SrcReg[2]);
+			inst->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[2].Index = tmpreg;
 		}
 	}
 
 	if (opcode->NumSrcRegs >= 2) {
-		if (t_src_conflict(inst->I.SrcReg[1], inst->I.SrcReg[0])) {
+		if (t_src_conflict(inst->U.I.SrcReg[1], inst->U.I.SrcReg[0])) {
 			int tmpreg = rc_find_free_temporary(c);
 			struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
-			inst_mov->I.Opcode = RC_OPCODE_MOV;
-			inst_mov->I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_mov->I.DstReg.Index = tmpreg;
-			inst_mov->I.SrcReg[0] = inst->I.SrcReg[1];
+			inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+			inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_mov->U.I.DstReg.Index = tmpreg;
+			inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[1];
 
-			reset_srcreg(&inst->I.SrcReg[1]);
-			inst->I.SrcReg[1].File = RC_FILE_TEMPORARY;
-			inst->I.SrcReg[1].Index = tmpreg;
+			reset_srcreg(&inst->U.I.SrcReg[1]);
+			inst->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[1].Index = tmpreg;
 		}
 	}
 
@@ -531,15 +531,15 @@ static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
 		if ((compiler->RequiredOutputs & (1 << i)) &&
 		    !(compiler->Base.Program.OutputsWritten & (1 << i))) {
 			struct rc_instruction * inst = rc_insert_new_instruction(&compiler->Base, compiler->Base.Program.Instructions.Prev);
-			inst->I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.Opcode = RC_OPCODE_MOV;
 
-			inst->I.DstReg.File = RC_FILE_OUTPUT;
-			inst->I.DstReg.Index = i;
-			inst->I.DstReg.WriteMask = RC_MASK_XYZW;
+			inst->U.I.DstReg.File = RC_FILE_OUTPUT;
+			inst->U.I.DstReg.Index = i;
+			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 
-			inst->I.SrcReg[0].File = RC_FILE_CONSTANT;
-			inst->I.SrcReg[0].Index = 0;
-			inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+			inst->U.I.SrcReg[0].File = RC_FILE_CONSTANT;
+			inst->U.I.SrcReg[0].Index = 0;
+			inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
 
 			compiler->Base.Program.OutputsWritten |= 1 << i;
 		}

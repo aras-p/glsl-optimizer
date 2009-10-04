@@ -152,25 +152,25 @@ static void translate_instruction(struct radeon_compiler * c,
 	const struct rc_opcode_info * opcode;
 	unsigned int i;
 
-	dest->I.Opcode = translate_opcode(src->Opcode);
-	if (dest->I.Opcode == RC_OPCODE_ILLEGAL_OPCODE) {
+	dest->U.I.Opcode = translate_opcode(src->Opcode);
+	if (dest->U.I.Opcode == RC_OPCODE_ILLEGAL_OPCODE) {
 		rc_error(c, "Unsupported opcode %i\n", src->Opcode);
 		return;
 	}
-	dest->I.SaturateMode = translate_saturate(src->SaturateMode);
+	dest->U.I.SaturateMode = translate_saturate(src->SaturateMode);
 
-	opcode = rc_get_opcode_info(dest->I.Opcode);
+	opcode = rc_get_opcode_info(dest->U.I.Opcode);
 
 	for(i = 0; i < opcode->NumSrcRegs; ++i)
-		translate_srcreg(&dest->I.SrcReg[i], &src->SrcReg[i]);
+		translate_srcreg(&dest->U.I.SrcReg[i], &src->SrcReg[i]);
 
 	if (opcode->HasDstReg)
-		translate_dstreg(&dest->I.DstReg, &src->DstReg);
+		translate_dstreg(&dest->U.I.DstReg, &src->DstReg);
 
 	if (opcode->HasTexture) {
-		dest->I.TexSrcUnit = src->TexSrcUnit;
-		dest->I.TexSrcTarget = translate_tex_target(src->TexSrcTarget);
-		dest->I.TexShadow = src->TexShadow;
+		dest->U.I.TexSrcUnit = src->TexSrcUnit;
+		dest->U.I.TexSrcTarget = translate_tex_target(src->TexSrcTarget);
+		dest->U.I.TexShadow = src->TexShadow;
 	}
 }
 

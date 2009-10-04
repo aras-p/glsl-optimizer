@@ -40,48 +40,48 @@ static void rewrite_source(struct radeon_compiler * c,
 
 	usemask = 0;
 	for(unsigned int chan = 0; chan < 4; ++chan) {
-		if (GET_SWZ(inst->I.SrcReg[src].Swizzle, chan) != RC_SWIZZLE_UNUSED)
+		if (GET_SWZ(inst->U.I.SrcReg[src].Swizzle, chan) != RC_SWIZZLE_UNUSED)
 			usemask |= 1 << chan;
 	}
 
-	c->SwizzleCaps->Split(inst->I.SrcReg[src], usemask, &split);
+	c->SwizzleCaps->Split(inst->U.I.SrcReg[src], usemask, &split);
 
 	for(unsigned int phase = 0; phase < split.NumPhases; ++phase) {
 		struct rc_instruction * mov = rc_insert_new_instruction(c, inst->Prev);
 		unsigned int phase_refmask;
 		unsigned int masked_negate;
 
-		mov->I.Opcode = RC_OPCODE_MOV;
-		mov->I.DstReg.File = RC_FILE_TEMPORARY;
-		mov->I.DstReg.Index = tempreg;
-		mov->I.DstReg.WriteMask = split.Phase[phase];
-		mov->I.SrcReg[0] = inst->I.SrcReg[src];
+		mov->U.I.Opcode = RC_OPCODE_MOV;
+		mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		mov->U.I.DstReg.Index = tempreg;
+		mov->U.I.DstReg.WriteMask = split.Phase[phase];
+		mov->U.I.SrcReg[0] = inst->U.I.SrcReg[src];
 
 		phase_refmask = 0;
 		for(unsigned int chan = 0; chan < 4; ++chan) {
 			if (!GET_BIT(split.Phase[phase], chan))
-				SET_SWZ(mov->I.SrcReg[0].Swizzle, chan, RC_SWIZZLE_UNUSED);
+				SET_SWZ(mov->U.I.SrcReg[0].Swizzle, chan, RC_SWIZZLE_UNUSED);
 			else
-				phase_refmask |= 1 << GET_SWZ(mov->I.SrcReg[0].Swizzle, chan);
+				phase_refmask |= 1 << GET_SWZ(mov->U.I.SrcReg[0].Swizzle, chan);
 		}
 
 		phase_refmask &= RC_MASK_XYZW;
 
-		masked_negate = split.Phase[phase] & mov->I.SrcReg[0].Negate;
+		masked_negate = split.Phase[phase] & mov->U.I.SrcReg[0].Negate;
 		if (masked_negate == 0)
-			mov->I.SrcReg[0].Negate = 0;
+			mov->U.I.SrcReg[0].Negate = 0;
 		else if (masked_negate == split.Phase[phase])
-			mov->I.SrcReg[0].Negate = RC_MASK_XYZW;
+			mov->U.I.SrcReg[0].Negate = RC_MASK_XYZW;
 
 	}
 
-	inst->I.SrcReg[src].File = RC_FILE_TEMPORARY;
-	inst->I.SrcReg[src].Index = tempreg;
-	inst->I.SrcReg[src].Swizzle = 0;
-	inst->I.SrcReg[src].Negate = RC_MASK_NONE;
-	inst->I.SrcReg[src].Abs = 0;
+	inst->U.I.SrcReg[src].File = RC_FILE_TEMPORARY;
+	inst->U.I.SrcReg[src].Index = tempreg;
+	inst->U.I.SrcReg[src].Swizzle = 0;
+	inst->U.I.SrcReg[src].Negate = RC_MASK_NONE;
+	inst->U.I.SrcReg[src].Abs = 0;
 	for(unsigned int chan = 0; chan < 4; ++chan) {
-		SET_SWZ(inst->I.SrcReg[src].Swizzle, chan,
+		SET_SWZ(inst->U.I.SrcReg[src].Swizzle, chan,
 				GET_BIT(usemask, chan) ? chan : RC_SWIZZLE_UNUSED);
 	}
 }
@@ -91,11 +91,11 @@ void rc_dataflow_swizzles(struct radeon_compiler * c)
 	struct rc_instruction * inst;
 
 	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		unsigned int src;
 
 		for(src = 0; src < opcode->NumSrcRegs; ++src) {
-			if (!c->SwizzleCaps->IsNative(inst->I.Opcode, inst->I.SrcReg[src]))
+			if (!c->SwizzleCaps->IsNative(inst->U.I.Opcode, inst->U.I.SrcReg[src]))
 				rewrite_source(c, inst, src);
 		}
 	}

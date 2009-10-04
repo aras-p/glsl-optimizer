@@ -54,75 +54,75 @@ int r500_transform_TEX(
 	struct r300_fragment_program_compiler *compiler =
 		(struct r300_fragment_program_compiler*)data;
 
-	if (inst->I.Opcode != RC_OPCODE_TEX &&
-	    inst->I.Opcode != RC_OPCODE_TXB &&
-	    inst->I.Opcode != RC_OPCODE_TXP &&
-	    inst->I.Opcode != RC_OPCODE_KIL)
+	if (inst->U.I.Opcode != RC_OPCODE_TEX &&
+	    inst->U.I.Opcode != RC_OPCODE_TXB &&
+	    inst->U.I.Opcode != RC_OPCODE_TXP &&
+	    inst->U.I.Opcode != RC_OPCODE_KIL)
 		return 0;
 
 	/* ARB_shadow & EXT_shadow_funcs */
-	if (inst->I.Opcode != RC_OPCODE_KIL &&
-	    c->Program.ShadowSamplers & (1 << inst->I.TexSrcUnit)) {
-		rc_compare_func comparefunc = compiler->state.unit[inst->I.TexSrcUnit].texture_compare_func;
+	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
+	    c->Program.ShadowSamplers & (1 << inst->U.I.TexSrcUnit)) {
+		rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == RC_COMPARE_FUNC_NEVER || comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-			inst->I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.Opcode = RC_OPCODE_MOV;
 
 			if (comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-				inst->I.SrcReg[0].File = RC_FILE_NONE;
-				inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst->U.I.SrcReg[0].File = RC_FILE_NONE;
+				inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
 			} else {
-				inst->I.SrcReg[0] = shadow_ambient(c, inst->I.TexSrcUnit);
+				inst->U.I.SrcReg[0] = shadow_ambient(c, inst->U.I.TexSrcUnit);
 			}
 
 			return 1;
 		} else {
-			rc_compare_func comparefunc = compiler->state.unit[inst->I.TexSrcUnit].texture_compare_func;
-			unsigned int depthmode = compiler->state.unit[inst->I.TexSrcUnit].depth_texture_mode;
+			rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
+			unsigned int depthmode = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_mode;
 			struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, inst);
 			struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_rcp);
 			struct rc_instruction * inst_cmp = rc_insert_new_instruction(c, inst_mad);
 			int pass, fail;
 
-			inst_rcp->I.Opcode = RC_OPCODE_RCP;
-			inst_rcp->I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_rcp->I.DstReg.Index = rc_find_free_temporary(c);
-			inst_rcp->I.DstReg.WriteMask = RC_MASK_W;
-			inst_rcp->I.SrcReg[0] = inst->I.SrcReg[0];
-			inst_rcp->I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
+			inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
+			inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_rcp->U.I.DstReg.Index = rc_find_free_temporary(c);
+			inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
+			inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+			inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
 
-			inst_cmp->I.DstReg = inst->I.DstReg;
-			inst->I.DstReg.File = RC_FILE_TEMPORARY;
-			inst->I.DstReg.Index = rc_find_free_temporary(c);
-			inst->I.DstReg.WriteMask = RC_MASK_XYZW;
+			inst_cmp->U.I.DstReg = inst->U.I.DstReg;
+			inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst->U.I.DstReg.Index = rc_find_free_temporary(c);
+			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 
-			inst_mad->I.Opcode = RC_OPCODE_MAD;
-			inst_mad->I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_mad->I.DstReg.Index = rc_find_free_temporary(c);
-			inst_mad->I.SrcReg[0] = inst->I.SrcReg[0];
-			inst_mad->I.SrcReg[0].Swizzle = RC_SWIZZLE_ZZZZ;
-			inst_mad->I.SrcReg[1].File = RC_FILE_TEMPORARY;
-			inst_mad->I.SrcReg[1].Index = inst_rcp->I.DstReg.Index;
-			inst_mad->I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
-			inst_mad->I.SrcReg[2].File = RC_FILE_TEMPORARY;
-			inst_mad->I.SrcReg[2].Index = inst->I.DstReg.Index;
+			inst_mad->U.I.Opcode = RC_OPCODE_MAD;
+			inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_mad->U.I.DstReg.Index = rc_find_free_temporary(c);
+			inst_mad->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+			inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_ZZZZ;
+			inst_mad->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+			inst_mad->U.I.SrcReg[1].Index = inst_rcp->U.I.DstReg.Index;
+			inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
+			inst_mad->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
+			inst_mad->U.I.SrcReg[2].Index = inst->U.I.DstReg.Index;
 			if (depthmode == 0) /* GL_LUMINANCE */
-				inst_mad->I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
+				inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
 			else if (depthmode == 2) /* GL_ALPHA */
-				inst_mad->I.SrcReg[2].Swizzle = RC_SWIZZLE_WWWW;
+				inst_mad->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_WWWW;
 
 			/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
 			 *   r  < tex  <=>      -tex+r < 0
 			 *   r >= tex  <=> not (-tex+r < 0 */
 			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GEQUAL)
-				inst_mad->I.SrcReg[2].Negate = inst_mad->I.SrcReg[2].Negate ^ RC_MASK_XYZW;
+				inst_mad->U.I.SrcReg[2].Negate = inst_mad->U.I.SrcReg[2].Negate ^ RC_MASK_XYZW;
 			else
-				inst_mad->I.SrcReg[0].Negate = inst_mad->I.SrcReg[0].Negate ^ RC_MASK_XYZW;
+				inst_mad->U.I.SrcReg[0].Negate = inst_mad->U.I.SrcReg[0].Negate ^ RC_MASK_XYZW;
 
-			inst_cmp->I.Opcode = RC_OPCODE_CMP;
+			inst_cmp->U.I.Opcode = RC_OPCODE_CMP;
 			/* DstReg has been filled out above */
-			inst_cmp->I.SrcReg[0].File = RC_FILE_TEMPORARY;
-			inst_cmp->I.SrcReg[0].Index = inst_mad->I.DstReg.Index;
+			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+			inst_cmp->U.I.SrcReg[0].Index = inst_mad->U.I.DstReg.Index;
 
 			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GREATER) {
 				pass = 1;
@@ -132,38 +132,38 @@ int r500_transform_TEX(
 				fail = 1;
 			}
 
-			inst_cmp->I.SrcReg[pass].File = RC_FILE_NONE;
-			inst_cmp->I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
-			inst_cmp->I.SrcReg[fail] = shadow_ambient(c, inst->I.TexSrcUnit);
+			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
+			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
+			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(c, inst->U.I.TexSrcUnit);
 		}
 	}
 
 	/* Cannot write texture to output registers */
-	if (inst->I.Opcode != RC_OPCODE_KIL && inst->I.DstReg.File != RC_FILE_TEMPORARY) {
+	if (inst->U.I.Opcode != RC_OPCODE_KIL && inst->U.I.DstReg.File != RC_FILE_TEMPORARY) {
 		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
 
-		inst_mov->I.Opcode = RC_OPCODE_MOV;
-		inst_mov->I.DstReg = inst->I.DstReg;
-		inst_mov->I.SrcReg[0].File = RC_FILE_TEMPORARY;
-		inst_mov->I.SrcReg[0].Index = rc_find_free_temporary(c);
+		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+		inst_mov->U.I.DstReg = inst->U.I.DstReg;
+		inst_mov->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst_mov->U.I.SrcReg[0].Index = rc_find_free_temporary(c);
 
-		inst->I.DstReg.File = RC_FILE_TEMPORARY;
-		inst->I.DstReg.Index = inst_mov->I.SrcReg[0].Index;
-		inst->I.DstReg.WriteMask = RC_MASK_XYZW;
+		inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst->U.I.DstReg.Index = inst_mov->U.I.SrcReg[0].Index;
+		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 	}
 
 	/* Cannot read texture coordinate from constants file */
-	if (inst->I.SrcReg[0].File != RC_FILE_TEMPORARY && inst->I.SrcReg[0].File != RC_FILE_INPUT) {
+	if (inst->U.I.SrcReg[0].File != RC_FILE_TEMPORARY && inst->U.I.SrcReg[0].File != RC_FILE_INPUT) {
 		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
 
-		inst_mov->I.Opcode = RC_OPCODE_MOV;
-		inst_mov->I.DstReg.File = RC_FILE_TEMPORARY;
-		inst_mov->I.DstReg.Index = rc_find_free_temporary(c);
-		inst_mov->I.SrcReg[0] = inst->I.SrcReg[0];
+		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+		inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_mov->U.I.DstReg.Index = rc_find_free_temporary(c);
+		inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
 
-		reset_srcreg(&inst->I.SrcReg[0]);
-		inst->I.SrcReg[0].File = RC_FILE_TEMPORARY;
-		inst->I.SrcReg[0].Index = inst_mov->I.DstReg.Index;
+		reset_srcreg(&inst->U.I.SrcReg[0]);
+		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst->U.I.SrcReg[0].Index = inst_mov->U.I.DstReg.Index;
 	}
 
 	return 1;
@@ -177,22 +177,22 @@ int r500_transform_IF(
 	struct rc_instruction * inst,
 	void* data)
 {
-	if (inst->I.Opcode != RC_OPCODE_IF)
+	if (inst->U.I.Opcode != RC_OPCODE_IF)
 		return 0;
 
 	struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
-	inst_mov->I.Opcode = RC_OPCODE_MOV;
-	inst_mov->I.DstReg.WriteMask = 0;
-	inst_mov->I.WriteALUResult = RC_ALURESULT_W;
-	inst_mov->I.ALUResultCompare = RC_COMPARE_FUNC_NOTEQUAL;
-	inst_mov->I.SrcReg[0] = inst->I.SrcReg[0];
-	inst_mov->I.SrcReg[0].Swizzle = combine_swizzles4(inst_mov->I.SrcReg[0].Swizzle,
+	inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+	inst_mov->U.I.DstReg.WriteMask = 0;
+	inst_mov->U.I.WriteALUResult = RC_ALURESULT_W;
+	inst_mov->U.I.ALUResultCompare = RC_COMPARE_FUNC_NOTEQUAL;
+	inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+	inst_mov->U.I.SrcReg[0].Swizzle = combine_swizzles4(inst_mov->U.I.SrcReg[0].Swizzle,
 			RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_UNUSED, RC_SWIZZLE_X);
 
-	inst->I.SrcReg[0].File = RC_FILE_SPECIAL;
-	inst->I.SrcReg[0].Index = RC_SPECIAL_ALU_RESULT;
-	inst->I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
-	inst->I.SrcReg[0].Negate = 0;
+	inst->U.I.SrcReg[0].File = RC_FILE_SPECIAL;
+	inst->U.I.SrcReg[0].Index = RC_SPECIAL_ALU_RESULT;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.SrcReg[0].Negate = 0;
 
 	return 1;
 }
