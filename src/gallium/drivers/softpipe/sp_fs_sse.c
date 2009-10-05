@@ -138,7 +138,7 @@ fs_sse_run( const struct sp_fragment_shader *base,
 		 machine->Consts,
                  (const float (*)[4])shader->immediates,
 		 machine->InterpCoefs
-		 //	 , &machine->QuadPos
+		 /*, &machine->QuadPos*/
       );
 
    quad->inout.mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);

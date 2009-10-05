@@ -1197,10 +1197,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             if (!fbConfig)
                return NULL;
             parselist++;
-            if (*parselist == GLX_RGBA_BIT) {
+            if (*parselist & GLX_RGBA_BIT) {
                rgb_flag = GL_TRUE;
             }
-            else if (*parselist == GLX_COLOR_INDEX_BIT) {
+            else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
             else if (*parselist == 0) {

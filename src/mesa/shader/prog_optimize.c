@@ -217,6 +217,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
                   _mesa_printf("abort remove dead code (indirect temp)\n");
+               _mesa_free(removeInst);
                return;
             }
 
@@ -232,6 +233,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
          if (inst->DstReg.RelAddr) {
             if (dbg)
                _mesa_printf("abort remove dead code (indirect temp)\n");
+            _mesa_free(removeInst);
             return;
          }
 
@@ -421,6 +423,8 @@ _mesa_remove_extra_moves(struct gl_program *prog)
 
    /* now remove the instructions which aren't needed */
    rem = remove_instructions(prog, removeInst);
+
+   _mesa_free(removeInst);
 
    if (dbg) {
       _mesa_printf("Optimize: End remove extra moves.  %u instructions removed\n", rem);

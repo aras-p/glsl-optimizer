@@ -165,12 +165,12 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                                                      strb->texture,
                                                      0, 0, 0,
                                                      surface_usage );
-
-      assert(strb->surface->texture);
-      assert(strb->surface->format);
-      assert(strb->surface->width == width);
-      assert(strb->surface->height == height);
-
+      if (strb->surface) {
+         assert(strb->surface->texture);
+         assert(strb->surface->format);
+         assert(strb->surface->width == width);
+         assert(strb->surface->height == height);
+      }
 
       return strb->surface != NULL;
    }
@@ -298,6 +298,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    default:
       _mesa_problem(NULL,
 		    "Unexpected format in st_new_renderbuffer_fb");
+      _mesa_free(strb);
       return NULL;
    }
 

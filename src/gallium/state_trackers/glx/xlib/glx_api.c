@@ -850,10 +850,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             if (!fbConfig)
                return NULL;
             parselist++;
-            if (*parselist == GLX_RGBA_BIT) {
+            if (*parselist & GLX_RGBA_BIT) {
                rgb_flag = GL_TRUE;
             }
-            else if (*parselist == GLX_COLOR_INDEX_BIT) {
+            else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
             else if (*parselist == 0) {
@@ -1538,9 +1538,9 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          if (!fbconfig)
             return GLX_BAD_ATTRIBUTE;
          if (xmvis->mesa_visual.rgbMode)
-            *value = GLX_RGBA_TYPE;
+            *value = GLX_RGBA_BIT;
          else
-            *value = GLX_COLOR_INDEX_TYPE;
+            *value = GLX_COLOR_INDEX_BIT;
          break;
       case GLX_X_RENDERABLE_SGIX:
          if (!fbconfig)

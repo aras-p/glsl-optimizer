@@ -254,7 +254,7 @@ debug_profile_start(void)
 {
    WCHAR *p;
 
-   // increment starting from the less significant digit
+   /* increment starting from the less significant digit */
    p = &wFileName[14];
    while(1) {
       if(*p == '9') {
