@@ -1501,8 +1501,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    GLuint comps;
 
    ASSERT(texObj);
-   /* XXX choose cube map face here??? */
-   srcImage = texObj->Image[0][texObj->BaseLevel];
+   srcImage = _mesa_select_tex_image(ctx, texObj, target, texObj->BaseLevel);
    ASSERT(srcImage);
 
    maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
