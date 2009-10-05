@@ -522,7 +522,7 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 };
 
 
-FetchTexelFuncF
+static FetchTexelFuncF
 _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
 {
    FetchTexelFuncF f;
