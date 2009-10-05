@@ -245,6 +245,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 		return false;
 
 	*handle = mt->bo->handle;
+	*stride = mt->base.nblocksx[0] * mt->base.block.size;
 	return true;
 }
 
