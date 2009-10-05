@@ -734,109 +734,182 @@ _mesa_test_formats(void)
 }
 
 
+
 /**
- * XXX possible replacement for _mesa_format_to_type_and_comps()
- * Used for mipmap generation.
+ * Return datatype and number of components per texel for the given gl_format.
+ * Only used for mipmap generation code.
  */
 void
-_mesa_format_to_type_and_comps2(gl_format format,
-                                GLenum *datatype, GLuint *comps)
+_mesa_format_to_type_and_comps(gl_format format,
+                               GLenum *datatype, GLuint *comps)
 {
-   const struct gl_format_info *info = _mesa_get_format_info(format);
-
-   /* We use a bunch of heuristics here.  If this gets too ugly we could
-    * just encode the info the in the gl_format_info structures.
-    */
-   if (info->BaseFormat == GL_RGB ||
-       info->BaseFormat == GL_RGBA ||
-       info->BaseFormat == GL_ALPHA) {
-      *comps = ((info->RedBits > 0) +
-                (info->GreenBits > 0) +
-                (info->BlueBits > 0) +
-                (info->AlphaBits > 0));
-
-      if (info->DataType== GL_FLOAT) {
-         if (info->RedBits == 32)
-            *datatype = GL_FLOAT;
-         else
-            *datatype = GL_HALF_FLOAT;
-      }
-      else if (info->GreenBits == 3) {
-         *datatype = GL_UNSIGNED_BYTE_3_3_2;
-      }
-      else if (info->GreenBits == 4) {
-         *datatype = GL_UNSIGNED_SHORT_4_4_4_4;
-      }
-      else if (info->GreenBits == 6) {
-         *datatype = GL_UNSIGNED_SHORT_5_6_5;
-      }
-      else if (info->GreenBits == 5) {
-         *datatype = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-      }
-      else if (info->RedBits == 8) {
-         *datatype = GL_UNSIGNED_BYTE;
-      }
-      else {
-         ASSERT(info->RedBits == 16);
-         *datatype = GL_UNSIGNED_SHORT;
-      }
-   }
-   else if (info->BaseFormat == GL_LUMINANCE ||
-            info->BaseFormat == GL_LUMINANCE_ALPHA) {
-      *comps = ((info->LuminanceBits > 0) +
-                (info->AlphaBits > 0));
-      if (info->LuminanceBits == 8) {
-         *datatype = GL_UNSIGNED_BYTE;
-      }
-      else if (info->LuminanceBits == 16) {
-         *datatype = GL_UNSIGNED_SHORT;
-      }
-      else {
-         *datatype = GL_FLOAT;
-      }
-   }
-   else if (info->BaseFormat == GL_INTENSITY) {
-      *comps = 1;
-      if (info->IntensityBits == 8) {
-         *datatype = GL_UNSIGNED_BYTE;
-      }
-      else if (info->IntensityBits == 16) {
-         *datatype = GL_UNSIGNED_SHORT;
-      }
-      else {
-         *datatype = GL_FLOAT;
-      }
-   }
-   else if (info->BaseFormat == GL_COLOR_INDEX) {
-      *comps = 1;
+   switch (format) {
+   case MESA_FORMAT_RGBA8888:
+   case MESA_FORMAT_RGBA8888_REV:
+   case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_ARGB8888_REV:
       *datatype = GL_UNSIGNED_BYTE;
-   }
-   else if (info->BaseFormat == GL_DEPTH_COMPONENT) {
-      *comps = 1;
-      if (info->DepthBits == 16) {
-         *datatype = GL_UNSIGNED_SHORT;
-      }
-      else {
-         ASSERT(info->DepthBits == 32);
-         *datatype = GL_UNSIGNED_INT;
-      }
-   }
-   else if (info->BaseFormat == GL_DEPTH_STENCIL) {
-      *comps = 1;
-      *datatype = GL_UNSIGNED_INT;
-   }
-   else if (info->BaseFormat == GL_YCBCR_MESA) {
+      *comps = 4;
+      return;
+   case MESA_FORMAT_RGB888:
+   case MESA_FORMAT_BGR888:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 3;
+      return;
+   case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_RGB565_REV:
+      *datatype = GL_UNSIGNED_SHORT_5_6_5;
+      *comps = 3;
+      return;
+
+   case MESA_FORMAT_ARGB4444:
+   case MESA_FORMAT_ARGB4444_REV:
+      *datatype = GL_UNSIGNED_SHORT_4_4_4_4;
+      *comps = 4;
+      return;
+
+   case MESA_FORMAT_ARGB1555:
+   case MESA_FORMAT_ARGB1555_REV:
+      *datatype = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+      *comps = 4;
+      return;
+
+   case MESA_FORMAT_AL88:
+   case MESA_FORMAT_AL88_REV:
+      *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
+      return;
+   case MESA_FORMAT_RGB332:
+      *datatype = GL_UNSIGNED_BYTE_3_3_2;
+      *comps = 3;
+      return;
+
+   case MESA_FORMAT_A8:
+   case MESA_FORMAT_L8:
+   case MESA_FORMAT_I8:
+   case MESA_FORMAT_CI8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 1;
+      return;
+
+   case MESA_FORMAT_YCBCR:
+   case MESA_FORMAT_YCBCR_REV:
       *datatype = GL_UNSIGNED_SHORT;
-   }
-   else if (info->BaseFormat == GL_DUDV_ATI) {
       *comps = 2;
-      *datatype = GL_BYTE;
-   }
-   else {
-      /* any other formats? */
-      ASSERT(0);
+      return;
+
+   case MESA_FORMAT_Z24_S8:
+      *datatype = GL_UNSIGNED_INT;
+      *comps = 1; /* XXX OK? */
+      return;
+
+   case MESA_FORMAT_S8_Z24:
+      *datatype = GL_UNSIGNED_INT;
+      *comps = 1; /* XXX OK? */
+      return;
+
+   case MESA_FORMAT_Z16:
+      *datatype = GL_UNSIGNED_SHORT;
       *comps = 1;
+      return;
+
+   case MESA_FORMAT_Z32:
+      *datatype = GL_UNSIGNED_INT;
+      *comps = 1;
+      return;
+
+   case MESA_FORMAT_DUDV8:
+      *datatype = GL_BYTE;
+      *comps = 2;
+      return;
+
+   case MESA_FORMAT_SIGNED_RGBA8888:
+   case MESA_FORMAT_SIGNED_RGBA8888_REV:
+      *datatype = GL_BYTE;
+      *comps = 4;
+      return;
+
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB8:
       *datatype = GL_UNSIGNED_BYTE;
+      *comps = 3;
+      return;
+   case MESA_FORMAT_SRGBA8:
+   case MESA_FORMAT_SARGB8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 4;
+      return;
+   case MESA_FORMAT_SL8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 1;
+      return;
+   case MESA_FORMAT_SLA8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 2;
+      return;
+#endif
+
+#if FEATURE_texture_fxt1
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+#endif
+#if FEATURE_texture_s3tc
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
+      /* XXX generate error instead? */
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 0;
+      return;
+#endif
+
+   case MESA_FORMAT_RGBA_FLOAT32:
+      *datatype = GL_FLOAT;
+      *comps = 4;
+      return;
+   case MESA_FORMAT_RGBA_FLOAT16:
+      *datatype = GL_HALF_FLOAT_ARB;
+      *comps = 4;
+      return;
+   case MESA_FORMAT_RGB_FLOAT32:
+      *datatype = GL_FLOAT;
+      *comps = 3;
+      return;
+   case MESA_FORMAT_RGB_FLOAT16:
+      *datatype = GL_HALF_FLOAT_ARB;
+      *comps = 3;
+      return;
+   case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+      *datatype = GL_FLOAT;
+      *comps = 2;
+      return;
+   case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+      *datatype = GL_HALF_FLOAT_ARB;
+      *comps = 2;
+      return;
+   case MESA_FORMAT_ALPHA_FLOAT32:
+   case MESA_FORMAT_LUMINANCE_FLOAT32:
+   case MESA_FORMAT_INTENSITY_FLOAT32:
+      *datatype = GL_FLOAT;
+      *comps = 1;
+      return;
+   case MESA_FORMAT_ALPHA_FLOAT16:
+   case MESA_FORMAT_LUMINANCE_FLOAT16:
+   case MESA_FORMAT_INTENSITY_FLOAT16:
+      *datatype = GL_HALF_FLOAT_ARB;
+      *comps = 1;
+      return;
+
+   default:
+      _mesa_problem(NULL, "bad format in _mesa_format_to_type_and_comps");
+      *datatype = 0;
+      *comps = 1;
    }
 }

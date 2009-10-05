@@ -31,7 +31,6 @@
 #include "formats.h"
 #include "mipmap.h"
 #include "texcompress.h"
-#include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
 #include "image.h"
