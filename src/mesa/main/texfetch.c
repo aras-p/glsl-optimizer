@@ -595,6 +595,7 @@ fetch_texel_float_to_chan(const struct gl_texture_image *texImage,
 }
 
 
+#if 0
 /**
  * Adaptor for fetching a float texel from a GLchan-valued texture.
  */
@@ -620,6 +621,7 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
       texelOut[3] = CHAN_TO_FLOAT(temp[3]);
    }
 }
+#endif
 
 
 /**
@@ -631,17 +633,15 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
    ASSERT(dims == 1 || dims == 2 || dims == 3);
    ASSERT(texImage->TexFormat);
 
-   texImage->FetchTexelf =
-      _mesa_get_texel_fetch_func(texImage->TexFormat, dims);
+   if (!texImage->FetchTexelf) {
+      texImage->FetchTexelf =
+         _mesa_get_texel_fetch_func(texImage->TexFormat, dims);
+   }
 
    /* now check if we need to use a float/chan adaptor */
    if (!texImage->FetchTexelc) {
       texImage->FetchTexelc = fetch_texel_float_to_chan;
    }
-   else if (!texImage->FetchTexelf) {
-      texImage->FetchTexelf = fetch_texel_chan_to_float;
-   }
-
 
    ASSERT(texImage->FetchTexelc);
    ASSERT(texImage->FetchTexelf);

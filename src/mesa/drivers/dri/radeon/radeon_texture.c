@@ -34,7 +34,6 @@
 #include "main/convolve.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
-#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
@@ -140,7 +139,6 @@ static void map_override(GLcontext *ctx, radeonTexObj *t)
 	radeon_bo_map(t->bo, GL_FALSE);
 
 	img->base.Data = t->bo->ptr;
-	_mesa_set_fetch_functions(&img->base, 2);
 }
 
 static void unmap_override(GLcontext *ctx, radeonTexObj *t)
@@ -543,7 +541,6 @@ static void radeon_teximage(
 
 	/* Choose and fill in the texture format for this image */
 	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type, 0);
-	_mesa_set_fetch_functions(texImage, dims);
 
 	if (_mesa_is_format_compressed(texImage->TexFormat)) {
 		texelBytes = 0;

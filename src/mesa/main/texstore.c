@@ -64,7 +64,6 @@
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"
-#include "texfetch.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
@@ -3213,8 +3212,6 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
    ASSERT(texImage->TexFormat);
 
-   _mesa_set_fetch_functions(texImage, 1);
-
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
@@ -3276,8 +3273,6 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
    ASSERT(texImage->TexFormat);
 
-   _mesa_set_fetch_functions(texImage, 2);
-
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
@@ -3334,8 +3329,6 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat
       = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
    ASSERT(texImage->TexFormat);
-
-   _mesa_set_fetch_functions(texImage, 3);
 
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
@@ -3538,8 +3531,6 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat
       = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, 0, 0);
    ASSERT(texImage->TexFormat);
-
-   _mesa_set_fetch_functions(texImage, 2);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);

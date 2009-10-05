@@ -37,7 +37,6 @@
 #include "main/mipmap.h"
 #include "main/simple_list.h"
 #include "main/texcompress.h"
-#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
@@ -691,8 +690,6 @@ static void viaTexImage(GLcontext *ctx,
 					    format, type);
 
    assert(texImage->TexFormat);
-
-   _mesa_set_fetch_functions(texImage, dims);
 
    texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 

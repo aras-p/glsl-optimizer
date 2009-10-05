@@ -7,7 +7,6 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/texcompress.h"
-#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"
@@ -335,8 +334,6 @@ intelTexImage(GLcontext * ctx,
    /* choose the texture format */
    texImage->TexFormat = intelChooseTextureFormat(ctx, internalFormat,
                                                   format, type);
-
-   _mesa_set_fetch_functions(texImage, dims);
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
@@ -794,7 +791,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    intelImage->level = level;
    texImage->TexFormat = intelChooseTextureFormat(&intel->ctx, internalFormat,
                                                   type, format);
-   _mesa_set_fetch_functions(texImage, 2);
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 

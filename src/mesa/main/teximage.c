@@ -43,6 +43,7 @@
 #include "macros.h"
 #include "state.h"
 #include "texcompress.h"
+#include "texfetch.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
@@ -997,6 +998,9 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
       img->HeightScale = (GLfloat) img->Height;
       img->DepthScale = (GLfloat) img->Depth;
    }
+
+   img->FetchTexelc = NULL;
+   img->FetchTexelf = NULL;
 }
 
 
@@ -2200,6 +2204,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
             ASSERT(texImage->TexFormat);
 
+            _mesa_set_fetch_functions(texImage, 1);
+
             check_gen_mipmap(ctx, target, texObj, level);
 
             update_fbo_texture(ctx, texObj, face, level);
@@ -2314,6 +2320,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
             ASSERT(texImage->TexFormat);
 
+            _mesa_set_fetch_functions(texImage, 2);
+
             check_gen_mipmap(ctx, target, texObj, level);
 
             update_fbo_texture(ctx, texObj, face, level);
@@ -2423,6 +2431,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                                    pixels, &ctx->Unpack, texObj, texImage);
 
             ASSERT(texImage->TexFormat);
+
+            _mesa_set_fetch_functions(texImage, 3);
 
             check_gen_mipmap(ctx, target, texObj, level);
 
@@ -2732,6 +2742,8 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
          ASSERT(texImage->TexFormat);
 
+         _mesa_set_fetch_functions(texImage, 1);
+
          check_gen_mipmap(ctx, target, texObj, level);
 
          update_fbo_texture(ctx, texObj, face, level);
@@ -2806,6 +2818,8 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                     x, y, width, height, border);
 
          ASSERT(texImage->TexFormat);
+
+         _mesa_set_fetch_functions(texImage, 2);
 
          check_gen_mipmap(ctx, target, texObj, level);
 
@@ -3259,6 +3273,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                                              imageSize, data,
                                              texObj, texImage);
 
+            _mesa_set_fetch_functions(texImage, 1);
+
             check_gen_mipmap(ctx, target, texObj, level);
 
             /* state update */
@@ -3363,6 +3379,8 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                                              border, imageSize, data,
                                              texObj, texImage);
 
+            _mesa_set_fetch_functions(texImage, 2);
+
             check_gen_mipmap(ctx, target, texObj, level);
 
             /* state update */
@@ -3466,6 +3484,8 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                                              width, height, depth,
                                              border, imageSize, data,
                                              texObj, texImage);
+
+            _mesa_set_fetch_functions(texImage, 3);
 
             check_gen_mipmap(ctx, target, texObj, level);
 
