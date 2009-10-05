@@ -57,6 +57,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
 			break;
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
+			break;
 		case PIPE_FORMAT_R5G6B5_UNORM:
 			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
 			break;
