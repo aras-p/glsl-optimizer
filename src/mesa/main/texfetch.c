@@ -41,8 +41,6 @@
 #include "texfetch.h"
 
 
-#if FEATURE_EXT_texture_sRGB
-
 /**
  * Convert an 8-bit sRGB value from non-linear space to a
  * linear RGB value in [0, 1].
@@ -70,8 +68,6 @@ nonlinear_to_linear(GLubyte cs8)
    return table[cs8];
 }
 
-
-#endif /* FEATURE_EXT_texture_sRGB */
 
 
 /* Texel fetch routines for all supported formats

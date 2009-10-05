@@ -989,8 +989,6 @@ static void store_texel_ci8(struct gl_texture_image *texImage,
 #endif
 
 
-#if FEATURE_EXT_texture_sRGB
-
 /* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
 /* Note: component order is same as for MESA_FORMAT_RGB888 */
 static void FETCH(srgb8)(const struct gl_texture_image *texImage,
@@ -1099,8 +1097,6 @@ static void store_texel_sla8(struct gl_texture_image *texImage,
    dst[1] = rgba[ACOMP];
 }
 #endif
-
-#endif /* FEATURE_EXT_texture_sRGB */
 
 
 /* MESA_FORMAT_DUDV8 ********************************************************/

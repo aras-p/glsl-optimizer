@@ -79,7 +79,6 @@ typedef enum
    MESA_FORMAT_S8,              /*                               SSSS SSSS */
    /*@}*/
 
-#if FEATURE_EXT_texture_sRGB
    /**
     * \name 8-bit/channel sRGB formats
     */
@@ -89,29 +88,22 @@ typedef enum
    MESA_FORMAT_SARGB8,
    MESA_FORMAT_SL8,
    MESA_FORMAT_SLA8,
-#if FEATURE_texture_s3tc
    MESA_FORMAT_SRGB_DXT1,
    MESA_FORMAT_SRGBA_DXT1,
    MESA_FORMAT_SRGBA_DXT3,
    MESA_FORMAT_SRGBA_DXT5,
-#endif
    /*@}*/
-#endif
 
    /**
     * \name Compressed texture formats.
     */
    /*@{*/
-#if FEATURE_texture_fxt1
    MESA_FORMAT_RGB_FXT1,
    MESA_FORMAT_RGBA_FXT1,
-#endif
-#if FEATURE_texture_s3tc
    MESA_FORMAT_RGB_DXT1,
    MESA_FORMAT_RGBA_DXT1,
    MESA_FORMAT_RGBA_DXT3,
    MESA_FORMAT_RGBA_DXT5,
-#endif
    /*@}*/
 
    /**

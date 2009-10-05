@@ -261,8 +261,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 8,               /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 1                      /* BlockWidth/Height,Bytes */
    },
-
-#if FEATURE_EXT_texture_sRGB
    {
       MESA_FORMAT_SRGB8,
       GL_RGB,
@@ -303,7 +301,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       8, 0, 0, 0, 0,
       1, 1, 2
    },
-#if FEATURE_texture_s3tc
    {
       MESA_FORMAT_SRGB_DXT1,       /* Name */
       GL_RGB,                      /* BaseFormat */
@@ -336,10 +333,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       4, 4, 16                     /* 16 bytes per 4x4 block */
    },
-#endif
-#endif
 
-#if FEATURE_texture_fxt1
    {
       MESA_FORMAT_RGB_FXT1,
       GL_RGB,
@@ -356,9 +350,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       8, 4, 16                     /* 16 bytes per 8x4 block */
    },
-#endif
 
-#if FEATURE_texture_s3tc
    {
       MESA_FORMAT_RGB_DXT1,        /* Name */
       GL_RGB,                      /* BaseFormat */
@@ -391,8 +383,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       4, 4, 16                     /* 16 bytes per 4x4 block */
    },
-#endif
-
    {
       MESA_FORMAT_RGBA_FLOAT32,
       GL_RGBA,
@@ -489,7 +479,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 16, 0, 0, 0,
       1, 1, 2
    },
-
    {
       MESA_FORMAT_DUDV8,
       GL_DUDV_ATI,
@@ -498,7 +487,6 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 2
    },
-
    {
       MESA_FORMAT_SIGNED_RGBA8888,
       GL_RGBA,
