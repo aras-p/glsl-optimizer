@@ -73,7 +73,7 @@
 struct util_cpu_caps util_cpu_caps;
 
 static int has_cpuid(void);
-static int cpuid(unsigned int ax, unsigned int *p);
+static int cpuid(uint32_t ax, uint32_t *p);
 
 #if defined(PIPE_ARCH_X86)
 
@@ -331,18 +331,22 @@ static int has_cpuid(void)
 #endif
 }
 
+
+/**
+ * @sa cpuid.h included in gcc-4.3 onwards.
+ */
 static INLINE int
-cpuid(unsigned int ax, unsigned int *p)
+cpuid(uint32_t ax, uint32_t *p)
 {
    int ret = -1;
 
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
    __asm __volatile (
-     "movl %%ebx, %%esi\n\t"
+     "xchgl %%ebx, %1\n\t"
      "cpuid\n\t"
-     "xchgl %%ebx, %%esi"
+     "xchgl %%ebx, %1"
      : "=a" (p[0]),
-       "=S" (p[1]),
+       "=m" (p[1]),
        "=c" (p[2]),
        "=d" (p[3])
      : "0" (ax)
@@ -350,11 +354,9 @@ cpuid(unsigned int ax, unsigned int *p)
    ret = 0;
 #elif defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64)
    __asm __volatile (
-     "movq %%rbx, %%rsi\n\t"
      "cpuid\n\t"
-     "xchgq %%rbx, %%rsi"
      : "=a" (p[0]),
-       "=S" (p[1]),
+       "=b" (p[1]),
        "=c" (p[2]),
        "=d" (p[3])
      : "0" (ax)
@@ -418,8 +420,8 @@ util_cpu_detect(void)
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if (has_cpuid()) {
-      unsigned int regs[4];
-      unsigned int regs2[4];
+      uint32_t regs[4];
+      uint32_t regs2[4];
 
       util_cpu_caps.cacheline = 32;
 
