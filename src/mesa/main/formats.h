@@ -137,44 +137,6 @@ typedef enum
 } gl_format;
 
 
-/**
- * Information about texture formats.
- */
-struct gl_format_info
-{
-   gl_format Name;
-
-   /**
-    * Base format is one of GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE,
-    * GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_COLOR_INDEX, GL_DEPTH_COMPONENT.
-    */
-   GLenum BaseFormat;
-
-   /**
-    * Logical data type: one of  GL_UNSIGNED_NORMALIZED, GL_SIGNED_NORMALED,
-    * GL_UNSIGNED_INT, GL_SIGNED_INT, GL_FLOAT.
-    */
-   GLenum DataType;
-
-   GLubyte RedBits;
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte LuminanceBits;
-   GLubyte IntensityBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits;
-
-   /**
-    * To describe compressed formats.  If not compressed, Width=Height=1.
-    */
-   GLubyte BlockWidth, BlockHeight;
-   GLubyte BytesPerBlock;
-};
-
-
-
 extern GLuint
 _mesa_get_format_bytes(gl_format format);
 
