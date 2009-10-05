@@ -42,6 +42,7 @@
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_draw.h"
 #include "st_gen_mipmap.h"
@@ -113,6 +114,9 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
    uint dstLevel;
    GLenum datatype;
    GLuint comps;
+   
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 

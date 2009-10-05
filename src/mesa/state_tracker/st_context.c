@@ -36,6 +36,7 @@
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
 #include "st_public.h"
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
@@ -113,6 +114,9 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st->ctx = ctx;
    st->pipe = pipe;
 
+   /* XXX: this is one-off, per-screen init: */
+   st_debug_init();
+   
    /* state tracker needs the VBO module */
    _vbo_CreateContext(ctx);
 

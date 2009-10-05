@@ -42,14 +42,12 @@
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_dump.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "cso_cache/cso_context.h"
-
-
-#define TGSI_DEBUG 0
 
 
 /**
@@ -346,11 +344,15 @@ st_translate_vertex_program(struct st_context *st,
    stvp->num_inputs = vs_num_inputs;
    stvp->driver_shader = pipe->create_vs_state(pipe, &stvp->state);
 
-   if (0)
+   if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stvp->Base.Base);
+      debug_printf("\n");
+   }
 
-   if (TGSI_DEBUG)
+   if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( stvp->state.tokens, 0 );
+      debug_printf("\n");
+   }
 }
 
 
@@ -526,11 +528,15 @@ st_translate_fragment_program(struct st_context *st,
 
    stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
 
-   if (0)
+   if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stfp->Base.Base);
+      debug_printf("\n");
+   }
 
-   if (TGSI_DEBUG)
+   if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( stfp->state.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      debug_printf("\n");
+   }
 }
 
 

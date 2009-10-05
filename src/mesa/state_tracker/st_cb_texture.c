@@ -43,6 +43,7 @@
 #include "main/texobj.h"
 #include "main/texstore.h"
 
+#include "state_tracker/st_debug.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 #include "state_tracker/st_cb_texture.h"
@@ -903,6 +904,9 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
          GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
                                               height, format, type, row, 0);
 
+         if (ST_DEBUG & DEBUG_FALLBACK)
+            debug_printf("%s: fallback format translation\n", __FUNCTION__);
+
          /* get float[4] rgba row from surface */
          pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
 
@@ -1294,6 +1298,9 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    struct pipe_transfer *src_trans;
    GLvoid *texDest;
    enum pipe_transfer_usage transfer_usage;
+   
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    assert(width <= MAX_WIDTH);
 
@@ -1419,6 +1426,12 @@ compatible_src_dst_formats(const struct gl_renderbuffer *src,
       return TGSI_WRITEMASK_XYZ; /* A ==> 1.0 */
    }
    else {
+      if (ST_DEBUG & DEBUG_FALLBACK)
+         debug_printf("%s failed for src %s, dst %s\n",
+                      __FUNCTION__, 
+                      _mesa_lookup_enum_by_nr(srcFormat),
+                      _mesa_lookup_enum_by_nr(dstLogicalFormat));
+
       /* Otherwise fail.
        */
       return 0;

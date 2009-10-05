@@ -40,6 +40,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
@@ -1089,6 +1090,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					height);
       struct pipe_transfer *ptTex;
       enum pipe_transfer_usage transfer_usage;
+
+      if (ST_DEBUG & DEBUG_FALLBACK)
+         debug_printf("%s: fallback processing\n", __FUNCTION__);
 
       if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
