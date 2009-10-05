@@ -42,7 +42,6 @@
 #include "image.h"
 #include "texcompress.h"
 #include "texcompress_s3tc.h"
-#include "texformat.h"
 #include "texstore.h"
 
 #ifdef __MINGW32__

@@ -38,7 +38,6 @@
 #include "mipmap.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
-#include "texformat.h"
 #include "texstore.h"
 
 

@@ -44,7 +44,6 @@
 #include "state.h"
 #include "texcompress.h"
 #include "texfetch.h"
-#include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "texstore.h"

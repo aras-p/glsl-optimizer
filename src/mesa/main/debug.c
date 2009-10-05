@@ -35,7 +35,6 @@
 #include "readpix.h"
 #include "texgetimage.h"
 #include "texobj.h"
-#include "texformat.h"
 
 
 /**
