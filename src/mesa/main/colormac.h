@@ -140,9 +140,9 @@
  */
 #define UNCLAMPED_FLOAT_TO_RGB_CHAN(dst, f)	\
 do {						\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[0], (f)[0]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[1], (f)[1]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[2], (f)[2]);	\
 } while (0)
 
 
@@ -156,10 +156,10 @@ do {						\
  */
 #define UNCLAMPED_FLOAT_TO_RGBA_CHAN(dst, f)	\
 do {						\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[3], f[3]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[0], (f)[0]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[1], (f)[1]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[2], (f)[2]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[3], (f)[3]);	\
 } while (0)
 
 
