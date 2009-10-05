@@ -383,6 +383,7 @@ st_render_texture(GLcontext *ctx,
 
    rb->Width = texImage->Width2;
    rb->Height = texImage->Height2;
+   rb->_BaseFormat = texImage->_BaseFormat;
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
    /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
