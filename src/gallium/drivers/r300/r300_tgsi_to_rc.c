@@ -257,12 +257,13 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
 
 static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_instruction * src)
 {
+    struct rc_instruction * dst;
+    int i;
+
     if (src->Instruction.Opcode == TGSI_OPCODE_END)
         return;
 
-    struct rc_instruction * dst = rc_insert_new_instruction(ttr->compiler, ttr->compiler->Program.Instructions.Prev);
-    int i;
-
+    dst = rc_insert_new_instruction(ttr->compiler, ttr->compiler->Program.Instructions.Prev);
     dst->I.Opcode = translate_opcode(src->Instruction.Opcode);
     dst->I.SaturateMode = translate_saturate(src->Instruction.Saturate);
 

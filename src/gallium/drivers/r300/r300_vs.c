@@ -35,6 +35,8 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
 {
     struct r300_vertex_shader * vs = c->UserData;
     struct tgsi_shader_info* info = &vs->info;
+    struct tgsi_parse_context parser;
+    struct tgsi_full_declaration * decl;
     boolean pointsize = false;
     int out_colors = 0;
     int colors = 0;
@@ -62,8 +64,6 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
         }
     }
 
-    struct tgsi_parse_context parser;
-
     tgsi_parse_init(&parser, vs->state.tokens);
 
     while (!tgsi_parse_end_of_tokens(&parser)) {
@@ -72,7 +72,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
         if (parser.FullToken.Token.Type != TGSI_TOKEN_TYPE_DECLARATION)
             continue;
 
-        struct tgsi_full_declaration * decl = &parser.FullToken.FullDeclaration;
+        decl = &parser.FullToken.FullDeclaration;
 
         if (decl->Declaration.File != TGSI_FILE_OUTPUT)
             continue;
