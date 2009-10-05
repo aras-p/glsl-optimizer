@@ -1,5 +1,6 @@
 
 #include "context.h"
+#include "colormac.h"
 #include "fbobject.h"
 #include "texfetch.h"
 #include "texrender.h"
@@ -46,7 +47,9 @@ texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    if (rb->DataType == CHAN_TYPE) {
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
-         trb->TexImage->FetchTexelc(trb->TexImage, x + i, y, z, rgbaOut + 4 * i);
+         GLfloat rgba[4];
+         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, rgba);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
    }
    else if (rb->DataType == GL_UNSIGNED_SHORT) {
@@ -100,8 +103,10 @@ texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    if (rb->DataType == CHAN_TYPE) {
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
-         trb->TexImage->FetchTexelc(trb->TexImage, x[i], y[i] + trb->Yoffset,
-				    z, rgbaOut + 4 * i);
+         GLfloat rgba[4];
+         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+				    z, rgba);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
    }
    else if (rb->DataType == GL_UNSIGNED_SHORT) {
