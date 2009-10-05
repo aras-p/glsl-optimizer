@@ -179,7 +179,6 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -360,8 +359,6 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
 
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-   else
-      drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
    if (visual->depthBits && visual->stencilBits)
       drawable->attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
    else if (visual->depthBits)
