@@ -249,6 +249,9 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
    dri_get_buffers(drawable->dPriv);
    st_get_framebuffer_surface(drawable->stfb, ST_SURFACE_FRONT_LEFT, &ps);
 
+   if (!ps)
+      return;
+
    st_bind_texture_surface(ps, target == GL_TEXTURE_2D ? ST_TEXTURE_2D :
                            ST_TEXTURE_RECT, 0, drawable->color_format);
 }
