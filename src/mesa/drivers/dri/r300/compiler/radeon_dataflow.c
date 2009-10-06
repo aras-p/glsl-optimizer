@@ -44,7 +44,7 @@ static void reads_normal(struct rc_instruction * fullinst, rc_read_write_fn cb, 
 		for(unsigned int chan = 0; chan < 4; ++chan)
 			refmask |= 1 << GET_SWZ(inst->SrcReg[src].Swizzle, chan);
 
-		refmask &= ~RC_MASK_XYZW;
+		refmask &= RC_MASK_XYZW;
 
 		for(unsigned int chan = 0; chan < 4; ++chan) {
 			if (GET_BIT(refmask, chan)) {
