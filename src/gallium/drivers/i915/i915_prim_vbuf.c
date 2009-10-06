@@ -581,9 +581,9 @@ i915_vbuf_render_create(struct i915_context *i915)
    int i;
 
    i915_render->i915 = i915;
-   
-   i915_render->base.max_vertex_buffer_bytes = 128*1024;
-   
+
+   i915_render->base.max_vertex_buffer_bytes = 16*4096;
+
    /* NOTE: it must be such that state and vertices indices fit in a single 
     * batch buffer.
     */
@@ -605,7 +605,7 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->vbo_offset = 0;
 
    i915_render->pool_used = FALSE;
-   i915_render->pool_buffer_size = 128 * 4096;
+   i915_render->pool_buffer_size = i915_render->base.max_vertex_buffer_bytes * 4;
    i915_render->pool_fifo = u_fifo_create(6);
    for (i = 0; i < 6; i++)
       u_fifo_add(i915_render->pool_fifo,
