@@ -31,18 +31,17 @@
  *   Jose Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+
 #include "mach64_context.h"
 #include "mach64_state.h"
 #include "mach64_ioctl.h"
 #include "mach64_vb.h"
 #include "mach64_tris.h"
 #include "mach64_tex.h"
-
-#include "main/context.h"
-#include "main/macros.h"
-#include "main/simple_list.h"
-#include "main/texformat.h"
-#include "main/imports.h"
 
 
 /* Destroy hardware state associated with texture `t'.

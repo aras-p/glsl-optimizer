@@ -42,7 +42,6 @@
 #include "main/image.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
 #include "main/texobj.h"

@@ -32,7 +32,6 @@
 
 #include "main/simple_list.h"
 #include "main/texcompress.h"
-#include "main/texformat.h"
 
 static GLuint radeon_compressed_texture_size(GLcontext *ctx,
 		GLsizei width, GLsizei height, GLsizei depth,

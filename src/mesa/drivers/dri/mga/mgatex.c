@@ -27,22 +27,21 @@
 
 #include "main/glheader.h"
 #include "main/mm.h"
-#include "mgacontext.h"
-#include "mgatex.h"
-#include "mgaregs.h"
-#include "mgatris.h"
-#include "mgaioctl.h"
-
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
+
+#include "mgacontext.h"
+#include "mgatex.h"
+#include "mgaregs.h"
+#include "mgatris.h"
+#include "mgaioctl.h"
 
 #include "swrast/swrast.h"
 

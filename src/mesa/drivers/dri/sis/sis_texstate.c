@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 
 #include "sis_context.h"
 #include "sis_state.h"

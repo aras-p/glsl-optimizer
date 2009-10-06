@@ -29,7 +29,6 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
              
-#include "main/texformat.h"
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_wm.h"

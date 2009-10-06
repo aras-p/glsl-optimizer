@@ -46,7 +46,6 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
-#include "main/texformat.h"
 
 #include "r600_context.h"
 

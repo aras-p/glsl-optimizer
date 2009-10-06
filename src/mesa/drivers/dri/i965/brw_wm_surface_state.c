@@ -31,7 +31,6 @@
                    
 
 #include "main/mtypes.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "shader/prog_parameter.h"
 

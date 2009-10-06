@@ -33,7 +33,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"

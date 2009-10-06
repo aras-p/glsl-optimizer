@@ -27,7 +27,6 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"

@@ -41,7 +41,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/imports.h"
 
 #define TEX_0	1

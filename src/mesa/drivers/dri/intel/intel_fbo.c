@@ -33,7 +33,6 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/context.h"
-#include "main/texformat.h"
 #include "main/texrender.h"
 #include "drivers/common/meta.h"
 

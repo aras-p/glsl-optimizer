@@ -574,7 +574,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       _mesa_destroy_context(imesa->glCtx);
 
       /* no longer use vertex_dma_buf*/
-      Xfree(imesa);
+      _mesa_free(imesa);
    }
 }
 

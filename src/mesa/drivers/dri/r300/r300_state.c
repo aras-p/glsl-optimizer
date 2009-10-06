@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/framebuffer.h"
 #include "main/simple_list.h"
 #include "main/api_arrayelt.h"
-#include "main/texformat.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

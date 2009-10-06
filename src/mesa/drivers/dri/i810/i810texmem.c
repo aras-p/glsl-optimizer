@@ -30,7 +30,6 @@
 #include "main/enums.h"
 #include "main/colormac.h"
 #include "main/mm.h"
-#include "main/texformat.h"
 
 #include "i810screen.h"
 #include "i810_dri.h"

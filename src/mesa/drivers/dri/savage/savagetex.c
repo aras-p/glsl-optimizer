@@ -23,28 +23,23 @@
  */
 
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <GL/gl.h>
-
+#include "main/context.h"
 #include "main/mm.h"
-#include "savagecontext.h"
-#include "savagetex.h"
-#include "savagetris.h"
-#include "savageioctl.h"
-#include "main/simple_list.h"
-#include "main/enums.h"
-#include "savage_bci.h"
-
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/texobj.h"
 #include "main/convolve.h"
 #include "main/colormac.h"
+#include "main/simple_list.h"
+#include "main/enums.h"
 
 #include "swrast/swrast.h"
+
+#include "savagecontext.h"
+#include "savagetex.h"
+#include "savagetris.h"
+#include "savageioctl.h"
+#include "savage_bci.h"
 
 #include "xmlpool.h"
 

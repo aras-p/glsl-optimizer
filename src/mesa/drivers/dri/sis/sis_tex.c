@@ -28,17 +28,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
-#include "sis_context.h"
-#include "sis_alloc.h"
-#include "sis_tex.h"
-
 #include "swrast/swrast.h"
 #include "main/imports.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 
+#include "sis_context.h"
+#include "sis_alloc.h"
+#include "sis_tex.h"
 #include "xmlpool.h"
 
 #define ALIGN(value, align) (GLubyte *)((long)(value + align - 1) & ~(align - 1))

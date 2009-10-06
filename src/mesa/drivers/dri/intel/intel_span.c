@@ -29,7 +29,6 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 
 #include "intel_buffers.h"
 #include "intel_fbo.h"

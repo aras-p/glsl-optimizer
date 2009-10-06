@@ -29,7 +29,6 @@
 #include "main/mtypes.h"
 #include "main/context.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 #include "main/colormac.h"
 
 #include "intel_blit.h"

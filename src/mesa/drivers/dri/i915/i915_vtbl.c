@@ -32,7 +32,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"

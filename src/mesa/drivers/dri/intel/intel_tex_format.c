@@ -1,7 +1,6 @@
 #include "intel_context.h"
 #include "intel_tex.h"
 #include "intel_chipset.h"
-#include "main/texformat.h"
 #include "main/enums.h"
 
 
