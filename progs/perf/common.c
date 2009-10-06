@@ -30,6 +30,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#if defined(_MSC_VER)
+#define snprintf _snprintf
+#endif
+
 
 /* Need to add a fflush windows console with mingw, otherwise nothing
  * shows up until program exit.  May want to add logging here.
