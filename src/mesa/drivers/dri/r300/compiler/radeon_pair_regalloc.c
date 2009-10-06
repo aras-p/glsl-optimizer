@@ -177,6 +177,7 @@ static void scan_callback(void * data, struct rc_instruction * inst,
 			reg->Live.Start = -1;
 		else
 			reg->Live.Start = inst->IP;
+		reg->Live.End = inst->IP;
 	} else {
 		if (inst->IP > reg->Live.End)
 			reg->Live.End = inst->IP;
