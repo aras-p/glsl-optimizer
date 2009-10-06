@@ -295,7 +295,6 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_X8R8G8B8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
-        case PIPE_FORMAT_Z24S8_UNORM:
             return R300_COLOR_FORMAT_ARGB8888;
         /* XXX Not in pipe_format
         case PIPE_FORMAT_A32R32G32B32:

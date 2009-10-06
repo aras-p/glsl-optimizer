@@ -215,10 +215,8 @@ static boolean check_tex_2d_format(enum pipe_format format, uint32_t usage,
                  PIPE_TEXTURE_USAGE_PRIMARY |
                  PIPE_TEXTURE_USAGE_SAMPLER);
 
-        /* Z buffer */
+        /* Z buffer or texture */
         case PIPE_FORMAT_Z16_UNORM:
-            return usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
-
         /* Z buffer with stencil or texture */
         case PIPE_FORMAT_Z24S8_UNORM:
             return usage &
