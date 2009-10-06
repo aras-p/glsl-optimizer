@@ -179,8 +179,19 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 
 	for(unsigned int i = 0; i < sinst->NumWriteValues; ++i) {
 		struct reg_value * v = sinst->WriteValues[i];
-		for(struct reg_value_reader * r = v->Readers; r; r = r->Next) {
-			decrease_dependencies(s, r->Reader);
+		if (v->NumReaders) {
+			for(struct reg_value_reader * r = v->Readers; r; r = r->Next) {
+				decrease_dependencies(s, r->Reader);
+			}
+		} else {
+			/* This happens in instruction sequences of the type
+			 *  OP r.x, ...;
+			 *  OP r.x, r.x, ...;
+			 * See also the subtlety in how instructions that both
+			 * read and write the same register are scanned.
+			 */
+			if (v->Next)
+				decrease_dependencies(s, v->Next->Writer);
 		}
 	}
 }
@@ -360,6 +371,13 @@ static void scan_read(void * data, struct rc_instruction * inst,
 	if (!v)
 		return;
 
+	if (v->Writer == s->Current) {
+		/* The instruction reads and writes to a register component.
+		 * In this case, we only want to increment dependencies by one.
+		 */
+		return;
+	}
+
 	DBG("%i: read %i[%i] chan %i\n", s->Current->Instruction->IP, file, index, chan);
 
 	struct reg_value_reader * reader = memory_pool_malloc(&s->C->Pool, sizeof(*reader));
@@ -426,8 +444,12 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 
 		DBG("%i: Scanning\n", inst->IP);
 
-		rc_for_all_reads(inst, &scan_read, &s);
+		/* The order of things here is subtle and maybe slightly
+		 * counter-intuitive, to account for the case where an
+		 * instruction writes to the same register as it reads
+		 * from. */
 		rc_for_all_writes(inst, &scan_write, &s);
+		rc_for_all_reads(inst, &scan_read, &s);
 
 		DBG("%i: Has %i dependencies\n", inst->IP, s.Current->NumDependencies);
 
