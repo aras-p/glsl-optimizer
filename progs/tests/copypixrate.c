@@ -69,7 +69,7 @@ DrawTestImage(void)
 static int
 Rand(int max)
 {
-   return ((int) random()) % max;
+   return ((int) rand()) % max;
 }
 
 
