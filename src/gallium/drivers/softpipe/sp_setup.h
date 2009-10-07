@@ -31,23 +31,23 @@ struct setup_context;
 struct softpipe_context;
 
 void 
-setup_tri( struct setup_context *setup,
+sp_setup_tri( struct setup_context *setup,
 	   const float (*v0)[4],
 	   const float (*v1)[4],
 	   const float (*v2)[4] );
 
 void
-setup_line(struct setup_context *setup,
+sp_setup_line(struct setup_context *setup,
            const float (*v0)[4],
            const float (*v1)[4]);
 
 void
-setup_point( struct setup_context *setup,
+sp_setup_point( struct setup_context *setup,
              const float (*v0)[4] );
 
 
-struct setup_context *setup_create_context( struct softpipe_context *softpipe );
-void setup_prepare( struct setup_context *setup );
-void setup_destroy_context( struct setup_context *setup );
+struct setup_context *sp_setup_create_context( struct softpipe_context *softpipe );
+void sp_setup_prepare( struct setup_context *setup );
+void sp_setup_destroy_context( struct setup_context *setup );
 
 #endif

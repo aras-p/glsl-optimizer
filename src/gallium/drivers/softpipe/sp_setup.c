@@ -696,7 +696,7 @@ calc_det( const float (*v0)[4],
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-void setup_tri( struct setup_context *setup,
+void sp_setup_tri( struct setup_context *setup,
                 const float (*v0)[4],
                 const float (*v1)[4],
                 const float (*v2)[4] )
@@ -915,7 +915,7 @@ plot(struct setup_context *setup, int x, int y)
  * to handle stippling and wide lines.
  */
 void
-setup_line(struct setup_context *setup,
+sp_setup_line(struct setup_context *setup,
            const float (*v0)[4],
            const float (*v1)[4])
 {
@@ -1045,7 +1045,7 @@ point_persp_coeff(const struct setup_context *setup,
  * XXX could optimize a lot for 1-pixel points.
  */
 void
-setup_point( struct setup_context *setup,
+sp_setup_point( struct setup_context *setup,
              const float (*v0)[4] )
 {
    struct softpipe_context *softpipe = setup->softpipe;
@@ -1246,7 +1246,7 @@ setup_point( struct setup_context *setup,
    }
 }
 
-void setup_prepare( struct setup_context *setup )
+void sp_setup_prepare( struct setup_context *setup )
 {
    struct softpipe_context *sp = setup->softpipe;
 
@@ -1270,7 +1270,7 @@ void setup_prepare( struct setup_context *setup )
 
 
 
-void setup_destroy_context( struct setup_context *setup )
+void sp_setup_destroy_context( struct setup_context *setup )
 {
    FREE( setup );
 }
@@ -1279,7 +1279,7 @@ void setup_destroy_context( struct setup_context *setup )
 /**
  * Create a new primitive setup/render stage.
  */
-struct setup_context *setup_create_context( struct softpipe_context *softpipe )
+struct setup_context *sp_setup_create_context( struct softpipe_context *softpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
    unsigned i;
