@@ -796,7 +796,7 @@ unpack_image(GLcontext *ctx, GLuint dimensions,
  *         opcode).
  */
 void *
-_mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
+_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
 {
    const GLuint numNodes = 1 + (bytes + sizeof(Node) - 1) / sizeof(Node);
    Node *n;
@@ -847,11 +847,11 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
  * \return  the new opcode number or -1 if error
  */
 GLint
-_mesa_alloc_opcode(GLcontext *ctx,
-                   GLuint size,
-                   void (*execute) (GLcontext *, void *),
-                   void (*destroy) (GLcontext *, void *),
-                   void (*print) (GLcontext *, void *))
+_mesa_dlist_alloc_opcode(GLcontext *ctx,
+                         GLuint size,
+                         void (*execute) (GLcontext *, void *),
+                         void (*destroy) (GLcontext *, void *),
+                         void (*print) (GLcontext *, void *))
 {
    if (ctx->ListExt.NumOpcodes < MAX_DLIST_EXT_OPCODES) {
       const GLuint i = ctx->ListExt.NumOpcodes++;
@@ -875,7 +875,7 @@ _mesa_alloc_opcode(GLcontext *ctx,
  *     usable data area.
  */
 #define ALLOC_INSTRUCTION(CTX, OPCODE, NPARAMS) \
-    ((Node *)_mesa_alloc_instruction(CTX, OPCODE, (NPARAMS)*sizeof(Node)) - 1)
+    ((Node *)_mesa_dlist_alloc(CTX, OPCODE, (NPARAMS)*sizeof(Node)) - 1)
 
 
 
