@@ -3026,6 +3026,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_DUDV8, _mesa_texstore_dudv8 },
    { MESA_FORMAT_SIGNED_RGBA8888, _mesa_texstore_signed_rgba8888 },
    { MESA_FORMAT_SIGNED_RGBA8888_REV, _mesa_texstore_signed_rgba8888 },
+   { MESA_FORMAT_SIGNED_RGBA_16, NULL },
 };
 
 

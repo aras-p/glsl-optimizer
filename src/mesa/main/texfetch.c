@@ -334,6 +334,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_signed_rgba8888_rev
    },
    {
+      MESA_FORMAT_SIGNED_RGBA_16,
+      NULL, /* XXX to do */
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_RGBA8888,
       fetch_texel_1d_f_rgba8888,
       fetch_texel_2d_f_rgba8888,
