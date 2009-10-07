@@ -93,7 +93,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(pipe, internalFormat);
+      format = st_choose_renderbuffer_format(pipe->screen, internalFormat);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;

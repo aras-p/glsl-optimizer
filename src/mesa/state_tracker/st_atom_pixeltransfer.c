@@ -122,7 +122,8 @@ create_color_map_texture(GLcontext *ctx)
    const uint texSize = 256; /* simple, and usually perfect */
 
    /* find an RGBA texture format */
-   format = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
+   format = st_choose_format(pipe->screen, GL_RGBA,
+                             PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
 
    /* create texture for color map/table */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
