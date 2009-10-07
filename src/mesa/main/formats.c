@@ -638,6 +638,31 @@ _mesa_is_format_compressed(gl_format format)
 
 
 /**
+ * Return color encoding for given format.
+ * \return GL_LINEAR or GL_SRGB
+ */
+GLenum
+_mesa_get_format_color_encoding(gl_format format)
+{
+   /* XXX this info should be encoded in gl_format_info */
+   switch (format) {
+   case MESA_FORMAT_SRGB8:
+   case MESA_FORMAT_SRGBA8:
+   case MESA_FORMAT_SARGB8:
+   case MESA_FORMAT_SL8:
+   case MESA_FORMAT_SLA8:
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+      return GL_SRGB;
+   default:
+      return GL_LINEAR;
+   }
+}
+
+
+/**
  * Return number of bytes needed to store an image of the given size
  * in the given format.
  */

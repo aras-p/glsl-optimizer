@@ -152,6 +152,9 @@ _mesa_get_format_base_format(gl_format format);
 extern GLboolean
 _mesa_is_format_compressed(gl_format format);
 
+extern GLenum
+_mesa_get_format_color_encoding(gl_format format);
+
 extern GLuint
 _mesa_format_image_size(gl_format format, GLsizei width,
                         GLsizei height, GLsizei depth);
