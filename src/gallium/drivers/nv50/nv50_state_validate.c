@@ -356,13 +356,14 @@ viewport_uptodate:
 	if (nv50->dirty & NV50_NEW_SAMPLER) {
 		int i;
 
-		so = so_new(nv50->sampler_nr * 9 + 2, 0);
-		so_method(so, tesla, NV50TCL_CB_ADDR, 1);
-		so_data  (so, NV50_CB_TSC);
+		so = so_new(nv50->sampler_nr * 11, 0);
 		for (i = 0; i < nv50->sampler_nr; i++) {
 			if (!nv50->sampler[i])
 				continue;
 
+			so_method(so, tesla, NV50TCL_CB_ADDR, 1);
+			so_data  (so, ((i * 8) << NV50TCL_CB_ADDR_ID_SHIFT) |
+				      NV50_CB_TSC);
 			so_method(so, tesla, NV50TCL_CB_DATA(0) | (2<<29), 8);
 			so_datap (so, nv50->sampler[i]->tsc, 8);
 		}

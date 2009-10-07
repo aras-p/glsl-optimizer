@@ -148,18 +148,19 @@ nv50_tex_validate(struct nv50_context *nv50)
 	struct nouveau_stateobj *so;
 	int unit, push;
 
-	push  = nv50->miptree_nr * 9 + 2;
+	push  = nv50->miptree_nr * 11;
 	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
 
 	so = so_new(push, nv50->miptree_nr * 2);
-	so_method(so, tesla, NV50TCL_CB_ADDR, 1);
-	so_data  (so, NV50_CB_TIC);
 	for (unit = 0; unit < nv50->miptree_nr; unit++) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
 		if (!mt)
 			continue;
 
+		so_method(so, tesla, NV50TCL_CB_ADDR, 1);
+		so_data  (so, ((unit * 8) << NV50TCL_CB_ADDR_ID_SHIFT) |
+			      NV50_CB_TIC);
 		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000, 8);
 		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
