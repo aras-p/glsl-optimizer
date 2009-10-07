@@ -1311,13 +1311,15 @@ glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
 Bool
 glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 {
+   int op, ev, err;
    /* Mesa's GLX isn't really an X extension but we try to act like one. */
-   (void) dpy;
+   if (!XQueryExtension(dpy, GLX_EXTENSION_NAME, &op, &ev, &err))
+      ev = err = 0;
    if (errorBase)
-      *errorBase = 0;
+      *errorBase = err;
    if (eventBase)
-      *eventBase = 0;
-   return True;
+      *eventBase = ev;
+   return True; /* we're faking GLX so always return success */
 }
 
 
