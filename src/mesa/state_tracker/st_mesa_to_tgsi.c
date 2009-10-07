@@ -151,7 +151,7 @@ dst_register( struct st_translate *t,
       return t->address[index];
 
    default:
-      assert( 0 );
+      debug_assert( 0 );
       return ureg_dst_undef();
    }
 }
@@ -173,8 +173,9 @@ src_register( struct st_translate *t,
 
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
+   case PROGRAM_ENV_PARAM:
    case PROGRAM_UNIFORM:
-   case PROGRAM_CONSTANT:
+   case PROGRAM_CONSTANT:       /* ie, immediate */
       return t->constants[index];
 
    case PROGRAM_INPUT:
@@ -187,7 +188,7 @@ src_register( struct st_translate *t,
       return ureg_src(t->address[index]);
 
    default:
-      assert( 0 );
+      debug_assert( 0 );
       return ureg_src_undef();
    }
 }
@@ -216,7 +217,7 @@ translate_texture_target( GLuint textarget,
    case TEXTURE_CUBE_INDEX: return TGSI_TEXTURE_CUBE;
    case TEXTURE_RECT_INDEX: return TGSI_TEXTURE_RECT;
    default:
-      assert( 0 );
+      debug_assert( 0 );
       return TGSI_TEXTURE_1D;
    }
 }
@@ -386,7 +387,7 @@ static void emit_swz( struct st_translate *t,
                 swizzle_4v( imm, add_swizzle ) );
    }
    else {
-      assert(0);
+      debug_assert(0);
    }
 
 #undef IMM_ZERO
@@ -539,7 +540,7 @@ translate_opcode( unsigned op )
    case OPCODE_END:
       return TGSI_OPCODE_END;
    default:
-      assert( 0 );
+      debug_assert( 0 );
       return TGSI_OPCODE_NOP;
    }
 }
@@ -578,7 +579,7 @@ compile_instruction(
    case OPCODE_ELSE:
    case OPCODE_ENDLOOP:
    case OPCODE_IF:
-      assert(num_dst == 0);
+      debug_assert(num_dst == 0);
       ureg_label_insn( ureg,
                        translate_opcode( inst->Opcode ),
                        src, num_src,
@@ -761,7 +762,7 @@ st_translate_mesa_program(
                                               outputSemanticIndex[i] );
             break;
          default:
-            assert(0);
+            debug_assert(0);
             return 0;
          }
       }
@@ -781,7 +782,7 @@ st_translate_mesa_program(
    /* Declare address register.
     */
    if (program->NumAddressRegs > 0) {
-      assert( program->NumAddressRegs == 1 );
+      debug_assert( program->NumAddressRegs == 1 );
       t->address[0] = ureg_DECL_address( ureg );
    }
 
@@ -864,7 +865,7 @@ out:
    if (!tokens) {
       debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
       _mesa_print_program(program);
-      assert(0);
+      debug_assert(0);
    }
 
    return tokens;
