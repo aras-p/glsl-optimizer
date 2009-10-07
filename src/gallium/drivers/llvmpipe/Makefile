@@ -32,7 +32,6 @@ C_SOURCES = \
 	lp_draw_arrays.c \
 	lp_flush.c \
 	lp_jit.c \
-	lp_prim_setup.c \
 	lp_prim_vbuf.c \
 	lp_setup.c \
 	lp_query.c \
@@ -51,7 +50,6 @@ C_SOURCES = \
 	lp_tex_sample_c.c \
 	lp_tex_sample_llvm.c \
 	lp_texture.c \
-	lp_tile_cache.c \
 	lp_tile_soa.c
 
 include ../../Makefile.template
