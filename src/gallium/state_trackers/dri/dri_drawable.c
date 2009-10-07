@@ -213,6 +213,7 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 					dri_drawable->h, buffers[i].pitch);
 
       switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
       case __DRI_BUFFER_BACK_LEFT:
 	 drawable->color_format = surface->format;
@@ -222,6 +223,9 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       case __DRI_BUFFER_STENCIL:
 	 drawable->depth_stencil_format = surface->format;
 	 break;
+      case __DRI_BUFFER_ACCUM:
+      default:
+	 assert(0);
       }
 
       st_set_framebuffer_surface(drawable->stfb, index, surface);
