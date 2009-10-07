@@ -789,14 +789,13 @@ unpack_image(GLcontext *ctx, GLuint dimensions,
 
 
 /**
- * Allocate space for a display list instruction.
+ * Allocate space for a display list instruction (opcode + payload space).
  * \param opcode  the instruction opcode (OPCODE_* value)
- * \param bytes   instruction size in bytes, not counting opcode.
- * \return pointer to the usable data area (not including the internal
- *         opcode).
+ * \param bytes   instruction payload size (not counting opcode)
+ * \return pointer to allocated memory (the opcode space)
  */
-void *
-_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
+static Node *
+dlist_alloc(GLcontext *ctx, OpCode opcode, GLuint bytes)
 {
    const GLuint numNodes = 1 + (bytes + sizeof(Node) - 1) / sizeof(Node);
    Node *n;
@@ -830,9 +829,30 @@ _mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
    n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
    ctx->ListState.CurrentPos += numNodes;
 
-   n[0].opcode = (OpCode) opcode;
+   n[0].opcode = opcode;
 
-   return (void *) (n + 1);     /* return ptr to node following opcode */
+   return n;
+}
+
+
+
+/**
+ * Allocate space for a display list instruction.  Used by callers outside
+ * this file for things like VBO vertex data.
+ *
+ * \param opcode  the instruction opcode (OPCODE_* value)
+ * \param bytes   instruction size in bytes, not counting opcode.
+ * \return pointer to the usable data area (not including the internal
+ *         opcode).
+ */
+void *
+_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint bytes)
+{
+   Node *n = dlist_alloc(ctx, (OpCode) opcode, bytes);
+   if (n)
+      return n + 1;  /* return pointer to payload area, after opcode */
+   else
+      return NULL;
 }
 
 
@@ -866,18 +886,19 @@ _mesa_dlist_alloc_opcode(GLcontext *ctx,
 }
 
 
-
 /**
- * Allocate display list instruction.  Returns Node ptr to where the opcode
- * is stored.  The first function parameter would go in node[1].
+ * Allocate space for a display list instruction.  The space is basically
+ * an array of Nodes where node[0] holds the opcode, node[1] is the first
+ * function parameter, node[2] is the second parameter, etc.
+ *
  * \param opcode  one of OPCODE_x
  * \param nparams  number of function parameters
+ * \return  pointer to start of instruction space
  */
 static INLINE Node *
 alloc_instruction(GLcontext *ctx, OpCode opcode, GLuint nparams)
 {
-   return (Node *)
-      _mesa_dlist_alloc(ctx, opcode, nparams * sizeof(Node)) - 1;
+   return dlist_alloc(ctx, opcode, nparams * sizeof(Node));
 }
 
 
