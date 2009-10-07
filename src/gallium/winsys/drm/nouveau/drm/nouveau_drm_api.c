@@ -197,6 +197,7 @@ nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
 			 unsigned stride, unsigned handle)
 {
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
+	struct pipe_texture *pt;
 	struct pipe_buffer *pb;
 	int ret;
 
@@ -218,7 +219,9 @@ nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
 	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
 		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 	pb->size = nouveau_bo(pb)->size;
-	return pscreen->texture_blanket(pscreen, templ, &stride, pb);
+	pt = pscreen->texture_blanket(pscreen, templ, &stride, pb);
+	pipe_buffer_reference(&pb, NULL);
+	return pt;
 }
 
 static boolean
@@ -245,6 +248,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 		return false;
 
 	*handle = mt->bo->handle;
+	*stride = mt->base.nblocksx[0] * mt->base.block.size;
 	return true;
 }
 

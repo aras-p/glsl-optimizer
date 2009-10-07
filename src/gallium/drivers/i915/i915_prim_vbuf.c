@@ -52,6 +52,9 @@
 #include "i915_state.h"
 
 
+#undef VBUF_USE_FIFO
+#undef VBUF_MAP_BUFFER
+
 /**
  * Primitive renderer for i915.
  */
@@ -74,16 +77,25 @@ struct i915_vbuf_render {
 
    /* Stuff for the vbo */
    struct intel_buffer *vbo;
-   size_t vbo_size;
+   size_t vbo_size; /**< current size of allocated buffer */
+   size_t vbo_alloc_size; /**< minimum buffer size to allocate */
    size_t vbo_offset;
    void *vbo_ptr;
    size_t vbo_max_used;
 
-   /* stuff for the pool */
+#ifndef VBUF_MAP_BUFFER
+   size_t map_used_start;
+   size_t map_used_end;
+   size_t map_size;
+#endif
+
+#ifdef VBUF_USE_FIFO
+   /* Stuff for the pool */
    struct util_fifo *pool_fifo;
    unsigned pool_used;
    unsigned pool_buffer_size;
    boolean pool_not_used;
+#endif
 };
 
 
@@ -132,18 +144,31 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    struct intel_winsys *iws = i915->iws;
 
    if (i915_render->vbo) {
+#ifdef VBUF_USE_FIFO
       if (i915_render->pool_not_used)
          iws->buffer_destroy(iws, i915_render->vbo);
       else
          u_fifo_add(i915_render->pool_fifo, i915_render->vbo);
       i915_render->vbo = NULL;
+#else
+      iws->buffer_destroy(iws, i915_render->vbo);
+#endif
    }
 
    i915->vbo_flushed = 0;
 
-   i915_render->vbo_size = MAX2(size, i915_render->pool_buffer_size);
+   i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
    i915_render->vbo_offset = 0;
 
+#ifndef VBUF_MAP_BUFFER
+   if (i915_render->vbo_size > i915_render->map_size) {
+      i915_render->map_size = i915_render->vbo_size;
+      FREE(i915_render->vbo_ptr);
+      i915_render->vbo_ptr = MALLOC(i915_render->map_size);
+   }
+#endif
+
+#ifdef VBUF_USE_FIFO
    if (i915_render->vbo_size != i915_render->pool_buffer_size) {
       i915_render->pool_not_used = TRUE;
       i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size, 64,
@@ -158,6 +183,10 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
       }
       u_fifo_pop(i915_render->pool_fifo, (void**)&i915_render->vbo);
    }
+#else
+   i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size,
+                                         64, INTEL_NEW_VERTEX);
+#endif
 }
 
 static boolean
@@ -173,10 +202,11 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
    assert(!i915->vbo);
 
    if (!i915_vbuf_render_reserve(i915_render, size)) {
-
+#ifdef VBUF_USE_FIFO
+      /* incase we flushed reset the number of pool buffers used */
       if (i915->vbo_flushed)
          i915_render->pool_used = 0;
-
+#endif
       i915_vbuf_render_new_buf(i915_render, size);
    }
 
@@ -200,9 +230,13 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
    if (i915->vbo_flushed)
       debug_printf("%s bad vbo flush occured stalling on hw\n", __FUNCTION__);
 
+#ifdef VBUF_MAP_BUFFER
    i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
-
-   return (unsigned char *)i915_render->vbo_ptr + i915->vbo_offset;
+   return (unsigned char *)i915_render->vbo_ptr + i915_render->vbo_offset;
+#else
+   (void)iws;
+   return (unsigned char *)i915_render->vbo_ptr;
+#endif
 }
 
 static void
@@ -215,7 +249,17 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
    struct intel_winsys *iws = i915->iws;
 
    i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
+#ifdef VBUF_MAP_BUFFER
    iws->buffer_unmap(iws, i915_render->vbo);
+#else
+   i915_render->map_used_start = i915_render->vertex_size * min_index;
+   i915_render->map_used_end = i915_render->vertex_size * (max_index + 1);
+   iws->buffer_write(iws, i915_render->vbo,
+                     i915_render->map_used_start + i915_render->vbo_offset,
+                     i915_render->map_used_end - i915_render->map_used_start,
+                     i915_render->vbo_ptr + i915_render->map_used_start);
+
+#endif
 }
 
 static boolean
@@ -581,9 +625,9 @@ i915_vbuf_render_create(struct i915_context *i915)
    int i;
 
    i915_render->i915 = i915;
-   
-   i915_render->base.max_vertex_buffer_bytes = 128*1024;
-   
+
+   i915_render->base.max_vertex_buffer_bytes = 16*4096;
+
    /* NOTE: it must be such that state and vertices indices fit in a single 
     * batch buffer.
     */
@@ -599,23 +643,29 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->base.release_vertices = i915_vbuf_render_release_vertices;
    i915_render->base.destroy = i915_vbuf_render_destroy;
 
+#ifndef VBUF_MAP_BUFFER
+   i915_render->map_size = 0;
+   i915_render->map_used_start = 0;
+   i915_render->map_used_end = 0;
+#endif
 
    i915_render->vbo = NULL;
+   i915_render->vbo_ptr = NULL;
    i915_render->vbo_size = 0;
    i915_render->vbo_offset = 0;
+   i915_render->vbo_alloc_size = i915_render->base.max_vertex_buffer_bytes * 4;
 
+#ifdef VBUF_USE_POOL
    i915_render->pool_used = FALSE;
-   i915_render->pool_buffer_size = 128 * 4096;
+   i915_render->pool_buffer_size = i915_render->vbo_alloc_size;
    i915_render->pool_fifo = u_fifo_create(6);
    for (i = 0; i < 6; i++)
       u_fifo_add(i915_render->pool_fifo,
                  iws->buffer_create(iws, i915_render->pool_buffer_size, 64,
                                     INTEL_NEW_VERTEX));
-
-#if 0
-   /* TODO JB: is this realy needed? */
-   i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
-   iws->buffer_unmap(iws, i915_render->vbo);
+#else
+   (void)i;
+   (void)iws;
 #endif
 
    return &i915_render->base;

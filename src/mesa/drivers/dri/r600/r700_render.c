@@ -960,7 +960,6 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
 
     _tnl_UpdateFixedFunctionProgram(ctx);
     r700SetVertexFormat(ctx, arrays, max_index + 1);
-    r700SetupIndexBuffer(ctx, ib);
     /* shaders need to be updated before buffers are validated */
     r700UpdateShaders2(ctx);
     if (!r600ValidateBuffers(ctx))
@@ -981,6 +980,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     GLuint emit_end = r700PredictRenderSize(ctx, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
 
+    r700SetupIndexBuffer(ctx, ib);
     r700SetupStreams2(ctx, arrays, max_index + 1);
 
     radeonEmitState(radeon);

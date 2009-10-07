@@ -1501,8 +1501,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    GLuint comps;
 
    ASSERT(texObj);
-   /* XXX choose cube map face here??? */
-   srcImage = texObj->Image[0][texObj->BaseLevel];
+   srcImage = _mesa_select_tex_image(ctx, texObj, target, texObj->BaseLevel);
    ASSERT(srcImage);
 
    maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
@@ -1510,7 +1509,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
    /* Find convertFormat - the format that do_row() will process */
    if (srcImage->IsCompressed) {
-      /* setup for compressed textures */
+      /* setup for compressed textures - need to allocate temporary
+       * image buffers to hold uncompressed images.
+       */
       GLuint row;
       GLint  components, size;
       GLchan *dst;
@@ -1587,11 +1588,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                                          &dstWidth, &dstHeight, &dstDepth);
       if (!nextLevel) {
          /* all done */
-         if (srcImage->IsCompressed) {
-            _mesa_free((void *) srcData);
-            _mesa_free(dstData);
-         }
-         return;
+         break;
       }
 
       /* get dest gl_texture_image */
@@ -1682,6 +1679,12 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       }
 
    } /* loop over mipmap levels */
+
+   if (srcImage->IsCompressed) {
+      /* free uncompressed image buffers */
+      _mesa_free((void *) srcData);
+      _mesa_free(dstData);
+   }
 }
 
 

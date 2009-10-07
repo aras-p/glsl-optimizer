@@ -1,0 +1,30 @@
+Import('*')
+
+env = env.Clone()
+env.Append(CPPPATH = '#/include')
+env.Append(CPPPATH = '#/src/mesa')
+
+# temporary fix
+env['CFLAGS'] = str(env['CFLAGS']).replace('-Werror=declaration-after-statement', '')
+
+r300compiler = env.ConvenienceLibrary(
+    target = 'r300compiler',
+    source = [
+        'radeon_code.c',
+        'radeon_compiler.c',
+        'radeon_nqssadce.c',
+        'radeon_program.c',
+        'radeon_program_alu.c',
+        'radeon_program_pair.c',
+        'r3xx_fragprog.c',
+        'r300_fragprog.c',
+        'r300_fragprog_swizzle.c',
+        'r300_fragprog_emit.c',
+        'r500_fragprog.c',
+        'r500_fragprog_emit.c',
+        'r3xx_vertprog.c',
+        'r3xx_vertprog_dump.c',
+        'memory_pool.c',
+    ])
+
+Return('r300compiler')

@@ -153,13 +153,13 @@ struct intel_winsys {
    /**
     * Write to a buffer.
     *
-    * Arguments follows pwrite(2)
+    * Arguments follows pipe_buffer_write.
     */
    int (*buffer_write)(struct intel_winsys *iws,
                        struct intel_buffer *dst,
-                       const void *src,
+                       size_t offset,
                        size_t size,
-                       size_t offset);
+                       const void *data);
 
    void (*buffer_destroy)(struct intel_winsys *iws,
                           struct intel_buffer *buffer);

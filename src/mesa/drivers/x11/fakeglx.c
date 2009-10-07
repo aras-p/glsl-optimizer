@@ -1197,10 +1197,10 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             if (!fbConfig)
                return NULL;
             parselist++;
-            if (*parselist == GLX_RGBA_BIT) {
+            if (*parselist & GLX_RGBA_BIT) {
                rgb_flag = GL_TRUE;
             }
-            else if (*parselist == GLX_COLOR_INDEX_BIT) {
+            else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
             else if (*parselist == 0) {
@@ -1637,12 +1637,14 @@ Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
 
 
 static Bool
-Fake_glXQueryExtension( Display *dpy, int *errorb, int *event )
+Fake_glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 {
    /* Mesa's GLX isn't really an X extension but we try to act like one. */
    (void) dpy;
-   (void) errorb;
-   (void) event;
+   if (errorBase)
+      *errorBase = 0;
+   if (eventBase)
+      *eventBase = 0;
    return True;
 }
 
@@ -2349,32 +2351,42 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
             break;
          case GLX_PRESERVED_CONTENTS:
             attrib++;
-            preserveContents = *attrib; /* ignored */
+            preserveContents = *attrib;
             break;
          case GLX_LARGEST_PBUFFER:
             attrib++;
-            useLargest = *attrib; /* ignored */
+            useLargest = *attrib;
             break;
          default:
             return 0;
       }
    }
 
-   /* not used at this time */
-   (void) useLargest;
-   (void) preserveContents;
-
    if (width == 0 || height == 0)
       return 0;
+
+   if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+      /* If allocation would have failed and GLX_LARGEST_PBUFFER is set,
+       * allocate the largest possible buffer.
+       */
+      if (useLargest) {
+         width = MAX_WIDTH;
+         height = MAX_HEIGHT;
+      }
+   }
 
    xmbuf = XMesaCreatePBuffer( xmvis, 0, width, height);
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   if (xmbuf)
+   if (xmbuf) {
+      xmbuf->largestPbuffer = useLargest;
+      xmbuf->preservedContents = preserveContents;
       return (GLXPbuffer) xmbuf->frontxrb->pixmap;
-   else
+   }
+   else {
       return 0;
+   }
 }
 
 
@@ -2396,6 +2408,9 @@ Fake_glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
    if (!xmbuf)
       return;
 
+   /* make sure buffer's dimensions are up to date */
+   xmesa_check_and_update_buffer_size(NULL, xmbuf);
+
    switch (attribute) {
       case GLX_WIDTH:
          *value = xmbuf->mesa_buffer.Width;
@@ -2404,10 +2419,10 @@ Fake_glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
          *value = xmbuf->mesa_buffer.Height;
          break;
       case GLX_PRESERVED_CONTENTS:
-         *value = True;
+         *value = xmbuf->preservedContents;
          break;
       case GLX_LARGEST_PBUFFER:
-         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
+         *value = xmbuf->largestPbuffer;
          break;
       case GLX_FBCONFIG_ID:
          *value = xmbuf->xm_visual->visinfo->visualid;
@@ -2764,10 +2779,10 @@ Fake_glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, un
 
    switch (attribute) {
       case GLX_PRESERVED_CONTENTS_SGIX:
-         *value = True;
+         *value = xmbuf->preservedContents;
          break;
       case GLX_LARGEST_PBUFFER_SGIX:
-         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
+         *value = xmbuf->largestPbuffer;
          break;
       case GLX_WIDTH_SGIX:
          *value = xmbuf->mesa_buffer.Width;

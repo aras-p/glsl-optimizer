@@ -181,11 +181,14 @@ void _debug_assert_fail(const char *expr,
  * 
  * Do not expect that the assert call terminates -- errors must be handled 
  * regardless of assert behavior.
+ *
+ * For non debug builds the assert macro will expand to a no-op, so do not
+ * call functions with side effects in the assert expression.
  */
 #ifdef DEBUG
 #define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
-#define debug_assert(expr) ((void)(expr))
+#define debug_assert(expr) ((void)0)
 #endif
 
 

@@ -670,6 +670,7 @@ get_main_shader(GLcontext *ctx,
           !shader->Main ||
           shader->UnresolvedRefs) {
          link_error(shProg, "Unresolved symbols");
+         _mesa_free_shader(ctx, shader);
          return NULL;
       }
    }

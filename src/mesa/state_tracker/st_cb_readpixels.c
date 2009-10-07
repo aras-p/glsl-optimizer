@@ -43,6 +43,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
@@ -415,6 +416,9 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       y = 0;
       yStep = 1;
    }
+
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    /*
     * Copy pixels from pipe_transfer to user memory

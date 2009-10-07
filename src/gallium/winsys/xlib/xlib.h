@@ -9,7 +9,6 @@ extern struct xm_driver xlib_trace_driver;
 extern struct xm_driver xlib_softpipe_driver;
 extern struct xm_driver xlib_llvmpipe_driver;
 extern struct xm_driver xlib_cell_driver;
-extern struct xm_driver xlib_brw_driver;
 
 
 #endif

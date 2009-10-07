@@ -39,6 +39,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
@@ -75,7 +76,7 @@ void st_upload_constants( struct st_context *st,
                                         PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
-      if (0) {
+      if (ST_DEBUG & DEBUG_CONSTANTS) {
 	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
                       __FUNCTION__, shader_type, params->NumParameters,
                       params->StateFlags);

@@ -319,8 +319,10 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
                 _mesa_insert_mvp_code(ctx, vp->mesa_program);
         }
 
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
+	if( 1 == nVer )
 	{
+	    for(i=0; i<VERT_ATTRIB_MAX; i++)
+	    {
 		unBit = 1 << i;
 		if(vp->mesa_program->Base.InputsRead & unBit) /* ctx->Array.ArrayObj->xxxxxxx */
 		{
@@ -328,7 +330,17 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 			vp->aos_desc[i].stride = vb->AttribPtr[i]->size * sizeof(GL_FLOAT);/* when emit array, data is packed. vb->AttribPtr[i]->stride;*/
 			vp->aos_desc[i].type   = GL_FLOAT;
 		}
+	    }
 	}
+	else
+	{
+		for(i=0; i<context->nNumActiveAos; i++)
+		{
+			vp->aos_desc[i].size   = context->stream_desc[i].size;
+			vp->aos_desc[i].stride = context->stream_desc[i].stride;
+			vp->aos_desc[i].type   = context->stream_desc[i].type;
+		}
+	}	
 	
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
 	{
@@ -388,17 +400,35 @@ void r700SelectVertexShader(GLcontext *ctx, GLint nVersion)
     
     for (vp = vpc->progs; vp; vp = vp->next)
     {
+	if (vp->uiVersion != nVersion ) 
+	    continue;
 	match = GL_TRUE;	
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
+	if ( 1 == nVersion ) 
 	{
+	    for(i=0; i<VERT_ATTRIB_MAX; i++)
+	    {
 		unBit = 1 << i;
 		if(InputsRead & unBit)
 		{
-			if (vp->aos_desc[i].size != vb->AttribPtr[i]->size)
-				match = GL_FALSE;
-				break;
+		    if (vp->aos_desc[i].size != vb->AttribPtr[i]->size)
+		    {
+			match = GL_FALSE;
+			break;
+		    }
 		}
+	    }
 	}
+	else
+	{
+	    for(i=0; i<context->nNumActiveAos; i++)
+	    {
+		if (vp->aos_desc[i].size != context->stream_desc[i].size)
+		{
+		    match = GL_FALSE;
+		    break;
+		}
+	    }
+	}	
 	if (match) 
 	{
 		context->selected_vp = vp;

@@ -135,7 +135,7 @@ do_copy_texsubimage(struct intel_context *intel,
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
-	 __DRIdrawablePrivate *dPriv = intel->driDrawable;
+	 const __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
 	 y = dPriv->y + (dPriv->h - (y + height));
 	 x += dPriv->x;
 

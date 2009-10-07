@@ -124,7 +124,7 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    struct quad_header *quad = quads[0];
    const unsigned x = quad->input.x0;
    const unsigned y = quad->input.y0;
-   uint8_t *tile = lp_get_cached_tile(llvmpipe->cbuf_cache[0], x, y);
+   uint8_t *tile;
    uint8_t *color;
    void *depth;
    uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
@@ -150,7 +150,13 @@ shade_quads(struct llvmpipe_context *llvmpipe,
          mask[q][chan_index] = quads[q]->inout.mask & (1 << chan_index) ? ~0 : 0;
 
    /* color buffer */
-   color = &TILE_PIXEL(tile, x & (TILE_SIZE-1), y & (TILE_SIZE-1), 0);
+   if(llvmpipe->framebuffer.nr_cbufs >= 1 &&
+      llvmpipe->framebuffer.cbufs[0]) {
+      tile = lp_get_cached_tile(llvmpipe->cbuf_cache[0], x, y);
+      color = &TILE_PIXEL(tile, x & (TILE_SIZE-1), y & (TILE_SIZE-1), 0);
+   }
+   else
+      color = NULL;
 
    /* depth buffer */
    if(llvmpipe->zsbuf_map) {

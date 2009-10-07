@@ -29,8 +29,44 @@
 #ifndef ST_DEBUG_H
 #define ST_DEBUG_H
 
+#include "pipe/p_compiler.h"
+#include "util/u_debug.h"
+
 extern void
 st_print_current(void);
+
+
+#define DEBUG_MESA      0x1
+#define DEBUG_TGSI      0x2
+#define DEBUG_CONSTANTS 0x4
+#define DEBUG_PIPE      0x8
+#define DEBUG_TEX       0x10
+#define DEBUG_FALLBACK  0x20
+#define DEBUG_QUERY     0x40
+#define DEBUG_SCREEN    0x80
+
+#ifdef DEBUG
+extern int ST_DEBUG;
+#define DBSTR(x) x
+#else
+#define ST_DEBUG 0
+#define DBSTR(x) ""
+#endif
+
+void st_debug_init( void );
+
+static INLINE void
+ST_DBG( unsigned flag, const char *fmt, ... )
+{
+    if (ST_DEBUG & flag)
+    {
+        va_list args;
+
+        va_start( args, fmt );
+        debug_vprintf( fmt, args );
+        va_end( args );
+    }
+}
 
 
 #endif /* ST_DEBUG_H */

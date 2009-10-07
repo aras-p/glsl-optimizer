@@ -2,8 +2,8 @@ Import('*')
 
 env = env.Clone()
 
-i915simple = env.ConvenienceLibrary(
-	target = 'i915simple',
+i915 = env.ConvenienceLibrary(
+	target = 'i915',
 	source = [
 		'i915_blit.c',
 		'i915_buffer.c',
@@ -27,4 +27,4 @@ i915simple = env.ConvenienceLibrary(
 		'i915_texture.c',
 	])
 
-Export('i915simple')
+Export('i915')

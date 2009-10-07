@@ -210,7 +210,7 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 	 pvs->run = post_vs_viewport;
    }
    else {
-      //if (opengl) 
+      /* if (opengl) */
       pvs->run = post_vs_cliptest_viewport_gl;
    }
 }

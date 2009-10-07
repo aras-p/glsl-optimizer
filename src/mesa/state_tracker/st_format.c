@@ -392,10 +392,9 @@ default_depth_format(struct pipe_screen *screen,
  *                   or PIPE_TEXTURE_USAGE_SAMPLER
  */
 enum pipe_format
-st_choose_format(struct pipe_context *pipe, GLenum internalFormat,
+st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
                  enum pipe_texture_target target, unsigned tex_usage)
 {
-   struct pipe_screen *screen = pipe->screen;
    unsigned geom_flags = 0;
 
    switch (internalFormat) {
@@ -618,14 +617,15 @@ is_depth_or_stencil_format(GLenum internalFormat)
  * Called by FBO code to choose a PIPE_FORMAT_ for drawing surfaces.
  */
 enum pipe_format
-st_choose_renderbuffer_format(struct pipe_context *pipe, GLenum internalFormat)
+st_choose_renderbuffer_format(struct pipe_screen *screen,
+                              GLenum internalFormat)
 {
    uint usage;
    if (is_depth_or_stencil_format(internalFormat))
       usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    else
       usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-   return st_choose_format(pipe, internalFormat, PIPE_TEXTURE_2D, usage);
+   return st_choose_format(screen, internalFormat, PIPE_TEXTURE_2D, usage);
 }
 
 
@@ -713,8 +713,8 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    (void) format;
    (void) type;
 
-   pFormat = st_choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE_2D, 
-                              PIPE_TEXTURE_USAGE_SAMPLER);
+   pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
+                              PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
    if (pFormat == PIPE_FORMAT_NONE)
       return NULL;
 

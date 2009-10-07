@@ -205,7 +205,9 @@ static boolean check_tex_2d_format(enum pipe_format format, uint32_t usage,
 
         /* Colorbuffer or texture */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
             return usage &
                 (PIPE_TEXTURE_USAGE_RENDER_TARGET |

@@ -119,9 +119,9 @@ intel_drm_buffer_unmap(struct intel_winsys *iws,
 static int
 intel_drm_buffer_write(struct intel_winsys *iws,
                        struct intel_buffer *buffer,
-                       const void *data,
+                       size_t offset,
                        size_t size,
-                       size_t offset)
+                       const void *data)
 {
    struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
 

@@ -57,6 +57,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
 			break;
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
+			break;
 		case PIPE_FORMAT_R5G6B5_UNORM:
 			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
 			break;
@@ -353,13 +356,16 @@ viewport_uptodate:
 	if (nv50->dirty & NV50_NEW_SAMPLER) {
 		int i;
 
-		so = so_new(nv50->sampler_nr * 8 + 3, 0);
+		so = so_new(nv50->sampler_nr * 9 + 2, 0);
 		so_method(so, tesla, NV50TCL_CB_ADDR, 1);
 		so_data  (so, NV50_CB_TSC);
-		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000,
-			nv50->sampler_nr * 8);
-		for (i = 0; i < nv50->sampler_nr; i++)
+		for (i = 0; i < nv50->sampler_nr; i++) {
+			if (!nv50->sampler[i])
+				continue;
+
+			so_method(so, tesla, NV50TCL_CB_DATA(0) | (2<<29), 8);
 			so_datap (so, nv50->sampler[i]->tsc, 8);
+		}
 		so_ref(so, &nv50->state.tsc_upload);
 		so_ref(NULL, &so);
 	}

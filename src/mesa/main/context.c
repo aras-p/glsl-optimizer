@@ -860,6 +860,7 @@ _mesa_initialize_context(GLcontext *ctx,
       _mesa_free_shared_state(ctx, ctx->Shared);
       if (ctx->Exec)
          _mesa_free(ctx->Exec);
+      return GL_FALSE;
    }
 #if FEATURE_dispatch
    _mesa_init_exec_table(ctx->Exec);

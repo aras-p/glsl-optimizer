@@ -228,7 +228,7 @@ get_drawable_size( Display *dpy, Drawable d, uint *width, uint *height )
  * \param width  returns width in pixels
  * \param height  returns height in pixels
  */
-static void
+void
 xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height)
 {

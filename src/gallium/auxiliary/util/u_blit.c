@@ -182,47 +182,7 @@ get_next_slot( struct blit_state *ctx )
 }
                                
 
-/**
- * Setup vertex data for the textured quad we'll draw.
- * Note: y=0=top
- */
-static unsigned
-setup_vertex_data(struct blit_state *ctx,
-                  float x0, float y0, float x1, float y1, float z)
-{
-   unsigned offset;
 
-   ctx->vertices[0][0][0] = x0;
-   ctx->vertices[0][0][1] = y0;
-   ctx->vertices[0][0][2] = z;
-   ctx->vertices[0][1][0] = 0.0f; /*s*/
-   ctx->vertices[0][1][1] = 0.0f; /*t*/
-
-   ctx->vertices[1][0][0] = x1;
-   ctx->vertices[1][0][1] = y0;
-   ctx->vertices[1][0][2] = z;
-   ctx->vertices[1][1][0] = 1.0f; /*s*/
-   ctx->vertices[1][1][1] = 0.0f; /*t*/
-
-   ctx->vertices[2][0][0] = x1;
-   ctx->vertices[2][0][1] = y1;
-   ctx->vertices[2][0][2] = z;
-   ctx->vertices[2][1][0] = 1.0f;
-   ctx->vertices[2][1][1] = 1.0f;
-
-   ctx->vertices[3][0][0] = x0;
-   ctx->vertices[3][0][1] = y1;
-   ctx->vertices[3][0][2] = z;
-   ctx->vertices[3][1][0] = 0.0f;
-   ctx->vertices[3][1][1] = 1.0f;
-
-   offset = get_next_slot( ctx );
-
-   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
-                     offset, sizeof(ctx->vertices), ctx->vertices);
-
-   return offset;
-}
 
 
 /**
@@ -315,15 +275,13 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture texTemp, *tex;
-   struct pipe_surface *texSurf;
+   struct pipe_texture *tex = NULL;
    struct pipe_framebuffer_state fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
-   const int srcLeft = MIN2(srcX0, srcX1);
-   const int srcTop = MIN2(srcY0, srcY1);
    unsigned offset;
    boolean overlap;
+   float s0, t0, s1, t1;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -358,54 +316,76 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       return;
    }
    
-   if (srcLeft != srcX0) {
-      /* left-right flip */
-      int tmp = dstX0;
-      dstX0 = dstX1;
-      dstX1 = tmp;
-   }
-
-   if (srcTop != srcY0) {
-      /* up-down flip */
-      int tmp = dstY0;
-      dstY0 = dstY1;
-      dstY1 = tmp;
-   }
-
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
 
-   /*
-    * XXX for now we're always creating a temporary texture.
-    * Strictly speaking that's not always needed.
+   /* Create a temporary texture when src and dest alias or when src
+    * is anything other than a single-level 2d texture.
+    * 
+    * This can still be improved upon.
     */
+   if (util_same_surface(src, dst) ||
+       src->texture->target != PIPE_TEXTURE_2D ||
+       src->texture->last_level != 0)
+   {
+      struct pipe_texture texTemp;
+      struct pipe_surface *texSurf;
+      const int srcLeft = MIN2(srcX0, srcX1);
+      const int srcTop = MIN2(srcY0, srcY1);
 
-   /* create temp texture */
-   memset(&texTemp, 0, sizeof(texTemp));
-   texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = src->format;
-   texTemp.last_level = 0;
-   texTemp.width[0] = srcW;
-   texTemp.height[0] = srcH;
-   texTemp.depth[0] = 1;
-   pf_get_block(src->format, &texTemp.block);
+      if (srcLeft != srcX0) {
+         /* left-right flip */
+         int tmp = dstX0;
+         dstX0 = dstX1;
+         dstX1 = tmp;
+      }
 
-   tex = screen->texture_create(screen, &texTemp);
-   if (!tex)
-      return;
+      if (srcTop != srcY0) {
+         /* up-down flip */
+         int tmp = dstY0;
+         dstY0 = dstY1;
+         dstY1 = tmp;
+      }
 
-   texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
-                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+      /* create temp texture */
+      memset(&texTemp, 0, sizeof(texTemp));
+      texTemp.target = PIPE_TEXTURE_2D;
+      texTemp.format = src->format;
+      texTemp.last_level = 0;
+      texTemp.width[0] = srcW;
+      texTemp.height[0] = srcH;
+      texTemp.depth[0] = 1;
+      pf_get_block(src->format, &texTemp.block);
 
-   /* load temp texture */
-   pipe->surface_copy(pipe,
-                      texSurf, 0, 0,   /* dest */
-                      src, srcLeft, srcTop, /* src */
-                      srcW, srcH);     /* size */
+      tex = screen->texture_create(screen, &texTemp);
+      if (!tex)
+         return;
 
-   /* free the surface, update the texture if necessary.
-    */
-   pipe_surface_reference(&texSurf, NULL);
+      texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
+                                        PIPE_BUFFER_USAGE_GPU_WRITE);
+
+      /* load temp texture */
+      pipe->surface_copy(pipe,
+                         texSurf, 0, 0,   /* dest */
+                         src, srcLeft, srcTop, /* src */
+                         srcW, srcH);     /* size */
+
+      /* free the surface, update the texture if necessary.
+       */
+      pipe_surface_reference(&texSurf, NULL);
+      s0 = 0.0f; 
+      s1 = 1.0f;
+      t0 = 0.0f;
+      t1 = 1.0f;
+   }
+   else {
+      pipe_texture_reference(&tex, src->texture);
+      s0 = srcX0 / (float)tex->width[0];
+      s1 = srcX1 / (float)tex->width[0];
+      t0 = srcY0 / (float)tex->height[0];
+      t1 = srcY1 / (float)tex->height[0];
+   }
+
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -447,9 +427,12 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
-   offset = setup_vertex_data(ctx,
-                              (float) dstX0, (float) dstY0, 
-                              (float) dstX1, (float) dstY1, z);
+   offset = setup_vertex_data_tex(ctx,
+                                  (float) dstX0, (float) dstY0, 
+                                  (float) dstX1, (float) dstY1,
+                                  s0, t0,
+                                  s1, t1,
+                                  z);
 
    util_draw_vertex_buffer(ctx->pipe, ctx->vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,

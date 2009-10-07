@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = i915simple
+LIBNAME = i915
 
 C_SOURCES = \
 	i915_blit.c \

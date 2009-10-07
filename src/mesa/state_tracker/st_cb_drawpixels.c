@@ -40,6 +40,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
@@ -598,15 +599,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* viewport state: viewport matching window dims */
    {
-      const float width = (float) ctx->DrawBuffer->Width;
-      const float height = (float) ctx->DrawBuffer->Height;
+      const float w = (float) ctx->DrawBuffer->Width;
+      const float h = (float) ctx->DrawBuffer->Height;
       struct pipe_viewport_state vp;
-      vp.scale[0] =  0.5f * width;
-      vp.scale[1] = -0.5f * height;
+      vp.scale[0] =  0.5f * w;
+      vp.scale[1] = -0.5f * h;
       vp.scale[2] = 1.0f;
       vp.scale[3] = 1.0f;
-      vp.translate[0] = 0.5f * width;
-      vp.translate[1] = 0.5f * height;
+      vp.translate[0] = 0.5f * w;
+      vp.translate[1] = 0.5f * h;
       vp.translate[2] = 0.0f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
@@ -1014,13 +1015,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    else {
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
-         texFormat = st_choose_format(pipe, GL_DEPTH_COMPONENT, PIPE_TEXTURE_2D, 
+         texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
+                                      PIPE_TEXTURE_2D, 
                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE_2D, 
+         texFormat = st_choose_format(screen, GL_RGBA, PIPE_TEXTURE_2D, 
                                       PIPE_TEXTURE_USAGE_SAMPLER);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
@@ -1089,6 +1091,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					height);
       struct pipe_transfer *ptTex;
       enum pipe_transfer_usage transfer_usage;
+
+      if (ST_DEBUG & DEBUG_FALLBACK)
+         debug_printf("%s: fallback processing\n", __FUNCTION__);
 
       if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
