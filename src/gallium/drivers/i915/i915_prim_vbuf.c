@@ -53,6 +53,7 @@
 
 
 #undef VBUF_USE_FIFO
+#undef VBUF_MAP_BUFFER
 
 /**
  * Primitive renderer for i915.
@@ -81,6 +82,12 @@ struct i915_vbuf_render {
    size_t vbo_offset;
    void *vbo_ptr;
    size_t vbo_max_used;
+
+#ifndef VBUF_MAP_BUFFER
+   size_t map_used_start;
+   size_t map_used_end;
+   size_t map_size;
+#endif
 
 #ifdef VBUF_USE_FIFO
    /* Stuff for the pool */
@@ -153,6 +160,14 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
    i915_render->vbo_offset = 0;
 
+#ifndef VBUF_MAP_BUFFER
+   if (i915_render->vbo_size > i915_render->map_size) {
+      i915_render->map_size = i915_render->vbo_size;
+      FREE(i915_render->vbo_ptr);
+      i915_render->vbo_ptr = MALLOC(i915_render->map_size);
+   }
+#endif
+
 #ifdef VBUF_USE_FIFO
    if (i915_render->vbo_size != i915_render->pool_buffer_size) {
       i915_render->pool_not_used = TRUE;
@@ -215,9 +230,13 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
    if (i915->vbo_flushed)
       debug_printf("%s bad vbo flush occured stalling on hw\n", __FUNCTION__);
 
+#ifdef VBUF_MAP_BUFFER
    i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
-
-   return (unsigned char *)i915_render->vbo_ptr + i915->vbo_offset;
+   return (unsigned char *)i915_render->vbo_ptr + i915_render->vbo_offset;
+#else
+   (void)iws;
+   return (unsigned char *)i915_render->vbo_ptr;
+#endif
 }
 
 static void
@@ -230,7 +249,17 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
    struct intel_winsys *iws = i915->iws;
 
    i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
+#ifdef VBUF_MAP_BUFFER
    iws->buffer_unmap(iws, i915_render->vbo);
+#else
+   i915_render->map_used_start = i915_render->vertex_size * min_index;
+   i915_render->map_used_end = i915_render->vertex_size * (max_index + 1);
+   iws->buffer_write(iws, i915_render->vbo,
+                     i915_render->map_used_start + i915_render->vbo_offset,
+                     i915_render->map_used_end - i915_render->map_used_start,
+                     i915_render->vbo_ptr + i915_render->map_used_start);
+
+#endif
 }
 
 static boolean
@@ -614,8 +643,14 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->base.release_vertices = i915_vbuf_render_release_vertices;
    i915_render->base.destroy = i915_vbuf_render_destroy;
 
+#ifndef VBUF_MAP_BUFFER
+   i915_render->map_size = 0;
+   i915_render->map_used_start = 0;
+   i915_render->map_used_end = 0;
+#endif
 
    i915_render->vbo = NULL;
+   i915_render->vbo_ptr = NULL;
    i915_render->vbo_size = 0;
    i915_render->vbo_offset = 0;
    i915_render->vbo_alloc_size = i915_render->base.max_vertex_buffer_bytes * 4;
