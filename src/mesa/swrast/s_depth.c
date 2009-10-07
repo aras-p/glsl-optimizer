@@ -1274,7 +1274,7 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
 {
    if (!rb) {
       /* really only doing this to prevent FP exceptions later */
-      _mesa_bzero(depth, n * sizeof(GLfloat));
+      _mesa_bzero(depth, n * sizeof(GLuint));
       return;
    }
 
