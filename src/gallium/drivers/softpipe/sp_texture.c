@@ -111,6 +111,9 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
 }
 
 
+/**
+ * Create new pipe_texture given the template information.
+ */
 static struct pipe_texture *
 softpipe_texture_create(struct pipe_screen *screen,
                         const struct pipe_texture *template)
@@ -145,6 +148,9 @@ softpipe_texture_create(struct pipe_screen *screen,
 }
 
 
+/**
+ * Create a new pipe_texture which wraps an existing buffer.
+ */
 static struct pipe_texture *
 softpipe_texture_blanket(struct pipe_screen * screen,
                          const struct pipe_texture *base,
@@ -188,6 +194,9 @@ softpipe_texture_destroy(struct pipe_texture *pt)
 }
 
 
+/**
+ * Get a pipe_surface "view" into a texture.
+ */
 static struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_screen *screen,
                          struct pipe_texture *pt,
@@ -248,6 +257,9 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 }
 
 
+/**
+ * Free a pipe_surface which was created with softpipe_get_tex_surface().
+ */
 static void 
 softpipe_tex_surface_destroy(struct pipe_surface *surf)
 {
@@ -261,6 +273,18 @@ softpipe_tex_surface_destroy(struct pipe_surface *surf)
 }
 
 
+/**
+ * Geta pipe_transfer object which is used for moving data in/out of
+ * a texture object.
+ * \param face  one of PIPE_TEX_FACE_x or 0
+ * \param level  texture mipmap level
+ * \param zslice  2D slice of a 3D texture
+ * \param usage  one of PIPE_TRANSFER_READ/WRITE/READ_WRITE
+ * \param x  X position of region to read/write
+ * \param y  Y position of region to read/write
+ * \param width  width of region to read/write
+ * \param height  height of region to read/write
+ */
 static struct pipe_transfer *
 softpipe_get_tex_transfer(struct pipe_screen *screen,
                           struct pipe_texture *texture,
@@ -310,6 +334,10 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
 }
 
 
+/**
+ * Free a pipe_transfer object which was created with
+ * softpipe_get_tex_transfer().
+ */
 static void 
 softpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
 {
@@ -323,6 +351,9 @@ softpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
 }
 
 
+/**
+ * Create memory mapping for given pipe_transfer object.
+ */
 static void *
 softpipe_transfer_map( struct pipe_screen *screen,
                        struct pipe_transfer *transfer )
@@ -355,6 +386,9 @@ softpipe_transfer_map( struct pipe_screen *screen,
 }
 
 
+/**
+ * Unmap memory mapping for given pipe_transfer object.
+ */
 static void
 softpipe_transfer_unmap(struct pipe_screen *screen,
                         struct pipe_transfer *transfer)
@@ -371,6 +405,7 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
       spt->timestamp++;
    }
 }
+
 
 static struct pipe_video_surface*
 softpipe_video_surface_create(struct pipe_screen *screen,
@@ -445,6 +480,10 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 }
 
 
+/**
+ * Return pipe_buffer handle and stride for given texture object.
+ * XXX used for???
+ */
 boolean
 softpipe_get_texture_buffer( struct pipe_texture *texture,
                              struct pipe_buffer **buf,
