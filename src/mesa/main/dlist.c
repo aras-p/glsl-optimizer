@@ -9463,3 +9463,10 @@ _mesa_init_display_list(GLcontext *ctx)
    _mesa_save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
 #endif
 }
+
+
+void
+_mesa_free_display_list_data(GLcontext *ctx)
+{
+
+}

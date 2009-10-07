@@ -106,5 +106,7 @@ _mesa_init_dlist_dispatch(struct _glapi_table *disp)
 
 extern void _mesa_init_display_list( GLcontext * ctx );
 
+extern void _mesa_free_display_list_data(GLcontext *ctx);
+
 
 #endif /* DLIST_H */
