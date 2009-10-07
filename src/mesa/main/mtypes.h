@@ -84,6 +84,7 @@
 /*@{*/
 struct _mesa_HashTable;
 struct gl_attrib_node;
+struct gl_list_extensions;
 struct gl_meta_state;
 struct gl_pixelstore_attrib;
 struct gl_program_cache;
@@ -816,29 +817,6 @@ struct gl_line_attrib
 struct gl_list_attrib
 {
    GLuint ListBase;
-};
-
-
-/**
- * Used by device drivers to hook new commands into display lists.
- */
-struct gl_list_instruction
-{
-   GLuint Size;
-   void (*Execute)( GLcontext *ctx, void *data );
-   void (*Destroy)( GLcontext *ctx, void *data );
-   void (*Print)( GLcontext *ctx, void *data );
-};
-
-#define MAX_DLIST_EXT_OPCODES 16
-
-/**
- * Used by device drivers to hook new commands into display lists.
- */
-struct gl_list_extensions
-{
-   struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
-   GLuint NumOpcodes;
 };
 
 
@@ -3061,7 +3039,7 @@ struct __GLcontextRec
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
    /**@}*/
 
-   struct gl_list_extensions ListExt; /**< driver dlist extensions */
+   struct gl_list_extensions *ListExt; /**< driver dlist extensions */
 
    /** \name For debugging/development only */
    /*@{*/

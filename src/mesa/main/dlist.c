@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.7
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -89,6 +90,33 @@
 #include "math/m_matrix.h"
 
 #include "glapi/dispatch.h"
+
+
+
+/**
+ * Other parts of Mesa (such as the VBO module) can plug into the display
+ * list system.  This structure describes new display list instructions.
+ */
+struct gl_list_instruction
+{
+   GLuint Size;
+   void (*Execute)( GLcontext *ctx, void *data );
+   void (*Destroy)( GLcontext *ctx, void *data );
+   void (*Print)( GLcontext *ctx, void *data );
+};
+
+
+#define MAX_DLIST_EXT_OPCODES 16
+
+/**
+ * Used by device drivers to hook new commands into display lists.
+ */
+struct gl_list_extensions
+{
+   struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
+   GLuint NumOpcodes;
+};
+
 
 
 /**
@@ -496,9 +524,9 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
       /* check for extension opcodes first */
 
       GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
-      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
-         ctx->ListExt.Opcode[i].Destroy(ctx, &n[1]);
-         n += ctx->ListExt.Opcode[i].Size;
+      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
+         ctx->ListExt->Opcode[i].Destroy(ctx, &n[1]);
+         n += ctx->ListExt->Opcode[i].Size;
       }
       else {
          switch (n[0].opcode) {
@@ -873,13 +901,13 @@ _mesa_dlist_alloc_opcode(GLcontext *ctx,
                          void (*destroy) (GLcontext *, void *),
                          void (*print) (GLcontext *, void *))
 {
-   if (ctx->ListExt.NumOpcodes < MAX_DLIST_EXT_OPCODES) {
-      const GLuint i = ctx->ListExt.NumOpcodes++;
-      ctx->ListExt.Opcode[i].Size =
+   if (ctx->ListExt->NumOpcodes < MAX_DLIST_EXT_OPCODES) {
+      const GLuint i = ctx->ListExt->NumOpcodes++;
+      ctx->ListExt->Opcode[i].Size =
          1 + (size + sizeof(Node) - 1) / sizeof(Node);
-      ctx->ListExt.Opcode[i].Execute = execute;
-      ctx->ListExt.Opcode[i].Destroy = destroy;
-      ctx->ListExt.Opcode[i].Print = print;
+      ctx->ListExt->Opcode[i].Execute = execute;
+      ctx->ListExt->Opcode[i].Destroy = destroy;
+      ctx->ListExt->Opcode[i].Print = print;
       return i + OPCODE_EXT_0;
    }
    return -1;
@@ -6468,10 +6496,10 @@ execute_list(GLcontext *ctx, GLuint list)
       OpCode opcode = n[0].opcode;
       int i = (int) n[0].opcode - (int) OPCODE_EXT_0;
 
-      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
+      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
          /* this is a driver-extended opcode */
-         ctx->ListExt.Opcode[i].Execute(ctx, &n[1]);
-         n += ctx->ListExt.Opcode[i].Size;
+         ctx->ListExt->Opcode[i].Execute(ctx, &n[1]);
+         n += ctx->ListExt->Opcode[i].Size;
       }
       else {
          switch (opcode) {
@@ -9068,10 +9096,10 @@ print_list(GLcontext *ctx, GLuint list)
       OpCode opcode = n[0].opcode;
       GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
 
-      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
+      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
          /* this is a driver-extended opcode */
-         ctx->ListExt.Opcode[i].Print(ctx, &n[1]);
-         n += ctx->ListExt.Opcode[i].Size;
+         ctx->ListExt->Opcode[i].Print(ctx, &n[1]);
+         n += ctx->ListExt->Opcode[i].Size;
       }
       else {
          switch (opcode) {
@@ -9449,6 +9477,9 @@ _mesa_init_display_list(GLcontext *ctx)
       tableInitialized = GL_TRUE;
    }
 
+   /* extension info */
+   ctx->ListExt = CALLOC_STRUCT(gl_list_extensions);
+
    /* Display list */
    ctx->ListState.CallDepth = 0;
    ctx->ExecuteFlag = GL_TRUE;
@@ -9468,5 +9499,6 @@ _mesa_init_display_list(GLcontext *ctx)
 void
 _mesa_free_display_list_data(GLcontext *ctx)
 {
-
+   free(ctx->ListExt);
+   ctx->ListExt = NULL;
 }
