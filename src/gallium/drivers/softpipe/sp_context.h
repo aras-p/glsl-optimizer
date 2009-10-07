@@ -85,7 +85,7 @@ struct softpipe_context {
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
-   
+
    /** Mapped constant buffers */
    void *mapped_constants[PIPE_SHADER_TYPES];
 
@@ -96,14 +96,13 @@ struct softpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   /* The reduced version of the primitive supplied by the state
-    * tracker.
-    */
+   /** The reduced version of the primitive supplied by the state tracker */
    unsigned reduced_api_prim;
 
-   /* The reduced primitive after unfilled triangles, wide-line
-    * decomposition, etc, are taken into account.  This is the
-    * primitive actually rasterized.
+   /**
+    * The reduced primitive after unfilled triangles, wide-line decomposition,
+    * etc, are taken into account.  This is the primitive type that's actually
+    * rasterized.
     */
    unsigned reduced_prim;
 
@@ -117,7 +116,6 @@ struct softpipe_context {
       struct quad_stage *shade;
       struct quad_stage *depth_test;
       struct quad_stage *blend;
-
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;
 
@@ -135,10 +133,10 @@ struct softpipe_context {
    struct draw_stage *vbuf;
 
    boolean dirty_render_cache;
-   
+
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zsbuf_cache;
-   
+
    unsigned tex_timestamp;
    struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
@@ -159,4 +157,3 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
 
 
 #endif /* SP_CONTEXT_H */
-
