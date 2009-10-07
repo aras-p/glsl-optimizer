@@ -323,6 +323,9 @@ struct xmesa_buffer {
    Colormap cmap;		/* the X colormap */
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
+   GLboolean largestPbuffer;    /**< for pbuffers */
+   GLboolean preservedContents; /**< for pbuffers */
+
    XImage *tempImage;
    unsigned long selectedEvents;/* for pbuffers only */
 
@@ -368,6 +371,10 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb);
 
 extern XMesaBuffer
 xmesa_find_buffer(Display *dpy, Colormap cmap, XMesaBuffer notThis);
+
+extern void
+xmesa_get_window_size(Display *dpy, XMesaBuffer b,
+                      GLuint *width, GLuint *height);
 
 extern void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
