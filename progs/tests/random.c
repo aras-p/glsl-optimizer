@@ -257,11 +257,11 @@ RandomPrimitive(void)
    Vcount++;
 
    for (i = 0; i < len; i++) {
+      int k = RandomInt(9);
       Vbuffer[Vcount].v[0] = RandomFloat(-3, 3);
       Vbuffer[Vcount].v[1] = RandomFloat(-3, 3);
       Vbuffer[Vcount].v[2] = RandomFloat(-3, 3);
       Vbuffer[Vcount].v[3] = RandomFloat(-3, 3);
-      int k = RandomInt(9);
       switch (k) {
       case 0:
          glVertex2fv(Vbuffer[Vcount].v);
