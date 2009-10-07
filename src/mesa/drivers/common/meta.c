@@ -238,34 +238,10 @@ _mesa_meta_init(GLcontext *ctx)
 void
 _mesa_meta_free(GLcontext *ctx)
 {
-   struct gl_meta_state *meta = ctx->Meta;
-
-   if (_mesa_get_current_context()) {
-      /* if there's no current context, these textures, buffers, etc should
-       * still get freed by _mesa_free_context_data().
-       */
-
-      _mesa_DeleteTextures(1, &meta->TempTex.TexObj);
-
-      /* glBlitFramebuffer */
-      _mesa_DeleteBuffersARB(1, & meta->Blit.VBO);
-      _mesa_DeleteVertexArraysAPPLE(1, &meta->Blit.ArrayObj);
-      _mesa_DeletePrograms(1, &meta->Blit.DepthFP);
-
-      /* glClear */
-      _mesa_DeleteBuffersARB(1, & meta->Clear.VBO);
-      _mesa_DeleteVertexArraysAPPLE(1, &meta->Clear.ArrayObj);
-
-      /* glCopyPixels */
-      _mesa_DeleteBuffersARB(1, & meta->CopyPix.VBO);
-      _mesa_DeleteVertexArraysAPPLE(1, &meta->CopyPix.ArrayObj);
-
-      /* glDrawPixels */
-      _mesa_DeleteVertexArraysAPPLE(1, &meta->DrawPix.ArrayObj);
-      _mesa_DeletePrograms(1, &meta->DrawPix.DepthFP);
-      _mesa_DeletePrograms(1, &meta->DrawPix.StencilFP);
-   }
-
+   /* Note: Any textures, VBOs, etc, that we allocate should get
+    * freed by the normal context destruction code.  But this would be
+    * the place to free other meta data someday.
+    */
    _mesa_free(ctx->Meta);
    ctx->Meta = NULL;
 }
