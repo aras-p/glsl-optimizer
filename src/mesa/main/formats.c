@@ -879,6 +879,10 @@ _mesa_format_to_type_and_comps(gl_format format,
       *datatype = GL_BYTE;
       *comps = 4;
       return;
+   case MESA_FORMAT_SIGNED_RGBA_16:
+      *datatype = GL_SHORT;
+      *comps = 4;
+      return;
 
 #if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SRGB8:
