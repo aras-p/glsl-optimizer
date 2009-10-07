@@ -143,7 +143,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
 
       /* Create the pbuffer using first fbConfig in the list that works. */
       for (i=0;i<nConfigs;i++) {
-         pBuffer = CreatePbuffer(dpy, screen, fbConfigs[i], width, height, preserve, largest);
+         pBuffer = CreatePbuffer(dpy, screen, fbConfigs[i], width, height, largest, preserve);
          if (pBuffer) {
             gFBconfig = fbConfigs[i];
             gWidth = width;
