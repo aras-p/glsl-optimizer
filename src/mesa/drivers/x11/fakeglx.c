@@ -1637,12 +1637,14 @@ Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
 
 
 static Bool
-Fake_glXQueryExtension( Display *dpy, int *errorb, int *event )
+Fake_glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 {
    /* Mesa's GLX isn't really an X extension but we try to act like one. */
    (void) dpy;
-   (void) errorb;
-   (void) event;
+   if (errorBase)
+      *errorBase = 0;
+   if (eventBase)
+      *eventBase = 0;
    return True;
 }
 
