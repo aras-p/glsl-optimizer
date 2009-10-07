@@ -1344,12 +1344,14 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
-          dstFormat == MESA_FORMAT_ARGB8888_REV);
+          dstFormat == MESA_FORMAT_ARGB8888_REV ||
+          dstFormat == MESA_FORMAT_XRGB8888);
    ASSERT(texelBytes == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_ARGB8888 &&
+       (dstFormat == MESA_FORMAT_ARGB8888 ||
+        dstFormat == MESA_FORMAT_XRGB8888) &&
        baseInternalFormat == GL_RGBA &&
        srcFormat == GL_BGRA &&
        ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
@@ -1379,7 +1381,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
    }
    else if (!ctx->_ImageTransferState &&
             !srcPacking->SwapBytes &&
-	    dstFormat == MESA_FORMAT_ARGB8888 &&
+	    (dstFormat == MESA_FORMAT_ARGB8888 ||
+             dstFormat == MESA_FORMAT_XRGB8888) &&
             srcFormat == GL_RGB &&
 	    (baseInternalFormat == GL_RGBA ||
 	     baseInternalFormat == GL_RGB) &&
@@ -1455,6 +1458,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       /* dstmap - how to swizzle from RGBA to dst format:
        */
       if ((littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
+          (littleEndian && dstFormat == MESA_FORMAT_XRGB8888) ||
 	  (!littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV)) {
 	 dstmap[3] = 3;		/* alpha */
 	 dstmap[2] = 0;		/* red */
@@ -1463,7 +1467,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       }
       else {
 	 assert((littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV) ||
-		(!littleEndian && dstFormat == MESA_FORMAT_ARGB8888));
+		(!littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
+		(!littleEndian && dstFormat == MESA_FORMAT_XRGB8888));
 	 dstmap[3] = 2;
 	 dstmap[2] = 1;
 	 dstmap[1] = 0;
@@ -1505,6 +1510,15 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             if (dstFormat == MESA_FORMAT_ARGB8888) {
                for (col = 0; col < srcWidth; col++) {
                   dstUI[col] = PACK_COLOR_8888( CHAN_TO_UBYTE(src[ACOMP]),
+                                                CHAN_TO_UBYTE(src[RCOMP]),
+                                                CHAN_TO_UBYTE(src[GCOMP]),
+                                                CHAN_TO_UBYTE(src[BCOMP]) );
+                  src += 4;
+               }
+            }
+            else if (dstFormat == MESA_FORMAT_XRGB8888) {
+               for (col = 0; col < srcWidth; col++) {
+                  dstUI[col] = PACK_COLOR_8888( 0xff,
                                                 CHAN_TO_UBYTE(src[RCOMP]),
                                                 CHAN_TO_UBYTE(src[GCOMP]),
                                                 CHAN_TO_UBYTE(src[BCOMP]) );
@@ -2973,6 +2987,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_RGBA8888_REV, _mesa_texstore_rgba8888 },
    { MESA_FORMAT_ARGB8888, _mesa_texstore_argb8888 },
    { MESA_FORMAT_ARGB8888_REV, _mesa_texstore_argb8888 },
+   { MESA_FORMAT_XRGB8888, _mesa_texstore_argb8888 },
    { MESA_FORMAT_RGB888, _mesa_texstore_rgb888 },
    { MESA_FORMAT_BGR888, _mesa_texstore_bgr888 },
    { MESA_FORMAT_RGB565, _mesa_texstore_rgb565 },

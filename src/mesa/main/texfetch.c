@@ -369,6 +369,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_argb8888_rev
    },
    {
+      MESA_FORMAT_XRGB8888,
+      fetch_texel_1d_f_xrgb8888,
+      fetch_texel_2d_f_xrgb8888,
+      fetch_texel_3d_f_xrgb8888,
+      store_texel_xrgb8888
+   },
+   {
       MESA_FORMAT_RGB888,
       fetch_texel_1d_f_rgb888,
       fetch_texel_2d_f_rgb888,
