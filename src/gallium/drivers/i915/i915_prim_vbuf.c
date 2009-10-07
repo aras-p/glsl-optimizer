@@ -257,7 +257,7 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
    iws->buffer_write(iws, i915_render->vbo,
                      i915_render->map_used_start + i915_render->vbo_offset,
                      i915_render->map_used_end - i915_render->map_used_start,
-                     i915_render->vbo_ptr + i915_render->map_used_start);
+                     (unsigned char *)i915_render->vbo_ptr + i915_render->map_used_start);
 
 #endif
 }
