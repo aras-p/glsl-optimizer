@@ -212,6 +212,9 @@ struct xmesa_buffer {
    XMesaDisplay *display;
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
+   GLboolean largestPbuffer;    /**< for pbuffers */
+   GLboolean preservedContents; /**< for pbuffers */
+
    struct xmesa_renderbuffer *frontxrb; /* front color renderbuffer */
    struct xmesa_renderbuffer *backxrb;  /* back color renderbuffer */
 
