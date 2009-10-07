@@ -569,23 +569,42 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
    const struct gl_format_info *info = _mesa_get_format_info(format);
 
    switch (pname) {
+   case GL_RED_BITS:
    case GL_TEXTURE_RED_SIZE:
+   case GL_RENDERBUFFER_RED_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
       return info->RedBits;
+   case GL_GREEN_BITS:
    case GL_TEXTURE_GREEN_SIZE:
+   case GL_RENDERBUFFER_GREEN_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
       return info->GreenBits;
+   case GL_BLUE_BITS:
    case GL_TEXTURE_BLUE_SIZE:
+   case GL_RENDERBUFFER_BLUE_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
       return info->BlueBits;
+   case GL_ALPHA_BITS:
    case GL_TEXTURE_ALPHA_SIZE:
+   case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
       return info->AlphaBits;
    case GL_TEXTURE_INTENSITY_SIZE:
       return info->IntensityBits;
    case GL_TEXTURE_LUMINANCE_SIZE:
       return info->LuminanceBits;
+   case GL_INDEX_BITS:
    case GL_TEXTURE_INDEX_SIZE_EXT:
       return info->IndexBits;
+   case GL_DEPTH_BITS:
    case GL_TEXTURE_DEPTH_SIZE_ARB:
+   case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
       return info->DepthBits;
+   case GL_STENCIL_BITS:
    case GL_TEXTURE_STENCIL_SIZE_EXT:
+   case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
       return info->StencilBits;
    default:
       _mesa_problem(NULL, "bad pname in _mesa_get_format_bits()");
