@@ -210,6 +210,21 @@ Setup(int width, int height)
       return 0;
    }
 
+   /* Test drawable queries */
+   {
+      unsigned int v;
+      glXQueryDrawable( gDpy, gPBuffer, GLX_WIDTH, &v);
+      printf("GLX_WIDTH = %u\n", v);
+      glXQueryDrawable( gDpy, gPBuffer, GLX_HEIGHT, &v);
+      printf("GLX_HEIGHT = %u\n", v);
+      glXQueryDrawable( gDpy, gPBuffer, GLX_PRESERVED_CONTENTS, &v);
+      printf("GLX_PRESERVED_CONTENTS = %u\n", v);
+      glXQueryDrawable( gDpy, gPBuffer, GLX_LARGEST_PBUFFER, &v);
+      printf("GLX_LARGEST_PBUFFER = %u\n", v);
+      glXQueryDrawable( gDpy, gPBuffer, GLX_FBCONFIG_ID, &v);
+      printf("GLX_FBCONFIG_ID = %u\n", v);
+   }
+
    /* Get corresponding XVisualInfo */
    visInfo = GetVisualFromFBConfig(gDpy, gScreen, gFBconfig);
    if (!visInfo) {
