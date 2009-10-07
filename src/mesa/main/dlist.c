@@ -505,6 +505,49 @@ lookup_list(GLcontext *ctx, GLuint list)
 }
 
 
+/** Is the given opcode an extension code? */
+static INLINE GLboolean
+is_ext_opcode(OpCode opcode)
+{
+   return (opcode >= OPCODE_EXT_0);
+}
+
+
+/** Destroy an extended opcode instruction */
+static GLint
+ext_opcode_destroy(GLcontext *ctx, Node *node)
+{
+   const GLint i = node[0].opcode - OPCODE_EXT_0;
+   GLint step;
+   ctx->ListExt->Opcode[i].Destroy(ctx, &node[1]);
+   step = ctx->ListExt->Opcode[i].Size;
+   return step;
+}
+
+
+/** Execute an extended opcode instruction */
+static GLint
+ext_opcode_execute(GLcontext *ctx, Node *node)
+{
+   const GLint i = node[0].opcode - OPCODE_EXT_0;
+   GLint step;
+   ctx->ListExt->Opcode[i].Execute(ctx, &node[1]);
+   step = ctx->ListExt->Opcode[i].Size;
+   return step;
+}
+
+
+/** Print an extended opcode instruction */
+static GLint
+ext_opcode_print(GLcontext *ctx, Node *node)
+{
+   const GLint i = node[0].opcode - OPCODE_EXT_0;
+   GLint step;
+   ctx->ListExt->Opcode[i].Print(ctx, &node[1]);
+   step = ctx->ListExt->Opcode[i].Size;
+   return step;
+}
+
 
 /**
  * Delete the named display list, but don't remove from hash table.
@@ -520,16 +563,14 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
 
    done = block ? GL_FALSE : GL_TRUE;
    while (!done) {
+      const OpCode opcode = n[0].opcode;
 
       /* check for extension opcodes first */
-
-      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
-      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
-         ctx->ListExt->Opcode[i].Destroy(ctx, &n[1]);
-         n += ctx->ListExt->Opcode[i].Size;
+      if (is_ext_opcode(opcode)) {
+         n += ext_opcode_destroy(ctx, n);
       }
       else {
-         switch (n[0].opcode) {
+         switch (opcode) {
             /* for some commands, we need to free malloc'd memory */
          case OPCODE_MAP1:
             _mesa_free(n[6].data);
@@ -6493,13 +6534,10 @@ execute_list(GLcontext *ctx, GLuint list)
 
    done = GL_FALSE;
    while (!done) {
-      OpCode opcode = n[0].opcode;
-      int i = (int) n[0].opcode - (int) OPCODE_EXT_0;
+      const OpCode opcode = n[0].opcode;
 
-      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
-         /* this is a driver-extended opcode */
-         ctx->ListExt->Opcode[i].Execute(ctx, &n[1]);
-         n += ctx->ListExt->Opcode[i].Size;
+      if (is_ext_opcode(opcode)) {
+         n += ext_opcode_execute(ctx, n);
       }
       else {
          switch (opcode) {
@@ -9093,13 +9131,10 @@ print_list(GLcontext *ctx, GLuint list)
 
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
-      OpCode opcode = n[0].opcode;
-      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
+      const OpCode opcode = n[0].opcode;
 
-      if (i >= 0 && i < (GLint) ctx->ListExt->NumOpcodes) {
-         /* this is a driver-extended opcode */
-         ctx->ListExt->Opcode[i].Print(ctx, &n[1]);
-         n += ctx->ListExt->Opcode[i].Size;
+      if (is_ext_opcode(opcode)) {
+         n += ext_opcode_print(ctx, n);
       }
       else {
          switch (opcode) {
