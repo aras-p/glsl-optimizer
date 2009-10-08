@@ -215,12 +215,8 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 #endif
 					PIPE_TRANSFER_READ_WRITE,
 					0, 0, priv->tex->width[0], priv->tex->height[0]);
-	if (!priv->map_transfer)
-#ifdef EXA_MIXED_PIXMAPS
+        if (!priv->map_transfer)
 	    return FALSE;
-#else
-	    FatalError("failed to create transfer\n");
-#endif
 
 	pPix->devPrivate.ptr =
 	    exa->scrn->transfer_map(exa->scrn, priv->map_transfer);
@@ -322,10 +318,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 #if DISABLE_ACCEL
     return FALSE;
 #else
-    if (xorg_solid_bind_state(exa, priv, fg))
-	return TRUE;
-    else
-	XORG_FALLBACK("xorg_solid_bind_state failed\n");
+    return xorg_solid_bind_state(exa, priv, fg);
 #endif
 }
 
@@ -503,14 +496,11 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    (void) exa;
    return FALSE;
 #else
-   if (xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
-                                 pDstPicture,
-                                 pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
-                                 pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,
-                                 exaGetPixmapDriverPrivate(pDst)))
-      return TRUE;
-   else
-      XORG_FALLBACK("xorg_composite_bind_state failed");
+   return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
+                                    pDstPicture,
+                                    pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
+                                    pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,
+                                    exaGetPixmapDriverPrivate(pDst));
 #endif
 }
 
@@ -536,17 +526,15 @@ ExaCheckComposite(int op,
 		  PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 		  PicturePtr pDstPicture)
 {
-   ScreenPtr pScreen = pDstPicture->pDrawable->pScreen;
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-   modesettingPtr ms = modesettingPTR(pScrn);
-
-   if (xorg_composite_accelerated(op,
-                                  pSrcPicture,
-                                  pMaskPicture,
-                                  pDstPicture))
-      return TRUE;
-   else
-      XORG_FALLBACK("xorg_composite_accelerated failed");
+   boolean accelerated = xorg_composite_accelerated(op,
+                                                    pSrcPicture,
+                                                    pMaskPicture,
+                                                    pDstPicture);
+#if DEBUG_PRINT
+   debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
+                op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
+#endif
+   return accelerated;
 }
 
 static void *
