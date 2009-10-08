@@ -26,12 +26,10 @@
  **************************************************************************/
 
 /*
- * Recursive rasterization for triangles
+ * Binning code for triangles
  */
 
 #include "lp_context.h"
-#include "lp_quad.h"
-#include "lp_quad_pipe.h"
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "draw/draw_context.h"
@@ -41,43 +39,6 @@
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-
-#define BLOCKSIZE 4
-
-struct triangle {
-   /* one-pixel sized trivial accept offsets for each plane */
-   float ei1;                   
-   float ei2;
-   float ei3;
-
-   /* one-pixel sized trivial reject offsets for each plane */
-   float eo1;                   
-   float eo2;
-   float eo3;
-
-   /* y deltas for vertex pairs */
-   float dy12;
-   float dy23;
-   float dy31;
-
-   /* x deltas for vertex pairs */
-   float dx12;
-   float dx23;
-   float dx31;
-
-   /* Attribute interpolation:
-    */
-   float oneoverarea;
-   float x1;
-   float y1;
-   struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
-   struct tgsi_interp_coef position_coef;
-
-   /* A run of pre-initialized quads:
-    */
-   struct llvmpipe_context *llvmpipe;
-   struct quad_header quad[4];
-};
 
 
 /**
@@ -267,163 +228,6 @@ static inline float subpixel_snap( float a )
 }
 
 
-/* Convert 8x8 block into four runs of quads and render each in turn.
- */
-#if (BLOCKSIZE == 8)
-static void block_full( struct triangle *tri, int x, int y )
-{
-   struct quad_header *ptrs[4];
-   int i;
-
-   tri->quad[0].input.x0 = x + 0;
-   tri->quad[1].input.x0 = x + 2;
-   tri->quad[2].input.x0 = x + 4;
-   tri->quad[3].input.x0 = x + 6;
-
-   for (i = 0; i < 4; i++, y += 2) {
-      tri->quad[0].inout.mask = 0xf;
-      tri->quad[1].inout.mask = 0xf;
-      tri->quad[2].inout.mask = 0xf;
-      tri->quad[3].inout.mask = 0xf;
-
-      tri->quad[0].input.y0 = y;
-      tri->quad[1].input.y0 = y;
-      tri->quad[2].input.y0 = y;
-      tri->quad[3].input.y0 = y;
-
-      /* XXX: don't bother with this ptrs business */
-      ptrs[0] = &tri->quad[0];
-      ptrs[1] = &tri->quad[1];
-      ptrs[2] = &tri->quad[2];
-      ptrs[3] = &tri->quad[3];
-
-      tri->llvmpipe->quad.first->run( tri->llvmpipe->quad.first, ptrs, 4 );
-   }
-}
-#elif (BLOCKSIZE == 4)
-static void block_full( struct triangle *tri, int x, int y )
-{
-   struct quad_header *ptrs[4];
-   int iy;
-
-   tri->quad[0].input.x0 = x + 0;
-   tri->quad[1].input.x0 = x + 2;
-
-   for (iy = 0; iy < 4; iy += 2) {
-      tri->quad[0].inout.mask = 0xf;
-      tri->quad[1].inout.mask = 0xf;
-
-      tri->quad[0].input.y0 = y + iy;
-      tri->quad[1].input.y0 = y + iy;
-
-      /* XXX: don't bother with this ptrs business */
-      ptrs[0] = &tri->quad[0];
-      ptrs[1] = &tri->quad[1];
-
-      tri->llvmpipe->quad.first->run( tri->llvmpipe->quad.first, ptrs, 2 );
-   }
-}
-#else
-static void block_full( struct triangle *tri, int x, int y )
-{
-   struct quad_header *ptrs[4];
-   int iy;
-
-   tri->quad[0].input.x0 = x;
-   tri->quad[0].input.y0 = y;
-   tri->quad[0].inout.mask = 0xf;
-
-   ptrs[0] = &tri->quad[0];
-   tri->llvmpipe->quad.first->run( tri->llvmpipe->quad.first, ptrs, 1 );
-}
-#endif
-
-
-static void
-do_quad( struct triangle *tri,
-	 int x, int y,
-	 float c1, float c2, float c3 )
-{
-   struct quad_header *quad = &tri->quad[0];
-
-   float xstep1 = -tri->dy12;
-   float xstep2 = -tri->dy23;
-   float xstep3 = -tri->dy31;
-
-   float ystep1 = tri->dx12;
-   float ystep2 = tri->dx23;
-   float ystep3 = tri->dx31;
-
-   quad->input.x0 = x;
-   quad->input.y0 = y;
-   quad->inout.mask = 0;
-
-   if (c1 > 0 &&
-       c2 > 0 &&
-       c3 > 0)
-      quad->inout.mask |= 1;
-	 
-   if (c1 + xstep1 > 0 && 
-       c2 + xstep2 > 0 && 
-       c3 + xstep3 > 0)
-      quad->inout.mask |= 2;
-
-   if (c1 + ystep1 > 0 && 
-       c2 + ystep2 > 0 && 
-       c3 + ystep3 > 0)
-      quad->inout.mask |= 4;
-
-   if (c1 + ystep1 + xstep1 > 0 && 
-       c2 + ystep2 + xstep2 > 0 && 
-       c3 + ystep3 + xstep3 > 0)
-      quad->inout.mask |= 8;
-
-   if (quad->inout.mask)
-      tri->llvmpipe->quad.first->run( tri->llvmpipe->quad.first, &quad, 1 );
-}
-
-/* Evaluate each pixel in a block, generate a mask and possibly render
- * the quad:
- */
-static void
-do_block( struct triangle *tri,
-	 int x, int y,
-	 float c1,
-	 float c2,
-	 float c3 )
-{
-   const int step = 2;
-
-   float xstep1 = -step * tri->dy12;
-   float xstep2 = -step * tri->dy23;
-   float xstep3 = -step * tri->dy31;
-
-   float ystep1 = step * tri->dx12;
-   float ystep2 = step * tri->dx23;
-   float ystep3 = step * tri->dx31;
-
-   int ix, iy;
-
-   for (iy = 0; iy < BLOCKSIZE; iy += 2) {
-      float cx1 = c1;
-      float cx2 = c2;
-      float cx3 = c3;
-
-      for (ix = 0; ix < BLOCKSIZE; ix += 2) {
-
-	 do_quad(tri, x+ix, y+iy, cx1, cx2, cx3);
-
-	 cx1 += xstep1;
-	 cx2 += xstep2;
-	 cx3 += xstep3;
-      }
-
-      c1 += ystep1;
-      c2 += ystep2;
-      c3 += ystep3;
-   }
-}
-
 
 
 
@@ -441,14 +245,14 @@ do_block( struct triangle *tri,
 #define MAX3(a,b,c) MAX2(MAX2(a,b),c)
 
 static void 
-do_triangle_ccw(struct llvmpipe_context *llvmpipe,
+do_triangle_ccw(struct lp_setup *setup,
 		const float (*v1)[4],
 		const float (*v2)[4],
 		const float (*v3)[4],
 		boolean frontfacing )
 {
-   const int rt_width = llvmpipe->framebuffer.cbufs[0]->width;
-   const int rt_height = llvmpipe->framebuffer.cbufs[0]->height;
+   const int rt_width = setup->framebuffer.cbufs[0]->width;
+   const int rt_height = setup->framebuffer.cbufs[0]->height;
 
    const float y1 = subpixel_snap(v1[0][1]);
    const float y2 = subpixel_snap(v2[0][1]);
@@ -458,14 +262,11 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
    const float x2 = subpixel_snap(v2[0][0]);
    const float x3 = subpixel_snap(v3[0][0]);
    
-   struct triangle tri;
+   struct triangle *tri = allocate_triangle;
    float area;
    float c1, c2, c3;
    int i;
    int minx, maxx, miny, maxy;
-
-   tri.llvmpipe = llvmpipe;
-
 
    tri.dx12 = x1 - x2;
    tri.dx23 = x2 - x3;
@@ -505,12 +306,7 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
 
    /* Setup parameter interpolants:
     */
-   setup_tri_coefficients( llvmpipe, &tri, v1, v2, v3, frontfacing );
-
-   for (i = 0; i < Elements(tri.quad); i++) {
-      tri.quad[i].coef = tri.coef;
-      tri.quad[i].posCoef = &tri.position_coef;
-   }
+   setup_tri_coefficients( setup, &tri, v1, v2, v3, frontfacing );
 
    /* half-edge constants, will be interated over the whole
     * rendertarget.
@@ -548,73 +344,22 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
    tri.ei2 = tri.dx23 - tri.dy23 - tri.eo2;
    tri.ei3 = tri.dx31 - tri.dy31 - tri.eo3;
 
-   minx &= ~(BLOCKSIZE-1);		/* aligned blocks */
-   miny &= ~(BLOCKSIZE-1);		/* aligned blocks */
+   minx &= ~(TILESIZE-1);		/* aligned blocks */
+   miny &= ~(TILESIZE-1);		/* aligned blocks */
 
    c1 += tri.dx12 * miny - tri.dy12 * minx;
    c2 += tri.dx23 * miny - tri.dy23 * minx;
    c3 += tri.dx31 * miny - tri.dy31 * minx;
 
-   if ((miny & ~15) == (maxy & ~15) &&
-       (minx & ~15) == (maxx & ~15))
+   if (miny + TILESIZE > maxy &&
+       minx + TILESIZE > maxx)
    {
-      const int step = 2;
-
-      float xstep1 = -step * tri.dy12;
-      float xstep2 = -step * tri.dy23;
-      float xstep3 = -step * tri.dy31;
-
-      float ystep1 = step * tri.dx12;
-      float ystep2 = step * tri.dx23;
-      float ystep3 = step * tri.dx31;
-
-      float eo1 = tri.eo1 * step;
-      float eo2 = tri.eo2 * step;
-      float eo3 = tri.eo3 * step;
-
-      int x, y;
-
-      /* Subdivide space into NxM blocks, where each block is square and
-       * power-of-four in dimension.
-       *
-       * Trivially accept or reject blocks, else jump to per-pixel
-       * examination above.
+      /* Triangle is contained in a single tile:
        */
-      for (y = miny; y < maxy; y += step)
-      {
-	 float cx1 = c1;
-	 float cx2 = c2;
-	 float cx3 = c3;
-
-	 for (x = minx; x < maxx; x += step)
-	 {
-	    if (cx1 + eo1 < 0 || 
-		cx2 + eo2 < 0 ||
-		cx3 + eo3 < 0) 
-	    {
-	    }
-	    else 
-	    {
-	       do_quad(&tri, x, y, cx1, cx2, cx3);
-	    }
-
-	    /* Iterate cx values across the region:
-	     */
-	    cx1 += xstep1;
-	    cx2 += xstep2;
-	    cx3 += xstep3;
-	 }
-      
-	 /* Iterate c values down the region:
-	  */
-	 c1 += ystep1;
-	 c2 += ystep2;
-	 c3 += ystep3;    
-      }
    }
    else 
    {
-      const int step = BLOCKSIZE;
+      const int step = TILESIZE;
 
       float ei1 = tri.ei1 * step;
       float ei2 = tri.ei2 * step;
@@ -645,7 +390,6 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
 	 float cx1 = c1;
 	 float cx2 = c2;
 	 float cx3 = c3;
-	 boolean in = false;
 
 	 for (x = minx; x < maxx; x += step)
 	 {
@@ -654,21 +398,18 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
 		cx3 + eo3 < 0) 
 	    {
 	       /* do nothing */
-	       if (in)
-		  break;
 	    }
 	    else if (cx1 + ei1 > 0 &&
 		     cx2 + ei2 > 0 &&
 		     cx3 + ei3 > 0) 
 	    {
-	       in = TRUE;
-	       block_full(&tri, x, y); /* trivial accept */
+               /* shade whole tile */
+               bin_command(tile[x][y], lp_rast_shade_tile, &tri->inputs );
 	    }
 	    else 
 	    {
-	       in = TRUE;
-	       // block_full(&tri, x, y); /* trivial accept */
-	       do_block(&tri, x, y, cx1, cx2, cx3);
+               /* shade partial tile */
+	       bin_command(tile[x][y], lp_rast_triangle, &tri );
 	    }
 
 	    /* Iterate cx values across the region:
@@ -687,23 +428,23 @@ do_triangle_ccw(struct llvmpipe_context *llvmpipe,
    }
 }
 
-static void triangle_cw( struct llvmpipe_context *llvmpipe,
+static void triangle_cw( struct setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   do_triangle_ccw( llvmpipe, v1, v0, v2, !llvmpipe->ccw_is_frontface );
+   do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface );
 }
 
-static void triangle_ccw( struct llvmpipe_context *llvmpipe,
+static void triangle_ccw( struct setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   do_triangle_ccw( llvmpipe, v0, v1, v2, llvmpipe->ccw_is_frontface );
+   do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
 }
 
-static void triangle_both( struct llvmpipe_context *llvmpipe,
+static void triangle_both( struct setup_context *setup,
 			   const float (*v0)[4],
 			   const float (*v1)[4],
 			   const float (*v2)[4] )
@@ -716,38 +457,37 @@ static void triangle_both( struct llvmpipe_context *llvmpipe,
 
    /* det = cross(e,f).z */
    if (ex * fy - ey * fx < 0) 
-      triangle_ccw( llvmpipe, v0, v1, v2 );
+      triangle_ccw( setup, v0, v1, v2 );
    else
-      triangle_cw( llvmpipe, v0, v1, v2 );
+      triangle_cw( setup, v0, v1, v2 );
 }
 
-static void triangle_nop( struct llvmpipe_context *llvmpipe,
+static void triangle_nop( struct setup_context *setup,
 			  const float (*v0)[4],
 			  const float (*v1)[4],
 			  const float (*v2)[4] )
 {
 }
 
-
-
-
-void setup_prepare_tri( struct llvmpipe_context *llvmpipe )
+void setup_prepare_tri( struct setup_context *setup )
 {
-   llvmpipe->ccw_is_frontface = (llvmpipe->rasterizer->front_winding == 
-				 PIPE_WINDING_CW);
+   struct llvmpipe_context *llvmpipe = setup->llvmpipe;
+
+   setup->ccw_is_frontface = (llvmpipe->rasterizer->front_winding == 
+                              PIPE_WINDING_CW);
 
    switch (llvmpipe->rasterizer->cull_mode) {
    case PIPE_WINDING_NONE:
-      llvmpipe->triangle = triangle_both;
+      setup->triangle = triangle_both;
       break;
    case PIPE_WINDING_CCW:
-      llvmpipe->triangle = triangle_cw;
+      setup->triangle = triangle_cw;
       break;
    case PIPE_WINDING_CW:
-      llvmpipe->triangle = triangle_ccw;
+      setup->triangle = triangle_ccw;
       break;
    default:
-      llvmpipe->triangle = triangle_nop;
+      setup->triangle = triangle_nop;
       break;
    }
 }
