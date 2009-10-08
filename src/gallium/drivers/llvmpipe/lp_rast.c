@@ -50,14 +50,14 @@ struct lp_rasterizer *lp_rast_create( void )
 }
 
 void lp_rast_bind_surfaces( struct lp_rasterizer *rast,
-			    struct pipe_surface *color,
-			    struct pipe_surface *zstencil,
+			    struct pipe_surface *cbuf,
+			    struct pipe_surface *zsbuf,
 			    const float *clear_color,
 			    double clear_depth,
 			    unsigned clear_stencil)
 {
-   pipe_surface_reference(&rast->state.color, color);
-   pipe_surface_reference(&rast->state.depth, depth);
+   pipe_surface_reference(&rast->state.cbuf, cbuf);
+   pipe_surface_reference(&rast->state.zsbuf, zsbuf);
 }
 
 
@@ -93,12 +93,12 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              const union lp_rast_cmd_arg *arg)
 {
-   const unsigned clear_color = arg->clear.clear_zstencil;
+   const unsigned clear_zstencil = arg->clear.clear_zstencil;
    unsigned i, j;
    
    for (i = 0; i < TILE_SIZE; i++)
       for (j = 0; j < TILE_SIZE; j++)
-	 rast->tile.depth[i][j] = clear_depth;
+	 rast->tile.depth[i*TILE_SIZE + j] = clear_zstencil;
 }
 
 
@@ -119,7 +119,7 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
 void lp_rast_set_state( struct lp_rasterizer *rast,
                         const union lp_rast_cmd_arg *arg )
 {
-   rast->shader_state = arg->state;
+   rast->shader_state = arg->set_state;
 
 }
 
@@ -128,36 +128,24 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg *arg,
 			 const struct lp_rast_shader_inputs *inputs )
 {
-   unsigned i;
-
-   /* Set up the silly quad coef pointers
-    */
-   for (i = 0; i < 4; i++) {
-      rast->quads[i].posCoef = &inputs->posCoef;
-      rast->quads[i].coef = inputs->coef;
-   }
+   const uint32_t masks[4] = {~0, ~0, ~0, ~0};
+   unsigned i, j;
 
    /* Use the existing preference for 8x2 (four quads) shading:
     */
-   for (i = 0; i < TILE_SIZE; i += 8) {
-      for (j = 0; j < TILE_SIZE; j += 2) {
-	 rast->shader_state.shade( inputs->jc,
-				   rast->x + i,
-				   rast->y + j,
-				   rast->quads, 4 );
-      }
-   }
+   for (i = 0; i < TILE_SIZE; i += 8)
+      for (j = 0; j < TILE_SIZE; j += 2)
+         lp_rast_shade_quads( rast, inputs, i, j, &masks);
 }
 
 
-void lp_rast_shade_quads( const struct lp_rast_state *state,
-                          struct lp_rast_tile *tile,
-                          struct quad_header **quads,
-                          unsigned nr )
+void lp_rast_shade_quads( struct lp_rasterizer *rast,
+                          const struct lp_rast_shader_inputs *inputs,
+                          unsigned x, unsigned y,
+                          const unsigned *masks)
 {
-   struct quad_header *quad = quads[0];
-   const unsigned x = quad->input.x0;
-   const unsigned y = quad->input.y0;
+   const struct lp_rast_state *state = rast->shader_state;
+   struct lp_rast_tile *tile = &rast->tile;
    uint8_t *color;
    uint8_t *depth;
    uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
@@ -165,18 +153,13 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
    unsigned q;
 
    /* Sanity checks */
-   assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
-   for (q = 0; q < nr; ++q) {
-      assert(quads[q]->input.x0 == x + q*2);
-      assert(quads[q]->input.y0 == y);
-   }
 
    /* mask */
    for (q = 0; q < 4; ++q)
       for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-         mask[q][chan_index] = quads[q]->inout.mask & (1 << chan_index) ? ~0 : 0;
+         mask[q][chan_index] = masks[q] & (1 << chan_index) ? ~0 : 0;
 
    /* color buffer */
    color = &TILE_PIXEL(tile->color, x, y, 0);
@@ -184,7 +167,7 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
    /* depth buffer */
    assert((x % 2) == 0);
    assert((y % 2) == 0);
-   depth = (uint8_t *)tile->depth + y*TILE_SIZE*4 + 2*x*4;
+   depth = tile->depth + y*TILE_SIZE + 2*x;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(mask, 16));
@@ -196,9 +179,9 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
    /* run shader */
    state->shader( &state->jc,
                   x, y,
-                  quad->coef->a0,
-                  quad->coef->dadx,
-                  quad->coef->dady,
+                  inputs->a0,
+                  inputs->dadx,
+                  inputs->dady,
                   &mask[0][0],
                   color,
                   depth);
@@ -220,8 +203,9 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
    const unsigned y = rast->y;
    unsigned w = TILE_SIZE;
    unsigned h = TILE_SIZE;
+   void *map;
 
-   surface = rast->state.color;
+   surface = rast->state.cbuf;
    if(!surface)
       return;
 
@@ -252,7 +236,7 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
       screen->transfer_unmap(screen, transfer);
    }
 
-   screen->tex_transfer_destroy(screen, transfer);
+   screen->tex_transfer_destroy(transfer);
 
    if (write_depth) {
       /* FIXME: call u_tile func to store depth/stencil to surface */

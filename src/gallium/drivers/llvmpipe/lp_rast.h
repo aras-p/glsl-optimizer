@@ -28,6 +28,7 @@
 #ifndef LP_RAST_H
 #define LP_RAST_H
 
+#include "pipe/p_compiler.h"
 #include "lp_jit.h"
 
 /* Initially create and program a single rasterizer directly.  Later
@@ -91,9 +92,6 @@ struct lp_rast_triangle {
    float dx12;
    float dx23;
    float dx31;
-
-   /* State to run the shader: */
-   struct lp_rast_shader_inputs inputs;
 };
 
 struct clear_tile {
@@ -112,8 +110,8 @@ struct load_tile {
 struct lp_rasterizer *lp_rast_create( void );
 
 void lp_rast_bind_surfaces( struct lp_rasterizer *,
-			    struct pipe_surface *color,
-			    struct pipe_surface *zstencil,
+			    struct pipe_surface *cbuf,
+			    struct pipe_surface *zsbuf,
 			    const float *clear_color,
 			    double clear_depth,
 			    unsigned clear_stencil);
@@ -154,7 +152,8 @@ void lp_rast_triangle( struct lp_rasterizer *,
                        const union lp_rast_cmd_arg * );
 
 void lp_rast_shade_tile( struct lp_rasterizer *,
-                         const union lp_rast_cmd_arg * );
+                         const union lp_rast_cmd_arg *,
+                         const struct lp_rast_shader_inputs *);
 
 void lp_rast_store_color( struct lp_rasterizer *,
                           const union lp_rast_cmd_arg *);
@@ -162,6 +161,12 @@ void lp_rast_store_color( struct lp_rasterizer *,
 void lp_rast_store_zstencil( struct lp_rasterizer *,
                              const union lp_rast_cmd_arg *);
 
+
+/* End of tile:
+ */
+
+void lp_rast_end_tile( struct lp_rasterizer *rast,
+                       boolean write_depth );
 
 /* Shutdown:
  */

@@ -38,7 +38,7 @@ struct lp_rast_tile
 {
    uint8_t *color;
 
-   uint8_t *depth;
+   uint32_t *depth;
 };
 
 
@@ -55,12 +55,20 @@ struct lp_rasterizer {
 
    
    struct {
-      struct pipe_surface *color;
-      struct pipe_surface *zstencil;
+      struct pipe_surface *cbuf;
+      struct pipe_surface *zsbuf;
       unsigned clear_color;
       unsigned clear_depth;
       char clear_stencil;
    } state;
+
+   const struct lp_rast_state *shader_state;
 };
+
+
+void lp_rast_shade_quads( struct lp_rasterizer *rast,
+                          const struct lp_rast_shader_inputs *inputs,
+                          unsigned x, unsigned y,
+                          const unsigned *masks);
 
 #endif
