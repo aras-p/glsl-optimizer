@@ -41,62 +41,12 @@
 #include "lp_prim_vbuf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
-#include "lp_tile_cache.h"
-#include "lp_tex_cache.h"
 #include "lp_texture.h"
 #include "lp_winsys.h"
 #include "lp_query.h"
 
 
 
-/**
- * Map any drawing surfaces which aren't already mapped
- */
-void
-llvmpipe_map_transfers(struct llvmpipe_context *lp)
-{
-   struct pipe_screen *screen = lp->pipe.screen;
-   struct pipe_surface *zsbuf = lp->framebuffer.zsbuf;
-   unsigned i;
-
-   for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
-      lp_tile_cache_map_transfers(lp->cbuf_cache[i]);
-   }
-
-   if(zsbuf) {
-      if(!lp->zsbuf_transfer)
-         lp->zsbuf_transfer = screen->get_tex_transfer(screen, zsbuf->texture,
-                                                       zsbuf->face, zsbuf->level, zsbuf->zslice,
-                                                       PIPE_TRANSFER_READ_WRITE,
-                                                       0, 0, zsbuf->width, zsbuf->height);
-      if(lp->zsbuf_transfer && !lp->zsbuf_map)
-         lp->zsbuf_map = screen->transfer_map(screen, lp->zsbuf_transfer);
-
-   }
-}
-
-
-/**
- * Unmap any mapped drawing surfaces
- */
-void
-llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
-{
-   uint i;
-
-   for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
-      lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
-   }
-
-   if(lp->zsbuf_transfer) {
-      struct pipe_screen *screen = lp->pipe.screen;
-
-      if(lp->zsbuf_map) {
-         screen->transfer_unmap(screen, lp->zsbuf_transfer);
-         lp->zsbuf_map = NULL;
-      }
-   }
-}
 
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
@@ -107,14 +57,16 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
+   if (llvmpipe->setup)
+      lp_setup_destroy( llvmpipe->setup );
+
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
       pipe_surface_reference(&llvmpipe->framebuffer.cbufs[i], NULL);
    }
+
    pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      lp_destroy_tex_tile_cache(llvmpipe->tex_cache[i]);
       pipe_texture_reference(&llvmpipe->texture[i], NULL);
    }
 
@@ -135,7 +87,7 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    unsigned i;
 
-   if(llvmpipe->dirty_render_cache) {
+   if (lp_setup_is_active(llvmpipe->setup)) {
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
          if(llvmpipe->framebuffer.cbufs[i] && 
             llvmpipe->framebuffer.cbufs[i]->texture == texture)
@@ -226,21 +178,10 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_texture_funcs( llvmpipe );
 
-   /*
-    * Alloc caches for accessing drawing surfaces and textures.
-    */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      llvmpipe->cbuf_cache[i] = lp_create_tile_cache( screen );
-
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
-
-
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
       llvmpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
-      llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
    }
 
@@ -248,7 +189,6 @@ llvmpipe_create( struct pipe_screen *screen )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
       llvmpipe->tgsi.frag_samplers[i].processor = TGSI_PROCESSOR_FRAGMENT;
-      llvmpipe->tgsi.frag_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.frag_samplers_list[i] = &llvmpipe->tgsi.frag_samplers[i];
    }
 

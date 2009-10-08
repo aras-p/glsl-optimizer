@@ -208,12 +208,6 @@ llvmpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
 
 
 void
-llvmpipe_map_transfers(struct llvmpipe_context *lp);
-
-void
-llvmpipe_unmap_transfers(struct llvmpipe_context *lp);
-
-void
 llvmpipe_map_texture_surfaces(struct llvmpipe_context *lp);
 
 void

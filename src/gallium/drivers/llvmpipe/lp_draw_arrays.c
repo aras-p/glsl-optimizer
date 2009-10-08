@@ -123,7 +123,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    if (lp->dirty)
       llvmpipe_update_derived( lp );
 
-   llvmpipe_map_transfers(lp);
    llvmpipe_map_constant_buffers(lp);
 
    /*
@@ -164,8 +163,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
 
    /* Note: leave drawing surfaces mapped */
    llvmpipe_unmap_constant_buffers(lp);
-
-   lp->dirty_render_cache = TRUE;
    
    return TRUE;
 }

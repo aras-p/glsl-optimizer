@@ -42,10 +42,17 @@ struct setup_context *
 lp_setup_create( void );
 
 void
+lp_setup_clear(struct pipe_context *pipe, 
+               unsigned buffers,
+               const float *rgba,
+               double depth,
+               unsigned stencil);
+
+void
 lp_setup_triangle(struct setup_context *setup,
                   const float (*v0)[4],
                   const float (*v1)[4],
-                  const float (*v1)[4]);
+                  const float (*v2)[4]);
 
 void
 lp_setup_line(struct setup_context *setup,

@@ -40,7 +40,6 @@
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_texture.h"
-#include "lp_tex_cache.h"
 #include "lp_screen.h"
 #include "lp_winsys.h"
 
@@ -241,7 +240,7 @@ llvmpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
                        PIPE_BUFFER_USAGE_GPU_WRITE)) {
-         /* Mark the surface as dirty.  The tile cache will look for this. */
+         /* Mark the surface as dirty. */
          lpt->timestamp++;
          llvmpipe_screen(screen)->timestamp++;
       }
@@ -368,7 +367,6 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
    if (transfer->texture && (transfer->usage & PIPE_TRANSFER_WRITE))
    {
       /* Do something to notify sharing contexts of a texture change.
-       * In llvmpipe, that would mean flushing the texture cache.
        */
       screen->timestamp++;
    }

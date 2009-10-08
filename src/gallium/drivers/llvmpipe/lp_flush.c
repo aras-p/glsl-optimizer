@@ -36,8 +36,6 @@
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_state.h"
-#include "lp_tile_cache.h"
-#include "lp_tex_cache.h"
 #include "lp_winsys.h"
 
 
@@ -47,40 +45,14 @@ llvmpipe_flush( struct pipe_context *pipe,
                 struct pipe_fence_handle **fence )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   uint i;
 
    draw_flush(llvmpipe->draw);
 
    if (flags & PIPE_FLUSH_SWAPBUFFERS) {
-      /* If this is a swapbuffers, just flush color buffers.
-       *
-       * The zbuffer changes are not discarded, but held in the cache
-       * in the hope that a later clear will wipe them out.
-       */
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i]) {
-            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
-            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
-         }
-
-      /* Need this call for hardware buffers before swapbuffers.
-       *
-       * there should probably be another/different flush-type function
-       * that's called before swapbuffers because we don't always want
-       * to unmap surfaces when flushing.
-       */
-      llvmpipe_unmap_transfers(llvmpipe);
+      lp_setup_flush( llvmpipe->setup, FALSE );
    }
    else if (flags & PIPE_FLUSH_RENDER_CACHE) {
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i]) {
-            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
-            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
-         }
-
-      /* FIXME: untile zsbuf! */
-     
-      llvmpipe->dirty_render_cache = FALSE;
+      lp_setup_flush( llvmpipe->setup, TRUE );
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */

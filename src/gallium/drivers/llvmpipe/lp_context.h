@@ -42,12 +42,10 @@
 struct llvmpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
-struct llvmpipe_tile_cache;
-struct llvmpipe_tex_tile_cache;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
-
+struct lp_setup_context;
 
 struct llvmpipe_context {
    struct pipe_context pipe;  /**< base class */
@@ -112,8 +110,6 @@ struct llvmpipe_context {
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
 
-   unsigned line_stipple_counter;
-
    /** TGSI exec things */
    struct {
       struct lp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
@@ -122,6 +118,9 @@ struct llvmpipe_context {
       struct lp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
+   /** The tiling engine */
+   struct lp_setup_context *setup;
+
    /** The primitive drawing context */
    struct draw_context *draw;
 
@@ -129,18 +128,8 @@ struct llvmpipe_context {
    struct vbuf_render *vbuf_backend;
    struct draw_stage *vbuf;
 
-   boolean dirty_render_cache;
-   
-   struct llvmpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
-   
-   /* TODO: we shouldn't be using external interfaces internally like this */
-   struct pipe_transfer *zsbuf_transfer;
-   uint8_t *zsbuf_map;
-
    unsigned tex_timestamp;
-   struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
-
-   unsigned no_rast : 1;
+   boolean no_rast;
 
    struct lp_jit_context jit_context;
 };
