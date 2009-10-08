@@ -98,6 +98,64 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
    }
 }
 
+
+void lp_rast_shade_quads( const struct lp_rast_state *state,
+                          struct lp_rast_tile *tile,
+                          struct quad_header **quads,
+                          unsigned nr )
+{
+   struct lp_fragment_shader *fs = llvmpipe->fs;
+   struct quad_header *quad = quads[0];
+   const unsigned x = quad->input.x0;
+   const unsigned y = quad->input.y0;
+   uint8_t *color;
+   uint8_t *depth;
+   uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
+   unsigned chan_index;
+   unsigned q;
+
+   /* Sanity checks */
+   assert(nr * QUAD_SIZE == TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH);
+   assert(x % TILE_VECTOR_WIDTH == 0);
+   assert(y % TILE_VECTOR_HEIGHT == 0);
+   for (q = 0; q < nr; ++q) {
+      assert(quads[q]->input.x0 == x + q*2);
+      assert(quads[q]->input.y0 == y);
+   }
+
+   /* mask */
+   for (q = 0; q < 4; ++q)
+      for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+         mask[q][chan_index] = quads[q]->inout.mask & (1 << chan_index) ? ~0 : 0;
+
+   /* color buffer */
+   color = &TILE_PIXEL(tile->color, x, y, 0);
+
+   /* depth buffer */
+   assert((x % 2) == 0);
+   assert((y % 2) == 0);
+   depth = (uint8_t)*tile->depth + y*TILE_SIZE*4 + 2*x*4;
+
+   /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
+   assert(lp_check_alignment(mask, 16));
+
+   assert(lp_check_alignment(depth, 16));
+   assert(lp_check_alignment(color, 16));
+   assert(lp_check_alignment(state->jc.blend_color, 16));
+
+   /* run shader */
+   state->jit_function( &state->jc,
+                        x, y,
+                        quad->coef->a0,
+                        quad->coef->dadx,
+                        quad->coef->dady,
+                        &mask[0][0],
+                        color,
+                        depth);
+
+}
+
+
 /* End of tile:
  */
 void lp_rast_store_color( struct lp_rasterizer *rast )

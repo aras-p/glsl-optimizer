@@ -3,16 +3,24 @@
 
 #include "lp_rast.h"
 
+
+/* We can choose whatever layout for the internal tile storage we
+ * prefer:
+ */
+struct lp_rast_tile
+{
+   uint8_t *color;
+
+   uint8_t *depth;
+};
+
+
 struct lp_rasterizer {
 
    /* We can choose whatever layout for the internal tile storage we
     * prefer:
     */
-   struct {
-      unsigned color[TILESIZE][TILESIZE];
-      unsigned depth[TILESIZE][TILESIZE];
-      char stencil[TILESIZE][TILESIZE];
-   } tile;
+   struct lp_rast_tile tile;
 
       
    unsigned x;

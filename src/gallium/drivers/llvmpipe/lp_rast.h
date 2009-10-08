@@ -17,9 +17,8 @@ struct lp_rast_state {
    /* The shader itself.  Probably we also need to pass a pointer to
     * the tile color/z/stencil data somehow:
     */
-   void (*run)( struct lp_jit_context *jc,
-                struct quad_header **quads,
-                unsigned nr );
+   lp_jit_frag_func shader;
+
 };
 
 /* Coefficients necessary to run the shader at a given location:
