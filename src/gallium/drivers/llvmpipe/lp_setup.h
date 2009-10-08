@@ -27,6 +27,7 @@
 #ifndef LP_SETUP_H
 #define LP_SETUP_H
 
+#include "pipe/p_compiler.h"
 
 enum lp_interp {
    LP_INTERP_CONSTANT,
@@ -42,11 +43,11 @@ struct setup_context *
 lp_setup_create( void );
 
 void
-lp_setup_clear(struct pipe_context *pipe, 
-               unsigned buffers,
-               const float *rgba,
-               double depth,
-               unsigned stencil);
+lp_setup_clear(struct setup_context *setup,
+               const float *clear_color,
+               double clear_depth,
+               unsigned clear_stencil,
+               unsigned flags);
 
 void
 lp_setup_triangle(struct setup_context *setup,

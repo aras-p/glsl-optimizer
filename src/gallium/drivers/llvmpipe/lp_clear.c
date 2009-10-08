@@ -55,5 +55,5 @@ llvmpipe_clear(struct pipe_context *pipe,
    if (llvmpipe->no_rast)
       return;
 
-   lp_setup_clear( llvmpipe->setup, buffers, rgba, depth, stencil );
+   lp_setup_clear( llvmpipe->setup, rgba, depth, stencil, buffers );
 }
