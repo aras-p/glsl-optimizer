@@ -214,7 +214,7 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
    if(x + w > surface->width)
       w = surface->width - x;
    if(y + h > surface->height)
-      h = surface->height - x;
+      h = surface->height - y;
 
    transfer = screen->get_tex_transfer(screen,
                                        surface->texture,
