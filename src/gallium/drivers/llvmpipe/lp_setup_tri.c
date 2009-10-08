@@ -29,14 +29,8 @@
  * Binning code for triangles
  */
 
-#include "lp_context.h"
 #include "lp_setup.h"
 #include "lp_state.h"
-#include "draw/draw_context.h"
-#include "draw/draw_private.h"
-#include "draw/draw_vertex.h"
-#include "pipe/p_shader_tokens.h"
-#include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -163,56 +157,55 @@ setup_fragcoord_coef(struct triangle *tri, unsigned slot)
 /**
  * Compute the tri->coef[] array dadx, dady, a0 values.
  */
-static void setup_tri_coefficients( struct llvmpipe_context *llvmpipe,
+static void setup_tri_coefficients( struct setup_context *setup,
 				    struct triangle *tri,
 				    const float (*v1)[4],
 				    const float (*v2)[4],
 				    const float (*v3)[4],
 				    boolean frontface )
 {
-   const struct lp_fragment_shader *fs = llvmpipe->fs;
-   const struct vertex_info *vinfo = llvmpipe_get_vertex_info(llvmpipe);
+   const struct vertex_info *vinfo = setup->vinfo;
    unsigned input;
 
    /* z and w are done by linear interpolation:
     */
-   linear_coef(tri, &tri->position_coef, v1, v2, v3, 0, 2);
-   linear_coef(tri, &tri->position_coef, v1, v2, v3, 0, 3);
+   linear_coef(tri, tri->position_coef, v1, v2, v3, 0, 2);
+   linear_coef(tri, tri->position_coef, v1, v2, v3, 0, 3);
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (input = 0; input < fs->info.num_inputs; input++) {
+   for (input = 0; input < vinfo->num_fs_inputs; input++) {
       unsigned vert_attr = vinfo->attrib[input].src_index;
       unsigned i;
 
       switch (vinfo->attrib[input].interp_mode) {
       case INTERP_CONSTANT:
          for (i = 0; i < NUM_CHANNELS; i++)
-            constant_coef(&tri->coef[input], v3, vert_attr, i);
+            constant_coef(tri->coef[input], v3, vert_attr, i);
          break;
 
       case INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
-            linear_coef(tri, &tri->coef[input], v1, v2, v3, vert_attr, i);
+            linear_coef(tri, tri->coef[input], v1, v2, v3, vert_attr, i);
          break;
 
       case INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
-            perspective_coef(tri, &tri->coef[input], v1, v2, v3, vert_attr, i);
+            perspective_coef(tri, tri->coef[input], v1, v2, v3, vert_attr, i);
          break;
 
       case INTERP_POS:
          setup_fragcoord_coef(tri, input);
          break;
 
-      default:
-         assert(0);
-      }
-
-      if (fs->info.input_semantic_name[input] == TGSI_SEMANTIC_FACE) {
+      case INTERP_FACING:
          tri->coef[input].a0[0] = 1.0f - frontface;
          tri->coef[input].dadx[0] = 0.0;
          tri->coef[input].dady[0] = 0.0;
+         break;
+
+      default:
+         assert(0);
       }
    }
 }
@@ -262,22 +255,22 @@ do_triangle_ccw(struct lp_setup *setup,
    const float x2 = subpixel_snap(v2[0][0]);
    const float x3 = subpixel_snap(v3[0][0]);
    
-   struct triangle *tri = allocate_triangle;
+   struct triangle *tri = allocate_triangle( setup );
    float area;
    float c1, c2, c3;
    int i;
    int minx, maxx, miny, maxy;
 
-   tri.dx12 = x1 - x2;
-   tri.dx23 = x2 - x3;
-   tri.dx31 = x3 - x1;
+   tri->dx12 = x1 - x2;
+   tri->dx23 = x2 - x3;
+   tri->dx31 = x3 - x1;
 
-   tri.dy12 = y1 - y2;
-   tri.dy23 = y2 - y3;
-   tri.dy31 = y3 - y1;
+   tri->dy12 = y1 - y2;
+   tri->dy23 = y2 - y3;
+   tri->dy31 = y3 - y1;
 
-   area = (tri.dx12 * tri.dy31 - 
-	   tri.dx31 * tri.dy12);
+   area = (tri->dx12 * tri->dy31 - 
+	   tri->dx31 * tri->dy12);
 
    /* Cull non-ccw and zero-sized triangles.
     */
@@ -302,80 +295,87 @@ do_triangle_ccw(struct lp_setup *setup,
 
    /* The only divide in this code.  Is it really needed?
     */
-   tri.oneoverarea = 1.0f / area;
+   tri->oneoverarea = 1.0f / area;
 
    /* Setup parameter interpolants:
     */
-   setup_tri_coefficients( setup, &tri, v1, v2, v3, frontfacing );
+   setup_tri_coefficients( setup, tri, v1, v2, v3, frontfacing );
 
    /* half-edge constants, will be interated over the whole
     * rendertarget.
     */
-   c1 = tri.dy12 * x1 - tri.dx12 * y1;
-   c2 = tri.dy23 * x2 - tri.dx23 * y2;
-   c3 = tri.dy31 * x3 - tri.dx31 * y3;
+   c1 = tri->dy12 * x1 - tri->dx12 * y1;
+   c2 = tri->dy23 * x2 - tri->dx23 * y2;
+   c3 = tri->dy31 * x3 - tri->dx31 * y3;
 
    /* correct for top-left fill convention:
     */
-   if (tri.dy12 < 0 || (tri.dy12 == 0 && tri.dx12 > 0)) c1++;
-   if (tri.dy23 < 0 || (tri.dy23 == 0 && tri.dx23 > 0)) c2++;
-   if (tri.dy31 < 0 || (tri.dy31 == 0 && tri.dx31 > 0)) c3++;
+   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) c1++;
+   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) c2++;
+   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) c3++;
 
    /* find trivial reject offsets for each edge for a single-pixel
     * sized block.  These will be scaled up at each recursive level to
     * match the active blocksize.  Scaling in this way works best if
     * the blocks are square.
     */
-   tri.eo1 = 0;
-   if (tri.dy12 < 0) tri.eo1 -= tri.dy12;
-   if (tri.dx12 > 0) tri.eo1 += tri.dx12;
+   tri->eo1 = 0;
+   if (tri->dy12 < 0) tri->eo1 -= tri->dy12;
+   if (tri->dx12 > 0) tri->eo1 += tri->dx12;
 
-   tri.eo2 = 0;
-   if (tri.dy23 < 0) tri.eo2 -= tri.dy23;
-   if (tri.dx23 > 0) tri.eo2 += tri.dx23;
+   tri->eo2 = 0;
+   if (tri->dy23 < 0) tri->eo2 -= tri->dy23;
+   if (tri->dx23 > 0) tri->eo2 += tri->dx23;
 
-   tri.eo3 = 0;
-   if (tri.dy31 < 0) tri.eo3 -= tri.dy31;
-   if (tri.dx31 > 0) tri.eo3 += tri.dx31;
+   tri->eo3 = 0;
+   if (tri->dy31 < 0) tri->eo3 -= tri->dy31;
+   if (tri->dx31 > 0) tri->eo3 += tri->dx31;
 
    /* Calculate trivial accept offsets from the above.
     */
-   tri.ei1 = tri.dx12 - tri.dy12 - tri.eo1;
-   tri.ei2 = tri.dx23 - tri.dy23 - tri.eo2;
-   tri.ei3 = tri.dx31 - tri.dy31 - tri.eo3;
+   tri->ei1 = tri->dx12 - tri->dy12 - tri->eo1;
+   tri->ei2 = tri->dx23 - tri->dy23 - tri->eo2;
+   tri->ei3 = tri->dx31 - tri->dy31 - tri->eo3;
 
    minx &= ~(TILESIZE-1);		/* aligned blocks */
    miny &= ~(TILESIZE-1);		/* aligned blocks */
 
-   c1 += tri.dx12 * miny - tri.dy12 * minx;
-   c2 += tri.dx23 * miny - tri.dy23 * minx;
-   c3 += tri.dx31 * miny - tri.dy31 * minx;
+   c1 += tri->dx12 * miny - tri->dy12 * minx;
+   c2 += tri->dx23 * miny - tri->dy23 * minx;
+   c3 += tri->dx31 * miny - tri->dy31 * minx;
 
-   if (miny + TILESIZE > maxy &&
-       minx + TILESIZE > maxx)
+   /* Convert to tile coordinates:
+    */
+   minx /= TILESIZE;
+   maxx /= TILESIZE;
+   miny /= TILESIZE;
+   maxy /= TILESIZE;
+   
+   if (miny == maxy && minx == maxx)
    {
       /* Triangle is contained in a single tile:
        */
+      bin_command(setup->tile[minx][miny], lp_rast_triangle, tri );
    }
    else 
    {
       const int step = TILESIZE;
 
-      float ei1 = tri.ei1 * step;
-      float ei2 = tri.ei2 * step;
-      float ei3 = tri.ei3 * step;
+      float ei1 = tri->ei1 * step;
+      float ei2 = tri->ei2 * step;
+      float ei3 = tri->ei3 * step;
 
-      float eo1 = tri.eo1 * step;
-      float eo2 = tri.eo2 * step;
-      float eo3 = tri.eo3 * step;
+      float eo1 = tri->eo1 * step;
+      float eo2 = tri->eo2 * step;
+      float eo3 = tri->eo3 * step;
 
-      float xstep1 = -step * tri.dy12;
-      float xstep2 = -step * tri.dy23;
-      float xstep3 = -step * tri.dy31;
+      float xstep1 = -step * tri->dy12;
+      float xstep2 = -step * tri->dy23;
+      float xstep3 = -step * tri->dy31;
 
-      float ystep1 = step * tri.dx12;
-      float ystep2 = step * tri.dx23;
-      float ystep3 = step * tri.dx31;
+      float ystep1 = step * tri->dx12;
+      float ystep2 = step * tri->dx23;
+      float ystep3 = step * tri->dx31;
       int x, y;
 
 
@@ -385,13 +385,13 @@ do_triangle_ccw(struct lp_setup *setup,
        * Trivially accept or reject blocks, else jump to per-pixel
        * examination above.
        */
-      for (y = miny; y < maxy; y += step)
+      for (y = miny; y < maxy; y++)
       {
 	 float cx1 = c1;
 	 float cx2 = c2;
 	 float cx3 = c3;
 
-	 for (x = minx; x < maxx; x += step)
+	 for (x = minx; x < maxx; x++)
 	 {
 	    if (cx1 + eo1 < 0 || 
 		cx2 + eo2 < 0 ||
@@ -404,12 +404,12 @@ do_triangle_ccw(struct lp_setup *setup,
 		     cx3 + ei3 > 0) 
 	    {
                /* shade whole tile */
-               bin_command(tile[x][y], lp_rast_shade_tile, &tri->inputs );
+               bin_command(setup->tile[x][y], lp_rast_shade_tile, &tri->inputs );
 	    }
 	    else 
 	    {
                /* shade partial tile */
-	       bin_command(tile[x][y], lp_rast_triangle, &tri );
+	       bin_command(setup->tile[x][y], lp_rast_triangle, tri );
 	    }
 
 	    /* Iterate cx values across the region:
@@ -469,14 +469,13 @@ static void triangle_nop( struct setup_context *setup,
 {
 }
 
-void setup_prepare_tri( struct setup_context *setup )
+void setup_set_tri_state( struct setup_context *setup,
+                          unsigned cull_mode,
+                          boolean ccw_is_frontface)
 {
-   struct llvmpipe_context *llvmpipe = setup->llvmpipe;
+   setup->ccw_is_frontface = ccw_is_frontface;
 
-   setup->ccw_is_frontface = (llvmpipe->rasterizer->front_winding == 
-                              PIPE_WINDING_CW);
-
-   switch (llvmpipe->rasterizer->cull_mode) {
+   switch (cull_mode) {
    case PIPE_WINDING_NONE:
       setup->triangle = triangle_both;
       break;

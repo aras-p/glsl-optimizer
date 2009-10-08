@@ -26,124 +26,337 @@
  **************************************************************************/
 
 /**
- * \brief  Primitive rasterization/rendering (points, lines)
+ * Tiling engine.
  *
- * \author  Keith Whitwell <keith@tungstengraphics.com>
- * \author  Brian Paul
+ * Builds per-tile display lists and executes them on calls to
+ * lp_setup_flush().
  */
 
-#include "lp_context.h"
-#include "lp_quad.h"
 #include "lp_setup.h"
-#include "lp_state.h"
-#include "draw/draw_context.h"
-#include "draw/draw_private.h"
-#include "draw/draw_vertex.h"
-#include "pipe/p_shader_tokens.h"
-#include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
+void lp_setup_new_cmd_block( struct cmd_block_list *list )
+{
+   struct cmd_block *block = MALLOC_STRUCT(cmd_block);
+   list->tail->next = block;
+   list->tail = block;
+   block->next = NULL;
+   block->count = 0;
+}
 
-#define DEBUG_VERTS 0
+void lp_setup_new_data_block( struct data_block_list *list )
+{
+   struct data_block *block = MALLOC_STRUCT(data_block);
+   list->tail->next = block;
+   list->tail = block;
+   block->next = NULL;
+   block->used = 0;
+}
+
+static void reset_context( struct setup_context *setup )
+{
+   for (i = 0; i < setup->tiles_x; i++) {
+      for (j = 0; j < setup->tiles_y; j++) {
+         struct cmd_block_list *list = scene->tile[i][j];
+         struct cmd_block *block;
+         struct cmd_block *tmp;
+         
+         for (block = list->first; block != list->tail; block = tmp) {
+            tmp = block->next;
+            FREE(block);
+         }
+         
+         list->first = list->tail;
+      }
+   }
+
+   {
+      struct data_block_list *list = &scene->data;
+      struct data_block *block, *tmp;
+
+      for (block = list->first; block != list->tail; block = tmp) {
+         tmp = block->next;
+         FREE(block);
+      }
+         
+      list->first = list->tail;
+   }
+}
+
+
+
+
+/* Add a command to all active bins.
+ */
+static void bin_everywhere( struct setup_context *setup,
+                            bin_cmd cmd,
+                            const union lp_rast_cmd_arg *arg )
+{
+   unsigned i, j;
+   for (i = 0; i < setup->tiles_x; i++)
+      for (j = 0; j < setup->tiles_y; j++)
+         bin_cmd( setup, &setup->tile[i][j], cmd, arg );
+}
+
+
+static void
+rasterize_bins( struct setup_context *setup,
+                struct lp_rast *rast,
+                boolean write_depth )
+{
+   lp_rast_bind_color( rast, 
+                       scene->fb.color, 
+                       TRUE );                    /* WRITE */
+                       
+   lp_rast_bind_depth( rast,
+                       scene->fb.depth,
+                       write_depth );             /* WRITE */
+
+   for (i = 0; i < scene->tiles_x; i++) {
+      for (j = 0; j < scene->tiles_y; j++) {
+
+         lp_rast_start_tile( rast, 
+                             i * TILESIZE,
+                             j * TILESIZE );
+
+         for (block = scene->tile[i][j].first; block; block = block->next) {
+            for (k = 0; k < block->nr_cmds; k++) {
+               block->cmd[k].func( rast, block->cmd[k].arg );
+            }
+         }
+
+         lp_rast_finish_tile( rast );
+      }
+   }
+
+   lp_setup_free_data( setup );
+}
+
+
+
+static void
+begin_binning( struct setup_context *setup )
+{
+   if (setup->fb.color) {
+      if (setup->fb.clear_color)
+         bin_everywhere( setup, 
+                         lp_rast_clear_color, 
+                         &setup->clear_data );
+      else
+         bin_everywhere( setup, 
+                         lp_rast_load_color, 
+                         NULL );
+   }
+
+   if (setup->fb.zstencil) {
+      if (setup->fb.clear_zstencil)
+         bin_everywhere( setup, 
+                         lp_rast_clear_zstencil, 
+                         &setup->clear_data );
+      else
+         bin_everywhere( setup, 
+                         lp_rast_load_zstencil, 
+                         NULL );
+   }
+}
+
+
+/* This basically bins and then flushes any outstanding full-screen
+ * clears.  
+ *
+ * TODO: fast path for fullscreen clears and no triangles.
+ */
+static void
+execute_clears( struct setup_context *setup )
+{
+   begin_binning( setup );
+   rasterize_bins( setup );
+}
+
+
+static void
+set_state( struct setup_context *setup,
+           unsigned new_state )
+{
+   unsigned old_state = setup->state;
+
+   if (old_state == new_state)
+      return;
+       
+   switch (new_state) {
+   case SETUP_ACTIVE:
+      if (old_state == SETUP_FLUSHED)
+         setup_begin_binning( setup );
+      break;
+
+   case SETUP_CLEARED:
+      if (old_state == SETUP_ACTIVE) {
+         assert(0);
+         return;
+      }
+      break;
+      
+   case SETUP_FLUSHED:
+      if (old_state == SETUP_CLEAR)
+         execute_clears( setup );
+      else
+         rasterize_bins( setup );
+      break;
+   }
+
+   setup->state = new_state;
+}
 
 
 void
-llvmpipe_setup_flush()
+lp_setup_flush( struct setup_context *setup,
+                unsigned flags )
 {
+   set_state( setup, SETUP_FLUSHED );
+}
+
+
+void
+lp_setup_bind_framebuffer( struct setup_context *setup,
+                           struct pipe_surface *color,
+                           struct pipe_surface *zstencil )
+{
+   unsigned width, height;
+
+   set_state( setup, SETUP_FLUSHED );
+
+   pipe_surface_reference( &setup->fb.color, color );
+   pipe_surface_reference( &setup->fb.zstencil, zstencil );
+
+   width = MAX2( color->width, zstencil->width );
+   height = MAX2( color->height, zstencil->height );
+
+   setup->tiles_x = align( width, TILESIZE ) / TILESIZE;
+   setup->tiles_y = align( height, TILESIZE ) / TILESIZE;
 }
 
 void
-llvmpipe_setup_bind_framebuffer()
+lp_setup_clear( struct setup_context *setup,
+                const float *clear_color,
+                double clear_depth,
+                unsigned clear_stencil,
+                unsigned flags )
 {
+   if (setup->state == SETUP_ACTIVE) {
+      struct lp_rast_clear_info *clear_info;
+      unsigned i, j;
+
+      clear_info = alloc_clear_info( setup );
+
+      if (flags & PIPE_CLEAR_COLOR) {
+         pack_color( setup, 
+                     clear_info->color,
+                     clear_color );
+         bin_everywhere(setup, lp_rast_clear_color, clear_info );
+      }
+
+      if (flags & PIPE_CLEAR_DEPTH_STENCIL) {
+         pack_depth_stencil( setup, 
+                             clear_info->depth, 
+                             clear_depth,
+                             clear_stencil );
+         
+         bin_everywhere(setup, lp_rast_clear_zstencil, clear_info );
+      }
+   }
+   else {
+      set_state( setup, SETUP_CLEARED );
+      setup->clear.flags |= flags;
+
+      if (flags & PIPE_CLEAR_COLOR) {
+         memcpy(setup->clear.color, color, sizeof setup->clear.color);
+      }
+
+      if (flags & PIPE_CLEAR_DEPTH_STENCIL) {
+         setup->clear.depth = clear_depth;
+         setup->clear.stencil = clear_stencil;
+      }
+   }
 }
 
+
 void
-llvmpipe_setup_clear()
+lp_setup_set_fs_inputs( struct setup_context *setup,
+                        const enum lp_interp *interp,
+                        unsigned nr )
 {
+   memcpy( setup->interp, interp, nr * sizeof interp[0] );
 }
+
+
+static void
+first_triangle( struct setup_context *setup,
+                const float (*v0)[4],
+                const float (*v1)[4],
+                const float (*v2)[4])
+{
+   set_state( setup, STATE_ACTIVE );
+   setup_choose_triangle( setup, v0, v1, v2 );
+}
+
 
 
 /* Stubs for lines & points for now:
  */
 void
-llvmpipe_setup_point(struct setup_context *setup,
+lp_setup_point(struct setup_context *setup,
 		     const float (*v0)[4])
 {
+   setup->point( setup, v0 );
 }
 
 void
-llvmpipe_setup_line(struct setup_context *setup,
+lp_setup_line(struct setup_context *setup,
 		    const float (*v0)[4],
 		    const float (*v1)[4])
 {
+   setup->line( setup, v0, v1 );
 }
 
-
-/* Called after statechange, before emitting primitives.  If binning
- * is active, this function should store relevant state in the binning
- * context.
- *
- * That includes: 
- *    - current fragment shader function
- *    - bound constant buffer contents
- *    - bound textures
- *    - blend color
- *    - etc.
- *
- * Basically everything needed at some point in the future to
- * rasterize triangles for the current state.
- *
- * Additionally this will set up the state needed for the rasterizer
- * to process and bin incoming triangles.  That would include such
- * things as:
- *    - cull mode
- *    - ???
- *    - etc.
- * 
- */
-void setup_prepare( struct setup_context *setup )
+void
+lp_setup_triangle(struct setup_context *setup,
+                  const float (*v0)[4],
+                  const float (*v1)[4],
+                  const float (*v2)[4])
 {
-   struct llvmpipe_context *lp = setup->llvmpipe;
-
-   if (lp->dirty) {
-      llvmpipe_update_derived(lp);
-   }
-
-   lp->quad.first->begin( lp->quad.first );
-
-   if (lp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
-       lp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
-       lp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
-      /* we'll do culling */
-      setup->winding = lp->rasterizer->cull_mode;
-   }
-   else {
-      /* 'draw' will do culling */
-      setup->winding = PIPE_WINDING_NONE;
-   }
-
-   setup_prepare_tri( setup->llvmpipe );
+   setup->triangle( setup, v0, v1, v2 );
 }
-
 
 
 void setup_destroy_context( struct setup_context *setup )
 {
+   lp_rast_destroy( setup->rast );
    FREE( setup );
 }
 
 
 /**
- * Create a new primitive setup/render stage.
+ * Create a new primitive tiling engine.  Currently also creates a
+ * rasterizer to use with it.
  */
-struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe )
+struct setup_context *setup_create_context( void )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
-   unsigned i;
 
-   setup->llvmpipe = llvmpipe;
+   setup->rast = lp_rast_create( void );
+   if (!setup->rast) 
+      goto fail;
+
+   for (i = 0; i < TILES_X; i++)
+      for (j = 0; j < TILES_Y; j++)
+         setup->tile[i][j].first = 
+            setup->tile[i][j].next = CALLOC_STRUCT(cmd_block);
 
    return setup;
+
+fail:
+   FREE(setup);
+   return NULL;
 }
 

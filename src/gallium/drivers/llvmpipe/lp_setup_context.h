@@ -27,114 +27,125 @@
 #ifndef LP_SETUP_CONTEXT_H
 #define LP_SETUP_CONTEXT_H
 
-struct clear_tile {
-   boolean do_color;
-   boolean do_depth_stencil;
-   unsigned rgba;
-   unsigned depth_stencil;
-};
 
-struct load_tile {
-   boolean do_color;
-   boolean do_depth_stencil;
-};
+#define CMD_BLOCK_MAX 128
+#define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
 
-/* Shade tile points directly at this:
+/* switch to a non-pointer value for this:
  */
-struct shader_inputs {
-   /* Some way of updating rasterizer state:
-    */
-   /* ??? */
-
-   /* Attribute interpolation:
-    */
-   float oneoverarea;
-   float x1;
-   float y1;
-
-   struct tgsi_interp_coef position_coef;
-   struct tgsi_interp_coef *coef;
-};
-
-/* Shade triangle points at this:
- */
-struct shade_triangle {
-   /* one-pixel sized trivial accept offsets for each plane */
-   float ei1;                   
-   float ei2;
-   float ei3;
-
-   /* one-pixel sized trivial reject offsets for each plane */
-   float eo1;                   
-   float eo2;
-   float eo3;
-
-   /* y deltas for vertex pairs */
-   float dy12;
-   float dy23;
-   float dy31;
-
-   /* x deltas for vertex pairs */
-   float dx12;
-   float dx23;
-   float dx31;
-   
-   struct shader_inputs inputs;
-};
-
-struct bin_cmd {
-   enum {
-      CMD_END = 0,
-      CMD_CLEAR,
-      CMD_LOAD_TILE,
-      CMD_SHADE_TILE,
-      CMD_SHADE_TRIANGLE,
-   } cmd;
-
-   union {
-      struct triangle *tri;
-      struct clear *clear;
-   } ptr;
-};
+typedef void (*lp_rast_cmd)( struct lp_rast *, const union lp_rast_cmd_arg * );
 
 struct cmd_block {
-   struct bin_cmd cmds[128];
+   union lp_rast_arg *arg[CMD_BLOCK_MAX];
+   lp_rast_cmd cmd[CMD_BLOCK_MAX];
    unsigned count;
    struct cmd_block *next;
 };
 
-/* Triangles
- */
 struct data_block {
-   ubyte data[4096 - sizeof(unsigned) - sizeof(struct cmd_block *)];
-   unsigned count;
+   ubyte data[DATA_BLOCK_SZ];
+   unsigned used;
    struct data_block *next;
 };
 
-/* Need to store the state at the time the triangle was drawn, at
- * least as it is needed during rasterization.  That would include at
- * minimum the constant values referred to by the fragment shader,
- * blend state, etc.  Much of this is code-generated into the shader
- * in llvmpipe -- may be easier to do this work there.
- */
-struct state_block {
+struct cmd_block_list {
+   struct cmd_block *head;
+   struct cmd_block *tail;
 };
 
+struct data_block_list {
+   struct data_block *head;
+   struct data_block *tail;
+};
+   
 
-/**
- * Basically all the data from a binner scene:
+/* We're limited to 2K by 2K for 32bit fixed point rasterization.
+ * Will need a 64-bit version for larger framebuffers.
  */
-struct binned_scene {
-   struct llvmpipe_context *llvmpipe;
+#define MAXHEIGHT 2048
+#define MAXWIDTH 2048
 
-   struct cmd_block *bin[MAX_HEIGHT / BIN_SIZE][MAX_WIDTH / BIN_SIZE];
-   struct data_block *data;
+struct setup_context {
+
+   /* When there are multiple threads, will want to double-buffer the
+    * bin arrays:
+    */
+   struct cmd_block_list bin[MAXHEIGHT / TILESIZE][MAXWIDTH / TILESIZE];
+   struct data_block_list data;
+
+   unsigned tiles_x;
+   unsigned tiles_y;
+
+   struct {
+      struct pipe_surface *color;
+      struct pipe_surface *zstencil;
+   } fb;
+
+   struct {
+      unsigned flags;
+      float    clear_color[4];
+      double   clear_depth;
+      unsigned clear_stencil;
+   } clear;
+
+   enum {
+      SETUP_FLUSHED,
+      SETUP_CLEARED,
+      SETUP_ACTIVE
+   } state;
+   
+   struct {
+      enum lp_interp inputs[PIPE_MAX_ATTRIBS];
+      unsigned nr_inputs;
+   } fs;
+
+   void (*point)( struct setup_context *,
+                  const float (*v0)[4]);
+
+   void (*line)( struct setup_context *,
+                 const float (*v0)[4],
+                 const float (*v1)[4]);
+
+   void (*triangle)( struct setup_context *,
+                     const float (*v0)[4],
+                     const float (*v1)[4],
+                     const float (*v1)[4]);
 };
 
-static INLINE struct triangle *get_triangle( struct setup_context *setup )
+static INLINE void *get_data( struct data_block_list *list,
+                              unsigned size)
 {
-   if (setup->triangles->count == TRIANGLE_BLOCK_COUNT)
-      return setup_triangle_from_new_block( setup );
 
-   return &setup->triangles[setup->triangles->count++];
+   if (list->tail->used + size > DATA_BLOCK_SIZE) {
+      lp_setup_new_data_block( list );
+   }
+
+   {
+      struct data_block *tail = list->tail;
+      char *data = tail->data + tail->used;
+      tail->used += size;
+      return data;
+   }
 }
+
+/* Add a command to a given bin.
+ */
+static INLINE void bin_cmd( struct cmd_block_list *list,
+                            bin_cmd cmd,
+                            const union lp_rast_cmd_arg *arg )
+{
+   if (list->tail.count == CMD_BLOCK_MAX) {
+      lp_setup_new_cmd_block( list )
+   }
+
+   {
+      struct cmd_block *tail = list->tail;
+      unsigned i = tail->count;
+      tail->cmd[i] = cmd;
+      tail->arg[i] = arg;
+      tail->count++;
+   }
+}
+
+
+

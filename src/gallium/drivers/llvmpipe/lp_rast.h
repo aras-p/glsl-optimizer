@@ -90,6 +90,17 @@ struct lp_rast_triangle {
    struct lp_rast_shader_inputs inputs;
 };
 
+struct clear_tile {
+   boolean do_color;
+   boolean do_depth_stencil;
+   unsigned rgba;
+   unsigned depth_stencil;
+};
+
+struct load_tile {
+   boolean do_color;
+   boolean do_depth_stencil;
+};
 
 
 struct lp_rasterizer *lp_rast_create( void );

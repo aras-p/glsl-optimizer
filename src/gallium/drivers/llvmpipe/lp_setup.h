@@ -27,28 +27,46 @@
 #ifndef LP_SETUP_H
 #define LP_SETUP_H
 
+
+enum lp_interp {
+   LP_INTERP_CONSTANT,
+   LP_INTERP_LINEAR,
+   LP_INTERP_PERSPECTIVE,
+   LP_INTERP_POSITION,
+   LP_INTERP_FACING
+};
+
 struct setup_context;
-struct llvmpipe_context;
 
-/* Note, not using setup_context currently 
- */
-
-void
-llvmpipe_setup_line(struct setup_context *setup,
-           const float (*v0)[4],
-           const float (*v1)[4]);
+struct setup_context *
+lp_setup_create( void );
 
 void
-llvmpipe_setup_point( struct setup_context *setup,
-             const float (*v0)[4] );
+lp_setup_triangle(struct setup_context *setup,
+                  const float (*v0)[4],
+                  const float (*v1)[4],
+                  const float (*v1)[4]);
 
+void
+lp_setup_line(struct setup_context *setup,
+              const float (*v0)[4],
+              const float (*v1)[4]);
 
-struct setup_context *setup_create_context( struct llvmpipe_context *llvmpipe );
+void
+lp_setup_point( struct setup_context *setup,
+                const float (*v0)[4] );
 
-void setup_prepare( struct setup_context *setup );
+void 
+lp_setup_set_triangle_state( struct setup_context *setup,
+                             unsigned cullmode,
+                             boolean front_is_ccw );
 
-void setup_destroy_context( struct setup_context *setup );
+void
+lp_setup_set_fs_inputs( struct setup_context *setup,
+                        const enum lp_interp *interp,
+                        unsigned nr );
 
-void setup_prepare_tri( struct llvmpipe_context *llvmpipe );
+void 
+lp_setup_destroy( struct setup_context *setup );
 
 #endif
