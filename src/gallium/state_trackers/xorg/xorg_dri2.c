@@ -81,11 +81,14 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     case DRI2BufferStencil:
 #if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
     case DRI2BufferDepthStencil:
+#else
+    /* Works on old X servers because sanity checking is for the weak */
+    case 9:
+#endif
 	if (exa_priv->depth_stencil_tex &&
 	    !pf_is_depth_stencil(exa_priv->depth_stencil_tex->format))
 	    exa_priv->depth_stencil_tex = NULL;
         /* Fall through */
-#endif
     case DRI2BufferDepth:
 	if (exa_priv->depth_stencil_tex)
 	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
