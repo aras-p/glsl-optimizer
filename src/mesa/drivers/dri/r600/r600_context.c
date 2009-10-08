@@ -92,9 +92,9 @@ int hw_tcl_on = 1;
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
@@ -145,7 +145,7 @@ const struct dri_extension card_extensions[] = {
 };
 
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
 };
@@ -154,7 +154,7 @@ const struct dri_extension mm_extensions[] = {
  * The GL 2.0 functions are needed to make display lists work with
  * functions added by GL_ATI_separate_stencil.
  */
-const struct dri_extension gl_20_extension[] = {
+static const struct dri_extension gl_20_extension[] = {
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 };
 

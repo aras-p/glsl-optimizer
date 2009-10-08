@@ -67,8 +67,6 @@ static const GLuint __driNConfigOptions = 3;
 static const GLuint __driNConfigOptions = 2;
 #endif
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
 mach64FillInModes( __DRIscreenPrivate *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
@@ -436,18 +434,6 @@ mach64InitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
    
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-
    if (!mach64InitDriver(psp))
       return NULL;
 

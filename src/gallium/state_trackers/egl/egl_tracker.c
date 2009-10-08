@@ -16,7 +16,6 @@
 
 /** HACK */
 void* driDriverAPI;
-extern const struct dri_extension card_extensions[];
 
 
 /*
@@ -168,8 +167,7 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 		goto err_screen;
 	dev->winsys = dev->screen->winsys;
 
-	/* TODO HACK */
-	driInitExtensions(NULL, card_extensions, GL_FALSE);
+	driInitExtensions(NULL, NULL, GL_FALSE);
 
 	drm_update_res(dev);
 	res = dev->res;

@@ -141,12 +141,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
-extern const struct dri_extension blend_extensions[];
-extern const struct dri_extension ARB_vp_extension[];
-extern const struct dri_extension NV_vp_extension[];
-extern const struct dri_extension ATI_fs_extension[];
-extern const struct dri_extension point_extensions[];
-
 #elif defined(RADEON_R300) || defined(RADEON_R600)
 
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
@@ -218,12 +212,7 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
-extern const struct dri_extension gl_20_extension[];
-
 #endif
-
-extern const struct dri_extension card_extensions[];
-extern const struct dri_extension mm_extensions[];
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
@@ -1619,27 +1608,6 @@ radeonInitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create
-    * is called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-#if defined(RADEON_R200)
-   driInitExtensions( NULL, blend_extensions, GL_FALSE );
-   driInitSingleExtension( NULL, ARB_vp_extension );
-   driInitSingleExtension( NULL, NV_vp_extension );
-   driInitSingleExtension( NULL, ATI_fs_extension );
-   driInitExtensions( NULL, point_extensions, GL_FALSE );
-#elif (defined(RADEON_R300) || defined(RADEON_R600))
-   driInitSingleExtension( NULL, gl_20_extension );
-#endif
-
    if (!radeonInitDriver(psp))
        return NULL;
 
@@ -1671,28 +1639,6 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
    uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
    __DRIconfig **configs = NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create
-    * is called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-   driInitExtensions( NULL, mm_extensions, GL_FALSE );
-#if defined(RADEON_R200)
-   driInitExtensions( NULL, blend_extensions, GL_FALSE );
-   driInitSingleExtension( NULL, ARB_vp_extension );
-   driInitSingleExtension( NULL, NV_vp_extension );
-   driInitSingleExtension( NULL, ATI_fs_extension );
-   driInitExtensions( NULL, point_extensions, GL_FALSE );
-#elif (defined(RADEON_R300) || defined(RADEON_R600))
-   driInitSingleExtension( NULL, gl_20_extension );
-#endif
 
    if (!radeonInitDriver(psp)) {
        return NULL;

@@ -117,6 +117,7 @@
 #include "syncobj.h"
 #endif
 #include "rastpos.h"
+#include "remap.h"
 #include "scissor.h"
 #include "shared.h"
 #include "simple_list.h"
@@ -406,6 +407,8 @@ one_time_init( GLcontext *ctx )
       assert( sizeof(GLuint) == 4 );
 
       _mesa_get_cpu_features();
+
+      _mesa_init_remap_table();
 
       _mesa_init_sqrt_table();
 

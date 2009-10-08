@@ -28,6 +28,7 @@
 #include "intel_chipset.h"
 #include "intel_context.h"
 #include "intel_extensions.h"
+#include "utils.h"
 
 
 #define need_GL_ARB_copy_buffer
@@ -63,7 +64,7 @@
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 
 /**

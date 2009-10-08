@@ -38,9 +38,6 @@
 #include "utils.h"
 
 
-int driDispatchRemapTable[ driDispatchRemapTable_size ];
-
-
 unsigned
 driParseDebugString( const char * debug, 
 		     const struct dri_debug_control * control  )
@@ -142,7 +139,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #define need_GL_EXT_blend_func_separate
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 static const struct dri_extension all_mesa_extensions[] = {
    { "GL_ARB_draw_buffers",          GL_ARB_draw_buffers_functions },
@@ -165,8 +162,12 @@ static const struct dri_extension all_mesa_extensions[] = {
 
 
 /**
- * Enable extensions supported by the driver.
+ * Enable and map extensions supported by the driver.
  * 
+ * When ctx is NULL, extensions are not enabled, but their functions
+ * are still mapped.  When extensions_to_enable is NULL, all static
+ * functions known to mesa core are mapped.
+ *
  * \bug
  * ARB_imaging isn't handled properly.  In Mesa, enabling ARB_imaging also
  * enables all the sub-extensions that are folded into it.  This means that
@@ -181,16 +182,21 @@ void driInitExtensions( GLcontext * ctx,
    unsigned   i;
 
    if ( first_time ) {
-      for ( i = 0 ; i < driDispatchRemapTable_size ; i++ ) {
-	 driDispatchRemapTable[i] = -1;
-      }
-
       first_time = 0;
-      driInitExtensions( ctx, all_mesa_extensions, GL_FALSE );
+      driInitExtensions( NULL, all_mesa_extensions, GL_FALSE );
    }
 
    if ( (ctx != NULL) && enable_imaging ) {
       _mesa_enable_imaging_extensions( ctx );
+   }
+
+   /* The caller is too lazy to list any extension */
+   if ( extensions_to_enable == NULL ) {
+      /* Map the static functions.  Together with those mapped by remap
+       * table, this should cover everything mesa core knows.
+       */
+      _mesa_map_static_functions();
+      return;
    }
 
    for ( i = 0 ; extensions_to_enable[i].name != NULL ; i++ ) {
@@ -202,80 +208,18 @@ void driInitExtensions( GLcontext * ctx,
 
 
 /**
- * Enable and add dispatch functions for a single extension
+ * Enable and map functions for a single extension
  * 
  * \param ctx  Context where extension is to be enabled.
  * \param ext  Extension that is to be enabled.
  * 
- * \sa driInitExtensions, _mesa_enable_extension, _glapi_add_entrypoint
- *
- * \todo
- * Determine if it would be better to use \c strlen instead of the hardcoded
- * for-loops.
+ * \sa driInitExtensions, _mesa_enable_extension, _mesa_map_function_array
  */
 void driInitSingleExtension( GLcontext * ctx,
 			     const struct dri_extension * ext )
 {
-    unsigned i;
-
-
     if ( ext->functions != NULL ) {
-	for ( i = 0 ; ext->functions[i].strings != NULL ; i++ ) {
-	    const char * functions[16];
-	    const char * parameter_signature;
-	    const char * str = ext->functions[i].strings;
-	    unsigned j;
-	    unsigned offset;
-
-
-	    /* Separate the parameter signature from the rest of the string.
-	     * If the parameter signature is empty (i.e., the string starts
-	     * with a NUL character), then the function has a void parameter
-	     * list.
-	     */
-	    parameter_signature = str;
-	    while ( str[0] != '\0' ) {
-		str++;
-	    }
-	    str++;
-
-
-	    /* Divide the string into the substrings that name each
-	     * entry-point for the function.
-	     */
-	    for ( j = 0 ; j < 16 ; j++ ) {
-		if ( str[0] == '\0' ) {
-		    functions[j] = NULL;
-		    break;
-		}
-
-		functions[j] = str;
-
-		while ( str[0] != '\0' ) {
-		    str++;
-		}
-		str++;
-	    }
-
-
-	    /* Add each entry-point to the dispatch table.
-	     */
-	    offset = _glapi_add_dispatch( functions, parameter_signature );
-	    if (offset == -1) {
-#if 0 /* this causes noise with egl */
-		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
-			"to add %s!\n", functions[0]);
-#endif
-	    }
-	    else if (ext->functions[i].remap_index != -1) {
-		driDispatchRemapTable[ ext->functions[i].remap_index ] = 
-		  offset;
-	    }
-	    else if (ext->functions[i].offset != offset) {
-		fprintf(stderr, "DISPATCH ERROR! %s -> %u != %u\n",
-			functions[0], offset, ext->functions[i].offset);
-	    }
-	}
+       _mesa_map_function_array(ext->functions);
     }
 
     if ( ctx != NULL ) {

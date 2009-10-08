@@ -31,41 +31,13 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "main/context.h"
+#include "main/remap.h"
 
 typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 struct dri_debug_control {
     const char * string;
     unsigned     flag;
-};
-
-/**
- * Description of the entry-points and parameters for an OpenGL function.
- */
-struct dri_extension_function {
-    /**
-     * \brief
-     * Packed string describing the parameter signature and the entry-point
-     * names.
-     * 
-     * The parameter signature and the names of the entry-points for this
-     * function are packed into a single string.  The substrings are
-     * separated by NUL characters.  The whole string is terminated by
-     * two consecutive NUL characters.
-     */
-    const char * strings;
-
-
-    /**
-     * Location in the remap table where the dispatch offset should be
-     * stored.
-     */
-    int remap_index;
-
-    /**
-     * Offset of the function in the dispatch table.
-     */
-    int offset;
 };
 
 /**
@@ -83,7 +55,7 @@ struct dri_extension {
      * is terminated by a structure with a \c NULL
      * \c dri_extension_function::strings pointer.
      */
-    const struct dri_extension_function * functions;
+    const struct gl_function_remap * functions;
 };
 
 /**

@@ -55,6 +55,7 @@ MAIN_SOURCES = \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
+	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
 	main/shaders.c \

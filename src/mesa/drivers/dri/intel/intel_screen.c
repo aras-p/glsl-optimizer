@@ -696,18 +696,6 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
-	   
    if (!intelInitDriver(psp))
        return NULL;
 
@@ -759,18 +747,6 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
    __DRIconfig **configs = NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
 
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));

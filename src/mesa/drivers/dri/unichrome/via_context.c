@@ -65,7 +65,7 @@
 #define need_GL_ARB_point_parameters
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20060710"
 
@@ -362,7 +362,7 @@ void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 
 /* Extension strings exported by the Unichrome driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },

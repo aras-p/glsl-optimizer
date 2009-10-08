@@ -53,8 +53,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
 i810FillInModes( __DRIscreenPrivate *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
@@ -165,8 +163,6 @@ i810InitScreen(__DRIscreen *sPriv)
 				      &sPriv->drm_version, & drm_expected ) ) {
       return NULL;
    }
-
-   driInitExtensions( NULL, card_extensions, GL_TRUE );
 
    if (sPriv->devPrivSize != sizeof(I810DRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(I810DRIRec) does not match passed size from device driver\n");
