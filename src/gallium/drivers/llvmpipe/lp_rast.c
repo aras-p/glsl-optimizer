@@ -37,7 +37,16 @@
 
 struct lp_rasterizer *lp_rast_create( void )
 {
-   return CALLOC_STRUCT(lp_rasterizer);
+   struct lp_rasterizer *rast;
+
+   rast = CALLOC_STRUCT(lp_rasterizer);
+   if(!rast)
+      return NULL;
+
+   rast->tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+   rast->tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+
+   return rast;
 }
 
 void lp_rast_bind_surfaces( struct lp_rasterizer *rast,
@@ -54,7 +63,7 @@ void lp_rast_bind_surfaces( struct lp_rasterizer *rast,
 
 /* Begining of each tile:
  */
-void lp_rast_start_tile( struct lp_rasterizer *,
+void lp_rast_start_tile( struct lp_rasterizer *rast,
 			 unsigned x,
 			 unsigned y )
 {
@@ -68,9 +77,17 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
    const unsigned clear_color = arg->clear.clear_color;
    unsigned i, j;
    
-   for (i = 0; i < TILESIZE; i++)
-      for (j = 0; j < TILESIZE; j++)
-	 rast->tile[i][j] = clear_color;
+   if (clear_color[0] == clear_color[1] &&
+       clear_color[1] == clear_color[2] &&
+       clear_color[2] == clear_color[3]) {
+      memset(rast->tile.color, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
+   }
+   else {
+      for (y = 0; y < TILE_SIZE; y++)
+         for (x = 0; x < TILE_SIZE; x++)
+            for (chan = 0; chan < 4; ++chan)
+               TILE_PIXEL(rast->tile.color, x, y, chan) = clear_color[chan];
+   }
 }
 
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
@@ -79,9 +96,9 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
    const unsigned clear_color = arg->clear.clear_zstencil;
    unsigned i, j;
    
-   for (i = 0; i < TILESIZE; i++)
-      for (j = 0; j < TILESIZE; j++)
-	 rast->tile[i][j] = clear_depth;
+   for (i = 0; i < TILE_SIZE; i++)
+      for (j = 0; j < TILE_SIZE; j++)
+	 rast->tile.depth[i][j] = clear_depth;
 }
 
 
@@ -108,9 +125,11 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
 
 
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
-                            const union lp_rast_cmd_arg *arg )
+                         const union lp_rast_cmd_arg *arg,
 			 const struct lp_rast_shader_inputs *inputs )
 {
+   unsigned i;
+
    /* Set up the silly quad coef pointers
     */
    for (i = 0; i < 4; i++) {
@@ -120,8 +139,8 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
 
    /* Use the existing preference for 8x2 (four quads) shading:
     */
-   for (i = 0; i < TILESIZE; i += 8) {
-      for (j = 0; j < TILESIZE; j += 2) {
+   for (i = 0; i < TILE_SIZE; i += 8) {
+      for (j = 0; j < TILE_SIZE; j += 2) {
 	 rast->shader_state.shade( inputs->jc,
 				   rast->x + i,
 				   rast->y + j,
@@ -189,13 +208,54 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
 
 /* End of tile:
  */
+
+
 void lp_rast_end_tile( struct lp_rasterizer *rast,
                        boolean write_depth )
 {
-   /* call u_tile func to store colors to surface */
+   struct pipe_surface *surface;
+   struct pipe_screen *screen;
+   struct pipe_transfer *transfer;
+   const unsigned x = rast->x;
+   const unsigned y = rast->y;
+   unsigned w = TILE_SIZE;
+   unsigned h = TILE_SIZE;
+
+   surface = rast->state.color;
+   if(!surface)
+      return;
+
+   screen = surface->texture->screen;
+
+   if(x + w > surface->width)
+      w = surface->width - x;
+   if(y + h > surface->height)
+      h = surface->height - x;
+
+   transfer = screen->get_tex_transfer(screen,
+                                       surface->texture,
+                                       surface->face,
+                                       surface->level,
+                                       surface->zslice,
+                                       PIPE_TRANSFER_READ_WRITE,
+                                       x, y, w, h);
+   if(!transfer)
+      return;
+
+   map = screen->transfer_map(screen, transfer);
+   if(map) {
+      lp_tile_write_4ub(transfer->format,
+                        rast->tile.color,
+                        map, transfer->stride,
+                        x, y, w, h);
+
+      screen->transfer_unmap(screen, transfer);
+   }
+
+   screen->tex_transfer_destroy(screen, transfer);
 
    if (write_depth) {
-      /* call u_tile func to store depth/stencil to surface */
+      /* FIXME: call u_tile func to store depth/stencil to surface */
    }
 }
 
@@ -203,6 +263,8 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
  */
 void lp_rast_destroy( struct lp_rasterizer *rast )
 {
+   align_free(rast->tile.depth);
+   align_free(rast->tile.color);
    FREE(rast);
 }
 
