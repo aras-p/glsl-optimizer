@@ -92,6 +92,9 @@ struct lp_rast_triangle {
    float dx12;
    float dx23;
    float dx31;
+
+   /* inputs for the shader */
+   struct lp_rast_shader_inputs *inputs;
 };
 
 struct clear_tile {
