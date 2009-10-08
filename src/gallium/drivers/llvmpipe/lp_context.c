@@ -44,6 +44,7 @@
 #include "lp_texture.h"
 #include "lp_winsys.h"
 #include "lp_query.h"
+#include "lp_setup.h"
 
 
 
@@ -85,20 +86,8 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
 				unsigned face, unsigned level)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
-   unsigned i;
 
-   if (lp_setup_is_active(llvmpipe->setup)) {
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
-         if(llvmpipe->framebuffer.cbufs[i] && 
-            llvmpipe->framebuffer.cbufs[i]->texture == texture)
-            return PIPE_REFERENCED_FOR_WRITE;
-      }
-      if(llvmpipe->framebuffer.zsbuf && 
-         llvmpipe->framebuffer.zsbuf->texture == texture)
-         return PIPE_REFERENCED_FOR_WRITE;
-   }
-   
-   return PIPE_UNREFERENCED;
+   return lp_setup_is_texture_referenced(llvmpipe->setup, texture);
 }
 
 static unsigned int
@@ -112,7 +101,6 @@ struct pipe_context *
 llvmpipe_create( struct pipe_screen *screen )
 {
    struct llvmpipe_context *llvmpipe;
-   uint i;
 
    llvmpipe = align_malloc(sizeof(struct llvmpipe_context), 16);
    if (!llvmpipe)
@@ -178,20 +166,6 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_texture_funcs( llvmpipe );
 
-   /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
-      llvmpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
-      llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
-   }
-
-   /* fragment shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
-      llvmpipe->tgsi.frag_samplers[i].processor = TGSI_PROCESSOR_FRAGMENT;
-      llvmpipe->tgsi.frag_samplers_list[i] = &llvmpipe->tgsi.frag_samplers[i];
-   }
-
    /*
     * Create drawing context and plug our rendering stage into it.
     */
@@ -199,13 +173,15 @@ llvmpipe_create( struct pipe_screen *screen )
    if (!llvmpipe->draw) 
       goto fail;
 
-   draw_texture_samplers(llvmpipe->draw,
-                         PIPE_MAX_SAMPLERS,
-                         (struct tgsi_sampler **)
-                            llvmpipe->tgsi.vert_samplers_list);
+   /* FIXME: vertex sampler state
+    */
 
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
+
+   llvmpipe->setup = lp_setup_create();
+   if (!llvmpipe->setup)
+      goto fail;
 
    llvmpipe->vbuf_backend = lp_create_vbuf_backend(llvmpipe);
    if (!llvmpipe->vbuf_backend)

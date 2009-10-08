@@ -136,9 +136,8 @@ static boolean
 lp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct llvmpipe_vbuf_render *cvbr = llvmpipe_vbuf_render(vbr);
-   struct setup_context *setup_ctx = cvbr->setup;
 
-   llvmpipe_update_state( setup_ctx->llvmpipe );
+   llvmpipe_update_derived( cvbr->llvmpipe );
 
    cvbr->llvmpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
@@ -524,9 +523,7 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 static void
 lp_vbuf_destroy(struct vbuf_render *vbr)
 {
-   struct llvmpipe_vbuf_render *cvbr = llvmpipe_vbuf_render(vbr);
-   lp_setup_destroy_context(cvbr->setup);
-   FREE(cvbr);
+   FREE(vbr);
 }
 
 
@@ -539,6 +536,7 @@ lp_create_vbuf_backend(struct llvmpipe_context *lp)
    struct llvmpipe_vbuf_render *cvbr = CALLOC_STRUCT(llvmpipe_vbuf_render);
 
    assert(lp->draw);
+   assert(lp->setup);
 
 
    cvbr->base.max_indices = LP_MAX_VBUF_INDEXES;
@@ -555,8 +553,7 @@ lp_create_vbuf_backend(struct llvmpipe_context *lp)
    cvbr->base.destroy = lp_vbuf_destroy;
 
    cvbr->llvmpipe = lp;
-
-   cvbr->setup = lp_setup_create_context(cvbr->llvmpipe);
+   cvbr->setup = lp->setup;
 
    return &cvbr->base;
 }

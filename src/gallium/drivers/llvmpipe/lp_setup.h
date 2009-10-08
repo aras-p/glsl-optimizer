@@ -50,10 +50,10 @@ lp_setup_clear(struct setup_context *setup,
                unsigned flags);
 
 void
-lp_setup_triangle(struct setup_context *setup,
-                  const float (*v0)[4],
-                  const float (*v1)[4],
-                  const float (*v2)[4]);
+lp_setup_tri(struct setup_context *setup,
+             const float (*v0)[4],
+             const float (*v1)[4],
+             const float (*v2)[4]);
 
 void
 lp_setup_line(struct setup_context *setup,
@@ -73,6 +73,11 @@ void
 lp_setup_set_fs_inputs( struct setup_context *setup,
                         const enum lp_interp *interp,
                         unsigned nr );
+
+boolean
+lp_setup_is_texture_referenced( struct setup_context *setup,
+                                const struct pipe_texture *texture );
+
 
 void 
 lp_setup_destroy( struct setup_context *setup );

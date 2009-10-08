@@ -91,7 +91,7 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, constants,
                              screen->target, context_type, 0);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, samplers,
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, dummy,
                              screen->target, context_type, 1);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, alpha_ref_value,
                              screen->target, context_type, 2);

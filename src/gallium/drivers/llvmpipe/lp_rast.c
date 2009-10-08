@@ -40,7 +40,7 @@ struct lp_rasterizer *lp_rast_create( void )
    return CALLOC_STRUCT(lp_rasterizer);
 }
 
-void lp_rast_bind_surfaces( struct lp_rasterizer *,
+void lp_rast_bind_surfaces( struct lp_rasterizer *rast,
 			    struct pipe_surface *color,
 			    struct pipe_surface *zstencil,
 			    const float *clear_color,
@@ -49,10 +49,8 @@ void lp_rast_bind_surfaces( struct lp_rasterizer *,
 {
    pipe_surface_reference(&rast->state.color, color);
    pipe_surface_reference(&rast->state.depth, depth);
-   rast->state.clear_color = util_pack_8888(clear_color);
-   rast->state.clear_depth = clear_depth * 0xffffffff;
-   rast->state.clear_stencil = clear_stencil;
 }
+
 
 /* Begining of each tile:
  */
@@ -64,9 +62,10 @@ void lp_rast_start_tile( struct lp_rasterizer *,
    rast->y = y;
 }
 
-void lp_rast_clear_color( struct lp_rasterizer *rast )
+void lp_rast_clear_color( struct lp_rasterizer *rast,
+                          const union lp_rast_cmd_arg *arg )
 {
-   const unsigned clear_color = rast->state.clear_color;
+   const unsigned clear_color = arg->clear.clear_color;
    unsigned i, j;
    
    for (i = 0; i < TILESIZE; i++)
@@ -74,9 +73,10 @@ void lp_rast_clear_color( struct lp_rasterizer *rast )
 	 rast->tile[i][j] = clear_color;
 }
 
-void lp_rast_clear_depth( struct lp_rasterizer *rast )
+void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
+                             const union lp_rast_cmd_arg *arg)
 {
-   const unsigned clear_depth = rast->state.clear_depth;
+   const unsigned clear_color = arg->clear.clear_zstencil;
    unsigned i, j;
    
    for (i = 0; i < TILESIZE; i++)
@@ -84,19 +84,15 @@ void lp_rast_clear_depth( struct lp_rasterizer *rast )
 	 rast->tile[i][j] = clear_depth;
 }
 
-void lp_rast_clear_stencil( struct lp_rasterizer *rast )
-{
-   const unsigned clear_stencil = rast->state.clear_stencil;
 
-   memset(rast->tile.stencil, clear_stencil, sizeof rast->tile.stencil );
-}
-
-void lp_rast_load_color( struct lp_rasterizer *rast )
+void lp_rast_load_color( struct lp_rasterizer *rast,
+                         const union lp_rast_cmd_arg *arg)
 {
    /* call u_tile func to load colors from surface */
 }
 
-void lp_rast_load_zstencil( struct lp_rasterizer *rast )
+void lp_rast_load_zstencil( struct lp_rasterizer *rast,
+                            const union lp_rast_cmd_arg *arg )
 {
    /* call u_tile func to load depth (and stencil?) from surface */
 }
@@ -104,15 +100,15 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast )
 /* Within a tile:
  */
 void lp_rast_set_state( struct lp_rasterizer *rast,
-		       const struct lp_rast_state *state )
+                        const union lp_rast_cmd_arg *arg )
 {
-   rast->shader_state = state;
-   lp->quad.first->begin( lp->quad.first );
+   rast->shader_state = arg->state;
 
 }
 
 
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
+                            const union lp_rast_cmd_arg *arg )
 			 const struct lp_rast_shader_inputs *inputs )
 {
    /* Set up the silly quad coef pointers
@@ -193,14 +189,14 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
 
 /* End of tile:
  */
-void lp_rast_store_color( struct lp_rasterizer *rast )
+void lp_rast_end_tile( struct lp_rasterizer *rast,
+                       boolean write_depth )
 {
    /* call u_tile func to store colors to surface */
-}
 
-void lp_rast_store_zstencil( struct lp_rasterizer *rast )
-{
-   /* call u_tile func to store depth/stencil to surface */
+   if (write_depth) {
+      /* call u_tile func to store depth/stencil to surface */
+   }
 }
 
 /* Shutdown:

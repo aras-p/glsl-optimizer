@@ -45,7 +45,7 @@ struct draw_stage;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
-struct lp_setup_context;
+struct setup_context;
 
 struct llvmpipe_context {
    struct pipe_context pipe;  /**< base class */
@@ -110,16 +110,8 @@ struct llvmpipe_context {
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
 
-   /** TGSI exec things */
-   struct {
-      struct lp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler *vert_samplers_list[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler frag_samplers[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
-   } tgsi;
-
    /** The tiling engine */
-   struct lp_setup_context *setup;
+   struct setup_context *setup;
 
    /** The primitive drawing context */
    struct draw_context *draw;

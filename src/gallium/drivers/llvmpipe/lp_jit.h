@@ -78,7 +78,7 @@ struct lp_jit_context
 {
    const float *constants;
 
-   struct tgsi_sampler **samplers;
+   void *dummy;                 /* remove me */
 
    float alpha_ref_value;
 
