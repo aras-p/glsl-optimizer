@@ -1,4 +1,7 @@
 
+#ifndef LP_RAST_H
+#define LP_RAST_H
+
 /* Initially create and program a single rasterizer directly.  Later
  * will want multiple of these, one or two per core.  At that stage
  * will probably pass command buffers into the rasterizers rather than
@@ -7,12 +10,16 @@
 struct lp_rasterizer;
 
 struct lp_rast_state {
-   /* State:
+   /* State for the shader:
     */
    struct lp_jit_context jc;
    
-   /* Shader itself:
+   /* The shader itself.  Probably we also need to pass a pointer to
+    * the tile color/z/stencil data somehow:
     */
+   void (*run)( struct lp_jit_context *jc,
+                struct quad_header **quads,
+                unsigned nr );
 };
 
 /* Coefficients necessary to run the shader at a given location:
@@ -25,10 +32,6 @@ struct lp_rast_shader_inputs {
 
    /* Attribute interpolation:
     */
-   float oneoverarea;
-   float x1;
-   float y1;
-
    struct tgsi_interp_coef position_coef;
    struct tgsi_interp_coef *coef;
 };
@@ -79,34 +82,48 @@ void lp_rast_start_tile( struct lp_rasterizer *,
 			 unsigned x,
 			 unsigned y );
 
-void lp_rast_clear_color( struct lp_rasterizer * );
-
-void lp_rast_clear_zstencil( struct lp_rasterizer * );
-
-void lp_rast_load_color( struct lp_rasterizer * );
-
-void lp_rast_load_zstencil( struct lp_rasterizer * );
 
 
-/* Within a tile:
+union lp_rast_cmd_arg {
+   const struct lp_rast_shader_inputs *shade_tile;
+   const struct lp_rast_triangle *triangle;
+   const struct lp_rast_state *set_state;
+};
+
+
+/* Binnable Commands:
  */
-void lp_rast_set_state( struct lp_rasterizer *,
-		       const struct lp_rast_state * );
+void lp_rast_clear_color( struct lp_rasterizer *, 
+                          const union lp_rast_cmd_arg *);
 
-void lp_rast_triangle( struct lp_rasterizer *,
-		       const struct lp_rast_triangle * );
+void lp_rast_clear_zstencil( struct lp_rasterizer *, 
+                             const union lp_rast_cmd_arg *);
+
+void lp_rast_load_color( struct lp_rasterizer *, 
+                         const union lp_rast_cmd_arg *);
+
+void lp_rast_load_zstencil( struct lp_rasterizer *, 
+                            const union lp_rast_cmd_arg *);
+
+void lp_rast_set_state( struct lp_rasterizer *, 
+                        const union lp_rast_cmd_arg * );
+
+void lp_rast_triangle( struct lp_rasterizer *, 
+                       const union lp_rast_cmd_arg * );
 
 void lp_rast_shade_tile( struct lp_rasterizer *,
-			 const struct lp_rast_shader_inputs * );
+                         const union lp_rast_cmd_arg * );
 
-/* End of tile:
- */
-void lp_rast_store_color( struct lp_rasterizer * );
+void lp_rast_store_color( struct lp_rasterizer *,
+                          const union lp_rast_cmd_arg *);
 
-void lp_rast_store_zstencil( struct lp_rasterizer * );
+void lp_rast_store_zstencil( struct lp_rasterizer *,
+                             const union lp_rast_cmd_arg *);
 
 
 /* Shutdown:
  */
 void lp_rast_destroy( struct lp_rasterizer * );
 
+
+#endif

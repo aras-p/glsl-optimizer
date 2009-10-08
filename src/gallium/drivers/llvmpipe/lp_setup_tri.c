@@ -728,9 +728,9 @@ static void triangle_nop( struct llvmpipe_context *llvmpipe,
 {
 }
 
-/**
- * Do setup for triangle rasterization, then render the triangle.
- */
+
+
+
 void setup_prepare_tri( struct llvmpipe_context *llvmpipe )
 {
    llvmpipe->ccw_is_frontface = (llvmpipe->rasterizer->front_winding == 

@@ -1,29 +1,4 @@
 
-struct lp_rasterizer {
-
-   /* We can choose whatever layout for the internal tile storage we
-    * prefer:
-    */
-   struct {
-      unsigned color[TILESIZE][TILESIZE];
-      unsigned depth[TILESIZE][TILESIZE];
-      char stencil[TILESIZE][TILESIZE];
-   } tile;
-
-      
-   unsigned x;
-   unsigned y;
-
-   
-   struct {
-      struct pipe_surface *color;
-      struct pipe_surface *zstencil;
-      unsigned clear_color;
-      unsigned clear_depth;
-      char clear_stencil;
-   } state;
-};
-
 struct lp_rasterizer *lp_rast_create( void )
 {
    return CALLOC_STRUCT(lp_rasterizer);
@@ -96,23 +71,10 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
 		       const struct lp_rast_state *state )
 {
    rast->shader_state = state;
-}
-
-void lp_rast_triangle( struct lp_rasterizer *rast,
-		       const struct lp_rast_triangle *inputs )
-{
-   /* Set up the silly quad coef pointers
-    */
-   for (i = 0; i < 4; i++) {
-      rast->quads[i].posCoef = inputs->posCoef;
-      rast->quads[i].coef = inputs->coef;
-   }
-
-   /* Scan the tile in 4x4 chunks (?) and figure out which bits to
-    * rasterize:
-    */
+   lp->quad.first->begin( lp->quad.first );
 
 }
+
 
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
 			 const struct lp_rast_shader_inputs *inputs )
@@ -120,7 +82,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
    /* Set up the silly quad coef pointers
     */
    for (i = 0; i < 4; i++) {
-      rast->quads[i].posCoef = inputs->posCoef;
+      rast->quads[i].posCoef = &inputs->posCoef;
       rast->quads[i].coef = inputs->coef;
    }
 

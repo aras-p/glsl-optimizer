@@ -138,7 +138,7 @@ lp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
    struct llvmpipe_vbuf_render *cvbr = llvmpipe_vbuf_render(vbr);
    struct setup_context *setup_ctx = cvbr->setup;
 
-   llvmpipe_setup_prepare( setup_ctx );
+   llvmpipe_update_state( setup_ctx->llvmpipe );
 
    cvbr->llvmpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;

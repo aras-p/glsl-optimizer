@@ -48,6 +48,23 @@
 
 #define DEBUG_VERTS 0
 
+
+void
+llvmpipe_setup_flush()
+{
+}
+
+void
+llvmpipe_setup_bind_framebuffer()
+{
+}
+
+void
+llvmpipe_setup_clear()
+{
+}
+
+
 /* Stubs for lines & points for now:
  */
 void

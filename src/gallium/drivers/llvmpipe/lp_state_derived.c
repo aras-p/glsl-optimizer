@@ -232,6 +232,22 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    llvmpipe->jit_context.samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
 }
 
+static void 
+update_culling()
+{
+   if (lp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
+       lp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
+       lp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
+      /* we'll do culling */
+      setup->winding = lp->rasterizer->cull_mode;
+   }
+   else {
+      /* 'draw' will do culling */
+      setup->winding = PIPE_WINDING_NONE;
+   }
+}
+
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
@@ -269,4 +285,15 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
 
    llvmpipe->dirty = 0;
+}
+
+
+void llvmpipe_prepare( )
+{
+   struct llvmpipe_context *lp = setup->llvmpipe;
+
+   if (lp->dirty) {
+      llvmpipe_update_derived(lp);
+   }
+
 }
