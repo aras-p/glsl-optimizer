@@ -294,21 +294,21 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     debug_printf("ExaPrepareSolid(0x%x)\n", fg);
 #endif
     if (!exa->pipe)
-	XORG_FALLBACK("solid accle not enabled");
+	XORG_FALLBACK("accle not enabled");
 
     if (!priv || !priv->tex)
-	XORG_FALLBACK("solid !priv || !priv->tex");
+	XORG_FALLBACK("%s", !priv ? "!priv" : "!priv->tex");
 
     if (!EXA_PM_IS_SOLID(&pPixmap->drawable, planeMask))
-	XORG_FALLBACK("solid planeMask is not solid");
+	XORG_FALLBACK("planeMask is not solid");
 
     if (alu != GXcopy)
-	XORG_FALLBACK("solid not GXcopy");
+	XORG_FALLBACK("not GXcopy");
 
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
-	XORG_FALLBACK("solid bad format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
     }
 
 #if DEBUG_SOLID
@@ -390,29 +390,29 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     debug_printf("ExaPrepareCopy\n");
 #endif
     if (!exa->pipe)
-	XORG_FALLBACK("copy accle not enabled");
+	XORG_FALLBACK("accle not enabled");
 
-    if (!priv || !src_priv)
-	XORG_FALLBACK("copy !priv || !src_priv");
+    if (!priv || !priv->tex)
+	XORG_FALLBACK("pDst %s", !priv ? "!priv" : "!priv->tex");
 
-    if (!priv->tex || !src_priv->tex)
-	XORG_FALLBACK("copy !priv->tex || !src_priv->tex");
+    if (!src_priv || !src_priv->tex)
+	XORG_FALLBACK("pSrc %s", !src_priv ? "!priv" : "!priv->tex");
 
     if (!EXA_PM_IS_SOLID(&pSrcPixmap->drawable, planeMask))
-	XORG_FALLBACK("copy planeMask is not solid");
+	XORG_FALLBACK("planeMask is not solid");
 
     if (alu != GXcopy)
-	XORG_FALLBACK("copy alu not GXcopy");
+	XORG_FALLBACK("alu not GXcopy");
 
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-	XORG_FALLBACK("copy pDst format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("pDst format %s", pf_name(priv->tex->format));
 
     if (!exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
                                         src_priv->tex->target,
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0))
-	XORG_FALLBACK("copy pSrc format %s", pf_name(src_priv->tex->format));
+	XORG_FALLBACK("pSrc format %s", pf_name(src_priv->tex->format));
 
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
@@ -459,37 +459,37 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    debug_printf("ExaPrepareComposite\n");
 #endif
    if (!exa->pipe)
-      XORG_FALLBACK("comp accle not enabled");
+      XORG_FALLBACK("accle not enabled");
 
    priv = exaGetPixmapDriverPrivate(pDst);
    if (!priv || !priv->tex)
-      XORG_FALLBACK("comp pDst %s", !priv ? "!priv" : "!priv->tex");
+      XORG_FALLBACK("pDst %s", !priv ? "!priv" : "!priv->tex");
 
    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                        priv->tex->target,
                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-      XORG_FALLBACK("copy pDst format: %s", pf_name(priv->tex->format));
+      XORG_FALLBACK("pDst format: %s", pf_name(priv->tex->format));
 
    if (pSrc) {
       priv = exaGetPixmapDriverPrivate(pSrc);
       if (!priv || !priv->tex)
-         XORG_FALLBACK("comp pSrc %s", !priv ? "!priv" : "!priv->tex");
+         XORG_FALLBACK("pSrc %s", !priv ? "!priv" : "!priv->tex");
 
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("copy pSrc format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pSrc format: %s", pf_name(priv->tex->format));
    }
 
    if (pMask) {
       priv = exaGetPixmapDriverPrivate(pMask);
       if (!priv || !priv->tex)
-         XORG_FALLBACK("comp pMask %s", !priv ? "!priv" : "!priv->tex");
+         XORG_FALLBACK("pMask %s", !priv ? "!priv" : "!priv->tex");
 
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("copy pMask format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
    }
 
 #if DISABLE_ACCEL

@@ -283,6 +283,9 @@ boolean xorg_composite_accelerated(int op,
                                    PicturePtr pMaskPicture,
                                    PicturePtr pDstPicture)
 {
+   ScreenPtr pScreen = pDstPicture->pDrawable->pScreen;
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   modesettingPtr ms = modesettingPTR(pScrn);
    unsigned i;
    unsigned accel_ops_count =
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
@@ -290,11 +293,11 @@ boolean xorg_composite_accelerated(int op,
    if (pSrcPicture->pSourcePict) {
       /* Gradients not yet supported */
       if (pSrcPicture->pSourcePict->type != SourcePictTypeSolidFill)
-         return FALSE;
+         XORG_FALLBACK("gradients not yet supported");
 
       /* Solid source with mask not yet handled properly */
       if (pMaskPicture)
-         return FALSE;
+         XORG_FALLBACK("solid source with mask not yet handled properly");
    }
 
    for (i = 0; i < accel_ops_count; ++i) {
@@ -306,11 +309,11 @@ boolean xorg_composite_accelerated(int op,
               (!accelerated_ops[i].with_mask ||
                (pMaskPicture->componentAlpha &&
                 !accelerated_ops[i].component_alpha))))
-            return FALSE;
+            XORG_FALLBACK("component alpha unsupported");
          return TRUE;
       }
    }
-   return FALSE;
+   XORG_FALLBACK("unsupported operation");
 }
 
 static void
