@@ -65,6 +65,17 @@ void
 lp_setup_point( struct setup_context *setup,
                 const float (*v0)[4] );
 
+
+void
+lp_setup_flush( struct setup_context *setup,
+                unsigned flags );
+
+
+void
+lp_setup_bind_framebuffer( struct setup_context *setup,
+                           struct pipe_surface *color,
+                           struct pipe_surface *zstencil );
+
 void 
 lp_setup_set_triangle_state( struct setup_context *setup,
                              unsigned cullmode,
@@ -74,6 +85,10 @@ void
 lp_setup_set_fs_inputs( struct setup_context *setup,
                         const enum lp_interp *interp,
                         unsigned nr );
+
+void
+lp_setup_set_shader_state( struct setup_context *setup,
+                           const struct jit_context *jc );
 
 boolean
 lp_setup_is_texture_referenced( struct setup_context *setup,

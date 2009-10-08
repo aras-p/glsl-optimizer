@@ -88,9 +88,8 @@ struct setup_context {
 
    struct {
       unsigned flags;
-      float    clear_color[4];
-      double   clear_depth;
-      unsigned clear_stencil;
+      union lp_rast_cmd_arg color;
+      union lp_rast_cmd_arg zstencil;
    } clear;
 
    enum {

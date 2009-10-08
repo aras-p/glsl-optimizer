@@ -48,14 +48,17 @@ struct lp_rasterizer *lp_rast_create( void )
    return rast;
 }
 
-void lp_rast_bind_surfaces( struct lp_rasterizer *rast,
-			    struct pipe_surface *cbuf,
-			    struct pipe_surface *zsbuf,
-			    const float *clear_color,
-			    double clear_depth,
-			    unsigned clear_stencil)
+void lp_rast_bind_color( struct lp_rasterizer *rast,
+                         struct pipe_surface *cbuf,
+                         boolean write_color )
 {
    pipe_surface_reference(&rast->state.cbuf, cbuf);
+}
+
+void lp_rast_bind_zstencil( struct lp_rasterizer *rast,
+                            struct pipe_surface *zsbuf,
+                            boolean write_zstencil )
+{
    pipe_surface_reference(&rast->state.zsbuf, zsbuf);
 }
 

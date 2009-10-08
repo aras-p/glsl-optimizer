@@ -58,6 +58,8 @@ static void reset_context( struct setup_context *setup )
 {
    unsigned i, j;
 
+   /* Free binner command lists:
+    */
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
          struct cmd_block_list *list = &setup->tile[i][j];
@@ -73,6 +75,8 @@ static void reset_context( struct setup_context *setup )
       }
    }
 
+   /* Free binned data:
+    */
    {
       struct data_block_list *list = &setup->data;
       struct data_block *block, *tmp;
@@ -84,6 +88,10 @@ static void reset_context( struct setup_context *setup )
          
       list->head = list->tail;
    }
+
+   /* Reset some state:
+    */
+   setup->clear.flags = 0;
 }
 
 
@@ -131,7 +139,7 @@ rasterize_bins( struct setup_context *setup,
             }
          }
 
-         lp_rast_finish_tile( rast );
+         lp_rast_end_tile( rast );
       }
    }
 
@@ -144,10 +152,10 @@ static void
 begin_binning( struct setup_context *setup )
 {
    if (setup->fb.color) {
-      if (setup->fb.clear_color)
+      if (setup->clear.flags & PIPE_CLEAR_COLOR)
          bin_everywhere( setup, 
                          lp_rast_clear_color, 
-                         &setup->clear_data );
+                         &setup->clear.color );
       else
          bin_everywhere( setup, 
                          lp_rast_load_color, 
@@ -155,10 +163,10 @@ begin_binning( struct setup_context *setup )
    }
 
    if (setup->fb.zstencil) {
-      if (setup->fb.clear_zstencil)
+      if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          bin_everywhere( setup, 
                          lp_rast_clear_zstencil, 
-                         &setup->clear_data );
+                         &setup->clear.zstencil );
       else
          bin_everywhere( setup, 
                          lp_rast_load_zstencil, 
@@ -176,7 +184,7 @@ static void
 execute_clears( struct setup_context *setup )
 {
    begin_binning( setup );
-   rasterize_bins( setup );
+   rasterize_bins( setup, TRUE );
 }
 
 
@@ -192,7 +200,7 @@ set_state( struct setup_context *setup,
    switch (new_state) {
    case SETUP_ACTIVE:
       if (old_state == SETUP_FLUSHED)
-         setup_begin_binning( setup );
+         begin_binning( setup );
       break;
 
    case SETUP_CLEARED:
@@ -203,10 +211,10 @@ set_state( struct setup_context *setup,
       break;
       
    case SETUP_FLUSHED:
-      if (old_state == SETUP_CLEAR)
+      if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
-         rasterize_bins( setup );
+         rasterize_bins( setup, TRUE );
       break;
    }
 
@@ -271,15 +279,20 @@ lp_setup_clear( struct setup_context *setup,
    }
    else {
       set_state( setup, SETUP_CLEARED );
+
       setup->clear.flags |= flags;
 
       if (flags & PIPE_CLEAR_COLOR) {
-         memcpy(setup->clear.color, color, sizeof setup->clear.color);
+         util_pack_color(rgba, 
+                         setup->fb.cbuf->format, 
+                         &setup->clear.color.clear_color );
       }
 
       if (flags & PIPE_CLEAR_DEPTH_STENCIL) {
-         setup->clear.depth = clear_depth;
-         setup->clear.stencil = clear_stencil;
+         setup->clear.zstencil.clear_zstencil = 
+            util_pack_z_stencil(setup->fb.zsbuf->format, 
+                                depth,
+                                stencil);
       }
    }
 }
@@ -291,6 +304,12 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         unsigned nr )
 {
    memcpy( setup->interp, interp, nr * sizeof interp[0] );
+}
+
+void
+lp_setup_set_shader_state( struct setup_context *setup,
+                           const struct jit_context *jc )
+{
 }
 
 
@@ -324,10 +343,10 @@ lp_setup_line(struct setup_context *setup,
 }
 
 void
-lp_setup_triangle(struct setup_context *setup,
-                  const float (*v0)[4],
-                  const float (*v1)[4],
-                  const float (*v2)[4])
+lp_setup_tri(struct setup_context *setup,
+             const float (*v0)[4],
+             const float (*v1)[4],
+             const float (*v2)[4])
 {
    setup->triangle( setup, v0, v1, v2 );
 }

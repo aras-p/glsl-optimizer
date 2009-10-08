@@ -101,27 +101,17 @@ struct lp_rast_triangle {
    struct lp_rast_shader_inputs *inputs;
 };
 
-struct clear_tile {
-   boolean do_color;
-   boolean do_depth_stencil;
-   unsigned rgba;
-   unsigned depth_stencil;
-};
-
-struct load_tile {
-   boolean do_color;
-   boolean do_depth_stencil;
-};
 
 
 struct lp_rasterizer *lp_rast_create( void );
 
-void lp_rast_bind_surfaces( struct lp_rasterizer *,
-			    struct pipe_surface *cbuf,
-			    struct pipe_surface *zsbuf,
-			    const float *clear_color,
-			    double clear_depth,
-			    unsigned clear_stencil);
+void lp_rast_bind_color( struct lp_rasterizer *,
+                         struct pipe_surface *cbuf,
+                         boolean write_when_done );
+
+void lp_rast_bind_depth( struct lp_rasterizer *,
+                         struct pipe_surface *zsbuf,
+                         boolean write_when_done );
 
 /* Begining of each tile:
  */
@@ -174,8 +164,7 @@ void lp_rast_store_zstencil( struct lp_rasterizer *,
 /* End of tile:
  */
 
-void lp_rast_end_tile( struct lp_rasterizer *rast,
-                       boolean write_depth );
+void lp_rast_end_tile( struct lp_rasterizer *rast );
 
 /* Shutdown:
  */
