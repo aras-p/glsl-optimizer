@@ -106,6 +106,7 @@ struct setup_context {
 #endif
 
    unsigned winding;		/* which winding to cull */
+   unsigned nr_vertex_attrs;
 };
 
 
@@ -268,8 +269,8 @@ static void print_vertex(const struct setup_context *setup,
                          const float (*v)[4])
 {
    int i;
-   debug_printf("   Vertex: (%p)\n", v);
-   for (i = 0; i < setup->quad[0].nr_attrs; i++) {
+   debug_printf("   Vertex: (%p)\n", (void *) v);
+   for (i = 0; i < setup->nr_vertex_attrs; i++) {
       debug_printf("     %d: %f %f %f %f\n",  i,
               v[i][0], v[i][1], v[i][2], v[i][3]);
       if (util_is_inf_or_nan(v[i][0])) {
@@ -1253,6 +1254,9 @@ void sp_setup_prepare( struct setup_context *setup )
    if (sp->dirty) {
       softpipe_update_derived(sp);
    }
+
+   /* Note: nr_attrs is only used for debugging (vertex printing) */
+   setup->nr_vertex_attrs = draw_num_vs_outputs(sp->draw);
 
    sp->quad.first->begin( sp->quad.first );
 
