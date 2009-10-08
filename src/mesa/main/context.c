@@ -971,7 +971,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
    _mesa_free_attrib_data(ctx);
-   _mesa_free_display_list_data(ctx);
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );
    _mesa_free_texture_data( ctx );
@@ -1011,6 +1010,9 @@ _mesa_free_context_data( GLcontext *ctx )
       /* free shared state */
       _mesa_free_shared_state( ctx, ctx->Shared );
    }
+
+   /* needs to be after freeing shared state */
+   _mesa_free_display_list_data(ctx);
 
    if (ctx->Extensions.String)
       _mesa_free((void *) ctx->Extensions.String);
