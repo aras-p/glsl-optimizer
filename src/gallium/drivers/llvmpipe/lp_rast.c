@@ -30,6 +30,9 @@
 #include "lp_state.h"
 #include "lp_quad.h"
 #include "lp_rast.h"
+#include "lp_rast_priv.h"
+#include "lp_tile_soa.h"
+#include "lp_bld_debug.h"
 
 
 struct lp_rasterizer *lp_rast_create( void )
@@ -137,7 +140,6 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
                           struct quad_header **quads,
                           unsigned nr )
 {
-   struct lp_fragment_shader *fs = llvmpipe->fs;
    struct quad_header *quad = quads[0];
    const unsigned x = quad->input.x0;
    const unsigned y = quad->input.y0;
@@ -167,7 +169,7 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
    /* depth buffer */
    assert((x % 2) == 0);
    assert((y % 2) == 0);
-   depth = (uint8_t)*tile->depth + y*TILE_SIZE*4 + 2*x*4;
+   depth = (uint8_t *)tile->depth + y*TILE_SIZE*4 + 2*x*4;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(mask, 16));
@@ -177,14 +179,14 @@ void lp_rast_shade_quads( const struct lp_rast_state *state,
    assert(lp_check_alignment(state->jc.blend_color, 16));
 
    /* run shader */
-   state->jit_function( &state->jc,
-                        x, y,
-                        quad->coef->a0,
-                        quad->coef->dadx,
-                        quad->coef->dady,
-                        &mask[0][0],
-                        color,
-                        depth);
+   state->shader( &state->jc,
+                  x, y,
+                  quad->coef->a0,
+                  quad->coef->dadx,
+                  quad->coef->dady,
+                  &mask[0][0],
+                  color,
+                  depth);
 
 }
 

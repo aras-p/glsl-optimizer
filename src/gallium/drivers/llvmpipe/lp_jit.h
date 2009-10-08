@@ -108,13 +108,13 @@ struct lp_jit_context
 
 
 typedef void
-(*lp_jit_frag_func)(struct lp_jit_context *context,
+(*lp_jit_frag_func)(const struct lp_jit_context *context,
                     uint32_t x,
                     uint32_t y,
                     const void *a0,
                     const void *dadx,
                     const void *dady,
-                    uint32_t *mask,
+                    const uint32_t *mask,
                     void *color,
                     void *depth);
 
