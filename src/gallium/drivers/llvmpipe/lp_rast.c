@@ -74,8 +74,7 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
 void lp_rast_clear_color( struct lp_rasterizer *rast,
                           const union lp_rast_cmd_arg *arg )
 {
-   const unsigned clear_color = arg->clear.clear_color;
-   unsigned i, j;
+   const uint8_t *clear_color = arg->clear_color;
    
    if (clear_color[0] == clear_color[1] &&
        clear_color[1] == clear_color[2] &&
@@ -83,6 +82,7 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
       memset(rast->tile.color, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
    }
    else {
+      unsigned x, y, chan;
       for (y = 0; y < TILE_SIZE; y++)
          for (x = 0; x < TILE_SIZE; x++)
             for (chan = 0; chan < 4; ++chan)
@@ -93,7 +93,7 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              const union lp_rast_cmd_arg *arg)
 {
-   const unsigned clear_zstencil = arg->clear.clear_zstencil;
+   const unsigned clear_zstencil = arg->clear_zstencil;
    unsigned i, j;
    
    for (i = 0; i < TILE_SIZE; i++)
@@ -128,14 +128,14 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg *arg,
 			 const struct lp_rast_shader_inputs *inputs )
 {
-   const uint32_t masks[4] = {~0, ~0, ~0, ~0};
-   unsigned i, j;
+   const unsigned masks[4] = {~0, ~0, ~0, ~0};
+   unsigned x, y;
 
    /* Use the existing preference for 8x2 (four quads) shading:
     */
-   for (i = 0; i < TILE_SIZE; i += 8)
-      for (j = 0; j < TILE_SIZE; j += 2)
-         lp_rast_shade_quads( rast, inputs, i, j, &masks);
+   for (y = 0; y < TILE_SIZE; y += 2)
+      for (x = 0; x < TILE_SIZE; x += 8)
+         lp_rast_shade_quads( rast, inputs, x, y, masks);
 }
 
 
@@ -146,8 +146,8 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 {
    const struct lp_rast_state *state = rast->shader_state;
    struct lp_rast_tile *tile = &rast->tile;
-   uint8_t *color;
-   uint8_t *depth;
+   void *color;
+   void *depth;
    uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
    unsigned chan_index;
    unsigned q;
@@ -247,6 +247,8 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
  */
 void lp_rast_destroy( struct lp_rasterizer *rast )
 {
+   pipe_surface_reference(&rast->state.cbuf, NULL);
+   pipe_surface_reference(&rast->state.zsbuf, NULL);
    align_free(rast->tile.depth);
    align_free(rast->tile.color);
    FREE(rast);

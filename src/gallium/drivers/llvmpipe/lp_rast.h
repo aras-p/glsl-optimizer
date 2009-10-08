@@ -128,6 +128,8 @@ union lp_rast_cmd_arg {
    const struct lp_rast_shader_inputs *shade_tile;
    const struct lp_rast_triangle *triangle;
    const struct lp_rast_state *set_state;
+   const uint8_t clear_color[4];
+   unsigned clear_zstencil;
 };
 
 
