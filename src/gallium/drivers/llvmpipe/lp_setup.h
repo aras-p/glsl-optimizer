@@ -37,8 +37,15 @@ enum lp_interp {
    LP_INTERP_FACING
 };
 
+struct lp_shader_input {
+   enum lp_interp interp;
+   unsigned vs_output;
+};
+
 struct pipe_texture;
+struct pipe_surface;
 struct setup_context;
+struct lp_jit_context;
 
 struct setup_context *
 lp_setup_create( void );
@@ -83,12 +90,12 @@ lp_setup_set_triangle_state( struct setup_context *setup,
 
 void
 lp_setup_set_fs_inputs( struct setup_context *setup,
-                        const enum lp_interp *interp,
+                        const struct lp_shader_input *interp,
                         unsigned nr );
 
 void
 lp_setup_set_shader_state( struct setup_context *setup,
-                           const struct jit_context *jc );
+                           const struct lp_jit_context *jc );
 
 boolean
 lp_setup_is_texture_referenced( struct setup_context *setup,

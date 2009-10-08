@@ -35,6 +35,10 @@
 #include "lp_setup_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
+#include "pipe/p_defines.h"
+
+static void set_state( struct setup_context *, unsigned );
 
 void lp_setup_new_cmd_block( struct cmd_block_list *list )
 {
@@ -52,6 +56,37 @@ void lp_setup_new_data_block( struct data_block_list *list )
    list->tail = block;
    block->next = NULL;
    block->used = 0;
+}
+
+
+static void
+first_triangle( struct setup_context *setup,
+                const float (*v0)[4],
+                const float (*v1)[4],
+                const float (*v2)[4])
+{
+   set_state( setup, SETUP_ACTIVE );
+   lp_setup_choose_triangle( setup );
+   setup->triangle( setup, v0, v1, v2 );
+}
+
+static void
+first_line( struct setup_context *setup,
+	    const float (*v0)[4],
+	    const float (*v1)[4])
+{
+   set_state( setup, SETUP_ACTIVE );
+   lp_setup_choose_line( setup );
+   setup->line( setup, v0, v1 );
+}
+
+static void
+first_point( struct setup_context *setup,
+	     const float (*v0)[4])
+{
+   set_state( setup, SETUP_ACTIVE );
+   lp_setup_choose_point( setup );
+   setup->point( setup, v0 );
 }
 
 static void reset_context( struct setup_context *setup )
@@ -92,6 +127,13 @@ static void reset_context( struct setup_context *setup )
    /* Reset some state:
     */
    setup->clear.flags = 0;
+
+   /* Have an explicit "start-binning" call and get rid of this
+    * pointer twiddling?
+    */
+   setup->line = first_line;
+   setup->point = first_point;
+   setup->triangle = first_triangle;
 }
 
 
@@ -119,11 +161,11 @@ rasterize_bins( struct setup_context *setup,
    unsigned i,j,k;
 
    lp_rast_bind_color( rast, 
-                       setup->fb.color, 
+                       setup->fb.cbuf, 
                        TRUE );                    /* WRITE */
                        
    lp_rast_bind_depth( rast,
-                       setup->fb.zstencil,
+                       setup->fb.zsbuf,
                        write_depth );             /* WRITE */
 
    for (i = 0; i < setup->tiles_x; i++) {
@@ -151,7 +193,7 @@ rasterize_bins( struct setup_context *setup,
 static void
 begin_binning( struct setup_context *setup )
 {
-   if (setup->fb.color) {
+   if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          bin_everywhere( setup, 
                          lp_rast_clear_color, 
@@ -162,7 +204,7 @@ begin_binning( struct setup_context *setup )
                          NULL );
    }
 
-   if (setup->fb.zstencil) {
+   if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          bin_everywhere( setup, 
                          lp_rast_clear_zstencil, 
@@ -239,8 +281,8 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    set_state( setup, SETUP_FLUSHED );
 
-   pipe_surface_reference( &setup->fb.color, color );
-   pipe_surface_reference( &setup->fb.zstencil, zstencil );
+   pipe_surface_reference( &setup->fb.cbuf, color );
+   pipe_surface_reference( &setup->fb.zsbuf, zstencil );
 
    width = MAX2( color->width, zstencil->width );
    height = MAX2( color->height, zstencil->height );
@@ -251,44 +293,55 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
 void
 lp_setup_clear( struct setup_context *setup,
-                const float *clear_color,
-                double clear_depth,
-                unsigned clear_stencil,
+                const float *color,
+                double depth,
+                unsigned stencil,
                 unsigned flags )
 {
    if (setup->state == SETUP_ACTIVE) {
-      struct lp_rast_clear_info *clear_info;
-
-      clear_info = alloc_clear_info( setup );
-
+      /* Add the clear to existing bins.  In the unusual case where
+       * both color and depth-stencilare being cleared, we could
+       * discard the currently binned scene and start again, but I
+       * don't see that as being a common usage.
+       */
       if (flags & PIPE_CLEAR_COLOR) {
-         pack_color( setup, 
-                     clear_info->color,
-                     clear_color );
-         bin_everywhere(setup, lp_rast_clear_color, clear_info );
+	 union lp_rast_cmd_arg *arg = get_data( &setup->data, sizeof *arg );
+
+         util_pack_color(color, 
+                         setup->fb.cbuf->format, 
+                         &arg->clear_color );
+
+         bin_everywhere(setup, lp_rast_clear_color, arg );
       }
 
-      if (flags & PIPE_CLEAR_DEPTH_STENCIL) {
-         pack_depth_stencil( setup, 
-                             clear_info->depth, 
-                             clear_depth,
-                             clear_stencil );
+      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
+	 union lp_rast_cmd_arg *arg = get_data( &setup->data, sizeof *arg );
+
+         arg->clear_zstencil = 
+            util_pack_z_stencil(setup->fb.zsbuf->format, 
+                                depth,
+                                stencil);
          
-         bin_everywhere(setup, lp_rast_clear_zstencil, clear_info );
+         bin_everywhere(setup, lp_rast_clear_zstencil, arg );
       }
    }
    else {
+      /* Put ourselves into the 'pre-clear' state, specifically to try
+       * and accumulate multiple clears to color and depth_stencil
+       * buffers which the app or state-tracker might issue
+       * separately.
+       */
       set_state( setup, SETUP_CLEARED );
 
       setup->clear.flags |= flags;
 
       if (flags & PIPE_CLEAR_COLOR) {
-         util_pack_color(rgba, 
+         util_pack_color(color, 
                          setup->fb.cbuf->format, 
                          &setup->clear.color.clear_color );
       }
 
-      if (flags & PIPE_CLEAR_DEPTH_STENCIL) {
+      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
          setup->clear.zstencil.clear_zstencil = 
             util_pack_z_stencil(setup->fb.zsbuf->format, 
                                 depth,
@@ -300,28 +353,21 @@ lp_setup_clear( struct setup_context *setup,
 
 void
 lp_setup_set_fs_inputs( struct setup_context *setup,
-                        const enum lp_interp *interp,
+                        const struct lp_shader_input *input,
                         unsigned nr )
 {
-   memcpy( setup->interp, interp, nr * sizeof interp[0] );
+   memcpy( setup->fs.input, input, nr * sizeof input[0] );
+   setup->fs.nr_inputs = nr;
 }
 
 void
 lp_setup_set_shader_state( struct setup_context *setup,
-                           const struct jit_context *jc )
+                           const struct lp_jit_context *jc )
 {
+   
 }
 
 
-static void
-first_triangle( struct setup_context *setup,
-                const float (*v0)[4],
-                const float (*v1)[4],
-                const float (*v2)[4])
-{
-   set_state( setup, STATE_ACTIVE );
-   setup_choose_triangle( setup, v0, v1, v2 );
-}
 
 
 
@@ -352,7 +398,8 @@ lp_setup_tri(struct setup_context *setup,
 }
 
 
-void setup_destroy_context( struct setup_context *setup )
+void 
+lp_setup_destroy( struct setup_context *setup )
 {
    lp_rast_destroy( setup->rast );
    FREE( setup );
@@ -363,18 +410,20 @@ void setup_destroy_context( struct setup_context *setup )
  * Create a new primitive tiling engine.  Currently also creates a
  * rasterizer to use with it.
  */
-struct setup_context *setup_create_context( void )
+struct setup_context *
+lp_setup_create( void )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
+   unsigned i, j;
 
-   setup->rast = lp_rast_create( void );
+   setup->rast = lp_rast_create();
    if (!setup->rast) 
       goto fail;
 
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++)
-         setup->tile[i][j].first = 
-            setup->tile[i][j].next = CALLOC_STRUCT(cmd_block);
+         setup->tile[i][j].head = 
+            setup->tile[i][j].tail = CALLOC_STRUCT(cmd_block);
 
    return setup;
 

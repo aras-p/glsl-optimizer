@@ -31,8 +31,17 @@
 #include "lp_setup.h"
 #include "lp_rast.h"
 
+/* We're limited to 2K by 2K for 32bit fixed point rasterization.
+ * Will need a 64-bit version for larger framebuffers.
+ */
+#define MAXHEIGHT 2048
+#define MAXWIDTH 2048
+#define TILES_X (MAXWIDTH / TILESIZE)
+#define TILES_Y (MAXHEIGHT / TILESIZE)
+
 #define CMD_BLOCK_MAX 128
 #define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
+   
 
 /* switch to a non-pointer value for this:
  */
@@ -62,12 +71,6 @@ struct data_block_list {
 };
    
 
-/* We're limited to 2K by 2K for 32bit fixed point rasterization.
- * Will need a 64-bit version for larger framebuffers.
- */
-#define MAXHEIGHT 2048
-#define MAXWIDTH 2048
-
 struct setup_context {
 
    struct lp_rasterizer *rast;
@@ -75,15 +78,15 @@ struct setup_context {
    /* When there are multiple threads, will want to double-buffer the
     * bin arrays:
     */
-   struct cmd_block_list tile[MAXHEIGHT / TILESIZE][MAXWIDTH / TILESIZE];
+   struct cmd_block_list tile[TILES_X][TILES_Y];
    struct data_block_list data;
 
    unsigned tiles_x;
    unsigned tiles_y;
 
    struct {
-      struct pipe_surface *color;
-      struct pipe_surface *zstencil;
+      struct pipe_surface *cbuf;
+      struct pipe_surface *zsbuf;
    } fb;
 
    struct {
@@ -99,7 +102,7 @@ struct setup_context {
    } state;
    
    struct {
-      enum lp_interp inputs[PIPE_MAX_ATTRIBS];
+      struct lp_shader_input input[PIPE_MAX_ATTRIBS];
       unsigned nr_inputs;
    } fs;
 
@@ -115,6 +118,11 @@ struct setup_context {
                      const float (*v1)[4],
                      const float (*v2)[4]);
 };
+
+void lp_setup_choose_triangle( struct setup_context *setup );
+void lp_setup_choose_line( struct setup_context *setup );
+void lp_setup_choose_point( struct setup_context *setup );
+
 
 void lp_setup_new_data_block( struct data_block_list *list );
 void lp_setup_new_cmd_block( struct cmd_block_list *list );
