@@ -215,8 +215,12 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 #endif
 					PIPE_TRANSFER_READ_WRITE,
 					0, 0, priv->tex->width[0], priv->tex->height[0]);
-        if (!priv->map_transfer)
+	if (!priv->map_transfer)
+#ifdef EXA_MIXED_PIXMAPS
 	    return FALSE;
+#else
+	    FatalError("failed to create transfer\n");
+#endif
 
 	pPix->devPrivate.ptr =
 	    exa->scrn->transfer_map(exa->scrn, priv->map_transfer);
