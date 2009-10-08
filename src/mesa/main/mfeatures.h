@@ -68,6 +68,12 @@
  * enabled or not.
  */
 
+#ifdef IN_DRI_DRIVER
+#define FEATURE_remap_table 1
+#else
+#define FEATURE_remap_table 0
+#endif
+
 #define FEATURE_accum  _HAVE_FULL_GL
 #define FEATURE_arrayelt  _HAVE_FULL_GL
 #define FEATURE_attrib_stack  _HAVE_FULL_GL

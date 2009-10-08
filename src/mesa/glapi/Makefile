@@ -9,6 +9,7 @@ include $(TOP)/configs/current
 
 OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
 	../main/enums.c \
+	../main/remap_helper.h \
 	../x86/glapi_x86.S \
 	../x86-64/glapi_x86-64.S \
 	../sparc/glapi_sparc.S \
@@ -90,6 +91,9 @@ dispatch.h $(GLX_DIR)/dispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 ../main/enums.c: gl_enums.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
+
+../main/remap_helper.h: remap_helper.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 ../x86/glapi_x86.S: gl_x86_asm.py $(COMMON)
