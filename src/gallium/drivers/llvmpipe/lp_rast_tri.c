@@ -203,8 +203,8 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
     */
    minx = MAX2(tri->maxx, rast->x);
    miny = MAX2(tri->miny, rast->y);
-   maxx = MIN2(tri->maxx, rast->x + TILESIZE);
-   maxy = MIN2(tri->maxy, rast->y + TILESIZE);
+   maxx = MIN2(tri->maxx, rast->x + TILE_SIZE);
+   maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
 
    if (miny == maxy ||
        minx == maxx) {

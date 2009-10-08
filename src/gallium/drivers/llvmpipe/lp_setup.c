@@ -250,7 +250,6 @@ lp_setup_clear( struct setup_context *setup,
 {
    if (setup->state == SETUP_ACTIVE) {
       struct lp_rast_clear_info *clear_info;
-      unsigned i, j;
 
       clear_info = alloc_clear_info( setup );
 
