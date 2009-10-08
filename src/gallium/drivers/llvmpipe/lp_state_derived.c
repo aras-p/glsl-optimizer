@@ -228,8 +228,10 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
 }
 
 static void 
-update_culling()
+update_culling(struct llvmpipe_context *lp)
 {
+   struct lp_setup_context *setup = lp->setup;
+
    if (lp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
        lp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
        lp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
@@ -283,7 +285,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 }
 
 
-void llvmpipe_prepare( )
+void llvmpipe_prepare(struct lp_setup_context *setup)
 {
    struct llvmpipe_context *lp = setup->llvmpipe;
 

@@ -82,7 +82,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    }
 
    if (dirty) {
-      lp_setup_set_framebuffer( llvmpipe->setup, fb );
+      lp_setup_set_framebuffer( lp->setup, fb );
       lp->dirty |= LP_NEW_FRAMEBUFFER;
    }
 }
