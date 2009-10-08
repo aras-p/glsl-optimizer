@@ -84,7 +84,6 @@
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_state.h"
-#include "lp_quad.h"
 #include "lp_tex_sample.h"
 
 

@@ -28,7 +28,6 @@
 #include "util/u_memory.h"
 
 #include "lp_state.h"
-#include "lp_quad.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"

@@ -30,7 +30,6 @@
  */
 
 #include "util/u_math.h"
-#include "lp_quad.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 
