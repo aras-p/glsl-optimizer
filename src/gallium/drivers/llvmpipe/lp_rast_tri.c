@@ -29,18 +29,10 @@
  * Rasterization for binned triangles within a tile
  */
 
-#include "lp_context.h"
 #include "lp_quad.h"
 #include "lp_quad_pipe.h"
-#include "lp_setup.h"
-#include "lp_state.h"
-#include "draw/draw_context.h"
-#include "draw/draw_private.h"
-#include "draw/draw_vertex.h"
-#include "pipe/p_shader_tokens.h"
-#include "pipe/p_thread.h"
-#include "util/u_math.h"
-#include "util/u_memory.h"
+#include "lp_rast_priv.h"
+
 
 #define BLOCKSIZE 4
 
@@ -48,7 +40,7 @@
 /* Convert 8x8 block into four runs of quads and render each in turn.
  */
 #if (BLOCKSIZE == 8)
-static void block_full( struct triangle *tri, int x, int y )
+static void block_full( struct lp_rast_triangle *tri, int x, int y )
 {
    struct quad_header *ptrs[4];
    int i;
@@ -79,7 +71,7 @@ static void block_full( struct triangle *tri, int x, int y )
    }
 }
 #else
-static void block_full( struct triangle *tri, int x, int y )
+static void block_full( struct lp_rast_triangle *tri, int x, int y )
 {
    struct quad_header *ptrs[4];
    int iy;
@@ -108,7 +100,7 @@ do_quad( struct lp_rasterizer *rast,
 	 int x, int y,
 	 float c1, float c2, float c3 )
 {
-   struct triangle *tri = rast->tri;
+   struct lp_rast_triangle *tri = rast->tri;
    struct quad_header *quad = &rast->quad[0];
 
    float xstep1 = -tri->dy12;
@@ -151,7 +143,7 @@ do_quad( struct lp_rasterizer *rast,
  * the quad:
  */
 static void
-do_block( struct triangle *tri,
+do_block( struct lp_rast_triangle *tri,
 	 int x, int y,
 	 float c1,
 	 float c2,
