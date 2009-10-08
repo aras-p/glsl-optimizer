@@ -48,7 +48,7 @@ static void block_full( struct lp_rasterizer *rast,
    int iy;
 
    for (iy = 0; iy < 8; iy += 2)
-      lp_rast_shade_quads(rast, tri->inputs, x, y + iy, masks);
+      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
 }
 #else
 static void block_full( struct lp_rasterizer *rast,
@@ -59,7 +59,7 @@ static void block_full( struct lp_rasterizer *rast,
    int iy;
 
    for (iy = 0; iy < 4; iy += 2)
-      lp_rast_shade_quads(rast, tri->inputs, x, y + iy, masks);
+      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
 }
 #endif
 
@@ -140,7 +140,7 @@ do_block( struct lp_rasterizer *rast,
 	 cx3 += xstep3;
       }
 
-      lp_rast_shade_quads(rast, tri->inputs, x, y + iy, masks);
+      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
 
       c1 += ystep1;
       c2 += ystep2;

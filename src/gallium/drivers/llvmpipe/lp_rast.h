@@ -98,7 +98,7 @@ struct lp_rast_triangle {
    float dx31;
 
    /* inputs for the shader */
-   struct lp_rast_shader_inputs *inputs;
+   struct lp_rast_shader_inputs inputs;
 };
 
 
