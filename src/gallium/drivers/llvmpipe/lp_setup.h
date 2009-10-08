@@ -37,6 +37,7 @@ enum lp_interp {
    LP_INTERP_FACING
 };
 
+struct pipe_texture;
 struct setup_context;
 
 struct setup_context *

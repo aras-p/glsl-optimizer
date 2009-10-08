@@ -28,23 +28,25 @@
 #ifndef LP_SETUP_CONTEXT_H
 #define LP_SETUP_CONTEXT_H
 
+#include "lp_setup.h"
+#include "lp_rast.h"
 
 #define CMD_BLOCK_MAX 128
 #define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
 
 /* switch to a non-pointer value for this:
  */
-typedef void (*lp_rast_cmd)( struct lp_rast *, const union lp_rast_cmd_arg * );
+typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg * );
 
 struct cmd_block {
-   union lp_rast_arg *arg[CMD_BLOCK_MAX];
    lp_rast_cmd cmd[CMD_BLOCK_MAX];
+   const union lp_rast_cmd_arg *arg[CMD_BLOCK_MAX];
    unsigned count;
    struct cmd_block *next;
 };
 
 struct data_block {
-   ubyte data[DATA_BLOCK_SZ];
+   ubyte data[DATA_BLOCK_SIZE];
    unsigned used;
    struct data_block *next;
 };
@@ -68,10 +70,12 @@ struct data_block_list {
 
 struct setup_context {
 
+   struct lp_rasterizer *rast;
+
    /* When there are multiple threads, will want to double-buffer the
     * bin arrays:
     */
-   struct cmd_block_list bin[MAXHEIGHT / TILESIZE][MAXWIDTH / TILESIZE];
+   struct cmd_block_list tile[MAXHEIGHT / TILESIZE][MAXWIDTH / TILESIZE];
    struct data_block_list data;
 
    unsigned tiles_x;
@@ -110,8 +114,11 @@ struct setup_context {
    void (*triangle)( struct setup_context *,
                      const float (*v0)[4],
                      const float (*v1)[4],
-                     const float (*v1)[4]);
+                     const float (*v2)[4]);
 };
+
+void lp_setup_new_data_block( struct data_block_list *list );
+void lp_setup_new_cmd_block( struct cmd_block_list *list );
 
 static INLINE void *get_data( struct data_block_list *list,
                               unsigned size)
@@ -123,7 +130,7 @@ static INLINE void *get_data( struct data_block_list *list,
 
    {
       struct data_block *tail = list->tail;
-      char *data = tail->data + tail->used;
+      ubyte *data = tail->data + tail->used;
       tail->used += size;
       return data;
    }
@@ -132,11 +139,11 @@ static INLINE void *get_data( struct data_block_list *list,
 /* Add a command to a given bin.
  */
 static INLINE void bin_cmd( struct cmd_block_list *list,
-                            bin_cmd cmd,
+                            lp_rast_cmd cmd,
                             const union lp_rast_cmd_arg *arg )
 {
-   if (list->tail.count == CMD_BLOCK_MAX) {
-      lp_setup_new_cmd_block( list )
+   if (list->tail->count == CMD_BLOCK_MAX) {
+      lp_setup_new_cmd_block( list );
    }
 
    {
@@ -150,3 +157,4 @@ static INLINE void bin_cmd( struct cmd_block_list *list,
 
 
 
+#endif

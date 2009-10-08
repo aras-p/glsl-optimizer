@@ -28,12 +28,17 @@
 #ifndef LP_RAST_H
 #define LP_RAST_H
 
+#include "lp_jit.h"
+
 /* Initially create and program a single rasterizer directly.  Later
  * will want multiple of these, one or two per core.  At that stage
  * will probably pass command buffers into the rasterizers rather than
  * individual function calls like this.
  */
 struct lp_rasterizer;
+
+#define TILESIZE 64
+
 
 struct lp_rast_state {
    /* State for the shader:
@@ -55,10 +60,11 @@ struct lp_rast_shader_inputs {
     */
    const struct lp_rast_state *state;
 
-   /* Attribute interpolation:
+   /* Attribute interpolation:  FIXME: reduce memory waste!
     */
-   struct tgsi_interp_coef position_coef;
-   struct tgsi_interp_coef *coef;
+   float a0[PIPE_MAX_ATTRIBS][4];
+   float dadx[PIPE_MAX_ATTRIBS][4];
+   float dady[PIPE_MAX_ATTRIBS][4];
 };
 
 

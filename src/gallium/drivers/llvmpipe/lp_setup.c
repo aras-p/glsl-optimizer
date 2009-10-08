@@ -32,7 +32,7 @@
  * lp_setup_flush().
  */
 
-#include "lp_setup.h"
+#include "lp_setup_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -56,31 +56,33 @@ void lp_setup_new_data_block( struct data_block_list *list )
 
 static void reset_context( struct setup_context *setup )
 {
+   unsigned i, j;
+
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
-         struct cmd_block_list *list = scene->tile[i][j];
+         struct cmd_block_list *list = &setup->tile[i][j];
          struct cmd_block *block;
          struct cmd_block *tmp;
          
-         for (block = list->first; block != list->tail; block = tmp) {
+         for (block = list->head; block != list->tail; block = tmp) {
             tmp = block->next;
             FREE(block);
          }
          
-         list->first = list->tail;
+         list->head = list->tail;
       }
    }
 
    {
-      struct data_block_list *list = &scene->data;
+      struct data_block_list *list = &setup->data;
       struct data_block *block, *tmp;
 
-      for (block = list->first; block != list->tail; block = tmp) {
+      for (block = list->head; block != list->tail; block = tmp) {
          tmp = block->next;
          FREE(block);
       }
          
-      list->first = list->tail;
+      list->head = list->tail;
    }
 }
 
@@ -90,39 +92,42 @@ static void reset_context( struct setup_context *setup )
 /* Add a command to all active bins.
  */
 static void bin_everywhere( struct setup_context *setup,
-                            bin_cmd cmd,
+                            lp_rast_cmd cmd,
                             const union lp_rast_cmd_arg *arg )
 {
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++)
       for (j = 0; j < setup->tiles_y; j++)
-         bin_cmd( setup, &setup->tile[i][j], cmd, arg );
+         bin_cmd( &setup->tile[i][j], cmd, arg );
 }
 
 
 static void
 rasterize_bins( struct setup_context *setup,
-                struct lp_rast *rast,
                 boolean write_depth )
 {
+   struct lp_rasterizer *rast = setup->rast;
+   struct cmd_block *block;
+   unsigned i,j,k;
+
    lp_rast_bind_color( rast, 
-                       scene->fb.color, 
+                       setup->fb.color, 
                        TRUE );                    /* WRITE */
                        
    lp_rast_bind_depth( rast,
-                       scene->fb.depth,
+                       setup->fb.zstencil,
                        write_depth );             /* WRITE */
 
-   for (i = 0; i < scene->tiles_x; i++) {
-      for (j = 0; j < scene->tiles_y; j++) {
+   for (i = 0; i < setup->tiles_x; i++) {
+      for (j = 0; j < setup->tiles_y; j++) {
 
          lp_rast_start_tile( rast, 
                              i * TILESIZE,
                              j * TILESIZE );
 
-         for (block = scene->tile[i][j].first; block; block = block->next) {
-            for (k = 0; k < block->nr_cmds; k++) {
-               block->cmd[k].func( rast, block->cmd[k].arg );
+         for (block = setup->tile[i][j].head; block; block = block->next) {
+            for (k = 0; k < block->count; k++) {
+               block->cmd[k]( rast, block->arg[k] );
             }
          }
 
@@ -130,7 +135,7 @@ rasterize_bins( struct setup_context *setup,
       }
    }
 
-   lp_setup_free_data( setup );
+   reset_context( setup );
 }
 
 
