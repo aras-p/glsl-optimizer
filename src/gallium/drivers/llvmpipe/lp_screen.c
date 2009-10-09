@@ -35,6 +35,24 @@
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
+#include "lp_debug.h"
+
+#ifdef DEBUG
+int LP_DEBUG = 0;
+
+static const struct debug_named_value lp_debug_flags[] = {
+   { "pipe",   DEBUG_PIPE },
+   { "tgsi",   DEBUG_TGSI },
+   { "tex",    DEBUG_TEX },
+   { "asm",    DEBUG_ASM },
+   { "setup",  DEBUG_SETUP },
+   { "rast",   DEBUG_RAST },
+   { "query",  DEBUG_QUERY },
+   { "screen", DEBUG_SCREEN },
+   { "jit",    DEBUG_JIT },
+   {NULL, 0}
+};
+#endif
 
 
 static const char *
@@ -212,6 +230,10 @@ struct pipe_screen *
 llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
+
+#ifdef DEBUG
+   LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
+#endif
 
    if (!screen)
       return NULL;

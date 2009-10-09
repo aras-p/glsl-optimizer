@@ -86,6 +86,7 @@
 #include "lp_buffer.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
+#include "lp_debug.h"
 
 
 static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
@@ -396,29 +397,29 @@ generate_fragment(struct llvmpipe_context *lp,
    unsigned i;
    unsigned chan;
 
-#ifdef DEBUG
-   tgsi_dump(shader->base.tokens, 0);
-   if(key->depth.enabled) {
-      debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
-      debug_printf("depth.writemask = %u\n", key->depth.writemask);
+   if (LP_DEBUG & DEBUG_JIT) {
+      tgsi_dump(shader->base.tokens, 0);
+      if(key->depth.enabled) {
+         debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
+         debug_printf("depth.writemask = %u\n", key->depth.writemask);
+      }
+      if(key->alpha.enabled) {
+         debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
+         debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
+      }
+      if(key->blend.logicop_enable) {
+         debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
+      }
+      else if(key->blend.blend_enable) {
+         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
+         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
+         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
+         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
+         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
+         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
+      }
+      debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
    }
-   if(key->alpha.enabled) {
-      debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
-      debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
-   }
-   if(key->blend.logicop_enable) {
-      debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
-   }
-   else if(key->blend.blend_enable) {
-      debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
-      debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
-      debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
-      debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
-      debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
-      debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
-   }
-   debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
-#endif
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
    if(!variant)
@@ -509,13 +510,8 @@ generate_fragment(struct llvmpipe_context *lp,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x0, y0, 2, 0);
 
-#if 0
-   /* C texture sampling */
-   sampler = lp_c_sampler_soa_create(context_ptr);
-#else
    /* code generated texture sampling */
    sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);
-#endif
 
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
@@ -558,8 +554,8 @@ generate_fragment(struct llvmpipe_context *lp,
    }
 
    lp_build_conv_mask(builder, fs_type, blend_type,
-                               fs_mask, num_fs,
-                               &blend_mask, 1);
+                      fs_mask, num_fs,
+                      &blend_mask, 1);
 
    /*
     * Blending.
@@ -588,16 +584,15 @@ generate_fragment(struct llvmpipe_context *lp,
 
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 
-#ifdef DEBUG
-   LLVMDumpValue(variant->function);
-   debug_printf("\n");
-#endif
+   if (LP_DEBUG & DEBUG_JIT) {
+      LLVMDumpValue(variant->function);
+      debug_printf("\n");
+   }
 
    variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 
-#ifdef DEBUG
-   lp_disassemble(variant->jit_function);
-#endif
+   if (LP_DEBUG & DEBUG_ASM)
+      lp_disassemble(variant->jit_function);
 
    variant->next = shader->variants;
    shader->variants = variant;
