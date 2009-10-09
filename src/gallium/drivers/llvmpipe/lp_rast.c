@@ -64,6 +64,7 @@ void lp_rast_bind_color( struct lp_rasterizer *rast,
                          boolean write_color )
 {
    pipe_surface_reference(&rast->state.cbuf, cbuf);
+   rast->state.write_color = write_color;
 }
 
 void lp_rast_bind_zstencil( struct lp_rasterizer *rast,
@@ -71,6 +72,7 @@ void lp_rast_bind_zstencil( struct lp_rasterizer *rast,
                             boolean write_zstencil )
 {
    pipe_surface_reference(&rast->state.zsbuf, zsbuf);
+   rast->state.write_zstencil = write_zstencil;
 }
 
 
@@ -206,7 +208,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
  */
 
 
-void lp_rast_end_tile( struct lp_rasterizer *rast )
+static void lp_rast_store_color( struct lp_rasterizer *rast )
 {
    struct pipe_surface *surface;
    struct pipe_screen *screen;
@@ -250,10 +252,24 @@ void lp_rast_end_tile( struct lp_rasterizer *rast )
 
    screen->tex_transfer_destroy(transfer);
 
-   if (0) {
-      /* FIXME: call u_tile func to store depth/stencil to surface */
-   }
 }
+
+
+static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
+{
+   /* FIXME: call u_tile func to store depth/stencil to surface */
+}
+
+
+void lp_rast_end_tile( struct lp_rasterizer *rast )
+{
+   if (rast->state.write_color)
+      lp_rast_store_color(rast);
+
+   if (rast->state.write_zstencil)
+      lp_rast_store_zstencil(rast);
+}
+
 
 /* Shutdown:
  */

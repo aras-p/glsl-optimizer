@@ -61,6 +61,8 @@ struct lp_rasterizer {
    struct {
       struct pipe_surface *cbuf;
       struct pipe_surface *zsbuf;
+      boolean write_color;
+      boolean write_zstencil;
       unsigned clear_color;
       unsigned clear_depth;
       char clear_stencil;

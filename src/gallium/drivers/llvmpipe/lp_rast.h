@@ -163,12 +163,6 @@ void lp_rast_shade_tile( struct lp_rasterizer *,
                          const union lp_rast_cmd_arg *,
                          const struct lp_rast_shader_inputs *);
 
-void lp_rast_store_color( struct lp_rasterizer *,
-                          const union lp_rast_cmd_arg *);
-
-void lp_rast_store_zstencil( struct lp_rasterizer *,
-                             const union lp_rast_cmd_arg *);
-
 
 /* End of tile:
  */
