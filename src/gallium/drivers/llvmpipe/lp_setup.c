@@ -32,11 +32,15 @@
  * lp_setup_flush().
  */
 
-#include "lp_setup_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
-#include "pipe/p_defines.h"
+#include "lp_state.h"
+#include "lp_buffer.h"
+#include "lp_texture.h"
+#include "lp_setup_context.h"
 
 static void set_state( struct setup_context *, unsigned );
 
@@ -394,14 +398,99 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
 }
 
 void
-lp_setup_set_shader_state( struct setup_context *setup,
-                           const struct lp_jit_context *jc )
+lp_setup_set_fs( struct setup_context *setup,
+                 struct lp_fragment_shader *fs )
 {
-   
+   /* FIXME: reference count */
+
+   setup->fs.jit_function = fs->current->jit_function;
+}
+
+void
+lp_setup_set_fs_constants(struct setup_context *setup,
+                          struct pipe_buffer *buffer)
+{
+   const void *data = buffer ? llvmpipe_buffer(buffer)->data : NULL;
+   struct pipe_buffer *dummy;
+
+   /* FIXME: hold on to the reference */
+   dummy = NULL;
+   pipe_buffer_reference(&dummy, buffer);
+
+   setup->fs.jit_context.constants = data;
+
+   setup->fs.jit_context_dirty = TRUE;
 }
 
 
+void
+lp_setup_set_alpha_ref_value( struct setup_context *setup,
+                              float alpha_ref_value )
+{
+   if(setup->fs.jit_context.alpha_ref_value != alpha_ref_value) {
+      setup->fs.jit_context.alpha_ref_value = alpha_ref_value;
+      setup->fs.jit_context_dirty = TRUE;
+   }
+}
 
+void
+lp_setup_set_blend_color( struct setup_context *setup,
+                          const struct pipe_blend_color *blend_color )
+{
+   unsigned i, j;
+
+   if(!setup->fs.jit_context.blend_color)
+      setup->fs.jit_context.blend_color = align_malloc(4 * 16, 16);
+
+   for (i = 0; i < 4; ++i) {
+      uint8_t c = float_to_ubyte(blend_color->color[i]);
+      for (j = 0; j < 16; ++j)
+         setup->fs.jit_context.blend_color[i*4 + j] = c;
+   }
+
+   setup->fs.jit_context_dirty = TRUE;
+}
+
+void
+lp_setup_set_sampler_textures( struct setup_context *setup,
+                               unsigned num, struct pipe_texture **texture)
+{
+   struct pipe_texture *dummy;
+   unsigned i;
+
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+
+      /* FIXME: hold on to the reference */
+      dummy = NULL;
+      pipe_texture_reference(&dummy, tex);
+
+      if(tex) {
+         struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
+         struct lp_jit_texture *jit_tex = &setup->fs.jit_context.textures[i];
+         jit_tex->width = tex->width[0];
+         jit_tex->height = tex->height[0];
+         jit_tex->stride = lp_tex->stride[0];
+         if(!lp_tex->dt)
+            jit_tex->data = lp_tex->data;
+         else
+            /* FIXME: map the rendertarget */
+            assert(0);
+      }
+   }
+
+   setup->fs.jit_context_dirty = TRUE;
+}
+
+static void
+lp_setup_set_shader_state( struct setup_context *setup,
+                           const struct lp_jit_context *jc )
+{
+
+
+}
 
 
 /* Stubs for lines & points for now:

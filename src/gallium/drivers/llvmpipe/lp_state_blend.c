@@ -67,17 +67,16 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
 			     const struct pipe_blend_color *blend_color )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   unsigned i, j;
+
+   if(!blend_color)
+      return;
+
+   if(memcmp(&llvmpipe->blend_color, blend_color, sizeof *blend_color) == 0)
+      return;
 
    memcpy(&llvmpipe->blend_color, blend_color, sizeof *blend_color);
 
-   if(!llvmpipe->jit_context.blend_color)
-      llvmpipe->jit_context.blend_color = align_malloc(4 * 16, 16);
-   for (i = 0; i < 4; ++i) {
-      uint8_t c = float_to_ubyte(blend_color->color[i]);
-      for (j = 0; j < 16; ++j)
-         llvmpipe->jit_context.blend_color[i*4 + j] = c;
-   }
+   llvmpipe->dirty |= LP_NEW_BLEND_COLOR;
 }
 
 
@@ -100,9 +99,6 @@ llvmpipe_bind_depth_stencil_state(struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    llvmpipe->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
-
-   if(llvmpipe->depth_stencil)
-      llvmpipe->jit_context.alpha_ref_value = llvmpipe->depth_stencil->alpha.ref_value;
 
    llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }

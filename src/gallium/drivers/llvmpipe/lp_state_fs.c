@@ -681,15 +681,14 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
+   if(llvmpipe->constants[shader].buffer == buffer)
+      return;
+
    if(shader == PIPE_SHADER_VERTEX)
       draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
    pipe_buffer_reference(&llvmpipe->constants[shader].buffer, buffer);
-
-   if(shader == PIPE_SHADER_FRAGMENT) {
-      llvmpipe->jit_context.constants = data;
-   }
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(llvmpipe->draw, data, size);

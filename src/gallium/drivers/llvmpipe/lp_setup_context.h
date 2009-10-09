@@ -109,6 +109,11 @@ struct setup_context {
    struct {
       struct lp_shader_input input[PIPE_MAX_ATTRIBS];
       unsigned nr_inputs;
+
+      struct lp_jit_context jit_context;
+      lp_jit_frag_func jit_function;
+
+      boolean jit_context_dirty;
    } fs;
 
    void (*point)( struct setup_context *,

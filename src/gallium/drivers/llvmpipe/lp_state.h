@@ -54,6 +54,7 @@
 #define LP_NEW_VERTEX        0x1000
 #define LP_NEW_VS            0x2000
 #define LP_NEW_QUERY         0x4000
+#define LP_NEW_BLEND_COLOR   0x8000
 
 
 struct tgsi_sampler;

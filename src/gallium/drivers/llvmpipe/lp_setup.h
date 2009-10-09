@@ -50,7 +50,9 @@ struct lp_shader_input {
 
 struct pipe_texture;
 struct pipe_surface;
+struct pipe_blend_color;
 struct setup_context;
+struct lp_fragment_shader;
 struct lp_jit_context;
 
 struct setup_context *
@@ -100,8 +102,25 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         unsigned nr );
 
 void
-lp_setup_set_shader_state( struct setup_context *setup,
-                           const struct lp_jit_context *jc );
+lp_setup_set_fs( struct setup_context *setup,
+                 struct lp_fragment_shader *fs );
+
+void
+lp_setup_set_fs_constants(struct setup_context *setup,
+                          struct pipe_buffer *buffer);
+
+
+void
+lp_setup_set_alpha_ref_value( struct setup_context *setup,
+                              float alpha_ref_value );
+
+void
+lp_setup_set_blend_color( struct setup_context *setup,
+                          const struct pipe_blend_color *blend_color );
+
+void
+lp_setup_set_sampler_textures( struct setup_context *setup,
+                               unsigned num, struct pipe_texture **texture);
 
 boolean
 lp_setup_is_texture_referenced( struct setup_context *setup,

@@ -33,6 +33,7 @@
 #include "draw/draw_private.h"
 #include "lp_context.h"
 #include "lp_screen.h"
+#include "lp_setup.h"
 #include "lp_state.h"
 
 
@@ -256,6 +257,23 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_TEXTURE))
       llvmpipe_update_fs( llvmpipe );
 
+   if (llvmpipe->dirty & (LP_NEW_BLEND |
+                          LP_NEW_DEPTH_STENCIL_ALPHA |
+                          LP_NEW_SAMPLER |
+                          LP_NEW_TEXTURE))
+      llvmpipe_update_fs( llvmpipe );
+
+   if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)
+      lp_setup_set_blend_color(llvmpipe->setup, &llvmpipe->blend_color);
+
+   if (llvmpipe->dirty & LP_NEW_DEPTH_STENCIL_ALPHA)
+      lp_setup_set_alpha_ref_value(llvmpipe->setup, llvmpipe->depth_stencil->alpha.ref_value);
+
+   if (llvmpipe->dirty & LP_NEW_CONSTANTS)
+      lp_setup_set_fs_constants(llvmpipe->setup, llvmpipe->constants[PIPE_SHADER_FRAGMENT].buffer);
+
+   if (llvmpipe->dirty & LP_NEW_TEXTURE)
+      lp_setup_set_sampler_textures(llvmpipe->setup, llvmpipe->num_textures, llvmpipe->texture);
 
    llvmpipe->dirty = 0;
 }

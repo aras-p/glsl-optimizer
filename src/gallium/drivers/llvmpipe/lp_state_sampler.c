@@ -96,16 +96,6 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
       struct pipe_texture *tex = i < num ? texture[i] : NULL;
 
       pipe_texture_reference(&llvmpipe->texture[i], tex);
-
-      if(tex) {
-         struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
-         struct lp_jit_texture *jit_tex = &llvmpipe->jit_context.textures[i];
-         jit_tex->width = tex->width[0];
-         jit_tex->height = tex->height[0];
-         jit_tex->stride = lp_tex->stride[0];
-         if(!lp_tex->dt)
-            jit_tex->data = lp_tex->data;
-      }
    }
 
    llvmpipe->num_textures = num;
