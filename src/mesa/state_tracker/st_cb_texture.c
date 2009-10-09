@@ -31,6 +31,7 @@
 #include "main/convolve.h"
 #endif
 #include "main/enums.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/macros.h"
@@ -1397,8 +1398,8 @@ static unsigned
 compatible_src_dst_formats(const struct gl_renderbuffer *src,
                            const struct gl_texture_image *dst)
 {
-   const GLenum srcFormat = src->_BaseFormat;
-   const GLenum dstLogicalFormat = dst->_BaseFormat;
+   const GLenum srcFormat = _mesa_get_format_base_format(src->Format);
+   const GLenum dstLogicalFormat = _mesa_get_format_base_format(dst->TexFormat);
 
    if (srcFormat == dstLogicalFormat) {
       /* This is the same as matching_base_formats, which should
@@ -1524,7 +1525,9 @@ st_copy_texsubimage(GLcontext *ctx,
     * framebuffer's alpha values).  We can't do that with the blit or
     * textured-quad paths.
     */
-   matching_base_formats = (strb->Base._BaseFormat == texImage->_BaseFormat);
+   matching_base_formats =
+      (_mesa_get_format_base_format(strb->Base.Format) ==
+       _mesa_get_format_base_format(texImage->TexFormat));
    format_writemask = compatible_src_dst_formats(&strb->Base, texImage);
 
    if (ctx->_ImageTransferState == 0x0) {

@@ -497,30 +497,23 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->Base.InternalFormat = trb->TexImage->InternalFormat;
    /* XXX may need more special cases here */
    if (trb->TexImage->TexFormat == MESA_FORMAT_Z24_S8) {
-      trb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      trb->Base.Format = MESA_FORMAT_Z24_S8;
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
    }
    else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
-      trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
+      trb->Base.Format = MESA_FORMAT_Z16;
       trb->Base.DataType = GL_UNSIGNED_SHORT;
    }
    else if (trb->TexImage->TexFormat == MESA_FORMAT_Z32) {
-      trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
+      trb->Base.Format = MESA_FORMAT_Z32;
       trb->Base.DataType = GL_UNSIGNED_INT;
    }
    else {
-      trb->Base._ActualFormat = trb->TexImage->InternalFormat;
+      trb->Base.Format = trb->TexImage->TexFormat;
       trb->Base.DataType = CHAN_TYPE;
    }
-   trb->Base._BaseFormat = trb->TexImage->_BaseFormat;
    trb->Base.Data = trb->TexImage->Data;
-
-   trb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
-   trb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
-   trb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
-   trb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
-   trb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
-   trb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
+   trb->Base._BaseFormat = _mesa_base_fbo_format(ctx, trb->Base.InternalFormat);
 }
 
 

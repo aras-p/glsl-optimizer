@@ -32,6 +32,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/matrix.h"
 #include "main/state.h"
 #include "main/simple_list.h"
@@ -163,24 +164,28 @@ viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
    if (format == GL_RGBA) {
       /* Color */
       rb->_BaseFormat = GL_RGBA;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
    else if (format == GL_DEPTH_COMPONENT16) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else if (format == GL_DEPTH_COMPONENT24) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z32;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else {
       /* Stencil */
       ASSERT(format == GL_STENCIL_INDEX8_EXT);
       rb->_BaseFormat = GL_STENCIL_INDEX;
+      rb->Format = MESA_FORMAT_S8;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
 

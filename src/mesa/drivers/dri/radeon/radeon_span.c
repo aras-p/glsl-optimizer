@@ -864,25 +864,25 @@ void radeonInitSpanFuncs(GLcontext * ctx)
  */
 static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
-	if (rrb->base._ActualFormat == GL_RGB5) {
+	if (rrb->base.Format == MESA_FORMAT_RGB565) {
 		radeonInitPointers_RGB565(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGB8) {
+	} else if (rrb->base.Format == MESA_FORMAT_RGBA8888) { /* XXX */
 		radeonInitPointers_xRGB8888(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGBA8) {
+	} else if (rrb->base.Format == MESA_FORMAT_RGBA8888) {
 		radeonInitPointers_ARGB8888(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGBA4) {
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB4444) {
 		radeonInitPointers_ARGB4444(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGB5_A1) {
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB1555) {
 		radeonInitPointers_ARGB1555(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
+	} else if (rrb->base.Format == MESA_FORMAT_Z16) {
 		radeonInitDepthPointers_z16(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
+	} else if (rrb->base.Format == GL_DEPTH_COMPONENT32) { /* XXX */
 		radeonInitDepthPointers_z24(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+	} else if (rrb->base.Format == MESA_FORMAT_Z24_S8) {
 		radeonInitDepthPointers_z24_s8(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
+	} else if (rrb->base.Format == MESA_FORMAT_S8) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
 	} else {
-		fprintf(stderr, "radeonSetSpanFunctions: bad actual format: 0x%04X\n", rrb->base._ActualFormat);
+		fprintf(stderr, "radeonSetSpanFunctions: bad actual format: 0x%04X\n", rrb->base.Format);
 	}
 }

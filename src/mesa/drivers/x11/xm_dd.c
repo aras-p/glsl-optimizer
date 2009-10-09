@@ -448,7 +448,7 @@ can_do_DrawPixels_8R8G8B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -582,7 +582,7 @@ can_do_DrawPixels_5R6G5B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }

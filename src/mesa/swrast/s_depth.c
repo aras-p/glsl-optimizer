@@ -25,6 +25,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/fbobject.h"
@@ -1298,10 +1299,14 @@ void
 _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
                               GLint n, GLint x, GLint y, GLuint depth[] )
 {
+   GLuint depthBits;
+
    if (!rb) {
       /* really only doing this to prevent FP exceptions later */
       _mesa_bzero(depth, n * sizeof(GLfloat));
    }
+
+   depthBits = _mesa_get_format_bits(rb->Format, GL_DEPTH_BITS);
 
    ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
 
@@ -1334,8 +1339,8 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
 
    if (rb->DataType == GL_UNSIGNED_INT) {
       rb->GetRow(ctx, rb, n, x, y, depth);
-      if (rb->DepthBits < 32) {
-         GLuint shift = 32 - rb->DepthBits;
+      if (depthBits < 32) {
+         GLuint shift = 32 - depthBits;
          GLint i;
          for (i = 0; i < n; i++) {
             GLuint z = depth[i];
@@ -1347,14 +1352,14 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
       GLushort temp[MAX_WIDTH];
       GLint i;
       rb->GetRow(ctx, rb, n, x, y, temp);
-      if (rb->DepthBits == 16) {
+      if (depthBits == 16) {
          for (i = 0; i < n; i++) {
             GLuint z = temp[i];
             depth[i] = (z << 16) | z;
          }
       }
       else {
-         GLuint shift = 16 - rb->DepthBits;
+         GLuint shift = 16 - depthBits;
          for (i = 0; i < n; i++) {
             GLuint z = temp[i];
             depth[i] = (z << (shift + 16)) | (z << shift); /* XXX lsb bits? */

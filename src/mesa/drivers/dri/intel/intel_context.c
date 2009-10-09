@@ -189,19 +189,7 @@ intelGetString(GLcontext * ctx, GLenum name)
 static unsigned
 intel_bits_per_pixel(const struct intel_renderbuffer *rb)
 {
-   switch (rb->Base._ActualFormat) {
-   case GL_RGB5:
-   case GL_DEPTH_COMPONENT16:
-      return 16;
-   case GL_RGB8:
-   case GL_RGBA8:
-   case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH24_STENCIL8_EXT:
-   case GL_STENCIL_INDEX8_EXT:
-      return 32;
-   default:
-      return 0;
-   }
+   return _mesa_get_format_bytes(rb->Base.Format) * 8;
 }
 
 void

@@ -1,5 +1,6 @@
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/imports.h"
@@ -83,47 +84,37 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
 
       if (format == GL_RGBA || format == GL_RGB5 || format == GL_RGBA8) {
          /* Color */
-         drb->Base._BaseFormat = GL_RGBA;
          drb->Base.DataType = GL_UNSIGNED_BYTE;
          if (format == GL_RGB5) {
-            drb->Base.RedBits = 5;
-            drb->Base.GreenBits = 6;
-            drb->Base.BlueBits = 5;
+            drb->Base.Format = MESA_FORMAT_RGB565;
          }
          else {
-            drb->Base.RedBits =
-            drb->Base.GreenBits =
-            drb->Base.BlueBits =
-            drb->Base.AlphaBits = 8;
+            drb->Base.Format = MESA_FORMAT_ARGB8888;
          }
       }
       else if (format == GL_DEPTH_COMPONENT16) {
          /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 16;
+         drb->Base.Format = MESA_FORMAT_Z16;
       }
       else if (format == GL_DEPTH_COMPONENT24) {
          /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 24;
+         drb->Base.Format = MESA_FORMAT_Z32;
       }
       else if (format == GL_DEPTH_COMPONENT32) {
          /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 32;
+         drb->Base.Format = MESA_FORMAT_Z32;
       }
       else {
          /* Stencil */
          ASSERT(format == GL_STENCIL_INDEX8_EXT);
-         drb->Base._BaseFormat = GL_STENCIL_INDEX;
          drb->Base.DataType = GL_UNSIGNED_BYTE;
-         drb->Base.StencilBits = 8;
+         drb->Base.Format = MESA_FORMAT_S8;
       }
 
       /* XXX if we were allocating a user-created renderbuffer, we'd have

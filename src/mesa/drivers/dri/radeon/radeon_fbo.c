@@ -90,11 +90,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      rb->_ActualFormat = GL_RGB5;
+      rb->Format = MESA_FORMAT_RGB565;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 5;
-      rb->GreenBits = 6;
-      rb->BlueBits = 5;
       cpp = 2;
       break;
    case GL_RGB:
@@ -102,12 +99,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->_ActualFormat = GL_RGB8;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 8;
-      rb->GreenBits = 8;
-      rb->BlueBits = 8;
-      rb->AlphaBits = 0;
       cpp = 4;
       break;
    case GL_RGBA:
@@ -118,12 +111,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      rb->_ActualFormat = GL_RGBA8;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 8;
-      rb->GreenBits = 8;
-      rb->BlueBits = 8;
-      rb->AlphaBits = 8;
       cpp = 4;
       break;
    case GL_STENCIL_INDEX:
@@ -132,31 +121,26 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      rb->Format = MESA_FORMAT_Z24_S8;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->StencilBits = 8;
       cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
-      rb->_ActualFormat = GL_DEPTH_COMPONENT16;
+      rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_SHORT;
-      rb->DepthBits = 16;
       cpp = 2;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->_ActualFormat = GL_DEPTH_COMPONENT24;
+      rb->Format = MESA_FORMAT_Z32;
       rb->DataType = GL_UNSIGNED_INT;
-      rb->DepthBits = 24;
       cpp = 4;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      rb->Format = MESA_FORMAT_Z24_S8;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->DepthBits = 24;
-      rb->StencilBits = 8;
       cpp = 4;
       break;
    default:
@@ -164,6 +148,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                     "Unexpected format in intel_alloc_renderbuffer_storage");
       return GL_FALSE;
    }
+
+  rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
 
   if (ctx->Driver.Flush)
 	  ctx->Driver.Flush(ctx); /* +r6/r7 */
@@ -212,7 +198,7 @@ radeon_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
-   rb->_ActualFormat = internalFormat;
+   rb->InternalFormat = internalFormat;
 
    return GL_TRUE;
 }
@@ -269,55 +255,32 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     /* XXX format junk */
     switch (format) {
 	case GL_RGB5:
-	    rrb->base._ActualFormat = GL_RGB5;
-	    rrb->base._BaseFormat = GL_RGBA;
-	    rrb->base.RedBits = 5;
-	    rrb->base.GreenBits = 6;
-	    rrb->base.BlueBits = 5;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case GL_RGB8:
-	    rrb->base._ActualFormat = GL_RGB8;
-	    rrb->base._BaseFormat = GL_RGB;
-	    rrb->base.RedBits = 8;
-	    rrb->base.GreenBits = 8;
-	    rrb->base.BlueBits = 8;
-	    rrb->base.AlphaBits = 0;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case GL_RGBA8:
-	    rrb->base._ActualFormat = GL_RGBA8;
-	    rrb->base._BaseFormat = GL_RGBA;
-	    rrb->base.RedBits = 8;
-	    rrb->base.GreenBits = 8;
-	    rrb->base.BlueBits = 8;
-	    rrb->base.AlphaBits = 8;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGBA;
 	    break;
 	case GL_STENCIL_INDEX8_EXT:
-	    rrb->base._ActualFormat = GL_STENCIL_INDEX8_EXT;
-	    rrb->base._BaseFormat = GL_STENCIL_INDEX;
-	    rrb->base.StencilBits = 8;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
 	case GL_DEPTH_COMPONENT16:
-	    rrb->base._ActualFormat = GL_DEPTH_COMPONENT16;
-	    rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
-	    rrb->base.DepthBits = 16;
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
+            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case GL_DEPTH_COMPONENT24:
-	    rrb->base._ActualFormat = GL_DEPTH_COMPONENT24;
-	    rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
-	    rrb->base.DepthBits = 24;
 	    rrb->base.DataType = GL_UNSIGNED_INT;
+            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case GL_DEPTH24_STENCIL8_EXT:
-	    rrb->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-	    rrb->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
-	    rrb->base.DepthBits = 24;
-	    rrb->base.StencilBits = 8;
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+            rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
 	default:
 	    fprintf(stderr, "%s: Unknown format 0x%04x\n", __FUNCTION__, format);
@@ -390,44 +353,26 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 
 restart:
 	if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
-		rrb->cpp = 4;
-		rrb->base._ActualFormat = GL_RGBA8;
-		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGBA8 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
-		rrb->cpp = 2;
-		rrb->base._ActualFormat = GL_RGB5;
-		rrb->base._BaseFormat = GL_RGB;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGB5 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_ARGB1555) {
-		rrb->cpp = 2;
-		rrb->base._ActualFormat = GL_RGB5_A1;
-		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to ARGB1555 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_ARGB4444) {
-		rrb->cpp = 2;
-		rrb->base._ActualFormat = GL_RGBA4;
-		rrb->base._BaseFormat = GL_RGBA;
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to ARGB1555 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_Z16) {
-		rrb->cpp = 2;
-		rrb->base._ActualFormat = GL_DEPTH_COMPONENT16;
-		rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 		rrb->base.DataType = GL_UNSIGNED_SHORT;
 		DBG("Render to DEPTH16 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_S8_Z24) {
-		rrb->cpp = 4;
-		rrb->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-		rrb->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
 		rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
 		DBG("Render to DEPTH_STENCIL texture OK\n");
 	}
@@ -448,16 +393,15 @@ restart:
 	
 	texFormat = texImage->TexFormat;
 
+	rrb->base.Format = texFormat;
+
+        rrb->cpp = _mesa_get_format_bytes(texFormat);
 	rrb->pitch = texImage->Width * rrb->cpp;
-	rrb->base.InternalFormat = rrb->base._ActualFormat;
+	rrb->base.InternalFormat = texImage->InternalFormat;
+        rrb->base._BaseFormat = _mesa_base_fbo_format(ctx, rrb->base.InternalFormat);
+
 	rrb->base.Width = texImage->Width;
 	rrb->base.Height = texImage->Height;
-	rrb->base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
-	rrb->base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
-	rrb->base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
-	rrb->base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
-	rrb->base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
-	rrb->base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
 	
 	rrb->base.Delete = radeon_delete_renderbuffer;
 	rrb->base.AllocStorage = radeon_nop_alloc_storage;

@@ -33,6 +33,7 @@
 
 #include "main/context.h"
 #include "main/extensions.h"
+#include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/renderbuffer.h"
@@ -378,50 +379,38 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 
     switch (pixel_format) {
     case PF_A8R8G8B8:
+	xrb->Base.Format = MESA_FORMAT_ARGB8888;
 	xrb->Base.InternalFormat = GL_RGBA;
 	xrb->Base._BaseFormat = GL_RGBA;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->Base.RedBits   = 8 * sizeof(GLubyte);
-	xrb->Base.GreenBits = 8 * sizeof(GLubyte);
-	xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
-	xrb->Base.AlphaBits = 8 * sizeof(GLubyte);
 	xrb->bpp = 32;
 	break;
     case PF_X8R8G8B8:
+	xrb->Base.Format = MESA_FORMAT_ARGB8888; /* XXX */
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->Base.RedBits   = 8 * sizeof(GLubyte);
-	xrb->Base.GreenBits = 8 * sizeof(GLubyte);
-	xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
-	xrb->Base.AlphaBits = 0;
 	xrb->bpp = 32;
 	break;
     case PF_R5G6B5:
+	xrb->Base.Format = MESA_FORMAT_RGB565;
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->Base.RedBits   = 5 * sizeof(GLubyte);
-	xrb->Base.GreenBits = 6 * sizeof(GLubyte);
-	xrb->Base.BlueBits  = 5 * sizeof(GLubyte);
-	xrb->Base.AlphaBits = 0;
 	xrb->bpp = 16;
 	break;
     case PF_R3G3B2:
+	xrb->Base.Format = MESA_FORMAT_RGB332;
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->Base.RedBits   = 3 * sizeof(GLubyte);
-	xrb->Base.GreenBits = 3 * sizeof(GLubyte);
-	xrb->Base.BlueBits  = 2 * sizeof(GLubyte);
-	xrb->Base.AlphaBits = 0;
 	xrb->bpp = 8;
 	break;
     case PF_CI8:
+	xrb->Base.Format = MESA_FORMAT_CI8;
 	xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
 	xrb->Base._BaseFormat = GL_COLOR_INDEX;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->Base.IndexBits = 8 * sizeof(GLubyte);
 	xrb->bpp = 8;
 	break;
     default:

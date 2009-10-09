@@ -48,7 +48,7 @@
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */
-#define DEBUG_FBO 0
+#define DEBUG_FBO 1
 
 
 /**
@@ -416,10 +416,9 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
       else {
          ASSERT(format == GL_STENCIL);
-         ASSERT(att->Renderbuffer->StencilBits);
          if (ctx->Extensions.EXT_packed_depth_stencil &&
              ctx->Extensions.ARB_depth_texture &&
-             att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+             baseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
          else {
@@ -431,6 +430,9 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
    }
    else if (att->Type == GL_RENDERBUFFER_EXT) {
+      const GLenum baseFormat =
+         _mesa_get_format_base_format(att->Renderbuffer->Format);
+
       ASSERT(att->Renderbuffer);
       if (!att->Renderbuffer->InternalFormat ||
           att->Renderbuffer->Width < 1 ||
@@ -440,24 +442,19 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          return;
       }
       if (format == GL_COLOR) {
-         if (att->Renderbuffer->_BaseFormat != GL_RGB &&
-             att->Renderbuffer->_BaseFormat != GL_RGBA) {
+         if (baseFormat != GL_RGB &&
+             baseFormat != GL_RGBA) {
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
          }
-         ASSERT(att->Renderbuffer->RedBits);
-         ASSERT(att->Renderbuffer->GreenBits);
-         ASSERT(att->Renderbuffer->BlueBits);
       }
       else if (format == GL_DEPTH) {
-         if (att->Renderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
-            ASSERT(att->Renderbuffer->DepthBits);
+         if (baseFormat == GL_DEPTH_COMPONENT) {
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
-                  att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-            ASSERT(att->Renderbuffer->DepthBits);
+                  baseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
          else {
@@ -468,13 +465,11 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       }
       else {
          assert(format == GL_STENCIL);
-         if (att->Renderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
-            ASSERT(att->Renderbuffer->StencilBits);
+         if (baseFormat == GL_STENCIL_INDEX) {
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
-                  att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-            ASSERT(att->Renderbuffer->StencilBits);
+                  baseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
          else {
@@ -980,42 +975,27 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
    }
 
    /* These MUST get set by the AllocStorage func */
-   rb->_ActualFormat = 0;
-   rb->RedBits =
-   rb->GreenBits =
-   rb->BlueBits =
-   rb->AlphaBits =
-   rb->IndexBits =
-   rb->DepthBits =
-   rb->StencilBits = 0;
+   rb->Format = MESA_FORMAT_NONE;
    rb->NumSamples = samples;
 
    /* Now allocate the storage */
    ASSERT(rb->AllocStorage);
    if (rb->AllocStorage(ctx, rb, internalFormat, width, height)) {
       /* No error - check/set fields now */
-      assert(rb->_ActualFormat);
+      assert(rb->Format != MESA_FORMAT_NONE);
       assert(rb->Width == (GLuint) width);
       assert(rb->Height == (GLuint) height);
-      assert(rb->RedBits || rb->GreenBits || rb->BlueBits || rb->AlphaBits ||
-             rb->DepthBits || rb->StencilBits || rb->IndexBits);
       rb->InternalFormat = internalFormat;
-      rb->_BaseFormat = baseFormat;
+      rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+      assert(rb->_BaseFormat != 0);
    }
    else {
       /* Probably ran out of memory - clear the fields */
       rb->Width = 0;
       rb->Height = 0;
+      rb->Format = MESA_FORMAT_NONE;
       rb->InternalFormat = GL_NONE;
-      rb->_ActualFormat = GL_NONE;
       rb->_BaseFormat = GL_NONE;
-      rb->RedBits =
-      rb->GreenBits =
-      rb->BlueBits =
-      rb->AlphaBits =
-      rb->IndexBits =
-      rb->DepthBits =
-      rb->StencilBits =
       rb->NumSamples = 0;
    }
 
@@ -1026,6 +1006,53 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
     * points???
     */
 }
+
+
+/**
+ * Helper function for _mesa_GetRenderbufferParameterivEXT() and
+ * _mesa_GetFramebufferAttachmentParameterivEXT()
+ * We have to be careful to respect the base format.  For example, if a
+ * renderbuffer/texture was created with internalFormat=GL_RGB but the
+ * driver actually chose a GL_RGBA format, when the user queries ALPHA_SIZE
+ * we need to return zero.
+ */
+static GLint
+get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
+{
+   switch (pname) {
+   case GL_RENDERBUFFER_RED_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+   case GL_RENDERBUFFER_GREEN_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+   case GL_RENDERBUFFER_BLUE_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
+      if (baseFormat == GL_RGB || baseFormat == GL_RGBA)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
+   case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
+      if (baseFormat == GL_RGBA || baseFormat == GL_ALPHA)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
+   case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
+      if (baseFormat == GL_DEPTH_COMPONENT || baseFormat == GL_DEPTH_STENCIL)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
+   case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
+      if (baseFormat == GL_STENCIL_INDEX || baseFormat == GL_DEPTH_STENCIL)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
+   default:
+      return 0;
+   }
+}
+
 
 
 void GLAPIENTRY
@@ -1084,22 +1111,12 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       *params = rb->InternalFormat;
       return;
    case GL_RENDERBUFFER_RED_SIZE_EXT:
-      *params = rb->RedBits;
-      break;
    case GL_RENDERBUFFER_GREEN_SIZE_EXT:
-      *params = rb->GreenBits;
-      break;
    case GL_RENDERBUFFER_BLUE_SIZE_EXT:
-      *params = rb->BlueBits;
-      break;
    case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
-      *params = rb->AlphaBits;
-      break;
    case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
-      *params = rb->DepthBits;
-      break;
    case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
-      *params = rb->StencilBits;
+      *params = get_component_bits(pname, rb->_BaseFormat, rb->Format);
       break;
    case GL_RENDERBUFFER_SAMPLES:
       if (ctx->Extensions.ARB_framebuffer_object) {
@@ -1706,7 +1723,9 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
 
    if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
       /* make sure the renderbuffer is a depth/stencil format */
-      if (rb->_BaseFormat != GL_DEPTH_STENCIL) {
+      const GLenum baseFormat =
+         _mesa_get_format_base_format(att->Renderbuffer->Format);
+      if (baseFormat != GL_DEPTH_STENCIL) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glFramebufferRenderbufferEXT(renderbuffer"
                      " is not DEPTH_STENCIL format)");
@@ -1862,7 +1881,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-         *params = att->Renderbuffer->ColorEncoding;
+         *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
@@ -1872,61 +1891,44 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
          return;
       }
       else {
-         *params = att->Renderbuffer->ComponentType;
+         gl_format format = att->Renderbuffer->Format;
+         if (format == MESA_FORMAT_CI8 || format == MESA_FORMAT_S8) {
+            /* special cases */
+            *params = GL_INDEX;
+         }
+         else {
+            *params = _mesa_get_format_datatype(format);
+         }
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
-      else {
-         *params = att->Renderbuffer->RedBits;
-      }
-      return;
    case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
-      else {
-         *params = att->Renderbuffer->GreenBits;
-      }
-      return;
    case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
-      else {
-         *params = att->Renderbuffer->BlueBits;
-      }
-      return;
    case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
-      else {
-         *params = att->Renderbuffer->AlphaBits;
-      }
-      return;
    case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
-      else {
-         *params = att->Renderbuffer->DepthBits;
-      }
-      return;
    case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
       if (!ctx->Extensions.ARB_framebuffer_object) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
+      else if (att->Texture) {
+         const struct gl_texture_image *texImage =
+            _mesa_select_tex_image(ctx, att->Texture, att->Texture->Target,
+                                   att->TextureLevel);
+         if (texImage) {
+            *params = get_component_bits(pname, texImage->_BaseFormat,
+                                         texImage->TexFormat);
+         }
+         else {
+            *params = 0;
+         }
+      }
+      else if (att->Renderbuffer) {
+         *params = get_component_bits(pname, att->Renderbuffer->_BaseFormat,
+                                      att->Renderbuffer->Format);
+      }
       else {
-         *params = att->Renderbuffer->StencilBits;
+         *params = 0;
       }
       return;
    default:
@@ -2053,7 +2055,8 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       struct gl_renderbuffer *drawRb = drawFb->_StencilBuffer;
       if (!readRb ||
           !drawRb ||
-          readRb->StencilBits != drawRb->StencilBits) {
+          _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) != 
+          _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(stencil buffer size mismatch");
          return;
@@ -2065,7 +2068,8 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       struct gl_renderbuffer *drawRb = drawFb->_DepthBuffer;
       if (!readRb ||
           !drawRb ||
-          readRb->DepthBits != drawRb->DepthBits) {
+          _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) != 
+          _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(depth buffer size mismatch");
          return;
@@ -2093,7 +2097,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       /* color formats must match */
       if (colorReadRb &&
           colorDrawRb &&
-          colorReadRb->_ActualFormat != colorDrawRb->_ActualFormat) {
+          colorReadRb->Format != colorDrawRb->Format) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                 "glBlitFramebufferEXT(bad src/dst multisample pixel formats");
          return;

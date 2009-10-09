@@ -2089,19 +2089,9 @@ struct gl_renderbuffer
    GLint RefCount;
    GLuint Width, Height;
    GLenum InternalFormat; /**< The user-specified format */
-   GLenum _ActualFormat;  /**< The driver-chosen format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum ColorEncoding; /**< GL_LINEAR or GL_SRGB */
-   GLenum ComponentType; /**< GL_FLOAT, GL_INT, GL_UNSIGNED_INT,
-                              GL_UNSIGNED_NORMALIZED or GL_INDEX */
-   GLubyte RedBits;      /**< Bits of red per pixel */
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits;
+   GLuint Format;         /**< The actual format: MESA_FORMAT_x */
    GLubyte NumSamples;
 
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */

@@ -114,11 +114,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      rb->_ActualFormat = GL_RGB5;
+      rb->Format = MESA_FORMAT_RGB565;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 5;
-      rb->GreenBits = 6;
-      rb->BlueBits = 5;
       irb->texformat = MESA_FORMAT_RGB565;
       cpp = 2;
       break;
@@ -127,12 +124,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->_ActualFormat = GL_RGB8;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 8;
-      rb->GreenBits = 8;
-      rb->BlueBits = 8;
-      rb->AlphaBits = 0;
       irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
       cpp = 4;
       break;
@@ -144,12 +137,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      rb->_ActualFormat = GL_RGBA8;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->RedBits = 8;
-      rb->GreenBits = 8;
-      rb->BlueBits = 8;
-      rb->AlphaBits = 8;
       irb->texformat = MESA_FORMAT_ARGB8888;
       cpp = 4;
       break;
@@ -159,42 +148,39 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      rb->Format = MESA_FORMAT_Z24_S8;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->StencilBits = 8;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    case GL_DEPTH_COMPONENT16:
-      rb->_ActualFormat = GL_DEPTH_COMPONENT16;
+      rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_SHORT;
-      rb->DepthBits = 16;
       cpp = 2;
       irb->texformat = MESA_FORMAT_Z16;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      rb->Format = MESA_FORMAT_Z24_S8;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->DepthBits = 24;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      rb->Format = MESA_FORMAT_Z24_S8;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->DepthBits = 24;
-      rb->StencilBits = 8;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    default:
       _mesa_problem(ctx,
                     "Unexpected format in intel_alloc_renderbuffer_storage");
       return GL_FALSE;
    }
+
+   rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
 
    intelFlush(ctx);
 
@@ -245,7 +231,7 @@ intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
-   rb->_ActualFormat = internalFormat;
+   rb->InternalFormat = internalFormat;
 
    return GL_TRUE;
 }
@@ -324,62 +310,46 @@ intel_create_renderbuffer(GLenum intFormat)
 
    switch (intFormat) {
    case GL_RGB5:
-      irb->Base._ActualFormat = GL_RGB5;
-      irb->Base._BaseFormat = GL_RGBA;
-      irb->Base.RedBits = 5;
-      irb->Base.GreenBits = 6;
-      irb->Base.BlueBits = 5;
+      irb->Base.Format = MESA_FORMAT_RGB565;
+      irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       irb->texformat = MESA_FORMAT_RGB565;
       break;
    case GL_RGB8:
-      irb->Base._ActualFormat = GL_RGB8;
+      irb->Base.Format = MESA_FORMAT_ARGB8888; /* XXX: NEED XRGB8888 */
       irb->Base._BaseFormat = GL_RGB;
-      irb->Base.RedBits = 8;
-      irb->Base.GreenBits = 8;
-      irb->Base.BlueBits = 8;
-      irb->Base.AlphaBits = 0;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: NEED XRGB8888 */
       break;
    case GL_RGBA8:
-      irb->Base._ActualFormat = GL_RGBA8;
+      irb->Base.Format = MESA_FORMAT_ARGB8888;
       irb->Base._BaseFormat = GL_RGBA;
-      irb->Base.RedBits = 8;
-      irb->Base.GreenBits = 8;
-      irb->Base.BlueBits = 8;
-      irb->Base.AlphaBits = 8;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       irb->texformat = MESA_FORMAT_ARGB8888;
       break;
    case GL_STENCIL_INDEX8_EXT:
-      irb->Base._ActualFormat = GL_STENCIL_INDEX8_EXT;
+      irb->Base.Format = MESA_FORMAT_Z24_S8;
       irb->Base._BaseFormat = GL_STENCIL_INDEX;
-      irb->Base.StencilBits = 8;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    case GL_DEPTH_COMPONENT16:
-      irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
+      irb->Base.Format = MESA_FORMAT_Z16;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      irb->Base.DepthBits = 16;
       irb->Base.DataType = GL_UNSIGNED_SHORT;
       irb->texformat = MESA_FORMAT_Z16;
       break;
    case GL_DEPTH_COMPONENT24:
-      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      irb->Base.Format = MESA_FORMAT_Z24_S8;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      irb->Base.DepthBits = 24;
       irb->Base.DataType = GL_UNSIGNED_INT;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    case GL_DEPTH24_STENCIL8_EXT:
-      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
-      irb->Base.DepthBits = 24;
-      irb->Base.StencilBits = 8;
+      irb->Base.Format = MESA_FORMAT_Z24_S8;
+      irb->Base._BaseFormat = GL_DEPTH_STENCIL;
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-      irb->texformat = MESA_FORMAT_S8_Z24;
+      irb->texformat = MESA_FORMAT_Z24_S8;
       break;
    default:
       _mesa_problem(NULL,
@@ -468,38 +438,26 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    gl_format texFormat;
 
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
-      irb->Base._ActualFormat = GL_RGBA8;
-      irb->Base._BaseFormat = GL_RGBA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
-      irb->Base._ActualFormat = GL_RGB5;
-      irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGB5 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_ARGB1555) {
-      irb->Base._ActualFormat = GL_RGB5_A1;
-      irb->Base._BaseFormat = GL_RGBA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to ARGB1555 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_ARGB4444) {
-      irb->Base._ActualFormat = GL_RGBA4;
-      irb->Base._BaseFormat = GL_RGBA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to ARGB4444 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_Z16) {
-      irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DataType = GL_UNSIGNED_SHORT;
       DBG("Render to DEPTH16 texture OK\n");
    }
-   else if (texImage->TexFormat == MESA_FORMAT_S8_Z24) {
-      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+   else if (texImage->TexFormat == MESA_FORMAT_Z24_S8) {
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       DBG("Render to DEPTH_STENCIL texture OK\n");
    }
@@ -508,17 +466,14 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       return GL_FALSE;
    }
 
+   irb->Base.Format = texImage->TexFormat;
+
    texFormat = texImage->TexFormat;
 
-   irb->Base.InternalFormat = irb->Base._ActualFormat;
+   irb->Base.InternalFormat = texImage->InternalFormat;
+   irb->Base._BaseFormat = _mesa_base_fbo_format(ctx, irb->Base.InternalFormat);
    irb->Base.Width = texImage->Width;
    irb->Base.Height = texImage->Height;
-   irb->Base.RedBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE);
-   irb->Base.GreenBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE);
-   irb->Base.BlueBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_BLUE_SIZE);
-   irb->Base.AlphaBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_ALPHA_SIZE);
-   irb->Base.DepthBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_DEPTH_SIZE_ARB);
-   irb->Base.StencilBits = _mesa_get_format_bits(texFormat, GL_TEXTURE_STENCIL_SIZE_EXT);
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;

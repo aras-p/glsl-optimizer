@@ -891,7 +891,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
       return;								\
    }
 #define RENDER_SPAN( span )						\
-   if (rb->DepthBits <= 16) {						\
+   if (rb->Format == MESA_FORMAT_Z16) {					\
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
          rb->GetPointer(ctx, rb, span.x, span.y);			\

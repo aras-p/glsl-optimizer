@@ -153,7 +153,7 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 #endif
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      return MESA_FORMAT_S8_Z24;
+      return MESA_FORMAT_Z24_S8;
 
 #ifndef I915
    case GL_SRGB_EXT:

@@ -621,7 +621,7 @@ intel_set_span_functions(struct intel_context *intel,
       }
       break;
    case MESA_FORMAT_ARGB8888:
-      if (rb->AlphaBits == 0) { /* XXX: Need xRGB8888 Mesa format */
+      if (0 /*rb->AlphaBits == 0*/) { /* XXX: Need xRGB8888 Mesa format */
 	 /* 8888 RGBx */
 	 switch (tiling) {
 	 case I915_TILING_NONE:
@@ -665,26 +665,13 @@ intel_set_span_functions(struct intel_context *intel,
 	 break;
       }
       break;
-   case MESA_FORMAT_S8_Z24:
+   case MESA_FORMAT_Z24_S8:
       /* There are a few different ways SW asks us to access the S8Z24 data:
        * Z24 depth-only depth reads
        * S8Z24 depth reads
        * S8Z24 stencil reads.
        */
-      if (rb->_ActualFormat == GL_DEPTH_COMPONENT24) {
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitDepthPointers_z24(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitDepthPointers_z24(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitDepthPointers_z24(rb);
-	    break;
-	 }
-      } else if (rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+      if (rb->Format == MESA_FORMAT_Z24_S8) {
 	 switch (tiling) {
 	 case I915_TILING_NONE:
 	 default:
@@ -697,7 +684,7 @@ intel_set_span_functions(struct intel_context *intel,
 	    intel_YTile_InitDepthPointers_z24_s8(rb);
 	    break;
 	 }
-      } else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {
+      } else if (rb->Format == MESA_FORMAT_S8) {
 	 switch (tiling) {
 	 case I915_TILING_NONE:
 	 default:
