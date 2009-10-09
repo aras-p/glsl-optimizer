@@ -101,7 +101,7 @@ static void reset_context( struct setup_context *setup )
 
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   /* Free binner command lists:
+   /* Free all but last binner command lists:
     */
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
@@ -114,12 +114,13 @@ static void reset_context( struct setup_context *setup )
             FREE(block);
          }
          
+         assert(list->tail->next == NULL);
          list->head = list->tail;
          list->head->count = 0;
       }
    }
 
-   /* Free binned data:
+   /* Free all but last binned data block:
     */
    {
       struct data_block_list *list = &setup->data;
@@ -130,6 +131,7 @@ static void reset_context( struct setup_context *setup )
          FREE(block);
       }
          
+      assert(list->tail->next == NULL);
       list->head = list->tail;
       list->head->used = 0;
    }
@@ -587,6 +589,8 @@ lp_setup_destroy( struct setup_context *setup )
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++)
          FREE(setup->tile[i][j].head);
+
+   FREE(setup->data.head);
 
    lp_rast_destroy( setup->rast );
    FREE( setup );
