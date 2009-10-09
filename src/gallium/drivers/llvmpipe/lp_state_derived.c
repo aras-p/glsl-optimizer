@@ -144,6 +144,36 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
       }
 
       draw_compute_vertex_size(vinfo);
+
+      {
+         struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
+
+         for (i = 0; i < lpfs->info.num_inputs; i++) {
+            switch (vinfo->attrib[i].interp_mode) {
+            case INTERP_CONSTANT:
+               inputs[i].interp = LP_INTERP_CONSTANT;
+               break;
+            case INTERP_LINEAR:
+               inputs[i].interp = LP_INTERP_LINEAR;
+               break;
+            case INTERP_PERSPECTIVE:
+               inputs[i].interp = LP_INTERP_PERSPECTIVE;
+               break;
+            case INTERP_POS:
+               inputs[i].interp = LP_INTERP_POSITION;
+               break;
+            default:
+               assert(0);
+            }
+
+            if (lpfs->info.input_semantic_name[i] == TGSI_SEMANTIC_FACE)
+               inputs[i].interp = LP_INTERP_FACING;
+
+            inputs[i].src_index = vinfo->attrib[i].src_index;
+         }
+
+         lp_setup_set_fs_inputs(llvmpipe->setup, inputs, lpfs->info.num_inputs);
+      }
    }
 
    return vinfo;
