@@ -37,6 +37,7 @@
 #include "lp_surface.h"
 #include "lp_state.h"
 #include "lp_winsys.h"
+#include "lp_setup.h"
 
 
 void

@@ -31,6 +31,7 @@
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_surface.h"
+#include "lp_setup.h"
 
 #include "draw/draw_context.h"
 
@@ -82,7 +83,10 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    }
 
    if (dirty) {
-      lp_setup_set_framebuffer( lp->setup, fb );
+      lp_setup_bind_framebuffer( lp->setup,
+                                 fb->cbufs[0],
+                                 fb->zsbuf );
+
       lp->dirty |= LP_NEW_FRAMEBUFFER;
    }
 }
