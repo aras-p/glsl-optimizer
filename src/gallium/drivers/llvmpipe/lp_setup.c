@@ -568,6 +568,10 @@ lp_setup_create( struct pipe_screen *screen )
          setup->tile[i][j].head = 
             setup->tile[i][j].tail = CALLOC_STRUCT(cmd_block);
 
+   setup->triangle = first_triangle;
+   setup->line     = first_line;
+   setup->point    = first_point;
+   
    return setup;
 
 fail:
