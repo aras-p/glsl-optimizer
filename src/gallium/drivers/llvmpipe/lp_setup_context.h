@@ -83,6 +83,9 @@ struct setup_context {
 
    unsigned tiles_x;
    unsigned tiles_y;
+   
+   boolean ccw_is_frontface;
+   unsigned cullmode;
 
    struct {
       struct pipe_surface *cbuf;
@@ -147,9 +150,9 @@ static INLINE void *get_data( struct data_block_list *list,
 
 /* Add a command to a given bin.
  */
-static INLINE void bin_cmd( struct cmd_block_list *list,
-                            lp_rast_cmd cmd,
-                            const union lp_rast_cmd_arg *arg )
+static INLINE void bin_command( struct cmd_block_list *list,
+                                lp_rast_cmd cmd,
+                                const union lp_rast_cmd_arg *arg )
 {
    if (list->tail->count == CMD_BLOCK_MAX) {
       lp_setup_new_cmd_block( list );

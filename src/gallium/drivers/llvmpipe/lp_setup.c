@@ -148,7 +148,7 @@ static void bin_everywhere( struct setup_context *setup,
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++)
       for (j = 0; j < setup->tiles_y; j++)
-         bin_cmd( &setup->tile[i][j], cmd, arg );
+         bin_command( &setup->tile[i][j], cmd, arg );
 }
 
 
@@ -382,6 +382,19 @@ lp_setup_clear( struct setup_context *setup,
 }
 
 
+
+void 
+lp_setup_set_tri_state( struct setup_context *setup,
+                        unsigned cull_mode,
+                        boolean ccw_is_frontface)
+{
+   setup->ccw_is_frontface = ccw_is_frontface;
+   setup->cullmode = cull_mode;
+   setup->triangle = first_triangle;
+}
+
+
+
 void
 lp_setup_set_fs_inputs( struct setup_context *setup,
                         const struct lp_shader_input *input,
@@ -432,6 +445,14 @@ lp_setup_tri(struct setup_context *setup,
 void 
 lp_setup_destroy( struct setup_context *setup )
 {
+   unsigned i, j;
+
+   reset_context( setup );
+
+   for (i = 0; i < TILES_X; i++)
+      for (j = 0; j < TILES_Y; j++)
+         FREE(setup->tile[i][j].head);
+
    lp_rast_destroy( setup->rast );
    FREE( setup );
 }

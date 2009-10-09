@@ -30,6 +30,7 @@
  */
 
 #include "lp_setup_context.h"
+#include "lp_rast.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -263,10 +264,9 @@ do_triangle_ccw(struct setup_context *setup,
    const float x2 = subpixel_snap(v2[0][0]);
    const float x3 = subpixel_snap(v3[0][0]);
    
-   struct lp_setup_triangle *tri = get_data( setup, sizeof *tri );
+   struct lp_rast_triangle *tri = get_data( &setup->data, sizeof *tri );
    float area;
    float c1, c2, c3;
-   int i;
    int minx, maxx, miny, maxy;
 
    tri->dx12 = x1 - x2;
@@ -363,7 +363,7 @@ do_triangle_ccw(struct setup_context *setup,
    {
       /* Triangle is contained in a single tile:
        */
-      bin_command(setup->tile[minx][miny], lp_rast_triangle, tri );
+      bin_command( &setup->tile[minx][miny], lp_rast_triangle, tri );
    }
    else 
    {
@@ -412,12 +412,12 @@ do_triangle_ccw(struct setup_context *setup,
 		     cx3 + ei3 > 0) 
 	    {
                /* shade whole tile */
-               bin_command(setup->tile[x][y], lp_rast_shade_tile, &tri->inputs );
+               bin_command( &setup->tile[x][y], lp_rast_shade_tile, &tri->inputs );
 	    }
 	    else 
 	    {
                /* shade partial tile */
-	       bin_command(setup->tile[x][y], lp_rast_triangle, tri );
+	       bin_command( &setup->tile[x][y], lp_rast_triangle, tri );
 	    }
 
 	    /* Iterate cx values across the region:
@@ -477,13 +477,11 @@ static void triangle_nop( struct setup_context *setup,
 {
 }
 
-void setup_set_tri_state( struct setup_context *setup,
-                          unsigned cull_mode,
-                          boolean ccw_is_frontface)
-{
-   setup->ccw_is_frontface = ccw_is_frontface;
 
-   switch (cull_mode) {
+void 
+lp_setup_choose_triangle( struct setup_context *setup )
+{
+   switch (setup->cull_mode) {
    case PIPE_WINDING_NONE:
       setup->triangle = triangle_both;
       break;
