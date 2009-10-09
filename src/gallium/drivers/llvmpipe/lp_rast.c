@@ -87,9 +87,9 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
 }
 
 void lp_rast_clear_color( struct lp_rasterizer *rast,
-                          const union lp_rast_cmd_arg *arg )
+                          const union lp_rast_cmd_arg arg )
 {
-   const uint8_t *clear_color = arg->clear_color;
+   const uint8_t *clear_color = arg.clear_color;
    
    if (clear_color[0] == clear_color[1] &&
        clear_color[1] == clear_color[2] &&
@@ -106,25 +106,24 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 }
 
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
-                             const union lp_rast_cmd_arg *arg)
+                             const union lp_rast_cmd_arg arg)
 {
-   const unsigned clear_zstencil = arg->clear_zstencil;
    unsigned i, j;
    
    for (i = 0; i < TILE_SIZE; i++)
       for (j = 0; j < TILE_SIZE; j++)
-	 rast->tile.depth[i*TILE_SIZE + j] = clear_zstencil;
+	 rast->tile.depth[i*TILE_SIZE + j] = arg.clear_zstencil;
 }
 
 
 void lp_rast_load_color( struct lp_rasterizer *rast,
-                         const union lp_rast_cmd_arg *arg)
+                         const union lp_rast_cmd_arg arg)
 {
    /* call u_tile func to load colors from surface */
 }
 
 void lp_rast_load_zstencil( struct lp_rasterizer *rast,
-                            const union lp_rast_cmd_arg *arg )
+                            const union lp_rast_cmd_arg arg )
 {
    /* call u_tile func to load depth (and stencil?) from surface */
 }
@@ -132,17 +131,17 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
 /* Within a tile:
  */
 void lp_rast_set_state( struct lp_rasterizer *rast,
-                        const union lp_rast_cmd_arg *arg )
+                        const union lp_rast_cmd_arg arg )
 {
-   rast->shader_state = arg->set_state;
+   rast->shader_state = arg.set_state;
 
 }
 
 
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
-                         const union lp_rast_cmd_arg *arg,
-			 const struct lp_rast_shader_inputs *inputs )
+                         const union lp_rast_cmd_arg arg )
 {
+   const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
    const unsigned masks[4] = {~0, ~0, ~0, ~0};
    unsigned x, y;
 

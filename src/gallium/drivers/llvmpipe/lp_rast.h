@@ -134,34 +134,70 @@ union lp_rast_cmd_arg {
    const struct lp_rast_shader_inputs *shade_tile;
    const struct lp_rast_triangle *triangle;
    const struct lp_rast_state *set_state;
-   const uint8_t clear_color[4];
+   uint8_t clear_color[4];
    unsigned clear_zstencil;
 };
+
+/* Cast wrappers.  Hopefully these compile to noops!
+ */
+static INLINE const union lp_rast_cmd_arg
+lp_rast_arg_inputs( const struct lp_rast_shader_inputs *shade_tile )
+{
+   union lp_rast_cmd_arg arg;
+   arg.shade_tile = shade_tile;
+   return arg;
+}
+
+static INLINE const union lp_rast_cmd_arg
+lp_rast_arg_triangle( const struct lp_rast_triangle *triangle )
+{
+   union lp_rast_cmd_arg arg;
+   arg.triangle = triangle;
+   return arg;
+}
+
+static INLINE const union lp_rast_cmd_arg
+lp_rast_arg_state( const struct lp_rast_state *state )
+{
+   union lp_rast_cmd_arg arg;
+   arg.set_state = state;
+   return arg;
+}
+
+static INLINE const union lp_rast_cmd_arg
+lp_rast_arg_null( void )
+{
+   union lp_rast_cmd_arg arg;
+   arg.set_state = NULL;
+   return arg;
+}
+
+
+
 
 
 /* Binnable Commands:
  */
 void lp_rast_clear_color( struct lp_rasterizer *, 
-                          const union lp_rast_cmd_arg *);
+                          const union lp_rast_cmd_arg );
 
 void lp_rast_clear_zstencil( struct lp_rasterizer *, 
-                             const union lp_rast_cmd_arg *);
+                             const union lp_rast_cmd_arg );
 
 void lp_rast_load_color( struct lp_rasterizer *, 
-                         const union lp_rast_cmd_arg *);
+                         const union lp_rast_cmd_arg );
 
 void lp_rast_load_zstencil( struct lp_rasterizer *, 
-                            const union lp_rast_cmd_arg *);
+                            const union lp_rast_cmd_arg );
 
 void lp_rast_set_state( struct lp_rasterizer *, 
-                        const union lp_rast_cmd_arg * );
+                        const union lp_rast_cmd_arg );
 
 void lp_rast_triangle( struct lp_rasterizer *, 
-                       const union lp_rast_cmd_arg * );
+                       const union lp_rast_cmd_arg );
 
 void lp_rast_shade_tile( struct lp_rasterizer *,
-                         const union lp_rast_cmd_arg *,
-                         const struct lp_rast_shader_inputs *);
+                         const union lp_rast_cmd_arg );
 
 
 /* End of tile:

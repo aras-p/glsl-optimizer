@@ -230,7 +230,10 @@ static inline float subpixel_snap( float a )
 }
 
 
-
+static INLINE void bin_triangle( struct cmd_block_list *list,
+                                 const struct lp_rast_triangle arg )
+{
+}
 
 
 /* to avoid having to allocate power-of-four, square render targets,
@@ -363,7 +366,8 @@ do_triangle_ccw(struct setup_context *setup,
    {
       /* Triangle is contained in a single tile:
        */
-      bin_command( &setup->tile[minx][miny], lp_rast_triangle, tri );
+      bin_command( &setup->tile[minx][miny], lp_rast_triangle, 
+                   lp_rast_arg_triangle(tri) );
    }
    else 
    {
@@ -412,12 +416,15 @@ do_triangle_ccw(struct setup_context *setup,
 		     cx3 + ei3 > 0) 
 	    {
                /* shade whole tile */
-               bin_command( &setup->tile[x][y], lp_rast_shade_tile, &tri->inputs );
+               bin_command( &setup->tile[x][y], lp_rast_shade_tile,
+                            lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
 	    {
                /* shade partial tile */
-	       bin_command( &setup->tile[x][y], lp_rast_triangle, tri );
+	       bin_command( &setup->tile[x][y], 
+                            lp_rast_triangle, 
+                            lp_rast_arg_triangle(tri) );
 	    }
 
 	    /* Iterate cx values across the region:
@@ -481,7 +488,7 @@ static void triangle_nop( struct setup_context *setup,
 void 
 lp_setup_choose_triangle( struct setup_context *setup )
 {
-   switch (setup->cull_mode) {
+   switch (setup->cullmode) {
    case PIPE_WINDING_NONE:
       setup->triangle = triangle_both;
       break;

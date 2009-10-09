@@ -155,9 +155,9 @@ do_block( struct lp_rasterizer *rast,
  * for this triangle:
  */
 void lp_rast_triangle( struct lp_rasterizer *rast,
-                       const union lp_rast_cmd_arg *arg )
+                       const union lp_rast_cmd_arg arg )
 {
-   const struct lp_rast_triangle *tri = arg->triangle;
+   const struct lp_rast_triangle *tri = arg.triangle;
    int minx, maxx, miny, maxy;
 
    /* Clamp to tile dimensions:

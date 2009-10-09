@@ -143,7 +143,7 @@ static void reset_context( struct setup_context *setup )
  */
 static void bin_everywhere( struct setup_context *setup,
                             lp_rast_cmd cmd,
-                            const union lp_rast_cmd_arg *arg )
+                            const union lp_rast_cmd_arg arg )
 {
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++)
@@ -232,18 +232,18 @@ begin_binning( struct setup_context *setup )
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          bin_everywhere( setup, 
                          lp_rast_clear_color, 
-                         &setup->clear.color );
+                         setup->clear.color );
       else
-         bin_everywhere( setup, lp_rast_load_color, NULL );
+         bin_everywhere( setup, lp_rast_load_color, lp_rast_arg_null() );
    }
 
    if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          bin_everywhere( setup, 
                          lp_rast_clear_zstencil, 
-                         &setup->clear.zstencil );
+                         setup->clear.zstencil );
       else
-         bin_everywhere( setup, lp_rast_load_zstencil, NULL );
+         bin_everywhere( setup, lp_rast_load_zstencil, lp_rast_arg_null() );
    }
 }
 
@@ -329,32 +329,34 @@ lp_setup_clear( struct setup_context *setup,
                 unsigned stencil,
                 unsigned flags )
 {
+   if (flags & PIPE_CLEAR_COLOR) {
+      util_pack_color(color, 
+                      setup->fb.cbuf->format, 
+                      &setup->clear.color.clear_color );
+   }
+
+   if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
+      setup->clear.zstencil.clear_zstencil = 
+         util_pack_z_stencil(setup->fb.zsbuf->format, 
+                             depth,
+                             stencil);
+   }
+
    if (setup->state == SETUP_ACTIVE) {
       /* Add the clear to existing bins.  In the unusual case where
        * both color and depth-stencilare being cleared, we could
        * discard the currently binned scene and start again, but I
        * don't see that as being a common usage.
        */
-      if (flags & PIPE_CLEAR_COLOR) {
-	 union lp_rast_cmd_arg *arg = get_data( &setup->data, sizeof *arg );
+      if (flags & PIPE_CLEAR_COLOR)
+         bin_everywhere( setup, 
+                         lp_rast_clear_color, 
+                         setup->clear.color );
 
-         util_pack_color(color, 
-                         setup->fb.cbuf->format, 
-                         &arg->clear_color );
-
-         bin_everywhere(setup, lp_rast_clear_color, arg );
-      }
-
-      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-	 union lp_rast_cmd_arg *arg = get_data( &setup->data, sizeof *arg );
-
-         arg->clear_zstencil = 
-            util_pack_z_stencil(setup->fb.zsbuf->format, 
-                                depth,
-                                stencil);
-         
-         bin_everywhere(setup, lp_rast_clear_zstencil, arg );
-      }
+      if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
+         bin_everywhere( setup, 
+                         lp_rast_clear_zstencil, 
+                         setup->clear.zstencil );
    }
    else {
       /* Put ourselves into the 'pre-clear' state, specifically to try
@@ -365,19 +367,6 @@ lp_setup_clear( struct setup_context *setup,
       set_state( setup, SETUP_CLEARED );
 
       setup->clear.flags |= flags;
-
-      if (flags & PIPE_CLEAR_COLOR) {
-         util_pack_color(color, 
-                         setup->fb.cbuf->format, 
-                         &setup->clear.color.clear_color );
-      }
-
-      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         setup->clear.zstencil.clear_zstencil = 
-            util_pack_z_stencil(setup->fb.zsbuf->format, 
-                                depth,
-                                stencil);
-      }
    }
 }
 

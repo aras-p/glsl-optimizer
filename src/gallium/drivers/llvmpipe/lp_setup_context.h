@@ -45,11 +45,11 @@
 
 /* switch to a non-pointer value for this:
  */
-typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg * );
+typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg );
 
 struct cmd_block {
    lp_rast_cmd cmd[CMD_BLOCK_MAX];
-   const union lp_rast_cmd_arg *arg[CMD_BLOCK_MAX];
+   union lp_rast_cmd_arg arg[CMD_BLOCK_MAX];
    unsigned count;
    struct cmd_block *next;
 };
@@ -152,7 +152,7 @@ static INLINE void *get_data( struct data_block_list *list,
  */
 static INLINE void bin_command( struct cmd_block_list *list,
                                 lp_rast_cmd cmd,
-                                const union lp_rast_cmd_arg *arg )
+                                union lp_rast_cmd_arg arg )
 {
    if (list->tail->count == CMD_BLOCK_MAX) {
       lp_setup_new_cmd_block( list );
