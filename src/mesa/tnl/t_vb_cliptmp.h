@@ -80,6 +80,58 @@ do {									\
 } while (0)
 
 
+#define POLY_USERCLIP(PLANE)						\
+do {									\
+   if (mask & CLIP_USER_BIT) {						\
+      GLuint idxPrev = inlist[0];					\
+      GLfloat dpPrev = VB->ClipDistancePtr[PLANE][idxPrev];		\
+      GLuint outcount = 0;						\
+      GLuint i;								\
+									\
+      inlist[n] = inlist[0]; /* prevent rotation of vertices */		\
+      for (i = 1; i <= n; i++) {					\
+	 GLuint idx = inlist[i];					\
+	 GLfloat dp = VB->ClipDistancePtr[PLANE][idx];			\
+									\
+	 if (!IS_NEGATIVE(dpPrev)) {					\
+	    outlist[outcount++] = idxPrev;				\
+	 }								\
+									\
+	 if (DIFFERENT_SIGNS(dp, dpPrev)) {				\
+	    if (IS_NEGATIVE(dp)) {					\
+	       /* Going out of bounds.  Avoid division by zero as we	\
+		* know dp != dpPrev from DIFFERENT_SIGNS, above.	\
+		*/							\
+	       GLfloat t = dp / (dp - dpPrev);				\
+               INTERP_4F( t, coord[newvert], coord[idx], coord[idxPrev]); \
+	       interp( ctx, t, newvert, idx, idxPrev, GL_TRUE );	\
+	    } else {							\
+	       /* Coming back in.					\
+		*/							\
+	       GLfloat t = dpPrev / (dpPrev - dp);			\
+               INTERP_4F( t, coord[newvert], coord[idxPrev], coord[idx]); \
+	       interp( ctx, t, newvert, idxPrev, idx, GL_FALSE );	\
+	    }								\
+            outlist[outcount++] = newvert++;				\
+	 }								\
+									\
+	 idxPrev = idx;							\
+	 dpPrev = dp;							\
+      }									\
+									\
+      if (outcount < 3)							\
+	 return;							\
+									\
+      {									\
+	 GLuint *tmp = inlist;						\
+	 inlist = outlist;						\
+	 outlist = tmp;							\
+	 n = outcount;							\
+      }									\
+   }									\
+} while (0)
+
+
 #define LINE_CLIP(PLANE_BIT, A, B, C, D )				\
 do {									\
    if (mask & PLANE_BIT) {						\
@@ -88,6 +140,37 @@ do {									\
       const GLboolean neg_dp0 = IS_NEGATIVE(dp0);			\
       const GLboolean neg_dp1 = IS_NEGATIVE(dp1);			\
       									\
+      /* For regular clipping, we know from the clipmask that one	\
+       * (or both) of these must be negative (otherwise we wouldn't	\
+       * be here).							\
+       * For userclip, there is only a single bit for all active	\
+       * planes, so we can end up here when there is nothing to do,	\
+       * hence the second IS_NEGATIVE() test:				\
+       */								\
+      if (neg_dp0 && neg_dp1)						\
+         return; /* both vertices outside clip plane: discard */	\
+									\
+      if (neg_dp1) {							\
+	 GLfloat t = dp1 / (dp1 - dp0);					\
+	 if (t > t1) t1 = t;						\
+      } else if (neg_dp0) {						\
+	 GLfloat t = dp0 / (dp0 - dp1);					\
+	 if (t > t0) t0 = t;						\
+      }									\
+      if (t0 + t1 >= 1.0)						\
+	 return; /* discard */						\
+   }									\
+} while (0)
+
+
+#define LINE_USERCLIP(PLANE)						\
+do {									\
+   if (mask & CLIP_USER_BIT) {						\
+      const GLfloat dp0 = VB->ClipDistancePtr[PLANE][v0];		\
+      const GLfloat dp1 = VB->ClipDistancePtr[PLANE][v1];		\
+      const GLboolean neg_dp0 = IS_NEGATIVE(dp0);			\
+      const GLboolean neg_dp1 = IS_NEGATIVE(dp1);			\
+									\
       /* For regular clipping, we know from the clipmask that one	\
        * (or both) of these must be negative (otherwise we wouldn't	\
        * be here).							\
@@ -139,11 +222,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    if (mask & CLIP_USER_BIT) {
       for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    LINE_CLIP( CLIP_USER_BIT, a, b, c, d );
+	    LINE_USERCLIP(p);
 	 }
       }
    }
@@ -228,11 +307,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
    if (mask & CLIP_USER_BIT) {
       for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
          if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-            POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
+            POLY_USERCLIP(p);
          }
       }
    }
@@ -291,11 +366,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
    if (mask & CLIP_USER_BIT) {
       for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
+	    POLY_USERCLIP(p);
 	 }
       }
    }
@@ -317,4 +388,6 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 #undef SIZE
 #undef TAG
 #undef POLY_CLIP
+#undef POLY_USERCLIP
 #undef LINE_CLIP
+#undef LINE_USERCLIP

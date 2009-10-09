@@ -207,6 +207,7 @@ struct vertex_buffer
    GLvector4f  *EyePtr;		                /* _TNL_BIT_POS */
    GLvector4f  *ClipPtr;	                /* _TNL_BIT_POS */
    GLvector4f  *NdcPtr;                         /* _TNL_BIT_POS */
+   GLfloat     *ClipDistancePtr[MAX_CLIP_PLANES]; /* _TNL_BIT_POS */
    GLubyte     ClipOrMask;	                /* _TNL_BIT_POS */
    GLubyte     ClipAndMask;	                /* _TNL_BIT_POS */
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
