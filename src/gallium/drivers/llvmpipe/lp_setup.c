@@ -229,8 +229,8 @@ begin_binning( struct setup_context *setup )
                               setup->fb.zsbuf->height);
    }
 
-   setup->tiles_x = align(setup->fb.width, TILESIZE);
-   setup->tiles_y = align(setup->fb.height, TILESIZE);
+   setup->tiles_x = align(setup->fb.width, TILESIZE) / TILESIZE;
+   setup->tiles_y = align(setup->fb.height, TILESIZE) / TILESIZE;
 
    if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
@@ -312,18 +312,10 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
                            struct pipe_surface *color,
                            struct pipe_surface *zstencil )
 {
-   unsigned width, height;
-
    set_state( setup, SETUP_FLUSHED );
 
    pipe_surface_reference( &setup->fb.cbuf, color );
    pipe_surface_reference( &setup->fb.zsbuf, zstencil );
-
-   width = MAX2( color->width, zstencil->width );
-   height = MAX2( color->height, zstencil->height );
-
-   setup->tiles_x = align( width, TILESIZE ) / TILESIZE;
-   setup->tiles_y = align( height, TILESIZE ) / TILESIZE;
 }
 
 void
