@@ -788,7 +788,7 @@ _mesa_fprint_program_opt(FILE *f,
       else if (mode == PROG_PRINT_NV)
          _mesa_fprintf(f, "!!VP1.0\n");
       else
-         _mesa_fprintf(f, "# Vertex Program/Shader\n");
+         _mesa_fprintf(f, "# Vertex Program/Shader %u\n", prog->Id);
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
    case GL_FRAGMENT_PROGRAM_NV:
@@ -797,7 +797,7 @@ _mesa_fprint_program_opt(FILE *f,
       else if (mode == PROG_PRINT_NV)
          _mesa_fprintf(f, "!!FP1.0\n");
       else
-         _mesa_fprintf(f, "# Fragment Program/Shader\n");
+         _mesa_fprintf(f, "# Fragment Program/Shader %u\n", prog->Id);
       break;
    }
 
