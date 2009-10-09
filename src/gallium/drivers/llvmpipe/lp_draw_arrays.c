@@ -45,54 +45,6 @@
 
 
 
-static void
-llvmpipe_map_constant_buffers(struct llvmpipe_context *lp)
-{
-   struct pipe_screen *screen = lp->pipe.screen;
-   uint i, size;
-
-   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      if (lp->constants[i].buffer && lp->constants[i].buffer->size)
-         lp->mapped_constants[i] = screen->buffer_map(screen, lp->constants[i].buffer,
-                                                      PIPE_BUFFER_USAGE_CPU_READ);
-   }
-
-   if (lp->constants[PIPE_SHADER_VERTEX].buffer)
-      size = lp->constants[PIPE_SHADER_VERTEX].buffer->size;
-   else
-      size = 0;
-
-   lp->jit_context.constants = lp->mapped_constants[PIPE_SHADER_FRAGMENT];
-
-   draw_set_mapped_constant_buffer(lp->draw,
-                                   lp->mapped_constants[PIPE_SHADER_VERTEX],
-                                   size);
-}
-
-
-static void
-llvmpipe_unmap_constant_buffers(struct llvmpipe_context *lp)
-{
-   struct pipe_screen *screen = lp->pipe.screen;
-   uint i;
-
-   /* really need to flush all prims since the vert/frag shaders const buffers
-    * are going away now.
-    */
-   draw_flush(lp->draw);
-
-   draw_set_mapped_constant_buffer(lp->draw, NULL, 0);
-
-   lp->jit_context.constants = NULL;
-
-   for (i = 0; i < 2; i++) {
-      if (lp->constants[i].buffer && lp->constants[i].buffer->size)
-         screen->buffer_unmap(screen, lp->constants[i].buffer);
-      lp->mapped_constants[i] = NULL;
-   }
-}
-
-
 boolean
 llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
@@ -122,8 +74,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
 
    if (lp->dirty)
       llvmpipe_update_derived( lp );
-
-   llvmpipe_map_constant_buffers(lp);
 
    /*
     * Map vertex buffers
@@ -160,10 +110,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
-
-   /* Note: leave drawing surfaces mapped */
-   llvmpipe_unmap_constant_buffers(lp);
-   
    return TRUE;
 }
 

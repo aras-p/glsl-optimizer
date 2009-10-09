@@ -83,6 +83,7 @@
 #include "lp_bld_debug.h"
 #include "lp_screen.h"
 #include "lp_context.h"
+#include "lp_buffer.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
 
@@ -670,16 +671,29 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf)
+                             const struct pipe_constant_buffer *constants)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   struct pipe_buffer *buffer = constants ? constants->buffer : NULL;
+   unsigned size = buffer ? buffer->size : 0;
+   const void *data = buffer ? llvmpipe_buffer(buffer)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
+   if(shader == PIPE_SHADER_VERTEX)
+      draw_flush(llvmpipe->draw);
+
    /* note: reference counting */
-   pipe_buffer_reference(&llvmpipe->constants[shader].buffer,
-			 buf ? buf->buffer : NULL);
+   pipe_buffer_reference(&llvmpipe->constants[shader].buffer, buffer);
+
+   if(shader == PIPE_SHADER_FRAGMENT) {
+      llvmpipe->jit_context.constants = data;
+   }
+
+   if(shader == PIPE_SHADER_VERTEX) {
+      draw_set_mapped_constant_buffer(llvmpipe->draw, data, size);
+   }
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;
 }
