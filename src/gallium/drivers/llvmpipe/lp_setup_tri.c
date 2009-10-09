@@ -315,9 +315,9 @@ do_triangle_ccw(struct setup_context *setup,
    /* half-edge constants, will be interated over the whole
     * rendertarget.
     */
-   c1 = tri->dy12 * x1 - tri->dx12 * y1;
-   c2 = tri->dy23 * x2 - tri->dx23 * y2;
-   c3 = tri->dy31 * x3 - tri->dx31 * y3;
+   tri->c1 = tri->dy12 * x1 - tri->dx12 * y1;
+   tri->c2 = tri->dy23 * x2 - tri->dx23 * y2;
+   tri->c3 = tri->dy31 * x3 - tri->dx31 * y3;
 
    /* correct for top-left fill convention:
     */
@@ -351,9 +351,9 @@ do_triangle_ccw(struct setup_context *setup,
    minx &= ~(TILESIZE-1);		/* aligned blocks */
    miny &= ~(TILESIZE-1);		/* aligned blocks */
 
-   c1 += tri->dx12 * miny - tri->dy12 * minx;
-   c2 += tri->dx23 * miny - tri->dy23 * minx;
-   c3 += tri->dx31 * miny - tri->dy31 * minx;
+   c1 = tri->c1 + tri->dx12 * miny - tri->dy12 * minx;
+   c2 = tri->c2 + tri->dx23 * miny - tri->dy23 * minx;
+   c3 = tri->c3 + tri->dx31 * miny - tri->dy31 * minx;
 
    /* Convert to tile coordinates:
     */

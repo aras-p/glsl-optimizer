@@ -373,9 +373,9 @@ lp_setup_clear( struct setup_context *setup,
 
 
 void 
-lp_setup_set_tri_state( struct setup_context *setup,
-                        unsigned cull_mode,
-                        boolean ccw_is_frontface)
+lp_setup_set_triangle_state( struct setup_context *setup,
+                             unsigned cull_mode,
+                             boolean ccw_is_frontface)
 {
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;

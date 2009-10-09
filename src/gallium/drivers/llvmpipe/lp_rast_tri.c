@@ -158,21 +158,6 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
                        const union lp_rast_cmd_arg arg )
 {
    const struct lp_rast_triangle *tri = arg.triangle;
-   int minx, maxx, miny, maxy;
-
-   /* Clamp to tile dimensions:
-    */
-   minx = MAX2(tri->maxx, rast->x);
-   miny = MAX2(tri->miny, rast->y);
-   maxx = MIN2(tri->maxx, rast->x + TILE_SIZE);
-   maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
-
-   if (miny == maxy ||
-       minx == maxx) {
-      debug_printf("%s: non-intersecting triangle in bin\n", __FUNCTION__);
-      //assert(0);
-      return;
-   }
 
    const int step = BLOCKSIZE;
 
@@ -191,10 +176,32 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
    float ystep1 = step * tri->dx12;
    float ystep2 = step * tri->dx23;
    float ystep3 = step * tri->dx31;
+
+   /* Clamp to tile dimensions:
+    */
+   int minx = MAX2(tri->maxx, rast->x);
+   int miny = MAX2(tri->miny, rast->y);
+   int maxx = MIN2(tri->maxx, rast->x + TILE_SIZE);
+   int maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
+
    int x, y;
+   float x0, y0;
+   float c1, c2, c3;
+
+   if (miny == maxy || minx == maxx) {
+      debug_printf("%s: non-intersecting triangle in bin\n", __FUNCTION__);
+      return;
+   }
 
    minx &= ~(step-1);
    miny &= ~(step-1);
+
+   x0 = (float)minx;
+   y0 = (float)miny;
+
+   c1 = tri->c1 + tri->dx12 * y0 - tri->dy12 * x0;
+   c2 = tri->c2 + tri->dx23 * y0 - tri->dy23 * x0;
+   c3 = tri->c3 + tri->dx31 * y0 - tri->dy31 * x0;
 
    for (y = miny; y < maxy; y += step)
    {

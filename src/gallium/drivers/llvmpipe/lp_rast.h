@@ -77,6 +77,11 @@ struct lp_rast_shader_inputs {
  * plus inputs to run the shader:
  */
 struct lp_rast_triangle {
+   int minx;
+   int maxx;
+   int miny;
+   int maxy;
+
    /* one-pixel sized trivial accept offsets for each plane */
    float ei1;                   
    float ei2;
@@ -97,8 +102,13 @@ struct lp_rast_triangle {
    float dx23;
    float dx31;
 
-   /* XXX: these are only used inside lp_setup_tri.c, don't really
-    * need to bin them:
+   /* edge function values at minx,miny ?? */
+   float c1;
+   float c2;
+   float c3;
+
+   /* XXX: this is only used inside lp_setup_tri.c, don't really
+    * need it here:
     */
    float oneoverarea;
 
