@@ -192,6 +192,7 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
 {
+#if 0
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
    const unsigned masks[4] = {~0, ~0, ~0, ~0};
    unsigned x, y;
@@ -203,6 +204,10 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
    for (y = 0; y < TILE_SIZE; y += 2)
       for (x = 0; x < TILE_SIZE; x += 8)
          lp_rast_shade_quads( rast, inputs, x, y, masks);
+#else
+   RAST_DEBUG("%s\n", __FUNCTION__);
+   memset(rast->tile.color, 0x80, TILE_SIZE * TILE_SIZE * 4);
+#endif
 }
 
 

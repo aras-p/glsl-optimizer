@@ -357,13 +357,13 @@ do_triangle_ccw(struct setup_context *setup,
    c2 = tri->c2 + tri->dx23 * miny - tri->dy23 * minx;
    c3 = tri->c3 + tri->dx31 * miny - tri->dy31 * minx;
 
+   minx /= TILESIZE;
+   miny /= TILESIZE;
+   maxx /= TILESIZE;
+   maxy /= TILESIZE;
+
    /* Convert to tile coordinates:
     */
-   minx /= TILESIZE;
-   maxx /= TILESIZE;
-   miny /= TILESIZE;
-   maxy /= TILESIZE;
-   
    if (miny == maxy && minx == maxx)
    {
       /* Triangle is contained in a single tile:
@@ -399,13 +399,13 @@ do_triangle_ccw(struct setup_context *setup,
        * Trivially accept or reject blocks, else jump to per-pixel
        * examination above.
        */
-      for (y = miny; y < maxy; y++)
+      for (y = miny; y <= maxy; y++)
       {
 	 float cx1 = c1;
 	 float cx2 = c2;
 	 float cx3 = c3;
 
-	 for (x = minx; x < maxx; x++)
+	 for (x = minx; x <= maxx; x++)
 	 {
 	    if (cx1 + eo1 < 0 || 
 		cx2 + eo2 < 0 ||
