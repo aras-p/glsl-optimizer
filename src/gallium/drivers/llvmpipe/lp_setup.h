@@ -50,6 +50,7 @@ struct lp_shader_input {
 
 struct pipe_texture;
 struct pipe_surface;
+struct pipe_buffer;
 struct pipe_blend_color;
 struct setup_context;
 struct lp_fragment_shader;

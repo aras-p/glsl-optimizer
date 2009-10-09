@@ -493,15 +493,6 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 }
 
 
-static void
-lp_setup_set_shader_state( struct setup_context *setup,
-                           const struct lp_jit_context *jc )
-{
-
-
-}
-
-
 /* Stubs for lines & points for now:
  */
 void
