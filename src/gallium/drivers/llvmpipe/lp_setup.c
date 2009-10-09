@@ -319,10 +319,11 @@ lp_setup_clear( struct setup_context *setup,
                 unsigned stencil,
                 unsigned flags )
 {
+   unsigned i;
+
    if (flags & PIPE_CLEAR_COLOR) {
-      util_pack_color(color, 
-                      setup->fb.cbuf->format, 
-                      &setup->clear.color.clear_color );
+      for (i = 0; i < 4; ++i)
+         setup->clear.color.clear_color[i] = float_to_ubyte(color[i]);
    }
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
