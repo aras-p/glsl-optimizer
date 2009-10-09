@@ -89,7 +89,7 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
 			 unsigned x,
 			 unsigned y )
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   RAST_DEBUG("%s %d,%d\n", __FUNCTION__, x, y);
 
    rast->x = x;
    rast->y = y;
@@ -100,7 +100,11 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 {
    const uint8_t *clear_color = arg.clear_color;
    
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   RAST_DEBUG("%s %x,%x,%x,%x\n", __FUNCTION__, 
+              clear_color[0],
+              clear_color[1],
+              clear_color[2],
+              clear_color[3]);
 
    if (clear_color[0] == clear_color[1] &&
        clear_color[1] == clear_color[2] &&
@@ -238,7 +242,7 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
    unsigned h = TILE_SIZE;
    void *map;
 
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    surface = rast->state.cbuf;
    if(!surface)
