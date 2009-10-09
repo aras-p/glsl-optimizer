@@ -415,7 +415,7 @@ lp_setup_set_fs( struct setup_context *setup,
    SETUP_DEBUG("%s\n", __FUNCTION__);
    /* FIXME: reference count */
 
-   setup->fs.jit_function = fs->current->jit_function;
+   setup->fs.current.jit_function = fs ? fs->current->jit_function : NULL;
 }
 
 void
@@ -431,9 +431,9 @@ lp_setup_set_fs_constants(struct setup_context *setup,
    dummy = NULL;
    pipe_buffer_reference(&dummy, buffer);
 
-   setup->fs.jit_context.constants = data;
+   setup->fs.current.jit_context.constants = data;
 
-   setup->fs.jit_context_dirty = TRUE;
+   setup->fs.dirty = TRUE;
 }
 
 
@@ -443,9 +443,9 @@ lp_setup_set_alpha_ref_value( struct setup_context *setup,
 {
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   if(setup->fs.jit_context.alpha_ref_value != alpha_ref_value) {
-      setup->fs.jit_context.alpha_ref_value = alpha_ref_value;
-      setup->fs.jit_context_dirty = TRUE;
+   if(setup->fs.current.jit_context.alpha_ref_value != alpha_ref_value) {
+      setup->fs.current.jit_context.alpha_ref_value = alpha_ref_value;
+      setup->fs.dirty = TRUE;
    }
 }
 
@@ -457,16 +457,16 @@ lp_setup_set_blend_color( struct setup_context *setup,
 
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   if(!setup->fs.jit_context.blend_color)
-      setup->fs.jit_context.blend_color = align_malloc(4 * 16, 16);
+   if(!setup->fs.current.jit_context.blend_color)
+      setup->fs.current.jit_context.blend_color = align_malloc(4 * 16, 16);
 
    for (i = 0; i < 4; ++i) {
       uint8_t c = float_to_ubyte(blend_color->color[i]);
       for (j = 0; j < 16; ++j)
-         setup->fs.jit_context.blend_color[i*4 + j] = c;
+         setup->fs.current.jit_context.blend_color[i*4 + j] = c;
    }
 
-   setup->fs.jit_context_dirty = TRUE;
+   setup->fs.dirty = TRUE;
 }
 
 void
@@ -490,7 +490,8 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
 
       if(tex) {
          struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
-         struct lp_jit_texture *jit_tex = &setup->fs.jit_context.textures[i];
+         struct lp_jit_texture *jit_tex;
+         jit_tex = &setup->fs.current.jit_context.textures[i];
          jit_tex->width = tex->width[0];
          jit_tex->height = tex->height[0];
          jit_tex->stride = lp_tex->stride[0];
@@ -502,7 +503,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
       }
    }
 
-   setup->fs.jit_context_dirty = TRUE;
+   setup->fs.dirty = TRUE;
 }
 
 boolean
@@ -519,22 +520,28 @@ lp_setup_update_shader_state( struct setup_context *setup )
 {
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   if(setup->fs.jit_context_dirty) {
-      if(!setup->fs.last_jc ||
-         memcmp(setup->fs.last_jc, &setup->fs.jit_context, sizeof *setup->fs.last_jc)) {
-         struct lp_jit_context *jc;
+   assert(setup->fs.current.jit_function);
 
-         jc = get_data(&setup->data, sizeof *jc);
-         if(jc) {
-            memcpy(jc, &setup->fs.jit_context, sizeof *jc);
-            setup->fs.last_jc = jc;
+   if(setup->fs.dirty) {
+      if(!setup->fs.stored ||
+         memcmp(setup->fs.stored,
+                &setup->fs.current,
+                sizeof setup->fs.current) != 0) {
+         struct lp_rast_state *stored;
+
+         stored = get_data(&setup->data, sizeof *stored);
+         if(stored) {
+            memcpy(stored,
+                   &setup->fs.current,
+                   sizeof setup->fs.current);
+            setup->fs.stored = stored;
          }
       }
 
-      setup->fs.jit_context_dirty = FALSE;
+      setup->fs.dirty = FALSE;
    }
 
-   assert(setup->fs.last_jc);
+   assert(setup->fs.stored);
 }
 
 

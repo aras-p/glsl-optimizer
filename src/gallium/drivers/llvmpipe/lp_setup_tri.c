@@ -272,6 +272,8 @@ do_triangle_ccw(struct setup_context *setup,
    float c1, c2, c3;
    int minx, maxx, miny, maxy;
 
+   tri->inputs.state = setup->fs.stored;
+
    tri->dx12 = x1 - x2;
    tri->dx23 = x2 - x3;
    tri->dx31 = x3 - x1;

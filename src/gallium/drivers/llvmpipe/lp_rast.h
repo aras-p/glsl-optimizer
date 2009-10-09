@@ -45,12 +45,12 @@ struct pipe_screen;
 struct lp_rast_state {
    /* State for the shader:
     */
-   struct lp_jit_context jc;
+   struct lp_jit_context jit_context;
    
    /* The shader itself.  Probably we also need to pass a pointer to
     * the tile color/z/stencil data somehow:
     */
-   lp_jit_frag_func shader;
+   lp_jit_frag_func jit_function;
 
 };
 

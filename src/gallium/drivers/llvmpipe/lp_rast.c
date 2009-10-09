@@ -188,14 +188,6 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
 
 /* Within a tile:
  */
-void lp_rast_set_state( struct lp_rasterizer *rast,
-                        const union lp_rast_cmd_arg arg )
-{
-   RAST_DEBUG("%s\n", __FUNCTION__);
-
-   rast->shader_state = arg.set_state;
-}
-
 
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
@@ -219,7 +211,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned x, unsigned y,
                           const unsigned *masks)
 {
-   const struct lp_rast_state *state = rast->shader_state;
+   const struct lp_rast_state *state = inputs->state;
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
    void *depth;
@@ -249,17 +241,17 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
    assert(lp_check_alignment(depth, 16));
    assert(lp_check_alignment(color, 16));
-   assert(lp_check_alignment(state->jc.blend_color, 16));
+   assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
    /* run shader */
-   state->shader( &state->jc,
-                  x, y,
-                  inputs->a0,
-                  inputs->dadx,
-                  inputs->dady,
-                  &mask[0][0],
-                  color,
-                  depth);
+   state->jit_function( &state->jit_context,
+                        x, y,
+                        inputs->a0,
+                        inputs->dadx,
+                        inputs->dady,
+                        &mask[0][0],
+                        color,
+                        depth);
 
 }
 

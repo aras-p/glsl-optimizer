@@ -74,8 +74,6 @@ struct lp_rasterizer {
       unsigned clear_depth;
       char clear_stencil;
    } state;
-
-   const struct lp_rast_state *shader_state;
 };
 
 

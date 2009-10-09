@@ -84,6 +84,7 @@
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_buffer.h"
+#include "lp_setup.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
 #include "lp_debug.h"
@@ -765,4 +766,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       variant = generate_fragment(lp, shader, &key);
 
    shader->current = variant;
+
+   lp_setup_set_fs(lp->setup, shader);
 }
