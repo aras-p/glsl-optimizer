@@ -179,7 +179,7 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 
    /* Clamp to tile dimensions:
     */
-   int minx = MAX2(tri->maxx, rast->x);
+   int minx = MAX2(tri->minx, rast->x);
    int miny = MAX2(tri->miny, rast->y);
    int maxx = MIN2(tri->maxx, rast->x + TILE_SIZE);
    int maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
