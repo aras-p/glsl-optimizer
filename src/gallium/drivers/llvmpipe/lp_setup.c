@@ -115,6 +115,7 @@ static void reset_context( struct setup_context *setup )
          }
          
          list->head = list->tail;
+         list->head->count = 0;
       }
    }
 
@@ -130,6 +131,7 @@ static void reset_context( struct setup_context *setup )
       }
          
       list->head = list->tail;
+      list->head->used = 0;
    }
 
    /* Reset some state:
