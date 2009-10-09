@@ -160,13 +160,23 @@ rasterize_bins( struct setup_context *setup,
    struct cmd_block *block;
    unsigned i,j,k;
 
+   if (setup->state != SETUP_ACTIVE) {
+      /* this can happen, not a big deal */
+      debug_printf("%s called when not binning\n", __FUNCTION__);
+      return;
+   }
+
+   lp_rast_begin( rast,
+                  setup->fb.width,
+                  setup->fb.height );
+
    lp_rast_bind_color( rast, 
                        setup->fb.cbuf, 
-                       TRUE );                    /* WRITE */
+                       setup->fb.cbuf != NULL );
                        
-   lp_rast_bind_depth( rast,
-                       setup->fb.zsbuf,
-                       write_depth );             /* WRITE */
+   lp_rast_bind_zstencil( rast,
+                          setup->fb.zsbuf,
+                          setup->fb.zsbuf != NULL && write_depth );
 
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
@@ -193,15 +203,38 @@ rasterize_bins( struct setup_context *setup,
 static void
 begin_binning( struct setup_context *setup )
 {
+   if (!setup->fb.cbuf && !setup->fb.zsbuf) {
+      setup->fb.width = 0;
+      setup->fb.height = 0;
+   }
+   else if (!setup->fb.zsbuf) {
+      setup->fb.width = setup->fb.cbuf->width;
+      setup->fb.height = setup->fb.cbuf->height;
+   }
+   else if (!setup->fb.cbuf) {
+      setup->fb.width = setup->fb.zsbuf->width;
+      setup->fb.height = setup->fb.zsbuf->height;
+   }
+   else {
+      /* XXX: not sure what we're really supposed to do for
+       * mis-matched color & depth buffer sizes.
+       */
+      setup->fb.width = MIN2(setup->fb.cbuf->width,
+                             setup->fb.zsbuf->width);
+      setup->fb.height = MIN2(setup->fb.cbuf->height,
+                              setup->fb.zsbuf->height);
+   }
+
+   setup->tiles_x = align(setup->fb.width, TILESIZE);
+   setup->tiles_y = align(setup->fb.height, TILESIZE);
+
    if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          bin_everywhere( setup, 
                          lp_rast_clear_color, 
                          &setup->clear.color );
       else
-         bin_everywhere( setup, 
-                         lp_rast_load_color, 
-                         NULL );
+         bin_everywhere( setup, lp_rast_load_color, NULL );
    }
 
    if (setup->fb.zsbuf) {
@@ -210,9 +243,7 @@ begin_binning( struct setup_context *setup )
                          lp_rast_clear_zstencil, 
                          &setup->clear.zstencil );
       else
-         bin_everywhere( setup, 
-                         lp_rast_load_zstencil, 
-                         NULL );
+         bin_everywhere( setup, lp_rast_load_zstencil, NULL );
    }
 }
 

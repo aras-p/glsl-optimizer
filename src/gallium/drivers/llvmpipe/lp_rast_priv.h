@@ -52,7 +52,11 @@ struct lp_rasterizer {
       
    unsigned x;
    unsigned y;
+   boolean clipped_tile;
 
+   boolean check_for_clipped_tiles;
+   unsigned width;
+   unsigned height;
    
    struct {
       struct pipe_surface *cbuf;

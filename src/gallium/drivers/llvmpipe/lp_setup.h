@@ -37,9 +37,15 @@ enum lp_interp {
    LP_INTERP_FACING
 };
 
+/* Describes how to generate all the fragment shader inputs from the
+ * the vertices passed into our triangle/line/point functions.
+ *
+ * Vertices are treated as an array of float[4] values, indexed by
+ * src_index.
+ */
 struct lp_shader_input {
-   enum lp_interp interp;
-   unsigned vs_output;
+   enum lp_interp interp;       /* how to interpolate values */
+   unsigned src_index;          /* where to find values in incoming vertices */
 };
 
 struct pipe_texture;

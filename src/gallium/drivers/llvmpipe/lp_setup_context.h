@@ -87,6 +87,8 @@ struct setup_context {
    struct {
       struct pipe_surface *cbuf;
       struct pipe_surface *zsbuf;
+      unsigned width;
+      unsigned height;
    } fb;
 
    struct {

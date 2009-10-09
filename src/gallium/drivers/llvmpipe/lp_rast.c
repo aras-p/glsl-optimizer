@@ -48,6 +48,17 @@ struct lp_rasterizer *lp_rast_create( void )
    return rast;
 }
 
+
+void lp_rast_begin( struct lp_rasterizer *rast,
+                    unsigned width,
+                    unsigned height )
+{
+   rast->width = width;
+   rast->height = height;
+   rast->check_for_clipped_tiles = (width % TILESIZE != 0 ||
+                                    height % TILESIZE != 0);
+}
+
 void lp_rast_bind_color( struct lp_rasterizer *rast,
                          struct pipe_surface *cbuf,
                          boolean write_color )
@@ -195,8 +206,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
  */
 
 
-void lp_rast_end_tile( struct lp_rasterizer *rast,
-                       boolean write_depth )
+void lp_rast_end_tile( struct lp_rasterizer *rast )
 {
    struct pipe_surface *surface;
    struct pipe_screen *screen;
@@ -213,10 +223,10 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
 
    screen = surface->texture->screen;
 
-   if(x + w > surface->width)
-      w = surface->width - x;
-   if(y + h > surface->height)
-      h = surface->height - y;
+   if(x + w > rast->width)
+      w = rast->width - x;
+   if(y + h > rast->height)
+      h = rast->height - y;
 
    transfer = screen->get_tex_transfer(screen,
                                        surface->texture,
@@ -240,7 +250,7 @@ void lp_rast_end_tile( struct lp_rasterizer *rast,
 
    screen->tex_transfer_destroy(transfer);
 
-   if (write_depth) {
+   if (0) {
       /* FIXME: call u_tile func to store depth/stencil to surface */
    }
 }

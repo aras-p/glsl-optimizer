@@ -97,6 +97,11 @@ struct lp_rast_triangle {
    float dx23;
    float dx31;
 
+   /* XXX: these are only used inside lp_setup_tri.c, don't really
+    * need to bin them:
+    */
+   float oneoverarea;
+
    /* inputs for the shader */
    struct lp_rast_shader_inputs inputs;
 };
@@ -105,13 +110,17 @@ struct lp_rast_triangle {
 
 struct lp_rasterizer *lp_rast_create( void );
 
+void lp_rast_begin( struct lp_rasterizer *,
+                    unsigned width,
+                    unsigned height);
+
 void lp_rast_bind_color( struct lp_rasterizer *,
                          struct pipe_surface *cbuf,
                          boolean write_when_done );
 
-void lp_rast_bind_depth( struct lp_rasterizer *,
-                         struct pipe_surface *zsbuf,
-                         boolean write_when_done );
+void lp_rast_bind_zstencil( struct lp_rasterizer *,
+                            struct pipe_surface *zsbuf,
+                            boolean write_when_done );
 
 /* Begining of each tile:
  */
