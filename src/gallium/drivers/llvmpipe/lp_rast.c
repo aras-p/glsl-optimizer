@@ -269,15 +269,23 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
 {
    const unsigned x = rast->x;
    const unsigned y = rast->y;
+   unsigned w = TILESIZE;
+   unsigned h = TILESIZE;
 
-   RAST_DEBUG("%s %d,%d\n", __FUNCTION__, x, y);
+   if (x + w > rast->width)
+      w -= x + w - rast->width;
+
+   if (y + h > rast->height)
+      h -= y + h - rast->height;
+
+   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    lp_tile_write_4ub(rast->cbuf_transfer->format,
                      rast->tile.color,
                      rast->cbuf_map, 
                      rast->cbuf_transfer->stride,
                      x, y,
-                     TILESIZE, TILESIZE);
+                     w, h);
 }
 
 
