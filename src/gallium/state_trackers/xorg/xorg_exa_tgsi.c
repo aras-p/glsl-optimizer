@@ -44,7 +44,7 @@
  */
 
 struct xorg_shaders {
-   struct exa_context *exa;
+   struct xorg_renderer *r;
 
    struct cso_hash *vs_hash;
    struct cso_hash *fs_hash;
@@ -400,11 +400,11 @@ create_fs(struct pipe_context *pipe,
    return ureg_create_shader_and_destroy(ureg, pipe);
 }
 
-struct xorg_shaders * xorg_shaders_create(struct exa_context *exa)
+struct xorg_shaders * xorg_shaders_create(struct xorg_renderer *r)
 {
    struct xorg_shaders *sc = CALLOC_STRUCT(xorg_shaders);
 
-   sc->exa = exa;
+   sc->r = r;
    sc->vs_hash = cso_hash_create();
    sc->fs_hash = cso_hash_create();
 
@@ -431,9 +431,9 @@ cache_destroy(struct cso_context *cso,
 
 void xorg_shaders_destroy(struct xorg_shaders *sc)
 {
-   cache_destroy(sc->exa->cso, sc->vs_hash,
+   cache_destroy(sc->r->cso, sc->vs_hash,
                  PIPE_SHADER_VERTEX);
-   cache_destroy(sc->exa->cso, sc->fs_hash,
+   cache_destroy(sc->r->cso, sc->fs_hash,
                  PIPE_SHADER_FRAGMENT);
 
    free(sc);
@@ -468,9 +468,9 @@ struct xorg_shader xorg_shaders_get(struct xorg_shaders *sc,
    struct xorg_shader shader = { NULL, NULL };
    void *vs, *fs;
 
-   vs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_VERTEX,
+   vs = shader_from_cache(sc->r->pipe, PIPE_SHADER_VERTEX,
                           sc->vs_hash, vs_traits);
-   fs = shader_from_cache(sc->exa->pipe, PIPE_SHADER_FRAGMENT,
+   fs = shader_from_cache(sc->r->pipe, PIPE_SHADER_FRAGMENT,
                           sc->fs_hash, fs_traits);
 
    debug_assert(vs && fs);

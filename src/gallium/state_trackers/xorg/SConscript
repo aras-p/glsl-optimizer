@@ -22,6 +22,7 @@ if 'xorg' in env['statetrackers']:
 		'xorg_exa.c',
 		'xorg_exa_tgsi.c',
 		'xorg_output.c',
+		'xorg_xv.c',
 		]
     )
     Export('st_xorg')

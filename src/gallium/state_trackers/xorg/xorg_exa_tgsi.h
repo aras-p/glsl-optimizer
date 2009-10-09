@@ -1,7 +1,7 @@
 #ifndef XORG_EXA_TGSI_H
 #define XORG_EXA_TGSI_H
 
-#include "xorg_exa.h"
+#include "xorg_renderer.h"
 
 enum xorg_vs_traits {
    VS_COMPOSITE        = 1 << 0,
@@ -33,7 +33,7 @@ struct xorg_shader {
 
 struct xorg_shaders;
 
-struct xorg_shaders *xorg_shaders_create(struct exa_context *exa);
+struct xorg_shaders *xorg_shaders_create(struct xorg_renderer *renderer);
 void xorg_shaders_destroy(struct xorg_shaders *shaders);
 
 struct xorg_shader xorg_shaders_get(struct xorg_shaders *shaders,

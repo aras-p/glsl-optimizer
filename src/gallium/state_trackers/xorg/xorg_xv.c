@@ -4,9 +4,33 @@
 #include <X11/extensions/Xv.h>
 #include <fourcc.h>
 
+#include "xorg_exa.h"
+#include "xorg_renderer.h"
+
+#include "pipe/p_screen.h"
+#include "pipe/p_inlines.h"
+
 /*XXX get these from pipe's texture limits */
 #define IMAGE_MAX_WIDTH		2048
 #define IMAGE_MAX_HEIGHT	2048
+
+#define RES_720P_X 1280
+#define RES_720P_Y 720
+
+
+/* The ITU-R BT.601 conversion matrix for SDTV. */
+static const float bt_601[] = {
+    1.0, 0.0, 1.4075,
+    1.0, -0.3455, -0.7169,
+    1.0, 1.7790, 0.
+};
+
+/* The ITU-R BT.709 conversion matrix for HDTV. */
+static const float bt_709[] = {
+    1.0, 0.0, 1.581,
+    1.0, -0.1881, -0.47,
+    1.0, 1.8629, 0.
+};
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 
@@ -39,10 +63,17 @@ static XF86ImageRec Images[NUM_IMAGES] = {
 };
 
 struct xorg_xv_port_priv {
+   struct xorg_renderer *r;
+
    RegionRec clip;
 
    int brightness;
    int contrast;
+
+   int current_set;
+   /* juggle two sets of seperate Y, U and V
+    * textures */
+   struct pipe_texture *yuv[2][3];
 };
 
 
@@ -106,6 +137,225 @@ query_best_size(ScrnInfoPtr pScrn,
    *p_h = drw_h;
 }
 
+static INLINE struct pipe_texture *
+create_component_texture(struct pipe_context *pipe,
+                         int width, int height)
+{
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_texture *tex = 0;
+   struct pipe_texture templ;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.format = PIPE_FORMAT_L8_UNORM;
+   templ.last_level = 0;
+   templ.width[0] = width;
+   templ.height[0] = height;
+   templ.depth[0] = 1;
+   pf_get_block(PIPE_FORMAT_L8_UNORM, &templ.block);
+   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+
+   tex = screen->texture_create(screen, &templ);
+
+   return tex;
+}
+
+static int
+check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
+{
+   struct pipe_texture **dst = priv->yuv[priv->current_set];
+   if (!dst[0] ||
+       dst[0]->width[0] != width ||
+       dst[0]->height[0] != height) {
+      pipe_texture_reference(&dst[0], NULL);
+   }
+   if (!dst[1] ||
+       dst[1]->width[0] != width ||
+       dst[1]->height[0] != height) {
+      pipe_texture_reference(&dst[1], NULL);
+   }
+   if (!dst[2] ||
+       dst[2]->width[0] != width ||
+       dst[2]->height[0] != height) {
+      pipe_texture_reference(&dst[2], NULL);
+   }
+
+   if (!dst[0])
+      dst[0] = create_component_texture(priv->r->pipe, width, height);
+
+   if (!dst[1])
+      dst[1] = create_component_texture(priv->r->pipe, width, height);
+
+   if (!dst[2])
+      dst[2] = create_component_texture(priv->r->pipe, width, height);
+
+   if (!dst[0] || !dst[1] || !dst[2])
+      return BadAlloc;
+
+   return Success;
+}
+
+static void
+copy_packed_data(ScrnInfoPtr pScrn,
+                 struct xorg_xv_port_priv *port,
+                 int id,
+                 unsigned char *buf,
+                 int srcPitch,
+                 int left,
+                 int top,
+                 int w, int h)
+{
+   unsigned char *src;
+   int i, j;
+   struct pipe_texture **dst = port->yuv[port->current_set];
+   struct pipe_transfer *ytrans, *utrans, *vtrans;
+   struct pipe_screen *screen = port->r->pipe->screen;
+   char *ymap, *vmap, *umap;
+   unsigned char y1, y2, u, v;
+   int yidx, uidx, vidx;
+
+   src = buf + (top * srcPitch) + (left << 1);
+
+   ytrans = screen->get_tex_transfer(screen, dst[0],
+                                     0, 0, 0,
+                                     PIPE_TRANSFER_WRITE,
+                                     left, top, w, h);
+   utrans = screen->get_tex_transfer(screen, dst[1],
+                                     0, 0, 0,
+                                     PIPE_TRANSFER_WRITE,
+                                     left, top, w, h);
+   vtrans = screen->get_tex_transfer(screen, dst[2],
+                                     0, 0, 0,
+                                     PIPE_TRANSFER_WRITE,
+                                     left, top, w, h);
+
+   ymap = screen->transfer_map(screen, ytrans);
+   umap = screen->transfer_map(screen, utrans);
+   vmap = screen->transfer_map(screen, vtrans);
+
+   switch (id) {
+   case FOURCC_YV12: {
+      int y_array_size = w * h;
+      for (i = 0; i < w; ++i) {
+         for (j = 0; i < h; ++j) {
+            /*XXX use src? */
+            y1  = buf[j*w + i];
+            u   = buf[(j/2) * (w/2) + i/2 + y_array_size];
+            v   = buf[(j/2) * (w/2) + i/2 + y_array_size + y_array_size/4];
+            ymap[yidx++] = y1;
+            umap[uidx++] = u;
+            vmap[vidx++] = v;
+         }
+      }
+   }
+      break;
+   case FOURCC_YUY2:
+      for (j = 0; j < h; ++j) {
+         for (i = 0; i < w; ++i) {
+            /* extracting two pixels */
+            y1 = buf[0];
+            u  = buf[1];
+            y2 = buf[2];
+            v  = buf[3];
+
+            ymap[yidx++] = y1;
+            ymap[yidx++] = y2;
+            umap[uidx++] = u;
+            umap[uidx++] = u;
+            vmap[vidx++] = v;
+            vmap[vidx++] = v;
+         }
+      }
+      break;
+   default:
+      debug_assert(!"Unsupported yuv format!");
+      break;
+   }
+
+   screen->transfer_unmap(screen, ytrans);
+   screen->transfer_unmap(screen, utrans);
+   screen->transfer_unmap(screen, vtrans);
+   screen->tex_transfer_destroy(ytrans);
+   screen->tex_transfer_destroy(utrans);
+   screen->tex_transfer_destroy(vtrans);
+}
+
+static void
+setup_video_constants(struct xorg_renderer *r, boolean hdtv)
+{
+   struct pipe_context *pipe = r->pipe;
+   const int param_bytes = 9 * sizeof(float);
+   struct pipe_constant_buffer *cbuf = &r->vs_const_buffer;
+
+   pipe_buffer_reference(&cbuf->buffer, NULL);
+   cbuf->buffer = pipe_buffer_create(pipe->screen, 16,
+                                     PIPE_BUFFER_USAGE_CONSTANT,
+                                     param_bytes);
+
+   if (cbuf->buffer) {
+      const float *video_constants = (hdtv) ? bt_709 : bt_601;
+
+      pipe_buffer_write(pipe->screen, cbuf->buffer,
+                        0, param_bytes, video_constants);
+   }
+   pipe->set_constant_buffer(pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+}
+
+static int
+display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
+              RegionPtr dstRegion,
+              short width, short height,
+              int x1, int y1, int x2, int y2,
+              short src_w, short src_h, short drw_w, short drw_h,
+              PixmapPtr pPixmap)
+{
+   BoxPtr pbox;
+   int nbox;
+   int dxo, dyo;
+   Bool hdtv;
+   float tc0[2], tc1[2], tc2[2];
+
+   hdtv = ((src_w >= RES_720P_X) && (src_h >= RES_720P_Y));
+   setup_video_constants(pPriv->r, hdtv);
+
+   REGION_TRANSLATE(pScrn->pScreen, dstRegion, -pPixmap->screen_x,
+                    -pPixmap->screen_y);
+
+   dxo = dstRegion->extents.x1;
+   dyo = dstRegion->extents.y1;
+
+   pbox = REGION_RECTS(dstRegion);
+   nbox = REGION_NUM_RECTS(dstRegion);
+
+   while (nbox--) {
+      int box_x1 = pbox->x1;
+      int box_y1 = pbox->y1;
+      int box_x2 = pbox->x2;
+      int box_y2 = pbox->y2;
+
+      tc0[0] = (double) (box_x1 - dxo) / (double) drw_w; /* u0 */
+      tc0[1] = (double) (box_y1 - dyo) / (double) drw_h; /* v0 */
+      tc1[0] = (double) (box_x2 - dxo) / (double) drw_w; /* u1 */
+      tc1[1] = tc0[1];
+      tc2[0] = tc0[0];
+      tc2[1] = (double) (box_y2 - dyo) / (double) drw_h; /* v1 */
+
+#if 0
+      x = box_x1;
+      y = box_y1;
+      w = box_x2 - box_x1;
+      h = box_y2 - box_y1;
+
+      pbox++;
+      draw_yuv(pScrn, x, y, w, h, &src, 1, FALSE,
+               0, tc0, tc1, tc2, 1,
+               pPriv->conversionData);
+#endif
+   }
+   DamageDamageRegion(&pPixmap->drawable, dstRegion);
+   return TRUE;
+}
+
 static int
 put_image(ScrnInfoPtr pScrn,
           short src_x, short src_y,
@@ -117,7 +367,57 @@ put_image(ScrnInfoPtr pScrn,
           Bool sync, RegionPtr clipBoxes, pointer data,
           DrawablePtr pDraw)
 {
-   return 0;
+   struct xorg_xv_port_priv *pPriv = (struct xorg_xv_port_priv *) data;
+   ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
+   PixmapPtr pPixmap;
+   INT32 x1, x2, y1, y2;
+   int srcPitch;
+   BoxRec dstBox;
+   int ret;
+
+   /* Clip */
+   x1 = src_x;
+   x2 = src_x + src_w;
+   y1 = src_y;
+   y2 = src_y + src_h;
+
+   dstBox.x1 = drw_x;
+   dstBox.x2 = drw_x + drw_w;
+   dstBox.y1 = drw_y;
+   dstBox.y2 = drw_y + drw_h;
+
+   if (!xf86XVClipVideoHelper(&dstBox, &x1, &x2, &y1, &y2, clipBoxes,
+			      width, height))
+      return Success;
+
+   switch (id) {
+   case FOURCC_UYVY:
+   case FOURCC_YUY2:
+   default:
+      srcPitch = width << 1;
+      break;
+   }
+
+   ret = check_yuv_textures(pPriv, width, height);
+
+   if (ret)
+      return ret;
+
+   copy_packed_data(pScrn, pPriv, id, buf, srcPitch,
+                    src_x, src_y, width, height);
+
+   if (pDraw->type == DRAWABLE_WINDOW) {
+      pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr)pDraw);
+   } else {
+      pPixmap = (PixmapPtr)pDraw;
+   }
+
+   display_video(pScrn, pPriv, id, clipBoxes, width, height,
+                 x1, y1, x2, y2,
+                 src_w, src_h, drw_w, drw_h, pPixmap);
+
+   pPriv->current_set = (pPriv->current_set + 1) & 1;
+   return Success;
 }
 
 static int
@@ -152,10 +452,8 @@ query_image_attributes(ScrnInfoPtr pScrn,
 }
 
 static struct xorg_xv_port_priv *
-port_priv_create(ScreenPtr pScreen)
+port_priv_create(struct xorg_renderer *r)
 {
-   /*ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];*/
-   /*modesettingPtr ms = modesettingPTR(pScrn);*/
    struct xorg_xv_port_priv *priv = NULL;
 
    priv = calloc(1, sizeof(struct xorg_xv_port_priv));
@@ -163,7 +461,11 @@ port_priv_create(ScreenPtr pScreen)
    if (!priv)
       return NULL;
 
+   priv->r = r;
+
    REGION_NULL(pScreen, &priv->clip);
+
+   debug_assert(priv && priv->r);
 
    return priv;
 }
@@ -171,8 +473,8 @@ port_priv_create(ScreenPtr pScreen)
 static XF86VideoAdaptorPtr
 xorg_setup_textured_adapter(ScreenPtr pScreen)
 {
-   /*ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];*/
-   /*modesettingPtr ms = modesettingPTR(pScrn);*/
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   modesettingPtr ms = modesettingPTR(pScrn);
    XF86VideoAdaptorPtr adapt;
    XF86AttributePtr attrs;
    DevUnion *dev_unions;
@@ -180,6 +482,9 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
    int nattributes;
 
    nattributes = NUM_TEXTURED_ATTRIBUTES;
+
+   debug_assert(ms->exa);
+   debug_assert(ms->exa->renderer);
 
    adapt = calloc(1, sizeof(XF86VideoAdaptorRec));
    dev_unions = calloc(nports, sizeof(DevUnion));
@@ -218,7 +523,7 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
 
    for (i = 0; i < nports; i++) {
       struct xorg_xv_port_priv *priv =
-         port_priv_create(pScreen);
+         port_priv_create(ms->exa->renderer);
 
       adapt->pPortPrivates[i].ptr = (pointer) (priv);
       adapt->nPorts++;

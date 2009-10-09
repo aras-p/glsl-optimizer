@@ -43,8 +43,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
-#include "cso_cache/cso_context.h"
-
 #include "util/u_rect.h"
 
 #define DEBUG_PRINT 0
@@ -87,16 +85,6 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 	assert(0);
 	break;
     }
-}
-
-static void
-xorg_exa_init_state(struct exa_context *exa)
-{
-   struct pipe_depth_stencil_alpha_state dsa;
-
-   /* set common initial clip state */
-   memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
-   cso_set_depth_stencil_alpha(exa->cso, &dsa);
 }
 
 static void
@@ -444,9 +432,9 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
    debug_assert(priv == exa->copy.dst);
 
-   xorg_copy_pixmap(exa, exa->copy.dst, dstX, dstY,
-                    exa->copy.src, srcX, srcY,
-                    width, height);
+   renderer_copy_pixmap(exa->renderer, exa->copy.dst, dstX, dstY,
+                        exa->copy.src, srcX, srcY,
+                        width, height);
 }
 
 static Bool
@@ -701,7 +689,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 
 	    dst_surf = exa->scrn->get_tex_surface(
 		exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
-	    src_surf = exa_gpu_surface(exa, priv);
+	    src_surf = xorg_gpu_surface(exa->pipe->screen, priv);
 	    exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
 				    0, 0, min(width, texture->width[0]),
 				    min(height, texture->height[0]));
@@ -731,23 +719,8 @@ xorg_exa_close(ScrnInfoPtr pScrn)
 {
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
-   struct pipe_constant_buffer *vsbuf = &exa->vs_const_buffer;
-   struct pipe_constant_buffer *fsbuf = &exa->fs_const_buffer;
 
-   if (exa->shaders) {
-      xorg_shaders_destroy(exa->shaders);
-   }
-
-   if (vsbuf && vsbuf->buffer)
-      pipe_buffer_reference(&vsbuf->buffer, NULL);
-
-   if (fsbuf && fsbuf->buffer)
-      pipe_buffer_reference(&fsbuf->buffer, NULL);
-
-   if (exa->cso) {
-      cso_release_all(exa->cso);
-      cso_destroy_context(exa->cso);
-   }
+   renderer_destroy(exa->renderer);
 
    if (exa->pipe)
       exa->pipe->destroy(exa->pipe);
@@ -822,10 +795,7 @@ xorg_exa_init(ScrnInfoPtr pScrn)
    /* Share context with DRI */
    ms->ctx = exa->pipe;
 
-   exa->cso = cso_create_context(exa->pipe);
-   exa->shaders = xorg_shaders_create(exa);
-
-   xorg_exa_init_state(exa);
+   exa->renderer = renderer_create(exa->pipe);
 
    return (void *)exa;
 
@@ -836,11 +806,11 @@ out_err:
 }
 
 struct pipe_surface *
-exa_gpu_surface(struct exa_context *exa, struct exa_pixmap_priv *priv)
+xorg_gpu_surface(struct pipe_screen *scrn, struct exa_pixmap_priv *priv)
 {
-   return exa->scrn->get_tex_surface(exa->scrn, priv->tex, 0, 0, 0,
-                                     PIPE_BUFFER_USAGE_GPU_READ |
-                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+   return scrn->get_tex_surface(scrn, priv->tex, 0, 0, 0,
+                                PIPE_BUFFER_USAGE_GPU_READ |
+                                PIPE_BUFFER_USAGE_GPU_WRITE);
 
 }
 
