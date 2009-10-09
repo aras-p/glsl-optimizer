@@ -346,7 +346,7 @@ cpuid(uint32_t ax, uint32_t *p)
      "cpuid\n\t"
      "xchgl %%ebx, %1"
      : "=a" (p[0]),
-       "=m" (p[1]),
+       "=S" (p[1]),
        "=c" (p[2]),
        "=d" (p[3])
      : "0" (ax)
