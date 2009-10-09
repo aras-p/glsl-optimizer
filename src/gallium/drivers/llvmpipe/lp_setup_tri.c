@@ -29,23 +29,23 @@
  * Binning code for triangles
  */
 
-#include "lp_setup.h"
-#include "lp_state.h"
+#include "lp_setup_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
+#define NUM_CHANNELS 4
 
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  */
 static void constant_coef( struct lp_rast_triangle *tri,
-			   const float (*v3)[4],
-			   unsigned vert_attr,
-			   unsigned i )
+                           unsigned slot,
+			   const float value,
+                           unsigned i )
 {
-   tri->inputs.a0[i] = v3[vert_attr][i];
-   tri->inputs.dadx[i] = 0;
-   tri->inputs.dady[i] = 0;
+   tri->inputs.a0[slot][i] = value;
+   tri->inputs.dadx[slot][i] = 0;
+   tri->inputs.dady[slot][i] = 0;
 }
 
 /**
@@ -53,45 +53,40 @@ static void constant_coef( struct lp_rast_triangle *tri,
  * for a triangle.
  */
 static void linear_coef( struct lp_rast_triangle *tri,
-                         unsigned input,
-			 const float (*v1)[4],
-			 const float (*v2)[4],
-			 const float (*v3)[4],
-			 unsigned vert_attr)
+                         unsigned slot,
+                         const float (*v1)[4],
+                         const float (*v2)[4],
+                         const float (*v3)[4],
+                         unsigned vert_attr,
+                         unsigned i)
 {
-   unsigned i;
+   float a1 = v1[vert_attr][i];
+   float a2 = v2[vert_attr][i];
+   float a3 = v3[vert_attr][i];
 
-   input *= 4;
+   float da12 = a1 - a2;
+   float da31 = a3 - a1;
+   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
+   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
 
-   for (i = 0; i < NUM_CHANNELS; i++) {
-      float a1 = v1[vert_attr][i];
-      float a2 = v2[vert_attr][i];
-      float a3 = v3[vert_attr][i];
+   tri->inputs.dadx[slot][i] = dadx;
+   tri->inputs.dady[slot][i] = dady;
 
-      float da12 = a1 - a2;
-      float da31 = a3 - a1;
-      float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
-      float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
-
-      tri->inputs.dadx[input+i] = dadx;
-      tri->inputs.dady[input+i] = dady;
-
-      /* calculate a0 as the value which would be sampled for the
-       * fragment at (0,0), taking into account that we want to sample at
-       * pixel centers, in other words (0.5, 0.5).
-       *
-       * this is neat but unfortunately not a good way to do things for
-       * triangles with very large values of dadx or dady as it will
-       * result in the subtraction and re-addition from a0 of a very
-       * large number, which means we'll end up loosing a lot of the
-       * fractional bits and precision from a0.  the way to fix this is
-       * to define a0 as the sample at a pixel center somewhere near vmin
-       * instead - i'll switch to this later.
-       */
-      tri->inputs.a0[input+i] = (v1[vert_attr][i] -
-                                 (dadx * (v1[0][0] - 0.5f) +
-                                  dady * (v1[0][1] - 0.5f)));
-   }
+   /* calculate a0 as the value which would be sampled for the
+    * fragment at (0,0), taking into account that we want to sample at
+    * pixel centers, in other words (0.5, 0.5).
+    *
+    * this is neat but unfortunately not a good way to do things for
+    * triangles with very large values of dadx or dady as it will
+    * result in the subtraction and re-addition from a0 of a very
+    * large number, which means we'll end up loosing a lot of the
+    * fractional bits and precision from a0.  the way to fix this is
+    * to define a0 as the sample at a pixel center somewhere near vmin
+    * instead - i'll switch to this later.
+    */
+   tri->inputs.a0[slot][i] = (v1[vert_attr][i] -
+                              (dadx * (v1[0][0] - 0.5f) +
+                               dady * (v1[0][1] - 0.5f)));
 }
 
 
@@ -104,34 +99,29 @@ static void linear_coef( struct lp_rast_triangle *tri,
  * divide the interpolated value by the interpolated W at that fragment.
  */
 static void perspective_coef( struct lp_rast_triangle *tri,
+                              unsigned slot,
 			      const float (*v1)[4],
 			      const float (*v2)[4],
 			      const float (*v3)[4],
 			      unsigned vert_attr,
-			      unsigned i)
+                              unsigned i)
 {
-   unsigned i;
-
-   input *= 4;
-
-   for (i = 0; i < NUM_CHANNELS; i++) {
-      /* premultiply by 1/w  (v[0][3] is always 1/w):
-       */
-      float a1 = v1[vert_attr][i] * v1[0][3];
-      float a2 = v2[vert_attr][i] * v2[0][3];
-      float a3 = v3[vert_attr][i] * v3[0][3];
-      float da12 = a1 - a2;
-      float da31 = a3 - a1;
-      float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
-      float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
+   /* premultiply by 1/w  (v[0][3] is always 1/w):
+    */
+   float a1 = v1[vert_attr][i] * v1[0][3];
+   float a2 = v2[vert_attr][i] * v2[0][3];
+   float a3 = v3[vert_attr][i] * v3[0][3];
+   float da12 = a1 - a2;
+   float da31 = a3 - a1;
+   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
+   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
 
 
-      tri->inputs.dadx[input+i] = dadx;
-      tri->inputs.dady[input+i] = dady;
-      tri->inputs.a0[input+i] = (a1 -
-                           (dadx * (v1[0][0] - 0.5f) +
-                            dady * (v1[0][1] - 0.5f)));
-   }
+   tri->inputs.dadx[slot][i] = dadx;
+   tri->inputs.dady[slot][i] = dady;
+   tri->inputs.a0[slot][i] = (a1 -
+                              (dadx * (v1[0][0] - 0.5f) +
+                               dady * (v1[0][1] - 0.5f)));
 }
 
 
@@ -142,28 +132,36 @@ static void perspective_coef( struct lp_rast_triangle *tri,
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
 static void
-setup_fragcoord_coef(struct lp_rast_triangle *tri, unsigned slot)
+setup_fragcoord_coef(struct lp_rast_triangle *tri,
+                     unsigned slot,
+                     const float (*v1)[4],
+                     const float (*v2)[4],
+                     const float (*v3)[4])
 {
-   slot *= 4;
-
    /*X*/
-   tri->inputs.a0[slot+0] = 0.0;
-   tri->inputs.dadx[slot+0] = 1.0;
-   tri->inputs.dady[slot+0] = 0.0;
+   tri->inputs.a0[slot][0] = 0.0;
+   tri->inputs.dadx[slot][0] = 1.0;
+   tri->inputs.dady[slot][0] = 0.0;
    /*Y*/
-   tri->inputs.a0[slot+1] = 0.0;
-   tri->inputs.dadx[slot+1] = 0.0;
-   tri->inputs.dady[slot+1] = 1.0;
+   tri->inputs.a0[slot][1] = 0.0;
+   tri->inputs.dadx[slot][1] = 0.0;
+   tri->inputs.dady[slot][1] = 1.0;
    /*Z*/
-   tri->inputs.a0[slot+2] = tri->inputs.a0[2];
-   tri->inputs.dadx[slot+2] = tri->inputs.dadx[2];
-   tri->inputs.dady[slot+2] = tri->inputs.dady[2];
+   linear_coef(tri, slot, v1, v2, v3, 0, 2);
    /*W*/
-   tri->inputs.a0[slot+3] = tri->inputs.a0[3];
-   tri->inputs.dadx[slot+3] = tri->inputs.dadx[3];
-   tri->inputs.dady[slot+3] = tri->inputs.dady[3];
+   linear_coef(tri, slot, v1, v2, v3, 0, 3);
 }
 
+
+static void setup_facing_coef( struct lp_rast_triangle *tri,
+                               unsigned slot,
+                               boolean frontface )
+{
+   constant_coef( tri, slot, 1.0f - frontface, 0 );
+   constant_coef( tri, slot, 0.0f, 1 ); /* wasted */
+   constant_coef( tri, slot, 0.0f, 2 ); /* wasted */
+   constant_coef( tri, slot, 0.0f, 3 ); /* wasted */
+}
 
 
 /**
@@ -176,40 +174,42 @@ static void setup_tri_coefficients( struct setup_context *setup,
 				    const float (*v3)[4],
 				    boolean frontface )
 {
-   unsigned input;
+   unsigned slot;
 
-   /* z and w are done by linear interpolation:
+   /* The internal position input is in slot zero:
     */
-   setup_fragcoord_coef(tri, 0);
-            linear_coef(tri, input, v1, v2, v3, vert_attr, i);
+   setup_fragcoord_coef(tri, 0, v1, v2, v3);
 
    /* setup interpolation for all the remaining attrbutes:
     */
-   for (input = 0; input < setup->fs.nr_inputs; input++) {
-      unsigned vert_attr = setup->fs.input[input].src_index;
+   for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
+      unsigned vert_attr = setup->fs.input[slot].src_index;
       unsigned i;
 
-      switch (setup->fs.input[input].interp_mode) {
+      switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
-         constant_coef(tri, input, v3, vert_attr, i);
+         for (i = 0; i < NUM_CHANNELS; i++)
+            constant_coef(tri, slot+1, v3[vert_attr][i], i);
          break;
 
       case LP_INTERP_LINEAR:
-         linear_coef(tri, input, v1, v2, v3, vert_attr, i);
+         for (i = 0; i < NUM_CHANNELS; i++)
+            linear_coef(tri, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
-            perspective_coef(tri, input, v1, v2, v3, vert_attr, i);
+         for (i = 0; i < NUM_CHANNELS; i++)
+            perspective_coef(tri, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
-      case LP_INTERP_POS:
-         setup_fragcoord_coef(tri, input);
+      case LP_INTERP_POSITION:
+         /* XXX: fix me - duplicates the values in slot zero.
+          */
+         setup_fragcoord_coef(tri, slot+1, v1, v2, v3);
          break;
 
       case LP_INTERP_FACING:
-         tri->inputs.a0[input*4+0] = 1.0f - frontface;
-         tri->inputs.dadx[input*4+0] = 0.0;
-         tri->da[input].dady[0] = 0.0;
+         setup_facing_coef(tri, slot+1, frontface);
          break;
 
       default:
@@ -246,14 +246,14 @@ static inline float subpixel_snap( float a )
 #define MAX3(a,b,c) MAX2(MAX2(a,b),c)
 
 static void 
-do_triangle_ccw(struct lp_setup *setup,
+do_triangle_ccw(struct setup_context *setup,
 		const float (*v1)[4],
 		const float (*v2)[4],
 		const float (*v3)[4],
 		boolean frontfacing )
 {
-   const int rt_width = setup->framebuffer.cbufs[0]->width;
-   const int rt_height = setup->framebuffer.cbufs[0]->height;
+   const int rt_width = setup->fb.width;
+   const int rt_height = setup->fb.height;
 
    const float y1 = subpixel_snap(v1[0][1]);
    const float y2 = subpixel_snap(v2[0][1]);
@@ -263,7 +263,7 @@ do_triangle_ccw(struct lp_setup *setup,
    const float x2 = subpixel_snap(v2[0][0]);
    const float x3 = subpixel_snap(v3[0][0]);
    
-   struct lp_setup_triangle *tri = lp_setup_alloc_data( setup, sizeof *tri );
+   struct lp_setup_triangle *tri = get_data( setup, sizeof *tri );
    float area;
    float c1, c2, c3;
    int i;
