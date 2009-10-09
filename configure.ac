@@ -18,7 +18,7 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Versions for external dependencies
-LIBDRM_REQUIRED=2.4.3
+LIBDRM_REQUIRED=2.4.15
 DRI2PROTO_REQUIRED=1.99.3
 
 dnl Check for progs
