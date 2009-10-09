@@ -484,6 +484,15 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
    setup->fs.jit_context_dirty = TRUE;
 }
 
+boolean
+lp_setup_is_texture_referenced( struct setup_context *setup,
+                                const struct pipe_texture *texture )
+{
+   /* FIXME */
+   return PIPE_UNREFERENCED;
+}
+
+
 static void
 lp_setup_set_shader_state( struct setup_context *setup,
                            const struct lp_jit_context *jc )
