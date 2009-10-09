@@ -30,6 +30,8 @@
 
 #include "lp_rast.h"
 
+struct pipe_transfer;
+struct pipe_screen;
 
 /* We can choose whatever layout for the internal tile storage we
  * prefer:
@@ -49,7 +51,6 @@ struct lp_rasterizer {
     */
    struct lp_rast_tile tile;
 
-      
    unsigned x;
    unsigned y;
    boolean clipped_tile;
@@ -57,7 +58,13 @@ struct lp_rasterizer {
    boolean check_for_clipped_tiles;
    unsigned width;
    unsigned height;
-   
+
+   struct pipe_screen *screen;
+   struct pipe_transfer *cbuf_transfer;
+   struct pipe_transfer *zsbuf_transfer;
+   void *cbuf_map;
+   void *zsbuf_map;
+
    struct {
       struct pipe_surface *cbuf;
       struct pipe_surface *zsbuf;

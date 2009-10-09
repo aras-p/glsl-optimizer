@@ -165,16 +165,14 @@ rasterize_bins( struct setup_context *setup,
    unsigned i,j,k;
 
    lp_rast_begin( rast,
+                  setup->fb.cbuf, 
+                  setup->fb.zsbuf,
+                  setup->fb.cbuf != NULL,
+                  setup->fb.zsbuf != NULL && write_depth,
                   setup->fb.width,
                   setup->fb.height );
 
-   lp_rast_bind_color( rast, 
-                       setup->fb.cbuf, 
-                       setup->fb.cbuf != NULL );
                        
-   lp_rast_bind_zstencil( rast,
-                          setup->fb.zsbuf,
-                          setup->fb.zsbuf != NULL && write_depth );
 
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
@@ -192,6 +190,8 @@ rasterize_bins( struct setup_context *setup,
          lp_rast_end_tile( rast );
       }
    }
+
+   lp_rast_end( rast );
 
    reset_context( setup );
 }
@@ -528,12 +528,12 @@ lp_setup_destroy( struct setup_context *setup )
  * rasterizer to use with it.
  */
 struct setup_context *
-lp_setup_create( void )
+lp_setup_create( struct pipe_screen *screen )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
    unsigned i, j;
 
-   setup->rast = lp_rast_create();
+   setup->rast = lp_rast_create( screen );
    if (!setup->rast) 
       goto fail;
 

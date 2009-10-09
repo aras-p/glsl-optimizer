@@ -35,7 +35,7 @@
 
 #define RAST_DEBUG debug_printf
 
-struct lp_rasterizer *lp_rast_create( void )
+struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
 {
    struct lp_rasterizer *rast;
 
@@ -43,6 +43,7 @@ struct lp_rasterizer *lp_rast_create( void )
    if(!rast)
       return NULL;
 
+   rast->screen = screen;
    rast->tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
    rast->tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
 
@@ -50,37 +51,73 @@ struct lp_rasterizer *lp_rast_create( void )
 }
 
 
-void lp_rast_begin( struct lp_rasterizer *rast,
-                    unsigned width,
-                    unsigned height )
+boolean lp_rast_begin( struct lp_rasterizer *rast,
+                       struct pipe_surface *cbuf,
+                       struct pipe_surface *zsbuf,
+                       boolean write_color,
+                       boolean write_zstencil,
+                       unsigned width,
+                       unsigned height )
 {
+   struct pipe_screen *screen = rast->screen;
+
    RAST_DEBUG("%s %dx%d\n", __FUNCTION__, width, height);
+
+   pipe_surface_reference(&rast->state.cbuf, cbuf);
+   pipe_surface_reference(&rast->state.zsbuf, zsbuf);
 
    rast->width = width;
    rast->height = height;
+   rast->state.write_zstencil = write_zstencil;
+   rast->state.write_color = write_color;
+
    rast->check_for_clipped_tiles = (width % TILESIZE != 0 ||
                                     height % TILESIZE != 0);
+
+   if (cbuf) {
+      rast->cbuf_transfer = screen->get_tex_transfer(rast->screen,
+                                                     cbuf->texture,
+                                                     cbuf->face,
+                                                     cbuf->level,
+                                                     cbuf->zslice,
+                                                     PIPE_TRANSFER_READ_WRITE,
+                                                     0, 0, width, height);
+      if (!rast->cbuf_transfer)
+         return FALSE;
+
+      rast->cbuf_map = screen->transfer_map(rast->screen, 
+                                            rast->cbuf_transfer);
+      if (!rast->cbuf_map)
+         return FALSE;
+   }
+
+   return TRUE;
 }
 
-void lp_rast_bind_color( struct lp_rasterizer *rast,
-                         struct pipe_surface *cbuf,
-                         boolean write_color )
+
+void lp_rast_end( struct lp_rasterizer *rast )
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   struct pipe_screen *screen = rast->screen;
 
-   pipe_surface_reference(&rast->state.cbuf, cbuf);
-   rast->state.write_color = write_color;
+   if (rast->cbuf_map) 
+      screen->transfer_unmap(screen, rast->cbuf_transfer);
+
+   if (rast->zsbuf_map) 
+      screen->transfer_unmap(screen, rast->zsbuf_transfer);
+
+   if (rast->cbuf_transfer)
+      screen->tex_transfer_destroy(rast->cbuf_transfer);
+
+   if (rast->zsbuf_transfer)
+      screen->tex_transfer_destroy(rast->cbuf_transfer);
+
+   rast->cbuf_transfer = NULL;
+   rast->zsbuf_transfer = NULL;
+   rast->cbuf_map = NULL;
+   rast->zsbuf_map = NULL;
 }
 
-void lp_rast_bind_zstencil( struct lp_rasterizer *rast,
-                            struct pipe_surface *zsbuf,
-                            boolean write_zstencil )
-{
-   RAST_DEBUG("%s\n", __FUNCTION__);
 
-   pipe_surface_reference(&rast->state.zsbuf, zsbuf);
-   rast->state.write_zstencil = write_zstencil;
-}
 
 
 /* Begining of each tile:
@@ -233,50 +270,17 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
 static void lp_rast_store_color( struct lp_rasterizer *rast )
 {
-   struct pipe_surface *surface;
-   struct pipe_screen *screen;
-   struct pipe_transfer *transfer;
    const unsigned x = rast->x;
    const unsigned y = rast->y;
-   unsigned w = TILE_SIZE;
-   unsigned h = TILE_SIZE;
-   void *map;
 
-   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+   RAST_DEBUG("%s %d,%d\n", __FUNCTION__, x, y);
 
-   surface = rast->state.cbuf;
-   if(!surface)
-      return;
-
-   screen = surface->texture->screen;
-
-   if(x + w > rast->width)
-      w = rast->width - x;
-   if(y + h > rast->height)
-      h = rast->height - y;
-
-   transfer = screen->get_tex_transfer(screen,
-                                       surface->texture,
-                                       surface->face,
-                                       surface->level,
-                                       surface->zslice,
-                                       PIPE_TRANSFER_READ_WRITE,
-                                       x, y, w, h);
-   if(!transfer)
-      return;
-
-   map = screen->transfer_map(screen, transfer);
-   if(map) {
-      lp_tile_write_4ub(transfer->format,
-                        rast->tile.color,
-                        map, transfer->stride,
-                        x, y, w, h);
-
-      screen->transfer_unmap(screen, transfer);
-   }
-
-   screen->tex_transfer_destroy(transfer);
-
+   lp_tile_write_4ub(rast->cbuf_transfer->format,
+                     rast->tile.color,
+                     rast->cbuf_map, 
+                     rast->cbuf_transfer->stride,
+                     x, y,
+                     TILESIZE, TILESIZE);
 }
 
 

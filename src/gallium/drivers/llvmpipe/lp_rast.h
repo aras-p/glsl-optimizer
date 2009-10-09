@@ -37,6 +37,7 @@
  * individual function calls like this.
  */
 struct lp_rasterizer;
+struct pipe_screen;
 
 #define TILESIZE 64
 
@@ -118,19 +119,17 @@ struct lp_rast_triangle {
 
 
 
-struct lp_rasterizer *lp_rast_create( void );
+struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen );
 
-void lp_rast_begin( struct lp_rasterizer *,
-                    unsigned width,
-                    unsigned height);
+boolean lp_rast_begin( struct lp_rasterizer *rast,
+                       struct pipe_surface *cbuf,
+                       struct pipe_surface *zsbuf,
+                       boolean write_color,
+                       boolean write_zstencil,
+                       unsigned width,
+                       unsigned height );
 
-void lp_rast_bind_color( struct lp_rasterizer *,
-                         struct pipe_surface *cbuf,
-                         boolean write_when_done );
-
-void lp_rast_bind_zstencil( struct lp_rasterizer *,
-                            struct pipe_surface *zsbuf,
-                            boolean write_when_done );
+void lp_rast_end( struct lp_rasterizer * );
 
 /* Begining of each tile:
  */

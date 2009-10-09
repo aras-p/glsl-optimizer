@@ -179,7 +179,7 @@ llvmpipe_create( struct pipe_screen *screen )
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   llvmpipe->setup = lp_setup_create();
+   llvmpipe->setup = lp_setup_create( screen );
    if (!llvmpipe->setup)
       goto fail;
 

@@ -52,12 +52,13 @@ struct pipe_texture;
 struct pipe_surface;
 struct pipe_buffer;
 struct pipe_blend_color;
+struct pipe_screen;
 struct setup_context;
 struct lp_fragment_shader;
 struct lp_jit_context;
 
 struct setup_context *
-lp_setup_create( void );
+lp_setup_create( struct pipe_screen *screen );
 
 void
 lp_setup_clear(struct setup_context *setup,
