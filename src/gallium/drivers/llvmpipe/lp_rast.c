@@ -250,7 +250,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
    /* run shader */
    state->jit_function( &state->jit_context,
-                        x, y,
+                        rast->x + x, rast->y + y,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
