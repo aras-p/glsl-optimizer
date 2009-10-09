@@ -421,10 +421,15 @@ do_triangle_ccw(struct setup_context *setup,
 	    }
 	    else 
 	    {
+#if 1
+               bin_command( &setup->tile[x][y], lp_rast_shade_tile,
+                            lp_rast_arg_inputs(&tri->inputs) );
+#else
                /* shade partial tile */
 	       bin_command( &setup->tile[x][y], 
                             lp_rast_triangle, 
                             lp_rast_arg_triangle(tri) );
+#endif
 	    }
 
 	    /* Iterate cx values across the region:

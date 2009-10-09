@@ -188,6 +188,8 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
    float x0, y0;
    float c1, c2, c3;
 
+   debug_printf("%s\n", __FUNCTION__);
+
    if (miny == maxy || minx == maxx) {
       debug_printf("%s: non-intersecting triangle in bin\n", __FUNCTION__);
       return;
