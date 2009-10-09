@@ -88,9 +88,6 @@ struct llvmpipe_context {
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
    
-   /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES];
-
    /** Vertex format */
    struct vertex_info vertex_info;
    struct vertex_info vertex_info_vbuf;
