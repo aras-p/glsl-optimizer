@@ -202,7 +202,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
     */
    for (y = 0; y < TILE_SIZE; y += 2)
       for (x = 0; x < TILE_SIZE; x += 8)
-         lp_rast_shade_quads( rast, inputs, x, y, masks);
+         lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, masks);
 }
 
 
@@ -211,6 +211,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned x, unsigned y,
                           const unsigned *masks)
 {
+#if 1
    const struct lp_rast_state *state = inputs->state;
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
@@ -218,10 +219,14 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
    unsigned chan_index;
    unsigned q;
+   unsigned ix, iy;
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
+
+   ix = x % TILE_SIZE;
+   iy = y % TILE_SIZE;
 
    /* mask */
    for (q = 0; q < 4; ++q)
@@ -229,12 +234,12 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
          mask[q][chan_index] = masks[q] & (1 << chan_index) ? ~0 : 0;
 
    /* color buffer */
-   color = &TILE_PIXEL(tile->color, x, y, 0);
+   color = &TILE_PIXEL(tile->color, ix, iy, 0);
 
    /* depth buffer */
    assert((x % 2) == 0);
    assert((y % 2) == 0);
-   depth = tile->depth + y*TILE_SIZE + 2*x;
+   depth = tile->depth + iy*TILE_SIZE + 2*ix;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(mask, 16));
@@ -245,14 +250,30 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
    /* run shader */
    state->jit_function( &state->jit_context,
-                        rast->x + x, rast->y + y,
+                        x, y,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
                         &mask[0][0],
                         color,
                         depth);
+#else
+   struct lp_rast_tile *tile = &rast->tile;
+   unsigned chan_index;
+   unsigned q, ix, iy;
 
+   x %= TILE_SIZE;
+   y %= TILE_SIZE;
+
+   /* mask */
+   for (q = 0; q < 4; ++q)
+      for(iy = 0; iy < 2; ++iy)
+         for(ix = 0; ix < 2; ++ix)
+            if(masks[q] & (1 << (iy*2 + ix)))
+               for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
+                  TILE_PIXEL(tile->color, x + q*2 + ix, y + iy, chan_index) = 0xff;
+
+#endif
 }
 
 
