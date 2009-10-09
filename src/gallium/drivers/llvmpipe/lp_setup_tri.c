@@ -306,6 +306,11 @@ do_triangle_ccw(struct setup_context *setup,
    if (miny == maxy || minx == maxx)
       return;
 
+   tri->miny = miny;
+   tri->minx = minx;
+   tri->maxy = maxy;
+   tri->maxx = maxx;
+
    /* The only divide in this code.  Is it really needed?
     */
    tri->oneoverarea = 1.0f / area;
