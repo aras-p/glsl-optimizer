@@ -336,7 +336,8 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
 
     switch (pAsm->D.dst.opcode)
     {
-    case SQ_OP2_INST_ADD:                          
+    case SQ_OP2_INST_ADD:
+    case SQ_OP2_INST_KILLGT:
     case SQ_OP2_INST_MUL: 
     case SQ_OP2_INST_MAX:
     case SQ_OP2_INST_MIN:
@@ -356,7 +357,6 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
     case SQ_OP2_INST_MOV: 
     case SQ_OP2_INST_FRACT:
     case SQ_OP2_INST_FLOOR:
-    case SQ_OP2_INST_KILLGT:
     case SQ_OP2_INST_EXP_IEEE:
     case SQ_OP2_INST_LOG_CLAMPED:
     case SQ_OP2_INST_LOG_IEEE:
@@ -2617,15 +2617,15 @@ GLboolean assemble_FRC(r700_AssemblerBase *pAsm)
  
 GLboolean assemble_KIL(r700_AssemblerBase *pAsm)
 {
+    /* TODO: doc says KILL has to be last(end) ALU clause */
+    
     checkop1(pAsm);
 
     pAsm->D.dst.opcode = SQ_OP2_INST_KILLGT;  
-  
-    if ( GL_FALSE == assemble_dst(pAsm) )
-    {
-        return GL_FALSE;
-    }
 
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg   = 0;
     pAsm->D.dst.writex = 0;
     pAsm->D.dst.writey = 0;
     pAsm->D.dst.writez = 0;
@@ -2638,19 +2638,10 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm)
     setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_0);
     noneg_PVSSRC(&(pAsm->S[0].src));
 
-    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-
-    if(PROGRAM_TEMPORARY == pAsm->pILInst[pAsm->uiCurInst].DstReg.File)
+    if ( GL_FALSE == assemble_src(pAsm, 0, 1) )
     {
-        pAsm->S[1].src.reg = pAsm->pILInst[pAsm->uiCurInst].DstReg.Index + pAsm->starting_temp_register_number;
+        return GL_FALSE;
     }
-    else
-    {   //PROGRAM_OUTPUT
-        pAsm->S[1].src.reg = pAsm->uiFP_OutputMap[pAsm->pILInst[pAsm->uiCurInst].DstReg.Index];
-    }
-  
-    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-    noswizzle_PVSSRC(&(pAsm->S[1].src));
   
     if ( GL_FALSE == next_ins(pAsm) )
     {
