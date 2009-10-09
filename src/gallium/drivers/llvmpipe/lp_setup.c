@@ -164,12 +164,6 @@ rasterize_bins( struct setup_context *setup,
    struct cmd_block *block;
    unsigned i,j,k;
 
-   if (setup->state != SETUP_ACTIVE) {
-      /* this can happen, not a big deal */
-      debug_printf("%s called when not binning\n", __FUNCTION__);
-      return;
-   }
-
    lp_rast_begin( rast,
                   setup->fb.width,
                   setup->fb.height );
