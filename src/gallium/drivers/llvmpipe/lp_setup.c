@@ -480,12 +480,36 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 }
 
 
+static INLINE void
+lp_setup_update_shader_state( struct setup_context *setup )
+{
+
+   if(setup->fs.jit_context_dirty) {
+      if(!setup->fs.last_jc ||
+         memcmp(setup->fs.last_jc, &setup->fs.jit_context, sizeof *setup->fs.last_jc)) {
+         struct lp_jit_context *jc;
+
+         jc = get_data(&setup->data, sizeof *jc);
+         if(jc) {
+            memcpy(jc, &setup->fs.jit_context, sizeof *jc);
+            setup->fs.last_jc = jc;
+         }
+      }
+
+      setup->fs.jit_context_dirty = FALSE;
+   }
+
+   assert(setup->fs.last_jc);
+}
+
+
 /* Stubs for lines & points for now:
  */
 void
 lp_setup_point(struct setup_context *setup,
 		     const float (*v0)[4])
 {
+   lp_setup_update_shader_state(setup);
    setup->point( setup, v0 );
 }
 
@@ -494,6 +518,7 @@ lp_setup_line(struct setup_context *setup,
 		    const float (*v0)[4],
 		    const float (*v1)[4])
 {
+   lp_setup_update_shader_state(setup);
    setup->line( setup, v0, v1 );
 }
 
@@ -503,6 +528,7 @@ lp_setup_tri(struct setup_context *setup,
              const float (*v1)[4],
              const float (*v2)[4])
 {
+   lp_setup_update_shader_state(setup);
    setup->triangle( setup, v0, v1, v2 );
 }
 

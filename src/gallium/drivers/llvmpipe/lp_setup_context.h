@@ -114,6 +114,8 @@ struct setup_context {
       lp_jit_frag_func jit_function;
 
       boolean jit_context_dirty;
+
+      const struct lp_jit_context *last_jc;
    } fs;
 
    void (*point)( struct setup_context *,
