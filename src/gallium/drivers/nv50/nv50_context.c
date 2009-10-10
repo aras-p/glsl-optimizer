@@ -33,13 +33,6 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-
-	/* We need this in the ddx for reliable composite, not sure what we're
-	 * actually flushing. We generate all our own flushes with flags = 0. */
-	WAIT_RING(chan, 2);
-	BEGIN_RING(chan, eng2d, 0x0110, 1);
-	OUT_RING  (chan, 0);
 
 	if (flags & PIPE_FLUSH_FRAME)
 		FIRE_RING(chan);

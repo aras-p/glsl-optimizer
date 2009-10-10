@@ -98,24 +98,24 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 void
 nv50_tex_validate(struct nv50_context *nv50)
 {
+	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	int unit, push;
+	unsigned i, unit, push;
 
-	push  = nv50->miptree_nr * 11;
-	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
+	push = MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2 + 23 + 6;
+	so = so_new(nv50->miptree_nr * 9 + push, nv50->miptree_nr + 2);
 
-	so = so_new(push, nv50->miptree_nr * 2);
-	for (unit = 0; unit < nv50->miptree_nr; unit++) {
+	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
+			  nv50->miptree_nr * 8 * 4);
+
+	for (i = 0, unit = 0; unit < nv50->miptree_nr; ++unit) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
 		if (!mt)
 			continue;
 
-		so_method(so, tesla, NV50TCL_CB_ADDR, 1);
-		so_data  (so, ((unit * 8) << NV50TCL_CB_ADDR_ID_SHIFT) |
-			      NV50_CB_TIC);
-		so_method(so, tesla, NV50TCL_CB_DATA(0) | 0x40000000, 8);
+		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
 		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
@@ -123,16 +123,24 @@ nv50_tex_validate(struct nv50_context *nv50)
 		}
 
 		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
-		so_data  (so, (unit << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
-			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
-			NV50TCL_SET_SAMPLER_TEX_VALID);
+		so_data  (so, (i++ << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
+			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
+			  NV50TCL_SET_SAMPLER_TEX_VALID);
 	}
 
 	for (; unit < nv50->state.miptree_nr; unit++) {
 		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
 		so_data  (so,
-			(unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
+			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
 	}
+
+	/* not sure if the following really do what I think: */
+	so_method(so, tesla, 0x1440, 1); /* sync SIFC */
+	so_data  (so, 0);
+	so_method(so, tesla, 0x1330, 1); /* flush TIC */
+	so_data  (so, 0);
+	so_method(so, tesla, 0x1338, 1); /* flush texture caches */
+	so_data  (so, 0x20);
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);

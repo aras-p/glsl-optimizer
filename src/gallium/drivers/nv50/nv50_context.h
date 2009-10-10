@@ -199,6 +199,11 @@ extern void nv50_program_destroy(struct nv50_context *nv50, struct nv50_program 
 extern boolean nv50_state_validate(struct nv50_context *nv50);
 extern void nv50_state_flush_notify(struct nouveau_channel *chan);
 
+extern void nv50_so_init_sifc(struct nv50_context *nv50,
+			      struct nouveau_stateobj *so,
+			      struct nouveau_bo *bo, unsigned reloc,
+			      unsigned size);
+
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);
 
