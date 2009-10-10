@@ -131,7 +131,12 @@ sp_create_tile_cache( struct pipe_screen *screen )
          tc->entries[pos].y = -1;
       }
 
-#if TILE_CLEAR_OPTIMIZATION
+      /* XXX this code prevents valgrind warnings about use of uninitialized
+       * memory in programs that don't clear the surface before rendering.
+       * However, it breaks clearing in other situations (such as in
+       * progs/tests/drawbuffers, see bug 24402).
+       */
+#if 0 && TILE_CLEAR_OPTIMIZATION
       /* set flags to indicate all the tiles are cleared */
       memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
 #endif
