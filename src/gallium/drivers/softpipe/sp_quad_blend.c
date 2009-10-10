@@ -946,15 +946,15 @@ choose_blend_quad(struct quad_stage *qs,
       qs->run = blend_noop;
    }
    else if (!softpipe->blend->logicop_enable &&
-            softpipe->blend->colormask == 0xf) 
+            softpipe->blend->colormask == 0xf &&
+            softpipe->framebuffer.nr_cbufs == 1)
    {
       if (!blend->blend_enable) {
          qs->run = single_output_color;
       }
       else if (blend->rgb_src_factor == blend->alpha_src_factor &&
                blend->rgb_dst_factor == blend->alpha_dst_factor &&
-               blend->rgb_func == blend->alpha_func &&
-               softpipe->framebuffer.nr_cbufs == 1)
+               blend->rgb_func == blend->alpha_func)
       {
          if (blend->alpha_func == PIPE_BLEND_ADD) {
             if (blend->rgb_src_factor == PIPE_BLENDFACTOR_ONE &&
