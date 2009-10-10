@@ -1955,7 +1955,7 @@ _mesa_add_aux_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
       return GL_FALSE;
    }
 
-   assert(numBuffers < MAX_AUX_BUFFERS);
+   assert(numBuffers <= MAX_AUX_BUFFERS);
 
    for (i = 0; i < numBuffers; i++) {
       struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, 0);

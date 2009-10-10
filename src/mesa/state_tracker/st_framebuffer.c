@@ -52,6 +52,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
    struct st_framebuffer *stfb = ST_CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
       int samples = st_get_msaa();
+      int i;
 
       if (visual->sampleBuffers)
          samples = visual->samples;
@@ -117,6 +118,12 @@ st_create_framebuffer( const __GLcontextModes *visual,
          struct gl_renderbuffer *accumRb
             = st_new_renderbuffer_fb(PIPE_FORMAT_R16G16B16A16_SNORM, 0, TRUE);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_ACCUM, accumRb);
+      }
+
+      for (i = 0; i < visual->numAuxBuffers; i++) {
+         struct gl_renderbuffer *aux
+            = st_new_renderbuffer_fb(colorFormat, 0, FALSE);
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_AUX0 + i, aux);
       }
 
       stfb->Base.Initialized = GL_TRUE;
