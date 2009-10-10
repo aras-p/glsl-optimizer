@@ -140,7 +140,8 @@ do_block( struct lp_rasterizer *rast,
 	 cx3 += xstep3;
       }
 
-      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
+      if(masks[0] || masks[1] || masks[2] || masks[3])
+         lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
 
       c1 += ystep1;
       c2 += ystep2;
