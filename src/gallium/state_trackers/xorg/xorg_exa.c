@@ -506,7 +506,7 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDst);
 
 #if DEBUG_PRINT
-   debug_printf("\tExaComposite\n");
+   debug_printf("\tExaComposite(src[%d,%d], mask=[%d, %d], dst=[%d, %d], dim=[%d, %d])\n", srcX, srcY, maskX, maskY, dstX, dstY, width, height);
 #endif
 
    xorg_composite(exa, priv, srcX, srcY, maskX, maskY,
@@ -525,6 +525,9 @@ ExaCheckComposite(int op,
 #if DEBUG_PRINT
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
+#endif
+#if DISABLE_ACCEL
+   accelerated = FALSE;
 #endif
    return accelerated;
 }

@@ -67,9 +67,19 @@ src_in_mask(struct ureg_program *ureg,
             struct ureg_src src,
             struct ureg_src mask)
 {
-   /* MUL dst, src, mask.wwww */
+#if 0
+   /* MUL dst, src, mask.a */
    ureg_MUL(ureg, dst, src,
             ureg_scalar(mask, TGSI_SWIZZLE_W));
+#else
+   /* MOV dst, src */
+   /* MUL dst.a, src.a, mask.a */
+   ureg_MOV(ureg, dst, src);
+   ureg_MUL(ureg,
+            ureg_writemask(dst, TGSI_WRITEMASK_W),
+            ureg_scalar(src, TGSI_SWIZZLE_W),
+            ureg_scalar(mask, TGSI_SWIZZLE_W));
+#endif
 }
 
 static struct ureg_src
@@ -271,7 +281,7 @@ create_vs(struct pipe_context *pipe,
 
    if (has_mask) {
       src = ureg_DECL_vs_input(ureg, input_slot++);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 2);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
       ureg_MOV(ureg, dst, src);
    }
 

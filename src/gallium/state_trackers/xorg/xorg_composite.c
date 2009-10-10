@@ -320,7 +320,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                  pDstPicture, pSrc, pMask, pDst);
    setup_constant_buffers(exa, pDst);
 
-   return FALSE;
+   return TRUE;
 }
 
 void xorg_composite(struct exa_context *exa,
