@@ -125,13 +125,8 @@ boolean xorg_composite_accelerated(int op,
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
 
    if (pSrcPicture->pSourcePict) {
-      /* Gradients not yet supported */
       if (pSrcPicture->pSourcePict->type != SourcePictTypeSolidFill)
-         XORG_FALLBACK("gradients not yet supported");
-
-      /* Solid source with mask not yet handled properly */
-      if (pMaskPicture)
-         XORG_FALLBACK("solid source with mask not yet handled properly");
+         XORG_FALLBACK("gradients not enabled (haven't been well tested)");
    }
 
    for (i = 0; i < accel_ops_count; ++i) {
