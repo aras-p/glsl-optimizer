@@ -25,106 +25,60 @@
 
 #include "nouveau/nouveau_stateobj.h"
 
+#define _(pf, tt, r, g, b, a, tf)                       	\
+{                                                       	\
+	PIPE_FORMAT_##pf,					\
+	NV50TIC_0_0_MAPR_##r | NV50TIC_0_0_TYPER_##tt |		\
+	NV50TIC_0_0_MAPG_##g | NV50TIC_0_0_TYPEG_##tt |		\
+	NV50TIC_0_0_MAPB_##b | NV50TIC_0_0_TYPEB_##tt |		\
+	NV50TIC_0_0_MAPA_##a | NV50TIC_0_0_TYPEA_##tt |		\
+	NV50TIC_0_0_FMT_##tf					\
+}
+
+struct nv50_texture_format {
+	enum pipe_format pf;
+	uint32_t hw;
+};
+
+#define NV50_TEX_FORMAT_LIST_SIZE \
+	(sizeof(nv50_tex_format_list) / sizeof(struct nv50_texture_format))
+
+static const struct nv50_texture_format nv50_tex_format_list[] =
+{
+	_(A8R8G8B8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
+	_(X8R8G8B8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
+	_(A1R5G5B5_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
+	_(A4R4G4B4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
+
+	_(R5G6B5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
+
+	_(L8_UNORM, UNORM, C0, C0, C0, ONE, 8),
+	_(A8_UNORM, UNORM, ZERO, ZERO, ZERO, C0, 8),
+	_(I8_UNORM, UNORM, C0, C0, C0, C0, 8),
+
+	_(A8L8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
+
+	_(DXT1_RGB, UNORM, C0, C1, C2, ONE, DXT1),
+	_(DXT1_RGBA, UNORM, C0, C1, C2, C3, DXT1),
+	_(DXT3_RGBA, UNORM, C0, C1, C2, C3, DXT3),
+	_(DXT5_RGBA, UNORM, C0, C1, C2, C3, DXT5)
+};
+
+#undef _
+
 static int
 nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 		   struct nv50_miptree *mt, int unit)
 {
-	switch (mt->base.base.format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8_8_8_8);
-		break;
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8_8_8_8);
-		break;
-	case PIPE_FORMAT_A1R5G5B5_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_1_5_5_5);
-		break;
-	case PIPE_FORMAT_A4R4G4B4_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_4_4_4_4);
-		break;
-	case PIPE_FORMAT_R5G6B5_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C2 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_5_6_5);
-		break;
-	case PIPE_FORMAT_L8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C0 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8);
-		break;
-	case PIPE_FORMAT_A8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C0 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_ZERO | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_ZERO | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_ZERO | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8);
-		break;
-	case PIPE_FORMAT_I8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C0 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C0 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8);
-		break;
-	case PIPE_FORMAT_A8L8_UNORM:
-		so_data(so, NV50TIC_0_0_MAPA_C1 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C0 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_8_8);
-		break;
-	case PIPE_FORMAT_DXT1_RGB:
-		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_DXT1);
-		break;
-	case PIPE_FORMAT_DXT1_RGBA:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_DXT1);
-		break;
-	case PIPE_FORMAT_DXT3_RGBA:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_DXT3);
-		break;
-	case PIPE_FORMAT_DXT5_RGBA:
-		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
-			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
-			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
-			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
-			    NV50TIC_0_0_FMT_DXT5);
-		break;
-	default:
-		return 1;
-	}
+	unsigned i;
 
+	for (i = 0; i < NV50_TEX_FORMAT_LIST_SIZE; i++)
+		if (nv50_tex_format_list[i].pf == mt->base.base.format)
+			break;
+	if (i == NV50_TEX_FORMAT_LIST_SIZE)
+                return 1;
+
+	so_data (so, nv50_tex_format_list[i].hw);
 	so_reloc(so, mt->base.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 		     NOUVEAU_BO_RD, 0, 0);
 	if (nv50->sampler[unit]->normalized)
