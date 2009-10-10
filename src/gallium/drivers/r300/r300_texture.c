@@ -215,6 +215,55 @@ static struct pipe_texture*
     return (struct pipe_texture*)tex;
 }
 
+static struct pipe_video_surface *
+r300_video_surface_create(struct pipe_screen *screen,
+                          enum pipe_video_chroma_format chroma_format,
+                          unsigned width, unsigned height)
+{
+    struct r300_video_surface *r300_vsfc;
+    struct pipe_texture template;
+
+    assert(screen);
+    assert(width && height);
+
+    r300_vsfc = CALLOC_STRUCT(r300_video_surface);
+    if (!r300_vsfc)
+       return NULL;
+
+    pipe_reference_init(&r300_vsfc->base.reference, 1);
+    r300_vsfc->base.screen = screen;
+    r300_vsfc->base.chroma_format = chroma_format;
+    r300_vsfc->base.width = width;
+    r300_vsfc->base.height = height;
+
+    memset(&template, 0, sizeof(struct pipe_texture));
+    template.target = PIPE_TEXTURE_2D;
+    template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+    template.last_level = 0;
+    template.width[0] = util_next_power_of_two(width);
+    template.height[0] = util_next_power_of_two(height);
+    template.depth[0] = 1;
+    pf_get_block(template.format, &template.block);
+    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER |
+                         PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+    r300_vsfc->tex = screen->texture_create(screen, &template);
+    if (!r300_vsfc->tex)
+    {
+        FREE(r300_vsfc);
+        return NULL;
+    }
+
+    return &r300_vsfc->base;
+}
+
+static void r300_video_surface_destroy(struct pipe_video_surface *vsfc)
+{
+    struct r300_video_surface *r300_vsfc = r300_video_surface(vsfc);
+    pipe_texture_reference(&r300_vsfc->tex, NULL);
+    FREE(r300_vsfc);
+}
+
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
@@ -222,6 +271,9 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen)
     screen->get_tex_surface = r300_get_tex_surface;
     screen->tex_surface_destroy = r300_tex_surface_destroy;
     screen->texture_blanket = r300_texture_blanket;
+
+    screen->video_surface_create = r300_video_surface_create;
+    screen->video_surface_destroy= r300_video_surface_destroy;
 }
 
 boolean r300_get_texture_buffer(struct pipe_texture* texture,

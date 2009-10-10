@@ -24,7 +24,7 @@
 #define R300_TEXTURE_H
 
 #include "pipe/p_screen.h"
-
+#include "pipe/p_video_state.h"
 #include "util/u_math.h"
 
 #include "r300_context.h"
@@ -89,6 +89,18 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
             break;
     }
     return 0;
+}
+
+struct r300_video_surface
+{
+    struct pipe_video_surface   base;
+    struct pipe_texture         *tex;
+};
+
+static INLINE struct r300_video_surface *
+r300_video_surface(struct pipe_video_surface *pvs)
+{
+    return (struct r300_video_surface *)pvs;
 }
 
 #ifndef R300_WINSYS_H
