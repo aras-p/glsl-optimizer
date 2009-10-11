@@ -726,7 +726,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + brw->ib.size);
+		brw->ib.offset + brw->ib.size - 1);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }
