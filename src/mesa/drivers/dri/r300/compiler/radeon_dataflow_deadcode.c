@@ -80,19 +80,8 @@ static void or_updatemasks(
 
 static void push_branch(struct deadcode_state * s)
 {
-	if (s->BranchStackSize >= s->BranchStackReserved) {
-		unsigned int new_reserve = 2 * s->BranchStackReserved;
-		struct branchinfo * new_stack;
-
-		if (!new_reserve)
-			new_reserve = 4;
-
-		new_stack = memory_pool_malloc(&s->C->Pool, new_reserve * sizeof(struct branchinfo));
-		memcpy(new_stack, s->BranchStack, s->BranchStackSize * sizeof(struct branchinfo));
-
-		s->BranchStack = new_stack;
-		s->BranchStackReserved = new_reserve;
-	}
+	memory_pool_array_reserve(&s->C->Pool, struct branchinfo, s->BranchStack,
+			s->BranchStackSize, s->BranchStackReserved, 1);
 
 	struct branchinfo * branch = &s->BranchStack[s->BranchStackSize++];
 	branch->HaveElse = 0;
