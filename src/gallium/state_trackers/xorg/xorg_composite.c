@@ -40,6 +40,14 @@ static const struct xorg_composite_blend xorg_blends[] = {
    { PictOpOverReverse,
      PIPE_BLENDFACTOR_SRC_ALPHA, PIPE_BLENDFACTOR_ONE,
      PIPE_BLENDFACTOR_INV_SRC_ALPHA, PIPE_BLENDFACTOR_INV_SRC_ALPHA },
+
+   { PictOpOutReverse,
+     PIPE_BLENDFACTOR_SRC_ALPHA, PIPE_BLENDFACTOR_ONE,
+     PIPE_BLENDFACTOR_INV_SRC_ALPHA, PIPE_BLENDFACTOR_INV_SRC_ALPHA },
+
+   { PictOpAdd,
+     PIPE_BLENDFACTOR_SRC_ALPHA, PIPE_BLENDFACTOR_ONE,
+     PIPE_BLENDFACTOR_INV_SRC_ALPHA, PIPE_BLENDFACTOR_INV_SRC_ALPHA },
 };
 
 
@@ -138,7 +146,9 @@ boolean xorg_composite_accelerated(int op,
               (!accelerated_ops[i].with_mask ||
                (pMaskPicture->componentAlpha &&
                 !accelerated_ops[i].component_alpha))))
-            XORG_FALLBACK("component alpha unsupported");
+            XORG_FALLBACK("component alpha unsupported (PictOpOver=%s(%d)",
+                          (accelerated_ops[i].op == PictOpOver) ? "yes" : "no",
+                          accelerated_ops[i].op);
          return TRUE;
       }
    }
@@ -156,10 +166,7 @@ bind_blend_state(struct exa_context *exa, int op,
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
    blend.blend_enable = 1;
-   blend.colormask |= PIPE_MASK_R;
-   blend.colormask |= PIPE_MASK_G;
-   blend.colormask |= PIPE_MASK_B;
-   blend.colormask |= PIPE_MASK_A;
+   blend.colormask |= PIPE_MASK_RGBA;
 
    blend.rgb_src_factor   = blend_opt.rgb_src_factor;
    blend.alpha_src_factor = blend_opt.alpha_src_factor;
@@ -345,8 +352,6 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
 
    pixel_to_float4(fg, exa->solid_color);
    exa->has_solid_color = TRUE;
-
-   exa->solid_color[3] = 1.f;
 
 #if 0
    debug_printf("Color Pixel=(%d, %d, %d, %d), RGBA=(%f, %f, %f, %f)\n",

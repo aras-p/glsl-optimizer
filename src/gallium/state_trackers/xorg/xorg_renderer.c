@@ -681,6 +681,9 @@ void renderer_draw_solid_rect(struct xorg_renderer *r,
    struct pipe_context *pipe = r->pipe;
    struct pipe_buffer *buf = 0;
 
+   /*
+   debug_printf("solid rect[(%d, %d), (%d, %d)], rgba[%f, %f, %f, %f]\n",
+   x0, y0, x1, y1, color[0], color[1], color[2], color[3]);*/
    /* 1st vertex */
    setup_vertex0(r->vertices2[0], x0, y0, color);
    /* 2nd vertex */
