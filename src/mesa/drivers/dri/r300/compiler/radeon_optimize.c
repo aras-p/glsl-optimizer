@@ -28,6 +28,7 @@
 #include "radeon_dataflow.h"
 
 #include "radeon_compiler.h"
+#include "radeon_swizzle.h"
 
 
 static struct rc_src_register chain_srcregs(struct rc_src_register outer, struct rc_src_register inner)
@@ -219,6 +220,215 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 	rc_remove_instruction(inst_mov);
 }
 
+/**
+ * Check if a source register is actually always the same
+ * swizzle constant.
+ */
+static int is_src_uniform_constant(struct rc_src_register src,
+		rc_swizzle * pswz, unsigned int * pnegate)
+{
+	int have_used = 0;
+
+	if (src.File != RC_FILE_NONE) {
+		*pswz = 0;
+		return 0;
+	}
+
+	for(unsigned int chan = 0; chan < 4; ++chan) {
+		unsigned int swz = GET_SWZ(src.Swizzle, chan);
+		if (swz < 4) {
+			*pswz = 0;
+			return 0;
+		}
+		if (swz == RC_SWIZZLE_UNUSED)
+			continue;
+
+		if (!have_used) {
+			*pswz = swz;
+			*pnegate = GET_BIT(src.Negate, chan);
+			have_used = 1;
+		} else {
+			if (swz != *pswz || *pnegate != GET_BIT(src.Negate, chan)) {
+				*pswz = 0;
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+
+static void constant_folding_mad(struct rc_instruction * inst)
+{
+	rc_swizzle swz;
+	unsigned int negate;
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[2], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MUL;
+			return;
+		}
+	}
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[1], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ONE) {
+			inst->U.I.Opcode = RC_OPCODE_ADD;
+			if (negate)
+				inst->U.I.SrcReg[0].Negate ^= RC_MASK_XYZW;
+			inst->U.I.SrcReg[1] = inst->U.I.SrcReg[2];
+			return;
+		} else if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0] = inst->U.I.SrcReg[2];
+			return;
+		}
+	}
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[0], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ONE) {
+			inst->U.I.Opcode = RC_OPCODE_ADD;
+			if (negate)
+				inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
+			inst->U.I.SrcReg[0] = inst->U.I.SrcReg[2];
+			return;
+		} else if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0] = inst->U.I.SrcReg[2];
+			return;
+		}
+	}
+}
+
+static void constant_folding_mul(struct rc_instruction * inst)
+{
+	rc_swizzle swz;
+	unsigned int negate;
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[0], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ONE) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0] = inst->U.I.SrcReg[1];
+			if (negate)
+				inst->U.I.SrcReg[0].Negate ^= RC_MASK_XYZW;
+			return;
+		} else if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
+			return;
+		}
+	}
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[1], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ONE) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			if (negate)
+				inst->U.I.SrcReg[0].Negate ^= RC_MASK_XYZW;
+			return;
+		} else if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_0000;
+			return;
+		}
+	}
+}
+
+static void constant_folding_add(struct rc_instruction * inst)
+{
+	rc_swizzle swz;
+	unsigned int negate;
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[0], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			inst->U.I.SrcReg[0] = inst->U.I.SrcReg[1];
+			return;
+		}
+	}
+
+	if (is_src_uniform_constant(inst->U.I.SrcReg[1], &swz, &negate)) {
+		if (swz == RC_SWIZZLE_ZERO) {
+			inst->U.I.Opcode = RC_OPCODE_MOV;
+			return;
+		}
+	}
+}
+
+
+/**
+ * Replace 0.0, 1.0 and 0.5 immediate constants by their
+ * respective swizzles. Simplify instructions like ADD dst, src, 0;
+ */
+static void constant_folding(struct radeon_compiler * c, struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+	/* Replace 0.0, 1.0 and 0.5 immediates by their explicit swizzles */
+	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
+		if (inst->U.I.SrcReg[src].File != RC_FILE_CONSTANT ||
+		    inst->U.I.SrcReg[src].RelAddr ||
+		    inst->U.I.SrcReg[src].Index >= c->Program.Constants.Count)
+			continue;
+
+		struct rc_constant * constant =
+			&c->Program.Constants.Constants[inst->U.I.SrcReg[src].Index];
+
+		if (constant->Type != RC_CONSTANT_IMMEDIATE)
+			continue;
+
+		struct rc_src_register newsrc = inst->U.I.SrcReg[src];
+		int have_real_reference = 0;
+		for(unsigned int chan = 0; chan < 4; ++chan) {
+			unsigned int swz = GET_SWZ(newsrc.Swizzle, chan);
+			if (swz >= 4)
+				continue;
+
+			unsigned int newswz;
+			float imm = constant->u.Immediate[swz];
+			float baseimm = imm;
+			if (imm < 0.0)
+				baseimm = -baseimm;
+
+			if (baseimm == 0.0) {
+				newswz = RC_SWIZZLE_ZERO;
+			} else if (baseimm == 1.0) {
+				newswz = RC_SWIZZLE_ONE;
+			} else if (baseimm == 0.5) {
+				newswz = RC_SWIZZLE_HALF;
+			} else {
+				have_real_reference = 1;
+				continue;
+			}
+
+			SET_SWZ(newsrc.Swizzle, chan, newswz);
+			if (imm < 0.0 && !newsrc.Abs)
+				newsrc.Negate ^= 1 << chan;
+		}
+
+		if (!have_real_reference) {
+			newsrc.File = RC_FILE_NONE;
+			newsrc.Index = 0;
+		}
+
+		/* don't make the swizzle worse */
+		if (!c->SwizzleCaps->IsNative(inst->U.I.Opcode, newsrc) &&
+		    c->SwizzleCaps->IsNative(inst->U.I.Opcode, inst->U.I.SrcReg[src]))
+			continue;
+
+		inst->U.I.SrcReg[src] = newsrc;
+	}
+
+	/* Simplify instructions based on constants */
+	if (inst->U.I.Opcode == RC_OPCODE_MAD)
+		constant_folding_mad(inst);
+
+	/* note: MAD can simplify to MUL or ADD */
+	if (inst->U.I.Opcode == RC_OPCODE_MUL)
+		constant_folding_mul(inst);
+	else if (inst->U.I.Opcode == RC_OPCODE_ADD)
+		constant_folding_add(inst);
+}
+
 void rc_optimize(struct radeon_compiler * c)
 {
 	struct rc_instruction * inst = c->Program.Instructions.Next;
@@ -226,7 +436,11 @@ void rc_optimize(struct radeon_compiler * c)
 		struct rc_instruction * cur = inst;
 		inst = inst->Next;
 
-		if (cur->U.I.Opcode == RC_OPCODE_MOV)
+		constant_folding(c, cur);
+
+		if (cur->U.I.Opcode == RC_OPCODE_MOV) {
 			peephole(c, cur);
+			/* cur may no longer be part of the program */
+		}
 	}
 }
