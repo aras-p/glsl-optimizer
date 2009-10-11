@@ -98,6 +98,15 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
 	rewrite_depth_out(c);
 
+	debug_program_log(c, "before compilation");
+
+	/* XXX Ideally this should be done only for r3xx, but since
+	 * we don't have branching support for r5xx, we use the emulation
+	 * on all chipsets. */
+	rc_emulate_branches(&c->Base);
+
+	debug_program_log(c, "after emulate branches");
+
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r500_transform_IF, 0 },
@@ -107,6 +116,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		};
 		radeonLocalTransform(&c->Base, 4, transformations);
 
+		debug_program_log(c, "after native rewrite part 1");
+
 		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {
 		struct radeon_program_transformation transformations[] = {
@@ -115,9 +126,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		};
 		radeonLocalTransform(&c->Base, 2, transformations);
 
-		debug_program_log(c, "before emulate branches");
-
-		rc_emulate_branches(&c->Base);
+		debug_program_log(c, "after native rewrite part 1");
 
 		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
@@ -135,7 +144,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	if (c->Base.Error)
 		return;
 
-	debug_program_log(c, "after native rewrite");
+	debug_program_log(c, "after native rewrite part 2");
 
 	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
 	if (c->Base.Error)
