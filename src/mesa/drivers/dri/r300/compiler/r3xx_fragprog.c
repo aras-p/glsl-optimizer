@@ -152,6 +152,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after deadcode");
 
+	rc_optimize(&c->Base);
+
+	debug_program_log(c, "after dataflow optimize");
+
 	rc_dataflow_swizzles(&c->Base);
 	if (c->Base.Error)
 		return;

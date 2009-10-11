@@ -448,8 +448,8 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 		 * counter-intuitive, to account for the case where an
 		 * instruction writes to the same register as it reads
 		 * from. */
-		rc_for_all_writes(inst, &scan_write, &s);
-		rc_for_all_reads(inst, &scan_read, &s);
+		rc_for_all_writes_chan(inst, &scan_write, &s);
+		rc_for_all_reads_chan(inst, &scan_read, &s);
 
 		DBG("%i: Has %i dependencies\n", inst->IP, s.Current->NumDependencies);
 

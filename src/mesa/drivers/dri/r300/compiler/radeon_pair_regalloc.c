@@ -159,7 +159,7 @@ static int try_add_live_intervals(struct regalloc_state * s,
 }
 
 static void scan_callback(void * data, struct rc_instruction * inst,
-		rc_register_file file, unsigned int index, unsigned int chan)
+		rc_register_file file, unsigned int index, unsigned int mask)
 {
 	struct regalloc_state * s = data;
 	struct register_info * reg;
@@ -191,8 +191,8 @@ static void compute_live_intervals(struct regalloc_state * s)
 	for(struct rc_instruction * inst = s->C->Program.Instructions.Next;
 	    inst != &s->C->Program.Instructions;
 	    inst = inst->Next) {
-		rc_for_all_reads(inst, scan_callback, s);
-		rc_for_all_writes(inst, scan_callback, s);
+		rc_for_all_reads_mask(inst, scan_callback, s);
+		rc_for_all_writes_mask(inst, scan_callback, s);
 	}
 }
 

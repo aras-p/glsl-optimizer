@@ -30,7 +30,7 @@
 #include "radeon_program.h"
 
 
-static void reads_normal(struct rc_instruction * fullinst, rc_read_write_fn cb, void * userdata)
+static void reads_normal(struct rc_instruction * fullinst, rc_read_write_chan_fn cb, void * userdata)
 {
 	struct rc_sub_instruction * inst = &fullinst->U.I;
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
@@ -46,18 +46,15 @@ static void reads_normal(struct rc_instruction * fullinst, rc_read_write_fn cb, 
 
 		refmask &= RC_MASK_XYZW;
 
-		for(unsigned int chan = 0; chan < 4; ++chan) {
-			if (GET_BIT(refmask, chan)) {
-				cb(userdata, fullinst, inst->SrcReg[src].File, inst->SrcReg[src].Index, chan);
-			}
-		}
+		if (refmask)
+			cb(userdata, fullinst, inst->SrcReg[src].File, inst->SrcReg[src].Index, refmask);
 
 		if (refmask && inst->SrcReg[src].RelAddr)
 			cb(userdata, fullinst, RC_FILE_ADDRESS, 0, RC_MASK_X);
 	}
 }
 
-static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_fn cb, void * userdata)
+static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_mask_fn cb, void * userdata)
 {
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 	unsigned int refmasks[3] = { 0, 0, 0 };
@@ -84,27 +81,23 @@ static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_fn cb, v
 	}
 
 	for(unsigned int src = 0; src < 3; ++src) {
-		if (inst->RGB.Src[src].Used) {
-			for(unsigned int chan = 0; chan < 3; ++chan) {
-				if (GET_BIT(refmasks[src], chan))
-					cb(userdata, fullinst, inst->RGB.Src[src].File, inst->RGB.Src[src].Index, chan);
-			}
-		}
+		if (inst->RGB.Src[src].Used && (refmasks[src] & RC_MASK_XYZ))
+			cb(userdata, fullinst, inst->RGB.Src[src].File, inst->RGB.Src[src].Index,
+			   refmasks[src] & RC_MASK_XYZ);
 
-		if (inst->Alpha.Src[src].Used) {
-			if (GET_BIT(refmasks[src], 3))
-				cb(userdata, fullinst, inst->Alpha.Src[src].File, inst->Alpha.Src[src].Index, 3);
-		}
+		if (inst->Alpha.Src[src].Used && (refmasks[src] & RC_MASK_W))
+			cb(userdata, fullinst, inst->Alpha.Src[src].File, inst->Alpha.Src[src].Index, RC_MASK_W);
 	}
 }
 
 /**
- * Calls a callback function for all sourced register channels.
+ * Calls a callback function for all register reads.
  *
- * This is conservative, i.e. channels may be called multiple times,
- * and the writemask of the instruction is not taken into account.
+ * This is conservative, i.e. if the same register is referenced multiple times,
+ * the callback may also be called multiple times.
+ * Also, the writemask of the instruction is not taken into account.
  */
-void rc_for_all_reads(struct rc_instruction * inst, rc_read_write_fn cb, void * userdata)
+void rc_for_all_reads_mask(struct rc_instruction * inst, rc_read_write_mask_fn cb, void * userdata)
 {
 	if (inst->Type == RC_INSTRUCTION_NORMAL) {
 		reads_normal(inst, cb, userdata);
@@ -115,44 +108,39 @@ void rc_for_all_reads(struct rc_instruction * inst, rc_read_write_fn cb, void * 
 
 
 
-static void writes_normal(struct rc_instruction * fullinst, rc_read_write_fn cb, void * userdata)
+static void writes_normal(struct rc_instruction * fullinst, rc_read_write_mask_fn cb, void * userdata)
 {
 	struct rc_sub_instruction * inst = &fullinst->U.I;
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 
-	if (opcode->HasDstReg) {
-		for(unsigned int chan = 0; chan < 4; ++chan) {
-			if (GET_BIT(inst->DstReg.WriteMask, chan))
-				cb(userdata, fullinst, inst->DstReg.File, inst->DstReg.Index, chan);
-		}
-	}
+	if (opcode->HasDstReg && inst->DstReg.WriteMask)
+		cb(userdata, fullinst, inst->DstReg.File, inst->DstReg.Index, inst->DstReg.WriteMask);
 
 	if (inst->WriteALUResult)
-		cb(userdata, fullinst, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT, 0);
+		cb(userdata, fullinst, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT, RC_MASK_X);
 }
 
-static void writes_pair(struct rc_instruction * fullinst, rc_read_write_fn cb, void * userdata)
+static void writes_pair(struct rc_instruction * fullinst, rc_read_write_mask_fn cb, void * userdata)
 {
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 
-	for(unsigned int chan = 0; chan < 3; ++chan) {
-		if (GET_BIT(inst->RGB.WriteMask, chan))
-			cb(userdata, fullinst, RC_FILE_TEMPORARY, inst->RGB.DestIndex, chan);
-	}
+	if (inst->RGB.WriteMask)
+		cb(userdata, fullinst, RC_FILE_TEMPORARY, inst->RGB.DestIndex, inst->RGB.WriteMask);
 
 	if (inst->Alpha.WriteMask)
-		cb(userdata, fullinst, RC_FILE_TEMPORARY, inst->Alpha.DestIndex, 3);
+		cb(userdata, fullinst, RC_FILE_TEMPORARY, inst->Alpha.DestIndex, RC_MASK_W);
 
 	if (inst->WriteALUResult)
-		cb(userdata, fullinst, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT, 0);
+		cb(userdata, fullinst, RC_FILE_SPECIAL, RC_SPECIAL_ALU_RESULT, RC_MASK_X);
 }
 
 /**
- * Calls a callback function for all written register channels.
+ * Calls a callback function for all register writes in the instruction,
+ * reporting writemasks to the callback function.
  *
  * \warning Does not report output registers for paired instructions!
  */
-void rc_for_all_writes(struct rc_instruction * inst, rc_read_write_fn cb, void * userdata)
+void rc_for_all_writes_mask(struct rc_instruction * inst, rc_read_write_mask_fn cb, void * userdata)
 {
 	if (inst->Type == RC_INSTRUCTION_NORMAL) {
 		writes_normal(inst, cb, userdata);
@@ -161,6 +149,48 @@ void rc_for_all_writes(struct rc_instruction * inst, rc_read_write_fn cb, void *
 	}
 }
 
+
+struct mask_to_chan_data {
+	void * UserData;
+	rc_read_write_chan_fn Fn;
+};
+
+static void mask_to_chan_cb(void * data, struct rc_instruction * inst,
+		rc_register_file file, unsigned int index, unsigned int mask)
+{
+	struct mask_to_chan_data * d = data;
+	for(unsigned int chan = 0; chan < 4; ++chan) {
+		if (GET_BIT(mask, chan))
+			d->Fn(d->UserData, inst, file, index, chan);
+	}
+}
+
+/**
+ * Calls a callback function for all sourced register channels.
+ *
+ * This is conservative, i.e. channels may be called multiple times,
+ * and the writemask of the instruction is not taken into account.
+ */
+void rc_for_all_reads_chan(struct rc_instruction * inst, rc_read_write_chan_fn cb, void * userdata)
+{
+	struct mask_to_chan_data d;
+	d.UserData = userdata;
+	d.Fn = cb;
+	rc_for_all_reads_mask(inst, &mask_to_chan_cb, &d);
+}
+
+/**
+ * Calls a callback function for all written register channels.
+ *
+ * \warning Does not report output registers for paired instructions!
+ */
+void rc_for_all_writes_chan(struct rc_instruction * inst, rc_read_write_chan_fn cb, void * userdata)
+{
+	struct mask_to_chan_data d;
+	d.UserData = userdata;
+	d.Fn = cb;
+	rc_for_all_writes_mask(inst, &mask_to_chan_cb, &d);
+}
 
 static void remap_normal_instruction(struct rc_instruction * fullinst,
 		rc_remap_register_fn cb, void * userdata)

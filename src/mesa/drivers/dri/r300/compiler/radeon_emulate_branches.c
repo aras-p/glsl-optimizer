@@ -150,7 +150,7 @@ static void allocate_and_insert_proxies(struct emulate_branch_state * s,
 	sap.Proxies = proxies;
 
 	for(struct rc_instruction * inst = begin; inst != end; inst = inst->Next) {
-		rc_for_all_writes(inst, scan_write, &sap);
+		rc_for_all_writes_mask(inst, scan_write, &sap);
 		rc_remap_registers(inst, remap_proxy_function, &sap);
 	}
 
