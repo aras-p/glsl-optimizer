@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "radeon_dataflow.h"
+#include "radeon_emulate_branches.h"
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
 #include "r300_fragprog.h"
@@ -85,6 +86,14 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	}
 }
 
+static void debug_program_log(struct r300_fragment_program_compiler* c, const char * where)
+{
+	if (c->Base.Debug) {
+		fprintf(stderr, "Fragment Program: %s\n", where);
+		rc_print_program(&c->Base.Program);
+	}
+}
+
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
 	rewrite_depth_out(c);
@@ -106,6 +115,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		};
 		radeonLocalTransform(&c->Base, 2, transformations);
 
+		debug_program_log(c, "before emulate branches");
+
+		rc_emulate_branches(&c->Base);
+
 		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
 
@@ -119,62 +132,41 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	common_transformations[0].function = &radeonTransformALU;
 	radeonLocalTransform(&c->Base, 1, common_transformations);
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After native rewrite:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	if (c->Base.Error)
+		return;
+
+	debug_program_log(c, "after native rewrite");
 
 	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After deadcode:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after deadcode");
 
 	rc_dataflow_swizzles(&c->Base);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after dataflow passes:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after dataflow passes");
 
 	rc_pair_translate(c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair translate:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after pair translate");
 
 	rc_pair_schedule(c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair scheduling:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after pair scheduling");
 
 	rc_pair_regalloc(c, c->max_temp_regs);
 
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair register allocation:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after register allocation");
 
 	if (c->is_r500) {
 		r500BuildFragmentProgramHwCode(c);

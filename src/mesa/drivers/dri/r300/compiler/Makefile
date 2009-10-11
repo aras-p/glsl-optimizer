@@ -8,6 +8,7 @@ LIBNAME = r300compiler
 C_SOURCES = \
 		radeon_code.c \
 		radeon_compiler.c \
+		radeon_emulate_branches.c \
 		radeon_program.c \
 		radeon_program_print.c \
 		radeon_opcodes.c \

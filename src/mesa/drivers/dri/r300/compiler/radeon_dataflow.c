@@ -160,3 +160,92 @@ void rc_for_all_writes(struct rc_instruction * inst, rc_read_write_fn cb, void *
 		writes_pair(inst, cb, userdata);
 	}
 }
+
+
+static void remap_normal_instruction(struct rc_instruction * fullinst,
+		rc_remap_register_fn cb, void * userdata)
+{
+	struct rc_sub_instruction * inst = &fullinst->U.I;
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
+
+	if (opcode->HasDstReg) {
+		rc_register_file file = inst->DstReg.File;
+		unsigned int index = inst->DstReg.Index;
+
+		cb(userdata, fullinst, &file, &index);
+
+		inst->DstReg.File = file;
+		inst->DstReg.Index = index;
+	}
+
+	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
+		rc_register_file file = inst->SrcReg[src].File;
+		unsigned int index = inst->SrcReg[src].Index;
+
+		cb(userdata, fullinst, &file, &index);
+
+		inst->SrcReg[src].File = file;
+		inst->SrcReg[src].Index = index;
+	}
+}
+
+static void remap_pair_instruction(struct rc_instruction * fullinst,
+		rc_remap_register_fn cb, void * userdata)
+{
+	struct rc_pair_instruction * inst = &fullinst->U.P;
+
+	if (inst->RGB.WriteMask) {
+		rc_register_file file = RC_FILE_TEMPORARY;
+		unsigned int index = inst->RGB.DestIndex;
+
+		cb(userdata, fullinst, &file, &index);
+
+		inst->RGB.DestIndex = index;
+	}
+
+	if (inst->Alpha.WriteMask) {
+		rc_register_file file = RC_FILE_TEMPORARY;
+		unsigned int index = inst->Alpha.DestIndex;
+
+		cb(userdata, fullinst, &file, &index);
+
+		inst->Alpha.DestIndex = index;
+	}
+
+	for(unsigned int src = 0; src < 3; ++src) {
+		if (inst->RGB.Src[src].Used) {
+			rc_register_file file = inst->RGB.Src[src].File;
+			unsigned int index = inst->RGB.Src[src].Index;
+
+			cb(userdata, fullinst, &file, &index);
+
+			inst->RGB.Src[src].File = file;
+			inst->RGB.Src[src].Index = index;
+		}
+
+		if (inst->Alpha.Src[src].Used) {
+			rc_register_file file = inst->Alpha.Src[src].File;
+			unsigned int index = inst->Alpha.Src[src].Index;
+
+			cb(userdata, fullinst, &file, &index);
+
+			inst->Alpha.Src[src].File = file;
+			inst->Alpha.Src[src].Index = index;
+		}
+	}
+}
+
+
+/**
+ * Remap all register accesses according to the given function.
+ * That is, call the function \p cb for each referenced register (both read and written)
+ * and update the given instruction \p inst accordingly
+ * if it modifies its \ref pfile and \ref pindex contents.
+ */
+void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, void * userdata)
+{
+	if (inst->Type == RC_INSTRUCTION_NORMAL)
+		remap_normal_instruction(inst, cb, userdata);
+	else
+		remap_pair_instruction(inst, cb, userdata);
+}
