@@ -348,21 +348,6 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 	return 1;
 }
 
-static void grow_branches(struct emit_state * s)
-{
-	unsigned int newreserved = s->BranchesReserved * 2;
-	struct branch_info * newbranches;
-
-	if (!newreserved)
-		newreserved = 4;
-
-	newbranches = memory_pool_malloc(&s->C->Pool, newreserved*sizeof(struct branch_info));
-	memcpy(newbranches, s->Branches, s->CurrentBranchDepth*sizeof(struct branch_info));
-
-	s->Branches = newbranches;
-	s->BranchesReserved = newreserved;
-}
-
 static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst)
 {
 	if (s->Code->inst_end >= 511) {
@@ -380,8 +365,8 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 			return;
 		}
 
-		if (s->CurrentBranchDepth >= s->BranchesReserved)
-			grow_branches(s);
+		memory_pool_array_reserve(&s->C->Pool, struct branch_info,
+				s->Branches, s->CurrentBranchDepth, s->BranchesReserved, 1);
 
 		struct branch_info * branch = &s->Branches[s->CurrentBranchDepth++];
 		branch->If = newip;
