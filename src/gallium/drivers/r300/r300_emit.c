@@ -212,7 +212,7 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
     }
 
     if (constants->Count) {
-        OUT_CS_ONE_REG(R300_PFS_PARAM_0_X, constants->Count * 4);
+        OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, constants->Count * 4);
         for(i = 0; i < constants->Count; ++i) {
             const float * data = get_shader_constant(r300, &constants->Constants[i], externals);
             OUT_CS(pack_float24(data[0]));
