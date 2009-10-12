@@ -222,7 +222,8 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_offset = intel_miptree_image_offset(intelImage->mt,
                                            intelImage->face,
-                                           intelImage->level);
+                                           intelImage->level,
+                                           0 /* zslice */);
 
    dst_stride = intelImage->mt->pitch;
 
@@ -281,8 +282,8 @@ try_pbo_zcopy(struct intel_context *intel,
 
    dst_offset = intel_miptree_image_offset(intelImage->mt,
                                            intelImage->face,
-                                           intelImage->level);
-
+                                           intelImage->level,
+                                           0 /* zslice */);
    dst_stride = intelImage->mt->pitch;
 
    if (src_stride != dst_stride || dst_offset != 0 || src_offset != 0) {
