@@ -693,7 +693,6 @@ brw_wm_get_binding_table(struct brw_context *brw)
 static void prepare_wm_surfaces(struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    GLuint i;
    int old_nr_surfaces;
 
