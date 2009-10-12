@@ -3026,6 +3026,7 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
     pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
     pAsm->S[1].src.reg   = tmp;
     setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
