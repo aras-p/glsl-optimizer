@@ -476,16 +476,17 @@ intel_miptree_image_data(struct intel_context *intel,
 			 GLuint src_row_pitch,
 			 GLuint src_image_pitch)
 {
-   GLuint depth = dst->level[level].depth;
+   const GLuint depth = dst->level[level].depth;
    GLuint i;
-   GLuint height = 0;
 
    DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
       GLuint dst_offset = intel_miptree_image_offset(dst, face, level, i);
-      height = dst->level[level].height;
-      if(dst->compressed)
+      GLuint height = dst->level[level].height;
+
+      if (dst->compressed)
 	 height = (height + 3) / 4;
+
       intel_region_data(intel,
 			dst->region,
 			dst_offset,
