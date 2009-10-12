@@ -2508,7 +2508,7 @@ GLboolean assemble_DOT(r700_AssemblerBase *pAsm)
     }
     else if(pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_DPH) 
     {
-        onecomp_PVSSRC(&(pAsm->S[1].src), 3);
+        onecomp_PVSSRC(&(pAsm->S[0].src), 3);
     } 
 
     if ( GL_FALSE == next_ins(pAsm) ) 
