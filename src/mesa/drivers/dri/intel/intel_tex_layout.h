@@ -33,7 +33,7 @@
 #include "main/macros.h"
 
 
-static GLuint minify( GLuint d )
+static INLINE GLuint minify( GLuint d )
 {
    return MAX2(1, d>>1);
 }
