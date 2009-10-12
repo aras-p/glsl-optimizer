@@ -96,6 +96,11 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_A8L8_UNORM:
+		case PIPE_FORMAT_A8_UNORM:
+		case PIPE_FORMAT_L8_UNORM:
+		case PIPE_FORMAT_I8_UNORM:
 		{
 			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
 				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;

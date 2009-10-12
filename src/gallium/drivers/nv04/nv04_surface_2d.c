@@ -13,10 +13,13 @@ nv04_surface_format(enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8_UNORM:
+	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_I8_UNORM:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
 	case PIPE_FORMAT_R16_SNORM:
 	case PIPE_FORMAT_R5G6B5_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -36,6 +39,7 @@ nv04_rect_format(enum pipe_format format)
 	case PIPE_FORMAT_A8_UNORM:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 	case PIPE_FORMAT_R5G6B5_UNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -51,6 +55,10 @@ static INLINE int
 nv04_scaled_image_format(enum pipe_format format)
 {
 	switch (format) {
+	case PIPE_FORMAT_A8_UNORM:
+	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_I8_UNORM:
+		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_Y8;
 	case PIPE_FORMAT_A1R5G5B5_UNORM:
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A1R5G5B5;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -59,6 +67,7 @@ nv04_scaled_image_format(enum pipe_format format)
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_X8R8G8B8;
 	case PIPE_FORMAT_R5G6B5_UNORM:
 	case PIPE_FORMAT_R16_SNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_R5G6B5;
 	default:
 		return -1;
@@ -131,7 +140,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	OUT_RING  (chan, nv04_surface_format(dst->format) |
 	                 log2i(dst->width) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
 	                 log2i(dst->height) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
- 
+
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, src_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
