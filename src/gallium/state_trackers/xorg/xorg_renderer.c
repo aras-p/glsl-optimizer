@@ -186,6 +186,7 @@ struct xorg_renderer * renderer_create(struct pipe_context *pipe)
 {
    struct xorg_renderer *renderer = CALLOC_STRUCT(xorg_renderer);
 
+   renderer->pipe = pipe;
    renderer->cso = cso_create_context(pipe);
    renderer->shaders = xorg_shaders_create(renderer);
 
