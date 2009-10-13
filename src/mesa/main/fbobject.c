@@ -1129,7 +1129,7 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
       struct gl_texture_object *texObj = att->Texture;
       if (texObj
-          && att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
+          && texObj->Image[att->CubeMapFace][att->TextureLevel]) {
          ctx->Driver.RenderTexture(ctx, fb, att);
       }
    }
