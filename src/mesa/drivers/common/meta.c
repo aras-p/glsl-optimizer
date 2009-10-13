@@ -1048,8 +1048,13 @@ blitframebuffer_texture(GLcontext *ctx,
 
       if (readAtt && readAtt->Texture) {
          const struct gl_texture_object *texObj = readAtt->Texture;
+         const GLuint srcLevel = readAtt->TextureLevel;
          const GLenum minFilterSave = texObj->MinFilter;
          const GLenum magFilterSave = texObj->MagFilter;
+         const GLint baseLevelSave = texObj->BaseLevel;
+         const GLint maxLevelSave = texObj->MaxLevel;
+         const GLenum wrapSSave = texObj->WrapS;
+         const GLenum wrapTSave = texObj->WrapT;
          const GLenum target = texObj->Target;
 
          if (drawAtt->Texture == readAtt->Texture) {
@@ -1075,8 +1080,11 @@ blitframebuffer_texture(GLcontext *ctx,
          _mesa_BindTexture(target, texObj->Name);
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-         /*_mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);*/
          _mesa_set_enable(ctx, target, GL_TRUE);
 
          /* Prepare vertex data (the VBO was previously created and bound) */
@@ -1089,8 +1097,7 @@ blitframebuffer_texture(GLcontext *ctx,
 
             if (target == GL_TEXTURE_2D) {
                const struct gl_texture_image *texImage
-                   = _mesa_select_tex_image(ctx, texObj, target,
-                                            readAtt->TextureLevel);
+                   = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
                s0 = srcX0 / (float) texImage->Width;
                s1 = srcX1 / (float) texImage->Width;
                t0 = srcY0 / (float) texImage->Height;
@@ -1127,11 +1134,15 @@ blitframebuffer_texture(GLcontext *ctx,
 
          _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-         /* Restore texture's filter state, the texture binding will
+         /* Restore texture object state, the texture binding will
           * be restored by _mesa_meta_end().
           */
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
 
          /* Done with color buffer */
          mask &= ~GL_COLOR_BUFFER_BIT;
