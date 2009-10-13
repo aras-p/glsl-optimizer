@@ -113,9 +113,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
         dest, x, y, w, h, pixpitch, color);
 
     /* Fallback? */
-    if (FALSE) {
+    if (!pipe->screen->is_format_supported(pipe->screen, dest->format,
+        PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
-        debug_printf("r300: Falling back on surface clear...");
+        debug_printf("r300: Falling back on surface clear...\n");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
     }
@@ -245,10 +246,18 @@ static void r300_surface_copy(struct pipe_context* pipe,
     if ((srctex->buffer == desttex->buffer) &&
             ((destx < srcx + w) || (srcx < destx + w)) &&
             ((desty < srcy + h) || (srcy < desty + h))) {
+        goto fallback;
+    }
+
+    if (!pipe->screen->is_format_supported(pipe->screen, src->format,
+            PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
+            !pipe->screen->is_format_supported(pipe->screen, dest->format,
+            PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
         debug_printf("r300: Falling back on surface_copy\n");
         util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
+        return;
     }
 
     /* Add our target BOs to the list. */
