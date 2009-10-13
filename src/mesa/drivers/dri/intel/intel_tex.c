@@ -177,6 +177,28 @@ intelGenerateMipmap(GLcontext *ctx, GLenum target,
       intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
       _mesa_generate_mipmap(ctx, target, texObj);
       intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
+
+      {
+         GLuint nr_faces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+         GLuint face, i;
+         /* Update the level information in our private data in the new images,
+          * since it didn't get set as part of a normal TexImage path.
+          */
+         for (face = 0; face < nr_faces; face++) {
+            for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
+               struct intel_texture_image *intelImage =
+                  intel_texture_image(texObj->Image[face][i]);
+               if (!intelImage)
+                  break;
+               intelImage->level = i;
+               intelImage->face = face;
+               /* Unreference the miptree to signal that the new Data is a
+                * bare pointer from mesa.
+                */
+               intel_miptree_release(intel, &intelImage->mt);
+            }
+         }
+      }
    }
    else {
       _mesa_meta_GenerateMipmap(ctx, target, texObj);
