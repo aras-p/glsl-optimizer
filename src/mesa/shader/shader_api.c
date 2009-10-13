@@ -1526,7 +1526,7 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       /* debug code */
       if (0) {
          GLuint i;
-         _mesa_printf("Use Shader %u\n", shProg->Name);
+         _mesa_printf("Use Shader Program %u\n", shProg->Name);
          for (i = 0; i < shProg->NumShaders; i++) {
             _mesa_printf(" shader %u, type 0x%x, checksum %u\n",
                          shProg->Shaders[i]->Name,
