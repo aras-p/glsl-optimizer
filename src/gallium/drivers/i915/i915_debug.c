@@ -880,7 +880,7 @@ i915_dump_batchbuffer( struct intel_batchbuffer *batch )
       return;
    }
    
-   debug_printf( "\n\nBATCH: (%d)\n", bytes / 4);
+   debug_printf( "\n\nBATCH: (%d)\n", (int)bytes / 4);
 
    while (!done &&
 	  stream.offset < bytes)
