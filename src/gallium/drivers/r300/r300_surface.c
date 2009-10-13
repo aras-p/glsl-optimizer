@@ -116,7 +116,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     if (!pipe->screen->is_format_supported(pipe->screen, dest->format,
         PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
-        DBG(r300, DBG_SURF, "r300: Falling back on surface clear...\n");
+        DBG(r300, DBG_SURF | DBG_FALL,
+            "r300: Falling back on surface clear...\n");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
     }
@@ -131,7 +132,7 @@ validate:
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
-            DBG(r300, DBG_SURF, "r300: Stuck in validation loop, gonna fallback.");
+            DBG(r300, DBG_SURF | DBG_FALL, "r300: Stuck in validation loop.");
             goto fallback;
         }
         invalid = TRUE;
@@ -254,7 +255,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
             !pipe->screen->is_format_supported(pipe->screen, dest->format,
             PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
-        DBG(r300, DBG_SURF, "r300: Falling back on surface_copy\n");
+        DBG(r300, DBG_SURF | DBG_FALL, "r300: Falling back on surface_copy\n");
         util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
         return;
@@ -275,7 +276,7 @@ validate:
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
-            DBG(r300, DBG_SURF, "r300: Stuck in validation loop, gonna fallback.");
+            DBG(r300, DBG_SURF | DBG_FALL, "r300: Stuck in validation loop.");
             goto fallback;
         }
         invalid = TRUE;

@@ -38,6 +38,8 @@ static struct debug_option debug_options[] = {
     { "cs", DBG_CS, "Command submissions" },
     { "draw", DBG_DRAW, "Draw and emit" },
     { "surf", DBG_SURF, "Surface drawing" },
+    { "tex", DBG_TEX, "Textures" },
+    { "fall", DBG_FALL, "Fallbacks" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 
