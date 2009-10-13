@@ -40,10 +40,9 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		for (i = 1; i < fb->nr_cbufs; i++)
 			assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
-		/* FIXME: NV34TCL_RT_FORMAT_LOG2_[WIDTH/HEIGHT] */
 		rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
-		log2i(fb->width) << 16 /*NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT*/ |
-		log2i(fb->height) << 24 /*NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT*/;
+			    (log2i(rt[0]->base.width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
+			    (log2i(rt[0]->base.height) << NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
 	}
 	else
 		rt_format = NV34TCL_RT_FORMAT_TYPE_LINEAR;
