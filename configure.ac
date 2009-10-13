@@ -230,6 +230,8 @@ else
         LIB_EXTENSION='dylib' ;;
     cygwin* )
         LIB_EXTENSION='dll' ;;
+    aix* )
+        LIB_EXTENSION='a' ;;
     * )
         LIB_EXTENSION='so' ;;
     esac
