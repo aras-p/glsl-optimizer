@@ -37,6 +37,7 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
+
 static GLenum
 target_to_target(GLenum target)
 {
@@ -52,6 +53,7 @@ target_to_target(GLenum target)
       return target;
    }
 }
+
 
 static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
@@ -101,6 +103,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 
    return mt;
 }
+
 
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
@@ -154,6 +157,7 @@ intel_miptree_create(struct intel_context *intel,
    return mt;
 }
 
+
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
@@ -191,7 +195,8 @@ intel_miptree_create_for_region(struct intel_context *intel,
    intel_region_reference(&mt->region, region);
 
    return mt;
- }
+}
+
 
 /**
  * intel_miptree_pitch_align:
@@ -205,7 +210,6 @@ intel_miptree_create_for_region(struct intel_context *intel,
  * Given @pitch, compute a larger value which accounts for
  * any necessary alignment required by the device
  */
-
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
 			       uint32_t tiling,
@@ -251,6 +255,7 @@ int intel_miptree_pitch_align (struct intel_context *intel,
    return pitch;
 }
 
+
 void
 intel_miptree_reference(struct intel_mipmap_tree **dst,
                         struct intel_mipmap_tree *src)
@@ -259,6 +264,7 @@ intel_miptree_reference(struct intel_mipmap_tree **dst,
    *dst = src;
    DBG("%s %p refcount now %d\n", __FUNCTION__, src, src->refcount);
 }
+
 
 void
 intel_miptree_release(struct intel_context *intel,
@@ -298,9 +304,8 @@ intel_miptree_release(struct intel_context *intel,
 }
 
 
-
-
-/* Can the image be pulled into a unified mipmap tree.  This mirrors
+/**
+ * Can the image be pulled into a unified mipmap tree?  This mirrors
  * the completeness test in a lot of ways.
  *
  * Not sure whether I want to pass gl_texture_image here.
@@ -387,6 +392,7 @@ intel_miptree_set_image_offset_ex(struct intel_mipmap_tree *mt,
        __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
 }
 
+
 void
 intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 			       GLuint level, GLuint img,
@@ -417,7 +423,6 @@ intel_miptree_image_offset(const struct intel_mipmap_tree *mt,
 
    return offset;
 }
-
 
 
 /**
@@ -456,6 +461,7 @@ intel_miptree_image_map(struct intel_context * intel,
            intel_miptree_image_offset(mt, face, level, 0));
 }
 
+
 void
 intel_miptree_image_unmap(struct intel_context *intel,
                           struct intel_mipmap_tree *mt)
@@ -465,8 +471,8 @@ intel_miptree_image_unmap(struct intel_context *intel,
 }
 
 
-
-/* Upload data for a particular image.
+/**
+ * Upload data for a particular image.
  */
 void
 intel_miptree_image_data(struct intel_context *intel,
@@ -502,7 +508,8 @@ intel_miptree_image_data(struct intel_context *intel,
 }
 
 
-/* Copy mipmap image between trees
+/**
+ * Copy mipmap image between trees
  */
 void
 intel_miptree_image_copy(struct intel_context *intel,
@@ -519,7 +526,8 @@ intel_miptree_image_copy(struct intel_context *intel,
    if (dst->compressed) {
        GLuint align_w, align_h;
 
-       intel_get_texture_alignment_unit(dst->internal_format, &align_w, &align_h);
+       intel_get_texture_alignment_unit(dst->internal_format,
+                                        &align_w, &align_h);
        height = (height + 3) / 4;
        width = ALIGN(width, align_w);
    }
