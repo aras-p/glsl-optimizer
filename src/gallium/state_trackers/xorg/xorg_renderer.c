@@ -11,10 +11,38 @@
 
 #include "pipe/p_inlines.h"
 
+#include <math.h>
+
 enum AxisOrientation {
    Y0_BOTTOM,
    Y0_TOP
 };
+
+#define floatsEqual(x, y) (fabs(x - y) <= 0.00001f * MIN2(fabs(x), fabs(y)))
+#define floatIsZero(x) (floatsEqual((x) + 1, 1))
+
+static INLINE boolean is_affine(float *matrix)
+{
+   return floatIsZero(matrix[2]) && floatIsZero(matrix[5])
+      && floatsEqual(matrix[8], 1);
+}
+static INLINE void map_point(float *mat, float x, float y,
+                             float *out_x, float *out_y)
+{
+   if (!mat) {
+      *out_x = x;
+      *out_y = y;
+      return;
+   }
+
+   *out_x = mat[0]*x + mat[3]*y + mat[6];
+   *out_y = mat[1]*x + mat[4]*y + mat[7];
+   if (!is_affine(mat)) {
+      float w = 1/(mat[2]*x + mat[5]*y + mat[8]);
+      *out_x *= w;
+      *out_y *= w;
+   }
+}
 
 static void
 renderer_init_state(struct xorg_renderer *r)
@@ -60,23 +88,38 @@ static struct pipe_buffer *
 setup_vertex_data1(struct xorg_renderer *r,
                    int srcX, int srcY,  int dstX, int dstY,
                    int width, int height,
-                   struct pipe_texture *src)
+                   struct pipe_texture *src, float *src_matrix)
 {
-   float s0, t0, s1, t1;
+   float s0, t0, s1, t1, stmp, ttmp;
 
    s0 = srcX / src->width[0];
    s1 = srcX + width / src->width[0];
    t0 = srcY / src->height[0];
    t1 = srcY + height / src->height[0];
 
-   /* 1st vertex */
-   setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
-   /* 2nd vertex */
-   setup_vertex1(r->vertices2[1], dstX + width, dstY, s1, t0);
-   /* 3rd vertex */
-   setup_vertex1(r->vertices2[2], dstX + width, dstY + height, s1, t1);
-   /* 4th vertex */
-   setup_vertex1(r->vertices2[3], dstX, dstY + height, s0, t1);
+   if (src_matrix) {
+      /* 1st vertex */
+      map_point(src_matrix, s0, t0, &stmp, &ttmp);
+      setup_vertex1(r->vertices2[0], dstX, dstY, stmp, ttmp);
+      /* 2nd vertex */
+      map_point(src_matrix, s1, t0, &stmp, &ttmp);
+      setup_vertex1(r->vertices2[1], dstX + width, dstY, stmp, ttmp);
+      /* 3rd vertex */
+      map_point(src_matrix, s1, t1, &stmp, &ttmp);
+      setup_vertex1(r->vertices2[2], dstX + width, dstY + height, stmp, ttmp);
+      /* 4th vertex */
+      map_point(src_matrix, s0, t1, &stmp, &ttmp);
+      setup_vertex1(r->vertices2[3], dstX, dstY + height, stmp, ttmp);
+   } else {
+      /* 1st vertex */
+      setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
+      /* 2nd vertex */
+      setup_vertex1(r->vertices2[1], dstX + width, dstY, s1, t0);
+      /* 3rd vertex */
+      setup_vertex1(r->vertices2[2], dstX + width, dstY + height, s1, t1);
+      /* 4th vertex */
+      setup_vertex1(r->vertices2[3], dstX, dstY + height, s0, t1);
+   }
 
    return pipe_user_buffer_create(r->pipe->screen,
                                   r->vertices2,
@@ -128,9 +171,11 @@ setup_vertex_data2(struct xorg_renderer *r,
                    int srcX, int srcY, int maskX, int maskY,
                    int dstX, int dstY, int width, int height,
                    struct pipe_texture *src,
-                   struct pipe_texture *mask)
+                   struct pipe_texture *mask,
+                   float *src_matrix, float *mask_matrix)
 {
    float st0[4], st1[4];
+   float pt0[2], pt1[2];
 
    st0[0] = srcX / src->width[0];
    st0[1] = srcY / src->height[0];
@@ -142,18 +187,49 @@ setup_vertex_data2(struct xorg_renderer *r,
    st1[2] = maskX + width / mask->width[0];
    st1[3] = maskY + height / mask->height[0];
 
-   /* 1st vertex */
-   setup_vertex2(r->vertices3[0], dstX, dstY,
-                 st0[0], st0[1], st1[0], st1[1]);
-   /* 2nd vertex */
-   setup_vertex2(r->vertices3[1], dstX + width, dstY,
-                 st0[2], st0[1], st1[2], st1[1]);
-   /* 3rd vertex */
-   setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
-                 st0[2], st0[3], st1[2], st1[3]);
-   /* 4th vertex */
-   setup_vertex2(r->vertices3[3], dstX, dstY + height,
-                 st0[0], st0[3], st1[0], st1[3]);
+   if (src_matrix || mask_matrix) {
+      /* 1st vertex */
+      map_point(src_matrix, st0[0], st0[1],
+                pt0 + 0, pt0 + 1);
+      map_point(mask_matrix, st1[0], st1[1],
+                pt1 + 0, pt1 + 1);
+      setup_vertex2(r->vertices3[0], dstX, dstY,
+                    pt0[0], pt0[1], pt1[0], pt1[1]);
+      /* 2nd vertex */
+      map_point(src_matrix, st0[2], st0[1],
+                pt0 + 0, pt0 + 1);
+      map_point(mask_matrix, st1[2], st1[1],
+                pt1 + 0, pt1 + 1);
+      setup_vertex2(r->vertices3[1], dstX + width, dstY,
+                    pt0[0], pt0[1], pt1[0], pt1[1]);
+      /* 3rd vertex */
+      map_point(src_matrix, st0[2], st0[3],
+                pt0 + 0, pt0 + 1);
+      map_point(mask_matrix, st1[2], st1[3],
+                pt1 + 0, pt1 + 1);
+      setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
+                    pt0[0], pt0[1], pt1[0], pt1[1]);
+      /* 4th vertex */
+      map_point(src_matrix, st0[0], st0[3],
+                pt0 + 0, pt0 + 1);
+      map_point(mask_matrix, st1[0], st1[3],
+                pt1 + 0, pt1 + 1);
+      setup_vertex2(r->vertices3[3], dstX, dstY + height,
+                    pt0[0], pt0[1], pt1[0], pt1[1]);
+   } else {
+      /* 1st vertex */
+      setup_vertex2(r->vertices3[0], dstX, dstY,
+                    st0[0], st0[1], st1[0], st1[1]);
+      /* 2nd vertex */
+      setup_vertex2(r->vertices3[1], dstX + width, dstY,
+                    st0[2], st0[1], st1[2], st1[1]);
+      /* 3rd vertex */
+      setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
+                    st0[2], st0[3], st1[2], st1[3]);
+      /* 4th vertex */
+      setup_vertex2(r->vertices3[3], dstX, dstY + height,
+                    st0[0], st0[3], st1[0], st1[3]);
+   }
 
    return pipe_user_buffer_create(r->pipe->screen,
                                   r->vertices3,
@@ -721,7 +797,8 @@ void renderer_draw_textures(struct xorg_renderer *r,
                             int *pos,
                             int width, int height,
                             struct pipe_texture **textures,
-                            int num_textures)
+                            int num_textures,
+                            float *src_matrix, float *mask_matrix)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_buffer *buf = 0;
@@ -732,7 +809,7 @@ void renderer_draw_textures(struct xorg_renderer *r,
                                pos[0], pos[1], /* src */
                                pos[4], pos[5], /* dst */
                                width, height,
-                               textures[0]);
+                               textures[0], src_matrix);
       break;
    case 2:
       buf = setup_vertex_data2(r,
@@ -740,7 +817,8 @@ void renderer_draw_textures(struct xorg_renderer *r,
                                pos[2], pos[3], /* mask */
                                pos[4], pos[5], /* dst */
                                width, height,
-                               textures[0], textures[1]);
+                               textures[0], textures[1],
+                               src_matrix, mask_matrix);
       break;
    default:
       debug_assert(!"Unsupported number of textures");

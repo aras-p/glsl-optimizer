@@ -9,6 +9,9 @@
 
 #include "pipe/p_inlines.h"
 
+/*XXX also in Xrender.h but the including it here breaks compilition */
+#define XFixedToDouble(f)    (((double) (f)) / 65536.)
+
 struct xorg_composite_blend {
    int op:8;
 
@@ -144,6 +147,43 @@ render_repeat_to_gallium(int mode)
    return PIPE_TEX_WRAP_REPEAT;
 }
 
+static INLINE boolean
+render_filter_to_gallium(int xrender_filter, int *out_filter)
+{
+
+   switch (xrender_filter) {
+   case PictFilterNearest:
+      *out_filter = PIPE_TEX_FILTER_NEAREST;
+      break;
+   case PictFilterBilinear:
+      *out_filter = PIPE_TEX_FILTER_LINEAR;
+      break;
+   case PictFilterFast:
+      *out_filter = PIPE_TEX_FILTER_NEAREST;
+      break;
+   case PictFilterGood:
+      *out_filter = PIPE_TEX_FILTER_LINEAR;
+      break;
+   case PictFilterBest:
+      *out_filter = PIPE_TEX_FILTER_LINEAR;
+      break;
+   default:
+      debug_printf("Unkown xrender filter");
+      *out_filter = PIPE_TEX_FILTER_NEAREST;
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+static boolean is_filter_accelerated(PicturePtr pic)
+{
+   int filter;
+   if (pic && !render_filter_to_gallium(pic->filter, &filter))
+       return FALSE;
+   return TRUE;
+}
+
 boolean xorg_composite_accelerated(int op,
                                    PicturePtr pSrcPicture,
                                    PicturePtr pMaskPicture,
@@ -156,6 +196,11 @@ boolean xorg_composite_accelerated(int op,
    unsigned accel_ops_count =
       sizeof(accelerated_ops)/sizeof(struct acceleration_info);
 
+   if (!is_filter_accelerated(pSrcPicture) ||
+       !is_filter_accelerated(pMaskPicture)) {
+      XORG_FALLBACK("Unsupported Xrender filter");
+   }
+
    if (pSrcPicture->pSourcePict) {
       if (pSrcPicture->pSourcePict->type != SourcePictTypeSolidFill)
          XORG_FALLBACK("gradients not enabled (haven't been well tested)");
@@ -163,13 +208,10 @@ boolean xorg_composite_accelerated(int op,
 
    for (i = 0; i < accel_ops_count; ++i) {
       if (op == accelerated_ops[i].op) {
-         /* Check for unsupported component alpha */
-         if ((pSrcPicture->componentAlpha &&
-              !accelerated_ops[i].component_alpha) ||
-             (pMaskPicture &&
-              (!accelerated_ops[i].with_mask ||
-               (pMaskPicture->componentAlpha &&
-                !accelerated_ops[i].component_alpha))))
+         /* Check for component alpha */
+         if (pMaskPicture &&
+             (pMaskPicture->componentAlpha ||
+              (!accelerated_ops[i].with_mask)))
             XORG_FALLBACK("component alpha unsupported (PictOpOver=%s(%d)",
                           (accelerated_ops[i].op == PictOpOver) ? "yes" : "no",
                           accelerated_ops[i].op);
@@ -238,7 +280,6 @@ bind_shaders(struct exa_context *exa, int op,
    cso_set_fragment_shader_handle(exa->renderer->cso, shader.fs);
 }
 
-
 static void
 bind_samplers(struct exa_context *exa, int op,
               PicturePtr pSrcPicture, PicturePtr pMaskPicture,
@@ -264,10 +305,15 @@ bind_samplers(struct exa_context *exa, int op,
    if (pSrcPicture && pSrc) {
       unsigned src_wrap = render_repeat_to_gallium(
          pSrcPicture->repeatType);
+      int filter;
+
+      render_filter_to_gallium(pSrcPicture->filter, &filter);
+
       src_sampler.wrap_s = src_wrap;
       src_sampler.wrap_t = src_wrap;
-      src_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
-      src_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      src_sampler.min_img_filter = filter;
+      src_sampler.mag_img_filter = filter;
+      src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
       src_sampler.normalized_coords = 1;
       samplers[0] = &src_sampler;
       exa->bound_textures[0] = pSrc->tex;
@@ -277,10 +323,15 @@ bind_samplers(struct exa_context *exa, int op,
    if (pMaskPicture && pMask) {
       unsigned mask_wrap = render_repeat_to_gallium(
          pMaskPicture->repeatType);
+      int filter;
+
+      render_filter_to_gallium(pMaskPicture->filter, &filter);
+
       mask_sampler.wrap_s = mask_wrap;
       mask_sampler.wrap_t = mask_wrap;
-      mask_sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
-      mask_sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
+      mask_sampler.min_img_filter = filter;
+      mask_sampler.mag_img_filter = filter;
+      src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
       mask_sampler.normalized_coords = 1;
       samplers[1] = &mask_sampler;
       exa->bound_textures[1] = pMask->tex;
@@ -328,6 +379,44 @@ setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
    setup_fs_constant_buffer(exa);
 }
 
+static INLINE boolean matrix_from_pict_transform(PictTransform *trans, float *matrix)
+{
+   if (!trans)
+      return FALSE;
+
+   matrix[0] = XFixedToDouble(trans->matrix[0][0]);
+   matrix[1] = XFixedToDouble(trans->matrix[0][1]);
+   matrix[2] = XFixedToDouble(trans->matrix[0][2]);
+
+   matrix[3] = XFixedToDouble(trans->matrix[1][0]);
+   matrix[4] = XFixedToDouble(trans->matrix[1][1]);
+   matrix[5] = XFixedToDouble(trans->matrix[1][2]);
+
+   matrix[6] = XFixedToDouble(trans->matrix[2][0]);
+   matrix[7] = XFixedToDouble(trans->matrix[2][1]);
+   matrix[8] = XFixedToDouble(trans->matrix[2][2]);
+
+   return TRUE;
+}
+
+static void
+setup_transforms(struct  exa_context *exa,
+                 PicturePtr pSrcPicture, PicturePtr pMaskPicture)
+{
+   PictTransform *src_t = NULL;
+   PictTransform *mask_t = NULL;
+
+   if (pSrcPicture)
+      src_t = pSrcPicture->transform;
+   if (pMaskPicture)
+      mask_t = pMaskPicture->transform;
+
+   exa->transform.has_src  =
+      matrix_from_pict_transform(src_t, exa->transform.src);
+   exa->transform.has_mask =
+      matrix_from_pict_transform(mask_t, exa->transform.mask);
+}
+
 boolean xorg_composite_bind_state(struct exa_context *exa,
                                   int op,
                                   PicturePtr pSrcPicture,
@@ -346,6 +435,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                  pDstPicture, pSrc, pMask, pDst);
    setup_constant_buffers(exa, pDst);
 
+   setup_transforms(exa, pSrcPicture, pMaskPicture);
+
    return TRUE;
 }
 
@@ -360,10 +451,19 @@ void xorg_composite(struct exa_context *exa,
                                exa->solid_color);
    } else {
       int pos[6] = {srcX, srcY, maskX, maskY, dstX, dstY};
+      float *src_matrix = NULL;
+      float *mask_matrix = NULL;
+
+      if (exa->transform.has_src)
+         src_matrix = exa->transform.src;
+      if (exa->transform.has_mask)
+         mask_matrix = exa->transform.mask;
+
       renderer_draw_textures(exa->renderer,
                              pos, width, height,
                              exa->bound_textures,
-                             exa->num_bound_samplers);
+                             exa->num_bound_samplers,
+                             src_matrix, mask_matrix);
    }
 }
 

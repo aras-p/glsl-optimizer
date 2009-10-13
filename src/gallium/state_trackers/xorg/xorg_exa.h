@@ -24,6 +24,14 @@ struct exa_context
    float solid_color[4];
    boolean has_solid_color;
 
+   /* float[9] projective matrix bound to pictures */
+   struct {
+      float    src[9];
+      float   mask[9];
+      boolean has_src;
+      boolean has_mask;
+   } transform;
+
    struct {
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;

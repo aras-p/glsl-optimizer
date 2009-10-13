@@ -92,6 +92,8 @@ xorg_exa_common_done(struct exa_context *exa)
 {
    exa->copy.src = NULL;
    exa->copy.dst = NULL;
+   exa->transform.has_src = FALSE;
+   exa->transform.has_mask = FALSE;
    exa->has_solid_color = FALSE;
    exa->num_bound_samplers = 0;
 }
