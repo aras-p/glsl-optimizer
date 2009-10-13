@@ -108,7 +108,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
     b = (float)((color >>  0) & 0xff) / 255.0f;
-    debug_printf("r300: Filling surface %p at (%d,%d),"
+    DBG(r300, DBG_SURF, "r300: Filling surface %p at (%d,%d),"
         " dimensions %dx%d (pixel pitch %d), color 0x%x\n",
         dest, x, y, w, h, pixpitch, color);
 
@@ -116,7 +116,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     if (!pipe->screen->is_format_supported(pipe->screen, dest->format,
         PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
-        debug_printf("r300: Falling back on surface clear...\n");
+        DBG(r300, DBG_SURF, "r300: Falling back on surface clear...\n");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
     }
@@ -131,7 +131,7 @@ validate:
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
-            debug_printf("r300: Stuck in validation loop, gonna fallback.");
+            DBG(r300, DBG_SURF, "r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;
@@ -239,7 +239,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     float fsrcx = srcx, fsrcy = srcy, fdestx = destx, fdesty = desty;
     CS_LOCALS(r300);
 
-    debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
+    DBG(r300, DBG_SURF, "r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
         " dimensions %dx%d (pixel pitch %d)\n",
         src, srcx, srcy, dest, destx, desty, w, h, pixpitch);
 
@@ -254,7 +254,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
             !pipe->screen->is_format_supported(pipe->screen, dest->format,
             PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
 fallback:
-        debug_printf("r300: Falling back on surface_copy\n");
+        DBG(r300, DBG_SURF, "r300: Falling back on surface_copy\n");
         util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
         return;
@@ -275,7 +275,7 @@ validate:
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
-            debug_printf("r300: Stuck in validation loop, gonna fallback.");
+            DBG(r300, DBG_SURF, "r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;

@@ -37,6 +37,7 @@ static struct debug_option debug_options[] = {
     { "vp", DBG_VP, "Vertex program handling" },
     { "cs", DBG_CS, "Command submissions" },
     { "draw", DBG_DRAW, "Draw and emit" },
+    { "surf", DBG_SURF, "Surface drawing" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 
