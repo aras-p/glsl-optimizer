@@ -2064,21 +2064,64 @@ _mesa_meta_Bitmap(GLcontext *ctx,
  * Check if the call to _mesa_meta_GenerateMipmap() will require a
  * software fallback.  The fallback path will require that the texture
  * images are mapped.
+ * \return GL_TRUE if a fallback is needed, GL_FALSE otherwise
  */
 GLboolean
 _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
                                           struct gl_texture_object *texObj)
 {
-   struct gl_texture_image *baseImage =
-      _mesa_select_tex_image(ctx, texObj, target, texObj->BaseLevel);
+   const GLuint fboSave = ctx->DrawBuffer->Name;
+   struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
+   struct gl_texture_image *baseImage;
+   GLuint srcLevel;
+   GLenum status;
 
    /* check for fallbacks */
    if (!ctx->Extensions.EXT_framebuffer_object ||
-       target == GL_TEXTURE_3D ||
-       !baseImage ||
-       baseImage->IsCompressed) {
+       target == GL_TEXTURE_3D) {
       return GL_TRUE;
    }
+
+   srcLevel = texObj->BaseLevel;
+   baseImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
+   if (!baseImage || baseImage->IsCompressed) {
+      return GL_TRUE;
+   }
+
+   /*
+    * Test that we can actually render in the texture's format.
+    */
+   if (!mipmap->FBO)
+      _mesa_GenFramebuffersEXT(1, &mipmap->FBO);
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
+
+   if (target == GL_TEXTURE_1D) {
+      _mesa_FramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT,
+                                    GL_COLOR_ATTACHMENT0_EXT,
+                                    target, texObj->Name, srcLevel);
+   }
+   else if (target == GL_TEXTURE_3D) {
+      GLint zoffset = 0;
+      _mesa_FramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
+                                    GL_COLOR_ATTACHMENT0_EXT,
+                                    target, texObj->Name, srcLevel, zoffset);
+   }
+   else {
+      /* 2D / cube */
+      _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+                                    GL_COLOR_ATTACHMENT0_EXT,
+                                    target, texObj->Name, srcLevel);
+   }
+
+   status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
+
+   if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      printf("Can't render\n");
+      return GL_TRUE;
+   }
+
    return GL_FALSE;
 }
 
@@ -2152,10 +2195,8 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
    }
 
    if (!mipmap->FBO) {
-      /* Bind the new renderbuffer to the color attachment point. */
       _mesa_GenFramebuffersEXT(1, &mipmap->FBO);
    }
-
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
    _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
