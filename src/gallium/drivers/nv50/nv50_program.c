@@ -1293,9 +1293,12 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 	e->inst[1] |= q;
 }
 
+/* Some operations support an optional negation flag. */
 static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
+	int s;
+
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
@@ -1305,12 +1308,29 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_ADD:
 	case TGSI_OPCODE_SUB:
 	case TGSI_OPCODE_MAD:
-		return TRUE;
+		break;
 	case TGSI_OPCODE_POW:
-		return (i == 1) ? TRUE : FALSE;
+		if (i == 1)
+			break;
+		return FALSE;
 	default:
 		return FALSE;
 	}
+
+	/* Watch out for possible multiple uses of an nv50_reg, we
+	 * can't use nv50_reg::neg in these cases.
+	 */
+	for (s = 0; s < insn->Instruction.NumSrcRegs; ++s) {
+		if (s == i)
+			continue;
+		if ((insn->FullSrcRegisters[s].SrcRegister.Index ==
+		     insn->FullSrcRegisters[i].SrcRegister.Index) &&
+		    (insn->FullSrcRegisters[s].SrcRegister.File ==
+		     insn->FullSrcRegisters[i].SrcRegister.File))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 /* Return a read mask for source registers deduced from opcode & write mask. */
@@ -1956,6 +1976,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!src[i][c])
 				continue;
+			src[i][c]->neg = 0;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
 		}
