@@ -2113,7 +2113,7 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
                                     target, texObj->Name, srcLevel);
    }
 
-   status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+   status = _mesa_CheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 
@@ -2399,7 +2399,7 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
       _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
       /* sanity check */
-      status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+      status = _mesa_CheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
          abort();
          break;
