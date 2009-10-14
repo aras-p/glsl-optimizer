@@ -142,7 +142,7 @@ struct r300_viewport_state {
 #define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VIEWPORT        0x10000000
 #define R300_NEW_QUERY           0x20000000
-#define R300_NEW_KITCHEN_SINK    0x1fffffff
+#define R300_NEW_KITCHEN_SINK    0x3fffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
