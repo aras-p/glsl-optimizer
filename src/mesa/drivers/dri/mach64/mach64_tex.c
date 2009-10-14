@@ -567,7 +567,6 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
 
    functions->UpdateTexturePalette	= NULL;
    functions->ActiveTexture		= NULL;
-   functions->PrioritizeTexture		= NULL;
 
    driInitTextureFormats();
 }

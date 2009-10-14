@@ -545,12 +545,6 @@ struct dd_function_table {
                                    struct gl_texture_object *t );
 
    /**
-    * Called by glPrioritizeTextures().
-    */
-   void (*PrioritizeTexture)( GLcontext *ctx,  struct gl_texture_object *t,
-                              GLclampf priority );
-
-   /**
     * Called by glActiveTextureARB() to set current texture unit.
     */
    void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );

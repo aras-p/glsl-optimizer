@@ -1098,8 +1098,6 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
          struct gl_texture_object *t = _mesa_lookup_texture(ctx, texName[i]);
          if (t) {
             t->Priority = CLAMP( priorities[i], 0.0F, 1.0F );
-	    if (ctx->Driver.PrioritizeTexture)
-	       ctx->Driver.PrioritizeTexture( ctx, t, t->Priority );
          }
       }
    }
