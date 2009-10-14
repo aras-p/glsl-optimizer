@@ -54,10 +54,9 @@ vbo_get_minmax_index(GLcontext *ctx,
    const void *indices;
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                                GL_READ_ONLY,
-                                                ib->obj);
+      const GLvoid *map =
+         ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
+                               GL_READ_ONLY, ib->obj);
       indices = ADD_POINTERS(map, ib->ptr);
    } else {
       indices = ib->ptr;
@@ -106,9 +105,7 @@ vbo_get_minmax_index(GLcontext *ctx,
    }
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx,
-			      GL_ELEMENT_ARRAY_BUFFER_ARB,
-			      ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, ib->obj);
    }
 }
 
@@ -126,10 +123,9 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
       if (_mesa_is_bufferobj(array->BufferObj)) {
          if (!array->BufferObj->Pointer) {
             /* need to map now */
-            array->BufferObj->Pointer = ctx->Driver.MapBuffer(ctx,
-                                                              GL_ARRAY_BUFFER_ARB,
-                                                              GL_READ_ONLY,
-                                                              array->BufferObj);
+            array->BufferObj->Pointer =
+               ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
+                                     GL_READ_ONLY, array->BufferObj);
          }
          data = ADD_POINTERS(data, array->BufferObj->Pointer);
       }
@@ -170,9 +166,7 @@ unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
        _mesa_bufferobj_mapped(array->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx,
-                              GL_ARRAY_BUFFER_ARB,
-                              array->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, array->BufferObj);
    }
 }
 
@@ -223,13 +217,13 @@ check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
          check_array_data(ctx, &arrayObj->TexCoord[k], VERT_ATTRIB_TEX0 + k, j);
       }
       for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
-         check_array_data(ctx, &arrayObj->VertexAttrib[k], VERT_ATTRIB_GENERIC0 + k, j);
+         check_array_data(ctx, &arrayObj->VertexAttrib[k],
+                          VERT_ATTRIB_GENERIC0 + k, j);
       }
    }
 
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx,
-			      GL_ELEMENT_ARRAY_BUFFER_ARB,
+      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
 			      ctx->Array.ElementArrayBufferObj);
    }
 
@@ -460,7 +454,6 @@ bind_arrays(GLcontext *ctx)
    }
    else if (exec->array.program_mode != get_program_mode(ctx) ||
 	    exec->array.enabled_flags != ctx->Array.ArrayObj->_Enabled) {
-      
       recalculate_input_bindings(ctx);
    }
 #else
@@ -587,10 +580,10 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
       ;
    }
 
-   ctx->Driver.UnmapBuffer(ctx,
-                           GL_ELEMENT_ARRAY_BUFFER_ARB,
+   ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB,
                            ctx->Array.ElementArrayBufferObj);
 }
+
 
 /* Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
 static void
@@ -766,11 +759,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				   count, type, indices, basevertex);
 }
 
+
 static void GLAPIENTRY
-vbo_exec_DrawRangeElements(GLenum mode,
-				     GLuint start, GLuint end,
-				     GLsizei count, GLenum type,
-				     const GLvoid *indices)
+vbo_exec_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
+                           GLsizei count, GLenum type, const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -803,6 +795,7 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
 				   count, type, indices, 0);
 }
 
+
 static void GLAPIENTRY
 vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 				const GLvoid *indices, GLint basevertex)
@@ -822,7 +815,8 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 				   count, type, indices, basevertex);
 }
 
-/* Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
+
+/** Inner support for both _mesa_DrawElements and _mesa_DrawRangeElements */
 static void
 vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 				const GLsizei *count, GLenum type,
@@ -957,6 +951,7 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
    _mesa_free(prim);
 }
 
+
 static void GLAPIENTRY
 vbo_exec_MultiDrawElements(GLenum mode,
 			   const GLsizei *count, GLenum type,
@@ -977,6 +972,7 @@ vbo_exec_MultiDrawElements(GLenum mode,
    vbo_validated_multidrawelements(ctx, mode, count, type, indices, primcount,
 				   NULL);
 }
+
 
 static void GLAPIENTRY
 vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
@@ -1067,6 +1063,7 @@ _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
    vbo_exec_DrawRangeElements(mode, start, end, count, type, indices);
 }
 
+
 void GLAPIENTRY
 _mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 				  GLsizei count, GLenum type,
@@ -1076,6 +1073,7 @@ _mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 					indices, basevertex);
 }
 
+
 /* GL_EXT_multi_draw_arrays */
 void GLAPIENTRY
 _mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
@@ -1083,6 +1081,7 @@ _mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
 {
    vbo_exec_MultiDrawElements(mode, count, type, indices, primcount);
 }
+
 
 void GLAPIENTRY
 _mesa_MultiDrawElementsBaseVertex(GLenum mode,
