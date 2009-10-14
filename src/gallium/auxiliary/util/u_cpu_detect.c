@@ -397,12 +397,17 @@ util_cpu_detect(void)
 #endif
 
    /* Count the number of CPUs in system */
-#if !defined(PIPE_OS_WINDOWS) && !defined(PIPE_OS_UNKNOWN) && defined(_SC_NPROCESSORS_ONLN)
+#if defined(PIPE_OS_WINDOWS)
+   {
+      SYSTEM_INFO system_info;
+      GetSystemInfo(&system_info);
+      util_cpu_caps.nr_cpus = system_info.dwNumberOfProcessors;
+   }
+#elif defined(PIPE_OS_UNIX) && defined(_SC_NPROCESSORS_ONLN)
    util_cpu_caps.nr_cpus = sysconf(_SC_NPROCESSORS_ONLN);
    if (util_cpu_caps.nr_cpus == -1)
       util_cpu_caps.nr_cpus = 1;
-
-#elif defined(PIPE_OS_NETBSD) || defined(PIPE_OS_FREEBSD) || defined(PIPE_OS_OPENBSD)
+#elif defined(PIPE_OS_BSD)
    {
       int mib[2], ncpu;
       int len;
@@ -469,7 +474,6 @@ util_cpu_detect(void)
          util_cpu_caps.cacheline = regs2[2] & 0xFF;
       }
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_FREEBSD) || defined(PIPE_OS_NETBSD) || defined(PIPE_OS_CYGWIN) || defined(PIPE_OS_OPENBSD)
       if (util_cpu_caps.has_sse)
          check_os_katmai_support();
 
@@ -477,13 +481,8 @@ util_cpu_detect(void)
          util_cpu_caps.has_sse2 = 0;
          util_cpu_caps.has_sse3 = 0;
          util_cpu_caps.has_ssse3 = 0;
+         util_cpu_caps.has_sse4_1 = 0;
       }
-#else
-      util_cpu_caps.has_sse = 0;
-      util_cpu_caps.has_sse2 = 0;
-      util_cpu_caps.has_sse3 = 0;
-      util_cpu_caps.has_ssse3 = 0;
-#endif
    }
 #endif /* PIPE_ARCH_X86 || PIPE_ARCH_X86_64 */
 
