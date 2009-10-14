@@ -366,7 +366,8 @@ trace_screen_get_tex_transfer(struct pipe_screen *_screen,
 
    trace_dump_call_end();
 
-   result = trace_transfer_create(tr_tex, result);
+   if (result)
+      result = trace_transfer_create(tr_tex, result);
 
    return result;
 }
