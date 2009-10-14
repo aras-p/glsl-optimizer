@@ -441,12 +441,6 @@ void r300_emit_query_end(struct r300_context* r300)
     if (query->begin_emitted == FALSE)
         return;
 
-    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
-                0, RADEON_GEM_DOMAIN_GTT)) {
-        debug_printf("r300: There wasn't room for the OQ buffer!?"
-                " Oh noes!\n");
-    }
-
     if (caps->family == CHIP_FAMILY_RV530) {
 	if (caps->num_z_pipes == 2)
 	    rv530_emit_query_double(r300, query);
