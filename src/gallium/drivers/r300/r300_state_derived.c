@@ -193,7 +193,7 @@ static void r300_vertex_psc(struct r300_context* r300,
     struct vertex_info* vinfo = &vformat->vinfo;
     int* tab = vformat->vs_tab;
     uint32_t temp;
-    int i, attrib_count;
+    unsigned i, attrib_count;
 
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on their info,

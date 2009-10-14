@@ -127,7 +127,6 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 static void r300_render_release_vertices(struct vbuf_render* render)
 {
     struct r300_render* r300render = r300_render(render);
-    struct r300_context* r300 = r300render->r300;
 
     r300render->vbo_offset += r300render->vbo_max_used;
     r300render->vbo_max_used = 0;
@@ -182,8 +181,6 @@ static void r300_prepare_render(struct r300_render* render, unsigned count)
 {
     struct r300_context* r300 = render->r300;
 
-    CS_LOCALS(r300);
-
     r300_emit_dirty_state(r300);
 }
 
@@ -213,11 +210,7 @@ static void r300_render_draw(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
-    struct pipe_screen* screen = r300->context.screen;
-    struct pipe_buffer* index_buffer;
-    void* index_map;
     int i;
-    uint32_t index;
 
     CS_LOCALS(r300);
 

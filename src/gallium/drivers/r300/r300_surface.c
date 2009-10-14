@@ -95,8 +95,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
                               unsigned w, unsigned h,
                               unsigned color)
 {
-    int i;
-    float r, g, b, a, depth;
+    float r, g, b, a;
     struct r300_context* r300 = r300_context(pipe);
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;

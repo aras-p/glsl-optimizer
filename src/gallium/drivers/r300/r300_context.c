@@ -152,7 +152,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys = r300_winsys;
 
     r300->context.winsys = (struct pipe_winsys*)r300_winsys;
-    r300->context.screen = r300_screen(screen);
+    r300->context.screen = screen;
 
     r300_init_debug(r300);
 
