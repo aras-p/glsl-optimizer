@@ -74,6 +74,8 @@ static void r300_begin_query(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
 
+    assert(r300->query_current == NULL);
+
     map = pipe->screen->buffer_map(pipe->screen, r300->oqbo,
             PIPE_BUFFER_USAGE_CPU_WRITE);
     map += q->offset / 4;
@@ -81,8 +83,8 @@ static void r300_begin_query(struct pipe_context* pipe,
     pipe->screen->buffer_unmap(pipe->screen, r300->oqbo);
 
     q->flushed = FALSE;
-    r300_emit_dirty_state(r300);
-    r300_emit_query_begin(r300, q);
+    r300->query_current = q;
+    r300->dirty_state |= R300_NEW_QUERY;
 }
 
 static void r300_end_query(struct pipe_context* pipe,
@@ -93,6 +95,8 @@ static void r300_end_query(struct pipe_context* pipe,
 
     r300_emit_dirty_state(r300);
     r300_emit_query_end(r300, q);
+
+    r300->query_current = NULL;
 }
 
 static boolean r300_get_query_result(struct pipe_context* pipe,

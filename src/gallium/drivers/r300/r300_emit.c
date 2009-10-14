@@ -320,11 +320,15 @@ void r300_emit_fb_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_query_begin(struct r300_context* r300,
-                           struct r300_query* query)
+void r300_emit_query_start(struct r300_context *r300)
+
 {
-    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    struct r300_capabilities *caps = r300_screen(r300->context.screen)->caps;
+    struct r300_query *query = r300->query_current;
     CS_LOCALS(r300);
+
+    if (!query)
+	return;
 
     /* XXX This will almost certainly not return good results
      * for overlapping queries. */
@@ -770,6 +774,11 @@ validate:
         }
         invalid = TRUE;
         goto validate;
+    }
+
+    if (r300->dirty_state & R300_NEW_QUERY) {
+        r300_emit_query_start(r300);
+        r300->dirty_state &= ~R300_NEW_QUERY;
     }
 
     if (r300->dirty_state & R300_NEW_BLEND) {
