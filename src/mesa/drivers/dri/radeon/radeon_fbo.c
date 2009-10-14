@@ -121,7 +121,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
       break;
@@ -139,7 +139,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
       break;
@@ -255,30 +255,37 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     /* XXX format junk */
     switch (format) {
 	case GL_RGB5:
+	    rrb->base.Format = MESA_FORMAT_RGB565;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case GL_RGB8:
+	    rrb->base.Format = MESA_FORMAT_ARGB8888;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case GL_RGBA8:
+	    rrb->base.Format = MESA_FORMAT_ARGB8888;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGBA;
 	    break;
 	case GL_STENCIL_INDEX8_EXT:
+	    rrb->base.Format = MESA_FORMAT_S8;
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
 	case GL_DEPTH_COMPONENT16:
+	    rrb->base.Format = MESA_FORMAT_Z16;
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
             rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case GL_DEPTH_COMPONENT24:
+	    rrb->base.Format = MESA_FORMAT_Z32;
 	    rrb->base.DataType = GL_UNSIGNED_INT;
             rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case GL_DEPTH24_STENCIL8_EXT:
+	    rrb->base.Format = MESA_FORMAT_S8_Z24;
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
             rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
