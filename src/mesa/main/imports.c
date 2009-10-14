@@ -48,6 +48,10 @@
 #include "context.h"
 #include "version.h"
 
+#ifdef _GNU_SOURCE
+#include <locale.h>
+#endif
+
 
 #define MAXSTRING 4000  /* for vsnprintf() */
 
@@ -908,7 +912,15 @@ _mesa_atoi(const char *s)
 double
 _mesa_strtod( const char *s, char **end )
 {
+#ifdef _GNU_SOURCE
+   static locale_t loc = NULL;
+   if (!loc) {
+      loc = newlocale(LC_CTYPE_MASK, "C", NULL);
+   }
+   return strtod_l(s, end, loc);
+#else
    return strtod(s, end);
+#endif
 }
 
 /** Compute simple checksum/hash for a string */
