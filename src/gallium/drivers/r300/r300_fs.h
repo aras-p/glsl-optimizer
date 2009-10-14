@@ -48,4 +48,10 @@ struct r300_fragment_shader {
 void r300_translate_fragment_shader(struct r300_context* r300,
                                     struct r300_fragment_shader* fs);
 
+static inline boolean r300_fragment_shader_writes_depth(struct r300_fragment_shader *fs)
+{
+    if (!fs)
+	return FALSE;
+    return (fs->code.writes_depth) ? TRUE : FALSE;
+}
 #endif /* R300_FS_H */

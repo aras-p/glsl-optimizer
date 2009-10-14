@@ -252,9 +252,11 @@ static void*
 
     dsa->z_buffer_top = R300_ZTOP_ENABLE;
     /* XXX TODO: add frag prog rules for ztop disable */
+    if (r300_fragment_shader_writes_depth(r300->fs))
+	dsa->z_buffer_top = R300_ZTOP_DISABLE;
     if (state->alpha.enabled && state->alpha.func != PIPE_FUNC_ALWAYS)
 	dsa->z_buffer_top = R300_ZTOP_DISABLE;
-    if (!is_empty_list(&r300->query_list))
+    if (r300->query_current)
 	dsa->z_buffer_top = R300_ZTOP_DISABLE;
 
     return (void*)dsa;
