@@ -444,6 +444,37 @@ static void r300_update_rs_block(struct r300_context* r300)
     rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
 }
 
+static void r300_update_ztop(struct r300_context* r300)
+{
+    r300->dsa_state->z_buffer_top = R300_ZTOP_ENABLE;
+
+    /* This is important enough that I felt it warranted a comment.
+     *
+     * According to the docs, these are the conditions where ZTOP must be
+     * disabled:
+     * 1) Alpha testing enabled
+     * 2) Texture kill instructions in fragment shader
+     * 3) Chroma key culling enabled
+     * 4) W-buffering enabled
+     *
+     * The docs claim that for the first three cases, if no ZS writes happen,
+     * then ZTOP can be used.
+     *
+     * Additionally, the following conditions require disabled ZTOP:
+     * ~) Depth writes in fragment shader
+     * ~) Outstanding occlusion queries
+     *
+     * ~C.
+     */
+    if (r300->dsa_state->alpha_function) {
+        r300->dsa_state->z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300_fragment_shader_writes_depth(r300->fs)) {
+        r300->dsa_state->z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300->query_current) {
+        r300->dsa_state->z_buffer_top = R300_ZTOP_DISABLE;
+    }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->dirty_state &
@@ -454,5 +485,10 @@ void r300_update_derived_state(struct r300_context* r300)
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
         r300_update_fs_tab(r300);
         r300_update_rs_block(r300);
+    }
+
+    if (r300->dirty_state &
+            (R300_NEW_DSA | R300_NEW_FRAGMENT_SHADER | R300_NEW_QUERY)) {
+        r300_update_ztop(r300);
     }
 }
