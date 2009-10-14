@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "main/glheader.h"
+#include "main/imports.h"
 #include "prog_instruction.h"
 #include "prog_statevars.h"
 
@@ -318,19 +319,19 @@ ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require
    return INTEGER;
 }
 {num}?{frac}{exp}?        {
-   yylval->real = strtod(yytext, NULL);
+   yylval->real = _mesa_strtod(yytext, NULL);
    return REAL;
 }
 {num}"."/[^.]             {
-   yylval->real = strtod(yytext, NULL);
+   yylval->real = _mesa_strtod(yytext, NULL);
    return REAL;
 }
 {num}{exp}                {
-   yylval->real = strtod(yytext, NULL);
+   yylval->real = _mesa_strtod(yytext, NULL);
    return REAL;
 }
 {num}"."{exp}             {
-   yylval->real = strtod(yytext, NULL);
+   yylval->real = _mesa_strtod(yytext, NULL);
    return REAL;
 }
 
