@@ -837,7 +837,7 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 #define CVTOP_SAT	0x08
 #define CVTOP_ABS	0x10
 
-/* 0x04 == 32 bit */
+/* 0x04 == 32 bit dst */
 /* 0x40 == dst is float */
 /* 0x80 == src is float */
 #define CVT_F32_F32 0xc4
@@ -858,7 +858,7 @@ emit_cvt(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
 	set_long(pc, e);
 
 	e->inst[0] |= 0xa0000000;
-	e->inst[1] |= 0x00004000;
+	e->inst[1] |= 0x00004000; /* 32 bit src */
 	e->inst[1] |= (cvn << 16);
 	e->inst[1] |= (fmt << 24);
 	set_src_0(pc, src, e);
@@ -1037,20 +1037,10 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	FREE(one);
 }
 
-static void
+static INLINE void
 emit_neg(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	set_long(pc, e);
-	e->inst[0] |= 0xa0000000; /* delta */
-	e->inst[1] |= (7 << 29); /* delta */
-	e->inst[1] |= 0x04000000; /* negate arg0? probably not */
-	e->inst[1] |= (1 << 14); /* src .f32 */
-	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
-
-	emit(pc, e);
+	emit_cvt(pc, dst, src, -1, CVTOP_RN, CVT_F32_F32 | CVT_NEG);
 }
 
 static void
@@ -1219,6 +1209,43 @@ emit_nop(struct nv50_pc *pc)
 }
 
 static void
+emit_ddx(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	assert(src->type == P_TEMP);
+
+	e->inst[0] = 0xc0140000;
+	e->inst[1] = 0x89800000;
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
+	set_src_2(pc, src, e);
+
+	emit(pc, e);
+}
+
+static void
+emit_ddy(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	assert(src->type == P_TEMP);
+
+	if (!src->neg) /* ! double negation */
+		emit_neg(pc, src, src);
+
+	e->inst[0] = 0xc0150000;
+	e->inst[1] = 0x8a400000;
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
+	set_src_2(pc, src, e);
+
+	emit(pc, e);
+}
+
+static void
 convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
 	unsigned q = 0, m = ~0;
@@ -1270,6 +1297,7 @@ static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
 	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
 	case TGSI_OPCODE_MUL:
@@ -1659,6 +1687,20 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		emit_precossin(pc, temp, src[0][0]);
 		emit_flop(pc, 5, brdc, temp);
+		break;
+	case TGSI_OPCODE_DDX:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_ddx(pc, dst[c], src[0][c]);
+		}
+		break;
+	case TGSI_OPCODE_DDY:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_ddy(pc, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_DP3:
 		emit_mul(pc, temp, src[0][0], src[1][0]);
