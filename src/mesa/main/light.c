@@ -636,7 +636,7 @@ _mesa_update_material( GLcontext *ctx, GLuint bitmask )
    struct gl_light *light, *list = &ctx->Light.EnabledList;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
-   if (MESA_VERBOSE&VERBOSE_IMMEDIATE) 
+   if (MESA_VERBOSE & VERBOSE_MATERIAL) 
       _mesa_debug(ctx, "_mesa_update_material, mask 0x%x\n", bitmask);
 
    if (!bitmask)

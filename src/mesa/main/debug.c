@@ -167,7 +167,7 @@ static void add_debug_flags( const char *debug )
    static const struct debug_option debug_opt[] = {
       { "varray",    VERBOSE_VARRAY },
       { "tex",       VERBOSE_TEXTURE },
-      { "imm",       VERBOSE_IMMEDIATE },
+      { "mat",       VERBOSE_MATERIAL },
       { "pipe",      VERBOSE_PIPELINE },
       { "driver",    VERBOSE_DRIVER },
       { "state",     VERBOSE_STATE },
