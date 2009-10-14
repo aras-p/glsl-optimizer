@@ -33,6 +33,7 @@
 #include "main/api_noop.h"
 #include "main/varray.h"
 #include "main/bufferobj.h"
+#include "main/enums.h"
 #include "main/macros.h"
 #include "glapi/dispatch.h"
 
@@ -482,6 +483,10 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    struct vbo_exec_context *exec = &vbo->exec;
    struct _mesa_prim prim[1];
 
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawArrays(%s, %d, %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), start, count);
+
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
@@ -675,6 +680,12 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
    static GLuint warnCount = 0;
    GET_CURRENT_CONTEXT(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx,
+                "glDrawRangeElementsBaseVertex(%s, %u, %u, %d, %s, %p, %d)\n",
+                _mesa_lookup_enum_by_nr(mode), start, end, count,
+                _mesa_lookup_enum_by_nr(type), indices, basevertex);
+
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices, basevertex ))
       return;
@@ -761,6 +772,14 @@ vbo_exec_DrawRangeElements(GLenum mode,
 				     GLsizei count, GLenum type,
 				     const GLvoid *indices)
 {
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx,
+                  "glDrawRangeElements(%s, %u, %u, %d, %s, %p)\n",
+                  _mesa_lookup_enum_by_nr(mode), start, end, count,
+                  _mesa_lookup_enum_by_nr(type), indices);
+
    vbo_exec_DrawRangeElementsBaseVertex(mode, start, end, count, type,
 					indices, 0);
 }
@@ -771,6 +790,11 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
                       const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawElements(%s, %u, %s, %p)\n",
+                  _mesa_lookup_enum_by_nr(mode), count,
+                  _mesa_lookup_enum_by_nr(type), indices);
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices, 0 ))
       return;
@@ -784,6 +808,11 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 				const GLvoid *indices, GLint basevertex)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_DRAW)
+      _mesa_debug(ctx, "glDrawElementsBaseVertex(%s, %d, %s, %p, %d)\n",
+                  _mesa_lookup_enum_by_nr(mode), count,
+                  _mesa_lookup_enum_by_nr(type), indices, basevertex);
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices,
 				     basevertex ))

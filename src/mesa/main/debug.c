@@ -174,7 +174,8 @@ static void add_debug_flags( const char *debug )
       { "api",       VERBOSE_API },
       { "list",      VERBOSE_DISPLAY_LIST },
       { "lighting",  VERBOSE_LIGHTING },
-      { "disassem",  VERBOSE_DISASSEM }
+      { "disassem",  VERBOSE_DISASSEM },
+      { "draw",      VERBOSE_DRAW }
    };
    GLuint i;
 
