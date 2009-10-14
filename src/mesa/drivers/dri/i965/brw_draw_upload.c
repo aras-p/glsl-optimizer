@@ -539,12 +539,12 @@ static void brw_emit_vertices(struct brw_context *brw)
           if (input->stride) {
               OUT_RELOC(input->bo,
                         I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->stride * input->count);
+                        input->offset + input->stride * input->count - 1);
           } else {
               assert(input->count == 1);
               OUT_RELOC(input->bo,
                         I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->element_size);
+                        input->offset + input->element_size - 1);
           }
       } else
           OUT_BATCH(input->stride ? input->count : 0);
@@ -726,7 +726,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + brw->ib.size);
+		brw->ib.offset + brw->ib.size - 1);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }
