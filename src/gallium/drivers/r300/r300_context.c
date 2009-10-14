@@ -136,6 +136,13 @@ r300_is_buffer_referenced( struct pipe_context *pipe,
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
+static void r300_flush_cb(void *data)
+{
+    struct r300_context* const cs_context_copy = data;
+
+    cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct r300_winsys* r300_winsys)
 {
@@ -190,6 +197,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_state_functions(r300);
 
     r300_emit_invariant_state(r300);
+
+    r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
 

@@ -658,6 +658,9 @@ void r300_emit_dirty_state(struct r300_context* r300)
 
     r300_update_derived_state(r300);
 
+    /* Clean out BOs. */
+    r300->winsys->reset_bos(r300->winsys);
+
     /* XXX check size */
 validate:
     /* Color buffers... */

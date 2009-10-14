@@ -22,6 +22,17 @@
 
 #include "radeon_r300.h"
 
+static void radeon_r300_set_flush_cb(struct r300_winsys *winsys,
+				     void (*flush_cb)(void *),
+				     void *data)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+
+    radeon_cs_space_set_flush(priv->cs, flush_cb,
+			      data);
+}
+
 static boolean radeon_r300_add_buffer(struct r300_winsys* winsys,
                                       struct pipe_buffer* pbuffer,
                                       uint32_t rd,
@@ -95,6 +106,13 @@ static void radeon_r300_write_cs_reloc(struct r300_winsys* winsys,
     }
 }
 
+static void radeon_r300_reset_bos(struct r300_winsys *winsys)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+    radeon_cs_space_reset_bos(priv->cs);
+}
+
 static void radeon_r300_end_cs(struct r300_winsys* winsys,
                                const char* file,
                                const char* function,
@@ -118,9 +136,6 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
         debug_printf("radeon: Bad CS, dumping...\n");
         radeon_cs_print(priv->cs, stderr);
     }
-
-    /* Clean out BOs. */
-    radeon_cs_space_reset_bos(priv->cs);
 
     /* Reset CS.
      * Someday, when we care about performance, we should really find a way
@@ -203,6 +218,8 @@ radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys)
     winsys->write_cs_reloc = radeon_r300_write_cs_reloc;
     winsys->end_cs = radeon_r300_end_cs;
     winsys->flush_cs = radeon_r300_flush_cs;
+    winsys->reset_bos = radeon_r300_reset_bos;
+    winsys->set_flush_cb = radeon_r300_set_flush_cb;
 
     memcpy(winsys, old_winsys, sizeof(struct radeon_winsys));
 
