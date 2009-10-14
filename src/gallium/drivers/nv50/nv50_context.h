@@ -121,6 +121,7 @@ struct nv50_state {
 	struct nouveau_stateobj *vtxfmt;
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
+	unsigned vtxelt_nr;
 };
 
 struct nv50_context {
@@ -153,6 +154,8 @@ struct nv50_context {
 	unsigned sampler_nr;
 	struct nv50_miptree *miptree[PIPE_MAX_SAMPLERS];
 	unsigned miptree_nr;
+
+	uint16_t vbo_fifo;
 };
 
 static INLINE struct nv50_context *
