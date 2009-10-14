@@ -173,6 +173,8 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
 void
 _mesa_notifySwapBuffers(__GLcontext *ctx)
 {
+   if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
+      _mesa_debug(ctx, "SwapBuffers\n");
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
