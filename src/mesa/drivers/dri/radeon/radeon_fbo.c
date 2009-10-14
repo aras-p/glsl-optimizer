@@ -445,7 +445,6 @@ restart:
 		goto restart;
 	}
 	
-	rrb->pitch = texImage->Width * rrb->cpp;
 	rrb->base.InternalFormat = rrb->base._ActualFormat;
 	rrb->base.Width = texImage->Width;
 	rrb->base.Height = texImage->Height;
@@ -555,8 +554,10 @@ radeon_render_texture(GLcontext * ctx,
       imageOffset += offsets[att->Zoffset];
    }
 
-   /* store that offset in the region */
+   /* store that offset in the region, along with the correct pitch for
+    * the image we are rendering to */
    rrb->draw_offset = imageOffset;
+   rrb->pitch = radeon_image->mt->levels[att->TextureLevel].rowstride;
 
    /* update drawing region, etc */
    radeon_draw_buffer(ctx, fb);
