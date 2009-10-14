@@ -717,7 +717,6 @@ struct dd_function_table {
    void (*TexParameter)(GLcontext *ctx, GLenum target,
                         struct gl_texture_object *texObj,
                         GLenum pname, const GLfloat *params);
-   void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
    /** Set the viewport */
    void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
    /*@}*/

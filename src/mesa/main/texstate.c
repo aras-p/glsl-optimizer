@@ -307,10 +307,6 @@ _mesa_ActiveTextureARB(GLenum texture)
       /* update current stack pointer */
       ctx->CurrentStack = &ctx->TextureMatrixStack[texUnit];
    }
-
-   if (ctx->Driver.ActiveTexture) {
-      (*ctx->Driver.ActiveTexture)( ctx, (GLuint) texUnit );
-   }
 }
 
 
@@ -360,9 +356,6 @@ update_texture_matrices( GLcontext *ctx )
 	 if (ctx->Texture.Unit[u]._ReallyEnabled &&
 	     ctx->TextureMatrixStack[u].Top->type != MATRIX_IDENTITY)
 	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(u);
-
-	 if (ctx->Driver.TextureMatrix)
-	    ctx->Driver.TextureMatrix( ctx, u, ctx->TextureMatrixStack[u].Top);
       }
    }
 }
