@@ -175,6 +175,8 @@ struct r300_query {
     unsigned offset;
     /* if we've flushed the query */
     boolean flushed;
+    /* if begin has been emitted */
+    boolean begin_emitted;
     /* Linked list members. */
     struct r300_query* prev;
     struct r300_query* next;

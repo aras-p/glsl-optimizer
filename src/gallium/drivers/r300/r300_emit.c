@@ -340,6 +340,7 @@ void r300_emit_query_start(struct r300_context *r300)
     }
     OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
     END_CS;
+    query->begin_emitted = TRUE;
 }
 
 
@@ -429,10 +430,16 @@ static void rv530_emit_query_double(struct r300_context *r300,
     END_CS;
 }
 
-void r300_emit_query_end(struct r300_context* r300,
-                         struct r300_query* query)
+void r300_emit_query_end(struct r300_context* r300)
 {
     struct r300_capabilities *caps = r300_screen(r300->context.screen)->caps;
+    struct r300_query *query = r300->query_current;
+
+    if (!query)
+	return;
+
+    if (query->begin_emitted == FALSE)
+        return;
 
     if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
                 0, RADEON_GEM_DOMAIN_GTT)) {

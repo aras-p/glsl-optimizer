@@ -88,14 +88,11 @@ static void r300_begin_query(struct pipe_context* pipe,
 }
 
 static void r300_end_query(struct pipe_context* pipe,
-                           struct pipe_query* query)
+	                   struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_query* q = (struct r300_query*)query;
 
-    r300_emit_dirty_state(r300);
-    r300_emit_query_end(r300, q);
-
+    r300_emit_query_end(r300);
     r300->query_current = NULL;
 }
 
