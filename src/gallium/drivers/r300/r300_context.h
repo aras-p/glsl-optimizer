@@ -172,6 +172,8 @@ struct r300_query {
     unsigned int count;
     /* The offset of this query into the query buffer, in bytes. */
     unsigned offset;
+    /* if we've flushed the query */
+    boolean flushed;
     /* Linked list members. */
     struct r300_query* prev;
     struct r300_query* next;
@@ -237,7 +239,7 @@ struct r300_context {
     /* Occlusion query buffer. */
     struct pipe_buffer* oqbo;
     /* Query list. */
-    struct r300_query* query_list;
+    struct r300_query query_list;
 
     /* Various CSO state objects. */
     /* Blend state. */

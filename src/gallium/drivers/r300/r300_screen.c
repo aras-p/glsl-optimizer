@@ -395,6 +395,7 @@ struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
 
     caps->pci_id = r300_winsys->pci_id;
     caps->num_frag_pipes = r300_winsys->gb_pipes;
+    caps->num_z_pipes = r300_winsys->z_pipes;
 
     r300_parse_chipset(caps);
 

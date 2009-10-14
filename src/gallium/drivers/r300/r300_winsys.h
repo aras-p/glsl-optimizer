@@ -48,6 +48,9 @@ struct r300_winsys {
     /* GB pipe count */
     uint32_t gb_pipes;
 
+    /* Z pipe count (rv530 only) */
+    uint32_t z_pipes;
+
     /* GART size. */
     uint32_t gart_size;
 

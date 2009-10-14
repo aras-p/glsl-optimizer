@@ -26,9 +26,10 @@ static void r300_flush(struct pipe_context* pipe,
                        unsigned flags,
                        struct pipe_fence_handle** fence)
 {
-    struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_query *query;
 
+    CS_LOCALS(r300);
     /* We probably need to flush Draw, but we may have been called from
      * within Draw. This feels kludgy, but it might be the best thing. */
     if (!r300->draw->flushing) {
@@ -41,7 +42,12 @@ static void r300_flush(struct pipe_context* pipe,
         r300->dirty_state = R300_NEW_KITCHEN_SINK;
         r300->dirty_hw = 0;
     }
+    /* reset flushed query */
+    foreach(query, &r300->query_list) {
+        query->flushed = TRUE;
+    }
 }
+
 
 void r300_init_flush_functions(struct r300_context* r300)
 {

@@ -323,28 +323,30 @@ void r300_emit_fb_state(struct r300_context* r300,
 void r300_emit_query_begin(struct r300_context* r300,
                            struct r300_query* query)
 {
+    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
     /* XXX This will almost certainly not return good results
      * for overlapping queries. */
-    BEGIN_CS(2);
+    BEGIN_CS(4);
+    if (caps->family == CHIP_FAMILY_RV530) {
+	OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
+    } else {
+	OUT_CS_REG(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_ALL);
+    }
     OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
     END_CS;
 }
 
-void r300_emit_query_end(struct r300_context* r300,
-                         struct r300_query* query)
+
+static void r300_emit_query_finish(struct r300_context *r300,
+				   struct r300_query *query)
 {
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
-                0, RADEON_GEM_DOMAIN_GTT)) {
-        debug_printf("r300: There wasn't room for the OQ buffer!?"
-                " Oh noes!\n");
-    }
-
     assert(caps->num_frag_pipes);
+
     BEGIN_CS(6 * caps->num_frag_pipes + 2);
     /* I'm not so sure I like this switch, but it's hard to be elegant
      * when there's so many special cases...
@@ -392,6 +394,55 @@ void r300_emit_query_end(struct r300_context* r300,
     OUT_CS_REG(R300_SU_REG_DEST, 0xF);
     END_CS;
 
+}
+
+static void rv530_emit_query_single(struct r300_context *r300,
+				    struct r300_query *query)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(8);
+    OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
+    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+    OUT_CS_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
+    END_CS;
+}
+
+static void rv530_emit_query_double(struct r300_context *r300,
+				    struct r300_query *query)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(14);
+    OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
+    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+    OUT_CS_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
+    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+    OUT_CS_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
+    END_CS;
+}
+
+void r300_emit_query_end(struct r300_context* r300,
+                         struct r300_query* query)
+{
+    struct r300_capabilities *caps = r300_screen(r300->context.screen)->caps;
+
+    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
+                0, RADEON_GEM_DOMAIN_GTT)) {
+        debug_printf("r300: There wasn't room for the OQ buffer!?"
+                " Oh noes!\n");
+    }
+
+    if (caps->family == CHIP_FAMILY_RV530) {
+	if (caps->num_z_pipes == 2)
+	    rv530_emit_query_double(r300, query);
+	else
+	    rv530_emit_query_single(r300, query);
+    } else 
+        r300_emit_query_finish(r300, query);
 }
 
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)

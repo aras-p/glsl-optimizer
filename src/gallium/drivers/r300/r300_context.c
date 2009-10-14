@@ -99,11 +99,9 @@ static void r300_destroy_context(struct pipe_context* context) {
     context->screen->buffer_destroy(r300->oqbo);
 
     /* If there are any queries pending or not destroyed, remove them now. */
-    if (r300->query_list) {
-        foreach_s(query, temp, r300->query_list) {
-            remove_from_list(query);
-            FREE(query);
-        }
+    foreach_s(query, temp, &r300->query_list) {
+        remove_from_list(query);
+        FREE(query);
     }
 
     FREE(r300->blend_color_state);
@@ -201,6 +199,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
-
+    make_empty_list(&r300->query_list);
     return &r300->context;
 }

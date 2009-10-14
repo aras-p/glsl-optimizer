@@ -164,6 +164,16 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     }
     winsys->gb_pipes = target;
 
+    /* get Z pipes */
+    info.request = RADEON_INFO_NUM_Z_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get GB pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->z_pipes = target;
+
     /* Then, get PCI ID */
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));

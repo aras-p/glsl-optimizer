@@ -190,6 +190,7 @@ static void*
         r300_create_dsa_state(struct pipe_context* pipe,
                               const struct pipe_depth_stencil_alpha_state* state)
 {
+    struct r300_context* r300 = r300_context(pipe);
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
     /* Depth test setup. */
@@ -247,10 +248,14 @@ static void*
             R300_FG_ALPHA_FUNC_ENABLE;
         dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
                                      0, 1023);
-    } else {
-        /* XXX need to fix this to be dynamically set
-        dsa->z_buffer_top = R300_ZTOP_ENABLE; */
     }
+
+    dsa->z_buffer_top = R300_ZTOP_ENABLE;
+    /* XXX TODO: add frag prog rules for ztop disable */
+    if (state->alpha.enabled && state->alpha.func != PIPE_FUNC_ALWAYS)
+	dsa->z_buffer_top = R300_ZTOP_DISABLE;
+    if (!is_empty_list(&r300->query_list))
+	dsa->z_buffer_top = R300_ZTOP_DISABLE;
 
     return (void*)dsa;
 }
