@@ -2118,7 +2118,6 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      printf("Can't render\n");
       return GL_TRUE;
    }
 
