@@ -42,14 +42,10 @@
  * application.
  */
 
-#include "texmem.h"
-#include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/texformat.h"
-
-#include <assert.h>
-
+#include "main/simple_list.h"
+#include "texmem.h"
 
 
 static unsigned dummy_swap_counter;
