@@ -1302,8 +1302,8 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
 
 
 /**
- * \name DRI texture formats.  Pointers initialized to either the big- or
- * little-endian Mesa formats.
+ * \name DRI texture formats.  These vars are initialized to either the
+ * big- or little-endian Mesa formats.
  */
 /*@{*/
 gl_format _dri_texformat_rgba8888 = MESA_FORMAT_NONE;
@@ -1320,15 +1320,13 @@ gl_format _dri_texformat_l8 = MESA_FORMAT_L8;
 
 
 /**
- * Initialize little endian target, host byte order independent texture formats
+ * Initialize _dri_texformat_* vars according to whether we're on
+ * a big or little endian system.
  */
 void
 driInitTextureFormats(void)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
-
-   if (littleEndian) {
+   if (_mesa_little_endian()) {
       _dri_texformat_rgba8888	= MESA_FORMAT_RGBA8888;
       _dri_texformat_argb8888	= MESA_FORMAT_ARGB8888;
       _dri_texformat_rgb565	= MESA_FORMAT_RGB565;
