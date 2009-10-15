@@ -15,6 +15,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	unsigned w = fb->width;
 	unsigned h = fb->height;
 	struct nv30_miptree *nv30mt;
+	int colour_bits = 32, zeta_bits = 32;
 
 	rt_enable = 0;
 	for (i = 0; i < fb->nr_cbufs; i++) {
@@ -54,6 +55,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		break;
 	case PIPE_FORMAT_R5G6B5_UNORM:
 		rt_format |= NV34TCL_RT_FORMAT_COLOR_R5G6B5;
+		colour_bits = 16;
 		break;
 	default:
 		assert(0);
@@ -62,6 +64,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	switch (zeta_format) {
 	case PIPE_FORMAT_Z16_UNORM:
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z16;
+		zeta_bits = 16;
 		break;
 	case PIPE_FORMAT_Z24S8_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -70,6 +73,10 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		break;
 	default:
 		assert(0);
+	}
+
+	if (colour_bits != zeta_bits) {
+		return FALSE;
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
