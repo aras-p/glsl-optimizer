@@ -31,6 +31,15 @@
  *
  * is generated.
  *
+ * Some of the entry points use current display, context, or surface
+ * implicitly.  For such entry points, the implicit objects are also
+ * checked before calling the driver function.  Other than the
+ * errors listed above,
+ *
+ * EGL_BAD_CURRENT_SURFACE
+ *
+ * may also be generated.
+ *
  * Notes on naming conventions:
  *
  * eglFooBar    - public EGL function
@@ -519,7 +528,13 @@ eglSwapInterval(EGLDisplay dpy, EGLint interval)
 EGLBoolean EGLAPIENTRY
 eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
+   _EGLContext *ctx = _eglGetCurrentContext();
    _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
+
+   /* surface must be bound to current context in EGL 1.4 */
+   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+
    return drv->API.SwapBuffers(drv, disp, surf);
 }
 
