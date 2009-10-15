@@ -62,7 +62,6 @@ struct r300_dsa_state {
     uint32_t z_buffer_control;  /* R300_ZB_CNTL: 0x4f00 */
     uint32_t z_stencil_control; /* R300_ZB_ZSTENCILCNTL: 0x4f04 */
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
-    uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
 };
 
@@ -122,6 +121,10 @@ struct r300_viewport_state {
     float zscale;         /* R300_VAP_VPORT_ZSCALE:  0x20a8 */
     float zoffset;        /* R300_VAP_VPORT_ZOFFSET: 0x20ac */
     uint32_t vte_control; /* R300_VAP_VTE_CNTL:      0x20b0 */
+};
+
+struct r300_ztop_state {
+    uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
 #define R300_NEW_BLEND           0x00000001
@@ -281,6 +284,9 @@ struct r300_context {
     struct r300_vertex_shader* vs;
     /* Viewport state. */
     struct r300_viewport_state* viewport_state;
+    /* ZTOP state. */
+    struct r300_ztop_state ztop_state;
+
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */

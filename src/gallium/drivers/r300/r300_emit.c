@@ -106,7 +106,7 @@ void r300_emit_dsa_state(struct r300_context* r300,
     OUT_CS(dsa->z_buffer_control);
     OUT_CS(dsa->z_stencil_control);
     OUT_CS(dsa->stencil_ref_mask);
-    OUT_CS_REG(R300_ZB_ZTOP, dsa->z_buffer_top);
+    OUT_CS_REG(R300_ZB_ZTOP, r300->ztop_state.z_buffer_top);
     if (r300screen->caps->is_r500) {
         /* OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf); */
     }
