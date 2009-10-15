@@ -531,7 +531,8 @@ void r300_emit_texture(struct r300_context* r300,
     CS_LOCALS(r300);
 
     BEGIN_CS(16);
-    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0);
+    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0 |
+        (offset << 28));
     OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
     OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
 
