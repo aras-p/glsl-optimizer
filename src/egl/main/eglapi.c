@@ -520,8 +520,18 @@ eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
 EGLBoolean EGLAPIENTRY
 eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLSurface *surf;
    _EGL_DECLARE_DD(dpy);
-   return drv->API.SwapInterval(drv, disp, interval);
+
+   if (!ctx || !_eglIsContextLinked(ctx) || ctx->Display != disp)
+      return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+
+   surf = ctx->DrawSurface;
+   if (!_eglIsSurfaceLinked(surf))
+      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+
+   return drv->API.SwapInterval(drv, disp, surf, interval);
 }
 
 
