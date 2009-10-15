@@ -127,6 +127,7 @@ static void run(EGLDisplay dpy, EGLSurface surf, int ttr)
 	double st = current_time();
 	double ct = st;
 	int frames = 0;
+	GLfloat seconds, fps;
 
 	while (ct - st < ttr)
 	{
@@ -139,8 +140,8 @@ static void run(EGLDisplay dpy, EGLSurface surf, int ttr)
 		frames++;
 	}
 
-	GLfloat seconds = ct - st;
-	GLfloat fps = frames / seconds;
+	seconds = ct - st;
+	fps = frames / seconds;
 	printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds, fps);
 }
 
