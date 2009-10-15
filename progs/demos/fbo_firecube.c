@@ -938,7 +938,14 @@ reshape(int width, int height)
 static void 
 init_fbotexture()
 {
+   static const GLenum depthFormats[] = {
+      GL_DEPTH_COMPONENT,
+      GL_DEPTH_COMPONENT16,
+      GL_DEPTH_COMPONENT32
+   };
+   static int numDepthFormats = sizeof(depthFormats) / sizeof(depthFormats[0]);
    GLint i;
+   GLenum stat;
 
    /* gen framebuffer id, delete it, do some assertions, just for testing */
    glGenFramebuffersEXT(1, &MyFB);
@@ -969,18 +976,31 @@ init_fbotexture()
    /* make depth renderbuffer */
    glGenRenderbuffersEXT(1, &DepthRB);
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthRB);
-   glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT16,
-			    TexWidth, TexHeight);
-   CheckError(__LINE__);
+   /* we may have to try several formats */
+   for (i = 0; i < numDepthFormats; i++) {
+      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, depthFormats[i],
+                               TexWidth, TexHeight);
+      CheckError(__LINE__);
+
+      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+                                   GL_RENDERBUFFER_EXT, DepthRB);
+      CheckError(__LINE__);
+      stat = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+      if (stat == GL_FRAMEBUFFER_COMPLETE_EXT) {
+         break;
+      }
+   }
+
+   if (stat != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      fprintf(stderr, "Error: unable to get usable FBO combination!\n");
+      exit(1);
+   }
+
    glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
-				   GL_RENDERBUFFER_DEPTH_SIZE_EXT, &i);
+                                   GL_RENDERBUFFER_DEPTH_SIZE_EXT, &i);
    CheckError(__LINE__);
    printf("Depth renderbuffer size = %d bits\n", i);
 
-   /* attach DepthRB to MyFB */
-   glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-				GL_RENDERBUFFER_EXT, DepthRB);
-   CheckError(__LINE__);
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
    /*
