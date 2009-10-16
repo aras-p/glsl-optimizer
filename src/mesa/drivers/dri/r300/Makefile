@@ -78,5 +78,3 @@ EXTRA_MODULES = compiler/libr300compiler.a
 
 include ../Makefile.template
 
-symlinks:
-

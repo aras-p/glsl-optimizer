@@ -86,6 +86,10 @@ subdirs:
 	fi
 
 
+.PHONY: symlinks
+symlinks:
+
+
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend

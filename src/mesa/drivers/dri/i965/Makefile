@@ -100,6 +100,5 @@ DRI_LIB_DEPS += -ldrm_intel
 
 include ../Makefile.template
 
-symlinks:
 intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c
