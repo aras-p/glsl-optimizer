@@ -62,12 +62,6 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 		}
 	}
 
-	if (vp->code.constants.Count * 4 > VSF_MAX_FRAGMENT_LENGTH) {
-		/* Should have checked this earlier... */
-		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
-		_mesa_exit(-1);
-	}
-
 	for(i = 0; i < vp->code.constants.Count; ++i) {
 		const float * src = 0;
 		const struct rc_constant * constant = &vp->code.constants.Constants[i];
@@ -281,6 +275,11 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	}
 
 	r3xx_compile_vertex_program(&compiler);
+
+	if (vp->code.constants.Count > ctx->Const.VertexProgram.MaxParameters) {
+		rc_error(&compiler.Base, "Program exceeds constant buffer size limit\n");
+	}
+
 	vp->error = compiler.Base.Error;
 
 	vp->Base->Base.InputsRead = vp->code.InputsRead;
@@ -334,7 +333,6 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 #define bump_vpu_count(ptr, new_count)   do { \
 		drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr)); \
 		int _nc=(new_count)/4; \
-		assert(_nc < 256); \
 		if(_nc>_p->vpu.count)_p->vpu.count=_nc; \
 	} while(0)
 
