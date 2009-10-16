@@ -60,7 +60,7 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: symlinks depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+default: symlinks subdirs depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
@@ -70,6 +70,18 @@ $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
+
+
+# If the Makefile defined SUBDIRS, run make in each
+.PHONY: subdirs
+subdirs:
+	@if test -n "$(SUBDIRS)" ; then \
+		for dir in $(SUBDIRS) ; do \
+			if [ -d $$dir ] ; then \
+				(cd $$dir && $(MAKE)) || exit 1; \
+			fi \
+		done \
+	fi
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
