@@ -7,7 +7,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
+OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h glapidispatch.h \
 	../main/enums.c \
 	../main/remap_helper.h \
 	../x86/glapi_x86.S \
@@ -41,6 +41,7 @@ SERVER_OUTPUTS = \
 	$(GLX_DIR)/glapitemp.h \
 	$(GLX_DIR)/glapitable.h \
 	$(GLX_DIR)/glapioffsets.h \
+	$(GLX_DIR)/glapidispatch.h \
 	$(GLX_DIR)/glprocs.h \
 	$(GLX_DIR)/dispatch.h \
 	$(SERVER_GLAPI_FILES)
@@ -86,7 +87,7 @@ glapioffsets.h $(GLX_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 glapitable.h $(GLX_DIR)/glapitable.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-dispatch.h $(GLX_DIR)/dispatch.h: gl_table.py $(COMMON)
+glapidispatch.h $(GLX_DIR)/glapidispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 ../main/enums.c: gl_enums.py $(COMMON)
