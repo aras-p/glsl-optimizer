@@ -29,6 +29,27 @@
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
+struct r300_shader_key {
+    struct r300_vertex_shader* vs;
+    struct r300_fragment_shader* fs;
+};
+
+unsigned r300_shader_key_hash(void* key) {
+    struct r300_shader_key* shader_key = (struct r300_shader_key*)key;
+    unsigned vs = (unsigned)shader_key->vs;
+    unsigned fs = (unsigned)shader_key->fs;
+
+    return (vs << 16) | (fs & 0xffff);
+}
+
+int r300_shader_key_compare(void* key1, void* key2) {
+    struct r300_shader_key* shader_key1 = (struct r300_shader_key*)key1;
+    struct r300_shader_key* shader_key2 = (struct r300_shader_key*)key2;
+
+    return (shader_key1->vs == shader_key2->vs) &&
+        (shader_key1->fs == shader_key2->fs);
+}
+
 /* Set up the vs_tab and routes. */
 static void r300_vs_tab_routes(struct r300_context* r300,
                                struct r300_vertex_format* vformat)
@@ -247,23 +268,41 @@ static void r300_vertex_psc(struct r300_context* r300,
 /* Update the vertex format. */
 static void r300_update_vertex_format(struct r300_context* r300)
 {
-    struct r300_vertex_format vformat;
+    struct r300_shader_key* key;
+    struct r300_vertex_format* vformat;
+    void* value;
     int i;
 
-    memset(&vformat, 0, sizeof(struct r300_vertex_format));
-    for (i = 0; i < 16; i++) {
-        vformat.vs_tab[i] = -1;
-        vformat.fs_tab[i] = -1;
+    key = CALLOC_STRUCT(r300_shader_key);
+    key->vs = r300->vs;
+    key->fs = r300->fs;
+
+    value = u_hash_table_get(r300->shader_hash_table, (void*)key);
+    if (value) {
+        debug_printf("r300: Hash table hit! vs: %p fs: %p\n", key->vs,
+            key->fs);
+        vformat = (struct r300_vertex_format*)value;
+    } else {
+        debug_printf("r300: Hash table miss... vs: %p fs: %p\n", key->vs,
+            key->fs);
+        vformat = CALLOC_STRUCT(r300_vertex_format);
+
+        for (i = 0; i < 16; i++) {
+            vformat->vs_tab[i] = -1;
+            vformat->fs_tab[i] = -1;
+        }
+
+        r300_vs_tab_routes(r300, vformat);
+        r300_vertex_psc(r300, vformat);
+
+        if (u_hash_table_set(r300->shader_hash_table, (void*)key,
+                (void*)vformat) != PIPE_OK) {
+            debug_printf("r300: Hash table insertion error!\n");
+        }
     }
 
-    r300_vs_tab_routes(r300, &vformat);
-
-    r300_vertex_psc(r300, &vformat);
-
-    if (memcmp(&r300->vertex_info, &vformat,
-                sizeof(struct r300_vertex_format))) {
-        memcpy(&r300->vertex_info, &vformat,
-                sizeof(struct r300_vertex_format));
+    if (r300->vertex_info != vformat) {
+        r300->vertex_info = vformat;
         r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
     }
 }
@@ -271,7 +310,7 @@ static void r300_update_vertex_format(struct r300_context* r300)
 /* Set up the mappings from GB to US, for RS block. */
 static void r300_update_fs_tab(struct r300_context* r300)
 {
-    struct r300_vertex_format* vformat = &r300->vertex_info;
+    struct r300_vertex_format* vformat = r300->vertex_info;
     struct tgsi_shader_info* info = &r300->fs->info;
     int i, cols = 0, texs = 0, cols_emitted = 0;
     int* tab = vformat->fs_tab;
@@ -337,7 +376,7 @@ static void r300_update_rs_block(struct r300_context* r300)
 {
     struct r300_rs_block* rs = r300->rs_block;
     struct tgsi_shader_info* info = &r300->fs->info;
-    int* tab = r300->vertex_info.fs_tab;
+    int* tab = r300->vertex_info->fs_tab;
     int col_count = 0, fp_offset = 0, i, tex_count = 0;
     int rs_tex_comp = 0;
     memset(rs, 0, sizeof(struct r300_rs_block));
@@ -477,10 +516,7 @@ static void r300_update_ztop(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    if (r300->dirty_state &
-            (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
-        r300_update_vertex_format(r300);
-    }
+    r300_update_vertex_format(r300);
 
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
         r300_update_fs_tab(r300);

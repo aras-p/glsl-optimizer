@@ -30,12 +30,14 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "util/u_hash_table.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
 #include "r300_clear.h"
 #include "r300_query.h"
 #include "r300_screen.h"
+#include "r300_state_derived.h"
 #include "r300_winsys.h"
 
 struct r300_fragment_shader;
@@ -248,6 +250,12 @@ struct r300_context {
     struct r300_query *query_current;
     struct r300_query query_list;
 
+    /* Shader hash table. Used to store vertex formatting information, which
+     * depends on the combination of both currently loaded shaders. */
+    struct u_hash_table* shader_hash_table;
+    /* Vertex formatting information. */
+    struct r300_vertex_format* vertex_info;
+
     /* Various CSO state objects. */
     /* Blend state. */
     struct r300_blend_state* blend_state;
@@ -278,8 +286,6 @@ struct r300_context {
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
-    /* Vertex information. */
-    struct r300_vertex_format vertex_info;
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */

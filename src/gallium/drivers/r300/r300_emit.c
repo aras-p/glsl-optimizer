@@ -551,7 +551,7 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
 
     DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
             "vertex size %d\n", r300->vbo,
-            r300->vertex_info.vinfo.size);
+            r300->vertex_info->vinfo.size);
     /* Set the pointer to our vertex buffer. The emitted values are this:
      * PACKET3 [3D_LOAD_VBPNTR]
      * COUNT   [1]
@@ -562,8 +562,8 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
     BEGIN_CS(7);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
     OUT_CS(1);
-    OUT_CS(r300->vertex_info.vinfo.size |
-            (r300->vertex_info.vinfo.size << 8));
+    OUT_CS(r300->vertex_info->vinfo.size |
+            (r300->vertex_info->vinfo.size << 8));
     OUT_CS(r300->vbo_offset);
     OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
@@ -575,30 +575,30 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     CS_LOCALS(r300);
 
     BEGIN_CS(26);
-    OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info.vinfo.size);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info->vinfo.size);
 
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
-    OUT_CS(r300->vertex_info.vinfo.hwfmt[0]);
-    OUT_CS(r300->vertex_info.vinfo.hwfmt[1]);
+    OUT_CS(r300->vertex_info->vinfo.hwfmt[0]);
+    OUT_CS(r300->vertex_info->vinfo.hwfmt[1]);
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(r300->vertex_info.vinfo.hwfmt[2]);
-    OUT_CS(r300->vertex_info.vinfo.hwfmt[3]);
+    OUT_CS(r300->vertex_info->vinfo.hwfmt[2]);
+    OUT_CS(r300->vertex_info->vinfo.hwfmt[3]);
     /* for (i = 0; i < 4; i++) {
      *    debug_printf("hwfmt%d: 0x%08x\n", i,
-     *            r300->vertex_info.vinfo.hwfmt[i]);
+     *            r300->vertex_info->vinfo.hwfmt[i]);
      * } */
 
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
     for (i = 0; i < 8; i++) {
-        OUT_CS(r300->vertex_info.vap_prog_stream_cntl[i]);
+        OUT_CS(r300->vertex_info->vap_prog_stream_cntl[i]);
         /* debug_printf("prog_stream_cntl%d: 0x%08x\n", i,
-         *        r300->vertex_info.vap_prog_stream_cntl[i]); */
+         *        r300->vertex_info->vap_prog_stream_cntl[i]); */
     }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
     for (i = 0; i < 8; i++) {
-        OUT_CS(r300->vertex_info.vap_prog_stream_cntl_ext[i]);
+        OUT_CS(r300->vertex_info->vap_prog_stream_cntl_ext[i]);
         /* debug_printf("prog_stream_cntl_ext%d: 0x%08x\n", i,
-         *        r300->vertex_info.vap_prog_stream_cntl_ext[i]); */
+         *        r300->vertex_info->vap_prog_stream_cntl_ext[i]); */
     }
     END_CS;
 }
