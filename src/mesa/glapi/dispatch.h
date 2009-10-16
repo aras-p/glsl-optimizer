@@ -26,7 +26,12 @@
 #ifndef _DISPATCH_H
 #define _DISPATCH_H
 
+#ifdef IN_DRI_DRIVER
+#define _GLAPI_USE_REMAP_TABLE
+#endif
+
 #include "glapitable.h"
+#include "glapioffsets.h"
 #include "glapidispatch.h"
 
 #endif /* _DISPATCH_H */

@@ -39,11 +39,7 @@ libmesagallium.a: $(MESA_GALLIUM_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	@if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
-		touch libglapi.a ; \
-	else \
-		$(MKLIB) -o glapi -static $(GLAPI_OBJECTS) ; \
-	fi
+	$(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
 ######################################################################
 # Device drivers

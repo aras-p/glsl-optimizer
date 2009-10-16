@@ -133,7 +133,6 @@
 #include "viewport.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
-#include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"

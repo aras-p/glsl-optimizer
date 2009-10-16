@@ -65,7 +65,6 @@ class PrintGlRemap(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "glapi/dispatch.h"'
-		print '#include "glapi/glapioffsets.h"'
 		print ''
 		return
 

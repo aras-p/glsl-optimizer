@@ -26,7 +26,6 @@
  */
 
 #include "glapi/dispatch.h"
-#include "glapi/glapioffsets.h"
 
 struct gl_function_remap {
    GLint func_index;

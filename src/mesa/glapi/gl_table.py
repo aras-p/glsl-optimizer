@@ -79,6 +79,8 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print """
+/* this file should not be included directly in mesa */
+
 /**
  * \\file glapidispatch.h
  * Macros for handling GL dispatch tables.
@@ -132,7 +134,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 		print ''
-		print '#if !defined(IN_DRI_DRIVER)'
+		print '#if !defined(_GLAPI_USE_REMAP_TABLE)'
 		print ''
 
 		for [f, index] in functions:
@@ -162,7 +164,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 		print ''
-		print '#endif /* !defined(IN_DRI_DRIVER) */'
+		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
 		return
 
 

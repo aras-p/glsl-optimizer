@@ -29,6 +29,8 @@
 #  define _GLAPI_DISPATCH_H_
 
 
+/* this file should not be included directly in mesa */
+
 /**
  * \file glapidispatch.h
  * Macros for handling GL dispatch tables.
@@ -1281,7 +1283,7 @@
 #define GET_MultiTexCoord4svARB(disp) ((disp)->MultiTexCoord4svARB)
 #define SET_MultiTexCoord4svARB(disp, fn) ((disp)->MultiTexCoord4svARB = fn)
 
-#if !defined(IN_DRI_DRIVER)
+#if !defined(_GLAPI_USE_REMAP_TABLE)
 
 #define CALL_AttachShader(disp, parameters) (*((disp)->AttachShader)) parameters
 #define GET_AttachShader(disp) ((disp)->AttachShader)
@@ -4000,6 +4002,6 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
 #define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
 
-#endif /* !defined(IN_DRI_DRIVER) */
+#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 
 #endif /* !defined( _GLAPI_DISPATCH_H_ ) */
