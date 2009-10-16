@@ -69,7 +69,10 @@ DRIVER_DEFINES = -DRADEON_R300
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
-PIPE_DRIVERS =  compiler/libr300compiler.a
+SUBDIRS = compiler
+
+EXTRA_MODULES = compiler/libr300compiler.a
+
 
 ##### TARGETS #####
 
@@ -77,8 +80,3 @@ include ../Makefile.template
 
 symlinks:
 
-# Mark the archive phony so that we always check for recompilation
-.PHONY : compiler/libr300compiler.a
-
-compiler/libr300compiler.a:
-	cd compiler && $(MAKE)
