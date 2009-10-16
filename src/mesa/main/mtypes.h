@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.7
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -1917,10 +1917,10 @@ struct ati_fragment_shader
    struct atifs_instruction *Instructions[2];
    struct atifs_setupinst *SetupInst[2];
    GLfloat Constants[8][4];
-   GLbitfield LocalConstDef;  /** Indicates which constants have been set */
+   GLbitfield LocalConstDef;  /**< Indicates which constants have been set */
    GLubyte numArithInstr[2];
    GLubyte regsAssigned[2];
-   GLubyte NumPasses;         /** 1 or 2 */
+   GLubyte NumPasses;         /**< 1 or 2 */
    GLubyte cur_pass;
    GLubyte last_optype;
    GLboolean interpinp1;
@@ -1934,7 +1934,7 @@ struct ati_fragment_shader
 struct gl_ati_fragment_shader_state
 {
    GLboolean Enabled;
-   GLboolean _Enabled;                      /** enabled and valid shader? */
+   GLboolean _Enabled;                  /**< enabled and valid shader? */
    GLboolean Compiling;
    GLfloat GlobalConstants[8][4];
    struct ati_fragment_shader *Current;
