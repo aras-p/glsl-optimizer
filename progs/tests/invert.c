@@ -128,7 +128,7 @@ static void Init( void )
 {
    const char * const ver_string = (const char * const)
        glGetString( GL_VERSION );
-   const float ver = strtof( ver_string, NULL );
+   const float ver = strtod( ver_string, NULL );
 
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
