@@ -37,6 +37,7 @@
 #include "pipe/p_screen.h"
 
 #include "trace/tr_drm.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 
 #include "state_tracker/drm_api.h"
