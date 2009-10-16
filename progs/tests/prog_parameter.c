@@ -153,7 +153,7 @@ static int set_parameter_batch( GLsizei count, GLfloat * param,
 
 
    for ( i = 0 ; i < (4 * count) ; i++ ) {
-      param[i] = (GLfloat) random() / (GLfloat) random();
+      param[i] = (GLfloat) rand() / (GLfloat) rand();
    }
 
    printf("Testing glProgram%sParameters4fvEXT (count = %u)...\n", name, count);
