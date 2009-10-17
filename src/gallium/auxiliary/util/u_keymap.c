@@ -28,7 +28,7 @@
 /**
  * Key lookup/associative container.
  *
- * Like Jose's u_hash_table, based on CSO cache code for now.
+ * Like Jose's util_hash_table, based on CSO cache code for now.
  *
  * Author: Brian Paul
  */
