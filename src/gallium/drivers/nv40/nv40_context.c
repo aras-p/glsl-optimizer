@@ -10,7 +10,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	
+
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(curie, 0x1fd8, 1);
 		OUT_RING  (2);
@@ -37,10 +37,14 @@ nv40_is_texture_referenced( struct pipe_context *pipe,
 			    unsigned face, unsigned level)
 {
    /**
-    * FIXME: Optimize.
+    * FIXME: Return the correct result. We can't always return referenced
+    *        since it causes a double flush within the vbo module.
     */
-
+#if 0
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+#else
+   return 0;
+#endif
 }
 
 static unsigned int
@@ -48,10 +52,14 @@ nv40_is_buffer_referenced( struct pipe_context *pipe,
 			   struct pipe_buffer *buf)
 {
    /**
-    * FIXME: Optimize.
+    * FIXME: Return the correct result. We can't always return referenced
+    *        since it causes a double flush within the vbo module.
     */
-
+#if 0
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+#else
+   return 0;
+#endif
 }
 
 struct pipe_context *
@@ -95,4 +103,3 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	return &nv40->pipe;
 }
-	
