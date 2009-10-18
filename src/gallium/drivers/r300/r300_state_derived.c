@@ -447,7 +447,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 }
 
 /* Update the vertex format. */
-static void r300_update_vertex_format(struct r300_context* r300)
+static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_shader_key* key;
     struct r300_vertex_format* vformat;
@@ -526,7 +526,10 @@ static void r300_update_ztop(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    r300_update_vertex_format(r300);
+    if (r300->dirty_state &
+        (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
+        r300_update_derived_shader_state(r300);
+    }
 
     if (r300->dirty_state &
             (R300_NEW_DSA | R300_NEW_FRAGMENT_SHADER | R300_NEW_QUERY)) {
