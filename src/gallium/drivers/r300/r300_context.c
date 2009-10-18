@@ -102,9 +102,9 @@ static void r300_destroy_context(struct pipe_context* context)
     struct r300_context* r300 = r300_context(context);
     struct r300_query* query, * temp;
 
-    u_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
+    util_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
         NULL);
-    u_hash_table_destroy(r300->shader_hash_table);
+    util_hash_table_destroy(r300->shader_hash_table);
 
     draw_destroy(r300->draw);
 
@@ -180,7 +180,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
-    r300->shader_hash_table = u_hash_table_create(r300_shader_key_hash,
+    r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
         r300_shader_key_compare);
 
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);

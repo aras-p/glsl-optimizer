@@ -277,7 +277,7 @@ static void r300_update_vertex_format(struct r300_context* r300)
     key->vs = r300->vs;
     key->fs = r300->fs;
 
-    value = u_hash_table_get(r300->shader_hash_table, (void*)key);
+    value = util_hash_table_get(r300->shader_hash_table, (void*)key);
     if (value) {
         debug_printf("r300: Hash table hit! vs: %p fs: %p\n", key->vs,
             key->fs);
@@ -295,10 +295,8 @@ static void r300_update_vertex_format(struct r300_context* r300)
         r300_vs_tab_routes(r300, vformat);
         r300_vertex_psc(r300, vformat);
 
-        if (u_hash_table_set(r300->shader_hash_table, (void*)key,
-                (void*)vformat) != PIPE_OK) {
-            debug_printf("r300: Hash table insertion error!\n");
-        }
+        util_hash_table_set(r300->shader_hash_table,
+            (void*)key, (void*)vformat);
     }
 
     if (r300->vertex_info != vformat) {
