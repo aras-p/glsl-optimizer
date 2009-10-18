@@ -173,18 +173,23 @@ crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
     //ScrnInfoPtr pScrn = crtc->scrn;
 }
 
+/*
+ * Cursor functions
+ */
+
 static void
-crtc_destroy(xf86CrtcPtr crtc)
+crtc_set_cursor_colors(xf86CrtcPtr crtc, int bg, int fg)
 {
-    struct crtc_private *crtcp = crtc->driver_private;
-
-    if (crtcp->cursor_tex)
-	pipe_texture_reference(&crtcp->cursor_tex, NULL);
-
-    drmModeFreeCrtc(crtcp->drm_crtc);
-    xfree(crtcp);
 }
 
+static void
+crtc_set_cursor_position(xf86CrtcPtr crtc, int x, int y)
+{
+    modesettingPtr ms = modesettingPTR(crtc->scrn);
+    struct crtc_private *crtcp = crtc->driver_private;
+
+    drmModeMoveCursor(ms->fd, crtcp->drm_crtc->crtc_id, x, y);
+}
 static void
 crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 {
@@ -230,15 +235,6 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 }
 
 static void
-crtc_set_cursor_position(xf86CrtcPtr crtc, int x, int y)
-{
-    modesettingPtr ms = modesettingPTR(crtc->scrn);
-    struct crtc_private *crtcp = crtc->driver_private;
-
-    drmModeMoveCursor(ms->fd, crtcp->drm_crtc->crtc_id, x, y);
-}
-
-static void
 crtc_show_cursor(xf86CrtcPtr crtc)
 {
     modesettingPtr ms = modesettingPTR(crtc->scrn);
@@ -258,29 +254,6 @@ crtc_hide_cursor(xf86CrtcPtr crtc)
     drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id, 0, 0, 0);
 }
 
-static const xf86CrtcFuncsRec crtc_funcs = {
-    .dpms = crtc_dpms,
-    .save = NULL,
-    .restore = NULL,
-    .lock = crtc_lock,
-    .unlock = crtc_unlock,
-    .mode_fixup = crtc_mode_fixup,
-    .prepare = crtc_prepare,
-    .mode_set = crtc_mode_set,
-    .commit = crtc_commit,
-    .gamma_set = crtc_gamma_set,
-    .shadow_create = crtc_shadow_create,
-    .shadow_allocate = crtc_shadow_allocate,
-    .shadow_destroy = crtc_shadow_destroy,
-    .set_cursor_position = crtc_set_cursor_position,
-    .show_cursor = crtc_show_cursor,
-    .hide_cursor = crtc_hide_cursor,
-    .load_cursor_image = NULL,	       /* lets convert to argb only */
-    .set_cursor_colors = NULL,	       /* using argb only */
-    .load_cursor_argb = crtc_load_cursor_argb,
-    .destroy = crtc_destroy,
-};
-
 void
 crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
@@ -290,6 +263,46 @@ crtc_cursor_destroy(xf86CrtcPtr crtc)
 	pipe_texture_reference(&crtcp->cursor_tex, NULL);
     }
 }
+
+/*
+ * Misc functions
+ */
+
+static void
+crtc_destroy(xf86CrtcPtr crtc)
+{
+    struct crtc_private *crtcp = crtc->driver_private;
+
+    if (crtcp->cursor_tex)
+	pipe_texture_reference(&crtcp->cursor_tex, NULL);
+
+    drmModeFreeCrtc(crtcp->drm_crtc);
+    xfree(crtcp);
+}
+
+static const xf86CrtcFuncsRec crtc_funcs = {
+    .dpms = crtc_dpms,
+
+    .lock = crtc_lock,
+    .unlock = crtc_unlock,
+    .mode_fixup = crtc_mode_fixup,
+    .prepare = crtc_prepare,
+    .mode_set = crtc_mode_set,
+    .commit = crtc_commit,
+
+    .set_cursor_colors = crtc_set_cursor_colors,
+    .set_cursor_position = crtc_set_cursor_position,
+    .show_cursor = crtc_show_cursor,
+    .hide_cursor = crtc_hide_cursor,
+    .load_cursor_argb = crtc_load_cursor_argb,
+
+    .shadow_create = crtc_shadow_create,
+    .shadow_allocate = crtc_shadow_allocate,
+    .shadow_destroy = crtc_shadow_destroy,
+
+    .gamma_set = crtc_gamma_set,
+    .destroy = crtc_destroy,
+};
 
 void
 crtc_init(ScrnInfoPtr pScrn)
