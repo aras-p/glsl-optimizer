@@ -517,6 +517,8 @@ static void r300_update_ztop(struct r300_context* r300)
      */
     if (r300->dsa_state->alpha_function) {
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300->fs->info.uses_kill) {
+        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
     } else if (r300_fragment_shader_writes_depth(r300->fs)) {
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
     } else if (r300->query_current) {
