@@ -231,6 +231,7 @@ static boolean check_tex_2d_format(enum pipe_format format, uint32_t usage,
 
         /* Definitely unsupported formats. */
         /* Non-usable Z buffer/stencil formats. */
+        case PIPE_FORMAT_Z32_UNORM:
         case PIPE_FORMAT_Z24X8_UNORM:
         case PIPE_FORMAT_S8Z24_UNORM:
         case PIPE_FORMAT_X8Z24_UNORM:
