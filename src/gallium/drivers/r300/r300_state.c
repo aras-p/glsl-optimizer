@@ -329,7 +329,7 @@ static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
     rc_constants_destroy(&fs->code.constants);
-    FREE(fs->state.tokens);
+    FREE((void*)fs->state.tokens);
     FREE(shader);
 }
 
@@ -697,7 +697,7 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
         rc_constants_destroy(&vs->code.constants);
         draw_delete_vertex_shader(r300->draw, vs->draw);
-        FREE(vs->state.tokens);
+        FREE((void*)vs->state.tokens);
         FREE(shader);
     } else {
         draw_delete_vertex_shader(r300->draw,

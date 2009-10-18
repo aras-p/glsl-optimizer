@@ -311,7 +311,7 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 {
     struct r300_texture *tex = (struct r300_texture *)texture;
     struct r300_transfer *trans;
-    unsigned offset;  /* in bytes */
+    unsigned offset = 0;  /* in bytes */
 
     /* XXX Add support for these things */
     if (texture->target == PIPE_TEXTURE_CUBE) {

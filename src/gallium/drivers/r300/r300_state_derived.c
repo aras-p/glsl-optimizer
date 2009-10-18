@@ -265,7 +265,9 @@ static void r300_vertex_psc(struct r300_context* r300,
     }
 
     /* Set the last vector in the PSC. */
-    i--;
+    if (i) {
+        i -= 1;
+    }
     vformat->vap_prog_stream_cntl[i >> 1] |=
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
 }
@@ -336,17 +338,14 @@ static void r300_update_fs_tab(struct r300_context* r300,
  * the rasterization of vertices into fragments. This is also the part of the
  * chipset that locks up if any part of it is even slightly wrong. */
 static void r300_update_rs_block(struct r300_context* r300,
-                                 struct r300_vertex_format* vformat,
                                  struct r300_rs_block* rs)
 {
     struct tgsi_shader_info* info = &r300->fs->info;
-    int* tab = vformat->fs_tab;
     int col_count = 0, fp_offset = 0, i, tex_count = 0;
     int rs_tex_comp = 0;
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
         for (i = 0; i < info->num_inputs; i++) {
-            assert(tab[i] != -1);
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
@@ -387,7 +386,6 @@ static void r300_update_rs_block(struct r300_context* r300,
         }
     } else {
         for (i = 0; i < info->num_inputs; i++) {
-            assert(tab[i] != -1);
             switch (info->input_semantic_name[i]) {
                 case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
@@ -480,7 +478,7 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
         r300_vertex_psc(r300, vformat);
         r300_update_fs_tab(r300, vformat);
 
-        r300_update_rs_block(r300, vformat, rs_block);
+        r300_update_rs_block(r300, rs_block);
 
         value->vformat = vformat;
         value->rs_block = rs_block;
