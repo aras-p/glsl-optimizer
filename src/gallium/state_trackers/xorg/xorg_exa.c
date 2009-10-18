@@ -708,6 +708,50 @@ xorg_exa_get_texture(PixmapPtr pPixmap)
    return tex;
 }
 
+Bool
+xorg_exa_set_texture(PixmapPtr pPixmap, struct  pipe_texture *tex)
+{
+    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
+
+    int mask = PIPE_TEXTURE_USAGE_PRIMARY | PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+
+    if (!priv)
+	return FALSE;
+
+    if (pPixmap->drawable.width != tex->width[0] ||
+	pPixmap->drawable.height != tex->height[0])
+	return FALSE;
+
+    pipe_texture_reference(&priv->tex, tex);
+    priv->tex_flags = tex->tex_usage & mask;
+
+    return TRUE;
+}
+
+struct pipe_texture *
+xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
+			     int width, int height,
+			     int depth, int bitsPerPixel)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    struct exa_context *exa = ms->exa;
+    struct pipe_texture template;
+
+    memset(&template, 0, sizeof(template));
+    template.target = PIPE_TEXTURE_2D;
+    exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
+    pf_get_block(template.format, &template.block);
+    template.width[0] = width;
+    template.height[0] = height;
+    template.depth[0] = 1;
+    template.last_level = 0;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+
+    return exa->scrn->texture_create(exa->scrn, &template);
+}
+
 void
 xorg_exa_close(ScrnInfoPtr pScrn)
 {

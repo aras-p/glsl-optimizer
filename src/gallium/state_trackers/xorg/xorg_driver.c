@@ -144,20 +144,22 @@ static Bool
 CreateFrontBuffer(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    ScreenPtr pScreen = pScrn->pScreen;
-    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
     unsigned handle, stride;
+    struct pipe_texture *tex;
 
     ms->noEvict = TRUE;
-    xorg_exa_set_displayed_usage(rootPixmap);
-    pScreen->ModifyPixmapHeader(rootPixmap,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->depth, pScrn->bitsPerPixel,
-				pScrn->displayWidth * pScrn->bitsPerPixel / 8,
-				NULL);
-    ms->noEvict = FALSE;
 
-    handle = xorg_exa_get_pixmap_handle(rootPixmap, &stride);
+    tex = xorg_exa_create_root_texture(pScrn, pScrn->virtualX, pScrn->virtualY,
+				       pScrn->depth, pScrn->bitsPerPixel);
+
+    if (!tex)
+	return FALSE;
+
+    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
+					    tex,
+					    &stride,
+					    &handle))
+	return FALSE;
 
     drmModeAddFB(ms->fd,
 		 pScrn->virtualX,
@@ -166,11 +168,38 @@ CreateFrontBuffer(ScrnInfoPtr pScrn)
 		 pScrn->bitsPerPixel,
 		 stride,
 		 handle,
-		 &ms->fb_id);
+                 &ms->fb_id);
 
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
     AdjustFrame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+
+    pipe_texture_reference(&ms->root_texture, tex);
+    pipe_texture_reference(&tex, NULL);
+    return TRUE;
+}
+
+static Bool
+BindTextureToRoot(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    ScreenPtr pScreen = pScrn->pScreen;
+    struct pipe_texture *check;
+    PixmapPtr rootPixmap;
+
+    rootPixmap = pScreen->GetScreenPixmap(pScreen);
+
+    xorg_exa_set_displayed_usage(rootPixmap);
+    xorg_exa_set_shared_usage(rootPixmap);
+    xorg_exa_set_texture(rootPixmap, ms->root_texture);
+    if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
+	FatalError("Couldn't adjust screen pixmap\n");
+
+    check = xorg_exa_get_texture(rootPixmap);
+    if (ms->root_texture != check)
+	FatalError("Created new root texture\n");
+
+    pipe_texture_reference(&check, NULL);
 
     return TRUE;
 }
@@ -179,10 +208,9 @@ static Bool
 crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    //ScreenPtr pScreen = pScrn->pScreen;
-    //PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
-    //Bool fbAccessDisabled;
-    //CARD8 *fbstart;
+    unsigned handle, stride;
+    PixmapPtr rootPixmap;
+    ScreenPtr pScreen = pScrn->pScreen;
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;
@@ -192,13 +220,40 @@ crtc_resize(ScrnInfoPtr pScrn, int width, int height)
     pScrn->virtualX = width;
     pScrn->virtualY = height;
 
+    /*
+     * Remove the old framebuffer & texture.
+     */
+    drmModeRmFB(ms->fd, ms->fb_id);
+    pipe_texture_reference(&ms->root_texture, NULL);
+
+
+    rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    if (!pScreen->ModifyPixmapHeader(rootPixmap, width, height, -1, -1, -1, NULL))
+	return FALSE;
+
+    /* takes one ref */
+    ms->root_texture = xorg_exa_get_texture(rootPixmap);
+
+    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
+					    ms->root_texture,
+					    &stride,
+					    &handle))
+	FatalError("Could not get handle and stride from texture\n");
+
+    drmModeAddFB(ms->fd,
+		 pScrn->virtualX,
+		 pScrn->virtualY,
+		 pScrn->depth,
+		 pScrn->bitsPerPixel,
+		 stride,
+		 handle,
+                 &ms->fb_id);
+
     /* HW dependent - FIXME */
     pScrn->displayWidth = pScrn->virtualX;
 
-    drmModeRmFB(ms->fd, ms->fb_id);
-
     /* now create new frontbuffer */
-    return CreateFrontBuffer(pScrn);
+    return CreateFrontBuffer(pScrn) && BindTextureToRoot(pScrn);
 }
 
 static const xf86CrtcConfigFuncsRec crtc_config_funcs = {
@@ -429,7 +484,6 @@ CreateScreenResources(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     PixmapPtr rootPixmap;
     Bool ret;
-    unsigned handle, stride;
 
     ms->noEvict = TRUE;
 
@@ -437,29 +491,14 @@ CreateScreenResources(ScreenPtr pScreen)
     ret = pScreen->CreateScreenResources(pScreen);
     pScreen->CreateScreenResources = CreateScreenResources;
 
-    rootPixmap = pScreen->GetScreenPixmap(pScreen);
-
-    xorg_exa_set_displayed_usage(rootPixmap);
-    xorg_exa_set_shared_usage(rootPixmap);
-    if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
-	FatalError("Couldn't adjust screen pixmap\n");
+    BindTextureToRoot(pScrn);
 
     ms->noEvict = FALSE;
-
-    handle = xorg_exa_get_pixmap_handle(rootPixmap, &stride);
-
-    drmModeAddFB(ms->fd,
-		 pScrn->virtualX,
-		 pScrn->virtualY,
-		 pScrn->depth,
-		 pScrn->bitsPerPixel,
-		 stride,
-		 handle,
-                 &ms->fb_id);
 
     AdjustFrame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
+    rootPixmap = pScreen->GetScreenPixmap(pScreen);
     ms->damage = DamageCreate(NULL, NULL, DamageReportNone, TRUE,
                               pScreen, rootPixmap);
 
@@ -472,6 +511,8 @@ CreateScreenResources(ScreenPtr pScreen)
                   "Failed to create screen damage record\n");
        return FALSE;
     }
+#else
+    (void)rootPixmap;
 #endif
 
     return ret;
@@ -684,8 +725,11 @@ EnterVT(int scrnIndex, int flags)
 	SaveHWState(pScrn);
     }
 
-    if (!flags)			       /* signals startup as we'll do this in CreateScreenResources */
-	CreateFrontBuffer(pScrn);
+    if (!CreateFrontBuffer(pScrn))
+	return FALSE;
+
+    if (!flags && !BindTextureToRoot(pScrn))
+	return FALSE;
 
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
@@ -724,6 +768,8 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
 	ms->damage = NULL;
     }
 #endif
+
+    pipe_texture_reference(&ms->root_texture, NULL);
 
     if (ms->exa)
 	xorg_exa_close(pScrn);
