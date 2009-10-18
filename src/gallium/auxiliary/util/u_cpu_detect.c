@@ -131,7 +131,7 @@ win32_sig_handler_sse(EXCEPTION_POINTERS* ep)
 
 
 #if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_DARWIN)
-static sigjmp_buf __lv_powerpc_jmpbuf;
+static jmp_buf  __lv_powerpc_jmpbuf;
 static volatile sig_atomic_t __lv_powerpc_canjump = 0;
 
 static void
@@ -143,9 +143,11 @@ sigill_handler(int sig)
    }
 
    __lv_powerpc_canjump = 0;
-   siglongjmp(__lv_powerpc_jmpbuf, 1);
+   longjmp(__lv_powerpc_jmpbuf, 1);
 }
+#endif
 
+#if defined(PIPE_ARCH_PPC)
 static void
 check_os_altivec_support(void)
 {
@@ -166,7 +168,7 @@ check_os_altivec_support(void)
    /* no Darwin, do it the brute-force way */
    /* this is borrowed from the libmpeg2 library */
    signal(SIGILL, sigill_handler);
-   if (sigsetjmp(__lv_powerpc_jmpbuf, 1)) {
+   if (setjmp(__lv_powerpc_jmpbuf)) {
       signal(SIGILL, SIG_DFL);
    } else {
       __lv_powerpc_canjump = 1;
@@ -180,9 +182,9 @@ check_os_altivec_support(void)
       signal(SIGILL, SIG_DFL);
       util_cpu_caps.has_altivec = 1;
    }
-#endif
+#endif /* PIPE_OS_DARWIN */
 }
-#endif
+#endif /* PIPE_ARCH_PPC */
 
 /* If we're running on a processor that can do SSE, let's see if we
  * are allowed to or not.  This will catch 2.4.0 or later kernels that
@@ -190,6 +192,7 @@ check_os_altivec_support(void)
  * and RedHat patched 2.2 kernels that have broken exception handling
  * support for user space apps that do SSE.
  */
+#if defined(PIPE_ARCH_X86) || defined (PIPE_ARCH_X86_64)
 static void
 check_os_katmai_support(void)
 {
@@ -370,6 +373,7 @@ cpuid(uint32_t ax, uint32_t *p)
 
    return ret;
 }
+#endif /* X86 or X86_64 */
 
 void
 util_cpu_detect(void)
