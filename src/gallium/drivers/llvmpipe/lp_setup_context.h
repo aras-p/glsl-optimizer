@@ -43,6 +43,10 @@
 #define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
    
 
+#define LP_SETUP_NEW_FS        0x01
+#define LP_SETUP_NEW_CONSTANTS 0x02
+
+
 /* switch to a non-pointer value for this:
  */
 typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg );
@@ -112,8 +116,15 @@ struct setup_context {
 
       const struct lp_rast_state *stored;
       struct lp_rast_state current;
-      boolean dirty;
    } fs;
+
+   struct {
+      struct pipe_buffer *current;
+      unsigned stored_size;
+      const void *stored_data;
+   } constants;
+
+   unsigned dirty;
 
    void (*point)( struct setup_context *,
                   const float (*v0)[4]);

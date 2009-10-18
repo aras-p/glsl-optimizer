@@ -101,6 +101,11 @@ static void reset_context( struct setup_context *setup )
 
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
+   /* Reset derived data */
+   pipe_buffer_reference(&setup->constants.current, NULL);
+   setup->constants.stored_size = 0;
+   setup->constants.stored_data = NULL;
+
    /* Free all but last binner command lists:
     */
    for (i = 0; i < setup->tiles_x; i++) {
@@ -424,18 +429,11 @@ void
 lp_setup_set_fs_constants(struct setup_context *setup,
                           struct pipe_buffer *buffer)
 {
-   const void *data = buffer ? llvmpipe_buffer(buffer)->data : NULL;
-   struct pipe_buffer *dummy;
-
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   /* FIXME: hold on to the reference */
-   dummy = NULL;
-   pipe_buffer_reference(&dummy, buffer);
+   pipe_buffer_reference(&setup->constants.current, buffer);
 
-   setup->fs.current.jit_context.constants = data;
-
-   setup->fs.dirty = TRUE;
+   setup->dirty |= LP_SETUP_NEW_CONSTANTS;
 }
 
 
@@ -447,7 +445,7 @@ lp_setup_set_alpha_ref_value( struct setup_context *setup,
 
    if(setup->fs.current.jit_context.alpha_ref_value != alpha_ref_value) {
       setup->fs.current.jit_context.alpha_ref_value = alpha_ref_value;
-      setup->fs.dirty = TRUE;
+      setup->dirty |= LP_SETUP_NEW_FS;
    }
 }
 
@@ -468,7 +466,7 @@ lp_setup_set_blend_color( struct setup_context *setup,
          setup->fs.current.jit_context.blend_color[i*4 + j] = c;
    }
 
-   setup->fs.dirty = TRUE;
+   setup->dirty |= LP_SETUP_NEW_FS;
 }
 
 void
@@ -505,7 +503,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
       }
    }
 
-   setup->fs.dirty = TRUE;
+   setup->dirty |= LP_SETUP_NEW_FS;
 }
 
 boolean
@@ -524,7 +522,43 @@ lp_setup_update_shader_state( struct setup_context *setup )
 
    assert(setup->fs.current.jit_function);
 
-   if(setup->fs.dirty) {
+   if(setup->dirty & LP_SETUP_NEW_CONSTANTS) {
+      struct pipe_buffer *buffer = setup->constants.current;
+
+      if(buffer) {
+         unsigned current_size = buffer->size;
+         const void *current_data = llvmpipe_buffer(buffer)->data;
+
+         /* TODO: copy only the actually used constants? */
+
+         if(setup->constants.stored_size != current_size ||
+            !setup->constants.stored_data ||
+            memcmp(setup->constants.stored_data,
+                   current_data,
+                   current_size) != 0) {
+            void *stored;
+
+            stored = get_data(&setup->data, current_size);
+            if(stored) {
+               memcpy(stored,
+                      current_data,
+                      current_size);
+               setup->constants.stored_size = current_size;
+               setup->constants.stored_data = stored;
+            }
+         }
+      }
+      else {
+         setup->constants.stored_size = 0;
+         setup->constants.stored_data = NULL;
+      }
+
+      setup->fs.current.jit_context.constants = setup->constants.stored_data;
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
+
+
+   if(setup->dirty & LP_SETUP_NEW_FS) {
       if(!setup->fs.stored ||
          memcmp(setup->fs.stored,
                 &setup->fs.current,
@@ -539,9 +573,9 @@ lp_setup_update_shader_state( struct setup_context *setup )
             setup->fs.stored = stored;
          }
       }
-
-      setup->fs.dirty = FALSE;
    }
+
+   setup->dirty = 0;
 
    assert(setup->fs.stored);
 }
