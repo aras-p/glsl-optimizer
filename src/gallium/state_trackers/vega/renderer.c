@@ -37,6 +37,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -457,10 +458,17 @@ void renderer_copy_surface(struct renderer *ctx,
                                      PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* load temp texture */
-   pipe->surface_copy(pipe,
-                      texSurf, 0, 0,   /* dest */
-                      src, srcLeft, srcTop, /* src */
-                      srcW, srcH);     /* size */
+   if (pipe->surface_copy) {
+      pipe->surface_copy(pipe,
+                         texSurf, 0, 0,   /* dest */
+                         src, srcLeft, srcTop, /* src */
+                         srcW, srcH);     /* size */
+   } else {
+      util_surface_copy(pipe, FALSE,
+                        texSurf, 0, 0,   /* dest */
+                        src, srcLeft, srcTop, /* src */
+                        srcW, srcH);     /* size */
+   }
 
    /* free the surface, update the texture if necessary.*/
    screen->tex_surface_destroy(texSurf);

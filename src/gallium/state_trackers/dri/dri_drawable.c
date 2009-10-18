@@ -45,6 +45,7 @@
 #include "state_tracker/st_cb_fbo.h"
 
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,
@@ -541,12 +542,21 @@ dri1_swap_copy(struct dri_context *ctx,
    cur = dPriv->pClipRects;
 
    for (i = 0; i < dPriv->numClipRects; ++i) {
-      if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox))
-	 pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
-			    src,
-			    (int)clip.x1 - dPriv->x,
-			    (int)clip.y1 - dPriv->y,
-			    clip.x2 - clip.x1, clip.y2 - clip.y1);
+      if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox)) {
+         if (pipe->surface_copy) {
+            pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
+                               src,
+                               (int)clip.x1 - dPriv->x,
+                               (int)clip.y1 - dPriv->y,
+                               clip.x2 - clip.x1, clip.y2 - clip.y1);
+         } else {
+            util_surface_copy(pipe, FALSE, dst, clip.x1, clip.y1,
+                              src,
+                              (int)clip.x1 - dPriv->x,
+                              (int)clip.y1 - dPriv->y,
+                              clip.x2 - clip.x1, clip.y2 - clip.y1);
+         }
+      }
    }
 }
 

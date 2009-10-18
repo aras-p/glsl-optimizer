@@ -189,6 +189,9 @@ struct pipe_context {
 
    /**
     * Surface functions
+    *
+    * The pipe driver is allowed to set these functions to NULL, and in that
+    * case, they will not be available.
     */
    /*@{*/
 

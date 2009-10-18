@@ -7,6 +7,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 
 #include "pipe/p_inlines.h"
 
@@ -586,11 +587,19 @@ create_sampler_texture(struct xorg_renderer *r,
          screen, src, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
       struct pipe_surface *ps_tex = screen->get_tex_surface(
          screen, pt, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE );
-      pipe->surface_copy(pipe,
-			 ps_tex, /* dest */
-			 0, 0, /* destx/y */
-			 ps_read,
-			 0, 0, src->width[0], src->height[0]);
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                ps_tex, /* dest */
+                0, 0, /* destx/y */
+                ps_read,
+                0, 0, src->width[0], src->height[0]);
+      } else {
+          util_surface_copy(pipe, FALSE,
+                ps_tex, /* dest */
+                0, 0, /* destx/y */
+                ps_read,
+                0, 0, src->width[0], src->height[0]);
+      }
       pipe_surface_reference(&ps_read, NULL);
       pipe_surface_reference(&ps_tex, NULL);
    }

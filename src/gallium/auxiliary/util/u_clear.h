@@ -32,6 +32,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_pack_color.h"
+#include "util/u_rect.h"
 
 
 /**
@@ -48,13 +49,22 @@ util_clear(struct pipe_context *pipe,
       unsigned color;
 
       util_pack_color(rgba, ps->format, &color);
-      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+      if (pipe->surface_fill) {
+         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+      } else {
+         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+      }
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
       struct pipe_surface *ps = framebuffer->zsbuf;
 
-      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
-                         util_pack_z_stencil(ps->format, depth, stencil));
+      if (pipe->surface_fill) {
+         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
+                            util_pack_z_stencil(ps->format, depth, stencil));
+      } else {
+         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
+                           util_pack_z_stencil(ps->format, depth, stencil));
+      }
    }
 }

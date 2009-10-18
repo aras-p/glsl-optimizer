@@ -1546,7 +1546,8 @@ st_copy_texsubimage(GLcontext *ctx,
 
    if (ctx->_ImageTransferState == 0x0) {
 
-      if (matching_base_formats && 
+      if (pipe->surface_copy &&
+          matching_base_formats &&
           src_format == dest_format &&
           !do_flip) 
       {

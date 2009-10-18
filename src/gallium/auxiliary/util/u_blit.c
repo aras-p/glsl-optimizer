@@ -46,6 +46,7 @@
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_surface.h"
+#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -301,7 +302,8 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (dst->format == src->format &&
+   if (pipe->surface_copy &&
+       dst->format == src->format &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
@@ -365,10 +367,17 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                         PIPE_BUFFER_USAGE_GPU_WRITE);
 
       /* load temp texture */
-      pipe->surface_copy(pipe,
-                         texSurf, 0, 0,   /* dest */
-                         src, srcLeft, srcTop, /* src */
-                         srcW, srcH);     /* size */
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                            texSurf, 0, 0,   /* dest */
+                            src, srcLeft, srcTop, /* src */
+                            srcW, srcH);     /* size */
+      } else {
+         util_surface_copy(pipe, FALSE,
+                           texSurf, 0, 0,   /* dest */
+                           src, srcLeft, srcTop, /* src */
+                           srcW, srcH);     /* size */
+      }
 
       /* free the surface, update the texture if necessary.
        */

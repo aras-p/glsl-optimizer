@@ -235,13 +235,23 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
          old_texture,
          0, 0, 0,
          PIPE_BUFFER_USAGE_GPU_READ);
-      pipe->surface_copy(pipe,
-                         surface,
-                         0, 0,
-                         old_surface,
-                         0, 0,
-                         MIN2(old_surface->width, width),
-                         MIN2(old_surface->height, height));
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                            surface,
+                            0, 0,
+                            old_surface,
+                            0, 0,
+                            MIN2(old_surface->width, width),
+                            MIN2(old_surface->height, height));
+      } else {
+         util_surface_copy(pipe, FALSE,
+                           surface,
+                           0, 0,
+                           old_surface,
+                           0, 0,
+                           MIN2(old_surface->width, width),
+                           MIN2(old_surface->height, height));
+      }
       if (surface)
          pipe_surface_reference(&surface, NULL);
       if (old_surface)

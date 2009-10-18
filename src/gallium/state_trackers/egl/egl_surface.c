@@ -12,6 +12,8 @@
 
 #include "state_tracker/drm_api.h"
 
+#include "util/u_rect.h"
+
 /*
  * Util functions
  */
@@ -360,12 +362,21 @@ drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 		st_notify_swapbuffers(surf->stfb);
 
 		if (ctx && surf->screen) {
-			ctx->pipe->surface_copy(ctx->pipe,
-				surf->screen->surface,
-				0, 0,
-				back_surf,
-				0, 0,
-				surf->w, surf->h);
+            if (ctx->pipe->surface_copy) {
+                ctx->pipe->surface_copy(ctx->pipe,
+                    surf->screen->surface,
+                    0, 0,
+                    back_surf,
+                    0, 0,
+                    surf->w, surf->h);
+            } else {
+                util_surface_copy(ctx->pipe, FALSE,
+                    surf->screen->surface,
+                    0, 0,
+                    back_surf,
+                    0, 0,
+                    surf->w, surf->h);
+            }
 			ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
