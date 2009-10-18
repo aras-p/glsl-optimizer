@@ -197,6 +197,8 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
         case PIPE_FORMAT_DXT3_RGBA:
         case PIPE_FORMAT_DXT5_RGBA:
         case PIPE_FORMAT_YCBCR:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_A8L8_UNORM:
             retval = usage & PIPE_TEXTURE_USAGE_SAMPLER;
             break;
 
