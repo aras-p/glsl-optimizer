@@ -60,29 +60,6 @@ nv50_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
 {
 }
 
-static unsigned int
-nv50_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-nv50_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
 struct pipe_context *
 nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -108,8 +85,8 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv50->pipe.flush = nv50_flush;
 
-	nv50->pipe.is_texture_referenced = nv50_is_texture_referenced;
-	nv50->pipe.is_buffer_referenced = nv50_is_buffer_referenced;
+	nv50->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nv50->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	screen->base.channel->user_private = nv50;
 	screen->base.channel->flush_notify = nv50_state_flush_notify;

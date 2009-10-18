@@ -31,37 +31,6 @@ nv30_destroy(struct pipe_context *pipe)
 	FREE(nv30);
 }
 
-static unsigned int
-nv30_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Return the corrent result. We can't alays return referenced
-    *        since it causes a double flush within the vbo module.
-    */
-#if 0
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-#else
-   return 0;
-#endif
-}
-
-static unsigned int
-nv30_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Return the corrent result. We can't alays return referenced
-    *        since it causes a double flush within the vbo module.
-    */
-#if 0
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-#else
-   return 0;
-#endif
-}
-
 struct pipe_context *
 nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -86,8 +55,8 @@ nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv30->pipe.clear = nv30_clear;
 	nv30->pipe.flush = nv30_flush;
 
-	nv30->pipe.is_texture_referenced = nv30_is_texture_referenced;
-	nv30->pipe.is_buffer_referenced = nv30_is_buffer_referenced;
+	nv30->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nv30->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	nv30_init_query_functions(nv30);
 	nv30_init_surface_functions(nv30);
