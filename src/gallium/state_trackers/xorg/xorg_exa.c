@@ -47,7 +47,7 @@
 
 #define DEBUG_PRINT 0
 #define DEBUG_SOLID 0
-#define DISABLE_ACCEL 0
+#define ACCEL_ENABLED TRUE
 
 /*
  * Helper functions
@@ -307,11 +307,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     fg = 0xffff0000;
 #endif
 
-#if DISABLE_ACCEL
-    return FALSE;
-#else
-    return xorg_solid_bind_state(exa, priv, fg);
-#endif
+    return ACCEL_ENABLED && xorg_solid_bind_state(exa, priv, fg);
 }
 
 static void
@@ -409,11 +405,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
 
-#if DISABLE_ACCEL
-    return FALSE;
-#else
-    return TRUE;
-#endif
+    return ACCEL_ENABLED;
 }
 
 static void
@@ -484,16 +476,12 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
          XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
    }
 
-#if DISABLE_ACCEL
-   (void) exa;
-   return FALSE;
-#else
-   return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
+   return ACCEL_ENABLED &&
+          xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
                                     pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
                                     pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,
                                     exaGetPixmapDriverPrivate(pDst));
-#endif
 }
 
 static void
@@ -526,10 +514,7 @@ ExaCheckComposite(int op,
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
 #endif
-#if DISABLE_ACCEL
-   accelerated = FALSE;
-#endif
-   return accelerated;
+   return ACCEL_ENABLED && accelerated;
 }
 
 static void *
