@@ -56,17 +56,17 @@
 static char *connector_enum_list[] = {
     "Unknown",
     "VGA",
-    "DVI-I",
-    "DVI-D",
-    "DVI-A",
+    "DVI",
+    "DVI",
+    "DVI",
     "Composite",
     "SVIDEO",
     "LVDS",
-    "Component",
-    "9-pin DIN",
-    "DisplayPort",
-    "HDMI Type A",
-    "HDMI Type B",
+    "CTV",
+    "DIN",
+    "DP",
+    "HDMI",
+    "HDMI",
 };
 
 static void
@@ -240,7 +240,7 @@ output_init(ScrnInfoPtr pScrn)
     drmModeResPtr res;
     drmModeConnectorPtr drm_connector = NULL;
     drmModeEncoderPtr drm_encoder = NULL;
-    char *name;
+    char name[32];
     int c, v, p;
 
     res = drmModeGetResources(ms->fd);
@@ -273,7 +273,10 @@ output_init(ScrnInfoPtr pScrn)
 	(void)v;
 #endif
 
-	name = connector_enum_list[drm_connector->connector_type];
+	snprintf(name, 32, "%s%d",
+		 connector_enum_list[drm_connector->connector_type],
+		 drm_connector->connector_type_id);
+
 
 	output = xf86OutputCreate(pScrn, &output_funcs, name);
 	if (!output)
