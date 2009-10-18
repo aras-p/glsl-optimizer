@@ -31,4 +31,3 @@ ASM_SOURCES =
 
 include ../Makefile.template
 
-symlinks:
