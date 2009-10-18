@@ -64,8 +64,6 @@ struct crtc_private
 static void
 crtc_dpms(xf86CrtcPtr crtc, int mode)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
-
     switch (mode) {
     case DPMSModeOn:
     case DPMSModeStandby:
@@ -77,44 +75,29 @@ crtc_dpms(xf86CrtcPtr crtc, int mode)
 }
 
 static Bool
-crtc_lock(xf86CrtcPtr crtc)
-{
-    return FALSE;
-}
-
-static void
-crtc_unlock(xf86CrtcPtr crtc)
-{
-}
-
-static void
-crtc_prepare(xf86CrtcPtr crtc)
-{
-}
-
-static void
-crtc_commit(xf86CrtcPtr crtc)
-{
-}
-
-static Bool
-crtc_mode_fixup(xf86CrtcPtr crtc, DisplayModePtr mode,
-		DisplayModePtr adjusted_mode)
-{
-    return TRUE;
-}
-
-static void
-crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
-	      DisplayModePtr adjusted_mode, int x, int y)
+crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
+		    Rotation rotation, int x, int y)
 {
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     modesettingPtr ms = modesettingPTR(crtc->scrn);
-    xf86OutputPtr output = config->output[config->compat_output];
-    drmModeConnectorPtr drm_connector = output->driver_private;
+    xf86OutputPtr output = NULL;
+    drmModeConnectorPtr drm_connector;
     struct crtc_private *crtcp = crtc->driver_private;
     drmModeCrtcPtr drm_crtc = crtcp->drm_crtc;
     drmModeModeInfo drm_mode;
+    int i, ret;
+
+    for (i = 0; i < config->num_output; output = NULL, i++) {
+	output = config->output[i];
+
+	if (output->crtc == crtc)
+	    break;
+    }
+
+    if (!output)
+	return FALSE;
+
+    drm_connector = output->driver_private;
 
     drm_mode.clock = mode->Clock;
     drm_mode.hdisplay = mode->HDisplay;
@@ -133,17 +116,19 @@ crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
 	xf86SetModeDefaultName(mode);
     strncpy(drm_mode.name, mode->name, DRM_DISPLAY_MODE_LEN);
 
-    drmModeSetCrtc(ms->fd, drm_crtc->crtc_id, ms->fb_id, x, y,
-		   &drm_connector->connector_id, 1, &drm_mode);
-}
+    ret = drmModeSetCrtc(ms->fd, drm_crtc->crtc_id, ms->fb_id, x, y,
+			 &drm_connector->connector_id, 1, &drm_mode);
 
-#if 0
-static void
-crtc_load_lut(xf86CrtcPtr crtc)
-{
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    if (ret)
+	return FALSE;
+
+    crtc->x = x;
+    crtc->y = y;
+    crtc->mode = *mode;
+    crtc->rotation = rotation;
+
+    return TRUE;
 }
-#endif
 
 static void
 crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
@@ -154,23 +139,18 @@ crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
 static void *
 crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
-
     return NULL;
 }
 
 static PixmapPtr
 crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
-
     return NULL;
 }
 
 static void
 crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
 }
 
 /*
@@ -282,13 +262,7 @@ crtc_destroy(xf86CrtcPtr crtc)
 
 static const xf86CrtcFuncsRec crtc_funcs = {
     .dpms = crtc_dpms,
-
-    .lock = crtc_lock,
-    .unlock = crtc_unlock,
-    .mode_fixup = crtc_mode_fixup,
-    .prepare = crtc_prepare,
-    .mode_set = crtc_mode_set,
-    .commit = crtc_commit,
+    .set_mode_major = crtc_set_mode_major,
 
     .set_cursor_colors = crtc_set_cursor_colors,
     .set_cursor_position = crtc_set_cursor_position,
@@ -322,6 +296,7 @@ crtc_init(ScrnInfoPtr pScrn)
 
     for (c = 0; c < res->count_crtcs; c++) {
 	drm_crtc = drmModeGetCrtc(ms->fd, res->crtcs[c]);
+
 	if (!drm_crtc)
 	    continue;
 
@@ -338,7 +313,6 @@ crtc_init(ScrnInfoPtr pScrn)
 	crtcp->drm_crtc = drm_crtc;
 
 	crtc->driver_private = crtcp;
-
     }
 
   out:

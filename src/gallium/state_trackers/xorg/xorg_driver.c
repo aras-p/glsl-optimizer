@@ -651,8 +651,8 @@ AdjustFrame(int scrnIndex, int x, int y, int flags)
     xf86CrtcPtr crtc = output->crtc;
 
     if (crtc && crtc->enabled) {
-	crtc->funcs->mode_set(crtc, pScrn->currentMode, pScrn->currentMode, x,
-			      y);
+	crtc->funcs->set_mode_major(crtc, pScrn->currentMode,
+				    RR_Rotate_0, x, y);
 	crtc->x = output->initial_x + x;
 	crtc->y = output->initial_y + y;
     }
