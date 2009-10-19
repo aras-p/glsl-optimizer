@@ -101,10 +101,10 @@ static void reset_context( struct setup_context *setup )
 
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   /* Reset derived data */
-   pipe_buffer_reference(&setup->constants.current, NULL);
+   /* Reset derived state */
    setup->constants.stored_size = 0;
    setup->constants.stored_data = NULL;
+   setup->fs.stored = NULL;
    setup->dirty = ~0;
 
    /* Free all but last binner command lists:
@@ -634,6 +634,8 @@ lp_setup_destroy( struct setup_context *setup )
 
    reset_context( setup );
 
+   pipe_buffer_reference(&setup->constants.current, NULL);
+
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++)
          FREE(setup->tile[i][j].head);
@@ -671,6 +673,8 @@ lp_setup_create( struct pipe_screen *screen )
    setup->line     = first_line;
    setup->point    = first_point;
    
+   setup->dirty = ~0;
+
    return setup;
 
 fail:
