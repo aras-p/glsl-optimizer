@@ -269,8 +269,8 @@ do_triangle_ccw(struct setup_context *setup,
    
    struct lp_rast_triangle *tri = get_data( &setup->data, sizeof *tri );
    float area;
-   float c1, c2, c3;
    int minx, maxx, miny, maxy;
+   float c1, c2, c3;
 
    tri->inputs.state = setup->fs.stored;
 
@@ -328,9 +328,9 @@ do_triangle_ccw(struct setup_context *setup,
 
    /* correct for top-left fill convention:
     */
-   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) c1++;
-   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) c2++;
-   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) c3++;
+   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) tri->c1++;
+   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2++;
+   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3++;
 
    /* find trivial reject offsets for each edge for a single-pixel
     * sized block.  These will be scaled up at each recursive level to
