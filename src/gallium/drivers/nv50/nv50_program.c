@@ -506,11 +506,13 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
 	struct nv50_program_exec *e = exec(pc);
 
-	e->inst[0] |= 0x10000000;
+	e->inst[0] = 0x10000000;
+	if (!pc->allow32)
+		set_long(pc, e);
 
 	set_dst(pc, dst, e);
 
-	if (pc->allow32 && dst->type != P_RESULT && src->type == P_IMMD) {
+	if (!is_long(e) && src->type == P_IMMD) {
 		set_immd(pc, src, e);
 		/*XXX: 32-bit, but steals part of "half" reg space - need to
 		 *     catch and handle this case if/when we do half-regs
@@ -1694,6 +1696,18 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1,
 				 CVTOP_CEIL, CVT_F32_F32 | CVT_RI);
+		}
+		break;
+	case TGSI_OPCODE_CMP:
+		pc->allow32 = FALSE;
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, NULL, src[0][c], 1, CVTOP_RN, CVT_F32_F32);
+			emit_mov(pc, dst[c], src[1][c]);
+			set_pred(pc, 0x1, 1, pc->p->exec_tail); /* @SF */
+			emit_mov(pc, dst[c], src[2][c]);
+			set_pred(pc, 0x6, 1, pc->p->exec_tail); /* @NSF */
 		}
 		break;
 	case TGSI_OPCODE_COS:
