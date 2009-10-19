@@ -37,6 +37,7 @@
 #define need_GL_ARB_multisample
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
+#define need_GL_ARB_provoking_vertex
 #define need_GL_ARB_shader_objects
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_array_object
@@ -52,6 +53,7 @@
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
+#define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
@@ -69,6 +71,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_multitexture", NULL},
    {"GL_ARB_occlusion_query", GL_ARB_occlusion_query_functions},
    {"GL_ARB_pixel_buffer_object", NULL},
+   {"GL_ARB_provoking_vertex", GL_ARB_provoking_vertex_functions},
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
    {"GL_ARB_shading_language_100", GL_VERSION_2_0_functions },
    {"GL_ARB_shading_language_120", GL_VERSION_2_1_functions },
@@ -97,6 +100,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
    {"GL_EXT_packed_depth_stencil", NULL},
    {"GL_EXT_pixel_buffer_object", NULL},
+   {"GL_EXT_provoking_vertex", GL_EXT_provoking_vertex_functions},
    {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
    {"GL_EXT_stencil_wrap", NULL},
    {"GL_EXT_texture_edge_clamp", NULL},
