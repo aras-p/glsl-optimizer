@@ -193,7 +193,12 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
 {
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   const unsigned masks[4] = {~0, ~0, ~0, ~0};
+   static const uint32_t ALIGN16_ATTRIB masks[4][4] = 
+      { {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0} };
+
    unsigned x, y;
 
    RAST_DEBUG("%s\n", __FUNCTION__);
@@ -202,23 +207,20 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
     */
    for (y = 0; y < TILE_SIZE; y += 2)
       for (x = 0; x < TILE_SIZE; x += 8)
-         lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, masks);
+         lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, &masks[0][0]);
 }
 
 
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
-                          const unsigned *masks)
+                          const uint32_t *masks)
 {
 #if 1
    const struct lp_rast_state *state = inputs->state;
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
    void *depth;
-   uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
-   unsigned chan_index;
-   unsigned q;
    unsigned ix, iy;
 
    /* Sanity checks */
@@ -227,11 +229,6 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
-
-   /* mask */
-   for (q = 0; q < 4; ++q)
-      for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-         mask[q][chan_index] = masks[q] & (1 << chan_index) ? ~0 : 0;
 
    /* color buffer */
    color = &TILE_PIXEL(tile->color, ix, iy, 0);
@@ -254,7 +251,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
-                        &mask[0][0],
+                        masks,
                         color,
                         depth);
 #else

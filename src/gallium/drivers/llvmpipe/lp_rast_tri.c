@@ -37,34 +37,26 @@
 #define BLOCKSIZE 4
 
 
-/* Convert 8x8 block into four runs of quads and render each in turn.
+/* Render a 4x4 unmasked block:
  */
-#if (BLOCKSIZE == 8)
 static void block_full( struct lp_rasterizer *rast,
                         const struct lp_rast_triangle *tri,
                         int x, int y )
 {
-   const unsigned masks[4] = {~0, ~0, ~0, ~0};
-   int iy;
+   static const uint32_t ALIGN16_ATTRIB masks[4][4] = 
+      { {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0},
+        {~0, ~0, ~0, ~0} };
 
-   for (iy = 0; iy < 8; iy += 2)
-      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
+   lp_rast_shade_quads(rast, &tri->inputs, x, y, &masks[0][0]);
 }
-#else
-static void block_full( struct lp_rasterizer *rast,
-                        const struct lp_rast_triangle *tri,
-                        int x, int y )
-{
-   const unsigned masks[4] = {~0, ~0, ~0, ~0};
 
-   lp_rast_shade_quads(rast, &tri->inputs, x, y, masks);
-}
-#endif
 
-static INLINE unsigned
+static INLINE void
 do_quad( const struct lp_rast_triangle *tri,
-	 int x, int y,
-	 int c1, int c2, int c3 )
+	 int c1, int c2, int c3,
+         int32_t *mask )
 {
    const int xstep1 = -tri->dy12 ;
    const int xstep2 = -tri->dy23 ;
@@ -73,30 +65,22 @@ do_quad( const struct lp_rast_triangle *tri,
    const int ystep1 = tri->dx12 ;
    const int ystep2 = tri->dx23 ;
    const int ystep3 = tri->dx31 ;
+   
+   mask[0] = ~(((c1) |
+                (c2) |
+                (c3)) >> 31);
 
-   unsigned mask = 0;
+   mask[1] = ~(((c1 + xstep1) | 
+                (c2 + xstep2) | 
+                (c3 + xstep3)) >> 31);
 
-   if (c1 > 0 &&
-       c2 > 0 &&
-       c3 > 0)
-      mask |= 1;
-	 
-   if (c1 + xstep1 > 0 && 
-       c2 + xstep2 > 0 && 
-       c3 + xstep3 > 0)
-      mask |= 2;
+   mask[2] = ~(((c1 + ystep1) | 
+                (c2 + ystep2) | 
+                (c3 + ystep3)) >> 31);
 
-   if (c1 + ystep1 > 0 && 
-       c2 + ystep2 > 0 && 
-       c3 + ystep3 > 0)
-      mask |= 4;
-
-   if (c1 + ystep1 + xstep1 > 0 && 
-       c2 + ystep2 + xstep2 > 0 && 
-       c3 + ystep3 + xstep3 > 0)
-      mask |= 8;
-
-   return mask;
+   mask[3] = ~(((c1 + ystep1 + xstep1) | 
+                (c2 + ystep2 + xstep2) | 
+                (c3 + ystep3 + xstep3)) >> 31);
 }
 
 /* Evaluate each pixel in a block, generate a mask and possibly render
@@ -121,17 +105,17 @@ do_block( struct lp_rasterizer *rast,
    const int ystep3 = step * tri->dx31;
 
    int ix, iy;
+   uint32_t ALIGN16_ATTRIB mask[4][4];
 
-   unsigned masks[2][2] = {{0, 0}, {0, 0}};
 
-   for (iy = 0; iy < BLOCKSIZE; iy += 2) {
+   for (iy = 0; iy < 4; iy += 2) {
       int cx1 = c1;
       int cx2 = c2;
       int cx3 = c3;
 
-      for (ix = 0; ix < BLOCKSIZE; ix += 2) {
+      for (ix = 0; ix < 2; ix ++) {
 
-	 masks[iy >> 1][ix >> 1] = do_quad(tri, x + ix, y + iy, cx1, cx2, cx3);
+	 do_quad(tri, cx1, cx2, cx3, (int32_t *)mask[iy+ix]);
 
 	 cx1 += xstep1;
 	 cx2 += xstep2;
@@ -143,8 +127,10 @@ do_block( struct lp_rasterizer *rast,
       c3 += ystep3;
    }
 
-   if(masks[0][0] || masks[0][1] || masks[1][0] || masks[1][1])
-      lp_rast_shade_quads(rast, &tri->inputs, x, y, &masks[0][0]);
+   /* As we do trivial reject already, masks should rarely be all
+    * zero:
+    */
+   lp_rast_shade_quads(rast, &tri->inputs, x, y, &mask[0][0] );
 }
 
 
