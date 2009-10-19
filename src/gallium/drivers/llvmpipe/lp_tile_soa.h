@@ -46,8 +46,8 @@ struct pipe_transfer;
 #define TILE_SIZE 64
 
 
-#define TILE_VECTOR_HEIGHT 2
-#define TILE_VECTOR_WIDTH 8
+#define TILE_VECTOR_HEIGHT 4
+#define TILE_VECTOR_WIDTH 4
 
 extern const unsigned char
 tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];

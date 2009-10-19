@@ -34,7 +34,7 @@
 #include "lp_tile_soa.h"
 
 
-#define BLOCKSIZE 8
+#define BLOCKSIZE 4
 
 
 /* Convert 8x8 block into four runs of quads and render each in turn.
@@ -55,11 +55,9 @@ static void block_full( struct lp_rasterizer *rast,
                         const struct lp_rast_triangle *tri,
                         int x, int y )
 {
-   const unsigned masks[4] = {~0, ~0, 0, 0}; /* FIXME: Wasting quads!!! */
-   int iy;
+   const unsigned masks[4] = {~0, ~0, ~0, ~0};
 
-   for (iy = 0; iy < 4; iy += 2)
-      lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
+   lp_rast_shade_quads(rast, &tri->inputs, x, y, masks);
 }
 #endif
 
@@ -124,30 +122,29 @@ do_block( struct lp_rasterizer *rast,
 
    int ix, iy;
 
+   unsigned masks[2][2] = {{0, 0}, {0, 0}};
+
    for (iy = 0; iy < BLOCKSIZE; iy += 2) {
       int cx1 = c1;
       int cx2 = c2;
       int cx3 = c3;
 
-      unsigned masks[4] = {0, 0, 0, 0};
-
       for (ix = 0; ix < BLOCKSIZE; ix += 2) {
 
-	 masks[ix >> 1] = do_quad(tri, x + ix, y + iy, cx1, cx2, cx3);
+	 masks[iy >> 1][ix >> 1] = do_quad(tri, x + ix, y + iy, cx1, cx2, cx3);
 
 	 cx1 += xstep1;
 	 cx2 += xstep2;
 	 cx3 += xstep3;
       }
 
-      if(masks[0] || masks[1] || masks[2] || masks[3])
-         lp_rast_shade_quads(rast, &tri->inputs, x, y + iy, masks);
-
       c1 += ystep1;
       c2 += ystep2;
       c3 += ystep3;
    }
 
+   if(masks[0][0] || masks[0][1] || masks[1][0] || masks[1][1])
+      lp_rast_shade_quads(rast, &tri->inputs, x, y, &masks[0][0]);
 }
 
 
