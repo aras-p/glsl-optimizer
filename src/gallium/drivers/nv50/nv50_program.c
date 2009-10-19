@@ -1050,22 +1050,18 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 {
 	struct nv50_program_exec *e;
 	const int r_pred = 1;
+	unsigned cvn = CVT_F32_F32;
 
-	/* Sets predicate reg ? */
-	e = exec(pc);
-	e->inst[0] = 0xa00001fd;
-	e->inst[1] = 0xc4014788;
-	set_src_0(pc, src, e);
-	set_pred_wr(pc, 1, r_pred, e);
 	if (src->neg)
-		e->inst[1] |= 0x20000000;
-	emit(pc, e);
+		cvn |= CVT_NEG;
+	/* write predicate reg */
+	emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
 
-	/* This is probably KILP */
+	/* conditional discard */
 	e = exec(pc);
-	e->inst[0] = 0x000001fe;
+	e->inst[0] = 0x00000002;
 	set_long(pc, e);
-	set_pred(pc, 1 /* LT? */, r_pred, e);
+	set_pred(pc, 0x1 /* LT */, r_pred, e);
 	emit(pc, e);
 }
 
