@@ -43,8 +43,9 @@
 #define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
    
 
-#define LP_SETUP_NEW_FS        0x01
-#define LP_SETUP_NEW_CONSTANTS 0x02
+#define LP_SETUP_NEW_FS          0x01
+#define LP_SETUP_NEW_CONSTANTS   0x02
+#define LP_SETUP_NEW_BLEND_COLOR 0x04
 
 
 /* switch to a non-pointer value for this:
@@ -124,6 +125,11 @@ struct setup_context {
       const void *stored_data;
    } constants;
 
+   struct {
+      struct pipe_blend_color current;
+      uint8_t *stored;
+   } blend_color;
+
    unsigned dirty;
 
    void (*point)( struct setup_context *,
@@ -160,6 +166,24 @@ static INLINE void *get_data( struct data_block_list *list,
       ubyte *data = tail->data + tail->used;
       tail->used += size;
       return data;
+   }
+}
+
+static INLINE void *get_data_aligned( struct data_block_list *list,
+                                      unsigned size,
+                                      unsigned alignment )
+{
+
+   if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
+      lp_setup_new_data_block( list );
+   }
+
+   {
+      struct data_block *tail = list->tail;
+      ubyte *data = tail->data + tail->used;
+      unsigned offset = (((uintptr_t)data + alignment - 1) & ~(alignment - 1)) - (uintptr_t)data;
+      tail->used += offset + size;
+      return data + offset;
    }
 }
 

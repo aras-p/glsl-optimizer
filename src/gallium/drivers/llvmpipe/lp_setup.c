@@ -105,6 +105,7 @@ static void reset_context( struct setup_context *setup )
    pipe_buffer_reference(&setup->constants.current, NULL);
    setup->constants.stored_size = 0;
    setup->constants.stored_data = NULL;
+   setup->dirty = ~0;
 
    /* Free all but last binner command lists:
     */
@@ -453,20 +454,14 @@ void
 lp_setup_set_blend_color( struct setup_context *setup,
                           const struct pipe_blend_color *blend_color )
 {
-   unsigned i, j;
-
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
-   if(!setup->fs.current.jit_context.blend_color)
-      setup->fs.current.jit_context.blend_color = align_malloc(4 * 16, 16);
+   assert(blend_color);
 
-   for (i = 0; i < 4; ++i) {
-      uint8_t c = float_to_ubyte(blend_color->color[i]);
-      for (j = 0; j < 16; ++j)
-         setup->fs.current.jit_context.blend_color[i*4 + j] = c;
+   if(memcmp(&setup->blend_color.current, blend_color, sizeof *blend_color) != 0) {
+      memcpy(&setup->blend_color.current, blend_color, sizeof *blend_color);
+      setup->dirty |= LP_SETUP_NEW_BLEND_COLOR;
    }
-
-   setup->dirty |= LP_SETUP_NEW_FS;
 }
 
 void
@@ -521,6 +516,25 @@ lp_setup_update_shader_state( struct setup_context *setup )
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
    assert(setup->fs.current.jit_function);
+
+   if(setup->dirty & LP_SETUP_NEW_BLEND_COLOR) {
+      uint8_t *stored;
+      unsigned i, j;
+
+      stored = get_data_aligned(&setup->data, 4 * 16, 16);
+
+      for (i = 0; i < 4; ++i) {
+         uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
+         for (j = 0; j < 16; ++j)
+            stored[i*4 + j] = c;
+      }
+
+      setup->blend_color.stored = stored;
+
+      setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
+
 
    if(setup->dirty & LP_SETUP_NEW_CONSTANTS) {
       struct pipe_buffer *buffer = setup->constants.current;
