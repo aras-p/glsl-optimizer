@@ -66,13 +66,13 @@ do_quad( const struct lp_rast_triangle *tri,
 	 int x, int y,
 	 int c1, int c2, int c3 )
 {
-   const int xstep1 = -tri->dy12 * FIXED_ONE;
-   const int xstep2 = -tri->dy23 * FIXED_ONE;
-   const int xstep3 = -tri->dy31 * FIXED_ONE;
+   const int xstep1 = -tri->dy12 ;
+   const int xstep2 = -tri->dy23 ;
+   const int xstep3 = -tri->dy31 ;
 
-   const int ystep1 = tri->dx12 * FIXED_ONE;
-   const int ystep2 = tri->dx23 * FIXED_ONE;
-   const int ystep3 = tri->dx31 * FIXED_ONE;
+   const int ystep1 = tri->dx12 ;
+   const int ystep2 = tri->dx23 ;
+   const int ystep3 = tri->dx31 ;
 
    unsigned mask = 0;
 
@@ -110,7 +110,7 @@ do_block( struct lp_rasterizer *rast,
           int c2,
           int c3 )
 {
-   const int step = 2 * FIXED_ONE;
+   const int step = 2 ;
 
    const int xstep1 = -step * tri->dy12;
    const int xstep2 = -step * tri->dy23;
@@ -157,7 +157,7 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 {
    const struct lp_rast_triangle *tri = arg.triangle;
 
-   const int step = BLOCKSIZE * FIXED_ONE;
+   const int step = BLOCKSIZE;
 
    int ei1 = tri->ei1 * step;
    int ei2 = tri->ei2 * step;
@@ -183,7 +183,6 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
    int maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
 
    int x, y;
-   int x0, y0;
    int c1, c2, c3;
 
    debug_printf("%s\n", __FUNCTION__);
@@ -196,12 +195,9 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
    minx &= ~(BLOCKSIZE-1);
    miny &= ~(BLOCKSIZE-1);
 
-   x0 = minx << FIXED_ORDER;
-   y0 = miny << FIXED_ORDER;
-
-   c1 = tri->c1 + tri->dx12 * y0 - tri->dy12 * x0;
-   c2 = tri->c2 + tri->dx23 * y0 - tri->dy23 * x0;
-   c3 = tri->c3 + tri->dx31 * y0 - tri->dy31 * x0;
+   c1 = tri->c1 + tri->dx12 * miny - tri->dy12 * minx;
+   c2 = tri->c2 + tri->dx23 * miny - tri->dy23 * minx;
+   c3 = tri->c3 + tri->dx31 * miny - tri->dy31 * minx;
 
    for (y = miny; y < maxy; y += BLOCKSIZE)
    {

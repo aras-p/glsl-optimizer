@@ -323,6 +323,14 @@ do_triangle_ccw(struct setup_context *setup,
    if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2++;
    if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3++;
 
+   tri->dy12 *= FIXED_ONE;
+   tri->dy23 *= FIXED_ONE;
+   tri->dy31 *= FIXED_ONE;
+
+   tri->dx12 *= FIXED_ONE;
+   tri->dx23 *= FIXED_ONE;
+   tri->dx31 *= FIXED_ONE;
+
    /* find trivial reject offsets for each edge for a single-pixel
     * sized block.  These will be scaled up at each recursive level to
     * match the active blocksize.  Scaling in this way works best if
@@ -363,30 +371,30 @@ do_triangle_ccw(struct setup_context *setup,
    else 
    {
       int c1 = (tri->c1 + 
-                tri->dx12 * miny * TILESIZE * FIXED_ONE - 
-                tri->dy12 * minx * TILESIZE * FIXED_ONE);
+                tri->dx12 * miny * TILESIZE - 
+                tri->dy12 * minx * TILESIZE);
       int c2 = (tri->c2 + 
-                tri->dx23 * miny * TILESIZE * FIXED_ONE -
-                tri->dy23 * minx * TILESIZE * FIXED_ONE);
+                tri->dx23 * miny * TILESIZE -
+                tri->dy23 * minx * TILESIZE);
       int c3 = (tri->c3 +
-                tri->dx31 * miny * TILESIZE * FIXED_ONE -
-                tri->dy31 * minx * TILESIZE * FIXED_ONE);
+                tri->dx31 * miny * TILESIZE -
+                tri->dy31 * minx * TILESIZE);
 
-      int ei1 = tri->ei1 << (FIXED_ORDER + TILE_ORDER);
-      int ei2 = tri->ei2 << (FIXED_ORDER + TILE_ORDER);
-      int ei3 = tri->ei3 << (FIXED_ORDER + TILE_ORDER);
+      int ei1 = tri->ei1 << TILE_ORDER;
+      int ei2 = tri->ei2 << TILE_ORDER;
+      int ei3 = tri->ei3 << TILE_ORDER;
 
-      int eo1 = tri->eo1 << (FIXED_ORDER + TILE_ORDER);
-      int eo2 = tri->eo2 << (FIXED_ORDER + TILE_ORDER);
-      int eo3 = tri->eo3 << (FIXED_ORDER + TILE_ORDER);
+      int eo1 = tri->eo1 << TILE_ORDER;
+      int eo2 = tri->eo2 << TILE_ORDER;
+      int eo3 = tri->eo3 << TILE_ORDER;
 
-      int xstep1 = -(tri->dy12 << (FIXED_ORDER + TILE_ORDER));
-      int xstep2 = -(tri->dy23 << (FIXED_ORDER + TILE_ORDER));
-      int xstep3 = -(tri->dy31 << (FIXED_ORDER + TILE_ORDER));
+      int xstep1 = -(tri->dy12 << TILE_ORDER);
+      int xstep2 = -(tri->dy23 << TILE_ORDER);
+      int xstep3 = -(tri->dy31 << TILE_ORDER);
 
-      int ystep1 = tri->dx12 << (FIXED_ORDER + TILE_ORDER);
-      int ystep2 = tri->dx23 << (FIXED_ORDER + TILE_ORDER);
-      int ystep3 = tri->dx31 << (FIXED_ORDER + TILE_ORDER);
+      int ystep1 = tri->dx12 << TILE_ORDER;
+      int ystep2 = tri->dx23 << TILE_ORDER;
+      int ystep3 = tri->dx31 << TILE_ORDER;
       int x, y;
 
 
@@ -406,16 +414,16 @@ do_triangle_ccw(struct setup_context *setup,
 	 {
             assert(cx1 == 
                    tri->c1 + 
-                   tri->dx12 * y * TILESIZE * FIXED_ONE - 
-                   tri->dy12 * x * TILESIZE * FIXED_ONE);
+                   tri->dx12 * y * TILESIZE - 
+                   tri->dy12 * x * TILESIZE);
             assert(cx2 ==
                    tri->c2 + 
-                   tri->dx23 * y * TILESIZE * FIXED_ONE - 
-                   tri->dy23 * x * TILESIZE * FIXED_ONE);
+                   tri->dx23 * y * TILESIZE - 
+                   tri->dy23 * x * TILESIZE);
             assert(cx3 == 
                    tri->c3 +
-                   tri->dx31 * y * TILESIZE * FIXED_ONE -
-                   tri->dy31 * x * TILESIZE * FIXED_ONE);
+                   tri->dx31 * y * TILESIZE -
+                   tri->dy31 * x * TILESIZE);
 
 	    if (cx1 + eo1 < 0 || 
 		cx2 + eo2 < 0 ||
