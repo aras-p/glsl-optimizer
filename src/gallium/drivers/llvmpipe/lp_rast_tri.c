@@ -66,15 +66,15 @@ static void block_full( struct lp_rasterizer *rast,
 static INLINE unsigned
 do_quad( const struct lp_rast_triangle *tri,
 	 int x, int y,
-	 float c1, float c2, float c3 )
+	 int c1, int c2, int c3 )
 {
-   float xstep1 = -tri->dy12;
-   float xstep2 = -tri->dy23;
-   float xstep3 = -tri->dy31;
+   const int xstep1 = -tri->dy12 * FIXED_ONE;
+   const int xstep2 = -tri->dy23 * FIXED_ONE;
+   const int xstep3 = -tri->dy31 * FIXED_ONE;
 
-   float ystep1 = tri->dx12;
-   float ystep2 = tri->dx23;
-   float ystep3 = tri->dx31;
+   const int ystep1 = tri->dx12 * FIXED_ONE;
+   const int ystep2 = tri->dx23 * FIXED_ONE;
+   const int ystep3 = tri->dx31 * FIXED_ONE;
 
    unsigned mask = 0;
 
@@ -108,26 +108,26 @@ static void
 do_block( struct lp_rasterizer *rast,
           const struct lp_rast_triangle *tri,
           int x, int y,
-          float c1,
-          float c2,
-          float c3 )
+          int c1,
+          int c2,
+          int c3 )
 {
-   const int step = 2;
+   const int step = 2 * FIXED_ONE;
 
-   float xstep1 = -step * tri->dy12;
-   float xstep2 = -step * tri->dy23;
-   float xstep3 = -step * tri->dy31;
+   const int xstep1 = -step * tri->dy12;
+   const int xstep2 = -step * tri->dy23;
+   const int xstep3 = -step * tri->dy31;
 
-   float ystep1 = step * tri->dx12;
-   float ystep2 = step * tri->dx23;
-   float ystep3 = step * tri->dx31;
+   const int ystep1 = step * tri->dx12;
+   const int ystep2 = step * tri->dx23;
+   const int ystep3 = step * tri->dx31;
 
    int ix, iy;
 
    for (iy = 0; iy < BLOCKSIZE; iy += 2) {
-      float cx1 = c1;
-      float cx2 = c2;
-      float cx3 = c3;
+      int cx1 = c1;
+      int cx2 = c2;
+      int cx3 = c3;
 
       unsigned masks[4] = {0, 0, 0, 0};
 
@@ -160,23 +160,23 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 {
    const struct lp_rast_triangle *tri = arg.triangle;
 
-   const int step = BLOCKSIZE;
+   const int step = BLOCKSIZE * FIXED_ONE;
 
-   float ei1 = tri->ei1 * step;
-   float ei2 = tri->ei2 * step;
-   float ei3 = tri->ei3 * step;
+   int ei1 = tri->ei1 * step;
+   int ei2 = tri->ei2 * step;
+   int ei3 = tri->ei3 * step;
 
-   float eo1 = tri->eo1 * step;
-   float eo2 = tri->eo2 * step;
-   float eo3 = tri->eo3 * step;
+   int eo1 = tri->eo1 * step;
+   int eo2 = tri->eo2 * step;
+   int eo3 = tri->eo3 * step;
 
-   float xstep1 = -step * tri->dy12;
-   float xstep2 = -step * tri->dy23;
-   float xstep3 = -step * tri->dy31;
+   int xstep1 = -step * tri->dy12;
+   int xstep2 = -step * tri->dy23;
+   int xstep3 = -step * tri->dy31;
 
-   float ystep1 = step * tri->dx12;
-   float ystep2 = step * tri->dx23;
-   float ystep3 = step * tri->dx31;
+   int ystep1 = step * tri->dx12;
+   int ystep2 = step * tri->dx23;
+   int ystep3 = step * tri->dx31;
 
    /* Clamp to tile dimensions:
     */
@@ -186,8 +186,8 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
    int maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
 
    int x, y;
-   float x0, y0;
-   float c1, c2, c3;
+   int x0, y0;
+   int c1, c2, c3;
 
    debug_printf("%s\n", __FUNCTION__);
 
@@ -196,23 +196,23 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
       return;
    }
 
-   minx &= ~(step-1);
-   miny &= ~(step-1);
+   minx &= ~(BLOCKSIZE-1);
+   miny &= ~(BLOCKSIZE-1);
 
-   x0 = (float)minx;
-   y0 = (float)miny;
+   x0 = minx << FIXED_ORDER;
+   y0 = miny << FIXED_ORDER;
 
    c1 = tri->c1 + tri->dx12 * y0 - tri->dy12 * x0;
    c2 = tri->c2 + tri->dx23 * y0 - tri->dy23 * x0;
    c3 = tri->c3 + tri->dx31 * y0 - tri->dy31 * x0;
 
-   for (y = miny; y < maxy; y += step)
+   for (y = miny; y < maxy; y += BLOCKSIZE)
    {
-      float cx1 = c1;
-      float cx2 = c2;
-      float cx3 = c3;
+      int cx1 = c1;
+      int cx2 = c2;
+      int cx3 = c3;
 
-      for (x = minx; x < maxx; x += step)
+      for (x = minx; x < maxx; x += BLOCKSIZE)
       {
          if (cx1 + eo1 < 0 ||
              cx2 + eo2 < 0 ||

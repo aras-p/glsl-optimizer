@@ -39,7 +39,10 @@
 struct lp_rasterizer;
 struct pipe_screen;
 
-#define TILESIZE 64
+#define FIXED_ORDER 4
+#define FIXED_ONE (1<<FIXED_ORDER)
+#define TILE_ORDER 6
+#define TILESIZE (1<<TILE_ORDER)
 
 
 struct lp_rast_state {
@@ -84,29 +87,29 @@ struct lp_rast_triangle {
    int maxy;
 
    /* one-pixel sized trivial accept offsets for each plane */
-   float ei1;                   
-   float ei2;
-   float ei3;
+   int ei1;                   
+   int ei2;
+   int ei3;
 
    /* one-pixel sized trivial reject offsets for each plane */
-   float eo1;                   
-   float eo2;
-   float eo3;
+   int eo1;                   
+   int eo2;
+   int eo3;
 
    /* y deltas for vertex pairs */
-   float dy12;
-   float dy23;
-   float dy31;
+   int dy12;
+   int dy23;
+   int dy31;
 
    /* x deltas for vertex pairs */
-   float dx12;
-   float dx23;
-   float dx31;
+   int dx12;
+   int dx23;
+   int dx31;
 
    /* edge function values at minx,miny ?? */
-   float c1;
-   float c2;
-   float c3;
+   int c1;
+   int c2;
+   int c3;
 
    /* XXX: this is only used inside lp_setup_tri.c, don't really
     * need it here:

@@ -223,10 +223,9 @@ static void setup_tri_coefficients( struct setup_context *setup,
 
 /* XXX: do this by add/subtracting a large floating point number:
  */
-static inline float subpixel_snap( float a )
+static inline int subpixel_snap( float a )
 {
-   int i = a * 16;
-   return (float)i * (1.0/16);
+   return util_iround(FIXED_ONE * a);
 }
 
 
@@ -256,23 +255,18 @@ do_triangle_ccw(struct setup_context *setup,
 		const float (*v3)[4],
 		boolean frontfacing )
 {
-   const int rt_width = setup->fb.width;
-   const int rt_height = setup->fb.height;
 
-   const float y1 = subpixel_snap(v1[0][1]);
-   const float y2 = subpixel_snap(v2[0][1]);
-   const float y3 = subpixel_snap(v3[0][1]);
+   const int y1 = subpixel_snap(v1[0][1]);
+   const int y2 = subpixel_snap(v2[0][1]);
+   const int y3 = subpixel_snap(v3[0][1]);
 
-   const float x1 = subpixel_snap(v1[0][0]);
-   const float x2 = subpixel_snap(v2[0][0]);
-   const float x3 = subpixel_snap(v3[0][0]);
+   const int x1 = subpixel_snap(v1[0][0]);
+   const int x2 = subpixel_snap(v2[0][0]);
+   const int x3 = subpixel_snap(v3[0][0]);
    
    struct lp_rast_triangle *tri = get_data( &setup->data, sizeof *tri );
    float area;
    int minx, maxx, miny, maxy;
-   float c1, c2, c3;
-
-   tri->inputs.state = setup->fs.stored;
 
    tri->dx12 = x1 - x2;
    tri->dx23 = x2 - x3;
@@ -285,35 +279,32 @@ do_triangle_ccw(struct setup_context *setup,
    area = (tri->dx12 * tri->dy31 - 
 	   tri->dx31 * tri->dy12);
 
-   /* Cull non-ccw and zero-sized triangles.
+   /* Cull non-ccw and zero-sized triangles. 
+    *
+    * XXX: subject to overflow??
     */
-   if (area <= 0 || util_is_inf_or_nan(area))
+   if (area <= 0) {
+      putback_data( &setup->data, sizeof *tri );
       return;
+   }
 
    // Bounding rectangle
-   minx = util_iround(MIN3(x1, x2, x3) - .5);
-   maxx = util_iround(MAX3(x1, x2, x3) + .5);
-   miny = util_iround(MIN3(y1, y2, y3) - .5);
-   maxy = util_iround(MAX3(y1, y2, y3) + .5);
+   tri->minx = (MIN3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
+   tri->maxx = (MAX3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
+   tri->miny = (MIN3(y1, y2, y3) + 0xf) >> FIXED_ORDER;
+   tri->maxy = (MAX3(y1, y2, y3) + 0xf) >> FIXED_ORDER;
    
-   /* Clamp to framebuffer (or tile) dimensions:
-    */
-   miny = MAX2(0, miny);
-   minx = MAX2(0, minx);
-   maxy = MIN2(rt_height, maxy);
-   maxx = MIN2(rt_width, maxx);
-
-   if (miny == maxy || minx == maxx)
+   if (tri->miny == tri->maxy || 
+       tri->minx == tri->maxx) {
+      putback_data( &setup->data, sizeof *tri );
       return;
+   }
 
-   tri->miny = miny;
-   tri->minx = minx;
-   tri->maxy = maxy;
-   tri->maxx = maxx;
+   tri->inputs.state = setup->fs.stored;
 
-   /* The only divide in this code.  Is it really needed?
+   /* 
     */
-   tri->oneoverarea = 1.0f / area;
+   tri->oneoverarea = ((float)FIXED_ONE) / (float)area;
 
    /* Setup parameter interpolants:
     */
@@ -328,9 +319,9 @@ do_triangle_ccw(struct setup_context *setup,
 
    /* correct for top-left fill convention:
     */
-   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) tri->c1 += 1.0/16.0f;
-   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2 += 1.0/16.0f;
-   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3 += 1.0/16.0f;
+   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) tri->c1++;
+   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2++;
+   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3++;
 
    /* find trivial reject offsets for each edge for a single-pixel
     * sized block.  These will be scaled up at each recursive level to
@@ -355,17 +346,10 @@ do_triangle_ccw(struct setup_context *setup,
    tri->ei2 = tri->dx23 - tri->dy23 - tri->eo2;
    tri->ei3 = tri->dx31 - tri->dy31 - tri->eo3;
 
-   minx &= ~(TILESIZE-1);		/* aligned blocks */
-   miny &= ~(TILESIZE-1);		/* aligned blocks */
-
-   c1 = tri->c1 + tri->dx12 * miny - tri->dy12 * minx;
-   c2 = tri->c2 + tri->dx23 * miny - tri->dy23 * minx;
-   c3 = tri->c3 + tri->dx31 * miny - tri->dy31 * minx;
-
-   minx /= TILESIZE;
-   miny /= TILESIZE;
-   maxx /= TILESIZE;
-   maxy /= TILESIZE;
+   minx = tri->minx / TILESIZE;
+   miny = tri->miny / TILESIZE;
+   maxx = tri->maxx / TILESIZE;
+   maxy = tri->maxy / TILESIZE;
 
    /* Convert to tile coordinates:
     */
@@ -378,23 +362,31 @@ do_triangle_ccw(struct setup_context *setup,
    }
    else 
    {
-      const int step = TILESIZE;
+      int c1 = (tri->c1 + 
+                tri->dx12 * miny * TILESIZE * FIXED_ONE - 
+                tri->dy12 * minx * TILESIZE * FIXED_ONE);
+      int c2 = (tri->c2 + 
+                tri->dx23 * miny * TILESIZE * FIXED_ONE -
+                tri->dy23 * minx * TILESIZE * FIXED_ONE);
+      int c3 = (tri->c3 +
+                tri->dx31 * miny * TILESIZE * FIXED_ONE -
+                tri->dy31 * minx * TILESIZE * FIXED_ONE);
 
-      float ei1 = tri->ei1 * step;
-      float ei2 = tri->ei2 * step;
-      float ei3 = tri->ei3 * step;
+      int ei1 = tri->ei1 << (FIXED_ORDER + TILE_ORDER);
+      int ei2 = tri->ei2 << (FIXED_ORDER + TILE_ORDER);
+      int ei3 = tri->ei3 << (FIXED_ORDER + TILE_ORDER);
 
-      float eo1 = tri->eo1 * step;
-      float eo2 = tri->eo2 * step;
-      float eo3 = tri->eo3 * step;
+      int eo1 = tri->eo1 << (FIXED_ORDER + TILE_ORDER);
+      int eo2 = tri->eo2 << (FIXED_ORDER + TILE_ORDER);
+      int eo3 = tri->eo3 << (FIXED_ORDER + TILE_ORDER);
 
-      float xstep1 = -step * tri->dy12;
-      float xstep2 = -step * tri->dy23;
-      float xstep3 = -step * tri->dy31;
+      int xstep1 = -(tri->dy12 << (FIXED_ORDER + TILE_ORDER));
+      int xstep2 = -(tri->dy23 << (FIXED_ORDER + TILE_ORDER));
+      int xstep3 = -(tri->dy31 << (FIXED_ORDER + TILE_ORDER));
 
-      float ystep1 = step * tri->dx12;
-      float ystep2 = step * tri->dx23;
-      float ystep3 = step * tri->dx31;
+      int ystep1 = tri->dx12 << (FIXED_ORDER + TILE_ORDER);
+      int ystep2 = tri->dx23 << (FIXED_ORDER + TILE_ORDER);
+      int ystep3 = tri->dx31 << (FIXED_ORDER + TILE_ORDER);
       int x, y;
 
 
@@ -406,12 +398,25 @@ do_triangle_ccw(struct setup_context *setup,
        */
       for (y = miny; y <= maxy; y++)
       {
-	 float cx1 = c1;
-	 float cx2 = c2;
-	 float cx3 = c3;
+	 int cx1 = c1;
+	 int cx2 = c2;
+	 int cx3 = c3;
 
 	 for (x = minx; x <= maxx; x++)
 	 {
+            assert(cx1 == 
+                   tri->c1 + 
+                   tri->dx12 * y * TILESIZE * FIXED_ONE - 
+                   tri->dy12 * x * TILESIZE * FIXED_ONE);
+            assert(cx2 ==
+                   tri->c2 + 
+                   tri->dx23 * y * TILESIZE * FIXED_ONE - 
+                   tri->dy23 * x * TILESIZE * FIXED_ONE);
+            assert(cx3 == 
+                   tri->c3 +
+                   tri->dx31 * y * TILESIZE * FIXED_ONE -
+                   tri->dy31 * x * TILESIZE * FIXED_ONE);
+
 	    if (cx1 + eo1 < 0 || 
 		cx2 + eo2 < 0 ||
 		cx3 + eo3 < 0) 
@@ -427,9 +432,9 @@ do_triangle_ccw(struct setup_context *setup,
                             lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
-	    {
+	    { 
                /* shade partial tile */
-	       bin_command( &setup->tile[x][y], 
+               bin_command( &setup->tile[x][y], 
                             lp_rast_triangle, 
                             lp_rast_arg_triangle(tri) );
 	    }

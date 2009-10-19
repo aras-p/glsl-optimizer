@@ -169,6 +169,15 @@ static INLINE void *get_data( struct data_block_list *list,
    }
 }
 
+/* Put back data if we decide not to use it, eg. culled triangles.
+ */
+static INLINE void putback_data( struct data_block_list *list,
+                                 unsigned size)
+{
+   list->tail->used -= size;
+}
+
+
 static INLINE void *get_data_aligned( struct data_block_list *list,
                                       unsigned size,
                                       unsigned alignment )
