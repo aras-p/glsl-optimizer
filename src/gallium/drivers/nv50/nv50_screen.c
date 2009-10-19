@@ -301,7 +301,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_data  (so, 8);
 
 	/* constant buffers for immediates and VP/FP parameters */
-	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (32 * 4) * 4,
 			     &screen->constbuf_misc[0]);
 	if (ret) {
 		nv50_screen_destroy(pscreen);
@@ -309,7 +309,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	for (i = 0; i < 2; i++) {
-		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (128 * 4) * 4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
 			nv50_screen_destroy(pscreen);
@@ -318,8 +318,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	if (nouveau_resource_init(&screen->immd_heap[0], 0, 128) ||
-		nouveau_resource_init(&screen->parm_heap[0], 0, 128) ||
-		nouveau_resource_init(&screen->parm_heap[1], 0, 128))
+	    nouveau_resource_init(&screen->parm_heap[0], 0, 512) ||
+	    nouveau_resource_init(&screen->parm_heap[1], 0, 512))
 	{
 		NOUVEAU_ERR("Error initialising constant buffers.\n");
 		nv50_screen_destroy(pscreen);
@@ -340,7 +340,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000800);
+	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000200);
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000001 | (NV50_CB_PMISC << 12));
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);

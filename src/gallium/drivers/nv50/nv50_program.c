@@ -32,6 +32,7 @@
 #include "nv50_context.h"
 
 #define NV50_SU_MAX_TEMP 64
+#define NV50_SU_MAX_ADDR 7
 //#define NV50_PROGRAM_DUMP
 
 /* ARL - gallium craps itself on progs/vp/arl.txt
@@ -79,7 +80,8 @@ struct nv50_reg {
 		P_ATTR,
 		P_RESULT,
 		P_CONST,
-		P_IMMD
+		P_IMMD,
+		P_ADDR
 	} type;
 	int index;
 
@@ -99,6 +101,7 @@ struct nv50_pc {
 
 	/* hw resources */
 	struct nv50_reg *r_temp[NV50_SU_MAX_TEMP];
+	struct nv50_reg r_addr[NV50_SU_MAX_ADDR];
 
 	/* tgsi resources */
 	struct nv50_reg *temp;
@@ -112,6 +115,8 @@ struct nv50_pc {
 	struct nv50_reg *immd;
 	float *immd_buf;
 	int immd_nr;
+	struct nv50_reg **addr;
+	int addr_nr;
 
 	struct nv50_reg *temp_temp[16];
 	unsigned temp_temp_nr;
@@ -156,6 +161,17 @@ popcnt4(uint32_t val)
 	static const unsigned cnt[16]
 	= { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 	return cnt[val & 0xf];
+}
+
+static void
+terminate_mbb(struct nv50_pc *pc)
+{
+	int i;
+
+	/* remove records of temporary address register values */
+	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
+		if (pc->r_addr[i].index < 0)
+			pc->r_addr[i].rhw = -1;
 }
 
 static void
@@ -454,9 +470,68 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 	e->inst[1] |= (val >> 6) << 2;
 }
 
+static void
+emit_set_addr(struct nv50_pc *pc, struct nv50_reg *dst, unsigned val)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	assert(val <= 0xffff);
+	e->inst[0] = 0xd0000000 | ((val & 0xffff) << 9);
+	e->inst[1] = 0x20000000;
+	e->inst[0] |= dst->hw << 2;
+	set_long(pc, e);
+
+	emit(pc, e);
+}
+
+static struct nv50_reg *
+alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
+{
+	int i;
+	struct nv50_reg *a = NULL;
+
+	if (!ref) {
+		for (i = 0; i < NV50_SU_MAX_ADDR; ++i) {
+			if (pc->r_addr[i].index >= 0)
+				continue;
+			if (pc->r_addr[i].rhw >= 0 &&
+			    pc->r_addr[i].acc == pc->insn_cur)
+				continue;
+
+			pc->r_addr[i].rhw = -1;
+			pc->r_addr[i].index = i;
+			return &pc->r_addr[i];
+		}
+		assert(0);
+		return NULL;
+	}
+
+	for (i = NV50_SU_MAX_ADDR - 1; i >= 0; --i) {
+		if (pc->r_addr[i].index >= 0) /* occupied for TGSI */
+			continue;
+		if (pc->r_addr[i].rhw < 0) { /* unused */
+			a = &pc->r_addr[i];
+			continue;
+		}
+		if (!a && pc->r_addr[i].acc != pc->insn_cur)
+			a = &pc->r_addr[i];
+
+		if (ref->hw - pc->r_addr[i].rhw < 128) {
+		/* alloc'd & suitable */
+			pc->r_addr[i].acc = pc->insn_cur;
+			return &pc->r_addr[i];
+		}
+	}
+	assert(a);
+	emit_set_addr(pc, a, ref->hw * 4);
+
+	a->rhw = ref->hw % 128;
+	a->acc = pc->insn_cur;
+	return a;
+}
 
 #define INTERP_LINEAR		0
-#define INTERP_FLAT			1
+#define INTERP_FLAT		1
 #define INTERP_PERSPECTIVE	2
 #define INTERP_CENTROID		4
 
@@ -488,6 +563,16 @@ emit_interp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *iv,
 	emit(pc, e);
 }
 
+static INLINE void
+set_addr(struct nv50_program_exec *e, struct nv50_reg *a)
+{
+	assert(!(e->inst[0] & 0x0c000000));
+	assert(!(e->inst[1] & 0x00000004));
+
+	e->inst[0] |= (a->hw & 3) << 26;
+	e->inst[1] |= (a->hw >> 2) << 2;
+}
+
 static void
 set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	 struct nv50_program_exec *e)
@@ -497,6 +582,14 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	e->param.index = src->hw;
 	e->param.shift = s;
 	e->param.mask = m << (s % 32);
+
+	if (src->hw > 127)
+		set_addr(e, alloc_addr(pc, src));
+	else
+	if (src->acc < 0) {
+		assert(src->type == P_CONST);
+		set_addr(e, pc->addr[src->index]);
+	}
 
 	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
 }
@@ -632,7 +725,7 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	}
 
 	alloc_reg(pc, src);
-	e->inst[0] |= (src->hw << 16);
+	e->inst[0] |= ((src->hw & 127) << 16);
 }
 
 static void
@@ -660,7 +753,7 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	}
 
 	alloc_reg(pc, src);
-	e->inst[1] |= (src->hw << 14);
+	e->inst[1] |= ((src->hw & 127) << 14);
 }
 
 static void
@@ -718,6 +811,22 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 		set_immd(pc, src1, e);
 	else
 		set_src_1(pc, src1, e);
+
+	emit(pc, e);
+}
+
+static void
+emit_arl(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
+	 uint8_t s)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	set_long(pc, e);
+	e->inst[1] |= 0xc0000000;
+
+	e->inst[0] |= dst->hw << 2;
+	e->inst[0] |= s << 16; /* shift left */
+	set_src_0_restricted(pc, src, e);
 
 	emit(pc, e);
 }
@@ -1403,6 +1512,16 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 		return &pc->temp[dst->DstRegister.Index * 4 + c];
 	case TGSI_FILE_OUTPUT:
 		return &pc->result[dst->DstRegister.Index * 4 + c];
+	case TGSI_FILE_ADDRESS:
+	{
+		struct nv50_reg *r = pc->addr[dst->DstRegister.Index * 4 + c];
+		if (!r) {
+			r = alloc_addr(pc, NULL);
+			pc->addr[dst->DstRegister.Index * 4 + c] = r;
+		}
+		assert(r);
+		return r;
+	}
 	case TGSI_FILE_NULL:
 		return NULL;
 	default:
@@ -1418,7 +1537,10 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 {
 	struct nv50_reg *r = NULL;
 	struct nv50_reg *temp;
-	unsigned sgn, c;
+	unsigned sgn, c, swz;
+
+	if (src->SrcRegister.File != TGSI_FILE_CONSTANT)
+		assert(!src->SrcRegister.Indirect);
 
 	sgn = tgsi_util_get_full_src_register_sign_mode(src, chan);
 
@@ -1436,12 +1558,28 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			r = &pc->temp[src->SrcRegister.Index * 4 + c];
 			break;
 		case TGSI_FILE_CONSTANT:
-			r = &pc->param[src->SrcRegister.Index * 4 + c];
+			if (!src->SrcRegister.Indirect) {
+				r = &pc->param[src->SrcRegister.Index * 4 + c];
+				break;
+			}
+			/* Indicate indirection by setting r->acc < 0 and
+			 * use the index field to select the address reg.
+			 */
+			r = MALLOC_STRUCT(nv50_reg);
+			swz = tgsi_util_get_src_register_swizzle(
+						 &src->SrcRegisterInd, 0);
+			ctor_reg(r, P_CONST,
+				 src->SrcRegisterInd.Index * 4 + swz, c);
+			r->acc = -1;
 			break;
 		case TGSI_FILE_IMMEDIATE:
 			r = &pc->immd[src->SrcRegister.Index * 4 + c];
 			break;
 		case TGSI_FILE_SAMPLER:
+			break;
+		case TGSI_FILE_ADDRESS:
+			r = pc->addr[src->SrcRegister.Index * 4 + c];
+			assert(r);
 			break;
 		default:
 			assert(0);
@@ -1678,8 +1816,15 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_add(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
+	case TGSI_OPCODE_ARL:
+		assert(src[0][0]);
+		temp = temp_temp(pc);
+		emit_cvt(pc, temp, src[0][0], -1, CVTOP_FLOOR, CVT_S32_F32);
+		emit_arl(pc, dst[0], temp, 4);
+		break;
 	case TGSI_OPCODE_BGNLOOP:
 		pc->loop_pos[pc->loop_lvl++] = pc->p->exec_size;
+		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_BRK:
 		emit_branch(pc, -1, 0, NULL);
@@ -1763,6 +1908,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_branch(pc, -1, 0, NULL);
 		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
 		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
+		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_ENDIF:
 		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
@@ -1775,6 +1921,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			pc->br_join[pc->if_lvl]->param.index = pc->p->exec_size;
 			pc->br_join[pc->if_lvl] = NULL;
 		}
+		terminate_mbb(pc);
 		/* emit a NOP as join point, we could set it on the next
 		 * one, but would have to make sure it is long and !immd
 		 */
@@ -1785,6 +1932,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_branch(pc, -1, 0, NULL);
 		pc->p->exec_tail->param.index = pc->loop_pos[--pc->loop_lvl];
 		pc->br_loop[pc->loop_lvl]->param.index = pc->p->exec_size;
+		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
@@ -1812,6 +1960,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		set_pred_wr(pc, 1, 0, pc->if_cond);
 		emit_branch(pc, 0, 2, &pc->br_join[pc->if_lvl]);
 		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
+		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_KIL:
 		emit_kil(pc, src[0][0]);
@@ -1989,6 +2138,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			src[i][c]->neg = 0;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
+			else
+			if (src[i][c]->acc < 0 && src[i][c]->type == P_CONST)
+				FREE(src[i][c]); /* indirect constant */
 		}
 	}
 
@@ -2332,8 +2484,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					pc->interp_mode[i] = mode;
 			}
 				break;
+			case TGSI_FILE_ADDRESS:
 			case TGSI_FILE_CONSTANT:
-				break;
 			case TGSI_FILE_SAMPLER:
 				break;
 			default:
@@ -2527,6 +2679,8 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 	pc->attr_nr = p->info.file_max[TGSI_FILE_INPUT] + 1;
 	pc->result_nr = p->info.file_max[TGSI_FILE_OUTPUT] + 1;
 	pc->param_nr = p->info.file_max[TGSI_FILE_CONSTANT] + 1;
+	pc->addr_nr = p->info.file_max[TGSI_FILE_ADDRESS] + 1;
+	assert(pc->addr_nr <= 2);
 
 	p->cfg.high_temp = 4;
 
@@ -2594,6 +2748,14 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 			for (c = 0; c < 4; ++c, ++rid)
 				ctor_reg(&pc->param[rid], P_CONST, i, rid);
 	}
+
+	if (pc->addr_nr) {
+		pc->addr = CALLOC(pc->addr_nr * 4, sizeof(struct nv50_reg *));
+		if (!pc->addr)
+			return FALSE;
+	}
+	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
+		ctor_reg(&pc->r_addr[i], P_ADDR, -1, i + 1);
 
 	return TRUE;
 }
@@ -2774,7 +2936,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 					 p->immd_nr, NV50_CB_PMISC);
 	}
 
-	assert(p->param_nr <= 128);
+	assert(p->param_nr <= 512);
 
 	if (p->param_nr) {
 		unsigned cb;
