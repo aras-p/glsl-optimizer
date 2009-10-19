@@ -723,7 +723,7 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	radeonTexObjPtr t = radeon_tex_obj(tObj);
 	int firstlevel = t->mt ? t->mt->firstLevel : 0;
 	const struct gl_texture_image *firstImage;
-	uint32_t pitch_val, size, row_align;
+	uint32_t pitch_val, size, row_align, bpp;
 
 	if (!tObj)
 		return;
@@ -733,9 +733,13 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	if (!offset)
 		return;
 
+	bpp = depth / 8;
+	if (bpp == 3) 
+		bpp = 4;
+
 	firstImage = t->base.Image[0][firstlevel];
 	row_align = rmesa->radeon.texture_row_align - 1;
-	size = ((firstImage->Width * (depth / 8) + row_align) & ~row_align) * firstImage->Height;
+	size = ((firstImage->Width * bpp + row_align) & ~row_align) * firstImage->Height;
 	if (t->bo) {
 		radeon_bo_unref(t->bo);
 		t->bo = NULL;
