@@ -460,31 +460,35 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     value = (struct r300_shader_derived_value*)
         util_hash_table_get(r300->shader_hash_table, (void*)key);
     if (value) {
-        vformat = value->vformat;
+        //vformat = value->vformat;
         rs_block = value->rs_block;
 
         FREE(key);
     } else {
-        vformat = CALLOC_STRUCT(r300_vertex_format);
         rs_block = CALLOC_STRUCT(r300_rs_block);
         value = CALLOC_STRUCT(r300_shader_derived_value);
 
-        for (i = 0; i < 16; i++) {
-            vformat->vs_tab[i] = -1;
-            vformat->fs_tab[i] = -1;
-        }
-
-        r300_vs_tab_routes(r300, vformat);
-        r300_vertex_psc(r300, vformat);
-        r300_update_fs_tab(r300, vformat);
-
         r300_update_rs_block(r300, rs_block);
 
-        value->vformat = vformat;
+        //value->vformat = vformat;
         value->rs_block = rs_block;
         util_hash_table_set(r300->shader_hash_table,
             (void*)key, (void*)value);
     }
+
+    /* XXX This will be refactored ASAP. */
+    vformat = CALLOC_STRUCT(r300_vertex_format);
+
+    for (i = 0; i < 16; i++) {
+        vformat->vs_tab[i] = -1;
+        vformat->fs_tab[i] = -1;
+    }
+
+    r300_vs_tab_routes(r300, vformat);
+    r300_vertex_psc(r300, vformat);
+    r300_update_fs_tab(r300, vformat);
+
+    FREE(r300->vertex_info);
 
     r300->vertex_info = vformat;
     r300->rs_block = rs_block;
