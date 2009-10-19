@@ -203,10 +203,10 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
 
    RAST_DEBUG("%s\n", __FUNCTION__);
 
-   /* Use the existing preference for 8x2 (four quads) shading:
+   /* Use the existing preference for 4x4 (four quads) shading:
     */
-   for (y = 0; y < TILE_SIZE; y += 2)
-      for (x = 0; x < TILE_SIZE; x += 8)
+   for (y = 0; y < TILE_SIZE; y += 4)
+      for (x = 0; x < TILE_SIZE; x += 4)
          lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, &masks[0][0]);
 }
 
@@ -239,7 +239,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    depth = tile->depth + iy*TILE_SIZE + 2*ix;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
-   assert(lp_check_alignment(mask, 16));
+   assert(lp_check_alignment(masks, 16));
 
    assert(lp_check_alignment(depth, 16));
    assert(lp_check_alignment(color, 16));
