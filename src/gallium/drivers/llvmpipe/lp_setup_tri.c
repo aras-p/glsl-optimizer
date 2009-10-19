@@ -328,9 +328,9 @@ do_triangle_ccw(struct setup_context *setup,
 
    /* correct for top-left fill convention:
     */
-   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) tri->c1++;
-   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2++;
-   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3++;
+   if (tri->dy12 < 0 || (tri->dy12 == 0 && tri->dx12 > 0)) tri->c1 += 1.0/16.0f;
+   if (tri->dy23 < 0 || (tri->dy23 == 0 && tri->dx23 > 0)) tri->c2 += 1.0/16.0f;
+   if (tri->dy31 < 0 || (tri->dy31 == 0 && tri->dx31 > 0)) tri->c3 += 1.0/16.0f;
 
    /* find trivial reject offsets for each edge for a single-pixel
     * sized block.  These will be scaled up at each recursive level to
