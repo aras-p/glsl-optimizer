@@ -70,52 +70,15 @@ static char *connector_enum_list[] = {
 };
 
 static void
+create_resources(xf86OutputPtr output)
+{
+#ifdef RANDR_12_INTERFACE
+#endif /* RANDR_12_INTERFACE */
+}
+
+static void
 dpms(xf86OutputPtr output, int mode)
 {
-}
-
-static void
-save(xf86OutputPtr output)
-{
-}
-
-static void
-restore(xf86OutputPtr output)
-{
-}
-
-static int
-mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
-{
-    return MODE_OK;
-}
-
-static Bool
-mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
-	   DisplayModePtr adjusted_mode)
-{
-    return TRUE;
-}
-
-static void
-prepare(xf86OutputPtr output)
-{
-    dpms(output, DPMSModeOff);
-}
-
-static void
-mode_set(xf86OutputPtr output, DisplayModePtr mode,
-	 DisplayModePtr adjusted_mode)
-{
-}
-
-static void
-commit(xf86OutputPtr output)
-{
-    dpms(output, DPMSModeOn);
-
-    if (output->scrn->pScreen != NULL)
-	xf86_reload_cursors(output->scrn->pScreen);
 }
 
 static xf86OutputStatus
@@ -171,17 +134,10 @@ get_modes(xf86OutputPtr output)
     return modes;
 }
 
-static void
-destroy(xf86OutputPtr output)
+static int
+mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
-    drmModeFreeConnector(output->driver_private);
-}
-
-static void
-create_resources(xf86OutputPtr output)
-{
-#ifdef RANDR_12_INTERFACE
-#endif /* RANDR_12_INTERFACE */
+    return MODE_OK;
 }
 
 #ifdef RANDR_12_INTERFACE
@@ -200,36 +156,26 @@ get_property(xf86OutputPtr output, Atom property)
 }
 #endif /* RANDR_13_INTERFACE */
 
-#ifdef RANDR_GET_CRTC_INTERFACE
-static xf86CrtcPtr
-get_crtc(xf86OutputPtr output)
+static void
+destroy(xf86OutputPtr output)
 {
-    return NULL;
+    drmModeFreeConnector(output->driver_private);
 }
-#endif
 
 static const xf86OutputFuncsRec output_funcs = {
     .create_resources = create_resources,
-    .dpms = dpms,
-    .save = save,
-    .restore = restore,
-    .mode_valid = mode_valid,
-    .mode_fixup = mode_fixup,
-    .prepare = prepare,
-    .mode_set = mode_set,
-    .commit = commit,
-    .detect = detect,
-    .get_modes = get_modes,
 #ifdef RANDR_12_INTERFACE
     .set_property = set_property,
 #endif
 #ifdef RANDR_13_INTERFACE
     .get_property = get_property,
 #endif
+    .dpms = dpms,
+    .detect = detect,
+
+    .get_modes = get_modes,
+    .mode_valid = mode_valid,
     .destroy = destroy,
-#ifdef RANDR_GET_CRTC_INTERFACE
-    .get_crtc = get_crtc,
-#endif
 };
 
 void
