@@ -710,6 +710,10 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
                 bo, bo->size, bo_legacy->map_count);
         return -EINVAL;
     }
+    if(bo->size == 0) {
+        fprintf(stderr, "bo(%p) has size 0.\n", bo);
+        return -EINVAL;
+    }
     if (bo_legacy->static_bo || bo_legacy->validated) {
         *soffset = bo_legacy->offset;
         *eoffset = bo_legacy->offset + bo->size;

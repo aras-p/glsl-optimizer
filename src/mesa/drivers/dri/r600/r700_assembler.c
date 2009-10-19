@@ -1307,8 +1307,10 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
         case PROGRAM_INPUT:
             switch (pILInst->SrcReg[0].Index)
             {
+                case FRAG_ATTRIB_WPOS:
                 case FRAG_ATTRIB_COL0:
                 case FRAG_ATTRIB_COL1:
+                case FRAG_ATTRIB_FOGC:
                 case FRAG_ATTRIB_TEX0:
                 case FRAG_ATTRIB_TEX1:
                 case FRAG_ATTRIB_TEX2:
@@ -1321,7 +1323,16 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                     pAsm->S[0].src.reg   =
                         pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
                     pAsm->S[0].src.rtype = SRC_REG_INPUT;
-                break;
+                    break;
+                case FRAG_ATTRIB_FACE:
+                    fprintf(stderr, "FRAG_ATTRIB_FACE unsupported\n");
+                    break;
+                case FRAG_ATTRIB_PNTC:
+                    fprintf(stderr, "FRAG_ATTRIB_PNTC unsupported\n");
+                    break;
+                case FRAG_ATTRIB_VAR0:
+                    fprintf(stderr, "FRAG_ATTRIB_VAR0 unsupported\n");
+                    break;
             }
         break;
         }

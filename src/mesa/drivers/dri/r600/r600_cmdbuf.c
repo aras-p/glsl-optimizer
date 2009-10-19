@@ -254,7 +254,7 @@ static int r600_cs_process_relocs(struct radeon_cs *cs,
     relocs = (struct r600_cs_reloc_legacy *)cs->relocs;
 restart:
     for (i = 0; i < cs->crelocs; i++) {
-            uint32_t soffset, eoffset, asicoffset;
+            uint32_t soffset, eoffset;
 
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
 					  &soffset, &eoffset);
@@ -262,24 +262,12 @@ restart:
 		    goto restart;
             }
             if (r) {
-		    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
+		    fprintf(stderr, "invalid bo(%p) [0x%08X, 0x%08X]\n",
 			    relocs[i].base.bo, soffset, eoffset);
 		    return r;
             }
-            asicoffset = soffset;
 
 	    for (j = 0; j < relocs[i].cindices; j++) {
-		    if (asicoffset >= eoffset) {
-			    /*                radeon_bo_debug(relocs[i].base.bo, 12); */
-			    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
-				    relocs[i].base.bo, soffset, eoffset);
-			    fprintf(stderr, "above end: %p 0x%08X 0x%08X\n",
-				    relocs[i].base.bo,
-				    cs->packets[relocs[i].indices[j]],
-				    eoffset);
-			    exit(0);
-			    return -EINVAL;
-		    }
 		    /* pkt3 nop header in ib chunk */
 		    cs->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
 		    /* reloc index in ib chunk */
@@ -287,7 +275,7 @@ restart:
 	    }
 
 	    /* asic offset in reloc chunk */ /* see alex drm r600_nomm_relocate */
-	    reloc_chunk[offset_dw] = asicoffset;
+	    reloc_chunk[offset_dw] = soffset;
 	    reloc_chunk[offset_dw + 3] = 0;
 
 	    offset_dw += 4;
