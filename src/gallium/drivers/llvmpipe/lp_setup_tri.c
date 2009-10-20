@@ -221,8 +221,6 @@ static void setup_tri_coefficients( struct setup_context *setup,
 
 
 
-/* XXX: do this by add/subtracting a large floating point number:
- */
 static inline int subpixel_snap( float a )
 {
    return util_iround(FIXED_ONE * a);
@@ -235,15 +233,6 @@ static INLINE void bin_triangle( struct cmd_block_list *list,
 }
 
 
-/* to avoid having to allocate power-of-four, square render targets,
- * end up having a specialized version of the above that runs only at
- * the topmost level.
- *
- * at the topmost level there may be an arbitary number of steps on
- * either dimension, so this loop needs to be either separately
- * code-generated and unrolled for each render target size, or kept as
- * generic looping code:
- */
 
 #define MIN3(a,b,c) MIN2(MIN2(a,b),c)
 #define MAX3(a,b,c) MAX2(MAX2(a,b),c)
@@ -354,11 +343,6 @@ do_triangle_ccw(struct setup_context *setup,
    tri->ei2 = tri->dx23 - tri->dy23 - tri->eo2;
    tri->ei3 = tri->dx31 - tri->dy31 - tri->eo3;
 
-   minx = tri->minx / TILESIZE;
-   miny = tri->miny / TILESIZE;
-   maxx = tri->maxx / TILESIZE;
-   maxy = tri->maxy / TILESIZE;
-
    {
       int xstep1 = -tri->dy12;
       int xstep2 = -tri->dy23;
@@ -370,15 +354,36 @@ do_triangle_ccw(struct setup_context *setup,
       
       int ix, iy;
       int i = 0;
+
+      int c1 = 0;
+      int c2 = 0;
+      int c3 = 0;
       
       for (iy = 0; iy < 4; iy++) {
+	 int cx1 = c1;
+	 int cx2 = c2;
+	 int cx3 = c3;
+
 	 for (ix = 0; ix < 4; ix++, i++) {
-	    tri->step[0][i] = xstep1 * ix + ystep1 * iy;
-	    tri->step[1][i] = xstep2 * ix + ystep2 * iy;
-	    tri->step[2][i] = xstep3 * ix + ystep3 * iy;
+	    tri->step[0][i] = cx1;
+	    tri->step[1][i] = cx2;
+	    tri->step[2][i] = cx3;
+	    cx1 += xstep1;
+	    cx2 += xstep2;
+	    cx3 += xstep3;
 	 }
+
+	 c1 += ystep1;
+	 c2 += ystep2;
+	 c3 += ystep3;
       }
    }
+
+   minx = tri->minx / TILESIZE;
+   miny = tri->miny / TILESIZE;
+   maxx = tri->maxx / TILESIZE;
+   maxy = tri->maxy / TILESIZE;
+
 
    /* Convert to tile coordinates:
     */
@@ -419,10 +424,7 @@ do_triangle_ccw(struct setup_context *setup,
       int x, y;
 
 
-      /* Subdivide space into NxM blocks, where each block is square and
-       * power-of-four in dimension.
-       *
-       * Trivially accept or reject blocks, else jump to per-pixel
+      /* Trivially accept or reject blocks, else jump to per-pixel
        * examination above.
        */
       for (y = miny; y <= maxy; y++)
@@ -430,38 +432,30 @@ do_triangle_ccw(struct setup_context *setup,
 	 int cx1 = c1;
 	 int cx2 = c2;
 	 int cx3 = c3;
+	 int in = 0;
 
 	 for (x = minx; x <= maxx; x++)
 	 {
-            assert(cx1 == 
-                   tri->c1 + 
-                   tri->dx12 * y * TILESIZE - 
-                   tri->dy12 * x * TILESIZE);
-            assert(cx2 ==
-                   tri->c2 + 
-                   tri->dx23 * y * TILESIZE - 
-                   tri->dy23 * x * TILESIZE);
-            assert(cx3 == 
-                   tri->c3 +
-                   tri->dx31 * y * TILESIZE -
-                   tri->dy31 * x * TILESIZE);
-
 	    if (cx1 + eo1 < 0 || 
 		cx2 + eo2 < 0 ||
 		cx3 + eo3 < 0) 
 	    {
 	       /* do nothing */
+	       if (in)
+		  break;
 	    }
 	    else if (cx1 + ei1 > 0 &&
 		     cx2 + ei2 > 0 &&
 		     cx3 + ei3 > 0) 
 	    {
+	       in = 1;
                /* shade whole tile */
                bin_command( &setup->tile[x][y], lp_rast_shade_tile,
                             lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
 	    { 
+	       in = 1;
                /* shade partial tile */
                bin_command( &setup->tile[x][y], 
                             lp_rast_triangle, 
