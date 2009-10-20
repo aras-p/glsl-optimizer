@@ -1039,7 +1039,7 @@ optArraySize:
 	}
 	| INTEGER
         {
-	   if (($1 < 1) || ((unsigned) $1 >= state->limits->MaxParameters)) {
+	   if (($1 < 1) || ((unsigned) $1 > state->limits->MaxParameters)) {
 	      yyerror(& @1, state, "invalid parameter array size");
 	      YYERROR;
 	   } else {
