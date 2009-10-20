@@ -355,6 +355,7 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
         return 2;  
 
     case SQ_OP2_INST_MOV: 
+    case SQ_OP2_INST_MOVA_FLOOR:
     case SQ_OP2_INST_FRACT:
     case SQ_OP2_INST_FLOOR:
     case SQ_OP2_INST_EXP_IEEE:
@@ -2064,7 +2065,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         }
 
         //other bits
-        alu_instruction_ptr->m_Word0.f.index_mode = SQ_INDEX_LOOP;
+        alu_instruction_ptr->m_Word0.f.index_mode = SQ_INDEX_AR_X;
 
         if(   (is_single_scalar_operation == GL_TRUE) 
            || (GL_TRUE == bSplitInst) )
@@ -2391,6 +2392,35 @@ GLboolean assemble_ADD(r700_AssemblerBase *pAsm)
     }
 
     if( GL_FALSE == next_ins(pAsm) ) 
+    {
+        return GL_FALSE;
+    }
+
+    return GL_TRUE;
+}
+
+GLboolean assemble_ARL(r700_AssemblerBase *pAsm)
+{ /* TODO: ar values dont' persist between clauses */
+    if( GL_FALSE == checkop1(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_MOVA_FLOOR;
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg = 0;
+    pAsm->D.dst.writex = 0;
+    pAsm->D.dst.writey = 0;
+    pAsm->D.dst.writez = 0;
+    pAsm->D.dst.writew = 0;
+
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }
@@ -3812,8 +3842,7 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
             break;  
 
         case OPCODE_ARL: 
-            radeon_error("Not yet implemented instruction OPCODE_ARL \n");
-            //if ( GL_FALSE == assemble_BAD("ARL") ) 
+            if ( GL_FALSE == assemble_ARL(pR700AsmCode) ) 
                 return GL_FALSE;
             break;
         case OPCODE_ARR: 

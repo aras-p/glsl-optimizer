@@ -461,6 +461,7 @@ GLboolean next_ins(r700_AssemblerBase *pAsm);
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode);
 GLboolean assemble_ABS(r700_AssemblerBase *pAsm);
 GLboolean assemble_ADD(r700_AssemblerBase *pAsm);
+GLboolean assemble_ARL(r700_AssemblerBase *pAsm);
 GLboolean assemble_BAD(char *opcode_str);
 GLboolean assemble_CMP(r700_AssemblerBase *pAsm);
 GLboolean assemble_COS(r700_AssemblerBase *pAsm);
