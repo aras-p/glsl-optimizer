@@ -42,7 +42,7 @@
 #include <pipe/p_compiler.h>
 
 
-struct lp_type type;
+struct lp_type;
 
 
 unsigned
