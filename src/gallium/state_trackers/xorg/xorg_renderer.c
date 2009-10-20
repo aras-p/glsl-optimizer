@@ -283,13 +283,15 @@ void renderer_destroy(struct xorg_renderer *r)
    if (fsbuf && fsbuf->buffer)
       pipe_buffer_reference(&fsbuf->buffer, NULL);
 
+   if (r->shaders) {
+      xorg_shaders_destroy(r->shaders);
+      r->shaders = NULL;
+   }
+
    if (r->cso) {
       cso_release_all(r->cso);
       cso_destroy_context(r->cso);
-   }
-
-   if (r->shaders) {
-      xorg_shaders_destroy(r->shaders);
+      r->cso = NULL;
    }
 }
 

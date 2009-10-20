@@ -541,6 +541,9 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
     }
 
+    if (!ms->api)
+	ms->api = drm_api_create();
+
     if (!ms->screen) {
 	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
 
@@ -774,7 +777,7 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
     if (ms->exa)
 	xorg_exa_close(pScrn);
 
-    if (ms->api->destroy)
+    if (ms->api && ms->api->destroy)
 	ms->api->destroy(ms->api);
     ms->api = NULL;
 
