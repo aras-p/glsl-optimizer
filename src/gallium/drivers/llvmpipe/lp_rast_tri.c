@@ -36,22 +36,17 @@
 
 #define BLOCKSIZE 4
 
-static struct {
-   int x;
-   int y;
-   unsigned mask;
-} blocks[256];
-static int nr_blocks;
 
 /* Render a 4x4 unmasked block:
  */
 static void block_full_4( struct lp_rasterizer *rast,
                         int x, int y )
 {
-   blocks[nr_blocks].x = x;
-   blocks[nr_blocks].y = y;
-   blocks[nr_blocks].mask = ~0;
-   nr_blocks++;
+   int i = rast->nr_blocks;
+   rast->blocks[i].x = x;
+   rast->blocks[i].y = y;
+   rast->blocks[i].mask = ~0;
+   rast->nr_blocks++;
 }
 
 
@@ -86,15 +81,15 @@ do_block_4( struct lp_rasterizer *rast,
 		  (c2 + tri->step[1][i]) | 
 		  (c3 + tri->step[2][i])) >> 31)) & (1 << i);
    
-
    /* As we do trivial reject already, masks should rarely be all
     * zero:
     */
    if (mask) {
-      blocks[nr_blocks].x = x;
-      blocks[nr_blocks].y = y;
-      blocks[nr_blocks].mask = mask;
-      nr_blocks++;
+      int i = rast->nr_blocks;
+      rast->blocks[i].x = x;
+      rast->blocks[i].y = y;
+      rast->blocks[i].mask = mask;
+      rast->nr_blocks++;
    }
 }
 
@@ -169,7 +164,7 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 
    debug_printf("%s\n", __FUNCTION__);
 
-   nr_blocks = 0;
+   rast->nr_blocks = 0;
 
    for (iy = 0; iy < 64; iy+=16) 
    {
@@ -197,10 +192,10 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
       }
    }
 
-   for (i = 0; i < nr_blocks; i++) 
+   for (i = 0; i < rast->nr_blocks; i++) 
       lp_rast_shade_quads(rast, &tri->inputs, 
-			  blocks[i].x,
-			  blocks[i].y,
-			  blocks[i].mask);
+			  rast->blocks[i].x,
+			  rast->blocks[i].y,
+			  rast->blocks[i].mask);
 }
 
