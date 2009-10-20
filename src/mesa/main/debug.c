@@ -27,6 +27,7 @@
 #include "attrib.h"
 #include "colormac.h"
 #include "context.h"
+#include "enums.h"
 #include "hash.h"
 #include "imports.h"
 #include "debug.h"
@@ -264,10 +265,13 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
 
 
 /**
- * Write level[0] image to a ppm file.
+ * Write a texture image to a ppm file.
+ * \param face  cube face in [0,5]
+ * \param level  mipmap level
  */
 static void
-write_texture_image(struct gl_texture_object *texObj, GLuint face, GLuint level)
+write_texture_image(struct gl_texture_object *texObj,
+                    GLuint face, GLuint level)
 {
    struct gl_texture_image *img = texObj->Image[face][level];
    if (img) {
@@ -296,6 +300,45 @@ write_texture_image(struct gl_texture_object *texObj, GLuint face, GLuint level)
 
       _mesa_free(buffer);
    }
+}
+
+
+/**
+ * Write renderbuffer image to a ppm file.
+ */
+static void
+write_renderbuffer_image(const struct gl_renderbuffer *rb)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLubyte *buffer;
+   char s[100];
+   GLenum format, type;
+
+   if (rb->_BaseFormat == GL_RGB || 
+       rb->_BaseFormat == GL_RGBA) {
+      format = GL_RGBA;
+      type = GL_UNSIGNED_BYTE;
+   }
+   else if (rb->_BaseFormat == GL_DEPTH_STENCIL) {
+      format = GL_DEPTH_STENCIL;
+      type = GL_UNSIGNED_INT_24_8;
+   }
+   else {
+      return;
+   }
+
+   buffer = (GLubyte *) _mesa_malloc(rb->Width * rb->Height * 4);
+
+   ctx->Driver.ReadPixels(ctx, 0, 0, rb->Width, rb->Height,
+                          format, type, &ctx->DefaultPacking, buffer);
+
+   /* make filename */
+   _mesa_sprintf(s, "/tmp/renderbuffer%u.ppm", rb->Name);
+
+   _mesa_printf("  Writing renderbuffer image to %s\n", s);
+   write_ppm(s, buffer, rb->Width, rb->Height, 4, 0, 1, 2, GL_TRUE);
+
+   _mesa_free(buffer);
 }
 
 
@@ -339,6 +382,35 @@ _mesa_dump_textures(GLboolean dumpImages)
    DumpImages = dumpImages;
    _mesa_HashWalk(ctx->Shared->TexObjects, dump_texture_cb, ctx);
 }
+
+
+static void
+dump_renderbuffer_cb(GLuint id, void *data, void *userData)
+{
+   const struct gl_renderbuffer *rb = (const struct gl_renderbuffer *) data;
+   (void) userData;
+
+   _mesa_printf("Renderbuffer %u: %u x %u  IntFormat = %s\n",
+                rb->Name, rb->Width, rb->Height,
+                _mesa_lookup_enum_by_nr(rb->InternalFormat));
+   if (DumpImages) {
+      write_renderbuffer_image(rb);
+   }
+}
+
+
+/**
+ * Print basic info about all renderbuffers to stdout.
+ * If dumpImages is true, write PPM of level[0] image to a file.
+ */
+void
+_mesa_dump_renderbuffers(GLboolean dumpImages)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   DumpImages = dumpImages;
+   _mesa_HashWalk(ctx->Shared->RenderBuffers, dump_renderbuffer_cb, ctx);
+}
+
 
 
 void

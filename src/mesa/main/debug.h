@@ -61,6 +61,9 @@ extern void
 _mesa_dump_textures(GLboolean dumpImages);
 
 extern void
+_mesa_dump_renderbuffers(GLboolean dumpImages);
+
+extern void
 _mesa_dump_color_buffer(const char *filename);
 
 extern void
