@@ -261,6 +261,37 @@ static const xf86CrtcConfigFuncsRec crtc_config_funcs = {
 };
 
 static Bool
+InitDRM(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    /* deal with server regeneration */
+    if (ms->fd < 0) {
+	char *BusID;
+
+	BusID = xalloc(64);
+	sprintf(BusID, "PCI:%d:%d:%d",
+		((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
+		ms->PciInfo->dev, ms->PciInfo->func
+	    );
+
+	ms->fd = drmOpen(NULL, BusID);
+
+	if (ms->fd < 0)
+	    return FALSE;
+    }
+
+    if (!ms->api) {
+	ms->api = drm_api_create();
+
+	if (!ms->api)
+	    return FALSE;
+    }
+
+    return TRUE;
+}
+
+static Bool
 PreInit(ScrnInfoPtr pScrn, int flags)
 {
     xf86CrtcConfigPtr xf86_config;
@@ -268,7 +299,6 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     rgb defaultWeight = { 0, 0, 0 };
     EntityInfoPtr pEnt;
     EntPtr msEnt = NULL;
-    char *BusID;
     int max_width, max_height;
 
     if (pScrn->numEntities != 1)
@@ -317,16 +347,9 @@ PreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
-    BusID = xalloc(64);
-    sprintf(BusID, "PCI:%d:%d:%d",
-	    ((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
-	    ms->PciInfo->dev, ms->PciInfo->func
-	);
-
-    ms->api = drm_api_create();
-    ms->fd = drmOpen(NULL, BusID);
-
-    if (ms->fd < 0)
+    ms->fd = -1;
+    ms->api = NULL;
+    if (!InitDRM(pScrn))
 	return FALSE;
 
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -525,24 +548,8 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     modesettingPtr ms = modesettingPTR(pScrn);
     VisualPtr visual;
 
-    /* deal with server regeneration */
-    if (ms->fd < 0) {
-	char *BusID;
-
-	BusID = xalloc(64);
-	sprintf(BusID, "PCI:%d:%d:%d",
-		((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
-		ms->PciInfo->dev, ms->PciInfo->func
-	    );
-
-	ms->fd = drmOpen(NULL, BusID);
-
-	if (ms->fd < 0)
-	    return FALSE;
-    }
-
-    if (!ms->api)
-	ms->api = drm_api_create();
+    if (!InitDRM(pScrn))
+	return FALSE;
 
     if (!ms->screen) {
 	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
