@@ -50,6 +50,9 @@
 
 #ifdef _GNU_SOURCE
 #include <locale.h>
+#ifdef __APPLE__
+#include <xlocale.h>
+#endif
 #endif
 
 
