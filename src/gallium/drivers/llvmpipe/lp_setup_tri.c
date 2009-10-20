@@ -359,6 +359,32 @@ do_triangle_ccw(struct setup_context *setup,
    maxx = tri->maxx / TILESIZE;
    maxy = tri->maxy / TILESIZE;
 
+   {
+      int xstep1 = -tri->dy12;
+      int xstep2 = -tri->dy23;
+      int xstep3 = -tri->dy31;
+
+      int ystep1 = tri->dx12;
+      int ystep2 = tri->dx23;
+      int ystep3 = tri->dx31;
+      
+      int ix, iy;
+      int qx, qy;
+      int i = 0;
+      
+      for (qy = 0; qy < 4; qy += 2) {
+	 for (qx = 0; qx < 4; qx += 2) {
+	    for (iy = 0; iy < 2; iy++) {
+	       for (ix = 0; ix < 2; ix++, i++) {
+		  tri->step[0][i] = (xstep1 * (qx+ix)) + (ystep1 * (qy+iy));
+		  tri->step[1][i] = (xstep2 * (qx+ix)) + (ystep2 * (qy+iy));
+		  tri->step[2][i] = (xstep3 * (qx+ix)) + (ystep3 * (qy+iy));
+	       }
+	    }
+	 }
+      }
+   }
+
    /* Convert to tile coordinates:
     */
    if (miny == maxy && minx == maxx)

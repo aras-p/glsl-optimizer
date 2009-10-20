@@ -111,6 +111,8 @@ struct lp_rast_triangle {
    int c2;
    int c3;
 
+   int step[3][16];
+
    /* XXX: this is only used inside lp_setup_tri.c, don't really
     * need it here:
     */

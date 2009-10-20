@@ -37,100 +37,44 @@
 #define BLOCKSIZE 4
 
 
+
 /* Render a 4x4 unmasked block:
  */
 static void block_full( struct lp_rasterizer *rast,
                         const struct lp_rast_triangle *tri,
                         int x, int y )
 {
-   static const uint32_t ALIGN16_ATTRIB masks[4][4] = 
-      { {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0} };
+   unsigned mask = ~0;
 
-   lp_rast_shade_quads(rast, &tri->inputs, x, y, &masks[0][0]);
+   lp_rast_shade_quads(rast, &tri->inputs, x, y, mask);
 }
 
 
-static INLINE void
-do_quad( const struct lp_rast_triangle *tri,
-	 int c1, int c2, int c3,
-         int32_t *mask )
-{
-   const int xstep1 = -tri->dy12 ;
-   const int xstep2 = -tri->dy23 ;
-   const int xstep3 = -tri->dy31 ;
-
-   const int ystep1 = tri->dx12 ;
-   const int ystep2 = tri->dx23 ;
-   const int ystep3 = tri->dx31 ;
-   
-   mask[0] = ~(((c1) |
-                (c2) |
-                (c3)) >> 31);
-
-   mask[1] = ~(((c1 + xstep1) | 
-                (c2 + xstep2) | 
-                (c3 + xstep3)) >> 31);
-
-   mask[2] = ~(((c1 + ystep1) | 
-                (c2 + ystep2) | 
-                (c3 + ystep3)) >> 31);
-
-   mask[3] = ~(((c1 + ystep1 + xstep1) | 
-                (c2 + ystep2 + xstep2) | 
-                (c3 + ystep3 + xstep3)) >> 31);
-}
 
 /* Evaluate each pixel in a block, generate a mask and possibly render
  * the quad:
  */
 static void
 do_block( struct lp_rasterizer *rast,
-          const struct lp_rast_triangle *tri,
+	  const struct lp_rast_triangle *tri,
           int x, int y,
           int c1,
           int c2,
           int c3 )
 {
-   const int step = 2 ;
+   int i;
+   unsigned mask = 0;
 
-   const int xstep1 = -step * tri->dy12;
-   const int xstep2 = -step * tri->dy23;
-   const int xstep3 = -step * tri->dy31;
-
-   const int ystep1 = step * tri->dx12;
-   const int ystep2 = step * tri->dx23;
-   const int ystep3 = step * tri->dx31;
-
-   int ix, iy;
-   uint32_t ALIGN16_ATTRIB mask[4][4];
-
-
-   for (iy = 0; iy < 4; iy += 2) {
-      int cx1 = c1;
-      int cx2 = c2;
-      int cx3 = c3;
-
-      for (ix = 0; ix < 2; ix ++) {
-
-	 do_quad(tri, cx1, cx2, cx3, (int32_t *)mask[iy+ix]);
-
-	 cx1 += xstep1;
-	 cx2 += xstep2;
-	 cx3 += xstep3;
-      }
-
-      c1 += ystep1;
-      c2 += ystep2;
-      c3 += ystep3;
-   }
+   for (i = 0; i < 16; i++)
+      mask |= (~(((c1 + tri->step[0][i]) | 
+		  (c2 + tri->step[1][i]) | 
+		  (c3 + tri->step[2][i])) >> 31)) & (1 << i);
+   
 
    /* As we do trivial reject already, masks should rarely be all
     * zero:
     */
-   lp_rast_shade_quads(rast, &tri->inputs, x, y, &mask[0][0] );
+   lp_rast_shade_quads(rast, &tri->inputs, x, y, mask );
 }
 
 

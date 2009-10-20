@@ -193,12 +193,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
 {
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   static const uint32_t ALIGN16_ATTRIB masks[4][4] = 
-      { {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0},
-        {~0, ~0, ~0, ~0} };
-
+   const unsigned mask = ~0;
    unsigned x, y;
 
    RAST_DEBUG("%s\n", __FUNCTION__);
@@ -207,25 +202,30 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
     */
    for (y = 0; y < TILE_SIZE; y += 4)
       for (x = 0; x < TILE_SIZE; x += 4)
-         lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, &masks[0][0]);
+         lp_rast_shade_quads( rast, inputs, rast->x + x, rast->y + y, mask);
 }
 
 
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
-                          const uint32_t *masks)
+                          unsigned mask)
 {
 #if 1
    const struct lp_rast_state *state = inputs->state;
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
    void *depth;
-   unsigned ix, iy;
+   uint32_t ALIGN16_ATTRIB masks[16];
+   unsigned ix, iy, i;
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
+
+   /* mask */
+   for (i = 0; i < 16; ++i)
+      masks[i] = mask & (1 << i) ? ~0 : 0;
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
@@ -251,7 +251,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
-                        masks,
+                        &masks[0],
                         color,
                         depth);
 #else

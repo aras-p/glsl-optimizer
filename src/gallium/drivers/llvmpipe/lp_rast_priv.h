@@ -80,6 +80,6 @@ struct lp_rasterizer {
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
-                          const uint32_t *masks);
+                          unsigned masks);
 
 #endif
