@@ -39,6 +39,11 @@ GLenum doubleBuffer;
 
 static void Init(void)
 {
+   if (!glutExtensionSupported("GL_ARB_occlusion_query")) {
+      fprintf(stderr, "Sorry, this program requires GL_ARB_occlusion_query\n");
+      exit(1);
+   }
+
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
