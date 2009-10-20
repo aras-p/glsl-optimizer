@@ -145,7 +145,7 @@ class PrintGlRemap(gl_XML.gl_print_base):
 			funcs = []
 			for f in extension_functions[ext]:
 				# test if the function is in the ABI
-				if not f.assign_offset and f.offset >= 0:
+				if f.is_abi():
 					funcs.append(f)
 			if not funcs:
 				continue

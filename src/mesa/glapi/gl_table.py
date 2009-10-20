@@ -113,14 +113,11 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '    } while(0)'
 		print ''
 
-		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
-
 		functions = []
 		abi_functions = []
 		count = 0
 		for f in api.functionIterateByOffset():
-			[category, num] = api.get_category_for_name( f.name )
-			if category not in abi:
+			if not f.is_abi():
 				functions.append( [f, count] )
 				count += 1
 			else:

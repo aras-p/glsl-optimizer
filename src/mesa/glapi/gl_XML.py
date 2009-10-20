@@ -738,6 +738,9 @@ class gl_function( gl_item ):
 		return p_string
 
 
+	def is_abi(self):
+		return (self.offset >= 0 and not self.assign_offset)
+
 	def is_static_entry_point(self, name):
 		return name in self.static_entry_points
 

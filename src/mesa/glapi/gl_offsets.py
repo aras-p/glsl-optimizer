@@ -41,8 +41,6 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		return
 
 	def printBody(self, api):
-		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
-
 		print '/* this file should not be included directly in mesa */'
 		print ''
 
@@ -50,8 +48,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		abi_functions = []
 		count = 0
 		for f in api.functionIterateByOffset():
-			[category, num] = api.get_category_for_name( f.name )
-			if category not in abi:
+			if not f.is_abi():
 				functions.append( [f, count] )
 				count += 1
 			else:
