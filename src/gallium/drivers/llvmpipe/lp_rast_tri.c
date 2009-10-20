@@ -40,7 +40,7 @@
 
 /* Render a 4x4 unmasked block:
  */
-static void block_full( struct lp_rasterizer *rast,
+static void block_full_4( struct lp_rasterizer *rast,
                         const struct lp_rast_triangle *tri,
                         int x, int y )
 {
@@ -50,17 +50,30 @@ static void block_full( struct lp_rasterizer *rast,
 }
 
 
+static void block_full_16( struct lp_rasterizer *rast,
+                        const struct lp_rast_triangle *tri,
+                        int x, int y )
+{
+   unsigned mask = ~0;
+   unsigned ix, iy;
+
+   for (iy = 0; iy < 16; iy+=4) 
+      for (ix = 0; ix < 16; ix+=4) 
+	 lp_rast_shade_quads(rast, &tri->inputs, x + ix, y + iy , mask);
+}
+
+
 
 /* Evaluate each pixel in a block, generate a mask and possibly render
  * the quad:
  */
 static void
-do_block( struct lp_rasterizer *rast,
-	  const struct lp_rast_triangle *tri,
-          int x, int y,
-          int c1,
-          int c2,
-          int c3 )
+do_block_4( struct lp_rasterizer *rast,
+	    const struct lp_rast_triangle *tri,
+	    int x, int y,
+	    int c1,
+	    int c2,
+	    int c3 )
 {
    int i;
    unsigned mask = 0;
@@ -74,10 +87,54 @@ do_block( struct lp_rasterizer *rast,
    /* As we do trivial reject already, masks should rarely be all
     * zero:
     */
-   lp_rast_shade_quads(rast, &tri->inputs, x, y, mask );
+   if (mask)
+      lp_rast_shade_quads(rast, &tri->inputs, x, y, mask );
 }
 
+static void
+do_block_16( struct lp_rasterizer *rast,
+	    const struct lp_rast_triangle *tri,
+	    int x, int y,
+	    int c1,
+	    int c2,
+	    int c3 )
+{
+   int ix,iy,i = 0;
 
+   int ei1 = tri->ei1 << 2;
+   int ei2 = tri->ei2 << 2;
+   int ei3 = tri->ei3 << 2;
+
+   int eo1 = tri->eo1 << 2;
+   int eo2 = tri->eo2 << 2;
+   int eo3 = tri->eo3 << 2;
+
+   for (iy = 0; iy < 16; iy+=4) 
+   {
+      for (ix = 0; ix < 16; ix+=4, i++) 
+      {
+	 int cx1 = c1 + (tri->step[0][i] << 2);
+	 int cx2 = c2 + (tri->step[1][i] << 2);
+	 int cx3 = c3 + (tri->step[2][i] << 2);
+	 
+	 if (cx1 + eo1 < 0 ||
+	     cx2 + eo2 < 0 ||
+	     cx3 + eo3 < 0)
+	 {
+	 }
+	 else if (cx1 + ei1 > 0 &&
+		  cx2 + ei2 > 0 &&
+		  cx3 + ei3 > 0)
+	 {
+	    block_full_4(rast, tri, x+ix, y+iy); /* trivial accept */
+	 }
+	 else
+	 {
+	    do_block_4(rast, tri, x+ix, y+iy, cx1, cx2, cx3);
+	 }
+      }
+   }
+}
 
 /* Scan the tile in chunks and figure out which pixels to rasterize
  * for this triangle:
@@ -87,84 +144,49 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 {
    const struct lp_rast_triangle *tri = arg.triangle;
 
-   const int step = BLOCKSIZE;
+   int x = rast->x;
+   int y = rast->y;
+   int ix,iy,i = 0;
 
-   int ei1 = tri->ei1 * step;
-   int ei2 = tri->ei2 * step;
-   int ei3 = tri->ei3 * step;
+   int c1 = tri->c1 + tri->dx12 * y - tri->dy12 * x;
+   int c2 = tri->c2 + tri->dx23 * y - tri->dy23 * x;
+   int c3 = tri->c3 + tri->dx31 * y - tri->dy31 * x;
 
-   int eo1 = tri->eo1 * step;
-   int eo2 = tri->eo2 * step;
-   int eo3 = tri->eo3 * step;
+   int ei1 = tri->ei1 << 4;
+   int ei2 = tri->ei2 << 4;
+   int ei3 = tri->ei3 << 4;
 
-   int xstep1 = -step * tri->dy12;
-   int xstep2 = -step * tri->dy23;
-   int xstep3 = -step * tri->dy31;
-
-   int ystep1 = step * tri->dx12;
-   int ystep2 = step * tri->dx23;
-   int ystep3 = step * tri->dx31;
-
-   /* Clamp to tile dimensions:
-    */
-   int minx = MAX2(tri->minx, rast->x);
-   int miny = MAX2(tri->miny, rast->y);
-   int maxx = MIN2(tri->maxx, rast->x + TILE_SIZE);
-   int maxy = MIN2(tri->maxy, rast->y + TILE_SIZE);
-
-   int x, y;
-   int c1, c2, c3;
+   int eo1 = tri->eo1 << 4;
+   int eo2 = tri->eo2 << 4;
+   int eo3 = tri->eo3 << 4;
 
    debug_printf("%s\n", __FUNCTION__);
 
-   if (miny == maxy || minx == maxx) {
-      debug_printf("%s: non-intersecting triangle in bin\n", __FUNCTION__);
-      return;
-   }
 
-   minx &= ~(BLOCKSIZE-1);
-   miny &= ~(BLOCKSIZE-1);
-
-   c1 = tri->c1 + tri->dx12 * miny - tri->dy12 * minx;
-   c2 = tri->c2 + tri->dx23 * miny - tri->dy23 * minx;
-   c3 = tri->c3 + tri->dx31 * miny - tri->dy31 * minx;
-
-   for (y = miny; y < maxy; y += BLOCKSIZE)
+   for (iy = 0; iy < 64; iy+=16) 
    {
-      int cx1 = c1;
-      int cx2 = c2;
-      int cx3 = c3;
-
-      for (x = minx; x < maxx; x += BLOCKSIZE)
+      for (ix = 0; ix < 64; ix+=16, i++) 
       {
-         if (cx1 + eo1 < 0 ||
-             cx2 + eo2 < 0 ||
-             cx3 + eo3 < 0)
-         {
-         }
-         else if (cx1 + ei1 > 0 &&
-                  cx2 + ei2 > 0 &&
-                  cx3 + ei3 > 0)
-         {
-            block_full(rast, tri, x, y); /* trivial accept */
-         }
-         else
-         {
-            do_block(rast, tri, x, y, cx1, cx2, cx3);
-         }
-
-         /* Iterate cx values across the region:
-          */
-         cx1 += xstep1;
-         cx2 += xstep2;
-         cx3 += xstep3;
+	 int cx1 = c1 + (tri->step[0][i] << 4);
+	 int cx2 = c2 + (tri->step[1][i] << 4);
+	 int cx3 = c3 + (tri->step[2][i] << 4);
+	 
+	 if (cx1 + eo1 < 0 ||
+	     cx2 + eo2 < 0 ||
+	     cx3 + eo3 < 0)
+	 {
+	 }
+	 else if (cx1 + ei1 > 0 &&
+		  cx2 + ei2 > 0 &&
+		  cx3 + ei3 > 0)
+	 {
+	    block_full_16(rast, tri, x+ix, y+iy); /* trivial accept */
+	 }
+	 else
+	 {
+	    do_block_16(rast, tri, x+ix, y+iy, cx1, cx2, cx3);
+	 }
       }
-
-      /* Iterate c values down the region:
-       */
-      c1 += ystep1;
-      c2 += ystep2;
-      c3 += ystep3;
    }
 }
 
