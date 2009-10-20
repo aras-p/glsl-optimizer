@@ -1346,8 +1346,6 @@ _mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
       /* create vertex array buffer */
       _mesa_GenBuffersARB(1, &clear->VBO);
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, clear->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                          NULL, GL_DYNAMIC_DRAW_ARB);
 
       /* setup vertex arrays */
       _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
@@ -1423,7 +1421,8 @@ _mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
       }
 
       /* upload new vertex data */
-      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts,
+			  GL_DYNAMIC_DRAW_ARB);
    }
 
    /* draw quad */
