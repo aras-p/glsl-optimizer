@@ -216,16 +216,45 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
    void *depth;
-   uint32_t ALIGN16_ATTRIB masks[16];
-   unsigned ix, iy, i;
+   uint32_t ALIGN16_ATTRIB masks[2][2][2][2];
+   unsigned ix, iy;
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
 
-   /* mask */
-   for (i = 0; i < 16; ++i)
-      masks[i] = mask & (1 << i) ? ~0 : 0;
+   /* mask: the rasterizer wants to treat pixels in 4x4 blocks, but
+    * the pixel shader wants to swizzle them into 4 2x2 quads.
+    * 
+    * Additionally, the pixel shader wants masks as full dword ~0,
+    * while the rasterizer wants to pack per-pixel bits tightly.
+    */
+#if 0
+   unsigned qx, qy;
+   for (qy = 0; qy < 2; ++qy)
+      for (qx = 0; qx < 2; ++qx)
+	 for (iy = 0; iy < 2; ++iy)
+	    for (ix = 0; ix < 2; ++ix)
+	       masks[qy][qx][iy][ix] = mask & (1 << (qy*8+iy*4+qx*2+ix)) ? ~0 : 0;
+#else
+   masks[0][0][0][0] = mask & (1 << (0*8+0*4+0*2+0)) ? ~0 : 0;
+   masks[0][0][0][1] = mask & (1 << (0*8+0*4+0*2+1)) ? ~0 : 0;
+   masks[0][0][1][0] = mask & (1 << (0*8+1*4+0*2+0)) ? ~0 : 0;
+   masks[0][0][1][1] = mask & (1 << (0*8+1*4+0*2+1)) ? ~0 : 0;
+   masks[0][1][0][0] = mask & (1 << (0*8+0*4+1*2+0)) ? ~0 : 0;
+   masks[0][1][0][1] = mask & (1 << (0*8+0*4+1*2+1)) ? ~0 : 0;
+   masks[0][1][1][0] = mask & (1 << (0*8+1*4+1*2+0)) ? ~0 : 0;
+   masks[0][1][1][1] = mask & (1 << (0*8+1*4+1*2+1)) ? ~0 : 0;
+
+   masks[1][0][0][0] = mask & (1 << (1*8+0*4+0*2+0)) ? ~0 : 0;
+   masks[1][0][0][1] = mask & (1 << (1*8+0*4+0*2+1)) ? ~0 : 0;
+   masks[1][0][1][0] = mask & (1 << (1*8+1*4+0*2+0)) ? ~0 : 0;
+   masks[1][0][1][1] = mask & (1 << (1*8+1*4+0*2+1)) ? ~0 : 0;
+   masks[1][1][0][0] = mask & (1 << (1*8+0*4+1*2+0)) ? ~0 : 0;
+   masks[1][1][0][1] = mask & (1 << (1*8+0*4+1*2+1)) ? ~0 : 0;
+   masks[1][1][1][0] = mask & (1 << (1*8+1*4+1*2+0)) ? ~0 : 0;
+   masks[1][1][1][1] = mask & (1 << (1*8+1*4+1*2+1)) ? ~0 : 0;
+#endif
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
@@ -251,7 +280,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
-                        &masks[0],
+                        &masks[0][0][0][0],
                         color,
                         depth);
 #else

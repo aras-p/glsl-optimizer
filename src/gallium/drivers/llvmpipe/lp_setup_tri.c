@@ -369,18 +369,13 @@ do_triangle_ccw(struct setup_context *setup,
       int ystep3 = tri->dx31;
       
       int ix, iy;
-      int qx, qy;
       int i = 0;
       
-      for (qy = 0; qy < 4; qy += 2) {
-	 for (qx = 0; qx < 4; qx += 2) {
-	    for (iy = 0; iy < 2; iy++) {
-	       for (ix = 0; ix < 2; ix++, i++) {
-		  tri->step[0][i] = (xstep1 * (qx+ix)) + (ystep1 * (qy+iy));
-		  tri->step[1][i] = (xstep2 * (qx+ix)) + (ystep2 * (qy+iy));
-		  tri->step[2][i] = (xstep3 * (qx+ix)) + (ystep3 * (qy+iy));
-	       }
-	    }
+      for (iy = 0; iy < 4; iy++) {
+	 for (ix = 0; ix < 4; ix++, i++) {
+	    tri->step[0][i] = xstep1 * ix + ystep1 * iy;
+	    tri->step[1][i] = xstep2 * ix + ystep2 * iy;
+	    tri->step[2][i] = xstep3 * ix + ystep3 * iy;
 	 }
       }
    }
