@@ -5,7 +5,6 @@ LIBNAME = xorgtracker
 
 LIBRARY_INCLUDES = \
 	-DHAVE_CONFIG_H \
-        -DHAVE_XEXTPROTO_71=1 \
 	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
