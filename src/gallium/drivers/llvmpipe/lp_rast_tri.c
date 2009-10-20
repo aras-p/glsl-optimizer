@@ -36,30 +36,33 @@
 
 #define BLOCKSIZE 4
 
-
+static struct {
+   int x;
+   int y;
+   unsigned mask;
+} blocks[256];
+static int nr_blocks;
 
 /* Render a 4x4 unmasked block:
  */
 static void block_full_4( struct lp_rasterizer *rast,
-                        const struct lp_rast_triangle *tri,
                         int x, int y )
 {
-   unsigned mask = ~0;
-
-   lp_rast_shade_quads(rast, &tri->inputs, x, y, mask);
+   blocks[nr_blocks].x = x;
+   blocks[nr_blocks].y = y;
+   blocks[nr_blocks].mask = ~0;
+   nr_blocks++;
 }
 
 
 static void block_full_16( struct lp_rasterizer *rast,
-                        const struct lp_rast_triangle *tri,
                         int x, int y )
 {
-   unsigned mask = ~0;
    unsigned ix, iy;
 
    for (iy = 0; iy < 16; iy+=4) 
       for (ix = 0; ix < 16; ix+=4) 
-	 lp_rast_shade_quads(rast, &tri->inputs, x + ix, y + iy , mask);
+	 block_full_4(rast, x + ix, y + iy);
 }
 
 
@@ -87,8 +90,12 @@ do_block_4( struct lp_rasterizer *rast,
    /* As we do trivial reject already, masks should rarely be all
     * zero:
     */
-   if (mask)
-      lp_rast_shade_quads(rast, &tri->inputs, x, y, mask );
+   if (mask) {
+      blocks[nr_blocks].x = x;
+      blocks[nr_blocks].y = y;
+      blocks[nr_blocks].mask = mask;
+      nr_blocks++;
+   }
 }
 
 static void
@@ -126,7 +133,7 @@ do_block_16( struct lp_rasterizer *rast,
 		  cx2 + ei2 > 0 &&
 		  cx3 + ei3 > 0)
 	 {
-	    block_full_4(rast, tri, x+ix, y+iy); /* trivial accept */
+	    block_full_4(rast, x+ix, y+iy); /* trivial accept */
 	 }
 	 else
 	 {
@@ -162,6 +169,7 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 
    debug_printf("%s\n", __FUNCTION__);
 
+   nr_blocks = 0;
 
    for (iy = 0; iy < 64; iy+=16) 
    {
@@ -180,7 +188,7 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 		  cx2 + ei2 > 0 &&
 		  cx3 + ei3 > 0)
 	 {
-	    block_full_16(rast, tri, x+ix, y+iy); /* trivial accept */
+	    block_full_16(rast, x+ix, y+iy); /* trivial accept */
 	 }
 	 else
 	 {
@@ -188,5 +196,11 @@ void lp_rast_triangle( struct lp_rasterizer *rast,
 	 }
       }
    }
+
+   for (i = 0; i < nr_blocks; i++) 
+      lp_rast_shade_quads(rast, &tri->inputs, 
+			  blocks[i].x,
+			  blocks[i].y,
+			  blocks[i].mask);
 }
 
