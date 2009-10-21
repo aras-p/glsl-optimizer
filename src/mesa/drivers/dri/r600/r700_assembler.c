@@ -4187,6 +4187,7 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
                                    GLbitfield          OutputsWritten)  
 { 
     unsigned int unBit;
+    GLuint export_count = 0;
 
     if(pR700AsmCode->depth_export_register_number >= 0) 
     {
@@ -4208,6 +4209,7 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
         {
             return GL_FALSE;
         }
+        export_count++;
 	}
 	unBit = 1 << FRAG_RESULT_DEPTH;
 	if(OutputsWritten & unBit)
@@ -4221,8 +4223,15 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
         {
             return GL_FALSE;
         }
+        export_count++;
 	}
-
+    /* Need to export something, otherwise we'll hang
+     * results are undefined anyway */
+    if(export_count == 0)
+    {
+        Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, 0, GL_FALSE);
+    }
+    
     if(pR700AsmCode->cf_last_export_ptr != NULL) 
     {
         pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst        = SQ_CF_INST_EXPORT_DONE;

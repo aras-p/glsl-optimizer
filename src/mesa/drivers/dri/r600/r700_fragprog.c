@@ -251,7 +251,15 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 		number_of_colors_exported--;
 	}
 
-	fp->r700Shader.exportMode = number_of_colors_exported << 1 | z_enabled;
+	/* illegal to set this to 0 */
+	if(number_of_colors_exported || z_enabled)
+	{
+	    fp->r700Shader.exportMode = number_of_colors_exported << 1 | z_enabled;
+	}
+	else
+	{
+	    fp->r700Shader.exportMode = (1 << 1);
+	}
 
     fp->translated = GL_TRUE;
 
