@@ -166,31 +166,6 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     }
 }
 
-static void
-    r300_set_constant_buffer(struct pipe_context* pipe,
-                             uint shader, uint index,
-                             const struct pipe_constant_buffer* buffer)
-{
-    struct r300_context* r300 = r300_context(pipe);
-
-    /* This entire chunk of code seems ever-so-slightly baked.
-     * It's as if I've got pipe_buffer* matryoshkas... */
-    if (buffer && buffer->buffer && buffer->buffer->size) {
-        void* map = pipe->winsys->buffer_map(pipe->winsys, buffer->buffer,
-                                             PIPE_BUFFER_USAGE_CPU_READ);
-        memcpy(r300->shader_constants[shader].constants,
-            map, buffer->buffer->size);
-        pipe->winsys->buffer_unmap(pipe->winsys, buffer->buffer);
-
-        r300->shader_constants[shader].count =
-            buffer->buffer->size / (sizeof(float) * 4);
-    } else {
-        r300->shader_constants[shader].count = 0;
-    }
-
-    r300->dirty_state |= R300_NEW_CONSTANTS;
-}
-
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
  *
  * This contains the depth buffer, stencil buffer, alpha test, and such.
@@ -345,7 +320,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 
     r300->fs = fs;
 
-    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;
+    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 /* Delete fragment shader state. */
@@ -702,7 +677,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 
         draw_bind_vertex_shader(r300->draw, vs->draw);
         r300->vs = vs;
-        r300->dirty_state |= R300_NEW_VERTEX_SHADER;
+        r300->dirty_state |= R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS;
     } else {
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)shader);
@@ -724,6 +699,31 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
         draw_delete_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)shader);
     }
+}
+
+static void r300_set_constant_buffer(struct pipe_context *pipe,
+                                     uint shader, uint index,
+                                     const struct pipe_constant_buffer *buf)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    void *mapped;
+
+    if (buf == NULL || buf->buffer->size == 0 ||
+        (mapped = pipe_buffer_map(pipe->screen, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
+    {
+        r300->shader_constants[shader].count = 0;
+        return;
+    }
+
+    assert((buf->buffer->size % 4 * sizeof(float)) == 0);
+    memcpy(r300->shader_constants[shader].constants, mapped, buf->buffer->size);
+    r300->shader_constants[shader].count = buf->buffer->size / (4 * sizeof(float));
+    pipe_buffer_unmap(pipe->screen, buf->buffer);
+
+    if (shader == PIPE_SHADER_VERTEX)
+        r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+    else if (shader == PIPE_SHADER_FRAGMENT)
+        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 void r300_init_state_functions(struct r300_context* r300)

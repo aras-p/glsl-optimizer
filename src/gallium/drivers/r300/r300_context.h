@@ -26,6 +26,7 @@
 #include "draw/draw_vertex.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 
 struct r300_fragment_shader;
 struct r300_vertex_shader;
@@ -119,10 +120,10 @@ struct r300_ztop_state {
 #define R300_NEW_BLEND           0x00000001
 #define R300_NEW_BLEND_COLOR     0x00000002
 #define R300_NEW_CLIP            0x00000004
-#define R300_NEW_CONSTANTS       0x00000008
-#define R300_NEW_DSA             0x00000010
-#define R300_NEW_FRAMEBUFFERS    0x00000020
-#define R300_NEW_FRAGMENT_SHADER 0x00000040
+#define R300_NEW_DSA             0x00000008
+#define R300_NEW_FRAMEBUFFERS    0x00000010
+#define R300_NEW_FRAGMENT_SHADER 0x00000020
+#define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
 #define R300_NEW_RASTERIZER      0x00000080
 #define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
@@ -132,9 +133,10 @@ struct r300_ztop_state {
 #define R300_ANY_NEW_TEXTURES    0x03fc0000
 #define R300_NEW_VERTEX_FORMAT   0x04000000
 #define R300_NEW_VERTEX_SHADER   0x08000000
-#define R300_NEW_VIEWPORT        0x10000000
-#define R300_NEW_QUERY           0x20000000
-#define R300_NEW_KITCHEN_SINK    0x3fffffff
+#define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
+#define R300_NEW_VIEWPORT        0x20000000
+#define R300_NEW_QUERY           0x40000000
+#define R300_NEW_KITCHEN_SINK    0x7fffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */

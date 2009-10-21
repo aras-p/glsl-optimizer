@@ -22,8 +22,6 @@
 
 #include "draw/draw_context.h"
 
-#include "pipe/p_inlines.h"
-
 #include "tgsi/tgsi_scan.h"
 
 #include "util/u_hash_table.h"
