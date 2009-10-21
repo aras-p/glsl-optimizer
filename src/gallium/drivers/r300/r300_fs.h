@@ -24,13 +24,12 @@
 #ifndef R300_FS_H
 #define R300_FS_H
 
-#include "tgsi/tgsi_dump.h"
+#include "pipe/p_state.h"
 
-#include "r300_context.h"
+#include "tgsi/tgsi_scan.h"
+
 #include "r3xx_fs.h"
 #include "r5xx_fs.h"
-
-#include "radeon_code.h"
 
 struct r300_fragment_shader {
     /* Parent class */

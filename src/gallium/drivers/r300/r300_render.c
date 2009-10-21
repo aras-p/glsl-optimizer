@@ -20,8 +20,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "draw/draw_pipe.h"
+#include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
+
+#include "pipe/p_inlines.h"
+
 #include "util/u_memory.h"
 
 #include "r300_cs.h"

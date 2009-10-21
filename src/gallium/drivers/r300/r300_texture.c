@@ -20,6 +20,12 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "pipe/p_screen.h"
+
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+#include "r300_context.h"
 #include "r300_texture.h"
 
 static void r300_setup_texture_state(struct r300_texture* tex)

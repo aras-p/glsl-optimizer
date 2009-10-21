@@ -21,10 +21,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_fs.h"
+#include "tgsi/tgsi_dump.h"
 
+#include "r300_context.h"
+#include "r300_screen.h"
+#include "r300_fs.h"
 #include "r300_tgsi_to_rc.h"
 
+#include "radeon_code.h"
 #include "radeon_compiler.h"
 
 static void find_output_registers(struct r300_fragment_program_compiler * compiler,

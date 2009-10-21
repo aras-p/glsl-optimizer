@@ -20,6 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
+
+#include "util/u_simple_list.h"
+
+#include "r300_context.h"
+#include "r300_cs.h"
 #include "r300_emit.h"
 #include "r300_flush.h"
 #include "r300_state_invariant.h"

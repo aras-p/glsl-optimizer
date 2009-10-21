@@ -20,9 +20,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_query.h"
+#include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
+#include "r300_context.h"
+#include "r300_screen.h"
+#include "r300_cs.h"
 #include "r300_emit.h"
+#include "r300_query.h"
+#include "r300_reg.h"
 
 static struct pipe_query *r300_create_query(struct pipe_context *pipe,
                                             unsigned query_type)

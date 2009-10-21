@@ -23,22 +23,9 @@
 #ifndef R300_CONTEXT_H
 #define R300_CONTEXT_H
 
-#include "draw/draw_context.h"
 #include "draw/draw_vertex.h"
 
 #include "pipe/p_context.h"
-
-#include "tgsi/tgsi_scan.h"
-
-#include "util/u_hash_table.h"
-#include "util/u_memory.h"
-#include "util/u_simple_list.h"
-
-#include "r300_clear.h"
-#include "r300_query.h"
-#include "r300_screen.h"
-#include "r300_state_derived.h"
-#include "r300_winsys.h"
 
 struct r300_fragment_shader;
 struct r300_vertex_shader;

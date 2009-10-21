@@ -20,8 +20,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "draw/draw_context.h"
+
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
 #include "tgsi/tgsi_parse.h"
@@ -31,6 +34,7 @@
 
 #include "r300_context.h"
 #include "r300_reg.h"
+#include "r300_screen.h"
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
 #include "r300_vs.h"

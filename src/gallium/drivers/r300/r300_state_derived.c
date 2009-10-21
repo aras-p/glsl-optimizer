@@ -20,9 +20,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_state_derived.h"
+#include "draw/draw_context.h"
 
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+#include "r300_context.h"
 #include "r300_fs.h"
+#include "r300_screen.h"
+#include "r300_state_derived.h"
 #include "r300_state_inlines.h"
 #include "r300_vs.h"
 

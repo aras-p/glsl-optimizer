@@ -23,11 +23,8 @@
 #ifndef R300_TEXTURE_H
 #define R300_TEXTURE_H
 
-#include "pipe/p_screen.h"
 #include "pipe/p_video_state.h"
-#include "util/u_math.h"
 
-#include "r300_context.h"
 #include "r300_reg.h"
 
 struct r300_texture;

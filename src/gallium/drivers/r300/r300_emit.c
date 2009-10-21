@@ -22,10 +22,15 @@
 
 /* r300_emit: Functions for emitting state. */
 
-#include "r300_emit.h"
+#include "util/u_math.h"
 
+#include "r300_context.h"
+#include "r300_cs.h"
+#include "r300_emit.h"
 #include "r300_fs.h"
+#include "r300_screen.h"
 #include "r300_state_derived.h"
+#include "r300_state_inlines.h"
 #include "r300_vs.h"
 
 void r300_emit_blend_state(struct r300_context* r300,

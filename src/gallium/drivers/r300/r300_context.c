@@ -20,10 +20,24 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_context.h"
+#include "draw/draw_context.h"
 
+#include "pipe/p_inlines.h"
+
+#include "tgsi/tgsi_scan.h"
+
+#include "util/u_hash_table.h"
+#include "util/u_memory.h"
+#include "util/u_simple_list.h"
+
+#include "r300_clear.h"
+#include "r300_context.h"
 #include "r300_flush.h"
+#include "r300_query.h"
+#include "r300_screen.h"
+#include "r300_state_derived.h"
 #include "r300_state_invariant.h"
+#include "r300_winsys.h"
 
 static boolean r300_draw_range_elements(struct pipe_context* pipe,
                                         struct pipe_buffer* indexBuffer,

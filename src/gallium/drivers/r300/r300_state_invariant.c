@@ -21,8 +21,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "r300_context.h"
+#include "r300_cs.h"
+#include "r300_reg.h"
+#include "r300_screen.h"
 #include "r300_state_invariant.h"
-
 
 struct pipe_viewport_state r300_viewport_identity = {
     .scale = {1.0, 1.0, 1.0, 1.0},

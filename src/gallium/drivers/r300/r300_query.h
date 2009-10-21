@@ -23,10 +23,6 @@
 #ifndef R300_QUERY_H
 #define R300_QUERY_H
 
-#include "r300_context.h"
-#include "r300_cs.h"
-#include "r300_reg.h"
-
 struct r300_context;
 
 static INLINE struct r300_query* r300_query(struct pipe_query* q)

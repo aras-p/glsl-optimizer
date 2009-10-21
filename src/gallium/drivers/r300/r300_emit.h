@@ -23,13 +23,6 @@
 #ifndef R300_EMIT_H
 #define R300_EMIT_H
 
-#include "util/u_math.h"
-
-#include "r300_context.h"
-#include "r300_cs.h"
-#include "r300_screen.h"
-#include "r300_state_inlines.h"
-
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;
 
