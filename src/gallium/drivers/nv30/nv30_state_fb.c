@@ -17,6 +17,10 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	struct nv30_miptree *nv30mt;
 	int colour_bits = 32, zeta_bits = 32;
 
+	if (fb->nr_cbufs == 0) {
+		return FALSE;
+	}
+
 	rt_enable = 0;
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		if (colour_format) {
