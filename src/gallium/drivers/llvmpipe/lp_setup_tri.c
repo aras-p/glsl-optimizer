@@ -227,13 +227,6 @@ static inline int subpixel_snap( float a )
 }
 
 
-static INLINE void bin_triangle( struct cmd_block_list *list,
-                                 const struct lp_rast_triangle arg )
-{
-}
-
-
-
 #define MIN3(a,b,c) MIN2(MIN2(a,b),c)
 #define MAX3(a,b,c) MAX2(MAX2(a,b),c)
 
