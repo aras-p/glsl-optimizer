@@ -451,6 +451,7 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     struct r300_shader_derived_value* value;
     int i;
 
+    /*
     key = CALLOC_STRUCT(r300_shader_key);
     key->vs = r300->vs;
     key->fs = r300->fs;
@@ -472,10 +473,11 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
         value->rs_block = rs_block;
         util_hash_table_set(r300->shader_hash_table,
             (void*)key, (void*)value);
-    }
+    } */
 
     /* XXX This will be refactored ASAP. */
     vformat = CALLOC_STRUCT(r300_vertex_format);
+    rs_block = CALLOC_STRUCT(r300_rs_block);
 
     for (i = 0; i < 16; i++) {
         vformat->vs_tab[i] = -1;
@@ -486,7 +488,10 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     r300_vertex_psc(r300, vformat);
     r300_update_fs_tab(r300, vformat);
 
+    r300_update_rs_block(r300, rs_block);
+
     FREE(r300->vertex_info);
+    FREE(r300->rs_block);
 
     r300->vertex_info = vformat;
     r300->rs_block = rs_block;
