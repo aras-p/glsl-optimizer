@@ -20,7 +20,6 @@ C_SOURCES = \
 	r300_state_derived.c \
 	r300_state_invariant.c \
 	r300_vs.c \
-	r300_surface.c \
 	r300_texture.c \
 	r300_tgsi_to_rc.c
 
