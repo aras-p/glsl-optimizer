@@ -71,8 +71,8 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
    rast->state.write_zstencil = write_zstencil;
    rast->state.write_color = write_color;
 
-   rast->check_for_clipped_tiles = (width % TILESIZE != 0 ||
-                                    height % TILESIZE != 0);
+   rast->check_for_clipped_tiles = (width % TILE_SIZE != 0 ||
+                                    height % TILE_SIZE != 0);
 
    if (cbuf) {
       rast->cbuf_transfer = screen->get_tex_transfer(rast->screen,
@@ -311,8 +311,8 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
 {
    const unsigned x = rast->x;
    const unsigned y = rast->y;
-   unsigned w = TILESIZE;
-   unsigned h = TILESIZE;
+   unsigned w = TILE_SIZE;
+   unsigned h = TILE_SIZE;
 
    if (x + w > rast->width)
       w -= x + w - rast->width;

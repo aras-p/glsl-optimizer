@@ -41,8 +41,6 @@ struct pipe_screen;
 
 #define FIXED_ORDER 4
 #define FIXED_ONE (1<<FIXED_ORDER)
-#define TILE_ORDER 6
-#define TILESIZE (1<<TILE_ORDER)
 
 
 struct lp_rast_state {

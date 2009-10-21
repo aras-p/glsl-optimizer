@@ -372,10 +372,10 @@ do_triangle_ccw(struct setup_context *setup,
       }
    }
 
-   minx = tri->minx / TILESIZE;
-   miny = tri->miny / TILESIZE;
-   maxx = tri->maxx / TILESIZE;
-   maxy = tri->maxy / TILESIZE;
+   minx = tri->minx / TILE_SIZE;
+   miny = tri->miny / TILE_SIZE;
+   maxx = tri->maxx / TILE_SIZE;
+   maxy = tri->maxy / TILE_SIZE;
 
 
    /* Convert to tile coordinates:
@@ -390,14 +390,14 @@ do_triangle_ccw(struct setup_context *setup,
    else 
    {
       int c1 = (tri->c1 + 
-                tri->dx12 * miny * TILESIZE - 
-                tri->dy12 * minx * TILESIZE);
+                tri->dx12 * miny * TILE_SIZE - 
+                tri->dy12 * minx * TILE_SIZE);
       int c2 = (tri->c2 + 
-                tri->dx23 * miny * TILESIZE -
-                tri->dy23 * minx * TILESIZE);
+                tri->dx23 * miny * TILE_SIZE -
+                tri->dy23 * minx * TILE_SIZE);
       int c3 = (tri->c3 +
-                tri->dx31 * miny * TILESIZE -
-                tri->dy31 * minx * TILESIZE);
+                tri->dx31 * miny * TILE_SIZE -
+                tri->dy31 * minx * TILE_SIZE);
 
       int ei1 = tri->ei1 << TILE_ORDER;
       int ei2 = tri->ei2 << TILE_ORDER;

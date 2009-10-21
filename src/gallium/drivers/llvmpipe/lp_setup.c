@@ -194,8 +194,8 @@ rasterize_bins( struct setup_context *setup,
       for (j = 0; j < setup->tiles_y; j++) {
 
          lp_rast_start_tile( rast, 
-                             i * TILESIZE,
-                             j * TILESIZE );
+                             i * TILE_SIZE,
+                             j * TILE_SIZE );
 
          for (block = setup->tile[i][j].head; block; block = block->next) {
             for (k = 0; k < block->count; k++) {
@@ -241,8 +241,8 @@ begin_binning( struct setup_context *setup )
                               setup->fb.zsbuf->height);
    }
 
-   setup->tiles_x = align(setup->fb.width, TILESIZE) / TILESIZE;
-   setup->tiles_y = align(setup->fb.height, TILESIZE) / TILESIZE;
+   setup->tiles_x = align(setup->fb.width, TILE_SIZE) / TILE_SIZE;
+   setup->tiles_y = align(setup->fb.height, TILE_SIZE) / TILE_SIZE;
 
    if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)

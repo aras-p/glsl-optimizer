@@ -30,14 +30,15 @@
 
 #include "lp_setup.h"
 #include "lp_rast.h"
+#include "lp_tile_soa.h"        /* for TILE_SIZE */
 
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
  */
 #define MAXHEIGHT 2048
 #define MAXWIDTH 2048
-#define TILES_X (MAXWIDTH / TILESIZE)
-#define TILES_Y (MAXHEIGHT / TILESIZE)
+#define TILES_X (MAXWIDTH / TILE_SIZE)
+#define TILES_Y (MAXHEIGHT / TILE_SIZE)
 
 #define CMD_BLOCK_MAX 128
 #define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
