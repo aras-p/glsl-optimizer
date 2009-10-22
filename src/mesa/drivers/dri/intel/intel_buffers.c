@@ -257,7 +257,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
       irbStencil = intel_renderbuffer(fb->_StencilBuffer->Wrapped);
       if (irbStencil && irbStencil->region) {
-         ASSERT(irbStencil->Base.Format == MESA_FORMAT_Z24_S8);
+         ASSERT(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
       }
       else {

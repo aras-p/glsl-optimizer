@@ -148,10 +148,10 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
@@ -162,17 +162,17 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    default:
       _mesa_problem(ctx,
@@ -328,10 +328,10 @@ intel_create_renderbuffer(GLenum intFormat)
       irb->texformat = MESA_FORMAT_ARGB8888;
       break;
    case GL_STENCIL_INDEX8_EXT:
-      irb->Base.Format = MESA_FORMAT_Z24_S8;
+      irb->Base.Format = MESA_FORMAT_S8_Z24;
       irb->Base._BaseFormat = GL_STENCIL_INDEX;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_COMPONENT16:
       irb->Base.Format = MESA_FORMAT_Z16;
@@ -340,16 +340,16 @@ intel_create_renderbuffer(GLenum intFormat)
       irb->texformat = MESA_FORMAT_Z16;
       break;
    case GL_DEPTH_COMPONENT24:
-      irb->Base.Format = MESA_FORMAT_Z24_S8;
+      irb->Base.Format = MESA_FORMAT_S8_Z24;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DataType = GL_UNSIGNED_INT;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH24_STENCIL8_EXT:
-      irb->Base.Format = MESA_FORMAT_Z24_S8;
+      irb->Base.Format = MESA_FORMAT_S8_Z24;
       irb->Base._BaseFormat = GL_DEPTH_STENCIL;
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-      irb->texformat = MESA_FORMAT_Z24_S8;
+      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    default:
       _mesa_problem(NULL,
@@ -457,7 +457,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       irb->Base.DataType = GL_UNSIGNED_SHORT;
       DBG("Render to DEPTH16 texture OK\n");
    }
-   else if (texImage->TexFormat == MESA_FORMAT_Z24_S8) {
+   else if (texImage->TexFormat == MESA_FORMAT_S8_Z24) {
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       DBG("Render to DEPTH_STENCIL texture OK\n");
    }

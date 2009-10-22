@@ -131,18 +131,6 @@ pwrite_8(struct intel_renderbuffer *irb, uint32_t offset, uint8_t val)
    dri_bo_subdata(irb->region->buffer, offset, 1, &val);
 }
 
-static uint32_t
-z24s8_to_s8z24(uint32_t val)
-{
-   return (val << 24) | (val >> 8);
-}
-
-static uint32_t
-s8z24_to_z24s8(uint32_t val)
-{
-   return (val >> 24) | (val << 8);
-}
-
 static uint32_t no_tile_swizzle(struct intel_renderbuffer *irb,
 				int x, int y)
 {
@@ -374,8 +362,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 /* z24s8 depthbuffer functions. */
 #define INTEL_VALUE_TYPE GLuint
-#define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, z24s8_to_s8z24(d))
-#define INTEL_READ_DEPTH(offset) s8z24_to_z24s8(pread_32(irb, offset))
+#define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, d)
+#define INTEL_READ_DEPTH(offset) pread_32(irb, offset)
 #define INTEL_TAG(name) name##_z24_s8
 #include "intel_depthtmp.h"
 
@@ -665,13 +653,13 @@ intel_set_span_functions(struct intel_context *intel,
 	 break;
       }
       break;
-   case MESA_FORMAT_Z24_S8:
+   case MESA_FORMAT_S8_Z24:
       /* There are a few different ways SW asks us to access the S8Z24 data:
        * Z24 depth-only depth reads
        * S8Z24 depth reads
        * S8Z24 stencil reads.
        */
-      if (rb->Format == MESA_FORMAT_Z24_S8) {
+      if (rb->Format == MESA_FORMAT_S8_Z24) {
 	 switch (tiling) {
 	 case I915_TILING_NONE:
 	 default:
