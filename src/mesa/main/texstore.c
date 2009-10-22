@@ -1048,6 +1048,41 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
+
+/**
+ * Store a 24-bit integer depth component texture image.
+ */
+static GLboolean
+_mesa_texstore_x8_z24(TEXSTORE_PARAMS)
+{
+   const GLuint depthScale = 0xffffff;
+   const GLuint texelBytes = 4;
+
+   (void) dims;
+   ASSERT(dstFormat == MESA_FORMAT_X8_Z24);
+
+   {
+      /* general path */
+      GLint img, row;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            const GLvoid *src = _mesa_image_address(dims, srcPacking,
+                srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, (GLuint *) dstRow,
+                                    depthScale, srcType, src, srcPacking);
+            dstRow += dstRowStride;
+         }
+      }
+   }
+   return GL_TRUE;
+}
+
+
 #define STRIDE_3D 0
 
 /**
@@ -3009,6 +3044,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_Z24_S8, _mesa_texstore_z24_s8 },
    { MESA_FORMAT_S8_Z24, _mesa_texstore_s8_z24 },
    { MESA_FORMAT_Z16, _mesa_texstore_z16 },
+   { MESA_FORMAT_X8_Z24, _mesa_texstore_x8_z24 },
    { MESA_FORMAT_Z32, _mesa_texstore_z32 },
    { MESA_FORMAT_S8, NULL/*_mesa_texstore_s8*/ },
    { MESA_FORMAT_SRGB8, _mesa_texstore_srgb8 },
