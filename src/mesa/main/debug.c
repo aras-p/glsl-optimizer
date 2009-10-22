@@ -346,12 +346,10 @@ static GLboolean DumpImages;
 
 
 static void
-dump_texture_cb(GLuint id, void *data, void *userData)
+dump_texture(struct gl_texture_object *texObj)
 {
-   struct gl_texture_object *texObj = (struct gl_texture_object *) data;
    int i;
    GLboolean written = GL_FALSE;
-   (void) userData;
 
    _mesa_printf("Texture %u\n", texObj->Name);
    _mesa_printf("  Target 0x%x\n", texObj->Target);
@@ -368,6 +366,30 @@ dump_texture_cb(GLuint id, void *data, void *userData)
          }
       }
    }
+}
+
+
+/**
+ * Dump a single texture.
+ */
+void
+_mesa_dump_texture(GLuint texture, GLboolean dumpImages)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_texture_object *texObj = _mesa_lookup_texture(ctx, texture);
+   if (texObj) {
+      DumpImages = dumpImages;
+      dump_texture(texObj);
+   }
+}
+
+
+static void
+dump_texture_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_texture_object *texObj = (struct gl_texture_object *) data;
+   (void) userData;
+   dump_texture(texObj);
 }
 
 
