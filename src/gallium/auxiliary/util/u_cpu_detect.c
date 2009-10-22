@@ -394,8 +394,10 @@ util_cpu_detect(void)
    util_cpu_caps.arch = UTIL_CPU_ARCH_SPARC;
 #elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    util_cpu_caps.arch = UTIL_CPU_ARCH_X86;
+   util_cpu_caps.little_endian = 1;
 #elif defined(PIPE_ARCH_PPC)
    util_cpu_caps.arch = UTIL_CPU_ARCH_POWERPC;
+   util_cpu_caps.little_endian = 0;
 #else
    util_cpu_caps.arch = UTIL_CPU_ARCH_UNKNOWN;
 #endif
