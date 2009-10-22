@@ -68,64 +68,48 @@ pixel_to_float4(Pixel pixel, float *color)
    color[3] = ((float)a) / 255.;
 }
 
-struct acceleration_info {
-   int op : 16;
-};
-static const struct acceleration_info accelerated_ops[] = {
-   {PictOpClear,        },
-   {PictOpSrc,          },
-   {PictOpDst,          },
-   {PictOpOver,         },
-   {PictOpOverReverse,  },
-   {PictOpIn,           },
-   {PictOpInReverse,    },
-   {PictOpOut,          },
-   {PictOpOutReverse,   },
-   {PictOpAtop,         },
-   {PictOpAtopReverse,  },
-   {PictOpXor,          },
-   {PictOpAdd,          },
-   {PictOpSaturate,     },
-};
-
-static struct xorg_composite_blend
-blend_for_op(int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
+static boolean
+blend_for_op(struct xorg_composite_blend *blend,
+             int op, PicturePtr pSrcPicture, PicturePtr pMaskPicture,
              PicturePtr pDstPicture)
 {
    const int num_blends =
       sizeof(xorg_blends)/sizeof(struct xorg_composite_blend);
    int i;
-   struct xorg_composite_blend blend = xorg_blends[BLEND_OP_OVER];
+   boolean supported = FALSE;
+
+   /* our default in case something goes wrong */
+   *blend = xorg_blends[BLEND_OP_OVER];
 
    for (i = 0; i < num_blends; ++i) {
-      if (xorg_blends[i].op == op)
-         blend = xorg_blends[i];
+      if (xorg_blends[i].op == op) {
+         *blend = xorg_blends[i];
+         supported = TRUE;
+      }
    }
 
    /* If there's no dst alpha channel, adjust the blend op so that we'll treat
-    * it as always 1.
-    */
+    * it as always 1. */
    if (pDstPicture &&
-       PICT_FORMAT_A(pDstPicture->format) == 0 && blend.alpha_dst) {
-      if (blend.rgb_src == PIPE_BLENDFACTOR_DST_ALPHA)
-         blend.rgb_src = PIPE_BLENDFACTOR_ONE;
-      else if (blend.rgb_src == PIPE_BLENDFACTOR_INV_DST_ALPHA)
-         blend.rgb_src = PIPE_BLENDFACTOR_ZERO;
+       PICT_FORMAT_A(pDstPicture->format) == 0 && blend->alpha_dst) {
+      if (blend->rgb_src == PIPE_BLENDFACTOR_DST_ALPHA)
+         blend->rgb_src = PIPE_BLENDFACTOR_ONE;
+      else if (blend->rgb_src == PIPE_BLENDFACTOR_INV_DST_ALPHA)
+         blend->rgb_src = PIPE_BLENDFACTOR_ZERO;
    }
 
    /* If the source alpha is being used, then we should only be in a case where
     * the source blend factor is 0, and the source blend value is the mask
-    * channels multiplied by the source picture's alpha.
-    */
+    * channels multiplied by the source picture's alpha. */
    if (pMaskPicture && pMaskPicture->componentAlpha &&
-       PICT_FORMAT_RGB(pMaskPicture->format) && blend.alpha_src) {
-      if (blend.rgb_dst == PIPE_BLENDFACTOR_SRC_ALPHA) {
-         blend.rgb_dst = PIPE_BLENDFACTOR_SRC_COLOR;
-      } else if (blend.rgb_dst == PIPE_BLENDFACTOR_INV_SRC_ALPHA) {
-         blend.rgb_dst = PIPE_BLENDFACTOR_INV_SRC_COLOR;
+       PICT_FORMAT_RGB(pMaskPicture->format) && blend->alpha_src) {
+      if (blend->rgb_dst == PIPE_BLENDFACTOR_SRC_ALPHA) {
+         blend->rgb_dst = PIPE_BLENDFACTOR_SRC_COLOR;
+      } else if (blend->rgb_dst == PIPE_BLENDFACTOR_INV_SRC_ALPHA) {
+         blend->rgb_dst = PIPE_BLENDFACTOR_INV_SRC_COLOR;
       }
    }
-   return blend;
+   return supported;
 }
 
 static INLINE int
@@ -191,9 +175,7 @@ boolean xorg_composite_accelerated(int op,
    ScreenPtr pScreen = pDstPicture->pDrawable->pScreen;
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
-   unsigned i;
-   unsigned accel_ops_count =
-      sizeof(accelerated_ops)/sizeof(struct acceleration_info);
+   struct xorg_composite_blend blend;
 
    if (!is_filter_accelerated(pSrcPicture) ||
        !is_filter_accelerated(pMaskPicture)) {
@@ -205,24 +187,18 @@ boolean xorg_composite_accelerated(int op,
          XORG_FALLBACK("Gradients not enabled (haven't been well tested)");
    }
 
-   for (i = 0; i < accel_ops_count; ++i) {
-      if (op == accelerated_ops[i].op) {
-         struct xorg_composite_blend blend = blend_for_op(op,
-                                                          pSrcPicture,
-                                                          pMaskPicture,
-                                                          pDstPicture);
-         /* Check for component alpha */
-         if (pMaskPicture && pMaskPicture->componentAlpha &&
-             PICT_FORMAT_RGB(pMaskPicture->format)) {
-            if (blend.alpha_src &&
-                blend.rgb_src != PIPE_BLENDFACTOR_ZERO) {
-               XORG_FALLBACK("Component alpha not supported with source "
-                             "alpha and source value blending. (op=%d)",
-                             op);
-            }
+   if (blend_for_op(&blend, op,
+                    pSrcPicture, pMaskPicture, pDstPicture)) {
+      /* Check for component alpha */
+      if (pMaskPicture && pMaskPicture->componentAlpha &&
+          PICT_FORMAT_RGB(pMaskPicture->format)) {
+         if (blend.alpha_src && blend.rgb_src != PIPE_BLENDFACTOR_ZERO) {
+            XORG_FALLBACK("Component alpha not supported with source "
+                          "alpha and source value blending. (op=%d)",
+                          op);
          }
-         return TRUE;
       }
+      return TRUE;
    }
    XORG_FALLBACK("Unsupported composition operation = %d", op);
 }
@@ -236,7 +212,7 @@ bind_blend_state(struct exa_context *exa, int op,
    struct xorg_composite_blend blend_opt;
    struct pipe_blend_state blend;
 
-   blend_opt = blend_for_op(op, pSrcPicture, pMaskPicture, pDstPicture);
+   blend_for_op(&blend_opt, op, pSrcPicture, pMaskPicture, pDstPicture);
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
    blend.blend_enable = 1;
