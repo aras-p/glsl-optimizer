@@ -330,13 +330,15 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
     return 0;
 }
 
-/* Depthbuffer and stencilbuffer. Thankfully, we only support two kinds. */
+/* Depthbuffer and stencilbuffer. Thankfully, we only support two flavors. */
 static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
 {
     switch (format) {
         /* 16-bit depth, no stencil */
         case PIPE_FORMAT_Z16_UNORM:
             return R300_DEPTHFORMAT_16BIT_INT_Z;
+        /* 24-bit depth, ignored stencil */
+        case PIPE_FORMAT_Z24X8_UNORM:
         /* 24-bit depth, 8-bit stencil */
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;

@@ -80,6 +80,7 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
                 R300_TX_FORMAT_YUV_TO_RGB;
         /* W24_FP */
         case PIPE_FORMAT_Z24S8_UNORM:
+        case PIPE_FORMAT_Z24X8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
         default:
             debug_printf("r300: Implementation error: "
