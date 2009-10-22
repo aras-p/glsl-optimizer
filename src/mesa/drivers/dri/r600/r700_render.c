@@ -409,139 +409,6 @@ static GLuint r700PredictRenderSize(GLcontext* ctx, GLuint nr_prims)
     return dwords;
 }
 
-static GLboolean r700RunRender(GLcontext * ctx,
-			       struct tnl_pipeline_stage *stage)
-{
-    context_t *context = R700_CONTEXT(ctx);
-    radeonContextPtr radeon = &context->radeon;
-    unsigned int i, id = 0;
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-    struct vertex_buffer *vb = &tnl->vb;
-    struct radeon_renderbuffer *rrb;
-
-    radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s: cs begin at %d\n",
-                __func__, context->radeon.cmdbuf.cs->cdw);
-
-    /* always emit CB base to prevent
-     * lock ups on some chips.
-     */
-    R600_STATECHANGE(context, cb_target);
-    /* mark vtx as dirty since it changes per-draw */
-    R600_STATECHANGE(context, vtx);
-
-    r700SetScissor(context);
-    r700SetupVertexProgram(ctx);
-    r700SetupFragmentProgram(ctx);
-    r600UpdateTextureState(ctx);
-
-    GLuint emit_end = r700PredictRenderSize(ctx, 0)
-        + context->radeon.cmdbuf.cs->cdw;
-    r700SetupStreams(ctx);
-
-    radeonEmitState(radeon);
-
-    radeon_debug_add_indent();
-    /* richard test code */
-    for (i = 0; i < vb->PrimitiveCount; i++) {
-        GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
-        GLuint start = vb->Primitive[i].start;
-        GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-        r700RunRenderPrimitive(ctx, start, end, prim);
-    }
-    radeon_debug_remove_indent();
-
-    /* Flush render op cached for last several quads. */
-    r700WaitForIdleClean(context);
-
-    rrb = radeon_get_colorbuffer(&context->radeon);
-    if (rrb && rrb->bo)
-	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
-			 CB_ACTION_ENA_bit | (1 << (id + 6)));
-
-    rrb = radeon_get_depthbuffer(&context->radeon);
-    if (rrb && rrb->bo)
-	    r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
-			 DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
-
-    radeonReleaseArrays(ctx, ~0);
-
-    radeon_print(RADEON_RENDER, RADEON_TRACE, "%s: cs end at %d\n",
-                __func__, context->radeon.cmdbuf.cs->cdw);
-
-    if ( emit_end < context->radeon.cmdbuf.cs->cdw )
-       WARN_ONCE("Rendering was %d commands larger than predicted size."
-	       " We might overflow  command buffer.\n", context->radeon.cmdbuf.cs->cdw - emit_end);
-
-    return GL_FALSE;
-}
-
-static GLboolean r700RunNonTCLRender(GLcontext * ctx,
-				     struct tnl_pipeline_stage *stage) /* -------------------- */
-{
-	GLboolean bRet = GL_TRUE;
-	
-	return bRet;
-}
-
-static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
-				  struct tnl_pipeline_stage *stage)
-{
-	GLboolean bRet = GL_FALSE;
-
-    /* TODO : sw fallback */
-
-    /* Need shader bo's setup before bo check */
-    r700UpdateShaders(ctx);
-    /**
-
-    * Ensure all enabled and complete textures are uploaded along with any buffers being used.
-    */
-    if(!r600ValidateBuffers(ctx))
-    {
-        return GL_TRUE;
-    }
-
-    bRet = r700RunRender(ctx, stage);
-
-    return bRet;
-	//GL_FALSE will stop to do other pipe stage in _tnl_run_pipeline
-    //The render here DOES finish the whole pipe, so GL_FALSE should be returned for success.
-}
-
-const struct tnl_pipeline_stage _r700_render_stage = {
-	"r700 Hardware Rasterization",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	r700RunNonTCLRender
-};
-
-const struct tnl_pipeline_stage _r700_tcl_stage = {
-	"r700 Hardware Transform, Clipping and Lighting",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	r700RunTCLRender
-};
-
-const struct tnl_pipeline_stage *r700_pipeline[] = 
-{
-    &_r700_tcl_stage,
-    &_tnl_vertex_transform_stage,
-	&_tnl_normal_transform_stage,
-	&_tnl_lighting_stage,
-	&_tnl_fog_coordinate_stage,
-	&_tnl_texgen_stage,
-	&_tnl_texture_transform_stage,
-	&_tnl_vertex_program_stage,
-
-    &_r700_render_stage,
-    &_tnl_render_stage,
-    0,
-};
-
 #define CONVERT( TYPE, MACRO ) do {		\
 	GLuint i, j, sz;				\
 	sz = input->Size;				\
@@ -941,12 +808,12 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 }
 
 static GLboolean r700TryDrawPrims(GLcontext *ctx,
-					 const struct gl_client_array *arrays[],
-					 const struct _mesa_prim *prim,
-					 GLuint nr_prims,
-					 const struct _mesa_index_buffer *ib,
-					 GLuint min_index,
-					 GLuint max_index )
+				  const struct gl_client_array *arrays[],
+				  const struct _mesa_prim *prim,
+				  GLuint nr_prims,
+				  const struct _mesa_index_buffer *ib,
+				  GLuint min_index,
+				  GLuint max_index )
 {
     context_t *context = R700_CONTEXT(ctx);
     radeonContextPtr radeon = &context->radeon;
@@ -954,9 +821,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     struct radeon_renderbuffer *rrb;
 
     if (ctx->NewState)
-    {
         _mesa_update_state( ctx );
-    }
 
     _tnl_UpdateFixedFunctionProgram(ctx);
     r700SetVertexFormat(ctx, arrays, max_index + 1);
@@ -1019,18 +884,18 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     return GL_TRUE;
 }
 
-static void r700DrawPrimsRe(GLcontext *ctx,
-			 const struct gl_client_array *arrays[],
-			 const struct _mesa_prim *prim,
-			 GLuint nr_prims,
-			 const struct _mesa_index_buffer *ib,
-			 GLboolean index_bounds_valid,
-			 GLuint min_index,
-			 GLuint max_index)
+static void r700DrawPrims(GLcontext *ctx,
+			  const struct gl_client_array *arrays[],
+			  const struct _mesa_prim *prim,
+			  GLuint nr_prims,
+			  const struct _mesa_index_buffer *ib,
+			  GLboolean index_bounds_valid,
+			  GLuint min_index,
+			  GLuint max_index)
 {
-    GLboolean retval = GL_FALSE;
+	GLboolean retval = GL_FALSE;
 
-    /* This check should get folded into just the places that
+	/* This check should get folded into just the places that
 	 * min/max index are really needed.
 	 */
 	if (!index_bounds_valid) {
@@ -1038,7 +903,7 @@ static void r700DrawPrimsRe(GLcontext *ctx,
 	}
 
 	if (min_index) {
-		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r700DrawPrimsRe );
+		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r700DrawPrims );
 		return;
 	}
 
@@ -1048,30 +913,6 @@ static void r700DrawPrimsRe(GLcontext *ctx,
 	/* If failed run tnl pipeline - it should take care of fallbacks */
 	if (!retval)
 		_tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
-}
-
-static void r700DrawPrims(GLcontext *ctx,
-			 const struct gl_client_array *arrays[],
-			 const struct _mesa_prim *prim,
-			 GLuint nr_prims,
-			 const struct _mesa_index_buffer *ib,
-			 GLboolean index_bounds_valid,
-			 GLuint min_index,
-			 GLuint max_index)
-{
-    context_t *context = R700_CONTEXT(ctx);
-
-    /* For non indexed drawing, using tnl pipe. */
-    if(!ib)
-    {
-        context->ind_buf.bo = NULL;
-
-        _tnl_vbo_draw_prims(ctx, arrays, prim, nr_prims, ib,
-                            index_bounds_valid, min_index, max_index);
-        return;
-    }
-
-	r700DrawPrimsRe(ctx, arrays, prim, nr_prims, ib, index_bounds_valid, min_index, max_index);
 }
 
 void r700InitDraw(GLcontext *ctx)

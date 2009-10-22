@@ -94,8 +94,6 @@ int hw_tcl_on = 1;
 
 #include "extension_helper.h"
 
-extern const struct tnl_pipeline_stage *r700_pipeline[];
-
 const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
@@ -160,17 +158,20 @@ const struct dri_extension gl_20_extension[] = {
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 };
 
-
-static void r600RunPipeline(GLcontext * ctx)
-{
-    _mesa_lock_context_textures(ctx);
-
-    if (ctx->NewState)
-        _mesa_update_state_locked(ctx);
-    
-    _tnl_run_pipeline(ctx);
-    _mesa_unlock_context_textures(ctx);
-}
+static const struct tnl_pipeline_stage *r600_pipeline[] = {
+	/* Catch any t&l fallbacks
+	 */
+	&_tnl_vertex_transform_stage,
+	&_tnl_normal_transform_stage,
+	&_tnl_lighting_stage,
+	&_tnl_fog_coordinate_stage,
+	&_tnl_texgen_stage,
+	&_tnl_texture_transform_stage,
+	&_tnl_point_attenuation_stage,
+	&_tnl_vertex_program_stage,
+	&_tnl_render_stage,
+	0,
+};
 
 static void r600_get_lock(radeonContextPtr rmesa)
 {
@@ -181,7 +182,7 @@ static void r600_get_lock(radeonContextPtr rmesa)
 		if (!rmesa->radeonScreen->kernel_mm)
 			radeon_bo_legacy_texture_age(rmesa->radeonScreen->bom);
 	}
-}		  
+}
 
 static void r600_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
@@ -370,8 +371,8 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	/* Install the customized pipeline:
 	 */
 	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, r700_pipeline);
-	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
+	_tnl_install_pipeline(ctx, r600_pipeline);
+	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
 	/* Configure swrast and TNL to match hardware characteristics:
 	 */
