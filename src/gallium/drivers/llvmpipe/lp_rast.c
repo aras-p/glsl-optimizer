@@ -265,7 +265,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    /* depth buffer */
    assert((x % 2) == 0);
    assert((y % 2) == 0);
-   depth = tile->depth + iy*TILE_SIZE + 2*ix;
+   depth = tile->depth + (iy/4)*(16*16) + (ix/4)*16;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(masks, 16));
