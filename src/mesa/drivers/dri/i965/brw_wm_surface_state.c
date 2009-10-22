@@ -69,7 +69,8 @@ static GLuint translate_tex_target( GLenum target )
 }
 
 
-static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
+static GLuint translate_tex_format( gl_format mesa_format,
+                                    GLenum internal_format,
 				    GLenum depth_mode )
 {
    switch( mesa_format ) {
