@@ -34,6 +34,8 @@
  */
 
 
+#include "util/u_cpu_detect.h"
+
 #include "lp_bld_const.h"
 #include "lp_test.h"
 
@@ -369,6 +371,8 @@ int main(int argc, char **argv)
    LLVMLinkInJIT();
    LLVMInitializeNativeTarget();
 #endif
+
+   util_cpu_detect();
 
    if(fp) {
       /* Warm up the caches */

@@ -35,6 +35,7 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
+#include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 
 #include "lp_bld_format.h"
@@ -262,6 +263,8 @@ int main(int argc, char **argv)
    LLVMLinkInJIT();
    LLVMInitializeNativeTarget();
 #endif
+
+   util_cpu_detect();
 
    for (i = 0; i < sizeof(test_cases)/sizeof(test_cases[0]); ++i)
       if(!test_format(&test_cases[i]))
