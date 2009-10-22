@@ -133,6 +133,8 @@
 #define NV50TSC_1_1_MIPF_NEAREST                                 0x00000080
 #define NV50TSC_1_1_MIPF_LINEAR                                  0x000000c0
 #define NV50TSC_1_1_LOD_BIAS_MASK                                0x01fff000
+#define NV50TSC_1_1_UNKN_ANISO_15                                0x10000000
+#define NV50TSC_1_1_UNKN_ANISO_35                                0x18000000
 
 #define NV50TSC_1_2_MIN_LOD_MASK                                 0x00000f00
 #define NV50TSC_1_2_MAX_LOD_MASK                                 0x00f00000
