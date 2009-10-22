@@ -280,14 +280,14 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
             rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
 	case GL_DEPTH_COMPONENT24:
-	    rrb->base.Format = MESA_FORMAT_Z32;
-	    rrb->base.DataType = GL_UNSIGNED_INT;
-            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
+	    rrb->base.Format = MESA_FORMAT_S8_Z24;
+	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+            rrb->base._BaseFormat = GL_DEPTH_STENCIL;
 	    break;
 	case GL_DEPTH24_STENCIL8_EXT:
 	    rrb->base.Format = MESA_FORMAT_S8_Z24;
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-            rrb->base._BaseFormat = GL_STENCIL_INDEX;
+            rrb->base._BaseFormat = GL_DEPTH_STENCIL;
 	    break;
 	default:
 	    fprintf(stderr, "%s: Unknown format 0x%04x\n", __FUNCTION__, format);
