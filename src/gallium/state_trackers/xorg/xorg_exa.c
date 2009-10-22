@@ -105,12 +105,21 @@ xorg_exa_common_done(struct exa_context *exa)
 static void
 ExaWaitMarker(ScreenPtr pScreen, int marker)
 {
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   modesettingPtr ms = modesettingPTR(pScrn);
+   struct exa_context *exa = ms->exa;
+
+#if 0
+   xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
+#else
+   xorg_exa_finish(exa);
+#endif
 }
 
 static int
 ExaMarkSync(ScreenPtr pScreen)
 {
-    return 1;
+   return 1;
 }
 
 static Bool
@@ -258,11 +267,6 @@ ExaDone(PixmapPtr pPixmap)
     if (!priv)
 	return;
 
-#if 1
-    xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
-#else
-    xorg_exa_finish(exa);
-#endif
     xorg_exa_common_done(exa);
 }
 
@@ -442,7 +446,8 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    struct exa_pixmap_priv *priv;
 
 #if DEBUG_PRINT
-   debug_printf("ExaPrepareComposite\n");
+   debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
+                op, pSrcPicture, pMaskPicture, pDstPicture);
 #endif
    if (!exa->pipe)
       XORG_FALLBACK("accle not enabled");

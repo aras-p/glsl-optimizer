@@ -50,36 +50,20 @@ struct xorg_shaders {
    struct cso_hash *fs_hash;
 };
 
-static const char over_op[] =
-   "SUB TEMP[3], CONST[0].wwww, TEMP[1].wwww\n"
-   "MAD TEMP[3], TEMP[0], TEMP[3], TEMP[0]\n";
-
-
-static INLINE void
-create_preamble(struct ureg_program *ureg)
-{
-}
-
-
 static INLINE void
 src_in_mask(struct ureg_program *ureg,
             struct ureg_dst dst,
             struct ureg_src src,
-            struct ureg_src mask)
+            struct ureg_src mask,
+            boolean component_alpha)
 {
-#if 0
-   /* MUL dst, src, mask.a */
-   ureg_MUL(ureg, dst, src,
-            ureg_scalar(mask, TGSI_SWIZZLE_W));
-#else
-   /* MOV dst, src */
-   /* MUL dst.a, src.a, mask.a */
-   ureg_MOV(ureg, dst, src);
-   ureg_MUL(ureg,
-            ureg_writemask(dst, TGSI_WRITEMASK_W),
-            ureg_scalar(src, TGSI_SWIZZLE_W),
-            ureg_scalar(mask, TGSI_SWIZZLE_W));
-#endif
+   if (component_alpha) {
+      ureg_MUL(ureg, dst, src, mask);
+   }
+   else {
+      ureg_MUL(ureg, dst, src,
+               ureg_scalar(mask, TGSI_SWIZZLE_W));
+   }
 }
 
 static struct ureg_src
@@ -305,6 +289,7 @@ create_fs(struct pipe_context *pipe,
    boolean is_solid   = fs_traits & FS_SOLID_FILL;
    boolean is_lingrad = fs_traits & FS_LINGRAD_FILL;
    boolean is_radgrad = fs_traits & FS_RADGRAD_FILL;
+   boolean is_comp_alpha = fs_traits & FS_COMPONENT_ALPHA;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -401,7 +386,7 @@ create_fs(struct pipe_context *pipe,
       ureg_TEX(ureg, mask,
                TGSI_TEXTURE_2D, mask_pos, mask_sampler);
       /* src IN mask */
-      src_in_mask(ureg, out, ureg_src(src), ureg_src(mask));
+      src_in_mask(ureg, out, ureg_src(src), ureg_src(mask), is_comp_alpha);
       ureg_release_temporary(ureg, mask);
    }
 

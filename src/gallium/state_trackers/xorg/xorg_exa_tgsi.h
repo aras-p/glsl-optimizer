@@ -23,7 +23,8 @@ enum xorg_fs_traits {
    FS_RADGRAD_FILL     = 1 << 4,
    FS_FILL             = (FS_SOLID_FILL |
                           FS_LINGRAD_FILL |
-                          FS_RADGRAD_FILL)
+                          FS_RADGRAD_FILL),
+   FS_COMPONENT_ALPHA  = 1 << 5
 };
 
 struct xorg_shader {
