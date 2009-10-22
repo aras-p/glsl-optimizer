@@ -28,8 +28,7 @@
 
 #include "tgsi/tgsi_scan.h"
 
-#include "r3xx_fs.h"
-#include "r5xx_fs.h"
+#include "radeon_code.h"
 
 struct r300_fragment_shader {
     /* Parent class */
