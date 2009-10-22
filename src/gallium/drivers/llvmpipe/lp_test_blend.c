@@ -477,8 +477,8 @@ test_one(unsigned verbose,
    char *error = NULL;
    blend_test_ptr_t blend_test_ptr;
    boolean success;
-   const unsigned n = 32;
-   int64_t cycles[n];
+   const unsigned n = LP_TEST_NUM_SAMPLES;
+   int64_t cycles[LP_TEST_NUM_SAMPLES];
    double cycles_avg = 0.0;
    unsigned i, j;
 

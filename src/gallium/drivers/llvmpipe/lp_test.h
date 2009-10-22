@@ -56,6 +56,9 @@
 #include "lp_bld_type.h"
 
 
+#define LP_TEST_NUM_SAMPLES 32
+
+
 void
 write_tsv_header(FILE *fp);
 
