@@ -331,52 +331,11 @@ static boolean r300_render_set_primitive(struct vbuf_render* render,
                                                unsigned prim)
 {
     struct r300_render* r300render = r300_render(render);
-    r300render->prim = prim;
 
-    switch (prim) {
-        case PIPE_PRIM_POINTS:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_POINTS;
-            break;
-        case PIPE_PRIM_LINES:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_LINES;
-            break;
-        case PIPE_PRIM_LINE_LOOP:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
-            break;
-        case PIPE_PRIM_LINE_STRIP:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-            break;
-        case PIPE_PRIM_TRIANGLES:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-            break;
-        case PIPE_PRIM_TRIANGLE_STRIP:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-            break;
-        case PIPE_PRIM_TRIANGLE_FAN:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-            break;
-        case PIPE_PRIM_QUADS:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_QUADS;
-            break;
-        case PIPE_PRIM_QUAD_STRIP:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-            break;
-        case PIPE_PRIM_POLYGON:
-            r300render->hwprim = R300_VAP_VF_CNTL__PRIM_POLYGON;
-            break;
-        default:
-            return FALSE;
-            break;
-    }
+    r300render->prim = prim;
+    r300render->hwprim = r300_translate_primitive(prim);
 
     return TRUE;
-}
-
-static void r300_prepare_render(struct r300_render* render, unsigned count)
-{
-    struct r300_context* r300 = render->r300;
-
-    r300_emit_dirty_state(r300);
 }
 
 static void r300_render_draw_arrays(struct vbuf_render* render,
@@ -388,7 +347,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_prepare_render(r300render, count);
+    r300_emit_dirty_state(r300);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
@@ -409,7 +368,7 @@ static void r300_render_draw(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_prepare_render(r300render, count);
+    r300_emit_dirty_state(r300);
 
     BEGIN_CS(2 + (count+1)/2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
