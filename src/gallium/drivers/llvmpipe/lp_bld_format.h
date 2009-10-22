@@ -62,20 +62,8 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
  */
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
-                       enum pipe_format format,
+                       const struct util_format_description *desc,
                        LLVMValueRef rgba);
-
-
-/**
- * Store a pixel.
- *
- * @param rgba 4 float vector with the unpacked components.
- */
-void 
-lp_build_store_rgba_aos(LLVMBuilderRef builder,
-                        enum pipe_format format,
-                        LLVMValueRef ptr,
-                        LLVMValueRef rgba);
 
 
 void

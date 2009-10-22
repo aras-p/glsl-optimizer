@@ -150,10 +150,9 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
 
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
-                       enum pipe_format format,
+                       const struct util_format_description *desc,
                        LLVMValueRef rgba)
 {
-   const struct util_format_description *desc;
    LLVMTypeRef type;
    LLVMValueRef packed = NULL;
    LLVMValueRef swizzles[4];
@@ -163,8 +162,6 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
    bool normalized;
    unsigned shift;
    unsigned i, j;
-
-   desc = util_format_description(format);
 
    assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
    assert(desc->block.width == 1);
@@ -244,30 +241,3 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 
    return packed;
 }
-
-
-void
-lp_build_store_rgba_aos(LLVMBuilderRef builder,
-                        enum pipe_format format,
-                        LLVMValueRef ptr,
-                        LLVMValueRef rgba)
-{
-   const struct util_format_description *desc;
-   LLVMTypeRef type;
-   LLVMValueRef packed;
-
-   desc = util_format_description(format);
-
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
-   assert(desc->block.width == 1);
-   assert(desc->block.height == 1);
-
-   type = LLVMIntType(desc->block.bits);
-
-   packed = lp_build_pack_rgba_aos(builder, format, rgba);
-
-   ptr = LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), "");
-
-   LLVMBuildStore(builder, packed, ptr);
-}
-

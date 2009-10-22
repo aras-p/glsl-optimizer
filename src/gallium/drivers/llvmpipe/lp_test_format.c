@@ -133,27 +133,31 @@ add_load_rgba_test(LLVMModuleRef module,
 }
 
 
-typedef void (*store_ptr_t)(void *, const float *);
+typedef void (*store_ptr_t)(uint32_t *, const float *);
 
 
 static LLVMValueRef
 add_store_rgba_test(LLVMModuleRef module,
                     enum pipe_format format)
 {
+   const struct util_format_description *desc;
    LLVMTypeRef args[2];
    LLVMValueRef func;
-   LLVMValueRef ptr;
+   LLVMValueRef packed_ptr;
    LLVMValueRef rgba_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
+   LLVMValueRef packed;
 
-   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   desc = util_format_description(format);
+
+   args[0] = LLVMPointerType(LLVMInt32Type(), 0);
    args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
 
    func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   ptr = LLVMGetParam(func, 0);
+   packed_ptr = LLVMGetParam(func, 0);
    rgba_ptr = LLVMGetParam(func, 1);
 
    block = LLVMAppendBasicBlock(func, "entry");
@@ -162,7 +166,12 @@ add_store_rgba_test(LLVMModuleRef module,
 
    rgba = LLVMBuildLoad(builder, rgba_ptr, "");
 
-   lp_build_store_rgba_aos(builder, format, ptr, rgba);
+   packed = lp_build_pack_rgba_aos(builder, desc, rgba);
+
+   if(desc->block.bits < 32)
+      packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
+
+   LLVMBuildStore(builder, packed, packed_ptr);
 
    LLVMBuildRetVoid(builder);
 
