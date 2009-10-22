@@ -400,28 +400,54 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     return 0;
 }
 
-/* Translate Draw vertex types into PSC vertex types. */
-static INLINE uint32_t translate_draw_vertex_data_type(int type) {
-    switch (type) {
-        case EMIT_1F:
-        case EMIT_1F_PSIZE:
+/* Translate pipe_formats into PSC vertex types. */
+static INLINE uint16_t
+r300_translate_vertex_data_type(enum pipe_format format) {
+    switch (format) {
+        case PIPE_FORMAT_R32_FLOAT:
             return R300_DATA_TYPE_FLOAT_1;
             break;
-        case EMIT_2F:
+        case PIPE_FORMAT_R32G32_FLOAT:
             return R300_DATA_TYPE_FLOAT_2;
             break;
-        case EMIT_3F:
+        case PIPE_FORMAT_R32G32B32_FLOAT:
             return R300_DATA_TYPE_FLOAT_3;
             break;
-        case EMIT_4F:
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return R300_DATA_TYPE_FLOAT_4;
             break;
-        case EMIT_4UB:
-            return R300_DATA_TYPE_BYTE;
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+            return R300_DATA_TYPE_BYTE |
+                R300_NORMALIZE;
             break;
         default:
             debug_printf("r300: Implementation error: "
-                    "Bad vertex data type!\n");
+                    "Bad vertex data format %s!\n", pf_name(format));
+            assert(0);
+            break;
+    }
+    return 0;
+}
+
+static INLINE uint16_t
+r300_translate_vertex_data_swizzle(enum pipe_format format) {
+    switch (format) {
+        case PIPE_FORMAT_R32_FLOAT:
+            return R300_VAP_SWIZZLE_X001;
+            break;
+        case PIPE_FORMAT_R32G32_FLOAT:
+            return R300_VAP_SWIZZLE_XY01;
+            break;
+        case PIPE_FORMAT_R32G32B32_FLOAT:
+            return R300_VAP_SWIZZLE_XYZ1;
+            break;
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+            return R300_VAP_SWIZZLE_XYZW;
+            break;
+        default:
+            debug_printf("r300: Implementation error: "
+                    "Bad vertex data format %s!\n", pf_name(format));
             assert(0);
             break;
     }

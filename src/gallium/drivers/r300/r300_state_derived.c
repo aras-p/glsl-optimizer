@@ -224,7 +224,8 @@ static void r300_vertex_psc(struct r300_context* r300,
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct vertex_info* vinfo = &vformat->vinfo;
     int* tab = vformat->vs_tab;
-    uint32_t temp;
+    uint16_t type, swizzle;
+    enum pipe_format format;
     unsigned i, attrib_count;
 
     /* Vertex shaders have no semantics on their inputs,
@@ -246,25 +247,28 @@ static void r300_vertex_psc(struct r300_context* r300,
     }
 
     for (i = 0; i < attrib_count; i++) {
-        /* Make sure we have a proper destination for our attribute */
+        /* Make sure we have a proper destination for our attribute. */
         assert(tab[i] != -1);
 
-        /* Add the attribute to the PSC table. */
-        temp = translate_draw_vertex_data_type(vinfo->attrib[i].emit) |
+        format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+
+        /* Obtain the type of data in this attribute. */
+        type = r300_translate_vertex_data_type(format) |
             tab[i] << R300_DST_VEC_LOC_SHIFT;
 
+        /* Obtain the swizzle for this attribute. Note that the default
+         * swizzle in the hardware is not XYZW! */
+        swizzle = r300_translate_vertex_data_swizzle(format);
+
+        /* Add the attribute to the PSC table. */
         if (i & 1) {
-            vformat->vap_prog_stream_cntl[i >> 1] &= 0x0000ffff;
-            vformat->vap_prog_stream_cntl[i >> 1] |= temp << 16;
+            vformat->vap_prog_stream_cntl[i >> 1] |= type << 16;
 
-            vformat->vap_prog_stream_cntl_ext[i >> 1] |=
-                (R300_VAP_SWIZZLE_XYZW << 16);
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
         } else {
-            vformat->vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
-            vformat->vap_prog_stream_cntl[i >> 1] |= temp <<  0;
+            vformat->vap_prog_stream_cntl[i >> 1] |= type <<  0;
 
-            vformat->vap_prog_stream_cntl_ext[i >> 1] |=
-                (R300_VAP_SWIZZLE_XYZW <<  0);
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 0;
         }
     }
 
