@@ -273,6 +273,9 @@ struct r300_context {
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
+    /* Vertex elements for Gallium. */
+    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
+    int vertex_element_count;
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */
