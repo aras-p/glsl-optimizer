@@ -42,16 +42,16 @@ static void r300_setup_texture_state(struct r300_texture* tex)
     /* XXX */
     state->format1 = r300_translate_texformat(pt->format);
     if (pt->target == PIPE_TEXTURE_CUBE) {
-	state->format1 |= R300_TX_FORMAT_CUBIC_MAP;
+        state->format1 |= R300_TX_FORMAT_CUBIC_MAP;
     }
     if (pt->target == PIPE_TEXTURE_3D) {
-	state->format1 |= R300_TX_FORMAT_3D;
+        state->format1 |= R300_TX_FORMAT_3D;
     }
 
     state->format2 = (r300_texture_get_stride(tex, 0) / pt->block.size) - 1;
 
-    /* Assume (somewhat foolishly) that oversized textures will
-     * not be permitted by the state tracker. */
+    /* Don't worry about accidentally setting this bit on non-r500;
+     * the kernel should catch it. */
     if (pt->width[0] > 2048) {
         state->format2 |= R500_TXWIDTH_BIT11;
     }
@@ -73,7 +73,8 @@ unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
         return tex->stride_override;
 
     if (level > tex->tex.last_level) {
-        debug_printf("%s: level (%u) > last_level (%u)\n", __FUNCTION__, level, tex->tex.last_level);
+        debug_printf("%s: level (%u) > last_level (%u)\n", __FUNCTION__,
+            level, tex->tex.last_level);
         return 0;
     }
 
@@ -96,11 +97,6 @@ static void r300_setup_miptree(struct r300_texture* tex)
         base->nblocksx[i] = pf_get_nblocksx(&base->block, base->width[i]);
         base->nblocksy[i] = pf_get_nblocksy(&base->block, base->height[i]);
 
-        /* Radeons enjoy things in multiples of 64.
-         *
-         * XXX
-         * POT, uncompressed, unmippmapped textures can be aligned to 32,
-         * instead of 64. */
         stride = r300_texture_get_stride(tex, i);
         size = stride * base->nblocksy[i] * base->depth[i];
 
@@ -195,9 +191,7 @@ static struct pipe_texture*
 {
     struct r300_texture* tex;
 
-    /* XXX we should start doing mips now... */
     if (base->target != PIPE_TEXTURE_2D ||
-        base->last_level != 0 ||
         base->depth[0] != 1) {
         return NULL;
     }
@@ -213,7 +207,6 @@ static struct pipe_texture*
 
     tex->stride_override = *stride;
 
-    /* XXX */
     r300_setup_texture_state(tex);
 
     pipe_buffer_reference(&tex->buffer, buffer);
