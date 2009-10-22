@@ -278,10 +278,12 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
        * until we codegenerate single-quad variants of the fragment pipeline
        * we need this hack. */
       const unsigned nr_quads = TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH/QUAD_SIZE;
-      struct quad_header quads[nr_quads];
-      struct quad_header *quad_ptrs[nr_quads];
+      struct quad_header quads[4];
+      struct quad_header *quad_ptrs[4];
       int x0 = block_x(quad->input.x0);
       unsigned i;
+
+      assert(nr_quads == 4);
 
       for(i = 0; i < nr_quads; ++i) {
          int x = x0 + 2*i;
