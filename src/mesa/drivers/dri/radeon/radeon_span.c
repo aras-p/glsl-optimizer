@@ -603,12 +603,12 @@ do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_depth( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    tmp &= 0xff000000;							\
-   tmp |= (((d) >> 8) & 0x00ffffff);					\
+   tmp |= ((d) & 0x00ffffff);					\
    *_ptr = tmp;					\
    _ptr = (GLuint*)r600_ptr_stencil(rrb, _x + x_off, _y + y_off);		\
    tmp = *_ptr;				\
    tmp &= 0xffffff00;							\
-   tmp |= (d) & 0xff;							\
+   tmp |= ((d) >> 24) & 0xff;						\
    *_ptr = tmp;					\
 } while (0)
 #elif defined(RADEON_R200)
@@ -633,8 +633,8 @@ do {									\
 #elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = ((*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off))) << 8) & 0xffffff00; \
-    d |= (*(GLuint*)(r600_ptr_stencil(rrb, _x + x_off, _y + y_off))) & 0x000000ff;	\
+    d = (*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off))) & 0x00ffffff; \
+    d |= ((*(GLuint*)(r600_ptr_stencil(rrb, _x + x_off, _y + y_off))) << 24) & 0xff000000; \
   }while(0)
 #elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
