@@ -159,7 +159,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 	case MESA_FORMAT_Z16:
 		format = formats[0];
 		break;
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_Z24:
 		format = formats[1];
 		break;
 	case MESA_FORMAT_Z32:

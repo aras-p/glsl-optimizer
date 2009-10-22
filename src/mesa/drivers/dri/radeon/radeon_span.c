@@ -878,11 +878,11 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 		radeonInitDepthPointers_z16(&rrb->base);
 	} else if (rrb->base.Format == GL_DEPTH_COMPONENT32) { /* XXX */
 		radeonInitDepthPointers_z24(&rrb->base);
-	} else if (rrb->base.Format == MESA_FORMAT_Z24_S8) {
+	} else if (rrb->base.Format == MESA_FORMAT_S8_Z24) {
 		radeonInitDepthPointers_z24_s8(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_S8) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
 	} else {
-		fprintf(stderr, "radeonSetSpanFunctions: bad actual format: 0x%04X\n", rrb->base.Format);
+		fprintf(stderr, "radeonSetSpanFunctions: bad format: 0x%04X\n", rrb->base.Format);
 	}
 }
