@@ -674,7 +674,7 @@ emit_MAD(struct codegen *gen, const struct tgsi_full_instruction *inst)
  * Emit linear interpolate.  See emit_ADD for comments.
  */
 static boolean
-emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+emit_LRP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], s2_reg[4], s3_reg[4], d_reg[4], tmp_reg[4];
 
@@ -1766,7 +1766,7 @@ emit_instruction(struct codegen *gen,
       return emit_binop(gen, inst);
    case TGSI_OPCODE_MAD:
       return emit_MAD(gen, inst);
-   case TGSI_OPCODE_LERP:
+   case TGSI_OPCODE_LRP:
       return emit_LRP(gen, inst);
    case TGSI_OPCODE_DP3:
       return emit_DP3(gen, inst);
