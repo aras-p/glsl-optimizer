@@ -77,7 +77,7 @@ env.Prepend(LIBS = [llvmpipe] + auxiliaries)
 
 env.Program(
     target = 'lp_test_format',
-    source = ['lp_test_format.c'],
+    source = ['lp_test_format.c', 'lp_test_main.c'],
 )
 
 env.Program(
