@@ -72,6 +72,7 @@ typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 #define INTEL_FALLBACK_USER		 0x10
 #define INTEL_FALLBACK_RENDERMODE	 0x20
 #define INTEL_FALLBACK_TEXTURE   	 0x40
+#define INTEL_FALLBACK_DRIVER            0x1000  /**< first for drivers */
 /*@}*/
 
 extern void intelFallback(struct intel_context *intel, GLbitfield bit,
