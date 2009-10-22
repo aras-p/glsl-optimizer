@@ -250,7 +250,7 @@ static void r300_vertex_psc(struct r300_context* r300,
         assert(tab[i] != -1);
 
         /* Add the attribute to the PSC table. */
-        temp = translate_vertex_data_type(vinfo->attrib[i].emit) |
+        temp = translate_draw_vertex_data_type(vinfo->attrib[i].emit) |
             tab[i] << R300_DST_VEC_LOC_SHIFT;
 
         if (i & 1) {
