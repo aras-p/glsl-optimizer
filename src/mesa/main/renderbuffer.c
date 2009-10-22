@@ -1052,6 +1052,18 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
+      rb->DataType = GL_UNSIGNED_INT;
+      rb->GetPointer = get_pointer_uint;
+      rb->GetRow = get_row_uint;
+      rb->GetValues = get_values_uint;
+      rb->PutRow = put_row_uint;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_uint;
+      rb->PutValues = put_values_uint;
+      rb->PutMonoValues = put_mono_values_uint;
+      rb->Format = MESA_FORMAT_X8_Z24;
+      pixelSize = sizeof(GLuint);
+      break;
    case GL_DEPTH_COMPONENT32:
       rb->DataType = GL_UNSIGNED_INT;
       rb->GetPointer = get_pointer_uint;
@@ -1734,6 +1746,10 @@ _mesa_add_depth_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    if (depthBits <= 16) {
       rb->Format = MESA_FORMAT_Z16;
       rb->InternalFormat = GL_DEPTH_COMPONENT16;
+   }
+   else if (depthBits <= 24) {
+      rb->Format = MESA_FORMAT_X8_Z24;
+      rb->InternalFormat = GL_DEPTH_COMPONENT24;
    }
    else {
       rb->Format = MESA_FORMAT_Z32;
