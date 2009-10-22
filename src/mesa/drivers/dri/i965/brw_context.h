@@ -115,7 +115,7 @@
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_FALLBACK_TEXTURE		 0x1
+
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
