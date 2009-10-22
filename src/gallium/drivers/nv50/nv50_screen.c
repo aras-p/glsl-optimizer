@@ -218,16 +218,19 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		tesla_class = NV54TCL;
 		break;
 	case 0xa0:
-		tesla_class = NVA0TCL;
+		switch (chipset) {
+		case 0xa0:
+		case 0xaa:
+		case 0xac:
+			tesla_class = NVA0TCL;
+			break;
+		default:
+			tesla_class = 0x8597;
+			break;
+		}
 		break;
 	default:
 		NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", chipset);
-		nv50_screen_destroy(pscreen);
-		return NULL;
-	}
-
-	if (tesla_class == 0) {
-		NOUVEAU_ERR("Unknown G8x chipset: NV%02x\n", chipset);
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
