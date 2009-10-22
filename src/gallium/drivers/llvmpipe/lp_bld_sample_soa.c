@@ -76,28 +76,6 @@ struct lp_build_sample_context
 
 
 static void
-lp_build_load_rgba_soa(LLVMBuilderRef builder,
-                       const struct util_format_description *format_desc,
-                       struct lp_type type,
-                       LLVMValueRef base_ptr,
-                       LLVMValueRef offsets,
-                       LLVMValueRef *rgba)
-{
-   LLVMValueRef packed;
-
-   assert(format_desc->block.width == 1);
-   assert(format_desc->block.height == 1);
-   assert(format_desc->block.bits <= type.width);
-
-   packed = lp_build_gather(builder,
-                            type.length, format_desc->block.bits, type.width,
-                            base_ptr, offsets);
-
-   lp_build_unpack_rgba_soa(builder, format_desc, type, packed, rgba);
-}
-
-
-static void
 lp_build_sample_texel(struct lp_build_sample_context *bld,
                       LLVMValueRef x,
                       LLVMValueRef y,
@@ -105,22 +83,28 @@ lp_build_sample_texel(struct lp_build_sample_context *bld,
                       LLVMValueRef data_ptr,
                       LLVMValueRef *texel)
 {
-   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
+   LLVMValueRef packed;
 
    offset = lp_build_sample_offset(&bld->int_coord_bld,
                                    bld->format_desc,
-                                   x,
-                                   y,
-                                   y_stride,
+                                   x, y, y_stride,
                                    data_ptr);
 
-   lp_build_load_rgba_soa(bld->builder,
-                          bld->format_desc,
-                          bld->texel_type,
-                          data_ptr,
-                          offset,
-                          texel);
+   assert(bld->format_desc->block.width == 1);
+   assert(bld->format_desc->block.height == 1);
+   assert(bld->format_desc->block.bits <= bld->texel_type.width);
+
+   packed = lp_build_gather(bld->builder,
+                            bld->texel_type.length,
+                            bld->format_desc->block.bits,
+                            bld->texel_type.width,
+                            data_ptr, offset);
+
+   lp_build_unpack_rgba_soa(bld->builder,
+                            bld->format_desc,
+                            bld->texel_type,
+                            packed, texel);
 }
 
 
