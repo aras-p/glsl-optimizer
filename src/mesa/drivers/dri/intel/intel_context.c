@@ -839,7 +839,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       _vbo_DestroyContext(&intel->ctx);
 
       _swrast_DestroyContext(&intel->ctx);
-      intel->Fallback = 0;      /* don't call _swrast_Flush later */
+      intel->Fallback = 0x0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
       intel->batch = NULL;
