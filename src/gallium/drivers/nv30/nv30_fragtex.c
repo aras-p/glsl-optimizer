@@ -30,7 +30,7 @@ nv30_texture_formats[] = {
 	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
 	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
 //	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-//	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
+	_(Z24S8_UNORM   , A8R8G8B8,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
@@ -73,9 +73,9 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 
 	txf  = tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
-	txf |= log2i(pt->width[0]) << 20;
-	txf |= log2i(pt->height[0]) << 24;
-	txf |= log2i(pt->depth[0]) << 28;
+	txf |= log2i(pt->width[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
+	txf |= log2i(pt->height[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
+	txf |= log2i(pt->depth[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
 	txf |= NV34TCL_TX_FORMAT_NO_BORDER | 0x10000;
 
 	switch (pt->target) {
