@@ -366,7 +366,7 @@ _mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,
    z24rb->Width = dsrb->Width;
    z24rb->Height = dsrb->Height;
    z24rb->InternalFormat = GL_DEPTH_COMPONENT24;
-   z24rb->Format = MESA_FORMAT_Z24_S8;
+   z24rb->Format = MESA_FORMAT_X8_Z24;
    z24rb->_BaseFormat = GL_DEPTH_COMPONENT;
    z24rb->DataType = GL_UNSIGNED_INT;
    z24rb->Data = NULL;
