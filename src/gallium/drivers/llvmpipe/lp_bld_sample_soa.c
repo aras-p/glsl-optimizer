@@ -106,51 +106,14 @@ lp_build_sample_texel(struct lp_build_sample_context *bld,
                       LLVMValueRef *texel)
 {
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   LLVMValueRef x_stride;
    LLVMValueRef offset;
 
-   x_stride = lp_build_const_scalar(bld->int_coord_type, bld->format_desc->block.bits/8);
-
-   if(bld->format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-      LLVMValueRef x_lo, x_hi;
-      LLVMValueRef y_lo, y_hi;
-      LLVMValueRef x_stride_lo, x_stride_hi;
-      LLVMValueRef y_stride_lo, y_stride_hi;
-      LLVMValueRef x_offset_lo, x_offset_hi;
-      LLVMValueRef y_offset_lo, y_offset_hi;
-      LLVMValueRef offset_lo, offset_hi;
-
-      x_lo = LLVMBuildAnd(bld->builder, x, int_coord_bld->one, "");
-      y_lo = LLVMBuildAnd(bld->builder, y, int_coord_bld->one, "");
-
-      x_hi = LLVMBuildLShr(bld->builder, x, int_coord_bld->one, "");
-      y_hi = LLVMBuildLShr(bld->builder, y, int_coord_bld->one, "");
-
-      x_stride_lo = x_stride;
-      y_stride_lo = lp_build_const_scalar(bld->int_coord_type, 2*bld->format_desc->block.bits/8);
-
-      x_stride_hi = lp_build_const_scalar(bld->int_coord_type, 4*bld->format_desc->block.bits/8);
-      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, int_coord_bld->one, "");
-
-      x_offset_lo = lp_build_mul(int_coord_bld, x_lo, x_stride_lo);
-      y_offset_lo = lp_build_mul(int_coord_bld, y_lo, y_stride_lo);
-      offset_lo = lp_build_add(int_coord_bld, x_offset_lo, y_offset_lo);
-
-      x_offset_hi = lp_build_mul(int_coord_bld, x_hi, x_stride_hi);
-      y_offset_hi = lp_build_mul(int_coord_bld, y_hi, y_stride_hi);
-      offset_hi = lp_build_add(int_coord_bld, x_offset_hi, y_offset_hi);
-
-      offset = lp_build_add(int_coord_bld, offset_hi, offset_lo);
-   }
-   else {
-      LLVMValueRef x_offset;
-      LLVMValueRef y_offset;
-
-      x_offset = lp_build_mul(int_coord_bld, x, x_stride);
-      y_offset = lp_build_mul(int_coord_bld, y, y_stride);
-
-      offset = lp_build_add(int_coord_bld, x_offset, y_offset);
-   }
+   offset = lp_build_sample_offset(&bld->int_coord_bld,
+                                   bld->format_desc,
+                                   x,
+                                   y,
+                                   y_stride,
+                                   data_ptr);
 
    lp_build_load_rgba_soa(bld->builder,
                           bld->format_desc,

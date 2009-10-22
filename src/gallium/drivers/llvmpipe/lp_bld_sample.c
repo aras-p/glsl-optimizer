@@ -37,6 +37,9 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "lp_bld_debug.h"
+#include "lp_bld_const.h"
+#include "lp_bld_arit.h"
+#include "lp_bld_type.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
 
@@ -121,4 +124,67 @@ lp_build_gather(LLVMBuilderRef builder,
    }
 
    return res;
+}
+
+
+/**
+ * Compute the offset of a pixel.
+ *
+ * x, y, y_stride are vectors
+ */
+LLVMValueRef
+lp_build_sample_offset(struct lp_build_context *bld,
+                       const struct util_format_description *format_desc,
+                       LLVMValueRef x,
+                       LLVMValueRef y,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef data_ptr)
+{
+   LLVMValueRef x_stride;
+   LLVMValueRef offset;
+
+   x_stride = lp_build_const_scalar(bld->type, format_desc->block.bits/8);
+
+   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      LLVMValueRef x_lo, x_hi;
+      LLVMValueRef y_lo, y_hi;
+      LLVMValueRef x_stride_lo, x_stride_hi;
+      LLVMValueRef y_stride_lo, y_stride_hi;
+      LLVMValueRef x_offset_lo, x_offset_hi;
+      LLVMValueRef y_offset_lo, y_offset_hi;
+      LLVMValueRef offset_lo, offset_hi;
+
+      x_lo = LLVMBuildAnd(bld->builder, x, bld->one, "");
+      y_lo = LLVMBuildAnd(bld->builder, y, bld->one, "");
+
+      x_hi = LLVMBuildLShr(bld->builder, x, bld->one, "");
+      y_hi = LLVMBuildLShr(bld->builder, y, bld->one, "");
+
+      x_stride_lo = x_stride;
+      y_stride_lo = lp_build_const_scalar(bld->type, 2*format_desc->block.bits/8);
+
+      x_stride_hi = lp_build_const_scalar(bld->type, 4*format_desc->block.bits/8);
+      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, bld->one, "");
+
+      x_offset_lo = lp_build_mul(bld, x_lo, x_stride_lo);
+      y_offset_lo = lp_build_mul(bld, y_lo, y_stride_lo);
+      offset_lo = lp_build_add(bld, x_offset_lo, y_offset_lo);
+
+      x_offset_hi = lp_build_mul(bld, x_hi, x_stride_hi);
+      y_offset_hi = lp_build_mul(bld, y_hi, y_stride_hi);
+      offset_hi = lp_build_add(bld, x_offset_hi, y_offset_hi);
+
+      offset = lp_build_add(bld, offset_hi, offset_lo);
+   }
+   else {
+      LLVMValueRef x_offset;
+      LLVMValueRef y_offset;
+
+      x_offset = lp_build_mul(bld, x, x_stride);
+      y_offset = lp_build_mul(bld, y, y_stride);
+
+      offset = lp_build_add(bld, x_offset, y_offset);
+   }
+
+   return offset;
 }
