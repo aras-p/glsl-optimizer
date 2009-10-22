@@ -116,6 +116,8 @@
  */
 
 
+#define BRW_FALLBACK_DRAW  (INTEL_FALLBACK_DRIVER << 0)
+
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
