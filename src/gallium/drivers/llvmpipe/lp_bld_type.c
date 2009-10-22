@@ -160,12 +160,31 @@ lp_build_int_vec_type(struct lp_type type)
 struct lp_type
 lp_int_type(struct lp_type type)
 {
-   struct lp_type int_type;
+   struct lp_type res_type;
 
-   memset(&int_type, 0, sizeof int_type);
-   int_type.width = type.width;
-   int_type.length = type.length;
-   return int_type;
+   memset(&res_type, 0, sizeof res_type);
+   res_type.width = type.width;
+   res_type.length = type.length;
+
+   return res_type;
+}
+
+
+/**
+ * Return the type with twice the bit width (hence half the number of elements).
+ */
+struct lp_type
+lp_wider_type(struct lp_type type)
+{
+   struct lp_type res_type;
+
+   memcpy(&res_type, &type, sizeof res_type);
+   res_type.width *= 2;
+   res_type.length /= 2;
+
+   assert(res_type.length);
+
+   return res_type;
 }
 
 
