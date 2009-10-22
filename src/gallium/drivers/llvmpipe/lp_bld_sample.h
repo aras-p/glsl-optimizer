@@ -119,6 +119,15 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_sampler_state *sampler);
 
 
+LLVMValueRef
+lp_build_gather(LLVMBuilderRef builder,
+                unsigned length,
+                unsigned src_width,
+                unsigned dst_width,
+                LLVMValueRef base_ptr,
+                LLVMValueRef offsets);
+
+
 void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,

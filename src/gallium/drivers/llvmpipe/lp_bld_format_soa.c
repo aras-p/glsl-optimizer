@@ -34,55 +34,6 @@
 #include "lp_bld_format.h"
 
 
-/**
- * Gather elements from scatter positions in memory into a single vector.
- *
- * @param src_width src element width
- * @param dst_width result element width (source will be expanded to fit)
- * @param length length of the offsets,
- * @param base_ptr base pointer, should be a i8 pointer type.
- * @param offsets vector with offsets
- */
-LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
-                unsigned length,
-                unsigned src_width,
-                unsigned dst_width,
-                LLVMValueRef base_ptr,
-                LLVMValueRef offsets)
-{
-   LLVMTypeRef src_type = LLVMIntType(src_width);
-   LLVMTypeRef src_ptr_type = LLVMPointerType(src_type, 0);
-   LLVMTypeRef dst_elem_type = LLVMIntType(dst_width);
-   LLVMTypeRef dst_vec_type = LLVMVectorType(dst_elem_type, length);
-   LLVMValueRef res;
-   unsigned i;
-
-   res = LLVMGetUndef(dst_vec_type);
-   for(i = 0; i < length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef elem_offset;
-      LLVMValueRef elem_ptr;
-      LLVMValueRef elem;
-
-      elem_offset = LLVMBuildExtractElement(builder, offsets, index, "");
-      elem_ptr = LLVMBuildGEP(builder, base_ptr, &elem_offset, 1, "");
-      elem_ptr = LLVMBuildBitCast(builder, elem_ptr, src_ptr_type, "");
-      elem = LLVMBuildLoad(builder, elem_ptr, "");
-
-      assert(src_width <= dst_width);
-      if(src_width > dst_width)
-         elem = LLVMBuildTrunc(builder, elem, dst_elem_type, "");
-      if(src_width < dst_width)
-         elem = LLVMBuildZExt(builder, elem, dst_elem_type, "");
-
-      res = LLVMBuildInsertElement(builder, res, elem, index, "");
-   }
-
-   return res;
-}
-
-
 static LLVMValueRef
 lp_build_format_swizzle(struct lp_type type,
                         const LLVMValueRef *inputs,
@@ -184,26 +135,4 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
          rgba[chan] = lp_build_format_swizzle(type, inputs, swizzle);
       }
    }
-}
-
-
-void
-lp_build_load_rgba_soa(LLVMBuilderRef builder,
-                       const struct util_format_description *format_desc,
-                       struct lp_type type,
-                       LLVMValueRef base_ptr,
-                       LLVMValueRef offsets,
-                       LLVMValueRef *rgba)
-{
-   LLVMValueRef packed;
-
-   assert(format_desc->block.width == 1);
-   assert(format_desc->block.height == 1);
-   assert(format_desc->block.bits <= type.width);
-
-   packed = lp_build_gather(builder,
-                            type.length, format_desc->block.bits, type.width,
-                            base_ptr, offsets);
-
-   lp_build_unpack_rgba_soa(builder, format_desc, type, packed, rgba);
 }

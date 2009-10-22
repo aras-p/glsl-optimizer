@@ -91,14 +91,6 @@ lp_build_store_rgba_aos(LLVMBuilderRef builder,
                         LLVMValueRef ptr,
                         LLVMValueRef rgba);
 
-LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
-                unsigned length,
-                unsigned src_width,
-                unsigned dst_width,
-                LLVMValueRef base_ptr,
-                LLVMValueRef offsets);
-
 
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
@@ -107,13 +99,5 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          LLVMValueRef packed,
                          LLVMValueRef *rgba);
 
-
-void
-lp_build_load_rgba_soa(LLVMBuilderRef builder,
-                       const struct util_format_description *format_desc,
-                       struct lp_type type,
-                       LLVMValueRef base_ptr,
-                       LLVMValueRef offsets,
-                       LLVMValueRef *rgba);
 
 #endif /* !LP_BLD_FORMAT_H */

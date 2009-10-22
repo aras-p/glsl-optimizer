@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Texture sampling.
+ * Texture sampling -- SoA.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -46,41 +46,6 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
-
-
-void
-lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_texture *texture,
-                        const struct pipe_sampler_state *sampler)
-{
-   memset(state, 0, sizeof *state);
-
-   if(!texture)
-      return;
-
-   if(!sampler)
-      return;
-
-   state->format            = texture->format;
-   state->target            = texture->target;
-   state->pot_width         = util_is_pot(texture->width[0]);
-   state->pot_height        = util_is_pot(texture->height[0]);
-   state->pot_depth         = util_is_pot(texture->depth[0]);
-
-   state->wrap_s            = sampler->wrap_s;
-   state->wrap_t            = sampler->wrap_t;
-   state->wrap_r            = sampler->wrap_r;
-   state->min_img_filter    = sampler->min_img_filter;
-   state->min_mip_filter    = sampler->min_mip_filter;
-   state->mag_img_filter    = sampler->mag_img_filter;
-   if(sampler->compare_mode) {
-      state->compare_mode      = sampler->compare_mode;
-      state->compare_func      = sampler->compare_func;
-   }
-   state->normalized_coords = sampler->normalized_coords;
-   state->prefilter         = sampler->prefilter;
-}
-
 
 
 /**
@@ -108,6 +73,28 @@ struct lp_build_sample_context
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
 };
+
+
+static void
+lp_build_load_rgba_soa(LLVMBuilderRef builder,
+                       const struct util_format_description *format_desc,
+                       struct lp_type type,
+                       LLVMValueRef base_ptr,
+                       LLVMValueRef offsets,
+                       LLVMValueRef *rgba)
+{
+   LLVMValueRef packed;
+
+   assert(format_desc->block.width == 1);
+   assert(format_desc->block.height == 1);
+   assert(format_desc->block.bits <= type.width);
+
+   packed = lp_build_gather(builder,
+                            type.length, format_desc->block.bits, type.width,
+                            base_ptr, offsets);
+
+   lp_build_unpack_rgba_soa(builder, format_desc, type, packed, rgba);
+}
 
 
 static void

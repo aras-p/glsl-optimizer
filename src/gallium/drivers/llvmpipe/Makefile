@@ -22,6 +22,7 @@ C_SOURCES = \
 	lp_bld_intr.c \
 	lp_bld_logic.c \
 	lp_bld_pack.c \
+	lp_bld_sample.c \
 	lp_bld_sample_soa.c \
 	lp_bld_swizzle.c \
 	lp_bld_struct.c \
