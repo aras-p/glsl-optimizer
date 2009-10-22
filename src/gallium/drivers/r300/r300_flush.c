@@ -40,8 +40,10 @@ static void r300_flush(struct pipe_context* pipe,
 
     CS_LOCALS(r300);
     /* We probably need to flush Draw, but we may have been called from
-     * within Draw. This feels kludgy, but it might be the best thing. */
-    if (!r300->draw->flushing) {
+     * within Draw. This feels kludgy, but it might be the best thing.
+     *
+     * Of course, the best thing is to kill Draw with fire. :3 */
+    if (r300->draw && !r300->draw->flushing) {
         draw_flush(r300->draw);
     }
 
