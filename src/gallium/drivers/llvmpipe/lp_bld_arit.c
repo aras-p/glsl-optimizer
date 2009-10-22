@@ -54,6 +54,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_logic.h"
+#include "lp_bld_pack.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
 
@@ -280,45 +281,6 @@ lp_build_sub(struct lp_build_context *bld,
 
 
 /**
- * Build shuffle vectors that match PUNPCKLxx and PUNPCKHxx instructions.
- */
-static LLVMValueRef 
-lp_build_unpack_shuffle(unsigned n, unsigned lo_hi)
-{
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i, j;
-
-   assert(n <= LP_MAX_VECTOR_LENGTH);
-   assert(lo_hi < 2);
-
-   for(i = 0, j = lo_hi*n/2; i < n; i += 2, ++j) {
-      elems[i + 0] = LLVMConstInt(LLVMInt32Type(), 0 + j, 0);
-      elems[i + 1] = LLVMConstInt(LLVMInt32Type(), n + j, 0);
-   }
-
-   return LLVMConstVector(elems, n);
-}
-
-
-/**
- * Build constant int vector of width 'n' and value 'c'.
- */
-static LLVMValueRef 
-lp_build_const_vec(LLVMTypeRef type, unsigned n, long long c)
-{
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
-
-   assert(n <= LP_MAX_VECTOR_LENGTH);
-
-   for(i = 0; i < n; ++i)
-      elems[i] = LLVMConstInt(type, c, 0);
-
-   return LLVMConstVector(elems, n);
-}
-
-
-/**
  * Normalized 8bit multiplication.
  *
  * - alpha plus one
@@ -361,33 +323,30 @@ lp_build_const_vec(LLVMTypeRef type, unsigned n, long long c)
  */
 static LLVMValueRef
 lp_build_mul_u8n(LLVMBuilderRef builder,
+                 struct lp_type i16_type,
                  LLVMValueRef a, LLVMValueRef b)
 {
-   static LLVMValueRef c01 = NULL;
-   static LLVMValueRef c08 = NULL;
-   static LLVMValueRef c80 = NULL;
+   LLVMValueRef c8;
    LLVMValueRef ab;
 
-   if(!c01) c01 = lp_build_const_vec(LLVMInt16Type(), 8, 0x01);
-   if(!c08) c08 = lp_build_const_vec(LLVMInt16Type(), 8, 0x08);
-   if(!c80) c80 = lp_build_const_vec(LLVMInt16Type(), 8, 0x80);
+   c8 = lp_build_int_const_scalar(i16_type, 8);
    
 #if 0
    
    /* a*b/255 ~= (a*(b + 1)) >> 256 */
-   b = LLVMBuildAdd(builder, b, c01, "");
+   b = LLVMBuildAdd(builder, b, lp_build_int_const_scalar(i16_type, 1), "");
    ab = LLVMBuildMul(builder, a, b, "");
 
 #else
    
-   /* t/255 ~= (t + (t >> 8) + 0x80) >> 8 */
+   /* ab/255 ~= (ab + (ab >> 8) + 0x80) >> 8 */
    ab = LLVMBuildMul(builder, a, b, "");
-   ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, c08, ""), "");
-   ab = LLVMBuildAdd(builder, ab, c80, "");
+   ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, c8, ""), "");
+   ab = LLVMBuildAdd(builder, ab, lp_build_int_const_scalar(i16_type, 0x80), "");
 
 #endif
    
-   ab = LLVMBuildLShr(builder, ab, c08, "");
+   ab = LLVMBuildLShr(builder, ab, c8, "");
 
    return ab;
 }
@@ -415,39 +374,18 @@ lp_build_mul(struct lp_build_context *bld,
       return bld->undef;
 
    if(!type.floating && !type.fixed && type.norm) {
-      if(util_cpu_caps.has_sse2 && type.width == 8 && type.length == 16) {
-         LLVMTypeRef i16x8 = LLVMVectorType(LLVMInt16Type(), 8);
-         LLVMTypeRef i8x16 = LLVMVectorType(LLVMInt8Type(), 16);
-         static LLVMValueRef ml = NULL;
-         static LLVMValueRef mh = NULL;
-         LLVMValueRef al, ah, bl, bh;
-         LLVMValueRef abl, abh;
-         LLVMValueRef ab;
-         
-         if(!ml) ml = lp_build_unpack_shuffle(16, 0);
-         if(!mh) mh = lp_build_unpack_shuffle(16, 1);
+      if(type.width == 8) {
+         struct lp_type i16_type = lp_wider_type(type);
+         LLVMValueRef al, ah, bl, bh, abl, abh, ab;
 
-         /*  PUNPCKLBW, PUNPCKHBW */
-         al = LLVMBuildShuffleVector(bld->builder, a, bld->zero, ml, "");
-         bl = LLVMBuildShuffleVector(bld->builder, b, bld->zero, ml, "");
-         ah = LLVMBuildShuffleVector(bld->builder, a, bld->zero, mh, "");
-         bh = LLVMBuildShuffleVector(bld->builder, b, bld->zero, mh, "");
-
-         /* NOP */
-         al = LLVMBuildBitCast(bld->builder, al, i16x8, "");
-         bl = LLVMBuildBitCast(bld->builder, bl, i16x8, "");
-         ah = LLVMBuildBitCast(bld->builder, ah, i16x8, "");
-         bh = LLVMBuildBitCast(bld->builder, bh, i16x8, "");
+         lp_build_unpack2(bld->builder, type, i16_type, a, &al, &ah);
+         lp_build_unpack2(bld->builder, type, i16_type, b, &bl, &bh);
 
          /* PMULLW, PSRLW, PADDW */
-         abl = lp_build_mul_u8n(bld->builder, al, bl);
-         abh = lp_build_mul_u8n(bld->builder, ah, bh);
+         abl = lp_build_mul_u8n(bld->builder, i16_type, al, bl);
+         abh = lp_build_mul_u8n(bld->builder, i16_type, ah, bh);
 
-         /* PACKUSWB */
-         ab = lp_build_intrinsic_binary(bld->builder, "llvm.x86.sse2.packuswb.128" , i16x8, abl, abh);
-
-         /* NOP */
-         ab = LLVMBuildBitCast(bld->builder, ab, i8x16, "");
+         ab = lp_build_pack2(bld->builder, i16_type, type, abl, abh);
          
          return ab;
       }
