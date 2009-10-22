@@ -317,9 +317,8 @@ void r300_init_surface_functions(struct r300_context* r300);
 #define DBG_VP      0x0000004
 #define DBG_CS      0x0000008
 #define DBG_DRAW    0x0000010
-#define DBG_SURF    0x0000020
-#define DBG_TEX     0x0000040
-#define DBG_FALL    0x0000080
+#define DBG_TEX     0x0000020
+#define DBG_FALL    0x0000040
 /*@}*/
 
 static INLINE boolean DBG_ON(struct r300_context * ctx, unsigned flags)
