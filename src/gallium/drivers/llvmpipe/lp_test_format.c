@@ -89,34 +89,41 @@ struct pixel_test_case test_cases[] =
 };
 
 
-typedef void (*load_ptr_t)(const void *, float *);
+typedef void (*load_ptr_t)(const uint32_t packed, float *);
 
 
 static LLVMValueRef
 add_load_rgba_test(LLVMModuleRef module,
                    enum pipe_format format)
 {
+   const struct util_format_description *desc;
    LLVMTypeRef args[2];
    LLVMValueRef func;
-   LLVMValueRef ptr;
+   LLVMValueRef packed;
    LLVMValueRef rgba_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
 
-   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   desc = util_format_description(format);
+
+   args[0] = LLVMInt32Type();
    args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
 
    func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   ptr = LLVMGetParam(func, 0);
+   packed = LLVMGetParam(func, 0);
    rgba_ptr = LLVMGetParam(func, 1);
 
    block = LLVMAppendBasicBlock(func, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   rgba = lp_build_load_rgba_aos(builder, format, ptr);
+   if(desc->block.bits < 32)
+      packed = LLVMBuildTrunc(builder, packed, LLVMIntType(desc->block.bits), "");
+
+   rgba = lp_build_unpack_rgba_aos(builder, desc, packed);
+
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
    LLVMBuildRetVoid(builder);
@@ -224,7 +231,7 @@ test_format(const struct pixel_test_case *test)
    memset(unpacked, 0, sizeof unpacked);
    packed = 0;
 
-   load_ptr(&test->packed, unpacked);
+   load_ptr(test->packed, unpacked);
    store_ptr(&packed, unpacked);
 
    success = TRUE;

@@ -51,7 +51,7 @@ struct lp_type;
  */
 LLVMValueRef
 lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
-                         enum pipe_format format,
+                         const struct util_format_description *desc,
                          LLVMValueRef packed);
 
 
@@ -64,20 +64,6 @@ LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
                        enum pipe_format format,
                        LLVMValueRef rgba);
-
-
-/**
- * Load a pixel into its RGBA components.
- *
- * @param ptr value with the pointer to the packed pixel. Pointer type is
- * irrelevant.
- *
- * @return RGBA in a 4 floats vector.
- */
-LLVMValueRef
-lp_build_load_rgba_aos(LLVMBuilderRef builder,
-                       enum pipe_format format,
-                       LLVMValueRef ptr);
 
 
 /**
