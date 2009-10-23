@@ -24,7 +24,12 @@ enum xorg_fs_traits {
    FS_FILL             = (FS_SOLID_FILL |
                           FS_LINGRAD_FILL |
                           FS_RADGRAD_FILL),
-   FS_COMPONENT_ALPHA  = 1 << 5
+   /* src.rgba * mask.rgba */
+   FS_CA_FULL          = 1 << 5,
+   /* src.aaaa * mask.rgba */
+   FS_CA_SRCALPHA      = 1 << 6,
+   FS_COMPONENT_ALPHA  = (FS_CA_FULL |
+                          FS_CA_SRCALPHA)
 };
 
 struct xorg_shader {

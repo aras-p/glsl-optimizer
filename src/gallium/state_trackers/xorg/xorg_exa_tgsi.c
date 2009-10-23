@@ -55,10 +55,13 @@ src_in_mask(struct ureg_program *ureg,
             struct ureg_dst dst,
             struct ureg_src src,
             struct ureg_src mask,
-            boolean component_alpha)
+            int component_alpha)
 {
-   if (component_alpha) {
+   if (component_alpha == FS_CA_FULL) {
       ureg_MUL(ureg, dst, src, mask);
+   } else if (component_alpha == FS_CA_SRCALPHA) {
+      ureg_MUL(ureg, dst,
+               ureg_scalar(src, TGSI_SWIZZLE_W), mask);
    }
    else {
       ureg_MUL(ureg, dst, src,
@@ -289,7 +292,7 @@ create_fs(struct pipe_context *pipe,
    boolean is_solid   = fs_traits & FS_SOLID_FILL;
    boolean is_lingrad = fs_traits & FS_LINGRAD_FILL;
    boolean is_radgrad = fs_traits & FS_RADGRAD_FILL;
-   boolean is_comp_alpha = fs_traits & FS_COMPONENT_ALPHA;
+   unsigned comp_alpha = fs_traits & FS_COMPONENT_ALPHA;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -386,7 +389,7 @@ create_fs(struct pipe_context *pipe,
       ureg_TEX(ureg, mask,
                TGSI_TEXTURE_2D, mask_pos, mask_sampler);
       /* src IN mask */
-      src_in_mask(ureg, out, ureg_src(src), ureg_src(mask), is_comp_alpha);
+      src_in_mask(ureg, out, ureg_src(src), ureg_src(mask), comp_alpha);
       ureg_release_temporary(ureg, mask);
    }
 

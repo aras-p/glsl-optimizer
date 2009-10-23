@@ -109,6 +109,7 @@ blend_for_op(struct xorg_composite_blend *blend,
          blend->rgb_dst = PIPE_BLENDFACTOR_INV_SRC_COLOR;
       }
    }
+
    return supported;
 }
 
@@ -257,8 +258,15 @@ bind_shaders(struct exa_context *exa, int op,
    if (pMaskPicture) {
       vs_traits |= VS_MASK;
       fs_traits |= FS_MASK;
-      if (pMaskPicture->componentAlpha)
-         fs_traits |= FS_COMPONENT_ALPHA;
+      if (pMaskPicture->componentAlpha) {
+         struct xorg_composite_blend blend;
+         blend_for_op(&blend, op,
+                      pSrcPicture, pMaskPicture, NULL);
+         if (blend.alpha_src) {
+            fs_traits |= FS_CA_SRCALPHA;
+         } else
+            fs_traits |= FS_CA_FULL;
+      }
    }
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
@@ -289,21 +297,27 @@ bind_samplers(struct exa_context *exa, int op,
       exa->pipe->flush(exa->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    if (pSrcPicture && pSrc) {
-      unsigned src_wrap = render_repeat_to_gallium(
-         pSrcPicture->repeatType);
-      int filter;
+      if (exa->has_solid_color) {
+         debug_assert(!"solid color with textures");
+         samplers[0] = NULL;
+         exa->bound_textures[0] = NULL;
+      } else {
+         unsigned src_wrap = render_repeat_to_gallium(
+            pSrcPicture->repeatType);
+         int filter;
 
-      render_filter_to_gallium(pSrcPicture->filter, &filter);
+         render_filter_to_gallium(pSrcPicture->filter, &filter);
 
-      src_sampler.wrap_s = src_wrap;
-      src_sampler.wrap_t = src_wrap;
-      src_sampler.min_img_filter = filter;
-      src_sampler.mag_img_filter = filter;
-      src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
-      src_sampler.normalized_coords = 1;
-      samplers[0] = &src_sampler;
-      exa->bound_textures[0] = pSrc->tex;
-      ++exa->num_bound_samplers;
+         src_sampler.wrap_s = src_wrap;
+         src_sampler.wrap_t = src_wrap;
+         src_sampler.min_img_filter = filter;
+         src_sampler.mag_img_filter = filter;
+         src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
+         src_sampler.normalized_coords = 1;
+         samplers[0] = &src_sampler;
+         exa->bound_textures[0] = pSrc->tex;
+         exa->num_bound_samplers = 1;
+      }
    }
 
    if (pMaskPicture && pMask) {
@@ -321,7 +335,7 @@ bind_samplers(struct exa_context *exa, int op,
       mask_sampler.normalized_coords = 1;
       samplers[1] = &mask_sampler;
       exa->bound_textures[1] = pMask->tex;
-      ++exa->num_bound_samplers;
+      exa->num_bound_samplers = 2;
    }
 
    cso_set_samplers(exa->renderer->cso, exa->num_bound_samplers,
