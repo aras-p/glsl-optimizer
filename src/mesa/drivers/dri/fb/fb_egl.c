@@ -692,7 +692,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
 
    /* front color renderbuffer */
    {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, display->pFB,
+      driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888, display->pFB,
                                                 bytesPerPixel,
                                                 origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);
@@ -703,7 +703,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    /* back color renderbuffer */
    if (vis.doubleBufferMode) {
       GLubyte *backBuf = _mesa_malloc(stride * height);
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, backBuf,
+      driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888, backBuf,
                                                 bytesPerPixel,
                                                 origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);

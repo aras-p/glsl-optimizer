@@ -215,7 +215,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL, screen->cpp,
                                  screen->frontOffset, screen->frontPitch,
                                  driDrawPriv);
          /*
@@ -226,7 +226,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, NULL, screen->cpp,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL, screen->cpp,
                                  screen->backOffset, screen->backPitch,
                                  driDrawPriv);
          /*
@@ -237,7 +237,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL, screen->cpp,
+            = driNewRenderbuffer(MESA_FORMAT_Z16, NULL, screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
                                  driDrawPriv);
          /*
@@ -247,7 +247,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, NULL, screen->cpp,
+            = driNewRenderbuffer(MESA_FORMAT_Z24_S8, NULL, screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
                                  driDrawPriv);
          /*
@@ -259,7 +259,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       /* no h/w stencil?
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT);
+            = driNewRenderbuffer(MESA_FORMAT_S8);
          tridentSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
       }

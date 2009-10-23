@@ -602,7 +602,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_FRONT,
                                  screen->cpp,
@@ -615,7 +615,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_BACK,
                                  screen->cpp,
@@ -628,7 +628,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -639,7 +639,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_S8_Z24,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -651,7 +651,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+            = driNewRenderbuffer(MESA_FORMAT_S8,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,

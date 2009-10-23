@@ -433,21 +433,19 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
 void
 r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         r128InitPointers_RGB565(&drb->Base);
-      }
-      else {
-         r128InitPointers_ARGB8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      r128InitPointers_RGB565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      r128InitPointers_ARGB8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       r128InitDepthPointers_z16(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (drb->Base.Format == MESA_FORMAT_S8_Z24) {
       r128InitDepthPointers_z24_s8(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (drb->Base.Format == MESA_FORMAT_S8) {
       radeonInitStencilPointers_z24_s8(&drb->Base);
    }
 }

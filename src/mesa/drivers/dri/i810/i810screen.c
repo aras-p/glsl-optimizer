@@ -293,7 +293,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  driScrnPriv->pFB,
                                  screen->cpp,
                                  /*screen->frontOffset*/0, screen->backPitch,
@@ -304,7 +304,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  screen->back.map,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -315,7 +315,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  screen->depth.map,
                                  screen->cpp,
                                  screen->depthOffset, screen->backPitch,
