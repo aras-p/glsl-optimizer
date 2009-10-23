@@ -776,7 +776,15 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Depth;
          break;
       case GL_TEXTURE_INTERNAL_FORMAT:
-         *params = img->InternalFormat;
+         if (img->IsCompressed) {
+            /* need to return the actual compressed format */
+            *params = _mesa_compressed_format_to_glenum(ctx,
+                                          img->TexFormat->MesaFormat);
+         }
+         else {
+            /* return the user's requested internal format */
+            *params = img->InternalFormat;
+         }
          break;
       case GL_TEXTURE_BORDER:
          *params = img->Border;
