@@ -32,8 +32,10 @@
 #include "nv50_context.h"
 
 #define NV50_SU_MAX_TEMP 64
-#define NV50_SU_MAX_ADDR 7
+#define NV50_SU_MAX_ADDR 4
 //#define NV50_PROGRAM_DUMP
+
+/* $a5 and $a6 always seem to be 0, and using $a7 gives you noise */
 
 /* ARL - gallium craps itself on progs/vp/arl.txt
  *
@@ -470,16 +472,28 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 	e->inst[1] |= (val >> 6) << 2;
 }
 
+static INLINE void
+set_addr(struct nv50_program_exec *e, struct nv50_reg *a)
+{
+	assert(!(e->inst[0] & 0x0c000000));
+	assert(!(e->inst[1] & 0x00000004));
+
+	e->inst[0] |= (a->hw & 3) << 26;
+	e->inst[1] |= (a->hw >> 2) << 2;
+}
+
 static void
-emit_set_addr(struct nv50_pc *pc, struct nv50_reg *dst, unsigned val)
+emit_add_addr_imm(struct nv50_pc *pc, struct nv50_reg *dst,
+		  struct nv50_reg *src0, uint16_t src1_val)
 {
 	struct nv50_program_exec *e = exec(pc);
 
-	assert(val <= 0xffff);
-	e->inst[0] = 0xd0000000 | ((val & 0xffff) << 9);
+	e->inst[0] = 0xd0000000 | (src1_val << 9);
 	e->inst[1] = 0x20000000;
-	e->inst[0] |= dst->hw << 2;
 	set_long(pc, e);
+	e->inst[0] |= dst->hw << 2;
+	if (src0) /* otherwise will add to $a0, which is always 0 */
+		set_addr(e, src0);
 
 	emit(pc, e);
 }
@@ -488,9 +502,10 @@ static struct nv50_reg *
 alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 {
 	int i;
-	struct nv50_reg *a = NULL;
+	struct nv50_reg *a_tgsi = NULL, *a = NULL;
 
 	if (!ref) {
+		/* allocate for TGSI address reg */
 		for (i = 0; i < NV50_SU_MAX_ADDR; ++i) {
 			if (pc->r_addr[i].index >= 0)
 				continue;
@@ -506,6 +521,13 @@ alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 		return NULL;
 	}
 
+	/* Allocate and set an address reg so we can access 'ref'.
+	 *
+	 * If and r_addr has index < 0, it is not reserved for TGSI,
+	 * and index will be the negative of the TGSI addr index the
+	 * value in rhw is relative to, or -256 if rhw is an offset
+	 * from 0. If rhw < 0, the reg has not been initialized.
+	 */
 	for (i = NV50_SU_MAX_ADDR - 1; i >= 0; --i) {
 		if (pc->r_addr[i].index >= 0) /* occupied for TGSI */
 			continue;
@@ -516,17 +538,25 @@ alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 		if (!a && pc->r_addr[i].acc != pc->insn_cur)
 			a = &pc->r_addr[i];
 
-		if (ref->hw - pc->r_addr[i].rhw < 128) {
-		/* alloc'd & suitable */
+		if (ref->hw - pc->r_addr[i].rhw >= 128)
+			continue;
+
+		if ((ref->acc >= 0 && pc->r_addr[i].index == -256) ||
+		    (ref->acc < 0 && -pc->r_addr[i].index == ref->index)) {
 			pc->r_addr[i].acc = pc->insn_cur;
 			return &pc->r_addr[i];
 		}
 	}
 	assert(a);
-	emit_set_addr(pc, a, ref->hw * 4);
 
-	a->rhw = ref->hw % 128;
+	if (ref->acc < 0)
+		a_tgsi = pc->addr[ref->index];
+
+	emit_add_addr_imm(pc, a, a_tgsi, (ref->hw & ~0x7f) * 4);
+
+	a->rhw = ref->hw & ~0x7f;
 	a->acc = pc->insn_cur;
+	a->index = a_tgsi ? -ref->index : -256;
 	return a;
 }
 
@@ -563,23 +593,13 @@ emit_interp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *iv,
 	emit(pc, e);
 }
 
-static INLINE void
-set_addr(struct nv50_program_exec *e, struct nv50_reg *a)
-{
-	assert(!(e->inst[0] & 0x0c000000));
-	assert(!(e->inst[1] & 0x00000004));
-
-	e->inst[0] |= (a->hw & 3) << 26;
-	e->inst[1] |= (a->hw >> 2) << 2;
-}
-
 static void
 set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	 struct nv50_program_exec *e)
 {
 	set_long(pc, e);
 
-	e->param.index = src->hw;
+	e->param.index = src->hw & 127;
 	e->param.shift = s;
 	e->param.mask = m << (s % 32);
 
@@ -1569,7 +1589,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			swz = tgsi_util_get_src_register_swizzle(
 						 &src->SrcRegisterInd, 0);
 			ctor_reg(r, P_CONST,
-				 src->SrcRegisterInd.Index * 4 + swz, c);
+				 src->SrcRegisterInd.Index * 4 + swz,
+				 src->SrcRegister.Index * 4 + c);
 			r->acc = -1;
 			break;
 		case TGSI_FILE_IMMEDIATE:
@@ -2743,7 +2764,7 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 			return FALSE;
 	}
 	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
-		ctor_reg(&pc->r_addr[i], P_ADDR, -1, i + 1);
+		ctor_reg(&pc->r_addr[i], P_ADDR, -256, i + 1);
 
 	return TRUE;
 }
