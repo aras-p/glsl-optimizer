@@ -934,9 +934,9 @@ _mesa_str_checksum(const char *str)
    unsigned int sum, i;
    const char *c;
    sum = i = 1;
-   for (c = str; *c; c++)
+   for (c = str; *c; c++, i++)
       sum += *c * (i % 100);
-   return sum;
+   return sum + i;
 }
 
 
