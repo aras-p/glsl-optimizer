@@ -34,6 +34,7 @@
 
 #include "radeon_bo_gem.h"
 #include "softpipe/sp_texture.h"
+#include "r300_context.h"
 #include <X11/Xutil.h>
 struct radeon_vl_context
 {
