@@ -66,7 +66,6 @@ struct vp_stage_data {
    GLvector4f results[VERT_RESULT_MAX];
 
    GLvector4f ndcCoords;              /**< normalized device coords */
-   GLfloat *clipdistance[MAX_CLIP_PLANES];
    GLubyte *clipmask;                 /**< clip flags */
    GLubyte ormask, andmask;           /**< for clipping */
 };
@@ -78,7 +77,6 @@ struct vp_stage_data {
 static void
 userclip( GLcontext *ctx,
           GLvector4f *clip,
-          GLfloat *clipdistance[MAX_CLIP_PLANES],
           GLubyte *clipmask,
           GLubyte *clipormask,
           GLubyte *clipandmask )
@@ -106,8 +104,6 @@ userclip( GLcontext *ctx,
 	       nr++;
 	       clipmask[i] |= CLIP_USER_BIT;
 	    }
-
-	    clipdistance[p][i] = dp;
 
 	    STRIDE_F(coord, stride);
 	 }
@@ -168,7 +164,6 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
       ctx->VertexProgram.Current->IsPositionInvariant)) {
       userclip( ctx,
 		VB->ClipPtr,
-		store->clipdistance,
 		store->clipmask,
 		&store->ormask,
 		&store->andmask );
@@ -176,9 +171,6 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
       if (store->andmask) {
 	 return GL_FALSE;
       }
-
-      memcpy(VB->ClipDistancePtr, store->clipdistance,
-	     sizeof(store->clipdistance));
    }
 
    VB->ClipAndMask = store->andmask;
@@ -522,10 +514,6 @@ init_vp(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
-   for (i = 0; i < MAX_CLIP_PLANES; i++)
-      store->clipdistance[i] =
-	 (GLfloat *) ALIGN_MALLOC(sizeof(GLfloat) * size, 32);
-
    return GL_TRUE;
 }
 
@@ -548,9 +536,6 @@ dtr(struct tnl_pipeline_stage *stage)
       /* free misc arrays */
       _mesa_vector4f_free( &store->ndcCoords );
       ALIGN_FREE( store->clipmask );
-
-      for (i = 0; i < MAX_CLIP_PLANES; i++)
-	 ALIGN_FREE(store->clipdistance[i]);
 
       FREE( store );
       stage->privatePtr = NULL;

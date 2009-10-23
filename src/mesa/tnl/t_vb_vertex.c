@@ -44,7 +44,6 @@ struct vertex_stage_data {
    GLvector4f eye;
    GLvector4f clip;
    GLvector4f proj;
-   GLfloat *clipdistance[MAX_CLIP_PLANES];
    GLubyte *clipmask;
    GLubyte ormask;
    GLubyte andmask;
@@ -57,12 +56,11 @@ struct vertex_stage_data {
 
 /* This function implements cliptesting for user-defined clip planes.
  * The clipping of primitives to these planes is implemented in
- * t_vp_cliptmp.h.
+ * t_render_clip.h.
  */
 #define USER_CLIPTEST(NAME, SZ)					\
 static void NAME( GLcontext *ctx,				\
 		  GLvector4f *clip,				\
-		  GLfloat *clipdistances[MAX_CLIP_PLANES],	\
 		  GLubyte *clipmask,				\
 		  GLubyte *clipormask,				\
 		  GLubyte *clipandmask )			\
@@ -90,8 +88,6 @@ static void NAME( GLcontext *ctx,				\
 	       clipmask[i] |= CLIP_USER_BIT;			\
 	    }							\
 								\
-	    clipdistances[p][i] = dp;				\
-								\
 	    STRIDE_F(coord, stride);				\
 	 }							\
 								\
@@ -111,9 +107,8 @@ USER_CLIPTEST(userclip3, 3)
 USER_CLIPTEST(userclip4, 4)
 
 static void (*(usercliptab[5]))( GLcontext *,
-				 GLvector4f *,
-				 GLfloat *[MAX_CLIP_PLANES],
-				 GLubyte *, GLubyte *, GLubyte * ) =
+				 GLvector4f *, GLubyte *,
+				 GLubyte *, GLubyte * ) =
 {
    NULL,
    NULL,
@@ -219,16 +214,12 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
    if (ctx->Transform.ClipPlanesEnabled) {
       usercliptab[VB->ClipPtr->size]( ctx,
 				      VB->ClipPtr,
-				      store->clipdistance,
 				      store->clipmask,
 				      &store->ormask,
 				      &store->andmask );
 
       if (store->andmask)
 	 return GL_FALSE;
-
-      memcpy(VB->ClipDistancePtr, store->clipdistance,
-	     sizeof(store->clipdistance));
    }
 
    VB->ClipAndMask = store->andmask;
@@ -245,7 +236,6 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct vertex_stage_data *store;
    GLuint size = VB->Size;
-   unsigned i;
 
    stage->privatePtr = CALLOC(sizeof(*store));
    store = VERTEX_STAGE_DATA(stage);
@@ -257,17 +247,8 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    _mesa_vector4f_alloc( &store->proj, 0, size, 32 );
 
    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
-   for (i = 0; i < MAX_CLIP_PLANES; i++)
-      store->clipdistance[i] =
-	 (GLfloat *) ALIGN_MALLOC(sizeof(GLfloat) * size, 32);
 
    if (!store->clipmask ||
-       !store->clipdistance[0] ||
-       !store->clipdistance[1] ||
-       !store->clipdistance[2] ||
-       !store->clipdistance[3] ||
-       !store->clipdistance[4] ||
-       !store->clipdistance[5] ||
        !store->eye.data ||
        !store->clip.data ||
        !store->proj.data)
@@ -281,16 +262,10 @@ static void dtr( struct tnl_pipeline_stage *stage )
    struct vertex_stage_data *store = VERTEX_STAGE_DATA(stage);
 
    if (store) {
-      unsigned i;
-
       _mesa_vector4f_free( &store->eye );
       _mesa_vector4f_free( &store->clip );
       _mesa_vector4f_free( &store->proj );
       ALIGN_FREE( store->clipmask );
-
-      for (i = 0; i < MAX_CLIP_PLANES; i++)
-	 ALIGN_FREE(store->clipdistance[i]);
-
       FREE(store);
       stage->privatePtr = NULL;
       stage->run = init_vertex_stage;
