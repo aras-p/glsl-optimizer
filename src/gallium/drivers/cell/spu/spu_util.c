@@ -28,7 +28,7 @@ tgsi_util_get_src_register_swizzle(
 
 
 unsigned
-tgsi_util_get_full_src_register_extswizzle(
+tgsi_util_get_full_src_register_swizzle(
    const struct tgsi_full_src_register  *reg,
    unsigned component )
 {
