@@ -51,8 +51,6 @@ struct intel_batchbuffer
    GLubyte *map;
    GLubyte *ptr;
 
-   enum cliprect_mode cliprect_mode;
-
    GLuint size;
 
    /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
@@ -126,21 +124,10 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
    if (intel_batchbuffer_space(batch) < sz)
       intel_batchbuffer_flush(batch);
 
-   if ((cliprect_mode == LOOP_CLIPRECTS ||
-	cliprect_mode == REFERENCES_CLIPRECTS) &&
-       batch->intel->constant_cliprect)
-      cliprect_mode = NO_LOOP_CLIPRECTS;
-
-   if (cliprect_mode != IGNORE_CLIPRECTS) {
-      if (batch->cliprect_mode == IGNORE_CLIPRECTS) {
-	 batch->cliprect_mode = cliprect_mode;
-      } else {
-	 if (batch->cliprect_mode != cliprect_mode) {
-	    intel_batchbuffer_flush(batch);
-	    batch->cliprect_mode = cliprect_mode;
-	 }
-      }
-   }
+   /* All commands should be executed once regardless of cliprect
+    * mode.
+    */
+   (void)cliprect_mode;
 }
 
 /* Here are the crusty old macros, to be removed:
