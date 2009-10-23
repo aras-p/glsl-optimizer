@@ -240,8 +240,13 @@ radeon_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    return GL_FALSE;
 }
 
+
+/**
+ * Create a renderbuffer for a window's color, depth and/or stencil buffer.
+ * Not used for user-created renderbuffers.
+ */
 struct radeon_renderbuffer *
-radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
+radeon_create_renderbuffer(gl_format format, __DRIdrawablePrivate *driDrawPriv)
 {
     struct radeon_renderbuffer *rrb;
 
@@ -252,40 +257,30 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     _mesa_init_renderbuffer(&rrb->base, 0);
     rrb->base.ClassID = RADEON_RB_CLASS;
 
-    /* XXX format junk */
+    rrb->base.Format = format;
+
     switch (format) {
-	case GL_RGB5:
-	    rrb->base.Format = MESA_FORMAT_RGB565;
+        case MESA_FORMAT_RGB565:
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
-	case GL_RGB8:
-	    rrb->base.Format = MESA_FORMAT_ARGB8888;
+        case MESA_FORMAT_XRGB8888:
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
-	case GL_RGBA8:
-	    rrb->base.Format = MESA_FORMAT_ARGB8888;
+	case MESA_FORMAT_ARGB8888:
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGBA;
 	    break;
-	case GL_STENCIL_INDEX8_EXT:
-	    rrb->base.Format = MESA_FORMAT_S8;
+	case MESA_FORMAT_S8:
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_STENCIL_INDEX;
 	    break;
-	case GL_DEPTH_COMPONENT16:
-	    rrb->base.Format = MESA_FORMAT_Z16;
+	case MESA_FORMAT_Z16:
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
             rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
-	case GL_DEPTH_COMPONENT24:
-	    rrb->base.Format = MESA_FORMAT_S8_Z24;
-	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-            rrb->base._BaseFormat = GL_DEPTH_STENCIL;
-	    break;
-	case GL_DEPTH24_STENCIL8_EXT:
-	    rrb->base.Format = MESA_FORMAT_S8_Z24;
+	case MESA_FORMAT_S8_Z24:
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
             rrb->base._BaseFormat = GL_DEPTH_STENCIL;
 	    break;
@@ -296,7 +291,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     }
 
     rrb->dPriv = driDrawPriv;
-    rrb->base.InternalFormat = format;
+    rrb->base.InternalFormat = _mesa_get_format_base_format(format);
 
     rrb->base.Delete = radeon_delete_renderbuffer;
     rrb->base.AllocStorage = radeon_alloc_window_storage;
