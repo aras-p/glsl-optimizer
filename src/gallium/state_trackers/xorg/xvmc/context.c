@@ -195,7 +195,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   vpipe = vl_video_create(screen, ProfileToPipe(mc_type),
+   vpipe = vl_video_create(dpy, scrn, screen, ProfileToPipe(mc_type),
                            FormatToPipe(chroma_format), width, height);
 
    if (!vpipe) {
