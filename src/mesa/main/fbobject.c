@@ -34,6 +34,7 @@
 
 #include "buffers.h"
 #include "context.h"
+#include "enums.h"
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "hash.h"
@@ -1665,7 +1666,8 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    att = _mesa_get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                 "glFramebufferRenderbufferEXT(attachment)");
+                  "glFramebufferRenderbufferEXT(invalid attachment %s)",
+                  _mesa_lookup_enum_by_nr(attachment));
       return;
    }
 
@@ -1673,7 +1675,8 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       rb = _mesa_lookup_renderbuffer(ctx, renderbuffer);
       if (!rb) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glFramebufferRenderbufferEXT(renderbuffer)");
+		     "glFramebufferRenderbufferEXT(non-existant"
+                     " renderbuffer %u)", renderbuffer);
 	 return;
       }
    }
