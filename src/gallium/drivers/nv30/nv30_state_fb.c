@@ -92,7 +92,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		assert(0);
 	}
 
-	if (colour_bits != zeta_bits) {
+	if (colour_bits > zeta_bits) {
 		return FALSE;
 	}
 
