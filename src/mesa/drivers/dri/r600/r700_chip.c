@@ -210,8 +210,8 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 
 extern int getTypeSize(GLenum type);
 static void r700SetupVTXConstants2(GLcontext  * ctx,
-				                   void *       pAos,
-                                   StreamDesc * pStreamDesc)     
+				   void *       pAos,
+                                   StreamDesc * pStreamDesc)
 {
     context_t *context = R700_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;

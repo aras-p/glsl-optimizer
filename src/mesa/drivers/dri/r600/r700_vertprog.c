@@ -580,6 +580,7 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
         unBit >>= 1;
         ++unLoc;
     }
+    context->radeon.tcl.aos_count = context->nNumActiveAos;
 }
 
 void * r700GetActiveVpShaderBo(GLcontext * ctx)

@@ -375,38 +375,38 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 /* start 3d, idle, cb/db flush */
 #define PRE_EMIT_STATE_BUFSZ 10 + 5 + 14
 
-static GLuint r700PredictRenderSize(GLcontext* ctx, GLuint nr_prims)
+static GLuint r700PredictRenderSize(GLcontext* ctx,
+				    const struct _mesa_prim *prim,
+				    const struct _mesa_index_buffer *ib,
+				    GLuint nr_prims)
 {
     context_t *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vp = context->selected_vp;
     GLboolean flushed;
     GLuint dwords, i;
     GLuint state_size;
-    /* pre calculate aos count so state prediction works */
-    context->radeon.tcl.aos_count = _mesa_bitcount(vp->mesa_program->Base.InputsRead);
 
     dwords = PRE_EMIT_STATE_BUFSZ;
-    if (nr_prims)
+    if (ib)
 	    dwords += nr_prims * 14;
     else {
-	    TNLcontext *tnl = TNL_CONTEXT(ctx);
-	    struct vertex_buffer *vb = &tnl->vb;
-
-	    for (i = 0; i < vb->PrimitiveCount; i++)
-		    dwords += vb->Primitive[i].count + 10;
+	    for (i = 0; i < nr_prims; ++i)
+	    {
+		    dwords += prim[i].count + 10;
+	    }
     }
+
     state_size = radeonCountStateEmitSize(&context->radeon);
     flushed = rcommonEnsureCmdBufSpace(&context->radeon,
-            dwords + state_size, __FUNCTION__);
-
+				       dwords + state_size,
+				       __FUNCTION__);
     if (flushed)
-        dwords += radeonCountStateEmitSize(&context->radeon);
+	    dwords += radeonCountStateEmitSize(&context->radeon);
     else
-        dwords += state_size;
+	    dwords += state_size;
 
-    radeon_print(RADEON_RENDER, RADEON_VERBOSE,
-	"%s: total prediction size is %d.\n", __FUNCTION__, dwords);
+    radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s: total prediction size is %d.\n", __FUNCTION__, dwords);
     return dwords;
+
 }
 
 #define CONVERT( TYPE, MACRO ) do {		\
@@ -653,7 +653,6 @@ static void r700SetupStreams2(GLcontext *ctx, const struct gl_client_array *inpu
         }
     }
 
-    context->radeon.tcl.aos_count = context->nNumActiveAos;
     ret = radeon_cs_space_check_with_bo(context->radeon.cmdbuf.cs, 
                                         first_elem(&context->radeon.dma.reserved)->bo, 
                                         RADEON_GEM_DOMAIN_GTT, 0);    
@@ -842,7 +841,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     r700SetupFragmentProgram(ctx);
     r600UpdateTextureState(ctx);
 
-    GLuint emit_end = r700PredictRenderSize(ctx, nr_prims)
+    GLuint emit_end = r700PredictRenderSize(ctx, prim, ib, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
 
     r700SetupIndexBuffer(ctx, ib);
