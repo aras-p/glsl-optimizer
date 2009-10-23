@@ -20,16 +20,16 @@
 
 /* The ITU-R BT.601 conversion matrix for SDTV. */
 static const float bt_601[] = {
-    1.0, 0.0, 1.4075,
-    1.0, -0.3455, -0.7169,
-    1.0, 1.7790, 0.
+    1.0, 0.0, 1.4075,   0,
+    1.0, -0.3455, -0.7169, 0,
+    1.0, 1.7790, 0., 0,
 };
 
 /* The ITU-R BT.709 conversion matrix for HDTV. */
 static const float bt_709[] = {
-    1.0, 0.0, 1.581,
-    1.0, -0.1881, -0.47,
-    1.0, 1.8629, 0.
+    1.0, 0.0, 1.581, 0,
+    1.0, -0.1881, -0.47, 0,
+    1.0, 1.8629, 0., 0,
 };
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
@@ -284,8 +284,8 @@ static void
 setup_video_constants(struct xorg_renderer *r, boolean hdtv)
 {
    struct pipe_context *pipe = r->pipe;
-   const int param_bytes = 9 * sizeof(float);
-   struct pipe_constant_buffer *cbuf = &r->vs_const_buffer;
+   const int param_bytes = 12 * sizeof(float);
+   struct pipe_constant_buffer *cbuf = &r->fs_const_buffer;
 
    pipe_buffer_reference(&cbuf->buffer, NULL);
    cbuf->buffer = pipe_buffer_create(pipe->screen, 16,

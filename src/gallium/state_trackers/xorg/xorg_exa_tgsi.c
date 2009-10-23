@@ -278,6 +278,70 @@ create_vs(struct pipe_context *pipe,
 }
 
 static void *
+create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
+{
+   struct ureg_src y_sampler, u_sampler, v_sampler;
+   struct ureg_src pos;
+   struct ureg_src matrow0, matrow1, matrow2;
+   struct ureg_dst y, u, v, rgb;
+   struct ureg_dst out = ureg_DECL_output(ureg,
+                                          TGSI_SEMANTIC_COLOR,
+                                          0);
+
+   pos = ureg_DECL_fs_input(ureg,
+                            TGSI_SEMANTIC_GENERIC,
+                            0,
+                            TGSI_INTERPOLATE_PERSPECTIVE);
+
+   rgb = ureg_DECL_temporary(ureg);
+   y = ureg_DECL_temporary(ureg);
+   u = ureg_DECL_temporary(ureg);
+   v = ureg_DECL_temporary(ureg);
+
+   y_sampler = ureg_DECL_sampler(ureg, 0);
+   u_sampler = ureg_DECL_sampler(ureg, 1);
+   v_sampler = ureg_DECL_sampler(ureg, 2);
+
+   matrow0 = ureg_DECL_constant(ureg, 0);
+   matrow1 = ureg_DECL_constant(ureg, 1);
+   matrow2 = ureg_DECL_constant(ureg, 2);
+
+   ureg_TEX(ureg, y,
+            TGSI_TEXTURE_2D, pos, y_sampler);
+   ureg_TEX(ureg, u,
+            TGSI_TEXTURE_2D, pos, u_sampler);
+   ureg_TEX(ureg, v,
+            TGSI_TEXTURE_2D, pos, v_sampler);
+
+   ureg_MUL(ureg, rgb,
+            ureg_scalar(ureg_src(y), TGSI_SWIZZLE_X),
+            matrow0);
+   ureg_MAD(ureg, rgb,
+            ureg_scalar(ureg_src(u), TGSI_SWIZZLE_X),
+            matrow1,
+            ureg_src(rgb));
+   ureg_MAD(ureg, rgb,
+            ureg_scalar(ureg_src(v), TGSI_SWIZZLE_X),
+            matrow2,
+            ureg_src(rgb));
+
+   /* rgb.a = 1; */
+   ureg_MOV(ureg, ureg_writemask(rgb, TGSI_WRITEMASK_W),
+            ureg_scalar(matrow0, TGSI_SWIZZLE_X));
+
+   ureg_MOV(ureg, out, ureg_src(rgb));
+
+   ureg_release_temporary(ureg, rgb);
+   ureg_release_temporary(ureg, y);
+   ureg_release_temporary(ureg, u);
+   ureg_release_temporary(ureg, v);
+
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
+
+static void *
 create_fs(struct pipe_context *pipe,
           unsigned fs_traits)
 {
@@ -293,13 +357,14 @@ create_fs(struct pipe_context *pipe,
    boolean is_lingrad = fs_traits & FS_LINGRAD_FILL;
    boolean is_radgrad = fs_traits & FS_RADGRAD_FILL;
    unsigned comp_alpha = fs_traits & FS_COMPONENT_ALPHA;
+   boolean is_yuv = fs_traits & FS_YUV;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
       return 0;
 
-   /* it has to be either a fill or a composite op */
-   debug_assert(is_fill ^ is_composite);
+   /* it has to be either a fill, a composite op or a yuv conversion */
+   debug_assert((is_fill ^ is_composite) ^ is_yuv);
 
    out = ureg_DECL_output(ureg,
                           TGSI_SEMANTIC_COLOR,
@@ -311,8 +376,7 @@ create_fs(struct pipe_context *pipe,
                                      TGSI_SEMANTIC_GENERIC,
                                      0,
                                      TGSI_INTERPOLATE_PERSPECTIVE);
-   } else {
-      debug_assert(is_fill);
+   } else if (is_fill) {
       if (is_solid)
          src_input = ureg_DECL_fs_input(ureg,
                                         TGSI_SEMANTIC_COLOR,
@@ -323,6 +387,9 @@ create_fs(struct pipe_context *pipe,
                                         TGSI_SEMANTIC_POSITION,
                                         0,
                                         TGSI_INTERPOLATE_PERSPECTIVE);
+   } else {
+      debug_assert(is_yuv);
+      return create_yuv_shader(pipe, ureg);
    }
 
    if (has_mask) {
