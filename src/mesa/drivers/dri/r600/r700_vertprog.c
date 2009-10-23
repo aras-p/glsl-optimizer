@@ -515,6 +515,11 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
     unsigned int unBit = mesa_vp->Base.InputsRead;
     context->nNumActiveAos = 0;
 
+    if (mesa_vp->IsPositionInvariant)
+    {
+        unBit |= VERT_BIT_POS;
+    }
+
     while(unBit) 
     {
         if(unBit & 1)
