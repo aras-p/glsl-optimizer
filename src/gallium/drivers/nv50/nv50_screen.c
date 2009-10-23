@@ -38,6 +38,11 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_R16G16B16A16_SNORM:
+		case PIPE_FORMAT_R16G16B16A16_UNORM:
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		case PIPE_FORMAT_R16G16_SNORM:
+		case PIPE_FORMAT_R16G16_UNORM:
 			return TRUE;
 		default:
 			break;
@@ -57,6 +62,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_A8R8G8B8_SRGB:
+		case PIPE_FORMAT_X8R8G8B8_SRGB:
 		case PIPE_FORMAT_A1R5G5B5_UNORM:
 		case PIPE_FORMAT_A4R4G4B4_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM:
@@ -68,6 +75,13 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
+		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z32_FLOAT:
+		case PIPE_FORMAT_R16G16B16A16_SNORM:
+		case PIPE_FORMAT_R16G16B16A16_UNORM:
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		case PIPE_FORMAT_R16G16_SNORM:
+		case PIPE_FORMAT_R16G16_UNORM:
 			return TRUE;
 		default:
 			break;
