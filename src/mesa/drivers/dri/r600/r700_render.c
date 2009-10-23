@@ -550,7 +550,7 @@ static void r700AlignDataToDword(GLcontext *ctx,
     attr->stride = dst_stride;
 }
 
-static void r700SetupStreams2(GLcontext *ctx, const struct gl_client_array *input[], int count)
+static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input[], int count)
 {
 	context_t *context = R700_CONTEXT(ctx);
     GLuint stride;
@@ -825,7 +825,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     _tnl_UpdateFixedFunctionProgram(ctx);
     r700SetVertexFormat(ctx, arrays, max_index + 1);
     /* shaders need to be updated before buffers are validated */
-    r700UpdateShaders2(ctx);
+    r700UpdateShaders(ctx);
     if (!r600ValidateBuffers(ctx))
 	    return GL_FALSE;
 
@@ -845,7 +845,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
                     + context->radeon.cmdbuf.cs->cdw;
 
     r700SetupIndexBuffer(ctx, ib);
-    r700SetupStreams2(ctx, arrays, max_index + 1);
+    r700SetupStreams(ctx, arrays, max_index + 1);
 
     radeonEmitState(radeon);
 
