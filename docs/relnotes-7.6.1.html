@@ -32,6 +32,8 @@ tbd
 
 <h2>New features</h2>
 <ul>
+<li>Upgraded GL/glext.h to version 56, GL/glxext.h to version 25,
+    GL/wglext.h to version 17
 </ul>
 
 
@@ -45,6 +47,9 @@ tbd
 <li>Fake glXQueryDrawable() didn't return good values (bug 24320)
 <li>Fixed AUX buffer breakage (bug 24426).
 <li>Fixed locale-dependent float parsing bug in GLSL compiler (bug 24531)
+<li>Fixed Gallium Cell driver compilation failure.
+<li>Fixed glGetTexLevelParameter(GL_TEXTURE_INTERNAL_FORMAT) query so that
+    it returns the actual compressed format chosen.
 </ul>
 
 </body>

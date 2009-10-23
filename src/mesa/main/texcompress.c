@@ -360,3 +360,53 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
    return addr;
 }
+
+
+/**
+ * Given a compressed MESA_FORMAT_x value, return the corresponding
+ * GLenum for that format.
+ * This is needed for glGetTexLevelParameter(GL_TEXTURE_INTERNAL_FORMAT)
+ * which must return the specific texture format used when the user might
+ * have originally specified a generic compressed format in their
+ * glTexImage2D() call.
+ * For non-compressed textures, we always return the user-specified
+ * internal format unchanged.
+ */
+GLenum
+_mesa_compressed_format_to_glenum(GLcontext *ctx, GLuint mesaFormat)
+{
+   switch (mesaFormat) {
+#if FEATURE_texture_fxt1
+   case MESA_FORMAT_RGB_FXT1:
+      return GL_COMPRESSED_RGB_FXT1_3DFX;
+   case MESA_FORMAT_RGBA_FXT1:
+      return GL_COMPRESSED_RGBA_FXT1_3DFX;
+#endif
+#if FEATURE_texture_s3tc
+   case MESA_FORMAT_RGB_DXT1:
+      return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+   case MESA_FORMAT_RGBA_DXT1:
+      return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+   case MESA_FORMAT_RGBA_DXT3:
+      return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+   case MESA_FORMAT_RGBA_DXT5:
+      return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+      return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+   case MESA_FORMAT_SRGBA_DXT1:
+      return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+   case MESA_FORMAT_SRGBA_DXT3:
+      return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+   case MESA_FORMAT_SRGBA_DXT5:
+      return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+#endif
+#endif
+   default:
+      _mesa_problem(ctx, "Unexpected mesa texture format in"
+                    " _mesa_compressed_format_to_glenum()");
+      return 0;
+   }
+}
+
+

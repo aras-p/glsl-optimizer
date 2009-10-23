@@ -571,7 +571,7 @@ intel_render_texture(GLcontext * ctx,
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
    struct intel_texture_image *intel_image;
-   GLuint imageOffset;
+   GLuint dst_x, dst_y;
 
    (void) fb;
 
@@ -618,11 +618,16 @@ intel_render_texture(GLcontext * ctx,
    }
 
    /* compute offset of the particular 2D image within the texture region */
-   imageOffset = intel_miptree_image_offset(intel_image->mt, att->CubeMapFace,
-                                            att->TextureLevel, att->Zoffset);
+   intel_miptree_get_image_offset(intel_image->mt,
+				  att->TextureLevel,
+				  att->CubeMapFace,
+				  att->Zoffset,
+				  &dst_x, &dst_y);
 
-   /* store that offset in the region */
-   intel_image->mt->region->draw_offset = imageOffset;
+   intel_image->mt->region->draw_offset = (dst_y * intel_image->mt->pitch +
+					   dst_x) * intel_image->mt->cpp;
+   intel_image->mt->region->draw_x = dst_x;
+   intel_image->mt->region->draw_y = dst_y;
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);

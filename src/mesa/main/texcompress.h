@@ -52,6 +52,10 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                GLsizei width, const GLubyte *image);
 
 
+extern GLenum
+_mesa_compressed_format_to_glenum(GLcontext *ctx, GLuint mesaFormat);
+
+
 extern void
 _mesa_init_texture_s3tc( GLcontext *ctx );
 

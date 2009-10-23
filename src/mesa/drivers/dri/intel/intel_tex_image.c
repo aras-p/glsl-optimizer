@@ -200,7 +200,7 @@ try_pbo_upload(struct intel_context *intel,
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
-   GLuint dst_offset, dst_stride;
+   GLuint dst_x, dst_y, dst_stride;
    dri_bo *dst_buffer = intel_region_buffer(intel,
 					    intelImage->mt->region,
 					    INTEL_WRITE_FULL);
@@ -220,10 +220,9 @@ try_pbo_upload(struct intel_context *intel,
    else
       src_stride = width;
 
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level,
-                                           0 /* zslice */);
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
+				  intelImage->face, 0,
+				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->pitch;
 
@@ -232,16 +231,12 @@ try_pbo_upload(struct intel_context *intel,
    LOCK_HARDWARE(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
-      dri_bo *dst_buffer = intel_region_buffer(intel,
-					       intelImage->mt->region,
-					       INTEL_WRITE_FULL);
-
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_stride, src_buffer, src_offset, GL_FALSE,
-			     dst_stride, dst_buffer, dst_offset, GL_FALSE,
-			     0, 0, 0, 0, width, height,
+			     dst_stride, dst_buffer, 0, GL_FALSE,
+			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
 	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
@@ -263,7 +258,7 @@ try_pbo_zcopy(struct intel_context *intel,
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
-   GLuint dst_offset, dst_stride;
+   GLuint dst_x, dst_y, dst_stride;
 
    if (!_mesa_is_bufferobj(unpack->BufferObj) ||
        intel->ctx._ImageTransferState ||
@@ -280,13 +275,14 @@ try_pbo_zcopy(struct intel_context *intel,
    else
       src_stride = width;
 
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level,
-                                           0 /* zslice */);
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
+				  intelImage->face, 0,
+				  &dst_x, &dst_y);
+
    dst_stride = intelImage->mt->pitch;
 
-   if (src_stride != dst_stride || dst_offset != 0 || src_offset != 0) {
+   if (src_stride != dst_stride || dst_x != 0 || dst_y != 0 ||
+       src_offset != 0) {
       DBG("%s: failure 2\n", __FUNCTION__);
       return GL_FALSE;
    }

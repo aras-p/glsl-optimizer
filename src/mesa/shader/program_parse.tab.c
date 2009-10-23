@@ -3394,7 +3394,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1238 "program_parse.y"
     {
-	   if (((yyvsp[(1) - (1)].integer) < 1) || ((unsigned) (yyvsp[(1) - (1)].integer) >= state->limits->MaxParameters)) {
+	   if (((yyvsp[(1) - (1)].integer) < 1) || ((unsigned) (yyvsp[(1) - (1)].integer) > state->limits->MaxParameters)) {
 	      yyerror(& (yylsp[(1) - (1)]), state, "invalid parameter array size");
 	      YYERROR;
 	   } else {

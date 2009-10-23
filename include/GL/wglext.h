@@ -48,9 +48,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number */
-/* wglext.h last updated 2009/08/03 */
+/* wglext.h last updated 2009/09/16 */
 /* Current version at http://www.opengl.org/registry/ */
-#define WGL_WGLEXT_VERSION 15
+#define WGL_WGLEXT_VERSION 17
 
 #ifndef WGL_ARB_buffer_region
 #define WGL_FRONT_COLOR_BUFFER_BIT_ARB 0x00000001
@@ -388,6 +388,14 @@ extern "C" {
 #define WGL_GPU_NUM_SPI_AMD            0x21A8
 #endif
 
+#ifndef NV_video_capture
+#define WGL_UNIQUE_ID_NV               0x20CE
+#define WGL_NUM_VIDEO_CAPTURE_SLOTS_NV 0x20CF
+#endif
+
+#ifndef NV_copy_image
+#endif
+
 
 /*************************************************************/
 
@@ -400,7 +408,7 @@ DECLARE_HANDLE(HPBUFFEREXT);
 #ifndef WGL_NV_present_video
 DECLARE_HANDLE(HVIDEOOUTPUTDEVICENV);
 #endif
-#ifndef WGL_NV_video_out
+#ifndef WGL_NV_video_output
 DECLARE_HANDLE(HPVIDEODEV);
 #endif
 #ifndef WGL_NV_gpu_affinity
@@ -414,6 +422,9 @@ typedef struct _GPU_DEVICE {
     DWORD  Flags;
     RECT   rcVirtualScreen;
 } GPU_DEVICE, *PGPU_DEVICE;
+#endif
+#ifndef WGL_NV_video_capture
+DECLARE_HANDLE(HVIDEOINPUTDEVICENV);
 #endif
 
 #ifndef WGL_ARB_buffer_region
@@ -750,8 +761,8 @@ typedef BOOL (WINAPI * PFNWGLBINDVIDEODEVICENVPROC) (HDC hDC, unsigned int uVide
 typedef BOOL (WINAPI * PFNWGLQUERYCURRENTCONTEXTNVPROC) (int iAttribute, int *piValue);
 #endif
 
-#ifndef WGL_NV_video_out
-#define WGL_NV_video_out 1
+#ifndef WGL_NV_video_output
+#define WGL_NV_video_output 1
 #ifdef WGL_WGLEXT_PROTOTYPES
 extern BOOL WINAPI wglGetVideoDeviceNV (HDC, int, HPVIDEODEV *);
 extern BOOL WINAPI wglReleaseVideoDeviceNV (HPVIDEODEV);
@@ -824,6 +835,30 @@ typedef BOOL (WINAPI * PFNWGLDELETEASSOCIATEDCONTEXTAMDPROC) (HGLRC hglrc);
 typedef BOOL (WINAPI * PFNWGLMAKEASSOCIATEDCONTEXTCURRENTAMDPROC) (HGLRC hglrc);
 typedef HGLRC (WINAPI * PFNWGLGETCURRENTASSOCIATEDCONTEXTAMDPROC) (void);
 typedef VOID (WINAPI * PFNWGLBLITCONTEXTFRAMEBUFFERAMDPROC) (HGLRC dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#endif
+
+#ifndef WGL_NV_video_capture
+#define WGL_NV_video_capture 1
+#ifdef WGL_WGLEXT_PROTOTYPES
+extern BOOL WINAPI wglBindVideoCaptureDeviceNV (UINT, HVIDEOINPUTDEVICENV);
+extern UINT WINAPI wglEnumerateVideoCaptureDevicesNV (HDC, HVIDEOINPUTDEVICENV *);
+extern BOOL WINAPI wglLockVideoCaptureDeviceNV (HDC, HVIDEOINPUTDEVICENV);
+extern BOOL WINAPI wglQueryVideoCaptureDeviceNV (HDC, HVIDEOINPUTDEVICENV, int, int *);
+extern BOOL WINAPI wglReleaseVideoCaptureDeviceNV (HDC, HVIDEOINPUTDEVICENV);
+#endif /* WGL_WGLEXT_PROTOTYPES */
+typedef BOOL (WINAPI * PFNWGLBINDVIDEOCAPTUREDEVICENVPROC) (UINT uVideoSlot, HVIDEOINPUTDEVICENV hDevice);
+typedef UINT (WINAPI * PFNWGLENUMERATEVIDEOCAPTUREDEVICESNVPROC) (HDC hDc, HVIDEOINPUTDEVICENV *phDeviceList);
+typedef BOOL (WINAPI * PFNWGLLOCKVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice);
+typedef BOOL (WINAPI * PFNWGLQUERYVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice, int iAttribute, int *piValue);
+typedef BOOL (WINAPI * PFNWGLRELEASEVIDEOCAPTUREDEVICENVPROC) (HDC hDc, HVIDEOINPUTDEVICENV hDevice);
+#endif
+
+#ifndef WGL_NV_copy_image
+#define WGL_NV_copy_image 1
+#ifdef WGL_WGLEXT_PROTOTYPES
+extern BOOL WINAPI wglCopyImageSubDataNV (HGLRC, GLuint, GLenum, GLint, GLint, GLint, GLint, HGLRC, GLuint, GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei);
+#endif /* WGL_WGLEXT_PROTOTYPES */
+typedef BOOL (WINAPI * PFNWGLCOPYIMAGESUBDATANVPROC) (HGLRC hSrcRC, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, HGLRC hDstRC, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth);
 #endif
 
 
