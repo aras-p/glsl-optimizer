@@ -86,40 +86,36 @@ setup_vertex1(float vertex[2][4], float x, float y, float s, float t)
 
 static struct pipe_buffer *
 setup_vertex_data1(struct xorg_renderer *r,
-                   int srcX, int srcY,  int dstX, int dstY,
-                   int width, int height,
+                   float srcX, float srcY,  float dstX, float dstY,
+                   float width, float height,
                    struct pipe_texture *src, float *src_matrix)
 {
-   float s0, t0, s1, t1, stmp, ttmp;
+   float s0, t0, s1, t1;
+   float pt0[2], pt1[2];
 
-   s0 = srcX / src->width[0];
-   s1 = srcX + width / src->width[0];
-   t0 = srcY / src->height[0];
-   t1 = srcY + height / src->height[0];
+   pt0[0] = srcX;
+   pt0[1] = srcY;
+   pt1[0] = (srcX + width);
+   pt1[1] = (srcY + height);
 
    if (src_matrix) {
-      /* 1st vertex */
-      map_point(src_matrix, s0, t0, &stmp, &ttmp);
-      setup_vertex1(r->vertices2[0], dstX, dstY, stmp, ttmp);
-      /* 2nd vertex */
-      map_point(src_matrix, s1, t0, &stmp, &ttmp);
-      setup_vertex1(r->vertices2[1], dstX + width, dstY, stmp, ttmp);
-      /* 3rd vertex */
-      map_point(src_matrix, s1, t1, &stmp, &ttmp);
-      setup_vertex1(r->vertices2[2], dstX + width, dstY + height, stmp, ttmp);
-      /* 4th vertex */
-      map_point(src_matrix, s0, t1, &stmp, &ttmp);
-      setup_vertex1(r->vertices2[3], dstX, dstY + height, stmp, ttmp);
-   } else {
-      /* 1st vertex */
-      setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
-      /* 2nd vertex */
-      setup_vertex1(r->vertices2[1], dstX + width, dstY, s1, t0);
-      /* 3rd vertex */
-      setup_vertex1(r->vertices2[2], dstX + width, dstY + height, s1, t1);
-      /* 4th vertex */
-      setup_vertex1(r->vertices2[3], dstX, dstY + height, s0, t1);
+      map_point(src_matrix, pt0[0], pt0[1], &pt0[0], &pt0[1]);
+      map_point(src_matrix, pt1[0], pt1[1], &pt1[0], &pt1[1]);
    }
+
+   s0 =  pt0[0] / src->width[0];
+   s1 =  pt1[0] / src->width[0];
+   t0 =  pt0[1] / src->height[0];
+   t1 =  pt1[1] / src->height[0];
+
+   /* 1st vertex */
+   setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
+   /* 2nd vertex */
+   setup_vertex1(r->vertices2[1], dstX + width, dstY, s1, t0);
+   /* 3rd vertex */
+   setup_vertex1(r->vertices2[2], dstX + width, dstY + height, s1, t1);
+   /* 4th vertex */
+   setup_vertex1(r->vertices2[3], dstX, dstY + height, s0, t1);
 
    return pipe_user_buffer_create(r->pipe->screen,
                                   r->vertices2,
@@ -168,68 +164,60 @@ setup_vertex2(float vertex[3][4], float x, float y,
 
 static struct pipe_buffer *
 setup_vertex_data2(struct xorg_renderer *r,
-                   int srcX, int srcY, int maskX, int maskY,
-                   int dstX, int dstY, int width, int height,
+                   float srcX, float srcY, float maskX, float maskY,
+                   float dstX, float dstY, float width, float height,
                    struct pipe_texture *src,
                    struct pipe_texture *mask,
                    float *src_matrix, float *mask_matrix)
 {
-   float st0[4], st1[4];
-   float pt0[2], pt1[2];
+   float src_s0, src_t0, src_s1, src_t1;
+   float mask_s0, mask_t0, mask_s1, mask_t1;
+   float spt0[2], spt1[2];
+   float mpt0[2], mpt1[2];
 
-   st0[0] = srcX / src->width[0];
-   st0[1] = srcY / src->height[0];
-   st0[2] = srcX + width / src->width[0];
-   st0[3] = srcY + height / src->height[0];
+   spt0[0] = srcX;
+   spt0[1] = srcY;
+   spt1[0] = srcX + width;
+   spt1[1] = srcY + height;
 
-   st1[0] = maskX / mask->width[0];
-   st1[1] = maskY / mask->height[0];
-   st1[2] = maskX + width / mask->width[0];
-   st1[3] = maskY + height / mask->height[0];
+   mpt0[0] = maskX;
+   mpt0[1] = maskY;
+   mpt1[0] = maskX + width;
+   mpt1[1] = maskY + height;
 
-   if (src_matrix || mask_matrix) {
-      /* 1st vertex */
-      map_point(src_matrix, st0[0], st0[1],
-                pt0 + 0, pt0 + 1);
-      map_point(mask_matrix, st1[0], st1[1],
-                pt1 + 0, pt1 + 1);
-      setup_vertex2(r->vertices3[0], dstX, dstY,
-                    pt0[0], pt0[1], pt1[0], pt1[1]);
-      /* 2nd vertex */
-      map_point(src_matrix, st0[2], st0[1],
-                pt0 + 0, pt0 + 1);
-      map_point(mask_matrix, st1[2], st1[1],
-                pt1 + 0, pt1 + 1);
-      setup_vertex2(r->vertices3[1], dstX + width, dstY,
-                    pt0[0], pt0[1], pt1[0], pt1[1]);
-      /* 3rd vertex */
-      map_point(src_matrix, st0[2], st0[3],
-                pt0 + 0, pt0 + 1);
-      map_point(mask_matrix, st1[2], st1[3],
-                pt1 + 0, pt1 + 1);
-      setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
-                    pt0[0], pt0[1], pt1[0], pt1[1]);
-      /* 4th vertex */
-      map_point(src_matrix, st0[0], st0[3],
-                pt0 + 0, pt0 + 1);
-      map_point(mask_matrix, st1[0], st1[3],
-                pt1 + 0, pt1 + 1);
-      setup_vertex2(r->vertices3[3], dstX, dstY + height,
-                    pt0[0], pt0[1], pt1[0], pt1[1]);
-   } else {
-      /* 1st vertex */
-      setup_vertex2(r->vertices3[0], dstX, dstY,
-                    st0[0], st0[1], st1[0], st1[1]);
-      /* 2nd vertex */
-      setup_vertex2(r->vertices3[1], dstX + width, dstY,
-                    st0[2], st0[1], st1[2], st1[1]);
-      /* 3rd vertex */
-      setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
-                    st0[2], st0[3], st1[2], st1[3]);
-      /* 4th vertex */
-      setup_vertex2(r->vertices3[3], dstX, dstY + height,
-                    st0[0], st0[3], st1[0], st1[3]);
+   if (src_matrix) {
+      map_point(src_matrix, spt0[0], spt0[1], &spt0[0], &spt0[1]);
+      map_point(src_matrix, spt1[0], spt1[1], &spt1[0], &spt1[1]);
    }
+
+   if (mask_matrix) {
+      map_point(mask_matrix, mpt0[0], mpt0[1], &mpt0[0], &mpt0[1]);
+      map_point(mask_matrix, mpt1[0], mpt1[1], &mpt1[0], &mpt1[1]);
+   }
+
+   src_s0 = spt0[0] / src->width[0];
+   src_t0 = spt0[1] / src->height[0];
+   src_s1 = spt1[0] / src->width[0];
+   src_t1 = spt1[1] / src->height[0];
+
+   mask_s0 = mpt0[0] / mask->width[0];
+   mask_t0 = mpt0[1] / mask->height[0];
+   mask_s1 = mpt1[0] / mask->width[0];
+   mask_t1 = mpt1[1] / mask->height[0];
+
+   /* 1st vertex */
+   setup_vertex2(r->vertices3[0], dstX, dstY,
+                 src_s0, src_t0, mask_s0, mask_t0);
+   /* 2nd vertex */
+   setup_vertex2(r->vertices3[1], dstX + width, dstY,
+                 src_s1, src_t0, mask_s1, mask_t0);
+   /* 3rd vertex */
+   setup_vertex2(r->vertices3[2], dstX + width, dstY + height,
+                 src_s1, src_t1, mask_s1, mask_t1);
+   /* 4th vertex */
+   setup_vertex2(r->vertices3[3], dstX, dstY + height,
+                 src_s0, src_t1, mask_s0, mask_t1);
+
 
    return pipe_user_buffer_create(r->pipe->screen,
                                   r->vertices3,
@@ -804,6 +792,21 @@ void renderer_draw_textures(struct xorg_renderer *r,
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_buffer *buf = 0;
+
+#if 0
+   if (src_matrix) {
+      debug_printf("src_matrix = \n");
+      debug_printf("%f, %f, %f\n", src_matrix[0], src_matrix[1], src_matrix[2]);
+      debug_printf("%f, %f, %f\n", src_matrix[3], src_matrix[4], src_matrix[5]);
+      debug_printf("%f, %f, %f\n", src_matrix[6], src_matrix[7], src_matrix[8]);
+   }
+   if (mask_matrix) {
+      debug_printf("mask_matrix = \n");
+      debug_printf("%f, %f, %f\n", mask_matrix[0], mask_matrix[1], mask_matrix[2]);
+      debug_printf("%f, %f, %f\n", mask_matrix[3], mask_matrix[4], mask_matrix[5]);
+      debug_printf("%f, %f, %f\n", mask_matrix[6], mask_matrix[7], mask_matrix[8]);
+   }
+#endif
 
    switch(num_textures) {
    case 1:

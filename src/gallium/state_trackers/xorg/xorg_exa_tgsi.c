@@ -62,7 +62,7 @@ src_in_mask(struct ureg_program *ureg,
    }
    else {
       ureg_MUL(ureg, dst, src,
-               ureg_scalar(mask, TGSI_SWIZZLE_W));
+               ureg_scalar(mask, TGSI_SWIZZLE_X));
    }
 }
 

@@ -74,7 +74,7 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 	assert(*bbp == 16);
 	break;
     case 8:
-	*format = PIPE_FORMAT_A8_UNORM;
+	*format = PIPE_FORMAT_L8_UNORM;
 	assert(*bbp == 8);
 	break;
     case 4:
@@ -145,6 +145,11 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     if (!transfer)
 	return FALSE;
 
+#if DEBUG_PRINT
+    debug_printf("------ ExaDownloadFromScreen(%d, %d, %d, %d, %d)\n",
+                 x, y, w, h, dst_pitch);
+#endif
+
     util_copy_rect((unsigned char*)dst, &priv->tex->block, dst_pitch, 0, 0,
 		   w, h, exa->scrn->transfer_map(exa->scrn, transfer),
 		   transfer->stride, 0, 0);
@@ -173,6 +178,11 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
 					   PIPE_TRANSFER_WRITE, x, y, w, h);
     if (!transfer)
 	return FALSE;
+
+#if DEBUG_PRINT
+    debug_printf("++++++ ExaUploadToScreen(%d, %d, %d, %d, %d)\n",
+                 x, y, w, h, src_pitch);
+#endif
 
     util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
 		   &priv->tex->block, transfer->stride, 0, 0, w, h,
@@ -501,7 +511,10 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pDst);
 
 #if DEBUG_PRINT
-   debug_printf("\tExaComposite(src[%d,%d], mask=[%d, %d], dst=[%d, %d], dim=[%d, %d])\n", srcX, srcY, maskX, maskY, dstX, dstY, width, height);
+   debug_printf("\tExaComposite(src[%d,%d], mask=[%d, %d], dst=[%d, %d], dim=[%d, %d])\n",
+                srcX, srcY, maskX, maskY, dstX, dstY, width, height);
+   debug_printf("\t   Num bound samplers = %d\n",
+                exa->num_bound_samplers);
 #endif
 
    xorg_composite(exa, priv, srcX, srcY, maskX, maskY,
