@@ -135,10 +135,6 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_BGNSUB: return RC_OPCODE_BGNSUB; */
      /* case TGSI_OPCODE_ENDLOOP2: return RC_OPCODE_ENDLOOP2; */
      /* case TGSI_OPCODE_ENDSUB: return RC_OPCODE_ENDSUB; */
-     /* case TGSI_OPCODE_NOISE1: return RC_OPCODE_NOISE1; */
-     /* case TGSI_OPCODE_NOISE2: return RC_OPCODE_NOISE2; */
-     /* case TGSI_OPCODE_NOISE3: return RC_OPCODE_NOISE3; */
-     /* case TGSI_OPCODE_NOISE4: return RC_OPCODE_NOISE4; */
         case TGSI_OPCODE_NOP: return RC_OPCODE_NOP;
                                         /* gap */
      /* case TGSI_OPCODE_NRM4: return RC_OPCODE_NRM4; */

@@ -1807,22 +1807,6 @@ exec_instruction(
       /* no-op */
       break;
 
-   case TGSI_OPCODE_NOISE1:
-      ASSERT( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE2:
-      ASSERT( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE3:
-      ASSERT( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE4:
-      ASSERT( 0 );
-      break;
-
    case TGSI_OPCODE_NOP:
       break;
 

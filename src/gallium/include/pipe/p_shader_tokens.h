@@ -266,10 +266,7 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_BGNSUB              100
 #define TGSI_OPCODE_ENDLOOP             101
 #define TGSI_OPCODE_ENDSUB              102
-#define TGSI_OPCODE_NOISE1              103
-#define TGSI_OPCODE_NOISE2              104
-#define TGSI_OPCODE_NOISE3              105
-#define TGSI_OPCODE_NOISE4              106
+                                /* gap */
 #define TGSI_OPCODE_NOP                 107
                                 /* gap */
 #define TGSI_OPCODE_NRM4                112

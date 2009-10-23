@@ -3223,22 +3223,6 @@ exec_instruction(
       /* no-op */
       break;
 
-   case TGSI_OPCODE_NOISE1:
-      assert( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE2:
-      assert( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE3:
-      assert( 0 );
-      break;
-
-   case TGSI_OPCODE_NOISE4:
-      assert( 0 );
-      break;
-
    case TGSI_OPCODE_NOP:
       break;
 

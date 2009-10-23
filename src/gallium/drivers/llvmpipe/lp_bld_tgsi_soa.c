@@ -1386,15 +1386,6 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_NOISE1:
-   case TGSI_OPCODE_NOISE2:
-   case TGSI_OPCODE_NOISE3:
-   case TGSI_OPCODE_NOISE4:
-      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         dst0[chan_index] = bld->base.zero;
-      }
-      break;
-
    case TGSI_OPCODE_NOP:
       break;
 

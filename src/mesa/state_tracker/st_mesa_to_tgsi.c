@@ -481,14 +481,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_MOV;
    case OPCODE_MUL:
       return TGSI_OPCODE_MUL;
-   case OPCODE_NOISE1:
-      return TGSI_OPCODE_NOISE1;
-   case OPCODE_NOISE2:
-      return TGSI_OPCODE_NOISE2;
-   case OPCODE_NOISE3:
-      return TGSI_OPCODE_NOISE3;
-   case OPCODE_NOISE4:
-      return TGSI_OPCODE_NOISE4;
    case OPCODE_NOP:
       return TGSI_OPCODE_NOP;
    case OPCODE_NRM3:
@@ -615,6 +607,21 @@ compile_instruction(
                  dst, num_dst, 
                  src, num_src );
       break;
+
+   case OPCODE_NOISE1:
+   case OPCODE_NOISE2:
+   case OPCODE_NOISE3:
+   case OPCODE_NOISE4:
+      /* At some point, a motivated person could add a better
+       * implementation of noise.  Currently not even the nvidia
+       * binary drivers do anything more than this.  In any case, the
+       * place to do this is in the GL state tracker, not the poor
+       * driver.
+       */
+      ureg_MOV( ureg, dst[0], ureg_imm1f(ureg, 0.5) );
+      break;
+		 
+
 
    default:
       ureg_insn( ureg, 
