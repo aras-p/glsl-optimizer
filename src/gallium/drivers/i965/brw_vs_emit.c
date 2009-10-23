@@ -30,9 +30,6 @@
   */
             
 
-#include "main/macros.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
 #include "pipe/p_shader_tokens.h"
 #include "brw_context.h"
 #include "brw_vs.h"

@@ -33,9 +33,9 @@
 #ifndef BRWCONTEXT_INC
 #define BRWCONTEXT_INC
 
-#include "intel_context.h"
 #include "brw_structs.h"
-#include "main/imports.h"
+#include "brw_winsys.h"
+#include "pipe/p_state.h"
 
 
 /* Glossary:
@@ -119,6 +119,19 @@
 
 struct brw_context;
 
+#define PIPE_NEW_DEPTH_STENCIL_ALPHA    0x1
+#define PIPE_NEW_RAST                   0x2
+#define PIPE_NEW_BLEND                  0x2
+#define PIPE_NEW_VIEWPORT               0x2
+#define PIPE_NEW_FRAMEBUFFER            0x2
+#define PIPE_NEW_VERTEX_BUFFER          0x2
+#define PIPE_NEW_VERTEX_ELEMENT         0x2
+#define PIPE_NEW_FRAGMENT_SHADER        0x2
+#define PIPE_NEW_VERTEX_SHADER          0x2
+#define PIPE_NEW_FRAGMENT_CONSTS        0x2
+#define PIPE_NEW_VERTEX_CONSTS          0x2
+
+
 #define BRW_NEW_URB_FENCE               0x1
 #define BRW_NEW_FRAGMENT_PROGRAM        0x2
 #define BRW_NEW_VERTEX_PROGRAM          0x4
@@ -156,26 +169,23 @@ struct brw_state_flags {
 };
 
 
-/** Subclass of Mesa vertex program */
 struct brw_vertex_program {
-   struct gl_vertex_program program;
+   const struct tgsi_token *tokens;
    GLuint id;
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
 };
 
 
 /** Subclass of Mesa fragment program */
 struct brw_fragment_program {
-   struct gl_fragment_program program;
+   const struct tgsi_token *tokens;
+
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
-   GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
+   GLboolean isGLSL;  /**< any IF/LOOP/CONT/BREAK instructions */
 
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
-
-   /** for debugging, which texture units are referenced */
-   GLbitfield tex_units_used;
 };
 
 
@@ -244,7 +254,7 @@ struct brw_vs_prog_data {
 /* Size == 0 if output either not written, or always [0,0,0,1]
  */
 struct brw_vs_ouput_sizes {
-   GLubyte output_size[VERT_RESULT_MAX];
+   GLubyte output_size[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 
@@ -312,10 +322,10 @@ struct brw_cache_item {
    GLuint hash;
    GLuint key_size;		/* for variable-sized keys */
    const void *key;
-   dri_bo **reloc_bufs;
+   struct brw_winsys_buffer **reloc_bufs;
    GLuint nr_reloc_bufs;
 
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    GLuint data_size;
 
    struct brw_cache_item *next;
@@ -336,7 +346,7 @@ struct brw_cache {
    /* Record of the last BOs chosen for each cache_id.  Used to set
     * brw->state.dirty.cache when a new cache item is chosen.
     */
-   dri_bo *last_bo[BRW_MAX_CACHE];
+   struct brw_winsys_buffer *last_bo[BRW_MAX_CACHE];
 };
 
 
@@ -384,56 +394,22 @@ struct brw_cached_batch_item {
 /* Protect against a future where VERT_ATTRIB_MAX > 32.  Wouldn't life
  * be easier if C allowed arrays of packed elements?
  */
-#define ATTRIB_BIT_DWORDS  ((VERT_ATTRIB_MAX+31)/32)
+#define VS_INPUT_BITMASK_DWORDS  ((PIPE_MAX_SHADER_INPUTS+31)/32)
 
-struct brw_vertex_element {
-   const struct gl_client_array *glarray;
-
-   /** The corresponding Mesa vertex attribute */
-   gl_vert_attrib attrib;
-   /** Size of a complete element */
-   GLuint element_size;
-   /** Number of uploaded elements for this input. */
-   GLuint count;
-   /** Byte stride between elements in the uploaded array */
-   GLuint stride;
-   /** Offset of the first element within the buffer object */
-   unsigned int offset;
-   /** Buffer object containing the uploaded vertex data */
-   dri_bo *bo;
-};
 
 
 
 struct brw_vertex_info {
-   GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
+   GLuint sizes[VS_INPUT_BITMASK_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 
-
-
-
-/* Cache for TNL programs.
- */
-struct brw_tnl_cache_item {
-   GLuint hash;
-   void *key;
-   void *data;
-   struct brw_tnl_cache_item *next;
-};
-
-struct brw_tnl_cache {
-   struct brw_tnl_cache_item **items;
-   GLuint size, n_items;
-};
 
 struct brw_query_object {
-   struct gl_query_object Base;
-
    /** Doubly linked list of active query objects in the context. */
    struct brw_query_object *prev, *next;
 
    /** Last query BO associated with this query. */
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    /** First index in bo with query data for this object. */
    int first_index;
    /** Last index in bo with query data for this object. */
@@ -445,21 +421,28 @@ struct brw_query_object {
 
 
 /**
- * brw_context is derived from intel_context.
+ * brw_context is derived from pipe_context
  */
 struct brw_context 
 {
+   struct pipe_context *pipe;
+   struct pipe_screen *screen;
+   
+   struct brw_winsys_screen *sws;
+
    GLuint primitive;
 
    GLboolean emit_state_always;
    GLboolean no_batch_wrap;
 
+   /* Active vertex program: 
+    */
+   const struct gl_vertex_program *vertex_program;
+   const struct gl_fragment_program *fragment_program;
+   struct pipe_framebuffer_state fb;
+
    struct {
       struct brw_state_flags dirty;
-
-      GLuint nr_color_regions;
-      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
-      struct intel_region *depth_region;
 
       /**
        * List of buffers accumulated in brw_validate_state to receive
@@ -471,7 +454,7 @@ struct brw_context
        * consisting of the vertex buffers, pipelined state pointers,
        * the CURBE, the depth buffer, and a query BO.
        */
-      dri_bo *validated_bos[VERT_ATTRIB_MAX + 16];
+      struct brw_winsys_buffer *validated_bos[PIPE_MAX_SHADER_INPUTS + 16];
       int validated_bo_count;
    } state;
 
@@ -480,18 +463,14 @@ struct brw_context
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
-      struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
+      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      unsigned num_vertex_element;
+      unsigned num_vertex_buffer;
 
-      struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
-      GLuint nr_enabled;
-
-#define BRW_NR_UPLOAD_BUFS 17
-#define BRW_UPLOAD_INIT_SIZE (128*1024)
-
-      struct {
-	 dri_bo *bo;
-	 GLuint offset;
-      } upload;
+      struct u_upload_mgr *upload_vertex;
+      struct u_upload_mgr *upload_index;
+      
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
@@ -509,7 +488,7 @@ struct brw_context
       const struct _mesa_index_buffer *ib;
 
       /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
-      dri_bo *bo;
+      struct brw_winsys_buffer *bo;
       unsigned int offset;
       unsigned int size;
       /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
@@ -518,16 +497,6 @@ struct brw_context
        */
       unsigned int start_vertex_offset;
    } ib;
-
-   /* Active vertex program: 
-    */
-   const struct gl_vertex_program *vertex_program;
-   const struct gl_fragment_program *fragment_program;
-
-
-   /* For populating the gtt:
-    */
-   GLuint next_free_page;
 
 
    /* BRW_NEW_URB_ALLOCATIONS:
@@ -544,12 +513,6 @@ struct brw_context
       GLuint nr_clip_entries;
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
-
-/*       GLuint vs_size; */
-/*       GLuint gs_size; */
-/*       GLuint clip_size; */
-/*       GLuint sf_size; */
-/*       GLuint cs_size; */
 
       GLuint vs_start;
       GLuint gs_start;
@@ -570,7 +533,7 @@ struct brw_context
       GLuint vs_size;
       GLuint total_size;
 
-      dri_bo *curbe_bo;
+      struct brw_winsys_buffer *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
       GLuint curbe_offset;
       /** Offset within curbe_bo of space for next curbe entry */
@@ -588,12 +551,12 @@ struct brw_context
    struct {
       struct brw_vs_prog_data *prog_data;
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      dri_bo *bind_bo;
-      dri_bo *surf_bo[BRW_VS_MAX_SURF];
+      struct brw_winsys_buffer *bind_bo;
+      struct brw_winsys_buffer *surf_bo[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
 
@@ -601,25 +564,25 @@ struct brw_context
       struct brw_gs_prog_data *prog_data;
 
       GLboolean prog_active;
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
    } gs;
 
    struct {
       struct brw_clip_prog_data *prog_data;
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
-      dri_bo *vp_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
+      struct brw_winsys_buffer *vp_bo;
    } clip;
 
 
    struct {
       struct brw_sf_prog_data *prog_data;
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
-      dri_bo *vp_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
+      struct brw_winsys_buffer *vp_bo;
    } sf;
 
    struct {
@@ -629,38 +592,38 @@ struct brw_context
       /** Input sizes, calculated from active vertex program.
        * One bit per fragment program input attribute.
        */
-      GLbitfield input_size_masks[4];
+      //GLbitfield input_size_masks[4];
 
       /** Array of surface default colors (texture border color) */
-      dri_bo *sdc_bo[BRW_MAX_TEX_UNIT];
+      struct brw_winsys_buffer *sdc_bo[BRW_MAX_TEX_UNIT];
 
       GLuint render_surf;
       GLuint nr_surfaces;      
 
       GLuint max_threads;
-      dri_bo *scratch_bo;
+      struct brw_winsys_buffer *scratch_bo;
 
       GLuint sampler_count;
-      dri_bo *sampler_bo;
+      struct brw_winsys_buffer *sampler_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      dri_bo *bind_bo;
-      dri_bo *surf_bo[BRW_WM_MAX_SURF];
+      struct brw_winsys_buffer *bind_bo;
+      struct brw_winsys_buffer *surf_bo[PIPE_MAX_COLOR_BUFS];
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
    } wm;
 
 
    struct {
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
-      dri_bo *vp_bo;
+      struct brw_winsys_buffer *prog_bo;
+      struct brw_winsys_buffer *state_bo;
+      struct brw_winsys_buffer *vp_bo;
    } cc;
 
    struct {
       struct brw_query_object active_head;
-      dri_bo *bo;
+      struct brw_winsys_buffer *bo;
       int index;
       GLboolean active;
    } query;
@@ -679,12 +642,6 @@ struct brw_context
  */
 void brwInitVtbl( struct brw_context *brw );
 
-/*======================================================================
- * brw_context.c
- */
-GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
-			    void *sharedContextPrivate);
 
 /*======================================================================
  * brw_queryobj.c
@@ -697,7 +654,7 @@ void brw_emit_query_end(struct brw_context *brw);
 /*======================================================================
  * brw_state_dump.c
  */
-void brw_debug_batch(struct intel_context *intel);
+void brw_debug_batch(struct brw_context *intel);
 
 /*======================================================================
  * brw_tex.c
@@ -706,9 +663,9 @@ void brw_validate_textures( struct brw_context *brw );
 
 
 /*======================================================================
- * brw_program.c
+ * brw_pipe_shader.c
  */
-void brwInitFragProgFuncs( struct dd_function_table *functions );
+void brw_init_shader_funcs( struct brw_context *brw );
 
 
 /* brw_urb.c

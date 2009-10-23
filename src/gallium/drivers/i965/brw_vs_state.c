@@ -34,7 +34,6 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "main/macros.h"
 
 struct brw_vs_unit_key {
    unsigned int total_grf;
@@ -51,8 +50,6 @@ struct brw_vs_unit_key {
 static void
 vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
@@ -79,11 +76,11 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    }
 }
 
-static dri_bo *
+static struct brw_winsys_buffer *
 vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
    struct brw_vs_unit_state vs;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    int chipset_max_threads;
 
    memset(&vs, 0, sizeof(vs));
@@ -163,7 +160,7 @@ static void prepare_vs_unit(struct brw_context *brw)
 
    vs_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->vs.state_bo);
+   brw->sws->bo_unreference(brw->vs.state_bo);
    brw->vs.state_bo = brw_search_cache(&brw->cache, BRW_VS_UNIT,
 				       &key, sizeof(key),
 				       &brw->vs.prog_bo, 1,

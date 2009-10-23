@@ -33,6 +33,7 @@
 #ifndef BRW_STRUCTS_H
 #define BRW_STRUCTS_H
 
+#include "brw_types.h"
 
 /** Number of general purpose registers (VS, WM, etc) */
 #define BRW_MAX_GRF 128

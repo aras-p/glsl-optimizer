@@ -26,15 +26,6 @@
  **************************************************************************/
 
 
-#include "main/glheader.h"
-#include "main/context.h"
-#include "main/state.h"
-#include "main/enums.h"
-#include "tnl/tnl.h"
-#include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
-
 #include "brw_draw.h"
 #include "brw_defines.h"
 #include "brw_context.h"
@@ -67,7 +58,6 @@ static uint32_t prim_to_hw_prim[PIPE_PRIM_POLYGON+1] = {
  */
 static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 {
-   GLcontext *ctx = &brw->intel.ctx;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
@@ -110,7 +100,6 @@ static void brw_emit_prim(struct brw_context *brw,
 			  uint32_t hw_prim)
 {
    struct brw_3d_primitive prim_packet;
-   struct intel_context *intel = &brw->intel;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
@@ -163,7 +152,7 @@ static void brw_merge_inputs( struct brw_context *brw,
    GLuint i;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      dri_bo_unreference(brw->vb.inputs[i].bo);
+      brw->sws->bo_unreference(brw->vb.inputs[i].bo);
 
    memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
@@ -185,7 +174,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
-static GLboolean brw_try_draw_prims( GLcontext *ctx,
+static GLboolean brw_try_draw_prims( struct brw_context *brw,
 				     const struct gl_client_array *arrays[],
 				     const struct _mesa_prim *prim,
 				     GLuint nr_prims,
@@ -193,7 +182,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 				     GLuint min_index,
 				     GLuint max_index )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
    GLboolean warn = GL_FALSE;
@@ -241,7 +229,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return 0;
 }
 
-void brw_draw_prims( GLcontext *ctx,
+void brw_draw_prims( struct brw_context *brw,
 		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
@@ -274,7 +262,6 @@ void brw_draw_prims( GLcontext *ctx,
 
 void brw_draw_init( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
 
    /* Register our drawing function: 
@@ -287,15 +274,15 @@ void brw_draw_destroy( struct brw_context *brw )
    int i;
 
    if (brw->vb.upload.bo != NULL) {
-      dri_bo_unreference(brw->vb.upload.bo);
+      brw->sws->bo_unreference(brw->vb.upload.bo);
       brw->vb.upload.bo = NULL;
    }
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      dri_bo_unreference(brw->vb.inputs[i].bo);
+      brw->sws->bo_unreference(brw->vb.inputs[i].bo);
       brw->vb.inputs[i].bo = NULL;
    }
 
-   dri_bo_unreference(brw->ib.bo);
+   brw->sws->bo_unreference(brw->ib.bo);
    brw->ib.bo = NULL;
 }

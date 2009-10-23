@@ -6,7 +6,6 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
    /* If we don't require strict OpenGL conformance, never 

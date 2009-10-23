@@ -33,13 +33,9 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_util.h"
-#include "main/macros.h"
-#include "main/enums.h"
 
 static void prepare_cc_vp( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_cc_viewport ccv;
 
    memset(&ccv, 0, sizeof(ccv));
@@ -48,13 +44,13 @@ static void prepare_cc_vp( struct brw_context *brw )
    ccv.min_depth = ctx->Viewport.Near;
    ccv.max_depth = ctx->Viewport.Far;
 
-   dri_bo_unreference(brw->cc.vp_bo);
+   brw->sws->bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
 }
 
 const struct brw_tracked_state brw_cc_vp = {
    .dirty = {
-      .mesa = _NEW_VIEWPORT,
+      .mesa = PIPE_NEW_VIEWPORT,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
@@ -71,8 +67,8 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    memset(key, 0, sizeof(*key));
    
-   key->dsa = brw->curr.dsa.base;
-   key->blend = brw->curr.blend.base;
+   key->dsa = brw->dsa;
+   key->blend = brw->blend;
 
    /* Clear non-respected values:
     */
@@ -82,11 +78,11 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 /**
  * Creates the state cache entry for the given CC unit key.
  */
-static dri_bo *
+static struct brw_winsys_buffer *
 cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    struct brw_cc_unit_state cc;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
 
    memset(&cc, 0, sizeof(cc));
 
@@ -124,7 +120,7 @@ static void prepare_cc_unit( struct brw_context *brw )
 
    cc_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->cc.state_bo);
+   brw->sws->bo_unreference(brw->cc.state_bo);
    brw->cc.state_bo = brw_search_cache(&brw->cache, BRW_CC_UNIT,
 				       &key, sizeof(key),
 				       &brw->cc.vp_bo, 1,

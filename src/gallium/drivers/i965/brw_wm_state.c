@@ -60,10 +60,8 @@ struct brw_wm_unit_key {
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    const struct brw_fragment_program *bfp = (struct brw_fragment_program *) fp;
-   struct intel_context *intel = &brw->intel;
 
    memset(key, 0, sizeof(*key));
 
@@ -121,7 +119,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* temporary sanity check assertion */
    ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
 
-   /* _NEW_DEPTH */
+   /* _NEW_QUERY */
    key->stats_wm = intel->stats_wm;
 
    /* _NEW_LINE */
@@ -136,12 +134,12 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 /**
  * Setup wm hardware state.  See page 225 of Volume 2
  */
-static dri_bo *
+static struct brw_winsys_buffer *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			dri_bo **reloc_bufs)
+			struct brw_winsys_buffer **reloc_bufs)
 {
    struct brw_wm_unit_state wm;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
 
    memset(&wm, 0, sizeof(wm));
 
@@ -257,9 +255,8 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
 static void upload_wm_unit( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
-   dri_bo *reloc_bufs[3];
+   struct brw_winsys_buffer *reloc_bufs[3];
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -271,7 +268,7 @@ static void upload_wm_unit( struct brw_context *brw )
       GLuint total = key.total_scratch * key.max_threads;
 
       if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
-	 dri_bo_unreference(brw->wm.scratch_bo);
+	 brw->sws->bo_unreference(brw->wm.scratch_bo);
 	 brw->wm.scratch_bo = NULL;
       }
       if (brw->wm.scratch_bo == NULL) {
@@ -286,7 +283,7 @@ static void upload_wm_unit( struct brw_context *brw )
    reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
-   dri_bo_unreference(brw->wm.state_bo);
+   brw->sws->bo_unreference(brw->wm.state_bo);
    brw->wm.state_bo = brw_search_cache(&brw->cache, BRW_WM_UNIT,
 				       &key, sizeof(key),
 				       reloc_bufs, 3,
@@ -302,7 +299,7 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
 	       _NEW_COLOR |
-	       _NEW_DEPTH),
+	       _NEW_QUERY),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |

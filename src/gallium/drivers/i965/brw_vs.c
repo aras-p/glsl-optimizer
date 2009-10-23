@@ -71,7 +71,7 @@ static void do_vs_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c.func, &program_size);
 
-   dri_bo_unreference(brw->vs.prog_bo);
+   brw->sws->bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_upload_cache( &brw->cache, BRW_VS_PROG,
 				       &c.key, sizeof(c.key),
 				       NULL, 0,
@@ -83,7 +83,6 @@ static void do_vs_prog( struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
@@ -100,7 +99,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
    /* Make an early check for the key.
     */
-   dri_bo_unreference(brw->vs.prog_bo);
+   brw->sws->bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,

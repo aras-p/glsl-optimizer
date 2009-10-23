@@ -191,8 +191,6 @@ static unsigned get_index_type(int type)
 
 static boolean brw_prepare_vertices(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = intel_context(ctx);
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
    GLuint i;
    const unsigned char *ptr = NULL;
@@ -210,15 +208,17 @@ static boolean brw_prepare_vertices(struct brw_context *brw)
 
 
 
-   for (i = 0; i < brw->vb.nr_enabled; i++) {
-      struct brw_vertex_element *input = brw->vb.enabled[i];
+   for (i = 0; i < brw->vb.num_vertex_buffer; i++) {
+      struct brw_vertex_buffer *vb = brw->vb.vertex_buffer[i];
+      unsigned size = (vb->stride == 0 ? 
+		       vb->size :
+		       vb->stride * (max_index + 1 - min_index));
 
-      input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
 
       if (brw_is_user_buffer(vb)) {
-	 u_upload_buffer( brw->upload, 
+	 u_upload_buffer( brw->upload_vertex, 
 			  min_index * vb->stride,
-			  (max_index + 1 - min_index) * vb->stride,
+			  size,
 			  &offset,
 			  &buffer );
       }
@@ -226,20 +226,20 @@ static boolean brw_prepare_vertices(struct brw_context *brw)
       {
 	 offset = 0;
 	 buffer = vb->buffer;
-	 count = stride == 0 ? 1 : max_index + 1 - min_index;
       }
-
-      /* Named buffer object: Just reference its contents directly. */
-      dri_bo_unreference(input->bo);
-      input->bo = intel_bufferobj_buffer(intel, intel_buffer,
-					 INTEL_READ);
-      dri_bo_reference(input->bo);
-
+      
+      /* Set up post-upload info about this vertex buffer:
+       */
       input->offset = (unsigned long)offset;
       input->stride = vb->stride;
       input->count = count;
+      brw->sws->bo_unreference(input->bo);
+      input->bo = intel_bufferobj_buffer(intel, intel_buffer,
+					 INTEL_READ);
+      brw->sws->bo_reference(input->bo);
 
       assert(input->offset < input->bo->size);
+      assert(input->offset + size <= input->bo->size);
    }
 
    brw_prepare_query_begin(brw);
@@ -253,8 +253,6 @@ static boolean brw_prepare_vertices(struct brw_context *brw)
 
 static void brw_emit_vertices(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = intel_context(ctx);
    GLuint i;
 
    brw_emit_query_begin(brw);
@@ -370,11 +368,9 @@ const struct brw_tracked_state brw_vertices = {
 
 static void brw_prepare_indices(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint ib_size;
-   dri_bo *bo = NULL;
+   struct brw_winsys_buffer *bo = NULL;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
    GLuint ib_type_size;
@@ -421,7 +417,7 @@ static void brw_prepare_indices(struct brw_context *brw)
        } else {
 	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
 				      INTEL_READ);
-	  dri_bo_reference(bo);
+	  brw->sws->bo_reference(bo);
 
 	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
 	   * the index buffer state when we're just moving the start index
@@ -461,7 +457,6 @@ const struct brw_tracked_state brw_indices = {
 
 static void brw_emit_index_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
 
    if (index_buffer == NULL)

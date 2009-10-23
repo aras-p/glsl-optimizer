@@ -30,32 +30,21 @@
   */
 
 
-#include "main/imports.h"
-#include "main/api_noop.h"
-#include "main/macros.h"
-#include "main/vtxfmt.h"
-#include "main/simple_list.h"
-#include "shader/shader_api.h"
+#include "pipe/p_context.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
 #include "brw_state.h"
 #include "brw_vs.h"
-#include "intel_tex.h"
-#include "intel_blit.h"
+#include "brw_screen_tex.h"
 #include "intel_batchbuffer.h"
-#include "intel_pixel.h"
-#include "intel_span.h"
-#include "tnl/t_pipeline.h"
-
-#include "utils.h"
 
 
 
-GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
-			    void *sharedContextPrivate)
+
+struct pipe_context *brw_create_context( struct pipe_screen *screen,
+					 void *priv )
 {
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
 
@@ -87,9 +76,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 /**
  * called from intelDestroyContext()
  */
-static void brw_destroy_context( struct intel_context *intel )
+static void brw_destroy_context( struct brw_context *brw )
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
    int i;
 
    brw_destroy_state(brw);
@@ -102,27 +90,27 @@ static void brw_destroy_context( struct intel_context *intel )
    brw->state.nr_color_regions = 0;
    intel_region_release(&brw->state.depth_region);
 
-   dri_bo_unreference(brw->curbe.curbe_bo);
-   dri_bo_unreference(brw->vs.prog_bo);
-   dri_bo_unreference(brw->vs.state_bo);
-   dri_bo_unreference(brw->vs.bind_bo);
-   dri_bo_unreference(brw->gs.prog_bo);
-   dri_bo_unreference(brw->gs.state_bo);
-   dri_bo_unreference(brw->clip.prog_bo);
-   dri_bo_unreference(brw->clip.state_bo);
-   dri_bo_unreference(brw->clip.vp_bo);
-   dri_bo_unreference(brw->sf.prog_bo);
-   dri_bo_unreference(brw->sf.state_bo);
-   dri_bo_unreference(brw->sf.vp_bo);
+   brw->sws->bo_unreference(brw->curbe.curbe_bo);
+   brw->sws->bo_unreference(brw->vs.prog_bo);
+   brw->sws->bo_unreference(brw->vs.state_bo);
+   brw->sws->bo_unreference(brw->vs.bind_bo);
+   brw->sws->bo_unreference(brw->gs.prog_bo);
+   brw->sws->bo_unreference(brw->gs.state_bo);
+   brw->sws->bo_unreference(brw->clip.prog_bo);
+   brw->sws->bo_unreference(brw->clip.state_bo);
+   brw->sws->bo_unreference(brw->clip.vp_bo);
+   brw->sws->bo_unreference(brw->sf.prog_bo);
+   brw->sws->bo_unreference(brw->sf.state_bo);
+   brw->sws->bo_unreference(brw->sf.vp_bo);
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
-      dri_bo_unreference(brw->wm.sdc_bo[i]);
-   dri_bo_unreference(brw->wm.bind_bo);
+      brw->sws->bo_unreference(brw->wm.sdc_bo[i]);
+   brw->sws->bo_unreference(brw->wm.bind_bo);
    for (i = 0; i < BRW_WM_MAX_SURF; i++)
-      dri_bo_unreference(brw->wm.surf_bo[i]);
-   dri_bo_unreference(brw->wm.sampler_bo);
-   dri_bo_unreference(brw->wm.prog_bo);
-   dri_bo_unreference(brw->wm.state_bo);
-   dri_bo_unreference(brw->cc.prog_bo);
-   dri_bo_unreference(brw->cc.state_bo);
-   dri_bo_unreference(brw->cc.vp_bo);
+      brw->sws->bo_unreference(brw->wm.surf_bo[i]);
+   brw->sws->bo_unreference(brw->wm.sampler_bo);
+   brw->sws->bo_unreference(brw->wm.prog_bo);
+   brw->sws->bo_unreference(brw->wm.state_bo);
+   brw->sws->bo_unreference(brw->cc.prog_bo);
+   brw->sws->bo_unreference(brw->cc.state_bo);
+   brw->sws->bo_unreference(brw->cc.vp_bo);
 }

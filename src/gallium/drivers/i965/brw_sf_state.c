@@ -34,12 +34,9 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "main/macros.h"
-#include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
@@ -92,7 +89,7 @@ static void upload_sf_vp(struct brw_context *brw)
       sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
    }
 
-   dri_bo_unreference(brw->sf.vp_bo);
+   brw->sws->bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
 }
 
@@ -126,7 +123,6 @@ struct brw_sf_unit_key {
 static void
 sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */
@@ -159,12 +155,12 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }
 
-static dri_bo *
+static struct brw_winsys_buffer *
 sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
-			dri_bo **reloc_bufs)
+			struct brw_winsys_buffer **reloc_bufs)
 {
    struct brw_sf_unit_state sf;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
@@ -332,14 +328,14 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 static void upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_key key;
-   dri_bo *reloc_bufs[2];
+   struct brw_winsys_buffer *reloc_bufs[2];
 
    sf_unit_populate_key(brw, &key);
 
    reloc_bufs[0] = brw->sf.prog_bo;
    reloc_bufs[1] = brw->sf.vp_bo;
 
-   dri_bo_unreference(brw->sf.state_bo);
+   brw->sws->bo_unreference(brw->sf.state_bo);
    brw->sf.state_bo = brw_search_cache(&brw->cache, BRW_SF_UNIT,
 				       &key, sizeof(key),
 				       reloc_bufs, 2,

@@ -49,7 +49,6 @@ struct brw_clip_unit_key {
 static void
 clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_CLIP_PROG */
@@ -69,12 +68,12 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    key->depth_clamp = 0; // XXX: add this to gallium: ctx->Transform.DepthClamp;
 }
 
-static dri_bo *
+static struct brw_winsys_buffer *
 clip_unit_create_from_key(struct brw_context *brw,
 			  struct brw_clip_unit_key *key)
 {
    struct brw_clip_unit_state clip;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
 
    memset(&clip, 0, sizeof(clip));
 
@@ -162,7 +161,7 @@ static void upload_clip_unit( struct brw_context *brw )
 
    clip_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->clip.state_bo);
+   brw->sws->bo_unreference(brw->clip.state_bo);
    brw->clip.state_bo = brw_search_cache(&brw->cache, BRW_CLIP_UNIT,
 					 &key, sizeof(key),
 					 &brw->clip.prog_bo, 1,

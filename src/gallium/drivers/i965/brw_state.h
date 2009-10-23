@@ -36,12 +36,12 @@
 #include "brw_context.h"
 
 static inline void
-brw_add_validated_bo(struct brw_context *brw, dri_bo *bo)
+brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
 {
    assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));
 
    if (bo != NULL) {
-      dri_bo_reference(bo);
+      brw->sws->bo_reference(bo);
       brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
    }
 };
@@ -95,9 +95,9 @@ const struct brw_tracked_state brw_index_buffer;
  * Use same key for WM and VS surfaces.
  */
 struct brw_surface_key {
-   GLenum target, depthmode;
-   dri_bo *bo;
-   GLint format, internal_format;
+   unsigned target;
+   struct brw_winsys_buffer *bo;
+   GLint format;
    GLint first_level, last_level;
    GLint width, height, depth;
    GLint pitch, cpp;
@@ -116,42 +116,42 @@ void brw_destroy_state(struct brw_context *brw);
 /***********************************************************************
  * brw_state_cache.c
  */
-dri_bo *brw_cache_data(struct brw_cache *cache,
+struct brw_winsys_buffer *brw_cache_data(struct brw_cache *cache,
 		       enum brw_cache_id cache_id,
 		       const void *data,
-		       dri_bo **reloc_bufs,
+		       struct brw_winsys_buffer **reloc_bufs,
 		       GLuint nr_reloc_bufs);
 
-dri_bo *brw_cache_data_sz(struct brw_cache *cache,
+struct brw_winsys_buffer *brw_cache_data_sz(struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *data,
 			  GLuint data_size,
-			  dri_bo **reloc_bufs,
+			  struct brw_winsys_buffer **reloc_bufs,
 			  GLuint nr_reloc_bufs);
 
-dri_bo *brw_upload_cache( struct brw_cache *cache,
+struct brw_winsys_buffer *brw_upload_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *key,
 			  GLuint key_sz,
-			  dri_bo **reloc_bufs,
+			  struct brw_winsys_buffer **reloc_bufs,
 			  GLuint nr_reloc_bufs,
 			  const void *data,
 			  GLuint data_sz,
 			  const void *aux,
 			  void *aux_return );
 
-dri_bo *brw_search_cache( struct brw_cache *cache,
+struct brw_winsys_buffer *brw_search_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *key,
 			  GLuint key_size,
-			  dri_bo **reloc_bufs,
+			  struct brw_winsys_buffer **reloc_bufs,
 			  GLuint nr_reloc_bufs,
 			  void *aux_return);
 void brw_state_cache_check_size( struct brw_context *brw );
 
 void brw_init_caches( struct brw_context *brw );
 void brw_destroy_caches( struct brw_context *brw );
-void brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo);
+void brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer *bo);
 
 /***********************************************************************
  * brw_state_batch.c
@@ -166,7 +166,7 @@ void brw_destroy_batch_cache( struct brw_context *brw );
 void brw_clear_batch_cache( struct brw_context *brw );
 
 /* brw_wm_surface_state.c */
-dri_bo *
+struct brw_winsys_buffer *
 brw_create_constant_surface( struct brw_context *brw,
                              struct brw_surface_key *key );
 

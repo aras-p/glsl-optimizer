@@ -47,7 +47,6 @@
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
    const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
@@ -157,7 +156,6 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void prepare_constant_buffer(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    const struct brw_fragment_program *fp =
@@ -269,7 +267,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	  (brw->curbe.need_new_bo ||
 	   brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size))
       {
-	 dri_bo_unreference(brw->curbe.curbe_bo);
+	 brw->sws->bo_unreference(brw->curbe.curbe_bo);
 	 brw->curbe.curbe_bo = NULL;
       }
 
@@ -310,7 +308,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
 static void emit_constant_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);

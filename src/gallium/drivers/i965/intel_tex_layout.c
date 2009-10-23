@@ -33,7 +33,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
 #include "intel_context.h"
-#include "main/macros.h"
 
 void intel_get_texture_alignment_unit(GLenum internalFormat, GLuint *w, GLuint *h)
 {
@@ -86,7 +85,7 @@ void i945_miptree_layout_2d( struct intel_context *intel,
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
     */
-   if (mt->first_level != mt->last_level) {
+   if (mt->last_level) {
        GLuint mip1_width;
 
        if (mt->compressed) {
@@ -108,7 +107,7 @@ void i945_miptree_layout_2d( struct intel_context *intel,
    mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->pitch);
    mt->total_height = 0;
 
-   for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
+   for ( level = 0 ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
       intel_miptree_set_level_info(mt, level, 1, x, y, width, 
@@ -127,7 +126,7 @@ void i945_miptree_layout_2d( struct intel_context *intel,
 
       /* Layout_below: step right after second mipmap.
        */
-      if (level == mt->first_level + 1) {
+      if (level == 1) {
 	 x += ALIGN(width, align_w);
       }
       else {

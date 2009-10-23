@@ -48,7 +48,6 @@
 
 static void upload_blend_constant_color(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_blend_constant_color bcc;
 
    memset(&bcc, 0, sizeof(bcc));      
@@ -75,17 +74,11 @@ const struct brw_tracked_state brw_blend_constant_color = {
 /* Constant single cliprect for framebuffer object or DRI2 drawing */
 static void upload_drawing_rect(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
-
-   if (!intel->constant_cliprect)
-      return;
-
    BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
    OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
-   OUT_BATCH(0); /* xmin, ymin */
-   OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
-	    ((ctx->DrawBuffer->Height - 1) << 16));
+   OUT_BATCH(0);
+   OUT_BATCH(((brw->fb.width - 1) & 0xffff) |
+	    ((brw->fb.height - 1) << 16));
    OUT_BATCH(0);
    ADVANCE_BATCH();
 }
@@ -114,8 +107,6 @@ static void prepare_binding_table_pointers(struct brw_context *brw)
  */
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    if (brw->vs.bind_bo != NULL)
@@ -148,8 +139,6 @@ const struct brw_tracked_state brw_binding_table_pointers = {
  */
 static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(7, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
@@ -210,7 +199,6 @@ static void prepare_depthbuffer(struct brw_context *brw)
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
    unsigned int len = (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? 6 : 5;
 
@@ -287,7 +275,6 @@ const struct brw_tracked_state brw_depthbuffer = {
 
 static void upload_polygon_stipple(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple bps;
    GLuint i;
 
@@ -401,7 +388,6 @@ const struct brw_tracked_state brw_aa_line_parameters = {
 
 static void upload_line_stipple(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_line_stipple bls;
    GLfloat tmp;
    GLint tmpi;
@@ -507,8 +493,6 @@ const struct brw_tracked_state brw_invarient_state = {
  */
 static void upload_state_base_address( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
-
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */

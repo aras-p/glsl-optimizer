@@ -29,11 +29,6 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "main/mtypes.h"
-#include "main/texformat.h"
-#include "main/texstore.h"
-#include "shader/prog_parameter.h"
-
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -47,7 +42,6 @@
 static drm_intel_bo *
 brw_vs_update_constant_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
@@ -73,7 +67,7 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
  * Sets brw->vs.surf_bo[surf] and brw->vp->const_buffer.
  */
 static void
-brw_update_vs_constant_surface( GLcontext *ctx,
+brw_update_vs_constant_surface( struct brw_context *brw,
                                 GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -87,7 +81,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    /* If we're in this state update atom, we need to update VS constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   dri_bo_unreference(vp->const_buffer);
+   brw->sws->bo_unreference(vp->const_buffer);
    vp->const_buffer = brw_vs_update_constant_buffer(brw);
 
    /* If there's no constant buffer, then no surface BO is needed to point at
@@ -101,8 +95,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 
    memset(&key, 0, sizeof(key));
 
-   key.format = MESA_FORMAT_RGBA_FLOAT32;
-   key.internal_format = GL_RGBA;
+   key.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    key.bo = vp->const_buffer;
    key.depthmode = GL_NONE;
    key.pitch = params->NumParameters;
@@ -132,10 +125,10 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 /**
  * Constructs the binding table for the VS surface state.
  */
-static dri_bo *
+static struct brw_winsys_buffer *
 brw_vs_get_binding_table(struct brw_context *brw)
 {
-   dri_bo *bind_bo;
+   struct brw_winsys_buffer *bind_bo;
 
    bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
 			      NULL, 0,
@@ -186,7 +179,6 @@ brw_vs_get_binding_table(struct brw_context *brw)
  */
 static void prepare_vs_surfaces(struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    int i;
    int nr_surfaces = 0;
 
@@ -208,7 +200,7 @@ static void prepare_vs_surfaces(struct brw_context *brw )
     * just slightly increases our working set size.
     */
    if (brw->vs.nr_surfaces != 0) {
-      dri_bo_unreference(brw->vs.bind_bo);
+      brw->sws->bo_unreference(brw->vs.bind_bo);
       brw->vs.bind_bo = brw_vs_get_binding_table(brw);
    }
 }

@@ -1,11 +1,18 @@
 #ifndef BRW_TYPES_H
 #define BRW_TYPES_H
 
-typedef GLuint uint32_t;
-typedef GLubyte uint8_t;
-typedef GLushort uint16_t;
+#include "pipe/p_compiler.h"
+
+typedef uint32_t GLuint;
+typedef uint8_t GLubyte;
+typedef uint16_t GLushort;
+typedef int32_t GLint;
+typedef int8_t GLbyte;
+typedef int16_t GLshort;
+typedef float GLfloat;
+
 /* no GLenum, translate all away */
 
-typedef GLboolean uint8_t;
+typedef uint8_t GLboolean;
 
 #endif

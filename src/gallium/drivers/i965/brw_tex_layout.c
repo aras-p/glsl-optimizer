@@ -34,13 +34,11 @@
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
-#include "intel_context.h"
-#include "main/macros.h"
 #include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
-GLboolean brw_miptree_layout(struct intel_context *intel,
+GLboolean brw_miptree_layout(struct brw_context *brw,
 			     struct intel_mipmap_tree *mt,
 			     uint32_t tiling)
 {
@@ -67,7 +65,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
               mt->pitch = ALIGN(mt->width0, align_w);
           }
 
-          if (mt->first_level != mt->last_level) {
+          if (mt->last_level != 0) {
               GLuint mip1_width;
 
               if (mt->compressed) {
@@ -93,7 +91,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
               mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * 6;
           }
 
-          for (level = mt->first_level; level <= mt->last_level; level++) {
+          for (level = 0; level <= mt->last_level; level++) {
               GLuint img_height;
               GLuint nr_images = 6;
               GLuint q = 0;
@@ -109,7 +107,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
               else
                   img_height = ALIGN(height, align_h);
 
-              if (level == mt->first_level + 1) {
+              if (level == 1) {
                   x += ALIGN(width, align_w);
               }
               else {
@@ -147,7 +145,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       pack_x_pitch = width;
       pack_x_nr = 1;
 
-      for (level = mt->first_level ; level <= mt->last_level ; level++) {
+      for (level = 0 ; level <= mt->last_level ; level++) {
 	 GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
 	 GLint x = 0;
 	 GLint y = 0;

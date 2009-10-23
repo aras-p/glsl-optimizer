@@ -56,7 +56,6 @@
  * incorrect program is run for the other instance.
  */
 
-#include "main/imports.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 
@@ -72,7 +71,7 @@
 
 static GLuint
 hash_key(const void *key, GLuint key_size,
-         dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
+         struct brw_winsys_buffer **reloc_bufs, GLuint nr_reloc_bufs)
 {
    GLuint *ikey = (GLuint *)key;
    GLuint hash = 0, i;
@@ -88,7 +87,7 @@ hash_key(const void *key, GLuint key_size,
 
    /* Include the BO pointers as key data as well */
    ikey = (GLuint *)reloc_bufs;
-   key_size = nr_reloc_bufs * sizeof(dri_bo *);
+   key_size = nr_reloc_bufs * sizeof(struct brw_winsys_buffer *);
    for (i = 0; i < key_size/4; i++) {
       hash ^= ikey[i];
       hash = (hash << 5) | (hash >> 27);
@@ -103,14 +102,14 @@ hash_key(const void *key, GLuint key_size,
  */
 static void
 update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
-		  dri_bo *bo)
+		  struct brw_winsys_buffer *bo)
 {
    if (bo == cache->last_bo[cache_id])
       return; /* no change */
 
-   dri_bo_unreference(cache->last_bo[cache_id]);
+   brw->sws->bo_unreference(cache->last_bo[cache_id]);
    cache->last_bo[cache_id] = bo;
-   dri_bo_reference(cache->last_bo[cache_id]);
+   brw->sws->bo_reference(cache->last_bo[cache_id]);
    cache->brw->state.dirty.cache |= 1 << cache_id;
 }
 
@@ -118,7 +117,7 @@ update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
 static struct brw_cache_item *
 search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
 	     GLuint hash, const void *key, GLuint key_size,
-	     dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
+	     struct brw_winsys_buffer **reloc_bufs, GLuint nr_reloc_bufs)
 {
    struct brw_cache_item *c;
 
@@ -139,7 +138,7 @@ search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
 	  memcmp(c->key, key, key_size) == 0 &&
 	  c->nr_reloc_bufs == nr_reloc_bufs &&
 	  memcmp(c->reloc_bufs, reloc_bufs,
-		 nr_reloc_bufs * sizeof(dri_bo *)) == 0)
+		 nr_reloc_bufs * sizeof(struct brw_winsys_buffer *)) == 0)
 	 return c;
    }
 
@@ -173,12 +172,12 @@ rehash(struct brw_cache *cache)
 /**
  * Returns the buffer object matching cache_id and key, or NULL.
  */
-dri_bo *
+struct brw_winsys_buffer *
 brw_search_cache(struct brw_cache *cache,
                  enum brw_cache_id cache_id,
                  const void *key,
                  GLuint key_size,
-                 dri_bo **reloc_bufs, GLuint nr_reloc_bufs,
+                 struct brw_winsys_buffer **reloc_bufs, GLuint nr_reloc_bufs,
                  void *aux_return)
 {
    struct brw_cache_item *item;
@@ -195,17 +194,17 @@ brw_search_cache(struct brw_cache *cache,
 
    update_cache_last(cache, cache_id, item->bo);
 
-   dri_bo_reference(item->bo);
+   brw->sws->bo_reference(item->bo);
    return item->bo;
 }
 
 
-dri_bo *
+struct brw_winsys_buffer *
 brw_upload_cache( struct brw_cache *cache,
 		  enum brw_cache_id cache_id,
 		  const void *key,
 		  GLuint key_size,
-		  dri_bo **reloc_bufs,
+		  struct brw_winsys_buffer **reloc_bufs,
 		  GLuint nr_reloc_bufs,
 		  const void *data,
 		  GLuint data_size,
@@ -214,10 +213,10 @@ brw_upload_cache( struct brw_cache *cache,
 {
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
    GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
-   GLuint relocs_size = nr_reloc_bufs * sizeof(dri_bo *);
+   GLuint relocs_size = nr_reloc_bufs * sizeof(struct brw_winsys_buffer *);
    GLuint aux_size = cache->aux_size[cache_id];
    void *tmp;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    int i;
 
    /* Create the buffer object to contain the data */
@@ -233,7 +232,7 @@ brw_upload_cache( struct brw_cache *cache,
    memcpy(tmp + key_size + aux_size, reloc_bufs, relocs_size);
    for (i = 0; i < nr_reloc_bufs; i++) {
       if (reloc_bufs[i] != NULL)
-	 dri_bo_reference(reloc_bufs[i]);
+	 brw->sws->bo_reference(reloc_bufs[i]);
    }
 
    item->cache_id = cache_id;
@@ -244,7 +243,7 @@ brw_upload_cache( struct brw_cache *cache,
    item->nr_reloc_bufs = nr_reloc_bufs;
 
    item->bo = bo;
-   dri_bo_reference(bo);
+   brw->sws->bo_reference(bo);
    item->data_size = data_size;
 
    if (cache->n_items > cache->size * 1.5)
@@ -277,15 +276,15 @@ brw_upload_cache( struct brw_cache *cache,
 /**
  * This doesn't really work with aux data.  Use search/upload instead
  */
-dri_bo *
+struct brw_winsys_buffer *
 brw_cache_data_sz(struct brw_cache *cache,
 		  enum brw_cache_id cache_id,
 		  const void *data,
 		  GLuint data_size,
-		  dri_bo **reloc_bufs,
+		  struct brw_winsys_buffer **reloc_bufs,
 		  GLuint nr_reloc_bufs)
 {
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
    struct brw_cache_item *item;
    GLuint hash = hash_key(data, data_size, reloc_bufs, nr_reloc_bufs);
 
@@ -293,7 +292,7 @@ brw_cache_data_sz(struct brw_cache *cache,
 		       reloc_bufs, nr_reloc_bufs);
    if (item) {
       update_cache_last(cache, cache_id, item->bo);
-      dri_bo_reference(item->bo);
+      brw->sws->bo_reference(item->bo);
       return item->bo;
    }
 
@@ -314,11 +313,11 @@ brw_cache_data_sz(struct brw_cache *cache,
  * better to use, as the potentially changing offsets in the data-used-as-key
  * will result in excessive cache misses.
  */
-dri_bo *
+struct brw_winsys_buffer *
 brw_cache_data(struct brw_cache *cache,
 	       enum brw_cache_id cache_id,
 	       const void *data,
-	       dri_bo **reloc_bufs,
+	       struct brw_winsys_buffer **reloc_bufs,
 	       GLuint nr_reloc_bufs)
 {
    return brw_cache_data_sz(cache, cache_id, data, cache->key_size[cache_id],
@@ -497,8 +496,8 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 
 	 next = c->next;
 	 for (j = 0; j < c->nr_reloc_bufs; j++)
-	    dri_bo_unreference(c->reloc_bufs[j]);
-	 dri_bo_unreference(c->bo);
+	    brw->sws->bo_unreference(c->reloc_bufs[j]);
+	 brw->sws->bo_unreference(c->bo);
 	 free((void *)c->key);
 	 free(c);
       }
@@ -523,7 +522,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
  * at the cost of walking the entire hash table.
  */
 void
-brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
+brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer *bo)
 {
    struct brw_cache_item **prev;
    GLuint i;
@@ -535,14 +534,14 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
       for (prev = &cache->items[i]; *prev;) {
 	 struct brw_cache_item *c = *prev;
 
-	 if (drm_intel_bo_references(c->bo, bo)) {
+	 if (cache->sws->bo_references(c->bo, bo)) {
 	    int j;
 
 	    *prev = c->next;
 
 	    for (j = 0; j < c->nr_reloc_bufs; j++)
-	       dri_bo_unreference(c->reloc_bufs[j]);
-	    dri_bo_unreference(c->bo);
+	       brw->sws->bo_unreference(c->reloc_bufs[j]);
+	    brw->sws->bo_unreference(c->bo);
 	    free((void *)c->key);
 	    free(c);
 	    cache->n_items--;
@@ -580,7 +579,7 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {
-      dri_bo_unreference(cache->last_bo[i]);
+      brw->sws->bo_unreference(cache->last_bo[i]);
       free(cache->name[i]);
    }
    free(cache->items);

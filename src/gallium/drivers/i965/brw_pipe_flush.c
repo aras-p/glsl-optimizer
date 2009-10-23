@@ -13,10 +13,8 @@ static void brw_finish_batch(struct intel_context *intel)
 /**
  * called from intelFlushBatchLocked
  */
-static void brw_new_batch( struct intel_context *intel )
+static void brw_new_batch( struct brw_context *brw )
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
-
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!brw->no_batch_wrap);
 
@@ -36,14 +34,14 @@ static void brw_new_batch( struct intel_context *intel )
     * a new buffer next time.
     */
    if (brw->vb.upload.bo != NULL) {
-      dri_bo_unreference(brw->vb.upload.bo);
+      brw->sws->bo_unreference(brw->vb.upload.bo);
       brw->vb.upload.bo = NULL;
       brw->vb.upload.offset = 0;
    }
 }
 
 
-static void brw_note_fence( struct intel_context *intel, GLuint fence )
+static void brw_note_fence( struct brw_context *brw, GLuint fence )
 {
    brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_FENCE;
 }

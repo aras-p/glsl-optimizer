@@ -1,5 +1,9 @@
-   /* _NEW_STENCIL */
-   if (key->dsa.stencil[0].enable) {
+
+static void *
+brw_create_depth_stencil( struct pipe_context *pipe,
+			  const struct pipe_depth_stencil_alpha_state *tmpl )
+{
+   if (tmpl->stencil[0].enable) {
       cc.cc0.stencil_enable = 1;
       cc.cc0.stencil_func =
 	 intel_translate_compare_func(key->stencil_func[0]);
@@ -13,7 +17,7 @@
       cc.cc1.stencil_write_mask = key->stencil_write_mask[0];
       cc.cc1.stencil_test_mask = key->stencil_test_mask[0];
 
-      if (key->stencil_two_side) {
+      if (tmpl->stencil[1].enable) {
 	 cc.cc0.bf_stencil_enable = 1;
 	 cc.cc0.bf_stencil_func =
 	    intel_translate_compare_func(key->stencil_func[1]);
@@ -30,9 +34,8 @@
 
       /* Not really sure about this:
        */
-      if (key->stencil_write_mask[0] ||
-	  (key->stencil_two_side && key->stencil_write_mask[1]))
-	 cc.cc0.stencil_write_enable = 1;
+      cc.cc0.stencil_write_enable = (cc.cc1.stencil_write_mask ||
+				     cc.cc2.bf_stencil_write_mask);
    }
 
 
@@ -50,3 +53,6 @@
       cc.cc2.depth_test_function = intel_translate_compare_func(key->depth_func);
       cc.cc2.depth_write_enable = key->depth_write;
    }
+
+
+}

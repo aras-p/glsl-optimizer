@@ -25,8 +25,6 @@
  *
  */
 
-#include "main/mtypes.h"
-
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -55,7 +53,7 @@ state_out(const char *name, void *data, uint32_t hw_offset, int index,
 
 /** Generic, undecoded state buffer debug printout */
 static void
-state_struct_out(const char *name, dri_bo *buffer, unsigned int state_size)
+state_struct_out(const char *name, struct brw_winsys_buffer *buffer, unsigned int state_size)
 {
    int i;
 
@@ -102,7 +100,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
    int i;
 
    for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      dri_bo *surf_bo = brw->wm.surf_bo[i];
+      struct brw_winsys_buffer *surf_bo = brw->wm.surf_bo[i];
       unsigned int surfoff;
       struct brw_surface_state *surf;
       char name[20];
@@ -162,7 +160,7 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    dri_bo_unmap(brw->sf.vp_bo);
 }
 
-static void brw_debug_prog(const char *name, dri_bo *prog)
+static void brw_debug_prog(const char *name, struct brw_winsys_buffer *prog)
 {
    unsigned int i;
    uint32_t *data;
@@ -202,10 +200,8 @@ static void brw_debug_prog(const char *name, dri_bo *prog)
  * The buffer offsets printed rely on the buffer containing the last offset
  * it was validated at.
  */
-void brw_debug_batch(struct intel_context *intel)
+void brw_debug_batch(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
-
    state_struct_out("WM bind", brw->wm.bind_bo, 4 * brw->wm.nr_surfaces);
    dump_wm_surface_state(brw);
 

@@ -129,7 +129,7 @@ static void compile_clip_prog( struct brw_context *brw,
 
    /* Upload
     */
-   dri_bo_unreference(brw->clip.prog_bo);
+   brw->sws->bo_unreference(brw->clip.prog_bo);
    brw->clip.prog_bo = brw_upload_cache( &brw->cache,
 					 BRW_CLIP_PROG,
 					 &c.key, sizeof(c.key),
@@ -199,7 +199,7 @@ static void upload_clip_prog(struct brw_context *brw)
       }
    }
 
-   dri_bo_unreference(brw->clip.prog_bo);
+   brw->sws->bo_unreference(brw->clip.prog_bo);
    brw->clip.prog_bo = brw_search_cache(&brw->cache, BRW_CLIP_PROG,
 					&key, sizeof(key),
 					NULL, 0,

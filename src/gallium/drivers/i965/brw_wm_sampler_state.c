@@ -34,9 +34,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-#include "main/macros.h"
-
-
 
 /* Samplers aren't strictly wm state from the hardware's perspective,
  * but that is the only situation in which we use them in this driver.
@@ -79,7 +76,7 @@ static GLint S_FIXED(GLfloat value, GLuint frac_bits)
 }
 
 
-static dri_bo *upload_default_color( struct brw_context *brw,
+static struct brw_winsys_buffer *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
    struct brw_sampler_default_color sdc;
@@ -102,7 +99,7 @@ struct wm_sampler_key {
       float max_aniso;
       GLenum minfilter, magfilter;
       GLenum comparemode, comparefunc;
-      dri_bo *sdc_bo;
+      struct brw_winsys_buffer *sdc_bo;
 
       /** If target is cubemap, take context setting.
        */
@@ -115,7 +112,7 @@ struct wm_sampler_key {
  * entry.
  */
 static void brw_update_sampler_state(struct wm_sampler_entry *key,
-				     dri_bo *sdc_bo,
+				     struct brw_winsys_buffer *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
    _mesa_memset(sampler, 0, sizeof(*sampler));
@@ -240,7 +237,6 @@ static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
 			    struct wm_sampler_key *key)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    int unit;
 
    memset(key, 0, sizeof(*key));
@@ -272,7 +268,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->comparemode = texObj->CompareMode;
          entry->comparefunc = texObj->CompareFunc;
 
-	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 brw->sws->bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
 	       texObj->BorderColor[0],
@@ -300,7 +296,6 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
  */
 static void upload_wm_samplers( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct wm_sampler_key key;
    int i;
 
@@ -311,7 +306,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
-   dri_bo_unreference(brw->wm.sampler_bo);
+   brw->sws->bo_unreference(brw->wm.sampler_bo);
    brw->wm.sampler_bo = NULL;
    if (brw->wm.sampler_count == 0)
       return;

@@ -149,7 +149,7 @@ brw_clear_validated_bos(struct brw_context *brw)
 
    /* Clear the last round of validated bos */
    for (i = 0; i < brw->state.validated_bo_count; i++) {
-      dri_bo_unreference(brw->state.validated_bos[i]);
+      brw->sws->bo_unreference(brw->state.validated_bos[i]);
       brw->state.validated_bos[i] = NULL;
    }
    brw->state.validated_bo_count = 0;
@@ -272,8 +272,6 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
  */
 enum pipe_error brw_validate_state( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;
 

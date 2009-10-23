@@ -30,11 +30,6 @@
   */
                    
 
-#include "main/mtypes.h"
-#include "main/texformat.h"
-#include "main/texstore.h"
-#include "shader/prog_parameter.h"
-
 #include "intel_mipmap_tree.h"
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
@@ -70,90 +65,87 @@ static GLuint translate_tex_target( GLenum target )
 }
 
 
-static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
+static GLuint translate_tex_format( GLuint mesa_format, 
 				    GLenum depth_mode )
 {
-   switch( mesa_format ) {
-   case MESA_FORMAT_L8:
+   switch( pipe_format ) {
+   case PIPE_FORMAT_L8_UNORM:
       return BRW_SURFACEFORMAT_L8_UNORM;
 
-   case MESA_FORMAT_I8:
+   case PIPE_FORMAT_I8_UNORM:
       return BRW_SURFACEFORMAT_I8_UNORM;
 
-   case MESA_FORMAT_A8:
+   case PIPE_FORMAT_A8_UNORM:
       return BRW_SURFACEFORMAT_A8_UNORM; 
 
-   case MESA_FORMAT_AL88:
+   case PIPE_FORMAT_A8L8_UNORM:
       return BRW_SURFACEFORMAT_L8A8_UNORM;
 
-   case MESA_FORMAT_RGB888:
-      assert(0);		/* not supported for sampling */
-      return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
-   case MESA_FORMAT_ARGB8888:
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
 
-   case MESA_FORMAT_RGBA8888_REV:
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
+   case PIPE_FORMAT_:
+      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
-   case MESA_FORMAT_RGB565:
+   case PIPE_FORMAT_RGB565:
       return BRW_SURFACEFORMAT_B5G6R5_UNORM;
 
-   case MESA_FORMAT_ARGB1555:
+   case PIPE_FORMAT_ARGB1555:
       return BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
 
-   case MESA_FORMAT_ARGB4444:
+   case PIPE_FORMAT_ARGB4444:
       return BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 
-   case MESA_FORMAT_YCBCR_REV:
+
+   case PIPE_FORMAT_L16_UNORM:
+      return BRW_SURFACEFORMAT_L16_UNORM;
+
+   case PIPE_FORMAT_I16_UNORM:
+      return BRW_SURFACEFORMAT_I16_UNORM;
+
+   case PIPE_FORMAT_A16_UNORM:
+      return BRW_SURFACEFORMAT_A16_UNORM; 
+
+   case PIPE_FORMAT_YCBCR_REV:
       return BRW_SURFACEFORMAT_YCRCB_NORMAL;
 
-   case MESA_FORMAT_YCBCR:
+   case PIPE_FORMAT_YCBCR:
       return BRW_SURFACEFORMAT_YCRCB_SWAPUVY;
 
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
+   case PIPE_FORMAT_RGB_FXT1:
+   case PIPE_FORMAT_RGBA_FXT1:
       return BRW_SURFACEFORMAT_FXT1;
 
-   case MESA_FORMAT_Z16:
-      if (depth_mode == GL_INTENSITY) 
-	  return BRW_SURFACEFORMAT_I16_UNORM;
-      else if (depth_mode == GL_ALPHA)
-	  return BRW_SURFACEFORMAT_A16_UNORM;
-      else
-	  return BRW_SURFACEFORMAT_L16_UNORM;
-
-   case MESA_FORMAT_RGB_DXT1:
+   case PIPE_FORMAT_RGB_DXT1:
        return BRW_SURFACEFORMAT_DXT1_RGB;
 
-   case MESA_FORMAT_RGBA_DXT1:
+   case PIPE_FORMAT_RGBA_DXT1:
        return BRW_SURFACEFORMAT_BC1_UNORM;
        
-   case MESA_FORMAT_RGBA_DXT3:
+   case PIPE_FORMAT_RGBA_DXT3:
        return BRW_SURFACEFORMAT_BC2_UNORM;
        
-   case MESA_FORMAT_RGBA_DXT5:
+   case PIPE_FORMAT_RGBA_DXT5:
        return BRW_SURFACEFORMAT_BC3_UNORM;
 
-   case MESA_FORMAT_SARGB8:
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
       return BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
 
-   case MESA_FORMAT_SLA8:
+   case PIPE_FORMAT_A8L8_SRGB:
       return BRW_SURFACEFORMAT_L8A8_UNORM_SRGB;
 
-   case MESA_FORMAT_SL8:
+   case PIPE_FORMAT_L8_SRGB:
       return BRW_SURFACEFORMAT_L8_UNORM_SRGB;
 
-   case MESA_FORMAT_SRGB_DXT1:
+   case PIPE_FORMAT_SRGB_DXT1:
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
-   case MESA_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8_Z24:
       /* XXX: these different surface formats don't seem to
        * make any difference for shadow sampler/compares.
        */
@@ -164,10 +156,10 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
       else
          return BRW_SURFACEFORMAT_L24X8_UNORM;
 
-   case MESA_FORMAT_DUDV8:
+   case PIPE_FORMAT_DUDV8:
       return BRW_SURFACEFORMAT_R8G8_SNORM;
 
-   case MESA_FORMAT_SIGNED_RGBA8888_REV:
+   case PIPE_FORMAT_SIGNED_RGBA8888_REV:
       return BRW_SURFACEFORMAT_R8G8B8A8_SNORM;
 
    default:
@@ -195,12 +187,12 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
    }
 }
 
-static dri_bo *
+static struct brw_winsys_buffer *
 brw_create_texture_surface( struct brw_context *brw,
 			    struct brw_surface_key *key )
 {
    struct brw_surface_state surf;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -234,7 +226,7 @@ brw_create_texture_surface( struct brw_context *brw,
    else
       surf.ss1.base_addr = key->offset;
 
-   surf.ss2.mip_count = key->last_level - key->first_level;
+   surf.ss2.mip_count = key->last_level;
    surf.ss2.width = key->width - 1;
    surf.ss2.height = key->height - 1;
    brw_set_surface_tiling(&surf, key->tiling);
@@ -270,41 +262,30 @@ brw_create_texture_surface( struct brw_context *brw,
 }
 
 static void
-brw_update_texture_surface( GLcontext *ctx, GLuint unit )
+brw_update_texture_surface( struct brw_context *brw, GLuint unit )
 {
-   struct brw_context *brw = brw_context(ctx);
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
-   struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
+   struct pipe_texture *tex = brw->texture[unit];
    struct brw_surface_key key;
    const GLuint surf = SURF_INDEX_TEXTURE(unit);
 
    memset(&key, 0, sizeof(key));
 
-   if (intelObj->imageOverride) {
-      key.pitch = intelObj->pitchOverride / intelObj->mt->cpp;
-      key.depth = intelObj->depthOverride;
-      key.bo = NULL;
-      key.offset = intelObj->textureOffset;
-   } else {
-      key.format = firstImage->TexFormat->MesaFormat;
-      key.internal_format = firstImage->InternalFormat;
-      key.pitch = intelObj->mt->pitch;
-      key.depth = firstImage->Depth;
-      key.bo = intelObj->mt->region->buffer;
-      key.offset = 0;
-   }
+   key.format = tex->base.format;
+   key.pitch = tex->pitch;
+   key.depth = tex->base.depth[0];
+   key.bo = tex->buffer;
+   key.offset = 0;
 
-   key.target = tObj->Target;
-   key.depthmode = tObj->DepthMode;
-   key.first_level = intelObj->firstLevel;
-   key.last_level = intelObj->lastLevel;
-   key.width = firstImage->Width;
-   key.height = firstImage->Height;
-   key.cpp = intelObj->mt->cpp;
-   key.tiling = intelObj->mt->region->tiling;
+   key.target = tObj->target;	/* translated to BRW enum */
+   /* key.depthmode = tObj->DepthMode; */ /* XXX: add this to gallium? or the state tracker? */
+   key.first_level = 0;
+   key.last_level = tex->base.last_level;
+   key.width = tex->base.depth[0];
+   key.height = tex->base.height[0];
+   key.cpp = tex->cpp;
+   key.tiling = tex->tiling;
 
-   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->sws->bo_unreference(brw->wm.surf_bo[surf]);
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
@@ -321,13 +302,13 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
-dri_bo *
+struct brw_winsys_buffer *
 brw_create_constant_surface( struct brw_context *brw,
                              struct brw_surface_key *key )
 {
    const GLint w = key->width - 1;
    struct brw_surface_state surf;
-   dri_bo *bo;
+   struct brw_winsys_buffer *bo;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -374,7 +355,6 @@ brw_create_constant_surface( struct brw_context *brw,
 static drm_intel_bo *
 brw_wm_update_constant_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
@@ -399,7 +379,7 @@ brw_wm_update_constant_buffer(struct brw_context *brw)
  * The constant buffer will be (re)allocated here if needed.
  */
 static void
-brw_update_wm_constant_surface( GLcontext *ctx,
+brw_update_wm_constant_surface( struct brw_context *brw,
                                 GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -412,7 +392,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    /* If we're in this state update atom, we need to update WM constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   dri_bo_unreference(fp->const_buffer);
+   brw->sws->bo_unreference(fp->const_buffer);
    fp->const_buffer = brw_wm_update_constant_buffer(brw);
 
    /* If there's no constant buffer, then no surface BO is needed to point at
@@ -426,7 +406,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
 
    memset(&key, 0, sizeof(key));
 
-   key.format = MESA_FORMAT_RGBA_FLOAT32;
+   key.format = PIPE_FORMAT_RGBA_FLOAT32;
    key.internal_format = GL_RGBA;
    key.bo = fp->const_buffer;
    key.depthmode = GL_NONE;
@@ -442,7 +422,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->sws->bo_unreference(brw->wm.surf_bo[surf]);
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
@@ -464,7 +444,6 @@ brw_update_wm_constant_surface( GLcontext *ctx,
  */
 static void prepare_wm_constant_surface(struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
@@ -507,8 +486,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
 				unsigned int unit)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   dri_bo *region_bo = NULL;
+   struct brw_winsys_buffer *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
    struct {
@@ -528,16 +506,16 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
       key.surface_type = BRW_SURFACE_2D;
       switch (irb->texformat->MesaFormat) {
-      case MESA_FORMAT_ARGB8888:
+      case PIPE_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
-      case MESA_FORMAT_RGB565:
+      case PIPE_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
 	 break;
-      case MESA_FORMAT_ARGB1555:
+      case PIPE_FORMAT_ARGB1555:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
 	 break;
-      case MESA_FORMAT_ARGB4444:
+      case PIPE_FORMAT_ARGB4444:
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
@@ -569,7 +547,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
 		      ctx->Color.BlendEnabled);
 
-   dri_bo_unreference(brw->wm.surf_bo[unit]);
+   brw->sws->bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
 					    BRW_SS_SURFACE,
 					    &key, sizeof(key),
@@ -646,10 +624,10 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
  * Constructs the binding table for the WM surface state, which maps unit
  * numbers to surface state objects.
  */
-static dri_bo *
+static struct brw_winsys_buffer *
 brw_wm_get_binding_table(struct brw_context *brw)
 {
-   dri_bo *bind_bo;
+   struct brw_winsys_buffer *bind_bo;
 
    assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
 
@@ -692,7 +670,6 @@ brw_wm_get_binding_table(struct brw_context *brw)
 
 static void prepare_wm_surfaces(struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
    int old_nr_surfaces;
 
@@ -724,12 +701,12 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 	 brw_update_texture_surface(ctx, i);
 	 brw->wm.nr_surfaces = surf + 1;
       } else {
-         dri_bo_unreference(brw->wm.surf_bo[surf]);
+         brw->sws->bo_unreference(brw->wm.surf_bo[surf]);
          brw->wm.surf_bo[surf] = NULL;
       }
    }
 
-   dri_bo_unreference(brw->wm.bind_bo);
+   brw->sws->bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
 
    if (brw->wm.nr_surfaces != old_nr_surfaces)

@@ -30,10 +30,6 @@
   */
    
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
-
 #include "intel_batchbuffer.h"
 
 #include "brw_defines.h"
@@ -305,6 +301,10 @@ static void invert_det( struct brw_sf_compile *c)
 }
 
 
+/* Two attributes packed into a wide register.  Figure out if either
+ * or both of them need linear/perspective interpolation.  Constant
+ * regs are left as-is.
+ */
 static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLuint reg,
 				  GLushort *pc,
@@ -312,20 +312,8 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLushort *pc_linear)
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLuint persp_mask;
-   GLuint linear_mask;
-
-   if (c->key.do_flat_shading || c->key.linear_color)
-      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
-                                    FRAG_BIT_COL0 |
-                                    FRAG_BIT_COL1);
-   else
-      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS);
-
-   if (c->key.do_flat_shading)
-      linear_mask = c->key.attrs & ~(FRAG_BIT_COL0|FRAG_BIT_COL1);
-   else
-      linear_mask = c->key.attrs;
+   GLuint persp_mask = c->key.persp_attrs;
+   GLuint linear_mask = c->key.linear_attrs;
 
    *pc_persp = 0;
    *pc_linear = 0;
@@ -570,7 +558,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
       {
 	 brw_set_predicate_control_flag_value(p, pc); 
 	 if (tex->CoordReplace) {
-	     if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
+	     if (c->key.sprite_origin_lower_left) {
 		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
 		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
 	     }
