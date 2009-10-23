@@ -29,9 +29,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
+#include "pipe/p_state.h"
+
+#include "util/u_math.h"
 
 #include "intel_batchbuffer.h"
 
@@ -83,7 +83,7 @@ static void compile_clip_prog( struct brw_context *brw,
 	 delta += ATTR_SIZE;
       }
 
-   c.nr_attrs = brw_count_bits(c.key.attrs);
+   c.nr_attrs = util_count_bits(c.key.attrs);
    
    if (BRW_IS_IGDNG(brw))
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
@@ -104,16 +104,16 @@ static void compile_clip_prog( struct brw_context *brw,
     * do all three:
     */
    switch (key->primitive) {
-   case GL_TRIANGLES: 
+   case PIPE_PRIM_TRIANGLES: 
       if (key->do_unfilled)
 	 brw_emit_unfilled_clip( &c );
       else
 	 brw_emit_tri_clip( &c );
       break;
-   case GL_LINES:
+   case PIPE_PRIM_LINES:
       brw_emit_line_clip( &c );
       break;
-   case GL_POINTS:
+   case PIPE_PRIM_POINTS:
       brw_emit_point_clip( &c );
       break;
    default:
@@ -143,7 +143,6 @@ static void compile_clip_prog( struct brw_context *brw,
  */
 static void upload_clip_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
    struct brw_clip_prog_key key;
 
    memset(&key, 0, sizeof(key));
@@ -151,101 +150,51 @@ static void upload_clip_prog(struct brw_context *brw)
    /* Populate the key:
     */
    /* BRW_NEW_REDUCED_PRIMITIVE */
-   key.primitive = brw->intel.reduced_primitive;
+   key.primitive = brw->reduced_primitive;
    /* CACHE_NEW_VS_PROG */
    key.attrs = brw->vs.prog_data->outputs_written;
-   /* _NEW_LIGHT */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
-   /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   /* PIPE_NEW_RAST */
+   key.do_flat_shading = brw->rast.base.flatshade;
+   /* PIPE_NEW_UCP */
+   key.nr_userclip = brw->nr_ucp;
 
    if (BRW_IS_IGDNG(brw))
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key.clip_mode = BRW_CLIPMODE_NORMAL;
 
-   /* _NEW_POLYGON */
-   if (key.primitive == GL_TRIANGLES) {
-      if (ctx->Polygon.CullFlag &&
-	  ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+   /* PIPE_NEW_RAST */
+   if (key.primitive == PIPE_PRIM_TRIANGLES) {
+      if (brw->rast->cull_mode = PIPE_WINDING_BOTH)
 	 key.clip_mode = BRW_CLIPMODE_REJECT_ALL;
       else {
-	 GLuint fill_front = CLIP_CULL;
-	 GLuint fill_back = CLIP_CULL;
-	 GLuint offset_front = 0;
-	 GLuint offset_back = 0;
+	 key.fill_ccw = CLIP_CULL;
+	 key.fill_cw = CLIP_CULL;
 
-	 if (!ctx->Polygon.CullFlag ||
-	     ctx->Polygon.CullFaceMode != GL_FRONT) {
-	    switch (ctx->Polygon.FrontMode) {
-	    case GL_FILL: 
-	       fill_front = CLIP_FILL; 
-	       offset_front = 0;
-	       break;
-	    case GL_LINE:
-	       fill_front = CLIP_LINE;
-	       offset_front = ctx->Polygon.OffsetLine;
-	       break;
-	    case GL_POINT:
-	       fill_front = CLIP_POINT;
-	       offset_front = ctx->Polygon.OffsetPoint;
-	       break;
-	    }
+	 if (!(brw->rast->cull_mode & PIPE_WINDING_CCW)) {
+	    key.fill_ccw = translate_fill(brw->rast.fill_ccw);
 	 }
 
-	 if (!ctx->Polygon.CullFlag ||
-	     ctx->Polygon.CullFaceMode != GL_BACK) {
-	    switch (ctx->Polygon.BackMode) {
-	    case GL_FILL: 
-	       fill_back = CLIP_FILL; 
-	       offset_back = 0;
-	       break;
-	    case GL_LINE:
-	       fill_back = CLIP_LINE;
-	       offset_back = ctx->Polygon.OffsetLine;
-	       break;
-	    case GL_POINT:
-	       fill_back = CLIP_POINT;
-	       offset_back = ctx->Polygon.OffsetPoint;
-	       break;
-	    }
+	 if (!(brw->rast->cull_mode & PIPE_WINDING_CW)) {
+	    key.fill_cw = translate_fill(brw->rast.fill_cw);
 	 }
 
-	 if (ctx->Polygon.BackMode != GL_FILL ||
-	     ctx->Polygon.FrontMode != GL_FILL) {
+	 if (key.fill_cw != CLIP_FILL ||
+	     key.fill_ccw != CLIP_FILL) {
 	    key.do_unfilled = 1;
-
-	    /* Most cases the fixed function units will handle.  Cases where
-	     * one or more polygon faces are unfilled will require help:
-	     */
 	    key.clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
+	 }
 
-	    if (offset_back || offset_front) {
-	       /* _NEW_POLYGON, _NEW_BUFFERS */
-	       key.offset_units = ctx->Polygon.OffsetUnits * brw->intel.polygon_offset_scale;
-	       key.offset_factor = ctx->Polygon.OffsetFactor * ctx->DrawBuffer->_MRD;
-	    }
+	 key.offset_ccw = brw->rast.offset_ccw;
+	 key.offset_cw = brw->rast.offset_cw;
 
-	    switch (ctx->Polygon.FrontFace) {
-	    case GL_CCW:
-	       key.fill_ccw = fill_front;
-	       key.fill_cw = fill_back;
-	       key.offset_ccw = offset_front;
-	       key.offset_cw = offset_back;
-	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_cw != CLIP_CULL) 
-		  key.copy_bfc_cw = 1;
-	       break;
-	    case GL_CW:
-	       key.fill_cw = fill_front;
-	       key.fill_ccw = fill_back;
-	       key.offset_cw = offset_front;
-	       key.offset_ccw = offset_back;
-	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_ccw != CLIP_CULL) 
-		  key.copy_bfc_ccw = 1;
-	       break;
-	    }
+	 if (brw->rast.light_twoside &&
+	     key.fill_cw != CLIP_CULL) 
+	    key.copy_bfc_cw = 1;
+
+	 if (brw->rast.light_twoside &&
+	     key.fill_ccw != CLIP_CULL) 
+	    key.copy_bfc_ccw = 1;
 	 }
       }
    }
@@ -262,10 +211,8 @@ static void upload_clip_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_clip_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT | 
-		_NEW_TRANSFORM |
-		_NEW_POLYGON | 
-		_NEW_BUFFERS),
+      .mesa  = (PIPE_NEW_RAST | 
+		PIPE_NEW_UCP),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },

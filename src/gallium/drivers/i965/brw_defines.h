@@ -840,8 +840,8 @@
 
 #include "intel_chipset.h"
 
-#define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->intel.intelScreen->deviceID))
+#define BRW_IS_G4X(brw)         (IS_G4X((brw)->brw_screen->deviceID))
+#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->brw_screen->deviceID))
 #define BRW_IS_965(brw)         (!(BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)))
 #define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
 #define CMD_VF_STATISTICS(brw)          ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)

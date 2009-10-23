@@ -422,7 +422,6 @@ void brw_wm_pass0( struct brw_wm_compile *c )
        */      
       switch (inst->Opcode) {
       case OPCODE_MOV: 
-      case OPCODE_SWZ: 
 	 if (!inst->SaturateMode) {
 	    pass0_precalc_mov(c, inst);
 	 }

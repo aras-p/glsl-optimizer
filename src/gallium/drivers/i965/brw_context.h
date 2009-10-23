@@ -115,7 +115,6 @@
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_FALLBACK_TEXTURE		 0x1
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
@@ -450,11 +449,9 @@ struct brw_query_object {
  */
 struct brw_context 
 {
-   struct intel_context intel;  /**< base class, must be first field */
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean tmp_fallback;
    GLboolean no_batch_wrap;
 
    struct {
@@ -692,7 +689,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 /*======================================================================
  * brw_queryobj.c
  */
-void brw_init_queryobj_functions(struct dd_function_table *functions);
+void brw_init_query(struct brw_context *brw);
 void brw_prepare_query_begin(struct brw_context *brw);
 void brw_emit_query_begin(struct brw_context *brw);
 void brw_emit_query_end(struct brw_context *brw);
@@ -730,7 +727,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst);
  * macros used previously:
  */
 static INLINE struct brw_context *
-brw_context( GLcontext *ctx )
+brw_context( struct pipe_context *ctx )
 {
    return (struct brw_context *)ctx;
 }

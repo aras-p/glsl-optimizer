@@ -120,7 +120,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       GLuint writemask;
       GLuint read0, read1, read2;
 
-      if (inst->opcode == OPCODE_KIL) {
+      if (inst->opcode == TGSI_OPCODE_KIL) {
 	 track_arg(c, inst, 0, WRITEMASK_XYZW); /* All args contribute to final */
 	 continue;
       }
@@ -154,76 +154,75 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       /* Mark all inputs which contribute to the marked outputs:
        */
       switch (inst->opcode) {
-      case OPCODE_ABS:
-      case OPCODE_FLR:
-      case OPCODE_FRC:
-      case OPCODE_MOV:
-      case OPCODE_SWZ:
-      case OPCODE_TRUNC:
+      case TGSI_OPCODE_ABS:
+      case TGSI_OPCODE_FLR:
+      case TGSI_OPCODE_FRC:
+      case TGSI_OPCODE_MOV:
+      case TGSI_OPCODE_TRUNC:
 	 read0 = writemask;
 	 break;
 
-      case OPCODE_SUB:
-      case OPCODE_SLT:
-      case OPCODE_SLE:
-      case OPCODE_SGE:
-      case OPCODE_SGT:
-      case OPCODE_SEQ:
-      case OPCODE_SNE:
-      case OPCODE_ADD:
-      case OPCODE_MAX:
-      case OPCODE_MIN:
-      case OPCODE_MUL:
+      case TGSI_OPCODE_SUB:
+      case TGSI_OPCODE_SLT:
+      case TGSI_OPCODE_SLE:
+      case TGSI_OPCODE_SGE:
+      case TGSI_OPCODE_SGT:
+      case TGSI_OPCODE_SEQ:
+      case TGSI_OPCODE_SNE:
+      case TGSI_OPCODE_ADD:
+      case TGSI_OPCODE_MAX:
+      case TGSI_OPCODE_MIN:
+      case TGSI_OPCODE_MUL:
 	 read0 = writemask;
 	 read1 = writemask;
 	 break;
 
-      case OPCODE_DDX:
-      case OPCODE_DDY:
+      case TGSI_OPCODE_DDX:
+      case TGSI_OPCODE_DDY:
 	 read0 = writemask;
 	 break;
 
-      case OPCODE_MAD:	
-      case OPCODE_CMP:
-      case OPCODE_LRP:
+      case TGSI_OPCODE_MAD:	
+      case TGSI_OPCODE_CMP:
+      case TGSI_OPCODE_LRP:
 	 read0 = writemask;
 	 read1 = writemask;	
 	 read2 = writemask;	
 	 break;
 
-      case OPCODE_XPD: 
+      case TGSI_OPCODE_XPD: 
 	 if (writemask & WRITEMASK_X) read0 |= WRITEMASK_YZ;	 
 	 if (writemask & WRITEMASK_Y) read0 |= WRITEMASK_XZ;	 
 	 if (writemask & WRITEMASK_Z) read0 |= WRITEMASK_XY;
 	 read1 = read0;
 	 break;
 
-      case OPCODE_COS:
-      case OPCODE_EX2:
-      case OPCODE_LG2:
-      case OPCODE_RCP:
-      case OPCODE_RSQ:
-      case OPCODE_SIN:
-      case OPCODE_SCS:
+      case TGSI_OPCODE_COS:
+      case TGSI_OPCODE_EX2:
+      case TGSI_OPCODE_LG2:
+      case TGSI_OPCODE_RCP:
+      case TGSI_OPCODE_RSQ:
+      case TGSI_OPCODE_SIN:
+      case TGSI_OPCODE_SCS:
       case WM_CINTERP:
       case WM_PIXELXY:
 	 read0 = WRITEMASK_X;
 	 break;
 
-      case OPCODE_POW:
+      case TGSI_OPCODE_POW:
 	 read0 = WRITEMASK_X;
 	 read1 = WRITEMASK_X;
 	 break;
 
-      case OPCODE_TEX:
-      case OPCODE_TXP:
+      case TGSI_OPCODE_TEX:
+      case TGSI_OPCODE_TXP:
 	 read0 = get_texcoord_mask(inst->tex_idx);
 
          if (inst->tex_shadow)
 	    read0 |= WRITEMASK_Z;
 	 break;
 
-      case OPCODE_TXB:
+      case TGSI_OPCODE_TXB:
 	 /* Shadow ignored for txb.
 	  */
 	 read0 = get_texcoord_mask(inst->tex_idx) | WRITEMASK_W;
@@ -254,28 +253,28 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 read2 = WRITEMASK_W; /* pixel w */
 	 break;
 
-      case OPCODE_DP3:	
+      case TGSI_OPCODE_DP3:	
 	 read0 = WRITEMASK_XYZ;
 	 read1 = WRITEMASK_XYZ;
 	 break;
 
-      case OPCODE_DPH:
+      case TGSI_OPCODE_DPH:
 	 read0 = WRITEMASK_XYZ;
 	 read1 = WRITEMASK_XYZW;
 	 break;
 
-      case OPCODE_DP4:
+      case TGSI_OPCODE_DP4:
 	 read0 = WRITEMASK_XYZW;
 	 read1 = WRITEMASK_XYZW;
 	 break;
 
-      case OPCODE_LIT: 
+      case TGSI_OPCODE_LIT: 
 	 read0 = WRITEMASK_XYW;
 	 break;
 
-      case OPCODE_DST:
+      case TGSI_OPCODE_DST:
       case WM_FRONTFACING:
-      case OPCODE_KIL_NV:
+      case TGSI_OPCODE_KIL_NV:
       default:
 	 break;
       }

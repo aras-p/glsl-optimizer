@@ -30,14 +30,6 @@
   */
 
 
-
-#include "main/glheader.h"
-#include "main/context.h"
-#include "main/macros.h"
-#include "main/enums.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
 #include "brw_context.h"
@@ -64,31 +56,17 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
-   /* _NEW_TRANSFORM */
-   if (ctx->Transform.ClipPlanesEnabled) {
-      GLuint nr_planes = 6 + brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   /* PIPE_NEW_UCP */
+   if (brw->nr_ucp) {
+      GLuint nr_planes = 6 + brw->nr_ucp;
       nr_clip_regs = (nr_planes * 4 + 15) / 16;
    }
 
 
    total_regs = nr_fp_regs + nr_vp_regs + nr_clip_regs;
 
-   /* This can happen - what to do?  Probably rather than falling
-    * back, the best thing to do is emit programs which code the
-    * constants as immediate values.  Could do this either as a static
-    * cap on WM and VS, or adaptively.
-    *
-    * Unfortunately, this is currently dependent on the results of the
-    * program generation process (in the case of wm), so this would
-    * introduce the need to re-generate programs in the event of a
-    * curbe allocation failure.
-    */
-   /* Max size is 32 - just large enough to
-    * hold the 128 parameters allowed by
-    * the fragment and vertex program
-    * api's.  It's not clear what happens
-    * when both VP and FP want to use 128
-    * parameters, though. 
+   /* When this is > 32, want to use a true constant buffer to hold
+    * the extra constants.
     */
    assert(total_regs <= 32);
 
@@ -113,8 +91,8 @@ static void calculate_curbe_offsets( struct brw_context *brw )
       brw->curbe.vs_size = nr_vp_regs; reg += nr_vp_regs;
       brw->curbe.total_size = reg;
 
-      if (0)
-	 _mesa_printf("curbe wm %d+%d clip %d+%d vs %d+%d\n",
+      if (BRW_DEBUG & DEBUG_CURBE)
+	 debug_printf("curbe wm %d+%d clip %d+%d vs %d+%d\n",
 		      brw->curbe.wm_start,
 		      brw->curbe.wm_size,
 		      brw->curbe.clip_start,
@@ -129,7 +107,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
-      .mesa = _NEW_TRANSFORM,
+      .mesa = PIPE_NEW_UCP,
       .brw  = BRW_NEW_VERTEX_PROGRAM,
       .cache = CACHE_NEW_WM_PROG
    },
@@ -204,11 +182,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
 
-      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters); 
+      /* map fs constant buffer */
 
       /* copy float constants */
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
 	 buf[offset + i] = *brw->wm.prog_data->param[i];
+
+      /* unmap fs constant buffer */
    }
 
 
@@ -228,18 +208,15 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 buf[offset + i * 4 + 3] = fixed_plane[i][3];
       }
 
-      /* Clip planes: _NEW_TRANSFORM plus _NEW_PROJECTION to get to
-       * clip-space:
+      /* Clip planes:
        */
-      assert(MAX_CLIP_PLANES == 6);
-      for (j = 0; j < MAX_CLIP_PLANES; j++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1<<j)) {
-	    buf[offset + i * 4 + 0] = ctx->Transform._ClipUserPlane[j][0];
-	    buf[offset + i * 4 + 1] = ctx->Transform._ClipUserPlane[j][1];
-	    buf[offset + i * 4 + 2] = ctx->Transform._ClipUserPlane[j][2];
-	    buf[offset + i * 4 + 3] = ctx->Transform._ClipUserPlane[j][3];
-	    i++;
-	 }
+      assert(brw->nr_ucp <= 6);
+      for (j = 0; j < brw->nr_ucp; j++) {
+	 buf[offset + i * 4 + 0] = brw->ucp[j][0];
+	 buf[offset + i * 4 + 1] = brw->ucp[j][1];
+	 buf[offset + i * 4 + 2] = brw->ucp[j][2];
+	 buf[offset + i * 4 + 3] = brw->ucp[j][3];
+	 i++;
       }
    }
 
@@ -248,13 +225,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
 
-      if (brw->vertex_program->IsNVProgram)
-	 _mesa_load_tracked_matrices(ctx);
-
-      /* Updates the ParamaterValues[i] pointers for all parameters of the
-       * basic type of PROGRAM_STATE_VAR.
-       */
-      _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
+      /* map vs constant buffer */
 
       /* XXX just use a memcpy here */
       for (i = 0; i < nr; i++) {
@@ -264,14 +235,16 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 buf[offset + i * 4 + 2] = value[2];
 	 buf[offset + i * 4 + 3] = value[3];
       }
+
+      /* unmap vs constant buffer */
    }
 
    if (0) {
       for (i = 0; i < sz*16; i+=4) 
-	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
+	 debug_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 
-      _mesa_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
+      debug_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
 		   brw->curbe.last_buf, buf,
 		   bufsz, brw->curbe.last_bufsz,
 		   brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
@@ -282,12 +255,12 @@ static void prepare_constant_buffer(struct brw_context *brw)
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       /* constants have not changed */
-      _mesa_free(buf);
+      FREE(buf);
    } 
    else {
       /* constants have changed */
       if (brw->curbe.last_buf)
-	 _mesa_free(brw->curbe.last_buf);
+	 FREE(brw->curbe.last_buf);
 
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;
@@ -353,15 +326,11 @@ static void emit_constant_buffer(struct brw_context *brw)
    ADVANCE_BATCH();
 }
 
-/* This tracked state is unique in that the state it monitors varies
- * dynamically depending on the parameters tracked by the fragment and
- * vertex programs.  This is the template used as a starting point,
- * each context will maintain a copy of this internally and update as
- * required.
- */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = _NEW_PROGRAM_CONSTANTS,
+      .mesa = (PIPE_NEW_FS_CONSTANTS |
+	       PIPE_NEW_VS_CONSTANTS |
+	       PIPE_NEW_UCP),
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */

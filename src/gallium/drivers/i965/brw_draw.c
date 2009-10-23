@@ -39,14 +39,13 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
-static GLuint prim_to_hw_prim[GL_POLYGON+1] = {
+static uint32_t prim_to_hw_prim[PIPE_PRIM_POLYGON+1] = {
    _3DPRIM_POINTLIST,
    _3DPRIM_LINELIST,
    _3DPRIM_LINELOOP,
@@ -59,19 +58,6 @@ static GLuint prim_to_hw_prim[GL_POLYGON+1] = {
    _3DPRIM_POLYGON
 };
 
-
-static const GLenum reduced_prim[GL_POLYGON+1] = {  
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
-};
 
 
 /* When the primitive changes, set a state bit and re-validate.  Not
@@ -196,102 +182,6 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
 }
 
-/* XXX: could split the primitive list to fallback only on the
- * non-conformant primitives.
- */
-static GLboolean check_fallbacks( struct brw_context *brw,
-				  const struct _mesa_prim *prim,
-				  GLuint nr_prims )
-{
-   GLcontext *ctx = &brw->intel.ctx;
-   GLuint i;
-
-   /* If we don't require strict OpenGL conformance, never 
-    * use fallbacks.  If we're forcing fallbacks, always
-    * use fallfacks.
-    */
-   if (brw->intel.conformance_mode == 0)
-      return GL_FALSE;
-
-   if (brw->intel.conformance_mode == 2)
-      return GL_TRUE;
-
-   if (ctx->Polygon.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
-	    return GL_TRUE;
-   }
-
-   /* BRW hardware will do AA lines, but they are non-conformant it
-    * seems.  TBD whether we keep this fallback:
-    */
-   if (ctx->Line.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (reduced_prim[prim[i].mode] == GL_LINES) 
-	    return GL_TRUE;
-   }
-
-   /* Stipple -- these fallbacks could be resolved with a little
-    * bit of work?
-    */
-   if (ctx->Line.StippleFlag) {
-      for (i = 0; i < nr_prims; i++) {
-	 /* GS doesn't get enough information to know when to reset
-	  * the stipple counter?!?
-	  */
-	 if (prim[i].mode == GL_LINE_LOOP || prim[i].mode == GL_LINE_STRIP) 
-	    return GL_TRUE;
-	    
-	 if (prim[i].mode == GL_POLYGON &&
-	     (ctx->Polygon.FrontMode == GL_LINE ||
-	      ctx->Polygon.BackMode == GL_LINE))
-	    return GL_TRUE;
-      }
-   }
-
-   if (ctx->Point.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (prim[i].mode == GL_POINTS) 
-	    return GL_TRUE;
-   }
-
-   /* BRW hardware doesn't handle GL_CLAMP texturing correctly;
-    * brw_wm_sampler_state:translate_wrap_mode() treats GL_CLAMP
-    * as GL_CLAMP_TO_EDGE instead.  If we're using GL_CLAMP, and
-    * we want strict conformance, force the fallback.
-    * Right now, we only do this for 2D textures.
-    */
-   {
-      int u;
-      for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
-         if (texUnit->Enabled) {
-            if (texUnit->Enabled & TEXTURE_1D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->WrapS == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_2D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_3D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapT == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapR == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-         }
-      }
-   }
-      
-   /* Nothing stopping us from the fast path now */
-   return GL_FALSE;
-}
-
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
@@ -308,22 +198,11 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    GLboolean retval = GL_FALSE;
    GLboolean warn = GL_FALSE;
    GLboolean first_time = GL_TRUE;
+   uint32_t hw_prim;
    GLuint i;
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
-
-   /* We have to validate the textures *before* checking for fallbacks;
-    * otherwise, the software fallback won't be able to rely on the
-    * texture state, the firstLevel and lastLevel fields won't be
-    * set in the intel texture object (they'll both be 0), and the 
-    * software fallback will segfault if it attempts to access any
-    * texture level other than level 0.
-    */
-   brw_validate_textures( brw );
-
-   if (check_fallbacks(brw, prim, nr_prims))
-      return GL_FALSE;
 
    /* Bind all inputs, derive varying and size information:
     */
@@ -336,90 +215,30 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    brw->vb.max_index = max_index;
    brw->state.dirty.brw |= BRW_NEW_VERTICES;
 
-   /* Have to validate state quite late.  Will rebuild tnl_program,
-    * which depends on varying information.  
-    * 
-    * Note this is where brw->vs->prog_data.inputs_read is calculated,
-    * so can't access it earlier.
+   hw_prim = brw_set_prim(brw, prim[i].mode);
+
+   brw_validate_state(brw);
+
+   /* Check that we can fit our state in with our existing batchbuffer, or
+    * flush otherwise.
     */
+   ret = dri_bufmgr_check_aperture_space(brw->state.validated_bos,
+					 brw->state.validated_bo_count);
+   if (ret)
+      return ret;
 
-   LOCK_HARDWARE(intel);
-
-   if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
-      UNLOCK_HARDWARE(intel);
-      return GL_TRUE;
-   }
-
-   for (i = 0; i < nr_prims; i++) {
-      uint32_t hw_prim;
-
-      /* Flush the batch if it's approaching full, so that we don't wrap while
-       * we've got validated state that needs to be in the same batch as the
-       * primitives.  This fraction is just a guess (minimal full state plus
-       * a primitive is around 512 bytes), and would be better if we had
-       * an upper bound of how much we might emit in a single
-       * brw_try_draw_prims().
-       */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				      LOOP_CLIPRECTS);
-
-      hw_prim = brw_set_prim(brw, prim[i].mode);
-
-      if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
-	 first_time = GL_FALSE;
-
-	 brw_validate_state(brw);
-
-	 /* Various fallback checks:  */
-	 if (brw->intel.Fallback)
-	    goto out;
-
-	 /* Check that we can fit our state in with our existing batchbuffer, or
-	  * flush otherwise.
-	  */
-	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
-					     brw->state.validated_bo_count)) {
-	    static GLboolean warned;
-	    intel_batchbuffer_flush(intel->batch);
-
-	    /* Validate the state after we flushed the batch (which would have
-	     * changed the set of dirty state).  If we still fail to
-	     * check_aperture, warn of what's happening, but attempt to continue
-	     * on since it may succeed anyway, and the user would probably rather
-	     * see a failure and a warning than a fallback.
-	     */
-	    brw_validate_state(brw);
-	    if (!warned &&
-		dri_bufmgr_check_aperture_space(brw->state.validated_bos,
-						brw->state.validated_bo_count)) {
-	       warn = GL_TRUE;
-	       warned = GL_TRUE;
-	    }
-	 }
-
-	 brw_upload_state(brw);
-      }
-
-      brw_emit_prim(brw, &prim[i], hw_prim);
-
-      retval = GL_TRUE;
-   }
+   ret = brw_upload_state(brw);
+   if (ret)
+      return ret;
+   
+   ret = brw_emit_prim(brw, &prim[i], hw_prim);
+   if (ret)
+      return ret;
 
    if (intel->always_flush_batch)
       intel_batchbuffer_flush(intel->batch);
- out:
-   UNLOCK_HARDWARE(intel);
 
-   brw_state_cache_check_size(brw);
-
-   if (warn)
-      fprintf(stderr, "i965: Single primitive emit potentially exceeded "
-	      "available aperture space\n");
-
-   if (!retval)
-      DBG("%s failed\n", __FUNCTION__);
-
-   return retval;
+   return 0;
 }
 
 void brw_draw_prims( GLcontext *ctx,
@@ -431,37 +250,26 @@ void brw_draw_prims( GLcontext *ctx,
 		     GLuint min_index,
 		     GLuint max_index )
 {
-   GLboolean retval;
+   enum pipe_error ret;
 
    if (!vbo_all_varyings_in_vbos(arrays)) {
       if (!index_bounds_valid)
 	 vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
-
-      /* Decide if we want to rebase.  If so we end up recursing once
-       * only into this function.
-       */
-      if (min_index != 0) {
-	 vbo_rebase_prims(ctx, arrays,
-			  prim, nr_prims,
-			  ib, min_index, max_index,
-			  brw_draw_prims );
-	 return;
-      }
    }
 
    /* Make a first attempt at drawing:
     */
-   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+   ret = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
    /* Otherwise, we really are out of memory.  Pass the drawing
     * command to the software tnl module and which will in turn call
     * swrast to do the drawing.
     */
-   if (!retval) {
-       _swsetup_Wakeup(ctx);
-      _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+   if (ret != 0) {
+      intel_batchbuffer_flush(intel->batch);
+      ret = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+      assert(ret == 0);
    }
-
 }
 
 void brw_draw_init( struct brw_context *brw )

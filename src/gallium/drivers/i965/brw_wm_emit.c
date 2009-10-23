@@ -125,23 +125,21 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   /* Calculate the pixel offset from window bottom left into destination
-    * X and Y channels.
-    */
    if (mask & WRITEMASK_X) {
-      /* X' = X - origin */
-      brw_ADD(p,
+      /* X' = X */
+      brw_MOV(p,
 	      dst[0],
-	      retype(arg0[0], BRW_REGISTER_TYPE_W),
-	      brw_imm_d(0 - c->key.origin_x));
+	      retype(arg0[0], BRW_REGISTER_TYPE_W));
    }
 
+   /* XXX: is this needed any more, or is this a NOOP?
+    */
    if (mask & WRITEMASK_Y) {
-      /* Y' = height - (Y - origin_y) = height + origin_y - Y */
+      /* Y' = height - 1 - Y */
       brw_ADD(p,
 	      dst[1],
 	      negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
-	      brw_imm_d(c->key.origin_y + c->key.drawable_height - 1));
+	      brw_imm_d(c->key.drawable_height - 1));
    }
 }
 
@@ -1376,7 +1374,6 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_MOV:
-      case OPCODE_SWZ:
 	 emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 	 break;
 

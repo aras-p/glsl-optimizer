@@ -43,6 +43,7 @@
  */
 struct brw_clip_prog_key {
    GLuint attrs:32;		
+
    GLuint primitive:4;
    GLuint nr_userclip:3;
    GLuint do_flat_shading:1;
@@ -51,12 +52,10 @@ struct brw_clip_prog_key {
    GLuint fill_ccw:2;		/* includes cull information */
    GLuint offset_cw:1;
    GLuint offset_ccw:1;
-   GLuint pad0:17;
-
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad1:27;
+   GLuint pad1:12;
    
    GLfloat offset_factor;
    GLfloat offset_units;

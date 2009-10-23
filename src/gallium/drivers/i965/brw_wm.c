@@ -269,61 +269,46 @@ static void brw_wm_populate_key( struct brw_context *brw,
 		    uses_depth,
 		    key);
 
+   /* Revisit this, figure out if it's really useful, and either push
+    * it into the state tracker so that everyone benefits (use to
+    * create fs varients with TEX rather than TXP), or discard.
+    */
+   key->proj_attrib_mask = ~0; /*brw->wm.input_size_masks[4-1];*/
 
-   /* BRW_NEW_WM_INPUT_DIMENSIONS */
-   key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
+   /* PIPE_NEW_RAST */
+   key->flat_shade = brw->rast.flat_shade;
 
-   /* _NEW_LIGHT */
-   key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
-
-   /* _NEW_HINT */
-   key->linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
+   /* This can be determined by looking at the INTERP mode each input decl.
+    */
+   key->linear_color = 0;
 
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
-
-      if (unit->_ReallyEnabled) {
-         const struct gl_texture_object *t = unit->_Current;
-         const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+      if (i < brw->nr_textures) {
+	 const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
+	 const struct gl_texture_object *t = unit->_Current;
+	 const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1 << i;
 	    if (img->TexFormat->MesaFormat == MESA_FORMAT_YCBCR)
-		key->yuvtex_swap_mask |= 1 << i;
+	       key->yuvtex_swap_mask |= 1 << i;
 	 }
 
-         key->tex_swizzles[i] = t->_Swizzle;
+	 key->tex_swizzles[i] = t->_Swizzle;
+	 
+	 if (0)
+	    key->shadowtex_mask |= 1<<i;
       }
       else {
          key->tex_swizzles[i] = SWIZZLE_NOOP;
       }
    }
 
-   /* Shadow */
-   key->shadowtex_mask = fp->program.Base.ShadowSamplers;
 
-   /* _NEW_BUFFERS */
-   /*
-    * Include the draw buffer origin and height so that we can calculate
-    * fragment position values relative to the bottom left of the drawable,
-    * from the incoming screen origin relative position we get as part of our
-    * payload.
-    *
-    * We could avoid recompiling by including this as a constant referenced by
-    * our program, but if we were to do that it would also be nice to handle
-    * getting that constant updated at batchbuffer submit time (when we
-    * hold the lock and know where the buffer really is) rather than at emit
-    * time when we don't hold the lock and are just guessing.  We could also
-    * just avoid using this as key data if the program doesn't use
-    * fragment.position.
-    *
-    * This pretty much becomes moot with DRI2 and redirected buffers anyway,
-    * as our origins will always be zero then.
-    */
+   /* _NEW_FRAMEBUFFER */
    if (brw->intel.driDrawable != NULL) {
-      key->origin_x = brw->intel.driDrawable->x;
-      key->origin_y = brw->intel.driDrawable->y;
-      key->drawable_height = brw->intel.driDrawable->h;
+      key->drawable_height = brw->fb.cbufs[0].height;
    }
 
    /* CACHE_NEW_VS_PROG */

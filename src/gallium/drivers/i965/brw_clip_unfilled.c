@@ -29,11 +29,6 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
-#include "shader/program.h"
-
 #include "intel_batchbuffer.h"
 
 #include "brw_defines.h"

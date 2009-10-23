@@ -52,122 +52,77 @@
 #include "utils.h"
 
 
-/***************************************
- * Mesa's Driver Functions
- ***************************************/
-
-static void brwUseProgram(GLcontext *ctx, GLuint program)
-{
-   _mesa_use_program(ctx, program);
-}
-
-static void brwInitProgFuncs( struct dd_function_table *functions )
-{
-   functions->UseProgram = brwUseProgram;
-}
-static void brwInitDriverFunctions( struct dd_function_table *functions )
-{
-   intelInitDriverFunctions( functions );
-
-   brwInitFragProgFuncs( functions );
-   brwInitProgFuncs( functions );
-   brw_init_queryobj_functions(functions);
-
-   functions->Viewport = intel_viewport;
-}
 
 GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 			    __DRIcontextPrivate *driContextPriv,
 			    void *sharedContextPrivate)
 {
-   struct dd_function_table functions;
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
-   struct intel_context *intel = &brw->intel;
-   GLcontext *ctx = &intel->ctx;
 
    if (!brw) {
-      _mesa_printf("%s: failed to alloc context\n", __FUNCTION__);
+      debug_printf("%s: failed to alloc context\n", __FUNCTION__);
       return GL_FALSE;
    }
-
-   brwInitVtbl( brw );
-   brwInitDriverFunctions( &functions );
-
-   if (!intelInitContext( intel, mesaVis, driContextPriv,
-			  sharedContextPrivate, &functions )) {
-      _mesa_printf("%s: failed to init intel context\n", __FUNCTION__);
-      FREE(brw);
-      return GL_FALSE;
-   }
-
-   /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
-
-   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
-
-   ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
-   ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
-   ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
-                                     ctx->Const.MaxTextureImageUnits);
-   ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
-
-   /* Mesa limits textures to 4kx4k; it would be nice to fix that someday
-    */
-   ctx->Const.MaxTextureLevels = 13;
-   ctx->Const.Max3DTextureLevels = 9;
-   ctx->Const.MaxCubeTextureLevels = 12;
-   ctx->Const.MaxTextureRectSize = (1<<12);
-   
-   ctx->Const.MaxTextureMaxAnisotropy = 16.0;
-
-   /* if conformance mode is set, swrast can handle any size AA point */
-   ctx->Const.MaxPointSizeAA = 255.0;
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    ctx->Shader.EmitCondCodes = GL_TRUE;
    ctx->Shader.EmitNVTempInitialization = GL_TRUE;
 
-   ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
-   ctx->Const.VertexProgram.MaxAluInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexIndirections = 0;
-   ctx->Const.VertexProgram.MaxNativeAluInstructions = 0;
-   ctx->Const.VertexProgram.MaxNativeTexInstructions = 0;
-   ctx->Const.VertexProgram.MaxNativeTexIndirections = 0;
-   ctx->Const.VertexProgram.MaxNativeAttribs = 16;
-   ctx->Const.VertexProgram.MaxNativeTemps = 256;
-   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
-   ctx->Const.VertexProgram.MaxNativeParameters = 1024;
-   ctx->Const.VertexProgram.MaxEnvParams =
-      MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
-	   ctx->Const.VertexProgram.MaxEnvParams);
 
-   ctx->Const.FragmentProgram.MaxNativeInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeAluInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexIndirections = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
-   ctx->Const.FragmentProgram.MaxNativeTemps = 256;
-   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
-   ctx->Const.FragmentProgram.MaxNativeParameters = 1024;
-   ctx->Const.FragmentProgram.MaxEnvParams =
-      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
-	   ctx->Const.FragmentProgram.MaxEnvParams);
-
+   brw_init_query( brw );
    brw_init_state( brw );
+   brw_draw_init( brw );
 
    brw->state.dirty.mesa = ~0;
    brw->state.dirty.brw = ~0;
 
    brw->emit_state_always = 0;
 
-   ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
-   ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-
    make_empty_list(&brw->query.active_head);
 
-   brw_draw_init( brw );
 
    return GL_TRUE;
 }
 
+/**
+ * called from intelDestroyContext()
+ */
+static void brw_destroy_context( struct intel_context *intel )
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+   int i;
+
+   brw_destroy_state(brw);
+   brw_draw_destroy( brw );
+
+   _mesa_free(brw->wm.compile_data);
+
+   for (i = 0; i < brw->state.nr_color_regions; i++)
+      intel_region_release(&brw->state.color_regions[i]);
+   brw->state.nr_color_regions = 0;
+   intel_region_release(&brw->state.depth_region);
+
+   dri_bo_unreference(brw->curbe.curbe_bo);
+   dri_bo_unreference(brw->vs.prog_bo);
+   dri_bo_unreference(brw->vs.state_bo);
+   dri_bo_unreference(brw->vs.bind_bo);
+   dri_bo_unreference(brw->gs.prog_bo);
+   dri_bo_unreference(brw->gs.state_bo);
+   dri_bo_unreference(brw->clip.prog_bo);
+   dri_bo_unreference(brw->clip.state_bo);
+   dri_bo_unreference(brw->clip.vp_bo);
+   dri_bo_unreference(brw->sf.prog_bo);
+   dri_bo_unreference(brw->sf.state_bo);
+   dri_bo_unreference(brw->sf.vp_bo);
+   for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
+      dri_bo_unreference(brw->wm.sdc_bo[i]);
+   dri_bo_unreference(brw->wm.bind_bo);
+   for (i = 0; i < BRW_WM_MAX_SURF; i++)
+      dri_bo_unreference(brw->wm.surf_bo[i]);
+   dri_bo_unreference(brw->wm.sampler_bo);
+   dri_bo_unreference(brw->wm.prog_bo);
+   dri_bo_unreference(brw->wm.state_bo);
+   dri_bo_unreference(brw->cc.prog_bo);
+   dri_bo_unreference(brw->cc.state_bo);
+   dri_bo_unreference(brw->cc.vp_bo);
+}

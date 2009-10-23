@@ -61,9 +61,7 @@ static void do_vs_prog( struct brw_context *brw,
    }
 
    if (0)
-      _mesa_print_program(&c.vp->program.Base);
-
-
+      tgsi_dump(&c.vp->tokens, 0);
 
    /* Emit GEN4 code.
     */
@@ -96,9 +94,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
     * the inputs it asks for, whether they are varying or not.
     */
    key.program_string_id = vp->id;
-   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
-   key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
-			ctx->Polygon.BackMode != GL_FILL);
+   key.nr_userclip = brw->nr_userclip;
+   key.copy_edgeflag = (brw->rast->fill_ccw != PIPE_POLYGON_MODE_FILL ||
+			brw->rast->fill_cw != PIPE_POLYGON_MODE_FILL);
 
    /* Make an early check for the key.
     */
@@ -116,7 +114,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
+      .mesa  = PIPE_NEW_UCP | PIPE_NEW_RAST,
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

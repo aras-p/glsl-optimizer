@@ -30,25 +30,12 @@
   */
                
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
+#include "pipe/p_shader_constants.h"
+
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_util.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
-
-
-/** An invalid texture target */
-#define TEX_TARGET_NONE NUM_TEXTURE_TARGETS
-
-/** An invalid texture unit */
-#define TEX_UNIT_NONE BRW_MAX_TEX_UNIT
-
-#define FIRST_INTERNAL_TEMP MAX_NV_FRAGMENT_PROGRAM_TEMPS
 
 #define X    0
 #define Y    1
@@ -68,11 +55,6 @@ static const char *wm_opcode_strings[] = {
    "FRONTFACING",
 };
 
-#if 0
-static const char *wm_file_strings[] = {   
-   "PAYLOAD"
-};
-#endif
 
 
 /***********************************************************************
@@ -165,13 +147,13 @@ static struct prog_dst_register get_temp( struct brw_wm_compile *c )
    }
 
    c->fp_temp |= 1<<(bit-1);
-   return dst_reg(PROGRAM_TEMPORARY, FIRST_INTERNAL_TEMP+(bit-1));
+   return dst_reg(PROGRAM_TEMPORARY, c->first_internal_temp+(bit-1));
 }
 
 
 static void release_temp( struct brw_wm_compile *c, struct prog_dst_register temp )
 {
-   c->fp_temp &= ~(1 << (temp.Index - FIRST_INTERNAL_TEMP));
+   c->fp_temp &= ~(1 << (temp.Index - c->first_internal_temp));
 }
 
 
@@ -192,58 +174,29 @@ static struct prog_instruction *emit_insn(struct brw_wm_compile *c,
    return inst;
 }
 
-static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
-				       GLuint op,
-				       struct prog_dst_register dest,
-				       GLuint saturate,
-				       GLuint tex_src_unit,
-				       GLuint tex_src_target,
-				       GLuint tex_shadow,
-				       struct prog_src_register src0,
-				       struct prog_src_register src1,
-				       struct prog_src_register src2 )
+static struct prog_instruction * emit_op(struct brw_wm_compile *c,
+					 GLuint op,
+					 struct prog_dst_register dest,
+					 GLuint saturate,
+					 struct prog_src_register src0,
+					 struct prog_src_register src1,
+					 struct prog_src_register src2 )
 {
    struct prog_instruction *inst = get_fp_inst(c);
       
-   assert(tex_src_unit < BRW_MAX_TEX_UNIT ||
-          tex_src_unit == TEX_UNIT_NONE);
-   assert(tex_src_target < NUM_TEXTURE_TARGETS ||
-          tex_src_target == TEX_TARGET_NONE);
-
-   /* update mask of which texture units are referenced by this program */
-   if (tex_src_unit != TEX_UNIT_NONE)
-      c->fp->tex_units_used |= (1 << tex_src_unit);
-
    memset(inst, 0, sizeof(*inst));
 
    inst->Opcode = op;
    inst->DstReg = dest;
    inst->SaturateMode = saturate;   
-   inst->TexSrcUnit = tex_src_unit;
-   inst->TexSrcTarget = tex_src_target;
-   inst->TexShadow = tex_shadow;
    inst->SrcReg[0] = src0;
    inst->SrcReg[1] = src1;
    inst->SrcReg[2] = src2;
    return inst;
 }
-   
-
-static struct prog_instruction * emit_op(struct brw_wm_compile *c,
-				       GLuint op,
-				       struct prog_dst_register dest,
-				       GLuint saturate,
-				       struct prog_src_register src0,
-				       struct prog_src_register src1,
-				       struct prog_src_register src2 )
-{
-   return emit_tex_op(c, op, dest, saturate,
-                      TEX_UNIT_NONE, TEX_TARGET_NONE, 0,  /* unit, tgt, shadow */
-                      src0, src1, src2);
-}
 
 
-/* Many Mesa opcodes produce the same value across all the result channels.
+/* Many opcodes produce the same value across all the result channels.
  * We'd rather not have to support that splatting in the opcode implementations,
  * and brw_wm_pass*.c wants to optimize them out by shuffling references around
  * anyway.  We can easily get both by emitting the opcode to one channel, and
@@ -267,7 +220,7 @@ static struct prog_instruction *emit_scalar_insn(struct brw_wm_compile *c,
    other_channel_mask = inst0->DstReg.WriteMask & ~(1 << dst_chan);
    if (other_channel_mask != 0) {
       inst = emit_op(c,
-		     OPCODE_MOV,
+		     TGSI_OPCODE_MOV,
 		     dst_mask(inst0->DstReg, other_channel_mask),
 		     0,
 		     src_swizzle1(src_reg_from_dst(inst0->DstReg), dst_chan),
@@ -356,7 +309,9 @@ static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
 }
 
 static void emit_interp( struct brw_wm_compile *c,
-			 GLuint idx )
+			 GLuint semantic,
+			 GLuint semantic_index,
+			 GLuint interp_mode )
 {
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
@@ -366,7 +321,7 @@ static void emit_interp( struct brw_wm_compile *c,
     * multiplied by 1/W in the SF program, and LINTERP on those
     * which have not:
     */
-   switch (idx) {
+   switch (semantic) {
    case FRAG_ATTRIB_WPOS:
       /* Have to treat wpos.xy specially:
        */
@@ -390,8 +345,8 @@ static void emit_interp( struct brw_wm_compile *c,
 	      deltas,
 	      src_undef());
       break;
-   case FRAG_ATTRIB_COL0:
-   case FRAG_ATTRIB_COL1:
+
+   case TGSI_SEMANTIC_COLOR:
       if (c->key.flat_shade) {
 	 emit_op(c,
 		 WM_CINTERP,
@@ -402,25 +357,13 @@ static void emit_interp( struct brw_wm_compile *c,
 		 src_undef());
       }
       else {
-         if (c->key.linear_color) {
-            emit_op(c,
-                    WM_LINTERP,
-                    dst,
-                    0,
-                    interp,
-                    deltas,
-                    src_undef());
-         }
-         else {
-            /* perspective-corrected color interpolation */
-            emit_op(c,
-                    WM_PINTERP,
-                    dst,
-                    0,
-                    interp,
-                    deltas,
-                    get_pixel_w(c));
-         }
+	 emit_op(c,
+		 translate_interp_mode(interp_mode),
+		 dst,
+		 0,
+		 interp,
+		 deltas,
+		 src_undef());
       }
       break;
    case FRAG_ATTRIB_FOGC:
@@ -434,7 +377,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	      get_pixel_w(c));
 
       emit_op(c,
-	      OPCODE_MOV,
+	      TGSI_OPCODE_MOV,
 	      dst_mask(dst, WRITEMASK_YZW),
 	      0,
 	      src_swizzle(interp,
@@ -468,7 +411,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	      get_pixel_w(c));
 
       emit_op(c,
-	      OPCODE_MOV,
+	      TGSI_OPCODE_MOV,
 	      dst_mask(dst, WRITEMASK_ZW),
 	      0,
 	      src_swizzle(interp,
@@ -482,7 +425,7 @@ static void emit_interp( struct brw_wm_compile *c,
 
    default:
       emit_op(c,
-	      WM_PINTERP,
+	      translate_interp_mode(interp_mode),
 	      dst,
 	      0,
 	      interp,
@@ -490,8 +433,6 @@ static void emit_interp( struct brw_wm_compile *c,
 	      get_pixel_w(c));
       break;
    }
-
-   c->fp_interp_emitted |= 1<<idx;
 }
 
 /***********************************************************************
@@ -581,7 +522,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       /* dst.y = mul src0.y, src1.y
        */
       emit_op(c,
-	      OPCODE_MUL,
+	      TGSI_OPCODE_MUL,
 	      dst_mask(dst, WRITEMASK_Y),
 	      inst->SaturateMode,
 	      src0,
@@ -596,7 +537,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       /* dst.xz = swz src0.1zzz
        */
       swz = emit_op(c,
-		    OPCODE_SWZ,
+		    TGSI_OPCODE_MOV,
 		    dst_mask(dst, WRITEMASK_XZ),
 		    inst->SaturateMode,
 		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
@@ -609,7 +550,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       /* dst.w = mov src1.w
        */
       emit_op(c,
-	      OPCODE_MOV,
+	      TGSI_OPCODE_MOV,
 	      dst_mask(dst, WRITEMASK_W),
 	      inst->SaturateMode,
 	      src1,
@@ -631,7 +572,7 @@ static void precalc_lit( struct brw_wm_compile *c,
       /* dst.xw = swz src0.1111
        */
       swz = emit_op(c,
-		    OPCODE_SWZ,
+		    TGSI_OPCODE_MOV,
 		    dst_mask(dst, WRITEMASK_XW),
 		    0,
 		    src_swizzle1(src0, SWIZZLE_ONE),
@@ -643,7 +584,7 @@ static void precalc_lit( struct brw_wm_compile *c,
 
    if (dst.WriteMask & WRITEMASK_YZ) {
       emit_op(c,
-	      OPCODE_LIT,
+	      TGSI_OPCODE_LIT,
 	      dst_mask(dst, WRITEMASK_YZ),
 	      inst->SaturateMode,
 	      src0,
@@ -681,7 +622,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        coord = src_reg_from_dst(tmpcoord);
 
        /* tmpcoord = src0 (i.e.: coord = src0) */
-       out = emit_op(c, OPCODE_MOV,
+       out = emit_op(c, TGSI_OPCODE_MOV,
                      tmpcoord,
                      0,
                      src0,
@@ -691,7 +632,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        out->SrcReg[0].Abs = 1;
 
        /* tmp0 = MAX(coord.X, coord.Y) */
-       emit_op(c, OPCODE_MAX,
+       emit_op(c, TGSI_OPCODE_MAX,
                tmp0,
                0,
                src_swizzle1(coord, X),
@@ -699,7 +640,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_undef());
 
        /* tmp1 = MAX(tmp0, coord.Z) */
-       emit_op(c, OPCODE_MAX,
+       emit_op(c, TGSI_OPCODE_MAX,
                tmp1,
                0,
                tmp0src,
@@ -707,7 +648,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_undef());
 
        /* tmp0 = 1 / tmp1 */
-       emit_op(c, OPCODE_RCP,
+       emit_op(c, TGSI_OPCODE_RCP,
                dst_mask(tmp0, WRITEMASK_X),
                0,
                tmp1src,
@@ -715,7 +656,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_undef());
 
        /* tmpCoord = src0 * tmp0 */
-       emit_op(c, OPCODE_MUL,
+       emit_op(c, TGSI_OPCODE_MUL,
                tmpcoord,
                0,
                src0,
@@ -738,7 +679,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       /* coord.xy   = MUL inst->SrcReg[0], { 1/width, 1/height }
        */
       emit_op(c,
-	      OPCODE_MUL,
+	      TGSI_OPCODE_MUL,
 	      tmpcoord,
 	      0,
 	      inst->SrcReg[0],
@@ -785,7 +726,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       /* tmp     = TEX ...
        */
       emit_tex_op(c, 
-                  OPCODE_TEX,
+                  TGSI_OPCODE_TEX,
                   tmp,
                   inst->SaturateMode,
                   unit,
@@ -798,7 +739,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       /* tmp.xyz =  ADD TMP, C0
        */
       emit_op(c,
-	      OPCODE_ADD,
+	      TGSI_OPCODE_ADD,
 	      dst_mask(tmp, WRITEMASK_XYZ),
 	      0,
 	      tmpsrc,
@@ -809,7 +750,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        */
 
       emit_op(c,
-	      OPCODE_MUL,
+	      TGSI_OPCODE_MUL,
 	      dst_mask(tmp, WRITEMASK_Y),
 	      0,
 	      tmpsrc,
@@ -824,7 +765,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        */
 
       emit_op(c,
-	      OPCODE_MAD,
+	      TGSI_OPCODE_MAD,
 	      dst_mask(dst, WRITEMASK_XYZ),
 	      0,
 	      swap_uv?src_swizzle(tmpsrc, Z,Z,X,X):src_swizzle(tmpsrc, X,X,Z,Z),
@@ -834,7 +775,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       /*  RGB.y   = MAD YUV.z, C1.w, RGB.y
        */
       emit_op(c,
-	      OPCODE_MAD,
+	      TGSI_OPCODE_MAD,
 	      dst_mask(dst, WRITEMASK_Y),
 	      0,
 	      src_swizzle1(tmpsrc, Z),
@@ -846,7 +787,7 @@ static void precalc_tex( struct brw_wm_compile *c,
    else {
       /* ordinary RGBA tex instruction */
       emit_tex_op(c, 
-                  OPCODE_TEX,
+                  TGSI_OPCODE_TEX,
                   inst->DstReg,
                   inst->SaturateMode,
                   unit,
@@ -861,7 +802,7 @@ static void precalc_tex( struct brw_wm_compile *c,
    if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
       /* swizzle the result of the TEX instruction */
       struct prog_src_register tmpsrc = src_reg_from_dst(inst->DstReg);
-      emit_op(c, OPCODE_SWZ,
+      emit_op(c, TGSI_OPCODE_MOV,
               inst->DstReg,
               SATURATE_OFF, /* saturate already done above */
               src_swizzle4(tmpsrc, c->key.tex_swizzles[unit]),
@@ -884,7 +825,7 @@ static GLboolean projtex( struct brw_wm_compile *c,
    const struct prog_src_register src = inst->SrcReg[0];
    GLboolean retVal;
 
-   assert(inst->Opcode == OPCODE_TXP);
+   assert(inst->Opcode == TGSI_OPCODE_TXP);
 
    /* Only try to detect the simplest cases.  Could detect (later)
     * cases where we are trying to emit code like RCP {1.0}, MUL x,
@@ -921,7 +862,7 @@ static void precalc_txp( struct brw_wm_compile *c,
       /* tmp0.w = RCP inst.arg[0][3]
        */
       emit_op(c,
-	      OPCODE_RCP,
+	      TGSI_OPCODE_RCP,
 	      dst_mask(tmp, WRITEMASK_W),
 	      0,
 	      src_swizzle1(src0, GET_SWZ(src0.Swizzle, W)),
@@ -931,7 +872,7 @@ static void precalc_txp( struct brw_wm_compile *c,
       /* tmp0.xyz =  MUL inst.arg[0], tmp0.wwww
        */
       emit_op(c,
-	      OPCODE_MUL,
+	      TGSI_OPCODE_MUL,
 	      dst_mask(tmp, WRITEMASK_XYZ),
 	      0,
 	      src0,
@@ -1015,6 +956,7 @@ static void validate_src_regs( struct brw_wm_compile *c,
 	 GLuint idx = inst->SrcReg[i].Index;
 	 if (!(c->fp_interp_emitted & (1<<idx))) {
 	    emit_interp(c, idx);
+	    c->fp_interp_emitted |= 1<<idx;
 	 }
       }
    }
@@ -1094,70 +1036,63 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
        */
 
       switch (inst->Opcode) {
-      case OPCODE_SWZ: 
+      case TGSI_OPCODE_ABS:
 	 out = emit_insn(c, inst);
-	 out->Opcode = OPCODE_MOV;
-	 break;
-	 
-      case OPCODE_ABS:
-	 out = emit_insn(c, inst);
-	 out->Opcode = OPCODE_MOV;
+	 out->Opcode = TGSI_OPCODE_MOV;
 	 out->SrcReg[0].Negate = NEGATE_NONE;
 	 out->SrcReg[0].Abs = 1;
 	 break;
 
-      case OPCODE_SUB: 
+      case TGSI_OPCODE_SUB: 
 	 out = emit_insn(c, inst);
-	 out->Opcode = OPCODE_ADD;
+	 out->Opcode = TGSI_OPCODE_ADD;
 	 out->SrcReg[1].Negate ^= NEGATE_XYZW;
 	 break;
 
-      case OPCODE_SCS: 
+      case TGSI_OPCODE_SCS: 
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
 	  */
 	 out->DstReg.WriteMask &= WRITEMASK_XY;
 	 break;
 	 
-      case OPCODE_DST:
+      case TGSI_OPCODE_DST:
 	 precalc_dst(c, inst);
 	 break;
 
-      case OPCODE_LIT:
+      case TGSI_OPCODE_LIT:
 	 precalc_lit(c, inst);
 	 break;
 
-      case OPCODE_TEX:
+      case TGSI_OPCODE_TEX:
 	 precalc_tex(c, inst);
 	 break;
 
-      case OPCODE_TXP:
+      case TGSI_OPCODE_TXP:
 	 precalc_txp(c, inst);
 	 break;
 
-      case OPCODE_TXB:
+      case TGSI_OPCODE_TXB:
 	 out = emit_insn(c, inst);
 	 out->TexSrcUnit = fp->program.Base.SamplerUnits[inst->TexSrcUnit];
          assert(out->TexSrcUnit < BRW_MAX_TEX_UNIT);
 	 break;
 
-      case OPCODE_XPD: 
+      case TGSI_OPCODE_XPD: 
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
 	  */
 	 out->DstReg.WriteMask &= WRITEMASK_XYZ;
 	 break;
 
-      case OPCODE_KIL: 
+      case TGSI_OPCODE_KIL: 
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
 	  */
 	 out->DstReg.WriteMask = 0;
 	 break;
-      case OPCODE_END:
+      case TGSI_OPCODE_END:
 	 emit_fb_write(c);
-	 break;
-      case OPCODE_PRINT:
 	 break;
       default:
 	 if (brw_wm_is_scalar_result(inst->Opcode))

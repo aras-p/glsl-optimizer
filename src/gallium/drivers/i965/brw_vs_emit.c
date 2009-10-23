@@ -33,7 +33,7 @@
 #include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
+#include "pipe/p_shader_tokens.h"
 #include "brw_context.h"
 #include "brw_vs.h"
 
@@ -129,6 +129,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 reg++;
       }
    }
+
    /* If there are no inputs, we'll still be reading one attribute's worth
     * because it's required -- see urb_read_length setting.
     */
@@ -226,6 +227,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * vertex urb, so is half the amount:
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
+
    /* Setting this field to 0 leads to undefined behavior according to the
     * the VS_STATE docs.  Our VUEs will always have at least one attribute
     * sitting in them, even if it's padding.
@@ -960,9 +962,6 @@ static void emit_arl( struct brw_vs_compile *c,
 
 /**
  * Return the brw reg for the given instruction's src argument.
- * Will return mangled results for SWZ op.  The emit_swz() function
- * ignores this result and recalculates taking extended swizzles into
- * account.
  */
 static struct brw_reg get_arg( struct brw_vs_compile *c,
                                const struct prog_instruction *inst,
@@ -1024,74 +1023,6 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
 }
 
 
-static void emit_swz( struct brw_vs_compile *c, 
-		      struct brw_reg dst,
-                      const struct prog_instruction *inst)
-{
-   const GLuint argIndex = 0;
-   const struct prog_src_register src = inst->SrcReg[argIndex];
-   struct brw_compile *p = &c->func;
-   GLuint zeros_mask = 0;
-   GLuint ones_mask = 0;
-   GLuint src_mask = 0;
-   GLubyte src_swz[4];
-   GLboolean need_tmp = (src.Negate &&
-			 dst.file != BRW_GENERAL_REGISTER_FILE);
-   struct brw_reg tmp = dst;
-   GLuint i;
-
-   if (need_tmp)
-      tmp = get_tmp(c);
-
-   for (i = 0; i < 4; i++) {
-      if (dst.dw1.bits.writemask & (1<<i)) {
-	 GLubyte s = GET_SWZ(src.Swizzle, i);
-	 switch (s) {
-	 case SWIZZLE_X:
-	 case SWIZZLE_Y:
-	 case SWIZZLE_Z:
-	 case SWIZZLE_W:
-	    src_mask |= 1<<i;
-	    src_swz[i] = s;
-	    break;
-	 case SWIZZLE_ZERO:
-	    zeros_mask |= 1<<i;
-	    break;
-	 case SWIZZLE_ONE:
-	    ones_mask |= 1<<i;
-	    break;
-	 }
-      }
-   }
-   
-   /* Do src first, in case dst aliases src:
-    */
-   if (src_mask) {
-      struct brw_reg arg0;
-
-      arg0 = get_src_reg(c, inst, argIndex);
-
-      arg0 = brw_swizzle(arg0, 
-			 src_swz[0], src_swz[1], 
-			 src_swz[2], src_swz[3]);
-
-      brw_MOV(p, brw_writemask(tmp, src_mask), arg0);
-   } 
-   
-   if (zeros_mask) 
-      brw_MOV(p, brw_writemask(tmp, zeros_mask), brw_imm_f(0));
-
-   if (ones_mask) 
-      brw_MOV(p, brw_writemask(tmp, ones_mask), brw_imm_f(1));
-
-   if (src.Negate)
-      brw_MOV(p, brw_writemask(tmp, src.Negate), negate(tmp));
-   
-   if (need_tmp) {
-      brw_MOV(p, dst, tmp);
-      release_tmp(c, tmp);
-   }
-}
 
 
 /**
@@ -1332,20 +1263,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    
-   /* Message registers can't be read, so copy the output into GRF register
-      if they are used in source registers */
-   for (insn = 0; insn < nr_insns; insn++) {
-       GLuint i;
-       struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
-       for (i = 0; i < 3; i++) {
-	   struct prog_src_register *src = &inst->SrcReg[i];
-	   GLuint index = src->Index;
-	   GLuint file = src->File;	
-	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
-	       c->output_regs[index].used_in_src = GL_TRUE;
-       }
-   }
-
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
@@ -1362,18 +1279,14 @@ void brw_vs_emit(struct brw_vs_compile *c )
       _mesa_print_instruction(inst);
 #endif
 
-      /* Get argument regs.  SWZ is special and does this itself.
+      /* Get argument regs.
        */
-      if (inst->Opcode != OPCODE_SWZ)
-	  for (i = 0; i < 3; i++) {
-	      const struct prog_src_register *src = &inst->SrcReg[i];
-	      index = src->Index;
-	      file = src->File;	
-	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-		  args[i] = c->output_regs[index].reg;
-	      else
-                  args[i] = get_arg(c, inst, i);
-	  }
+      for (i = 0; i < 3; i++) {
+	 const struct prog_src_register *src = &inst->SrcReg[i];
+	 index = src->Index;
+	 file = src->File;	
+	 args[i] = get_arg(c, inst, i);
+      }
 
       /* Get dest regs.  Note that it is possible for a reg to be both
        * dst and arg, given the static allocation of registers.  So
@@ -1381,10 +1294,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
        */ 
       index = inst->DstReg.Index;
       file = inst->DstReg.File;
-      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-	  dst = c->output_regs[index].reg;
-      else
-	  dst = get_dst(c, inst->DstReg);
+      dst = get_dst(c, inst->DstReg);
 
       if (inst->SaturateMode != SATURATE_OFF) {
 	 _mesa_problem(NULL, "Unsupported saturate %d in vertex shader",
@@ -1392,151 +1302,144 @@ void brw_vs_emit(struct brw_vs_compile *c )
       }
 
       switch (inst->Opcode) {
-      case OPCODE_ABS:
+      case TGSI_OPCODE_ABS:
 	 brw_MOV(p, dst, brw_abs(args[0]));
 	 break;
-      case OPCODE_ADD:
+      case TGSI_OPCODE_ADD:
 	 brw_ADD(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_COS:
+      case TGSI_OPCODE_COS:
 	 emit_math1(c, BRW_MATH_FUNCTION_COS, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_DP3:
+      case TGSI_OPCODE_DP3:
 	 brw_DP3(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_DP4:
+      case TGSI_OPCODE_DP4:
 	 brw_DP4(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_DPH:
+      case TGSI_OPCODE_DPH:
 	 brw_DPH(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_NRM3:
+      case TGSI_OPCODE_NRM3:
 	 emit_nrm(c, dst, args[0], 3);
 	 break;
-      case OPCODE_NRM4:
+      case TGSI_OPCODE_NRM4:
 	 emit_nrm(c, dst, args[0], 4);
 	 break;
-      case OPCODE_DST:
+      case TGSI_OPCODE_DST:
 	 unalias2(c, dst, args[0], args[1], emit_dst_noalias); 
 	 break;
-      case OPCODE_EXP:
+      case TGSI_OPCODE_EXP:
 	 unalias1(c, dst, args[0], emit_exp_noalias);
 	 break;
-      case OPCODE_EX2:
+      case TGSI_OPCODE_EX2:
 	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_ARL:
+      case TGSI_OPCODE_ARL:
 	 emit_arl(c, dst, args[0]);
 	 break;
-      case OPCODE_FLR:
+      case TGSI_OPCODE_FLR:
 	 brw_RNDD(p, dst, args[0]);
 	 break;
-      case OPCODE_FRC:
+      case TGSI_OPCODE_FRC:
 	 brw_FRC(p, dst, args[0]);
 	 break;
-      case OPCODE_LOG:
+      case TGSI_OPCODE_LOG:
 	 unalias1(c, dst, args[0], emit_log_noalias);
 	 break;
-      case OPCODE_LG2:
+      case TGSI_OPCODE_LG2:
 	 emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_LIT:
+      case TGSI_OPCODE_LIT:
 	 unalias1(c, dst, args[0], emit_lit_noalias);
 	 break;
-      case OPCODE_LRP:
+      case TGSI_OPCODE_LRP:
 	 unalias3(c, dst, args[0], args[1], args[2], emit_lrp_noalias);
 	 break;
-      case OPCODE_MAD:
+      case TGSI_OPCODE_MAD:
 	 brw_MOV(p, brw_acc_reg(), args[2]);
 	 brw_MAC(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_MAX:
+      case TGSI_OPCODE_MAX:
 	 emit_max(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_MIN:
+      case TGSI_OPCODE_MIN:
 	 emit_min(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_MOV:
+      case TGSI_OPCODE_MOV:
 	 brw_MOV(p, dst, args[0]);
 	 break;
-      case OPCODE_MUL:
+      case TGSI_OPCODE_MUL:
 	 brw_MUL(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_POW:
+      case TGSI_OPCODE_POW:
 	 emit_math2(c, BRW_MATH_FUNCTION_POW, dst, args[0], args[1], BRW_MATH_PRECISION_FULL); 
 	 break;
-      case OPCODE_RCP:
+      case TGSI_OPCODE_RCP:
 	 emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_RSQ:
+      case TGSI_OPCODE_RSQ:
 	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-
-      case OPCODE_SEQ:
+      case TGSI_OPCODE_SEQ:
          emit_seq(p, dst, args[0], args[1]);
          break;
-      case OPCODE_SIN:
+      case TGSI_OPCODE_SIN:
 	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_SNE:
+      case TGSI_OPCODE_SNE:
          emit_sne(p, dst, args[0], args[1]);
          break;
-      case OPCODE_SGE:
+      case TGSI_OPCODE_SGE:
 	 emit_sge(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_SGT:
+      case TGSI_OPCODE_SGT:
          emit_sgt(p, dst, args[0], args[1]);
          break;
-      case OPCODE_SLT:
+      case TGSI_OPCODE_SLT:
 	 emit_slt(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_SLE:
+      case TGSI_OPCODE_SLE:
          emit_sle(p, dst, args[0], args[1]);
          break;
-      case OPCODE_SUB:
+      case TGSI_OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));
 	 break;
-      case OPCODE_SWZ:
-	 /* The args[0] value can't be used here as it won't have
-	  * correctly encoded the full swizzle:
-	  */
-	 emit_swz(c, dst, inst);
-	 break;
-      case OPCODE_TRUNC:
+      case TGSI_OPCODE_TRUNC:
          /* round toward zero */
 	 brw_RNDZ(p, dst, args[0]);
 	 break;
-      case OPCODE_XPD:
+      case TGSI_OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_IF:
+      case TGSI_OPCODE_IF:
 	 assert(if_depth < MAX_IF_DEPTH);
 	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
 	 /* Note that brw_IF smashes the predicate_control field. */
 	 if_inst[if_depth]->header.predicate_control = get_predicate(inst);
 	 if_depth++;
 	 break;
-      case OPCODE_ELSE:
+      case TGSI_OPCODE_ELSE:
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
 	 break;
-      case OPCODE_ENDIF:
+      case TGSI_OPCODE_ENDIF:
          assert(if_depth > 0);
 	 brw_ENDIF(p, if_inst[--if_depth]);
 	 break;			
-      case OPCODE_BGNLOOP:
+      case TGSI_OPCODE_BGNLOOP:
          loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
          break;
-      case OPCODE_BRK:
+      case TGSI_OPCODE_BRK:
 	 brw_set_predicate_control(p, get_predicate(inst));
          brw_BREAK(p);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
-      case OPCODE_CONT:
+      case TGSI_OPCODE_CONT:
 	 brw_set_predicate_control(p, get_predicate(inst));
          brw_CONT(p);
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
-      case OPCODE_ENDLOOP: 
+      case TGSI_OPCODE_ENDLOOP: 
          {
             struct brw_instruction *inst0, *inst1;
 	    GLuint br = 1;
@@ -1550,23 +1453,23 @@ void brw_vs_emit(struct brw_vs_compile *c )
             /* patch all the BREAK/CONT instructions from last BEGINLOOP */
             while (inst0 > loop_inst[loop_depth]) {
                inst0--;
-               if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+               if (inst0->header.opcode == BRW_TGSI_OPCODE_BREAK) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
                   inst0->bits3.if_else.pop_count = 0;
                }
-               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+               else if (inst0->header.opcode == BRW_TGSI_OPCODE_CONTINUE) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                   inst0->bits3.if_else.pop_count = 0;
                }
             }
          }
          break;
-      case OPCODE_BRA:
+      case TGSI_OPCODE_BRA:
 	 brw_set_predicate_control(p, get_predicate(inst));
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
-      case OPCODE_CAL:
+      case TGSI_OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
 	 brw_ADD(p, deref_1d(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
@@ -1575,27 +1478,27 @@ void brw_vs_emit(struct brw_vs_compile *c )
          brw_save_call(p, inst->Comment, p->nr_insn);
 	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          break;
-      case OPCODE_RET:
+      case TGSI_OPCODE_RET:
 	 brw_ADD(p, get_addr_reg(stack_index),
 			 get_addr_reg(stack_index), brw_imm_d(-4));
 	 brw_set_access_mode(p, BRW_ALIGN_1);
          brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 break;
-      case OPCODE_END:	
+      case TGSI_OPCODE_END:	
          end_offset = p->nr_insn;
          /* this instruction will get patched later to jump past subroutine
           * code, etc.
           */
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          break;
-      case OPCODE_PRINT:
+      case TGSI_OPCODE_PRINT:
          /* no-op */
          break;
-      case OPCODE_BGNSUB:
+      case TGSI_OPCODE_BGNSUB:
          brw_save_label(p, inst->Comment, p->nr_insn);
          break;
-      case OPCODE_ENDSUB:
+      case TGSI_OPCODE_ENDSUB:
          /* no-op */
          break;
       default:
@@ -1616,33 +1519,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
 	 assert(hw_insn->header.destreg__conditionalmod == 0);
 	 hw_insn->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
-      }
-
-      if ((inst->DstReg.File == PROGRAM_OUTPUT)
-          && (inst->DstReg.Index != VERT_RESULT_HPOS)
-          && c->output_regs[inst->DstReg.Index].used_in_src) {
-         brw_MOV(p, get_dst(c, inst->DstReg), dst);
-      }
-
-      /* Result color clamping.
-       *
-       * When destination register is an output register and
-       * it's primary/secondary front/back color, we have to clamp
-       * the result to [0,1]. This is done by enabling the
-       * saturation bit for the last instruction.
-       *
-       * We don't use brw_set_saturate() as it modifies
-       * p->current->header.saturate, which affects all the subsequent
-       * instructions. Instead, we directly modify the header
-       * of the last (already stored) instruction.
-       */
-      if (inst->DstReg.File == PROGRAM_OUTPUT) {
-         if ((inst->DstReg.Index == VERT_RESULT_COL0)
-             || (inst->DstReg.Index == VERT_RESULT_COL1)
-             || (inst->DstReg.Index == VERT_RESULT_BFC0)
-             || (inst->DstReg.Index == VERT_RESULT_BFC1)) {
-            p->store[p->nr_insn-1].header.saturate = 1;
-         }
       }
 
       release_tmps(c);

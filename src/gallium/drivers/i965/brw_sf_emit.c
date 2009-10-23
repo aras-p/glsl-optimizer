@@ -150,7 +150,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint nr = util_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
 
    if (!nr)
@@ -188,7 +188,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint nr = util_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
 
    if (!nr)

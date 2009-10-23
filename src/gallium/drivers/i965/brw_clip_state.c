@@ -32,7 +32,6 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "main/macros.h"
 
 struct brw_clip_unit_key {
    unsigned int total_grf;
@@ -66,8 +65,8 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    key->nr_urb_entries = brw->urb.nr_clip_entries;
    key->urb_size = brw->urb.vsize;
 
-   /* _NEW_TRANSOFORM */
-   key->depth_clamp = ctx->Transform.DepthClamp;
+   /*  */
+   key->depth_clamp = 0; // XXX: add this to gallium: ctx->Transform.DepthClamp;
 }
 
 static dri_bo *
@@ -175,7 +174,7 @@ static void upload_clip_unit( struct brw_context *brw )
 
 const struct brw_tracked_state brw_clip_unit = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = 0,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_CLIP_PROG

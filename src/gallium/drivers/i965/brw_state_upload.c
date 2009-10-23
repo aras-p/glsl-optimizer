@@ -270,7 +270,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
 /***********************************************************************
  * Emit all state:
  */
-void brw_validate_state( struct brw_context *brw )
+enum pipe_error brw_validate_state( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
@@ -278,10 +278,6 @@ void brw_validate_state( struct brw_context *brw )
    GLuint i;
 
    brw_clear_validated_bos(brw);
-
-   state->mesa |= brw->intel.NewGLState;
-   brw->intel.NewGLState = 0;
-
    brw_add_validated_bo(brw, intel->batch->buf);
 
    if (brw->emit_state_always) {
@@ -290,36 +286,23 @@ void brw_validate_state( struct brw_context *brw )
       state->cache |= ~0;
    }
 
-   if (brw->fragment_program != ctx->FragmentProgram._Current) {
-      brw->fragment_program = ctx->FragmentProgram._Current;
-      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-   }
-
-   if (brw->vertex_program != ctx->VertexProgram._Current) {
-      brw->vertex_program = ctx->VertexProgram._Current;
-      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
-   }
-
    if (state->mesa == 0 &&
        state->cache == 0 &&
        state->brw == 0)
-      return;
+      return 0;
 
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
       brw_clear_batch_cache(brw);
-
-   brw->intel.Fallback = 0;
 
    /* do prepare stage for all atoms */
    for (i = 0; i < Elements(atoms); i++) {
       const struct brw_tracked_state *atom = atoms[i];
 
-      if (brw->intel.Fallback)
-         break;
-
       if (check_state(state, &atom->dirty)) {
          if (atom->prepare) {
-            atom->prepare(brw);
+            ret = atom->prepare(brw);
+	    if (ret)
+	       return ret;
         }
       }
    }
@@ -329,17 +312,18 @@ void brw_validate_state( struct brw_context *brw )
     * If this fails, we can experience GPU lock-ups.
     */
    {
-      const struct brw_fragment_program *fp;
-      fp = brw_fragment_program_const(brw->fragment_program);
+      const struct brw_fragment_program *fp = brw->fragment_program;
       if (fp) {
-         assert((fp->tex_units_used & ctx->Texture._EnabledUnits)
-                == fp->tex_units_used);
+         assert(fp->info.max_sampler <= brw->nr_samplers &&
+		fp->info.max_texture <= brw->nr_textures);
       }
    }
+
+   return 0;
 }
 
 
-void brw_upload_state(struct brw_context *brw)
+enum pipe_error brw_upload_state(struct brw_context *brw)
 {
    struct brw_state_flags *state = &brw->state.dirty;
    int i;
@@ -356,7 +340,7 @@ void brw_upload_state(struct brw_context *brw)
       _mesa_memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < Elements(atoms); i++) {	 
+      for (i = 0; i < Elements(atoms); i++) {
 	 const struct brw_tracked_state *atom = atoms[i];
 	 struct brw_state_flags generated;
 
@@ -364,12 +348,11 @@ void brw_upload_state(struct brw_context *brw)
 		atom->dirty.brw ||
 		atom->dirty.cache);
 
-	 if (brw->intel.Fallback)
-	    break;
-
 	 if (check_state(state, &atom->dirty)) {
 	    if (atom->emit) {
-	       atom->emit( brw );
+	       ret = atom->emit( brw );
+	       if (ret)
+		  return ret;
 	    }
 	 }
 
@@ -388,12 +371,11 @@ void brw_upload_state(struct brw_context *brw)
       for (i = 0; i < Elements(atoms); i++) {	 
 	 const struct brw_tracked_state *atom = atoms[i];
 
-	 if (brw->intel.Fallback)
-	    break;
-
 	 if (check_state(state, &atom->dirty)) {
 	    if (atom->emit) {
-	       atom->emit( brw );
+	       ret = atom->emit( brw );
+	       if (ret)
+		  return ret;
 	    }
 	 }
       }
@@ -407,10 +389,11 @@ void brw_upload_state(struct brw_context *brw)
 	 brw_print_dirty_count(mesa_bits, state->mesa);
 	 brw_print_dirty_count(brw_bits, state->brw);
 	 brw_print_dirty_count(cache_bits, state->cache);
-	 fprintf(stderr, "\n");
+	 debug_printf("\n");
       }
    }
-
-   if (!brw->intel.Fallback)
-      memset(state, 0, sizeof(*state));
+   
+   /* Clear dirty flags:
+    */
+   memset(state, 0, sizeof(*state));
 }
