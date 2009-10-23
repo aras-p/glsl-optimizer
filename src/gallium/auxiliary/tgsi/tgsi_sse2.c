@@ -1260,13 +1260,13 @@ emit_fetch(
    const struct tgsi_full_src_register *reg,
    const unsigned chan_index )
 {
-   unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
+   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
       switch (reg->SrcRegister.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
@@ -1306,22 +1306,6 @@ emit_fetch(
       default:
          assert( 0 );
       }
-      break;
-
-   case TGSI_EXTSWIZZLE_ZERO:
-      emit_tempf(
-         func,
-         xmm,
-         TGSI_EXEC_TEMP_00000000_I,
-         TGSI_EXEC_TEMP_00000000_C );
-      break;
-
-   case TGSI_EXTSWIZZLE_ONE:
-      emit_tempf(
-         func,
-         xmm,
-         TEMP_ONE_I,
-         TEMP_ONE_C );
       break;
 
    default:
@@ -1582,13 +1566,13 @@ emit_kil(
    /* This mask stores component bits that were already tested. Note that
     * we test if the value is less than zero, so 1.0 and 0.0 need not to be
     * tested. */
-   uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
+   uniquemask = 0;
 
    FOR_EACH_CHANNEL( chan_index ) {
       unsigned swizzle;
 
       /* unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle(
+      swizzle = tgsi_util_get_full_src_register_swizzle(
          reg,
          chan_index );
 
@@ -1772,7 +1756,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 4 + chan_index, 0, chan_index );
       }
@@ -2938,8 +2921,7 @@ tgsi_emit_sse2(
              * the result in the cases where the code is too opaque to
              * fix.
              */
-            if (opcode != TGSI_OPCODE_MOV &&
-                opcode != TGSI_OPCODE_SWZ) {
+            if (opcode != TGSI_OPCODE_MOV) {
                debug_printf("Warning: src/dst aliasing in instruction"
                             " is not handled:\n");
                tgsi_dump_instruction(&parse.FullToken.FullInstruction, 1);

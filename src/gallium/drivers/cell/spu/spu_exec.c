@@ -346,10 +346,10 @@ fetch_src_file_channel(
    union spu_exec_channel *chan )
 {
    switch( swizzle ) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
       switch( file ) {
       case TGSI_FILE_CONSTANT: {
          unsigned i;
@@ -411,14 +411,6 @@ fetch_src_file_channel(
       default:
          ASSERT( 0 );
       }
-      break;
-
-   case TGSI_EXTSWIZZLE_ZERO:
-      *chan = mach->Temps[TEMP_0_I].xyzw[TEMP_0_C];
-      break;
-
-   case TGSI_EXTSWIZZLE_ONE:
-      *chan = mach->Temps[TEMP_1_I].xyzw[TEMP_1_C];
       break;
 
    default:
@@ -500,7 +492,7 @@ fetch_source(
       }
    }
 
-   swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
+   swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(
       mach,
       reg->SrcRegister.File,
@@ -610,10 +602,8 @@ exec_kil(struct spu_exec_machine *mach,
    uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
    union spu_exec_channel r[1];
 
-   /* This mask stores component bits that were already tested. Note that
-    * we test if the value is less than zero, so 1.0 and 0.0 need not to be
-    * tested. */
-   uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
+   /* This mask stores component bits that were already tested. */
+   uniquemask = 0;
 
    for (chan_index = 0; chan_index < 4; chan_index++)
    {
@@ -621,7 +611,7 @@ exec_kil(struct spu_exec_machine *mach,
       uint i;
 
       /* unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle (
+      swizzle = tgsi_util_get_full_src_register_swizzle (
                         &inst->FullSrcRegisters[0],
                         chan_index);
 
@@ -909,7 +899,6 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          STORE( &r[0], 0, chan_index );

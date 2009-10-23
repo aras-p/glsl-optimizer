@@ -283,14 +283,14 @@ emit_fetch(struct gen_context *gen,
            const struct tgsi_full_src_register *reg,
            const unsigned chan_index)
 {
-   uint swizzle = tgsi_util_get_full_src_register_extswizzle(reg, chan_index);
+   uint swizzle = tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    int dst_vec = -1;
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
       switch (reg->SrcRegister.File) {
       case TGSI_FILE_INPUT:
          {
@@ -347,16 +347,6 @@ emit_fetch(struct gen_context *gen,
          break;
       default:
          assert( 0 );
-      }
-      break;
-   case TGSI_EXTSWIZZLE_ZERO:
-      ppc_vzero(gen->f, dst_vec);
-      break;
-   case TGSI_EXTSWIZZLE_ONE:
-      {
-         int one_vec = gen_one_vec(gen);
-         dst_vec = ppc_allocate_vec_register(gen->f);
-         ppc_vmove(gen->f, dst_vec, one_vec);
       }
       break;
    default:
@@ -418,8 +408,8 @@ equal_src_locs(const struct tgsi_full_src_register *a, uint chan_a,
       return FALSE;
    if (a->SrcRegister.Index != b->SrcRegister.Index)
       return FALSE;
-   swz_a = tgsi_util_get_full_src_register_extswizzle(a, chan_a);
-   swz_b = tgsi_util_get_full_src_register_extswizzle(b, chan_b);
+   swz_a = tgsi_util_get_full_src_register_swizzle(a, chan_a);
+   swz_b = tgsi_util_get_full_src_register_swizzle(b, chan_b);
    if (swz_a != swz_b)
       return FALSE;
    sign_a = tgsi_util_get_full_src_register_sign_mode(a, chan_a);
@@ -635,7 +625,6 @@ emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vlogefp(gen->f, v1, v0);      /* v1 = log2(v0) */
          break;
       case TGSI_OPCODE_MOV:
-      case TGSI_OPCODE_SWZ:
          if (v0 != v1)
             ppc_vmove(gen->f, v1, v0);
          break;
@@ -1119,7 +1108,6 @@ emit_instruction(struct gen_context *gen,
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
    case TGSI_OPCODE_ABS:
    case TGSI_OPCODE_FLR:
    case TGSI_OPCODE_FRC:

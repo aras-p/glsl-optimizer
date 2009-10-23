@@ -228,11 +228,6 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
                 src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
                 src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ||
 
-                src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-                src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-                src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-                src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W ||
-
                 dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW)
             {
                tgsi_parse_free(&parse);

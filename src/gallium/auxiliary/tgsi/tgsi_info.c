@@ -149,7 +149,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, 0, 0, "BREAKC", TGSI_OPCODE_BREAKC },
    { 0, 1, 0, 0, 0, 0, "KIL", TGSI_OPCODE_KIL },
    { 0, 0, 0, 0, 0, 0, "END", TGSI_OPCODE_END },
-   { 1, 1, 0, 0, 0, 0, "SWZ", TGSI_OPCODE_SWZ }
+   { 0, 0, 0, 0, 0, 0, "", 118 }      /* removed */
 };
 
 const struct tgsi_opcode_info *

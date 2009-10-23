@@ -241,10 +241,6 @@ tgsi_compare_src_register_ext_swz(
 
 struct tgsi_src_register_ext_swz
 tgsi_build_src_register_ext_swz(
-   unsigned ext_swizzle_x,
-   unsigned ext_swizzle_y,
-   unsigned ext_swizzle_z,
-   unsigned ext_swizzle_w,
    unsigned negate_x,
    unsigned negate_y,
    unsigned negate_z,

@@ -142,7 +142,6 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_IFC: return RC_OPCODE_IFC; */
      /* case TGSI_OPCODE_BREAKC: return RC_OPCODE_BREAKC; */
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
-        case TGSI_OPCODE_SWZ: return RC_OPCODE_SWZ;
     }
 
     fprintf(stderr, "Unknown opcode: %i\n", opcode);
@@ -205,10 +204,10 @@ static void transform_srcreg(
     dst->File = translate_register_file(src->SrcRegister.File);
     dst->Index = translate_register_index(ttr, src->SrcRegister.File, src->SrcRegister.Index);
     dst->RelAddr = src->SrcRegister.Indirect;
-    dst->Swizzle = tgsi_util_get_full_src_register_extswizzle(src, 0);
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 1) << 3;
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 2) << 6;
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 3) << 9;
+    dst->Swizzle = tgsi_util_get_full_src_register_swizzle(src, 0);
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 1) << 3;
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
     dst->Abs = src->SrcRegisterExtMod.Absolute;
     dst->Negate =
         src->SrcRegisterExtSwz.NegateX |

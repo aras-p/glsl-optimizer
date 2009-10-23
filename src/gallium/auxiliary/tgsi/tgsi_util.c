@@ -69,59 +69,15 @@ tgsi_util_get_src_register_swizzle(
    return 0;
 }
 
-unsigned
-tgsi_util_get_src_register_extswizzle(
-   const struct tgsi_src_register_ext_swz *reg,
-   unsigned component )
-{
-   switch( component ) {
-   case 0:
-      return reg->ExtSwizzleX;
-   case 1:
-      return reg->ExtSwizzleY;
-   case 2:
-      return reg->ExtSwizzleZ;
-   case 3:
-      return reg->ExtSwizzleW;
-   default:
-      assert( 0 );
-   }
-   return 0;
-}
 
 unsigned
-tgsi_util_get_full_src_register_extswizzle(
+tgsi_util_get_full_src_register_swizzle(
    const struct tgsi_full_src_register  *reg,
    unsigned component )
 {
-   unsigned swizzle;
-
-   /*
-    * First, calculate  the   extended swizzle for a given channel. This will give
-    * us either a channel index into the simple swizzle or  a constant 1 or   0.
-    */
-   swizzle = tgsi_util_get_src_register_extswizzle(
-      &reg->SrcRegisterExtSwz,
+   return tgsi_util_get_src_register_swizzle(
+      &reg->SrcRegister,
       component );
-
-   assert (TGSI_SWIZZLE_X == TGSI_EXTSWIZZLE_X);
-   assert (TGSI_SWIZZLE_Y == TGSI_EXTSWIZZLE_Y);
-   assert (TGSI_SWIZZLE_Z == TGSI_EXTSWIZZLE_Z);
-   assert (TGSI_SWIZZLE_W == TGSI_EXTSWIZZLE_W);
-   assert (TGSI_EXTSWIZZLE_ZERO > TGSI_SWIZZLE_W);
-   assert (TGSI_EXTSWIZZLE_ONE > TGSI_SWIZZLE_W);
-
-   /*
-    * Second, calculate the simple  swizzle  for   the   unswizzled channel index.
-    * Leave the constants intact, they are   not   affected by the   simple swizzle.
-    */
-   if( swizzle <= TGSI_SWIZZLE_W ) {
-      swizzle = tgsi_util_get_src_register_swizzle(
-         &reg->SrcRegister,
-         swizzle );
-   }
-
-   return swizzle;
 }
 
 void
@@ -142,30 +98,6 @@ tgsi_util_set_src_register_swizzle(
       break;
    case 3:
       reg->SwizzleW = swizzle;
-      break;
-   default:
-      assert( 0 );
-   }
-}
-
-void
-tgsi_util_set_src_register_extswizzle(
-   struct tgsi_src_register_ext_swz *reg,
-   unsigned swizzle,
-   unsigned component )
-{
-   switch( component ) {
-   case 0:
-      reg->ExtSwizzleX = swizzle;
-      break;
-   case 1:
-      reg->ExtSwizzleY = swizzle;
-      break;
-   case 2:
-      reg->ExtSwizzleZ = swizzle;
-      break;
-   case 3:
-      reg->ExtSwizzleW = swizzle;
       break;
    default:
       assert( 0 );

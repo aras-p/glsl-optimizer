@@ -158,14 +158,14 @@ emit_fetch(
    const unsigned chan_index )
 {
    const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[index];
-   unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
+   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    LLVMValueRef res;
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
 
       switch (reg->SrcRegister.File) {
       case TGSI_FILE_CONSTANT: {
@@ -196,14 +196,6 @@ emit_fetch(
          assert( 0 );
          return bld->base.undef;
       }
-      break;
-
-   case TGSI_EXTSWIZZLE_ZERO:
-      res = bld->base.zero;
-      break;
-
-   case TGSI_EXTSWIZZLE_ONE:
-      res = bld->base.one;
       break;
 
    default:
@@ -394,12 +386,7 @@ emit_kil(
       unsigned swizzle;
 
       /* Unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
-
-      /* Note that we test if the value is less than zero, so 1.0 and 0.0 need
-       * not to be tested. */
-      if(swizzle == TGSI_EXTSWIZZLE_ZERO || swizzle == TGSI_EXTSWIZZLE_ONE)
-         continue;
+      swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
 
       /* Check if the component has not been already tested. */
       assert(swizzle < NUM_CHANNELS);
@@ -488,7 +475,6 @@ emit_instruction(
 #endif
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          dst0[chan_index] = emit_fetch( bld, inst, 0, chan_index );
       }

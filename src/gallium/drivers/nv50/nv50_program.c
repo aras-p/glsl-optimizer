@@ -1544,12 +1544,12 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 
 	sgn = tgsi_util_get_full_src_register_sign_mode(src, chan);
 
-	c = tgsi_util_get_full_src_register_extswizzle(src, chan);
+	c = tgsi_util_get_full_src_register_swizzle(src, chan);
 	switch (c) {
-	case TGSI_EXTSWIZZLE_X:
-	case TGSI_EXTSWIZZLE_Y:
-	case TGSI_EXTSWIZZLE_Z:
-	case TGSI_EXTSWIZZLE_W:
+	case TGSI_SWIZZLE_X:
+	case TGSI_SWIZZLE_Y:
+	case TGSI_SWIZZLE_Z:
+	case TGSI_SWIZZLE_W:
 		switch (src->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
 			r = &pc->attr[src->SrcRegister.Index * 4 + c];
@@ -1586,13 +1586,6 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			break;
 		}
 		break;
-	case TGSI_EXTSWIZZLE_ZERO:
-		r = alloc_immd(pc, 0.0);
-		return r;
-	case TGSI_EXTSWIZZLE_ONE:
-		if (sgn == TGSI_UTIL_SIGN_TOGGLE || sgn == TGSI_UTIL_SIGN_SET)
-			return alloc_immd(pc, -1.0);
-		return alloc_immd(pc, 1.0);
 	default:
 		assert(0);
 		break;
@@ -2005,7 +1998,6 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_MOV:
-	case TGSI_OPCODE_SWZ:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
@@ -2189,10 +2181,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			k = tgsi_util_get_full_src_register_extswizzle(src, c);
-
-			if (k > TGSI_EXTSWIZZLE_W)
-				continue;
+			k = tgsi_util_get_full_src_register_swizzle(src, c);
 
 			reg[src->SrcRegister.Index * 4 + k].acc = pc->insn_nr;
 		}
@@ -2295,11 +2284,10 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 
 			if (!(mask & (1 << chn))) /* src is not read */
 				continue;
-			c = tgsi_util_get_full_src_register_extswizzle(fs, chn);
+			c = tgsi_util_get_full_src_register_swizzle(fs, chn);
 			s = tgsi_util_get_full_src_register_sign_mode(fs, chn);
 
-			if (c > TGSI_EXTSWIZZLE_W ||
-			    !(fd->DstRegister.WriteMask & (1 << c)))
+			if (!(fd->DstRegister.WriteMask & (1 << c)))
 				continue;
 
 			/* no danger if src is copied to TEMP first */

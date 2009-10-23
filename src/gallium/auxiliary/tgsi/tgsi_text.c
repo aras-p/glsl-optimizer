@@ -538,13 +538,11 @@ static boolean
 parse_optional_swizzle(
    struct translate_ctx *ctx,
    uint swizzle[4],
-   boolean *parsed_swizzle,
-   boolean *parsed_extswizzle )
+   boolean *parsed_swizzle )
 {
    const char *cur = ctx->cur;
 
    *parsed_swizzle = FALSE;
-   *parsed_extswizzle = FALSE;
 
    eat_opt_white( &cur );
    if (*cur == '.') {
@@ -562,15 +560,8 @@ parse_optional_swizzle(
          else if (uprcase( *cur ) == 'W')
             swizzle[i] = TGSI_SWIZZLE_W;
          else {
-            if (*cur == '0')
-               swizzle[i] = TGSI_EXTSWIZZLE_ZERO;
-            else if (*cur == '1')
-               swizzle[i] = TGSI_EXTSWIZZLE_ONE;
-            else {
-               report_error( ctx, "Expected register swizzle component `x', `y', `z', `w', `0' or `1'" );
-               return FALSE;
-            }
-            *parsed_extswizzle = TRUE;
+	    report_error( ctx, "Expected register swizzle component `x', `y', `z', `w', `0' or `1'" );
+	    return FALSE;
          }
          cur++;
       }
@@ -595,7 +586,6 @@ parse_src_operand(
    uint swizzle[4];
    boolean parsed_ext_negate_paren = FALSE;
    boolean parsed_swizzle;
-   boolean parsed_extswizzle;
 
    if (*ctx->cur == '-') {
       cur = ctx->cur;
@@ -690,16 +680,8 @@ parse_src_operand(
 
    /* Parse optional swizzle.
     */
-   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, &parsed_extswizzle )) {
-      if (parsed_extswizzle) {
-         assert( parsed_swizzle );
-
-         src->SrcRegisterExtSwz.ExtSwizzleX = swizzle[0];
-         src->SrcRegisterExtSwz.ExtSwizzleY = swizzle[1];
-         src->SrcRegisterExtSwz.ExtSwizzleZ = swizzle[2];
-         src->SrcRegisterExtSwz.ExtSwizzleW = swizzle[3];
-      }
-      else if (parsed_swizzle) {
+   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle )) {
+      if (parsed_swizzle) {
          src->SrcRegister.SwizzleX = swizzle[0];
          src->SrcRegister.SwizzleY = swizzle[1];
          src->SrcRegister.SwizzleZ = swizzle[2];

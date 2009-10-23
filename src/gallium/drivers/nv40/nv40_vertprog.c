@@ -370,20 +370,12 @@ src_native_swz(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc,
 	uint c;
 
 	for (c = 0; c < 4; c++) {
-		switch (tgsi_util_get_full_src_register_extswizzle(fsrc, c)) {
-		case TGSI_EXTSWIZZLE_X:
-		case TGSI_EXTSWIZZLE_Y:
-		case TGSI_EXTSWIZZLE_Z:
-		case TGSI_EXTSWIZZLE_W:
+		switch (tgsi_util_get_full_src_register_swizzle(fsrc, c)) {
+		case TGSI_SWIZZLE_X:
+		case TGSI_SWIZZLE_Y:
+		case TGSI_SWIZZLE_Z:
+		case TGSI_SWIZZLE_W:
 			mask |= tgsi_mask(1 << c);
-			break;
-		case TGSI_EXTSWIZZLE_ZERO:
-			zero_mask |= tgsi_mask(1 << c);
-			tgsi.swz[c] = SWZ_X;
-			break;
-		case TGSI_EXTSWIZZLE_ONE:
-			one_mask |= tgsi_mask(1 << c);
-			tgsi.swz[c] = SWZ_X;
 			break;
 		default:
 			assert(0);

@@ -45,25 +45,15 @@ tgsi_util_get_src_register_swizzle(
    const struct tgsi_src_register *reg,
    unsigned component );
 
-unsigned
-tgsi_util_get_src_register_extswizzle(
-   const struct tgsi_src_register_ext_swz *reg,
-   unsigned component);
 
 unsigned
-tgsi_util_get_full_src_register_extswizzle(
+tgsi_util_get_full_src_register_swizzle(
    const struct tgsi_full_src_register *reg,
    unsigned component );
 
 void
 tgsi_util_set_src_register_swizzle(
    struct tgsi_src_register *reg,
-   unsigned swizzle,
-   unsigned component );
-
-void
-tgsi_util_set_src_register_extswizzle(
-   struct tgsi_src_register_ext_swz *reg,
    unsigned swizzle,
    unsigned component );
 

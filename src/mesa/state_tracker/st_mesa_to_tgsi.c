@@ -515,8 +515,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_SSG;
    case OPCODE_SUB:
       return TGSI_OPCODE_SUB;
-   case OPCODE_SWZ:
-      return TGSI_OPCODE_SWZ;
    case OPCODE_TEX:
       return TGSI_OPCODE_TEX;
    case OPCODE_TXB:

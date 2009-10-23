@@ -148,15 +148,6 @@ static const char *texture_names[] =
    "SHADOWRECT"
 };
 
-static const char *extswizzle_names[] =
-{
-   "x",
-   "y",
-   "z",
-   "w",
-   "0",
-   "1"
-};
 
 static const char *modulate_names[TGSI_MODULATE_COUNT] =
 {
@@ -445,24 +436,6 @@ iter_instruction(
          ENM( src->SrcRegister.SwizzleY, swizzle_names );
          ENM( src->SrcRegister.SwizzleZ, swizzle_names );
          ENM( src->SrcRegister.SwizzleW, swizzle_names );
-      }
-      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-         CHR( '.' );
-         if (src->SrcRegisterExtSwz.NegateX)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateY)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateZ)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateW)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, extswizzle_names );
       }
 
       if (src->SrcRegisterExtMod.Complement)
