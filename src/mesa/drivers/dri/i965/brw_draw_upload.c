@@ -375,9 +375,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * isn't an issue at this point.
     */
    if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
-      intel->Fallback = 1;
+      FALLBACK(intel, BRW_FALLBACK_DRAW, GL_TRUE);
       return;
    }
+   FALLBACK(intel, BRW_FALLBACK_DRAW, GL_FALSE);
 
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
@@ -427,9 +428,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    /* Position array not properly enabled:
 	     */
             if (input->glarray->StrideB == 0) {
-               intel->Fallback = 1;
+               FALLBACK(intel, BRW_FALLBACK_DRAW, GL_TRUE);
                return;
             }
+            FALLBACK(intel, BRW_FALLBACK_DRAW, GL_FALSE);
 
 	    interleave = input->glarray->StrideB;
 	    ptr = input->glarray->Ptr;

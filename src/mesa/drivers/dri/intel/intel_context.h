@@ -61,6 +61,10 @@ typedef void (*intel_line_func) (struct intel_context *, intelVertex *,
                                  intelVertex *);
 typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 
+/**
+ * Bits for intel->Fallback field
+ */
+/*@{*/
 #define INTEL_FALLBACK_DRAW_BUFFER	 0x1
 #define INTEL_FALLBACK_READ_BUFFER	 0x2
 #define INTEL_FALLBACK_DEPTH_BUFFER      0x4
@@ -68,8 +72,10 @@ typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 #define INTEL_FALLBACK_USER		 0x10
 #define INTEL_FALLBACK_RENDERMODE	 0x20
 #define INTEL_FALLBACK_TEXTURE   	 0x40
+#define INTEL_FALLBACK_DRIVER            0x1000  /**< first for drivers */
+/*@}*/
 
-extern void intelFallback(struct intel_context *intel, GLuint bit,
+extern void intelFallback(struct intel_context *intel, GLbitfield bit,
                           GLboolean mode);
 #define FALLBACK( intel, bit, mode ) intelFallback( intel, bit, mode )
 
@@ -171,7 +177,7 @@ struct intel_context
    struct dri_metaops meta;
 
    GLint refcount;
-   GLuint Fallback;
+   GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
 
    dri_bufmgr *bufmgr;

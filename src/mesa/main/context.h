@@ -170,6 +170,14 @@ _mesa_valid_to_render(GLcontext *ctx, const char *where);
 extern void
 _mesa_record_error( GLcontext *ctx, GLenum error );
 
+
+extern void
+_mesa_finish(GLcontext *ctx);
+
+extern void
+_mesa_flush(GLcontext *ctx);
+
+
 extern void GLAPIENTRY
 _mesa_Finish( void );
 
