@@ -31,7 +31,7 @@
 
 #include "nv50_context.h"
 
-#define NV50_SU_MAX_TEMP 64
+#define NV50_SU_MAX_TEMP 127
 #define NV50_SU_MAX_ADDR 4
 //#define NV50_PROGRAM_DUMP
 
@@ -452,6 +452,8 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 	}
 
 	alloc_reg(pc, dst);
+	if (dst->hw > 63)
+		set_long(pc, e);
 	e->inst[0] |= (dst->hw << 2);
 }
 
@@ -642,6 +644,8 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 		}
 
 		alloc_reg(pc, src);
+		if (src->hw > 63)
+			set_long(pc, e);
 		e->inst[0] |= (src->hw << 9);
 	}
 
@@ -701,6 +705,8 @@ set_src_0_restricted(struct nv50_pc *pc, struct nv50_reg *src,
 	}
 
 	alloc_reg(pc, src);
+	if (src->hw > 63)
+		set_long(pc, e);
 	e->inst[0] |= (src->hw << 9);
 }
 
@@ -719,6 +725,8 @@ set_src_0(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	}
 
 	alloc_reg(pc, src);
+	if (src->hw > 63)
+		set_long(pc, e);
 	e->inst[0] |= (src->hw << 9);
 }
 
@@ -745,6 +753,8 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	}
 
 	alloc_reg(pc, src);
+	if (src->hw > 63)
+		set_long(pc, e);
 	e->inst[0] |= ((src->hw & 127) << 16);
 }
 
@@ -813,11 +823,12 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 {
 	struct nv50_program_exec *e = exec(pc);
 
-	e->inst[0] |= 0xb0000000;
+	e->inst[0] = 0xb0000000;
 
+	alloc_reg(pc, src1);
 	check_swap_src_0_1(pc, &src0, &src1);
 
-	if (!pc->allow32 || src0->neg || src1->neg) {
+	if (!pc->allow32 || (src0->neg | src1->neg) || src1->hw > 63) {
 		set_long(pc, e);
 		e->inst[1] |= (src0->neg << 26) | (src1->neg << 27);
 	}
@@ -873,6 +884,7 @@ static INLINE void
 emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
+	assert(src0 != src1);
 	src1->neg ^= 1;
 	emit_add(pc, dst, src0, src1);
 	src1->neg ^= 1;
@@ -904,6 +916,7 @@ static INLINE void
 emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
+	assert(src2 != src0 && src2 != src1);
 	src2->neg ^= 1;
 	emit_mad(pc, dst, src0, src1, src2);
 	src2->neg ^= 1;
