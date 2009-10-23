@@ -1821,7 +1821,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)) || dst[c]->type == P_TEMP)
 				continue;
-			rdst[c] = dst[c];
+			/* rdst[c] = dst[c]; */ /* done above */
 			dst[c] = temp_temp(pc);
 		}
 	}
@@ -2150,8 +2150,10 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			/* in this case we saturate later */
-			if (dst[c]->type == P_TEMP && dst[c]->index < 0)
+			/* In this case we saturate later, and dst[c] won't
+			 * be another temp_temp (and thus lost), since rdst
+			 * already is TEMP (see above). */
+			if (rdst[c]->type == P_TEMP && rdst[c]->index < 0)
 				continue;
 			emit_sat(pc, rdst[c], dst[c]);
 		}
