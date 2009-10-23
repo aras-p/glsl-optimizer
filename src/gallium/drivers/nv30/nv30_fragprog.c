@@ -318,11 +318,7 @@ src_native_swz(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc,
 {
 	const struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
 	struct nv30_sreg tgsi = tgsi_src(fpc, fsrc);
-	uint mask = 0, zero_mask = 0, one_mask = 0, neg_mask = 0;
-	uint neg[4] = { fsrc->SrcRegisterExtSwz.NegateX,
-			fsrc->SrcRegisterExtSwz.NegateY,
-			fsrc->SrcRegisterExtSwz.NegateZ,
-			fsrc->SrcRegisterExtSwz.NegateW };
+	uint mask = 0;
 	uint c;
 
 	for (c = 0; c < 4; c++) {
@@ -336,24 +332,15 @@ src_native_swz(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc,
 		default:
 			assert(0);
 		}
-
-		if (!tgsi.negate && neg[c])
-			neg_mask |= (1 << c);
 	}
 
-	if (mask == MASK_ALL && !neg_mask)
+	if (mask == MASK_ALL)
 		return TRUE;
 
 	*src = temp(fpc);
 
 	if (mask)
 		arith(fpc, 0, MOV, *src, mask, tgsi, none, none);
-
-	if (neg_mask) {
-		struct nv30_sreg one = temp(fpc);
-		arith(fpc, 0, STR, one, neg_mask, one, none, none);
-		arith(fpc, 0, MUL, *src, neg_mask, *src, neg(one), none);
-	}
 
 	return FALSE;
 }

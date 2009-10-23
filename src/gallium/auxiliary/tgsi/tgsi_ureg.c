@@ -51,7 +51,6 @@ union tgsi_any_token {
    struct tgsi_instruction_ext_texture insn_ext_texture;
    struct tgsi_instruction_ext_predicate insn_ext_predicate;
    struct tgsi_src_register src;
-   struct tgsi_src_register_ext_swz src_ext_swz;
    struct tgsi_src_register_ext_mod src_ext_mod;
    struct tgsi_dimension dim;
    struct tgsi_dst_register dst;

@@ -225,17 +225,8 @@ src_vector(struct i915_fp_compile *p,
     * Try to handle both here.
     */
    {
-      int nx = source->SrcRegisterExtSwz.NegateX;
-      int ny = source->SrcRegisterExtSwz.NegateY;
-      int nz = source->SrcRegisterExtSwz.NegateZ;
-      int nw = source->SrcRegisterExtSwz.NegateW;
-      if (source->SrcRegister.Negate) {
-         nx = !nx;
-         ny = !ny;
-         nz = !nz;
-         nw = !nw;
-      }
-      src = negate(src, nx, ny, nz, nw);
+      int n = source->SrcRegister.Negate;
+      src = negate(src, n, n, n, n);
    }
 
    /* no abs() or post-abs negation */

@@ -231,24 +231,6 @@ tgsi_build_src_register(
 struct tgsi_full_src_register
 tgsi_default_full_src_register( void );
 
-struct tgsi_src_register_ext_swz
-tgsi_default_src_register_ext_swz( void );
-
-unsigned
-tgsi_compare_src_register_ext_swz(
-   struct tgsi_src_register_ext_swz a,
-   struct tgsi_src_register_ext_swz b );
-
-struct tgsi_src_register_ext_swz
-tgsi_build_src_register_ext_swz(
-   unsigned negate_x,
-   unsigned negate_y,
-   unsigned negate_z,
-   unsigned negate_w,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
-
 struct tgsi_src_register_ext_mod
 tgsi_default_src_register_ext_mod( void );
 

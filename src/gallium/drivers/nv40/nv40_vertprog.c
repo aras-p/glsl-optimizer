@@ -362,11 +362,7 @@ src_native_swz(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc,
 {
 	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
 	struct nv40_sreg tgsi = tgsi_src(vpc, fsrc);
-	uint mask = 0, zero_mask = 0, one_mask = 0, neg_mask = 0;
-	uint neg[4] = { fsrc->SrcRegisterExtSwz.NegateX,
-			fsrc->SrcRegisterExtSwz.NegateY,
-			fsrc->SrcRegisterExtSwz.NegateZ,
-			fsrc->SrcRegisterExtSwz.NegateW };
+	uint mask = 0;
 	uint c;
 
 	for (c = 0; c < 4; c++) {
@@ -380,30 +376,15 @@ src_native_swz(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc,
 		default:
 			assert(0);
 		}
-
-		if (!tgsi.negate && neg[c])
-			neg_mask |= tgsi_mask(1 << c);
 	}
 
-	if (mask == MASK_ALL && !neg_mask)
+	if (mask == MASK_ALL)
 		return TRUE;
 
 	*src = temp(vpc);
 
 	if (mask)
 		arith(vpc, 0, OP_MOV, *src, mask, tgsi, none, none);
-
-	if (zero_mask)
-		arith(vpc, 0, OP_SFL, *src, zero_mask, *src, none, none);
-
-	if (one_mask)
-		arith(vpc, 0, OP_STR, *src, one_mask, *src, none, none);
-
-	if (neg_mask) {
-		struct nv40_sreg one = temp(vpc);
-		arith(vpc, 0, OP_STR, one, neg_mask, one, none, none);
-		arith(vpc, 0, OP_MUL, *src, neg_mask, *src, neg(one), none);
-	}
 
 	return FALSE;
 }

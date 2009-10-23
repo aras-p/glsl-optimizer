@@ -163,7 +163,7 @@ static const char *TGSI_TEXTURES[] =
 
 static const char *TGSI_SRC_REGISTER_EXTS[] =
 {
-   "SRC_REGISTER_EXT_TYPE_SWZ",
+   "",
    "SRC_REGISTER_EXT_TYPE_MOD"
 };
 
@@ -543,36 +543,6 @@ dump_instruction_verbose(
          if( deflt || fs->SrcRegister.Extended != src->SrcRegister.Extended ) {
             TXT( "\nExtended : " );
             UID( src->SrcRegister.Extended );
-         }
-      }
-
-      if( deflt || tgsi_compare_src_register_ext_swz( src->SrcRegisterExtSwz, fs->SrcRegisterExtSwz ) ) {
-         EOL();
-         TXT( "\nType       : " );
-         ENM( src->SrcRegisterExtSwz.Type, TGSI_SRC_REGISTER_EXTS );
-         if( deflt || fs->SrcRegisterExtSwz.NegateX != src->SrcRegisterExtSwz.NegateX ) {
-            TXT( "\nNegateX   : " );
-            UID( src->SrcRegisterExtSwz.NegateX );
-         }
-         if( deflt || fs->SrcRegisterExtSwz.NegateY != src->SrcRegisterExtSwz.NegateY ) {
-            TXT( "\nNegateY   : " );
-            UID( src->SrcRegisterExtSwz.NegateY );
-         }
-         if( deflt || fs->SrcRegisterExtSwz.NegateZ != src->SrcRegisterExtSwz.NegateZ ) {
-            TXT( "\nNegateZ   : " );
-            UID( src->SrcRegisterExtSwz.NegateZ );
-         }
-         if( deflt || fs->SrcRegisterExtSwz.NegateW != src->SrcRegisterExtSwz.NegateW ) {
-            TXT( "\nNegateW   : " );
-            UID( src->SrcRegisterExtSwz.NegateW );
-         }
-         if( ignored ) {
-            TXT( "\nPadding   : " );
-            UIX( src->SrcRegisterExtSwz.Padding );
-            if( deflt || fs->SrcRegisterExtSwz.Extended != src->SrcRegisterExtSwz.Extended ) {
-               TXT( "\nExtended   : " );
-               UID( src->SrcRegisterExtSwz.Extended );
-            }
          }
       }
 

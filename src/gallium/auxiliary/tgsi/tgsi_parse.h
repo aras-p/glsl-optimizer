@@ -56,7 +56,6 @@ struct tgsi_full_dst_register
 struct tgsi_full_src_register
 {
    struct tgsi_src_register         SrcRegister;
-   struct tgsi_src_register_ext_swz SrcRegisterExtSwz;
    struct tgsi_src_register_ext_mod SrcRegisterExtMod;
    struct tgsi_src_register         SrcRegisterInd;
    struct tgsi_dimension            SrcRegisterDim;

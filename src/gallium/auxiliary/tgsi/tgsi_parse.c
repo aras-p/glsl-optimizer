@@ -264,11 +264,6 @@ tgsi_parse_token(
             next_token( ctx, &token );
 
             switch( token.Type ) {
-            case TGSI_SRC_REGISTER_EXT_TYPE_SWZ:
-               copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtSwz,
-                          &token);
-               break;
-
             case TGSI_SRC_REGISTER_EXT_TYPE_MOD:
                copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtMod,
                           &token);

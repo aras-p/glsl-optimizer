@@ -37,49 +37,6 @@ tgsi_util_get_full_src_register_swizzle(
       component );
 }
 
-unsigned
-tgsi_util_get_src_register_extnegate(
-   const  struct tgsi_src_register_ext_swz *reg,
-   unsigned component )
-{
-   switch( component ) {
-   case 0:
-      return reg->NegateX;
-   case 1:
-      return reg->NegateY;
-   case 2:
-      return reg->NegateZ;
-   case 3:
-      return reg->NegateW;
-   default:
-      ASSERT( 0 );
-   }
-   return 0;
-}
-
-void
-tgsi_util_set_src_register_extnegate(
-   struct tgsi_src_register_ext_swz *reg,
-   unsigned negate,
-   unsigned component )
-{
-   switch( component ) {
-   case 0:
-      reg->NegateX = negate;
-      break;
-   case 1:
-      reg->NegateY = negate;
-      break;
-   case 2:
-      reg->NegateZ = negate;
-      break;
-   case 3:
-      reg->NegateW = negate;
-      break;
-   default:
-      ASSERT( 0 );
-   }
-}
 
 unsigned
 tgsi_util_get_full_src_register_sign_mode(
@@ -104,9 +61,6 @@ tgsi_util_get_full_src_register_sign_mode(
       unsigned negate;
 
       negate = reg->SrcRegister.Negate;
-      if( tgsi_util_get_src_register_extnegate( &reg->SrcRegisterExtSwz, component ) ) {
-         negate = !negate;
-      }
       if( reg->SrcRegisterExtMod.Negate ) {
          negate = !negate;
       }

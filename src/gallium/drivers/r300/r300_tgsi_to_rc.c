@@ -209,12 +209,7 @@ static void transform_srcreg(
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
     dst->Abs = src->SrcRegisterExtMod.Absolute;
-    dst->Negate =
-        src->SrcRegisterExtSwz.NegateX |
-        (src->SrcRegisterExtSwz.NegateY << 1) |
-        (src->SrcRegisterExtSwz.NegateZ << 2) |
-        (src->SrcRegisterExtSwz.NegateW << 3);
-    dst->Negate ^= src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
+    dst->Negate = src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
 }
 
 static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_ext_texture src)

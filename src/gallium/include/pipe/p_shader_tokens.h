@@ -475,7 +475,6 @@ struct tgsi_src_register
  * Then, if tgsi_src_register::Dimension is TRUE, tgsi_dimension follows.
  */
 
-#define TGSI_SRC_REGISTER_EXT_TYPE_SWZ      0
 #define TGSI_SRC_REGISTER_EXT_TYPE_MOD      1
 
 struct tgsi_src_register_ext
@@ -486,9 +485,6 @@ struct tgsi_src_register_ext
 };
 
 /**
- * If tgsi_src_register_ext::Type is TGSI_SRC_REGISTER_EXT_TYPE_SWZ,
- * it should be cast to tgsi_src_register_ext_swz.
- * 
  * If tgsi_src_register_ext::Type is TGSI_SRC_REGISTER_EXT_TYPE_MOD,
  * it should be cast to tgsi_src_register_ext_mod.
  * 
@@ -496,26 +492,6 @@ struct tgsi_src_register_ext
  * follows.
  */
 
-/**
- * NegateX, NegateY, NegateZ and NegateW negate individual components of the
- * source register.
- *
- * NOTE: To simplify matter, if this token is present, the corresponding Swizzle
- *       and Negate fields in tgsi_src_register should be set to X,Y,Z,W
- *       and FALSE, respectively.
- */
-
-struct tgsi_src_register_ext_swz
-{
-   unsigned Type         : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_SWZ */
-   unsigned Padding0     : 16;	 /* unused */
-   unsigned NegateX      : 1;    /* BOOL */
-   unsigned NegateY      : 1;    /* BOOL */
-   unsigned NegateZ      : 1;    /* BOOL */
-   unsigned NegateW      : 1;    /* BOOL */
-   unsigned Padding      : 7;
-   unsigned Extended     : 1;    /* BOOL */
-};
 
 /**
  * Extra src register modifiers
