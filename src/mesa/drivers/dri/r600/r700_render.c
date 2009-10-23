@@ -618,19 +618,15 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
                 {
                 case 1:                     
                     radeonEmitVec4(dst, input[i]->Ptr, input[i]->StrideB, local_count);                         
-					context->stream_desc[index].stride = 4; 
                     break;
                 case 2: 
                     radeonEmitVec8(dst, input[i]->Ptr, input[i]->StrideB, local_count); 
-					context->stream_desc[index].stride = 8; 
                     break;
                 case 3: 
                     radeonEmitVec12(dst, input[i]->Ptr, input[i]->StrideB, local_count); 
-					context->stream_desc[index].stride = 12; 
                     break;
                 case 4: 
                     radeonEmitVec16(dst, input[i]->Ptr, input[i]->StrideB, local_count); 
-					context->stream_desc[index].stride = 16; 
                     break;
                 default: 
                     assert(0); 
