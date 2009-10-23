@@ -986,7 +986,6 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 /* 0x80 == src is float */
 #define CVT_F32_F32 0xc4
 #define CVT_F32_S32 0x44
-#define CVT_F32_U32 0x64
 #define CVT_S32_F32 0x8c
 #define CVT_S32_S32 0x0c
 #define CVT_NEG     0x20
@@ -1644,11 +1643,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	case TGSI_UTIL_SIGN_SET:
 		temp = temp_temp(pc);
-		emit_abs(pc, temp, r);
-		if (neg)
-			temp->neg = 1;
-		else
-			emit_neg(pc, temp, temp);
+		emit_cvt(pc, temp, r, -1, CVTOP_ABS, CVT_F32_F32 | CVT_NEG);
 		r = temp;
 		break;
 	default:
