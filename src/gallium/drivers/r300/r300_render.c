@@ -76,7 +76,6 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
                                  unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
     uint32_t prim = r300_translate_primitive(mode);
     struct pipe_vertex_buffer* aos = r300->vertex_buffers;
     unsigned aos_count = r300->vertex_buffer_count;
@@ -84,6 +83,8 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
     unsigned packet_size;
     unsigned i;
     bool invalid = FALSE;
+    
+    CS_LOCALS(r300);
 
 validate:
     for (i = 0; i < aos_count; i++) {
