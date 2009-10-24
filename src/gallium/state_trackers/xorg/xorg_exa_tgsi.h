@@ -9,10 +9,12 @@ enum xorg_vs_traits {
    VS_SOLID_FILL       = 1 << 2,
    VS_LINGRAD_FILL     = 1 << 3,
    VS_RADGRAD_FILL     = 1 << 4,
+   VS_YUV              = 1 << 5,
+
+
    VS_FILL             = (VS_SOLID_FILL |
                           VS_LINGRAD_FILL |
                           VS_RADGRAD_FILL)
-   /*VS_TRANSFORM      = 1 << 5*/
 };
 
 enum xorg_fs_traits {

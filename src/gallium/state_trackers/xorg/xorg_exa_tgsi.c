@@ -236,6 +236,7 @@ create_vs(struct pipe_context *pipe,
    boolean is_fill = vs_traits & VS_FILL;
    boolean is_composite = vs_traits & VS_COMPOSITE;
    boolean has_mask = vs_traits & VS_MASK;
+   boolean is_yuv = vs_traits & VS_YUV;
    unsigned input_slot = 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -253,6 +254,20 @@ create_vs(struct pipe_context *pipe,
    src = vs_normalize_coords(ureg, src,
                              const0, const1);
    ureg_MOV(ureg, dst, src);
+
+   if (is_yuv) {
+      src = ureg_DECL_vs_input(ureg, input_slot++);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 0);
+      ureg_MOV(ureg, dst, src);
+
+      src = ureg_DECL_vs_input(ureg, input_slot++);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
+      ureg_MOV(ureg, dst, src);
+
+      src = ureg_DECL_vs_input(ureg, input_slot++);
+      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 2);
+      ureg_MOV(ureg, dst, src);
+   }
 
    if (is_composite) {
       src = ureg_DECL_vs_input(ureg, input_slot++);

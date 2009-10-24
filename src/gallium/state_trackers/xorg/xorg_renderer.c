@@ -224,6 +224,44 @@ setup_vertex_data2(struct xorg_renderer *r,
                                   sizeof(r->vertices3));
 }
 
+static struct pipe_buffer *
+setup_vertex_data_yuv(struct xorg_renderer *r,
+                      float srcX, float srcY,
+                      float dstX, float dstY,
+                      float width, float height,
+                      struct pipe_texture **tex)
+{
+   float s0, t0, s1, t1;
+   float spt0[2], spt1[2];
+
+   spt0[0] = srcX;
+   spt0[1] = srcY;
+   spt1[0] = srcX + width;
+   spt1[1] = srcY + height;
+
+   s0 = spt0[0] / tex[0]->width[0];
+   t0 = spt0[1] / tex[0]->height[0];
+   s1 = spt1[0] / tex[0]->width[0];
+   t1 = spt1[1] / tex[0]->height[0];
+
+   /* 1st vertex */
+   setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
+   /* 2nd vertex */
+   setup_vertex1(r->vertices2[1], dstX + width, dstY,
+                 s1, t0);
+   /* 3rd vertex */
+   setup_vertex1(r->vertices2[2], dstX + width, dstY + height,
+                 s1, t1);
+   /* 4th vertex */
+   setup_vertex1(r->vertices2[3], dstX, dstY + height,
+                 s0, t1);
+
+
+   return pipe_user_buffer_create(r->pipe->screen,
+                                  r->vertices2,
+                                  sizeof(r->vertices2));
+}
+
 
 
 static void
@@ -824,6 +862,13 @@ void renderer_draw_textures(struct xorg_renderer *r,
                                width, height,
                                textures[0], textures[1],
                                src_matrix, mask_matrix);
+      break;
+   case 3:
+      buf = setup_vertex_data_yuv(r,
+                                  pos[0], pos[1],
+                                  pos[2], pos[3],
+                                  width, height,
+                                  textures);
       break;
    default:
       debug_assert(!"Unsupported number of textures");
