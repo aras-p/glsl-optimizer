@@ -140,6 +140,9 @@ typedef enum
 } gl_format;
 
 
+extern const char *
+_mesa_get_format_name(gl_format format);
+
 extern GLuint
 _mesa_get_format_bytes(gl_format format);
 

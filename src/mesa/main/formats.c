@@ -37,6 +37,9 @@ struct gl_format_info
 {
    gl_format Name;
 
+   /** text name for debugging */
+   const char *StrName;
+
    /**
     * Base format is one of GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE,
     * GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_YCBCR_MESA, GL_COLOR_INDEX,
@@ -77,6 +80,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 {
    {
       MESA_FORMAT_NONE,            /* Name */
+      "MESA_FORMAT_NONE",          /* StrName */
       GL_NONE,                     /* BaseFormat */
       GL_NONE,                     /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -85,6 +89,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA8888,        /* Name */
+      "MESA_FORMAT_RGBA8888",      /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -93,6 +98,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA8888_REV,    /* Name */
+      "MESA_FORMAT_RGBA8888_REV",  /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -101,6 +107,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB8888,        /* Name */
+      "MESA_FORMAT_ARGB8888",      /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -109,6 +116,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB8888_REV,    /* Name */
+      "MESA_FORMAT_ARGB8888_REV",  /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -117,6 +125,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_XRGB8888,        /* Name */
+      "MESA_FORMAT_XRGB8888",      /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -125,6 +134,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB888,          /* Name */
+      "MESA_FORMAT_RGB888",        /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -133,6 +143,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_BGR888,          /* Name */
+      "MESA_FORMAT_BGR888",        /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -141,6 +152,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB565,          /* Name */
+      "MESA_FORMAT_RGB565",        /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       5, 6, 5, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -149,6 +161,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB565_REV,      /* Name */
+      "MESA_FORMAT_RGB565_REV",    /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       5, 6, 5, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -157,6 +170,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB4444,        /* Name */
+      "MESA_FORMAT_ARGB4444",      /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       4, 4, 4, 4,                  /* Red/Green/Blue/AlphaBits */
@@ -165,6 +179,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB4444_REV,    /* Name */
+      "MESA_FORMAT_ARGB4444_REV",  /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       4, 4, 4, 4,                  /* Red/Green/Blue/AlphaBits */
@@ -173,6 +188,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA5551,        /* Name */
+      "MESA_FORMAT_RGBA5551",      /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       5, 5, 5, 1,                  /* Red/Green/Blue/AlphaBits */
@@ -181,6 +197,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB1555,        /* Name */
+      "MESA_FORMAT_ARGB1555",      /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       5, 5, 5, 1,                  /* Red/Green/Blue/AlphaBits */
@@ -189,6 +206,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ARGB1555_REV,    /* Name */
+      "MESA_FORMAT_ARGB1555_REV",  /* StrName */
       GL_RGBA,                     /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       5, 5, 5, 1,                  /* Red/Green/Blue/AlphaBits */
@@ -197,6 +215,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_AL88,            /* Name */
+      "MESA_FORMAT_AL88",          /* StrName */
       GL_LUMINANCE_ALPHA,          /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -205,6 +224,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_AL88_REV,        /* Name */
+      "MESA_FORMAT_AL88_REV",      /* StrName */
       GL_LUMINANCE_ALPHA,          /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -213,6 +233,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB332,          /* Name */
+      "MESA_FORMAT_RGB332",        /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       3, 3, 2, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -221,6 +242,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_A8,              /* Name */
+      "MESA_FORMAT_A8",            /* StrName */
       GL_ALPHA,                    /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 8,                  /* Red/Green/Blue/AlphaBits */
@@ -229,6 +251,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_L8,              /* Name */
+      "MESA_FORMAT_L8",            /* StrName */
       GL_LUMINANCE,                /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -237,6 +260,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_I8,              /* Name */
+      "MESA_FORMAT_I8",            /* StrName */
       GL_INTENSITY,                /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -245,6 +269,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_CI8,             /* Name */
+      "MESA_FORMAT_CI8",           /* StrName */
       GL_COLOR_INDEX,              /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -253,6 +278,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_YCBCR,           /* Name */
+      "MESA_FORMAT_YCBCR",         /* StrName */
       GL_YCBCR_MESA,               /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -261,6 +287,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_YCBCR_REV,       /* Name */
+      "MESA_FORMAT_YCBCR_REV",     /* StrName */
       GL_YCBCR_MESA,               /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -269,6 +296,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_Z24_S8,          /* Name */
+      "MESA_FORMAT_Z24_S8",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -277,6 +305,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_S8_Z24,          /* Name */
+      "MESA_FORMAT_S8_Z24",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -285,6 +314,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_Z16,             /* Name */
+      "MESA_FORMAT_Z16",           /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -293,6 +323,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_X8_Z24,          /* Name */
+      "MESA_FORMAT_X8_Z24",        /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -301,6 +332,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_Z32,             /* Name */
+      "MESA_FORMAT_Z32",           /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -309,6 +341,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_S8,              /* Name */
+      "MESA_FORMAT_S8",            /* StrName */
       GL_STENCIL_INDEX,            /* BaseFormat */
       GL_UNSIGNED_INT,             /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -317,6 +350,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGB8,
+      "MESA_FORMAT_SRGB8",
       GL_RGB,
       GL_UNSIGNED_NORMALIZED,
       8, 8, 8, 0,
@@ -325,6 +359,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGBA8,
+      "MESA_FORMAT_SRGBA8",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,    
       8, 8, 8, 8,
@@ -333,6 +368,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SARGB8,
+      "MESA_FORMAT_SARGB8",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,    
       8, 8, 8, 8,
@@ -341,6 +377,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SL8,
+      "MESA_FORMAT_SL8",
       GL_LUMINANCE_ALPHA,
       GL_UNSIGNED_NORMALIZED,    
       0, 0, 0, 8,
@@ -349,6 +386,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SLA8,
+      "MESA_FORMAT_SLA8",
       GL_LUMINANCE_ALPHA,
       GL_UNSIGNED_NORMALIZED,    
       0, 0, 0, 8,
@@ -357,6 +395,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGB_DXT1,       /* Name */
+      "MESA_FORMAT_SRGB_DXT1",     /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       4, 4, 4, 0,                  /* approx Red/Green/Blue/AlphaBits */
@@ -365,6 +404,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGBA_DXT1,
+      "MESA_FORMAT_SRGBA_DXT1",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,
       4, 4, 4, 4,
@@ -373,6 +413,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGBA_DXT3,
+      "MESA_FORMAT_SRGBA_DXT3",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,
       4, 4, 4, 4,
@@ -381,6 +422,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGBA_DXT5,
+      "MESA_FORMAT_SRGBA_DXT5",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,
       4, 4, 4, 4,
@@ -390,6 +432,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 
    {
       MESA_FORMAT_RGB_FXT1,
+      "MESA_FORMAT_RGB_FXT1",
       GL_RGB,
       GL_UNSIGNED_NORMALIZED,
       8, 8, 8, 0,
@@ -398,6 +441,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_FXT1,
+      "MESA_FORMAT_RGBA_FXT1",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,
       8, 8, 8, 8,
@@ -407,6 +451,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 
    {
       MESA_FORMAT_RGB_DXT1,        /* Name */
+      "MESA_FORMAT_RGB_DXT1",      /* StrName */
       GL_RGB,                      /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       4, 4, 4, 0,                  /* approx Red/Green/Blue/AlphaBits */
@@ -415,6 +460,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_DXT1,
+      "MESA_FORMAT_RGBA_DXT1",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,    
       4, 4, 4, 4,
@@ -423,6 +469,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_DXT3,
+      "MESA_FORMAT_RGBA_DXT3",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,    
       4, 4, 4, 4,
@@ -431,6 +478,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_DXT5,
+      "MESA_FORMAT_RGBA_DXT5",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,    
       4, 4, 4, 4,
@@ -439,6 +487,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_FLOAT32,
+      "MESA_FORMAT_RGBA_FLOAT32",
       GL_RGBA,
       GL_FLOAT,
       32, 32, 32, 32,
@@ -447,6 +496,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGBA_FLOAT16,
+      "MESA_FORMAT_RGBA_FLOAT16",
       GL_RGBA,
       GL_FLOAT,
       16, 16, 16, 16,
@@ -455,6 +505,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB_FLOAT32,
+      "MESA_FORMAT_RGB_FLOAT32",
       GL_RGB,
       GL_FLOAT,
       32, 32, 32, 0,
@@ -463,6 +514,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB_FLOAT16,
+      "MESA_FORMAT_RGB_FLOAT16",
       GL_RGB,
       GL_FLOAT,
       16, 16, 16, 0,
@@ -471,6 +523,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ALPHA_FLOAT32,
+      "MESA_FORMAT_ALPHA_FLOAT32",
       GL_ALPHA,
       GL_FLOAT,
       0, 0, 0, 32,
@@ -479,6 +532,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_ALPHA_FLOAT16,
+      "MESA_FORMAT_ALPHA_FLOAT16",
       GL_ALPHA,
       GL_FLOAT,
       0, 0, 0, 16,
@@ -487,6 +541,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_LUMINANCE_FLOAT32,
+      "MESA_FORMAT_LUMINANCE_FLOAT32",
       GL_ALPHA,
       GL_FLOAT,
       0, 0, 0, 0,
@@ -495,6 +550,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_LUMINANCE_FLOAT16,
+      "MESA_FORMAT_LUMINANCE_FLOAT16",
       GL_ALPHA,
       GL_FLOAT,
       0, 0, 0, 0,
@@ -503,6 +559,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32,
+      "MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32",
       GL_LUMINANCE_ALPHA,
       GL_FLOAT,
       0, 0, 0, 32,
@@ -511,6 +568,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16,
+      "MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16",
       GL_LUMINANCE_ALPHA,
       GL_FLOAT,
       0, 0, 0, 16,
@@ -519,6 +577,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_INTENSITY_FLOAT32,
+      "MESA_FORMAT_INTENSITY_FLOAT32",
       GL_INTENSITY,
       GL_FLOAT,
       0, 0, 0, 0,
@@ -527,6 +586,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_INTENSITY_FLOAT16,
+      "MESA_FORMAT_INTENSITY_FLOAT16",
       GL_INTENSITY,
       GL_FLOAT,
       0, 0, 0, 0,
@@ -535,6 +595,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_DUDV8,
+      "MESA_FORMAT_DUDV8",
       GL_DUDV_ATI,
       GL_SIGNED_NORMALIZED,
       0, 0, 0, 0,
@@ -543,6 +604,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SIGNED_RGBA8888,
+      "MESA_FORMAT_SIGNED_RGBA8888",
       GL_RGBA,
       GL_SIGNED_NORMALIZED,
       8, 8, 8, 8,
@@ -551,6 +613,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SIGNED_RGBA8888_REV,
+      "MESA_FORMAT_SIGNED_RGBA8888_REV",
       GL_RGBA,
       GL_SIGNED_NORMALIZED,
       8, 8, 8, 8,
@@ -559,6 +622,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SIGNED_RGBA_16,
+      "MESA_FORMAT_SIGNED_RGBA_16",
       GL_RGBA,
       GL_SIGNED_NORMALIZED,
       16, 16, 16, 16,
@@ -576,6 +640,17 @@ _mesa_get_format_info(gl_format format)
    assert(info->Name == format);
    return info;
 }
+
+
+/** Return string name of format (for debugging) */
+const char *
+_mesa_get_format_name(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   ASSERT(info->BytesPerBlock);
+   return info->StrName;
+}
+
 
 
 /**
