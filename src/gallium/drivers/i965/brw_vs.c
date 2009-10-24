@@ -34,7 +34,6 @@
 #include "brw_vs.h"
 #include "brw_util.h"
 #include "brw_state.h"
-#include "shader/prog_print.h"
 
 
 
@@ -113,7 +112,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = PIPE_NEW_UCP | PIPE_NEW_RAST,
+      .mesa  = PIPE_NEW_CLIP | PIPE_NEW_RAST,
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

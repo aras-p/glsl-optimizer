@@ -91,15 +91,15 @@ static GLuint get_texcoord_mask( GLuint tex_idx )
 {
    switch (tex_idx) {
    case TEXTURE_1D_INDEX:
-      return WRITEMASK_X;
+      return BRW_WRITEMASK_X;
    case TEXTURE_2D_INDEX:
-      return WRITEMASK_XY;
+      return BRW_WRITEMASK_XY;
    case TEXTURE_3D_INDEX:
-      return WRITEMASK_XYZ;
+      return BRW_WRITEMASK_XYZ;
    case TEXTURE_CUBE_INDEX:
-      return WRITEMASK_XYZ;
+      return BRW_WRITEMASK_XYZ;
    case TEXTURE_RECT_INDEX:
-      return WRITEMASK_XY;
+      return BRW_WRITEMASK_XY;
    default: return 0;
    }
 }
@@ -121,16 +121,16 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       GLuint read0, read1, read2;
 
       if (inst->opcode == TGSI_OPCODE_KIL) {
-	 track_arg(c, inst, 0, WRITEMASK_XYZW); /* All args contribute to final */
+	 track_arg(c, inst, 0, BRW_WRITEMASK_XYZW); /* All args contribute to final */
 	 continue;
       }
 
       if (inst->opcode == WM_FB_WRITE) {
-	 track_arg(c, inst, 0, WRITEMASK_XYZW); 
-	 track_arg(c, inst, 1, WRITEMASK_XYZW); 
+	 track_arg(c, inst, 0, BRW_WRITEMASK_XYZW); 
+	 track_arg(c, inst, 1, BRW_WRITEMASK_XYZW); 
 	 if (c->key.source_depth_to_render_target &&
 	     c->key.computes_depth)
-	    track_arg(c, inst, 2, WRITEMASK_Z); 
+	    track_arg(c, inst, 2, BRW_WRITEMASK_Z); 
 	 else
 	    track_arg(c, inst, 2, 0); 
 	 continue;
@@ -191,9 +191,9 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 break;
 
       case TGSI_OPCODE_XPD: 
-	 if (writemask & WRITEMASK_X) read0 |= WRITEMASK_YZ;	 
-	 if (writemask & WRITEMASK_Y) read0 |= WRITEMASK_XZ;	 
-	 if (writemask & WRITEMASK_Z) read0 |= WRITEMASK_XY;
+	 if (writemask & BRW_WRITEMASK_X) read0 |= BRW_WRITEMASK_YZ;	 
+	 if (writemask & BRW_WRITEMASK_Y) read0 |= BRW_WRITEMASK_XZ;	 
+	 if (writemask & BRW_WRITEMASK_Z) read0 |= BRW_WRITEMASK_XY;
 	 read1 = read0;
 	 break;
 
@@ -206,12 +206,12 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       case TGSI_OPCODE_SCS:
       case WM_CINTERP:
       case WM_PIXELXY:
-	 read0 = WRITEMASK_X;
+	 read0 = BRW_WRITEMASK_X;
 	 break;
 
       case TGSI_OPCODE_POW:
-	 read0 = WRITEMASK_X;
-	 read1 = WRITEMASK_X;
+	 read0 = BRW_WRITEMASK_X;
+	 read1 = BRW_WRITEMASK_X;
 	 break;
 
       case TGSI_OPCODE_TEX:
@@ -219,57 +219,57 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 read0 = get_texcoord_mask(inst->tex_idx);
 
          if (inst->tex_shadow)
-	    read0 |= WRITEMASK_Z;
+	    read0 |= BRW_WRITEMASK_Z;
 	 break;
 
       case TGSI_OPCODE_TXB:
 	 /* Shadow ignored for txb.
 	  */
-	 read0 = get_texcoord_mask(inst->tex_idx) | WRITEMASK_W;
+	 read0 = get_texcoord_mask(inst->tex_idx) | BRW_WRITEMASK_W;
 	 break;
 
       case WM_WPOSXY:
-	 read0 = writemask & WRITEMASK_XY;
+	 read0 = writemask & BRW_WRITEMASK_XY;
 	 break;
 
       case WM_DELTAXY:
-	 read0 = writemask & WRITEMASK_XY;
-	 read1 = WRITEMASK_X;
+	 read0 = writemask & BRW_WRITEMASK_XY;
+	 read1 = BRW_WRITEMASK_X;
 	 break;
 
       case WM_PIXELW:
-	 read0 = WRITEMASK_X;
-	 read1 = WRITEMASK_XY;
+	 read0 = BRW_WRITEMASK_X;
+	 read1 = BRW_WRITEMASK_XY;
 	 break;
 
       case WM_LINTERP:
-	 read0 = WRITEMASK_X;
-	 read1 = WRITEMASK_XY;
+	 read0 = BRW_WRITEMASK_X;
+	 read1 = BRW_WRITEMASK_XY;
 	 break;
 
       case WM_PINTERP:
-	 read0 = WRITEMASK_X; /* interpolant */
-	 read1 = WRITEMASK_XY; /* deltas */
-	 read2 = WRITEMASK_W; /* pixel w */
+	 read0 = BRW_WRITEMASK_X; /* interpolant */
+	 read1 = BRW_WRITEMASK_XY; /* deltas */
+	 read2 = BRW_WRITEMASK_W; /* pixel w */
 	 break;
 
       case TGSI_OPCODE_DP3:	
-	 read0 = WRITEMASK_XYZ;
-	 read1 = WRITEMASK_XYZ;
+	 read0 = BRW_WRITEMASK_XYZ;
+	 read1 = BRW_WRITEMASK_XYZ;
 	 break;
 
       case TGSI_OPCODE_DPH:
-	 read0 = WRITEMASK_XYZ;
-	 read1 = WRITEMASK_XYZW;
+	 read0 = BRW_WRITEMASK_XYZ;
+	 read1 = BRW_WRITEMASK_XYZW;
 	 break;
 
       case TGSI_OPCODE_DP4:
-	 read0 = WRITEMASK_XYZW;
-	 read1 = WRITEMASK_XYZW;
+	 read0 = BRW_WRITEMASK_XYZW;
+	 read1 = BRW_WRITEMASK_XYZW;
 	 break;
 
       case TGSI_OPCODE_LIT: 
-	 read0 = WRITEMASK_XYW;
+	 read0 = BRW_WRITEMASK_XYW;
 	 break;
 
       case TGSI_OPCODE_DST:

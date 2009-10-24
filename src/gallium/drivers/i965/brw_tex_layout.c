@@ -47,7 +47,7 @@ GLboolean brw_miptree_layout(struct brw_context *brw,
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      if (IS_IGDNG(intel->intelScreen->deviceID)) {
+      if (IS_IGDNG(brw->brw_screen->pci_id)) {
           GLuint align_h = 2, align_w = 4;
           GLuint level;
           GLuint x = 0;

@@ -1276,7 +1276,7 @@ void brw_SAMPLE(struct brw_compile *p,
     * instruction, so that is a guide for whether a workaround is
     * needed.
     */
-   if (writemask != WRITEMASK_XYZW) {
+   if (writemask != BRW_WRITEMASK_XYZW) {
       GLuint dst_offset = 0;
       GLuint i, newmask = 0, len = 0;
 
@@ -1299,7 +1299,7 @@ void brw_SAMPLE(struct brw_compile *p,
       else {
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
 	 
-	 newmask = ~newmask & WRITEMASK_XYZW;
+	 newmask = ~newmask & BRW_WRITEMASK_XYZW;
 
 	 brw_push_insn_state(p);
 

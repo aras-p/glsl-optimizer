@@ -30,7 +30,7 @@
   */
 
 
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 #include "intel_regions.h"
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -55,8 +55,8 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
-   /* PIPE_NEW_UCP */
-   if (brw->nr_ucp) {
+   /* PIPE_NEW_CLIP */
+   if (brw->curr.ucp.nr) {
       GLuint nr_planes = 6 + brw->nr_ucp;
       nr_clip_regs = (nr_planes * 4 + 15) / 16;
    }
@@ -106,7 +106,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
-      .mesa = PIPE_NEW_UCP,
+      .mesa = PIPE_NEW_CLIP,
       .brw  = BRW_NEW_VERTEX_PROGRAM,
       .cache = CACHE_NEW_WM_PROG
    },
@@ -327,7 +327,7 @@ const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
       .mesa = (PIPE_NEW_FS_CONSTANTS |
 	       PIPE_NEW_VS_CONSTANTS |
-	       PIPE_NEW_UCP),
+	       PIPE_NEW_CLIP),
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */

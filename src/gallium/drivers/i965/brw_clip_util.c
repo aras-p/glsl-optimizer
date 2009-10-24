@@ -93,7 +93,7 @@ void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
    /* value.xyz *= value.rhw
     */
    brw_set_access_mode(p, BRW_ALIGN_16);
-   brw_MUL(p, brw_writemask(pos, WRITEMASK_XYZ), pos, brw_swizzle1(pos, W));
+   brw_MUL(p, brw_writemask(pos, BRW_WRITEMASK_XYZ), pos, brw_swizzle1(pos, W));
    brw_set_access_mode(p, BRW_ALIGN_1);
 }
 

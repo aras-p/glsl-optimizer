@@ -1,6 +1,6 @@
    /* _NEW_BUFFERS */
-   if (IS_965(intel->intelScreen->deviceID) &&
-       !IS_G4X(intel->intelScreen->deviceID)) {
+   if (IS_965(brw->brw_screen->pci_id) &&
+       !IS_G4X(brw->brw_screen->pci_id)) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
 	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);

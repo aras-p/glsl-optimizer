@@ -36,6 +36,8 @@
 #include "brw_structs.h"
 #include "brw_winsys.h"
 #include "pipe/p_state.h"
+#include "pipe/p_context.h"
+#include "tgsi/tgsi_scan.h"
 
 
 /* Glossary:
@@ -143,6 +145,27 @@ struct brw_blend_state {
 };
 
 
+struct brw_rasterizer_state;
+
+
+struct brw_vertex_shader {
+   const struct tgsi_token *tokens;
+   struct tgsi_shader_info info;
+
+   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
+};
+
+
+struct brw_fragment_shader {
+   const struct tgsi_token *tokens;
+   struct tgsi_shader_info info;
+
+   GLboolean isGLSL;
+
+   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
+};
 
 
 
@@ -157,6 +180,7 @@ struct brw_blend_state {
 #define PIPE_NEW_VERTEX_SHADER          0x2
 #define PIPE_NEW_FRAGMENT_CONSTS        0x2
 #define PIPE_NEW_VERTEX_CONSTS          0x2
+#define PIPE_NEW_CLIP                   0x2
 
 
 #define BRW_NEW_URB_FENCE               0x1
@@ -195,25 +219,6 @@ struct brw_state_flags {
    GLuint cache;
 };
 
-
-struct brw_vertex_program {
-   const struct tgsi_token *tokens;
-   GLuint id;
-   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
-   GLboolean use_const_buffer;
-};
-
-
-/** Subclass of Mesa fragment program */
-struct brw_fragment_program {
-   const struct tgsi_token *tokens;
-
-   GLuint id;  /**< serial no. to identify frag progs, never re-used */
-   GLboolean isGLSL;  /**< any IF/LOOP/CONT/BREAK instructions */
-
-   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
-   GLboolean use_const_buffer;
-};
 
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -452,24 +457,29 @@ struct brw_query_object {
  */
 struct brw_context 
 {
-   struct pipe_context *pipe;
-   struct pipe_screen *screen;
-   
+   struct pipe_context pipe;
+
+   struct brw_screen *brw_screen;   
    struct brw_winsys_screen *sws;
 
    GLuint primitive;
+   GLuint reduced_primitive;
 
    GLboolean emit_state_always;
    GLboolean no_batch_wrap;
 
    /* Active vertex program: 
     */
-   const struct gl_vertex_program *vertex_program;
-   const struct gl_fragment_program *fragment_program;
-   struct pipe_framebuffer_state fb;
-   struct brw_depth_stencil_alpha_state *dsa;
-   struct brw_blend_state *blend;
-   struct pipe_viewport_state vp;
+   struct {
+      const struct brw_vertex_shader *vs;
+      const struct brw_fragment_shader *fs;
+      const struct brw_blend_state *blend;
+      const struct brw_rasterizer_state *rast;
+      const struct brw_depth_stencil_alpha_state *dsa;
+      struct pipe_framebuffer_state fb;
+      struct pipe_viewport_state vp;
+      struct pipe_clip_state ucp;
+   } curr;
 
    struct {
       struct brw_state_flags dirty;
@@ -719,29 +729,6 @@ brw_context( struct pipe_context *ctx )
    return (struct brw_context *)ctx;
 }
 
-static INLINE struct brw_vertex_program *
-brw_vertex_program(struct gl_vertex_program *p)
-{
-   return (struct brw_vertex_program *) p;
-}
-
-static INLINE const struct brw_vertex_program *
-brw_vertex_program_const(const struct gl_vertex_program *p)
-{
-   return (const struct brw_vertex_program *) p;
-}
-
-static INLINE struct brw_fragment_program *
-brw_fragment_program(struct gl_fragment_program *p)
-{
-   return (struct brw_fragment_program *) p;
-}
-
-static INLINE const struct brw_fragment_program *
-brw_fragment_program_const(const struct gl_fragment_program *p)
-{
-   return (const struct brw_fragment_program *) p;
-}
 
 
 

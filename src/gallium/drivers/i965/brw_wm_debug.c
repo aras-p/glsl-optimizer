@@ -98,7 +98,7 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
    }
    _mesa_printf("]");
 
-   if (inst->writemask != WRITEMASK_XYZW)
+   if (inst->writemask != BRW_WRITEMASK_XYZW)
       _mesa_printf(".%s%s%s%s", 
 		   GET_BIT(inst->writemask, 0) ? "x" : "",
 		   GET_BIT(inst->writemask, 1) ? "y" : "",

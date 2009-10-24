@@ -33,13 +33,14 @@
 
 #include "util/u_math.h"
 
-#include "intel_batchbuffer.h"
-
+#include "brw_screen.h"
+#include "brw_batchbuffer.h"
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_util.h"
 #include "brw_state.h"
+#include "brw_pipe_rast.h"
 #include "brw_clip.h"
 
 
@@ -77,13 +78,16 @@ static void compile_clip_prog( struct brw_context *brw,
    else
        delta = REG_SIZE;
 
-   for (i = 0; i < VERT_RESULT_MAX; i++)
-      if (c.key.attrs & (1<<i)) {
-	 c.offset[i] = delta;
-	 delta += ATTR_SIZE;
-      }
+   /* XXX: c.offset is now pretty redundant:
+    */
+   for (i = 0; i < c.key.nr_attrs; i++) {
+      c.offset[i] = delta;
+      delta += ATTR_SIZE;
+   }
 
-   c.nr_attrs = util_count_bits(c.key.attrs);
+   /* XXX: c.nr_attrs is very redundant:
+    */
+   c.nr_attrs = c.key.nr_attrs;
    
    if (BRW_IS_IGDNG(brw))
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
@@ -145,59 +149,21 @@ static void upload_clip_prog(struct brw_context *brw)
 {
    struct brw_clip_prog_key key;
 
-   memset(&key, 0, sizeof(key));
-
-   /* Populate the key:
+   /* Populate the key, starting from the almost-complete version from
+    * the rast state. 
     */
+
+   /* PIPE_NEW_RAST */
+   memcpy(&key, &brw->curr.rast->clip_key, sizeof key);
+
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->reduced_primitive;
-   /* CACHE_NEW_VS_PROG */
-   key.attrs = brw->vs.prog_data->outputs_written;
-   /* PIPE_NEW_RAST */
-   key.do_flat_shading = brw->rast.base.flatshade;
-   /* PIPE_NEW_UCP */
-   key.nr_userclip = brw->nr_ucp;
 
-   if (BRW_IS_IGDNG(brw))
-       key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
-   else
-       key.clip_mode = BRW_CLIPMODE_NORMAL;
+   /* PIPE_NEW_VS */
+   key.nr_attrs = brw->curr.vs->info.file_max[TGSI_FILE_OUTPUT] + 1;
 
-   /* PIPE_NEW_RAST */
-   if (key.primitive == PIPE_PRIM_TRIANGLES) {
-      if (brw->rast->cull_mode = PIPE_WINDING_BOTH)
-	 key.clip_mode = BRW_CLIPMODE_REJECT_ALL;
-      else {
-	 key.fill_ccw = CLIP_CULL;
-	 key.fill_cw = CLIP_CULL;
-
-	 if (!(brw->rast->cull_mode & PIPE_WINDING_CCW)) {
-	    key.fill_ccw = translate_fill(brw->rast.fill_ccw);
-	 }
-
-	 if (!(brw->rast->cull_mode & PIPE_WINDING_CW)) {
-	    key.fill_cw = translate_fill(brw->rast.fill_cw);
-	 }
-
-	 if (key.fill_cw != CLIP_FILL ||
-	     key.fill_ccw != CLIP_FILL) {
-	    key.do_unfilled = 1;
-	    key.clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
-	 }
-
-	 key.offset_ccw = brw->rast.offset_ccw;
-	 key.offset_cw = brw->rast.offset_cw;
-
-	 if (brw->rast.light_twoside &&
-	     key.fill_cw != CLIP_CULL) 
-	    key.copy_bfc_cw = 1;
-
-	 if (brw->rast.light_twoside &&
-	     key.fill_ccw != CLIP_CULL) 
-	    key.copy_bfc_ccw = 1;
-	 }
-      }
-   }
+   /* PIPE_NEW_CLIP */
+   key.nr_userclip = brw->curr.ucp.nr;
 
    brw->sws->bo_unreference(brw->clip.prog_bo);
    brw->clip.prog_bo = brw_search_cache(&brw->cache, BRW_CLIP_PROG,
@@ -212,7 +178,7 @@ static void upload_clip_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_clip_prog = {
    .dirty = {
       .mesa  = (PIPE_NEW_RAST | 
-		PIPE_NEW_UCP),
+		PIPE_NEW_CLIP),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },

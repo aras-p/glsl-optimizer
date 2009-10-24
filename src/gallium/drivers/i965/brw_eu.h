@@ -35,7 +35,6 @@
 
 #include "brw_structs.h"
 #include "brw_defines.h"
-#include "shader/prog_instruction.h"
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
@@ -44,6 +43,23 @@
 #define BRW_SWIZZLE_XYZW      BRW_SWIZZLE4(0,1,2,3)
 #define BRW_SWIZZLE_XXXX      BRW_SWIZZLE4(0,0,0,0)
 #define BRW_SWIZZLE_XYXY      BRW_SWIZZLE4(0,1,0,1)
+
+#define BRW_WRITEMASK_NONE     0x00
+#define BRW_WRITEMASK_X        0x01
+#define BRW_WRITEMASK_Y        0x02
+#define BRW_WRITEMASK_XY       0x03
+#define BRW_WRITEMASK_Z        0x04
+#define BRW_WRITEMASK_XZ       0x05
+#define BRW_WRITEMASK_YZ       0x06
+#define BRW_WRITEMASK_XYZ      0x07
+#define BRW_WRITEMASK_W        0x08
+#define BRW_WRITEMASK_XW       0x09
+#define BRW_WRITEMASK_YW       0x0A
+#define BRW_WRITEMASK_XYW      0x0B
+#define BRW_WRITEMASK_ZW       0x0C
+#define BRW_WRITEMASK_XZW      0x0D
+#define BRW_WRITEMASK_YZW      0x0E
+#define BRW_WRITEMASK_XYZW     0x0F
 
 
 #define REG_SIZE (8*4)
@@ -157,7 +173,7 @@ static INLINE int type_sz( GLuint type )
  * \param width  one of BRW_WIDTH_x
  * \param hstride  one of BRW_HORIZONTAL_STRIDE_x
  * \param swizzle  one of BRW_SWIZZLE_x
- * \param writemask  WRITEMASK_X/Y/Z/W bitfield
+ * \param writemask  BRW_WRITEMASK_X/Y/Z/W bitfield
  */
 static INLINE struct brw_reg brw_reg( GLuint file,
                                       GLuint nr,
@@ -215,7 +231,7 @@ static INLINE struct brw_reg brw_vec16_reg( GLuint file,
 		  BRW_WIDTH_16,
 		  BRW_HORIZONTAL_STRIDE_1,
 		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+		  BRW_WRITEMASK_XYZW);
 }
 
 /** Construct float[8] register */
@@ -231,7 +247,7 @@ static INLINE struct brw_reg brw_vec8_reg( GLuint file,
 		  BRW_WIDTH_8,
 		  BRW_HORIZONTAL_STRIDE_1,
 		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+		  BRW_WRITEMASK_XYZW);
 }
 
 /** Construct float[4] register */
@@ -247,7 +263,7 @@ static INLINE struct brw_reg brw_vec4_reg( GLuint file,
 		  BRW_WIDTH_4,
 		  BRW_HORIZONTAL_STRIDE_1,
 		  BRW_SWIZZLE_XYZW,
-		  WRITEMASK_XYZW);
+		  BRW_WRITEMASK_XYZW);
 }
 
 /** Construct float[2] register */
@@ -263,7 +279,7 @@ static INLINE struct brw_reg brw_vec2_reg( GLuint file,
 		  BRW_WIDTH_2,
 		  BRW_HORIZONTAL_STRIDE_1,
 		  BRW_SWIZZLE_XYXY,
-		  WRITEMASK_XY);
+		  BRW_WRITEMASK_XY);
 }
 
 /** Construct float[1] register */
@@ -279,7 +295,7 @@ static INLINE struct brw_reg brw_vec1_reg( GLuint file,
 		  BRW_WIDTH_1,
 		  BRW_HORIZONTAL_STRIDE_0,
 		  BRW_SWIZZLE_XXXX,
-		  WRITEMASK_X);
+		  BRW_WRITEMASK_X);
 }
 
 
@@ -510,7 +526,7 @@ static INLINE struct brw_reg brw_ip_reg( void )
 		  BRW_WIDTH_1,
 		  BRW_HORIZONTAL_STRIDE_0,
 		  BRW_SWIZZLE_XYZW, /* NOTE! */
-		  WRITEMASK_XYZW); /* NOTE! */
+		  BRW_WRITEMASK_XYZW); /* NOTE! */
 }
 
 static INLINE struct brw_reg brw_acc_reg( void )

@@ -31,7 +31,7 @@
                    
 
 #include "intel_mipmap_tree.h"
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 #include "intel_tex.h"
 #include "intel_fbo.h"
 

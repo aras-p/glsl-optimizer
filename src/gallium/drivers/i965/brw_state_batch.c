@@ -32,7 +32,7 @@
 
 
 #include "brw_state.h"
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 
 
 
@@ -47,7 +47,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
    struct header *newheader = (struct header *)data;
 
    if (brw->emit_state_always) {
-      intel_batchbuffer_data(brw->intel.batch, data, sz, IGNORE_CLIPRECTS);
+      brw_batchbuffer_data(brw->intel.batch, data, sz, IGNORE_CLIPRECTS);
       return GL_TRUE;
    }
 
@@ -74,7 +74,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 
  emit:
    memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(brw->intel.batch, data, sz, IGNORE_CLIPRECTS);
+   brw_batchbuffer_data(brw->intel.batch, data, sz, IGNORE_CLIPRECTS);
    return GL_TRUE;
 }
 

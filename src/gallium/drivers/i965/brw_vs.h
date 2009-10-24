@@ -36,7 +36,6 @@
 
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "shader/program.h"
 
 
 struct brw_vs_prog_key {

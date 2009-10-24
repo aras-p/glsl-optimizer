@@ -1,6 +1,6 @@
 
 /**
- * called from intel_batchbuffer_flush and children before sending a
+ * called from brw_batchbuffer_flush and children before sending a
  * batchbuffer off.
  */
 static void brw_finish_batch(struct intel_context *intel)

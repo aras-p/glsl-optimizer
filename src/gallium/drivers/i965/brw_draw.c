@@ -31,7 +31,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 #include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
@@ -133,7 +133,7 @@ static void brw_emit_prim(struct brw_context *brw,
       ADVANCE_BATCH();
    }
    if (prim_packet.verts_per_instance) {
-      intel_batchbuffer_data( brw->intel.batch, &prim_packet,
+      brw_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
    if (intel->always_flush_cache) {
@@ -224,7 +224,7 @@ static GLboolean brw_try_draw_prims( struct brw_context *brw,
       return ret;
 
    if (intel->always_flush_batch)
-      intel_batchbuffer_flush(intel->batch);
+      brw_batchbuffer_flush(intel->batch);
 
    return 0;
 }
@@ -249,12 +249,10 @@ void brw_draw_prims( struct brw_context *brw,
     */
    ret = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
-   /* Otherwise, we really are out of memory.  Pass the drawing
-    * command to the software tnl module and which will in turn call
-    * swrast to do the drawing.
+   /* Otherwise, flush and retry:
     */
    if (ret != 0) {
-      intel_batchbuffer_flush(intel->batch);
+      brw_batchbuffer_flush(intel->batch);
       ret = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
       assert(ret == 0);
    }

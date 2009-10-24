@@ -192,7 +192,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 					     BRW_WIDTH_8,
 					     BRW_HORIZONTAL_STRIDE_1,
 					     BRW_SWIZZLE_XXXX,
-					     WRITEMASK_X);
+					     BRW_WRITEMASK_X);
       reg++;
    }
 
@@ -487,7 +487,7 @@ static void emit_exp_noalias( struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    
 
-   if (dst.dw1.bits.writemask & WRITEMASK_X) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_X) {
       struct brw_reg tmp = get_tmp(c);
       struct brw_reg tmp_d = retype(tmp, BRW_REGISTER_TYPE_D);
 
@@ -499,23 +499,23 @@ static void emit_exp_noalias( struct brw_vs_compile *c,
       /* Adjust exponent for floating point: 
        * exp += 127 
        */
-      brw_ADD(p, brw_writemask(tmp_d, WRITEMASK_X), tmp_d, brw_imm_d(127));
+      brw_ADD(p, brw_writemask(tmp_d, BRW_WRITEMASK_X), tmp_d, brw_imm_d(127));
 
       /* Install exponent and sign.  
        * Excess drops off the edge: 
        */
-      brw_SHL(p, brw_writemask(retype(dst, BRW_REGISTER_TYPE_D), WRITEMASK_X), 
+      brw_SHL(p, brw_writemask(retype(dst, BRW_REGISTER_TYPE_D), BRW_WRITEMASK_X), 
 	      tmp_d, brw_imm_d(23));
 
       release_tmp(c, tmp);
    }
 
-   if (dst.dw1.bits.writemask & WRITEMASK_Y) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_Y) {
       /* result[1] = arg0.x - floor(arg0.x) */
-      brw_FRC(p, brw_writemask(dst, WRITEMASK_Y), brw_swizzle1(arg0, 0));
+      brw_FRC(p, brw_writemask(dst, BRW_WRITEMASK_Y), brw_swizzle1(arg0, 0));
    }
    
-   if (dst.dw1.bits.writemask & WRITEMASK_Z) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_Z) {
       /* As with the LOG instruction, we might be better off just
        * doing a taylor expansion here, seeing as we have to do all
        * the prep work.
@@ -525,14 +525,14 @@ static void emit_exp_noalias( struct brw_vs_compile *c,
        */
       emit_math1(c, 
 		 BRW_MATH_FUNCTION_EXP, 
-		 brw_writemask(dst, WRITEMASK_Z),
+		 brw_writemask(dst, BRW_WRITEMASK_Z),
 		 brw_swizzle1(arg0, 0), 
 		 BRW_MATH_PRECISION_FULL);
    }  
 
-   if (dst.dw1.bits.writemask & WRITEMASK_W) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_W) {
       /* result[3] = 1.0; */
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_W), brw_imm_f(1));
+      brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_W), brw_imm_f(1));
    }
 }
 
@@ -562,36 +562,36 @@ static void emit_log_noalias( struct brw_vs_compile *c,
     * result[0].f = (x.i & ((1<<31)-1) >> 23) - 127
     * result[1].i = (x.i & ((1<<23)-1)        + (127<<23)
     */
-   if (dst.dw1.bits.writemask & WRITEMASK_XZ) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_XZ) {
       brw_AND(p, 
-	      brw_writemask(tmp_ud, WRITEMASK_X),
+	      brw_writemask(tmp_ud, BRW_WRITEMASK_X),
 	      brw_swizzle1(arg0_ud, 0),
 	      brw_imm_ud((1U<<31)-1));
 
       brw_SHR(p, 
-	      brw_writemask(tmp_ud, WRITEMASK_X), 
+	      brw_writemask(tmp_ud, BRW_WRITEMASK_X), 
 	      tmp_ud,
 	      brw_imm_ud(23));
 
       brw_ADD(p, 
-	      brw_writemask(tmp, WRITEMASK_X), 
+	      brw_writemask(tmp, BRW_WRITEMASK_X), 
 	      retype(tmp_ud, BRW_REGISTER_TYPE_D),	/* does it matter? */
 	      brw_imm_d(-127));
    }
 
-   if (dst.dw1.bits.writemask & WRITEMASK_YZ) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_YZ) {
       brw_AND(p, 
-	      brw_writemask(tmp_ud, WRITEMASK_Y),
+	      brw_writemask(tmp_ud, BRW_WRITEMASK_Y),
 	      brw_swizzle1(arg0_ud, 0),
 	      brw_imm_ud((1<<23)-1));
 
       brw_OR(p, 
-	     brw_writemask(tmp_ud, WRITEMASK_Y), 
+	     brw_writemask(tmp_ud, BRW_WRITEMASK_Y), 
 	     tmp_ud,
 	     brw_imm_ud(127<<23));
    }
    
-   if (dst.dw1.bits.writemask & WRITEMASK_Z) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_Z) {
       /* result[2] = result[0] + LOG2(result[1]); */
 
       /* Why bother?  The above is just a hint how to do this with a
@@ -606,19 +606,19 @@ static void emit_log_noalias( struct brw_vs_compile *c,
        */
       emit_math1(c, 
 		 BRW_MATH_FUNCTION_LOG, 
-		 brw_writemask(tmp, WRITEMASK_Z), 
+		 brw_writemask(tmp, BRW_WRITEMASK_Z), 
 		 brw_swizzle1(tmp, 1), 
 		 BRW_MATH_PRECISION_FULL);
       
       brw_ADD(p, 
-	      brw_writemask(tmp, WRITEMASK_Z), 
+	      brw_writemask(tmp, BRW_WRITEMASK_Z), 
 	      brw_swizzle1(tmp, 2), 
 	      brw_swizzle1(tmp, 0));
    }  
 
-   if (dst.dw1.bits.writemask & WRITEMASK_W) {
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_W) {
       /* result[3] = 1.0; */
-      brw_MOV(p, brw_writemask(tmp, WRITEMASK_W), brw_imm_f(1));
+      brw_MOV(p, brw_writemask(tmp, BRW_WRITEMASK_W), brw_imm_f(1));
    }
 
    if (need_tmp) {
@@ -639,14 +639,14 @@ static void emit_dst_noalias( struct brw_vs_compile *c,
 
    /* There must be a better way to do this: 
     */
-   if (dst.dw1.bits.writemask & WRITEMASK_X)
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_X), brw_imm_f(1.0));
-   if (dst.dw1.bits.writemask & WRITEMASK_Y)
-      brw_MUL(p, brw_writemask(dst, WRITEMASK_Y), arg0, arg1);
-   if (dst.dw1.bits.writemask & WRITEMASK_Z)
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_Z), arg0);
-   if (dst.dw1.bits.writemask & WRITEMASK_W)
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_W), arg1);
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_X)
+      brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_X), brw_imm_f(1.0));
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_Y)
+      brw_MUL(p, brw_writemask(dst, BRW_WRITEMASK_Y), arg0, arg1);
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_Z)
+      brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_Z), arg0);
+   if (dst.dw1.bits.writemask & BRW_WRITEMASK_W)
+      brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_W), arg1);
 }
 
 
@@ -672,8 +672,8 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
    if (need_tmp) 
       tmp = get_tmp(c);
    
-   brw_MOV(p, brw_writemask(dst, WRITEMASK_YZ), brw_imm_f(0)); 
-   brw_MOV(p, brw_writemask(dst, WRITEMASK_XW), brw_imm_f(1)); 
+   brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_YZ), brw_imm_f(0)); 
+   brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_XW), brw_imm_f(1)); 
 
    /* Need to use BRW_EXECUTE_8 and also do an 8-wide compare in order
     * to get all channels active inside the IF.  In the clipping code
@@ -683,15 +683,15 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, brw_swizzle1(arg0,0), brw_imm_f(0));
    if_insn = brw_IF(p, BRW_EXECUTE_8);
    {
-      brw_MOV(p, brw_writemask(dst, WRITEMASK_Y), brw_swizzle1(arg0,0));
+      brw_MOV(p, brw_writemask(dst, BRW_WRITEMASK_Y), brw_swizzle1(arg0,0));
 
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, brw_swizzle1(arg0,1), brw_imm_f(0));
-      brw_MOV(p, brw_writemask(tmp, WRITEMASK_Z),  brw_swizzle1(arg0,1));
+      brw_MOV(p, brw_writemask(tmp, BRW_WRITEMASK_Z),  brw_swizzle1(arg0,1));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       emit_math2(c, 
 		 BRW_MATH_FUNCTION_POW, 
-		 brw_writemask(dst, WRITEMASK_Z),
+		 brw_writemask(dst, BRW_WRITEMASK_Z),
 		 brw_swizzle1(tmp, 2),
 		 brw_swizzle1(arg0, 3),
 		 BRW_MATH_PRECISION_PARTIAL);      
@@ -1045,7 +1045,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    /* ndc = 1.0 / pos.w */
    emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
    /* ndc.xyz = pos * ndc */
-   brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
+   brw_MUL(p, brw_writemask(ndc, BRW_WRITEMASK_XYZ), pos, ndc);
 
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
@@ -1062,14 +1062,14 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       if (c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
-	 brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
-	 brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
+	 brw_MUL(p, brw_writemask(header1, BRW_WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
+	 brw_AND(p, brw_writemask(header1, BRW_WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
       }
 
       for (i = 0; i < c->key.nr_userclip; i++) {
 	 brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
 	 brw_DP4(p, brw_null_reg(), pos, c->userplane[i]);
-	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<i));
+	 brw_OR(p, brw_writemask(header1, BRW_WRITEMASK_W), header1, brw_imm_ud(1<<i));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
       }
 
@@ -1089,7 +1089,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 brw_swizzle1(ndc, 3),
 		 brw_imm_f(0));
    
-	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<6));
+	 brw_OR(p, brw_writemask(header1, BRW_WRITEMASK_W), header1, brw_imm_ud(1<<6));
 	 brw_MOV(p, ndc, brw_imm_f(0));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
       }
@@ -1139,7 +1139,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 eot, 		/* writes complete */
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
-
+!
    if (c->first_overflow_output > 0) {
       /* Not all of the vertex outputs/results fit into the MRF.
        * Move the overflowed attributes from the GRF to the MRF and

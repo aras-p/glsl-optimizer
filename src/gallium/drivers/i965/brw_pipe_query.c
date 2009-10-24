@@ -42,7 +42,7 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 #include "intel_reg.h"
 
 /** Waits on the query object's BO and totals the results for this query */
@@ -122,7 +122,7 @@ brw_end_query(struct pipe_context *pipe, struct pipe_query *q)
     */
    if (query->bo) {
       brw_emit_query_end(brw);
-      intel_batchbuffer_flush(brw->batch);
+      brw_batchbuffer_flush(brw->batch);
 
       brw->sws->bo_unreference(brw->query.bo);
       brw->query.bo = NULL;

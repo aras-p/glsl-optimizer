@@ -38,7 +38,7 @@
 #include "brw_state.h"
 #include "brw_vs.h"
 #include "brw_screen_tex.h"
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 
 
 

@@ -29,7 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
       
-#include "intel_batchbuffer.h"
+#include "brw_batchbuffer.h"
 
 #include "brw_defines.h"
 #include "brw_context.h"

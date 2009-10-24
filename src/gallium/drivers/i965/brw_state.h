@@ -157,7 +157,7 @@ void brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data( brw->intel.batch, (s), sizeof(*(s)), IGNORE_CLIPRECTS)
+#define BRW_BATCH_STRUCT(brw, s) brw_batchbuffer_data( brw->intel.batch, (s), sizeof(*(s)), IGNORE_CLIPRECTS)
 #define BRW_CACHED_BATCH_STRUCT(brw, s) brw_cached_batch_struct( brw, (s), sizeof(*(s)) )
 
 GLboolean brw_cached_batch_struct( struct brw_context *brw,

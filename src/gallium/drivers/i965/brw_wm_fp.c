@@ -115,7 +115,7 @@ static struct prog_dst_register dst_reg(GLuint file, GLuint idx)
    struct prog_dst_register reg;
    reg.File = file;
    reg.Index = idx;
-   reg.WriteMask = WRITEMASK_XYZW;
+   reg.WriteMask = BRW_WRITEMASK_XYZW;
    reg.RelAddr = 0;
    reg.CondMask = COND_TR;
    reg.CondSwizzle = 0;
@@ -249,7 +249,7 @@ static struct prog_src_register get_pixel_xy( struct brw_wm_compile *c )
        */
       emit_op(c,
 	      WM_PIXELXY,
-	      dst_mask(pixel_xy, WRITEMASK_XY),
+	      dst_mask(pixel_xy, BRW_WRITEMASK_XY),
 	      0,
 	      payload_r0_depth,
 	      src_undef(),
@@ -272,7 +272,7 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
        */
       emit_op(c,
 	      WM_DELTAXY,
-	      dst_mask(delta_xy, WRITEMASK_XY),
+	      dst_mask(delta_xy, BRW_WRITEMASK_XY),
 	      0,
 	      pixel_xy, 
 	      payload_r0_depth,
@@ -295,7 +295,7 @@ static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
        */
       emit_op(c,
 	      WM_PIXELW,
-	      dst_mask(pixel_w, WRITEMASK_W),
+	      dst_mask(pixel_w, BRW_WRITEMASK_W),
 	      0,
 	      interp_wpos,
 	      deltas, 
@@ -327,13 +327,13 @@ static void emit_interp( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      WM_WPOSXY,
-	      dst_mask(dst, WRITEMASK_XY),
+	      dst_mask(dst, BRW_WRITEMASK_XY),
 	      0,
 	      get_pixel_xy(c),
 	      src_undef(),
 	      src_undef());
       
-      dst = dst_mask(dst, WRITEMASK_ZW);
+      dst = dst_mask(dst, BRW_WRITEMASK_ZW);
 
       /* PROGRAM_INPUT.attr.xyzw = INTERP payload.interp[attr].x, deltas.xyw
        */
@@ -370,7 +370,7 @@ static void emit_interp( struct brw_wm_compile *c,
       /* Interpolate the fog coordinate */
       emit_op(c,
 	      WM_PINTERP,
-	      dst_mask(dst, WRITEMASK_X),
+	      dst_mask(dst, BRW_WRITEMASK_X),
 	      0,
 	      interp,
 	      deltas,
@@ -378,7 +378,7 @@ static void emit_interp( struct brw_wm_compile *c,
 
       emit_op(c,
 	      TGSI_OPCODE_MOV,
-	      dst_mask(dst, WRITEMASK_YZW),
+	      dst_mask(dst, BRW_WRITEMASK_YZW),
 	      0,
 	      src_swizzle(interp,
 			  SWIZZLE_ZERO,
@@ -393,7 +393,7 @@ static void emit_interp( struct brw_wm_compile *c,
       /* XXX review/test this case */
       emit_op(c,
               WM_FRONTFACING,
-              dst_mask(dst, WRITEMASK_X),
+              dst_mask(dst, BRW_WRITEMASK_X),
               0,
               src_undef(),
               src_undef(),
@@ -404,7 +404,7 @@ static void emit_interp( struct brw_wm_compile *c,
       /* XXX review/test this case */
       emit_op(c,
 	      WM_PINTERP,
-	      dst_mask(dst, WRITEMASK_XY),
+	      dst_mask(dst, BRW_WRITEMASK_XY),
 	      0,
 	      interp,
 	      deltas,
@@ -412,7 +412,7 @@ static void emit_interp( struct brw_wm_compile *c,
 
       emit_op(c,
 	      TGSI_OPCODE_MOV,
-	      dst_mask(dst, WRITEMASK_ZW),
+	      dst_mask(dst, BRW_WRITEMASK_ZW),
 	      0,
 	      src_swizzle(interp,
 			  SWIZZLE_ZERO,
@@ -518,19 +518,19 @@ static void precalc_dst( struct brw_wm_compile *c,
    struct prog_src_register src1 = inst->SrcReg[1];
    struct prog_dst_register dst = inst->DstReg;
    
-   if (dst.WriteMask & WRITEMASK_Y) {      
+   if (dst.WriteMask & BRW_WRITEMASK_Y) {      
       /* dst.y = mul src0.y, src1.y
        */
       emit_op(c,
 	      TGSI_OPCODE_MUL,
-	      dst_mask(dst, WRITEMASK_Y),
+	      dst_mask(dst, BRW_WRITEMASK_Y),
 	      inst->SaturateMode,
 	      src0,
 	      src1,
 	      src_undef());
    }
 
-   if (dst.WriteMask & WRITEMASK_XZ) {
+   if (dst.WriteMask & BRW_WRITEMASK_XZ) {
       struct prog_instruction *swz;
       GLuint z = GET_SWZ(src0.Swizzle, Z);
 
@@ -538,7 +538,7 @@ static void precalc_dst( struct brw_wm_compile *c,
        */
       swz = emit_op(c,
 		    TGSI_OPCODE_MOV,
-		    dst_mask(dst, WRITEMASK_XZ),
+		    dst_mask(dst, BRW_WRITEMASK_XZ),
 		    inst->SaturateMode,
 		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
 		    src_undef(),
@@ -546,12 +546,12 @@ static void precalc_dst( struct brw_wm_compile *c,
       /* Avoid letting negation flag of src0 affect our 1 constant. */
       swz->SrcReg[0].Negate &= ~NEGATE_X;
    }
-   if (dst.WriteMask & WRITEMASK_W) {
+   if (dst.WriteMask & BRW_WRITEMASK_W) {
       /* dst.w = mov src1.w
        */
       emit_op(c,
 	      TGSI_OPCODE_MOV,
-	      dst_mask(dst, WRITEMASK_W),
+	      dst_mask(dst, BRW_WRITEMASK_W),
 	      inst->SaturateMode,
 	      src1,
 	      src_undef(),
@@ -566,14 +566,14 @@ static void precalc_lit( struct brw_wm_compile *c,
    struct prog_src_register src0 = inst->SrcReg[0];
    struct prog_dst_register dst = inst->DstReg;
    
-   if (dst.WriteMask & WRITEMASK_XW) {
+   if (dst.WriteMask & BRW_WRITEMASK_XW) {
       struct prog_instruction *swz;
 
       /* dst.xw = swz src0.1111
        */
       swz = emit_op(c,
 		    TGSI_OPCODE_MOV,
-		    dst_mask(dst, WRITEMASK_XW),
+		    dst_mask(dst, BRW_WRITEMASK_XW),
 		    0,
 		    src_swizzle1(src0, SWIZZLE_ONE),
 		    src_undef(),
@@ -582,10 +582,10 @@ static void precalc_lit( struct brw_wm_compile *c,
       swz->SrcReg[0].Negate = NEGATE_NONE;
    }
 
-   if (dst.WriteMask & WRITEMASK_YZ) {
+   if (dst.WriteMask & BRW_WRITEMASK_YZ) {
       emit_op(c,
 	      TGSI_OPCODE_LIT,
-	      dst_mask(dst, WRITEMASK_YZ),
+	      dst_mask(dst, BRW_WRITEMASK_YZ),
 	      inst->SaturateMode,
 	      src0,
 	      src_undef(),
@@ -649,7 +649,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
        /* tmp0 = 1 / tmp1 */
        emit_op(c, TGSI_OPCODE_RCP,
-               dst_mask(tmp0, WRITEMASK_X),
+               dst_mask(tmp0, BRW_WRITEMASK_X),
                0,
                tmp1src,
                src_undef(),
@@ -740,7 +740,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      TGSI_OPCODE_ADD,
-	      dst_mask(tmp, WRITEMASK_XYZ),
+	      dst_mask(tmp, BRW_WRITEMASK_XYZ),
 	      0,
 	      tmpsrc,
 	      C0,
@@ -751,7 +751,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
       emit_op(c,
 	      TGSI_OPCODE_MUL,
-	      dst_mask(tmp, WRITEMASK_Y),
+	      dst_mask(tmp, BRW_WRITEMASK_Y),
 	      0,
 	      tmpsrc,
 	      src_swizzle1(C0, W),
@@ -766,7 +766,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
       emit_op(c,
 	      TGSI_OPCODE_MAD,
-	      dst_mask(dst, WRITEMASK_XYZ),
+	      dst_mask(dst, BRW_WRITEMASK_XYZ),
 	      0,
 	      swap_uv?src_swizzle(tmpsrc, Z,Z,X,X):src_swizzle(tmpsrc, X,X,Z,Z),
 	      C1,
@@ -776,7 +776,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      TGSI_OPCODE_MAD,
-	      dst_mask(dst, WRITEMASK_Y),
+	      dst_mask(dst, BRW_WRITEMASK_Y),
 	      0,
 	      src_swizzle1(tmpsrc, Z),
 	      src_swizzle1(C1, W),
@@ -863,7 +863,7 @@ static void precalc_txp( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      TGSI_OPCODE_RCP,
-	      dst_mask(tmp, WRITEMASK_W),
+	      dst_mask(tmp, BRW_WRITEMASK_W),
 	      0,
 	      src_swizzle1(src0, GET_SWZ(src0.Swizzle, W)),
 	      src_undef(),
@@ -873,7 +873,7 @@ static void precalc_txp( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      TGSI_OPCODE_MUL,
-	      dst_mask(tmp, WRITEMASK_XYZ),
+	      dst_mask(tmp, BRW_WRITEMASK_XYZ),
 	      0,
 	      src0,
 	      src_swizzle1(src_reg_from_dst(tmp), W),
@@ -1053,7 +1053,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
 	  */
-	 out->DstReg.WriteMask &= WRITEMASK_XY;
+	 out->DstReg.WriteMask &= BRW_WRITEMASK_XY;
 	 break;
 	 
       case TGSI_OPCODE_DST:
@@ -1082,7 +1082,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
 	  */
-	 out->DstReg.WriteMask &= WRITEMASK_XYZ;
+	 out->DstReg.WriteMask &= BRW_WRITEMASK_XYZ;
 	 break;
 
       case TGSI_OPCODE_KIL: 

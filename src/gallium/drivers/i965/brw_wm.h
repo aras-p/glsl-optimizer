@@ -34,7 +34,6 @@
 #define BRW_WM_H
 
 
-#include "shader/prog_instruction.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 

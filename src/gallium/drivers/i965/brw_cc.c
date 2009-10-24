@@ -65,7 +65,7 @@ static void prepare_cc_vp( struct brw_context *brw )
    memset(&ccv, 0, sizeof(ccv));
 
    /* PIPE_NEW_VIEWPORT */
-   calc_sane_viewport( &brw->vp, &svp );
+   calc_sane_viewport( &brw->curr.vp, &svp );
 
    ccv.min_depth = svp.near;
    ccv.max_depth = svp.far;
@@ -109,13 +109,13 @@ static void
 cc_unit_populate_key(const struct brw_context *brw,
 		     struct brw_cc_unit_key *key)
 {
-   key->cc0 = brw->dsa->cc0;
-   key->cc1 = brw->dsa->cc1;
-   key->cc2 = brw->dsa->cc2;
-   key->cc3 = combine_cc3( brw->dsa->cc3, brw->blend->cc3 );
-   key->cc5 = brw->blend->cc5;
-   key->cc6 = brw->blend->cc6;
-   key->cc7 = brw->blend->cc7;
+   key->cc0 = brw->curr.dsa->cc0;
+   key->cc1 = brw->curr.dsa->cc1;
+   key->cc2 = brw->curr.dsa->cc2;
+   key->cc3 = combine_cc3( brw->curr.dsa->cc3, brw->curr.blend->cc3 );
+   key->cc5 = brw->curr.blend->cc5;
+   key->cc6 = brw->curr.blend->cc6;
+   key->cc7 = brw->curr.blend->cc7;
 }
 
 /**
