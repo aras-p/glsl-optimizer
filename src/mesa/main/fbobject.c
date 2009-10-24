@@ -1511,18 +1511,6 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       return;
    }
 
-   if (texObj && attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
-      /* the texture format must be depth+stencil */
-      const struct gl_texture_image *texImg;
-      texImg = texObj->Image[0][texObj->BaseLevel];
-      if (!texImg || texImg->_BaseFormat != GL_DEPTH_STENCIL) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glFramebufferTexture%sEXT(texture is not"
-                     " DEPTH_STENCIL format)", caller);
-         return;
-      }
-   }
-
    FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
