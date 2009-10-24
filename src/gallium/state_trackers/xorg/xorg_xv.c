@@ -216,6 +216,7 @@ copy_packed_data(ScrnInfoPtr pScrn,
    char *ymap, *vmap, *umap;
    unsigned char y1, y2, u, v;
    int yidx, uidx, vidx;
+   int y_array_size = w * h;
 
    src = buf + (top * srcPitch) + (left << 1);
 
@@ -232,13 +233,12 @@ copy_packed_data(ScrnInfoPtr pScrn,
                                      PIPE_TRANSFER_WRITE,
                                      left, top, w, h);
 
-   ymap = screen->transfer_map(screen, ytrans);
-   umap = screen->transfer_map(screen, utrans);
-   vmap = screen->transfer_map(screen, vtrans);
+   ymap = (char*)screen->transfer_map(screen, ytrans);
+   umap = (char*)screen->transfer_map(screen, utrans);
+   vmap = (char*)screen->transfer_map(screen, vtrans);
 
    switch (id) {
    case FOURCC_YV12: {
-      int y_array_size = w * h;
       for (i = 0; i < w; ++i) {
          for (j = 0; i < h; ++j) {
             /*XXX use src? */
@@ -252,22 +252,39 @@ copy_packed_data(ScrnInfoPtr pScrn,
       }
    }
       break;
-   case FOURCC_YUY2:
-      for (j = 0; j < h; ++j) {
-         for (i = 0; i < w; ++i) {
-            /* extracting two pixels */
-            y1 = buf[0];
-            u  = buf[1];
-            y2 = buf[2];
-            v  = buf[3];
+   case FOURCC_UYVY:
+      for (i = 0; i < y_array_size; i +=2 ) {
+         /* extracting two pixels */
+         u  = buf[0];
+         y1 = buf[1];
+         v  = buf[2];
+         y2 = buf[3];
+         buf += 4;
 
-            ymap[yidx++] = y1;
-            ymap[yidx++] = y2;
-            umap[uidx++] = u;
-            umap[uidx++] = u;
-            vmap[vidx++] = v;
-            vmap[vidx++] = v;
-         }
+         ymap[yidx++] = y1;
+         ymap[yidx++] = y2;
+         umap[uidx++] = u;
+         umap[uidx++] = u;
+         vmap[vidx++] = v;
+         vmap[vidx++] = v;
+      }
+      break;
+   case FOURCC_YUY2:
+      for (i = 0; i < y_array_size; i +=2 ) {
+         /* extracting two pixels */
+         y1 = buf[0];
+         u  = buf[1];
+         y2 = buf[2];
+         v  = buf[3];
+
+         buf += 4;
+
+         ymap[yidx++] = y1;
+         ymap[yidx++] = y2;
+         umap[uidx++] = u;
+         umap[uidx++] = u;
+         vmap[vidx++] = v;
+         vmap[vidx++] = v;
       }
       break;
    default:

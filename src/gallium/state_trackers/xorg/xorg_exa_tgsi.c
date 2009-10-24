@@ -247,7 +247,7 @@ create_vs(struct pipe_context *pipe,
    const1 = ureg_DECL_constant(ureg, 1);
 
    /* it has to be either a fill or a composite op */
-   debug_assert(is_fill ^ is_composite);
+   debug_assert((is_fill ^ is_composite) ^ is_yuv);
 
    src = ureg_DECL_vs_input(ureg, input_slot++);
    dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
