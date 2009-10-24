@@ -119,6 +119,33 @@
 
 struct brw_context;
 
+struct brw_depth_stencil_alpha_state {
+   struct pipe_depth_stencil_alpha_state templ; /* for draw module */
+
+   /* Precalculated hardware state:
+    */
+   struct brw_cc0 cc0;
+   struct brw_cc1 cc1;
+   struct brw_cc2 cc2;
+   struct brw_cc3 cc3;
+};
+
+
+struct brw_blend_state {
+   struct pipe_depth_stencil_alpha_state templ; /* for draw module */
+
+   /* Precalculated hardware state:
+    */
+   struct brw_cc3 cc3;
+   struct brw_cc5 cc5;
+   struct brw_cc6 cc6;
+   struct brw_cc7 cc7;
+};
+
+
+
+
+
 #define PIPE_NEW_DEPTH_STENCIL_ALPHA    0x1
 #define PIPE_NEW_RAST                   0x2
 #define PIPE_NEW_BLEND                  0x2
@@ -440,6 +467,9 @@ struct brw_context
    const struct gl_vertex_program *vertex_program;
    const struct gl_fragment_program *fragment_program;
    struct pipe_framebuffer_state fb;
+   struct brw_depth_stencil_alpha_state *dsa;
+   struct brw_blend_state *blend;
+   struct pipe_viewport_state vp;
 
    struct {
       struct brw_state_flags dirty;

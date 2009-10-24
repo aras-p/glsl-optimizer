@@ -663,7 +663,7 @@ struct brw_clip_unit_state
 
 struct brw_cc_unit_state
 {
-   struct
+   struct brw_cc0
    {
       GLuint pad0:3;
       GLuint bf_stencil_pass_depth_pass_op:3; 
@@ -681,7 +681,7 @@ struct brw_cc_unit_state
    } cc0;
 
    
-   struct
+   struct brw_cc1
    {
       GLuint bf_stencil_ref:8; 
       GLuint stencil_write_mask:8; 
@@ -690,7 +690,7 @@ struct brw_cc_unit_state
    } cc1;
 
    
-   struct
+   struct brw_cc2
    {
       GLuint logicop_enable:1; 
       GLuint pad0:10;
@@ -702,7 +702,7 @@ struct brw_cc_unit_state
    } cc2;
 
    
-   struct
+   struct brw_cc3
    {
       GLuint pad0:8;
       GLuint alpha_test_func:3; 
@@ -714,13 +714,13 @@ struct brw_cc_unit_state
       GLuint pad2:16;
    } cc3;
    
-   struct
+   struct brw_cc4
    {
       GLuint pad0:5; 
       GLuint cc_viewport_state_offset:27; /* Offset from GENERAL_STATE_BASE */
    } cc4;
    
-   struct
+   struct brw_cc5
    {
       GLuint pad0:2;
       GLuint ia_dest_blend_factor:5; 
@@ -732,7 +732,7 @@ struct brw_cc_unit_state
       GLuint dither_enable:1; 
    } cc5;
 
-   struct
+   struct brw_cc6
    {
       GLuint clamp_post_alpha_blend:1; 
       GLuint clamp_pre_alpha_blend:1; 
@@ -745,7 +745,7 @@ struct brw_cc_unit_state
       GLuint blend_function:3; 
    } cc6;
 
-   struct {
+   struct brw_cc7 {
       union {
 	 GLfloat f;  
 	 GLubyte ub[4];

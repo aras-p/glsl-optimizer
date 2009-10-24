@@ -34,11 +34,12 @@
 #define BRW_STATE_H
 
 #include "brw_context.h"
+#include "util/u_memory.h"
 
 static inline void
 brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
 {
-   assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));
+   assert(brw->state.validated_bo_count < Elements(brw->state.validated_bos));
 
    if (bo != NULL) {
       brw->sws->bo_reference(bo);

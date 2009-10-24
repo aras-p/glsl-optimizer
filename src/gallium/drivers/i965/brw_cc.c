@@ -34,15 +34,41 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
+
+struct sane_viewport {
+   float top;
+   float left;
+   float width;
+   float height;
+   float near;
+   float far;
+};
+
+static void calc_sane_viewport( const struct pipe_viewport_state *vp,
+				struct sane_viewport *svp )
+{
+   /* XXX fix me, obviously.
+    */
+   svp->top = 0;
+   svp->left = 0;
+   svp->width = 250;
+   svp->height = 250;
+   svp->near = 0;
+   svp->far = 1;
+}
+
 static void prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
+   struct sane_viewport svp;
 
    memset(&ccv, 0, sizeof(ccv));
 
-   /* _NEW_VIEWPORT */
-   ccv.min_depth = ctx->Viewport.Near;
-   ccv.max_depth = ctx->Viewport.Far;
+   /* PIPE_NEW_VIEWPORT */
+   calc_sane_viewport( &brw->vp, &svp );
+
+   ccv.min_depth = svp.near;
+   ccv.max_depth = svp.far;
 
    brw->sws->bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
@@ -58,21 +84,38 @@ const struct brw_tracked_state brw_cc_vp = {
 };
 
 struct brw_cc_unit_key {
-   struct pipe_depth_stencil_alpha_state dsa;
-   struct pipe_blend_state blend; /* no color mask */
+   struct brw_cc0 cc0;
+   struct brw_cc1 cc1;
+   struct brw_cc2 cc2;
+   struct brw_cc3 cc3;
+   struct brw_cc5 cc5;
+   struct brw_cc6 cc6;
+   struct brw_cc7 cc7;
 };
 
-static void
-cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
+/* A long-winded way to OR two unsigned integers together:
+ */
+static INLINE struct brw_cc3
+combine_cc3( struct brw_cc3 a, struct brw_cc3 b )
 {
-   memset(key, 0, sizeof(*key));
-   
-   key->dsa = brw->dsa;
-   key->blend = brw->blend;
+   union { struct brw_cc3 cc3; unsigned i; } ca, cb;
+   ca.cc3 = a;
+   cb.cc3 = b;
+   ca.i |= cb.i;
+   return ca.cc3;
+}
 
-   /* Clear non-respected values:
-    */
-   key->blend.colormask = 0xf;
+static void
+cc_unit_populate_key(const struct brw_context *brw,
+		     struct brw_cc_unit_key *key)
+{
+   key->cc0 = brw->dsa->cc0;
+   key->cc1 = brw->dsa->cc1;
+   key->cc2 = brw->dsa->cc2;
+   key->cc3 = combine_cc3( brw->dsa->cc3, brw->blend->cc3 );
+   key->cc5 = brw->blend->cc5;
+   key->cc6 = brw->blend->cc6;
+   key->cc7 = brw->blend->cc7;
 }
 
 /**
@@ -86,16 +129,17 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 
    memset(&cc, 0, sizeof(cc));
 
-   cc.cc0 = brw->dsa.cc0;
-   cc.cc1 = brw->dsa.cc1;
-   cc.cc2 = brw->dsa.cc2;
-   cc.cc3 = brw->dsa.cc3 | brw->blend.cc3;
+   cc.cc0 = key->cc0;
+   cc.cc1 = key->cc1;
+   cc.cc2 = key->cc2;
+   cc.cc3 = key->cc3;
 
    /* CACHE_NEW_CC_VP */
    cc.cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
 
-   cc.cc5 = brw->blend.cc5 | brw->debug.cc5;
-
+   cc.cc5 = key->cc5;
+   cc.cc6 = key->cc6;
+   cc.cc7 = key->cc7;
 
    bo = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
 			 key, sizeof(*key),
@@ -104,12 +148,12 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 			 NULL, NULL);
 
    /* Emit CC viewport relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION,
-		     0,
-		     0,
-		     offsetof(struct brw_cc_unit_state, cc4),
-		     brw->cc.vp_bo);
+   brw->sws->bo_emit_reloc(bo,
+			   I915_GEM_DOMAIN_INSTRUCTION,
+			   0,
+			   0,
+			   offsetof(struct brw_cc_unit_state, cc4),
+			   brw->cc.vp_bo);
 
    return bo;
 }

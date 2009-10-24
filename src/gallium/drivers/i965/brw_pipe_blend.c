@@ -1,4 +1,5 @@
 
+
    /* _NEW_COLOR */
    if (key->logic_op != GL_COPY) {
       cc.cc2.logicop_enable = 1;
@@ -39,3 +40,6 @@
       cc.cc6.x_dither_offset = 0;
    }
 
+   if (INTEL_DEBUG & DEBUG_STATS)
+      cc.cc5.statistics_enable = 1;
+}
