@@ -1618,11 +1618,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
        * Setup src and dest data pointers.
        */
       if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         GLuint dstCompressedSize
-            = ctx->Driver.CompressedTextureSize(ctx, dstImage->Width,
-                                              dstImage->Height,
-                                              dstImage->Depth,
-                                              dstImage->TexFormat);
+         GLuint dstCompressedSize = 
+            _mesa_format_image_size(dstImage->TexFormat, dstImage->Width,
+                                    dstImage->Height, dstImage->Depth);
          ASSERT(dstCompressedSize > 0);
 
          dstImage->Data = _mesa_alloc_texmemory(dstCompressedSize);

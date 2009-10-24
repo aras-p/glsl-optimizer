@@ -580,12 +580,10 @@ static void radeon_teximage(
 	} else {
 		int size;
 		if (_mesa_is_format_compressed(texImage->TexFormat)) {
-                        size = ctx->Driver.CompressedTextureSize(ctx,
-                                                         texImage->Width,
-                                                         texImage->Height,
-                                                         texImage->Depth,
-                                                         texImage->TexFormat);
-
+			size = _mesa_format_image_size(texImage->TexFormat,
+						       texImage->Width,
+						       texImage->Height,
+						       texImage->Depth);
 		} else {
 			size = texImage->Width * texImage->Height * texImage->Depth * _mesa_get_format_bytes(texImage->TexFormat);
 		}

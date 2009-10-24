@@ -694,11 +694,10 @@ st_TexImage(GLcontext * ctx,
    else {
       /* Allocate regular memory and store the image there temporarily.   */
       if (_mesa_is_format_compressed(texImage->TexFormat)) {
-         sizeInBytes = ctx->Driver.CompressedTextureSize(ctx,
-                                                         texImage->Width,
-                                                         texImage->Height,
-                                                         texImage->Depth,
-                                                         texImage->TexFormat);
+         sizeInBytes = _mesa_format_image_size(texImage->TexFormat,
+                                               texImage->Width,
+                                               texImage->Height,
+                                               texImage->Depth);
          dstRowStride =
             _mesa_compressed_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
