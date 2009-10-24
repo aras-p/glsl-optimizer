@@ -237,6 +237,8 @@ copy_packed_data(ScrnInfoPtr pScrn,
    umap = (char*)screen->transfer_map(screen, utrans);
    vmap = (char*)screen->transfer_map(screen, vtrans);
 
+   yidx = uidx = vidx = 0;
+
    switch (id) {
    case FOURCC_YV12: {
       for (i = 0; i < w; ++i) {
