@@ -240,12 +240,7 @@ _mesa_set_texture_attachment(GLcontext *ctx,
 
    /* always update these fields */
    att->TextureLevel = level;
-   if (IS_CUBE_FACE(texTarget)) {
-      att->CubeMapFace = texTarget - GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-   }
-   else {
-      att->CubeMapFace = 0;
-   }
+   att->CubeMapFace = _mesa_tex_target_to_face(texTarget);
    att->Zoffset = zoffset;
    att->Complete = GL_FALSE;
 
