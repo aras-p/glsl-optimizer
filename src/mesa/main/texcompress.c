@@ -212,40 +212,7 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
 GLint
 _mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width)
 {
-   GLint stride;
-
-   switch (mesaFormat) {
-#if FEATURE_texture_fxt1
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-      stride = ((width + 7) / 8) * 16; /* 16 bytes per 8x4 tile */
-      break;
-#endif
-#if FEATURE_texture_s3tc
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-#endif
-      stride = ((width + 3) / 4) * 8; /* 8 bytes per 4x4 tile */
-      break;
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-#endif
-      stride = ((width + 3) / 4) * 16; /* 16 bytes per 4x4 tile */
-      break;
-#endif
-   default:
-      _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_row_stride");
-      return 0;
-   }
-
-   assert(stride == _mesa_format_row_stride(mesaFormat, width));
-
+   GLint stride = _mesa_format_row_stride(mesaFormat, width);
    return stride;
 }
 
@@ -253,58 +220,30 @@ _mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width)
 /*
  * Return the address of the pixel at (col, row, img) in a
  * compressed texture image.
- * \param col, row, img - image position (3D)
+ * \param col, row, img - image position (3D), should be a multiple of the
+ *                        format's block size.
  * \param format - compressed image format
- * \param width - image width
+ * \param width - image width (stride) in pixels
  * \param image - the image address
- * \return address of pixel at (row, col)
+ * \return address of pixel at (row, col, img)
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                gl_format mesaFormat,
                                GLsizei width, const GLubyte *image)
 {
-   GLubyte *addr;
+   /* XXX only 2D images implemented, not 3D */
+   const GLuint blockSize = _mesa_get_format_bytes(mesaFormat);
+   GLuint bw, bh;
+   GLint offset;
 
-   (void) img;
+   _mesa_get_format_block_size(mesaFormat, &bw, &bh);
 
-   /* We try to spot a "complete" subtexture "above" ROW, COL;
-    * this texture is given by appropriate rounding of WIDTH x ROW.
-    * Then we just add the amount left (usually on the left).
-    *
-    * Example for X*Y microtiles (Z bytes each)
-    * offset = Z * (((width + X - 1) / X) * (row / Y) + col / X);
-    */
+   ASSERT(col % bw == 0);
+   ASSERT(row % bh == 0);
 
-   switch (mesaFormat) {
-#if FEATURE_texture_fxt1
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-      addr = (GLubyte *) image + 16 * (((width + 7) / 8) * (row / 4) + col / 8);
-      break;
-#endif
-#if FEATURE_texture_s3tc
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-#endif
-      addr = (GLubyte *) image + 8 * (((width + 3) / 4) * (row / 4) + col / 4);
-      break;
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-#if FEATURE_EXT_texture_sRGB
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-#endif
-      addr = (GLubyte *) image + 16 * (((width + 3) / 4) * (row / 4) + col / 4);
-      break;
-#endif
-   default:
-      _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_image_address");
-      addr = NULL;
-   }
+   offset = ((width + bw - 1) / bw) * (row / bh) + col / bw;
+   offset *= blockSize;
 
-   return addr;
+   return (GLubyte *) image + offset;
 }
