@@ -329,8 +329,8 @@ put_mono_values_z24(GLcontext *ctx, struct gl_renderbuffer *z24rb,
       }
    }
    else {
-      assert(dsrb->Format == MESA_FORMAT_S8_Z24);
       const GLuint shiftedVal = *((GLuint *) value);
+      assert(dsrb->Format == MESA_FORMAT_S8_Z24);
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             temp[i] = shiftedVal | (temp[i] & 0xff000000);
