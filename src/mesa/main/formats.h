@@ -155,6 +155,9 @@ _mesa_get_format_datatype(gl_format format);
 extern GLenum
 _mesa_get_format_base_format(gl_format format);
 
+extern void
+_mesa_get_format_block_size(gl_format format, GLuint *bw, GLuint *bh);
+
 extern GLboolean
 _mesa_is_format_compressed(gl_format format);
 

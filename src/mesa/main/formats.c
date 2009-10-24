@@ -753,6 +753,22 @@ _mesa_get_format_base_format(gl_format format)
 }
 
 
+/**
+ * Return the block size (in pixels) for the given format.  Normally
+ * the block size is 1x1.  But compressed formats will have block sizes
+ * of 4x4 or 8x4 pixels, etc.
+ * \param bw  returns block width in pixels
+ * \param bh  returns block height in pixels
+ */
+void
+_mesa_get_format_block_size(gl_format format, GLuint *bw, GLuint *bh)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   *bw = info->BlockWidth;
+   *bh = info->BlockHeight;
+}
+
+
 /** Is the given format a compressed format? */
 GLboolean
 _mesa_is_format_compressed(gl_format format)
