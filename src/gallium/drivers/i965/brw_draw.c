@@ -30,9 +30,9 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
+#include "brw_debug.h"
 
 #include "brw_batchbuffer.h"
-#include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
@@ -56,26 +56,18 @@ static uint32_t prim_to_hw_prim[PIPE_PRIM_POLYGON+1] = {
  * programs be immune to the active primitive (ie. cope with all
  * possibilities).  That may not be realistic however.
  */
-static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
+static GLuint brw_set_prim(struct brw_context *brw, unsigned prim)
 {
 
-   if (INTEL_DEBUG & DEBUG_PRIMS)
-      _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
+   if (BRW_DEBUG & DEBUG_PRIMS)
+      debug_printf("PRIM: %s\n", u_prim_name(prim));
    
-   /* Slight optimization to avoid the GS program when not needed:
-    */
-   if (prim == GL_QUAD_STRIP &&
-       ctx->Light.ShadeModel != GL_FLAT &&
-       ctx->Polygon.FrontMode == GL_FILL &&
-       ctx->Polygon.BackMode == GL_FILL)
-      prim = GL_TRIANGLE_STRIP;
-
    if (prim != brw->primitive) {
       brw->primitive = prim;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
-      if (reduced_prim[prim] != brw->intel.reduced_primitive) {
-	 brw->intel.reduced_primitive = reduced_prim[prim];
+      if (reduced_prim[prim] != brw->reduced_primitive) {
+	 brw->reduced_primitive = reduced_prim[prim];
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
    }
@@ -84,43 +76,33 @@ static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 }
 
 
-static GLuint trim(GLenum prim, GLuint length)
-{
-   if (prim == GL_QUAD_STRIP)
-      return length > 3 ? (length - length % 2) : 0;
-   else if (prim == GL_QUADS)
-      return length - length % 4;
-   else 
-      return length;
-}
 
-
-static void brw_emit_prim(struct brw_context *brw,
-			  const struct _mesa_prim *prim,
-			  uint32_t hw_prim)
+static enum pipe_error brw_emit_prim(struct brw_context *brw,
+				     unsigned prim,
+				     unsigned start,
+				     unsigned count,
+				     boolean indexed,
+				     uint32_t hw_prim)
 {
    struct brw_3d_primitive prim_packet;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
-      _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
-		   prim->start, prim->count);
+      debug_printf("PRIM: %s %d %d\n", u_prim_name(prim), start, count);
 
    prim_packet.header.opcode = CMD_3D_PRIM;
    prim_packet.header.length = sizeof(prim_packet)/4 - 2;
    prim_packet.header.pad = 0;
    prim_packet.header.topology = hw_prim;
-   prim_packet.header.indexed = prim->indexed;
+   prim_packet.header.indexed = indexed;
 
-   prim_packet.verts_per_instance = trim(prim->mode, prim->count);
-   prim_packet.start_vert_location = prim->start;
-   if (prim->indexed)
+   prim_packet.verts_per_instance = count;
+   prim_packet.start_vert_location = start;
+   if (indexed)
       prim_packet.start_vert_location += brw->ib.start_vertex_offset;
    prim_packet.instance_count = 1;
    prim_packet.start_instance_location = 0;
    prim_packet.base_vert_location = prim->basevertex;
 
-   /* Can't wrap here, since we rely on the validated state. */
-   brw->no_batch_wrap = GL_TRUE;
 
    /* If we're set to always flush, do it before and after the primitive emit.
     * We want to catch both missed flushes that hurt instruction/state cache
@@ -128,13 +110,15 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS)
       OUT_BATCH(intel->vtbl.flush_cmd());
       ADVANCE_BATCH();
    }
    if (prim_packet.verts_per_instance) {
-      brw_batchbuffer_data( brw->intel.batch, &prim_packet,
-			      sizeof(prim_packet), LOOP_CLIPRECTS);
+      ret = brw_batchbuffer_data( brw->intel.batch, &prim_packet,
+				  sizeof(prim_packet), LOOP_CLIPRECTS);
+      if (ret)
+	 return ret;
    }
    if (intel->always_flush_cache) {
       BEGIN_BATCH(1, IGNORE_CLIPRECTS);
@@ -142,34 +126,9 @@ static void brw_emit_prim(struct brw_context *brw,
       ADVANCE_BATCH();
    }
 
-   brw->no_batch_wrap = GL_FALSE;
+   return 0;
 }
 
-static void brw_merge_inputs( struct brw_context *brw,
-		       const struct gl_client_array *arrays[])
-{
-   struct brw_vertex_info old = brw->vb.info;
-   GLuint i;
-
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      brw->sws->bo_unreference(brw->vb.inputs[i].bo);
-
-   memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
-   memset(&brw->vb.info, 0, sizeof(brw->vb.info));
-
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      brw->vb.inputs[i].glarray = arrays[i];
-      brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
-
-      if (arrays[i]->StrideB != 0)
-	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
-	    ((i%16) * 2);
-   }
-
-   /* Raise statechanges if input sizes have changed. */
-   if (memcmp(brw->vb.info.sizes, old.sizes, sizeof(old.sizes)) != 0)
-      brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
-}
 
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
@@ -229,14 +188,14 @@ static GLboolean brw_try_draw_prims( struct brw_context *brw,
    return 0;
 }
 
-void brw_draw_prims( struct brw_context *brw,
-		     const struct gl_client_array *arrays[],
-		     const struct _mesa_prim *prim,
-		     GLuint nr_prims,
-		     const struct _mesa_index_buffer *ib,
-		     GLboolean index_bounds_valid,
-		     GLuint min_index,
-		     GLuint max_index )
+
+static boolean
+brw_draw_range_elements(struct pipe_context *pipe,
+			struct pipe_buffer *index_buffer,
+			unsigned index_size,
+			unsigned min_index,
+			unsigned max_index,
+			unsigned mode, unsigned start, unsigned count)
 {
    enum pipe_error ret;
 
@@ -256,15 +215,40 @@ void brw_draw_prims( struct brw_context *brw,
       ret = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
       assert(ret == 0);
    }
+
+   return TRUE;
 }
+
+static boolean
+brw_draw_elements(struct pipe_context *pipe,
+		  struct pipe_buffer *index_buffer,
+		  unsigned index_size,
+		  unsigned mode, 
+		  unsigned start, unsigned count)
+{
+   return brw_draw_range_elements( pipe, index_buffer,
+				   index_size,
+				   0, 0xffffffff,
+				   mode, 
+				   start, count );
+}
+
+static boolean
+brw_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                     unsigned start, unsigned count)
+{
+   return brw_draw_elements(pipe, NULL, 0, mode, start, count);
+}
+
+
 
 void brw_draw_init( struct brw_context *brw )
 {
-   struct vbo_context *vbo = vbo_context(ctx);
-
    /* Register our drawing function: 
     */
-   vbo->draw_prims = brw_draw_prims;
+   brw->base.draw_arrays = brw_draw_arrays;
+   brw->base.draw_elements = brw_draw_elements;
+   brw->base.draw_range_elements = brw_draw_range_elements;
 }
 
 void brw_draw_destroy( struct brw_context *brw )

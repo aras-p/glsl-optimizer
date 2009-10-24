@@ -43,7 +43,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_batchbuffer.h"
-#include "intel_reg.h"
+#include "brw_reg.h"
 
 /** Waits on the query object's BO and totals the results for this query */
 static void
@@ -165,7 +165,7 @@ brw_prepare_query_begin(struct brw_context *brw)
       brw->sws->bo_unreference(brw->query.bo);
       brw->query.bo = NULL;
 
-      brw->query.bo = dri_bo_alloc(brw->bufmgr, "query", 4096, 1);
+      brw->query.bo = brw->sws->bo_alloc(brw->sws, BRW_BUFFER_TYPE_QUERY, 4096, 1);
       brw->query.index = 0;
    }
 

@@ -56,7 +56,7 @@ static void compile_sf_prog( struct brw_context *brw,
    c.key = *key;
    c.nr_attrs = util_count_bits(c.key.attrs);
    c.nr_attr_regs = (c.nr_attrs+1)/2;
-   c.nr_setup_attrs = util_count_bits(c.key.attrs & DO_SETUP_BITS);
+   c.nr_setup_attrs = c.key.nr_attrs;
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
 
    c.prog_data.urb_read_length = c.nr_attr_regs;

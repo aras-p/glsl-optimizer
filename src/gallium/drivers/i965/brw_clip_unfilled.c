@@ -29,10 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "brw_batchbuffer.h"
-
 #include "brw_defines.h"
-#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_util.h"
 #include "brw_clip.h"
@@ -126,8 +123,7 @@ static void copy_bfc( struct brw_clip_compile *c )
 
    /* Do we have any colors to copy? 
     */
-   if (!(c->offset[VERT_RESULT_COL0] && c->offset[VERT_RESULT_BFC0]) &&
-       !(c->offset[VERT_RESULT_COL1] && c->offset[VERT_RESULT_BFC1]))
+   if (c->nr_color_attrs == 0)
       return;
 
    /* In some wierd degnerate cases we can end up testing the
@@ -150,15 +146,15 @@ static void copy_bfc( struct brw_clip_compile *c )
       GLuint i;
 
       for (i = 0; i < 3; i++) {
-	 if (c->offset[VERT_RESULT_COL0] && c->offset[VERT_RESULT_BFC0])
+	 if (c->offset_color0 && c->offset_bfc0)
 	    brw_MOV(p, 
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL0]),
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC0]));
+		    byte_offset(c->reg.vertex[i], c->offset_color0),
+		    byte_offset(c->reg.vertex[i], c->offset_bfc0));
 
-	 if (c->offset[VERT_RESULT_COL1] && c->offset[VERT_RESULT_BFC1])
+	 if (c->offset_color1 && c->offset_bfc1)
 	    brw_MOV(p, 
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_COL1]),
-		    byte_offset(c->reg.vertex[i], c->offset[VERT_RESULT_BFC1]));
+		    byte_offset(c->reg.vertex[i], c->offset_color0),
+		    byte_offset(c->reg.vertex[i], c->offset_bfc0));
       }
    }
    brw_ENDIF(p, ccw);
@@ -218,12 +214,12 @@ static void merge_edgeflags( struct brw_clip_compile *c )
    {   
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
-      brw_MOV(p, byte_offset(c->reg.vertex[0], c->offset[VERT_RESULT_EDGE]), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[0], c->offset_edge), brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
-      brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_EDGE]), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset_edge), brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    }
    brw_ENDIF(p, is_poly);
@@ -294,7 +290,7 @@ static void emit_lines(struct brw_clip_compile *c,
       /* draw edge if edgeflag != 0 */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
+	      deref_1f(v0, c->offset_edge),
 	      brw_imm_f(0));
       draw_edge = brw_IF(p, BRW_EXECUTE_1);
       {
@@ -333,7 +329,7 @@ static void emit_points(struct brw_clip_compile *c,
        */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset[VERT_RESULT_EDGE]),
+	      deref_1f(v0, c->offset_edge),
 	      brw_imm_f(0));
       draw_point = brw_IF(p, BRW_EXECUTE_1);
       {
@@ -450,7 +446,7 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    brw_clip_tri_init_vertices(c);
    brw_clip_init_ff_sync(c);
 
-   assert(c->offset[VERT_RESULT_EDGE]);
+   assert(c->offset_edge);
 
    if (c->key.fill_ccw == CLIP_CULL &&
        c->key.fill_cw == CLIP_CULL) {

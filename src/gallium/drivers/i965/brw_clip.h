@@ -32,8 +32,8 @@
 #ifndef BRW_CLIP_H
 #define BRW_CLIP_H
 
-
-#include "brw_context.h"
+#include "pipe/p_state.h"
+#include "brw_reg.h"
 #include "brw_eu.h"
 
 #define MAX_VERTS (3+6+6)	
@@ -60,6 +60,12 @@ struct brw_clip_prog_key {
    GLfloat offset_units;
 };
 
+struct brw_clip_prog_data {
+   GLuint curb_read_length;	/* user planes? */
+   GLuint clip_mode;
+   GLuint urb_read_length;
+   GLuint total_grf;
+};
 
 #define CLIP_LINE   0
 #define CLIP_POINT  1
@@ -112,12 +118,21 @@ struct brw_clip_compile {
    GLuint last_tmp;
 
    GLboolean need_direction;
+   struct brw_chipset chipset;
 
    GLuint last_mrf;
 
    GLuint header_position_offset;
    GLuint offset[PIPE_MAX_SHADER_OUTPUTS];
    GLboolean need_ff_sync;
+
+   GLuint nr_color_attrs;
+   GLuint offset_color0;
+   GLuint offset_color1;
+   GLuint offset_bfc0;
+   GLuint offset_bfc1;
+   
+   GLuint offset_edge;
 };
 
 #define ATTR_SIZE  (4*4)

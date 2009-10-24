@@ -33,6 +33,8 @@
 #ifndef BRW_EU_H
 #define BRW_EU_H
 
+#include "util/u_debug.h"
+
 #include "brw_structs.h"
 #include "brw_defines.h"
 

@@ -31,6 +31,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_screen.h"
 
+#include "brw_reg.h"
 
 struct brw_winsys_screen;
 
@@ -41,11 +42,8 @@ struct brw_winsys_screen;
 struct brw_screen
 {
    struct pipe_screen base;
-
+   struct brw_chipset chipset;
    struct brw_winsys_screen *sws;
-
-   boolean is_i945;
-   uint pci_id;
 };
 
 /**

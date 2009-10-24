@@ -32,9 +32,7 @@
 /* Code to layout images in a mipmap tree for i965.
  */
 
-#include "intel_mipmap_tree.h"
-#include "intel_tex_layout.h"
-#include "intel_chipset.h"
+#include "brw_tex_layout.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 

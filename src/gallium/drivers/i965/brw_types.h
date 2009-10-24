@@ -15,4 +15,7 @@ typedef float GLfloat;
 
 typedef uint8_t GLboolean;
 
+#define GL_FALSE FALSE
+#define GL_TRUE TRUE
+
 #endif

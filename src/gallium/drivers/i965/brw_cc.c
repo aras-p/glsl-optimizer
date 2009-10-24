@@ -109,10 +109,10 @@ static void
 cc_unit_populate_key(const struct brw_context *brw,
 		     struct brw_cc_unit_key *key)
 {
-   key->cc0 = brw->curr.dsa->cc0;
-   key->cc1 = brw->curr.dsa->cc1;
-   key->cc2 = brw->curr.dsa->cc2;
-   key->cc3 = combine_cc3( brw->curr.dsa->cc3, brw->curr.blend->cc3 );
+   key->cc0 = brw->curr.zstencil->cc0;
+   key->cc1 = brw->curr.zstencil->cc1;
+   key->cc2 = brw->curr.zstencil->cc2;
+   key->cc3 = combine_cc3( brw->curr.zstencil->cc3, brw->curr.blend->cc3 );
    key->cc5 = brw->curr.blend->cc5;
    key->cc6 = brw->curr.blend->cc6;
    key->cc7 = brw->curr.blend->cc7;

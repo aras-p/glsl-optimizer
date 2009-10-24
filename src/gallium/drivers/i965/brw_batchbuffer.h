@@ -4,6 +4,7 @@
 #include "brw_types.h"
 #include "brw_winsys.h"
 #include "brw_reg.h"
+#include "util/u_debug.h"
 
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
@@ -68,56 +69,50 @@ brw_batchbuffer_emit_dword(struct brw_batchbuffer *batch, GLuint dword)
 
 static INLINE boolean
 brw_batchbuffer_require_space(struct brw_batchbuffer *batch,
-                                GLuint sz,
-				enum cliprect_mode cliprect_mode)
+                                GLuint sz)
 {
    assert(sz < batch->size - 8);
    if (brw_batchbuffer_space(batch) < sz) {
       assert(0);
       return FALSE;
    }
-
-   /* All commands should be executed once regardless of cliprect
-    * mode.
-    */
-   (void)cliprect_mode;
+#ifdef DEBUG
+   batch->emit.end_ptr = batch->ptr + sz;
+#endif
+   return TRUE;
 }
 
 /* Here are the crusty old macros, to be removed:
  */
-#define BATCH_LOCALS
-
 #define BEGIN_BATCH(n, cliprect_mode) do {				\
-   brw_batchbuffer_require_space(intel->batch, (n)*4, cliprect_mode); \
-   assert(intel->batch->emit.start_ptr == NULL);			\
-   intel->batch->emit.total = (n) * 4;					\
-   intel->batch->emit.start_ptr = intel->batch->ptr;			\
+   brw_batchbuffer_require_space(brw->batch, (n)*4); \
 } while (0)
 
-#define OUT_BATCH(d) brw_batchbuffer_emit_dword(intel->batch, d)
+#define OUT_BATCH(d) brw_batchbuffer_emit_dword(brw->batch, d)
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((unsigned) (delta) < buf->size);				\
-   brw_batchbuffer_emit_reloc(intel->batch, buf,			\
+   brw_batchbuffer_emit_reloc(brw->batch, buf,			\
 				read_domains, write_domain, delta);	\
 } while (0)
 
+#ifdef DEBUG
 #define ADVANCE_BATCH() do {						\
-   unsigned int _n = intel->batch->ptr - intel->batch->emit.start_ptr;	\
-   assert(intel->batch->emit.start_ptr != NULL);			\
-   if (_n != intel->batch->emit.total) {				\
-      fprintf(stderr, "ADVANCE_BATCH: %d of %d dwords emitted\n",	\
-	      _n, intel->batch->emit.total);				\
+   unsigned int _n = brw->batch->ptr - brw->batch->emit.end_ptr;	\
+   if (_n != 0) {							\
+      debug_printf("%s: %d too many bytes emitted to batch\n", __FUNCTION__, _n); \
       abort();								\
    }									\
-   intel->batch->emit.start_ptr = NULL;					\
+   brw->batch->emit.end_ptr = NULL;					\
 } while(0)
-
+#else
+#define ADVANCE_BATCH()
+#endif
 
 static INLINE void
 brw_batchbuffer_emit_mi_flush(struct brw_batchbuffer *batch)
 {
-   brw_batchbuffer_require_space(batch, 4, IGNORE_CLIPRECTS);
+   brw_batchbuffer_require_space(batch, 4);
    brw_batchbuffer_emit_dword(batch, MI_FLUSH);
 }
 

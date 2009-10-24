@@ -220,8 +220,8 @@ brw_upload_cache( struct brw_cache *cache,
    int i;
 
    /* Create the buffer object to contain the data */
-   bo = dri_bo_alloc(cache->brw->intel.bufmgr,
-		     cache->name[cache_id], data_size, 1 << 6);
+   bo = brw->sws->bo_alloc(cache->sws,
+			   cache->buffer_type[cache_id], data_size, 1 << 6);
 
 
    /* Set up the memory containing the key, aux_data, and reloc_bufs */

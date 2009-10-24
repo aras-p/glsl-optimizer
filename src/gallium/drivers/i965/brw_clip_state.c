@@ -29,9 +29,13 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "util/u_math.h"
+
 #include "brw_context.h"
+#include "brw_clip.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_debug.h"
 
 struct brw_clip_unit_key {
    unsigned int total_grf;
@@ -77,7 +81,7 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    memset(&clip, 0, sizeof(clip));
 
-   clip.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   clip.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    /* reloc */
    clip.thread0.kernel_start_pointer = brw->clip.prog_bo->offset >> 6;
 
@@ -112,10 +116,10 @@ clip_unit_create_from_key(struct brw_context *brw,
       clip.thread4.max_threads = 1 - 1;
    }
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+   if (BRW_DEBUG & DEBUG_SINGLE_THREAD)
       clip.thread4.max_threads = 0;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (BRW_DEBUG & DEBUG_STATS)
       clip.thread4.stats_enable = 1;
 
    clip.clip5.userclip_enable_flags = 0x7f;
@@ -145,12 +149,12 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION,
-		     0,
-		     clip.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_clip_unit_state, thread0),
-		     brw->clip.prog_bo);
+   brw->sws->bo_emit_reloc(bo,
+			   I915_GEM_DOMAIN_INSTRUCTION,
+			   0,
+			   clip.thread0.grf_reg_count << 1,
+			   offsetof(struct brw_clip_unit_state, thread0),
+			   brw->clip.prog_bo);
 
    return bo;
 }

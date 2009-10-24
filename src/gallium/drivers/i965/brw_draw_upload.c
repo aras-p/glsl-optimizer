@@ -36,8 +36,6 @@
 #include "brw_fallback.h"
 
 #include "brw_batchbuffer.h"
-#include "intel_buffer_objects.h"
-#include "intel_tex.h"
 
 
 

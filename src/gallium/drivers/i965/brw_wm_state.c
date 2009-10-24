@@ -272,10 +272,10 @@ static void upload_wm_unit( struct brw_context *brw )
 	 brw->wm.scratch_bo = NULL;
       }
       if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = dri_bo_alloc(intel->bufmgr,
-                                           "wm scratch",
-                                           total,
-                                           4096);
+	 brw->wm.scratch_bo = brw->sws->bo_alloc(brw->sws,
+						 BRW_BUFFER_TYPE_WM_SCRATCH,
+						 total,
+						 4096);
       }
    }
 

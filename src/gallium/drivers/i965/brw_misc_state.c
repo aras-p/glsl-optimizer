@@ -32,8 +32,6 @@
 
 
 #include "brw_batchbuffer.h"
-#include "intel_regions.h"
-
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"

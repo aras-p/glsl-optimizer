@@ -37,6 +37,7 @@ struct brw_winsys_buffer {
    struct brw_winsys_screen *sws;
    void *bo;
    unsigned offset;
+   unsigned size;
 };
 
 enum brw_buffer_usage {
@@ -63,6 +64,11 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_TEXTURE,
    BRW_BUFFER_TYPE_SCANOUT, /**< a texture used for scanning out from */
    BRW_BUFFER_TYPE_VERTEX,
+   BRW_BUFFER_TYPE_CURBE,
+   BRW_BUFFER_TYPE_QUERY,
+   BRW_BUFFER_TYPE_SHADER_CONSTANTS,
+   BRW_BUFFER_TYPE_WM_SCRATCH,
+   BRW_BUFFER_TYPE_BATCH,
 };
 
 
@@ -82,6 +88,10 @@ struct brw_batchbuffer {
    uint8_t *map;
    uint8_t *ptr;
    size_t size;
+   struct {
+      uint8_t *end_ptr;
+   } emit;
+
 
    size_t relocs;
    size_t max_relocs;
@@ -125,15 +135,15 @@ struct brw_winsys_screen {
    /**
     * Buffer functions.
     */
+
    /*@{*/
    /**
     * Create a buffer.
     */
-   struct brw_winsys_buffer *(*buffer_create)(struct brw_winsys *iws,
-					      unsigned size, 
-					      unsigned alignment,
-					      enum brw_buffer_type type);
-
+   struct brw_winsys_buffer *(*bo_alloc)( struct brw_winsys_screen *sws,
+					  enum brw_buffer_type type,
+					  unsigned size,
+					  unsigned alignment );
 
    /* Reference and unreference buffers:
     */
@@ -145,6 +155,11 @@ struct brw_winsys_screen {
 			  unsigned b,
 			  unsigned offset,
 			  struct brw_winsys_buffer *b2);
+
+   void (*bo_subdata)(struct brw_winsys_buffer *dst,
+		      size_t offset,
+		      size_t size,
+		      const void *data);
 
    /**
     * Map a buffer.
@@ -158,17 +173,6 @@ struct brw_winsys_screen {
     */
    void (*buffer_unmap)(struct brw_winsys *iws,
                         struct brw_winsys_buffer *buffer);
-
-   /**
-    * Write to a buffer.
-    *
-    * Arguments follows pipe_buffer_write.
-    */
-   int (*buffer_write)(struct brw_winsys *iws,
-                       struct brw_winsys_buffer *dst,
-                       size_t offset,
-                       size_t size,
-                       const void *data);
 
    void (*buffer_destroy)(struct brw_winsys *iws,
                           struct brw_winsys_buffer *buffer);
@@ -208,14 +212,14 @@ struct brw_winsys_screen {
 
 
 /**
- * Create i915 pipe_screen.
+ * Create brw pipe_screen.
  */
-struct pipe_screen *i915_create_screen(struct brw_winsys *iws, unsigned pci_id);
+struct pipe_screen *brw_create_screen(struct brw_winsys *iws, unsigned pci_id);
 
 /**
- * Create a i915 pipe_context.
+ * Create a brw pipe_context.
  */
-struct pipe_context *i915_create_context(struct pipe_screen *screen);
+struct pipe_context *brw_create_context(struct pipe_screen *screen);
 
 /**
  * Get the brw_winsys buffer backing the texture.
@@ -223,7 +227,7 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen);
  * TODO UGLY
  */
 struct pipe_texture;
-boolean i915_get_texture_buffer_brw(struct pipe_texture *texture,
+boolean brw_get_texture_buffer_brw(struct pipe_texture *texture,
 				    struct brw_winsys_buffer **buffer,
 				    unsigned *stride);
 
@@ -232,10 +236,10 @@ boolean i915_get_texture_buffer_brw(struct pipe_texture *texture,
  *
  * TODO UGLY
  */
-struct pipe_texture * i915_texture_blanket_brw(struct pipe_screen *screen,
-                                                 struct pipe_texture *tmplt,
-                                                 unsigned pitch,
-                                                 struct brw_winsys_buffer *buffer);
+struct pipe_texture * brw_texture_blanket(struct pipe_screen *screen,
+					  struct pipe_texture *tmplt,
+					  unsigned pitch,
+					  struct brw_winsys_buffer *buffer);
 
 
 

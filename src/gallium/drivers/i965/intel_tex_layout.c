@@ -30,9 +30,7 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
-#include "intel_context.h"
 
 void intel_get_texture_alignment_unit(GLenum internalFormat, GLuint *w, GLuint *h)
 {

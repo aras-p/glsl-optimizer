@@ -45,7 +45,7 @@ const struct brw_tracked_state *atoms[] =
 {
    &brw_check_fallback,
 
-   &brw_wm_input_sizes,
+//   &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog, 
    &brw_clip_prog, 
@@ -155,117 +155,6 @@ brw_clear_validated_bos(struct brw_context *brw)
    brw->state.validated_bo_count = 0;
 }
 
-struct dirty_bit_map {
-   uint32_t bit;
-   char *name;
-   uint32_t count;
-};
-
-#define DEFINE_BIT(name) {name, #name, 0}
-
-static struct dirty_bit_map mesa_bits[] = {
-   DEFINE_BIT(_NEW_MODELVIEW),
-   DEFINE_BIT(_NEW_PROJECTION),
-   DEFINE_BIT(_NEW_TEXTURE_MATRIX),
-   DEFINE_BIT(_NEW_COLOR_MATRIX),
-   DEFINE_BIT(_NEW_ACCUM),
-   DEFINE_BIT(_NEW_COLOR),
-   DEFINE_BIT(_NEW_DEPTH),
-   DEFINE_BIT(_NEW_EVAL),
-   DEFINE_BIT(_NEW_FOG),
-   DEFINE_BIT(_NEW_HINT),
-   DEFINE_BIT(_NEW_LIGHT),
-   DEFINE_BIT(_NEW_LINE),
-   DEFINE_BIT(_NEW_PIXEL),
-   DEFINE_BIT(_NEW_POINT),
-   DEFINE_BIT(_NEW_POLYGON),
-   DEFINE_BIT(_NEW_POLYGONSTIPPLE),
-   DEFINE_BIT(_NEW_SCISSOR),
-   DEFINE_BIT(_NEW_STENCIL),
-   DEFINE_BIT(_NEW_TEXTURE),
-   DEFINE_BIT(_NEW_TRANSFORM),
-   DEFINE_BIT(_NEW_VIEWPORT),
-   DEFINE_BIT(_NEW_PACKUNPACK),
-   DEFINE_BIT(_NEW_ARRAY),
-   DEFINE_BIT(_NEW_RENDERMODE),
-   DEFINE_BIT(_NEW_BUFFERS),
-   DEFINE_BIT(_NEW_MULTISAMPLE),
-   DEFINE_BIT(_NEW_TRACK_MATRIX),
-   DEFINE_BIT(_NEW_PROGRAM),
-   DEFINE_BIT(_NEW_PROGRAM_CONSTANTS),
-   {0, 0, 0}
-};
-
-static struct dirty_bit_map brw_bits[] = {
-   DEFINE_BIT(BRW_NEW_URB_FENCE),
-   DEFINE_BIT(BRW_NEW_FRAGMENT_PROGRAM),
-   DEFINE_BIT(BRW_NEW_VERTEX_PROGRAM),
-   DEFINE_BIT(BRW_NEW_INPUT_DIMENSIONS),
-   DEFINE_BIT(BRW_NEW_CURBE_OFFSETS),
-   DEFINE_BIT(BRW_NEW_REDUCED_PRIMITIVE),
-   DEFINE_BIT(BRW_NEW_PRIMITIVE),
-   DEFINE_BIT(BRW_NEW_CONTEXT),
-   DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
-   DEFINE_BIT(BRW_NEW_PSP),
-   DEFINE_BIT(BRW_NEW_FENCE),
-   DEFINE_BIT(BRW_NEW_INDICES),
-   DEFINE_BIT(BRW_NEW_INDEX_BUFFER),
-   DEFINE_BIT(BRW_NEW_VERTICES),
-   DEFINE_BIT(BRW_NEW_BATCH),
-   DEFINE_BIT(BRW_NEW_DEPTH_BUFFER),
-   {0, 0, 0}
-};
-
-static struct dirty_bit_map cache_bits[] = {
-   DEFINE_BIT(CACHE_NEW_CC_VP),
-   DEFINE_BIT(CACHE_NEW_CC_UNIT),
-   DEFINE_BIT(CACHE_NEW_WM_PROG),
-   DEFINE_BIT(CACHE_NEW_SAMPLER_DEFAULT_COLOR),
-   DEFINE_BIT(CACHE_NEW_SAMPLER),
-   DEFINE_BIT(CACHE_NEW_WM_UNIT),
-   DEFINE_BIT(CACHE_NEW_SF_PROG),
-   DEFINE_BIT(CACHE_NEW_SF_VP),
-   DEFINE_BIT(CACHE_NEW_SF_UNIT),
-   DEFINE_BIT(CACHE_NEW_VS_UNIT),
-   DEFINE_BIT(CACHE_NEW_VS_PROG),
-   DEFINE_BIT(CACHE_NEW_GS_UNIT),
-   DEFINE_BIT(CACHE_NEW_GS_PROG),
-   DEFINE_BIT(CACHE_NEW_CLIP_VP),
-   DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
-   DEFINE_BIT(CACHE_NEW_CLIP_PROG),
-   DEFINE_BIT(CACHE_NEW_SURFACE),
-   DEFINE_BIT(CACHE_NEW_SURF_BIND),
-   {0, 0, 0}
-};
-
-
-static void
-brw_update_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
-{
-   int i;
-
-   for (i = 0; i < 32; i++) {
-      if (bit_map[i].bit == 0)
-	 return;
-
-      if (bit_map[i].bit & bits)
-	 bit_map[i].count++;
-   }
-}
-
-static void
-brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
-{
-   int i;
-
-   for (i = 0; i < 32; i++) {
-      if (bit_map[i].bit == 0)
-	 return;
-
-      fprintf(stderr, "0x%08x: %12d (%s)\n",
-	      bit_map[i].bit, bit_map[i].count, bit_map[i].name);
-   }
-}
 
 /***********************************************************************
  * Emit all state:

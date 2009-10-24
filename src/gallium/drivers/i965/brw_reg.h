@@ -76,4 +76,40 @@
 #define FENCE_YMAJOR 2
 
 
+
+/* PCI IDs
+ */
+#define PCI_CHIP_I965_G			0x29A2
+#define PCI_CHIP_I965_Q			0x2992
+#define PCI_CHIP_I965_G_1		0x2982
+#define PCI_CHIP_I946_GZ		0x2972
+#define PCI_CHIP_I965_GM                0x2A02
+#define PCI_CHIP_I965_GME               0x2A12
+
+#define PCI_CHIP_GM45_GM                0x2A42
+
+#define PCI_CHIP_IGD_E_G                0x2E02
+#define PCI_CHIP_Q45_G                  0x2E12
+#define PCI_CHIP_G45_G                  0x2E22
+#define PCI_CHIP_G41_G                  0x2E32
+#define PCI_CHIP_B43_G                  0x2E42
+
+#define PCI_CHIP_ILD_G                  0x0042
+#define PCI_CHIP_ILM_G                  0x0046
+
+struct brw_chipset {
+   int pci_id:16;
+   int is_965:1;
+   int is_igdng:1;
+   int is_g4x:1;
+   int pad:13;
+};
+
+
+/* XXX: hacks
+ */
+#define VERT_RESULT_HPOS 0	/* not always true */
+#define VERT_RESULT_PSIZ 10000	/* disabled */
+
+
 #endif

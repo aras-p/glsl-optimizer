@@ -29,13 +29,16 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "brw_batchbuffer.h"
-#include "intel_regions.h"
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_util.h"
+#include "brw_debug.h"
+#include "brw_screen.h"
 
 
 /**
@@ -57,7 +60,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
    /* PIPE_NEW_CLIP */
    if (brw->curr.ucp.nr) {
-      GLuint nr_planes = 6 + brw->nr_ucp;
+      GLuint nr_planes = 6 + brw->curr.ucp.nr;
       nr_clip_regs = (nr_planes * 4 + 15) / 16;
    }
 
@@ -156,10 +159,6 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void prepare_constant_buffer(struct brw_context *brw)
 {
-   const struct brw_vertex_program *vp =
-      brw_vertex_program_const(brw->vertex_program);
-   const struct brw_fragment_program *fp =
-      brw_fragment_program_const(brw->fragment_program);
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
@@ -174,7 +173,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       return;
    }
 
-   buf = (GLfloat *) _mesa_calloc(bufsz);
+   buf = (GLfloat *) CALLOC(bufsz, 1);
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
@@ -208,12 +207,12 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
       /* Clip planes:
        */
-      assert(brw->nr_ucp <= 6);
-      for (j = 0; j < brw->nr_ucp; j++) {
-	 buf[offset + i * 4 + 0] = brw->ucp[j][0];
-	 buf[offset + i * 4 + 1] = brw->ucp[j][1];
-	 buf[offset + i * 4 + 2] = brw->ucp[j][2];
-	 buf[offset + i * 4 + 3] = brw->ucp[j][3];
+      assert(brw->curr.ucp.nr <= 6);
+      for (j = 0; j < brw->curr.ucp.nr; j++) {
+	 buf[offset + i * 4 + 0] = brw->curr.ucp.ucp[j][0];
+	 buf[offset + i * 4 + 1] = brw->curr.ucp.ucp[j][1];
+	 buf[offset + i * 4 + 2] = brw->curr.ucp.ucp[j][2];
+	 buf[offset + i * 4 + 3] = brw->curr.ucp.ucp[j][3];
 	 i++;
       }
    }
@@ -221,23 +220,21 @@ static void prepare_constant_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = brw->vs.prog_data->nr_params / 4;
+      GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT];
+      struct pipe_screen *screen = &brw->brw_screen->base;
 
-      /* map vs constant buffer */
+      const GLfloat *value = screen->buffer_map( screen,
+						 brw->curr.vertex_constants,
+						 PIPE_BUFFER_USAGE_CPU_READ);
 
-      /* XXX just use a memcpy here */
-      for (i = 0; i < nr; i++) {
-         const GLfloat *value = vp->program.Base.Parameters->ParameterValues[i];
-	 buf[offset + i * 4 + 0] = value[0];
-	 buf[offset + i * 4 + 1] = value[1];
-	 buf[offset + i * 4 + 2] = value[2];
-	 buf[offset + i * 4 + 3] = value[3];
-      }
+      /* XXX: what if user's constant buffer is too small?
+       */
+      memcpy(&buf[offset], value, nr * 4 * sizeof(float));
 
-      /* unmap vs constant buffer */
+      screen->buffer_unmap( screen, brw->curr.vertex_constants );
    }
 
-   if (0) {
+   if (BRW_DEBUG & DEBUG_CURBE) {
       for (i = 0; i < sz*16; i+=4) 
 	 debug_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
@@ -275,18 +272,22 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 /* Allocate a single page for CURBE entries for this batchbuffer.
 	  * They're generally around 64b.
 	  */
-	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
-					    4096, 1 << 6);
+	 brw->curbe.curbe_bo = brw->sws->bo_alloc(brw->sws, 
+						  BRW_BUFFER_TYPE_CURBE,
+						  4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
       }
 
       brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;
       brw->curbe.curbe_next_offset += bufsz;
-      brw->curbe.curbe_next_offset = ALIGN(brw->curbe.curbe_next_offset, 64);
+      brw->curbe.curbe_next_offset = align(brw->curbe.curbe_next_offset, 64);
 
       /* Copy data to the buffer:
        */
-      dri_bo_subdata(brw->curbe.curbe_bo, brw->curbe.curbe_offset, bufsz, buf);
+      brw->sws->bo_subdata(brw->curbe.curbe_bo,
+			   brw->curbe.curbe_offset,
+			   bufsz,
+			   buf);
    }
 
    brw_add_validated_bo(brw, brw->curbe.curbe_bo);
@@ -325,8 +326,8 @@ static void emit_constant_buffer(struct brw_context *brw)
 
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = (PIPE_NEW_FS_CONSTANTS |
-	       PIPE_NEW_VS_CONSTANTS |
+      .mesa = (PIPE_NEW_FRAGMENT_CONSTANTS |
+	       PIPE_NEW_VERTEX_CONSTANTS |
 	       PIPE_NEW_CLIP),
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |

@@ -31,64 +31,31 @@
 
 
 #include "pipe/p_context.h"
+#include "util/u_simple_list.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
 #include "brw_state.h"
-#include "brw_vs.h"
-#include "brw_screen_tex.h"
 #include "brw_batchbuffer.h"
+#include "brw_winsys.h"
 
 
-
-
-struct pipe_context *brw_create_context( struct pipe_screen *screen,
-					 void *priv )
+static void brw_destroy_context( struct pipe_context *pipe )
 {
-   struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
-
-   if (!brw) {
-      debug_printf("%s: failed to alloc context\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   /* We want the GLSL compiler to emit code that uses condition codes */
-   ctx->Shader.EmitCondCodes = GL_TRUE;
-   ctx->Shader.EmitNVTempInitialization = GL_TRUE;
-
-
-   brw_init_query( brw );
-   brw_init_state( brw );
-   brw_draw_init( brw );
-
-   brw->state.dirty.mesa = ~0;
-   brw->state.dirty.brw = ~0;
-
-   brw->emit_state_always = 0;
-
-   make_empty_list(&brw->query.active_head);
-
-
-   return GL_TRUE;
-}
-
-/**
- * called from intelDestroyContext()
- */
-static void brw_destroy_context( struct brw_context *brw )
-{
+   struct brw_context *brw = brw_context(pipe);
    int i;
 
    brw_destroy_state(brw);
-   brw_draw_destroy( brw );
 
-   _mesa_free(brw->wm.compile_data);
+   brw_draw_cleanup( brw );
 
-   for (i = 0; i < brw->state.nr_color_regions; i++)
-      intel_region_release(&brw->state.color_regions[i]);
-   brw->state.nr_color_regions = 0;
-   intel_region_release(&brw->state.depth_region);
+   FREE(brw->wm.compile_data);
+
+   for (i = 0; i < brw->curr.fb.nr_cbufs; i++)
+      pipe_surface_reference(&brw->curr.fb.cbufs[i], NULL);
+   brw->curr.fb.nr_cbufs = 0;
+   pipe_surface_reference(&brw->curr.fb.zsbuf, NULL);
 
    brw->sws->bo_unreference(brw->curbe.curbe_bo);
    brw->sws->bo_unreference(brw->vs.prog_bo);
@@ -114,3 +81,35 @@ static void brw_destroy_context( struct brw_context *brw )
    brw->sws->bo_unreference(brw->cc.state_bo);
    brw->sws->bo_unreference(brw->cc.vp_bo);
 }
+
+
+struct pipe_context *brw_create_context(struct pipe_screen *screen)
+{
+   struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
+
+   if (!brw) {
+      debug_printf("%s: failed to alloc context\n", __FUNCTION__);
+      return GL_FALSE;
+   }
+
+   /* We want the GLSL compiler to emit code that uses condition codes */
+   //ctx->Shader.EmitCondCodes = GL_TRUE;
+   //ctx->Shader.EmitNVTempInitialization = GL_TRUE;
+
+   brw->base.destroy = brw_destroy_context;
+
+   brw_init_query( brw );
+   brw_init_state( brw );
+   brw_draw_init( brw );
+
+   brw->state.dirty.mesa = ~0;
+   brw->state.dirty.brw = ~0;
+
+   brw->emit_state_always = 0;
+
+   make_empty_list(&brw->query.active_head);
+
+
+   return &brw->base;
+}
+

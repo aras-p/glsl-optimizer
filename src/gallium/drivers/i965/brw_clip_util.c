@@ -31,7 +31,6 @@
 
 
 #include "brw_defines.h"
-#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_util.h"
 #include "brw_clip.h"
@@ -144,10 +143,10 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    for (i = 0; i < c->nr_attrs; i++) {
       GLuint delta = i*16 + 32;
 
-      if (BRW_IS_IGDNG(p->brw))
+      if (c->chipset.is_igdng)
           delta = i * 16 + 32 * 3;
 
-      if (delta == c->offset[VERT_RESULT_EDGE]) {
+      if (delta == c->offset_edge) {
 	 if (force_edgeflag) 
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
@@ -178,7 +177,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    if (i & 1) {
       GLuint delta = i*16 + 32;
 
-      if (BRW_IS_IGDNG(p->brw))
+      if (c->chipset.is_igdng)
           delta = i * 16 + 32 * 3;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
@@ -304,25 +303,25 @@ void brw_clip_copy_colors( struct brw_clip_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   if (c->offset[VERT_RESULT_COL0])
+   if (c->offset_color0)
       brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_COL0]),
-	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_COL0]));
+	      byte_offset(c->reg.vertex[to], c->offset_color0),
+	      byte_offset(c->reg.vertex[from], c->offset_color0));
 
-   if (c->offset[VERT_RESULT_COL1])
+   if (c->offset_color1)
       brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_COL1]),
-	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_COL1]));
+	      byte_offset(c->reg.vertex[to], c->offset_color1),
+	      byte_offset(c->reg.vertex[from], c->offset_color1));
 
-   if (c->offset[VERT_RESULT_BFC0])
+   if (c->offset_bfc0)
       brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_BFC0]),
-	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_BFC0]));
+	      byte_offset(c->reg.vertex[to], c->offset_bfc0),
+	      byte_offset(c->reg.vertex[from], c->offset_bfc0));
 
-   if (c->offset[VERT_RESULT_BFC1])
+   if (c->offset_bfc1)
       brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to], c->offset[VERT_RESULT_BFC1]),
-	      byte_offset(c->reg.vertex[from], c->offset[VERT_RESULT_BFC1]));
+	      byte_offset(c->reg.vertex[to], c->offset_bfc1),
+	      byte_offset(c->reg.vertex[from], c->offset_bfc1));
 }
 
 

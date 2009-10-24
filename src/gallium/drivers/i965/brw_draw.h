@@ -33,21 +33,8 @@
 struct brw_context;
 
 
-void brw_draw_prims( struct brw_context *brw,
-		     const struct gl_client_array *arrays[],
-		     const struct _mesa_prim *prims,
-		     GLuint nr_prims,
-		     const struct _mesa_index_buffer *ib,
-		     GLboolean index_bounds_valid,
-		     GLuint min_index,
-		     GLuint max_index );
-
 void brw_draw_init( struct brw_context *brw );
-void brw_draw_destroy( struct brw_context *brw );
+void brw_draw_cleanup( struct brw_context *brw );
 
-/* brw_draw_current.c
- */
-void brw_init_current_values(struct brw_context *brw,
-			     struct gl_client_array *arrays);
 
 #endif

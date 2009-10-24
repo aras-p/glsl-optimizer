@@ -68,8 +68,7 @@ static void upload_sf_vp(struct brw_context *brw)
     */
 
    /* The scissor only needs to handle the intersection of drawable and
-    * scissor rect.  Clipping to the boundaries of static shared buffers
-    * for front/back/depth is covered by looping over cliprects in brw_draw.c.
+    * scissor rect.
     *
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.

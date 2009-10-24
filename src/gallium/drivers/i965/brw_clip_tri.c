@@ -30,7 +30,6 @@
   */
 
 #include "brw_defines.h"
-#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_util.h"
 #include "brw_clip.h"
@@ -71,7 +70,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       for (j = 0; j < 3; j++) {
 	 GLuint delta = c->nr_attrs*16 + 32;
 
-         if (BRW_IS_IGDNG(c->func.brw))
+         if (c->chipset.is_igdng)
              delta = c->nr_attrs * 16 + 32 * 3;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
@@ -565,7 +564,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (BRW_IS_965(p->brw)) {
+   if (c->chipset.is_965) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));

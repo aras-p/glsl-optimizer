@@ -30,11 +30,7 @@
   */
                    
 
-#include "intel_mipmap_tree.h"
 #include "brw_batchbuffer.h"
-#include "intel_tex.h"
-#include "intel_fbo.h"
-
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -365,7 +361,8 @@ brw_wm_update_constant_buffer(struct brw_context *brw)
    if (!fp->use_const_buffer)
       return NULL;
 
-   const_buffer = drm_intel_bo_alloc(intel->bufmgr, "fp_const_buffer",
+   const_buffer = drm_intel_bo_alloc(intel->bufmgr, 
+				     BRW_BUFFER_TYPE_SHADER_CONSTANTS,
 				     size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
@@ -686,7 +683,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;
-   brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
+   brw->wm.nr_surfaces = PIPE_MAX_COLOR_BUFS;
 
    if (brw->wm.surf_bo[SURF_INDEX_FRAG_CONST_BUFFER] != NULL)
        brw->wm.nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;

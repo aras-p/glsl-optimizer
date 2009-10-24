@@ -35,6 +35,7 @@
 
 #include "brw_structs.h"
 #include "brw_winsys.h"
+#include "brw_reg.h"
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "tgsi/tgsi_scan.h"
@@ -178,8 +179,8 @@ struct brw_fragment_shader {
 #define PIPE_NEW_VERTEX_ELEMENT         0x2
 #define PIPE_NEW_FRAGMENT_SHADER        0x2
 #define PIPE_NEW_VERTEX_SHADER          0x2
-#define PIPE_NEW_FRAGMENT_CONSTS        0x2
-#define PIPE_NEW_VERTEX_CONSTS          0x2
+#define PIPE_NEW_FRAGMENT_CONSTANTS     0x2
+#define PIPE_NEW_VERTEX_CONSTANTS       0x2
 #define PIPE_NEW_CLIP                   0x2
 
 
@@ -256,12 +257,8 @@ struct brw_sf_prog_data {
    GLuint urb_entry_size;
 };
 
-struct brw_clip_prog_data {
-   GLuint curb_read_length;	/* user planes? */
-   GLuint clip_mode;
-   GLuint urb_read_length;
-   GLuint total_grf;
-};
+
+struct brw_clip_prog_data;
 
 struct brw_gs_prog_data {
    GLuint urb_read_length;
@@ -298,15 +295,15 @@ struct brw_vs_ouput_sizes {
  * This contains pointers to the drawing surfaces and current texture
  * objects and shader constant buffers (+2).
  */
-#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
+#define BRW_WM_MAX_SURF (PIPE_MAX_COLOR_BUFS + BRW_MAX_TEX_UNIT + 1)
 
 /**
  * Helpers to convert drawing buffers, textures and constant buffers
  * to surface binding table indexes, for WM.
  */
 #define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (MAX_DRAW_BUFFERS) 
-#define SURF_INDEX_TEXTURE(t)        (MAX_DRAW_BUFFERS + 1 + (t))
+#define SURF_INDEX_FRAG_CONST_BUFFER (PIPE_MAX_COLOR_BUFS) 
+#define SURF_INDEX_TEXTURE(t)        (PIPE_MAX_COLOR_BUFS + 1 + (t))
 
 /**
  * Size of surface binding table for the VS.
@@ -457,28 +454,32 @@ struct brw_query_object {
  */
 struct brw_context 
 {
-   struct pipe_context pipe;
+   struct pipe_context base;
+   struct brw_chipset chipset;
 
    struct brw_screen *brw_screen;   
    struct brw_winsys_screen *sws;
+
+   struct brw_batchbuffer *batch;
 
    GLuint primitive;
    GLuint reduced_primitive;
 
    GLboolean emit_state_always;
-   GLboolean no_batch_wrap;
 
    /* Active vertex program: 
     */
    struct {
-      const struct brw_vertex_shader *vs;
-      const struct brw_fragment_shader *fs;
+      const struct brw_vertex_shader *vertex_shader;
+      const struct brw_fragment_shader *fragment_shader;
       const struct brw_blend_state *blend;
       const struct brw_rasterizer_state *rast;
-      const struct brw_depth_stencil_alpha_state *dsa;
+      const struct brw_depth_stencil_alpha_state *zstencil;
       struct pipe_framebuffer_state fb;
       struct pipe_viewport_state vp;
       struct pipe_clip_state ucp;
+      struct pipe_buffer *vertex_constants;
+      struct pipe_buffer *fragment_constants;
    } curr;
 
    struct {
@@ -673,15 +674,6 @@ struct brw_context
 };
 
 
-#define BRW_PACKCOLOR8888(r,g,b,a)  ((r<<24) | (g<<16) | (b<<8) | a)
-
-
-
-/*======================================================================
- * brw_vtbl.c
- */
-void brwInitVtbl( struct brw_context *brw );
-
 
 /*======================================================================
  * brw_queryobj.c
@@ -730,9 +722,10 @@ brw_context( struct pipe_context *ctx )
 }
 
 
+#define BRW_IS_965(brw)    ((brw)->chipset.is_965)
+#define BRW_IS_IGDNG(brw)  ((brw)->chipset.is_igdng)
+#define BRW_IS_G4X(brw)    ((brw)->chipset.is_g4x)
 
-
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 #endif
 

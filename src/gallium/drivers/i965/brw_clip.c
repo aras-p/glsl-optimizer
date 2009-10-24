@@ -65,15 +65,16 @@ static void compile_clip_prog( struct brw_context *brw,
 
    c.func.single_program_flow = 1;
 
+   c.chipset = brw->chipset;
    c.key = *key;
-   c.need_ff_sync = BRW_IS_IGDNG(brw);
+   c.need_ff_sync = c.chipset.is_igdng;
 
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.header_position_offset = ATTR_SIZE;
 
-   if (BRW_IS_IGDNG(brw))
+   if (c.chipset.is_igdng)
        delta = 3 * REG_SIZE;
    else
        delta = REG_SIZE;
@@ -160,7 +161,7 @@ static void upload_clip_prog(struct brw_context *brw)
    key.primitive = brw->reduced_primitive;
 
    /* PIPE_NEW_VS */
-   key.nr_attrs = brw->curr.vs->info.file_max[TGSI_FILE_OUTPUT] + 1;
+   key.nr_attrs = brw->curr.vertex_shader->info.file_max[TGSI_FILE_OUTPUT] + 1;
 
    /* PIPE_NEW_CLIP */
    key.nr_userclip = brw->curr.ucp.nr;

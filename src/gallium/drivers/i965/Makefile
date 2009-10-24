@@ -26,7 +26,6 @@ C_SOURCES = \
 	brw_gs_state.c \
 	brw_misc_state.c \
 	brw_pipe_blend.c \
-	brw_pipe_debug.c \
 	brw_pipe_depth.c \
 	brw_pipe_fb.c \
 	brw_pipe_flush.c \
@@ -63,7 +62,6 @@ C_SOURCES = \
 	brw_wm_surface_state.c \
 	brw_bo.c \
 	intel_batchbuffer.c \
-	intel_tex_format.c \
 	intel_tex_layout.c 
 
 include ../../Makefile.template

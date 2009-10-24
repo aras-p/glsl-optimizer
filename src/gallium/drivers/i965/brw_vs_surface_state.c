@@ -52,7 +52,8 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
    if (!vp->use_const_buffer)
       return NULL;
 
-   const_buffer = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
+   const_buffer = brw->sws->bo_alloc(brw->sws, 
+				     BRW_BUFFER_TYPE_SHADER_CONSTANTS,
 				     size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
