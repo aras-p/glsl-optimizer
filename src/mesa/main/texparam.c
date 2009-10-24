@@ -853,12 +853,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
 	 if (_mesa_is_format_compressed(img->TexFormat) && !isProxy) {
-	    /* Don't use ctx->Driver.CompressedTextureSize() since that
-	     * may returned a padded hardware size.
-	     */
-	    *params = _mesa_compressed_texture_size(ctx, img->Width,
-						    img->Height, img->Depth,
-						    texFormat);
+            *params = _mesa_format_image_size(texFormat, img->Width,
+                                              img->Height, img->Depth);
 	 }
 	 else {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,

@@ -320,12 +320,10 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage)
 {
-   GLuint size;
-
-   /* don't use texImage->CompressedSize since that may be padded out */
-   size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
-                                        texImage->Depth,
-                                        texImage->TexFormat);
+   const GLuint size = _mesa_format_image_size(texImage->TexFormat,
+                                               texImage->Width,
+                                               texImage->Height,
+                                               texImage->Depth);
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */

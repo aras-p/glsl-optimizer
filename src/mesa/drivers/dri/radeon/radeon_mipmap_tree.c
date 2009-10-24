@@ -37,7 +37,7 @@ static GLuint radeon_compressed_texture_size(GLcontext *ctx,
 		GLsizei width, GLsizei height, GLsizei depth,
 		GLuint mesaFormat)
 {
-	GLuint size = _mesa_compressed_texture_size(ctx, width, height, depth, mesaFormat);
+	GLuint size = _mesa_format_image_size(mesaFormat, width, height, depth);
 
 	if (mesaFormat == MESA_FORMAT_RGB_DXT1 ||
 	    mesaFormat == MESA_FORMAT_RGBA_DXT1) {

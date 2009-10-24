@@ -113,30 +113,6 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 }
 
 
-
-/**
- * Return number of bytes needed to store a texture of the given size
- * using the specified (compressed?) format.
- * This is called via the ctx->Driver.CompressedTextureSize function,
- * unless a device driver overrides it.  A driver might override this
- * if it needs to use an unusual or padded texture memory layout.
- *
- * \param width texture width in texels.
- * \param height texture height in texels.
- * \param depth texture depth in texels.
- * \param mesaFormat  one of the MESA_FORMAT_* compressed formats
- *
- * \return size in bytes, or zero if bad format
- */
-GLuint
-_mesa_compressed_texture_size( GLcontext *ctx,
-                               GLsizei width, GLsizei height, GLsizei depth,
-                               gl_format mesaFormat )
-{
-   return _mesa_format_image_size(mesaFormat, width, height, depth);
-}
-
-
 /**
  * As above, but format is specified by a GLenum (GL_COMPRESSED_*) token.
  *

@@ -34,11 +34,6 @@ extern GLuint
 _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all);
 
 extern GLuint
-_mesa_compressed_texture_size( GLcontext *ctx,
-                               GLsizei width, GLsizei height, GLsizei depth,
-                               gl_format mesaFormat );
-
-extern GLuint
 _mesa_compressed_texture_size_glenum(GLcontext *ctx,
                                      GLsizei width, GLsizei height,
                                      GLsizei depth, GLenum glformat);
@@ -64,7 +59,6 @@ _mesa_init_texture_fxt1( GLcontext *ctx );
 
 /* no-op macros */
 #define _mesa_get_compressed_formats( c, f ) 0
-#define _mesa_compressed_texture_size( c, w, h, d, f ) 0
 #define _mesa_compressed_texture_size_glenum( c, w, h, d, f ) 0
 #define _mesa_compressed_row_stride( f, w) 0
 #define _mesa_compressed_image_address(c, r, i, f, w, i2 ) 0

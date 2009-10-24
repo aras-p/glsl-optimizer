@@ -1397,11 +1397,9 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    /* allocate mipmap buffer */
    assert(!texImage->Data);
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
-                                                               mml->width,
-                                                               mml->height,
-                                                               1,
-                                                               internalFormat);
+      texImage->CompressedSize = _mesa_format_image_size(texImage->TexFormat,
+                                                         mml->width,
+                                                         mml->height, 1);
       dstRowStride = _mesa_compressed_row_stride(internalFormat, mml->width);
       texImage->Data = _mesa_malloc(texImage->CompressedSize);
    } else {
@@ -1664,11 +1662,9 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 
    /* allocate new storage for texture image, if needed */
    if (!texImage->Data) {
-      texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
-                                                               mml->width,
-                                                               mml->height,
-                                                               1,
-                                                               internalFormat);
+      texImage->CompressedSize = _mesa_format_image_size(texImage->TexFormat,
+                                                         mml->width,
+                                                         mml->height, 1);
       texImage->Data = _mesa_malloc(texImage->CompressedSize);
       if (!texImage->Data) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
