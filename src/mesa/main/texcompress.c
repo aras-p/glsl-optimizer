@@ -131,7 +131,7 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
                                GLsizei width, GLsizei height, GLsizei depth,
-                               GLuint mesaFormat )
+                               gl_format mesaFormat )
 {
    return _mesa_format_image_size(mesaFormat, width, height, depth);
 }
@@ -210,7 +210,7 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
  * \return stride, in bytes, between rows for compressed image
  */
 GLint
-_mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
+_mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width)
 {
    GLint stride;
 
@@ -261,7 +261,7 @@ _mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               GLuint mesaFormat,
+                               gl_format mesaFormat,
                                GLsizei width, const GLubyte *image)
 {
    GLubyte *addr;

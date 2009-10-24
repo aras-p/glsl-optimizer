@@ -26,6 +26,7 @@
 #define TEXCOMPRESS_H
 
 #include "mtypes.h"
+#include "formats.h"
 
 #if _HAVE_FULL_GL
 
@@ -35,7 +36,7 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all);
 extern GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
                                GLsizei width, GLsizei height, GLsizei depth,
-                               GLuint mesaFormat );
+                               gl_format mesaFormat );
 
 extern GLuint
 _mesa_compressed_texture_size_glenum(GLcontext *ctx,
@@ -43,12 +44,12 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
                                      GLsizei depth, GLenum glformat);
 
 extern GLint
-_mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width);
+_mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width);
 
 
 extern GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               GLuint mesaFormat,
+                               gl_format mesaFormat,
                                GLsizei width, const GLubyte *image);
 
 
