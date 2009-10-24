@@ -39,7 +39,8 @@ struct gl_format_info
 
    /**
     * Base format is one of GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE,
-    * GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_COLOR_INDEX, GL_DEPTH_COMPONENT.
+    * GL_LUMINANCE_ALPHA, GL_INTENSITY, GL_YCBCR_MESA, GL_COLOR_INDEX,
+    * GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
     */
    GLenum BaseFormat;
 
@@ -577,6 +578,11 @@ _mesa_get_format_info(gl_format format)
 }
 
 
+/**
+ * Return bytes needed to store a block of pixels in the given format.
+ * Normally, a block is 1x1 (a single pixel).  But for compressed formats
+ * a block may be 4x4 or 8x4, etc.
+ */
 GLuint
 _mesa_get_format_bytes(gl_format format)
 {
@@ -586,6 +592,11 @@ _mesa_get_format_bytes(gl_format format)
 }
 
 
+/**
+ * Return bits per component for the given format.
+ * \param format  one of MESA_FORMAT_x
+ * \param pname  the component, such as GL_RED_BITS, GL_TEXTURE_BLUE_BITS, etc.
+ */
 GLint
 _mesa_get_format_bits(gl_format format, GLenum pname)
 {
@@ -636,6 +647,15 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
 }
 
 
+/**
+ * Return the data type (or more specifically, the data representation)
+ * for the given format.
+ * The return value will be one of:
+ *    GL_UNSIGNED_NORMALIZED = unsigned int representing [0,1]
+ *    GL_SIGNED_NORMALIZED = signed int representing [-1, 1]
+ *    GL_UNSIGNED_INT = an ordinary unsigned integer
+ *    GL_FLOAT = an ordinary float
+ */
 GLenum
 _mesa_get_format_datatype(gl_format format)
 {
@@ -644,6 +664,12 @@ _mesa_get_format_datatype(gl_format format)
 }
 
 
+/**
+ * Return the basic format for the given type.  The result will be
+ * one of GL_RGB, GL_RGBA, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
+ * GL_INTENSITY, GL_YCBCR_MESA, GL_COLOR_INDEX, GL_DEPTH_COMPONENT,
+ * GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
+ */
 GLenum
 _mesa_get_format_base_format(gl_format format)
 {
@@ -652,6 +678,7 @@ _mesa_get_format_base_format(gl_format format)
 }
 
 
+/** Is the given format a compressed format? */
 GLboolean
 _mesa_is_format_compressed(gl_format format)
 {
