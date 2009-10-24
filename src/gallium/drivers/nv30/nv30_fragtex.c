@@ -21,6 +21,7 @@ struct nv30_texture_format {
 
 static struct nv30_texture_format
 nv30_texture_formats[] = {
+	_(X8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),

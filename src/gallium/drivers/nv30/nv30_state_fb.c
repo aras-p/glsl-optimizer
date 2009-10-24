@@ -66,6 +66,9 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	}
 
 	switch (colour_format) {
+	case PIPE_FORMAT_X8R8G8B8_UNORM:
+		rt_format |= NV34TCL_RT_FORMAT_COLOR_X8R8G8B8;
+		break;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case 0:
 		rt_format |= NV34TCL_RT_FORMAT_COLOR_A8R8G8B8;
