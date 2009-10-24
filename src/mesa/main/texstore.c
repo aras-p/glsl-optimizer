@@ -3670,6 +3670,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    GLubyte *dest;
    const GLubyte *src;
    const gl_format texFormat = texImage->TexFormat;
+   const GLint destWidth = texImage->Width;
    GLuint bw, bh;
 
    _mesa_get_format_block_size(texFormat, &bw, &bh);
@@ -3693,15 +3694,15 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    srcRowStride = _mesa_compressed_row_stride(texFormat, width);
    src = (const GLubyte *) data;
 
-   destRowStride = _mesa_compressed_row_stride(texFormat, texImage->Width);
+   destRowStride = _mesa_compressed_row_stride(texFormat, destWidth);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
-                                         texFormat,
-                                         texImage->Width,
+                                         texFormat, destWidth,
                                          (GLubyte *) texImage->Data);
 
-   bytesPerRow = srcRowStride;
+   bytesPerRow = srcRowStride;  /* bytes per row of blocks */
    rows = height / bh;  /* rows in blocks */
 
+   /* copy rows of blocks */
    for (i = 0; i < rows; i++) {
       MEMCPY(dest, src, bytesPerRow);
       dest += destRowStride;
