@@ -40,19 +40,12 @@ static void upload_sf_vp(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
-   const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    memset(&sfv, 0, sizeof(sfv));
 
-   if (render_to_fbo) {
-      y_scale = 1.0;
-      y_bias = 0;
-   }
-   else {
-      y_scale = -1.0;
-      y_bias = ctx->DrawBuffer->Height;
-   }
+   y_scale = 1.0;
+   y_bias = 0;
 
    /* _NEW_VIEWPORT */
 
@@ -73,20 +66,11 @@ static void upload_sf_vp(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   if (render_to_fbo) {
-      /* texmemory: Y=0=bottom */
-      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-      sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
-      sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
-   }
-   else {
-      /* memory: Y=0=top */
-      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-      sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-      sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
-   }
+   /* Y=0=bottom */
+   sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+   sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+   sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
+   sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
 
    brw->sws->bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
@@ -151,7 +135,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    /* _NEW_LIGHT */
    key->provoking_vertex = ctx->Light.ProvokingVertex;
 
-   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   key->render_to_fbo = 1;
 }
 
 static struct brw_winsys_buffer *
@@ -211,11 +195,6 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   /* The viewport is inverted for rendering to a FBO, and that inverts
-    * polygon front/back orientation.
-    */
-   sf.sf5.front_winding ^= key->render_to_fbo;
-
    switch (key->cull_face) {
    case GL_FRONT:
       sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
@@ -245,7 +224,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
        sf.sf6.line_width = 0;
 
    /* _NEW_BUFFERS */
-   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   key->render_to_fbo = 1;
    if (!key->render_to_fbo) {
       /* Rendering to an OpenGL window */
       sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;

@@ -12,13 +12,13 @@ static GLboolean check_fallbacks( struct brw_context *brw,
     * use fallbacks.  If we're forcing fallbacks, always
     * use fallfacks.
     */
-   if (brw->intel.conformance_mode == 0)
+   if (brw->flags.no_swtnl)
       return GL_FALSE;
 
-   if (brw->intel.conformance_mode == 2)
+   if (brw->flags.force_swtnl)
       return GL_TRUE;
 
-   if (ctx->Polygon.SmoothFlag) {
+   if (brw->curr.rast->tmpl.smooth_polys) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
 	    return GL_TRUE;

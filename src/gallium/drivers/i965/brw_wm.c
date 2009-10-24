@@ -158,7 +158,7 @@ static void do_wm_prog( struct brw_context *brw,
    memcpy(&c->key, key, sizeof(*key));
 
    c->fp = fp;
-   c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
+   c->env_param = NULL; /*brw->intel.ctx.FragmentProgram.Parameters;*/
 
    brw_init_compile(brw, &c->func);
 

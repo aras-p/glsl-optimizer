@@ -48,7 +48,7 @@
  * constants.  That greatly reduces the demand for space in the CURBE.
  * Some of the comments within are dated...
  */
-static void calculate_curbe_offsets( struct brw_context *brw )
+static int calculate_curbe_offsets( struct brw_context *brw )
 {
    /* CACHE_NEW_WM_PROG */
    const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
@@ -104,6 +104,8 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
       brw->state.dirty.brw |= BRW_NEW_CURBE_OFFSETS;
    }
+
+   return 0;
 }
 
 
@@ -157,7 +159,7 @@ static GLfloat fixed_plane[6][4] = {
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
-static void prepare_constant_buffer(struct brw_context *brw)
+static int prepare_constant_buffer(struct brw_context *brw)
 {
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
@@ -170,7 +172,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 brw->curbe.last_buf = NULL;
 	 brw->curbe.last_bufsz  = 0;
       }
-      return;
+      return 0;
    }
 
    buf = (GLfloat *) CALLOC(bufsz, 1);
@@ -305,9 +307,11 @@ static void prepare_constant_buffer(struct brw_context *brw)
     * flushes as necessary when doublebuffering of CURBEs isn't
     * possible.
     */
+
+   return 0;
 }
 
-static void emit_constant_buffer(struct brw_context *brw)
+static int emit_constant_buffer(struct brw_context *brw)
 {
    GLuint sz = brw->curbe.total_size;
 
@@ -322,6 +326,7 @@ static void emit_constant_buffer(struct brw_context *brw)
 		(sz - 1) + brw->curbe.curbe_offset);
    }
    ADVANCE_BATCH();
+   return 0;
 }
 
 const struct brw_tracked_state brw_constant_buffer = {

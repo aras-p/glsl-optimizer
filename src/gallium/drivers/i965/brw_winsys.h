@@ -161,6 +161,13 @@ struct brw_winsys_screen {
 		      size_t size,
 		      const void *data);
 
+   /* XXX: couldn't this be handled by returning true/false on
+    * bo_emit_reloc?
+    */
+   boolean (*check_aperture_space)( struct brw_winsys_screen *iws,
+				    struct brw_winsys_buffer **buffers,
+				    unsigned count );
+
    /**
     * Map a buffer.
     */

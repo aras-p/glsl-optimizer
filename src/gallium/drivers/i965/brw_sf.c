@@ -134,7 +134,7 @@ static void upload_sf_prog(struct brw_context *brw)
    key.attrs = brw->vs.prog_data->outputs_written; 
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
-   switch (brw->intel.reduced_primitive) {
+   switch (brw->reduced_primitive) {
    case GL_TRIANGLES: 
       /* NOTE: We just use the edgeflag attribute as an indicator that
        * unfilled triangles are active.  We don't actually do the

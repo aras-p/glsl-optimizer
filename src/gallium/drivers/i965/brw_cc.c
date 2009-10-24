@@ -57,7 +57,7 @@ static void calc_sane_viewport( const struct pipe_viewport_state *vp,
    svp->far = 1;
 }
 
-static void prepare_cc_vp( struct brw_context *brw )
+static int prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
    struct sane_viewport svp;
@@ -72,6 +72,8 @@ static void prepare_cc_vp( struct brw_context *brw )
 
    brw->sws->bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -158,7 +160,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    return bo;
 }
 
-static void prepare_cc_unit( struct brw_context *brw )
+static int prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
 
@@ -172,6 +174,8 @@ static void prepare_cc_unit( struct brw_context *brw )
 
    if (brw->cc.state_bo == NULL)
       brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
+   
+   return 0;
 }
 
 const struct brw_tracked_state brw_cc_unit = {

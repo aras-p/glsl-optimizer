@@ -182,6 +182,8 @@ struct brw_fragment_shader {
 #define PIPE_NEW_FRAGMENT_CONSTANTS     0x2
 #define PIPE_NEW_VERTEX_CONSTANTS       0x2
 #define PIPE_NEW_CLIP                   0x2
+#define PIPE_NEW_INDEX_BUFFER           0x2
+#define PIPE_NEW_INDEX_RANGE            0x2
 
 
 #define BRW_NEW_URB_FENCE               0x1
@@ -387,8 +389,8 @@ struct brw_cache {
  */
 struct brw_tracked_state {
    struct brw_state_flags dirty;
-   void (*prepare)( struct brw_context *brw );
-   void (*emit)( struct brw_context *brw );
+   int (*prepare)( struct brw_context *brw );
+   int (*emit)( struct brw_context *brw );
 };
 
 /* Flags for brw->state.cache.
@@ -465,9 +467,7 @@ struct brw_context
    GLuint primitive;
    GLuint reduced_primitive;
 
-   GLboolean emit_state_always;
-
-   /* Active vertex program: 
+   /* Active state from the state tracker: 
     */
    struct {
       const struct brw_vertex_shader *vertex_shader;
@@ -475,11 +475,31 @@ struct brw_context
       const struct brw_blend_state *blend;
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_alpha_state *zstencil;
+
+      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      unsigned num_vertex_elements;
+      unsigned num_vertex_buffers;
+
       struct pipe_framebuffer_state fb;
       struct pipe_viewport_state vp;
       struct pipe_clip_state ucp;
       struct pipe_buffer *vertex_constants;
       struct pipe_buffer *fragment_constants;
+
+      /**
+       * Index buffer for this draw_prims call.
+       *
+       * Updates are signaled by PIPE_NEW_INDEX_BUFFER.
+       */
+      struct pipe_buffer *index_buffer;
+      unsigned index_size;
+
+      /* Updates are signalled by PIPE_NEW_INDEX_RANGE:
+       */
+      unsigned min_index;
+      unsigned max_index;
+
    } curr;
 
    struct {
@@ -504,30 +524,26 @@ struct brw_context
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
-      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-      unsigned num_vertex_element;
-      unsigned num_vertex_buffer;
-
       struct u_upload_mgr *upload_vertex;
       struct u_upload_mgr *upload_index;
       
-
-      /* Summary of size and varying of active arrays, so we can check
-       * for changes to this state:
+      /* Information on uploaded vertex buffers:
        */
-      struct brw_vertex_info info;
-      unsigned int min_index, max_index;
+      struct {
+	 unsigned stride;	/* in bytes between successive vertices */
+	 unsigned offset;	/* in bytes, of first vertex in bo */
+	 unsigned vertex_count;	/* count of valid vertices which may be accessed */
+	 struct brw_winsys_buffer *bo;
+      } vb[PIPE_MAX_ATTRIBS];
+
+      struct {
+      } ve[PIPE_MAX_ATTRIBS];
+
+      unsigned nr_vb;		/* currently the same as curr.num_vertex_buffers */
+      unsigned nr_ve;		/* currently the same as curr.num_vertex_elements */
    } vb;
 
    struct {
-      /**
-       * Index buffer for this draw_prims call.
-       *
-       * Updates are signaled by BRW_NEW_INDICES.
-       */
-      const struct _mesa_index_buffer *ib;
-
       /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
       struct brw_winsys_buffer *bo;
       unsigned int offset;
@@ -668,6 +684,14 @@ struct brw_context
       int index;
       GLboolean active;
    } query;
+
+   struct {
+      unsigned always_emit_state:1;
+      unsigned always_flush_batch:1;
+      unsigned force_swtnl:1;
+      unsigned no_swtnl:1;
+   } flags;
+
    /* Used to give every program string a unique id
     */
    GLuint program_id;

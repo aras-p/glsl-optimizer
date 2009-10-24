@@ -29,6 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
   
+#include "util/u_memory.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -237,7 +238,7 @@ brw_resolve_cals(struct brw_compile *c)
         struct brw_glsl_call *call, *next;
         for (call = c->first_call; call; call = next) {
 	    next = call->next;
-	    _mesa_free(call);
+	    FREE(call);
 	}
 	c->first_call = NULL;
     }
@@ -247,7 +248,7 @@ brw_resolve_cals(struct brw_compile *c)
         struct brw_glsl_label *label, *next;
 	for (label = c->first_label; label; label = next) {
 	    next = label->next;
-	    _mesa_free(label);
+	    FREE(label);
 	}
 	c->first_label = NULL;
     }

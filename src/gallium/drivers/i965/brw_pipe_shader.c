@@ -33,6 +33,25 @@
 #include "brw_util.h"
 #include "brw_wm.h"
 
+
+/**
+ * Determine if the given fragment program uses GLSL features such
+ * as flow conditionals, loops, subroutines.
+ * Some GLSL shaders may use these features, others might not.
+ */
+GLboolean brw_wm_is_glsl(const struct brw_fragment_shader *fp)
+{
+    return (fp->info.insn_count[TGSI_OPCODE_ARL] > 0 ||
+	    fp->info.insn_count[TGSI_OPCODE_IF] > 0 ||
+	    fp->info.insn_count[TGSI_OPCODE_ENDIF] > 0 || /* redundant - IF */
+	    fp->info.insn_count[TGSI_OPCODE_CAL] > 0 ||
+	    fp->info.insn_count[TGSI_OPCODE_BRK] > 0 ||   /* redundant - BGNLOOP */
+	    fp->info.insn_count[TGSI_OPCODE_RET] > 0 ||	  /* redundant - CAL */
+	    fp->info.insn_count[TGSI_OPCODE_BGNLOOP] > 0);
+}
+
+
+
 static void brwBindProgram( struct brw_context *brw,
 			    GLenum target, 
 			    struct gl_program *prog )

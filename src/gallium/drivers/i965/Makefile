@@ -61,7 +61,7 @@ C_SOURCES = \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
 	brw_bo.c \
-	intel_batchbuffer.c \
+	brw_batchbuffer.c \
 	intel_tex_layout.c 
 
 include ../../Makefile.template

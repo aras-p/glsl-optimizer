@@ -7,34 +7,6 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
                                   const struct prog_instruction *inst,
                                   GLuint component);
 
-/**
- * Determine if the given fragment program uses GLSL features such
- * as flow conditionals, loops, subroutines.
- * Some GLSL shaders may use these features, others might not.
- */
-GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
-{
-    int i;
-
-    for (i = 0; i < fp->Base.NumInstructions; i++) {
-	const struct prog_instruction *inst = &fp->Base.Instructions[i];
-	switch (inst->Opcode) {
-	    case OPCODE_ARL:
-	    case OPCODE_IF:
-	    case OPCODE_ENDIF:
-	    case OPCODE_CAL:
-	    case OPCODE_BRK:
-	    case OPCODE_RET:
-	    case OPCODE_BGNLOOP:
-		return GL_TRUE; 
-	    default:
-		break;
-	}
-    }
-    return GL_FALSE; 
-}
-
-
 
 static void
 reclaim_temps(struct brw_wm_compile *c);

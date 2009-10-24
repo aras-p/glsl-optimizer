@@ -32,8 +32,7 @@
 
 struct brw_context;
 
-
-void brw_draw_init( struct brw_context *brw );
+boolean brw_draw_init( struct brw_context *brw );
 void brw_draw_cleanup( struct brw_context *brw );
 
 

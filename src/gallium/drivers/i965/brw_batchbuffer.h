@@ -33,18 +33,16 @@ void brw_batchbuffer_reset(struct brw_batchbuffer *batch);
  * Consider it a convenience function wrapping multple
  * intel_buffer_dword() calls.
  */
-void brw_batchbuffer_data(struct brw_batchbuffer *batch,
+int brw_batchbuffer_data(struct brw_batchbuffer *batch,
                             const void *data, GLuint bytes,
 			    enum cliprect_mode cliprect_mode);
 
-void brw_batchbuffer_release_space(struct brw_batchbuffer *batch,
-                                     GLuint bytes);
 
-GLboolean brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
-                                       struct brw_winsys_buffer *buffer,
-				       uint32_t read_domains,
-				       uint32_t write_domain,
-				       uint32_t offset);
+int brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
+			       struct brw_winsys_buffer *buffer,
+			       uint32_t read_domains,
+			       uint32_t write_domain,
+			       uint32_t offset);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to

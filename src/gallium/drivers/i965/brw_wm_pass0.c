@@ -124,33 +124,33 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
 }
 
 
-/** Return a ref to a constant/literal value */
-static const struct brw_wm_ref *get_const_ref( struct brw_wm_compile *c,
-					       const GLfloat *constval )
+/** Return a ref to an immediate value */
+static const struct brw_wm_ref *get_imm_ref( struct brw_wm_compile *c,
+					     const GLfloat *imm1f )
 {
    GLuint i;
 
    /* Search for an existing const value matching the request:
     */
-   for (i = 0; i < c->nr_constrefs; i++) {
-      if (c->constref[i].constval == *constval) 
-	 return c->constref[i].ref;
+   for (i = 0; i < c->nr_imm_refs; i++) {
+      if (c->imm_ref[i].imm_val == *imm1f) 
+	 return c->imm_ref[i].ref;
    }
 
    /* Else try to add a new one:
     */
-   if (c->nr_constrefs < BRW_WM_MAX_CONST) {
-      GLuint i = c->nr_constrefs++;
+   if (c->nr_imm_refs < BRW_WM_MAX_IMM) {
+      GLuint i = c->nr_imm_refs++;
 
-      /* A constant is a special type of parameter:
+      /* An immediate is a special type of parameter:
        */
-      c->constref[i].constval = *constval;
-      c->constref[i].ref = get_param_ref(c, constval);
+      c->imm_ref[i].imm_val = *imm_val;
+      c->imm_ref[i].ref = get_param_ref(c, imm_val);
 
-      return c->constref[i].ref;
+      return c->imm_ref[i].ref;
    }
    else {
-      _mesa_printf("%s: out of constrefs\n", __FUNCTION__);
+      _mesa_printf("%s: out of imm_refs\n", __FUNCTION__);
       c->prog_data.error = 1;
       return NULL;
    }
@@ -200,7 +200,7 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 	 case PROGRAM_CONSTANT:
 	    /* These are invarient:
 	     */
-	    ref = get_const_ref(c, &plist->ParameterValues[idx][component]);
+	    ref = get_imm_ref(c, &plist->ParameterValues[idx][component]);
 	    break;
 
 	 case PROGRAM_STATE_VAR:
@@ -266,9 +266,9 @@ static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
    static const GLfloat const_one = 1.0;
 
    if (component == SWIZZLE_ZERO) 
-      src_ref = get_const_ref(c, &const_zero);
+      src_ref = get_imm_ref(c, &const_zero);
    else if (component == SWIZZLE_ONE) 
-      src_ref = get_const_ref(c, &const_one);
+      src_ref = get_imm_ref(c, &const_one);
    else 
       src_ref = pass0_get_reg(c, src.File, src.Index, component);
 

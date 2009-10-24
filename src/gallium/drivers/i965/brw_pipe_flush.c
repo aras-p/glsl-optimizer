@@ -53,6 +53,9 @@ static void brw_note_fence( struct brw_context *brw, GLuint fence )
 static GLuint brw_flush_cmd( void )
 {
    struct brw_mi_flush flush;
+
+   return ;
+
    flush.opcode = CMD_MI_FLUSH;
    flush.pad = 0;
    flush.flags = BRW_FLUSH_STATE_CACHE;

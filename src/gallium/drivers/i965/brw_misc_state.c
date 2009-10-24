@@ -315,24 +315,20 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   __DRIdrawablePrivate *dPriv = brw->intel.driDrawable;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));
    bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
    bpso.header.length = sizeof(bpso)/4-2;
 
-   /* If we're drawing to a system window (ctx->DrawBuffer->Name == 0),
-    * we have to invert the Y axis in order to match the OpenGL
-    * pixel coordinate system, and our offset must be matched
-    * to the window position.  If we're drawing to a FBO
-    * (ctx->DrawBuffer->Name != 0), then our native pixel coordinate
-    * system works just fine, and there's no window system to
-    * worry about.
+   /* Never need to offset stipple coordinates.
+    *
+    * XXX: is it ever necessary to invert Y values?
     */
-   if (brw->intel.ctx.DrawBuffer->Name == 0) {
-      bpso.bits0.x_offset = (32 - (dPriv->x & 31)) & 31;
-      bpso.bits0.y_offset = (32 - ((dPriv->y + dPriv->h) & 31)) & 31;
+   if (0) {
+      int x = 0, y = 0, h = 0;
+      bpso.bits0.x_offset = (32 - (x & 31)) & 31;
+      bpso.bits0.y_offset = (32 - ((y + h) & 31)) & 31;
    }
    else {
       bpso.bits0.y_offset = 0;

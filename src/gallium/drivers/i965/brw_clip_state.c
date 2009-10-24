@@ -159,7 +159,7 @@ clip_unit_create_from_key(struct brw_context *brw,
    return bo;
 }
 
-static void upload_clip_unit( struct brw_context *brw )
+static int upload_clip_unit( struct brw_context *brw )
 {
    struct brw_clip_unit_key key;
 
@@ -173,6 +173,8 @@ static void upload_clip_unit( struct brw_context *brw )
    if (brw->clip.state_bo == NULL) {
       brw->clip.state_bo = clip_unit_create_from_key(brw, &key);
    }
+   
+   return 0;
 }
 
 const struct brw_tracked_state brw_clip_unit = {

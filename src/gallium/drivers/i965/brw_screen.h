@@ -56,6 +56,14 @@ struct brw_transfer
    unsigned offset;
 };
 
+struct brw_buffer
+{
+   struct pipe_buffer base;
+   struct brw_winsys_buffer *bo;
+   void *ptr;
+   boolean is_user_buffer;
+};
+
 
 /*
  * Cast wrappers
@@ -72,5 +80,19 @@ brw_transfer(struct pipe_transfer *transfer)
    return (struct brw_transfer *)transfer;
 }
 
+static INLINE struct brw_buffer *
+brw_buffer(struct pipe_buffer *buffer)
+{
+   return (struct brw_buffer *)buffer;
+}
+
+
+/* Pipe buffer helpers
+ */
+static INLINE boolean
+brw_buffer_is_user_buffer( const struct pipe_buffer *buf )
+{
+   return ((const struct brw_buffer *)buf)->is_user_buffer;
+}
 
 #endif /* BRW_SCREEN_H */

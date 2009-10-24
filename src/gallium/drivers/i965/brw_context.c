@@ -105,7 +105,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    brw->state.dirty.mesa = ~0;
    brw->state.dirty.brw = ~0;
 
-   brw->emit_state_always = 0;
+   brw->flags.always_emit_state = 0;
 
    make_empty_list(&brw->query.active_head);
 
