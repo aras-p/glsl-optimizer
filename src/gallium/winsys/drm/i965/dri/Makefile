@@ -1,7 +1,7 @@
 TOP = ../../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = i915_dri.so
+LIBNAME = i965_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
@@ -9,7 +9,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
-	$(TOP)/src/gallium/drivers/i915/libi915.a
+	$(TOP)/src/gallium/drivers/i965/libi965.a
 
 
 DRIVER_SOURCES =
@@ -24,4 +24,4 @@ DRI_LIB_DEPS += -ldrm_intel
 
 symlinks: $(TOP)/$(LIB_DIR)/gallium
 	@rm -f $(TOP)/$(LIB_DIR)/gallium/i965_dri.so
-	ln -s i915_dri.so $(TOP)/$(LIB_DIR)/gallium/i965_dri.so
+	ln -s i965_dri.so $(TOP)/$(LIB_DIR)/gallium/i965_dri.so

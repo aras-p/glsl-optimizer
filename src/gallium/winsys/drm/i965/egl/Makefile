@@ -2,14 +2,14 @@ TOP = ../../../../../..
 GALLIUMDIR = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = EGL_i915.so
+LIBNAME = EGL_i965.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/egl/libegldrm.a \
-	$(GALLIUMDIR)/winsys/drm/intel/gem/libinteldrm.a \
+	$(GALLIUMDIR)/winsys/drm/i965/gem/libi965drm.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
-	$(TOP)/src/gallium/drivers/i915/libi915.a
+	$(TOP)/src/gallium/drivers/i965/libi965.a
 
 DRIVER_SOURCES =
 

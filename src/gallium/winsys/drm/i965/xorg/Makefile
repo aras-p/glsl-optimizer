@@ -17,8 +17,8 @@ INCLUDES = \
 
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
-	$(TOP)/src/gallium/winsys/drm/intel/gem/libinteldrm.a \
-	$(TOP)/src/gallium/drivers/i915/libi915.a \
+	$(TOP)/src/gallium/winsys/drm/i965/gem/libi965drm.a \
+	$(TOP)/src/gallium/drivers/i965/libi965.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(GALLIUM_AUXILIARIES)
@@ -35,7 +35,7 @@ all default: $(TARGET)
 
 $(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
 	$(TOP)/bin/mklib -noprefix -o $@ \
-	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_intel
+	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_i965
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)

@@ -2,16 +2,16 @@ Import('*')
 
 env = drienv.Clone()
 
-inteldrm_sources = [
-    'intel_drm_api.c',
-    'intel_drm_batchbuffer.c',
-    'intel_drm_buffer.c',
-    'intel_drm_fence.c',
+i965drm_sources = [
+    'i965_drm_api.c',
+    'i965_drm_batchbuffer.c',
+    'i965_drm_buffer.c',
+    'i965_drm_fence.c',
 ]
 
-inteldrm = env.ConvenienceLibrary(
-    target ='inteldrm',
-    source = inteldrm_sources,
+i965drm = env.ConvenienceLibrary(
+    target ='i965drm',
+    source = i965drm_sources,
 )
 
-Export('inteldrm')
+Export('i965drm')

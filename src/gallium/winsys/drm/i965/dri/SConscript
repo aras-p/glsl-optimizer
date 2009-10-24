@@ -6,14 +6,13 @@ env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
 drivers = [
     st_dri,
-    inteldrm,
-    softpipe,
-    i915,
+    i965drm,
+    i965,
     trace,
 ]
 
 env.LoadableModule(
-    target ='i915_dri.so',
+    target ='i965_dri.so',
     source = COMMON_GALLIUM_SOURCES,
     LIBS = drivers + mesa + auxiliaries + env['LIBS'],
     SHLIBPREFIX = '',

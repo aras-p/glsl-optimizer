@@ -1,5 +1,5 @@
 
-#include "intel_drm_winsys.h"
+#include "i965_drm_winsys.h"
 #include "util/u_memory.h"
 
 #include "i915_drm.h"

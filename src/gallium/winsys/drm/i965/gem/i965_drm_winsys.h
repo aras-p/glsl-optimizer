@@ -2,7 +2,7 @@
 #ifndef INTEL_DRM_WINSYS_H
 #define INTEL_DRM_WINSYS_H
 
-#include "i915/intel_batchbuffer.h"
+#include "i965/intel_batchbuffer.h"
 
 #include "drm.h"
 #include "intel_bufmgr.h"
