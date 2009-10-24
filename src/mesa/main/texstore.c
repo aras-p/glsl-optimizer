@@ -3670,14 +3670,18 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    GLubyte *dest;
    const GLubyte *src;
    const gl_format texFormat = texImage->TexFormat;
+   GLuint bw, bh;
 
+   _mesa_get_format_block_size(texFormat, &bw, &bh);
+
+   (void) level;
    (void) format;
 
    /* these should have been caught sooner */
-   ASSERT((width & 3) == 0 || width == 2 || width == 1);
-   ASSERT((height & 3) == 0 || height == 2 || height == 1);
-   ASSERT((xoffset & 3) == 0);
-   ASSERT((yoffset & 3) == 0);
+   ASSERT((width % bw) == 0 || width == 2 || width == 1);
+   ASSERT((height % bh) == 0 || height == 2 || height == 1);
+   ASSERT((xoffset % bw) == 0);
+   ASSERT((yoffset % bh) == 0);
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
    data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
@@ -3696,7 +3700,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
                                          (GLubyte *) texImage->Data);
 
    bytesPerRow = srcRowStride;
-   rows = height / 4;
+   rows = height / bh;  /* rows in blocks */
 
    for (i = 0; i < rows; i++) {
       MEMCPY(dest, src, bytesPerRow);
