@@ -20,6 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+/* r300_render: Vertex and index buffer primitive emission. Contains both
+ * HW TCL fastpath rendering, and SW TCL Draw-assisted rendering. */
+
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 
@@ -38,7 +41,7 @@
 /* r300_render: Vertex and index buffer primitive emission. */
 #define R300_MAX_VBO_SIZE  (1024 * 1024)
 
-static uint32_t r300_translate_primitive(unsigned prim)
+uint32_t r300_translate_primitive(unsigned prim)
 {
     switch (prim) {
         case PIPE_PRIM_POINTS:
