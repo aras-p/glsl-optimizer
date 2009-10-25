@@ -3223,17 +3223,8 @@ texture_size(const struct gl_texture_image *texImage)
 static GLuint
 texture_row_stride(const struct gl_texture_image *texImage)
 {
-   GLuint stride;
-
-   if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      stride = _mesa_compressed_row_stride(texImage->TexFormat,
+   GLuint stride = _mesa_format_row_stride(texImage->TexFormat,
                                            texImage->Width);
-   }
-   else {
-      GLuint texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-      stride = texImage->RowStride * texelBytes;
-   }
-
    return stride;
 }
 
