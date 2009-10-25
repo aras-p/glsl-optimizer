@@ -36,7 +36,7 @@ static void r300_setup_texture_state(struct r300_texture* tex)
     state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
         R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff) |
         R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
-        R300_TX_NUM_LEVELS(pt->last_level) |
+        R300_TX_NUM_LEVELS(pt->last_level & 0xf) |
         R300_TX_PITCH_EN;
 
     /* XXX */
@@ -48,7 +48,8 @@ static void r300_setup_texture_state(struct r300_texture* tex)
         state->format1 |= R300_TX_FORMAT_3D;
     }
 
-    state->format2 = (r300_texture_get_stride(tex, 0) / pt->block.size) - 1;
+    state->format2 = ((r300_texture_get_stride(tex, 0) / pt->block.size) - 1)
+                     & 0x1fff;
 
     /* Don't worry about accidentally setting this bit on non-r500;
      * the kernel should catch it. */
@@ -61,6 +62,26 @@ static void r300_setup_texture_state(struct r300_texture* tex)
 
     debug_printf("r300: Set texture state (%dx%d, %d levels)\n",
 		 pt->width[0], pt->height[0], pt->last_level);
+}
+
+unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
+                                 unsigned zslice, unsigned face)
+{
+    unsigned offset = tex->offset[level];
+
+    switch (tex->tex.target) {
+        case PIPE_TEXTURE_3D:
+            assert(face == 0);
+            return offset + zslice * tex->layer_size[level];
+
+        case PIPE_TEXTURE_CUBE:
+            assert(zslice == 0);
+            return offset + face * tex->layer_size[level];
+
+        default:
+            assert(zslice == 0 && face == 0);
+            return offset;
+    }
 }
 
 /**
@@ -84,7 +105,7 @@ unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
 static void r300_setup_miptree(struct r300_texture* tex)
 {
     struct pipe_texture* base = &tex->tex;
-    int stride, size;
+    int stride, size, layer_size;
     int i;
 
     for (i = 0; i <= base->last_level; i++) {
@@ -98,10 +119,12 @@ static void r300_setup_miptree(struct r300_texture* tex)
         base->nblocksy[i] = pf_get_nblocksy(&base->block, base->height[i]);
 
         stride = r300_texture_get_stride(tex, i);
-        size = stride * base->nblocksy[i] * base->depth[i];
+        layer_size = stride * base->nblocksy[i];
+        size = layer_size * base->depth[i];
 
         tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
+        tex->layer_size[i] = layer_size;
 
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",
@@ -161,8 +184,7 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
     struct pipe_surface* surface = CALLOC_STRUCT(pipe_surface);
     unsigned offset;
 
-    /* XXX this is certainly dependent on tex target */
-    offset = tex->offset[level];
+    offset = r300_texture_get_offset(tex, level, zslice, face);
 
     if (surface) {
         pipe_reference_init(&surface->reference, 1);
@@ -190,11 +212,6 @@ static struct pipe_texture*
                          struct pipe_buffer* buffer)
 {
     struct r300_texture* tex;
-
-    if (base->target != PIPE_TEXTURE_2D ||
-        base->depth[0] != 1) {
-        return NULL;
-    }
 
     tex = CALLOC_STRUCT(r300_texture);
     if (!tex) {
