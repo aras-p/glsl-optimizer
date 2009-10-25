@@ -400,6 +400,7 @@ generate_fragment(struct llvmpipe_context *lp,
 #ifdef DEBUG
    tgsi_dump(shader->base.tokens, 0);
    if(key->depth.enabled) {
+      debug_printf("depth.format = %s\n", pf_name(key->zsbuf_format));
       debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
       debug_printf("depth.writemask = %u\n", key->depth.writemask);
    }
@@ -419,6 +420,23 @@ generate_fragment(struct llvmpipe_context *lp,
       debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
    }
    debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
+   for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
+      if(key->sampler[i].format) {
+         debug_printf("sampler[%u] = \n", i);
+         debug_printf("  .format = %s\n", pf_name(key->sampler[i].format));
+         debug_printf("  .target = %u\n", key->sampler[i].target);
+         debug_printf("  .pot = %u%u%u\n", key->sampler[i].pot_width, key->sampler[i].pot_height, key->sampler[i].pot_depth);
+         debug_printf("  .wrap = %u %u %u\n", key->sampler[i].wrap_s, key->sampler[i].wrap_t, key->sampler[i].wrap_r);
+         debug_printf("  .min_img_filter = %u\n", key->sampler[i].min_img_filter);
+         debug_printf("  .min_mip_filter = %u\n", key->sampler[i].min_mip_filter);
+         debug_printf("  .mag_img_filter = %u\n", key->sampler[i].mag_img_filter);
+         if(key->sampler[i].compare_mode)
+            debug_printf("  .compare_mode = %s\n", debug_dump_blend_func(key->sampler[i].compare_func, TRUE));
+         debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
+         debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
+      }
+   }
+
 #endif
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
