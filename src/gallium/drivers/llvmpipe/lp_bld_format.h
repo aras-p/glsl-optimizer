@@ -42,6 +42,13 @@ struct util_format_description;
 struct lp_type;
 
 
+void
+lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
+                            struct lp_type type,
+                            const LLVMValueRef *unswizzled,
+                            LLVMValueRef *swizzled);
+
+
 /**
  * Unpack a pixel into its RGBA components.
  *
