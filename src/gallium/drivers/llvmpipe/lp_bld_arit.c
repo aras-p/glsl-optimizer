@@ -47,6 +47,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 #include "util/u_string.h"
 #include "util/u_cpu_detect.h"
 
@@ -421,6 +422,59 @@ lp_build_mul(struct lp_build_context *bld,
    }
 
    return res;
+}
+
+
+/**
+ * Small vector x scale multiplication optimization.
+ */
+LLVMValueRef
+lp_build_mul_imm(struct lp_build_context *bld,
+                 LLVMValueRef a,
+                 int b)
+{
+   LLVMValueRef factor;
+
+   if(b == 0)
+      return bld->zero;
+
+   if(b == 1)
+      return a;
+
+   if(b == -1)
+      return LLVMBuildNeg(bld->builder, a, "");
+
+   if(b == 2 && bld->type.floating)
+      return lp_build_add(bld, a, a);
+
+   if(util_is_pot(b)) {
+      unsigned shift = ffs(b) - 1;
+
+      if(bld->type.floating) {
+#if 0
+         /*
+          * Power of two multiplication by directly manipulating the mantissa.
+          *
+          * XXX: This might not be always faster, it will introduce a small error
+          * for multiplication by zero, and it will produce wrong results
+          * for Inf and NaN.
+          */
+         unsigned mantissa = lp_mantissa(bld->type);
+         factor = lp_build_int_const_scalar(bld->type, (unsigned long long)shift << mantissa);
+         a = LLVMBuildBitCast(bld->builder, a, lp_build_int_vec_type(bld->type), "");
+         a = LLVMBuildAdd(bld->builder, a, factor, "");
+         a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->type), "");
+         return a;
+#endif
+      }
+      else {
+         factor = lp_build_const_scalar(bld->type, shift);
+         return LLVMBuildShl(bld->builder, a, factor, "");
+      }
+   }
+
+   factor = lp_build_const_scalar(bld->type, (double)b);
+   return lp_build_mul(bld, a, factor);
 }
 
 

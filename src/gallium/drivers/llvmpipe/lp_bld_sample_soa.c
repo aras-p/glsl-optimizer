@@ -309,7 +309,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->builder;
    struct lp_build_context i32, h16, u8n;
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
-   LLVMValueRef f32_c256, i32_c8, i32_c128, i32_c255;
+   LLVMValueRef i32_c8, i32_c128, i32_c255;
    LLVMValueRef s_ipart, s_fpart, s_fpart_lo, s_fpart_hi;
    LLVMValueRef t_ipart, t_fpart, t_fpart_lo, t_fpart_hi;
    LLVMValueRef x0, x1;
@@ -328,9 +328,8 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    h16_vec_type = lp_build_vec_type(h16.type);
    u8n_vec_type = lp_build_vec_type(u8n.type);
 
-   f32_c256 = lp_build_const_scalar(bld->coord_type, 256.0);
-   s = lp_build_mul(&bld->coord_bld, s, f32_c256);
-   t = lp_build_mul(&bld->coord_bld, t, f32_c256);
+   s = lp_build_mul_imm(&bld->coord_bld, s, 256);
+   t = lp_build_mul_imm(&bld->coord_bld, t, 256);
 
    s = LLVMBuildFPToSI(builder, s, i32_vec_type, "");
    t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
