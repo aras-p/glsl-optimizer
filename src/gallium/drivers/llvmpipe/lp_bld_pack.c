@@ -159,11 +159,10 @@ lp_build_unpack2(LLVMBuilderRef builder,
 
    assert(!src_type.floating);
    assert(!dst_type.floating);
-   assert(dst_type.sign == src_type.sign);
    assert(dst_type.width == src_type.width * 2);
    assert(dst_type.length * 2 == src_type.length);
 
-   if(src_type.sign) {
+   if(dst_type.sign && src_type.sign) {
       /* Replicate the sign bit in the most significant bits */
       msb = LLVMBuildAShr(builder, src, lp_build_int_const_scalar(src_type, src_type.width - 1), "");
    }
