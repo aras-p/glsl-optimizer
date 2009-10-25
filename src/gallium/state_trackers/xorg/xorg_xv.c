@@ -484,7 +484,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       w = box_x2 - box_x1;
       h = box_y2 - box_y1;
 
-      draw_yuv(pPriv, x, y, x, y, w, h);
+      draw_yuv(pPriv, src_x, src_y, x, y, w, h);
 
       pbox++;
    }
