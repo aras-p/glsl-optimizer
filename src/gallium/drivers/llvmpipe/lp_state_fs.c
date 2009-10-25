@@ -423,15 +423,26 @@ generate_fragment(struct llvmpipe_context *lp,
    for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
       if(key->sampler[i].format) {
          debug_printf("sampler[%u] = \n", i);
-         debug_printf("  .format = %s\n", pf_name(key->sampler[i].format));
-         debug_printf("  .target = %u\n", key->sampler[i].target);
-         debug_printf("  .pot = %u%u%u\n", key->sampler[i].pot_width, key->sampler[i].pot_height, key->sampler[i].pot_depth);
-         debug_printf("  .wrap = %u %u %u\n", key->sampler[i].wrap_s, key->sampler[i].wrap_t, key->sampler[i].wrap_r);
-         debug_printf("  .min_img_filter = %u\n", key->sampler[i].min_img_filter);
-         debug_printf("  .min_mip_filter = %u\n", key->sampler[i].min_mip_filter);
-         debug_printf("  .mag_img_filter = %u\n", key->sampler[i].mag_img_filter);
+         debug_printf("  .format = %s\n",
+                      pf_name(key->sampler[i].format));
+         debug_printf("  .target = %s\n",
+                      debug_dump_tex_target(key->sampler[i].target, TRUE));
+         debug_printf("  .pot = %u %u %u\n",
+                      key->sampler[i].pot_width,
+                      key->sampler[i].pot_height,
+                      key->sampler[i].pot_depth);
+         debug_printf("  .wrap = %s %s %s\n",
+                      debug_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
+                      debug_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
+                      debug_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
+         debug_printf("  .min_img_filter = %s\n",
+                      debug_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
+         debug_printf("  .min_mip_filter = %s\n",
+                      debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
+         debug_printf("  .mag_img_filter = %s\n",
+                      debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
          if(key->sampler[i].compare_mode)
-            debug_printf("  .compare_mode = %s\n", debug_dump_blend_func(key->sampler[i].compare_func, TRUE));
+            debug_printf("  .compare_mode = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
          debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
          debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
       }
