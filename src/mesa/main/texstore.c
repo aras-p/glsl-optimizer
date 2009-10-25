@@ -3682,10 +3682,10 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    if (!data)
       return;
 
-   srcRowStride = _mesa_compressed_row_stride(texFormat, width);
+   srcRowStride = _mesa_format_row_stride(texFormat, width);
    src = (const GLubyte *) data;
 
-   destRowStride = _mesa_compressed_row_stride(texFormat, destWidth);
+   destRowStride = _mesa_format_row_stride(texFormat, destWidth);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
                                          texFormat, destWidth,
                                          (GLubyte *) texImage->Data);
