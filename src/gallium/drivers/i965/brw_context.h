@@ -122,8 +122,8 @@
 
 struct brw_context;
 
-struct brw_depth_stencil_alpha_state {
-   struct pipe_depth_stencil_alpha_state templ; /* for draw module */
+struct brw_depth_stencil_state {
+   //struct pipe_depth_stencil_alpha_state templ; /* for draw module */
 
    /* Precalculated hardware state:
     */
@@ -131,18 +131,19 @@ struct brw_depth_stencil_alpha_state {
    struct brw_cc1 cc1;
    struct brw_cc2 cc2;
    struct brw_cc3 cc3;
+   struct brw_cc7 cc7;
 };
 
 
 struct brw_blend_state {
-   struct pipe_depth_stencil_alpha_state templ; /* for draw module */
+   //struct pipe_depth_stencil_alpha_state templ; /* for draw module */
 
    /* Precalculated hardware state:
     */
+   struct brw_cc2 cc2;
    struct brw_cc3 cc3;
    struct brw_cc5 cc5;
    struct brw_cc6 cc6;
-   struct brw_cc7 cc7;
 };
 
 
@@ -172,20 +173,24 @@ struct brw_fragment_shader {
 
 #define PIPE_NEW_DEPTH_STENCIL_ALPHA    0x1
 #define PIPE_NEW_RAST                   0x2
-#define PIPE_NEW_BLEND                  0x2
-#define PIPE_NEW_VIEWPORT               0x2
-#define PIPE_NEW_FRAMEBUFFER            0x2
-#define PIPE_NEW_VERTEX_BUFFER          0x2
-#define PIPE_NEW_VERTEX_ELEMENT         0x2
-#define PIPE_NEW_FRAGMENT_SHADER        0x2
-#define PIPE_NEW_VERTEX_SHADER          0x2
-#define PIPE_NEW_FRAGMENT_CONSTANTS     0x2
-#define PIPE_NEW_VERTEX_CONSTANTS       0x2
-#define PIPE_NEW_CLIP                   0x2
-#define PIPE_NEW_INDEX_BUFFER           0x2
-#define PIPE_NEW_INDEX_RANGE            0x2
-#define PIPE_NEW_BLEND_COLOR            0x2
-#define PIPE_NEW_POLYGON_STIPPLE        0x2
+#define PIPE_NEW_BLEND                  0x4
+#define PIPE_NEW_VIEWPORT               0x8
+#define PIPE_NEW_SAMPLERS               0x10
+#define PIPE_NEW_VERTEX_BUFFER          0x20
+#define PIPE_NEW_VERTEX_ELEMENT         0x40
+#define PIPE_NEW_FRAGMENT_SHADER        0x80
+#define PIPE_NEW_VERTEX_SHADER          0x100
+#define PIPE_NEW_FRAGMENT_CONSTANTS     0x200
+#define PIPE_NEW_VERTEX_CONSTANTS       0x400
+#define PIPE_NEW_CLIP                   0x800
+#define PIPE_NEW_INDEX_BUFFER           0x1000
+#define PIPE_NEW_INDEX_RANGE            0x2000
+#define PIPE_NEW_BLEND_COLOR            0x4000
+#define PIPE_NEW_POLYGON_STIPPLE        0x8000
+#define PIPE_NEW_FRAMEBUFFER_DIMENSIONS 0x10000
+#define PIPE_NEW_DEPTH_BUFFER           0x20000
+#define PIPE_NEW_COLOR_BUFFERS          0x40000
+
 
 
 #define BRW_NEW_URB_FENCE               0x1
@@ -209,8 +214,6 @@ struct brw_fragment_shader {
  * meantime.
  */
 #define BRW_NEW_BATCH			0x10000
-/** brw->depth_region updated */
-#define BRW_NEW_DEPTH_BUFFER		0x20000
 #define BRW_NEW_NR_WM_SURFACES		0x40000
 #define BRW_NEW_NR_VS_SURFACES		0x80000
 #define BRW_NEW_INDEX_BUFFER		0x100000
@@ -385,12 +388,6 @@ struct brw_cache {
 };
 
 
-/* Considered adding a member to this struct to document which flags
- * an update might raise so that ordering of the state atoms can be
- * checked or derived at runtime.  Dropped the idea in favor of having
- * a debug mode where the state is monitored for flags which are
- * raised that have already been tested against.
- */
 struct brw_tracked_state {
    struct brw_state_flags dirty;
    int (*prepare)( struct brw_context *brw );
@@ -478,7 +475,7 @@ struct brw_context
       const struct brw_fragment_shader *fragment_shader;
       const struct brw_blend_state *blend;
       const struct brw_rasterizer_state *rast;
-      const struct brw_depth_stencil_alpha_state *zstencil;
+      const struct brw_depth_stencil_state *zstencil;
 
       struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
@@ -491,6 +488,7 @@ struct brw_context
       struct pipe_buffer *vertex_constants;
       struct pipe_buffer *fragment_constants;
 
+      struct pipe_viewport_state viewport;
       struct brw_blend_constant_color bcc;
       struct brw_polygon_stipple bps;
 
@@ -719,16 +717,31 @@ void brw_emit_query_end(struct brw_context *brw);
  */
 void brw_debug_batch(struct brw_context *intel);
 
-/*======================================================================
- * brw_tex.c
- */
-void brw_validate_textures( struct brw_context *brw );
-
 
 /*======================================================================
- * brw_pipe_shader.c
+ * brw_pipe_*.c
  */
-void brw_init_shader_funcs( struct brw_context *brw );
+void brw_pipe_blend_init( struct brw_context *brw );
+void brw_pipe_depth_stencil_init( struct brw_context *brw );
+void brw_pipe_framebuffer_init( struct brw_context *brw );
+void brw_pipe_flush_init( struct brw_context *brw );
+void brw_pipe_misc_init( struct brw_context *brw );
+void brw_pipe_query_init( struct brw_context *brw );
+void brw_pipe_rast_init( struct brw_context *brw );
+void brw_pipe_sampler_init( struct brw_context *brw );
+void brw_pipe_shader_init( struct brw_context *brw );
+void brw_pipe_vertex_init( struct brw_context *brw );
+
+void brw_pipe_blend_cleanup( struct brw_context *brw );
+void brw_pipe_depth_stencil_cleanup( struct brw_context *brw );
+void brw_pipe_framebuffer_cleanup( struct brw_context *brw );
+void brw_pipe_flush_cleanup( struct brw_context *brw );
+void brw_pipe_misc_cleanup( struct brw_context *brw );
+void brw_pipe_query_cleanup( struct brw_context *brw );
+void brw_pipe_rast_cleanup( struct brw_context *brw );
+void brw_pipe_sampler_cleanup( struct brw_context *brw );
+void brw_pipe_shader_cleanup( struct brw_context *brw );
+void brw_pipe_vertex_cleanup( struct brw_context *brw );
 
 
 /* brw_urb.c

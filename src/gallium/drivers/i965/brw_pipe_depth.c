@@ -1,58 +1,142 @@
 
-static void *
-brw_create_depth_stencil( struct pipe_context *pipe,
-			  const struct pipe_depth_stencil_alpha_state *tmpl )
-{
-   if (tmpl->stencil[0].enable) {
-      cc.cc0.stencil_enable = 1;
-      cc.cc0.stencil_func =
-	 intel_translate_compare_func(key->stencil_func[0]);
-      cc.cc0.stencil_fail_op =
-	 intel_translate_stencil_op(key->stencil_fail_op[0]);
-      cc.cc0.stencil_pass_depth_fail_op =
-	 intel_translate_stencil_op(key->stencil_pass_depth_fail_op[0]);
-      cc.cc0.stencil_pass_depth_pass_op =
-	 intel_translate_stencil_op(key->stencil_pass_depth_pass_op[0]);
-      cc.cc1.stencil_ref = key->stencil_ref[0];
-      cc.cc1.stencil_write_mask = key->stencil_write_mask[0];
-      cc.cc1.stencil_test_mask = key->stencil_test_mask[0];
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
-      if (tmpl->stencil[1].enable) {
-	 cc.cc0.bf_stencil_enable = 1;
-	 cc.cc0.bf_stencil_func =
-	    intel_translate_compare_func(key->stencil_func[1]);
-	 cc.cc0.bf_stencil_fail_op =
-	    intel_translate_stencil_op(key->stencil_fail_op[1]);
-	 cc.cc0.bf_stencil_pass_depth_fail_op =
-	    intel_translate_stencil_op(key->stencil_pass_depth_fail_op[1]);
-	 cc.cc0.bf_stencil_pass_depth_pass_op =
-	    intel_translate_stencil_op(key->stencil_pass_depth_pass_op[1]);
-	 cc.cc1.bf_stencil_ref = key->stencil_ref[1];
-	 cc.cc2.bf_stencil_write_mask = key->stencil_write_mask[1];
-	 cc.cc2.bf_stencil_test_mask = key->stencil_test_mask[1];
+#include "brw_context.h"
+#include "brw_defines.h"
+
+static unsigned brw_translate_compare_func(unsigned func)
+{
+   switch (func) {
+   case PIPE_FUNC_NEVER:
+      return BRW_COMPAREFUNCTION_NEVER;
+   case PIPE_FUNC_LESS:
+      return BRW_COMPAREFUNCTION_LESS;
+   case PIPE_FUNC_LEQUAL:
+      return BRW_COMPAREFUNCTION_LEQUAL;
+   case PIPE_FUNC_GREATER:
+      return BRW_COMPAREFUNCTION_GREATER;
+   case PIPE_FUNC_GEQUAL:
+      return BRW_COMPAREFUNCTION_GEQUAL;
+   case PIPE_FUNC_NOTEQUAL:
+      return BRW_COMPAREFUNCTION_NOTEQUAL;
+   case PIPE_FUNC_EQUAL:
+      return BRW_COMPAREFUNCTION_EQUAL;
+   case PIPE_FUNC_ALWAYS:
+      return BRW_COMPAREFUNCTION_ALWAYS;
+   default:
+      assert(0);
+      return BRW_COMPAREFUNCTION_ALWAYS;
+   }
+}
+
+static unsigned translate_stencil_op(unsigned op)
+{
+   switch (op) {
+   case PIPE_STENCIL_OP_KEEP:
+      return BRW_STENCILOP_KEEP;
+   case PIPE_STENCIL_OP_ZERO:
+      return BRW_STENCILOP_ZERO;
+   case PIPE_STENCIL_OP_REPLACE:
+      return BRW_STENCILOP_REPLACE;
+   case PIPE_STENCIL_OP_INCR:
+      return BRW_STENCILOP_INCRSAT;
+   case PIPE_STENCIL_OP_DECR:
+      return BRW_STENCILOP_DECRSAT;
+   case PIPE_STENCIL_OP_INCR_WRAP:
+      return BRW_STENCILOP_INCR;
+   case PIPE_STENCIL_OP_DECR_WRAP:
+      return BRW_STENCILOP_DECR;
+   case PIPE_STENCIL_OP_INVERT:
+      return BRW_STENCILOP_INVERT;
+   default:
+      assert(0);
+      return BRW_STENCILOP_ZERO;
+   }
+}
+
+
+static void *
+brw_create_depth_stencil_state( struct pipe_context *pipe,
+				const struct pipe_depth_stencil_alpha_state *templ )
+{
+   struct brw_depth_stencil_state *zstencil = CALLOC_STRUCT(brw_depth_stencil_state);
+
+   if (templ->stencil[0].enabled) {
+      zstencil->cc0.stencil_enable = 1;
+      zstencil->cc0.stencil_func =
+	 brw_translate_compare_func(templ->stencil[0].func);
+      zstencil->cc0.stencil_fail_op =
+	 translate_stencil_op(templ->stencil[0].fail_op);
+      zstencil->cc0.stencil_pass_depth_fail_op =
+	 translate_stencil_op(templ->stencil[0].zfail_op);
+      zstencil->cc0.stencil_pass_depth_pass_op =
+	 translate_stencil_op(templ->stencil[0].zpass_op);
+      zstencil->cc1.stencil_ref = templ->stencil[0].ref_value;
+      zstencil->cc1.stencil_write_mask = templ->stencil[0].writemask;
+      zstencil->cc1.stencil_test_mask = templ->stencil[0].valuemask;
+
+      if (templ->stencil[1].enabled) {
+	 zstencil->cc0.bf_stencil_enable = 1;
+	 zstencil->cc0.bf_stencil_func =
+	    brw_translate_compare_func(templ->stencil[1].func);
+	 zstencil->cc0.bf_stencil_fail_op =
+	    translate_stencil_op(templ->stencil[1].fail_op);
+	 zstencil->cc0.bf_stencil_pass_depth_fail_op =
+	    translate_stencil_op(templ->stencil[1].zfail_op);
+	 zstencil->cc0.bf_stencil_pass_depth_pass_op =
+	    translate_stencil_op(templ->stencil[1].zpass_op);
+	 zstencil->cc1.bf_stencil_ref = templ->stencil[1].ref_value;
+	 zstencil->cc2.bf_stencil_write_mask = templ->stencil[1].writemask;
+	 zstencil->cc2.bf_stencil_test_mask = templ->stencil[1].valuemask;
       }
 
-      /* Not really sure about this:
-       */
-      cc.cc0.stencil_write_enable = (cc.cc1.stencil_write_mask ||
-				     cc.cc2.bf_stencil_write_mask);
+      zstencil->cc0.stencil_write_enable = (zstencil->cc1.stencil_write_mask ||
+					    zstencil->cc2.bf_stencil_write_mask);
    }
 
 
-   if (key->alpha_enabled) {
-      cc.cc3.alpha_test = 1;
-      cc.cc3.alpha_test_func = intel_translate_compare_func(key->alpha_func);
-      cc.cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
-
-      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], key->alpha_ref);
+   if (templ->alpha.enabled) {
+      zstencil->cc3.alpha_test = 1;
+      zstencil->cc3.alpha_test_func = brw_translate_compare_func(templ->alpha.func);
+      zstencil->cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
+      zstencil->cc7.alpha_ref.ub[0] = float_to_ubyte(templ->alpha.ref_value);
    }
 
-   /* _NEW_DEPTH */
-   if (key->depth_test) {
-      cc.cc2.depth_test = 1;
-      cc.cc2.depth_test_function = intel_translate_compare_func(key->depth_func);
-      cc.cc2.depth_write_enable = key->depth_write;
+   if (templ->depth.enabled) {
+      zstencil->cc2.depth_test = 1;
+      zstencil->cc2.depth_test_function = brw_translate_compare_func(templ->depth.func);
+      zstencil->cc2.depth_write_enable = templ->depth.writemask;
    }
 
+   return (void *)zstencil;
+}
 
+
+static void brw_bind_depth_stencil_state(struct pipe_context *pipe,
+					 void *cso)
+{
+   struct brw_context *brw = brw_context(pipe);
+   brw->curr.zstencil = (const struct brw_depth_stencil_state *)cso;
+   brw->state.dirty.mesa |= PIPE_NEW_DEPTH_STENCIL_ALPHA;
+}
+
+static void brw_delete_depth_stencil_state(struct pipe_context *pipe,
+					   void *cso)
+{
+   struct brw_context *brw = brw_context(pipe);
+   assert((const void *)cso != (const void *)brw->curr.zstencil);
+   FREE(cso);
+}
+
+
+void brw_pipe_depth_stencil_init( struct brw_context *brw )
+{
+   brw->base.create_depth_stencil_alpha_state = brw_create_depth_stencil_state;
+   brw->base.bind_depth_stencil_alpha_state = brw_bind_depth_stencil_state;
+   brw->base.delete_depth_stencil_alpha_state = brw_delete_depth_stencil_state;
+}
+
+void brw_pipe_depth_stencil_cleanup( struct brw_context *brw )
+{
 }

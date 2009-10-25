@@ -62,7 +62,9 @@ const struct brw_tracked_state brw_blend_constant_color = {
    .emit = upload_blend_constant_color
 };
 
-/* Constant single cliprect for framebuffer object or DRI2 drawing */
+/***********************************************************************
+ * Drawing rectangle - framebuffer dimensions
+ */
 static int upload_drawing_rect(struct brw_context *brw)
 {
    BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
@@ -77,12 +79,17 @@ static int upload_drawing_rect(struct brw_context *brw)
 
 const struct brw_tracked_state brw_drawing_rect = {
    .dirty = {
-      .mesa = PIPE_NEW_FRAMEBUFFER,
+      .mesa = PIPE_NEW_FRAMEBUFFER_DIMENSIONS,
       .brw = 0,
       .cache = 0
    },
    .emit = upload_drawing_rect
 };
+
+
+/***********************************************************************
+ * Binding table pointers
+ */
 
 static int prepare_binding_table_pointers(struct brw_context *brw)
 {
@@ -125,7 +132,7 @@ const struct brw_tracked_state brw_binding_table_pointers = {
 };
 
 
-/**
+/**********************************************************************
  * Upload pointers to the per-stage state.
  *
  * The state pointers in this packet are all relative to the general state
@@ -196,6 +203,11 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
    .prepare = prepare_psp_urb_cbs,
    .emit = upload_psp_urb_cbs,
 };
+
+
+/***********************************************************************
+ * Depth buffer 
+ */
 
 static int prepare_depthbuffer(struct brw_context *brw)
 {
@@ -278,8 +290,8 @@ static int emit_depthbuffer(struct brw_context *brw)
 
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
+      .mesa = PIPE_NEW_DEPTH_BUFFER,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = prepare_depthbuffer,
@@ -307,63 +319,6 @@ const struct brw_tracked_state brw_polygon_stipple = {
    .emit = upload_polygon_stipple
 };
 
-
-/***********************************************************************
- * Polygon stipple offset packet
- */
-
-static int upload_polygon_stipple_offset(struct brw_context *brw)
-{
-   struct brw_polygon_stipple_offset bpso;
-
-   /* This is invarient state in gallium:
-    */
-   memset(&bpso, 0, sizeof(bpso));
-   bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
-   bpso.header.length = sizeof(bpso)/4-2;
-   bpso.bits0.y_offset = 0;
-   bpso.bits0.x_offset = 0;
-
-   BRW_CACHED_BATCH_STRUCT(brw, &bpso);
-   return 0;
-}
-
-const struct brw_tracked_state brw_polygon_stipple_offset = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0
-   },
-   .emit = upload_polygon_stipple_offset
-};
-
-/**********************************************************************
- * AA Line parameters
- */
-static int upload_aa_line_parameters(struct brw_context *brw)
-{
-   struct brw_aa_line_parameters balp;
-   
-   if (BRW_IS_965(brw))
-      return 0;
-
-   /* use legacy aa line coverage computation */
-   memset(&balp, 0, sizeof(balp));
-   balp.header.opcode = CMD_AA_LINE_PARAMETERS;
-   balp.header.length = sizeof(balp) / 4 - 2;
-   
-   BRW_CACHED_BATCH_STRUCT(brw, &balp);
-   return 0;
-}
-
-const struct brw_tracked_state brw_aa_line_parameters = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0
-   },
-   .emit = upload_aa_line_parameters
-};
 
 /***********************************************************************
  * Line stipple packet
@@ -448,6 +403,32 @@ static int upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &vfs);
    }
    
+   if (!BRW_IS_965(brw))
+   {
+      struct brw_aa_line_parameters balp;
+
+      /* use legacy aa line coverage computation */
+      memset(&balp, 0, sizeof(balp));
+      balp.header.opcode = CMD_AA_LINE_PARAMETERS;
+      balp.header.length = sizeof(balp) / 4 - 2;
+   
+      BRW_BATCH_STRUCT(brw, &balp);
+   }
+
+   {
+      struct brw_polygon_stipple_offset bpso;
+      
+      /* This is invarient state in gallium:
+       */
+      memset(&bpso, 0, sizeof(bpso));
+      bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
+      bpso.header.length = sizeof(bpso)/4-2;
+      bpso.bits0.y_offset = 0;
+      bpso.bits0.x_offset = 0;
+
+      BRW_BATCH_STRUCT(brw, &bpso);
+   }
+   
    return 0;
 }
 
@@ -459,6 +440,11 @@ const struct brw_tracked_state brw_invarient_state = {
    },
    .emit = upload_invarient_state
 };
+
+
+/***********************************************************************
+ * State base address 
+ */
 
 /**
  * Define the base addresses which some state is referenced from.

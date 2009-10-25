@@ -117,7 +117,7 @@ cc_unit_populate_key(const struct brw_context *brw,
    key->cc3 = combine_cc3( brw->curr.zstencil->cc3, brw->curr.blend->cc3 );
    key->cc5 = brw->curr.blend->cc5;
    key->cc6 = brw->curr.blend->cc6;
-   key->cc7 = brw->curr.blend->cc7;
+   key->cc7 = brw->curr.zstencil->cc7;
 }
 
 /**

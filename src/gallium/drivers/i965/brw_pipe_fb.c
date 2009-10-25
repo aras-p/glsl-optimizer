@@ -1,25 +1,61 @@
+#include "util/u_math.h"
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+
+#include "brw_context.h"
 
 /**
  * called from intelDrawBuffer()
  */
-static void brw_set_draw_region( struct pipe_context *pipe, 
-                                 struct intel_region *color_regions[],
-                                 struct intel_region *depth_region,
-                                 GLuint num_color_regions)
+static void brw_set_framebuffer_state( struct pipe_context *pipe, 
+				       const struct pipe_framebuffer_state *fb )
 {
    struct brw_context *brw = brw_context(pipe);
-   GLuint i;
+   unsigned i;
 
-   /* release old color/depth regions */
-   if (brw->state.depth_region != depth_region)
-      brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
-   for (i = 0; i < brw->state.nr_color_regions; i++)
-       intel_region_release(&brw->state.color_regions[i]);
-   intel_region_release(&brw->state.depth_region);
+   /* Dimensions:
+    */
+   if (brw->curr.fb.width != fb->width ||
+       brw->curr.fb.height != fb->height) {
+      brw->curr.fb.width = fb->width;
+      brw->curr.fb.height = fb->height;
+      brw->state.dirty.mesa |= PIPE_NEW_FRAMEBUFFER_DIMENSIONS;
+   }
+   
+   /* Z/Stencil
+    */
+   if (brw->curr.fb.zsbuf != fb->zsbuf) {
+      pipe_surface_reference(&brw->curr.fb.zsbuf, fb->zsbuf);
+      brw->state.dirty.mesa |= PIPE_NEW_DEPTH_BUFFER;
+   }
 
-   /* reference new color/depth regions */
-   for (i = 0; i < num_color_regions; i++)
-       intel_region_reference(&brw->state.color_regions[i], color_regions[i]);
-   intel_region_reference(&brw->state.depth_region, depth_region);
-   brw->state.nr_color_regions = num_color_regions;
+   /* Color buffers:
+    */
+   for (i = 0; i < MAX2(fb->nr_cbufs, brw->curr.fb.nr_cbufs); i++) {
+      if (brw->curr.fb.cbufs[i] != fb->cbufs[i]) {
+	 brw->state.dirty.mesa |= PIPE_NEW_COLOR_BUFFERS;
+	 pipe_surface_reference(&brw->curr.fb.cbufs[i], fb->cbufs[i]);
+      }
+   }
+   
+   brw->curr.fb.nr_cbufs = fb->nr_cbufs;
+}
+
+static void brw_set_viewport_state( struct pipe_context *pipe,
+				    const struct pipe_viewport_state *viewport )
+{
+   struct brw_context *brw = brw_context(pipe);
+   brw->curr.viewport = *viewport;
+   brw->state.dirty.mesa |= PIPE_NEW_VIEWPORT;
+}
+
+
+void brw_pipe_framebuffer_init( struct brw_context *brw )
+{
+   brw->base.set_framebuffer_state = brw_set_framebuffer_state;
+   brw->base.set_framebuffer_state = brw_set_framebuffer_state;
+}
+
+void brw_pipe_framebuffer_cleanup( struct brw_context *brw )
+{
 }

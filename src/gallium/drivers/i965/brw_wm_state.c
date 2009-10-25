@@ -105,11 +105,11 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* as far as we can tell */
    key->computes_depth =
       (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) != 0;
-   /* BRW_NEW_DEPTH_BUFFER
+   /* PIPE_NEW_DEPTH_BUFFER
     * Override for NULL depthbuffer case, required by the Pixel Shader Computed
     * Depth field.
     */
-   if (brw->state.depth_region == NULL)
+   if (brw->curr.fb.zsbuf == NULL)
       key->computes_depth = 0;
 
    /* _NEW_COLOR */
@@ -295,7 +295,8 @@ static void upload_wm_unit( struct brw_context *brw )
 
 const struct brw_tracked_state brw_wm_unit = {
    .dirty = {
-      .mesa = (_NEW_POLYGON | 
+      .mesa = (PIPE_NEW_DEPTH_BUFFER |
+	       _NEW_POLYGON | 
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
 	       _NEW_COLOR |
@@ -303,7 +304,6 @@ const struct brw_tracked_state brw_wm_unit = {
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_DEPTH_BUFFER |
 	      BRW_NEW_NR_WM_SURFACES),
 
       .cache = (CACHE_NEW_WM_PROG |
