@@ -698,8 +698,7 @@ st_TexImage(GLcontext * ctx,
                                                texImage->Width,
                                                texImage->Height,
                                                texImage->Depth);
-         dstRowStride =
-            _mesa_compressed_row_stride(texImage->TexFormat, width);
+         dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
       }
       else {
