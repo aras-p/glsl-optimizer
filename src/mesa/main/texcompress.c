@@ -154,21 +154,6 @@ _mesa_glenum_to_compressed_format(GLenum format)
 
 
 /*
- * Compute the bytes per row in a compressed texture image.
- * We use this for computing the destination address for sub-texture updates.
- * \param mesaFormat  one of the MESA_FORMAT_* compressed formats
- * \param width  image width in pixels
- * \return stride, in bytes, between rows for compressed image
- */
-GLint
-_mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width)
-{
-   GLint stride = _mesa_format_row_stride(mesaFormat, width);
-   return stride;
-}
-
-
-/*
  * Return the address of the pixel at (col, row, img) in a
  * compressed texture image.
  * \param col, row, img - image position (3D), should be a multiple of the
