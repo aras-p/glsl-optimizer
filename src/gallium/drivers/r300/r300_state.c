@@ -666,10 +666,9 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    memcpy(r300->vertex_buffers, buffers,
+    memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
-
-    r300->vertex_buffer_count = count;
+    r300->vbuf_count = count;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -683,10 +682,10 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    memcpy(r300->vertex_elements, elements,
-        sizeof(struct pipe_vertex_element) * count);
-
-    r300->vertex_element_count = count;
+    memcpy(r300->vertex_element,
+           elements,
+           sizeof(struct pipe_vertex_element) * count);
+    r300->aos_count = count;
 
     if (r300->draw) {
         draw_flush(r300->draw);

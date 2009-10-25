@@ -216,18 +216,19 @@ struct r300_texture {
     struct r300_texture_state state;
 };
 
-struct r300_vertex_format {
+struct r300_vertex_info {
     /* Parent class */
     struct vertex_info vinfo;
-    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
-    uint32_t vap_prog_stream_cntl[8];
-    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
-    uint32_t vap_prog_stream_cntl_ext[8];
     /* Map of vertex attributes into PVS memory for HW TCL,
      * or GA memory for SW TCL. */
     int vs_tab[16];
     /* Map of rasterizer attributes from GB through RS to US. */
     int fs_tab[16];
+
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
 };
 
 extern struct pipe_viewport_state r300_viewport_identity;
@@ -256,7 +257,7 @@ struct r300_context {
      * depends on the combination of both currently loaded shaders. */
     struct util_hash_table* shader_hash_table;
     /* Vertex formatting information. */
-    struct r300_vertex_format* vertex_info;
+    struct r300_vertex_info* vertex_info;
 
     /* Various CSO state objects. */
     /* Blend state. */
@@ -285,18 +286,20 @@ struct r300_context {
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;
-    /* Vertex buffers for Gallium. */
-    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
-    int vertex_buffer_count;
-    /* Vertex elements for Gallium. */
-    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
-    int vertex_element_count;
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */
     struct r300_viewport_state* viewport_state;
     /* ZTOP state. */
     struct r300_ztop_state ztop_state;
+
+    /* Vertex buffers for Gallium. */
+    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+    int vbuf_count;
+    /* Vertex elements for Gallium. */
+    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+    int aos_count;
+    unsigned hw_prim;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;

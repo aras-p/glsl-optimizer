@@ -31,6 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_prim.h"
 
+#include "r300_vbo.h"
 #include "r300_cs.h"
 #include "r300_context.h"
 #include "r300_emit.h"
@@ -69,6 +70,36 @@ uint32_t r300_translate_primitive(unsigned prim)
     }
 }
 
+static boolean setup_vertex_buffers(struct r300_context *r300)
+{
+    unsigned vbuf_count = r300->aos_count;
+    struct pipe_vertex_buffer *vbuf= r300->vertex_buffer;
+    struct pipe_vertex_element *velem= r300->vertex_element;
+    bool invalid = false;
+
+validate:
+    for (int i = 0; i < vbuf_count; i++) {
+        if (!r300->winsys->add_buffer(r300->winsys, vbuf[velem[i].vertex_buffer_index].buffer,
+            RADEON_GEM_DOMAIN_GTT, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
+    }
+
+    if (!r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            /* Well, hell. */
+            debug_printf("r300: Stuck in validation loop, gonna quit now.");
+            exit(1);
+        }
+        invalid = true;
+        goto validate;
+    }
+
+    return invalid;
+}
+
 /* This is the fast-path drawing & emission for HW TCL. */
 boolean r300_draw_range_elements(struct pipe_context* pipe,
                                  struct pipe_buffer* indexBuffer,
@@ -80,87 +111,23 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
                                  unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
-    uint32_t prim = r300_translate_primitive(mode);
-    struct pipe_vertex_buffer* aos = r300->vertex_buffers;
-    unsigned aos_count = r300->vertex_buffer_count;
-    short* indices;
-    unsigned packet_size;
-    unsigned i;
-    bool invalid = FALSE;
-    
-    CS_LOCALS(r300);
 
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
-    }
+    r300_update_derived_state(r300);
 
-validate:
-    for (i = 0; i < aos_count; i++) {
-        if (!r300->winsys->add_buffer(r300->winsys, aos[i].buffer,
-                    RADEON_GEM_DOMAIN_GTT, 0)) {
-            pipe->flush(pipe, 0, NULL);
-            goto validate;
-        }
-    }
-    if (!r300->winsys->validate(r300->winsys)) {
-        pipe->flush(pipe, 0, NULL);
-        if (invalid) {
-            /* Well, hell. */
-            debug_printf("r300: Stuck in validation loop, gonna quit now.");
-            exit(1);
-        }
-        invalid = TRUE;
-        goto validate;
-    }
+    setup_vertex_buffers(r300);
+
+    setup_vertex_attributes(r300);
+
+    setup_index_buffer(r300, indexBuffer, indexSize);
+
+    r300->hw_prim = r300_translate_primitive(mode);
 
     r300_emit_dirty_state(r300);
 
-    packet_size = (aos_count >> 1) * 3 + (aos_count & 1) * 2;
+    r300_emit_aos(r300, 0);
 
-    BEGIN_CS(3 + packet_size + (aos_count * 2));
-    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(aos_count);
-    for (i = 0; i < aos_count - 1; i += 2) {
-        OUT_CS(aos[i].stride |
-            (aos[i].stride << 8) |
-            (aos[i + 1].stride << 16) |
-            (aos[i + 1].stride << 24));
-        OUT_CS(aos[i].buffer_offset + start * 4 * aos[i].stride);
-        OUT_CS(aos[i + 1].buffer_offset + start * 4 * aos[i + 1].stride);
-    }
-    if (aos_count & 1) {
-        OUT_CS(aos[i].stride | (aos[i].stride << 8));
-        OUT_CS(aos[i].buffer_offset + start * 4 * aos[i].stride);
-    }
-    for (i = 0; i < aos_count; i++) {
-        OUT_CS_RELOC(aos[i].buffer, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
-    }
-    END_CS;
-
-    if (indexBuffer) {
-        indices = (short*)pipe_buffer_map(pipe->screen, indexBuffer,
-                                          PIPE_BUFFER_USAGE_CPU_READ);
-
-        /* Set the starting point. */
-        indices += start;
-
-        BEGIN_CS(2 + (count+1)/2);
-        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count + 1)/2);
-        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) | prim);
-        for (i = 0; i < count - 1; i += 2) {
-            OUT_CS(indices[i + 1] << 16 | indices[i]);
-        }
-        if (count % 2) {
-            OUT_CS(indices[count - 1]);
-        }
-        END_CS;
-    } else {
-        BEGIN_CS(2);
-        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
-        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
-               prim);
-        END_CS;
-    }
+    r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
+                            start, count);
 
     return TRUE;
 }
@@ -178,7 +145,23 @@ boolean r300_draw_elements(struct pipe_context* pipe,
 boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                          unsigned start, unsigned count)
 {
-    return pipe->draw_elements(pipe, NULL, 0, mode, start, count);
+    struct r300_context* r300 = r300_context(pipe);
+
+    r300_update_derived_state(r300);
+
+    setup_vertex_buffers(r300);
+
+    setup_vertex_attributes(r300);
+
+    r300->hw_prim = r300_translate_primitive(mode);
+
+    r300_emit_dirty_state(r300);
+
+    r300_emit_aos(r300, start);
+
+    r300_emit_draw_arrays(r300, count);
+
+    return TRUE;
 }
 
 /****************************************************************************
@@ -196,7 +179,9 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        unsigned start,
                                        unsigned count)
 {
+    assert(0);
     struct r300_context* r300 = r300_context(pipe);
+#if 0
     int i;
 
     if (!u_trim_pipe_prim(mode, &count)) {
@@ -236,7 +221,7 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
         draw_set_mapped_element_buffer_range(r300->draw, 0, start,
                                              start + count - 1, NULL);
     }
-
+#endif
     return TRUE;
 }
 

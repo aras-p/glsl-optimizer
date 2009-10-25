@@ -29,6 +29,8 @@
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;
 
+void r300_emit_aos(struct r300_context* r300, unsigned offset);
+
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend);
 
@@ -37,6 +39,16 @@ void r300_emit_blend_color_state(struct r300_context* r300,
 
 void r300_emit_clip_state(struct r300_context* r300,
                           struct pipe_clip_state* clip);
+
+void r300_emit_draw_arrays(struct r300_context *r300, unsigned count);
+
+void r300_emit_draw_elements(struct r300_context *r300,
+                             struct pipe_buffer* indexBuffer,
+                             unsigned indexSize,
+                             unsigned minIndex,
+                             unsigned maxIndex,
+                             unsigned start,
+                             unsigned count);
 
 void r300_emit_dsa_state(struct r300_context* r300,
                          struct r300_dsa_state* dsa);

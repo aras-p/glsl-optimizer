@@ -63,7 +63,7 @@ int r300_shader_key_compare(void* key1, void* key2) {
 
 /* Set up the vs_tab and routes. */
 static void r300_vs_tab_routes(struct r300_context* r300,
-                               struct r300_vertex_format* vformat)
+                               struct r300_vertex_info* vformat)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct vertex_info* vinfo = &vformat->vinfo;
@@ -219,7 +219,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
 
 /* Update the PSC tables. */
 static void r300_vertex_psc(struct r300_context* r300,
-                            struct r300_vertex_format* vformat)
+                            struct r300_vertex_info* vformat)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct vertex_info* vinfo = &vformat->vinfo;
@@ -282,7 +282,7 @@ static void r300_vertex_psc(struct r300_context* r300,
 
 /* Set up the mappings from GB to US, for RS block. */
 static void r300_update_fs_tab(struct r300_context* r300,
-                               struct r300_vertex_format* vformat)
+                               struct r300_vertex_info* vformat)
 {
     struct tgsi_shader_info* info = &r300->fs->info;
     int i, cols = 0, texs = 0, cols_emitted = 0;
@@ -455,13 +455,13 @@ static void r300_update_rs_block(struct r300_context* r300,
 /* Update the vertex format. */
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
-    struct r300_shader_key* key;
-    struct r300_vertex_format* vformat;
+    struct r300_vertex_info* vformat;
     struct r300_rs_block* rs_block;
-    struct r300_shader_derived_value* value;
     int i;
 
     /*
+    struct r300_shader_key* key;
+    struct r300_shader_derived_value* value;
     key = CALLOC_STRUCT(r300_shader_key);
     key->vs = r300->vs;
     key->fs = r300->fs;
@@ -486,7 +486,7 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     } */
 
     /* XXX This will be refactored ASAP. */
-    vformat = CALLOC_STRUCT(r300_vertex_format);
+    vformat = CALLOC_STRUCT(r300_vertex_info);
     rs_block = CALLOC_STRUCT(r300_rs_block);
 
     for (i = 0; i < 16; i++) {

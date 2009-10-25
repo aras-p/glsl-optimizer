@@ -104,6 +104,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct r300_winsys* r300_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
+    struct r300_screen* r300screen = r300_screen(screen);
 
     if (!r300)
         return NULL;
@@ -119,9 +120,16 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.clear = r300_clear;
 
-    r300->context.draw_arrays = r300_draw_arrays;
-    r300->context.draw_elements = r300_draw_elements;
-    r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+    if (r300screen->caps->has_tcl)
+    {
+        r300->context.draw_arrays = r300_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_draw_range_elements;
+    }
+    else
+    {
+        assert(0);
+    }
 
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
