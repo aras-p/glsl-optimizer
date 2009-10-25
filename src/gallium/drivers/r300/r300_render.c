@@ -112,6 +112,9 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
+    if (!u_trim_pipe_prim(mode, &count))
+        return false;
+
     r300_update_derived_state(r300);
 
     setup_vertex_buffers(r300);
@@ -146,6 +149,9 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                          unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
+
+    if (!u_trim_pipe_prim(mode, &count))
+        return false;
 
     r300_update_derived_state(r300);
 
