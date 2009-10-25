@@ -3046,6 +3046,15 @@ compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
 }
 
 
+/*
+ * Return compressed texture block size, in pixels.
+ */
+static void
+get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
+{
+   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
+   _mesa_get_format_block_size(mesaFormat, bw, bh);
+}
 
 
 /**
@@ -3163,6 +3172,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
                                   GLenum format, GLsizei imageSize)
 {
    GLint expectedSize, maxLevels = 0, maxTextureSize;
+   GLuint bw, bh;
    (void) zoffset;
 
    if (dimensions == 1) {
@@ -3212,16 +3222,18 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
-   /* XXX these tests are specific to the compressed format.
-    * this code should be generalized in some way.
+   /*
+    * do checks which depend on compression block size
     */
-   if ((xoffset & 3) != 0 || (yoffset & 3) != 0)
+   get_compressed_block_size(format, &bw, &bh);
+
+   if ((xoffset % bw != 0) || (yoffset % bh != 0))
       return GL_INVALID_VALUE;
 
-   if ((width & 3) != 0 && width != 2 && width != 1)
+   if ((width % bw != 0) && width != 2 && width != 1)
       return GL_INVALID_VALUE;
 
-   if ((height & 3) != 0 && height != 2 && height != 1)
+   if ((height % bh != 0) && height != 2 && height != 1)
       return GL_INVALID_VALUE;
 
    expectedSize = compressed_tex_size(width, height, depth, format);
