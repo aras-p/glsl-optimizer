@@ -869,6 +869,7 @@ void renderer_draw_textures(struct xorg_renderer *r,
                                   pos[2], pos[3],
                                   width, height,
                                   textures);
+      num_textures = 1;
       break;
    default:
       debug_assert(!"Unsupported number of textures");

@@ -259,14 +259,6 @@ create_vs(struct pipe_context *pipe,
       src = ureg_DECL_vs_input(ureg, input_slot++);
       dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 0);
       ureg_MOV(ureg, dst, src);
-
-      src = ureg_DECL_vs_input(ureg, input_slot++);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 1);
-      ureg_MOV(ureg, dst, src);
-
-      src = ureg_DECL_vs_input(ureg, input_slot++);
-      dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, 2);
-      ureg_MOV(ureg, dst, src);
    }
 
    if (is_composite) {
@@ -327,6 +319,11 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
             TGSI_TEXTURE_2D, pos, u_sampler);
    ureg_TEX(ureg, v,
             TGSI_TEXTURE_2D, pos, v_sampler);
+
+   ureg_SUB(ureg, u, ureg_src(u),
+            ureg_scalar(matrow0, TGSI_SWIZZLE_W));
+   ureg_SUB(ureg, v, ureg_src(v),
+            ureg_scalar(matrow0, TGSI_SWIZZLE_W));
 
    ureg_MUL(ureg, rgb,
             ureg_scalar(ureg_src(y), TGSI_SWIZZLE_X),

@@ -22,17 +22,31 @@
 
 
 /* The ITU-R BT.601 conversion matrix for SDTV. */
+/* original, matrix, but we transpose it to
+ * make the shader easier
 static const float bt_601[] = {
-    1.0, 0.0, 1.4075,   0,
+    1.0, 0.0, 1.4075,   ,
     1.0, -0.3455, -0.7169, 0,
     1.0, 1.7790, 0., 0,
+};*/
+static const float bt_601[] = {
+    1.0, 1.0, 1.0,        0.5,
+    0.0, -0.3455, 1.7790, 0,
+    1.4075, -0.7169, 0.,  0,
 };
 
 /* The ITU-R BT.709 conversion matrix for HDTV. */
+/* original, but we transpose to make the conversion
+ * in the shader easier
 static const float bt_709[] = {
     1.0, 0.0, 1.581, 0,
     1.0, -0.1881, -0.47, 0,
     1.0, 1.8629, 0., 0,
+};*/
+static const float bt_709[] = {
+    1.0,   1.0,     1.0,     0.5,
+    0.0,  -0.1881,  1.8629,  0,
+    1.581,-0.47   , 0.0,     0,
 };
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
