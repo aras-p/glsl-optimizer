@@ -42,6 +42,10 @@ struct util_format_description;
 struct lp_type;
 
 
+boolean
+lp_format_is_rgba8(const struct util_format_description *desc);
+
+
 void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
                             struct lp_type type,
