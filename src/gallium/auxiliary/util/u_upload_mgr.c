@@ -29,7 +29,7 @@
  * coalescing small buffers into larger ones.
  */
 
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"

@@ -35,7 +35,7 @@
 #define U_HASH_TABLE_H_
 
 
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 
 
 #ifdef __cplusplus

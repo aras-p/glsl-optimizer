@@ -34,6 +34,23 @@
 extern "C" {
 #endif
 
+/**
+ * Gallium error codes.
+ *
+ * - A zero value always means success.
+ * - A negative value always means failure.
+ * - The meaning of a positive value is function dependent.
+ */
+enum pipe_error {
+   PIPE_OK = 0,
+   PIPE_ERROR = -1,    /**< Generic error */
+   PIPE_ERROR_BAD_INPUT = -2,
+   PIPE_ERROR_OUT_OF_MEMORY = -3,
+   PIPE_ERROR_RETRY = -4
+   /* TODO */
+};
+
+
 #define PIPE_BLENDFACTOR_ONE                 0x1
 #define PIPE_BLENDFACTOR_SRC_COLOR           0x2
 #define PIPE_BLENDFACTOR_SRC_ALPHA           0x3
