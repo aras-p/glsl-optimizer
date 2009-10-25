@@ -785,7 +785,7 @@ static void viaTexImage(GLcontext *ctx,
       GLboolean success;
 
       if (_mesa_is_format_compressed(texImage->TexFormat)) {
-         dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
+         dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
       }
       else {
          dstRowStride = postConvWidth * _mesa_get_format_bytes(texImage->TexFormat);

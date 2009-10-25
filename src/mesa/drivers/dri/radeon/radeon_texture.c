@@ -605,7 +605,7 @@ static void radeon_teximage(
 		if (compressed) {
 			if (image->mt) {
 				uint32_t srcRowStride, bytesPerRow, rows;
-				srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
+				srcRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
 				bytesPerRow = srcRowStride;
 				rows = (height + 3) / 4;
 				copy_rows(texImage->Data, image->mt->levels[level].rowstride,
@@ -755,7 +755,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 			uint32_t srcRowStride, bytesPerRow, rows;
 			GLubyte *img_start;
 			if (!image->mt) {
-				dstRowStride = _mesa_compressed_row_stride(texImage->TexFormat, texImage->Width);
+				dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 				img_start = _mesa_compressed_image_address(xoffset, yoffset, 0,
 									   texImage->TexFormat,
 									   texImage->Width, texImage->Data);
@@ -764,7 +764,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 				uint32_t blocks_x = dstRowStride / (image->mt->bpp * 4);
 				img_start = texImage->Data + image->mt->bpp * 4 * (blocks_x * (yoffset / 4) + xoffset / 4);
 			}
-			srcRowStride = _mesa_compressed_row_stride(texImage->TexFormat, width);
+			srcRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
 			bytesPerRow = srcRowStride;
 			rows = (height + 3) / 4;
 
@@ -887,7 +887,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 		/* need to confirm this value is correct */
 		if (mt->compressed) {
 			height = (image->base.Height + 3) / 4;
-			srcrowstride = _mesa_compressed_row_stride(image->base.TexFormat, image->base.Width);
+			srcrowstride = _mesa_format_row_stride(image->base.TexFormat, image->base.Width);
 		} else {
 			height = image->base.Height * image->base.Depth;
 			srcrowstride = image->base.Width * _mesa_get_format_bytes(image->base.TexFormat);
