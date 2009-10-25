@@ -33,10 +33,8 @@
 extern GLuint
 _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all);
 
-extern GLuint
-_mesa_compressed_texture_size_glenum(GLcontext *ctx,
-                                     GLsizei width, GLsizei height,
-                                     GLsizei depth, GLenum glformat);
+extern gl_format
+_mesa_glenum_to_compressed_format(GLenum format);
 
 extern GLint
 _mesa_compressed_row_stride(gl_format mesaFormat, GLsizei width);

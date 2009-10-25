@@ -114,67 +114,42 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 
 
 /**
- * As above, but format is specified by a GLenum (GL_COMPRESSED_*) token.
- *
- * Note: This function CAN NOT return a padded hardware texture size.
- * That's why we don't call the ctx->Driver.CompressedTextureSize() function.
- *
- * We use this function to validate the <imageSize> parameter
- * of glCompressedTex[Sub]Image1/2/3D(), which must be an exact match.
+ * Convert a compressed MESA_FORMAT_x to a GLenum.
  */
-GLuint
-_mesa_compressed_texture_size_glenum(GLcontext *ctx,
-                                     GLsizei width, GLsizei height,
-                                     GLsizei depth, GLenum glformat)
+gl_format
+_mesa_glenum_to_compressed_format(GLenum format)
 {
-   gl_format mesaFormat;
-
-   switch (glformat) {
-#if FEATURE_texture_fxt1
+   switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:
-      mesaFormat = MESA_FORMAT_RGB_FXT1;
-      break;
+      return MESA_FORMAT_RGB_FXT1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      mesaFormat = MESA_FORMAT_RGBA_FXT1;
-      break;
-#endif
-#if FEATURE_texture_s3tc
+      return MESA_FORMAT_RGBA_FXT1;
+
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_RGB_S3TC:
-      mesaFormat = MESA_FORMAT_RGB_DXT1;
-      break;
+      return MESA_FORMAT_RGB_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
    case GL_RGB4_S3TC:
-      mesaFormat = MESA_FORMAT_RGBA_DXT1;
-      break;
+      return MESA_FORMAT_RGBA_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_RGBA_S3TC:
-      mesaFormat = MESA_FORMAT_RGBA_DXT3;
-      break;
+      return MESA_FORMAT_RGBA_DXT3;
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
    case GL_RGBA4_S3TC:
-      mesaFormat = MESA_FORMAT_RGBA_DXT5;
-      break;
-#if FEATURE_EXT_texture_sRGB
-   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-      mesaFormat = MESA_FORMAT_SRGB_DXT1;
-      break;
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-      mesaFormat = MESA_FORMAT_SRGBA_DXT1;
-      break;
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-      mesaFormat = MESA_FORMAT_SRGBA_DXT3;
-      break;
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-      mesaFormat = MESA_FORMAT_SRGBA_DXT5;
-      break;
-#endif
-#endif
-   default:
-      return 0;
-   }
+      return MESA_FORMAT_RGBA_DXT5;
 
-   return _mesa_format_image_size(mesaFormat, width, height, depth);
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      return MESA_FORMAT_SRGB_DXT1;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      return MESA_FORMAT_SRGBA_DXT1;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      return MESA_FORMAT_SRGBA_DXT3;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return MESA_FORMAT_SRGBA_DXT5;
+
+   default:
+      return MESA_FORMAT_NONE;
+   }
 }
 
 

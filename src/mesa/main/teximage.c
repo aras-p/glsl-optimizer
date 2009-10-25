@@ -3035,6 +3035,20 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 
 
 /**
+ * Return expected size of a compressed texture.
+ */
+static GLuint
+compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
+                    GLenum glformat)
+{
+   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
+   return _mesa_format_image_size(mesaFormat, width, height, depth);
+}
+
+
+
+
+/**
  * Error checking for glCompressedTexImage[123]D().
  * \return error code or GL_NO_ERROR.
  */
@@ -3116,8 +3130,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
-   expectedSize = _mesa_compressed_texture_size_glenum(ctx, width, height,
-                                                       depth, internalFormat);
+   expectedSize = compressed_tex_size(width, height, depth, internalFormat);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
 
@@ -3211,8 +3224,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if ((height & 3) != 0 && height != 2 && height != 1)
       return GL_INVALID_VALUE;
 
-   expectedSize = _mesa_compressed_texture_size_glenum(ctx, width, height,
-                                                       depth, format);
+   expectedSize = compressed_tex_size(width, height, depth, format);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
 
