@@ -44,3 +44,23 @@ calculate_clip_key_rast()
       }
    }
 }
+
+
+static void
+calculate_line_stipple_rast()
+{
+   GLfloat tmp;
+   GLint tmpi;
+
+   memset(&bls, 0, sizeof(bls));
+   bls.header.opcode = CMD_LINE_STIPPLE_PATTERN;
+   bls.header.length = sizeof(bls)/4 - 2;
+   bls.bits0.pattern = brw->curr.rast.line_stipple_pattern;
+   bls.bits1.repeat_count = brw->curr.rast.line_stipple_factor + 1;
+
+   tmp = 1.0 / (GLfloat) bls.bits1.repeat_count;
+   tmpi = tmp * (1<<13);
+
+   bls.bits1.inverse_repeat_count = tmpi;
+
+}

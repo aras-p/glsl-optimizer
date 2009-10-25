@@ -43,3 +43,22 @@
    if (INTEL_DEBUG & DEBUG_STATS)
       cc.cc5.statistics_enable = 1;
 }
+
+
+
+static void brw_set_blend_color(struct pipe_context *pipe,
+				const float *blend_color)
+{
+   struct brw_context *brw = brw_context(pipe);
+   struct brw_blend_constant_color *bcc = &brw->curr.blend_color.bcc;
+
+   memset(bcc, 0, sizeof(*bcc));      
+   bcc->header.opcode = CMD_BLEND_CONSTANT_COLOR;
+   bcc->header.length = sizeof(*bcc)/4-2;
+   bcc->blend_constant_color[0] = blend_color[0];
+   bcc->blend_constant_color[1] = blend_color[1];
+   bcc->blend_constant_color[2] = blend_color[2];
+   bcc->blend_constant_color[3] = blend_color[3];
+
+   brw->state.dirty.pipe |= PIPE_NEW_BLEND_COLOR;
+}

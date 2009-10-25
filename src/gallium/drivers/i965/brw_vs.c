@@ -51,11 +51,11 @@ static void do_vs_prog( struct brw_context *brw,
    brw_init_compile(brw, &c.func);
    c.vp = vp;
 
-   c.prog_data.outputs_written = vp->program.Base.OutputsWritten;
+   c.prog_data.nr_outputs_written = vp->program.Base.OutputsWritten;
    c.prog_data.inputs_read = vp->program.Base.InputsRead;
 
    if (c.key.copy_edgeflag) {
-      c.prog_data.outputs_written |= 1<<VERT_RESULT_EDGE;
+      c.prog_data.nr_outputs_written |= 1<<VERT_RESULT_EDGE;
       c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
    }
 

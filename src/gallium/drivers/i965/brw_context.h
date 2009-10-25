@@ -184,6 +184,8 @@ struct brw_fragment_shader {
 #define PIPE_NEW_CLIP                   0x2
 #define PIPE_NEW_INDEX_BUFFER           0x2
 #define PIPE_NEW_INDEX_RANGE            0x2
+#define PIPE_NEW_BLEND_COLOR            0x2
+#define PIPE_NEW_POLYGON_STIPPLE        0x2
 
 
 #define BRW_NEW_URB_FENCE               0x1
@@ -202,7 +204,9 @@ struct brw_fragment_shader {
 #define BRW_NEW_VERTICES		0x8000
 /**
  * Used for any batch entry with a relocated pointer that will be used
- * by any 3D rendering.
+ * by any 3D rendering.  Need to re-emit these fresh in each
+ * batchbuffer as the referenced buffers may be relocated in the
+ * meantime.
  */
 #define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
@@ -271,7 +275,7 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint outputs_written;
+   GLuint nr_outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
@@ -486,6 +490,9 @@ struct brw_context
       struct pipe_clip_state ucp;
       struct pipe_buffer *vertex_constants;
       struct pipe_buffer *fragment_constants;
+
+      struct brw_blend_constant_color bcc;
+      struct brw_polygon_stipple bps;
 
       /**
        * Index buffer for this draw_prims call.
@@ -726,11 +733,11 @@ void brw_init_shader_funcs( struct brw_context *brw );
 
 /* brw_urb.c
  */
-void brw_upload_urb_fence(struct brw_context *brw);
+int brw_upload_urb_fence(struct brw_context *brw);
 
 /* brw_curbe.c
  */
-void brw_upload_cs_urb_state(struct brw_context *brw);
+int brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst);

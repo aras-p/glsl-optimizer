@@ -29,11 +29,12 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
  
-
+#include "util/u_math.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_debug.h"
 
 struct brw_gs_unit_key {
    unsigned int total_grf;
@@ -76,7 +77,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 
    memset(&gs, 0, sizeof(gs));
 
-   gs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   gs.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    if (key->prog_active) /* reloc */
       gs.thread0.kernel_start_pointer = brw->gs.prog_bo->offset >> 6;
 
@@ -100,7 +101,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    if (BRW_IS_IGDNG(brw))
       gs.thread4.rendering_enable = 1;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (BRW_DEBUG & DEBUG_STATS)
       gs.thread4.stats_enable = 1;
 
    bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
@@ -111,17 +112,17 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 
    if (key->prog_active) {
       /* Emit GS program relocation */
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_INSTRUCTION, 0,
-			gs.thread0.grf_reg_count << 1,
-			offsetof(struct brw_gs_unit_state, thread0),
-			brw->gs.prog_bo);
+      brw->sws->bo_emit_reloc(bo,
+			      I915_GEM_DOMAIN_INSTRUCTION, 0,
+			      gs.thread0.grf_reg_count << 1,
+			      offsetof(struct brw_gs_unit_state, thread0),
+			      brw->gs.prog_bo);
    }
 
    return bo;
 }
 
-static void prepare_gs_unit(struct brw_context *brw)
+static int prepare_gs_unit(struct brw_context *brw)
 {
    struct brw_gs_unit_key key;
 
@@ -135,6 +136,8 @@ static void prepare_gs_unit(struct brw_context *brw)
    if (brw->gs.state_bo == NULL) {
       brw->gs.state_bo = gs_unit_create_from_key(brw, &key);
    }
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_gs_unit = {

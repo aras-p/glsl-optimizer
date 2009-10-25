@@ -76,7 +76,7 @@ struct brw_wm_prog_key {
 
    GLuint program_string_id:32;
    GLuint drawable_height;
-   GLuint vp_outputs_written;
+   GLuint vp_nr_outputs_written;
 };
 
 

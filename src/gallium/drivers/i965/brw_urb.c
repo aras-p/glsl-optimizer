@@ -221,7 +221,7 @@ const struct brw_tracked_state brw_recalculate_urb_fence = {
 
 
 
-void brw_upload_urb_fence(struct brw_context *brw)
+int brw_upload_urb_fence(struct brw_context *brw)
 {
    struct brw_urb_fence uf;
    memset(&uf, 0, sizeof(uf));
@@ -247,4 +247,5 @@ void brw_upload_urb_fence(struct brw_context *brw)
    uf.bits1.cs_fence  = URB_SIZES(brw);
 
    BRW_BATCH_STRUCT(brw, &uf);
+   return 0;
 }

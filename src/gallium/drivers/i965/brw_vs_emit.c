@@ -140,35 +140,33 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_overflow_output = 0;
 
    if (BRW_IS_IGDNG(c->func.brw))
-       mrf = 8;
+      mrf = 8;
    else
-       mrf = 4;
+      mrf = 4;
 
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c->prog_data.outputs_written & (1 << i)) {
-	 c->nr_outputs++;
-         assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
-	 if (i == VERT_RESULT_HPOS) {
-	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	 }
-	 else if (i == VERT_RESULT_PSIZ) {
-	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
+   for (i = 0; i < c->prog_data.nr_outputs_written; i++) {
+      c->nr_outputs++;
+      assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
+      if (i == VERT_RESULT_HPOS) {
+	 c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+	 reg++;
+      }
+      else if (i == VERT_RESULT_PSIZ) {
+	 c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+	 reg++;
+	 mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
+      }
+      else {
+	 if (mrf < 16) {
+	    c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
+	    mrf++;
 	 }
 	 else {
-            if (mrf < 16) {
-               c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
-               mrf++;
-            }
-            else {
-               /* too many vertex results to fit in MRF, use GRF for overflow */
-               if (!c->first_overflow_output)
-                  c->first_overflow_output = i;
-               c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
-               reg++;
-            }
+	    /* too many vertex results to fit in MRF, use GRF for overflow */
+	    if (!c->first_overflow_output)
+	       c->first_overflow_output = i;
+	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+	    reg++;
 	 }
       }
    }     
@@ -238,9 +236,9 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
    if (BRW_IS_IGDNG(c->func.brw))
-       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
+      c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
-       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
+      c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
 
    c->prog_data.total_grf = reg;
 
@@ -1050,8 +1048,9 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
     */
-   if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip || BRW_IS_965(p->brw))
+   if (c->prog_data.writes_psiz ||
+       c->key.nr_userclip || 
+       BRW_IS_965(p->brw))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -1060,7 +1059,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       brw_set_access_mode(p, BRW_ALIGN_16);	
 
-      if (c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) {
+      if (c->prog_data.writes_psiz) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
 	 brw_MUL(p, brw_writemask(header1, BRW_WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
 	 brw_AND(p, brw_writemask(header1, BRW_WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
@@ -1149,12 +1148,10 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * at mrf[4] atm...
        */
       GLuint i, mrf = 0;
-      for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
-         if (c->prog_data.outputs_written & (1 << i)) {
-            /* move from GRF to MRF */
-            brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
-            mrf++;
-         }
+      for (i = c->first_overflow_output; i < c->prog_data.nr_outputs_written; i++) {
+	 /* move from GRF to MRF */
+	 brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
+	 mrf++;
       }
 
       brw_urb_WRITE(p,

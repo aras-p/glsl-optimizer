@@ -54,7 +54,7 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
-   c.nr_attrs = util_count_bits(c.key.attrs);
+   c.nr_attrs = c.key.nr_attrs;
 
    if (BRW_IS_IGDNG(brw))
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
@@ -80,30 +80,30 @@ static void compile_gs_prog( struct brw_context *brw,
     * already been weeded out by this stage:
     */
    switch (key->primitive) {
-   case GL_QUADS:
+   case PIPE_PRIM_QUADS:
       brw_gs_quads( &c ); 
       break;
-   case GL_QUAD_STRIP:
+   case PIPE_PRIM_QUAD_STRIP:
       brw_gs_quad_strip( &c );
       break;
-   case GL_LINE_LOOP:
+   case PIPE_PRIM_LINE_LOOP:
       brw_gs_lines( &c );
       break;
-   case GL_LINES:
+   case PIPE_PRIM_LINES:
       if (key->hint_gs_always)
 	 brw_gs_lines( &c );
       else {
 	 return;
       }
       break;
-   case GL_TRIANGLES:
+   case PIPE_PRIM_TRIANGLES:
       if (key->hint_gs_always)
 	 brw_gs_tris( &c );
       else {
 	 return;
       }
       break;
-   case GL_POINTS:
+   case PIPE_PRIM_POINTS:
       if (key->hint_gs_always)
 	 brw_gs_points( &c );
       else {
@@ -129,17 +129,17 @@ static void compile_gs_prog( struct brw_context *brw,
 				       &brw->gs.prog_data );
 }
 
-static const GLenum gs_prim[GL_POLYGON+1] = {  
-   GL_POINTS,
-   GL_LINES,
-   GL_LINE_LOOP,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_QUADS,
-   GL_QUAD_STRIP,
-   GL_TRIANGLES
+static const unsigned gs_prim[PIPE_PRIM_MAX] = {  
+   PIPE_PRIM_POINTS,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINE_LOOP,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_QUADS,
+   PIPE_PRIM_QUAD_STRIP,
+   PIPE_PRIM_TRIANGLES
 };
 
 static void populate_key( struct brw_context *brw,
@@ -148,7 +148,7 @@ static void populate_key( struct brw_context *brw,
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
-   key->attrs = brw->vs.prog_data->outputs_written;
+   key->nr_attrs = brw->vs.prog_data->nr_outputs_written;
 
    /* BRW_NEW_PRIMITIVE */
    key->primitive = gs_prim[brw->primitive];
@@ -156,14 +156,14 @@ static void populate_key( struct brw_context *brw,
    key->hint_gs_always = 0;	/* debug code? */
 
    key->need_gs_prog = (key->hint_gs_always ||
-			brw->primitive == GL_QUADS ||
-			brw->primitive == GL_QUAD_STRIP ||
-			brw->primitive == GL_LINE_LOOP);
+			brw->primitive == PIPE_PRIM_QUADS ||
+			brw->primitive == PIPE_PRIM_QUAD_STRIP ||
+			brw->primitive == PIPE_PRIM_LINE_LOOP);
 }
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void prepare_gs_prog(struct brw_context *brw)
+static int prepare_gs_prog(struct brw_context *brw)
 {
    struct brw_gs_prog_key key;
    /* Populate the key:
@@ -184,6 +184,8 @@ static void prepare_gs_prog(struct brw_context *brw)
       if (brw->gs.prog_bo == NULL)
 	 compile_gs_prog( brw, &key );
    }
+
+   return 0;
 }
 
 

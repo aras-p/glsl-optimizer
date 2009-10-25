@@ -33,8 +33,10 @@
 #ifndef BRW_STATE_H
 #define BRW_STATE_H
 
-#include "brw_context.h"
+#include "pipe/p_error.h"
 #include "util/u_memory.h"
+
+#include "brw_context.h"
 
 static inline void
 brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)

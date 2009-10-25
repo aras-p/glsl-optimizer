@@ -126,7 +126,7 @@ const struct brw_tracked_state brw_curbe_offsets = {
  * fixed-function hardware in a double-buffering scheme to avoid a
  * pipeline stall each time the contents of the curbe is changed.
  */
-void brw_upload_cs_urb_state(struct brw_context *brw)
+int brw_upload_cs_urb_state(struct brw_context *brw)
 {
    struct brw_cs_urb_state cs_urb;
    memset(&cs_urb, 0, sizeof(cs_urb));
@@ -144,6 +144,7 @@ void brw_upload_cs_urb_state(struct brw_context *brw)
 
    assert(brw->urb.nr_cs_entries);
    BRW_CACHED_BATCH_STRUCT(brw, &cs_urb);
+   return 0;
 }
 
 static GLfloat fixed_plane[6][4] = {
