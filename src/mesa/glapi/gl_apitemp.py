@@ -82,9 +82,6 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		else:
 			dispatch = "DISPATCH"
 
-		if f.has_different_protocol(name):
-			print '#ifndef GLX_INDIRECT_RENDERING'
-
 		if not f.is_static_entry_point(name):
 			print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
 			print ''
@@ -98,8 +95,6 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			print '   %s(%s, (%s), (F, "gl%s(%s);\\n", %s));' \
 				% (dispatch, f.name, p_string, name, t_string, o_string)
 		print '}'
-		if f.has_different_protocol(name):
-			print '#endif /* GLX_INDIRECT_RENDERING */'
 		print ''
 		return
 
@@ -172,6 +167,10 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 #error TABLE_ENTRY must be defined
 #endif
 
+#ifdef _GLAPI_SKIP_NORMAL_ENTRY_POINTS
+#error _GLAPI_SKIP_NORMAL_ENTRY_POINTS must not be defined
+#endif
+
 static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 		for f in api.functionIterateByOffset():
 			print '   TABLE_ENTRY(%s),' % (f.dispatch_name())
@@ -198,33 +197,88 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 #ifdef UNUSED_TABLE_NAME
 static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
+		normal_entries = []
+		proto_entries = []
 		for f in api.functionIterateByOffset():
-			for n in f.entry_points:
-				if n != f.name:
-					if f.is_static_entry_point(n):
-						text = '   TABLE_ENTRY(%s),' % (n)
+			normal_ents, proto_ents = self.classifyEntryPoints(f)
 
-						if f.has_different_protocol(n):
-							print '#ifndef GLX_INDIRECT_RENDERING'
-							print text
-							print '#endif'
-						else:
-							print text
+			# exclude f.name
+			if f.name in normal_ents:
+				normal_ents.remove(f.name)
+			elif f.name in proto_ents:
+				proto_ents.remove(f.name)
+
+			normal_ents = [f.static_name(ent) for ent in normal_ents]
+			proto_ents = [f.static_name(ent) for ent in proto_ents]
+
+			normal_entries.extend(normal_ents)
+			proto_entries.extend(proto_ents)
+
+		print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
+		for ent in normal_entries:
+			print '   TABLE_ENTRY(%s),' % (ent)
+		print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
+		print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
+		for ent in proto_entries:
+			print '   TABLE_ENTRY(%s),' % (ent)
+		print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
+
 		print '};'
 		print '#endif /*UNUSED_TABLE_NAME*/'
 		print ''
 		return
 
 
+	def classifyEntryPoints(self, func):
+		normal_names = []
+		normal_stubs = []
+		proto_names = []
+		proto_stubs = []
+		# classify the entry points
+		for name in func.entry_points:
+			if func.has_different_protocol(name):
+				if func.is_static_entry_point(name):
+					proto_names.append(name)
+				else:
+					proto_stubs.append(name)
+			else:
+				if func.is_static_entry_point(name):
+					normal_names.append(name)
+				else:
+					normal_stubs.append(name)
+		# there can be at most one stub for a function
+		if normal_stubs:
+			normal_names.append(normal_stubs[0])
+		elif proto_stubs:
+			proto_names.append(proto_stubs[0])
+
+		return (normal_names, proto_names)
+
 	def printBody(self, api):
+		normal_entry_points = []
+		proto_entry_points = []
 		for func in api.functionIterateByOffset():
-			got_stub = 0
-			for n in func.entry_points:
-				if func.is_static_entry_point(n):
-					self.printFunction(func, n)
-				elif not got_stub:
-					self.printFunction(func, n)
-					got_stub = 1
+			normal_ents, proto_ents = self.classifyEntryPoints(func)
+			normal_entry_points.append((func, normal_ents))
+			proto_entry_points.append((func, proto_ents))
+
+		print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
+		print ''
+		for func, ents in normal_entry_points:
+			for ent in ents:
+				self.printFunction(func, ent)
+		print ''
+		print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
+		print ''
+		print '/* these entry points might require different protocols */'
+		print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
+		print ''
+		for func, ents in proto_entry_points:
+			for ent in ents:
+				self.printFunction(func, ent)
+		print ''
+		print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
+		print ''
 
 		self.printInitDispatch(api)
 		self.printAliasedTable(api)
