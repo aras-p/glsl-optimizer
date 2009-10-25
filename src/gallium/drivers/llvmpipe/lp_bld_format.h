@@ -49,24 +49,19 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
                             LLVMValueRef *swizzled);
 
 
-/**
- * Unpack a pixel into its RGBA components.
- *
- * @param packed integer.
- *
- * @return RGBA in a 4 floats vector.
- */
 LLVMValueRef
 lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
                          const struct util_format_description *desc,
                          LLVMValueRef packed);
 
 
-/**
- * Pack a pixel.
- *
- * @param rgba 4 float vector with the unpacked components.
- */
+LLVMValueRef
+lp_build_unpack_rgba8_aos(LLVMBuilderRef builder,
+                          const struct util_format_description *desc,
+                          struct lp_type type,
+                          LLVMValueRef packed);
+
+
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
                        const struct util_format_description *desc,
