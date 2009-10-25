@@ -36,8 +36,9 @@ static void r300_setup_texture_state(struct r300_texture* tex)
     state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
         R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff) |
         R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
-        R300_TX_NUM_LEVELS(pt->last_level & 0xf) |
-        R300_TX_PITCH_EN;
+        R300_TX_NUM_LEVELS(pt->last_level & 0xf);/* |
+        R300_TX_PITCH_EN;*/
+    /* XXX TX_PITCH_EN breaks rendering mipmap levels > 0, weard */
 
     /* XXX */
     state->format1 = r300_translate_texformat(pt->format);
@@ -194,6 +195,10 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         surface->height = texture->height[level];
         surface->offset = offset;
         surface->usage = flags;
+        surface->zslice = zslice;
+        surface->texture = texture;
+        surface->face = face;
+        surface->level = level;
     }
 
     return surface;
