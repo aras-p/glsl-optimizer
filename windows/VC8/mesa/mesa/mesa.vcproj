@@ -715,6 +715,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\remap.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.c"
 				>
 			</File>
@@ -1581,6 +1585,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\readpix.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\remap.h"
 				>
 			</File>
 			<File
