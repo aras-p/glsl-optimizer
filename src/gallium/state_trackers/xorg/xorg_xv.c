@@ -343,19 +343,16 @@ setup_fs_video_constants(struct xorg_renderer *r, boolean hdtv)
 }
 
 static void
-draw_yuv(struct xorg_xv_port_priv *port, int src_x, int src_y,
-         int dst_x, int dst_y,
-         int w, int h)
+draw_yuv(struct xorg_xv_port_priv *port,
+         int src_x, int src_y, int src_w, int src_h,
+         int dst_x, int dst_y, int dst_w, int dst_h)
 {
-   int pos[4] = {src_x, src_y,
-                 dst_x, dst_y};
    struct pipe_texture **textures = port->yuv[port->current_set];
 
-   renderer_draw_textures(port->r,
-                          pos, w, h,
-                          textures,
-                          3, /*bound samplers/textures */
-                          NULL, NULL /* no transformations */);
+   renderer_draw_yuv(port->r,
+                     src_x, src_y, src_w, src_h,
+                     dst_x, dst_y, dst_w, dst_h,
+                     textures);
 }
 
 static void
@@ -438,8 +435,7 @@ static int
 display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
               RegionPtr dstRegion,
               int src_x, int src_y, int src_w, int src_h,
-              int dstX, int dstY,
-              short width, short height,
+              int dstX, int dstY, int dst_w, int dst_h,
               PixmapPtr pPixmap)
 {
    modesettingPtr ms = modesettingPTR(pScrn);
@@ -478,13 +474,24 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       int box_y1 = pbox->y1;
       int box_x2 = pbox->x2;
       int box_y2 = pbox->y2;
+      float diff_x = (float)src_w / (float)dst_w;
+      float diff_y = (float)src_h / (float)dst_h;
+      int offset_x = box_x1 - dstX;
+      int offset_y = box_y1 - dstY;
+      int offset_w;
+      int offset_h;
 
       x = box_x1;
       y = box_y1;
       w = box_x2 - box_x1;
       h = box_y2 - box_y1;
 
-      draw_yuv(pPriv, src_x, src_y, x, y, w, h);
+      offset_w = dst_w - w;
+      offset_h = dst_h - h;
+
+      draw_yuv(pPriv, src_x + offset_x*diff_x, src_y + offset_y*diff_y,
+               src_w - offset_w*diff_x, src_h - offset_h*diff_x,
+               x, y, w, h);
 
       pbox++;
    }

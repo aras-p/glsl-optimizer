@@ -51,5 +51,10 @@ void renderer_draw_textures(struct xorg_renderer *r,
                             float *src_matrix,
                             float *mask_matrix);
 
+void renderer_draw_yuv(struct xorg_renderer *r,
+                       int src_x, int src_y, int src_w, int src_h,
+                       int dst_x, int dst_y, int dst_w, int dst_h,
+                       struct pipe_texture **textures);
+
 
 #endif

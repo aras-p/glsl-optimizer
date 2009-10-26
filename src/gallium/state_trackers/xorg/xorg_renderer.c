@@ -226,9 +226,8 @@ setup_vertex_data2(struct xorg_renderer *r,
 
 static struct pipe_buffer *
 setup_vertex_data_yuv(struct xorg_renderer *r,
-                      float srcX, float srcY,
-                      float dstX, float dstY,
-                      float width, float height,
+                      float srcX, float srcY, float srcW, float srcH,
+                      float dstX, float dstY, float dstW, float dstH,
                       struct pipe_texture **tex)
 {
    float s0, t0, s1, t1;
@@ -236,8 +235,8 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
 
    spt0[0] = srcX;
    spt0[1] = srcY;
-   spt1[0] = srcX + width;
-   spt1[1] = srcY + height;
+   spt1[0] = srcX + srcW;
+   spt1[1] = srcY + srcH;
 
    s0 = spt0[0] / tex[0]->width[0];
    t0 = spt0[1] / tex[0]->height[0];
@@ -247,13 +246,13 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
    /* 1st vertex */
    setup_vertex1(r->vertices2[0], dstX, dstY, s0, t0);
    /* 2nd vertex */
-   setup_vertex1(r->vertices2[1], dstX + width, dstY,
+   setup_vertex1(r->vertices2[1], dstX + dstW, dstY,
                  s1, t0);
    /* 3rd vertex */
-   setup_vertex1(r->vertices2[2], dstX + width, dstY + height,
+   setup_vertex1(r->vertices2[2], dstX + dstW, dstY + dstH,
                  s1, t1);
    /* 4th vertex */
-   setup_vertex1(r->vertices2[3], dstX, dstY + height,
+   setup_vertex1(r->vertices2[3], dstX, dstY + dstH,
                  s0, t1);
 
 
@@ -864,13 +863,6 @@ void renderer_draw_textures(struct xorg_renderer *r,
                                src_matrix, mask_matrix);
       break;
    case 3:
-      buf = setup_vertex_data_yuv(r,
-                                  pos[0], pos[1],
-                                  pos[2], pos[3],
-                                  width, height,
-                                  textures);
-      num_textures = 1;
-      break;
    default:
       debug_assert(!"Unsupported number of textures");
       break;
@@ -879,6 +871,31 @@ void renderer_draw_textures(struct xorg_renderer *r,
    if (buf) {
       int num_attribs = 1; /*pos*/
       num_attribs += num_textures;
+
+      util_draw_vertex_buffer(pipe, buf, 0,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              num_attribs); /* attribs/vert */
+
+      pipe_buffer_reference(&buf, NULL);
+   }
+}
+
+void renderer_draw_yuv(struct xorg_renderer *r,
+                       int src_x, int src_y, int src_w, int src_h,
+                       int dst_x, int dst_y, int dst_w, int dst_h,
+                       struct pipe_texture **textures)
+{
+   struct pipe_context *pipe = r->pipe;
+   struct pipe_buffer *buf = 0;
+
+   buf = setup_vertex_data_yuv(r,
+                               src_x, src_y, src_w, src_h,
+                               dst_x, dst_y, dst_w, dst_h,
+                               textures);
+
+   if (buf) {
+      const int num_attribs = 2; /*pos + tex coord*/
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
