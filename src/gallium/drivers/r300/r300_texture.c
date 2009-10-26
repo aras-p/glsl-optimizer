@@ -27,18 +27,31 @@
 
 #include "r300_context.h"
 #include "r300_texture.h"
+#include "r300_screen.h"
 
-static void r300_setup_texture_state(struct r300_texture* tex)
+static void r300_setup_texture_state(struct r300_texture* tex, boolean is_r500)
 {
     struct r300_texture_state* state = &tex->state;
     struct pipe_texture *pt = &tex->tex;
+    unsigned stride;
 
     state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
-        R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff) |
-        R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
-        R300_TX_NUM_LEVELS(pt->last_level & 0xf);/* |
-        R300_TX_PITCH_EN;*/
-    /* XXX TX_PITCH_EN breaks rendering mipmap levels > 0, weard */
+                     R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff);
+
+    if (!util_is_power_of_two(pt->width[0]) ||
+        !util_is_power_of_two(pt->height[0])) {
+
+        /* rectangles love this */
+        state->format0 |= R300_TX_PITCH_EN;
+
+        stride = r300_texture_get_stride(tex, 0) / pt->block.size;
+        state->format2 = (stride - 1) & 0x1fff;
+    }
+    else {
+        /* power of two textures (3D, mipmaps, and no pitch) */
+        state->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
+                          R300_TX_NUM_LEVELS(pt->last_level & 0xf);
+    }
 
     /* XXX */
     state->format1 = r300_translate_texformat(pt->format);
@@ -49,17 +62,17 @@ static void r300_setup_texture_state(struct r300_texture* tex)
         state->format1 |= R300_TX_FORMAT_3D;
     }
 
-    state->format2 = ((r300_texture_get_stride(tex, 0) / pt->block.size) - 1)
-                     & 0x1fff;
-
-    /* Don't worry about accidentally setting this bit on non-r500;
-     * the kernel should catch it. */
-    if (pt->width[0] > 2048) {
-        state->format2 |= R500_TXWIDTH_BIT11;
+    /* large textures on r500 */
+    if (is_r500)
+    {
+        if (pt->width[0] > 2048) {
+            state->format2 |= R500_TXWIDTH_BIT11;
+        }
+        if (pt->height[0] > 2048) {
+            state->format2 |= R500_TXHEIGHT_BIT11;
+        }
     }
-    if (pt->height[0] > 2048) {
-        state->format2 |= R500_TXHEIGHT_BIT11;
-    }
+    assert(is_r500 || (pt->width[0] <= 2048 && pt->height[0] <= 2048));
 
     debug_printf("r300: Set texture state (%dx%d, %d levels)\n",
 		 pt->width[0], pt->height[0], pt->last_level);
@@ -121,7 +134,11 @@ static void r300_setup_miptree(struct r300_texture* tex)
 
         stride = r300_texture_get_stride(tex, i);
         layer_size = stride * base->nblocksy[i];
-        size = layer_size * base->depth[i];
+
+        if (base->target == PIPE_TEXTURE_CUBE)
+            size = layer_size * 6;
+        else
+            size = layer_size * base->depth[i];
 
         tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
@@ -151,7 +168,7 @@ static struct pipe_texture*
 
     r300_setup_miptree(tex);
 
-    r300_setup_texture_state(tex);
+    r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);
 
     tex->buffer = screen->buffer_create(screen, 1024,
                                         PIPE_BUFFER_USAGE_PIXEL,
@@ -229,7 +246,7 @@ static struct pipe_texture*
 
     tex->stride_override = *stride;
 
-    r300_setup_texture_state(tex);
+    r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);
 
     pipe_buffer_reference(&tex->buffer, buffer);
 
