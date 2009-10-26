@@ -484,7 +484,7 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
     * lands onscreen in a timely manner, even if the X Server doesn't trigger
     * a flush for us.
     */
-   if (needs_mi_flush)
+   if (!intel->driScreen->dri2.enabled && needs_mi_flush)
       intel_batchbuffer_emit_mi_flush(intel->batch);
 
    if (intel->batch->map != intel->batch->ptr)
