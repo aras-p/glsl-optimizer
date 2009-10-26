@@ -106,6 +106,8 @@ static void Display( void )
    glRotatef(Rot, 0, 0, 1);
 
    glEnable(GL_TEXTURE_2D);
+   glEnable(GL_BLEND);
+
    glBegin(GL_POLYGON);
    glTexCoord2f(0, 1);  glVertex2f(-1, -0.5);
    glTexCoord2f(1, 1);  glVertex2f( 1, -0.5);
@@ -118,6 +120,7 @@ static void Display( void )
    glDisable(GL_TEXTURE_2D);
 
    /* info */
+   glDisable(GL_BLEND);
    glColor4f(1, 1, 1, 1);
 
    glRasterPos3f(-1.2, -0.7, 0);
