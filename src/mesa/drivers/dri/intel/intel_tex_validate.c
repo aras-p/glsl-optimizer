@@ -42,7 +42,7 @@ intel_calculate_first_last_level(struct intel_context *intel,
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-	 if (!IS_9XX(intel->intelScreen->deviceID)) {
+	 if (intel->gen == 2) {
 	    firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
 	    firstLevel = MAX2(firstLevel, tObj->BaseLevel);
 	    firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);

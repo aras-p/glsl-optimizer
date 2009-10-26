@@ -122,7 +122,7 @@ intel_miptree_create(struct intel_context *intel,
 
    if (intel->use_texture_tiling && compress_byte == 0 &&
        intel->intelScreen->kernel_exec_fencing) {
-      if (IS_965(intel->intelScreen->deviceID) &&
+      if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;

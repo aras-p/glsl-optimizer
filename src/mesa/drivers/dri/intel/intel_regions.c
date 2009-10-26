@@ -582,8 +582,7 @@ intel_recreate_static(struct intel_context *intel,
        * instead of which tiling mode it is.  Guess.
        */
       if (region_desc->tiled) {
-	 if (IS_965(intel->intelScreen->deviceID) &&
-	     region_desc == &intelScreen->depth)
+	 if (intel->gen >= 4 && region_desc == &intelScreen->depth)
 	    region->tiling = I915_TILING_Y;
 	 else
 	    region->tiling = I915_TILING_X;

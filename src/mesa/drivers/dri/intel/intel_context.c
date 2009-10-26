@@ -477,7 +477,7 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
    if (intel->Fallback)
       _swrast_flush(ctx);
 
-   if (!IS_965(intel->intelScreen->deviceID))
+   if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
    /* Emit a flush so that any frontbuffer rendering that might have occurred
@@ -614,6 +614,13 @@ intelInitContext(struct intel_context *intel,
    intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
 
+   if (IS_965(intel->intelScreen->deviceID))
+      intel->gen = 4;
+   else if (IS_9XX(intel->intelScreen->deviceID))
+      intel->gen = 3;
+   else
+      intel->gen = 2;
+
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
@@ -621,7 +628,7 @@ intelInitContext(struct intel_context *intel,
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum,
-		       IS_965(intelScreen->deviceID) ? "i965" : "i915");
+		       (intel->gen >= 4) ? "i965" : "i915");
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intel->maxBatchSize = 4096;
    else
@@ -683,7 +690,7 @@ intelInitContext(struct intel_context *intel,
 
    meta_init_metaops(ctx, &intel->meta);
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
-   if (IS_965(intelScreen->deviceID)) {
+   if (intel->gen >= 4) {
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {
@@ -720,7 +727,7 @@ intelInitContext(struct intel_context *intel,
       break;
    }
 
-   if (IS_965(intelScreen->deviceID))
+   if (intel->gen >= 4)
       intel->polygon_offset_scale /= 0xffff;
 
    intel->RenderIndex = ~0;
@@ -733,7 +740,7 @@ intelInitContext(struct intel_context *intel,
 
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   if (IS_965(intelScreen->deviceID) && !intel->intelScreen->irq_active) {
+   if (intel->gen >= 4 && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);
    }

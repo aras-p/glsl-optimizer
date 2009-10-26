@@ -183,6 +183,11 @@ struct intel_context
    dri_bufmgr *bufmgr;
    unsigned int maxBatchSize;
 
+   /**
+    * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
+    */
+   int gen;
+
    struct intel_region *front_region;
    struct intel_region *back_region;
    struct intel_region *depth_region;
