@@ -28,6 +28,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_winsys.h"
 
 /**
  * Prints out a header, the contents, and the message associated with
@@ -44,28 +45,32 @@ state_out(const char *name, void *data, uint32_t hw_offset, int index,
 {
     va_list va;
 
-    fprintf(stderr, "%8s: 0x%08x: 0x%08x: ",
-	    name, hw_offset + index * 4, ((uint32_t *)data)[index]);
+    debug_printf("%8s: 0x%08x: 0x%08x: ",
+		 name, hw_offset + index * 4, ((uint32_t *)data)[index]);
     va_start(va, fmt);
-    vfprintf(stderr, fmt, va);
+    debug_vprintf(fmt, va);
     va_end(va);
 }
 
 /** Generic, undecoded state buffer debug printout */
 static void
-state_struct_out(const char *name, struct brw_winsys_buffer *buffer, unsigned int state_size)
+state_struct_out(struct brw_winsys_screen *sws,
+		 const char *name,
+		 struct brw_winsys_buffer *buffer,
+		 unsigned int state_size)
 {
    int i;
+   void *data;
 
    if (buffer == NULL)
       return;
 
-   dri_bo_map(buffer, GL_FALSE);
+   data = sws->bo_map(buffer, GL_FALSE);
    for (i = 0; i < state_size / 4; i++) {
-      state_out(name, buffer->virtual, buffer->offset, i,
+      state_out(name, data, buffer->offset, i,
 		"dword %d\n", i);
    }
-   dri_bo_unmap(buffer);
+   sws->bo_unmap(buffer);
 }
 
 static const char *
@@ -106,12 +111,11 @@ static void dump_wm_surface_state(struct brw_context *brw)
       char name[20];
 
       if (surf_bo == NULL) {
-	 fprintf(stderr, "  WM SS%d: NULL\n", i);
+	 debug_printf("  WM SS%d: NULL\n", i);
 	 continue;
       }
-      dri_bo_map(surf_bo, GL_FALSE);
+      surf = (struct brw_surface_state *)brw->sws->bo_map(surf_bo, GL_FALSE);
       surfoff = surf_bo->offset;
-      surf = (struct brw_surface_state *)(surf_bo->virtual);
 
       sprintf(name, "WM SS%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
@@ -127,7 +131,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
       state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
 		surf->ss5.x_offset, surf->ss5.y_offset);
 
-      dri_bo_unmap(surf_bo);
+      brw->sws->bo_unmap(surf_bo);
    }
 }
 
@@ -140,9 +144,7 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    if (brw->sf.vp_bo == NULL)
       return;
 
-   dri_bo_map(brw->sf.vp_bo, GL_FALSE);
-
-   vp = brw->sf.vp_bo->virtual;
+   vp = (struct brw_sf_viewport *)brw->sws->bo_map(brw->sf.vp_bo, GL_FALSE);
    vp_off = brw->sf.vp_bo->offset;
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
@@ -157,10 +159,12 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    state_out(name, vp, vp_off, 7, "bottom right = %d,%d\n",
 	     vp->scissor.xmax, vp->scissor.ymax);
 
-   dri_bo_unmap(brw->sf.vp_bo);
+   brw->sws->bo_unmap(brw->sf.vp_bo);
 }
 
-static void brw_debug_prog(const char *name, struct brw_winsys_buffer *prog)
+static void brw_debug_prog(struct brw_winsys_screen *sws,
+			   const char *name,
+			   struct brw_winsys_buffer *prog)
 {
    unsigned int i;
    uint32_t *data;
@@ -168,12 +172,10 @@ static void brw_debug_prog(const char *name, struct brw_winsys_buffer *prog)
    if (prog == NULL)
       return;
 
-   dri_bo_map(prog, GL_FALSE);
-
-   data = prog->virtual;
+   data = (uint32_t *)sws->bo_map(prog, GL_FALSE);
 
    for (i = 0; i < prog->size / 4 / 4; i++) {
-      fprintf(stderr, "%8s: 0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
+      debug_printf("%8s: 0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
 	      name, (unsigned int)prog->offset + i * 4 * 4,
 	      data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
       /* Stop at the end of the program.  It'd be nice to keep track of the actual
@@ -186,7 +188,7 @@ static void brw_debug_prog(const char *name, struct brw_winsys_buffer *prog)
 	 break;
    }
 
-   dri_bo_unmap(prog);
+   sws->bo_unmap(prog);
 }
 
 
@@ -202,19 +204,21 @@ static void brw_debug_prog(const char *name, struct brw_winsys_buffer *prog)
  */
 void brw_debug_batch(struct brw_context *brw)
 {
-   state_struct_out("WM bind", brw->wm.bind_bo, 4 * brw->wm.nr_surfaces);
+   struct brw_winsys_screen *sws = brw->sws;
+
+   state_struct_out(sws, "WM bind", brw->wm.bind_bo, 4 * brw->wm.nr_surfaces);
    dump_wm_surface_state(brw);
 
-   state_struct_out("VS", brw->vs.state_bo, sizeof(struct brw_vs_unit_state));
-   brw_debug_prog("VS prog", brw->vs.prog_bo);
+   state_struct_out(sws, "VS", brw->vs.state_bo, sizeof(struct brw_vs_unit_state));
+   brw_debug_prog(sws, "VS prog", brw->vs.prog_bo);
 
-   state_struct_out("GS", brw->gs.state_bo, sizeof(struct brw_gs_unit_state));
-   brw_debug_prog("GS prog", brw->gs.prog_bo);
+   state_struct_out(sws, "GS", brw->gs.state_bo, sizeof(struct brw_gs_unit_state));
+   brw_debug_prog(sws, "GS prog", brw->gs.prog_bo);
 
-   state_struct_out("SF", brw->sf.state_bo, sizeof(struct brw_sf_unit_state));
+   state_struct_out(sws, "SF", brw->sf.state_bo, sizeof(struct brw_sf_unit_state));
    dump_sf_viewport_state(brw);
-   brw_debug_prog("SF prog", brw->sf.prog_bo);
+   brw_debug_prog(sws, "SF prog", brw->sf.prog_bo);
 
-   state_struct_out("WM", brw->wm.state_bo, sizeof(struct brw_wm_unit_state));
-   brw_debug_prog("WM prog", brw->wm.prog_bo);
+   state_struct_out(sws, "WM", brw->wm.state_bo, sizeof(struct brw_wm_unit_state));
+   brw_debug_prog(sws, "WM prog", brw->wm.prog_bo);
 }

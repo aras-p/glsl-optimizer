@@ -122,7 +122,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread4.max_threads = CLAMP(key->nr_urb_entries / 2,
 				  1, chipset_max_threads) - 1;
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+   if (BRW_DEBUG & DEBUG_SINGLE_THREAD)
       vs.thread4.max_threads = 0;
 
    /* No samplers for ARB_vp programs:
@@ -131,7 +131,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.vs5.sampler_count = 0;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (BRW_DEBUG & DEBUG_STATS)
       vs.thread4.stats_enable = 1;
 
    /* Vertex program always enabled:

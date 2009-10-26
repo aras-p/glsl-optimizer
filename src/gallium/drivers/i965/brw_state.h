@@ -168,9 +168,20 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 void brw_destroy_batch_cache( struct brw_context *brw );
 void brw_clear_batch_cache( struct brw_context *brw );
 
-/* brw_wm_surface_state.c */
+/***********************************************************************
+ * brw_wm_surface_state.c 
+ */
 struct brw_winsys_buffer *
 brw_create_constant_surface( struct brw_context *brw,
                              struct brw_surface_key *key );
+
+/***********************************************************************
+ * brw_state_debug.c
+ */
+void brw_update_dirty_counts( unsigned mesa,
+			      unsigned brw,
+			      unsigned cache );
+
+
 
 #endif

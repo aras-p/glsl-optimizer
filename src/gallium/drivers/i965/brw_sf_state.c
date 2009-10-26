@@ -29,58 +29,48 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
    
+#include "util/u_math.h"
 
+#include "pipe/p_state.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_debug.h"
+#include "brw_pipe_rast.h"
 
-static void upload_sf_vp(struct brw_context *brw)
+static int upload_sf_vp(struct brw_context *brw)
 {
-   const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+   const struct pipe_viewport_state *vp = &brw->curr.vp;
+   const struct pipe_scissor_state *scissor = &brw->curr.scissor;
    struct brw_sf_viewport sfv;
-   GLfloat y_scale, y_bias;
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    memset(&sfv, 0, sizeof(sfv));
 
-   y_scale = 1.0;
-   y_bias = 0;
+   /* PIPE_NEW_VIEWPORT, PIPE_NEW_SCISSOR */
 
-   /* _NEW_VIEWPORT */
+   sfv.viewport.m00 = vp->scale[0];
+   sfv.viewport.m11 = vp->scale[1];
+   sfv.viewport.m22 = vp->scale[2];
+   sfv.viewport.m30 = vp->translate[0];
+   sfv.viewport.m31 = vp->translate[1];
+   sfv.viewport.m32 = vp->translate[2];
 
-   sfv.viewport.m00 = v[MAT_SX];
-   sfv.viewport.m11 = v[MAT_SY] * y_scale;
-   sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
-   sfv.viewport.m30 = v[MAT_TX];
-   sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
-   sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
-
-   /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT
-    * for DrawBuffer->_[XY]{min,max}
-    */
-
-   /* The scissor only needs to handle the intersection of drawable and
-    * scissor rect.
-    *
-    * Note that the hardware's coordinates are inclusive, while Mesa's min is
-    * inclusive but max is exclusive.
-    */
-   /* Y=0=bottom */
-   sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-   sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-   sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
-   sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
+   sfv.scissor.xmin = scissor->minx;
+   sfv.scissor.xmax = scissor->maxx; /* -1 ?? */
+   sfv.scissor.ymin = scissor->miny;
+   sfv.scissor.ymax = scissor->maxy; /* -1 ?? */
 
    brw->sws->bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
-      .mesa  = (_NEW_VIEWPORT | 
-		_NEW_SCISSOR |
-		_NEW_BUFFERS),
+      .mesa  = (PIPE_NEW_VIEWPORT | 
+		PIPE_NEW_SCISSOR),
       .brw   = 0,
       .cache = 0
    },
@@ -90,15 +80,17 @@ const struct brw_tracked_state brw_sf_vp = {
 struct brw_sf_unit_key {
    unsigned int total_grf;
    unsigned int urb_entry_read_length;
-
    unsigned int nr_urb_entries, urb_size, sfsize;
-
-   GLenum front_face, cull_face, provoking_vertex;
+   
    unsigned scissor:1;
    unsigned line_smooth:1;
    unsigned point_sprite:1;
    unsigned point_attenuated:1;
-   unsigned render_to_fbo:1;
+   unsigned front_face:2;
+   unsigned cull_mode:2;
+   unsigned flatshade_first:1;
+   unsigned gl_rasterization_rules:1;
+   unsigned line_last_pixel_enable:1;
    float line_width;
    float point_size;
 };
@@ -106,6 +98,7 @@ struct brw_sf_unit_key {
 static void
 sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
+   const struct pipe_rasterizer_state *rast = &brw->curr.rast->templ;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */
@@ -117,25 +110,22 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->urb_size = brw->urb.vsize;
    key->sfsize = brw->urb.sfsize;
 
-   key->scissor = ctx->Scissor.Enabled;
-   key->front_face = ctx->Polygon.FrontFace;
+   /* PIPE_NEW_RAST */
+   key->scissor = rast->scissor;
+   key->front_face = rast->front_winding;
+   key->cull_mode = rast->cull_mode;
+   key->line_smooth = rast->line_smooth;
+   key->line_width = rast->line_width;
+   key->flatshade_first = rast->flatshade_first;
+   key->line_last_pixel_enable = rast->line_last_pixel;
+   key->gl_rasterization_rules = rast->gl_rasterization_rules;
 
-   if (ctx->Polygon.CullFlag)
-      key->cull_face = ctx->Polygon.CullFaceMode;
-   else
-      key->cull_face = GL_NONE;
+   key->point_sprite = rast->point_sprite;
+   key->point_attenuated = rast->point_size_per_vertex;
 
-   key->line_width = ctx->Line.Width;
-   key->line_smooth = ctx->Line.SmoothFlag;
-
-   key->point_sprite = ctx->Point.PointSprite;
-   key->point_size = CLAMP(ctx->Point.Size, ctx->Point.MinSize, ctx->Point.MaxSize);
-   key->point_attenuated = ctx->Point._Attenuated;
-
-   /* _NEW_LIGHT */
-   key->provoking_vertex = ctx->Light.ProvokingVertex;
-
-   key->render_to_fbo = 1;
+   key->point_size = CLAMP(rast->point_size, 
+			   rast->point_size_min, 
+			   rast->point_size_max);
 }
 
 static struct brw_winsys_buffer *
@@ -147,7 +137,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
-   sf.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   sf.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
 
    sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
@@ -174,10 +164,10 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+   if (BRW_DEBUG & DEBUG_SINGLE_THREAD)
       sf.thread4.max_threads = 0;
 
-   if (INTEL_DEBUG & DEBUG_STATS)
+   if (BRW_DEBUG & DEBUG_STATS)
       sf.thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
@@ -185,31 +175,30 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.sf5.viewport_transform = 1;
 
-   /* _NEW_SCISSOR */
    if (key->scissor)
       sf.sf6.scissor = 1;
 
-   /* _NEW_POLYGON */
-   if (key->front_face == GL_CCW)
+   if (key->front_face == PIPE_WINDING_CCW)
       sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   switch (key->cull_face) {
-   case GL_FRONT:
-      sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
+   switch (key->cull_mode) {
+   case PIPE_WINDING_CCW:
+   case PIPE_WINDING_CW:
+      sf.sf6.cull_mode = (key->front_face == key->cull_mode ?
+			  BRW_CULLMODE_FRONT :
+			  BRW_CULLMODE_BACK);
       break;
-   case GL_BACK:
-      sf.sf6.cull_mode = BRW_CULLMODE_BACK;
-      break;
-   case GL_FRONT_AND_BACK:
+   case PIPE_WINDING_BOTH:
       sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
       break;
-   case GL_NONE:
+   case PIPE_WINDING_NONE:
       sf.sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    default:
       assert(0);
+      sf.sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    }
 
@@ -223,9 +212,9 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else if (sf.sf6.line_width <= 0x2)
        sf.sf6.line_width = 0;
 
-   /* _NEW_BUFFERS */
-   key->render_to_fbo = 1;
-   if (!key->render_to_fbo) {
+   /* XXX: gl_rasterization_rules?  something else?
+    */
+   if (0) {
       /* Rendering to an OpenGL window */
       sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;
    }
@@ -261,7 +250,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
-   if (key->provoking_vertex == GL_LAST_VERTEX_CONVENTION) {
+   if (!key->flatshade_first) {
       sf.sf7.trifan_pv = 2;
       sf.sf7.linestrip_pv = 1;
       sf.sf7.tristrip_pv = 2;
@@ -270,12 +259,19 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
       sf.sf7.linestrip_pv = 0;
       sf.sf7.tristrip_pv = 0;
    }
-   sf.sf7.line_last_pixel_enable = 0;
+
+   sf.sf7.line_last_pixel_enable = key->line_last_pixel_enable;
 
    /* Set bias for OpenGL rasterization rules:
     */
-   sf.sf6.dest_org_vbias = 0x8;
-   sf.sf6.dest_org_hbias = 0x8;
+   if (key->gl_rasterization_rules) {
+      sf.sf6.dest_org_vbias = 0x8;
+      sf.sf6.dest_org_hbias = 0x8;
+   }
+   else {
+      sf.sf6.dest_org_vbias = 0x0;
+      sf.sf6.dest_org_hbias = 0x0;
+   }
 
    bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
 			 key, sizeof(*key),
@@ -287,23 +283,23 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
     */
    /* Emit SF program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     sf.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_sf_unit_state, thread0),
-		     brw->sf.prog_bo);
+   brw->sws->bo_emit_reloc(bo,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   sf.thread0.grf_reg_count << 1,
+			   offsetof(struct brw_sf_unit_state, thread0),
+			   brw->sf.prog_bo);
 
    /* Emit SF viewport relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-		     offsetof(struct brw_sf_unit_state, sf5),
-		     brw->sf.vp_bo);
+   brw->sws->bo_emit_reloc(bo,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
+			   offsetof(struct brw_sf_unit_state, sf5),
+			   brw->sf.vp_bo);
 
    return bo;
 }
 
-static void upload_sf_unit( struct brw_context *brw )
+static int upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_key key;
    struct brw_winsys_buffer *reloc_bufs[2];
@@ -321,16 +317,12 @@ static void upload_sf_unit( struct brw_context *brw )
    if (brw->sf.state_bo == NULL) {
       brw->sf.state_bo = sf_unit_create_from_key(brw, &key, reloc_bufs);
    }
+   return 0;
 }
 
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
-      .mesa  = (_NEW_POLYGON | 
-		_NEW_LIGHT |
-		_NEW_LINE | 
-		_NEW_POINT | 
-		_NEW_SCISSOR |
-		_NEW_BUFFERS),
+      .mesa  = (PIPE_NEW_RAST),
       .brw   = BRW_NEW_URB_FENCE,
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)

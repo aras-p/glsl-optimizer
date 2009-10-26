@@ -46,25 +46,38 @@
 #include "brw_reg.h"
 
 /** Waits on the query object's BO and totals the results for this query */
-static void
-brw_queryobj_get_results(struct brw_query_object *query)
+static boolean
+brw_query_get_result(struct pipe_context *pipe,
+		     struct pipe_query *q,
+		     boolean wait,
+		     uint64_t *result)
 {
-   int i;
-   uint64_t *results;
-
-   if (query->bo == NULL)
-      return;
+   struct brw_context *brw = brw_context(pipe);
+   struct brw_query_object *query = (struct brw_query_object *)q;
 
    /* Map and count the pixels from the current query BO */
-   dri_bo_map(query->bo, GL_FALSE);
-   results = query->bo->virtual;
-   for (i = query->first_index; i <= query->last_index; i++) {
-      query->Base.Result += results[i * 2 + 1] - results[i * 2];
-   }
-   dri_bo_unmap(query->bo);
+   if (query->bo) {
+      int i;
+      uint64_t *map;
+      
+      if (brw->sws->bo_is_busy(query->bo) && !wait)
+	 return FALSE;
+      
+      map = brw->sws->bo_map(query->bo, GL_FALSE);
+      if (map == NULL)
+	 return FALSE;
+      
+      for (i = query->first_index; i <= query->last_index; i++) {
+	 query->result += map[i * 2 + 1] - map[i * 2];
+      }
 
-   brw->sws->bo_unreference(query->bo);
-   query->bo = NULL;
+      brw->sws->bo_unmap(query->bo);
+      brw->sws->bo_unreference(query->bo);
+      query->bo = NULL;
+   }
+
+   *result = query->result;
+   return TRUE;
 }
 
 static struct pipe_query *
@@ -72,12 +85,12 @@ brw_query_create(struct pipe_context *pipe, unsigned type )
 {
    struct brw_query_object *query;
 
-   switch (query->type) {
+   switch (type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       query = CALLOC_STRUCT( brw_query_object );
       if (query == NULL)
 	 return NULL;
-      return &query->Base;
+      return (struct pipe_query *)query;
       
    default:
       return NULL;
@@ -87,6 +100,7 @@ brw_query_create(struct pipe_context *pipe, unsigned type )
 static void
 brw_query_destroy(struct pipe_context *pipe, struct pipe_query *q)
 {
+   struct brw_context *brw = brw_context(pipe);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    brw->sws->bo_unreference(query->bo);
@@ -94,24 +108,25 @@ brw_query_destroy(struct pipe_context *pipe, struct pipe_query *q)
 }
 
 static void
-brw_begin_query(struct pipe_context *pipe, struct pipe_query *q)
+brw_query_begin(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct brw_context *brw = brw_context(pipe);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    /* Reset our driver's tracking of query state. */
    brw->sws->bo_unreference(query->bo);
+   query->result = 0;
    query->bo = NULL;
    query->first_index = -1;
    query->last_index = -1;
 
    insert_at_head(&brw->query.active_head, query);
-   brw->stats_wm++;
-   brw->dirty.mesa |= PIPE_NEW_QUERY;
+   brw->query.stats_wm++;
+   brw->state.dirty.mesa |= PIPE_NEW_QUERY;
 }
 
 static void
-brw_end_query(struct pipe_context *pipe, struct pipe_query *q)
+brw_query_end(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct brw_context *brw = brw_context(pipe);
    struct brw_query_object *query = (struct brw_query_object *)q;
@@ -129,27 +144,13 @@ brw_end_query(struct pipe_context *pipe, struct pipe_query *q)
    }
 
    remove_from_list(query);
-   brw->stats_wm--;
-   brw->dirty.mesa |= PIPE_NEW_QUERY;
+   brw->query.stats_wm--;
+   brw->state.dirty.mesa |= PIPE_NEW_QUERY;
 }
 
-static void brw_wait_query(struct pipe_context *pipe, struct pipe_query *q)
-{
-   struct brw_query_object *query = (struct brw_query_object *)q;
-
-   brw_queryobj_get_results(query);
-   query->Base.Ready = GL_TRUE;
-}
-
-static void brw_check_query(struct pipe_context *pipe, struct pipe_query *q)
-{
-   struct brw_query_object *query = (struct brw_query_object *)q;
-
-   if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
-      brw_queryobj_get_results(query);
-      query->Base.Ready = GL_TRUE;
-   }
-}
+/***********************************************************************
+ * Internal functions and callbacks to implement queries 
+ */
 
 /** Called to set up the query BO and account for its aperture space */
 void
@@ -201,8 +202,17 @@ brw_emit_query_begin(struct brw_context *brw)
 
    foreach(query, &brw->query.active_head) {
       if (query->bo != brw->query.bo) {
+	 uint64_t tmp;
+	 
+	 /* Propogate the results from this buffer to all of the
+	  * active queries, as the bo is going away.
+	  */
 	 if (query->bo != NULL)
-	    brw_queryobj_get_results(query);
+	    brw_query_get_result( &brw->base, 
+				  (struct pipe_query *)query,
+				  FALSE,
+				  &tmp );
+
 	 brw->sws->bo_reference(brw->query.bo);
 	 query->bo = brw->query.bo;
 	 query->first_index = brw->query.index;
@@ -235,12 +245,18 @@ brw_emit_query_end(struct brw_context *brw)
    brw->query.index++;
 }
 
-void brw_init_queryobj_functions(struct dd_function_table *functions)
+void brw_pipe_query_init( struct brw_context *brw )
 {
-   functions->NewQueryObject = brw_new_query_object;
-   functions->DeleteQuery = brw_delete_query;
-   functions->BeginQuery = brw_begin_query;
-   functions->EndQuery = brw_end_query;
-   functions->CheckQuery = brw_check_query;
-   functions->WaitQuery = brw_wait_query;
+   brw->base.create_query = brw_query_create;
+   brw->base.destroy_query = brw_query_destroy;
+   brw->base.begin_query = brw_query_begin;
+   brw->base.end_query = brw_query_end;
+   brw->base.get_query_result = brw_query_get_result;
+}
+
+
+void brw_pipe_query_cleanup( struct brw_context *brw )
+{
+   /* Unreference brw->query.bo ??
+    */
 }

@@ -46,7 +46,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
    struct brw_cached_batch_item *item = brw->cached_batch_items;
    struct header *newheader = (struct header *)data;
 
-   if (brw->emit_state_always) {
+   if (brw->flags.always_emit_state) {
       brw_batchbuffer_data(brw->batch, data, sz, IGNORE_CLIPRECTS);
       return GL_TRUE;
    }
@@ -56,8 +56,8 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 	 if (item->sz == sz && memcmp(item->header, newheader, sz) == 0)
 	    return GL_FALSE;
 	 if (item->sz != sz) {
-	    _mesa_free(item->header);
-	    item->header = _mesa_malloc(sz);
+	    FREE(item->header);
+	    item->header = MALLOC(sz);
 	    item->sz = sz;
 	 }
 	 goto emit;
@@ -67,7 +67,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 
    assert(!item);
    item = CALLOC_STRUCT(brw_cached_batch_item);
-   item->header = _mesa_malloc(sz);
+   item->header = MALLOC(sz);
    item->sz = sz;
    item->next = brw->cached_batch_items;
    brw->cached_batch_items = item;

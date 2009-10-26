@@ -55,7 +55,9 @@
  * only one of the two buffers referenced gets put into the offset, and the
  * incorrect program is run for the other instance.
  */
+#include "util/u_memory.h"
 
+#include "brw_debug.h"
 #include "brw_state.h"
 #include "brw_batchbuffer.h"
 
@@ -107,9 +109,9 @@ update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
    if (bo == cache->last_bo[cache_id])
       return; /* no change */
 
-   brw->sws->bo_unreference(cache->last_bo[cache_id]);
+   cache->sws->bo_unreference(cache->last_bo[cache_id]);
    cache->last_bo[cache_id] = bo;
-   brw->sws->bo_reference(cache->last_bo[cache_id]);
+   cache->sws->bo_reference(cache->last_bo[cache_id]);
    cache->brw->state.dirty.cache |= 1 << cache_id;
 }
 
@@ -127,7 +129,7 @@ search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
    for (c = cache->items[hash % cache->size]; c; c = c->next)
       bucketcount++;
 
-   fprintf(stderr, "bucket %d/%d = %d/%d items\n", hash % cache->size,
+   debug_printf("bucket %d/%d = %d/%d items\n", hash % cache->size,
 	   cache->size, bucketcount, cache->n_items);
 #endif
 
@@ -154,7 +156,7 @@ rehash(struct brw_cache *cache)
    GLuint size, i;
 
    size = cache->size * 3;
-   items = (struct brw_cache_item**) _mesa_calloc(size * sizeof(*items));
+   items = (struct brw_cache_item**) CALLOC(size, sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
       for (c = cache->items[i]; c; c = next) {
@@ -194,7 +196,7 @@ brw_search_cache(struct brw_cache *cache,
 
    update_cache_last(cache, cache_id, item->bo);
 
-   brw->sws->bo_reference(item->bo);
+   cache->sws->bo_reference(item->bo);
    return item->bo;
 }
 
@@ -219,20 +221,25 @@ brw_upload_cache( struct brw_cache *cache,
    struct brw_winsys_buffer *bo;
    int i;
 
-   /* Create the buffer object to contain the data */
-   bo = brw->sws->bo_alloc(cache->sws,
-			   cache->buffer_type[cache_id], data_size, 1 << 6);
+   /* Create the buffer object to contain the data.  For now, use a
+    * single buffer type to describe all cached state atoms.  Later,
+    * may want to take advantage of hardware distinctions between
+    * these various entities.
+    */
+   bo = cache->sws->bo_alloc(cache->sws,
+			     BRW_BUFFER_TYPE_STATE_CACHE, 
+			     data_size, 1 << 6);
 
 
    /* Set up the memory containing the key, aux_data, and reloc_bufs */
-   tmp = _mesa_malloc(key_size + aux_size + relocs_size);
+   tmp = MALLOC(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
    memcpy(tmp + key_size, aux, cache->aux_size[cache_id]);
    memcpy(tmp + key_size + aux_size, reloc_bufs, relocs_size);
    for (i = 0; i < nr_reloc_bufs; i++) {
       if (reloc_bufs[i] != NULL)
-	 brw->sws->bo_reference(reloc_bufs[i]);
+	 cache->sws->bo_reference(reloc_bufs[i]);
    }
 
    item->cache_id = cache_id;
@@ -243,7 +250,7 @@ brw_upload_cache( struct brw_cache *cache,
    item->nr_reloc_bufs = nr_reloc_bufs;
 
    item->bo = bo;
-   brw->sws->bo_reference(bo);
+   cache->sws->bo_reference(bo);
    item->data_size = data_size;
 
    if (cache->n_items > cache->size * 1.5)
@@ -259,13 +266,13 @@ brw_upload_cache( struct brw_cache *cache,
       *(void **)aux_return = (void *)((char *)item->key + item->key_size);
    }
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("upload %s: %d bytes to cache id %d\n",
+   if (BRW_DEBUG & DEBUG_STATE)
+      debug_printf("upload %s: %d bytes to cache id %d\n",
 		   cache->name[cache_id],
 		   data_size, cache_id);
 
    /* Copy data to the buffer */
-   dri_bo_subdata(bo, 0, data_size, data);
+   cache->sws->bo_subdata(bo, 0, data_size, data);
 
    update_cache_last(cache, cache_id, bo);
 
@@ -292,7 +299,7 @@ brw_cache_data_sz(struct brw_cache *cache,
 		       reloc_bufs, nr_reloc_bufs);
    if (item) {
       update_cache_last(cache, cache_id, item->bo);
-      brw->sws->bo_reference(item->bo);
+      cache->sws->bo_reference(item->bo);
       return item->bo;
    }
 
@@ -349,11 +356,12 @@ brw_init_non_surface_cache(struct brw_context *brw)
    struct brw_cache *cache = &brw->cache;
 
    cache->brw = brw;
+   cache->sws = brw->sws;
 
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      CALLOC(cache->size, sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache,
 		     "CC_VP",
@@ -457,7 +465,7 @@ brw_init_surface_cache(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      CALLOC(cache->size, sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache,
 		     "SS_SURFACE",
@@ -487,8 +495,8 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    struct brw_cache_item *c, *next;
    GLuint i;
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+   if (BRW_DEBUG & DEBUG_STATE)
+      debug_printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
@@ -507,7 +515,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    cache->n_items = 0;
 
    if (brw->curbe.last_buf) {
-      _mesa_free(brw->curbe.last_buf);
+      FREE(brw->curbe.last_buf);
       brw->curbe.last_buf = NULL;
    }
 
@@ -527,8 +535,8 @@ brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer *bo)
    struct brw_cache_item **prev;
    GLuint i;
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+   if (BRW_DEBUG & DEBUG_STATE)
+      debug_printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (prev = &cache->items[i]; *prev;) {
@@ -540,8 +548,8 @@ brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer *bo)
 	    *prev = c->next;
 
 	    for (j = 0; j < c->nr_reloc_bufs; j++)
-	       brw->sws->bo_unreference(c->reloc_bufs[j]);
-	    brw->sws->bo_unreference(c->bo);
+	       cache->sws->bo_unreference(c->reloc_bufs[j]);
+	    cache->sws->bo_unreference(c->bo);
 	    free((void *)c->key);
 	    free(c);
 	    cache->n_items--;
@@ -555,8 +563,8 @@ brw_state_cache_bo_delete(struct brw_cache *cache, struct brw_winsys_buffer *bo)
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
+   if (BRW_DEBUG & DEBUG_STATE)
+      debug_printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
 
    /* un-tuned guess.  We've got around 20 state objects for a total of around
     * 32k, so 1000 of them is around 1.5MB.
@@ -574,8 +582,8 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 {
    GLuint i;
 
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+   if (BRW_DEBUG & DEBUG_STATE)
+      debug_printf("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {

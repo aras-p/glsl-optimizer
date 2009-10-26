@@ -101,7 +101,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
    GLuint i = c->prog_data.nr_params++;
    
    if (i >= BRW_WM_MAX_PARAM) {
-      _mesa_printf("%s: out of params\n", __FUNCTION__);
+      debug_printf("%s: out of params\n", __FUNCTION__);
       c->prog_data.error = 1;
       return NULL;
    }
@@ -150,7 +150,7 @@ static const struct brw_wm_ref *get_imm_ref( struct brw_wm_compile *c,
       return c->imm_ref[i].ref;
    }
    else {
-      _mesa_printf("%s: out of imm_refs\n", __FUNCTION__);
+      debug_printf("%s: out of imm_refs\n", __FUNCTION__);
       c->prog_data.error = 1;
       return NULL;
    }
@@ -434,7 +434,7 @@ void brw_wm_pass0( struct brw_wm_compile *c )
       }
    }
  
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (BRW_DEBUG & DEBUG_WM) {
       brw_wm_print_program(c, "pass0");
    }
 }

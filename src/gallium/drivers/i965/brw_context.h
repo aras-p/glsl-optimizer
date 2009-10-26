@@ -190,6 +190,8 @@ struct brw_fragment_shader {
 #define PIPE_NEW_FRAMEBUFFER_DIMENSIONS 0x10000
 #define PIPE_NEW_DEPTH_BUFFER           0x20000
 #define PIPE_NEW_COLOR_BUFFERS          0x40000
+#define PIPE_NEW_QUERY                  0x80000
+#define PIPE_NEW_SCISSOR                0x100000
 
 
 
@@ -204,7 +206,7 @@ struct brw_fragment_shader {
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_WM_SURFACES		0x1000
-#define BRW_NEW_FENCE                   0x2000
+#define BRW_NEW_xxx                     0x2000 /* was FENCE */
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
 /**
@@ -373,6 +375,7 @@ struct brw_cache_item {
 
 struct brw_cache {
    struct brw_context *brw;
+   struct brw_winsys_screen *sws;
 
    struct brw_cache_item **items;
    GLuint size, n_items;
@@ -380,6 +383,7 @@ struct brw_cache {
    GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
+   
 
    /* Record of the last BOs chosen for each cache_id.  Used to set
     * brw->state.dirty.cache when a new cache item is chosen.
@@ -448,7 +452,7 @@ struct brw_query_object {
    int last_index;
 
    /* Total count of pixels from previous BOs */
-   unsigned int count;
+   uint64_t result;
 };
 
 
@@ -477,11 +481,18 @@ struct brw_context
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_state *zstencil;
 
+      const struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+      const struct pipe_sampler *sampler[PIPE_MAX_SAMPLERS];
+      unsigned num_textures;
+      unsigned num_samplers;
+      
+
       struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
       unsigned num_vertex_elements;
       unsigned num_vertex_buffers;
 
+      struct pipe_scissor_state scissor;
       struct pipe_framebuffer_state fb;
       struct pipe_viewport_state vp;
       struct pipe_clip_state ucp;
@@ -491,6 +502,8 @@ struct brw_context
       struct pipe_viewport_state viewport;
       struct brw_blend_constant_color bcc;
       struct brw_polygon_stipple bps;
+
+      
 
       /**
        * Index buffer for this draw_prims call.
@@ -688,6 +701,7 @@ struct brw_context
       struct brw_winsys_buffer *bo;
       int index;
       GLboolean active;
+      int stats_wm;
    } query;
 
    struct {

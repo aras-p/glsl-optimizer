@@ -109,8 +109,25 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
       if (bit_map[i].bit == 0)
 	 return;
 
-      fprintf(stderr, "0x%08x: %12d (%s)\n",
+      debug_printf("0x%08x: %12d (%s)\n",
 	      bit_map[i].bit, bit_map[i].count, bit_map[i].name);
    }
 }
 
+void
+brw_update_dirty_counts( unsigned mesa,
+			 unsigned brw,
+			 unsigned cache )
+{
+   static int dirty_count = 0;
+
+   brw_update_dirty_count(mesa_bits, mesa);
+   brw_update_dirty_count(brw_bits, brw);
+   brw_update_dirty_count(cache_bits, cache);
+      if (dirty_count++ % 1000 == 0) {
+	 brw_print_dirty_count(mesa_bits, mesa);
+	 brw_print_dirty_count(brw_bits, brw);
+	 brw_print_dirty_count(cache_bits, cache);
+	 debug_printf("\n");
+      }
+}

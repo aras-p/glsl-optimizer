@@ -33,6 +33,7 @@
 #ifndef BRW_WM_H
 #define BRW_WM_H
 
+#include "tgsi/tgsi_ureg.h"
 
 #include "brw_context.h"
 #include "brw_eu.h"
@@ -57,17 +58,18 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
+   unsigned proj_attrib_mask; /**< one bit per fragment program attribute */
+   unsigned linear_attrib_mask:1;  /**< linear interpolation vs perspective interp */
+
    GLuint source_depth_reg:3;
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
    GLuint nr_depth_regs:3;
-   GLuint computes_depth:1;	/* could be derived from program string */
+   GLuint computes_depth:1;
    GLuint source_depth_to_render_target:1;
    GLuint flat_shade:1;
-   GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint runtime_check_aads_emit:1;
-   
-   GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
+
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
@@ -75,7 +77,7 @@ struct brw_wm_prog_key {
    GLuint tex_swizzles[BRW_MAX_TEX_UNIT];
 
    GLuint program_string_id:32;
-   GLuint drawable_height;
+
    GLuint vp_nr_outputs_written;
 };
 
@@ -151,7 +153,7 @@ struct brw_wm_instruction {
 };
 
 
-#define BRW_WM_MAX_INSN  (MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS*3 + FRAG_ATTRIB_MAX + 3)
+#define BRW_WM_MAX_INSN  2048
 #define BRW_WM_MAX_GRF   128		/* hardware limit */
 #define BRW_WM_MAX_VREG  (BRW_WM_MAX_INSN * 4)
 #define BRW_WM_MAX_REF   (BRW_WM_MAX_INSN * 12)
@@ -161,11 +163,19 @@ struct brw_wm_instruction {
 #define BRW_WM_MAX_SUBROUTINE 16
 
 
+struct ureg_instruction {
+   unsigned opcode:8;
+   unsigned tex_target:3;
+   struct ureg_dst dst;
+   struct ureg_src src[3];
+};
+
 
 /* New opcodes to track internal operations required for WM unit.
  * These are added early so that the registers used can be tracked,
  * freed and reused like those of other instructions.
  */
+#define MAX_OPCODE        TGSI_OPCODE_LAST
 #define WM_PIXELXY        (MAX_OPCODE)
 #define WM_DELTAXY        (MAX_OPCODE + 1)
 #define WM_PIXELW         (MAX_OPCODE + 2)
@@ -177,7 +187,7 @@ struct brw_wm_instruction {
 #define WM_FRONTFACING    (MAX_OPCODE + 8)
 #define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
-#define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
+#define PROGRAM_PAYLOAD   (TGSI_FILE_COUNT)
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
 
 struct brw_wm_compile {
@@ -198,15 +208,15 @@ struct brw_wm_compile {
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
     */
-   struct prog_instruction prog_instructions[BRW_WM_MAX_INSN];
+   struct ureg_instruction prog_instructions[BRW_WM_MAX_INSN];
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
    GLuint fp_fragcolor_emitted;
 
-   struct prog_src_register pixel_xy;
-   struct prog_src_register delta_xy;
-   struct prog_src_register pixel_w;
+   struct ureg_src pixel_xy;
+   struct ureg_src delta_xy;
+   struct ureg_src pixel_w;
 
 
    struct brw_wm_value vreg[BRW_WM_MAX_VREG];
@@ -217,7 +227,7 @@ struct brw_wm_compile {
 
    struct {
       struct brw_wm_value depth[4]; /* includes r0/r1 */
-      struct brw_wm_value input_interp[FRAG_ATTRIB_MAX];
+      struct brw_wm_value input_interp[PIPE_MAX_SHADER_INPUTS];
    } payload;
 
 
@@ -295,7 +305,7 @@ void brw_wm_lookup_iz( GLuint line_aa,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
-GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
+//GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 void emit_ddxy(struct brw_compile *p,

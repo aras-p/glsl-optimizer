@@ -43,17 +43,12 @@ static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
 				    struct brw_reg vert,
 				    GLuint attr)
 {
-   GLuint off = c->attr_to_idx[attr] / 2;
-   GLuint sub = c->attr_to_idx[attr] % 2;
+   GLuint off = attr / 2;
+   GLuint sub = attr % 2;
 
    return brw_vec4_grf(vert.nr + off, sub * 4);
 }
 
-static GLboolean have_attr(struct brw_sf_compile *c,
-			   GLuint attr)
-{
-   return (c->key.attrs & (1<<attr)) ? 1 : 0;
-}
 
 /*********************************************************************** 
  * Twoside lighting
@@ -62,15 +57,16 @@ static void copy_bfc( struct brw_sf_compile *c,
 		      struct brw_reg vert )
 {
    struct brw_compile *p = &c->func;
-   GLuint i;
 
-   for (i = 0; i < 2; i++) {
-      if (have_attr(c, VERT_RESULT_COL0+i) &&
-	  have_attr(c, VERT_RESULT_BFC0+i))
-	 brw_MOV(p, 
-		 get_vert_attr(c, vert, VERT_RESULT_COL0+i), 
-		 get_vert_attr(c, vert, VERT_RESULT_BFC0+i));
-   }
+   if (c->key.attr_col0 && c->key.attr_bfc0)
+      brw_MOV(p, 
+	      get_vert_attr(c, vert, c->key.attr_col0), 
+	      get_vert_attr(c, vert, c->key.attr_bfc0));
+
+   if (c->key.attr_col1 && c->key.attr_bfc1)
+      brw_MOV(p, 
+	      get_vert_attr(c, vert, c->key.attr_col1), 
+	      get_vert_attr(c, vert, c->key.attr_bfc1));
 }
 
 
@@ -89,8 +85,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
     * for user-supplied vertex programs, as t_vp_build.c always does
     * the right thing.
     */
-   if (!(have_attr(c, VERT_RESULT_COL0) && have_attr(c, VERT_RESULT_BFC0)) &&
-       !(have_attr(c, VERT_RESULT_COL1) && have_attr(c, VERT_RESULT_BFC1)))
+   if (!(c->key.attr_col0 && c->key.attr_bfc0) &&
+       !(c->key.attr_col1 && c->key.attr_bfc1))
       return;
    
    /* Need to use BRW_EXECUTE_4 and also do an 4-wide compare in order
@@ -126,14 +122,17 @@ static void copy_colors( struct brw_sf_compile *c,
 		     struct brw_reg src)
 {
    struct brw_compile *p = &c->func;
-   GLuint i;
 
-   for (i = VERT_RESULT_COL0; i <= VERT_RESULT_COL1; i++) {
-      if (have_attr(c,i))
-	 brw_MOV(p, 
-		 get_vert_attr(c, dst, i), 
-		 get_vert_attr(c, src, i));
-   }
+   if (c->key.attr_col0)
+      brw_MOV(p, 
+	      get_vert_attr(c, dst, c->key.attr_col0), 
+	      get_vert_attr(c, src, c->key.attr_col0));
+
+   if (c->key.attr_col1)
+      brw_MOV(p, 
+	      get_vert_attr(c, dst, c->key.attr_col1), 
+	      get_vert_attr(c, src, c->key.attr_col1));
+
 }
 
 
@@ -146,10 +145,16 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = util_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
+   GLuint nr = 0;
 
-   if (!nr)
+   if (c->key.attr_col0)
+      nr++;
+
+   if (c->key.attr_col1)
+      nr++;
+
+   if (nr == 0)
       return;
 
    /* Already done in clip program:
@@ -184,10 +189,16 @@ static void do_flatshade_line( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = util_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
+   GLuint nr = 0;
 
-   if (!nr)
+   if (c->key.attr_col0)
+      nr++;
+
+   if (c->key.attr_col1)
+      nr++;
+
+   if (nr == 0)
       return;
 
    /* Already done in clip program: 
@@ -319,10 +330,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (persp_mask & (1 << (reg*2))) 
       *pc_persp = 0xf;
 
-   if (linear_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (linear_mask & (1 << (reg*2))) 
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -330,10 +341,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (persp_mask & (1 << (reg*2+1))) 
 	 *pc_persp |= 0xf0;
 
-      if (linear_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (linear_mask & (1 << (reg*2+1))) 
 	 *pc_linear |= 0xf0;
    }
 
@@ -513,24 +524,28 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
       alloc_regs(c);
 
    copy_z_inv_w(c);
+
    for (i = 0; i < c->nr_setup_regs; i++)
    {
-      struct brw_sf_point_tex *tex = &c->point_attrs[c->idx_to_attr[2*i]];
+      /* XXX: only seems to check point_coord_replace_attrs for every
+       * second attribute?!?
+       */
+      boolean coord_replace = !!(c->key.point_coord_replace_attrs & (1<<(2*i)));
       struct brw_reg a0 = offset(c->vert[0], i);
       GLushort pc, pc_persp, pc_linear;
       GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
             
       if (pc_persp)
       {				
-	  if (!tex->CoordReplace) {
-	      brw_set_predicate_control_flag_value(p, pc_persp);
-	      brw_MUL(p, a0, a0, c->inv_w[0]);
-	  }
+	 if (coord_replace) {
+	    brw_set_predicate_control_flag_value(p, pc_persp);
+	    brw_MUL(p, a0, a0, c->inv_w[0]);
+	 }
       }
 
-      if (tex->CoordReplace) {
-	  /* Caculate 1.0/PointWidth */
-	  brw_math(&c->func,
+      if (coord_replace) {
+	 /* Caculate 1.0/PointWidth */
+	 brw_math(&c->func,
 		  c->tmp,
 		  BRW_MATH_FUNCTION_INV,
 		  BRW_MATH_SATURATE_NONE,
@@ -539,33 +554,37 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	  if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  } else {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  }
-      } else {
-	  brw_MOV(p, c->m1Cx, brw_imm_ud(0));
-	  brw_MOV(p, c->m2Cy, brw_imm_ud(0));
+	 if (c->key.sprite_origin_lower_left) {
+	    brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
+	    brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
+	    brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
+	    brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
+	 } 
+	 else {
+	    brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
+	    brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
+	    brw_MUL(p, c->m2Cy, c->tmp, c->inv_w[0]);
+	    brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
+	 }
+      } 
+      else {
+	 brw_MOV(p, c->m1Cx, brw_imm_ud(0));
+	 brw_MOV(p, c->m2Cy, brw_imm_ud(0));
       }
 
       {
 	 brw_set_predicate_control_flag_value(p, pc); 
-	 if (tex->CoordReplace) {
-	     if (c->key.sprite_origin_lower_left) {
-		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
-		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
-	     }
-	     else
-		 brw_MOV(p, c->m3C0, brw_imm_f(0.0));
-	 } else {
-	 	brw_MOV(p, c->m3C0, a0); /* constant value */
+	 if (coord_replace) {
+	    if (c->key.sprite_origin_lower_left) {
+	       brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
+	       brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
+	    }
+	    else {
+	       brw_MOV(p, c->m3C0, brw_imm_f(0.0));
+	    }
+	 } 
+	 else {
+	    brw_MOV(p, c->m3C0, a0); /* constant value */
 	 }
 
 	 /* Copy m0..m3 to URB. 

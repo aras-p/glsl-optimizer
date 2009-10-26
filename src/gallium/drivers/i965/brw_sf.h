@@ -49,14 +49,21 @@ struct brw_sf_prog_key {
     */
    GLuint persp_attrs:32;
    GLuint linear_attrs:32;
+   GLuint point_coord_replace_attrs:32;
 
+   GLuint nr_attrs:8;
    GLuint primitive:2;
    GLuint do_twoside_color:1;
    GLuint do_flat_shading:1;
    GLuint frontface_ccw:1;
    GLuint do_point_sprite:1;
    GLuint sprite_origin_lower_left:1;
-   GLuint pad:25;
+   GLuint pad:17;
+
+   GLuint attr_col0:8;
+   GLuint attr_col1:8;
+   GLuint attr_bfc0:8;
+   GLuint attr_bfc1:8;
 };
 
 struct brw_sf_point_tex {
@@ -101,9 +108,7 @@ struct brw_sf_compile {
    GLuint nr_setup_attrs;
    GLuint nr_setup_regs;
 
-   GLubyte attr_to_idx[VERT_RESULT_MAX];   
-   GLubyte idx_to_attr[VERT_RESULT_MAX];   
-   struct brw_sf_point_tex point_attrs[VERT_RESULT_MAX];
+   GLuint point_coord_replace_mask;
 };
 
  

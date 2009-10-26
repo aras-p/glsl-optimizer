@@ -178,8 +178,8 @@ static void do_wm_prog( struct brw_context *brw,
       brw_wm_non_glsl_emit(brw, c);
    }
 
-   if (INTEL_DEBUG & DEBUG_WM)
-      fprintf(stderr, "\n");
+   if (BRW_DEBUG & DEBUG_WM)
+      debug_printf("\n");
 
    /* get the program
     */

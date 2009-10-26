@@ -69,6 +69,7 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_SHADER_CONSTANTS,
    BRW_BUFFER_TYPE_WM_SCRATCH,
    BRW_BUFFER_TYPE_BATCH,
+   BRW_BUFFER_TYPE_STATE_CACHE,
 };
 
 
@@ -156,10 +157,14 @@ struct brw_winsys_screen {
 			  unsigned offset,
 			  struct brw_winsys_buffer *b2);
 
-   void (*bo_subdata)(struct brw_winsys_buffer *dst,
+   void (*bo_subdata)(struct brw_winsys_buffer *buffer,
 		      size_t offset,
 		      size_t size,
 		      const void *data);
+
+   boolean (*bo_is_busy)(struct brw_winsys_buffer *buffer);
+   boolean (*bo_references)(struct brw_winsys_buffer *a,
+			    struct brw_winsys_buffer *b);
 
    /* XXX: couldn't this be handled by returning true/false on
     * bo_emit_reloc?
@@ -171,18 +176,13 @@ struct brw_winsys_screen {
    /**
     * Map a buffer.
     */
-   void *(*buffer_map)(struct brw_winsys *iws,
-                       struct brw_winsys_buffer *buffer,
-                       boolean write);
+   void *(*bo_map)(struct brw_winsys_buffer *buffer,
+		   boolean write);
 
    /**
     * Unmap a buffer.
     */
-   void (*buffer_unmap)(struct brw_winsys *iws,
-                        struct brw_winsys_buffer *buffer);
-
-   void (*buffer_destroy)(struct brw_winsys *iws,
-                          struct brw_winsys_buffer *buffer);
+   void (*bo_unmap)(struct brw_winsys_buffer *buffer);
    /*@}*/
 
 

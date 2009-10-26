@@ -53,7 +53,7 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
 void brw_pipe_framebuffer_init( struct brw_context *brw )
 {
    brw->base.set_framebuffer_state = brw_set_framebuffer_state;
-   brw->base.set_framebuffer_state = brw_set_framebuffer_state;
+   brw->base.set_viewport_state = brw_set_viewport_state;
 }
 
 void brw_pipe_framebuffer_cleanup( struct brw_context *brw )

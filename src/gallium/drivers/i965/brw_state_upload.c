@@ -34,6 +34,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_batchbuffer.h"
+#include "brw_debug.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which
@@ -83,12 +84,8 @@ const struct brw_tracked_state *atoms[] =
    &brw_blend_constant_color,
 
    &brw_depthbuffer,
-
    &brw_polygon_stipple,
-   &brw_polygon_stipple_offset,
-
    &brw_line_stipple,
-   &brw_aa_line_parameters,
 
    &brw_psp_urb_cbs,
 
@@ -163,11 +160,12 @@ enum pipe_error brw_validate_state( struct brw_context *brw )
 {
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;
+   int ret;
 
    brw_clear_validated_bos(brw);
-   brw_add_validated_bo(brw, intel->batch->buf);
+   brw_add_validated_bo(brw, brw->batch->buf);
 
-   if (brw->emit_state_always) {
+   if (brw->flags.always_emit_state) {
       state->mesa |= ~0;
       state->brw |= ~0;
       state->cache |= ~0;
@@ -199,10 +197,10 @@ enum pipe_error brw_validate_state( struct brw_context *brw )
     * If this fails, we can experience GPU lock-ups.
     */
    {
-      const struct brw_fragment_program *fp = brw->fragment_program;
+      const struct brw_fragment_shader *fp = brw->curr.fragment_shader;
       if (fp) {
-         assert(fp->info.max_sampler <= brw->nr_samplers &&
-		fp->info.max_texture <= brw->nr_textures);
+         assert(fp->info.file_max[TGSI_FILE_SAMPLER] < brw->curr.num_samplers &&
+		fp->info.texture_max < brw->curr.num_textures);
       }
    }
 
@@ -213,18 +211,18 @@ enum pipe_error brw_validate_state( struct brw_context *brw )
 enum pipe_error brw_upload_state(struct brw_context *brw)
 {
    struct brw_state_flags *state = &brw->state.dirty;
+   int ret;
    int i;
-   static int dirty_count = 0;
 
    brw_clear_validated_bos(brw);
 
-   if (INTEL_DEBUG) {
+   if (BRW_DEBUG) {
       /* Debug version which enforces various sanity checks on the
        * state flags which are generated and checked to help ensure
        * state atoms are ordered correctly in the list.
        */
       struct brw_state_flags examined, prev;      
-      _mesa_memset(&examined, 0, sizeof(examined));
+      memset(&examined, 0, sizeof(examined));
       prev = *state;
 
       for (i = 0; i < Elements(atoms); i++) {
@@ -268,19 +266,14 @@ enum pipe_error brw_upload_state(struct brw_context *brw)
       }
    }
 
-   if (INTEL_DEBUG & DEBUG_STATE) {
-      brw_update_dirty_count(mesa_bits, state->mesa);
-      brw_update_dirty_count(brw_bits, state->brw);
-      brw_update_dirty_count(cache_bits, state->cache);
-      if (dirty_count++ % 1000 == 0) {
-	 brw_print_dirty_count(mesa_bits, state->mesa);
-	 brw_print_dirty_count(brw_bits, state->brw);
-	 brw_print_dirty_count(cache_bits, state->cache);
-	 debug_printf("\n");
-      }
+   if (BRW_DEBUG & DEBUG_STATE) {
+      brw_update_dirty_counts( state->mesa, 
+			       state->brw,
+			       state->cache );
    }
    
    /* Clear dirty flags:
     */
    memset(state, 0, sizeof(*state));
+   return 0;
 }

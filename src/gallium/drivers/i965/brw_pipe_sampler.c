@@ -14,6 +14,87 @@ static void *brw_create_sampler_state( struct pipe_context *pipe,
 {
    struct brw_sampler_state *sampler = CALLOC_STRUCT(brw_sampler_state);
 
+   switch (key->minfilter) {
+   case GL_NEAREST:
+      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
+      break;
+   case GL_LINEAR:
+      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
+      break;
+   case GL_NEAREST_MIPMAP_NEAREST:
+      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
+      break;
+   case GL_LINEAR_MIPMAP_NEAREST:
+      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
+      break;
+   case GL_NEAREST_MIPMAP_LINEAR:
+      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
+      break;
+   case GL_LINEAR_MIPMAP_LINEAR:
+      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
+      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
+      break;
+   default:
+      break;
+   }
+
+   /* Set Anisotropy: 
+    */
+   if (key->max_aniso > 1.0) {
+      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC; 
+      sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
+
+      if (key->max_aniso > 2.0) {
+	 sampler->ss3.max_aniso = MIN2((key->max_aniso - 2) / 2,
+				       BRW_ANISORATIO_16);
+      }
+   }
+   else {
+      switch (key->magfilter) {
+      case GL_NEAREST:
+	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
+	 break;
+      case GL_LINEAR:
+	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
+
+   /* Set LOD bias: 
+    */
+   sampler->ss0.lod_bias = S_FIXED(CLAMP(key->lod_bias, -16, 15), 6);
+
+   sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
+   sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
+
+   /* Set shadow function: 
+    */
+   if (key->comparemode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      /* Shadowing is "enabled" by emitting a particular sampler
+       * message (sample_c).  So need to recompile WM program when
+       * shadow comparison is enabled on each/any texture unit.
+       */
+      sampler->ss0.shadow_function =
+	 intel_translate_shadow_compare_func(key->comparefunc);
+   }
+
+   /* Set BaseMipLevel, MaxLOD, MinLOD: 
+    */
+   sampler->ss0.base_level = U_FIXED(0, 1);
+
+   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(key->maxlod, 0), 13), 6);
+   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(key->minlod, 0), 13), 6);
 
    return (void *)sampler;
 }

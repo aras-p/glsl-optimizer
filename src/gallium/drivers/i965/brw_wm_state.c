@@ -65,7 +65,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    memset(key, 0, sizeof(*key));
 
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+   if (BRW_DEBUG & DEBUG_SINGLE_THREAD)
       key->max_threads = 1;
    else {
       /* WM maximum threads is number of EUs times number of threads per EU. */
@@ -120,7 +120,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
 
    /* _NEW_QUERY */
-   key->stats_wm = intel->stats_wm;
+   key->stats_wm = (brw->query.stats_wm != 0);
 
    /* _NEW_LINE */
    key->line_stipple = ctx->Line.StippleFlag;
@@ -215,7 +215,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.wm5.line_stipple = key->line_stipple;
 
-   if (INTEL_DEBUG & DEBUG_STATS || key->stats_wm)
+   if (BRW_DEBUG & DEBUG_STATS || key->stats_wm)
       wm.wm4.stats_enable = 1;
 
    bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,

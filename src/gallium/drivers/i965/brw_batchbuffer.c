@@ -105,13 +105,13 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
    }
 
 
-   if (INTEL_DEBUG & DEBUG_BATCH)
-      fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
+   if (BRW_DEBUG & DEBUG_BATCH)
+      debug_printf("%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
 
    /* Emit a flush if the bufmgr doesn't do it for us. */
    if (intel->always_flush_cache || !intel->ttm) {
-      *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
+      *(GLuint *) (batch->ptr) = ((CMD_MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
       batch->ptr += 4;
       used = batch->ptr - batch->map;
    }
@@ -136,15 +136,15 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
       
    batch->sws->bo_exec(batch->buf, used, NULL, 0, 0 );
       
-   if (INTEL_DEBUG & DEBUG_BATCH) {
+   if (BRW_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
 		   brw->brw_screen->pci_id);
       dri_bo_unmap(batch->buf);
    }
 
-   if (INTEL_DEBUG & DEBUG_SYNC) {
-      fprintf(stderr, "waiting for idle\n");
+   if (BRW_DEBUG & DEBUG_SYNC) {
+      debug_printf("waiting for idle\n");
       dri_bo_map(batch->buf, GL_TRUE);
       dri_bo_unmap(batch->buf);
    }
@@ -166,7 +166,7 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
    int ret;
 
    if (batch->ptr - batch->map > batch->buf->size)
-      _mesa_printf ("bad relocation ptr %p map %p offset %d size %d\n",
+      debug_printf ("bad relocation ptr %p map %p offset %d size %d\n",
 		    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
 
    ret = batch->sws->bo_emit_reloc(batch->buf,

@@ -29,11 +29,12 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
   
+#include "pipe/p_state.h"
 
 #include "brw_batchbuffer.h"
-
 #include "brw_defines.h"
 #include "brw_context.h"
+#include "brw_pipe_rast.h"
 #include "brw_eu.h"
 #include "brw_util.h"
 #include "brw_sf.h"
@@ -45,7 +46,6 @@ static void compile_sf_prog( struct brw_context *brw,
    struct brw_sf_compile c;
    const GLuint *program;
    GLuint program_size;
-   GLuint i, idx;
 
    memset(&c, 0, sizeof(c));
 
@@ -54,7 +54,7 @@ static void compile_sf_prog( struct brw_context *brw,
    brw_init_compile(brw, &c.func);
 
    c.key = *key;
-   c.nr_attrs = util_count_bits(c.key.attrs);
+   c.nr_attrs = c.key.nr_attrs;
    c.nr_attr_regs = (c.nr_attrs+1)/2;
    c.nr_setup_attrs = c.key.nr_attrs;
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
@@ -62,21 +62,6 @@ static void compile_sf_prog( struct brw_context *brw,
    c.prog_data.urb_read_length = c.nr_attr_regs;
    c.prog_data.urb_entry_size = c.nr_setup_regs * 2;
 
-   /* Construct map from attribute number to position in the vertex.
-    */
-   for (i = idx = 0; i < VERT_RESULT_MAX; i++) 
-      if (c.key.attrs & (1<<i)) {
-	 c.attr_to_idx[i] = idx;
-	 c.idx_to_attr[idx] = i;
-	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
-            c.point_attrs[i].CoordReplace = 
-               ctx->Point.CoordReplace[i - VERT_RESULT_TEX0];
-	 }
-         else {
-            c.point_attrs[i].CoordReplace = GL_FALSE;
-         }
-	 idx++;
-      }
    
    /* Which primitive?  Or all three? 
     */
@@ -122,7 +107,7 @@ static void compile_sf_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_sf_prog(struct brw_context *brw)
+static int upload_sf_prog(struct brw_context *brw)
 {
    struct brw_sf_prog_key key;
 
@@ -131,46 +116,49 @@ static void upload_sf_prog(struct brw_context *brw)
    /* Populate the key, noting state dependencies:
     */
    /* CACHE_NEW_VS_PROG */
-   key.attrs = brw->vs.prog_data->nr_outputs_written; 
+   key.nr_attrs = brw->curr.vertex_shader->info.file_max[TGSI_FILE_OUTPUT] + 1;
+
+
+   /* XXX: this is probably where the mapping between vertex shader
+    * outputs and fragment shader inputs should be handled.  Assume
+    * for now 1:1 correspondance.
+    *
+    * XXX: scan frag shader inputs to work out linear vs. perspective
+    * interpolation below.
+    *
+    * XXX: as long as we're hard-wiring, is eg. position required to
+    * be linear?
+    */
+   key.linear_attrs = 0;
+   key.persp_attrs = (1 << key.nr_attrs) - 1;
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
    switch (brw->reduced_primitive) {
-   case GL_TRIANGLES: 
-      /* NOTE: We just use the edgeflag attribute as an indicator that
-       * unfilled triangles are active.  We don't actually do the
-       * edgeflag testing here, it is already done in the clip
-       * program.
+   case PIPE_PRIM_TRIANGLES: 
+      /* PIPE_NEW_RAST
        */
-      if (key.attrs & (1<<VERT_RESULT_EDGE))
+      if (brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL ||
+	  brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL)
 	 key.primitive = SF_UNFILLED_TRIS;
       else
 	 key.primitive = SF_TRIANGLES;
       break;
-   case GL_LINES: 
+   case PIPE_PRIM_LINES: 
       key.primitive = SF_LINES; 
       break;
-   case GL_POINTS: 
+   case PIPE_PRIM_POINTS: 
       key.primitive = SF_POINTS; 
       break;
    }
 
-   key.do_point_sprite = ctx->Point.PointSprite;
-   key.SpriteOrigin = ctx->Point.SpriteOrigin;
-   /* _NEW_LIGHT */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
-   key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
+   key.do_point_sprite = brw->curr.rast->templ.point_sprite;
+   key.sprite_origin_lower_left = 0; /* XXX: ctx->Point.SpriteOrigin - fix rast state */
+   key.do_flat_shading = brw->curr.rast->templ.flatshade;
+   key.do_twoside_color = brw->curr.rast->templ.light_twoside;
 
-   /* _NEW_HINT */
-   key.linear_color = 0;
-
-   /* _NEW_POLYGON */
    if (key.do_twoside_color) {
-      /* If we're rendering to a FBO, we have to invert the polygon
-       * face orientation, just as we invert the viewport in
-       * sf_unit_create_from_key().  ctx->DrawBuffer->Name will be
-       * nonzero if we're rendering to such an FBO.
-       */
-      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW) ^ (ctx->DrawBuffer->Name != 0);
+      key.frontface_ccw = (brw->curr.rast->templ.front_winding == 
+			   PIPE_WINDING_CCW);
    }
 
    brw->sws->bo_unreference(brw->sf.prog_bo);
@@ -180,14 +168,16 @@ static void upload_sf_prog(struct brw_context *brw)
 				      &brw->sf.prog_data);
    if (brw->sf.prog_bo == NULL)
       compile_sf_prog( brw, &key );
+
+   return 0;
 }
 
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT),
+      .mesa  = (PIPE_NEW_RAST | PIPE_NEW_VERTEX_SHADER),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = CACHE_NEW_VS_PROG
+      .cache = 0
    },
    .prepare = upload_sf_prog
 };

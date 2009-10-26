@@ -1694,7 +1694,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
         c->cur_inst = i;
 
 #if 0
-        _mesa_printf("Inst %d: ", i);
+        debug_printf("Inst %d: ", i);
         _mesa_print_instruction(inst);
 #endif
 
@@ -1920,7 +1920,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                }
                break;
 	    default:
-		_mesa_printf("unsupported IR in fragment shader %d\n",
+		debug_printf("unsupported IR in fragment shader %d\n",
 			inst->Opcode);
 	}
 
@@ -1931,11 +1931,11 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     }
     post_wm_emit(c);
 
-    if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("wm-native:\n");
+    if (BRW_DEBUG & DEBUG_WM) {
+      debug_printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
 	 brw_disasm(stderr, &p->store[i]);
-      _mesa_printf("\n");
+      debug_printf("\n");
     }
 }
 
@@ -1945,8 +1945,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
  */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
-    if (INTEL_DEBUG & DEBUG_WM) {
-        _mesa_printf("brw_wm_glsl_emit:\n");
+    if (BRW_DEBUG & DEBUG_WM) {
+        debug_printf("brw_wm_glsl_emit:\n");
     }
 
     /* initial instruction translation/simplification */
@@ -1955,7 +1955,7 @@ void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
     /* actual code generation */
     brw_wm_emit_glsl(brw, c);
 
-    if (INTEL_DEBUG & DEBUG_WM) {
+    if (BRW_DEBUG & DEBUG_WM) {
         brw_wm_print_program(c, "brw_wm_glsl_emit done");
     }
 

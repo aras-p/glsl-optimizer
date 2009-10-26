@@ -284,7 +284,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       track_arg(c, inst, 2, read2);
    }
 
-   if (INTEL_DEBUG & DEBUG_WM) {
+   if (BRW_DEBUG & DEBUG_WM) {
       brw_wm_print_program(c, "pass1");
    }
 }

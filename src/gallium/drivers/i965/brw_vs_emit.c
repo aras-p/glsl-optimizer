@@ -242,10 +242,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    c->prog_data.total_grf = reg;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
-      _mesa_printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
-      _mesa_printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
-      _mesa_printf("%s reg = %d\n", __FUNCTION__, reg);
+   if (BRW_DEBUG & DEBUG_VS) {
+      debug_printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
+      debug_printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
+      debug_printf("%s reg = %d\n", __FUNCTION__, reg);
    }
 }
 
@@ -1248,10 +1248,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint index;
    GLuint file;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
-      _mesa_printf("vs-mesa:\n");
+   if (BRW_DEBUG & DEBUG_VS) {
+      debug_printf("vs-mesa:\n");
       _mesa_print_program(&c->vp->program.Base); 
-      _mesa_printf("\n");
+      debug_printf("\n");
    }
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1526,12 +1526,12 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    post_vs_emit(c, end_inst, last_inst);
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (BRW_DEBUG & DEBUG_VS) {
       int i;
 
-      _mesa_printf("vs-native:\n");
+      debug_printf("vs-native:\n");
       for (i = 0; i < p->nr_insn; i++)
 	 brw_disasm(stderr, &p->store[i]);
-      _mesa_printf("\n");
+      debug_printf("\n");
    }
 }

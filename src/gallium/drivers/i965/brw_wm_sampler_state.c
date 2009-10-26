@@ -76,8 +76,9 @@ static GLint S_FIXED(GLfloat value, GLuint frac_bits)
 }
 
 
-static struct brw_winsys_buffer *upload_default_color( struct brw_context *brw,
-				     const GLfloat *color )
+static struct brw_winsys_buffer *
+upload_default_color( struct brw_context *brw,
+		      const GLfloat *color )
 {
    struct brw_sampler_default_color sdc;
 
@@ -117,63 +118,6 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
 {
    _mesa_memset(sampler, 0, sizeof(*sampler));
 
-   switch (key->minfilter) {
-   case GL_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
-      break;
-   case GL_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
-      break;
-   case GL_NEAREST_MIPMAP_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
-      break;
-   case GL_LINEAR_MIPMAP_NEAREST:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_NEAREST;
-      break;
-   case GL_NEAREST_MIPMAP_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
-      break;
-   case GL_LINEAR_MIPMAP_LINEAR:
-      sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
-      sampler->ss0.mip_filter = BRW_MIPFILTER_LINEAR;
-      break;
-   default:
-      break;
-   }
-
-   /* Set Anisotropy: 
-    */
-   if (key->max_aniso > 1.0) {
-      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC; 
-      sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
-
-      if (key->max_aniso > 2.0) {
-	 sampler->ss3.max_aniso = MIN2((key->max_aniso - 2) / 2,
-				       BRW_ANISORATIO_16);
-      }
-   }
-   else {
-      switch (key->magfilter) {
-      case GL_NEAREST:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
-	 break;
-      case GL_LINEAR:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
-	 break;
-      default:
-	 break;
-      }  
-   }
-
-   sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
-   sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
-   sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
-
    /* Cube-maps on 965 and later must use the same wrap mode for all 3
     * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
     */
@@ -198,36 +142,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
    }
 
 
-   /* Set shadow function: 
-    */
-   if (key->comparemode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* Shadowing is "enabled" by emitting a particular sampler
-       * message (sample_c).  So need to recompile WM program when
-       * shadow comparison is enabled on each/any texture unit.
-       */
-      sampler->ss0.shadow_function =
-	 intel_translate_shadow_compare_func(key->comparefunc);
-   }
 
-   /* Set LOD bias: 
-    */
-   sampler->ss0.lod_bias = S_FIXED(CLAMP(key->lod_bias, -16, 15), 6);
-
-   sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
-   sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
-
-   /* Set BaseMipLevel, MaxLOD, MinLOD: 
-    *
-    * XXX: I don't think that using firstLevel, lastLevel works,
-    * because we always setup the surface state as if firstLevel ==
-    * level zero.  Probably have to subtract firstLevel from each of
-    * these:
-    */
-   sampler->ss0.base_level = U_FIXED(0, 1);
-
-   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(key->maxlod, 0), 13), 6);
-   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(key->minlod, 0), 13), 6);
-   
    sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }
 
@@ -237,57 +152,42 @@ static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
 			    struct wm_sampler_key *key)
 {
-   int unit;
+   int nr = MIN2(brw->curr.number_textures,
+		 brw->curr.number_samplers);
+   int i;
 
    memset(key, 0, sizeof(*key));
 
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-	 struct wm_sampler_entry *entry = &key->sampler[unit];
-	 struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-	 struct gl_texture_object *texObj = texUnit->_Current;
-	 struct intel_texture_object *intelObj = intel_texture_object(texObj);
-	 struct gl_texture_image *firstImage =
-	    texObj->Image[0][intelObj->firstLevel];
+   for (i = 0; i < nr; i++) {
+      const struct brw_texture *tex = brw->curr.texture[i];
+      const struct brw_sampler *sampler = brw->curr.sampler[i];
+      struct wm_sampler_entry *entry = &key->sampler[i];
 
-         entry->tex_target = texObj->Target;
+      entry->tex_target = texObj->Target;
+      entry->seamless_cube_map = FALSE; /* XXX: add this to gallium */
+      entry->ss0 = sampler->ss0;
+      entry->ss1 = sampler->ss1;
+      entry->ss3 = sampler->ss3;
 
-	 entry->seamless_cube_map = (texObj->Target == GL_TEXTURE_CUBE_MAP)
-	    ? ctx->Texture.CubeMapSeamless : GL_FALSE;
-
-	 entry->wrap_r = texObj->WrapR;
-	 entry->wrap_s = texObj->WrapS;
-	 entry->wrap_t = texObj->WrapT;
-
-	 entry->maxlod = texObj->MaxLod;
-	 entry->minlod = texObj->MinLod;
-	 entry->lod_bias = texUnit->LodBias + texObj->LodBias;
-	 entry->max_aniso = texObj->MaxAnisotropy;
-	 entry->minfilter = texObj->MinFilter;
-	 entry->magfilter = texObj->MagFilter;
-	 entry->comparemode = texObj->CompareMode;
-         entry->comparefunc = texObj->CompareFunc;
-
-	 brw->sws->bo_unreference(brw->wm.sdc_bo[unit]);
-	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
-	    float bordercolor[4] = {
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0]
-	    };
-	    /* GL specs that border color for depth textures is taken from the
-	     * R channel, while the hardware uses A.  Spam R into all the
-	     * channels for safety.
-	     */
-	    brw->wm.sdc_bo[unit] = upload_default_color(brw, bordercolor);
-	 } else {
-	    brw->wm.sdc_bo[unit] = upload_default_color(brw,
-							texObj->BorderColor);
-	 }
-	 key->sampler_count = unit + 1;
+      brw->sws->bo_unreference(brw->wm.sdc_bo[i]);
+      if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
+	 float bordercolor[4] = {
+	    texObj->BorderColor[0],
+	    texObj->BorderColor[0],
+	    texObj->BorderColor[0],
+	    texObj->BorderColor[0]
+	 };
+	 /* GL specs that border color for depth textures is taken from the
+	  * R channel, while the hardware uses A.  Spam R into all the
+	  * channels for safety.
+	  */
+	 brw->wm.sdc_bo[i] = upload_default_color(brw, bordercolor);
+      } else {
+	 brw->wm.sdc_bo[i] = upload_default_color(brw, texObj->BorderColor);
       }
    }
+
+   key->sampler_count = nr;
 }
 
 /* All samplers must be uploaded in a single contiguous array, which
@@ -354,7 +254,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 
 const struct brw_tracked_state brw_wm_samplers = {
    .dirty = {
-      .mesa = _NEW_TEXTURE,
+      .mesa = PIPE_NEW_BOUND_TEXTURES | PIPE_NEW_SAMPLER,
       .brw = 0,
       .cache = 0
    },
