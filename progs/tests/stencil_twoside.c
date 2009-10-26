@@ -274,9 +274,9 @@ static void Init( void )
    if (atof( ver_string ) < 2.0) {
       use20syntax = 0;
    }
-   stencil_func_separate = glutGetProcAddress( "glStencilFuncSeparate" );
-   stencil_func_separate_ati = glutGetProcAddress( "glStencilFuncSeparateATI" );
-   stencil_op_separate = glutGetProcAddress( "glStencilOpSeparate" );
+   stencil_func_separate = (PFNGLSTENCILFUNCSEPARATEPROC) glutGetProcAddress( "glStencilFuncSeparate" );
+   stencil_func_separate_ati = (PFNGLSTENCILFUNCSEPARATEATIPROC) glutGetProcAddress( "glStencilFuncSeparateATI" );
+   stencil_op_separate = (PFNGLSTENCILOPSEPARATEPROC) glutGetProcAddress( "glStencilOpSeparate" );
 
    printf("\nAll 5 squares should be the same color.\n");
 }
