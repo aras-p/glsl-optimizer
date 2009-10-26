@@ -3250,10 +3250,6 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    GLuint sizeInBytes;
    (void) border;
 
-   texImage->TexFormat
-      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
-   ASSERT(texImage->TexFormat);
-
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
@@ -3311,10 +3307,6 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    GLuint sizeInBytes;
    (void) border;
 
-   texImage->TexFormat
-      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
-   ASSERT(texImage->TexFormat);
-
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
@@ -3367,10 +3359,6 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 {
    GLuint sizeInBytes;
    (void) border;
-
-   texImage->TexFormat
-      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
-   ASSERT(texImage->TexFormat);
 
    /* allocate memory */
    sizeInBytes = texture_size(texImage);
@@ -3569,10 +3557,6 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    ASSERT(texImage->Height > 0);
    ASSERT(texImage->Depth == 1);
    ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
-
-   texImage->TexFormat
-      = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, 0, 0);
-   ASSERT(texImage->TexFormat);
 
    /* allocate storage */
    texImage->Data = _mesa_alloc_texmemory(imageSize);

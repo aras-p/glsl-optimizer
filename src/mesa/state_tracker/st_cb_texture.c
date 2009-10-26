@@ -555,10 +555,6 @@ st_TexImage(GLcontext * ctx,
    }
 #endif
 
-   /* choose the texture format */
-   texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
-                                                format, type);
-
    _mesa_set_fetch_functions(texImage, dims);
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {

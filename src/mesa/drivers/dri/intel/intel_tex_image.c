@@ -330,10 +330,6 @@ intelTexImage(GLcontext * ctx,
                                          &postConvHeight);
    }
 
-   /* choose the texture format */
-   texImage->TexFormat = intelChooseTextureFormat(ctx, internalFormat,
-                                                  format, type);
-
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       texelBytes = 0;
    }
@@ -787,8 +783,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
-   texImage->TexFormat = intelChooseTextureFormat(&intel->ctx, internalFormat,
-                                                  type, format);
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 

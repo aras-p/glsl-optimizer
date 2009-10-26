@@ -1396,11 +1396,6 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     }
 #endif
 
-    /* choose the texture format */
-    assert(ctx->Driver.ChooseTextureFormat);
-    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                     internalFormat, format, type);
-    assert(texImage->TexFormat);
     mesaFormat = texImage->TexFormat;
     mml->glideFormat = fxGlideFormat(mesaFormat);
     ti->info.format = mml->glideFormat;
@@ -1617,12 +1612,6 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
     mml->width = width * mml->wScale;
     mml->height = height * mml->hScale;
 
-
-    /* choose the texture format */
-    assert(ctx->Driver.ChooseTextureFormat);
-    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                           internalFormat, -1/*format*/, -1/*type*/);
-    assert(texImage->TexFormat);
 
     /* Determine the appropriate Glide texel format,
      * given the user's internal texture format hint.

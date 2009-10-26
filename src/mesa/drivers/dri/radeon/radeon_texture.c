@@ -538,9 +538,6 @@ static void radeon_teximage(
 						  &postConvHeight);
 	}
 
-	/* Choose and fill in the texture format for this image */
-	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type, 0);
-
 	if (_mesa_is_format_compressed(texImage->TexFormat)) {
 		texelBytes = 0;
 	} else {

@@ -385,6 +385,9 @@ restart:
 			    texImage->TexFormat);
 			return GL_FALSE;
 		}
+                /* XXX why is the tex format being set here?
+                 * I think this can be removed.
+                 */
 		texImage->TexFormat = radeonChooseTextureFormat(ctx, texImage->InternalFormat, 0,
 								_mesa_get_format_datatype(texImage->TexFormat),
 								1);
