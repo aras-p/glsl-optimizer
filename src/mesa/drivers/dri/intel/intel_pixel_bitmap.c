@@ -435,13 +435,14 @@ intel_texture_bitmap(GLcontext * ctx,
    }
 
    /* Save GL state before we start setting up our drawing */
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT |
-		    GL_VIEWPORT_BIT);
+   _mesa_PushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT |
+                    GL_TEXTURE_BIT | GL_VIEWPORT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT |
 			  GL_CLIENT_PIXEL_STORE_BIT);
    old_active_texture = ctx->Texture.CurrentUnit;
 
    _mesa_Disable(GL_POLYGON_STIPPLE);
+   _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
    /* Upload our bitmap data to an alpha texture */
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB);
@@ -501,8 +502,6 @@ intel_texture_bitmap(GLcontext * ctx,
    meta_restore_vertex_program(&intel->meta);
 
    _mesa_PopClientAttrib();
-   _mesa_Disable(GL_TEXTURE_2D); /* asserted that it was disabled at entry */
-   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_PopAttrib();
 
    _mesa_DeleteTextures(1, &texname);
