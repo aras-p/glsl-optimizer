@@ -516,8 +516,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+	 debug_printf("Bad renderbuffer format: %d\n",
+		      irb->texformat->MesaFormat);
+	 assert(0);
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 return;
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {

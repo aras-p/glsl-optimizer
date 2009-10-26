@@ -167,8 +167,8 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	case PROGRAM_PAYLOAD:
 	    break;
 	default:
-	    _mesa_problem(NULL, "Unexpected file in get_reg()");
-	    return brw_null_reg();
+	   debug_printf("Unexpected file in get_reg()");
+	   return brw_null_reg();
     }
 
     assert(index < 256);

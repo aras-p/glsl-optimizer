@@ -1,111 +1,93 @@
 
-/* XXX: could split the primitive list to fallback only on the
- * non-conformant primitives.
- */
-static GLboolean check_fallbacks( struct brw_context *brw,
-				  const struct _mesa_prim *prim,
-				  GLuint nr_prims )
+#include "brw_context.h"
+#include "brw_pipe_rast.h"
+
+
+static GLboolean need_swtnl( struct brw_context *brw )
 {
-   GLuint i;
+   const struct pipe_rasterizer_state *rast = &brw->curr.rast->templ;
 
    /* If we don't require strict OpenGL conformance, never 
     * use fallbacks.  If we're forcing fallbacks, always
     * use fallfacks.
     */
    if (brw->flags.no_swtnl)
-      return GL_FALSE;
+      return FALSE;
 
    if (brw->flags.force_swtnl)
-      return GL_TRUE;
-
-   if (brw->curr.rast->tmpl.smooth_polys) {
-      for (i = 0; i < nr_prims; i++)
-	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
-	    return GL_TRUE;
-   }
-
-   /* BRW hardware will do AA lines, but they are non-conformant it
-    * seems.  TBD whether we keep this fallback:
-    */
-   if (ctx->Line.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (reduced_prim[prim[i].mode] == GL_LINES) 
-	    return GL_TRUE;
-   }
-
-   /* Stipple -- these fallbacks could be resolved with a little
-    * bit of work?
-    */
-   if (ctx->Line.StippleFlag) {
-      for (i = 0; i < nr_prims; i++) {
-	 /* GS doesn't get enough information to know when to reset
-	  * the stipple counter?!?
-	  */
-	 if (prim[i].mode == GL_LINE_LOOP || prim[i].mode == GL_LINE_STRIP) 
-	    return GL_TRUE;
-	    
-	 if (prim[i].mode == GL_POLYGON &&
-	     (ctx->Polygon.FrontMode == GL_LINE ||
-	      ctx->Polygon.BackMode == GL_LINE))
-	    return GL_TRUE;
-      }
-   }
-
-   if (ctx->Point.SmoothFlag) {
-      for (i = 0; i < nr_prims; i++)
-	 if (prim[i].mode == GL_POINTS) 
-	    return GL_TRUE;
-   }
-
-   /* BRW hardware doesn't handle GL_CLAMP texturing correctly;
-    * brw_wm_sampler_state:translate_wrap_mode() treats GL_CLAMP
-    * as GL_CLAMP_TO_EDGE instead.  If we're using GL_CLAMP, and
-    * we want strict conformance, force the fallback.
-    * Right now, we only do this for 2D textures.
-    */
-   {
-      int u;
-      for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
-         if (texUnit->Enabled) {
-            if (texUnit->Enabled & TEXTURE_1D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->WrapS == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_2D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-            if (texUnit->Enabled & TEXTURE_3D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapT == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapR == GL_CLAMP) {
-                   return GL_TRUE;
-               }
-            }
-         }
-      }
-   }
+      return TRUE;
 
    /* Exceeding hw limits on number of VS inputs?
     */
-   if (brw->nr_ve == 0 ||
-       brw->nr_ve >= BRW_VEP_MAX) {
+   if (brw->curr.num_vertex_elements == 0 ||
+       brw->curr.num_vertex_elements >= BRW_VEP_MAX) {
       return TRUE;
    }
 
    /* Position array with zero stride?
+    *
+    * XXX: position isn't always at zero...
+    * XXX: eliminate zero-stride arrays
     */
-   if (brw->vs[brw->ve[0]]->stride == 0)
-      return TRUE;
+   {
+      int ve0_vb = brw->curr.vertex_element[0].vertex_buffer_index;
+      
+      if (brw->curr.vertex_buffer[ve0_vb].stride == 0)
+	 return TRUE;
+   }
 
+   /* XXX: short-circuit
+    */
+   return FALSE;
 
+   if (brw->reduced_primitive == PIPE_PRIM_TRIANGLES) {
+      if (rast->poly_smooth)
+	 return TRUE;
+
+   }
+   
+   if (brw->reduced_primitive == PIPE_PRIM_LINES ||
+       (brw->reduced_primitive == PIPE_PRIM_TRIANGLES &&
+	(rast->fill_cw == PIPE_POLYGON_MODE_LINE ||
+	 rast->fill_ccw == PIPE_POLYGON_MODE_LINE)))
+   {
+      /* BRW hardware will do AA lines, but they are non-conformant it
+       * seems.  TBD whether we keep this fallback:
+       */
+      if (rast->line_smooth)
+	 return TRUE;
+
+      /* XXX: was a fallback in mesa (gs doesn't get enough
+       * information to know when to reset stipple counter), but there
+       * must be a way around it.
+       */
+      if (rast->line_stipple_enable &&
+	  (brw->reduced_primitive == PIPE_PRIM_TRIANGLES ||
+	   brw->primitive == PIPE_PRIM_LINE_LOOP || 
+	   brw->primitive == PIPE_PRIM_LINE_STRIP))
+	 return TRUE;
+   }
+
+   
+   if (brw->reduced_primitive == PIPE_PRIM_POINTS ||
+       (brw->reduced_primitive == PIPE_PRIM_TRIANGLES &&
+	(rast->fill_cw == PIPE_POLYGON_MODE_POINT ||
+	 rast->fill_ccw == PIPE_POLYGON_MODE_POINT)))
+   {
+      if (rast->point_smooth)
+	 return TRUE;
+   }
+
+   /* BRW hardware doesn't handle CLAMP texturing correctly;
+    * brw_wm_sampler_state:translate_wrap_mode() treats CLAMP
+    * as CLAMP_TO_EDGE instead.  If we're using CLAMP, and
+    * we want strict conformance, force the fallback.
+    *
+    * XXX: need a workaround for this.
+    */
       
    /* Nothing stopping us from the fast path now */
-   return GL_FALSE;
+   return FALSE;
 }
 
 

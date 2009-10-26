@@ -35,6 +35,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_debug.h"
 
 #define VS 0
 #define GS 1
@@ -111,7 +112,7 @@ static GLboolean check_urb_layout( struct brw_context *brw )
 /* Most minimal update, forces re-emit of URB fence packet after GS
  * unit turned on/off.
  */
-static void recalculate_urb_fence( struct brw_context *brw )
+static int recalculate_urb_fence( struct brw_context *brw )
 {
    GLuint csize = brw->curbe.total_size;
    GLuint vsize = brw->vs.prog_data->urb_entry_size;
@@ -204,6 +205,8 @@ done:
       
       brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
    }
+
+   return 0;
 }
 
 

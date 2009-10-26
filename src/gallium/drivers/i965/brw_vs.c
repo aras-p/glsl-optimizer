@@ -28,17 +28,19 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-           
+
+#include "tgsi/tgsi_dump.h"           
 
 #include "brw_context.h"
 #include "brw_vs.h"
 #include "brw_util.h"
 #include "brw_state.h"
+#include "brw_pipe_rast.h"
 
 
 
 static void do_vs_prog( struct brw_context *brw, 
-			struct brw_vertex_program *vp,
+			struct brw_vertex_shader *vp,
 			struct brw_vs_prog_key *key )
 {
    GLuint program_size;
@@ -51,16 +53,12 @@ static void do_vs_prog( struct brw_context *brw,
    brw_init_compile(brw, &c.func);
    c.vp = vp;
 
-   c.prog_data.nr_outputs_written = vp->program.Base.OutputsWritten;
-   c.prog_data.inputs_read = vp->program.Base.InputsRead;
-
-   if (c.key.copy_edgeflag) {
-      c.prog_data.nr_outputs_written |= 1<<VERT_RESULT_EDGE;
-      c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
-   }
+   c.prog_data.nr_outputs = vp->info.num_outputs;
+   c.prog_data.nr_inputs = vp->info.num_inputs;
+   c.prog_data.copy_edgeflag = c.key.copy_edgeflag;
 
    if (0)
-      tgsi_dump(&c.vp->tokens, 0);
+      tgsi_dump(c.vp->tokens, 0);
 
    /* Emit GEN4 code.
     */
@@ -80,11 +78,10 @@ static void do_vs_prog( struct brw_context *brw,
 }
 
 
-static void brw_upload_vs_prog(struct brw_context *brw)
+static int brw_upload_vs_prog(struct brw_context *brw)
 {
    struct brw_vs_prog_key key;
-   struct brw_vertex_program *vp = 
-      (struct brw_vertex_program *)brw->vertex_program;
+   struct brw_vertex_shader *vp = brw->curr.vertex_shader;
 
    memset(&key, 0, sizeof(key));
 
@@ -92,9 +89,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
     * the inputs it asks for, whether they are varying or not.
     */
    key.program_string_id = vp->id;
-   key.nr_userclip = brw->nr_userclip;
-   key.copy_edgeflag = (brw->rast->fill_ccw != PIPE_POLYGON_MODE_FILL ||
-			brw->rast->fill_cw != PIPE_POLYGON_MODE_FILL);
+   key.nr_userclip = brw->curr.ucp.nr;
+   key.copy_edgeflag = (brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL ||
+			brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL);
 
    /* Make an early check for the key.
     */
@@ -105,6 +102,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 				      &brw->vs.prog_data);
    if (brw->vs.prog_bo == NULL)
       do_vs_prog(brw, vp, &key);
+
+   return 0;
 }
 
 

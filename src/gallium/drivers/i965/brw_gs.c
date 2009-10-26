@@ -148,7 +148,7 @@ static void populate_key( struct brw_context *brw,
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
-   key->nr_attrs = brw->vs.prog_data->nr_outputs_written;
+   key->nr_attrs = brw->vs.prog_data->nr_outputs;
 
    /* BRW_NEW_PRIMITIVE */
    key->primitive = gs_prim[brw->primitive];

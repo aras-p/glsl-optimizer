@@ -46,17 +46,22 @@ struct brw_vs_prog_key {
 };
 
 
+
+#define MAX_IF_DEPTH 32
+#define MAX_LOOP_DEPTH 32
+
 struct brw_vs_compile {
    struct brw_compile func;
    struct brw_vs_prog_key key;
    struct brw_vs_prog_data prog_data;
 
-   struct brw_vertex_program *vp;
+   struct brw_vertex_shader *vp;
 
    GLuint nr_inputs;
+   GLuint nr_outputs;
+   GLboolean copy_edgeflag;
 
    GLuint first_output;
-   GLuint nr_outputs;
    GLuint first_overflow_output; /**< VERT_ATTRIB_x */
 
    GLuint first_tmp;
@@ -80,7 +85,12 @@ struct brw_vs_compile {
       GLint index;
       struct brw_reg reg;
    } current_const[3];
+
+   struct brw_instruction *if_inst[MAX_IF_DEPTH];
+   struct brw_instruction *loop_inst[MAX_LOOP_DEPTH];
+
 };
+
 
 void brw_vs_emit( struct brw_vs_compile *c );
 

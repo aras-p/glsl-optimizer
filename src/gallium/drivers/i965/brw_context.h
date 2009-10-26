@@ -154,6 +154,7 @@ struct brw_vertex_shader {
    const struct tgsi_token *tokens;
    struct tgsi_shader_info info;
 
+   unsigned id;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
 };
@@ -165,6 +166,7 @@ struct brw_fragment_shader {
 
    GLboolean isGLSL;
 
+   unsigned id;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
 };
@@ -280,10 +282,13 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint nr_outputs_written;
-   GLuint nr_params;       /**< number of float params/constants */
 
-   GLuint inputs_read;
+   GLuint nr_outputs;
+   GLuint nr_inputs;
+
+   GLuint nr_params;       /**< number of TGSI_FILE_CONSTANT's */
+
+   GLboolean copy_edgeflag;
 
    /* Used for calculating urb partitions:
     */
@@ -475,8 +480,8 @@ struct brw_context
    /* Active state from the state tracker: 
     */
    struct {
-      const struct brw_vertex_shader *vertex_shader;
-      const struct brw_fragment_shader *fragment_shader;
+      struct brw_vertex_shader *vertex_shader;
+      struct brw_fragment_shader *fragment_shader;
       const struct brw_blend_state *blend;
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_state *zstencil;
