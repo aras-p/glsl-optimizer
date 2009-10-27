@@ -76,7 +76,6 @@
 struct util_cpu_caps util_cpu_caps;
 
 static int has_cpuid(void);
-static int cpuid(uint32_t ax, uint32_t *p);
 
 #if defined(PIPE_ARCH_X86)
 
@@ -342,11 +341,9 @@ static int has_cpuid(void)
  * @sa cpuid.h included in gcc-4.3 onwards.
  * @sa http://msdn.microsoft.com/en-us/library/hskdteyh.aspx
  */
-static INLINE int
+static INLINE void
 cpuid(uint32_t ax, uint32_t *p)
 {
-   int ret = -1;
-
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
    __asm __volatile (
      "xchgl %%ebx, %1\n\t"
@@ -358,7 +355,6 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64)
    __asm __volatile (
      "cpuid\n\t"
@@ -368,14 +364,14 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_MSVC)
    __cpuid(p, ax);
-
-   ret = 0;
+#else
+   p[0] = 0;
+   p[1] = 0;
+   p[2] = 0;
+   p[3] = 0;
 #endif
-
-   return ret;
 }
 #endif /* X86 or X86_64 */
 
