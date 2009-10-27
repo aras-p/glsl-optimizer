@@ -4565,7 +4565,7 @@ yyreduce:
 		      "undefined variable binding in ALIAS statement");
 	      YYERROR;
 	   } else {
-	      _mesa_symbol_table_add_symbol(state->st, 0, (yyvsp[(2) - (4)].string), target);
+	      _mesa_symbol_table_add_symbol(state->st, 0, strdup((yyvsp[(2) - (4)].string)), target);
 	   }
 	;}
     break;
@@ -4896,9 +4896,13 @@ declare_variable(struct asm_parser_state *state, char *name, enum asm_type t,
    if (exist != NULL) {
       yyerror(locp, state, "redeclared identifier");
    } else {
-      s = calloc(1, sizeof(struct asm_symbol));
-      s->name = name;
+      const size_t name_len = strlen(name);
+
+      s = calloc(1, sizeof(struct asm_symbol) + name_len + 1);
+      s->name = (char *)(s + 1);
       s->type = t;
+
+      memcpy((char *) s->name, name, name_len + 1);
 
       switch (t) {
       case at_temp:
@@ -5147,6 +5151,11 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    _mesa_memcpy (strz, str, len);
    strz[len] = '\0';
 
+   if (state->prog->String != NULL) {
+      _mesa_free(state->prog->String);
+      state->prog->String = NULL;
+   }
+
    state->prog->String = strz;
 
    state->st = _mesa_symbol_table_ctor();
@@ -5236,13 +5245,17 @@ error:
    for (sym = state->sym; sym != NULL; sym = temp) {
       temp = sym->next;
 
-      _mesa_free((void *) sym->name);
       _mesa_free(sym);
    }
    state->sym = NULL;
 
    _mesa_symbol_table_dtor(state->st);
    state->st = NULL;
+
+   if (state->string_dumpster != NULL) {
+      _mesa_free(state->string_dumpster);
+      state->dumpster_size = 0;
+   }
 
    return result;
 }
