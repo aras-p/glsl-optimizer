@@ -67,6 +67,9 @@
 
 #if defined(PIPE_OS_WINDOWS)
 #include <windows.h>
+#if defined(MSVC)
+#include <intrin.h>
+#endif
 #endif
 
 
@@ -337,6 +340,7 @@ static int has_cpuid(void)
 
 /**
  * @sa cpuid.h included in gcc-4.3 onwards.
+ * @sa http://msdn.microsoft.com/en-us/library/hskdteyh.aspx
  */
 static INLINE int
 cpuid(uint32_t ax, uint32_t *p)
@@ -366,7 +370,7 @@ cpuid(uint32_t ax, uint32_t *p)
    );
    ret = 0;
 #elif defined(PIPE_CC_MSVC)
-   __cpuid(ax, p);
+   __cpuid(p, ax);
 
    ret = 0;
 #endif
