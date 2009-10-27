@@ -73,6 +73,9 @@ struct symbol {
 /**
  */
 struct symbol_header {
+    /** Linkage in list of all headers in a given symbol table. */
+    struct symbol_header *next;
+
     /** Symbol name. */
     const char *name;
 
@@ -102,6 +105,9 @@ struct _mesa_symbol_table {
 
     /** Top of scope stack. */
     struct scope_level *current_scope;
+
+    /** List of all symbol headers in the table. */
+    struct symbol_header *hdr;
 };
 
 
@@ -301,6 +307,8 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
         hdr->name = name;
 
         hash_table_insert(table->ht, hdr, name);
+	hdr->next = table->hdr;
+	table->hdr = hdr;
     }
 
     check_symbol_table(table);
@@ -341,8 +349,16 @@ _mesa_symbol_table_ctor(void)
 void
 _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 {
+   struct symbol_header *hdr;
+   struct symbol_header *next;
+
    while (table->current_scope != NULL) {
       _mesa_symbol_table_pop_scope(table);
+   }
+
+   for (hdr = table->hdr; hdr != NULL; hdr = next) {
+       next = hdr->next;
+       _mesa_free(hdr);
    }
 
    hash_table_dtor(table->ht);
