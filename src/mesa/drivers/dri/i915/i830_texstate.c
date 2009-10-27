@@ -160,11 +160,18 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
       pitch = intelObj->pitchOverride;
    } else {
+      GLuint dst_x, dst_y;
+
+      intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
+				     &dst_x, &dst_y);
+
       dri_bo_reference(intelObj->mt->region->buffer);
       i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
-      i830->state.tex_offset[unit] = intel_miptree_image_offset(intelObj->mt,
-								0, intelObj->
-								firstLevel);
+      /* XXX: This calculation is probably broken for tiled images with
+       * a non-page-aligned offset.
+       */
+      i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
+	 intelObj->mt->cpp;
 
       format = translate_texture_format(firstImage->TexFormat->MesaFormat,
 					firstImage->InternalFormat);
