@@ -93,8 +93,7 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
-   const struct intel_region *src =
-      get_teximage_source(intel, internalFormat);
+   const struct intel_region *src = get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
@@ -121,6 +120,7 @@ do_copy_texsubimage(struct intel_context *intel,
       GLuint image_x, image_y;
       GLshort src_pitch;
 
+      /* get dest x/y in destination texture */
       intel_miptree_get_image_offset(intelImage->mt,
 				     intelImage->level,
 				     intelImage->face,
@@ -155,6 +155,7 @@ do_copy_texsubimage(struct intel_context *intel,
 	 src_pitch = src->pitch;
       }
 
+      /* blit from src buffer to texture */
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
