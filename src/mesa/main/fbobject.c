@@ -51,6 +51,9 @@
 /** Set this to 1 to help debug FBO incompleteness problems */
 #define DEBUG_FBO 0
 
+/** Set this to 1 to debug/log glBlitFramebuffer() calls */
+#define DEBUG_BLIT 0
+
 
 /**
  * Notes:
@@ -1932,6 +1935,20 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
 
 #if FEATURE_EXT_framebuffer_blit
+
+static const struct gl_renderbuffer_attachment *
+find_attachment(const struct gl_framebuffer *fb, const struct gl_renderbuffer *rb)
+{
+   GLuint i;
+   for (i = 0; i < Elements(fb->Attachment); i++) {
+      if (fb->Attachment[i].Renderbuffer == rb)
+         return &fb->Attachment[i];
+   }
+   return NULL;
+}
+
+
+
 /**
  * Blit rectangular region, optionally from one framebuffer to another.
  *
@@ -2057,6 +2074,44 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if (!ctx->Extensions.EXT_framebuffer_blit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebufferEXT");
       return;
+   }
+
+   /* Debug code */
+   if (DEBUG_BLIT) {
+      _mesa_printf("glBlitFramebuffer(%d, %d, %d, %d,  %d, %d, %d, %d,"
+                   " 0x%x, 0x%x)\n",
+                   srcX0, srcY0, srcX1, srcY1,
+                   dstX0, dstY0, dstX1, dstY1,
+                   mask, filter);
+      if (colorReadRb) {
+         const struct gl_renderbuffer_attachment *att;
+
+         att = find_attachment(readFb, colorReadRb);
+         _mesa_printf("  Src FBO %u  RB %u (%dx%d)  ",
+                      readFb->Name, colorReadRb->Name,
+                      colorReadRb->Width, colorReadRb->Height);
+         if (att && att->Texture) {
+            _mesa_printf("Tex %u  tgt 0x%x  level %u  face %u",
+                         att->Texture->Name,
+                         att->Texture->Target,
+                         att->TextureLevel,
+                         att->CubeMapFace);
+         }
+         _mesa_printf("\n");
+
+         att = find_attachment(drawFb, colorDrawRb);
+         _mesa_printf("  Dst FBO %u  RB %u (%dx%d)  ",
+                      drawFb->Name, colorDrawRb->Name,
+                      colorDrawRb->Width, colorDrawRb->Height);
+         if (att && att->Texture) {
+            _mesa_printf("Tex %u  tgt 0x%x  level %u  face %u",
+                         att->Texture->Name,
+                         att->Texture->Target,
+                         att->TextureLevel,
+                         att->CubeMapFace);
+         }
+         _mesa_printf("\n");
+      }
    }
 
    ASSERT(ctx->Driver.BlitFramebuffer);
