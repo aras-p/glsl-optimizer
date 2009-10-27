@@ -58,13 +58,13 @@ extern void _mesa_init_debug( GLcontext *ctx );
 #endif
 
 extern void
-_mesa_dump_texture(GLuint texture, GLboolean dumpImages);
+_mesa_dump_texture(GLuint texture, GLuint writeImages);
 
 extern void
-_mesa_dump_textures(GLboolean dumpImages);
+_mesa_dump_textures(GLuint writeImages);
 
 extern void
-_mesa_dump_renderbuffers(GLboolean dumpImages);
+_mesa_dump_renderbuffers(GLboolean writeImages);
 
 extern void
 _mesa_dump_color_buffer(const char *filename);
