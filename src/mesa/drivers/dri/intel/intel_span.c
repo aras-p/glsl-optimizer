@@ -163,6 +163,9 @@ static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
 	int	x_tile_number, y_tile_number;
 	int	tile_off, tile_base;
 	
+        x += irb->region->draw_x;
+        y += irb->region->draw_y;
+
 	tile_stride = (irb->region->pitch * irb->region->cpp) << 3;
 
 	xbyte = x * irb->region->cpp;
@@ -218,6 +221,9 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 	int	x_tile_number, y_tile_number;
 	int	tile_off, tile_base;
 	
+        x += irb->region->draw_x;
+        y += irb->region->draw_y;
+
 	tile_stride = (irb->region->pitch * irb->region->cpp) << 5;
 
 	xbyte = x * irb->region->cpp;
