@@ -52,6 +52,7 @@ progs = [
     'blendminmax',
     'blendsquare',
     'blendxor',
+    'blitfb',
     'bufferobj',
     'bug_3050',
     'bug_3101',

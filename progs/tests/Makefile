@@ -28,6 +28,7 @@ SOURCES = \
 	blendminmax.c \
 	blendsquare.c \
 	blendxor.c \
+	blitfb.c \
 	bufferobj.c \
 	bumpmap.c \
 	bug_3050.c \
