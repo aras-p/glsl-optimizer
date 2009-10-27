@@ -394,6 +394,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 
          default:
             assert(0);
+            FREE(storage);
             return;
          }
       }
@@ -422,6 +423,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 
          default:
             assert(0);
+            FREE(storage);
             return;
          }
       }
