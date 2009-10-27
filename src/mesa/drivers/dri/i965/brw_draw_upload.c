@@ -375,7 +375,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * isn't an issue at this point.
     */
    if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
-      intel->Fallback = 1;
+      intel->Fallback = GL_TRUE; /* boolean, not bitfield */
       return;
    }
 
@@ -427,7 +427,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    /* Position array not properly enabled:
 	     */
             if (input->glarray->StrideB == 0) {
-               intel->Fallback = 1;
+               intel->Fallback = GL_TRUE; /* boolean, not bitfield */
                return;
             }
 

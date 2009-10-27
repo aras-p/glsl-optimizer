@@ -133,7 +133,11 @@ const struct brw_tracked_state brw_check_fallback = {
 
 
 
-/* Not used:
+/**
+ * Called by the INTEL_FALLBACK() macro.
+ * NOTE: this is a no-op for the i965 driver.  The brw->intel.Fallback
+ * field is treated as a boolean, not a bitmask.  It's only set in a
+ * couple of places.
  */
 void intelFallback( struct intel_context *intel, GLuint bit, GLboolean mode )
 {

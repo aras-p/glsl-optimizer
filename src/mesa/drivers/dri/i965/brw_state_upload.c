@@ -308,7 +308,7 @@ void brw_validate_state( struct brw_context *brw )
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
       brw_clear_batch_cache(brw);
 
-   brw->intel.Fallback = 0;
+   brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
 
    /* do prepare stage for all atoms */
    for (i = 0; i < Elements(atoms); i++) {
