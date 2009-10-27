@@ -484,11 +484,12 @@ static void xorgBlockHandler(int i, pointer blockData, pointer pTimeout,
 	    BoxPtr rect = REGION_RECTS(dirty);
 	    int i;
 
+	    /* XXX no need for copy? */
 	    for (i = 0; i < num_cliprects; i++, rect++) {
-		clip[i].x = rect->x1;
-		clip[i].y = rect->y1;
-		clip[i].width = rect->x2 - rect->x1;
-		clip[i].height = rect->y2 - rect->y1;
+		clip[i].x1 = rect->x1;
+		clip[i].y1 = rect->y1;
+		clip[i].x2 = rect->x2;
+		clip[i].y2 = rect->y2;
 	    }
 
 	    /* TODO query connector property to see if this is needed */
