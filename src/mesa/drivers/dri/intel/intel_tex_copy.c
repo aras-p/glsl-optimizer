@@ -29,6 +29,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/teximage.h"
+#include "main/texstate.h"
 #include "main/mipmap.h"
 
 #include "drivers/common/meta.h"
@@ -183,8 +184,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLint border)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -231,8 +231,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                     GLint x, GLint y, GLsizei width, GLsizei height,
                     GLint border)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -247,7 +246,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
     */
    ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
                           width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
+                          GL_RGBA, GL_UNSIGNED_BYTE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
 
    srcx = x;
@@ -277,8 +276,7 @@ static void
 intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint x, GLint y, GLsizei width)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -303,8 +301,7 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint yoffset,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
