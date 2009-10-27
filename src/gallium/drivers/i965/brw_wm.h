@@ -34,6 +34,7 @@
 #define BRW_WM_H
 
 #include "tgsi/tgsi_ureg.h"
+#include "tgsi/tgsi_ureg_parse.h"
 
 #include "brw_context.h"
 #include "brw_eu.h"
@@ -161,14 +162,6 @@ struct brw_wm_instruction {
 #define BRW_WM_MAX_CONST 256
 #define BRW_WM_MAX_KILLS MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS
 #define BRW_WM_MAX_SUBROUTINE 16
-
-
-struct ureg_instruction {
-   unsigned opcode:8;
-   unsigned tex_target:3;
-   struct ureg_dst dst;
-   struct ureg_src src[3];
-};
 
 
 /* New opcodes to track internal operations required for WM unit.

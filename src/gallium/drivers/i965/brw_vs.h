@@ -54,6 +54,7 @@ struct brw_vs_compile {
    struct brw_compile func;
    struct brw_vs_prog_key key;
    struct brw_vs_prog_data prog_data;
+   struct brw_chipset chipset;
 
    struct brw_vertex_shader *vp;
 
@@ -88,7 +89,12 @@ struct brw_vs_compile {
 
    struct brw_instruction *if_inst[MAX_IF_DEPTH];
    struct brw_instruction *loop_inst[MAX_LOOP_DEPTH];
+   GLuint insn;
+   GLuint if_depth;
+   GLuint loop_depth;
+   GLuint end_offset;
 
+   struct brw_indirect stack_index;
 };
 
 

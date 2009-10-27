@@ -1867,7 +1867,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                 brw_set_access_mode(p, BRW_ALIGN_16);
                 brw_ADD(p, get_addr_reg(stack_index),
                          get_addr_reg(stack_index), brw_imm_d(4));
-		brw_save_call(&c->func, inst->Comment, p->nr_insn);
+		brw_save_call(&c->func, inst->label, p->nr_insn);
                 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
                 brw_pop_insn_state(p);
 		break;

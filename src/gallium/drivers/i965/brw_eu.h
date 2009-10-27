@@ -136,10 +136,10 @@ struct brw_compile {
 
 
 void
-brw_save_label(struct brw_compile *c, const char *name, GLuint position);
+brw_save_label(struct brw_compile *c, unsigned label, GLuint position);
 
 void
-brw_save_call(struct brw_compile *c, const char *name, GLuint call_pos);
+brw_save_call(struct brw_compile *c, unsigned label, GLuint call_pos);
 
 void
 brw_resolve_cals(struct brw_compile *c);

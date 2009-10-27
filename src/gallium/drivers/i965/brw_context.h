@@ -289,6 +289,7 @@ struct brw_vs_prog_data {
    GLuint nr_params;       /**< number of TGSI_FILE_CONSTANT's */
 
    GLboolean copy_edgeflag;
+   GLboolean writes_psiz;
 
    /* Used for calculating urb partitions:
     */

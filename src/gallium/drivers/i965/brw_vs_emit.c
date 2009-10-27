@@ -35,18 +35,14 @@
 #include "util/u_math.h"
 
 #include "tgsi/tgsi_ureg.h"
+#include "tgsi/tgsi_ureg_parse.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_info.h"
 
 #include "brw_context.h"
 #include "brw_vs.h"
 #include "brw_debug.h"
 
-
-struct ureg_instruction {
-   unsigned opcode:8;
-   unsigned tex_target:3;
-   struct ureg_dst dst;
-   struct ureg_src src[3];
-};
 
 
 static struct brw_reg get_tmp( struct brw_vs_compile *c )
@@ -149,7 +145,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_output = reg;
    c->first_overflow_output = 0;
 
-   if (BRW_IS_IGDNG(c->func.brw))
+   if (c->chipset.is_igdng)
       mrf = 8;
    else
       mrf = 4;
@@ -251,7 +247,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
-   if (BRW_IS_IGDNG(c->func.brw))
+   if (c->chipset.is_igdng)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1058,7 +1054,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     */
    if (c->prog_data.writes_psiz ||
        c->key.nr_userclip || 
-       BRW_IS_965(p->brw))
+       c->chipset.is_965)
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -1089,7 +1085,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (BRW_IS_965(p->brw)) {
+      if (c->chipset.is_965) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,
@@ -1117,7 +1113,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
 
-   if (BRW_IS_IGDNG(p->brw)) {
+   if (c->chipset.is_igdng) {
        /* There are 20 DWs (D0-D19) in VUE vertex header on IGDNG */
        brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
        /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
@@ -1205,6 +1201,9 @@ post_vs_emit( struct brw_vs_compile *c,
 static uint32_t
 get_predicate(const struct ureg_instruction *inst)
 {
+   /* XXX: disabling for now
+    */
+#if 0
    if (inst->dst.CondMask == COND_TR)
       return BRW_PREDICATE_NONE;
 
@@ -1237,11 +1236,15 @@ get_predicate(const struct ureg_instruction *inst)
 		    inst->dst.CondMask);
       return BRW_PREDICATE_NORMAL;
    }
+#else
+   return BRW_PREDICATE_NORMAL;
+#endif
 }
 
 static void emit_insn(struct brw_vs_compile *c,
-		      const struct tgsi_full_instruction *insn)
+		      const struct ureg_instruction *inst)
 {
+   struct brw_compile *p = &c->func;
    struct brw_reg args[3], dst;
    GLuint i;
 
@@ -1253,9 +1256,6 @@ static void emit_insn(struct brw_vs_compile *c,
    /* Get argument regs.
     */
    for (i = 0; i < 3; i++) {
-      const struct ureg_src src = inst->src[i];
-      index = src.Index;
-      file = src.File;	
       args[i] = get_arg(c, inst, i);
    }
 
@@ -1263,16 +1263,13 @@ static void emit_insn(struct brw_vs_compile *c,
     * dst and arg, given the static allocation of registers.  So
     * care needs to be taken emitting multi-operation instructions.
     */ 
-   index = inst->dst.Index;
-   file = inst->dst.File;
    dst = get_dst(c, inst->dst);
 
-   if (inst->SaturateMode != SATURATE_OFF) {
-      debug_printf("Unsupported saturate %d in vertex shader",
-		   inst->SaturateMode);
+   if (inst->dst.Saturate) {
+      debug_printf("Unsupported saturate in vertex shader");
    }
 
-   switch (inst->Opcode) {
+   switch (inst->opcode) {
    case TGSI_OPCODE_ABS:
       brw_MOV(p, dst, brw_abs(args[0]));
       break;
@@ -1291,7 +1288,7 @@ static void emit_insn(struct brw_vs_compile *c,
    case TGSI_OPCODE_DPH:
       brw_DPH(p, dst, args[0], args[1]);
       break;
-   case TGSI_OPCODE_NRM3:
+   case TGSI_OPCODE_NRM:
       emit_nrm(c, dst, args[0], 3);
       break;
    case TGSI_OPCODE_NRM4:
@@ -1384,21 +1381,21 @@ static void emit_insn(struct brw_vs_compile *c,
       emit_xpd(p, dst, args[0], args[1]);
       break;
    case TGSI_OPCODE_IF:
-      assert(if_depth < MAX_IF_DEPTH);
-      if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
+      assert(c->if_depth < MAX_IF_DEPTH);
+      c->if_inst[c->if_depth] = brw_IF(p, BRW_EXECUTE_8);
       /* Note that brw_IF smashes the predicate_control field. */
-      if_inst[if_depth]->header.predicate_control = get_predicate(inst);
-      if_depth++;
+      c->if_inst[c->if_depth]->header.predicate_control = get_predicate(inst);
+      c->if_depth++;
       break;
    case TGSI_OPCODE_ELSE:
-      if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
+      c->if_inst[c->if_depth-1] = brw_ELSE(p, c->if_inst[c->if_depth-1]);
       break;
    case TGSI_OPCODE_ENDIF:
-      assert(if_depth > 0);
-      brw_ENDIF(p, if_inst[--if_depth]);
+      assert(c->if_depth > 0);
+      brw_ENDIF(p, c->if_inst[--c->if_depth]);
       break;			
    case TGSI_OPCODE_BGNLOOP:
-      loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
+      c->loop_inst[c->loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
       break;
    case TGSI_OPCODE_BRK:
       brw_set_predicate_control(p, get_predicate(inst));
@@ -1415,14 +1412,14 @@ static void emit_insn(struct brw_vs_compile *c,
       struct brw_instruction *inst0, *inst1;
       GLuint br = 1;
 
-      loop_depth--;
+      c->loop_depth--;
 
-      if (BRW_IS_IGDNG(brw))
+      if (c->chipset.is_igdng)
 	 br = 2;
 
-      inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
+      inst0 = inst1 = brw_WHILE(p, c->loop_inst[c->loop_depth]);
       /* patch all the BREAK/CONT instructions from last BEGINLOOP */
-      while (inst0 > loop_inst[loop_depth]) {
+      while (inst0 > c->loop_inst[c->loop_depth]) {
 	 inst0--;
 	 if (inst0->header.opcode == TGSI_OPCODE_BRK) {
 	    inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
@@ -1442,41 +1439,37 @@ static void emit_insn(struct brw_vs_compile *c,
       break;
    case TGSI_OPCODE_CAL:
       brw_set_access_mode(p, BRW_ALIGN_1);
-      brw_ADD(p, deref_1d(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+      brw_ADD(p, deref_1d(c->stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
       brw_set_access_mode(p, BRW_ALIGN_16);
-      brw_ADD(p, get_addr_reg(stack_index),
-	      get_addr_reg(stack_index), brw_imm_d(4));
-      brw_save_call(p, inst->Comment, p->nr_insn);
+      brw_ADD(p, get_addr_reg(c->stack_index),
+	      get_addr_reg(c->stack_index), brw_imm_d(4));
+      brw_save_call(p, inst->label, p->nr_insn);
       brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
       break;
    case TGSI_OPCODE_RET:
-      brw_ADD(p, get_addr_reg(stack_index),
-	      get_addr_reg(stack_index), brw_imm_d(-4));
+      brw_ADD(p, get_addr_reg(c->stack_index),
+	      get_addr_reg(c->stack_index), brw_imm_d(-4));
       brw_set_access_mode(p, BRW_ALIGN_1);
-      brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
+      brw_MOV(p, brw_ip_reg(), deref_1d(c->stack_index, 0));
       brw_set_access_mode(p, BRW_ALIGN_16);
       break;
    case TGSI_OPCODE_END:	
-      end_offset = p->nr_insn;
+      c->end_offset = p->nr_insn;
       /* this instruction will get patched later to jump past subroutine
        * code, etc.
        */
       brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
       break;
-   case TGSI_OPCODE_PRINT:
-      /* no-op */
-      break;
    case TGSI_OPCODE_BGNSUB:
-      brw_save_label(p, inst->Comment, p->nr_insn);
+      brw_save_label(p, p->nr_insn, p->nr_insn);
       break;
    case TGSI_OPCODE_ENDSUB:
       /* no-op */
       break;
    default:
       debug_printf("Unsupported opcode %i (%s) in vertex shader",
-		   inst->Opcode, inst->Opcode < MAX_OPCODE ?
-		   _mesa_opcode_string(inst->Opcode) :
-		   "unknown");
+		   inst->opcode, 
+		   tgsi_get_opcode_name(inst->opcode));
    }
 
    /* Set the predication update on the last instruction of the native
@@ -1485,12 +1478,16 @@ static void emit_insn(struct brw_vs_compile *c,
     * This would be problematic if it was set on a math instruction,
     * but that shouldn't be the case with the current GLSL compiler.
     */
+#if 0
+   /* XXX: disabled
+    */
    if (inst->CondUpdate) {
       struct brw_instruction *hw_insn = &p->store[p->nr_insn - 1];
 
       assert(hw_insn->header.destreg__conditionalmod == 0);
       hw_insn->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
    }
+#endif
 
    release_tmps(c);
 }
@@ -1498,24 +1495,19 @@ static void emit_insn(struct brw_vs_compile *c,
 
 /* Emit the vertex program instructions here.
  */
-void brw_vs_emit(struct brw_vs_compile *c )
+void brw_vs_emit(struct brw_vs_compile *c)
 {
    struct brw_compile *p = &c->func;
-   struct brw_context *brw = p->brw;
-   GLuint insn, if_depth = 0, loop_depth = 0;
-   GLuint end_offset = 0;
    struct brw_instruction *end_inst, *last_inst;
-   const struct brw_indirect stack_index = brw_indirect(0, 0);   
-   struct tgsi_parse_context parse;
-   struct tgsi_full_declaration *decl;
-   GLuint index;
-   GLuint file;
+   struct ureg_parse_context parse;
+   struct ureg_declaration *decl;
+   struct ureg_declaration *imm;
+   struct ureg_declaration *insn;
 
-   if (BRW_DEBUG & DEBUG_VS) {
-      debug_printf("vs-mesa:\n");
-      _mesa_print_program(&c->vp->program.Base); 
-      debug_printf("\n");
-   }
+   if (BRW_DEBUG & DEBUG_VS)
+      tgsi_dump(c->vp->tokens, 0); 
+
+   c->stack_index = brw_indirect(0, 0);
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
@@ -1523,12 +1515,15 @@ void brw_vs_emit(struct brw_vs_compile *c )
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
-   brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+   brw_MOV(p, get_addr_reg(c->stack_index), brw_address(c->stack));
 
-   for (insn = 0; insn < nr_insns; insn++) {
+   while (ureg_next_decl(&parse, &decl)) {
+   }
 
-      const struct ureg_instruction *inst = &c->vp->program.Base.Instructions[insn];
-      
+   while (ureg_next_immediate(&parse, &imm)) {
+   }
+
+   while (ureg_next_instruction(&parse, &insn)) {
    }
 
    end_inst = &p->store[end_offset];

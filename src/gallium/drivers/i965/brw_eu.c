@@ -152,7 +152,7 @@ const GLuint *brw_get_program( struct brw_compile *p,
  */
 struct brw_glsl_label
 {
-   const char *name; /**< the label string */
+   GLuint label;     /**< the label number */
    GLuint position;  /**< the position of the brw instruction for this label */
    struct brw_glsl_label *next;  /**< next in linked list */
 };
@@ -164,7 +164,7 @@ struct brw_glsl_label
 struct brw_glsl_call
 {
    GLuint call_inst_pos;  /**< location of the CAL instruction */
-   const char *sub_name;  /**< name of subroutine to call */
+   GLuint label;
    struct brw_glsl_call *next;  /**< next in linked list */
 };
 
@@ -173,10 +173,10 @@ struct brw_glsl_call
  * Called for each OPCODE_BGNSUB.
  */
 void
-brw_save_label(struct brw_compile *c, const char *name, GLuint position)
+brw_save_label(struct brw_compile *c, unsigned l, GLuint position)
 {
    struct brw_glsl_label *label = CALLOC_STRUCT(brw_glsl_label);
-   label->name = name;
+   label->label = l;
    label->position = position;
    label->next = c->first_label;
    c->first_label = label;
@@ -187,11 +187,11 @@ brw_save_label(struct brw_compile *c, const char *name, GLuint position)
  * Called for each OPCODE_CAL.
  */
 void
-brw_save_call(struct brw_compile *c, const char *name, GLuint call_pos)
+brw_save_call(struct brw_compile *c, GLuint label, GLuint call_pos)
 {
    struct brw_glsl_call *call = CALLOC_STRUCT(brw_glsl_call);
    call->call_inst_pos = call_pos;
-   call->sub_name = name;
+   call->label = label;
    call->next = c->first_call;
    c->first_call = call;
 }
@@ -201,11 +201,11 @@ brw_save_call(struct brw_compile *c, const char *name, GLuint call_pos)
  * Lookup a label, return label's position/offset.
  */
 static GLuint
-brw_lookup_label(struct brw_compile *c, const char *name)
+brw_lookup_label(struct brw_compile *c, unsigned l)
 {
    const struct brw_glsl_label *label;
    for (label = c->first_label; label; label = label->next) {
-      if (strcmp(name, label->name) == 0) {
+      if (l == label->label) {
          return label->position;
       }
    }
@@ -224,7 +224,7 @@ brw_resolve_cals(struct brw_compile *c)
     const struct brw_glsl_call *call;
 
     for (call = c->first_call; call; call = call->next) {
-        const GLuint sub_loc = brw_lookup_label(c, call->sub_name);
+        const GLuint sub_loc = brw_lookup_label(c, call->label);
 	struct brw_instruction *brw_call_inst = &c->store[call->call_inst_pos];
 	struct brw_instruction *brw_sub_inst = &c->store[sub_loc];
 	GLint offset = brw_sub_inst - brw_call_inst;
