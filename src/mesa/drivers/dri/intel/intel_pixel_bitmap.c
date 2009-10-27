@@ -33,6 +33,7 @@
 #include "main/macros.h"
 #include "main/bufferobj.h"
 #include "main/pixelstore.h"
+#include "main/polygon.h"
 #include "main/state.h"
 #include "main/teximage.h"
 #include "main/texenv.h"
