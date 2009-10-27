@@ -1025,7 +1025,7 @@ init_blit_depth_pixels(GLcontext *ctx)
 
 
 /**
- * Try to do a glBiltFramebuffer using no-copy texturing.
+ * Try to do a glBlitFramebuffer using no-copy texturing.
  * We can do this when the src renderbuffer is actually a texture.
  * But if the src buffer == dst buffer we cannot do this.
  *
