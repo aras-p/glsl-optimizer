@@ -55,46 +55,47 @@
 static void
 client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 {
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint flag;
    GLboolean *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Vertex.Enabled;
+         var = &arrayObj->Vertex.Enabled;
          flag = _NEW_ARRAY_VERTEX;
          break;
       case GL_NORMAL_ARRAY:
-         var = &ctx->Array.ArrayObj->Normal.Enabled;
+         var = &arrayObj->Normal.Enabled;
          flag = _NEW_ARRAY_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &ctx->Array.ArrayObj->Color.Enabled;
+         var = &arrayObj->Color.Enabled;
          flag = _NEW_ARRAY_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Index.Enabled;
+         var = &arrayObj->Index.Enabled;
          flag = _NEW_ARRAY_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
+         var = &arrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
          flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &ctx->Array.ArrayObj->EdgeFlag.Enabled;
+         var = &arrayObj->EdgeFlag.Enabled;
          flag = _NEW_ARRAY_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->FogCoord.Enabled;
+         var = &arrayObj->FogCoord.Enabled;
          flag = _NEW_ARRAY_FOGCOORD;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->SecondaryColor.Enabled;
+         var = &arrayObj->SecondaryColor.Enabled;
          flag = _NEW_ARRAY_COLOR1;
          break;
 
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
-         var = &ctx->Array.ArrayObj->PointSize.Enabled;
+         var = &arrayObj->PointSize.Enabled;
          flag = _NEW_ARRAY_POINT_SIZE;
          break;
 #endif
@@ -120,7 +121,7 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
             ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
-            var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
+            var = &arrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
