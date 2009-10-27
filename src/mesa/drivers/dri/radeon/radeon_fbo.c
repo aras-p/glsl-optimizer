@@ -280,12 +280,17 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawablePrivate *driDrawPriv)
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
             rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    break;
+	case MESA_FORMAT_X8_Z24:
+	    rrb->base.DataType = GL_UNSIGNED_INT;
+            rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
+	    break;
 	case MESA_FORMAT_S8_Z24:
 	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
             rrb->base._BaseFormat = GL_DEPTH_STENCIL;
 	    break;
 	default:
-	    fprintf(stderr, "%s: Unknown format 0x%04x\n", __FUNCTION__, format);
+	    fprintf(stderr, "%s: Unknown format %s\n",
+                    __FUNCTION__, _mesa_get_format_name(format));
 	    _mesa_delete_renderbuffer(&rrb->base);
 	    return NULL;
     }
