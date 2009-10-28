@@ -43,6 +43,8 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         /* X8 */
         case PIPE_FORMAT_I8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
+        case PIPE_FORMAT_L8_UNORM:
+            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
         /* X16 */
         case PIPE_FORMAT_R16_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16);
@@ -51,6 +53,9 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
                 R300_TX_FORMAT_SIGNED;
         case PIPE_FORMAT_Z16_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16);
+        /* Y8X8 */
+        case PIPE_FORMAT_A8L8_UNORM:
+            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
         /* W8Z8Y8X8 */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
             return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
@@ -85,12 +90,6 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         case PIPE_FORMAT_Z24S8_UNORM:
         case PIPE_FORMAT_Z24X8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
-
-        case PIPE_FORMAT_A8L8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
-
-        case PIPE_FORMAT_L8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
 
         default:
             debug_printf("r300: Implementation error: "
