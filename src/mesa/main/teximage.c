@@ -3554,10 +3554,14 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 }
 
 
-void GLAPIENTRY
-_mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
-                                 GLsizei width, GLenum format,
-                                 GLsizei imageSize, const GLvoid *data)
+/**
+ * Common helper for glCompressedTexSubImage1/2/3D().
+ */
+static void
+compressed_tex_sub_image(GLuint dims, GLenum target, GLint level,
+                         GLint xoffset, GLint yoffset, GLint zoffset,
+                         GLsizei width, GLsizei height, GLsizei depth,
+                         GLenum format, GLsizei imageSize, const GLvoid *data)
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
@@ -3565,12 +3569,12 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   error = compressed_subtexture_error_check(ctx, 1, target, level,
+   error = compressed_subtexture_error_check(ctx, dims, target, level,
                                              xoffset, 0, 0, /* pos */
-                                             width, 1, 1,   /* size */
+                                             width, height, depth,   /* size */
                                              format, imageSize);
    if (error) {
-      _mesa_error(ctx, error, "glCompressedTexSubImage1D");
+      _mesa_error(ctx, error, "glCompressedTexSubImage%uD", dims);
       return;
    }
 
@@ -3581,16 +3585,40 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
       assert(texImage);
 
-      if (compressed_subtexture_error_check2(ctx, 1, width, 1, 1,
+      if (compressed_subtexture_error_check2(ctx, dims, width, height, depth,
                                              format, texImage)) {
          /* error was recorded */
       }
-      else if (width > 0) {
-         if (ctx->Driver.CompressedTexSubImage1D) {
-            ctx->Driver.CompressedTexSubImage1D(ctx, target, level,
-                                                xoffset, width,
-                                                format, imageSize, data,
-                                                texObj, texImage);
+      else if (width > 0 && height > 0 && depth > 0) {
+         switch (dims) {
+         case 1:
+            if (ctx->Driver.CompressedTexSubImage1D) {
+               ctx->Driver.CompressedTexSubImage1D(ctx, target, level,
+                                                   xoffset, width,
+                                                   format, imageSize, data,
+                                                   texObj, texImage);
+            }
+            break;
+         case 2:
+            if (ctx->Driver.CompressedTexSubImage2D) {
+               ctx->Driver.CompressedTexSubImage2D(ctx, target, level,
+                                                   xoffset, yoffset,
+                                                   width, height,
+                                                   format, imageSize, data,
+                                                   texObj, texImage);
+            }
+            break;
+         case 3:
+            if (ctx->Driver.CompressedTexSubImage3D) {
+               ctx->Driver.CompressedTexSubImage3D(ctx, target, level,
+                                                   xoffset, yoffset, zoffset,
+                                                   width, height, depth,
+                                                   format, imageSize, data,
+                                                   texObj, texImage);
+            }
+            break;
+         default:
+            ;
          }
 
          check_gen_mipmap(ctx, target, texObj, level);
@@ -3599,6 +3627,16 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       }
    }
    _mesa_unlock_texture(ctx, texObj);
+}
+
+
+void GLAPIENTRY
+_mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
+                                 GLsizei width, GLenum format,
+                                 GLsizei imageSize, const GLvoid *data)
+{
+   compressed_tex_sub_image(1, target, level, xoffset, 0, 0, width, 1, 1,
+                            format, imageSize, data);
 }
 
 
@@ -3608,47 +3646,8 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data)
 {
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   GLenum error;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   error = compressed_subtexture_error_check(ctx, 2, target, level,
-                                             xoffset, yoffset, 0, /* pos */
-                                             width, height, 1,    /* size */
-                                             format, imageSize);
-   if (error) {
-      /* XXX proxy target? */
-      _mesa_error(ctx, error, "glCompressedTexSubImage2D");
-      return;
-   }
-
-   texObj = get_current_tex_object(ctx, target);
-
-   _mesa_lock_texture(ctx, texObj);
-   {
-      texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-      assert(texImage);
-
-      if (compressed_subtexture_error_check2(ctx, 2, width, height, 1,
-                                             format, texImage)) {
-         /* error was recorded */
-      }
-      else if (width > 0 && height > 0) {
-         if (ctx->Driver.CompressedTexSubImage2D) {
-            ctx->Driver.CompressedTexSubImage2D(ctx, target, level,
-						xoffset, yoffset, width, height,
-						format, imageSize, data,
-						texObj, texImage);
-         }
-
-         check_gen_mipmap(ctx, target, texObj, level);
-
-         ctx->NewState |= _NEW_TEXTURE;
-      }
-   }
-   _mesa_unlock_texture(ctx, texObj);
+   compressed_tex_sub_image(2, target, level, xoffset, yoffset, 0,
+                            width, height, 1, format, imageSize, data);
 }
 
 
@@ -3658,47 +3657,8 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   GLenum error;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   error = compressed_subtexture_error_check(ctx, 3, target, level,
-                                             xoffset, yoffset, zoffset,/*pos*/
-                                             width, height, depth, /*size*/
-                                             format, imageSize);
-   if (error) {
-      _mesa_error(ctx, error, "glCompressedTexSubImage3D");
-      return;
-   }
-
-   texObj = get_current_tex_object(ctx, target);
-
-   _mesa_lock_texture(ctx, texObj);
-   {
-      texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-      assert(texImage);
-
-      if (compressed_subtexture_error_check2(ctx, 3, width, height, depth,
-                                             format, texImage)) {
-         /* error was recorded */
-      }
-      else if (width > 0 && height > 0 && depth > 0) {
-         if (ctx->Driver.CompressedTexSubImage3D) {
-            ctx->Driver.CompressedTexSubImage3D(ctx, target, level,
-						xoffset, yoffset, zoffset,
-						width, height, depth,
-						format, imageSize, data,
-						texObj, texImage);
-         }
-
-         check_gen_mipmap(ctx, target, texObj, level);
-
-         ctx->NewState |= _NEW_TEXTURE;
-      }
-   }
-   _mesa_unlock_texture(ctx, texObj);
+   compressed_tex_sub_image(3, target, level, xoffset, yoffset, zoffset,
+                            width, height, depth, format, imageSize, data);
 }
 
 
