@@ -3202,6 +3202,55 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
 }
 
 
+/**
+ * Do second part of glCompressedTexSubImage error checking.
+ * \return GL_TRUE if error found, GL_FALSE otherwise.
+ */
+static GLboolean
+compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
+                                   GLsizei width, GLsizei height,
+                                   GLsizei depth, GLenum format,
+                                   struct gl_texture_image *texImage)
+{
+
+   if ((GLint) format != texImage->InternalFormat) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCompressedTexSubImage%uD(format=0x%x)", dims, format);
+      return GL_TRUE;
+   }
+
+   if (((width == 1 || width == 2) &&
+        (GLuint) width != texImage->Width) ||
+       (width > texImage->Width)) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCompressedTexSubImage%uD(width=%d)", dims, width);
+      return GL_TRUE;
+   }
+
+   if (dims >= 2) {
+      if (((height == 1 || height == 2) &&
+           (GLuint) height != texImage->Height) ||
+          (height > texImage->Height)) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCompressedTexSubImage%uD(height=%d)", dims, height);
+         return GL_TRUE;
+      }
+   }
+
+   if (dims >= 3) {
+      if (((depth == 1 || depth == 2) &&
+           (GLuint) depth != texImage->Depth) ||
+          (depth > texImage->Depth)) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCompressedTexSubImage%uD(depth=%d)", dims, depth);
+         return GL_TRUE;
+      }
+   }
+
+   return GL_FALSE;
+}
+
+
 
 void GLAPIENTRY
 _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
@@ -3532,14 +3581,9 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
       assert(texImage);
 
-      if ((GLint) format != texImage->InternalFormat) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glCompressedTexSubImage1D(format)");
-      }
-      else if ((width == 1 || width == 2) &&
-               (GLuint) width != texImage->Width) {
-	 _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCompressedTexSubImage1D(width)");
+      if (compressed_subtexture_error_check2(ctx, 1, width, 1, 1,
+                                             format, texImage)) {
+         /* error was recorded */
       }
       else if (width > 0) {
          if (ctx->Driver.CompressedTexSubImage1D) {
@@ -3587,15 +3631,9 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
       assert(texImage);
 
-      if ((GLint) format != texImage->InternalFormat) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glCompressedTexSubImage2D(format)");
-      }
-      else if (((width == 1 || width == 2)
-                && (GLuint) width != texImage->Width) ||
-               ((height == 1 || height == 2)
-                && (GLuint) height != texImage->Height)) {
-	 _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage2D(size)");
+      if (compressed_subtexture_error_check2(ctx, 2, width, height, 1,
+                                             format, texImage)) {
+         /* error was recorded */
       }
       else if (width > 0 && height > 0) {
          if (ctx->Driver.CompressedTexSubImage2D) {
@@ -3642,17 +3680,9 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
       assert(texImage);
 
-      if ((GLint) format != texImage->InternalFormat) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glCompressedTexSubImage3D(format)");
-      }
-      else if (((width == 1 || width == 2)
-                && (GLuint) width != texImage->Width) ||
-               ((height == 1 || height == 2)
-                && (GLuint) height != texImage->Height) ||
-               ((depth == 1 || depth == 2)
-                && (GLuint) depth != texImage->Depth)) {
-	 _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage3D(size)");
+      if (compressed_subtexture_error_check2(ctx, 3, width, height, depth,
+                                             format, texImage)) {
+         /* error was recorded */
       }
       else if (width > 0 && height > 0 && depth > 0) {
          if (ctx->Driver.CompressedTexSubImage3D) {
