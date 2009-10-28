@@ -27,10 +27,6 @@
  *
  * \author Ian Romanick <ian.d.romanick@intel.com>
  */
-#include <stdlib.h>
-#include <string.h>
-
-#include <assert.h>
 
 #include "main/imports.h"
 #include "main/simple_list.h"
