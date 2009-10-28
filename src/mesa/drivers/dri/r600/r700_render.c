@@ -259,8 +259,6 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
     uint32_t vgt_index_type     = 0;
     uint32_t vgt_primitive_type = 0;
     uint32_t vgt_num_indices    = 0;
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-    struct vertex_buffer *vb = &tnl->vb;
     GLboolean bUseDrawIndex;
 
     if(NULL != context->ind_buf.bo)
@@ -287,6 +285,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         total_emit =   3  /* VGT_PRIMITIVE_TYPE */
 		     + 2  /* VGT_INDEX_TYPE */
 		     + 2  /* NUM_INSTANCES */
+                     + 3  /* VGT_INDEX_OFFSET */
                      + 5 + 2; /* DRAW_INDEX */
     }
     else
@@ -294,7 +293,8 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         total_emit =   3 /* VGT_PRIMITIVE_TYPE */
 		     + 2 /* VGT_INDEX_TYPE */
 	             + 2 /* NUM_INSTANCES */
-                     + num_indices + 3; /* DRAW_INDEX_IMMD */
+                     + 3 /* VGT_INDEX_OFFSET */
+                     + 3; /* DRAW_INDEX_IMMD */
     }
 
     BEGIN_BATCH_NO_AUTOSTATE(total_emit);
@@ -332,13 +332,15 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
     }
     else
     {
-        SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+        SETfield(vgt_draw_initiator, DI_SRC_SEL_AUTO_INDEX, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     }
 
 	SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
     if(GL_TRUE == bUseDrawIndex)
     {
+        R600_OUT_BATCH_REGSEQ(VGT_INDX_OFFSET, 1);
+        R600_OUT_BATCH(0);
         R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX, 3));
         R600_OUT_BATCH(context->ind_buf.bo_offset);
         R600_OUT_BATCH(0);
@@ -351,21 +353,11 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
     }
     else
     {
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
+        R600_OUT_BATCH_REGSEQ(VGT_INDX_OFFSET, 1);
+        R600_OUT_BATCH(start);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_AUTO,1));
         R600_OUT_BATCH(vgt_num_indices);
         R600_OUT_BATCH(vgt_draw_initiator);
-
-        for (i = start; i < (start + num_indices); i++)
-	{
-            if(vb->Elts)
-            {
-                R600_OUT_BATCH(vb->Elts[i]);
-            }
-            else
-	    {
-                R600_OUT_BATCH(i);
-	    }
-        }
     }
 
     END_BATCH();
@@ -391,7 +383,7 @@ static GLuint r700PredictRenderSize(GLcontext* ctx,
     else {
 	    for (i = 0; i < nr_prims; ++i)
 	    {
-		    dwords += prim[i].count + 10;
+                dwords += 13;
 	    }
     }
 
