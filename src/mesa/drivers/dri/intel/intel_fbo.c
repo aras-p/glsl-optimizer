@@ -385,6 +385,7 @@ intel_create_renderbuffer(GLenum intFormat)
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
+      _mesa_free(irb);
       return NULL;
    }
 
