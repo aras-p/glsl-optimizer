@@ -76,26 +76,23 @@ static void r300_destroy_context(struct pipe_context* context)
 }
 
 static unsigned int
-r300_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
+r300_is_texture_referenced(struct pipe_context *pipe,
+                           struct pipe_texture *texture,
+                           unsigned face, unsigned level)
 {
-   /**
-    * FIXME: Optimize.
-    */
+    struct pipe_buffer* buf;
 
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    r300_get_texture_buffer(texture, &buf, NULL);
+
+    return pipe->is_buffer_referenced(pipe, buf);
 }
 
 static unsigned int
-r300_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
+r300_is_buffer_referenced(struct pipe_context *pipe,
+                          struct pipe_buffer *buf)
 {
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    /* XXX */
+    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 static void r300_flush_cb(void *data)
