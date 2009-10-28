@@ -26,6 +26,7 @@
 #include "pipe/p_inlines.h"
 
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 
 #include "r300_cs.h"
 #include "r300_context.h"
@@ -85,6 +86,10 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
     bool invalid = FALSE;
     
     CS_LOCALS(r300);
+
+    if (!u_trim_pipe_prim(mode, &count)) {
+        return FALSE;
+    }
 
 validate:
     for (i = 0; i < aos_count; i++) {
@@ -190,6 +195,10 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     int i;
+
+    if (!u_trim_pipe_prim(mode, &count)) {
+        return FALSE;
+    }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe->screen,
