@@ -29,8 +29,10 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
             
+#include "util/u_math.h"
 
 
+#include "brw_debug.h"
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
@@ -64,8 +66,8 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    /* BRW_NEW_NR_VS_SURFACES */
    key->nr_surfaces = brw->vs.nr_surfaces;
 
-   /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM */
-   if (ctx->Transform.ClipPlanesEnabled) {
+   /* PIPE_NEW_CLIP */
+   if (brw->curr.ucp.nr) {
       /* Note that we read in the userclip planes as well, hence
        * clip_start:
        */
@@ -86,7 +88,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    memset(&vs, 0, sizeof(vs));
 
    vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
-   vs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   vs.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    vs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    /* Choosing multiple program flow means that we may get 2-vertex threads,
     * which will have the channel mask for dwords 4-7 enabled in the thread,
@@ -119,6 +121,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
       chipset_max_threads = 32;
    else
       chipset_max_threads = 16;
+
    vs.thread4.max_threads = CLAMP(key->nr_urb_entries / 2,
 				  1, chipset_max_threads) - 1;
 
@@ -145,16 +148,16 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 			 NULL, NULL);
 
    /* Emit VS program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     vs.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_vs_unit_state, thread0),
-		     brw->vs.prog_bo);
+   brw->sws->bo_emit_reloc(bo,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   vs.thread0.grf_reg_count << 1,
+			   offsetof(struct brw_vs_unit_state, thread0),
+			   brw->vs.prog_bo);
 
    return bo;
 }
 
-static void prepare_vs_unit(struct brw_context *brw)
+static int prepare_vs_unit(struct brw_context *brw)
 {
    struct brw_vs_unit_key key;
 
@@ -168,11 +171,13 @@ static void prepare_vs_unit(struct brw_context *brw)
    if (brw->vs.state_bo == NULL) {
       brw->vs.state_bo = vs_unit_create_from_key(brw, &key);
    }
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_vs_unit = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = (PIPE_NEW_CLIP),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
                 BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE),

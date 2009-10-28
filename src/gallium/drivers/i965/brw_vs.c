@@ -57,7 +57,7 @@ static void do_vs_prog( struct brw_context *brw,
    c.prog_data.nr_inputs = vp->info.num_inputs;
    c.prog_data.copy_edgeflag = c.key.copy_edgeflag;
 
-   if (0)
+   if (1)
       tgsi_dump(c.vp->tokens, 0);
 
    /* Emit GEN4 code.

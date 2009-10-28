@@ -32,6 +32,11 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "brw_winsys.h"
+
+/* XXX: disabled true constant buffer functionality
+ */
+
 
 /* Creates a new VS constant buffer reflecting the current VS program's
  * constants, if needed by the VS program.
@@ -39,9 +44,12 @@
  * Otherwise, constants go through the CURBEs using the brw_constant_buffer
  * state atom.
  */
-static drm_intel_bo *
+#if 0
+static struct brw_winsys_buffer *
 brw_vs_update_constant_buffer(struct brw_context *brw)
 {
+   /* XXX: true constant buffers
+    */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
@@ -61,21 +69,20 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
 
    return const_buffer;
 }
+#endif
 
 /**
  * Update the surface state for a VS constant buffer.
  *
  * Sets brw->vs.surf_bo[surf] and brw->vp->const_buffer.
  */
+#if 0
 static void
 brw_update_vs_constant_surface( struct brw_context *brw,
                                 GLuint surf)
 {
-   struct brw_context *brw = brw_context(ctx);
    struct brw_surface_key key;
-   struct brw_vertex_program *vp =
-      (struct brw_vertex_program *) brw->vertex_program;
-   const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
+   struct pipe_buffer *cb = brw->curr.vs_constants;
 
    assert(surf == 0);
 
@@ -121,6 +128,7 @@ brw_update_vs_constant_surface( struct brw_context *brw,
       brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);
    }
 }
+#endif
 
 
 /**
@@ -129,6 +137,7 @@ brw_update_vs_constant_surface( struct brw_context *brw,
 static struct brw_winsys_buffer *
 brw_vs_get_binding_table(struct brw_context *brw)
 {
+#if 0
    struct brw_winsys_buffer *bind_bo;
 
    bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
@@ -169,6 +178,9 @@ brw_vs_get_binding_table(struct brw_context *brw)
    }
 
    return bind_bo;
+#else
+   return NULL;
+#endif
 }
 
 /**
@@ -178,8 +190,9 @@ brw_vs_get_binding_table(struct brw_context *brw)
  * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
  * CACHE_NEW_SURF_BIND for the binding table upload.
  */
-static void prepare_vs_surfaces(struct brw_context *brw )
+static int prepare_vs_surfaces(struct brw_context *brw )
 {
+#if 0
    int i;
    int nr_surfaces = 0;
 
@@ -195,6 +208,7 @@ static void prepare_vs_surfaces(struct brw_context *brw )
       brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
       brw->vs.nr_surfaces = nr_surfaces;
    }
+#endif
 
    /* Note that we don't end up updating the bind_bo if we don't have a
     * surface to be pointing at.  This should be relatively harmless, as it
@@ -204,12 +218,15 @@ static void prepare_vs_surfaces(struct brw_context *brw )
       brw->sws->bo_unreference(brw->vs.bind_bo);
       brw->vs.bind_bo = brw_vs_get_binding_table(brw);
    }
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_vs_surfaces = {
    .dirty = {
-      .mesa = (_NEW_PROGRAM_CONSTANTS),
-      .brw = (BRW_NEW_VERTEX_PROGRAM),
+      .mesa = (PIPE_NEW_VERTEX_CONSTANTS |
+	       PIPE_NEW_VERTEX_SHADER),
+      .brw = 0,
       .cache = 0
    },
    .prepare = prepare_vs_surfaces,

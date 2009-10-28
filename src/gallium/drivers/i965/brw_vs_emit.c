@@ -34,8 +34,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-#include "tgsi/tgsi_ureg.h"
-#include "tgsi/tgsi_ureg_parse.h"
+#include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 
@@ -67,6 +66,7 @@ static void release_tmps( struct brw_vs_compile *c )
 }
 
 
+
 /**
  * Preallocate GRF register before code emit.
  * Do things as simply as possible.  Allocate and populate all regs
@@ -83,10 +83,17 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * XXX this heuristic/check may need some fine tuning...
     */
    if (c->vp->info.file_max[TGSI_FILE_CONSTANT] +
+       c->vp->info.file_max[TGSI_FILE_IMMEDIATE] +
        c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 > BRW_MAX_GRF)
       c->vp->use_const_buffer = GL_TRUE;
-   else
+   else {
+      /* XXX: immediates can go elsewhere if necessary:
+       */
+      assert(c->vp->info.file_max[TGSI_FILE_IMMEDIATE] +
+	     c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 > BRW_MAX_GRF);
+
       c->vp->use_const_buffer = GL_FALSE;
+   }
 
    /*printf("use_const_buffer = %d\n", c->vp->use_const_buffer);*/
 
@@ -138,6 +145,29 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    if (c->nr_inputs == 0)
       reg++;
+
+   /* Allocate a GRF and load immediate values by hand with 4 MOVs!!!
+    *
+    * XXX: Try to encode float immediates as brw immediates
+    * XXX: Put immediates into the CURBE.
+    * XXX: Make sure ureg sets minimal immediate size and respect it
+    * here.
+    */
+   for (i = 0; i < c->nr_immediates; i++) {
+      struct brw_reg r;
+      int j;
+
+      r = brw_vec8_grf(reg, 0);
+
+      for (j = 0; j < 4; j++) {
+	 brw_MOV(&c->func, 
+		 brw_writemask(r, (1<<j)), 
+		 brw_imm_f(c->immediate[i][j]));
+      }
+
+      reg++;
+   }
+
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
@@ -754,21 +784,20 @@ static void emit_nrm( struct brw_vs_compile *c,
 
 static struct brw_reg
 get_constant(struct brw_vs_compile *c,
-             const struct ureg_instruction *inst,
-             GLuint argIndex)
+	     GLuint argIndex,
+	     GLuint index,
+	     GLboolean relAddr)
 {
-   const struct ureg_src src = inst->src[argIndex];
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg;
    struct brw_reg const2_reg;
-   const GLboolean relAddr = src.Indirect;
 
    assert(argIndex < 3);
 
-   if (c->current_const[argIndex].index != src.Index || relAddr) {
+   if (c->current_const[argIndex].index != index || relAddr) {
       struct brw_reg addrReg = c->regs[TGSI_FILE_ADDRESS][0];
 
-      c->current_const[argIndex].index = src.Index;
+      c->current_const[argIndex].index = index;
 
 #if 0
       printf("  fetch const[%d] for arg %d into reg %d\n",
@@ -780,7 +809,7 @@ get_constant(struct brw_vs_compile *c,
                        0,                             /* oword */
                        relAddr,                       /* relative indexing? */
                        addrReg,                       /* address register */
-                       16 * src.Index,               /* byte offset */
+                       16 * index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
 
@@ -797,7 +826,7 @@ get_constant(struct brw_vs_compile *c,
                           1,                       /* oword */
                           relAddr,                 /* relative indexing? */
                           addrReg,                 /* address register */
-                          16 * src.Index,         /* byte offset */
+                          16 * index,         /* byte offset */
                           SURF_INDEX_VERT_CONST_BUFFER
                           );
       }
@@ -894,12 +923,11 @@ static struct brw_reg deref( struct brw_vs_compile *c,
  */
 static struct brw_reg
 get_src_reg( struct brw_vs_compile *c,
-             const struct ureg_instruction *inst,
-             GLuint argIndex )
+	     GLuint argIndex,
+	     GLuint file,
+	     GLint index,
+	     GLboolean relAddr )
 {
-   const GLuint file = inst->src[argIndex].File;
-   const GLint index = inst->src[argIndex].Index;
-   const GLboolean relAddr = inst->src[argIndex].Indirect;
 
    switch (file) {
    case TGSI_FILE_TEMPORARY:
@@ -913,9 +941,12 @@ get_src_reg( struct brw_vs_compile *c,
          return c->regs[file][index];
       }
 
+   case TGSI_FILE_IMMEDIATE:
+      return c->regs[file][index];
+
    case TGSI_FILE_CONSTANT:
       if (c->vp->use_const_buffer) {
-         return get_constant(c, inst, argIndex);
+         return get_constant(c, argIndex, index, relAddr);
       }
       else if (relAddr) {
          return deref(c, c->regs[TGSI_FILE_CONSTANT][0], index);
@@ -962,27 +993,32 @@ static void emit_arl( struct brw_vs_compile *c,
  * Return the brw reg for the given instruction's src argument.
  */
 static struct brw_reg get_arg( struct brw_vs_compile *c,
-                               const struct ureg_instruction *inst,
+                               const struct tgsi_full_src_register *src,
                                GLuint argIndex )
 {
-   const struct ureg_src src = inst->src[argIndex];
    struct brw_reg reg;
 
-   if (src.File == TGSI_FILE_NULL)
+   if (src->SrcRegister.File == TGSI_FILE_NULL)
       return brw_null_reg();
 
-   reg = get_src_reg(c, inst, argIndex);
+   reg = get_src_reg(c, argIndex,
+		     src->SrcRegister.File,
+		     src->SrcRegister.Index,
+		     src->SrcRegister.Indirect);
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
-   reg.dw1.bits.swizzle = BRW_SWIZZLE4(src.SwizzleX,
-				       src.SwizzleY,
-				       src.SwizzleZ,
-				       src.SwizzleW);
+   reg.dw1.bits.swizzle = BRW_SWIZZLE4(src->SrcRegister.SwizzleX,
+				       src->SrcRegister.SwizzleY,
+				       src->SrcRegister.SwizzleZ,
+				       src->SrcRegister.SwizzleW);
 
    /* Note this is ok for non-swizzle instructions: 
     */
-   reg.negate = src.Negate ? 1 : 0;   
+   reg.negate = src->SrcRegister.Negate ? 1 : 0;   
+
+   /* XXX: abs, absneg
+    */
 
    return reg;
 }
@@ -992,19 +1028,21 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
  * Get brw register for the given program dest register.
  */
 static struct brw_reg get_dst( struct brw_vs_compile *c,
-			       struct ureg_dst dst )
+			       unsigned file,
+			       unsigned index,
+			       unsigned writemask )
 {
    struct brw_reg reg;
 
-   switch (dst.File) {
+   switch (file) {
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_OUTPUT:
-      assert(c->regs[dst.File][dst.Index].nr != 0);
-      reg = c->regs[dst.File][dst.Index];
+      assert(c->regs[file][index].nr != 0);
+      reg = c->regs[file][index];
       break;
    case TGSI_FILE_ADDRESS:
-      assert(dst.Index == 0);
-      reg = c->regs[dst.File][dst.Index];
+      assert(index == 0);
+      reg = c->regs[file][index];
       break;
    case TGSI_FILE_NULL:
       /* we may hit this for OPCODE_END, OPCODE_KIL, etc */
@@ -1015,7 +1053,7 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
       reg = brw_null_reg();
    }
 
-   reg.dw1.bits.writemask = dst.WriteMask;
+   reg.dw1.bits.writemask = writemask;
 
    return reg;
 }
@@ -1199,7 +1237,7 @@ post_vs_emit( struct brw_vs_compile *c,
 }
 
 static uint32_t
-get_predicate(const struct ureg_instruction *inst)
+get_predicate(const struct tgsi_full_instruction *inst)
 {
    /* XXX: disabling for now
     */
@@ -1242,8 +1280,10 @@ get_predicate(const struct ureg_instruction *inst)
 }
 
 static void emit_insn(struct brw_vs_compile *c,
-		      const struct ureg_instruction *inst)
+		      const struct tgsi_full_instruction *inst)
 {
+   unsigned opcode = inst->Instruction.Opcode;
+   unsigned label = inst->InstructionExtLabel.Label;
    struct brw_compile *p = &c->func;
    struct brw_reg args[3], dst;
    GLuint i;
@@ -1256,20 +1296,25 @@ static void emit_insn(struct brw_vs_compile *c,
    /* Get argument regs.
     */
    for (i = 0; i < 3; i++) {
-      args[i] = get_arg(c, inst, i);
+      args[i] = get_arg(c, &inst->FullSrcRegisters[i], i);
    }
 
    /* Get dest regs.  Note that it is possible for a reg to be both
     * dst and arg, given the static allocation of registers.  So
     * care needs to be taken emitting multi-operation instructions.
     */ 
-   dst = get_dst(c, inst->dst);
+   dst = get_dst(c, 
+		 inst->FullDstRegisters[0].DstRegister.File,
+		 inst->FullDstRegisters[0].DstRegister.Index,
+		 inst->FullDstRegisters[0].DstRegister.WriteMask);
 
-   if (inst->dst.Saturate) {
+   /* XXX: saturate
+    */
+   if (inst->Instruction.Saturate != TGSI_SAT_NONE) {
       debug_printf("Unsupported saturate in vertex shader");
    }
 
-   switch (inst->opcode) {
+   switch (opcode) {
    case TGSI_OPCODE_ABS:
       brw_MOV(p, dst, brw_abs(args[0]));
       break;
@@ -1443,7 +1488,7 @@ static void emit_insn(struct brw_vs_compile *c,
       brw_set_access_mode(p, BRW_ALIGN_16);
       brw_ADD(p, get_addr_reg(c->stack_index),
 	      get_addr_reg(c->stack_index), brw_imm_d(4));
-      brw_save_call(p, inst->label, p->nr_insn);
+      brw_save_call(p, label, p->nr_insn);
       brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
       break;
    case TGSI_OPCODE_RET:
@@ -1468,8 +1513,8 @@ static void emit_insn(struct brw_vs_compile *c,
       break;
    default:
       debug_printf("Unsupported opcode %i (%s) in vertex shader",
-		   inst->opcode, 
-		   tgsi_get_opcode_name(inst->opcode));
+		   opcode, 
+		   tgsi_get_opcode_name(opcode));
    }
 
    /* Set the predication update on the last instruction of the native
@@ -1498,11 +1543,12 @@ static void emit_insn(struct brw_vs_compile *c,
 void brw_vs_emit(struct brw_vs_compile *c)
 {
    struct brw_compile *p = &c->func;
+   const struct tgsi_token *tokens = c->vp->tokens;
    struct brw_instruction *end_inst, *last_inst;
-   struct ureg_parse_context parse;
-   struct ureg_declaration *decl;
-   struct ureg_declaration *imm;
-   struct ureg_declaration *insn;
+   struct tgsi_parse_context parse;
+   struct tgsi_full_instruction *inst;
+   boolean done = FALSE;
+   int i;
 
    if (BRW_DEBUG & DEBUG_VS)
       tgsi_dump(c->vp->tokens, 0); 
@@ -1512,21 +1558,66 @@ void brw_vs_emit(struct brw_vs_compile *c)
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    
+   /* Inputs */
+   tgsi_parse_init( &parse, tokens );
+   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      tgsi_parse_token( &parse );
+
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+	 /* Nothing to do -- using info from tgsi_scan().
+	  */
+         break;
+
+      case TGSI_TOKEN_TYPE_IMMEDIATE: {
+	 static const float id[4] = {0,0,0,1};
+	 const float *imm = &parse.FullToken.FullImmediate.u[i].Float;
+	 unsigned size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
+
+	 for (i = 0; i < size; i++)
+	    c->immediate[c->nr_immediates][i] = imm[i];
+
+	 for ( ; i < 4; i++)
+	    c->immediate[c->nr_immediates][i] = id[i];
+
+	 c->nr_immediates++;
+	 break;
+      }
+
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+	 done = 1;
+	 break;
+      }
+   }
+
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
    brw_MOV(p, get_addr_reg(c->stack_index), brw_address(c->stack));
 
-   while (ureg_next_decl(&parse, &decl)) {
-   }
+   /* Instructions
+    */
+   tgsi_parse_init( &parse, tokens );
+   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      tgsi_parse_token( &parse );
 
-   while (ureg_next_immediate(&parse, &imm)) {
-   }
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+	 break;
 
-   while (ureg_next_instruction(&parse, &insn)) {
-   }
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+         inst = &parse.FullToken.FullInstruction;
+	 emit_insn( c, inst );
+         break;
 
-   end_inst = &p->store[end_offset];
+      default:
+         assert( 0 );
+      }
+   }
+   tgsi_parse_free( &parse );
+
+   end_inst = &p->store[c->end_offset];
    last_inst = &p->store[p->nr_insn];
 
    /* The END instruction will be patched to jump to this code */

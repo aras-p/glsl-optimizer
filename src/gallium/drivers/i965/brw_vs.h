@@ -60,6 +60,9 @@ struct brw_vs_compile {
 
    GLuint nr_inputs;
    GLuint nr_outputs;
+   GLuint nr_immediates;
+   GLfloat immediate[128][4];
+
    GLboolean copy_edgeflag;
 
    GLuint first_output;

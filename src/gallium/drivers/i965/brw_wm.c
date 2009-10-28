@@ -28,11 +28,14 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-             
+
+#include "tgsi/tgsi_info.h"
+
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "brw_state.h"
+#include "brw_debug.h"
 
 
 /** Return number of src args for given instruction */
@@ -54,7 +57,7 @@ GLuint brw_wm_nr_args( GLuint opcode )
       return 3;
    default:
       assert(opcode < MAX_OPCODE);
-      return _mesa_num_inst_src_regs(opcode);
+      return tgsi_get_opcode_info(opcode)->num_src;
    }
 }
 
@@ -62,17 +65,17 @@ GLuint brw_wm_nr_args( GLuint opcode )
 GLuint brw_wm_is_scalar_result( GLuint opcode )
 {
    switch (opcode) {
-   case OPCODE_COS:
-   case OPCODE_EX2:
-   case OPCODE_LG2:
-   case OPCODE_POW:
-   case OPCODE_RCP:
-   case OPCODE_RSQ:
-   case OPCODE_SIN:
-   case OPCODE_DP3:
-   case OPCODE_DP4:
-   case OPCODE_DPH:
-   case OPCODE_DST:
+   case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_EX2:
+   case TGSI_OPCODE_LG2:
+   case TGSI_OPCODE_POW:
+   case TGSI_OPCODE_RCP:
+   case TGSI_OPCODE_RSQ:
+   case TGSI_OPCODE_SIN:
+   case TGSI_OPCODE_DP3:
+   case TGSI_OPCODE_DP4:
+   case TGSI_OPCODE_DPH:
+   case TGSI_OPCODE_DST:
       return 1;
       
    default:
@@ -134,7 +137,7 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * we'll use one of two code generators.
  */
 static void do_wm_prog( struct brw_context *brw,
-			struct brw_fragment_program *fp, 
+			struct brw_fragment_shader *fp, 
 			struct brw_wm_prog_key *key)
 {
    struct brw_wm_compile *c;
@@ -163,7 +166,7 @@ static void do_wm_prog( struct brw_context *brw,
    brw_init_compile(brw, &c->func);
 
    /* temporary sanity check assertion */
-   ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
+   assert(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
 
    /*
     * Shader which use GLSL features such as flow control are handled
@@ -200,8 +203,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   const struct brw_fragment_program *fp = 
-      (struct brw_fragment_program *)brw->fragment_program;
+   const struct brw_fragment_program *fp = brw->curr.fragment_shader;
    GLboolean uses_depth = (fp->program.Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
    GLuint lookup = 0;
    GLuint line_aa;
