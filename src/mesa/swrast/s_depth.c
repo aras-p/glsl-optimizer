@@ -506,22 +506,32 @@ _swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
    const GLuint count = span->end;
    GLuint *zValues = span->array->z;
-   GLuint near, far;
+   GLuint min, max;
+   GLfloat min_f, max_f;
    int i;
 
+   if (ctx->Viewport.Near < ctx->Viewport.Far) {
+      min_f = ctx->Viewport.Near;
+      max_f = ctx->Viewport.Far;
+   } else {
+      min_f = ctx->Viewport.Far;
+      max_f = ctx->Viewport.Near;
+   }
+
    if (rb->DataType == GL_UNSIGNED_SHORT) {
-      near = FLOAT_TO_UINT(ctx->Viewport.Near);
-      far = FLOAT_TO_UINT(ctx->Viewport.Far);
+      CLAMPED_FLOAT_TO_USHORT(min, min_f);
+      CLAMPED_FLOAT_TO_USHORT(max, max_f);
    } else {
       assert(rb->DataType == GL_UNSIGNED_INT);
-      CLAMPED_FLOAT_TO_USHORT(near, ctx->Viewport.Near);
-      CLAMPED_FLOAT_TO_USHORT(far, ctx->Viewport.Far);
+      min = FLOAT_TO_UINT(min_f);
+      max = FLOAT_TO_UINT(max_f);
    }
+
    for (i = 0; i < count; i++) {
-      if (zValues[i] < near)
-	 zValues[i] = near;
-      if (zValues[i] > far)
-	 zValues[i] = far;
+      if (zValues[i] < min)
+	 zValues[i] = min;
+      if (zValues[i] > max)
+	 zValues[i] = max;
    }
 }
 
