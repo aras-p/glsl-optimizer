@@ -198,6 +198,8 @@ static void*
         r300_create_dsa_state(struct pipe_context* pipe,
                               const struct pipe_depth_stencil_alpha_state* state)
 {
+    struct r300_capabilities *caps =
+        r300_screen(r300_context(pipe)->context.screen)->caps;
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
     /* Depth test setup. */
@@ -242,9 +244,16 @@ static void*
             (r300_translate_stencil_op(state->stencil[1].zfail_op) <<
                 R300_S_BACK_ZFAIL_OP_SHIFT);
 
-            dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
-                (state->stencil[1].valuemask << R300_STENCILMASK_SHIFT) |
-                (state->stencil[1].writemask << R300_STENCILWRITEMASK_SHIFT);
+            /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
+            if (caps->is_r500)
+            {
+                dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
+                dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
+                    (state->stencil[1].valuemask <<
+                    R300_STENCILMASK_SHIFT) |
+                    (state->stencil[1].writemask <<
+                    R300_STENCILWRITEMASK_SHIFT);
+            }
         }
     }
 
@@ -253,8 +262,13 @@ static void*
         dsa->alpha_function =
             r300_translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
-        dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
-                                     0, 1023);
+
+        /* XXX figure out why emitting 10bit alpha ref causes CS to dump */
+        /* always use 8bit alpha ref */
+        dsa->alpha_function |= float_to_ubyte(state->alpha.ref_value);
+
+        if (caps->is_r500)
+            dsa->alpha_function |= R500_FG_ALPHA_FUNC_8BIT;
     }
 
     return (void*)dsa;
