@@ -34,6 +34,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_bld_format_soa.c',
 		'lp_bld_interp.c',
 		'lp_bld_intr.c',
+		'lp_bld_misc.cpp',
         'lp_bld_pack.c',
         'lp_bld_sample.c',
 		'lp_bld_sample_soa.c',

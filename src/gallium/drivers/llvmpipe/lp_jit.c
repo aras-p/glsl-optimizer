@@ -39,6 +39,7 @@
 #include "util/u_cpu_detect.h"
 #include "lp_screen.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_misc.h"
 #include "lp_jit.h"
 
 
@@ -156,10 +157,8 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    util_cpu_caps.has_sse4_1 = 0;
 #endif
 
-#ifdef LLVM_NATIVE_ARCH
    LLVMLinkInJIT();
    LLVMInitializeNativeTarget();
-#endif
 
    screen->module = LLVMModuleCreateWithName("llvmpipe");
 

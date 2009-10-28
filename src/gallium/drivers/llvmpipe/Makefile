@@ -57,6 +57,9 @@ C_SOURCES = \
 	lp_tile_cache.c \
 	lp_tile_soa.c
 
+CPP_SOURCES = \
+	lp_bld_misc.cpp
+
 include ../../Makefile.template
 
 lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_access.py ../../auxiliary/util/u_format.csv
