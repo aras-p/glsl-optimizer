@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "main/imports.h"
 #include "symbol_table.h"
 #include "hash_table.h"
 
