@@ -342,12 +342,21 @@ st_texture_image_copy(struct pipe_context *pipe,
       src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
                                             PIPE_BUFFER_USAGE_GPU_READ);
 
-      pipe->surface_copy(pipe,
-			 dst_surface,
-			 0, 0, /* destX, Y */
-			 src_surface,
-			 0, 0, /* srcX, Y */
-			 width, height);
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+			    dst_surface,
+			    0, 0, /* destX, Y */
+			    src_surface,
+			    0, 0, /* srcX, Y */
+			    width, height);
+      } else {
+         util_surface_copy(pipe, FALSE,
+			   dst_surface,
+			   0, 0, /* destX, Y */
+			   src_surface,
+			   0, 0, /* srcX, Y */
+			   width, height);
+      }
 
       pipe_surface_reference(&src_surface, NULL);
       pipe_surface_reference(&dst_surface, NULL);
