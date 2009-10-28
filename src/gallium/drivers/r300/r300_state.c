@@ -49,46 +49,47 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 {
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
 
+    if (state->blend_enable)
     {
-	unsigned eqRGB = state->rgb_func;
-	unsigned srcRGB = state->rgb_src_factor;
-	unsigned dstRGB = state->rgb_dst_factor;
+        unsigned eqRGB = state->rgb_func;
+        unsigned srcRGB = state->rgb_src_factor;
+        unsigned dstRGB = state->rgb_dst_factor;
 
-	unsigned eqA = state->alpha_func;
-	unsigned srcA = state->alpha_src_factor;
-	unsigned dstA = state->alpha_dst_factor;
+        unsigned eqA = state->alpha_func;
+        unsigned srcA = state->alpha_src_factor;
+        unsigned dstA = state->alpha_dst_factor;
 
-	if (srcA != srcRGB ||
-	    dstA != dstRGB ||
-	    eqA != eqRGB) {
-	    blend->alpha_blend_control =
-		r300_translate_blend_function(eqA) |
-		(r300_translate_blend_factor(srcA) <<
-                    R300_SRC_BLEND_SHIFT) |
-                (r300_translate_blend_factor(dstA) <<
-		 R300_DST_BLEND_SHIFT);
-	    blend->blend_control |= R300_ALPHA_BLEND_ENABLE |
-		R300_SEPARATE_ALPHA_ENABLE;
-	} else {
-	    blend->alpha_blend_control = R300_COMB_FCN_ADD_CLAMP |
-		(R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
-		(R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
-	}
-    }
-    if (state->blend_enable) {
-        /* XXX for now, always do separate alpha...
-         * is it faster to do it with one reg? */
-        blend->blend_control |= R300_READ_ENABLE |
-                r300_translate_blend_function(state->rgb_func) |
-                (r300_translate_blend_factor(state->rgb_src_factor) <<
-                    R300_SRC_BLEND_SHIFT) |
-                (r300_translate_blend_factor(state->rgb_dst_factor) <<
-                    R300_DST_BLEND_SHIFT);
-    } else {
-	blend->blend_control = 
-	    R300_COMB_FCN_ADD_CLAMP |
-	    (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
-	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
+        /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
+         * this is just the crappy D3D naming */
+        blend->blend_control = R300_ALPHA_BLEND_ENABLE |
+            r300_translate_blend_function(eqRGB) |
+            ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
+            ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
+
+        /* optimization: some operations do not require the destination color */
+        if (eqRGB == PIPE_BLEND_MIN || eqA == PIPE_BLEND_MIN ||
+            eqRGB == PIPE_BLEND_MAX || eqA == PIPE_BLEND_MAX ||
+            dstRGB != PIPE_BLENDFACTOR_ZERO ||
+            dstA != PIPE_BLENDFACTOR_ZERO ||
+            srcRGB == PIPE_BLENDFACTOR_DST_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_DST_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_INV_DST_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA)
+            blend->blend_control |= R300_READ_ENABLE;
+
+        /* XXX implement the optimization with DISCARD_SRC_PIXELS*/
+        /* XXX implement the optimization with SRC_ALPHA_?_NO_READ */
+
+        /* separate alpha */
+        if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
+            blend->blend_control |= R300_SEPARATE_ALPHA_ENABLE;
+            blend->alpha_blend_control =
+                r300_translate_blend_function(eqA) |
+                (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
+                (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
+        }
     }
 
     /* PIPE_LOGICOP_* don't need to be translated, fortunately. */
@@ -122,25 +123,29 @@ static void r300_delete_blend_state(struct pipe_context* pipe,
     FREE(state);
 }
 
+/* Convert float to 10bit integer */
+static unsigned float_to_fixed10(float f)
+{
+    return CLAMP((unsigned)(f * 1023.9f), 0, 1023);
+}
+
 /* Set blend color.
  * Setup both R300 and R500 registers, figure out later which one to write. */
 static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
-    ubyte ur, ug, ub, ua;
-
-    ur = float_to_ubyte(color->color[0]);
-    ug = float_to_ubyte(color->color[1]);
-    ub = float_to_ubyte(color->color[2]);
-    ua = float_to_ubyte(color->color[3]);
 
     util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM,
             &r300->blend_color_state->blend_color);
 
-    /* XXX this is wrong */
-    r300->blend_color_state->blend_color_red_alpha = ur | (ua << 16);
-    r300->blend_color_state->blend_color_green_blue = ub | (ug << 16);
+    /* XXX if FP16 blending is enabled, we should use the FP16 format */
+    r300->blend_color_state->blend_color_red_alpha =
+        float_to_fixed10(color->color[0]) |
+        (float_to_fixed10(color->color[3]) << 16);
+    r300->blend_color_state->blend_color_green_blue =
+        float_to_fixed10(color->color[2]) |
+        (float_to_fixed10(color->color[1]) << 16);
 
     r300->dirty_state |= R300_NEW_BLEND_COLOR;
 }
