@@ -64,6 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_queryobj.h"
 
 #include "r700_state.h"
 #include "r700_ioctl.h"
@@ -73,11 +74,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-/* hw_tcl_on derives from future_hw_tcl_on when its safe to change it. */
-int future_hw_tcl_on = 1;
-int hw_tcl_on = 1;
-
 #define need_GL_VERSION_2_0
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_equation_separate
@@ -98,6 +96,7 @@ static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
+  {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
@@ -204,6 +203,24 @@ static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 		context->radeon.Fallback &= ~bit;
 }
 
+static void r600_emit_query_finish(radeonContextPtr radeon)
+{
+	context_t *context = (context_t*) radeon;
+	BATCH_LOCALS(&context->radeon);
+
+	struct radeon_query_object *query = radeon->query.current;
+
+	BEGIN_BATCH_NO_AUTOSTATE(4 + 2);
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 2));
+	R600_OUT_BATCH(ZPASS_DONE);
+	R600_OUT_BATCH(query->curr_offset + 8); /* hw writes qwords */
+	R600_OUT_BATCH(0x00000000);
+	R600_OUT_BATCH_RELOC(VGT_EVENT_INITIATOR, query->bo, 0, 0, RADEON_GEM_DOMAIN_GTT, 0);
+	END_BATCH();
+	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+	query->emitted_begin = GL_FALSE;
+}
+
 static void r600_init_vtbl(radeonContextPtr radeon)
 {
 	radeon->vtbl.get_lock = r600_get_lock;
@@ -212,6 +229,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.swtcl_flush = NULL;
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
+	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -302,6 +320,10 @@ static void r600InitGLExtensions(GLcontext *ctx)
 	{
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
+
+	/* XXX: RV740 only seems to report results from half of its DBs */
+	if (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740)
+		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 }
 
 /* Create the device specific rendering context.
@@ -340,6 +362,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r700InitStateFuncs(&functions);
 	r600InitTextureFuncs(&functions);
 	r700InitShaderFuncs(&functions);
+	radeonInitQueryObjFunctions(&functions);
 	r700InitIoctlFuncs(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 

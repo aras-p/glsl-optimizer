@@ -47,8 +47,8 @@ static int radeonQueryIsFlushed(GLcontext *ctx, struct gl_query_object *q)
 
 static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 {
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
-	uint32_t *result;
 	int i;
 
 	radeon_print(RADEON_STATE, RADEON_VERBOSE,
@@ -57,12 +57,33 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 
 	radeon_bo_map(query->bo, GL_FALSE);
 
-	result = query->bo->ptr;
-
 	query->Base.Result = 0;
-	for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
-		query->Base.Result += result[i];
-		radeon_print(RADEON_STATE, RADEON_TRACE, "result[%d] = %d\n", i, result[i]);
+	if (IS_R600_CLASS(radeon->radeonScreen)) {
+		/* ZPASS EVENT writes alternating qwords
+		 * At query start we set the start offset to 0 and
+		 * hw writes zpass start counts to qwords 0, 2, 4, 6.
+		 * At query end we set the start offset to 8 and
+		 * hw writes zpass end counts to qwords 1, 3, 5, 7.
+		 * then we substract. MSB is the valid bit.
+		 */
+		uint64_t *result = query->bo->ptr;
+		for (i = 0; i < 8; i += 2) {
+			uint64_t start = result[i];
+			uint64_t end = result[i + 1];
+			if ((start & 0x8000000000000000) && (end & 0x8000000000000000)) {
+				uint64_t query_count = end - start;
+				query->Base.Result += query_count;
+
+			}
+			radeon_print(RADEON_STATE, RADEON_TRACE,
+				     "%d start: %lx, end: %lx %ld\n", i, start, end, end - start);
+		}
+	} else {
+		uint32_t *result = query->bo->ptr;
+		for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {
+			query->Base.Result += result[i];
+			radeon_print(RADEON_STATE, RADEON_TRACE, "result[%d] = %d\n", i, result[i]);
+		}
 	}
 
 	radeon_bo_unmap(query->bo);

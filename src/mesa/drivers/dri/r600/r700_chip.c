@@ -1100,6 +1100,32 @@ static void r700SendVSConsts(GLcontext *ctx, struct radeon_state_atom *atom)
 	COMMIT_BATCH();
 }
 
+static void r700SendQueryBegin(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct radeon_query_object *query = radeon->query.current;
+	BATCH_LOCALS(radeon);
+	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
+
+	/* clear the buffer */
+	radeon_bo_map(query->bo, GL_FALSE);
+	memset(query->bo->ptr, 0, 4 * 2 * sizeof(uint64_t)); /* 4 DBs, 2 qwords each */
+	radeon_bo_unmap(query->bo);
+
+	radeon_cs_space_check_with_bo(radeon->cmdbuf.cs,
+				      query->bo,
+				      0, RADEON_GEM_DOMAIN_GTT);
+
+	BEGIN_BATCH_NO_AUTOSTATE(4 + 2);
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 2));
+	R600_OUT_BATCH(ZPASS_DONE);
+	R600_OUT_BATCH(query->curr_offset); /* hw writes qwords */
+	R600_OUT_BATCH(0x00000000);
+	R600_OUT_BATCH_RELOC(VGT_EVENT_INITIATOR, query->bo, 0, 0, RADEON_GEM_DOMAIN_GTT, 0);
+	END_BATCH();
+	query->emitted_begin = GL_TRUE;
+}
+
 static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	return atom->cmd_size;
@@ -1208,6 +1234,20 @@ static int check_vs_consts(GLcontext *ctx, struct radeon_state_atom *atom)
 	return count;
 }
 
+static int check_queryobj(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct radeon_query_object *query = radeon->query.current;
+	int count;
+
+	if (!query || query->emitted_begin)
+		count = 0;
+	else
+		count = atom->cmd_size;
+	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
+	return count;
+}
+
 #define ALLOC_STATE( ATOM, CHK, SZ, EMIT )				\
 do {									\
 	context->atoms.ATOM.cmd_size = (SZ);				\
@@ -1220,6 +1260,19 @@ do {									\
 	context->radeon.hw.max_state_size += (SZ);			\
 	insert_at_tail(&context->radeon.hw.atomlist, &context->atoms.ATOM); \
 } while (0)
+
+static void r600_init_query_stateobj(radeonContextPtr radeon, int SZ)
+{
+	radeon->query.queryobj.cmd_size = (SZ);
+	radeon->query.queryobj.cmd = NULL;
+	radeon->query.queryobj.name = "queryobj";
+	radeon->query.queryobj.idx = 0;
+	radeon->query.queryobj.check = check_queryobj;
+	radeon->query.queryobj.dirty = GL_FALSE;
+	radeon->query.queryobj.emit = r700SendQueryBegin;
+	radeon->hw.max_state_size += (SZ);
+	insert_at_tail(&radeon->hw.atomlist, &radeon->query.queryobj);
+}
 
 void r600InitAtoms(context_t *context)
 {
@@ -1260,6 +1313,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
 	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
 	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);
+	r600_init_query_stateobj(&context->radeon, 6 * 2);
 
 	context->radeon.hw.is_dirty = GL_TRUE;
 	context->radeon.hw.all_dirty = GL_TRUE;
