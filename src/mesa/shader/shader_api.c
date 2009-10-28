@@ -1547,8 +1547,6 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
-
    if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
       if (!shProg) {
@@ -1569,7 +1567,10 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       shProg = NULL;
    }
 
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
+   if (ctx->Shader.CurrentProgram != shProg) {
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+      _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
+   }
 }
 
 
