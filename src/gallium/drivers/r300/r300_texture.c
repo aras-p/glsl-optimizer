@@ -53,7 +53,6 @@ static void r300_setup_texture_state(struct r300_texture* tex, boolean is_r500)
                           R300_TX_NUM_LEVELS(pt->last_level & 0xf);
     }
 
-    /* XXX */
     state->format1 = r300_translate_texformat(pt->format);
     if (pt->target == PIPE_TEXTURE_CUBE) {
         state->format1 |= R300_TX_FORMAT_CUBIC_MAP;
