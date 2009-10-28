@@ -52,51 +52,55 @@
 
 
 /**
+ * Return pointer to address of a buffer object target.
+ * \param ctx  the GL context
+ * \param target  the buffer object target to be retrieved.
+ * \return   pointer to pointer to the buffer object bound to \c target in the
+ *           specified context or \c NULL if \c target is invalid.
+ */
+static INLINE struct gl_buffer_object **
+get_buffer_target(GLcontext *ctx, GLenum target)
+{
+   switch (target) {
+   case GL_ARRAY_BUFFER_ARB:
+      return &ctx->Array.ArrayBufferObj;
+   case GL_ELEMENT_ARRAY_BUFFER_ARB:
+      return &ctx->Array.ElementArrayBufferObj;
+   case GL_PIXEL_PACK_BUFFER_EXT:
+      return &ctx->Pack.BufferObj;
+   case GL_PIXEL_UNPACK_BUFFER_EXT:
+      return &ctx->Unpack.BufferObj;
+   case GL_COPY_READ_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         return &ctx->CopyReadBuffer;
+      }
+      break;
+   case GL_COPY_WRITE_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         return &ctx->CopyWriteBuffer;
+      }
+      break;
+   default:
+      return NULL;
+   }
+   return NULL;
+}
+
+
+/**
  * Get the buffer object bound to the specified target in a GL context.
- *
- * \param ctx     GL context
- * \param target  Buffer object target to be retrieved.  Currently this must
- *                be either \c GL_ARRAY_BUFFER or \c GL_ELEMENT_ARRAY_BUFFER.
- * \return   A pointer to the buffer object bound to \c target in the
+ * \param ctx  the GL context
+ * \param target  the buffer object target to be retrieved.
+ * \return   pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if \c target is invalid.
  */
 static INLINE struct gl_buffer_object *
 get_buffer(GLcontext *ctx, GLenum target)
 {
-   struct gl_buffer_object * bufObj = NULL;
-
-   switch (target) {
-      case GL_ARRAY_BUFFER_ARB:
-         bufObj = ctx->Array.ArrayBufferObj;
-         break;
-      case GL_ELEMENT_ARRAY_BUFFER_ARB:
-         bufObj = ctx->Array.ElementArrayBufferObj;
-         break;
-      case GL_PIXEL_PACK_BUFFER_EXT:
-         bufObj = ctx->Pack.BufferObj;
-         break;
-      case GL_PIXEL_UNPACK_BUFFER_EXT:
-         bufObj = ctx->Unpack.BufferObj;
-         break;
-      case GL_COPY_READ_BUFFER:
-         if (ctx->Extensions.ARB_copy_buffer) {
-            bufObj = ctx->CopyReadBuffer;
-         }
-         break;
-      case GL_COPY_WRITE_BUFFER:
-         if (ctx->Extensions.ARB_copy_buffer) {
-            bufObj = ctx->CopyWriteBuffer;
-         }
-         break;
-      default:
-         /* error must be recorded by caller */
-         return NULL;
-   }
-
-   /* bufObj should point to NullBufferObj or a user-created buffer object */
-   ASSERT(bufObj);
-
-   return bufObj;
+   struct gl_buffer_object **bufObj = get_buffer_target(ctx, target);
+   if (bufObj)
+      return *bufObj;
+   return NULL;
 }
 
 
@@ -552,6 +556,7 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 
 /**
  * Bind the specified target to buffer for the specified context.
+ * Called by glBindBuffer() and other functions.
  */
 static void
 bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
@@ -560,40 +565,14 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
    struct gl_buffer_object *newBufObj = NULL;
    struct gl_buffer_object **bindTarget = NULL;
 
-   switch (target) {
-   case GL_ARRAY_BUFFER_ARB:
-      bindTarget = &ctx->Array.ArrayBufferObj;
-      break;
-   case GL_ELEMENT_ARRAY_BUFFER_ARB:
-      bindTarget = &ctx->Array.ElementArrayBufferObj;
-      break;
-   case GL_PIXEL_PACK_BUFFER_EXT:
-      bindTarget = &ctx->Pack.BufferObj;
-      break;
-   case GL_PIXEL_UNPACK_BUFFER_EXT:
-      bindTarget = &ctx->Unpack.BufferObj;
-      break;
-   case GL_COPY_READ_BUFFER:
-      if (ctx->Extensions.ARB_copy_buffer) {
-         bindTarget = &ctx->CopyReadBuffer;
-      }
-      break;
-   case GL_COPY_WRITE_BUFFER:
-      if (ctx->Extensions.ARB_copy_buffer) {
-         bindTarget = &ctx->CopyWriteBuffer;
-      }
-      break;
-   default:
-      ; /* no-op / we'll hit the follow error test next */
-   }
-
+   bindTarget = get_buffer_target(ctx, target);
    if (!bindTarget) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target 0x%x)");
       return;
    }
 
    /* Get pointer to old buffer object (to be unbound) */
-   oldBufObj = get_buffer(ctx, target);
+   oldBufObj = *bindTarget;
    if (oldBufObj && oldBufObj->Name == buffer)
       return;   /* rebinding the same buffer object- no change */
 
