@@ -589,8 +589,12 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
    /* unpack and transfer the source image */
    tempImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
                                        * components * sizeof(GLchan));
-   if (!tempImage)
+   if (!tempImage) {
+      if (freeSrcImage) {
+         _mesa_free((void *) srcAddr);
+      }
       return NULL;
+   }
 
    dst = tempImage;
    for (img = 0; img < srcDepth; img++) {
