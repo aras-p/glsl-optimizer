@@ -532,10 +532,17 @@ void r300_emit_texture(struct r300_context* r300,
                        struct r300_texture* tex,
                        unsigned offset)
 {
+    uint32_t filter0 = sampler->filter0;
     CS_LOCALS(r300);
 
+    /* to emulate 1D textures through 2D ones correctly */
+    if (tex->tex.height[0] == 1) {
+        filter0 &= ~R300_TX_WRAP_T_MASK;
+        filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+    }
+
     BEGIN_CS(16);
-    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0 |
+    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
         (offset << 28));
     OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
     OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
