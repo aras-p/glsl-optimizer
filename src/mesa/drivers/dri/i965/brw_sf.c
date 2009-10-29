@@ -161,7 +161,7 @@ static void upload_sf_prog(struct brw_context *brw)
    }
 
    key.do_point_sprite = ctx->Point.PointSprite;
-   key.SpriteOrigin = ctx->Point.SpriteOrigin;
+   key.sprite_origin_lower_left = (ctx->Point.SpriteOrigin == GL_LOWER_LEFT);
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
