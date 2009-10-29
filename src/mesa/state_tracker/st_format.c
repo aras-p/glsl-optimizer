@@ -312,6 +312,7 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
    case PIPE_FORMAT_Z24S8_UNORM:
       return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_X8Z24_UNORM:
+      return MESA_FORMAT_X8_Z24;
    case PIPE_FORMAT_S8Z24_UNORM:
       return MESA_FORMAT_S8_Z24;
    case PIPE_FORMAT_S8_UNORM:
@@ -726,6 +727,7 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_Z24S8_UNORM:
       return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_X8Z24_UNORM:
+      return MESA_FORMAT_X8_Z24;
    case PIPE_FORMAT_S8Z24_UNORM:
       return MESA_FORMAT_S8_Z24;
    case PIPE_FORMAT_YCBCR:
