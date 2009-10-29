@@ -218,7 +218,7 @@ static void radeon_display_surface(struct pipe_winsys *pws,
     ximage->data = data;
     ximage->width = psurf->width;
     ximage->height = psurf->height;
-    ximage->bytes_per_line = r300tex->stride_override;
+    ximage->bytes_per_line = psurf->width * (ximage->bits_per_pixel >> 3);
 
     XPutImage(rvl_ctx->display, rvl_ctx->drawable,
               XDefaultGC(rvl_ctx->display, rvl_ctx->screen),
