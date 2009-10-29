@@ -696,11 +696,16 @@ memcpy_get_tex_image(GLcontext *ctx, GLenum target, GLint level,
          const GLint srcRowStride = texImage->RowStride * bpp;
          GLuint row;
 
-         for (row = 0; row < texImage->Height; row++) {
-            memcpy(dst, src, bytesPerRow);
-            dst += dstRowStride;
-            src += srcRowStride;
-         }         
+         if (bytesPerRow == dstRowStride && bytesPerRow == dstRowStride) {
+            memcpy(dst, src, bytesPerRow * texImage->Height);
+         }
+         else {
+            for (row = 0; row < texImage->Height; row++) {
+               memcpy(dst, src, bytesPerRow);
+               dst += dstRowStride;
+               src += srcRowStride;
+            }
+         }
       }
 
       if (_mesa_is_bufferobj(pack->BufferObj)) {
