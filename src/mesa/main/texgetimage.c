@@ -111,16 +111,11 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
          /* out of memory or other unexpected error */
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage(map PBO failed)");
          return;
-
       }
       /* <pixels> was an offset into the PBO.
        * Now make it a real, client-side pointer inside the mapped region.
        */
       pixels = ADD_POINTERS(buf, pixels);
-   }
-   else if (!pixels) {
-      /* not an error */
-      return;
    }
 
    {
@@ -318,10 +313,6 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       }
       img = ADD_POINTERS(buf, img);
    }
-   else if (!img) {
-      /* not an error */
-      return;
-   }
 
    /* just memcpy, no pixelstore or pixel transfer */
    _mesa_memcpy(img, texImage->Data, size);
@@ -496,6 +487,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) && !pixels) {
+      /* not an error, do nothing */
+      return;
+   }
+
    texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -611,6 +607,11 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (getcompressedteximage_error_check(ctx, target, level, img)) {
+      return;
+   }
+
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) && !img) {
+      /* not an error, do nothing */
       return;
    }
 
