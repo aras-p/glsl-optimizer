@@ -355,6 +355,85 @@ get_tex_rgba(GLcontext *ctx, GLuint dimensions,
 
 
 /**
+ * Try to do glGetTexImage() with simple memcpy().
+ * \return GL_TRUE if done, GL_FALSE otherwise
+ */
+static GLboolean
+get_tex_memcpy(GLcontext *ctx, GLenum format, GLenum type, GLvoid *pixels,
+               const struct gl_texture_object *texObj,
+               const struct gl_texture_image *texImage)
+{
+   GLboolean memCopy = GL_FALSE;
+
+   /* Texture image should have been mapped already */
+   assert(texImage->Data);
+
+   /*
+    * Check if the src/dst formats are compatible.
+    * Also note that GL's pixel transfer ops don't apply to glGetTexImage()
+    * so we don't have to worry about those.
+    * XXX more format combinations could be supported here.
+    */
+   if ((texObj->Target == GL_TEXTURE_1D ||
+        texObj->Target == GL_TEXTURE_2D ||
+        texObj->Target == GL_TEXTURE_RECTANGLE ||
+        (texObj->Target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+         texObj->Target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
+      if (texImage->TexFormat == MESA_FORMAT_ARGB8888 &&
+          format == GL_BGRA &&
+          type == GL_UNSIGNED_BYTE &&
+          !ctx->Pack.SwapBytes &&
+          _mesa_little_endian()) {
+         memCopy = GL_TRUE;
+      }
+      else if (texImage->TexFormat == MESA_FORMAT_AL88 &&
+               format == GL_LUMINANCE_ALPHA &&
+               type == GL_UNSIGNED_BYTE &&
+               !ctx->Pack.SwapBytes &&
+               _mesa_little_endian()) {
+         memCopy = GL_TRUE;
+      }
+      else if (texImage->TexFormat == MESA_FORMAT_L8 &&
+               format == GL_LUMINANCE &&
+               type == GL_UNSIGNED_BYTE) {
+         memCopy = GL_TRUE;
+      }
+      else if (texImage->TexFormat == MESA_FORMAT_A8 &&
+               format == GL_ALPHA &&
+               type == GL_UNSIGNED_BYTE) {
+         memCopy = GL_TRUE;
+      }
+   }
+
+   if (memCopy) {
+      const GLuint bpp = _mesa_get_format_bytes(texImage->TexFormat);
+      const GLuint bytesPerRow = texImage->Width * bpp;
+      GLubyte *dst =
+         _mesa_image_address2d(&ctx->Pack, pixels, texImage->Width,
+                               texImage->Height, format, type, 0, 0);
+      const GLint dstRowStride =
+         _mesa_image_row_stride(&ctx->Pack, texImage->Width, format, type);
+      const GLubyte *src = texImage->Data;
+      const GLint srcRowStride = texImage->RowStride * bpp;
+      GLuint row;
+
+      if (bytesPerRow == dstRowStride && bytesPerRow == srcRowStride) {
+         memcpy(dst, src, bytesPerRow * texImage->Height);
+      }
+      else {
+         for (row = 0; row < texImage->Height; row++) {
+            memcpy(dst, src, bytesPerRow);
+            dst += dstRowStride;
+            src += srcRowStride;
+         }
+      }
+   }
+
+   return memCopy;
+}
+
+
+/**
  * This is the software fallback for Driver.GetTexImage().
  * All error checking will have been done before this routine is called.
  * The texture image must be mapped.
@@ -402,7 +481,10 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
       pixels = ADD_POINTERS(buf, pixels);
    }
 
-   if (format == GL_COLOR_INDEX) {
+   if (get_tex_memcpy(ctx, format, type, pixels, texObj, texImage)) {
+      /* all done */
+   }
+   else if (format == GL_COLOR_INDEX) {
       get_tex_color_index(ctx, dimensions, format, type, pixels, texImage);
    }
    else if (format == GL_DEPTH_COMPONENT) {
