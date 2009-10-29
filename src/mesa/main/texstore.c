@@ -1078,6 +1078,44 @@ _mesa_texstore_x8_z24(TEXSTORE_PARAMS)
 
 
 /**
+ * Store a 24-bit integer depth component texture image.
+ */
+static GLboolean
+_mesa_texstore_z24_x8(TEXSTORE_PARAMS)
+{
+   const GLuint depthScale = 0xffffff;
+   const GLuint texelBytes = 4;
+
+   (void) dims;
+   ASSERT(dstFormat == MESA_FORMAT_Z24_X8);
+
+   {
+      /* general path */
+      GLint img, row;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            const GLvoid *src = _mesa_image_address(dims, srcPacking,
+                srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
+            GLuint *dst = (GLuint *) dstRow;
+            GLint i;
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, dst,
+                                    depthScale, srcType, src, srcPacking);
+            for (i = 0; i < srcWidth; i++)
+               dst[i] <<= 8;
+            dstRow += dstRowStride;
+         }
+      }
+   }
+   return GL_TRUE;
+}
+
+
+/**
  * Store a 16-bit integer depth component texture image.
  */
 static GLboolean
@@ -3012,7 +3050,7 @@ _mesa_texstore_sla8(TEXSTORE_PARAMS)
  * Table mapping MESA_FORMAT_8 to _mesa_texstore_*()
  * XXX this is somewhat temporary.
  */
-static struct {
+const static struct {
    gl_format Name;
    StoreTexImageFunc Store;
 }
@@ -3046,6 +3084,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_S8_Z24, _mesa_texstore_s8_z24 },
    { MESA_FORMAT_Z16, _mesa_texstore_z16 },
    { MESA_FORMAT_X8_Z24, _mesa_texstore_x8_z24 },
+   { MESA_FORMAT_Z24_X8, _mesa_texstore_z24_x8 },
    { MESA_FORMAT_Z32, _mesa_texstore_z32 },
    { MESA_FORMAT_S8, NULL/*_mesa_texstore_s8*/ },
    { MESA_FORMAT_SRGB8, _mesa_texstore_srgb8 },

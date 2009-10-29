@@ -530,6 +530,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_s8_z24
    },
    {
+      MESA_FORMAT_Z24_X8,
+      fetch_texel_1d_f_z24_s8,
+      fetch_texel_2d_f_z24_s8,
+      fetch_texel_3d_f_z24_s8,
+      store_texel_z24_s8
+   },
+   {
       MESA_FORMAT_Z32,
       fetch_texel_1d_f_z32,
       fetch_texel_2d_f_z32,

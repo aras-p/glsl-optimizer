@@ -309,6 +309,8 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
       return MESA_FORMAT_Z16;
    case PIPE_FORMAT_Z32_UNORM:
       return MESA_FORMAT_Z32;
+   case PIPE_FORMAT_Z24X8_UNORM:
+      return MESA_FORMAT_Z24_X8;
    case PIPE_FORMAT_Z24S8_UNORM:
       return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_X8Z24_UNORM:
