@@ -45,29 +45,6 @@
 #if FEATURE_EXT_texture_sRGB
 
 /**
- * Test if given texture image is an sRGB format.
- */
-static GLboolean
-is_srgb_teximage(const struct gl_texture_image *texImage)
-{
-   switch (texImage->TexFormat) {
-   case MESA_FORMAT_SRGB8:
-   case MESA_FORMAT_SRGBA8:
-   case MESA_FORMAT_SARGB8:
-   case MESA_FORMAT_SL8:
-   case MESA_FORMAT_SLA8:
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
  * Convert a float value from linear space to a
  * non-linear sRGB value in [0, 255].
  * Not terribly efficient.
@@ -224,7 +201,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
             }
 #if FEATURE_EXT_texture_sRGB
-            else if (is_srgb_teximage(texImage)) {
+            else if (_mesa_get_format_color_encoding(texImage->TexFormat)
+                     == GL_SRGB) {
                /* special case this since need to backconvert values */
                /* convert row to RGBA format */
                GLfloat rgba[MAX_WIDTH][4];
