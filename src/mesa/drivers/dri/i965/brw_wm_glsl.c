@@ -841,8 +841,8 @@ static void emit_fb_write(struct brw_wm_compile *c,
         nr += 2;
    }
 
-    target = inst->Aux >> 1;
-    eot = inst->Aux & 1;
+    target = INST_AUX_GET_TARGET(inst->Aux);
+    eot = inst->Aux & INST_AUX_EOT;
     fire_fb_write(c, 0, nr, target, eot);
 }
 

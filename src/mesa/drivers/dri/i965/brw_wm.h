@@ -271,6 +271,12 @@ struct brw_wm_compile {
 };
 
 
+/** Bits for prog_instruction::Aux field */
+#define INST_AUX_EOT      0x1
+#define INST_AUX_TARGET(T)  (T << 1)
+#define INST_AUX_GET_TARGET(AUX) ((AUX) >> 1)
+
+
 GLuint brw_wm_nr_args( GLuint opcode );
 GLuint brw_wm_is_scalar_result( GLuint opcode );
 

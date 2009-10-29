@@ -973,15 +973,15 @@ static void emit_fb_write( struct brw_wm_compile *c )
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
          last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
                                     0, outcolor, payload_r0_depth, outdepth);
-         inst->Aux = (i<<1);
+         inst->Aux = INST_AUX_TARGET(i);
          if (c->fp_fragcolor_emitted) {
             outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
             last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
                                        0, outcolor, payload_r0_depth, outdepth);
-            inst->Aux = (i<<1);
+            inst->Aux = INST_AUX_TARGET(i);
          }
       }
-      last_inst->Aux |= 1; //eot
+      last_inst->Aux |= INST_AUX_EOT;
    }
    else {
       /* if gl_FragData[0] is written, use it, else use gl_FragColor */
@@ -992,7 +992,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
 
       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
                      0, outcolor, payload_r0_depth, outdepth);
-      inst->Aux = 1|(0<<1);
+      inst->Aux = INST_AUX_EOT | INST_AUX_TARGET(0);
    }
 }
 
