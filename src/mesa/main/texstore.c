@@ -3108,8 +3108,8 @@ _mesa_texstore_null(TEXSTORE_PARAMS)
 static StoreTexImageFunc
 _mesa_get_texstore_func(gl_format format)
 {
-   GLuint i;
 #ifdef DEBUG
+   GLuint i;
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {
       ASSERT(texstore_funcs[i].Name == i);
    }
