@@ -1391,11 +1391,11 @@ opt_sample_rgba_2d(GLcontext *ctx,
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
-      const GLubyte *texel = ((GLubyte *) img->Data) + (pos << 2);    /* pos*4 */
-      rgba[i][RCOMP] = UBYTE_TO_FLOAT(texel[3]);
-      rgba[i][GCOMP] = UBYTE_TO_FLOAT(texel[2]);
-      rgba[i][BCOMP] = UBYTE_TO_FLOAT(texel[1]);
-      rgba[i][ACOMP] = UBYTE_TO_FLOAT(texel[0]);
+      const GLuint texel = *((GLuint *) img->Data + pos);
+      rgba[i][RCOMP] = UBYTE_TO_FLOAT( (texel >> 24)        );
+      rgba[i][GCOMP] = UBYTE_TO_FLOAT( (texel >> 16) & 0xff );
+      rgba[i][BCOMP] = UBYTE_TO_FLOAT( (texel >>  8) & 0xff );
+      rgba[i][ACOMP] = UBYTE_TO_FLOAT( (texel      ) & 0xff );
    }
 }
 
