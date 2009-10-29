@@ -358,7 +358,6 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 
 	rrb = radeon_get_depthbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
-		fprintf(stderr, "no rrb\n");
 		return;
 	}
 
@@ -400,7 +399,6 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 
 	rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
-		fprintf(stderr, "no rrb\n");
 		return;
 	}
 
