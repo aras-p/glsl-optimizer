@@ -134,15 +134,17 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define SETUP_CODE							\
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];	\
-   struct gl_texture_object *obj = 					\
+   const struct gl_texture_object *obj = 				\
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
-   const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
-   const GLubyte *texture = (const GLubyte *) obj->Image[0][b]->Data;	\
-   const GLint smask = obj->Image[0][b]->Width - 1;			\
-   const GLint tmask = obj->Image[0][b]->Height - 1;			\
+   const struct gl_texture_image *texImg =				\
+      obj->Image[0][obj->BaseLevel];					\
+   const GLfloat twidth = (GLfloat) texImg->Width;			\
+   const GLfloat theight = (GLfloat) texImg->Height;			\
+   const GLint twidth_log2 = texImg->WidthLog2;				\
+   const GLubyte *texture = (const GLubyte *) texImg->Data;		\
+   const GLint smask = texImg->Width - 1;				\
+   const GLint tmask = texImg->Height - 1;				\
+   ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
    if (!rb || !texture) {						\
       return;								\
    }
@@ -186,15 +188,17 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define SETUP_CODE							\
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];	\
-   struct gl_texture_object *obj = 					\
+   const struct gl_texture_object *obj = 				\
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
-   const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
-   const GLubyte *texture = (const GLubyte *) obj->Image[0][b]->Data;	\
-   const GLint smask = obj->Image[0][b]->Width - 1;			\
-   const GLint tmask = obj->Image[0][b]->Height - 1;			\
+   const struct gl_texture_image *texImg = 				\
+       obj->Image[0][obj->BaseLevel]; 					\
+   const GLfloat twidth = (GLfloat) texImg->Width;			\
+   const GLfloat theight = (GLfloat) texImg->Height;			\
+   const GLint twidth_log2 = texImg->WidthLog2;				\
+   const GLubyte *texture = (const GLubyte *) texImg->Data;		\
+   const GLint smask = texImg->Width - 1;				\
+   const GLint tmask = texImg->Height - 1;				\
+   ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
    if (!rb || !texture) {						\
       return;								\
    }
@@ -536,16 +540,17 @@ affine_span(GLcontext *ctx, SWspan *span,
 #define SETUP_CODE							\
    struct affine_info info;						\
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
-   struct gl_texture_object *obj = 					\
+   const struct gl_texture_object *obj = 				\
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
-   const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   info.texture = (const GLchan *) obj->Image[0][b]->Data;		\
-   info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
-   info.smask = obj->Image[0][b]->Width - 1;				\
-   info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->TexFormat;				\
+   const struct gl_texture_image *texImg = 				\
+      obj->Image[0][obj->BaseLevel]; 					\
+   const GLfloat twidth = (GLfloat) texImg->Width;			\
+   const GLfloat theight = (GLfloat) texImg->Height;			\
+   info.texture = (const GLchan *) texImg->Data;			\
+   info.twidth_log2 = texImg->WidthLog2;				\
+   info.smask = texImg->Width - 1;					\
+   info.tmask = texImg->Height - 1;					\
+   info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
    span.arrayMask |= SPAN_RGBA;						\
@@ -563,25 +568,17 @@ affine_span(GLcontext *ctx, SWspan *span,
    }									\
 									\
    switch (info.format) {						\
-   case MESA_FORMAT_A8:							\
-   case MESA_FORMAT_L8:							\
-   case MESA_FORMAT_I8:							\
-      info.tbytesline = obj->Image[0][b]->Width;			\
-      break;								\
-   case MESA_FORMAT_AL88:						\
-      info.tbytesline = obj->Image[0][b]->Width * 2;			\
-      break;								\
    case MESA_FORMAT_RGB888:						\
-      info.tbytesline = obj->Image[0][b]->Width * 3;			\
+      info.tbytesline = texImg->Width * 3;				\
       break;								\
    case MESA_FORMAT_RGBA8888:						\
-      info.tbytesline = obj->Image[0][b]->Width * 4;			\
+      info.tbytesline = texImg->Width * 4;				\
       break;								\
    default:								\
       _mesa_problem(NULL, "Bad texture format in affine_texture_triangle");\
       return;								\
    }									\
-   info.tsize = obj->Image[0][b]->Height * info.tbytesline;
+   info.tsize = texImg->Height * info.tbytesline;
 
 #define RENDER_SPAN( span )   affine_span(ctx, &span, &info);
 
@@ -807,14 +804,15 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define SETUP_CODE							\
    struct persp_info info;						\
    const struct gl_texture_unit *unit = ctx->Texture.Unit+0;		\
-   struct gl_texture_object *obj = 					\
+   const struct gl_texture_object *obj = 				\
       ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];		\
-   const GLint b = obj->BaseLevel;					\
-   info.texture = (const GLchan *) obj->Image[0][b]->Data;		\
-   info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
-   info.smask = obj->Image[0][b]->Width - 1;				\
-   info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->TexFormat;				\
+   const struct gl_texture_image *texImg = 				\
+      obj->Image[0][obj->BaseLevel];			 		\
+   info.texture = (const GLchan *) texImg->Data;			\
+   info.twidth_log2 = texImg->WidthLog2;				\
+   info.smask = texImg->Width - 1;					\
+   info.tmask = texImg->Height - 1;					\
+   info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
 									\
@@ -831,25 +829,17 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    }									\
 									\
    switch (info.format) {						\
-   case MESA_FORMAT_A8:							\
-   case MESA_FORMAT_L8:							\
-   case MESA_FORMAT_I8:							\
-      info.tbytesline = obj->Image[0][b]->Width;			\
-      break;								\
-   case MESA_FORMAT_AL88:						\
-      info.tbytesline = obj->Image[0][b]->Width * 2;			\
-      break;								\
    case MESA_FORMAT_RGB888:						\
-      info.tbytesline = obj->Image[0][b]->Width * 3;			\
+      info.tbytesline = texImg->Width * 3;				\
       break;								\
    case MESA_FORMAT_RGBA8888:						\
-      info.tbytesline = obj->Image[0][b]->Width * 4;			\
+      info.tbytesline = texImg->Width * 4;				\
       break;								\
    default:								\
       _mesa_problem(NULL, "Bad texture format in persp_textured_triangle");\
       return;								\
    }									\
-   info.tsize = obj->Image[0][b]->Height * info.tbytesline;
+   info.tsize = texImg->Height * info.tbytesline;
 
 #define RENDER_SPAN( span )			\
    span.interpMask &= ~SPAN_RGBA;		\
@@ -1067,9 +1057,9 @@ _swrast_choose_triangle( GLcontext *ctx )
          texObj2D = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
-         format = texImg ? texImg->TexFormat : -1;
-         minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
-         magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
+         format = texImg ? texImg->TexFormat : MESA_FORMAT_NONE;
+         minFilter = texObj2D ? texObj2D->MinFilter : GL_NONE;
+         magFilter = texObj2D ? texObj2D->MagFilter : GL_NONE;
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
