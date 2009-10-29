@@ -325,6 +325,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       key->drawable_height = brw->intel.driDrawable->h;
    }
 
+   key->nr_color_regions = brw->state.nr_color_regions;
+
    /* CACHE_NEW_VS_PROG */
    key->vp_outputs_written = brw->vs.prog_data->outputs_written & DO_SETUP_BITS;
 
