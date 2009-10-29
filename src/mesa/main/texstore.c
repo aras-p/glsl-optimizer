@@ -3083,6 +3083,26 @@ texstore_funcs[MESA_FORMAT_COUNT] =
 };
 
 
+static GLboolean
+_mesa_texstore_null(TEXSTORE_PARAMS)
+{
+   (void) ctx; (void) dims;
+   (void) baseInternalFormat;
+   (void) dstFormat;
+   (void) dstAddr;
+   (void) dstXoffset; (void) dstYoffset; (void) dstZoffset;
+   (void) dstRowStride; (void) dstImageOffsets;
+   (void) srcWidth; (void) srcHeight; (void) srcDepth;
+   (void) srcFormat; (void) srcType;
+   (void) srcAddr;
+   (void) srcPacking;
+
+   /* should never happen */
+   _mesa_problem(NULL, "_mesa_texstore_null() is called");
+   return GL_FALSE;
+}
+
+
 /**
  * Return the StoreTexImageFunc pointer to store an image in the given format.
  */
@@ -3096,7 +3116,11 @@ _mesa_get_texstore_func(gl_format format)
    }
 #endif
    ASSERT(texstore_funcs[format].Name == format);
-   return texstore_funcs[format].Store;
+
+   if (texstore_funcs[format].Store)
+      return texstore_funcs[format].Store;
+   else
+      return _mesa_texstore_null;
 }
 
 
@@ -3111,8 +3135,6 @@ _mesa_texstore(TEXSTORE_PARAMS)
    GLboolean success;
 
    storeImage = _mesa_get_texstore_func(dstFormat);
-
-   assert(storeImage);
 
    success = storeImage(ctx, dims, baseInternalFormat,
                         dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
