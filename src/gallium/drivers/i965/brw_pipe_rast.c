@@ -64,3 +64,21 @@ calculate_line_stipple_rast()
    bls.bits1.inverse_repeat_count = tmpi;
 
 }
+
+
+
+static void
+calculate_wm_lookup()
+{
+   if (rast->fill_cw == PIPE_POLYGON_MODE_LINE &&
+       rast->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      line_aa = AA_ALWAYS;
+   }
+   else if (rast->fill_cw == PIPE_POLYGON_MODE_LINE ||
+	    rast->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      line_aa = AA_SOMETIMES;
+   }
+   else {
+      line_aa = AA_NEVER;
+   }
+}

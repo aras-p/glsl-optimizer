@@ -39,7 +39,7 @@
  * as flow conditionals, loops, subroutines.
  * Some GLSL shaders may use these features, others might not.
  */
-GLboolean brw_wm_is_glsl(const struct brw_fragment_shader *fp)
+GLboolean brw_wm_has_flow_control(const struct brw_fragment_shader *fp)
 {
     return (fp->info.insn_count[TGSI_OPCODE_ARL] > 0 ||
 	    fp->info.insn_count[TGSI_OPCODE_IF] > 0 ||
@@ -144,7 +144,7 @@ static void brwProgramStringNotify( struct brw_context *brw,
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
-      newFP->isGLSL = brw_wm_is_glsl(fprog);
+      newFP->has_flow_control = brw_wm_has_flow_control(fprog);
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;

@@ -28,7 +28,8 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-               
+
+#include "tgsi/tgsi_info.h"
 
 #include "brw_context.h"
 #include "brw_wm.h"
@@ -49,10 +50,10 @@ void brw_wm_print_value( struct brw_wm_compile *c,
 	    value - c->creg < BRW_WM_MAX_PARAM)
       debug_printf("c%d", value - c->creg);
    else if (value - c->payload.input_interp >= 0 &&
-	    value - c->payload.input_interp < FRAG_ATTRIB_MAX)
+	    value - c->payload.input_interp < PIPE_MAX_SHADER_INPUTS)
       debug_printf("i%d", value - c->payload.input_interp);
    else if (value - c->payload.depth >= 0 &&
-	    value - c->payload.depth < FRAG_ATTRIB_MAX)
+	    value - c->payload.depth < PIPE_MAX_SHADER_INPUTS)
       debug_printf("d%d", value - c->payload.depth);
    else 
       debug_printf("?");
@@ -100,10 +101,10 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 
    if (inst->writemask != BRW_WRITEMASK_XYZW)
       debug_printf(".%s%s%s%s", 
-		   GET_BIT(inst->writemask, 0) ? "x" : "",
-		   GET_BIT(inst->writemask, 1) ? "y" : "",
-		   GET_BIT(inst->writemask, 2) ? "z" : "",
-		   GET_BIT(inst->writemask, 3) ? "w" : "");
+		   (inst->writemask & BRW_WRITEMASK_X) ? "x" : "",
+		   (inst->writemask & BRW_WRITEMASK_Y) ? "y" : "",
+		   (inst->writemask & BRW_WRITEMASK_Z) ? "z" : "",
+		   (inst->writemask & BRW_WRITEMASK_W) ? "w" : "");
 
    switch (inst->opcode) {
    case WM_PIXELXY:
@@ -134,7 +135,7 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
       debug_printf(" = FRONTFACING");
       break;
    default:
-      debug_printf(" = %s", _mesa_opcode_string(inst->opcode));
+      debug_printf(" = %s", tgsi_get_opcode_info(inst->opcode)->mnemonic);
       break;
    }
 

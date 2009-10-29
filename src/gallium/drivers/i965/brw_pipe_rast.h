@@ -10,6 +10,7 @@ struct brw_rasterizer_state {
     */
    struct brw_clip_prog_key clip_key;
    struct brw_line_stipple bls;
+   unsigned unfilled_aa_line;
 };
 
 #endif

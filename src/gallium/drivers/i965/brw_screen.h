@@ -64,6 +64,13 @@ struct brw_buffer
    boolean is_user_buffer;
 };
 
+struct brw_texture
+{
+   struct pipe_texture base;
+
+   ubyte shader_swizzle;
+};
+
 
 /*
  * Cast wrappers

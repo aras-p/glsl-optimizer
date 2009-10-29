@@ -28,14 +28,17 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
+#include "pipe/p_error.h"
 
 #include "tgsi/tgsi_info.h"
 
 #include "brw_context.h"
+#include "brw_screen.h"
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "brw_state.h"
 #include "brw_debug.h"
+#include "brw_pipe_rast.h"
 
 
 /** Return number of src args for given instruction */
@@ -85,12 +88,12 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
 
 
 /**
- * Do GPU code generation for non-GLSL shader.  non-GLSL shaders have
- * no flow control instructions so we can more readily do SSA-style
- * optimizations.
+ * Do GPU code generation for shaders without flow control.  Shaders
+ * without flow control instructions can more readily be analysed for
+ * SSA-style optimizations.
  */
 static void
-brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
+brw_wm_linear_shader_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
    /* Augment fragment program.  Add instructions for pre- and
     * post-fragment-program tasks such as interpolation and fogging.
@@ -136,7 +139,7 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * Depending on the instructions used (i.e. flow control instructions)
  * we'll use one of two code generators.
  */
-static void do_wm_prog( struct brw_context *brw,
+static int do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_shader *fp, 
 			struct brw_wm_prog_key *key)
 {
@@ -153,7 +156,7 @@ static void do_wm_prog( struct brw_context *brw,
           * without triggering a segfault, no way to signal,
           * so just return.
           */
-         return;
+         return PIPE_ERROR_OUT_OF_MEMORY;
       }
    } else {
       memset(c, 0, sizeof(*brw->wm.compile_data));
@@ -166,19 +169,19 @@ static void do_wm_prog( struct brw_context *brw,
    brw_init_compile(brw, &c->func);
 
    /* temporary sanity check assertion */
-   assert(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
+   assert(fp->has_flow_control == brw_wm_has_flow_control(c->fp));
 
    /*
     * Shader which use GLSL features such as flow control are handled
     * differently from "simple" shaders.
     */
-   if (fp->isGLSL) {
+   if (fp->has_flow_control) {
       c->dispatch_width = 8;
-      brw_wm_glsl_emit(brw, c);
+      brw_wm_branching_shader_emit(brw, c);
    }
    else {
       c->dispatch_width = 16;
-      brw_wm_non_glsl_emit(brw, c);
+      brw_wm_linear_shader_emit(brw, c);
    }
 
    if (BRW_DEBUG & DEBUG_WM)
@@ -195,6 +198,8 @@ static void do_wm_prog( struct brw_context *brw,
 				       program, program_size,
 				       &c->prog_data,
 				       &brw->wm.prog_data );
+
+   return 0;
 }
 
 
@@ -202,71 +207,36 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   const struct brw_fragment_program *fp = brw->curr.fragment_shader;
-   GLboolean uses_depth = (fp->program.Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
-   GLuint lookup = 0;
-   GLuint line_aa;
-   GLuint i;
+   unsigned lookup, line_aa;
+   unsigned i;
 
    memset(key, 0, sizeof(*key));
 
-   /* Build the index for table lookup
+   /* PIPE_NEW_FRAGMENT_SHADER
+    * PIPE_NEW_DEPTH_STENCIL_ALPHA
     */
-   /* _NEW_COLOR */
-   if (fp->program.UsesKill ||
-       ctx->Color.AlphaEnabled)
-      lookup |= IZ_PS_KILL_ALPHATEST_BIT;
+   lookup = (brw->curr.zstencil->iz_lookup |
+	     brw->curr.fragment_shader->iz_lookup);
 
-   if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPTH))
-      lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
-   /* _NEW_DEPTH */
-   if (ctx->Depth.Test)
-      lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
-
-   if (ctx->Depth.Test &&  
-       ctx->Depth.Mask) /* ?? */
-      lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
-
-   /* _NEW_STENCIL */
-   if (ctx->Stencil._Enabled) {
-      lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
-
-      if (ctx->Stencil.WriteMask[0] ||
-	  ctx->Stencil.WriteMask[ctx->Stencil._BackFace])
-	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
-   }
-
-   line_aa = AA_NEVER;
-
-   /* _NEW_LINE, _NEW_POLYGON, BRW_NEW_REDUCED_PRIMITIVE */
-   if (ctx->Line.SmoothFlag) {
-      if (brw->intel.reduced_primitive == GL_LINES) {
-	 line_aa = AA_ALWAYS;
-      }
-      else if (brw->intel.reduced_primitive == GL_TRIANGLES) {
-	 if (ctx->Polygon.FrontMode == GL_LINE) {
-	    line_aa = AA_SOMETIMES;
-
-	    if (ctx->Polygon.BackMode == GL_LINE ||
-		(ctx->Polygon.CullFlag &&
-		 ctx->Polygon.CullFaceMode == GL_BACK))
-	       line_aa = AA_ALWAYS;
-	 }
-	 else if (ctx->Polygon.BackMode == GL_LINE) {
-	    line_aa = AA_SOMETIMES;
-
-	    if ((ctx->Polygon.CullFlag &&
-		 ctx->Polygon.CullFaceMode == GL_FRONT))
-	       line_aa = AA_ALWAYS;
-	 }
-      }
+   /* PIPE_NEW_RAST
+    * BRW_NEW_REDUCED_PRIMITIVE 
+    */
+   switch (brw->reduced_primitive) {
+   case PIPE_PRIM_POINTS:
+      line_aa = AA_NEVER;
+      break;
+   case PIPE_PRIM_LINES:
+      line_aa = AA_ALWAYS;
+      break;
+   default:
+      line_aa = brw->curr.rast->unfilled_aa_line;
+      break;
    }
 	 
    brw_wm_lookup_iz(line_aa,
 		    lookup,
-		    uses_depth,
+		    brw->curr.fragment_shader->uses_depth,
 		    key);
 
    /* Revisit this, figure out if it's really useful, and either push
@@ -276,54 +246,39 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->proj_attrib_mask = ~0; /*brw->wm.input_size_masks[4-1];*/
 
    /* PIPE_NEW_RAST */
-   key->flat_shade = brw->rast.flat_shade;
+   key->flat_shade = brw->curr.rast->templ.flatshade;
 
    /* This can be determined by looking at the INTERP mode each input decl.
     */
-   key->linear_color = 0;
+   key->linear_attrib_mask = 0;
 
-   /* _NEW_TEXTURE */
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      if (i < brw->nr_textures) {
-	 const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
-	 const struct gl_texture_object *t = unit->_Current;
-	 const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+   /* PIPE_NEW_BOUND_TEXTURES */
+   for (i = 0; i < brw->curr.num_textures; i++) {
+      const struct brw_texture *tex = brw->curr.texture[i];
 	 
-	 if (img->InternalFormat == GL_YCBCR_MESA) {
-	    key->yuvtex_mask |= 1 << i;
-	    if (img->TexFormat->MesaFormat == MESA_FORMAT_YCBCR)
-	       key->yuvtex_swap_mask |= 1 << i;
-	 }
+      if (tex->base.format == PIPE_FORMAT_YCBCR)
+	 key->yuvtex_mask |= 1 << i;
 
-	 key->tex_swizzles[i] = t->_Swizzle;
-	 
-	 if (0)
-	    key->shadowtex_mask |= 1<<i;
-      }
-      else {
-         key->tex_swizzles[i] = SWIZZLE_NOOP;
-      }
-   }
+      if (tex->base.format == PIPE_FORMAT_YCBCR_REV)
+	 key->yuvtex_swap_mask |= 1 << i;
 
-
-   /* _NEW_FRAMEBUFFER */
-   if (brw->intel.driDrawable != NULL) {
-      key->drawable_height = brw->fb.cbufs[0].height;
+      /* XXX: shadow texture
+       */
+      /* key->shadowtex_mask |= 1<<i; */
    }
 
    /* CACHE_NEW_VS_PROG */
-   key->vp_nr_outputs_written = brw->vs.prog_data->nr_outputs_written;
+   key->vp_nr_outputs = brw->vs.prog_data->nr_outputs;
 
    /* The unique fragment program ID */
-   key->program_string_id = fp->id;
+   key->program_string_id = brw->curr.fragment_shader->id;
 }
 
 
-static void brw_prepare_wm_prog(struct brw_context *brw)
+static int brw_prepare_wm_prog(struct brw_context *brw)
 {
    struct brw_wm_prog_key key;
-   struct brw_fragment_program *fp = (struct brw_fragment_program *)
-      brw->fragment_program;
+   struct brw_fragment_shader *fs = brw->curr.fragment_shader;
      
    brw_wm_populate_key(brw, &key);
 
@@ -335,23 +290,19 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 				      NULL, 0,
 				      &brw->wm.prog_data);
    if (brw->wm.prog_bo == NULL)
-      do_wm_prog(brw, fp, &key);
+      return do_wm_prog(brw, fs, &key);
+
+   return 0;
 }
 
 
 const struct brw_tracked_state brw_wm_prog = {
    .dirty = {
-      .mesa  = (_NEW_COLOR |
-		_NEW_DEPTH |
-                _NEW_HINT |
-		_NEW_STENCIL |
-		_NEW_POLYGON |
-		_NEW_LINE |
-		_NEW_LIGHT |
-		_NEW_BUFFERS |
-		_NEW_TEXTURE),
-      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_WM_INPUT_DIMENSIONS |
+      .mesa  = (PIPE_NEW_FRAGMENT_SHADER |
+		PIPE_NEW_DEPTH_STENCIL_ALPHA |
+		PIPE_NEW_RAST |
+		PIPE_NEW_BOUND_TEXTURES),
+      .brw   = (BRW_NEW_WM_INPUT_DIMENSIONS |
 		BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG,
    },

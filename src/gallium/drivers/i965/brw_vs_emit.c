@@ -1013,8 +1013,6 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 				       src->SrcRegister.SwizzleZ,
 				       src->SrcRegister.SwizzleW);
 
-   /* Note this is ok for non-swizzle instructions: 
-    */
    reg.negate = src->SrcRegister.Negate ? 1 : 0;   
 
    /* XXX: abs, absneg

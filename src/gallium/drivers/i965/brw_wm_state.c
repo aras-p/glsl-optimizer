@@ -52,7 +52,7 @@ struct brw_wm_unit_key {
    unsigned int max_threads;
 
    unsigned int nr_surfaces, sampler_count;
-   GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
+   GLboolean uses_depth, computes_depth, uses_kill, has_flow_control;
    GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
    GLfloat offset_units, offset_factor;
 };
@@ -114,10 +114,10 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* _NEW_COLOR */
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
-   key->is_glsl = bfp->isGLSL;
+   key->has_flow_control = bfp->has_flow_control;
 
    /* temporary sanity check assertion */
-   ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
+   ASSERT(bfp->has_flow_control == brw_wm_has_flow_control(fp));
 
    /* _NEW_QUERY */
    key->stats_wm = (brw->query.stats_wm != 0);
@@ -184,7 +184,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.wm5.program_computes_depth = key->computes_depth;
    wm.wm5.program_uses_killpixel = key->uses_kill;
 
-   if (key->is_glsl)
+   if (key->has_flow_control)
       wm.wm5.enable_8_pix = 1;
    else
       wm.wm5.enable_16_pix = 1;

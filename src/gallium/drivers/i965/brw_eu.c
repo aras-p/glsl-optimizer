@@ -150,22 +150,22 @@ const GLuint *brw_get_program( struct brw_compile *p,
 /**
  * For each OPCODE_BGNSUB we create one of these.
  */
-struct brw_glsl_label
+struct brw_eu_label
 {
    GLuint label;     /**< the label number */
    GLuint position;  /**< the position of the brw instruction for this label */
-   struct brw_glsl_label *next;  /**< next in linked list */
+   struct brw_eu_label *next;  /**< next in linked list */
 };
 
 
 /**
  * For each OPCODE_CAL we create one of these.
  */
-struct brw_glsl_call
+struct brw_eu_call
 {
    GLuint call_inst_pos;  /**< location of the CAL instruction */
    GLuint label;
-   struct brw_glsl_call *next;  /**< next in linked list */
+   struct brw_eu_call *next;  /**< next in linked list */
 };
 
 
@@ -175,7 +175,7 @@ struct brw_glsl_call
 void
 brw_save_label(struct brw_compile *c, unsigned l, GLuint position)
 {
-   struct brw_glsl_label *label = CALLOC_STRUCT(brw_glsl_label);
+   struct brw_eu_label *label = CALLOC_STRUCT(brw_eu_label);
    label->label = l;
    label->position = position;
    label->next = c->first_label;
@@ -189,7 +189,7 @@ brw_save_label(struct brw_compile *c, unsigned l, GLuint position)
 void
 brw_save_call(struct brw_compile *c, GLuint label, GLuint call_pos)
 {
-   struct brw_glsl_call *call = CALLOC_STRUCT(brw_glsl_call);
+   struct brw_eu_call *call = CALLOC_STRUCT(brw_eu_call);
    call->call_inst_pos = call_pos;
    call->label = label;
    call->next = c->first_call;
@@ -203,7 +203,7 @@ brw_save_call(struct brw_compile *c, GLuint label, GLuint call_pos)
 static GLuint
 brw_lookup_label(struct brw_compile *c, unsigned l)
 {
-   const struct brw_glsl_label *label;
+   const struct brw_eu_label *label;
    for (label = c->first_label; label; label = label->next) {
       if (l == label->label) {
          return label->position;
@@ -221,7 +221,7 @@ brw_lookup_label(struct brw_compile *c, unsigned l)
 void
 brw_resolve_cals(struct brw_compile *c)
 {
-    const struct brw_glsl_call *call;
+    const struct brw_eu_call *call;
 
     for (call = c->first_call; call; call = call->next) {
         const GLuint sub_loc = brw_lookup_label(c, call->label);
@@ -235,7 +235,7 @@ brw_resolve_cals(struct brw_compile *c)
 
     /* free linked list of calls */
     {
-        struct brw_glsl_call *call, *next;
+        struct brw_eu_call *call, *next;
         for (call = c->first_call; call; call = next) {
 	    next = call->next;
 	    FREE(call);
@@ -245,7 +245,7 @@ brw_resolve_cals(struct brw_compile *c)
 
     /* free linked list of labels */
     {
-        struct brw_glsl_label *label, *next;
+        struct brw_eu_label *label, *next;
 	for (label = c->first_label; label; label = next) {
 	    next = label->next;
 	    FREE(label);

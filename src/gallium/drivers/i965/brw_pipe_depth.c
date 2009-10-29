@@ -5,6 +5,10 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 
+/* XXX: Fixme - include this to get IZ_ defines
+ */
+#include "brw_wm.h"
+
 static unsigned brw_translate_compare_func(unsigned func)
 {
    switch (func) {
@@ -55,13 +59,9 @@ static unsigned translate_stencil_op(unsigned op)
    }
 }
 
-
-static void *
-brw_create_depth_stencil_state( struct pipe_context *pipe,
-				const struct pipe_depth_stencil_alpha_state *templ )
+static void create_bcc_state( struct brw_depth_stencil_state *zstencil,
+			      const struct pipe_depth_stencil_alpha_state *templ )
 {
-   struct brw_depth_stencil_state *zstencil = CALLOC_STRUCT(brw_depth_stencil_state);
-
    if (templ->stencil[0].enabled) {
       zstencil->cc0.stencil_enable = 1;
       zstencil->cc0.stencil_func =
@@ -108,6 +108,36 @@ brw_create_depth_stencil_state( struct pipe_context *pipe,
       zstencil->cc2.depth_test_function = brw_translate_compare_func(templ->depth.func);
       zstencil->cc2.depth_write_enable = templ->depth.writemask;
    }
+}
+
+static void create_wm_iz_state( struct brw_depth_stencil_state *zstencil )
+{
+   if (zstencil->cc3.alpha_test)
+      zstencil->iz_lookup |= IZ_PS_KILL_ALPHATEST_BIT;
+
+   if (zstencil->cc2.depth_test)
+      zstencil->iz_lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
+
+   if (zstencil->cc2.depth_write_enable)
+      zstencil->iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
+
+   if (zstencil->cc0.stencil_enable)
+      zstencil->iz_lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
+
+   if (zstencil->cc0.stencil_write_enable)
+      zstencil->iz_lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
+
+}
+
+
+static void *
+brw_create_depth_stencil_state( struct pipe_context *pipe,
+				const struct pipe_depth_stencil_alpha_state *templ )
+{
+   struct brw_depth_stencil_state *zstencil = CALLOC_STRUCT(brw_depth_stencil_state);
+
+   create_bcc_state( zstencil, templ );
+   create_wm_iz_state( zstencil );
 
    return (void *)zstencil;
 }

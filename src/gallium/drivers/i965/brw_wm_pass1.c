@@ -90,17 +90,24 @@ static void track_arg(struct brw_wm_compile *c,
 static GLuint get_texcoord_mask( GLuint tex_idx )
 {
    switch (tex_idx) {
-   case TEXTURE_1D_INDEX:
+   case TGSI_TEXTURE_1D:
       return BRW_WRITEMASK_X;
-   case TEXTURE_2D_INDEX:
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
       return BRW_WRITEMASK_XY;
-   case TEXTURE_3D_INDEX:
+   case TGSI_TEXTURE_3D:
       return BRW_WRITEMASK_XYZ;
-   case TEXTURE_CUBE_INDEX:
+   case TGSI_TEXTURE_CUBE:
       return BRW_WRITEMASK_XYZ;
-   case TEXTURE_RECT_INDEX:
-      return BRW_WRITEMASK_XY;
-   default: return 0;
+
+   case TGSI_TEXTURE_SHADOW1D:
+      return BRW_WRITEMASK_XZ;
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      return BRW_WRITEMASK_XYZ;
+   default: 
+      assert(0);
+      return 0;
    }
 }
 
@@ -217,14 +224,9 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       case TGSI_OPCODE_TEX:
       case TGSI_OPCODE_TXP:
 	 read0 = get_texcoord_mask(inst->tex_idx);
-
-         if (inst->tex_shadow)
-	    read0 |= BRW_WRITEMASK_Z;
 	 break;
 
       case TGSI_OPCODE_TXB:
-	 /* Shadow ignored for txb.
-	  */
 	 read0 = get_texcoord_mask(inst->tex_idx) | BRW_WRITEMASK_W;
 	 break;
 

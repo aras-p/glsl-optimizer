@@ -28,10 +28,13 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-               
+
+#include "util/u_math.h"
+#include "tgsi/tgsi_info.h"
 
 #include "brw_context.h"
 #include "brw_wm.h"
+#include "brw_debug.h"
 
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.
@@ -45,15 +48,15 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
 
 /* Payload R0:
  *
- * R0.0 -- pixel mask, one bit for each of 4 pixels in 4 tiles,
+ * R0.0 -- pixel mask, one bit for each of 4 pixels in 4 quads,
  *         corresponding to each of the 16 execution channels.
  * R0.1..8 -- ?
  * R1.0 -- triangle vertex 0.X
  * R1.1 -- triangle vertex 0.Y
- * R1.2 -- tile 0 x,y coords (2 packed uwords)
- * R1.3 -- tile 1 x,y coords (2 packed uwords)
- * R1.4 -- tile 2 x,y coords (2 packed uwords)
- * R1.5 -- tile 3 x,y coords (2 packed uwords)
+ * R1.2 -- quad 0 x,y coords (2 packed uwords)
+ * R1.3 -- quad 1 x,y coords (2 packed uwords)
+ * R1.4 -- quad 2 x,y coords (2 packed uwords)
+ * R1.5 -- quad 3 x,y coords (2 packed uwords)
  * R1.6 -- ?
  * R1.7 -- ?
  * R1.8 -- ?
@@ -134,11 +137,17 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
    /* XXX: is this needed any more, or is this a NOOP?
     */
    if (mask & BRW_WRITEMASK_Y) {
+#if 0
       /* Y' = height - 1 - Y */
       brw_ADD(p,
 	      dst[1],
 	      negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
 	      brw_imm_d(c->key.drawable_height - 1));
+#else
+      brw_MOV(p,
+	      dst[0],
+	      retype(arg0[0], BRW_REGISTER_TYPE_W));
+#endif
    }
 }
 
@@ -279,28 +288,28 @@ static void emit_frontfacing( struct brw_compile *p,
 /* For OPCODE_DDX and OPCODE_DDY, per channel of output we've got input
  * looking like:
  *
- * arg0: ss0.tl ss0.tr ss0.bl ss0.br ss1.tl ss1.tr ss1.bl ss1.br
+ * arg0: q0.tl q0.tr q0.bl q0.br q1.tl q1.tr q1.bl q1.br
  *
  * and we're trying to produce:
  *
  *           DDX                     DDY
- * dst: (ss0.tr - ss0.tl)     (ss0.tl - ss0.bl)
- *      (ss0.tr - ss0.tl)     (ss0.tr - ss0.br)
- *      (ss0.br - ss0.bl)     (ss0.tl - ss0.bl)
- *      (ss0.br - ss0.bl)     (ss0.tr - ss0.br)
- *      (ss1.tr - ss1.tl)     (ss1.tl - ss1.bl)
- *      (ss1.tr - ss1.tl)     (ss1.tr - ss1.br)
- *      (ss1.br - ss1.bl)     (ss1.tl - ss1.bl)
- *      (ss1.br - ss1.bl)     (ss1.tr - ss1.br)
+ * dst: (q0.tr - q0.tl)     (q0.tl - q0.bl)
+ *      (q0.tr - q0.tl)     (q0.tr - q0.br)
+ *      (q0.br - q0.bl)     (q0.tl - q0.bl)
+ *      (q0.br - q0.bl)     (q0.tr - q0.br)
+ *      (q1.tr - q1.tl)     (q1.tl - q1.bl)
+ *      (q1.tr - q1.tl)     (q1.tr - q1.br)
+ *      (q1.br - q1.bl)     (q1.tl - q1.bl)
+ *      (q1.br - q1.bl)     (q1.tr - q1.br)
  *
- * and add another set of two more subspans if in 16-pixel dispatch mode.
+ * and add two more quads if in 16-pixel dispatch mode.
  *
  * For DDX, it ends up being easy: width = 2, horiz=0 gets us the same result
  * for each pair, and vertstride = 2 jumps us 2 elements after processing a
  * pair. But for DDY, it's harder, as we want to produce the pairs swizzled
  * between each other.  We could probably do it like ddx and swizzle the right
  * order later, but bail for now and just produce
- * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
+ * ((q0.tl - q0.bl)x4 (q1.tl - q1.bl)x4)
  */
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
@@ -611,12 +620,12 @@ static void emit_dp3( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
-   int dst_chan = _mesa_ffs(mask & BRW_WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & BRW_WRITEMASK_XYZW) - 1;
 
    if (!(mask & BRW_WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert(is_power_of_two(mask & BRW_WRITEMASK_XYZW));
+   assert(util_is_power_of_two(mask & BRW_WRITEMASK_XYZW));
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
    brw_MAC(p, brw_null_reg(), arg0[1], arg1[1]);
@@ -633,12 +642,12 @@ static void emit_dp4( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
-   int dst_chan = _mesa_ffs(mask & BRW_WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & BRW_WRITEMASK_XYZW) - 1;
 
    if (!(mask & BRW_WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert(is_power_of_two(mask & BRW_WRITEMASK_XYZW));
+   assert(util_is_power_of_two(mask & BRW_WRITEMASK_XYZW));
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
    brw_MAC(p, brw_null_reg(), arg0[1], arg1[1]);
@@ -656,12 +665,12 @@ static void emit_dph( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
-   const int dst_chan = _mesa_ffs(mask & BRW_WRITEMASK_XYZW) - 1;
+   const int dst_chan = ffs(mask & BRW_WRITEMASK_XYZW) - 1;
 
    if (!(mask & BRW_WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert(is_power_of_two(mask & BRW_WRITEMASK_XYZW));
+   assert(util_is_power_of_two(mask & BRW_WRITEMASK_XYZW));
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
    brw_MAC(p, brw_null_reg(), arg0[1], arg1[1]);
@@ -704,12 +713,12 @@ static void emit_math1( struct brw_compile *p,
 			GLuint mask,
 			const struct brw_reg *arg0 )
 {
-   int dst_chan = _mesa_ffs(mask & BRW_WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & BRW_WRITEMASK_XYZW) - 1;
 
    if (!(mask & BRW_WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert(is_power_of_two(mask & BRW_WRITEMASK_XYZW));
+   assert(util_is_power_of_two(mask & BRW_WRITEMASK_XYZW));
 
    brw_MOV(p, brw_message_reg(2), arg0[0]);
 
@@ -732,12 +741,12 @@ static void emit_math2( struct brw_compile *p,
 			const struct brw_reg *arg0,
 			const struct brw_reg *arg1)
 {
-   int dst_chan = _mesa_ffs(mask & BRW_WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & BRW_WRITEMASK_XYZW) - 1;
 
    if (!(mask & BRW_WRITEMASK_XYZW))
       return; /* Do not emit dead code */
 
-   assert(is_power_of_two(mask & BRW_WRITEMASK_XYZW));
+   assert(util_is_power_of_two(mask & BRW_WRITEMASK_XYZW));
 
    brw_push_insn_state(p);
 
@@ -790,32 +799,38 @@ static void emit_tex( struct brw_wm_compile *c,
    GLuint i, nr;
    GLuint emit;
    GLuint msg_type;
+   GLboolean shadow = FALSE;
 
    /* How many input regs are there?
     */
-   switch (inst->tex_idx) {
-   case TEXTURE_1D_INDEX:
+   switch (inst->tex_target) {
+   case TGSI_TEXTURE_1D:
       emit = BRW_WRITEMASK_X;
       nr = 1;
       break;
-   case TEXTURE_2D_INDEX:
-   case TEXTURE_RECT_INDEX:
+   case TGSI_TEXTURE_SHADOW1D:
+      emit = BRW_WRITEMASK_XW;
+      nr = 4;
+      shadow = TRUE;
+      break;
+   case TGSI_TEXTURE_2D:
       emit = BRW_WRITEMASK_XY;
       nr = 2;
       break;
-   case TEXTURE_3D_INDEX:
-   case TEXTURE_CUBE_INDEX:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      emit = BRW_WRITEMASK_XYW;
+      nr = 4;
+      shadow = TRUE;
+      break;
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
       emit = BRW_WRITEMASK_XYZ;
       nr = 3;
       break;
    default:
       /* unexpected target */
       abort();
-   }
-
-   if (inst->tex_shadow) {
-      nr = 4;
-      emit |= BRW_WRITEMASK_W;
    }
 
    msgLength = 1;
@@ -832,12 +847,12 @@ static void emit_tex( struct brw_wm_compile *c,
    responseLength = 8;		/* always */
 
    if (BRW_IS_IGDNG(p->brw)) {
-       if (inst->tex_shadow)
+       if (shadow)
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG;
        else
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG;
    } else {
-       if (inst->tex_shadow)
+       if (shadow)
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
        else
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
@@ -870,20 +885,23 @@ static void emit_txb( struct brw_wm_compile *c,
    GLuint msg_type;
    /* Shadow ignored for txb.
     */
-   switch (inst->tex_idx) {
-   case TEXTURE_1D_INDEX:
+   switch (inst->tex_target) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
       brw_MOV(p, brw_message_reg(2), arg[0]);
       brw_MOV(p, brw_message_reg(4), brw_imm_f(0));
       brw_MOV(p, brw_message_reg(6), brw_imm_f(0));
       break;
-   case TEXTURE_2D_INDEX:
-   case TEXTURE_RECT_INDEX:
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
       brw_MOV(p, brw_message_reg(2), arg[0]);
       brw_MOV(p, brw_message_reg(4), arg[1]);
       brw_MOV(p, brw_message_reg(6), brw_imm_f(0));
       break;
-   case TEXTURE_3D_INDEX:
-   case TEXTURE_CUBE_INDEX:
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
       brw_MOV(p, brw_message_reg(2), arg[0]);
       brw_MOV(p, brw_message_reg(4), arg[1]);
       brw_MOV(p, brw_message_reg(6), arg[2]);
@@ -976,10 +994,10 @@ static void emit_kil( struct brw_wm_compile *c,
    }
 }
 
-/* KIL_NV kills the pixels that are currently executing, not based on a test
+/* KILLP kills the pixels that are currently executing, not based on a test
  * of the arguments.
  */
-static void emit_kil_nv( struct brw_wm_compile *c )
+static void emit_killp( struct brw_wm_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
@@ -1259,7 +1277,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
     */
    spill_values(c, c->payload.depth, 4);
    spill_values(c, c->creg, c->nr_creg);
-   spill_values(c, c->payload.input_interp, FRAG_ATTRIB_MAX);
+   spill_values(c, c->payload.input_interp, PIPE_MAX_SHADER_INPUTS);
    
 
    for (insn = 0; insn < c->nr_insns; insn++) {
@@ -1328,89 +1346,89 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
 	 /* Straightforward arithmetic:
 	  */
-      case OPCODE_ADD:
+      case TGSI_OPCODE_ADD:
 	 emit_alu2(p, brw_ADD, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_FRC:
+      case TGSI_OPCODE_FRC:
 	 emit_alu1(p, brw_FRC, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_FLR:
+      case TGSI_OPCODE_FLR:
 	 emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_DDX:
+      case TGSI_OPCODE_DDX:
 	 emit_ddxy(p, dst, dst_flags, GL_TRUE, args[0]);
 	 break;
 
-      case OPCODE_DDY:
+      case TGSI_OPCODE_DDY:
 	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
 	 break;
 
-      case OPCODE_DP3:
+      case TGSI_OPCODE_DP3:
 	 emit_dp3(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_DP4:
+      case TGSI_OPCODE_DP4:
 	 emit_dp4(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_DPH:
+      case TGSI_OPCODE_DPH:
 	 emit_dph(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_TRUNC:
+      case TGSI_OPCODE_TRUNC:
 	 emit_trunc(p, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_LRP:
+      case TGSI_OPCODE_LRP:
 	 emit_lrp(p, dst, dst_flags, args[0], args[1], args[2]);
 	 break;
 
-      case OPCODE_MAD:	
+      case TGSI_OPCODE_MAD:	
 	 emit_mad(p, dst, dst_flags, args[0], args[1], args[2]);
 	 break;
 
-      case OPCODE_MOV:
+      case TGSI_OPCODE_MOV:
 	 emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_MUL:
+      case TGSI_OPCODE_MUL:
 	 emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_XPD:
+      case TGSI_OPCODE_XPD:
 	 emit_xpd(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
 	 /* Higher math functions:
 	  */
-      case OPCODE_RCP:
+      case TGSI_OPCODE_RCP:
 	 emit_math1(p, BRW_MATH_FUNCTION_INV, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_RSQ:
+      case TGSI_OPCODE_RSQ:
 	 emit_math1(p, BRW_MATH_FUNCTION_RSQ, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_SIN:
+      case TGSI_OPCODE_SIN:
 	 emit_math1(p, BRW_MATH_FUNCTION_SIN, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_COS:
+      case TGSI_OPCODE_COS:
 	 emit_math1(p, BRW_MATH_FUNCTION_COS, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_EX2:
+      case TGSI_OPCODE_EX2:
 	 emit_math1(p, BRW_MATH_FUNCTION_EXP, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_LG2:
+      case TGSI_OPCODE_LG2:
 	 emit_math1(p, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_SCS:
+      case TGSI_OPCODE_SCS:
 	 /* There is an scs math function, but it would need some
 	  * fixup for 16-element execution.
 	  */
@@ -1420,71 +1438,70 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	    emit_math1(p, BRW_MATH_FUNCTION_SIN, dst+1, (dst_flags&SATURATE)|BRW_WRITEMASK_X, args[0]);
 	 break;
 
-      case OPCODE_POW:
+      case TGSI_OPCODE_POW:
 	 emit_math2(p, BRW_MATH_FUNCTION_POW, dst, dst_flags, args[0], args[1]);
 	 break;
 
 	 /* Comparisons:
 	  */
-      case OPCODE_CMP:
+      case TGSI_OPCODE_CMP:
 	 emit_cmp(p, dst, dst_flags, args[0], args[1], args[2]);
 	 break;
 
-      case OPCODE_MAX:
+      case TGSI_OPCODE_MAX:
 	 emit_max(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_MIN:
+      case TGSI_OPCODE_MIN:
 	 emit_min(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_SLT:
+      case TGSI_OPCODE_SLT:
 	 emit_slt(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
-      case OPCODE_SLE:
+      case TGSI_OPCODE_SLE:
 	 emit_sle(p, dst, dst_flags, args[0], args[1]);
 	break;
-      case OPCODE_SGT:
+      case TGSI_OPCODE_SGT:
 	 emit_sgt(p, dst, dst_flags, args[0], args[1]);
 	break;
-      case OPCODE_SGE:
+      case TGSI_OPCODE_SGE:
 	 emit_sge(p, dst, dst_flags, args[0], args[1]);
 	 break;
-      case OPCODE_SEQ:
+      case TGSI_OPCODE_SEQ:
 	 emit_seq(p, dst, dst_flags, args[0], args[1]);
 	break;
-      case OPCODE_SNE:
+      case TGSI_OPCODE_SNE:
 	 emit_sne(p, dst, dst_flags, args[0], args[1]);
 	break;
 
-      case OPCODE_LIT:
+      case TGSI_OPCODE_LIT:
 	 emit_lit(p, dst, dst_flags, args[0]);
 	 break;
 
 	 /* Texturing operations:
 	  */
-      case OPCODE_TEX:
+      case TGSI_OPCODE_TEX:
 	 emit_tex(c, inst, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_TXB:
+      case TGSI_OPCODE_TXB:
 	 emit_txb(c, inst, dst, dst_flags, args[0]);
 	 break;
 
-      case OPCODE_KIL:
+      case TGSI_OPCODE_KIL:
 	 emit_kil(c, args[0]);
 	 break;
 
-      case OPCODE_KIL_NV:
-	 emit_kil_nv(c);
+      case TGSI_OPCODE_KILP:
+	 emit_killp(c);
 	 break;
 
       default:
 	 debug_printf("Unsupported opcode %i (%s) in fragment shader\n",
-		      inst->opcode, inst->opcode < MAX_OPCODE ?
-				    _mesa_opcode_string(inst->opcode) :
-				    "unknown");
+		      inst->opcode, 
+		      tgsi_get_opcode_info(inst->opcode)->mnemonic);
       }
       
       for (i = 0; i < 4; i++)

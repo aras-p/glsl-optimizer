@@ -332,7 +332,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	  for (j = 0; j < 4; j++)
 	     set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
        }
-       if (c->key.vp_outputs_written & (1 << i)) {
+       if (c->key.nr_vp_outputs > i) {
 	  reg_index += 2;
        }
     }
@@ -1670,7 +1670,7 @@ get_argument_regs(struct brw_wm_compile *c,
     }
 }
 
-static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
+static void brw_wm_emit_branching_shader(struct brw_context *brw, struct brw_wm_compile *c)
 {
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
@@ -1943,20 +1943,20 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
  * Do GPU code generation for shaders that use GLSL features such as
  * flow control.  Other shaders will be compiled with the 
  */
-void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
+void brw_wm_branching_shader_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
     if (BRW_DEBUG & DEBUG_WM) {
-        debug_printf("brw_wm_glsl_emit:\n");
+       debug_printf("%s:\n", __FUNCTION__);
     }
 
     /* initial instruction translation/simplification */
     brw_wm_pass_fp(c);
 
     /* actual code generation */
-    brw_wm_emit_glsl(brw, c);
+    brw_wm_emit_branching_shader(brw, c);
 
     if (BRW_DEBUG & DEBUG_WM) {
-        brw_wm_print_program(c, "brw_wm_glsl_emit done");
+        brw_wm_print_program(c, "brw_wm_branching_shader_emit done");
     }
 
     c->prog_data.total_grf = num_grf_used(c);

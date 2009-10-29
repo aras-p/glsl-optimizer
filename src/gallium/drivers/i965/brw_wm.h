@@ -33,9 +33,6 @@
 #ifndef BRW_WM_H
 #define BRW_WM_H
 
-#include "tgsi/tgsi_ureg.h"
-#include "tgsi/tgsi_ureg_parse.h"
-
 #include "brw_context.h"
 #include "brw_eu.h"
 
@@ -59,8 +56,8 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
-   unsigned proj_attrib_mask; /**< one bit per fragment program attribute */
-   unsigned linear_attrib_mask:1;  /**< linear interpolation vs perspective interp */
+   unsigned proj_attrib_mask;    /**< one bit per fragment program attribute */
+   unsigned linear_attrib_mask;  /**< linear interpolation vs perspective interp */
 
    GLuint source_depth_reg:3;
    GLuint aa_dest_stencil_reg:3;
@@ -75,11 +72,10 @@ struct brw_wm_prog_key {
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
 
-   GLuint tex_swizzles[BRW_MAX_TEX_UNIT];
+   GLuint vp_nr_outputs:6;
+   GLuint nr_cbufs:3;
 
-   GLuint program_string_id:32;
-
-   GLuint vp_nr_outputs_written;
+   GLuint program_string_id;
 };
 
 
@@ -146,9 +142,8 @@ struct brw_wm_instruction {
    GLuint opcode:8;
    GLuint saturate:1;
    GLuint writemask:4;
-   GLuint tex_unit:4;   /* texture unit for TEX, TXD, TXP instructions */
-   GLuint tex_idx:3;    /* TEXTURE_1D,2D,3D,CUBE,RECT_INDEX source target */
-   GLuint tex_shadow:1; /* do shadow comparison? */
+   GLuint tex_unit:4;   /* texture/sampler unit for texture instructions */
+   GLuint tex_target:4; /* TGSI_TEXTURE_x for texture instructions*/
    GLuint eot:1;    	/* End of thread indicator for FB_WRITE*/
    GLuint target:10;    /* target binding table index for FB_WRITE*/
 };
@@ -180,15 +175,17 @@ struct brw_wm_instruction {
 #define WM_FRONTFACING    (MAX_OPCODE + 8)
 #define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
-#define PROGRAM_PAYLOAD   (TGSI_FILE_COUNT)
-#define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
+#define BRW_FILE_PAYLOAD   (TGSI_FILE_COUNT)
+#define PAYLOAD_DEPTH      (FRAG_ATTRIB_MAX) /* ?? */
+
+struct brw_passfp_program;
 
 struct brw_wm_compile {
    struct brw_compile func;
    struct brw_wm_prog_key key;
    struct brw_wm_prog_data prog_data;
 
-   struct brw_fragment_program *fp;
+   struct brw_fragment_shader *fp;
 
    GLfloat (*env_param)[4];
 
@@ -201,15 +198,7 @@ struct brw_wm_compile {
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
     */
-   struct ureg_instruction prog_instructions[BRW_WM_MAX_INSN];
-   GLuint nr_fp_insns;
-   GLuint fp_temp;
-   GLuint fp_interp_emitted;
-   GLuint fp_fragcolor_emitted;
-
-   struct ureg_src pixel_xy;
-   struct ureg_src delta_xy;
-   struct ureg_src pixel_w;
+   struct brw_passfp_program *pass_fp;
 
 
    struct brw_wm_value vreg[BRW_WM_MAX_VREG];
@@ -298,8 +287,8 @@ void brw_wm_lookup_iz( GLuint line_aa,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
-//GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
-void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+GLboolean brw_wm_has_flow_control(const struct brw_fragment_shader *fp);
+void brw_wm_branching_shader_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,

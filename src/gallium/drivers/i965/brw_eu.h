@@ -109,8 +109,8 @@ struct brw_indirect {
 };
 
 
-struct brw_glsl_label;
-struct brw_glsl_call;
+struct brw_eu_label;
+struct brw_eu_call;
 
 
 
@@ -130,8 +130,8 @@ struct brw_compile {
    GLboolean single_program_flow;
    struct brw_context *brw;
 
-   struct brw_glsl_label *first_label;  /**< linked list of labels */
-   struct brw_glsl_call *first_call;    /**< linked list of CALs */
+   struct brw_eu_label *first_label;  /**< linked list of labels */
+   struct brw_eu_call *first_call;    /**< linked list of CALs */
 };
 
 

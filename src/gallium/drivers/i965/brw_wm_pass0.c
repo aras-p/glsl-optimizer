@@ -168,54 +168,20 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 
    if (!ref) {
       switch (file) {
-      case PROGRAM_INPUT:
-      case PROGRAM_PAYLOAD:
-      case PROGRAM_TEMPORARY:
-      case PROGRAM_OUTPUT:
-      case PROGRAM_VARYING:
+      case TGSI_FILE_INPUT:
+      case TGSI_FILE_TEMPORARY:
+      case TGSI_FILE_OUTPUT:
+      case BRW_FILE_PAYLOAD:
+	 /* should already be done?? */
 	 break;
 
-      case PROGRAM_LOCAL_PARAM:
-	 ref = get_param_ref(c, &c->fp->program.Base.LocalParams[idx][component]);
-	 break;
-
-      case PROGRAM_ENV_PARAM:
+      case TGSI_FILE_CONSTANT:
 	 ref = get_param_ref(c, &c->env_param[idx][component]);
 	 break;
 
-      case PROGRAM_STATE_VAR:
-      case PROGRAM_UNIFORM:
-      case PROGRAM_CONSTANT:
-      case PROGRAM_NAMED_PARAM: {
-	 struct gl_program_parameter_list *plist = c->fp->program.Base.Parameters;
-	 
-	 /* There's something really hokey about parameters parsed in
-	  * arb programs - they all end up in here, whether they be
-	  * state values, parameters or constants.  This duplicates the
-	  * structure above & also seems to subvert the limits set for
-	  * each type of constant/param.
-	  */ 
-	 switch (plist->Parameters[idx].Type) {
-	 case PROGRAM_NAMED_PARAM:
-	 case PROGRAM_CONSTANT:
-	    /* These are invarient:
-	     */
-	    ref = get_imm_ref(c, &plist->ParameterValues[idx][component]);
-	    break;
-
-	 case PROGRAM_STATE_VAR:
-	 case PROGRAM_UNIFORM:
-	    /* These may change from run to run:
-	     */
-	    ref = get_param_ref(c, &plist->ParameterValues[idx][component] );
-	    break;
-
-	 default:
-	    assert(0);
-	    break;
-	 }
+      case TGSI_FILE_IMMEDIATE:
+	 ref = get_imm_ref(c, &plist->ParameterValues[idx][component]);
 	 break;
-      }
 
       default:
 	 assert(0);
@@ -310,17 +276,16 @@ translate_insn(struct brw_wm_compile *c,
                const struct prog_instruction *inst)
 {
    struct brw_wm_instruction *out = get_instruction(c);
-   GLuint writemask = inst->DstReg.WriteMask;
+   GLuint writemask = inst->dst.WriteMask;
    GLuint nr_args = brw_wm_nr_args(inst->Opcode);
    GLuint i, j;
 
    /* Copy some data out of the instruction
     */
    out->opcode = inst->Opcode;
-   out->saturate = (inst->SaturateMode != SATURATE_OFF);
+   out->saturate = inst->dst.Saturate;
    out->tex_unit = inst->TexSrcUnit;
-   out->tex_idx = inst->TexSrcTarget;
-   out->tex_shadow = inst->TexShadow;
+   out->tex_target = inst->TexSrcTarget;
    out->eot = inst->Aux & 1;
    out->target = inst->Aux >> 1;
 
@@ -328,7 +293,7 @@ translate_insn(struct brw_wm_compile *c,
     */
    for (i = 0; i < nr_args; i++) {
       for (j = 0; j < 4; j++) {
-	 out->src[i][j] = get_new_ref(c, inst->SrcReg[i], j, out);
+	 out->src[i][j] = get_new_ref(c, inst->src[i], j, out);
       }
    }
 
@@ -380,15 +345,6 @@ static void pass0_init_payload( struct brw_wm_compile *c )
 			     &c->payload.depth[j] );
    }
 
-#if 0
-   /* This seems to be an alternative to the INTERP_WPOS stuff I do
-    * elsewhere:
-    */
-   if (c->key.source_depth_reg)
-      pass0_set_fpreg_value(c, PROGRAM_INPUT, FRAG_ATTRIB_WPOS, 2,
-			    &c->payload.depth[c->key.source_depth_reg/2]);
-#endif
-   
    for (i = 0; i < FRAG_ATTRIB_MAX; i++)
       pass0_set_fpreg_value( c, PROGRAM_PAYLOAD, i, 0, 
 			     &c->payload.input_interp[i] );      
@@ -403,6 +359,9 @@ static void pass0_init_payload( struct brw_wm_compile *c )
  * the same number.
  *
  * Translate away swizzling and eliminate non-saturating moves.
+ *
+ * Translate instructions from Mesa's prog_instruction structs to our
+ * internal brw_wm_instruction representation.
  */
 void brw_wm_pass0( struct brw_wm_compile *c )
 {
@@ -421,7 +380,7 @@ void brw_wm_pass0( struct brw_wm_compile *c )
        */      
       switch (inst->Opcode) {
       case OPCODE_MOV: 
-	 if (!inst->SaturateMode) {
+	 if (!inst->dst.Saturate) {
 	    pass0_precalc_mov(c, inst);
 	 }
 	 else {

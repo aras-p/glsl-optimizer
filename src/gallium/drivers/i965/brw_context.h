@@ -132,6 +132,8 @@ struct brw_depth_stencil_state {
    struct brw_cc2 cc2;
    struct brw_cc3 cc3;
    struct brw_cc7 cc7;
+
+   unsigned iz_lookup;
 };
 
 
@@ -164,7 +166,10 @@ struct brw_fragment_shader {
    const struct tgsi_token *tokens;
    struct tgsi_shader_info info;
 
-   GLboolean isGLSL;
+   unsigned iz_lookup;
+   
+   boolean  uses_depth:1;
+   boolean  has_flow_control:1;
 
    unsigned id;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
@@ -194,6 +199,7 @@ struct brw_fragment_shader {
 #define PIPE_NEW_COLOR_BUFFERS          0x40000
 #define PIPE_NEW_QUERY                  0x80000
 #define PIPE_NEW_SCISSOR                0x100000
+#define PIPE_NEW_BOUND_TEXTURES         0x200000
 
 
 
@@ -487,7 +493,7 @@ struct brw_context
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_state *zstencil;
 
-      const struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+      const struct brw_texture *texture[PIPE_MAX_SAMPLERS];
       const struct pipe_sampler *sampler[PIPE_MAX_SAMPLERS];
       unsigned num_textures;
       unsigned num_samplers;
