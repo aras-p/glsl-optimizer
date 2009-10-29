@@ -1087,8 +1087,6 @@ _mesa_texstore_x8_z24(TEXSTORE_PARAMS)
 }
 
 
-#define STRIDE_3D 0
-
 /**
  * Store a 16-bit integer depth component texture image.
  */
