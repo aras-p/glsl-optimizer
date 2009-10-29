@@ -33,6 +33,7 @@
 #include "context.h"
 #include "enums.h"
 #include "fbobject.h"
+#include "formats.h"
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
@@ -739,6 +740,10 @@ _mesa_get_fallback_texture(GLcontext *ctx)
       /* init the image fields */
       _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
                                     8, 8, 1, 0, GL_RGBA); 
+
+      texImage->TexFormat =
+         ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+      ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
       /* set image data */
       ctx->Driver.TexImage2D(ctx, GL_TEXTURE_2D, 0, GL_RGBA,
