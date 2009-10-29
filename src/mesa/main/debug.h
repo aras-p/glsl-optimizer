@@ -75,4 +75,7 @@ _mesa_dump_depth_buffer(const char *filename);
 extern void
 _mesa_dump_stencil_buffer(const char *filename);
 
+extern void
+_mesa_print_texture(GLcontext *ctx, const struct gl_texture_image *img);
+
 #endif

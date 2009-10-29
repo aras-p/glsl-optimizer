@@ -82,63 +82,6 @@ _mesa_free_texmemory(void *m)
 }
 
 
-
-
-#if 0
-static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
-{
-#if CHAN_TYPE != GL_UNSIGNED_BYTE
-   _mesa_problem(NULL, "PrintTexture not supported");
-#else
-   GLuint i, j, c;
-   const GLubyte *data = (const GLubyte *) img->Data;
-
-   if (!data) {
-      _mesa_printf("No texture data\n");
-      return;
-   }
-
-   switch (img->Format) {
-      case GL_ALPHA:
-      case GL_LUMINANCE:
-      case GL_INTENSITY:
-      case GL_COLOR_INDEX:
-         c = 1;
-         break;
-      case GL_LUMINANCE_ALPHA:
-         c = 2;
-         break;
-      case GL_RGB:
-         c = 3;
-         break;
-      case GL_RGBA:
-         c = 4;
-         break;
-      default:
-         _mesa_problem(NULL, "error in PrintTexture\n");
-         return;
-   }
-
-   for (i = 0; i < img->Height; i++) {
-      for (j = 0; j < img->Width; j++) {
-         if (c==1)
-            _mesa_printf("%02x  ", data[0]);
-         else if (c==2)
-            _mesa_printf("%02x%02x  ", data[0], data[1]);
-         else if (c==3)
-            _mesa_printf("%02x%02x%02x  ", data[0], data[1], data[2]);
-         else if (c==4)
-            _mesa_printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
-         data += (img->RowStride - img->Width) * c;
-      }
-      /* XXX use img->ImageStride here */
-      _mesa_printf("\n");
-   }
-#endif
-}
-#endif
-
-
 /*
  * Compute floor(log_base_2(n)).
  * If n < 0 return -1.
