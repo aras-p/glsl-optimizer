@@ -94,6 +94,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
+  {"GL_ARB_depth_clamp",                NULL},
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},

@@ -1030,6 +1030,7 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 	GLfloat tz = v[MAT_TZ] * depthScale;
 
 	R600_STATECHANGE(context, vpt);
+	R600_STATECHANGE(context, cl);
 
 	r700->viewport[id].PA_CL_VPORT_XSCALE.f32All  = sx;
 	r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
@@ -1039,6 +1040,18 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 
 	r700->viewport[id].PA_CL_VPORT_ZSCALE.f32All  = sz;
 	r700->viewport[id].PA_CL_VPORT_ZOFFSET.f32All = tz;
+
+	if (ctx->Transform.DepthClamp) {
+		r700->viewport[id].PA_SC_VPORT_ZMIN_0.f32All = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
+		r700->viewport[id].PA_SC_VPORT_ZMAX_0.f32All = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+		SETbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_NEAR_DISABLE_bit);
+		SETbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_FAR_DISABLE_bit);
+	} else {
+		r700->viewport[id].PA_SC_VPORT_ZMIN_0.f32All = 0.0;
+		r700->viewport[id].PA_SC_VPORT_ZMAX_0.f32All = 1.0;
+		CLEARbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_NEAR_DISABLE_bit);
+		CLEARbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_FAR_DISABLE_bit);
+	}
 
 	r700->viewport[id].enabled = GL_TRUE;
 
@@ -1345,8 +1358,6 @@ void r700SetScissor(context_t *context) //---------------
 	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_BR.u32All, y2,
 		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
 
-	r700->viewport[id].PA_SC_VPORT_ZMIN_0.u32All = 0;
-	r700->viewport[id].PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 	r700->viewport[id].enabled = GL_TRUE;
 }
 
