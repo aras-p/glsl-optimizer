@@ -1406,7 +1406,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+   const GLenum baseFormat = GL_RGBA;
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
           dstFormat == MESA_FORMAT_ARGB8888_REV ||
