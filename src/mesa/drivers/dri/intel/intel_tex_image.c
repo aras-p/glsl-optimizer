@@ -696,7 +696,6 @@ memcpy_get_tex_image(GLcontext *ctx, GLenum target, GLint level,
          const GLint srcRowStride = texImage->RowStride * bpp;
          GLuint row;
 
-         printf("Fast getteximage!\n");
          for (row = 0; row < texImage->Height; row++) {
             memcpy(dst, src, bytesPerRow);
             dst += dstRowStride;
