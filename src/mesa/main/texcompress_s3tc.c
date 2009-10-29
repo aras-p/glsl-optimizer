@@ -44,6 +44,10 @@
 #include "texcompress_s3tc.h"
 #include "texstore.h"
 
+
+#if FEATURE_texture_s3tc
+
+
 #ifdef __MINGW32__
 #define DXTN_LIBNAME "dxtn.dll"
 #define RTLD_LAZY 0
@@ -564,5 +568,7 @@ _mesa_fetch_texel_2d_f_srgba_dxt5(const struct gl_texture_image *texImage,
    texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
 }
-#endif
+#endif /* FEATURE_EXT_texture_sRGB */
 
+
+#endif /* FEATURE_texture_s3tc */

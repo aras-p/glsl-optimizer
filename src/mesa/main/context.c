@@ -123,7 +123,7 @@
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
-#include "texcompress.h"
+#include "texcompress_s3tc.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
@@ -703,9 +703,7 @@ init_attrib_groups(GLcontext *ctx)
    if (!_mesa_init_texture( ctx ))
       return GL_FALSE;
 
-#if FEATURE_texture_s3tc
    _mesa_init_texture_s3tc( ctx );
-#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;

@@ -44,11 +44,6 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                gl_format mesaFormat,
                                GLsizei width, const GLubyte *image);
 
-
-extern void
-_mesa_init_texture_s3tc( GLcontext *ctx );
-
-
 #else /* _HAVE_FULL_GL */
 
 /* no-op macros */
