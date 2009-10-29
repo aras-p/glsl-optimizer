@@ -1538,6 +1538,11 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
    return GL_FALSE;
 }
 
+
+/**
+ * Do second part of glTexSubImage which depends on the destination texture.
+ * \return GL_TRUE if error recorded, GL_FALSE otherwise
+ */
 static GLboolean
 subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
 			 GLenum target, GLint level,
@@ -1585,41 +1590,35 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-#if FEATURE_EXT_texture_sRGB
-   if (destTex->InternalFormat == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT ||
-       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT ||
-       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT ||
-       destTex->InternalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT) {
-      if ((width & 0x3) || (height & 0x3) ||
-          (xoffset & 0x3) || (yoffset & 0x3))
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexSubImage%dD(size or offset not multiple of 4)",
-                     dimensions);
-      return GL_TRUE;
-   }
-#endif
-
    if (_mesa_is_format_compressed(destTex->TexFormat)) {
+      GLuint bw, bh;
+
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexSubImage%D(target)", dimensions);
+                     "glTexSubImage%D(target=%s)", dimensions,
+                     _mesa_lookup_enum_by_nr(target));
          return GL_TRUE;
       }
-      /* offset must be multiple of 4 */
-      if ((xoffset & 3) || (yoffset & 3)) {
+
+      /* do tests which depend on compression block size */
+      _mesa_get_format_block_size(destTex->TexFormat, &bw, &bh);
+
+      /* offset must be multiple of block size */
+      if ((xoffset % bw != 0) || (yoffset % bh != 0)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexSubImage%D(xoffset or yoffset)", dimensions);
+                     "glTexSubImage%D(xoffset = %d, yoffset = %d)",
+                     dimensions, xoffset, yoffset);
          return GL_TRUE;
       }
-      /* size must be multiple of 4 or equal to whole texture size */
-      if ((width & 3) && (GLuint) width != destTex->Width) {
+      /* size must be multiple of bw by bh or equal to whole texture size */
+      if ((width % bw != 0) && (GLuint) width != destTex->Width) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexSubImage%D(width)", dimensions);
+                     "glTexSubImage%D(width = %d)", dimensions, width);
          return GL_TRUE;
       }         
-      if ((height & 3) && (GLuint) height != destTex->Height) {
+      if ((height % bh != 0) && (GLuint) height != destTex->Height) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexSubImage%D(width)", dimensions);
+                     "glTexSubImage%D(height = %d)", dimensions, height);
          return GL_TRUE;
       }         
    }
