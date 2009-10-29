@@ -159,9 +159,9 @@ _swrast_culltriangle( GLcontext *ctx,
       GLint t = FixedToInt(span.intTex[1]) & tmask;			\
       GLint pos = (t << twidth_log2) + s;				\
       pos = pos + pos + pos;  /* multiply by 3 */			\
-      rgb[i][RCOMP] = texture[pos];					\
+      rgb[i][RCOMP] = texture[pos+2];					\
       rgb[i][GCOMP] = texture[pos+1];					\
-      rgb[i][BCOMP] = texture[pos+2];					\
+      rgb[i][BCOMP] = texture[pos+0];					\
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
@@ -215,9 +215,9 @@ _swrast_culltriangle( GLcontext *ctx,
          GLint t = FixedToInt(span.intTex[1]) & tmask;			\
          GLint pos = (t << twidth_log2) + s;				\
          pos = pos + pos + pos;  /* multiply by 3 */			\
-         rgb[i][RCOMP] = texture[pos];					\
+         rgb[i][RCOMP] = texture[pos+2];				\
          rgb[i][GCOMP] = texture[pos+1];				\
-         rgb[i][BCOMP] = texture[pos+2];				\
+         rgb[i][BCOMP] = texture[pos+0];				\
          zRow[i] = z;							\
          span.array->mask[i] = 1;					\
       }									\
@@ -1101,7 +1101,13 @@ _swrast_choose_triangle( GLcontext *ctx )
 #if CHAN_BITS != 8
                   USE(general_triangle);
 #else
-                  USE(affine_textured_triangle);
+                  if (format == MESA_FORMAT_RGBA8888 && !_mesa_little_endian())
+                     /* We only handle RGBA8888 correctly on little endian
+                      * in the optimized code above.
+                      */
+                     USE(general_triangle);
+                  else
+                     USE(affine_textured_triangle);
 #endif
 	       }
 	    }
