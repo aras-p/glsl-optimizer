@@ -964,7 +964,6 @@ static void emit_fb_write( struct brw_wm_compile *c )
    GLuint i;
 
    struct prog_instruction *inst, *last_inst;
-   struct brw_context *brw = c->func.brw;
 
    /* The inst->Aux field is used for FB write target and the EOT marker */
 
