@@ -1101,13 +1101,15 @@ _swrast_choose_triangle( GLcontext *ctx )
 #if CHAN_BITS != 8
                   USE(general_triangle);
 #else
-                  if (format == MESA_FORMAT_RGBA8888 && !_mesa_little_endian())
+                  if (format == MESA_FORMAT_RGBA8888 && !_mesa_little_endian()) {
                      /* We only handle RGBA8888 correctly on little endian
                       * in the optimized code above.
                       */
                      USE(general_triangle);
-                  else
+                  }
+                  else {
                      USE(affine_textured_triangle);
+                 }
 #endif
 	       }
 	    }
