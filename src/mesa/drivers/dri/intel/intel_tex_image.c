@@ -620,104 +620,6 @@ intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 
 
 /**
- * Try to use memcpy() to do a glGetTexImage().
- * \return GL_TRUE if done, GL_FALSE otherwise
- */
-static GLboolean
-memcpy_get_tex_image(GLcontext *ctx, GLenum target, GLint level,
-                     GLenum format, GLenum type, GLvoid * pixels,
-                     struct gl_texture_object *texObj,
-                     struct gl_texture_image *texImage)
-{
-   GLboolean memCopy = GL_FALSE;
-
-   /* Texture image should have been mapped already */
-   assert(texImage->Data);
-
-   /*
-    * Check if the src/dst formats are compatible.
-    * Also note that GL's pixel transfer ops don't apply to glGetTexImage()
-    * so we don't have to worry about those.
-    */
-   if ((texObj->Target == GL_TEXTURE_1D ||
-        texObj->Target == GL_TEXTURE_2D ||
-        texObj->Target == GL_TEXTURE_RECTANGLE ||
-        (texObj->Target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-         texObj->Target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
-      if (texImage->TexFormat == MESA_FORMAT_ARGB8888 &&
-          format == GL_BGRA &&
-          type == GL_UNSIGNED_BYTE &&
-          _mesa_little_endian()) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_AL88 &&
-               format == GL_LUMINANCE_ALPHA &&
-               type == GL_UNSIGNED_BYTE &&
-               _mesa_little_endian()) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_L8 &&
-               format == GL_LUMINANCE &&
-               type == GL_UNSIGNED_BYTE) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_A8 &&
-               format == GL_ALPHA &&
-               type == GL_UNSIGNED_BYTE) {
-         memCopy = GL_TRUE;
-      }
-   }
-
-   if (memCopy) {
-      struct gl_pixelstore_attrib *pack = &ctx->Pack;
-
-      if (_mesa_is_bufferobj(pack->BufferObj)) {
-         /* Packing texture image into a PBO */
-         GLubyte *buf = (GLubyte *)
-            ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                  GL_WRITE_ONLY_ARB, pack->BufferObj);
-         if (!buf) {
-            /* out of memory or other unexpected error */
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage(map PBO failed)");
-            return GL_TRUE; /* failed, but done */
-         }
-         pixels = ADD_POINTERS(buf, pixels);
-      }
-
-      {
-         const GLuint bpp = _mesa_get_format_bytes(texImage->TexFormat);
-         const GLuint bytesPerRow = texImage->Width * bpp;
-         GLubyte *dst =
-            _mesa_image_address2d(&ctx->Pack, pixels, texImage->Width,
-                                  texImage->Height, format, type, 0, 0);
-         const GLint dstRowStride =
-            _mesa_image_row_stride(&ctx->Pack, texImage->Width, format, type);
-         const GLubyte *src = texImage->Data;
-         const GLint srcRowStride = texImage->RowStride * bpp;
-         GLuint row;
-
-         if (bytesPerRow == dstRowStride && bytesPerRow == dstRowStride) {
-            memcpy(dst, src, bytesPerRow * texImage->Height);
-         }
-         else {
-            for (row = 0; row < texImage->Height; row++) {
-               memcpy(dst, src, bytesPerRow);
-               dst += dstRowStride;
-               src += srcRowStride;
-            }
-         }
-      }
-
-      if (_mesa_is_bufferobj(pack->BufferObj)) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT, pack->BufferObj);
-      }
-   }
-
-   return memCopy;
-}
-
-
-/**
  * Need to map texture image into memory before copying image data,
  * then unmap it.
  */
@@ -768,11 +670,8 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 				    texObj, texImage);
    }
    else {
-      if (!memcpy_get_tex_image(ctx, target, level, format, type, pixels,
-                                texObj, texImage)) {
-         _mesa_get_teximage(ctx, target, level, format, type, pixels,
-                            texObj, texImage);
-      }
+      _mesa_get_teximage(ctx, target, level, format, type, pixels,
+                         texObj, texImage);
    }
      
 
