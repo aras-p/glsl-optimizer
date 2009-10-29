@@ -971,13 +971,12 @@ static void emit_fb_write( struct brw_wm_compile *c )
    if (brw->state.nr_color_regions > 1) {
       for (i = 0 ; i < brw->state.nr_color_regions; i++) {
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
-         last_inst = inst = emit_op(c,
-                                    WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
-                                    outcolor, payload_r0_depth, outdepth);
+         last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
+                                    0, outcolor, payload_r0_depth, outdepth);
          inst->Aux = (i<<1);
          if (c->fp_fragcolor_emitted) {
             outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
-            last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+            last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(), 0),
                                        0, outcolor, payload_r0_depth, outdepth);
             inst->Aux = (i<<1);
          }
