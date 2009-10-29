@@ -305,6 +305,12 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       GLenum wt = tObj->WrapT;
       GLenum wr = tObj->WrapR;
 
+      /* We program 1D textures as 2D textures, so the 2D texcoord could
+       * result in sampling border values if we don't set the T wrap to
+       * repeat.
+       */
+      if (tObj->Target == GL_TEXTURE_1D)
+	 wt = GL_REPEAT;
 
       /* 3D textures don't seem to respect the border color.
        * Fallback if there's ever a danger that they might refer to
