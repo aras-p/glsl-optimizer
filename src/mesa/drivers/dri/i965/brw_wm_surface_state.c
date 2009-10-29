@@ -709,7 +709,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;
-   brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
+   brw->wm.nr_surfaces = BRW_MAX_DRAW_BUFFERS;
 
    if (brw->wm.surf_bo[SURF_INDEX_FRAG_CONST_BUFFER] != NULL)
        brw->wm.nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
