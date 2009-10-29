@@ -86,8 +86,278 @@ type_with_negative_values(GLenum type)
 
 
 /**
+ * glGetTexImage for color index pixels.
+ */
+static void
+get_tex_color_index(GLcontext *ctx, GLuint dimensions,
+                    GLenum format, GLenum type, GLvoid *pixels,
+                    const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   const GLuint indexBits =
+      _mesa_get_format_bits(texImage->TexFormat, GL_TEXTURE_INDEX_SIZE_EXT);
+   const GLbitfield transferOps = 0x0;
+   GLint img, row, col;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         GLuint indexRow[MAX_WIDTH];
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+         assert(dest);
+
+         if (indexBits == 8) {
+            const GLubyte *src = (const GLubyte *) texImage->Data;
+            src += width * (img * texImage->Height + row);
+            for (col = 0; col < width; col++) {
+               indexRow[col] = src[col];
+            }
+         }
+         else if (indexBits == 16) {
+            const GLushort *src = (const GLushort *) texImage->Data;
+            src += width * (img * texImage->Height + row);
+            for (col = 0; col < width; col++) {
+               indexRow[col] = src[col];
+            }
+         }
+         else {
+            _mesa_problem(ctx, "Color index problem in _mesa_GetTexImage");
+         }
+         _mesa_pack_index_span(ctx, width, type, dest,
+                               indexRow, &ctx->Pack, transferOps);
+      }
+   }
+}
+
+
+/**
+ * glGetTexImage for depth/Z pixels.
+ */
+static void
+get_tex_depth(GLcontext *ctx, GLuint dimensions,
+              GLenum format, GLenum type, GLvoid *pixels,
+              const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   GLint img, row, col;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         GLfloat depthRow[MAX_WIDTH];
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+         assert(dest);
+
+         for (col = 0; col < width; col++) {
+            texImage->FetchTexelf(texImage, col, row, img, depthRow + col);
+         }
+         _mesa_pack_depth_span(ctx, width, dest, type, depthRow, &ctx->Pack);
+      }
+   }
+}
+
+
+/**
+ * glGetTexImage for depth/stencil pixels.
+ */
+static void
+get_tex_depth_stencil(GLcontext *ctx, GLuint dimensions,
+                      GLenum format, GLenum type, GLvoid *pixels,
+                      const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   const GLuint *src = (const GLuint *) texImage->Data;
+   GLint img, row;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+         _mesa_memcpy(dest, src, width * sizeof(GLuint));
+         if (ctx->Pack.SwapBytes) {
+            _mesa_swap4((GLuint *) dest, width);
+         }
+
+         src += width * row + width * height * img;
+      }
+   }
+}
+
+
+/**
+ * glGetTexImage for YCbCr pixels.
+ */
+static void
+get_tex_ycbcr(GLcontext *ctx, GLuint dimensions,
+              GLenum format, GLenum type, GLvoid *pixels,
+              const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   const GLint rowstride = texImage->RowStride;
+   const GLushort *src = (const GLushort *) texImage->Data;
+   GLint img, row;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+         _mesa_memcpy(dest, src, width * sizeof(GLushort));
+
+         /* check for byte swapping */
+         if ((texImage->TexFormat == MESA_FORMAT_YCBCR
+              && type == GL_UNSIGNED_SHORT_8_8_REV_MESA) ||
+             (texImage->TexFormat == MESA_FORMAT_YCBCR_REV
+              && type == GL_UNSIGNED_SHORT_8_8_MESA)) {
+            if (!ctx->Pack.SwapBytes)
+               _mesa_swap2((GLushort *) dest, width);
+         }
+         else if (ctx->Pack.SwapBytes) {
+            _mesa_swap2((GLushort *) dest, width);
+         }
+
+         src += rowstride;
+      }
+   }
+}
+
+
+/**
+ * glGetTexImagefor sRGB pixels;
+ */
+static void
+get_tex_srgb(GLcontext *ctx, GLuint dimensions,
+             GLenum format, GLenum type, GLvoid *pixels,
+             const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   const GLbitfield transferOps = 0x0;
+   GLint img, row;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+
+         GLfloat rgba[MAX_WIDTH][4];
+         GLint col;
+
+         /* convert row to RGBA format */
+         for (col = 0; col < width; col++) {
+            texImage->FetchTexelf(texImage, col, row, img, rgba[col]);
+            if (texImage->_BaseFormat == GL_LUMINANCE) {
+               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+               rgba[col][GCOMP] = 0.0;
+               rgba[col][BCOMP] = 0.0;
+            }
+            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+               rgba[col][GCOMP] = 0.0;
+               rgba[col][BCOMP] = 0.0;
+            }
+            else if (texImage->_BaseFormat == GL_RGB ||
+                     texImage->_BaseFormat == GL_RGBA) {
+               rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+               rgba[col][GCOMP] = linear_to_nonlinear(rgba[col][GCOMP]);
+               rgba[col][BCOMP] = linear_to_nonlinear(rgba[col][BCOMP]);
+            }
+         }
+         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                    format, type, dest,
+                                    &ctx->Pack, transferOps);
+      }
+   }
+}
+
+
+/**
+ * glGetTexImagefor RGBA, Luminance, etc. pixels.
+ * This is the slow way since we use texture sampling.
+ */
+static void
+get_tex_rgba(GLcontext *ctx, GLuint dimensions,
+             GLenum format, GLenum type, GLvoid *pixels,
+             const struct gl_texture_image *texImage)
+{
+   const GLint width = texImage->Width;
+   const GLint height = texImage->Height;
+   const GLint depth = texImage->Depth;
+   /* Normally, no pixel transfer ops are performed during glGetTexImage.
+    * The only possible exception is component clamping to [0,1].
+    */
+   GLbitfield transferOps = 0x0;
+   GLint img, row;
+
+   for (img = 0; img < depth; img++) {
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          img, row, 0);
+         GLfloat rgba[MAX_WIDTH][4];
+         GLint col;
+         GLenum dataType = _mesa_get_format_datatype(texImage->TexFormat);
+
+         /* clamp does not apply to GetTexImage (final conversion)?
+          * Looks like we need clamp though when going from format
+          * containing negative values to unsigned format.
+          */
+         if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
+            transferOps |= IMAGE_CLAMP_BIT;
+         }
+         else if (!type_with_negative_values(type) &&
+                  (dataType == GL_FLOAT ||
+                   dataType == GL_SIGNED_NORMALIZED)) {
+            transferOps |= IMAGE_CLAMP_BIT;
+         }
+
+         for (col = 0; col < width; col++) {
+            texImage->FetchTexelf(texImage, col, row, img, rgba[col]);
+            if (texImage->_BaseFormat == GL_ALPHA) {
+               rgba[col][RCOMP] = 0.0F;
+               rgba[col][GCOMP] = 0.0F;
+               rgba[col][BCOMP] = 0.0F;
+            }
+            else if (texImage->_BaseFormat == GL_LUMINANCE) {
+               rgba[col][GCOMP] = 0.0F;
+               rgba[col][BCOMP] = 0.0F;
+               rgba[col][ACOMP] = 1.0F;
+            }
+            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+               rgba[col][GCOMP] = 0.0F;
+               rgba[col][BCOMP] = 0.0F;
+            }
+            else if (texImage->_BaseFormat == GL_INTENSITY) {
+               rgba[col][GCOMP] = 0.0F;
+               rgba[col][BCOMP] = 0.0F;
+               rgba[col][ACOMP] = 1.0F;
+            }
+         }
+         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                    format, type, dest,
+                                    &ctx->Pack, transferOps);
+      }
+   }
+}
+
+
+/**
  * This is the software fallback for Driver.GetTexImage().
  * All error checking will have been done before this routine is called.
+ * The texture image must be mapped.
  */
 void
 _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
@@ -95,7 +365,21 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-   const GLuint dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
+   GLuint dimensions;
+
+   /* If we get here, the texture image should be mapped */
+   assert(texImage->Data);
+
+   switch (target) {
+   case GL_TEXTURE_1D:
+      dimensions = 1;
+      break;
+   case GL_TEXTURE_3D:
+      dimensions = 3;
+      break;
+   default:
+      dimensions = 2;
+   }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* Packing texture image into a PBO.
@@ -118,163 +402,23 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
       pixels = ADD_POINTERS(buf, pixels);
    }
 
-   {
-      const GLint width = texImage->Width;
-      const GLint height = texImage->Height;
-      const GLint depth = texImage->Depth;
-      GLint img, row;
-      for (img = 0; img < depth; img++) {
-         for (row = 0; row < height; row++) {
-            /* compute destination address in client memory */
-            GLvoid *dest = _mesa_image_address( dimensions, &ctx->Pack, pixels,
-                                                width, height, format, type,
-                                                img, row, 0);
-            assert(dest);
-
-            if (format == GL_COLOR_INDEX) {
-               GLuint indexRow[MAX_WIDTH];
-               GLint col;
-               GLuint indexBits = _mesa_get_format_bits(texImage->TexFormat, GL_TEXTURE_INDEX_SIZE_EXT);
-               /* Can't use FetchTexel here because that returns RGBA */
-               if (indexBits == 8) {
-                  const GLubyte *src = (const GLubyte *) texImage->Data;
-                  src += width * (img * texImage->Height + row);
-                  for (col = 0; col < width; col++) {
-                     indexRow[col] = src[col];
-                  }
-               }
-               else if (indexBits == 16) {
-                  const GLushort *src = (const GLushort *) texImage->Data;
-                  src += width * (img * texImage->Height + row);
-                  for (col = 0; col < width; col++) {
-                     indexRow[col] = src[col];
-                  }
-               }
-               else {
-                  _mesa_problem(ctx,
-                                "Color index problem in _mesa_GetTexImage");
-               }
-               _mesa_pack_index_span(ctx, width, type, dest,
-                                     indexRow, &ctx->Pack,
-                                     0 /* no image transfer */);
-            }
-            else if (format == GL_DEPTH_COMPONENT) {
-               GLfloat depthRow[MAX_WIDTH];
-               GLint col;
-               for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexelf)(texImage, col, row, img,
-                                           depthRow + col);
-               }
-               _mesa_pack_depth_span(ctx, width, dest, type,
-                                     depthRow, &ctx->Pack);
-            }
-            else if (format == GL_DEPTH_STENCIL_EXT) {
-               /* XXX Note: we're bypassing texImage->FetchTexel()! */
-               const GLuint *src = (const GLuint *) texImage->Data;
-               src += width * row + width * height * img;
-               _mesa_memcpy(dest, src, width * sizeof(GLuint));
-               if (ctx->Pack.SwapBytes) {
-                  _mesa_swap4((GLuint *) dest, width);
-               }
-            }
-            else if (format == GL_YCBCR_MESA) {
-               /* No pixel transfer */
-               const GLint rowstride = texImage->RowStride;
-               MEMCPY(dest,
-                      (const GLushort *) texImage->Data + row * rowstride,
-                      width * sizeof(GLushort));
-               /* check for byte swapping */
-               if ((texImage->TexFormat == MESA_FORMAT_YCBCR
-                    && type == GL_UNSIGNED_SHORT_8_8_REV_MESA) ||
-                   (texImage->TexFormat == MESA_FORMAT_YCBCR_REV
-                    && type == GL_UNSIGNED_SHORT_8_8_MESA)) {
-                  if (!ctx->Pack.SwapBytes)
-                     _mesa_swap2((GLushort *) dest, width);
-               }
-               else if (ctx->Pack.SwapBytes) {
-                  _mesa_swap2((GLushort *) dest, width);
-               }
-            }
-#if FEATURE_EXT_texture_sRGB
-            else if (_mesa_get_format_color_encoding(texImage->TexFormat)
-                     == GL_SRGB) {
-               /* special case this since need to backconvert values */
-               /* convert row to RGBA format */
-               GLfloat rgba[MAX_WIDTH][4];
-               GLint col;
-               GLbitfield transferOps = 0x0;
-
-               for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
-                  if (texImage->_BaseFormat == GL_LUMINANCE) {
-                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                  }
-                  else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                  }
-                  else if (texImage->_BaseFormat == GL_RGB ||
-                     texImage->_BaseFormat == GL_RGBA) {
-                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
-                     rgba[col][GCOMP] = linear_to_nonlinear(rgba[col][GCOMP]);
-                     rgba[col][BCOMP] = linear_to_nonlinear(rgba[col][BCOMP]);
-                  }
-               }
-               _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                          format, type, dest,
-                                          &ctx->Pack, transferOps);
-            }
-#endif /* FEATURE_EXT_texture_sRGB */
-            else {
-               /* general case:  convert row to RGBA format */
-               GLfloat rgba[MAX_WIDTH][4];
-               GLint col;
-               GLbitfield transferOps = 0x0;
-               GLenum dataType =
-                  _mesa_get_format_datatype(texImage->TexFormat);
-
-               /* clamp does not apply to GetTexImage (final conversion)?
-                * Looks like we need clamp though when going from format
-                * containing negative values to unsigned format.
-                */
-               if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
-                  transferOps |= IMAGE_CLAMP_BIT;
-               else if (!type_with_negative_values(type) &&
-                        (dataType == GL_FLOAT ||
-                         dataType == GL_SIGNED_NORMALIZED))
-                  transferOps |= IMAGE_CLAMP_BIT;
-
-               for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
-                  if (texImage->_BaseFormat == GL_ALPHA) {
-                     rgba[col][RCOMP] = 0.0;
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                  }
-                  else if (texImage->_BaseFormat == GL_LUMINANCE) {
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                     rgba[col][ACOMP] = 1.0;
-                  }
-                  else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                  }
-                  else if (texImage->_BaseFormat == GL_INTENSITY) {
-                     rgba[col][GCOMP] = 0.0;
-                     rgba[col][BCOMP] = 0.0;
-                     rgba[col][ACOMP] = 1.0;
-                  }
-               }
-               _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                          format, type, dest,
-                                          &ctx->Pack, transferOps);
-            } /* format */
-         } /* row */
-      } /* img */
+   if (format == GL_COLOR_INDEX) {
+      get_tex_color_index(ctx, dimensions, format, type, pixels, texImage);
+   }
+   else if (format == GL_DEPTH_COMPONENT) {
+      get_tex_depth(ctx, dimensions, format, type, pixels, texImage);
+   }
+   else if (format == GL_DEPTH_STENCIL_EXT) {
+      get_tex_depth_stencil(ctx, dimensions, format, type, pixels, texImage);
+   }
+   else if (format == GL_YCBCR_MESA) {
+      get_tex_ycbcr(ctx, dimensions, format, type, pixels, texImage);
+   }
+   else if (_mesa_get_format_color_encoding(texImage->TexFormat) == GL_SRGB) {
+      get_tex_srgb(ctx, dimensions, format, type, pixels, texImage);
+   }
+   else {
+      get_tex_rgba(ctx, dimensions, format, type, pixels, texImage);
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
