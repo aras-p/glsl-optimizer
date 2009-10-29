@@ -1066,6 +1066,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          if (ctx->Texture._EnabledCoordUnits == 0x1
              && !ctx->FragmentProgram._Current
              && !ctx->ATIFragmentShader._Enabled
+             && ctx->Texture._EnabledUnits == 0x1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
              && texObj2D->WrapT == GL_REPEAT
