@@ -66,19 +66,6 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-
-static GLuint U_FIXED(GLfloat value, GLuint frac_bits)
-{
-   value *= (1<<frac_bits);
-   return value < 0 ? 0 : value;
-}
-
-static GLint S_FIXED(GLfloat value, GLuint frac_bits)
-{
-   return value * (1<<frac_bits);
-}
-
-
 static dri_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {

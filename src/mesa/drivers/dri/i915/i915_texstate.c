@@ -27,6 +27,7 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
+#include "main/macros.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -200,10 +201,10 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
    state[I915_TEXREG_MS4] =
-     ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) | MS4_CUBE_FACE_ENA_MASK |
-       ((((intelObj->lastLevel - intelObj->firstLevel) * 4)) <<
-	MS4_MAX_LOD_SHIFT) | ((firstImage->Depth - 1) <<
-			      MS4_VOLUME_DEPTH_SHIFT));
+      ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) |
+       MS4_CUBE_FACE_ENA_MASK |
+       (U_FIXED(CLAMP(tObj->MaxLod, 0.0, 11.0), 2) << MS4_MAX_LOD_SHIFT) |
+       ((firstImage->Depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 
 
    {
@@ -333,6 +334,9 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
           (translate_wrap_mode(wr) << SS3_TCZ_ADDR_MODE_SHIFT));
 
       state[I915_TEXREG_SS3] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
+      state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(tObj->MinLod, 0.0, 11.0), 4) <<
+				 SS3_MIN_LOD_SHIFT);
+
    }
 
    /* convert border color from float to ubyte */

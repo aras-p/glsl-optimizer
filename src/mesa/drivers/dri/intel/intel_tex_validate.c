@@ -5,6 +5,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
+#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -14,7 +15,8 @@
  * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
  */
 static void
-intel_calculate_first_last_level(struct intel_texture_object *intelObj)
+intel_calculate_first_last_level(struct intel_context *intel,
+				 struct intel_texture_object *intelObj)
 {
    struct gl_texture_object *tObj = &intelObj->base;
    const struct gl_texture_image *const baseImage =
@@ -40,27 +42,27 @@ intel_calculate_first_last_level(struct intel_texture_object *intelObj)
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-#ifdef I915
-         firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-         firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-         firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
-         lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-         lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-         lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-         lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-         lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
-#else
-	 /* Currently not taking min/max lod into account here, those
-	  * values are programmed as sampler state elsewhere and we
-	  * upload the same mipmap levels regardless.  Not sure if
-	  * this makes sense as it means it isn't possible for the app
-	  * to use min/max lod to reduce texture memory pressure:
-	  */
-	 firstLevel = tObj->BaseLevel;
-	 lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
-			  tObj->MaxLevel);
-	 lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
-#endif
+	 if (!IS_9XX(intel->intelScreen->deviceID)) {
+	    firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
+	    firstLevel = MAX2(firstLevel, tObj->BaseLevel);
+	    firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
+	    lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
+	    lastLevel = MAX2(lastLevel, tObj->BaseLevel);
+	    lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
+	    lastLevel = MIN2(lastLevel, tObj->MaxLevel);
+	    lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
+	 } else {
+	    /* Min/max LOD are taken into account in sampler state.  We don't
+	     * want to re-layout textures just because clamping has been applied
+	     * since it means a bunch of blitting around and probably no memory
+	     * savings (since we have to keep the other levels around anyway).
+	     */
+	    firstLevel = tObj->BaseLevel;
+	    lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
+			     tObj->MaxLevel);
+	    /* need at least one level */
+	    lastLevel = MAX2(firstLevel, lastLevel);
+	 }
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -135,7 +137,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* What levels must the tree include at a minimum?
     */
-   intel_calculate_first_last_level(intelObj);
+   intel_calculate_first_last_level(intel, intelObj);
    firstImage =
       intel_texture_image(intelObj->base.Image[0][intelObj->firstLevel]);
 

@@ -353,6 +353,19 @@ extern char *__progname;
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 #define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
+static inline uint32_t
+U_FIXED(float value, uint32_t frac_bits)
+{
+   value *= (1 << frac_bits);
+   return value < 0 ? 0 : value;
+}
+
+static inline uint32_t
+S_FIXED(float value, uint32_t frac_bits)
+{
+   return value * (1 << frac_bits);
+}
+
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\
