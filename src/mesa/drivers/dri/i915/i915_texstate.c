@@ -82,7 +82,12 @@ translate_texture_format(gl_format mesa_format, GLuint internal_format,
    case MESA_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
    case MESA_FORMAT_S8_Z24:
-      return (MAPSURF_32BIT | MT_32BIT_xI824);
+      if (DepthMode == GL_ALPHA)
+	 return (MAPSURF_32BIT | MT_32BIT_x8A24);
+      else if (DepthMode == GL_INTENSITY)
+	 return (MAPSURF_32BIT | MT_32BIT_x8I24);
+      else
+	 return (MAPSURF_32BIT | MT_32BIT_x8L24);
    default:
       fprintf(stderr, "%s: bad image format %x\n", __FUNCTION__, mesa_format);
       abort();
