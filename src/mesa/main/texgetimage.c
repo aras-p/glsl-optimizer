@@ -488,6 +488,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 {
    const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -497,10 +498,9 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    texUnit = _mesa_get_current_tex_unit(ctx);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
-      struct gl_texture_image *texImage =
-         _mesa_select_tex_image(ctx, texObj, target, level);
       _mesa_debug(ctx, "glGetTexImage(tex %u) format = %s, w=%d, h=%d,"
                   " dstFmt=0x%x, dstType=0x%x\n",
                   texObj->Name,
@@ -511,10 +511,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    _mesa_lock_texture(ctx, texObj);
    {
-      struct gl_texture_image *texImage =
-         _mesa_select_tex_image(ctx, texObj, target, level);
-
-      /* typically, this will call _mesa_get_teximage() */
       ctx->Driver.GetTexImage(ctx, target, level, format, type, pixels,
                               texObj, texImage);
    }
