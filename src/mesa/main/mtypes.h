@@ -1120,13 +1120,15 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
  */
 struct gl_texture_image
 {
+   GLint InternalFormat;	/**< Internal format as given by the user */
    GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX,
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLint InternalFormat;	/**< Internal format as given by the user */
+   GLuint TexFormat;            /**< The actual format: MESA_FORMAT_x */
+
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
@@ -1143,8 +1145,6 @@ struct gl_texture_image
    GLfloat DepthScale;		/**< used for mipmap LOD computation */
    GLboolean IsClientData;	/**< Data owned by client? */
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
-
-   GLuint TexFormat; /**< XXX Really gl_format */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
 
@@ -2069,10 +2069,12 @@ struct gl_renderbuffer
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
+
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
    GLuint Format;         /**< The actual format: MESA_FORMAT_x */
+
    GLubyte NumSamples;
 
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
