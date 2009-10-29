@@ -133,7 +133,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->Format = MESA_FORMAT_Z32;
+      rb->Format = MESA_FORMAT_X8_Z24;
       rb->DataType = GL_UNSIGNED_INT;
       cpp = 4;
       break;
@@ -145,7 +145,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       break;
    default:
       _mesa_problem(ctx,
-                    "Unexpected format in intel_alloc_renderbuffer_storage");
+                    "Unexpected format in radeon_alloc_renderbuffer_storage");
       return GL_FALSE;
    }
 
