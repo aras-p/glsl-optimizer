@@ -540,7 +540,7 @@ void r300_emit_texture(struct r300_context* r300,
     CS_LOCALS(r300);
 
     /* to emulate 1D textures through 2D ones correctly */
-    if (tex->tex.height[0] == 1) {
+    if (tex->tex.target == PIPE_TEXTURE_1D) {
         filter0 &= ~R300_TX_WRAP_T_MASK;
         filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
     }

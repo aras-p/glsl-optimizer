@@ -80,7 +80,7 @@ r300_is_texture_referenced(struct pipe_context *pipe,
                            struct pipe_texture *texture,
                            unsigned face, unsigned level)
 {
-    struct pipe_buffer* buf;
+    struct pipe_buffer* buf = 0;
 
     r300_get_texture_buffer(texture, &buf, NULL);
 
