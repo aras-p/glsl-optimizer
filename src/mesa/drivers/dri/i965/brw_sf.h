@@ -57,7 +57,7 @@ struct brw_sf_prog_key {
 };
 
 struct brw_sf_point_tex {
-	GLboolean CoordReplace;	
+   GLboolean CoordReplace;	
 };
 
 struct brw_sf_compile {
