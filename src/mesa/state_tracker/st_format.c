@@ -218,6 +218,8 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_ARGB8888_REV:
    case MESA_FORMAT_ARGB8888:
       return PIPE_FORMAT_A8R8G8B8_UNORM;
+   case MESA_FORMAT_XRGB8888:
+      return PIPE_FORMAT_X8R8G8B8_UNORM;
    case MESA_FORMAT_ARGB1555:
       return PIPE_FORMAT_A1R5G5B5_UNORM;
    case MESA_FORMAT_ARGB4444:
@@ -287,6 +289,8 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
    switch (pipeFormat) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return MESA_FORMAT_ARGB8888;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
@@ -698,6 +702,8 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return MESA_FORMAT_ARGB8888;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
