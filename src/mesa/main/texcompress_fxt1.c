@@ -41,6 +41,9 @@
 #include "texstore.h"
 
 
+#if FEATURE_texture_fxt1
+
+
 static void
 fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
@@ -49,16 +52,6 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
 void
 fxt1_decode_1 (const void *texture, GLint stride,
                GLint i, GLint j, GLchan *rgba);
-
-
-/**
- * Called during context initialization.
- */
-void
-_mesa_init_texture_fxt1( GLcontext *ctx )
-{
-   (void) ctx;
-}
 
 
 /**
@@ -176,15 +169,6 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 
 
 void
-_mesa_fetch_texel_2d_rgba_fxt1( const struct gl_texture_image *texImage,
-                                GLint i, GLint j, GLint k, GLchan *texel )
-{
-   (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
-}
-
-
-void
 _mesa_fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -196,16 +180,6 @@ _mesa_fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
    texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
    texel[ACOMP] = CHAN_TO_FLOAT(rgba[ACOMP]);
-}
-
-
-void
-_mesa_fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
-                               GLint i, GLint j, GLint k, GLchan *texel )
-{
-   (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
-   texel[ACOMP] = 255;
 }
 
 
@@ -1673,3 +1647,6 @@ fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
 
    decode_1[mode](code, t, rgba);
 }
+
+
+#endif /* FEATURE_texture_fxt1 */

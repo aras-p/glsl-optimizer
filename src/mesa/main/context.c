@@ -706,9 +706,6 @@ init_attrib_groups(GLcontext *ctx)
 #if FEATURE_texture_s3tc
    _mesa_init_texture_s3tc( ctx );
 #endif
-#if FEATURE_texture_fxt1
-   _mesa_init_texture_fxt1( ctx );
-#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;

@@ -48,9 +48,6 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 extern void
 _mesa_init_texture_s3tc( GLcontext *ctx );
 
-extern void
-_mesa_init_texture_fxt1( GLcontext *ctx );
-
 
 #else /* _HAVE_FULL_GL */
 
