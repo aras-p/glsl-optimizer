@@ -218,14 +218,10 @@ _mesa_new_renderbuffer_16wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       _glthread_UNLOCK_MUTEX(rb8->Mutex);
 
       rb16->InternalFormat = rb8->InternalFormat;
-      rb16->_ActualFormat = rb8->_ActualFormat;
+      rb16->Format = rb8->Format; /* XXX is this right? */
       rb16->_BaseFormat = rb8->_BaseFormat;
       rb16->DataType = GL_UNSIGNED_SHORT;
       /* Note: passing through underlying bits/channel */
-      rb16->RedBits = rb8->RedBits;
-      rb16->GreenBits = rb8->GreenBits;
-      rb16->BlueBits = rb8->BlueBits;
-      rb16->AlphaBits = rb8->AlphaBits;
       rb16->Wrapped = rb8;
 
       rb16->AllocStorage = AllocStorage_wrapper;
@@ -385,14 +381,10 @@ _mesa_new_renderbuffer_32wrap8(GLcontext *ctx, struct gl_renderbuffer *rb8)
       _glthread_UNLOCK_MUTEX(rb8->Mutex);
 
       rb32->InternalFormat = rb8->InternalFormat;
-      rb32->_ActualFormat = rb8->_ActualFormat;
+      rb32->Format = rb8->Format;  /* XXX is this right? */
       rb32->_BaseFormat = rb8->_BaseFormat;
       rb32->DataType = GL_FLOAT;
       /* Note: passing through underlying bits/channel */
-      rb32->RedBits = rb8->RedBits;
-      rb32->GreenBits = rb8->GreenBits;
-      rb32->BlueBits = rb8->BlueBits;
-      rb32->AlphaBits = rb8->AlphaBits;
       rb32->Wrapped = rb8;
 
       rb32->AllocStorage = AllocStorage_wrapper;
@@ -552,14 +544,10 @@ _mesa_new_renderbuffer_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb16)
       _glthread_UNLOCK_MUTEX(rb16->Mutex);
 
       rb32->InternalFormat = rb16->InternalFormat;
-      rb32->_ActualFormat = rb16->_ActualFormat;
+      rb32->Format = rb16->Format;  /* XXX is this right? */
       rb32->_BaseFormat = rb16->_BaseFormat;
       rb32->DataType = GL_FLOAT;
       /* Note: passing through underlying bits/channel */
-      rb32->RedBits = rb16->RedBits;
-      rb32->GreenBits = rb16->GreenBits;
-      rb32->BlueBits = rb16->BlueBits;
-      rb32->AlphaBits = rb16->AlphaBits;
       rb32->Wrapped = rb16;
 
       rb32->AllocStorage = AllocStorage_wrapper;

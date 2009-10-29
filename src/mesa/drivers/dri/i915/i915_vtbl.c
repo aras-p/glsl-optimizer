@@ -32,7 +32,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
@@ -588,7 +587,7 @@ i915_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
 	 value |= DV_PF_8888;
 	 break;
@@ -603,7 +602,7 @@ i915_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->texformat);
       }
    }
 

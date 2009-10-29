@@ -44,7 +44,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "main/enums.h"
 #include "main/texstore.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/imports.h"
@@ -178,7 +177,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
-static const struct gl_texture_format *
+static gl_format
 r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type )
 {
@@ -282,13 +281,13 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
           type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    default:
       _mesa_problem( ctx, "unexpected format in %s", __FUNCTION__ );
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 

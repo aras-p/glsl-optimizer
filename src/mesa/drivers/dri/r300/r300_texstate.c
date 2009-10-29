@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
@@ -156,11 +155,11 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
+	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat) {
 	case MESA_FORMAT_Z16:
 		format = formats[0];
 		break;
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_Z24:
 		format = formats[1];
 		break;
 	case MESA_FORMAT_Z32:
@@ -208,14 +207,14 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override
-	    && VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
-		if (firstImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+	    && VALID_FORMAT(firstImage->TexFormat)) {
+		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->pp_txformat = tx_table[firstImage->TexFormat->MesaFormat].format;
+			t->pp_txformat = tx_table[firstImage->TexFormat].format;
 		}
 
-		t->pp_txfilter |= tx_table[firstImage->TexFormat->MesaFormat].filter;
+		t->pp_txfilter |= tx_table[firstImage->TexFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
@@ -449,9 +448,6 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
-	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
-							internalFormat,
-							type, format, 0);
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;

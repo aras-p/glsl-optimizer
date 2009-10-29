@@ -165,11 +165,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       intel_miptree_reference(&intelObj->mt, firstImage->mt);
    }
 
-   if (firstImage->base.IsCompressed) {
-      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
+   if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
+      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat);
       cpp = comp_byte;
    }
-   else cpp = firstImage->base.TexFormat->TexelBytes;
+   else
+      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
@@ -189,7 +190,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	intelObj->mt->height0 != firstImage->base.Height ||
 	intelObj->mt->depth0 != firstImage->base.Depth ||
 	intelObj->mt->cpp != cpp ||
-	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
+	intelObj->mt->compressed != _mesa_is_format_compressed(firstImage->base.TexFormat))) {
       intel_miptree_release(intel, &intelObj->mt);
    }
 

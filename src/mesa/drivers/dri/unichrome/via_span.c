@@ -23,6 +23,7 @@
  */
 
 #include "main/glheader.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
@@ -177,24 +178,22 @@ void viaInitSpanFuncs(GLcontext *ctx)
 void
 viaSetSpanFunctions(struct via_renderbuffer *vrb, const GLvisual *vis)
 {
-   if (vrb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         viaInitPointers_565(&vrb->Base);
-      }
-      else {
-         viaInitPointers_8888(&vrb->Base);
-      }
+   if (vrb->Base.Format == MESA_FORMAT_RGB565) {
+      viaInitPointers_565(&vrb->Base);
    }
-   else if (vrb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (vrb->Base.Format == MESA_FORMAT_ARGB8888) {
+      viaInitPointers_8888(&vrb->Base);
+   }
+   else if (vrb->Base.Format == MESA_FORMAT_Z16) {
       viaInitDepthPointers_z16(&vrb->Base);
    }
-   else if (vrb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (vrb->Base.Format == MESA_FORMAT_Z24_S8) {
       viaInitDepthPointers_z24_s8(&vrb->Base);
    }
-   else if (vrb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+   else if (vrb->Base.Format == MESA_FORMAT_Z32) {
       viaInitDepthPointers_z32(&vrb->Base);
    }
-   else if (vrb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (vrb->Base.Format == MESA_FORMAT_S8) {
       viaInitStencilPointers_z24_s8(&vrb->Base);
    }
 }

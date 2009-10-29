@@ -1115,91 +1115,6 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
 
 
 /**
- * This macro defines the (many) parameters to the texstore functions.
- * \param dims  either 1 or 2 or 3
- * \param baseInternalFormat  user-specified base internal format
- * \param dstFormat  destination Mesa texture format
- * \param dstAddr  destination image address
- * \param dstX/Y/Zoffset  destination x/y/z offset (ala TexSubImage), in texels
- * \param dstRowStride  destination image row stride, in bytes
- * \param dstImageOffsets  offset of each 2D slice within 3D texture, in texels
- * \param srcWidth/Height/Depth  source image size, in pixels
- * \param srcFormat  incoming image format
- * \param srcType  incoming image data type
- * \param srcAddr  source image address
- * \param srcPacking  source image packing parameters
- */
-#define TEXSTORE_PARAMS \
-	GLcontext *ctx, GLuint dims, \
-	GLenum baseInternalFormat, \
-	const struct gl_texture_format *dstFormat, \
-	GLvoid *dstAddr, \
-	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
-	GLint dstRowStride, const GLuint *dstImageOffsets, \
-	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
-	GLenum srcFormat, GLenum srcType, \
-	const GLvoid *srcAddr, \
-	const struct gl_pixelstore_attrib *srcPacking
-
-
-
-/**
- * Texture image storage function.
- */
-typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
-
-
-/**
- * Texture format record 
- */
-struct gl_texture_format
-{
-   GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
-
-   GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
-				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 *   GL_INTENSITY, GL_COLOR_INDEX or
-				 *   GL_DEPTH_COMPONENT.
-				 */
-   GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-
-   /**
-    * Bits per texel component.  These are just rough approximations
-    * for compressed texture formats.
-    */
-   /*@{*/
-   GLubyte RedBits;
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte LuminanceBits;
-   GLubyte IntensityBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
-   /*@}*/
-
-   GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
-
-   StoreTexImageFunc StoreImage;
-
-   /**
-    * \name Texel fetch function pointers
-    */
-   /*@{*/
-   FetchTexelFuncC FetchTexel1D;
-   FetchTexelFuncC FetchTexel2D;
-   FetchTexelFuncC FetchTexel3D;
-   FetchTexelFuncF FetchTexel1Df;
-   FetchTexelFuncF FetchTexel2Df;
-   FetchTexelFuncF FetchTexel3Df;
-   /*@}*/
-
-   StoreTexelFunc StoreTexel;
-};
-
-
-/**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
  */
@@ -1229,15 +1144,12 @@ struct gl_texture_image
    GLboolean IsClientData;	/**< Data owned by client? */
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
-   const struct gl_texture_format *TexFormat;
+   GLuint TexFormat; /**< XXX Really gl_format */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
 
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
-
-   GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
-   GLuint CompressedSize;	/**< GL_ARB_texture_compression */
 
    GLuint RowStride;		/**< Padded width in units of texels */
    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
@@ -2158,19 +2070,9 @@ struct gl_renderbuffer
    GLint RefCount;
    GLuint Width, Height;
    GLenum InternalFormat; /**< The user-specified format */
-   GLenum _ActualFormat;  /**< The driver-chosen format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum ColorEncoding; /**< GL_LINEAR or GL_SRGB */
-   GLenum ComponentType; /**< GL_FLOAT, GL_INT, GL_UNSIGNED_INT,
-                              GL_UNSIGNED_NORMALIZED or GL_INDEX */
-   GLubyte RedBits;      /**< Bits of red per pixel */
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits;
+   GLuint Format;         /**< The actual format: MESA_FORMAT_x */
    GLubyte NumSamples;
 
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */

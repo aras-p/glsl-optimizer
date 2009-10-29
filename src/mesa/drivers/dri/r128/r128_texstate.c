@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 
 #include "r128_context.h"
 #include "r128_state.h"
@@ -61,7 +60,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
    if ( R128_DEBUG & DEBUG_VERBOSE_API )
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *) tObj );
 
-   switch (baseImage->TexFormat->MesaFormat) {
+   switch (baseImage->TexFormat) {
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_ARGB8888_REV:
       t->textureFormat = R128_DATATYPE_ARGB8888;
@@ -123,7 +122,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
 
       totalSize += (tObj->Image[0][i]->Height *
 		    tObj->Image[0][i]->Width *
-		    tObj->Image[0][i]->TexFormat->TexelBytes);
+		    _mesa_get_format_bytes(tObj->Image[0][i]->TexFormat));
 
       /* Offsets must be 32-byte aligned for host data blits and tiling */
       totalSize = (totalSize + 31) & ~31;

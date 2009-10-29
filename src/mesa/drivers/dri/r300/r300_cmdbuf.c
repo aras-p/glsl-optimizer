@@ -279,16 +279,18 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	cbpitch = (rrb->pitch / rrb->cpp);
 	if (rrb->cpp == 4)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-	else switch (rrb->base._ActualFormat) {
-	case GL_RGB5:
+	else switch (rrb->base.Format) {
+        case MESA_FORMAT_RGB565:
 		cbpitch |= R300_COLOR_FORMAT_RGB565;
 		break;
-	case GL_RGBA4:
+        case MESA_FORMAT_ARGB4444:
 		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
 		break;
-	case GL_RGB5_A1:
+	case MESA_FORMAT_ARGB1555:
 		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
 		break;
+	default:
+		_mesa_problem(ctx, "unexpected format in emit_cb_offset()");
 	}
 
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)

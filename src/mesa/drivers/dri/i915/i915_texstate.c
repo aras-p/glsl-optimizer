@@ -27,7 +27,6 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -37,7 +36,7 @@
 
 
 static GLuint
-translate_texture_format(GLuint mesa_format, GLuint internal_format,
+translate_texture_format(gl_format mesa_format, GLuint internal_format,
 			 GLenum DepthMode)
 {
    switch (mesa_format) {
@@ -184,7 +183,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       i915->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
 	 intelObj->mt->cpp;
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat, 
+      format = translate_texture_format(firstImage->TexFormat,
 					firstImage->InternalFormat,
 					tObj->DepthMode);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
@@ -270,8 +269,8 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
       /* YUV conversion:
        */
-      if (firstImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR ||
-          firstImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR_REV)
+      if (firstImage->TexFormat == MESA_FORMAT_YCBCR ||
+          firstImage->TexFormat == MESA_FORMAT_YCBCR_REV)
          state[I915_TEXREG_SS2] |= SS2_COLORSPACE_CONVERSION;
 
       /* Shadow:

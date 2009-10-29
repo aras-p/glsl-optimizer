@@ -184,8 +184,8 @@ struct dd_function_table {
     * functions.  The driver should examine \p internalFormat and return a
     * pointer to an appropriate gl_texture_format.
     */
-   const struct gl_texture_format *(*ChooseTextureFormat)( GLcontext *ctx,
-                      GLint internalFormat, GLenum srcFormat, GLenum srcType );
+   GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
+                                     GLenum srcFormat, GLenum srcType );
 
    /**
     * Called by glTexImage1D().
@@ -475,13 +475,6 @@ struct dd_function_table {
                                  struct gl_texture_object *texObj,
                                  struct gl_texture_image *texImage);
 
-   /**
-    * Called to query number of bytes of storage needed to store the
-    * specified compressed texture.
-    */
-   GLuint (*CompressedTextureSize)( GLcontext *ctx, GLsizei width,
-                                    GLsizei height, GLsizei depth,
-                                    GLenum format );
    /*@}*/
 
    /**

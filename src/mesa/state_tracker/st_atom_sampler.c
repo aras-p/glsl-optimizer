@@ -209,7 +209,7 @@ update_samplers(struct st_context *st)
          }
 
          xlate_border_color(texobj->BorderColor,
-                            teximg ? teximg->TexFormat->BaseFormat : GL_RGBA,
+                            teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;

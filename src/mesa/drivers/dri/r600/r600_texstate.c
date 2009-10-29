@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
@@ -78,7 +77,7 @@ void r600UpdateTextureState(GLcontext * ctx)
 	}
 }
 
-static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_format)
+static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa_format)
 {
 	radeonTexObj *t = radeon_tex_obj(tObj);
 
@@ -480,14 +479,14 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		break;
 	case MESA_FORMAT_Z16:
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z32:
 		switch (mesa_format) {
 		case MESA_FORMAT_Z16:
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_16,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 			break;
-		case MESA_FORMAT_Z24_S8:
+		case MESA_FORMAT_S8_Z24:
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_24_8,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 			break;
@@ -591,7 +590,7 @@ void r600SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat);
+	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat);
 
 }
 
@@ -616,7 +615,7 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override) {
-		if (!r600GetTexFormat(texObj, firstImage->TexFormat->MesaFormat)) {
+		if (!r600GetTexFormat(texObj, firstImage->TexFormat)) {
 			radeon_error("unexpected texture format in %s\n",
 				      __FUNCTION__);
 			return;
@@ -916,9 +915,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
-	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
-							internalFormat,
-							type, format, 0);
+
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;

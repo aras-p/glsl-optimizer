@@ -65,13 +65,7 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
       assert( 0 );
    }
 
-   strb->Base._ActualFormat = info.base_format;
-   strb->Base.RedBits = info.red_bits;
-   strb->Base.GreenBits = info.green_bits;
-   strb->Base.BlueBits = info.blue_bits;
-   strb->Base.AlphaBits = info.alpha_bits;
-   strb->Base.DepthBits = info.depth_bits;
-   strb->Base.StencilBits = info.stencil_bits;
+   strb->Base.Format = info.mesa_format;
    strb->Base.DataType = st_format_datatype(pipeFormat);
 
    return info.size;
@@ -271,30 +265,24 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_A4R4G4B4_UNORM:
    case PIPE_FORMAT_R5G6B5_UNORM:
       strb->Base.InternalFormat = GL_RGBA;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT16;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_Z32_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
-      strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
    case PIPE_FORMAT_S8_UNORM:
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
-      strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    default:
       _mesa_problem(NULL,

@@ -157,15 +157,13 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
 void
 mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         mach64InitPointers_RGB565(&drb->Base);
-      }
-      else {
-         mach64InitPointers_ARGB8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      mach64InitPointers_RGB565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      mach64InitPointers_ARGB8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       mach64InitDepthPointers_z16(&drb->Base);
    }
 }

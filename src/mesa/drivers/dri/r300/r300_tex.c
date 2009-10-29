@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/image.h"
 #include "main/mipmap.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -196,6 +195,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 			     GLenum pname, const GLfloat * params)
 {
 	radeonTexObj* t = radeon_tex_obj(texObj);
+	GLenum texBaseFormat;
 
 	if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
 		fprintf(stderr, "%s( %s )\n", __FUNCTION__,
@@ -238,8 +238,10 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_DEPTH_TEXTURE_MODE:
 		if (!texObj->Image[0][texObj->BaseLevel])
 			return;
-		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
-		    == GL_DEPTH_COMPONENT) {
+		texBaseFormat = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
+
+		if (texBaseFormat == GL_DEPTH_COMPONENT ||
+			texBaseFormat == GL_DEPTH_STENCIL) {
 			r300SetDepthTexMode(texObj);
 			break;
 		} else {

@@ -1,7 +1,8 @@
 
 #include "context.h"
+#include "colormac.h"
 #include "fbobject.h"
-#include "texformat.h"
+#include "texfetch.h"
 #include "texrender.h"
 #include "renderbuffer.h"
 
@@ -46,7 +47,9 @@ texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    if (rb->DataType == CHAN_TYPE) {
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
-         trb->TexImage->FetchTexelc(trb->TexImage, x + i, y, z, rgbaOut + 4 * i);
+         GLfloat rgba[4];
+         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, rgba);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
    }
    else if (rb->DataType == GL_UNSIGNED_SHORT) {
@@ -100,8 +103,10 @@ texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    if (rb->DataType == CHAN_TYPE) {
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
-         trb->TexImage->FetchTexelc(trb->TexImage, x[i], y[i] + trb->Yoffset,
-				    z, rgbaOut + 4 * i);
+         GLfloat rgba[4];
+         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+				    z, rgba);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
    }
    else if (rb->DataType == GL_UNSIGNED_SHORT) {
@@ -462,6 +467,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
+   gl_format texFormat;
 
    (void) ctx;
    ASSERT(trb);
@@ -469,7 +475,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->TexImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    ASSERT(trb->TexImage);
 
-   trb->Store = trb->TexImage->TexFormat->StoreTexel;
+   trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat);
    if (!trb->Store) {
       /* we'll never draw into some textures (compressed formats) */
       trb->Store = store_nop;
@@ -484,41 +490,30 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Zoffset = att->Zoffset;
    }
 
+   texFormat = trb->TexImage->TexFormat;
+
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat;
    /* XXX may need more special cases here */
-   if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z24_S8) {
-      trb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+   if (trb->TexImage->TexFormat == MESA_FORMAT_Z24_S8) {
+      trb->Base.Format = MESA_FORMAT_Z24_S8;
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
    }
-   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z16) {
-      trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
+   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
+      trb->Base.Format = MESA_FORMAT_Z16;
       trb->Base.DataType = GL_UNSIGNED_SHORT;
    }
-   else if (trb->TexImage->TexFormat->MesaFormat == MESA_FORMAT_Z32) {
-      trb->Base._ActualFormat = GL_DEPTH_COMPONENT;
+   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z32) {
+      trb->Base.Format = MESA_FORMAT_Z32;
       trb->Base.DataType = GL_UNSIGNED_INT;
    }
    else {
-      trb->Base._ActualFormat = trb->TexImage->InternalFormat;
+      trb->Base.Format = trb->TexImage->TexFormat;
       trb->Base.DataType = CHAN_TYPE;
    }
-   trb->Base._BaseFormat = trb->TexImage->TexFormat->BaseFormat;
-#if 0
-   /* fix/avoid this assertion someday */
-   ASSERT(trb->Base._BaseFormat == GL_RGB ||
-          trb->Base._BaseFormat == GL_RGBA ||
-          trb->Base._BaseFormat == GL_DEPTH_COMPONENT);
-#endif
    trb->Base.Data = trb->TexImage->Data;
-
-   trb->Base.RedBits = trb->TexImage->TexFormat->RedBits;
-   trb->Base.GreenBits = trb->TexImage->TexFormat->GreenBits;
-   trb->Base.BlueBits = trb->TexImage->TexFormat->BlueBits;
-   trb->Base.AlphaBits = trb->TexImage->TexFormat->AlphaBits;
-   trb->Base.DepthBits = trb->TexImage->TexFormat->DepthBits;
-   trb->Base.StencilBits = trb->TexImage->TexFormat->StencilBits;
+   trb->Base._BaseFormat = _mesa_base_fbo_format(ctx, trb->Base.InternalFormat);
 }
 
 

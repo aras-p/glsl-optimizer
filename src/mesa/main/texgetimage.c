@@ -33,9 +33,9 @@
 #include "bufferobj.h"
 #include "enums.h"
 #include "context.h"
+#include "formats.h"
 #include "image.h"
 #include "texcompress.h"
-#include "texformat.h"
 #include "texgetimage.h"
 #include "teximage.h"
 #include "texstate.h"
@@ -50,7 +50,7 @@
 static GLboolean
 is_srgb_teximage(const struct gl_texture_image *texImage)
 {
-   switch (texImage->TexFormat->MesaFormat) {
+   switch (texImage->TexFormat) {
    case MESA_FORMAT_SRGB8:
    case MESA_FORMAT_SRGBA8:
    case MESA_FORMAT_SARGB8:
@@ -162,15 +162,16 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
             if (format == GL_COLOR_INDEX) {
                GLuint indexRow[MAX_WIDTH];
                GLint col;
+               GLuint indexBits = _mesa_get_format_bits(texImage->TexFormat, GL_TEXTURE_INDEX_SIZE_EXT);
                /* Can't use FetchTexel here because that returns RGBA */
-               if (texImage->TexFormat->IndexBits == 8) {
+               if (indexBits == 8) {
                   const GLubyte *src = (const GLubyte *) texImage->Data;
                   src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
                      indexRow[col] = src[col];
                   }
                }
-               else if (texImage->TexFormat->IndexBits == 16) {
+               else if (indexBits == 16) {
                   const GLushort *src = (const GLushort *) texImage->Data;
                   src += width * (img * texImage->Height + row);
                   for (col = 0; col < width; col++) {
@@ -211,9 +212,9 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                       (const GLushort *) texImage->Data + row * rowstride,
                       width * sizeof(GLushort));
                /* check for byte swapping */
-               if ((texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR
+               if ((texImage->TexFormat == MESA_FORMAT_YCBCR
                     && type == GL_UNSIGNED_SHORT_8_8_REV_MESA) ||
-                   (texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR_REV
+                   (texImage->TexFormat == MESA_FORMAT_YCBCR_REV
                     && type == GL_UNSIGNED_SHORT_8_8_MESA)) {
                   if (!ctx->Pack.SwapBytes)
                      _mesa_swap2((GLushort *) dest, width);
@@ -259,6 +260,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLfloat rgba[MAX_WIDTH][4];
                GLint col;
                GLbitfield transferOps = 0x0;
+               GLenum dataType =
+                  _mesa_get_format_datatype(texImage->TexFormat);
 
                /* clamp does not apply to GetTexImage (final conversion)?
                 * Looks like we need clamp though when going from format
@@ -267,8 +270,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
                   transferOps |= IMAGE_CLAMP_BIT;
                else if (!type_with_negative_values(type) &&
-                        (texImage->TexFormat->DataType == GL_FLOAT ||
-                         texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
+                        (dataType == GL_FLOAT ||
+                         dataType == GL_SIGNED_NORMALIZED))
                   transferOps |= IMAGE_CLAMP_BIT;
 
                for (col = 0; col < width; col++) {
@@ -319,7 +322,10 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage)
 {
-   GLuint size;
+   const GLuint size = _mesa_format_image_size(texImage->TexFormat,
+                                               texImage->Width,
+                                               texImage->Height,
+                                               texImage->Depth);
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
@@ -338,11 +344,6 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       /* not an error */
       return;
    }
-
-   /* don't use texImage->CompressedSize since that may be padded out */
-   size = _mesa_compressed_texture_size(ctx, texImage->Width, texImage->Height,
-                                        texImage->Depth,
-                                        texImage->TexFormat->MesaFormat);
 
    /* just memcpy, no pixelstore or pixel transfer */
    _mesa_memcpy(img, texImage->Data, size);
@@ -367,6 +368,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
+   GLenum baseFormat;
 
    if (maxLevels == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target=0x%x)", target);
@@ -429,40 +431,42 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       /* out of memory */
       return GL_TRUE;
    }
+
+   baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
       
    /* Make sure the requested image format is compatible with the
     * texture's format.  Note that a color index texture can be converted
     * to RGBA so that combo is allowed.
     */
    if (_mesa_is_color_format(format)
-       && !_mesa_is_color_format(texImage->TexFormat->BaseFormat)
-       && !_mesa_is_index_format(texImage->TexFormat->BaseFormat)) {
+       && !_mesa_is_color_format(baseFormat)
+       && !_mesa_is_index_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_index_format(format)
-            && !_mesa_is_index_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_index_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_depth_format(format)
-            && !_mesa_is_depth_format(texImage->TexFormat->BaseFormat)
-            && !_mesa_is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_depth_format(baseFormat)
+            && !_mesa_is_depthstencil_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_ycbcr_format(format)
-            && !_mesa_is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_ycbcr_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_depthstencil_format(format)
-            && !_mesa_is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_depthstencil_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
    else if (_mesa_is_dudv_format(format)
-            && !_mesa_is_dudv_format(texImage->TexFormat->BaseFormat)) {
+            && !_mesa_is_dudv_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
@@ -519,10 +523,10 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
       struct gl_texture_image *texImage =
          _mesa_select_tex_image(ctx, texObj, target, level);
-      _mesa_debug(ctx, "glGetTexImage(tex %u) format = %d, w=%d, h=%d,"
+      _mesa_debug(ctx, "glGetTexImage(tex %u) format = %s, w=%d, h=%d,"
                   " dstFmt=0x%x, dstType=0x%x\n",
                   texObj->Name,
-                  texImage->TexFormat->MesaFormat,
+                  _mesa_get_format_name(texImage->TexFormat),
                   texImage->Width, texImage->Height,
                   format, type);
    }
@@ -590,13 +594,15 @@ getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   if (!texImage->IsCompressed) {
+   if (!_mesa_is_format_compressed(texImage->TexFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetCompressedTexImageARB(texture is not compressed)");
       return GL_TRUE;
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
+      GLuint compressedSize;
+
       /* make sure PBO is not mapped */
       if (_mesa_bufferobj_mapped(ctx->Pack.BufferObj)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -604,8 +610,13 @@ getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
          return GL_TRUE;
       }
 
+      compressedSize = _mesa_format_image_size(texImage->TexFormat,
+                                               texImage->Width,
+                                               texImage->Height,
+                                               texImage->Depth);
+
       /* do bounds checking on PBO write */
-      if ((const GLubyte *) img + texImage->CompressedSize >
+      if ((const GLubyte *) img + compressedSize >
           (const GLubyte *) ctx->Pack.BufferObj->Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetCompressedTexImage(out of bounds PBO write)");
@@ -636,9 +647,9 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
       struct gl_texture_image *texImage =
          _mesa_select_tex_image(ctx, texObj, target, level);
       _mesa_debug(ctx,
-                  "glGetCompressedTexImage(tex %u) format = %d, w=%d, h=%d\n",
+                  "glGetCompressedTexImage(tex %u) format = %s, w=%d, h=%d\n",
                   texObj->Name,
-                  texImage->TexFormat->MesaFormat,
+                  _mesa_get_format_name(texImage->TexFormat),
                   texImage->Width, texImage->Height);
    }
 

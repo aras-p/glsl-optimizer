@@ -29,11 +29,12 @@
 #ifndef ST_FORMAT_H
 #define ST_FORMAT_H
 
+#include "main/formats.h"
 
 struct pipe_format_info
 {
    enum pipe_format format;
-   GLenum base_format;
+   gl_format mesa_format;
    GLenum datatype;
    GLubyte red_bits;
    GLubyte green_bits;
@@ -60,7 +61,10 @@ st_format_datatype(enum pipe_format format);
 
 
 extern enum pipe_format
-st_mesa_format_to_pipe_format(GLuint mesaFormat);
+st_mesa_format_to_pipe_format(gl_format mesaFormat);
+
+extern gl_format
+st_pipe_format_to_mesa_format(enum pipe_format pipeFormat);
 
 
 extern enum pipe_format
@@ -72,7 +76,7 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
                               GLenum internalFormat);
 
 
-extern const struct gl_texture_format *
+extern gl_format
 st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
                        GLenum format, GLenum type);
 

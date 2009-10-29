@@ -334,22 +334,6 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #endif
 
-#ifndef RADEON_R300
-#ifndef RADEON_R600
-static uint32_t
-z24s8_to_s8z24(uint32_t val)
-{
-   return (val << 24) | (val >> 8);
-}
-
-static uint32_t
-s8z24_to_z24s8(uint32_t val)
-{
-   return (val >> 24) | (val << 8);
-}
-#endif
-#endif
-
 /*
  * Note that all information needed to access pixels in a renderbuffer
  * should be obtained through the gl_renderbuffer parameter, not per-context
@@ -619,27 +603,25 @@ do {									\
    GLuint *_ptr = (GLuint*)r600_ptr_depth( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    tmp &= 0xff000000;							\
-   tmp |= (((d) >> 8) & 0x00ffffff);					\
+   tmp |= ((d) & 0x00ffffff);					\
    *_ptr = tmp;					\
    _ptr = (GLuint*)r600_ptr_stencil(rrb, _x + x_off, _y + y_off);		\
    tmp = *_ptr;				\
    tmp &= 0xffffff00;							\
-   tmp |= (d) & 0xff;							\
+   tmp |= ((d) >> 24) & 0xff;						\
    *_ptr = tmp;					\
 } while (0)
 #elif defined(RADEON_R200)
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = z24s8_to_s8z24(d);					\
-   *_ptr = tmp;								\
+   *_ptr = d;								\
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
-   GLuint tmp = z24s8_to_s8z24(d);					\
-   *_ptr = tmp;					\
+   *_ptr = d;					\
 } while (0)
 #endif
 
@@ -651,21 +633,21 @@ do {									\
 #elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = ((*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off))) << 8) & 0xffffff00; \
-    d |= (*(GLuint*)(r600_ptr_stencil(rrb, _x + x_off, _y + y_off))) & 0x000000ff;	\
+    d = (*(GLuint*)(r600_ptr_depth(rrb, _x + x_off, _y + y_off))) & 0x00ffffff; \
+    d |= ((*(GLuint*)(r600_ptr_stencil(rrb, _x + x_off, _y + y_off))) << 24) & 0xff000000; \
   }while(0)
 #elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = s8z24_to_z24s8(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off)));	\
+    d = *(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off));	\
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	do {					\
-    d = s8z24_to_z24s8(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off ))); \
+    d = *(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off )); \
   } while (0)
 #endif
 
-#define TAG(x) radeon##x##_z24_s8
+#define TAG(x) radeon##x##_s8_z24
 #include "depthtmp.h"
 
 /* ================================================================
@@ -742,7 +724,7 @@ do {									\
 } while (0)
 #endif
 
-#define TAG(x) radeon##x##_z24_s8
+#define TAG(x) radeon##x##_s8_z24
 #include "stenciltmp.h"
 
 
@@ -864,25 +846,25 @@ void radeonInitSpanFuncs(GLcontext * ctx)
  */
 static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
-	if (rrb->base._ActualFormat == GL_RGB5) {
+	if (rrb->base.Format == MESA_FORMAT_RGB565) {
 		radeonInitPointers_RGB565(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGB8) {
+	} else if (rrb->base.Format == MESA_FORMAT_XRGB8888) {
 		radeonInitPointers_xRGB8888(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGBA8) {
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB8888) {
 		radeonInitPointers_ARGB8888(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGBA4) {
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB4444) {
 		radeonInitPointers_ARGB4444(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_RGB5_A1) {
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB1555) {
 		radeonInitPointers_ARGB1555(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
+	} else if (rrb->base.Format == MESA_FORMAT_Z16) {
 		radeonInitDepthPointers_z16(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
+	} else if (rrb->base.Format == MESA_FORMAT_X8_Z24) {
 		radeonInitDepthPointers_z24(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
-		radeonInitDepthPointers_z24_s8(&rrb->base);
-	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
-		radeonInitStencilPointers_z24_s8(&rrb->base);
+	} else if (rrb->base.Format == MESA_FORMAT_S8_Z24) {
+		radeonInitDepthPointers_s8_z24(&rrb->base);
+	} else if (rrb->base.Format == MESA_FORMAT_S8) {
+		radeonInitStencilPointers_s8_z24(&rrb->base);
 	} else {
-		fprintf(stderr, "radeonSetSpanFunctions: bad actual format: 0x%04X\n", rrb->base._ActualFormat);
+		fprintf(stderr, "radeonSetSpanFunctions: bad format: 0x%04X\n", rrb->base.Format);
 	}
 }

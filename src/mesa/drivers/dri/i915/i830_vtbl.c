@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include "glapi/glapi.h"
-#include "main/texformat.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -646,7 +645,7 @@ i830_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
 
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
 	 value |= DV_PF_8888;
 	 break;
@@ -661,7 +660,7 @@ i830_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->texformat);
       }
    }
 

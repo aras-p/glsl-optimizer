@@ -29,7 +29,6 @@
 #include "main/mtypes.h"
 #include "main/context.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 #include "main/colormac.h"
 
 #include "intel_blit.h"
@@ -497,7 +496,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		  CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
 		  CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
 
-		  switch (irb->texformat->MesaFormat) {
+		  switch (irb->texformat) {
 		  case MESA_FORMAT_ARGB8888:
 		     clearVal = intel->ClearColor8888;
 		     break;
@@ -514,7 +513,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		     break;
 		  default:
 		     _mesa_problem(ctx, "Unexpected renderbuffer format: %d\n",
-				   irb->texformat->MesaFormat);
+				   irb->texformat);
 		     clearVal = 0;
 		  }
 	       }

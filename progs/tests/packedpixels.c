@@ -191,6 +191,16 @@ MakeTexture(const struct pixel_format *format, GLenum intFormat, GLboolean swap)
                    format->format, format->type, texBuffer);
    }
 
+   if (0) {
+      GLint r, g, b, a;
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
+      printf("sizes: %d %d %d %d\n", r, g, b, a);
+      glGetError();
+   }                              
+
    if (glGetError()) {
       printf("GL Error for %s\n", format->name);
       memset(texBuffer, 255, 1000);

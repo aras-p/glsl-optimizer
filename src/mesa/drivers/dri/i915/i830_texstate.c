@@ -27,7 +27,6 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -173,7 +172,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
 	 intelObj->mt->cpp;
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat,
+      format = translate_texture_format(firstImage->TexFormat,
 					firstImage->InternalFormat);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
    }

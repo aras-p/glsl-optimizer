@@ -28,6 +28,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "enums.h"
+#include "formats.h"
 #include "hash.h"
 #include "imports.h"
 #include "debug.h"
@@ -36,7 +37,6 @@
 #include "readpix.h"
 #include "texgetimage.h"
 #include "texobj.h"
-#include "texformat.h"
 
 
 /**
@@ -388,10 +388,11 @@ dump_texture(struct gl_texture_object *texObj, GLuint writeImages)
       for (j = 0; j < numFaces; j++) {
          struct gl_texture_image *texImg = texObj->Image[j][i];
          if (texImg) {
-            _mesa_printf("  Face %u level %u: %d x %d x %d, format %u at %p\n",
+            _mesa_printf("  Face %u level %u: %d x %d x %d, format %s at %p\n",
                          j, i,
                          texImg->Width, texImg->Height, texImg->Depth,
-                         texImg->TexFormat->MesaFormat, texImg->Data);
+                         _mesa_get_format_name(texImg->TexFormat),
+                         texImg->Data);
             if (writeImages == WRITE_ALL ||
                 (writeImages == WRITE_ONE && !written)) {
                write_texture_image(texObj, j, i);
