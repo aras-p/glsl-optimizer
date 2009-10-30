@@ -31,6 +31,16 @@
  */
 
 #define VALUE_TYPE INTEL_VALUE_TYPE
+#define WRITE_DEPTH(_x, _y, d) \
+   (*(INTEL_VALUE_TYPE *)(irb->region->buffer->virtual +	\
+			  NO_TILE(_x, _y)) = d)
+#define READ_DEPTH(d, _x, _y) \
+   d = *(INTEL_VALUE_TYPE *)(irb->region->buffer->virtual +	\
+			     NO_TILE(_x, _y))
+#define TAG(x) INTEL_TAG(intel_gttmap_##x)
+#include "depthtmp.h"
+
+#define VALUE_TYPE INTEL_VALUE_TYPE
 #define WRITE_DEPTH(_x, _y, d) INTEL_WRITE_DEPTH(NO_TILE(_x, _y), d)
 #define READ_DEPTH(d, _x, _y) d = INTEL_READ_DEPTH(NO_TILE(_x, _y))
 #define TAG(x) INTEL_TAG(intel##x)
