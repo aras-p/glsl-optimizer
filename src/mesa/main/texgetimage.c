@@ -713,7 +713,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (_mesa_is_bufferobj(ctx->Pack.BufferObj) && !pixels) {
+   if (!_mesa_is_bufferobj(ctx->Pack.BufferObj) && !pixels) {
       /* not an error, do nothing */
       return;
    }
