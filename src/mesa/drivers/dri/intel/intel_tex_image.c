@@ -6,6 +6,7 @@
 #include "main/bufferobj.h"
 #include "main/convolve.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
@@ -741,7 +742,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   int level = 0, type, format, internalFormat;
+   int level = 0, internalFormat;
 
    texUnit = &intel->ctx.Texture.Unit[intel->ctx.Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(&intel->ctx, texUnit, target);
@@ -759,8 +760,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (rb->region == NULL)
       return;
 
-   type = GL_BGRA;
-   format = GL_UNSIGNED_BYTE;
    if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
       internalFormat = GL_RGB;
    else
@@ -791,6 +790,10 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
+   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+      texImage->TexFormat = MESA_FORMAT_XRGB8888;
+   else
+      texImage->TexFormat = MESA_FORMAT_ARGB8888;
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
