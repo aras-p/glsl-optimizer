@@ -115,7 +115,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat);
+intel_create_renderbuffer(gl_format format);
 
 
 extern void

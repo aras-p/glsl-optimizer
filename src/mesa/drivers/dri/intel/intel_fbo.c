@@ -292,7 +292,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
  * not a user-created renderbuffer.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat)
+intel_create_renderbuffer(gl_format format)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -308,48 +308,30 @@ intel_create_renderbuffer(GLenum intFormat)
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
-   switch (intFormat) {
-   case GL_RGB5:
-      irb->Base.Format = MESA_FORMAT_RGB565;
+   switch (format) {
+   case MESA_FORMAT_RGB565:
       irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_RGB565;
       break;
-   case GL_RGB8:
-      irb->Base.Format = MESA_FORMAT_ARGB8888; /* XXX: NEED XRGB8888 */
+   case MESA_FORMAT_XRGB8888:
       irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: NEED XRGB8888 */
       break;
-   case GL_RGBA8:
-      irb->Base.Format = MESA_FORMAT_ARGB8888;
+   case MESA_FORMAT_ARGB8888:
       irb->Base._BaseFormat = GL_RGBA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888;
       break;
-   case GL_STENCIL_INDEX8_EXT:
-      irb->Base.Format = MESA_FORMAT_S8_Z24;
-      irb->Base._BaseFormat = GL_STENCIL_INDEX;
-      irb->Base.DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_S8_Z24;
-      break;
-   case GL_DEPTH_COMPONENT16:
-      irb->Base.Format = MESA_FORMAT_Z16;
+   case MESA_FORMAT_Z16:
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DataType = GL_UNSIGNED_SHORT;
-      irb->texformat = MESA_FORMAT_Z16;
       break;
-   case GL_DEPTH_COMPONENT24:
-      irb->Base.Format = MESA_FORMAT_S8_Z24;
+   case MESA_FORMAT_X8_Z24:
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DataType = GL_UNSIGNED_INT;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
-   case GL_DEPTH24_STENCIL8_EXT:
-      irb->Base.Format = MESA_FORMAT_S8_Z24;
+   case MESA_FORMAT_S8_Z24:
       irb->Base._BaseFormat = GL_DEPTH_STENCIL;
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    default:
       _mesa_problem(NULL,
@@ -358,7 +340,10 @@ intel_create_renderbuffer(GLenum intFormat)
       return NULL;
    }
 
-   irb->Base.InternalFormat = intFormat;
+   assert(irb->Base._BaseFormat == _mesa_get_format_base_format(format));
+   irb->Base.Format = format;
+   irb->Base.InternalFormat = irb->Base._BaseFormat;
+   irb->texformat = format;
 
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
@@ -441,6 +426,10 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_XRGB8888) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to XGBA8 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
@@ -644,6 +633,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
       switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
+      case MESA_FORMAT_XRGB8888:
       case MESA_FORMAT_RGB565:
       case MESA_FORMAT_ARGB1555:
       case MESA_FORMAT_ARGB4444:

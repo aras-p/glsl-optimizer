@@ -169,7 +169,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
     * buffer.
     */
    depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   irb = intel_create_renderbuffer(GL_RGBA8);
+   irb = intel_create_renderbuffer(MESA_FORMAT_ARGB8888);
    rb = &irb->Base;
    irb->Base.Width = depth_irb->Base.Width;
    irb->Base.Height = depth_irb->Base.Height;

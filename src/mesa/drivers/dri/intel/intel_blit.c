@@ -498,6 +498,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 
 		  switch (irb->texformat) {
 		  case MESA_FORMAT_ARGB8888:
+		  case MESA_FORMAT_XRGB8888:
 		     clearVal = intel->ClearColor8888;
 		     break;
 		  case MESA_FORMAT_RGB565:

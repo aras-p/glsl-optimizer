@@ -96,7 +96,11 @@ static GLuint translate_tex_format( gl_format mesa_format,
       else
 	 return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
+   case MESA_FORMAT_XRGB8888:
+      return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+
    case MESA_FORMAT_RGBA8888_REV:
+      _mesa_problem(NULL, "unexpected format in i965:translate_tex_format()");
       if (internal_format == GL_RGB)
 	 return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
       else
@@ -530,6 +534,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 break;
+      case MESA_FORMAT_XRGB8888:
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
 	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;

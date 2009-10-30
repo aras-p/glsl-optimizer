@@ -651,8 +651,23 @@ intel_set_span_functions(struct intel_context *intel,
 	 break;
       }
       break;
+   case MESA_FORMAT_XRGB8888:
+      switch (tiling) {
+      case I915_TILING_NONE:
+      default:
+         intelInitPointers_xRGB8888(rb);
+         break;
+      case I915_TILING_X:
+         intel_XTile_InitPointers_xRGB8888(rb);
+         break;
+      case I915_TILING_Y:
+         intel_YTile_InitPointers_xRGB8888(rb);
+         break;
+      }
+      break;
    case MESA_FORMAT_ARGB8888:
       if (0 /*rb->AlphaBits == 0*/) { /* XXX: Need xRGB8888 Mesa format */
+         /* XXX remove this code someday when we enable XRGB surfaces */
 	 /* 8888 RGBx */
 	 switch (tiling) {
 	 case I915_TILING_NONE:

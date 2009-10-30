@@ -349,7 +349,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
    else {
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
-      GLenum rgbFormat;
+      gl_format rgbFormat;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -359,11 +359,11 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
       if (mesaVis->redBits == 5)
-	 rgbFormat = GL_RGB5;
+	 rgbFormat = MESA_FORMAT_RGB565;
       else if (mesaVis->alphaBits == 0)
-	 rgbFormat = GL_RGB8;
+	 rgbFormat = MESA_FORMAT_ARGB8888; /* XXX change to XRGB someday */
       else
-	 rgbFormat = GL_RGBA8;
+	 rgbFormat = MESA_FORMAT_ARGB8888;
 
       /* setup the hardware-based renderbuffers */
       intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
@@ -382,7 +382,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 if (mesaVis->stencilBits == 8) {
 	    /* combined depth/stencil buffer */
 	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT);
+	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
 	    /* note: bind RB to two attachment points */
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthStencilRb->Base);
@@ -390,7 +390,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				   &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24);
+	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthRb->Base);
 	 }
@@ -398,7 +398,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-	    = intel_create_renderbuffer(GL_DEPTH_COMPONENT16);
+	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
