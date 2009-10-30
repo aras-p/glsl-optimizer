@@ -65,8 +65,6 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct lp_fragment_shader *lpfs = llvmpipe->fs;
-      const enum interp_mode colorInterp
-         = llvmpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
       struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
       const uint num = draw_num_vs_outputs(llvmpipe->draw);
       uint i;
@@ -107,33 +105,21 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
 
          switch (lpfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
-            src = draw_find_vs_output(llvmpipe->draw,
-                                      TGSI_SEMANTIC_POSITION, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
+            interp = INTERP_POS;
             break;
 
          case TGSI_SEMANTIC_COLOR:
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_COLOR, 
-                                 lpfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+            if (llvmpipe->rasterizer->flatshade) {
+               interp = INTERP_CONSTANT;
+            }
             break;
-
-         case TGSI_SEMANTIC_FOG:
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         case TGSI_SEMANTIC_GENERIC:
-         case TGSI_SEMANTIC_FACE:
-            /* this includes texcoords and varying vars */
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_GENERIC,
-                                      lpfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         default:
-            assert(0);
          }
+
+         /* this includes texcoords and varying vars */
+         src = draw_find_vs_output(llvmpipe->draw,
+                                   lpfs->info.input_semantic_name[i],
+                                   lpfs->info.input_semantic_index[i]);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
       llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,
