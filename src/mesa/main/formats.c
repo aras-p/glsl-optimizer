@@ -387,11 +387,11 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SL8,
       "MESA_FORMAT_SL8",
-      GL_LUMINANCE_ALPHA,
+      GL_LUMINANCE,
       GL_UNSIGNED_NORMALIZED,    
-      0, 0, 0, 8,
+      0, 0, 0, 0,
       8, 0, 0, 0, 0,
-      1, 1, 2
+      1, 1, 1
    },
    {
       MESA_FORMAT_SLA8,
