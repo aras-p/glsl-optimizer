@@ -285,21 +285,22 @@ void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
     struct r300_texture* tex;
-    unsigned pixpitch;
+    struct pipe_surface* surf;
     int i;
     CS_LOCALS(r300);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
-        tex = (struct r300_texture*)fb->cbufs[i]->texture;
+        surf = fb->cbufs[i];
+        tex = (struct r300_texture*)surf->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        pixpitch = r300_texture_get_stride(tex, 0) / tex->tex.block.size;
 
+        /* XXX I still need to figure out how to set the mipmap level here */
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(tex->buffer, pixpitch |
+        OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level] |
                      r300_translate_colorformat(tex->tex.format), 0,
                      RADEON_GEM_DOMAIN_VRAM, 0);
 
@@ -308,9 +309,9 @@ void r300_emit_fb_state(struct r300_context* r300,
     }
 
     if (fb->zsbuf) {
-        tex = (struct r300_texture*)fb->zsbuf->texture;
+        surf = fb->zsbuf;
+        tex = (struct r300_texture*)surf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        pixpitch = r300_texture_get_stride(tex, 0) / tex->tex.block.size;
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -318,7 +319,8 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_REG(R300_ZB_FORMAT, r300_translate_zsformat(tex->tex.format));
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(tex->buffer, pixpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level], 0,
+                     RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,

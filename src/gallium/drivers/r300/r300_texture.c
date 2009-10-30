@@ -33,21 +33,15 @@ static void r300_setup_texture_state(struct r300_texture* tex, boolean is_r500)
 {
     struct r300_texture_state* state = &tex->state;
     struct pipe_texture *pt = &tex->tex;
-    unsigned stride;
 
     state->format0 = R300_TX_WIDTH((pt->width[0] - 1) & 0x7ff) |
                      R300_TX_HEIGHT((pt->height[0] - 1) & 0x7ff);
 
-    if (!util_is_power_of_two(pt->width[0]) ||
-        !util_is_power_of_two(pt->height[0])) {
-
+    if (tex->is_npot) {
         /* rectangles love this */
         state->format0 |= R300_TX_PITCH_EN;
-
-        stride = r300_texture_get_stride(tex, 0) / pt->block.size;
-        state->format2 = (stride - 1) & 0x1fff;
-    }
-    else {
+        state->format2 = (tex->pitch[0] - 1) & 0x1fff;
+    } else {
         /* power of two textures (3D, mipmaps, and no pitch) */
         state->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
                           R300_TX_NUM_LEVELS(pt->last_level & 0xf);
@@ -143,11 +137,23 @@ static void r300_setup_miptree(struct r300_texture* tex)
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
 
+        if (tex->is_npot) {
+            tex->pitch[i] = stride / base->block.size;
+        } else {
+            tex->pitch[i] = base->width[i];
+        }
+
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",
                 i, base->width[i], base->height[i], base->depth[i],
                 stride);
     }
+}
+
+static void r300_setup_flags(struct r300_texture* tex)
+{
+    tex->is_npot = !util_is_power_of_two(tex->tex.width[0]) ||
+                   !util_is_power_of_two(tex->tex.height[0]);
 }
 
 /* Create a new texture. */
@@ -165,8 +171,8 @@ static struct pipe_texture*
     pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
+    r300_setup_flags(tex);
     r300_setup_miptree(tex);
-
     r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);
 
     tex->buffer = screen->buffer_create(screen, 1024,
@@ -234,6 +240,13 @@ static struct pipe_texture*
 {
     struct r300_texture* tex;
 
+    /* Support only 2D textures without mipmaps */
+    if (base->target != PIPE_TEXTURE_2D ||
+        base->depth[0] != 1 ||
+        base->last_level != 0) {
+        return NULL;
+    }
+
     tex = CALLOC_STRUCT(r300_texture);
     if (!tex) {
         return NULL;
@@ -244,7 +257,9 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     tex->stride_override = *stride;
+    tex->pitch[0] = *stride / base->block.size;
 
+    r300_setup_flags(tex);
     r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);
 
     pipe_buffer_reference(&tex->buffer, buffer);

@@ -181,6 +181,9 @@ struct r300_texture {
     /* Offsets into the buffer. */
     unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
 
+    /* A pitch for each mip-level */
+    unsigned pitch[PIPE_MAX_TEXTURE_LEVELS];
+
     /* Size of one zslice or face based on the texture target */
     unsigned layer_size[PIPE_MAX_TEXTURE_LEVELS];
 
@@ -196,6 +199,11 @@ struct r300_texture {
 
     /* Total size of this texture, in bytes. */
     unsigned size;
+
+    /* Whether this texture has non-power-of-two dimensions.
+     * It can be either a regular texture or a rectangle one.
+     */
+    boolean is_npot;
 
     /* Pipe buffer backing this texture. */
     struct pipe_buffer* buffer;
