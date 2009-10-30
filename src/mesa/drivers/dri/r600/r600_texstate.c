@@ -85,7 +85,6 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
-	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
 		 FORMAT_COMP_X_shift, FORMAT_COMP_X_mask);
