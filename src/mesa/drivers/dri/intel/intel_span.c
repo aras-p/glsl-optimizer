@@ -666,7 +666,7 @@ intel_set_span_functions(struct intel_context *intel,
       }
       break;
    case MESA_FORMAT_ARGB8888:
-      if (0 /*rb->AlphaBits == 0*/) { /* XXX: Need xRGB8888 Mesa format */
+      if (rb->_BaseFormat == GL_RGB) {
          /* XXX remove this code someday when we enable XRGB surfaces */
 	 /* 8888 RGBx */
 	 switch (tiling) {

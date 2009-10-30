@@ -314,6 +314,10 @@ intel_create_renderbuffer(gl_format format)
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
    case MESA_FORMAT_XRGB8888:
+      /* XXX this is a hack since XRGB surfaces don't seem to work
+       * properly yet.  Reading the alpha channel returns 0 instead of 1.
+       */
+      format = MESA_FORMAT_ARGB8888;
       irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
@@ -340,7 +344,6 @@ intel_create_renderbuffer(gl_format format)
       return NULL;
    }
 
-   assert(irb->Base._BaseFormat == _mesa_get_format_base_format(format));
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
    irb->texformat = format;
