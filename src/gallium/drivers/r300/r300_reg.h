@@ -862,10 +862,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_POINTSIZE_X_MASK          0xffff0000
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
-/* Blue fill color */
+/* Red fill color */
 #define R500_GA_FILL_R                                0x4220
 
-/* Blue fill color */
+/* Green fill color */
 #define R500_GA_FILL_G                                0x4224
 
 /* Blue fill color */
