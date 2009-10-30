@@ -253,7 +253,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 {
     context_t *context = R700_CONTEXT(ctx);
     BATCH_LOCALS(&context->radeon);
-    int type, i, total_emit;
+    int type, total_emit;
     int num_indices;
     uint32_t vgt_draw_initiator = 0;
     uint32_t vgt_index_type     = 0;
@@ -294,7 +294,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
 		     + 2 /* VGT_INDEX_TYPE */
 	             + 2 /* NUM_INSTANCES */
                      + 3 /* VGT_INDEX_OFFSET */
-                     + 3; /* DRAW_INDEX_IMMD */
+                     + 3; /* DRAW_INDEX_AUTO */
     }
 
     BEGIN_BATCH_NO_AUTOSTATE(total_emit);
@@ -335,7 +335,7 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
         SETfield(vgt_draw_initiator, DI_SRC_SEL_AUTO_INDEX, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     }
 
-	SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
+    SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
     if(GL_TRUE == bUseDrawIndex)
     {
