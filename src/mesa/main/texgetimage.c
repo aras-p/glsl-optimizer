@@ -559,7 +559,6 @@ static GLboolean
 getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
                         GLenum format, GLenum type, GLvoid *pixels )
 {
-   const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
@@ -613,8 +612,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
 
    if (!texObj || _mesa_is_proxy_texture(target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target)");
@@ -703,7 +701,6 @@ void GLAPIENTRY
 _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
-   const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
@@ -718,8 +715,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
@@ -749,7 +745,6 @@ static GLboolean
 getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
                                   GLvoid *img)
 {
-   const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
@@ -773,9 +768,7 @@ getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
       return GL_TRUE;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-
+   texObj = _mesa_get_current_tex_object(ctx, target);
    if (!texObj) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImageARB(target)");
       return GL_TRUE;
@@ -827,7 +820,6 @@ getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
 void GLAPIENTRY
 _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 {
-   const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
@@ -842,8 +834,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
       return;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
