@@ -75,7 +75,9 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcRGB == PIPE_BLENDFACTOR_DST_ALPHA ||
             srcRGB == PIPE_BLENDFACTOR_INV_DST_COLOR ||
             srcRGB == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_DST_COLOR ||
             srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
             srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA)
             blend->blend_control |= R300_READ_ENABLE;
 
