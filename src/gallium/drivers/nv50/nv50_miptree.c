@@ -26,6 +26,16 @@
 
 #include "nv50_context.h"
 
+static INLINE uint32_t
+get_tile_mode(unsigned ny)
+{
+	if (ny > 32) return 4;
+	if (ny > 16) return 3;
+	if (ny >  8) return 2;
+	if (ny >  4) return 1;
+	return 0;
+}
+
 static struct pipe_texture *
 nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
@@ -34,7 +44,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	struct pipe_texture *pt = &mt->base.base;
 	unsigned width = tmp->width[0], height = tmp->height[0];
 	unsigned depth = tmp->depth[0];
-	uint32_t tile_mode, tile_flags, tile_h;
+	uint32_t tile_flags;
 	int ret, i, l;
 
 	*pt = *tmp;
@@ -56,13 +66,6 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		tile_flags = 0x7000;
 		break;
 	}
-
-	if      (pt->height[0] > 32) tile_mode = 4;
-	else if (pt->height[0] > 16) tile_mode = 3;
-	else if (pt->height[0] >  8) tile_mode = 2;
-	else if (pt->height[0] >  4) tile_mode = 1;
-	else                         tile_mode = 0;
-	tile_h = 1 << (tile_mode + 2);
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_3D:
@@ -86,28 +89,22 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-		lvl->pitch = align(pt->width[l] * pt->block.size, 64);
-		lvl->tile_mode = tile_mode;
+		lvl->pitch = align(pt->nblocksx[l] * pt->block.size, 64);
+		lvl->tile_mode = get_tile_mode(pt->nblocksy[l]);
 
 		width = MAX2(1, width >> 1);
 		height = MAX2(1, height >> 1);
 		depth = MAX2(1, depth >> 1);
-
-		if (tile_mode && height <= (tile_h >> 1)) {
-			tile_mode--;
-			tile_h >>= 1;
-		}
 	}
 
 	for (i = 0; i < mt->image_nr; i++) {
 		for (l = 0; l <= pt->last_level; l++) {
 			struct nv50_miptree_level *lvl = &mt->level[l];
 			int size;
-			tile_h = 1 << (lvl->tile_mode + 2);
+			unsigned tile_ny = 1 << (lvl->tile_mode + 2);
 
-			size  = align(pt->width[l], 8) * pt->block.size;
-			size  = align(size, 64);
-			size *= align(pt->height[l], tile_h);
+			size  = align(pt->nblocksx[l] * pt->block.size, 64);
+			size *= align(pt->nblocksy[l], tile_ny);
 
 			lvl->image_offset[i] = mt->total_size;
 

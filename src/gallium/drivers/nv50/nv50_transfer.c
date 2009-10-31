@@ -124,7 +124,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct nv50_transfer *tx;
-	unsigned image = 0;
+	unsigned nx, ny, image = 0;
 	int ret;
 
 	if (pt->target == PIPE_TEXTURE_CUBE)
@@ -142,9 +142,16 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->base.width = w;
 	tx->base.height = h;
 	tx->base.block = pt->block;
-	tx->base.nblocksx = pt->nblocksx[level];
-	tx->base.nblocksy = pt->nblocksy[level];
-	tx->base.stride = (w * pt->block.size);
+	if (!pt->nblocksx[level]) {
+		tx->base.nblocksx = pf_get_nblocksx(&pt->block,
+						    pt->width[level]);
+		tx->base.nblocksy = pf_get_nblocksy(&pt->block,
+						    pt->height[level]);
+	} else {
+		tx->base.nblocksx = pt->nblocksx[level];
+		tx->base.nblocksy = pt->nblocksy[level];
+	}
+	tx->base.stride = tx->base.nblocksx * pt->block.size;
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
@@ -152,24 +159,28 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->level_height = mt->base.base.height[level];
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
-	tx->level_x = x;
-	tx->level_y = y;
+	tx->level_x = pf_get_nblocksx(&tx->base.block, x);
+	tx->level_y = pf_get_nblocksy(&tx->base.block, y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-			     w * pt->block.size * h, &tx->bo);
+			     tx->base.nblocksy * tx->base.stride, &tx->bo);
 	if (ret) {
 		FREE(tx);
 		return NULL;
 	}
 
 	if (usage & PIPE_TRANSFER_READ) {
+		nx = pf_get_nblocksx(&tx->base.block, tx->base.width);
+		ny = pf_get_nblocksy(&tx->base.block, tx->base.height);
+
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
 					x, y,
-					tx->level_width, tx->level_height,
-					tx->bo, 0, tx->base.stride,
-					tx->bo->tile_mode, 0, 0,
-					tx->base.width, tx->base.height,
-					tx->base.block.size, w, h,
+					tx->base.nblocksx, tx->base.nblocksy,
+					tx->bo, 0,
+					tx->base.stride, tx->bo->tile_mode,
+					0, 0,
+					tx->base.nblocksx, tx->base.nblocksy,
+					tx->base.block.size, nx, ny,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
 					NOUVEAU_BO_GART);
 	}
@@ -183,17 +194,20 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 
+	unsigned nx = pf_get_nblocksx(&tx->base.block, tx->base.width);
+	unsigned ny = pf_get_nblocksy(&tx->base.block, tx->base.height);
+
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
-		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0, tx->base.stride,
-					tx->bo->tile_mode, 0, 0,
-					tx->base.width, tx->base.height,
+		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
+					tx->base.stride, tx->bo->tile_mode,
+					0, 0,
+					tx->base.nblocksx, tx->base.nblocksy,
 					mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
 					tx->level_x, tx->level_y,
-					tx->level_width, tx->level_height,
-					tx->base.block.size, tx->base.width,
-					tx->base.height,
+					tx->base.nblocksx, tx->base.nblocksy,
+					tx->base.block.size, nx, ny,
 					NOUVEAU_BO_GART, NOUVEAU_BO_VRAM |
 					NOUVEAU_BO_GART);
 	}
