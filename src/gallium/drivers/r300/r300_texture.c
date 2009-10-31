@@ -136,12 +136,7 @@ static void r300_setup_miptree(struct r300_texture* tex)
         tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
-
-        if (tex->is_npot) {
-            tex->pitch[i] = stride / base->block.size;
-        } else {
-            tex->pitch[i] = base->width[i];
-        }
+        tex->pitch[i] = stride / base->block.size;
 
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",

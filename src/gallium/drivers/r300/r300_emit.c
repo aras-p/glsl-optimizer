@@ -305,7 +305,7 @@ void r300_emit_fb_state(struct r300_context* r300,
                      RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
-            r300_translate_out_fmt(fb->cbufs[i]->format));
+            r300_translate_out_fmt(surf->format));
     }
 
     if (fb->zsbuf) {
