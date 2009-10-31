@@ -79,6 +79,8 @@ validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
 /**
  * Get current texture object for given target.
  * Return NULL if any error.
+ * Note that this is different from _mesa_select_tex_object() in that proxy
+ * targets are not accepted.
  */
 static struct gl_texture_object *
 get_texobj(GLcontext *ctx, GLenum target)
