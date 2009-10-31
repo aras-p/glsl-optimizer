@@ -74,6 +74,7 @@ struct brw_wm_prog_key {
 
    GLuint vp_nr_outputs:6;
    GLuint nr_cbufs:3;
+   GLuint has_flow_control:1;
 
    GLuint program_string_id;
 };
@@ -176,9 +177,36 @@ struct brw_wm_instruction {
 #define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define BRW_FILE_PAYLOAD   (TGSI_FILE_COUNT)
-#define PAYLOAD_DEPTH      (FRAG_ATTRIB_MAX) /* ?? */
+#define PAYLOAD_DEPTH      (PIPE_MAX_SHADER_INPUTS) /* ?? */
 
-struct brw_passfp_program;
+
+struct brw_fp_src {
+   unsigned file:4;
+   unsigned index:16;
+   unsigned swizzle:8;
+   unsigned indirect:1;
+   unsigned negate:1;
+   unsigned abs:1;
+};
+
+struct brw_fp_dst {
+   unsigned file:4;
+   unsigned index:16;
+   unsigned writemask:4;
+   unsigned indirect:1;
+   unsigned saturate:1;
+};
+
+struct brw_fp_instruction {
+   struct brw_fp_dst dst;
+   struct brw_fp_src src[3];
+   unsigned opcode:8;
+   unsigned tex_unit:4;
+   unsigned tex_target:4;
+   unsigned target:10;		/* destination surface for FB_WRITE */
+   unsigned eot:1;		/* mark last instruction (usually FB_WRITE) */
+};
+
 
 struct brw_wm_compile {
    struct brw_compile func;
@@ -198,9 +226,26 @@ struct brw_wm_compile {
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
     */
-   struct brw_passfp_program *pass_fp;
+   struct {
+      GLfloat v[4];
+      unsigned nr;
+   } immediate[BRW_WM_MAX_CONST+3];
+   GLuint nr_immediates;
+   
+   struct brw_fp_instruction fp_instructions[BRW_WM_MAX_INSN];
+   GLuint nr_fp_insns;
+   GLuint fp_temp;
+   GLuint fp_interp_emitted;
+   GLuint fp_fragcolor_emitted;
+   GLuint fp_first_internal_temp;
+
+   struct brw_fp_src fp_pixel_xy;
+   struct brw_fp_src fp_delta_xy;
+   struct brw_fp_src fp_pixel_w;
 
 
+   /* Subsequent passes using SSA representation:
+    */
    struct brw_wm_value vreg[BRW_WM_MAX_VREG];
    GLuint nr_vreg;
 
@@ -213,7 +258,7 @@ struct brw_wm_compile {
    } payload;
 
 
-   const struct brw_wm_ref *pass0_fp_reg[PROGRAM_PAYLOAD+1][256][4];
+   const struct brw_wm_ref *pass0_fp_reg[BRW_FILE_PAYLOAD+1][256][4];
 
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
@@ -241,7 +286,7 @@ struct brw_wm_compile {
    struct {
       GLboolean inited;
       struct brw_reg reg;
-   } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+   } wm_regs[BRW_FILE_PAYLOAD+1][256][4];
 
    GLboolean used_grf[BRW_WM_MAX_GRF];
    GLuint first_free_grf;
@@ -258,13 +303,15 @@ struct brw_wm_compile {
       GLint index;
       struct brw_reg reg;
    } current_const[3];
+
+   GLuint error;
 };
 
 
 GLuint brw_wm_nr_args( GLuint opcode );
 GLuint brw_wm_is_scalar_result( GLuint opcode );
 
-void brw_wm_pass_fp( struct brw_wm_compile *c );
+int brw_wm_pass_fp( struct brw_wm_compile *c );
 void brw_wm_pass0( struct brw_wm_compile *c );
 void brw_wm_pass1( struct brw_wm_compile *c );
 void brw_wm_pass2( struct brw_wm_compile *c );
