@@ -258,7 +258,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 116 "program_parse.y"
+#line 122 "program_parse.y"
 {
    struct asm_instruction *inst;
    struct asm_symbol *sym;
