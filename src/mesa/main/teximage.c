@@ -1268,8 +1268,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
       if (!isProxy) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(internalFormat=0x%x)",
-                     dimensions, internalFormat);
+                     "glTexImage%dD(internalFormat=%s)",
+                     dimensions, _mesa_lookup_enum_by_nr(internalFormat));
       }
       return GL_TRUE;
    }
