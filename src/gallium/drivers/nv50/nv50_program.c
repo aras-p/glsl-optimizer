@@ -2980,11 +2980,8 @@ static void
 nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program_exec *e;
-	struct nouveau_stateobj *so;
-	const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_WR;
-	unsigned start, count, *up, *ptr;
+	uint32_t *up, i;
 	boolean upload = FALSE;
 
 	if (!p->bo) {
@@ -2999,32 +2996,37 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	if (!upload)
 		return;
 
-	for (e = p->exec_head; e; e = e->next) {
+	up = MALLOC(p->exec_size * 4);
+
+	for (i = 0, e = p->exec_head; e; e = e->next) {
 		unsigned ei, ci, bs;
 
-		if (e->param.index < 0)
-			continue;
+		if (e->param.index >= 0 && e->param.mask) {
+			bs = (e->inst[1] >> 22) & 0x07;
+			assert(bs < 2);
+			ei = e->param.shift >> 5;
+			ci = e->param.index;
+			if (bs == 0)
+				ci += p->data[bs]->start;
 
-		if (e->param.mask == 0) {
+			e->inst[ei] &= ~e->param.mask;
+			e->inst[ei] |= (ci << e->param.shift);
+		} else
+		if (e->param.index >= 0) {
+			/* zero mask means param is a jump/branch offset */
 			assert(!(e->param.index & 1));
 			/* seem to be 8 byte steps */
 			ei = (e->param.index >> 1) + 0 /* START_ID */;
 
 			e->inst[0] &= 0xf0000fff;
 			e->inst[0] |= ei << 12;
-			continue;
 		}
 
-		bs = (e->inst[1] >> 22) & 0x07;
-		assert(bs < 2);
-		ei = e->param.shift >> 5;
-		ci = e->param.index;
-		if (bs == 0)
-			ci += p->data[bs]->start;
-
-		e->inst[ei] &= ~e->param.mask;
-		e->inst[ei] |= (ci << e->param.shift);
+		up[i++] = e->inst[0];
+		if (is_long(e))
+			up[i++] = e->inst[1];
 	}
+	assert(i == p->exec_size);
 
 	if (p->data[0])
 		p->data_start[0] = p->data[0]->start;
@@ -3037,45 +3039,12 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
 	}
 #endif
-
-	up = ptr = MALLOC(p->exec_size * 4);
-	for (e = p->exec_head; e; e = e->next) {
-		*(ptr++) = e->inst[0];
-		if (is_long(e))
-			*(ptr++) = e->inst[1];
-	}
-
-	so = so_new(4,2);
-	so_method(so, nv50->screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
-	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_PUPLOAD << 16) | 0x0800); //(p->exec_size * 4));
-
-	start = 0; count = p->exec_size;
-	while (count) {
-		struct nouveau_channel *chan = nv50->screen->base.channel;
-		unsigned nr;
-
-		so_emit(chan, so);
-
-		nr = MIN2(count, 2047);
-		nr = MIN2(chan->pushbuf->remaining, nr);
-		if (chan->pushbuf->remaining < (nr + 3)) {
-			FIRE_RING(chan);
-			continue;
-		}
-
-		BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 1);
-		OUT_RING  (chan, (start << 8) | NV50_CB_PUPLOAD);
-		BEGIN_RING(chan, tesla, NV50TCL_CB_DATA(0) | 0x40000000, nr);
-		OUT_RINGp (chan, up + start, nr);
-
-		start += nr;
-		count -= nr;
-	}
+	nv50_upload_sifc(nv50, p->bo, 0, NOUVEAU_BO_VRAM,
+			 NV50_2D_DST_FORMAT_R8_UNORM, 65536, 1, 262144,
+			 up, NV50_2D_SIFC_FORMAT_R8_UNORM, 0,
+			 0, 0, p->exec_size * 4, 1, 1);
 
 	FREE(up);
-	so_ref(NULL, &so);
 }
 
 void

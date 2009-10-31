@@ -237,3 +237,89 @@ nv50_transfer_init_screen_functions(struct pipe_screen *pscreen)
 	pscreen->transfer_map = nv50_transfer_map;
 	pscreen->transfer_unmap = nv50_transfer_unmap;
 }
+
+void
+nv50_upload_sifc(struct nv50_context *nv50,
+		 struct nouveau_bo *bo, unsigned dst_offset, unsigned reloc,
+		 unsigned dst_format, int dst_w, int dst_h, int dst_pitch,
+		 void *src, unsigned src_format, int src_pitch,
+		 int x, int y, int w, int h, int cpp)
+{
+	struct nouveau_channel *chan = nv50->screen->base.channel;
+	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned line_dwords = (w * cpp + 3) / 4;
+
+	reloc |= NOUVEAU_BO_WR;
+
+	WAIT_RING (chan, 32);
+
+	if (bo->tile_flags) {
+		BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 5);
+		OUT_RING  (chan, dst_format);
+		OUT_RING  (chan, 0);
+		OUT_RING  (chan, bo->tile_mode << 4);
+		OUT_RING  (chan, 1);
+		OUT_RING  (chan, 0);
+	} else {
+		BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 2);
+		OUT_RING  (chan, dst_format);
+		OUT_RING  (chan, 1);
+		BEGIN_RING(chan, eng2d, NV50_2D_DST_PITCH, 1);
+		OUT_RING  (chan, dst_pitch);
+	}
+
+	BEGIN_RING(chan, eng2d, NV50_2D_DST_WIDTH, 4);
+	OUT_RING  (chan, dst_w);
+	OUT_RING  (chan, dst_h);
+	OUT_RELOCh(chan, bo, dst_offset, reloc);
+	OUT_RELOCl(chan, bo, dst_offset, reloc);
+
+	/* NV50_2D_OPERATION_SRCCOPY assumed already set */
+
+	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_UNK0800, 2);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, src_format);
+	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_WIDTH, 10);
+	OUT_RING  (chan, w);
+	OUT_RING  (chan, h);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, 1);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, 1);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, x);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, y);
+
+	while (h--) {
+		const uint32_t *p = src;
+		unsigned count = line_dwords;
+
+		while (count) {
+			unsigned nr = MIN2(count, 1792);
+
+			if (chan->pushbuf->remaining <= nr) {
+				FIRE_RING (chan);
+
+				BEGIN_RING(chan, eng2d,
+					   NV50_2D_DST_ADDRESS_HIGH, 2);
+				OUT_RELOCh(chan, bo, dst_offset, reloc);
+				OUT_RELOCl(chan, bo, dst_offset, reloc);
+			}
+			assert(chan->pushbuf->remaining > nr);
+
+			BEGIN_RING(chan, eng2d,
+				   NV50_2D_SIFC_DATA | (2 << 29), nr);
+			OUT_RINGp (chan, p, nr);
+
+			p += nr;
+			count -= nr;
+		}
+
+		src += src_pitch;
+	}
+
+	BEGIN_RING(chan, tesla, 0x1440, 1);
+	OUT_RING  (chan, 0);
+}
