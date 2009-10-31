@@ -37,6 +37,14 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned i, w, h, gw = 0;
 
+	/* Set nr of active RTs. Don't know what 0xfac6880 does, but
+	 * at least 0x880 was required to draw to more than 1 RT.
+	 * In some special cases, 0xfac6880 is not used, we probably
+	 * don't hit any of these though.
+	 */
+	so_method(so, tesla, 0x121c, 1);
+	so_data  (so, 0x0fac6880 | fb->nr_cbufs);
+
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct pipe_texture *pt = fb->cbufs[i]->texture;
 		struct nouveau_bo *bo = nv50_miptree(pt)->base.bo;
@@ -121,6 +129,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_data  (so, fb->zsbuf->width);
 		so_data  (so, fb->zsbuf->height);
 		so_data  (so, 0x00010001);
+	} else {
+		so_method(so, tesla, 0x1538, 1);
+		so_data  (so, 0);
 	}
 
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);

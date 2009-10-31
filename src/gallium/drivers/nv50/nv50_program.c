@@ -2644,6 +2644,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			pc->result[2].rhw = rid;
 
 		p->cfg.high_result = rid;
+
+		/* separate/different colour results for MRTs ? */
+		if (pc->result_nr - (p->info.writes_z ? 1 : 0) > 1)
+			p->cfg.regs[2] |= 1;
 	}
 
 	if (pc->immd_nr) {
