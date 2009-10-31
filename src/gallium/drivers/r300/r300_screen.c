@@ -84,7 +84,9 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* XXX I'm told this goes up to 16 */
             return 8;
         case PIPE_CAP_NPOT_TEXTURES:
-            return 0;
+            /* XXX enable now to get GL2.1 API,
+             * figure out later how to emulate this */
+            return 1;
         case PIPE_CAP_TWO_SIDED_STENCIL:
             if (r300screen->caps->is_r500) {
                 return 1;
