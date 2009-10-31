@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,8 +26,8 @@
  * 
  **************************************************************************/
 
-#ifndef TGSI_TOKEN_H
-#define TGSI_TOKEN_H
+#ifndef P_SHADER_TOKENS_H
+#define P_SHADER_TOKENS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +80,7 @@ enum tgsi_file_type {
    TGSI_FILE_ADDRESS     =6,
    TGSI_FILE_IMMEDIATE   =7,
    TGSI_FILE_LOOP        =8,
+   TGSI_FILE_PREDICATE   =9,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -319,7 +321,6 @@ struct tgsi_instruction
  * instruction, including the instruction word.
  */
 
-#define TGSI_INSTRUCTION_EXT_TYPE_NV        0
 #define TGSI_INSTRUCTION_EXT_TYPE_LABEL     1
 #define TGSI_INSTRUCTION_EXT_TYPE_TEXTURE   2
 #define TGSI_INSTRUCTION_EXT_TYPE_PREDICATE 3
@@ -332,9 +333,6 @@ struct tgsi_instruction_ext
 };
 
 /*
- * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_NV, it should
- * be cast to tgsi_instruction_ext_nv.
- * 
  * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_LABEL, it
  * should be cast to tgsi_instruction_ext_label.
  * 
@@ -348,55 +346,10 @@ struct tgsi_instruction_ext
  * follows.
  */
 
-#define TGSI_PRECISION_DEFAULT      0
-#define TGSI_PRECISION_FLOAT32      1
-#define TGSI_PRECISION_FLOAT16      2
-#define TGSI_PRECISION_FIXED12      3
-
-#define TGSI_CC_GT      0
-#define TGSI_CC_EQ      1
-#define TGSI_CC_LT      2
-#define TGSI_CC_GE      3
-#define TGSI_CC_LE      4
-#define TGSI_CC_NE      5
-#define TGSI_CC_TR      6
-#define TGSI_CC_FL      7
-
 #define TGSI_SWIZZLE_X      0
 #define TGSI_SWIZZLE_Y      1
 #define TGSI_SWIZZLE_Z      2
 #define TGSI_SWIZZLE_W      3
-
-/**
- * Precision controls the precision at which the operation should be executed.
- *
- * CondDstUpdate enables condition code register writes. When this field is
- * TRUE, CondDstIndex specifies the index of the condition code register to
- * update.
- *
- * CondFlowEnable enables conditional execution of the operation. When this
- * field is TRUE, CondFlowIndex specifies the index of the condition code
- * register to test against CondMask with component swizzle controled by
- * CondSwizzleX, CondSwizzleY, CondSwizzleZ and CondSwizzleW. If the test fails,
- * the operation is not executed.
- */
-
-struct tgsi_instruction_ext_nv
-{
-   unsigned Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_NV */
-   unsigned Precision        : 4;    /* TGSI_PRECISION_ */
-   unsigned CondDstIndex     : 4;    /* UINT */
-   unsigned CondFlowIndex    : 4;    /* UINT */
-   unsigned CondMask         : 4;    /* TGSI_CC_ */
-   unsigned CondSwizzleX     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleY     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleW     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondDstUpdate    : 1;    /* BOOL */
-   unsigned CondFlowEnable   : 1;    /* BOOL */
-   unsigned Padding          : 1;
-   unsigned Extended         : 1;    /* BOOL */
-};
 
 struct tgsi_instruction_ext_label
 {
@@ -425,13 +378,21 @@ struct tgsi_instruction_ext_texture
    unsigned Extended : 1;    /* BOOL */
 };
 
+/*
+ * For SM3, the following constraint applies.
+ *   - Swizzle is either set to identity or replicate.
+ */
 struct tgsi_instruction_ext_predicate
 {
-   unsigned Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
-   unsigned PredDstIndex     : 4;    /* UINT */
-   unsigned PredWriteMask    : 4;    /* TGSI_WRITEMASK_ */
-   unsigned Padding          : 19;
-   unsigned Extended         : 1;    /* BOOL */
+   unsigned Type     : 4;  /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
+   unsigned SwizzleX : 2;  /* TGSI_SWIZZLE_x */
+   unsigned SwizzleY : 2;  /* TGSI_SWIZZLE_x */
+   unsigned SwizzleZ : 2;  /* TGSI_SWIZZLE_x */
+   unsigned SwizzleW : 2;  /* TGSI_SWIZZLE_x */
+   unsigned Negate   : 1;  /* BOOL */
+   unsigned SrcIndex : 8;  /* UINT */
+   unsigned Padding  : 10;
+   unsigned Extended : 1;  /* BOOL */
 };
 
 /**
@@ -546,9 +507,7 @@ struct tgsi_dst_register
  * Then, if tgsi_dst_register::Indirect is TRUE, tgsi_src_register follows.
  */
 
-#define TGSI_DST_REGISTER_EXT_TYPE_CONDCODE     0
 #define TGSI_DST_REGISTER_EXT_TYPE_MODULATE     1
-#define TGSI_DST_REGISTER_EXT_TYPE_PREDICATE    2
 
 struct tgsi_dst_register_ext
 {
@@ -560,30 +519,12 @@ struct tgsi_dst_register_ext
 /**
  * Extra destination register modifiers
  *
- * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_CONDCODE,
- * it should be cast to tgsi_dst_register_ext_condcode.
- * 
  * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_MODULATE,
  * it should be cast to tgsi_dst_register_ext_modulate.
- * 
- * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_PREDICATE,
- * it should be cast to tgsi_dst_register_ext_predicate.
  * 
  * If tgsi_dst_register_ext::Extended is TRUE, another tgsi_dst_register_ext
  * follows.
  */
-struct tgsi_dst_register_ext_concode
-{
-   unsigned Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_CONDCODE */
-   unsigned CondMask     : 4;    /* TGSI_CC_ */
-   unsigned CondSwizzleX : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleY : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSwizzleW : 2;    /* TGSI_SWIZZLE_ */
-   unsigned CondSrcIndex : 4;    /* UINT */
-   unsigned Padding      : 11;
-   unsigned Extended     : 1;    /* BOOL */
-};
 
 #define TGSI_MODULATE_1X        0
 #define TGSI_MODULATE_2X        1
@@ -602,30 +543,8 @@ struct tgsi_dst_register_ext_modulate
    unsigned Extended : 1;    /* BOOL */
 };
 
-/*
- * Currently, the following constraints apply.
- *
- * - PredSwizzleXYZW is either set to identity or replicate.
- * - PredSrcIndex is 0.
- */
-
-struct tgsi_dst_register_ext_predicate
-{
-   unsigned Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_PREDICATE */
-   unsigned PredSwizzleX : 2;    /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleY : 2;    /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleW : 2;    /* TGSI_SWIZZLE_ */
-   unsigned PredSrcIndex : 4;    /* UINT */
-   unsigned Negate       : 1;    /* BOOL */
-   unsigned Padding      : 14;
-   unsigned Extended     : 1;    /* BOOL */
-};
-
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* TGSI_TOKEN_H */
-
+#endif /* P_SHADER_TOKENS_H */

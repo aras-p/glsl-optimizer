@@ -333,6 +333,8 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
 #define PIPE_CAP_TGSI_CONT_SUPPORTED     27
 #define PIPE_CAP_BLEND_EQUATION_SEPARATE 28
+#define PIPE_CAP_SM3                     29  /*< Shader Model 3 supported */
+#define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
 
 
 /**
