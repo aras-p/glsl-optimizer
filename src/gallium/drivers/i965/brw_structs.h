@@ -965,7 +965,7 @@ struct brw_sampler_default_color {
 struct brw_sampler_state
 {
    
-   struct
+   struct brw_ss0
    {
       GLuint shadow_function:3; 
       GLuint lod_bias:11; 
@@ -980,7 +980,7 @@ struct brw_sampler_state
       GLuint disable:1; 
    } ss0;
 
-   struct
+   struct brw_ss1
    {
       GLuint r_wrap_mode:3; 
       GLuint t_wrap_mode:3; 
@@ -991,13 +991,13 @@ struct brw_sampler_state
    } ss1;
 
    
-   struct
+   struct brw_ss2
    {
       GLuint pad:5;
       GLuint default_color_pointer:27; 
    } ss2;
    
-   struct
+   struct brw_ss3
    {
       GLuint pad:19;
       GLuint max_aniso:3; 

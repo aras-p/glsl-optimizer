@@ -29,12 +29,14 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
                    
-
+#include "util/u_math.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_wm.h"
+#include "brw_debug.h"
+#include "brw_pipe_rast.h"
 
 /***********************************************************************
  * WM unit - fragment programs and rasterization
@@ -60,8 +62,7 @@ struct brw_wm_unit_key {
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
-   const struct gl_fragment_program *fp = brw->fragment_program;
-   const struct brw_fragment_program *bfp = (struct brw_fragment_program *) fp;
+   const struct brw_fragment_shader *fp = brw->curr.fragment_shader;
 
    memset(key, 0, sizeof(*key));
 
@@ -82,7 +83,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
    key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
-   key->total_scratch = ALIGN(brw->wm.prog_data->total_scratch, 1024);
+   key->total_scratch = align(brw->wm.prog_data->total_scratch, 1024);
 
    /* BRW_NEW_URB_FENCE */
    key->urb_size = brw->urb.vsize;
@@ -96,39 +97,42 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* CACHE_NEW_SAMPLER */
    key->sampler_count = brw->wm.sampler_count;
 
-   /* _NEW_POLYGONSTIPPLE */
-   key->polygon_stipple = ctx->Polygon.StippleFlag;
+   /* PIPE_NEW_RAST */
+   key->polygon_stipple = brw->curr.rast->templ.poly_stipple_enable;
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   key->uses_depth = (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
+   /* PIPE_NEW_FRAGMENT_PROGRAM */
+   key->uses_depth = fp->uses_depth;
+   key->computes_depth = fp->info.writes_z;
 
-   /* as far as we can tell */
-   key->computes_depth =
-      (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) != 0;
    /* PIPE_NEW_DEPTH_BUFFER
+    *
     * Override for NULL depthbuffer case, required by the Pixel Shader Computed
     * Depth field.
     */
    if (brw->curr.fb.zsbuf == NULL)
       key->computes_depth = 0;
 
-   /* _NEW_COLOR */
-   key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
-   key->has_flow_control = bfp->has_flow_control;
+   /* PIPE_NEW_DEPTH_STENCIL_ALPHA */
+   key->uses_kill = (fp->info.uses_kill || 
+		     brw->curr.zstencil->cc3.alpha_test);
+
+   key->has_flow_control = fp->has_flow_control;
 
    /* temporary sanity check assertion */
-   ASSERT(bfp->has_flow_control == brw_wm_has_flow_control(fp));
+   assert(fp->has_flow_control == 0);
 
-   /* _NEW_QUERY */
+   /* PIPE_NEW_QUERY */
    key->stats_wm = (brw->query.stats_wm != 0);
 
-   /* _NEW_LINE */
-   key->line_stipple = ctx->Line.StippleFlag;
+   /* PIPE_NEW_RAST */
+   key->line_stipple = brw->curr.rast->templ.line_stipple_enable;
 
-   /* _NEW_POLYGON */
-   key->offset_enable = ctx->Polygon.OffsetFill;
-   key->offset_units = ctx->Polygon.OffsetUnits;
-   key->offset_factor = ctx->Polygon.OffsetFactor;
+
+   key->offset_enable = (brw->curr.rast->templ.offset_cw ||
+			 brw->curr.rast->templ.offset_ccw);
+
+   key->offset_units = brw->curr.rast->templ.offset_units;
+   key->offset_factor = brw->curr.rast->templ.offset_scale;
 }
 
 /**
@@ -143,7 +147,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    memset(&wm, 0, sizeof(wm));
 
-   wm.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   wm.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
@@ -225,7 +229,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			 NULL, NULL);
 
    /* Emit WM program relocation */
-   dri_bo_emit_reloc(bo,
+   brw->sws->bo_emit_reloc(bo,
 		     I915_GEM_DOMAIN_INSTRUCTION, 0,
 		     wm.thread0.grf_reg_count << 1,
 		     offsetof(struct brw_wm_unit_state, thread0),
@@ -233,7 +237,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      dri_bo_emit_reloc(bo,
+      brw->sws->bo_emit_reloc(bo,
 			0, 0,
 			wm.thread2.per_thread_scratch_space,
 			offsetof(struct brw_wm_unit_state, thread2),
@@ -242,7 +246,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      dri_bo_emit_reloc(bo,
+      brw->sws->bo_emit_reloc(bo,
 			I915_GEM_DOMAIN_INSTRUCTION, 0,
 			wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
 			offsetof(struct brw_wm_unit_state, wm4),
@@ -253,7 +257,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 }
 
 
-static void upload_wm_unit( struct brw_context *brw )
+static int upload_wm_unit( struct brw_context *brw )
 {
    struct brw_wm_unit_key key;
    struct brw_winsys_buffer *reloc_bufs[3];
@@ -291,19 +295,19 @@ static void upload_wm_unit( struct brw_context *brw )
    if (brw->wm.state_bo == NULL) {
       brw->wm.state_bo = wm_unit_create_from_key(brw, &key, reloc_bufs);
    }
+
+   return 0;
 }
 
 const struct brw_tracked_state brw_wm_unit = {
    .dirty = {
-      .mesa = (PIPE_NEW_DEPTH_BUFFER |
-	       _NEW_POLYGON | 
-	       _NEW_POLYGONSTIPPLE | 
-	       _NEW_LINE | 
-	       _NEW_COLOR |
-	       _NEW_QUERY),
+      .mesa = (PIPE_NEW_FRAGMENT_SHADER |
+	       PIPE_NEW_DEPTH_BUFFER |
+	       PIPE_NEW_RAST | 
+	       PIPE_NEW_DEPTH_STENCIL_ALPHA |
+	       PIPE_NEW_QUERY),
 
-      .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
-	      BRW_NEW_CURBE_OFFSETS |
+      .brw = (BRW_NEW_CURBE_OFFSETS |
 	      BRW_NEW_NR_WM_SURFACES),
 
       .cache = (CACHE_NEW_WM_PROG |

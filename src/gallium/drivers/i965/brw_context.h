@@ -177,6 +177,14 @@ struct brw_fragment_shader {
 };
 
 
+struct brw_sampler {
+   struct pipe_sampler_state templ;
+   struct brw_ss0 ss0;
+   struct brw_ss1 ss1;
+   struct brw_ss3 ss3;
+};
+
+
 
 #define PIPE_NEW_DEPTH_STENCIL_ALPHA    0x1
 #define PIPE_NEW_RAST                   0x2
@@ -494,7 +502,7 @@ struct brw_context
       const struct brw_depth_stencil_state *zstencil;
 
       const struct brw_texture *texture[PIPE_MAX_SAMPLERS];
-      const struct pipe_sampler *sampler[PIPE_MAX_SAMPLERS];
+      const struct brw_sampler *sampler[PIPE_MAX_SAMPLERS];
       unsigned num_textures;
       unsigned num_samplers;
       

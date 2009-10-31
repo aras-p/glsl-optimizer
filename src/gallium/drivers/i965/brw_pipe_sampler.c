@@ -9,6 +9,38 @@
 
 
 
+/* The brw (and related graphics cores) do not support GL_CLAMP.  The
+ * Intel drivers for "other operating systems" implement GL_CLAMP as
+ * GL_CLAMP_TO_EDGE, so the same is done here.
+ */
+static GLuint translate_wrap_mode( unsigned wrap )
+{
+   switch( wrap ) {
+   case PIPE_TEX_WRAP_REPEAT: 
+      return BRW_TEXCOORDMODE_WRAP;
+
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return BRW_TEXCOORDMODE_CLAMP;
+      
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return BRW_TEXCOORDMODE_CLAMP_BORDER;
+
+   case PIPE_TEX_WRAP_MIRROR_REPEAT: 
+      return BRW_TEXCOORDMODE_MIRROR;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP: 
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE: 
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER: 
+      return BRW_TEXCOORDMODE_MIRROR_ONCE;
+
+   default: 
+      return BRW_TEXCOORDMODE_WRAP;
+   }
+}
+
+
+
 static void *brw_create_sampler_state( struct pipe_context *pipe,
 				     const struct pipe_sampler_state *templ )
 {
