@@ -86,6 +86,9 @@ extern struct gl_texture_object *
 _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target);
 
+extern struct gl_texture_object *
+_mesa_get_current_tex_object(GLcontext *ctx, GLenum target);
+
 
 extern struct gl_texture_image *
 _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
