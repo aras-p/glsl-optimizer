@@ -30,7 +30,7 @@
   */
                    
 
-#include "brw_context.h"
+#include "brw_debug.h"
 #include "brw_wm.h"
 
 
@@ -82,27 +82,14 @@ static void init_registers( struct brw_wm_compile *c )
    for (j = 0; j < c->nr_creg; j++) 
       prealloc_reg(c, &c->creg[j], i++);
 
-   for (j = 0; j < FRAG_ATTRIB_MAX; j++) {
-      if (c->key.vp_outputs_written & (1<<j)) {
-	 int fp_index;
-
-	 if (j >= VERT_RESULT_VAR0)
-	    fp_index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
-	 else if (j <= VERT_RESULT_TEX7)
-	    fp_index = j;
-	 else
-	    fp_index = -1;
-
-	 nr_interp_regs++;
-	 if (fp_index >= 0)
-	    prealloc_reg(c, &c->payload.input_interp[fp_index], i++);
-      }
+   for (j = 0; j < c->key.vp_nr_outputs; j++) {
+      prealloc_reg(c, &c->payload.input_interp[j], i++);
    }
 
    assert(nr_interp_regs >= 1);
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
-   c->prog_data.urb_read_length = nr_interp_regs * 2;
+   c->prog_data.urb_read_length = c->key.vp_nr_outputs * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 
    c->max_wm_grf = i * 2;
@@ -308,9 +295,9 @@ void brw_wm_pass2( struct brw_wm_compile *c )
       /* Allocate registers to hold results:
        */
       switch (inst->opcode) {
-      case OPCODE_TEX:
-      case OPCODE_TXB:
-      case OPCODE_TXP:
+      case TGSI_OPCODE_TEX:
+      case TGSI_OPCODE_TXB:
+      case TGSI_OPCODE_TXP:
 	 alloc_contiguous_dest(c, inst->dst, 4, insn);
 	 break;
 

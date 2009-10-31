@@ -47,7 +47,6 @@ C_SOURCES = \
 	brw_wm_debug.c \
 	brw_wm_emit.c \
 	brw_wm_fp.c \
-	brw_wm_glsl.c \
 	brw_wm_iz.c \
 	brw_wm_pass0.c \
 	brw_wm_pass1.c \

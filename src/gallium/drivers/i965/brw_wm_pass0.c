@@ -28,9 +28,10 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-                 
 
-#include "brw_context.h"
+#include "util/u_memory.h"
+
+#include "brw_debug.h"
 #include "brw_wm.h"
 
 
@@ -133,19 +134,19 @@ static const struct brw_wm_ref *get_imm_ref( struct brw_wm_compile *c,
    /* Search for an existing const value matching the request:
     */
    for (i = 0; i < c->nr_imm_refs; i++) {
-      if (c->imm_ref[i].imm_val == *imm1f) 
+      if (c->imm_ref[i].imm1f == *imm1f) 
 	 return c->imm_ref[i].ref;
    }
 
    /* Else try to add a new one:
     */
-   if (c->nr_imm_refs < BRW_WM_MAX_IMM) {
+   if (c->nr_imm_refs < Elements(c->imm_ref)) {
       GLuint i = c->nr_imm_refs++;
 
       /* An immediate is a special type of parameter:
        */
-      c->imm_ref[i].imm_val = *imm_val;
-      c->imm_ref[i].ref = get_param_ref(c, imm_val);
+      c->imm_ref[i].imm1f = *imm1f;
+      c->imm_ref[i].ref = get_param_ref(c, imm1f);
 
       return c->imm_ref[i].ref;
    }
@@ -180,7 +181,7 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 	 break;
 
       case TGSI_FILE_IMMEDIATE:
-	 ref = get_imm_ref(c, &plist->ParameterValues[idx][component]);
+	 ref = get_imm_ref(c, &c->immediate[idx].v[component]);
 	 break;
 
       default:
@@ -205,16 +206,16 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 
 static void pass0_set_dst( struct brw_wm_compile *c,
 			   struct brw_wm_instruction *out,
-			   const struct prog_instruction *inst,
+			   const struct brw_fp_instruction *inst,
 			   GLuint writemask )
 {
-   const struct prog_dst_register *dst = &inst->DstReg;
+   const struct brw_fp_dst dst = inst->dst;
    GLuint i;
 
    for (i = 0; i < 4; i++) {
       if (writemask & (1<<i)) {
 	 out->dst[i] = get_value(c);
-	 pass0_set_fpreg_value(c, dst->File, dst->Index, i, out->dst[i]);
+	 pass0_set_fpreg_value(c, dst.file, dst.index, i, out->dst[i]);
       }
    }
 
@@ -223,27 +224,15 @@ static void pass0_set_dst( struct brw_wm_compile *c,
 
 
 static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
-						    struct prog_src_register src,
+						    struct brw_fp_src src,
 						    GLuint i )
 {
-   GLuint component = GET_SWZ(src.Swizzle,i);
-   const struct brw_wm_ref *src_ref;
-   static const GLfloat const_zero = 0.0;
-   static const GLfloat const_one = 1.0;
-
-   if (component == SWIZZLE_ZERO) 
-      src_ref = get_imm_ref(c, &const_zero);
-   else if (component == SWIZZLE_ONE) 
-      src_ref = get_imm_ref(c, &const_one);
-   else 
-      src_ref = pass0_get_reg(c, src.File, src.Index, component);
-
-   return src_ref;
+   return pass0_get_reg(c, src.file, src.index, GET_SWZ(src.swizzle,i));
 }
 
 
 static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
-				       struct prog_src_register src,
+				       struct brw_fp_src src,
 				       GLuint i,
 				       struct brw_wm_instruction *insn)
 {
@@ -259,10 +248,10 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
       newref->value->lastuse = newref;
    }
 
-   if (src.Negate & (1 << i))
+   if (src.negate)
       newref->hw_reg.negate ^= 1;
 
-   if (src.Abs) {
+   if (src.abs) {
       newref->hw_reg.negate = 0;
       newref->hw_reg.abs = 1;
    }
@@ -273,21 +262,21 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
 
 static void
 translate_insn(struct brw_wm_compile *c,
-               const struct prog_instruction *inst)
+               const struct brw_fp_instruction *inst)
 {
    struct brw_wm_instruction *out = get_instruction(c);
-   GLuint writemask = inst->dst.WriteMask;
-   GLuint nr_args = brw_wm_nr_args(inst->Opcode);
+   GLuint writemask = inst->dst.writemask;
+   GLuint nr_args = brw_wm_nr_args(inst->opcode);
    GLuint i, j;
 
    /* Copy some data out of the instruction
     */
-   out->opcode = inst->Opcode;
-   out->saturate = inst->dst.Saturate;
-   out->tex_unit = inst->TexSrcUnit;
-   out->tex_target = inst->TexSrcTarget;
-   out->eot = inst->Aux & 1;
-   out->target = inst->Aux >> 1;
+   out->opcode = inst->opcode;
+   out->saturate = inst->dst.saturate;
+   out->tex_unit = inst->tex_unit;
+   out->tex_target = inst->tex_target;
+   out->eot = inst->eot; //inst->Aux & 1;
+   out->target = inst->target; //inst->Aux >> 1;
 
    /* Args:
     */
@@ -308,10 +297,10 @@ translate_insn(struct brw_wm_compile *c,
  * Optimize moves and swizzles away:
  */ 
 static void pass0_precalc_mov( struct brw_wm_compile *c,
-			       const struct prog_instruction *inst )
+			       const struct brw_fp_instruction *inst )
 {
-   const struct prog_dst_register *dst = &inst->DstReg;
-   GLuint writemask = inst->DstReg.WriteMask;
+   const struct brw_fp_dst dst = inst->dst;
+   GLuint writemask = dst.writemask;
    struct brw_wm_ref *refs[4];
    GLuint i;
 
@@ -323,11 +312,11 @@ static void pass0_precalc_mov( struct brw_wm_compile *c,
     * one loop and the above case was incorrectly handled.
     */
    for (i = 0; i < 4; i++) {
-      refs[i] = get_new_ref(c, inst->SrcReg[0], i, NULL);
+      refs[i] = get_new_ref(c, inst->src[0], i, NULL);
    }
    for (i = 0; i < 4; i++) {
       if (writemask & (1 << i)) {	    
-         pass0_set_fpreg_ref( c, dst->File, dst->Index, i, refs[i]);
+         pass0_set_fpreg_ref( c, dst.file, dst.index, i, refs[i]);
       }
    }
 }
@@ -341,12 +330,12 @@ static void pass0_init_payload( struct brw_wm_compile *c )
 
    for (i = 0; i < 4; i++) {
       GLuint j = i >= c->key.nr_depth_regs ? 0 : i;
-      pass0_set_fpreg_value( c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, 
+      pass0_set_fpreg_value( c, BRW_FILE_PAYLOAD, PAYLOAD_DEPTH, i, 
 			     &c->payload.depth[j] );
    }
 
-   for (i = 0; i < FRAG_ATTRIB_MAX; i++)
-      pass0_set_fpreg_value( c, PROGRAM_PAYLOAD, i, 0, 
+   for (i = 0; i < c->key.nr_inputs; i++)
+      pass0_set_fpreg_value( c, BRW_FILE_PAYLOAD, i, 0, 
 			     &c->payload.input_interp[i] );      
 }
 
@@ -360,7 +349,7 @@ static void pass0_init_payload( struct brw_wm_compile *c )
  *
  * Translate away swizzling and eliminate non-saturating moves.
  *
- * Translate instructions from Mesa's prog_instruction structs to our
+ * Translate instructions from our fp_instruction structs to our
  * internal brw_wm_instruction representation.
  */
 void brw_wm_pass0( struct brw_wm_compile *c )
@@ -374,13 +363,13 @@ void brw_wm_pass0( struct brw_wm_compile *c )
    pass0_init_payload(c);
 
    for (insn = 0; insn < c->nr_fp_insns; insn++) {
-      const struct prog_instruction *inst = &c->prog_instructions[insn];
+      const struct brw_fp_instruction *inst = &c->fp_instructions[insn];
 
       /* Optimize away moves, otherwise emit translated instruction:
        */      
-      switch (inst->Opcode) {
-      case OPCODE_MOV: 
-	 if (!inst->dst.Saturate) {
+      switch (inst->opcode) {
+      case TGSI_OPCODE_MOV: 
+	 if (!inst->dst.saturate) {
 	    pass0_precalc_mov(c, inst);
 	 }
 	 else {

@@ -56,9 +56,6 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
-   unsigned proj_attrib_mask;    /**< one bit per fragment program attribute */
-   unsigned linear_attrib_mask;  /**< linear interpolation vs perspective interp */
-
    GLuint source_depth_reg:3;
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
@@ -73,6 +70,7 @@ struct brw_wm_prog_key {
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
 
    GLuint vp_nr_outputs:6;
+   GLuint nr_inputs:6;
    GLuint nr_cbufs:3;
    GLuint has_flow_control:1;
 
@@ -178,6 +176,12 @@ struct brw_wm_instruction {
 
 #define BRW_FILE_PAYLOAD   (TGSI_FILE_COUNT)
 #define PAYLOAD_DEPTH      (PIPE_MAX_SHADER_INPUTS) /* ?? */
+
+#define X    0
+#define Y    1
+#define Z    2
+#define W    3
+#define GET_SWZ(swz, comp) (((swz) >> ((comp)*2)) & 0x3)
 
 
 struct brw_fp_src {

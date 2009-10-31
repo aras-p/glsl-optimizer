@@ -177,7 +177,10 @@ static int do_wm_prog( struct brw_context *brw,
     */
    if (fp->has_flow_control) {
       c->dispatch_width = 8;
-      brw_wm_branching_shader_emit(brw, c);
+      /* XXX: GLSL support
+       */
+      exit(1);
+      //brw_wm_branching_shader_emit(brw, c);
    }
    else {
       c->dispatch_width = 16;
@@ -239,18 +242,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
 		    brw->curr.fragment_shader->uses_depth,
 		    key);
 
-   /* Revisit this, figure out if it's really useful, and either push
-    * it into the state tracker so that everyone benefits (use to
-    * create fs varients with TEX rather than TXP), or discard.
-    */
-   key->proj_attrib_mask = ~0; /*brw->wm.input_size_masks[4-1];*/
-
    /* PIPE_NEW_RAST */
    key->flat_shade = brw->curr.rast->templ.flatshade;
 
-   /* This can be determined by looking at the INTERP mode each input decl.
-    */
-   key->linear_attrib_mask = 0;
 
    /* PIPE_NEW_BOUND_TEXTURES */
    for (i = 0; i < brw->curr.num_textures; i++) {

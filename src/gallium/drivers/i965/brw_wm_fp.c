@@ -46,11 +46,6 @@
 #include "brw_debug.h"
 
 
-#define X    0
-#define Y    1
-#define Z    2
-#define W    3
-#define GET_SWZ(swz, comp) (((swz) >> ((comp)*2)) & 0x3)
 
 
 static const char *wm_opcode_strings[] = {
@@ -850,7 +845,7 @@ static GLboolean projtex( struct brw_wm_compile *c,
    
    if (src.file == TGSI_FILE_INPUT && 
        GET_SWZ(src.swizzle, W) == W &&
-       (c->key.proj_attrib_mask & (1 << src.index)) == 0)
+       c->fp->info.input_interpolate[src.index] != TGSI_INTERPOLATE_PERSPECTIVE)
       return GL_FALSE;
 
    return GL_TRUE;
