@@ -66,7 +66,13 @@ static int validate_inputs(struct YYLTYPE *locp,
 
 static void init_dst_reg(struct prog_dst_register *r);
 
+static void set_dst_reg(struct prog_dst_register *r,
+                        gl_register_file file, GLint index);
+
 static void init_src_reg(struct asm_src_register *r);
+
+static void set_src_reg(struct asm_src_register *r,
+                        gl_register_file file, GLint index);
 
 static void asm_instruction_set_operands(struct asm_instruction *inst,
     const struct prog_dst_register *dst, const struct asm_src_register *src0,
@@ -580,9 +586,7 @@ scalarUse:  srcReg scalarSuffix
 	   temp_sym.param_binding_begin = ~0;
 	   initialize_symbol_from_const(state->prog, & temp_sym, & $1);
 
-	   init_src_reg(& $$);
-	   $$.Base.File = PROGRAM_CONSTANT;
-	   $$.Base.Index = temp_sym.param_binding_begin;
+	   set_src_reg(& $$, PROGRAM_CONSTANT, temp_sym.param_binding_begin);
 	}
 	;
 
@@ -644,9 +648,7 @@ maskedDstReg: dstReg optionalMask optionalCcMask
 
 maskedAddrReg: addrReg addrWriteMask
 	{
-	   init_dst_reg(& $$);
-	   $$.File = PROGRAM_ADDRESS;
-	   $$.Index = 0;
+	   set_dst_reg(& $$, PROGRAM_ADDRESS, 0);
 	   $$.WriteMask = $2.mask;
 	}
 	;
@@ -776,16 +778,13 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	   init_src_reg(& $$);
 	   switch (s->type) {
 	   case at_temp:
-	      $$.Base.File = PROGRAM_TEMPORARY;
-	      $$.Base.Index = s->temp_binding;
+	      set_src_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_param:
-	      $$.Base.File = s->param_binding_type;
-	      $$.Base.Index = s->param_binding_begin;
+	      set_src_reg(& $$, s->param_binding_type, s->param_binding_begin);
 	      break;
 	   case at_attrib:
-	      $$.Base.File = PROGRAM_INPUT;
-	      $$.Base.Index = s->attrib_binding;
+	      set_src_reg(& $$, PROGRAM_INPUT, s->attrib_binding);
 	      state->prog->InputsRead |= (1U << $$.Base.Index);
 
 	      if (!validate_inputs(& @1, state)) {
@@ -800,9 +799,7 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	}
 	| attribBinding
 	{
-	   init_src_reg(& $$);
-	   $$.Base.File = PROGRAM_INPUT;
-	   $$.Base.Index = $1;
+	   set_src_reg(& $$, PROGRAM_INPUT, $1);
 	   state->prog->InputsRead |= (1U << $$.Base.Index);
 
 	   if (!validate_inputs(& @1, state)) {
@@ -832,19 +829,16 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	}
 	| paramSingleItemUse
 	{
-	   init_src_reg(& $$);
-	   $$.Base.File = ($1.name != NULL) 
+           gl_register_file file = ($1.name != NULL) 
 	      ? $1.param_binding_type
 	      : PROGRAM_CONSTANT;
-	   $$.Base.Index = $1.param_binding_begin;
+	   set_src_reg(& $$, file, $1.param_binding_begin);
 	}
 	;
 
 dstReg: resultBinding
 	{
-	   init_dst_reg(& $$);
-	   $$.File = PROGRAM_OUTPUT;
-	   $$.Index = $1;
+	   set_dst_reg(& $$, PROGRAM_OUTPUT, $1);
 	}
 	| USED_IDENTIFIER /* temporaryReg | vertexResultReg */
 	{
@@ -859,19 +853,15 @@ dstReg: resultBinding
 	      YYERROR;
 	   }
 
-	   init_dst_reg(& $$);
 	   switch (s->type) {
 	   case at_temp:
-	      $$.File = PROGRAM_TEMPORARY;
-	      $$.Index = s->temp_binding;
+	      set_dst_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_output:
-	      $$.File = PROGRAM_OUTPUT;
-	      $$.Index = s->output_binding;
+	      set_dst_reg(& $$, PROGRAM_OUTPUT, s->output_binding);
 	      break;
 	   default:
-	      $$.File = s->param_binding_type;
-	      $$.Index = s->param_binding_begin;
+	      set_dst_reg(& $$, s->param_binding_type, s->param_binding_begin);
 	      break;
 	   }
 	}
@@ -2263,11 +2253,48 @@ init_dst_reg(struct prog_dst_register *r)
 }
 
 
+/** Like init_dst_reg() but set the File and Index fields. */
+void
+set_dst_reg(struct prog_dst_register *r, gl_register_file file, GLint index)
+{
+   const GLint maxIndex = 1 << INST_INDEX_BITS;
+   const GLint minIndex = 0;
+   ASSERT(index >= minIndex);
+   ASSERT(index <= maxIndex);
+   ASSERT(file == PROGRAM_TEMPORARY ||
+	  file == PROGRAM_ADDRESS ||
+	  file == PROGRAM_OUTPUT);
+   memset(r, 0, sizeof(*r));
+   r->File = file;
+   r->Index = index;
+   r->WriteMask = WRITEMASK_XYZW;
+   r->CondMask = COND_TR;
+   r->CondSwizzle = SWIZZLE_NOOP;
+}
+
+
 void
 init_src_reg(struct asm_src_register *r)
 {
    memset(r, 0, sizeof(*r));
    r->Base.File = PROGRAM_UNDEFINED;
+   r->Base.Swizzle = SWIZZLE_NOOP;
+   r->Symbol = NULL;
+}
+
+
+/** Like init_src_reg() but set the File and Index fields. */
+void
+set_src_reg(struct asm_src_register *r, gl_register_file file, GLint index)
+{
+   const GLint maxIndex = (1 << INST_INDEX_BITS) - 1;
+   const GLint minIndex = -(1 << INST_INDEX_BITS);
+   ASSERT(index >= minIndex);
+   ASSERT(index <= maxIndex);
+   ASSERT(file < PROGRAM_FILE_MAX);
+   memset(r, 0, sizeof(*r));
+   r->Base.File = file;
+   r->Base.Index = index;
    r->Base.Swizzle = SWIZZLE_NOOP;
    r->Symbol = NULL;
 }
