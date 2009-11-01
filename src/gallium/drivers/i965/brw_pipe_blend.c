@@ -111,6 +111,8 @@ static void *brw_create_blend_state( struct pipe_context *pipe,
 				     const struct pipe_blend_state *templ )
 {
    struct brw_blend_state *blend = CALLOC_STRUCT(brw_blend_state);
+   if (blend == NULL)
+      return NULL;
 
    if (templ->logicop_enable) {
       blend->cc2.logicop_enable = 1;

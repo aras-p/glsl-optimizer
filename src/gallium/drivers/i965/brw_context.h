@@ -102,7 +102,7 @@
  *
  * CS - Clipper.  Mesa's clipping algorithms are imported to run on
  * this unit.  The fixed function part performs cliptesting against
- * the 6 fixed clipplanes and makes descisions on whether or not the
+ * the 6 fixed clipplanes and makes decisions on whether or not the
  * incoming primitive needs to be passed to a thread for clipping.
  * User clip planes are handled via cooperation with the VS thread.
  *
@@ -123,8 +123,6 @@
 struct brw_context;
 
 struct brw_depth_stencil_state {
-   //struct pipe_depth_stencil_alpha_state templ; /* for draw module */
-
    /* Precalculated hardware state:
     */
    struct brw_cc0 cc0;
@@ -138,8 +136,6 @@ struct brw_depth_stencil_state {
 
 
 struct brw_blend_state {
-   //struct pipe_depth_stencil_alpha_state templ; /* for draw module */
-
    /* Precalculated hardware state:
     */
    struct brw_cc2 cc2;
@@ -181,7 +177,7 @@ struct brw_fragment_shader {
 
 
 struct brw_sampler {
-   struct pipe_sampler_state templ;
+   float border_color[4];
    struct brw_ss0 ss0;
    struct brw_ss1 ss1;
    struct brw_ss3 ss3;

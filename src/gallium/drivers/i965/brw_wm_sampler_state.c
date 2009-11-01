@@ -126,10 +126,10 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
 
       if (pf_is_depth_or_stencil(tex->base.format)) {
 	 float bordercolor[4] = {
-	    sampler->templ.border_color[0],
-	    sampler->templ.border_color[0],
-	    sampler->templ.border_color[0],
-	    sampler->templ.border_color[0]
+	    sampler->border_color[0],
+	    sampler->border_color[0],
+	    sampler->border_color[0],
+	    sampler->border_color[0]
 	 };
 	 /* GL specs that border color for depth textures is taken from the
 	  * R channel, while the hardware uses A.  Spam R into all the
@@ -137,7 +137,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
 	  */
 	 brw->wm.sdc_bo[i] = upload_default_color(brw, bordercolor);
       } else {
-	 brw->wm.sdc_bo[i] = upload_default_color(brw, sampler->templ.border_color);
+	 brw->wm.sdc_bo[i] = upload_default_color(brw, sampler->border_color);
       }
    }
 }

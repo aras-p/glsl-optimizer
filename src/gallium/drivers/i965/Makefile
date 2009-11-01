@@ -31,6 +31,7 @@ C_SOURCES = \
 	brw_pipe_query.c \
 	brw_pipe_shader.c \
 	brw_pipe_flush.c \
+	brw_pipe_rast.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
@@ -57,8 +58,8 @@ C_SOURCES = \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
 	brw_screen_tex_layout.c \
-	brw_screen_surface.c \
 	brw_screen_texture.c \
+	brw_screen_surface.c \
 	brw_batchbuffer.c 
 
 include ../../Makefile.template

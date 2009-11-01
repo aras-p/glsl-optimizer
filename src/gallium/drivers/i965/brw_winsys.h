@@ -243,10 +243,10 @@ boolean brw_get_texture_buffer_brw(struct pipe_texture *texture,
  *
  * TODO UGLY
  */
-struct pipe_texture * brw_texture_blanket(struct pipe_screen *screen,
-					  struct pipe_texture *tmplt,
-					  unsigned pitch,
-					  struct brw_winsys_buffer *buffer);
+struct pipe_texture * brw_texture_blanket_ws(struct pipe_screen *screen,
+					     const struct pipe_texture *tmplt,
+					     const unsigned *stride,
+					     struct brw_winsys_buffer *buffer);
 
 
 

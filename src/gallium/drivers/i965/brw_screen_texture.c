@@ -29,12 +29,12 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-/* Code to layout images in a mipmap tree for i965.
- */
+#include "util/u_memory.h"
 
-#include "brw_tex_layout.h"
-
-#define FILE_DEBUG_FLAG DEBUG_MIPTREE
+#include "brw_screen.h"
+#include "brw_defines.h"
+#include "brw_structs.h"
+#include "brw_winsys.h"
 
 
 
@@ -176,92 +176,111 @@ static GLuint translate_tex_format( enum pipe_format pf )
    }
 }
 
-static void
-brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
-{
-   switch (tiling) {
-   case BRW_TILING_NONE:
-      surf->ss3.tiled_surface = 0;
-      surf->ss3.tile_walk = 0;
-      break;
-   case BRW_TILING_X:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-      break;
-   case BRW_TILING_Y:
-      surf->ss3.tiled_surface = 1;
-      surf->ss3.tile_walk = BRW_TILEWALK_YMAJOR;
-      break;
-   }
-}
 
 
 
 
-static void brw_create_texture( struct pipe_screen *screen,
-				const pipe_texture *templ )
+static struct pipe_texture *brw_create_texture( struct pipe_screen *screen,
+						const struct pipe_texture *templ )
 
 {  
+   struct brw_screen *bscreen = brw_screen(screen);
+   struct brw_texture *tex;
+   
+   tex = CALLOC_STRUCT(brw_texture);
+   if (tex == NULL)
+      return NULL;
 
    tex->compressed = pf_is_compressed(tex->base.format);
 
-   if (intel->use_texture_tiling && compress_byte == 0 &&
-       intel->intelScreen->kernel_exec_fencing) {
-      if (IS_965(intel->intelScreen->deviceID) &&
-	  (base_format == GL_DEPTH_COMPONENT ||
-	   base_format == GL_DEPTH_STENCIL_EXT))
-	 tiling = I915_TILING_Y;
+   /* XXX: No tiling with compressed textures??
+    */
+   if (tex->compressed == 0 
+       /* && bscreen->use_texture_tiling */
+       /* && bscreen->kernel_exec_fencing */) 
+   {
+      if (bscreen->chipset.is_965 &&
+	  pf_is_depth_or_stencil(templ->format))
+	 tex->tiling = BRW_TILING_Y;
       else
-	 tiling = I915_TILING_X;
-   } else
-      tiling = I915_TILING_NONE;
+	 tex->tiling = BRW_TILING_X;
+   } 
+   else {
+      tex->tiling = BRW_TILING_NONE;
+   }
 
 
+   memcpy(&tex->base, templ, sizeof *templ);
 
-   key.format = tex->base.format;
-   key.pitch = tex->pitch;
-   key.depth = tex->base.depth[0];
-   key.bo = tex->buffer;
-   key.offset = 0;
+   if (!brw_texture_layout( bscreen, tex ))
+      goto fail;
 
-   key.target = tex->brw_target;	/* translated to BRW enum */
-   //key.depthmode = 0; /* XXX: add this to gallium? or handle in the state tracker? */
-   key.last_level = tex->base.last_level;
-   key.width = tex->base.depth[0];
-   key.height = tex->base.height[0];
-   key.cpp = tex->cpp;
-   key.tiling = tex->tiling;
-
-
-
-   surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf.ss0.surface_type = translate_tex_target(key->target);
-   surf.ss0.surface_format = translate_tex_format(key->format /* , key->depthmode */ );
+   tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
+   tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
+   tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
-/*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   assert(key->bo);
-   surf.ss1.base_addr = key->bo->offset; /* reloc */
-   surf.ss2.mip_count = key->last_level;
-   surf.ss2.width = key->width - 1;
-   surf.ss2.height = key->height - 1;
-   brw_set_surface_tiling(&surf, key->tiling);
-   surf.ss3.pitch = (key->pitch * key->cpp) - 1;
-   surf.ss3.depth = key->depth - 1;
+/*    tex->ss.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
+   tex->ss.ss1.base_addr = tex->bo->offset; /* reloc */
+   tex->ss.ss2.mip_count = tex->base.last_level;
+   tex->ss.ss2.width = tex->base.width[0] - 1;
+   tex->ss.ss2.height = tex->base.height[0] - 1;
 
-   surf.ss4.min_lod = 0;
- 
-   if (key->target == PIPE_TEXTURE_CUBE) {
-      surf.ss0.cube_pos_x = 1;
-      surf.ss0.cube_pos_y = 1;
-      surf.ss0.cube_pos_z = 1;
-      surf.ss0.cube_neg_x = 1;
-      surf.ss0.cube_neg_y = 1;
-      surf.ss0.cube_neg_z = 1;
+   switch (tex->tiling) {
+   case BRW_TILING_NONE:
+      tex->ss.ss3.tiled_surface = 0;
+      tex->ss.ss3.tile_walk = 0;
+      break;
+   case BRW_TILING_X:
+      tex->ss.ss3.tiled_surface = 1;
+      tex->ss.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
+      break;
+   case BRW_TILING_Y:
+      tex->ss.ss3.tiled_surface = 1;
+      tex->ss.ss3.tile_walk = BRW_TILEWALK_YMAJOR;
+      break;
    }
 
+   tex->ss.ss3.pitch = (tex->pitch * tex->cpp) - 1;
+   tex->ss.ss3.depth = tex->base.depth[0] - 1;
+
+   tex->ss.ss4.min_lod = 0;
+ 
+   if (tex->base.target == PIPE_TEXTURE_CUBE) {
+      tex->ss.ss0.cube_pos_x = 1;
+      tex->ss.ss0.cube_pos_y = 1;
+      tex->ss.ss0.cube_pos_z = 1;
+      tex->ss.ss0.cube_neg_x = 1;
+      tex->ss.ss0.cube_neg_y = 1;
+      tex->ss.ss0.cube_neg_z = 1;
+   }
+
+   return &tex->base;
+
+fail:
+   bscreen->sws->bo_unreference(tex->bo);
+   FREE(tex);
+   return NULL;
 }
+
+
+
+static struct pipe_texture *brw_texture_blanket(struct pipe_screen *screen,
+						const struct pipe_texture *templ,
+						const unsigned *stride,
+						struct pipe_buffer *buffer)
+{
+   return NULL;
+}
+
+static void brw_texture_destroy(struct pipe_texture *pt)
+{
+   //bscreen->sws->bo_unreference(tex->bo);
+   FREE(pt);
+}
+
+
 
 
 
