@@ -891,6 +891,43 @@ emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 }
 
 static void
+emit_bitop2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	    struct nv50_reg *src1, unsigned op)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xd0000000;
+	set_long(pc, e);
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+
+	if (op != TGSI_OPCODE_AND && op != TGSI_OPCODE_OR &&
+	    op != TGSI_OPCODE_XOR)
+		assert(!"invalid bit op");
+
+	if (src1->type == P_IMMD && src0->type == P_TEMP && pc->allow32) {
+		set_immd(pc, src1, e);
+		if (op == TGSI_OPCODE_OR)
+			e->inst[0] |= 0x0100;
+		else
+		if (op == TGSI_OPCODE_XOR)
+			e->inst[0] |= 0x8000;
+	} else {
+		set_src_1(pc, src1, e);
+		e->inst[1] |= 0x04000000; /* 32 bit */
+		if (op == TGSI_OPCODE_OR)
+			e->inst[1] |= 0x4000;
+		else
+		if (op == TGSI_OPCODE_XOR)
+			e->inst[1] |= 0x8000;
+	}
+
+	emit(pc, e);
+}
+
+static void
 emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
@@ -1836,6 +1873,16 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_add(pc, dst[c], src[0][c], src[1][c]);
+		}
+		break;
+	case TGSI_OPCODE_AND:
+	case TGSI_OPCODE_XOR:
+	case TGSI_OPCODE_OR:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_bitop2(pc, dst[c], src[0][c], src[1][c],
+				    inst->Instruction.Opcode);
 		}
 		break;
 	case TGSI_OPCODE_ARL:
