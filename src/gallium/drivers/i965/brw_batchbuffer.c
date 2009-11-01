@@ -25,38 +25,42 @@
  * 
  **************************************************************************/
 
+#include "util/u_memory.h"
+
+#include "pipe/p_error.h"
+
 #include "brw_batchbuffer.h"
-#include "brw_decode.h"
+//#include "brw_decode.h"
 #include "brw_reg.h"
 #include "brw_winsys.h"
+#include "brw_debug.h"
+#include "brw_structs.h"
 
+#define BATCH_SIZE (32*1024)
+#define USE_LOCAL_BUFFER 1
+#define ALWAYS_EMIT_MI_FLUSH 1
 
 void
 brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 {
-   struct intel_context *intel = batch->intel;
-
    if (batch->buf != NULL) {
-      brw->sws->bo_unreference(batch->buf);
+      batch->sws->bo_unreference(batch->buf);
       batch->buf = NULL;
    }
 
-   if (!batch->buffer && intel->ttm == GL_TRUE)
-      batch->buffer = malloc (intel->maxBatchSize);
+   if (USE_LOCAL_BUFFER && !batch->buffer)
+      batch->buffer = MALLOC(BATCH_SIZE);
 
    batch->buf = batch->sws->bo_alloc(batch->sws,
 				     BRW_BUFFER_TYPE_BATCH,
-				     intel->maxBatchSize, 4096);
+				     BATCH_SIZE, 4096);
    if (batch->buffer)
       batch->map = batch->buffer;
-   else {
-      batch->sws->bo_map(batch->buf, GL_TRUE);
-      batch->map = batch->buf->virtual;
-   }
-   batch->size = intel->maxBatchSize;
+   else 
+      batch->map = batch->sws->bo_map(batch->buf, GL_TRUE);
+
+   batch->size = BATCH_SIZE;
    batch->ptr = batch->map;
-   batch->dirty_state = ~0;
-   batch->cliprect_mode = IGNORE_CLIPRECTS;
 }
 
 struct brw_batchbuffer *
@@ -74,79 +78,74 @@ void
 brw_batchbuffer_free(struct brw_batchbuffer *batch)
 {
    if (batch->map) {
-      dri_bo_unmap(batch->buf);
+      batch->sws->bo_unmap(batch->buf);
       batch->map = NULL;
    }
 
-   brw->sws->bo_unreference(batch->buf);
+
+   batch->sws->bo_unreference(batch->buf);
    batch->buf = NULL;
+
+   FREE(batch->buffer);
    FREE(batch);
 }
 
 
 void
-_brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
-			 int line)
+_brw_batchbuffer_flush(struct brw_batchbuffer *batch, 
+		       const char *file,
+		       int line)
 {
-   struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
 
    if (used == 0)
       return;
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
-      intel->first_post_swapbuffers_batch = intel->batch->buf;
-      batch->sws->bo_reference(intel->first_post_swapbuffers_batch);
-   }
-
-   if (intel->first_post_swapbuffers_batch == NULL) {
-      intel->first_post_swapbuffers_batch = intel->batch->buf;
-      batch->sws->bo_reference(intel->first_post_swapbuffers_batch);
-   }
-
+   /* Post-swap throttling done by the state tracker.
+    */
 
    if (BRW_DEBUG & DEBUG_BATCH)
-      debug_printf("%s:%d: Batchbuffer flush with %db used\n", file, line,
-	      used);
+      debug_printf("%s:%d: Batchbuffer flush with %db used\n", 
+		   file, line, used);
 
-#if 0
-   if (intel->always_flush_cache || 1) {
-      *(GLuint *) (batch->ptr) = ((CMD_MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
+   if (ALWAYS_EMIT_MI_FLUSH) {
+      *(GLuint *) (batch->ptr) = ((MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
       batch->ptr += 4;
       used = batch->ptr - batch->map;
    }
-#endif
 
-   /* Round batchbuffer usage to 2 DWORDs. */
-
+   /* Round batchbuffer usage to 2 DWORDs. 
+    */
    if ((used & 4) == 0) {
       *(GLuint *) (batch->ptr) = 0; /* noop */
       batch->ptr += 4;
       used = batch->ptr - batch->map;
    }
 
-   /* Mark the end of the buffer. */
-   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END; /* noop */
+   /* Mark the end of the buffer. 
+    */
+   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END;
    batch->ptr += 4;
    used = batch->ptr - batch->map;
 
    batch->sws->bo_unmap(batch->buf);
-
    batch->map = NULL;
    batch->ptr = NULL;
       
    batch->sws->bo_exec(batch->buf, used, NULL, 0, 0 );
-      
+
+#if 0      
    if (BRW_DEBUG & DEBUG_BATCH) {
       void *ptr = batch->sws->bo_map(batch->buf, GL_FALSE);
 
       intel_decode(ptr,
 		   used / 4, 
 		   batch->buf->offset,
-		   batch->chipset);
+		   batch->chipset.pci_id);
 
       batch->sws->bo_unmap(batch->buf);
    }
+#endif
 
    if (BRW_DEBUG & DEBUG_SYNC) {
       /* Abuse map/unmap to achieve wait-for-fence.
@@ -214,7 +213,7 @@ brw_batchbuffer_data(struct brw_batchbuffer *batch,
    if (ret)
       return ret;
 
-   __memcpy(batch->ptr, data, bytes);
+   memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
    return 0;
 }

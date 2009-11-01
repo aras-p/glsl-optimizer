@@ -18,6 +18,43 @@ enum cliprect_mode {
    REFERENCES_CLIPRECTS
 };
 
+
+
+
+struct brw_batchbuffer {
+
+   struct brw_winsys_screen *sws;
+   struct brw_winsys_buffer *buf;
+
+   /* Main-memory copy of the batch-buffer, built up incrementally &
+    * then copied as one to the true buffer.
+    *
+    * XXX: is this still necessary?
+    * XXX: if so, can this be hidden inside the GEM-specific winsys code?
+    */
+   uint8_t *buffer;
+
+   /**
+    * Values exported to speed up the writing the batchbuffer,
+    * instead of having to go trough a accesor function for
+    * each dword written.
+    */
+   /*{@*/
+   uint8_t *map;
+   uint8_t *ptr;
+   size_t size;
+   struct {
+      uint8_t *end_ptr;
+   } emit;
+
+
+   size_t relocs;
+   size_t max_relocs;
+   /*@}*/
+};
+
+struct brw_batchbuffer *brw_batchbuffer_alloc( struct brw_winsys_screen *sws );
+
 void brw_batchbuffer_free(struct brw_batchbuffer *batch);
 
 void _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
@@ -83,26 +120,27 @@ brw_batchbuffer_require_space(struct brw_batchbuffer *batch,
 /* Here are the crusty old macros, to be removed:
  */
 #define BEGIN_BATCH(n, cliprect_mode) do {				\
-   brw_batchbuffer_require_space(brw->batch, (n)*4); \
-} while (0)
+      brw_batchbuffer_require_space(brw->batch, (n)*4);			\
+   } while (0)
 
 #define OUT_BATCH(d) brw_batchbuffer_emit_dword(brw->batch, d)
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
-   assert((unsigned) (delta) < buf->size);				\
-   brw_batchbuffer_emit_reloc(brw->batch, buf,			\
-				read_domains, write_domain, delta);	\
-} while (0)
+      assert((unsigned) (delta) < buf->size);				\
+      brw_batchbuffer_emit_reloc(brw->batch, buf,			\
+				 read_domains, write_domain, delta);	\
+   } while (0)
 
 #ifdef DEBUG
 #define ADVANCE_BATCH() do {						\
-   unsigned int _n = brw->batch->ptr - brw->batch->emit.end_ptr;	\
-   if (_n != 0) {							\
-      debug_printf("%s: %d too many bytes emitted to batch\n", __FUNCTION__, _n); \
-      abort();								\
-   }									\
-   brw->batch->emit.end_ptr = NULL;					\
-} while(0)
+      unsigned int _n = brw->batch->ptr - brw->batch->emit.end_ptr;	\
+      if (_n != 0) {							\
+	 debug_printf("%s: %d too many bytes emitted to batch\n",	\
+		      __FUNCTION__, _n);				\
+	 abort();							\
+      }									\
+      brw->batch->emit.end_ptr = NULL;					\
+   } while(0)
 #else
 #define ADVANCE_BATCH()
 #endif

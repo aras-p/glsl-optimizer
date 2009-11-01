@@ -72,65 +72,7 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_STATE_CACHE,
 };
 
-
-/* AKA winsys context:
- */
-struct brw_batchbuffer {
-
-   struct brw_winsys *iws;
-   struct brw_winsys_buffer *buf;
-
-   /**
-    * Values exported to speed up the writing the batchbuffer,
-    * instead of having to go trough a accesor function for
-    * each dword written.
-    */
-   /*{@*/
-   uint8_t *map;
-   uint8_t *ptr;
-   size_t size;
-   struct {
-      uint8_t *end_ptr;
-   } emit;
-
-
-   size_t relocs;
-   size_t max_relocs;
-   /*@}*/
-};
-
 struct brw_winsys_screen {
-
-   /**
-    * Batchbuffer functions.
-    */
-   /*@{*/
-   /**
-    * Create a new batchbuffer.
-    */
-   struct brw_batchbuffer *(*batchbuffer_create)(struct brw_winsys_screen *iws);
-
-   /**
-    * Emit a relocation to a buffer.
-    * Target position in batchbuffer is the same as ptr.
-    */
-   int (*batchbuffer_reloc)(struct brw_batchbuffer *batch,
-			    unsigned offset,
-                            struct brw_winsys_buffer *reloc,
-			    unsigned pre_add,
-                            enum brw_buffer_usage usage);
-
-   /**
-    * Flush a bufferbatch.
-    */
-   void (*batchbuffer_flush)(struct brw_batchbuffer *batch,
-                             struct pipe_fence_handle **fence);
-
-   /**
-    * Destroy a batchbuffer.
-    */
-   void (*batchbuffer_destroy)(struct brw_batchbuffer *batch);
-   /*@}*/
 
 
    /**
@@ -150,12 +92,21 @@ struct brw_winsys_screen {
     */
    void (*bo_reference)( struct brw_winsys_buffer *buffer );
    void (*bo_unreference)( struct brw_winsys_buffer *buffer );
-   void (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
-			  unsigned domain,
-			  unsigned a,
-			  unsigned b,
-			  unsigned offset,
-			  struct brw_winsys_buffer *b2);
+
+   /* XXX: parameter names!!
+    */
+   int (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
+			 unsigned domain,
+			 unsigned a,
+			 unsigned b,
+			 unsigned offset,
+			 struct brw_winsys_buffer *b2);
+
+   int (*bo_exec)( struct brw_winsys_buffer *buffer,
+		   unsigned bytes_used,
+		   void *foo,
+		   int a,
+		   int b );
 
    void (*bo_subdata)(struct brw_winsys_buffer *buffer,
 		      size_t offset,
@@ -186,29 +137,6 @@ struct brw_winsys_screen {
    /*@}*/
 
 
-   /**
-    * Fence functions.
-    */
-   /*@{*/
-   /**
-    * Reference fence and set ptr to fence.
-    */
-   void (*fence_reference)(struct brw_winsys *iws,
-                           struct pipe_fence_handle **ptr,
-                           struct pipe_fence_handle *fence);
-
-   /**
-    * Check if a fence has finished.
-    */
-   int (*fence_signalled)(struct brw_winsys *iws,
-                          struct pipe_fence_handle *fence);
-
-   /**
-    * Wait on a fence to finish.
-    */
-   int (*fence_finish)(struct brw_winsys *iws,
-                       struct pipe_fence_handle *fence);
-   /*@}*/
 
 
    /**
