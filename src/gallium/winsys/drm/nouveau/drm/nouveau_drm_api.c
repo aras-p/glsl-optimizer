@@ -21,8 +21,7 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	struct pipe_texture tmpl;
 
 	memset(&tmpl, 0, sizeof(tmpl));
-	tmpl.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
-			 NOUVEAU_TEXTURE_USAGE_LINEAR;
+	tmpl.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY;
 	tmpl.target = PIPE_TEXTURE_2D;
 	tmpl.last_level = 0;
 	tmpl.depth[0] = 1;

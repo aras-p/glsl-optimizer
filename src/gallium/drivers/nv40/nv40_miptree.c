@@ -141,6 +141,9 @@ nv40_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->level[0].pitch = stride[0];
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
+	/* Assume whoever created this buffer expects it to be linear for now */
+	mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+
 	pipe_buffer_reference(&mt->buffer, pb);
 	return &mt->base;
 }
