@@ -169,6 +169,7 @@ struct brw_fragment_shader {
    struct tgsi_shader_info info;
 
    unsigned iz_lookup;
+   //unsigned wm_lookup;
    
    boolean  uses_depth:1;
    boolean  has_flow_control:1;

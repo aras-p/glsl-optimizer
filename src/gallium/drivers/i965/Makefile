@@ -29,6 +29,8 @@ C_SOURCES = \
 	brw_pipe_depth.c \
 	brw_pipe_fb.c \
 	brw_pipe_query.c \
+	brw_pipe_shader.c \
+	brw_pipe_flush.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
@@ -56,10 +58,7 @@ C_SOURCES = \
 	brw_wm_surface_state.c \
 	brw_screen_surface.c \
 	brw_screen_texture.c \
-	brw_bo.c \
 	brw_batchbuffer.c \
-	brw_pipe_shader.c \
-	brw_pipe_flush.c \
 	intel_tex_layout.c 
 
 include ../../Makefile.template

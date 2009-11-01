@@ -28,151 +28,151 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
+
+#include "util/u_memory.h"
   
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
+
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_wm.h"
 
 
 /**
- * Determine if the given fragment program uses GLSL features such
- * as flow conditionals, loops, subroutines.
- * Some GLSL shaders may use these features, others might not.
+ * Determine if the given shader uses complex features such as flow
+ * conditionals, loops, subroutines.
  */
 GLboolean brw_wm_has_flow_control(const struct brw_fragment_shader *fp)
 {
-    return (fp->info.insn_count[TGSI_OPCODE_ARL] > 0 ||
-	    fp->info.insn_count[TGSI_OPCODE_IF] > 0 ||
-	    fp->info.insn_count[TGSI_OPCODE_ENDIF] > 0 || /* redundant - IF */
-	    fp->info.insn_count[TGSI_OPCODE_CAL] > 0 ||
-	    fp->info.insn_count[TGSI_OPCODE_BRK] > 0 ||   /* redundant - BGNLOOP */
-	    fp->info.insn_count[TGSI_OPCODE_RET] > 0 ||	  /* redundant - CAL */
-	    fp->info.insn_count[TGSI_OPCODE_BGNLOOP] > 0);
+    return (fp->info.opcode_count[TGSI_OPCODE_ARL] > 0 ||
+	    fp->info.opcode_count[TGSI_OPCODE_IF] > 0 ||
+	    fp->info.opcode_count[TGSI_OPCODE_ENDIF] > 0 || /* redundant - IF */
+	    fp->info.opcode_count[TGSI_OPCODE_CAL] > 0 ||
+	    fp->info.opcode_count[TGSI_OPCODE_BRK] > 0 ||   /* redundant - BGNLOOP */
+	    fp->info.opcode_count[TGSI_OPCODE_RET] > 0 ||   /* redundant - CAL */
+	    fp->info.opcode_count[TGSI_OPCODE_BGNLOOP] > 0);
 }
 
 
 
-static void brwBindProgram( struct brw_context *brw,
-			    GLenum target, 
-			    struct gl_program *prog )
+static void brw_bind_fs_state( struct pipe_context *pipe, void *prog )
 {
-   struct brw_context *brw = brw_context(ctx);
+   struct brw_context *brw = brw_context(pipe);
 
-   switch (target) {
-   case GL_VERTEX_PROGRAM_ARB: 
-      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      break;
-   }
+   brw->curr.fragment_shader = (struct brw_fragment_shader *)prog;
+   brw->state.dirty.mesa |= PIPE_NEW_FRAGMENT_SHADER;
 }
 
-static struct gl_program *brwNewProgram( structg brw_context *brw,
-				      GLenum target, 
-				      GLuint id )
+static void brw_bind_vs_state( struct pipe_context *pipe, void *prog )
 {
-   struct brw_context *brw = brw_context(ctx);
+   struct brw_context *brw = brw_context(pipe);
 
-   switch (target) {
-   case GL_VERTEX_PROGRAM_ARB: {
-      struct brw_vertex_program *prog = CALLOC_STRUCT(brw_vertex_program);
-      if (prog) {
-	 prog->id = brw->program_id++;
-
-	 return _mesa_init_vertex_program( ctx, &prog->program,
-					     target, id );
-      }
-      else
-	 return NULL;
-   }
-
-   case GL_FRAGMENT_PROGRAM_ARB: {
-      struct brw_fragment_program *prog = CALLOC_STRUCT(brw_fragment_program);
-      if (prog) {
-	 prog->id = brw->program_id++;
-
-	 return _mesa_init_fragment_program( ctx, &prog->program,
-					     target, id );
-      }
-      else
-	 return NULL;
-   }
-
-   default:
-      return _mesa_new_program(ctx, target, id);
-   }
+   brw->curr.vertex_shader = (struct brw_vertex_shader *)prog;
+   brw->state.dirty.mesa |= PIPE_NEW_VERTEX_SHADER;
 }
 
-static void brwDeleteProgram( struct brw_context *brw,
-			      struct gl_program *prog )
+
+
+static void *brw_create_fs_state( struct pipe_context *pipe,
+				  const struct pipe_shader_state *shader )
 {
-   if (prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
-      struct brw_fragment_program *brw_fprog = brw_fragment_program(fprog);
-      brw->sws->bo_unreference(brw_fprog->const_buffer);
-   }
+   struct brw_context *brw = brw_context(pipe);
+   struct brw_fragment_shader *fs;
+   int i;
 
-   _mesa_delete_program( ctx, prog );
+   fs = CALLOC_STRUCT(brw_fragment_shader);
+   if (fs == NULL)
+      return NULL;
+
+   /* Duplicate tokens, scan shader
+    */
+   fs->id = brw->program_id++;
+   fs->has_flow_control = brw_wm_has_flow_control(fs);
+
+   fs->tokens = tgsi_dup_tokens(shader->tokens);
+   if (fs->tokens == NULL)
+      goto fail;
+
+   tgsi_scan_shader(fs->tokens, &fs->info);
+
+   for (i = 0; i < fs->info.num_inputs; i++)
+      if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_POSITION)
+	 fs->uses_depth = 1;
+
+   if (fs->info.uses_kill)
+      fs->iz_lookup |= IZ_PS_KILL_ALPHATEST_BIT;
+
+   if (fs->info.writes_z)
+      fs->iz_lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
+
+   return (void *)fs;
+
+fail:
+   FREE(fs);
+   return NULL;
 }
 
 
-static GLboolean brwIsProgramNative( struct brw_context *brw,
-				     GLenum target, 
-				     struct gl_program *prog )
+static void *brw_create_vs_state( struct pipe_context *pipe,
+				  const struct pipe_shader_state *shader )
 {
-   return GL_TRUE;
+   struct brw_context *brw = brw_context(pipe);
+
+   struct brw_vertex_shader *vs = CALLOC_STRUCT(brw_vertex_shader);
+   if (vs == NULL)
+      return NULL;
+
+   /* Duplicate tokens, scan shader
+    */
+   vs->id = brw->program_id++;
+   //vs->has_flow_control = brw_wm_has_flow_control(vs);
+
+   /* Tell the draw module about this shader:
+    */
+   
+   /* Done:
+    */
+   return (void *)vs;
 }
 
-static void brwProgramStringNotify( struct brw_context *brw,
-				    GLenum target,
-				    struct gl_program *prog )
+
+static void brw_delete_fs_state( struct pipe_context *pipe, void *prog )
 {
-   struct brw_context *brw = brw_context(ctx);
+   struct brw_context *brw = brw_context(pipe);
+   struct brw_fragment_shader *fs = (struct brw_fragment_shader *)prog;
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
-      struct brw_fragment_program *newFP = brw_fragment_program(fprog);
-      const struct brw_fragment_program *curFP =
-         brw_fragment_program_const(brw->fragment_program);
-
-      if (fprog->FogOption) {
-         _mesa_append_fog_code(ctx, fprog);
-         fprog->FogOption = GL_NONE;
-      }
-
-      if (newFP == curFP)
-	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      newFP->id = brw->program_id++;      
-      newFP->has_flow_control = brw_wm_has_flow_control(fprog);
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB) {
-      struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
-      struct brw_vertex_program *newVP = brw_vertex_program(vprog);
-      const struct brw_vertex_program *curVP =
-         brw_vertex_program_const(brw->vertex_program);
-
-      if (newVP == curVP)
-	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
-      if (newVP->program.IsPositionInvariant) {
-	 _mesa_insert_mvp_code(ctx, &newVP->program);
-      }
-      newVP->id = brw->program_id++;      
-
-      /* Also tell tnl about it:
-       */
-      _tnl_program_string(ctx, target, prog);
-   }
+   brw->sws->bo_unreference(fs->const_buffer);
+   FREE( (void *)fs->tokens );
+   FREE( fs );
 }
 
-void brwInitFragProgFuncs( struct dd_function_table *functions )
+
+static void brw_delete_vs_state( struct pipe_context *pipe, void *prog )
 {
-   assert(functions->ProgramStringNotify == _tnl_program_string); 
+   struct brw_fragment_shader *vs = (struct brw_fragment_shader *)prog;
 
-   functions->BindProgram = brwBindProgram;
-   functions->NewProgram = brwNewProgram;
-   functions->DeleteProgram = brwDeleteProgram;
-   functions->IsProgramNative = brwIsProgramNative;
-   functions->ProgramStringNotify = brwProgramStringNotify;
+   /* Delete draw shader
+    */
+   FREE( (void *)vs->tokens );
+   FREE( vs );
 }
 
+
+
+
+
+void brw_pipe_shader_init( struct brw_context *brw )
+{
+   brw->base.create_vs_state = brw_create_vs_state;
+   brw->base.bind_vs_state = brw_bind_vs_state;
+   brw->base.delete_vs_state = brw_delete_vs_state;
+
+   brw->base.create_fs_state = brw_create_fs_state;
+   brw->base.bind_fs_state = brw_bind_fs_state;
+   brw->base.delete_fs_state = brw_delete_fs_state;
+}
+
+void brw_pipe_shader_cleanup( struct brw_context *brw )
+{
+}

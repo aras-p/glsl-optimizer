@@ -1,11 +1,15 @@
 
+#include "util/u_upload_mgr.h"
+
+#include "brw_context.h"
+
+
 /**
  * called from brw_batchbuffer_flush and children before sending a
  * batchbuffer off.
  */
-static void brw_finish_batch(struct intel_context *intel)
+static void brw_finish_batch(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
    brw_emit_query_end(brw);
 }
 
@@ -15,9 +19,6 @@ static void brw_finish_batch(struct intel_context *intel)
  */
 static void brw_new_batch( struct brw_context *brw )
 {
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!brw->no_batch_wrap);
-
    brw->curbe.need_new_bo = GL_TRUE;
 
    /* Mark all context state as needing to be re-emitted.
@@ -33,17 +34,9 @@ static void brw_new_batch( struct brw_context *brw )
    /* Move to the end of the current upload buffer so that we'll force choosing
     * a new buffer next time.
     */
-   if (brw->vb.upload.bo != NULL) {
-      brw->sws->bo_unreference(brw->vb.upload.bo);
-      brw->vb.upload.bo = NULL;
-      brw->vb.upload.offset = 0;
-   }
-}
+   u_upload_flush( brw->vb.upload_vertex );
+   u_upload_flush( brw->vb.upload_index );
 
-
-static void brw_note_fence( struct brw_context *brw, GLuint fence )
-{
-   brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_FENCE;
 }
 
 /* called from intelWaitForIdle() and intelFlush()
@@ -52,7 +45,7 @@ static void brw_note_fence( struct brw_context *brw, GLuint fence )
  */
 static GLuint brw_flush_cmd( void )
 {
-   return ((CMD_MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
+   return ((MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
 }
 
 

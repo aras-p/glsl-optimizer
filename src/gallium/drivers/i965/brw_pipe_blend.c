@@ -130,12 +130,24 @@ static void *brw_create_blend_state( struct pipe_context *pipe,
 	 (blend->cc6.dest_blend_factor != blend->cc5.ia_dest_blend_factor ||
 	  blend->cc6.src_blend_factor != blend->cc5.ia_src_blend_factor ||
 	  blend->cc6.blend_function != blend->cc5.ia_blend_function);
+
+      /* Per-surface blend enables, currently just follow global
+       * state:
+       */
+      blend->ss0.color_blend = 1;
    }
 
    blend->cc5.dither_enable = templ->dither;
 
    if (BRW_DEBUG & DEBUG_STATS)
       blend->cc5.statistics_enable = 1;
+
+   /* Per-surface color mask -- just follow global state:
+    */
+   blend->ss0.writedisable_red   = (templ->colormask & PIPE_MASK_R) ? 1 : 0;
+   blend->ss0.writedisable_green = (templ->colormask & PIPE_MASK_G) ? 1 : 0;
+   blend->ss0.writedisable_blue  = (templ->colormask & PIPE_MASK_B) ? 1 : 0;
+   blend->ss0.writedisable_alpha = (templ->colormask & PIPE_MASK_A) ? 1 : 0;
 
    return (void *)blend;
 }

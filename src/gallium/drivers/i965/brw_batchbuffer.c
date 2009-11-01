@@ -109,12 +109,13 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
       debug_printf("%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
 
-   /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (intel->always_flush_cache || !intel->ttm) {
+#if 0
+   if (intel->always_flush_cache || 1) {
       *(GLuint *) (batch->ptr) = ((CMD_MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
       batch->ptr += 4;
       used = batch->ptr - batch->map;
    }
+#endif
 
    /* Round batchbuffer usage to 2 DWORDs. */
 
@@ -137,16 +138,25 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
    batch->sws->bo_exec(batch->buf, used, NULL, 0, 0 );
       
    if (BRW_DEBUG & DEBUG_BATCH) {
-      dri_bo_map(batch->buf, GL_FALSE);
-      intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
-		   brw->brw_screen->pci_id);
-      dri_bo_unmap(batch->buf);
+      void *ptr = batch->sws->bo_map(batch->buf, GL_FALSE);
+
+      intel_decode(ptr,
+		   used / 4, 
+		   batch->buf->offset,
+		   batch->chipset);
+
+      batch->sws->bo_unmap(batch->buf);
    }
 
    if (BRW_DEBUG & DEBUG_SYNC) {
+      /* Abuse map/unmap to achieve wait-for-fence.
+       *
+       * XXX: hide this inside the winsys and export a fence
+       * interface.
+       */
       debug_printf("waiting for idle\n");
-      dri_bo_map(batch->buf, GL_TRUE);
-      dri_bo_unmap(batch->buf);
+      batch->sws->bo_map(batch->buf, GL_TRUE);
+      batch->sws->bo_unmap(batch->buf);
    }
 
    /* Reset the buffer:
@@ -155,9 +165,10 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch, const char *file,
 }
 
 
-/*  This is the only way buffers get added to the validate list.
+/* The OUT_RELOC() macro ends up here, generating a relocation within
+ * the batch buffer.
  */
-GLboolean
+enum pipe_error
 brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
                              struct brw_winsys_buffer *buffer,
                              uint32_t read_domains, uint32_t write_domain,
@@ -165,9 +176,12 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
 {
    int ret;
 
-   if (batch->ptr - batch->map > batch->buf->size)
-      debug_printf ("bad relocation ptr %p map %p offset %d size %d\n",
-		    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
+   if (batch->ptr - batch->map > batch->buf->size) {
+      debug_printf("bad relocation ptr %p map %p offset %d size %d\n",
+		   batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
+
+      return PIPE_ERROR_OUT_OF_MEMORY;
+   }
 
    ret = batch->sws->bo_emit_reloc(batch->buf,
 				   read_domains,
@@ -175,6 +189,8 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
 				   delta, 
 				   batch->ptr - batch->map,
 				   buffer);
+   if (ret != 0)
+      return ret;
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case
@@ -182,17 +198,23 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
     * in the kernel
     */
    brw_batchbuffer_emit_dword (batch, buffer->offset + delta);
-
-   return GL_TRUE;
+   return 0;
 }
 
-void
+enum pipe_error
 brw_batchbuffer_data(struct brw_batchbuffer *batch,
                        const void *data, GLuint bytes,
 		       enum cliprect_mode cliprect_mode)
 {
+   enum pipe_error ret;
+
    assert((bytes & 3) == 0);
-   brw_batchbuffer_require_space(batch, bytes);
+
+   ret = brw_batchbuffer_require_space(batch, bytes);
+   if (ret)
+      return ret;
+
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
+   return 0;
 }
