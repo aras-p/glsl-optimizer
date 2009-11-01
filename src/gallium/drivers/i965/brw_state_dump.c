@@ -67,7 +67,7 @@ state_struct_out(struct brw_winsys_screen *sws,
 
    data = sws->bo_map(buffer, GL_FALSE);
    for (i = 0; i < state_size / 4; i++) {
-      state_out(name, data, buffer->offset, i,
+      state_out(name, data, buffer->offset[0], i,
 		"dword %d\n", i);
    }
    sws->bo_unmap(buffer);
@@ -115,7 +115,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
 	 continue;
       }
       surf = (struct brw_surface_state *)brw->sws->bo_map(surf_bo, GL_FALSE);
-      surfoff = surf_bo->offset;
+      surfoff = surf_bo->offset[0];
 
       sprintf(name, "WM SS%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
@@ -145,7 +145,7 @@ static void dump_sf_viewport_state(struct brw_context *brw)
       return;
 
    vp = (struct brw_sf_viewport *)brw->sws->bo_map(brw->sf.vp_bo, GL_FALSE);
-   vp_off = brw->sf.vp_bo->offset;
+   vp_off = brw->sf.vp_bo->offset[0];
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
    state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);

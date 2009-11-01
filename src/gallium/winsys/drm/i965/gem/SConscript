@@ -4,9 +4,7 @@ env = drienv.Clone()
 
 i965drm_sources = [
     'i965_drm_api.c',
-    'i965_drm_batchbuffer.c',
     'i965_drm_buffer.c',
-    'i965_drm_fence.c',
 ]
 
 i965drm = env.ConvenienceLibrary(

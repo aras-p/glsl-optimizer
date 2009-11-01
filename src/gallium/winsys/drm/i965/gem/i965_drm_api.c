@@ -1,11 +1,12 @@
 
+#include <stdio.h>
 #include "state_tracker/drm_api.h"
 
 #include "i965_drm_winsys.h"
 #include "util/u_memory.h"
 
-#include "brw/brw_context.h"	/* XXX: shouldn't be doing this */
-#include "brw/brw_screen.h"	/* XXX: shouldn't be doing this */
+#include "i965/brw_context.h"	/* XXX: shouldn't be doing this */
+#include "i965/brw_screen.h"	/* XXX: shouldn't be doing this */
 
 #include "trace/tr_drm.h"
 
@@ -15,7 +16,7 @@
 
 
 static void
-i965_drm_get_device_id(unsigned int *device_id)
+i965_libdrm_get_device_id(unsigned int *device_id)
 {
    char path[512];
    FILE *file;
@@ -36,29 +37,28 @@ i965_drm_get_device_id(unsigned int *device_id)
    fclose(file);
 }
 
-static struct i965_buffer *
-i965_drm_buffer_from_handle(struct i965_drm_winsys *idws,
+static struct i965_libdrm_buffer *
+i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
                              const char* name, unsigned handle)
 {
-   struct i965_drm_buffer *buf = CALLOC_STRUCT(i965_drm_buffer);
+   struct i965_libdrm_buffer *buf = CALLOC_STRUCT(i965_libdrm_buffer);
    uint32_t tile = 0, swizzle = 0;
 
    if (!buf)
       return NULL;
 
-   buf->magic = 0xDEAD1337;
-   buf->bo = drm_i965_bo_gem_create_from_name(idws->pools.gem, name, handle);
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem, name, handle);
    buf->flinked = TRUE;
    buf->flink = handle;
 
    if (!buf->bo)
       goto err;
 
-   drm_i965_bo_get_tiling(buf->bo, &tile, &swizzle);
-   if (tile != I965_TILE_NONE)
+   drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
+   if (tile != 0)
       buf->map_gtt = TRUE;
 
-   return (struct i965_buffer *)buf;
+   return buf;
 
 err:
    FREE(buf);
@@ -72,38 +72,43 @@ err:
 
 
 static struct pipe_texture *
-i965_drm_texture_from_shared_handle(struct drm_api *api,
+i965_libdrm_texture_from_shared_handle(struct drm_api *api,
                                      struct pipe_screen *screen,
-                                     struct pipe_texture *templ,
+                                     struct pipe_texture *template,
                                      const char* name,
                                      unsigned pitch,
                                      unsigned handle)
 {
-   struct i965_drm_winsys *idws = i965_drm_winsys(i965_screen(screen)->iws);
-   struct i965_buffer *buffer;
+   /* XXX: this is silly -- there should be a way to get directly from
+    * the "drm_api" struct to ourselves, without peering into
+    * unrelated code:
+    */
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(brw_screen(screen)->sws);
+   struct i965_libdrm_buffer *buffer;
 
-   buffer = i965_drm_buffer_from_handle(idws, name, handle);
+   buffer = i965_libdrm_buffer_from_handle(idws, name, handle);
    if (!buffer)
       return NULL;
 
-   return i965_texture_blanket_i965(screen, templ, pitch, buffer);
+   return brw_texture_blanket_winsys_buffer(screen, template, pitch, &buffer->base);
 }
 
+
 static boolean
-i965_drm_shared_handle_from_texture(struct drm_api *api,
+i965_libdrm_shared_handle_from_texture(struct drm_api *api,
                                      struct pipe_screen *screen,
                                      struct pipe_texture *texture,
                                      unsigned *pitch,
                                      unsigned *handle)
 {
-   struct i965_drm_buffer *buf = NULL;
-   struct i965_buffer *buffer = NULL;
-   if (!i965_get_texture_buffer_i965(texture, &buffer, pitch))
+   struct i965_libdrm_buffer *buf = NULL;
+   struct brw_winsys_buffer *buffer = NULL;
+   if (!brw_texture_get_winsys_buffer(texture, &buffer, pitch))
       return FALSE;
 
-   buf = i965_drm_buffer(buffer);
+   buf = i965_libdrm_buffer(buffer);
    if (!buf->flinked) {
-      if (drm_i965_bo_flink(buf->bo, &buf->flink))
+      if (drm_intel_bo_flink(buf->bo, &buf->flink))
          return FALSE;
       buf->flinked = TRUE;
    }
@@ -114,36 +119,36 @@ i965_drm_shared_handle_from_texture(struct drm_api *api,
 }
 
 static boolean
-i965_drm_local_handle_from_texture(struct drm_api *api,
+i965_libdrm_local_handle_from_texture(struct drm_api *api,
                                     struct pipe_screen *screen,
                                     struct pipe_texture *texture,
                                     unsigned *pitch,
                                     unsigned *handle)
 {
-   struct i965_buffer *buffer = NULL;
-   if (!i965_get_texture_buffer_i965(texture, &buffer, pitch))
+   struct brw_winsys_buffer *buffer = NULL;
+   if (!brw_texture_get_winsys_buffer(texture, &buffer, pitch))
       return FALSE;
 
-   *handle = i965_drm_buffer(buffer)->bo->handle;
+   *handle = i965_libdrm_buffer(buffer)->bo->handle;
 
    return TRUE;
 }
 
 static void
-i965_drm_winsys_destroy(struct i965_winsys *iws)
+i965_libdrm_winsys_destroy(struct brw_winsys_screen *iws)
 {
-   struct i965_drm_winsys *idws = i965_drm_winsys(iws);
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(iws);
 
-   drm_i965_bufmgr_destroy(idws->pools.gem);
+   drm_intel_bufmgr_destroy(idws->gem);
 
    FREE(idws);
 }
 
 static struct pipe_screen *
-i965_drm_create_screen(struct drm_api *api, int drmFD,
+i965_libdrm_create_screen(struct drm_api *api, int drmFD,
 		      struct drm_create_screen_arg *arg)
 {
-   struct i965_drm_winsys *idws;
+   struct i965_libdrm_winsys *idws;
    unsigned int deviceID;
 
    if (arg != NULL) {
@@ -155,35 +160,31 @@ i965_drm_create_screen(struct drm_api *api, int drmFD,
       }
    }
 
-   idws = CALLOC_STRUCT(i965_drm_winsys);
+   idws = CALLOC_STRUCT(i965_libdrm_winsys);
    if (!idws)
       return NULL;
 
-   i965_drm_get_device_id(&deviceID);
+   i965_libdrm_get_device_id(&deviceID);
 
-   i965_drm_winsys_init_batchbuffer_functions(idws);
-   i965_drm_winsys_init_buffer_functions(idws);
-   i965_drm_winsys_init_fence_functions(idws);
+   i965_libdrm_winsys_init_buffer_functions(idws);
 
    idws->fd = drmFD;
    idws->id = deviceID;
-   idws->max_batch_size = 16 * 4096;
 
-   idws->base.destroy = i965_drm_winsys_destroy;
+   idws->base.destroy = i965_libdrm_winsys_destroy;
 
-   idws->pools.gem = drm_i965_bufmgr_gem_init(idws->fd, idws->max_batch_size);
-   drm_i965_bufmgr_gem_enable_reuse(idws->pools.gem);
+   idws->gem = drm_intel_bufmgr_gem_init(idws->fd, BRW_BATCH_SIZE);
+   drm_intel_bufmgr_gem_enable_reuse(idws->gem);
 
-   idws->softpipe = FALSE;
    idws->dump_cmd = debug_get_bool_option("I965_DUMP_CMD", FALSE);
 
-   return i965_create_screen(&idws->base, deviceID);
+   return brw_create_screen(&idws->base, deviceID);
 }
 
 static struct pipe_context *
-i965_drm_create_context(struct drm_api *api, struct pipe_screen *screen)
+i965_libdrm_create_context(struct drm_api *api, struct pipe_screen *screen)
 {
-   return i965_create_context(screen);
+   return brw_create_context(screen);
 }
 
 static void
@@ -192,18 +193,18 @@ destroy(struct drm_api *api)
 
 }
 
-struct drm_api i965_drm_api =
+struct drm_api i965_libdrm_api =
 {
-   .create_context = i965_drm_create_context,
-   .create_screen = i965_drm_create_screen,
-   .texture_from_shared_handle = i965_drm_texture_from_shared_handle,
-   .shared_handle_from_texture = i965_drm_shared_handle_from_texture,
-   .local_handle_from_texture = i965_drm_local_handle_from_texture,
+   .create_context = i965_libdrm_create_context,
+   .create_screen = i965_libdrm_create_screen,
+   .texture_from_shared_handle = i965_libdrm_texture_from_shared_handle,
+   .shared_handle_from_texture = i965_libdrm_shared_handle_from_texture,
+   .local_handle_from_texture = i965_libdrm_local_handle_from_texture,
    .destroy = destroy,
 };
 
 struct drm_api *
 drm_api_create()
 {
-   return trace_drm_create(&i965_drm_api);
+   return trace_drm_create(&i965_libdrm_api);
 }

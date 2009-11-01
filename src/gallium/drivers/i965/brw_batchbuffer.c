@@ -36,7 +36,6 @@
 #include "brw_debug.h"
 #include "brw_structs.h"
 
-#define BATCH_SIZE (32*1024)
 #define USE_LOCAL_BUFFER 1
 #define ALWAYS_EMIT_MI_FLUSH 1
 
@@ -49,17 +48,17 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
    }
 
    if (USE_LOCAL_BUFFER && !batch->buffer)
-      batch->buffer = MALLOC(BATCH_SIZE);
+      batch->buffer = MALLOC(BRW_BATCH_SIZE);
 
    batch->buf = batch->sws->bo_alloc(batch->sws,
 				     BRW_BUFFER_TYPE_BATCH,
-				     BATCH_SIZE, 4096);
+				     BRW_BATCH_SIZE, 4096);
    if (batch->buffer)
       batch->map = batch->buffer;
    else 
       batch->map = batch->sws->bo_map(batch->buf, GL_TRUE);
 
-   batch->size = BATCH_SIZE;
+   batch->size = BRW_BATCH_SIZE;
    batch->ptr = batch->map;
 }
 
@@ -132,7 +131,7 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
    batch->map = NULL;
    batch->ptr = NULL;
       
-   batch->sws->bo_exec(batch->buf, used, NULL, 0, 0 );
+   batch->sws->bo_exec(batch->buf, used );
 
 #if 0      
    if (BRW_DEBUG & DEBUG_BATCH) {
@@ -196,7 +195,7 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
     * the buffer doesn't move and we can short-circuit the relocation processing
     * in the kernel
     */
-   brw_batchbuffer_emit_dword (batch, buffer->offset + delta);
+   brw_batchbuffer_emit_dword (batch, buffer->offset[0] + delta);
    return 0;
 }
 

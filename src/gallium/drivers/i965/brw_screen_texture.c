@@ -222,7 +222,11 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    tex->ss.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   tex->ss.ss1.base_addr = tex->bo->offset; /* reloc */
+
+
+   /* XXX: what happens when tex->bo->offset changes???
+    */
+   tex->ss.ss1.base_addr = tex->bo->offset[0]; /* reloc */
    tex->ss.ss2.mip_count = tex->base.last_level;
    tex->ss.ss2.width = tex->base.width[0] - 1;
    tex->ss.ss2.height = tex->base.height[0] - 1;

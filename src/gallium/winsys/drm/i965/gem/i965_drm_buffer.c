@@ -3,48 +3,58 @@
 #include "util/u_memory.h"
 
 #include "i915_drm.h"
+#include "intel_bufmgr.h"
 
-static struct intel_buffer *
-intel_drm_buffer_create(struct intel_winsys *iws,
-                        unsigned size, unsigned alignment,
-                        enum intel_buffer_type type)
+const char *names[BRW_BUFFER_TYPE_MAX] = {
+   "texture",
+   "scanout",
+   "vertex",
+   "curbe",
+   "query",
+   "shader_constants",
+   "wm_scratch",
+   "batch",
+   "state_cache",
+};
+
+static struct brw_winsys_buffer *
+i965_libdrm_bo_alloc( struct brw_winsys_screen *sws,
+		      enum brw_buffer_type type,
+		      unsigned size,
+		      unsigned alignment )
 {
-   struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
-   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
-   drm_intel_bufmgr *pool;
-   char *name;
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(sws);
+   struct i965_libdrm_buffer *buf;
 
+   buf = CALLOC_STRUCT(i965_libdrm_buffer);
    if (!buf)
       return NULL;
 
-   buf->magic = 0xDEAD1337;
-   buf->flinked = FALSE;
-   buf->flink = 0;
-   buf->map_gtt = FALSE;
-
-   if (type == INTEL_NEW_TEXTURE) {
-      name = "gallium3d_texture";
-      pool = idws->pools.gem;
-   } else if (type == INTEL_NEW_VERTEX) {
-      name = "gallium3d_vertex";
-      pool = idws->pools.gem;
+   switch (type) {
+   case BRW_BUFFER_TYPE_TEXTURE:
+      break;
+   case BRW_BUFFER_TYPE_VERTEX:
       buf->map_gtt = TRUE;
-   } else if (type == INTEL_NEW_SCANOUT) {
-      name = "gallium3d_scanout";
-      pool = idws->pools.gem;
+      break;
+   case BRW_BUFFER_TYPE_SCANOUT:
       buf->map_gtt = TRUE;
-   } else {
-      assert(0);
-      name = "gallium3d_unknown";
-      pool = idws->pools.gem;
+      break;
+   default:
+      break;
    }
 
-   buf->bo = drm_intel_bo_alloc(pool, name, size, alignment);
+   buf->bo = drm_intel_bo_alloc(idws->gem, 
+				names[type], 
+				size, 
+				alignment);
 
    if (!buf->bo)
       goto err;
 
-   return (struct intel_buffer *)buf;
+   buf->base.offset = &buf->bo->offset;
+   buf->base.size = size;
+
+   return &buf->base;
 
 err:
    assert(0);
@@ -52,103 +62,186 @@ err:
    return NULL;
 }
 
-static int
-intel_drm_buffer_set_fence_reg(struct intel_winsys *iws,
-                               struct intel_buffer *buffer,
-                               unsigned stride,
-                               enum intel_buffer_tile tile)
-{
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
-   assert(I915_TILING_NONE == INTEL_TILE_NONE);
-   assert(I915_TILING_X == INTEL_TILE_X);
-   assert(I915_TILING_Y == INTEL_TILE_Y);
 
-   if (tile != INTEL_TILE_NONE) {
-      assert(buf->map_count == 0);
-      buf->map_gtt = TRUE;
+
+
+/* Reference and unreference buffers:
+ */
+static void 
+i965_libdrm_bo_reference( struct brw_winsys_buffer *buffer )
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+
+   /* I think we have to refcount ourselves and then just pass through
+    * the final dereference to the bo on destruction.
+    */
+   buf->cheesy_refcount++;
+}
+
+static void 
+i965_libdrm_bo_unreference( struct brw_winsys_buffer *buffer )
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+
+   if (--buf->cheesy_refcount == 0) {
+      drm_intel_bo_unreference(buf->bo);
+      FREE(buffer);
+   }
+}
+
+   /* XXX: parameter names!!
+    */
+static int 
+i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
+			   unsigned domain,
+			   unsigned a,
+			   unsigned b,
+			   unsigned offset,
+			   struct brw_winsys_buffer *buffer2)
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   struct i965_libdrm_buffer *buf2 = i965_libdrm_buffer(buffer2);
+   int ret;
+
+   ret = dri_bo_emit_reloc( buf->bo, domain, a, b, offset, buf2->bo );
+   if (ret)
+      return -1;
+
+   return 0;
+}
+
+static int 
+i965_libdrm_bo_exec( struct brw_winsys_buffer *buffer,
+		     unsigned bytes_used )
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   int ret;
+
+   ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
+   if (ret)
+      return -1;
+
+   return 0;
+}
+
+static int
+i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
+		       size_t offset,
+		       size_t size,
+		       const void *data)
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   int ret;
+
+   /* XXX: use bo_map_gtt/memcpy/unmap_gtt under some circumstances???
+    */
+   ret = drm_intel_bo_subdata(buf->bo, offset, size, (void*)data);
+   if (ret)
+      return -1;
+   
+   return 0;
+}
+
+
+static boolean 
+i965_libdrm_bo_is_busy(struct brw_winsys_buffer *buffer)
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+
+   return drm_intel_bo_busy(buf->bo);
+}
+
+static boolean 
+i965_libdrm_bo_references(struct brw_winsys_buffer *a,
+			  struct brw_winsys_buffer *b)
+{
+   struct i965_libdrm_buffer *bufa = i965_libdrm_buffer(a);
+   struct i965_libdrm_buffer *bufb = i965_libdrm_buffer(b);
+
+   /* XXX: can't find this func:
+    */
+   return drm_intel_bo_references(bufa->bo, bufb->bo);
+}
+
+/* XXX: couldn't this be handled by returning true/false on
+ * bo_emit_reloc?
+ */
+static boolean 
+i965_libdrm_check_aperture_space( struct brw_winsys_screen *iws,
+				  struct brw_winsys_buffer **buffers,
+				  unsigned count )
+{
+   static drm_intel_bo *bos[128];
+   int i;
+
+   if (count > Elements(bos)) {
+      assert(0);
+      return FALSE;
    }
 
-   return drm_intel_bo_set_tiling(buf->bo, &tile, stride);
+   for (i = 0; i < count; i++)
+      bos[i] = i965_libdrm_buffer(buffers[i])->bo;
+
+   return dri_bufmgr_check_aperture_space(bos, count);
 }
 
+/**
+ * Map a buffer.
+ */
 static void *
-intel_drm_buffer_map(struct intel_winsys *iws,
-                     struct intel_buffer *buffer,
-                     boolean write)
+i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
+		   boolean write)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
-   drm_intel_bo *bo = intel_bo(buffer);
-   int ret = 0;
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   int ret;
 
-   assert(bo);
-
-   if (buf->map_count)
-      goto out;
-
-   if (buf->map_gtt)
-      ret = drm_intel_gem_bo_map_gtt(bo);
-   else
-      ret = drm_intel_bo_map(bo, write);
-
-   buf->ptr = bo->virtual;
-
-   assert(ret == 0);
-out:
-   if (ret)
-      return NULL;
+   if (!buf->map_count) {
+      if (buf->map_gtt) {
+	 ret = drm_intel_gem_bo_map_gtt(buf->bo);
+	 if (ret)
+	    return NULL;
+      }
+      else {
+	 ret = drm_intel_bo_map(buf->bo, write);
+	 if (ret)
+	    return NULL;
+      }
+   }
 
    buf->map_count++;
-   return buf->ptr;
+   return buf->bo->virtual;
 }
 
-static void
-intel_drm_buffer_unmap(struct intel_winsys *iws,
-                       struct intel_buffer *buffer)
+/**
+ * Unmap a buffer.
+ */
+static void 
+i965_libdrm_bo_unmap(struct brw_winsys_buffer *buffer)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
 
-   if (--buf->map_count)
+   if (--buf->map_count > 0)
       return;
 
    if (buf->map_gtt)
-      drm_intel_gem_bo_unmap_gtt(intel_bo(buffer));
+      drm_intel_gem_bo_unmap_gtt(buf->bo);
    else
-      drm_intel_bo_unmap(intel_bo(buffer));
+      drm_intel_bo_unmap(buf->bo);
 }
 
-static int
-intel_drm_buffer_write(struct intel_winsys *iws,
-                       struct intel_buffer *buffer,
-                       size_t offset,
-                       size_t size,
-                       const void *data)
-{
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
-
-   return drm_intel_bo_subdata(buf->bo, offset, size, (void*)data);
-}
-
-static void
-intel_drm_buffer_destroy(struct intel_winsys *iws,
-                         struct intel_buffer *buffer)
-{
-   drm_intel_bo_unreference(intel_bo(buffer));
-
-#ifdef DEBUG
-   intel_drm_buffer(buffer)->magic = 0;
-   intel_drm_buffer(buffer)->bo = NULL;
-#endif
-
-   FREE(buffer);
-}
 
 void
-intel_drm_winsys_init_buffer_functions(struct intel_drm_winsys *idws)
+i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws)
 {
-   idws->base.buffer_create = intel_drm_buffer_create;
-   idws->base.buffer_set_fence_reg = intel_drm_buffer_set_fence_reg;
-   idws->base.buffer_map = intel_drm_buffer_map;
-   idws->base.buffer_unmap = intel_drm_buffer_unmap;
-   idws->base.buffer_write = intel_drm_buffer_write;
-   idws->base.buffer_destroy = intel_drm_buffer_destroy;
+   idws->base.bo_alloc             = i965_libdrm_bo_alloc;
+   idws->base.bo_reference         = i965_libdrm_bo_reference;
+   idws->base.bo_unreference       = i965_libdrm_bo_unreference;
+   idws->base.bo_emit_reloc        = i965_libdrm_bo_emit_reloc;
+   idws->base.bo_exec              = i965_libdrm_bo_exec;
+   idws->base.bo_subdata           = i965_libdrm_bo_subdata;
+   idws->base.bo_is_busy           = i965_libdrm_bo_is_busy;
+   idws->base.bo_references        = i965_libdrm_bo_references;
+   idws->base.check_aperture_space = i965_libdrm_check_aperture_space;
+   idws->base.bo_map               = i965_libdrm_bo_map;
+   idws->base.bo_unmap             = i965_libdrm_bo_unmap;
 }

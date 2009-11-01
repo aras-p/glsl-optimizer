@@ -148,7 +148,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    memset(&wm, 0, sizeof(wm));
 
    wm.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
-   wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
+   wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset[0] >> 6; /* reloc */
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
@@ -159,7 +159,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
-	 brw->wm.scratch_bo->offset >> 10; /* reloc */
+	 brw->wm.scratch_bo->offset[0] >> 10; /* reloc */
       wm.thread2.per_thread_scratch_space = key->total_scratch / 1024 - 1;
    } else {
       wm.thread2.scratch_space_base_pointer = 0;
@@ -179,7 +179,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    if (brw->wm.sampler_bo != NULL) {
       /* reloc */
-      wm.wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;
+      wm.wm4.sampler_state_pointer = brw->wm.sampler_bo->offset[0] >> 5;
    } else {
       wm.wm4.sampler_state_pointer = 0;
    }

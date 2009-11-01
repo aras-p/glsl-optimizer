@@ -118,7 +118,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        */
       brw->sws->bo_emit_reloc(brw->wm.surf_bo[unit],
 			      I915_GEM_DOMAIN_RENDER, 0, 
-			      ss.ss1.base_addr - surface->bo->offset, /* XXX */
+			      ss.ss1.base_addr - surface->bo->offset[0], /* XXX */
 			      offsetof(struct brw_surface_state, ss1),
 			      surface->bo);
    }
@@ -150,7 +150,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
       int i;
 
       for (i = 0; i < brw->wm.nr_surfaces; i++)
-	 data[i] = brw->wm.surf_bo[i]->offset;
+	 data[i] = brw->wm.surf_bo[i]->offset[0];
 
       bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,

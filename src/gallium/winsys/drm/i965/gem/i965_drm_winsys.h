@@ -2,10 +2,11 @@
 #ifndef INTEL_DRM_WINSYS_H
 #define INTEL_DRM_WINSYS_H
 
-#include "i965/intel_batchbuffer.h"
+#include "i965/brw_winsys.h"
 
 #include "drm.h"
 #include "intel_bufmgr.h"
+
 
 
 /*
@@ -13,45 +14,33 @@
  */
 
 
-struct intel_drm_winsys
+struct i965_libdrm_winsys
 {
-   struct intel_winsys base;
+   struct brw_winsys_screen base;
+   drm_intel_bufmgr *gem;
 
-   boolean softpipe;
    boolean dump_cmd;
 
    int fd; /**< Drm file discriptor */
 
    unsigned id;
-
-   size_t max_batch_size;
-
-   struct {
-      drm_intel_bufmgr *gem;
-   } pools;
 };
 
-static INLINE struct intel_drm_winsys *
-intel_drm_winsys(struct intel_winsys *iws)
+static INLINE struct i965_libdrm_winsys *
+i965_libdrm_winsys(struct brw_winsys_screen *iws)
 {
-   return (struct intel_drm_winsys *)iws;
+   return (struct i965_libdrm_winsys *)iws;
 }
 
-struct intel_drm_winsys * intel_drm_winsys_create(int fd, unsigned pci_id);
-struct pipe_fence_handle * intel_drm_fence_create(drm_intel_bo *bo);
+struct i965_libdrm_winsys *i965_libdrm_winsys_create(int fd, unsigned pci_id);
 
-void intel_drm_winsys_init_batchbuffer_functions(struct intel_drm_winsys *idws);
-void intel_drm_winsys_init_buffer_functions(struct intel_drm_winsys *idws);
-void intel_drm_winsys_init_fence_functions(struct intel_drm_winsys *idws);
+void i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws);
 
 
-/*
- * Buffer
+/* Buffer.  
  */
-
-
-struct intel_drm_buffer {
-   unsigned magic;
+struct i965_libdrm_buffer {
+   struct brw_winsys_buffer base;
 
    drm_intel_bo *bo;
 
@@ -61,18 +50,15 @@ struct intel_drm_buffer {
 
    boolean flinked;
    unsigned flink;
+
+   unsigned cheesy_refcount;
 };
 
-static INLINE struct intel_drm_buffer *
-intel_drm_buffer(struct intel_buffer *buffer)
+static INLINE struct i965_libdrm_buffer *
+i965_libdrm_buffer(struct brw_winsys_buffer *buffer)
 {
-   return (struct intel_drm_buffer *)buffer;
+   return (struct i965_libdrm_buffer *)buffer;
 }
 
-static INLINE drm_intel_bo *
-intel_bo(struct intel_buffer *buffer)
-{
-   return intel_drm_buffer(buffer)->bo;
-}
 
 #endif

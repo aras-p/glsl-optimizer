@@ -31,12 +31,15 @@
 struct brw_winsys;
 struct pipe_fence_handle;
 
-/* This currently just wraps dri_bo:
+/* Not sure why the winsys needs this:
+ */
+#define BRW_BATCH_SIZE (32*1024)
+
+
+/* Need a tiny bit of information inside the abstract buffer struct:
  */
 struct brw_winsys_buffer {
-   struct brw_winsys_screen *sws;
-   void *bo;
-   unsigned offset;
+   unsigned *offset;
    unsigned size;
 };
 
@@ -70,6 +73,8 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_WM_SCRATCH,
    BRW_BUFFER_TYPE_BATCH,
    BRW_BUFFER_TYPE_STATE_CACHE,
+   
+   BRW_BUFFER_TYPE_MAX		/* Count of possible values */
 };
 
 struct brw_winsys_screen {
@@ -103,12 +108,9 @@ struct brw_winsys_screen {
 			 struct brw_winsys_buffer *b2);
 
    int (*bo_exec)( struct brw_winsys_buffer *buffer,
-		   unsigned bytes_used,
-		   void *foo,
-		   int a,
-		   int b );
+		   unsigned bytes_used );
 
-   void (*bo_subdata)(struct brw_winsys_buffer *buffer,
+   int (*bo_subdata)(struct brw_winsys_buffer *buffer,
 		      size_t offset,
 		      size_t size,
 		      const void *data);
@@ -142,14 +144,14 @@ struct brw_winsys_screen {
    /**
     * Destroy the winsys.
     */
-   void (*destroy)(struct brw_winsys *iws);
+   void (*destroy)(struct brw_winsys_screen *iws);
 };
 
 
 /**
  * Create brw pipe_screen.
  */
-struct pipe_screen *brw_create_screen(struct brw_winsys *iws, unsigned pci_id);
+struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws, unsigned pci_id);
 
 /**
  * Create a brw pipe_context.
@@ -162,19 +164,20 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen);
  * TODO UGLY
  */
 struct pipe_texture;
-boolean brw_get_texture_buffer_brw(struct pipe_texture *texture,
-				    struct brw_winsys_buffer **buffer,
-				    unsigned *stride);
+boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
+				      struct brw_winsys_buffer **buffer,
+				      unsigned *stride);
 
 /**
  * Wrap a brw_winsys buffer with a texture blanket.
  *
  * TODO UGLY
  */
-struct pipe_texture * brw_texture_blanket_ws(struct pipe_screen *screen,
-					     const struct pipe_texture *tmplt,
-					     const unsigned *stride,
-					     struct brw_winsys_buffer *buffer);
+struct pipe_texture * 
+brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
+				  const struct pipe_texture *template,
+				  const unsigned pitch,
+				  struct brw_winsys_buffer *buffer);
 
 
 

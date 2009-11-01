@@ -87,7 +87,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    memset(&vs, 0, sizeof(vs));
 
-   vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
+   vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset[0] >> 6; /* reloc */
    vs.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    vs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    /* Choosing multiple program flow means that we may get 2-vertex threads,
