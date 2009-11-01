@@ -1,135 +1,51 @@
+/*
+ Copyright (C) Intel Corp.  2006.  All Rights Reserved.
+ Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ develop this 3D driver.
+ 
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ 
+ The above copyright notice and this permission notice (including the
+ next paragraph) shall be included in all copies or substantial
+ portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ 
+ **********************************************************************/
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  */
+
+#include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "pipe/p_screen.h"
 #include "brw_screen.h"
+#include "brw_defines.h"
 
-
-/**
- * Sets up a surface state structure to point at the given region.
- * While it is only used for the front/back buffer currently, it should be
- * usable for further buffers when doing ARB_draw_buffer support.
- */
-static void
-brw_update_renderbuffer_surface(struct brw_context *brw,
-				struct gl_renderbuffer *rb,
-				unsigned int unit)
-{
-   struct brw_winsys_buffer *region_bo = NULL;
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   struct intel_region *region = irb ? irb->region : NULL;
-   struct {
-      unsigned int surface_type;
-      unsigned int surface_format;
-      unsigned int width, height, pitch, cpp;
-      GLubyte color_mask[4];
-      GLboolean color_blend;
-      uint32_t tiling;
-      uint32_t draw_offset;
-   } key;
-
-   memset(&key, 0, sizeof(key));
-
-   if (region != NULL) {
-      region_bo = region->buffer;
-
-      key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat->MesaFormat) {
-      case PIPE_FORMAT_ARGB8888:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 break;
-      case PIPE_FORMAT_RGB565:
-	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
-	 break;
-      case PIPE_FORMAT_ARGB1555:
-	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
-	 break;
-      case PIPE_FORMAT_ARGB4444:
-	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
-	 break;
-      default:
-	 debug_printf("Bad renderbuffer format: %d\n",
-		      irb->texformat->MesaFormat);
-	 assert(0);
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 return;
-      }
-      key.tiling = region->tiling;
-      if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
-	 key.width = rb->Width;
-	 key.height = rb->Height;
-      } else {
-	 key.width = region->width;
-	 key.height = region->height;
-      }
-      key.pitch = region->pitch;
-      key.cpp = region->cpp;
-      key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
-   } 
-
-   memcpy(key.color_mask, ctx->Color.ColorMask,
-	  sizeof(key.color_mask));
-
-   key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      ctx->Color.BlendEnabled);
-
-   brw->sws->bo_unreference(brw->wm.surf_bo[unit]);
-   brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
-					    BRW_SS_SURFACE,
-					    &key, sizeof(key),
-					    &region_bo, 1,
-					    NULL);
-
-   if (brw->wm.surf_bo[unit] == NULL) {
-      struct brw_surface_state surf;
-
-      memset(&surf, 0, sizeof(surf));
-
-      surf.ss0.surface_format = key.surface_format;
-      surf.ss0.surface_type = key.surface_type;
-      if (key.tiling == I915_TILING_NONE) {
-	 surf.ss1.base_addr = key.draw_offset;
-      } else {
-	 uint32_t tile_offset = key.draw_offset % 4096;
-
-	 surf.ss1.base_addr = key.draw_offset - tile_offset;
-
-	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
-	 if (BRW_IS_G4X(brw)) {
-	    if (key.tiling == I915_TILING_X) {
-	       /* Note that the low bits of these fields are missing, so
-		* there's the possibility of getting in trouble.
-		*/
-	       surf.ss5.x_offset = (tile_offset % 512) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 512 / 2;
-	    } else {
-	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 128 / 2;
-	    }
-	 }
-      }
-
-      if (region_bo != NULL)
-	 surf.ss1.base_addr += region_bo->offset; /* reloc */
-
-      surf.ss2.width = key.width - 1;
-      surf.ss2.height = key.height - 1;
-      brw_set_surface_tiling(&surf, key.tiling);
-      surf.ss3.pitch = (key.pitch * key.cpp) - 1;
-
-}
-
-
-
-struct brw_surface_id {
-   unsigned face:3;
-   unsigned zslice:13;
-   unsigned level:16;
+enum {
+   BRW_VIEW_LINEAR,
+   BRW_VIEW_IN_PLACE
 };
+
 
 static boolean need_linear_view( struct brw_screen *brw_screen,
 				 struct brw_texture *brw_texture,
-				 unsigned face,
-				 unsigned level,
-				 unsigned zslice )
+				 union brw_surface_id id,
+				 unsigned usage )
 {
 #if 0
    /* XXX: what about IDGNG?
@@ -178,71 +94,155 @@ static boolean need_linear_view( struct brw_screen *brw_screen,
 /* Look at all texture views and figure out if any of them need to be
  * back-copied into the texture for sampling
  */
-void brw_update_texture( struct pipe_screen *screen,
-			 struct pipe_texture *texture )
+void brw_update_texture( struct brw_screen *brw_screen,
+			 struct brw_texture *tex )
 {
    /* currently nothing to do */
 }
 
 
-static struct pipe_surface *create_linear_view( struct brw_screen *brw_screen,
-						struct brw_texture *brw_tex,
-						struct brw_surface_id id )
+/* Create a new surface with linear layout to serve as a render-target
+ * where it would be illegal (perhaps due to tiling constraints) to do
+ * this in-place.
+ * 
+ * Currently not implmented, not sure if it's needed.
+ */
+static struct brw_surface *create_linear_view( struct brw_screen *brw_screen,
+					       struct brw_texture *tex,
+					       union brw_surface_id id,
+					       unsigned usage )
 {
-   
+   return NULL;
 }
 
-static struct pipe_surface *create_in_place_view( struct brw_screen *brw_screen,
-						  struct brw_texture *brw_tex,
-						  struct brw_surface_id id )
+
+/* Create a pipe_surface that just points directly into the existing
+ * texture's storage.
+ */
+static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
+						  struct brw_texture *tex,
+						  union brw_surface_id id,
+						  unsigned usage )
 {
-   struct brw_surface *surface = CALLOC_STRUCT(brw_surface);
+   struct brw_surface *surface;
+
+   surface = CALLOC_STRUCT(brw_surface);
+   if (surface == NULL)
+      return NULL;
+
+   /* XXX: ignoring render-to-slice-of-3d-texture
+    */
+   assert(id.bits.zslice == 0);
+
+   surface->base.format = tex->base.format;
+   surface->base.width = tex->base.width[id.bits.level];
+   surface->base.height = tex->base.height[id.bits.level];
+   surface->base.offset = tex->image_offset[id.bits.level][id.bits.face];
+   surface->base.usage = usage;
+   surface->base.zslice = id.bits.zslice;
+   surface->base.face = id.bits.face;
+   surface->base.level = id.bits.level;
    surface->id = id;
-   
+
+   pipe_texture_reference( &surface->base.texture, &tex->base );
+
+   surface->ss.ss0.surface_format = tex->ss.ss0.surface_format;
+   surface->ss.ss0.surface_type = BRW_SURFACE_2D;
+
+   if (tex->tiling == BRW_TILING_NONE) {
+      surface->ss.ss1.base_addr = surface->base.offset;
+   } else {
+      uint32_t tile_offset = surface->base.offset % 4096;
+
+      surface->ss.ss1.base_addr = surface->base.offset - tile_offset;
+
+      if (brw_screen->chipset.is_g4x) {
+	 if (tex->tiling == BRW_TILING_X) {
+	    /* Note that the low bits of these fields are missing, so
+	     * there's the possibility of getting in trouble.
+	     */
+	    surface->ss.ss5.x_offset = (tile_offset % 512) / tex->cpp / 4;
+	    surface->ss.ss5.y_offset = tile_offset / 512 / 2;
+	 } else {
+	    surface->ss.ss5.x_offset = (tile_offset % 128) / tex->cpp / 4;
+	    surface->ss.ss5.y_offset = tile_offset / 128 / 2;
+	 }
+      }
+      else {
+	 assert(tile_offset == 0);
+      }
+   }
+
+#if 0
+   if (region_bo != NULL)
+      surface->ss.ss1.base_addr += region_bo->offset; /* reloc */
+#endif
+
+   surface->ss.ss2.width = surface->base.width - 1;
+   surface->ss.ss2.height = surface->base.height - 1;
+   surface->ss.ss3.tiled_surface = tex->ss.ss3.tiled_surface;
+   surface->ss.ss3.tile_walk = tex->ss.ss3.tile_walk;
+   surface->ss.ss3.pitch = tex->ss.ss3.pitch;
+
+   return surface;
 }
 
 /* Get a surface which is view into a texture 
  */
-struct pipe_surface *brw_get_tex_surface(struct pipe_screen *screen,
-					 struct pipe_texture *texture,
-					 unsigned face, unsigned level,
-					 unsigned zslice,
-					 unsigned usage )
+static struct pipe_surface *brw_get_tex_surface(struct pipe_screen *screen,
+						struct pipe_texture *pt,
+						unsigned face, unsigned level,
+						unsigned zslice,
+						unsigned usage )
 {
+   struct brw_texture *tex = brw_texture(pt);
    struct brw_screen *bscreen = brw_screen(screen);
-   struct brw_surface_id id;
+   struct brw_surface *surface;
+   union brw_surface_id id;
+   int type;
 
-   id.face = face;
-   id.level = level;
-   id.zslice = zslice;
+   id.bits.face = face;
+   id.bits.level = level;
+   id.bits.zslice = zslice;
 
-   if (need_linear_view(brw_screen, brw_tex, id)) 
+   if (need_linear_view(bscreen, tex, id, usage)) 
       type = BRW_VIEW_LINEAR;
    else
       type = BRW_VIEW_IN_PLACE;
 
    
-   foreach (surface, texture->views[type]) {
+   foreach (surface, &tex->views[type]) {
       if (id.value == surface->id.value)
-	 return surface;
+	 return &surface->base;
    }
 
    switch (type) {
    case BRW_VIEW_LINEAR:
-      surface = create_linear_view( texture, id, type );
+      surface = create_linear_view( bscreen, tex, id, usage );
       break;
    case BRW_VIEW_IN_PLACE:
-      surface = create_in_place_view( texture, id, type );
+      surface = create_in_place_view( bscreen, tex, id, usage );
       break;
    default:
       return NULL;
    }
 
-   insert_at_head( texture->views[type], surface );
-   return surface;
+   insert_at_head( &tex->views[type], surface );
+   return &surface->base;
 }
 
 
-void brw_tex_surface_destroy( struct pipe_surface *surface )
+static void brw_tex_surface_destroy( struct pipe_surface *surface )
 {
+   /* Unreference texture, shared buffer:
+    */
+
+   FREE(surface);
+}
+
+
+void brw_screen_tex_surface_init( struct brw_screen *brw_screen )
+{
+   brw_screen->base.get_tex_surface = brw_get_tex_surface;
+   brw_screen->base.tex_surface_destroy = brw_tex_surface_destroy;
 }

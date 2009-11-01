@@ -171,8 +171,7 @@ static GLuint translate_tex_format( enum pipe_format pf )
       return BRW_SURFACEFORMAT_R8G8B8A8_SNORM;
 
    default:
-      assert(0);
-      return 0;
+      return BRW_SURFACEFORMAT_INVALID;
    }
 }
 
@@ -180,7 +179,7 @@ static GLuint translate_tex_format( enum pipe_format pf )
 
 
 
-static struct pipe_texture *brw_create_texture( struct pipe_screen *screen,
+static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 						const struct pipe_texture *templ )
 
 {  
@@ -218,6 +217,7 @@ static struct pipe_texture *brw_create_texture( struct pipe_screen *screen,
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
    tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
+   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
@@ -281,8 +281,20 @@ static void brw_texture_destroy(struct pipe_texture *pt)
 }
 
 
+static boolean brw_is_format_supported( struct pipe_screen *screen,
+					enum pipe_format format,
+					enum pipe_texture_target target,
+					unsigned tex_usage, 
+					unsigned geom_flags )
+{
+   return translate_tex_format(format) != BRW_SURFACEFORMAT_INVALID;
+}
 
 
-
-
-
+void brw_screen_tex_init( struct brw_screen *brw_screen )
+{
+   brw_screen->base.is_format_supported = brw_is_format_supported;
+   brw_screen->base.texture_create = brw_texture_create;
+   brw_screen->base.texture_destroy = brw_texture_destroy;
+   brw_screen->base.texture_blanket = brw_texture_blanket;
+}

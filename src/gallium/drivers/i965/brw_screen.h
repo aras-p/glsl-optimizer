@@ -69,17 +69,35 @@ struct brw_buffer
 #define BRW_TILING_Y     1
 #define BRW_TILING_X     2
 
+union brw_surface_id {
+   struct {
+      unsigned face:3;
+      unsigned zslice:13;
+      unsigned level:16;
+   } bits;
+   unsigned value;
+};
+
+
+struct brw_surface
+{
+   struct pipe_surface base;
+   union brw_surface_id id;
+   struct brw_surface_state ss;
+   struct brw_winsys_buffer *bo;
+   struct brw_surface *next, *prev;
+};
+
+
 
 struct brw_texture
 {
    struct pipe_texture base;
-
    struct brw_winsys_buffer *bo;
    struct brw_surface_state ss;
 
    unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];
    unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
-
    unsigned level_offset[PIPE_MAX_TEXTURE_LEVELS];
 
    boolean compressed;
@@ -88,15 +106,11 @@ struct brw_texture
    unsigned tiling;
    unsigned cpp;
    unsigned total_height;
+
+   struct brw_surface views[2];
 };
 
 
-struct brw_surface
-{
-   struct pipe_surface base;
-   struct brw_surface_state ss;
-   struct brw_winsys_buffer *bo;
-};
 
 /*
  * Cast wrappers
@@ -125,6 +139,12 @@ brw_buffer(struct pipe_buffer *buffer)
    return (struct brw_buffer *)buffer;
 }
 
+static INLINE struct brw_texture *
+brw_texture(struct pipe_texture *texture)
+{
+   return (struct brw_texture *)texture;
+}
+
 
 /* Pipe buffer helpers
  */
@@ -146,6 +166,12 @@ brw_surface_pitch( const struct pipe_surface *surface );
 GLboolean brw_texture_layout(struct brw_screen *brw_screen,
 			     struct brw_texture *tex );
 
+void brw_update_texture( struct brw_screen *brw_screen,
+			 struct brw_texture *tex );
+
+
+void brw_screen_tex_init( struct brw_screen *brw_screen );
+void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 
 
 
