@@ -484,6 +484,7 @@ GLboolean assemble_FRC(r700_AssemblerBase *pAsm);
 GLboolean assemble_KIL(r700_AssemblerBase *pAsm);
 GLboolean assemble_LG2(r700_AssemblerBase *pAsm);
 GLboolean assemble_LRP(r700_AssemblerBase *pAsm);
+GLboolean assemble_LOG(r700_AssemblerBase *pAsm);
 GLboolean assemble_MAD(r700_AssemblerBase *pAsm);
 GLboolean assemble_LIT(r700_AssemblerBase *pAsm);
 GLboolean assemble_MAX(r700_AssemblerBase *pAsm);
