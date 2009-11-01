@@ -65,6 +65,11 @@ struct brw_buffer
    boolean is_user_buffer;
 };
 
+#define BRW_TILING_NONE  0
+#define BRW_TILING_Y     1
+#define BRW_TILING_X     2
+
+
 struct brw_texture
 {
    struct pipe_texture base;
@@ -72,10 +77,17 @@ struct brw_texture
    struct brw_winsys_buffer *bo;
    struct brw_surface_state ss;
 
+   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
+
+   unsigned level_offset[PIPE_MAX_TEXTURE_LEVELS];
+
+   boolean compressed;
    unsigned brw_target;
    unsigned pitch;
    unsigned tiling;
    unsigned cpp;
+   unsigned total_height;
 };
 
 
@@ -127,6 +139,14 @@ brw_surface_bo( struct pipe_surface *surface );
 
 unsigned
 brw_surface_pitch( const struct pipe_surface *surface );
+
+/***********************************************************************
+ * Internal functions 
+ */
+GLboolean brw_texture_layout(struct brw_screen *brw_screen,
+			     struct brw_texture *tex );
+
+
 
 
 #endif /* BRW_SCREEN_H */

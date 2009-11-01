@@ -56,9 +56,9 @@ C_SOURCES = \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
+	brw_screen_tex_layout.c \
 	brw_screen_surface.c \
 	brw_screen_texture.c \
-	brw_batchbuffer.c \
-	intel_tex_layout.c 
+	brw_batchbuffer.c 
 
 include ../../Makefile.template
