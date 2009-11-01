@@ -2,6 +2,123 @@
 #include "pipe/p_screen.h"
 #include "brw_screen.h"
 
+
+/**
+ * Sets up a surface state structure to point at the given region.
+ * While it is only used for the front/back buffer currently, it should be
+ * usable for further buffers when doing ARB_draw_buffer support.
+ */
+static void
+brw_update_renderbuffer_surface(struct brw_context *brw,
+				struct gl_renderbuffer *rb,
+				unsigned int unit)
+{
+   struct brw_winsys_buffer *region_bo = NULL;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_region *region = irb ? irb->region : NULL;
+   struct {
+      unsigned int surface_type;
+      unsigned int surface_format;
+      unsigned int width, height, pitch, cpp;
+      GLubyte color_mask[4];
+      GLboolean color_blend;
+      uint32_t tiling;
+      uint32_t draw_offset;
+   } key;
+
+   memset(&key, 0, sizeof(key));
+
+   if (region != NULL) {
+      region_bo = region->buffer;
+
+      key.surface_type = BRW_SURFACE_2D;
+      switch (irb->texformat->MesaFormat) {
+      case PIPE_FORMAT_ARGB8888:
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 break;
+      case PIPE_FORMAT_RGB565:
+	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+	 break;
+      case PIPE_FORMAT_ARGB1555:
+	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
+	 break;
+      case PIPE_FORMAT_ARGB4444:
+	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
+	 break;
+      default:
+	 debug_printf("Bad renderbuffer format: %d\n",
+		      irb->texformat->MesaFormat);
+	 assert(0);
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 return;
+      }
+      key.tiling = region->tiling;
+      if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
+	 key.width = rb->Width;
+	 key.height = rb->Height;
+      } else {
+	 key.width = region->width;
+	 key.height = region->height;
+      }
+      key.pitch = region->pitch;
+      key.cpp = region->cpp;
+      key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
+   } 
+
+   memcpy(key.color_mask, ctx->Color.ColorMask,
+	  sizeof(key.color_mask));
+
+   key.color_blend = (!ctx->Color._LogicOpEnabled &&
+		      ctx->Color.BlendEnabled);
+
+   brw->sws->bo_unreference(brw->wm.surf_bo[unit]);
+   brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
+					    BRW_SS_SURFACE,
+					    &key, sizeof(key),
+					    &region_bo, 1,
+					    NULL);
+
+   if (brw->wm.surf_bo[unit] == NULL) {
+      struct brw_surface_state surf;
+
+      memset(&surf, 0, sizeof(surf));
+
+      surf.ss0.surface_format = key.surface_format;
+      surf.ss0.surface_type = key.surface_type;
+      if (key.tiling == I915_TILING_NONE) {
+	 surf.ss1.base_addr = key.draw_offset;
+      } else {
+	 uint32_t tile_offset = key.draw_offset % 4096;
+
+	 surf.ss1.base_addr = key.draw_offset - tile_offset;
+
+	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
+	 if (BRW_IS_G4X(brw)) {
+	    if (key.tiling == I915_TILING_X) {
+	       /* Note that the low bits of these fields are missing, so
+		* there's the possibility of getting in trouble.
+		*/
+	       surf.ss5.x_offset = (tile_offset % 512) / key.cpp / 4;
+	       surf.ss5.y_offset = tile_offset / 512 / 2;
+	    } else {
+	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
+	       surf.ss5.y_offset = tile_offset / 128 / 2;
+	    }
+	 }
+      }
+
+      if (region_bo != NULL)
+	 surf.ss1.base_addr += region_bo->offset; /* reloc */
+
+      surf.ss2.width = key.width - 1;
+      surf.ss2.height = key.height - 1;
+      brw_set_surface_tiling(&surf, key.tiling);
+      surf.ss3.pitch = (key.pitch * key.cpp) - 1;
+
+}
+
+
+
 struct brw_surface_id {
    unsigned face:3;
    unsigned zslice:13;

@@ -146,6 +146,8 @@ struct brw_blend_state {
    struct brw_cc3 cc3;
    struct brw_cc5 cc5;
    struct brw_cc6 cc6;
+
+   struct brw_surf_ss0 ss0;
 };
 
 
@@ -501,15 +503,14 @@ struct brw_context
       const struct brw_rasterizer_state *rast;
       const struct brw_depth_stencil_state *zstencil;
 
-      const struct brw_texture *texture[PIPE_MAX_SAMPLERS];
       const struct brw_sampler *sampler[PIPE_MAX_SAMPLERS];
-      unsigned num_textures;
-      unsigned num_samplers;
-      
-
-      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      const struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       unsigned num_vertex_elements;
+      unsigned num_samplers;
+
+      struct brw_texture *texture[PIPE_MAX_SAMPLERS];
+      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      unsigned num_textures;
       unsigned num_vertex_buffers;
 
       struct pipe_scissor_state scissor;

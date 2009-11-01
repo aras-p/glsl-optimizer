@@ -841,4 +841,9 @@
 #define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
                                          (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
 
+
+#define BRW_TILING_NONE  0
+#define BRW_TILING_Y     1
+#define BRW_TILING_X     2
+
 #endif

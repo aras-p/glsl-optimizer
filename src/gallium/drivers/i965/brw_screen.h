@@ -32,6 +32,7 @@
 #include "pipe/p_screen.h"
 
 #include "brw_reg.h"
+#include "brw_structs.h"
 
 struct brw_winsys_screen;
 
@@ -68,9 +69,22 @@ struct brw_texture
 {
    struct pipe_texture base;
 
-   ubyte shader_swizzle;
+   struct brw_winsys_buffer *bo;
+   struct brw_surface_state ss;
+
+   unsigned brw_target;
+   unsigned pitch;
+   unsigned tiling;
+   unsigned cpp;
 };
 
+
+struct brw_surface
+{
+   struct pipe_surface base;
+   struct brw_surface_state ss;
+   struct brw_winsys_buffer *bo;
+};
 
 /*
  * Cast wrappers
@@ -85,6 +99,12 @@ static INLINE struct brw_transfer *
 brw_transfer(struct pipe_transfer *transfer)
 {
    return (struct brw_transfer *)transfer;
+}
+
+static INLINE struct brw_surface *
+brw_surface(struct pipe_surface *surface)
+{
+   return (struct brw_surface *)surface;
 }
 
 static INLINE struct brw_buffer *

@@ -179,7 +179,8 @@ brw_search_cache(struct brw_cache *cache,
                  enum brw_cache_id cache_id,
                  const void *key,
                  GLuint key_size,
-                 struct brw_winsys_buffer **reloc_bufs, GLuint nr_reloc_bufs,
+                 struct brw_winsys_buffer **reloc_bufs, 
+		 GLuint nr_reloc_bufs,
                  void *aux_return)
 {
    struct brw_cache_item *item;

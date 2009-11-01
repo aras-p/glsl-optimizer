@@ -94,19 +94,6 @@ const struct brw_tracked_state brw_indices;
 const struct brw_tracked_state brw_vertices;
 const struct brw_tracked_state brw_index_buffer;
 
-/**
- * Use same key for WM and VS surfaces.
- */
-struct brw_surface_key {
-   unsigned target;
-   struct brw_winsys_buffer *bo;
-   GLint format;
-   GLint first_level, last_level;
-   GLint width, height, depth;
-   GLint pitch, cpp;
-   uint32_t tiling;
-   GLuint offset;
-};
 
 /***********************************************************************
  * brw_state.c
@@ -171,9 +158,6 @@ void brw_clear_batch_cache( struct brw_context *brw );
 /***********************************************************************
  * brw_wm_surface_state.c 
  */
-struct brw_winsys_buffer *
-brw_create_constant_surface( struct brw_context *brw,
-                             struct brw_surface_key *key );
 
 /***********************************************************************
  * brw_state_debug.c

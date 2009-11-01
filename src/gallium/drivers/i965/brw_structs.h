@@ -1048,7 +1048,7 @@ struct brw_sf_viewport
  */
 struct brw_surface_state
 {
-   struct {
+   struct brw_surf_ss0 {
       GLuint cube_pos_z:1; 
       GLuint cube_neg_z:1; 
       GLuint cube_pos_y:1; 
@@ -1070,18 +1070,18 @@ struct brw_surface_state
       GLuint surface_type:3;       /**< BRW_SURFACE_1D/2D/3D/CUBE */
    } ss0;
    
-   struct {
+   struct brw_surf_ss1 {
       GLuint base_addr;  
    } ss1;
    
-   struct {
+   struct brw_surf_ss2 {
       GLuint pad:2;
       GLuint mip_count:4; 
       GLuint width:13; 
       GLuint height:13; 
    } ss2;
 
-   struct {
+   struct brw_surf_ss3 {
       GLuint tile_walk:1; 
       GLuint tiled_surface:1; 
       GLuint pad:1; 
@@ -1089,7 +1089,7 @@ struct brw_surface_state
       GLuint depth:11; 
    } ss3;
    
-   struct {
+   struct brw_surf_ss4 {
       GLuint multisample_position_palette_index:3;
       GLuint pad1:1;
       GLuint num_multisamples:3;
@@ -1099,7 +1099,7 @@ struct brw_surface_state
       GLuint min_lod:4; 
    } ss4;
 
-   struct {
+   struct brw_surf_ss5 {
       GLuint pad1:16;
       GLuint llc_mapping:1;
       GLuint mlc_mapping:1;
