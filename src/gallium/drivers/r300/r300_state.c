@@ -281,7 +281,9 @@ static void
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_flush(r300->draw);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+    }
 
     r300->framebuffer_state = *state;
 
@@ -444,10 +446,13 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
 
-    draw_flush(r300->draw);
-    draw_set_rasterizer_state(r300->draw, &rs->rs);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_rasterizer_state(r300->draw, &rs->rs);
+    }
 
     r300->rs_state = rs;
+    /* XXX Clean these up when we move to atom emits */
     r300->dirty_state |= R300_NEW_RASTERIZER;
     r300->dirty_state |= R300_NEW_RS_BLOCK;
     r300->dirty_state |= R300_NEW_SCISSOR;
@@ -623,8 +628,10 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     r300->vertex_buffer_count = count;
 
-    draw_flush(r300->draw);
-    draw_set_vertex_buffers(r300->draw, count, buffers);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_vertex_buffers(r300->draw, count, buffers);
+    }
 }
 
 static void r300_set_vertex_elements(struct pipe_context* pipe,
@@ -633,8 +640,15 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_flush(r300->draw);
-    draw_set_vertex_elements(r300->draw, count, elements);
+    memcpy(r300->vertex_elements, elements,
+        sizeof(struct pipe_vertex_element) * count);
+
+    r300->vertex_element_count = count;
+
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_vertex_elements(r300->draw, count, elements);
+    }
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,

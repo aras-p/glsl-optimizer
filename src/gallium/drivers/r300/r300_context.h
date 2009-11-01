@@ -339,7 +339,7 @@ void r300_init_surface_functions(struct r300_context* r300);
 
 static INLINE boolean DBG_ON(struct r300_context * ctx, unsigned flags)
 {
-    return (ctx->debug & flags) ? true : false;
+    return (ctx->debug & flags) ? TRUE : FALSE;
 }
 
 static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * fmt, ...)

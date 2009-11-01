@@ -37,7 +37,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     struct tgsi_shader_info* info = &vs->info;
     struct tgsi_parse_context parser;
     struct tgsi_full_declaration * decl;
-    boolean pointsize = false;
+    boolean pointsize = FALSE;
     int out_colors = 0;
     int colors = 0;
     int out_generic = 0;
@@ -52,7 +52,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     for (i = 0; i < info->num_outputs; i++) {
         switch (info->output_semantic_name[i]) {
             case TGSI_SEMANTIC_PSIZE:
-                pointsize = true;
+                pointsize = TRUE;
                 break;
             case TGSI_SEMANTIC_COLOR:
                 out_colors++;

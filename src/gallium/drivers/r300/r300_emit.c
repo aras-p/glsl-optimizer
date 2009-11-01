@@ -800,7 +800,7 @@ validate:
     for (i = 0; i < r300->texture_count; i++) {
         tex = r300->textures[i];
         if (!tex)
-	    continue;
+            continue;
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
