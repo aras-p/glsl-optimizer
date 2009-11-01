@@ -2729,6 +2729,133 @@ GLboolean assemble_EX2(r700_AssemblerBase *pAsm)
 {
     return assemble_math_function(pAsm, SQ_OP2_INST_EXP_IEEE);
 }
+
+GLboolean assemble_EXP(r700_AssemblerBase *pAsm)
+{
+    BITS tmp;
+
+    checkop1(pAsm);
+
+    tmp = gethelpr(pAsm);
+
+    // FLOOR   tmp.x,    a.x
+    // EX2     dst.x     tmp.x
+
+    if (pAsm->pILInst->DstReg.WriteMask & 0x1) {
+        pAsm->D.dst.opcode = SQ_OP2_INST_FLOOR;
+
+        setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+        pAsm->D.dst.reg    = tmp;
+        pAsm->D.dst.writex = 1;
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        pAsm->D.dst.math = 1;
+
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.writey = pAsm->D.dst.writez = pAsm->D.dst.writew = 0;
+
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        pAsm->S[0].src.rtype = DST_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+
+        setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    // FRACT   dst.y     a.x
+
+    if ((pAsm->pILInst->DstReg.WriteMask >> 1) & 0x1) {
+        pAsm->D.dst.opcode = SQ_OP2_INST_FRACT;
+
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.writex = pAsm->D.dst.writez = pAsm->D.dst.writew = 0;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    // EX2     dst.z,    a.x
+
+    if ((pAsm->pILInst->DstReg.WriteMask >> 2) & 0x1) {
+        pAsm->D.dst.opcode = SQ_OP2_INST_EXP_IEEE;
+        pAsm->D.dst.math = 1;
+
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.writex = pAsm->D.dst.writey = pAsm->D.dst.writew = 0;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    // MOV     dst.w     1.0
+
+    if ((pAsm->pILInst->DstReg.WriteMask >> 3) & 0x1) {
+        pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
+
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.writex = pAsm->D.dst.writey = pAsm->D.dst.writez = 0;
+
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+
+        setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_1);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    return GL_TRUE;
+}
  
 GLboolean assemble_FLR(r700_AssemblerBase *pAsm)
 {
@@ -4004,10 +4131,9 @@ GLboolean AssembleInstr(GLuint uiNumberInsts,
                 return GL_FALSE;
             break;  
         case OPCODE_EXP: 
-            radeon_error("Not yet implemented instruction OPCODE_EXP \n");
-            //if ( GL_FALSE == assemble_BAD("EXP") ) 
+            if ( GL_FALSE == assemble_EXP(pR700AsmCode) ) 
                 return GL_FALSE;
-            break; // approx of EX2
+            break;
 
         case OPCODE_FLR:     
             if ( GL_FALSE == assemble_FLR(pR700AsmCode) ) 

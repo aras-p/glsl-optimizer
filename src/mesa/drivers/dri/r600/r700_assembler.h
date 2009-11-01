@@ -477,6 +477,7 @@ GLboolean assemble_COS(r700_AssemblerBase *pAsm);
 GLboolean assemble_DOT(r700_AssemblerBase *pAsm);
 GLboolean assemble_DST(r700_AssemblerBase *pAsm);
 GLboolean assemble_EX2(r700_AssemblerBase *pAsm);
+GLboolean assemble_EXP(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR_INT(r700_AssemblerBase *pAsm);
 GLboolean assemble_FRC(r700_AssemblerBase *pAsm);
