@@ -2026,7 +2026,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_IF:
 		/* emitting a join_at may not be necessary */
 		assert(pc->if_lvl < MAX_IF_DEPTH);
-		set_pred_wr(pc, 1, 0, pc->if_cond);
+		/* set_pred_wr(pc, 1, 0, pc->if_cond); */
+		emit_cvt(pc, NULL, src[0][0], 0, CVTOP_ABS | CVTOP_RN,
+			 CVT_F32_F32);
 		emit_branch(pc, 0, 2, &pc->br_join[pc->if_lvl]);
 		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
 		terminate_mbb(pc);
