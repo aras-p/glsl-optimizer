@@ -652,7 +652,7 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
         return;
     }
 
-    BEGIN_CS(11 + code->length);
+    BEGIN_CS(9 + code->length);
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1
@@ -674,7 +674,6 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
             R300_PVS_NUM_CNTLRS(5) |
             R300_PVS_NUM_FPUS(r300screen->caps->num_vert_fpus) |
             R300_PVS_VF_MAX_VTX_NUM(12));
-    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
 }
 
@@ -746,6 +745,15 @@ void r300_flush_textures(struct r300_context* r300)
     BEGIN_CS(4);
     OUT_CS_REG(R300_TX_INVALTAGS, 0);
     OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    END_CS;
+}
+
+static void r300_flush_pvs(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
 }
 
@@ -920,6 +928,10 @@ validate:
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
         r300_emit_vertex_format_state(r300);
         r300->dirty_state &= ~R300_NEW_VERTEX_FORMAT;
+    }
+
+    if (r300->dirty_state & (R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS)) {
+        r300_flush_pvs(r300);
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER) {
