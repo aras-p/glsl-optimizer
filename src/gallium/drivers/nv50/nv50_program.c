@@ -2463,6 +2463,23 @@ load_interpolant(struct nv50_pc *pc, struct nv50_reg *reg)
 	emit_interp(pc, reg, iv, mode);
 }
 
+/* The face input is always at v[255] (varying space), with a
+ * value of 0 for back-facing, and 0xffffffff for front-facing.
+ */
+static void
+load_frontfacing(struct nv50_pc *pc, struct nv50_reg *a)
+{
+	struct nv50_reg *one = alloc_immd(pc, 1.0f);
+
+	assert(a->rhw == -1);
+	alloc_reg(pc, a); /* do this before rhw is set */
+	a->rhw = 255;
+	load_interpolant(pc, a);
+	emit_bitop2(pc, a, a, one, TGSI_OPCODE_AND);
+
+	FREE(one);
+}
+
 static boolean
 nv50_program_tx_prep(struct nv50_pc *pc)
 {
@@ -2607,6 +2624,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		int rid, aid;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
+		pc->allow32 = TRUE;
+
 		int base = (TGSI_SEMANTIC_POSITION ==
 			    p->info.input_semantic_name[0]) ? 0 : 1;
 
@@ -2634,6 +2653,12 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		for (n = 0; n < pc->attr_nr; ++n) {
 			p->cfg.io[n].hw = rid = aid;
 			i = p->cfg.io[n].id_fp;
+
+			if (p->info.input_semantic_name[n] ==
+			    TGSI_SEMANTIC_FACE) {
+				load_frontfacing(pc, &pc->attr[i * 4]);
+				continue;
+			}
 
 			for (c = 0; c < 4; ++c) {
 				if (!pc->attr[i * 4 + c].acc)
