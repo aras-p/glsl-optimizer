@@ -338,7 +338,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    if (ctx->Driver.DrawBuffers)
       ctx->Driver.DrawBuffers(ctx, n, buffers);
    else if (ctx->Driver.DrawBuffer)
-      ctx->Driver.DrawBuffer(ctx, n>0? buffers[0]:GL_NONE);
+      ctx->Driver.DrawBuffer(ctx, n > 0 ? buffers[0] : GL_NONE);
 }
 
 
