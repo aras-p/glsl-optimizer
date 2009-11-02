@@ -36,12 +36,6 @@
 #include "brw_batchbuffer.h"
 #include "brw_debug.h"
 
-/* This is used to initialize brw->state.atoms[].  We could use this
- * list directly except for a single atom, brw_constant_buffer, which
- * has a .dirty value which changes according to the parameters of the
- * current fragment and vertex programs, and so cannot be a static
- * value.
- */
 const struct brw_tracked_state *atoms[] =
 {
    &brw_check_fallback,
@@ -94,7 +88,7 @@ const struct brw_tracked_state *atoms[] =
    &brw_index_buffer,
    &brw_vertices,
 
-   &brw_constant_buffer
+   &brw_curbe_buffer
 };
 
 

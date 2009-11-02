@@ -160,7 +160,7 @@ static GLfloat fixed_plane[6][4] = {
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
-static int prepare_constant_buffer(struct brw_context *brw)
+static int prepare_curbe_buffer(struct brw_context *brw)
 {
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
@@ -312,7 +312,7 @@ static int prepare_constant_buffer(struct brw_context *brw)
    return 0;
 }
 
-static int emit_constant_buffer(struct brw_context *brw)
+static int emit_curbe_buffer(struct brw_context *brw)
 {
    GLuint sz = brw->curbe.total_size;
 
@@ -330,7 +330,7 @@ static int emit_constant_buffer(struct brw_context *brw)
    return 0;
 }
 
-const struct brw_tracked_state brw_constant_buffer = {
+const struct brw_tracked_state brw_curbe_buffer = {
    .dirty = {
       .mesa = (PIPE_NEW_FRAGMENT_CONSTANTS |
 	       PIPE_NEW_VERTEX_CONSTANTS |
@@ -343,7 +343,7 @@ const struct brw_tracked_state brw_constant_buffer = {
 	       BRW_NEW_BATCH),
       .cache = (CACHE_NEW_WM_PROG) 
    },
-   .prepare = prepare_constant_buffer,
-   .emit = emit_constant_buffer,
+   .prepare = prepare_curbe_buffer,
+   .emit = emit_curbe_buffer,
 };
 
