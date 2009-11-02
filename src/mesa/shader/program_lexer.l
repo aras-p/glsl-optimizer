@@ -46,8 +46,7 @@
       if (condition) {					\
 	 return token;					\
       } else {						\
-	 yylval->string = return_string(yyextra, yytext);	\
-	 return IDENTIFIER;				\
+	 return handle_ident(yyextra, yytext, yylval);	\
       }							\
    } while (0)
 
@@ -71,8 +70,7 @@
 	 yylval->temp_inst.Opcode = OPCODE_ ## opcode;	\
 	 return token;					\
       } else {						\
-	 yylval->string = return_string(yyextra, yytext);		\
-	 return IDENTIFIER;				\
+	 return handle_ident(yyextra, yytext, yylval);	\
       }							\
    } while (0)
 
@@ -163,7 +161,7 @@ swiz_from_char(char c)
 static int
 handle_ident(struct asm_parser_state *state, const char *text, YYSTYPE *lval)
 {
-   lval->string = strdup(text);
+   lval->string = return_string(state, text);
 
    return (_mesa_symbol_table_find_symbol(state->st, 0, text) == NULL)
       ? IDENTIFIER : USED_IDENTIFIER;
