@@ -344,7 +344,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 
 /**
  * Helper function to set the GL_DRAW_BUFFER state in the context and
- * current FBO.
+ * current FBO.  Called via glDrawBuffer(), glDrawBuffersARB()
  *
  * All error checking will have been done prior to calling this function
  * so nothing should go wrong at this point.
@@ -392,6 +392,8 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       GLuint buf, count = 0;
       for (buf = 0; buf < n; buf++ ) {
          if (destMask[buf]) {
+            /* only one bit should be set in the destMask[buf] field */
+            ASSERT(_mesa_bitcount(destMask[buf]) == 1);
             fb->_ColorDrawBufferIndexes[buf] = _mesa_ffs(destMask[buf]) - 1;
             fb->ColorDrawBuffer[buf] = buffers[buf];
             count = buf + 1;
