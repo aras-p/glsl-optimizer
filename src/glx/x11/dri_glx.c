@@ -596,8 +596,10 @@ driCreateDrawable(__GLXscreenConfigs * psc,
    pdraw->drawable = drawable;
    pdraw->psc = psc;
 
-   if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable))
+   if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable)) {
+      Xfree(pdraw);
       return NULL;
+   }
 
    /* Create a new drawable */
    pdraw->driDrawable =
