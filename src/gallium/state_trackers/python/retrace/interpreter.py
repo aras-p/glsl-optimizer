@@ -459,7 +459,7 @@ class Context(Object):
         sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, buffer):
-        if buffer is not None:
+        if buffer is not None and buffer.buffer is not None:
             self.real.set_constant_buffer(shader, index, buffer.buffer)
 
             self.dump_constant_buffer(buffer.buffer)
