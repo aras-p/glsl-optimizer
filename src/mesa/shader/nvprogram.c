@@ -47,6 +47,7 @@
 #include "prog_instruction.h"
 #include "nvfragparse.h"
 #include "nvvertparse.h"
+#include "arbprogparse.h"
 #include "nvprogram.h"
 
 
@@ -642,6 +643,20 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
          _mesa_HashInsert(ctx->Shared->Programs, id, fprog);
       }
       _mesa_parse_nv_fragment_program(ctx, target, program, len, fprog);
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_ARB
+            && ctx->Extensions.ARB_fragment_program) {
+      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
+      if (!fprog || prog == &_mesa_DummyProgram) {
+         fprog = (struct gl_fragment_program *)
+            ctx->Driver.NewProgram(ctx, target, id);
+         if (!fprog) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
+            return;
+         }
+         _mesa_HashInsert(ctx->Shared->Programs, id, fprog);
+      }
+      _mesa_parse_arb_fragment_program(ctx, target, program, len, fprog);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glLoadProgramNV(target)");
