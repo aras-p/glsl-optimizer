@@ -375,15 +375,19 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       destMask = mask;
    }
 
+   /*
+    * If n==1, destMask[0] may have up to four bits set.
+    * Otherwise, destMask[x] can only have one bit set.
+    */
    if (n == 1) {
-      GLuint buf, count = 0;
+      GLuint count = 0, destMask0 = destMask[0];
       /* init to -1 to help catch errors */
       fb->_ColorDrawBufferIndexes[0] = -1;
-      for (buf = 0; buf < BUFFER_COUNT; buf++) {
-         if (destMask[0] & (1 << buf)) {
-            fb->_ColorDrawBufferIndexes[count] = buf;
-            count++;
-         }
+      while (destMask0) {
+         GLint bufIndex = _mesa_ffs(destMask0) - 1;
+         fb->_ColorDrawBufferIndexes[count] = bufIndex;
+         count++;
+         destMask0 &= ~(1 << bufIndex);
       }
       fb->ColorDrawBuffer[0] = buffers[0];
       fb->_NumColorDrawBuffers = count;
