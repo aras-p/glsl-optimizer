@@ -716,7 +716,9 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
       return;
    }
 
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
+   /* No need to flush here since the render buffer binding has no
+    * effect on rendering state.
+    */
 
    if (renderbuffer) {
       newRb = _mesa_lookup_renderbuffer(ctx, renderbuffer);
@@ -1093,7 +1095,9 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   /* No need to flush here since we're just quering state which is
+    * not effected by rendering.
+    */
 
    switch (pname) {
    case GL_RENDERBUFFER_WIDTH_EXT:
@@ -1308,7 +1312,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    for (i = 0; i < n; i++) {
       if (framebuffers[i] > 0) {
@@ -1413,7 +1417,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
       return GL_FRAMEBUFFER_COMPLETE_EXT;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   /* No need to flush here */
 
    if (buffer->_Status != GL_FRAMEBUFFER_COMPLETE) {
       _mesa_test_framebuffer_completeness(ctx, buffer);
@@ -1529,7 +1533,7 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       return;
    }
 
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    _glthread_LOCK_MUTEX(fb->Mutex);
    if (texObj) {
@@ -1709,7 +1713,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    }
 
 
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    assert(ctx->Driver.FramebufferRenderbuffer);
    ctx->Driver.FramebufferRenderbuffer(ctx, fb, attachment, rb);
@@ -1785,7 +1789,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
    }
 
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
+   /* No need to flush here */
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
