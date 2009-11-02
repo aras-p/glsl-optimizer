@@ -443,7 +443,7 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
    }
 
    if (newState)
-      ctx->NewState |= _NEW_BUFFERS;
+      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 }
 
 
