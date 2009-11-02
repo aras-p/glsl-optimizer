@@ -712,8 +712,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target != GL_RENDERBUFFER_EXT) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glBindRenderbufferEXT(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindRenderbufferEXT(target)");
       return;
    }
 
