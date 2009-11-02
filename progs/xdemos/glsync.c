@@ -59,6 +59,7 @@
 
 void (*video_sync_get)();
 void (*video_sync)();
+void (*swap_interval)();
 
 static int GLXExtensionSupported(Display *dpy, const char *extension)
 {
@@ -84,7 +85,7 @@ static int GLXExtensionSupported(Display *dpy, const char *extension)
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-static char optstr[] = "w:h:s:v";
+static char optstr[] = "w:h:s:vi:";
 
 enum sync_type {
 	none = 0,
@@ -100,6 +101,7 @@ static void usage(char *name)
 	printf("\t\tn: none\n");
 	printf("\t\ts: SGI video sync extension\n");
 	printf("\t\tb: buffer swap\n");
+	printf("\t-i<swap interval>\n");
 	printf("\t-v: verbose (print count)\n");
 	exit(-1);
 }
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
 	Atom wmDelete;
 	enum sync_type waitforsync = none;
 	int width = 500, height = 500, verbose = 0,
-		countonly = 0;
+		countonly = 0, interval = 1;
 	int c, i = 1;
 
 	opterr = 0;
@@ -147,6 +149,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'i':
+			interval = atoi(optarg);
 			break;
 		default:
 			usage(argv[0]);
@@ -227,11 +232,15 @@ int main(int argc, char *argv[])
 	video_sync_get = glXGetProcAddress((unsigned char *)"glXGetVideoSyncSGI");
 	video_sync = glXGetProcAddress((unsigned char *)"glXWaitVideoSyncSGI");
 
-	if (!video_sync_get || !video_sync) {
+	swap_interval = glXGetProcAddress((unsigned char *)"glXSwapIntervalSGI");
+
+	if (!video_sync_get || !video_sync || !swap_interval) {
 		fprintf(stderr, "failed to get sync functions\n");
 		return -1;
 	}
 
+	swap_interval(interval);
+	fprintf(stderr, "set swap interval to %d\n", interval);
 	video_sync_get(&count);
 	count++;
 	while (i++) {
@@ -254,6 +263,11 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "current count: %d\n", count);
 			sleep(1);
 			continue;
+		}
+
+		if (verbose) {
+			video_sync_get(&count);
+			fprintf(stderr, "current count: %d\n", count);
 		}
 
 		/* Alternate colors to make tearing obvious */
