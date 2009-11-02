@@ -38,6 +38,7 @@
 #include "arbprogram.h"
 #include "arbprogparse.h"
 #include "nvfragparse.h"
+#include "nvvertparse.h"
 #include "program.h"
 
 
@@ -435,15 +436,36 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   if (!ctx->Extensions.ARB_vertex_program
+       && !ctx->Extensions.ARB_fragment_program) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramStringARB()");
+      return;
+   }
+
    if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
       return;
    }
 
+   /* The first couple cases are complicated.  The same enum value is used for
+    * ARB and NV vertex programs.  If the target is a vertex program, parse it
+    * using the ARB grammar if the string starts with "!!ARB" or if
+    * NV_vertex_program is not supported.
+    */
    if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
+       && ctx->Extensions.ARB_vertex_program
+       && ((strncmp(string, "!!ARB", 5) == 0)
+	   || !ctx->Extensions.NV_vertex_program)) {
       struct gl_vertex_program *prog = ctx->VertexProgram.Current;
       _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
+
+      base = & prog->Base;
+   }
+   else if ((target == GL_VERTEX_PROGRAM_ARB
+	     || target == GL_VERTEX_STATE_PROGRAM_NV)
+	    && ctx->Extensions.NV_vertex_program) {
+      struct gl_vertex_program *prog = ctx->VertexProgram.Current;
+      _mesa_parse_nv_vertex_program(ctx, target, string, len, prog);
 
       base = & prog->Base;
    }
