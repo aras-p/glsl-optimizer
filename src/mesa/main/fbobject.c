@@ -1228,8 +1228,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       return;
    }
 
-   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
-
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
       newFb = _mesa_lookup_framebuffer(ctx, framebuffer);
@@ -1268,12 +1266,14 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    /*
     * OK, now bind the new Draw/Read framebuffers, if they're changing.
     */
-
    if (bindReadBuf) {
-      if (ctx->ReadBuffer == newFbread)
+      if (ctx->ReadBuffer == newFbread) {
          bindReadBuf = GL_FALSE; /* no change */
-      else
+      }
+      else {
+         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
          _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
+      }
    }
 
    if (bindDrawBuf) {
@@ -1282,10 +1282,13 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
          check_end_texture_render(ctx, ctx->DrawBuffer);
       }
 
-      if (ctx->DrawBuffer == newFb)
+      if (ctx->DrawBuffer == newFb) {
          bindDrawBuf = GL_FALSE; /* no change */
-      else
+      }
+      else {
+         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
          _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
+      }
 
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
