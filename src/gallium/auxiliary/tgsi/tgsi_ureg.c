@@ -29,6 +29,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_ureg.h"
+#include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_sanity.h"
@@ -46,7 +47,6 @@ union tgsi_any_token {
    struct tgsi_immediate imm;
    union  tgsi_immediate_data imm_data;
    struct tgsi_instruction insn;
-   struct tgsi_instruction_ext_nv insn_ext_nv;
    struct tgsi_instruction_ext_label insn_ext_label;
    struct tgsi_instruction_ext_texture insn_ext_texture;
    struct tgsi_instruction_ext_predicate insn_ext_predicate;
@@ -54,9 +54,7 @@ union tgsi_any_token {
    struct tgsi_src_register_ext_mod src_ext_mod;
    struct tgsi_dimension dim;
    struct tgsi_dst_register dst;
-   struct tgsi_dst_register_ext_concode dst_ext_code;
    struct tgsi_dst_register_ext_modulate dst_ext_mod;
-   struct tgsi_dst_register_ext_predicate dst_ext_pred;
    unsigned value;
 };
 
@@ -74,6 +72,7 @@ struct ureg_tokens {
 #define UREG_MAX_IMMEDIATE 32
 #define UREG_MAX_TEMP 256
 #define UREG_MAX_ADDR 2
+#define UREG_MAX_PRED 1
 
 #define DOMAIN_DECL 0
 #define DOMAIN_INSN 1
@@ -117,6 +116,7 @@ struct ureg_program
    unsigned nr_constant_ranges;
 
    unsigned nr_addrs;
+   unsigned nr_preds;
    unsigned nr_instructions;
 
    struct ureg_tokens domain[2];
@@ -416,6 +416,19 @@ struct ureg_dst ureg_DECL_address( struct ureg_program *ureg )
    return ureg_dst_register( TGSI_FILE_ADDRESS, 0 );
 }
 
+/* Allocate a new predicate register.
+ */
+struct ureg_dst
+ureg_DECL_predicate(struct ureg_program *ureg)
+{
+   if (ureg->nr_preds < UREG_MAX_PRED) {
+      return ureg_dst_register(TGSI_FILE_PREDICATE, ureg->nr_preds++);
+   }
+
+   assert(0);
+   return ureg_dst_register(TGSI_FILE_PREDICATE, 0);
+}
+
 /* Allocate a new sampler.
  */
 struct ureg_src ureg_DECL_sampler( struct ureg_program *ureg,
@@ -631,14 +644,16 @@ unsigned
 ureg_emit_insn(struct ureg_program *ureg,
                unsigned opcode,
                boolean saturate,
+               boolean predicate,
                unsigned num_dst,
                unsigned num_src )
 {
    union tgsi_any_token *out;
+   uint count = predicate ? 2 : 1;
 
    validate( opcode, num_dst, num_src );
    
-   out = get_tokens( ureg, DOMAIN_INSN, 1 );
+   out = get_tokens( ureg, DOMAIN_INSN, count );
    out[0].value = 0;
    out[0].insn.Type = TGSI_TOKEN_TYPE_INSTRUCTION;
    out[0].insn.NrTokens = 0;
@@ -647,11 +662,17 @@ ureg_emit_insn(struct ureg_program *ureg,
    out[0].insn.NumDstRegs = num_dst;
    out[0].insn.NumSrcRegs = num_src;
    out[0].insn.Padding = 0;
-   out[0].insn.Extended = 0;
-   
+
+   if (predicate) {
+      out[0].insn.Extended = 1;
+      out[1].insn_ext_predicate = tgsi_default_instruction_ext_predicate();
+   } else {
+      out[0].insn.Extended = 0;
+   }
+
    ureg->nr_instructions++;
    
-   return ureg->domain[DOMAIN_INSN].count - 1;
+   return ureg->domain[DOMAIN_INSN].count - count;
 }
 
 
@@ -739,10 +760,12 @@ ureg_insn(struct ureg_program *ureg,
 {
    unsigned insn, i;
    boolean saturate;
+   boolean predicate;
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
+   predicate = nr_dst ? dst[0].Predicate : FALSE;
 
-   insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
+   insn = ureg_emit_insn( ureg, opcode, saturate, predicate, nr_dst, nr_src );
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );
@@ -764,12 +787,14 @@ ureg_tex_insn(struct ureg_program *ureg,
 {
    unsigned insn, i;
    boolean saturate;
+   boolean predicate;
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
+   predicate = nr_dst ? dst[0].Predicate : FALSE;
 
-   insn = ureg_emit_insn( ureg, opcode, saturate, nr_dst, nr_src );
+   insn = ureg_emit_insn( ureg, opcode, saturate, predicate, nr_dst, nr_src );
 
-   ureg_emit_texture( ureg, insn, target );                             \
+   ureg_emit_texture( ureg, insn, target );
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );
@@ -790,9 +815,9 @@ ureg_label_insn(struct ureg_program *ureg,
 {
    unsigned insn, i;
 
-   insn = ureg_emit_insn( ureg, opcode, FALSE, 0, nr_src );
+   insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, nr_src );
 
-   ureg_emit_label( ureg, insn, label_token );                  \
+   ureg_emit_label( ureg, insn, label_token );
 
    for (i = 0; i < nr_src; i++)
       ureg_emit_src( ureg, src[i] );
@@ -927,6 +952,13 @@ static void emit_decls( struct ureg_program *ureg )
       emit_decl_range( ureg,
                        TGSI_FILE_ADDRESS,
                        0, ureg->nr_addrs );
+   }
+
+   if (ureg->nr_preds) {
+      emit_decl_range(ureg,
+                      TGSI_FILE_PREDICATE,
+                      0,
+                      ureg->nr_preds);
    }
 
    for (i = 0; i < ureg->nr_immediates; i++) {
