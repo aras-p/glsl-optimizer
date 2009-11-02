@@ -501,6 +501,8 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
       else
          intel_renderbuffer_unmap(intel, fb->_StencilBuffer->Wrapped);
    }
+
+   intel_check_front_buffer_rendering(intel);
 }
 
 /**

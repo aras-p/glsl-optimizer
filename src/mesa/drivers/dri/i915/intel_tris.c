@@ -1088,6 +1088,7 @@ intelRenderStart(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   intel_check_front_buffer_rendering(intel);
    intel->vtbl.render_start(intel_context(ctx));
    intel->vtbl.emit_state(intel);
 }
