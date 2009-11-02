@@ -362,6 +362,7 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLbitfield mask[MAX_DRAW_BUFFERS];
+   GLboolean newState = GL_FALSE;
 
    if (!destMask) {
       /* compute destMask values now */
@@ -382,35 +383,50 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
    if (n == 1) {
       GLuint count = 0, destMask0 = destMask[0];
       /* init to -1 to help catch errors */
-      fb->_ColorDrawBufferIndexes[0] = -1;
+      //fb->_ColorDrawBufferIndexes[0] = -1;
       while (destMask0) {
          GLint bufIndex = _mesa_ffs(destMask0) - 1;
-         fb->_ColorDrawBufferIndexes[count] = bufIndex;
+         if (fb->_ColorDrawBufferIndexes[count] != bufIndex) {
+            fb->_ColorDrawBufferIndexes[count] = bufIndex;
+            newState = GL_TRUE;
+         }
          count++;
          destMask0 &= ~(1 << bufIndex);
       }
       fb->ColorDrawBuffer[0] = buffers[0];
-      fb->_NumColorDrawBuffers = count;
+      if (fb->_NumColorDrawBuffers != count) {
+         fb->_NumColorDrawBuffers = count;
+         newState = GL_TRUE;
+      }
    }
    else {
       GLuint buf, count = 0;
       for (buf = 0; buf < n; buf++ ) {
          if (destMask[buf]) {
+            GLint bufIndex = _mesa_ffs(destMask[buf]) - 1;
             /* only one bit should be set in the destMask[buf] field */
             ASSERT(_mesa_bitcount(destMask[buf]) == 1);
-            fb->_ColorDrawBufferIndexes[buf] = _mesa_ffs(destMask[buf]) - 1;
+            if (fb->_ColorDrawBufferIndexes[buf] != bufIndex) {
+               fb->_ColorDrawBufferIndexes[buf] = bufIndex;
+               newState = GL_TRUE;
+            }
             fb->ColorDrawBuffer[buf] = buffers[buf];
             count = buf + 1;
          }
          else {
-            fb->_ColorDrawBufferIndexes[buf] = -1;
+            if (fb->_ColorDrawBufferIndexes[buf] != -1) {
+               fb->_ColorDrawBufferIndexes[buf] = -1;
+               newState = GL_TRUE;
+            }
          }
       }
       /* set remaining outputs to -1 (GL_NONE) */
       while (buf < ctx->Const.MaxDrawBuffers) {
-         fb->_ColorDrawBufferIndexes[buf] = -1;
+         if (fb->_ColorDrawBufferIndexes[buf] != -1) {
+            fb->_ColorDrawBufferIndexes[buf] = -1;
+            buf++;
+         }
          fb->ColorDrawBuffer[buf] = GL_NONE;
-         buf++;
       }
       fb->_NumColorDrawBuffers = count;
    }
@@ -419,11 +435,15 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       /* also set context drawbuffer state */
       GLuint buf;
       for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
-         ctx->Color.DrawBuffer[buf] = fb->ColorDrawBuffer[buf];
+         if (ctx->Color.DrawBuffer[buf] != fb->ColorDrawBuffer[buf]) {
+            ctx->Color.DrawBuffer[buf] = fb->ColorDrawBuffer[buf];
+            newState = GL_TRUE;
+         }
       }
    }
 
-   ctx->NewState |= _NEW_BUFFERS;
+   if (newState)
+      ctx->NewState |= _NEW_BUFFERS;
 }
 
 
