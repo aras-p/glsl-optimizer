@@ -37,6 +37,7 @@
 #include "main/mtypes.h"
 #include "arbprogram.h"
 #include "arbprogparse.h"
+#include "nvfragparse.h"
 #include "program.h"
 
 
@@ -428,6 +429,7 @@ void GLAPIENTRY
 _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                        const GLvoid *string)
 {
+   struct gl_program *base;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -442,22 +444,30 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
        && ctx->Extensions.ARB_vertex_program) {
       struct gl_vertex_program *prog = ctx->VertexProgram.Current;
       _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
-      
-      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
+
+      base = & prog->Base;
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
       struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
       _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
 
-      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
+      base = & prog->Base;
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_NV
+            && ctx->Extensions.NV_fragment_program) {
+      struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
+      _mesa_parse_nv_fragment_program(ctx, target, string, len, prog);
+
+      base = & prog->Base;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(target)");
       return;
    }
+
+   if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
+      ctx->Driver.ProgramStringNotify( ctx, target, base );
 }
 
 
