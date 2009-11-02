@@ -181,16 +181,16 @@ tgsi_parse_token(
          next_token( ctx, &token );
 
          switch( token.Type ) {
-         case TGSI_INSTRUCTION_EXT_TYPE_NV:
-            copy_token(&inst->InstructionExtNv, &token);
-            break;
-
          case TGSI_INSTRUCTION_EXT_TYPE_LABEL:
             copy_token(&inst->InstructionExtLabel, &token);
             break;
 
          case TGSI_INSTRUCTION_EXT_TYPE_TEXTURE:
             copy_token(&inst->InstructionExtTexture, &token);
+            break;
+
+         case TGSI_INSTRUCTION_EXT_TYPE_PREDICATE:
+            copy_token(&inst->InstructionExtPredicate, &token);
             break;
 
          default:
@@ -220,11 +220,6 @@ tgsi_parse_token(
             next_token( ctx, &token );
 
             switch( token.Type ) {
-            case TGSI_DST_REGISTER_EXT_TYPE_CONDCODE:
-               copy_token(&inst->FullDstRegisters[i].DstRegisterExtConcode,
-                          &token);
-               break;
-
             case TGSI_DST_REGISTER_EXT_TYPE_MODULATE:
                copy_token(&inst->FullDstRegisters[i].DstRegisterExtModulate,
                           &token);

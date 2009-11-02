@@ -168,7 +168,12 @@ struct tgsi_exec_labels
 
 #define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 8)
 #define TGSI_EXEC_NUM_ADDRS         1
-#define TGSI_EXEC_NUM_TEMP_EXTRAS   9
+
+/* predicate register */
+#define TGSI_EXEC_TEMP_P0           (TGSI_EXEC_NUM_TEMPS + 9)
+#define TGSI_EXEC_NUM_PREDS         1
+
+#define TGSI_EXEC_NUM_TEMP_EXTRAS   10
 
 
 

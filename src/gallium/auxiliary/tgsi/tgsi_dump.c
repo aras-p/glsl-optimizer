@@ -100,7 +100,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "SAMP",
    "ADDR",
    "IMM",
-   "LOOP"
+   "LOOP",
+   "PRED"
 };
 
 static const char *interpolate_names[] =

@@ -49,7 +49,6 @@ struct tgsi_full_dst_register
 {
    struct tgsi_dst_register               DstRegister;
    struct tgsi_src_register               DstRegisterInd;
-   struct tgsi_dst_register_ext_concode   DstRegisterExtConcode;
    struct tgsi_dst_register_ext_modulate  DstRegisterExtModulate;
 };
 
@@ -81,9 +80,9 @@ struct tgsi_full_immediate
 struct tgsi_full_instruction
 {
    struct tgsi_instruction             Instruction;
-   struct tgsi_instruction_ext_nv      InstructionExtNv;
    struct tgsi_instruction_ext_label   InstructionExtLabel;
    struct tgsi_instruction_ext_texture InstructionExtTexture;
+   struct tgsi_instruction_ext_predicate InstructionExtPredicate;
    struct tgsi_full_dst_register       FullDstRegisters[TGSI_FULL_MAX_DST_REGISTERS];
    struct tgsi_full_src_register       FullSrcRegisters[TGSI_FULL_MAX_SRC_REGISTERS];
    uint Flags;  /**< user-defined usage */
