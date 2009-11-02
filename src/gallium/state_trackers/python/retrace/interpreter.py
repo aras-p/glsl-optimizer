@@ -314,7 +314,7 @@ class Screen(Object):
         if texture is None:
             return None
         transfer = Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
-        if transfer and usage & gallium.PIPE_TRANSFER_READ
+        if transfer and usage & gallium.PIPE_TRANSFER_READ:
             if self.interpreter.options.all:
                 self.interpreter.present(transfer.surface, 'transf_read', x, y, w, h)
         return transfer
