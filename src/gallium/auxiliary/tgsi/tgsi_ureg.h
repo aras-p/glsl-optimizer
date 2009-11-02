@@ -68,9 +68,12 @@ struct ureg_dst
    unsigned Indirect    : 1;  /* BOOL */
    unsigned Saturate    : 1;  /* BOOL */
    unsigned Predicate   : 1;
+   unsigned PredNegate  : 1;  /* BOOL */
+   unsigned PredSwizzleX: 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleY: 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleZ: 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleW: 2;  /* TGSI_SWIZZLE_ */
    int      Index       : 16; /* SINT */
-   unsigned Pad1        : 5;
-   unsigned Pad2        : 1;  /* BOOL */
    int      IndirectIndex   : 16; /* SINT */
    int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
 };
@@ -275,6 +278,11 @@ ureg_emit_insn(struct ureg_program *ureg,
                unsigned opcode,
                boolean saturate,
                boolean predicate,
+               boolean pred_negate,
+               unsigned pred_swizzle_x,
+               unsigned pred_swizzle_y,
+               unsigned pred_swizzle_z,
+               unsigned pred_swizzle_w,
                unsigned num_dst,
                unsigned num_src );
 
@@ -305,7 +313,17 @@ ureg_fixup_insn_size(struct ureg_program *ureg,
 static INLINE void ureg_##op( struct ureg_program *ureg )       \
 {                                                               \
    unsigned opcode = TGSI_OPCODE_##op;                          \
-   unsigned insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, 0 );\
+   unsigned insn = ureg_emit_insn(ureg,                         \
+                                  opcode,                       \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  TGSI_SWIZZLE_X,               \
+                                  TGSI_SWIZZLE_Y,               \
+                                  TGSI_SWIZZLE_Z,               \
+                                  TGSI_SWIZZLE_W,               \
+                                  0,                            \
+                                  0);                           \
    ureg_fixup_insn_size( ureg, insn );                          \
 }
 
@@ -314,7 +332,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,        \
                               struct ureg_src src )             \
 {                                                               \
    unsigned opcode = TGSI_OPCODE_##op;                          \
-   unsigned insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, 1 );\
+   unsigned insn = ureg_emit_insn(ureg,                         \
+                                  opcode,                       \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  TGSI_SWIZZLE_X,               \
+                                  TGSI_SWIZZLE_Y,               \
+                                  TGSI_SWIZZLE_Z,               \
+                                  TGSI_SWIZZLE_W,               \
+                                  0,                            \
+                                  1);                           \
    ureg_emit_src( ureg, src );                                  \
    ureg_fixup_insn_size( ureg, insn );                          \
 }
@@ -324,7 +352,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,        \
                               unsigned *label_token )           \
 {                                                               \
    unsigned opcode = TGSI_OPCODE_##op;                          \
-   unsigned insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, 0 );\
+   unsigned insn = ureg_emit_insn(ureg,                         \
+                                  opcode,                       \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  TGSI_SWIZZLE_X,               \
+                                  TGSI_SWIZZLE_Y,               \
+                                  TGSI_SWIZZLE_Z,               \
+                                  TGSI_SWIZZLE_W,               \
+                                  0,                            \
+                                  0);                           \
    ureg_emit_label( ureg, insn, label_token );                  \
    ureg_fixup_insn_size( ureg, insn );                          \
 }
@@ -335,7 +373,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,        \
                               unsigned *label_token )          \
 {                                                               \
    unsigned opcode = TGSI_OPCODE_##op;                          \
-   unsigned insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, 1 );\
+   unsigned insn = ureg_emit_insn(ureg,                         \
+                                  opcode,                       \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  FALSE,                        \
+                                  TGSI_SWIZZLE_X,               \
+                                  TGSI_SWIZZLE_Y,               \
+                                  TGSI_SWIZZLE_Z,               \
+                                  TGSI_SWIZZLE_W,               \
+                                  0,                            \
+                                  1);                           \
    ureg_emit_label( ureg, insn, label_token );                  \
    ureg_emit_src( ureg, src );                                  \
    ureg_fixup_insn_size( ureg, insn );                          \
@@ -346,7 +394,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_dst dst )                     \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 0 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  0);                                   \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_fixup_insn_size( ureg, insn );                                  \
 }
@@ -358,7 +416,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_src src )                     \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 1 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  1);                                   \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src );                                          \
    ureg_fixup_insn_size( ureg, insn );                                  \
@@ -371,7 +439,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_src src1 )                    \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 2 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  2);                                   \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
    ureg_emit_src( ureg, src1 );                                         \
@@ -386,7 +464,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_src src1 )                    \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 2 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  2);                                   \
    ureg_emit_texture( ureg, insn, target );                             \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
@@ -402,7 +490,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_src src2 )                    \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 3 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  3);                                   \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
    ureg_emit_src( ureg, src1 );                                         \
@@ -420,7 +518,17 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
                               struct ureg_src src3 )                    \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
-   unsigned insn = ureg_emit_insn( ureg, opcode, dst.Saturate, dst.Predicate, 1, 4 );\
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  4);                                   \
    ureg_emit_texture( ureg, insn, target );                             \
    ureg_emit_dst( ureg, dst );                                          \
    ureg_emit_src( ureg, src0 );                                         \
@@ -503,10 +611,20 @@ ureg_saturate( struct ureg_dst reg )
 }
 
 static INLINE struct ureg_dst
-ureg_predicate(struct ureg_dst reg)
+ureg_predicate(struct ureg_dst reg,
+               boolean negate,
+               unsigned swizzle_x,
+               unsigned swizzle_y,
+               unsigned swizzle_z,
+               unsigned swizzle_w)
 {
    assert(reg.File != TGSI_FILE_NULL);
    reg.Predicate = 1;
+   reg.PredNegate = negate;
+   reg.PredSwizzleX = swizzle_x;
+   reg.PredSwizzleY = swizzle_y;
+   reg.PredSwizzleZ = swizzle_z;
+   reg.PredSwizzleW = swizzle_w;
    return reg;
 }
 
@@ -544,9 +662,12 @@ ureg_dst( struct ureg_src src )
    dst.IndirectSwizzle = src.IndirectSwizzle;
    dst.Saturate  = 0;
    dst.Predicate = 0;
+   dst.PredNegate = 0;
+   dst.PredSwizzleX = TGSI_SWIZZLE_X;
+   dst.PredSwizzleY = TGSI_SWIZZLE_Y;
+   dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
+   dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = src.Index;
-   dst.Pad1      = 0;
-   dst.Pad2      = 0;
 
    return dst;
 }
@@ -586,9 +707,12 @@ ureg_dst_undef( void )
    dst.IndirectSwizzle = 0;
    dst.Saturate  = 0;
    dst.Predicate = 0;
+   dst.PredNegate = 0;
+   dst.PredSwizzleX = TGSI_SWIZZLE_X;
+   dst.PredSwizzleY = TGSI_SWIZZLE_Y;
+   dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
+   dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = 0;
-   dst.Pad1      = 0;
-   dst.Pad2      = 0;
 
    return dst;
 }

@@ -206,9 +206,13 @@ ureg_dst_register( unsigned file,
    dst.IndirectIndex = 0;
    dst.IndirectSwizzle = 0;
    dst.Saturate  = 0;
+   dst.Predicate = 0;
+   dst.PredNegate = 0;
+   dst.PredSwizzleX = TGSI_SWIZZLE_X;
+   dst.PredSwizzleY = TGSI_SWIZZLE_Y;
+   dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
+   dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = index;
-   dst.Pad1      = 0;
-   dst.Pad2      = 0;
 
    return dst;
 }
@@ -645,6 +649,11 @@ ureg_emit_insn(struct ureg_program *ureg,
                unsigned opcode,
                boolean saturate,
                boolean predicate,
+               boolean pred_negate,
+               unsigned pred_swizzle_x,
+               unsigned pred_swizzle_y,
+               unsigned pred_swizzle_z,
+               unsigned pred_swizzle_w,
                unsigned num_dst,
                unsigned num_src )
 {
@@ -666,6 +675,11 @@ ureg_emit_insn(struct ureg_program *ureg,
    if (predicate) {
       out[0].insn.Extended = 1;
       out[1].insn_ext_predicate = tgsi_default_instruction_ext_predicate();
+      out[1].insn_ext_predicate.Negate = pred_negate;
+      out[1].insn_ext_predicate.SwizzleX = pred_swizzle_x;
+      out[1].insn_ext_predicate.SwizzleY = pred_swizzle_y;
+      out[1].insn_ext_predicate.SwizzleZ = pred_swizzle_z;
+      out[1].insn_ext_predicate.SwizzleW = pred_swizzle_w;
    } else {
       out[0].insn.Extended = 0;
    }
@@ -761,11 +775,30 @@ ureg_insn(struct ureg_program *ureg,
    unsigned insn, i;
    boolean saturate;
    boolean predicate;
+   boolean negate;
+   unsigned swizzle[4];
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
+   if (predicate) {
+      negate = dst[0].PredNegate;
+      swizzle[0] = dst[0].PredSwizzleX;
+      swizzle[1] = dst[0].PredSwizzleY;
+      swizzle[2] = dst[0].PredSwizzleZ;
+      swizzle[3] = dst[0].PredSwizzleW;
+   }
 
-   insn = ureg_emit_insn( ureg, opcode, saturate, predicate, nr_dst, nr_src );
+   insn = ureg_emit_insn(ureg,
+                         opcode,
+                         saturate,
+                         predicate,
+                         negate,
+                         swizzle[0],
+                         swizzle[1],
+                         swizzle[2],
+                         swizzle[3],
+                         nr_dst,
+                         nr_src);
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );
@@ -788,11 +821,30 @@ ureg_tex_insn(struct ureg_program *ureg,
    unsigned insn, i;
    boolean saturate;
    boolean predicate;
+   boolean negate;
+   unsigned swizzle[4];
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
+   if (predicate) {
+      negate = dst[0].PredNegate;
+      swizzle[0] = dst[0].PredSwizzleX;
+      swizzle[1] = dst[0].PredSwizzleY;
+      swizzle[2] = dst[0].PredSwizzleZ;
+      swizzle[3] = dst[0].PredSwizzleW;
+   }
 
-   insn = ureg_emit_insn( ureg, opcode, saturate, predicate, nr_dst, nr_src );
+   insn = ureg_emit_insn(ureg,
+                         opcode,
+                         saturate,
+                         predicate,
+                         negate,
+                         swizzle[0],
+                         swizzle[1],
+                         swizzle[2],
+                         swizzle[3],
+                         nr_dst,
+                         nr_src);
 
    ureg_emit_texture( ureg, insn, target );
 
@@ -815,7 +867,17 @@ ureg_label_insn(struct ureg_program *ureg,
 {
    unsigned insn, i;
 
-   insn = ureg_emit_insn( ureg, opcode, FALSE, FALSE, 0, nr_src );
+   insn = ureg_emit_insn(ureg,
+                         opcode,
+                         FALSE,
+                         FALSE,
+                         FALSE,
+                         TGSI_SWIZZLE_X,
+                         TGSI_SWIZZLE_Y,
+                         TGSI_SWIZZLE_Z,
+                         TGSI_SWIZZLE_W,
+                         0,
+                         nr_src);
 
    ureg_emit_label( ureg, insn, label_token );
 
