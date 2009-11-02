@@ -444,7 +444,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       "MESA_FORMAT_RGB_FXT1",
       GL_RGB,
       GL_UNSIGNED_NORMALIZED,
-      8, 8, 8, 0,
+      4, 4, 4, 0,                  /* approx Red/Green/BlueBits */
       0, 0, 0, 0, 0,
       8, 4, 16                     /* 16 bytes per 8x4 block */
    },
@@ -453,7 +453,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       "MESA_FORMAT_RGBA_FXT1",
       GL_RGBA,
       GL_UNSIGNED_NORMALIZED,
-      8, 8, 8, 8,
+      4, 4, 4, 1,                  /* approx Red/Green/Blue/AlphaBits */
       0, 0, 0, 0, 0,
       8, 4, 16                     /* 16 bytes per 8x4 block */
    },
