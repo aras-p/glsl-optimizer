@@ -1560,6 +1560,8 @@ st_copy_texsubimage(GLcontext *ctx,
          use_fallback = GL_FALSE;
       }
       else if (format_writemask &&
+               texBaseFormat != GL_DEPTH_COMPONENT &&
+               texBaseFormat != GL_DEPTH_STENCIL &&
                screen->is_format_supported(screen, src_format,
                                            PIPE_TEXTURE_2D, 
                                            PIPE_TEXTURE_USAGE_SAMPLER,
