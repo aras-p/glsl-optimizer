@@ -29,8 +29,9 @@
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
 #include <util/u_rect.h>
-#include "softpipe/sp_winsys.h"
-#include "softpipe/sp_texture.h"
+#include <util/u_video.h>
+#include "sp_winsys.h"
+#include "sp_texture.h"
 
 static void
 sp_mpeg12_destroy(struct pipe_video_context *vpipe)
