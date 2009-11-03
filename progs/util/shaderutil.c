@@ -84,6 +84,7 @@ CompileShaderFile(GLenum shaderType, const char *filename)
    f = fopen(filename, "r");
    if (!f) {
       fprintf(stderr, "Unable to open shader file %s\n", filename);
+      free(buffer);
       return 0;
    }
 
@@ -94,6 +95,7 @@ CompileShaderFile(GLenum shaderType, const char *filename)
       shader = CompileShaderText(shaderType, buffer);
    }
    else {
+      free(buffer);
       return 0;
    }
 
