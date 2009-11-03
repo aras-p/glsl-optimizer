@@ -136,6 +136,41 @@ const struct brw_tracked_state brw_binding_table_pointers = {
    .emit = upload_binding_table_pointers,
 };
 
+/**
+ * Upload the binding table pointers, which point each stage's array of surface
+ * state pointers.
+ *
+ * The binding table pointers are relative to the surface state base address,
+ * which is 0.
+ */
+static void upload_gen6_binding_table_pointers(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 |
+	     GEN6_BINDING_TABLE_MODIFY_VS |
+	     GEN6_BINDING_TABLE_MODIFY_GS |
+	     GEN6_BINDING_TABLE_MODIFY_PS |
+	     (4 - 2));
+   if (brw->vs.bind_bo != NULL)
+      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
+   else
+      OUT_BATCH(0);
+   OUT_BATCH(0); /* gs */
+   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* wm/ps */
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state gen6_binding_table_pointers = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH,
+      .cache = CACHE_NEW_SURF_BIND,
+   },
+   .prepare = prepare_binding_table_pointers,
+   .emit = upload_gen6_binding_table_pointers,
+};
 
 /**
  * Upload pointers to the per-stage state.
