@@ -192,12 +192,15 @@ MakeTexture(const struct pixel_format *format, GLenum intFormat, GLboolean swap)
    }
 
    if (0) {
-      GLint r, g, b, a;
+      GLint r, g, b, a, l, i;
       glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
       glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
       glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
       glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
-      printf("sizes: %d %d %d %d\n", r, g, b, a);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_LUMINANCE_SIZE, &l);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTENSITY_SIZE, &i);
+      printf("IntFormat: 0x%x  R %d  G %d  B %d  A %d  L %d  I %d\n",
+             intFormat, r, g, b, a, l, i);
       glGetError();
    }                              
 
