@@ -285,7 +285,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     if (constants->Count == 0)
         return;
 
-    BEGIN_CS(constants->Count * 4 + 2);
+    BEGIN_CS(constants->Count * 4 + 3);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->Count * 4);
     for (i = 0; i < constants->Count; i++) {
