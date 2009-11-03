@@ -88,11 +88,15 @@ struct nv50_reg {
 	int index;
 
 	int hw;
-	int neg;
+	int mod;
 
 	int rhw; /* result hw for FP outputs, or interpolant index */
 	int acc; /* instruction where this reg is last read (first insn == 1) */
 };
+
+#define NV50_MOD_NEG 1
+#define NV50_MOD_ABS 2
+#define NV50_MOD_SAT 4
 
 /* arbitrary limits */
 #define MAX_IF_DEPTH 4
@@ -152,7 +156,7 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->type = type;
 	reg->index = index;
 	reg->hw = hw;
-	reg->neg = 0;
+	reg->mod = 0;
 	reg->rhw = -1;
 	reg->acc = 0;
 }
@@ -460,8 +464,12 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
+	unsigned val;
 	float f = pc->immd_buf[imm->hw];
-	unsigned val = fui(imm->neg ? -f : f);
+
+	if (imm->mod & NV50_MOD_ABS)
+		f = fabsf(f);
+	val = fui((imm->mod & NV50_MOD_NEG) ? -f : f);
 
 	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
@@ -801,12 +809,12 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
 	if (src1->type == P_IMMD && !is_long(e)) {
-		if (src0->neg)
+		if (src0->mod & NV50_MOD_NEG)
 			e->inst[0] |= 0x00008000;
 		set_immd(pc, src1, e);
 	} else {
 		set_src_1(pc, src1, e);
-		if (src0->neg ^ src1->neg) {
+		if ((src0->mod ^ src1->mod) & NV50_MOD_NEG) {
 			if (is_long(e))
 				e->inst[1] |= 0x08000000;
 			else
@@ -828,9 +836,10 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 	alloc_reg(pc, src1);
 	check_swap_src_0_1(pc, &src0, &src1);
 
-	if (!pc->allow32 || (src0->neg | src1->neg) || src1->hw > 63) {
+	if (!pc->allow32 || (src0->mod | src1->mod) || src1->hw > 63) {
 		set_long(pc, e);
-		e->inst[1] |= (src0->neg << 26) | (src1->neg << 27);
+		e->inst[1] |= ((src0->mod & NV50_MOD_NEG) << 26) |
+			      ((src1->mod & NV50_MOD_NEG) << 27);
 	}
 
 	set_dst(pc, dst, e);
@@ -877,6 +886,11 @@ emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	set_src_0(pc, src0, e);
 	set_src_1(pc, src1, e);
 
+	if (src0->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
+	if (src1->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00080000;
+
 	emit(pc, e);
 }
 
@@ -885,9 +899,9 @@ emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
 	assert(src0 != src1);
-	src1->neg ^= 1;
+	src1->mod ^= NV50_MOD_NEG;
 	emit_add(pc, dst, src0, src1);
-	src1->neg ^= 1;
+	src1->mod ^= NV50_MOD_NEG;
 }
 
 static void
@@ -941,9 +955,9 @@ emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_src_1(pc, src1, e);
 	set_src_2(pc, src2, e);
 
-	if (src0->neg ^ src1->neg)
+	if ((src0->mod ^ src1->mod) & NV50_MOD_NEG)
 		e->inst[1] |= 0x04000000;
-	if (src2->neg)
+	if (src2->mod & NV50_MOD_NEG)
 		e->inst[1] |= 0x08000000;
 
 	emit(pc, e);
@@ -954,9 +968,9 @@ emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
 	assert(src2 != src0 && src2 != src1);
-	src2->neg ^= 1;
+	src2->mod ^= NV50_MOD_NEG;
 	emit_mad(pc, dst, src0, src1, src2);
-	src2->neg ^= 1;
+	src2->mod ^= NV50_MOD_NEG;
 }
 
 static void
@@ -1230,7 +1244,7 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	const int r_pred = 1;
 	unsigned cvn = CVT_F32_F32;
 
-	if (src->neg)
+	if (src->mod & NV50_MOD_NEG)
 		cvn |= CVT_NEG;
 	/* write predicate reg */
 	emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
@@ -1408,7 +1422,7 @@ emit_ddy(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	assert(src->type == P_TEMP);
 
-	if (!src->neg) /* ! double negation */
+	if (!(src->mod & NV50_MOD_NEG)) /* ! double negation */
 		emit_neg(pc, src, src);
 
 	e->inst[0] = 0xc0150000;
@@ -1671,7 +1685,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	case TGSI_UTIL_SIGN_TOGGLE:
 		if (neg)
-			r->neg = 1;
+			r->mod = NV50_MOD_NEG;
 		else {
 			temp = temp_temp(pc);
 			emit_neg(pc, temp, r);
@@ -2207,7 +2221,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!src[i][c])
 				continue;
-			src[i][c]->neg = 0;
+			src[i][c]->mod = 0;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
 			else
