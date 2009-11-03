@@ -72,12 +72,6 @@ struct pipe_video_context
                               struct pipe_macroblock *macroblocks,
                               struct pipe_fence_handle **fence);
 
-   void (*clear_surface)(struct pipe_video_context *vpipe,
-                         unsigned x, unsigned y,
-                         unsigned width, unsigned height,
-                         unsigned value,
-                         struct pipe_surface *surface);
-
    void (*render_picture)(struct pipe_video_context     *vpipe,
                           /*struct pipe_surface         *backround,
                           struct pipe_video_rect        *backround_area,*/
@@ -95,6 +89,20 @@ struct pipe_video_context
                           struct pipe_video_rect        *layer_src_areas,
                           struct pipe_video_rect        *layer_dst_areas,*/
                           struct pipe_fence_handle      **fence);
+
+   void (*surface_fill)(struct pipe_video_context *vpipe,
+                        struct pipe_surface *dst,
+                        unsigned dstx, unsigned dsty,
+                        unsigned width, unsigned height,
+                        unsigned value);
+
+   void (*surface_copy)(struct pipe_video_context *vpipe,
+                        struct pipe_surface *dst,
+                        unsigned dstx, unsigned dsty,
+                        struct pipe_surface *src,
+                        unsigned srcx, unsigned srcy,
+                        unsigned width, unsigned height);
+
    /*@}*/
 
    /**

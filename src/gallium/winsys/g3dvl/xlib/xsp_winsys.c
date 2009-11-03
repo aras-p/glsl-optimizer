@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <vl_winsys.h>
@@ -36,7 +36,12 @@
 #include <softpipe/sp_video_context.h>
 #include <softpipe/sp_texture.h>
 
-/* pipe_winsys implementation */
+/* TODO: Find a good way to calculate this */
+static enum pipe_format VisualToPipe(Visual *visual)
+{
+   assert(visual);
+   return PIPE_FORMAT_X8R8G8B8_UNORM;
+}
 
 struct xsp_pipe_winsys
 {
@@ -48,9 +53,9 @@ struct xsp_pipe_winsys
 
 struct xsp_context
 {
-   Drawable drawable;
+   struct vl_context base;
 
-   void (*pipe_destroy)(struct pipe_video_context *vpipe);
+   Drawable drawable;
 };
 
 struct xsp_buffer
@@ -218,48 +223,37 @@ static void xsp_destroy(struct pipe_winsys *pws)
    FREE(xsp_winsys);
 }
 
-/* Called through pipe_video_context::destroy() */
-static void xsp_pipe_destroy(struct pipe_video_context *vpipe)
-{
-   struct xsp_context *xsp_context;
-
-   assert(vpipe);
-
-   xsp_context = vpipe->priv;
-
-   /* Call the original destroy */
-   xsp_context->pipe_destroy(vpipe);
-
-   FREE(xsp_context);
-}
-
-/* Show starts here */
-
 Drawable
-vl_video_bind_drawable(struct pipe_video_context *vpipe, Drawable drawable)
+vl_video_bind_drawable(struct vl_context *vctx, Drawable drawable)
 {
-   struct xsp_context *xsp_context;
+   struct xsp_context *xsp_context = (struct xsp_context*)vctx;
    Drawable old_drawable;
 
-   assert(vpipe);
+   assert(vctx);
 
-   xsp_context = vpipe->priv;
    old_drawable = xsp_context->drawable;
    xsp_context->drawable = drawable;
 
    return old_drawable;
 }
 
-struct pipe_screen*
+struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
+   struct vl_screen *vscreen;
    struct xsp_pipe_winsys *xsp_winsys;
 
    assert(display);
 
-   xsp_winsys = CALLOC_STRUCT(xsp_pipe_winsys);
-   if (!xsp_winsys)
+   vscreen = CALLOC_STRUCT(vl_screen);
+   if (!vscreen)
       return NULL;
+
+   xsp_winsys = CALLOC_STRUCT(xsp_pipe_winsys);
+   if (!xsp_winsys) {
+      FREE(vscreen);
+      return NULL;
+   }
 
    xsp_winsys->base.buffer_create = xsp_buffer_create;
    xsp_winsys->base.user_buffer_create = xsp_user_buffer_create;
@@ -291,17 +285,36 @@ vl_screen_create(Display *display, int screen)
 
    if (!xsp_winsys->fbimage) {
       FREE(xsp_winsys);
+      FREE(vscreen);
       return NULL;
    }
 
    XInitImage(xsp_winsys->fbimage);
 
-   return softpipe_create_screen(&xsp_winsys->base);
+   vscreen->pscreen = softpipe_create_screen(&xsp_winsys->base);
+
+   if (!vscreen->pscreen) {
+      FREE(vscreen);
+      XDestroyImage(xsp_winsys->fbimage);
+      FREE(xsp_winsys);
+      return NULL;
+   }
+
+   vscreen->format = VisualToPipe(XDefaultVisual(display, screen));
+
+   return vscreen;
 }
 
-struct pipe_video_context*
-vl_video_create(Display *display, int screen,
-                struct pipe_screen *p_screen,
+void vl_screen_destroy(struct vl_screen *vscreen)
+{
+   assert(vscreen);
+
+   vscreen->pscreen->destroy(vscreen->pscreen);
+   FREE(vscreen);
+}
+
+struct vl_context*
+vl_video_create(struct vl_screen *vscreen,
                 enum pipe_video_profile profile,
                 enum pipe_video_chroma_format chroma_format,
                 unsigned width, unsigned height)
@@ -309,10 +322,10 @@ vl_video_create(Display *display, int screen,
    struct pipe_video_context *vpipe;
    struct xsp_context *xsp_context;
 
-   assert(p_screen);
+   assert(vscreen);
    assert(width && height);
 
-   vpipe = sp_video_create(p_screen, profile, chroma_format, width, height);
+   vpipe = sp_video_create(vscreen->pscreen, profile, chroma_format, width, height);
    if (!vpipe)
       return NULL;
 
@@ -322,11 +335,17 @@ vl_video_create(Display *display, int screen,
       return NULL;
    }
 
-   /* Override this so we can free our xsp_context when the pipe is freed */
-   xsp_context->pipe_destroy = vpipe->destroy;
-   vpipe->destroy = xsp_pipe_destroy;
-
    vpipe->priv = xsp_context;
+   xsp_context->base.vpipe = vpipe;
+   xsp_context->base.vscreen = vscreen;
 
-   return vpipe;
+   return &xsp_context->base;
+}
+
+void vl_video_destroy(struct vl_context *vctx)
+{
+   assert(vctx);
+
+   vctx->vpipe->destroy(vctx->vpipe);
+   FREE(vctx);
 }

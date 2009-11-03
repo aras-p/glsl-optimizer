@@ -24,6 +24,7 @@ C_SOURCES = \
 	nv40_surface.c \
 	nv40_transfer.c \
 	nv40_vbo.c \
-	nv40_vertprog.c
+	nv40_vertprog.c \
+        nv40_video_context.c
 
 include ../../Makefile.template

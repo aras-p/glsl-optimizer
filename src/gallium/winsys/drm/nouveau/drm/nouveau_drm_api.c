@@ -45,9 +45,9 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 }
 
 static struct pipe_surface *
-nouveau_dri1_front_surface(struct pipe_context *pipe)
+nouveau_dri1_front_surface(struct pipe_screen *screen)
 {
-	return nouveau_winsys_screen(pipe->screen)->front;
+	return nouveau_winsys_screen(screen)->front;
 }
 
 static struct dri1_api nouveau_dri1_api = {
@@ -190,6 +190,54 @@ nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 	return nvws->pctx[i];
 }
 
+typedef struct pipe_video_context* (*nouveau_video_create)(struct pipe_context *pipe,
+                                                           enum pipe_video_profile profile,
+                                                           enum pipe_video_chroma_format chroma_format,
+                                                           unsigned width, unsigned height,
+                                                           unsigned pvctx);
+
+static struct pipe_video_context *
+nouveau_drm_create_video_context(struct drm_api *api, struct pipe_screen *pscreen,
+                                 enum pipe_video_profile profile,
+                                 enum pipe_video_chroma_format chroma_format,
+                                 unsigned width, unsigned height)
+{
+	struct nouveau_winsys *nvws = nouveau_winsys_screen(pscreen);
+        nouveau_video_create init;
+	unsigned chipset = nouveau_screen(pscreen)->device->chipset;
+        struct pipe_context *pipe;
+	int i;
+
+	switch (chipset & 0xf0) {
+	case 0x40:
+	case 0x60:
+		init = nv40_video_create;
+		break;
+	default:
+		debug_printf("%s: unknown chipset nv%02x\n", __func__, chipset);
+		return NULL;
+	}
+
+	/* Find a free slot for a pipe video context, allocate a new one if needed */
+	for (i = 0; i < nvws->nr_pvctx; i++) {
+		if (nvws->pvctx[i] == NULL)
+			break;
+	}
+
+	if (i == nvws->nr_pvctx) {
+		nvws->nr_pvctx++;
+		nvws->pvctx = realloc(nvws->pvctx,
+				      sizeof(*nvws->pvctx) * nvws->nr_pvctx);
+	}
+
+        pipe = nouveau_drm_create_context(api, pscreen);
+        if (!pipe)
+           return NULL;
+
+	nvws->pvctx[i] = init(pipe, profile, chroma_format, width, height, i);
+	return nvws->pvctx[i];
+}
+
 static struct pipe_texture *
 nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
 			 struct pipe_texture *templ, const char *name,
@@ -254,6 +302,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 struct drm_api drm_api_hooks = {
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
+        .create_video_context = nouveau_drm_create_video_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,
 	.shared_handle_from_texture = nouveau_drm_name_from_pt,
 	.local_handle_from_texture = nouveau_drm_handle_from_pt,

@@ -34,13 +34,13 @@
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
 
-struct pipe_video_context;
+struct vl_context;
 struct pipe_surface;
 struct pipe_fence_handle;
 
 typedef struct
 {
-	struct pipe_video_context *vpipe;
+	struct vl_context *vctx;
 	struct pipe_surface *backbuffer;
 } XvMCContextPrivate;
 

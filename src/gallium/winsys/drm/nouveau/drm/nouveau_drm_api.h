@@ -15,6 +15,8 @@ struct nouveau_winsys {
 
 	unsigned nr_pctx;
 	struct pipe_context **pctx;
+        unsigned nr_pvctx;
+        struct pipe_video_context **pvctx;
 
 	struct pipe_surface *front;
 };

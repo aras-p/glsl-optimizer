@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <assert.h>
@@ -121,7 +121,7 @@ static enum pipe_video_profile ProfileToPipe(int xvmc_profile)
       assert(0);
    if (xvmc_profile & XVMC_MPEG_4)
       assert(0);
-	
+
    assert(0);
 
    return -1;
@@ -152,8 +152,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    int mc_type;
    int surface_flags;
    Status ret;
-   struct pipe_screen *screen;
-   struct pipe_video_context *vpipe;
+   struct vl_screen *vscreen;
+   struct vl_context *vctx;
    XvMCContextPrivate *context_priv;
    float csc[16];
 
@@ -188,18 +188,18 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
 
    /* TODO: Reuse screen if process creates another context */
-   screen = vl_screen_create(dpy, scrn);
+   vscreen = vl_screen_create(dpy, scrn);
 
-   if (!screen) {
+   if (!vscreen) {
       FREE(context_priv);
       return BadAlloc;
    }
 
-   vpipe = vl_video_create(dpy, scrn, screen, ProfileToPipe(mc_type),
-                           FormatToPipe(chroma_format), width, height);
+   vctx = vl_video_create(vscreen, ProfileToPipe(mc_type),
+                          FormatToPipe(chroma_format), width, height);
 
-   if (!vpipe) {
-      screen->destroy(screen);
+   if (!vctx) {
+      vl_screen_destroy(vscreen);
       FREE(context_priv);
       return BadAlloc;
    }
@@ -211,9 +211,9 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
       NULL, true, csc
    );
-   vpipe->set_csc_matrix(vpipe, csc);
+   vctx->vpipe->set_csc_matrix(vctx->vpipe, csc);
 
-   context_priv->vpipe = vpipe;
+   context_priv->vctx = vctx;
 
    context->context_id = XAllocID(dpy);
    context->surface_type_id = surface_type_id;
@@ -222,7 +222,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    context->flags = flags;
    context->port = port;
    context->privData = context_priv;
-	
+
    SyncHandle();
 
    return Success;
@@ -230,8 +230,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 
 Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 {
-   struct pipe_screen *screen;
-   struct pipe_video_context *vpipe;
+   struct vl_screen *vscreen;
+   struct vl_context *vctx;
    XvMCContextPrivate *context_priv;
 
    assert(dpy);
@@ -240,11 +240,11 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
       return XvMCBadContext;
 
    context_priv = context->privData;
-   vpipe = context_priv->vpipe;
+   vctx = context_priv->vctx;
    pipe_surface_reference(&context_priv->backbuffer, NULL);
-   screen = vpipe->screen;
-   vpipe->destroy(vpipe);
-   screen->destroy(screen);
+   vscreen = vctx->vscreen;
+   vl_video_destroy(vctx);
+   vl_screen_destroy(vscreen);
    FREE(context_priv);
    context->privData = NULL;
 

@@ -175,33 +175,33 @@ dri_make_current(__DRIcontextPrivate * cPriv,
 }
 
 static void
-st_dri_lock(struct pipe_context *pipe)
+st_dri_lock(void *pipe_priv)
 {
-   dri_lock((struct dri_context *)pipe->priv);
+   dri_lock((struct dri_context *)pipe_priv);
 }
 
 static void
-st_dri_unlock(struct pipe_context *pipe)
+st_dri_unlock(void *pipe_priv)
 {
-   dri_unlock((struct dri_context *)pipe->priv);
+   dri_unlock((struct dri_context *)pipe_priv);
 }
 
 static boolean
-st_dri_is_locked(struct pipe_context *pipe)
+st_dri_is_locked(void *pipe_priv)
 {
-   return ((struct dri_context *)pipe->priv)->isLocked;
+   return ((struct dri_context *)pipe_priv)->isLocked;
 }
 
 static boolean
-st_dri_lost_lock(struct pipe_context *pipe)
+st_dri_lost_lock(void *pipe_priv)
 {
-   return ((struct dri_context *)pipe->priv)->wsLostLock;
+   return ((struct dri_context *)pipe_priv)->wsLostLock;
 }
 
 static void
-st_dri_clear_lost_lock(struct pipe_context *pipe)
+st_dri_clear_lost_lock(void *pipe_priv)
 {
-   ((struct dri_context *)pipe->priv)->wsLostLock = FALSE;
+   ((struct dri_context *)pipe_priv)->wsLostLock = FALSE;
 }
 
 struct dri1_api_lock_funcs dri1_lf = {

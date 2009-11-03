@@ -8,6 +8,7 @@ struct pipe_screen;
 struct pipe_winsys;
 struct pipe_buffer;
 struct pipe_context;
+struct pipe_video_context;
 struct pipe_texture;
 
 enum drm_create_screen_mode {
@@ -36,6 +37,11 @@ struct drm_api
 	                                      struct drm_create_screen_arg *arg);
 	struct pipe_context* (*create_context)(struct drm_api *api,
 	                                       struct pipe_screen *screen);
+        struct pipe_video_context* (*create_video_context)(struct drm_api *api,
+                                                           struct pipe_screen *screen,
+                                                           enum pipe_video_profile profile,
+                                                           enum pipe_video_chroma_format chroma_format,
+                                                           unsigned width, unsigned height);
 	/*@}*/
 
 	/**

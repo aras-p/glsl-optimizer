@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <X11/Xlibint.h>
+#include <vl_winsys.h>
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
@@ -83,13 +84,16 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_
 }
 
 static bool
-CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, unsigned int height,
+CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned int height,
                          struct pipe_surface **backbuffer)
 {
+   struct pipe_video_context *vpipe;
    struct pipe_texture template;
    struct pipe_texture *tex;
 
-   assert(vpipe);
+   assert(vctx);
+
+   vpipe = vctx->vpipe;
 
    if (*backbuffer) {
       if ((*backbuffer)->width != width || (*backbuffer)->height != height)
@@ -100,8 +104,7 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
 
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
-   /* XXX: Needs to match the drawable's format? */
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.format = vctx->vscreen->format;
    template.last_level = 0;
    template.width[0] = width;
    template.height[0] = height;
@@ -123,7 +126,7 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
 
    /* Clear the backbuffer in case the video doesn't cover the whole window */
    /* FIXME: Need to clear every time a frame moves and leaves dirty rects */
-   vpipe->clear_surface(vpipe, 0, 0, width, height, 0, *backbuffer);
+   vpipe->surface_fill(vpipe, *backbuffer, 0, 0, width, height, 0);
 
    return true;
 }
@@ -186,7 +189,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return XvMCBadSurface;
 
    context_priv = context->privData;
-   vpipe = context_priv->vpipe;
+   vpipe = context_priv->vctx->vpipe;
 
    surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
    if (!surface_priv)
@@ -266,7 +269,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    assert(!future_surface || future_surface_priv->context == context);
 
    context_priv = context->privData;
-   vpipe = context_priv->vpipe;
+   vpipe = context_priv->vctx->vpipe;
 
    t_vsfc = target_surface_priv->pipe_vsfc;
    p_vsfc = past_surface ? past_surface_priv->pipe_vsfc : NULL;
@@ -345,15 +348,15 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    surface_priv = surface->privData;
    context = surface_priv->context;
    context_priv = context->privData;
-   vpipe = context_priv->vpipe;
+   vpipe = context_priv->vctx->vpipe;
 
-   if (!CreateOrResizeBackBuffer(vpipe, width, height, &context_priv->backbuffer))
+   if (!CreateOrResizeBackBuffer(context_priv->vctx, width, height, &context_priv->backbuffer))
       return BadAlloc;
 
    vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
                          context_priv->backbuffer, &dst_rect, surface_priv->disp_fence);
 
-   vl_video_bind_drawable(vpipe, drawable);
+   vl_video_bind_drawable(context_priv->vctx, drawable);
 	
    vpipe->screen->flush_frontbuffer
    (

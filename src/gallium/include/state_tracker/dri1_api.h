@@ -29,11 +29,11 @@ struct dri1_api_version
 
 struct dri1_api_lock_funcs
 {
-   void (*lock) (struct pipe_context * pipe);
-   void (*unlock) (struct pipe_context * locked_pipe);
-      boolean(*is_locked) (struct pipe_context * locked_pipe);
-      boolean(*is_lock_lost) (struct pipe_context * locked_pipe);
-   void (*clear_lost_lock) (struct pipe_context * locked_pipe);
+   void (*lock) (void *pipe_priv);
+   void (*unlock) (void *locked_pipe_priv);
+      boolean(*is_locked) (void *locked_pipe_priv);
+      boolean(*is_lock_lost) (void *locked_pipe_priv);
+   void (*clear_lost_lock) (void *locked_pipe_priv);
 };
 
 struct dri1_api
@@ -46,7 +46,7 @@ struct dri1_api
 
    /*@{ */
 
-   struct pipe_surface *(*front_srf_locked) (struct pipe_context *
+   struct pipe_surface *(*front_srf_locked) (struct pipe_screen *
 					     locked_pipe);
 
    void (*present_locked) (struct pipe_context * locked_pipe,

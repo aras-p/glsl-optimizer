@@ -53,6 +53,12 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 extern struct pipe_context *
 nv40_create(struct pipe_screen *, unsigned pctx_id);
 
+extern struct pipe_video_context *
+nv40_video_create(struct pipe_context *pipe, enum pipe_video_profile profile,
+                  enum pipe_video_chroma_format chroma_format,
+                  unsigned width, unsigned height,
+                  unsigned pvctx_id);
+
 extern struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 

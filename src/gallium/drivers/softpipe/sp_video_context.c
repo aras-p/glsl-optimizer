@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,12 +22,13 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "sp_video_context.h"
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_rect.h>
 #include "softpipe/sp_winsys.h"
 #include "softpipe/sp_texture.h"
 
@@ -79,18 +80,40 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_clear_surface(struct pipe_video_context *vpipe,
-                        unsigned x, unsigned y,
-                        unsigned width, unsigned height,
-                        unsigned value,
-                        struct pipe_surface *surface)
+sp_mpeg12_surface_fill(struct pipe_video_context *vpipe,
+                       struct pipe_surface *dst,
+                       unsigned dstx, unsigned dsty,
+                       unsigned width, unsigned height,
+                       unsigned value)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
 
    assert(vpipe);
-   assert(surface);
+   assert(dst);
 
-   ctx->pipe->surface_fill(ctx->pipe, surface, x, y, width, height, value);
+   if (ctx->pipe->surface_fill)
+      ctx->pipe->surface_fill(ctx->pipe, dst, dstx, dsty, width, height, value);
+   else
+      util_surface_fill(ctx->pipe, dst, dstx, dsty, width, height, value);
+}
+
+static void
+sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
+                       struct pipe_surface *dst,
+                       unsigned dstx, unsigned dsty,
+                       struct pipe_surface *src,
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(dst);
+
+   if (ctx->pipe->surface_copy)
+      ctx->pipe->surface_copy(ctx->pipe, dst, dstx, dsty, src, srcx, srcy, width, height);
+   else
+      util_surface_copy(ctx->pipe, FALSE, dst, dstx, dsty, src, srcx, srcy, width, height);
 }
 
 static void
@@ -136,7 +159,8 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    pipe_video_surface_reference(&ctx->decode_target, dt);
 }
 
-static void sp_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
+static void
+sp_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
 
@@ -181,6 +205,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.point_size = 1;
    rast.offset_units = 1;
    rast.offset_scale = 1;
+   rast.gl_rasterization_rules = 1;
    /*rast.sprite_coord_mode[i] = ;*/
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
@@ -223,9 +248,12 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
 }
 
 static struct pipe_video_context *
-sp_mpeg12_create(struct pipe_screen *screen, enum pipe_video_profile profile,
+sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  enum pipe_video_chroma_format chroma_format,
-                 unsigned width, unsigned height)
+                 unsigned width, unsigned height,
+                 enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
+                 enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
+                 bool pot_buffers)
 {
    struct sp_mpeg12_context *ctx;
 
@@ -241,27 +269,20 @@ sp_mpeg12_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    ctx->base.width = width;
    ctx->base.height = height;
 
-   ctx->base.screen = screen;
+   ctx->base.screen = pipe->screen;
    ctx->base.destroy = sp_mpeg12_destroy;
    ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
-   ctx->base.clear_surface = sp_mpeg12_clear_surface;
    ctx->base.render_picture = sp_mpeg12_render_picture;
+   ctx->base.surface_fill = sp_mpeg12_surface_fill;
+   ctx->base.surface_copy = sp_mpeg12_surface_copy;
    ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
    ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
 
-   ctx->pipe = softpipe_create(screen);
-   if (!ctx->pipe) {
-      FREE(ctx);
-      return NULL;
-   }
+   ctx->pipe = pipe;
 
-   /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture */
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    width, height, chroma_format,
-                                   VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
-                                   /* TODO: Use XFER_NONE when implemented */
-                                   VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
-                                   true)) {
+                                   bufmode, eb_handling, pot_buffers)) {
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -290,14 +311,43 @@ sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
                 enum pipe_video_chroma_format chroma_format,
                 unsigned width, unsigned height)
 {
+   struct pipe_context *pipe;
+
+   assert(screen);
+   assert(width && height);
+
+   pipe = softpipe_create(screen);
+   if (!pipe)
+      return NULL;
+
+   /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
+   /* TODO: Use XFER_NONE when implemented */
+   return sp_video_create_ex(pipe, profile,
+                             chroma_format,
+                             width, height,
+                             VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
+                             VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
+                             true);
+}
+
+struct pipe_video_context *
+sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
+                   enum pipe_video_chroma_format chroma_format,
+                   unsigned width, unsigned height,
+                   enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
+                   enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
+                   bool pot_buffers)
+{
    assert(screen);
    assert(width && height);
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
-         return sp_mpeg12_create(screen, profile,
+         return sp_mpeg12_create(pipe, profile,
                                  chroma_format,
-                                 width, height);
+                                 width, height,
+                                 bufmode, eb_handling,
+                                 pot_buffers);
       default:
          return NULL;
    }

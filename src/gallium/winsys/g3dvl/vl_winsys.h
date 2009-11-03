@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef vl_winsys_h
@@ -35,17 +35,32 @@
 struct pipe_screen;
 struct pipe_video_context;
 
-struct pipe_screen*
+struct vl_screen
+{
+   enum pipe_format format;
+   struct pipe_screen *pscreen;
+};
+
+struct vl_context
+{
+   struct vl_screen *vscreen;
+   struct pipe_video_context *vpipe;
+};
+
+struct vl_screen*
 vl_screen_create(Display *display, int screen);
 
-struct pipe_video_context*
-vl_video_create(Display *display, int screen,
-                struct pipe_screen *p_screen,
+void vl_screen_destroy(struct vl_screen *vscreen);
+
+struct vl_context*
+vl_video_create(struct vl_screen *vscreen,
                 enum pipe_video_profile profile,
                 enum pipe_video_chroma_format chroma_format,
                 unsigned width, unsigned height);
 
+void vl_video_destroy(struct vl_context *vctx);
+
 Drawable
-vl_video_bind_drawable(struct pipe_video_context *vpipe, Drawable drawable);
+vl_video_bind_drawable(struct vl_context *vctx, Drawable drawable);
 
 #endif
