@@ -77,8 +77,7 @@ int brw_batchbuffer_data(struct brw_batchbuffer *batch,
 
 int brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
 			       struct brw_winsys_buffer *buffer,
-			       uint32_t read_domains,
-			       uint32_t write_domain,
+			       enum brw_buffer_usage usage,
 			       uint32_t offset);
 
 /* Inline functions - might actually be better off with these
@@ -125,10 +124,10 @@ brw_batchbuffer_require_space(struct brw_batchbuffer *batch,
 
 #define OUT_BATCH(d) brw_batchbuffer_emit_dword(brw->batch, d)
 
-#define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
+#define OUT_RELOC(buf, usage, delta) do {				\
       assert((unsigned) (delta) < buf->size);				\
       brw_batchbuffer_emit_reloc(brw->batch, buf,			\
-				 read_domains, write_domain, delta);	\
+				 usage, delta);				\
    } while (0)
 
 #ifdef DEBUG

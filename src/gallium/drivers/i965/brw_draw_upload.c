@@ -300,11 +300,11 @@ static int brw_emit_vertex_buffers( struct brw_context *brw )
 		BRW_VB0_ACCESS_VERTEXDATA |
 		(brw->vb.vb[i].stride << BRW_VB0_PITCH_SHIFT));
       OUT_RELOC(brw->vb.vb[i].bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
+		BRW_USAGE_VERTEX,
 		brw->vb.vb[i].offset);
       if (BRW_IS_IGDNG(brw)) {
 	 OUT_RELOC(brw->vb.vb[i].bo,
-		   I915_GEM_DOMAIN_VERTEX, 0,
+		   BRW_USAGE_VERTEX,
 		   brw->vb.vb[i].bo->size - 1);
       } else
 	 OUT_BATCH(brw->vb.vb[i].stride ? brw->vb.vb[i].vertex_count : 0);
@@ -527,10 +527,10 @@ static int brw_emit_index_buffer(struct brw_context *brw)
       BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
       OUT_RELOC(brw->ib.bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
+		BRW_USAGE_VERTEX,
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
+		BRW_USAGE_VERTEX,
 		brw->ib.offset + brw->ib.size - 1);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();

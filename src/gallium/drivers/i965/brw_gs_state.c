@@ -113,7 +113,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    if (key->prog_active) {
       /* Emit GS program relocation */
       brw->sws->bo_emit_reloc(bo,
-			      I915_GEM_DOMAIN_INSTRUCTION, 0,
+			      BRW_USAGE_STATE,
 			      gs.thread0.grf_reg_count << 1,
 			      offsetof(struct brw_gs_unit_state, thread0),
 			      brw->gs.prog_bo);

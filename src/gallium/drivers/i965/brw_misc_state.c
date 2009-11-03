@@ -111,7 +111,7 @@ static int upload_binding_table_pointers(struct brw_context *brw)
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    if (brw->vs.bind_bo != NULL)
       OUT_RELOC(brw->vs.bind_bo, 
-		I915_GEM_DOMAIN_SAMPLER, 0,
+		BRW_USAGE_SAMPLER,
 		0); /* vs */
    else
       OUT_BATCH(0);
@@ -119,7 +119,7 @@ static int upload_binding_table_pointers(struct brw_context *brw)
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
    OUT_RELOC(brw->wm.bind_bo,
-	     I915_GEM_DOMAIN_SAMPLER, 0,
+	     BRW_USAGE_SAMPLER,
 	     0); /* wm/ps */
    ADVANCE_BATCH();
    return 0;
@@ -147,25 +147,25 @@ static int upload_pipelined_state_pointers(struct brw_context *brw )
    BEGIN_BATCH(7, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, 
-	     I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     BRW_USAGE_STATE,
 	     0);
    if (brw->gs.prog_active)
       OUT_RELOC(brw->gs.state_bo, 
-		I915_GEM_DOMAIN_INSTRUCTION, 0,
+		BRW_USAGE_STATE,
 		1);
    else
       OUT_BATCH(0);
    OUT_RELOC(brw->clip.state_bo, 
-	     I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     BRW_USAGE_STATE,
 	     1);
    OUT_RELOC(brw->sf.state_bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     BRW_USAGE_STATE,
 	     0);
    OUT_RELOC(brw->wm.state_bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     BRW_USAGE_STATE,
 	     0);
    OUT_RELOC(brw->cc.state_bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     BRW_USAGE_STATE,
 	     0);
    ADVANCE_BATCH();
 
@@ -288,7 +288,7 @@ static int emit_depthbuffer(struct brw_context *brw)
 		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(bo,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		BRW_USAGE_DEPTH_BUFFER,
 		surface->offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((pitch - 1) << 6) |

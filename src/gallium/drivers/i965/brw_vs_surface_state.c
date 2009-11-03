@@ -170,7 +170,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 	     */
 	    drm_intel_bo_emit_reloc(bind_bo, i * 4,
 				    brw->vs.surf_bo[i], 0,
-				    I915_GEM_DOMAIN_INSTRUCTION, 0);
+				    BRW_USAGE_STATE);
 	 }
       }
 

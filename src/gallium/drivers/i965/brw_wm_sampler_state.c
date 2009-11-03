@@ -182,7 +182,7 @@ static int upload_wm_samplers( struct brw_context *brw )
       /* Emit SDC relocations */
       for (i = 0; i < key.sampler_count; i++) {
 	 brw->sws->bo_emit_reloc(brw->wm.sampler_bo,
-				 I915_GEM_DOMAIN_SAMPLER, 0,
+				 BRW_USAGE_SAMPLER,
 				 0,
 				 i * sizeof(struct brw_sampler_state) +
 				 offsetof(struct brw_sampler_state, ss2),

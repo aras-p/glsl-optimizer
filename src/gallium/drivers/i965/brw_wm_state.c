@@ -230,27 +230,27 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    /* Emit WM program relocation */
    brw->sws->bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     wm.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_wm_unit_state, thread0),
-		     brw->wm.prog_bo);
+			   BRW_USAGE_STATE,
+			   wm.thread0.grf_reg_count << 1,
+			   offsetof(struct brw_wm_unit_state, thread0),
+			   brw->wm.prog_bo);
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
       brw->sws->bo_emit_reloc(bo,
-			0, 0,
-			wm.thread2.per_thread_scratch_space,
-			offsetof(struct brw_wm_unit_state, thread2),
-			brw->wm.scratch_bo);
+			      BRW_USAGE_SCRATCH,
+			      wm.thread2.per_thread_scratch_space,
+			      offsetof(struct brw_wm_unit_state, thread2),
+			      brw->wm.scratch_bo);
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
       brw->sws->bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_INSTRUCTION, 0,
-			wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-			offsetof(struct brw_wm_unit_state, wm4),
-			brw->wm.sampler_bo);
+			      BRW_USAGE_STATE,
+			      wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
+			      offsetof(struct brw_wm_unit_state, wm4),
+			      brw->wm.sampler_bo);
    }
 
    return bo;
@@ -277,7 +277,7 @@ static int upload_wm_unit( struct brw_context *brw )
       }
       if (brw->wm.scratch_bo == NULL) {
 	 brw->wm.scratch_bo = brw->sws->bo_alloc(brw->sws,
-						 BRW_BUFFER_TYPE_WM_SCRATCH,
+						 BRW_BUFFER_TYPE_SHADER_SCRATCH,
 						 total,
 						 4096);
       }

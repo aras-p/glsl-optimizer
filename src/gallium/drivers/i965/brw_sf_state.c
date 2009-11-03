@@ -284,14 +284,14 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
     */
    /* Emit SF program relocation */
    brw->sws->bo_emit_reloc(bo,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   BRW_USAGE_STATE,
 			   sf.thread0.grf_reg_count << 1,
 			   offsetof(struct brw_sf_unit_state, thread0),
 			   brw->sf.prog_bo);
 
    /* Emit SF viewport relocation */
    brw->sws->bo_emit_reloc(bo,
-			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   BRW_USAGE_STATE,
 			   sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
 			   offsetof(struct brw_sf_unit_state, sf5),
 			   brw->sf.vp_bo);

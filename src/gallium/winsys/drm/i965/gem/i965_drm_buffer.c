@@ -93,17 +93,51 @@ i965_libdrm_bo_unreference( struct brw_winsys_buffer *buffer )
     */
 static int 
 i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
-			   unsigned domain,
-			   unsigned a,
-			   unsigned b,
+			   enum brw_buffer_usage usage,
+			   unsigned delta,
 			   unsigned offset,
 			   struct brw_winsys_buffer *buffer2)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    struct i965_libdrm_buffer *buf2 = i965_libdrm_buffer(buffer2);
+   int read, write;
    int ret;
 
-   ret = dri_bo_emit_reloc( buf->bo, domain, a, b, offset, buf2->bo );
+   switch (usage) {
+   case BRW_USAGE_STATE:
+      read = I915_GEM_DOMAIN_INSTRUCTION;
+      write = 0;
+      break;
+   case BRW_USAGE_QUERY_RESULT:
+      read = I915_GEM_DOMAIN_INSTRUCTION;
+      write = I915_GEM_DOMAIN_INSTRUCTION;
+      break;
+   case BRW_USAGE_RENDER_TARGET:
+      read = I915_GEM_DOMAIN_RENDER;
+      write = 0;
+      break;
+   case BRW_USAGE_DEPTH_BUFFER:
+      read = I915_GEM_DOMAIN_RENDER;
+      write = I915_GEM_DOMAIN_RENDER;
+      break;
+   case BRW_USAGE_SAMPLER:
+      read = I915_GEM_DOMAIN_SAMPLER;
+      write = 0;
+      break;
+   case BRW_USAGE_VERTEX:
+      read = I915_GEM_DOMAIN_VERTEX;
+      write = 0;
+      break;
+   case BRW_USAGE_SCRATCH:
+      read = 0;
+      write = 0;
+      break;
+   default:
+      assert(0);
+      return -1;
+   }
+
+   ret = dri_bo_emit_reloc( buf->bo, read, write, delta, offset, buf2->bo );
    if (ret)
       return -1;
 

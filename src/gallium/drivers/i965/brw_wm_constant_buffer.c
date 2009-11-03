@@ -37,7 +37,7 @@ brw_create_constant_surface( struct brw_context *brw,
    if (key->bo) {
       /* Emit relocation to surface contents */
       brw->sws->bo_emit_reloc(bo,
-			      I915_GEM_DOMAIN_SAMPLER, 0,
+			      BRW_USAGE_SAMPLER,
 			      0,
 			      offsetof(struct brw_surface_state, ss1),
 			      key->bo);

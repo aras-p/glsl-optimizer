@@ -43,25 +43,22 @@ struct brw_winsys_buffer {
    unsigned size;
 };
 
+/* Describe the usage of a particular buffer in a relocation.  The DRM
+ * winsys will translate these back to GEM read/write domain flags.
+ */
 enum brw_buffer_usage {
-   I915_GEM_DOMAIN_RENDER,
-   I915_GEM_DOMAIN_SAMPLER,
-   I915_GEM_DOMAIN_VERTEX,
-   I915_GEM_DOMAIN_INSTRUCTION,
-
-
-   /* XXX: migrate from domains to explicit usage cases, eg below:
-    */
-
-   /* use on textures */
-   BRW_USAGE_RENDER    = 0x01,
-   BRW_USAGE_SAMPLER   = 0x02,
-   BRW_USAGE_2D_TARGET = 0x04,
-   BRW_USAGE_2D_SOURCE = 0x08,
-   /* use on vertex */
-   BRW_USAGE_VERTEX    = 0x10,
+   BRW_USAGE_STATE,		/* INSTRUCTION, 0 */
+   BRW_USAGE_QUERY_RESULT,	/* INSTRUCTION, INSTRUCTION */
+   BRW_USAGE_RENDER_TARGET,	/* RENDER,      0 */
+   BRW_USAGE_DEPTH_BUFFER,	/* RENDER,      RENDER */
+   BRW_USAGE_SAMPLER,		/* SAMPLER,     0 */
+   BRW_USAGE_VERTEX,		/* VERTEX,      0 */
+   BRW_USAGE_SCRATCH,		/* 0,           0 */
 };
 
+/* Should be possible to validate usages above against buffer creation
+ * types, below:
+ */
 enum brw_buffer_type
 {
    BRW_BUFFER_TYPE_TEXTURE,
@@ -70,10 +67,9 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_CURBE,
    BRW_BUFFER_TYPE_QUERY,
    BRW_BUFFER_TYPE_SHADER_CONSTANTS,
-   BRW_BUFFER_TYPE_WM_SCRATCH,
+   BRW_BUFFER_TYPE_SHADER_SCRATCH,
    BRW_BUFFER_TYPE_BATCH,
    BRW_BUFFER_TYPE_STATE_CACHE,
-   
    BRW_BUFFER_TYPE_MAX		/* Count of possible values */
 };
 
@@ -98,12 +94,12 @@ struct brw_winsys_screen {
    void (*bo_reference)( struct brw_winsys_buffer *buffer );
    void (*bo_unreference)( struct brw_winsys_buffer *buffer );
 
-   /* XXX: parameter names!!
+   /* delta -- added to b2->offset, and written into buffer
+    * offset -- location above value is written to within buffer
     */
    int (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
-			 unsigned domain,
-			 unsigned a,
-			 unsigned b,
+			 enum brw_buffer_usage usage,
+			 unsigned delta,
 			 unsigned offset,
 			 struct brw_winsys_buffer *b2);
 

@@ -60,7 +60,7 @@ brw_update_texture_surface( struct brw_context *brw,
       
       /* Emit relocation to surface contents */
       brw->sws->bo_emit_reloc(brw->wm.surf_bo[surf],
-			      I915_GEM_DOMAIN_SAMPLER, 0,
+			      BRW_USAGE_SAMPLER,
 			      0,
 			      offsetof(struct brw_surface_state, ss1),
 			      tex->bo);
@@ -117,7 +117,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       /* XXX: we will only be rendering to this surface:
        */
       brw->sws->bo_emit_reloc(brw->wm.surf_bo[unit],
-			      I915_GEM_DOMAIN_RENDER, 0, 
+			      BRW_USAGE_RENDER_TARGET,
 			      ss.ss1.base_addr - surface->bo->offset[0], /* XXX */
 			      offsetof(struct brw_surface_state, ss1),
 			      surface->bo);
@@ -161,7 +161,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
       /* Emit binding table relocations to surface state */
       for (i = 0; i < brw->wm.nr_surfaces; i++) {
 	 brw->sws->bo_emit_reloc(bind_bo,
-				 I915_GEM_DOMAIN_INSTRUCTION, 0,
+				 BRW_USAGE_STATE,
 				 0,
 				 i * sizeof(GLuint),
 				 brw->wm.surf_bo[i]);

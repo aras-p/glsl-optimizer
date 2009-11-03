@@ -193,7 +193,7 @@ brw_emit_query_begin(struct brw_context *brw)
     * to pick up the results.
     */
    OUT_RELOC(brw->query.bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+	     BRW_USAGE_QUERY_RESULT,
 	     PIPE_CONTROL_GLOBAL_GTT_WRITE |
 	     ((brw->query.index * 2) * sizeof(uint64_t)));
    OUT_BATCH(0);
@@ -234,7 +234,7 @@ brw_emit_query_end(struct brw_context *brw)
 	     PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_WRITE_DEPTH_COUNT);
    OUT_RELOC(brw->query.bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+	     BRW_USAGE_QUERY_RESULT,
 	     PIPE_CONTROL_GLOBAL_GTT_WRITE |
 	     ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
    OUT_BATCH(0);
