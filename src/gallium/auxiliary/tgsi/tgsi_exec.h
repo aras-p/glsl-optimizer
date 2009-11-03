@@ -177,9 +177,9 @@ struct tgsi_exec_labels
 
 
 
-#define TGSI_EXEC_MAX_COND_NESTING  20
-#define TGSI_EXEC_MAX_LOOP_NESTING  20
-#define TGSI_EXEC_MAX_CALL_NESTING  20
+#define TGSI_EXEC_MAX_COND_NESTING  32
+#define TGSI_EXEC_MAX_LOOP_NESTING  32
+#define TGSI_EXEC_MAX_CALL_NESTING  32
 
 /* The maximum number of input attributes per vertex. For 2D
  * input register files, this is the stride between two 1D
