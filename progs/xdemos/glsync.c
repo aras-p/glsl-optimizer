@@ -111,7 +111,6 @@ int main(int argc, char *argv[])
 	Display *disp;
 	XVisualInfo *pvi;
 	XSetWindowAttributes swa;
-	int attrib[14];
 	GLint last_val = -1, count = 0;
 	Window winGL;
 	GLXContext context;
@@ -121,6 +120,19 @@ int main(int argc, char *argv[])
 	int width = 500, height = 500, verbose = 0,
 		countonly = 0, interval = 1;
 	int c, i = 1;
+	int attribs[] = { GLX_RGBA,
+                     GLX_RED_SIZE, 1,
+                     GLX_GREEN_SIZE, 1,
+                     GLX_BLUE_SIZE, 1,
+                     None };
+	int db_attribs[] = { GLX_RGBA,
+                     GLX_RED_SIZE, 1,
+                     GLX_GREEN_SIZE, 1,
+                     GLX_BLUE_SIZE, 1,
+                     GLX_DOUBLEBUFFER,
+                     GLX_DEPTH_SIZE, 1,
+                     None };
+	XSizeHints sizehints;
 
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstr)) != -1) {
@@ -175,31 +187,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	attrib[0] = GLX_RGBA;
-	attrib[1] = 1;
-	attrib[2] = GLX_RED_SIZE;
-	attrib[3] = 1;
-	attrib[4] = GLX_GREEN_SIZE;
-	attrib[5] = 1;
-	attrib[6] = GLX_BLUE_SIZE;
-	attrib[7] = 1;
-	if (waitforsync != buffer_swap)
-		attrib[8] = None;
-	else {
-		attrib[8] = GLX_DOUBLEBUFFER;
-		attrib[9] = 1;
-		attrib[10] = None;
+	if (waitforsync != buffer_swap) {
+		pvi = glXChooseVisual(disp, DefaultScreen(disp), attribs);
+	} else {
+		pvi = glXChooseVisual(disp, DefaultScreen(disp), db_attribs);
 	}
 
-	pvi = glXChooseVisual(disp, DefaultScreen(disp), attrib);
 	if (!pvi) {
 		fprintf(stderr, "failed to choose visual, exiting\n");
-		return -1;
-	}
-
-	context = glXCreateContext(disp, pvi, None, GL_TRUE);
-	if (!context) {
-		fprintf(stderr, "failed to create glx context\n");
 		return -1;
 	}
 
@@ -222,11 +217,23 @@ int main(int argc, char *argv[])
         wmDelete = XInternAtom(disp, "WM_DELETE_WINDOW", True);
         XSetWMProtocols(disp, winGL, &wmDelete, 1);
 
+	sizehints.x = 0;
+	sizehints.y = 0;
+	sizehints.width  = width;
+	sizehints.height = height;
+	sizehints.flags = USSize | USPosition;
+
+	XSetNormalHints(disp, winGL, &sizehints);
 	XSetStandardProperties(disp, winGL, "glsync test", "glsync text",
-			       None, NULL, 0, NULL);
+			       None, NULL, 0, &sizehints);
 
-	XMapRaised(disp, winGL);
+	context = glXCreateContext(disp, pvi, NULL, GL_TRUE);
+	if (!context) {
+		fprintf(stderr, "failed to create glx context\n");
+		return -1;
+	}
 
+	XMapWindow(disp, winGL);
 	glXMakeCurrent(disp, winGL, context);
 
 	video_sync_get = glXGetProcAddress((unsigned char *)"glXGetVideoSyncSGI");
@@ -239,11 +246,26 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	swap_interval(interval);
-	fprintf(stderr, "set swap interval to %d\n", interval);
+	if (waitforsync == buffer_swap) {
+		swap_interval(interval);
+		fprintf(stderr, "set swap interval to %d\n", interval);
+	}
 	video_sync_get(&count);
 	count++;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	while (i++) {
+		/* Alternate colors to make tearing obvious */
+		if (i & 1) {
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			glColor3f(1.0f, 1.0f, 1.0f);
+		} else {
+			glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+			glColor3f(1.0f, 0.0f, 0.0f);
+		}
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glRectf(0, 0, width, height);
+
 		/* Wait for vsync */
 		if (waitforsync == sgi_video_sync) {
 			if (verbose)
@@ -254,6 +276,7 @@ int main(int argc, char *argv[])
 			if (count == last_val)
 				fprintf(stderr, "error:  count didn't change: %d\n", count);
 			last_val = count;
+			glFlush();
 		} else if (waitforsync == buffer_swap) {
 			glXSwapBuffers(disp, winGL);
 		}
@@ -269,14 +292,6 @@ int main(int argc, char *argv[])
 			video_sync_get(&count);
 			fprintf(stderr, "current count: %d\n", count);
 		}
-
-		/* Alternate colors to make tearing obvious */
-		if (i & 1)
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		else
-			glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glFlush();
 	}
 
 	XDestroyWindow(disp, winGL);
