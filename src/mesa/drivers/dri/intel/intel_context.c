@@ -610,7 +610,9 @@ intelInitContext(struct intel_context *intel,
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
-   if (IS_965(intel->intelScreen->deviceID)) {
+   if (IS_GEN6(intel->intelScreen->deviceID)) {
+      intel->gen = 6;
+   } else if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
       intel->gen = 3;

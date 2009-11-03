@@ -124,6 +124,10 @@ static void brw_emit_prim(struct brw_context *brw,
    struct brw_3d_primitive prim_packet;
    struct intel_context *intel = &brw->intel;
 
+   /* Last thing to hook up in the pipeline when brw_state_upload.c is done. */
+   if (IS_GEN6(intel->intelScreen->deviceID))
+      return;
+
    if (INTEL_DEBUG & DEBUG_PRIMS)
       printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
 		   prim->start, prim->count);
