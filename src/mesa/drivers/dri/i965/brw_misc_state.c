@@ -209,7 +209,14 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (intel->is_g4x || intel->is_ironlake) ? 6 : 5;
+   unsigned int len;
+
+   if (intel->gen >= 6)
+      len = 7;
+   else if (intel->is_g4x || intel->is_ironlake)
+      len = 6;
+   else
+      len = 5;
 
    if (region == NULL) {
       BEGIN_BATCH(len);
@@ -220,8 +227,11 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
          OUT_BATCH(0);
+
+      if (intel->gen >= 6)
+	 OUT_BATCH(0);
 
       ADVANCE_BATCH();
    } else {
@@ -243,6 +253,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       }
 
       assert(region->tiling != I915_TILING_X);
+      if (IS_GEN6(intel->intelScreen->deviceID))
+	 assert(region->tiling != I915_TILING_NONE);
 
       BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
@@ -259,8 +271,11 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
          OUT_BATCH(0);
+
+      if (intel->gen >= 6)
+	 OUT_BATCH(0);
 
       ADVANCE_BATCH();
    }

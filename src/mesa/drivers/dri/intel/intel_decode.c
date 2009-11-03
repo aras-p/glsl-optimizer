@@ -1592,7 +1592,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
 
     case 0x7905:
-	if (len != 5 && len != 6)
+	if (len < 5 || len > 7)
 	    fprintf(out, "Bad count in 3DSTATE_DEPTH_BUFFER\n");
 	if (count < len)
 	    BUFFER_FAIL(count, len, "3DSTATE_DEPTH_BUFFER");
@@ -1611,6 +1611,8 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 4, "volume depth\n");
 	if (len == 6)
 	    instr_out(data, hw_offset, 5, "\n");
+	if (len == 7)
+	    instr_out(data, hw_offset, 6, "render target view extent\n");
 
 	return len;
 

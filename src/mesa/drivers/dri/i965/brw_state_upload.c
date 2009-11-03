@@ -143,9 +143,11 @@ const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_binding_table_pointers,
    &brw_blend_constant_color,
+#endif
 
    &brw_depthbuffer,
 
+#if 0
    &brw_polygon_stipple,
    &brw_polygon_stipple_offset,
 
