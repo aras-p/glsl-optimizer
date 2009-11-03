@@ -392,11 +392,6 @@ def generate(env):
                 '/O2', # optimize for speed
                 #'/fp:fast', # fast floating point 
             ]
-        if env['profile']:
-            ccflags += [
-                '/Gh', # enable _penter hook function
-                '/GH', # enable _pexit hook function
-            ]
         ccflags += [
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
