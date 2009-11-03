@@ -1042,7 +1042,7 @@ def ConversionFunc(fromType, toType):
 	elif fromType == GLint and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	elif fromType == GLint and toType == GLint64:
-		return ""
+		return "(GLint64)"
 	elif fromType == GLint64 and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	else:
