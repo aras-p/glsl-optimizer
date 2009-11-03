@@ -1258,10 +1258,36 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static void
+load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
+		     struct nv50_reg **src, boolean proj)
+{
+	int mod[3] = { src[0]->mod, src[1]->mod, src[2]->mod };
+
+	src[0]->mod |= NV50_MOD_ABS;
+	src[1]->mod |= NV50_MOD_ABS;
+	src[2]->mod |= NV50_MOD_ABS;
+
+	emit_minmax(pc, 4, t[2], src[0], src[1]);
+	emit_minmax(pc, 4, t[2], src[2], t[2]);
+
+	src[0]->mod = mod[0];
+	src[1]->mod = mod[1];
+	src[2]->mod = mod[2];
+
+	if (proj && 0 /* looks more correct without this */)
+		emit_mul(pc, t[2], t[2], src[3]);
+	emit_flop(pc, 0, t[2], t[2]);
+
+	emit_mul(pc, t[0], src[0], t[2]);
+	emit_mul(pc, t[1], src[1], t[2]);
+	emit_mul(pc, t[2], src[2], t[2]);
+}
+
+static void
 emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	 struct nv50_reg **src, unsigned unit, unsigned type, boolean proj)
 {
-	struct nv50_reg *temp, *t[4];
+	struct nv50_reg *t[4];
 	struct nv50_program_exec *e;
 
 	unsigned c, mode, dim;
@@ -1290,6 +1316,9 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	/* some cards need t[0]'s hw index to be a multiple of 4 */
 	alloc_temp4(pc, t, 0);
 
+	if (type == TGSI_TEXTURE_CUBE) {
+		load_cube_tex_coords(pc, t, src, proj);
+	} else
 	if (proj) {
 		if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
 			mode = pc->interp_mode[src[0]->index];
@@ -1314,17 +1343,8 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			 */
 		}
 	} else {
-		if (type == TGSI_TEXTURE_CUBE) {
-			temp = temp_temp(pc);
-			emit_minmax(pc, 4, temp, src[0], src[1]);
-			emit_minmax(pc, 4, temp, temp, src[2]);
-			emit_flop(pc, 0, temp, temp);
-			for (c = 0; c < 3; c++)
-				emit_mul(pc, t[c], src[c], temp);
-		} else {
-			for (c = 0; c < dim; c++)
-				emit_mov(pc, t[c], src[c]);
-		}
+		for (c = 0; c < dim; c++)
+			emit_mov(pc, t[c], src[c]);
 	}
 
 	e = exec(pc);
@@ -1337,14 +1357,16 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	if (dim == 2)
 		e->inst[0] |= 0x00400000;
 	else
-	if (dim == 3)
+	if (dim == 3) {
 		e->inst[0] |= 0x00800000;
+		if (type == TGSI_TEXTURE_CUBE)
+			e->inst[0] |= 0x08000000;
+	}
 
 	e->inst[0] |= (mask & 0x3) << 25;
 	e->inst[1] |= (mask & 0xc) << 12;
 
 	emit(pc, e);
-
 #if 1
 	c = 0;
 	if (mask & 1) emit_mov(pc, dst[0], t[c++]);
