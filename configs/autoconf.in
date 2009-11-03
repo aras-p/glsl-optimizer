@@ -124,7 +124,7 @@ INSTALL_INC_DIR = $(includedir)
 DRI_DRIVER_INSTALL_DIR = @DRI_DRIVER_INSTALL_DIR@
 
 # Where libGL will look for DRI hardware drivers
-DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
+DRI_DRIVER_SEARCH_DIR = @DRI_DRIVER_SEARCH_DIR@
 
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = @XORG_DRIVER_INSTALL_DIR@

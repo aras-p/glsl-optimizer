@@ -665,6 +665,15 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    GLint skipPixels;
    ubyte *stmap;
+   struct gl_pixelstore_attrib clippedUnpack = *unpack;
+
+   if (!zoom) {
+      if (!_mesa_clip_drawpixels(ctx, &x, &y, &width, &height,
+                                 &clippedUnpack)) {
+         /* totally clipped */
+         return;
+      }
+   }
 
    strb = st_renderbuffer(ctx->DrawBuffer->
                           Attachment[BUFFER_STENCIL].Renderbuffer);
@@ -685,7 +694,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    stmap = screen->transfer_map(screen, pt);
 
-   pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
+   pixels = _mesa_map_pbo_source(ctx, &clippedUnpack, pixels);
    assert(pixels);
 
    /* if width > MAX_WIDTH, have to process image in chunks */
@@ -698,17 +707,18 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
          GLubyte sValues[MAX_WIDTH];
          GLuint zValues[MAX_WIDTH];
          GLenum destType = GL_UNSIGNED_BYTE;
-         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+         const GLvoid *source = _mesa_image_address2d(&clippedUnpack, pixels,
                                                       width, height,
                                                       format, type,
                                                       row, skipPixels);
          _mesa_unpack_stencil_span(ctx, spanWidth, destType, sValues,
-                                   type, source, unpack,
+                                   type, source, &clippedUnpack,
                                    ctx->_ImageTransferState);
 
          if (format == GL_DEPTH_STENCIL) {
             _mesa_unpack_depth_span(ctx, spanWidth, GL_UNSIGNED_INT, zValues,
-                                    (1 << 24) - 1, type, source, unpack);
+                                    (1 << 24) - 1, type, source,
+                                    &clippedUnpack);
          }
 
          if (zoom) {
@@ -779,7 +789,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       skipPixels += spanWidth;
    }
 
-   _mesa_unmap_pbo_source(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, &clippedUnpack);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, pt);
