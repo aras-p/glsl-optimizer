@@ -38,10 +38,11 @@ void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend)
 {
     CS_LOCALS(r300);
-    BEGIN_CS(7);
-    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 2);
+    BEGIN_CS(8);
+    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
     OUT_CS(blend->blend_control);
     OUT_CS(blend->alpha_blend_control);
+    OUT_CS(blend->color_channel_mask);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
     END_CS;
@@ -313,7 +314,6 @@ void r300_emit_fb_state(struct r300_context* r300,
         tex = (struct r300_texture*)surf->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
 
-        /* XXX I still need to figure out how to set the mipmap level here */
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
