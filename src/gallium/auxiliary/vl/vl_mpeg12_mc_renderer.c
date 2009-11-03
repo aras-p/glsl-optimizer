@@ -1507,6 +1507,8 @@ static void
 grab_macroblock(struct vl_mpeg12_mc_renderer *r,
                 struct pipe_mpeg12_macroblock *mb)
 {
+   void *blocks;
+
    assert(r);
    assert(mb);
    assert(r->num_macroblocks < r->macroblocks_per_batch);
@@ -1514,7 +1516,10 @@ grab_macroblock(struct vl_mpeg12_mc_renderer *r,
    memcpy(&r->macroblock_buf[r->num_macroblocks], mb,
           sizeof(struct pipe_mpeg12_macroblock));
 
-   grab_blocks(r, mb->mbx, mb->mby, mb->dct_type, mb->cbp, mb->blocks);
+   blocks = pipe_buffer_map(r->pipe->screen, mb->blocks,
+                            PIPE_BUFFER_USAGE_CPU_READ);
+   grab_blocks(r, mb->mbx, mb->mby, mb->dct_type, mb->cbp, blocks);
+   pipe_buffer_unmap(r->pipe->screen, mb->blocks);
 
    ++r->num_macroblocks;
 }

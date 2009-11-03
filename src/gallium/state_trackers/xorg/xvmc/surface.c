@@ -31,6 +31,7 @@
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
+#include <pipe/p_inlines.h>
 #include <util/u_memory.h>
 #include "xvmc_private.h"
 
@@ -132,7 +133,8 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
 }
 
 static void
-MacroBlocksToPipe(const XvMCMacroBlockArray *xvmc_macroblocks,
+MacroBlocksToPipe(struct pipe_screen *screen,
+                  const XvMCMacroBlockArray *xvmc_macroblocks,
                   const XvMCBlockArray *xvmc_blocks,
                   unsigned int first_macroblock,
                   unsigned int num_macroblocks,
@@ -167,7 +169,8 @@ MacroBlocksToPipe(const XvMCMacroBlockArray *xvmc_macroblocks,
                pipe_macroblocks->pmv[j][k][l] = xvmc_mb->PMV[j][k][l];
 
       pipe_macroblocks->cbp = xvmc_mb->coded_block_pattern;
-      pipe_macroblocks->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
+      pipe_macroblocks->blocks = pipe_user_buffer_create(screen, xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES,
+                                                         BLOCK_SIZE_BYTES);
 
       ++pipe_macroblocks;
       ++xvmc_mb;
@@ -232,6 +235,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
+   unsigned int i;
 
    assert(dpy);
 
@@ -275,12 +279,15 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    p_vsfc = past_surface ? past_surface_priv->pipe_vsfc : NULL;
    f_vsfc = future_surface ? future_surface_priv->pipe_vsfc : NULL;
 
-   MacroBlocksToPipe(macroblocks, blocks, first_macroblock,
+   MacroBlocksToPipe(vpipe->screen, macroblocks, blocks, first_macroblock,
                      num_macroblocks, pipe_macroblocks);
 
    vpipe->set_decode_target(vpipe, t_vsfc);
    vpipe->decode_macroblocks(vpipe, p_vsfc, f_vsfc, num_macroblocks,
                              &pipe_macroblocks->base, target_surface_priv->render_fence);
+
+   for (i = 0; i < num_macroblocks; ++i)
+      vpipe->screen->buffer_destroy(pipe_macroblocks[i].blocks);
 
    return Success;
 }
