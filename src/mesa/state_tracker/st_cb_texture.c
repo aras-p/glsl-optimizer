@@ -1313,7 +1313,8 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 					       srcX, srcY,
 					       width, height);
 
-   if (baseFormat == GL_DEPTH_COMPONENT &&
+   if ((baseFormat == GL_DEPTH_COMPONENT ||
+        baseFormat == GL_DEPTH_STENCIL) &&
        pf_is_depth_and_stencil(stImage->pt->format))
       transfer_usage = PIPE_TRANSFER_READ_WRITE;
    else
@@ -1326,7 +1327,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
                                   destX, destY, width, height);
 
    if (baseFormat == GL_DEPTH_COMPONENT ||
-       baseFormat == GL_DEPTH24_STENCIL8) {
+       baseFormat == GL_DEPTH_STENCIL) {
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
       GLint row, yStep;
@@ -1453,7 +1454,7 @@ st_copy_texsubimage(GLcontext *ctx,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   const GLenum texBaseFormat = texImage->InternalFormat;
+   const GLenum texBaseFormat = texImage->_BaseFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
@@ -1474,11 +1475,8 @@ st_copy_texsubimage(GLcontext *ctx,
 
    /* determine if copying depth or color data */
    if (texBaseFormat == GL_DEPTH_COMPONENT ||
-       texBaseFormat == GL_DEPTH24_STENCIL8) {
+       texBaseFormat == GL_DEPTH_STENCIL) {
       strb = st_renderbuffer(fb->_DepthBuffer);
-   }
-   else if (texBaseFormat == GL_DEPTH_STENCIL_EXT) {
-      strb = st_renderbuffer(fb->_StencilBuffer);
    }
    else {
       /* texBaseFormat == GL_RGB, GL_RGBA, GL_ALPHA, etc */
