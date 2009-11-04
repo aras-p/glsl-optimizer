@@ -175,20 +175,6 @@ static void brw_note_fence( struct intel_context *intel, GLuint fence )
    brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_FENCE;
 }
 
-/* called from intelWaitForIdle() and intelFlush()
- *
- * For now, just flush everything.  Could be smarter later.
- */
-static GLuint brw_flush_cmd( void )
-{
-   struct brw_mi_flush flush;
-   flush.opcode = CMD_MI_FLUSH;
-   flush.pad = 0;
-   flush.flags = BRW_FLUSH_STATE_CACHE;
-   return *(GLuint *)&flush;
-}
-
-
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )
 {
    /* nothing */
@@ -209,6 +195,5 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
-   brw->intel.vtbl.flush_cmd = brw_flush_cmd;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
 }

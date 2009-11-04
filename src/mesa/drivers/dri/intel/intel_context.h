@@ -117,8 +117,6 @@ struct intel_context
                                struct intel_region * depth_region,
 			       GLuint num_regions);
 
-      GLuint (*flush_cmd) (void);
-
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
 

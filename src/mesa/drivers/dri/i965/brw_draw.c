@@ -153,18 +153,14 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
-      OUT_BATCH(intel->vtbl.flush_cmd());
-      ADVANCE_BATCH();
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
    if (intel->always_flush_cache) {
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
-      OUT_BATCH(intel->vtbl.flush_cmd());
-      ADVANCE_BATCH();
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
 
    brw->no_batch_wrap = GL_FALSE;

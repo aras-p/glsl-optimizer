@@ -719,15 +719,6 @@ i830_new_batch(struct intel_context *intel)
    assert(!intel->no_batch_wrap);
 }
 
-
-
-static GLuint
-i830_flush_cmd(void)
-{
-   return MI_FLUSH | FLUSH_MAP_CACHE;
-}
-
-
 static void 
 i830_assert_not_dirty( struct intel_context *intel )
 {
@@ -753,7 +744,6 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;
    i830->intel.vtbl.set_draw_region = i830_set_draw_region;
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
-   i830->intel.vtbl.flush_cmd = i830_flush_cmd;
    i830->intel.vtbl.render_start = i830_render_start;
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
