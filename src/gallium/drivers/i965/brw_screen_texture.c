@@ -30,6 +30,7 @@
   */
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "brw_screen.h"
 #include "brw_defines.h"
@@ -190,7 +191,17 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    if (tex == NULL)
       return NULL;
 
+   memcpy(&tex->base, templ, sizeof *templ);
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->base.screen = screen;
+
+   /* XXX: compressed textures need special treatment here
+    */
+   tex->cpp = pf_get_size(tex->base.format);
    tex->compressed = pf_is_compressed(tex->base.format);
+
+   make_empty_list(&tex->views[0]);
+   make_empty_list(&tex->views[1]);
 
    /* XXX: No tiling with compressed textures??
     */
@@ -209,10 +220,29 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    }
 
 
-   memcpy(&tex->base, templ, sizeof *templ);
+
 
    if (!brw_texture_layout( bscreen, tex ))
       goto fail;
+
+   
+   if (templ->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+   } 
+   else if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                            PIPE_TEXTURE_USAGE_PRIMARY)) {
+   }
+   else if (templ->tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+   }
+   else if (templ->tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) {
+   }
+   
+   if (templ->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC) {
+   }
+
+   tex->bo = bscreen->sws->bo_alloc( bscreen->sws,
+                                     BRW_USAGE_SAMPLER,
+                                     tex->pitch * tex->total_height * tex->cpp,
+                                     64 );
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);

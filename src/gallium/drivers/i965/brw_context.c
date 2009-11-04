@@ -107,6 +107,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    //ctx->Shader.EmitCondCodes = GL_TRUE;
    //ctx->Shader.EmitNVTempInitialization = GL_TRUE;
 
+   brw->base.screen = screen;
    brw->base.destroy = brw_destroy_context;
 
    brw_pipe_blend_init( brw );
