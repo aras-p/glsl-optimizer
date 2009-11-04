@@ -379,7 +379,7 @@ static GLuint r700PredictRenderSize(GLcontext* ctx,
 
     dwords = PRE_EMIT_STATE_BUFSZ;
     if (ib)
-	    dwords += nr_prims * 14;
+	    dwords += nr_prims * 17;
     else {
 	    for (i = 0; i < nr_prims; ++i)
 	    {
