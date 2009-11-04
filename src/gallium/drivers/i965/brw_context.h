@@ -501,12 +501,12 @@ struct brw_context
       const struct brw_depth_stencil_state *zstencil;
 
       const struct brw_sampler *sampler[PIPE_MAX_SAMPLERS];
-      const struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-      unsigned num_vertex_elements;
       unsigned num_samplers;
 
       struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+      unsigned num_vertex_elements;
       unsigned num_textures;
       unsigned num_vertex_buffers;
 
