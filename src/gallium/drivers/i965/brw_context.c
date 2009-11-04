@@ -60,6 +60,7 @@ static void brw_destroy_context( struct pipe_context *pipe )
    brw_pipe_sampler_cleanup( brw );
    brw_pipe_shader_cleanup( brw );
    brw_pipe_vertex_cleanup( brw );
+   brw_pipe_clear_cleanup( brw );
 
    FREE(brw->wm.compile_data);
 
@@ -120,6 +121,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    brw_pipe_sampler_init( brw );
    brw_pipe_shader_init( brw );
    brw_pipe_vertex_init( brw );
+   brw_pipe_clear_init( brw );
 
    brw_init_state( brw );
    brw_draw_init( brw );

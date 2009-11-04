@@ -764,6 +764,7 @@ void brw_pipe_rast_init( struct brw_context *brw );
 void brw_pipe_sampler_init( struct brw_context *brw );
 void brw_pipe_shader_init( struct brw_context *brw );
 void brw_pipe_vertex_init( struct brw_context *brw );
+void brw_pipe_clear_init( struct brw_context *brw );
 
 void brw_pipe_blend_cleanup( struct brw_context *brw );
 void brw_pipe_depth_stencil_cleanup( struct brw_context *brw );
@@ -775,6 +776,7 @@ void brw_pipe_rast_cleanup( struct brw_context *brw );
 void brw_pipe_sampler_cleanup( struct brw_context *brw );
 void brw_pipe_shader_cleanup( struct brw_context *brw );
 void brw_pipe_vertex_cleanup( struct brw_context *brw );
+void brw_pipe_clear_cleanup( struct brw_context *brw );
 
 
 void brw_context_flush( struct brw_context *brw );

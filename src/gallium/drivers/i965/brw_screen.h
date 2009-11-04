@@ -89,7 +89,13 @@ union brw_surface_id {
 struct brw_surface
 {
    struct pipe_surface base;
+   
    union brw_surface_id id;
+   unsigned cpp;
+   unsigned pitch;
+   unsigned draw_offset;
+   unsigned tiling;
+
    struct brw_surface_state ss;
    struct brw_winsys_buffer *bo;
    struct brw_surface *next, *prev;

@@ -1,10 +1,13 @@
 #ifndef BRW_BATCHBUFFER_H
 #define BRW_BATCHBUFFER_H
 
+#include "util/u_debug.h"
+
+#include "pipe/p_error.h"
+
 #include "brw_types.h"
 #include "brw_winsys.h"
 #include "brw_reg.h"
-#include "util/u_debug.h"
 
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
