@@ -42,7 +42,8 @@ brw_flush( struct pipe_context *pipe,
            struct pipe_fence_handle **fence )
 {
    brw_context_flush( brw_context( pipe ) );
-   *fence = NULL;
+   if (fence)
+      *fence = NULL;
 }
 
 static unsigned brw_is_buffer_referenced(struct pipe_context *pipe,

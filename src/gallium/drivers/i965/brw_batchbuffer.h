@@ -35,7 +35,8 @@ struct brw_batchbuffer {
     * XXX: is this still necessary?
     * XXX: if so, can this be hidden inside the GEM-specific winsys code?
     */
-   uint8_t *buffer;
+   boolean use_malloc_buffer;
+   uint8_t *malloc_buffer;
 
    /**
     * Values exported to speed up the writing the batchbuffer,

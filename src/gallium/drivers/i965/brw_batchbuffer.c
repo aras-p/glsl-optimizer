@@ -36,25 +36,26 @@
 #include "brw_debug.h"
 #include "brw_structs.h"
 
-#define USE_LOCAL_BUFFER 1
+#define USE_MALLOC_BUFFER 1
 #define ALWAYS_EMIT_MI_FLUSH 1
 
 void
 brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 {
-   if (batch->buf != NULL) {
+   if (batch->buf) {
       batch->sws->bo_unreference(batch->buf);
       batch->buf = NULL;
    }
 
-   if (USE_LOCAL_BUFFER && !batch->buffer)
-      batch->buffer = MALLOC(BRW_BATCH_SIZE);
+   if (batch->use_malloc_buffer && !batch->malloc_buffer)
+      batch->malloc_buffer = MALLOC(BRW_BATCH_SIZE);
 
    batch->buf = batch->sws->bo_alloc(batch->sws,
 				     BRW_BUFFER_TYPE_BATCH,
 				     BRW_BATCH_SIZE, 4096);
-   if (batch->buffer)
-      batch->map = batch->buffer;
+
+   if (batch->malloc_buffer)
+      batch->map = batch->malloc_buffer;
    else 
       batch->map = batch->sws->bo_map(batch->buf, GL_TRUE);
 
@@ -67,6 +68,7 @@ brw_batchbuffer_alloc(struct brw_winsys_screen *sws)
 {
    struct brw_batchbuffer *batch = CALLOC_STRUCT(brw_batchbuffer);
 
+   batch->use_malloc_buffer = USE_MALLOC_BUFFER;
    batch->sws = sws;
    brw_batchbuffer_reset(batch);
 
@@ -76,16 +78,16 @@ brw_batchbuffer_alloc(struct brw_winsys_screen *sws)
 void
 brw_batchbuffer_free(struct brw_batchbuffer *batch)
 {
-   if (batch->map) {
+   if (batch->malloc_buffer) {
+      FREE(batch->malloc_buffer);
+      batch->map = NULL;
+   }
+   else if (batch->map) {
       batch->sws->bo_unmap(batch->buf);
       batch->map = NULL;
    }
 
-
    batch->sws->bo_unreference(batch->buf);
-   batch->buf = NULL;
-
-   FREE(batch->buffer);
    FREE(batch);
 }
 
@@ -127,8 +129,15 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
    batch->ptr += 4;
    used = batch->ptr - batch->map;
 
-   batch->sws->bo_unmap(batch->buf);
-   batch->map = NULL;
+   if (batch->use_malloc_buffer) {
+      batch->sws->bo_subdata(batch->buf, 0, used, batch->map );
+      batch->map = NULL;
+   }
+   else {
+      batch->sws->bo_unmap(batch->buf);
+      batch->map = NULL;
+   }
+
    batch->ptr = NULL;
       
    batch->sws->bo_exec(batch->buf, used );
