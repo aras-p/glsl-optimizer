@@ -130,6 +130,8 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
    if (surface == NULL)
       return NULL;
 
+   pipe_reference_init(&surface->base.reference, 1);
+
    /* XXX: ignoring render-to-slice-of-3d-texture
     */
    assert(id.bits.zslice == 0);
