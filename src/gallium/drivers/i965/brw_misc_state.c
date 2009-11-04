@@ -37,6 +37,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_screen.h"
+#include "brw_pipe_rast.h"
 
 
 
@@ -342,7 +343,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static int upload_line_stipple(struct brw_context *brw)
 {
-   struct brw_line_stipple *bls = NULL; //brw->curr.rast->bls;
+   struct brw_line_stipple *bls = &brw->curr.rast->bls;
    BRW_CACHED_BATCH_STRUCT(brw, bls);
    return 0;
 }
