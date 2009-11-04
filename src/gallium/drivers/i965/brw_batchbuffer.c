@@ -35,6 +35,7 @@
 #include "brw_winsys.h"
 #include "brw_debug.h"
 #include "brw_structs.h"
+#include "intel_decode.h"
 
 #define USE_MALLOC_BUFFER 1
 #define ALWAYS_EMIT_MI_FLUSH 1
@@ -46,9 +47,6 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
       batch->sws->bo_unreference(batch->buf);
       batch->buf = NULL;
    }
-
-   if (batch->use_malloc_buffer && !batch->malloc_buffer)
-      batch->malloc_buffer = MALLOC(BRW_BATCH_SIZE);
 
    batch->buf = batch->sws->bo_alloc(batch->sws,
 				     BRW_BUFFER_TYPE_BATCH,
@@ -64,12 +62,18 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 }
 
 struct brw_batchbuffer *
-brw_batchbuffer_alloc(struct brw_winsys_screen *sws)
+brw_batchbuffer_alloc(struct brw_winsys_screen *sws,
+                      struct brw_chipset chipset)
 {
    struct brw_batchbuffer *batch = CALLOC_STRUCT(brw_batchbuffer);
 
    batch->use_malloc_buffer = USE_MALLOC_BUFFER;
+   if (batch->use_malloc_buffer) {
+      batch->malloc_buffer = MALLOC(BRW_BATCH_SIZE);
+   }
+
    batch->sws = sws;
+   batch->chipset = chipset;
    brw_batchbuffer_reset(batch);
 
    return batch;
@@ -142,18 +146,16 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
       
    batch->sws->bo_exec(batch->buf, used );
 
-#if 0      
-   if (BRW_DEBUG & DEBUG_BATCH) {
+   if (1 /*BRW_DEBUG & DEBUG_BATCH*/) {
       void *ptr = batch->sws->bo_map(batch->buf, GL_FALSE);
 
       intel_decode(ptr,
 		   used / 4, 
-		   batch->buf->offset,
+		   batch->buf->offset[0],
 		   batch->chipset.pci_id);
 
       batch->sws->bo_unmap(batch->buf);
    }
-#endif
 
    if (BRW_DEBUG & DEBUG_SYNC) {
       /* Abuse map/unmap to achieve wait-for-fence.

@@ -66,6 +66,7 @@ C_SOURCES = \
 	brw_screen_tex_layout.c \
 	brw_screen_texture.c \
 	brw_screen_surface.c \
-	brw_batchbuffer.c 
+	brw_batchbuffer.c \
+	intel_decode.c
 
 include ../../Makefile.template

@@ -133,7 +133,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
 
    make_empty_list(&brw->query.active_head);
 
-   brw->batch = brw_batchbuffer_alloc( brw->sws );
+   brw->batch = brw_batchbuffer_alloc( brw->sws, brw->chipset );
    if (brw->batch == NULL)
       goto fail;
 
