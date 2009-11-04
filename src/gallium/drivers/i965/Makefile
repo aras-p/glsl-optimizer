@@ -33,6 +33,7 @@ C_SOURCES = \
 	brw_pipe_flush.c \
 	brw_pipe_misc.c \
 	brw_pipe_sampler.c \
+	brw_pipe_vertex.c \
 	brw_pipe_rast.c \
 	brw_sf.c \
 	brw_sf_emit.c \
