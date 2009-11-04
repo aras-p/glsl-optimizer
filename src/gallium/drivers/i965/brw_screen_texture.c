@@ -325,6 +325,45 @@ static boolean brw_is_format_supported( struct pipe_screen *screen,
 }
 
 
+boolean brw_is_texture_referenced_by_bo( struct brw_screen *brw_screen,
+                                      struct pipe_texture *texture,
+                                      unsigned face, 
+                                      unsigned level,
+                                      struct brw_winsys_buffer *bo )
+{
+   struct brw_texture *tex = brw_texture(texture);
+   struct brw_surface *surf;
+   int i;
+
+   /* XXX: this is subject to false positives if the underlying
+    * texture BO is referenced, we can't tell whether the sub-region
+    * we care about participates in that.
+    */
+   if (brw_screen->sws->bo_references( bo, tex->bo ))
+      return TRUE;
+
+   /* Find any view on this texture for this face/level and see if it
+    * is referenced:
+    */
+   for (i = 0; i < 2; i++) {
+      foreach (surf, &tex->views[i]) {
+         if (surf->bo == tex->bo)
+            continue;
+
+         if (surf->id.bits.face != face ||
+             surf->id.bits.level != level)
+            continue;
+         
+         if (brw_screen->sws->bo_references( bo, surf->bo))
+            return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
+
+
 void brw_screen_tex_init( struct brw_screen *brw_screen )
 {
    brw_screen->base.is_format_supported = brw_is_format_supported;

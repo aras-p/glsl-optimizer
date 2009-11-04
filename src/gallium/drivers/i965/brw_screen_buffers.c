@@ -131,6 +131,18 @@ brw_user_buffer_create(struct pipe_screen *screen,
    return &buf->base; 
 }
 
+
+boolean brw_is_buffer_referenced_by_bo( struct brw_screen *brw_screen,
+                                     struct pipe_buffer *buffer,
+                                     struct brw_winsys_buffer *bo )
+{
+   struct brw_buffer *buf = brw_buffer(buffer);
+   if (buf->bo == NULL)
+      return FALSE;
+
+   return brw_screen->sws->bo_references( bo, buf->bo );
+}
+
    
 void brw_screen_buffer_init(struct brw_screen *brw_screen)
 {

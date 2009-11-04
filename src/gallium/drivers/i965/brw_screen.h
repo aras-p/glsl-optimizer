@@ -183,4 +183,16 @@ void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 void brw_screen_buffer_init(struct brw_screen *brw_screen);
 
 
+boolean brw_is_texture_referenced_by_bo( struct brw_screen *brw_screen,
+                                         struct pipe_texture *texture,
+                                         unsigned face, 
+                                         unsigned level,
+                                         struct brw_winsys_buffer *bo );
+
+boolean brw_is_buffer_referenced_by_bo( struct brw_screen *brw_screen,
+                                        struct pipe_buffer *buffer,
+                                        struct brw_winsys_buffer *bo );
+
+
+
 #endif /* BRW_SCREEN_H */
