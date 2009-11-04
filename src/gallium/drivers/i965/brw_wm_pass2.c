@@ -69,30 +69,32 @@ static void prealloc_reg(struct brw_wm_compile *c,
  */
 static void init_registers( struct brw_wm_compile *c )
 {
-   GLuint nr_interp_regs = 0;
-   GLuint i = 0;
+   GLuint reg = 0;
    GLuint j;
 
    for (j = 0; j < c->grf_limit; j++) 
       c->pass2_grf[j].nextuse = BRW_WM_MAX_INSN;
 
+   /* Pre-allocate incoming payload regs:
+    */
    for (j = 0; j < c->key.nr_depth_regs; j++) 
-      prealloc_reg(c, &c->payload.depth[j], i++);
+      prealloc_reg(c, &c->payload.depth[j], reg++);
 
    for (j = 0; j < c->nr_creg; j++) 
-      prealloc_reg(c, &c->creg[j], i++);
+      prealloc_reg(c, &c->creg[j], reg++);
 
-   for (j = 0; j < c->key.vp_nr_outputs; j++) {
-      prealloc_reg(c, &c->payload.input_interp[j], i++);
-   }
+   for (j = 0; j < c->key.vp_nr_outputs; j++)
+      prealloc_reg(c, &c->payload.input_interp[j], reg++);
 
-   assert(nr_interp_regs >= 1);
+   assert(c->key.vp_nr_outputs >= 1);
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
    c->prog_data.urb_read_length = c->key.vp_nr_outputs * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 
-   c->max_wm_grf = i * 2;
+   /* Note this allocation:
+    */
+   c->max_wm_grf = reg * 2;
 }
 
 
