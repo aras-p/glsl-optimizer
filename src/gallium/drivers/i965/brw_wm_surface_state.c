@@ -215,13 +215,13 @@ static int prepare_wm_surfaces(struct brw_context *brw )
    }
 #endif
 
-   brw->sws->bo_unreference(brw->wm.bind_bo);
-   brw->wm.bind_bo = brw_wm_get_binding_table(brw);
-
    if (brw->wm.nr_surfaces != nr_surfaces) {
       brw->wm.nr_surfaces = nr_surfaces;
       brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
    }
+
+   brw->sws->bo_unreference(brw->wm.bind_bo);
+   brw->wm.bind_bo = brw_wm_get_binding_table(brw);
 
    return 0;
 }
