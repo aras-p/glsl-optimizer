@@ -154,6 +154,12 @@ xlib_brw_bo_unreference( struct brw_winsys_buffer *buffer )
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
+   /* As a special favor in this call only, buffer is allowed to be
+    * NULL:
+    */
+   if (buffer == NULL)
+      return;
+
    if (--buf->cheesy_refcount == 0) {
       FREE(buffer);
    }
