@@ -90,7 +90,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       /* XXX: immediates can go elsewhere if necessary:
        */
       assert(c->vp->info.file_max[TGSI_FILE_IMMEDIATE] +
-	     c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 > BRW_MAX_GRF);
+	     c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 <= BRW_MAX_GRF);
 
       c->vp->use_const_buffer = GL_FALSE;
    }

@@ -128,12 +128,19 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
    vs->id = brw->program_id++;
    //vs->has_flow_control = brw_wm_has_flow_control(vs);
 
-   /* Tell the draw module about this shader:
-    */
+   vs->tokens = tgsi_dup_tokens(shader->tokens);
+   if (vs->tokens == NULL)
+      goto fail;
+
+   tgsi_scan_shader(vs->tokens, &vs->info);
    
    /* Done:
     */
    return (void *)vs;
+
+fail:
+   FREE(vs);
+   return NULL;
 }
 
 
