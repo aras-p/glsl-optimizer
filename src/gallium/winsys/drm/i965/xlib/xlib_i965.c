@@ -125,6 +125,7 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
    buf->offset = align(xbw->offset, alignment);
    buf->type = type;
    buf->virtual = MALLOC(size);
+   buf->cheesy_refcount = 1;
    buf->base.offset = &buf->offset; /* hmm, cheesy */
    buf->base.size = size;
 
@@ -299,6 +300,27 @@ xlib_create_brw_winsys_screen( void )
  * Implementation of Xlib co-state-tracker's winsys interface
  */
 
+static void
+xlib_i965_display_surface(struct xmesa_buffer *xm_buffer,
+                          struct pipe_surface *surf)
+{
+   /* struct brw_texture *texture = brw_texture(surf->texture); */
+
+   debug_printf("%s tex %p, sz %dx%d\n", __FUNCTION__, 
+                (void *)surf->texture,
+                surf->texture->width[0],
+                surf->texture->height[0]);
+}
+
+static void
+xlib_i965_flush_frontbuffer(struct pipe_screen *screen,
+			    struct pipe_surface *surf,
+			    void *context_private)
+{
+   xlib_i965_display_surface(NULL, surf);
+}
+
+
 static struct pipe_screen *
 xlib_create_i965_screen( void )
 {
@@ -309,11 +331,11 @@ xlib_create_i965_screen( void )
    if (winsys == NULL)
       return NULL;
 
-   screen = brw_create_screen(winsys, 
-                              PCI_CHIP_GM45_GM);
+   screen = brw_create_screen(winsys, PCI_CHIP_GM45_GM);
    if (screen == NULL)
       goto fail;
 
+   screen->flush_frontbuffer = xlib_i965_flush_frontbuffer;
    return screen;
 
 fail:
@@ -343,17 +365,6 @@ fail:
 }
 
 
-static void
-xlib_i965_display_surface(struct xmesa_buffer *xm_buffer,
-                              struct pipe_surface *surf)
-{
-   /* struct brw_texture *texture = brw_texture(surf->texture); */
-
-   debug_printf("%s tex %p, sz %dx%d\n", __FUNCTION__, 
-                (void *)surf->texture,
-                surf->texture->width[0],
-                surf->texture->height[0]);
-}
 
 
 struct xm_driver xlib_i965_driver = 
