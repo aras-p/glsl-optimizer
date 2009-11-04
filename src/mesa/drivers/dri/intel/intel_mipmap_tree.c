@@ -315,10 +315,11 @@ intel_miptree_release(struct intel_context *intel,
  */
 GLboolean
 intel_miptree_match_image(struct intel_mipmap_tree *mt,
-                          struct gl_texture_image *image,
-                          GLuint face, GLuint level)
+                          struct gl_texture_image *image)
 {
    GLboolean isCompressed = _mesa_is_format_compressed(image->TexFormat);
+   struct intel_texture_image *intelImage = intel_texture_image(image);
+   GLuint level = intelImage->level;
 
    /* Images with borders are never pulled into mipmap trees. 
     */

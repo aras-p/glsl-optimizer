@@ -368,8 +368,7 @@ intelTexImage(GLcontext * ctx,
        intelObj->mt->first_level == level &&
        intelObj->mt->last_level == level &&
        intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !intel_miptree_match_image(intelObj->mt, &intelImage->base,
-                                  intelImage->face, intelImage->level)) {
+       !intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 
       DBG("release it\n");
       intel_miptree_release(intel, &intelObj->mt);
@@ -386,8 +385,7 @@ intelTexImage(GLcontext * ctx,
    assert(!intelImage->mt);
 
    if (intelObj->mt &&
-       intel_miptree_match_image(intelObj->mt, &intelImage->base,
-                                 intelImage->face, intelImage->level)) {
+       intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 
       intel_miptree_reference(&intelImage->mt, intelObj->mt);
       assert(intelImage->mt);
@@ -797,8 +795,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
-   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base,
-				  intelImage->face, intelImage->level)) {
+   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 	   fprintf(stderr, "miptree doesn't match image\n");
    }
 
