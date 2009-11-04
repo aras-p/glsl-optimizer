@@ -3,8 +3,6 @@
 
 #include "util/u_debug.h"
 
-#include "pipe/p_error.h"
-
 #include "brw_types.h"
 #include "brw_winsys.h"
 #include "brw_reg.h"

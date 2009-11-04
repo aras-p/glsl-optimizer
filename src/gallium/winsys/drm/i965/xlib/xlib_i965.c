@@ -35,6 +35,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "pipe/p_error.h"
 #include "pipe/p_context.h"
 
 #include "xm_winsys.h"
@@ -226,7 +227,7 @@ xlib_brw_bo_references(struct brw_winsys_buffer *a,
    return TRUE;
 }
 
-static boolean 
+static enum pipe_error
 xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
                                 struct brw_winsys_buffer **buffers,
                                 unsigned count )
@@ -241,7 +242,7 @@ xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
                 __FUNCTION__, count, 
                 (tot_size + 1023) / 1024);
 
-   return TRUE;
+   return PIPE_OK;
 }
 
 static void *

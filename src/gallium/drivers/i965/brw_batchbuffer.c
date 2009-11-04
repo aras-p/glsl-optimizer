@@ -27,8 +27,6 @@
 
 #include "util/u_memory.h"
 
-#include "pipe/p_error.h"
-
 #include "brw_batchbuffer.h"
 //#include "brw_decode.h"
 #include "brw_reg.h"

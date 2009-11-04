@@ -27,7 +27,6 @@
 
 #include "util/u_pack_color.h"
 
-#include "pipe/p_error.h"
 #include "pipe/p_state.h"
 
 #include "brw_batchbuffer.h"

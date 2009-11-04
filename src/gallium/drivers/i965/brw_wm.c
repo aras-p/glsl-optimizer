@@ -28,8 +28,6 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-#include "pipe/p_error.h"
-
 #include "tgsi/tgsi_info.h"
 
 #include "brw_context.h"

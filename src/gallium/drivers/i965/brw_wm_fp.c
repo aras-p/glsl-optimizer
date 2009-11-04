@@ -31,7 +31,6 @@
                
 
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_error.h"
 
 #include "util/u_math.h"
 #include "util/u_memory.h"

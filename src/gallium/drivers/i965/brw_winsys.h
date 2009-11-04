@@ -27,6 +27,7 @@
 #define BRW_WINSYS_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_error.h"
 
 struct brw_winsys;
 struct pipe_fence_handle;
@@ -123,9 +124,9 @@ struct brw_winsys_screen {
    /* XXX: couldn't this be handled by returning true/false on
     * bo_emit_reloc?
     */
-   boolean (*check_aperture_space)( struct brw_winsys_screen *iws,
-				    struct brw_winsys_buffer **buffers,
-				    unsigned count );
+   enum pipe_error (*check_aperture_space)( struct brw_winsys_screen *iws,
+					    struct brw_winsys_buffer **buffers,
+					    unsigned count );
 
    /**
     * Map a buffer.
