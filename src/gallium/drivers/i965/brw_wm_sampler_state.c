@@ -75,7 +75,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 			    brw->curr.num_samplers);
 
    for (i = 0; i < key->sampler_count; i++) {
-      const struct brw_texture *tex = brw->curr.texture[i];
+      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       struct brw_sampler_state *entry = &key->sampler[i];
 
@@ -119,7 +119,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
    int i;
 
    for (i = 0; i < nr; i++) {
-      const struct brw_texture *tex = brw->curr.texture[i];
+      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
 
       brw->sws->bo_unreference(brw->wm.sdc_bo[i]);

@@ -248,7 +248,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* PIPE_NEW_BOUND_TEXTURES */
    for (i = 0; i < brw->curr.num_textures; i++) {
-      const struct brw_texture *tex = brw->curr.texture[i];
+      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
 	 
       if (tex->base.format == PIPE_FORMAT_YCBCR)
 	 key->yuvtex_mask |= 1 << i;

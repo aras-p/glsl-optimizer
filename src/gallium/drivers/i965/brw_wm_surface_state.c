@@ -201,7 +201,7 @@ static int prepare_wm_surfaces(struct brw_context *brw )
     */
    for (i = 0; i < brw->curr.num_textures; i++) {
       brw_update_texture_surface(brw, 
-				 brw->curr.texture[i],
+				 brw_texture(brw->curr.texture[i]),
 				 nr_surfaces++);
    }
 

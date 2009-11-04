@@ -505,7 +505,7 @@ struct brw_context
       unsigned num_vertex_elements;
       unsigned num_samplers;
 
-      struct brw_texture *texture[PIPE_MAX_SAMPLERS];
+      struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
       unsigned num_textures;
       unsigned num_vertex_buffers;
