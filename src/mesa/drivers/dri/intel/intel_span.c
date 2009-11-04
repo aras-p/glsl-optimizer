@@ -292,7 +292,6 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
-/* XXX with GEM, these need to tell the kernel */
 #define HW_LOCK()
 
 #define HW_UNLOCK()
