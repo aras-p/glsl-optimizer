@@ -202,7 +202,7 @@ static int brw_prepare_vertices(struct brw_context *brw)
    for (i = 0; i < brw->curr.num_vertex_buffers; i++) {
       struct pipe_vertex_buffer *vb = &brw->curr.vertex_buffer[i];
       struct brw_winsys_buffer *bo;
-      struct pipe_buffer *upload_buf;
+      struct pipe_buffer *upload_buf = NULL;
       unsigned offset;
       
       if (BRW_DEBUG & DEBUG_VERTS)
