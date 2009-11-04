@@ -60,8 +60,6 @@ void brw_batchbuffer_free(struct brw_batchbuffer *batch);
 void _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
 			      const char *file, int line);
 
-#define brw_batchbuffer_flush(batch) \
-	_brw_batchbuffer_flush(batch, __FILE__, __LINE__)
 
 void brw_batchbuffer_reset(struct brw_batchbuffer *batch);
 

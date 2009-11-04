@@ -1,7 +1,12 @@
 
+#include "brw_context.h"
+#include "brw_structs.h"
+#include "brw_defines.h"
+
 static void brw_set_polygon_stipple( struct pipe_context *pipe,
-				     const unsigned *stipple )
+				     const struct pipe_poly_stipple *stip )
 {
+   struct brw_context *brw = brw_context(pipe);
    struct brw_polygon_stipple *bps = &brw->curr.bps;
    GLuint i;
 
@@ -10,5 +15,17 @@ static void brw_set_polygon_stipple( struct pipe_context *pipe,
    bps->header.length = sizeof *bps/4-2;
 
    for (i = 0; i < 32; i++)
-      bps->stipple[i] = brw->curr.poly_stipple[i]; /* don't invert */
+      bps->stipple[i] = stip->stipple[i]; /* don't invert */
+}
+
+
+
+void brw_pipe_misc_init( struct brw_context *brw )
+{
+   brw->base.set_polygon_stipple = brw_set_polygon_stipple;
+}
+
+
+void brw_pipe_misc_cleanup( struct brw_context *brw )
+{
 }

@@ -166,7 +166,7 @@ try_draw_range_elements(struct brw_context *brw,
       return ret;
 
    if (brw->flags.always_flush_batch)
-      brw_batchbuffer_flush(brw->batch);
+      brw_context_flush( brw );
 
    return 0;
 }
@@ -217,7 +217,7 @@ brw_draw_range_elements(struct pipe_context *pipe,
    /* Otherwise, flush and retry:
     */
    if (ret != 0) {
-      brw_batchbuffer_flush(brw->batch);
+      brw_context_flush( brw );
       ret = try_draw_range_elements(brw, index_buffer, hw_prim, start, count );
       assert(ret == 0);
    }

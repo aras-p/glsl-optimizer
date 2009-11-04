@@ -137,7 +137,7 @@ brw_query_end(struct pipe_context *pipe, struct pipe_query *q)
     */
    if (query->bo) {
       brw_emit_query_end(brw);
-      brw_batchbuffer_flush(brw->batch);
+      brw_context_flush( brw );
 
       brw->sws->bo_unreference(brw->query.bo);
       brw->query.bo = NULL;

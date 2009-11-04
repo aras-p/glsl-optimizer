@@ -777,6 +777,9 @@ void brw_pipe_shader_cleanup( struct brw_context *brw );
 void brw_pipe_vertex_cleanup( struct brw_context *brw );
 
 
+void brw_context_flush( struct brw_context *brw );
+
+
 /* brw_urb.c
  */
 int brw_upload_urb_fence(struct brw_context *brw);

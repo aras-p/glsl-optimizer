@@ -50,6 +50,17 @@ static void brw_destroy_context( struct pipe_context *pipe )
 
    brw_draw_cleanup( brw );
 
+   brw_pipe_blend_cleanup( brw );
+   brw_pipe_depth_stencil_cleanup( brw );
+   brw_pipe_framebuffer_cleanup( brw );
+   brw_pipe_flush_cleanup( brw );
+   brw_pipe_misc_cleanup( brw );
+   brw_pipe_query_cleanup( brw );
+   brw_pipe_rast_cleanup( brw );
+   brw_pipe_sampler_cleanup( brw );
+   brw_pipe_shader_cleanup( brw );
+   brw_pipe_vertex_cleanup( brw );
+
    FREE(brw->wm.compile_data);
 
    for (i = 0; i < brw->curr.fb.nr_cbufs; i++)
@@ -98,7 +109,17 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
 
    brw->base.destroy = brw_destroy_context;
 
-   brw_init_query( brw );
+   brw_pipe_blend_init( brw );
+   brw_pipe_depth_stencil_init( brw );
+   brw_pipe_framebuffer_init( brw );
+   brw_pipe_flush_init( brw );
+   brw_pipe_misc_init( brw );
+   brw_pipe_query_init( brw );
+   brw_pipe_rast_init( brw );
+   brw_pipe_sampler_init( brw );
+   brw_pipe_shader_init( brw );
+   brw_pipe_vertex_init( brw );
+
    brw_init_state( brw );
    brw_draw_init( brw );
 
