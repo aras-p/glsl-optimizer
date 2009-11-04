@@ -40,7 +40,7 @@
       if (condition) {					\
 	 return token;					\
       } else {						\
-	 yylval->string = return_string(yyextra, yytext);	\
+	 yylval->string = strdup(yytext);		\
 	 return IDENTIFIER;				\
       }							\
    } while (0)
@@ -63,52 +63,13 @@
 	 yylval->temp_inst.SaturateMode = SATURATE_ ## sat; \
 	 return token;					\
       } else {						\
-	 yylval->string = return_string(yyextra, yytext);		\
+	 yylval->string = strdup(yytext);		\
 	 return IDENTIFIER;				\
       }							\
    } while (0)
 
 #define SWIZZLE_INVAL  MAKE_SWIZZLE4(SWIZZLE_NIL, SWIZZLE_NIL, \
 				     SWIZZLE_NIL, SWIZZLE_NIL)
-
-/**
- * Send a string to the parser using asm_parser_state::string_dumpster
- *
- * Sends a string to the parser using asm_parser_state::string_dumpster as a
- * temporary storage buffer.  Data previously stored in
- * asm_parser_state::string_dumpster will be lost.  If
- * asm_parser_state::string_dumpster is not large enough to hold the new
- * string, the buffer size will be increased.  The buffer size is \b never
- * decreased.
- *
- * \param state   Assembler parser state tracking
- * \param str     String to be passed to the parser
- *
- * \return
- * A pointer to asm_parser_state::string_dumpster on success or \c NULL on
- * failure.  Currently the only failure case is \c ENOMEM.
- */
-static char *
-return_string(struct asm_parser_state *state, const char *str)
-{
-   const size_t len = strlen(str);
-
-   if (len >= state->dumpster_size) {
-      char *const dumpster = _mesa_realloc(state->string_dumpster,
-					   state->dumpster_size,
-					   len + 1);
-      if (dumpster == NULL) {
-	 return NULL;
-      }
-
-      state->string_dumpster = dumpster;
-      state->dumpster_size = len + 1;
-   }
-
-   memcpy(state->string_dumpster, str, len + 1);
-   return state->string_dumpster;
-}
-
 
 static unsigned
 mask_from_char(char c)
@@ -347,7 +308,7 @@ ARRAYSHADOW1D             { return_token_or_IDENTIFIER(require_ARB_fp && require
 ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require_shadow && require_texarray, TEX_ARRAYSHADOW2D); }
 
 [_a-zA-Z$][_a-zA-Z0-9$]*  {
-   yylval->string = return_string(yyextra, yytext);
+   yylval->string = strdup(yytext);
    return IDENTIFIER;
 }
 
