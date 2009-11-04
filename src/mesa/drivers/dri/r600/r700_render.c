@@ -259,16 +259,6 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
     uint32_t vgt_index_type     = 0;
     uint32_t vgt_primitive_type = 0;
     uint32_t vgt_num_indices    = 0;
-    GLboolean bUseDrawIndex;
-
-    if(NULL != context->ind_buf.bo)
-    {
-        bUseDrawIndex = GL_TRUE;
-    }
-    else
-    {
-        bUseDrawIndex = GL_FALSE;
-    }
 
     type = r700PrimitiveType(prim);
     num_indices = r700NumVerts(end - start, prim);
@@ -280,84 +270,153 @@ static void r700RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim
     if (type < 0 || num_indices <= 0)
 	    return;
 
-    if(GL_TRUE == bUseDrawIndex)
+    SETfield(vgt_primitive_type, type,
+	     VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
+
+    SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
+
+    if(GL_TRUE != context->ind_buf.is_32bit)
     {
-        total_emit =   3  /* VGT_PRIMITIVE_TYPE */
-		     + 2  /* VGT_INDEX_TYPE */
-		     + 2  /* NUM_INSTANCES */
-                     + 3  /* VGT_INDEX_OFFSET */
-                     + 5 + 2; /* DRAW_INDEX */
+            SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
-    else
-    {
-        total_emit =   3 /* VGT_PRIMITIVE_TYPE */
-		     + 2 /* VGT_INDEX_TYPE */
-	             + 2 /* NUM_INSTANCES */
-                     + 3 /* VGT_INDEX_OFFSET */
-                     + 3; /* DRAW_INDEX_AUTO */
-    }
+
+    vgt_num_indices = num_indices;
+    SETfield(vgt_draw_initiator, DI_SRC_SEL_DMA, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+    SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
+
+    total_emit =   3  /* VGT_PRIMITIVE_TYPE */
+	         + 2  /* VGT_INDEX_TYPE */
+	         + 2  /* NUM_INSTANCES */
+	         + 5 + 2; /* DRAW_INDEX */
 
     BEGIN_BATCH_NO_AUTOSTATE(total_emit);
     // prim
-    SETfield(vgt_primitive_type, type,
-	     VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+    R600_OUT_BATCH_REGSEQ(VGT_PRIMITIVE_TYPE, 1);
     R600_OUT_BATCH(vgt_primitive_type);
-
-	// index type
-    SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
-
-    if(GL_TRUE == bUseDrawIndex)
-    {
-        if(GL_TRUE != context->ind_buf.is_32bit)
-        {
-            SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
-        }
-    }
-
+    // index type
     R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
     R600_OUT_BATCH(vgt_index_type);
-
     // num instances
     R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
     R600_OUT_BATCH(1);
-
     // draw packet
-    vgt_num_indices = num_indices;
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX, 3));
+    R600_OUT_BATCH(context->ind_buf.bo_offset);
+    R600_OUT_BATCH(0);
+    R600_OUT_BATCH(vgt_num_indices);
+    R600_OUT_BATCH(vgt_draw_initiator);
+    R600_OUT_BATCH_RELOC(context->ind_buf.bo_offset,
+			 context->ind_buf.bo,
+			 context->ind_buf.bo_offset,
+			 RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_BATCH();
+    COMMIT_BATCH();
+}
 
-    if(GL_TRUE == bUseDrawIndex)
+static void r700RunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end, int prim)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    BATCH_LOCALS(&context->radeon);
+    int type, i;
+    uint32_t num_indices, total_emit = 0;
+    uint32_t vgt_draw_initiator = 0;
+    uint32_t vgt_index_type     = 0;
+    uint32_t vgt_primitive_type = 0;
+    uint32_t vgt_num_indices    = 0;
+
+    type = r700PrimitiveType(prim);
+    num_indices = r700NumVerts(end - start, prim);
+
+    radeon_print(RADEON_RENDER, RADEON_TRACE,
+		 "%s type %x num_indices %d\n",
+		 __func__, type, num_indices);
+
+    if (type < 0 || num_indices <= 0)
+	    return;
+
+    SETfield(vgt_primitive_type, type,
+	     VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
+
+    if (num_indices > 0xffff)
     {
-        SETfield(vgt_draw_initiator, DI_SRC_SEL_DMA, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+	    SETfield(vgt_index_type, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
     else
     {
-        SETfield(vgt_draw_initiator, DI_SRC_SEL_AUTO_INDEX, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+            SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
 
+    vgt_num_indices = num_indices;
     SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
-    if(GL_TRUE == bUseDrawIndex)
+    if (start == 0)
     {
-        R600_OUT_BATCH_REGSEQ(VGT_INDX_OFFSET, 1);
-        R600_OUT_BATCH(0);
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX, 3));
-        R600_OUT_BATCH(context->ind_buf.bo_offset);
-        R600_OUT_BATCH(0);
-        R600_OUT_BATCH(vgt_num_indices);
-        R600_OUT_BATCH(vgt_draw_initiator);
-        R600_OUT_BATCH_RELOC(context->ind_buf.bo_offset,
-                             context->ind_buf.bo,
-                             context->ind_buf.bo_offset,
-                             RADEON_GEM_DOMAIN_GTT, 0, 0);
+	SETfield(vgt_draw_initiator, DI_SRC_SEL_AUTO_INDEX, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     }
     else
     {
-        R600_OUT_BATCH_REGSEQ(VGT_INDX_OFFSET, 1);
-        R600_OUT_BATCH(start);
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_AUTO,1));
+	if (num_indices > 0xffff)
+	{
+		total_emit += num_indices;
+	}
+	else
+	{
+		total_emit += (num_indices + 1) / 2;
+	}
+	SETfield(vgt_draw_initiator, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
+    }
+
+    total_emit +=   3 /* VGT_PRIMITIVE_TYPE */
+	          + 2 /* VGT_INDEX_TYPE */
+	          + 2 /* NUM_INSTANCES */
+	          + 3; /* DRAW */
+
+    BEGIN_BATCH_NO_AUTOSTATE(total_emit);
+    // prim
+    R600_OUT_BATCH_REGSEQ(VGT_PRIMITIVE_TYPE, 1);
+    R600_OUT_BATCH(vgt_primitive_type);
+    // index type
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+    R600_OUT_BATCH(vgt_index_type);
+    // num instances
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_NUM_INSTANCES, 0));
+    R600_OUT_BATCH(1);
+    // draw packet
+    if(start == 0)
+    {
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_AUTO, 1));
         R600_OUT_BATCH(vgt_num_indices);
         R600_OUT_BATCH(vgt_draw_initiator);
+    }
+    else
+    {
+	if (num_indices > 0xffff)
+        {
+	    R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (num_indices + 1)));
+	    R600_OUT_BATCH(vgt_num_indices);
+	    R600_OUT_BATCH(vgt_draw_initiator);
+	    for (i = start; i < (start + num_indices); i++)
+	    {
+		R600_OUT_BATCH(i);
+	    }
+	}
+	else
+        {
+	    R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (((num_indices + 1) / 2) + 1)));
+	    R600_OUT_BATCH(vgt_num_indices);
+	    R600_OUT_BATCH(vgt_draw_initiator);
+	    for (i = start; i < (start + num_indices); i += 2)
+	    {
+		if ((i + 1) == (start + num_indices))
+		{
+		    R600_OUT_BATCH(i);
+		}
+		else
+		{
+		    R600_OUT_BATCH(((i + 1) << 16) | (i));
+		}
+	    }
+	}
     }
 
     END_BATCH();
@@ -379,11 +438,16 @@ static GLuint r700PredictRenderSize(GLcontext* ctx,
 
     dwords = PRE_EMIT_STATE_BUFSZ;
     if (ib)
-	    dwords += nr_prims * 17;
+	    dwords += nr_prims * 14;
     else {
 	    for (i = 0; i < nr_prims; ++i)
 	    {
-                dwords += 13;
+		    if (prim[i].start == 0)
+			    dwords += 10;
+		    else if (prim[i].count > 0xffff)
+			    dwords += prim[i].count + 10;
+		    else
+			    dwords += ((prim[i].count + 1) / 2) + 10;
 	    }
     }
 
@@ -840,10 +904,16 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     radeon_debug_add_indent();
     for (i = 0; i < nr_prims; ++i)
     {
-	    r700RunRenderPrimitive(ctx,
-                               prim[i].start,
-                               prim[i].start + prim[i].count,
-                               prim[i].mode);
+	    if (context->ind_buf.bo)
+		    r700RunRenderPrimitive(ctx,
+					   prim[i].start,
+					   prim[i].start + prim[i].count,
+					   prim[i].mode);
+	    else
+		    r700RunRenderPrimitiveImmediate(ctx,
+						    prim[i].start,
+						    prim[i].start + prim[i].count,
+						    prim[i].mode);
     }
     radeon_debug_remove_indent();
 
