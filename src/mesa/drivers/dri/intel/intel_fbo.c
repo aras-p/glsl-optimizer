@@ -577,6 +577,7 @@ intel_render_texture(GLcontext * ctx,
 					   dst_x) * intel_image->mt->cpp;
    intel_image->mt->region->draw_x = dst_x;
    intel_image->mt->region->draw_y = dst_y;
+   intel_image->used_as_render_target = GL_TRUE;
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);
@@ -590,16 +591,13 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
-   /* no-op
-    * Previously we released the renderbuffer's intel_region but
-    * that's not necessary and actually caused problems when trying
-    * to do a glRead/CopyPixels from the renderbuffer later.
-    * The region will be released later if the texture is replaced
-    * or the renderbuffer deleted.
-    *
-    * The intention of this driver hook is more of a "done rendering
-    * to texture, please re-twiddle/etc if necessary".
-    */
+   struct gl_texture_object *tex_obj = att->Texture;
+   struct gl_texture_image *image =
+      tex_obj->Image[att->CubeMapFace][att->TextureLevel];
+   struct intel_texture_image *intel_image = intel_texture_image(image);
+
+   /* Flag that this image may now be validated into the object's miptree. */
+   intel_image->used_as_render_target = GL_FALSE;
 }
 
 
