@@ -360,6 +360,13 @@ struct xm_driver xlib_i965_driver =
 };
 
 
+/* Register this driver at library load: 
+ */
+static void _init( void ) __attribute__((constructor));
+static void _init( void )
+{
+   xmesa_set_driver( &xlib_i965_driver );
+}
 
 
 
