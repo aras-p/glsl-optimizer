@@ -243,7 +243,7 @@ static int prepare_curbe_buffer(struct brw_context *brw)
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 
       debug_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
-		   brw->curbe.last_buf, buf,
+		   (void *)brw->curbe.last_buf, (void *)buf,
 		   bufsz, brw->curbe.last_bufsz,
 		   brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
    }

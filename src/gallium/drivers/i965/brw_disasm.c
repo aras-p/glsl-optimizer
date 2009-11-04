@@ -143,6 +143,7 @@ char *chan_sel[4] = {
 };
 
 char *dest_condmod[16] = {
+   [0] = NULL
 };
 
 char *debug_ctrl[2] = {

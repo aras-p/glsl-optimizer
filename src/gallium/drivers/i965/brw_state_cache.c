@@ -236,8 +236,8 @@ brw_upload_cache( struct brw_cache *cache,
    tmp = MALLOC(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
-   memcpy(tmp + key_size, aux, cache->aux_size[cache_id]);
-   memcpy(tmp + key_size + aux_size, reloc_bufs, relocs_size);
+   memcpy((char *)tmp + key_size, aux, cache->aux_size[cache_id]);
+   memcpy((char *)tmp + key_size + aux_size, reloc_bufs, relocs_size);
    for (i = 0; i < nr_reloc_bufs; i++) {
       if (reloc_bufs[i] != NULL)
 	 cache->sws->bo_reference(reloc_bufs[i]);
@@ -247,7 +247,7 @@ brw_upload_cache( struct brw_cache *cache,
    item->key = tmp;
    item->hash = hash;
    item->key_size = key_size;
-   item->reloc_bufs = tmp + key_size + aux_size;
+   item->reloc_bufs = (struct brw_winsys_buffer **)((char *)tmp + key_size + aux_size);
    item->nr_reloc_bufs = nr_reloc_bufs;
 
    item->bo = bo;

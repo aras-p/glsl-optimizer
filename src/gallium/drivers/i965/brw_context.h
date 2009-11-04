@@ -167,8 +167,8 @@ struct brw_fragment_shader {
    unsigned iz_lookup;
    //unsigned wm_lookup;
    
-   boolean  uses_depth:1;
-   boolean  has_flow_control:1;
+   unsigned  uses_depth:1;
+   unsigned  has_flow_control:1;
 
    unsigned id;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
@@ -573,6 +573,7 @@ struct brw_context
       } vb[PIPE_MAX_ATTRIBS];
 
       struct {
+         int dummy;
       } ve[PIPE_MAX_ATTRIBS];
 
       unsigned nr_vb;		/* currently the same as curr.num_vertex_buffers */

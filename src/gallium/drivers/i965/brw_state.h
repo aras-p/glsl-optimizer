@@ -47,7 +47,7 @@ brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
       brw->sws->bo_reference(bo);
       brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
    }
-};
+}
 
 const struct brw_tracked_state brw_blend_constant_color;
 const struct brw_tracked_state brw_cc_unit;

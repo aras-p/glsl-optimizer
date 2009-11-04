@@ -54,6 +54,7 @@ enum brw_buffer_usage {
    BRW_USAGE_SAMPLER,		/* SAMPLER,     0 */
    BRW_USAGE_VERTEX,		/* VERTEX,      0 */
    BRW_USAGE_SCRATCH,		/* 0,           0 */
+   BRW_USAGE_MAX
 };
 
 /* Should be possible to validate usages above against buffer creation

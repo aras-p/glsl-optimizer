@@ -4,7 +4,7 @@
 # Xlib (no DRI HW acceleration)
 
 
-TOP = ../../../..
+TOP = ../../../../../..
 include $(TOP)/configs/current
 
 
@@ -19,37 +19,30 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/drivers/i965 \
+	-I$(TOP)/src/gallium/drivers/i965/include \
 	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
-	-I$(TOP)/src/gallium/auxiliary
-
-DEFINES += \
-	-DGALLIUM_SOFTPIPE \
-	-DGALLIUM_TRACE \
-	-DGALLIUM_BRW
-#-DGALLIUM_CELL will be defined by the config */
+	-I$(TOP)/src/gallium/auxiliary \
+	-I/usr/include/drm
 
 XLIB_WINSYS_SOURCES = \
-	xlib.c \
 	xlib_i965.c \
-	xlib_cell.c \
-	xlib_llvmpipe.c \
-	xlib_softpipe.c \
-	xlib_trace.c 
+
 
 
 XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
 
 
-# Note: CELL_SPU_LIB is only defined for cell configs
 
 LIBS = \
-	$(GALLIUM_DRIVERS) \
+	$(TOP)/src/gallium/drivers/i965/libi965.a \
+	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/state_trackers/glx/xlib/libxlib.a \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/mesa/libmesagallium.a \
-	$(GALLIUM_AUXILIARIES) \
-	$(CELL_SPU_LIB) \
+	$(GALLIUM_AUXILIARIES) 
 
+#	$(TOP)/src/gallium/drivers/i965/lib/libi9xx.a \
 
 .SUFFIXES : .cpp
 
