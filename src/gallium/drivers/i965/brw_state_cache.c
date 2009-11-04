@@ -462,6 +462,7 @@ brw_init_surface_cache(struct brw_context *brw)
    struct brw_cache *cache = &brw->surface_cache;
 
    cache->brw = brw;
+   cache->sws = brw->sws;
 
    cache->size = 7;
    cache->n_items = 0;
