@@ -98,11 +98,11 @@
 #define PCI_CHIP_ILM_G                  0x0046
 
 struct brw_chipset {
-   int pci_id:16;
-   int is_965:1;
-   int is_igdng:1;
-   int is_g4x:1;
-   int pad:13;
+   unsigned pci_id:16;
+   unsigned is_965:1;
+   unsigned is_igdng:1;
+   unsigned is_g4x:1;
+   unsigned pad:13;
 };
 
 

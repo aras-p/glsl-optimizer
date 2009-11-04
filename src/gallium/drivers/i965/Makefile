@@ -57,6 +57,7 @@ C_SOURCES = \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
+	brw_screen.c \
 	brw_screen_tex_layout.c \
 	brw_screen_texture.c \
 	brw_screen_surface.c \

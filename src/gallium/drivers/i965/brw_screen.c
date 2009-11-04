@@ -33,9 +33,8 @@
 #include "brw_reg.h"
 #include "brw_context.h"
 #include "brw_screen.h"
-#include "brw_buffer.h"
-#include "brw_texture.h"
 #include "brw_winsys.h"
+#include "brw_debug.h"
 
 #ifdef DEBUG
 static const struct debug_named_value debug_names[] = {
@@ -49,18 +48,13 @@ static const struct debug_named_value debug_names[] = {
    { "bat",   DEBUG_BATCH},
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
-   { "reg",   DEBUG_REGION},
-   { "fbo",   DEBUG_FBO},
-   { "lock",  DEBUG_LOCK},
    { "sync",  DEBUG_SYNC},
    { "prim",  DEBUG_PRIMS },
    { "vert",  DEBUG_VERTS },
-   { "dri",   DEBUG_DRI },
    { "dma",   DEBUG_DMA },
    { "san",   DEBUG_SANITY },
    { "sleep", DEBUG_SLEEP },
    { "stats", DEBUG_STATS },
-   { "tile",  DEBUG_TILE },
    { "sing",  DEBUG_SINGLE_THREAD },
    { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
@@ -90,7 +84,7 @@ brw_get_name(struct pipe_screen *screen)
    static char buffer[128];
    const char *chipset;
 
-   switch (brw_screen(screen)->pci_id) {
+   switch (brw_screen(screen)->chipset.pci_id) {
    case PCI_CHIP_I965_G:
       chipset = "I965_G";
       break;
@@ -250,9 +244,6 @@ brw_fence_reference(struct pipe_screen *screen,
                      struct pipe_fence_handle **ptr,
                      struct pipe_fence_handle *fence)
 {
-   struct brw_screen *is = brw_screen(screen);
-
-   is->iws->fence_reference(is->iws, ptr, fence);
 }
 
 static int
@@ -260,19 +251,15 @@ brw_fence_signalled(struct pipe_screen *screen,
                      struct pipe_fence_handle *fence,
                      unsigned flags)
 {
-   struct brw_screen *is = brw_screen(screen);
-
-   return is->iws->fence_signalled(is->iws, fence);
+   return 0;                    /* XXX shouldn't this be a boolean? */
 }
 
 static int
 brw_fence_finish(struct pipe_screen *screen,
-                  struct pipe_fence_handle *fence,
-                  unsigned flags)
+                 struct pipe_fence_handle *fence,
+                 unsigned flags)
 {
-   struct brw_screen *is = brw_screen(screen);
-
-   return is->iws->fence_finish(is->iws, fence);
+   return 0;
 }
 
 
@@ -284,21 +271,21 @@ brw_fence_finish(struct pipe_screen *screen,
 static void
 brw_destroy_screen(struct pipe_screen *screen)
 {
-   struct brw_screen *is = brw_screen(screen);
+   struct brw_screen *bscreen = brw_screen(screen);
 
-   if (is->iws)
-      is->iws->destroy(is->iws);
+   if (bscreen->sws)
+      bscreen->sws->destroy(bscreen->sws);
 
-   FREE(is);
+   FREE(bscreen);
 }
 
 /**
  * Create a new brw_screen object
  */
 struct pipe_screen *
-brw_create_screen(struct intel_winsys *iws, uint pci_id)
+brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 {
-   struct brw_screen *is;
+   struct brw_screen *bscreen;
    struct brw_chipset chipset;
 
 #ifdef DEBUG
@@ -341,25 +328,26 @@ brw_create_screen(struct intel_winsys *iws, uint pci_id)
    }
 
 
-   is = CALLOC_STRUCT(brw_screen);
-   if (!is)
+   bscreen = CALLOC_STRUCT(brw_screen);
+   if (!bscreen)
       return NULL;
 
-   is->chipset = chipset;
-   is->iws = iws;
-   is->base.winsys = NULL;
-   is->base.destroy = brw_destroy_screen;
-   is->base.get_name = brw_get_name;
-   is->base.get_vendor = brw_get_vendor;
-   is->base.get_param = brw_get_param;
-   is->base.get_paramf = brw_get_paramf;
-   is->base.is_format_supported = brw_is_format_supported;
-   is->base.fence_reference = brw_fence_reference;
-   is->base.fence_signalled = brw_fence_signalled;
-   is->base.fence_finish = brw_fence_finish;
+   bscreen->chipset = chipset;
+   bscreen->sws = sws;
+   bscreen->base.winsys = NULL;
+   bscreen->base.destroy = brw_destroy_screen;
+   bscreen->base.get_name = brw_get_name;
+   bscreen->base.get_vendor = brw_get_vendor;
+   bscreen->base.get_param = brw_get_param;
+   bscreen->base.get_paramf = brw_get_paramf;
+   bscreen->base.is_format_supported = brw_is_format_supported;
+   bscreen->base.fence_reference = brw_fence_reference;
+   bscreen->base.fence_signalled = brw_fence_signalled;
+   bscreen->base.fence_finish = brw_fence_finish;
 
-   brw_screen_init_texture_functions(is);
-   brw_screen_init_buffer_functions(is);
+   brw_screen_tex_init(bscreen);
+   brw_screen_tex_surface_init(bscreen);
+   brw_screen_init_buffer_functions(bscreen);
 
-   return &is->base;
+   return &bscreen->base;
 }
