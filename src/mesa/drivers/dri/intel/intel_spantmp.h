@@ -48,8 +48,8 @@
 
 #define SPANTMP_PIXEL_FMT INTEL_PIXEL_FMT
 #define SPANTMP_PIXEL_TYPE INTEL_PIXEL_TYPE
-#define PUT_VALUE(_x, _y, v) INTEL_WRITE_VALUE(X_TILE(_x, _y), v)
-#define GET_VALUE(_x, _y) INTEL_READ_VALUE(X_TILE(_x, _y))
+#define PUT_VALUE(_x, _y, v) INTEL_WRITE_VALUE(Y_TILE(_x, _y), v)
+#define GET_VALUE(_x, _y) INTEL_READ_VALUE(Y_TILE(_x, _y))
 #define TAG(x) INTEL_TAG(intel_YTile_##x)
 #define TAG2(x, y) INTEL_TAG(intel_YTile_##x)##y
 #include "spantmp2.h"
