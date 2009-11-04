@@ -50,8 +50,9 @@ static unsigned brw_is_buffer_referenced(struct pipe_context *pipe,
                                   struct pipe_buffer *buffer)
 {
    struct brw_context *brw = brw_context(pipe);
+   struct brw_screen *bscreen = brw_screen(brw->base.screen);
 
-   return brw_is_buffer_referenced_by_bo( brw->brw_screen,
+   return brw_is_buffer_referenced_by_bo( bscreen,
                                           buffer,
                                           brw->batch->buf );
 }
@@ -62,8 +63,9 @@ static unsigned brw_is_texture_referenced(struct pipe_context *pipe,
                                    unsigned level)
 {
    struct brw_context *brw = brw_context(pipe);
+   struct brw_screen *bscreen = brw_screen(brw->base.screen);
 
-   return brw_is_texture_referenced_by_bo( brw->brw_screen,
+   return brw_is_texture_referenced_by_bo( bscreen,
                                            texture, face, level,
                                            brw->batch->buf );
 }

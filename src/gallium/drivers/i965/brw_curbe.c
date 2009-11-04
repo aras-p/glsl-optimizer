@@ -224,7 +224,7 @@ static int prepare_curbe_buffer(struct brw_context *brw)
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT];
-      struct pipe_screen *screen = &brw->brw_screen->base;
+      struct pipe_screen *screen = brw->base.screen;
 
       const GLfloat *value = screen->buffer_map( screen,
 						 brw->curr.vertex_constants,

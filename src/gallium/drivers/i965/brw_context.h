@@ -483,7 +483,6 @@ struct brw_context
    struct pipe_context base;
    struct brw_chipset chipset;
 
-   struct brw_screen *brw_screen;   
    struct brw_winsys_screen *sws;
 
    struct brw_batchbuffer *batch;

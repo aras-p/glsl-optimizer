@@ -258,14 +258,14 @@ boolean brw_draw_init( struct brw_context *brw )
 
    /* Create helpers for uploading data in user buffers:
     */
-   brw->vb.upload_vertex = u_upload_create( &brw->brw_screen->base,
+   brw->vb.upload_vertex = u_upload_create( brw->base.screen,
 					    128 * 1024,
 					    64,
 					    PIPE_BUFFER_USAGE_VERTEX );
    if (brw->vb.upload_vertex == NULL)
       return FALSE;
 
-   brw->vb.upload_index = u_upload_create( &brw->brw_screen->base,
+   brw->vb.upload_index = u_upload_create( brw->base.screen,
 					   128 * 1024,
 					   64,
 					   PIPE_BUFFER_USAGE_INDEX );
