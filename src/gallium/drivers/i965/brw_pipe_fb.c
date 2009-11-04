@@ -41,6 +41,7 @@ static void brw_set_framebuffer_state( struct pipe_context *pipe,
    brw->curr.fb.nr_cbufs = fb->nr_cbufs;
 }
 
+
 static void brw_set_viewport_state( struct pipe_context *pipe,
 				    const struct pipe_viewport_state *viewport )
 {
@@ -58,4 +59,12 @@ void brw_pipe_framebuffer_init( struct brw_context *brw )
 
 void brw_pipe_framebuffer_cleanup( struct brw_context *brw )
 {
+   struct pipe_framebuffer_state *fb = &brw->curr.fb;
+   int i;
+
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&fb->cbufs[i], NULL);
+   }
+
+   pipe_surface_reference(&fb->zsbuf, NULL);
 }

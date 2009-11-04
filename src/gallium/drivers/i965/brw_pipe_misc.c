@@ -16,13 +16,45 @@ static void brw_set_polygon_stipple( struct pipe_context *pipe,
 
    for (i = 0; i < 32; i++)
       bps->stipple[i] = stip->stipple[i]; /* don't invert */
+
+   brw->state.dirty.mesa |= PIPE_NEW_POLYGON_STIPPLE;
 }
 
+
+static void brw_set_scissor_state( struct pipe_context *pipe,
+                                   const struct pipe_scissor_state *scissor )
+{
+   struct brw_context *brw = brw_context(pipe);
+
+   brw->curr.scissor =  *scissor;
+   brw->state.dirty.mesa |= PIPE_NEW_SCISSOR;
+}
+
+static void brw_set_viewport_state( struct pipe_context *pipe,
+                                    const struct pipe_viewport_state *viewport )
+{
+   struct brw_context *brw = brw_context(pipe);
+
+   brw->curr.viewport = *viewport;
+   brw->state.dirty.mesa |= PIPE_NEW_VIEWPORT;
+}
+
+static void brw_set_clip_state( struct pipe_context *pipe,
+                                const struct pipe_clip_state *clip )
+{
+   struct brw_context *brw = brw_context(pipe);
+
+   brw->curr.ucp = *clip;
+   brw->state.dirty.mesa |= PIPE_NEW_CLIP;
+}
 
 
 void brw_pipe_misc_init( struct brw_context *brw )
 {
    brw->base.set_polygon_stipple = brw_set_polygon_stipple;
+   brw->base.set_scissor_state = brw_set_scissor_state;
+   brw->base.set_clip_state = brw_set_clip_state;
+   brw->base.set_viewport_state = brw_set_viewport_state;
 }
 
 
