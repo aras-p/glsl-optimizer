@@ -35,6 +35,7 @@
 #include "pipe/p_screen.h"
 #include "brw_screen.h"
 #include "brw_defines.h"
+#include "brw_winsys.h"
 
 enum {
    BRW_VIEW_LINEAR,
@@ -145,6 +146,12 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
    surface->base.face = id.bits.face;
    surface->base.level = id.bits.level;
    surface->id = id;
+   surface->cpp = tex->cpp;
+   surface->pitch = tex->pitch;
+   surface->tiling = tex->tiling;
+
+   surface->bo = tex->bo;
+   brw_screen->sws->bo_reference(surface->bo);
 
    pipe_texture_reference( &surface->base.texture, &tex->base );
 
@@ -234,10 +241,16 @@ static struct pipe_surface *brw_get_tex_surface(struct pipe_screen *screen,
 }
 
 
-static void brw_tex_surface_destroy( struct pipe_surface *surface )
+static void brw_tex_surface_destroy( struct pipe_surface *surf )
 {
+   struct brw_surface *surface = brw_surface(surf);
+   struct brw_screen *screen = brw_screen(surf->texture->screen);
+
    /* Unreference texture, shared buffer:
     */
+   screen->sws->bo_unreference(surface->bo);
+   pipe_texture_reference( &surface->base.texture, NULL );
+
 
    FREE(surface);
 }

@@ -39,6 +39,7 @@
 #include "brw_state.h"
 #include "brw_batchbuffer.h"
 #include "brw_winsys.h"
+#include "brw_screen.h"
 
 
 static void brw_destroy_context( struct pipe_context *pipe )
@@ -46,6 +47,8 @@ static void brw_destroy_context( struct pipe_context *pipe )
    struct brw_context *brw = brw_context(pipe);
    int i;
 
+   brw_context_flush( brw );
+   brw_batchbuffer_free( brw->batch );
    brw_destroy_state(brw);
 
    brw_draw_cleanup( brw );
@@ -101,15 +104,12 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
 
    if (!brw) {
       debug_printf("%s: failed to alloc context\n", __FUNCTION__);
-      return GL_FALSE;
+      return NULL;
    }
-
-   /* We want the GLSL compiler to emit code that uses condition codes */
-   //ctx->Shader.EmitCondCodes = GL_TRUE;
-   //ctx->Shader.EmitNVTempInitialization = GL_TRUE;
 
    brw->base.screen = screen;
    brw->base.destroy = brw_destroy_context;
+   brw->sws = brw_screen(screen)->sws;
 
    brw_pipe_blend_init( brw );
    brw_pipe_depth_stencil_init( brw );
@@ -133,7 +133,15 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
 
    make_empty_list(&brw->query.active_head);
 
+   brw->batch = brw_batchbuffer_alloc( brw->sws );
+   if (brw->batch == NULL)
+      goto fail;
 
    return &brw->base;
+
+fail:
+   if (brw->batch)
+      brw_batchbuffer_free( brw->batch );
+   return NULL;
 }
 
