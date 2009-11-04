@@ -233,9 +233,13 @@ _mesa_set_texture_attachment(GLcontext *ctx,
    if (att->Texture == texObj) {
       /* re-attaching same texture */
       ASSERT(att->Type == GL_TEXTURE);
+      if (ctx->Driver.FinishRenderTexture)
+	 ctx->Driver.FinishRenderTexture(ctx, att);
    }
    else {
       /* new attachment */
+      if (ctx->Driver.FinishRenderTexture && att->Texture)
+	 ctx->Driver.FinishRenderTexture(ctx, att);
       _mesa_remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
       assert(!att->Texture);
