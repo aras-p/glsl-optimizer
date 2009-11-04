@@ -60,9 +60,16 @@ struct brw_transfer
 struct brw_buffer
 {
    struct pipe_buffer base;
+
+   /* One of either bo or user_buffer will be non-null, depending on
+    * whether this is a hardware or user buffer.
+    */
    struct brw_winsys_buffer *bo;
+   void *user_buffer;
+
+   /* Mapped pointer??
+    */
    void *ptr;
-   boolean is_user_buffer;
 };
 
 #define BRW_TILING_NONE  0
@@ -151,7 +158,7 @@ brw_texture(struct pipe_texture *texture)
 static INLINE boolean
 brw_buffer_is_user_buffer( const struct pipe_buffer *buf )
 {
-   return ((const struct brw_buffer *)buf)->is_user_buffer;
+   return ((const struct brw_buffer *)buf)->user_buffer != NULL;
 }
 
 struct brw_winsys_buffer *
@@ -173,6 +180,7 @@ void brw_update_texture( struct brw_screen *brw_screen,
 void brw_screen_tex_init( struct brw_screen *brw_screen );
 void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 
+void brw_screen_buffer_init(struct brw_screen *brw_screen);
 
 
 #endif /* BRW_SCREEN_H */

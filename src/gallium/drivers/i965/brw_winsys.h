@@ -51,6 +51,8 @@ enum brw_buffer_usage {
    BRW_USAGE_QUERY_RESULT,	/* INSTRUCTION, INSTRUCTION */
    BRW_USAGE_RENDER_TARGET,	/* RENDER,      0 */
    BRW_USAGE_DEPTH_BUFFER,	/* RENDER,      RENDER */
+   BRW_USAGE_BLIT_SOURCE,	/* RENDER,      0 */
+   BRW_USAGE_BLIT_DEST,         /* RENDER,      RENDER */
    BRW_USAGE_SAMPLER,		/* SAMPLER,     0 */
    BRW_USAGE_VERTEX,		/* VERTEX,      0 */
    BRW_USAGE_SCRATCH,		/* 0,           0 */
@@ -71,6 +73,8 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_SHADER_SCRATCH,
    BRW_BUFFER_TYPE_BATCH,
    BRW_BUFFER_TYPE_STATE_CACHE,
+   BRW_BUFFER_TYPE_PIXEL,       /* image uploads, pbo's, etc */
+   BRW_BUFFER_TYPE_GENERIC,     /* unknown */
    BRW_BUFFER_TYPE_MAX		/* Count of possible values */
 };
 

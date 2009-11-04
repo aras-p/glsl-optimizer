@@ -347,7 +347,7 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 
    brw_screen_tex_init(bscreen);
    brw_screen_tex_surface_init(bscreen);
-   brw_screen_init_buffer_functions(bscreen);
+   brw_screen_buffer_init(bscreen);
 
    return &bscreen->base;
 }

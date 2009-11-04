@@ -90,6 +90,8 @@ const char *names[BRW_BUFFER_TYPE_MAX] = {
    "wm_scratch",
    "batch",
    "state_cache",
+   "pixel",
+   "generic",
 };
 
 const char *usages[BRW_USAGE_MAX] = {
@@ -97,6 +99,8 @@ const char *usages[BRW_USAGE_MAX] = {
    "query_result",
    "render_target",
    "depth_buffer",
+   "blit_source",
+   "blit_dest",
    "sampler",
    "vertex",
    "scratch"
