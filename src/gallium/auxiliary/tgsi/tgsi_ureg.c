@@ -644,7 +644,7 @@ static void validate( unsigned opcode,
 #endif
 }
 
-unsigned
+struct ureg_emit_insn_result
 ureg_emit_insn(struct ureg_program *ureg,
                unsigned opcode,
                boolean saturate,
@@ -659,6 +659,7 @@ ureg_emit_insn(struct ureg_program *ureg,
 {
    union tgsi_any_token *out;
    uint count = predicate ? 2 : 1;
+   struct ureg_emit_insn_result result;
 
    validate( opcode, num_dst, num_src );
    
@@ -672,6 +673,8 @@ ureg_emit_insn(struct ureg_program *ureg,
    out[0].insn.NumSrcRegs = num_src;
    out[0].insn.Padding = 0;
 
+   result.insn_token = ureg->domain[DOMAIN_INSN].count - count;
+
    if (predicate) {
       out[0].insn.Extended = 1;
       out[1].insn_ext_predicate = tgsi_default_instruction_ext_predicate();
@@ -680,19 +683,23 @@ ureg_emit_insn(struct ureg_program *ureg,
       out[1].insn_ext_predicate.SwizzleY = pred_swizzle_y;
       out[1].insn_ext_predicate.SwizzleZ = pred_swizzle_z;
       out[1].insn_ext_predicate.SwizzleW = pred_swizzle_w;
+
+      result.extended_token = result.insn_token + 1;
    } else {
       out[0].insn.Extended = 0;
+
+      result.extended_token = result.insn_token;
    }
 
    ureg->nr_instructions++;
    
-   return ureg->domain[DOMAIN_INSN].count - count;
+   return result;
 }
 
 
 void
 ureg_emit_label(struct ureg_program *ureg,
-                unsigned insn_token,
+                unsigned extended_token,
                 unsigned *label_token )
 {
    union tgsi_any_token *out, *insn;
@@ -701,9 +708,9 @@ ureg_emit_label(struct ureg_program *ureg,
       return;
 
    out = get_tokens( ureg, DOMAIN_INSN, 1 );
-   insn = retrieve_token( ureg, DOMAIN_INSN, insn_token );
+   insn = retrieve_token( ureg, DOMAIN_INSN, extended_token );
 
-   insn->insn.Extended = 1;
+   insn->token.Extended = 1;
 
    out[0].value = 0;
    out[0].insn_ext_label.Type = TGSI_INSTRUCTION_EXT_TYPE_LABEL;
@@ -737,15 +744,15 @@ ureg_fixup_label(struct ureg_program *ureg,
 
 void
 ureg_emit_texture(struct ureg_program *ureg,
-                  unsigned insn_token,
+                  unsigned extended_token,
                   unsigned target )
 {
    union tgsi_any_token *out, *insn;
 
    out = get_tokens( ureg, DOMAIN_INSN, 1 );
-   insn = retrieve_token( ureg, DOMAIN_INSN, insn_token );
+   insn = retrieve_token( ureg, DOMAIN_INSN, extended_token );
 
-   insn->insn.Extended = 1;
+   insn->token.Extended = 1;
 
    out[0].value = 0;
    out[0].insn_ext_texture.Type = TGSI_INSTRUCTION_EXT_TYPE_TEXTURE;
@@ -772,7 +779,8 @@ ureg_insn(struct ureg_program *ureg,
           const struct ureg_src *src,
           unsigned nr_src )
 {
-   unsigned insn, i;
+   struct ureg_emit_insn_result insn;
+   unsigned i;
    boolean saturate;
    boolean predicate;
    boolean negate;
@@ -806,7 +814,7 @@ ureg_insn(struct ureg_program *ureg,
    for (i = 0; i < nr_src; i++)
       ureg_emit_src( ureg, src[i] );
 
-   ureg_fixup_insn_size( ureg, insn );
+   ureg_fixup_insn_size( ureg, insn.insn_token );
 }
 
 void
@@ -818,7 +826,8 @@ ureg_tex_insn(struct ureg_program *ureg,
               const struct ureg_src *src,
               unsigned nr_src )
 {
-   unsigned insn, i;
+   struct ureg_emit_insn_result insn;
+   unsigned i;
    boolean saturate;
    boolean predicate;
    boolean negate;
@@ -846,7 +855,7 @@ ureg_tex_insn(struct ureg_program *ureg,
                          nr_dst,
                          nr_src);
 
-   ureg_emit_texture( ureg, insn, target );
+   ureg_emit_texture( ureg, insn.extended_token, target );
 
    for (i = 0; i < nr_dst; i++)
       ureg_emit_dst( ureg, dst[i] );
@@ -854,7 +863,7 @@ ureg_tex_insn(struct ureg_program *ureg,
    for (i = 0; i < nr_src; i++)
       ureg_emit_src( ureg, src[i] );
 
-   ureg_fixup_insn_size( ureg, insn );
+   ureg_fixup_insn_size( ureg, insn.insn_token );
 }
 
 
@@ -865,7 +874,8 @@ ureg_label_insn(struct ureg_program *ureg,
                 unsigned nr_src,
                 unsigned *label_token )
 {
-   unsigned insn, i;
+   struct ureg_emit_insn_result insn;
+   unsigned i;
 
    insn = ureg_emit_insn(ureg,
                          opcode,
@@ -879,12 +889,12 @@ ureg_label_insn(struct ureg_program *ureg,
                          0,
                          nr_src);
 
-   ureg_emit_label( ureg, insn, label_token );
+   ureg_emit_label( ureg, insn.extended_token, label_token );
 
    for (i = 0; i < nr_src; i++)
       ureg_emit_src( ureg, src[i] );
 
-   ureg_fixup_insn_size( ureg, insn );
+   ureg_fixup_insn_size( ureg, insn.insn_token );
 }
 
 
