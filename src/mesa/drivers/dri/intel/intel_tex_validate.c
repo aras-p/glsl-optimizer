@@ -138,8 +138,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* What levels must the tree include at a minimum?
     */
    intel_calculate_first_last_level(intel, intelObj);
-   firstImage =
-      intel_texture_image(intelObj->base.Image[0][intelObj->firstLevel]);
+   firstImage = intel_texture_image(tObj->Image[0][intelObj->firstLevel]);
 
    /* Fallback case:
     */
