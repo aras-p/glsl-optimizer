@@ -448,7 +448,6 @@ static void emit_interp( struct brw_wm_compile *c,
       break;
 
    case FRAG_ATTRIB_FACE:
-      /* XXX review/test this case */
       emit_op(c,
               WM_FRONTFACING,
               dst_mask(dst, WRITEMASK_X),
