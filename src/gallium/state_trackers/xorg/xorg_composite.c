@@ -290,12 +290,6 @@ bind_samplers(struct exa_context *exa, int op,
    memset(&src_sampler, 0, sizeof(struct pipe_sampler_state));
    memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
 
-   if ((pSrc && exa->pipe->is_texture_referenced(exa->pipe, pSrc->tex, 0, 0) &
-        PIPE_REFERENCED_FOR_WRITE) ||
-       (pMask && exa->pipe->is_texture_referenced(exa->pipe, pMask->tex, 0, 0) &
-        PIPE_REFERENCED_FOR_WRITE))
-      exa->pipe->flush(exa->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    if (pSrcPicture && pSrc) {
       if (exa->has_solid_color) {
          debug_assert(!"solid color with textures");
