@@ -483,7 +483,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(20);
+    BEGIN_CS(22);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
@@ -499,6 +499,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
     OUT_CS_REG(R300_GA_COLOR_CONTROL, rs->color_control);
+    OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
     END_CS;
 }
 

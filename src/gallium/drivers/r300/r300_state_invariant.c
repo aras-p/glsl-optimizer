@@ -84,7 +84,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(62 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(60 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -114,7 +114,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* XXX this big chunk should be refactored into rs_state */
     OUT_CS_REG(R300_GA_SOLID_RG, 0x00000000);
     OUT_CS_REG(R300_GA_SOLID_BA, 0x00000000);
-    OUT_CS_REG(R300_GA_POLY_MODE, 0x00000000);
     OUT_CS_REG(R300_GA_ROUND_MODE, 0x00000001);
     OUT_CS_REG(R300_GA_OFFSET, 0x00000000);
     OUT_CS_REG(R300_GA_FOG_SCALE, 0x3DBF1412);

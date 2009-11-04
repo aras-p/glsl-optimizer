@@ -78,6 +78,7 @@ struct r300_rs_state {
     uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
     uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
     uint32_t color_control;         /* R300_GA_COLOR_CONTROL: 0x4278 */
+    uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
 };
 
 struct r300_rs_block {
