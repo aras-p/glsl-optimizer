@@ -321,12 +321,8 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    struct intel_texture_image *intelImage = intel_texture_image(image);
    GLuint level = intelImage->level;
 
-   /* Images with borders are never pulled into mipmap trees. 
-    */
-   if (image->Border ||
-       ((image->_BaseFormat == GL_DEPTH_COMPONENT) &&
-        ((image->TexObject->WrapS == GL_CLAMP_TO_BORDER) ||
-         (image->TexObject->WrapT == GL_CLAMP_TO_BORDER)))) 
+   /* Images with borders are never pulled into mipmap trees. */
+   if (image->Border)
       return GL_FALSE;
 
    if (image->InternalFormat != mt->internal_format ||
