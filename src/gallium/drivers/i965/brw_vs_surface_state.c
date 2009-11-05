@@ -83,22 +83,23 @@ brw_update_vs_constant_surface( struct brw_context *brw,
 {
    struct brw_surface_key key;
    struct pipe_buffer *cb = brw->curr.vs_constants;
+   enum pipe_error ret;
 
    assert(surf == 0);
 
    /* If we're in this state update atom, we need to update VS constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   brw->sws->bo_unreference(vp->const_buffer);
-   vp->const_buffer = brw_vs_update_constant_buffer(brw);
+   ret = brw_vs_update_constant_buffer(brw, &vp->const_buffer);
+   if (ret)
+      return ret;
 
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (vp->const_buffer == 0) {
-      drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
-      brw->vs.surf_bo[surf] = NULL;
-      return;
+   if (vp->const_buffer == NULL) {
+      bo_reference(brw->vs.surf_bo[surf], NULL);
+      return PIPE_OK;
    }
 
    memset(&key, 0, sizeof(key));
@@ -118,15 +119,20 @@ brw_update_vs_constant_surface( struct brw_context *brw,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
-   brw->vs.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
-                                            BRW_SS_SURFACE,
-                                            &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
-                                            NULL);
-   if (brw->vs.surf_bo[surf] == NULL) {
-      brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);
-   }
+   if (brw_search_cache(&brw->surface_cache,
+                        BRW_SS_SURFACE,
+                        &key, sizeof(key),
+                        &key.bo, key.bo ? 1 : 0,
+                        NULL,
+                        &brw->vs.surf_bo[surf]))
+      return PIPE_OK;
+
+   ret = brw_create_constant_surface(brw, &key
+                                     &brw->vs.surf_bo[surf]);
+   if (ret)
+      return ret;
+   
+   return PIPE_OK;
 }
 #endif
 
@@ -134,18 +140,20 @@ brw_update_vs_constant_surface( struct brw_context *brw,
 /**
  * Constructs the binding table for the VS surface state.
  */
-static struct brw_winsys_buffer *
-brw_vs_get_binding_table(struct brw_context *brw)
+static enum pipe_error
+brw_vs_get_binding_table(struct brw_context *brw,
+                         struct brw_winsys_buffer **bo_out)
 {
 #if 0
-   struct brw_winsys_buffer *bind_bo;
-
-   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
-			      NULL, 0,
-			      brw->vs.surf_bo, BRW_VS_MAX_SURF,
-			      NULL);
-
-   if (bind_bo == NULL) {
+   if (brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
+                        NULL, 0,
+                        brw->vs.surf_bo, BRW_VS_MAX_SURF,
+                        NULL,
+                        bo_out))
+   {
+      return PIPE_OK;
+   }
+   else {
       GLuint data_size = BRW_VS_MAX_SURF * sizeof(GLuint);
       uint32_t *data = malloc(data_size);
       int i;
@@ -156,11 +164,14 @@ brw_vs_get_binding_table(struct brw_context *brw)
          else
             data[i] = 0;
 
-      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
-				  NULL, 0,
-				  brw->vs.surf_bo, BRW_VS_MAX_SURF,
-				  data, data_size,
-				  NULL, NULL);
+      ret = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
+                              NULL, 0,
+                              brw->vs.surf_bo, BRW_VS_MAX_SURF,
+                              data, data_size,
+                              NULL, NULL,
+                              bo_out);
+      if (ret)
+         return ret;
 
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_VS_MAX_SURF; i++) {
@@ -168,18 +179,19 @@ brw_vs_get_binding_table(struct brw_context *brw)
 	    /* The presumed offsets were set in the data values for
 	     * brw_upload_cache.
 	     */
-	    drm_intel_bo_emit_reloc(bind_bo, i * 4,
-				    brw->vs.surf_bo[i], 0,
-				    BRW_USAGE_STATE);
+	    ret = sws->bo_emit_reloc(*bo_out, i * 4,
+                                     brw->vs.surf_bo[i], 0,
+                                     BRW_USAGE_STATE);
+            if (ret)
+               return ret;
 	 }
       }
 
-      free(data);
+      FREE(data);
+      return PIPE_OK;
    }
-
-   return bind_bo;
 #else
-   return NULL;
+   return PIPE_OK;
 #endif
 }
 
@@ -190,8 +202,10 @@ brw_vs_get_binding_table(struct brw_context *brw)
  * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
  * CACHE_NEW_SURF_BIND for the binding table upload.
  */
-static int prepare_vs_surfaces(struct brw_context *brw )
+static enum pipe_error prepare_vs_surfaces(struct brw_context *brw )
 {
+   enum pipe_error ret;
+
 #if 0
    int i;
    int nr_surfaces = 0;
@@ -215,11 +229,12 @@ static int prepare_vs_surfaces(struct brw_context *brw )
     * just slightly increases our working set size.
     */
    if (brw->vs.nr_surfaces != 0) {
-      brw->sws->bo_unreference(brw->vs.bind_bo);
-      brw->vs.bind_bo = brw_vs_get_binding_table(brw);
+      ret = brw_vs_get_binding_table(brw, &brw->vs.bind_bo);
+      if (ret)
+         return ret;
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_vs_surfaces = {

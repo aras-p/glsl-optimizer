@@ -72,8 +72,7 @@ brw_query_get_result(struct pipe_context *pipe,
       }
 
       brw->sws->bo_unmap(query->bo);
-      brw->sws->bo_unreference(query->bo);
-      query->bo = NULL;
+      bo_reference(&query->bo, NULL);
    }
 
    *result = query->result;
@@ -100,10 +99,9 @@ brw_query_create(struct pipe_context *pipe, unsigned type )
 static void
 brw_query_destroy(struct pipe_context *pipe, struct pipe_query *q)
 {
-   struct brw_context *brw = brw_context(pipe);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   brw->sws->bo_unreference(query->bo);
+   bo_reference(&query->bo, NULL);
    FREE(query);
 }
 
@@ -114,9 +112,8 @@ brw_query_begin(struct pipe_context *pipe, struct pipe_query *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    /* Reset our driver's tracking of query state. */
-   brw->sws->bo_unreference(query->bo);
+   bo_reference(&query->bo, NULL);
    query->result = 0;
-   query->bo = NULL;
    query->first_index = -1;
    query->last_index = -1;
 
@@ -139,8 +136,7 @@ brw_query_end(struct pipe_context *pipe, struct pipe_query *q)
       brw_emit_query_end(brw);
       brw_context_flush( brw );
 
-      brw->sws->bo_unreference(brw->query.bo);
-      brw->query.bo = NULL;
+      bo_reference(&brw->query.bo, NULL);
    }
 
    remove_from_list(query);
@@ -153,24 +149,30 @@ brw_query_end(struct pipe_context *pipe, struct pipe_query *q)
  */
 
 /** Called to set up the query BO and account for its aperture space */
-void
+enum pipe_error
 brw_prepare_query_begin(struct brw_context *brw)
 {
+   enum pipe_error ret;
+
    /* Skip if we're not doing any queries. */
    if (is_empty_list(&brw->query.active_head))
-      return;
+      return PIPE_OK;
 
    /* Get a new query BO if we're going to need it. */
    if (brw->query.bo == NULL ||
        brw->query.index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
-      brw->sws->bo_unreference(brw->query.bo);
-      brw->query.bo = NULL;
 
-      brw->query.bo = brw->sws->bo_alloc(brw->sws, BRW_BUFFER_TYPE_QUERY, 4096, 1);
+      ret = brw->sws->bo_alloc(brw->sws, BRW_BUFFER_TYPE_QUERY, 4096, 1,
+                               &brw->query.bo);
+      if (ret)
+         return ret;
+
       brw->query.index = 0;
    }
 
    brw_add_validated_bo(brw, brw->query.bo);
+
+   return PIPE_OK;
 }
 
 /** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */
@@ -213,8 +215,7 @@ brw_emit_query_begin(struct brw_context *brw)
 				  FALSE,
 				  &tmp );
 
-	 brw->sws->bo_reference(brw->query.bo);
-	 query->bo = brw->query.bo;
+	 bo_reference( &query->bo, brw->query.bo );
 	 query->first_index = brw->query.index;
       }
       query->last_index = brw->query.index;

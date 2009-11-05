@@ -56,7 +56,7 @@ brw_pipe_vertex_cleanup( struct brw_context *brw )
     */
 #if 0
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      brw->sws->bo_unreference(brw->vb.inputs[i].bo);
+      bo_reference(&brw->vb.inputs[i].bo, NULL);
       brw->vb.inputs[i].bo = NULL;
    }
 #endif

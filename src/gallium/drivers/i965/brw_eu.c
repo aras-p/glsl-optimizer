@@ -118,16 +118,23 @@ void brw_init_compile( struct brw_context *brw, struct brw_compile *p )
 }
 
 
-const GLuint *brw_get_program( struct brw_compile *p,
-			       GLuint *sz )
+enum pipe_error brw_get_program( struct brw_compile *p,
+                                 const GLuint **data,
+                                 GLuint *sz )
 {
    GLuint i;
 
    for (i = 0; i < 8; i++)
       brw_NOP(p);
 
+   /* Is the generated program malformed for some reason?
+    */
+   if (p->error)
+      return PIPE_ERROR_BAD_INPUT;
+
    *sz = p->nr_insn * sizeof(struct brw_instruction);
-   return (const GLuint *)p->store;
+   *data = (const GLuint *)p->store;
+   return PIPE_OK;
 }
 
 

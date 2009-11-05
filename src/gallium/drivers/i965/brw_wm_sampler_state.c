@@ -43,16 +43,22 @@
 
 
 
-static struct brw_winsys_buffer *
+static enum pipe_error
 upload_default_color( struct brw_context *brw,
-		      const GLfloat *color )
+		      const GLfloat *color,
+                      struct brw_winsys_buffer **bo_out )
 {
    struct brw_sampler_default_color sdc;
+   enum pipe_error ret;
 
    COPY_4V(sdc.color, color); 
    
-   return brw_cache_data( &brw->cache, BRW_SAMPLER_DEFAULT_COLOR, &sdc,
-			  NULL, 0 );
+   ret = brw_cache_data( &brw->cache, BRW_SAMPLER_DEFAULT_COLOR, &sdc,
+                         NULL, 0, bo_out );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 
@@ -111,9 +117,10 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 }
 
 
-static void
+static enum pipe_error
 brw_wm_sampler_update_default_colors(struct brw_context *brw)
 {
+   enum pipe_error ret;
    int nr = MIN2(brw->curr.num_textures,
 		 brw->curr.num_samplers);
    int i;
@@ -121,8 +128,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
    for (i = 0; i < nr; i++) {
       const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
-
-      brw->sws->bo_unreference(brw->wm.sdc_bo[i]);
+      const float *bc;
 
       if (pf_is_depth_or_stencil(tex->base.format)) {
 	 float bordercolor[4] = {
@@ -131,15 +137,25 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
 	    sampler->border_color[0],
 	    sampler->border_color[0]
 	 };
-	 /* GL specs that border color for depth textures is taken from the
-	  * R channel, while the hardware uses A.  Spam R into all the
-	  * channels for safety.
-	  */
-	 brw->wm.sdc_bo[i] = upload_default_color(brw, bordercolor);
-      } else {
-	 brw->wm.sdc_bo[i] = upload_default_color(brw, sampler->border_color);
+         
+         bc = bordercolor;
       }
+      else {
+         bc = sampler->border_color;
+      }
+
+      /* GL specs that border color for depth textures is taken from the
+       * R channel, while the hardware uses A.  Spam R into all the
+       * channels for safety.
+       */
+      ret = upload_default_color(brw, 
+                                 bc,
+                                 &brw->wm.sdc_bo[i]);
+      if (ret) 
+         return ret;
    }
+
+   return PIPE_OK;
 }
 
 
@@ -149,6 +165,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
 static int upload_wm_samplers( struct brw_context *brw )
 {
    struct wm_sampler_key key;
+   enum pipe_error ret;
    int i;
 
    brw_wm_sampler_update_default_colors(brw);
@@ -159,35 +176,40 @@ static int upload_wm_samplers( struct brw_context *brw )
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
-   brw->sws->bo_unreference(brw->wm.sampler_bo);
-   brw->wm.sampler_bo = NULL;
-   if (brw->wm.sampler_count == 0)
-      return 0;
+   if (brw->wm.sampler_count == 0) {
+      bo_reference(&brw->wm.sampler_bo, NULL);
+      return PIPE_OK;
+   }
 
-   brw->wm.sampler_bo = brw_search_cache(&brw->cache, BRW_SAMPLER,
-					 &key, sizeof(key),
-					 brw->wm.sdc_bo, key.sampler_count,
-					 NULL);
+   if (brw_search_cache(&brw->cache, BRW_SAMPLER,
+                        &key, sizeof(key),
+                        brw->wm.sdc_bo, key.sampler_count,
+                        NULL,
+                        &brw->wm.sampler_bo))
+      return PIPE_OK;
 
    /* If we didnt find it in the cache, compute the state and put it in the
     * cache.
     */
-   if (brw->wm.sampler_bo == NULL) {
-      brw->wm.sampler_bo = brw_upload_cache(&brw->cache, BRW_SAMPLER,
-					    &key, sizeof(key),
-					    brw->wm.sdc_bo, key.sampler_count,
-					    &key.sampler, sizeof(key.sampler),
-					    NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_SAMPLER,
+                          &key, sizeof(key),
+                          brw->wm.sdc_bo, key.sampler_count,
+                          &key.sampler, sizeof(key.sampler),
+                          NULL, NULL,
+                          &brw->wm.sampler_bo);
+   if (ret)
+      return ret;
 
-      /* Emit SDC relocations */
-      for (i = 0; i < key.sampler_count; i++) {
-	 brw->sws->bo_emit_reloc(brw->wm.sampler_bo,
-				 BRW_USAGE_SAMPLER,
-				 0,
-				 i * sizeof(struct brw_sampler_state) +
-				 offsetof(struct brw_sampler_state, ss2),
-				 brw->wm.sdc_bo[i]);
-      }
+   /* Emit SDC relocations */
+   for (i = 0; i < key.sampler_count; i++) {
+      ret = brw->sws->bo_emit_reloc(brw->wm.sampler_bo,
+                                    BRW_USAGE_SAMPLER,
+                                    0,
+                                    i * sizeof(struct brw_sampler_state) +
+                                    offsetof(struct brw_sampler_state, ss2),
+                                    brw->wm.sdc_bo[i]);
+      if (ret)
+         return ret;
    }
 
    return 0;

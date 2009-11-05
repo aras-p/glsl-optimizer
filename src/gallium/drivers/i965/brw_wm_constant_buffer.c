@@ -6,12 +6,14 @@
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
-struct brw_winsys_buffer *
+enum pipe_error
 brw_create_constant_surface( struct brw_context *brw,
-                             struct brw_surface_key *key )
+                             struct brw_surface_key *key,
+                             struct brw_winsys_buffer **bo_out )
 {
    const GLint w = key->width - 1;
    struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -28,22 +30,27 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss3.pitch = (key->pitch * key->cpp) - 1; /* ignored?? */
    brw_set_surface_tiling(&surf, key->tiling); /* tiling now allowed */
  
-   bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
-			 key, sizeof(*key),
-			 &key->bo, key->bo ? 1 : 0,
-			 &surf, sizeof(surf),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
+                          key, sizeof(*key),
+                          &key->bo, key->bo ? 1 : 0,
+                          &surf, sizeof(surf),
+                          NULL, NULL,
+                          &bo_out);
+   if (ret)
+      return ret;
 
    if (key->bo) {
       /* Emit relocation to surface contents */
-      brw->sws->bo_emit_reloc(bo,
-			      BRW_USAGE_SAMPLER,
-			      0,
-			      offsetof(struct brw_surface_state, ss1),
-			      key->bo);
+      ret = brw->sws->bo_emit_reloc(*bo_out,
+                                    BRW_USAGE_SAMPLER,
+                                    0,
+                                    offsetof(struct brw_surface_state, ss1),
+                                    key->bo);
+      if (ret)
+         return ret;
    }
 
-   return bo;
+   return PIPE_OK;
 }
 
 
@@ -52,7 +59,7 @@ brw_create_constant_surface( struct brw_context *brw,
  * Update the surface state for a WM constant buffer.
  * The constant buffer will be (re)allocated here if needed.
  */
-static void
+static enum pipe_error
 brw_update_wm_constant_surface( struct brw_context *brw,
                                 GLuint surf)
 {
@@ -60,20 +67,21 @@ brw_update_wm_constant_surface( struct brw_context *brw,
    struct brw_fragment_shader *fp = brw->curr.fragment_shader;
    struct pipe_buffer *cbuf = brw->curr.fragment_constants;
    int pitch = cbuf->size / (4 * sizeof(float));
+   enum pipe_error ret;
 
    /* If we're in this state update atom, we need to update WM constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   brw->sws->bo_unreference(fp->const_buffer);
-   fp->const_buffer = brw_wm_update_constant_buffer(brw);
+   ret = brw_wm_update_constant_buffer(brw, &fp->const_buffer);
+   if (ret)
+      return ret;
 
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
    if (cbuf == NULL) {
-      drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
-      brw->wm.surf_bo[surf] = NULL;
-      return;
+      bo_reference(&brw->wm.surf_bo[surf], NULL);
+      return PIPE_OK;
    }
 
    memset(&key, 0, sizeof(key));
@@ -97,16 +105,20 @@ brw_update_wm_constant_surface( struct brw_context *brw,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   brw->sws->bo_unreference(brw->wm.surf_bo[surf]);
-   brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
-                                            BRW_SS_SURFACE,
-                                            &key, sizeof(key),
-                                            &key.bo, 1,
-                                            NULL);
-   if (brw->wm.surf_bo[surf] == NULL) {
-      brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
-   }
+   if (brw_search_cache(&brw->surface_cache,
+                        BRW_SS_SURFACE,
+                        &key, sizeof(key),
+                        &key.bo, 1,
+                        NULL,
+                        &brw->wm.surf_bo[surf]))
+      return PIPE_OK;
+
+   ret = brw_create_constant_surface(brw, &key, &brw->wm.surf_bo[surf]);
+   if (ret)
+      return ret;
+
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+   return PIPE_OK;
 }
 
 /**
@@ -117,28 +129,33 @@ brw_update_wm_constant_surface( struct brw_context *brw,
  * BRW_NEW_WM_SURFACES to get picked up by brw_prepare_wm_surfaces for
  * inclusion in the binding table.
  */
-static void prepare_wm_constant_surface(struct brw_context *brw )
+static enum pipe_error prepare_wm_constant_surface(struct brw_context *brw )
 {
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
 
-   drm_intel_bo_unreference(fp->const_buffer);
-   fp->const_buffer = brw_wm_update_constant_buffer(brw);
+   ret = brw_wm_update_constant_buffer(brw,
+                                       &fp->const_buffer);
+   if (ret)
+      return ret;
 
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
    if (fp->const_buffer == 0) {
       if (brw->wm.surf_bo[surf] != NULL) {
-	 drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
-	 brw->wm.surf_bo[surf] = NULL;
+	 bo_reference(&brw->wm.surf_bo[surf], NULL);
 	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
       }
-      return;
+      return PIPE_OK;
    }
 
-   brw_update_wm_constant_surface(ctx, surf);
+   ret = brw_update_wm_constant_surface(ctx, surf);
+   if (ret)
+      return ret;
+
+   return PIPE_OK
 }
 
 const struct brw_tracked_state brw_wm_constant_surface = {

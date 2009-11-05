@@ -48,9 +48,12 @@
 #define BACK_UNFILLED_BIT   0x2
 
 
-static void compile_clip_prog( struct brw_context *brw,
-			     struct brw_clip_prog_key *key )
+static enum pipe_error
+compile_clip_prog( struct brw_context *brw,
+                   struct brw_clip_prog_key *key,
+                   struct brw_winsys_buffer **bo_out )
 {
+   enum pipe_error ret;
    struct brw_clip_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -123,31 +126,39 @@ static void compile_clip_prog( struct brw_context *brw,
       break;
    default:
       assert(0);
-      return;
+      return PIPE_ERROR_BAD_INPUT;
    }
 
 	 
 
    /* get the program
     */
-   program = brw_get_program(&c.func, &program_size);
+   ret = brw_get_program(&c.func, &program, &program_size);
+   if (ret)
+      return ret;
 
    /* Upload
     */
-   brw->sws->bo_unreference(brw->clip.prog_bo);
-   brw->clip.prog_bo = brw_upload_cache( &brw->cache,
-					 BRW_CLIP_PROG,
-					 &c.key, sizeof(c.key),
-					 NULL, 0,
-					 program, program_size,
-					 &c.prog_data,
-					 &brw->clip.prog_data );
+   ret = brw_upload_cache( &brw->cache,
+                           BRW_CLIP_PROG,
+                           &c.key, sizeof(c.key),
+                           NULL, 0,
+                           program, program_size,
+                           &c.prog_data,
+                           &brw->clip.prog_data,
+                           bo_out );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static int upload_clip_prog(struct brw_context *brw)
+static enum pipe_error
+upload_clip_prog(struct brw_context *brw)
 {
+   enum pipe_error ret;
    struct brw_clip_prog_key key;
 
    /* Populate the key, starting from the almost-complete version from
@@ -166,15 +177,22 @@ static int upload_clip_prog(struct brw_context *brw)
    /* PIPE_NEW_CLIP */
    key.nr_userclip = brw->curr.ucp.nr;
 
-   brw->sws->bo_unreference(brw->clip.prog_bo);
-   brw->clip.prog_bo = brw_search_cache(&brw->cache, BRW_CLIP_PROG,
-					&key, sizeof(key),
-					NULL, 0,
-					&brw->clip.prog_data);
-   if (brw->clip.prog_bo == NULL)
-      compile_clip_prog( brw, &key );
+   /* Already cached?
+    */
+   if (brw_search_cache(&brw->cache, BRW_CLIP_PROG,
+                        &key, sizeof(key),
+                        NULL, 0,
+                        &brw->clip.prog_data,
+                        &brw->clip.prog_bo))
+      return PIPE_OK;
 
-   return 0;
+   /* Compile new program:
+    */
+   ret = compile_clip_prog( brw, &key, &brw->clip.prog_bo );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 

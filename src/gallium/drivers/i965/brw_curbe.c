@@ -160,10 +160,11 @@ static GLfloat fixed_plane[6][4] = {
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
-static int prepare_curbe_buffer(struct brw_context *brw)
+static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 {
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
+   enum pipe_error ret;
    GLfloat *buf;
    GLuint i;
 
@@ -267,17 +268,20 @@ static int prepare_curbe_buffer(struct brw_context *brw)
 	  (brw->curbe.need_new_bo ||
 	   brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size))
       {
-	 brw->sws->bo_unreference(brw->curbe.curbe_bo);
-	 brw->curbe.curbe_bo = NULL;
+	 bo_reference(&brw->curbe.curbe_bo, NULL);
       }
 
       if (brw->curbe.curbe_bo == NULL) {
 	 /* Allocate a single page for CURBE entries for this batchbuffer.
 	  * They're generally around 64b.
 	  */
-	 brw->curbe.curbe_bo = brw->sws->bo_alloc(brw->sws, 
-						  BRW_BUFFER_TYPE_CURBE,
-						  4096, 1 << 6);
+	 ret = brw->sws->bo_alloc(brw->sws, 
+                                  BRW_BUFFER_TYPE_CURBE,
+                                  4096, 1 << 6,
+                                  &brw->curbe.curbe_bo);
+         if (ret)
+            return ret;
+
 	 brw->curbe.curbe_next_offset = 0;
       }
 
@@ -313,7 +317,7 @@ static int prepare_curbe_buffer(struct brw_context *brw)
    return 0;
 }
 
-static int emit_curbe_buffer(struct brw_context *brw)
+static enum pipe_error emit_curbe_buffer(struct brw_context *brw)
 {
    GLuint sz = brw->curbe.total_size;
 

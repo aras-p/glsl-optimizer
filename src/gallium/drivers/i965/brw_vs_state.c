@@ -78,11 +78,13 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    }
 }
 
-static struct brw_winsys_buffer *
-vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
+static enum pipe_error
+vs_unit_create_from_key(struct brw_context *brw, 
+                        struct brw_vs_unit_key *key,
+                        struct brw_winsys_buffer **bo_out)
 {
+   enum pipe_error ret;
    struct brw_vs_unit_state vs;
-   struct brw_winsys_buffer *bo;
    int chipset_max_threads;
 
    memset(&vs, 0, sizeof(vs));
@@ -141,38 +143,46 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.vs6.vs_enable = 1;
 
-   bo = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
-			 key, sizeof(*key),
-			 &brw->vs.prog_bo, 1,
-			 &vs, sizeof(vs),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
+                          key, sizeof(*key),
+                          &brw->vs.prog_bo, 1,
+                          &vs, sizeof(vs),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
    /* Emit VS program relocation */
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   vs.thread0.grf_reg_count << 1,
-			   offsetof(struct brw_vs_unit_state, thread0),
-			   brw->vs.prog_bo);
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 vs.thread0.grf_reg_count << 1,
+                                 offsetof(struct brw_vs_unit_state, thread0),
+                                 brw->vs.prog_bo);
+   if (ret)
+      return ret;
 
-   return bo;
+   return PIPE_OK;
 }
 
 static int prepare_vs_unit(struct brw_context *brw)
 {
    struct brw_vs_unit_key key;
+   enum pipe_error ret;
 
    vs_unit_populate_key(brw, &key);
 
-   brw->sws->bo_unreference(brw->vs.state_bo);
-   brw->vs.state_bo = brw_search_cache(&brw->cache, BRW_VS_UNIT,
-				       &key, sizeof(key),
-				       &brw->vs.prog_bo, 1,
-				       NULL);
-   if (brw->vs.state_bo == NULL) {
-      brw->vs.state_bo = vs_unit_create_from_key(brw, &key);
-   }
+   if (brw_search_cache(&brw->cache, BRW_VS_UNIT,
+                        &key, sizeof(key),
+                        &brw->vs.prog_bo, 1,
+                        NULL,
+                        &brw->vs.state_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = vs_unit_create_from_key(brw, &key, &brw->vs.state_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_vs_unit = {

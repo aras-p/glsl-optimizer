@@ -40,10 +40,12 @@
 
 
 
-static void compile_gs_prog( struct brw_context *brw,
-			     struct brw_gs_prog_key *key )
+static enum pipe_error compile_gs_prog( struct brw_context *brw,
+                                        struct brw_gs_prog_key *key,
+                                        struct brw_winsys_buffer **bo_out )
 {
    struct brw_gs_compile c;
+   enum pipe_error ret;
    const GLuint *program;
    GLuint program_size;
 
@@ -57,9 +59,9 @@ static void compile_gs_prog( struct brw_context *brw,
    c.nr_attrs = c.key.nr_attrs;
 
    if (BRW_IS_IGDNG(brw))
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
+      c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+      c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
@@ -93,40 +95,47 @@ static void compile_gs_prog( struct brw_context *brw,
       if (key->hint_gs_always)
 	 brw_gs_lines( &c );
       else {
-	 return;
+	 return PIPE_OK;
       }
       break;
    case PIPE_PRIM_TRIANGLES:
       if (key->hint_gs_always)
 	 brw_gs_tris( &c );
       else {
-	 return;
+	 return PIPE_OK;
       }
       break;
    case PIPE_PRIM_POINTS:
       if (key->hint_gs_always)
 	 brw_gs_points( &c );
       else {
-	 return;
+	 return PIPE_OK;
       }
-      break;      
+      break;
    default:
-      return;
+      assert(0);
+      return PIPE_ERROR_BAD_INPUT;
    }
 
    /* get the program
     */
-   program = brw_get_program(&c.func, &program_size);
+   ret = brw_get_program(&c.func, &program, &program_size);
+   if (ret)
+      return ret;
 
    /* Upload
     */
-   brw->sws->bo_unreference(brw->gs.prog_bo);
-   brw->gs.prog_bo = brw_upload_cache( &brw->cache, BRW_GS_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->gs.prog_data );
+   ret = brw_upload_cache( &brw->cache, BRW_GS_PROG,
+                           &c.key, sizeof(c.key),
+                           NULL, 0,
+                           program, program_size,
+                           &c.prog_data,
+                           &brw->gs.prog_data,
+                           bo_out );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 static const unsigned gs_prim[PIPE_PRIM_MAX] = {  
@@ -166,6 +175,8 @@ static void populate_key( struct brw_context *brw,
 static int prepare_gs_prog(struct brw_context *brw)
 {
    struct brw_gs_prog_key key;
+   enum pipe_error ret;
+
    /* Populate the key:
     */
    populate_key(brw, &key);
@@ -175,17 +186,21 @@ static int prepare_gs_prog(struct brw_context *brw)
       brw->gs.prog_active = key.need_gs_prog;
    }
 
-   if (brw->gs.prog_active) {
-      brw->sws->bo_unreference(brw->gs.prog_bo);
-      brw->gs.prog_bo = brw_search_cache(&brw->cache, BRW_GS_PROG,
-					 &key, sizeof(key),
-					 NULL, 0,
-					 &brw->gs.prog_data);
-      if (brw->gs.prog_bo == NULL)
-	 compile_gs_prog( brw, &key );
-   }
+   if (!brw->gs.prog_active)
+      return PIPE_OK;
 
-   return 0;
+   if (brw_search_cache(&brw->cache, BRW_GS_PROG,
+                        &key, sizeof(key),
+                        NULL, 0,
+                        &brw->gs.prog_data,
+                        &brw->gs.prog_bo))
+      return PIPE_OK;
+
+   ret = compile_gs_prog( brw, &key, &brw->gs.prog_bo );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 

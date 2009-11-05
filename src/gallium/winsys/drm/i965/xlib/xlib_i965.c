@@ -134,11 +134,12 @@ const char *data_types[BRW_DATA_MAX] =
 };
 
 
-static struct brw_winsys_buffer *
+static enum pipe_error
 xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
-		      enum brw_buffer_type type,
-		      unsigned size,
-		      unsigned alignment )
+                   enum brw_buffer_type type,
+                   unsigned size,
+                   unsigned alignment,
+                   struct brw_winsys_buffer **bo_out )
 {
    struct xlib_brw_winsys *xbw = xlib_brw_winsys(sws);
    struct xlib_brw_buffer *buf;
@@ -148,12 +149,13 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
 
    buf = CALLOC_STRUCT(xlib_brw_buffer);
    if (!buf)
-      return NULL;
+      return PIPE_ERROR_OUT_OF_MEMORY;
+
+   pipe_reference_init(&buf->base.reference, 1);
 
    buf->offset = align(xbw->offset, alignment);
    buf->type = type;
    buf->virtual = MALLOC(size);
-   buf->cheesy_refcount = 1;
    buf->base.offset = &buf->offset; /* hmm, cheesy */
    buf->base.size = size;
 
@@ -161,36 +163,25 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
    if (xbw->offset > MAX_VRAM)
       goto err;
 
-   return &buf->base;
+   /* XXX: possibly rentrant call to bo_destroy:
+    */
+   bo_reference(bo_out, &buf->base);
+   return PIPE_OK;
 
 err:
    assert(0);
+   FREE(buf->virtual);
    FREE(buf);
-   return NULL;
+   return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 static void 
-xlib_brw_bo_reference( struct brw_winsys_buffer *buffer )
+xlib_brw_bo_destroy( struct brw_winsys_buffer *buffer )
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   buf->cheesy_refcount++;
-}
-
-static void 
-xlib_brw_bo_unreference( struct brw_winsys_buffer *buffer )
-{
-   struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
-
-   /* As a special favor in this call only, buffer is allowed to be
-    * NULL:
-    */
-   if (buffer == NULL)
-      return;
-
-   if (--buf->cheesy_refcount == 0) {
-      FREE(buffer);
-   }
+   FREE(buf->virtual);
+   FREE(buf);
 }
 
 static int 
@@ -378,8 +369,7 @@ xlib_create_brw_winsys_screen( void )
 
    ws->base.destroy              = xlib_brw_winsys_destroy;
    ws->base.bo_alloc             = xlib_brw_bo_alloc;
-   ws->base.bo_reference         = xlib_brw_bo_reference;
-   ws->base.bo_unreference       = xlib_brw_bo_unreference;
+   ws->base.bo_destroy           = xlib_brw_bo_destroy;
    ws->base.bo_emit_reloc        = xlib_brw_bo_emit_reloc;
    ws->base.bo_exec              = xlib_brw_bo_exec;
    ws->base.bo_subdata           = xlib_brw_bo_subdata;

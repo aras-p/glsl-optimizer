@@ -69,11 +69,13 @@ gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    key->urb_size = brw->urb.vsize;
 }
 
-static struct brw_winsys_buffer *
-gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
+static enum pipe_error
+gs_unit_create_from_key(struct brw_context *brw, 
+                        struct brw_gs_unit_key *key,
+                        struct brw_winsys_buffer **bo_out)
 {
    struct brw_gs_unit_state gs;
-   struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
 
    memset(&gs, 0, sizeof(gs));
 
@@ -104,40 +106,46 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    if (BRW_DEBUG & DEBUG_STATS)
       gs.thread4.stats_enable = 1;
 
-   bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
-			 key, sizeof(*key),
-			 &brw->gs.prog_bo, 1,
-			 &gs, sizeof(gs),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
+                          key, sizeof(*key),
+                          &brw->gs.prog_bo, 1,
+                          &gs, sizeof(gs),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
    if (key->prog_active) {
       /* Emit GS program relocation */
-      brw->sws->bo_emit_reloc(bo,
+      brw->sws->bo_emit_reloc(*bo_out,
 			      BRW_USAGE_STATE,
 			      gs.thread0.grf_reg_count << 1,
 			      offsetof(struct brw_gs_unit_state, thread0),
 			      brw->gs.prog_bo);
    }
 
-   return bo;
+   return PIPE_OK;
 }
 
-static int prepare_gs_unit(struct brw_context *brw)
+static enum pipe_error prepare_gs_unit(struct brw_context *brw)
 {
    struct brw_gs_unit_key key;
+   enum pipe_error ret;
 
    gs_unit_populate_key(brw, &key);
 
-   brw->sws->bo_unreference(brw->gs.state_bo);
-   brw->gs.state_bo = brw_search_cache(&brw->cache, BRW_GS_UNIT,
-				       &key, sizeof(key),
-				       &brw->gs.prog_bo, 1,
-				       NULL);
-   if (brw->gs.state_bo == NULL) {
-      brw->gs.state_bo = gs_unit_create_from_key(brw, &key);
-   }
+   if (brw_search_cache(&brw->cache, BRW_GS_UNIT,
+                        &key, sizeof(key),
+                        &brw->gs.prog_bo, 1,
+                        NULL,
+                        &brw->gs.state_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = gs_unit_create_from_key(brw, &key, &brw->gs.state_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_gs_unit = {

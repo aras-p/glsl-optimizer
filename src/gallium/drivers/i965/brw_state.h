@@ -44,8 +44,8 @@ brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
    assert(brw->state.validated_bo_count < Elements(brw->state.validated_bos));
 
    if (bo != NULL) {
-      brw->sws->bo_reference(bo);
-      brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
+      bo_reference( &brw->state.validated_bos[brw->state.validated_bo_count++],
+                    bo );
    }
 }
 
@@ -106,37 +106,42 @@ void brw_destroy_state(struct brw_context *brw);
 /***********************************************************************
  * brw_state_cache.c
  */
-struct brw_winsys_buffer *brw_cache_data(struct brw_cache *cache,
-		       enum brw_cache_id cache_id,
-		       const void *data,
-		       struct brw_winsys_buffer **reloc_bufs,
-		       GLuint nr_reloc_bufs);
+enum pipe_error brw_cache_data(struct brw_cache *cache,
+                               enum brw_cache_id cache_id,
+                               const void *data,
+                               struct brw_winsys_buffer **reloc_bufs,
+                               GLuint nr_reloc_bufs,
+                               struct brw_winsys_buffer **bo_out );
 
-struct brw_winsys_buffer *brw_cache_data_sz(struct brw_cache *cache,
-			  enum brw_cache_id cache_id,
-			  const void *data,
-			  GLuint data_size,
-			  struct brw_winsys_buffer **reloc_bufs,
-			  GLuint nr_reloc_bufs);
+enum pipe_error brw_cache_data_sz(struct brw_cache *cache,
+                                  enum brw_cache_id cache_id,
+                                  const void *data,
+                                  GLuint data_size,
+                                  struct brw_winsys_buffer **reloc_bufs,
+                                  GLuint nr_reloc_bufs,
+                                  struct brw_winsys_buffer **bo_out);
 
-struct brw_winsys_buffer *brw_upload_cache( struct brw_cache *cache,
-			  enum brw_cache_id cache_id,
-			  const void *key,
-			  GLuint key_sz,
-			  struct brw_winsys_buffer **reloc_bufs,
-			  GLuint nr_reloc_bufs,
-			  const void *data,
-			  GLuint data_sz,
-			  const void *aux,
-			  void *aux_return );
+enum pipe_error brw_upload_cache( struct brw_cache *cache,
+                                  enum brw_cache_id cache_id,
+                                  const void *key,
+                                  GLuint key_sz,
+                                  struct brw_winsys_buffer **reloc_bufs,
+                                  GLuint nr_reloc_bufs,
+                                  const void *data,
+                                  GLuint data_sz,
+                                  const void *aux,
+                                  void *aux_return ,
+                                  struct brw_winsys_buffer **bo_out);
 
-struct brw_winsys_buffer *brw_search_cache( struct brw_cache *cache,
-			  enum brw_cache_id cache_id,
-			  const void *key,
-			  GLuint key_size,
-			  struct brw_winsys_buffer **reloc_bufs,
-			  GLuint nr_reloc_bufs,
-			  void *aux_return);
+boolean brw_search_cache( struct brw_cache *cache,
+                          enum brw_cache_id cache_id,
+                          const void *key,
+                          GLuint key_size,
+                          struct brw_winsys_buffer **reloc_bufs,
+                          GLuint nr_reloc_bufs,
+                          void *aux_return,
+                          struct brw_winsys_buffer **bo_out);
+
 void brw_state_cache_check_size( struct brw_context *brw );
 
 void brw_init_caches( struct brw_context *brw );

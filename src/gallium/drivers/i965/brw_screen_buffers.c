@@ -43,15 +43,11 @@ brw_buffer_unmap( struct pipe_screen *screen,
 static void
 brw_buffer_destroy( struct pipe_buffer *buffer )
 {
-   struct brw_screen *bscreen = brw_screen( buffer->screen );
-   struct brw_winsys_screen *sws = bscreen->sws;
    struct brw_buffer *buf = brw_buffer( buffer );
 
    assert(!p_atomic_read(&buffer->reference.count));
 
-   if (buf->bo)
-      sws->bo_unreference(buf->bo);
-   
+   bo_reference(&buf->bo, NULL);
    FREE(buf);
 }
 
@@ -66,6 +62,7 @@ brw_buffer_create(struct pipe_screen *screen,
    struct brw_winsys_screen *sws = bscreen->sws;
    struct brw_buffer *buf;
    unsigned buffer_type;
+   enum pipe_error ret;
    
    buf = CALLOC_STRUCT(brw_buffer);
    if (!buf)
@@ -101,10 +98,11 @@ brw_buffer_create(struct pipe_screen *screen,
       break;
    }
    
-   buf->bo = sws->bo_alloc( sws,
-                            buffer_type,
-                            size,
-                            alignment );
+   ret = sws->bo_alloc( sws, buffer_type,
+                        size, alignment,
+                        &buf->bo );
+   if (ret != PIPE_OK)
+      return NULL;
       
    return &buf->base; 
 }

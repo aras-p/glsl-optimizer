@@ -187,6 +187,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    struct brw_screen *bscreen = brw_screen(screen);
    struct brw_texture *tex;
    enum brw_buffer_type buffer_type;
+   enum pipe_error ret;
    
    tex = CALLOC_STRUCT(brw_texture);
    if (tex == NULL)
@@ -235,10 +236,13 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
       buffer_type = BRW_BUFFER_TYPE_TEXTURE;
    }
 
-   tex->bo = bscreen->sws->bo_alloc( bscreen->sws,
-                                     buffer_type,
-                                     tex->pitch * tex->total_height * tex->cpp,
-                                     64 );
+   ret = bscreen->sws->bo_alloc( bscreen->sws,
+                                 buffer_type,
+                                 tex->pitch * tex->total_height * tex->cpp,
+                                 64,
+                                 &tex->bo );
+   if (ret)
+      goto fail;
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
@@ -289,7 +293,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    return &tex->base;
 
 fail:
-   bscreen->sws->bo_unreference(tex->bo);
+   bo_reference(&tex->bo, NULL);
    FREE(tex);
    return NULL;
 }
@@ -306,7 +310,8 @@ static struct pipe_texture *brw_texture_blanket(struct pipe_screen *screen,
 
 static void brw_texture_destroy(struct pipe_texture *pt)
 {
-   //bscreen->sws->bo_unreference(tex->bo);
+   struct brw_texture *tex = brw_texture(pt);
+   bo_reference(&tex->bo, NULL);
    FREE(pt);
 }
 

@@ -146,10 +146,9 @@ fail:
 
 static void brw_delete_fs_state( struct pipe_context *pipe, void *prog )
 {
-   struct brw_context *brw = brw_context(pipe);
    struct brw_fragment_shader *fs = (struct brw_fragment_shader *)prog;
 
-   brw->sws->bo_unreference(fs->const_buffer);
+   bo_reference(&fs->const_buffer, NULL);
    FREE( (void *)fs->tokens );
    FREE( fs );
 }

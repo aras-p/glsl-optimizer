@@ -40,31 +40,40 @@
 
 
 
-static void
+static enum pipe_error
 brw_update_texture_surface( struct brw_context *brw,
 			    struct brw_texture *tex,
-			    GLuint surf )
+                            struct brw_winsys_buffer **bo_out)
 {
-   brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
-                                            BRW_SS_SURFACE,
-                                            &tex->ss, sizeof tex->ss,
-                                            &tex->bo, 1,
-                                            NULL);
+   enum pipe_error ret;
 
-   if (brw->wm.surf_bo[surf] == NULL) {
-      brw->wm.surf_bo[surf] = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
-					       &tex->ss, sizeof tex->ss,
-					       &tex->bo, 1,
-					       &tex->ss, sizeof tex->ss,
-					       NULL, NULL);
+   if (brw_search_cache(&brw->surface_cache,
+                        BRW_SS_SURFACE,
+                        &tex->ss, sizeof tex->ss,
+                        &tex->bo, 1,
+                        NULL,
+                        bo_out))
+      return PIPE_OK;
+
+   ret = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
+                          &tex->ss, sizeof tex->ss,
+                          &tex->bo, 1,
+                          &tex->ss, sizeof tex->ss,
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
       
-      /* Emit relocation to surface contents */
-      brw->sws->bo_emit_reloc(brw->wm.surf_bo[surf],
-			      BRW_USAGE_SAMPLER,
-			      0,
-			      offsetof(struct brw_surface_state, ss1),
-			      tex->bo);
-   }
+   /* Emit relocation to surface contents */
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_SAMPLER,
+                                 0,
+                                 offsetof(struct brw_surface_state, ss1),
+                                 tex->bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 
@@ -79,13 +88,14 @@ brw_update_texture_surface( struct brw_context *brw,
  * While it is only used for the front/back buffer currently, it should be
  * usable for further buffers when doing ARB_draw_buffer support.
  */
-static void
-brw_update_renderbuffer_surface(struct brw_context *brw,
-				struct brw_surface *surface,
-				unsigned int unit)
+static enum pipe_error
+brw_update_render_surface(struct brw_context *brw,
+                          struct brw_surface *surface,
+                          struct brw_winsys_buffer **bo_out)
 {
    struct brw_surf_ss0 blend_ss0 = brw->curr.blend->ss0;
    struct brw_surface_state ss;
+   enum pipe_error ret;
 
    /* Surfaces are potentially shared between contexts, so can't
     * scribble the in-place ss0 value in the surface.
@@ -98,30 +108,35 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    ss.ss0.writedisable_red   = blend_ss0.writedisable_red;
    ss.ss0.writedisable_alpha = blend_ss0.writedisable_alpha;
 
-   brw->sws->bo_unreference(brw->wm.surf_bo[unit]);
-   brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
-					    BRW_SS_SURFACE,
-					    &ss, sizeof(ss),
-					    &surface->bo, 1,
-					    NULL);
-
-   if (brw->wm.surf_bo[unit] == NULL) {
-
-      brw->wm.surf_bo[unit] = brw_upload_cache(&brw->surface_cache,
-                                               BRW_SS_SURFACE,
-                                               &ss, sizeof ss,
-					       &surface->bo, 1,
-					       &ss, sizeof ss,
-					       NULL, NULL);
+   if (brw_search_cache(&brw->surface_cache,
+                        BRW_SS_SURFACE,
+                        &ss, sizeof(ss),
+                        &surface->bo, 1,
+                        NULL,
+                        bo_out))
+      return PIPE_OK;
+       
+   ret = brw_upload_cache(&brw->surface_cache,
+                          BRW_SS_SURFACE,
+                          &ss, sizeof ss,
+                          &surface->bo, 1,
+                          &ss, sizeof ss,
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
       /* XXX: we will only be rendering to this surface:
        */
-      brw->sws->bo_emit_reloc(brw->wm.surf_bo[unit],
-			      BRW_USAGE_RENDER_TARGET,
-			      ss.ss1.base_addr - surface->bo->offset[0], /* XXX */
-			      offsetof(struct brw_surface_state, ss1),
-			      surface->bo);
-   }
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_RENDER_TARGET,
+                                 ss.ss1.base_addr - surface->bo->offset[0], /* XXX */
+                                 offsetof(struct brw_surface_state, ss1),
+                                 surface->bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 
@@ -129,60 +144,60 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
  * Constructs the binding table for the WM surface state, which maps unit
  * numbers to surface state objects.
  */
-static struct brw_winsys_buffer *
-brw_wm_get_binding_table(struct brw_context *brw)
+static enum pipe_error
+brw_wm_get_binding_table(struct brw_context *brw,
+                         struct brw_winsys_buffer **bo_out )
 {
-   struct brw_winsys_buffer *bind_bo;
+   enum pipe_error ret;
+   uint32_t data[BRW_WM_MAX_SURF];
+   GLuint data_size = brw->wm.nr_surfaces * sizeof data[0];
+   int i;
 
    assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
+   assert(brw->wm.nr_surfaces > 0);
 
    /* Note there is no key for this search beyond the values in the
     * relocation array:
     */
-   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
-			      NULL, 0,
-			      brw->wm.surf_bo, brw->wm.nr_surfaces,
-			      NULL);
+   if (brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
+                        NULL, 0,
+                        brw->wm.surf_bo,
+                        brw->wm.nr_surfaces,
+                        NULL,
+                        bo_out))
+      return PIPE_OK;
 
-   if (bind_bo == NULL) {
-      uint32_t data[BRW_WM_MAX_SURF];
-      GLuint data_size = brw->wm.nr_surfaces * sizeof data[0];
-      int i;
+   for (i = 0; i < brw->wm.nr_surfaces; i++)
+      data[i] = brw->wm.surf_bo[i]->offset[0];
 
-      for (i = 0; i < brw->wm.nr_surfaces; i++)
-	 data[i] = brw->wm.surf_bo[i]->offset[0];
+   ret = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
+                           NULL, 0,
+                           brw->wm.surf_bo, brw->wm.nr_surfaces,
+                           data, data_size,
+                           NULL, NULL,
+                           bo_out);
+   if (ret)
+      return ret;
 
-      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
-				  NULL, 0,
-				  brw->wm.surf_bo, brw->wm.nr_surfaces,
-				  data, data_size,
-				  NULL, NULL);
-
-      /* Emit binding table relocations to surface state */
-      for (i = 0; i < brw->wm.nr_surfaces; i++) {
-	 brw->sws->bo_emit_reloc(bind_bo,
-				 BRW_USAGE_STATE,
-				 0,
-				 i * sizeof(GLuint),
-				 brw->wm.surf_bo[i]);
-      }
+   /* Emit binding table relocations to surface state */
+   for (i = 0; i < brw->wm.nr_surfaces; i++) {
+      ret = brw->sws->bo_emit_reloc(*bo_out,
+                                    BRW_USAGE_STATE,
+                                    0,
+                                    i * sizeof(GLuint),
+                                    brw->wm.surf_bo[i]);
+      if (ret)
+         return ret;
    }
 
-   return bind_bo;
+   return PIPE_OK;
 }
 
-static int prepare_wm_surfaces(struct brw_context *brw )
+static enum pipe_error prepare_wm_surfaces(struct brw_context *brw )
 {
-   GLuint i;
+   enum pipe_error ret;
    int nr_surfaces = 0;
-
-   /* Unreference old buffers
-    */
-   for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      brw->sws->bo_unreference(brw->wm.surf_bo[i]);
-      brw->wm.surf_bo[i] = NULL;
-   }
-
+   GLuint i;
 
    /* PIPE_NEW_COLOR_BUFFERS | PIPE_NEW_BLEND
     *
@@ -192,38 +207,51 @@ static int prepare_wm_surfaces(struct brw_context *brw )
     * XXX: no color buffer case
     */
    for (i = 0; i < brw->curr.fb.nr_cbufs; i++) {
-      brw_update_renderbuffer_surface(brw, 
-				      brw_surface(brw->curr.fb.cbufs[i]), 
-				      nr_surfaces++);
+      ret = brw_update_render_surface(brw, 
+                                      brw_surface(brw->curr.fb.cbufs[i]), 
+                                      &brw->wm.surf_bo[nr_surfaces++]);
+      if (ret)
+         return ret;
    }
 
    /* PIPE_NEW_TEXTURE 
     */
    for (i = 0; i < brw->curr.num_textures; i++) {
-      brw_update_texture_surface(brw, 
-				 brw_texture(brw->curr.texture[i]),
-				 nr_surfaces++);
+      ret = brw_update_texture_surface(brw, 
+                                       brw_texture(brw->curr.texture[i]),
+                                       &brw->wm.surf_bo[nr_surfaces++]);
+      if (ret)
+         return ret;
    }
 
    /* PIPE_NEW_FRAGMENT_CONSTANTS
     */
 #if 0
    if (brw->curr.fragment_constants) {
-      brw_update_fragment_constant_surface(brw, 
-					   brw->curr.fragment_constants, 
-					   nr_surfaces++);
+      ret = brw_update_fragment_constant_surface(brw, 
+                                                 brw->curr.fragment_constants, 
+                                                 &brw->wm.surf_bo[nr_surfaces++]);
+      if (ret)
+         return ret;
    }
 #endif
 
    if (brw->wm.nr_surfaces != nr_surfaces) {
+
+      /* Unreference any left-over old buffers
+       */
+      for (i = nr_surfaces; i < brw->wm.nr_surfaces; i++)
+         bo_reference(&brw->wm.surf_bo[i], NULL);
+
       brw->wm.nr_surfaces = nr_surfaces;
       brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
    }
 
-   brw->sws->bo_unreference(brw->wm.bind_bo);
-   brw->wm.bind_bo = brw_wm_get_binding_table(brw);
+   ret = brw_wm_get_binding_table(brw, &brw->wm.bind_bo);
+   if (ret)
+      return ret;
 
-   return 0;
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_wm_surfaces = {

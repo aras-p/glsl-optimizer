@@ -72,12 +72,13 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    key->depth_clamp = 0; // XXX: add this to gallium: ctx->Transform.DepthClamp;
 }
 
-static struct brw_winsys_buffer *
+static enum pipe_error
 clip_unit_create_from_key(struct brw_context *brw,
-			  struct brw_clip_unit_key *key)
+                          struct brw_clip_unit_key *key,
+                          struct brw_winsys_buffer **bo_out)
 {
    struct brw_clip_unit_state clip;
-   struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
 
    memset(&clip, 0, sizeof(clip));
 
@@ -141,39 +142,50 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.viewport_ymin = -1;
    clip.viewport_ymax = 1;
 
-   bo = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
-			 key, sizeof(*key),
-			 &brw->clip.prog_bo, 1,
-			 &clip, sizeof(clip),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
+                          key, sizeof(*key),
+                          &brw->clip.prog_bo, 1,
+                          &clip, sizeof(clip),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   clip.thread0.grf_reg_count << 1,
-			   offsetof(struct brw_clip_unit_state, thread0),
-			   brw->clip.prog_bo);
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 clip.thread0.grf_reg_count << 1,
+                                 offsetof(struct brw_clip_unit_state, thread0),
+                                 brw->clip.prog_bo);
+   if (ret)
+      return ret;
 
-   return bo;
+   return PIPE_OK;
 }
 
 static int upload_clip_unit( struct brw_context *brw )
 {
    struct brw_clip_unit_key key;
+   enum pipe_error ret;
 
    clip_unit_populate_key(brw, &key);
 
-   brw->sws->bo_unreference(brw->clip.state_bo);
-   brw->clip.state_bo = brw_search_cache(&brw->cache, BRW_CLIP_UNIT,
-					 &key, sizeof(key),
-					 &brw->clip.prog_bo, 1,
-					 NULL);
-   if (brw->clip.state_bo == NULL) {
-      brw->clip.state_bo = clip_unit_create_from_key(brw, &key);
-   }
+   if (brw_search_cache(&brw->cache, BRW_CLIP_UNIT,
+                        &key, sizeof(key),
+                        &brw->clip.prog_bo, 1,
+                        NULL,
+                        &brw->clip.state_bo))
+      return PIPE_OK;
+      
+   /* Create new:
+    */
+   ret = clip_unit_create_from_key(brw, &key, 
+                                   &brw->clip.state_bo);
+   if (ret)
+      return ret;
    
-   return 0;
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_clip_unit = {

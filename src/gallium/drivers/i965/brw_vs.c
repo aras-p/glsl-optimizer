@@ -39,10 +39,12 @@
 
 
 
-static void do_vs_prog( struct brw_context *brw, 
-			struct brw_vertex_shader *vp,
-			struct brw_vs_prog_key *key )
+static enum pipe_error do_vs_prog( struct brw_context *brw, 
+                                   struct brw_vertex_shader *vp,
+                                   struct brw_vs_prog_key *key,
+                                   struct brw_winsys_buffer **bo_out)
 {
+   enum pipe_error ret;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
@@ -66,22 +68,29 @@ static void do_vs_prog( struct brw_context *brw,
 
    /* get the program
     */
-   program = brw_get_program(&c.func, &program_size);
+   ret = brw_get_program(&c.func, &program, &program_size);
+   if (ret)
+      return ret;
 
-   brw->sws->bo_unreference(brw->vs.prog_bo);
-   brw->vs.prog_bo = brw_upload_cache( &brw->cache, BRW_VS_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->vs.prog_data );
+   ret = brw_upload_cache( &brw->cache, BRW_VS_PROG,
+                           &c.key, sizeof(c.key),
+                           NULL, 0,
+                           program, program_size,
+                           &c.prog_data,
+                           &brw->vs.prog_data,
+                           bo_out);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 
-static int brw_upload_vs_prog(struct brw_context *brw)
+static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
 {
    struct brw_vs_prog_key key;
    struct brw_vertex_shader *vp = brw->curr.vertex_shader;
+   enum pipe_error ret;
 
    memset(&key, 0, sizeof(key));
 
@@ -95,15 +104,18 @@ static int brw_upload_vs_prog(struct brw_context *brw)
 
    /* Make an early check for the key.
     */
-   brw->sws->bo_unreference(brw->vs.prog_bo);
-   brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
-				      &key, sizeof(key),
-				      NULL, 0,
-				      &brw->vs.prog_data);
-   if (brw->vs.prog_bo == NULL)
-      do_vs_prog(brw, vp, &key);
+   if (brw_search_cache(&brw->cache, BRW_VS_PROG,
+                        &key, sizeof(key),
+                        NULL, 0,
+                        &brw->vs.prog_data,
+                        &brw->vs.prog_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = do_vs_prog(brw, vp, &key, &brw->vs.prog_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 

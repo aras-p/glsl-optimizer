@@ -744,7 +744,7 @@ struct brw_context
  * brw_queryobj.c
  */
 void brw_init_query(struct brw_context *brw);
-void brw_prepare_query_begin(struct brw_context *brw);
+enum pipe_error brw_prepare_query_begin(struct brw_context *brw);
 void brw_emit_query_begin(struct brw_context *brw);
 void brw_emit_query_end(struct brw_context *brw);
 

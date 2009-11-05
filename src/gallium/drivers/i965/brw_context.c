@@ -72,29 +72,33 @@ static void brw_destroy_context( struct pipe_context *pipe )
    brw->curr.fb.nr_cbufs = 0;
    pipe_surface_reference(&brw->curr.fb.zsbuf, NULL);
 
-   brw->sws->bo_unreference(brw->curbe.curbe_bo);
-   brw->sws->bo_unreference(brw->vs.prog_bo);
-   brw->sws->bo_unreference(brw->vs.state_bo);
-   brw->sws->bo_unreference(brw->vs.bind_bo);
-   brw->sws->bo_unreference(brw->gs.prog_bo);
-   brw->sws->bo_unreference(brw->gs.state_bo);
-   brw->sws->bo_unreference(brw->clip.prog_bo);
-   brw->sws->bo_unreference(brw->clip.state_bo);
-   brw->sws->bo_unreference(brw->clip.vp_bo);
-   brw->sws->bo_unreference(brw->sf.prog_bo);
-   brw->sws->bo_unreference(brw->sf.state_bo);
-   brw->sws->bo_unreference(brw->sf.vp_bo);
+   bo_reference(&brw->curbe.curbe_bo, NULL);
+   bo_reference(&brw->vs.prog_bo, NULL);
+   bo_reference(&brw->vs.state_bo, NULL);
+   bo_reference(&brw->vs.bind_bo, NULL);
+   bo_reference(&brw->gs.prog_bo, NULL);
+   bo_reference(&brw->gs.state_bo, NULL);
+   bo_reference(&brw->clip.prog_bo, NULL);
+   bo_reference(&brw->clip.state_bo, NULL);
+   bo_reference(&brw->clip.vp_bo, NULL);
+   bo_reference(&brw->sf.prog_bo, NULL);
+   bo_reference(&brw->sf.state_bo, NULL);
+   bo_reference(&brw->sf.vp_bo, NULL);
+
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
-      brw->sws->bo_unreference(brw->wm.sdc_bo[i]);
-   brw->sws->bo_unreference(brw->wm.bind_bo);
+      bo_reference(&brw->wm.sdc_bo[i], NULL);
+
+   bo_reference(&brw->wm.bind_bo, NULL);
+
    for (i = 0; i < BRW_WM_MAX_SURF; i++)
-      brw->sws->bo_unreference(brw->wm.surf_bo[i]);
-   brw->sws->bo_unreference(brw->wm.sampler_bo);
-   brw->sws->bo_unreference(brw->wm.prog_bo);
-   brw->sws->bo_unreference(brw->wm.state_bo);
-   brw->sws->bo_unreference(brw->cc.prog_bo);
-   brw->sws->bo_unreference(brw->cc.state_bo);
-   brw->sws->bo_unreference(brw->cc.vp_bo);
+      bo_reference(&brw->wm.surf_bo[i], NULL);
+
+   bo_reference(&brw->wm.sampler_bo, NULL);
+   bo_reference(&brw->wm.prog_bo, NULL);
+   bo_reference(&brw->wm.state_bo, NULL);
+   bo_reference(&brw->cc.prog_bo, NULL);
+   bo_reference(&brw->cc.state_bo, NULL);
+   bo_reference(&brw->cc.vp_bo, NULL);
 }
 
 

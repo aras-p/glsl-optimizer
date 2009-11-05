@@ -251,9 +251,8 @@ static int brw_prepare_vertices(struct brw_context *brw)
       brw->vb.vb[i].vertex_count = (vb->stride == 0 ?
 				    1 :
 				    (bo->size - offset) / vb->stride);
-      brw->sws->bo_unreference(brw->vb.vb[i].bo);
-      brw->vb.vb[i].bo = bo;
-      brw->sws->bo_reference(brw->vb.vb[i].bo);
+
+      bo_reference( &brw->vb.vb[i].bo,  bo );
 
       /* Don't need to retain this reference.  We have a reference on
        * the underlying winsys buffer:
@@ -417,6 +416,7 @@ const struct brw_tracked_state brw_vertices = {
 static int brw_prepare_indices(struct brw_context *brw)
 {
    struct pipe_buffer *index_buffer = brw->curr.index_buffer;
+   struct pipe_buffer *upload_buf = NULL;
    struct brw_winsys_buffer *bo = NULL;
    GLuint offset;
    GLuint index_size;
@@ -438,7 +438,6 @@ static int brw_prepare_indices(struct brw_context *brw)
    /* Turn userbuffer into a proper hardware buffer?
     */
    if (brw_buffer_is_user_buffer(index_buffer)) {
-      struct pipe_buffer *upload_buf;
 
       ret = u_upload_buffer( brw->vb.upload_index,
 			     0,
@@ -450,8 +449,6 @@ static int brw_prepare_indices(struct brw_context *brw)
 	 return ret;
 
       bo = brw_buffer(upload_buf)->bo;
-      brw->sws->bo_reference(bo);
-      pipe_buffer_reference( &upload_buf, NULL );
 
       /* XXX: annotate the userbuffer with the upload information so
        * that successive calls don't get re-uploaded.
@@ -459,8 +456,6 @@ static int brw_prepare_indices(struct brw_context *brw)
    }
    else {
       bo = brw_buffer(index_buffer)->bo;
-      brw->sws->bo_reference(bo);
-      
       ib_size = bo->size;
       offset = 0;
    }
@@ -486,15 +481,12 @@ static int brw_prepare_indices(struct brw_context *brw)
    if (brw->ib.bo != bo ||
        brw->ib.size != ib_size)
    {
-      brw->sws->bo_unreference(brw->ib.bo);
-      brw->ib.bo = bo;
+      bo_reference(&brw->ib.bo, bo);
       brw->ib.size = ib_size;
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    }
-   else {
-      brw->sws->bo_unreference(bo);
-   }
 
+   pipe_buffer_reference( &upload_buf, NULL );
    brw_add_validated_bo(brw, brw->ib.bo);
    return 0;
 }

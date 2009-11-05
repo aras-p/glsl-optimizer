@@ -39,11 +39,12 @@
 #include "brw_debug.h"
 #include "brw_pipe_rast.h"
 
-static int upload_sf_vp(struct brw_context *brw)
+static enum pipe_error upload_sf_vp(struct brw_context *brw)
 {
    const struct pipe_viewport_state *vp = &brw->curr.vp;
    const struct pipe_scissor_state *scissor = &brw->curr.scissor;
    struct brw_sf_viewport sfv;
+   enum pipe_error ret;
 
    memset(&sfv, 0, sizeof(sfv));
 
@@ -61,10 +62,12 @@ static int upload_sf_vp(struct brw_context *brw)
    sfv.scissor.ymin = scissor->miny;
    sfv.scissor.ymax = scissor->maxy; /* -1 ?? */
 
-   brw->sws->bo_unreference(brw->sf.vp_bo);
-   brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
+   ret = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0,
+                         &brw->sf.vp_bo );
+   if (ret)
+      return ret;
 
-   return 0;
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_sf_vp = {
@@ -128,12 +131,13 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 			   rast->point_size_max);
 }
 
-static struct brw_winsys_buffer *
+static enum pipe_error
 sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
-			struct brw_winsys_buffer **reloc_bufs)
+			struct brw_winsys_buffer **reloc_bufs,
+                        struct brw_winsys_buffer **bo_out)
 {
    struct brw_sf_unit_state sf;
-   struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
    int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
@@ -273,51 +277,65 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
       sf.sf6.dest_org_hbias = 0x0;
    }
 
-   bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
-			 key, sizeof(*key),
-			 reloc_bufs, 2,
-			 &sf, sizeof(sf),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
+                          key, sizeof(*key),
+                          reloc_bufs, 2,
+                          &sf, sizeof(sf),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
     */
    /* Emit SF program relocation */
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   sf.thread0.grf_reg_count << 1,
-			   offsetof(struct brw_sf_unit_state, thread0),
-			   brw->sf.prog_bo);
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 sf.thread0.grf_reg_count << 1,
+                                 offsetof(struct brw_sf_unit_state, thread0),
+                                 brw->sf.prog_bo);
+   if (ret)
+      return ret;
+
 
    /* Emit SF viewport relocation */
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-			   offsetof(struct brw_sf_unit_state, sf5),
-			   brw->sf.vp_bo);
-
-   return bo;
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
+                                 offsetof(struct brw_sf_unit_state, sf5),
+                                 brw->sf.vp_bo);
+   if (ret)
+      return ret;
+   
+   return PIPE_OK;
 }
 
-static int upload_sf_unit( struct brw_context *brw )
+static enum pipe_error upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_key key;
    struct brw_winsys_buffer *reloc_bufs[2];
+   enum pipe_error ret;
 
    sf_unit_populate_key(brw, &key);
 
    reloc_bufs[0] = brw->sf.prog_bo;
    reloc_bufs[1] = brw->sf.vp_bo;
 
-   brw->sws->bo_unreference(brw->sf.state_bo);
-   brw->sf.state_bo = brw_search_cache(&brw->cache, BRW_SF_UNIT,
-				       &key, sizeof(key),
-				       reloc_bufs, 2,
-				       NULL);
-   if (brw->sf.state_bo == NULL) {
-      brw->sf.state_bo = sf_unit_create_from_key(brw, &key, reloc_bufs);
-   }
-   return 0;
+   if (brw_search_cache(&brw->cache, BRW_SF_UNIT,
+                        &key, sizeof(key),
+                        reloc_bufs, 2,
+                        NULL,
+                        &brw->sf.state_bo))
+      return PIPE_OK;
+
+
+   ret = sf_unit_create_from_key(brw, &key, reloc_bufs,
+                                 &brw->sf.state_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_sf_unit = {

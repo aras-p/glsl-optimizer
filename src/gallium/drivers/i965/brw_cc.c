@@ -57,10 +57,11 @@ static void calc_sane_viewport( const struct pipe_viewport_state *vp,
    svp->far = 1;
 }
 
-static int prepare_cc_vp( struct brw_context *brw )
+static enum pipe_error prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
    struct sane_viewport svp;
+   enum pipe_error ret;
 
    memset(&ccv, 0, sizeof(ccv));
 
@@ -70,10 +71,12 @@ static int prepare_cc_vp( struct brw_context *brw )
    ccv.min_depth = svp.near;
    ccv.max_depth = svp.far;
 
-   brw->sws->bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
-
-   return 0;
+   ret = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0,
+                         &brw->cc.vp_bo );
+   if (ret)
+      return ret;
+                
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -123,11 +126,13 @@ cc_unit_populate_key(const struct brw_context *brw,
 /**
  * Creates the state cache entry for the given CC unit key.
  */
-static struct brw_winsys_buffer *
-cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
+static enum pipe_error
+cc_unit_create_from_key(struct brw_context *brw, 
+                        struct brw_cc_unit_key *key,
+                        struct brw_winsys_buffer **bo_out)
 {
    struct brw_cc_unit_state cc;
-   struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
 
    memset(&cc, 0, sizeof(cc));
 
@@ -143,38 +148,48 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    cc.cc6 = key->cc6;
    cc.cc7 = key->cc7;
 
-   bo = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
-			 key, sizeof(*key),
-			 &brw->cc.vp_bo, 1,
-			 &cc, sizeof(cc),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
+                          key, sizeof(*key),
+                          &brw->cc.vp_bo, 1,
+                          &cc, sizeof(cc),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
+
 
    /* Emit CC viewport relocation */
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   0,
-			   offsetof(struct brw_cc_unit_state, cc4),
-			   brw->cc.vp_bo);
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 0,
+                                 offsetof(struct brw_cc_unit_state, cc4),
+                                 brw->cc.vp_bo);
+   if (ret)
+      return ret;
 
-   return bo;
+   return PIPE_OK;
 }
 
 static int prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
+   enum pipe_error ret;
 
    cc_unit_populate_key(brw, &key);
 
-   brw->sws->bo_unreference(brw->cc.state_bo);
-   brw->cc.state_bo = brw_search_cache(&brw->cache, BRW_CC_UNIT,
-				       &key, sizeof(key),
-				       &brw->cc.vp_bo, 1,
-				       NULL);
+   if (brw_search_cache(&brw->cache, BRW_CC_UNIT,
+                        &key, sizeof(key),
+                        &brw->cc.vp_bo, 1,
+                        NULL,
+                        &brw->cc.state_bo))
+      return PIPE_OK;
 
-   if (brw->cc.state_bo == NULL)
-      brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
+   ret = cc_unit_create_from_key(brw, &key, 
+                                 &brw->cc.state_bo);
+   if (ret)
+      return ret;
    
-   return 0;
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_cc_unit = {

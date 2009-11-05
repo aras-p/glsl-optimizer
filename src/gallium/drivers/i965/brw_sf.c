@@ -40,9 +40,11 @@
 #include "brw_sf.h"
 #include "brw_state.h"
 
-static void compile_sf_prog( struct brw_context *brw,
-			     struct brw_sf_prog_key *key )
+static enum pipe_error compile_sf_prog( struct brw_context *brw,
+                                        struct brw_sf_prog_key *key,
+                                        struct brw_winsys_buffer **bo_out )
 {
+   enum pipe_error ret;
    struct brw_sf_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -87,28 +89,35 @@ static void compile_sf_prog( struct brw_context *brw,
       break;
    default:
       assert(0);
-      return;
+      return PIPE_ERROR_BAD_INPUT;
    }
 
    /* get the program
     */
-   program = brw_get_program(&c.func, &program_size);
+   ret = brw_get_program(&c.func, &program, &program_size);
+   if (ret)
+      return ret;
 
    /* Upload
     */
-   brw->sws->bo_unreference(brw->sf.prog_bo);
-   brw->sf.prog_bo = brw_upload_cache( &brw->cache, BRW_SF_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->sf.prog_data );
+   ret = brw_upload_cache( &brw->cache, BRW_SF_PROG,
+                           &c.key, sizeof(c.key),
+                           NULL, 0,
+                           program, program_size,
+                           &c.prog_data,
+                           &brw->sf.prog_data,
+                           bo_out);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static int upload_sf_prog(struct brw_context *brw)
+static enum pipe_error upload_sf_prog(struct brw_context *brw)
 {
+   enum pipe_error ret;
    struct brw_sf_prog_key key;
 
    memset(&key, 0, sizeof(key));
@@ -161,15 +170,18 @@ static int upload_sf_prog(struct brw_context *brw)
 			   PIPE_WINDING_CCW);
    }
 
-   brw->sws->bo_unreference(brw->sf.prog_bo);
-   brw->sf.prog_bo = brw_search_cache(&brw->cache, BRW_SF_PROG,
-				      &key, sizeof(key),
-				      NULL, 0,
-				      &brw->sf.prog_data);
-   if (brw->sf.prog_bo == NULL)
-      compile_sf_prog( brw, &key );
+   if (brw_search_cache(&brw->cache, BRW_SF_PROG,
+                        &key, sizeof(key),
+                        NULL, 0,
+                        &brw->sf.prog_data,
+                        &brw->sf.prog_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = compile_sf_prog( brw, &key, &brw->sf.prog_bo );
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 

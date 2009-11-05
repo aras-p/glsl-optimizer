@@ -38,17 +38,17 @@
 #define USE_MALLOC_BUFFER 1
 #define ALWAYS_EMIT_MI_FLUSH 1
 
-void
+enum pipe_error
 brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 {
-   if (batch->buf) {
-      batch->sws->bo_unreference(batch->buf);
-      batch->buf = NULL;
-   }
+   enum pipe_error ret;
 
-   batch->buf = batch->sws->bo_alloc(batch->sws,
-				     BRW_BUFFER_TYPE_BATCH,
-				     BRW_BATCH_SIZE, 4096);
+   ret = batch->sws->bo_alloc( batch->sws,
+                               BRW_BUFFER_TYPE_BATCH,
+                               BRW_BATCH_SIZE, 4096,
+                               &batch->buf );
+   if (ret)
+      return ret;
 
    if (batch->malloc_buffer)
       batch->map = batch->malloc_buffer;
@@ -59,6 +59,7 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 
    batch->size = BRW_BATCH_SIZE;
    batch->ptr = batch->map;
+   return PIPE_OK;
 }
 
 struct brw_batchbuffer *
@@ -91,7 +92,7 @@ brw_batchbuffer_free(struct brw_batchbuffer *batch)
       batch->map = NULL;
    }
 
-   batch->sws->bo_unreference(batch->buf);
+   bo_reference(&batch->buf, NULL);
    FREE(batch);
 }
 

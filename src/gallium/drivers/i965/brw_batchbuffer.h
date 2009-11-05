@@ -65,7 +65,8 @@ void _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
 			      const char *file, int line);
 
 
-void brw_batchbuffer_reset(struct brw_batchbuffer *batch);
+enum pipe_error
+brw_batchbuffer_reset(struct brw_batchbuffer *batch);
 
 
 /* Unlike bmBufferData, this currently requires the buffer be mapped.

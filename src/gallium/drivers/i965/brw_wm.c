@@ -137,30 +137,26 @@ brw_wm_linear_shader_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * Depending on the instructions used (i.e. flow control instructions)
  * we'll use one of two code generators.
  */
-static int do_wm_prog( struct brw_context *brw,
-			struct brw_fragment_shader *fp, 
-			struct brw_wm_prog_key *key)
+static enum pipe_error do_wm_prog( struct brw_context *brw,
+                                   struct brw_fragment_shader *fp, 
+                                   struct brw_wm_prog_key *key,
+                                   struct brw_winsys_buffer **bo_out)
 {
+   enum pipe_error ret;
    struct brw_wm_compile *c;
    const GLuint *program;
    GLuint program_size;
 
-   c = brw->wm.compile_data;
-   if (c == NULL) {
-      brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
-      c = brw->wm.compile_data;
-      if (c == NULL) {
-         /* Ouch - big out of memory problem.  Can't continue
-          * without triggering a segfault, no way to signal,
-          * so just return.
-          */
+   if (brw->wm.compile_data == NULL) {
+      brw->wm.compile_data = MALLOC(sizeof(*brw->wm.compile_data));
+      if (!brw->wm.compile_data) 
          return PIPE_ERROR_OUT_OF_MEMORY;
-      }
-   } else {
-      memset(c, 0, sizeof(*brw->wm.compile_data));
    }
-   memcpy(&c->key, key, sizeof(*key));
 
+   c = brw->wm.compile_data;
+   memset(c, 0, sizeof *c);
+
+   c->key = *key;
    c->fp = fp;
    c->env_param = NULL; /*brw->intel.ctx.FragmentProgram.Parameters;*/
 
@@ -190,17 +186,21 @@ static int do_wm_prog( struct brw_context *brw,
 
    /* get the program
     */
-   program = brw_get_program(&c->func, &program_size);
+   ret = brw_get_program(&c->func, &program, &program_size);
+   if (ret)
+      return ret;
 
-   brw->sws->bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_upload_cache( &brw->cache, BRW_WM_PROG,
-				       &c->key, sizeof(c->key),
-				       NULL, 0,
-				       program, program_size,
-				       &c->prog_data,
-				       &brw->wm.prog_data );
+   ret = brw_upload_cache( &brw->cache, BRW_WM_PROG,
+                           &c->key, sizeof(c->key),
+                           NULL, 0,
+                           program, program_size,
+                           &c->prog_data,
+                           &brw->wm.prog_data,
+                           bo_out );
+   if (ret)
+      return ret;
 
-   return 0;
+   return PIPE_OK;
 }
 
 
@@ -267,24 +267,28 @@ static void brw_wm_populate_key( struct brw_context *brw,
 }
 
 
-static int brw_prepare_wm_prog(struct brw_context *brw)
+static enum pipe_error brw_prepare_wm_prog(struct brw_context *brw)
 {
    struct brw_wm_prog_key key;
    struct brw_fragment_shader *fs = brw->curr.fragment_shader;
+   enum pipe_error ret;
      
    brw_wm_populate_key(brw, &key);
 
    /* Make an early check for the key.
     */
-   brw->sws->bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
-				      &key, sizeof(key),
-				      NULL, 0,
-				      &brw->wm.prog_data);
-   if (brw->wm.prog_bo == NULL)
-      return do_wm_prog(brw, fs, &key);
+   if (brw_search_cache(&brw->cache, BRW_WM_PROG,
+                        &key, sizeof(key),
+                        NULL, 0,
+                        &brw->wm.prog_data,
+                        &brw->wm.prog_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = do_wm_prog(brw, fs, &key, &brw->wm.prog_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 

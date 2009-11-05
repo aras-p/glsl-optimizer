@@ -34,6 +34,7 @@
 #define BRW_EU_H
 
 #include "util/u_debug.h"
+#include "pipe/p_error.h"
 
 #include "brw_structs.h"
 #include "brw_defines.h"
@@ -132,6 +133,8 @@ struct brw_compile {
 
    struct brw_eu_label *first_label;  /**< linked list of labels */
    struct brw_eu_call *first_call;    /**< linked list of CALs */
+
+   boolean error;
 };
 
 
@@ -772,7 +775,10 @@ void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
 
 void brw_init_compile( struct brw_context *, struct brw_compile *p );
-const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
+
+enum pipe_error brw_get_program( struct brw_compile *p, 
+                                 const GLuint **program,
+                                 GLuint *sz );
 
 
 /* Helpers for regular instructions:

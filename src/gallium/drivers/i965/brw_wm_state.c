@@ -138,12 +138,13 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 /**
  * Setup wm hardware state.  See page 225 of Volume 2
  */
-static struct brw_winsys_buffer *
+static enum pipe_error
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			struct brw_winsys_buffer **reloc_bufs)
+			struct brw_winsys_buffer **reloc_bufs,
+                        struct brw_winsys_buffer **bo_out)
 {
    struct brw_wm_unit_state wm;
-   struct brw_winsys_buffer *bo;
+   enum pipe_error ret;
 
    memset(&wm, 0, sizeof(wm));
 
@@ -222,45 +223,56 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    if (BRW_DEBUG & DEBUG_STATS || key->stats_wm)
       wm.wm4.stats_enable = 1;
 
-   bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
-			 key, sizeof(*key),
-			 reloc_bufs, 3,
-			 &wm, sizeof(wm),
-			 NULL, NULL);
+   ret = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
+                          key, sizeof(*key),
+                          reloc_bufs, 3,
+                          &wm, sizeof(wm),
+                          NULL, NULL,
+                          bo_out);
+   if (ret)
+      return ret;
 
    /* Emit WM program relocation */
-   brw->sws->bo_emit_reloc(bo,
-			   BRW_USAGE_STATE,
-			   wm.thread0.grf_reg_count << 1,
-			   offsetof(struct brw_wm_unit_state, thread0),
-			   brw->wm.prog_bo);
+   ret = brw->sws->bo_emit_reloc(*bo_out,
+                                 BRW_USAGE_STATE,
+                                 wm.thread0.grf_reg_count << 1,
+                                 offsetof(struct brw_wm_unit_state, thread0),
+                                 brw->wm.prog_bo);
+   if (ret)
+      return ret;
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      brw->sws->bo_emit_reloc(bo,
-			      BRW_USAGE_SCRATCH,
-			      wm.thread2.per_thread_scratch_space,
-			      offsetof(struct brw_wm_unit_state, thread2),
-			      brw->wm.scratch_bo);
+      ret = brw->sws->bo_emit_reloc(*bo_out,
+                                    BRW_USAGE_SCRATCH,
+                                    wm.thread2.per_thread_scratch_space,
+                                    offsetof(struct brw_wm_unit_state, thread2),
+                                    brw->wm.scratch_bo);
+      if (ret)
+         return ret;
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      brw->sws->bo_emit_reloc(bo,
-			      BRW_USAGE_STATE,
-			      wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-			      offsetof(struct brw_wm_unit_state, wm4),
-			      brw->wm.sampler_bo);
+      ret = brw->sws->bo_emit_reloc(*bo_out,
+                                    BRW_USAGE_STATE,
+                                    wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
+                                    offsetof(struct brw_wm_unit_state, wm4),
+                                    brw->wm.sampler_bo);
+      if (ret)
+         return ret;
    }
 
-   return bo;
+   return PIPE_OK;
 }
 
 
-static int upload_wm_unit( struct brw_context *brw )
+static enum pipe_error upload_wm_unit( struct brw_context *brw )
 {
    struct brw_wm_unit_key key;
    struct brw_winsys_buffer *reloc_bufs[3];
+   enum pipe_error ret;
+
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -271,15 +283,19 @@ static int upload_wm_unit( struct brw_context *brw )
    if (key.total_scratch) {
       GLuint total = key.total_scratch * key.max_threads;
 
-      if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
-	 brw->sws->bo_unreference(brw->wm.scratch_bo);
-	 brw->wm.scratch_bo = NULL;
-      }
+      /* Do we need a new buffer:
+       */
+      if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) 
+	 bo_reference(&brw->wm.scratch_bo, NULL);
+
       if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = brw->sws->bo_alloc(brw->sws,
-						 BRW_BUFFER_TYPE_SHADER_SCRATCH,
-						 total,
-						 4096);
+	 ret = brw->sws->bo_alloc(brw->sws,
+                                  BRW_BUFFER_TYPE_SHADER_SCRATCH,
+                                  total,
+                                  4096,
+                                  &brw->wm.scratch_bo);
+         if (ret)
+            return ret;
       }
    }
 
@@ -287,16 +303,19 @@ static int upload_wm_unit( struct brw_context *brw )
    reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
-   brw->sws->bo_unreference(brw->wm.state_bo);
-   brw->wm.state_bo = brw_search_cache(&brw->cache, BRW_WM_UNIT,
-				       &key, sizeof(key),
-				       reloc_bufs, 3,
-				       NULL);
-   if (brw->wm.state_bo == NULL) {
-      brw->wm.state_bo = wm_unit_create_from_key(brw, &key, reloc_bufs);
-   }
+   if (brw_search_cache(&brw->cache, BRW_WM_UNIT,
+                        &key, sizeof(key),
+                        reloc_bufs, 3,
+                        NULL,
+                        &brw->wm.state_bo))
+      return PIPE_OK;
 
-   return 0;
+   ret = wm_unit_create_from_key(brw, &key, reloc_bufs,
+                                 &brw->wm.state_bo);
+   if (ret)
+      return ret;
+
+   return PIPE_OK;
 }
 
 const struct brw_tracked_state brw_wm_unit = {

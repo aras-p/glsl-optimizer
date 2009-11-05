@@ -280,6 +280,5 @@ void brw_draw_cleanup( struct brw_context *brw )
    u_upload_destroy( brw->vb.upload_vertex );
    u_upload_destroy( brw->vb.upload_index );
 
-   brw->sws->bo_unreference(brw->ib.bo);
-   brw->ib.bo = NULL;
+   bo_reference(&brw->ib.bo, NULL);
 }

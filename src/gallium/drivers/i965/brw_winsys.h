@@ -28,6 +28,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_error.h"
+#include "pipe/p_refcnt.h"
 
 struct brw_winsys;
 struct pipe_fence_handle;
@@ -36,10 +37,13 @@ struct pipe_fence_handle;
  */
 #define BRW_BATCH_SIZE (32*1024)
 
+struct brw_winsys_screen;
 
 /* Need a tiny bit of information inside the abstract buffer struct:
  */
 struct brw_winsys_buffer {
+   struct pipe_reference reference;
+   struct brw_winsys_screen *sws;
    unsigned *offset;
    unsigned size;
 };
@@ -105,6 +109,10 @@ enum brw_buffer_data_type {
    BRW_DATA_MAX
 };
 
+
+
+
+
 struct brw_winsys_screen {
 
 
@@ -116,33 +124,33 @@ struct brw_winsys_screen {
    /**
     * Create a buffer.
     */
-   struct brw_winsys_buffer *(*bo_alloc)( struct brw_winsys_screen *sws,
-					  enum brw_buffer_type type,
-					  unsigned size,
-					  unsigned alignment );
+   enum pipe_error (*bo_alloc)( struct brw_winsys_screen *sws,
+                                enum brw_buffer_type type,
+                                unsigned size,
+                                unsigned alignment,
+                                struct brw_winsys_buffer **bo_out );
 
-   /* Reference and unreference buffers:
+   /* Destroy a buffer when our refcount goes to zero:
     */
-   void (*bo_reference)( struct brw_winsys_buffer *buffer );
-   void (*bo_unreference)( struct brw_winsys_buffer *buffer );
+   void (*bo_destroy)( struct brw_winsys_buffer *buffer );
 
    /* delta -- added to b2->offset, and written into buffer
     * offset -- location above value is written to within buffer
     */
-   int (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
-			 enum brw_buffer_usage usage,
-			 unsigned delta,
-			 unsigned offset,
-			 struct brw_winsys_buffer *b2);
+   enum pipe_error (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
+                                     enum brw_buffer_usage usage,
+                                     unsigned delta,
+                                     unsigned offset,
+                                     struct brw_winsys_buffer *b2);
 
-   int (*bo_exec)( struct brw_winsys_buffer *buffer,
-		   unsigned bytes_used );
+   enum pipe_error (*bo_exec)( struct brw_winsys_buffer *buffer,
+                               unsigned bytes_used );
 
-   int (*bo_subdata)(struct brw_winsys_buffer *buffer,
-                     enum brw_buffer_data_type data_type,
-                     size_t offset,
-                     size_t size,
-                     const void *data);
+   enum pipe_error (*bo_subdata)(struct brw_winsys_buffer *buffer,
+                                 enum brw_buffer_data_type data_type,
+                                 size_t offset,
+                                 size_t size,
+                                 const void *data);
 
    boolean (*bo_is_busy)(struct brw_winsys_buffer *buffer);
    boolean (*bo_references)(struct brw_winsys_buffer *a,
@@ -173,6 +181,16 @@ struct brw_winsys_screen {
     */
    void (*destroy)(struct brw_winsys_screen *iws);
 };
+
+
+static INLINE void
+bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
+{
+   struct brw_winsys_buffer *old_buf = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
+      old_buf->sws->bo_destroy(old_buf);
+}
 
 
 /**
