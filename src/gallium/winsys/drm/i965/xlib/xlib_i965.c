@@ -43,6 +43,7 @@
 #include "i965/brw_winsys.h"
 #include "i965/brw_screen.h"
 #include "i965/brw_reg.h"
+#include "i965/brw_structs_dump.h"
 
 #define MAX_VRAM (128*1024*1024)
 
@@ -233,6 +234,66 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    debug_printf("%s buf %p off %d sz %d data %p %s\n", 
                 __FUNCTION__, 
                 (void *)buffer, offset, size, data, data_types[data_type]);
+
+   switch (data_type) {
+   case BRW_DATA_GS_CC_VP:
+      brw_dump_cc_viewport( data );
+      break;
+   case BRW_DATA_GS_CC_UNIT:
+      brw_dump_cc_unit_state( data );
+      break;
+   case BRW_DATA_GS_WM_PROG:
+      /* disassem */
+      break;
+   case BRW_DATA_GS_SAMPLER_DEFAULT_COLOR:
+      brw_dump_sampler_default_color( data );
+      break;
+   case BRW_DATA_GS_SAMPLER:
+      brw_dump_sampler_state( data );
+      break;
+   case BRW_DATA_GS_WM_UNIT:
+      brw_dump_wm_unit_state( data );
+      break;
+   case BRW_DATA_GS_SF_PROG:
+      /* disassem */
+      break;
+   case BRW_DATA_GS_SF_VP:
+      brw_dump_sf_viewport( data );
+      break;
+   case BRW_DATA_GS_SF_UNIT:
+      brw_dump_sf_unit_state( data );
+      break;
+   case BRW_DATA_GS_VS_UNIT:
+      brw_dump_vs_unit_state( data );
+      break;
+   case BRW_DATA_GS_VS_PROG:
+      /* disassem */
+      break;
+   case BRW_DATA_GS_GS_UNIT:
+      brw_dump_gs_unit_state( data );
+      break;
+   case BRW_DATA_GS_GS_PROG:
+      /* disassem */
+      break;
+   case BRW_DATA_GS_CLIP_VP:
+      brw_dump_clipper_viewport( data );
+      break;
+   case BRW_DATA_GS_CLIP_UNIT:
+      brw_dump_clip_unit_state( data );
+      break;
+   case BRW_DATA_GS_CLIP_PROG:
+      break;
+   case BRW_DATA_SS_SURFACE:
+      brw_dump_surface_state( data );
+      break;
+   case BRW_DATA_SS_SURF_BIND:
+      break;
+   case BRW_DATA_OTHER:
+      break;
+   default:
+      assert(0);
+      break;
+   }
 
    memcpy(buf->virtual + offset, data, size);
    return 0;
