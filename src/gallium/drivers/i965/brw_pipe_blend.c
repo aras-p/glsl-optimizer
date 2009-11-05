@@ -146,10 +146,10 @@ static void *brw_create_blend_state( struct pipe_context *pipe,
 
    /* Per-surface color mask -- just follow global state:
     */
-   blend->ss0.writedisable_red   = (templ->colormask & PIPE_MASK_R) ? 1 : 0;
-   blend->ss0.writedisable_green = (templ->colormask & PIPE_MASK_G) ? 1 : 0;
-   blend->ss0.writedisable_blue  = (templ->colormask & PIPE_MASK_B) ? 1 : 0;
-   blend->ss0.writedisable_alpha = (templ->colormask & PIPE_MASK_A) ? 1 : 0;
+   blend->ss0.writedisable_red   = (templ->colormask & PIPE_MASK_R) ? 0 : 1;
+   blend->ss0.writedisable_green = (templ->colormask & PIPE_MASK_G) ? 0 : 1;
+   blend->ss0.writedisable_blue  = (templ->colormask & PIPE_MASK_B) ? 0 : 1;
+   blend->ss0.writedisable_alpha = (templ->colormask & PIPE_MASK_A) ? 0 : 1;
 
    return (void *)blend;
 }
