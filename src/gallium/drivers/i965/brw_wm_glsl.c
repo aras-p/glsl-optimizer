@@ -2003,9 +2003,7 @@ static void brw_wm_emit_branching_shader(struct brw_context *brw, struct brw_wm_
 
     if (BRW_DEBUG & DEBUG_WM) {
       debug_printf("wm-native:\n");
-      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i]);
-      debug_printf("\n");
+      brw_disasm(stderr, p->store, p->nr_insn);
     }
 }
 

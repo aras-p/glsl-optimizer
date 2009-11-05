@@ -1627,8 +1627,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
       int i;
 
       debug_printf("vs-native:\n");
-      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i]);
-      debug_printf("\n");
+      brw_disasm(stderr, p->store, p->nr_insn);
    }
 }

@@ -455,7 +455,7 @@ static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
     return err;
 }
 
-static int dest (FILE *file, struct brw_instruction *inst)
+static int dest (FILE *file, const struct brw_instruction *inst)
 {
     int	err = 0;
 
@@ -621,7 +621,7 @@ static int src_da16 (FILE *file,
 }
 
 
-static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
+static int imm (FILE *file, GLuint type, const struct brw_instruction *inst) {
     switch (type) {
     case BRW_REGISTER_TYPE_UD:
 	format (file, "0x%08xUD", inst->bits3.ud);
@@ -650,7 +650,7 @@ static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
     return 0;
 }
 
-static int src0 (FILE *file, struct brw_instruction *inst)
+static int src0 (FILE *file, const struct brw_instruction *inst)
 {
     if (inst->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE)
 	return imm (file, inst->bits1.da1.src0_reg_type,
@@ -710,7 +710,7 @@ static int src0 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-static int src1 (FILE *file, struct brw_instruction *inst)
+static int src1 (FILE *file, const struct brw_instruction *inst)
 {
     if (inst->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE)
 	return imm (file, inst->bits1.da1.src1_reg_type,
@@ -770,7 +770,7 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-int brw_disasm (FILE *file, struct brw_instruction *inst)
+static int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 {
     int	err = 0;
     int space = 0;
@@ -900,3 +900,21 @@ int brw_disasm (FILE *file, struct brw_instruction *inst)
     newline (file);
     return err;
 }
+
+
+int brw_disasm (FILE *file, 
+                const struct brw_instruction *inst,
+                unsigned count)
+{
+   int i, err;
+
+   for (i = 0; i < count; i++) {
+      err = brw_disasm_insn(stderr, &inst[i]);
+      if (err)
+         return err;
+   }
+
+   fprintf(file, "\n");
+   return 0;
+}
+

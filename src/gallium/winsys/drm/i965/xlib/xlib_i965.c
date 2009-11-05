@@ -47,7 +47,9 @@
 
 #define MAX_VRAM (128*1024*1024)
 
-extern int brw_disasm (FILE *file, struct brw_instruction *inst);
+extern int brw_disasm (FILE *file, 
+                       const struct brw_instruction *inst,
+                       unsigned count );
 
 struct xlib_brw_buffer
 {
@@ -236,7 +238,11 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_cc_unit_state( data );
       break;
    case BRW_DATA_GS_WM_PROG:
-      brw_disasm( stderr, data ); /* disassem */
+   case BRW_DATA_GS_SF_PROG:
+   case BRW_DATA_GS_VS_PROG:
+   case BRW_DATA_GS_GS_PROG:
+   case BRW_DATA_GS_CLIP_PROG:
+      brw_disasm( stderr, data, size / sizeof(struct brw_instruction) );
       break;
    case BRW_DATA_GS_SAMPLER_DEFAULT_COLOR:
       brw_dump_sampler_default_color( data );
@@ -247,9 +253,6 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    case BRW_DATA_GS_WM_UNIT:
       brw_dump_wm_unit_state( data );
       break;
-   case BRW_DATA_GS_SF_PROG:
-      brw_disasm( stderr, data ); /* disassem */
-      break;
    case BRW_DATA_GS_SF_VP:
       brw_dump_sf_viewport( data );
       break;
@@ -259,23 +262,14 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    case BRW_DATA_GS_VS_UNIT:
       brw_dump_vs_unit_state( data );
       break;
-   case BRW_DATA_GS_VS_PROG:
-      brw_disasm( stderr, data ); /* disassem */
-      break;
    case BRW_DATA_GS_GS_UNIT:
       brw_dump_gs_unit_state( data );
-      break;
-   case BRW_DATA_GS_GS_PROG:
-      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_GS_CLIP_VP:
       brw_dump_clipper_viewport( data );
       break;
    case BRW_DATA_GS_CLIP_UNIT:
       brw_dump_clip_unit_state( data );
-      break;
-   case BRW_DATA_GS_CLIP_PROG:
-      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_SS_SURFACE:
       brw_dump_surface_state( data );

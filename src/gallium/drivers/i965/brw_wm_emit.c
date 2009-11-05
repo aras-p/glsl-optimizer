@@ -1512,11 +1512,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
    }
 
    if (BRW_DEBUG & DEBUG_WM) {
-      int i;
-
       debug_printf("wm-native:\n");
-      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i]);
-      debug_printf("\n");
+      brw_disasm(stderr, p->store, p->nr_insn);
    }
 }
