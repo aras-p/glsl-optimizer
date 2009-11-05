@@ -1392,7 +1392,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24;
    }
 
-   r->pipe->clear(r->pipe, 1, a, 1, 0);
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
    pipe_surface_reference(&r->fb_state.cbufs[0], NULL);
 
