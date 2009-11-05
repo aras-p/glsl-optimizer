@@ -41,7 +41,6 @@ C_SOURCES = \
 	brw_sf_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \
-	brw_state_dump.c \
 	brw_state_upload.c \
 	brw_structs_dump.c \
 	brw_swtnl.c \
