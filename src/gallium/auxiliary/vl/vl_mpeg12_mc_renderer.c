@@ -721,6 +721,11 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->viewport.translate[2] = 0;
    r->viewport.translate[3] = 0;
 
+   r->scissor.maxx = r->pot_buffers ?
+      util_next_power_of_two(r->picture_width) : r->picture_width;
+   r->scissor.maxy = r->pot_buffers ?
+      util_next_power_of_two(r->picture_height) : r->picture_height;
+
    r->fb_state.width = r->pot_buffers ?
       util_next_power_of_two(r->picture_width) : r->picture_width;
    r->fb_state.height = r->pot_buffers ?
@@ -1270,6 +1275,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
+   r->pipe->set_scissor_state(r->pipe, &r->scissor);
 
    vs_consts = pipe_buffer_map
    (
@@ -1386,6 +1392,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 24;
    }
 
+   r->pipe->clear(r->pipe, 1, a, 1, 0);
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
    pipe_surface_reference(&r->fb_state.cbufs[0], NULL);
 

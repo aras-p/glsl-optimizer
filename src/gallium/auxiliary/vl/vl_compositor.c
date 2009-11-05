@@ -473,8 +473,12 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->viewport.translate[2] = 0;
    compositor->viewport.translate[3] = 0;
 
+   compositor->scissor.maxx = compositor->fb_state.width;
+   compositor->scissor.maxy = compositor->fb_state.height;
+
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
+   compositor->pipe->set_scissor_state(compositor->pipe, &compositor->scissor);
    compositor->pipe->bind_sampler_states(compositor->pipe, 1, &compositor->sampler);
    compositor->pipe->set_sampler_textures(compositor->pipe, 1, &src_surface);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
