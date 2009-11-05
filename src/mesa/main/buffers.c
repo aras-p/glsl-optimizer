@@ -424,9 +424,10 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       while (buf < ctx->Const.MaxDrawBuffers) {
          if (fb->_ColorDrawBufferIndexes[buf] != -1) {
             fb->_ColorDrawBufferIndexes[buf] = -1;
-            buf++;
+            newState = GL_TRUE;
          }
          fb->ColorDrawBuffer[buf] = GL_NONE;
+         buf++;
       }
       fb->_NumColorDrawBuffers = count;
    }
