@@ -243,7 +243,7 @@ static void nv10_init_hwctx(struct nv10_context *nv10)
 	OUT_RING  (0.0);
 	OUT_RINGf  (16777216.0);
 
-	BEGIN_RING(celsius, NV10TCL_VIEWPORT_SCALE_X, 4);
+	BEGIN_RING(celsius, NV10TCL_VIEWPORT_TRANSLATE_X, 4);
 	OUT_RINGf  (-2048.0);
 	OUT_RINGf  (-2048.0);
 	OUT_RINGf  (16777215.0 * 0.5);

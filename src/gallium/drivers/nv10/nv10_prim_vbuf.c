@@ -69,9 +69,9 @@ void nv10_vtxbuf_bind( struct nv10_context* nv10 )
 {
 	int i;
 	for(i = 0; i < 8; i++) {
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
+		BEGIN_RING(celsius, NV10TCL_VTXBUF_ADDRESS(i), 1);
 		OUT_RING(0/*nv10->vtxbuf*/);
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
+		BEGIN_RING(celsius, NV10TCL_VTXFMT(i), 1);
 		OUT_RING(0/*XXX*/);
 	}
 }
