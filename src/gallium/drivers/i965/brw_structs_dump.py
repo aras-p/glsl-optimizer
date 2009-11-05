@@ -40,6 +40,7 @@ copyright = '''
 
 import os
 import sys
+import re
 
 from pygccxml import parser
 from pygccxml import declarations
@@ -51,6 +52,11 @@ from pygccxml.declarations import type_visitor
 
 
 enums = True
+
+
+def vars_filter(variable):
+    name = variable.name
+    return not re.match('^pad\d*', name) and name != 'dword' 
 
 
 class decl_dumper_t(decl_visitor.decl_visitor_t):
@@ -69,7 +75,8 @@ class decl_dumper_t(decl_visitor.decl_visitor_t):
         assert self.decl.class_type in ('struct', 'union')
 
         for variable in class_.variables(recursive = False):
-            dump_type(self.stream, self._instance + '.' + variable.name, variable.type)
+            if vars_filter(variable):
+                dump_type(self.stream, self._instance + '.' + variable.name, variable.type)
 
     def visit_enumeration(self):
         if enums:
