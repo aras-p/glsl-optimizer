@@ -172,6 +172,7 @@ vbo_exec_bind_arrays( GLcontext *ctx )
          exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
+         ASSERT(attr + 16 < Elements(exec->vtx.inputs));
          exec->vtx.inputs[attr + 16] = &vbo->mat_currval[attr];
       }
       map = vbo->map_vp_none;
@@ -184,6 +185,7 @@ vbo_exec_bind_arrays( GLcontext *ctx )
        */
       for (attr = 0; attr < 16; attr++) {
          exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
+         ASSERT(attr + 16 < Elements(exec->vtx.inputs));
          exec->vtx.inputs[attr + 16] = &vbo->generic_currval[attr];
       }
       map = vbo->map_vp_arb;
@@ -212,6 +214,8 @@ vbo_exec_bind_arrays( GLcontext *ctx )
 
       if (exec->vtx.attrsz[src]) {
          /* override the default array set above */
+         ASSERT(attr < Elements(exec->vtx.inputs));
+         ASSERT(attr < Elements(exec->vtx.arrays)); /* arrays[] */
          exec->vtx.inputs[attr] = &arrays[attr];
 
          if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
