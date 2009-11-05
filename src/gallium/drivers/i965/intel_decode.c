@@ -70,7 +70,7 @@ int_as_float(uint32_t intval)
 }
 
 static void
-instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
+instr_out(const uint32_t *data, uint32_t hw_offset, unsigned int index,
 	  char *fmt, ...)
 {
     va_list va;
@@ -84,7 +84,7 @@ instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
 
 
 static int
-decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_mi(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode;
 
@@ -149,7 +149,7 @@ decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 }
 
 static int
-decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_2d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode, len;
     char *format = NULL;
@@ -306,7 +306,7 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 }
 
 static int
-decode_3d_1c(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_3d_1c(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     switch ((data[0] & 0x00f80000) >> 19) {
     case 0x11:
@@ -333,7 +333,7 @@ decode_3d_1c(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
 /** Sets the string dstname to describe the destination of the PS instruction */
 static void
-i915_get_instruction_dst(uint32_t *data, int i, char *dstname, int do_mask)
+i915_get_instruction_dst(const uint32_t *data, int i, char *dstname, int do_mask)
 {
     uint32_t a0 = data[i];
     int dst_nr = (a0 >> 14) & 0xf;
@@ -466,7 +466,7 @@ i915_get_instruction_src_name(uint32_t src_type, uint32_t src_nr, char *name)
 }
 
 static void
-i915_get_instruction_src0(uint32_t *data, int i, char *srcname)
+i915_get_instruction_src0(const uint32_t *data, int i, char *srcname)
 {
     uint32_t a0 = data[i];
     uint32_t a1 = data[i + 1];
@@ -484,7 +484,7 @@ i915_get_instruction_src0(uint32_t *data, int i, char *srcname)
 }
 
 static void
-i915_get_instruction_src1(uint32_t *data, int i, char *srcname)
+i915_get_instruction_src1(const uint32_t *data, int i, char *srcname)
 {
     uint32_t a1 = data[i + 1];
     uint32_t a2 = data[i + 2];
@@ -502,7 +502,7 @@ i915_get_instruction_src1(uint32_t *data, int i, char *srcname)
 }
 
 static void
-i915_get_instruction_src2(uint32_t *data, int i, char *srcname)
+i915_get_instruction_src2(const uint32_t *data, int i, char *srcname)
 {
     uint32_t a2 = data[i + 2];
     int src_nr = (a2 >> 16) & 0x1f;
@@ -559,7 +559,7 @@ i915_get_instruction_addr(uint32_t src_type, uint32_t src_nr, char *name)
 }
 
 static void
-i915_decode_alu1(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu1(const uint32_t *data, uint32_t hw_offset,
 		 int i, char *instr_prefix, char *op_name)
 {
     char dst[100], src0[100];
@@ -574,7 +574,7 @@ i915_decode_alu1(uint32_t *data, uint32_t hw_offset,
 }
 
 static void
-i915_decode_alu2(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu2(const uint32_t *data, uint32_t hw_offset,
 		 int i, char *instr_prefix, char *op_name)
 {
     char dst[100], src0[100], src1[100];
@@ -590,7 +590,7 @@ i915_decode_alu2(uint32_t *data, uint32_t hw_offset,
 }
 
 static void
-i915_decode_alu3(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu3(const uint32_t *data, uint32_t hw_offset,
 		 int i, char *instr_prefix, char *op_name)
 {
     char dst[100], src0[100], src1[100], src2[100];
@@ -607,7 +607,7 @@ i915_decode_alu3(uint32_t *data, uint32_t hw_offset,
 }
 
 static void
-i915_decode_tex(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix,
+i915_decode_tex(const uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix,
 		char *tex_name)
 {
     uint32_t t0 = data[i];
@@ -629,7 +629,7 @@ i915_decode_tex(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix,
 }
 
 static void
-i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
+i915_decode_dcl(const uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
 {
     uint32_t d0 = data[i];
     char *sampletype;
@@ -710,7 +710,7 @@ i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
 }
 
 static void
-i915_decode_instruction(uint32_t *data, uint32_t hw_offset,
+i915_decode_instruction(const uint32_t *data, uint32_t hw_offset,
 			int i, char *instr_prefix)
 {
     switch ((data[i] >> 24) & 0x1f) {
@@ -800,7 +800,7 @@ i915_decode_instruction(uint32_t *data, uint32_t hw_offset,
 }
 
 static int
-decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i830)
+decode_3d_1d(const uint32_t *data, int count, uint32_t hw_offset, int *failures, int i830)
 {
     unsigned int len, i, c, opcode, word, map, sampler, instr;
     char *format;
@@ -1073,7 +1073,7 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
 }
 
 static int
-decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
+decode_3d_primitive(const uint32_t *data, int count, uint32_t hw_offset,
 		    int *failures)
 {
     char immediate = (data[0] & (1 << 23)) == 0;
@@ -1260,7 +1260,7 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 }
 
 static int
-decode_3d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_3d(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode;
 
@@ -1406,7 +1406,7 @@ get_965_prim_type(uint32_t data)
 }
 
 static int
-decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_3d_965(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode, len;
     int i;
@@ -1667,7 +1667,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 }
 
 static int
-decode_3d_i830(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+decode_3d_i830(const uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode;
 
@@ -1741,7 +1741,7 @@ decode_3d_i830(uint32_t *data, int count, uint32_t hw_offset, int *failures)
  * \param hw_offset hardware address for the buffer
  */
 int
-intel_decode(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid)
+intel_decode(const uint32_t *data, int count, uint32_t hw_offset, uint32_t devid)
 {
     int index = 0;
     int failures = 0;
