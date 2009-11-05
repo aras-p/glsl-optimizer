@@ -115,7 +115,8 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
     */
    if ((intelObj->base.MinFilter == GL_NEAREST ||
         intelObj->base.MinFilter == GL_LINEAR) &&
-       intelImage->level == firstLevel) {
+       intelImage->level == firstLevel &&
+       (intel->gen < 4 || firstLevel == 0)) {
       lastLevel = firstLevel;
    }
    else {
@@ -733,17 +734,16 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
+   GLcontext *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
    struct intel_texture_image *intelImage;
    struct intel_mipmap_tree *mt;
    struct intel_renderbuffer *rb;
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    int level = 0, internalFormat;
 
-   texUnit = &intel->ctx.Texture.Unit[intel->ctx.Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(&intel->ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    intelObj = intel_texture_object(texObj);
 
    if (!intelObj)
