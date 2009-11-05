@@ -41,7 +41,7 @@
 
 static enum pipe_error upload_sf_vp(struct brw_context *brw)
 {
-   const struct pipe_viewport_state *vp = &brw->curr.vp;
+   const struct pipe_viewport_state *vp = &brw->curr.viewport;
    const struct pipe_scissor_state *scissor = &brw->curr.scissor;
    struct brw_sf_viewport sfv;
    enum pipe_error ret;

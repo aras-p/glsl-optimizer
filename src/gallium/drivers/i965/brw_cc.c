@@ -66,7 +66,7 @@ static enum pipe_error prepare_cc_vp( struct brw_context *brw )
    memset(&ccv, 0, sizeof(ccv));
 
    /* PIPE_NEW_VIEWPORT */
-   calc_sane_viewport( &brw->curr.vp, &svp );
+   calc_sane_viewport( &brw->curr.viewport, &svp );
 
    ccv.min_depth = svp.near;
    ccv.max_depth = svp.far;

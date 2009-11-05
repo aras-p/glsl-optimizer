@@ -514,17 +514,14 @@ struct brw_context
       unsigned num_vertex_buffers;
 
       struct pipe_scissor_state scissor;
+      struct pipe_viewport_state viewport;
       struct pipe_framebuffer_state fb;
-      struct pipe_viewport_state vp;
       struct pipe_clip_state ucp;
       struct pipe_buffer *vertex_constants;
       struct pipe_buffer *fragment_constants;
 
-      struct pipe_viewport_state viewport;
       struct brw_blend_constant_color bcc;
       struct brw_polygon_stipple bps;
-
-      
 
       /**
        * Index buffer for this draw_prims call.
