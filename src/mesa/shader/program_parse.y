@@ -291,6 +291,8 @@ option: OPTION IDENTIFIER ';'
 	   }
 
 
+	   free($2);
+
 	   if (!valid) {
 	      const char *const err_str = (state->mode == ARB_vertex)
 		 ? "invalid ARB vertex program option"
@@ -591,12 +593,17 @@ extSwizSel: INTEGER
 	}
 	| IDENTIFIER
 	{
+	   char s;
+
 	   if (strlen($1) > 1) {
 	      yyerror(& @1, state, "invalid extended swizzle selector");
 	      YYERROR;
 	   }
 
-	   switch ($1[0]) {
+	   s = $1[0];
+	   free($1);
+
+	   switch (s) {
 	   case 'x':
 	      $$.swz = SWIZZLE_X;
 	      $$.xyzw_valid = 1;
@@ -643,6 +650,8 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
@@ -734,6 +743,8 @@ dstReg: resultBinding
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
 
+	   free($1);
+
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
 	      YYERROR;
@@ -764,6 +775,8 @@ progParamArray: IDENTIFIER
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
@@ -832,6 +845,8 @@ addrReg: IDENTIFIER
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
 
+	   free($1);
+
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid array member");
 	      YYERROR;
@@ -894,6 +909,7 @@ ATTRIB_statement: ATTRIB IDENTIFIER '=' attribBinding
 	      declare_variable(state, $2, at_attrib, & @2);
 
 	   if (s == NULL) {
+	      free($2);
 	      YYERROR;
 	   } else {
 	      s->attrib_binding = $4;
@@ -1001,6 +1017,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	      declare_variable(state, $2, at_param, & @2);
 
 	   if (s == NULL) {
+	      free($2);
 	      YYERROR;
 	   } else {
 	      s->param_binding_type = $3.param_binding_type;
@@ -1014,6 +1031,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 	{
 	   if (($4 != 0) && ((unsigned) $4 != $6.param_binding_length)) {
+	      free($2);
 	      yyerror(& @4, state, 
 		      "parameter array size and number of bindings must match");
 	      YYERROR;
@@ -1022,6 +1040,7 @@ PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 		 declare_variable(state, $2, $6.type, & @2);
 
 	      if (s == NULL) {
+		 free($2);
 		 YYERROR;
 	      } else {
 		 s->param_binding_type = $6.param_binding_type;
@@ -1717,12 +1736,14 @@ ADDRESS_statement: ADDRESS { $<integer>$ = $1; } varNameList
 varNameList: varNameList ',' IDENTIFIER
 	{
 	   if (!declare_variable(state, $3, $<integer>0, & @3)) {
+	      free($3);
 	      YYERROR;
 	   }
 	}
 	| IDENTIFIER
 	{
 	   if (!declare_variable(state, $1, $<integer>0, & @1)) {
+	      free($1);
 	      YYERROR;
 	   }
 	}
@@ -1734,6 +1755,7 @@ OUTPUT_statement: OUTPUT IDENTIFIER '=' resultBinding
 	      declare_variable(state, $2, at_output, & @2);
 
 	   if (s == NULL) {
+	      free($2);
 	      YYERROR;
 	   } else {
 	      s->output_binding = $4;
@@ -1911,10 +1933,14 @@ ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
 	      _mesa_symbol_table_find_symbol(state->st, 0, $4);
 
 
+	   free($4);
+
 	   if (exist != NULL) {
+	      free($2);
 	      yyerror(& @2, state, "redeclared identifier");
 	      YYERROR;
 	   } else if (target == NULL) {
+	      free($2);
 	      yyerror(& @4, state,
 		      "undefined variable binding in ALIAS statement");
 	      YYERROR;
