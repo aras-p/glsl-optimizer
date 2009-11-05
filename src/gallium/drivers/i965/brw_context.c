@@ -85,12 +85,12 @@ static void brw_destroy_context( struct pipe_context *pipe )
    bo_reference(&brw->sf.state_bo, NULL);
    bo_reference(&brw->sf.vp_bo, NULL);
 
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
+   for (i = 0; i < Elements(brw->wm.sdc_bo); i++)
       bo_reference(&brw->wm.sdc_bo[i], NULL);
 
    bo_reference(&brw->wm.bind_bo, NULL);
 
-   for (i = 0; i < BRW_WM_MAX_SURF; i++)
+   for (i = 0; i < Elements(brw->wm.surf_bo); i++)
       bo_reference(&brw->wm.surf_bo[i], NULL);
 
    bo_reference(&brw->wm.sampler_bo, NULL);
