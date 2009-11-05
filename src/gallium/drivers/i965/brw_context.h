@@ -705,7 +705,7 @@ struct brw_context
 
       /** Binding table of pointers to surf_bo entries */
       struct brw_winsys_buffer *bind_bo;
-      struct brw_winsys_buffer *surf_bo[PIPE_MAX_COLOR_BUFS];
+      struct brw_winsys_buffer *surf_bo[BRW_WM_MAX_SURF];
 
       struct brw_winsys_buffer *prog_bo;
       struct brw_winsys_buffer *state_bo;
