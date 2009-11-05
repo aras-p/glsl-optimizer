@@ -35,7 +35,6 @@
 #include "brw_structs.h"
 #include "intel_decode.h"
 
-#define USE_MALLOC_BUFFER 1
 #define ALWAYS_EMIT_MI_FLUSH 1
 
 enum pipe_error
@@ -50,14 +49,18 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
    if (ret)
       return ret;
 
-   if (batch->malloc_buffer)
-      batch->map = batch->malloc_buffer;
-   else 
-      batch->map = batch->sws->bo_map(batch->buf,
-                                      BRW_DATA_BATCH_BUFFER,
-                                      GL_TRUE);
-
    batch->size = BRW_BATCH_SIZE;
+
+   /* With map_range semantics, the winsys can decide whether to
+    * inject a malloc'ed bounce buffer instead of mapping directly.
+    */
+   batch->map = batch->sws->bo_map(batch->buf,
+                                   BRW_DATA_BATCH_BUFFER,
+                                   0, batch->size,
+                                   GL_TRUE,
+                                   GL_TRUE,
+                                   GL_TRUE);
+
    batch->ptr = batch->map;
    return PIPE_OK;
 }
@@ -67,11 +70,6 @@ brw_batchbuffer_alloc(struct brw_winsys_screen *sws,
                       struct brw_chipset chipset)
 {
    struct brw_batchbuffer *batch = CALLOC_STRUCT(brw_batchbuffer);
-
-   batch->use_malloc_buffer = USE_MALLOC_BUFFER;
-   if (batch->use_malloc_buffer) {
-      batch->malloc_buffer = MALLOC(BRW_BATCH_SIZE);
-   }
 
    batch->sws = sws;
    batch->chipset = chipset;
@@ -83,11 +81,7 @@ brw_batchbuffer_alloc(struct brw_winsys_screen *sws,
 void
 brw_batchbuffer_free(struct brw_batchbuffer *batch)
 {
-   if (batch->malloc_buffer) {
-      FREE(batch->malloc_buffer);
-      batch->map = NULL;
-   }
-   else if (batch->map) {
+   if (batch->map) {
       batch->sws->bo_unmap(batch->buf);
       batch->map = NULL;
    }
@@ -134,18 +128,9 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
    batch->ptr += 4;
    used = batch->ptr - batch->map;
 
-   if (batch->use_malloc_buffer) {
-      batch->sws->bo_subdata(batch->buf, 
-                             BRW_DATA_BATCH_BUFFER,
-                             0, used,
-                             batch->map );
-      batch->map = NULL;
-   }
-   else {
-      batch->sws->bo_unmap(batch->buf);
-      batch->map = NULL;
-   }
-
+   batch->sws->bo_flush_range(batch->buf, 0, used);
+   batch->sws->bo_unmap(batch->buf);
+   batch->map = NULL;
    batch->ptr = NULL;
       
    batch->sws->bo_exec(batch->buf, used );

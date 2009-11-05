@@ -12,6 +12,29 @@
 
 
 static void *
+brw_buffer_map_range( struct pipe_screen *screen,
+                      struct pipe_buffer *buffer,
+                      unsigned offset,
+                      unsigned length,
+                      unsigned usage )
+{
+   struct brw_screen *bscreen = brw_screen(screen); 
+   struct brw_winsys_screen *sws = bscreen->sws;
+   struct brw_buffer *buf = brw_buffer( buffer );
+
+   if (buf->user_buffer)
+      return buf->user_buffer;
+
+   return sws->bo_map( buf->bo, 
+                       BRW_DATA_OTHER,
+                       offset,
+                       length,
+                       (usage & PIPE_BUFFER_USAGE_CPU_WRITE) ? TRUE : FALSE,
+                       (usage & PIPE_BUFFER_USAGE_DISCARD) ? TRUE : FALSE,
+                       (usage & PIPE_BUFFER_USAGE_FLUSH_EXPLICIT) ? TRUE : FALSE);
+}
+
+static void *
 brw_buffer_map( struct pipe_screen *screen,
                 struct pipe_buffer *buffer,
                 unsigned usage )
@@ -25,8 +48,32 @@ brw_buffer_map( struct pipe_screen *screen,
 
    return sws->bo_map( buf->bo, 
                        BRW_DATA_OTHER,
-                       (usage & PIPE_BUFFER_USAGE_CPU_WRITE) ? TRUE : FALSE );
+                       0,
+                       buf->base.size,
+                       (usage & PIPE_BUFFER_USAGE_CPU_WRITE) ? TRUE : FALSE,
+                       FALSE,
+                       FALSE);
 }
+
+
+static void 
+brw_buffer_flush_mapped_range( struct pipe_screen *screen,
+                               struct pipe_buffer *buffer,
+                               unsigned offset,
+                               unsigned length )
+{
+   struct brw_screen *bscreen = brw_screen(screen); 
+   struct brw_winsys_screen *sws = bscreen->sws;
+   struct brw_buffer *buf = brw_buffer( buffer );
+
+   if (buf->user_buffer)
+      return;
+
+   sws->bo_flush_range( buf->bo, 
+                        offset,
+                        length );
+}
+
 
 static void 
 brw_buffer_unmap( struct pipe_screen *screen,
@@ -148,6 +195,8 @@ void brw_screen_buffer_init(struct brw_screen *brw_screen)
    brw_screen->base.buffer_create = brw_buffer_create;
    brw_screen->base.user_buffer_create = brw_user_buffer_create;
    brw_screen->base.buffer_map = brw_buffer_map;
+   brw_screen->base.buffer_map_range = brw_buffer_map_range;
+   brw_screen->base.buffer_flush_mapped_range = brw_buffer_flush_mapped_range;
    brw_screen->base.buffer_unmap = brw_buffer_unmap;
    brw_screen->base.buffer_destroy = brw_buffer_destroy;
 }

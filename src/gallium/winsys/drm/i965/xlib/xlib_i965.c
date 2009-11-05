@@ -350,7 +350,11 @@ xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
 static void *
 xlib_brw_bo_map(struct brw_winsys_buffer *buffer,
                 enum brw_buffer_data_type data_type,
-                boolean write)
+                unsigned offset,
+                unsigned length,
+                boolean write,
+                boolean discard,
+                boolean explicit)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
@@ -364,6 +368,15 @@ xlib_brw_bo_map(struct brw_winsys_buffer *buffer,
    buf->map_count++;
    return buf->virtual;
 }
+
+
+static void
+xlib_brw_bo_flush_range( struct brw_winsys_buffer *buffer,
+                         unsigned offset,
+                         unsigned length )
+{
+}
+
 
 static void 
 xlib_brw_bo_unmap(struct brw_winsys_buffer *buffer)
@@ -380,7 +393,8 @@ xlib_brw_bo_unmap(struct brw_winsys_buffer *buffer)
 
       buf->modified = 0;
       
-      /* Consider dumping new buffer contents here.
+      /* Consider dumping new buffer contents here, using the
+       * flush-range info to minimize verbosity.
        */
    }
 }
@@ -421,6 +435,7 @@ xlib_create_brw_winsys_screen( void )
    ws->base.bo_references        = xlib_brw_bo_references;
    ws->base.check_aperture_space = xlib_brw_check_aperture_space;
    ws->base.bo_map               = xlib_brw_bo_map;
+   ws->base.bo_flush_range       = xlib_brw_bo_flush_range;
    ws->base.bo_unmap             = xlib_brw_bo_unmap;
    ws->base.bo_wait_idle         = xlib_brw_bo_wait_idle;
 

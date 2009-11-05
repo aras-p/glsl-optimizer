@@ -28,15 +28,6 @@ struct brw_batchbuffer {
    struct brw_winsys_buffer *buf;
    struct brw_chipset chipset;
 
-   /* Main-memory copy of the batch-buffer, built up incrementally &
-    * then copied as one to the true buffer.
-    *
-    * XXX: is this still necessary?
-    * XXX: if so, can this be hidden inside the GEM-specific winsys code?
-    */
-   boolean use_malloc_buffer;
-   uint8_t *malloc_buffer;
-
    /**
     * Values exported to speed up the writing the batchbuffer,
     * instead of having to go trough a accesor function for

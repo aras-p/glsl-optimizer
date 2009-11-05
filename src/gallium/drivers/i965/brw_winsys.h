@@ -169,7 +169,15 @@ struct brw_winsys_screen {
     */
    void *(*bo_map)(struct brw_winsys_buffer *buffer,
                    enum brw_buffer_data_type data_type,
-		   boolean write);
+                   unsigned offset,
+                   unsigned length,
+                   boolean write,
+                   boolean discard,
+                   boolean flush_explicit );
+
+   void (*bo_flush_range)( struct brw_winsys_buffer *buffer,
+                           unsigned offset,
+                           unsigned length );
 
    /**
     * Unmap a buffer.
@@ -189,6 +197,14 @@ struct brw_winsys_screen {
    void (*destroy)(struct brw_winsys_screen *iws);
 };
 
+static INLINE void *
+bo_map_read( struct brw_winsys_screen *sws, struct brw_winsys_buffer *buf )
+{
+   return sws->bo_map( buf,
+                       BRW_DATA_OTHER,
+                       0, buf->size,
+                       FALSE, FALSE, FALSE );
+}
 
 static INLINE void
 bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
