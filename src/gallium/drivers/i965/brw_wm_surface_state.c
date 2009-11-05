@@ -130,7 +130,7 @@ brw_update_render_surface(struct brw_context *brw,
        */
    ret = brw->sws->bo_emit_reloc(*bo_out,
                                  BRW_USAGE_RENDER_TARGET,
-                                 ss.ss1.base_addr - surface->bo->offset[0], /* XXX */
+                                 0,
                                  offsetof(struct brw_surface_state, ss1),
                                  surface->bo);
    if (ret)
@@ -167,8 +167,11 @@ brw_wm_get_binding_table(struct brw_context *brw,
                         bo_out))
       return PIPE_OK;
 
+   /* Upload zero data, will all be overwitten with relocation
+    * offsets:
+    */
    for (i = 0; i < brw->wm.nr_surfaces; i++)
-      data[i] = brw->wm.surf_bo[i]->offset[0];
+      data[i] = 0;
 
    ret = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
                            NULL, 0,

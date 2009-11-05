@@ -142,7 +142,7 @@ cc_unit_create_from_key(struct brw_context *brw,
    cc.cc3 = key->cc3;
 
    /* CACHE_NEW_CC_VP */
-   cc.cc4.cc_viewport_state_offset = *(brw->cc.vp_bo->offset) >> 5; /* reloc */
+   cc.cc4.cc_viewport_state_offset = 0;
 
    cc.cc5 = key->cc5;
    cc.cc6 = key->cc6;

@@ -87,7 +87,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 
       entry->ss0 = sampler->ss0;
       entry->ss1 = sampler->ss1;
-      entry->ss2.default_color_pointer = brw->wm.sdc_bo[i]->offset[0] >> 5; /* reloc */
+      entry->ss2.default_color_pointer = 0; /* reloc */
       entry->ss3 = sampler->ss3;
 
       /* Cube-maps on 965 and later must use the same wrap mode for all 3

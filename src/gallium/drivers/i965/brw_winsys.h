@@ -44,7 +44,6 @@ struct brw_winsys_screen;
 struct brw_winsys_buffer {
    struct pipe_reference reference;
    struct brw_winsys_screen *sws;
-   unsigned *offset;
    unsigned size;
 };
 

@@ -84,7 +84,7 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    clip.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    /* reloc */
-   clip.thread0.kernel_start_pointer = *(brw->clip.prog_bo->offset) >> 6;
+   clip.thread0.kernel_start_pointer = 0;
 
    clip.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    clip.thread1.single_program_flow = 1;

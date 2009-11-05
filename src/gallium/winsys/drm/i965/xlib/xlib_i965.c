@@ -168,7 +168,6 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
    buf->offset = align(xbw->used, alignment);
    buf->type = type;
    buf->virtual = MALLOC(size);
-   buf->base.offset = &buf->offset; /* hmm, cheesy */
    buf->base.size = size;
    buf->base.sws = sws;
 

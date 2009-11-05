@@ -211,8 +211,10 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
        /* && bscreen->use_texture_tiling */
        /* && bscreen->kernel_exec_fencing */) 
    {
-      if (bscreen->chipset.is_965 &&
-	  pf_is_depth_or_stencil(templ->format))
+      if (1)
+         tex->tiling = BRW_TILING_NONE;
+      else if (bscreen->chipset.is_965 &&
+               pf_is_depth_or_stencil(templ->format))
 	 tex->tiling = BRW_TILING_Y;
       else
 	 tex->tiling = BRW_TILING_X;
@@ -256,7 +258,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 
    /* XXX: what happens when tex->bo->offset changes???
     */
-   tex->ss.ss1.base_addr = tex->bo->offset[0]; /* reloc */
+   tex->ss.ss1.base_addr = 0; /* reloc */
    tex->ss.ss2.mip_count = tex->base.last_level;
    tex->ss.ss2.width = tex->base.width[0] - 1;
    tex->ss.ss2.height = tex->base.height[0] - 1;

@@ -142,7 +142,8 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    memset(&sf, 0, sizeof(sf));
 
    sf.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
-   sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset[0] >> 6; /* reloc */
+   /* reloc */
+   sf.thread0.kernel_start_pointer = 0;
 
    sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
@@ -175,7 +176,8 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
       sf.thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf.sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset[0] >> 5; /* reloc */
+   /* reloc */
+   sf.sf5.sf_viewport_state_offset = 0;
 
    sf.sf5.viewport_transform = 1;
 

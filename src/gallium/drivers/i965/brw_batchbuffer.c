@@ -115,7 +115,7 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
 		   file, line, used);
 
    if (ALWAYS_EMIT_MI_FLUSH) {
-      *(GLuint *) (batch->ptr) = ((MI_FLUSH << 16) | BRW_FLUSH_STATE_CACHE);
+      *(GLuint *) (batch->ptr) = MI_FLUSH | BRW_FLUSH_STATE_CACHE;
       batch->ptr += 4;
       used = batch->ptr - batch->map;
    }
@@ -192,12 +192,11 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
    if (ret != 0)
       return ret;
 
-   /*
-    * Using the old buffer offset, write in what the right data would be, in case
-    * the buffer doesn't move and we can short-circuit the relocation processing
-    * in the kernel
+   /* bo_emit_reloc was resposible for writing a zero into the
+    * batchbuffer if necessary.  Just need to update our pointer.
     */
-   brw_batchbuffer_emit_dword (batch, buffer->offset[0] + delta);
+   batch->ptr += 4;
+
    return 0;
 }
 
