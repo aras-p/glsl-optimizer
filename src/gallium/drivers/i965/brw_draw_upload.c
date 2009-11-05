@@ -426,7 +426,7 @@ static int brw_prepare_indices(struct brw_context *brw)
    if (index_buffer == NULL)
       return 0;
 
-   if (DEBUG & DEBUG_VERTS)
+   if (BRW_DEBUG & DEBUG_VERTS)
       debug_printf("%s: index_size:%d index_buffer->size:%d\n",
 		   __FUNCTION__,
 		   brw->curr.index_size,
