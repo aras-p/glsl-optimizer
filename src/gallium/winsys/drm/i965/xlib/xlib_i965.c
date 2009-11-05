@@ -47,6 +47,8 @@
 
 #define MAX_VRAM (128*1024*1024)
 
+extern int brw_disasm (FILE *file, struct brw_instruction *inst);
+
 struct xlib_brw_buffer
 {
    struct brw_winsys_buffer base;
@@ -234,7 +236,7 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_cc_unit_state( data );
       break;
    case BRW_DATA_GS_WM_PROG:
-      /* disassem */
+      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_GS_SAMPLER_DEFAULT_COLOR:
       brw_dump_sampler_default_color( data );
@@ -246,7 +248,7 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_wm_unit_state( data );
       break;
    case BRW_DATA_GS_SF_PROG:
-      /* disassem */
+      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_GS_SF_VP:
       brw_dump_sf_viewport( data );
@@ -258,13 +260,13 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_vs_unit_state( data );
       break;
    case BRW_DATA_GS_VS_PROG:
-      /* disassem */
+      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_GS_GS_UNIT:
       brw_dump_gs_unit_state( data );
       break;
    case BRW_DATA_GS_GS_PROG:
-      /* disassem */
+      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_GS_CLIP_VP:
       brw_dump_clipper_viewport( data );
@@ -273,6 +275,7 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_clip_unit_state( data );
       break;
    case BRW_DATA_GS_CLIP_PROG:
+      brw_disasm( stderr, data ); /* disassem */
       break;
    case BRW_DATA_SS_SURFACE:
       brw_dump_surface_state( data );
