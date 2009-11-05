@@ -103,19 +103,19 @@ brw_batchbuffer_emit_dword(struct brw_batchbuffer *batch, GLuint dword)
    batch->ptr += 4;
 }
 
-static INLINE boolean
+static INLINE enum pipe_error
 brw_batchbuffer_require_space(struct brw_batchbuffer *batch,
                                 GLuint sz)
 {
    assert(sz < batch->size - 8);
    if (brw_batchbuffer_space(batch) < sz) {
       assert(0);
-      return FALSE;
+      return PIPE_ERROR_OUT_OF_MEMORY;
    }
 #ifdef DEBUG
    batch->emit.end_ptr = batch->ptr + sz;
 #endif
-   return TRUE;
+   return 0;
 }
 
 /* Here are the crusty old macros, to be removed:
