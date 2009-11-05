@@ -2136,9 +2136,10 @@ ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 	   struct asm_symbol *target = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $4);
 
-
 	   if (exist != NULL) {
-	      yyerror(& @2, state, "redeclared identifier");
+	      char m[1000];
+	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
+	      yyerror(& @2, state, m);
 	      YYERROR;
 	   } else if (target == NULL) {
 	      yyerror(& @4, state,
