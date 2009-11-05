@@ -2304,10 +2304,6 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    _mesa_memcpy (strz, str, len);
    strz[len] = '\0';
 
-   if (state->prog->String != NULL) {
-      _mesa_free(state->prog->String);
-   }
-
    state->prog->String = strz;
 
    state->st = _mesa_symbol_table_ctor();
