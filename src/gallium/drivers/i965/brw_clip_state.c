@@ -75,6 +75,7 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
 static enum pipe_error
 clip_unit_create_from_key(struct brw_context *brw,
                           struct brw_clip_unit_key *key,
+                          struct brw_winsys_reloc *reloc,
                           struct brw_winsys_buffer **bo_out)
 {
    struct brw_clip_unit_state clip;
@@ -82,7 +83,6 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    memset(&clip, 0, sizeof(clip));
 
-   clip.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    /* reloc */
    clip.thread0.kernel_start_pointer = 0;
 
@@ -144,20 +144,10 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    ret = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
                           key, sizeof(*key),
-                          &brw->clip.prog_bo, 1,
+                          reloc, 1,
                           &clip, sizeof(clip),
                           NULL, NULL,
                           bo_out);
-   if (ret)
-      return ret;
-
-   /* Emit clip program relocation */
-   assert(brw->clip.prog_bo);
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 clip.thread0.grf_reg_count << 1,
-                                 offsetof(struct brw_clip_unit_state, thread0),
-                                 brw->clip.prog_bo);
    if (ret)
       return ret;
 
@@ -167,13 +157,31 @@ clip_unit_create_from_key(struct brw_context *brw,
 static int upload_clip_unit( struct brw_context *brw )
 {
    struct brw_clip_unit_key key;
+   struct brw_winsys_reloc reloc[1];
+   unsigned grf_reg_count;
    enum pipe_error ret;
 
    clip_unit_populate_key(brw, &key);
 
+   grf_reg_count = align(key.total_grf, 16) / 16 - 1;
+
+   /* clip program relocation
+    *
+    * XXX: these reloc structs are long lived and only need to be
+    * updated when the bound BO changes.  Hopefully the stuff mixed in
+    * in the delta's is non-orthogonal.
+    */
+   assert(brw->clip.prog_bo);
+   make_reloc(&reloc[0],
+              BRW_USAGE_STATE,
+              grf_reg_count << 1,
+              offsetof(struct brw_clip_unit_state, thread0),
+              brw->clip.prog_bo);
+
+
    if (brw_search_cache(&brw->cache, BRW_CLIP_UNIT,
                         &key, sizeof(key),
-                        &brw->clip.prog_bo, 1,
+                        reloc, 1,
                         NULL,
                         &brw->clip.state_bo))
       return PIPE_OK;
@@ -181,6 +189,7 @@ static int upload_clip_unit( struct brw_context *brw )
    /* Create new:
     */
    ret = clip_unit_create_from_key(brw, &key, 
+                                   reloc,
                                    &brw->clip.state_bo);
    if (ret)
       return ret;

@@ -295,7 +295,8 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 			   brw->curbe.curbe_offset,
                            BRW_DATA_OTHER,
 			   bufsz,
-			   buf);
+			   buf,
+                           NULL, 0);
    }
 
    brw_add_validated_bo(brw, brw->curbe.curbe_bo);

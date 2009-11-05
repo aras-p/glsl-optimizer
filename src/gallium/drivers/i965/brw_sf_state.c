@@ -132,8 +132,9 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 }
 
 static enum pipe_error
-sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
-			struct brw_winsys_buffer **reloc_bufs,
+sf_unit_create_from_key(struct brw_context *brw,
+                        struct brw_sf_unit_key *key,
+                        struct brw_winsys_reloc *reloc,
                         struct brw_winsys_buffer **bo_out)
 {
    struct brw_sf_unit_state sf;
@@ -141,7 +142,8 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
-   sf.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
+
+   sf.thread0.grf_reg_count = 0;
    /* reloc */
    sf.thread0.kernel_start_pointer = 0;
 
@@ -177,17 +179,9 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    /* CACHE_NEW_SF_VP */
    /* reloc */
-   sf.sf5.sf_viewport_state_offset = 0;
-
-   sf.sf5.viewport_transform = 1;
 
    if (key->scissor)
       sf.sf6.scissor = 1;
-
-   if (key->front_face == PIPE_WINDING_CCW)
-      sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
-   else
-      sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
    switch (key->cull_mode) {
    case PIPE_WINDING_CCW:
@@ -281,34 +275,13 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    ret = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
                           key, sizeof(*key),
-                          reloc_bufs, 2,
+                          reloc, 2,
                           &sf, sizeof(sf),
                           NULL, NULL,
                           bo_out);
    if (ret)
       return ret;
 
-   /* STATE_PREFETCH command description describes this state as being
-    * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
-    */
-   /* Emit SF program relocation */
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 sf.thread0.grf_reg_count << 1,
-                                 offsetof(struct brw_sf_unit_state, thread0),
-                                 brw->sf.prog_bo);
-   if (ret)
-      return ret;
-
-
-   /* Emit SF viewport relocation */
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-                                 offsetof(struct brw_sf_unit_state, sf5),
-                                 brw->sf.vp_bo);
-   if (ret)
-      return ret;
    
    return PIPE_OK;
 }
@@ -316,23 +289,47 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 static enum pipe_error upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_key key;
-   struct brw_winsys_buffer *reloc_bufs[2];
+   struct brw_winsys_reloc reloc[2];
+   unsigned total_grf;
+   unsigned viewport_transform;
+   unsigned front_winding;
    enum pipe_error ret;
 
    sf_unit_populate_key(brw, &key);
+   
+   /* XXX: cut this crap and pre calculate the key:
+    */
+   total_grf = (align(key.total_grf, 16) / 16 - 1);
+   viewport_transform = 1;
+   front_winding = (key.front_face == PIPE_WINDING_CCW ?
+                    BRW_FRONTWINDING_CCW :
+                    BRW_FRONTWINDING_CW);
 
-   reloc_bufs[0] = brw->sf.prog_bo;
-   reloc_bufs[1] = brw->sf.vp_bo;
+   /* Emit SF program relocation */
+   make_reloc(&reloc[0],
+              BRW_USAGE_STATE,
+              total_grf << 1,
+              offsetof(struct brw_sf_unit_state, thread0),
+              brw->sf.prog_bo);
+
+   /* Emit SF viewport relocation */
+   make_reloc(&reloc[1],
+              BRW_USAGE_STATE,
+              front_winding | (viewport_transform << 1),
+              offsetof(struct brw_sf_unit_state, sf5),
+              brw->sf.vp_bo);
+
 
    if (brw_search_cache(&brw->cache, BRW_SF_UNIT,
                         &key, sizeof(key),
-                        reloc_bufs, 2,
+                        reloc, 2,
                         NULL,
                         &brw->sf.state_bo))
       return PIPE_OK;
 
 
-   ret = sf_unit_create_from_key(brw, &key, reloc_bufs,
+   ret = sf_unit_create_from_key(brw, &key,
+                                 reloc,
                                  &brw->sf.state_bo);
    if (ret)
       return ret;

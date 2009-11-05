@@ -383,8 +383,8 @@ struct brw_cache_item {
    GLuint hash;
    GLuint key_size;		/* for variable-sized keys */
    const void *key;
-   struct brw_winsys_buffer **reloc_bufs;
-   GLuint nr_reloc_bufs;
+   struct brw_winsys_reloc *relocs;
+   GLuint nr_relocs;
 
    struct brw_winsys_buffer *bo;
    GLuint data_size;

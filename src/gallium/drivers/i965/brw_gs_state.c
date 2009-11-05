@@ -72,15 +72,18 @@ gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 static enum pipe_error
 gs_unit_create_from_key(struct brw_context *brw, 
                         struct brw_gs_unit_key *key,
+                        struct brw_winsys_reloc *reloc,
+                        unsigned nr_reloc,
                         struct brw_winsys_buffer **bo_out)
 {
    struct brw_gs_unit_state gs;
    enum pipe_error ret;
 
+
    memset(&gs, 0, sizeof(gs));
 
+   /* maybe-reloc: populate the background */
    gs.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
-   /* reloc */
    gs.thread0.kernel_start_pointer = 0;
 
    gs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
@@ -108,21 +111,12 @@ gs_unit_create_from_key(struct brw_context *brw,
 
    ret = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
                           key, sizeof(*key),
-                          &brw->gs.prog_bo, 1,
+                          reloc, nr_reloc,
                           &gs, sizeof(gs),
                           NULL, NULL,
                           bo_out);
    if (ret)
       return ret;
-
-   if (key->prog_active) {
-      /* Emit GS program relocation */
-      brw->sws->bo_emit_reloc(*bo_out,
-			      BRW_USAGE_STATE,
-			      gs.thread0.grf_reg_count << 1,
-			      offsetof(struct brw_gs_unit_state, thread0),
-			      brw->gs.prog_bo);
-   }
 
    return PIPE_OK;
 }
@@ -131,17 +125,33 @@ static enum pipe_error prepare_gs_unit(struct brw_context *brw)
 {
    struct brw_gs_unit_key key;
    enum pipe_error ret;
+   struct brw_winsys_reloc reloc[1];
+   unsigned nr_reloc = 0;
+   unsigned grf_reg_count;
 
    gs_unit_populate_key(brw, &key);
 
+   grf_reg_count = (align(key.total_grf, 16) / 16 - 1);
+
+   /* GS program relocation */
+   if (key.prog_active) {
+      make_reloc(&reloc[nr_reloc++],
+                 BRW_USAGE_STATE,
+                 grf_reg_count << 1,
+                 offsetof(struct brw_gs_unit_state, thread0),
+                 brw->gs.prog_bo);
+   }
+
    if (brw_search_cache(&brw->cache, BRW_GS_UNIT,
                         &key, sizeof(key),
-                        &brw->gs.prog_bo, 1,
+                        reloc, nr_reloc,
                         NULL,
                         &brw->gs.state_bo))
       return PIPE_OK;
 
-   ret = gs_unit_create_from_key(brw, &key, &brw->gs.state_bo);
+   ret = gs_unit_create_from_key(brw, &key,
+                                 reloc, nr_reloc,
+                                 &brw->gs.state_bo);
    if (ret)
       return ret;
 

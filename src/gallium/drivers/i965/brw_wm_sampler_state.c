@@ -165,6 +165,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
 static int upload_wm_samplers( struct brw_context *brw )
 {
    struct wm_sampler_key key;
+   struct brw_winsys_reloc reloc[BRW_MAX_TEX_UNIT];
    enum pipe_error ret;
    int i;
 
@@ -181,9 +182,20 @@ static int upload_wm_samplers( struct brw_context *brw )
       return PIPE_OK;
    }
 
+   /* Emit SDC relocations */
+   for (i = 0; i < key.sampler_count; i++) {
+      make_reloc( &reloc[i],
+                  BRW_USAGE_SAMPLER,
+                  0,
+                  i * sizeof(struct brw_sampler_state) +
+                  offsetof(struct brw_sampler_state, ss2),
+                  brw->wm.sdc_bo[i]);
+   }
+
+
    if (brw_search_cache(&brw->cache, BRW_SAMPLER,
                         &key, sizeof(key),
-                        brw->wm.sdc_bo, key.sampler_count,
+                        reloc, key.sampler_count,
                         NULL,
                         &brw->wm.sampler_bo))
       return PIPE_OK;
@@ -193,24 +205,13 @@ static int upload_wm_samplers( struct brw_context *brw )
     */
    ret = brw_upload_cache(&brw->cache, BRW_SAMPLER,
                           &key, sizeof(key),
-                          brw->wm.sdc_bo, key.sampler_count,
+                          reloc, key.sampler_count,
                           &key.sampler, sizeof(key.sampler),
                           NULL, NULL,
                           &brw->wm.sampler_bo);
    if (ret)
       return ret;
 
-   /* Emit SDC relocations */
-   for (i = 0; i < key.sampler_count; i++) {
-      ret = brw->sws->bo_emit_reloc(brw->wm.sampler_bo,
-                                    BRW_USAGE_SAMPLER,
-                                    0,
-                                    i * sizeof(struct brw_sampler_state) +
-                                    offsetof(struct brw_sampler_state, ss2),
-                                    brw->wm.sdc_bo[i]);
-      if (ret)
-         return ret;
-   }
 
    return 0;
 }

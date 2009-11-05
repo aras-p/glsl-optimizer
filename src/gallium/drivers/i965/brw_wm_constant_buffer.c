@@ -13,16 +13,24 @@ brw_create_constant_surface( struct brw_context *brw,
 {
    const GLint w = key->width - 1;
    struct brw_winsys_buffer *bo;
+   struct brw_winsys_reloc reloc[1];
    enum pipe_error ret;
 
+      /* Emit relocation to surface contents */
+   make_reloc(&reloc[0],
+              BRW_USAGE_SAMPLER,
+              0,
+              offsetof(struct brw_surface_state, ss1),
+              key->bo);
+
+   
    memset(&surf, 0, sizeof(surf));
 
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = BRW_SURFACE_BUFFER;
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
-   assert(key->bo);
-   surf.ss1.base_addr = key->bo->offset; /* reloc */
+   surf.ss1.base_addr = 0; /* reloc */
 
    surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
@@ -32,23 +40,12 @@ brw_create_constant_surface( struct brw_context *brw,
  
    ret = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
                           key, sizeof(*key),
-                          &key->bo, key->bo ? 1 : 0,
+                          reloc, Elements(reloc),
                           &surf, sizeof(surf),
                           NULL, NULL,
                           &bo_out);
    if (ret)
       return ret;
-
-   if (key->bo) {
-      /* Emit relocation to surface contents */
-      ret = brw->sws->bo_emit_reloc(*bo_out,
-                                    BRW_USAGE_SAMPLER,
-                                    0,
-                                    offsetof(struct brw_surface_state, ss1),
-                                    key->bo);
-      if (ret)
-         return ret;
-   }
 
    return PIPE_OK;
 }

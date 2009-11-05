@@ -144,7 +144,35 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
                         struct brw_winsys_buffer **bo_out)
 {
    struct brw_wm_unit_state wm;
+   struct brw_winsys_reloc reloc[3];
+   unsigned nr_reloc = 0;
    enum pipe_error ret;
+
+   /* Emit WM program relocation */
+   make_reloc(&reloc[nr_reloc++],
+              BRW_USAGE_STATE,
+              wm.thread0.grf_reg_count << 1,
+              offsetof(struct brw_wm_unit_state, thread0),
+              brw->wm.prog_bo);
+
+   /* Emit scratch space relocation */
+   if (key->total_scratch != 0) {
+      make_reloc(&reloc[nr_reloc++],
+                 BRW_USAGE_SCRATCH,
+                 wm.thread2.per_thread_scratch_space,
+                 offsetof(struct brw_wm_unit_state, thread2),
+                 brw->wm.scratch_bo);
+   }
+
+   /* Emit sampler state relocation */
+   if (key->sampler_count != 0) {
+      make_reloc(&reloc[nr_reloc++],
+                 BRW_USAGE_STATE,
+                 wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
+                 offsetof(struct brw_wm_unit_state, wm4),
+                 brw->wm.sampler_bo);
+   }
+
 
    memset(&wm, 0, sizeof(wm));
 
@@ -220,43 +248,12 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    ret = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
                           key, sizeof(*key),
-                          reloc_bufs, 3,
+                          reloc, nr_reloc,
                           &wm, sizeof(wm),
                           NULL, NULL,
                           bo_out);
    if (ret)
       return ret;
-
-   /* Emit WM program relocation */
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 wm.thread0.grf_reg_count << 1,
-                                 offsetof(struct brw_wm_unit_state, thread0),
-                                 brw->wm.prog_bo);
-   if (ret)
-      return ret;
-
-   /* Emit scratch space relocation */
-   if (key->total_scratch != 0) {
-      ret = brw->sws->bo_emit_reloc(*bo_out,
-                                    BRW_USAGE_SCRATCH,
-                                    wm.thread2.per_thread_scratch_space,
-                                    offsetof(struct brw_wm_unit_state, thread2),
-                                    brw->wm.scratch_bo);
-      if (ret)
-         return ret;
-   }
-
-   /* Emit sampler state relocation */
-   if (key->sampler_count != 0) {
-      ret = brw->sws->bo_emit_reloc(*bo_out,
-                                    BRW_USAGE_STATE,
-                                    wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-                                    offsetof(struct brw_wm_unit_state, wm4),
-                                    brw->wm.sampler_bo);
-      if (ret)
-         return ret;
-   }
 
    return PIPE_OK;
 }

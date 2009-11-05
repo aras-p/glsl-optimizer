@@ -111,6 +111,30 @@ enum brw_buffer_data_type {
 };
 
 
+/* Relocations to be applied with subdata in a call to sws->bo_subdata, below.
+ *
+ * Effectively this encodes:
+ *
+ *    (unsigned *)(subdata + offset) = bo->offset + delta
+ */
+struct brw_winsys_reloc {
+   enum brw_buffer_usage usage; /* debug only */
+   unsigned delta;
+   unsigned offset;
+   struct brw_winsys_buffer *bo;
+};
+
+static INLINE void make_reloc( struct brw_winsys_reloc *reloc,
+                               enum brw_buffer_usage usage,
+                               unsigned delta,
+                               unsigned offset,
+                               struct brw_winsys_buffer *bo)
+{
+   reloc->usage = usage;
+   reloc->delta = delta;
+   reloc->offset = offset;
+   reloc->bo = bo;              /* Note - note taking a reference yet */
+}
 
 
 
@@ -151,7 +175,9 @@ struct brw_winsys_screen {
                                  enum brw_buffer_data_type data_type,
                                  size_t offset,
                                  size_t size,
-                                 const void *data);
+                                 const void *data,
+                                 const struct brw_winsys_reloc *reloc,
+                                 unsigned nr_reloc );
 
    boolean (*bo_is_busy)(struct brw_winsys_buffer *buffer);
    boolean (*bo_references)(struct brw_winsys_buffer *a,

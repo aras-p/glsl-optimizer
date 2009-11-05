@@ -129,6 +129,7 @@ cc_unit_populate_key(const struct brw_context *brw,
 static enum pipe_error
 cc_unit_create_from_key(struct brw_context *brw, 
                         struct brw_cc_unit_key *key,
+                        struct brw_winsys_reloc *reloc,
                         struct brw_winsys_buffer **bo_out)
 {
    struct brw_cc_unit_state cc;
@@ -141,29 +142,18 @@ cc_unit_create_from_key(struct brw_context *brw,
    cc.cc2 = key->cc2;
    cc.cc3 = key->cc3;
 
-   /* CACHE_NEW_CC_VP */
    cc.cc4.cc_viewport_state_offset = 0;
 
    cc.cc5 = key->cc5;
    cc.cc6 = key->cc6;
    cc.cc7 = key->cc7;
-
+   
    ret = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
                           key, sizeof(*key),
-                          &brw->cc.vp_bo, 1,
+                          reloc, Elements(reloc),
                           &cc, sizeof(cc),
                           NULL, NULL,
                           bo_out);
-   if (ret)
-      return ret;
-
-
-   /* Emit CC viewport relocation */
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 0,
-                                 offsetof(struct brw_cc_unit_state, cc4),
-                                 brw->cc.vp_bo);
    if (ret)
       return ret;
 
@@ -173,18 +163,27 @@ cc_unit_create_from_key(struct brw_context *brw,
 static int prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
+   struct brw_winsys_reloc reloc[1];
    enum pipe_error ret;
 
    cc_unit_populate_key(brw, &key);
 
+   /* CACHE_NEW_CC_VP */
+   make_reloc(&reloc[0],
+              BRW_USAGE_STATE,
+              0,
+              offsetof(struct brw_cc_unit_state, cc4),
+              brw->cc.vp_bo);
+
    if (brw_search_cache(&brw->cache, BRW_CC_UNIT,
                         &key, sizeof(key),
-                        &brw->cc.vp_bo, 1,
+                        reloc, 1,
                         NULL,
                         &brw->cc.state_bo))
       return PIPE_OK;
 
    ret = cc_unit_create_from_key(brw, &key, 
+                                 reloc,
                                  &brw->cc.state_bo);
    if (ret)
       return ret;

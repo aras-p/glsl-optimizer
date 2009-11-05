@@ -65,7 +65,8 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
 				     size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
-   dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
+   brw->sws->bo_subdata(const_buffer, 0, size, params->ParameterValues,
+                        NULL, 0);
 
    return const_buffer;
 }
@@ -145,51 +146,31 @@ brw_vs_get_binding_table(struct brw_context *brw,
                          struct brw_winsys_buffer **bo_out)
 {
 #if 0
-   if (brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
-                        NULL, 0,
-                        brw->vs.surf_bo, BRW_VS_MAX_SURF,
-                        NULL,
-                        bo_out))
-   {
-      return PIPE_OK;
+   static GLuint data[BRW_VS_MAX_SURF]; /* always zero */
+   struct brw_winsys_reloc reloc[BRW_VS_MAX_SURF];
+   int i;
+
+   /* Emit binding table relocations to surface state */
+   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
+      make_reloc(&reloc[i],
+                 BRW_USAGE_STATE,
+                 0,
+                 i * 4,
+                 brw->vs.surf_bo[i]);
    }
-   else {
-      GLuint data_size = BRW_VS_MAX_SURF * sizeof(GLuint);
-      uint32_t *data = malloc(data_size);
-      int i;
+   
+   ret = brw_cache_data( &brw->surface_cache, 
+                         BRW_SS_SURF_BIND,
+                         NULL, 0,
+                         reloc, Elements(reloc),
+                         data, sizeof data,
+                         NULL, NULL,
+                         bo_out);
+   if (ret)
+      return ret;
 
-      for (i = 0; i < BRW_VS_MAX_SURF; i++)
-         if (brw->vs.surf_bo[i])
-            data[i] = brw->vs.surf_bo[i]->offset;
-         else
-            data[i] = 0;
-
-      ret = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
-                              NULL, 0,
-                              brw->vs.surf_bo, BRW_VS_MAX_SURF,
-                              data, data_size,
-                              NULL, NULL,
-                              bo_out);
-      if (ret)
-         return ret;
-
-      /* Emit binding table relocations to surface state */
-      for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-	 if (brw->vs.surf_bo[i] != NULL) {
-	    /* The presumed offsets were set in the data values for
-	     * brw_upload_cache.
-	     */
-	    ret = sws->bo_emit_reloc(*bo_out, i * 4,
-                                     brw->vs.surf_bo[i], 0,
-                                     BRW_USAGE_STATE);
-            if (ret)
-               return ret;
-	 }
-      }
-
-      FREE(data);
-      return PIPE_OK;
-   }
+   FREE(data);
+   return PIPE_OK;
 #else
    return PIPE_OK;
 #endif

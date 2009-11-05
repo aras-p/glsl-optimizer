@@ -81,6 +81,7 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 static enum pipe_error
 vs_unit_create_from_key(struct brw_context *brw, 
                         struct brw_vs_unit_key *key,
+                        struct brw_winsys_reloc *reloc,
                         struct brw_winsys_buffer **bo_out)
 {
    enum pipe_error ret;
@@ -145,19 +146,10 @@ vs_unit_create_from_key(struct brw_context *brw,
 
    ret = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
                           key, sizeof(*key),
-                          &brw->vs.prog_bo, 1,
+                          reloc, Elements(reloc),
                           &vs, sizeof(vs),
                           NULL, NULL,
                           bo_out);
-   if (ret)
-      return ret;
-
-   /* Emit VS program relocation */
-   ret = brw->sws->bo_emit_reloc(*bo_out,
-                                 BRW_USAGE_STATE,
-                                 vs.thread0.grf_reg_count << 1,
-                                 offsetof(struct brw_vs_unit_state, thread0),
-                                 brw->vs.prog_bo);
    if (ret)
       return ret;
 
@@ -168,17 +160,29 @@ static int prepare_vs_unit(struct brw_context *brw)
 {
    struct brw_vs_unit_key key;
    enum pipe_error ret;
+   struct brw_winsys_reloc reloc[1];
+   unsigned grf_reg_count;
 
    vs_unit_populate_key(brw, &key);
 
+   grf_reg_count = (align(key.total_grf, 16) / 16 - 1);
+
+   /* Emit VS program relocation */
+   make_reloc(&reloc[0],
+              BRW_USAGE_STATE,
+              grf_reg_count << 1,
+              offsetof(struct brw_vs_unit_state, thread0),
+              brw->vs.prog_bo);
+
+
    if (brw_search_cache(&brw->cache, BRW_VS_UNIT,
                         &key, sizeof(key),
-                        &brw->vs.prog_bo, 1,
+                        reloc, 1,
                         NULL,
                         &brw->vs.state_bo))
       return PIPE_OK;
 
-   ret = vs_unit_create_from_key(brw, &key, &brw->vs.state_bo);
+   ret = vs_unit_create_from_key(brw, &key, reloc, &brw->vs.state_bo);
    if (ret)
       return ret;
 

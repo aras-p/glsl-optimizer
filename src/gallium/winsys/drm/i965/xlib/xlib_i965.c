@@ -47,6 +47,10 @@
 
 #define MAX_VRAM (128*1024*1024)
 
+#define MAX_DUMPS 128
+
+
+
 extern int brw_disasm (FILE *file, 
                        const struct brw_instruction *inst,
                        unsigned count );
@@ -294,21 +298,36 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
                     enum brw_buffer_data_type data_type,
                     size_t offset,
                     size_t size,
-                    const void *data)
+                    const void *data,
+                    const struct brw_winsys_reloc *reloc,
+                    unsigned nr_relocs)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
    struct xlib_brw_winsys *xbw = xlib_brw_winsys(buffer->sws);
+   unsigned i;
 
-   debug_printf("%s buf %p off %d sz %d %s\n", 
+   debug_printf("%s buf %p off %d sz %d %s relocs: %d\n", 
                 __FUNCTION__, 
-                (void *)buffer, offset, size, data_types[data_type]);
-
-   if (1)
-      dump_data( xbw, data_type, data, size );
+                (void *)buffer, offset, size, 
+                data_types[data_type],
+                nr_relocs);
 
    assert(buf->base.size >= offset + size);
    memcpy(buf->virtual + offset, data, size);
 
+   /* Apply the relocations:
+    */
+   for (i = 0; i < nr_relocs; i++) {
+      debug_printf("\treloc[%d] usage %s off %d value %x+%x\n", 
+                   i, usages[reloc[i].usage], reloc[i].offset,
+                   xlib_brw_buffer(reloc[i].bo)->offset, reloc[i].delta);
+
+      *(unsigned *)(buf->virtual + offset + reloc[i].offset) = 
+         xlib_brw_buffer(reloc[i].bo)->offset + reloc[i].delta;
+   }
+
+   if (1)
+      dump_data( xbw, data_type, buf->virtual + offset, size );
 
    return 0;
 }
