@@ -289,6 +289,7 @@ static int prepare_curbe_buffer(struct brw_context *brw)
        */
       brw->sws->bo_subdata(brw->curbe.curbe_bo,
 			   brw->curbe.curbe_offset,
+                           BRW_DATA_OTHER,
 			   bufsz,
 			   buf);
    }

@@ -228,7 +228,7 @@ brw_upload_cache( struct brw_cache *cache,
     * these various entities.
     */
    bo = cache->sws->bo_alloc(cache->sws,
-			     BRW_BUFFER_TYPE_STATE_CACHE, 
+                             cache->buffer_type,
 			     data_size, 1 << 6);
 
 
@@ -273,7 +273,9 @@ brw_upload_cache( struct brw_cache *cache,
 		   data_size, cache_id);
 
    /* Copy data to the buffer */
-   cache->sws->bo_subdata(bo, 0, data_size, data);
+   cache->sws->bo_subdata(bo, 
+                          cache_id,
+                          0, data_size, data);
 
    update_cache_last(cache, cache_id, bo);
 
@@ -332,11 +334,6 @@ brw_cache_data(struct brw_cache *cache,
 			    reloc_bufs, nr_reloc_bufs);
 }
 
-enum pool_type {
-   DW_SURFACE_STATE,
-   DW_GENERAL_STATE
-};
-
 
 static void
 brw_init_cache_id(struct brw_cache *cache,
@@ -352,12 +349,14 @@ brw_init_cache_id(struct brw_cache *cache,
 
 
 static void
-brw_init_non_surface_cache(struct brw_context *brw)
+brw_init_general_state_cache(struct brw_context *brw)
 {
    struct brw_cache *cache = &brw->cache;
 
    cache->brw = brw;
    cache->sws = brw->sws;
+
+   cache->buffer_type = BRW_BUFFER_TYPE_GENERAL_STATE;
 
    cache->size = 7;
    cache->n_items = 0;
@@ -457,12 +456,14 @@ brw_init_non_surface_cache(struct brw_context *brw)
 
 
 static void
-brw_init_surface_cache(struct brw_context *brw)
+brw_init_surface_state_cache(struct brw_context *brw)
 {
    struct brw_cache *cache = &brw->surface_cache;
 
    cache->brw = brw;
    cache->sws = brw->sws;
+
+   cache->buffer_type = BRW_BUFFER_TYPE_SURFACE_STATE;
 
    cache->size = 7;
    cache->n_items = 0;
@@ -486,8 +487,8 @@ brw_init_surface_cache(struct brw_context *brw)
 void
 brw_init_caches(struct brw_context *brw)
 {
-   brw_init_non_surface_cache(brw);
-   brw_init_surface_cache(brw);
+   brw_init_general_state_cache(brw);
+   brw_init_surface_state_cache(brw);
 }
 
 

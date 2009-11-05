@@ -53,7 +53,9 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
    if (batch->malloc_buffer)
       batch->map = batch->malloc_buffer;
    else 
-      batch->map = batch->sws->bo_map(batch->buf, GL_TRUE);
+      batch->map = batch->sws->bo_map(batch->buf,
+                                      BRW_DATA_OTHER,
+                                      GL_TRUE);
 
    batch->size = BRW_BATCH_SIZE;
    batch->ptr = batch->map;
@@ -132,7 +134,10 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
    used = batch->ptr - batch->map;
 
    if (batch->use_malloc_buffer) {
-      batch->sws->bo_subdata(batch->buf, 0, used, batch->map );
+      batch->sws->bo_subdata(batch->buf, 
+                             BRW_DATA_OTHER,
+                             0, used,
+                             batch->map );
       batch->map = NULL;
    }
    else {
@@ -145,7 +150,9 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
    batch->sws->bo_exec(batch->buf, used );
 
    if (1 /*BRW_DEBUG & DEBUG_BATCH*/) {
-      void *ptr = batch->sws->bo_map(batch->buf, GL_FALSE);
+      void *ptr = batch->sws->bo_map(batch->buf,
+                                     BRW_DATA_OTHER,
+                                     GL_FALSE);
 
       intel_decode(ptr,
 		   used / 4, 
@@ -162,7 +169,9 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
        * interface.
        */
       debug_printf("waiting for idle\n");
-      batch->sws->bo_map(batch->buf, GL_TRUE);
+      batch->sws->bo_map(batch->buf,
+                         BRW_DATA_OTHER,
+                         GL_TRUE);
       batch->sws->bo_unmap(batch->buf);
    }
 

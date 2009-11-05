@@ -347,25 +347,27 @@ struct brw_vs_ouput_sizes {
 #define SURF_INDEX_VERT_CONST_BUFFER 0
 
 
+/* Bit of a hack to align these with the winsys buffer_data_type enum.
+ */
 enum brw_cache_id {
-   BRW_CC_VP,
-   BRW_CC_UNIT,
-   BRW_WM_PROG,
-   BRW_SAMPLER_DEFAULT_COLOR,
-   BRW_SAMPLER,
-   BRW_WM_UNIT,
-   BRW_SF_PROG,
-   BRW_SF_VP,
-   BRW_SF_UNIT,
-   BRW_VS_UNIT,
-   BRW_VS_PROG,
-   BRW_GS_UNIT,
-   BRW_GS_PROG,
-   BRW_CLIP_VP,
-   BRW_CLIP_UNIT,
-   BRW_CLIP_PROG,
-   BRW_SS_SURFACE,
-   BRW_SS_SURF_BIND,
+   BRW_CC_VP         = BRW_DATA_GS_CC_VP,
+   BRW_CC_UNIT       = BRW_DATA_GS_CC_UNIT,
+   BRW_WM_PROG       = BRW_DATA_GS_WM_PROG,
+   BRW_SAMPLER_DEFAULT_COLOR    = BRW_DATA_GS_SAMPLER_DEFAULT_COLOR,
+   BRW_SAMPLER       = BRW_DATA_GS_SAMPLER,
+   BRW_WM_UNIT       = BRW_DATA_GS_WM_UNIT,
+   BRW_SF_PROG       = BRW_DATA_GS_SF_PROG,
+   BRW_SF_VP         = BRW_DATA_GS_SF_VP,
+   BRW_SF_UNIT       = BRW_DATA_GS_SF_UNIT,
+   BRW_VS_UNIT       = BRW_DATA_GS_VS_UNIT,
+   BRW_VS_PROG       = BRW_DATA_GS_VS_PROG,
+   BRW_GS_UNIT       = BRW_DATA_GS_GS_UNIT,
+   BRW_GS_PROG       = BRW_DATA_GS_GS_PROG,
+   BRW_CLIP_VP       = BRW_DATA_GS_CLIP_VP,
+   BRW_CLIP_UNIT     = BRW_DATA_GS_CLIP_UNIT,
+   BRW_CLIP_PROG     = BRW_DATA_GS_CLIP_PROG,
+   BRW_SS_SURFACE    = BRW_DATA_SS_SURFACE,
+   BRW_SS_SURF_BIND  = BRW_DATA_SS_SURF_BIND,
 
    BRW_MAX_CACHE
 };
@@ -398,6 +400,8 @@ struct brw_cache {
 
    struct brw_cache_item **items;
    GLuint size, n_items;
+
+   enum brw_buffer_type buffer_type;
 
    GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];

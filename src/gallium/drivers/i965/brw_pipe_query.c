@@ -63,7 +63,7 @@ brw_query_get_result(struct pipe_context *pipe,
       if (brw->sws->bo_is_busy(query->bo) && !wait)
 	 return FALSE;
       
-      map = brw->sws->bo_map(query->bo, GL_FALSE);
+      map = brw->sws->bo_map(query->bo, BRW_DATA_OTHER, GL_FALSE);
       if (map == NULL)
 	 return FALSE;
       

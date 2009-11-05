@@ -82,30 +82,56 @@ xlib_brw_buffer( struct brw_winsys_buffer *buffer )
 
 
 const char *names[BRW_BUFFER_TYPE_MAX] = {
-   "texture",
-   "scanout",
-   "vertex",
-   "curbe",
-   "query",
-   "shader_constants",
-   "wm_scratch",
-   "batch",
-   "state_cache",
-   "pixel",
-   "generic",
+   "TEXTURE",
+   "SCANOUT",
+   "VERTEX",
+   "CURBE",
+   "QUERY",
+   "SHADER_CONSTANTS",
+   "WM_SCRATCH",
+   "BATCH",
+   "GENERAL_STATE",
+   "SURFACE_STATE",
+   "PIXEL",
+   "GENERIC",
 };
 
 const char *usages[BRW_USAGE_MAX] = {
-   "state",
-   "query_result",
-   "render_target",
-   "depth_buffer",
-   "blit_source",
-   "blit_dest",
-   "sampler",
-   "vertex",
-   "scratch"
+   "STATE",
+   "QUERY_RESULT",
+   "RENDER_TARGET",
+   "DEPTH_BUFFER",
+   "BLIT_SOURCE",
+   "BLIT_DEST",
+   "SAMPLER",
+   "VERTEX",
+   "SCRATCH"
 };
+
+
+const char *data_types[BRW_DATA_MAX] =
+{
+   "GS: CC_VP",
+   "GS: CC_UNIT",
+   "GS: WM_PROG",
+   "GS: SAMPLER_DEFAULT_COLOR",
+   "GS: SAMPLER",
+   "GS: WM_UNIT",
+   "GS: SF_PROG",
+   "GS: SF_VP",
+   "GS: SF_UNIT",
+   "GS: VS_UNIT",
+   "GS: VS_PROG",
+   "GS: GS_UNIT",
+   "GS: GS_PROG",
+   "GS: CLIP_VP",
+   "GS: CLIP_UNIT",
+   "GS: CLIP_PROG",
+   "SS: SURFACE",
+   "SS: SURF_BIND",
+   "(untyped)"
+};
+
 
 static struct brw_winsys_buffer *
 xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
@@ -116,8 +142,8 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
    struct xlib_brw_winsys *xbw = xlib_brw_winsys(sws);
    struct xlib_brw_buffer *buf;
 
-   debug_printf("%s type %d sz %d align %d\n",
-                __FUNCTION__, type, size, alignment );
+   debug_printf("%s type %s sz %d align %d\n",
+                __FUNCTION__, names[type], size, alignment );
 
    buf = CALLOC_STRUCT(xlib_brw_buffer);
    if (!buf)
@@ -168,10 +194,10 @@ xlib_brw_bo_unreference( struct brw_winsys_buffer *buffer )
 
 static int 
 xlib_brw_bo_emit_reloc( struct brw_winsys_buffer *buffer,
-			   enum brw_buffer_usage usage,
-			   unsigned delta,
-			   unsigned offset,
-			   struct brw_winsys_buffer *buffer2)
+                        enum brw_buffer_usage usage,
+                        unsigned delta,
+                        unsigned offset,
+                        struct brw_winsys_buffer *buffer2)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
    struct xlib_brw_buffer *buf2 = xlib_brw_buffer(buffer2);
@@ -197,15 +223,16 @@ xlib_brw_bo_exec( struct brw_winsys_buffer *buffer,
 
 static int
 xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
-		       size_t offset,
-		       size_t size,
-		       const void *data)
+                    enum brw_buffer_data_type data_type,
+                    size_t offset,
+                    size_t size,
+                    const void *data)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   debug_printf("%s buf %p off %d sz %d data %p\n", 
+   debug_printf("%s buf %p off %d sz %d data %p %s\n", 
                 __FUNCTION__, 
-                (void *)buffer, offset, size, data);
+                (void *)buffer, offset, size, data, data_types[data_type]);
 
    memcpy(buf->virtual + offset, data, size);
    return 0;
@@ -247,12 +274,14 @@ xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
 
 static void *
 xlib_brw_bo_map(struct brw_winsys_buffer *buffer,
+                enum brw_buffer_data_type data_type,
 		   boolean write)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   debug_printf("%s %p %s\n", __FUNCTION__, (void *)buffer, 
-                write ? "read/write" : "read");
+   debug_printf("%s %p %s %s\n", __FUNCTION__, (void *)buffer, 
+                write ? "read/write" : "read",
+                write ? data_types[data_type] : "");
 
    buf->map_count++;
    return buf->virtual;

@@ -186,6 +186,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 {  
    struct brw_screen *bscreen = brw_screen(screen);
    struct brw_texture *tex;
+   enum brw_buffer_type buffer_type;
    
    tex = CALLOC_STRUCT(brw_texture);
    if (tex == NULL)
@@ -226,21 +227,16 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
       goto fail;
 
    
-   if (templ->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
-   } 
-   else if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                            PIPE_TEXTURE_USAGE_PRIMARY)) {
+   if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                           PIPE_TEXTURE_USAGE_PRIMARY)) {
+      buffer_type = BRW_BUFFER_TYPE_SCANOUT;
    }
-   else if (templ->tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
-   }
-   else if (templ->tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) {
-   }
-   
-   if (templ->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC) {
+   else {
+      buffer_type = BRW_BUFFER_TYPE_TEXTURE;
    }
 
    tex->bo = bscreen->sws->bo_alloc( bscreen->sws,
-                                     BRW_USAGE_SAMPLER,
+                                     buffer_type,
                                      tex->pitch * tex->total_height * tex->cpp,
                                      64 );
 

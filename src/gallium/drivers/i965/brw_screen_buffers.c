@@ -24,6 +24,7 @@ brw_buffer_map( struct pipe_screen *screen,
       return buf->user_buffer;
 
    return sws->bo_map( buf->bo, 
+                       BRW_DATA_OTHER,
                        (usage & PIPE_BUFFER_USAGE_CPU_WRITE) ? TRUE : FALSE );
 }
 
@@ -64,7 +65,7 @@ brw_buffer_create(struct pipe_screen *screen,
    struct brw_screen *bscreen = brw_screen(screen);
    struct brw_winsys_screen *sws = bscreen->sws;
    struct brw_buffer *buf;
-   unsigned usage_type;
+   unsigned buffer_type;
    
    buf = CALLOC_STRUCT(brw_buffer);
    if (!buf)
@@ -84,24 +85,24 @@ brw_buffer_create(struct pipe_screen *screen,
    case PIPE_BUFFER_USAGE_VERTEX:
    case PIPE_BUFFER_USAGE_INDEX:
    case (PIPE_BUFFER_USAGE_VERTEX|PIPE_BUFFER_USAGE_INDEX):
-      usage_type = BRW_BUFFER_TYPE_VERTEX;
+      buffer_type = BRW_BUFFER_TYPE_VERTEX;
       break;
       
    case PIPE_BUFFER_USAGE_PIXEL:
-      usage_type = BRW_BUFFER_TYPE_PIXEL;
+      buffer_type = BRW_BUFFER_TYPE_PIXEL;
       break;
 
    case PIPE_BUFFER_USAGE_CONSTANT:
-      usage_type = BRW_BUFFER_TYPE_SHADER_CONSTANTS;
+      buffer_type = BRW_BUFFER_TYPE_SHADER_CONSTANTS;
       break;
 
    default:
-      usage_type = BRW_BUFFER_TYPE_GENERIC;
+      buffer_type = BRW_BUFFER_TYPE_GENERIC;
       break;
    }
    
    buf->bo = sws->bo_alloc( sws,
-                            usage_type,
+                            buffer_type,
                             size,
                             alignment );
       

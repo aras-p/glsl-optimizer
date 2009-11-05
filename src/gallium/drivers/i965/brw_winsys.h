@@ -44,21 +44,6 @@ struct brw_winsys_buffer {
    unsigned size;
 };
 
-/* Describe the usage of a particular buffer in a relocation.  The DRM
- * winsys will translate these back to GEM read/write domain flags.
- */
-enum brw_buffer_usage {
-   BRW_USAGE_STATE,		/* INSTRUCTION, 0 */
-   BRW_USAGE_QUERY_RESULT,	/* INSTRUCTION, INSTRUCTION */
-   BRW_USAGE_RENDER_TARGET,	/* RENDER,      0 */
-   BRW_USAGE_DEPTH_BUFFER,	/* RENDER,      RENDER */
-   BRW_USAGE_BLIT_SOURCE,	/* RENDER,      0 */
-   BRW_USAGE_BLIT_DEST,         /* RENDER,      RENDER */
-   BRW_USAGE_SAMPLER,		/* SAMPLER,     0 */
-   BRW_USAGE_VERTEX,		/* VERTEX,      0 */
-   BRW_USAGE_SCRATCH,		/* 0,           0 */
-   BRW_USAGE_MAX
-};
 
 /* Should be possible to validate usages above against buffer creation
  * types, below:
@@ -73,10 +58,51 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_SHADER_CONSTANTS,
    BRW_BUFFER_TYPE_SHADER_SCRATCH,
    BRW_BUFFER_TYPE_BATCH,
-   BRW_BUFFER_TYPE_STATE_CACHE,
+   BRW_BUFFER_TYPE_GENERAL_STATE,
+   BRW_BUFFER_TYPE_SURFACE_STATE,
    BRW_BUFFER_TYPE_PIXEL,       /* image uploads, pbo's, etc */
    BRW_BUFFER_TYPE_GENERIC,     /* unknown */
    BRW_BUFFER_TYPE_MAX		/* Count of possible values */
+};
+
+
+/* Describe the usage of a particular buffer in a relocation.  The DRM
+ * winsys will translate these back to GEM read/write domain flags.
+ */
+enum brw_buffer_usage {
+   BRW_USAGE_STATE,         /* INSTRUCTION, 0 */
+   BRW_USAGE_QUERY_RESULT,	 /* INSTRUCTION, INSTRUCTION */
+   BRW_USAGE_RENDER_TARGET, /* RENDER,      0 */
+   BRW_USAGE_DEPTH_BUFFER,	 /* RENDER,      RENDER */
+   BRW_USAGE_BLIT_SOURCE,	 /* RENDER,      0 */
+   BRW_USAGE_BLIT_DEST,     /* RENDER,      RENDER */
+   BRW_USAGE_SAMPLER,	 /* SAMPLER,     0 */
+   BRW_USAGE_VERTEX,	 /* VERTEX,      0 */
+   BRW_USAGE_SCRATCH,	 /* 0,           0 */
+   BRW_USAGE_MAX
+};
+
+enum brw_buffer_data_type {
+   BRW_DATA_GS_CC_VP,
+   BRW_DATA_GS_CC_UNIT,
+   BRW_DATA_GS_WM_PROG,
+   BRW_DATA_GS_SAMPLER_DEFAULT_COLOR,
+   BRW_DATA_GS_SAMPLER,
+   BRW_DATA_GS_WM_UNIT,
+   BRW_DATA_GS_SF_PROG,
+   BRW_DATA_GS_SF_VP,
+   BRW_DATA_GS_SF_UNIT,
+   BRW_DATA_GS_VS_UNIT,
+   BRW_DATA_GS_VS_PROG,
+   BRW_DATA_GS_GS_UNIT,
+   BRW_DATA_GS_GS_PROG,
+   BRW_DATA_GS_CLIP_VP,
+   BRW_DATA_GS_CLIP_UNIT,
+   BRW_DATA_GS_CLIP_PROG,
+   BRW_DATA_SS_SURFACE,
+   BRW_DATA_SS_SURF_BIND,
+   BRW_DATA_OTHER,
+   BRW_DATA_MAX
 };
 
 struct brw_winsys_screen {
@@ -113,9 +139,10 @@ struct brw_winsys_screen {
 		   unsigned bytes_used );
 
    int (*bo_subdata)(struct brw_winsys_buffer *buffer,
-		      size_t offset,
-		      size_t size,
-		      const void *data);
+                     enum brw_buffer_data_type data_type,
+                     size_t offset,
+                     size_t size,
+                     const void *data);
 
    boolean (*bo_is_busy)(struct brw_winsys_buffer *buffer);
    boolean (*bo_references)(struct brw_winsys_buffer *a,
@@ -132,6 +159,7 @@ struct brw_winsys_screen {
     * Map a buffer.
     */
    void *(*bo_map)(struct brw_winsys_buffer *buffer,
+                   enum brw_buffer_data_type data_type,
 		   boolean write);
 
    /**
@@ -139,9 +167,6 @@ struct brw_winsys_screen {
     */
    void (*bo_unmap)(struct brw_winsys_buffer *buffer);
    /*@}*/
-
-
-
 
    /**
     * Destroy the winsys.
