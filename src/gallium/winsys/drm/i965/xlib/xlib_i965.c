@@ -47,8 +47,6 @@
 
 #define MAX_VRAM (128*1024*1024)
 
-#define MAX_DUMPS 128
-
 
 
 extern int brw_disasm (FILE *file, 
@@ -146,6 +144,8 @@ const char *data_types[BRW_DATA_MAX] =
    "GS: CLIP_PROG",
    "SS: SURFACE",
    "SS: SURF_BIND",
+   "CONSTANT DATA",
+   "BATCH DATA",
    "(untyped)"
 };
 
@@ -230,65 +230,85 @@ xlib_brw_bo_exec( struct brw_winsys_buffer *buffer,
 
 static void dump_data( struct xlib_brw_winsys *xbw,
                        enum brw_buffer_data_type data_type,
+                       unsigned offset,
                        const void *data,
                        size_t size )
 {
-   switch (data_type) {
-   case BRW_DATA_GS_CC_VP:
-      brw_dump_cc_viewport( data );
-      break;
-   case BRW_DATA_GS_CC_UNIT:
-      brw_dump_cc_unit_state( data );
-      break;
-   case BRW_DATA_GS_WM_PROG:
-   case BRW_DATA_GS_SF_PROG:
-   case BRW_DATA_GS_VS_PROG:
-   case BRW_DATA_GS_GS_PROG:
-   case BRW_DATA_GS_CLIP_PROG:
-      brw_disasm( stderr, data, size / sizeof(struct brw_instruction) );
-      break;
-   case BRW_DATA_GS_SAMPLER_DEFAULT_COLOR:
-      brw_dump_sampler_default_color( data );
-      break;
-   case BRW_DATA_GS_SAMPLER:
-      brw_dump_sampler_state( data );
-      break;
-   case BRW_DATA_GS_WM_UNIT:
-      brw_dump_wm_unit_state( data );
-      break;
-   case BRW_DATA_GS_SF_VP:
-      brw_dump_sf_viewport( data );
-      break;
-   case BRW_DATA_GS_SF_UNIT:
-      brw_dump_sf_unit_state( data );
-      break;
-   case BRW_DATA_GS_VS_UNIT:
-      brw_dump_vs_unit_state( data );
-      break;
-   case BRW_DATA_GS_GS_UNIT:
-      brw_dump_gs_unit_state( data );
-      break;
-   case BRW_DATA_GS_CLIP_VP:
-      brw_dump_clipper_viewport( data );
-      break;
-   case BRW_DATA_GS_CLIP_UNIT:
-      brw_dump_clip_unit_state( data );
-      break;
-   case BRW_DATA_SS_SURFACE:
-      brw_dump_surface_state( data );
-      break;
-   case BRW_DATA_SS_SURF_BIND:
-      break;
-   case BRW_DATA_OTHER:
-      break;
-   case BRW_DATA_BATCH_BUFFER:
-      intel_decode(data, size / 4, 0, xbw->chipset.pci_id);
-      break;
-   case BRW_DATA_CONSTANT_BUFFER:
-      break;
-   default:
-      assert(0);
-      break;
+   static int DUMP_ASM = 0;
+   static int DUMP_STATE = 0;
+   static int DUMP_BATCH = 1;
+
+   if (DUMP_ASM) {
+      switch (data_type) {
+      case BRW_DATA_GS_WM_PROG:
+      case BRW_DATA_GS_SF_PROG:
+      case BRW_DATA_GS_VS_PROG:
+      case BRW_DATA_GS_GS_PROG:
+      case BRW_DATA_GS_CLIP_PROG:
+         brw_disasm( stderr, data, size / sizeof(struct brw_instruction) );
+         break;
+      default:
+         break;
+      }
+   }
+
+   if (DUMP_STATE) {
+      switch (data_type) {
+      case BRW_DATA_GS_CC_VP:
+         brw_dump_cc_viewport( data );
+         break;
+      case BRW_DATA_GS_CC_UNIT:
+         brw_dump_cc_unit_state( data );
+         break;
+      case BRW_DATA_GS_SAMPLER_DEFAULT_COLOR:
+         brw_dump_sampler_default_color( data );
+         break;
+      case BRW_DATA_GS_SAMPLER:
+         brw_dump_sampler_state( data );
+         break;
+      case BRW_DATA_GS_WM_UNIT:
+         brw_dump_wm_unit_state( data );
+         break;
+      case BRW_DATA_GS_SF_VP:
+         brw_dump_sf_viewport( data );
+         break;
+      case BRW_DATA_GS_SF_UNIT:
+         brw_dump_sf_unit_state( data );
+         break;
+      case BRW_DATA_GS_VS_UNIT:
+         brw_dump_vs_unit_state( data );
+         break;
+      case BRW_DATA_GS_GS_UNIT:
+         brw_dump_gs_unit_state( data );
+         break;
+      case BRW_DATA_GS_CLIP_VP:
+         brw_dump_clipper_viewport( data );
+         break;
+      case BRW_DATA_GS_CLIP_UNIT:
+         brw_dump_clip_unit_state( data );
+         break;
+      case BRW_DATA_SS_SURFACE:
+         brw_dump_surface_state( data );
+         break;
+      case BRW_DATA_SS_SURF_BIND:
+         break;
+      case BRW_DATA_OTHER:
+         break;
+      case BRW_DATA_CONSTANT_BUFFER:
+         break;
+      default:
+         break;
+      }
+   }
+
+   if (DUMP_BATCH) {
+      switch (data_type) {
+      case BRW_DATA_BATCH_BUFFER:
+         intel_decode(data, size / 4, offset, xbw->chipset.pci_id);
+         break;
+      default:
+         break;
+      }
    }
 }
 
@@ -327,7 +347,10 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    }
 
    if (1)
-      dump_data( xbw, data_type, buf->virtual + offset, size );
+      dump_data( xbw, data_type,
+                 buf->offset + offset, 
+                 buf->virtual + offset, size );
+
 
    return 0;
 }
