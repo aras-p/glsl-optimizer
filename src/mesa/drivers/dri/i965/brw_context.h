@@ -333,7 +333,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 

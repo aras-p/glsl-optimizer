@@ -119,15 +119,9 @@ void brw_destroy_state(struct brw_context *brw);
 dri_bo *brw_cache_data(struct brw_cache *cache,
 		       enum brw_cache_id cache_id,
 		       const void *data,
+		       GLuint size,
 		       dri_bo **reloc_bufs,
 		       GLuint nr_reloc_bufs);
-
-dri_bo *brw_cache_data_sz(struct brw_cache *cache,
-			  enum brw_cache_id cache_id,
-			  const void *data,
-			  GLuint data_size,
-			  dri_bo **reloc_bufs,
-			  GLuint nr_reloc_bufs);
 
 dri_bo *brw_upload_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
