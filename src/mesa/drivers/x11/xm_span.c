@@ -3773,7 +3773,7 @@ static void put_values_ci_ximage( PUT_VALUES_ARGS )
  *          else return number of pixels to skip in the destination array.
  */
 static int
-clip_for_xgetimage(GLcontext *ctx, GLuint *n, GLint *x, GLint *y)
+clip_for_xgetimage(GLcontext *ctx, XMesaPixmap pixmap, GLuint *n, GLint *x, GLint *y)
 {
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer source = XMESA_BUFFER(ctx->DrawBuffer);
@@ -3783,7 +3783,7 @@ clip_for_xgetimage(GLcontext *ctx, GLuint *n, GLint *x, GLint *y)
    GLint dx, dy;
    if (source->type == PBUFFER || source->type == PIXMAP)
       return 0;
-   XTranslateCoordinates(xmesa->display, source->frontxrb->pixmap, rootWin,
+   XTranslateCoordinates(xmesa->display, pixmap, rootWin,
                          *x, *y, &dx, &dy, &child);
    if (dx >= screenWidth) {
       /* totally clipped on right */
@@ -3827,7 +3827,7 @@ get_row_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
 #ifndef XFree86Server
       XMesaImage *span = NULL;
       int error;
-      int k = clip_for_xgetimage(ctx, &n, &x, &y);
+      int k = clip_for_xgetimage(ctx, xrb->pixmap, &n, &x, &y);
       if (k < 0)
          return;
       index += k;
@@ -3892,7 +3892,7 @@ get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
 #else
       int k;
       y = YFLIP(xrb, y);
-      k = clip_for_xgetimage(ctx, &n, &x, &y);
+      k = clip_for_xgetimage(ctx, xrb->pixmap, &n, &x, &y);
       if (k < 0)
          return;
       rgba += k;
