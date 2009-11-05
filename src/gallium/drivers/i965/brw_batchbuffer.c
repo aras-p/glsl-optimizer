@@ -54,7 +54,7 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
       batch->map = batch->malloc_buffer;
    else 
       batch->map = batch->sws->bo_map(batch->buf,
-                                      BRW_DATA_OTHER,
+                                      BRW_DATA_BATCH_BUFFER,
                                       GL_TRUE);
 
    batch->size = BRW_BATCH_SIZE;
@@ -136,7 +136,7 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
 
    if (batch->use_malloc_buffer) {
       batch->sws->bo_subdata(batch->buf, 
-                             BRW_DATA_OTHER,
+                             BRW_DATA_BATCH_BUFFER,
                              0, used,
                              batch->map );
       batch->map = NULL;
@@ -150,19 +150,6 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
       
    batch->sws->bo_exec(batch->buf, used );
 
-   if (1 /*BRW_DEBUG & DEBUG_BATCH*/) {
-      void *ptr = batch->sws->bo_map(batch->buf,
-                                     BRW_DATA_OTHER,
-                                     GL_FALSE);
-
-      intel_decode(ptr,
-		   used / 4, 
-		   batch->buf->offset[0],
-		   batch->chipset.pci_id);
-
-      batch->sws->bo_unmap(batch->buf);
-   }
-
    if (BRW_DEBUG & DEBUG_SYNC) {
       /* Abuse map/unmap to achieve wait-for-fence.
        *
@@ -170,10 +157,7 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
        * interface.
        */
       debug_printf("waiting for idle\n");
-      batch->sws->bo_map(batch->buf,
-                         BRW_DATA_OTHER,
-                         GL_TRUE);
-      batch->sws->bo_unmap(batch->buf);
+      batch->sws->bo_wait_idle(batch->buf);
    }
 
    /* Reset the buffer:

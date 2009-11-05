@@ -51,14 +51,19 @@ extern int brw_disasm (FILE *file,
                        const struct brw_instruction *inst,
                        unsigned count );
 
+extern int intel_decode(const uint32_t *data, 
+                        int count,
+                        uint32_t hw_offset,
+                        uint32_t devid);
+
 struct xlib_brw_buffer
 {
    struct brw_winsys_buffer base;
+   char *virtual;
    unsigned offset;
    unsigned type;
-   char *virtual;
-   unsigned cheesy_refcount;
    int map_count;
+   boolean modified;
 };
 
 
@@ -68,7 +73,10 @@ struct xlib_brw_buffer
 struct xlib_brw_winsys
 {
    struct brw_winsys_screen base;
-   unsigned offset;
+   struct brw_chipset chipset;
+
+   unsigned size;
+   unsigned used;
 };
 
 static struct xlib_brw_winsys *
@@ -157,14 +165,15 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
 
    pipe_reference_init(&buf->base.reference, 1);
 
-   buf->offset = align(xbw->offset, alignment);
+   buf->offset = align(xbw->used, alignment);
    buf->type = type;
    buf->virtual = MALLOC(size);
    buf->base.offset = &buf->offset; /* hmm, cheesy */
    buf->base.size = size;
+   buf->base.sws = sws;
 
-   xbw->offset = align(xbw->offset, alignment) + size;
-   if (xbw->offset > MAX_VRAM)
+   xbw->used = align(xbw->used, alignment) + size;
+   if (xbw->used > MAX_VRAM)
       goto err;
 
    /* XXX: possibly rentrant call to bo_destroy:
@@ -184,7 +193,6 @@ xlib_brw_bo_destroy( struct brw_winsys_buffer *buffer )
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   FREE(buf->virtual);
    FREE(buf);
 }
 
@@ -217,19 +225,11 @@ xlib_brw_bo_exec( struct brw_winsys_buffer *buffer,
    return 0;
 }
 
-static int
-xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
-                    enum brw_buffer_data_type data_type,
-                    size_t offset,
-                    size_t size,
-                    const void *data)
+static void dump_data( struct xlib_brw_winsys *xbw,
+                       enum brw_buffer_data_type data_type,
+                       const void *data,
+                       size_t size )
 {
-   struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
-
-   debug_printf("%s buf %p off %d sz %d data %p %s\n", 
-                __FUNCTION__, 
-                (void *)buffer, offset, size, data, data_types[data_type]);
-
    switch (data_type) {
    case BRW_DATA_GS_CC_VP:
       brw_dump_cc_viewport( data );
@@ -278,12 +278,39 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
       break;
    case BRW_DATA_OTHER:
       break;
+   case BRW_DATA_BATCH_BUFFER:
+      intel_decode(data, size / 4, 0, xbw->chipset.pci_id);
+      break;
+   case BRW_DATA_CONSTANT_BUFFER:
+      break;
    default:
       assert(0);
       break;
    }
+}
 
+
+static int
+xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
+                    enum brw_buffer_data_type data_type,
+                    size_t offset,
+                    size_t size,
+                    const void *data)
+{
+   struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
+   struct xlib_brw_winsys *xbw = xlib_brw_winsys(buffer->sws);
+
+   debug_printf("%s buf %p off %d sz %d %s\n", 
+                __FUNCTION__, 
+                (void *)buffer, offset, size, data_types[data_type]);
+
+   if (1)
+      dump_data( xbw, data_type, data, size );
+
+   assert(buf->base.size >= offset + size);
    memcpy(buf->virtual + offset, data, size);
+
+
    return 0;
 }
 
@@ -324,13 +351,16 @@ xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
 static void *
 xlib_brw_bo_map(struct brw_winsys_buffer *buffer,
                 enum brw_buffer_data_type data_type,
-		   boolean write)
+                boolean write)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
    debug_printf("%s %p %s %s\n", __FUNCTION__, (void *)buffer, 
                 write ? "read/write" : "read",
                 write ? data_types[data_type] : "");
+
+   if (write)
+      buf->modified = 1;
 
    buf->map_count++;
    return buf->virtual;
@@ -345,14 +375,30 @@ xlib_brw_bo_unmap(struct brw_winsys_buffer *buffer)
 
    --buf->map_count;
    assert(buf->map_count >= 0);
+
+   if (buf->map_count == 0 &&
+       buf->modified) {
+
+      buf->modified = 0;
+      
+      /* Consider dumping new buffer contents here.
+       */
+   }
 }
 
 
 static void
-xlib_brw_winsys_destroy( struct brw_winsys_screen *screen )
+xlib_brw_bo_wait_idle( struct brw_winsys_buffer *buffer )
 {
-   /* XXX: free all buffers */
-   FREE(screen);
+}
+
+
+static void
+xlib_brw_winsys_destroy( struct brw_winsys_screen *sws )
+{
+   struct xlib_brw_winsys *xbw = xlib_brw_winsys(sws);
+
+   FREE(xbw);
 }
 
 static struct brw_winsys_screen *
@@ -363,6 +409,8 @@ xlib_create_brw_winsys_screen( void )
    ws = CALLOC_STRUCT(xlib_brw_winsys);
    if (!ws)
       return NULL;
+
+   ws->used = 0;
 
    ws->base.destroy              = xlib_brw_winsys_destroy;
    ws->base.bo_alloc             = xlib_brw_bo_alloc;
@@ -375,6 +423,7 @@ xlib_create_brw_winsys_screen( void )
    ws->base.check_aperture_space = xlib_brw_check_aperture_space;
    ws->base.bo_map               = xlib_brw_bo_map;
    ws->base.bo_unmap             = xlib_brw_bo_unmap;
+   ws->base.bo_wait_idle         = xlib_brw_bo_wait_idle;
 
    return &ws->base;
 }
@@ -388,12 +437,14 @@ static void
 xlib_i965_display_surface(struct xmesa_buffer *xm_buffer,
                           struct pipe_surface *surf)
 {
-   /* struct brw_texture *texture = brw_texture(surf->texture); */
+   struct brw_surface *surface = brw_surface(surf);
+   struct xlib_brw_buffer *bo = xlib_brw_buffer(surface->bo);
 
-   debug_printf("%s tex %p, sz %dx%d\n", __FUNCTION__, 
-                (void *)surf->texture,
-                surf->texture->width[0],
-                surf->texture->height[0]);
+   debug_printf("%s offset %x+%x sz %dx%d\n", __FUNCTION__, 
+                bo->offset,
+                surface->draw_offset,
+                surf->width,
+                surf->height);
 }
 
 static void
@@ -418,6 +469,8 @@ xlib_create_i965_screen( void )
    screen = brw_create_screen(winsys, PCI_CHIP_GM45_GM);
    if (screen == NULL)
       goto fail;
+
+   xlib_brw_winsys(winsys)->chipset = brw_screen(screen)->chipset;
 
    screen->flush_frontbuffer = xlib_i965_flush_frontbuffer;
    return screen;

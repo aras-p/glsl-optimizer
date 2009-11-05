@@ -105,6 +105,8 @@ enum brw_buffer_data_type {
    BRW_DATA_GS_CLIP_PROG,
    BRW_DATA_SS_SURFACE,
    BRW_DATA_SS_SURF_BIND,
+   BRW_DATA_CONSTANT_BUFFER,
+   BRW_DATA_BATCH_BUFFER,
    BRW_DATA_OTHER,
    BRW_DATA_MAX
 };
@@ -176,6 +178,12 @@ struct brw_winsys_screen {
    void (*bo_unmap)(struct brw_winsys_buffer *buffer);
    /*@}*/
 
+   
+   /* Wait for buffer to go idle.  Similar to map+unmap, but doesn't
+    * mark buffer contents as dirty.
+    */
+   void (*bo_wait_idle)(struct brw_winsys_buffer *buffer);
+   
    /**
     * Destroy the winsys.
     */
