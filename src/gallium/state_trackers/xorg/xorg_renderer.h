@@ -7,6 +7,14 @@
 struct xorg_shaders;
 struct exa_pixmap_priv;
 
+/* max number of vertices *
+ * max number of attributes per vertex *
+ * max number of components per attribute
+ *
+ * currently the max is 5 quads
+ */
+#define BUF_SIZE (20 * 3 * 4)
+
 struct xorg_renderer {
    struct pipe_context *pipe;
 
@@ -16,7 +24,7 @@ struct xorg_renderer {
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
 
-   float vertices[4*3*4];
+   float vertices[BUF_SIZE];
 };
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);
