@@ -177,9 +177,6 @@ static void brw_set_blend_color(struct pipe_context *pipe,
    struct brw_context *brw = brw_context(pipe);
    struct brw_blend_constant_color *bcc = &brw->curr.bcc;
 
-   memset(bcc, 0, sizeof(*bcc));      
-   bcc->header.opcode = CMD_BLEND_CONSTANT_COLOR;
-   bcc->header.length = sizeof(*bcc)/4-2;
    bcc->blend_constant_color[0] = blend_color->color[0];
    bcc->blend_constant_color[1] = blend_color->color[1];
    bcc->blend_constant_color[2] = blend_color->color[2];
@@ -195,6 +192,15 @@ void brw_pipe_blend_init( struct brw_context *brw )
    brw->base.create_blend_state = brw_create_blend_state;
    brw->base.bind_blend_state = brw_bind_blend_state;
    brw->base.delete_blend_state = brw_delete_blend_state;
+
+   {
+      struct brw_blend_constant_color *bcc = &brw->curr.bcc;
+
+      memset(bcc, 0, sizeof(*bcc));      
+      bcc->header.opcode = CMD_BLEND_CONSTANT_COLOR;
+      bcc->header.length = sizeof(*bcc)/4-2;
+   }
+
 }
 
 void brw_pipe_blend_cleanup( struct brw_context *brw )
