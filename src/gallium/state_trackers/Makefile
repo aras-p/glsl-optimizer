@@ -21,5 +21,9 @@ clean:
 	rm -f `find . -name depend`
 
 
-# Dummy install target
 install:
+	@for dir in $(SUBDIRS) ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) $@) || exit 1 ; \
+		fi \
+	done
