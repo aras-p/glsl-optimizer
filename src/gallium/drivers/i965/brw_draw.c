@@ -194,8 +194,10 @@ brw_draw_range_elements(struct pipe_context *pipe,
     * XXX: do we need to go through state validation to achieve this?
     * Could just call upload code directly.
     */
-   if (brw->curr.index_buffer != index_buffer) {
+   if (brw->curr.index_buffer != index_buffer ||
+       brw->curr.index_size != index_size) {
       pipe_buffer_reference( &brw->curr.index_buffer, index_buffer );
+      brw->curr.index_size = index_size;
       brw->state.dirty.mesa |= PIPE_NEW_INDEX_BUFFER;
    }
 
