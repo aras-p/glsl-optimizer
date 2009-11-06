@@ -384,8 +384,6 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 {
    struct brw_screen *bscreen = brw_screen(screen);
    struct brw_texture *tex;
-   enum brw_buffer_type buffer_type;
-   enum pipe_error ret;
 
    if (templ->target != PIPE_TEXTURE_2D ||
        templ->last_level != 0 ||
@@ -419,17 +417,13 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
    if (!brw_texture_layout(bscreen, tex))
       goto fail;
 
-   
-   if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                           PIPE_TEXTURE_USAGE_PRIMARY)) {
-      buffer_type = BRW_BUFFER_TYPE_SCANOUT;
-   } else {
-      buffer_type = BRW_BUFFER_TYPE_TEXTURE;
-   }
+   /* XXX Maybe some more checks? */
+   if ((pitch / tex->cpp) < tex->pitch)
+      goto fail;
+
+   tex->pitch = pitch / tex->cpp;
 
    tex->bo = buffer;
-
-   tex->pitch = pitch;
 
    /* fix this warning */
 #if 0
