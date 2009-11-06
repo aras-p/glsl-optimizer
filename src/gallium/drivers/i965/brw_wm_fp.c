@@ -223,6 +223,7 @@ static struct brw_fp_dst dst_reg(GLuint file, GLuint idx)
    reg.index = idx;
    reg.writemask = BRW_WRITEMASK_XYZW;
    reg.indirect = 0;
+   reg.saturate = 0;
    return reg;
 }
 
