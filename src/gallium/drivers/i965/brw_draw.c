@@ -268,7 +268,7 @@ boolean brw_draw_init( struct brw_context *brw )
       return FALSE;
 
    brw->vb.upload_index = u_upload_create( brw->base.screen,
-					   128 * 1024,
+					   32 * 1024,
 					   64,
 					   PIPE_BUFFER_USAGE_INDEX );
    if (brw->vb.upload_index == NULL)
