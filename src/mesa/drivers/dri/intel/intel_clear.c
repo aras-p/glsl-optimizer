@@ -33,6 +33,7 @@
 
 #include "intel_context.h"
 #include "intel_blit.h"
+#include "intel_buffers.h"
 #include "intel_chipset.h"
 #include "intel_clear.h"
 #include "intel_fbo.h"
@@ -74,6 +75,8 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
+
+   intel_check_front_buffer_rendering(intel);
 
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);
