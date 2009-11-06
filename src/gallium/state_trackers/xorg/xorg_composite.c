@@ -440,9 +440,11 @@ void xorg_composite(struct exa_context *exa,
                     int dstX, int dstY, int width, int height)
 {
    if (exa->num_bound_samplers == 0 ) { /* solid fill */
-      renderer_draw_solid_rect(exa->renderer,
-                               dstX, dstY, dstX + width, dstY + height,
-                               exa->solid_color);
+      renderer_begin_solid(exa->renderer);
+      renderer_solid(exa->renderer,
+                     dstX, dstY, dstX + width, dstY + height,
+                     exa->solid_color);
+      renderer_draw_flush(exa->renderer);
    } else {
       int pos[6] = {srcX, srcY, maskX, maskY, dstX, dstY};
       float *src_matrix = NULL;
@@ -492,6 +494,8 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    cso_set_vertex_shader_handle(exa->renderer->cso, shader.vs);
    cso_set_fragment_shader_handle(exa->renderer->cso, shader.fs);
 
+   renderer_begin_solid(exa->renderer);
+
    return TRUE;
 }
 
@@ -499,7 +503,7 @@ void xorg_solid(struct exa_context *exa,
                 struct exa_pixmap_priv *pixmap,
                 int x0, int y0, int x1, int y1)
 {
-   renderer_draw_solid_rect(exa->renderer,
-                            x0, y0, x1, y1, exa->solid_color);
+   renderer_solid(exa->renderer,
+                  x0, y0, x1, y1, exa->solid_color);
 }
 

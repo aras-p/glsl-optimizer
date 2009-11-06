@@ -46,7 +46,6 @@
 #include "util/u_rect.h"
 
 #define DEBUG_PRINT 0
-#define DEBUG_SOLID 0
 #define ACCEL_ENABLED TRUE
 
 /*
@@ -277,6 +276,8 @@ ExaDone(PixmapPtr pPixmap)
     if (!priv)
 	return;
 
+    renderer_draw_flush(exa->renderer);
+
     xorg_exa_common_done(exa);
 }
 
@@ -319,10 +320,6 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
     }
 
-#if DEBUG_SOLID
-    fg = 0xffff0000;
-#endif
-
     return ACCEL_ENABLED && xorg_solid_bind_state(exa, priv, fg);
 }
 
@@ -338,46 +335,7 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
 #endif
 
-#if 0
-    if (x0 == 0 && y0 == 0 &&
-        x1 == priv->tex->width[0] &&
-        y1 == priv->tex->height[0]) {
-       exa->ctx->clear(exa->pipe, PIPE_CLEAR_COLOR,
-                       exa->solid_color, 1., 0);
-    } else
-#endif
-
-#if DEBUG_SOLID
-       exa->solid_color[0] = 0.f;
-       exa->solid_color[1] = 1.f;
-       exa->solid_color[2] = 0.f;
-       exa->solid_color[3] = 1.f;
-    xorg_solid(exa, priv, 0, 0, 1024, 768);
-       exa->solid_color[0] = 1.f;
-       exa->solid_color[1] = 0.f;
-       exa->solid_color[2] = 0.f;
-       exa->solid_color[3] = 1.f;
-       xorg_solid(exa, priv, 0, 0, 300, 300);
-       xorg_solid(exa, priv, 300, 300, 350, 350);
-       xorg_solid(exa, priv, 350, 350, 500, 500);
-
-       xorg_solid(exa, priv,
-               priv->tex->width[0] - 10,
-               priv->tex->height[0] - 10,
-               priv->tex->width[0],
-               priv->tex->height[0]);
-
-    exa->solid_color[0] = 0.f;
-    exa->solid_color[1] = 0.f;
-    exa->solid_color[2] = 1.f;
-    exa->solid_color[3] = 1.f;
-
-    exa->has_solid_color = FALSE;
-    ExaPrepareCopy(pPixmap, pPixmap, 0, 0, GXcopy, 0xffffffff);
-    ExaCopy(pPixmap, 0, 0, 50, 50, 500, 500);
-#else
     xorg_solid(exa, priv, x0, y0, x1, y1) ;
-#endif
 }
 
 static Bool

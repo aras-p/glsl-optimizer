@@ -45,11 +45,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
                           struct exa_pixmap_priv *src_priv, int sx, int sy,
                           int width, int height);
 
-void renderer_draw_solid_rect(struct xorg_renderer *r,
-                              int x0, int y0,
-                              int x1, int y1,
-                              float *color);
-
 void renderer_draw_textures(struct xorg_renderer *r,
                             int *pos,
                             int width, int height,
@@ -63,12 +58,12 @@ void renderer_draw_yuv(struct xorg_renderer *r,
                        int dst_x, int dst_y, int dst_w, int dst_h,
                        struct pipe_texture **textures);
 
-void renderer_begin_solid(struct xorg_renderer *r,
-                          float *color);
+void renderer_begin_solid(struct xorg_renderer *r);
 void renderer_solid(struct xorg_renderer *r,
                     int x0, int y0,
-                    int x1, int y1);
-void renderer_end_solid(struct xorg_renderer *r);
+                    int x1, int y1,
+                    float *color);
 
+void renderer_draw_flush(struct xorg_renderer *r);
 
 #endif

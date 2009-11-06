@@ -57,6 +57,37 @@ renderer_buffer_create(struct xorg_renderer *r)
    return buf;
 }
 
+static INLINE void
+renderer_draw(struct xorg_renderer *r)
+{
+   struct pipe_context *pipe = r->pipe;
+   struct pipe_buffer *buf = 0;
+
+   if (!r->num_vertices)
+      return;
+
+   buf = renderer_buffer_create(r);
+
+
+   if (buf) {
+      util_draw_vertex_buffer(pipe, buf, 0,
+                              PIPE_PRIM_QUADS,
+                              4,  /* verts */
+                              2); /* attribs/vert */
+
+      pipe_buffer_reference(&buf, NULL);
+   }
+}
+
+static INLINE void
+renderer_draw_conditional(struct xorg_renderer *r,
+                          int next_batch)
+{
+   if (r->num_vertices + next_batch >= BUF_SIZE ||
+       (next_batch == 0 && r->num_vertices))
+      renderer_draw(r);
+}
+
 static void
 renderer_init_state(struct xorg_renderer *r)
 {
@@ -804,39 +835,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    }
 }
 
-void renderer_draw_solid_rect(struct xorg_renderer *r,
-                              int x0, int y0,
-                              int x1, int y1,
-                              float *color)
-{
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_buffer *buf = 0;
-
-   /*
-   debug_printf("solid rect[(%d, %d), (%d, %d)], rgba[%f, %f, %f, %f]\n",
-   x0, y0, x1, y1, color[0], color[1], color[2], color[3]);*/
-   /* 1st vertex */
-   add_vertex_color(r, x0, y0, color);
-   /* 2nd vertex */
-   add_vertex_color(r, x1, y0, color);
-   /* 3rd vertex */
-   add_vertex_color(r, x1, y1, color);
-   /* 4th vertex */
-   add_vertex_color(r, x0, y1, color);
-
-   buf = renderer_buffer_create(r);
-
-
-   if (buf) {
-      util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_buffer_reference(&buf, NULL);
-   }
-}
-
 void renderer_draw_textures(struct xorg_renderer *r,
                             int *pos,
                             int width, int height,
@@ -923,17 +921,33 @@ void renderer_draw_yuv(struct xorg_renderer *r,
    }
 }
 
-void renderer_begin_solid(struct xorg_renderer *r,
-                          float *color)
+void renderer_begin_solid(struct xorg_renderer *r)
 {
+   r->num_vertices = 0;
 }
 
 void renderer_solid(struct xorg_renderer *r,
                     int x0, int y0,
-                    int x1, int y1)
+                    int x1, int y1,
+                    float *color)
 {
+   /*
+   debug_printf("solid rect[(%d, %d), (%d, %d)], rgba[%f, %f, %f, %f]\n",
+   x0, y0, x1, y1, color[0], color[1], color[2], color[3]);*/
+
+   renderer_draw_conditional(r, 4 * 8);
+
+   /* 1st vertex */
+   add_vertex_color(r, x0, y0, color);
+   /* 2nd vertex */
+   add_vertex_color(r, x1, y0, color);
+   /* 3rd vertex */
+   add_vertex_color(r, x1, y1, color);
+   /* 4th vertex */
+   add_vertex_color(r, x0, y1, color);
 }
 
-void renderer_end_solid(struct xorg_renderer *r)
+void renderer_draw_flush(struct xorg_renderer *r)
 {
+   renderer_draw_conditional(r, 0);
 }
