@@ -4,7 +4,6 @@ include $(MESA)/sources.mak
 
 LOCAL_ES1_SOURCES :=			\
 	main/api_exec_es1.c		\
-	main/drawtex.c			\
 	main/get_es1.c			\
 	main/specials_es1.c		\
 	main/drawtex.c			\

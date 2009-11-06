@@ -107,6 +107,9 @@ clean:
 	-rm -f depend
 	-rm -f *~
 
+# nothing to install
+install:
+
 subdirs:
 	make -C glapi
 	make -C $(MESA) asm_subdirs

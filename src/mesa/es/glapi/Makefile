@@ -52,7 +52,7 @@ endef
 	$(call gen-glapi,-c)
 
 %/glapitemp.h: $(GLAPI)/gl_apitemp.py $(COMMON)
-	$(call gen-glapi)
+	$(call gen-glapi,-c)
 
 %/glprocs.h: $(GLAPI)/gl_procs.py $(COMMON)
 	$(call gen-glapi,-c)
