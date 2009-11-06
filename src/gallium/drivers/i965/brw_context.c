@@ -114,6 +114,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    brw->base.screen = screen;
    brw->base.destroy = brw_destroy_context;
    brw->sws = brw_screen(screen)->sws;
+   brw->chipset = brw_screen(screen)->chipset;
 
    brw_pipe_blend_init( brw );
    brw_pipe_depth_stencil_init( brw );
