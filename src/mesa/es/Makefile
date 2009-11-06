@@ -110,11 +110,17 @@ clean:
 # nothing to install
 install:
 
-subdirs:
-	make -C glapi
-	make -C $(MESA) asm_subdirs
+glapi/glapi-stamp:
+	$(MAKE) -C glapi
 
-depend: $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES)
+subdirs: glapi/glapi-stamp
+	$(MAKE) -C $(MESA) asm_subdirs
+
+# remove generated sources because "depend" is checked even when "make clean"
+DEPEND_SOURCES := $(filter-out $(GENERATED_SOURCES), $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES))
+DEPEND_SOURCES := $(filter-out glapi/%, $(DEPEND_SOURCES))
+
+depend: glapi/glapi-stamp $(DEPEND_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@# MESA is "..", but luckily, directories are longer than 2 characters

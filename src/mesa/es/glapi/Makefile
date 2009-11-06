@@ -30,7 +30,10 @@ ES2_DEPS = $(ES2_APIXML) base2_API.xml es2_EXT.xml es_EXT.xml \
 ES1_OUTPUTS := $(addprefix $(ES1_OUTPUT_DIR)/, $(OUTPUTS))
 ES2_OUTPUTS := $(addprefix $(ES2_OUTPUT_DIR)/, $(OUTPUTS))
 
-all: $(ES1_OUTPUTS) $(ES2_OUTPUTS)
+all: glapi-stamp
+
+glapi-stamp: $(ES1_OUTPUTS) $(ES2_OUTPUTS)
+	@touch glapi-stamp
 
 $(ES1_OUTPUTS): APIXML := $(ES1_APIXML)
 $(ES2_OUTPUTS): APIXML := $(ES2_APIXML)
@@ -86,5 +89,6 @@ verify_xml:
 	@rm -f tmp.xml
 
 clean:
+	-rm -f glapi-stamp
 	-rm -rf $(ES1_OUTPUT_DIR) $(ES2_OUTPUT_DIR)
 	-rm -f *~ *.pyc *.pyo
