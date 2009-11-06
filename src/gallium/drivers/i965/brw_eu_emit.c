@@ -33,6 +33,7 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_eu.h"
+#include "brw_debug.h"
 
 
 
@@ -472,6 +473,12 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
 					  GLuint opcode )
 {
    struct brw_instruction *insn;
+
+   if (0 && (BRW_DEBUG & DEBUG_DISASSEM))
+   {
+      if (p->nr_insn) 
+         brw_disasm_insn(stderr, &p->store[p->nr_insn-1]);
+   }
 
    assert(p->nr_insn + 1 < BRW_EU_MAX_INSN);
 

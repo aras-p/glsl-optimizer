@@ -49,6 +49,7 @@ static const struct debug_named_value debug_names[] = {
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
    { "min",   DEBUG_MIN_URB},
+   { "dis",   DEBUG_DISASSEM},
    { "sync",  DEBUG_SYNC},
    { "prim",  DEBUG_PRIMS },
    { "vert",  DEBUG_VERTS },

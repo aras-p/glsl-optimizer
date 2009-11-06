@@ -770,7 +770,7 @@ static int src1 (FILE *file, const struct brw_instruction *inst)
     }
 }
 
-static int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
+int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 {
     int	err = 0;
     int space = 0;
