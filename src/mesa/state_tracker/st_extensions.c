@@ -284,6 +284,7 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
+      ctx->Extensions.S3_s3tc = GL_TRUE;
    }
 
    /* ycbcr support */
