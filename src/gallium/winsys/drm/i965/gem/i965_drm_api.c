@@ -46,10 +46,13 @@ i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
 
    if (!buf)
       return NULL;
-
+   pipe_reference_init(&buf->base.reference, 1);
    buf->bo = drm_intel_bo_gem_create_from_name(idws->gem, name, handle);
+   buf->base.size = buf->bo->size;
+   buf->base.sws = &idws->base;
    buf->flinked = TRUE;
    buf->flink = handle;
+
 
    if (!buf->bo)
       goto err;
@@ -177,6 +180,7 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD,
    drm_intel_bufmgr_gem_enable_reuse(idws->gem);
 
    idws->dump_cmd = debug_get_bool_option("I965_DUMP_CMD", FALSE);
+   idws->send_cmd = debug_get_bool_option("I965_SEND_CMD", FALSE);
 
    return brw_create_screen(&idws->base, deviceID);
 }

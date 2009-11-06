@@ -53,6 +53,7 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
       goto err;
 
    buf->base.size = size;
+   buf->base.sws = sws;
 
    *bo_out = &buf->base;
    return PIPE_OK;
@@ -93,6 +94,14 @@ i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
       read = I915_GEM_DOMAIN_INSTRUCTION;
       write = I915_GEM_DOMAIN_INSTRUCTION;
       break;
+   case BRW_USAGE_BLIT_DEST:
+      read = I915_GEM_DOMAIN_RENDER;
+      write = I915_GEM_DOMAIN_RENDER;
+      break;
+   case BRW_USAGE_BLIT_SOURCE:
+      read = 0;
+      write = I915_GEM_DOMAIN_RENDER;
+      break;
    case BRW_USAGE_RENDER_TARGET:
       read = I915_GEM_DOMAIN_RENDER;
       write = 0;
@@ -130,11 +139,14 @@ i965_libdrm_bo_exec(struct brw_winsys_buffer *buffer,
                     unsigned bytes_used)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(buffer->sws);
    int ret;
 
-   ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
-   if (ret)
-      return PIPE_ERROR;
+   if (idws->send_cmd) {
+      ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
+      if (ret)
+         return PIPE_ERROR;
+   }
 
    return PIPE_OK;
 }
