@@ -73,6 +73,12 @@ remove_instructions(struct gl_program *prog, const GLboolean *removeFlags)
          }
       }
    }
+   /* Finish removing if the first instruction was to be removed. */
+   if (removeCount > 0) {
+      GLint removeStart = removeEnd - removeCount + 1;
+      _mesa_delete_instructions(prog, removeStart, removeCount);
+      removeStart = removeCount = 0; /* reset removal info */
+   }
    return totalRemoved;
 }
 
