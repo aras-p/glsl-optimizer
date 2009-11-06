@@ -224,9 +224,13 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT];
+      GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
       struct pipe_screen *screen = brw->base.screen;
 
+      /* XXX: note that constant buffers are currently *already* in
+       * buffer objects.  If we want to keep on putting them into the
+       * curbe, makes sense to treat constbuf's specially with malloc.
+       */
       const GLfloat *value = screen->buffer_map( screen,
 						 brw->curr.vertex_constants,
 						 PIPE_BUFFER_USAGE_CPU_READ);
@@ -272,8 +276,10 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
       }
 
       if (brw->curbe.curbe_bo == NULL) {
-	 /* Allocate a single page for CURBE entries for this batchbuffer.
-	  * They're generally around 64b.
+	 /* Allocate a single page for CURBE entries for this
+	  * batchbuffer.  They're generally around 64b.  We will
+	  * discard the curbe buffer after the batch is flushed to
+	  * avoid synchronous updates.
 	  */
 	 ret = brw->sws->bo_alloc(brw->sws, 
                                   BRW_BUFFER_TYPE_CURBE,
@@ -292,8 +298,8 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
       /* Copy data to the buffer:
        */
       brw->sws->bo_subdata(brw->curbe.curbe_bo,
+                           BRW_DATA_CONSTANT_BUFFER,
 			   brw->curbe.curbe_offset,
-                           BRW_DATA_OTHER,
 			   bufsz,
 			   buf,
                            NULL, 0);
