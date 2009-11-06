@@ -181,7 +181,6 @@ struct brw_wm_instruction {
 #define Y    1
 #define Z    2
 #define W    3
-#define GET_SWZ(swz, comp) (((swz) >> ((comp)*2)) & 0x3)
 
 
 struct brw_fp_src {
@@ -332,6 +331,9 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 
 void brw_wm_print_program( struct brw_wm_compile *c,
 			   const char *stage );
+
+void brw_wm_print_fp_program( struct brw_wm_compile *c,
+                              const char *stage );
 
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,

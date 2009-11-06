@@ -34,6 +34,62 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
+static void print_writemask( unsigned writemask )
+{
+   if (writemask != BRW_WRITEMASK_XYZW)
+      debug_printf(".%s%s%s%s", 
+		   (writemask & BRW_WRITEMASK_X) ? "x" : "",
+		   (writemask & BRW_WRITEMASK_Y) ? "y" : "",
+		   (writemask & BRW_WRITEMASK_Z) ? "z" : "",
+		   (writemask & BRW_WRITEMASK_W) ? "w" : "");
+}
+
+static void print_swizzle( unsigned swizzle )
+{
+   char *swz = "xyzw";
+   if (swizzle != BRW_SWIZZLE_XYZW)
+      debug_printf(".%c%c%c%c", 
+		   swz[BRW_GET_SWZ(swizzle, X)],
+		   swz[BRW_GET_SWZ(swizzle, Y)],
+		   swz[BRW_GET_SWZ(swizzle, Z)],
+		   swz[BRW_GET_SWZ(swizzle, W)]);
+}
+
+static void print_opcode( unsigned opcode )
+{
+   switch (opcode) {
+   case WM_PIXELXY:
+      debug_printf("PIXELXY");
+      break;
+   case WM_DELTAXY:
+      debug_printf("DELTAXY");
+      break;
+   case WM_PIXELW:
+      debug_printf("PIXELW");
+      break;
+   case WM_WPOSXY:
+      debug_printf("WPOSXY");
+      break;
+   case WM_PINTERP:
+      debug_printf("PINTERP");
+      break;
+   case WM_LINTERP:
+      debug_printf("LINTERP");
+      break;
+   case WM_CINTERP:
+      debug_printf("CINTERP");
+      break;
+   case WM_FB_WRITE:
+      debug_printf("FB_WRITE");
+      break;
+   case WM_FRONTFACING:
+      debug_printf("FRONTFACING");
+      break;
+   default:
+      debug_printf("%s", tgsi_get_opcode_info(opcode)->mnemonic);
+      break;
+   }
+}
 
 void brw_wm_print_value( struct brw_wm_compile *c,
 		       struct brw_wm_value *value )
@@ -98,47 +154,11 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 	 debug_printf(",");
    }
    debug_printf("]");
-
-   if (inst->writemask != BRW_WRITEMASK_XYZW)
-      debug_printf(".%s%s%s%s", 
-		   (inst->writemask & BRW_WRITEMASK_X) ? "x" : "",
-		   (inst->writemask & BRW_WRITEMASK_Y) ? "y" : "",
-		   (inst->writemask & BRW_WRITEMASK_Z) ? "z" : "",
-		   (inst->writemask & BRW_WRITEMASK_W) ? "w" : "");
-
-   switch (inst->opcode) {
-   case WM_PIXELXY:
-      debug_printf(" = PIXELXY");
-      break;
-   case WM_DELTAXY:
-      debug_printf(" = DELTAXY");
-      break;
-   case WM_PIXELW:
-      debug_printf(" = PIXELW");
-      break;
-   case WM_WPOSXY:
-      debug_printf(" = WPOSXY");
-      break;
-   case WM_PINTERP:
-      debug_printf(" = PINTERP");
-      break;
-   case WM_LINTERP:
-      debug_printf(" = LINTERP");
-      break;
-   case WM_CINTERP:
-      debug_printf(" = CINTERP");
-      break;
-   case WM_FB_WRITE:
-      debug_printf(" = FB_WRITE");
-      break;
-   case WM_FRONTFACING:
-      debug_printf(" = FRONTFACING");
-      break;
-   default:
-      debug_printf(" = %s", tgsi_get_opcode_info(inst->opcode)->mnemonic);
-      break;
-   }
-
+   print_writemask(inst->writemask);
+   
+   debug_printf(" = ");
+   print_opcode(inst->opcode);
+  
    if (inst->saturate)
       debug_printf("_SAT");
 
@@ -170,6 +190,67 @@ void brw_wm_print_program( struct brw_wm_compile *c,
    debug_printf("%s:\n", stage);
    for (insn = 0; insn < c->nr_insns; insn++)
       brw_wm_print_insn(c, &c->instruction[insn]);
+   debug_printf("\n");
+}
+
+static const char *file_strings[TGSI_FILE_COUNT+1] = {
+   "NULL",
+   "CONST",
+   "IN",
+   "OUT",
+   "TEMP",
+   "SAMPLER",
+   "ADDR",
+   "IMM",
+   "LOOP",
+   "PAYLOAD"
+};
+
+static void brw_wm_print_fp_insn( struct brw_wm_compile *c,
+                                  struct brw_fp_instruction *inst )
+{
+   GLuint i;
+   GLuint nr_args = brw_wm_nr_args(inst->opcode);
+
+   print_opcode(inst->opcode);
+   if (inst->dst.saturate)
+      debug_printf("_SAT");
+   debug_printf(" ");
+
+   if (inst->dst.indirect)
+      debug_printf("[");
+
+   debug_printf("%s[%d]",
+                file_strings[inst->dst.file],
+                inst->dst.index );
+   print_writemask(inst->dst.writemask);
+
+   if (inst->dst.indirect)
+      debug_printf("]");
+
+   debug_printf(nr_args ? ", " : "\n");
+   
+   for (i = 0; i < nr_args; i++) {
+      debug_printf("%s%s%s[%d]%s",
+                   inst->src[i].negate ? "-" : "",
+                   inst->src[i].abs ? "ABS(" : "",
+                   file_strings[inst->src[i].file],
+                   inst->src[i].index,
+                   inst->src[i].abs ? ")" : "");
+      print_swizzle(inst->src[i].swizzle);
+      debug_printf("%s", i == nr_args - 1 ? "\n" : ", ");
+   }
+}
+
+
+void brw_wm_print_fp_program( struct brw_wm_compile *c,
+                              const char *stage )
+{
+   GLuint insn;
+
+   debug_printf("%s:\n", stage);
+   for (insn = 0; insn < c->nr_fp_insns; insn++)
+      brw_wm_print_fp_insn(c, &c->fp_instructions[insn]);
    debug_printf("\n");
 }
 

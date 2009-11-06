@@ -558,7 +558,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 {
     const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
     const GLuint nr = 1;
-    const GLuint component = GET_SWZ(src->Swizzle, channel);
+    const GLuint component = BRW_GET_SWZ(src->Swizzle, channel);
 
     /* Extended swizzle terms */
     if (component == SWIZZLE_ZERO) {
@@ -598,7 +598,7 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
     const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
     if (src->File == TGSI_FILE_IMMEDIATE) {
        /* an immediate */
-       const int component = GET_SWZ(src->Swizzle, channel);
+       const int component = BRW_GET_SWZ(src->Swizzle, channel);
        const GLfloat *param =
           c->fp->program.Base.Parameters->ParameterValues[src->Index];
        GLfloat value = param[component];

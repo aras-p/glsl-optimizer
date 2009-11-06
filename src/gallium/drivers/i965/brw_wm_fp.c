@@ -45,20 +45,6 @@
 #include "brw_debug.h"
 
 
-
-
-static const char *wm_opcode_strings[] = {
-   "PIXELXY",
-   "DELTAXY",
-   "PIXELW",
-   "LINTERP",
-   "PINTERP",
-   "CINTERP",
-   "WPOSXY",
-   "FB_WRITE",
-   "FRONTFACING",
-};
-
 /***********************************************************************
  * Source regs
  */
@@ -94,10 +80,10 @@ static struct brw_fp_src src_swizzle( struct brw_fp_src reg, int x, int y, int z
 {
    unsigned swz = reg.swizzle;
 
-   reg.swizzle = ( GET_SWZ(swz, x) << 0 |
-		   GET_SWZ(swz, y) << 2 |
-		   GET_SWZ(swz, z) << 4 |
-		   GET_SWZ(swz, w) << 6 );
+   reg.swizzle = ( BRW_GET_SWZ(swz, x) << 0 |
+		   BRW_GET_SWZ(swz, y) << 2 |
+		   BRW_GET_SWZ(swz, z) << 4 |
+		   BRW_GET_SWZ(swz, w) << 6 );
 
    return reg;
 }
@@ -200,10 +186,10 @@ out:
       swizzle |= (swizzle & 0x3) << (j * 2);
 
    return src_swizzle( src_reg( TGSI_FILE_IMMEDIATE, i ),
-		       GET_SWZ(swizzle, X),
-		       GET_SWZ(swizzle, Y),
-		       GET_SWZ(swizzle, Z),
-		       GET_SWZ(swizzle, W) );
+		       BRW_GET_SWZ(swizzle, X),
+		       BRW_GET_SWZ(swizzle, Y),
+		       BRW_GET_SWZ(swizzle, Z),
+		       BRW_GET_SWZ(swizzle, W) );
 }
 
 
@@ -843,7 +829,7 @@ static GLboolean projtex( struct brw_wm_compile *c,
       return GL_FALSE;  /* ut2004 gun rendering !?! */
    
    if (src.file == TGSI_FILE_INPUT && 
-       GET_SWZ(src.swizzle, W) == W &&
+       BRW_GET_SWZ(src.swizzle, W) == W &&
        c->fp->info.input_interpolate[src.index] != TGSI_INTERPOLATE_PERSPECTIVE)
       return GL_FALSE;
 
@@ -1214,8 +1200,7 @@ int brw_wm_pass_fp( struct brw_wm_compile *c )
    }
 
    if (BRW_DEBUG & DEBUG_WM) {
-      debug_printf("pass_fp:\n");
-      //brw_print_program( c->fp_brw_program );
+      brw_wm_print_fp_program( c, "pass_fp" );
       debug_printf("\n");
    }
 

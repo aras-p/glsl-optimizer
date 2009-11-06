@@ -227,7 +227,7 @@ static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
 						    struct brw_fp_src src,
 						    GLuint i )
 {
-   return pass0_get_reg(c, src.file, src.index, GET_SWZ(src.swizzle,i));
+   return pass0_get_reg(c, src.file, src.index, BRW_GET_SWZ(src.swizzle,i));
 }
 
 

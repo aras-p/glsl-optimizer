@@ -293,7 +293,7 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 #ifdef DEBUG
    BRW_DEBUG = debug_get_flags_option("BRW_DEBUG", debug_names, 0);
    BRW_DEBUG |= debug_get_flags_option("INTEL_DEBUG", debug_names, 0);
-   BRW_DEBUG |= DEBUG_STATS | DEBUG_MIN_URB;
+   BRW_DEBUG |= DEBUG_STATS | DEBUG_MIN_URB | DEBUG_WM;
 #endif
 
    memset(&chipset, 0, sizeof chipset);
