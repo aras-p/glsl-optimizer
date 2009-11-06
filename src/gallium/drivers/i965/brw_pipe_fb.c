@@ -38,7 +38,10 @@ static void brw_set_framebuffer_state( struct pipe_context *pipe,
       }
    }
    
-   brw->curr.fb.nr_cbufs = fb->nr_cbufs;
+   if (brw->curr.fb.nr_cbufs != fb->nr_cbufs) {
+      brw->curr.fb.nr_cbufs = fb->nr_cbufs;
+      brw->state.dirty.mesa |= PIPE_NEW_NR_CBUFS;
+   }
 }
 
 

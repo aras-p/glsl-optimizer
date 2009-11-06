@@ -259,6 +259,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* CACHE_NEW_VS_PROG */
    key->vp_nr_outputs = brw->vs.prog_data->nr_outputs;
 
+   key->nr_cbufs = brw->curr.fb.nr_cbufs;
+
+   key->nr_inputs = brw->curr.fragment_shader->info.num_inputs;
+
    /* The unique fragment program ID */
    key->program_string_id = brw->curr.fragment_shader->id;
 }
@@ -294,6 +298,7 @@ const struct brw_tracked_state brw_wm_prog = {
       .mesa  = (PIPE_NEW_FRAGMENT_SHADER |
 		PIPE_NEW_DEPTH_STENCIL_ALPHA |
 		PIPE_NEW_RAST |
+		PIPE_NEW_NR_CBUFS |
 		PIPE_NEW_BOUND_TEXTURES),
       .brw   = (BRW_NEW_WM_INPUT_DIMENSIONS |
 		BRW_NEW_REDUCED_PRIMITIVE),

@@ -209,6 +209,7 @@ struct brw_sampler {
 #define PIPE_NEW_QUERY                  0x80000
 #define PIPE_NEW_SCISSOR                0x100000
 #define PIPE_NEW_BOUND_TEXTURES         0x200000
+#define PIPE_NEW_NR_CBUFS               0x400000
 
 
 
