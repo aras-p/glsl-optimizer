@@ -1,0 +1,21 @@
+# Configuration for OpenGL ES on Linux
+
+include $(TOP)/configs/linux
+
+CONFIG_NAME = linux-opengl-es
+
+# Directories to build
+LIB_DIR = lib
+SRC_DIRS = egl mesa/es gallium gallium/winsys
+PROGRAM_DIRS = es1/xegl es2/xegl
+
+# no mesa or egl drivers
+DRIVER_DIRS =
+EGL_DRIVERS_DIRS =
+
+GALLIUM_DRIVERS_DIRS = softpipe
+
+# build egl_softpipe.so
+GALLIUM_WINSYS_DIRS = egl_xlib
+# and libGLES*.so
+GALLIUM_STATE_TRACKERS_DIRS = es
