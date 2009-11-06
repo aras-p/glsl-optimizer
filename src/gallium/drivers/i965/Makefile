@@ -40,6 +40,7 @@ C_SOURCES = \
 	brw_sf_emit.c \
 	brw_sf_state.c \
 	brw_state_batch.c \
+	brw_state_debug.c \
 	brw_state_cache.c \
 	brw_state_upload.c \
 	brw_structs_dump.c \
