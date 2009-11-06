@@ -16,9 +16,7 @@ struct xorg_renderer {
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
 
-   /* we should combine these three */
-   float vertices2[4][2][4];
-   float vertices3[4][3][4];
+   float vertices[4*3*4];
 };
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);
