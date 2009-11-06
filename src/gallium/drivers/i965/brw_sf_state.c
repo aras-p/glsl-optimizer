@@ -58,9 +58,9 @@ static enum pipe_error upload_sf_vp(struct brw_context *brw)
    sfv.viewport.m32 = vp->translate[2];
 
    sfv.scissor.xmin = scissor->minx;
-   sfv.scissor.xmax = scissor->maxx; /* -1 ?? */
+   sfv.scissor.xmax = scissor->maxx - 1; /* ? */
    sfv.scissor.ymin = scissor->miny;
-   sfv.scissor.ymax = scissor->maxy; /* -1 ?? */
+   sfv.scissor.ymax = scissor->maxy - 1; /* ? */
 
    ret = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0,
                          &brw->sf.vp_bo );
