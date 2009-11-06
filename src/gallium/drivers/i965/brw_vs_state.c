@@ -146,7 +146,7 @@ vs_unit_create_from_key(struct brw_context *brw,
 
    ret = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
                           key, sizeof(*key),
-                          reloc, Elements(reloc),
+                          reloc, 1,
                           &vs, sizeof(vs),
                           NULL, NULL,
                           bo_out);

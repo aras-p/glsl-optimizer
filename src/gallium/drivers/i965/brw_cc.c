@@ -150,7 +150,7 @@ cc_unit_create_from_key(struct brw_context *brw,
    
    ret = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
                           key, sizeof(*key),
-                          reloc, Elements(reloc),
+                          reloc, 1,
                           &cc, sizeof(cc),
                           NULL, NULL,
                           bo_out);

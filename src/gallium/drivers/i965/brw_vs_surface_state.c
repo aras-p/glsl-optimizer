@@ -162,7 +162,7 @@ brw_vs_get_binding_table(struct brw_context *brw,
    ret = brw_cache_data( &brw->surface_cache, 
                          BRW_SS_SURF_BIND,
                          NULL, 0,
-                         reloc, Elements(reloc),
+                         reloc, nr_reloc,
                          data, sizeof data,
                          NULL, NULL,
                          bo_out);
