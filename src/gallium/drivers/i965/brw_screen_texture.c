@@ -387,12 +387,14 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
    enum brw_buffer_type buffer_type;
    enum pipe_error ret;
 
+   if (templ->target != PIPE_TEXTURE_2D ||
+       templ->last_level != 0 ||
+       templ->depth[0] != 1)
+      return NULL;
+
    if (pf_is_compressed(templ->format))
       return NULL;
 
-   if (pf_is_depth_or_stencil(templ->format))
-      return NULL;
- 
    tex = CALLOC_STRUCT(brw_texture);
    if (!tex)
       return NULL;
@@ -408,6 +410,9 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 
    if (1)
       tex->tiling = BRW_TILING_NONE;
+   else if (bscreen->chipset.is_965 &&
+            pf_is_depth_or_stencil(templ->format))
+      tex->tiling = BRW_TILING_Y;
    else
       tex->tiling = BRW_TILING_X;
 
@@ -424,17 +429,13 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 
    tex->bo = buffer;
 
-   if (tex->pitch != pitch)
-      goto fail;
+   tex->pitch = pitch;
 
-
-/* fix this warning
+   /* fix this warning */
+#if 0
    if (tex->size > buffer->size)
       goto fail;
- */
-
-   if (ret)
-      goto fail;
+#endif
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
