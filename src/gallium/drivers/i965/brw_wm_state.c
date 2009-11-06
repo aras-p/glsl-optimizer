@@ -140,39 +140,12 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
  */
 static enum pipe_error
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			struct brw_winsys_buffer **reloc_bufs,
+			struct brw_winsys_reloc *reloc,
+                        unsigned nr_reloc,
                         struct brw_winsys_buffer **bo_out)
 {
    struct brw_wm_unit_state wm;
-   struct brw_winsys_reloc reloc[3];
-   unsigned nr_reloc = 0;
    enum pipe_error ret;
-
-   /* Emit WM program relocation */
-   make_reloc(&reloc[nr_reloc++],
-              BRW_USAGE_STATE,
-              wm.thread0.grf_reg_count << 1,
-              offsetof(struct brw_wm_unit_state, thread0),
-              brw->wm.prog_bo);
-
-   /* Emit scratch space relocation */
-   if (key->total_scratch != 0) {
-      make_reloc(&reloc[nr_reloc++],
-                 BRW_USAGE_SCRATCH,
-                 wm.thread2.per_thread_scratch_space,
-                 offsetof(struct brw_wm_unit_state, thread2),
-                 brw->wm.scratch_bo);
-   }
-
-   /* Emit sampler state relocation */
-   if (key->sampler_count != 0) {
-      make_reloc(&reloc[nr_reloc++],
-                 BRW_USAGE_STATE,
-                 wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-                 offsetof(struct brw_wm_unit_state, wm4),
-                 brw->wm.sampler_bo);
-   }
-
 
    memset(&wm, 0, sizeof(wm));
 
@@ -243,7 +216,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.wm5.line_stipple = key->line_stipple;
 
-   if (BRW_DEBUG & DEBUG_STATS || key->stats_wm)
+   if ((BRW_DEBUG & DEBUG_STATS) || key->stats_wm)
       wm.wm4.stats_enable = 1;
 
    ret = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
@@ -262,10 +235,16 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 static enum pipe_error upload_wm_unit( struct brw_context *brw )
 {
    struct brw_wm_unit_key key;
-   struct brw_winsys_buffer *reloc_bufs[3];
+   struct brw_winsys_reloc reloc[3];
+   unsigned nr_reloc = 0;
    enum pipe_error ret;
+   unsigned grf_reg_count;
+   unsigned per_thread_scratch_space;
+   unsigned stats_enable;
+   unsigned sampler_count;
 
    wm_unit_populate_key(brw, &key);
+
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
     * bother reducing the allocation later, since we use scratch so
@@ -291,18 +270,49 @@ static enum pipe_error upload_wm_unit( struct brw_context *brw )
       }
    }
 
-   reloc_bufs[0] = brw->wm.prog_bo;
-   reloc_bufs[1] = brw->wm.scratch_bo;
-   reloc_bufs[2] = brw->wm.sampler_bo;
+
+   /* XXX: temporary:
+    */
+   grf_reg_count = (align(key.total_grf, 16) / 16 - 1);
+   per_thread_scratch_space = key.total_scratch / 1024 - 1;
+   stats_enable = (BRW_DEBUG & DEBUG_STATS) || key.stats_wm;
+   sampler_count = BRW_IS_IGDNG(brw) ? 0 :(key.sampler_count + 1) / 4;
+
+   /* Emit WM program relocation */
+   make_reloc(&reloc[nr_reloc++],
+              BRW_USAGE_STATE,
+              grf_reg_count << 1,
+              offsetof(struct brw_wm_unit_state, thread0),
+              brw->wm.prog_bo);
+
+   /* Emit scratch space relocation */
+   if (key.total_scratch != 0) {
+      make_reloc(&reloc[nr_reloc++],
+                 BRW_USAGE_SCRATCH,
+                 per_thread_scratch_space,
+                 offsetof(struct brw_wm_unit_state, thread2),
+                 brw->wm.scratch_bo);
+   }
+
+   /* Emit sampler state relocation */
+   if (key.sampler_count != 0) {
+      make_reloc(&reloc[nr_reloc++],
+                 BRW_USAGE_STATE,
+                 stats_enable | (sampler_count << 2),
+                 offsetof(struct brw_wm_unit_state, wm4),
+                 brw->wm.sampler_bo);
+   }
+
 
    if (brw_search_cache(&brw->cache, BRW_WM_UNIT,
                         &key, sizeof(key),
-                        reloc_bufs, 3,
+                        reloc, nr_reloc,
                         NULL,
                         &brw->wm.state_bo))
       return PIPE_OK;
 
-   ret = wm_unit_create_from_key(brw, &key, reloc_bufs,
+   ret = wm_unit_create_from_key(brw, &key, 
+                                 reloc, nr_reloc,
                                  &brw->wm.state_bo);
    if (ret)
       return ret;
