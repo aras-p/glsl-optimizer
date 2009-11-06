@@ -363,6 +363,97 @@ boolean brw_is_texture_referenced_by_bo( struct brw_screen *brw_screen,
    return FALSE;
 }
 
+
+/*
+ * Transfer functions
+ */
+
+static struct pipe_transfer*
+brw_get_tex_transfer(struct pipe_screen *screen,
+                     struct pipe_texture *texture,
+                     unsigned face, unsigned level, unsigned zslice,
+                     enum pipe_transfer_usage usage, unsigned x, unsigned y,
+                     unsigned w, unsigned h)
+{
+   struct brw_texture *tex = brw_texture(texture);
+   struct brw_transfer *trans;
+   unsigned offset;  /* in bytes */
+
+   if (texture->target == PIPE_TEXTURE_CUBE) {
+      offset = tex->image_offset[level][face];
+   } else if (texture->target == PIPE_TEXTURE_3D) {
+      offset = tex->image_offset[level][zslice];
+   } else {
+      offset = tex->image_offset[level][0];
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   trans = CALLOC_STRUCT(brw_transfer);
+   if (trans) {
+      pipe_texture_reference(&trans->base.texture, texture);
+      trans->base.format = trans->base.format;
+      trans->base.x = x;
+      trans->base.y = y;
+      trans->base.width = w;
+      trans->base.height = h;
+      trans->base.block = texture->block;
+      trans->base.nblocksx = texture->nblocksx[level];
+      trans->base.nblocksy = texture->nblocksy[level];
+      trans->base.stride = tex->pitch * tex->cpp;
+      trans->offset = offset;
+      trans->base.usage = usage;
+   }
+   return &trans->base;
+}
+
+static void *
+brw_transfer_map(struct pipe_screen *screen,
+                 struct pipe_transfer *transfer)
+{
+   struct brw_texture *tex = brw_texture(transfer->texture);
+   struct brw_winsys_screen *sws = brw_screen(screen)->sws;
+   char *map;
+   unsigned usage = transfer->usage;
+
+   map = sws->bo_map(tex->bo, 
+                     BRW_DATA_OTHER,
+                     0,
+                     tex->bo->size,
+                     (usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE,
+                     (usage & 0) ? TRUE : FALSE,
+                     (usage & 0) ? TRUE : FALSE);
+
+   if (!map)
+      return NULL;
+
+   return map + brw_transfer(transfer)->offset +
+      transfer->y / transfer->block.height * transfer->stride +
+      transfer->x / transfer->block.width * transfer->block.size;
+}
+
+static void
+brw_transfer_unmap(struct pipe_screen *screen,
+                   struct pipe_transfer *transfer)
+{
+   struct brw_texture *tex = brw_texture(transfer->texture);
+   struct brw_winsys_screen *sws = brw_screen(screen)->sws;
+
+   sws->bo_unmap(tex->bo);
+}
+
+static void
+brw_tex_transfer_destroy(struct pipe_transfer *trans)
+{
+   pipe_texture_reference(&trans->texture, NULL);
+   FREE(trans);
+}
+
+
+/*
+ * Functions exported to the winsys
+ */
+
 boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
                                       struct brw_winsys_buffer **buffer,
                                       unsigned *stride)
@@ -481,4 +572,8 @@ void brw_screen_tex_init( struct brw_screen *brw_screen )
    brw_screen->base.texture_create = brw_texture_create;
    brw_screen->base.texture_destroy = brw_texture_destroy;
    brw_screen->base.texture_blanket = brw_texture_blanket;
+   brw_screen->base.get_tex_transfer = brw_get_tex_transfer;
+   brw_screen->base.transfer_map = brw_transfer_map;
+   brw_screen->base.transfer_unmap = brw_transfer_unmap;
+   brw_screen->base.tex_transfer_destroy = brw_tex_transfer_destroy;
 }
