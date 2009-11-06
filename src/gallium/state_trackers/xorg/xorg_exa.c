@@ -89,6 +89,8 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 static void
 xorg_exa_common_done(struct exa_context *exa)
 {
+   renderer_draw_flush(exa->renderer);
+
    exa->copy.src = NULL;
    exa->copy.dst = NULL;
    exa->transform.has_src = FALSE;
@@ -275,8 +277,6 @@ ExaDone(PixmapPtr pPixmap)
 
     if (!priv)
 	return;
-
-    renderer_draw_flush(exa->renderer);
 
     xorg_exa_common_done(exa);
 }

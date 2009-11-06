@@ -431,6 +431,14 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
 
    setup_transforms(exa, pSrcPicture, pMaskPicture);
 
+   if (exa->num_bound_samplers == 0 ) { /* solid fill */
+      renderer_begin_solid(exa->renderer);
+   } else {
+      renderer_begin_textures(exa->renderer,
+                              exa->bound_textures,
+                              exa->num_bound_samplers);
+   }
+
    return TRUE;
 }
 
@@ -440,11 +448,9 @@ void xorg_composite(struct exa_context *exa,
                     int dstX, int dstY, int width, int height)
 {
    if (exa->num_bound_samplers == 0 ) { /* solid fill */
-      renderer_begin_solid(exa->renderer);
       renderer_solid(exa->renderer,
                      dstX, dstY, dstX + width, dstY + height,
                      exa->solid_color);
-      renderer_draw_flush(exa->renderer);
    } else {
       int pos[6] = {srcX, srcY, maskX, maskY, dstX, dstY};
       float *src_matrix = NULL;
@@ -455,11 +461,19 @@ void xorg_composite(struct exa_context *exa,
       if (exa->transform.has_mask)
          mask_matrix = exa->transform.mask;
 
+#if 1
       renderer_draw_textures(exa->renderer,
                              pos, width, height,
                              exa->bound_textures,
                              exa->num_bound_samplers,
                              src_matrix, mask_matrix);
+#else
+      renderer_texture(exa->renderer,
+                       pos, width, height,
+                       exa->bound_textures,
+                       exa->num_bound_samplers,
+                       src_matrix, mask_matrix);
+#endif
    }
 }
 

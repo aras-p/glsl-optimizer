@@ -26,6 +26,8 @@ struct xorg_renderer {
 
    float vertices[BUF_SIZE];
    int num_vertices;
+
+   int num_attributes;
 };
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);
@@ -45,13 +47,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
                           struct exa_pixmap_priv *src_priv, int sx, int sy,
                           int width, int height);
 
-void renderer_draw_textures(struct xorg_renderer *r,
-                            int *pos,
-                            int width, int height,
-                            struct pipe_texture **textures,
-                            int num_textures,
-                            float *src_matrix,
-                            float *mask_matrix);
 
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,
@@ -64,6 +59,26 @@ void renderer_solid(struct xorg_renderer *r,
                     int x1, int y1,
                     float *color);
 
+void renderer_begin_textures(struct xorg_renderer *r,
+                             struct pipe_texture **textures,
+                             int num_textures);
+void renderer_texture(struct xorg_renderer *r,
+                      int *pos,
+                      int width, int height,
+                      struct pipe_texture **textures,
+                      int num_textures,
+                      float *src_matrix,
+                      float *mask_matrix);
+
 void renderer_draw_flush(struct xorg_renderer *r);
+
+
+void renderer_draw_textures(struct xorg_renderer *r,
+                            int *pos,
+                            int width, int height,
+                            struct pipe_texture **textures,
+                            int num_textures,
+                            float *src_matrix, float *mask_matrix);
+
 
 #endif

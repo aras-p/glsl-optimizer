@@ -73,7 +73,7 @@ renderer_draw(struct xorg_renderer *r)
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
-                              2); /* attribs/vert */
+                              r->num_attributes); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
    }
@@ -138,11 +138,11 @@ add_vertex_1tex(struct xorg_renderer *r,
    r->num_vertices += 8;
 }
 
-static struct pipe_buffer *
-setup_vertex_data1(struct xorg_renderer *r,
-                   float srcX, float srcY,  float dstX, float dstY,
-                   float width, float height,
-                   struct pipe_texture *src, float *src_matrix)
+static void
+add_vertex_data1(struct xorg_renderer *r,
+                 float srcX, float srcY,  float dstX, float dstY,
+                 float width, float height,
+                 struct pipe_texture *src, float *src_matrix)
 {
    float s0, t0, s1, t1;
    float pt0[2], pt1[2];
@@ -170,8 +170,6 @@ setup_vertex_data1(struct xorg_renderer *r,
    add_vertex_1tex(r, dstX + width, dstY + height, s1, t1);
    /* 4th vertex */
    add_vertex_1tex(r, dstX, dstY + height, s0, t1);
-
-   return renderer_buffer_create(r);
 }
 
 static struct pipe_buffer *
@@ -217,13 +215,13 @@ add_vertex_2tex(struct xorg_renderer *r,
    r->num_vertices += 12;
 }
 
-static struct pipe_buffer *
-setup_vertex_data2(struct xorg_renderer *r,
-                   float srcX, float srcY, float maskX, float maskY,
-                   float dstX, float dstY, float width, float height,
-                   struct pipe_texture *src,
-                   struct pipe_texture *mask,
-                   float *src_matrix, float *mask_matrix)
+static void
+add_vertex_data2(struct xorg_renderer *r,
+                 float srcX, float srcY, float maskX, float maskY,
+                 float dstX, float dstY, float width, float height,
+                 struct pipe_texture *src,
+                 struct pipe_texture *mask,
+                 float *src_matrix, float *mask_matrix)
 {
    float src_s0, src_t0, src_s1, src_t1;
    float mask_s0, mask_t0, mask_s1, mask_t1;
@@ -272,9 +270,6 @@ setup_vertex_data2(struct xorg_renderer *r,
    /* 4th vertex */
    add_vertex_2tex(r, dstX, dstY + height,
                    src_s0, src_t1, mask_s0, mask_t1);
-
-
-   return renderer_buffer_create(r);
 }
 
 static struct pipe_buffer *
@@ -835,67 +830,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    }
 }
 
-void renderer_draw_textures(struct xorg_renderer *r,
-                            int *pos,
-                            int width, int height,
-                            struct pipe_texture **textures,
-                            int num_textures,
-                            float *src_matrix, float *mask_matrix)
-{
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_buffer *buf = 0;
-
-#if 0
-   if (src_matrix) {
-      debug_printf("src_matrix = \n");
-      debug_printf("%f, %f, %f\n", src_matrix[0], src_matrix[1], src_matrix[2]);
-      debug_printf("%f, %f, %f\n", src_matrix[3], src_matrix[4], src_matrix[5]);
-      debug_printf("%f, %f, %f\n", src_matrix[6], src_matrix[7], src_matrix[8]);
-   }
-   if (mask_matrix) {
-      debug_printf("mask_matrix = \n");
-      debug_printf("%f, %f, %f\n", mask_matrix[0], mask_matrix[1], mask_matrix[2]);
-      debug_printf("%f, %f, %f\n", mask_matrix[3], mask_matrix[4], mask_matrix[5]);
-      debug_printf("%f, %f, %f\n", mask_matrix[6], mask_matrix[7], mask_matrix[8]);
-   }
-#endif
-
-   switch(num_textures) {
-   case 1:
-      buf = setup_vertex_data1(r,
-                               pos[0], pos[1], /* src */
-                               pos[4], pos[5], /* dst */
-                               width, height,
-                               textures[0], src_matrix);
-      break;
-   case 2:
-      buf = setup_vertex_data2(r,
-                               pos[0], pos[1], /* src */
-                               pos[2], pos[3], /* mask */
-                               pos[4], pos[5], /* dst */
-                               width, height,
-                               textures[0], textures[1],
-                               src_matrix, mask_matrix);
-      break;
-   case 3:
-   default:
-      debug_assert(!"Unsupported number of textures");
-      break;
-   }
-
-   if (buf) {
-      int num_attribs = 1; /*pos*/
-      num_attribs += num_textures;
-
-      util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              num_attribs); /* attribs/vert */
-
-      pipe_buffer_reference(&buf, NULL);
-   }
-}
-
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,
                        int dst_x, int dst_y, int dst_w, int dst_h,
@@ -924,6 +858,7 @@ void renderer_draw_yuv(struct xorg_renderer *r,
 void renderer_begin_solid(struct xorg_renderer *r)
 {
    r->num_vertices = 0;
+   r->num_attributes = 2;
 }
 
 void renderer_solid(struct xorg_renderer *r,
@@ -951,3 +886,110 @@ void renderer_draw_flush(struct xorg_renderer *r)
 {
    renderer_draw_conditional(r, 0);
 }
+
+void renderer_begin_textures(struct xorg_renderer *r,
+                             struct pipe_texture **textures,
+                             int num_textures)
+{
+   r->num_attributes = 1 + num_textures;
+}
+
+void renderer_texture(struct xorg_renderer *r,
+                      int *pos,
+                      int width, int height,
+                      struct pipe_texture **textures,
+                      int num_textures,
+                      float *src_matrix,
+                      float *mask_matrix)
+{
+
+#if 0
+   if (src_matrix) {
+      debug_printf("src_matrix = \n");
+      debug_printf("%f, %f, %f\n", src_matrix[0], src_matrix[1], src_matrix[2]);
+      debug_printf("%f, %f, %f\n", src_matrix[3], src_matrix[4], src_matrix[5]);
+      debug_printf("%f, %f, %f\n", src_matrix[6], src_matrix[7], src_matrix[8]);
+   }
+   if (mask_matrix) {
+      debug_printf("mask_matrix = \n");
+      debug_printf("%f, %f, %f\n", mask_matrix[0], mask_matrix[1], mask_matrix[2]);
+      debug_printf("%f, %f, %f\n", mask_matrix[3], mask_matrix[4], mask_matrix[5]);
+      debug_printf("%f, %f, %f\n", mask_matrix[6], mask_matrix[7], mask_matrix[8]);
+   }
+#endif
+
+   switch(r->num_attributes) {
+   case 2:
+      renderer_draw_conditional(r, 4 * 8);
+      add_vertex_data1(r,
+                       pos[0], pos[1], /* src */
+                       pos[4], pos[5], /* dst */
+                       width, height,
+                       textures[0], src_matrix);
+      break;
+   case 3:
+      renderer_draw_conditional(r, 4 * 12);
+      add_vertex_data2(r,
+                       pos[0], pos[1], /* src */
+                       pos[2], pos[3], /* mask */
+                       pos[4], pos[5], /* dst */
+                       width, height,
+                       textures[0], textures[1],
+                       src_matrix, mask_matrix);
+      break;
+   default:
+      debug_assert(!"Unsupported number of textures");
+      break;
+   }
+}
+
+
+void renderer_draw_textures(struct xorg_renderer *r,
+                            int *pos,
+                            int width, int height,
+                            struct pipe_texture **textures,
+                            int num_textures,
+                            float *src_matrix, float *mask_matrix)
+{
+#if 0
+   if (src_matrix) {
+      debug_printf("src_matrix = \n");
+      debug_printf("%f, %f, %f\n", src_matrix[0], src_matrix[1], src_matrix[2]);
+      debug_printf("%f, %f, %f\n", src_matrix[3], src_matrix[4], src_matrix[5]);
+      debug_printf("%f, %f, %f\n", src_matrix[6], src_matrix[7], src_matrix[8]);
+   }
+   if (mask_matrix) {
+      debug_printf("mask_matrix = \n");
+      debug_printf("%f, %f, %f\n", mask_matrix[0], mask_matrix[1], mask_matrix[2]);
+      debug_printf("%f, %f, %f\n", mask_matrix[3], mask_matrix[4], mask_matrix[5]);
+      debug_printf("%f, %f, %f\n", mask_matrix[6], mask_matrix[7], mask_matrix[8]);
+   }
+#endif
+
+   r->num_attributes = 1 + num_textures;
+   switch(num_textures) {
+   case 1:
+      add_vertex_data1(r,
+                       pos[0], pos[1], /* src */
+                       pos[4], pos[5], /* dst */
+                       width, height,
+                       textures[0], src_matrix);
+      break;
+   case 2:
+      add_vertex_data2(r,
+                       pos[0], pos[1], /* src */
+                       pos[2], pos[3], /* mask */
+                       pos[4], pos[5], /* dst */
+                       width, height,
+                       textures[0], textures[1],
+                       src_matrix, mask_matrix);
+      break;
+   case 3:
+   default:
+      debug_assert(!"Unsupported number of textures");
+      break;
+   }
+
+   renderer_draw(r);
+}
+
