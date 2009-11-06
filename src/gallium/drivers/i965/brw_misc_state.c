@@ -344,7 +344,9 @@ const struct brw_tracked_state brw_polygon_stipple = {
 static int upload_line_stipple(struct brw_context *brw)
 {
    const struct brw_line_stipple *bls = &brw->curr.rast->bls;
-   BRW_CACHED_BATCH_STRUCT(brw, bls);
+   if (bls->header.opcode) {
+      BRW_CACHED_BATCH_STRUCT(brw, bls);
+   }
    return 0;
 }
 
