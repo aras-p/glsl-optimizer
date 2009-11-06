@@ -239,6 +239,9 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    if (access & GL_MAP_FLUSH_EXPLICIT_BIT)
       flags |= PIPE_BUFFER_USAGE_FLUSH_EXPLICIT;
    
+   if (access & GL_MAP_UNSYNCHRONIZED_BIT)
+      flags |= PIPE_BUFFER_USAGE_UNSYNCHRONIZED;
+
    /* ... other flags ...
     */
 
