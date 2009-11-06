@@ -190,7 +190,7 @@ pack_histogram( GLcontext *ctx,
             /* temporarily store as GLuints */
             GLuint temp[4*HISTOGRAM_TABLE_SIZE];
             GLuint *dst = temp;
-            GLhalfARB *half = destination;
+            GLhalfARB *half = (GLhalfARB *) destination;
             GLuint i;
             /* get GLuint values */
             PACK_MACRO(GLuint);
