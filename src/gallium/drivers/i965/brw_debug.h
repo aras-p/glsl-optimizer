@@ -15,7 +15,7 @@
 #define DEBUG_BATCH             0x80
 #define DEBUG_PIXEL             0x100
 #define DEBUG_BUFMGR            0x200
-#define DEBUG_unused1           0x400
+#define DEBUG_MIN_URB           0x400
 #define DEBUG_unused2           0x800
 #define DEBUG_unused3           0x1000
 #define DEBUG_SYNC	        0x2000

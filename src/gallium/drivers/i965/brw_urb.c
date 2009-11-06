@@ -84,7 +84,7 @@
  * XXX: Verify min_nr_entries, esp for VS.
  * XXX: Verify SF min_entry_size.
  */
-static const struct {
+static const struct urb_limits {
    GLuint min_nr_entries;
    GLuint preferred_nr_entries;
    GLuint min_entry_size;
@@ -165,6 +165,15 @@ static int recalculate_urb_fence( struct brw_context *brw )
 	    brw->urb.constrained = 1;
 	    brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
 	 }
+      }
+
+      if (BRW_DEBUG & DEBUG_MIN_URB) {
+	 brw->urb.nr_vs_entries = limits[VS].min_nr_entries;	
+	 brw->urb.nr_gs_entries = limits[GS].min_nr_entries;	
+	 brw->urb.nr_clip_entries = limits[CLP].min_nr_entries;
+	 brw->urb.nr_sf_entries = limits[SF].min_nr_entries;	
+	 brw->urb.nr_cs_entries = limits[CS].min_nr_entries;	
+	 brw->urb.constrained = 1;
       }
 
       if (!check_urb_layout(brw)) {

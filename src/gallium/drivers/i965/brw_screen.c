@@ -48,6 +48,7 @@ static const struct debug_named_value debug_names[] = {
    { "bat",   DEBUG_BATCH},
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
+   { "min",   DEBUG_MIN_URB},
    { "sync",  DEBUG_SYNC},
    { "prim",  DEBUG_PRIMS },
    { "vert",  DEBUG_VERTS },
@@ -291,7 +292,7 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 #ifdef DEBUG
    BRW_DEBUG = debug_get_flags_option("BRW_DEBUG", debug_names, 0);
    BRW_DEBUG |= debug_get_flags_option("INTEL_DEBUG", debug_names, 0);
-   BRW_DEBUG |= DEBUG_STATS;
+   BRW_DEBUG |= DEBUG_STATS | DEBUG_MIN_URB;
 #endif
 
    memset(&chipset, 0, sizeof chipset);
