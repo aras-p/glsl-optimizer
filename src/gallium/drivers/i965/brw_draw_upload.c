@@ -317,6 +317,7 @@ static int brw_emit_vertex_buffers( struct brw_context *brw )
 
 static int brw_emit_vertex_elements(struct brw_context *brw)
 {
+   GLuint nr = brw->curr.num_vertex_elements;
    GLuint i;
 
    brw_emit_query_begin(brw);
@@ -328,7 +329,7 @@ static int brw_emit_vertex_elements(struct brw_context *brw)
     * The stale VB state stays in place, but they don't do anything unless
     * a VE loads from them.
     */
-   if (brw->vb.nr_ve == 0) {
+   if (nr == 0) {
       BEGIN_BATCH(3, IGNORE_CLIPRECTS);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
       OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
@@ -346,9 +347,9 @@ static int brw_emit_vertex_elements(struct brw_context *brw)
    /* Now emit vertex element (VEP) state packets.
     *
     */
-   BEGIN_BATCH(1 + brw->curr.num_vertex_elements * 2, IGNORE_CLIPRECTS);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_ve * 2) - 2));
-   for (i = 0; i < brw->vb.nr_ve; i++) {
+   BEGIN_BATCH(1 + nr * 2, IGNORE_CLIPRECTS);
+   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr * 2) - 2));
+   for (i = 0; i < nr; i++) {
       const struct pipe_vertex_element *input = &brw->curr.vertex_element[i];
       uint32_t format = brw_translate_surface_format( input->src_format );
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
@@ -364,10 +365,10 @@ static int brw_emit_vertex_elements(struct brw_context *brw)
 	 break;
       }
 
-      OUT_BATCH((i << BRW_VE0_INDEX_SHIFT) |
+      OUT_BATCH((input->vertex_buffer_index << BRW_VE0_INDEX_SHIFT) |
 		BRW_VE0_VALID |
 		(format << BRW_VE0_FORMAT_SHIFT) |
-		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
+		(input->src_offset << BRW_VE0_SRC_OFFSET_SHIFT));
 
       if (BRW_IS_IGDNG(brw))
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |

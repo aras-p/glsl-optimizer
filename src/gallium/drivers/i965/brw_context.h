@@ -572,12 +572,7 @@ struct brw_context
 	 struct brw_winsys_buffer *bo;
       } vb[PIPE_MAX_ATTRIBS];
 
-      struct {
-         int dummy;
-      } ve[PIPE_MAX_ATTRIBS];
-
       unsigned nr_vb;		/* currently the same as curr.num_vertex_buffers */
-      unsigned nr_ve;		/* currently the same as curr.num_vertex_elements */
    } vb;
 
    struct {
