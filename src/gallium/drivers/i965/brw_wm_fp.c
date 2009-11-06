@@ -906,8 +906,11 @@ find_output_by_semantic( struct brw_wm_compile *c,
 	 return src_reg( TGSI_FILE_OUTPUT, i );
 
    /* If not found, return some arbitrary immediate value:
+    *
+    * XXX: this is a good idea but immediates are up generating extra
+    * curbe entries atm, as they would have in the original driver.
     */
-   return src_imm1f(c, 1.0);
+   return src_reg( TGSI_FILE_OUTPUT, 0 ); /* src_imm1f(c, 1.0); */
 }
 
 
