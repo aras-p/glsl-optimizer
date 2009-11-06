@@ -25,6 +25,7 @@ struct xorg_renderer {
    struct pipe_constant_buffer fs_const_buffer;
 
    float vertices[BUF_SIZE];
+   int num_vertices;
 };
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);
@@ -61,6 +62,13 @@ void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,
                        int dst_x, int dst_y, int dst_w, int dst_h,
                        struct pipe_texture **textures);
+
+void renderer_begin_solid(struct xorg_renderer *r,
+                          float *color);
+void renderer_solid(struct xorg_renderer *r,
+                    int x0, int y0,
+                    int x1, int y1);
+void renderer_end_solid(struct xorg_renderer *r);
 
 
 #endif

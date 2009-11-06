@@ -44,6 +44,19 @@ static INLINE void map_point(float *mat, float x, float y,
    }
 }
 
+static INLINE struct pipe_buffer *
+renderer_buffer_create(struct xorg_renderer *r)
+{
+   struct pipe_buffer *buf =
+      pipe_user_buffer_create(r->pipe->screen,
+                              r->vertices,
+                              sizeof(float)*
+                              r->num_vertices);
+   r->num_vertices = 0;
+
+   return buf;
+}
+
 static void
 renderer_init_state(struct xorg_renderer *r)
 {
@@ -56,9 +69,12 @@ renderer_init_state(struct xorg_renderer *r)
 
 
 static INLINE void
-setup_vertex0(float *vertex, float x, float y,
-              float color[4])
+add_vertex_color(struct xorg_renderer *r,
+                 float x, float y,
+                 float color[4])
 {
+   float *vertex = r->vertices + r->num_vertices;
+
    vertex[0] = x;
    vertex[1] = y;
    vertex[2] = 0.f; /*z*/
@@ -68,11 +84,16 @@ setup_vertex0(float *vertex, float x, float y,
    vertex[5] = color[1]; /*g*/
    vertex[6] = color[2]; /*b*/
    vertex[7] = color[3]; /*a*/
+
+   r->num_vertices += 8;
 }
 
 static INLINE void
-setup_vertex1(float *vertex, float x, float y, float s, float t)
+add_vertex_1tex(struct xorg_renderer *r,
+                float x, float y, float s, float t)
 {
+   float *vertex = r->vertices + r->num_vertices;
+
    vertex[0] = x;
    vertex[1] = y;
    vertex[2] = 0.f; /*z*/
@@ -82,6 +103,8 @@ setup_vertex1(float *vertex, float x, float y, float s, float t)
    vertex[5] = t;   /*t*/
    vertex[6] = 0.f; /*r*/
    vertex[7] = 1.f; /*q*/
+
+   r->num_vertices += 8;
 }
 
 static struct pipe_buffer *
@@ -109,17 +132,15 @@ setup_vertex_data1(struct xorg_renderer *r,
    t1 =  pt1[1] / src->height[0];
 
    /* 1st vertex */
-   setup_vertex1(r->vertices, dstX, dstY, s0, t0);
+   add_vertex_1tex(r, dstX, dstY, s0, t0);
    /* 2nd vertex */
-   setup_vertex1(r->vertices + 2*4, dstX + width, dstY, s1, t0);
+   add_vertex_1tex(r, dstX + width, dstY, s1, t0);
    /* 3rd vertex */
-   setup_vertex1(r->vertices + 4*4, dstX + width, dstY + height, s1, t1);
+   add_vertex_1tex(r, dstX + width, dstY + height, s1, t1);
    /* 4th vertex */
-   setup_vertex1(r->vertices + 6*4, dstX, dstY + height, s0, t1);
+   add_vertex_1tex(r, dstX, dstY + height, s0, t1);
 
-   return pipe_user_buffer_create(r->pipe->screen,
-                                  r->vertices,
-                                  sizeof(float)*8*4);
+   return renderer_buffer_create(r);
 }
 
 static struct pipe_buffer *
@@ -129,23 +150,24 @@ setup_vertex_data_tex(struct xorg_renderer *r,
                       float z)
 {
    /* 1st vertex */
-   setup_vertex1(r->vertices, x0, y0, s0, t0);
+   add_vertex_1tex(r, x0, y0, s0, t0);
    /* 2nd vertex */
-   setup_vertex1(r->vertices + 2*4, x1, y0, s1, t0);
+   add_vertex_1tex(r, x1, y0, s1, t0);
    /* 3rd vertex */
-   setup_vertex1(r->vertices + 4*4, x1, y1, s1, t1);
+   add_vertex_1tex(r, x1, y1, s1, t1);
    /* 4th vertex */
-   setup_vertex1(r->vertices + 6*4, x0, y1, s0, t1);
+   add_vertex_1tex(r, x0, y1, s0, t1);
 
-   return pipe_user_buffer_create(r->pipe->screen,
-                                  r->vertices,
-                                  sizeof(float)*8*4);
+   return renderer_buffer_create(r);
 }
 
 static INLINE void
-setup_vertex2(float *vertex, float x, float y,
-              float s0, float t0, float s1, float t1)
+add_vertex_2tex(struct xorg_renderer *r,
+                float x, float y,
+                float s0, float t0, float s1, float t1)
 {
+   float *vertex = r->vertices + r->num_vertices;
+
    vertex[0] = x;
    vertex[1] = y;
    vertex[2] = 0.f; /*z*/
@@ -160,6 +182,8 @@ setup_vertex2(float *vertex, float x, float y,
    vertex[9] = t1;  /*t*/
    vertex[10] = 0.f; /*r*/
    vertex[11] = 1.f; /*q*/
+
+   r->num_vertices += 12;
 }
 
 static struct pipe_buffer *
@@ -206,22 +230,20 @@ setup_vertex_data2(struct xorg_renderer *r,
    mask_t1 = mpt1[1] / mask->height[0];
 
    /* 1st vertex */
-   setup_vertex2(r->vertices, dstX, dstY,
-                 src_s0, src_t0, mask_s0, mask_t0);
+   add_vertex_2tex(r, dstX, dstY,
+                   src_s0, src_t0, mask_s0, mask_t0);
    /* 2nd vertex */
-   setup_vertex2(r->vertices + 3*4, dstX + width, dstY,
-                 src_s1, src_t0, mask_s1, mask_t0);
+   add_vertex_2tex(r, dstX + width, dstY,
+                   src_s1, src_t0, mask_s1, mask_t0);
    /* 3rd vertex */
-   setup_vertex2(r->vertices + 6*4, dstX + width, dstY + height,
-                 src_s1, src_t1, mask_s1, mask_t1);
+   add_vertex_2tex(r, dstX + width, dstY + height,
+                   src_s1, src_t1, mask_s1, mask_t1);
    /* 4th vertex */
-   setup_vertex2(r->vertices + 9*4, dstX, dstY + height,
-                 src_s0, src_t1, mask_s0, mask_t1);
+   add_vertex_2tex(r, dstX, dstY + height,
+                   src_s0, src_t1, mask_s0, mask_t1);
 
 
-   return pipe_user_buffer_create(r->pipe->screen,
-                                  r->vertices,
-                                  sizeof(float)*12*4);
+   return renderer_buffer_create(r);
 }
 
 static struct pipe_buffer *
@@ -244,21 +266,18 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
    t1 = spt1[1] / tex[0]->height[0];
 
    /* 1st vertex */
-   setup_vertex1(r->vertices, dstX, dstY, s0, t0);
+   add_vertex_1tex(r, dstX, dstY, s0, t0);
    /* 2nd vertex */
-   setup_vertex1(r->vertices + 2*4, dstX + dstW, dstY,
-                 s1, t0);
+   add_vertex_1tex(r, dstX + dstW, dstY,
+                   s1, t0);
    /* 3rd vertex */
-   setup_vertex1(r->vertices + 4*4, dstX + dstW, dstY + dstH,
-                 s1, t1);
+   add_vertex_1tex(r, dstX + dstW, dstY + dstH,
+                   s1, t1);
    /* 4th vertex */
-   setup_vertex1(r->vertices + 6*4, dstX, dstY + dstH,
-                 s0, t1);
+   add_vertex_1tex(r, dstX, dstY + dstH,
+                   s0, t1);
 
-
-   return pipe_user_buffer_create(r->pipe->screen,
-                                  r->vertices,
-                                  sizeof(float)*8*4);
+   return renderer_buffer_create(r);
 }
 
 
@@ -797,17 +816,15 @@ void renderer_draw_solid_rect(struct xorg_renderer *r,
    debug_printf("solid rect[(%d, %d), (%d, %d)], rgba[%f, %f, %f, %f]\n",
    x0, y0, x1, y1, color[0], color[1], color[2], color[3]);*/
    /* 1st vertex */
-   setup_vertex0(r->vertices, x0, y0, color);
+   add_vertex_color(r, x0, y0, color);
    /* 2nd vertex */
-   setup_vertex0(r->vertices + 2*4, x1, y0, color);
+   add_vertex_color(r, x1, y0, color);
    /* 3rd vertex */
-   setup_vertex0(r->vertices + 4*4, x1, y1, color);
+   add_vertex_color(r, x1, y1, color);
    /* 4th vertex */
-   setup_vertex0(r->vertices + 6*4, x0, y1, color);
+   add_vertex_color(r, x0, y1, color);
 
-   buf = pipe_user_buffer_create(pipe->screen,
-                                 r->vertices,
-                                 sizeof(float)*8*4);
+   buf = renderer_buffer_create(r);
 
 
    if (buf) {
@@ -904,4 +921,19 @@ void renderer_draw_yuv(struct xorg_renderer *r,
 
       pipe_buffer_reference(&buf, NULL);
    }
+}
+
+void renderer_begin_solid(struct xorg_renderer *r,
+                          float *color)
+{
+}
+
+void renderer_solid(struct xorg_renderer *r,
+                    int x0, int y0,
+                    int x1, int y1)
+{
+}
+
+void renderer_end_solid(struct xorg_renderer *r)
+{
 }
