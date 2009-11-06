@@ -171,7 +171,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
-   c->nr_outputs = 0;
+   c->nr_outputs = c->prog_data.nr_outputs;
    c->first_output = reg;
    c->first_overflow_output = 0;
 
@@ -182,7 +182,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* XXX: need to access vertex output semantics here:
     */
-   c->nr_outputs = c->prog_data.nr_outputs;
    for (i = 0; i < c->prog_data.nr_outputs; i++) {
       assert(i < Elements(c->regs[TGSI_FILE_OUTPUT]));
 
@@ -244,12 +243,14 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       }
    }
 
+#if 0
    for (i = 0; i < 128; i++) {
       if (c->output_regs[i].used_in_src) {
          c->output_regs[i].reg = brw_vec8_grf(reg, 0);
          reg++;
       }
    }
+#endif
 
    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
    reg += 2;
