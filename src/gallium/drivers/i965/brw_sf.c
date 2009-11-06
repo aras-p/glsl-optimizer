@@ -138,8 +138,11 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
     * XXX: as long as we're hard-wiring, is eg. position required to
     * be linear?
     */
-   key.linear_attrs = 0;
-   key.persp_attrs = (1 << key.nr_attrs) - 1;
+   //key.linear_attrs = 0;
+   //key.persp_attrs = (1 << key.nr_attrs) - 1;
+
+   key.linear_attrs = (1 << key.nr_attrs) - 1;
+   key.persp_attrs = 0;
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
    switch (brw->reduced_primitive) {
