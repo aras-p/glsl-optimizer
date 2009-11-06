@@ -300,8 +300,6 @@ fail:
    return NULL;
 }
 
-
-
 static struct pipe_texture *brw_texture_blanket(struct pipe_screen *screen,
 						const struct pipe_texture *templ,
 						const unsigned *stride,
@@ -365,7 +363,122 @@ boolean brw_is_texture_referenced_by_bo( struct brw_screen *brw_screen,
    return FALSE;
 }
 
+boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
+                                      struct brw_winsys_buffer **buffer,
+                                      unsigned *stride)
+{
+   struct brw_texture *tex = brw_texture(texture);
 
+   *buffer = tex->bo;
+   if (stride)
+      *stride = tex->pitch;
+
+   return TRUE;
+}
+
+struct pipe_texture * 
+brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
+                                  const struct pipe_texture *templ,
+                                  const unsigned pitch,
+                                  struct brw_winsys_buffer *buffer)
+{
+   struct brw_screen *bscreen = brw_screen(screen);
+   struct brw_texture *tex;
+   enum brw_buffer_type buffer_type;
+   enum pipe_error ret;
+
+   if (pf_is_compressed(templ->format))
+      return NULL;
+
+   if (pf_is_depth_or_stencil(templ->format))
+      return NULL;
+ 
+   tex = CALLOC_STRUCT(brw_texture);
+   if (!tex)
+      return NULL;
+
+   memcpy(&tex->base, templ, sizeof *templ);
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->base.screen = screen;
+
+   tex->cpp = pf_get_size(tex->base.format);
+
+   make_empty_list(&tex->views[0]);
+   make_empty_list(&tex->views[1]);
+
+   if (1)
+      tex->tiling = BRW_TILING_NONE;
+   else
+      tex->tiling = BRW_TILING_X;
+
+   if (!brw_texture_layout(bscreen, tex))
+      goto fail;
+
+   
+   if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                           PIPE_TEXTURE_USAGE_PRIMARY)) {
+      buffer_type = BRW_BUFFER_TYPE_SCANOUT;
+   } else {
+      buffer_type = BRW_BUFFER_TYPE_TEXTURE;
+   }
+
+   tex->bo = buffer;
+
+   if (tex->pitch != pitch)
+      goto fail;
+
+
+/* fix this warning
+   if (tex->size > buffer->size)
+      goto fail;
+ */
+
+   if (ret)
+      goto fail;
+
+   tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
+   tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
+   tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
+   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
+
+   /* This is ok for all textures with channel width 8bit or less:
+    */
+/*    tex->ss.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
+
+
+   /* XXX: what happens when tex->bo->offset changes???
+    */
+   tex->ss.ss1.base_addr = 0; /* reloc */
+   tex->ss.ss2.mip_count = tex->base.last_level;
+   tex->ss.ss2.width = tex->base.width[0] - 1;
+   tex->ss.ss2.height = tex->base.height[0] - 1;
+
+   switch (tex->tiling) {
+   case BRW_TILING_NONE:
+      tex->ss.ss3.tiled_surface = 0;
+      tex->ss.ss3.tile_walk = 0;
+      break;
+   case BRW_TILING_X:
+      tex->ss.ss3.tiled_surface = 1;
+      tex->ss.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
+      break;
+   case BRW_TILING_Y:
+      tex->ss.ss3.tiled_surface = 1;
+      tex->ss.ss3.tile_walk = BRW_TILEWALK_YMAJOR;
+      break;
+   }
+
+   tex->ss.ss3.pitch = (tex->pitch * tex->cpp) - 1;
+   tex->ss.ss3.depth = tex->base.depth[0] - 1;
+
+   tex->ss.ss4.min_lod = 0;
+
+   return &tex->base;
+
+fail:
+   FREE(tex);
+   return NULL;
+}
 
 void brw_screen_tex_init( struct brw_screen *brw_screen )
 {
