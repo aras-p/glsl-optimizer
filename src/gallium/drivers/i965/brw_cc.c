@@ -35,48 +35,13 @@
 #include "brw_defines.h"
 
 
-struct sane_viewport {
-   float top;
-   float left;
-   float width;
-   float height;
-   float near;
-   float far;
-};
-
-static void calc_sane_viewport( const struct pipe_viewport_state *vp,
-				struct sane_viewport *svp )
-{
-   /* XXX fix me, obviously.
-    */
-   svp->top = 0;
-   svp->left = 0;
-   svp->width = 250;
-   svp->height = 250;
-   svp->near = 0;
-   svp->far = 1;
-}
-
 static enum pipe_error prepare_cc_vp( struct brw_context *brw )
 {
-   struct brw_cc_viewport ccv;
-   struct sane_viewport svp;
-   enum pipe_error ret;
-
-   memset(&ccv, 0, sizeof(ccv));
-
-   /* PIPE_NEW_VIEWPORT */
-   calc_sane_viewport( &brw->curr.viewport, &svp );
-
-   ccv.min_depth = svp.near;
-   ccv.max_depth = svp.far;
-
-   ret = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0,
-                         &brw->cc.vp_bo );
-   if (ret)
-      return ret;
-                
-   return PIPE_OK;
+   return brw_cache_data( &brw->cache, 
+                         BRW_CC_VP,
+                         &brw->curr.ccv,
+                         NULL, 0,
+                         &brw->cc.reloc[CC_RELOC_VP].bo );
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -88,15 +53,6 @@ const struct brw_tracked_state brw_cc_vp = {
    .prepare = prepare_cc_vp
 };
 
-struct brw_cc_unit_key {
-   struct brw_cc0 cc0;
-   struct brw_cc1 cc1;
-   struct brw_cc2 cc2;
-   struct brw_cc3 cc3;
-   struct brw_cc5 cc5;
-   struct brw_cc6 cc6;
-   struct brw_cc7 cc7;
-};
 
 /* A long-winded way to OR two unsigned integers together:
  */
@@ -110,85 +66,22 @@ combine_cc3( struct brw_cc3 a, struct brw_cc3 b )
    return ca.cc3;
 }
 
-static void
-cc_unit_populate_key(const struct brw_context *brw,
-		     struct brw_cc_unit_key *key)
-{
-   key->cc0 = brw->curr.zstencil->cc0;
-   key->cc1 = brw->curr.zstencil->cc1;
-   key->cc2 = brw->curr.zstencil->cc2;
-   key->cc3 = combine_cc3( brw->curr.zstencil->cc3, brw->curr.blend->cc3 );
-   key->cc5 = brw->curr.blend->cc5;
-   key->cc6 = brw->curr.blend->cc6;
-   key->cc7 = brw->curr.zstencil->cc7;
-}
-
-/**
- * Creates the state cache entry for the given CC unit key.
- */
-static enum pipe_error
-cc_unit_create_from_key(struct brw_context *brw, 
-                        struct brw_cc_unit_key *key,
-                        struct brw_winsys_reloc *reloc,
-                        struct brw_winsys_buffer **bo_out)
-{
-   struct brw_cc_unit_state cc;
-   enum pipe_error ret;
-
-   memset(&cc, 0, sizeof(cc));
-
-   cc.cc0 = key->cc0;
-   cc.cc1 = key->cc1;
-   cc.cc2 = key->cc2;
-   cc.cc3 = key->cc3;
-
-   cc.cc4.cc_viewport_state_offset = 0;
-
-   cc.cc5 = key->cc5;
-   cc.cc6 = key->cc6;
-   cc.cc7 = key->cc7;
-   
-   ret = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
-                          key, sizeof(*key),
-                          reloc, 1,
-                          &cc, sizeof(cc),
-                          NULL, NULL,
-                          bo_out);
-   if (ret)
-      return ret;
-
-   return PIPE_OK;
-}
 
 static int prepare_cc_unit( struct brw_context *brw )
 {
-   struct brw_cc_unit_key key;
-   struct brw_winsys_reloc reloc[1];
-   enum pipe_error ret;
-
-   cc_unit_populate_key(brw, &key);
-
-   /* CACHE_NEW_CC_VP */
-   make_reloc(&reloc[0],
-              BRW_USAGE_STATE,
-              0,
-              offsetof(struct brw_cc_unit_state, cc4),
-              brw->cc.vp_bo);
-
-   if (brw_search_cache(&brw->cache, BRW_CC_UNIT,
-                        &key, sizeof(key),
-                        reloc, 1,
-                        NULL,
-                        &brw->cc.state_bo))
-      return PIPE_OK;
-
-   ret = cc_unit_create_from_key(brw, &key, 
-                                 reloc,
-                                 &brw->cc.state_bo);
-   if (ret)
-      return ret;
+   brw->cc.cc.cc0 = brw->curr.zstencil->cc0;
+   brw->cc.cc.cc1 = brw->curr.zstencil->cc1;
+   brw->cc.cc.cc2 = brw->curr.zstencil->cc2;
+   brw->cc.cc.cc3 = combine_cc3( brw->curr.zstencil->cc3, brw->curr.blend->cc3 );
    
-   return PIPE_OK;
+   brw->cc.cc.cc5 = brw->curr.blend->cc5;
+   brw->cc.cc.cc6 = brw->curr.blend->cc6;
+   brw->cc.cc.cc7 = brw->curr.zstencil->cc7;
+
+   return brw_cache_data_sz(&brw->cache, BRW_CC_UNIT,
+                           &brw->cc.cc, sizeof(brw->cc.cc),
+                           brw->cc.reloc, 1,
+                           &brw->cc.state_bo);
 }
 
 const struct brw_tracked_state brw_cc_unit = {
@@ -201,4 +94,18 @@ const struct brw_tracked_state brw_cc_unit = {
 };
 
 
+void brw_hw_cc_init( struct brw_context *brw )
+{
+   make_reloc(&brw->cc.reloc[0],
+              BRW_USAGE_STATE,
+              0,
+              offsetof(struct brw_cc_unit_state, cc4),
+              NULL);
+}
 
+
+void brw_hw_cc_cleanup( struct brw_context *brw )
+{
+   bo_reference(&brw->cc.state_bo, NULL);
+   bo_reference(&brw->cc.reloc[0].bo, NULL);
+}

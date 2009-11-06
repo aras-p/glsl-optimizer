@@ -481,6 +481,8 @@ struct brw_query_object {
    uint64_t result;
 };
 
+#define CC_RELOC_VP 0
+
 
 /**
  * brw_context is derived from pipe_context
@@ -525,6 +527,7 @@ struct brw_context
 
       struct brw_blend_constant_color bcc;
       struct brw_polygon_stipple bps;
+      struct brw_cc_viewport ccv;
 
       /**
        * Index buffer for this draw_prims call.
@@ -708,9 +711,10 @@ struct brw_context
 
 
    struct {
-      struct brw_winsys_buffer *prog_bo;
       struct brw_winsys_buffer *state_bo;
-      struct brw_winsys_buffer *vp_bo;
+
+      struct brw_cc_unit_state cc;
+      struct brw_winsys_reloc reloc[1];
    } cc;
 
    struct {
@@ -764,6 +768,7 @@ void brw_pipe_shader_init( struct brw_context *brw );
 void brw_pipe_vertex_init( struct brw_context *brw );
 void brw_pipe_clear_init( struct brw_context *brw );
 
+
 void brw_pipe_blend_cleanup( struct brw_context *brw );
 void brw_pipe_depth_stencil_cleanup( struct brw_context *brw );
 void brw_pipe_framebuffer_cleanup( struct brw_context *brw );
@@ -775,6 +780,10 @@ void brw_pipe_sampler_cleanup( struct brw_context *brw );
 void brw_pipe_shader_cleanup( struct brw_context *brw );
 void brw_pipe_vertex_cleanup( struct brw_context *brw );
 void brw_pipe_clear_cleanup( struct brw_context *brw );
+
+void brw_hw_cc_init( struct brw_context *brw );
+void brw_hw_cc_cleanup( struct brw_context *brw );
+
 
 
 void brw_context_flush( struct brw_context *brw );

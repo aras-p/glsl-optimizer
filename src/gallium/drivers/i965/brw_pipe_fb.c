@@ -49,7 +49,11 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
 				    const struct pipe_viewport_state *viewport )
 {
    struct brw_context *brw = brw_context(pipe);
+
    brw->curr.viewport = *viewport;
+   brw->curr.ccv.min_depth = 0.0;         /* XXX: near */
+   brw->curr.ccv.max_depth = 1.0;         /* XXX: far */
+
    brw->state.dirty.mesa |= PIPE_NEW_VIEWPORT;
 }
 

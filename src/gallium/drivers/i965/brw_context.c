@@ -65,6 +65,9 @@ static void brw_destroy_context( struct pipe_context *pipe )
    brw_pipe_vertex_cleanup( brw );
    brw_pipe_clear_cleanup( brw );
 
+   brw_hw_cc_cleanup( brw );
+
+
    FREE(brw->wm.compile_data);
 
    for (i = 0; i < brw->curr.fb.nr_cbufs; i++)
@@ -96,9 +99,6 @@ static void brw_destroy_context( struct pipe_context *pipe )
    bo_reference(&brw->wm.sampler_bo, NULL);
    bo_reference(&brw->wm.prog_bo, NULL);
    bo_reference(&brw->wm.state_bo, NULL);
-   bo_reference(&brw->cc.prog_bo, NULL);
-   bo_reference(&brw->cc.state_bo, NULL);
-   bo_reference(&brw->cc.vp_bo, NULL);
 }
 
 
@@ -127,6 +127,8 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    brw_pipe_shader_init( brw );
    brw_pipe_vertex_init( brw );
    brw_pipe_clear_init( brw );
+
+   brw_hw_cc_init( brw );
 
    brw_init_state( brw );
    brw_draw_init( brw );
