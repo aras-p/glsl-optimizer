@@ -82,15 +82,15 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * works if everything fits in the GRF.
     * XXX this heuristic/check may need some fine tuning...
     */
-   if (c->vp->info.file_max[TGSI_FILE_CONSTANT] +
-       c->vp->info.file_max[TGSI_FILE_IMMEDIATE] +
-       c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 > BRW_MAX_GRF)
+   if (c->vp->info.file_max[TGSI_FILE_CONSTANT] + 1 +
+       c->vp->info.file_max[TGSI_FILE_IMMEDIATE] + 1 +
+       c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 1 + 21 > BRW_MAX_GRF)
       c->vp->use_const_buffer = GL_TRUE;
    else {
       /* XXX: immediates can go elsewhere if necessary:
        */
-      assert(c->vp->info.file_max[TGSI_FILE_IMMEDIATE] +
-	     c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 21 <= BRW_MAX_GRF);
+      assert(c->vp->info.file_max[TGSI_FILE_IMMEDIATE] + 1 +
+	     c->vp->info.file_max[TGSI_FILE_TEMPORARY] + 1 + 21 <= BRW_MAX_GRF);
 
       c->vp->use_const_buffer = GL_FALSE;
    }
