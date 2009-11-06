@@ -33,14 +33,23 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
 
    switch (type) {
    case BRW_BUFFER_TYPE_TEXTURE:
-      break;
+/* case BRW_BUFFER_TYPE_SCANOUT:*/
    case BRW_BUFFER_TYPE_VERTEX:
-      buf->map_gtt = TRUE;
+   case BRW_BUFFER_TYPE_CURBE:
+   case BRW_BUFFER_TYPE_QUERY:
+   case BRW_BUFFER_TYPE_SHADER_CONSTANTS:
+   case BRW_BUFFER_TYPE_SHADER_SCRATCH:
+   case BRW_BUFFER_TYPE_BATCH:
+   case BRW_BUFFER_TYPE_GENERAL_STATE:
+   case BRW_BUFFER_TYPE_SURFACE_STATE:
+   case BRW_BUFFER_TYPE_PIXEL:
+   case BRW_BUFFER_TYPE_GENERIC:
       break;
    case BRW_BUFFER_TYPE_SCANOUT:
       buf->map_gtt = TRUE;
       break;
    default:
+      assert(0);
       break;
    }
 
@@ -52,6 +61,7 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
    if (!buf->bo)
       goto err;
 
+   pipe_reference_init(&buf->base.reference, 1);
    buf->base.size = size;
    buf->base.sws = sws;
 
