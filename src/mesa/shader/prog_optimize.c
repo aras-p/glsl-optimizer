@@ -38,6 +38,39 @@
 
 static GLboolean dbg = GL_FALSE;
 
+/* Returns the mask of channels read from the given srcreg in this instruction.
+ */
+static GLuint
+get_src_arg_mask(const struct prog_instruction *inst, int arg)
+{
+   int writemask = inst->DstReg.WriteMask;
+
+   if (inst->CondUpdate)
+      writemask = WRITEMASK_XYZW;
+
+   switch (inst->Opcode) {
+   case OPCODE_MOV:
+   case OPCODE_ABS:
+   case OPCODE_ADD:
+   case OPCODE_MUL:
+   case OPCODE_SUB:
+      return writemask;
+   case OPCODE_RCP:
+   case OPCODE_SIN:
+   case OPCODE_COS:
+   case OPCODE_RSQ:
+   case OPCODE_POW:
+   case OPCODE_EX2:
+      return WRITEMASK_X;
+   case OPCODE_DP2:
+      return WRITEMASK_XY;
+   case OPCODE_DP3:
+      return WRITEMASK_XYZ;
+   default:
+      return WRITEMASK_XYZW;
+   }
+}
+
 /**
  * In 'prog' remove instruction[i] if removeFlags[i] == TRUE.
  * \return number of instructions removed
@@ -217,6 +250,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
          if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
             const GLuint index = inst->SrcReg[j].Index;
             ASSERT(index < MAX_PROGRAM_TEMPS);
+	    int read_mask = get_src_arg_mask(inst, j);
 
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
@@ -226,6 +260,9 @@ _mesa_remove_dead_code(struct gl_program *prog)
 
 	    for (comp = 0; comp < 4; comp++) {
 	       GLuint swz = (inst->SrcReg[j].Swizzle >> (3 * comp)) & 0x7;
+
+	       if ((read_mask & (1 << comp)) == 0)
+		  continue;
 
 	       switch (swz) {
 	       case SWIZZLE_X:
@@ -396,6 +433,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
 
       for (arg = 0; arg < _mesa_num_inst_src_regs(inst2->Opcode); arg++) {
 	 int comp;
+	 int read_mask = get_src_arg_mask(inst2, arg);
 
 	 if (inst2->SrcReg[arg].File != mov->DstReg.File ||
 	     inst2->SrcReg[arg].Index != mov->DstReg.Index ||
@@ -410,7 +448,8 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
 	    int src_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
 
 	    /* If the MOV didn't write that channel, can't use it. */
-	    if (src_swz <= SWIZZLE_W &&
+	    if ((read_mask & (1 << comp)) &&
+		src_swz <= SWIZZLE_W &&
 		(mov->DstReg.WriteMask & (1 << src_swz)) == 0)
 	       break;
 	 }
