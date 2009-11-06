@@ -223,11 +223,11 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 
       case TGSI_OPCODE_TEX:
       case TGSI_OPCODE_TXP:
-	 read0 = get_texcoord_mask(inst->tex_target);
+	 read0 = get_texcoord_mask(inst->target);
 	 break;
 
       case TGSI_OPCODE_TXB:
-	 read0 = get_texcoord_mask(inst->tex_target) | BRW_WRITEMASK_W;
+	 read0 = get_texcoord_mask(inst->target) | BRW_WRITEMASK_W;
 	 break;
 
       case WM_WPOSXY:

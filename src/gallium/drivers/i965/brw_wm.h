@@ -142,9 +142,10 @@ struct brw_wm_instruction {
    GLuint saturate:1;
    GLuint writemask:4;
    GLuint tex_unit:4;   /* texture/sampler unit for texture instructions */
-   GLuint tex_target:4; /* TGSI_TEXTURE_x for texture instructions*/
+   GLuint target:4;     /* TGSI_TEXTURE_x for texture instructions,
+                         * target binding table index for FB_WRITE
+                         */
    GLuint eot:1;    	/* End of thread indicator for FB_WRITE*/
-   GLuint target:10;    /* target binding table index for FB_WRITE*/
 };
 
 
@@ -204,10 +205,9 @@ struct brw_fp_instruction {
    struct brw_fp_dst dst;
    struct brw_fp_src src[3];
    unsigned opcode:8;
+   unsigned target:8; /* XXX: special usage for FB_WRITE */
    unsigned tex_unit:4;
-   unsigned tex_target:4;
-   unsigned target:10;		/* destination surface for FB_WRITE */
-   unsigned eot:1;		/* mark last instruction (usually FB_WRITE) */
+   unsigned pad:12;
 };
 
 

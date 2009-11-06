@@ -274,9 +274,13 @@ translate_insn(struct brw_wm_compile *c,
    out->opcode = inst->opcode;
    out->saturate = inst->dst.saturate;
    out->tex_unit = inst->tex_unit;
-   out->tex_target = inst->tex_target;
-   out->eot = inst->eot; //inst->Aux & 1;
-   out->target = inst->target; //inst->Aux >> 1;
+   out->target = inst->target;
+
+   /* Nasty hack:
+    */
+   out->eot = (inst->opcode == WM_FB_WRITE &&
+               inst->tex_unit != 0);
+
 
    /* Args:
     */

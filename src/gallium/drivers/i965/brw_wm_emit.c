@@ -803,7 +803,7 @@ static void emit_tex( struct brw_wm_compile *c,
 
    /* How many input regs are there?
     */
-   switch (inst->tex_target) {
+   switch (inst->target) {
    case TGSI_TEXTURE_1D:
       emit = BRW_WRITEMASK_X;
       nr = 1;
@@ -885,7 +885,7 @@ static void emit_txb( struct brw_wm_compile *c,
    GLuint msg_type;
    /* Shadow ignored for txb.
     */
-   switch (inst->tex_target) {
+   switch (inst->target) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
       brw_MOV(p, brw_message_reg(2), arg[0]);

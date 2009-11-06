@@ -280,18 +280,24 @@ static struct brw_fp_instruction *get_fp_inst(struct brw_wm_compile *c)
 static struct brw_fp_instruction * emit_tex_op(struct brw_wm_compile *c,
 					     GLuint op,
 					     struct brw_fp_dst dest,
-					     GLuint tex_src_unit,
-					     GLuint tex_src_target,
+					     GLuint tex_unit,
+					     GLuint target,
 					     struct brw_fp_src src0,
 					     struct brw_fp_src src1,
 					     struct brw_fp_src src2 )
 {
    struct brw_fp_instruction *inst = get_fp_inst(c);
 
+   if (tex_unit || target)
+      assert(op == TGSI_OPCODE_TXP ||
+             op == TGSI_OPCODE_TXB ||
+             op == TGSI_OPCODE_TEX ||
+             op == WM_FB_WRITE);
+
    inst->opcode = op;
    inst->dst = dest;
-   inst->tex_unit = tex_src_unit;
-   inst->tex_target = tex_src_target;
+   inst->tex_unit = tex_unit;
+   inst->target = target;
    inst->src[0] = src0;
    inst->src[1] = src1;
    inst->src[2] = src2;
@@ -916,23 +922,17 @@ static void emit_fb_write( struct brw_wm_compile *c )
 
    for (i = 0 ; i < c->key.nr_cbufs; i++) {
       struct brw_fp_src outcolor;
-      unsigned target = 1<<i;
-
-      /* Set EOT flag on last inst:
-       */
-      if (i == c->key.nr_cbufs - 1)
-	 target |= 1;
       
       outcolor = find_output_by_semantic(c, TGSI_SEMANTIC_COLOR, i);
 
-      /* Use emit_tex_op so that we can specify the inst->tex_target
+      /* Use emit_tex_op so that we can specify the inst->target
        * field, which is abused to contain the FB write target and the
        * EOT marker
        */
       emit_tex_op(c, WM_FB_WRITE,
 		  dst_undef(),
-		  target,
-		  0,
+		  (i == c->key.nr_cbufs - 1), /* EOT */
+		  i,
 		  outcolor,
 		  payload_r0_depth,
 		  outdepth);
