@@ -629,7 +629,7 @@ static void renderer_copy_texture(struct xorg_renderer *r,
 
    if (buf) {
       util_draw_vertex_buffer(r->pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
+                              PIPE_PRIM_QUADS,
                               4,  /* verts */
                               2); /* attribs/vert */
 
@@ -812,7 +812,7 @@ void renderer_draw_solid_rect(struct xorg_renderer *r,
 
    if (buf) {
       util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
+                              PIPE_PRIM_QUADS,
                               4,  /* verts */
                               2); /* attribs/vert */
 
@@ -873,7 +873,7 @@ void renderer_draw_textures(struct xorg_renderer *r,
       num_attribs += num_textures;
 
       util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
+                              PIPE_PRIM_QUADS,
                               4,  /* verts */
                               num_attribs); /* attribs/vert */
 
@@ -898,7 +898,7 @@ void renderer_draw_yuv(struct xorg_renderer *r,
       const int num_attribs = 2; /*pos + tex coord*/
 
       util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
+                              PIPE_PRIM_QUADS,
                               4,  /* verts */
                               num_attribs); /* attribs/vert */
 
