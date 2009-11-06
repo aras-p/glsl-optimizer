@@ -17,18 +17,19 @@ const char *names[BRW_BUFFER_TYPE_MAX] = {
    "state_cache",
 };
 
-static struct brw_winsys_buffer *
-i965_libdrm_bo_alloc( struct brw_winsys_screen *sws,
-		      enum brw_buffer_type type,
-		      unsigned size,
-		      unsigned alignment )
+static enum pipe_error 
+i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
+                     enum brw_buffer_type type,
+                     unsigned size,
+                     unsigned alignment,
+                     struct brw_winsys_buffer **bo_out)
 {
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(sws);
    struct i965_libdrm_buffer *buf;
 
    buf = CALLOC_STRUCT(i965_libdrm_buffer);
    if (!buf)
-      return NULL;
+      return PIPE_ERROR_OUT_OF_MEMORY;
 
    switch (type) {
    case BRW_BUFFER_TYPE_TEXTURE:
@@ -51,47 +52,27 @@ i965_libdrm_bo_alloc( struct brw_winsys_screen *sws,
    if (!buf->bo)
       goto err;
 
-   buf->base.offset = &buf->bo->offset;
    buf->base.size = size;
 
-   return &buf->base;
+   *bo_out = &buf->base;
+   return PIPE_OK;
 
 err:
    assert(0);
    FREE(buf);
-   return NULL;
-}
-
-
-
-
-/* Reference and unreference buffers:
- */
-static void 
-i965_libdrm_bo_reference( struct brw_winsys_buffer *buffer )
-{
-   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
-
-   /* I think we have to refcount ourselves and then just pass through
-    * the final dereference to the bo on destruction.
-    */
-   buf->cheesy_refcount++;
+   return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 static void 
-i965_libdrm_bo_unreference( struct brw_winsys_buffer *buffer )
+i965_libdrm_bo_destroy(struct brw_winsys_buffer *buffer)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
 
-   if (--buf->cheesy_refcount == 0) {
-      drm_intel_bo_unreference(buf->bo);
-      FREE(buffer);
-   }
+   drm_intel_bo_unreference(buf->bo);
+   FREE(buffer);
 }
 
-   /* XXX: parameter names!!
-    */
-static int 
+static enum pipe_error
 i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
 			   enum brw_buffer_usage usage,
 			   unsigned delta,
@@ -144,7 +125,7 @@ i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
    return 0;
 }
 
-static int 
+static enum pipe_error 
 i965_libdrm_bo_exec( struct brw_winsys_buffer *buffer,
 		     unsigned bytes_used )
 {
@@ -153,29 +134,38 @@ i965_libdrm_bo_exec( struct brw_winsys_buffer *buffer,
 
    ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
    if (ret)
-      return -1;
+      return PIPE_ERROR;
 
-   return 0;
+   return PIPE_OK;
 }
 
-static int
+static enum pipe_error
 i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
-		       size_t offset,
-		       size_t size,
-		       const void *data)
+                       enum brw_buffer_data_type data_type,
+                       size_t offset,
+                       size_t size,
+                       const void *data,
+                       const struct brw_winsys_reloc *reloc,
+                       unsigned nr_reloc)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
-   int ret;
+   int ret, i;
+
+   (void)data_type;
 
    /* XXX: use bo_map_gtt/memcpy/unmap_gtt under some circumstances???
     */
    ret = drm_intel_bo_subdata(buf->bo, offset, size, (void*)data);
    if (ret)
-      return -1;
-   
-   return 0;
-}
+      return PIPE_ERROR;
+  
+   for (i = 0; i < nr_reloc; i++) {
+      i965_libdrm_bo_emit_reloc(buffer, reloc[i].usage, reloc[i].delta,
+                                reloc[i].offset, reloc[i].bo);
+   }
 
+   return PIPE_OK;
+}
 
 static boolean 
 i965_libdrm_bo_is_busy(struct brw_winsys_buffer *buffer)
@@ -200,7 +190,7 @@ i965_libdrm_bo_references(struct brw_winsys_buffer *a,
 /* XXX: couldn't this be handled by returning true/false on
  * bo_emit_reloc?
  */
-static boolean 
+static enum pipe_error
 i965_libdrm_check_aperture_space( struct brw_winsys_screen *iws,
 				  struct brw_winsys_buffer **buffers,
 				  unsigned count )
@@ -219,12 +209,14 @@ i965_libdrm_check_aperture_space( struct brw_winsys_screen *iws,
    return dri_bufmgr_check_aperture_space(bos, count);
 }
 
-/**
- * Map a buffer.
- */
 static void *
 i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
-		   boolean write)
+                   enum brw_buffer_data_type data_type,
+                   unsigned offset,
+                   unsigned length,
+                   boolean write,
+                   boolean discard,
+                   boolean flush_explicit)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    int ret;
@@ -246,9 +238,14 @@ i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
    return buf->bo->virtual;
 }
 
-/**
- * Unmap a buffer.
- */
+static void
+i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
+                           unsigned offset,
+                           unsigned length)
+{
+
+}
+
 static void 
 i965_libdrm_bo_unmap(struct brw_winsys_buffer *buffer)
 {
@@ -263,13 +260,11 @@ i965_libdrm_bo_unmap(struct brw_winsys_buffer *buffer)
       drm_intel_bo_unmap(buf->bo);
 }
 
-
 void
 i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws)
 {
    idws->base.bo_alloc             = i965_libdrm_bo_alloc;
-   idws->base.bo_reference         = i965_libdrm_bo_reference;
-   idws->base.bo_unreference       = i965_libdrm_bo_unreference;
+   idws->base.bo_destroy           = i965_libdrm_bo_destroy;
    idws->base.bo_emit_reloc        = i965_libdrm_bo_emit_reloc;
    idws->base.bo_exec              = i965_libdrm_bo_exec;
    idws->base.bo_subdata           = i965_libdrm_bo_subdata;
@@ -277,5 +272,6 @@ i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws)
    idws->base.bo_references        = i965_libdrm_bo_references;
    idws->base.check_aperture_space = i965_libdrm_check_aperture_space;
    idws->base.bo_map               = i965_libdrm_bo_map;
+   idws->base.bo_flush_range       = i965_libdrm_bo_flush_range;
    idws->base.bo_unmap             = i965_libdrm_bo_unmap;
 }
