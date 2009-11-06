@@ -82,7 +82,7 @@ gs_unit_create_from_key(struct brw_context *brw,
 
    memset(&gs, 0, sizeof(gs));
 
-   /* maybe-reloc: populate the background */
+   /* reloc */
    gs.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    gs.thread0.kernel_start_pointer = 0;
 

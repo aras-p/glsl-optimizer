@@ -142,8 +142,7 @@ sf_unit_create_from_key(struct brw_context *brw,
    int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
-
-   sf.thread0.grf_reg_count = 0;
+   sf.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    /* reloc */
    sf.thread0.kernel_start_pointer = 0;
 
@@ -179,9 +178,17 @@ sf_unit_create_from_key(struct brw_context *brw,
 
    /* CACHE_NEW_SF_VP */
    /* reloc */
+   sf.sf5.sf_viewport_state_offset = 0;
+
+   sf.sf5.viewport_transform = 1;
 
    if (key->scissor)
       sf.sf6.scissor = 1;
+
+   if (key->front_face == PIPE_WINDING_CCW)
+      sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
+   else
+      sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
    switch (key->cull_mode) {
    case PIPE_WINDING_CCW:

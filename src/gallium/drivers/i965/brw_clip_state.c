@@ -83,6 +83,7 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    memset(&clip, 0, sizeof(clip));
 
+   clip.thread0.grf_reg_count = align(key->total_grf, 16) / 16 - 1;
    /* reloc */
    clip.thread0.kernel_start_pointer = 0;
 
