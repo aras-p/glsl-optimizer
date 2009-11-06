@@ -52,7 +52,6 @@ brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
 const struct brw_tracked_state brw_blend_constant_color;
 const struct brw_tracked_state brw_cc_unit;
 const struct brw_tracked_state brw_cc_vp;
-const struct brw_tracked_state brw_check_fallback;
 const struct brw_tracked_state brw_clip_prog;
 const struct brw_tracked_state brw_clip_unit;
 const struct brw_tracked_state brw_curbe_buffer;
@@ -65,7 +64,6 @@ const struct brw_tracked_state brw_aa_line_parameters;
 const struct brw_tracked_state brw_pipelined_state_pointers;
 const struct brw_tracked_state brw_binding_table_pointers;
 const struct brw_tracked_state brw_depthbuffer;
-const struct brw_tracked_state brw_polygon_stipple_offset;
 const struct brw_tracked_state brw_polygon_stipple;
 const struct brw_tracked_state brw_program_parameters;
 const struct brw_tracked_state brw_recalculate_urb_fence;

@@ -404,7 +404,7 @@ static int upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &sip);
    }
 
-
+   /* VF Statistics */
    {
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
