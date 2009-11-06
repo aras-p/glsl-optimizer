@@ -45,9 +45,9 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
    }
 
    buf->bo = drm_intel_bo_alloc(idws->gem, 
-				names[type], 
-				size, 
-				alignment);
+                                names[type], 
+                                size, 
+                                alignment);
 
    if (!buf->bo)
       goto err;
@@ -73,11 +73,11 @@ i965_libdrm_bo_destroy(struct brw_winsys_buffer *buffer)
 }
 
 static enum pipe_error
-i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
-			   enum brw_buffer_usage usage,
-			   unsigned delta,
-			   unsigned offset,
-			   struct brw_winsys_buffer *buffer2)
+i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
+                          enum brw_buffer_usage usage,
+                          unsigned delta,
+                          unsigned offset,
+                          struct brw_winsys_buffer *buffer2)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    struct i965_libdrm_buffer *buf2 = i965_libdrm_buffer(buffer2);
@@ -126,8 +126,8 @@ i965_libdrm_bo_emit_reloc( struct brw_winsys_buffer *buffer,
 }
 
 static enum pipe_error 
-i965_libdrm_bo_exec( struct brw_winsys_buffer *buffer,
-		     unsigned bytes_used )
+i965_libdrm_bo_exec(struct brw_winsys_buffer *buffer,
+                    unsigned bytes_used)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    int ret;
@@ -177,7 +177,7 @@ i965_libdrm_bo_is_busy(struct brw_winsys_buffer *buffer)
 
 static boolean 
 i965_libdrm_bo_references(struct brw_winsys_buffer *a,
-			  struct brw_winsys_buffer *b)
+                          struct brw_winsys_buffer *b)
 {
    struct i965_libdrm_buffer *bufa = i965_libdrm_buffer(a);
    struct i965_libdrm_buffer *bufb = i965_libdrm_buffer(b);
@@ -191,9 +191,9 @@ i965_libdrm_bo_references(struct brw_winsys_buffer *a,
  * bo_emit_reloc?
  */
 static enum pipe_error
-i965_libdrm_check_aperture_space( struct brw_winsys_screen *iws,
-				  struct brw_winsys_buffer **buffers,
-				  unsigned count )
+i965_libdrm_check_aperture_space(struct brw_winsys_screen *iws,
+                                 struct brw_winsys_buffer **buffers,
+                                 unsigned count)
 {
    static drm_intel_bo *bos[128];
    int i;
@@ -223,14 +223,14 @@ i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
 
    if (!buf->map_count) {
       if (buf->map_gtt) {
-	 ret = drm_intel_gem_bo_map_gtt(buf->bo);
-	 if (ret)
-	    return NULL;
+         ret = drm_intel_gem_bo_map_gtt(buf->bo);
+         if (ret)
+            return NULL;
       }
       else {
-	 ret = drm_intel_bo_map(buf->bo, write);
-	 if (ret)
-	    return NULL;
+         ret = drm_intel_bo_map(buf->bo, write);
+         if (ret)
+            return NULL;
       }
    }
 

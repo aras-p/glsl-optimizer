@@ -5,8 +5,8 @@
 #include "i965_drm_winsys.h"
 #include "util/u_memory.h"
 
-#include "i965/brw_context.h"	/* XXX: shouldn't be doing this */
-#include "i965/brw_screen.h"	/* XXX: shouldn't be doing this */
+#include "i965/brw_context.h"        /* XXX: shouldn't be doing this */
+#include "i965/brw_screen.h"         /* XXX: shouldn't be doing this */
 
 #include "trace/tr_drm.h"
 
@@ -39,7 +39,7 @@ i965_libdrm_get_device_id(unsigned int *device_id)
 
 static struct i965_libdrm_buffer *
 i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
-                             const char* name, unsigned handle)
+                               const char* name, unsigned handle)
 {
    struct i965_libdrm_buffer *buf = CALLOC_STRUCT(i965_libdrm_buffer);
    uint32_t tile = 0, swizzle = 0;
@@ -73,11 +73,11 @@ err:
 
 static struct pipe_texture *
 i965_libdrm_texture_from_shared_handle(struct drm_api *api,
-                                     struct pipe_screen *screen,
-                                     struct pipe_texture *template,
-                                     const char* name,
-                                     unsigned pitch,
-                                     unsigned handle)
+                                       struct pipe_screen *screen,
+                                       struct pipe_texture *template,
+                                       const char* name,
+                                       unsigned pitch,
+                                       unsigned handle)
 {
    /* XXX: this is silly -- there should be a way to get directly from
     * the "drm_api" struct to ourselves, without peering into
@@ -96,10 +96,10 @@ i965_libdrm_texture_from_shared_handle(struct drm_api *api,
 
 static boolean
 i965_libdrm_shared_handle_from_texture(struct drm_api *api,
-                                     struct pipe_screen *screen,
-                                     struct pipe_texture *texture,
-                                     unsigned *pitch,
-                                     unsigned *handle)
+                                       struct pipe_screen *screen,
+                                       struct pipe_texture *texture,
+                                       unsigned *pitch,
+                                       unsigned *handle)
 {
    struct i965_libdrm_buffer *buf = NULL;
    struct brw_winsys_buffer *buffer = NULL;
@@ -120,10 +120,10 @@ i965_libdrm_shared_handle_from_texture(struct drm_api *api,
 
 static boolean
 i965_libdrm_local_handle_from_texture(struct drm_api *api,
-                                    struct pipe_screen *screen,
-                                    struct pipe_texture *texture,
-                                    unsigned *pitch,
-                                    unsigned *handle)
+                                      struct pipe_screen *screen,
+                                      struct pipe_texture *texture,
+                                      unsigned *pitch,
+                                      unsigned *handle)
 {
    struct brw_winsys_buffer *buffer = NULL;
    if (!brw_texture_get_winsys_buffer(texture, &buffer, pitch))
@@ -146,7 +146,7 @@ i965_libdrm_winsys_destroy(struct brw_winsys_screen *iws)
 
 static struct pipe_screen *
 i965_libdrm_create_screen(struct drm_api *api, int drmFD,
-		      struct drm_create_screen_arg *arg)
+                          struct drm_create_screen_arg *arg)
 {
    struct i965_libdrm_winsys *idws;
    unsigned int deviceID;
