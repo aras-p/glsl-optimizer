@@ -371,7 +371,7 @@ boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
 
    *buffer = tex->bo;
    if (stride)
-      *stride = tex->pitch;
+      *stride = tex->pitch * tex->cpp;
 
    return TRUE;
 }
