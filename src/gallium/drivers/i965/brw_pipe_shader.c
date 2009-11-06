@@ -43,15 +43,15 @@
  * Determine if the given shader uses complex features such as flow
  * conditionals, loops, subroutines.
  */
-GLboolean brw_wm_has_flow_control(const struct brw_fragment_shader *fp)
+static GLboolean has_flow_control(const struct tgsi_shader_info *info)
 {
-    return (fp->info.opcode_count[TGSI_OPCODE_ARL] > 0 ||
-	    fp->info.opcode_count[TGSI_OPCODE_IF] > 0 ||
-	    fp->info.opcode_count[TGSI_OPCODE_ENDIF] > 0 || /* redundant - IF */
-	    fp->info.opcode_count[TGSI_OPCODE_CAL] > 0 ||
-	    fp->info.opcode_count[TGSI_OPCODE_BRK] > 0 ||   /* redundant - BGNLOOP */
-	    fp->info.opcode_count[TGSI_OPCODE_RET] > 0 ||   /* redundant - CAL */
-	    fp->info.opcode_count[TGSI_OPCODE_BGNLOOP] > 0);
+    return (info->opcode_count[TGSI_OPCODE_ARL] > 0 ||
+	    info->opcode_count[TGSI_OPCODE_IF] > 0 ||
+	    info->opcode_count[TGSI_OPCODE_ENDIF] > 0 || /* redundant - IF */
+	    info->opcode_count[TGSI_OPCODE_CAL] > 0 ||
+	    info->opcode_count[TGSI_OPCODE_BRK] > 0 ||   /* redundant - BGNLOOP */
+	    info->opcode_count[TGSI_OPCODE_RET] > 0 ||   /* redundant - CAL */
+	    info->opcode_count[TGSI_OPCODE_BGNLOOP] > 0);
 }
 
 
@@ -88,7 +88,7 @@ static void *brw_create_fs_state( struct pipe_context *pipe,
    /* Duplicate tokens, scan shader
     */
    fs->id = brw->program_id++;
-   fs->has_flow_control = brw_wm_has_flow_control(fs);
+   fs->has_flow_control = has_flow_control(&fs->info);
 
    fs->tokens = tgsi_dup_tokens(shader->tokens);
    if (fs->tokens == NULL)
@@ -126,7 +126,7 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
    /* Duplicate tokens, scan shader
     */
    vs->id = brw->program_id++;
-   //vs->has_flow_control = brw_wm_has_flow_control(vs);
+   vs->has_flow_control = has_flow_control(&vs->info);
 
    vs->tokens = tgsi_dup_tokens(shader->tokens);
    if (vs->tokens == NULL)

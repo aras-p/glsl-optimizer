@@ -252,8 +252,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    }
 #endif
 
-   c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
-   reg += 2;
+   if (c->vp->has_flow_control) {
+      c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
+      reg += 2;
+   }
 
    /* Some opcodes need an internal temporary:
     */
@@ -1592,7 +1594,10 @@ void brw_vs_emit(struct brw_vs_compile *c)
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
-   brw_MOV(p, get_addr_reg(c->stack_index), brw_address(c->stack));
+
+   if (c->vp->has_flow_control) {
+      brw_MOV(p, get_addr_reg(c->stack_index), brw_address(c->stack));
+   }
 
    /* Instructions
     */

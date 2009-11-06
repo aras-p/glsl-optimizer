@@ -162,9 +162,6 @@ static enum pipe_error do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func);
 
-   /* temporary sanity check assertion */
-   assert(fp->has_flow_control == brw_wm_has_flow_control(c->fp));
-
    /*
     * Shader which use GLSL features such as flow control are handled
     * differently from "simple" shaders.

@@ -338,7 +338,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
 		       GLboolean ps_uses_depth,
 		       struct brw_wm_prog_key *key );
 
-GLboolean brw_wm_has_flow_control(const struct brw_fragment_shader *fp);
 void brw_wm_branching_shader_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 void emit_ddxy(struct brw_compile *p,

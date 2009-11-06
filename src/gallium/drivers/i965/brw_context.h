@@ -154,6 +154,8 @@ struct brw_vertex_shader {
    const struct tgsi_token *tokens;
    struct tgsi_shader_info info;
 
+   unsigned  has_flow_control:1;
+
    unsigned id;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
