@@ -54,7 +54,7 @@ struct brw_winsys_buffer {
 enum brw_buffer_type
 {
    BRW_BUFFER_TYPE_TEXTURE,
-   BRW_BUFFER_TYPE_SCANOUT, /**< a texture used for scanning out from */
+   BRW_BUFFER_TYPE_SCANOUT,          /**< a texture used for scanning out from */
    BRW_BUFFER_TYPE_VERTEX,
    BRW_BUFFER_TYPE_CURBE,
    BRW_BUFFER_TYPE_QUERY,
@@ -63,9 +63,9 @@ enum brw_buffer_type
    BRW_BUFFER_TYPE_BATCH,
    BRW_BUFFER_TYPE_GENERAL_STATE,
    BRW_BUFFER_TYPE_SURFACE_STATE,
-   BRW_BUFFER_TYPE_PIXEL,       /* image uploads, pbo's, etc */
-   BRW_BUFFER_TYPE_GENERIC,     /* unknown */
-   BRW_BUFFER_TYPE_MAX		/* Count of possible values */
+   BRW_BUFFER_TYPE_PIXEL,            /* image uploads, pbo's, etc */
+   BRW_BUFFER_TYPE_GENERIC,          /* unknown */
+   BRW_BUFFER_TYPE_MAX               /* Count of possible values */
 };
 
 
@@ -74,14 +74,14 @@ enum brw_buffer_type
  */
 enum brw_buffer_usage {
    BRW_USAGE_STATE,         /* INSTRUCTION, 0 */
-   BRW_USAGE_QUERY_RESULT,	 /* INSTRUCTION, INSTRUCTION */
+   BRW_USAGE_QUERY_RESULT,  /* INSTRUCTION, INSTRUCTION */
    BRW_USAGE_RENDER_TARGET, /* RENDER,      0 */
-   BRW_USAGE_DEPTH_BUFFER,	 /* RENDER,      RENDER */
-   BRW_USAGE_BLIT_SOURCE,	 /* RENDER,      0 */
+   BRW_USAGE_DEPTH_BUFFER,  /* RENDER,      RENDER */
+   BRW_USAGE_BLIT_SOURCE,   /* RENDER,      0 */
    BRW_USAGE_BLIT_DEST,     /* RENDER,      RENDER */
-   BRW_USAGE_SAMPLER,	 /* SAMPLER,     0 */
-   BRW_USAGE_VERTEX,	 /* VERTEX,      0 */
-   BRW_USAGE_SCRATCH,	 /* 0,           0 */
+   BRW_USAGE_SAMPLER,       /* SAMPLER,     0 */
+   BRW_USAGE_VERTEX,        /* VERTEX,      0 */
+   BRW_USAGE_SCRATCH,       /* 0,           0 */
    BRW_USAGE_MAX
 };
 
@@ -124,11 +124,11 @@ struct brw_winsys_reloc {
    struct brw_winsys_buffer *bo;
 };
 
-static INLINE void make_reloc( struct brw_winsys_reloc *reloc,
-                               enum brw_buffer_usage usage,
-                               unsigned delta,
-                               unsigned offset,
-                               struct brw_winsys_buffer *bo)
+static INLINE void make_reloc(struct brw_winsys_reloc *reloc,
+                              enum brw_buffer_usage usage,
+                              unsigned delta,
+                              unsigned offset,
+                              struct brw_winsys_buffer *bo)
 {
    reloc->usage = usage;
    reloc->delta = delta;
@@ -149,27 +149,27 @@ struct brw_winsys_screen {
    /**
     * Create a buffer.
     */
-   enum pipe_error (*bo_alloc)( struct brw_winsys_screen *sws,
-                                enum brw_buffer_type type,
-                                unsigned size,
-                                unsigned alignment,
-                                struct brw_winsys_buffer **bo_out );
+   enum pipe_error (*bo_alloc)(struct brw_winsys_screen *sws,
+                               enum brw_buffer_type type,
+                               unsigned size,
+                               unsigned alignment,
+                               struct brw_winsys_buffer **bo_out);
 
    /* Destroy a buffer when our refcount goes to zero:
     */
-   void (*bo_destroy)( struct brw_winsys_buffer *buffer );
+   void (*bo_destroy)(struct brw_winsys_buffer *buffer);
 
    /* delta -- added to b2->offset, and written into buffer
     * offset -- location above value is written to within buffer
     */
-   enum pipe_error (*bo_emit_reloc)( struct brw_winsys_buffer *buffer,
-                                     enum brw_buffer_usage usage,
-                                     unsigned delta,
-                                     unsigned offset,
-                                     struct brw_winsys_buffer *b2);
+   enum pipe_error (*bo_emit_reloc)(struct brw_winsys_buffer *buffer,
+                                    enum brw_buffer_usage usage,
+                                    unsigned delta,
+                                    unsigned offset,
+                                    struct brw_winsys_buffer *b2);
 
-   enum pipe_error (*bo_exec)( struct brw_winsys_buffer *buffer,
-                               unsigned bytes_used );
+   enum pipe_error (*bo_exec)(struct brw_winsys_buffer *buffer,
+                              unsigned bytes_used);
 
    enum pipe_error (*bo_subdata)(struct brw_winsys_buffer *buffer,
                                  enum brw_buffer_data_type data_type,
@@ -181,14 +181,14 @@ struct brw_winsys_screen {
 
    boolean (*bo_is_busy)(struct brw_winsys_buffer *buffer);
    boolean (*bo_references)(struct brw_winsys_buffer *a,
-			    struct brw_winsys_buffer *b);
+                            struct brw_winsys_buffer *b);
 
    /* XXX: couldn't this be handled by returning true/false on
     * bo_emit_reloc?
     */
-   enum pipe_error (*check_aperture_space)( struct brw_winsys_screen *iws,
-					    struct brw_winsys_buffer **buffers,
-					    unsigned count );
+   enum pipe_error (*check_aperture_space)(struct brw_winsys_screen *iws,
+                                           struct brw_winsys_buffer **buffers,
+                                           unsigned count);
 
    /**
     * Map a buffer.
@@ -199,11 +199,11 @@ struct brw_winsys_screen {
                    unsigned length,
                    boolean write,
                    boolean discard,
-                   boolean flush_explicit );
+                   boolean flush_explicit);
 
-   void (*bo_flush_range)( struct brw_winsys_buffer *buffer,
-                           unsigned offset,
-                           unsigned length );
+   void (*bo_flush_range)(struct brw_winsys_buffer *buffer,
+                          unsigned offset,
+                          unsigned length);
 
    /**
     * Unmap a buffer.
@@ -224,7 +224,7 @@ struct brw_winsys_screen {
 };
 
 static INLINE void *
-bo_map_read( struct brw_winsys_screen *sws, struct brw_winsys_buffer *buf )
+bo_map_read(struct brw_winsys_screen *sws, struct brw_winsys_buffer *buf)
 {
    return sws->bo_map( buf,
                        BRW_DATA_OTHER,
@@ -259,8 +259,8 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen);
  */
 struct pipe_texture;
 boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
-				      struct brw_winsys_buffer **buffer,
-				      unsigned *stride);
+                                      struct brw_winsys_buffer **buffer,
+                                      unsigned *stride);
 
 /**
  * Wrap a brw_winsys buffer with a texture blanket.
@@ -269,9 +269,9 @@ boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
  */
 struct pipe_texture * 
 brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
-				  const struct pipe_texture *template,
-				  const unsigned pitch,
-				  struct brw_winsys_buffer *buffer);
+                                  const struct pipe_texture *template,
+                                  const unsigned pitch,
+                                  struct brw_winsys_buffer *buffer);
 
 
 
