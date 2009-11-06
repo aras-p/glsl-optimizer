@@ -231,7 +231,7 @@ static int prepare_depthbuffer(struct brw_context *brw)
    struct pipe_surface *zsbuf = brw->curr.fb.zsbuf;
 
    if (zsbuf)
-      brw_add_validated_bo(brw, brw_surface_bo(zsbuf));
+      brw_add_validated_bo(brw, brw_surface(zsbuf)->bo);
 
    return 0;
 }
@@ -278,8 +278,8 @@ static int emit_depthbuffer(struct brw_context *brw)
 	 return PIPE_ERROR_BAD_INPUT;
       }
 
-      bo = brw_surface_bo(surface);
-      pitch = brw_surface_pitch(surface);
+      bo = brw_surface(surface)->bo;
+      pitch = brw_surface(surface)->pitch;
 
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));

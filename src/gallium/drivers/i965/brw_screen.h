@@ -167,9 +167,6 @@ brw_buffer_is_user_buffer( const struct pipe_buffer *buf )
    return ((const struct brw_buffer *)buf)->user_buffer != NULL;
 }
 
-struct brw_winsys_buffer *
-brw_surface_bo( struct pipe_surface *surface );
-
 unsigned
 brw_surface_pitch( const struct pipe_surface *surface );
 
