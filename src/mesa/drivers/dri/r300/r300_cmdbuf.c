@@ -107,32 +107,45 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	END_BATCH();
 }
 
-void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
+void r500_emit_fp(struct r300_context *r300,
+                  uint32_t *data,
+                  unsigned len,
+                  uint32_t addr,
+                  unsigned type,
+                  unsigned clamp)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(&r300->radeon);
-	drm_r300_cmd_header_t cmd;
-	uint32_t addr, ndw, sz;
-	int type, clamp;
+    BATCH_LOCALS(&r300->radeon);
 
-	ndw = atom->check(ctx, atom);
+    addr |= (type << 16);
+    addr |= (clamp << 17);
 
-	cmd.u = atom->cmd[0];
-	sz = cmd.r500fp.count;
-	addr = ((cmd.r500fp.adrhi_flags & 1) << 8) | cmd.r500fp.adrlo;
-	type = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_TYPE);
-	clamp = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_CLAMP);
+    BEGIN_BATCH_NO_AUTOSTATE(len + 3);
+    OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_INDEX, 0));
+    OUT_BATCH(addr);
+    OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, len-1) | RADEON_ONE_REG_WR);
+    OUT_BATCH_TABLE(data, len);
+    END_BATCH();
+}
 
-	addr |= (type << 16);
-	addr |= (clamp << 17);
+static void emit_r500fp_atom(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    drm_r300_cmd_header_t cmd;
+    uint32_t addr, count;
+    int type, clamp;
 
-	BEGIN_BATCH_NO_AUTOSTATE(ndw);
-	OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_INDEX, 0));
-	OUT_BATCH(addr);
-	ndw-=3;
-	OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, ndw-1) | RADEON_ONE_REG_WR);
-	OUT_BATCH_TABLE(&atom->cmd[1], ndw);
-	END_BATCH();
+    cmd.u = atom->cmd[0];
+    addr = ((cmd.r500fp.adrhi_flags & 1) << 8) | cmd.r500fp.adrlo;
+    type = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_TYPE);
+    clamp = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_CLAMP);
+
+    if (type) {
+        count = r500fp_count(atom->cmd) * 4;
+    } else {
+        count = r500fp_count(atom->cmd) * 6;
+    }
+
+    r500_emit_fp(r300, &atom->cmd[1], count, addr, type, clamp);
 }
 
 static int check_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
@@ -480,7 +493,7 @@ static int check_variable(GLcontext *ctx, struct radeon_state_atom *atom)
 	return cnt ? cnt + 1 : 0;
 }
 
-int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	int cnt;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -492,7 +505,7 @@ int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom)
 	return cnt ? (cnt * 6) + extra : 0;
 }
 
-int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	int cnt;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -669,13 +682,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] =
 			cmdr500fp(r300->radeon.radeonScreen, 0, 0, 0, 0);
 		if (r300->radeon.radeonScreen->kernel_mm)
-			r300->hw.r500fp.emit = emit_r500fp;
+			r300->hw.r500fp.emit = emit_r500fp_atom;
 
 		ALLOC_STATE(r500fp_const, r500fp_const, R500_FPP_CMDSIZE, 0);
 		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] =
 			cmdr500fp(r300->radeon.radeonScreen, 0, 0, 1, 0);
 		if (r300->radeon.radeonScreen->kernel_mm)
-			r300->hw.r500fp_const.emit = emit_r500fp;
+			r300->hw.r500fp_const.emit = emit_r500fp_atom;
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
 		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_US_CONFIG, 3);
