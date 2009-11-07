@@ -54,4 +54,11 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom);
 int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom);
 int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom);
 
-#endif				/* __R300_CMDBUF_H__ */
+void r300_emit_cb_setup(struct r300_context *r300,
+                        struct radeon_bo *bo,
+                        uint32_t offset,
+                        GLuint format,
+                        unsigned cpp,
+                        unsigned pitch);
+
+#endif /* __R300_CMDBUF_H__ */

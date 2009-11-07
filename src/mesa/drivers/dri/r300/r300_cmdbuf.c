@@ -255,110 +255,136 @@ static int check_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	return dw;
 }
 
-static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
+static void emit_scissor(struct r300_context *r300,
+                         unsigned width,
+                         unsigned height)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(&r300->radeon);
-	struct radeon_renderbuffer *rrb;
-	uint32_t cbpitch;
-	uint32_t offset = r300->radeon.state.color.draw_offset;
-	uint32_t dw = 6;
-	int i;
-
-	rrb = radeon_get_colorbuffer(&r300->radeon);
-	if (!rrb || !rrb->bo) {
-		fprintf(stderr, "no rrb\n");
-		return;
-	}
-
-        if (RADEON_DEBUG & RADEON_STATE)
-           fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
-	cbpitch = (rrb->pitch / rrb->cpp);
-	if (rrb->cpp == 4)
-		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-	else switch (rrb->base.Format) {
-        case MESA_FORMAT_RGB565:
-		assert(_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_RGB565;
-		break;
-        case MESA_FORMAT_RGB565_REV:
-		assert(!_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_RGB565;
-		break;
-        case MESA_FORMAT_ARGB4444:
-		assert(_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
-		break;
-        case MESA_FORMAT_ARGB4444_REV:
-		assert(!_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
-		break;
-	case MESA_FORMAT_ARGB1555:
-		assert(_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
-		break;
-	case MESA_FORMAT_ARGB1555_REV:
-		assert(!_mesa_little_endian());
-		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
-		break;
-	default:
-		_mesa_problem(ctx, "unexpected format in emit_cb_offset()");
-	}
-
-	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
-		cbpitch |= R300_COLOR_TILE_ENABLE;
-
-    	if (r300->radeon.radeonScreen->kernel_mm)
-		dw += 2;
-	BEGIN_BATCH_NO_AUTOSTATE(dw);
-	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
-	OUT_BATCH_RELOC(offset, rrb->bo, offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
-    	if (!r300->radeon.radeonScreen->kernel_mm)
-		OUT_BATCH(cbpitch);
-	else
-		OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-	END_BATCH();
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
-        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-            BEGIN_BATCH_NO_AUTOSTATE(3);
-            OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
-            OUT_BATCH(0);
-            OUT_BATCH(((rrb->base.Width - 1) << R300_SCISSORS_X_SHIFT) |
-                    ((rrb->base.Height - 1) << R300_SCISSORS_Y_SHIFT));
-            END_BATCH();
-            BEGIN_BATCH_NO_AUTOSTATE(16);
-            for (i = 0; i < 4; i++) {
-                OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
-                OUT_BATCH((0 << R300_CLIPRECT_X_SHIFT) | (0 << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH(((rrb->base.Width - 1) << R300_CLIPRECT_X_SHIFT) | ((rrb->base.Height - 1) << R300_CLIPRECT_Y_SHIFT));
-            }
-            OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
-            OUT_BATCH(0xAAAA);
-            OUT_BATCH_REGSEQ(R300_SC_SCREENDOOR, 1);
-            OUT_BATCH(0xffffff);
-            END_BATCH();
-        } else {
-            BEGIN_BATCH_NO_AUTOSTATE(3);
-            OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
-            OUT_BATCH((R300_SCISSORS_OFFSET << R300_SCISSORS_X_SHIFT) |
-                    (R300_SCISSORS_OFFSET << R300_SCISSORS_Y_SHIFT));
-            OUT_BATCH(((rrb->base.Width + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_X_SHIFT) |
-                    ((rrb->base.Height + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_Y_SHIFT));
-            END_BATCH();
-            BEGIN_BATCH_NO_AUTOSTATE(16);
-            for (i = 0; i < 4; i++) {
-                OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
-                OUT_BATCH((R300_SCISSORS_OFFSET << R300_CLIPRECT_X_SHIFT) | (R300_SCISSORS_OFFSET << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH(((R300_SCISSORS_OFFSET + rrb->base.Width - 1) << R300_CLIPRECT_X_SHIFT) |
-                          ((R300_SCISSORS_OFFSET + rrb->base.Height - 1) << R300_CLIPRECT_Y_SHIFT));
-            }
-            OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
-            OUT_BATCH(0xAAAA);
-            OUT_BATCH_REGSEQ(R300_SC_SCREENDOOR, 1);
-            OUT_BATCH(0xffffff);
-            END_BATCH();
+    int i;
+    BATCH_LOCALS(&r300->radeon);
+    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+        BEGIN_BATCH_NO_AUTOSTATE(3);
+        OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
+        OUT_BATCH(0);
+        OUT_BATCH(((width - 1) << R300_SCISSORS_X_SHIFT) |
+                ((height - 1) << R300_SCISSORS_Y_SHIFT));
+        END_BATCH();
+        BEGIN_BATCH_NO_AUTOSTATE(16);
+        for (i = 0; i < 4; i++) {
+            OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
+            OUT_BATCH((0 << R300_CLIPRECT_X_SHIFT) | (0 << R300_CLIPRECT_Y_SHIFT));
+            OUT_BATCH(((width - 1) << R300_CLIPRECT_X_SHIFT) | ((height - 1) << R300_CLIPRECT_Y_SHIFT));
         }
+        OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
+        OUT_BATCH(0xAAAA);
+        OUT_BATCH_REGSEQ(R300_SC_SCREENDOOR, 1);
+        OUT_BATCH(0xffffff);
+        END_BATCH();
+    } else {
+        BEGIN_BATCH_NO_AUTOSTATE(3);
+        OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
+        OUT_BATCH((R300_SCISSORS_OFFSET << R300_SCISSORS_X_SHIFT) |
+                (R300_SCISSORS_OFFSET << R300_SCISSORS_Y_SHIFT));
+        OUT_BATCH(((width + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_X_SHIFT) |
+                ((height + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_Y_SHIFT));
+        END_BATCH();
+        BEGIN_BATCH_NO_AUTOSTATE(16);
+        for (i = 0; i < 4; i++) {
+            OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
+            OUT_BATCH((R300_SCISSORS_OFFSET << R300_CLIPRECT_X_SHIFT) | (R300_SCISSORS_OFFSET << R300_CLIPRECT_Y_SHIFT));
+            OUT_BATCH(((R300_SCISSORS_OFFSET + width - 1) << R300_CLIPRECT_X_SHIFT) |
+                        ((R300_SCISSORS_OFFSET + height - 1) << R300_CLIPRECT_Y_SHIFT));
+        }
+        OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
+        OUT_BATCH(0xAAAA);
+        OUT_BATCH_REGSEQ(R300_SC_SCREENDOOR, 1);
+        OUT_BATCH(0xffffff);
+        END_BATCH();
+    }
+}
+
+void r300_emit_cb_setup(struct r300_context *r300,
+                        struct radeon_bo *bo,
+                        uint32_t offset,
+                        GLuint format,
+                        unsigned cpp,
+                        unsigned pitch)
+{
+    BATCH_LOCALS(&r300->radeon);
+    uint32_t cbpitch = pitch / cpp;
+    uint32_t dw = 6;
+
+    assert(offset % 256 == 0);
+
+    switch (format) {
+        case MESA_FORMAT_RGB565:
+            assert(_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_RGB565;
+            break;
+        case MESA_FORMAT_RGB565_REV:
+            assert(!_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_RGB565;
+            break;
+        case MESA_FORMAT_ARGB4444:
+            assert(_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_ARGB4444;
+            break;
+        case MESA_FORMAT_ARGB4444_REV:
+            assert(!_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_ARGB4444;
+            break;
+        case MESA_FORMAT_ARGB1555:
+            assert(_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+            break;
+        case MESA_FORMAT_ARGB1555_REV:
+            assert(!_mesa_little_endian());
+            cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+            break;
+        default:
+            if (cpp == 4) {
+                cbpitch |= R300_COLOR_FORMAT_ARGB8888;
+            } else {
+                _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");;
+            }
+            break;
+    }
+
+    if (bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+        cbpitch |= R300_COLOR_TILE_ENABLE;
+
+    if (r300->radeon.radeonScreen->kernel_mm)
+        dw += 2;
+
+    BEGIN_BATCH_NO_AUTOSTATE(dw);
+    OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
+    OUT_BATCH_RELOC(offset, bo, offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
+    if (!r300->radeon.radeonScreen->kernel_mm)
+        OUT_BATCH(cbpitch);
+    else
+        OUT_BATCH_RELOC(cbpitch, bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    END_BATCH();
+}
+
+static void emit_cb_offset_atom(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    struct radeon_renderbuffer *rrb;
+    uint32_t offset = r300->radeon.state.color.draw_offset;
+
+    rrb = radeon_get_colorbuffer(&r300->radeon);
+    if (!rrb || !rrb->bo) {
+        fprintf(stderr, "no rrb\n");
+        return;
+    }
+
+    if (RADEON_DEBUG & RADEON_STATE)
+        fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
+
+    r300_emit_cb_setup(r300, rrb->bo, offset, rrb->base.Format, rrb->cpp, rrb->pitch);
+
+    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+        emit_scissor(r300, rrb->base.Width, rrb->base.Height);
     }
 }
 
@@ -693,7 +719,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(rop, always, 2, 0);
 	r300->hw.rop.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_ROPCNTL, 1);
 	ALLOC_STATE(cb, cb_offset, R300_CB_CMDSIZE, 0);
-	r300->hw.cb.emit = &emit_cb_offset;
+	r300->hw.cb.emit = &emit_cb_offset_atom;
 	ALLOC_STATE(rb3d_dither_ctl, always, 10, 0);
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
