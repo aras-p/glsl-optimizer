@@ -75,7 +75,6 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned count)
 {
     CS_LOCALS(r300);
-    assert(count < 65536);
 
     BEGIN_CS(4);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
@@ -100,7 +99,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
     /* XXX most of these are stupid */
     assert(indexSize == 4 || indexSize == 2);
-    assert(count < 65536);
     assert((start * indexSize)  % 4 == 0);
     assert(offset_dwords == 0);
 
@@ -172,8 +170,13 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (!u_trim_pipe_prim(mode, &count))
+    if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (count > 65535) {
+        return FALSE;
+    }
 
     r300_update_derived_state(r300);
 
@@ -210,8 +213,13 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (!u_trim_pipe_prim(mode, &count))
+    if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (count > 65535) {
+        return FALSE;
+    }
 
     r300_update_derived_state(r300);
 
