@@ -21,6 +21,9 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/* r300_vbo: Various helpers for emitting vertex buffers. Needs cleanup,
+ * refactoring, etc. */
+
 #include "r300_vbo.h"
 
 #include "pipe/p_format.h"
@@ -76,6 +79,7 @@ void setup_vertex_attributes(struct r300_context *r300)
     finish_vertex_attribs_setup(r300->vertex_info, r300->aos_count);
 }
 
+/* XXX WTF are these doing? */
 static void setup_vertex_array(struct r300_context *r300, struct pipe_vertex_element *element)
 {
 }
@@ -84,6 +88,7 @@ static void finish_vertex_arrays_setup(struct r300_context *r300)
 {
 }
 
+/* XXX move/integrate this with the checks in r300_state_inlines */
 static boolean format_is_supported(enum pipe_format format, int nr_components)
 {
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS)
@@ -151,16 +156,15 @@ void setup_index_buffer(struct r300_context *r300,
                         struct pipe_buffer* indexBuffer,
                         unsigned indexSize)
 {
+    /* XXX I call BS; why is this different from the assert in r300_render? */
     assert(indexSize = 2);
 
-    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer, RADEON_GEM_DOMAIN_GTT, 0))
-    {
+    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
+                                  RADEON_GEM_DOMAIN_GTT, 0)) {
         assert(0);
     }
 
-    if (!r300->winsys->validate(r300->winsys))
-    {
+    if (!r300->winsys->validate(r300->winsys)) {
         assert(0);
     }
 }
-

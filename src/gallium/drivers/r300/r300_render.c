@@ -243,7 +243,8 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* Draw-based drawing for SW TCL chipsets. */
+/* Draw-based drawing for SW TCL chipsets.
+ * XXX currently broken as fucking hell. */
 boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        struct pipe_buffer* indexBuffer,
                                        unsigned indexSize,
