@@ -79,30 +79,6 @@ void setup_vertex_attributes(struct r300_context *r300)
     finish_vertex_attribs_setup(r300->vertex_info, r300->aos_count);
 }
 
-/* XXX move/integrate this with the checks in r300_state_inlines */
-static boolean format_is_supported(enum pipe_format format, int nr_components)
-{
-    if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS)
-        return FALSE;
-
-    if ((pf_size_x(format) != pf_size_y(format)) ||
-        (pf_size_x(format) != pf_size_z(format)) ||
-        (pf_size_x(format) != pf_size_w(format)))
-        return FALSE;
-
-    /* Following should be supported as long as stride is 4 bytes aligned */
-    if (pf_size_x(format) != 1 && nr_components != 4)
-        return FALSE;
-
-    if (pf_size_x(format) != 2 && !(nr_components == 2 || nr_components == 4))
-        return FALSE;
-
-    if (pf_size_x(format) == 3 || pf_size_x(format) > 4)
-        return FALSE;
-
-    return TRUE;
-}
-
 static INLINE int get_buffer_offset(struct r300_context *r300,
                                     unsigned int buf_nr,
                                     unsigned int elem_offset)
@@ -110,8 +86,7 @@ static INLINE int get_buffer_offset(struct r300_context *r300,
     return r300->vertex_buffer[buf_nr].buffer_offset + elem_offset;
 }
 
-/**
- */
+/* XXX not called at all */
 static void setup_vertex_buffers(struct r300_context *r300)
 {
     struct pipe_vertex_element *vert_elem;

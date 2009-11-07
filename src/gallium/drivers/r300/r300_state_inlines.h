@@ -436,7 +436,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
         debug_printf("r300: Bad format %s in %s:%d\n", pf_name(format),
             __FUNCTION__, __LINE__);
-        return 0;
+        assert(0);
     }
 
     switch (pf_type(format)) {
