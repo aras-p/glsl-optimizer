@@ -1105,6 +1105,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 		   GLuint eot)
 {
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    GLuint nr = 2;
    GLuint channel;
 
@@ -1119,18 +1120,28 @@ void emit_fb_write(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    for (channel = 0; channel < 4; channel++) {
-      /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-      /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_MOV(p,
-	      brw_message_reg(nr + channel),
-	      arg0[channel]);
-
-      if (c->dispatch_width == 16) {
-	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      if (c->dispatch_width == 16 && (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))) {
+	 /* By setting the high bit of the MRF register number, we indicate
+	  * that we want COMPR4 mode - instead of doing the usual destination
+	  * + 1 for the second half we get destination + 4.
+	  */
 	 brw_MOV(p,
-		 brw_message_reg(nr + channel + 4),
-		 sechalf(arg0[channel]));
+		 brw_message_reg(nr + channel + (1 << 7)),
+		 arg0[channel]);
+      } else {
+	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
+	 /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+	 brw_MOV(p,
+		 brw_message_reg(nr + channel),
+		 arg0[channel]);
+
+	 if (c->dispatch_width == 16) {
+	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	    brw_MOV(p,
+		    brw_message_reg(nr + channel + 4),
+		    sechalf(arg0[channel]));
+	 }
       }
    }
    /* skip over the regs populated above:
