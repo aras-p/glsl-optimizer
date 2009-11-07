@@ -118,13 +118,16 @@ static INLINE int get_buffer_offset(struct r300_context *r300,
  */
 static void setup_vertex_buffers(struct r300_context *r300)
 {
-    for (int i=0; i<r300->aos_count; i++)
+    struct pipe_vertex_element *vert_elem;
+    int i;
+
+    for (i = 0; i < r300->aos_count; i++)
     {
-        struct pipe_vertex_element *vert_elem = &r300->vertex_element[i];
-        if (!format_is_supported(vert_elem->src_format, vert_elem->nr_components))
-        {
+        vert_elem = &r300->vertex_element[i];
+        if (!format_is_supported(vert_elem->src_format,
+                                 vert_elem->nr_components)) {
+            /* XXX use translate module to convert the data */
             assert(0);
-            /* use translate module to convert the data */
             /*
             struct pipe_buffer *buf;
             const unsigned int max_index = r300->vertex_buffers[vert_elem->vertex_buffer_index].max_index;
@@ -132,9 +135,10 @@ static void setup_vertex_buffers(struct r300_context *r300)
             */
         }
 
-        if (get_buffer_offset(r300, vert_elem->vertex_buffer_index, vert_elem->src_offset) % 4 != 0)
-        {
-            /* need to align buffer */
+        if (get_buffer_offset(r300,
+                              vert_elem->vertex_buffer_index,
+                              vert_elem->src_offset) % 4) {
+            /* XXX need to align buffer */
             assert(0);
         }
         setup_vertex_array(r300, vert_elem);
