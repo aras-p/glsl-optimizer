@@ -201,31 +201,62 @@ brw_is_format_supported(struct pipe_screen *screen,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_L8_UNORM,
-      PIPE_FORMAT_A8_UNORM,
       PIPE_FORMAT_I8_UNORM,
+      PIPE_FORMAT_A8_UNORM,
+      PIPE_FORMAT_L16_UNORM,
+      /*PIPE_FORMAT_I16_UNORM,*/
+      /*PIPE_FORMAT_A16_UNORM,*/
       PIPE_FORMAT_A8L8_UNORM,
+      PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_A1R5G5B5_UNORM,
+      PIPE_FORMAT_A4R4G4B4_UNORM,
+      PIPE_FORMAT_X8R8G8B8_UNORM,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      /* video */
       PIPE_FORMAT_YCBCR,
       PIPE_FORMAT_YCBCR_REV,
+      /* compressed */
+      /*PIPE_FORMAT_FXT1_RGBA,*/
+      PIPE_FORMAT_DXT1_RGB,
+      PIPE_FORMAT_DXT1_RGBA,
+      PIPE_FORMAT_DXT3_RGBA,
+      PIPE_FORMAT_DXT5_RGBA,
+      /* sRGB */
+      PIPE_FORMAT_R8G8B8A8_SRGB,
+      PIPE_FORMAT_A8L8_SRGB,
+      PIPE_FORMAT_L8_SRGB,
+      PIPE_FORMAT_DXT1_SRGB,
+      /* depth */
+      PIPE_FORMAT_Z32_FLOAT,
       PIPE_FORMAT_X8Z24_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z16_UNORM,
+      /* signed */
+      PIPE_FORMAT_R8G8_SNORM,
+      PIPE_FORMAT_R8G8B8A8_SNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
-   static const enum pipe_format surface_supported[] = {
+   static const enum pipe_format render_supported[] = {
+      PIPE_FORMAT_X8R8G8B8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
+   };
+   static const enum pipe_format depth_supported[] = {
+      PIPE_FORMAT_Z32_FLOAT,
       PIPE_FORMAT_X8Z24_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
    uint i;
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
-      list = surface_supported;
+   if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL)
+      list = depth_supported;
+   else if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+      list = render_supported;
    else
       list = tex_supported;
 

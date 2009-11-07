@@ -73,16 +73,19 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_A8_UNORM:
       return BRW_SURFACEFORMAT_A8_UNORM; 
 
+   case PIPE_FORMAT_L16_UNORM:
+      return BRW_SURFACEFORMAT_L16_UNORM;
+
+      /* XXX: Add these to gallium
+   case PIPE_FORMAT_I16_UNORM:
+      return BRW_SURFACEFORMAT_I16_UNORM;
+
+   case PIPE_FORMAT_A16_UNORM:
+      return BRW_SURFACEFORMAT_A16_UNORM; 
+      */
+
    case PIPE_FORMAT_A8L8_UNORM:
       return BRW_SURFACEFORMAT_L8A8_UNORM;
-
-   case PIPE_FORMAT_A8R8G8B8_UNORM: /* XXX */
-   case PIPE_FORMAT_B8G8R8A8_UNORM: /* XXX */
-   case PIPE_FORMAT_R8G8B8A8_UNORM: /* XXX */
-      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
-   case PIPE_FORMAT_R8G8B8X8_UNORM:
-      return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
 
    case PIPE_FORMAT_R5G6B5_UNORM:
       return BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -93,19 +96,15 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_A4R4G4B4_UNORM:
       return BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
 
-   case PIPE_FORMAT_L16_UNORM:
-      return BRW_SURFACEFORMAT_L16_UNORM;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
-      /* XXX: Z texturing: 
-   case PIPE_FORMAT_I16_UNORM:
-      return BRW_SURFACEFORMAT_I16_UNORM;
-       */
-
-      /* XXX: Z texturing:
-   case PIPE_FORMAT_A16_UNORM:
-      return BRW_SURFACEFORMAT_A16_UNORM; 
-      */
+   /*
+    * Video formats
+    */
 
    case PIPE_FORMAT_YCBCR_REV:
       return BRW_SURFACEFORMAT_YCRCB_NORMAL;
@@ -113,6 +112,9 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_YCBCR:
       return BRW_SURFACEFORMAT_YCRCB_SWAPUVY;
 
+   /*
+    * Compressed formats.
+    */
       /* XXX: Add FXT to gallium?
    case PIPE_FORMAT_FXT1_RGBA:
       return BRW_SURFACEFORMAT_FXT1;
@@ -130,6 +132,10 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_DXT5_RGBA:
        return BRW_SURFACEFORMAT_BC3_UNORM;
 
+   /*
+    * sRGB formats
+    */
+
    case PIPE_FORMAT_R8G8B8A8_SRGB:
       return BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
 
@@ -142,24 +148,24 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_DXT1_SRGB:
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
+   /*
+    * Depth formats
+    */
+
+   case PIPE_FORMAT_Z16_UNORM:
+         return BRW_SURFACEFORMAT_I16_UNORM;
+
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
          return BRW_SURFACEFORMAT_I24X8_UNORM;
 
-#if 0
-      /* XXX: these different surface formats don't seem to
-       * make any difference for shadow sampler/compares.
-       */
-      if (depth_mode == GL_INTENSITY) 
-         return BRW_SURFACEFORMAT_I24X8_UNORM;
-      else if (depth_mode == GL_ALPHA)
-         return BRW_SURFACEFORMAT_A24X8_UNORM;
-      else
-         return BRW_SURFACEFORMAT_L24X8_UNORM;
-#endif
+   case PIPE_FORMAT_Z32_FLOAT:
+         return BRW_SURFACEFORMAT_I32_FLOAT;
 
       /* XXX: presumably for bump mapping.  Add this to mesa state
        * tracker?
+       *
+       * XXX: Add flipped versions of these formats to Gallium.
        */
    case PIPE_FORMAT_R8G8_SNORM:
       return BRW_SURFACEFORMAT_R8G8_SNORM;
