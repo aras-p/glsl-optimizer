@@ -309,7 +309,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, 0x121c, 1);
 	so_data  (so, 1);
 
-	/* try to activate all/more lanes (threads) in a warp */
+	/* activate all 32 lanes (threads) in a warp */
+	so_method(so, screen->tesla, 0x19a0, 1);
+	so_data  (so, 0x2);
 	so_method(so, screen->tesla, 0x1400, 1);
 	so_data  (so, 0xf);
 
