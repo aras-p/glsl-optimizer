@@ -79,15 +79,6 @@ void setup_vertex_attributes(struct r300_context *r300)
     finish_vertex_attribs_setup(r300->vertex_info, r300->aos_count);
 }
 
-/* XXX WTF are these doing? */
-static void setup_vertex_array(struct r300_context *r300, struct pipe_vertex_element *element)
-{
-}
-
-static void finish_vertex_arrays_setup(struct r300_context *r300)
-{
-}
-
 /* XXX move/integrate this with the checks in r300_state_inlines */
 static boolean format_is_supported(enum pipe_format format, int nr_components)
 {
@@ -146,10 +137,7 @@ static void setup_vertex_buffers(struct r300_context *r300)
             /* XXX need to align buffer */
             assert(0);
         }
-        setup_vertex_array(r300, vert_elem);
     }
-
-    finish_vertex_arrays_setup(r300);
 }
 
 /* XXX these shouldn't be asserts since we can work around bad indexbufs */
