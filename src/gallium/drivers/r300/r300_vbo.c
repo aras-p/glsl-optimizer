@@ -27,85 +27,19 @@
 
 #include "r300_cs.h"
 #include "r300_context.h"
+#include "r300_state_inlines.h"
 #include "r300_reg.h"
 #include "r300_winsys.h"
-
-static void translate_vertex_format(enum pipe_format format,
-                                    unsigned nr_comps,
-                                    unsigned component_size,
-                                    unsigned dst_loc,
-                                    uint32_t *hw_fmt1,
-                                    uint32_t *hw_fmt2)
-{
-    uint32_t fmt1 = 0;
-
-    switch (pf_type(format))
-    {
-        case PIPE_FORMAT_TYPE_FLOAT:
-            assert(component_size == 4);
-            fmt1 = R300_DATA_TYPE_FLOAT_1 + nr_comps - 1;
-            break;
-        case PIPE_FORMAT_TYPE_UNORM:
-        case PIPE_FORMAT_TYPE_SNORM:
-        case PIPE_FORMAT_TYPE_USCALED:
-        case PIPE_FORMAT_TYPE_SSCALED:
-            if (component_size == 1)
-            {
-                assert(nr_comps == 4);
-                fmt1 = R300_DATA_TYPE_BYTE;
-            }
-            else if (component_size == 2)
-            {
-                if (nr_comps == 2)
-                    fmt1 = R300_DATA_TYPE_SHORT_2;
-                else if (nr_comps == 4)
-                    fmt1 = R300_DATA_TYPE_SHORT_4;
-                else
-                    assert(0);
-            }
-            else
-            {
-                assert(0);
-            }
-
-            if (pf_type(format) == PIPE_FORMAT_TYPE_SNORM)
-            {
-                fmt1 |= R300_SIGNED;
-            }
-            else if (pf_type(format) == PIPE_FORMAT_TYPE_SSCALED)
-            {
-                fmt1 |= R300_SIGNED;
-                fmt1 |= R300_NORMALIZE;
-            }
-            else if (pf_type(format) == PIPE_FORMAT_TYPE_USCALED)
-            {
-                fmt1 |= R300_NORMALIZE;
-            }
-            break;
-        default:
-            assert(0);
-            break;
-    }
-
-    *hw_fmt1 = fmt1 | (dst_loc << R300_DST_VEC_LOC_SHIFT);
-    *hw_fmt2 = (pf_swizzle_x(format) << R300_SWIZZLE_SELECT_X_SHIFT) |
-               (pf_swizzle_y(format) << R300_SWIZZLE_SELECT_Y_SHIFT) |
-               (pf_swizzle_z(format) << R300_SWIZZLE_SELECT_Z_SHIFT) |
-               (pf_swizzle_w(format) << R300_SWIZZLE_SELECT_W_SHIFT) |
-               (0xf << R300_WRITE_ENA_SHIFT);
-}
 
 static INLINE void setup_vertex_attribute(struct r300_vertex_info *vinfo,
                                           struct pipe_vertex_element *vert_elem,
                                           unsigned attr_num)
 {
-    uint32_t hw_fmt1, hw_fmt2;
-    translate_vertex_format(vert_elem->src_format,
-                            vert_elem->nr_components,
-                            pf_size_x(vert_elem->src_format),
-                            attr_num,
-                            &hw_fmt1,
-                            &hw_fmt2);
+    uint16_t hw_fmt1, hw_fmt2;
+
+    hw_fmt1 = r300_translate_vertex_data_type(vert_elem->src_format) |
+        (attr_num << R300_DST_VEC_LOC_SHIFT);
+    hw_fmt2 = r300_translate_vertex_data_swizzle(vert_elem->src_format);
 
     if (attr_num % 2 == 0)
     {
