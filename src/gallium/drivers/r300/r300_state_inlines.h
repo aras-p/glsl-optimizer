@@ -434,8 +434,8 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     unsigned components = pf_component_count(format);
 
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
-        debug_printf("r300: Bad format %s in %s\n", pf_name(format),
-            __FUNCTION__);
+        debug_printf("r300: Bad format %s in %s:%d\n", pf_name(format),
+            __FUNCTION__, __LINE__);
         return 0;
     }
 
@@ -447,6 +447,8 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     result = R300_DATA_TYPE_FLOAT_1 + (components - 1);
                     break;
                 default:
+                    debug_printf("r300: Bad format %s in %s:%d\n",
+                        pf_name(format), __FUNCTION__, __LINE__);
                     assert(0);
             }
             break;
@@ -470,10 +472,16 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     }
                     break;
                 default:
+                    debug_printf("r300: Bad format %s in %s:%d\n",
+                        pf_name(format), __FUNCTION__, __LINE__);
+                    debug_printf("r300: pf_size_x(format) == %d\n",
+                        pf_size_x(format));
                     assert(0);
             }
             break;
         default:
+            debug_printf("r300: Bad format %s in %s:%d\n",
+                pf_name(format), __FUNCTION__, __LINE__);
             assert(0);
     }
 
@@ -492,8 +500,8 @@ static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
 
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
-        debug_printf("r300: Bad format %s in %s\n", pf_name(format),
-            __FUNCTION__);
+        debug_printf("r300: Bad format %s in %s:%d\n",
+            pf_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 
