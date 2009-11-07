@@ -134,16 +134,16 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 }
 
 
-static boolean setup_vertex_buffers(struct r300_context *r300)
+static boolean r300_setup_vertex_buffers(struct r300_context *r300)
 {
     unsigned vbuf_count = r300->aos_count;
-    struct pipe_vertex_buffer *vbuf= r300->vertex_buffer;
-    struct pipe_vertex_element *velem= r300->vertex_element;
-    bool invalid = false;
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
 
 validate:
     for (int i = 0; i < vbuf_count; i++) {
-        if (!r300->winsys->add_buffer(r300->winsys, vbuf[velem[i].vertex_buffer_index].buffer,
+        if (!r300->winsys->add_buffer(r300->winsys,
+                vbuf[velem[i].vertex_buffer_index].buffer,
             RADEON_GEM_DOMAIN_GTT, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
@@ -152,16 +152,10 @@ validate:
 
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
-        if (invalid) {
-            /* Well, hell. */
-            debug_printf("r300: Stuck in validation loop, gonna quit now.");
-            exit(1);
-        }
-        invalid = true;
-        goto validate;
+        return r300->winsys->validate(r300->winsys);
     }
 
-    return invalid;
+    return TRUE;
 }
 
 /* This is the fast-path drawing & emission for HW TCL. */
@@ -181,7 +175,9 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_update_derived_state(r300);
 
-    setup_vertex_buffers(r300);
+    if (!r300_setup_vertex_buffers(r300)) {
+        return FALSE;
+    }
 
     setup_vertex_attributes(r300);
 
@@ -217,7 +213,9 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_update_derived_state(r300);
 
-    setup_vertex_buffers(r300);
+    if (!r300_setup_vertex_buffers(r300)) {
+        return FALSE;
+    }
 
     setup_vertex_attributes(r300);
 
