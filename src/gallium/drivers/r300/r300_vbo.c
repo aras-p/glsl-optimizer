@@ -152,13 +152,11 @@ static void setup_vertex_buffers(struct r300_context *r300)
     finish_vertex_arrays_setup(r300);
 }
 
+/* XXX these shouldn't be asserts since we can work around bad indexbufs */
 void setup_index_buffer(struct r300_context *r300,
                         struct pipe_buffer* indexBuffer,
                         unsigned indexSize)
 {
-    /* XXX I call BS; why is this different from the assert in r300_render? */
-    assert(indexSize = 2);
-
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
         assert(0);
