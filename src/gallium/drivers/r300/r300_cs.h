@@ -34,8 +34,8 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
-#define VERY_VERBOSE_CS 0
-#define VERY_VERBOSE_REGISTERS 0
+#define VERY_VERBOSE_CS 1
+#define VERY_VERBOSE_REGISTERS 1
 
 /* XXX stolen from radeon_drm.h */
 #define RADEON_GEM_DOMAIN_CPU  0x1

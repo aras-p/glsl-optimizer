@@ -582,7 +582,48 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_vertex_buffer(struct r300_context* r300)
+void r300_emit_aos(struct r300_context* r300, unsigned offset)
+{
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    CS_LOCALS(r300);
+    int i;
+    unsigned packet_size = (r300->aos_count * 3 + 1) / 2;
+    BEGIN_CS(2 + packet_size + r300->aos_count * 2);
+    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
+    OUT_CS(r300->aos_count);
+    for (i = 0; i < r300->aos_count - 1; i += 2) {
+        int buf_num1 = velem[i].vertex_buffer_index;
+        int buf_num2 = velem[i+1].vertex_buffer_index;
+        assert(vbuf[buf_num1].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
+        assert(vbuf[buf_num2].stride % 4 == 0 && pf_get_size(velem[i+1].src_format) % 4 == 0);
+        OUT_CS((pf_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
+               (pf_get_size(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
+        OUT_CS(vbuf[buf_num1].buffer_offset + velem[i].src_offset +
+               offset * vbuf[buf_num1].stride);
+        OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
+               offset * vbuf[buf_num2].stride);
+    }
+    if (r300->aos_count & 1) {
+        int buf_num = velem[i].vertex_buffer_index;
+        assert(vbuf[buf_num].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
+        OUT_CS((pf_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
+        OUT_CS(vbuf[buf_num].buffer_offset + velem[i].src_offset +
+               offset * vbuf[buf_num].stride);
+    }
+
+    for (i = 0; i < r300->aos_count; i++) {
+        cs_winsys->write_cs_reloc(cs_winsys,
+                                  vbuf[velem[i].vertex_buffer_index].buffer,
+                                  RADEON_GEM_DOMAIN_GTT,
+                                  0,
+                                  0);
+        cs_count -= 2;
+    }
+    END_CS;
+}
+#if 0
+void r300_emit_draw_packet(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
@@ -605,6 +646,7 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
     OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
 }
+#endif
 
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
@@ -771,8 +813,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
         return;
     }
 
-    r300_update_derived_state(r300);
-
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
@@ -823,7 +863,7 @@ validate:
             goto validate;
         }
     } else {
-        debug_printf("No VBO while emitting dirty state!\n");
+        // debug_printf("No VBO while emitting dirty state!\n");
     }
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
@@ -951,7 +991,7 @@ validate:
     */
 
     /* Finally, emit the VBO. */
-    r300_emit_vertex_buffer(r300);
+    //r300_emit_vertex_buffer(r300);
 
     r300->dirty_hw++;
 }

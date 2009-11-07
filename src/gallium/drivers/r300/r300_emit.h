@@ -29,6 +29,8 @@
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;
 
+void r300_emit_aos(struct r300_context* r300, unsigned offset);
+
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend);
 

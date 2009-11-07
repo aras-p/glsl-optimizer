@@ -23,6 +23,8 @@
 #ifndef R300_RENDER_H
 #define R300_RENDER_H
 
+uint32_t r300_translate_primitive(unsigned prim);
+
 boolean r300_draw_range_elements(struct pipe_context* pipe,
                                  struct pipe_buffer* indexBuffer,
                                  unsigned indexSize,
