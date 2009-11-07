@@ -249,8 +249,9 @@ _mesa_remove_dead_code(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
             const GLuint index = inst->SrcReg[j].Index;
+            GLuint read_mask;
             ASSERT(index < MAX_PROGRAM_TEMPS);
-	    int read_mask = get_src_arg_mask(inst, j);
+	    read_mask = get_src_arg_mask(inst, j);
 
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
