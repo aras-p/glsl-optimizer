@@ -191,6 +191,42 @@ static INLINE uint32_t r300_translate_alpha_function(int alpha_func)
     return 0;
 }
 
+static INLINE uint32_t
+r300_translate_polygon_mode_front(unsigned mode) {
+    switch (mode)
+    {
+        case PIPE_POLYGON_MODE_FILL:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
+        case PIPE_POLYGON_MODE_LINE:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_LINE;
+        case PIPE_POLYGON_MODE_POINT:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
+
+        default:
+            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+                __FUNCTION__);
+            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
+    }
+}
+
+static INLINE uint32_t
+r300_translate_polygon_mode_back(unsigned mode) {
+    switch (mode)
+    {
+        case PIPE_POLYGON_MODE_FILL:
+            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
+        case PIPE_POLYGON_MODE_LINE:
+            return R300_GA_POLY_MODE_BACK_PTYPE_LINE;
+        case PIPE_POLYGON_MODE_POINT:
+            return R300_GA_POLY_MODE_BACK_PTYPE_POINT;
+
+        default:
+            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+                __FUNCTION__);
+            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
+    }
+}
+
 /* Texture sampler state. */
 
 static INLINE uint32_t r300_translate_wrap(int wrap)
@@ -510,42 +546,6 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
         (pf_swizzle_z(format) << R300_SWIZZLE_SELECT_Z_SHIFT) |
         (pf_swizzle_w(format) << R300_SWIZZLE_SELECT_W_SHIFT) |
         (0xf << R300_WRITE_ENA_SHIFT));
-}
-
-static INLINE uint32_t
-r300_translate_polygon_mode_front(unsigned mode) {
-    switch (mode)
-    {
-        case PIPE_POLYGON_MODE_FILL:
-            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
-        case PIPE_POLYGON_MODE_LINE:
-            return R300_GA_POLY_MODE_FRONT_PTYPE_LINE;
-        case PIPE_POLYGON_MODE_POINT:
-            return R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
-
-        default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
-                __FUNCTION__);
-            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
-    }
-}
-
-static INLINE uint32_t
-r300_translate_polygon_mode_back(unsigned mode) {
-    switch (mode)
-    {
-        case PIPE_POLYGON_MODE_FILL:
-            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
-        case PIPE_POLYGON_MODE_LINE:
-            return R300_GA_POLY_MODE_BACK_PTYPE_LINE;
-        case PIPE_POLYGON_MODE_POINT:
-            return R300_GA_POLY_MODE_BACK_PTYPE_POINT;
-
-        default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
-                __FUNCTION__);
-            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
-    }
 }
 
 #endif /* R300_STATE_INLINES_H */
