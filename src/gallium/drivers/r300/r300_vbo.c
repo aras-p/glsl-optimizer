@@ -84,27 +84,27 @@ static void finish_vertex_arrays_setup(struct r300_context *r300)
 {
 }
 
-static bool format_is_supported(enum pipe_format format, int nr_components)
+static boolean format_is_supported(enum pipe_format format, int nr_components)
 {
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS)
-        return false;
+        return FALSE;
 
     if ((pf_size_x(format) != pf_size_y(format)) ||
         (pf_size_x(format) != pf_size_z(format)) ||
         (pf_size_x(format) != pf_size_w(format)))
-        return false;
+        return FALSE;
 
     /* Following should be supported as long as stride is 4 bytes aligned */
     if (pf_size_x(format) != 1 && nr_components != 4)
-        return false;
+        return FALSE;
 
     if (pf_size_x(format) != 2 && !(nr_components == 2 || nr_components == 4))
-        return false;
+        return FALSE;
 
     if (pf_size_x(format) == 3 || pf_size_x(format) > 4)
-        return false;
+        return FALSE;
 
-    return true;
+    return TRUE;
 }
 
 static INLINE int get_buffer_offset(struct r300_context *r300,
