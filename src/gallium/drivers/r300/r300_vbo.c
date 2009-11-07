@@ -56,7 +56,8 @@ static INLINE void setup_vertex_attribute(struct r300_vertex_info *vinfo,
 static void finish_vertex_attribs_setup(struct r300_vertex_info *vinfo,
                                         unsigned attribs_num)
 {
-    uint32_t last_vec_bit = (attribs_num % 2 == 0) ? (R300_LAST_VEC << 16) : R300_LAST_VEC;
+    uint32_t last_vec_bit = (attribs_num % 2 == 0) ?
+        (R300_LAST_VEC << 16) : R300_LAST_VEC;
 
     assert(attribs_num > 0 && attribs_num <= 16);
     vinfo->vap_prog_stream_cntl[(attribs_num - 1) >> 1] |= last_vec_bit;
@@ -64,10 +65,11 @@ static void finish_vertex_attribs_setup(struct r300_vertex_info *vinfo,
 
 void setup_vertex_attributes(struct r300_context *r300)
 {
-    for (int i=0; i<r300->aos_count; i++)
-    {
-        struct pipe_vertex_element *vert_elem = &r300->vertex_element[i];
+    struct pipe_vertex_element *vert_elem;
+    int i;
 
+    for (i = 0; i < r300->aos_count; i++) {
+        vert_elem = &r300->vertex_element[i];
         setup_vertex_attribute(r300->vertex_info, vert_elem, i);
     }
 

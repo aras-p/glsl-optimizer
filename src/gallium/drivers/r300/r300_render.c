@@ -31,13 +31,13 @@
 #include "util/u_memory.h"
 #include "util/u_prim.h"
 
-#include "r300_vbo.h"
 #include "r300_cs.h"
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_render.h"
 #include "r300_state_derived.h"
+#include "r300_vbo.h"
 
 /* r300_render: Vertex and index buffer primitive emission. */
 #define R300_MAX_VBO_SIZE  (1024 * 1024)
@@ -69,6 +69,70 @@ uint32_t r300_translate_primitive(unsigned prim)
             return 0;
     }
 }
+
+static void r300_emit_draw_arrays(struct r300_context *r300,
+                                  unsigned mode,
+                                  unsigned count)
+{
+    CS_LOCALS(r300);
+    assert(count < 65536);
+
+    BEGIN_CS(4);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
+           r300_translate_primitive(mode));
+    END_CS;
+}
+
+static void r300_emit_draw_elements(struct r300_context *r300,
+                                    struct pipe_buffer* indexBuffer,
+                                    unsigned indexSize,
+                                    unsigned minIndex,
+                                    unsigned maxIndex,
+                                    unsigned mode,
+                                    unsigned start,
+                                    unsigned count)
+{
+    CS_LOCALS(r300);
+    assert(indexSize == 4 || indexSize == 2);
+    assert(count < 65536);
+    assert((start * indexSize)  % 4 == 0);
+
+    uint32_t size_dwords;
+    uint32_t skip_dwords = indexSize * start / sizeof(uint32_t);
+    assert(skip_dwords == 0);
+
+    BEGIN_CS(10);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
+    if (indexSize == 4) {
+        size_dwords = count + start;
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
+               r300_translate_primitive(mode));
+    } else {
+        size_dwords = (count + start + 1) / 2;
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               r300_translate_primitive(mode));
+    }
+
+    OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
+    OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
+           (0 << R300_INDX_BUFFER_SKIP_SHIFT));
+    OUT_CS(skip_dwords);
+    OUT_CS(size_dwords);
+    /* XXX hax */
+    cs_winsys->write_cs_reloc(cs_winsys,
+                              indexBuffer,
+                              RADEON_GEM_DOMAIN_GTT,
+                              0,
+                              0);
+    cs_count -= 2;
+
+    END_CS;
+}
+
 
 static boolean setup_vertex_buffers(struct r300_context *r300)
 {
@@ -123,14 +187,12 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 
     setup_index_buffer(r300, indexBuffer, indexSize);
 
-    r300->hw_prim = r300_translate_primitive(mode);
-
     r300_emit_dirty_state(r300);
 
     r300_emit_aos(r300, 0);
 
     r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
-                            start, count);
+                            mode, start, count);
 
     return TRUE;
 }
@@ -159,13 +221,11 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     setup_vertex_attributes(r300);
 
-    r300->hw_prim = r300_translate_primitive(mode);
-
     r300_emit_dirty_state(r300);
 
     r300_emit_aos(r300, start);
 
-    r300_emit_draw_arrays(r300, count);
+    r300_emit_draw_arrays(r300, mode, count);
 
     return TRUE;
 }
@@ -186,8 +246,8 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        unsigned count)
 {
     assert(0);
-    struct r300_context* r300 = r300_context(pipe);
 #if 0
+    struct r300_context* r300 = r300_context(pipe);
     int i;
 
     if (!u_trim_pipe_prim(mode, &count)) {

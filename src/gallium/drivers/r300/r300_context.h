@@ -299,7 +299,6 @@ struct r300_context {
     /* Vertex elements for Gallium. */
     struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
     int aos_count;
-    unsigned hw_prim;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
