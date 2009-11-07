@@ -94,41 +94,43 @@ static void r300_emit_draw_elements(struct r300_context *r300,
                                     unsigned start,
                                     unsigned count)
 {
+    uint32_t count_dwords;
+    uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
     CS_LOCALS(r300);
+
+    /* XXX most of these are stupid */
     assert(indexSize == 4 || indexSize == 2);
     assert(count < 65536);
     assert((start * indexSize)  % 4 == 0);
-
-    uint32_t size_dwords;
-    uint32_t skip_dwords = indexSize * start / sizeof(uint32_t);
-    assert(skip_dwords == 0);
+    assert(offset_dwords == 0);
 
     BEGIN_CS(10);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
-        size_dwords = count + start;
+        count_dwords = count + start;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
                r300_translate_primitive(mode));
     } else {
-        size_dwords = (count + start + 1) / 2;
+        count_dwords = (count + start + 1) / 2;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                r300_translate_primitive(mode));
     }
 
+    /* INDX_BUFFER is a truly special packet3.
+     * Unlike most other packet3, where the offset is after the count,
+     * the order is reversed, so the relocation ends up carrying the
+     * size of the indexbuf instead of the offset.
+     *
+     * XXX Fix offset
+     */
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
-    OUT_CS(skip_dwords);
-    OUT_CS(size_dwords);
-    /* XXX hax */
-    cs_winsys->write_cs_reloc(cs_winsys,
-                              indexBuffer,
-                              RADEON_GEM_DOMAIN_GTT,
-                              0,
-                              0);
-    cs_count -= 2;
+    OUT_CS(offset_dwords);
+    OUT_CS_RELOC(indexBuffer, count_dwords,
+        RADEON_GEM_DOMAIN_GTT, 0, 0);
 
     END_CS;
 }
