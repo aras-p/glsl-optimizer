@@ -71,7 +71,7 @@ static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 #define r500fp_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->r500fp.count)
 
-int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
+static int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int cnt;
@@ -85,26 +85,32 @@ int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 	return cnt ? (cnt * 4) + extra : 0;
 }
 
-
-void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
+void r300_emit_vpu(struct r300_context *r300,
+                   uint32_t *data,
+                   unsigned len,
+                   uint32_t addr)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(&r300->radeon);
-	drm_r300_cmd_header_t cmd;
-	uint32_t addr, ndw;
+    BATCH_LOCALS(&r300->radeon);
 
-	cmd.u = atom->cmd[0];
-	addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
-	ndw = atom->check(ctx, atom);
+    BEGIN_BATCH_NO_AUTOSTATE(5 + len);
+    OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+    OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
+    OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, len-1) | RADEON_ONE_REG_WR);
+    OUT_BATCH_TABLE(data, len);
+    END_BATCH();
+}
 
-	BEGIN_BATCH_NO_AUTOSTATE(ndw);
+static void emit_vpu_state(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    drm_r300_cmd_header_t cmd;
+    uint32_t addr, ndw;
 
-	ndw -= 5;
-	OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
-	OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
-	OUT_BATCH_TABLE(&atom->cmd[1], ndw);
-	OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
-	END_BATCH();
+    cmd.u = atom->cmd[0];
+    addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
+    ndw = atom->check(ctx, atom);
+
+    r300_emit_vpu(r300, &atom->cmd[1], vpu_count(atom->cmd) * 4, addr);
 }
 
 void r500_emit_fp(struct r300_context *r300,
@@ -796,20 +802,20 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.vpi.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R300_PVS_CODE_START, 0);
 		if (r300->radeon.radeonScreen->kernel_mm)
-			r300->hw.vpi.emit = emit_vpu;
+			r300->hw.vpi.emit = emit_vpu_state;
 
 		if (is_r500) {
 			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R500_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu;
+				r300->hw.vpp.emit = emit_vpu_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R500_POINT_VPORT_SCALE_OFFSET, 1);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vps.emit = emit_vpu;
+				r300->hw.vps.emit = emit_vpu_state;
 
 			for (i = 0; i < 6; i++) {
 				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
@@ -817,20 +823,20 @@ void r300InitCmdBuf(r300ContextPtr r300)
 					cmdvpu(r300->radeon.radeonScreen,
 							R500_PVS_UCP_START + i, 1);
 				if (r300->radeon.radeonScreen->kernel_mm)
-					r300->hw.vpucp[i].emit = emit_vpu;
+					r300->hw.vpucp[i].emit = emit_vpu_state;
 			}
 		} else {
 			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R300_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu;
+				r300->hw.vpp.emit = emit_vpu_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R300_POINT_VPORT_SCALE_OFFSET, 1);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vps.emit = emit_vpu;
+				r300->hw.vps.emit = emit_vpu_state;
 
 			for (i = 0; i < 6; i++) {
 				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
@@ -838,7 +844,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 					cmdvpu(r300->radeon.radeonScreen,
 							R300_PVS_UCP_START + i, 1);
 				if (r300->radeon.radeonScreen->kernel_mm)
-					r300->hw.vpucp[i].emit = emit_vpu;
+					r300->hw.vpucp[i].emit = emit_vpu_state;
 			}
 		}
 	}

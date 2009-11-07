@@ -47,8 +47,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 void r300InitCmdBuf(r300ContextPtr r300);
 void r300_emit_scissor(GLcontext *ctx);
 
-void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom);
-int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom);
+void r300_emit_vpu(struct r300_context *ctx,
+                   uint32_t *data,
+                   unsigned len,
+                   uint32_t addr);
 
 void r500_emit_fp(struct r300_context *r300,
                   uint32_t *data,
