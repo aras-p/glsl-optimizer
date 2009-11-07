@@ -59,7 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * identically.  -- paulus
  */
 
-static uint32_t translateTexFormat(gl_format mesaFormat)
+uint32_t r300TranslateTexFormat(gl_format mesaFormat)
 {
 	switch (mesaFormat)
 	{
@@ -168,8 +168,6 @@ static uint32_t translateTexFormat(gl_format mesaFormat)
 		case MESA_FORMAT_SRGBA_DXT5:
 			return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5) | R300_TX_FORMAT_GAMMA;
 		default:
-			fprintf(stderr, "%s: Invalid format %s", __FUNCTION__, _mesa_get_format_name(mesaFormat));
-			assert(0);
 			return 0;
 	}
 };
@@ -254,7 +252,12 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->pp_txformat = translateTexFormat(firstImage->TexFormat);
+			t->pp_txformat = r300TranslateTexFormat(firstImage->TexFormat);
+			if (t->pp_txformat == 0) {
+				_mesa_problem(rmesa->radeon.glCtx, "%s: Invalid format %s",
+							  __FUNCTION__, _mesa_get_format_name(firstImage->TexFormat));
+				_mesa_exit(1);
+			}
 		}
 	}
 
