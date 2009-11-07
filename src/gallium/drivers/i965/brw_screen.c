@@ -210,12 +210,14 @@ brw_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_A8L8_UNORM,
       PIPE_FORMAT_YCBCR,
       PIPE_FORMAT_YCBCR_REV,
+      PIPE_FORMAT_X8Z24_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format surface_supported[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_X8Z24_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };

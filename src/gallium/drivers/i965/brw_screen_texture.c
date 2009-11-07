@@ -142,12 +142,8 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_DXT1_SRGB:
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
-      /* XXX: which pipe depth formats does i965 suppport
-       */
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_Z24X8_UNORM:
          return BRW_SURFACEFORMAT_I24X8_UNORM;
 
 #if 0
