@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 
 #include "r300_context.h"
-#include "r300_ioctl.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"

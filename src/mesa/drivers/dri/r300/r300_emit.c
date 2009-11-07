@@ -49,7 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "r300_state.h"
 #include "r300_emit.h"
-#include "r300_ioctl.h"
 #include "r300_render.h"
 #include "r300_swtcl.h"
 
