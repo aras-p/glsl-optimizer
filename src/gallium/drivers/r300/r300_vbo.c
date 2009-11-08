@@ -85,7 +85,7 @@ static INLINE int get_buffer_offset(struct r300_context *r300,
 {
     return r300->vertex_buffer[buf_nr].buffer_offset + elem_offset;
 }
-
+#if 0
 /* XXX not called at all */
 static void setup_vertex_buffers(struct r300_context *r300)
 {
@@ -95,9 +95,9 @@ static void setup_vertex_buffers(struct r300_context *r300)
     for (i = 0; i < r300->aos_count; i++)
     {
         vert_elem = &r300->vertex_element[i];
+            /* XXX use translate module to convert the data */
         if (!format_is_supported(vert_elem->src_format,
                                  vert_elem->nr_components)) {
-            /* XXX use translate module to convert the data */
             assert(0);
             /*
             struct pipe_buffer *buf;
@@ -114,7 +114,7 @@ static void setup_vertex_buffers(struct r300_context *r300)
         }
     }
 }
-
+#endif
 /* XXX these shouldn't be asserts since we can work around bad indexbufs */
 void setup_index_buffer(struct r300_context *r300,
                         struct pipe_buffer* indexBuffer,
