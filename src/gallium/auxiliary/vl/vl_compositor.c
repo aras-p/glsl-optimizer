@@ -29,11 +29,9 @@
 #include <assert.h>
 #include <pipe/p_context.h>
 #include <pipe/p_inlines.h>
-#include <tgsi/tgsi_parse.h>
-#include <tgsi/tgsi_build.h>
+#include <tgsi/tgsi_ureg.h>
 #include <util/u_memory.h>
 #include "vl_csc.h"
-#include "vl_shader_build.h"
 
 struct vertex2f
 {
@@ -76,156 +74,81 @@ static const struct vertex2f surface_verts[4] =
  */
 static const struct vertex2f *surface_texcoords = surface_verts;
 
-static void
+static bool
 create_vert_shader(struct vl_compositor *c)
 {
-   const unsigned max_tokens = 50;
+   struct ureg_program *shader;
+   struct ureg_src vpos, vtex;
+   struct ureg_src vpos_scale, vpos_trans, vtex_scale, vtex_trans;
+   struct ureg_dst o_vpos, o_vtex;
+   
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return false;
 
-   struct pipe_shader_state vs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
-   unsigned i;
-
-   assert(c);
-
-   tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
-
-   ti = 3;
+   vpos = ureg_DECL_vs_input(shader, 0);
+   vtex = ureg_DECL_vs_input(shader, 1);
+   vpos_scale = ureg_DECL_constant(shader, 0);
+   vpos_trans = ureg_DECL_constant(shader, 1);
+   vtex_scale = ureg_DECL_constant(shader, 2);
+   vtex_trans = ureg_DECL_constant(shader, 3);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 1);
 
    /*
-    * decl i0             ; Vertex pos
-    * decl i1             ; Vertex texcoords
+    * o_vpos = vpos * vpos_scale + vpos_trans
+    * o_vtex = vtex * vtex_scale + vtex_trans
     */
-   for (i = 0; i < 2; i++) {
-      decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_MAD(shader, o_vpos, vpos, vpos_scale, vpos_trans);
+   ureg_MAD(shader, o_vtex, vtex, vtex_scale, vtex_trans);
 
-   /*
-    * decl c0             ; Scaling vector to scale vertex pos rect to destination size
-    * decl c1             ; Translation vector to move vertex pos rect into position
-    * decl c2             ; Scaling vector to scale texcoord rect to source size
-    * decl c3             ; Translation vector to move texcoord rect into position
-    */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 3);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   ureg_END(shader);
 
-   /*
-    * decl o0             ; Vertex pos
-    * decl o1             ; Vertex texcoords
-    */
-   for (i = 0; i < 2; i++) {
-      decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   c->vertex_shader = ureg_create_shader_and_destroy(shader, c->pipe);
+   if (!c->vertex_shader)
+      return false;
 
-   /* decl t0, t1 */
-   decl = vl_decl_temps(0, 1);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /*
-    * mad o0, i0, c0, c1  ; Scale and translate unit output rect to destination size and pos
-    * mad o1, i1, c2, c3  ; Scale and translate unit texcoord rect to source size and pos
-    */
-   for (i = 0; i < 2; ++i) {
-      inst = vl_inst4(TGSI_OPCODE_MAD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   vs.tokens = tokens;
-   c->vertex_shader = c->pipe->create_vs_state(c->pipe, &vs);
-   FREE(tokens);
+   return true;
 }
 
-static void
+static bool
 create_frag_shader(struct vl_compositor *c)
 {
-   const unsigned max_tokens = 50;
-
-   struct pipe_shader_state fs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src tc;
+   struct ureg_src csc[4];
+   struct ureg_src sampler;
+   struct ureg_dst texel;
+   struct ureg_dst fragment;
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
 
-   assert(c);
-
-   tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
-
-   ti = 3;
-
-   /* decl i0             ; Texcoords for s0 */
-   decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
+   for (i = 0; i < 4; ++i)
+      csc[i] = ureg_DECL_constant(shader, i);
+   sampler = ureg_DECL_sampler(shader, 0);
+   texel = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
-    * decl c0-c3          ; CSC matrix c0-c3
+    * texel = tex(tc, sampler)
+    * fragment = csc * texel
     */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 3);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
+   for (i = 0; i < 4; ++i)
+      ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
 
-   /* decl o0             ; Fragment color */
-   decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   ureg_release_temporary(shader, texel);
+   ureg_END(shader);
 
-   /* decl t0 */
-   decl = vl_decl_temps(0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   c->fragment_shader = ureg_create_shader_and_destroy(shader, c->pipe);
+   if (!c->fragment_shader)
+      return false;
 
-   /* decl s0             ; Sampler for tex containing picture to display */
-   decl = vl_decl_samplers(0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /* tex2d t0, i0, s0    ; Read src pixel */
-   inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, 0);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   /*
-    * dp4 o0.x, t0, c0    ; Multiply pixel by the color conversion matrix
-    * dp4 o0.y, t0, c1
-    * dp4 o0.z, t0, c2
-    * dp4 o0.w, t0, c3
-    */
-   for (i = 0; i < 4; ++i) {
-      inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i);
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-   assert(ti <= max_tokens);
-
-   fs.tokens = tokens;
-   c->fragment_shader = c->pipe->create_fs_state(c->pipe, &fs);
-   FREE(tokens);
+   return true;
 }
 
 static bool

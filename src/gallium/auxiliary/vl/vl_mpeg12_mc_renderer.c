@@ -31,9 +31,7 @@
 #include <pipe/p_inlines.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>
-#include <tgsi/tgsi_parse.h>
-#include <tgsi/tgsi_build.h>
-#include "vl_shader_build.h"
+#include <tgsi/tgsi_ureg.h>
 
 #define DEFAULT_BUF_ALIGNMENT 1
 #define MACROBLOCK_WIDTH 16
@@ -96,244 +94,126 @@ enum MACROBLOCK_TYPE
    NUM_MACROBLOCK_TYPES
 };
 
-static void
+static bool
 create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 50;
-
-   struct pipe_shader_state vs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src vpos, vtex[3];
+   struct ureg_dst o_vpos, o_vtex[3];
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
-
-   ti = 3;
-
-   /*
-    * decl i0              ; Vertex pos
-    * decl i1              ; Luma texcoords
-    * decl i2              ; Chroma Cb texcoords
-    * decl i3              ; Chroma Cr texcoords
-    */
-   for (i = 0; i < 4; i++) {
-      decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   vpos = ureg_DECL_vs_input(shader, 0);
+   for (i = 0; i < 3; ++i)
+      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   for (i = 0; i < 3; ++i)
+      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
 
    /*
-    * decl o0              ; Vertex pos
-    * decl o1              ; Luma texcoords
-    * decl o2              ; Chroma Cb texcoords
-    * decl o3              ; Chroma Cr texcoords
+    * o_vpos = vpos
+    * o_vtex[0..2] = vtex[0..2]
     */
-   for (i = 0; i < 4; i++) {
-      decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_MOV(shader, o_vpos, vpos);
+   for (i = 0; i < 3; ++i)
+      ureg_MOV(shader, o_vtex[i], vtex[i]);
 
-   /*
-    * mov o0, i0           ; Move input vertex pos to output
-    * mov o1, i1           ; Move input luma texcoords to output
-    * mov o2, i2           ; Move input chroma Cb texcoords to output
-    * mov o3, i3           ; Move input chroma Cr texcoords to output
-    */
-   for (i = 0; i < 4; ++i) {
-      inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_END(shader);
 
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   r->i_vs = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->i_vs)
+      return false;
 
-   assert(ti <= max_tokens);
-
-   vs.tokens = tokens;
-   r->i_vs = r->pipe->create_vs_state(r->pipe, &vs);
-   free(tokens);
+   return true;
 }
 
-static void
+static bool
 create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 100;
-
-   struct pipe_shader_state fs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src scale;
+   struct ureg_src tc[3];
+   struct ureg_src sampler[3];
+   struct ureg_dst texel, temp;
+   struct ureg_dst fragment;
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
-
-   ti = 3;
+   scale = ureg_DECL_constant(shader, 0);
+   for (i = 0; i < 3; ++i)  {
+      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
+      sampler[i] = ureg_DECL_sampler(shader, i);
+   }
+   texel = ureg_DECL_temporary(shader);
+   temp = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
-    * decl i0                      ; Luma texcoords
-    * decl i1                      ; Chroma Cb texcoords
-    * decl i2                      ; Chroma Cr texcoords
+    * texel.r = tex(tc[0], sampler[0])
+    * texel.g = tex(tc[1], sampler[1])
+    * texel.b = tex(tc[2], sampler[2])
+    * fragment = texel * scale
     */
    for (i = 0; i < 3; ++i) {
-      decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+      /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
+      ureg_TEX(shader, temp, TGSI_TEXTURE_2D, tc[i], sampler[i]);
+      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(temp), TGSI_SWIZZLE_X));
    }
+   ureg_MUL(shader, fragment, ureg_src(texel), scale);
 
-   /* decl c0                      ; Scaling factor, rescales 16-bit snorm to 9-bit snorm */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   ureg_release_temporary(shader, texel);
+   ureg_release_temporary(shader, temp);
+   ureg_END(shader);
 
-   /* decl o0                      ; Fragment color */
-   decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   r->i_fs = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->i_fs)
+      return false;
 
-   /* decl t0, t1 */
-   decl = vl_decl_temps(0, 1);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /*
-    * decl s0                      ; Sampler for luma texture
-    * decl s1                      ; Sampler for chroma Cb texture
-    * decl s2                      ; Sampler for chroma Cr texture
-    */
-   for (i = 0; i < 3; ++i) {
-      decl = vl_decl_samplers(i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /*
-    * tex2d t1, i0, s0             ; Read texel from luma texture
-    * mov t0.x, t1.x               ; Move luma sample into .x component
-    * tex2d t1, i1, s1             ; Read texel from chroma Cb texture
-    * mov t0.y, t1.x               ; Move Cb sample into .y component
-    * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
-    * mov t0.z, t1.x               ; Move Cr sample into .z component
-    */
-   for (i = 0; i < 3; ++i) {
-      inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-      inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /* mul o0, t0, c0               ; Rescale texel to correct range */
-   inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   fs.tokens = tokens;
-   r->i_fs = r->pipe->create_fs_state(r->pipe, &fs);
-   free(tokens);
+   return true;
 }
 
-static void
+static bool
 create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 100;
-
-   struct pipe_shader_state vs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src vpos, vtex[4];
+   struct ureg_dst o_vpos, o_vtex[4];
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
-
-   ti = 3;
-
-   /*
-    * decl i0              ; Vertex pos
-    * decl i1              ; Luma texcoords
-    * decl i2              ; Chroma Cb texcoords
-    * decl i3              ; Chroma Cr texcoords
-    * decl i4              ; Ref surface top field texcoords
-    * decl i5              ; Ref surface bottom field texcoords (unused, packed in the same stream)
-    */
-   for (i = 0; i < 6; i++) {
-      decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   vpos = ureg_DECL_vs_input(shader, 0);
+   for (i = 0; i < 4; ++i)
+      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   for (i = 0; i < 4; ++i)
+      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
 
    /*
-    * decl o0              ; Vertex pos
-    * decl o1              ; Luma texcoords
-    * decl o2              ; Chroma Cb texcoords
-    * decl o3              ; Chroma Cr texcoords
-    * decl o4              ; Ref macroblock texcoords
+    * o_vpos = vpos
+    * o_vtex[0..2] = vtex[0..2]
+    * o_vtex[3] = vpos + vtex[3] // Apply motion vector
     */
-   for (i = 0; i < 5; i++) {
-      decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_MOV(shader, o_vpos, vpos);
+   for (i = 0; i < 3; ++i)
+      ureg_MOV(shader, o_vtex[i], vtex[i]);
+   ureg_ADD(shader, o_vtex[3], vpos, vtex[3]);
 
-   /*
-    * mov o0, i0           ; Move input vertex pos to output
-    * mov o1, i1           ; Move input luma texcoords to output
-    * mov o2, i2           ; Move input chroma Cb texcoords to output
-    * mov o3, i3           ; Move input chroma Cr texcoords to output
-    */
-   for (i = 0; i < 4; ++i) {
-        inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
-        ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_END(shader);
 
-   /* add o4, i0, i4       ; Translate vertex pos by motion vec to form ref macroblock texcoords */
-   inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, 4);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   r->p_vs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->p_vs[0])
+      return false;
 
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   vs.tokens = tokens;
-   r->p_vs[0] = r->pipe->create_vs_state(r->pipe, &vs);
-   free(tokens);
+   return true;
 }
 
 static void
@@ -342,107 +222,54 @@ create_field_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    assert(false);
 }
 
-static void
+static bool
 create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 100;
-
-   struct pipe_shader_state fs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src scale;
+   struct ureg_src tc[4];
+   struct ureg_src sampler[4];
+   struct ureg_dst texel, ref;
+   struct ureg_dst fragment;
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
-
-   ti = 3;
-
-   /*
-    * decl i0                      ; Luma texcoords
-    * decl i1                      ; Chroma Cb texcoords
-    * decl i2                      ; Chroma Cr texcoords
-    * decl i3                      ; Ref macroblock texcoords
-    */
-   for (i = 0; i < 4; ++i) {
-      decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   scale = ureg_DECL_constant(shader, 0);
+   for (i = 0; i < 4; ++i)  {
+      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
+      sampler[i] = ureg_DECL_sampler(shader, i);
    }
-
-   /* decl c0                      ; Scaling factor, rescales 16-bit snorm to 9-bit snorm */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /* decl o0                      ; Fragment color */
-   decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /* decl t0, t1 */
-   decl = vl_decl_temps(0, 1);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   texel = ureg_DECL_temporary(shader);
+   ref = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
-    * decl s0                      ; Sampler for luma texture
-    * decl s1                      ; Sampler for chroma Cb texture
-    * decl s2                      ; Sampler for chroma Cr texture
-    * decl s3                      ; Sampler for ref surface texture
-    */
-   for (i = 0; i < 4; ++i) {
-      decl = vl_decl_samplers(i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /*
-    * tex2d t1, i0, s0             ; Read texel from luma texture
-    * mov t0.x, t1.x               ; Move luma sample into .x component
-    * tex2d t1, i1, s1             ; Read texel from chroma Cb texture
-    * mov t0.y, t1.x               ; Move Cb sample into .y component
-    * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
-    * mov t0.z, t1.x               ; Move Cr sample into .z component
+    * texel.r = tex(tc[0], sampler[0])
+    * texel.g = tex(tc[1], sampler[1])
+    * texel.b = tex(tc[2], sampler[2])
+    * ref = tex(tc[3], sampler[3])
+    * fragment = texel * scale + ref
     */
    for (i = 0; i < 3; ++i) {
-      inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-      inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+      /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
+      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[i], sampler[i]);
+      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_X));
    }
+   ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[3], sampler[3]);
+   ureg_MAD(shader, fragment, ureg_src(texel), scale, ureg_src(ref));
 
-   /* mul t0, t0, c0               ; Rescale texel to correct range */
-   inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   ureg_release_temporary(shader, texel);
+   ureg_release_temporary(shader, ref);
+   ureg_END(shader);
 
-   /* tex2d t1, i3, s3             ; Read texel from ref macroblock */
-   inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 3, TGSI_FILE_SAMPLER, 3);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   r->p_fs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->p_fs[0])
+      return false;
 
-   /* add o0, t0, t1               ; Add ref and differential to form final output */
-   inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   fs.tokens = tokens;
-   r->p_fs[0] = r->pipe->create_fs_state(r->pipe, &fs);
-   free(tokens);
+   return true;
 }
 
 static void
@@ -451,89 +278,45 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    assert(false);
 }
 
-static void
+static bool
 create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 100;
-
-   struct pipe_shader_state vs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src vpos, vtex[5];
+   struct ureg_dst o_vpos, o_vtex[5];
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
-
-   ti = 3;
-
-   /*
-    * decl i0              ; Vertex pos
-    * decl i1              ; Luma texcoords
-    * decl i2              ; Chroma Cb texcoords
-    * decl i3              ; Chroma Cr texcoords
-    * decl i4              ; First ref macroblock top field texcoords
-    * decl i5              ; First ref macroblock bottom field texcoords (unused, packed in the same stream)
-    * decl i6              ; Second ref macroblock top field texcoords
-    * decl i7              ; Second ref macroblock bottom field texcoords (unused, packed in the same stream)
-    */
-   for (i = 0; i < 8; i++) {
-      decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   vpos = ureg_DECL_vs_input(shader, 0);
+   for (i = 0; i < 4; ++i)
+      vtex[i] = ureg_DECL_vs_input(shader, i + 1);
+   /* Skip input 5 */
+   vtex[4] = ureg_DECL_vs_input(shader, 6);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
+   for (i = 0; i < 5; ++i)
+      o_vtex[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, i + 1);
 
    /*
-    * decl o0              ; Vertex pos
-    * decl o1              ; Luma texcoords
-    * decl o2              ; Chroma Cb texcoords
-    * decl o3              ; Chroma Cr texcoords
-    * decl o4              ; First ref macroblock texcoords
-    * decl o5              ; Second ref macroblock texcoords
+    * o_vpos = vpos
+    * o_vtex[0..2] = vtex[0..2]
+    * o_vtex[3..4] = vpos + vtex[3..4] // Apply motion vector
     */
-   for (i = 0; i < 6; i++) {
-      decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_MOV(shader, o_vpos, vpos);
+   for (i = 0; i < 3; ++i)
+      ureg_MOV(shader, o_vtex[i], vtex[i]);
+   for (i = 3; i < 5; ++i)
+      ureg_ADD(shader, o_vtex[i], vpos, vtex[i]);
 
-   /*
-    * mov o0, i0           ; Move input vertex pos to output
-    * mov o1, i1           ; Move input luma texcoords to output
-    * mov o2, i2           ; Move input chroma Cb texcoords to output
-    * mov o3, i3           ; Move input chroma Cr texcoords to output
-    */
-   for (i = 0; i < 4; ++i) {
-      inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_END(shader);
 
-   /*
-    * add o4, i0, i4       ; Translate vertex pos by motion vec to form first ref macroblock texcoords
-    * add o5, i0, i6       ; Translate vertex pos by motion vec to form second ref macroblock texcoords
-    */
-   for (i = 0; i < 2; ++i) {
-      inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, (i + 2) * 2);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
+   r->b_vs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->b_vs[0])
+      return false;
 
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   vs.tokens = tokens;
-   r->b_vs[0] = r->pipe->create_vs_state(r->pipe, &vs);
-   free(tokens);
+   return true;
 }
 
 static void
@@ -542,125 +325,62 @@ create_field_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    assert(false);
 }
 
-static void
+static bool
 create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
-   const unsigned max_tokens = 100;
-
-   struct pipe_shader_state fs;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-
-   unsigned ti;
-
+   struct ureg_program *shader;
+   struct ureg_src scale, blend;
+   struct ureg_src tc[5];
+   struct ureg_src sampler[5];
+   struct ureg_dst texel, ref[2];
+   struct ureg_dst fragment;
    unsigned i;
+   
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
 
-   assert(r);
-
-   tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
-
-   ti = 3;
-
-   /*
-    * decl i0                      ; Luma texcoords
-    * decl i1                      ; Chroma Cb texcoords
-    * decl i2                      ; Chroma Cr texcoords
-    * decl i3                      ; First ref macroblock texcoords
-    * decl i4                      ; Second ref macroblock texcoords
-    */
-   for (i = 0; i < 5; ++i) {
-      decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+   scale = ureg_DECL_constant(shader, 0);
+   blend = ureg_DECL_constant(shader, 1);
+   for (i = 0; i < 5; ++i)  {
+      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
+      sampler[i] = ureg_DECL_sampler(shader, i);
    }
+   texel = ureg_DECL_temporary(shader);
+   ref[0] = ureg_DECL_temporary(shader);
+   ref[1] = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
-    * decl c0                      ; Scaling factor, rescales 16-bit snorm to 9-bit snorm
-    * decl c1                      ; Constant 1/2 in .x channel to use as weight to blend past and future texels
-    */
-   decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /* decl o0                      ; Fragment color */
-   decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /* decl t0-t2 */
-   decl = vl_decl_temps(0, 2);
-   ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-
-   /*
-    * decl s0                      ; Sampler for luma texture
-    * decl s1                      ; Sampler for chroma Cb texture
-    * decl s2                      ; Sampler for chroma Cr texture
-    * decl s3                      ; Sampler for first ref surface texture
-    * decl s4                      ; Sampler for second ref surface texture
-    */
-   for (i = 0; i < 5; ++i) {
-      decl = vl_decl_samplers(i, i);
-      ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
-   }
-
-   /*
-    * tex2d t1, i0, s0             ; Read texel from luma texture
-    * mov t0.x, t1.x               ; Move luma sample into .x component
-    * tex2d t1, i1, s1             ; Read texel from chroma Cb texture
-    * mov t0.y, t1.x               ; Move Cb sample into .y component
-    * tex2d t1, i2, s2             ; Read texel from chroma Cr texture
-    * mov t0.z, t1.x               ; Move Cr sample into .z component
+    * texel.r = tex(tc[0], sampler[0])
+    * texel.g = tex(tc[1], sampler[1])
+    * texel.b = tex(tc[2], sampler[2])
+    * ref[0..1 = tex(tc[3..4], sampler[3..4])
+    * ref[0] = lerp(ref[0], ref[1], 0.5)
+    * fragment = texel * scale + ref[0]
     */
    for (i = 0; i < 3; ++i) {
-      inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-      inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+      /* Nouveau can't writemask tex dst regs (yet?), do in two steps */
+      ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[i], sampler[i]);
+      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref[0]), TGSI_SWIZZLE_X));
    }
+   ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[3], sampler[3]);
+   ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[4], sampler[4]);
+   ureg_LRP(shader, ref[0], ureg_swizzle(blend, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X),
+            ureg_src(ref[0]), ureg_src(ref[1]));
 
-   /* mul t0, t0, c0               ; Rescale texel to correct range */
-   inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   ureg_MAD(shader, fragment, ureg_src(texel), scale, ureg_src(ref[0]));
 
-   /*
-    * tex2d t1, i3, s3             ; Read texel from first ref macroblock
-    * tex2d t2, i4, s4             ; Read texel from second ref macroblock
-    */
-   for (i = 0; i < 2; ++i) {
-      inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, i + 3);
-      ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-   }
+   ureg_release_temporary(shader, texel);
+   ureg_release_temporary(shader, ref[0]);
+   ureg_release_temporary(shader, ref[1]);
+   ureg_END(shader);
 
-   /* lerp t1, c1.x, t1, t2        ; Blend past and future texels */
-   inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+   r->b_fs[0] = ureg_create_shader_and_destroy(shader, r->pipe);
+   if (!r->b_fs[0])
+      return false;
 
-   /* add o0, t0, t1               ; Add past/future ref and differential to form final output */
-   inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   /* end */
-   inst = vl_end();
-   ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-   assert(ti <= max_tokens);
-
-   fs.tokens = tokens;
-   r->b_fs[0] = r->pipe->create_fs_state(r->pipe, &fs);
-   free(tokens);
+   return true;
 }
 
 static void
