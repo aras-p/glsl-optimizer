@@ -339,7 +339,7 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
                    bool pot_buffers)
 {
-   assert(screen);
+   assert(pipe);
    assert(width && height);
 
    switch (u_reduce_video_profile(profile)) {
