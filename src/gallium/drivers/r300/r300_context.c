@@ -89,8 +89,11 @@ static unsigned int
 r300_is_buffer_referenced(struct pipe_context *pipe,
                           struct pipe_buffer *buf)
 {
-    /* XXX */
-    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    /* This only checks to see whether actual hardware buffers are
+     * referenced. Since we use managed BOs and transfers, it's actually not
+     * possible for pipe_buffers to ever reference the actual hardware, so
+     * buffers are never referenced. */
+    return 0;
 }
 
 static void r300_flush_cb(void *data)
