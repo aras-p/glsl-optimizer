@@ -170,20 +170,30 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         }
         tab[0] = 0;
     }
-    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-        draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+
+    /* Position. */
+    if (r300->draw) {
+        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+    }
     vinfo->hwfmt[1] |= R300_INPUT_CNTL_POS;
     vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
+    /* Point size. */
     if (psize) {
-        draw_emit_vertex_attr(vinfo, EMIT_1F_PSIZE, INTERP_POS,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_PSIZE, 0));
+        if (r300->draw) {
+            draw_emit_vertex_attr(vinfo, EMIT_1F_PSIZE, INTERP_POS,
+                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_PSIZE, 0));
+        }
         vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
     }
 
+    /* Colors. */
     for (i = 0; i < cols; i++) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_COLOR, i));
+        if (r300->draw) {
+            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR,
+                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_COLOR, i));
+        }
         vinfo->hwfmt[1] |= R300_INPUT_CNTL_COLOR;
         vinfo->hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
     }
@@ -192,26 +202,25 @@ static void r300_vs_tab_routes(struct r300_context* r300,
      * This gets around a double-increment problem. */
     i = 0;
 
+    /* Fog. This is a special-cased texcoord. */
     if (fog) {
         i++;
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
+        if (r300->draw) {
+            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
+        }
         vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
         vinfo->hwfmt[3] |= (4 << (3 * i));
     }
 
+    /* Texcoords. */
     for (; i < texs; i++) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+        if (r300->draw) {
+            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+        }
         vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
         vinfo->hwfmt[3] |= (4 << (3 * i));
-    }
-
-    /* Handle the case where the vertex shader will be generating some of
-     * the attribs based on its inputs. */
-    if (r300screen->caps->has_tcl &&
-            info->num_inputs < info->num_outputs) {
-        vinfo->num_attribs = info->num_inputs;
     }
 
     draw_compute_vertex_size(vinfo);
@@ -455,6 +464,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 /* Update the vertex format. */
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_vertex_info* vformat;
     struct r300_rs_block* rs_block;
     int i;
@@ -543,7 +553,8 @@ static void r300_update_ztop(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    if (r300->dirty_state &
+    /* XXX */
+    if (TRUE || r300->dirty_state &
         (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
         r300_update_derived_shader_state(r300);
     }
