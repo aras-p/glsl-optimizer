@@ -40,6 +40,7 @@
 #define BLOCK_HEIGHT 8
 #define ZERO_BLOCK_NIL -1.0f
 #define ZERO_BLOCK_IS_NIL(zb) ((zb).x < 0.0f)
+#define SCALE_FACTOR_16_TO_9 (32767.0f / 255.0f)
 
 struct vertex2f
 {
@@ -60,17 +61,6 @@ struct fragment_shader_consts
 {
    struct vertex4f multiplier;
    struct vertex4f div;
-};
-
-/*
- * Muliplier renormalizes block samples from 16 bits to 12 bits.
- * Divider is used when calculating Y % 2 for choosing top or bottom
- * field for P or B macroblocks.
- * TODO: Use immediates.
- */
-static const struct fragment_shader_consts fs_consts = {
-   {32767.0f / 255.0f, 32767.0f / 255.0f, 32767.0f / 255.0f, 0.0f},
-   {0.5f, 2.0f, 0.0f, 0.0f}
 };
 
 struct vert_stream_0
@@ -134,7 +124,6 @@ static bool
 create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src scale;
    struct ureg_src tc[3];
    struct ureg_src sampler[3];
    struct ureg_dst texel, temp;
@@ -145,7 +134,6 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
    if (!shader)
       return false;
 
-   scale = ureg_DECL_constant(shader, 0);
    for (i = 0; i < 3; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
       sampler[i] = ureg_DECL_sampler(shader, i);
@@ -165,7 +153,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_TEX(shader, temp, TGSI_TEXTURE_2D, tc[i], sampler[i]);
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(temp), TGSI_SWIZZLE_X));
    }
-   ureg_MUL(shader, fragment, ureg_src(texel), scale);
+   ureg_MUL(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X));
 
    ureg_release_temporary(shader, texel);
    ureg_release_temporary(shader, temp);
@@ -226,7 +214,6 @@ static bool
 create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src scale;
    struct ureg_src tc[4];
    struct ureg_src sampler[4];
    struct ureg_dst texel, ref;
@@ -237,7 +224,6 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    if (!shader)
       return false;
 
-   scale = ureg_DECL_constant(shader, 0);
    for (i = 0; i < 4; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
       sampler[i] = ureg_DECL_sampler(shader, i);
@@ -259,7 +245,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_X));
    }
    ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[3], sampler[3]);
-   ureg_MAD(shader, fragment, ureg_src(texel), scale, ureg_src(ref));
+   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref));
 
    ureg_release_temporary(shader, texel);
    ureg_release_temporary(shader, ref);
@@ -329,7 +315,6 @@ static bool
 create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src scale, blend;
    struct ureg_src tc[5];
    struct ureg_src sampler[5];
    struct ureg_dst texel, ref[2];
@@ -340,8 +325,6 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    if (!shader)
       return false;
 
-   scale = ureg_DECL_constant(shader, 0);
-   blend = ureg_DECL_constant(shader, 1);
    for (i = 0; i < 5; ++i)  {
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, i + 1, TGSI_INTERPOLATE_LINEAR);
       sampler[i] = ureg_DECL_sampler(shader, i);
@@ -366,10 +349,9 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    }
    ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[3], sampler[3]);
    ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[4], sampler[4]);
-   ureg_LRP(shader, ref[0], ureg_swizzle(blend, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X),
-            ureg_src(ref[0]), ureg_src(ref[1]));
+   ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
 
-   ureg_MAD(shader, fragment, ureg_src(texel), scale, ureg_src(ref[0]));
+   ureg_MAD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, SCALE_FACTOR_16_TO_9), TGSI_SWIZZLE_X), ureg_src(ref[0]));
 
    ureg_release_temporary(shader, texel);
    ureg_release_temporary(shader, ref[0]);
@@ -658,21 +640,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       sizeof(struct vertex_shader_consts)
    );
 
-   r->fs_const_buf.buffer = pipe_buffer_create
-   (
-      r->pipe->screen,
-      DEFAULT_BUF_ALIGNMENT,
-      PIPE_BUFFER_USAGE_CONSTANT, sizeof(struct fragment_shader_consts)
-   );
-
-   memcpy
-   (
-      pipe_buffer_map(r->pipe->screen, r->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-      &fs_consts, sizeof(struct fragment_shader_consts)
-   );
-
-   pipe_buffer_unmap(r->pipe->screen, r->fs_const_buf.buffer);
-
    return true;
 }
 
@@ -684,7 +651,6 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    pipe_buffer_reference(&r->vs_const_buf.buffer, NULL);
-   pipe_buffer_reference(&r->fs_const_buf.buffer, NULL);
 
    for (i = 0; i < 3; ++i)
       pipe_buffer_reference(&r->vertex_bufs.all[i].buffer, NULL);
@@ -1004,8 +970,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
                                 &r->vs_const_buf);
-   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_FRAGMENT, 0,
-                                &r->fs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
