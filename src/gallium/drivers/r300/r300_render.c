@@ -242,19 +242,12 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* Draw-based drawing for SW TCL chipsets.
- * XXX currently broken as fucking hell. */
-boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
-                                       struct pipe_buffer* indexBuffer,
-                                       unsigned indexSize,
-                                       unsigned minIndex,
-                                       unsigned maxIndex,
-                                       unsigned mode,
-                                       unsigned start,
-                                       unsigned count)
+/* SW TCL arrays, using Draw. */
+boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count)
 {
-    assert(0);
-#if 0
     struct r300_context* r300 = r300_context(pipe);
     int i;
 
@@ -264,19 +257,12 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe->screen,
-                                    r300->vertex_buffers[i].buffer,
+                                    r300->vertex_buffer[i].buffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
         draw_set_mapped_vertex_buffer(r300->draw, i, buf);
     }
 
-    if (indexBuffer) {
-        void* indices = pipe_buffer_map(pipe->screen, indexBuffer,
-                                        PIPE_BUFFER_USAGE_CPU_READ);
-        draw_set_mapped_element_buffer_range(r300->draw, indexSize,
-                                             minIndex, maxIndex, indices);
-    } else {
-        draw_set_mapped_element_buffer(r300->draw, 0, NULL);
-    }
+    draw_set_mapped_element_buffer(r300->draw, 0, NULL);
 
     draw_set_mapped_constant_buffer(r300->draw,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
@@ -286,16 +272,58 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     draw_arrays(r300->draw, mode, start, count);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe->screen, r300->vertex_buffers[i].buffer);
+        pipe_buffer_unmap(pipe->screen, r300->vertex_buffer[i].buffer);
         draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
     }
 
-    if (indexBuffer) {
-        pipe_buffer_unmap(pipe->screen, indexBuffer);
-        draw_set_mapped_element_buffer_range(r300->draw, 0, start,
-                                             start + count - 1, NULL);
+    return TRUE;
+}
+
+/* SW TCL elements, using Draw. */
+boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
+                                       struct pipe_buffer* indexBuffer,
+                                       unsigned indexSize,
+                                       unsigned minIndex,
+                                       unsigned maxIndex,
+                                       unsigned mode,
+                                       unsigned start,
+                                       unsigned count)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    int i;
+
+    if (!u_trim_pipe_prim(mode, &count)) {
+        return FALSE;
     }
-#endif
+
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        void* buf = pipe_buffer_map(pipe->screen,
+                                    r300->vertex_buffer[i].buffer,
+                                    PIPE_BUFFER_USAGE_CPU_READ);
+        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+    }
+
+    void* indices = pipe_buffer_map(pipe->screen, indexBuffer,
+                                    PIPE_BUFFER_USAGE_CPU_READ);
+    draw_set_mapped_element_buffer_range(r300->draw, indexSize,
+                                         minIndex, maxIndex, indices);
+
+    draw_set_mapped_constant_buffer(r300->draw,
+            r300->shader_constants[PIPE_SHADER_VERTEX].constants,
+            r300->shader_constants[PIPE_SHADER_VERTEX].count *
+                (sizeof(float) * 4));
+
+    draw_arrays(r300->draw, mode, start, count);
+
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        pipe_buffer_unmap(pipe->screen, r300->vertex_buffer[i].buffer);
+        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+    }
+
+    pipe_buffer_unmap(pipe->screen, indexBuffer);
+    draw_set_mapped_element_buffer_range(r300->draw, 0, start,
+                                         start + count - 1, NULL);
+
     return TRUE;
 }
 

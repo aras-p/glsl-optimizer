@@ -42,6 +42,11 @@ boolean r300_draw_elements(struct pipe_context* pipe,
 boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                          unsigned start, unsigned count);
 
+boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count);
+
 boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        struct pipe_buffer* indexBuffer,
                                        unsigned indexSize,
