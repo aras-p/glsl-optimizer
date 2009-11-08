@@ -332,7 +332,7 @@ void r300_emit_cb_setup(struct r300_context *r300,
     uint32_t cbpitch = pitch / cpp;
     uint32_t dw = 6;
 
-    assert(offset % 256 == 0);
+    assert(offset % 32 == 0);
 
     switch (format) {
         case MESA_FORMAT_RGB565:
