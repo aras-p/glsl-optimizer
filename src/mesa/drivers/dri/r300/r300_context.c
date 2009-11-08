@@ -93,6 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/remap_helper.h"
 
+void r300_init_texcopy_functions(struct dd_function_table *table);
 
 static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
@@ -485,6 +486,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300_init_vtbl(&r300->radeon);
 
 	_mesa_init_driver_functions(&functions);
+	r300_init_texcopy_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);

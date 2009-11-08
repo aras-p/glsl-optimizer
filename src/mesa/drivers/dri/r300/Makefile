@@ -50,6 +50,7 @@ DRIVER_SOURCES = \
 		 r300_state.c \
 		 r300_render.c \
 		 r300_tex.c \
+		 r300_texcopy.c \
 		 r300_texstate.c \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \
