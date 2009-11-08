@@ -140,7 +140,7 @@ static boolean r300_setup_vertex_buffers(struct r300_context *r300)
     struct pipe_vertex_element *velem = r300->vertex_element;
 
 validate:
-    for (int i = 0; i < r300->aos_count; i++) {
+    for (int i = 0; i < r300->vertex_element_count; i++) {
         if (!r300->winsys->add_buffer(r300->winsys,
                 vbuf[velem[i].vertex_buffer_index].buffer,
             RADEON_GEM_DOMAIN_GTT, 0)) {

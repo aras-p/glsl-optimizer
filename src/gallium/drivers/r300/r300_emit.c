@@ -584,17 +584,20 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
+/* XXX I can't read this and that's not good */
 void r300_emit_aos(struct r300_context* r300, unsigned offset)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
     CS_LOCALS(r300);
     int i;
-    unsigned packet_size = (r300->aos_count * 3 + 1) / 2;
-    BEGIN_CS(2 + packet_size + r300->aos_count * 2);
+    unsigned aos_count = r300->vertex_element_count;
+
+    unsigned packet_size = (aos_count * 3 + 1) / 2;
+    BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(r300->aos_count);
-    for (i = 0; i < r300->aos_count - 1; i += 2) {
+    OUT_CS(aos_count);
+    for (i = 0; i < aos_count - 1; i += 2) {
         int buf_num1 = velem[i].vertex_buffer_index;
         int buf_num2 = velem[i+1].vertex_buffer_index;
         assert(vbuf[buf_num1].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
@@ -606,7 +609,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
         OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
                offset * vbuf[buf_num2].stride);
     }
-    if (r300->aos_count & 1) {
+    if (aos_count & 1) {
         int buf_num = velem[i].vertex_buffer_index;
         assert(vbuf[buf_num].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
         OUT_CS((pf_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
@@ -614,7 +617,8 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
                offset * vbuf[buf_num].stride);
     }
 
-    for (i = 0; i < r300->aos_count; i++) {
+    /* XXX bare CS reloc */
+    for (i = 0; i < aos_count; i++) {
         cs_winsys->write_cs_reloc(cs_winsys,
                                   vbuf[velem[i].vertex_buffer_index].buffer,
                                   RADEON_GEM_DOMAIN_GTT,

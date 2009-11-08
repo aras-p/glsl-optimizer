@@ -71,12 +71,13 @@ void setup_vertex_attributes(struct r300_context *r300)
     struct pipe_vertex_element *vert_elem;
     int i;
 
-    for (i = 0; i < r300->aos_count; i++) {
+    for (i = 0; i < r300->vertex_element_count; i++) {
         vert_elem = &r300->vertex_element[i];
         setup_vertex_attribute(r300->vertex_info, vert_elem, i);
     }
 
-    finish_vertex_attribs_setup(r300->vertex_info, r300->aos_count);
+    finish_vertex_attribs_setup(r300->vertex_info,
+        r300->vertex_element_count);
 }
 
 static INLINE int get_buffer_offset(struct r300_context *r300,

@@ -295,10 +295,10 @@ struct r300_context {
 
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-    int vbuf_count;
+    int vertex_buffer_count;
     /* Vertex elements for Gallium. */
     struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-    int aos_count;
+    int vertex_element_count;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;

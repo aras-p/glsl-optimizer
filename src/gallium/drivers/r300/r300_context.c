@@ -158,6 +158,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
+    make_empty_list(&r300->query_list);
 
     r300_init_flush_functions(r300);
 
@@ -172,6 +173,5 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
-    make_empty_list(&r300->query_list);
     return &r300->context;
 }
