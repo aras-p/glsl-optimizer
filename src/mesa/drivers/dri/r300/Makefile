@@ -43,6 +43,7 @@ RADEON_COMMON_SOURCES = \
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
+		 r300_blit.c \
 		 r300_context.c \
 		 r300_draw.c \
 		 r300_cmdbuf.c \

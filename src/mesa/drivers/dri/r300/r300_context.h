@@ -533,6 +533,11 @@ struct r300_context {
 
 	uint32_t fallback;
 
+	struct {
+		struct r300_vertex_program_code vp_code;
+		struct rX00_fragment_program_code fp_code;
+	} blit;
+
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 };
 

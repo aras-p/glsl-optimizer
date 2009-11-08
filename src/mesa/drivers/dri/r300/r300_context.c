@@ -60,6 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "radeon_context.h"
 #include "radeon_span.h"
+#include "r300_blit.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
 #include "r300_tex.h"
@@ -537,6 +538,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 		r300InitSwtcl(ctx);
 	}
 
+	r300_blit_init(r300);
 	radeon_fbo_init(&r300->radeon);
 	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);
