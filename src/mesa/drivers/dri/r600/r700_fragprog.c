@@ -393,26 +393,6 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     SETfield(r700->ps.SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
              EXPORT_MODE_shift, EXPORT_MODE_mask);
 
-    R600_STATECHANGE(context, db);
-
-    if(fp->r700Shader.killIsUsed)
-    {
-	    SETbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
-    }
-    else
-    {
-        CLEARbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
-    }
-
-    if(fp->r700Shader.depthIsExported)
-    {
-	    SETbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-    else
-    {
-        CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-
     // emit ps input map
     unBit = 1 << FRAG_ATTRIB_WPOS;
     if(mesa_fp->Base.InputsRead & unBit)
@@ -479,9 +459,12 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    }
     }
 
-    R600_STATECHANGE(context, cb);
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
-    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
+    if (r700->CB_SHADER_CONTROL.u32All != ((1 << exportCount) - 1))
+    {
+	    R600_STATECHANGE(context, cb);
+	    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
+    }
 
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;

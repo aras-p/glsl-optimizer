@@ -59,9 +59,7 @@
 
 void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
-GLboolean r700SendTextureState(context_t *context);
 static unsigned int r700PrimitiveType(int prim);
-void r600UpdateTextureState(GLcontext * ctx);
 GLboolean r700SyncSurf(context_t *context,
 		       struct radeon_bo *pbo,
 		       uint32_t read_domain,
@@ -891,7 +889,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     r700SetScissor(context);
     r700SetupVertexProgram(ctx);
     r700SetupFragmentProgram(ctx);
-    r600UpdateTextureState(ctx);
+    r700UpdateShaderStates(ctx);
 
     GLuint emit_end = r700PredictRenderSize(ctx, prim, ib, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
