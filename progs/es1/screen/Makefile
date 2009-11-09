@@ -13,12 +13,16 @@ ES1_LIB_DEPS = \
 WINSYS_OBJS = winsys.o
 
 PROGRAMS = \
+	gears \
 	tri
 
 .c.o:
 	$(CC) -c $(ES1_CFLAGS) $(CFLAGS) $< -o $@
 
 default: $(PROGRAMS)
+
+gears: gears.o $(WINSYS_OBJS) $(ES1_LIB_DEPS)
+	$(CC) $(CFLAGS) -o $@ $@.o $(WINSYS_OBJS) $(ES1_LIBS)
 
 tri: tri.o $(WINSYS_OBJS) $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) -o $@ $@.o $(WINSYS_OBJS) $(ES1_LIBS)
