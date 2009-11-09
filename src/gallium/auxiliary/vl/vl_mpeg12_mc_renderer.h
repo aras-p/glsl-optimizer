@@ -50,6 +50,11 @@ enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK
    VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE /* Needs conditional texel fetch! */
 };
 
+struct vertex2f
+{
+   float x, y;
+};
+
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
@@ -93,8 +98,8 @@ struct vl_mpeg12_mc_renderer
    struct pipe_mpeg12_macroblock *macroblock_buf;
    struct pipe_transfer *tex_transfer[3];
    short *texels[3];
-   struct { float x, y; } surface_tex_inv_size;
-   struct { float x, y; } zero_block[3];
+   struct vertex2f surface_tex_inv_size;
+   struct vertex2f zero_block[3];
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,

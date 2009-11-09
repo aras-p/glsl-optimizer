@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "vl_mpeg12_mc_renderer.h"
@@ -41,11 +41,6 @@
 #define ZERO_BLOCK_NIL -1.0f
 #define ZERO_BLOCK_IS_NIL(zb) ((zb).x < 0.0f)
 #define SCALE_FACTOR_16_TO_9 (32767.0f / 255.0f)
-
-struct vertex2f
-{
-   float x, y;
-};
 
 struct vertex4f
 {
@@ -91,7 +86,7 @@ create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_src vpos, vtex[3];
    struct ureg_dst o_vpos, o_vtex[3];
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return false;
@@ -129,7 +124,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_dst texel, temp;
    struct ureg_dst fragment;
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return false;
@@ -173,7 +168,7 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_src vpos, vtex[4];
    struct ureg_dst o_vpos, o_vtex[4];
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return false;
@@ -219,7 +214,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_dst texel, ref;
    struct ureg_dst fragment;
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return false;
@@ -271,7 +266,7 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_src vpos, vtex[5];
    struct ureg_dst o_vpos, o_vtex[5];
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return false;
@@ -320,7 +315,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_dst texel, ref[2];
    struct ureg_dst fragment;
    unsigned i;
-   
+
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return false;
@@ -686,73 +681,105 @@ get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
    return -1;
 }
 
-/* XXX: One of these days this will have to be killed with fire */
-#define SET_BLOCK(vb, cbp, mbx, mby, unitx, unity, ofsx, ofsy, hx, hy, lm, cbm, crm, use_zb, zb)				\
-	do {															\
-	(vb)[0].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[0].pos.y = (mby) * (unity) + (ofsy);			\
-	(vb)[1].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[1].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
-	(vb)[2].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].pos.y = (mby) * (unity) + (ofsy);			\
-	(vb)[3].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].pos.y = (mby) * (unity) + (ofsy);			\
-	(vb)[4].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[4].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
-	(vb)[5].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
-																\
-	if (!use_zb || (cbp) & (lm))												\
-	{															\
-		(vb)[0].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].luma_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[1].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[2].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].luma_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[3].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].luma_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[4].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[5].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	}															\
-	else															\
-	{															\
-		(vb)[0].luma_tc.x = (zb)[0].x;		(vb)[0].luma_tc.y = (zb)[0].y;						\
-		(vb)[1].luma_tc.x = (zb)[0].x;		(vb)[1].luma_tc.y = (zb)[0].y + (hy);					\
-		(vb)[2].luma_tc.x = (zb)[0].x + (hx);	(vb)[2].luma_tc.y = (zb)[0].y;						\
-		(vb)[3].luma_tc.x = (zb)[0].x + (hx);	(vb)[3].luma_tc.y = (zb)[0].y;						\
-		(vb)[4].luma_tc.x = (zb)[0].x;		(vb)[4].luma_tc.y = (zb)[0].y + (hy);					\
-		(vb)[5].luma_tc.x = (zb)[0].x + (hx);	(vb)[5].luma_tc.y = (zb)[0].y + (hy);					\
-	}															\
-																\
-	if (!use_zb || (cbp) & (cbm))												\
-	{															\
-		(vb)[0].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cb_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[1].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[2].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cb_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[3].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cb_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[4].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[5].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	}															\
-	else															\
-	{															\
-		(vb)[0].cb_tc.x = (zb)[1].x;		(vb)[0].cb_tc.y = (zb)[1].y;						\
-		(vb)[1].cb_tc.x = (zb)[1].x;		(vb)[1].cb_tc.y = (zb)[1].y + (hy);					\
-		(vb)[2].cb_tc.x = (zb)[1].x + (hx);	(vb)[2].cb_tc.y = (zb)[1].y;						\
-		(vb)[3].cb_tc.x = (zb)[1].x + (hx);	(vb)[3].cb_tc.y = (zb)[1].y;						\
-		(vb)[4].cb_tc.x = (zb)[1].x;		(vb)[4].cb_tc.y = (zb)[1].y + (hy);					\
-		(vb)[5].cb_tc.x = (zb)[1].x + (hx);	(vb)[5].cb_tc.y = (zb)[1].y + (hy);					\
-	}															\
-																\
-	if (!use_zb || (cbp) & (crm))												\
-	{															\
-		(vb)[0].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cr_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[1].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[2].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cr_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[3].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cr_tc.y = (mby) * (unity) + (ofsy);		\
-		(vb)[4].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-		(vb)[5].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	}															\
-	else															\
-	{															\
-		(vb)[0].cr_tc.x = (zb)[2].x;		(vb)[0].cr_tc.y = (zb)[2].y;						\
-		(vb)[1].cr_tc.x = (zb)[2].x;		(vb)[1].cr_tc.y = (zb)[2].y + (hy);					\
-		(vb)[2].cr_tc.x = (zb)[2].x + (hx);	(vb)[2].cr_tc.y = (zb)[2].y;						\
-		(vb)[3].cr_tc.x = (zb)[2].x + (hx);	(vb)[3].cr_tc.y = (zb)[2].y;						\
-		(vb)[4].cr_tc.x = (zb)[2].x;		(vb)[4].cr_tc.y = (zb)[2].y + (hy);					\
-		(vb)[5].cr_tc.x = (zb)[2].x + (hx);	(vb)[5].cr_tc.y = (zb)[2].y + (hy);					\
-	}															\
-	} while (0)
+static void
+gen_block_verts(struct vert_stream_0 *vb, unsigned cbp, unsigned mbx, unsigned mby,
+                const struct vertex2f *unit, const struct vertex2f *half, const struct vertex2f *offset,
+                unsigned luma_mask, unsigned cb_mask, unsigned cr_mask,
+                bool use_zeroblocks, struct vertex2f *zero_blocks)
+{
+   struct vertex2f v;
+
+   assert(vb);
+   assert(unit && half && offset);
+   assert(zero_blocks || !use_zeroblocks);
+
+   /* Generate vertices for two triangles covering a block */
+   v.x = mbx * unit->x + offset->x;
+   v.y = mby * unit->y + offset->y;
+
+   vb[0].pos.x = v.x;
+   vb[0].pos.y = v.y;
+   vb[1].pos.x = v.x;
+   vb[1].pos.y = v.y + half->y;
+   vb[2].pos.x = v.x + half->x;
+   vb[2].pos.y = v.y;
+   vb[3].pos.x = v.x + half->x;
+   vb[3].pos.y = v.y;
+   vb[4].pos.x = v.x;
+   vb[4].pos.y = v.y + half->y;
+   vb[5].pos.x = v.x + half->x;
+   vb[5].pos.y = v.y + half->y;
+
+   /* Generate texcoords for the triangles, either pointing to the correct area on the luma/chroma texture
+      or if zero blocks are being used, to the zero block if the appropriate CBP bits aren't set (i.e. no data
+      for this channel is defined for this block) */
+
+   if (!use_zeroblocks || cbp & luma_mask) {
+      v.x = mbx * unit->x + offset->x;
+      v.y = mby * unit->y + offset->y;
+   }
+   else {
+      v.x = zero_blocks[0].x;
+      v.y = zero_blocks[0].y;
+   }
+
+   vb[0].luma_tc.x = v.x;
+   vb[0].luma_tc.y = v.y;
+   vb[1].luma_tc.x = v.x;
+   vb[1].luma_tc.y = v.y + half->y;
+   vb[2].luma_tc.x = v.x + half->x;
+   vb[2].luma_tc.y = v.y;
+   vb[3].luma_tc.x = v.x + half->x;
+   vb[3].luma_tc.y = v.y;
+   vb[4].luma_tc.x = v.x;
+   vb[4].luma_tc.y = v.y + half->y;
+   vb[5].luma_tc.x = v.x + half->x;
+   vb[5].luma_tc.y = v.y + half->y;
+
+   if (!use_zeroblocks || cbp & cb_mask) {
+      v.x = mbx * unit->x + offset->x;
+      v.y = mby * unit->y + offset->y;
+   }
+   else {
+      v.x = zero_blocks[1].x;
+      v.y = zero_blocks[1].y;
+   }
+
+   vb[0].cb_tc.x = v.x;
+   vb[0].cb_tc.y = v.y;
+   vb[1].cb_tc.x = v.x;
+   vb[1].cb_tc.y = v.y + half->y;
+   vb[2].cb_tc.x = v.x + half->x;
+   vb[2].cb_tc.y = v.y;
+   vb[3].cb_tc.x = v.x + half->x;
+   vb[3].cb_tc.y = v.y;
+   vb[4].cb_tc.x = v.x;
+   vb[4].cb_tc.y = v.y + half->y;
+   vb[5].cb_tc.x = v.x + half->x;
+   vb[5].cb_tc.y = v.y + half->y;
+
+   if (!use_zeroblocks || cbp & cr_mask) {
+      v.x = mbx * unit->x + offset->x;
+      v.y = mby * unit->y + offset->y;
+   }
+   else {
+      v.x = zero_blocks[2].x;
+      v.y = zero_blocks[2].y;
+   }
+
+   vb[0].cr_tc.x = v.x;
+   vb[0].cr_tc.y = v.y;
+   vb[1].cr_tc.x = v.x;
+   vb[1].cr_tc.y = v.y + half->y;
+   vb[2].cr_tc.x = v.x + half->x;
+   vb[2].cr_tc.y = v.y;
+   vb[3].cr_tc.x = v.x + half->x;
+   vb[3].cr_tc.y = v.y;
+   vb[4].cr_tc.x = v.x;
+   vb[4].cr_tc.y = v.y + half->y;
+   vb[5].cr_tc.x = v.x + half->x;
+   vb[5].cr_tc.y = v.y + half->y;
+}
 
 static void
 gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
@@ -857,25 +884,34 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
             r->surface_tex_inv_size.x * (MACROBLOCK_WIDTH / 2),
             r->surface_tex_inv_size.y * (MACROBLOCK_HEIGHT / 2)
          };
+         const struct vertex2f offsets[2][2] =
+         {
+            {
+               {0, 0}, {0, half.y}
+            },
+            {
+               {half.x, 0}, {half.x, half.y}
+            }
+         };
          const bool use_zb = r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE;
 
          struct vert_stream_0 *vb = ycbcr_vb + pos * 24;
 
-         SET_BLOCK(vb, mb->cbp, mb->mbx, mb->mby,
-                   unit.x, unit.y, 0, 0, half.x, half.y,
-                   32, 2, 1, use_zb, r->zero_block);
+         gen_block_verts(vb, mb->cbp, mb->mbx, mb->mby,
+                         &unit, &half, &offsets[0][0],
+                         32, 2, 1, use_zb, r->zero_block);
 
-         SET_BLOCK(vb + 6, mb->cbp, mb->mbx, mb->mby,
-                   unit.x, unit.y, half.x, 0, half.x, half.y,
-                   16, 2, 1, use_zb, r->zero_block);
+         gen_block_verts(vb + 6, mb->cbp, mb->mbx, mb->mby,
+                         &unit, &half, &offsets[1][0],
+                         16, 2, 1, use_zb, r->zero_block);
 
-         SET_BLOCK(vb + 12, mb->cbp, mb->mbx, mb->mby,
-                   unit.x, unit.y, 0, half.y, half.x, half.y,
-                   8, 2, 1, use_zb, r->zero_block);
+         gen_block_verts(vb + 12, mb->cbp, mb->mbx, mb->mby,
+                         &unit, &half, &offsets[0][1],
+                         8, 2, 1, use_zb, r->zero_block);
 
-         SET_BLOCK(vb + 18, mb->cbp, mb->mbx, mb->mby,
-                   unit.x, unit.y, half.x, half.y, half.x, half.y,
-                   4, 2, 1, use_zb, r->zero_block);
+         gen_block_verts(vb + 18, mb->cbp, mb->mbx, mb->mby,
+                         &unit, &half, &offsets[1][1],
+                         4, 2, 1, use_zb, r->zero_block);
 
          break;
       }
