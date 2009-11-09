@@ -37,13 +37,14 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned i, w, h, gw = 0;
 
-	/* Set nr of active RTs. Don't know what 0xfac6880 does, but
-	 * at least 0x880 was required to draw to more than 1 RT.
-	 * In some special cases, 0xfac6880 is not used, we probably
-	 * don't hit any of these though.
+	/* Set nr of active RTs and select RT for each colour output.
+	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.
+	 * Ambiguous assignment results in no rendering (no DATA_ERROR).
 	 */
 	so_method(so, tesla, 0x121c, 1);
-	so_data  (so, 0x0fac6880 | fb->nr_cbufs);
+	so_data  (so, fb->nr_cbufs |
+		  (0 <<  4) | (1 <<  7) | (2 << 10) | (3 << 13) |
+		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct pipe_texture *pt = fb->cbufs[i]->texture;
