@@ -1123,8 +1123,6 @@ void radeonFlush(GLcontext *ctx)
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
 
-	radeonEmitState(radeon);
-
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
