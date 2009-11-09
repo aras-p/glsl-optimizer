@@ -60,8 +60,12 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: symlinks subdirs depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+default: subdirs lib
 
+
+.PHONY: lib
+lib: symlinks subdirs depend
+	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template
