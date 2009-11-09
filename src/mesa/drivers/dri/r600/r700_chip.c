@@ -794,8 +794,7 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
-        BEGIN_BATCH_NO_AUTOSTATE(23);
-	R600_OUT_BATCH_REGVAL(DB_HTILE_DATA_BASE, r700->DB_HTILE_DATA_BASE.u32All);
+	BEGIN_BATCH_NO_AUTOSTATE(17);
 
 	R600_OUT_BATCH_REGSEQ(DB_STENCIL_CLEAR, 2);
 	R600_OUT_BATCH(r700->DB_STENCIL_CLEAR.u32All);
@@ -808,7 +807,6 @@ static void r700SendDBState(GLcontext *ctx, struct radeon_state_atom *atom)
 	R600_OUT_BATCH(r700->DB_RENDER_CONTROL.u32All);
 	R600_OUT_BATCH(r700->DB_RENDER_OVERRIDE.u32All);
 
-	R600_OUT_BATCH_REGVAL(DB_HTILE_SURFACE, r700->DB_HTILE_SURFACE.u32All);
 	R600_OUT_BATCH_REGVAL(DB_ALPHA_TO_MASK, r700->DB_ALPHA_TO_MASK.u32All);
 
 	END_BATCH();
@@ -1239,7 +1237,7 @@ void r600InitAtoms(context_t *context)
 	context->radeon.hw.atomlist.name = "atom-list";
 
 	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
-	ALLOC_STATE(db, always, 23, r700SendDBState);
+	ALLOC_STATE(db, always, 17, r700SendDBState);
 	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
 	ALLOC_STATE(db_target, always, 12, r700SendDepthTargetState);
 	ALLOC_STATE(sc, always, 15, r700SendSCState);
