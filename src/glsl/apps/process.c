@@ -41,6 +41,8 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
+   char errmsg[100] = "";
+   unsigned int errline = 0;
    struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    unsigned int version;
@@ -91,8 +93,8 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   if (sl_pp_purify(inbuf, &options, &outbuf)) {
-      fprintf(out, "$PURIFYERROR\n");
+   if (sl_pp_purify(inbuf, &options, &outbuf, errmsg, sizeof(errmsg), &errline)) {
+      fprintf(out, "$PURIFYERROR %s\n", errmsg);
 
       free(inbuf);
       fclose(out);

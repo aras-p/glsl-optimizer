@@ -40,6 +40,8 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
+   char errmsg[100] = "";
+   unsigned int errline = 0;
    FILE *out;
 
    if (argc != 3) {
@@ -84,8 +86,8 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   if (sl_pp_purify(inbuf, &options, &outbuf)) {
-      fprintf(out, "$PURIFYERROR\n");
+   if (sl_pp_purify(inbuf, &options, &outbuf, errmsg, sizeof(errmsg), &errline)) {
+      fprintf(out, "$PURIFYERROR %u: %s\n", errline, errmsg);
 
       free(inbuf);
       fclose(out);
