@@ -287,6 +287,14 @@ bind_samplers(struct exa_context *exa, int op,
 
    exa->num_bound_samplers = 0;
 
+#if 0
+   if ((pSrc && (exa->pipe->is_texture_referenced(exa->pipe, pSrc->tex, 0, 0) &
+                 PIPE_REFERENCED_FOR_WRITE)) ||
+       (pMask && (exa->pipe->is_texture_referenced(exa->pipe, pMask->tex, 0, 0) &
+        PIPE_REFERENCED_FOR_WRITE)))
+      xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
+#endif
+
    memset(&src_sampler, 0, sizeof(struct pipe_sampler_state));
    memset(&mask_sampler, 0, sizeof(struct pipe_sampler_state));
 
@@ -461,7 +469,7 @@ void xorg_composite(struct exa_context *exa,
       if (exa->transform.has_mask)
          mask_matrix = exa->transform.mask;
 
-#if 1
+#if 0
       renderer_draw_textures(exa->renderer,
                              pos, width, height,
                              exa->bound_textures,

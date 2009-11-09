@@ -21,6 +21,8 @@ enum AxisOrientation {
 #define floatsEqual(x, y) (fabs(x - y) <= 0.00001f * MIN2(fabs(x), fabs(y)))
 #define floatIsZero(x) (floatsEqual((x) + 1, 1))
 
+#define NUM_COMPONENTS 4
+
 static INLINE boolean is_affine(float *matrix)
 {
    return floatIsZero(matrix[2]) && floatIsZero(matrix[5])
@@ -62,6 +64,7 @@ renderer_draw(struct xorg_renderer *r)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_buffer *buf = 0;
+   int num_verts = r->num_vertices/(r->num_attributes * NUM_COMPONENTS);
 
    if (!r->num_vertices)
       return;
@@ -72,7 +75,7 @@ renderer_draw(struct xorg_renderer *r)
    if (buf) {
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
-                              4,  /* verts */
+                              num_verts,  /* verts */
                               r->num_attributes); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
@@ -84,8 +87,9 @@ renderer_draw_conditional(struct xorg_renderer *r,
                           int next_batch)
 {
    if (r->num_vertices + next_batch >= BUF_SIZE ||
-       (next_batch == 0 && r->num_vertices))
+       (next_batch == 0 && r->num_vertices)) {
       renderer_draw(r);
+   }
 }
 
 static void
@@ -892,6 +896,7 @@ void renderer_begin_textures(struct xorg_renderer *r,
                              int num_textures)
 {
    r->num_attributes = 1 + num_textures;
+   r->num_vertices = 0;
 }
 
 void renderer_texture(struct xorg_renderer *r,

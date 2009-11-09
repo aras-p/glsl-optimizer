@@ -11,9 +11,9 @@ struct exa_pixmap_priv;
  * max number of attributes per vertex *
  * max number of components per attribute
  *
- * currently the max is 5 quads
+ * currently the max is 100 quads
  */
-#define BUF_SIZE (20 * 3 * 4)
+#define BUF_SIZE (100 * 4 * 3 * 4)
 
 struct xorg_renderer {
    struct pipe_context *pipe;
