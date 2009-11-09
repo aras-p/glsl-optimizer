@@ -424,10 +424,16 @@ GLboolean r300_blit(struct r300_context *r300,
                     unsigned dst_width,
                     unsigned dst_height)
 {
-    assert(src_width == dst_width);
-    assert(src_height == dst_height);
+    //assert(src_width == dst_width);
+    //assert(src_height == dst_height);
 
-    if (0) {
+    if (src_bo == dst_bo) {
+        return GL_FALSE;
+    }
+
+    //return GL_FALSE;
+
+    if (1) {
         fprintf(stderr, "src: width %d, height %d, pitch %d vs %d, format %s\n",
                 src_width, src_height, src_pitch,
                 _mesa_format_row_stride(src_mesaformat, src_width),
@@ -440,6 +446,8 @@ GLboolean r300_blit(struct r300_context *r300,
 
     if (!validate_buffers(r300, src_bo, dst_bo))
         return GL_FALSE;
+
+    rcommonEnsureCmdBufSpace(&r300->radeon, 200, __FUNCTION__);
 
     other_stuff(r300);
 
@@ -463,6 +471,7 @@ GLboolean r300_blit(struct r300_context *r300,
     r300EmitCacheFlush(r300);
 
     radeonFlush(r300->radeon.glCtx);
+    //r300ResetHwState(r300);
 
     return GL_TRUE;
 }

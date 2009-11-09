@@ -57,29 +57,38 @@ do_copy_texsubimage(GLcontext *ctx,
         rrb = radeon_get_colorbuffer(&r300->radeon);
     }
 
+    if (!timg->mt) {
+        radeon_validate_texture_miptree(ctx, &tobj->base);
+    }
+
     assert(rrb && rrb->bo);
-    assert(timg->mt && timg->mt->bo);
+    assert(timg->mt->bo);
     assert(timg->base.Width >= dstx + width);
     assert(timg->base.Height >= dsty + height);
-    assert(tobj->mt == timg->mt);
+    //assert(tobj->mt == timg->mt);
 
     intptr_t src_offset = rrb->draw_offset + x * rrb->cpp + y * rrb->pitch;
     intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
     dst_offset += dstx * _mesa_get_format_bytes(timg->base.TexFormat) +
                   dsty * _mesa_format_row_stride(timg->base.TexFormat, timg->base.Width);
 
-    if (0) {
+    if (src_offset % 32 || dst_offset % 32) {
+        return GL_FALSE;
+    }
+
+    if (1) {
         fprintf(stderr, "%s: copying to face %d, level %d\n",
                 __FUNCTION__, _mesa_tex_target_to_face(target), level);
         fprintf(stderr, "to: x %d, y %d, offset %d\n", dstx, dsty, (uint32_t) dst_offset);
         fprintf(stderr, "from (%dx%d) width %d, height %d, offset %d, pitch %d, width %d\n",
                 x, y, width, height, (uint32_t) src_offset, rrb->pitch, rrb->pitch/rrb->cpp);
+        fprintf(stderr, "src size %d, dst size %d\n", rrb->bo->size, timg->mt->bo->size);
 
     }
 
     /* blit from src buffer to texture */
     return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch,
-                     width, height, timg->mt->bo, dst_offset,
+                     rrb->base.Width, rrb->base.Height, timg->mt->bo ? timg->mt->bo : timg->bo, dst_offset,
                      timg->base.TexFormat, width, height);
 }
 
@@ -140,8 +149,6 @@ r300CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
     struct gl_texture_object *texObj = _mesa_select_tex_object(ctx, texUnit, target);
     struct gl_texture_image *texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-
-    assert(target == GL_TEXTURE_2D);
 
     if (!do_copy_texsubimage(ctx, target, level,
                              radeon_tex_obj(texObj), (radeon_texture_image *)texImage,
