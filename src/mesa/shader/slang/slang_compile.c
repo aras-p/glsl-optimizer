@@ -2589,12 +2589,14 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    int result;
    struct sl_pp_purify_options options;
    char *outbuf;
+   char errmsg[200] = "";
+   unsigned int errline = 0;
    struct sl_pp_token_info *intokens;
    unsigned int tokens_eaten;
 
    memset(&options, 0, sizeof(options));
-   if (sl_pp_purify(source, &options, &outbuf)) {
-      slang_info_log_error(infolog, "unable to preprocess the source");
+   if (sl_pp_purify(source, &options, &outbuf, errmsg, sizeof(errmsg), &errline)) {
+      slang_info_log_error(infolog, errmsg);
       return GL_FALSE;
    }
 
