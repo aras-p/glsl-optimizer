@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include "sl_pp_purify.h"
 
 
@@ -39,10 +41,12 @@
 
 static unsigned int
 _purify_newline(const char *input,
-                char *out)
+                char *out,
+                unsigned int *current_line)
 {
    if (input[0] == '\n') {
       *out = '\n';
+      (*current_line)++;
       if (input[1] == '\r') {
          /*
           * The GLSL spec is not explicit about whether this
@@ -55,6 +59,7 @@ _purify_newline(const char *input,
    }
    if (input[0] == '\r') {
       *out = '\n';
+      (*current_line)++;
       if (input[1] == '\n') {
          return 2;
       }
@@ -67,7 +72,8 @@ _purify_newline(const char *input,
 
 static unsigned int
 _purify_backslash(const char *input,
-                  char *out)
+                  char *out,
+                  unsigned int *current_line)
 {
    unsigned int eaten = 0;
 
@@ -75,11 +81,12 @@ _purify_backslash(const char *input,
       if (input[0] == '\\') {
          char next;
          unsigned int next_eaten;
+         unsigned int next_line = *current_line;
 
          eaten++;
          input++;
 
-         next_eaten = _purify_newline(input, &next);
+         next_eaten = _purify_newline(input, &next, &next_line);
          if (next == '\n') {
             /*
              * If this is really a line continuation sequence, eat
@@ -87,6 +94,7 @@ _purify_backslash(const char *input,
              */
             eaten += next_eaten;
             input += next_eaten;
+            *current_line = next_line;
          } else {
             /*
              * It is an error to put anything between a backslash
@@ -98,7 +106,7 @@ _purify_backslash(const char *input,
             break;
          }
       } else {
-         eaten += _purify_newline(input, out);
+         eaten += _purify_newline(input, out, current_line);
          break;
       }
    }
@@ -110,7 +118,23 @@ struct out_buf {
    char *out;
    unsigned int len;
    unsigned int capacity;
+   unsigned int current_line;
+   char *errormsg;
+   unsigned int cberrormsg;
 };
+
+
+static void
+_report_error(struct out_buf *obuf,
+              const char *msg,
+              ...)
+{
+   va_list args;
+
+   va_start(args, msg);
+   vsnprintf(obuf->errormsg, obuf->cberrormsg, msg, args);
+   va_end(args);
+}
 
 
 static int
@@ -130,6 +154,7 @@ _out_buf_putc(struct out_buf *obuf,
 
       obuf->out = realloc(obuf->out, new_max);
       if (!obuf->out) {
+         _report_error(obuf, "out of memory");
          return -1;
       }
       obuf->capacity = new_max;
@@ -148,20 +173,22 @@ _purify_comment(const char *input,
    unsigned int eaten;
    char curr;
 
-   eaten = _purify_backslash(input, &curr);
+   eaten = _purify_backslash(input, &curr, &obuf->current_line);
    input += eaten;
    if (curr == '/') {
       char next;
       unsigned int next_eaten;
+      unsigned int next_line = obuf->current_line;
 
-      next_eaten = _purify_backslash(input, &next);
+      next_eaten = _purify_backslash(input, &next, &next_line);
       if (next == '/') {
          eaten += next_eaten;
          input += next_eaten;
+         obuf->current_line = next_line;
 
          /* Replace a line comment with either a newline or nil. */
          for (;;) {
-            next_eaten = _purify_backslash(input, &next);
+            next_eaten = _purify_backslash(input, &next, &obuf->current_line);
             eaten += next_eaten;
             input += next_eaten;
             if (next == '\n' || next == '\0') {
@@ -174,14 +201,15 @@ _purify_comment(const char *input,
       } else if (next == '*') {
          eaten += next_eaten;
          input += next_eaten;
+         obuf->current_line = next_line;
 
          /* Replace a block comment with a whitespace. */
          for (;;) {
-            next_eaten = _purify_backslash(input, &next);
+            next_eaten = _purify_backslash(input, &next, &obuf->current_line);
             eaten += next_eaten;
             input += next_eaten;
             while (next == '*') {
-               next_eaten = _purify_backslash(input, &next);
+               next_eaten = _purify_backslash(input, &next, &obuf->current_line);
                eaten += next_eaten;
                input += next_eaten;
                if (next == '/') {
@@ -197,6 +225,7 @@ _purify_comment(const char *input,
                }
             }
             if (next == '\0') {
+               _report_error(obuf, "expected `*/' but end of translation unit found");
                return 0;
             }
          }
@@ -212,19 +241,26 @@ _purify_comment(const char *input,
 int
 sl_pp_purify(const char *input,
              const struct sl_pp_purify_options *options,
-             char **output)
+             char **output,
+             char *errormsg,
+             unsigned int cberrormsg,
+             unsigned int *errorline)
 {
    struct out_buf obuf;
 
    obuf.out = NULL;
    obuf.len = 0;
    obuf.capacity = 0;
+   obuf.current_line = 1;
+   obuf.errormsg = errormsg;
+   obuf.cberrormsg = cberrormsg;
 
    for (;;) {
       unsigned int eaten;
 
       eaten = _purify_comment(input, &obuf);
       if (!eaten) {
+         *errorline = obuf.current_line;
          return -1;
       }
       input += eaten;

@@ -36,6 +36,9 @@ struct sl_pp_purify_options {
 int
 sl_pp_purify(const char *input,
              const struct sl_pp_purify_options *options,
-             char **output);
+             char **output,
+             char *errormsg,
+             unsigned int cberrormsg,
+             unsigned int *errorline);
 
 #endif /* SL_PP_PURIFY_H */
