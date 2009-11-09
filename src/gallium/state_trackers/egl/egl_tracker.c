@@ -167,8 +167,6 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 		goto err_screen;
 	dev->winsys = dev->screen->winsys;
 
-	driInitExtensions(NULL, NULL, GL_FALSE);
-
 	drm_update_res(dev);
 	res = dev->res;
 	if (res)

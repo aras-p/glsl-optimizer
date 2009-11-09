@@ -2,7 +2,7 @@ TOP = ../../../../../..
 GALLIUMDIR = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = EGL_r300.so
+LIBNAME = egl_r300.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/egl/libegldrm.a \
@@ -11,16 +11,28 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
-DRIVER_SOURCES =
+DRIVER_EXTRAS = -lm -lpthread -ldrm_radeon
 
-C_SOURCES = \
-	$(COMMON_GALLIUM_SOURCES) \
-	$(DRIVER_SOURCES)
+OBJECTS = dummy.o
 
-DRIVER_EXTRAS = -ldrm_radeon
+default: $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
-ASM_SOURCES = 
+$(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
+	@mkdir -p $(TOP)/$(LIB_DIR)
+	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR)
 
-include ../../Makefile.template
+$(LIBNAME): $(OBJECTS) $(GALLIUM_AUXILIARIES) $(PIPE_DRIVERS) Makefile
+	$(MKLIB) -noprefix -o $@ $(OBJECTS) \
+		-Wl,--whole-archive $(PIPE_DRIVERS) -Wl,--no-whole-archive \
+		-Wl,--start-group $(GALLIUM_AUXILIARIES) -Wl,--end-group \
+                 $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
+
+clean:
+	-rm -f *.o *.so *~
+
+depend:
 
 symlinks:
+
+install: $(LIBNAME)
+	$(MINSTALL) -m 755 $(LIBNAME) $(INSTALL_DIR)/$(LIB_DIR)
