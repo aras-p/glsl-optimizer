@@ -1686,6 +1686,10 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
     SETbit(r700->DB_RENDER_OVERRIDE.u32All, NOOP_CULL_DISABLE_bit);
+    if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+    {
+	    CLEARbit(r700->DB_RENDER_CONTROL.u32All, PERFECT_ZPASS_COUNTS_bit);
+    }
 
     r700->DB_ALPHA_TO_MASK.u32All = 0;
     SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET0_shift, ALPHA_TO_MASK_OFFSET0_mask);
