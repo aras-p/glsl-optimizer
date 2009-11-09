@@ -469,19 +469,11 @@ void xorg_composite(struct exa_context *exa,
       if (exa->transform.has_mask)
          mask_matrix = exa->transform.mask;
 
-#if 0
-      renderer_draw_textures(exa->renderer,
-                             pos, width, height,
-                             exa->bound_textures,
-                             exa->num_bound_samplers,
-                             src_matrix, mask_matrix);
-#else
       renderer_texture(exa->renderer,
                        pos, width, height,
                        exa->bound_textures,
                        exa->num_bound_samplers,
                        src_matrix, mask_matrix);
-#endif
    }
 }
 

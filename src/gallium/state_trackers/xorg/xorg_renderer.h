@@ -73,12 +73,4 @@ void renderer_texture(struct xorg_renderer *r,
 void renderer_draw_flush(struct xorg_renderer *r);
 
 
-void renderer_draw_textures(struct xorg_renderer *r,
-                            int *pos,
-                            int width, int height,
-                            struct pipe_texture **textures,
-                            int num_textures,
-                            float *src_matrix, float *mask_matrix);
-
-
 #endif
