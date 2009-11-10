@@ -1194,6 +1194,7 @@ void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
    struct gl_framebuffer *newDrawFb, *newReadFb;
+   struct gl_framebuffer *oldDrawFb, *oldReadFb;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1275,11 +1276,14 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    ASSERT(newDrawFb);
    ASSERT(newDrawFb != &DummyFramebuffer);
 
+   oldDrawFb = ctx->DrawBuffer;
+   oldReadFb = ctx->ReadBuffer;
+
    /*
     * OK, now bind the new Draw/Read framebuffers, if they're changing.
     */
    if (bindReadBuf) {
-      if (ctx->ReadBuffer == newReadFb) {
+      if (oldReadFb == newReadFb) {
          bindReadBuf = GL_FALSE; /* no change */
       }
       else {
@@ -1289,11 +1293,11 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    if (bindDrawBuf) {
-      if (ctx->DrawBuffer->Name != 0) {
+      if (oldDrawFb->Name != 0) {
          check_end_texture_render(ctx, ctx->DrawBuffer);
       }
 
-      if (ctx->DrawBuffer == newDrawFb) {
+      if (oldDrawFb == newDrawFb) {
          bindDrawBuf = GL_FALSE; /* no change */
       }
       else {
