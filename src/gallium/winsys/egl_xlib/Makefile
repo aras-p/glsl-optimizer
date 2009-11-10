@@ -29,13 +29,7 @@ WINSYS_OBJECTS = $(WINSYS_SOURCES:.c=.o)
 LIBS = \
 	$(GALLIUM_DRIVERS) \
 	$(GALLIUM_AUXILIARIES)
-
-# XXX temporary (should create a separate lib with the GL API funcs and
-# mesa code, as done for ES 1.x, 2.x, OpenVG, etc)
-UNUSED_LIBS = \
-	$(TOP)/src/mesa/libglapi.a \
-	$(TOP)/src/mesa/libmesagallium.a \
-
+LIB_DEPS = $(EGL_LIB_DEPS) -lm -lX11
 
 LOCAL_CFLAGS =
 
@@ -60,14 +54,15 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
 		-noprefix \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(WINSYS_OBJECTS) \
-		-Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive
+		-Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive \
+		$(LIB_DEPS)
 
 
-depend: $(ALL_SOURCES)
+depend: $(WINSYS_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend  # workaround oops on gutsy?!?
 	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(WINSYS_SOURCES) \
 		> /dev/null 2>/dev/null
 
 
