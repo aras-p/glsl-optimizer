@@ -41,4 +41,23 @@ sl_pp_purify(const char *input,
              unsigned int cberrormsg,
              unsigned int *errorline);
 
+struct sl_pp_purify_state {
+   struct sl_pp_purify_options options;
+   const char *input;
+   unsigned int current_line;
+   unsigned int inside_c_comment:1;
+};
+
+void
+sl_pp_purify_state_init(struct sl_pp_purify_state *state,
+                        const char *input,
+                        const struct sl_pp_purify_options *options);
+
+unsigned int
+sl_pp_purify_getc(struct sl_pp_purify_state *state,
+                  char *output,
+                  unsigned int *current_line,
+                  char *errormsg,
+                  unsigned int cberrormsg);
+
 #endif /* SL_PP_PURIFY_H */

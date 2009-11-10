@@ -114,6 +114,111 @@ _purify_backslash(const char *input,
 }
 
 
+static void
+_report_error(char *buf,
+              unsigned int cbbuf,
+              const char *msg,
+              ...)
+{
+   va_list args;
+
+   va_start(args, msg);
+   vsnprintf(buf, cbbuf, msg, args);
+   va_end(args);
+}
+
+
+void
+sl_pp_purify_state_init(struct sl_pp_purify_state *state,
+                        const char *input,
+                        const struct sl_pp_purify_options *options)
+{
+   state->options = *options;
+   state->input = input;
+   state->current_line = 1;
+   state->inside_c_comment = 0;
+}
+
+
+unsigned int
+_purify_comment(struct sl_pp_purify_state *state,
+                char *output,
+                unsigned int *current_line,
+                char *errormsg,
+                unsigned int cberrormsg)
+{
+   for (;;) {
+      unsigned int eaten;
+      char next;
+
+      eaten = _purify_backslash(state->input, &next, current_line);
+      state->input += eaten;
+      while (next == '*') {
+         eaten = _purify_backslash(state->input, &next, current_line);
+         state->input += eaten;
+         if (next == '/') {
+            *output = ' ';
+            state->inside_c_comment = 0;
+            return 1;
+         }
+      }
+      if (next == '\n') {
+         *output = '\n';
+         state->inside_c_comment = 1;
+         return 1;
+      }
+      if (next == '\0') {
+         _report_error(errormsg, cberrormsg, "expected `*/' but end of translation unit found");
+         return 0;
+      }
+   }
+}
+
+
+unsigned int
+sl_pp_purify_getc(struct sl_pp_purify_state *state,
+                  char *output,
+                  unsigned int *current_line,
+                  char *errormsg,
+                  unsigned int cberrormsg)
+{
+   unsigned int eaten;
+
+   if (state->inside_c_comment) {
+      return _purify_comment(state, output, current_line, errormsg, cberrormsg);
+   }
+
+   eaten = _purify_backslash(state->input, output, current_line);
+   state->input += eaten;
+   if (*output == '/') {
+      char next;
+      unsigned int next_line = *current_line;
+
+      eaten = _purify_backslash(state->input, &next, &next_line);
+      if (next == '/') {
+         state->input += eaten;
+         *current_line = next_line;
+
+         /* Replace a line comment with either a newline or nil. */
+         for (;;) {
+            eaten = _purify_backslash(state->input, &next, current_line);
+            state->input += eaten;
+            if (next == '\n' || next == '\0') {
+               *output = next;
+               return eaten;
+            }
+         }
+      } else if (next == '*') {
+         state->input += eaten;
+         *current_line = next_line;
+
+         return _purify_comment(state, output, current_line, errormsg, cberrormsg);
+      }
+   }
+   return eaten;
+}
+
+
 struct out_buf {
    char *out;
    unsigned int len;
@@ -122,19 +227,6 @@ struct out_buf {
    char *errormsg;
    unsigned int cberrormsg;
 };
-
-
-static void
-_report_error(struct out_buf *obuf,
-              const char *msg,
-              ...)
-{
-   va_list args;
-
-   va_start(args, msg);
-   vsnprintf(obuf->errormsg, obuf->cberrormsg, msg, args);
-   va_end(args);
-}
 
 
 static int
@@ -154,7 +246,7 @@ _out_buf_putc(struct out_buf *obuf,
 
       obuf->out = realloc(obuf->out, new_max);
       if (!obuf->out) {
-         _report_error(obuf, "out of memory");
+         _report_error(obuf->errormsg, obuf->cberrormsg, "out of memory");
          return -1;
       }
       obuf->capacity = new_max;
@@ -163,78 +255,6 @@ _out_buf_putc(struct out_buf *obuf,
    obuf->out[obuf->len++] = c;
 
    return 0;
-}
-
-
-static unsigned int
-_purify_comment(const char *input,
-                struct out_buf *obuf)
-{
-   unsigned int eaten;
-   char curr;
-
-   eaten = _purify_backslash(input, &curr, &obuf->current_line);
-   input += eaten;
-   if (curr == '/') {
-      char next;
-      unsigned int next_eaten;
-      unsigned int next_line = obuf->current_line;
-
-      next_eaten = _purify_backslash(input, &next, &next_line);
-      if (next == '/') {
-         eaten += next_eaten;
-         input += next_eaten;
-         obuf->current_line = next_line;
-
-         /* Replace a line comment with either a newline or nil. */
-         for (;;) {
-            next_eaten = _purify_backslash(input, &next, &obuf->current_line);
-            eaten += next_eaten;
-            input += next_eaten;
-            if (next == '\n' || next == '\0') {
-               if (_out_buf_putc(obuf, next)) {
-                  return 0;
-               }
-               return eaten;
-            }
-         }
-      } else if (next == '*') {
-         eaten += next_eaten;
-         input += next_eaten;
-         obuf->current_line = next_line;
-
-         /* Replace a block comment with a whitespace. */
-         for (;;) {
-            next_eaten = _purify_backslash(input, &next, &obuf->current_line);
-            eaten += next_eaten;
-            input += next_eaten;
-            while (next == '*') {
-               next_eaten = _purify_backslash(input, &next, &obuf->current_line);
-               eaten += next_eaten;
-               input += next_eaten;
-               if (next == '/') {
-                  if (_out_buf_putc(obuf, ' ')) {
-                     return 0;
-                  }
-                  return eaten;
-               }
-            }
-            if (next == '\n') {
-               if (_out_buf_putc(obuf, '\n')) {
-                  return 0;
-               }
-            }
-            if (next == '\0') {
-               _report_error(obuf, "expected `*/' but end of translation unit found");
-               return 0;
-            }
-         }
-      }
-   }
-   if (_out_buf_putc(obuf, curr)) {
-      return 0;
-   }
-   return eaten;
 }
 
 
@@ -247,6 +267,7 @@ sl_pp_purify(const char *input,
              unsigned int *errorline)
 {
    struct out_buf obuf;
+   struct sl_pp_purify_state state;
 
    obuf.out = NULL;
    obuf.len = 0;
@@ -255,17 +276,23 @@ sl_pp_purify(const char *input,
    obuf.errormsg = errormsg;
    obuf.cberrormsg = cberrormsg;
 
+   sl_pp_purify_state_init(&state, input, options);
+
    for (;;) {
       unsigned int eaten;
+      char c;
 
-      eaten = _purify_comment(input, &obuf);
+      eaten = sl_pp_purify_getc(&state, &c, &obuf.current_line, errormsg, cberrormsg);
       if (!eaten) {
          *errorline = obuf.current_line;
          return -1;
       }
-      input += eaten;
+      if (_out_buf_putc(&obuf, c)) {
+         *errorline = obuf.current_line;
+         return -1;
+      }
 
-      if (obuf.out[obuf.len - 1] == '\0') {
+      if (c == '\0') {
          break;
       }
    }
