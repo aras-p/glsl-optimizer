@@ -476,9 +476,9 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture);
    debug_printf("\tFormats: src(%s), mask(%s), dst(%s)\n",
-                render_format_name(pSrcPicture->format),
-                render_format_name(pMaskPicture->format),
-                render_format_name(pDstPicture->format));
+                pSrcPicture ? render_format_name(pSrcPicture->format) : "none",
+                pMaskPicture ? render_format_name(pMaskPicture->format) : "none",
+                pDstPicture ? render_format_name(pDstPicture->format) : "none");
 #endif
    if (!exa->pipe)
       XORG_FALLBACK("accle not enabled");
