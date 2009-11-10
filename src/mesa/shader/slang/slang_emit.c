@@ -195,6 +195,9 @@ alloc_node_storage(slang_emit_info *emitInfo, slang_ir_node *n,
    if (!n->Store) {
       assert(defaultSize > 0);
       n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, defaultSize);
+      if (!n->Store) {
+         return GL_FALSE;
+      }
    }
 
    /* now allocate actual register(s).  I.e. set n->Store->Index >= 0 */
@@ -799,7 +802,9 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
       emit(emitInfo, n->Children[0]->Children[0]);  /* A */
       emit(emitInfo, n->Children[0]->Children[1]);  /* B */
       emit(emitInfo, n->Children[1]);  /* C */
-      alloc_node_storage(emitInfo, n, -1);  /* dest */
+      if (alloc_node_storage(emitInfo, n, -1)) {  /* dest */
+         return NULL;
+      }
 
       inst = emit_instruction(emitInfo,
                               OPCODE_MAD,
@@ -820,7 +825,9 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
       emit(emitInfo, n->Children[0]);  /* A */
       emit(emitInfo, n->Children[1]->Children[0]);  /* B */
       emit(emitInfo, n->Children[1]->Children[1]);  /* C */
-      alloc_node_storage(emitInfo, n, -1);  /* dest */
+      if (!alloc_node_storage(emitInfo, n, -1)) {  /* dest */
+         return NULL;
+      }
 
       inst = emit_instruction(emitInfo,
                               OPCODE_MAD,
@@ -846,7 +853,9 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
    }
 
    /* result storage */
-   alloc_node_storage(emitInfo, n, -1);
+   if (!alloc_node_storage(emitInfo, n, -1)) {
+      return NULL;
+   }
 
    inst = emit_instruction(emitInfo,
                            info->InstOpcode,
@@ -1100,7 +1109,9 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
     * the intermediate result.  Use a temp register instead.
     */
    _mesa_bzero(&tmpNode, sizeof(tmpNode));
-   alloc_node_storage(emitInfo, &tmpNode, n->Store->Size);
+   if (!alloc_node_storage(emitInfo, &tmpNode, n->Store->Size)) {
+      return NULL;
+   }
 
    /* tmp = max(ch[0], ch[1]) */
    inst = emit_instruction(emitInfo, OPCODE_MAX,
