@@ -83,6 +83,10 @@ static void init_registers( struct brw_wm_compile *c )
    for (j = 0; j < c->nr_creg; j++) 
       prealloc_reg(c, &c->creg[j], reg++);
 
+   reg++;                       /* XXX: skip over position output */
+
+   /* XXX: currently just hope the VS outputs line up with FS inputs:
+    */
    for (j = 0; j < c->key.vp_nr_outputs; j++)
       prealloc_reg(c, &c->payload.input_interp[j], reg++);
 
