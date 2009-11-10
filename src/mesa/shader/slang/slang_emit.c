@@ -802,7 +802,7 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
       emit(emitInfo, n->Children[0]->Children[0]);  /* A */
       emit(emitInfo, n->Children[0]->Children[1]);  /* B */
       emit(emitInfo, n->Children[1]);  /* C */
-      if (alloc_node_storage(emitInfo, n, -1)) {  /* dest */
+      if (!alloc_node_storage(emitInfo, n, -1)) {  /* dest */
          return NULL;
       }
 
