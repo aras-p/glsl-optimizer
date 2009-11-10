@@ -53,6 +53,7 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
    drm_intel_bo *const_buffer;
+   int i;
 
    /* BRW_NEW_VERTEX_PROGRAM */
    if (!vp->use_const_buffer)
@@ -62,7 +63,16 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
 				     size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
-   dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
+
+   /* Updates the ParamaterValues[i] pointers for all parameters of the
+    * basic type of PROGRAM_STATE_VAR.
+    */
+   _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
+
+   for (i = 0; i < params->NumParameters; i++) {
+      dri_bo_subdata(const_buffer, i * 4 * sizeof(float), 4 * sizeof(float),
+		     params->ParameterValues[i]);
+   }
 
    return const_buffer;
 }
