@@ -912,6 +912,7 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
    case PROGRAM_ENV_PARAM:
+   case PROGRAM_LOCAL_PARAM:
       if (c->vp->use_const_buffer) {
          return get_constant(c, inst, argIndex);
       }
@@ -930,7 +931,6 @@ get_src_reg( struct brw_vs_compile *c,
       /* this is a normal case since we loop over all three src args */
       return brw_null_reg();
 
-   case PROGRAM_LOCAL_PARAM: 
    case PROGRAM_WRITE_ONLY:
    default:
       assert(0);
