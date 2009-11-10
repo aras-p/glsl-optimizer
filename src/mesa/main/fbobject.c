@@ -1149,6 +1149,11 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
 }
 
 
+/**
+ * Check if any of the attachments of the given framebuffer are textures
+ * (render to texture).  Call ctx->Driver.RenderTexture() for such
+ * attachments.
+ */
 static void
 check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 {
