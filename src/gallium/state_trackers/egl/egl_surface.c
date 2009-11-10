@@ -35,34 +35,62 @@ drm_find_mode(drmModeConnectorPtr connector, _EGLMode *mode)
 }
 
 static struct st_framebuffer *
-drm_create_framebuffer(const __GLcontextModes *visual,
+drm_create_framebuffer(struct pipe_screen *screen,
+                       const __GLcontextModes *visual,
                        unsigned width,
                        unsigned height,
                        void *priv)
 {
-	enum pipe_format colorFormat, depthFormat, stencilFormat;
+	enum pipe_format color_format, depth_stencil_format;
+	boolean d_depth_bits_last;
+	boolean ds_depth_bits_last;
 
-	if (visual->redBits == 5)
-		colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
-	else
-		colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+	d_depth_bits_last =
+		screen->is_format_supported(screen, PIPE_FORMAT_X8Z24_UNORM,
+		                            PIPE_TEXTURE_2D,
+		                            PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+	ds_depth_bits_last =
+		screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+		                            PIPE_TEXTURE_2D,
+		                            PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
 
-	if (visual->depthBits == 16)
-		depthFormat = PIPE_FORMAT_Z16_UNORM;
-	else if (visual->depthBits == 24)
-		depthFormat = PIPE_FORMAT_S8Z24_UNORM;
-	else
-		depthFormat = PIPE_FORMAT_NONE;
+	if (visual->redBits == 8) {
+		if (visual->alphaBits == 8)
+			color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+		else
+			color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	} else {
+		color_format = PIPE_FORMAT_R5G6B5_UNORM;
+	}
 
-	if (visual->stencilBits == 8)
-		stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
-	else
-		stencilFormat = PIPE_FORMAT_NONE;
+	switch(visual->depthBits) {
+		default:
+		case 0:
+			depth_stencil_format = PIPE_FORMAT_NONE;
+			break;
+		case 16:
+			depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
+			break;
+		case 24:
+			if (visual->stencilBits == 0) {
+				depth_stencil_format = (d_depth_bits_last) ?
+					PIPE_FORMAT_X8Z24_UNORM:
+					PIPE_FORMAT_Z24X8_UNORM;
+			} else {
+				depth_stencil_format = (ds_depth_bits_last) ?
+					PIPE_FORMAT_S8Z24_UNORM:
+					PIPE_FORMAT_Z24S8_UNORM;
+			}
+			break;
+		case 32:
+			depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
+			break;
+	}
 
 	return st_create_framebuffer(visual,
-	                             colorFormat,
-	                             depthFormat,
-	                             stencilFormat,
+	                             color_format,
+	                             depth_stencil_format,
+	                             depth_stencil_format,
 	                             width,
 	                             height,
 	                             priv);
@@ -176,6 +204,7 @@ _EGLSurface *
 drm_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                            const EGLint *attrib_list)
 {
+	struct drm_device *dev = lookup_drm_device(dpy);
 	int i;
 	int width = -1;
 	int height = -1;
@@ -212,9 +241,8 @@ drm_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 	surf->h = height;
 
 	visual = drm_visual_from_config(conf);
-	surf->stfb = drm_create_framebuffer(visual,
-	                                    width,
-	                                    height,
+	surf->stfb = drm_create_framebuffer(dev->screen, visual,
+	                                    width, height,
 	                                    (void*)surf);
 	drm_visual_modes_destroy(visual);
 
