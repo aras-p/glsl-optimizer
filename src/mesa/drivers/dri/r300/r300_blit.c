@@ -218,6 +218,8 @@ static uint32_t mesa_format_to_us_format(gl_format mesa_format)
 {
     switch(mesa_format)
     {
+        case MESA_FORMAT_S8_Z24:
+        case MESA_FORMAT_X8_Z24:
         case MESA_FORMAT_RGBA8888: // x
             return EASY_US_FORMAT(R500_OUT_FMT_C4_8, A, B, G, R, 0);
         case MESA_FORMAT_RGB565: // x

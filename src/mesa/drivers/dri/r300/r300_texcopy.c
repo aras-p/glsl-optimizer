@@ -49,10 +49,8 @@ do_copy_texsubimage(GLcontext *ctx,
     struct r300_context *r300 = R300_CONTEXT(ctx);
     struct radeon_renderbuffer *rrb;
 
-    if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) ||
-        _mesa_get_format_bits(timg->base.TexFormat, GL_STENCIL_BITS)) {
+    if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
         rrb = radeon_get_depthbuffer(&r300->radeon);
-        return GL_FALSE;
     } else {
         rrb = radeon_get_colorbuffer(&r300->radeon);
     }
