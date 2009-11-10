@@ -1193,7 +1193,7 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-   struct gl_framebuffer *newFb, *newFbread;
+   struct gl_framebuffer *newDrawFb, *newReadFb;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1242,74 +1242,73 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
-      newFb = _mesa_lookup_framebuffer(ctx, framebuffer);
-      if (newFb == &DummyFramebuffer) {
+      newDrawFb = _mesa_lookup_framebuffer(ctx, framebuffer);
+      if (newDrawFb == &DummyFramebuffer) {
          /* ID was reserved, but no real framebuffer object made yet */
-         newFb = NULL;
+         newDrawFb = NULL;
       }
-      else if (!newFb && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newDrawFb && ctx->Extensions.ARB_framebuffer_object) {
          /* All FBO IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
          return;
       }
 
-      if (!newFb) {
+      if (!newDrawFb) {
 	 /* create new framebuffer object */
-	 newFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
-	 if (!newFb) {
+	 newDrawFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
+	 if (!newDrawFb) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindFramebufferEXT");
 	    return;
 	 }
-         _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newFb);
+         _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newDrawFb);
       }
-      newFbread = newFb;
+      newReadFb = newDrawFb;
    }
    else {
       /* Binding the window system framebuffer (which was originally set
        * with MakeCurrent).
        */
-      newFb = ctx->WinSysDrawBuffer;
-      newFbread = ctx->WinSysReadBuffer;
+      newDrawFb = ctx->WinSysDrawBuffer;
+      newReadFb = ctx->WinSysReadBuffer;
    }
 
-   ASSERT(newFb);
-   ASSERT(newFb != &DummyFramebuffer);
+   ASSERT(newDrawFb);
+   ASSERT(newDrawFb != &DummyFramebuffer);
 
    /*
     * OK, now bind the new Draw/Read framebuffers, if they're changing.
     */
    if (bindReadBuf) {
-      if (ctx->ReadBuffer == newFbread) {
+      if (ctx->ReadBuffer == newReadFb) {
          bindReadBuf = GL_FALSE; /* no change */
       }
       else {
          FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
+         _mesa_reference_framebuffer(&ctx->ReadBuffer, newReadFb);
       }
    }
 
    if (bindDrawBuf) {
-      /* check if old FB had any texture attachments */
       if (ctx->DrawBuffer->Name != 0) {
          check_end_texture_render(ctx, ctx->DrawBuffer);
       }
 
-      if (ctx->DrawBuffer == newFb) {
+      if (ctx->DrawBuffer == newDrawFb) {
          bindDrawBuf = GL_FALSE; /* no change */
       }
       else {
          FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
+         _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
       }
 
-      if (newFb->Name != 0) {
+      if (newDrawFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
-         check_begin_texture_render(ctx, newFb);
+         check_begin_texture_render(ctx, newDrawFb);
       }
    }
 
    if ((bindDrawBuf || bindReadBuf) && ctx->Driver.BindFramebuffer) {
-      ctx->Driver.BindFramebuffer(ctx, target, newFb, newFbread);
+      ctx->Driver.BindFramebuffer(ctx, target, newDrawFb, newReadFb);
    }
 }
 
