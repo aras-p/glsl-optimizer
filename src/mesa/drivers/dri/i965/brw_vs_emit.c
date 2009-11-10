@@ -331,63 +331,65 @@ static void unalias3( struct brw_vs_compile *c,
    }
 }
 
-static void emit_sop( struct brw_compile *p,
+static void emit_sop( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1, 
 		      GLuint cond)
 {
+   struct brw_compile *p = &c->func;
+
    brw_MOV(p, dst, brw_imm_f(0.0f));
    brw_CMP(p, brw_null_reg(), cond, arg0, arg1);
    brw_MOV(p, dst, brw_imm_f(1.0f));
    brw_set_predicate_control_flag_value(p, 0xff);
 }
 
-static void emit_seq( struct brw_compile *p,
+static void emit_seq( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_EQ);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_EQ);
 }
 
-static void emit_sne( struct brw_compile *p,
+static void emit_sne( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_NEQ);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_NEQ);
 }
-static void emit_slt( struct brw_compile *p, 
+static void emit_slt( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_L);
-}
-
-static void emit_sle( struct brw_compile *p, 
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1 )
-{
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_LE);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_L);
 }
 
-static void emit_sgt( struct brw_compile *p, 
+static void emit_sle( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_G);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_LE);
 }
 
-static void emit_sge( struct brw_compile *p, 
+static void emit_sgt( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-  emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_GE);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_G);
+}
+
+static void emit_sge( struct brw_vs_compile *c,
+		      struct brw_reg dst,
+		      struct brw_reg arg0,
+		      struct brw_reg arg1 )
+{
+  emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_GE);
 }
 
 static void emit_max( struct brw_compile *p, 
@@ -1453,25 +1455,25 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
 
       case OPCODE_SEQ:
-         emit_seq(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_seq);
          break;
       case OPCODE_SIN:
 	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_SNE:
-         emit_sne(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sne);
          break;
       case OPCODE_SGE:
-	 emit_sge(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sge);
 	 break;
       case OPCODE_SGT:
-         emit_sgt(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sgt);
          break;
       case OPCODE_SLT:
-	 emit_slt(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_slt);
 	 break;
       case OPCODE_SLE:
-         emit_sle(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sle);
          break;
       case OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));
