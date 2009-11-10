@@ -24,10 +24,12 @@ struct xorg_renderer {
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
 
-   float vertices[BUF_SIZE];
-   int num_vertices;
+   float buffer[BUF_SIZE];
+   int buffer_size;
 
-   int num_attributes;
+   /* number of attributes per vertex for the current
+    * draw operation */
+   int attrs_per_vertex;
 };
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);

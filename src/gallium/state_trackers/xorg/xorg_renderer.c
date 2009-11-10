@@ -51,10 +51,10 @@ renderer_buffer_create(struct xorg_renderer *r)
 {
    struct pipe_buffer *buf =
       pipe_user_buffer_create(r->pipe->screen,
-                              r->vertices,
+                              r->buffer,
                               sizeof(float)*
-                              r->num_vertices);
-   r->num_vertices = 0;
+                              r->buffer_size);
+   r->buffer_size = 0;
 
    return buf;
 }
@@ -64,9 +64,9 @@ renderer_draw(struct xorg_renderer *r)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_buffer *buf = 0;
-   int num_verts = r->num_vertices/(r->num_attributes * NUM_COMPONENTS);
+   int num_verts = r->buffer_size/(r->attrs_per_vertex * NUM_COMPONENTS);
 
-   if (!r->num_vertices)
+   if (!r->buffer_size)
       return;
 
    buf = renderer_buffer_create(r);
@@ -76,7 +76,7 @@ renderer_draw(struct xorg_renderer *r)
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
                               num_verts,  /* verts */
-                              r->num_attributes); /* attribs/vert */
+                              r->attrs_per_vertex); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
    }
@@ -86,8 +86,8 @@ static INLINE void
 renderer_draw_conditional(struct xorg_renderer *r,
                           int next_batch)
 {
-   if (r->num_vertices + next_batch >= BUF_SIZE ||
-       (next_batch == 0 && r->num_vertices)) {
+   if (r->buffer_size + next_batch >= BUF_SIZE ||
+       (next_batch == 0 && r->buffer_size)) {
       renderer_draw(r);
    }
 }
@@ -108,7 +108,7 @@ add_vertex_color(struct xorg_renderer *r,
                  float x, float y,
                  float color[4])
 {
-   float *vertex = r->vertices + r->num_vertices;
+   float *vertex = r->buffer + r->buffer_size;
 
    vertex[0] = x;
    vertex[1] = y;
@@ -120,14 +120,14 @@ add_vertex_color(struct xorg_renderer *r,
    vertex[6] = color[2]; /*b*/
    vertex[7] = color[3]; /*a*/
 
-   r->num_vertices += 8;
+   r->buffer_size += 8;
 }
 
 static INLINE void
 add_vertex_1tex(struct xorg_renderer *r,
                 float x, float y, float s, float t)
 {
-   float *vertex = r->vertices + r->num_vertices;
+   float *vertex = r->buffer + r->buffer_size;
 
    vertex[0] = x;
    vertex[1] = y;
@@ -139,7 +139,7 @@ add_vertex_1tex(struct xorg_renderer *r,
    vertex[6] = 0.f; /*r*/
    vertex[7] = 1.f; /*q*/
 
-   r->num_vertices += 8;
+   r->buffer_size += 8;
 }
 
 static void
@@ -199,7 +199,7 @@ add_vertex_2tex(struct xorg_renderer *r,
                 float x, float y,
                 float s0, float t0, float s1, float t1)
 {
-   float *vertex = r->vertices + r->num_vertices;
+   float *vertex = r->buffer + r->buffer_size;
 
    vertex[0] = x;
    vertex[1] = y;
@@ -216,7 +216,7 @@ add_vertex_2tex(struct xorg_renderer *r,
    vertex[10] = 0.f; /*r*/
    vertex[11] = 1.f; /*q*/
 
-   r->num_vertices += 12;
+   r->buffer_size += 12;
 }
 
 static void
@@ -861,8 +861,8 @@ void renderer_draw_yuv(struct xorg_renderer *r,
 
 void renderer_begin_solid(struct xorg_renderer *r)
 {
-   r->num_vertices = 0;
-   r->num_attributes = 2;
+   r->buffer_size = 0;
+   r->attrs_per_vertex = 2;
 }
 
 void renderer_solid(struct xorg_renderer *r,
@@ -895,8 +895,8 @@ void renderer_begin_textures(struct xorg_renderer *r,
                              struct pipe_texture **textures,
                              int num_textures)
 {
-   r->num_attributes = 1 + num_textures;
-   r->num_vertices = 0;
+   r->attrs_per_vertex = 1 + num_textures;
+   r->buffer_size = 0;
 }
 
 void renderer_texture(struct xorg_renderer *r,
@@ -923,7 +923,7 @@ void renderer_texture(struct xorg_renderer *r,
    }
 #endif
 
-   switch(r->num_attributes) {
+   switch(r->attrs_per_vertex) {
    case 2:
       renderer_draw_conditional(r, 4 * 8);
       add_vertex_data1(r,
