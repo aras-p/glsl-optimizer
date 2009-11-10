@@ -112,27 +112,32 @@ static const char *render_format_name(int format)
 #endif
 
 static void
-exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
+exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_format)
 {
     switch (depth) {
     case 32:
 	*format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	*picture_format = PICT_a8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 24:
 	*format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	*picture_format = PICT_x8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 16:
 	*format = PIPE_FORMAT_R5G6B5_UNORM;
+	*picture_format = PICT_r5g6b5;
 	assert(*bbp == 16);
 	break;
     case 15:
 	*format = PIPE_FORMAT_A1R5G5B5_UNORM;
+	*picture_format = PICT_x1r5g5b5;
 	assert(*bbp == 16);
 	break;
     case 8:
 	*format = PIPE_FORMAT_L8_UNORM;
+	*picture_format = PICT_a8;
 	assert(*bbp == 8);
 	break;
     case 4:
@@ -492,6 +497,11 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
       XORG_FALLBACK("pDst format: %s", pf_name(priv->tex->format));
 
+   if (priv->picture_format != pDstPicture->format)
+      XORG_FALLBACK("pDst pic_format: %s != %s",
+                    render_format_name(priv->picture_format),
+                    render_format_name(pDstPicture->format));
+
    if (pSrc) {
       priv = exaGetPixmapDriverPrivate(pSrc);
       if (!priv || !priv->tex)
@@ -501,6 +511,11 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
          XORG_FALLBACK("pSrc format: %s", pf_name(priv->tex->format));
+
+      if (priv->picture_format != pSrcPicture->format)
+         XORG_FALLBACK("pSrc pic_format: %s != %s",
+                       render_format_name(priv->picture_format),
+                       render_format_name(pSrcPicture->format));
    }
 
    if (pMask) {
@@ -512,6 +527,11 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
          XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
+
+      if (priv->picture_format != pMaskPicture->format)
+         XORG_FALLBACK("pMask pic_format: %s != %s",
+                       render_format_name(priv->picture_format),
+                       render_format_name(pMaskPicture->format));
    }
 
    return ACCEL_ENABLED &&
@@ -702,7 +722,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
-	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
+	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
 	pf_get_block(template.format, &template.block);
 	template.width[0] = width;
 	template.height[0] = height;
@@ -777,10 +797,11 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     modesettingPtr ms = modesettingPTR(pScrn);
     struct exa_context *exa = ms->exa;
     struct pipe_texture template;
+    int dummy;
 
     memset(&template, 0, sizeof(template));
     template.target = PIPE_TEXTURE_2D;
-    exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
+    exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &dummy);
     pf_get_block(template.format, &template.block);
     template.width[0] = width;
     template.height[0] = height;

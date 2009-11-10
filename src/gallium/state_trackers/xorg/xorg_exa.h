@@ -43,6 +43,8 @@ struct exa_pixmap_priv
    int flags;
    int tex_flags;
 
+   int picture_format;
+
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;
 
