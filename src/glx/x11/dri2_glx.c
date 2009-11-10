@@ -47,6 +47,7 @@
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
+#include "../../mesa/drivers/dri/common/dri_util.h"
 
 #undef DRI2_MINOR
 #define DRI2_MINOR 1
@@ -83,6 +84,7 @@ struct __GLXDRIdrawablePrivateRec
    int width, height;
    int have_back;
    int have_fake_front;
+   int swap_interval;
 };
 
 static void dri2WaitX(__GLXDRIdrawable * pdraw);
@@ -438,6 +440,23 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    return pdraw->buffers;
 }
 
+static void
+dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
+{
+   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+
+   DRI2SwapInterval(priv->base.psc->dpy, pdraw->xDrawable, interval);
+   priv->swap_interval = interval;
+}
+
+static unsigned int
+dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
+{
+   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+
+  return priv->swap_interval;
+}
+
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
    {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
    dri2GetBuffers,
@@ -559,6 +578,8 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->getDrawableMSC = dri2DrawableGetMSC;
    psp->waitForMSC = dri2WaitForMSC;
    psp->waitForSBC = dri2WaitForSBC;
+   psp->setSwapInterval = dri2SetSwapInterval;
+   psp->getSwapInterval = dri2GetSwapInterval;
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
     * available.*/

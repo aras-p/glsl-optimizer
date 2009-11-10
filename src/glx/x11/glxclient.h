@@ -148,6 +148,8 @@ struct __GLXDRIscreenRec {
 		     int64_t *msc, int64_t *sbc);
    int (*waitForSBC)(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 		     int64_t *msc, int64_t *sbc);
+   void (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
+   int (*getSwapInterval)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec

@@ -390,12 +390,9 @@ dri2BindExtensions(__GLXscreenConfigs *psc)
       }
 #endif
 
-#ifdef __DRI2_MEDIA_STREAM_COUNTER
-      if (strcmp(extensions[i]->name, __DRI2_MEDIA_STREAM_COUNTER) == 0) {
-	 psc->msc = (__DRI2mediaStreamCounterExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      }
-#endif
+      __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
+      __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
+      __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
 
 #ifdef __DRI2_FLUSH
       if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {

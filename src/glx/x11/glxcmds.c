@@ -1884,6 +1884,7 @@ __glXSwapIntervalSGI(int interval)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
+   __GLXscreenConfigs *psc;
    Display *dpy;
    CARD32 *interval_ptr;
    CARD8 opcode;
@@ -1912,6 +1913,16 @@ __glXSwapIntervalSGI(int interval)
       }
    }
 #endif
+   psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
+
+   if (gc->driContext && psc->driScreen && psc->driScreen->setSwapInterval) {
+      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
+						  gc->currentDrawable,
+						  NULL);
+      psc->driScreen->setSwapInterval(pdraw, interval);
+      return 0;
+   }
+
    dpy = gc->currentDpy;
    opcode = __glXSetupForCommand(dpy);
    if (!opcode) {
@@ -1943,13 +1954,13 @@ __glXSwapIntervalSGI(int interval)
 static int
 __glXSwapIntervalMESA(unsigned int interval)
 {
-#ifdef __DRI_SWAP_CONTROL
    GLXContext gc = __glXGetCurrentContext();
 
    if (interval < 0) {
       return GLX_BAD_VALUE;
    }
 
+#ifdef __DRI_SWAP_CONTROL
    if (gc != NULL && gc->driContext) {
       __GLXscreenConfigs *const psc = GetGLXScreenConfigs(gc->currentDpy,
                                                           gc->screen);
@@ -1963,9 +1974,19 @@ __glXSwapIntervalMESA(unsigned int interval)
          }
       }
    }
-#else
-   (void) interval;
 #endif
+
+   if (gc != NULL && gc->driContext) {
+      __GLXscreenConfigs *psc;
+
+      psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
+      if (psc->driScreen && psc->driScreen->setSwapInterval) {
+         __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
+						     gc->currentDrawable, NULL);
+	 psc->driScreen->setSwapInterval(pdraw, interval);
+	 return 0;
+      }
+   }
 
    return GLX_BAD_CONTEXT;
 }
@@ -1990,6 +2011,16 @@ __glXGetSwapIntervalMESA(void)
       }
    }
 #endif
+   if (gc != NULL && gc->driContext) {
+      __GLXscreenConfigs *psc;
+
+      psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
+      if (psc->driScreen && psc->driScreen->getSwapInterval) {
+         __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
+						     gc->currentDrawable, NULL);
+	 return psc->driScreen->getSwapInterval(pdraw);
+      }
+   }
 
    return 0;
 }

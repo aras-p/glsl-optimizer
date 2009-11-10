@@ -100,4 +100,7 @@ extern Bool
 DRI2WaitSBC(Display *dpy, XID drawable, CARD64 target_sbc, CARD64 *ust,
 	    CARD64 *msc, CARD64 *sbc);
 
+extern void
+DRI2SwapInterval(Display *dpy, XID drawable, int interval);
+
 #endif

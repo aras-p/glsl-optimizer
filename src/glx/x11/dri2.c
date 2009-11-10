@@ -537,4 +537,21 @@ Bool DRI2WaitSBC(Display *dpy, XID drawable, CARD64 target_sbc, CARD64 *ust,
     return True;
 }
 
+void DRI2SwapInterval(Display *dpy, XID drawable, int interval)
+{
+    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+    xDRI2SwapIntervalReq *req;
+
+    XextSimpleCheckExtension (dpy, info, dri2ExtensionName);
+
+    LockDisplay(dpy);
+    GetReq(DRI2SwapInterval, req);
+    req->reqType = info->codes->major_opcode;
+    req->dri2ReqType = X_DRI2SwapInterval;
+    req->drawable = drawable;
+    req->interval = interval;
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
+
 #endif /* GLX_DIRECT_RENDERING */
