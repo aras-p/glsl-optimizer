@@ -1254,7 +1254,9 @@ emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Opcode == IR_RETURN);
    assert(n->Label);
    inst = new_instruction(emitInfo, OPCODE_RET);
-   inst->DstReg.CondMask = COND_TR;  /* always return */
+   if (inst) {
+      inst->DstReg.CondMask = COND_TR;  /* always return */
+   }
    return inst;
 }
 
