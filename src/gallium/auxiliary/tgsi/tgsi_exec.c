@@ -1811,8 +1811,8 @@ exec_declaration(
             break;
 
          default:
-            eval = NULL;
             assert( 0 );
+            return;
          }
 
          if( mask == TGSI_WRITEMASK_XYZW ) {
