@@ -202,7 +202,7 @@ struct brw_wm_compile {
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
     */
-   struct prog_instruction prog_instructions[BRW_WM_MAX_INSN];
+   struct prog_instruction *prog_instructions;
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
@@ -213,7 +213,7 @@ struct brw_wm_compile {
    struct prog_src_register pixel_w;
 
 
-   struct brw_wm_value vreg[BRW_WM_MAX_VREG];
+   struct brw_wm_value *vreg;
    GLuint nr_vreg;
 
    struct brw_wm_value creg[BRW_WM_MAX_PARAM];
@@ -230,10 +230,10 @@ struct brw_wm_compile {
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
 
-   struct brw_wm_ref refs[BRW_WM_MAX_REF];
+   struct brw_wm_ref *refs;
    GLuint nr_refs;
 
-   struct brw_wm_instruction instruction[BRW_WM_MAX_INSN];
+   struct brw_wm_instruction *instruction;
    GLuint nr_insns;
 
    struct brw_wm_constref constref[BRW_WM_MAX_CONST];

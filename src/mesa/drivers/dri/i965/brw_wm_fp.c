@@ -182,6 +182,8 @@ static void release_temp( struct brw_wm_compile *c, struct prog_dst_register tem
 static struct prog_instruction *get_fp_inst(struct brw_wm_compile *c)
 {
    assert(c->nr_fp_insns < BRW_WM_MAX_INSN);
+   memset(&c->prog_instructions[c->nr_fp_insns], 0,
+	  sizeof(*c->prog_instructions));
    return &c->prog_instructions[c->nr_fp_insns++];
 }
 
