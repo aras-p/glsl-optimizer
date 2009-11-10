@@ -358,7 +358,10 @@ brw_create_constant_surface( struct brw_context *brw,
 			 NULL, NULL);
 
    if (key->bo) {
-      /* Emit relocation to surface contents */
+      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
+       * bspec ("Data Cache") says that the data cache does not exist as
+       * a separate cache and is just the sampler cache.
+       */
       dri_bo_emit_reloc(bo,
 			I915_GEM_DOMAIN_SAMPLER, 0,
 			0,
