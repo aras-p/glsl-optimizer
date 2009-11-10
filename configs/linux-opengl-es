@@ -7,7 +7,7 @@ CONFIG_NAME = linux-opengl-es
 # Directories to build
 LIB_DIR = lib
 SRC_DIRS = egl mesa/es gallium gallium/winsys
-PROGRAM_DIRS = es1/xegl es2/xegl
+PROGRAM_DIRS = es1/screen es1/xegl es2/xegl
 
 # no mesa or egl drivers
 DRIVER_DIRS =
@@ -19,3 +19,9 @@ GALLIUM_DRIVERS_DIRS = softpipe
 GALLIUM_WINSYS_DIRS = egl_xlib
 # and libGLES*.so
 GALLIUM_STATE_TRACKERS_DIRS = es
+
+# build egl_i915.so
+GALLIUM_DRIVERS_DIRS += trace i915
+GALLIUM_STATE_TRACKERS_DIRS += egl
+GALLIUM_WINSYS_DIRS += drm
+GALLIUM_WINSYS_DRM_DIRS = intel
