@@ -76,7 +76,7 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
    for (i = 0; i < 4; ++i) {
       uint8_t c = float_to_ubyte(blend_color->color[i]);
       for (j = 0; j < 16; ++j)
-         llvmpipe->jit_context.blend_color[i*4 + j] = c;
+         llvmpipe->jit_context.blend_color[i*16 + j] = c;
    }
 }
 
