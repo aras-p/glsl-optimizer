@@ -51,6 +51,65 @@
 /*
  * Helper functions
  */
+#if DEBUG_PRINT
+struct render_format_str {
+   int format;
+   const char *name;
+};
+static const struct render_format_str formats_info[] =
+{
+   {PICT_a2r10g10b10, "PICT_a2r10g10b10"},
+   {PICT_x2r10g10b10, "PICT_x2r10g10b10"},
+   {PICT_a2b10g10r10, "PICT_a2b10g10r10"},
+   {PICT_x2b10g10r10, "PICT_x2b10g10r10"},
+   {PICT_a8r8g8b8, "PICT_a8r8g8b8"},
+   {PICT_x8r8g8b8, "PICT_x8r8g8b8"},
+   {PICT_a8b8g8r8, "PICT_a8b8g8r8"},
+   {PICT_x8b8g8r8, "PICT_x8b8g8r8"},
+   {PICT_b8g8r8a8, "PICT_b8g8r8a8"},
+   {PICT_b8g8r8x8, "PICT_b8g8r8x8"},
+   {PICT_r8g8b8, "PICT_r8g8b8"},
+   {PICT_b8g8r8, "PICT_b8g8r8"},
+   {PICT_r5g6b5, "PICT_r5g6b5"},
+   {PICT_b5g6r5, "PICT_b5g6r5"},
+   {PICT_a1r5g5b5, "PICT_a1r5g5b5"},
+   {PICT_x1r5g5b5, "PICT_x1r5g5b5"},
+   {PICT_a1b5g5r5, "PICT_a1b5g5r5"},
+   {PICT_x1b5g5r5, "PICT_x1b5g5r5"},
+   {PICT_a4r4g4b4, "PICT_a4r4g4b4"},
+   {PICT_x4r4g4b4, "PICT_x4r4g4b4"},
+   {PICT_a4b4g4r4, "PICT_a4b4g4r4"},
+   {PICT_x4b4g4r4, "PICT_x4b4g4r4"},
+   {PICT_a8, "PICT_a8"},
+   {PICT_r3g3b2, "PICT_r3g3b2"},
+   {PICT_b2g3r3, "PICT_b2g3r3"},
+   {PICT_a2r2g2b2, "PICT_a2r2g2b2"},
+   {PICT_a2b2g2r2, "PICT_a2b2g2r2"},
+   {PICT_c8, "PICT_c8"},
+   {PICT_g8, "PICT_g8"},
+   {PICT_x4a4, "PICT_x4a4"},
+   {PICT_x4c4, "PICT_x4c4"},
+   {PICT_x4g4, "PICT_x4g4"},
+   {PICT_a4, "PICT_a4"},
+   {PICT_r1g2b1, "PICT_r1g2b1"},
+   {PICT_b1g2r1, "PICT_b1g2r1"},
+   {PICT_a1r1g1b1, "PICT_a1r1g1b1"},
+   {PICT_a1b1g1r1, "PICT_a1b1g1r1"},
+   {PICT_c4, "PICT_c4"},
+   {PICT_g4, "PICT_g4"},
+   {PICT_a1, "PICT_a1"},
+   {PICT_g1, "PICT_g1"}
+};
+static const char *render_format_name(int format)
+{
+   int i = 0;
+   for (i = 0; i < sizeof(formats_info)/sizeof(formats_info[0]); ++i) {
+      if (formats_info[i].format == format)
+         return formats_info[i].name;
+   }
+   return NULL;
+}
+#endif
 
 static void
 exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
@@ -416,6 +475,10 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 #if DEBUG_PRINT
    debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture);
+   debug_printf("\tFormats: src(%s), mask(%s), dst(%s)\n",
+                render_format_name(pSrcPicture->format),
+                render_format_name(pMaskPicture->format),
+                render_format_name(pDstPicture->format));
 #endif
    if (!exa->pipe)
       XORG_FALLBACK("accle not enabled");
