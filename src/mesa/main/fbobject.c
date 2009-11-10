@@ -1288,26 +1288,28 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       }
       else {
          FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
          _mesa_reference_framebuffer(&ctx->ReadBuffer, newReadFb);
       }
    }
 
    if (bindDrawBuf) {
-      if (oldDrawFb->Name != 0) {
-         check_end_texture_render(ctx, ctx->DrawBuffer);
-      }
-
       if (oldDrawFb == newDrawFb) {
          bindDrawBuf = GL_FALSE; /* no change */
       }
       else {
          FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
-      }
 
-      if (newDrawFb->Name != 0) {
-         /* check if newly bound framebuffer has any texture attachments */
-         check_begin_texture_render(ctx, newDrawFb);
+         if (oldDrawFb->Name != 0) {
+            check_end_texture_render(ctx, oldDrawFb);
+         }
+
+         if (newDrawFb->Name != 0) {
+            /* check if newly bound framebuffer has any texture attachments */
+            check_begin_texture_render(ctx, newDrawFb);
+         }
+
+         _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
       }
    }
 
