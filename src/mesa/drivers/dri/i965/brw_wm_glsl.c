@@ -1850,7 +1850,7 @@ static void emit_txb(struct brw_wm_compile *c,
     brw_MOV(p, brw_message_reg(6), brw_imm_f(0));    /* ref (unused?) */
 
     if (BRW_IS_IGDNG(p->brw)) {
-        msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_IGDNG;
+        msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG;
     } else {
         /* Does it work well on SIMD8? */
         msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
@@ -1932,9 +1932,9 @@ static void emit_tex(struct brw_wm_compile *c,
 
     if (BRW_IS_IGDNG(p->brw)) {
         if (shadow)
-            msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_COMPARE_IGDNG;
+            msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
         else
-            msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_IGDNG;
+            msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG;
     } else {
         /* Does it work for shadow on SIMD8 ? */
         msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
