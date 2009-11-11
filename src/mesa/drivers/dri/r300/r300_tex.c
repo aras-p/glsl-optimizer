@@ -270,7 +270,11 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 
 	if (rmesa) {
 		int i;
-		radeon_firevertices(&rmesa->radeon);
+		struct radeon_bo *bo;
+		bo = !t->mt ? t->bo : t->mt->bo;
+		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->radeon.cmdbuf.cs)) {
+			radeon_firevertices(&rmesa->radeon);
+		}
 
 		for(i = 0; i < R300_MAX_TEXTURE_UNITS; ++i)
 			if (rmesa->hw.textures[i] == t)

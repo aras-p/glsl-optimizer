@@ -534,7 +534,13 @@ static void radeon_teximage(
 	GLuint texelBytes;
 	GLuint face = radeon_face_for_target(target);
 
-	radeon_firevertices(rmesa);
+	{
+		struct radeon_bo *bo;
+		bo = !image->mt ? image->bo : image->mt->bo;
+		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+			radeon_firevertices(rmesa);
+		}
+	}
 
 	t->validated = GL_FALSE;
 
@@ -731,7 +737,13 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
-	radeon_firevertices(rmesa);
+	{
+		struct radeon_bo *bo;
+		bo = !image->mt ? image->bo : image->mt->bo;
+		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+			radeon_firevertices(rmesa);
+		}
+	}
 
 	t->validated = GL_FALSE;
 	if (compressed) {
