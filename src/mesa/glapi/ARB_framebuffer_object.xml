@@ -93,7 +93,9 @@
     <enum name="STENCIL_ATTACHMENT"                        value="0x8D20"/>
     <enum name="DEPTH_STENCIL_ATTACHMENT"                  value="0x821A"/>
 
-    <enum name="MAX_SAMPLES"                               value="0x8D57"/>
+    <enum name="MAX_SAMPLES"                     count="1" value="0x8D57">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <enum name="FRAMEBUFFER_COMPLETE"                      value="0x8CD5"/>
     <enum name="FRAMEBUFFER_INCOMPLETE_ATTACHMENT"         value="0x8CD6"/>
@@ -131,7 +133,10 @@
 
     <enum name="DEPTH24_STENCIL8"                         value="0x88F0"/>
 
-    <enum name="TEXTURE_STENCIL_SIZE"                     value="0x88F1"/>
+    <enum name="TEXTURE_STENCIL_SIZE"          count="1"  value="0x88F1">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
 
 
 
