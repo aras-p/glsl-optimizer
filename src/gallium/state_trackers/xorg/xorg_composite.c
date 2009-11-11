@@ -118,7 +118,7 @@ render_repeat_to_gallium(int mode)
 {
    switch(mode) {
    case RepeatNone:
-      return PIPE_TEX_WRAP_CLAMP;
+      return PIPE_TEX_WRAP_CLAMP_TO_BORDER;
    case RepeatNormal:
       return PIPE_TEX_WRAP_REPEAT;
    case RepeatReflect:
