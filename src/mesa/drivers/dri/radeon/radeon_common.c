@@ -1147,9 +1147,6 @@ void radeonFlush(GLcontext *ctx)
 			}
 		}
 	}
-
-	make_empty_list(&radeon->query.not_flushed_head);
-
 }
 
 /* Make sure all commands have been sent to the hardware and have

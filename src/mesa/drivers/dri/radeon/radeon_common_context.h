@@ -502,7 +502,6 @@ struct radeon_context {
 
    struct {
 	struct radeon_query_object *current;
-	struct radeon_query_object not_flushed_head;
 	struct radeon_state_atom queryobj;
    } query;
 
