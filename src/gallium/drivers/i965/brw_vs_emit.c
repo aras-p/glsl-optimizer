@@ -66,6 +66,38 @@ static void release_tmps( struct brw_vs_compile *c )
 }
 
 
+static boolean is_position_output( struct brw_vs_compile *c,
+                                   unsigned vs_output )
+{
+   struct brw_vertex_shader *vs = c->vp;
+   unsigned semantic = vs->info.output_semantic_name[vs_output];
+   unsigned index = vs->info.output_semantic_index[vs_output];
+
+   return (semantic == TGSI_SEMANTIC_POSITION &&
+           index == 0);
+}
+
+
+static boolean find_output_slot( struct brw_vs_compile *c,
+                                  unsigned vs_output,
+                                  unsigned *fs_input_slot )
+{
+   struct brw_vertex_shader *vs = c->vp;
+   unsigned semantic = vs->info.output_semantic_name[vs_output];
+   unsigned index = vs->info.output_semantic_index[vs_output];
+   unsigned i;
+
+   for (i = 0; i < c->key.fs_signature.nr_inputs; i++) {
+      if (c->key.fs_signature.input[i].semantic == semantic &&
+          c->key.fs_signature.input[i].semantic_index == index) {
+         *fs_input_slot = i;
+         return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
 
 /**
  * Preallocate GRF register before code emit.
@@ -172,42 +204,50 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
    c->nr_outputs = c->prog_data.nr_outputs;
-   c->first_output = reg;
-   c->first_overflow_output = 0;
 
    if (c->chipset.is_igdng)
       mrf = 8;
    else
       mrf = 4;
 
+   
+   if (c->key.fs_signature.nr_inputs > BRW_MAX_MRF) {
+      c->overflow_grf_start = reg;
+      c->overflow_count = c->key.fs_signature.nr_inputs - BRW_MAX_MRF;
+      reg += c->overflow_count;
+   }
+
    /* XXX: need to access vertex output semantics here:
     */
    for (i = 0; i < c->prog_data.nr_outputs; i++) {
-      assert(i < Elements(c->regs[TGSI_FILE_OUTPUT]));
+      unsigned slot;
 
-      /* XXX: Hardwire position to zero:
+      /* XXX: Put output position in slot zero always.  Clipper, etc,
+       * need access to this reg.
        */
-      if (i == 0) {
-	 c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
+      if (is_position_output(c, i)) {
+	 c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0); /* copy to mrf 0 */
 	 reg++;
       }
-      /* XXX: disable psiz:
-       */
-      else if (0) {
-	 c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	 reg++;
-	 mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
-      }
-      else if (mrf < 16) {
-	 c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(mrf);
-	 mrf++;
+      else if (find_output_slot(c, i, &slot)) {
+         
+         if (0 /* is_psize_output(c, i) */ ) {
+            /* c->psize_out.grf = reg; */
+            /* c->psize_out.mrf = i; */
+         }
+         
+         /* The first (16-4) outputs can go straight into the message regs.
+          */
+         if (slot + mrf < BRW_MAX_MRF) {
+            c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(slot + mrf);
+         }
+         else {
+            int grf = c->overflow_grf_start + slot - BRW_MAX_MRF;
+            c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(grf, 0);
+         }
       }
       else {
-	 /* too many vertex results to fit in MRF, use GRF for overflow */
-	 if (!c->first_overflow_output)
-	    c->first_overflow_output = i;
-	 c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	 reg++;
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_null_reg();
       }
    }     
 
@@ -1072,6 +1112,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg pos = c->regs[TGSI_FILE_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
    int eot;
+   int i;
    GLuint len_vertext_header = 2;
 
    if (c->key.copy_edgeflag) {
@@ -1167,7 +1208,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        len_vertext_header = 2;
    }
 
-   eot = (c->first_overflow_output == 0);
+   eot = (c->overflow_count == 0);
 
    brw_urb_WRITE(p, 
 		 brw_null_reg(), /* dest */
@@ -1182,19 +1223,22 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
 
-   if (c->first_overflow_output > 0) {
-      /* Not all of the vertex outputs/results fit into the MRF.
-       * Move the overflowed attributes from the GRF to the MRF and
-       * issue another brw_urb_WRITE().
-       */
+   /* Not all of the vertex outputs/results fit into the MRF.
+    * Move the overflowed attributes from the GRF to the MRF and
+    * issue another brw_urb_WRITE().
+    */
+   for (i = 0; i < c->overflow_count; i += BRW_MAX_MRF) {
+      unsigned nr = MIN2(c->overflow_count - i, BRW_MAX_MRF);
+      GLuint j;
+
+      eot = (i + nr >= c->overflow_count);
+
       /* XXX I'm not 100% sure about which MRF regs to use here.  Starting
        * at mrf[4] atm...
        */
-      GLuint i, mrf = 0;
-      for (i = c->first_overflow_output; i < c->prog_data.nr_outputs; i++) {
-	 /* move from GRF to MRF */
-	 brw_MOV(p, brw_message_reg(4+mrf), c->regs[TGSI_FILE_OUTPUT][i]);
-	 mrf++;
+      for (j = 0; j < nr; j++) {
+	 brw_MOV(p, brw_message_reg(4+j), 
+                 brw_vec8_grf(c->overflow_grf_start + i + j, 0));
       }
 
       brw_urb_WRITE(p,
@@ -1203,11 +1247,11 @@ static void emit_vertex_write( struct brw_vs_compile *c)
                     c->r0,          /* src */
                     0,              /* allocate */
                     1,              /* used */
-                    mrf+1,          /* msg len */
+                    nr+1,          /* msg len */
                     0,              /* response len */
-                    1,              /* eot */
-                    1,              /* writes complete */
-                    BRW_MAX_MRF-1,  /* urb destination offset */
+                    eot,            /* eot */
+                    eot,            /* writes complete */
+                    i-1,            /* urb destination offset */
                     BRW_URB_SWIZZLE_INTERLEAVE);
    }
 }

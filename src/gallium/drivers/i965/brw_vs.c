@@ -90,22 +90,24 @@ static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
 {
    struct brw_vs_prog_key key;
    struct brw_vertex_shader *vp = brw->curr.vertex_shader;
+   struct brw_fragment_shader *fs = brw->curr.fragment_shader;
    enum pipe_error ret;
 
    memset(&key, 0, sizeof(key));
 
-   /* Just upload the program verbatim for now.  Always send it all
-    * the inputs it asks for, whether they are varying or not.
-    */
    key.program_string_id = vp->id;
    key.nr_userclip = brw->curr.ucp.nr;
    key.copy_edgeflag = (brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL ||
 			brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL);
 
+   memcpy(&key.fs_signature, &fs->signature,
+          brw_fs_signature_size(&fs->signature));
+
+
    /* Make an early check for the key.
     */
    if (brw_search_cache(&brw->cache, BRW_VS_PROG,
-                        &key, sizeof(key),
+                        &key, brw_vs_prog_key_size(&key),
                         NULL, 0,
                         &brw->vs.prog_data,
                         &brw->vs.prog_bo))
@@ -123,7 +125,9 @@ static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = PIPE_NEW_CLIP | PIPE_NEW_RAST,
+      .mesa  = (PIPE_NEW_CLIP | 
+                PIPE_NEW_RAST |
+                PIPE_NEW_FRAGMENT_SHADER),
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

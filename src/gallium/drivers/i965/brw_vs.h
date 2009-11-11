@@ -43,8 +43,11 @@ struct brw_vs_prog_key {
    GLuint nr_userclip:4;
    GLuint copy_edgeflag:1;
    GLuint pad:26;
+   struct brw_fs_signature fs_signature;
 };
 
+#define brw_vs_prog_key_size(s) (offsetof(struct brw_vs_prog_key, fs_signature) + \
+                                 brw_fs_signature_size(&(s)->fs_signature))
 
 
 #define MAX_IF_DEPTH 32
@@ -65,8 +68,8 @@ struct brw_vs_compile {
 
    GLboolean copy_edgeflag;
 
-   GLuint first_output;
-   GLuint first_overflow_output; /**< VERT_ATTRIB_x */
+   GLuint overflow_grf_start;
+   GLuint overflow_count;
 
    GLuint first_tmp;
    GLuint last_tmp;

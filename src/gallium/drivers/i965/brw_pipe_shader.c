@@ -96,6 +96,12 @@ static void *brw_create_fs_state( struct pipe_context *pipe,
 
    tgsi_scan_shader(fs->tokens, &fs->info);
 
+   fs->signature.nr_inputs = fs->info.num_inputs;
+   for (i = 0; i < fs->info.num_inputs; i++) {
+      fs->signature.input[i].semantic = fs->info.input_semantic_name[i];
+      fs->signature.input[i].semantic_index = fs->info.input_semantic_index[i];
+   }
+
    for (i = 0; i < fs->info.num_inputs; i++)
       if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_POSITION)
 	 fs->uses_depth = 1;

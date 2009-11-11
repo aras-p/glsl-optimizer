@@ -161,10 +161,23 @@ struct brw_vertex_shader {
    GLboolean use_const_buffer;
 };
 
+struct brw_fs_signature {
+   GLuint nr_inputs;
+   struct {
+      GLuint semantic:5;
+      GLuint semantic_index:27;
+   } input[PIPE_MAX_SHADER_INPUTS];
+};
+
+#define brw_fs_signature_size(s) (offsetof(struct brw_fs_signature, input) + \
+                                  ((s)->nr_inputs * sizeof (s)->input[0])) 
+
 
 struct brw_fragment_shader {
    const struct tgsi_token *tokens;
    struct tgsi_shader_info info;
+
+   struct brw_fs_signature signature;
 
    unsigned iz_lookup;
    //unsigned wm_lookup;
