@@ -12260,6 +12260,7 @@
         <param name="dstY1" type="GLint"/>
         <param name="mask" type="GLbitfield"/>
         <param name="filter" type="GLenum"/>
+        <glx rop="4330"/>
     </function>
 </category>
 
