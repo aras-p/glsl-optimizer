@@ -173,6 +173,7 @@
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
         <param name="height" type="GLsizei"/>
+        <glx rop="4331"/>
     </function>
 
     <function name="GetRenderbufferParameteriv" alias="GetRenderbufferParameterivEXT">
