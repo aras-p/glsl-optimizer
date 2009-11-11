@@ -1271,6 +1271,38 @@ post_vs_emit( struct brw_vs_compile *c,
    }
 }
 
+static GLboolean
+accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_instruction *prev_insn = &p->store[p->nr_insn - 1];
+
+   if (p->nr_insn == 0)
+      return GL_FALSE;
+
+   if (val.address_mode != BRW_ADDRESS_DIRECT)
+      return GL_FALSE;
+
+   switch (prev_insn->header.opcode) {
+   case BRW_OPCODE_MOV:
+   case BRW_OPCODE_MAC:
+   case BRW_OPCODE_MUL:
+      if (prev_insn->header.access_mode == BRW_ALIGN_16 &&
+	  prev_insn->header.execution_size == val.width &&
+	  prev_insn->bits1.da1.dest_reg_file == val.file &&
+	  prev_insn->bits1.da1.dest_reg_type == val.type &&
+	  prev_insn->bits1.da1.dest_address_mode == val.address_mode &&
+	  prev_insn->bits1.da1.dest_reg_nr == val.nr &&
+	  prev_insn->bits1.da16.dest_subreg_nr == val.subnr / 16 &&
+	  prev_insn->bits1.da16.dest_writemask == 0xf)
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   default:
+      return GL_FALSE;
+   }
+}
+
 static uint32_t
 get_predicate(const struct prog_instruction *inst)
 {
@@ -1449,7 +1481,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 unalias3(c, dst, args[0], args[1], args[2], emit_lrp_noalias);
 	 break;
       case OPCODE_MAD:
-	 brw_MOV(p, brw_acc_reg(), args[2]);
+	 if (!accumulator_contains(c, args[2]))
+	    brw_MOV(p, brw_acc_reg(), args[2]);
 	 brw_MAC(p, dst, args[0], args[1]);
 	 break;
       case OPCODE_MAX:
