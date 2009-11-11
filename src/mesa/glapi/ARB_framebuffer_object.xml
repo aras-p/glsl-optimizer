@@ -12,10 +12,10 @@
 
     <enum name="RENDERBUFFER"                             value="0x8D41"/>
 
-    <enum name="STENCIL_INDEX1_EXT"                       value="0x8D46"/>
-    <enum name="STENCIL_INDEX4_EXT"                       value="0x8D47"/>
-    <enum name="STENCIL_INDEX8_EXT"                       value="0x8D48"/>
-    <enum name="STENCIL_INDEX16_EXT"                      value="0x8D49"/>
+    <enum name="STENCIL_INDEX1"                           value="0x8D46"/>
+    <enum name="STENCIL_INDEX4"                           value="0x8D47"/>
+    <enum name="STENCIL_INDEX8"                           value="0x8D48"/>
+    <enum name="STENCIL_INDEX16"                          value="0x8D49"/>
 
     <enum name="RENDERBUFFER_WIDTH"              value="0x8D42"/>
     <enum name="RENDERBUFFER_HEIGHT"             value="0x8D43"/>
@@ -98,28 +98,28 @@
     <enum name="FRAMEBUFFER_COMPLETE"                      value="0x8CD5"/>
     <enum name="FRAMEBUFFER_INCOMPLETE_ATTACHMENT"         value="0x8CD6"/>
     <enum name="FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT" value="0x8CD7"/>
-    <enum name="FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT"    value="0x8CDB"/>
-    <enum name="FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT"    value="0x8CDC"/>
+    <enum name="FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"        value="0x8CDB"/>
+    <enum name="FRAMEBUFFER_INCOMPLETE_READ_BUFFER"        value="0x8CDC"/>
     <enum name="FRAMEBUFFER_UNSUPPORTED"                   value="0x8CDD"/>
     <enum name="FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"        value="0x8D56"/>
     <enum name="FRAMEBUFFER_UNDEFINED"                     value="0x8219"/>
 
-    <enum name="FRAMEBUFFER_BINDING_EXT"         count="1" value="0x8CA6">
+    <enum name="FRAMEBUFFER_BINDING"             count="1" value="0x8CA6">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="DRAW_FRAMEBUFFER_BINDING_EXT"    count="1" value="0x8CA6">
+    <enum name="DRAW_FRAMEBUFFER_BINDING"        count="1" value="0x8CA6">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="READ_FRAMEBUFFER_BINDING_EXT"    count="1" value="0x8CAA">
+    <enum name="READ_FRAMEBUFFER_BINDING"        count="1" value="0x8CAA">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="RENDERBUFFER_BINDING_EXT"        count="1" value="0x8CA7">
+    <enum name="RENDERBUFFER_BINDING"            count="1" value="0x8CA7">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="MAX_COLOR_ATTACHMENTS_EXT"       count="1" value="0x8CDF">
+    <enum name="MAX_COLOR_ATTACHMENTS"           count="1" value="0x8CDF">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="MAX_RENDERBUFFER_SIZE_EXT"       count="1" value="0x84E8">
+    <enum name="MAX_RENDERBUFFER_SIZE"           count="1" value="0x84E8">
         <size name="Get" mode="get"/>
     </enum>
 
