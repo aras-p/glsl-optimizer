@@ -1159,6 +1159,10 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
+
+   if (fb->Name == 0)
+      return; /* can't render to texture with winsys framebuffers */
+
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
       struct gl_texture_object *texObj = att->Texture;
@@ -1178,6 +1182,9 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 {
+   if (fb->Name == 0)
+      return; /* can't render to texture with winsys framebuffers */
+
    if (ctx->Driver.FinishRenderTexture) {
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
@@ -1276,41 +1283,51 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    ASSERT(newDrawFb);
    ASSERT(newDrawFb != &DummyFramebuffer);
 
+   /* save pointers to current/old framebuffers */
    oldDrawFb = ctx->DrawBuffer;
    oldReadFb = ctx->ReadBuffer;
 
+   /* check if really changing bindings */
+   if (oldDrawFb == newDrawFb)
+      bindDrawBuf = GL_FALSE;
+   if (oldReadFb == newReadFb)
+      bindReadBuf = GL_FALSE;
+
    /*
     * OK, now bind the new Draw/Read framebuffers, if they're changing.
+    *
+    * We also check if we're beginning and/or ending render-to-texture.
+    * When a framebuffer with texture attachments is unbound, call
+    * ctx->Driver.FinishRenderTexture().
+    * When a framebuffer with texture attachments is bound, call
+    * ctx->Driver.RenderTexture().
+    *
+    * Note that if the ReadBuffer has texture attachments we don't consider
+    * that a render-to-texture case.
     */
    if (bindReadBuf) {
-      if (oldReadFb == newReadFb) {
-         bindReadBuf = GL_FALSE; /* no change */
-      }
-      else {
-         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-         _mesa_reference_framebuffer(&ctx->ReadBuffer, newReadFb);
-      }
+      /* check if old readbuffer was render-to-texture */
+      check_end_texture_render(ctx, oldReadFb);
+
+      _mesa_reference_framebuffer(&ctx->ReadBuffer, newReadFb);
    }
 
    if (bindDrawBuf) {
-      if (oldDrawFb == newDrawFb) {
-         bindDrawBuf = GL_FALSE; /* no change */
-      }
-      else {
-         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-         if (oldDrawFb->Name != 0) {
-            check_end_texture_render(ctx, oldDrawFb);
-         }
+      /* check if old read/draw buffers were render-to-texture */
+      if (!bindReadBuf)
+         check_end_texture_render(ctx, oldReadFb);
 
-         if (newDrawFb->Name != 0) {
-            /* check if newly bound framebuffer has any texture attachments */
-            check_begin_texture_render(ctx, newDrawFb);
-         }
+      if (oldDrawFb != oldReadFb)
+         check_end_texture_render(ctx, oldDrawFb);
 
-         _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
-      }
+      /* check if newly bound framebuffer has any texture attachments */
+      check_begin_texture_render(ctx, newDrawFb);
+
+      _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
    }
 
    if ((bindDrawBuf || bindReadBuf) && ctx->Driver.BindFramebuffer) {
