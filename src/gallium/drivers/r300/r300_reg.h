@@ -1884,6 +1884,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RGB_ADDR0(x)                ((x) << 0)
 #       define R300_RGB_ADDR1(x)                ((x) << 6)
 #       define R300_RGB_ADDR2(x)                ((x) << 12)
+#       define R300_RGB_TARGET(x)               ((x) << 29)
 
 #define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
 #       define R300_ALU_SRC0A_SHIFT             0
@@ -1901,9 +1902,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTA_REG                (1 << 23)
 #       define R300_ALU_DSTA_OUTPUT             (1 << 24)
 #		define R300_ALU_DSTA_DEPTH              (1 << 27)
-#       define R300_ALPHA_ADDR0(x)                ((x) << 0)
-#       define R300_ALPHA_ADDR1(x)                ((x) << 6)
-#       define R300_ALPHA_ADDR2(x)                ((x) << 12)
+#       define R300_ALPHA_ADDR0(x)              ((x) << 0)
+#       define R300_ALPHA_ADDR1(x)              ((x) << 6)
+#       define R300_ALPHA_ADDR2(x)              ((x) << 12)
+#       define R300_ALPHA_TARGET(x)             ((x) << 25)
 
 #define R300_US_ALU_RGB_INST_0                   0x48C0
 #       define R300_ALU_ARGC_SRC0C_XYZ          0
