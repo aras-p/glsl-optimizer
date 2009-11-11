@@ -229,7 +229,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 				(inst->RGB.WriteMask & 2) ? "y" : "",
 				(inst->RGB.WriteMask & 4) ? "z" : "");
 		if (inst->RGB.OutputWriteMask)
-			fprintf(f, " color.%s%s%s",
+			fprintf(f, " color[%i].%s%s%s", inst->RGB.Target,
 				(inst->RGB.OutputWriteMask & 1) ? "x" : "",
 				(inst->RGB.OutputWriteMask & 2) ? "y" : "",
 				(inst->RGB.OutputWriteMask & 4) ? "z" : "");
@@ -255,7 +255,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 		if (inst->Alpha.WriteMask)
 			fprintf(f, " temp[%i].w", inst->Alpha.DestIndex);
 		if (inst->Alpha.OutputWriteMask)
-			fprintf(f, " color.w");
+			fprintf(f, " color[%i].w", inst->Alpha.Target);
 		if (inst->Alpha.DepthWriteMask)
 			fprintf(f, " depth.w");
 		if (inst->WriteALUResult == RC_ALURESULT_W)
