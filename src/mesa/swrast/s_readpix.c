@@ -29,6 +29,7 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/feedback.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -107,7 +108,7 @@ read_depth_pixels( GLcontext *ctx,
        && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT16);
+      ASSERT(rb->Format == MESA_FORMAT_Z16);
       ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
       for (j = 0; j < height; j++, y++) {
          void *dest =_mesa_image_address2d(packing, pixels, width, height,
@@ -119,7 +120,7 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT24);
+      ASSERT(rb->Format == MESA_FORMAT_X8_Z24);
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       for (j = 0; j < height; j++, y++) {
          GLuint *dest = (GLuint *)
@@ -138,7 +139,7 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->Format == MESA_FORMAT_Z32);
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       for (j = 0; j < height; j++, y++) {
          void *dest = _mesa_image_address2d(packing, pixels, width, height,
