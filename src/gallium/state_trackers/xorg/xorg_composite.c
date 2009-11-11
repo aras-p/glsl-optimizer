@@ -199,6 +199,11 @@ boolean xorg_composite_accelerated(int op,
                           op);
          }
       }
+      if ((pSrcPicture && pSrcPicture->repeatType == RepeatNone) ||
+          (pMaskPicture && pMaskPicture->repeatType == RepeatNone)) {
+         XORG_FALLBACK("RepeatNone is not supported");
+      }
+
       return TRUE;
    }
    XORG_FALLBACK("Unsupported composition operation = %d", op);
