@@ -77,17 +77,21 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
 static void find_output_registers(struct r300_fragment_program_compiler * compiler,
                                   struct r300_fragment_shader * fs)
 {
-    unsigned i;
+    unsigned i, colorbuf_count = 0;
 
     /* Mark the outputs as not present initially */
-    compiler->OutputColor = fs->info.num_outputs;
+    compiler->OutputColor[0] = fs->info.num_outputs;
+    compiler->OutputColor[1] = fs->info.num_outputs;
+    compiler->OutputColor[2] = fs->info.num_outputs;
+    compiler->OutputColor[3] = fs->info.num_outputs;
     compiler->OutputDepth = fs->info.num_outputs;
 
     /* Now see where they really are. */
     for(i = 0; i < fs->info.num_outputs; ++i) {
         switch(fs->info.output_semantic_name[i]) {
             case TGSI_SEMANTIC_COLOR:
-                compiler->OutputColor = i;
+                compiler->OutputColor[colorbuf_count] = i;
+                colorbuf_count++;
                 break;
             case TGSI_SEMANTIC_POSITION:
                 compiler->OutputDepth = i;

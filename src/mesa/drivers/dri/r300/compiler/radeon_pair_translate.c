@@ -203,12 +203,21 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 
 	/* Destination handling */
 	if (inst->DstReg.File == RC_FILE_OUTPUT) {
-		if (inst->DstReg.Index == c->OutputColor) {
-			pair->RGB.OutputWriteMask |= inst->DstReg.WriteMask & RC_MASK_XYZ;
-			pair->Alpha.OutputWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
-		} else if (inst->DstReg.Index == c->OutputDepth) {
-			pair->Alpha.DepthWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
-		}
+        if (inst->DstReg.Index == c->OutputDepth) {
+            pair->Alpha.DepthWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
+        } else {
+            for (i = 0; i < 4; i++) {
+                if (inst->DstReg.Index == c->OutputColor[i]) {
+                    pair->RGB.Target = inst->DstReg.Index;
+                    pair->Alpha.Target = inst->DstReg.Index;
+                    pair->RGB.OutputWriteMask |=
+                        inst->DstReg.WriteMask & RC_MASK_XYZ;
+                    pair->Alpha.OutputWriteMask |=
+                        GET_BIT(inst->DstReg.WriteMask, 3);
+                    break;
+                }
+            }
+        }
 	} else {
 		if (needrgb) {
 			pair->RGB.DestIndex = inst->DstReg.Index;

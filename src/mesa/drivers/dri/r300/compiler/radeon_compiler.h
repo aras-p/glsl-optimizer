@@ -83,8 +83,10 @@ struct r300_fragment_program_compiler {
 	struct rX00_fragment_program_code *code;
 	struct r300_fragment_program_external_state state;
 	unsigned is_r500;
+    /* Register corresponding to the depthbuffer. */
 	unsigned OutputDepth;
-	unsigned OutputColor;
+    /* Registers corresponding to the four colorbuffers. */
+	unsigned OutputColor[4];
 
 	void * UserData;
 	void (*AllocateHwInputs)(

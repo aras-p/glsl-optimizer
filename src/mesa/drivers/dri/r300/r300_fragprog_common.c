@@ -221,7 +221,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.state = fp->state;
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;
-	compiler.OutputColor = FRAG_RESULT_COLOR;
+	compiler.OutputColor[0] = FRAG_RESULT_COLOR;
 	compiler.AllocateHwInputs = &allocate_hw_inputs;
 
 	if (compiler.Base.Debug) {

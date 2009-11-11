@@ -241,6 +241,9 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 1) << R500_ALPHA_SEL_B_SHIFT;
 	code->inst[ip].inst5 |= translate_arg_alpha(inst, 2) << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT;
 
+    code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
+    code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
+
 	if (inst->WriteALUResult) {
 		code->inst[ip].inst3 |= R500_ALU_RGB_WMASK;
 

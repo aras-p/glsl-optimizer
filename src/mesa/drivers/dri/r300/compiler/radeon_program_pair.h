@@ -60,6 +60,7 @@ struct radeon_pair_instruction_rgb {
 	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:3;
+    unsigned int Target:2;
 	unsigned int OutputWriteMask:3;
 	unsigned int Saturate:1;
 
@@ -77,6 +78,7 @@ struct radeon_pair_instruction_alpha {
 	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:1;
+    unsigned int Target:2;
 	unsigned int OutputWriteMask:1;
 	unsigned int DepthWriteMask:1;
 	unsigned int Saturate:1;
