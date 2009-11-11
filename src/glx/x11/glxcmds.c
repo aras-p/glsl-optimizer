@@ -50,7 +50,7 @@
 #include <xcb/glx.h>
 #endif
 
-static const char __glXGLXClientVendorName[] = "SGI";
+static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
 
 
