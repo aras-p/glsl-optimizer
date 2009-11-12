@@ -113,7 +113,8 @@ struct brw_sf_unit_key {
 
    unsigned int nr_urb_entries, urb_size, sfsize;
 
-   GLenum front_face, cull_face, provoking_vertex;
+   GLenum front_face, cull_face;
+   unsigned pv_first:1;
    unsigned scissor:1;
    unsigned line_smooth:1;
    unsigned point_sprite:1;
@@ -154,7 +155,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->point_attenuated = ctx->Point._Attenuated;
 
    /* _NEW_LIGHT */
-   key->provoking_vertex = ctx->Light.ProvokingVertex;
+   key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
 
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }
@@ -287,7 +288,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
-   if (key->provoking_vertex == GL_LAST_VERTEX_CONVENTION) {
+   if (!key->pv_first) {
       sf.sf7.trifan_pv = 2;
       sf.sf7.linestrip_pv = 1;
       sf.sf7.tristrip_pv = 2;

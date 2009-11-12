@@ -156,6 +156,7 @@ static void upload_clip_prog(struct brw_context *brw)
    key.attrs = brw->vs.prog_data->outputs_written;
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
+   key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    /* _NEW_TRANSFORM */
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 

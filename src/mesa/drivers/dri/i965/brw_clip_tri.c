@@ -188,14 +188,20 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 	   brw_imm_ud(_3DPRIM_POLYGON));
 
    is_poly = brw_IF(p, BRW_EXECUTE_1);
-   {   
+   {
       brw_clip_copy_colors(c, 1, 0);
       brw_clip_copy_colors(c, 2, 0);
    }
    is_poly = brw_ELSE(p, is_poly);
    {
-      brw_clip_copy_colors(c, 0, 2);
-      brw_clip_copy_colors(c, 1, 2);
+      if (c->key.pv_first) {
+         brw_clip_copy_colors(c, 1, 0);
+         brw_clip_copy_colors(c, 2, 0);
+      }
+      else {
+         brw_clip_copy_colors(c, 0, 2);
+         brw_clip_copy_colors(c, 1, 2);
+      }
    }
    brw_ENDIF(p, is_poly);
 }
