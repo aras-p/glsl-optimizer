@@ -119,6 +119,7 @@ Key(unsigned char key, int x, int y)
    case 'a':
       Anim = !Anim;
       glutIdleFunc(Anim ? Idle : NULL);
+      break;
    case 's':
       Slice -= step;
       break;
