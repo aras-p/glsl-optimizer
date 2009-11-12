@@ -233,10 +233,10 @@ create_vs(struct pipe_context *pipe,
    struct ureg_src src;
    struct ureg_dst dst;
    struct ureg_src const0, const1;
-   boolean is_fill = vs_traits & VS_FILL;
-   boolean is_composite = vs_traits & VS_COMPOSITE;
-   boolean has_mask = vs_traits & VS_MASK;
-   boolean is_yuv = vs_traits & VS_YUV;
+   boolean is_fill = (vs_traits & VS_FILL) != 0;
+   boolean is_composite = (vs_traits & VS_COMPOSITE) != 0;
+   boolean has_mask = (vs_traits & VS_MASK) != 0;
+   boolean is_yuv = (vs_traits & VS_YUV) != 0;
    unsigned input_slot = 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -353,6 +353,47 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
    return ureg_create_shader_and_destroy(ureg, pipe);
 }
 
+
+static INLINE void
+xrender_tex(struct ureg_program *ureg,
+            struct ureg_dst dst,
+            struct ureg_src coords,
+            struct ureg_src sampler,
+            boolean repeat_none)
+{
+   if (repeat_none) {
+      struct ureg_dst tmp0 = ureg_DECL_temporary(ureg);
+      struct ureg_dst tmp1 = ureg_DECL_temporary(ureg);
+      struct ureg_src const0 = ureg_DECL_constant(ureg, 0);
+      unsigned label;
+      ureg_SLT(ureg, tmp1, ureg_swizzle(coords,
+                                        TGSI_SWIZZLE_X,
+                                        TGSI_SWIZZLE_Y,
+                                        TGSI_SWIZZLE_X,
+                                        TGSI_SWIZZLE_Y),
+               ureg_scalar(const0, TGSI_SWIZZLE_X));
+      ureg_SGT(ureg, tmp0, ureg_swizzle(coords,
+                                        TGSI_SWIZZLE_X,
+                                        TGSI_SWIZZLE_Y,
+                                        TGSI_SWIZZLE_X,
+                                        TGSI_SWIZZLE_Y),
+               ureg_scalar(const0, TGSI_SWIZZLE_W));
+      ureg_MAX(ureg, tmp0, ureg_src(tmp0), ureg_src(tmp1));
+      ureg_MAX(ureg, tmp0, ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_X),
+               ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_Y));
+      label = ureg_get_instruction_number(ureg) + 2;
+      ureg_IF(ureg, ureg_src(tmp0), &label);
+      ureg_MOV(ureg, dst, ureg_scalar(const0, TGSI_SWIZZLE_X));
+      label += 2;
+      ureg_ELSE(ureg, &label);
+      ureg_TEX(ureg, dst, TGSI_TEXTURE_2D, coords, sampler);
+      ureg_ENDIF(ureg);
+      ureg_release_temporary(ureg, tmp0);
+      ureg_release_temporary(ureg, tmp1);
+   } else
+      ureg_TEX(ureg, dst, TGSI_TEXTURE_2D, coords, sampler);
+}
+
 static void *
 create_fs(struct pipe_context *pipe,
           unsigned fs_traits)
@@ -362,14 +403,16 @@ create_fs(struct pipe_context *pipe,
    struct ureg_src /*dst_pos,*/ src_input, mask_pos;
    struct ureg_dst src, mask;
    struct ureg_dst out;
-   boolean has_mask = fs_traits & FS_MASK;
-   boolean is_fill = fs_traits & FS_FILL;
-   boolean is_composite = fs_traits & FS_COMPOSITE;
-   boolean is_solid   = fs_traits & FS_SOLID_FILL;
-   boolean is_lingrad = fs_traits & FS_LINGRAD_FILL;
-   boolean is_radgrad = fs_traits & FS_RADGRAD_FILL;
-   unsigned comp_alpha = fs_traits & FS_COMPONENT_ALPHA;
-   boolean is_yuv = fs_traits & FS_YUV;
+   unsigned has_mask = (fs_traits & FS_MASK) != 0;
+   unsigned is_fill = (fs_traits & FS_FILL) != 0;
+   unsigned is_composite = (fs_traits & FS_COMPOSITE) != 0;
+   unsigned is_solid   = (fs_traits & FS_SOLID_FILL) != 0;
+   unsigned is_lingrad = (fs_traits & FS_LINGRAD_FILL) != 0;
+   unsigned is_radgrad = (fs_traits & FS_RADGRAD_FILL) != 0;
+   unsigned comp_alpha = (fs_traits & FS_COMPONENT_ALPHA) != 0;
+   unsigned is_yuv = (fs_traits & FS_YUV) != 0;
+   unsigned src_repeat_none = (fs_traits & FS_SRC_REPEAT_NONE) != 0;
+   unsigned mask_repeat_none = (fs_traits & FS_MASK_REPEAT_NONE) != 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -425,8 +468,8 @@ create_fs(struct pipe_context *pipe,
          src = ureg_DECL_temporary(ureg);
       else
          src = out;
-      ureg_TEX(ureg, src,
-               TGSI_TEXTURE_2D, src_input, src_sampler);
+      xrender_tex(ureg, src, src_input, src_sampler,
+                  src_repeat_none);
    } else if (is_fill) {
       if (is_solid) {
          if (has_mask)
@@ -465,8 +508,8 @@ create_fs(struct pipe_context *pipe,
 
    if (has_mask) {
       mask = ureg_DECL_temporary(ureg);
-      ureg_TEX(ureg, mask,
-               TGSI_TEXTURE_2D, mask_pos, mask_sampler);
+      xrender_tex(ureg, mask, mask_pos, mask_sampler,
+                  mask_repeat_none);
       /* src IN mask */
       src_in_mask(ureg, out, ureg_src(src), ureg_src(mask), comp_alpha);
       ureg_release_temporary(ureg, mask);

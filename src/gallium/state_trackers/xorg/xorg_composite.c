@@ -199,10 +199,6 @@ boolean xorg_composite_accelerated(int op,
                           op);
          }
       }
-      if ((pSrcPicture && pSrcPicture->repeatType == RepeatNone) ||
-          (pMaskPicture && pMaskPicture->repeatType == RepeatNone)) {
-         XORG_FALLBACK("RepeatNone is not supported");
-      }
 
       return TRUE;
    }
@@ -243,6 +239,9 @@ bind_shaders(struct exa_context *exa, int op,
    exa->has_solid_color = FALSE;
 
    if (pSrcPicture) {
+      if (pSrcPicture->repeatType == RepeatNone && pSrcPicture->transform)
+         fs_traits |= FS_SRC_REPEAT_NONE;
+
       if (pSrcPicture->pSourcePict) {
          if (pSrcPicture->pSourcePict->type == SourcePictTypeSolidFill) {
             fs_traits |= FS_SOLID_FILL;
@@ -263,6 +262,8 @@ bind_shaders(struct exa_context *exa, int op,
    if (pMaskPicture) {
       vs_traits |= VS_MASK;
       fs_traits |= FS_MASK;
+      if (pMaskPicture->repeatType == RepeatNone && pMaskPicture->transform)
+         fs_traits |= FS_MASK_REPEAT_NONE;
       if (pMaskPicture->componentAlpha) {
          struct xorg_composite_blend blend;
          blend_for_op(&blend, op,

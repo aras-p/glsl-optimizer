@@ -51,7 +51,6 @@
 /*
  * Helper functions
  */
-#if DEBUG_PRINT
 struct render_format_str {
    int format;
    const char *name;
@@ -109,7 +108,6 @@ static const char *render_format_name(int format)
    }
    return NULL;
 }
-#endif
 
 static void
 exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_format)
