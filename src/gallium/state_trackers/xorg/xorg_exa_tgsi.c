@@ -359,12 +359,18 @@ xrender_tex(struct ureg_program *ureg,
             struct ureg_dst dst,
             struct ureg_src coords,
             struct ureg_src sampler,
-            boolean repeat_none)
+            boolean repeat_none,
+            boolean swizzle,
+            boolean set_alpha)
 {
+   struct ureg_src imm0 = { 0 };
+
+   if (repeat_none || set_alpha)
+      imm0 = ureg_imm4f(ureg, 0, 0, 0, 1);
+
    if (repeat_none) {
       struct ureg_dst tmp0 = ureg_DECL_temporary(ureg);
       struct ureg_dst tmp1 = ureg_DECL_temporary(ureg);
-      struct ureg_src imm0 = ureg_imm4f(ureg, 0, 0, 0, 1);
       ureg_SGT(ureg, tmp1, ureg_swizzle(coords,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y,
@@ -381,11 +387,37 @@ xrender_tex(struct ureg_program *ureg,
       ureg_MIN(ureg, tmp0, ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_X),
                ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_Y));
       ureg_TEX(ureg, tmp1, TGSI_TEXTURE_2D, coords, sampler);
+      if (swizzle)
+         ureg_MOV(ureg, tmp1, ureg_swizzle(ureg_src(tmp1),
+                                           TGSI_SWIZZLE_Z,
+                                           TGSI_SWIZZLE_Y,
+                                           TGSI_SWIZZLE_X,
+                                           TGSI_SWIZZLE_W));
+      if (set_alpha)
+         ureg_MOV(ureg,
+                  ureg_writemask(tmp1, TGSI_WRITEMASK_W),
+                  ureg_scalar(imm0, TGSI_SWIZZLE_W));
       ureg_MUL(ureg, dst, ureg_src(tmp1), ureg_src(tmp0));
       ureg_release_temporary(ureg, tmp0);
       ureg_release_temporary(ureg, tmp1);
-   } else
-      ureg_TEX(ureg, dst, TGSI_TEXTURE_2D, coords, sampler);
+   } else {
+      if (swizzle) {
+         struct ureg_dst tmp = ureg_DECL_temporary(ureg);
+         ureg_TEX(ureg, tmp, TGSI_TEXTURE_2D, coords, sampler);
+         ureg_MOV(ureg, dst, ureg_swizzle(ureg_src(tmp),
+                                          TGSI_SWIZZLE_Z,
+                                          TGSI_SWIZZLE_Y,
+                                          TGSI_SWIZZLE_X,
+                                          TGSI_SWIZZLE_W));
+         ureg_release_temporary(ureg, tmp);
+      } else {
+         ureg_TEX(ureg, dst, TGSI_TEXTURE_2D, coords, sampler);
+      }
+      if (set_alpha)
+         ureg_MOV(ureg,
+                  ureg_writemask(dst, TGSI_WRITEMASK_W),
+                  ureg_scalar(imm0, TGSI_SWIZZLE_W));
+   }
 }
 
 static void *
@@ -407,6 +439,10 @@ create_fs(struct pipe_context *pipe,
    unsigned is_yuv = (fs_traits & FS_YUV) != 0;
    unsigned src_repeat_none = (fs_traits & FS_SRC_REPEAT_NONE) != 0;
    unsigned mask_repeat_none = (fs_traits & FS_MASK_REPEAT_NONE) != 0;
+   unsigned src_swizzle = (fs_traits & FS_SRC_SWIZZLE_RGB) != 0;
+   unsigned mask_swizzle = (fs_traits & FS_MASK_SWIZZLE_RGB) != 0;
+   unsigned src_set_alpha = (fs_traits & FS_SRC_SET_ALPHA) != 0;
+   unsigned mask_set_alpha = (fs_traits & FS_MASK_SET_ALPHA) != 0;
 
    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (ureg == NULL)
@@ -463,7 +499,7 @@ create_fs(struct pipe_context *pipe,
       else
          src = out;
       xrender_tex(ureg, src, src_input, src_sampler,
-                  src_repeat_none);
+                  src_repeat_none, src_swizzle, src_set_alpha);
    } else if (is_fill) {
       if (is_solid) {
          if (has_mask)
@@ -503,7 +539,7 @@ create_fs(struct pipe_context *pipe,
    if (has_mask) {
       mask = ureg_DECL_temporary(ureg);
       xrender_tex(ureg, mask, mask_pos, mask_sampler,
-                  mask_repeat_none);
+                  mask_repeat_none, mask_swizzle, mask_set_alpha);
       /* src IN mask */
       src_in_mask(ureg, out, ureg_src(src), ureg_src(mask), comp_alpha);
       ureg_release_temporary(ureg, mask);

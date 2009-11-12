@@ -468,6 +468,41 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 }
 
 static Bool
+picture_check_formats(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture)
+{
+   if (pSrc->picture_format == pSrcPicture->format)
+      return TRUE;
+
+   if (pSrc->picture_format != PICT_a8r8g8b8)
+      return FALSE;
+
+   /* pSrc->picture_format == PICT_a8r8g8b8 */
+   switch (pSrcPicture->format) {
+   case PICT_a8r8g8b8:
+   case PICT_x8r8g8b8:
+   case PICT_a8b8g8r8:
+   case PICT_x8b8g8r8:
+   /* just treat these two as x8... */
+   case PICT_r8g8b8:
+   case PICT_b8g8r8:
+      return TRUE;
+#ifdef PICT_TYPE_BGRA
+   case PICT_b8g8r8a8:
+   case PICT_b8g8r8x8:
+      return FALSE; /* does not support swizzleing the alpha channel yet */
+   case PICT_a2r10g10b10:
+   case PICT_x2r10g10b10:
+   case PICT_a2b10g10r10:
+   case PICT_x2b10g10r10:
+      return FALSE;
+#endif
+   default:
+      return FALSE;
+   }
+   return FALSE;
+}
+
+static Bool
 ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 		    PicturePtr pMaskPicture, PicturePtr pDstPicture,
 		    PixmapPtr pSrc, PixmapPtr pMask, PixmapPtr pDst)
@@ -512,7 +547,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
          XORG_FALLBACK("pSrc format: %s", pf_name(priv->tex->format));
 
-      if (priv->picture_format != pSrcPicture->format)
+      if (!picture_check_formats(priv, pSrcPicture))
          XORG_FALLBACK("pSrc pic_format: %s != %s",
                        render_format_name(priv->picture_format),
                        render_format_name(pSrcPicture->format));
@@ -528,7 +563,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
          XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
 
-      if (priv->picture_format != pMaskPicture->format)
+      if (!picture_check_formats(priv, pMaskPicture))
          XORG_FALLBACK("pMask pic_format: %s != %s",
                        render_format_name(priv->picture_format),
                        render_format_name(pMaskPicture->format));

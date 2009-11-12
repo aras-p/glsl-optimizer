@@ -28,6 +28,10 @@ enum xorg_fs_traits {
    FS_YUV              = 1 << 7,
    FS_SRC_REPEAT_NONE  = 1 << 8,
    FS_MASK_REPEAT_NONE = 1 << 9,
+   FS_SRC_SWIZZLE_RGB  = 1 << 10,
+   FS_MASK_SWIZZLE_RGB = 1 << 11,
+   FS_SRC_SET_ALPHA    = 1 << 12,
+   FS_MASK_SET_ALPHA   = 1 << 13,
 
    FS_FILL             = (FS_SOLID_FILL |
                           FS_LINGRAD_FILL |
