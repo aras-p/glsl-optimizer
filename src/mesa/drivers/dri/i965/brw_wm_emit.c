@@ -745,19 +745,29 @@ static void emit_tex( struct brw_wm_compile *c,
       abort();
    }
 
-   if (inst->tex_shadow) {
-      nr = 4;
-      emit |= WRITEMASK_W;
-   }
+   /* For shadow comparisons, we have to supply u,v,r. */
+   if (inst->tex_shadow)
+      nr = 3;
 
    msgLength = 1;
 
    for (i = 0; i < nr; i++) {
-      static const GLuint swz[4] = {0,1,2,2};
-      if (emit & (1<<i)) 
-	 brw_MOV(p, brw_message_reg(msgLength+1), arg[swz[i]]);
+      if (emit & (1<<i))
+	 brw_MOV(p, brw_message_reg(msgLength+1), arg[i]);
       else
 	 brw_MOV(p, brw_message_reg(msgLength+1), brw_imm_f(0));
+      msgLength += 2;
+   }
+
+   /* Fill in the cube map array index value. */
+   if (BRW_IS_IGDNG(p->brw) && inst->tex_shadow) {
+	 brw_MOV(p, brw_message_reg(msgLength+1), brw_imm_f(0));
+      msgLength += 2;
+   }
+
+   /* Fill in the shadow comparison reference value. */
+   if (inst->tex_shadow) {
+      brw_MOV(p, brw_message_reg(msgLength+1), arg[2]);
       msgLength += 2;
    }
 
