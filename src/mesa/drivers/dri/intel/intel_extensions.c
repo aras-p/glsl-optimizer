@@ -194,15 +194,13 @@ static const struct dri_extension fragment_shader_extensions[] = {
  * extensions for a context.
  */
 void
-intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+intelInitExtensions(GLcontext *ctx)
 {
    struct intel_context *intel = ctx?intel_context(ctx):NULL;
 
    /* Disable imaging extension until convolution is working in teximage paths.
     */
-   enable_imaging = GL_FALSE;
-
-   driInitExtensions(ctx, card_extensions, enable_imaging);
+   driInitExtensions(ctx, card_extensions, GL_FALSE);
 
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);

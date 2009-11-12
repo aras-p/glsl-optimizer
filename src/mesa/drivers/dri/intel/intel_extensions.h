@@ -30,7 +30,7 @@
 
 
 extern void
-intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
+intelInitExtensions(GLcontext *ctx);
 
 
 #endif

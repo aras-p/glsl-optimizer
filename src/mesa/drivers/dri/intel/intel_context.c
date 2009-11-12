@@ -745,7 +745,7 @@ intelInitContext(struct intel_context *intel,
       exit(1);
    }
 
-   intelInitExtensions(ctx, GL_FALSE);
+   intelInitExtensions(ctx);
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
