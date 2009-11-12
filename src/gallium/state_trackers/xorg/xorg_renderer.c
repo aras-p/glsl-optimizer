@@ -148,32 +148,42 @@ add_vertex_data1(struct xorg_renderer *r,
                  float width, float height,
                  struct pipe_texture *src, float *src_matrix)
 {
-   float s0, t0, s1, t1;
-   float pt0[2], pt1[2];
+   float s0, t0, s1, t1, s2, t2, s3, t3;
+   float pt0[2], pt1[2], pt2[2], pt3[2];
 
    pt0[0] = srcX;
    pt0[1] = srcY;
    pt1[0] = (srcX + width);
-   pt1[1] = (srcY + height);
+   pt1[1] = srcY;
+   pt2[0] = (srcX + width);
+   pt2[1] = (srcY + height);
+   pt3[0] = srcX;
+   pt3[1] = (srcY + height);
 
    if (src_matrix) {
       map_point(src_matrix, pt0[0], pt0[1], &pt0[0], &pt0[1]);
       map_point(src_matrix, pt1[0], pt1[1], &pt1[0], &pt1[1]);
+      map_point(src_matrix, pt2[0], pt2[1], &pt2[0], &pt2[1]);
+      map_point(src_matrix, pt3[0], pt3[1], &pt3[0], &pt3[1]);
    }
 
    s0 =  pt0[0] / src->width[0];
    s1 =  pt1[0] / src->width[0];
+   s2 =  pt2[0] / src->width[0];
+   s3 =  pt3[0] / src->width[0];
    t0 =  pt0[1] / src->height[0];
    t1 =  pt1[1] / src->height[0];
+   t2 =  pt2[1] / src->height[0];
+   t3 =  pt3[1] / src->height[0];
 
    /* 1st vertex */
    add_vertex_1tex(r, dstX, dstY, s0, t0);
    /* 2nd vertex */
-   add_vertex_1tex(r, dstX + width, dstY, s1, t0);
+   add_vertex_1tex(r, dstX + width, dstY, s1, t1);
    /* 3rd vertex */
-   add_vertex_1tex(r, dstX + width, dstY + height, s1, t1);
+   add_vertex_1tex(r, dstX + width, dstY + height, s2, t2);
    /* 4th vertex */
-   add_vertex_1tex(r, dstX, dstY + height, s0, t1);
+   add_vertex_1tex(r, dstX, dstY + height, s3, t3);
 }
 
 static struct pipe_buffer *
