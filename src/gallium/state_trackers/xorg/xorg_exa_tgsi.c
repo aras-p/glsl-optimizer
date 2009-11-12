@@ -365,29 +365,23 @@ xrender_tex(struct ureg_program *ureg,
       struct ureg_dst tmp0 = ureg_DECL_temporary(ureg);
       struct ureg_dst tmp1 = ureg_DECL_temporary(ureg);
       struct ureg_src const0 = ureg_DECL_constant(ureg, 0);
-      unsigned label;
-      ureg_SLT(ureg, tmp1, ureg_swizzle(coords,
+      ureg_SGT(ureg, tmp1, ureg_swizzle(coords,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y),
                ureg_scalar(const0, TGSI_SWIZZLE_X));
-      ureg_SGT(ureg, tmp0, ureg_swizzle(coords,
+      ureg_SLT(ureg, tmp0, ureg_swizzle(coords,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y),
                ureg_scalar(const0, TGSI_SWIZZLE_W));
-      ureg_MAX(ureg, tmp0, ureg_src(tmp0), ureg_src(tmp1));
-      ureg_MAX(ureg, tmp0, ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_X),
+      ureg_MIN(ureg, tmp0, ureg_src(tmp0), ureg_src(tmp1));
+      ureg_MIN(ureg, tmp0, ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_X),
                ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_Y));
-      label = ureg_get_instruction_number(ureg) + 2;
-      ureg_IF(ureg, ureg_src(tmp0), &label);
-      ureg_MOV(ureg, dst, ureg_scalar(const0, TGSI_SWIZZLE_X));
-      label += 2;
-      ureg_ELSE(ureg, &label);
-      ureg_TEX(ureg, dst, TGSI_TEXTURE_2D, coords, sampler);
-      ureg_ENDIF(ureg);
+      ureg_TEX(ureg, tmp1, TGSI_TEXTURE_2D, coords, sampler);
+      ureg_MUL(ureg, dst, ureg_src(tmp1), ureg_src(tmp0));
       ureg_release_temporary(ureg, tmp0);
       ureg_release_temporary(ureg, tmp1);
    } else
