@@ -1190,6 +1190,19 @@ AC_ARG_WITH([max-height],
 )
 
 dnl
+dnl Gallium SVGA configuration
+dnl
+AC_ARG_ENABLE([gallium-svga],
+    [AS_HELP_STRING([--disable-gallium-svga],
+        [build gallium SVGA @<:@default=enabled@:>@])],
+    [enable_gallium_svga="$enableval"],
+    [enable_gallium_svga=yes])
+if test "x$enable_gallium_svga" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS vmware"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+fi
+
+dnl
 dnl Gallium Intel configuration
 dnl
 AC_ARG_ENABLE([gallium-intel],
