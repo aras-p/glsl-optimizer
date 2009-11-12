@@ -104,6 +104,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
    { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
+   { GLX(INTEL_swap_event),            VER(1,4), Y, Y, N, N },
    { NULL }
 };
 

@@ -394,6 +394,9 @@ dri2BindExtensions(__GLXscreenConfigs *psc)
       __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
       __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
 
+      /* FIXME: if DRI2 version supports it... */
+      __glXEnableDirectExtension(psc, "INTEL_swap_event");
+
 #ifdef __DRI2_FLUSH
       if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
 	 psc->f = (__DRI2flushExtension *) extensions[i];

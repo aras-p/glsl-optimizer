@@ -41,6 +41,8 @@
 #include <X11/extensions/dri2proto.h>
 #include "xf86drm.h"
 #include "dri2.h"
+#include "glxclient.h"
+#include "GL/glxext.h"
 
 /* Allow the build to work with an older versions of dri2proto.h and
  * dri2tokens.h.
@@ -56,6 +58,11 @@ static char dri2ExtensionName[] = DRI2_NAME;
 static XExtensionInfo *dri2Info;
 static XEXT_GENERATE_CLOSE_DISPLAY (DRI2CloseDisplay, dri2Info)
 
+static Bool
+DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire);
+static Status
+DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire);
+
 static /* const */ XExtensionHooks dri2ExtensionHooks = {
   NULL,                   /* create_gc */
   NULL,                   /* copy_gc */
@@ -64,8 +71,8 @@ static /* const */ XExtensionHooks dri2ExtensionHooks = {
   NULL,                   /* create_font */
   NULL,                   /* free_font */
   DRI2CloseDisplay,       /* close_display */
-  NULL,                   /* wire_to_event */
-  NULL,                   /* event_to_wire */
+  DRI2WireToEvent,        /* wire_to_event */
+  DRI2EventToWire,        /* event_to_wire */
   NULL,                   /* error */
   NULL,                   /* error_string */
 };
@@ -75,6 +82,65 @@ static XEXT_GENERATE_FIND_DISPLAY (DRI2FindDisplay,
                                    dri2ExtensionName,
                                    &dri2ExtensionHooks,
                                    0, NULL)
+
+static Bool
+DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
+{
+   XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+
+   XextCheckExtension(dpy, info, dri2ExtensionName, False);
+
+   switch ((wire->u.u.type & 0x7f) - info->codes->first_event) {
+   case DRI2_BufferSwapComplete:
+   {
+      GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
+      xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
+      switch (awire->type) {
+      case DRI2_EXCHANGE_COMPLETE:
+	 aevent->event_type = GLX_EXCHANGE_COMPLETE;
+	 break;
+      case DRI2_BLIT_COMPLETE:
+	 aevent->event_type = GLX_BLIT_COMPLETE;
+	 break;
+      case DRI2_FLIP_COMPLETE:
+	 aevent->event_type = GLX_FLIP_COMPLETE;
+	 break;
+      default:
+	 /* unknown swap completion type */
+	 return False;
+      }
+      aevent->drawable = awire->drawable;
+      aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
+      aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
+      aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
+      return True;
+   }
+   default:
+      /* client doesn't support server event */
+      break;
+   }
+
+   return False;
+}
+
+/* We don't actually support this.  It doesn't make sense for clients to
+ * send each other DRI2 events.
+ */
+static Status
+DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire)
+{
+   XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+
+   XextCheckExtension(dpy, info, dri2ExtensionName, False);
+
+   switch (event->type) {
+   default:
+      /* client doesn't support server event */
+      break;
+   }
+
+   return Success;
+}
 
 Bool
 DRI2QueryExtension(Display * dpy, int *eventBase, int *errorBase)
