@@ -364,19 +364,19 @@ xrender_tex(struct ureg_program *ureg,
    if (repeat_none) {
       struct ureg_dst tmp0 = ureg_DECL_temporary(ureg);
       struct ureg_dst tmp1 = ureg_DECL_temporary(ureg);
-      struct ureg_src const0 = ureg_DECL_constant(ureg, 0);
+      struct ureg_src imm0 = ureg_imm4f(ureg, 0, 0, 0, 1);
       ureg_SGT(ureg, tmp1, ureg_swizzle(coords,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y),
-               ureg_scalar(const0, TGSI_SWIZZLE_X));
+               ureg_scalar(imm0, TGSI_SWIZZLE_X));
       ureg_SLT(ureg, tmp0, ureg_swizzle(coords,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y,
                                         TGSI_SWIZZLE_X,
                                         TGSI_SWIZZLE_Y),
-               ureg_scalar(const0, TGSI_SWIZZLE_W));
+               ureg_scalar(imm0, TGSI_SWIZZLE_W));
       ureg_MIN(ureg, tmp0, ureg_src(tmp0), ureg_src(tmp1));
       ureg_MIN(ureg, tmp0, ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_X),
                ureg_scalar(ureg_src(tmp0), TGSI_SWIZZLE_Y));
