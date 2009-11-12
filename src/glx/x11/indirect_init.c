@@ -588,6 +588,10 @@ __GLapi * __glXNewIndirectAPI( void )
 
     glAPI->DrawBuffersARB = __indirect_glDrawBuffersARB;
 
+    /*  45. GL_ARB_framebuffer_object */
+
+    glAPI->RenderbufferStorageMultisample = __indirect_glRenderbufferStorageMultisample;
+
     /*  25. GL_SGIS_multisample */
 
     glAPI->SampleMaskSGIS = __indirect_glSampleMaskSGIS;
@@ -767,6 +771,10 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->IsFramebufferEXT = __indirect_glIsFramebufferEXT;
     glAPI->IsRenderbufferEXT = __indirect_glIsRenderbufferEXT;
     glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;
+
+    /* 316. GL_EXT_framebuffer_blit */
+
+    glAPI->BlitFramebufferEXT = __indirect_glBlitFramebufferEXT;
 
     return glAPI;
 }
