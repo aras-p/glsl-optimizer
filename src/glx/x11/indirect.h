@@ -712,6 +712,7 @@ extern HIDDEN GLboolean __indirect_glIsFramebufferEXT(GLuint framebuffer);
 extern HIDDEN GLboolean __indirect_glIsRenderbufferEXT(GLuint renderbuffer);
 extern HIDDEN void __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 extern HIDDEN void __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+extern HIDDEN void __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 
 #  undef HIDDEN
 #  undef FASTCALL

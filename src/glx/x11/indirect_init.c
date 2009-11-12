@@ -776,6 +776,10 @@ __GLapi * __glXNewIndirectAPI( void )
 
     glAPI->BlitFramebufferEXT = __indirect_glBlitFramebufferEXT;
 
+    /* 329. GL_EXT_texture_array */
+
+    glAPI->FramebufferTextureLayerEXT = __indirect_glFramebufferTextureLayerEXT;
+
     return glAPI;
 }
 

@@ -10643,6 +10643,26 @@ __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1,
     }
 }
 
+#define X_GLrop_FramebufferTextureLayerEXT 237
+void
+__indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+                                        GLuint texture, GLint level,
+                                        GLint layer)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTextureLayerEXT, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&level), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&layer), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
 
 #  undef FASTCALL
 #  undef NOINLINE
