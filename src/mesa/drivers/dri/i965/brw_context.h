@@ -412,23 +412,6 @@ struct brw_vertex_info {
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 
-
-
-
-/* Cache for TNL programs.
- */
-struct brw_tnl_cache_item {
-   GLuint hash;
-   void *key;
-   void *data;
-   struct brw_tnl_cache_item *next;
-};
-
-struct brw_tnl_cache {
-   struct brw_tnl_cache_item **items;
-   GLuint size, n_items;
-};
-
 struct brw_query_object {
    struct gl_query_object Base;
 
