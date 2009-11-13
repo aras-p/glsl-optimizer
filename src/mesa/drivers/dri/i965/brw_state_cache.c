@@ -245,7 +245,6 @@ brw_upload_cache( struct brw_cache *cache,
 
    item->bo = bo;
    dri_bo_reference(bo);
-   item->data_size = data_size;
 
    if (cache->n_items > cache->size * 1.5)
       rehash(cache);

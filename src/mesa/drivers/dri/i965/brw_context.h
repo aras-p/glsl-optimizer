@@ -320,7 +320,6 @@ struct brw_cache_item {
    GLuint nr_reloc_bufs;
 
    dri_bo *bo;
-   GLuint data_size;
 
    struct brw_cache_item *next;
 };   
