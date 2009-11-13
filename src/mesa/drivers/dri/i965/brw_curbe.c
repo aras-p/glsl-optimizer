@@ -130,7 +130,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
       .mesa = _NEW_TRANSFORM,
-      .brw  = BRW_NEW_VERTEX_PROGRAM,
+      .brw  = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_WM_PROG
    },
    .prepare = calculate_curbe_offsets
