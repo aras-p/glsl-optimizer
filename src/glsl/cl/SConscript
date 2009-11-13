@@ -1,0 +1,11 @@
+Import('*')
+
+env = env.Clone()
+
+glslcl = env.StaticLibrary(
+    target = 'glslcl',
+    source = [
+        'sl_cl_parse.c',
+    ],
+)
+Export('glslcl')
