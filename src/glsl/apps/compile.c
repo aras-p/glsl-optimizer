@@ -170,7 +170,7 @@ main(int argc,
    }
    outtokens[j] = outtokens[i];
 
-   if (sl_cl_compile(context, outtokens, shader_type, &outbytes, &cboutbytes) == 0) {
+   if (sl_cl_compile(context, outtokens, shader_type, 1, &outbytes, &cboutbytes, errmsg, sizeof(errmsg)) == 0) {
       unsigned int i;
       unsigned int line = 0;
 
@@ -203,6 +203,9 @@ main(int argc,
       }
       fprintf (out, "\n");
       free(outbytes);
+   } else {
+      fprintf(out, "$SYNTAXERROR: `%s'\n", errmsg);
+      return -1;
    }
 
    sl_pp_context_destroy(context);
