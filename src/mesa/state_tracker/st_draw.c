@@ -25,10 +25,20 @@
  * 
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  */
+/*
+ * This file implements the st_draw_vbo() function which is called from
+ * Mesa's VBO module.  All point/line/triangle rendering is done through
+ * this function whether the user called glBegin/End, glDrawArrays,
+ * glDrawElements, glEvalMesh, or glCalList, etc.
+ *
+ * We basically convert the VBO's vertex attribute/array information into
+ * Gallium vertex state, bind the vertex buffer objects and call
+ * pipe->draw_elements(), pipe->draw_range_elements() or pipe->draw_arrays().
+ *
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ */
+
 
 #include "main/imports.h"
 #include "main/image.h"
