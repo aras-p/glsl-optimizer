@@ -2758,10 +2758,6 @@ compile_with_grammar(const char *source,
    return GL_TRUE;
 }
 
-LONGSTRING static const char *slang_shader_syn =
-#include "library/slang_shader_syn.h"
-   ;
-
 static const unsigned char slang_core_gc[] = {
 #include "library/slang_core_gc.h"
 };
