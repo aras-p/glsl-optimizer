@@ -35,8 +35,8 @@
 #include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
-#include "shader/grammar/grammar_mesa.h"
 #include "../../glsl/pp/sl_pp_public.h"
+#include "../../glsl/cl/sl_cl_parse.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"
@@ -128,7 +128,7 @@ _slang_code_object_dtr(slang_code_object * self)
 
 typedef struct slang_parse_ctx_
 {
-   const byte *I;
+   const unsigned char *I;
    slang_info_log *L;
    int parsing_builtin;
    GLboolean global_scope;   /**< Is object being declared a global? */
@@ -196,7 +196,7 @@ parse_general_number(slang_parse_ctx *ctx, float *number)
 
    if (*ctx->I == '0') {
       int value = 0;
-      const byte *pi;
+      const unsigned char *pi;
 
       if (ctx->I[1] == 'x' || ctx->I[1] == 'X') {
          ctx->I += 2;
@@ -2540,7 +2540,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 }
 
 static GLboolean
-compile_binary(const byte * prod, slang_code_unit * unit,
+compile_binary(const unsigned char * prod, slang_code_unit * unit,
                GLuint version,
                slang_unit_type type, slang_info_log * infolog,
                slang_code_unit * builtin, slang_code_unit * downlink,
@@ -2573,16 +2573,20 @@ compile_binary(const byte * prod, slang_code_unit * unit,
 }
 
 static GLboolean
-compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
-                     slang_unit_type type, slang_info_log * infolog,
-                     slang_code_unit * builtin,
+compile_with_grammar(const char *source,
+                     slang_code_unit *unit,
+                     slang_unit_type type,
+                     slang_info_log *infolog,
+                     slang_code_unit *builtin,
                      struct gl_shader *shader,
                      const struct gl_extensions *extensions,
-                     struct gl_sl_pragmas *pragmas)
+                     struct gl_sl_pragmas *pragmas,
+                     unsigned int shader_type,
+                     unsigned int parsing_builtin)
 {
    struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
-   byte *prod;
+   unsigned char *prod;
    GLuint size;
    unsigned int version;
    unsigned int maxVersion;
@@ -2718,17 +2722,17 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    }
 
    /* Finally check the syntax and generate its binary representation. */
-   result = grammar_fast_check(id, context, tokens, &prod, &size, 65536);
+   result = sl_cl_compile(context, tokens, shader_type, &prod, &size);
 
    sl_pp_context_destroy(context);
    free(tokens);
 
-   if (!result) {
-      char buf[1024];
-      GLint pos;
+   if (result) {
+      /*char buf[1024];
+      GLint pos;*/
 
-      grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
-      slang_info_log_error(infolog, buf);
+      /*slang_info_log_error(infolog, buf);*/
+      slang_info_log_error(infolog, "Syntax error.");
       /* syntax error (possibly in library code) */
 #if 0
       {
@@ -2747,10 +2751,10 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    if (!compile_binary(prod, unit, version, type, infolog, builtin,
                        &builtin[SLANG_BUILTIN_TOTAL - 1],
                        shader)) {
-      grammar_alloc_free(prod);
+      free(prod);
       return GL_FALSE;
    }
-   grammar_alloc_free(prod);
+   free(prod);
    return GL_TRUE;
 }
 
@@ -2758,60 +2762,53 @@ LONGSTRING static const char *slang_shader_syn =
 #include "library/slang_shader_syn.h"
    ;
 
-static const byte slang_core_gc[] = {
+static const unsigned char slang_core_gc[] = {
 #include "library/slang_core_gc.h"
 };
 
-static const byte slang_120_core_gc[] = {
+static const unsigned char slang_120_core_gc[] = {
 #include "library/slang_120_core_gc.h"
 };
 
-static const byte slang_120_fragment_gc[] = {
+static const unsigned char slang_120_fragment_gc[] = {
 #include "library/slang_builtin_120_fragment_gc.h"
 };
 
-static const byte slang_common_builtin_gc[] = {
+static const unsigned char slang_common_builtin_gc[] = {
 #include "library/slang_common_builtin_gc.h"
 };
 
-static const byte slang_fragment_builtin_gc[] = {
+static const unsigned char slang_fragment_builtin_gc[] = {
 #include "library/slang_fragment_builtin_gc.h"
 };
 
-static const byte slang_vertex_builtin_gc[] = {
+static const unsigned char slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
 static GLboolean
-compile_object(grammar * id, const char *source, slang_code_object * object,
-               slang_unit_type type, slang_info_log * infolog,
+compile_object(const char *source,
+               slang_code_object *object,
+               slang_unit_type type,
+               slang_info_log *infolog,
                struct gl_shader *shader,
                const struct gl_extensions *extensions,
                struct gl_sl_pragmas *pragmas)
 {
    slang_code_unit *builtins = NULL;
    GLuint base_version = 110;
-
-   /* load GLSL grammar */
-   *id = grammar_load_from_text((const byte *) (slang_shader_syn));
-   if (*id == 0) {
-      byte buf[1024];
-      int pos;
-
-      grammar_get_last_error(buf, 1024, &pos);
-      slang_info_log_error(infolog, (const char *) (buf));
-      return GL_FALSE;
-   }
+   unsigned int shader_type;
+   unsigned int parsing_builtin;
 
    /* set shader type - the syntax is slightly different for different shaders */
-   if (type == SLANG_UNIT_FRAGMENT_SHADER
-       || type == SLANG_UNIT_FRAGMENT_BUILTIN)
-      grammar_set_reg8(*id, (const byte *) "shader_type", 1);
-   else
-      grammar_set_reg8(*id, (const byte *) "shader_type", 2);
+   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_FRAGMENT_BUILTIN) {
+      shader_type = 1;
+   } else {
+      shader_type = 2;
+   }
 
    /* enable language extensions */
-   grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
+   parsing_builtin = 1;
 
    /* if parsing user-specified shader, load built-in library */
    if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER) {
@@ -2877,16 +2874,24 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 
       /* disable language extensions */
 #if NEW_SLANG /* allow-built-ins */
-      grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
+      parsing_builtin = 1;
 #else
-      grammar_set_reg8(*id, (const byte *) "parsing_builtin", 0);
+      parsing_builtin = 0;
 #endif
       builtins = object->builtin;
    }
 
    /* compile the actual shader - pass-in built-in library for external shader */
-   return compile_with_grammar(*id, source, &object->unit, type, infolog,
-                               builtins, shader, extensions, pragmas);
+   return compile_with_grammar(source,
+                               &object->unit,
+                               type,
+                               infolog,
+                               builtins,
+                               shader,
+                               extensions,
+                               pragmas,
+                               shader_type,
+                               parsing_builtin);
 }
 
 
@@ -2895,9 +2900,6 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
                struct gl_shader *shader)
 {
-   GLboolean success;
-   grammar id = 0;
-
 #if 0 /* for debug */
    _mesa_printf("********* COMPILE SHADER ***********\n");
    _mesa_printf("%s\n", shader->Source);
@@ -2909,14 +2911,13 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
 
-   success = compile_object(&id, shader->Source, object, type, infolog, shader,
-                            &ctx->Extensions, &shader->Pragmas);
-   if (id != 0)
-      grammar_destroy(id);
-   if (!success)
-      return GL_FALSE;
-
-   return GL_TRUE;
+   return compile_object(shader->Source,
+                         object,
+                         type,
+                         infolog,
+                         shader,
+                         &ctx->Extensions,
+                         &shader->Pragmas);
 }
 
 
