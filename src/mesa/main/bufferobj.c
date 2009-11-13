@@ -37,6 +37,8 @@
 #include "image.h"
 #include "context.h"
 #include "bufferobj.h"
+#include "fbobject.h"
+#include "texobj.h"
 
 
 /* Debug flags */
@@ -1710,3 +1712,357 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
    if (ctx->Driver.FlushMappedBufferRange)
       ctx->Driver.FlushMappedBufferRange(ctx, target, offset, length, bufObj);
 }
+
+#if FEATURE_APPLE_object_purgeable
+static GLenum
+_mesa_BufferObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_buffer_object *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_bufferobj(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectPurgeable(name = 0x%x)", name);
+      return 0;
+   }
+   if (!_mesa_is_bufferobj(bufObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glObjectPurgeable(buffer 0)" );
+      return 0;
+   }
+
+   if (bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectPurgeable(name = 0x%x) is already purgeable", name);
+      return GL_VOLATILE_APPLE;
+   }
+
+   bufObj->Purgeable = GL_TRUE;
+
+   retval = GL_VOLATILE_APPLE;
+   if (ctx->Driver.BufferObjectPurgeable)
+      retval = ctx->Driver.BufferObjectPurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+static GLenum
+_mesa_RenderObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_renderbuffer *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_renderbuffer(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   if (bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectPurgeable(name = 0x%x) is already purgeable", name);
+      return GL_VOLATILE_APPLE;
+   }
+
+   bufObj->Purgeable = GL_TRUE;
+
+   retval = GL_VOLATILE_APPLE;
+   if (ctx->Driver.RenderObjectPurgeable)
+      retval = ctx->Driver.RenderObjectPurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+static GLenum
+_mesa_TextureObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_texture_object *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_texture(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectPurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   if (bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectPurgeable(name = 0x%x) is already purgeable", name);
+      return GL_VOLATILE_APPLE;
+   }
+
+   bufObj->Purgeable = GL_TRUE;
+
+   retval = GL_VOLATILE_APPLE;
+   if (ctx->Driver.TextureObjectPurgeable)
+      retval = ctx->Driver.TextureObjectPurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+GLenum GLAPIENTRY
+_mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
+
+   if (name == 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectPurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   switch (option) {
+   case GL_VOLATILE_APPLE:
+   case GL_RELEASED_APPLE:
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glObjectPurgeable(name = 0x%x) invalid option: %d", name, option);
+      return 0;
+   }
+
+   switch (objectType) {
+   case GL_TEXTURE:
+      return _mesa_TextureObjectPurgeable (ctx, name, option);
+   case GL_RENDERBUFFER_EXT:
+      return _mesa_RenderObjectPurgeable (ctx, name, option);
+   case GL_BUFFER_OBJECT_APPLE:
+      return _mesa_BufferObjectPurgeable (ctx, name, option);
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glObjectPurgeable(name = 0x%x) invalid type: %d", name, objectType);
+      return 0;
+   }
+}
+
+static GLenum
+_mesa_BufferObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_buffer_object *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_bufferobj(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   if (! bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+      return 0;
+   }
+
+   bufObj->Purgeable = GL_FALSE;
+
+   retval = GL_RETAINED_APPLE;
+   if (ctx->Driver.BufferObjectUnpurgeable)
+      retval = ctx->Driver.BufferObjectUnpurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+static GLenum
+_mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_renderbuffer *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_renderbuffer(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   if (! bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+      return 0;
+   }
+
+   bufObj->Purgeable = GL_FALSE;
+
+   retval = GL_RETAINED_APPLE;
+   if (ctx->Driver.RenderObjectUnpurgeable)
+      retval = ctx->Driver.RenderObjectUnpurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+static GLenum
+_mesa_TextureObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
+{
+   struct gl_texture_object *bufObj;
+   GLenum retval;
+
+   bufObj = _mesa_lookup_texture(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   if (! bufObj->Purgeable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+      return 0;
+   }
+
+   bufObj->Purgeable = GL_FALSE;
+
+   retval = GL_RETAINED_APPLE;
+   if (ctx->Driver.TextureObjectUnpurgeable)
+      retval = ctx->Driver.TextureObjectUnpurgeable(ctx, bufObj, option);
+
+   return retval;
+}
+
+GLenum GLAPIENTRY
+_mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
+
+   if (name == 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return 0;
+   }
+
+   switch (option) {
+   case GL_RETAINED_APPLE:
+   case GL_UNDEFINED_APPLE:
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glObjectUnpurgeable(name = 0x%x) invalid option: %d", name, option);
+      return 0;
+   }
+
+   switch (objectType) {
+   case GL_BUFFER_OBJECT_APPLE:
+      return _mesa_BufferObjectUnpurgeable(ctx, name, option);
+
+   case GL_TEXTURE:
+      return _mesa_TextureObjectUnpurgeable(ctx, name, option);
+
+   case GL_RENDERBUFFER_EXT:
+      return _mesa_RenderObjectUnpurgeable(ctx, name, option);
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glObjectUnpurgeable(name = 0x%x) invalid type: %d", name, objectType);
+      return 0;
+   }
+}
+
+static void
+_mesa_GetBufferObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+{
+   struct gl_buffer_object *bufObj;
+
+   bufObj = _mesa_lookup_bufferobj(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetObjectParameteriv(name = 0x%x) invalid object", name);
+      return;
+   }
+
+   switch (pname) {
+   case GL_PURGEABLE_APPLE:
+      *params = bufObj->Purgeable;
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+      break;
+   }
+}
+
+static void
+_mesa_GetRenderObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+{
+   struct gl_renderbuffer *bufObj;
+
+   bufObj = _mesa_lookup_renderbuffer(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return;
+   }
+
+   switch (pname) {
+   case GL_PURGEABLE_APPLE:
+      *params = bufObj->Purgeable;
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+      break;
+   }
+}
+
+static void
+_mesa_GetTextureObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+{
+   struct gl_texture_object *bufObj;
+
+   bufObj = _mesa_lookup_texture(ctx, name);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glObjectUnpurgeable(name = 0x%x)", name);
+      return;
+   }
+
+   switch (pname) {
+   case GL_PURGEABLE_APPLE:
+      *params = bufObj->Purgeable;
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+      break;
+   }
+}
+
+void GLAPIENTRY
+_mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname, GLint* params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (name == 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetObjectParameteriv(name = 0x%x)", name);
+      return;
+   }
+
+   switch (objectType) {
+   case GL_TEXTURE:
+      _mesa_GetTextureObjectParameterivAPPLE (ctx, name, pname, params);
+      break;
+
+   case GL_BUFFER_OBJECT_APPLE:
+      _mesa_GetBufferObjectParameterivAPPLE (ctx, name, pname, params);
+      break;
+
+   case GL_RENDERBUFFER_EXT:
+      _mesa_GetRenderObjectParameterivAPPLE (ctx, name, pname, params);
+      break;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetObjectParameteriv(name = 0x%x) invalid type: %d", name, objectType);
+   }
+}
+#endif

@@ -777,6 +777,23 @@ struct dd_function_table {
 #endif
 
    /**
+    * \name Functions for GL_APPLE_object_purgeable
+    */
+#if FEATURE_APPLE_object_purgeable
+   /*@{*/
+   /* variations on ObjectPurgeable */
+   GLenum (*BufferObjectPurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
+   GLenum (*RenderObjectPurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
+   GLenum (*TextureObjectPurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
+
+   /* variations on ObjectUnpurgeable */
+   GLenum (*BufferObjectUnpurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
+   GLenum (*RenderObjectUnpurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
+   GLenum (*TextureObjectUnpurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
+   /*@}*/
+#endif
+
+   /**
     * \name Functions for GL_EXT_framebuffer_object
     */
 #if FEATURE_EXT_framebuffer_object
