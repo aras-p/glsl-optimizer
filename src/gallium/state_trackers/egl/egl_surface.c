@@ -186,6 +186,9 @@ drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen)
 	screen->shown = 0;
 }
 
+/**
+ * Called by libEGL's eglCreateWindowSurface().
+ */
 _EGLSurface *
 drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list)
 {
@@ -193,6 +196,9 @@ drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, N
 }
 
 
+/**
+ * Called by libEGL's eglCreatePixmapSurface().
+ */
 _EGLSurface *
 drm_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list)
 {
@@ -200,6 +206,9 @@ drm_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, N
 }
 
 
+/**
+ * Called by libEGL's eglCreatePbufferSurface().
+ */
 _EGLSurface *
 drm_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                            const EGLint *attrib_list)
@@ -254,6 +263,9 @@ err:
 	return NULL;
 }
 
+/**
+ * Called by libEGL's eglCreateScreenSurfaceMESA().
+ */
 _EGLSurface *
 drm_create_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *cfg,
                                const EGLint *attrib_list)
@@ -263,6 +275,9 @@ drm_create_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *cf
 	return surf;
 }
 
+/**
+ * Called by libEGL's eglShowScreenSurfaceMESA().
+ */
 EGLBoolean
 drm_show_screen_surface_mesa(_EGLDriver *drv, _EGLDisplay *dpy,
                              _EGLScreen *screen,
@@ -359,6 +374,9 @@ err_tex:
 	return EGL_FALSE;
 }
 
+/**
+ * Called by libEGL's eglDestroySurface().
+ */
 EGLBoolean
 drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
@@ -372,6 +390,9 @@ drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 	return EGL_TRUE;
 }
 
+/**
+ * Called by libEGL's eglSwapBuffers().
+ */
 EGLBoolean
 drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
