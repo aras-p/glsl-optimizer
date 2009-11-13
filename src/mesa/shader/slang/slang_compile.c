@@ -2722,17 +2722,22 @@ compile_with_grammar(const char *source,
    }
 
    /* Finally check the syntax and generate its binary representation. */
-   result = sl_cl_compile(context, tokens, shader_type, &prod, &size);
+   result = sl_cl_compile(context,
+                          tokens,
+                          shader_type,
+                          parsing_builtin,
+                          &prod,
+                          &size,
+                          errmsg,
+                          sizeof(errmsg));
 
    sl_pp_context_destroy(context);
    free(tokens);
 
    if (result) {
-      /*char buf[1024];
-      GLint pos;*/
+      /*GLint pos;*/
 
-      /*slang_info_log_error(infolog, buf);*/
-      slang_info_log_error(infolog, "Syntax error.");
+      slang_info_log_error(infolog, errmsg);
       /* syntax error (possibly in library code) */
 #if 0
       {
