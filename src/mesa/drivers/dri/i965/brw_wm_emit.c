@@ -828,8 +828,8 @@ static void emit_tex( struct brw_wm_compile *c,
 		      struct brw_reg *arg )
 {
    struct brw_compile *p = &c->func;
-   GLuint msgLength, responseLength;
-   GLuint i, nr;
+   GLuint cur_mrf = 2, response_length;
+   GLuint i, nr_texcoords;
    GLuint emit;
    GLuint msg_type;
 
@@ -838,17 +838,17 @@ static void emit_tex( struct brw_wm_compile *c,
    switch (inst->tex_idx) {
    case TEXTURE_1D_INDEX:
       emit = WRITEMASK_X;
-      nr = 1;
+      nr_texcoords = 1;
       break;
    case TEXTURE_2D_INDEX:
    case TEXTURE_RECT_INDEX:
       emit = WRITEMASK_XY;
-      nr = 2;
+      nr_texcoords = 2;
       break;
    case TEXTURE_3D_INDEX:
    case TEXTURE_CUBE_INDEX:
       emit = WRITEMASK_XYZ;
-      nr = 3;
+      nr_texcoords = 3;
       break;
    default:
       /* unexpected target */
@@ -857,31 +857,28 @@ static void emit_tex( struct brw_wm_compile *c,
 
    /* For shadow comparisons, we have to supply u,v,r. */
    if (inst->tex_shadow)
-      nr = 3;
+      nr_texcoords = 3;
 
-   msgLength = 1;
-
-   for (i = 0; i < nr; i++) {
+   for (i = 0; i < nr_texcoords; i++) {
       if (emit & (1<<i))
-	 brw_MOV(p, brw_message_reg(msgLength+1), arg[i]);
+	 brw_MOV(p, brw_message_reg(cur_mrf), arg[i]);
       else
-	 brw_MOV(p, brw_message_reg(msgLength+1), brw_imm_f(0));
-      msgLength += 2;
-   }
-
-   /* Fill in the cube map array index value. */
-   if (BRW_IS_IGDNG(p->brw) && inst->tex_shadow) {
-	 brw_MOV(p, brw_message_reg(msgLength+1), brw_imm_f(0));
-      msgLength += 2;
+	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
+      cur_mrf += 2;
    }
 
    /* Fill in the shadow comparison reference value. */
    if (inst->tex_shadow) {
-      brw_MOV(p, brw_message_reg(msgLength+1), arg[2]);
-      msgLength += 2;
+      if (BRW_IS_IGDNG(p->brw)) {
+	 /* Fill in the cube map array index value. */
+	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
+	 cur_mrf += 2;
+      }
+      brw_MOV(p, brw_message_reg(cur_mrf), arg[2]);
+      cur_mrf += 2;
    }
 
-   responseLength = 8;		/* always */
+   response_length = 8;		/* always */
 
    if (BRW_IS_IGDNG(p->brw)) {
        if (inst->tex_shadow)
@@ -895,19 +892,19 @@ static void emit_tex( struct brw_wm_compile *c,
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
    }
 
-   brw_SAMPLE(p, 
+   brw_SAMPLE(p,
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
 	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
               SURF_INDEX_TEXTURE(inst->tex_unit),
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
-	      msg_type, 
-	      responseLength,
-	      msgLength,
-	      0,	
+	      msg_type,
+	      response_length,
+	      cur_mrf - 1,
+	      0,
 	      1,
-	      BRW_SAMPLER_SIMD_MODE_SIMD16);	
+	      BRW_SAMPLER_SIMD_MODE_SIMD16);
 }
 
 
