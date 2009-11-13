@@ -330,6 +330,8 @@ struct parse_context {
 
    unsigned int shader_type;
    unsigned int parsing_builtin;
+
+   char error[256];
 };
 
 
@@ -359,6 +361,16 @@ _update(struct parse_context *ctx,
         unsigned char b)
 {
    ctx->out_buf[out] = b;
+}
+
+
+static void
+_error(struct parse_context *ctx,
+       char *msg)
+{
+   if (ctx->error[0] == '\0') {
+      strcpy(ctx->error, msg);
+   }
 }
 
 
@@ -648,10 +660,12 @@ _parse_struct_declarator(struct parse_context *ctx,
       return 0;
    }
    if (_parse_constant_expression(ctx, &p)) {
-      return 0;
+      _error(ctx, "expected constant integral expression");
+      return -1;
    }
    if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
-      return 0;
+      _error(ctx, "expected `]'");
+      return -1;
    }
    _update(ctx, e, FIELD_ARRAY);
    *ps = p;
@@ -736,6 +750,7 @@ _parse_struct_specifier(struct parse_context *ctx,
       _emit(ctx, &p.out, '\0');
    }
    if (_parse_token(ctx, SL_PP_LBRACE, &p)) {
+      _error(ctx, "expected `{'");
       return -1;
    }
    if (_parse_struct_declaration_list(ctx, &p)) {
@@ -853,9 +868,11 @@ _parse_type_specifier_array(struct parse_context *ctx,
       return -1;
    }
    if (_parse_constant_expression(ctx, &p)) {
+      _error(ctx, "expected constant integral expression");
       return -1;
    }
    if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
+      _error(ctx, "expected `]'");
       return -1;
    }
    *ps = p;
@@ -963,10 +980,12 @@ _parse_function_identifier(struct parse_context *ctx,
       return 0;
    }
    if (_parse_constant_expression(ctx, &p)) {
-      return 0;
+      _error(ctx, "expected constant integral expression");
+      return -1;
    }
    if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
-      return 0;
+      _error(ctx, "expected `]'");
+      return -1;
    }
    _update(ctx, e, FUNCTION_CALL_ARRAY);
    *ps = p;
@@ -1091,6 +1110,8 @@ _parse_function_call_generic(struct parse_context *ctx,
          *ps = p;
          return 0;
       }
+      _error(ctx, "expected `)'");
+      return -1;
    }
 
    p = *ps;
@@ -1099,6 +1120,8 @@ _parse_function_call_generic(struct parse_context *ctx,
          *ps = p;
          return 0;
       }
+      _error(ctx, "expected `)'");
+      return -1;
    }
 
    return -1;
@@ -1202,10 +1225,12 @@ _parse_postfix_expression(struct parse_context *ctx,
          _emit(ctx, &p.out, OP_POSTDECREMENT);
       } else if (_parse_token(ctx, SL_PP_LBRACKET, &p) == 0) {
          if (_parse_expression(ctx, &p)) {
-            return 0;
+            _error(ctx, "expected an integral expression");
+            return -1;
          }
          if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
-            return 0;
+            _error(ctx, "expected `]'");
+            return -1;
          }
          _emit(ctx, &p.out, OP_SUBSCRIPT);
       } else if (_parse_token(ctx, SL_PP_DOT, &p) == 0) {
@@ -1487,9 +1512,11 @@ _parse_parameter_declarator_array(struct parse_context *ctx,
       return -1;
    }
    if (_parse_constant_expression(ctx, &p)) {
+      _error(ctx, "expected constant integral expression");
       return -1;
    }
    if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
+      _error(ctx, "expected `]'");
       return -1;
    }
    *ps = p;
@@ -1529,9 +1556,11 @@ _parse_parameter_type_specifier_array(struct parse_context *ctx,
       return -1;
    }
    if (_parse_constant_expression(ctx, &p)) {
+      _error(ctx, "expected constant integral expression");
       return -1;
    }
    if (_parse_token(ctx, SL_PP_RBRACKET, &p)) {
+      _error(ctx, "expected `]'");
       return -1;
    }
    *ps = p;
@@ -1641,6 +1670,8 @@ _parse_function_prototype(struct parse_context *ctx,
             *ps = p;
             return 0;
          }
+         _error(ctx, "expected `)'");
+         return -1;
       }
    }
 
@@ -1651,6 +1682,8 @@ _parse_function_prototype(struct parse_context *ctx,
          *ps = p;
          return 0;
       }
+      _error(ctx, "expected `)'");
+      return -1;
    }
 
    return -1;
@@ -1937,12 +1970,15 @@ _parse_selection_statement(struct parse_context *ctx,
       return -1;
    }
    if (_parse_token(ctx, SL_PP_LPAREN, &p)) {
+      _error(ctx, "expected `('");
       return -1;
    }
    if (_parse_expression(ctx, &p)) {
+      _error(ctx, "expected an expression");
       return -1;
    }
    if (_parse_token(ctx, SL_PP_RPAREN, &p)) {
+      _error(ctx, "expected `)'");
       return -1;
    }
    _emit(ctx, &p.out, OP_END);
@@ -2033,10 +2069,12 @@ _parse_condition_initializer(struct parse_context *ctx,
       return -1;
    }
    if (_parse_token(ctx, SL_PP_ASSIGN, &p)) {
+      _error(ctx, "expected `='");
       return -1;
    }
    _emit(ctx, &p.out, VARIABLE_INITIALIZER);
    if (_parse_initializer(ctx, &p)) {
+      _error(ctx, "expected an initialiser");
       return -1;
    }
    _emit(ctx, &p.out, DECLARATOR_NONE);
@@ -2102,12 +2140,15 @@ _parse_iteration_statement(struct parse_context *ctx,
    if (_parse_id(ctx, ctx->dict._while, &p) == 0) {
       _emit(ctx, &p.out, OP_WHILE);
       if (_parse_token(ctx, SL_PP_LPAREN, &p)) {
+         _error(ctx, "expected `('");
          return -1;
       }
       if (_parse_condition(ctx, &p)) {
+         _error(ctx, "expected an expression");
          return -1;
       }
       if (_parse_token(ctx, SL_PP_RPAREN, &p)) {
+         _error(ctx, "expected `)'");
          return -1;
       }
       if (_parse_statement(ctx, &p)) {
@@ -2126,16 +2167,20 @@ _parse_iteration_statement(struct parse_context *ctx,
          return -1;
       }
       if (_parse_token(ctx, SL_PP_LPAREN, &p)) {
+         _error(ctx, "expected `('");
          return -1;
       }
       if (_parse_expression(ctx, &p)) {
+         _error(ctx, "expected an expression");
          return -1;
       }
       if (_parse_token(ctx, SL_PP_RPAREN, &p)) {
+         _error(ctx, "expected `)'");
          return -1;
       }
       _emit(ctx, &p.out, OP_END);
       if (_parse_token(ctx, SL_PP_SEMICOLON, &p)) {
+         _error(ctx, "expected `;'");
          return -1;
       }
       *ps = p;
@@ -2145,6 +2190,7 @@ _parse_iteration_statement(struct parse_context *ctx,
    if (_parse_id(ctx, ctx->dict._for, &p) == 0) {
       _emit(ctx, &p.out, OP_FOR);
       if (_parse_token(ctx, SL_PP_LPAREN, &p)) {
+         _error(ctx, "expected `('");
          return -1;
       }
       if (_parse_for_init_statement(ctx, &p)) {
@@ -2154,6 +2200,7 @@ _parse_iteration_statement(struct parse_context *ctx,
          return -1;
       }
       if (_parse_token(ctx, SL_PP_RPAREN, &p)) {
+         _error(ctx, "expected `)'");
          return -1;
       }
       if (_parse_statement(ctx, &p)) {
@@ -2384,6 +2431,8 @@ _parse_single_declaration(struct parse_context *ctx,
          *ps = p;
          return 0;
       }
+      _error(ctx, "expected an initialiser");
+      return -1;
    }
    p = *ps;
 
@@ -2397,6 +2446,8 @@ _parse_single_declaration(struct parse_context *ctx,
          *ps = p;
          return 0;
       }
+      _error(ctx, "expected `]'");
+      return -1;
    }
    return 0;
 }
@@ -2434,6 +2485,8 @@ _parse_init_declarator_list(struct parse_context *ctx,
             *ps = p;
             continue;
          }
+         _error(ctx, "expected an initialiser");
+         break;
       }
       p = *ps;
 
@@ -2450,6 +2503,8 @@ _parse_init_declarator_list(struct parse_context *ctx,
             *ps = p;
             continue;
          }
+         _error(ctx, "expected `]'");
+         break;
       }
       p = *ps;
    }
@@ -2473,6 +2528,7 @@ _parse_declaration(struct parse_context *ctx,
       _update(ctx, e, DECLARATION_INIT_DECLARATOR_LIST);
    }
    if (_parse_token(ctx, SL_PP_SEMICOLON, &p)) {
+      _error(ctx, "expected `;'");
       return -1;
    }
    *ps = p;
@@ -2511,6 +2567,7 @@ _parse_external_declaration(struct parse_context *ctx,
       return 0;
    }
 
+   _error(ctx, "expected an identifier");
    return -1;
 }
 
@@ -2548,8 +2605,11 @@ int
 sl_cl_compile(struct sl_pp_context *context,
               const struct sl_pp_token_info *input,
               unsigned int shader_type,
+              unsigned int parsing_builtin,
               unsigned char **output,
-              unsigned int *cboutput)
+              unsigned int *cboutput,
+              char *error,
+              unsigned int cberror)
 {
    struct parse_context ctx;
    struct parse_state ps;
@@ -2634,10 +2694,13 @@ sl_cl_compile(struct sl_pp_context *context,
    ctx.shader_type = shader_type;
    ctx.parsing_builtin = 1;
 
+   ctx.error[0] = '\0';
+
    ps.in = 0;
    ps.out = 0;
 
    if (_parse_translation_unit(&ctx, &ps)) {
+      strncpy(error, ctx.error, cberror);
       return -1;
    }
 
