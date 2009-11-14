@@ -129,7 +129,9 @@ static const float * get_shader_constant(
     struct rc_constant * constant,
     struct r300_constant_buffer * externals)
 {
-    static const float zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+    static float vec[4] = { 0.0, 0.0, 0.0, 0.0 };
+    struct pipe_texture *tex;
+
     switch(constant->Type) {
         case RC_CONSTANT_EXTERNAL:
             return externals->constants[constant->u.External];
@@ -137,10 +139,26 @@ static const float * get_shader_constant(
         case RC_CONSTANT_IMMEDIATE:
             return constant->u.Immediate;
 
+        case RC_CONSTANT_STATE:
+            switch (constant->u.State[0])
+            {
+                /* R3xx-specific */
+                case RC_STATE_R300_TEXRECT_FACTOR:
+                    tex = &r300->textures[constant->u.State[1]]->tex;
+                    vec[0] = 1.0 / tex->width[0];
+                    vec[1] = 1.0 / tex->height[0];
+                    vec[2] = vec[3] = 1;
+                    break;
+
+                default:
+                    assert(0);
+            }
+            return vec;
+
         default:
             debug_printf("r300: Implementation error: Unhandled constant type %i\n",
                 constant->Type);
-            return zero;
+            return vec;
     }
 }
 
