@@ -34,7 +34,6 @@
 #include "main/simple_list.h"
 #include "main/texcompress.h"
 #include "main/teximage.h"
-/* TODO: remove if texture completeness check is removed */
 #include "main/texobj.h"
 #include "radeon_texture.h"
 
@@ -547,9 +546,10 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	if (texObj->Image[0][texObj->BaseLevel]->Border > 0)
 		return GL_FALSE;
 
-	/* TODO: is this really necessary? */
 	_mesa_test_texobj_completeness(rmesa->glCtx, texObj);
-	assert(texObj->_Complete);
+	if (!texObj->_Complete) {
+		return GL_FALSE;
+	}
 
 	calculate_min_max_lod(&t->base, &t->minLod, &t->maxLod);
 
