@@ -583,6 +583,8 @@ void r300_emit_texture(struct r300_context* r300,
                        unsigned offset)
 {
     uint32_t filter0 = sampler->filter0;
+    uint32_t format0 = tex->state.format0;
+    unsigned min_level, max_level;
     CS_LOCALS(r300);
 
     /* to emulate 1D textures through 2D ones correctly */
@@ -591,13 +593,20 @@ void r300_emit_texture(struct r300_context* r300,
         filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
     }
 
+    /* determine min/max levels */
+    /* the MAX_MIP level is the largest (finest) one */
+    max_level = MIN2(sampler->max_lod, tex->tex.last_level);
+    min_level = MIN2(sampler->min_lod, max_level);
+    format0 |= R300_TX_NUM_LEVELS(max_level);
+    filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+
     BEGIN_CS(16);
     OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
         (offset << 28));
     OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
     OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
 
-    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), tex->state.format0);
+    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), format0);
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
     OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);

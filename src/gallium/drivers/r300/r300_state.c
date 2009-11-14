@@ -523,6 +523,11 @@ static void*
                                                    state->mag_img_filter,
                                                    state->min_mip_filter);
 
+    /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
+    /* We must pass these to the emit function to clamp them properly. */
+    sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
+    sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
+
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;

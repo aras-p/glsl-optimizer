@@ -43,8 +43,7 @@ static void r300_setup_texture_state(struct r300_texture* tex, boolean is_r500)
         state->format2 = (tex->pitch[0] - 1) & 0x1fff;
     } else {
         /* power of two textures (3D, mipmaps, and no pitch) */
-        state->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf) |
-                          R300_TX_NUM_LEVELS(pt->last_level & 0xf);
+        state->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth[0]) & 0xf);
     }
 
     state->format1 = r300_translate_texformat(pt->format);
