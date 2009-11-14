@@ -169,7 +169,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		if (t && !t->image_override) {
 			BEGIN_BATCH_NO_AUTOSTATE(4);
 			OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-			OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+			OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 					RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 			END_BATCH();
 		} else if (!t) {

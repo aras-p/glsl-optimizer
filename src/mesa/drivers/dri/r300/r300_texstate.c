@@ -203,9 +203,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 {
 	const struct gl_texture_image *firstImage;
-	int firstlevel = t->mt ? t->mt->firstLevel : 0;
-	    
-	firstImage = t->base.Image[0][firstlevel];
+	firstImage = t->base.Image[0][t->minLod];
 
 	if (!t->image_override
 	    && VALID_FORMAT(firstImage->TexFormat)) {
@@ -228,7 +226,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	t->pp_txsize = (((R300_TX_WIDTHMASK_MASK & ((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)))
 			| ((R300_TX_HEIGHTMASK_MASK & ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)))
 			| ((R300_TX_DEPTHMASK_MASK & ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)))
-			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
+			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->maxLod - t->minLod) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
 
 	t->tile_bits = 0;
 
@@ -239,7 +237,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
-		unsigned int align = (64 / t->mt->bpp) - 1;
+		unsigned int align = (64 / _mesa_get_format_bytes(firstImage->TexFormat)) - 1;
 		t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 		if (!t->image_override)
 			t->pp_txpitch = ((firstImage->Width + align) & ~align) - 1;

@@ -223,12 +223,6 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MAX_LEVEL:
 	case GL_TEXTURE_MIN_LOD:
 	case GL_TEXTURE_MAX_LOD:
-		/* This isn't the most efficient solution but there doesn't appear to
-		 * be a nice alternative.  Since there's no LOD clamping,
-		 * we just have to rely on loading the right subset of mipmap levels
-		 * to simulate a clamped LOD.
-		 */
-		radeon_miptree_unreference(&t->mt);
 		t->validated = GL_FALSE;
 		break;
 

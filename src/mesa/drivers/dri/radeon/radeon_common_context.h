@@ -208,6 +208,10 @@ struct radeon_tex_obj {
 	 * and so on.
 	 */
 	GLboolean validated;
+	/* Minimum LOD to be used during rendering */
+	unsigned minLod;
+	/* Miximum LOD to be used during rendering */
+	unsigned maxLod;
 
 	GLuint override_offset;
 	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */

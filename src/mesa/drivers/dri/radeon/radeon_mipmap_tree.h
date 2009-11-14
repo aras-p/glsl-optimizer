@@ -59,44 +59,38 @@ struct _radeon_mipmap_level {
  * changed.
  */
 struct _radeon_mipmap_tree {
-	radeonContextPtr radeon;
-	radeonTexObj *t;
 	struct radeon_bo *bo;
 	GLuint refcount;
 
 	GLuint totalsize; /** total size of the miptree, in bytes */
 
 	GLenum target; /** GL_TEXTURE_xxx */
-	GLenum internal_format;
+	GLenum mesaFormat; /** MESA_FORMAT_xxx */
 	GLuint faces; /** # of faces: 6 for cubemaps, 1 otherwise */
-	GLuint firstLevel; /** First mip level stored in this mipmap tree */
-	GLuint lastLevel; /** Last mip level stored in this mipmap tree */
+	GLuint baseLevel; /** gl_texture_object->baseLevel it was created for */
+	GLuint numLevels; /** Number of mip levels stored in this mipmap tree */
 
 	GLuint width0; /** Width of firstLevel image */
 	GLuint height0; /** Height of firstLevel image */
 	GLuint depth0; /** Depth of firstLevel image */
 
-	GLuint bpp; /** Bytes per texel */
 	GLuint tilebits; /** RADEON_TXO_xxx_TILE */
-	GLuint compressed; /** MESA_FORMAT_xxx indicating a compressed format, or 0 if uncompressed */
 
 	radeon_mipmap_level levels[RADEON_MIPTREE_MAX_TEXTURE_LEVELS];
 };
-
-radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *t,
-		GLenum target, GLenum internal_format, GLuint firstLevel, GLuint lastLevel,
-		GLuint width0, GLuint height0, GLuint depth0,
-		GLuint bpp, GLuint tilebits, GLuint compressed);
 
 void radeon_miptree_reference(radeon_mipmap_tree *mt, radeon_mipmap_tree **ptr);
 void radeon_miptree_unreference(radeon_mipmap_tree **ptr);
 
 GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 		struct gl_texture_image *texImage, GLuint face, GLuint level);
-GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_texture_object *texObj);
-void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
-			      radeon_texture_image *texImage, GLuint face, GLuint level);
+void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t);
 GLuint radeon_miptree_image_offset(radeon_mipmap_tree *mt,
 				   GLuint face, GLuint level);
 void radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level, GLuint *offsets);
+
+unsigned radeon_miptree_level_to_gl_level(struct gl_texture_object *tObj, unsigned level);
+unsigned radeon_gl_level_to_miptree_level(struct gl_texture_object *tObj, unsigned level);
+
+uint32_t get_base_teximage_offset(radeonTexObj *texObj);
 #endif /* __RADEON_MIPMAP_TREE_H_ */
