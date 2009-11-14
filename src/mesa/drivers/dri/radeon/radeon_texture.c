@@ -81,8 +81,7 @@ void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
 	radeon_texture_image* image = get_radeon_texture_image(timage);
 
 	if (image->mt) {
-		radeon_miptree_unreference(image->mt);
-		image->mt = 0;
+		radeon_miptree_unreference(&image->mt);
 		assert(!image->base.Data);
 	} else {
 		_mesa_free_texture_image_data(ctx, timage);
@@ -240,8 +239,7 @@ static void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
 			image->mtlevel = i;
 			image->mtface = face;
 
-			radeon_miptree_unreference(image->mt);
-			image->mt = NULL;
+			radeon_miptree_unreference(&image->mt);
 		}
 	}
 	
@@ -571,18 +569,16 @@ static void radeon_teximage(
 	    t->mt->lastLevel == level &&
 	    t->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
 	    !radeon_miptree_matches_image(t->mt, texImage, face, level)) {
-	  radeon_miptree_unreference(t->mt);
-	  t->mt = NULL;
+	  radeon_miptree_unreference(&t->mt);
 	}
 
 	if (!t->mt)
 		radeon_try_alloc_miptree(rmesa, t, image, face, level);
 	if (t->mt && radeon_miptree_matches_image(t->mt, texImage, face, level)) {
 		radeon_mipmap_level *lvl;
-		image->mt = t->mt;
 		image->mtlevel = level - t->mt->firstLevel;
 		image->mtface = face;
-		radeon_miptree_reference(t->mt);
+		radeon_miptree_reference(t->mt, &image->mt);
 		lvl = &image->mt->levels[image->mtlevel];
 		dstRowStride = lvl->rowstride;
 	} else {
@@ -894,7 +890,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 			dstlvl->size);
 		radeon_bo_unmap(image->mt->bo);
 
-		radeon_miptree_unreference(image->mt);
+		radeon_miptree_unreference(&image->mt);
 	} else {
 		uint32_t srcrowstride;
 		uint32_t height;
@@ -919,10 +915,9 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 
 	radeon_bo_unmap(mt->bo);
 
-	image->mt = mt;
 	image->mtface = face;
 	image->mtlevel = level;
-	radeon_miptree_reference(image->mt);
+	radeon_miptree_reference(mt, &image->mt);
 }
 
 int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *texObj)
@@ -954,12 +949,10 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	if (baseimage->mt &&
 	    baseimage->mt != t->mt &&
 	    radeon_miptree_matches_texture(baseimage->mt, &t->base)) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = baseimage->mt;
-		radeon_miptree_reference(t->mt);
+		radeon_miptree_unreference(&t->mt);
+		radeon_miptree_reference(baseimage->mt, &t->mt);
 	} else if (t->mt && !radeon_miptree_matches_texture(t->mt, &t->base)) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = 0;
+		radeon_miptree_unreference(&t->mt);
 	}
 
 	if (!t->mt) {

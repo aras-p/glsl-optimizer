@@ -87,8 +87,9 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 		GLenum target, GLenum internal_format, GLuint firstLevel, GLuint lastLevel,
 		GLuint width0, GLuint height0, GLuint depth0,
 		GLuint bpp, GLuint tilebits, GLuint compressed);
-void radeon_miptree_reference(radeon_mipmap_tree *mt);
-void radeon_miptree_unreference(radeon_mipmap_tree *mt);
+
+void radeon_miptree_reference(radeon_mipmap_tree *mt, radeon_mipmap_tree **ptr);
+void radeon_miptree_unreference(radeon_mipmap_tree **ptr);
 
 GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 		struct gl_texture_image *texImage, GLuint face, GLuint level);

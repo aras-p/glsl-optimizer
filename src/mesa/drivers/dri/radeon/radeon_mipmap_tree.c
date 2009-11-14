@@ -223,23 +223,31 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 	return mt;
 }
 
-void radeon_miptree_reference(radeon_mipmap_tree *mt)
+void radeon_miptree_reference(radeon_mipmap_tree *mt, radeon_mipmap_tree **ptr)
 {
+	assert(!*ptr);
+
 	mt->refcount++;
 	assert(mt->refcount > 0);
+
+	*ptr = mt;
 }
 
-void radeon_miptree_unreference(radeon_mipmap_tree *mt)
+void radeon_miptree_unreference(radeon_mipmap_tree **ptr)
 {
+	radeon_mipmap_tree *mt = *ptr;
 	if (!mt)
 		return;
 
 	assert(mt->refcount > 0);
+
 	mt->refcount--;
 	if (!mt->refcount) {
 		radeon_bo_unref(mt->bo);
 		free(mt);
 	}
+
+	*ptr = 0;
 }
 
 

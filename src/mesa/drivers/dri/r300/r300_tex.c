@@ -228,11 +228,8 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		 * we just have to rely on loading the right subset of mipmap levels
 		 * to simulate a clamped LOD.
 		 */
-		if (t->mt) {
-			radeon_miptree_unreference(t->mt);
-			t->mt = 0;
-			t->validated = GL_FALSE;
-		}
+		radeon_miptree_unreference(&t->mt);
+		t->validated = GL_FALSE;
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
@@ -286,10 +283,8 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 		t->bo = NULL;
 	}
 
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = 0;
-	}
+	radeon_miptree_unreference(&t->mt);
+
 	_mesa_delete_texture_object(ctx, texObj);
 }
 
