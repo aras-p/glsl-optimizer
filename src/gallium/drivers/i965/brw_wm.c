@@ -225,7 +225,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       line_aa = AA_NEVER;
       break;
    case PIPE_PRIM_LINES:
-      line_aa = AA_ALWAYS;
+      line_aa = (brw->curr.rast->templ.line_smooth ? 
+                 AA_ALWAYS : AA_NEVER);
       break;
    default:
       line_aa = brw->curr.rast->unfilled_aa_line;
