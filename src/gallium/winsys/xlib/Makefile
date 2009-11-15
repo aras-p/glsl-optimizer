@@ -30,7 +30,6 @@ DEFINES += \
 
 XLIB_WINSYS_SOURCES = \
 	xlib.c \
-	xlib_i965.c \
 	xlib_cell.c \
 	xlib_llvmpipe.c \
 	xlib_softpipe.c \
