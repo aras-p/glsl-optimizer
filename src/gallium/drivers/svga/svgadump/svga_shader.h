@@ -211,4 +211,10 @@ struct sh_trinaryop
    struct sh_srcreg src2;
 };
 
+struct sh_comment
+{
+   unsigned opcode:16;
+   unsigned size:16;
+};
+
 #endif /* ST_SHADER_SVGA_H */
