@@ -146,7 +146,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       if (c->chipset.is_igdng)
           delta = i * 16 + 32 * 3;
 
-      if (delta == c->offset_edge) {
+      if (delta == c->offset_edgeflag) {
 	 if (force_edgeflag) 
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else

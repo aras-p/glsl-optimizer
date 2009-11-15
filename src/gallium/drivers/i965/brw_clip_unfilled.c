@@ -214,12 +214,12 @@ static void merge_edgeflags( struct brw_clip_compile *c )
    {   
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
-      brw_MOV(p, byte_offset(c->reg.vertex[0], c->offset_edge), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[0], c->offset_edgeflag), brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
-      brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset_edge), brw_imm_f(0));
+      brw_MOV(p, byte_offset(c->reg.vertex[2], c->offset_edgeflag), brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    }
    brw_ENDIF(p, is_poly);
@@ -290,7 +290,7 @@ static void emit_lines(struct brw_clip_compile *c,
       /* draw edge if edgeflag != 0 */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset_edge),
+	      deref_1f(v0, c->offset_edgeflag),
 	      brw_imm_f(0));
       draw_edge = brw_IF(p, BRW_EXECUTE_1);
       {
@@ -329,7 +329,7 @@ static void emit_points(struct brw_clip_compile *c,
        */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, c->offset_edge),
+	      deref_1f(v0, c->offset_edgeflag),
 	      brw_imm_f(0));
       draw_point = brw_IF(p, BRW_EXECUTE_1);
       {
@@ -446,7 +446,7 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    brw_clip_tri_init_vertices(c);
    brw_clip_init_ff_sync(c);
 
-   assert(c->offset_edge);
+   assert(c->offset_edgeflag);
 
    if (c->key.fill_ccw == CLIP_CULL &&
        c->key.fill_cw == CLIP_CULL) {

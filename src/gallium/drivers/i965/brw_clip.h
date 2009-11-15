@@ -132,7 +132,7 @@ struct brw_clip_compile {
    GLuint offset_bfc0;
    GLuint offset_bfc1;
    
-   GLuint offset_edge;
+   GLuint offset_edgeflag;
 };
 
 #define ATTR_SIZE  (4*4)
