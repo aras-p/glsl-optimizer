@@ -169,11 +169,6 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
 
-   /* No need to send this incomplete program down to hardware:
-    *
-    * st_translate_fragment_program(ctx->st, stfp, NULL);
-    */
-
    return stfp;
 }
 

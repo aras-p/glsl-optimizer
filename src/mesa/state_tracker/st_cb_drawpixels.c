@@ -927,7 +927,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
-   struct st_vertex_program *stvp;
+   void *driver_vp;
    struct st_fragment_program *stfp;
    struct pipe_texture *pt;
    GLfloat *color;
@@ -976,14 +976,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
       stfp = make_fragment_shader_z(st);
-      stvp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
    srcFormat = rbRead->texture->format;
@@ -1116,7 +1116,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       pt, 
-                      stvp->driver_shader, 
+                      driver_vp, 
                       stfp->driver_shader,
                       color, GL_TRUE);
 
