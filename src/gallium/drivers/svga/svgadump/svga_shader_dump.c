@@ -587,7 +587,12 @@ svga_shader_dump(
          break;
 
       case SVGA3DOP_COMMENT:
-         assert( 0 );
+         {
+            struct sh_comment comment = *(struct sh_comment *)assem;
+
+            /* Ignore comment contents. */
+            assem += sizeof(struct sh_comment) / sizeof(unsigned) + comment.size;
+         }
          break;
 
       case SVGA3DOP_RET:
