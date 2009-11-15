@@ -69,8 +69,6 @@ st_translate_vertex_program(struct st_context *st,
    GLuint attr, i;
    GLuint num_generic = 0;
 
-   ubyte vs_input_semantic_name[PIPE_MAX_SHADER_INPUTS];
-   ubyte vs_input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    uint vs_num_inputs = 0;
 
    ubyte vs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
@@ -99,71 +97,6 @@ st_translate_vertex_program(struct st_context *st,
 
          stvp->input_to_index[attr] = slot;
          stvp->index_to_input[slot] = attr;
-
-         switch (attr) {
-         case VERT_ATTRIB_POS:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_WEIGHT:
-            /* fall-through */
-         case VERT_ATTRIB_NORMAL:
-            /* just label as a generic */
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_COLOR0:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_COLOR1:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_input_semantic_index[slot] = 1;
-            break;
-         case VERT_ATTRIB_FOG:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_POINT_SIZE:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_TEX0:
-         case VERT_ATTRIB_TEX1:
-         case VERT_ATTRIB_TEX2:
-         case VERT_ATTRIB_TEX3:
-         case VERT_ATTRIB_TEX4:
-         case VERT_ATTRIB_TEX5:
-         case VERT_ATTRIB_TEX6:
-         case VERT_ATTRIB_TEX7:
-            assert(slot < Elements(vs_input_semantic_name));
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = num_generic++;
-            break;
-         case VERT_ATTRIB_GENERIC0:
-         case VERT_ATTRIB_GENERIC1:
-         case VERT_ATTRIB_GENERIC2:
-         case VERT_ATTRIB_GENERIC3:
-         case VERT_ATTRIB_GENERIC4:
-         case VERT_ATTRIB_GENERIC5:
-         case VERT_ATTRIB_GENERIC6:
-         case VERT_ATTRIB_GENERIC7:
-         case VERT_ATTRIB_GENERIC8:
-         case VERT_ATTRIB_GENERIC9:
-         case VERT_ATTRIB_GENERIC10:
-         case VERT_ATTRIB_GENERIC11:
-         case VERT_ATTRIB_GENERIC12:
-         case VERT_ATTRIB_GENERIC13:
-         case VERT_ATTRIB_GENERIC14:
-         case VERT_ATTRIB_GENERIC15:
-            assert(attr < VERT_ATTRIB_MAX);
-            assert(slot < Elements(vs_input_semantic_name));
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = num_generic++;
-            break;
-         default:
-            assert(0);
-         }
 
          input_flags[slot] = stvp->Base.Base.InputFlags[attr];
       }
@@ -330,8 +263,8 @@ st_translate_vertex_program(struct st_context *st,
                                 /* inputs */
                                 vs_num_inputs,
                                 stvp->input_to_index,
-                                vs_input_semantic_name,
-                                vs_input_semantic_index,
+                                NULL, /* input semantic name */
+                                NULL, /* input semantic index */
                                 NULL,
                                 input_flags,
                                 /* outputs */
