@@ -35,9 +35,6 @@ struct r300_vertex_shader {
     struct pipe_shader_state state;
     struct tgsi_shader_info info;
 
-    /* Fallback shader, because Draw has issues */
-    struct draw_vertex_shader* draw;
-
     /* Has this shader been translated yet? */
     boolean translated;
 

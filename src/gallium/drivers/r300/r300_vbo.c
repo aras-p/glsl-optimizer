@@ -34,52 +34,6 @@
 #include "r300_reg.h"
 #include "r300_winsys.h"
 
-static INLINE void setup_vertex_attribute(struct r300_vertex_info *vinfo,
-                                          struct pipe_vertex_element *vert_elem,
-                                          unsigned attr_num)
-{
-    uint16_t hw_fmt1, hw_fmt2;
-
-    hw_fmt1 = r300_translate_vertex_data_type(vert_elem->src_format) |
-        (attr_num << R300_DST_VEC_LOC_SHIFT);
-    hw_fmt2 = r300_translate_vertex_data_swizzle(vert_elem->src_format);
-
-    if (attr_num % 2 == 0)
-    {
-        vinfo->vap_prog_stream_cntl[attr_num >> 1] = hw_fmt1;
-        vinfo->vap_prog_stream_cntl_ext[attr_num >> 1] = hw_fmt2;
-    }
-    else
-    {
-        vinfo->vap_prog_stream_cntl[attr_num >> 1] |= hw_fmt1 << 16;
-        vinfo->vap_prog_stream_cntl_ext[attr_num >> 1] |= hw_fmt2 << 16;
-    }
-}
-
-static void finish_vertex_attribs_setup(struct r300_vertex_info *vinfo,
-                                        unsigned attribs_num)
-{
-    uint32_t last_vec_bit = (attribs_num % 2 == 0) ?
-        (R300_LAST_VEC << 16) : R300_LAST_VEC;
-
-    assert(attribs_num > 0 && attribs_num <= 16);
-    vinfo->vap_prog_stream_cntl[(attribs_num - 1) >> 1] |= last_vec_bit;
-}
-
-void setup_vertex_attributes(struct r300_context *r300)
-{
-    struct pipe_vertex_element *vert_elem;
-    int i;
-
-    for (i = 0; i < r300->vertex_element_count; i++) {
-        vert_elem = &r300->vertex_element[i];
-        setup_vertex_attribute(r300->vertex_info, vert_elem, i);
-    }
-
-    finish_vertex_attribs_setup(r300->vertex_info,
-        r300->vertex_element_count);
-}
-
 static INLINE int get_buffer_offset(struct r300_context *r300,
                                     unsigned int buf_nr,
                                     unsigned int elem_offset)

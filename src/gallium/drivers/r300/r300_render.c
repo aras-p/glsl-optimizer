@@ -183,8 +183,6 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
         return FALSE;
     }
 
-    setup_vertex_attributes(r300);
-
     setup_index_buffer(r300, indexBuffer, indexSize);
 
     r300_emit_dirty_state(r300);
@@ -225,8 +223,6 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     if (!r300_setup_vertex_buffers(r300)) {
         return FALSE;
     }
-
-    setup_vertex_attributes(r300);
 
     r300_emit_dirty_state(r300);
 
