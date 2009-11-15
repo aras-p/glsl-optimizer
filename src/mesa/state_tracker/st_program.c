@@ -75,11 +75,9 @@ st_translate_vertex_program(struct st_context *st,
    ubyte vs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint vs_num_outputs = 0;
 
-   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
    GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
 
 //   memset(&vs, 0, sizeof(vs));
-   memset(input_flags, 0, sizeof(input_flags));
    memset(output_flags, 0, sizeof(output_flags));
 
    if (stvp->Base.IsPositionInvariant)
@@ -91,14 +89,10 @@ st_translate_vertex_program(struct st_context *st,
     */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       if (stvp->Base.Base.InputsRead & (1 << attr)) {
-         const GLuint slot = vs_num_inputs;
+         stvp->input_to_index[attr] = vs_num_inputs;
+         stvp->index_to_input[vs_num_inputs] = attr;
 
          vs_num_inputs++;
-
-         stvp->input_to_index[attr] = slot;
-         stvp->index_to_input[slot] = attr;
-
-         input_flags[slot] = stvp->Base.Base.InputFlags[attr];
       }
    }
 
@@ -266,7 +260,6 @@ st_translate_vertex_program(struct st_context *st,
                                 NULL, /* input semantic name */
                                 NULL, /* input semantic index */
                                 NULL,
-                                input_flags,
                                 /* outputs */
                                 vs_num_outputs,
                                 outputMapping,
@@ -316,11 +309,9 @@ st_translate_fragment_program(struct st_context *st,
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
 
-   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
    GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
 
 //   memset(&fs, 0, sizeof(fs));
-   memset(input_flags, 0, sizeof(input_flags));
    memset(output_flags, 0, sizeof(output_flags));
 
    /* which vertex output goes to the first fragment input: */
@@ -392,8 +383,6 @@ st_translate_fragment_program(struct st_context *st,
             stfp->input_semantic_index[slot] = num_generic++;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
-
-         input_flags[slot] = stfp->Base.Base.InputFlags[attr];
       }
    }
 
@@ -451,7 +440,6 @@ st_translate_fragment_program(struct st_context *st,
                                 stfp->input_semantic_name,
                                 stfp->input_semantic_index,
                                 interpMode,
-                                input_flags,
                                 /* outputs */
                                 fs_num_outputs,
                                 outputMapping,
