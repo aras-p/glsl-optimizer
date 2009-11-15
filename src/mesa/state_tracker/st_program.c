@@ -75,11 +75,6 @@ st_translate_vertex_program(struct st_context *st,
    ubyte vs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint vs_num_outputs = 0;
 
-   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
-
-//   memset(&vs, 0, sizeof(vs));
-   memset(output_flags, 0, sizeof(output_flags));
-
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(st->ctx, &stvp->Base);
 
@@ -115,7 +110,6 @@ st_translate_vertex_program(struct st_context *st,
       assert(i < Elements(vs_output_semantic_name));
       vs_output_semantic_name[i] = TGSI_SEMANTIC_GENERIC;
       vs_output_semantic_index[i] = 0;
-      output_flags[i] = 0x0;
    }
 
    num_generic = 0;
@@ -201,9 +195,6 @@ st_translate_vertex_program(struct st_context *st,
                vs_output_semantic_index[slot] = num_generic++;
             }
          }
-
-         assert(slot < Elements(output_flags));
-         output_flags[slot] = stvp->Base.Base.OutputFlags[attr];
       }
    }
 
@@ -264,8 +255,7 @@ st_translate_vertex_program(struct st_context *st,
                                 vs_num_outputs,
                                 outputMapping,
                                 vs_output_semantic_name,
-                                vs_output_semantic_index,
-                                output_flags );
+                                vs_output_semantic_index );
 
    stvp->num_inputs = vs_num_inputs;
    stvp->driver_shader = pipe->create_vs_state(pipe, &stvp->state);
@@ -308,11 +298,6 @@ st_translate_fragment_program(struct st_context *st,
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
-
-   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
-
-//   memset(&fs, 0, sizeof(fs));
-   memset(output_flags, 0, sizeof(output_flags));
 
    /* which vertex output goes to the first fragment input: */
    if (inputsRead & FRAG_BIT_WPOS)
@@ -420,8 +405,6 @@ st_translate_fragment_program(struct st_context *st,
                break;
             }
 
-            output_flags[fs_num_outputs] = stfp->Base.Base.OutputFlags[attr];
-
             fs_num_outputs++;
          }
       }
@@ -444,8 +427,7 @@ st_translate_fragment_program(struct st_context *st,
                                 fs_num_outputs,
                                 outputMapping,
                                 fs_output_semantic_name,
-                                fs_output_semantic_index,
-                                output_flags );
+                                fs_output_semantic_index );
 
    stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
 
