@@ -2035,7 +2035,9 @@ check_gen_mipmap(GLcontext *ctx, GLenum target,
                  struct gl_texture_object *texObj, GLint level)
 {
    ASSERT(target != GL_TEXTURE_CUBE_MAP);
-   if (texObj->GenerateMipmap && level == texObj->BaseLevel) {
+   if (texObj->GenerateMipmap &&
+       level == texObj->BaseLevel &&
+       level < texObj->MaxLevel) {
       ASSERT(ctx->Driver.GenerateMipmap);
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
