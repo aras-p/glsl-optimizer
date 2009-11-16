@@ -232,6 +232,24 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_AL1616,          /* Name */
+      "MESA_FORMAT_AL1616",        /* StrName */
+      GL_LUMINANCE_ALPHA,          /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 16,                 /* Red/Green/Blue/AlphaBits */
+      16, 0, 0, 0, 0,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_AL1616_REV,      /* Name */
+      "MESA_FORMAT_AL1616_REV",    /* StrName */
+      GL_LUMINANCE_ALPHA,          /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 16,                 /* Red/Green/Blue/AlphaBits */
+      16, 0, 0, 0, 0,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_RGB332,          /* Name */
       "MESA_FORMAT_RGB332",        /* StrName */
       GL_RGB,                      /* BaseFormat */
@@ -974,6 +992,13 @@ _mesa_format_to_type_and_comps(gl_format format,
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
+
+   case MESA_FORMAT_AL1616:
+   case MESA_FORMAT_AL1616_REV:
+      *datatype = GL_UNSIGNED_SHORT;
+      *comps = 2;
+      return;
+
    case MESA_FORMAT_RGB332:
       *datatype = GL_UNSIGNED_BYTE_3_3_2;
       *comps = 3;
