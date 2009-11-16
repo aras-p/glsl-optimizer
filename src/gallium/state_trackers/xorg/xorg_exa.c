@@ -57,16 +57,18 @@ struct render_format_str {
 };
 static const struct render_format_str formats_info[] =
 {
-   {PICT_a2r10g10b10, "PICT_a2r10g10b10"},
-   {PICT_x2r10g10b10, "PICT_x2r10g10b10"},
-   {PICT_a2b10g10r10, "PICT_a2b10g10r10"},
-   {PICT_x2b10g10r10, "PICT_x2b10g10r10"},
    {PICT_a8r8g8b8, "PICT_a8r8g8b8"},
    {PICT_x8r8g8b8, "PICT_x8r8g8b8"},
    {PICT_a8b8g8r8, "PICT_a8b8g8r8"},
    {PICT_x8b8g8r8, "PICT_x8b8g8r8"},
+#ifdef PICT_TYPE_BGRA
    {PICT_b8g8r8a8, "PICT_b8g8r8a8"},
    {PICT_b8g8r8x8, "PICT_b8g8r8x8"},
+   {PICT_a2r10g10b10, "PICT_a2r10g10b10"},
+   {PICT_x2r10g10b10, "PICT_x2r10g10b10"},
+   {PICT_a2b10g10r10, "PICT_a2b10g10r10"},
+   {PICT_x2b10g10r10, "PICT_x2b10g10r10"},
+#endif
    {PICT_r8g8b8, "PICT_r8g8b8"},
    {PICT_b8g8r8, "PICT_b8g8r8"},
    {PICT_r5g6b5, "PICT_r5g6b5"},
