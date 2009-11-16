@@ -2146,6 +2146,77 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
 
 
 static GLboolean
+_mesa_texstore_al1616(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_AL1616 ||
+          dstFormat == MESA_FORMAT_AL1616_REV);
+   ASSERT(texelBytes == 4);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       dstFormat == MESA_FORMAT_AL1616 &&
+       baseInternalFormat == GL_LUMINANCE_ALPHA &&
+       srcFormat == GL_LUMINANCE_ALPHA &&
+       srcType == GL_UNSIGNED_SHORT &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+            if (dstFormat == MESA_FORMAT_AL1616) {
+               for (col = 0; col < srcWidth; col++) {
+                  /* src[0] is luminance, src[1] is alpha */
+                 dstUI[col] = PACK_COLOR_88( FLOAT_TO_USHORT(src[1]),
+                                             FLOAT_TO_USHORT(src[0]) );
+                 src += 2;
+               }
+            }
+            else {
+               for (col = 0; col < srcWidth; col++) {
+                  /* src[0] is luminance, src[1] is alpha */
+                 dstUI[col] = PACK_COLOR_1616_REV( FLOAT_TO_UBYTE(src[1]),
+						   FLOAT_TO_UBYTE(src[0]) );
+                 src += 2;
+               }
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      _mesa_free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+
+static GLboolean
 _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
@@ -3073,6 +3144,8 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_ARGB1555_REV, _mesa_texstore_argb1555 },
    { MESA_FORMAT_AL88, _mesa_texstore_al88 },
    { MESA_FORMAT_AL88_REV, _mesa_texstore_al88 },
+   { MESA_FORMAT_AL1616, _mesa_texstore_al1616 },
+   { MESA_FORMAT_AL1616_REV, _mesa_texstore_al1616 },
    { MESA_FORMAT_RGB332, _mesa_texstore_rgb332 },
    { MESA_FORMAT_A8, _mesa_texstore_a8 },
    { MESA_FORMAT_L8, _mesa_texstore_a8 },
