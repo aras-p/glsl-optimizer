@@ -95,14 +95,20 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_COMPRESSED_LUMINANCE:
       return MESA_FORMAT_L8;
 
+   case GL_LUMINANCE12_ALPHA4:
+   case GL_LUMINANCE12_ALPHA12:
+   case GL_LUMINANCE16_ALPHA16:
+#ifndef I915
+      return MESA_FORMAT_AL1616;
+#else
+      /* FALLTHROUGH */
+#endif
+
    case 2:
    case GL_LUMINANCE_ALPHA:
    case GL_LUMINANCE4_ALPHA4:
    case GL_LUMINANCE6_ALPHA2:
    case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
-   case GL_LUMINANCE12_ALPHA12:
-   case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
       return MESA_FORMAT_AL88;
 

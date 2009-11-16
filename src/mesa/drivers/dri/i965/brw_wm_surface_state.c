@@ -86,6 +86,9 @@ static GLuint translate_tex_format( gl_format mesa_format,
    case MESA_FORMAT_AL88:
       return BRW_SURFACEFORMAT_L8A8_UNORM;
 
+   case MESA_FORMAT_AL1616:
+      return BRW_SURFACEFORMAT_L16A16_UNORM;
+
    case MESA_FORMAT_RGB888:
       assert(0);		/* not supported for sampling */
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
