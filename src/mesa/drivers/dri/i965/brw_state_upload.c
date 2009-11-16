@@ -132,13 +132,14 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
+
+   &gen6_vs_state,
 #if 0
    &brw_wm_samplers,
 
    &brw_wm_unit,
    &brw_sf_vp,
    &brw_sf_unit,
-   &brw_vs_unit,		/* always required, enabled or not */
    &brw_clip_unit,
    &brw_gs_unit,
 

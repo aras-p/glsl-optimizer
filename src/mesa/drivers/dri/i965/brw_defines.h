@@ -807,10 +807,29 @@
 # define BRW_VE1_COMPONENT_3_SHIFT	16
 # define BRW_VE1_DST_OFFSET_SHIFT	0
 
-#define CMD_3D_CC_STATE_POINTERS      0x780e /* GEN6+ */
 #define CMD_INDEX_BUFFER              0x780a
-#define CMD_VF_STATISTICS_965         0x780b
+#define CMD_VF_STATISTICS_965          0x780b
 #define CMD_VF_STATISTICS_GM45        0x680b
+#define CMD_3D_CC_STATE_POINTERS      0x780e /* GEN6+ */
+
+#define CMD_3D_VS_STATE		      0x7810 /* GEN6+ */
+# define GEN6_VS_SPF_MODE				(1 << 31)
+# define GEN6_VS_VECTOR_MASK_ENABLE			(1 << 30)
+# define GEN6_VS_SAMPLER_COUNT_SHIFT			27
+# define GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
+# define GEN6_VS_DISPATCH_START_GRF_SHIFT		20
+# define GEN6_VS_URB_READ_LENGTH_SHIFT			11
+# define GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT		0
+# define GEN6_VS_MAX_THREADS_SHIFT			25
+# define GEN6_VS_STATISTICS_ENABLE			(1 << 10)
+# define GEN6_VS_CACHE_DISABLE				(1 << 1)
+# define GEN6_VS_ENABLE					(1 << 0)
+
+#define CMD_3D_CONSTANT_VS_STATE	      0x7815 /* GEN6+ */
+# define GEN6_VS_BUFFER_3_ENABLE			(1 << 15)
+# define GEN6_VS_BUFFER_2_ENABLE			(1 << 14)
+# define GEN6_VS_BUFFER_1_ENABLE			(1 << 13)
+# define GEN6_VS_BUFFER_0_ENABLE			(1 << 12)
 
 #define CMD_DRAW_RECT                 0x7900
 #define CMD_BLEND_CONSTANT_COLOR      0x7901
