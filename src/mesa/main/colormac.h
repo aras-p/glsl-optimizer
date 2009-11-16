@@ -210,6 +210,12 @@ do {						\
 #define PACK_COLOR_88_REV( L, A )					\
    (((A) << 8) | (L))
 
+#define PACK_COLOR_1616( L, A )						\
+   (((L) << 16) | (A))
+
+#define PACK_COLOR_1616_REV( L, A )					\
+   (((A) << 16) | (L))
+
 #define PACK_COLOR_332( R, G, B )					\
    (((R) & 0xe0) | (((G) & 0xe0) >> 3) | (((B) & 0xc0) >> 6))
 
