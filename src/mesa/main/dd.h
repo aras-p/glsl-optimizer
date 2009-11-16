@@ -761,13 +761,13 @@ struct dd_function_table {
 
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
-   void * (*MapBufferRange)( GLcontext *ctx, GLenum target,
-                             GLintptr offset, GLsizeiptr length, GLbitfield access,
+   void * (*MapBufferRange)( GLcontext *ctx, GLenum target, GLintptr offset,
+                             GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 
-   void (*FlushMappedBufferRange) (GLcontext *ctx, GLenum target, 
-                                   GLintptr offset, GLsizeiptr length,
-                                   struct gl_buffer_object *obj);
+   void (*FlushMappedBufferRange)(GLcontext *ctx, GLenum target, 
+                                  GLintptr offset, GLsizeiptr length,
+                                  struct gl_buffer_object *obj);
 
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
@@ -782,7 +782,8 @@ struct dd_function_table {
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
    void (*BindFramebuffer)(GLcontext *ctx, GLenum target,
-                           struct gl_framebuffer *fb, struct gl_framebuffer *fbread);
+                           struct gl_framebuffer *drawFb,
+                           struct gl_framebuffer *readFb);
    void (*FramebufferRenderbuffer)(GLcontext *ctx, 
                                    struct gl_framebuffer *fb,
                                    GLenum attachment,
