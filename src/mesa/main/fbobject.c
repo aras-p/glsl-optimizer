@@ -1962,6 +1962,11 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
    texObj = _mesa_get_current_tex_object(ctx, target);
 
+   if (texObj->BaseLevel >= texObj->MaxLevel) {
+      /* nothing to do */
+      return;
+   }
+
    _mesa_lock_texture(ctx, texObj);
    if (target == GL_TEXTURE_CUBE_MAP) {
       GLuint face;
