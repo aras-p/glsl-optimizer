@@ -1942,7 +1942,6 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1961,8 +1960,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
       return;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
 
    _mesa_lock_texture(ctx, texObj);
    if (target == GL_TEXTURE_CUBE_MAP) {
