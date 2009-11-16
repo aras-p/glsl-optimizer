@@ -133,6 +133,8 @@ initdlists(void)
 
       glEndList();
    }
+
+   gluDeleteQuadric(obj);
 }
 
 static void
