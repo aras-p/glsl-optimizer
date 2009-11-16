@@ -202,9 +202,6 @@ static void r700SetDBRenderState(GLcontext * ctx)
 
 	SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
 	SETfield(r700->DB_SHADER_CONTROL.u32All, EARLY_Z_THEN_LATE_Z, Z_ORDER_shift, Z_ORDER_mask);
-	/* XXX not sure if this is required */
-	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-		SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
 	/* XXX need to enable htile for hiz/s */
 	SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
 	SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
