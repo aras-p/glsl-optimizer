@@ -834,6 +834,54 @@ static void store_texel_al88_rev(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_AL1616 ********************************************************/
+
+/* Fetch texel from 1D, 2D or 3D al1616 texture, return 4 GLchans */
+static void FETCH(f_al1616)( const struct gl_texture_image *texImage,
+			     GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = USHORT_TO_FLOAT( s & 0xffff );
+   texel[ACOMP] = USHORT_TO_FLOAT( s >> 16 );
+}
+
+#if DIM == 3
+static void store_texel_al1616(struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLushort *rgba = (const GLushort *) texel;
+   GLuint *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_1616(rgba[ACOMP], rgba[RCOMP]);
+}
+#endif
+
+
+/* MESA_FORMAT_AL1616_REV ****************************************************/
+
+/* Fetch texel from 1D, 2D or 3D al1616_rev texture, return 4 GLchans */
+static void FETCH(f_al1616_rev)( const struct gl_texture_image *texImage,
+				 GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = USHORT_TO_FLOAT( s >> 16 );
+   texel[ACOMP] = USHORT_TO_FLOAT( s & 0xffff );
+}
+
+#if DIM == 3
+static void store_texel_al1616_rev(struct gl_texture_image *texImage,
+				   GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLushort *rgba = (const GLushort *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_1616(rgba[RCOMP], rgba[ACOMP]);
+}
+#endif
+
+
 /* MESA_FORMAT_RGB332 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb332 texture, return 4 GLchans */
