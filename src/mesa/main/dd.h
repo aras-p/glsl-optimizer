@@ -182,7 +182,7 @@ struct dd_function_table {
     * 
     * This is called by the \c _mesa_store_tex[sub]image[123]d() fallback
     * functions.  The driver should examine \p internalFormat and return a
-    * pointer to an appropriate gl_texture_format.
+    * gl_format value.
     */
    GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
