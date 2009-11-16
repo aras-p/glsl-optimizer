@@ -3121,7 +3121,7 @@ _mesa_texstore_sla8(TEXSTORE_PARAMS)
  * Table mapping MESA_FORMAT_8 to _mesa_texstore_*()
  * XXX this is somewhat temporary.
  */
-const static struct {
+static const struct {
    gl_format Name;
    StoreTexImageFunc Store;
 }
