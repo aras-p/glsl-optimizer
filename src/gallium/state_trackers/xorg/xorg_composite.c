@@ -235,8 +235,11 @@ picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, bool
    boolean swizzle = FALSE;
    unsigned ret = 0;
 
-   if (pSrc->picture_format == pSrcPicture->format)
+   if (pSrc->picture_format == pSrcPicture->format) {
+      if (pSrc->picture_format == PICT_a8)
+         return mask ? FS_MASK_LUMINANCE : FS_MASK_LUMINANCE;
       return 0;
+   }
 
    if (pSrc->picture_format != PICT_a8r8g8b8) {
       assert(!"can not handle formats");

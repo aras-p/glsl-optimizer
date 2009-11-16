@@ -551,6 +551,9 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
          XORG_FALLBACK("pSrc pic_format: %s != %s",
                        render_format_name(priv->picture_format),
                        render_format_name(pSrcPicture->format));
+
+      if (priv->picture_format == PICT_a8)
+         XORG_FALLBACK("pSrc pic_format == PICT_a8");
    }
 
    if (pMask) {
