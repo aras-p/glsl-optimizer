@@ -237,7 +237,7 @@ picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, bool
 
    if (pSrc->picture_format == pSrcPicture->format) {
       if (pSrc->picture_format == PICT_a8)
-         return mask ? FS_MASK_LUMINANCE : FS_MASK_LUMINANCE;
+         return mask ? FS_MASK_LUMINANCE : FS_SRC_LUMINANCE;
       return 0;
    }
 
