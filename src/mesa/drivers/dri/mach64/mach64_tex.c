@@ -565,7 +565,6 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
    functions->IsTextureResident		= driIsTextureResident;
 
    functions->UpdateTexturePalette	= NULL;
-   functions->ActiveTexture		= NULL;
 
    driInitTextureFormats();
 }

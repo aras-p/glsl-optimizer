@@ -538,11 +538,6 @@ struct dd_function_table {
                                    struct gl_texture_object *t );
 
    /**
-    * Called by glActiveTextureARB() to set current texture unit.
-    */
-   void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );
-
-   /**
     * Called when the texture's color lookup table is changed.
     * 
     * If \p tObj is NULL then the shared texture palette
