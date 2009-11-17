@@ -579,10 +579,10 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0x000000ff;							\
    tmp |= ((d << 8) & 0xffffff00);					\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
@@ -597,26 +597,26 @@ do {									\
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
-   GLuint tmp = *_ptr;							\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #endif
 
 #if defined(RADEON_R300)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
-    d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
+    d = (LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off))) & 0xffffff00) >> 8; \
   }while(0)
 #elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
@@ -626,11 +626,11 @@ do {									\
 #elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
-    d = *(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off)) & 0x00ffffff; \
+    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off))) & 0x00ffffff; \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	\
-  d = *(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off)) & 0x00ffffff;
+  d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off))) & 0x00ffffff;
 #endif
 
 #define TAG(x) radeon##x##_z24
@@ -648,7 +648,7 @@ do {									\
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
-   *_ptr = d;								\
+   *_ptr = CPU_TO_LE32(d);                                              \
 } while (0)
 #elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
@@ -668,20 +668,20 @@ do {									\
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
-   *_ptr = d;								\
+   *_ptr = CPU_TO_LE32(d);						\
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
-   *_ptr = d;					\
+   *_ptr = CPU_TO_LE32(d);						\
 } while (0)
 #endif
 
 #if defined(RADEON_R300)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
+    d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
   }while(0)
 #elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
@@ -692,11 +692,11 @@ do {									\
 #elif defined(RADEON_R200)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = *(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off));	\
+    d = LE32_TO_CPU(*(GLuint*)(r200_depth_4byte(rrb, _x + x_off, _y + y_off))); \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	do {					\
-    d = *(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off )); \
+    d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off))); \
   } while (0)
 #endif
 
@@ -713,10 +713,10 @@ do {									\
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0xffffff00;							\
    tmp |= (d) & 0xff;							\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #elif defined(RADEON_R600)
 #define WRITE_STENCIL( _x, _y, d )					\
@@ -731,19 +731,19 @@ do {									\
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte(rrb, _x + x_off, _y + y_off);		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #else
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
-   *_ptr = tmp;					\
+   *_ptr = CPU_TO_LE32(tmp);                                            \
 } while (0)
 #endif
 
@@ -751,7 +751,7 @@ do {									\
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    d = tmp & 0x000000ff;						\
 } while (0)
 #elif defined(RADEON_R600)
@@ -765,14 +765,14 @@ do {									\
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)r200_depth_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
 #else
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
-   GLuint tmp = *_ptr;				\
+   GLuint tmp = LE32_TO_CPU(*_ptr);                                     \
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
 #endif
