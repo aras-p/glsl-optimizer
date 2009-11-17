@@ -116,6 +116,8 @@ void init(void)
    glNewList(startList+3, GL_COMPILE);
       gluPartialDisk(qobj, 0.0, 1.0, 20, 4, 0.0, 225.0);
    glEndList();
+
+   gluDeleteQuadric(qobj);
 }
 
 void display(void)
