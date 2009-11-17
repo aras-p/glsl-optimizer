@@ -200,7 +200,7 @@ struct vertex_buffer
 
    /* Pointers to current data.
     * XXX some of these fields alias AttribPtr below and should be removed
-    * such as NormalPtr, TexCoordPtr, FogCoordPtr, etc.
+    * such as TexCoordPtr, FogCoordPtr, etc.
     */
    GLuint      *Elts;		                
    GLvector4f  *ObjPtr;		                /* _TNL_BIT_POS */
@@ -210,7 +210,6 @@ struct vertex_buffer
    GLubyte     ClipOrMask;	                /* _TNL_BIT_POS */
    GLubyte     ClipAndMask;	                /* _TNL_BIT_POS */
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
-   GLvector4f  *NormalPtr;	                /* _TNL_BIT_NORMAL */
    GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
    GLboolean   *EdgeFlag;	                /* _TNL_BIT_EDGEFLAG */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_COORD_UNITS]; /* VERT_TEX_0..n */

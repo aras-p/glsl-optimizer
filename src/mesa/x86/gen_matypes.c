@@ -126,7 +126,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_PROJ_CLIP_PTR       ", struct vertex_buffer, NdcPtr );
    OFFSET( "VB_CLIP_OR_MASK        ", struct vertex_buffer, ClipOrMask );
    OFFSET( "VB_CLIP_MASK           ", struct vertex_buffer, ClipMask );
-   OFFSET( "VB_NORMAL_PTR          ", struct vertex_buffer, NormalPtr );
+   OFFSET( "VB_NORMAL_PTR          ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_NORMAL] );
    OFFSET( "VB_EDGE_FLAG           ", struct vertex_buffer, EdgeFlag );
    OFFSET( "VB_TEX0_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[0] );
    OFFSET( "VB_TEX1_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[1] );

@@ -216,9 +216,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.norm.buf)
 	 rcommon_emit_vector( ctx, 
 			      &(rmesa->tcl.aos[nr]),
-			      (char *)VB->NormalPtr->data,
+			      (char *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data,
 			      3,
-			      VB->NormalPtr->stride,
+			      VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride,
 			      count);
 
       vfmt |= RADEON_CP_VC_FRMT_N0;

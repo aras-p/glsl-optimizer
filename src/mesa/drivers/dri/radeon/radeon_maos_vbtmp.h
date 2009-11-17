@@ -112,9 +112,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_NORM) {
-      if (VB->NormalPtr) {
-	 norm_stride = VB->NormalPtr->stride;
-	 norm = (GLuint (*)[4])VB->NormalPtr->data;
+      if (VB->AttribPtr[_TNL_ATTRIB_NORMAL]) {
+	 norm_stride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+	 norm = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
       } else {
 	 norm_stride = 0;
 	 norm = (GLuint (*)[4])&ctx->Current.Attrib[VERT_ATTRIB_NORMAL];

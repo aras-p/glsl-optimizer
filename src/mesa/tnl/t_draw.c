@@ -255,7 +255,6 @@ static void bind_inputs( GLcontext *ctx,
    /* Legacy pointers -- remove one day.
     */
    VB->ObjPtr = VB->AttribPtr[_TNL_ATTRIB_POS];
-   VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    VB->ColorPtr[1] = NULL;
    VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
