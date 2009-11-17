@@ -432,7 +432,11 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB1555_REV
 #define TAG2(x,y) radeon##x##_ARGB1555_REV##y
+#if defined(RADEON_R600)
+#define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
+#else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#endif
 #include "spantmp2.h"
 
 /* 16 bit, RGBA4 color spanline and pixel functions
@@ -454,7 +458,11 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB4444_REV
 #define TAG2(x,y) radeon##x##_ARGB4444_REV##y
+#if defined(RADEON_R600)
+#define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
+#else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#endif
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
