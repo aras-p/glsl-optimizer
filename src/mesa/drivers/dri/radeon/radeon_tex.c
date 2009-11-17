@@ -348,17 +348,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:
    case GL_TEXTURE_MAX_LOD:
-
-      /* This isn't the most efficient solution but there doesn't appear to
-       * be a nice alternative.  Since there's no LOD clamping,
-       * we just have to rely on loading the right subset of mipmap levels
-       * to simulate a clamped LOD.
-       */
-      if (t->mt) {
-         radeon_miptree_unreference(t->mt);
-	 t->mt = 0;
-	 t->validated = GL_FALSE;
-      }
+      t->validated = GL_FALSE;
       break;
 
    default:
@@ -388,10 +378,8 @@ static void radeonDeleteTexture( GLcontext *ctx,
      }
    }
 
-   if (t->mt) {
-      radeon_miptree_unreference(t->mt);
-      t->mt = 0;
-   }
+   radeon_miptree_unreference(&t->mt);
+
    /* Free mipmap images and the texture object itself */
    _mesa_delete_texture_object(ctx, texObj);
 }
