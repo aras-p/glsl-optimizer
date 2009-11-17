@@ -250,6 +250,7 @@ static TK_RGBImageRec *tkRGBImageLoad(const char *fileName)
    final = (TK_RGBImageRec *)malloc(sizeof(TK_RGBImageRec));
    if (final == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      RawImageClose(raw);
       return NULL;
    }
    final->sizeX = raw->sizeX;
