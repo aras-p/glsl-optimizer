@@ -357,6 +357,7 @@ GLubyte *LoadRGBImage( const char *imageFile, GLint *width, GLint *height,
       fprintf(stderr,
               "Error in LoadRGBImage %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return NULL;
    }
 
@@ -365,8 +366,10 @@ GLubyte *LoadRGBImage( const char *imageFile, GLint *width, GLint *height,
 
    bytes = image->sizeX * image->sizeY * image->components;
    buffer = (GLubyte *) malloc(bytes);
-   if (!buffer)
+   if (!buffer) {
+      FreeImage(image);
       return NULL;
+   }
 
    memcpy( (void *) buffer, (void *) image->data, bytes );
 
