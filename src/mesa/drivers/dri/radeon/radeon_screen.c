@@ -390,12 +390,14 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    screen->device_id = device_id;
    screen->chip_flags = 0;
    switch ( device_id ) {
+   case PCI_CHIP_RN50_515E:
+   case PCI_CHIP_RN50_5969:
+	return -1;
+
    case PCI_CHIP_RADEON_LY:
    case PCI_CHIP_RADEON_LZ:
    case PCI_CHIP_RADEON_QY:
    case PCI_CHIP_RADEON_QZ:
-   case PCI_CHIP_RN50_515E:
-   case PCI_CHIP_RN50_5969:
       screen->chip_family = CHIP_FAMILY_RV100;
       break;
 
