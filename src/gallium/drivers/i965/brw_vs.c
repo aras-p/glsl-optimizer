@@ -57,7 +57,18 @@ static enum pipe_error do_vs_prog( struct brw_context *brw,
 
    c.prog_data.nr_outputs = vp->info.num_outputs;
    c.prog_data.nr_inputs = vp->info.num_inputs;
-   c.prog_data.copy_edgeflag = c.key.copy_edgeflag;
+
+   /* XXX: we want edgeflag handling to be integrated to the vertex
+    * shader, but are currently faking the edgeflag output:
+    */
+   if (c.key.copy_edgeflag) {
+      c.prog_data.output_edgeflag = c.prog_data.nr_outputs;
+      c.prog_data.nr_outputs++;
+   }
+   else {
+      c.prog_data.output_edgeflag = ~0;
+   }
+
 
    if (1)
       tgsi_dump(c.vp->tokens, 0);

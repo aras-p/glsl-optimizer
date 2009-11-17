@@ -42,7 +42,7 @@
  * up polygon offset and flatshading at this point:
  */
 struct brw_clip_prog_key {
-   GLuint nr_attrs:5;
+   GLuint nr_attrs:6;
    GLuint primitive:4;
    GLuint nr_userclip:3;
    GLuint do_flat_shading:1;
@@ -54,7 +54,14 @@ struct brw_clip_prog_key {
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad1:7;
+   GLuint output_hpos:6;        /* not always zero? */
+
+   GLuint output_color0:6;
+   GLuint output_color1:6;
+   GLuint output_bfc0:6;
+   GLuint output_bfc1:6;
+   GLuint output_edgeflag:6;
+   GLuint pad1:2;
    
    GLfloat offset_factor;
    GLfloat offset_units;
@@ -123,7 +130,6 @@ struct brw_clip_compile {
    GLuint last_mrf;
 
    GLuint header_position_offset;
-   GLuint offset[PIPE_MAX_SHADER_OUTPUTS];
    GLboolean need_ff_sync;
 
    GLuint nr_color_attrs;
@@ -131,7 +137,8 @@ struct brw_clip_compile {
    GLuint offset_color1;
    GLuint offset_bfc0;
    GLuint offset_bfc1;
-   
+
+   GLuint offset_hpos;
    GLuint offset_edgeflag;
 };
 

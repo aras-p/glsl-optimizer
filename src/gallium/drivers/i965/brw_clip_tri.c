@@ -249,13 +249,13 @@ void brw_clip_tri( struct brw_clip_compile *c )
 
 	    /* IS_NEGATIVE(prev) */
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	    brw_DP4(p, vec4(c->reg.dpPrev), deref_4f(vtxPrev, c->offset[VERT_RESULT_HPOS]), c->reg.plane_equation);
+	    brw_DP4(p, vec4(c->reg.dpPrev), deref_4f(vtxPrev, c->offset_hpos), c->reg.plane_equation);
 	    prev_test = brw_IF(p, BRW_EXECUTE_1);
 	    {
 	       /* IS_POSITIVE(next)
 		*/
 	       brw_set_conditionalmod(p, BRW_CONDITIONAL_GE);
-	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, c->offset[VERT_RESULT_HPOS]), c->reg.plane_equation);
+	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, c->offset_hpos), c->reg.plane_equation);
 	       next_test = brw_IF(p, BRW_EXECUTE_1);
 	       {
 
@@ -297,7 +297,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	       /* IS_NEGATIVE(next)
 		*/
 	       brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, c->offset[VERT_RESULT_HPOS]), c->reg.plane_equation);
+	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, c->offset_hpos), c->reg.plane_equation);
 	       next_test = brw_IF(p, BRW_EXECUTE_1);
 	       {
 		  /* Going out of bounds.  Avoid division by zero as we
@@ -462,9 +462,9 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_MOV(p, get_addr_reg(vt0), brw_address(c->reg.vertex[0]));
     brw_MOV(p, get_addr_reg(vt1), brw_address(c->reg.vertex[1]));
     brw_MOV(p, get_addr_reg(vt2), brw_address(c->reg.vertex[2]));
-    brw_MOV(p, v0, deref_4f(vt0, c->offset[VERT_RESULT_HPOS]));
-    brw_MOV(p, v1, deref_4f(vt1, c->offset[VERT_RESULT_HPOS]));
-    brw_MOV(p, v2, deref_4f(vt2, c->offset[VERT_RESULT_HPOS]));
+    brw_MOV(p, v0, deref_4f(vt0, c->offset_hpos));
+    brw_MOV(p, v1, deref_4f(vt1, c->offset_hpos));
+    brw_MOV(p, v2, deref_4f(vt2, c->offset_hpos));
     brw_AND(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(~0x3f));
 
     /* test nearz, xmin, ymin plane */

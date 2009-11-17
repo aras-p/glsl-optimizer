@@ -93,7 +93,7 @@ static void init_registers( struct brw_wm_compile *c )
    assert(c->key.vp_nr_outputs >= 1);
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
-   c->prog_data.urb_read_length = c->key.vp_nr_outputs * 2;
+   c->prog_data.urb_read_length = (c->key.nr_inputs + 1) * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 
    /* Note this allocation:

@@ -152,13 +152,23 @@ struct brw_rasterizer_state;
 
 struct brw_vertex_shader {
    const struct tgsi_token *tokens;
+   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
+
    struct tgsi_shader_info info;
 
-   unsigned  has_flow_control:1;
+   GLuint has_flow_control:1;
+   GLuint use_const_buffer:1;
+
+   /* Offsets of special vertex shader outputs required for clipping.
+    */
+   GLuint output_hpos:6;        /* not always zero? */
+   GLuint output_color0:6;
+   GLuint output_color1:6;
+   GLuint output_bfc0:6;
+   GLuint output_bfc1:6;
+   GLuint output_edgeflag:6;
 
    unsigned id;
-   struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
-   GLboolean use_const_buffer;
 };
 
 struct brw_fs_signature {
@@ -317,7 +327,8 @@ struct brw_vs_prog_data {
 
    GLuint nr_params;       /**< number of TGSI_FILE_CONSTANT's */
 
-   GLboolean copy_edgeflag;
+   GLuint output_edgeflag;
+
    GLboolean writes_psiz;
 
    /* Used for calculating urb partitions:

@@ -132,7 +132,6 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    struct brw_instruction *is_neg2 = NULL;
    struct brw_instruction *not_culled;
    struct brw_reg v1_null_ud = retype(vec1(brw_null_reg()), BRW_REGISTER_TYPE_UD);
-   const int hpos = 0;		/* XXX: position not always first element */
 
    brw_MOV(p, get_addr_reg(vtx0),      brw_address(c->reg.vertex[0]));
    brw_MOV(p, get_addr_reg(vtx1),      brw_address(c->reg.vertex[1]));
@@ -173,12 +172,12 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 
 	 /* dp = DP4(vtx->position, plane) 
 	  */
-	 brw_DP4(p, vec4(c->reg.dp0), deref_4f(vtx0, c->offset[hpos]), c->reg.plane_equation);
+	 brw_DP4(p, vec4(c->reg.dp0), deref_4f(vtx0, c->offset_hpos), c->reg.plane_equation);
 
 	 /* if (IS_NEGATIVE(dp1)) 
 	  */
 	 brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	 brw_DP4(p, vec4(c->reg.dp1), deref_4f(vtx1, c->offset[hpos]), c->reg.plane_equation);
+	 brw_DP4(p, vec4(c->reg.dp1), deref_4f(vtx1, c->offset_hpos), c->reg.plane_equation);
 	 is_negative = brw_IF(p, BRW_EXECUTE_1);
 	 {
              /*

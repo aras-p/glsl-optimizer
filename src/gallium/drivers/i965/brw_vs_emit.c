@@ -70,11 +70,17 @@ static boolean is_position_output( struct brw_vs_compile *c,
                                    unsigned vs_output )
 {
    struct brw_vertex_shader *vs = c->vp;
-   unsigned semantic = vs->info.output_semantic_name[vs_output];
-   unsigned index = vs->info.output_semantic_index[vs_output];
 
-   return (semantic == TGSI_SEMANTIC_POSITION &&
-           index == 0);
+   if (vs_output == c->prog_data.output_edgeflag) {
+      return FALSE;
+   }
+   else {
+      unsigned semantic = vs->info.output_semantic_name[vs_output];
+      unsigned index = vs->info.output_semantic_index[vs_output];
+      
+      return (semantic == TGSI_SEMANTIC_POSITION &&
+              index == 0);
+   }
 }
 
 
@@ -83,15 +89,22 @@ static boolean find_output_slot( struct brw_vs_compile *c,
                                   unsigned *fs_input_slot )
 {
    struct brw_vertex_shader *vs = c->vp;
-   unsigned semantic = vs->info.output_semantic_name[vs_output];
-   unsigned index = vs->info.output_semantic_index[vs_output];
-   unsigned i;
 
-   for (i = 0; i < c->key.fs_signature.nr_inputs; i++) {
-      if (c->key.fs_signature.input[i].semantic == semantic &&
+   if (vs_output == c->prog_data.output_edgeflag) {
+      *fs_input_slot = c->key.fs_signature.nr_inputs;
+      return TRUE;
+   }
+   else {
+      unsigned semantic = vs->info.output_semantic_name[vs_output];
+      unsigned index = vs->info.output_semantic_index[vs_output];
+      unsigned i;
+
+      for (i = 0; i < c->key.fs_signature.nr_inputs; i++) {
+         if (c->key.fs_signature.input[i].semantic == semantic &&
           c->key.fs_signature.input[i].semantic_index == index) {
-         *fs_input_slot = i;
-         return TRUE;
+            *fs_input_slot = i;
+            return TRUE;
+         }
       }
    }
 
@@ -219,7 +232,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* XXX: need to access vertex output semantics here:
     */
-   for (i = 0; i < c->prog_data.nr_outputs; i++) {
+   for (i = 0; i < c->nr_outputs; i++) {
       unsigned slot;
 
       /* XXX: Put output position in slot zero always.  Clipper, etc,
@@ -1116,10 +1129,9 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    GLuint len_vertext_header = 2;
 
    if (c->key.copy_edgeflag) {
-      assert(0);
       brw_MOV(p, 
-	      get_reg(c, TGSI_FILE_OUTPUT, 0),
-	      get_reg(c, TGSI_FILE_INPUT, 0));
+              get_reg(c, TGSI_FILE_OUTPUT, c->prog_data.output_edgeflag),
+              brw_imm_f(1));
    }
 
    /* Build ndc coords */

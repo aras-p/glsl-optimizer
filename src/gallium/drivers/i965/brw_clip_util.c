@@ -106,7 +106,7 @@ static void brw_clip_project_vertex( struct brw_clip_compile *c,
    /* Fixup position.  Extract from the original vertex and re-project
     * to screen space:
     */
-   brw_MOV(p, tmp, deref_4f(vert_addr, c->offset[VERT_RESULT_HPOS]));
+   brw_MOV(p, tmp, deref_4f(vert_addr, c->offset_hpos));
    brw_clip_project_position(c, tmp);
    brw_MOV(p, deref_4f(vert_addr, c->header_position_offset), tmp);
 	 

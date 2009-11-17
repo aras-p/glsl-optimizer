@@ -58,7 +58,6 @@ compile_clip_prog( struct brw_context *brw,
    const GLuint *program;
    GLuint program_size;
    GLuint delta;
-   GLuint i;
 
    memset(&c, 0, sizeof(c));
    
@@ -82,16 +81,26 @@ compile_clip_prog( struct brw_context *brw,
    else
        delta = REG_SIZE;
 
-   /* XXX: c.offset is now pretty redundant:
-    */
-   for (i = 0; i < c.key.nr_attrs; i++) {
-      c.offset[i] = delta;
-      delta += ATTR_SIZE;
-   }
-
    /* XXX: c.nr_attrs is very redundant:
     */
    c.nr_attrs = c.key.nr_attrs;
+
+   c.offset_hpos = delta + c.key.output_hpos * ATTR_SIZE;
+
+   if (c.key.output_color0)
+      c.offset_color0 = delta + c.key.output_color0 * ATTR_SIZE;
+
+   if (c.key.output_color1)
+      c.offset_color1 = delta + c.key.output_color1 * ATTR_SIZE;
+
+   if (c.key.output_bfc0)
+      c.offset_bfc0 = delta + c.key.output_bfc0 * ATTR_SIZE;
+
+   if (c.key.output_bfc1)
+      c.offset_bfc1 = delta + c.key.output_bfc1 * ATTR_SIZE;
+
+   if (c.key.output_edgeflag)
+      c.offset_edgeflag = delta + c.key.output_edgeflag * ATTR_SIZE;
    
    if (BRW_IS_IGDNG(brw))
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
@@ -158,21 +167,33 @@ compile_clip_prog( struct brw_context *brw,
 static enum pipe_error
 upload_clip_prog(struct brw_context *brw)
 {
-   enum pipe_error ret;
+   const struct brw_vertex_shader *vs = brw->curr.vertex_shader;
    struct brw_clip_prog_key key;
+   enum pipe_error ret;
 
    /* Populate the key, starting from the almost-complete version from
     * the rast state. 
     */
 
    /* PIPE_NEW_RAST */
-   memcpy(&key, &brw->curr.rast->clip_key, sizeof key);
-
+   key = brw->curr.rast->clip_key;
+   
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->reduced_primitive;
 
+   /* XXX: if edgeflag is moved to a proper TGSI vs output, can remove
+    * dependency on CACHE_NEW_VS_PROG
+    */
+   /* CACHE_NEW_VS_PROG */
+   key.nr_attrs        = brw->vs.prog_data->nr_outputs;
+   key.output_edgeflag = brw->vs.prog_data->output_edgeflag;
+
    /* PIPE_NEW_VS */
-   key.nr_attrs = brw->curr.vertex_shader->info.file_max[TGSI_FILE_OUTPUT] + 1;
+   key.output_hpos     = vs->output_hpos;
+   key.output_color0   = vs->output_color0;
+   key.output_color1   = vs->output_color1;
+   key.output_bfc0     = vs->output_bfc0;
+   key.output_bfc1     = vs->output_bfc1;
 
    /* PIPE_NEW_CLIP */
    key.nr_userclip = brw->curr.ucp.nr;

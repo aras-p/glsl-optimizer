@@ -124,21 +124,51 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
 				  const struct pipe_shader_state *shader )
 {
    struct brw_context *brw = brw_context(pipe);
+   struct brw_vertex_shader *vs;
+   unsigned i;
 
-   struct brw_vertex_shader *vs = CALLOC_STRUCT(brw_vertex_shader);
+   vs = CALLOC_STRUCT(brw_vertex_shader);
    if (vs == NULL)
       return NULL;
 
    /* Duplicate tokens, scan shader
     */
-   vs->id = brw->program_id++;
-   vs->has_flow_control = has_flow_control(&vs->info);
-
    vs->tokens = tgsi_dup_tokens(shader->tokens);
    if (vs->tokens == NULL)
       goto fail;
 
    tgsi_scan_shader(vs->tokens, &vs->info);
+
+   vs->id = brw->program_id++;
+   vs->has_flow_control = has_flow_control(&vs->info);
+
+   for (i = 0; i < vs->info.num_outputs; i++) {
+      int index = vs->info.output_semantic_index[i];
+      switch (vs->info.output_semantic_name[i]) {
+      case TGSI_SEMANTIC_POSITION:
+         vs->output_hpos = i;
+         break;
+      case TGSI_SEMANTIC_COLOR:
+         if (index == 0)
+            vs->output_color0 = i;
+         else
+            vs->output_color1 = i;
+         break;
+      case TGSI_SEMANTIC_BCOLOR:
+         if (index == 0)
+            vs->output_bfc0 = i;
+         else
+            vs->output_bfc1 = i;
+         break;
+#if 0
+      case TGSI_SEMANTIC_EDGEFLAG:
+         vs->output_edgeflag = i;
+         break;
+#endif
+      }
+   }
+
+
    
    /* Done:
     */

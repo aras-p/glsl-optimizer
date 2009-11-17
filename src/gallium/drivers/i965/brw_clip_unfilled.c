@@ -45,9 +45,9 @@ static void compute_tri_direction( struct brw_clip_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg e = c->reg.tmp0;
    struct brw_reg f = c->reg.tmp1;
-   struct brw_reg v0 = byte_offset(c->reg.vertex[0], c->offset[VERT_RESULT_HPOS]); 
-   struct brw_reg v1 = byte_offset(c->reg.vertex[1], c->offset[VERT_RESULT_HPOS]); 
-   struct brw_reg v2 = byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_HPOS]); 
+   struct brw_reg v0 = byte_offset(c->reg.vertex[0], c->offset_hpos); 
+   struct brw_reg v1 = byte_offset(c->reg.vertex[1], c->offset_hpos); 
+   struct brw_reg v2 = byte_offset(c->reg.vertex[2], c->offset_hpos); 
 
 
    struct brw_reg v0n = get_tmp(c);
@@ -123,7 +123,8 @@ static void copy_bfc( struct brw_clip_compile *c )
 
    /* Do we have any colors to copy? 
     */
-   if (c->nr_color_attrs == 0)
+   if ((c->offset_color0 == 0 || c->offset_bfc0 == 0) &&
+       (c->offset_color1 == 0 || c->offset_bfc1 == 0))
       return;
 
    /* In some wierd degnerate cases we can end up testing the
