@@ -99,6 +99,7 @@ CompileShaderFile(GLenum shaderType, const char *filename)
       shader = CompileShaderText(shaderType, buffer);
    }
    else {
+      fclose(f);
       free(buffer);
       return 0;
    }
