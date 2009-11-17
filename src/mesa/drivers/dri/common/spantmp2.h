@@ -107,7 +107,8 @@
 
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
-      GLushort p = bswap_16(GET_VALUE(_x, _y));                         \
+      GLushort p = GET_VALUE(_x, _y);					\
+      p = p << 8 | p >> 8;						\
       rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
       rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
       rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
@@ -237,7 +238,8 @@
 
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
-      GLushort p = bswap_16(GET_VALUE(_x, _y));                         \
+      GLushort p = GET_VALUE(_x, _y);					\
+      p = p << 8 | p >> 8;						\
       rgba[0] = ((p >> 7) & 0xf8) * 255 / 0xf8;				\
       rgba[1] = ((p >> 2) & 0xf8) * 255 / 0xf8;				\
       rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
