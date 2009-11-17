@@ -24,7 +24,6 @@ if env['platform'] == 'linux':
 			'HAVE_STDINT_H',
 			'HAVE_SYS_TYPES_H',
 		])
-		env.Append(CFLAGS = ['-Werror'])
 
 	env.Append(CFLAGS = [
 		'-std=gnu99',

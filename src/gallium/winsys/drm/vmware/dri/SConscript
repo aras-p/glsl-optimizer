@@ -35,7 +35,6 @@ if env['platform'] == 'linux':
             ])
 
       env.Append(CFLAGS = [
-            '-Werror',
             '-std=gnu99',
             '-D_FILE_OFFSET_BITS=64',
             ])
