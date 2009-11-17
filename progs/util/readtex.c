@@ -305,6 +305,7 @@ GLboolean LoadRGBMipmaps2( const char *imageFile, GLenum target,
       fprintf(stderr,
               "Error in LoadRGBMipmaps %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return GL_FALSE;
    }
 
