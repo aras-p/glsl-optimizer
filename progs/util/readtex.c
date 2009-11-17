@@ -438,6 +438,7 @@ GLushort *LoadYUVImage( const char *imageFile, GLint *width, GLint *height )
       fprintf(stderr,
               "Error in LoadYUVImage %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return NULL;
    }
 
