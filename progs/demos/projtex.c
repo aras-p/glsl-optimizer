@@ -245,6 +245,9 @@ loadImageTextures(void)
        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
      }
      glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+     free(texData3);
+     free(texData4);
   }
 }
 
