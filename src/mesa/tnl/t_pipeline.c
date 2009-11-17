@@ -86,10 +86,6 @@ static GLuint check_input_changes( GLcontext *ctx )
       }
    }
 
-   if (tnl->pipeline.input_changes &&
-      tnl->Driver.NotifyInputChanges) 
-      tnl->Driver.NotifyInputChanges( ctx, tnl->pipeline.input_changes );
-
    return tnl->pipeline.input_changes;
 }
 

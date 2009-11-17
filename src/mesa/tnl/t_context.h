@@ -402,11 +402,6 @@ struct tnl_device_driver
    /* Alert tnl-aware drivers of changes to material.
     */
 
-   void (*NotifyInputChanges)(GLcontext *ctx, GLuint bitmask);
-   /* Alert tnl-aware drivers of changes to size and stride of input
-    * arrays.
-    */
-
    /***
     *** Rendering -- These functions called only from t_vb_render.c
     ***/
