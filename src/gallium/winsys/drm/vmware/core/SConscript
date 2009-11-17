@@ -3,7 +3,7 @@ Import('*')
 env = env.Clone()
 
 if env['gcc']:
-	env.Append(CCFLAGS = ['-fvisibility=hidden', '-Werror'])
+	env.Append(CCFLAGS = ['-fvisibility=hidden'])
 	env.Append(CPPDEFINES = [
 		'HAVE_STDINT_H', 
 		'HAVE_SYS_TYPES_H',

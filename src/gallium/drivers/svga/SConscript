@@ -10,9 +10,6 @@ if env['gcc']:
 		'HAVE_STDINT_H', 
 		'HAVE_SYS_TYPES_H',
 	])
-	if env['platform'] not in ['windows']:
-		# The Windows headers cause many gcc warnings
-		env.Append(CCFLAGS = ['-Werror'])
 	
 env.Prepend(CPPPATH = [
 	'include',
