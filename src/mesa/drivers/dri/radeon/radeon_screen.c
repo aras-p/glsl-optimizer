@@ -1484,11 +1484,11 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     _mesa_initialize_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->redBits == 5)
-        rgbFormat = MESA_FORMAT_RGB565;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;
     else if (mesaVis->alphaBits == 0)
-        rgbFormat = MESA_FORMAT_XRGB8888;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_XRGB8888 : MESA_FORMAT_XRGB8888_REV;
     else
-        rgbFormat = MESA_FORMAT_ARGB8888;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB8888_REV;
 
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
