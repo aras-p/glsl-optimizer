@@ -4,6 +4,7 @@
 #include "pipe/p_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 
@@ -131,7 +132,7 @@ emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
 				sizeof(uint32_t) * 4);
 		}
 
-		sr |= (NV30_FP_REG_TYPE_CONST << NV30_FP_REG_TYPE_SHIFT);	
+		sr |= (NV30_FP_REG_TYPE_CONST << NV30_FP_REG_TYPE_SHIFT);
 		break;
 	case NV30SR_NONE:
 		sr |= (NV30_FP_REG_TYPE_INPUT << NV30_FP_REG_TYPE_SHIFT);
@@ -666,7 +667,7 @@ nv30_fragprog_prepare(struct nv30_fpc *fpc)
 		{
 			struct tgsi_full_immediate *imm;
 			float vals[4];
-			
+
 			imm = &p.FullToken.FullImmediate;
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
@@ -754,7 +755,7 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	fp->insn[fpc->inst_offset + 1] = 0x00000000;
 	fp->insn[fpc->inst_offset + 2] = 0x00000000;
 	fp->insn[fpc->inst_offset + 3] = 0x00000000;
-	
+
 	fp->translated = TRUE;
 	fp->on_hw = FALSE;
 out_err:
@@ -838,7 +839,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 update_constants:
 	if (fp->nr_consts) {
 		float *map;
-		
+
 		map = pipe_buffer_map(pscreen, constbuf,
 				      PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
