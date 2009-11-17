@@ -1410,7 +1410,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
           dstFormat == MESA_FORMAT_ARGB8888_REV ||
-          dstFormat == MESA_FORMAT_XRGB8888);
+          dstFormat == MESA_FORMAT_XRGB8888 ||
+          dstFormat == MESA_FORMAT_XRGB8888_REV );
    ASSERT(texelBytes == 4);
 
    if (!ctx->_ImageTransferState &&
@@ -1431,7 +1432,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
    }
    else if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_ARGB8888_REV &&
+       (dstFormat == MESA_FORMAT_ARGB8888_REV ||
+        dstFormat == MESA_FORMAT_XRGB8888_REV) &&
        baseInternalFormat == GL_RGBA &&
        srcFormat == GL_BGRA &&
        ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
@@ -1524,7 +1526,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
        */
       if ((littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
           (littleEndian && dstFormat == MESA_FORMAT_XRGB8888) ||
-	  (!littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV)) {
+	  (!littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV) ||
+	  (!littleEndian && dstFormat == MESA_FORMAT_XRGB8888_REV)) {
 	 dstmap[3] = 3;		/* alpha */
 	 dstmap[2] = 0;		/* red */
 	 dstmap[1] = 1;		/* green */
@@ -1533,6 +1536,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       else {
 	 assert((littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV) ||
 		(!littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
+		(littleEndian && dstFormat == MESA_FORMAT_XRGB8888_REV) ||
 		(!littleEndian && dstFormat == MESA_FORMAT_XRGB8888));
 	 dstmap[3] = 2;
 	 dstmap[2] = 1;
@@ -3133,6 +3137,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_ARGB8888, _mesa_texstore_argb8888 },
    { MESA_FORMAT_ARGB8888_REV, _mesa_texstore_argb8888 },
    { MESA_FORMAT_XRGB8888, _mesa_texstore_argb8888 },
+   { MESA_FORMAT_XRGB8888_REV, _mesa_texstore_argb8888 },
    { MESA_FORMAT_RGB888, _mesa_texstore_rgb888 },
    { MESA_FORMAT_BGR888, _mesa_texstore_bgr888 },
    { MESA_FORMAT_RGB565, _mesa_texstore_rgb565 },

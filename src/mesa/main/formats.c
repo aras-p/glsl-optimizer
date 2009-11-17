@@ -133,6 +133,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_XRGB8888_REV,    /* Name */
+      "MESA_FORMAT_XRGB8888_REV",  /* StrName */
+      GL_RGB,                      /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_RGB888,          /* Name */
       "MESA_FORMAT_RGB888",        /* StrName */
       GL_RGB,                      /* BaseFormat */

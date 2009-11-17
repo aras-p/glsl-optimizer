@@ -559,6 +559,30 @@ static void store_texel_xrgb8888(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_XRGB8888_REV **************************************************/
+
+/* Fetch texel from 1D, 2D or 3D xrgb8888_rev texture, return 4 GLfloats */
+static void FETCH(f_xrgb8888_rev)( const struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
+   texel[ACOMP] = 1.0f;
+}
+
+#if DIM == 3
+static void store_texel_xrgb8888_rev(struct gl_texture_image *texImage,
+                                     GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[BCOMP], rgba[GCOMP], rgba[RCOMP], 0xff);
+}
+#endif
+
+
 /* MESA_FORMAT_RGB888 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb888 texture, return 4 GLchans */
