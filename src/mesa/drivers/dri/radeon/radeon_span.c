@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "main/glheader.h"
+#include "main/texformat.h"
 #include "swrast/swrast.h"
 
 #include "radeon_common.h"
@@ -400,6 +401,18 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 #endif
 #include "spantmp2.h"
 
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5_REV
+
+#define TAG(x)    radeon##x##_RGB565_REV
+#define TAG2(x,y) radeon##x##_RGB565_REV##y
+#if defined(RADEON_R600)
+#define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
+#else
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#endif
+#include "spantmp2.h"
+
 /* 16 bit, ARGB1555 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -414,6 +427,14 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 #endif
 #include "spantmp2.h"
 
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5
+
+#define TAG(x)    radeon##x##_ARGB1555_REV
+#define TAG2(x,y) radeon##x##_ARGB1555_REV##y
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
+#include "spantmp2.h"
+
 /* 16 bit, RGBA4 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -426,6 +447,14 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 #else
 #define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
 #endif
+#include "spantmp2.h"
+
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4
+
+#define TAG(x)    radeon##x##_ARGB4444_REV
+#define TAG2(x,y) radeon##x##_ARGB4444_REV##y
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
@@ -470,6 +499,30 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
    *_ptr = d;								\
 } while (0)
 #endif
+#include "spantmp2.h"
+
+/* 32 bit, BGRx8888 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8
+
+#define TAG(x)    radeon##x##_BGRx8888
+#define TAG2(x,y) radeon##x##_BGRx8888##y
+#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) | 0x000000ff))
+#define PUT_VALUE(_x, _y, d) { \
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
+   *_ptr = d;								\
+} while (0)
+#include "spantmp2.h"
+
+/* 32 bit, BGRA8888 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8
+
+#define TAG(x)    radeon##x##_BGRA8888
+#define TAG2(x,y) radeon##x##_BGRA8888##y
+#define GET_PTR(X,Y) radeon_ptr_4byte(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* ================================================================
@@ -848,14 +901,24 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
 	if (rrb->base.Format == MESA_FORMAT_RGB565) {
 		radeonInitPointers_RGB565(&rrb->base);
+	} else if (rrb->base.Format == MESA_FORMAT_RGB565_REV) {
+		radeonInitPointers_RGB565_REV(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_XRGB8888) {
 		radeonInitPointers_xRGB8888(&rrb->base);
+        } else if (rrb->base.Format == MESA_FORMAT_XRGB8888_REV) {
+		radeonInitPointers_BGRx8888(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_ARGB8888) {
 		radeonInitPointers_ARGB8888(&rrb->base);
+        } else if (rrb->base.Format == MESA_FORMAT_ARGB8888_REV) {
+		radeonInitPointers_BGRA8888(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_ARGB4444) {
 		radeonInitPointers_ARGB4444(&rrb->base);
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB4444_REV) {
+		radeonInitPointers_ARGB4444_REV(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_ARGB1555) {
 		radeonInitPointers_ARGB1555(&rrb->base);
+	} else if (rrb->base.Format == MESA_FORMAT_ARGB1555_REV) {
+		radeonInitPointers_ARGB1555_REV(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_Z16) {
 		radeonInitDepthPointers_z16(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_X8_Z24) {
