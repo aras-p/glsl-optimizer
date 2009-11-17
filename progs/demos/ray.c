@@ -834,6 +834,8 @@ initdlists(void)
    gluQuadricTexture(obj, GL_TRUE);
    gluSphere(obj, SPHERE_RADIUS, 16, 16);
    glEndList();
+
+   gluDeleteQuadric(obj);
 }
 
 int
