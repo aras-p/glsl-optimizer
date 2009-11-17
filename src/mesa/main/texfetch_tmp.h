@@ -876,7 +876,7 @@ static void store_texel_al1616(struct gl_texture_image *texImage,
                              GLint i, GLint j, GLint k, const void *texel)
 {
    const GLushort *rgba = (const GLushort *) texel;
-   GLuint *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
    *dst = PACK_COLOR_1616(rgba[ACOMP], rgba[RCOMP]);
 }
 #endif
