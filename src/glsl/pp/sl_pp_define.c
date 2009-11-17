@@ -60,7 +60,7 @@ _parse_formal_args(struct sl_pp_context *context,
          return 0;
       }
    } else {
-      strcpy(context->error_msg, "expected either an identifier or `)'");
+      strcpy(context->error_msg, "expected either macro formal argument or `)'");
       return -1;
    }
 
@@ -68,7 +68,7 @@ _parse_formal_args(struct sl_pp_context *context,
 
    for (;;) {
       if (*first < last && input[*first].token != SL_PP_IDENTIFIER) {
-         strcpy(context->error_msg, "expected an identifier");
+         strcpy(context->error_msg, "expected macro formal argument");
          return -1;
       }
 
@@ -90,6 +90,7 @@ _parse_formal_args(struct sl_pp_context *context,
       if (*first < last) {
          if (input[*first].token == SL_PP_COMMA) {
             (*first)++;
+            skip_whitespace(input, first, last);
          } else if (input[*first].token == SL_PP_RPAREN) {
             (*first)++;
             return 0;
@@ -124,7 +125,7 @@ sl_pp_process_define(struct sl_pp_context *context,
       first++;
    }
    if (macro_name == -1) {
-      strcpy(context->error_msg, "expected an identifier");
+      strcpy(context->error_msg, "expected macro name");
       return -1;
    }
 
