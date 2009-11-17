@@ -109,6 +109,7 @@ static rawImageRec *RawImageOpen(const char *fileName)
          raw->file = fopen(baseName + 1, "rb");
       if(raw->file == NULL) {
          perror(fileName);
+         free(raw);
          return NULL;
       }
    }
