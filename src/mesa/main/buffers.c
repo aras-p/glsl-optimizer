@@ -382,7 +382,6 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
     */
    if (n == 1) {
       GLuint count = 0, destMask0 = destMask[0];
-      /* init to -1 to help catch errors */
       while (destMask0) {
          GLint bufIndex = _mesa_ffs(destMask0) - 1;
          if (fb->_ColorDrawBufferIndexes[count] != bufIndex) {
