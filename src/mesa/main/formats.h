@@ -140,7 +140,7 @@ typedef enum
    MESA_FORMAT_SIGNED_RGBA_16,
    /*@}*/
 
-   MESA_FORMAT_COUNT,
+   MESA_FORMAT_COUNT
 } gl_format;
 
 
