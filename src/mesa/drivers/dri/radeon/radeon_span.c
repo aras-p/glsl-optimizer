@@ -516,11 +516,19 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_BGRx8888
 #define TAG2(x,y) radeon##x##_BGRx8888##y
+#if defined(RADEON_R600)
+#define GET_VALUE(_x, _y) ((*(GLuint*)(r600_ptr_color(rrb, _x + x_off, _y + y_off)) | 0x000000ff))
+#define PUT_VALUE(_x, _y, d) { \
+   GLuint *_ptr = (GLuint*)r600_ptr_color( rrb, _x + x_off, _y + y_off );		\
+   *_ptr = d;								\
+} while (0)
+#else
 #define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) | 0x000000ff))
 #define PUT_VALUE(_x, _y, d) { \
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    *_ptr = d;								\
 } while (0)
+#endif
 #include "spantmp2.h"
 
 /* 32 bit, BGRA8888 color spanline and pixel functions
@@ -530,7 +538,11 @@ static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_BGRA8888
 #define TAG2(x,y) radeon##x##_BGRA8888##y
+#if defined(RADEON_R600)
+#define GET_PTR(X,Y) r600_ptr_color(rrb, (X) + x_off, (Y) + y_off)
+#else
 #define GET_PTR(X,Y) radeon_ptr_4byte(rrb, (X) + x_off, (Y) + y_off)
+#endif
 #include "spantmp2.h"
 
 /* ================================================================
