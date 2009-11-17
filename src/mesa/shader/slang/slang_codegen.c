@@ -925,7 +925,7 @@ gen_return_with_expression(slang_assemble_ctx *A, slang_operation *oper)
       slang_operation_copy(rhs, &oper->children[0]);
    }
 
-   ///blockOper->locals->outer_scope = oper->locals->outer_scope;
+   /*blockOper->locals->outer_scope = oper->locals->outer_scope;*/
 
    /*slang_print_tree(blockOper, 0);*/
 
