@@ -140,6 +140,7 @@ MakeSphere(void)
    glNewList(SphereList, GL_COMPILE);
    gluSphere(obj, 2.0f, 30, 15);
    glEndList();
+   gluDeleteQuadric(obj);
 }
 
 
