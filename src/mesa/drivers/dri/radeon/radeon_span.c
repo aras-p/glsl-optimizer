@@ -668,7 +668,7 @@ do {									\
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
-   *_ptr = CPU_TO_LE32(d);                                              \
+   *_ptr = CPU_TO_LE32((((d) & 0xff000000) >> 24) | (((d) & 0x00ffffff) << 8));   \
 } while (0)
 #elif defined(RADEON_R600)
 #define WRITE_DEPTH( _x, _y, d )					\
@@ -701,7 +701,8 @@ do {									\
 #if defined(RADEON_R300)
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = LE32_TO_CPU(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
+    GLuint tmp = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
+    d = LE32_TO_CPU(((tmp & 0x000000ff) << 24) | ((tmp & 0xffffff00) >> 8));	\
   }while(0)
 #elif defined(RADEON_R600)
 #define READ_DEPTH( d, _x, _y )						\
