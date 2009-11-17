@@ -111,6 +111,15 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 		}
 	}
 
+    for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
+	{
+		unBit = 1 << i;
+		if(mesa_vp->Base.OutputsWritten & unBit)
+		{
+			pAsm->ucVP_OutputMap[i] = unTotal++;
+		}
+	}
+
 	return (unTotal - unStart);
 }
 
@@ -235,6 +244,8 @@ void Map_Vertex_Program(GLcontext *ctx,
         pAsm->number_used_registers += mesa_vp->Base.NumTemporaries;
     }
 
+    pAsm->flag_reg_index = pAsm->number_used_registers++;
+
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
@@ -324,7 +335,10 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 		return NULL;
 	}
 
-	if(GL_FALSE == AssembleInstr(vp->mesa_program->Base.NumInstructions,
+    InitShaderProgram(&(vp->r700AsmCode));
+
+	if(GL_FALSE == AssembleInstr(0,
+                                 vp->mesa_program->Base.NumInstructions,
                                  &(vp->mesa_program->Base.Instructions[0]),
                                  &(vp->r700AsmCode)) )
 	{
@@ -334,6 +348,11 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
     if(GL_FALSE == Process_Vertex_Exports(&(vp->r700AsmCode), vp->mesa_program->Base.OutputsWritten) )
     {
         return NULL;
+    }
+
+    if( GL_FALSE == RelocProgram(&(vp->r700AsmCode)) )
+    {
+        return GL_FALSE;
     }
 
     vp->r700Shader.nRegs = (vp->r700AsmCode.number_used_registers == 0) ? 0 

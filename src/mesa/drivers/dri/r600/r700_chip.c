@@ -442,68 +442,77 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 
 static void r700SendPSState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
-	context_t *context = R700_CONTEXT(ctx);
-	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_bo * pbo;
-	BATCH_LOCALS(&context->radeon);
-	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
+    context_t *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+    struct radeon_bo * pbo;
+    BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
-	pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
+    pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
 
-	if (!pbo)
-		return;
+    if (!pbo)
+	    return;
 
-	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
+    r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
-	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_PS, 1);
-	R600_OUT_BATCH(r700->ps.SQ_PGM_START_PS.u32All);
-	R600_OUT_BATCH_RELOC(r700->ps.SQ_PGM_START_PS.u32All,
-			     pbo,
-			     r700->ps.SQ_PGM_START_PS.u32All,
-			     RADEON_GEM_DOMAIN_GTT, 0, 0);
-	END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(SQ_PGM_START_PS, 1);
+    R600_OUT_BATCH(r700->ps.SQ_PGM_START_PS.u32All);
+    R600_OUT_BATCH_RELOC(r700->ps.SQ_PGM_START_PS.u32All,
+		         pbo,
+		         r700->ps.SQ_PGM_START_PS.u32All,
+		         RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(9);
-	R600_OUT_BATCH_REGVAL(SQ_PGM_RESOURCES_PS, r700->ps.SQ_PGM_RESOURCES_PS.u32All);
-	R600_OUT_BATCH_REGVAL(SQ_PGM_EXPORTS_PS, r700->ps.SQ_PGM_EXPORTS_PS.u32All);
-	R600_OUT_BATCH_REGVAL(SQ_PGM_CF_OFFSET_PS, r700->ps.SQ_PGM_CF_OFFSET_PS.u32All);
-        END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(9);
+    R600_OUT_BATCH_REGVAL(SQ_PGM_RESOURCES_PS, r700->ps.SQ_PGM_RESOURCES_PS.u32All);
+    R600_OUT_BATCH_REGVAL(SQ_PGM_EXPORTS_PS, r700->ps.SQ_PGM_EXPORTS_PS.u32All);
+    R600_OUT_BATCH_REGVAL(SQ_PGM_CF_OFFSET_PS, r700->ps.SQ_PGM_CF_OFFSET_PS.u32All);
+    END_BATCH();
 
-	COMMIT_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    R600_OUT_BATCH_REGVAL(SQ_LOOP_CONST_0, 0x01000FFF);
+    END_BATCH();
+
+    COMMIT_BATCH();
 
 }
 
 static void r700SendVSState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
-	context_t *context = R700_CONTEXT(ctx);
-	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-	struct radeon_bo * pbo;
-	BATCH_LOCALS(&context->radeon);
-	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
+    context_t *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+    struct radeon_bo * pbo;
+    BATCH_LOCALS(&context->radeon);
+    radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
-	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
+    pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
 
-	if (!pbo)
-		return;
+    if (!pbo)
+	    return;
 
-	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
+    r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
-        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
-	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_VS, 1);
-	R600_OUT_BATCH(r700->vs.SQ_PGM_START_VS.u32All);
-	R600_OUT_BATCH_RELOC(r700->vs.SQ_PGM_START_VS.u32All,
-			     pbo,
-			     r700->vs.SQ_PGM_START_VS.u32All,
-			     RADEON_GEM_DOMAIN_GTT, 0, 0);
-	END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(SQ_PGM_START_VS, 1);
+    R600_OUT_BATCH(r700->vs.SQ_PGM_START_VS.u32All);
+    R600_OUT_BATCH_RELOC(r700->vs.SQ_PGM_START_VS.u32All,
+		         pbo,
+		         r700->vs.SQ_PGM_START_VS.u32All,
+		         RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(6);
-	R600_OUT_BATCH_REGVAL(SQ_PGM_RESOURCES_VS, r700->vs.SQ_PGM_RESOURCES_VS.u32All);
-	R600_OUT_BATCH_REGVAL(SQ_PGM_CF_OFFSET_VS, r700->vs.SQ_PGM_CF_OFFSET_VS.u32All);
-        END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(6);
+    R600_OUT_BATCH_REGVAL(SQ_PGM_RESOURCES_VS, r700->vs.SQ_PGM_RESOURCES_VS.u32All);
+    R600_OUT_BATCH_REGVAL(SQ_PGM_CF_OFFSET_VS, r700->vs.SQ_PGM_CF_OFFSET_VS.u32All);
+    END_BATCH();
 
-	COMMIT_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    R600_OUT_BATCH_REGVAL((SQ_LOOP_CONST_0 + 32*4), 0x0100000F);
+    //R600_OUT_BATCH_REGVAL((SQ_LOOP_CONST_0 + (SQ_LOOP_CONST_vs<2)), 0x0100000F);
+    END_BATCH();
+
+    COMMIT_BATCH();
 }
 
 static void r700SendFSState(GLcontext *ctx, struct radeon_state_atom *atom)

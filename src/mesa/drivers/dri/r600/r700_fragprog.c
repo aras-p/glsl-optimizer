@@ -73,11 +73,11 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1] = pAsm->number_used_registers++;
 	}
 
-        unBit = 1 << FRAG_ATTRIB_FOGC;
-        if(mesa_fp->Base.InputsRead & unBit)
-        {
-                pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
-        }
+    unBit = 1 << FRAG_ATTRIB_FOGC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
+    }
 
 	for(i=0; i<8; i++)
 	{
@@ -87,6 +87,62 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 			pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i] = pAsm->number_used_registers++;
 		}
 	}
+
+/* order has been taken care of */
+#if 1
+    for(i=FRAG_ATTRIB_VAR0; i<FRAG_ATTRIB_MAX; i++)
+    {
+        unBit = 1 << i;
+        if(mesa_fp->Base.InputsRead & unBit)
+		{
+            pAsm->uiFP_AttributeMap[i] = pAsm->number_used_registers++;
+        }
+    }
+#else
+    if( (mesa_fp->Base.InputsRead >> FRAG_ATTRIB_VAR0) > 0 )
+    {
+	    struct r700_vertex_program_cont *vpc =
+		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+        struct gl_program_parameter_list * VsVarying = vpc->mesa_program.Base.Varying;
+        struct gl_program_parameter_list * PsVarying = mesa_fp->Base.Varying;
+        struct gl_program_parameter      * pVsParam;
+        struct gl_program_parameter      * pPsParam;
+        GLuint j, k;
+        GLuint unMaxVarying = 0;
+
+        for(i=0; i<VsVarying->NumParameters; i++)
+        {
+            pAsm->uiFP_AttributeMap[i + FRAG_ATTRIB_VAR0] = 0;
+        }
+
+        for(i=FRAG_ATTRIB_VAR0; i<FRAG_ATTRIB_MAX; i++)
+	    {
+            unBit = 1 << i;
+            if(mesa_fp->Base.InputsRead & unBit)
+		    {
+                j = i - FRAG_ATTRIB_VAR0;
+                pPsParam = PsVarying->Parameters + j;
+
+                for(k=0; k<VsVarying->NumParameters; k++)
+                {					
+                    pVsParam = VsVarying->Parameters + k;
+
+			        if( strcmp(pPsParam->Name, pVsParam->Name) == 0)
+                    {
+                        pAsm->uiFP_AttributeMap[i] = pAsm->number_used_registers + k;                  
+                        if(k > unMaxVarying)
+                        {
+                            unMaxVarying = k;
+                        }
+                        break;
+                    }
+                }
+		    }
+        }
+
+        pAsm->number_used_registers += unMaxVarying + 1;
+    }
+#endif
 
 /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
@@ -126,6 +182,8 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
     {
         pAsm->pucOutMask[ui] = 0x0;
     }
+
+    pAsm->flag_reg_index = pAsm->number_used_registers++;
 
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
@@ -247,8 +305,11 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	{
 		return GL_FALSE;
     }
+
+    InitShaderProgram(&(fp->r700AsmCode));
 	
-	if( GL_FALSE == AssembleInstr(mesa_fp->Base.NumInstructions,
+	if( GL_FALSE == AssembleInstr(0,
+                                  mesa_fp->Base.NumInstructions,
                                   &(mesa_fp->Base.Instructions[0]), 
                                   &(fp->r700AsmCode)) )
 	{
@@ -256,6 +317,11 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	}
 
     if(GL_FALSE == Process_Fragment_Exports(&(fp->r700AsmCode), mesa_fp->Base.OutputsWritten) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == RelocProgram(&(fp->r700AsmCode)) )
     {
         return GL_FALSE;
     }
@@ -458,6 +524,22 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    }
     }
+
+    for(i=FRAG_ATTRIB_VAR0; i<FRAG_ATTRIB_MAX; i++)
+	{
+		unBit = 1 << i;
+		if(mesa_fp->Base.InputsRead & unBit)
+		{
+            ui = pAsm->uiFP_AttributeMap[i];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		             SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		        SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+		        CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		}
+	}
 
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
     if (r700->CB_SHADER_CONTROL.u32All != ((1 << exportCount) - 1))
