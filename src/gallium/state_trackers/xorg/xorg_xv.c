@@ -73,10 +73,11 @@ static XF86VideoEncodingRec DummyEncoding[1] = {
    }
 };
 
-#define NUM_IMAGES 2
+#define NUM_IMAGES 3
 static XF86ImageRec Images[NUM_IMAGES] = {
    XVIMAGE_UYVY,
    XVIMAGE_YUY2,
+   XVIMAGE_YV12,
 };
 
 struct xorg_xv_port_priv {
@@ -537,6 +538,7 @@ put_image(ScrnInfoPtr pScrn,
    switch (id) {
    case FOURCC_UYVY:
    case FOURCC_YUY2:
+   case FOURCC_YV12:
    default:
       srcPitch = width << 1;
       break;
@@ -585,6 +587,7 @@ query_image_attributes(ScrnInfoPtr pScrn,
    switch (id) {
    case FOURCC_UYVY:
    case FOURCC_YUY2:
+   case FOURCC_YV12:
    default:
       size = *w << 1;
       if (pitches)
