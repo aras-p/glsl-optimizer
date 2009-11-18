@@ -87,10 +87,8 @@ static void init_registers( struct brw_wm_compile *c )
 
    /* XXX: currently just hope the VS outputs line up with FS inputs:
     */
-   for (j = 0; j < c->key.vp_nr_outputs; j++)
+   for (j = 0; j < c->key.nr_inputs; j++)
       prealloc_reg(c, &c->payload.input_interp[j], reg++);
-
-   assert(c->key.vp_nr_outputs >= 1);
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
    c->prog_data.urb_read_length = (c->key.nr_inputs + 1) * 2;
