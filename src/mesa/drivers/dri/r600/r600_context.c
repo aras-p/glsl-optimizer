@@ -362,6 +362,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	    (&r600->radeon.optionCache, "disable_stencil_two_side"))
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
+#if 0
 	if (r600->radeon.glCtx->Mesa_DXTn
 	    && !driQueryOptionb(&r600->radeon.optionCache, "disable_s3tc")) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
@@ -371,6 +372,9 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	{
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
+#else
+	_mesa_disable_extension(ctx, "GL_ARB_texture_compression");
+#endif
 
 	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );
