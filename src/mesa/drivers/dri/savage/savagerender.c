@@ -252,13 +252,13 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
          const GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
          const GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
             (texObj->WrapT == GL_REPEAT);
-         const GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;
-         const GLint instride = VB->TexCoordPtr[i]->stride;
+         const GLfloat *in = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->data;
+         const GLint instride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->stride;
          GLfloat (*out)[4] = store->texcoord[i].data;
          GLint j;
 
          if (!ctx->Texture.Unit[i]._ReallyEnabled ||
-             VB->TexCoordPtr[i]->size == 4)
+             VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size == 4)
             /* Never try to normalize homogenous tex coords! */
             continue;
 
@@ -297,7 +297,7 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
          }
 
          if (normalizeS || normalizeT)
-            VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
+            VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &store->texcoord[i];
       }
    }
 

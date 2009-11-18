@@ -466,7 +466,6 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VERT_RESULT_PSIZ];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      VB->TexCoordPtr[i] = 
       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]
          = &store->results[VERT_RESULT_TEX0 + i];
    }

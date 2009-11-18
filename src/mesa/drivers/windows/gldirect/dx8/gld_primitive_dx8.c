@@ -259,15 +259,15 @@
 	pV->Diffuse = dwColor;
 
 #define GLD_SETUP_TEX0_3D(v)						\
-	if (VB->TexCoordPtr[0]) {						\
-		tc				= VB->TexCoordPtr[0]->data;	\
+	if (VB->AttribPtr[_TNL_ATTRIB_TEX0]) {				\
+		tc = VB->TnlAttribPtr[_TNL_ATTRIB_TEX0]->data;		\
 		pV->TexUnit0.x	= tc[##v][0];				\
 		pV->TexUnit0.y	= tc[##v][1];				\
 	}
 
 #define GLD_SETUP_TEX1_3D(v)						\
-	if (VB->TexCoordPtr[1]) {						\
-		tc				= VB->TexCoordPtr[1]->data;	\
+	if (VB->TnlAttribPtr[_TNL_ATTRIB_TEX1]) {			\
+		tc = VB->TnlAttribPtr[_TNL_ATTRIB_TEX1]->data;		\
 		pV->TexUnit1.x	= tc[##v][0];				\
 		pV->TexUnit1.y	= tc[##v][1];				\
 	}

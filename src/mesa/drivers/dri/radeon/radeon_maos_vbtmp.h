@@ -60,14 +60,14 @@ static void TAG(emit)( GLcontext *ctx,
    coord_stride = VB->ObjPtr->stride;
 
    if (DO_TEX2) {
-      if (VB->TexCoordPtr[2]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX2]) {
 	 const GLuint t2 = GET_TEXSOURCE(2);
-	 tc2 = (GLuint (*)[4])VB->TexCoordPtr[t2]->data;
-	 tc2_stride = VB->TexCoordPtr[t2]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t2]->size < 3) {
+	 tc2 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->data;
+	 tc2_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->stride;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->size < 3) {
 	    fill_tex |= (1<<2);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t2]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->size < 4) {
 	    rqcoordsnoswap |= (1<<2);
 	 }
       } else {
@@ -77,14 +77,14 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_TEX1) {
-      if (VB->TexCoordPtr[1]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX1]) {
 	 const GLuint t1 = GET_TEXSOURCE(1);
-	 tc1 = (GLuint (*)[4])VB->TexCoordPtr[t1]->data;
-	 tc1_stride = VB->TexCoordPtr[t1]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t1]->size < 3) {
+	 tc1 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->data;
+	 tc1_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->stride;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size < 3) {
 	    fill_tex |= (1<<1);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t1]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size < 4) {
 	    rqcoordsnoswap |= (1<<1);
 	 }
       } else {
@@ -94,14 +94,14 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_TEX0) {
-      if (VB->TexCoordPtr[0]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX0]) {
 	 const GLuint t0 = GET_TEXSOURCE(0);
-	 tc0_stride = VB->TexCoordPtr[t0]->stride;
-	 tc0 = (GLuint (*)[4])VB->TexCoordPtr[t0]->data;
-	 if (DO_PTEX && VB->TexCoordPtr[t0]->size < 3) {
+	 tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->stride;
+	 tc0 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->data;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size < 3) {
 	    fill_tex |= (1<<0);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t0]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size < 4) {
 	    rqcoordsnoswap |= (1<<0);
 	 }
       } else {

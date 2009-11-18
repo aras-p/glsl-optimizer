@@ -348,15 +348,15 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 req |= RADEON_ST_BIT(unit);
 	 /* assume we need the 3rd coord if texgen is active for r/q OR at least
 	    3 coords are submitted. This may not be 100% correct */
-	 if (VB->TexCoordPtr[unit]->size >= 3) {
+	 if (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) {
 	    req |= RADEON_Q_BIT(unit);
 	    vtx |= RADEON_Q_BIT(unit);
 	 }
 	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
 	    vtx |= RADEON_Q_BIT(unit);
-	 else if ((VB->TexCoordPtr[unit]->size >= 3) &&
+	 else if ((VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) &&
 	          ((ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_CUBE_BIT)) == 0)) {
-	    GLuint swaptexmatcol = (VB->TexCoordPtr[unit]->size - 3);
+	    GLuint swaptexmatcol = (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size - 3);
 	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))
 	       radeonUploadTexMatrix( rmesa, unit, swaptexmatcol ) ;

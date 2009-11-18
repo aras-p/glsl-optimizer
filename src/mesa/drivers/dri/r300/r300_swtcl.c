@@ -159,7 +159,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		int tex_id = rmesa->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
-		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
+		VB->AttribPtr[_TNL_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
 		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
@@ -167,7 +167,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		int tex_id = rmesa->selected_fp->fog_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
-		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
+		VB->AttribPtr[_TNL_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
 		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
@@ -180,7 +180,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		GLuint swiz, format, hw_format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 			if (fp_reads & FRAG_BIT_TEX(i)) {
-				switch (VB->TexCoordPtr[i]->size) {
+				switch (VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size) {
 					case 1:
 						format = EMIT_1F;
 						hw_format = R300_DATA_TYPE_FLOAT_1;

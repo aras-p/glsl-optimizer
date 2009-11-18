@@ -498,7 +498,6 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 
 	 store->TexgenFunc[i]( ctx, store, i );
 
-         VB->TexCoordPtr[i] =
          VB->AttribPtr[VERT_ATTRIB_TEX0 + i] = &store->texcoord[i];
       }
    }
