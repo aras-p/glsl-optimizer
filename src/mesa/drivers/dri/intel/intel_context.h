@@ -209,10 +209,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   GLuint ClearColor565;
-   GLuint ClearColor8888;
-
-
    /* Offsets of fields within the current vertex:
     */
    GLuint coloroffset;
