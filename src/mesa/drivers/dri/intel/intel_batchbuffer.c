@@ -244,6 +244,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (intel->vtbl.finish_batch)
       intel->vtbl.finish_batch(intel);
 
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!intel->no_batch_wrap);
+
    batch->reserved_space = BATCH_RESERVED;
 
    /* TODO: Just pass the relocation list and dma buffer up to the

@@ -438,7 +438,6 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean no_batch_wrap;
 
    struct {
       struct brw_state_flags dirty;
