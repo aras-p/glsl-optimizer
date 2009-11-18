@@ -230,6 +230,11 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
     if (!priv || !priv->tex)
 	return FALSE;
 
+    /* make sure that any pending operations are flushed to hardware */
+    if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
+	(PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE))
+	xorg_exa_flush(exa, 0, NULL);
+
     transfer = exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
 					   PIPE_TRANSFER_WRITE, x, y, w, h);
     if (!transfer)
