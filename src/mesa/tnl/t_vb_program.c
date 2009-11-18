@@ -454,10 +454,10 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       VB->ClipPtr->count = VB->Count;
    }
 
-   VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
-   VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
-   VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
-   VB->SecondaryColorPtr[1] = &store->results[VERT_RESULT_BFC1];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];
+   VB->BackfaceColorPtr = &store->results[VERT_RESULT_BFC0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR1] = &store->results[VERT_RESULT_COL1];
+   VB->BackfaceSecondaryColorPtr = &store->results[VERT_RESULT_BFC1];
    VB->FogCoordPtr = &store->results[VERT_RESULT_FOGC];
 
    VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];

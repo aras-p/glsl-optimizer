@@ -53,8 +53,8 @@ static void gamma_emit( GLcontext *ctx, GLuint start, GLuint end)
    GLfloat (*tc0)[4] = 0;
    GLuint tc0_size = 0;
 
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
+   col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+   col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
 
    if (ctx->Texture.Unit[0]._ReallyEnabled) {
       tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0]->stride;

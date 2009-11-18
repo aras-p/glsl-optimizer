@@ -80,14 +80,14 @@ static void TAG(emit)( GLcontext *ctx,
    }
    
    if (IND & SETUP_RGBA) {
-      col = VB->ColorPtr[0]->data;
-      col_stride = VB->ColorPtr[0]->stride;
-      col_size = VB->ColorPtr[0]->size;
+      col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+      col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
+      col_size = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
    }
 
    if (IND & SETUP_SPEC) {
-      spec = VB->SecondaryColorPtr[0]->data;
-      spec_stride = VB->SecondaryColorPtr[0]->stride;
+      spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
+      spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
    }
 
    if (IND & SETUP_FOGC) {

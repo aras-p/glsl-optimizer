@@ -72,13 +72,13 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
 
-   VB->ColorPtr[0] = &store->LitColor[0];
-   VB->SecondaryColorPtr[0] = &store->LitSecondary[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &store->LitColor[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR1] = &store->LitSecondary[0];
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
 
 #if IDX & LIGHT_TWOSIDE
-   VB->ColorPtr[1] = &store->LitColor[1];
-   VB->SecondaryColorPtr[1] = &store->LitSecondary[1];
+   VB->BackfaceColorPtr = &store->LitColor[1];
+   VB->BackfaceSecondaryColorPtr = &store->LitSecondary[1];
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
 #endif
 
@@ -259,11 +259,11 @@ static void TAG(light_rgba)( GLcontext *ctx,
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
 
-   VB->ColorPtr[0] = &store->LitColor[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &store->LitColor[0];
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
 
 #if IDX & LIGHT_TWOSIDE
-   VB->ColorPtr[1] = &store->LitColor[1];
+   VB->BackfaceColorPtr = &store->LitColor[1];
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
 #endif
 
@@ -449,9 +449,9 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
    (void) input;		/* doesn't refer to Eye or Obj */
 
-   VB->ColorPtr[0] = &store->LitColor[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &store->LitColor[0];
 #if IDX & LIGHT_TWOSIDE
-   VB->ColorPtr[1] = &store->LitColor[1];
+   VB->BackfaceColorPtr = &store->LitColor[1];
 #endif
 
    if (nr > 1) {
@@ -559,9 +559,9 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
 
-   VB->ColorPtr[0] = &store->LitColor[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &store->LitColor[0];
 #if IDX & LIGHT_TWOSIDE
-   VB->ColorPtr[1] = &store->LitColor[1];
+   VB->BackfaceColorPtr = &store->LitColor[1];
 #endif
 
    if (nr > 1) {

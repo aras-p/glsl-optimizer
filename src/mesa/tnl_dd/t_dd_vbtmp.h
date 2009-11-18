@@ -184,15 +184,15 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_RGBA) {
-      col_stride = VB->ColorPtr[0]->stride;
-      col = VB->ColorPtr[0]->data;
-      col_size = VB->ColorPtr[0]->size;
+      col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
+      col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+      col_size = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
    }
 
    if (DO_SPEC) {
-      if (VB->SecondaryColorPtr[0]) {
-	 spec_stride = VB->SecondaryColorPtr[0]->stride;
-	 spec = VB->SecondaryColorPtr[0]->data;
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
+	 spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
+	 spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
       } else {
 	 spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
 	 spec_stride = 0;
@@ -356,9 +356,9 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    ASSERT(stride == 4);
 
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
-   col_size = VB->ColorPtr[0]->size;
+   col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+   col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
+   col_size = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
 
 /*     fprintf(stderr, "%s(small) importable %x\n",  */
 /*  	   __FUNCTION__, VB->importable_data); */

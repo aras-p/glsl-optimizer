@@ -124,7 +124,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	}
 
 	if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
-		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->ColorPtr[1];
+		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->BackfaceColorPtr;
 		OutputsWritten |= 1 << VERT_RESULT_BFC0;
 #if MESA_LITTLE_ENDIAN
 		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_RGBA );
@@ -134,7 +134,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		ADD_ATTR(VERT_ATTRIB_GENERIC0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW, 1);
 #endif
 		if (fp_reads & FRAG_BIT_COL1) {
-			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->SecondaryColorPtr[1];
+			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->BackfaceSecondaryColorPtr;
 			GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 			OutputsWritten |= 1 << VERT_RESULT_BFC1;
 #if MESA_LITTLE_ENDIAN

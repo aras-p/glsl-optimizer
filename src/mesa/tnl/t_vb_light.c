@@ -127,7 +127,7 @@ prepare_materials(GLcontext *ctx,
       const GLuint bitmask = ctx->Light.ColorMaterialBitmask;
       for (i = 0 ; i < MAT_ATTRIB_MAX ; i++)
 	 if (bitmask & (1<<i))
-	    VB->AttribPtr[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = VB->ColorPtr[0];
+	    VB->AttribPtr[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    }
 
    /* Now, for each material attribute that's tracking vertex color, save
@@ -245,9 +245,6 @@ static GLboolean run_lighting( GLcontext *ctx,
     * vs. full re-execution. 
     */
    store->light_func_tab[idx]( ctx, VB, stage, input );
-
-   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = VB->ColorPtr[0];
-   VB->AttribPtr[_TNL_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
 
    return GL_TRUE;
 }

@@ -122,9 +122,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_RGBA) {
-      if (VB->ColorPtr[0]) {
-	 col = VB->ColorPtr[0]->data;
-	 col_stride = VB->ColorPtr[0]->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR0]) {
+	 col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+	 col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
       } else {
 	 col = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 	 col_stride = 0;
@@ -132,9 +132,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_SPEC_OR_FOG) {
-      if (VB->SecondaryColorPtr[0]) {
-	 spec = VB->SecondaryColorPtr[0]->data;
-	 spec_stride = VB->SecondaryColorPtr[0]->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
+	 spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
+	 spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
       } else {
 	 spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
 	 spec_stride = 0;

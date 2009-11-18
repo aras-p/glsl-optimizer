@@ -227,9 +227,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_COLOR0) {
       int emitsize;
-      if (VB->ColorPtr[0]->size == 4 &&
-	  (VB->ColorPtr[0]->stride != 0 ||
-	   VB->ColorPtr[0]->data[0][3] != 1.0)) {
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size == 4 &&
+	  (VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride != 0 ||
+	   VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data[0][3] != 1.0)) {
 	 vfmt |= RADEON_CP_VC_FRMT_FPCOLOR | RADEON_CP_VC_FRMT_FPALPHA;
 	 emitsize = 4;
       }
@@ -242,9 +242,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.rgba.buf)
 	rcommon_emit_vector( ctx,
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->ColorPtr[0]->data,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data,
 			     emitsize,
-			     VB->ColorPtr[0]->stride,
+			     VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride,
 			     count);
 
       nr++;
@@ -256,9 +256,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 	rcommon_emit_vector( ctx,
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->SecondaryColorPtr[0]->data,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data,
 			     3,
-			     VB->SecondaryColorPtr[0]->stride,
+			     VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride,
 			     count);
       }
 

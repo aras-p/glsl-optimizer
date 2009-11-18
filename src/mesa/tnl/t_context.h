@@ -214,9 +214,9 @@ struct vertex_buffer
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
    GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
    GLboolean   *EdgeFlag;	                /* _TNL_BIT_EDGEFLAG */
-   GLvector4f  *BackfaceIndexPtr;               /* _TNL_BIT_INDEX */
-   GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
-   GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
+   GLvector4f  *BackfaceIndexPtr;
+   GLvector4f  *BackfaceColorPtr;
+   GLvector4f  *BackfaceSecondaryColorPtr;
    GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
 
    const struct _mesa_prim  *Primitive;	              

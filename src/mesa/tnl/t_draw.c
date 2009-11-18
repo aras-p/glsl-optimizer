@@ -254,11 +254,9 @@ static void bind_inputs( GLcontext *ctx,
 
    /* Legacy pointers -- remove one day.
     */
-   VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
-   VB->ColorPtr[1] = NULL;
+   VB->BackfaceColorPtr = NULL;
    VB->BackfaceIndexPtr = NULL;
-   VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
-   VB->SecondaryColorPtr[1] = NULL;
+   VB->BackfaceSecondaryColorPtr = NULL;
    VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    /* Clipping and drawing code still requires this to be a packed

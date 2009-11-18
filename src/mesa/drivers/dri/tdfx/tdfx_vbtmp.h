@@ -76,9 +76,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
    
    if (IND & TDFX_RGBA_BIT) {
-      col = VB->ColorPtr[0]->data;
-      col_stride = VB->ColorPtr[0]->stride;
-      col_size = VB->ColorPtr[0]->size;
+      col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+      col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
+      col_size = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
    }
    
    if (IND & TDFX_FOGC_BIT) {
