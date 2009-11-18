@@ -362,29 +362,6 @@ do {						\
 } while (0)
 
 /* ================================================================
- * Color packing:
- */
-
-#define INTEL_PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define INTEL_PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define INTEL_PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-#define INTEL_PACKCOLOR8888(r,g,b,a) \
-  ((a<<24) | (r<<16) | (g<<8) | b)
-
-#define INTEL_PACKCOLOR(format, r,  g,  b, a)		\
-(format == DV_PF_555 ? INTEL_PACKCOLOR1555(r,g,b,a) :	\
- (format == DV_PF_565 ? INTEL_PACKCOLOR565(r,g,b) :	\
-  (format == DV_PF_8888 ? INTEL_PACKCOLOR8888(r,g,b,a) :	\
-   0)))
-
-/* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
  * XXX Put this in src/mesa/main/imports.h ???
