@@ -733,12 +733,6 @@ intelInitContext(struct intel_context *intel,
    intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->irqsEmitted = 0;
-
-   intel->do_irqs = (intel->intelScreen->irq_active &&
-                     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
-
-   intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
    if (intel->gen >= 4 && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");

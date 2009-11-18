@@ -225,6 +225,7 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
+   GLboolean no_hw;
    GLboolean always_flush_batch;
    GLboolean always_flush_cache;
 
@@ -290,13 +291,6 @@ struct intel_context
    GLboolean use_early_z;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
-   int perf_boxes;
-
-   GLuint do_usleeps;
-   int do_irqs;
-   GLuint irqsEmitted;
-
-   GLboolean scissor;
    drm_clip_rect_t draw_rect;
    drm_clip_rect_t scissor_rect;
 
@@ -312,8 +306,6 @@ struct intel_context
    volatile drm_i915_sarea_t *sarea;
 
    GLuint lastStamp;
-
-   GLboolean no_hw;
 
    /**
     * Configuration cache
