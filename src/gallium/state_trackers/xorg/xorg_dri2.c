@@ -42,6 +42,12 @@
 
 #include "util/u_rect.h"
 
+/* Make all the #if cases in the code esier to read */
+/* XXX can it be set to 1? */
+#ifndef DRI2INFOREC_VERSION
+#define DRI2INFOREC_VERSION 0
+#endif
+
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
@@ -79,7 +85,7 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     case DRI2BufferFrontLeft:
 	break;
     case DRI2BufferStencil:
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if DRI2INFOREC_VERSION >= 3
     case DRI2BufferDepthStencil:
 #else
     /* Works on old X servers because sanity checking is for the weak */
@@ -137,9 +143,9 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     buffer->cpp = 4;
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION == 2
+#if DRI2INFOREC_VERSION == 2
     ((DRI2Buffer2Ptr)buffer)->format = 0;
-#elif defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 3
+#elif DRI2INFOREC_VERSION >= 3
     buffer->format = 0;
 #endif
     private->tex = tex;
@@ -162,7 +168,7 @@ driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
     (*pScreen->DestroyPixmap)(private->pPixmap);
 }
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2
+#if DRI2INFOREC_VERSION >= 2
 
 static DRI2Buffer2Ptr
 driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
@@ -202,7 +208,7 @@ driDestroyBuffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
     xfree(buffer);
 }
 
-#else /* !defined(DRI2INFOREC_VERSION) || DRI2INFOREC_VERSION < 2 */
+#else /* DRI2INFOREC_VERSION < 2 */
 
 static DRI2BufferPtr
 driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
@@ -252,7 +258,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 }
 
-#endif /* defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2 */
+#endif /* DRI2INFOREC_VERSION >= 2 */
 
 static void
 driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
@@ -349,7 +355,7 @@ driScreenInit(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
-#if defined(DRI2INFOREC_VERSION)
+#if DRI2INFORCE_VERSION >= 2
     dri2info.version = DRI2INFOREC_VERSION;
 #else
     dri2info.version = 1;
@@ -359,7 +365,7 @@ driScreenInit(ScreenPtr pScreen)
     dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2
+#if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
 #else
