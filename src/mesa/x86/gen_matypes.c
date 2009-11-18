@@ -120,7 +120,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_COUNT               ", struct vertex_buffer, Count );
    printf( "\n" );
    OFFSET( "VB_ELTS                ", struct vertex_buffer, Elts );
-   OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, ObjPtr );
+   OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_POS] );
    OFFSET( "VB_EYE_PTR             ", struct vertex_buffer, EyePtr );
    OFFSET( "VB_CLIP_PTR            ", struct vertex_buffer, ClipPtr );
    OFFSET( "VB_PROJ_CLIP_PTR       ", struct vertex_buffer, NdcPtr );

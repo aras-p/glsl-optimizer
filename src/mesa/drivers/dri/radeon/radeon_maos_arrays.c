@@ -196,12 +196,12 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.obj.buf) 
 	rcommon_emit_vector( ctx, 
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->ObjPtr->data,
-			     VB->ObjPtr->size,
-			     VB->ObjPtr->stride,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_POS]->data,
+			     VB->AttribPtr[_TNL_ATTRIB_POS]->size,
+			     VB->AttribPtr[_TNL_ATTRIB_POS]->stride,
 			     count);
 
-      switch( VB->ObjPtr->size ) {
+      switch( VB->AttribPtr[_TNL_ATTRIB_POS]->size ) {
       case 4: vfmt |= RADEON_CP_VC_FRMT_W0;
       case 3: vfmt |= RADEON_CP_VC_FRMT_Z;
       case 2: vfmt |= RADEON_CP_VC_FRMT_XY;

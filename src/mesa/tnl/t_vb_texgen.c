@@ -341,7 +341,7 @@ static void texgen( GLcontext *ctx,
    GLvector4f *in = VB->AttribPtr[VERT_ATTRIB_TEX0 + unit];
    GLvector4f *out = &store->texcoord[unit];
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   const GLvector4f *obj = VB->ObjPtr;
+   const GLvector4f *obj = VB->AttribPtr[_TNL_ATTRIB_POS];
    const GLvector4f *eye = VB->EyePtr;
    const GLvector4f *normal = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    const GLfloat *m = store->tmp_m;

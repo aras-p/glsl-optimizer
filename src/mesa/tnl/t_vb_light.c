@@ -200,7 +200,7 @@ static GLboolean run_lighting( GLcontext *ctx,
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
+   GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->AttribPtr[_TNL_ATTRIB_POS];
    GLuint idx;
 
    if (!ctx->Light.Enabled || ctx->VertexProgram._Current)
@@ -208,13 +208,13 @@ static GLboolean run_lighting( GLcontext *ctx,
 
    /* Make sure we can talk about position x,y and z:
     */
-   if (input->size <= 2 && input == VB->ObjPtr) {
+   if (input->size <= 2 && input == VB->AttribPtr[_TNL_ATTRIB_POS]) {
 
       _math_trans_4f( store->Input.data,
-		      VB->ObjPtr->data,
-		      VB->ObjPtr->stride,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->data,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->stride,
 		      GL_FLOAT,
-		      VB->ObjPtr->size,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->size,
 		      0,
 		      VB->Count );
 

@@ -203,7 +203,6 @@ struct vertex_buffer
     * such as FogCoordPtr, etc.
     */
    GLuint      *Elts;		                
-   GLvector4f  *ObjPtr;		                /* _TNL_BIT_POS */
    GLvector4f  *EyePtr;		                /* _TNL_BIT_POS */
    GLvector4f  *ClipPtr;	                /* _TNL_BIT_POS */
    GLvector4f  *NdcPtr;                         /* _TNL_BIT_POS */

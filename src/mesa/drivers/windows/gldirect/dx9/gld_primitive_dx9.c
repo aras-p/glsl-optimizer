@@ -241,7 +241,7 @@
 	DWORD					dwColor;
 
 #define GLD_SETUP_3D_VERTEX(v)					\
-	p4f				= VB->ObjPtr->data;			\
+	p4f = VB->AttribPtr[_TNL_ATTRIB_POS]->data;		\
 	pV->Position.x	= p4f[##v][0];				\
 	pV->Position.y	= p4f[##v][1];				\
 	pV->Position.z	= p4f[##v][2];

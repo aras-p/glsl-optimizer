@@ -56,8 +56,8 @@ static void TAG(emit)( GLcontext *ctx,
 
    radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __FUNCTION__);
 
-   coord = (GLuint (*)[4])VB->ObjPtr->data;
-   coord_stride = VB->ObjPtr->stride;
+   coord = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_POS]->data;
+   coord_stride = VB->AttribPtr[_TNL_ATTRIB_POS]->stride;
 
    if (DO_TEX2) {
       if (VB->AttribPtr[_TNL_ATTRIB_TEX2]) {
