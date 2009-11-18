@@ -2198,8 +2198,8 @@ _mesa_texstore_al1616(TEXSTORE_PARAMS)
             if (dstFormat == MESA_FORMAT_AL1616) {
                for (col = 0; col < srcWidth; col++) {
                   /* src[0] is luminance, src[1] is alpha */
-                 dstUI[col] = PACK_COLOR_88( FLOAT_TO_USHORT(src[1]),
-                                             FLOAT_TO_USHORT(src[0]) );
+                 dstUI[col] = PACK_COLOR_1616( FLOAT_TO_USHORT(src[1]),
+					       FLOAT_TO_USHORT(src[0]) );
                  src += 2;
                }
             }
