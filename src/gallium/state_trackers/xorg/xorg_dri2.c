@@ -355,7 +355,7 @@ driScreenInit(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
-#if DRI2INFORCE_VERSION >= 2
+#if DRI2INFOREC_VERSION >= 2
     dri2info.version = DRI2INFOREC_VERSION;
 #else
     dri2info.version = 1;
@@ -368,6 +368,8 @@ driScreenInit(ScreenPtr pScreen)
 #if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
+    dri2info.CreateBuffers = NULL;
+    dri2info.DestroyBuffers = NULL;
 #else
     dri2info.CreateBuffers = driCreateBuffers;
     dri2info.DestroyBuffers = driDestroyBuffers;
