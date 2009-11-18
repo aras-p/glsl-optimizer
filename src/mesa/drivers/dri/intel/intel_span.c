@@ -613,15 +613,7 @@ intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   uint32_t tiling;
-
-   /* If in GEM mode, we need to do the tile address swizzling ourselves,
-    * instead of the fence registers handling it.
-    */
-   if (intel->ttm)
-      tiling = irb->region->tiling;
-   else
-      tiling = I915_TILING_NONE;
+   uint32_t tiling = irb->region->tiling;
 
    if (intel->intelScreen->kernel_exec_fencing) {
       switch (irb->texformat) {
@@ -673,6 +665,9 @@ intel_set_span_functions(struct intel_context *intel,
       return;
    }
 
+   /* If in GEM mode, we need to do the tile address swizzling ourselves,
+    * instead of the fence registers handling it.
+    */
    switch (irb->texformat) {
    case MESA_FORMAT_RGB565:
       switch (tiling) {

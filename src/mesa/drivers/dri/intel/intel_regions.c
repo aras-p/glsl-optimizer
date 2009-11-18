@@ -542,55 +542,18 @@ intel_recreate_static(struct intel_context *intel,
       region->buffer = NULL;
    }
 
-   if (intel->ttm) {
-      assert(region_desc->bo_handle != -1);
-      region->buffer = intel_bo_gem_create_from_name(intel->bufmgr,
-						     name,
-						     region_desc->bo_handle);
-
-      ret = dri_bo_get_tiling(region->buffer, &region->tiling,
-			      &region->bit_6_swizzle);
-      if (ret != 0) {
-	 fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
-		 region_desc->bo_handle, name, strerror(-ret));
-	 intel_region_release(&region);
-	 return NULL;
-      }
-   } else {
-      if (region->classic_map != NULL) {
-	 drmUnmap(region->classic_map,
-		  region->pitch * region->cpp * region->height);
-	 region->classic_map = NULL;
-      }
-      ret = drmMap(intel->driFd, region_desc->handle,
-		   region->pitch * region->cpp * region->height,
-		   &region->classic_map);
-      if (ret != 0) {
-	 fprintf(stderr, "Failed to drmMap %s buffer\n", name);
-	 free(region);
-	 return NULL;
-      }
-
-      region->buffer = intel_bo_fake_alloc_static(intel->bufmgr,
+   assert(region_desc->bo_handle != -1);
+   region->buffer = intel_bo_gem_create_from_name(intel->bufmgr,
 						  name,
-						  region_desc->offset,
-						  region->pitch * region->cpp *
-						  region->height,
-						  region->classic_map);
+						  region_desc->bo_handle);
 
-      /* The sarea just gives us a boolean for whether it's tiled or not,
-       * instead of which tiling mode it is.  Guess.
-       */
-      if (region_desc->tiled) {
-	 if (intel->gen >= 4 && region_desc == &intelScreen->depth)
-	    region->tiling = I915_TILING_Y;
-	 else
-	    region->tiling = I915_TILING_X;
-      } else {
-	 region->tiling = I915_TILING_NONE;
-      }
-
-      region->bit_6_swizzle = I915_BIT_6_SWIZZLE_NONE;
+   ret = dri_bo_get_tiling(region->buffer, &region->tiling,
+			   &region->bit_6_swizzle);
+   if (ret != 0) {
+      fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
+	      region_desc->bo_handle, name, strerror(-ret));
+      intel_region_release(&region);
+      return NULL;
    }
 
    assert(region->buffer != NULL);

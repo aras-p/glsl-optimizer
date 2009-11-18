@@ -224,16 +224,12 @@ int intel_miptree_pitch_align (struct intel_context *intel,
    if (!mt->compressed) {
       int pitch_align;
 
-      if (intel->ttm) {
-	 /* XXX: Align pitch to multiple of 64 bytes for now to allow
-	  * render-to-texture to work in all cases. This should probably be
-	  * replaced at some point by some scheme to only do this when really
-	  * necessary.
-	  */
-	 pitch_align = 64;
-      } else {
-	 pitch_align = 4;
-      }
+      /* XXX: Align pitch to multiple of 64 bytes for now to allow
+       * render-to-texture to work in all cases. This should probably be
+       * replaced at some point by some scheme to only do this when really
+       * necessary.
+       */
+      pitch_align = 64;
 
       if (tiling == I915_TILING_X)
 	 pitch_align = 512;

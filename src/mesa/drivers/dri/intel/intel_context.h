@@ -181,12 +181,6 @@ struct intel_context
    struct intel_region *back_region;
    struct intel_region *depth_region;
 
-   /**
-    * This value indicates that the kernel memory manager is being used
-    * instead of the fake client-side memory manager.
-    */
-   GLboolean ttm;
-
    struct intel_batchbuffer *batch;
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;

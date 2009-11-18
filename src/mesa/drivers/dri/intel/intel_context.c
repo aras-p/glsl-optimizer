@@ -176,9 +176,7 @@ intelGetString(GLcontext * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, 
-				  (intel->ttm) ? DRIVER_DATE_GEM : DRIVER_DATE,
-				  0);
+      (void) driGetRendererString(buffer, chipset, DRIVER_DATE_GEM, 0);
       return (GLubyte *) buffer;
 
    default:
@@ -601,6 +599,7 @@ intelInitContext(struct intel_context *intel,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    int fthrottle_mode;
+   int bo_reuse_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
                                  functions, (void *) intel)) {
@@ -635,18 +634,14 @@ intelInitContext(struct intel_context *intel,
       intel->maxBatchSize = BATCH_SZ;
 
    intel->bufmgr = intelScreen->bufmgr;
-   intel->ttm = intelScreen->ttm;
-   if (intel->ttm) {
-      int bo_reuse_mode;
 
-      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
-      switch (bo_reuse_mode) {
-      case DRI_CONF_BO_REUSE_DISABLED:
-	 break;
-      case DRI_CONF_BO_REUSE_ALL:
-	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
-	 break;
-      }
+   bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+   switch (bo_reuse_mode) {
+   case DRI_CONF_BO_REUSE_DISABLED:
+      break;
+   case DRI_CONF_BO_REUSE_ALL:
+      intel_bufmgr_gem_enable_reuse(intel->bufmgr);
+      break;
    }
 
    /* This doesn't yet catch all non-conformant rendering, but it's a
@@ -1050,21 +1045,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 		 sarea->ctxOwner, me);
       }
       sarea->ctxOwner = me;
-   }
-
-   /* If the last consumer of the texture memory wasn't us, notify the fake
-    * bufmgr and record the new owner.  We should have the memory shared
-    * between contexts of a single fake bufmgr, but this will at least make
-    * things correct for now.
-    */
-   if (!intel->ttm && sarea->texAge != intel->hHWContext) {
-      sarea->texAge = intel->hHWContext;
-      intel_bufmgr_fake_contended_lock_take(intel->bufmgr);
-      if (INTEL_DEBUG & DEBUG_BATCH)
-	 intel_decode_context_reset();
-      if (INTEL_DEBUG & DEBUG_BUFMGR)
-	 fprintf(stderr, "Lost Textures: sarea->texAge %x hw context %x\n",
-		 sarea->ctxOwner, intel->hHWContext);
    }
 
    /* Drawable changed?
