@@ -1310,8 +1310,8 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);
 	ALLOC_STATE(vpt, always, 16, r700SendViewportState);
 	ALLOC_STATE(fs, always, 18, r700SendFSState);
-	ALLOC_STATE(vs, always, 18, r700SendVSState);
-	ALLOC_STATE(ps, always, 21, r700SendPSState);
+	ALLOC_STATE(vs, always, 21, r700SendVSState);
+	ALLOC_STATE(ps, always, 24, r700SendPSState);
 	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
 	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
 	ALLOC_STATE(vtx, vtx, (6 + (VERT_ATTRIB_MAX * 18)), r700SendVTXState);
