@@ -34,7 +34,8 @@ ShadersSupported(void)
       fprintf(stderr, "Warning: Trying ARB GLSL instead of OpenGL 2.x.  This may not work.\n");
       return GL_TRUE;
    }
-   return GL_TRUE;
+   fprintf(stderr, "Sorry, GLSL not supported with this OpenGL.\n");
+   return GL_FALSE;
 }
 
 
