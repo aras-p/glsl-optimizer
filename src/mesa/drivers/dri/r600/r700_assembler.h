@@ -259,6 +259,8 @@ enum
     FC_IF = 1,
     FC_LOOP = 2,
     FC_REP = 3,
+    FC_PUSH_VPM = 4,
+    FC_PUSH_WQM = 5,
 
     COND_NONE = 0,
     COND_BOOL = 1,
@@ -304,11 +306,29 @@ typedef struct CALLER_POINTER
 
 #define SQ_MAX_CALL_DEPTH 0x00000020
 
+typedef struct STACK_USAGE 
+{
+	BITS pushs   :8;
+	BITS current :8;
+	BITS max     :8;
+} STACK_USAGE;
+
+typedef union STACKDWORDtag 
+{
+	BITS        bits;
+	STACK_USAGE su;
+} STACKDWORD;
+
 typedef struct CALL_LEVEL
 {
     unsigned int      FCSP_BeforeEntry;
+    STACKDWORD        stackUsage;
     TypedShaderList * plstCFInstructions_local;
 } CALL_LEVEL;
+
+#define HAS_CURRENT_LOOPRET 0x1L
+#define HAS_LOOPRET         0x2L
+#define LOOPRET_FLAGS       HAS_LOOPRET | HAS_CURRENT_LOOPRET
 
 typedef struct r700_AssemblerBase 
 {
@@ -429,6 +449,7 @@ typedef struct r700_AssemblerBase
 } r700_AssemblerBase;
 
 //Internal use
+inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason);
 BITS addrmode_PVSDST(PVSDST * pPVSDST);
 void setaddrmode_PVSDST(PVSDST * pPVSDST, BITS addrmode);
 void nomask_PVSDST(PVSDST * pPVSDST);

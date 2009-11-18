@@ -39,6 +39,7 @@
 #include "r700_assembler.h"
 
 #define USE_CF_FOR_CONTINUE_BREAK 1
+#define USE_CF_FOR_POP_AFTER      1
 
 BITS addrmode_PVSDST(PVSDST * pPVSDST)
 {
@@ -489,9 +490,11 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
     pAsm->unCallerArrayPointer = 0;
 
     pAsm->CALLSP = 0;
-    pAsm->CALLSTACK[0].FCSP_BeforeEntry;
+    pAsm->CALLSTACK[0].FCSP_BeforeEntry = 0;
     pAsm->CALLSTACK[0].plstCFInstructions_local
           = &(pAsm->pR700Shader->lstCFInstructions);
+
+    pAsm->CALLSTACK[0].stackUsage.bits = 0;
 
     SetActiveCFlist(pAsm->pR700Shader, pAsm->CALLSTACK[0].plstCFInstructions_local);
 
@@ -4978,6 +4981,21 @@ GLboolean assemble_EXPORT(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
+inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason)
+{
+    switch (uReason)
+    {
+    case FC_PUSH_VPM:
+        break;
+    case FC_PUSH_WQM:
+        break;
+    case FC_LOOP:
+        break;
+    case FC_REP:
+        break;
+    };
+}
+
 GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset)
 {
     if(GL_FALSE == add_cf_instruction(pAsm) )
@@ -5024,7 +5042,7 @@ GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops)
     return GL_TRUE;
 }
 
-GLboolean assemble_IF(r700_AssemblerBase *pAsm)
+GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
 {
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
@@ -5056,10 +5074,12 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm)
     pAsm->fc_stack[pAsm->FCSP].midLen= 0;
     pAsm->fc_stack[pAsm->FCSP].first = pAsm->cf_current_cf_clause_ptr;
 
+#ifndef USE_CF_FOR_POP_AFTER
     if(GL_TRUE != bHasElse)
     {
         pAsm->alu_x_opcode = SQ_CF_INST_ALU_POP_AFTER;
     }
+#endif /* USE_CF_FOR_POP_AFTER */
 
     pAsm->branch_depth++;
 
@@ -5072,6 +5092,10 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
 {
+#ifdef USE_CF_FOR_POP_AFTER
+    pops(pAsm, 1);
+#endif /* USE_CF_FOR_POP_AFTER */
+
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
         return GL_FALSE;
@@ -5094,7 +5118,9 @@ GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
     pAsm->fc_stack[pAsm->FCSP].mid[0] = pAsm->cf_current_cf_clause_ptr;
     //pAsm->fc_stack[pAsm->FCSP].unNumMid = 1;
 
+#ifndef USE_CF_FOR_POP_AFTER
     pAsm->alu_x_opcode = SQ_CF_INST_ALU_POP_AFTER;
+#endif /* USE_CF_FOR_POP_AFTER */
 
     pAsm->fc_stack[pAsm->FCSP].first->m_Word0.f.addr = pAsm->pR700Shader->plstCFInstructions_active->uNumOfNode - 1; 
 
@@ -5103,6 +5129,10 @@ GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_ENDIF(r700_AssemblerBase *pAsm)
 {
+#ifdef USE_CF_FOR_POP_AFTER
+    pops(pAsm, 1);
+#endif /* USE_CF_FOR_POP_AFTER */
+
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
 
     if(NULL == pAsm->fc_stack[pAsm->FCSP].mid)
@@ -5410,6 +5440,7 @@ GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
     pAsm->CALLSTACK[pAsm->CALLSP].FCSP_BeforeEntry = pAsm->FCSP;
     pAsm->CALLSTACK[pAsm->CALLSP].plstCFInstructions_local
                    = &(pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local);
+    pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.bits = 0;
     SetActiveCFlist(pAsm->pR700Shader, 
                     pAsm->CALLSTACK[pAsm->CALLSP].plstCFInstructions_local);
 

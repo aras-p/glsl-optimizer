@@ -140,7 +140,7 @@ void Init_R700_Shader(R700_Shader * pShader)
 	pShader->killIsUsed = GL_FALSE;
 
 	pShader->uCFOffset = 0;
-	pShader->uStackSize = 0;
+	pShader->uStackSize = 10; //richard test
 	pShader->uMaxCallDepth = 0;
 
 	pShader->bSurfAllocated = GL_FALSE;
