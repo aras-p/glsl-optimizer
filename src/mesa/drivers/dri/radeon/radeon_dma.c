@@ -207,6 +207,7 @@ again_alloc:
 		   counter on unused buffers for later freeing them from
 		   begin of list */
 		dma_bo = last_elem(&rmesa->dma.free);
+		assert(dma_bo->bo->cref == 1);
 		remove_from_list(dma_bo);
 		insert_at_head(&rmesa->dma.reserved, dma_bo);
 	}
@@ -306,10 +307,6 @@ static int radeon_bo_is_idle(struct radeon_bo* bo)
 		WARN_ONCE("Your libdrm or kernel doesn't have support for busy query.\n"
 			"This may cause small performance drop for you.\n");
 	}
-	/* Protect against bug in legacy bo handling that causes bos stay
-	 * referenced even after they should be freed */
-	if (bo->cref != 1)
-		return 0;
 	return ret != -EBUSY;
 }
 
@@ -346,9 +343,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
 		if (dma_bo->expire_counter == time) {
 			WARN_ONCE("Leaking dma buffer object!\n");
-			/* force free of buffer so we don't realy start
-			 * leaking stuff now*/
-			while ((dma_bo->bo = radeon_bo_unref(dma_bo->bo))) {}
+			radeon_bo_unref(dma_bo->bo);
 			remove_from_list(dma_bo);
 			FREE(dma_bo);
 			continue;
