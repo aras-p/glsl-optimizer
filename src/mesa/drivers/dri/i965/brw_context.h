@@ -231,7 +231,7 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint outputs_written;
+   GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
@@ -741,10 +741,6 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
 }
-
-
-
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 #endif
 

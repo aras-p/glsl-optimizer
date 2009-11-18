@@ -515,7 +515,7 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       }
 
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
-         prog->OutputsWritten |= 1 << inst->DstReg.Index;
+         prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
          if (inst->DstReg.RelAddr) {
             /* If the output attribute is indexed with relative addressing
              * we know that it must be a varying or texcoord such as
@@ -528,14 +528,17 @@ _slang_update_inputs_outputs(struct gl_program *prog)
             if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
                if (inst->DstReg.Index == VERT_RESULT_TEX0) {
                   /* mark all texcoord outputs as written */
-                  const GLbitfield mask =
-                     ((1 << MAX_TEXTURE_COORD_UNITS) - 1) << VERT_RESULT_TEX0;
+                  const GLbitfield64 mask =
+		     BITFIELD64_RANGE(VERT_RESULT_TEX0,
+				      (VERT_RESULT_TEX0
+				       + MAX_TEXTURE_COORD_UNITS - 1));
                   prog->OutputsWritten |= mask;
                }
                else if (inst->DstReg.Index == VERT_RESULT_VAR0) {
                   /* mark all generic varying outputs as written */
-                  const GLbitfield mask =
-                     ((1 << MAX_VARYING) - 1) << VERT_RESULT_VAR0;
+                  const GLbitfield64 mask =
+		     BITFIELD64_RANGE(VERT_RESULT_VAR0,
+				      (VERT_RESULT_VAR0 + MAX_VARYING - 1));
                   prog->OutputsWritten |= mask;
                }
             }
@@ -807,7 +810,8 @@ _slang_link(GLcontext *ctx,
    if (shProg->VertexProgram) {
       _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
       _slang_count_temporaries(&shProg->VertexProgram->Base);
-      if (!(shProg->VertexProgram->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
+      if (!(shProg->VertexProgram->Base.OutputsWritten
+	    & BITFIELD64_BIT(VERT_RESULT_HPOS))) {
          /* the vertex program did not compute a vertex position */
          link_error(shProg,
                     "gl_Position was not written by vertex shader\n");
@@ -825,7 +829,7 @@ _slang_link(GLcontext *ctx,
    if (shProg->FragmentProgram) {
       const GLbitfield varyingRead
          = shProg->FragmentProgram->Base.InputsRead >> FRAG_ATTRIB_VAR0;
-      const GLbitfield varyingWritten = shProg->VertexProgram ?
+      const GLbitfield64 varyingWritten = shProg->VertexProgram ?
          shProg->VertexProgram->Base.OutputsWritten >> VERT_RESULT_VAR0 : 0x0;
       if ((varyingRead & varyingWritten) != varyingRead) {
          link_error(shProg,
@@ -836,9 +840,10 @@ _slang_link(GLcontext *ctx,
 
    /* check that gl_FragColor and gl_FragData are not both written to */
    if (shProg->FragmentProgram) {
-      GLbitfield outputsWritten = shProg->FragmentProgram->Base.OutputsWritten;
-      if ((outputsWritten & ((1 << FRAG_RESULT_COLOR))) &&
-          (outputsWritten >= (1 << FRAG_RESULT_DATA0))) {
+      const GLbitfield64 outputsWritten =
+	 shProg->FragmentProgram->Base.OutputsWritten;
+      if ((outputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) &&
+          (outputsWritten >= BITFIELD64_BIT(FRAG_RESULT_DATA0))) {
          link_error(shProg, "Fragment program cannot write both gl_FragColor"
                     " and gl_FragData[].\n");
          return;

@@ -438,7 +438,7 @@ static struct ureg register_input( struct tnl_program *p, GLuint input )
  */
 static struct ureg register_output( struct tnl_program *p, GLuint output )
 {
-   p->program->Base.OutputsWritten |= (1<<output);
+   p->program->Base.OutputsWritten |= BITFIELD64_BIT(output);
    return make_ureg(PROGRAM_OUTPUT, output);
 }
 

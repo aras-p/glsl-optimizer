@@ -78,7 +78,7 @@ static void compile_clip_prog( struct brw_context *brw,
        delta = REG_SIZE;
 
    for (i = 0; i < VERT_RESULT_MAX; i++)
-      if (c.key.attrs & (1<<i)) {
+      if (c.key.attrs & BITFIELD64_BIT(i)) {
 	 c.offset[i] = delta;
 	 delta += ATTR_SIZE;
       }

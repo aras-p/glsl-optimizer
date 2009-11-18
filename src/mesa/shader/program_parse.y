@@ -643,7 +643,7 @@ maskedDstReg: dstReg optionalMask optionalCcMask
 		 YYERROR;
 	      }
 
-	      state->prog->OutputsWritten |= (1U << $$.Index);
+	      state->prog->OutputsWritten |= BITFIELD64_BIT($$.Index);
 	   }
 	}
 	;

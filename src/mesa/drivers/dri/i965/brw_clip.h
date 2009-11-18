@@ -42,7 +42,7 @@
  * up polygon offset and flatshading at this point:
  */
 struct brw_clip_prog_key {
-   GLuint attrs:32;		
+   GLbitfield64 attrs;
    GLuint primitive:4;
    GLuint nr_userclip:3;
    GLuint do_flat_shading:1;

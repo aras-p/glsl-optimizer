@@ -147,7 +147,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
        mrf = 4;
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c->prog_data.outputs_written & (1 << i)) {
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
 	 c->nr_outputs++;
          assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
 	 if (i == VERT_RESULT_HPOS) {
@@ -1124,7 +1124,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
     */
-   if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
+   if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
        c->key.nr_userclip || BRW_IS_965(p->brw))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
@@ -1134,7 +1134,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       brw_set_access_mode(p, BRW_ALIGN_16);	
 
-      if (c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) {
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
 	 brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
 	 brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
@@ -1224,7 +1224,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        */
       GLuint i, mrf = 0;
       for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
-         if (c->prog_data.outputs_written & (1 << i)) {
+         if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
             /* move from GRF to MRF */
             brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
             mrf++;

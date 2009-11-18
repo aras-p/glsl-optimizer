@@ -469,7 +469,7 @@ st_translate_fragment_program(struct st_context *st,
     */
    {
       uint numColors = 0;
-      GLbitfield outputsWritten = stfp->Base.Base.OutputsWritten;
+      GLbitfield64 outputsWritten = stfp->Base.Base.OutputsWritten;
 
       /* if z is written, emit that first */
       if (outputsWritten & (1 << FRAG_RESULT_DEPTH)) {

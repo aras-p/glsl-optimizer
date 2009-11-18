@@ -601,9 +601,11 @@ _mesa_init_constants(GLcontext *ctx)
    ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
    ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
 
-   /* check that we don't exceed various 32-bit bitfields */
-   ASSERT(VERT_RESULT_MAX <= 32);
-   ASSERT(FRAG_ATTRIB_MAX <= 32);
+   /* check that we don't exceed the size of various bitfields */
+   ASSERT(VERT_RESULT_MAX <=
+	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
+   ASSERT(FRAG_ATTRIB_MAX <=
+	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 }
 
 

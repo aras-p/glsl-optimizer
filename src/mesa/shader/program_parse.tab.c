@@ -2622,7 +2622,7 @@ yyreduce:
 		 YYERROR;
 	      }
 
-	      state->prog->OutputsWritten |= (1U << (yyval.dst_reg).Index);
+	      state->prog->OutputsWritten |= BITFIELD64_BIT((yyval.dst_reg).Index);
 	   }
 	;}
     break;

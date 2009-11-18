@@ -371,7 +371,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	  for (j = 0; j < 4; j++)
 	     set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
        }
-       if (c->key.vp_outputs_written & (1 << i)) {
+       if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
 	  reg_index += 2;
        }
     }

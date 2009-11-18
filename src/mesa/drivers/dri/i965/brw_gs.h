@@ -40,7 +40,7 @@
 #define MAX_GS_VERTS (4)	     
 
 struct brw_gs_prog_key {
-   GLuint attrs:32;
+   GLbitfield64 attrs;
    GLuint primitive:4;
    GLuint hint_gs_always:1;
    GLuint pv_first:1;

@@ -106,7 +106,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* as far as we can tell */
    key->computes_depth =
-      (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) != 0;
+      (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) != 0;
    /* BRW_NEW_DEPTH_BUFFER
     * Override for NULL depthbuffer case, required by the Pixel Shader Computed
     * Depth field.
