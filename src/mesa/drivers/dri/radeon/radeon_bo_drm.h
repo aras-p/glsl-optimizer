@@ -39,6 +39,7 @@
 #define RADEON_BO_FLAGS_MICRO_TILE  2
 
 struct radeon_bo_manager;
+struct radeon_cs;
 
 struct radeon_bo {
     uint32_t                    alignment;
@@ -74,6 +75,7 @@ struct radeon_bo_funcs {
     int (*bo_get_tiling)(struct radeon_bo *bo, uint32_t *tiling_flags,
 			  uint32_t *pitch);
     int (*bo_is_busy)(struct radeon_bo *bo, uint32_t *domain);
+    int (*bo_is_referenced_by_cs)(struct radeon_bo *bo, struct radeon_cs *cs);
 };
 
 struct radeon_bo_manager {
@@ -199,6 +201,15 @@ static inline int radeon_bo_is_static(struct radeon_bo *bo)
 	return 0;
 }
 
+static inline int _radeon_bo_is_referenced_by_cs(struct radeon_bo *bo,
+                                                 struct radeon_cs *cs,
+                                                 const char *file,
+                                                 const char *func,
+                                                 unsigned line)
+{
+    return bo->cref > 1;
+}
+
 #define radeon_bo_open(bom, h, s, a, d, f)\
     _radeon_bo_open(bom, h, s, a, d, f, __FILE__, __FUNCTION__, __LINE__)
 #define radeon_bo_ref(bo)\
@@ -215,5 +226,7 @@ static inline int radeon_bo_is_static(struct radeon_bo *bo)
     _radeon_bo_wait(bo, __FILE__, __func__, __LINE__)
 #define radeon_bo_is_busy(bo, domain) \
     _radeon_bo_is_busy(bo, domain, __FILE__, __func__, __LINE__)
+#define radeon_bo_is_referenced_by_cs(bo, cs) \
+    _radeon_bo_is_referenced_by_cs(bo, cs, __FILE__, __FUNCTION__, __LINE__)
 
 #endif

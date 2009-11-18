@@ -31,20 +31,6 @@
 #include "main/imports.h"
 #include "main/simple_list.h"
 
-static int radeonQueryIsFlushed(GLcontext *ctx, struct gl_query_object *q)
-{
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	struct radeon_query_object *tmp, *query = (struct radeon_query_object *)q;
-
-	foreach(tmp, &radeon->query.not_flushed_head) {
-		if (tmp == query) {
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
 static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -122,10 +108,11 @@ static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 
 static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)
 {
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
 
 	/* If the cmdbuf with packets for this query hasn't been flushed yet, do it now */
-	if (!radeonQueryIsFlushed(ctx, q))
+	if (radeon_bo_is_referenced_by_cs(query->bo, radeon->cmdbuf.cs))
 		ctx->Driver.Flush(ctx);
 
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s: query id %d, bo %p, offset %d\n", __FUNCTION__, q->Id, query->bo, query->curr_offset);
@@ -157,8 +144,6 @@ static void radeonBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 
 	radeon->query.queryobj.dirty = GL_TRUE;
 	radeon->hw.is_dirty = GL_TRUE;
-	insert_at_tail(&radeon->query.not_flushed_head, query);
-
 }
 
 void radeonEmitQueryEnd(GLcontext *ctx)
@@ -206,7 +191,7 @@ static void radeonCheckQuery(GLcontext *ctx, struct gl_query_object *q)
 		uint32_t domain;
 
 		/* Need to perform a flush, as per ARB_occlusion_query spec */
-		if (!radeonQueryIsFlushed(ctx, q)) {
+		if (radeon_bo_is_referenced_by_cs(query->bo, radeon->cmdbuf.cs)) {
 			ctx->Driver.Flush(ctx);
 		}
 

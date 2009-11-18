@@ -824,14 +824,10 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
@@ -1423,10 +1419,9 @@ void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
  */
 static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 {
-   int firstlevel = t->mt ? t->mt->firstLevel : 0;
-   const struct gl_texture_image *firstImage = t->base.Image[0][firstlevel];
+   const struct gl_texture_image *firstImage = t->base.Image[0][t->minLod];
    GLint log2Width, log2Height, log2Depth, texelBytes;
-   
+
    if ( t->bo ) {
        return;
    }
@@ -1454,9 +1449,9 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 	 return;
       }
    }
-   
+
    t->pp_txfilter &= ~R200_MAX_MIP_LEVEL_MASK;
-   t->pp_txfilter |= (t->mt->lastLevel - t->mt->firstLevel) << R200_MAX_MIP_LEVEL_SHIFT;
+   t->pp_txfilter |= (t->maxLod - t->minLod) << R200_MAX_MIP_LEVEL_SHIFT;
 	
    t->pp_txformat &= ~(R200_TXFORMAT_WIDTH_MASK |
 		       R200_TXFORMAT_HEIGHT_MASK |

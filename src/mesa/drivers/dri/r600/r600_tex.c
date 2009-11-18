@@ -312,16 +312,7 @@ static void r600TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MAX_LEVEL:
 	case GL_TEXTURE_MIN_LOD:
 	case GL_TEXTURE_MAX_LOD:
-		/* This isn't the most efficient solution but there doesn't appear to
-		 * be a nice alternative.  Since there's no LOD clamping,
-		 * we just have to rely on loading the right subset of mipmap levels
-		 * to simulate a clamped LOD.
-		 */
-		if (t->mt) {
-			radeon_miptree_unreference(t->mt);
-			t->mt = 0;
-			t->validated = GL_FALSE;
-		}
+		t->validated = GL_FALSE;
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
@@ -369,10 +360,8 @@ static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 		t->bo = NULL;
 	}
 
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = 0;
-	}
+	radeon_miptree_unreference(&t->mt);
+
 	_mesa_delete_texture_object(ctx, texObj);
 }
 
