@@ -565,6 +565,8 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    renderer_bind_viewport(exa->renderer, pixmap);
    renderer_bind_rasterizer(exa->renderer);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
+   cso_set_samplers(exa->renderer->cso, 0, NULL);
+   cso_set_sampler_textures(exa->renderer->cso, 0, NULL);
    setup_constant_buffers(exa, pixmap);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
