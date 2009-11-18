@@ -82,8 +82,8 @@ static void TAG(emit)( GLcontext *ctx,
    }
    
    if (IND & TDFX_FOGC_BIT) {
-      fog = VB->FogCoordPtr->data;
-      fog_stride = VB->FogCoordPtr->stride;
+      fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+      fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
    }
 
    {

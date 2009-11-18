@@ -200,9 +200,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_FOG) {
-      if (VB->FogCoordPtr) {
-	 fog = VB->FogCoordPtr->data;
-	 fog_stride = VB->FogCoordPtr->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_FOG]) {
+	 fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+	 fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
       } else {
 	 static GLfloat tmp[4] = {0, 0, 0, 0};
 	 fog = &tmp;

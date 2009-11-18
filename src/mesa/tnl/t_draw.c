@@ -251,13 +251,10 @@ static void bind_inputs( GLcontext *ctx,
     */
    VB->Count = count;
 
-
-   /* Legacy pointers -- remove one day.
-    */
+   /* These should perhaps be part of _TNL_ATTRIB_* */
    VB->BackfaceColorPtr = NULL;
    VB->BackfaceIndexPtr = NULL;
    VB->BackfaceSecondaryColorPtr = NULL;
-   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    /* Clipping and drawing code still requires this to be a packed
     * array of ubytes which can be written into.  TODO: Fix and

@@ -228,7 +228,6 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       VB->AttribPtr[_TNL_ATTRIB_FOG] = input;
    }
 
-   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
    return GL_TRUE;
 }
 

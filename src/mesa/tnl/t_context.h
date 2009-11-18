@@ -202,8 +202,6 @@ struct vertex_buffer
     * it that is one of VERT_ATTRIB_X.  For things only produced by TNL,
     * such as backface color or eye-space coordinates, they are stored
     * here.
-    * XXX some of these fields alias AttribPtr below and should be removed
-    * such as FogCoordPtr, etc.
     */
    GLuint      *Elts;		                
    GLvector4f  *EyePtr;		                /* _TNL_BIT_POS */
@@ -217,7 +215,6 @@ struct vertex_buffer
    GLvector4f  *BackfaceIndexPtr;
    GLvector4f  *BackfaceColorPtr;
    GLvector4f  *BackfaceSecondaryColorPtr;
-   GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
 
    const struct _mesa_prim  *Primitive;	              
    GLuint      PrimitiveCount;	      

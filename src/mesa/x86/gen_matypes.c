@@ -135,7 +135,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_INDEX_PTR           ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR_INDEX] );
    OFFSET( "VB_COLOR_PTR           ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR0] );
    OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR1] );
-   OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, FogCoordPtr );
+   OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_FOG] );
    OFFSET( "VB_PRIMITIVE           ", struct vertex_buffer, Primitive );
    printf( "\n" );
 

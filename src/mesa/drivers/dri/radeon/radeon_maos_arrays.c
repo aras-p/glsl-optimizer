@@ -273,8 +273,8 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.fog.buf)
 	 emit_vecfog( ctx,
 		      &(rmesa->tcl.aos[nr]),
-		      (char *)VB->FogCoordPtr->data,
-		      VB->FogCoordPtr->stride,
+		      (char *)VB->AttribPtr[_TNL_ATTRIB_FOG]->data,
+		      VB->AttribPtr[_TNL_ATTRIB_FOG]->stride,
 		      count);
 
       vfmt |= RADEON_CP_VC_FRMT_FPFOG;
