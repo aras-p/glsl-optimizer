@@ -138,7 +138,6 @@ static struct prog_dst_register dst_reg(GLuint file, GLuint idx)
    reg.CondMask = COND_TR;
    reg.CondSwizzle = 0;
    reg.CondSrc = 0;
-   reg.pad = 0;
    return reg;
 }
 
