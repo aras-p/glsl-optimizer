@@ -248,7 +248,6 @@ static GLboolean run_lighting( GLcontext *ctx,
 
    VB->AttribPtr[_TNL_ATTRIB_COLOR0] = VB->ColorPtr[0];
    VB->AttribPtr[_TNL_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
-   VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = VB->IndexPtr[0];
 
    return GL_TRUE;
 }

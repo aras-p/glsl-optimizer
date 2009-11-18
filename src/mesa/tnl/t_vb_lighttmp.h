@@ -665,14 +665,14 @@ static void TAG(light_ci)( GLcontext *ctx,
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
 
-   VB->IndexPtr[0] = &store->LitIndex[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = &store->LitIndex[0];
 #if IDX & LIGHT_TWOSIDE
-   VB->IndexPtr[1] = &store->LitIndex[1];
+   VB->BackfaceIndexPtr = &store->LitIndex[1];
 #endif
 
-   indexResult[0] = (GLfloat *)VB->IndexPtr[0]->data;
+   indexResult[0] = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX]->data;
 #if IDX & LIGHT_TWOSIDE
-   indexResult[1] = (GLfloat *)VB->IndexPtr[1]->data;
+   indexResult[1] = (GLfloat *)VB->BackfaceIndexPtr->data;
 #endif
 
    /* loop over vertices */

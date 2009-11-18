@@ -1115,10 +1115,10 @@ void _tnl_generic_interp_extras( GLcontext *ctx,
 		 VB->SecondaryColorPtr[1]->data[in] );
    }
    
-   if (VB->IndexPtr[1]) {
-      VB->IndexPtr[1]->data[dst][0] = LINTERP( t,
-					       VB->IndexPtr[1]->data[out][0],
-					       VB->IndexPtr[1]->data[in][0] );
+   if (VB->BackfaceIndexPtr) {
+      VB->BackfaceIndexPtr->data[dst][0] = LINTERP( t,
+					       VB->BackfaceIndexPtr->data[out][0],
+					       VB->BackfaceIndexPtr->data[in][0] );
    }
 
    if (VB->EdgeFlag) {
@@ -1145,8 +1145,8 @@ void _tnl_generic_copy_pv_extras( GLcontext *ctx,
 		VB->SecondaryColorPtr[1]->data[src] );
    }
 
-   if (VB->IndexPtr[1]) {
-      VB->IndexPtr[1]->data[dst][0] = VB->IndexPtr[1]->data[src][0];
+   if (VB->BackfaceIndexPtr) {
+      VB->BackfaceIndexPtr->data[dst][0] = VB->BackfaceIndexPtr->data[src][0];
    }
 
    _tnl_generic_copy_pv(ctx, dst, src);

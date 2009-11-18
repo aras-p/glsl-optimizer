@@ -198,7 +198,10 @@ struct vertex_buffer
     */
    GLuint Count;  /**< Number of vertices currently in buffer */
 
-   /* Pointers to current data.
+   /* Pointers to current data.  Most of the data is in AttribPtr -- all of
+    * it that is one of VERT_ATTRIB_X.  For things only produced by TNL,
+    * such as backface color or eye-space coordinates, they are stored
+    * here.
     * XXX some of these fields alias AttribPtr below and should be removed
     * such as FogCoordPtr, etc.
     */
@@ -211,7 +214,7 @@ struct vertex_buffer
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
    GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
    GLboolean   *EdgeFlag;	                /* _TNL_BIT_EDGEFLAG */
-   GLvector4f  *IndexPtr[2];	                /* _TNL_BIT_INDEX */
+   GLvector4f  *BackfaceIndexPtr;               /* _TNL_BIT_INDEX */
    GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
    GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
    GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */

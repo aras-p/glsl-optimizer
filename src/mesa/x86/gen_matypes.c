@@ -132,7 +132,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_TEX1_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX1] );
    OFFSET( "VB_TEX2_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX2] );
    OFFSET( "VB_TEX3_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX3] );
-   OFFSET( "VB_INDEX_PTR           ", struct vertex_buffer, IndexPtr );
+   OFFSET( "VB_INDEX_PTR           ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR_INDEX] );
    OFFSET( "VB_COLOR_PTR           ", struct vertex_buffer, ColorPtr );
    OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, SecondaryColorPtr );
    OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, FogCoordPtr );

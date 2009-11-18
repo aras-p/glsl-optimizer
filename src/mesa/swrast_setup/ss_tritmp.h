@@ -127,7 +127,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		     }
 		  }
 	       } else {
-		  GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
+		  GLfloat *vbindex = (GLfloat *)VB->BackfaceIndexPtr->data;
 		  saved_index[0] = v[0]->attrib[FRAG_ATTRIB_CI][0];
 		  saved_index[1] = v[1]->attrib[FRAG_ATTRIB_CI][0];
 		  saved_index[2] = v[2]->attrib[FRAG_ATTRIB_CI][0];

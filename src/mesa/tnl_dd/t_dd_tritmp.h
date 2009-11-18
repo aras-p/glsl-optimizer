@@ -237,7 +237,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	       }
 	    }
 	    else {
-	       GLfloat (*vbindex) = (GLfloat *)VB->IndexPtr[1]->data;
+	       GLfloat (*vbindex) = (GLfloat *)VB->BackfaceIndexPtr->data;
 	       if (!DO_FLAT) {
 		  VERT_SAVE_IND( 0 );
 		  VERT_SAVE_IND( 1 );
@@ -506,7 +506,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	       }
 	    }
 	    else {
-	       GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
+	       GLfloat *vbindex = (GLfloat *)VB->BackfaceIndexPtr->data;
 	       if (!DO_FLAT) {
 		  VERT_SAVE_IND( 0 );
 		  VERT_SAVE_IND( 1 );

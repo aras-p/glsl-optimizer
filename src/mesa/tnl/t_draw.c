@@ -256,8 +256,7 @@ static void bind_inputs( GLcontext *ctx,
     */
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    VB->ColorPtr[1] = NULL;
-   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
-   VB->IndexPtr[1] = NULL;
+   VB->BackfaceIndexPtr = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
    VB->SecondaryColorPtr[1] = NULL;
    VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
