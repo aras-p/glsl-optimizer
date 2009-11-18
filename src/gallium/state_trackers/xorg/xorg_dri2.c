@@ -137,6 +137,11 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     buffer->cpp = 4;
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION == 2
+    ((DRI2Buffer2Ptr)buffer)->format = 0;
+#elif defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 3
+    buffer->format = 0;
+#endif
     private->tex = tex;
 
     return TRUE;
@@ -157,12 +162,12 @@ driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
     (*pScreen->DestroyPixmap)(private->pPixmap);
 }
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2
 
-static DRI2BufferPtr
+static DRI2Buffer2Ptr
 driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
 {
-    DRI2BufferPtr buffer;
+    DRI2Buffer2Ptr buffer;
     BufferPrivatePtr private;
 
     buffer = xcalloc(1, sizeof *buffer);
@@ -177,7 +182,8 @@ driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
     buffer->attachment = attachment;
     buffer->driverPrivate = private;
 
-    if (driDoCreateBuffer(pDraw, buffer, format))
+    /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
+    if (driDoCreateBuffer(pDraw, (DRI2BufferPtr)buffer, format))
 	return buffer;
 
     xfree(private);
@@ -187,15 +193,16 @@ fail:
 }
 
 static void
-driDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
+driDestroyBuffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
 {
-    driDoDestroyBuffer(pDraw, buffer);
+    /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
+    driDoDestroyBuffer(pDraw, (DRI2BufferPtr)buffer);
 
     xfree(buffer->driverPrivate);
     xfree(buffer);
 }
 
-#else /* DRI2INFOREC_VERSION <= 2 */
+#else /* !defined(DRI2INFOREC_VERSION) || DRI2INFOREC_VERSION < 2 */
 
 static DRI2BufferPtr
 driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
@@ -245,7 +252,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 }
 
-#endif /* DRI2INFOREC_VERSION */
+#endif /* defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2 */
 
 static void
 driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
@@ -352,7 +359,7 @@ driScreenInit(ScreenPtr pScreen)
     dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
 #else
