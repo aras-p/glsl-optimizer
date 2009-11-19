@@ -80,7 +80,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   if (!batch->buffer && intel->ttm == GL_TRUE)
+   if (!batch->buffer)
       batch->buffer = malloc (intel->maxBatchSize);
 
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
@@ -212,7 +212,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    batch->reserved_space = 0;
    /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (intel->always_flush_cache || !intel->ttm) {
+   if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(batch);
       used = batch->ptr - batch->map;
    }
@@ -243,6 +243,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    if (intel->vtbl.finish_batch)
       intel->vtbl.finish_batch(intel);
+
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!intel->no_batch_wrap);
 
    batch->reserved_space = BATCH_RESERVED;
 

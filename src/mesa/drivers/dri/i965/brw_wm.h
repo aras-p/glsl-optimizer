@@ -76,10 +76,10 @@ struct brw_wm_prog_key {
 
    GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
 
-   GLuint program_string_id:32;
    GLushort origin_x, origin_y;
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
+   GLuint program_string_id:32;
 };
 
 

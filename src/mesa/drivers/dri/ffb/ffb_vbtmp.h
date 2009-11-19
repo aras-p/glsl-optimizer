@@ -38,11 +38,11 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end)
 #endif
 
 #if (IND & (FFB_VB_RGBA_BIT))
-	col0 = VB->ColorPtr[0]->data;
-	col0_stride = VB->ColorPtr[0]->stride;
+	col0 = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+	col0_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
 #if (IND & (FFB_VB_TWOSIDE_BIT))
-	col1 = VB->ColorPtr[1]->data;
-	col1_stride = VB->ColorPtr[1]->stride;
+	col1 = VB->BackfaceColorPtr->data;
+	col1_stride = VB->BackfaceColorPtr->stride;
 #endif
 #endif
 

@@ -127,7 +127,7 @@ prepare_materials(GLcontext *ctx,
       const GLuint bitmask = ctx->Light.ColorMaterialBitmask;
       for (i = 0 ; i < MAT_ATTRIB_MAX ; i++)
 	 if (bitmask & (1<<i))
-	    VB->AttribPtr[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = VB->ColorPtr[0];
+	    VB->AttribPtr[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
    }
 
    /* Now, for each material attribute that's tracking vertex color, save
@@ -200,7 +200,7 @@ static GLboolean run_lighting( GLcontext *ctx,
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
+   GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->AttribPtr[_TNL_ATTRIB_POS];
    GLuint idx;
 
    if (!ctx->Light.Enabled || ctx->VertexProgram._Current)
@@ -208,13 +208,13 @@ static GLboolean run_lighting( GLcontext *ctx,
 
    /* Make sure we can talk about position x,y and z:
     */
-   if (input->size <= 2 && input == VB->ObjPtr) {
+   if (input->size <= 2 && input == VB->AttribPtr[_TNL_ATTRIB_POS]) {
 
       _math_trans_4f( store->Input.data,
-		      VB->ObjPtr->data,
-		      VB->ObjPtr->stride,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->data,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->stride,
 		      GL_FLOAT,
-		      VB->ObjPtr->size,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->size,
 		      0,
 		      VB->Count );
 
@@ -245,10 +245,6 @@ static GLboolean run_lighting( GLcontext *ctx,
     * vs. full re-execution. 
     */
    store->light_func_tab[idx]( ctx, VB, stage, input );
-
-   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = VB->ColorPtr[0];
-   VB->AttribPtr[_TNL_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
-   VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX] = VB->IndexPtr[0];
 
    return GL_TRUE;
 }

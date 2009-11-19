@@ -523,7 +523,6 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->CondMask = COND_TR;  /* always pass cond test */
    dst->CondSwizzle = SWIZZLE_NOOP;
    dst->CondSrc = 0;
-   dst->pad = 0;
    /* Check that bitfield sizes aren't exceeded */
    ASSERT(dst->Index == reg.idx);
 }

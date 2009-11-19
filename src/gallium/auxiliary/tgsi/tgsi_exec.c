@@ -62,9 +62,6 @@
 
 #define FAST_MATH 1
 
-/** for tgsi_full_instruction::Flags */
-#define SOA_DEPENDENCY_FLAG 0x1
-
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
 #define TILE_BOTTOM_LEFT  2
@@ -330,20 +327,6 @@ tgsi_exec_machine_bind_shader(
                                    (maxInstructions + 10)
                                    * sizeof(struct tgsi_full_instruction));
             maxInstructions += 10;
-         }
-
-         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
-            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-            parse.FullToken.FullInstruction.Flags = SOA_DEPENDENCY_FLAG;
-            /* XXX we only handle SOA dependencies properly for MOV/SWZ
-             * at this time!
-             */
-            if (opcode != TGSI_OPCODE_MOV) {
-               debug_printf("Warning: SOA dependency in instruction"
-                            " is not handled:\n");
-               tgsi_dump_instruction(&parse.FullToken.FullInstruction,
-                                     numInstructions);
-            }
          }
 
          memcpy(instructions + numInstructions,
@@ -1847,6 +1830,7 @@ exec_instruction(
 {
    uint chan_index;
    union tgsi_exec_channel r[10];
+   union tgsi_exec_channel d[8];
 
    (*pc)++;
 
@@ -1855,42 +1839,27 @@ exec_instruction(
    case TGSI_OPCODE_FLR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_flr( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_flr(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_MOV:
-      if (inst->Flags & SOA_DEPENDENCY_FLAG) {
-         /* Do all fetches into temp regs, then do all stores to avoid
-          * intermediate/accidental clobbering.  This could be done all the
-          * time for MOV but for other instructions we'll need more temps...
-          */
-         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-            FETCH( &r[chan_index], 0, chan_index );
-         }
-         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-            STORE( &r[chan_index], 0, chan_index );
-         }
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&d[chan_index], 0, chan_index);
       }
-      else {
-         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-            FETCH( &r[0], 0, chan_index );
-            STORE( &r[0], 0, chan_index );
-         }
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_LIT:
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_X );
-      }
-
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y ) || IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
          FETCH( &r[0], 0, CHAN_X );
          if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-            micro_max( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-            STORE( &r[0], 0, CHAN_Y );
+            micro_max(&d[CHAN_Y], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
          }
 
          if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
@@ -1901,11 +1870,19 @@ exec_instruction(
             micro_min( &r[2], &r[2], &mach->Temps[TEMP_128_I].xyzw[TEMP_128_C] );
             micro_max( &r[2], &r[2], &mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C] );
             micro_pow( &r[1], &r[1], &r[2] );
-            micro_lt( &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-            STORE( &r[0], 0, CHAN_Z );
+            micro_lt(&d[CHAN_Z], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+         }
+
+         if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+            STORE(&d[CHAN_Y], 0, CHAN_Y);
+         }
+         if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+            STORE(&d[CHAN_Z], 0, CHAN_Z);
          }
       }
-
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_X );
+      }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
@@ -1973,14 +1950,13 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MUL:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-      {
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
-
-         micro_mul( &r[0], &r[0], &r[1] );
-
-         STORE(&r[0], 0, chan_index);
+         micro_mul(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -1988,8 +1964,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_add(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2045,25 +2023,29 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_DST:
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_X );
-      }
-
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          FETCH( &r[0], 0, CHAN_Y );
          FETCH( &r[1], 1, CHAN_Y);
-         micro_mul( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, CHAN_Y );
+         micro_mul(&d[CHAN_Y], &r[0], &r[1]);
       }
-
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-         FETCH( &r[0], 0, CHAN_Z );
-         STORE( &r[0], 0, CHAN_Z );
+         FETCH(&d[CHAN_Z], 0, CHAN_Z);
+      }
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
+         FETCH(&d[CHAN_W], 1, CHAN_W);
       }
 
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-         FETCH( &r[0], 1, CHAN_W );
-         STORE( &r[0], 0, CHAN_W );
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
+         STORE(&mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_X);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         STORE(&d[CHAN_Y], 0, CHAN_Y);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+         STORE(&d[CHAN_Z], 0, CHAN_Z);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_W)) {
+         STORE(&d[CHAN_W], 0, CHAN_W);
       }
       break;
 
@@ -2073,9 +2055,10 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
 
          /* XXX use micro_min()?? */
-         micro_lt( &r[0], &r[0], &r[1], &r[0], &r[1] );
-
-         STORE(&r[0], 0, chan_index);
+         micro_lt(&d[chan_index], &r[0], &r[1], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2085,9 +2068,10 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
 
          /* XXX use micro_max()?? */
-         micro_lt( &r[0], &r[0], &r[1], &r[1], &r[0] );
-
-         STORE(&r[0], 0, chan_index );
+         micro_lt(&d[chan_index], &r[0], &r[1], &r[1], &r[0] );
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2096,8 +2080,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_lt(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2106,8 +2092,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_le( &r[0], &r[1], &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_le(&d[chan_index], &r[1], &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2118,8 +2106,10 @@ exec_instruction(
          FETCH( &r[1], 1, chan_index );
          micro_mul( &r[0], &r[0], &r[1] );
          FETCH( &r[1], 2, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_add(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2127,10 +2117,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
-
-         micro_sub( &r[0], &r[0], &r[1] );
-
-         STORE(&r[0], 0, chan_index);
+         micro_sub(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2139,12 +2129,12 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
-
          micro_sub( &r[1], &r[1], &r[2] );
          micro_mul( &r[0], &r[0], &r[1] );
-         micro_add( &r[0], &r[0], &r[2] );
-
-         STORE(&r[0], 0, chan_index);
+         micro_add(&d[chan_index], &r[0], &r[2]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2153,8 +2143,10 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
-         micro_lt(&r[0], &mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C], &r[2], &r[0], &r[1]);
-         STORE(&r[0], 0, chan_index);
+         micro_lt(&d[chan_index], &mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C], &r[2], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2179,8 +2171,10 @@ exec_instruction(
    case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_frc( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_frc(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2190,8 +2184,10 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
          micro_max(&r[0], &r[0], &r[1]);
          FETCH(&r[1], 2, chan_index);
-         micro_min(&r[0], &r[0], &r[1]);
-         STORE(&r[0], 0, chan_index);
+         micro_min(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2199,8 +2195,10 @@ exec_instruction(
    case TGSI_OPCODE_ARR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_rnd( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_rnd(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2247,11 +2245,7 @@ exec_instruction(
       FETCH(&r[4], 1, CHAN_Y);
 
       micro_mul( &r[5], &r[3], &r[4] );
-      micro_sub( &r[2], &r[2], &r[5] );
-
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-         STORE( &r[2], 0, CHAN_X );
-      }
+      micro_sub(&d[CHAN_X], &r[2], &r[5]);
 
       FETCH(&r[2], 1, CHAN_X);
 
@@ -2260,20 +2254,21 @@ exec_instruction(
       FETCH(&r[5], 0, CHAN_X);
 
       micro_mul( &r[1], &r[1], &r[5] );
-      micro_sub( &r[3], &r[3], &r[1] );
-
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-         STORE( &r[3], 0, CHAN_Y );
-      }
+      micro_sub(&d[CHAN_Y], &r[3], &r[1]);
 
       micro_mul( &r[5], &r[5], &r[4] );
       micro_mul( &r[0], &r[0], &r[2] );
-      micro_sub( &r[5], &r[5], &r[0] );
+      micro_sub(&d[CHAN_Z], &r[5], &r[0]);
 
-      if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-         STORE( &r[5], 0, CHAN_Z );
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
+         STORE(&d[CHAN_X], 0, CHAN_X);
       }
-
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         STORE(&d[CHAN_Y], 0, CHAN_Y);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+         STORE(&d[CHAN_Z], 0, CHAN_Z);
+      }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
@@ -2282,11 +2277,11 @@ exec_instruction(
     case TGSI_OPCODE_ABS:
        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
           FETCH(&r[0], 0, chan_index);
-
-          micro_abs( &r[0], &r[0] );
-
-          STORE(&r[0], 0, chan_index);
+          micro_abs(&d[chan_index], &r[0]);
        }
+       FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
+      }
        break;
 
    case TGSI_OPCODE_RCC:
@@ -2338,16 +2333,20 @@ exec_instruction(
    case TGSI_OPCODE_DDX:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ddx( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_ddx(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_DDY:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ddy( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_ddy(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2428,10 +2427,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_eq( &r[0], &r[0], &r[1],
-                   &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C],
-                   &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_eq(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2445,8 +2444,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_le( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_le(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2462,8 +2463,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_le( &r[0], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_le(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2471,8 +2474,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_eq( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
-         STORE( &r[0], 0, chan_index );
+         micro_eq(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2546,13 +2551,8 @@ exec_instruction(
          micro_mul(&r[3], &r[3], &r[1]);
          micro_add(&r[2], &r[2], &r[3]);
          FETCH(&r[3], 0, CHAN_X);
-         micro_add(&r[2], &r[2], &r[3]);
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
-            STORE(&r[2], 0, CHAN_X);
-         }
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-            STORE(&r[2], 0, CHAN_Z);
-         }
+         micro_add(&d[CHAN_X], &r[2], &r[3]);
+         
       }
       if (IS_CHANNEL_ENABLED(*inst, CHAN_Y) ||
           IS_CHANNEL_ENABLED(*inst, CHAN_W)) {
@@ -2562,13 +2562,20 @@ exec_instruction(
          micro_mul(&r[3], &r[3], &r[1]);
          micro_add(&r[2], &r[2], &r[3]);
          FETCH(&r[3], 0, CHAN_Y);
-         micro_add(&r[2], &r[2], &r[3]);
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-            STORE(&r[2], 0, CHAN_Y);
-         }
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_W)) {
-            STORE(&r[2], 0, CHAN_W);
-         }
+         micro_add(&d[CHAN_Y], &r[2], &r[3]);
+         
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
+         STORE(&d[CHAN_X], 0, CHAN_X);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         STORE(&d[CHAN_Y], 0, CHAN_Y);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+         STORE(&d[CHAN_X], 0, CHAN_Z);
+      }
+      if (IS_CHANNEL_ENABLED(*inst, CHAN_W)) {
+         STORE(&d[CHAN_Y], 0, CHAN_W);
       }
       break;
 
@@ -2653,8 +2660,10 @@ exec_instruction(
    /* TGSI_OPCODE_SGN */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_sgn( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_sgn(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2663,10 +2672,10 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
-
-         micro_lt( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2] );
-
-         STORE(&r[0], 0, chan_index);
+         micro_lt(&d[chan_index], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2841,32 +2850,40 @@ exec_instruction(
    case TGSI_OPCODE_CEIL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ceil( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_ceil(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_I2F:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_i2f( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_i2f(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_NOT:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_not( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_not(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
    case TGSI_OPCODE_TRUNC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_trunc( &r[0], &r[0] );
-         STORE( &r[0], 0, chan_index );
+         micro_trunc(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2874,8 +2891,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_shl( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_shl(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2883,8 +2902,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_ishr( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_ishr(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2892,8 +2913,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_and( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_and(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2901,8 +2924,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_or( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_or(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 
@@ -2914,8 +2939,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_xor( &r[0], &r[0], &r[1] );
-         STORE( &r[0], 0, chan_index );
+         micro_xor(&d[chan_index], &r[0], &r[1]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
       }
       break;
 

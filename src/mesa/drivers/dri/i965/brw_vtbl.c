@@ -144,9 +144,6 @@ static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!brw->no_batch_wrap);
-
    brw->curbe.need_new_bo = GL_TRUE;
 
    /* Mark all context state as needing to be re-emitted.

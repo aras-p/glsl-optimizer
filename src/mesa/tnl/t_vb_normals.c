@@ -79,7 +79,6 @@ run_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    }
 
    VB->AttribPtr[_TNL_ATTRIB_NORMAL] = &store->normal;
-   VB->NormalPtr = &store->normal;
 
    VB->NormalLengthPtr = NULL;	/* no longer valid */
    return GL_TRUE;

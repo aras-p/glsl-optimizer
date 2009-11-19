@@ -58,32 +58,32 @@ static void TAG(emit)( GLcontext *ctx,
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    if (IND & TDFX_TEX0_BIT) {
-      tc0_stride = VB->TexCoordPtr[tmu0_source]->stride;
-      tc0 = VB->TexCoordPtr[tmu0_source]->data;
+      tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu0_source]->stride;
+      tc0 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu0_source]->data;
       u0scale = fxMesa->sScale0;
       v0scale = fxMesa->tScale0;
       if (IND & TDFX_PTEX_BIT)
-	 tc0_size = VB->TexCoordPtr[tmu0_source]->size;
+	 tc0_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu0_source]->size;
    }
 
    if (IND & TDFX_TEX1_BIT) {
-      tc1 = VB->TexCoordPtr[tmu1_source]->data;
-      tc1_stride = VB->TexCoordPtr[tmu1_source]->stride;
+      tc1 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu1_source]->data;
+      tc1_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu1_source]->stride;
       u1scale = fxMesa->sScale1;
       v1scale = fxMesa->tScale1;
       if (IND & TDFX_PTEX_BIT)
-	 tc1_size = VB->TexCoordPtr[tmu1_source]->size;
+	 tc1_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + tmu1_source]->size;
    }
    
    if (IND & TDFX_RGBA_BIT) {
-      col = VB->ColorPtr[0]->data;
-      col_stride = VB->ColorPtr[0]->stride;
-      col_size = VB->ColorPtr[0]->size;
+      col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+      col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
+      col_size = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
    }
    
    if (IND & TDFX_FOGC_BIT) {
-      fog = VB->FogCoordPtr->data;
-      fog_stride = VB->FogCoordPtr->stride;
+      fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+      fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
    }
 
    {
@@ -168,14 +168,14 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
       if (IND & TDFX_TEX1_BIT) {
-	 if (VB->TexCoordPtr[0] == 0)
-	    VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
+	 if (VB->AttribPtr[_TNL_ATTRIB_TEX0] == 0)
+	    VB->AttribPtr[_TNL_ATTRIB_TEX0] = VB->AttribPtr[_TNL_ATTRIB_TEX1];
 	 
-	 if (VB->TexCoordPtr[1]->size == 4)
+	 if (VB->AttribPtr[_TNL_ATTRIB_TEX1]->size == 4)
 	    return GL_FALSE;
       }
 
-      if (VB->TexCoordPtr[0]->size == 4)
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 4)
 	 return GL_FALSE;
    }
 

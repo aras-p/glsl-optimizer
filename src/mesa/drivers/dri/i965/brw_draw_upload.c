@@ -243,14 +243,6 @@ static void wrap_buffers( struct brw_context *brw,
       dri_bo_unreference(brw->vb.upload.bo);
    brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
 				    size, 1);
-
-   /* Set the internal VBO\ to no-backing-store.  We only use them as a
-    * temporary within a brw_try_draw_prims while the lock is held.
-    */
-   /* DON'T DO THIS AS IF WE HAVE TO RE-ORG MEMORY WE NEED SOMEWHERE WITH
-      FAKE TO PUSH THIS STUFF */
-//   if (!brw->intel.ttm)
-//      dri_bo_fake_disable_backing_store(brw->vb.upload.bo, NULL, NULL);
 }
 
 static void get_space( struct brw_context *brw,

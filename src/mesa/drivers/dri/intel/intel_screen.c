@@ -605,7 +605,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
 static GLboolean
 intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
-   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
    int gem_kernel = 0;
    GLboolean gem_supported;
    struct drm_i915_getparam gp;
@@ -622,43 +621,24 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
     */
-   intelScreen->ttm = GL_FALSE;
    if (intelScreen->driScrnPriv->dri2.enabled)
        gem_supported = GL_TRUE;
    else if (intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
 	    gem_kernel &&
 	    intelScreen->front.bo_handle != -1)
        gem_supported = GL_TRUE;
-   else
-       gem_supported = GL_FALSE;
-
-   if (!gem_disable && gem_supported) {
-      intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-      if (intelScreen->bufmgr != NULL)
-	 intelScreen->ttm = GL_TRUE;
+   else {
+      fprintf(stderr, "[%s:%u] Error initializing GEM.\n",
+	      __func__, __LINE__);
+      return GL_FALSE;
    }
+
+   intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
    /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
-      if (gem_disable) {
-	 _mesa_warning(NULL, "GEM disabled.  Using classic.");
-      } else {
-	 _mesa_warning(NULL,
-                       "Failed to initialize GEM.  Falling back to classic.");
-      }
-
-      if (intelScreen->tex.size == 0) {
-	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
-		 __func__, __LINE__);
-	 return GL_FALSE;
-      }
-
-      intelScreen->bufmgr =
-	 intel_bufmgr_fake_init(spriv->fd,
-				intelScreen->tex.offset,
-				intelScreen->tex.map,
-				intelScreen->tex.size,
-				(unsigned int * volatile)
-				&intelScreen->sarea->last_dispatch);
+      fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+	      __func__, __LINE__);
+      return GL_FALSE;
    }
 
    if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))

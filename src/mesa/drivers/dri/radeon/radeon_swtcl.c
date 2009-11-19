@@ -179,7 +179,7 @@ static void radeonSetVertexFormat( GLcontext *ctx )
 
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-	    GLuint sz = VB->TexCoordPtr[i]->size;
+	    GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
 	    switch (sz) {
 	    case 1:

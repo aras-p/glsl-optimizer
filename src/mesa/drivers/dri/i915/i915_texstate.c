@@ -28,6 +28,7 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/colormac.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -363,15 +364,15 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        * R channel, while the hardware uses A.  Spam R into all the channels
        * for safety.
        */
-      state[I915_TEXREG_SS4] = INTEL_PACKCOLOR8888(border[0],
-						   border[0],
-						   border[0],
-						   border[0]);
+      state[I915_TEXREG_SS4] = PACK_COLOR_8888(border[0],
+					       border[0],
+					       border[0],
+					       border[0]);
    } else {
-      state[I915_TEXREG_SS4] = INTEL_PACKCOLOR8888(border[0],
-						   border[1],
-						   border[2],
-						   border[3]);
+      state[I915_TEXREG_SS4] = PACK_COLOR_8888(border[3],
+					       border[0],
+					       border[1],
+					       border[2]);
    }
 
 

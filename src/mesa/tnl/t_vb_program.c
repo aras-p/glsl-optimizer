@@ -454,19 +454,14 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       VB->ClipPtr->count = VB->Count;
    }
 
-   VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
-   VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
-   VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
-   VB->SecondaryColorPtr[1] = &store->results[VERT_RESULT_BFC1];
-   VB->FogCoordPtr = &store->results[VERT_RESULT_FOGC];
-
    VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];
    VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->results[VERT_RESULT_COL1];
    VB->AttribPtr[VERT_ATTRIB_FOG] = &store->results[VERT_RESULT_FOGC];
    VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VERT_RESULT_PSIZ];
+   VB->BackfaceColorPtr = &store->results[VERT_RESULT_BFC0];
+   VB->BackfaceSecondaryColorPtr = &store->results[VERT_RESULT_BFC1];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      VB->TexCoordPtr[i] = 
       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]
          = &store->results[VERT_RESULT_TEX0 + i];
    }

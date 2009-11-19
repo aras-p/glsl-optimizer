@@ -79,6 +79,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
+   { "GL_ARB_pixel_buffer_object",      NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
@@ -104,6 +105,8 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_blend_logic_op",             NULL },
    { "GL_EXT_blend_subtract",             NULL },
    { "GL_EXT_cull_vertex",                GL_EXT_cull_vertex_functions },
+   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
+   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
    { "GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions },
    { "GL_EXT_packed_depth_stencil",       NULL },
@@ -176,14 +179,6 @@ static const struct dri_extension arb_oq_extensions[] = {
    { NULL, NULL }
 };
 
-
-static const struct dri_extension ttm_extensions[] = {
-   { "GL_ARB_pixel_buffer_object",      NULL },
-   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
-   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
-   { NULL, NULL }
-};
-
 static const struct dri_extension fragment_shader_extensions[] = {
    { "GL_ARB_fragment_shader",            NULL },
    { NULL, NULL }
@@ -201,9 +196,6 @@ intelInitExtensions(GLcontext *ctx)
    /* Disable imaging extension until convolution is working in teximage paths.
     */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
-
-   if (intel->ttm)
-      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
    if (IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);

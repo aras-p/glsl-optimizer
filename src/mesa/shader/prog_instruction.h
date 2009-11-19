@@ -312,7 +312,6 @@ struct prog_dst_register
     */
    GLuint CondSrc:1;
    /*@}*/
-   GLuint pad:28;
 };
 
 

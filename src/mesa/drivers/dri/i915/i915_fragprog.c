@@ -1301,7 +1301,7 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
       if (inputsRead & FRAG_BIT_TEX(i)) {
-         int sz = VB->TexCoordPtr[i]->size;
+         int sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
          s2 &= ~S2_TEXCOORD_FMT(i, S2_TEXCOORD_FMT0_MASK);
          s2 |= S2_TEXCOORD_FMT(i, SZ_TO_HW(sz));

@@ -149,7 +149,7 @@ static GLboolean gld_d3d_render_stage_run(
 #if 0
    // For debugging: Useful to see if an app passes colour data in
    // an unusual format.
-   switch (VB->ColorPtr[0]->Type) {
+   switch (VB->AttribPtr[_TNL_ATTRIB_COLOR0]->Type) {
    case GL_FLOAT:
 	   ddlogMessage(GLDLOG_SYSTEM, "ColorPtr: GL_FLOAT\n");
 	   break;

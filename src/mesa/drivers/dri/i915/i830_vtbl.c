@@ -126,7 +126,7 @@ i830_render_start(struct intel_context *intel)
 
       for (i = 0; i < I830_TEX_UNITS; i++) {
          if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_TEX(i))) {
-            GLuint sz = VB->TexCoordPtr[i]->size;
+            GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
             GLuint emit;
             GLuint mcs = (i830->state.Tex[i][I830_TEXREG_MCS] &
                           ~TEXCOORDTYPE_MASK);
@@ -714,9 +714,6 @@ i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
 }
 
 static void 

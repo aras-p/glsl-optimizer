@@ -667,9 +667,6 @@ i915_new_batch(struct intel_context *intel)
     * difficulties associated with them (physical address requirements).
     */
    i915->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
 }
 
 static void 

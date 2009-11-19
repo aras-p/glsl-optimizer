@@ -103,10 +103,10 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_TEX1
    {
       const GLuint t1 = GET_TEXSOURCE(1);
-      tc1 = VB->TexCoordPtr[t1]->data;
-      tc1_stride = VB->TexCoordPtr[t1]->stride;
+      tc1 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->data;
+      tc1_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->stride;
 #if DO_PTEX
-      tc1_size = VB->TexCoordPtr[t1]->size;
+      tc1_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size;
 #endif
    }
 #endif
@@ -114,18 +114,18 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_TEX0
    {
       const GLuint t0 = GET_TEXSOURCE(0);
-      tc0 = VB->TexCoordPtr[t0]->data;
-      tc0_stride = VB->TexCoordPtr[t0]->stride;
+      tc0 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->data;
+      tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->stride;
 #if DO_PTEX
-      tc0_size = VB->TexCoordPtr[t0]->size;
+      tc0_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size;
 #endif
    }
 #endif
 
 #if DO_SPEC
-   if (VB->SecondaryColorPtr[0]) {
-      spec = VB->SecondaryColorPtr[0]->data;
-      spec_stride = VB->SecondaryColorPtr[0]->stride;
+   if (VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
+      spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
+      spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
    } else {
       spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
       spec_stride = 0;
@@ -133,9 +133,9 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_FOG
-   if (VB->FogCoordPtr) {
-      fog = VB->FogCoordPtr->data;
-      fog_stride = VB->FogCoordPtr->stride;
+   if (VB->AttribPtr[_TNL_ATTRIB_FOG]) {
+      fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+      fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
    } else {
       static GLfloat tmp[4] = {0, 0, 0, 0};
       fog = &tmp;
@@ -144,8 +144,8 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_RGBA
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
+   col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+   col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
 #endif
 
    coord = VB->NdcPtr->data;
@@ -319,8 +319,8 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    /* Force 'missing' texcoords to something valid.
     */
-   if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
-      VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
+   if (DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX0] = VB->AttribPtr[_TNL_ATTRIB_TEX1];
 
    if (DO_PTEX)
       return GL_TRUE;
@@ -328,12 +328,12 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    /* No hardware support for projective texture.  Can fake it for
     * TEX0 only.
     */
-   if ((DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4)) {
+   if ((DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(1)]->size == 4)) {
       PTEX_FALLBACK();
       return GL_FALSE;
    }
 
-   if (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4) {
+   if (DO_TEX0 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(0)]->size == 4) {
       if (DO_TEX1) {
 	 PTEX_FALLBACK();
       }

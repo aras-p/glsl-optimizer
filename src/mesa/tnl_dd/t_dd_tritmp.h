@@ -195,7 +195,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  }
 	       }
 	       else {
-		  GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
+		  GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
 		  (void) vbcolor;
 
 		  if (!DO_FLAT) {
@@ -204,8 +204,8 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  }
 		  VERT_SAVE_RGBA( 2 );
 
-		  if (VB->ColorPtr[1]->stride) {
-		     ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLfloat));
+		  if (VB->BackfaceColorPtr->stride) {
+		     ASSERT(VB->BackfaceColorPtr->stride == 4*sizeof(GLfloat));
 
 		     if (!DO_FLAT) {		  
 			VERT_SET_RGBA( v[0], vbcolor[e0] );
@@ -221,9 +221,9 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		     VERT_SET_RGBA( v[2], vbcolor[0] );
 		  }
 
-		  if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
-		     ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLfloat));
+		  if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
+		     GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
+		     ASSERT(VB->BackfaceSecondaryColorPtr->stride == 4*sizeof(GLfloat));
 
 		     if (!DO_FLAT) {
 			VERT_SAVE_SPEC( 0 );
@@ -237,7 +237,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	       }
 	    }
 	    else {
-	       GLfloat (*vbindex) = (GLfloat *)VB->IndexPtr[1]->data;
+	       GLfloat (*vbindex) = (GLfloat *)VB->BackfaceIndexPtr->data;
 	       if (!DO_FLAT) {
 		  VERT_SAVE_IND( 0 );
 		  VERT_SAVE_IND( 1 );
@@ -279,7 +279,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 VERT_SAVE_RGBA( 1 );
 	 VERT_COPY_RGBA( v[0], v[2] );
 	 VERT_COPY_RGBA( v[1], v[2] );
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_SAVE_SPEC( 0 );
 	    VERT_SAVE_SPEC( 1 );
 	    VERT_COPY_SPEC( v[0], v[2] );
@@ -374,7 +374,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA( 0 );
 	 VERT_RESTORE_RGBA( 1 );
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_RESTORE_SPEC( 0 );
 	    VERT_RESTORE_SPEC( 1 );
 	 }
@@ -436,7 +436,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	 if (DO_TWOSIDE && facing == 1)
 	 {
 	    if (HAVE_RGBA) {
-	       GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
+	       GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
 	       (void)vbcolor;
 
 	       if (HAVE_BACK_COLORS) {
@@ -471,7 +471,7 @@ static void TAG(quadr)( GLcontext *ctx,
 		  }
 	          VERT_SAVE_RGBA( 3 );
 
-		  if (VB->ColorPtr[1]->stride) {
+		  if (VB->BackfaceColorPtr->stride) {
 		     if (!DO_FLAT) {
 			VERT_SET_RGBA( v[0], vbcolor[e0] );
 			VERT_SET_RGBA( v[1], vbcolor[e1] );
@@ -488,9 +488,9 @@ static void TAG(quadr)( GLcontext *ctx,
 		     VERT_SET_RGBA( v[3], vbcolor[0] );
 		  }
 
-	          if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
-		     ASSERT(VB->SecondaryColorPtr[1]->stride==4*sizeof(GLfloat));
+	          if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
+		     GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
+		     ASSERT(VB->BackfaceSecondaryColorPtr->stride==4*sizeof(GLfloat));
 
 		     if (!DO_FLAT) {
 		        VERT_SAVE_SPEC( 0 );
@@ -506,7 +506,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	       }
 	    }
 	    else {
-	       GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
+	       GLfloat *vbindex = (GLfloat *)VB->BackfaceIndexPtr->data;
 	       if (!DO_FLAT) {
 		  VERT_SAVE_IND( 0 );
 		  VERT_SAVE_IND( 1 );
@@ -553,7 +553,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	 VERT_COPY_RGBA( v[0], v[3] );
 	 VERT_COPY_RGBA( v[1], v[3] );
 	 VERT_COPY_RGBA( v[2], v[3] );
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_SAVE_SPEC( 0 );
 	    VERT_SAVE_SPEC( 1 );
 	    VERT_SAVE_SPEC( 2 );
@@ -659,7 +659,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	 VERT_RESTORE_RGBA( 0 );
 	 VERT_RESTORE_RGBA( 1 );
 	 VERT_RESTORE_RGBA( 2 );
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_RESTORE_SPEC( 0 );
 	    VERT_RESTORE_SPEC( 1 );
 	    VERT_RESTORE_SPEC( 2 );
@@ -708,7 +708,7 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
       if (HAVE_RGBA) {
 	 VERT_SAVE_RGBA( 0 );
 	 VERT_COPY_RGBA( v[0], v[1] );
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_SAVE_SPEC( 0 );
 	    VERT_COPY_SPEC( v[0], v[1] );
 	 }
@@ -725,7 +725,7 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
       if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA( 0 );
 
-	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_RESTORE_SPEC( 0 );
 	 }
       }
