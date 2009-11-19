@@ -47,8 +47,8 @@ struct r300_shader_derived_value {
 
 unsigned r300_shader_key_hash(void* key) {
     struct r300_shader_key* shader_key = (struct r300_shader_key*)key;
-    unsigned vs = (unsigned)shader_key->vs;
-    unsigned fs = (unsigned)shader_key->fs;
+    unsigned vs = (intptr_t)shader_key->vs;
+    unsigned fs = (intptr_t)shader_key->fs;
 
     return (vs << 16) | (fs & 0xffff);
 }
