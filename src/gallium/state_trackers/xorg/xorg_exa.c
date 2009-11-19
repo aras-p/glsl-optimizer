@@ -170,15 +170,7 @@ xorg_exa_common_done(struct exa_context *exa)
 static void
 ExaWaitMarker(ScreenPtr pScreen, int marker)
 {
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-   modesettingPtr ms = modesettingPTR(pScrn);
-   struct exa_context *exa = ms->exa;
-
-#if 0
-   xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
-#else
-   xorg_exa_finish(exa);
-#endif
+   /* Nothing to do, handled in the PrepareAccess hook */
 }
 
 static int
