@@ -940,7 +940,8 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
 /**
  * Convert a GL texture target enum such as GL_TEXTURE_2D or GL_TEXTURE_3D
  * into the corresponding Mesa texture target index.
- * Return -1 if target is invalid.
+ * Note that proxy targets are not valid here.
+ * \return TEXTURE_x_INDEX or -1 if target is invalid
  */
 static GLint
 target_enum_to_index(GLenum target)
