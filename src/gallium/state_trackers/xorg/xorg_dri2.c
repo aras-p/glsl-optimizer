@@ -127,9 +127,12 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     }
 
     if (!tex) {
+	/* First call to make sure we have a pixmap private */
 	exaMoveInPixmap(private->pPixmap);
 	xorg_exa_set_shared_usage(private->pPixmap);
 	pScreen->ModifyPixmapHeader(private->pPixmap, 0, 0, 0, 0, 0, NULL);
+	/* Second call to make sure texture has valid contents */
+	exaMoveInPixmap(private->pPixmap);
 	tex = xorg_exa_get_texture(private->pPixmap);
     }
 
