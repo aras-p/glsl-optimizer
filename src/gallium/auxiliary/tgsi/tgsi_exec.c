@@ -1698,6 +1698,64 @@ exec_tex(struct tgsi_exec_machine *mach,
    }
 }
 
+static void
+exec_txd(struct tgsi_exec_machine *mach,
+         const struct tgsi_full_instruction *inst)
+{
+   const uint unit = inst->FullSrcRegisters[3].SrcRegister.Index;
+   union tgsi_exec_channel r[4];
+   uint chan_index;
+
+   /*
+    * XXX: This is fake TXD -- the derivatives are not taken into account, yet.
+    */
+
+   switch (inst->InstructionExtTexture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+
+      FETCH(&r[0], 0, CHAN_X);
+
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &ZeroVec, &ZeroVec, 0.0f,  /* S, T, P, BIAS */
+                  &r[0], &r[1], &r[2], &r[3]);      /* R, G, B, A */
+      break;
+
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &r[1], &r[2], 0.0f,    /* inputs */
+                  &r[0], &r[1], &r[2], &r[3]);  /* outputs */
+      break;
+
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &r[1], &r[2], 0.0f,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   default:
+      assert(0);
+   }
+
+   FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+      STORE(&r[chan_index], 0, chan_index);
+   }
+}
+
 
 /**
  * Evaluate a constant-valued coefficient at the position of the
@@ -2507,7 +2565,7 @@ exec_instruction(
       /* src[1] = d[strq]/dx */
       /* src[2] = d[strq]/dy */
       /* src[3] = sampler unit */
-      assert (0);
+      exec_txd(mach, inst);
       break;
 
    case TGSI_OPCODE_TXL:
