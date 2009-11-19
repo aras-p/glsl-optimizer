@@ -202,7 +202,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       struct brw_reg r;
       int j;
 
-      r = brw_vec8_grf(reg, 0);
+      c->regs[TGSI_FILE_IMMEDIATE][i] = 
+         r = brw_vec8_grf(reg, 0);
 
       for (j = 0; j < 4; j++) {
 	 brw_MOV(&c->func, 
@@ -1628,7 +1629,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
 
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
 	 static const float id[4] = {0,0,0,1};
-	 const float *imm = &parse.FullToken.FullImmediate.u[i].Float;
+	 const float *imm = &parse.FullToken.FullImmediate.u[0].Float;
 	 unsigned size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
 
 	 for (i = 0; i < size; i++)
