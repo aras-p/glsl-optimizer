@@ -84,7 +84,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(60 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(56 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -135,8 +135,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-    OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
-    OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
 
     /* XXX */
