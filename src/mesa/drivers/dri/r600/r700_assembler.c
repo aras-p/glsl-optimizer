@@ -4986,14 +4986,28 @@ inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason)
     switch (uReason)
     {
     case FC_PUSH_VPM:
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs++;
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.current++;
         break;
     case FC_PUSH_WQM:
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs++;
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.current += 4;
         break;
     case FC_LOOP:
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs += 4;
         break;
     case FC_REP:
+        /* TODO : for 16 vp asic, should += 2; */
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs += 1;
         break;
     };
+
+    if(pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs
+         > pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.max)
+    {
+        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.max =
+            pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs;
+    }
 }
 
 GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset)
@@ -5092,10 +5106,6 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
 
 GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
 {
-#ifdef USE_CF_FOR_POP_AFTER
-    pops(pAsm, 1);
-#endif /* USE_CF_FOR_POP_AFTER */
-
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
         return GL_FALSE;
@@ -5648,6 +5658,8 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 #endif
+
+    checkStackDepth(pAsm, FC_PUSH_VPM);
 
     return GL_TRUE;
 }
