@@ -39,7 +39,7 @@
 #include "r700_assembler.h"
 
 #define USE_CF_FOR_CONTINUE_BREAK 1
-#define USE_CF_FOR_POP_AFTER      1
+//#define USE_CF_FOR_POP_AFTER      1
 
 BITS addrmode_PVSDST(PVSDST * pPVSDST)
 {
