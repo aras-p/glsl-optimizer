@@ -368,8 +368,6 @@ driScreenInit(ScreenPtr pScreen)
 #if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
-    dri2info.CreateBuffers = NULL;
-    dri2info.DestroyBuffers = NULL;
 #else
     dri2info.CreateBuffers = driCreateBuffers;
     dri2info.DestroyBuffers = driDestroyBuffers;
