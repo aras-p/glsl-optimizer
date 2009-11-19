@@ -3087,6 +3087,8 @@ exec_instruction(
    }
 }
 
+#define DEBUG_EXECUTION 0
+
 
 /**
  * Run TGSI interpreter.
@@ -3130,10 +3132,67 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
       exec_declaration( mach, mach->Declarations+i );
    }
 
-   /* execute instructions, until pc is set to -1 */
-   while (pc != -1) {
-      assert(pc < (int) mach->NumInstructions);
-      exec_instruction( mach, mach->Instructions + pc, &pc );
+   {
+#if DEBUG_EXECUTION
+      struct tgsi_exec_vector temps[TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_TEMP_EXTRAS];
+      struct tgsi_exec_vector outputs[PIPE_MAX_ATTRIBS];
+      uint inst = 1;
+
+      memcpy(temps, mach->Temps, sizeof(temps));
+      memcpy(outputs, mach->Outputs, sizeof(outputs));
+#endif
+
+      /* execute instructions, until pc is set to -1 */
+      while (pc != -1) {
+
+#if DEBUG_EXECUTION
+         uint i;
+
+         tgsi_dump_instruction(&mach->Instructions[pc], inst++);
+#endif
+
+         assert(pc < (int) mach->NumInstructions);
+         exec_instruction(mach, mach->Instructions + pc, &pc);
+
+#if DEBUG_EXECUTION
+         for (i = 0; i < TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_TEMP_EXTRAS; i++) {
+            if (memcmp(&temps[i], &mach->Temps[i], sizeof(temps[i]))) {
+               uint j;
+
+               memcpy(&temps[i], &mach->Temps[i], sizeof(temps[i]));
+               debug_printf("TEMP[%2u] = ", i);
+               for (j = 0; j < 4; j++) {
+                  if (j > 0) {
+                     debug_printf("           ");
+                  }
+                  debug_printf("(%6f, %6f, %6f, %6f)\n",
+                               temps[i].xyzw[0].f[j],
+                               temps[i].xyzw[1].f[j],
+                               temps[i].xyzw[2].f[j],
+                               temps[i].xyzw[3].f[j]);
+               }
+            }
+         }
+         for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
+            if (memcmp(&outputs[i], &mach->Outputs[i], sizeof(outputs[i]))) {
+               uint j;
+
+               memcpy(&outputs[i], &mach->Outputs[i], sizeof(outputs[i]));
+               debug_printf("OUT[%2u] =  ", i);
+               for (j = 0; j < 4; j++) {
+                  if (j > 0) {
+                     debug_printf("           ");
+                  }
+                  debug_printf("{%6f, %6f, %6f, %6f}\n",
+                               outputs[i].xyzw[0].f[j],
+                               outputs[i].xyzw[1].f[j],
+                               outputs[i].xyzw[2].f[j],
+                               outputs[i].xyzw[3].f[j]);
+               }
+            }
+         }
+#endif
+      }
    }
 
 #if 0
