@@ -101,16 +101,17 @@ brw_tex_set_level_info(struct brw_texture *tex,
 		       GLuint x, GLuint y,
 		       GLuint w, GLuint h, GLuint d)
 {
-   assert(tex->base.width[level] == w);
-   assert(tex->base.height[level] == h);
-   assert(tex->base.depth[level] == d);
-   assert(tex->image_offset[level] == NULL);
-   assert(nr_images >= 1);
 
    if (BRW_DEBUG & DEBUG_TEXTURE)
       debug_printf("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
 		   level, w, h, d, x, y, tex->level_offset[level]);
 
+   assert(tex->image_offset[level] == NULL);
+   assert(nr_images >= 1);
+
+   tex->base.width[level] = w;
+   tex->base.height[level] = h;
+   tex->base.depth[level] = d;
 
    tex->level_offset[level] = (x + y * tex->pitch) * tex->cpp;
    tex->nr_images[level] = nr_images;
