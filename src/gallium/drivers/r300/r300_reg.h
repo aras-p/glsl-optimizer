@@ -1293,7 +1293,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #        define R500_RS_INST_TEX_ID(x)                  ((x) << 0)
 #define R500_RS_INST_TEX_CN_WRITE			(1 << 4)
 #define R500_RS_INST_TEX_ADDR_SHIFT			5
-#        define R500_RS_INST_TEX_ADDR(x)                ((x) << 0)
+#        define R500_RS_INST_TEX_ADDR(x)                ((x) << 5)
 #define R500_RS_INST_COL_ID_SHIFT			12
 #        define R500_RS_INST_COL_ID(x)                  ((x) << 12)
 #define R500_RS_INST_COL_CN_NO_WRITE			(0 << 16)

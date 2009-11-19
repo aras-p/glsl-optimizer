@@ -381,17 +381,18 @@ static void r300_update_rs_block(struct r300_context* r300,
             col_count++;
         }
 
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R500_RS_INST_COL_ID(i) |
+                R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
+        }
+
         for (i = 0; i < tex_count; i++) {
             rs->inst[i] |= R500_RS_INST_TEX_ID(i) |
                 R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_offset);
             fp_offset++;
         }
 
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R500_RS_INST_COL_ID(i) |
-                R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_offset);
-            fp_offset++;
-        }
     } else {
         for (i = 0; i < info->num_inputs; i++) {
             switch (info->input_semantic_name[i]) {
@@ -416,8 +417,10 @@ static void r300_update_rs_block(struct r300_context* r300,
             }
         }
 
+        /* Rasterize at least one color, or bad things happen. */
         if (col_count == 0) {
             rs->ip[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+            col_count++;
         }
 
         if (tex_count == 0) {
@@ -428,20 +431,15 @@ static void r300_update_rs_block(struct r300_context* r300,
                 R300_RS_SEL_Q(R300_RS_SEL_K1);
         }
 
-        /* Rasterize at least one color, or bad things happen. */
-        if ((col_count == 0) && (tex_count == 0)) {
-            col_count++;
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R300_RS_INST_COL_ID(i) |
+                R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
         }
 
         for (i = 0; i < tex_count; i++) {
             rs->inst[i] |= R300_RS_INST_TEX_ID(i) |
                 R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_offset);
-            fp_offset++;
-        }
-
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R300_RS_INST_COL_ID(i) |
-                R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
     }
