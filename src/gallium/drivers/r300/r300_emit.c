@@ -690,12 +690,35 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
+/* XXX This should probably go to util ... */
+/* Return the number of bits set in the given number. */
+static unsigned bitcount(unsigned n)
+{
+    unsigned bits;
+    for (bits = 0; n > 0; n = n >> 1) {
+        bits += n & 1;
+    }
+    return bits;
+}
+
+/* XXX ... and this one too. */
+#define MIN3(x, y, z) MIN2(MIN2(x, y), z)
+
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code)
 {
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     unsigned instruction_count = code->length / 4;
+
+    int vtx_mem_size = r300screen->caps->is_r500 ? 128 : 72;
+    int input_count = MAX2(bitcount(code->InputsRead), 1);
+    int output_count = MAX2(bitcount(code->OutputsWritten), 1);
+    int temp_count = MAX2(code->num_temporaries, 1);
+    int pvs_num_slots = MIN3(vtx_mem_size / input_count,
+                             vtx_mem_size / output_count, 10);
+    int pvs_num_controllers = MIN2(6, vtx_mem_size / temp_count);
+
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
@@ -708,8 +731,7 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1
-     * See the r5xx docs for instructions on how to use these.
-     * XXX these could be optimized to select better values... */
+     * See the r5xx docs for instructions on how to use these. */
     OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
     OUT_CS(R300_PVS_FIRST_INST(0) |
             R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
@@ -722,10 +744,11 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     for (i = 0; i < code->length; i++)
         OUT_CS(code->body.d[i]);
 
-    OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(10) |
-            R300_PVS_NUM_CNTLRS(5) |
+    OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(pvs_num_slots) |
+            R300_PVS_NUM_CNTLRS(pvs_num_controllers) |
             R300_PVS_NUM_FPUS(r300screen->caps->num_vert_fpus) |
-            R300_PVS_VF_MAX_VTX_NUM(12));
+            R300_PVS_VF_MAX_VTX_NUM(12) |
+            (r300screen->caps->is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
     END_CS;
 }
 
