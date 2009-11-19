@@ -120,7 +120,7 @@ softpipe_destroy( struct pipe_context *pipe )
  * if (the texture is being used as a framebuffer surface)
  *    return PIPE_REFERENCED_FOR_WRITE
  * else if (the texture is a bound texture source)
- *    return PIPE_REFERENCED_FOR_READ  XXX not done yet
+ *    return PIPE_REFERENCED_FOR_READ
  * else
  *    return PIPE_UNREFERENCED
  */
@@ -132,6 +132,7 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context( pipe );
    unsigned i;
 
+   /* check if any of the bound drawing surfaces are this texture */
    if (softpipe->dirty_render_cache) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
          if (softpipe->framebuffer.cbufs[i] && 
@@ -145,7 +146,12 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
       }
    }
    
-   /* FIXME: we also need to do the same for the texture cache */
+   /* check if any of the tex_cache textures are this texture */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      if (softpipe->tex_cache[i] &&
+          softpipe->tex_cache[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ;
+   }
    
    return PIPE_UNREFERENCED;
 }
