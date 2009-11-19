@@ -256,7 +256,7 @@ copy_packed_data(ScrnInfoPtr pScrn,
    switch (id) {
    case FOURCC_YV12: {
       for (i = 0; i < w; ++i) {
-         for (j = 0; i < h; ++j) {
+         for (j = 0; j < h; ++j) {
             /*XXX use src? */
             y1  = buf[j*w + i];
             u   = buf[(j/2) * (w/2) + i/2 + y_array_size];
