@@ -119,25 +119,6 @@ compressed_num_bytes(gl_format format)
 }
 
 
-static GLboolean
-is_compressed_mesa_format(gl_format format)
-{
-   switch (format) {
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
 /** called via ctx->Driver.NewTextureImage() */
 static struct gl_texture_image *
 st_NewTextureImage(GLcontext * ctx)
@@ -663,7 +644,7 @@ st_TexImage(GLcontext * ctx,
     */
    if (!compressed_src &&
        !ctx->Mesa_DXTn &&
-       is_compressed_mesa_format(texImage->TexFormat) &&
+       _mesa_is_format_compressed(texImage->TexFormat) &&
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
@@ -1066,7 +1047,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
    /* See if we can do texture compression with a blit/render.
     */
    if (!ctx->Mesa_DXTn &&
-       is_compressed_mesa_format(texImage->TexFormat) &&
+       _mesa_is_format_compressed(texImage->TexFormat) &&
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
