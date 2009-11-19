@@ -1724,8 +1724,6 @@ copy_image_data_to_texture(struct st_context *st,
       pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
-      assert(stImage->base.Data != NULL);
-
       /* More straightforward upload.  
        */
 
