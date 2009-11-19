@@ -294,6 +294,7 @@ process_input(Display *dpy, Window win) {
 	    default:
 		break;
 	    }
+	    break;
 	case ButtonPress:
 	    prevx = event.xbutton.x;
 	    prevy = event.xbutton.y;
