@@ -590,10 +590,15 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
 {
    struct gl_shader *newShader;
    const struct gl_shader *firstShader = NULL;
-   GLuint shaderLengths[100];
+   GLuint *shaderLengths;
    GLchar *source;
    GLuint totalLen = 0, len = 0;
    GLuint i;
+
+   shaderLengths = (GLuint *)_mesa_malloc(shProg->NumShaders * sizeof(GLuint));
+   if (!shaderLengths) {
+      return NULL;
+   }
 
    /* compute total size of new shader source code */
    for (i = 0; i < shProg->NumShaders; i++) {
@@ -606,12 +611,16 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
       }
    }
 
-   if (totalLen == 0)
+   if (totalLen == 0) {
+      _mesa_free(shaderLengths);
       return NULL;
+   }
 
    source = (GLchar *) _mesa_malloc(totalLen + 1);
-   if (!source)
+   if (!source) {
+      _mesa_free(shaderLengths);
       return NULL;
+   }
 
    /* concatenate shaders */
    for (i = 0; i < shProg->NumShaders; i++) {
@@ -626,9 +635,16 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
    */
 
+   _mesa_free(shaderLengths);
+
    remove_extra_version_directives(source);
 
    newShader = CALLOC_STRUCT(gl_shader);
+   if (!newShader) {
+      _mesa_free(source);
+      return NULL;
+   }
+
    newShader->Type = shaderType;
    newShader->Source = source;
    newShader->Pragmas = firstShader->Pragmas;
