@@ -455,8 +455,8 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    assert(dst_area);
    assert(picture_type == PIPE_MPEG12_PICTURE_TYPE_FRAME);
 
-   compositor->fb_state.width = dst_surface->width[0];
-   compositor->fb_state.height = dst_surface->height[0];
+   compositor->fb_state.width = dst_surface->width0;
+   compositor->fb_state.height = dst_surface->height0;
    compositor->fb_state.cbufs[0] = compositor->pipe->screen->get_tex_surface
    (
       compositor->pipe->screen,
@@ -504,12 +504,12 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    vs_consts->dst_trans.z = 0;
    vs_consts->dst_trans.w = 0;
 
-   vs_consts->src_scale.x = src_area->w / (float)src_surface->width[0];
-   vs_consts->src_scale.y = src_area->h / (float)src_surface->height[0];
+   vs_consts->src_scale.x = src_area->w / (float)src_surface->width0;
+   vs_consts->src_scale.y = src_area->h / (float)src_surface->height0;
    vs_consts->src_scale.z = 1;
    vs_consts->src_scale.w = 1;
-   vs_consts->src_trans.x = src_area->x / (float)src_surface->width[0];
-   vs_consts->src_trans.y = src_area->y / (float)src_surface->height[0];
+   vs_consts->src_trans.x = src_area->x / (float)src_surface->width0;
+   vs_consts->src_trans.y = src_area->y / (float)src_surface->height0;
    vs_consts->src_trans.z = 0;
    vs_consts->src_trans.w = 0;
 

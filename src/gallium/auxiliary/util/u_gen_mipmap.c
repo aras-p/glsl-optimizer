@@ -45,6 +45,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_gen_mipmap.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_math.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -1125,12 +1126,12 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       
       srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
-                                          pt->width[srcLevel],
-                                          pt->height[srcLevel]);
+                                          u_minify(pt->width0, srcLevel),
+                                          u_minify(pt->height0, srcLevel));
       dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
-                                          pt->width[dstLevel],
-                                          pt->height[dstLevel]);
+                                          u_minify(pt->width0, dstLevel),
+                                          u_minify(pt->height0, dstLevel));
 
       srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);
@@ -1168,12 +1169,12 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       
       srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
-                                          pt->width[srcLevel],
-                                          pt->height[srcLevel]);
+                                          u_minify(pt->width0, srcLevel),
+                                          u_minify(pt->height0, srcLevel));
       dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
-                                          pt->width[dstLevel],
-                                          pt->height[dstLevel]);
+                                          u_minify(pt->width0, dstLevel),
+                                          u_minify(pt->height0, dstLevel));
 
       srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);
@@ -1575,8 +1576,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * Setup framebuffer / dest surface
        */
       fb.cbufs[0] = surf;
-      fb.width = pt->width[dstLevel];
-      fb.height = pt->height[dstLevel];
+      fb.width = u_minify(pt->width0, dstLevel);
+      fb.height = u_minify(pt->height0, dstLevel);
       cso_set_framebuffer(ctx->cso, &fb);
 
       /*
@@ -1597,8 +1598,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       offset = set_vertex_data(ctx,
                                pt->target,
                                face,
-                               (float) pt->width[dstLevel],
-                               (float) pt->height[dstLevel]);
+                               (float) u_minify(pt->width0, dstLevel),
+                               (float) u_minify(pt->height0, dstLevel));
 
       util_draw_vertex_buffer(ctx->pipe, 
                               ctx->vbuf,

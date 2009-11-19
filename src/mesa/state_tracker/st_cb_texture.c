@@ -451,9 +451,9 @@ compress_with_blit(GLcontext * ctx,
    templ.target = PIPE_TEXTURE_2D;
    templ.format = st_mesa_format_to_pipe_format(mesa_format);
    pf_get_block(templ.format, &templ.block);
-   templ.width[0] = width;
-   templ.height[0] = height;
-   templ.depth[0] = 1;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
    templ.last_level = 0;
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
    src_tex = screen->texture_create(screen, &templ);
@@ -1813,9 +1813,9 @@ st_finalize_texture(GLcontext *ctx,
       if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
           stObj->pt->format != fmt ||
           stObj->pt->last_level < stObj->lastLevel ||
-          stObj->pt->width[0] != firstImage->base.Width2 ||
-          stObj->pt->height[0] != firstImage->base.Height2 ||
-          stObj->pt->depth[0] != firstImage->base.Depth2 ||
+          stObj->pt->width0 != firstImage->base.Width2 ||
+          stObj->pt->height0 != firstImage->base.Height2 ||
+          stObj->pt->depth0 != firstImage->base.Depth2 ||
           /* Nominal bytes per pixel: */
           stObj->pt->block.size / stObj->pt->block.width != cpp)
       {

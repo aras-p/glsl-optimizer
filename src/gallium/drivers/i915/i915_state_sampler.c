@@ -231,7 +231,7 @@ i915_update_texture(struct i915_context *i915,
 {
    const struct pipe_texture *pt = &tex->base;
    uint format, pitch;
-   const uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
+   const uint width = pt->width0, height = pt->height0, depth = pt->depth0;
    const uint num_levels = pt->last_level;
    unsigned max_lod = num_levels * 4;
    unsigned tiled = MS3_USE_FENCE_REGS;

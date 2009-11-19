@@ -243,7 +243,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       GLint row, col, dy, dstStride;
 
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-         y = strb->texture->height[0] - y - height;
+         y = strb->texture->height0 - y - height;
       }
 
       trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,

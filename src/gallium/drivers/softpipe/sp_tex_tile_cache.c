@@ -35,6 +35,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
+#include "util/u_math.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_texture.h"
@@ -246,9 +247,9 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                                      addr.bits.level, 
                                      addr.bits.z, 
                                      PIPE_TRANSFER_READ, 0, 0,
-                                     tc->texture->width[addr.bits.level],
-                                     tc->texture->height[addr.bits.level]);
-
+                                     u_minify(tc->texture->width0, addr.bits.level),
+                                     u_minify(tc->texture->height0, addr.bits.level));
+         
          tc->tex_trans_map = screen->transfer_map(screen, tc->tex_trans);
 
          tc->tex_face = addr.bits.face;

@@ -398,9 +398,9 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.target = PIPE_TEXTURE_2D;
    texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = MAX_TEXTURE_LEVEL;
-   texTemp.width[0] = 1 << MAX_TEXTURE_LEVEL;
-   texTemp.height[0] = 1 << MAX_TEXTURE_LEVEL;
-   texTemp.depth[0] = 1;
+   texTemp.width0 = 1 << MAX_TEXTURE_LEVEL;
+   texTemp.height0 = 1 << MAX_TEXTURE_LEVEL;
+   texTemp.depth0 = 1;
    pf_get_block(texTemp.format, &texTemp.block);
 
    aaline->texture = screen->texture_create(screen, &texTemp);
@@ -413,11 +413,11 @@ aaline_create_texture(struct aaline_stage *aaline)
     */
    for (level = 0; level <= MAX_TEXTURE_LEVEL; level++) {
       struct pipe_transfer *transfer;
-      const uint size = aaline->texture->width[level];
+      const uint size = u_minify(aaline->texture->width0, level);
       ubyte *data;
       uint i, j;
 
-      assert(aaline->texture->width[level] == aaline->texture->height[level]);
+      assert(aaline->texture->width0 == aaline->texture->height0);
 
       /* This texture is new, no need to flush. 
        */

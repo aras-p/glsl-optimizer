@@ -128,9 +128,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       template.target = PIPE_TEXTURE_2D;
       template.format = format;
       pf_get_block(format, &template.block);
-      template.width[0] = width;
-      template.height[0] = height;
-      template.depth[0] = 1;
+      template.width0 = width;
+      template.height0 = height;
+      template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (pf_is_depth_stencil(format)) {
