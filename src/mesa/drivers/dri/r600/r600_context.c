@@ -370,23 +370,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	assert(driContextPriv);
 	assert(screen);
 
-    //richard test
-    FILE        *pFile = NULL;
-	unsigned long ulByteToWrite = 0;
-    char         szStr[1024];
-
-    pFile = fopen("//home//richard//rtp-log//func_call.log", "a+");
-    if(NULL != pFile)
-    {
-        sprintf(szStr, "r600CreateContext \r\n");
-	    ulByteToWrite = strlen(szStr);
-	    fwrite(szStr, 1, ulByteToWrite, pFile);
-
-        fclose(pFile);
-        pFile = NULL;
-    }
-    //-------------
-
 	/* Allocate the R600 context */
 	r600 = (context_t*) CALLOC(sizeof(*r600));
 	if (!r600) {
