@@ -249,9 +249,9 @@ softpipe_create( struct pipe_screen *screen )
 
 
    /* setup quad rendering stages */
-      softpipe->quad.shade = sp_quad_shade_stage(softpipe);
-      softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
-      softpipe->quad.blend = sp_quad_blend_stage(softpipe);
+   softpipe->quad.shade = sp_quad_shade_stage(softpipe);
+   softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
+   softpipe->quad.blend = sp_quad_blend_stage(softpipe);
 
 
    /*
@@ -281,7 +281,6 @@ softpipe_create( struct pipe_screen *screen )
    draw_set_render(softpipe->draw, softpipe->vbuf_backend);
 
 
-
    /* plug in AA line/point stages */
    draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
    draw_install_aapoint_stage(softpipe->draw, &softpipe->pipe);
@@ -297,4 +296,3 @@ softpipe_create( struct pipe_screen *screen )
    softpipe_destroy(&softpipe->pipe);
    return NULL;
 }
-
