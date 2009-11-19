@@ -24,6 +24,8 @@ struct exa_context
    float solid_color[4];
    boolean has_solid_color;
 
+   boolean accel;
+
    /* float[9] projective matrix bound to pictures */
    struct {
       float    src[9];

@@ -276,6 +276,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
     PixmapPtr dst_pixmap;
     GCPtr gc;
     RegionPtr copy_clip;
+    Bool save_accel;
 
     /*
      * In driCreateBuffers we dewrap windows into the
@@ -341,8 +342,11 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 	}
     }
 
+    save_accel = ms->exa->accel;
+    ms->exa->accel = TRUE;
     (*gc->ops->CopyArea)(&src_pixmap->drawable, &dst_pixmap->drawable, gc,
 			 0, 0, pDraw->width, pDraw->height, 0, 0);
+    ms->exa->accel = save_accel;
 
     FreeScratchGC(gc);
 
