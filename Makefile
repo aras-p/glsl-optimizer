@@ -433,8 +433,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c			\
-	$(DIRECTORY)/windows/VC7/progs/progs.sln
+	$(DIRECTORY)/progs/ggi/*.c
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
@@ -457,9 +456,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
 	$(DIRECTORY)/src/glut/directfb/Makefile		\
 	$(DIRECTORY)/src/glut/directfb/NOTES		\
-	$(DIRECTORY)/src/glut/directfb/*[ch]		\
-	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
-	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
+	$(DIRECTORY)/src/glut/directfb/*[ch]
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
