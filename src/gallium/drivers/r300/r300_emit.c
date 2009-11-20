@@ -837,13 +837,22 @@ void r300_emit_viewport_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_texture_count(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    END_CS;
+
+}
+
 void r300_flush_textures(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(4);
+    BEGIN_CS(2);
     OUT_CS_REG(R300_TX_INVALTAGS, 0);
-    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
     END_CS;
 }
 
@@ -997,6 +1006,8 @@ validate:
     /* Samplers and textures are tracked separately but emitted together. */
     if (r300->dirty_state &
             (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
+        r300_emit_texture_count(r300);
+
         for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
   	    if (r300->dirty_state &
 		((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
