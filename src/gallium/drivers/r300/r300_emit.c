@@ -129,7 +129,7 @@ static const float * get_shader_constant(
     struct rc_constant * constant,
     struct r300_constant_buffer * externals)
 {
-    static float vec[4] = { 0.0, 0.0, 0.0, 0.0 };
+    static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
 
     switch(constant->Type) {
@@ -140,26 +140,30 @@ static const float * get_shader_constant(
             return constant->u.Immediate;
 
         case RC_CONSTANT_STATE:
-            switch (constant->u.State[0])
-            {
-                /* R3xx-specific */
+            switch (constant->u.State[0]) {
+                /* Factor for converting rectangle coords to
+                 * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
                     tex = &r300->textures[constant->u.State[1]]->tex;
                     vec[0] = 1.0 / tex->width[0];
                     vec[1] = 1.0 / tex->height[0];
-                    vec[2] = vec[3] = 1;
                     break;
 
                 default:
-                    assert(0);
+                    debug_printf("r300: Implementation error: "
+                        "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
             }
-            return vec;
+            break;
 
         default:
-            debug_printf("r300: Implementation error: Unhandled constant type %i\n",
-                constant->Type);
-            return vec;
+            debug_printf("r300: Implementation error: "
+                "Unhandled constant type %d\n", constant->Type);
     }
+
+    /* This should either be (0, 0, 0, 1), which should be a relatively safe
+     * RGBA or STRQ value, or it could be one of the RC_CONSTANT_STATE
+     * state factors. */
+    return vec;
 }
 
 /* Convert a normal single-precision float into the 7.16 format
