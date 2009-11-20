@@ -640,7 +640,7 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    OUT_BATCH_TABLE(atom->cmd, 10);
 
    if (t && t->mt && !t->image_override) {
-     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {
      /* workaround for old CS mechanism */

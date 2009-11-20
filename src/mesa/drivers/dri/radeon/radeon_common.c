@@ -257,7 +257,9 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
-		radeon_firevertices(radeon);
+		if (!radeon->radeonScreen->kernel_mm) {
+			radeon_firevertices(radeon);
+		}
 		radeonUpdateScissor(ctx);
 	}
 }
@@ -1123,8 +1125,6 @@ void radeonFlush(GLcontext *ctx)
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
 
-	radeonEmitState(radeon);
-
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
@@ -1147,9 +1147,6 @@ void radeonFlush(GLcontext *ctx)
 			}
 		}
 	}
-
-	make_empty_list(&radeon->query.not_flushed_head);
-
 }
 
 /* Make sure all commands have been sent to the hardware and have

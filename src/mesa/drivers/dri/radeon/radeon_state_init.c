@@ -645,11 +645,11 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH(CP_PACKET0(RADEON_PP_TXOFFSET_0 + (24 * i), 0));
      if (t->mt && !t->image_override) {
         if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-            lvl = &t->mt->levels[0];
+            lvl = &t->mt->levels[t->minLod];
 	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
 			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
         } else {
-           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
       } else {

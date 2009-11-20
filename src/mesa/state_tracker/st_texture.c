@@ -588,5 +588,5 @@ st_teximage_flush_before_map(struct st_context *st,
 
    if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
 		      (usage & PIPE_TRANSFER_WRITE)))
-      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      st->pipe->flush(st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 }

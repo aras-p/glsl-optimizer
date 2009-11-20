@@ -131,7 +131,7 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
 			     int depth, int bpp);
 
 void *
-xorg_exa_init(ScrnInfoPtr pScrn);
+xorg_exa_init(ScrnInfoPtr pScrn, Bool accel);
 
 void
 xorg_exa_close(ScrnInfoPtr pScrn);

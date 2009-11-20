@@ -46,7 +46,6 @@
 #include "util/u_rect.h"
 
 #define DEBUG_PRINT 0
-#define ACCEL_ENABLED TRUE
 
 /*
  * Helper functions
@@ -170,15 +169,7 @@ xorg_exa_common_done(struct exa_context *exa)
 static void
 ExaWaitMarker(ScreenPtr pScreen, int marker)
 {
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-   modesettingPtr ms = modesettingPTR(pScrn);
-   struct exa_context *exa = ms->exa;
-
-#if 0
-   xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, NULL);
-#else
-   xorg_exa_finish(exa);
-#endif
+   /* Nothing to do, handled in the PrepareAccess hook */
 }
 
 static int
@@ -384,7 +375,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
     }
 
-    return ACCEL_ENABLED && xorg_solid_bind_state(exa, priv, fg);
+    return exa->accel && xorg_solid_bind_state(exa, priv, fg);
 }
 
 static void
@@ -443,7 +434,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
 
-    return ACCEL_ENABLED;
+    return exa->accel;
 }
 
 static void
@@ -572,7 +563,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                        render_format_name(pMaskPicture->format));
    }
 
-   return ACCEL_ENABLED &&
+   return exa->accel &&
           xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
                                     pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
@@ -605,6 +596,9 @@ ExaCheckComposite(int op,
 		  PicturePtr pSrcPicture, PicturePtr pMaskPicture,
 		  PicturePtr pDstPicture)
 {
+   ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
+   modesettingPtr ms = modesettingPTR(pScrn);
+   struct exa_context *exa = ms->exa;
    boolean accelerated = xorg_composite_accelerated(op,
                                                     pSrcPicture,
                                                     pMaskPicture,
@@ -613,7 +607,7 @@ ExaCheckComposite(int op,
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
 #endif
-   return ACCEL_ENABLED && accelerated;
+   return exa->accel && accelerated;
 }
 
 static void *
@@ -751,10 +745,11 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 			     bitsPerPixel, devKind, NULL);
 
     /* Deal with screen resize */
-    if (!priv->tex ||
-        (priv->tex->width[0] != width ||
-         priv->tex->height[0] != height ||
-         priv->tex_flags != priv->flags)) {
+    if ((exa->accel || priv->flags) &&
+        (!priv->tex ||
+         (priv->tex->width[0] != width ||
+          priv->tex->height[0] != height ||
+          priv->tex_flags != priv->flags))) {
 	struct pipe_texture *texture = NULL;
 	struct pipe_texture template;
 
@@ -869,7 +864,7 @@ xorg_exa_close(ScrnInfoPtr pScrn)
 }
 
 void *
-xorg_exa_init(ScrnInfoPtr pScrn)
+xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
 {
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa;
@@ -934,6 +929,7 @@ xorg_exa_init(ScrnInfoPtr pScrn)
    ms->ctx = exa->pipe;
 
    exa->renderer = renderer_create(exa->pipe);
+   exa->accel = accel;
 
    return (void *)exa;
 

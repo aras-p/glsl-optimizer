@@ -75,10 +75,12 @@ static Bool PreInit(ScrnInfoPtr pScrn, int flags);
 typedef enum
 {
     OPTION_SW_CURSOR,
+    OPTION_2D_ACCEL,
 } modesettingOpts;
 
 static const OptionInfoRec Options[] = {
     {OPTION_SW_CURSOR, "SWcursor", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_2D_ACCEL, "2DAccel", OPTV_BOOLEAN, {0}, FALSE},
     {-1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
@@ -609,7 +611,8 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     xf86SetBlackWhitePixels(pScreen);
 
-    ms->exa = xorg_exa_init(pScrn);
+    ms->exa = xorg_exa_init(pScrn, xf86ReturnOptValBool(ms->Options,
+                                                        OPTION_2D_ACCEL, TRUE));
     ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
 
     xorg_init_video(pScreen);

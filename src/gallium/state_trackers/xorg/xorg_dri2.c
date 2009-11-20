@@ -42,6 +42,12 @@
 
 #include "util/u_rect.h"
 
+/* Make all the #if cases in the code esier to read */
+/* XXX can it be set to 1? */
+#ifndef DRI2INFOREC_VERSION
+#define DRI2INFOREC_VERSION 0
+#endif
+
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
@@ -79,7 +85,7 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     case DRI2BufferFrontLeft:
 	break;
     case DRI2BufferStencil:
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if DRI2INFOREC_VERSION >= 3
     case DRI2BufferDepthStencil:
 #else
     /* Works on old X servers because sanity checking is for the weak */
@@ -121,9 +127,12 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     }
 
     if (!tex) {
+	/* First call to make sure we have a pixmap private */
 	exaMoveInPixmap(private->pPixmap);
 	xorg_exa_set_shared_usage(private->pPixmap);
 	pScreen->ModifyPixmapHeader(private->pPixmap, 0, 0, 0, 0, 0, NULL);
+	/* Second call to make sure texture has valid contents */
+	exaMoveInPixmap(private->pPixmap);
 	tex = xorg_exa_get_texture(private->pPixmap);
     }
 
@@ -137,6 +146,11 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
     buffer->cpp = 4;
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
+#if DRI2INFOREC_VERSION == 2
+    ((DRI2Buffer2Ptr)buffer)->format = 0;
+#elif DRI2INFOREC_VERSION >= 3
+    buffer->format = 0;
+#endif
     private->tex = tex;
 
     return TRUE;
@@ -157,12 +171,12 @@ driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
     (*pScreen->DestroyPixmap)(private->pPixmap);
 }
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if DRI2INFOREC_VERSION >= 2
 
-static DRI2BufferPtr
+static DRI2Buffer2Ptr
 driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
 {
-    DRI2BufferPtr buffer;
+    DRI2Buffer2Ptr buffer;
     BufferPrivatePtr private;
 
     buffer = xcalloc(1, sizeof *buffer);
@@ -177,7 +191,8 @@ driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
     buffer->attachment = attachment;
     buffer->driverPrivate = private;
 
-    if (driDoCreateBuffer(pDraw, buffer, format))
+    /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
+    if (driDoCreateBuffer(pDraw, (DRI2BufferPtr)buffer, format))
 	return buffer;
 
     xfree(private);
@@ -187,15 +202,16 @@ fail:
 }
 
 static void
-driDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
+driDestroyBuffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
 {
-    driDoDestroyBuffer(pDraw, buffer);
+    /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
+    driDoDestroyBuffer(pDraw, (DRI2BufferPtr)buffer);
 
     xfree(buffer->driverPrivate);
     xfree(buffer);
 }
 
-#else /* DRI2INFOREC_VERSION <= 2 */
+#else /* DRI2INFOREC_VERSION < 2 */
 
 static DRI2BufferPtr
 driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
@@ -245,7 +261,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 }
 
-#endif /* DRI2INFOREC_VERSION */
+#endif /* DRI2INFOREC_VERSION >= 2 */
 
 static void
 driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
@@ -260,6 +276,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
     PixmapPtr dst_pixmap;
     GCPtr gc;
     RegionPtr copy_clip;
+    Bool save_accel;
 
     /*
      * In driCreateBuffers we dewrap windows into the
@@ -325,8 +342,11 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 	}
     }
 
+    save_accel = ms->exa->accel;
+    ms->exa->accel = TRUE;
     (*gc->ops->CopyArea)(&src_pixmap->drawable, &dst_pixmap->drawable, gc,
 			 0, 0, pDraw->width, pDraw->height, 0, 0);
+    ms->exa->accel = save_accel;
 
     FreeScratchGC(gc);
 
@@ -342,7 +362,7 @@ driScreenInit(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
-#if defined(DRI2INFOREC_VERSION)
+#if DRI2INFOREC_VERSION >= 2
     dri2info.version = DRI2INFOREC_VERSION;
 #else
     dri2info.version = 1;
@@ -352,7 +372,7 @@ driScreenInit(ScreenPtr pScreen)
     dri2info.driverName = pScrn->driverName;
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
-#if defined(DRI2INFOREC_VERSION) && DRI2INFOREC_VERSION > 2
+#if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = driCreateBuffer;
     dri2info.DestroyBuffer = driDestroyBuffer;
 #else

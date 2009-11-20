@@ -257,7 +257,7 @@ copy_packed_data(ScrnInfoPtr pScrn,
    switch (id) {
    case FOURCC_YV12: {
       for (i = 0; i < w; ++i) {
-         for (j = 0; i < h; ++j) {
+         for (j = 0; j < h; ++j) {
             /*XXX use src? */
             y1  = buf[j*w + i];
             u   = buf[(j/2) * (w/2) + i/2 + y_array_size];
@@ -447,6 +447,11 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    int x, y, w, h;
    struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
 
+   if (!dst->tex) {
+	xorg_exa_set_shared_usage(pPixmap);
+	pScrn->pScreen->ModifyPixmapHeader(pPixmap, 0, 0, 0, 0, 0, NULL);
+   }
+
    if (!dst || !dst->tex)
       XORG_FALLBACK("Xv destination %s", !dst ? "!dst" : "!dst->tex");
 
@@ -470,6 +475,9 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    setup_vs_video_constants(pPriv->r, dst);
    setup_fs_video_constants(pPriv->r, hdtv);
 
+   exaMoveInPixmap(pPixmap);
+   DamageDamageRegion(&pPixmap->drawable, dstRegion);
+
    while (nbox--) {
       int box_x1 = pbox->x1;
       int box_y1 = pbox->y1;
@@ -477,8 +485,8 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       int box_y2 = pbox->y2;
       float diff_x = (float)src_w / (float)dst_w;
       float diff_y = (float)src_h / (float)dst_h;
-      int offset_x = box_x1 - dstX;
-      int offset_y = box_y1 - dstY;
+      int offset_x = box_x1 - dstX + pPixmap->screen_x;
+      int offset_y = box_y1 - dstY + pPixmap->screen_y;
       int offset_w;
       int offset_h;
 
@@ -496,7 +504,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
 
       pbox++;
    }
-   DamageDamageRegion(&pPixmap->drawable, dstRegion);
+   DamageRegionProcessPending(&pPixmap->drawable);
 
    return TRUE;
 }

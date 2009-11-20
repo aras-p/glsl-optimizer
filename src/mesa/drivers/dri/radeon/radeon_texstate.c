@@ -699,14 +699,10 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
@@ -718,8 +714,6 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 	t->tile_bits = 0;
 	t->image_override = GL_TRUE;
 	t->override_offset = 0;
-	t->pp_txpitch &= (1 << 13) -1;
-	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
 		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
@@ -738,12 +732,17 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
 	}
-        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
-		   | ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
-        t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
-	t->pp_txpitch = pitch_val;
-        t->pp_txpitch -= 32;
 
+	t->pp_txpitch &= (1 << 13) -1;
+	pitch_val = rb->pitch;
+
+        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
+		| ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
+	if (target == GL_TEXTURE_RECTANGLE_NV) {
+		t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
+		t->pp_txpitch = pitch_val;
+		t->pp_txpitch -= 32;
+	}
 	t->validated = GL_TRUE;
 	_mesa_unlock_texture(radeon->glCtx, texObj);
 	return;
@@ -1021,7 +1020,7 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 	return GL_TRUE;
    }
 
-   firstImage = t->base.Image[0][t->mt->firstLevel];   
+   firstImage = t->base.Image[0][t->minLod];
 
    if (firstImage->Border > 0) {
       fprintf(stderr, "%s: border\n", __FUNCTION__);
@@ -1049,9 +1048,9 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 	 return GL_FALSE;
       }
    }
-   
+
    t->pp_txfilter &= ~RADEON_MAX_MIP_LEVEL_MASK;
-   t->pp_txfilter |= (t->mt->lastLevel - t->mt->firstLevel) << RADEON_MAX_MIP_LEVEL_SHIFT;
+   t->pp_txfilter |= (t->maxLod - t->minLod) << RADEON_MAX_MIP_LEVEL_SHIFT;
 	
    t->pp_txformat &= ~(RADEON_TXFORMAT_WIDTH_MASK |
 		       RADEON_TXFORMAT_HEIGHT_MASK |
@@ -1060,9 +1059,9 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 		       RADEON_TXFORMAT_F5_HEIGHT_MASK);
    t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_WIDTH_SHIFT) |
 		      (log2Height << RADEON_TXFORMAT_HEIGHT_SHIFT));
-   
+
    t->tile_bits = 0;
-   
+
    if (t->base.Target == GL_TEXTURE_CUBE_MAP) {
       ASSERT(log2Width == log2Height);
       t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_F5_WIDTH_SHIFT) |

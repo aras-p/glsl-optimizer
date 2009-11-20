@@ -93,51 +93,6 @@ gl_target_to_pipe(GLenum target)
 }
 
 
-/**
- * Return nominal bytes per texel for a compressed format, 0 for non-compressed
- * format.
- */
-static GLuint
-compressed_num_bytes(gl_format format)
-{
-   switch (format) {
-#if FEATURE_texture_fxt1
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-#endif
-#if FEATURE_texture_s3tc
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-      return 2;
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-      return 4;
-#endif
-   default:
-      return 0;
-   }
-}
-
-
-static GLboolean
-is_compressed_mesa_format(gl_format format)
-{
-   switch (format) {
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-   case MESA_FORMAT_SRGB_DXT1:
-   case MESA_FORMAT_SRGBA_DXT1:
-   case MESA_FORMAT_SRGBA_DXT3:
-   case MESA_FORMAT_SRGBA_DXT5:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
 /** called via ctx->Driver.NewTextureImage() */
 static struct gl_texture_image *
 st_NewTextureImage(GLcontext * ctx)
@@ -663,7 +618,7 @@ st_TexImage(GLcontext * ctx,
     */
    if (!compressed_src &&
        !ctx->Mesa_DXTn &&
-       is_compressed_mesa_format(texImage->TexFormat) &&
+       _mesa_is_format_compressed(texImage->TexFormat) &&
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
@@ -1066,7 +1021,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
    /* See if we can do texture compression with a blit/render.
     */
    if (!ctx->Mesa_DXTn &&
-       is_compressed_mesa_format(texImage->TexFormat) &&
+       _mesa_is_format_compressed(texImage->TexFormat) &&
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
@@ -1724,8 +1679,6 @@ copy_image_data_to_texture(struct st_context *st,
       pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
-      assert(stImage->base.Data != NULL);
-
       /* More straightforward upload.  
        */
 
@@ -1764,7 +1717,7 @@ st_finalize_texture(GLcontext *ctx,
 {
    struct st_texture_object *stObj = st_texture_object(tObj);
    const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   GLuint cpp, face;
+   GLuint blockSize, face;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
@@ -1796,13 +1749,8 @@ st_finalize_texture(GLcontext *ctx,
       pipe_texture_reference(&stObj->pt, firstImage->pt);
    }
 
-   /* FIXME: determine format block instead of cpp */
-   if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
-      cpp = compressed_num_bytes(firstImage->base.TexFormat);
-   }
-   else {
-      cpp = _mesa_get_format_bytes(firstImage->base.TexFormat);
-   }
+   /* bytes per pixel block (blocks are usually 1x1) */
+   blockSize = _mesa_get_format_bytes(firstImage->base.TexFormat);
 
    /* If we already have a gallium texture, check that it matches the texture
     * object's format, target, size, num_levels, etc.
@@ -1816,8 +1764,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->width[0] != firstImage->base.Width2 ||
           stObj->pt->height[0] != firstImage->base.Height2 ||
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
-          /* Nominal bytes per pixel: */
-          stObj->pt->block.size / stObj->pt->block.width != cpp)
+          stObj->pt->block.size != blockSize)
       {
          pipe_texture_reference(&stObj->pt, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;

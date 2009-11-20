@@ -439,11 +439,11 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (r300->options.stencil_two_side_disabled)
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
-	if (r300->options.s3tc_force_enabled) {
+	if (r300->options.s3tc_force_disabled) {
+		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+	} else if (ctx->Mesa_DXTn || r300->options.s3tc_force_enabled) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 		_mesa_enable_extension(ctx, "GL_S3_s3tc");
-	} else if (r300->options.s3tc_force_disabled) {
-		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {

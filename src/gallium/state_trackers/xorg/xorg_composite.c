@@ -152,7 +152,8 @@ render_filter_to_gallium(int xrender_filter, int *out_filter)
       *out_filter = PIPE_TEX_FILTER_LINEAR;
       break;
    default:
-      debug_printf("Unkown xrender filter");
+      debug_printf("Unkown xrender filter\n");
+   case PictFilterConvolution:
       *out_filter = PIPE_TEX_FILTER_NEAREST;
       return FALSE;
    }
