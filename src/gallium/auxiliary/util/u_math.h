@@ -499,6 +499,9 @@ util_next_power_of_two(unsigned x)
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
+#define MIN3( A, B, C ) MIN2( MIN2( A, B ), C )
+#define MAX3( A, B, C ) MAX2( MAX2( A, B ), C )
+
 
 static INLINE int
 align(int value, int alignment)
