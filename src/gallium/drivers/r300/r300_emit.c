@@ -701,9 +701,6 @@ static unsigned bitcount(unsigned n)
     return bits;
 }
 
-/* XXX ... and this one too. */
-#define MIN3(x, y, z) MIN2(MIN2(x, y), z)
-
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code)
 {

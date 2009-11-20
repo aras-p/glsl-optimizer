@@ -458,7 +458,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     rs->count = (rs_tex_comp) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
-    rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
+    rs->inst_count = MAX3(col_count - 1, tex_count - 1, 0);
 }
 
 /* Update the vertex format. */
