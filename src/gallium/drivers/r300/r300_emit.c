@@ -690,14 +690,19 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
-/* XXX This should probably go to util ... */
+/* XXX This should go to util ... */
 /* Return the number of bits set in the given number. */
 static unsigned bitcount(unsigned n)
 {
-    unsigned bits;
-    for (bits = 0; n > 0; n = n >> 1) {
-        bits += n & 1;
+    unsigned bits = 0;
+
+    while (n) {
+        if (n & 1) {
+            bits++;
+        }
+        n >>= 1;
     }
+
     return bits;
 }
 
@@ -714,7 +719,7 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     int temp_count = MAX2(code->num_temporaries, 1);
     int pvs_num_slots = MIN3(vtx_mem_size / input_count,
                              vtx_mem_size / output_count, 10);
-    int pvs_num_controllers = MIN2(6, vtx_mem_size / temp_count);
+    int pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
 
     CS_LOCALS(r300);
 
