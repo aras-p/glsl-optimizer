@@ -149,12 +149,17 @@ struct brw_blend_state {
 
 struct brw_rasterizer_state;
 
+struct brw_immediate_data {
+   unsigned nr;
+   float (*data)[4];
+};
 
 struct brw_vertex_shader {
    const struct tgsi_token *tokens;
    struct brw_winsys_buffer *const_buffer;    /** Program constant buffer/surface */
 
    struct tgsi_shader_info info;
+   struct brw_immediate_data immediates;
 
    GLuint has_flow_control:1;
    GLuint use_const_buffer:1;
@@ -189,6 +194,7 @@ struct brw_fragment_shader {
    struct tgsi_shader_info info;
 
    struct brw_fs_signature signature;
+   struct brw_immediate_data immediates;
 
    unsigned iz_lookup;
    //unsigned wm_lookup;

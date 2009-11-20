@@ -226,21 +226,34 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
+      struct brw_vertex_shader *vs = brw->curr.vertex_shader;
+      GLuint nr_immediate, nr_const;
 
-      /* XXX: note that constant buffers are currently *already* in
-       * buffer objects.  If we want to keep on putting them into the
-       * curbe, makes sense to treat constbuf's specially with malloc.
-       */
-      const GLfloat *value = screen->buffer_map( screen,
-						 brw->curr.vertex_constants,
-						 PIPE_BUFFER_USAGE_CPU_READ);
+      nr_immediate = vs->immediates.nr;
+      if (nr_immediate) {
+         memcpy(&buf[offset], 
+                vs->immediates.data,
+                nr_immediate * 4 * sizeof(float));
 
-      /* XXX: what if user's constant buffer is too small?
-       */
-      memcpy(&buf[offset], value, nr * 4 * sizeof(float));
+         offset += nr_immediate * 4;
+      }
 
-      screen->buffer_unmap( screen, brw->curr.vertex_constants );
+      nr_const = vs->info.file_max[TGSI_FILE_CONSTANT] + 1;
+      if (nr_const) {
+         /* XXX: note that constant buffers are currently *already* in
+          * buffer objects.  If we want to keep on putting them into the
+          * curbe, makes sense to treat constbuf's specially with malloc.
+          */
+         const GLfloat *value = screen->buffer_map( screen,
+                                                    brw->curr.vertex_constants,
+                                                    PIPE_BUFFER_USAGE_CPU_READ);
+         
+         /* XXX: what if user's constant buffer is too small?
+          */
+         memcpy(&buf[offset], value, nr_const * 4 * sizeof(float));
+         
+         screen->buffer_unmap( screen, brw->curr.vertex_constants );
+      }
    }
 
    if (BRW_DEBUG & DEBUG_CURBE) {
@@ -263,8 +276,7 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    } 
    else {
       /* constants have changed */
-      if (brw->curbe.last_buf)
-	 FREE(brw->curbe.last_buf);
+      FREE(brw->curbe.last_buf);
 
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;

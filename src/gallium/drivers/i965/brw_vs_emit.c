@@ -42,6 +42,15 @@
 #include "brw_vs.h"
 #include "brw_debug.h"
 
+/* Choose one of the 4 vec4's which can be packed into each 16-wide reg.
+ */
+static INLINE struct brw_reg brw_vec4_grf_repeat( GLuint reg, GLuint slot )
+{
+   int nr = reg + slot/2;
+   int subnr = (slot%2) * 4;
+
+   return stride(brw_vec4_grf(nr, subnr), 0, 4, 1);
+}
 
 
 static struct brw_reg get_tmp( struct brw_vs_compile *c )
@@ -119,7 +128,7 @@ static boolean find_output_slot( struct brw_vs_compile *c,
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
-   GLuint i, reg = 0, mrf;
+   GLuint i, reg = 0, subreg = 0, mrf;
    int attributes_in_vue;
 
    /* Determine whether to use a real constant buffer or use a block
@@ -150,32 +159,56 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* User clip planes from curbe: 
     */
    if (c->key.nr_userclip) {
-      for (i = 0; i < c->key.nr_userclip; i++) {
-	 c->userplane[i] = stride( brw_vec4_grf(reg+3+i/2, (i%2) * 4), 0, 4, 1);
+      /* Skip over fixed planes:  Or never read them into vs unit?
+       */
+      subreg += 6;
+
+      for (i = 0; i < c->key.nr_userclip; i++, subreg++) {
+	 c->userplane[i] = 
+            stride( brw_vec4_grf(reg+subreg/2, (subreg%2) * 4), 0, 4, 1);
       }     
 
       /* Deal with curbe alignment:
        */
-      reg += ((6 + c->key.nr_userclip + 3) / 4) * 2;
+      subreg = align(subreg, 2);
+      /*reg += ((6 + c->key.nr_userclip + 3) / 4) * 2;*/
    }
 
-   /* Vertex program parameters from curbe:
+
+   /* Immediates: always in the curbe.
+    *
+    * XXX: Can try to encode some immediates as brw immediates
+    * XXX: Make sure ureg sets minimal immediate size and respect it
+    * here.
     */
-   if (c->vp->use_const_buffer) {
-      /* get constants from a real constant buffer */
-      c->prog_data.curb_read_length = 0;
-      c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
+   for (i = 0; i < c->vp->info.immediate_count; i++, subreg++) {
+      c->regs[TGSI_FILE_IMMEDIATE][i] = 
+         stride( brw_vec4_grf(reg+subreg/2, (subreg%2) * 4), 0, 4, 1);
    }
-   else {
-      /* use a section of the GRF for constants */
+   c->prog_data.nr_params = c->vp->info.immediate_count * 4;
+
+
+   /* Vertex constant buffer.
+    *
+    * Constants from the buffer can be either cached in the curbe or
+    * loaded as needed from the actual constant buffer.
+    */
+   if (!c->vp->use_const_buffer) {
       GLuint nr_params = c->vp->info.file_max[TGSI_FILE_CONSTANT] + 1;
-      for (i = 0; i < nr_params; i++) {
-         c->regs[TGSI_FILE_CONSTANT][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
+
+      for (i = 0; i < nr_params; i++, subreg++) {
+         c->regs[TGSI_FILE_CONSTANT][i] =
+            stride( brw_vec4_grf(reg+subreg/2, (subreg%2) * 4), 0, 4, 1);
       }
-      reg += (nr_params + 1) / 2;
-      c->prog_data.curb_read_length = reg - 1;
-      c->prog_data.nr_params = nr_params * 4;
+
+      c->prog_data.nr_params += nr_params * 4;
    }
+
+   /* All regs allocated
+    */
+   reg += (subreg + 1) / 2;
+   c->prog_data.curb_read_length = reg - 1;
+
 
    /* Allocate input regs:  
     */
@@ -191,28 +224,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    if (c->nr_inputs == 0)
       reg++;
 
-   /* Allocate a GRF and load immediate values by hand with 4 MOVs!!!
-    *
-    * XXX: Try to encode float immediates as brw immediates
-    * XXX: Put immediates into the CURBE.
-    * XXX: Make sure ureg sets minimal immediate size and respect it
-    * here.
-    */
-   for (i = 0; i < c->nr_immediates; i++) {
-      struct brw_reg r;
-      int j;
-
-      c->regs[TGSI_FILE_IMMEDIATE][i] = 
-         r = brw_vec8_grf(reg, 0);
-
-      for (j = 0; j < 4; j++) {
-	 brw_MOV(&c->func, 
-		 brw_writemask(r, (1<<j)), 
-		 brw_imm_f(c->immediate[i][j]));
-      }
-
-      reg++;
-   }
 
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
@@ -1605,8 +1616,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
    struct brw_instruction *end_inst, *last_inst;
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction *inst;
-   boolean done = FALSE;
-   int i;
 
    if (BRW_DEBUG & DEBUG_VS)
       tgsi_dump(c->vp->tokens, 0); 
@@ -1616,37 +1625,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    
-   /* Inputs */
-   tgsi_parse_init( &parse, tokens );
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      tgsi_parse_token( &parse );
-
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-	 /* Nothing to do -- using info from tgsi_scan().
-	  */
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE: {
-	 static const float id[4] = {0,0,0,1};
-	 const float *imm = &parse.FullToken.FullImmediate.u[0].Float;
-	 unsigned size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
-
-	 for (i = 0; i < size; i++)
-	    c->immediate[c->nr_immediates][i] = imm[i];
-
-	 for ( ; i < 4; i++)
-	    c->immediate[c->nr_immediates][i] = id[i];
-
-	 c->nr_immediates++;
-	 break;
-      }
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-	 done = 1;
-	 break;
-      }
-   }
 
    /* Static register allocation
     */

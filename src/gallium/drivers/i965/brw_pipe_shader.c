@@ -55,6 +55,47 @@ static GLboolean has_flow_control(const struct tgsi_shader_info *info)
 }
 
 
+static void scan_immediates(const struct tgsi_token *tokens,
+                            const struct tgsi_shader_info *info,
+                            struct brw_immediate_data *imm)
+{
+   struct tgsi_parse_context parse;
+   boolean done = FALSE;
+
+   imm->nr = 0;
+   imm->data = MALLOC(info->immediate_count * 4 * sizeof(float));
+
+   tgsi_parse_init( &parse, tokens );
+   while (!tgsi_parse_end_of_tokens( &parse ) && !done) {
+      tgsi_parse_token( &parse );
+
+      switch (parse.FullToken.Token.Type) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+         break;
+
+      case TGSI_TOKEN_TYPE_IMMEDIATE: {
+	 static const float id[4] = {0,0,0,1};
+	 const float *value = &parse.FullToken.FullImmediate.u[0].Float;
+	 unsigned size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
+         unsigned i;
+
+	 for (i = 0; i < size; i++)
+	    imm->data[imm->nr][i] = value[i];
+
+	 for (; i < 4; i++)
+	    imm->data[imm->nr][i] = id[i];
+         
+         imm->nr++;
+	 break;
+      }
+
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+	 done = 1;
+	 break;
+      }
+   }
+}
+
 
 static void brw_bind_fs_state( struct pipe_context *pipe, void *prog )
 {
@@ -106,6 +147,7 @@ static void *brw_create_fs_state( struct pipe_context *pipe,
       goto fail;
 
    tgsi_scan_shader(fs->tokens, &fs->info);
+   scan_immediates(fs->tokens, &fs->info, &fs->immediates);
 
    fs->signature.nr_inputs = fs->info.num_inputs;
    for (i = 0; i < fs->info.num_inputs; i++) {
@@ -150,6 +192,7 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
       goto fail;
 
    tgsi_scan_shader(vs->tokens, &vs->info);
+   scan_immediates(vs->tokens, &vs->info, &vs->immediates);
 
    vs->id = brw->program_id++;
    vs->has_flow_control = has_flow_control(&vs->info);
