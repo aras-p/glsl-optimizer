@@ -53,7 +53,7 @@ sl_pp_process_line(struct sl_pp_context *context,
          break;
 
       case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, input, &i, NULL, &state, 0)) {
+         if (sl_pp_macro_expand(context, input, &i, NULL, &state, sl_pp_macro_expand_normal)) {
             free(state.out);
             return -1;
          }

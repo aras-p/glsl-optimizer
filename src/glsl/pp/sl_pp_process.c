@@ -257,7 +257,8 @@ sl_pp_process(struct sl_pp_context *context,
                break;
 
             case SL_PP_IDENTIFIER:
-               if (sl_pp_macro_expand(context, input, &i, NULL, &state, !context->if_value)) {
+               if (sl_pp_macro_expand(context, input, &i, NULL, &state,
+                                      context->if_value ? sl_pp_macro_expand_normal : sl_pp_macro_expand_mute)) {
                   return -1;
                }
                break;

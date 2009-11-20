@@ -56,12 +56,18 @@ sl_pp_macro_free(struct sl_pp_macro *macro);
 void
 sl_pp_macro_reset(struct sl_pp_macro *macro);
 
+enum sl_pp_macro_expand_behaviour {
+   sl_pp_macro_expand_normal,
+   sl_pp_macro_expand_mute,
+   sl_pp_macro_expand_unknown_to_0
+};
+
 int
 sl_pp_macro_expand(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
                    unsigned int *pi,
                    struct sl_pp_macro *local,
                    struct sl_pp_process_state *state,
-                   int mute);
+                   enum sl_pp_macro_expand_behaviour behaviour);
 
 #endif /* SL_PP_MACRO_H */

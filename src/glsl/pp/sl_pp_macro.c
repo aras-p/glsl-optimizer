@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "sl_pp_public.h"
 #include "sl_pp_macro.h"
 #include "sl_pp_process.h"
 
@@ -122,8 +123,9 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                    unsigned int *pi,
                    struct sl_pp_macro *local,
                    struct sl_pp_process_state *state,
-                   int mute)
+                   enum sl_pp_macro_expand_behaviour behaviour)
 {
+   int mute = (behaviour == sl_pp_macro_expand_mute);
    int macro_name;
    struct sl_pp_macro *macro = NULL;
    struct sl_pp_macro *actual_arg = NULL;
@@ -183,7 +185,12 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    }
 
    if (!macro) {
-      if (!mute) {
+      if (behaviour == sl_pp_macro_expand_unknown_to_0) {
+         if (_out_number(context, state, 0)) {
+            strcpy(context->error_msg, "out of memory");
+            return -1;
+         }
+      } else if (!mute) {
          if (sl_pp_process_out(state, &input[*pi])) {
             strcpy(context->error_msg, "out of memory");
             return -1;
@@ -274,7 +281,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                break;
 
             case SL_PP_IDENTIFIER:
-               if (sl_pp_macro_expand(context, input, &i, local, &arg_state, 0)) {
+               if (sl_pp_macro_expand(context, input, &i, local, &arg_state, sl_pp_macro_expand_normal)) {
                   free(arg_state.out);
                   return -1;
                }
@@ -339,7 +346,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
          break;
 
       case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state, mute)) {
+         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state, behaviour)) {
             return -1;
          }
          break;

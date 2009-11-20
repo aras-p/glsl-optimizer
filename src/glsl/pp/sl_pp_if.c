@@ -137,7 +137,7 @@ _parse_if(struct sl_pp_context *context,
                return -1;
             }
          } else {
-            if (sl_pp_macro_expand(context, input, &i, NULL, &state, 0)) {
+            if (sl_pp_macro_expand(context, input, &i, NULL, &state, sl_pp_macro_expand_unknown_to_0)) {
                free(state.out);
                return -1;
             }
