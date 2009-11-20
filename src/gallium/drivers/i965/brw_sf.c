@@ -129,7 +129,7 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
     * another one to account for the position input.
     */
    /* PIPE_NEW_FRAGMENT_SHADER */
-   key.nr_attrs = brw->curr.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 2;
+   key.nr_attrs = brw->curr.fragment_shader->info.file_max[TGSI_FILE_INPUT] + 2;
 
 
    /* XXX: this is probably where the mapping between vertex shader
