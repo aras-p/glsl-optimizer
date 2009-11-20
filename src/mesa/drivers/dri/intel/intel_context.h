@@ -107,7 +107,6 @@ struct intel_context
       void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
       void (*emit_invarient_state) (struct intel_context * intel);
-      void (*note_fence) (struct intel_context *intel, GLuint fence);
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
