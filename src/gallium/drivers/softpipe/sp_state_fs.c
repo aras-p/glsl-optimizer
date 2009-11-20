@@ -143,6 +143,7 @@ softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
    struct sp_vertex_shader *state = (struct sp_vertex_shader *) vs;
 
    draw_delete_vertex_shader(softpipe->draw, state->draw_data);
+   FREE( (void *)state->shader.tokens );
    FREE( state );
 }
 
