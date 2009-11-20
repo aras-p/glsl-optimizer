@@ -130,6 +130,12 @@ static rawImageRec *RawImageOpen(const char *fileName)
    if (raw->tmp == NULL || raw->tmpR == NULL || raw->tmpG == NULL ||
        raw->tmpB == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      free(raw->tmp);
+      free(raw->tmpR);
+      free(raw->tmpG);
+      free(raw->tmpB);
+      free(raw->tmpA);
+      free(raw);
       return NULL;
    }
 
@@ -139,6 +145,14 @@ static rawImageRec *RawImageOpen(const char *fileName)
       raw->rowSize = (GLint *)malloc(x);
       if (raw->rowStart == NULL || raw->rowSize == NULL) {
          fprintf(stderr, "Out of memory!\n");
+         free(raw->tmp);
+         free(raw->tmpR);
+         free(raw->tmpG);
+         free(raw->tmpB);
+         free(raw->tmpA);
+         free(raw->rowStart);
+         free(raw->rowSize);
+         free(raw);
          return NULL;
       }
       raw->rleEnd = 512 + (2 * x);
