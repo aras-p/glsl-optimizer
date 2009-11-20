@@ -230,6 +230,7 @@ static void RawImageGetData(rawImageRec *raw, TK_RGBImageRec *final)
    final->data = (unsigned char *)malloc((raw->sizeX+1)*(raw->sizeY+1)*4);
    if (final->data == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      return;
    }
 
    ptr = final->data;
