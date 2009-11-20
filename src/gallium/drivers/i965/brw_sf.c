@@ -64,32 +64,42 @@ static enum pipe_error compile_sf_prog( struct brw_context *brw,
    c.prog_data.urb_read_length = c.nr_attr_regs;
    c.prog_data.urb_entry_size = c.nr_setup_regs * 2;
 
-   
-   /* Which primitive?  Or all three? 
+   /* Special case when there are no attributes to setup.
+    *
+    * XXX: should be able to set nr_setup_attrs to nr_attrs-1 -- but
+    * breaks vp-tris.c
     */
-   switch (key->primitive) {
-   case SF_TRIANGLES:
-      c.nr_verts = 3;
-      brw_emit_tri_setup( &c, GL_TRUE );
-      break;
-   case SF_LINES:
-      c.nr_verts = 2;
-      brw_emit_line_setup( &c, GL_TRUE );
-      break;
-   case SF_POINTS:
-      c.nr_verts = 1;
-      if (key->do_point_sprite)
-	  brw_emit_point_sprite_setup( &c, GL_TRUE );
-      else
-	  brw_emit_point_setup( &c, GL_TRUE );
-      break;
-   case SF_UNFILLED_TRIS:
-      c.nr_verts = 3;
-      brw_emit_anyprim_setup( &c );
-      break;
-   default:
-      assert(0);
-      return PIPE_ERROR_BAD_INPUT;
+   if (c.nr_attrs - 1 == 0) {
+      c.nr_verts = 0;
+      brw_emit_null_setup( &c );
+   }
+   else {
+      /* Which primitive?  Or all three? 
+       */
+      switch (key->primitive) {
+      case SF_TRIANGLES:
+         c.nr_verts = 3;
+         brw_emit_tri_setup( &c, GL_TRUE );
+         break;
+      case SF_LINES:
+         c.nr_verts = 2;
+         brw_emit_line_setup( &c, GL_TRUE );
+         break;
+      case SF_POINTS:
+         c.nr_verts = 1;
+         if (key->do_point_sprite)
+            brw_emit_point_sprite_setup( &c, GL_TRUE );
+         else
+            brw_emit_point_setup( &c, GL_TRUE );
+         break;
+      case SF_UNFILLED_TRIS:
+         c.nr_verts = 3;
+         brw_emit_anyprim_setup( &c );
+         break;
+      default:
+         assert(0);
+         return PIPE_ERROR_BAD_INPUT;
+      }
    }
 
    /* get the program

@@ -352,6 +352,25 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 }
 
 
+void brw_emit_null_setup( struct brw_sf_compile *c )
+{
+   struct brw_compile *p = &c->func;
+
+   /* m0 is implicitly copied from r0 in the send instruction:
+    */	 
+   brw_urb_WRITE(p, 
+                 brw_null_reg(),
+                 0,
+                 brw_vec8_grf(0, 0), /* r0, will be copied to m0 */
+                 0, 	/* allocate */
+                 1,	/* used */
+                 1, 	/* msg len */
+                 0,	/* response len */
+                 1,	/* eot */
+                 1, 	/* writes complete */
+                 0,	/* offset */
+                 BRW_URB_SWIZZLE_TRANSPOSE); 
+}
 
 void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
 {
