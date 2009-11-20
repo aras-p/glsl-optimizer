@@ -51,10 +51,10 @@
 static int calculate_curbe_offsets( struct brw_context *brw )
 {
    /* CACHE_NEW_WM_PROG */
-   const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
+   const GLuint nr_fp_regs = brw->wm.prog_data->curb_read_length;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   const GLuint nr_vp_regs = (brw->vs.prog_data->nr_params + 15) / 16;
+   const GLuint nr_vp_regs = brw->vs.prog_data->curb_read_length;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
@@ -162,6 +162,7 @@ static GLfloat fixed_plane[6][4] = {
  */
 static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 {
+   struct pipe_screen *screen = brw->base.screen;
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    enum pipe_error ret;
@@ -182,14 +183,15 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
+      unsigned nr = brw->wm.prog_data->nr_params;
 
-      /* map fs constant buffer */
+      const GLfloat *value = screen->buffer_map( screen,
+						 brw->curr.fragment_constants,
+						 PIPE_BUFFER_USAGE_CPU_READ);
 
-      /* copy float constants */
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
-	 buf[offset + i] = *brw->wm.prog_data->param[i];
+      memcpy(&buf[offset], value, nr * 4 * sizeof(float));
 
-      /* unmap fs constant buffer */
+      screen->buffer_unmap( screen, brw->curr.fragment_constants );
    }
 
 
@@ -225,7 +227,6 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->curr.vertex_shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
-      struct pipe_screen *screen = brw->base.screen;
 
       /* XXX: note that constant buffers are currently *already* in
        * buffer objects.  If we want to keep on putting them into the
