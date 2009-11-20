@@ -90,14 +90,15 @@ softpipe_destroy( struct pipe_context *pipe )
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
 
-      softpipe->quad.shade->destroy( softpipe->quad.shade );
-      softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
-      softpipe->quad.blend->destroy( softpipe->quad.blend );
+   softpipe->quad.shade->destroy( softpipe->quad.shade );
+   softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
+   softpipe->quad.blend->destroy( softpipe->quad.blend );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
       pipe_surface_reference(&softpipe->framebuffer.cbufs[i], NULL);
    }
+
    sp_destroy_tile_cache(softpipe->zsbuf_cache);
    pipe_surface_reference(&softpipe->framebuffer.zsbuf, NULL);
 
