@@ -127,8 +127,10 @@ static enum pipe_error compile_sf_prog( struct brw_context *brw,
  */
 static enum pipe_error upload_sf_prog(struct brw_context *brw)
 {
-   enum pipe_error ret;
+   const struct brw_fs_signature *sig = &brw->curr.fragment_shader->signature;
    struct brw_sf_prog_key key;
+   enum pipe_error ret;
+   unsigned i;
 
    memset(&key, 0, sizeof(key));
 
@@ -138,24 +140,26 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    /* XXX: Add one to account for the position input.
     */
    /* PIPE_NEW_FRAGMENT_SIGNATURE */
-   key.nr_attrs = brw->curr.fragment_shader->signature.nr_inputs + 1;
+   key.nr_attrs = sig->nr_inputs + 1;
 
 
-   /* XXX: this is probably where the mapping between vertex shader
-    * outputs and fragment shader inputs should be handled.  Assume
-    * for now 1:1 correspondance.
-    *
-    * XXX: scan frag shader inputs to work out linear vs. perspective
-    * interpolation below.
-    *
-    * XXX: as long as we're hard-wiring, is eg. position required to
-    * be linear?
+   /* XXX: why is position required to be linear?  why do we care
+    * about it at all?
     */
-   //key.linear_attrs = 0;
-   //key.persp_attrs = (1 << key.nr_attrs) - 1;
+   key.linear_attrs = 1;        /* position -- but why? */
 
-   key.linear_attrs = (1 << key.nr_attrs) - 1;
-   key.persp_attrs = 0;
+   for (i = 0; i < sig->nr_inputs; i++) {
+      switch (sig->input[i].interp) {
+      case TGSI_INTERPOLATE_CONSTANT:
+         break;
+      case TGSI_INTERPOLATE_LINEAR:
+         key.linear_attrs |= 1 << (i+1);
+         break;
+      case TGSI_INTERPOLATE_PERSPECTIVE:
+         key.persp_attrs |= 1 << (i+1);
+         break;
+      }
+   }
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
    switch (brw->reduced_primitive) {
