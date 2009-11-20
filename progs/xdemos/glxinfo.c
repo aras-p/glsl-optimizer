@@ -964,8 +964,10 @@ print_fbconfig_info(Display *dpy, int scrnum, InfoMode mode)
    /* get list of all fbconfigs on this screen */
    fbconfigs = glXGetFBConfigs(dpy, scrnum, &numFBConfigs);
 
-   if (numFBConfigs == 0)
+   if (numFBConfigs == 0) {
+      XFree(fbconfigs);
       return;
+   }
 
    printf("%d GLXFBConfigs:\n", numFBConfigs);
    if (mode == Normal)
