@@ -87,11 +87,11 @@ GENERATED_SOURCES :=		\
 	main/get_es1.c		\
 	main/get_es2.c
 
-main/api_exec_es1.c: main/APIspec.txt main/es_generator.py main/apiutil.py main/es1_special
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.txt -V GLES1.1 > $@
+main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
 
-main/api_exec_es2.c: main/APIspec.txt main/es_generator.py main/apiutil.py main/es2_special
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.txt -V GLES2.0 > $@
+main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
 
 main/get_es1.c: main/get_gen.py
 	$(PYTHON2) $(PYTHON_FLAGS) $< 1 > $@

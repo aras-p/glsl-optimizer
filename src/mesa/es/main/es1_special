@@ -1,8 +1,0 @@
-# GetString is always special.
-GetString
-# CompressedTexImage2D calls out to two different functions based on
-# whether the image is a paletted image or not
-CompressedTexImage2D
-# QueryMatrixx returns values in an unusual, decomposed, fixed-value
-# form; it has its own code for this
-QueryMatrixx
