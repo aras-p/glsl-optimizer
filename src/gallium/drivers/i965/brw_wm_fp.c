@@ -1023,7 +1023,7 @@ static void emit_insn( struct brw_wm_compile *c,
 			inst->Instruction.Saturate );
 
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++)
-      src[i] = translate_src( c, &inst->FullSrcRegisters[0] );
+      src[i] = translate_src( c, &inst->FullSrcRegisters[i] );
    
    switch (opcode) {
    case TGSI_OPCODE_ABS:
