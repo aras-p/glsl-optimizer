@@ -3516,7 +3516,7 @@ check_functions( const char *extensions )
    struct name_test_pair *entry;
    int failures = 0, passes = 0, untested = 0;
    int totalFail = 0, totalPass = 0, totalUntested = 0, totalUnsupported = 0;
-   int doTests;
+   int doTests = 0;
    const char *version = (const char *) glGetString(GL_VERSION);
 
    /* The functions list will have "real" entries (consisting of
