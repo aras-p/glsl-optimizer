@@ -714,8 +714,6 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 	t->tile_bits = 0;
 	t->image_override = GL_TRUE;
 	t->override_offset = 0;
-	t->pp_txpitch &= (1 << 13) -1;
-	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
 		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
@@ -734,12 +732,17 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
 	}
-        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
-		   | ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
-        t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
-	t->pp_txpitch = pitch_val;
-        t->pp_txpitch -= 32;
 
+	t->pp_txpitch &= (1 << 13) -1;
+	pitch_val = rb->pitch;
+
+        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
+		| ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
+	if (target == GL_TEXTURE_RECTANGLE_NV) {
+		t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
+		t->pp_txpitch = pitch_val;
+		t->pp_txpitch -= 32;
+	}
 	t->validated = GL_TRUE;
 	_mesa_unlock_texture(radeon->glCtx, texObj);
 	return;
