@@ -58,9 +58,20 @@ static GLboolean has_flow_control(const struct tgsi_shader_info *info)
 
 static void brw_bind_fs_state( struct pipe_context *pipe, void *prog )
 {
+   struct brw_fragment_shader *fs = (struct brw_fragment_shader *)prog;
    struct brw_context *brw = brw_context(pipe);
+   
+   if (brw->curr.fragment_shader == fs)
+      return;
 
-   brw->curr.fragment_shader = (struct brw_fragment_shader *)prog;
+   if (brw->curr.fragment_shader == NULL ||
+       fs == NULL ||
+       memcmp(&brw->curr.fragment_shader->signature, &fs->signature,
+              brw_fs_signature_size(&fs->signature)) != 0) {
+      brw->state.dirty.mesa |= PIPE_NEW_FRAGMENT_SIGNATURE;
+   }
+
+   brw->curr.fragment_shader = fs;
    brw->state.dirty.mesa |= PIPE_NEW_FRAGMENT_SHADER;
 }
 

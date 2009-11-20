@@ -101,7 +101,7 @@ static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
 {
    struct brw_vs_prog_key key;
    struct brw_vertex_shader *vp = brw->curr.vertex_shader;
-   struct brw_fragment_shader *fs = brw->curr.fragment_shader;
+   struct brw_fs_signature *sig = &brw->curr.fragment_shader->signature;
    enum pipe_error ret;
 
    memset(&key, 0, sizeof(key));
@@ -111,8 +111,7 @@ static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
    key.copy_edgeflag = (brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL ||
 			brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL);
 
-   memcpy(&key.fs_signature, &fs->signature,
-          brw_fs_signature_size(&fs->signature));
+   memcpy(&key.fs_signature, sig, brw_fs_signature_size(sig));
 
 
    /* Make an early check for the key.
@@ -138,7 +137,7 @@ const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
       .mesa  = (PIPE_NEW_CLIP | 
                 PIPE_NEW_RAST |
-                PIPE_NEW_FRAGMENT_SHADER),
+                PIPE_NEW_FRAGMENT_SIGNATURE),
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

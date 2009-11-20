@@ -125,11 +125,10 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    /* Populate the key, noting state dependencies:
     */
 
-   /* XXX: Add one to turn the max value into a count, then add
-    * another one to account for the position input.
+   /* XXX: Add one to account for the position input.
     */
-   /* PIPE_NEW_FRAGMENT_SHADER */
-   key.nr_attrs = brw->curr.fragment_shader->info.file_max[TGSI_FILE_INPUT] + 2;
+   /* PIPE_NEW_FRAGMENT_SIGNATURE */
+   key.nr_attrs = brw->curr.fragment_shader->signature.nr_inputs + 1;
 
 
    /* XXX: this is probably where the mapping between vertex shader
@@ -194,7 +193,7 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .mesa  = (PIPE_NEW_RAST | PIPE_NEW_VERTEX_SHADER),
+      .mesa  = (PIPE_NEW_RAST | PIPE_NEW_FRAGMENT_SIGNATURE),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = 0
    },
