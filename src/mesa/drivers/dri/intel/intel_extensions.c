@@ -166,6 +166,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_shadow",                     NULL },
    { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_ARB_texture_rg",                 NULL },
    { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },

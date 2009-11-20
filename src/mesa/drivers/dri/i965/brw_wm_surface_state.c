@@ -89,6 +89,18 @@ static GLuint translate_tex_format( gl_format mesa_format,
    case MESA_FORMAT_AL1616:
       return BRW_SURFACEFORMAT_L16A16_UNORM;
 
+   case MESA_FORMAT_R8:
+      return BRW_SURFACEFORMAT_R8_UNORM;
+
+   case MESA_FORMAT_R16:
+      return BRW_SURFACEFORMAT_R16_UNORM;
+
+   case MESA_FORMAT_RG88:
+      return BRW_SURFACEFORMAT_R8G8_UNORM;
+
+   case MESA_FORMAT_RG1616:
+      return BRW_SURFACEFORMAT_R16G16_UNORM;
+
    case MESA_FORMAT_RGB888:
       assert(0);		/* not supported for sampling */
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
@@ -443,6 +455,18 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 break;
       case MESA_FORMAT_A8:
 	 key.surface_format = BRW_SURFACEFORMAT_A8_UNORM;
+	 break;
+      case MESA_FORMAT_R8:
+	 key.surface_format = BRW_SURFACEFORMAT_R8_UNORM;
+	 break;
+      case MESA_FORMAT_R16:
+	 key.surface_format = BRW_SURFACEFORMAT_R16_UNORM;
+	 break;
+      case MESA_FORMAT_RG88:
+	 key.surface_format = BRW_SURFACEFORMAT_R8G8_UNORM;
+	 break;
+      case MESA_FORMAT_RG1616:
+	 key.surface_format = BRW_SURFACEFORMAT_R16G16_UNORM;
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);

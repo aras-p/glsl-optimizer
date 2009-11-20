@@ -107,6 +107,24 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->Name != 0);
 
    switch (internalFormat) {
+   case GL_RED:
+   case GL_R8:
+      rb->Format = MESA_FORMAT_R8;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      break;
+   case GL_R16:
+      rb->Format = MESA_FORMAT_R16;
+      rb->DataType = GL_UNSIGNED_SHORT;
+      break;
+   case GL_RG:
+   case GL_RG8:
+      rb->Format = MESA_FORMAT_RG88;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      break;
+   case GL_RG16:
+      rb->Format = MESA_FORMAT_RG1616;
+      rb->DataType = GL_UNSIGNED_SHORT;
+      break;
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
@@ -346,6 +364,14 @@ intel_create_renderbuffer(gl_format format)
       irb->Base._BaseFormat = GL_ALPHA;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
+   case MESA_FORMAT_R8:
+      irb->Base._BaseFormat = GL_RED;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
+   case MESA_FORMAT_RG88:
+      irb->Base._BaseFormat = GL_RG;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
@@ -458,6 +484,22 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    else if (texImage->TexFormat == MESA_FORMAT_A8) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to A8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_R8) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to R8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_RG88) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to RG88 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_R16) {
+      irb->Base.DataType = GL_UNSIGNED_SHORT;
+      DBG("Render to R8 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_RG1616) {
+      irb->Base.DataType = GL_UNSIGNED_SHORT;
+      DBG("Render to RG88 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_Z16) {
       irb->Base.DataType = GL_UNSIGNED_SHORT;
@@ -673,6 +715,10 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       case MESA_FORMAT_ARGB1555:
       case MESA_FORMAT_ARGB4444:
       case MESA_FORMAT_A8:
+      case MESA_FORMAT_R8:
+      case MESA_FORMAT_R16:
+      case MESA_FORMAT_RG88:
+      case MESA_FORMAT_RG1616:
 	 break;
       default:
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
