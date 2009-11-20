@@ -182,16 +182,32 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
+      const struct brw_fragment_shader *fs = brw->curr.fragment_shader;
       GLuint offset = brw->curbe.wm_start * 16;
-      unsigned nr = brw->wm.prog_data->nr_params;
+      GLuint nr_immediate, nr_const;
 
-      const GLfloat *value = screen->buffer_map( screen,
-						 brw->curr.fragment_constants,
-						 PIPE_BUFFER_USAGE_CPU_READ);
+      nr_immediate = fs->immediates.nr;
+      if (nr_immediate) {
+         memcpy(&buf[offset], 
+                fs->immediates.data,
+                nr_immediate * 4 * sizeof(float));
 
-      memcpy(&buf[offset], value, nr * 4 * sizeof(float));
+         offset += nr_immediate * 4;
+      }
 
-      screen->buffer_unmap( screen, brw->curr.fragment_constants );
+      nr_const = fs->info.file_max[TGSI_FILE_CONSTANT] + 1;
+/*      nr_const = brw->wm.prog_data->nr_params; */
+      if (nr_const) {
+         const GLfloat *value = screen->buffer_map( screen,
+                                                    brw->curr.fragment_constants,
+                                                    PIPE_BUFFER_USAGE_CPU_READ);
+
+         memcpy(&buf[offset], value,
+                nr_const * 4 * sizeof(float));
+         
+         screen->buffer_unmap( screen, 
+                               brw->curr.fragment_constants );
+      }
    }
 
 
@@ -226,7 +242,7 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      struct brw_vertex_shader *vs = brw->curr.vertex_shader;
+      const struct brw_vertex_shader *vs = brw->curr.vertex_shader;
       GLuint nr_immediate, nr_const;
 
       nr_immediate = vs->immediates.nr;

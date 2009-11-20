@@ -129,12 +129,6 @@ struct brw_wm_ref {
    GLuint insn:24;
 };
 
-struct brw_wm_imm_ref {
-   const struct brw_wm_ref *ref;
-   GLfloat imm1f;
-};
-
-
 struct brw_wm_instruction {
    struct brw_wm_value *dst[4];
    struct brw_wm_ref *src[3][4];
@@ -271,9 +265,6 @@ struct brw_wm_compile {
 
    struct brw_wm_instruction instruction[BRW_WM_MAX_INSN];
    GLuint nr_insns;
-
-   struct brw_wm_imm_ref imm_ref[BRW_WM_MAX_CONST];
-   GLuint nr_imm_refs;
 
    struct brw_wm_grf pass2_grf[BRW_WM_MAX_GRF/2];
 

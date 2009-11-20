@@ -30,6 +30,7 @@
   */
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "brw_debug.h"
 #include "brw_wm.h"
@@ -97,9 +98,10 @@ static void pass0_set_fpreg_ref( struct brw_wm_compile *c,
 }
 
 static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c, 
-					       const GLfloat *param_ptr )
+					       unsigned idx,
+                                               unsigned component)
 {
-   GLuint i = c->prog_data.nr_params++;
+   GLuint i = idx * 4 + component;
    
    if (i >= BRW_WM_MAX_PARAM) {
       debug_printf("%s: out of params\n", __FUNCTION__);
@@ -109,8 +111,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
    else {
       struct brw_wm_ref *ref = get_ref(c);
 
-      c->prog_data.param[i] = param_ptr;
-      c->nr_creg = (i+16)/16;
+      c->nr_creg = MAX2(c->nr_creg, (i+16)/16);
 
       /* Push the offsets into hw_reg.  These will be added to the
        * real register numbers once one is allocated in pass2.
@@ -125,37 +126,6 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
 }
 
 
-/** Return a ref to an immediate value */
-static const struct brw_wm_ref *get_imm_ref( struct brw_wm_compile *c,
-					     const GLfloat *imm1f )
-{
-   GLuint i;
-
-   /* Search for an existing const value matching the request:
-    */
-   for (i = 0; i < c->nr_imm_refs; i++) {
-      if (c->imm_ref[i].imm1f == *imm1f) 
-	 return c->imm_ref[i].ref;
-   }
-
-   /* Else try to add a new one:
-    */
-   if (c->nr_imm_refs < Elements(c->imm_ref)) {
-      GLuint i = c->nr_imm_refs++;
-
-      /* An immediate is a special type of parameter:
-       */
-      c->imm_ref[i].imm1f = *imm1f;
-      c->imm_ref[i].ref = get_param_ref(c, imm1f);
-
-      return c->imm_ref[i].ref;
-   }
-   else {
-      debug_printf("%s: out of imm_refs\n", __FUNCTION__);
-      c->prog_data.error = 1;
-      return NULL;
-   }
-}
 
 
 /* Lookup our internal registers
@@ -177,11 +147,15 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 	 break;
 
       case TGSI_FILE_CONSTANT:
-	 ref = get_param_ref(c, &c->env_param[idx][component]);
+	 ref = get_param_ref(c, 
+                             c->fp->info.immediate_count + idx,
+                             component);
 	 break;
 
       case TGSI_FILE_IMMEDIATE:
-	 ref = get_imm_ref(c, &c->immediate[idx].v[component]);
+	 ref = get_param_ref(c, 
+                             idx,
+                             component);
 	 break;
 
       default:
