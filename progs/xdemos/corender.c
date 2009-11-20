@@ -55,6 +55,7 @@ setup_ipc(void)
 
       printf("Waiting for connection from another 'corender'\n");
       Sock = AcceptConnection(k);
+      assert(Sock != -1);
 
       printf("Got connection, sending windowID\n");
 
