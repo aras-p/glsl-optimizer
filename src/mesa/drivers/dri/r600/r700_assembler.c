@@ -39,7 +39,7 @@
 #include "r700_assembler.h"
 
 #define USE_CF_FOR_CONTINUE_BREAK 1
-//#define USE_CF_FOR_POP_AFTER      1
+#define USE_CF_FOR_POP_AFTER      1
 
 BITS addrmode_PVSDST(PVSDST * pPVSDST)
 {
@@ -3022,7 +3022,6 @@ GLboolean next_ins2(r700_AssemblerBase *pAsm)
     pAsm->is_tex = GL_FALSE;
     pAsm->need_tex_barrier = GL_FALSE;
 
-    //richard nov.16 glsl
     pAsm->D2.bits = 0;
 
     return GL_TRUE;
@@ -5377,32 +5376,35 @@ GLboolean assemble_ENDLOOP(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    unsigned int unFCSP = 0;
+    GLuint unFCSP;
+    GLuint unIF = 0;
     if((pAsm->unCFflags & HAS_CURRENT_LOOPRET) > 0)
     {        
         for(unFCSP=(pAsm->FCSP-1); unFCSP>pAsm->CALLSTACK[pAsm->CALLSP].FCSP_BeforeEntry; unFCSP--)
         {
             if(FC_LOOP == pAsm->fc_stack[unFCSP].type)
             {
+                breakLoopOnFlag(pAsm, unFCSP);
                 break;
+            }
+            else if(FC_IF == pAsm->fc_stack[unFCSP].type)
+            {
+                unIF++;
             }
         }
         if(unFCSP <= pAsm->CALLSTACK[pAsm->CALLSP].FCSP_BeforeEntry)
         {            
-            unFCSP = 0;
-
-            returnOnFlag(pAsm); 
+#ifdef USE_CF_FOR_POP_AFTER
+            returnOnFlag(pAsm, unIF); 
+#else
+            returnOnFlag(pAsm, 0);
+#endif /* USE_CF_FOR_POP_AFTER */
             pAsm->unCFflags &= ~HAS_CURRENT_LOOPRET;
         }
     }
 
     pAsm->branch_depth--;
     pAsm->FCSP--;
-
-    if(unFCSP > 0)
-    {        
-        breakLoopOnFlag(pAsm, unFCSP);
-    }
     
     return GL_TRUE;
 }
@@ -5459,25 +5461,38 @@ GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
     /* start sub */
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
 
+    pAsm->FCSP++;
+	pAsm->fc_stack[pAsm->FCSP].type  = FC_REP;
+
     return GL_TRUE;
 }
 
 GLboolean assemble_ENDSUB(r700_AssemblerBase *pAsm)
 {
+    if(pAsm->fc_stack[pAsm->FCSP].type != FC_REP)
+    {
+        radeon_error("BGNSUB/ENDSUB in shader code are not paired. \n");
+        return GL_FALSE;
+    }
+
     pAsm->CALLSP--;
     SetActiveCFlist(pAsm->pR700Shader, 
                     pAsm->CALLSTACK[pAsm->CALLSP].plstCFInstructions_local);
     
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
 
+    pAsm->FCSP--;
+
     return GL_TRUE;
 }
 
 GLboolean assemble_RET(r700_AssemblerBase *pAsm)
 {
+    GLuint unIF = 0;
+
     if(pAsm->CALLSP > 0)
     {   /* in sub */
-        unsigned int unFCSP;
+        GLuint unFCSP;        
         for(unFCSP=pAsm->FCSP; unFCSP>pAsm->CALLSTACK[pAsm->CALLSP].FCSP_BeforeEntry; unFCSP--)
         {
             if(FC_LOOP == pAsm->fc_stack[unFCSP].type)
@@ -5488,9 +5503,20 @@ GLboolean assemble_RET(r700_AssemblerBase *pAsm)
 
                 return GL_TRUE;
             }
+            else if(FC_IF == pAsm->fc_stack[unFCSP].type)
+            {
+                unIF++;
+            }
         }
     }
-    
+
+#ifdef USE_CF_FOR_POP_AFTER    
+    if(unIF > 0)
+    {
+        pops(pAsm, unIF);
+    }
+#endif /* USE_CF_FOR_POP_AFTER */
+
     add_return_inst(pAsm);
 
     return GL_TRUE;
@@ -5664,12 +5690,12 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-GLboolean returnOnFlag(r700_AssemblerBase *pAsm)
+GLboolean returnOnFlag(r700_AssemblerBase *pAsm, GLuint unIF)
 {
     testFlag(pAsm);
     jumpToOffest(pAsm, 1, 4);
     setRetInLoopFlag(pAsm, SQ_SEL_0);
-    pops(pAsm, 1);
+    pops(pAsm, unIF + 1);
     add_return_inst(pAsm);
 
     return GL_TRUE;

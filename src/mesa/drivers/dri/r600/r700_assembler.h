@@ -553,7 +553,7 @@ GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset);
 GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue);
 GLboolean testFlag(r700_AssemblerBase *pAsm);
 GLboolean breakLoopOnFlag(r700_AssemblerBase *pAsm, GLuint unFCSP);
-GLboolean returnOnFlag(r700_AssemblerBase *pAsm);
+GLboolean returnOnFlag(r700_AssemblerBase *pAsm, GLuint unIF);
 
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode);
 GLboolean assemble_ABS(r700_AssemblerBase *pAsm);
