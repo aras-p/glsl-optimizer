@@ -165,6 +165,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(ARB_texture_mirrored_repeat),    VER(1,4), Y, N, N, N },
    { GL(ARB_texture_non_power_of_two),   VER(1,5), Y, N, N, N },
    { GL(ARB_texture_rectangle),          VER(0,0), Y, N, N, N },
+   { GL(ARB_texture_rg),                 VER(0,0), Y, N, N, N },
    { GL(ARB_transpose_matrix),           VER(1,3), Y, N, Y, N },
    { GL(ARB_vertex_buffer_object),       VER(1,5), N, N, N, N },
    { GL(ARB_vertex_program),             VER(0,0), Y, N, N, N },

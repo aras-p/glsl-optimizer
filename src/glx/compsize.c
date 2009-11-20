@@ -66,6 +66,7 @@ __glElementsPerGroup(GLenum format, GLenum type)
    case GL_RGB:
    case GL_BGR:
       return 3;
+   case GL_RG:
    case GL_422_EXT:
    case GL_422_REV_EXT:
    case GL_422_AVERAGE_EXT:
