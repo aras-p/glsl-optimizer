@@ -109,6 +109,7 @@ static void *brw_create_fs_state( struct pipe_context *pipe,
 
    fs->signature.nr_inputs = fs->info.num_inputs;
    for (i = 0; i < fs->info.num_inputs; i++) {
+      fs->signature.input[i].interp = fs->info.input_interpolate[i];
       fs->signature.input[i].semantic = fs->info.input_semantic_name[i];
       fs->signature.input[i].semantic_index = fs->info.input_semantic_index[i];
    }

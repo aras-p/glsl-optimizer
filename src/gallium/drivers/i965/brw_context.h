@@ -174,8 +174,9 @@ struct brw_vertex_shader {
 struct brw_fs_signature {
    GLuint nr_inputs;
    struct {
-      GLuint semantic:5;
-      GLuint semantic_index:27;
+      GLuint interp:3;          /* TGSI_INTERPOLATE_x */
+      GLuint semantic:5;        /* TGSI_SEMANTIC_x */
+      GLuint semantic_index:24;
    } input[PIPE_MAX_SHADER_INPUTS];
 };
 
