@@ -69,6 +69,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->blend_color_state);
     FREE(r300->rs_block);
     FREE(r300->scissor_state);
+    FREE(r300->vertex_info);
     FREE(r300->viewport_state);
     FREE(r300);
 }
@@ -152,6 +153,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
+    r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
     r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
 
     /* Open up the OQ BO. */

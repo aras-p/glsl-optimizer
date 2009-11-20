@@ -63,10 +63,9 @@ int r300_shader_key_compare(void* key1, void* key2) {
 
 /* Set up the vs_output_tab and routes. */
 static void r300_vs_output_tab_routes(struct r300_context* r300,
-                                      struct r300_vertex_info* vformat,
                                       int* vs_output_tab)
 {
-    struct vertex_info* vinfo = &vformat->vinfo;
+    struct vertex_info* vinfo = &r300->vertex_info->vinfo;
     boolean pos = FALSE, psize = FALSE, fog = FALSE;
     int i, texs = 0, cols = 0;
     struct tgsi_shader_info* info = &r300->fs->info;
@@ -185,9 +184,9 @@ static void r300_vs_output_tab_routes(struct r300_context* r300,
 }
 
 /* Update the PSC tables. */
-static void r300_vertex_psc(struct r300_context* r300,
-                            struct r300_vertex_info* vformat)
+static void r300_vertex_psc(struct r300_context* r300)
 {
+    struct r300_vertex_info *vformat = r300->vertex_info;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
@@ -229,9 +228,9 @@ static void r300_vertex_psc(struct r300_context* r300,
 
 /* Update the PSC tables for SW TCL, using Draw. */
 static void r300_swtcl_vertex_psc(struct r300_context* r300,
-                                  struct r300_vertex_info* vformat,
                                   int* vs_output_tab)
 {
+    struct r300_vertex_info *vformat = r300->vertex_info;
     struct vertex_info* vinfo = &vformat->vinfo;
     uint16_t type, swizzle;
     enum pipe_format format;
@@ -283,9 +282,9 @@ static void r300_swtcl_vertex_psc(struct r300_context* r300,
 /* Set up the RS block. This is the part of the chipset that actually does
  * the rasterization of vertices into fragments. This is also the part of the
  * chipset that locks up if any part of it is even slightly wrong. */
-static void r300_update_rs_block(struct r300_context* r300,
-                                 struct r300_rs_block* rs)
+static void r300_update_rs_block(struct r300_context* r300)
 {
+    struct r300_rs_block* rs = r300->rs_block;
     struct tgsi_shader_info* info = &r300->fs->info;
     int col_count = 0, fp_offset = 0, i, tex_count = 0;
     int rs_tex_comp = 0;
@@ -392,14 +391,9 @@ static void r300_update_rs_block(struct r300_context* r300,
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct r300_vertex_info* vformat;
-    struct r300_rs_block* rs_block;
     int vs_output_tab[16];
     int i;
 
-    for (i = 0; i < 16; i++) {
-        vs_output_tab[i] = -1;
-    }
 
     /*
     struct r300_shader_key* key;
@@ -427,25 +421,25 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
             (void*)key, (void*)value);
     } */
 
-    /* XXX This will be refactored ASAP. */
-    vformat = CALLOC_STRUCT(r300_vertex_info);
-    rs_block = CALLOC_STRUCT(r300_rs_block);
+    /* Reset structures */
+    memset(r300->rs_block, 0, sizeof(struct r300_rs_block));
+    memset(r300->vertex_info, 0, sizeof(struct r300_vertex_info));
 
-    r300_vs_output_tab_routes(r300, vformat, vs_output_tab);
-
-    if (r300screen->caps->has_tcl) {
-        r300_vertex_psc(r300, vformat);
-    } else {
-        r300_swtcl_vertex_psc(r300, vformat, vs_output_tab);
+    for (i = 0; i < 16; i++) {
+        vs_output_tab[i] = -1;
     }
 
-    r300_update_rs_block(r300, rs_block);
+    /* Update states */
+    r300_vs_output_tab_routes(r300, vs_output_tab);
 
-    FREE(r300->vertex_info);
-    FREE(r300->rs_block);
+    if (r300screen->caps->has_tcl) {
+        r300_vertex_psc(r300);
+    } else {
+        r300_swtcl_vertex_psc(r300, vs_output_tab);
+    }
 
-    r300->vertex_info = vformat;
-    r300->rs_block = rs_block;
+    r300_update_rs_block(r300);
+
     r300->dirty_state |= R300_NEW_RS_BLOCK;
 }
 
