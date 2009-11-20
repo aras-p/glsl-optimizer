@@ -427,8 +427,6 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       int nConfigs;
 
       if (!visinfo)
-	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribSingle, &nConfigs);
-      if (!visinfo)
 	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribDouble, &nConfigs);
 
       if (configs) {
