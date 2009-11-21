@@ -85,11 +85,11 @@ drm_get_device_id(struct drm_device *device)
 	}
 
 	ret = fgets(path, sizeof( path ), file);
+	fclose(file);
 	if (!ret)
 		return;
 
 	sscanf(path, "%x", &device->deviceID);
-	fclose(file);
 }
 
 static void
