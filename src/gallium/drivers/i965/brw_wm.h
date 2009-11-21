@@ -135,6 +135,7 @@ struct brw_wm_instruction {
    GLuint opcode:8;
    GLuint saturate:1;
    GLuint writemask:4;
+   GLuint sampler:4;
    GLuint tex_unit:4;   /* texture/sampler unit for texture instructions */
    GLuint target:4;     /* TGSI_TEXTURE_x for texture instructions,
                          * target binding table index for FB_WRITE
@@ -201,7 +202,8 @@ struct brw_fp_instruction {
    unsigned opcode:8;
    unsigned target:8; /* XXX: special usage for FB_WRITE */
    unsigned tex_unit:4;
-   unsigned pad:12;
+   unsigned sampler:4;
+   unsigned pad:8;
 };
 
 

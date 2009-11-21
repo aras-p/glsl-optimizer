@@ -31,7 +31,7 @@ static void brw_set_framebuffer_state( struct pipe_context *pipe,
 
    /* Color buffers:
     */
-   for (i = 0; i < MAX2(fb->nr_cbufs, brw->curr.fb.nr_cbufs); i++) {
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       if (brw->curr.fb.cbufs[i] != fb->cbufs[i]) {
 	 brw->state.dirty.mesa |= PIPE_NEW_COLOR_BUFFERS;
 	 pipe_surface_reference(&brw->curr.fb.cbufs[i], fb->cbufs[i]);
@@ -39,7 +39,7 @@ static void brw_set_framebuffer_state( struct pipe_context *pipe,
    }
    
    if (brw->curr.fb.nr_cbufs != fb->nr_cbufs) {
-      brw->curr.fb.nr_cbufs = fb->nr_cbufs;
+      brw->curr.fb.nr_cbufs = MIN2(BRW_MAX_DRAW_BUFFERS, fb->nr_cbufs);
       brw->state.dirty.mesa |= PIPE_NEW_NR_CBUFS;
    }
 }

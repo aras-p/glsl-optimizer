@@ -282,6 +282,7 @@ static struct brw_fp_instruction * emit_tex_op(struct brw_wm_compile *c,
 					     struct brw_fp_dst dest,
 					     GLuint tex_unit,
 					     GLuint target,
+					     GLuint sampler,
 					     struct brw_fp_src src0,
 					     struct brw_fp_src src1,
 					     struct brw_fp_src src2 )
@@ -298,6 +299,7 @@ static struct brw_fp_instruction * emit_tex_op(struct brw_wm_compile *c,
    inst->dst = dest;
    inst->tex_unit = tex_unit;
    inst->target = target;
+   inst->sampler = sampler;
    inst->src[0] = src0;
    inst->src[1] = src1;
    inst->src[2] = src2;
@@ -313,7 +315,7 @@ static INLINE void emit_op3(struct brw_wm_compile *c,
 			    struct brw_fp_src src1,
 			    struct brw_fp_src src2 )
 {
-   emit_tex_op(c, op, dest, 0, 0, src0, src1, src2);
+   emit_tex_op(c, op, dest, 0, 0, 0, src0, src1, src2);
 }
 
 
@@ -323,7 +325,7 @@ static INLINE void emit_op2(struct brw_wm_compile *c,
 			    struct brw_fp_src src0,
 			    struct brw_fp_src src1)
 {
-   emit_tex_op(c, op, dest, 0, 0, src0, src1, src_undef());
+   emit_tex_op(c, op, dest, 0, 0, 0, src0, src1, src_undef());
 }
 
 static INLINE void emit_op1(struct brw_wm_compile *c,
@@ -331,14 +333,14 @@ static INLINE void emit_op1(struct brw_wm_compile *c,
 			    struct brw_fp_dst dest,
 			    struct brw_fp_src src0)
 {
-   emit_tex_op(c, op, dest, 0, 0, src0, src_undef(), src_undef());
+   emit_tex_op(c, op, dest, 0, 0, 0, src0, src_undef(), src_undef());
 }
 
 static INLINE void emit_op0(struct brw_wm_compile *c,
 			   GLuint op,
 			   struct brw_fp_dst dest)
 {
-   emit_tex_op(c, op, dest, 0, 0, src_undef(), src_undef(), src_undef());
+   emit_tex_op(c, op, dest, 0, 0, 0, src_undef(), src_undef(), src_undef());
 }
 
 
@@ -674,7 +676,8 @@ static void precalc_tex( struct brw_wm_compile *c,
 			 struct brw_fp_dst dst,
 			 unsigned target,
 			 unsigned unit,
-			 struct brw_fp_src src0 )
+			 struct brw_fp_src src0,
+			 struct brw_fp_src sampler )
 {
    struct brw_fp_src coord = src_undef();
    struct brw_fp_dst tmp = dst_undef();
@@ -751,6 +754,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                   dst_saturate(tmp, dst.saturate),
                   unit,
                   target,
+                  sampler.index,
                   coord,
                   src_undef(),
                   src_undef());
@@ -802,6 +806,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                   dst,
                   unit,
                   target,
+                  sampler.index,
                   coord,
                   src_undef(),
                   src_undef());
@@ -851,7 +856,8 @@ static void precalc_txp( struct brw_wm_compile *c,
 			 struct brw_fp_dst dst,
 			 unsigned target,
 			 unsigned unit,
-			 struct brw_fp_src src0 )
+			 struct brw_fp_src src0,
+                         struct brw_fp_src sampler )
 {
    if (projtex(c, target, src0)) {
       struct brw_fp_dst tmp = get_temp(c);
@@ -877,7 +883,8 @@ static void precalc_txp( struct brw_wm_compile *c,
 		  dst,
 		  target,
 		  unit,
-		  src_reg_from_dst(tmp));
+		  src_reg_from_dst(tmp),
+                  sampler );
 
       release_temp(c, tmp);
    }
@@ -885,7 +892,7 @@ static void precalc_txp( struct brw_wm_compile *c,
    {
       /* dst = TEX src0
        */
-      precalc_tex(c, dst, target, unit, src0);
+      precalc_tex(c, dst, target, unit, src0, sampler);
    }
 }
 
@@ -936,6 +943,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
 		  dst_undef(),
 		  (i == c->key.nr_cbufs - 1), /* EOT */
 		  i,
+                  0,            /* no sampler */
 		  outcolor,
 		  payload_r0_depth,
 		  outdepth);
@@ -1056,15 +1064,17 @@ static void emit_insn( struct brw_wm_compile *c,
    case TGSI_OPCODE_TEX:
       precalc_tex(c, dst,
 		  inst->InstructionExtTexture.Texture,
-		  src[0].file,	/* sampler unit */
-		  src[1] );
+		  src[1].index,	/* use sampler unit for tex idx */
+		  src[0],       /* coord */
+                  src[1]);      /* sampler */
       break;
 
    case TGSI_OPCODE_TXP:
       precalc_txp(c, dst,
 		  inst->InstructionExtTexture.Texture,
-		  src[0].file,	/* sampler unit */
-		  src[1] );
+		  src[1].index,	/* use sampler unit for tex idx */
+		  src[0],       /* coord */
+                  src[1]);      /* sampler */
       break;
 
    case TGSI_OPCODE_TXB:
@@ -1072,8 +1082,9 @@ static void emit_insn( struct brw_wm_compile *c,
        */
       precalc_tex(c, dst,
 		  inst->InstructionExtTexture.Texture,
-		  src[0].file,	/* sampler unit */
-		  src[1] );
+		  src[1].index,	/* use sampler unit for tex idx*/
+		  src[0],
+                  src[1]);
       break;
 
    case TGSI_OPCODE_XPD: 

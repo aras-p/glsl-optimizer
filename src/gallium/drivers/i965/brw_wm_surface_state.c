@@ -149,19 +149,23 @@ brw_wm_get_binding_table(struct brw_context *brw,
    enum pipe_error ret;
    struct brw_winsys_reloc reloc[BRW_WM_MAX_SURF];
    uint32_t data[BRW_WM_MAX_SURF];
+   GLuint nr_relocs = 0;
    GLuint data_size = brw->wm.nr_surfaces * sizeof data[0];
    int i;
 
    assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
    assert(brw->wm.nr_surfaces > 0);
 
-   /* Emit binding table relocations to surface state */
+   /* Emit binding table relocations to surface state 
+    */
    for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      make_reloc(&reloc[i],
-                 BRW_USAGE_STATE,
-                 0,
-                 i * sizeof(GLuint),
-                 brw->wm.surf_bo[i]);
+      if (brw->wm.surf_bo[i]) {
+         make_reloc(&reloc[nr_relocs++],
+                    BRW_USAGE_STATE,
+                    0,
+                    i * sizeof(GLuint),
+                    brw->wm.surf_bo[i]);
+      }
    }
 
    /* Note there is no key for this search beyond the values in the
@@ -169,7 +173,7 @@ brw_wm_get_binding_table(struct brw_context *brw,
     */
    if (brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
                         NULL, 0,
-                        reloc, brw->wm.nr_surfaces,
+                        reloc, nr_relocs,
                         NULL,
                         bo_out))
       return PIPE_OK;
@@ -182,7 +186,7 @@ brw_wm_get_binding_table(struct brw_context *brw,
 
    ret = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
                            NULL, 0,
-                           reloc, brw->wm.nr_surfaces,
+                           reloc, nr_relocs,
                            data, data_size,
                            NULL, NULL,
                            bo_out);
@@ -208,40 +212,60 @@ static enum pipe_error prepare_wm_surfaces(struct brw_context *brw )
    for (i = 0; i < brw->curr.fb.nr_cbufs; i++) {
       ret = brw_update_render_surface(brw, 
                                       brw_surface(brw->curr.fb.cbufs[i]), 
-                                      &brw->wm.surf_bo[nr_surfaces++]);
+                                      &brw->wm.surf_bo[BTI_COLOR_BUF(i)]);
       if (ret)
          return ret;
+      
+      nr_surfaces = BTI_COLOR_BUF(i) + 1;
    }
+
+
+
+   /* PIPE_NEW_FRAGMENT_CONSTANTS
+    */
+#if 0
+   if (brw->curr.fragment_constants) {
+      ret = brw_update_fragment_constant_surface(
+         brw, 
+         brw->curr.fragment_constants, 
+         &brw->wm.surf_bo[BTI_FRAGMENT_CONSTANTS]);
+
+      if (ret)
+         return ret;
+
+      nr_surfaces = BTI_FRAGMENT_CONSTANTS + 1;
+   }
+   else {
+      bo_reference(&brw->wm.surf_bo[SURF_FRAG_CONSTANTS], NULL);      
+   }
+#endif
+
 
    /* PIPE_NEW_TEXTURE 
     */
    for (i = 0; i < brw->curr.num_textures; i++) {
       ret = brw_update_texture_surface(brw, 
                                        brw_texture(brw->curr.texture[i]),
-                                       &brw->wm.surf_bo[nr_surfaces++]);
+                                       &brw->wm.surf_bo[BTI_TEXTURE(i)]);
       if (ret)
          return ret;
+
+      nr_surfaces = BTI_TEXTURE(i) + 1;
    }
 
-   /* PIPE_NEW_FRAGMENT_CONSTANTS
+   /* Clear any inactive entries:
     */
-#if 0
-   if (brw->curr.fragment_constants) {
-      ret = brw_update_fragment_constant_surface(brw, 
-                                                 brw->curr.fragment_constants, 
-                                                 &brw->wm.surf_bo[nr_surfaces++]);
-      if (ret)
-         return ret;
-   }
-#endif
+   for (i = brw->curr.fb.nr_cbufs; i < BRW_MAX_DRAW_BUFFERS; i++) 
+      bo_reference(&brw->wm.surf_bo[BTI_COLOR_BUF(i)], NULL);
+
+   if (!brw->curr.fragment_constants)
+      bo_reference(&brw->wm.surf_bo[BTI_FRAGMENT_CONSTANTS], NULL);      
+
+   /* XXX: no pipe_max_textures define?? */
+   for (i = brw->curr.num_textures; i < PIPE_MAX_SAMPLERS; i++)
+      bo_reference(&brw->wm.surf_bo[BTI_TEXTURE(i)], NULL);
 
    if (brw->wm.nr_surfaces != nr_surfaces) {
-
-      /* Unreference any left-over old buffers
-       */
-      for (i = nr_surfaces; i < brw->wm.nr_surfaces; i++)
-         bo_reference(&brw->wm.surf_bo[i], NULL);
-
       brw->wm.nr_surfaces = nr_surfaces;
       brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
    }

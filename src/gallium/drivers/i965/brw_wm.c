@@ -56,6 +56,15 @@ GLuint brw_wm_nr_args( GLuint opcode )
    case WM_FB_WRITE:
    case WM_PINTERP:
       return 3;
+   case TGSI_OPCODE_TEX:
+   case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_TXB:
+   case TGSI_OPCODE_TXD:
+      /* sampler arg is held as a field in the instruction, not in an
+       * actual register:
+       */
+      return tgsi_get_opcode_info(opcode)->num_src - 1;
+
    default:
       assert(opcode < MAX_OPCODE);
       return tgsi_get_opcode_info(opcode)->num_src;

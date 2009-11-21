@@ -792,7 +792,8 @@ static void emit_tex( struct brw_wm_compile *c,
 		      const struct brw_wm_instruction *inst,
 		      struct brw_reg *dst,
 		      GLuint dst_flags,
-		      struct brw_reg *arg )
+		      struct brw_reg *coord,
+		      GLuint sampler)
 {
    struct brw_compile *p = &c->func;
    GLuint msgLength, responseLength;
@@ -838,7 +839,7 @@ static void emit_tex( struct brw_wm_compile *c,
    for (i = 0; i < nr; i++) {
       static const GLuint swz[4] = {0,1,2,2};
       if (emit & (1<<i)) 
-	 brw_MOV(p, brw_message_reg(msgLength+1), arg[swz[i]]);
+	 brw_MOV(p, brw_message_reg(msgLength+1), coord[swz[i]]);
       else
 	 brw_MOV(p, brw_message_reg(msgLength+1), brw_imm_f(0));
       msgLength += 2;
@@ -862,8 +863,8 @@ static void emit_tex( struct brw_wm_compile *c,
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
 	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
-              SURF_INDEX_TEXTURE(inst->tex_unit),
-	      inst->tex_unit,	  /* sampler */
+              BTI_TEXTURE(inst->tex_unit),
+	      sampler,          /* sampler index */
 	      inst->writemask,
 	      msg_type, 
 	      responseLength,
@@ -878,7 +879,8 @@ static void emit_txb( struct brw_wm_compile *c,
 		      const struct brw_wm_instruction *inst,
 		      struct brw_reg *dst,
 		      GLuint dst_flags,
-		      struct brw_reg *arg )
+		      struct brw_reg *coord,
+		      GLuint sampler )
 {
    struct brw_compile *p = &c->func;
    GLuint msgLength;
@@ -888,7 +890,7 @@ static void emit_txb( struct brw_wm_compile *c,
    switch (inst->target) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
-      brw_MOV(p, brw_message_reg(2), arg[0]);
+      brw_MOV(p, brw_message_reg(2), coord[0]);
       brw_MOV(p, brw_message_reg(4), brw_imm_f(0));
       brw_MOV(p, brw_message_reg(6), brw_imm_f(0));
       break;
@@ -896,22 +898,22 @@ static void emit_txb( struct brw_wm_compile *c,
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
-      brw_MOV(p, brw_message_reg(2), arg[0]);
-      brw_MOV(p, brw_message_reg(4), arg[1]);
+      brw_MOV(p, brw_message_reg(2), coord[0]);
+      brw_MOV(p, brw_message_reg(4), coord[1]);
       brw_MOV(p, brw_message_reg(6), brw_imm_f(0));
       break;
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
-      brw_MOV(p, brw_message_reg(2), arg[0]);
-      brw_MOV(p, brw_message_reg(4), arg[1]);
-      brw_MOV(p, brw_message_reg(6), arg[2]);
+      brw_MOV(p, brw_message_reg(2), coord[0]);
+      brw_MOV(p, brw_message_reg(4), coord[1]);
+      brw_MOV(p, brw_message_reg(6), coord[2]);
       break;
    default:
       /* unexpected target */
       abort();
    }
 
-   brw_MOV(p, brw_message_reg(8), arg[3]);
+   brw_MOV(p, brw_message_reg(8), coord[3]);
    msgLength = 9;
 
    if (BRW_IS_IGDNG(p->brw))
@@ -923,8 +925,8 @@ static void emit_txb( struct brw_wm_compile *c,
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
 	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
-              SURF_INDEX_TEXTURE(inst->tex_unit),
-	      inst->tex_unit,	  /* sampler */
+              BTI_TEXTURE(inst->tex_unit),
+	      sampler,          /* sampler index */
 	      inst->writemask,
 	      msg_type,
 	      8,		/* responseLength */
@@ -1483,11 +1485,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 /* Texturing operations:
 	  */
       case TGSI_OPCODE_TEX:
-	 emit_tex(c, inst, dst, dst_flags, args[0]);
+	 emit_tex(c, inst, dst, dst_flags, args[0], inst->sampler);
 	 break;
 
       case TGSI_OPCODE_TXB:
-	 emit_txb(c, inst, dst, dst_flags, args[0]);
+	 emit_txb(c, inst, dst, dst_flags, args[0], inst->sampler);
 	 break;
 
       case TGSI_OPCODE_KIL:

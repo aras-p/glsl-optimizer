@@ -209,9 +209,9 @@ struct brw_fragment_shader {
 
 
 struct brw_sampler {
-   float border_color[4];
    struct brw_ss0 ss0;
    struct brw_ss1 ss1;
+   float border_color[4];
    struct brw_ss3 ss3;
 };
 
@@ -355,20 +355,23 @@ struct brw_vs_ouput_sizes {
 /** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
 
+/** Max number of render targets in a shader */
+#define BRW_MAX_DRAW_BUFFERS 4
+
 /**
  * Size of our surface binding table for the WM.
  * This contains pointers to the drawing surfaces and current texture
  * objects and shader constant buffers (+2).
  */
-#define BRW_WM_MAX_SURF (PIPE_MAX_COLOR_BUFS + BRW_MAX_TEX_UNIT + 1)
+#define BRW_WM_MAX_SURF (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
 
 /**
  * Helpers to convert drawing buffers, textures and constant buffers
  * to surface binding table indexes, for WM.
  */
-#define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (PIPE_MAX_COLOR_BUFS) 
-#define SURF_INDEX_TEXTURE(t)        (PIPE_MAX_COLOR_BUFS + 1 + (t))
+#define BTI_COLOR_BUF(d)          (d)
+#define BTI_FRAGMENT_CONSTANTS    (BRW_MAX_DRAW_BUFFERS) 
+#define BTI_TEXTURE(t)            (BRW_MAX_DRAW_BUFFERS + 1 + (t))
 
 /**
  * Size of surface binding table for the VS.

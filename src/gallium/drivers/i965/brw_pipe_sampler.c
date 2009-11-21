@@ -107,7 +107,7 @@ static void *
 brw_create_sampler_state( struct pipe_context *pipe,
                           const struct pipe_sampler_state *template )
 {
-   struct brw_sampler_state *sampler = CALLOC_STRUCT(brw_sampler_state);
+   struct brw_sampler *sampler = CALLOC_STRUCT(brw_sampler);
 
    sampler->ss0.min_filter = translate_img_filter( template->min_img_filter );
    sampler->ss0.mag_filter = translate_img_filter( template->mag_img_filter );
@@ -214,7 +214,6 @@ void brw_pipe_sampler_init( struct brw_context *brw )
 
    brw->base.set_sampler_textures = brw_set_sampler_textures;
 }
-
 void brw_pipe_sampler_cleanup( struct brw_context *brw )
 {
 }

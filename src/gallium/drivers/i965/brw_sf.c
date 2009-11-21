@@ -153,9 +153,10 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
       case TGSI_INTERPOLATE_CONSTANT:
          break;
       case TGSI_INTERPOLATE_LINEAR:
+      case TGSI_INTERPOLATE_PERSPECTIVE:
          key.linear_attrs |= 1 << (i+1);
          break;
-      case TGSI_INTERPOLATE_PERSPECTIVE:
+//      case TGSI_INTERPOLATE_PERSPECTIVE:
          key.persp_attrs |= 1 << (i+1);
          break;
       }
