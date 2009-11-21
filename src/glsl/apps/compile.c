@@ -41,7 +41,6 @@ main(int argc,
    long size;
    char *inbuf;
    struct sl_pp_purify_options options;
-   char *outbuf;
    char errmsg[100] = "";
    unsigned int errline = 0;
    struct sl_pp_context *context;
@@ -105,35 +104,25 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   if (sl_pp_purify(inbuf, &options, &outbuf, errmsg, sizeof(errmsg), &errline)) {
-      fprintf(out, "$PURIFYERROR %s\n", errmsg);
+   context = sl_pp_context_create();
+   if (!context) {
+      fprintf(out, "$CONTEXERROR\n");
 
       free(inbuf);
       fclose(out);
       return 1;
    }
 
-   free(inbuf);
-
-   context = sl_pp_context_create();
-   if (!context) {
-      fprintf(out, "$CONTEXERROR\n");
-
-      free(outbuf);
-      fclose(out);
-      return 1;
-   }
-
-   if (sl_pp_tokenise(context, outbuf, &tokens)) {
+   if (sl_pp_tokenise(context, inbuf, &options, &tokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       sl_pp_context_destroy(context);
-      free(outbuf);
+      free(inbuf);
       fclose(out);
       return 1;
    }
 
-   free(outbuf);
+   free(inbuf);
 
    if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
