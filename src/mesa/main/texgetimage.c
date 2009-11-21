@@ -521,10 +521,11 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage)
 {
-   const GLuint size = _mesa_format_image_size(texImage->TexFormat,
-                                               texImage->Width,
-                                               texImage->Height,
-                                               texImage->Depth);
+   const GLuint row_stride = _mesa_format_row_stride(texImage->TexFormat,
+                                                     texImage->Width);
+   const GLuint row_stride_stored = _mesa_format_row_stride(texImage->TexFormat,
+                                                            texImage->RowStride);
+   GLuint i;
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* pack texture image into a PBO */
@@ -540,8 +541,22 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       img = ADD_POINTERS(buf, img);
    }
 
-   /* just memcpy, no pixelstore or pixel transfer */
-   _mesa_memcpy(img, texImage->Data, size);
+   /* no pixelstore or pixel transfer, but respect stride */
+
+   if (row_stride == row_stride_stored) {
+      const GLuint size = _mesa_format_image_size(texImage->TexFormat,
+                                                  texImage->Width,
+                                                  texImage->Height,
+                                                  texImage->Depth);
+      _mesa_memcpy(img, texImage->Data, size);
+   }
+   else {
+      GLuint bw, bh;
+      _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
+      for (i = 0; i < (texImage->Height + bh - 1) / bh; i++) {
+         memcpy(img + i * row_stride, texImage->Data + i * row_stride_stored, row_stride);
+      }
+   }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
