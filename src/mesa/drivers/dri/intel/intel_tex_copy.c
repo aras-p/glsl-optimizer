@@ -221,6 +221,8 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage1D(ctx, target, level, internalFormat, x, y,
                              width, border);
 }
@@ -268,6 +270,8 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
                              width, height, border);
 }
@@ -292,6 +296,8 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage1D(ctx, target, level, xoffset, x, y, width);
    }
 }
@@ -317,8 +323,8 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
 
-      DBG("%s - fallback to _mesa_meta_CopyTexSubImage2D\n", __FUNCTION__);
-
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage2D(ctx, target, level,
                                    xoffset, yoffset, x, y, width, height);
    }
