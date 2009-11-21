@@ -35,12 +35,6 @@
 #include "compiler/radeon_compiler.h"
 #include "compiler/radeon_opcodes.h"
 
-/**
- * TODO:
- * - handle depth buffer
- * - r300 fp and rs setup
- */
-
 static void vp_ins_outs(struct r300_vertex_program_compiler *c)
 {
     c->code->inputs[VERT_ATTRIB_POS] = 0;
@@ -133,85 +127,6 @@ void r300_blit_init(struct r300_context *r300)
 {
     create_vertex_program(r300);
     create_fragment_program(r300);
-}
-
-static void r500_emit_rs_setup(struct r300_context *r300)
-{
-    BATCH_LOCALS(&r300->radeon);
-
-    BEGIN_BATCH(7);
-    OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
-    OUT_BATCH((4 << R300_IT_COUNT_SHIFT) | R300_HIRES_EN);
-    OUT_BATCH(0);
-    OUT_BATCH_REGVAL(R500_RS_INST_0,
-                     (0 << R500_RS_INST_TEX_ID_SHIFT) |
-                     (0 << R500_RS_INST_TEX_ADDR_SHIFT) |
-                     R500_RS_INST_TEX_CN_WRITE |
-                     R500_RS_INST_COL_CN_NO_WRITE);
-    OUT_BATCH_REGVAL(R500_RS_IP_0,
-                     (0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
-                     (1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-                     (2 << R500_RS_IP_TEX_PTR_R_SHIFT) |
-                     (3 << R500_RS_IP_TEX_PTR_Q_SHIFT));
-    END_BATCH();
-}
-
-static void r300_emit_fp_setup(struct r300_context *r300,
-                               struct r300_fragment_program_code *code)
-{
-    unsigned i;
-    BATCH_LOCALS(&r300->radeon);
-
-    BEGIN_BATCH((code->alu.length + 1) * 4 + code->tex.length + 1 + 9);
-
-    OUT_BATCH_REGSEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++) {
-        OUT_BATCH(code->alu.inst[i].rgb_inst);
-    }
-    OUT_BATCH_REGSEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++) {
-        OUT_BATCH(code->alu.inst[i].rgb_addr);
-    }
-    OUT_BATCH_REGSEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++) {
-        OUT_BATCH(code->alu.inst[i].alpha_inst);
-    }
-    OUT_BATCH_REGSEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++) {
-        OUT_BATCH(code->alu.inst[i].alpha_addr);
-    }
-
-    OUT_BATCH_REGSEQ(R300_US_TEX_INST_0, code->tex.length);
-    OUT_BATCH_TABLE(code->tex.inst, code->tex.length);
-
-    OUT_BATCH_REGSEQ(R300_US_CONFIG, 3);
-    OUT_BATCH(R300_PFS_CNTL_FIRST_NODE_HAS_TEX);
-    OUT_BATCH(code->pixsize);
-    OUT_BATCH(code->code_offset);
-    OUT_BATCH_REGSEQ(R300_US_CODE_ADDR_0, 4);
-    OUT_BATCH_TABLE(code->code_addr, 4);
-    END_BATCH();
-}
-
-static void r300_emit_rs_setup(struct r300_context *r300)
-{
-    BATCH_LOCALS(&r300->radeon);
-
-    BEGIN_BATCH(7);
-    OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
-    OUT_BATCH((4 << R300_IT_COUNT_SHIFT) | R300_HIRES_EN);
-    OUT_BATCH(0);
-    OUT_BATCH_REGVAL(R300_RS_INST_0,
-                     R300_RS_INST_TEX_ID(0) |
-                     R300_RS_INST_TEX_ADDR(0) |
-                     R300_RS_INST_TEX_CN_WRITE);
-    OUT_BATCH_REGVAL(R300_RS_IP_0,
-                     R300_RS_TEX_PTR(0) |
-                     R300_RS_SEL_S(R300_RS_SEL_C0) |
-                     R300_RS_SEL_R(R300_RS_SEL_C1) |
-                     R300_RS_SEL_T(R300_RS_SEL_K0) |
-                     R300_RS_SEL_Q(R300_RS_SEL_K1));
-    END_BATCH();
 }
 
 static void r300_emit_tx_setup(struct r300_context *r300,
@@ -322,6 +237,87 @@ static void r500_emit_fp_setup(struct r300_context *r300,
     OUT_BATCH_REGVAL(R500_US_CONFIG, 0);
     OUT_BATCH_REGVAL(R500_US_OUT_FMT_0, mesa_format_to_us_format(dst_format));
     OUT_BATCH_REGVAL(R500_US_PIXSIZE, fp->max_temp_idx);
+    END_BATCH();
+}
+
+static void r500_emit_rs_setup(struct r300_context *r300)
+{
+    BATCH_LOCALS(&r300->radeon);
+
+    BEGIN_BATCH(7);
+    OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
+    OUT_BATCH((4 << R300_IT_COUNT_SHIFT) | R300_HIRES_EN);
+    OUT_BATCH(0);
+    OUT_BATCH_REGVAL(R500_RS_INST_0,
+                     (0 << R500_RS_INST_TEX_ID_SHIFT) |
+                     (0 << R500_RS_INST_TEX_ADDR_SHIFT) |
+                     R500_RS_INST_TEX_CN_WRITE |
+                     R500_RS_INST_COL_CN_NO_WRITE);
+    OUT_BATCH_REGVAL(R500_RS_IP_0,
+                     (0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+                     (1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+                     (2 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+                     (3 << R500_RS_IP_TEX_PTR_Q_SHIFT));
+    END_BATCH();
+}
+
+static void r300_emit_fp_setup(struct r300_context *r300,
+                               struct r300_fragment_program_code *code,
+                               gl_format dst_format)
+{
+    unsigned i;
+    BATCH_LOCALS(&r300->radeon);
+
+    BEGIN_BATCH((code->alu.length + 1) * 4 + code->tex.length + 1 + 11);
+
+    OUT_BATCH_REGSEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++) {
+        OUT_BATCH(code->alu.inst[i].rgb_inst);
+    }
+    OUT_BATCH_REGSEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++) {
+        OUT_BATCH(code->alu.inst[i].rgb_addr);
+    }
+    OUT_BATCH_REGSEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++) {
+        OUT_BATCH(code->alu.inst[i].alpha_inst);
+    }
+    OUT_BATCH_REGSEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+    for (i = 0; i < code->alu.length; i++) {
+        OUT_BATCH(code->alu.inst[i].alpha_addr);
+    }
+
+    OUT_BATCH_REGSEQ(R300_US_TEX_INST_0, code->tex.length);
+    OUT_BATCH_TABLE(code->tex.inst, code->tex.length);
+
+    OUT_BATCH_REGSEQ(R300_US_CONFIG, 3);
+    OUT_BATCH(R300_PFS_CNTL_FIRST_NODE_HAS_TEX);
+    OUT_BATCH(code->pixsize);
+    OUT_BATCH(code->code_offset);
+    OUT_BATCH_REGSEQ(R300_US_CODE_ADDR_0, 4);
+    OUT_BATCH_TABLE(code->code_addr, 4);
+    OUT_BATCH_REGVAL(R500_US_OUT_FMT_0, mesa_format_to_us_format(dst_format));
+    END_BATCH();
+}
+
+static void r300_emit_rs_setup(struct r300_context *r300)
+{
+    BATCH_LOCALS(&r300->radeon);
+
+    BEGIN_BATCH(7);
+    OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
+    OUT_BATCH((4 << R300_IT_COUNT_SHIFT) | R300_HIRES_EN);
+    OUT_BATCH(0);
+    OUT_BATCH_REGVAL(R300_RS_INST_0,
+                     R300_RS_INST_TEX_ID(0) |
+                     R300_RS_INST_TEX_ADDR(0) |
+                     R300_RS_INST_TEX_CN_WRITE);
+    OUT_BATCH_REGVAL(R300_RS_IP_0,
+                     R300_RS_TEX_PTR(0) |
+                     R300_RS_SEL_S(R300_RS_SEL_C0) |
+                     R300_RS_SEL_R(R300_RS_SEL_C1) |
+                     R300_RS_SEL_T(R300_RS_SEL_K0) |
+                     R300_RS_SEL_Q(R300_RS_SEL_K1));
     END_BATCH();
 }
 
@@ -507,7 +503,7 @@ GLboolean r300_blit(struct r300_context *r300,
         r500_emit_fp_setup(r300, &r300->blit.fp_code.code.r500, dst_mesaformat);
         r500_emit_rs_setup(r300);
     } else {
-        r300_emit_fp_setup(r300, &r300->blit.fp_code.code.r300);
+        r300_emit_fp_setup(r300, &r300->blit.fp_code.code.r300, dst_mesaformat);
         r300_emit_rs_setup(r300);
     }
 
