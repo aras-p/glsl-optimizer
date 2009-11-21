@@ -2592,33 +2592,23 @@ compile_with_grammar(const char *source,
    unsigned int maxVersion;
    int result;
    struct sl_pp_purify_options options;
-   char *outbuf;
    char errmsg[200] = "";
    unsigned int errline = 0;
    struct sl_pp_token_info *intokens;
    unsigned int tokens_eaten;
 
-   memset(&options, 0, sizeof(options));
-   if (sl_pp_purify(source, &options, &outbuf, errmsg, sizeof(errmsg), &errline)) {
-      slang_info_log_error(infolog, errmsg);
-      return GL_FALSE;
-   }
-
    context = sl_pp_context_create();
    if (!context) {
       slang_info_log_error(infolog, "out of memory");
-      free(outbuf);
       return GL_FALSE;
    }
 
-   if (sl_pp_tokenise(context, outbuf, &intokens)) {
+   memset(&options, 0, sizeof(options));
+   if (sl_pp_tokenise(context, &options, source, &intokens)) {
       slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
-      free(outbuf);
       return GL_FALSE;
    }
-
-   free(outbuf);
 
    if (sl_pp_version(context, intokens, &version, &tokens_eaten)) {
       slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
