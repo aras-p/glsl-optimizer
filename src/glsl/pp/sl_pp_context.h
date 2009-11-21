@@ -30,6 +30,7 @@
 
 #include "sl_pp_dict.h"
 #include "sl_pp_macro.h"
+#include "sl_pp_purify.h"
 
 
 #define SL_PP_MAX_IF_NESTING  64
@@ -53,10 +54,12 @@ struct sl_pp_context {
 
    unsigned int line;
    unsigned int file;
-};
 
-int
-sl_pp_context_add_unique_str(struct sl_pp_context *context,
-                             const char *str);
+   struct sl_pp_purify_state pure;
+
+   char *getc_buf;
+   unsigned int getc_buf_size;
+   unsigned int getc_buf_capacity;
+};
 
 #endif /* SL_PP_CONTEXT_H */

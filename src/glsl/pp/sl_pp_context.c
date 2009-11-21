@@ -46,6 +46,12 @@ sl_pp_context_create(void)
       return NULL;
    }
 
+   context->getc_buf = malloc(64 * sizeof(char));
+   if (!context->getc_buf) {
+      sl_pp_context_destroy(context);
+      return NULL;
+   }
+
    context->macro_tail = &context->macro;
    context->if_ptr = SL_PP_MAX_IF_NESTING;
    context->if_value = 1;
@@ -62,6 +68,7 @@ sl_pp_context_destroy(struct sl_pp_context *context)
    if (context) {
       free(context->cstr_pool);
       sl_pp_macro_free(context->macro);
+      free(context->getc_buf);
       free(context);
    }
 }
