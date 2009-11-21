@@ -223,11 +223,6 @@ struct r300_texture {
 struct r300_vertex_info {
     /* Parent class */
     struct vertex_info vinfo;
-    /* Map of vertex attributes into PVS memory for HW TCL,
-     * or GA memory for SW TCL. */
-    int vs_tab[16];
-    /* Map of rasterizer attributes from GB through RS to US. */
-    int fs_tab[16];
 
     /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
     uint32_t vap_prog_stream_cntl[8];
