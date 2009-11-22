@@ -435,8 +435,6 @@ typedef struct r700_AssemblerBase
 } r700_AssemblerBase;
 
 //Internal use
-inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason, GLboolean bCheckMaxOnly);
-inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason);
 BITS addrmode_PVSDST(PVSDST * pPVSDST);
 void setaddrmode_PVSDST(PVSDST * pPVSDST, BITS addrmode);
 void nomask_PVSDST(PVSDST * pPVSDST);

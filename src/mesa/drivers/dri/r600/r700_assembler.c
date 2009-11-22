@@ -4976,7 +4976,7 @@ GLboolean assemble_EXPORT(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason)
+static inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason)
 {
     switch (uReason)
     {
@@ -4996,7 +4996,7 @@ inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason)
     };
 }
 
-inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason, GLboolean bCheckMaxOnly)
+static inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason, GLboolean bCheckMaxOnly)
 {
     if(GL_TRUE == bCheckMaxOnly)
     {
