@@ -6421,6 +6421,8 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
     R700ShaderInstruction *        pInst;
     R700ControlFlowGenericClause * pCFInst;
 
+    plstCFmain = pAsm->CALLSTACK[0].plstCFInstructions_local;
+
     /* remove flags init if they are not used */
     if((pAsm->unCFflags & HAS_LOOPRET) == 0)
     {
@@ -6462,7 +6464,6 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
         pAsm->pR700Shader->uStackSize = ((pAsm->CALLSTACK[0].max + 3)>>2) + 2;
     }
 
-    plstCFmain = pAsm->CALLSTACK[0].plstCFInstructions_local;
     unCFoffset = plstCFmain->uNumOfNode;
 
     /* Reloc subs */
