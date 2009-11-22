@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,7 +10,7 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
@@ -22,28 +22,78 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <assert.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
+#include <vl_winsys.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_video_context.h>
+#include <pipe/p_state.h>
+#include <util/u_memory.h>
+#include <util/u_math.h>
+#include "xvmc_private.h"
+
+#define FOURCC_RGB 0x0000003
 
 Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *subpicture,
                             unsigned short width, unsigned short height, int xvimage_id)
 {
+   XvMCContextPrivate *context_priv;
+   XvMCSubPicturePrivate *subpicture_priv;
+   struct pipe_video_context *vpipe;
+   struct pipe_texture template;
+   struct pipe_texture *tex;
+
    assert(dpy);
 
    if (!context)
       return XvMCBadContext;
 
-   assert(subpicture);
+   context_priv = context->privData;
+   vpipe = context_priv->vctx->vpipe;
 
-   /*if (width > || height > )
-      return BadValue;*/
+   if (!subpicture)
+      return XvMCBadSubpicture;
 
-   /*if (xvimage_id != )
-      return BadMatch;*/
+   if (width > 2048 || height > 2048)
+      return BadValue;
+
+   if (xvimage_id != FOURCC_RGB)
+      return BadMatch;
+
+   subpicture_priv = CALLOC(1, sizeof(XvMCSubPicturePrivate));
+   if (!subpicture_priv)
+      return BadAlloc;
+
+   memset(&template, 0, sizeof(struct pipe_texture));
+   template.target = PIPE_TEXTURE_2D;
+   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.last_level = 0;
+   if (vpipe->screen->get_param(vpipe->screen, PIPE_CAP_NPOT_TEXTURES)) {
+      template.width[0] = width;
+      template.height[0] = height;
+   }
+   else {
+      template.width[0] = util_next_power_of_two(width);
+      template.height[0] = util_next_power_of_two(height);
+   }
+   template.depth[0] = 1;
+   pf_get_block(template.format, &template.block);
+   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+   subpicture_priv->context = context;
+   tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   subpicture_priv->sfc = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
+                                                         PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   pipe_texture_reference(&tex, NULL);
+   if (!subpicture_priv->sfc)
+   {
+      FREE(subpicture_priv);
+      return BadAlloc;
+   }
 
    subpicture->subpicture_id = XAllocID(dpy);
    subpicture->context_id = context->context_id;
@@ -56,7 +106,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    subpicture->component_order[1] = 0;
    subpicture->component_order[2] = 0;
    subpicture->component_order[3] = 0;
-   /* TODO: subpicture->privData = ;*/
+   subpicture->privData = subpicture_priv;
 
    SyncHandle();
 
@@ -66,12 +116,19 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, short y,
                            unsigned short width, unsigned short height, unsigned int color)
 {
+   XvMCSubPicturePrivate *subpicture_priv;
+   XvMCContextPrivate *context_priv;
    assert(dpy);
 
    if (!subpicture)
       return XvMCBadSubpicture;
 
+   subpicture_priv = subpicture->privData;
+   context_priv = subpicture_priv->context->privData;
    /* TODO: Assert clear rect is within bounds? Or clip? */
+   context_priv->vctx->vpipe->surface_fill(context_priv->vctx->vpipe,
+                                           subpicture_priv->sfc, x, y,
+                                           width, height, color);
 
    return Success;
 }
@@ -97,12 +154,18 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
 Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
+   XvMCSubPicturePrivate *subpicture_priv;
+
    assert(dpy);
 
    if (!subpicture)
       return XvMCBadSubpicture;
 
-   return BadImplementation;
+   subpicture_priv = subpicture->privData;
+   pipe_surface_reference(&subpicture_priv->sfc, NULL);
+   FREE(subpicture_priv);
+
+   return Success;
 }
 
 Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsigned char *palette)

@@ -42,11 +42,6 @@
 #define ZERO_BLOCK_IS_NIL(zb) ((zb).x < 0.0f)
 #define SCALE_FACTOR_16_TO_9 (32767.0f / 255.0f)
 
-struct vertex4f
-{
-   float x, y, z, w;
-};
-
 struct vertex_shader_consts
 {
    struct vertex4f denorm;

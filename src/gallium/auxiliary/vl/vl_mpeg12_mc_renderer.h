@@ -31,6 +31,7 @@
 #include <pipe/p_compiler.h>
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
+#include "vl_types.h"
 
 struct pipe_context;
 struct pipe_video_surface;
@@ -48,11 +49,6 @@ enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK
    VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ALL, /* Waste of memory bandwidth */
    VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE, /* Can only do point-filtering when interpolating subsampled chroma channels */
    VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_NONE /* Needs conditional texel fetch! */
-};
-
-struct vertex2f
-{
-   float x, y;
 };
 
 struct vl_mpeg12_mc_renderer
