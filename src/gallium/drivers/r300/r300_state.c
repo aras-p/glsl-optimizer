@@ -688,7 +688,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 
-    r300->state |= R300_NEW_VERTEX_FORMAT;
+    r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
 }
 
 static void r300_set_vertex_elements(struct pipe_context* pipe,
