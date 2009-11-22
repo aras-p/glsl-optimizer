@@ -388,99 +388,94 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
     pAsm->pR700Shader = pShader;
     pAsm->currentShaderType = spt;
 
-	pAsm->cf_last_export_ptr   = NULL;
+    pAsm->cf_last_export_ptr   = NULL;
 
-	pAsm->cf_current_export_clause_ptr = NULL;
-	pAsm->cf_current_alu_clause_ptr    = NULL;
-	pAsm->cf_current_tex_clause_ptr    = NULL;
-	pAsm->cf_current_vtx_clause_ptr    = NULL;
-	pAsm->cf_current_cf_clause_ptr     = NULL;
+    pAsm->cf_current_export_clause_ptr = NULL;
+    pAsm->cf_current_alu_clause_ptr    = NULL;
+    pAsm->cf_current_tex_clause_ptr    = NULL;
+    pAsm->cf_current_vtx_clause_ptr    = NULL;
+    pAsm->cf_current_cf_clause_ptr     = NULL;
 
-	// No clause has been created yet
-	pAsm->cf_current_clause_type = CF_EMPTY_CLAUSE;
+    // No clause has been created yet
+    pAsm->cf_current_clause_type = CF_EMPTY_CLAUSE;
 
-	pAsm->number_of_colorandz_exports = 0;
-	pAsm->number_of_exports           = 0;
-	pAsm->number_of_export_opcodes    = 0;
+    pAsm->number_of_colorandz_exports = 0;
+    pAsm->number_of_exports           = 0;
+    pAsm->number_of_export_opcodes    = 0;
 
     pAsm->alu_x_opcode = 0;
 
     pAsm->D2.bits = 0;
 
-	pAsm->D.bits = 0;
-	pAsm->S[0].bits = 0;
-	pAsm->S[1].bits = 0;
-	pAsm->S[2].bits = 0;
+    pAsm->D.bits = 0;
+    pAsm->S[0].bits = 0;
+    pAsm->S[1].bits = 0;
+    pAsm->S[2].bits = 0;
 
-	pAsm->uLastPosUpdate = 0; 
+    pAsm->uLastPosUpdate = 0; 
 	
-	*(BITS *) &pAsm->fp_stOutFmt0 = 0;
+    *(BITS *) &pAsm->fp_stOutFmt0 = 0;
 
-	pAsm->uIIns = 0;
-	pAsm->uOIns = 0;
-	pAsm->number_used_registers = 0;
-	pAsm->uUsedConsts = 256; 
-
-
-	// Fragment programs
-	pAsm->uBoolConsts = 0;
-	pAsm->uIntConsts = 0;
-	pAsm->uInsts = 0;
-	pAsm->uConsts = 0;
-
-	pAsm->FCSP = 0;
-	pAsm->fc_stack[0].type = FC_NONE;
-
-	pAsm->branch_depth     = 0;
-	pAsm->max_branch_depth = 0;
-
-	pAsm->aArgSubst[0] =
-	pAsm->aArgSubst[1] =
-	pAsm->aArgSubst[2] =
-	pAsm->aArgSubst[3] = (-1);
-
-	pAsm->uOutputs = 0;
-
-	for (i=0; i<NUMBER_OF_OUTPUT_COLORS; i++) 
-	{
-		pAsm->color_export_register_number[i] = (-1);
-	}
+    pAsm->uIIns = 0;
+    pAsm->uOIns = 0;
+    pAsm->number_used_registers = 0;
+    pAsm->uUsedConsts = 256; 
 
 
-	pAsm->depth_export_register_number = (-1);
-	pAsm->stencil_export_register_number = (-1);
-	pAsm->coverage_to_mask_export_register_number = (-1);
-	pAsm->mask_export_register_number = (-1);
+    // Fragment programs
+    pAsm->uBoolConsts = 0;
+    pAsm->uIntConsts = 0;
+    pAsm->uInsts = 0;
+    pAsm->uConsts = 0;
 
-	pAsm->starting_export_register_number = 0;
-	pAsm->starting_vfetch_register_number = 0;
-	pAsm->starting_temp_register_number   = 0;
-	pAsm->uFirstHelpReg = 0;
+    pAsm->FCSP = 0;
+    pAsm->fc_stack[0].type = FC_NONE;
+
+    pAsm->aArgSubst[0] =
+    pAsm->aArgSubst[1] =
+    pAsm->aArgSubst[2] =
+    pAsm->aArgSubst[3] = (-1);
+
+    pAsm->uOutputs = 0;
+
+    for (i=0; i<NUMBER_OF_OUTPUT_COLORS; i++) 
+    {
+        pAsm->color_export_register_number[i] = (-1);
+    }
 
 
-	pAsm->input_position_is_used = GL_FALSE;
-	pAsm->input_normal_is_used   = GL_FALSE;
+    pAsm->depth_export_register_number = (-1);
+    pAsm->stencil_export_register_number = (-1);
+    pAsm->coverage_to_mask_export_register_number = (-1);
+    pAsm->mask_export_register_number = (-1);
 
+    pAsm->starting_export_register_number = 0;
+    pAsm->starting_vfetch_register_number = 0;
+    pAsm->starting_temp_register_number   = 0;
+    pAsm->uFirstHelpReg = 0;
 
-	for (i=0; i<NUMBER_OF_INPUT_COLORS; i++) 
-	{
-		pAsm->input_color_is_used[ i ] = GL_FALSE;
-	}
+    pAsm->input_position_is_used = GL_FALSE;
+    pAsm->input_normal_is_used   = GL_FALSE;
 
-	for (i=0; i<NUMBER_OF_TEXTURE_UNITS; i++) 
-	{
-		pAsm->input_texture_unit_is_used[ i ] = GL_FALSE;
-	}
+    for (i=0; i<NUMBER_OF_INPUT_COLORS; i++) 
+    {
+        pAsm->input_color_is_used[ i ] = GL_FALSE;
+    }
 
-	for (i=0; i<VERT_ATTRIB_MAX; i++) 
-	{
-		pAsm->vfetch_instruction_ptr_array[ i ] = NULL;
-	}
+    for (i=0; i<NUMBER_OF_TEXTURE_UNITS; i++) 
+    {
+        pAsm->input_texture_unit_is_used[ i ] = GL_FALSE;
+    }
 
-	pAsm->number_of_inputs = 0;
+    for (i=0; i<VERT_ATTRIB_MAX; i++) 
+    {
+        pAsm->vfetch_instruction_ptr_array[ i ] = NULL;
+    }
 
-	pAsm->is_tex = GL_FALSE;
-	pAsm->need_tex_barrier = GL_FALSE;
+    pAsm->number_of_inputs = 0;
+
+    pAsm->is_tex = GL_FALSE;
+    pAsm->need_tex_barrier = GL_FALSE;
 
     pAsm->subs              = NULL;
     pAsm->unSubArraySize    = 0;
@@ -494,13 +489,14 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
     pAsm->CALLSTACK[0].plstCFInstructions_local
           = &(pAsm->pR700Shader->lstCFInstructions);
 
-    pAsm->CALLSTACK[0].stackUsage.bits = 0;
+    pAsm->CALLSTACK[0].max = 0;
+    pAsm->CALLSTACK[0].current = 0;
 
     SetActiveCFlist(pAsm->pR700Shader, pAsm->CALLSTACK[0].plstCFInstructions_local);
 
     pAsm->unCFflags = 0;
 
-	return 0;
+    return 0;
 }
 
 GLboolean IsTex(gl_inst_opcode Opcode)
@@ -4980,32 +4976,74 @@ GLboolean assemble_EXPORT(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason)
+inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason)
 {
     switch (uReason)
     {
     case FC_PUSH_VPM:
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs++;
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.current++;
+        pAsm->CALLSTACK[pAsm->CALLSP].current--;
         break;
     case FC_PUSH_WQM:
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs++;
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.current += 4;
+        pAsm->CALLSTACK[pAsm->CALLSP].current -= 4;
         break;
     case FC_LOOP:
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs += 4;
+        pAsm->CALLSTACK[pAsm->CALLSP].current -= 4;
+        break;
+    case FC_REP:
+        /* TODO : for 16 vp asic, should -= 2; */
+        pAsm->CALLSTACK[pAsm->CALLSP].current -= 1;
+        break;
+    };
+}
+
+inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason, GLboolean bCheckMaxOnly)
+{
+    if(GL_TRUE == bCheckMaxOnly)
+    {
+        switch (uReason)
+        {
+        case FC_PUSH_VPM:
+            if((pAsm->CALLSTACK[pAsm->CALLSP].current + 1)
+                    > pAsm->CALLSTACK[pAsm->CALLSP].max)
+            {
+                pAsm->CALLSTACK[pAsm->CALLSP].max =
+                    pAsm->CALLSTACK[pAsm->CALLSP].current + 1;
+            }
+            break;
+        case FC_PUSH_WQM:
+            if((pAsm->CALLSTACK[pAsm->CALLSP].current + 4)
+                    > pAsm->CALLSTACK[pAsm->CALLSP].max)
+            {
+                pAsm->CALLSTACK[pAsm->CALLSP].max =
+                    pAsm->CALLSTACK[pAsm->CALLSP].current + 4;
+            }
+            break;
+        }
+        return;
+    }
+
+    switch (uReason)
+    {
+    case FC_PUSH_VPM:
+        pAsm->CALLSTACK[pAsm->CALLSP].current++;
+        break;
+    case FC_PUSH_WQM:
+        pAsm->CALLSTACK[pAsm->CALLSP].current += 4;
+        break;
+    case FC_LOOP:
+        pAsm->CALLSTACK[pAsm->CALLSP].current += 4;
         break;
     case FC_REP:
         /* TODO : for 16 vp asic, should += 2; */
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs += 1;
+        pAsm->CALLSTACK[pAsm->CALLSP].current += 1;
         break;
     };
 
-    if(pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs
-         > pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.max)
+    if(pAsm->CALLSTACK[pAsm->CALLSP].current
+         > pAsm->CALLSTACK[pAsm->CALLSP].max)
     {
-        pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.max =
-            pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.su.pushs;
+        pAsm->CALLSTACK[pAsm->CALLSP].max =
+            pAsm->CALLSTACK[pAsm->CALLSP].current;
     }
 }
 
@@ -5082,7 +5120,6 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
 
     pAsm->FCSP++;
 	pAsm->fc_stack[pAsm->FCSP].type  = FC_IF;
-    pAsm->fc_stack[pAsm->FCSP].bpush = 0;
     pAsm->fc_stack[pAsm->FCSP].mid   = NULL;
     pAsm->fc_stack[pAsm->FCSP].midLen= 0;
     pAsm->fc_stack[pAsm->FCSP].first = pAsm->cf_current_cf_clause_ptr;
@@ -5094,12 +5131,8 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
     }
 #endif /* USE_CF_FOR_POP_AFTER */
 
-    pAsm->branch_depth++;
+    checkStackDepth(pAsm, FC_PUSH_VPM, GL_FALSE); 
 
-    if(pAsm->branch_depth > pAsm->max_branch_depth) 
-    {
-        pAsm->max_branch_depth = pAsm->branch_depth;
-    }
     return GL_TRUE;
 }
 
@@ -5164,8 +5197,10 @@ GLboolean assemble_ENDIF(r700_AssemblerBase *pAsm)
         radeon_error("if/endif in shader code are not paired. \n");
         return GL_FALSE;
     }
-    pAsm->branch_depth--;
+    
     pAsm->FCSP--;
+
+    decreaseCurrent(pAsm, FC_PUSH_VPM);
 
     return GL_TRUE;
 }
@@ -5191,18 +5226,13 @@ GLboolean assemble_BGNLOOP(r700_AssemblerBase *pAsm)
 
     pAsm->FCSP++;
 	pAsm->fc_stack[pAsm->FCSP].type  = FC_LOOP;
-    pAsm->fc_stack[pAsm->FCSP].bpush = 1;
     pAsm->fc_stack[pAsm->FCSP].mid   = NULL;
     pAsm->fc_stack[pAsm->FCSP].unNumMid = 0;
     pAsm->fc_stack[pAsm->FCSP].midLen   = 0;
     pAsm->fc_stack[pAsm->FCSP].first    = pAsm->cf_current_cf_clause_ptr;
 
-    pAsm->branch_depth++;
+    checkStackDepth(pAsm, FC_LOOP, GL_FALSE);
 
-    if(pAsm->branch_depth > pAsm->max_branch_depth) 
-    {
-        pAsm->max_branch_depth = pAsm->branch_depth;
-    }
     return GL_TRUE;
 }
 
@@ -5265,6 +5295,8 @@ GLboolean assemble_BRK(r700_AssemblerBase *pAsm)
 
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr             = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
+
+    checkStackDepth(pAsm, FC_PUSH_VPM, GL_TRUE);
 
 #endif //USE_CF_FOR_CONTINUE_BREAK
     return GL_TRUE;
@@ -5329,6 +5361,8 @@ GLboolean assemble_CONT(r700_AssemblerBase *pAsm)
 
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
     pAsm->cf_current_cf_clause_ptr->m_Word0.f.addr             = pAsm->cf_current_cf_clause_ptr->m_uIndex + 1;
+
+    checkStackDepth(pAsm, FC_PUSH_VPM, GL_TRUE);
 
 #endif /* USE_CF_FOR_CONTINUE_BREAK */
 
@@ -5403,8 +5437,9 @@ GLboolean assemble_ENDLOOP(r700_AssemblerBase *pAsm)
         }
     }
 
-    pAsm->branch_depth--;
     pAsm->FCSP--;
+
+    decreaseCurrent(pAsm, FC_LOOP);
     
     return GL_TRUE;
 }
@@ -5445,14 +5480,16 @@ GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
 
     pAsm->subs[pAsm->unSubArrayPointer].subIL_Offset = nILindex;
     pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.pHead=NULL;  
-	pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.pTail=NULL;  
-	pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.uNumOfNode=0;
+    pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.pTail=NULL;  
+    pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.uNumOfNode=0;
 
     pAsm->CALLSP++;
+    pAsm->CALLSTACK[pAsm->CALLSP].subDescIndex = pAsm->unSubArrayPointer;
     pAsm->CALLSTACK[pAsm->CALLSP].FCSP_BeforeEntry = pAsm->FCSP;
     pAsm->CALLSTACK[pAsm->CALLSP].plstCFInstructions_local
                    = &(pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local);
-    pAsm->CALLSTACK[pAsm->CALLSP].stackUsage.bits = 0;
+    pAsm->CALLSTACK[pAsm->CALLSP].max = 0;
+    pAsm->CALLSTACK[pAsm->CALLSP].current = 0;
     SetActiveCFlist(pAsm->pR700Shader, 
                     pAsm->CALLSTACK[pAsm->CALLSP].plstCFInstructions_local);
 
@@ -5462,7 +5499,9 @@ GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
 
     pAsm->FCSP++;
-	pAsm->fc_stack[pAsm->FCSP].type  = FC_REP;
+    pAsm->fc_stack[pAsm->FCSP].type  = FC_REP;
+
+    checkStackDepth(pAsm, FC_REP, GL_FALSE);
 
     return GL_TRUE;
 }
@@ -5474,6 +5513,12 @@ GLboolean assemble_ENDSUB(r700_AssemblerBase *pAsm)
         radeon_error("BGNSUB/ENDSUB in shader code are not paired. \n");
         return GL_FALSE;
     }
+
+    /* copy max to sub structure */
+    pAsm->subs[pAsm->CALLSTACK[pAsm->CALLSP].subDescIndex].unStackDepthMax
+        = pAsm->CALLSTACK[pAsm->CALLSP].max;
+
+    decreaseCurrent(pAsm, FC_REP);
 
     pAsm->CALLSP--;
     SetActiveCFlist(pAsm->pR700Shader, 
@@ -5565,18 +5610,42 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
     pAsm->unCallerArrayPointer++;
 
     int j;
+    GLuint max;
+    GLuint unSubID;
+    GLboolean bRet;
     for(j=0; j<pAsm->unSubArrayPointer; j++)
     {
         if(nILindex == pAsm->subs[j].subIL_Offset)
         {   /* compiled before */
+
+            max = pAsm->subs[j].unStackDepthMax 
+                + pAsm->CALLSTACK[pAsm->CALLSP].current;
+            if(max > pAsm->CALLSTACK[pAsm->CALLSP].max)
+            {
+                pAsm->CALLSTACK[pAsm->CALLSP].max = max;
+            }
+            
             pAsm->callers[pAsm->unCallerArrayPointer - 1].subDescIndex = j; 
             return GL_TRUE;
         }
     }
 
     pAsm->callers[pAsm->unCallerArrayPointer - 1].subDescIndex = pAsm->unSubArrayPointer;
+    unSubID = pAsm->unSubArrayPointer;
 
-    return AssembleInstr(nILindex, uiNumberInsts, pILInst, pAsm);
+    bRet = AssembleInstr(nILindex, uiNumberInsts, pILInst, pAsm);
+
+    if(GL_TRUE == bRet)
+    {
+        max = pAsm->subs[unSubID].unStackDepthMax 
+            + pAsm->CALLSTACK[pAsm->CALLSP].current;
+        if(max > pAsm->CALLSTACK[pAsm->CALLSP].max)
+        {
+            pAsm->CALLSTACK[pAsm->CALLSP].max = max;
+        }
+    }
+
+    return bRet;
 }
 
 GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
@@ -5685,7 +5754,7 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
     }
 #endif
 
-    checkStackDepth(pAsm, FC_PUSH_VPM);
+    checkStackDepth(pAsm, FC_PUSH_VPM, GL_TRUE);
 
     return GL_TRUE;
 }
@@ -5704,7 +5773,7 @@ GLboolean returnOnFlag(r700_AssemblerBase *pAsm, GLuint unIF)
 GLboolean breakLoopOnFlag(r700_AssemblerBase *pAsm, GLuint unFCSP)
 {
     testFlag(pAsm);
-
+ 
     //break
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
@@ -5831,7 +5900,8 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             if ( GL_FALSE == assemble_FLR(pR700AsmCode) ) 
                 return GL_FALSE;
             break;  
-        //case OP_FLR_INT: 
+        //case OP_FLR_INT: ;
+
         //    if ( GL_FALSE == assemble_FLR_INT() ) 
         //        return GL_FALSE;
         //    break;  
@@ -6351,9 +6421,45 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
     R700ShaderInstruction *        pInst;
     R700ControlFlowGenericClause * pCFInst;
 
+    /* remove flags init if they are not used */
+    if((pAsm->unCFflags & HAS_LOOPRET) == 0)
+    {
+        R700ControlFlowALUClause * pCF_ALU;
+        pInst = plstCFmain->pHead;
+        while(pInst)
+        {
+            if(SIT_CF_ALU == pInst->m_ShaderInstType)
+            {
+                pCF_ALU = (R700ControlFlowALUClause *)pInst;
+                if(1 == pCF_ALU->m_Word1.f.count)
+                {
+                    pCF_ALU->m_Word1.f.cf_inst = SQ_CF_INST_NOP;
+                }
+                else
+                {
+                    R700ALUInstruction * pALU = pCF_ALU->m_pLinkedALUInstruction;
+                    
+                    pALU->m_pLinkedALUClause = NULL;
+                    pALU = (R700ALUInstruction *)(pALU->pNextInst);
+                    pALU->m_pLinkedALUClause = pCF_ALU;
+                    pCF_ALU->m_pLinkedALUInstruction = pALU;
+
+                    pCF_ALU->m_Word1.f.count--;
+                }
+                break;
+            }
+            pInst = pInst->pNextInst;
+        };
+    }
+
     if(0 == pAsm->unSubArrayPointer)
     {
         return GL_TRUE;
+    }
+
+    if(pAsm->CALLSTACK[0].max > 0)
+    {
+        pAsm->pR700Shader->uStackSize = ((pAsm->CALLSTACK[0].max + 3)>>2) + 2;
     }
 
     plstCFmain = pAsm->CALLSTACK[0].plstCFInstructions_local;
@@ -6409,37 +6515,6 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
     {
         pAsm->callers[i].cf_ptr->m_Word0.f.addr
             = pAsm->subs[pAsm->callers[i].subDescIndex].unCFoffset; 
-    }
-
-    /* remove flags init if they are not used */
-    if((pAsm->unCFflags & HAS_LOOPRET) == 0)
-    {
-        R700ControlFlowALUClause * pCF_ALU;
-        pInst = plstCFmain->pHead;
-        while(pInst)
-        {
-            if(SIT_CF_ALU == pInst->m_ShaderInstType)
-            {
-                pCF_ALU = (R700ControlFlowALUClause *)pInst;
-                if(1 == pCF_ALU->m_Word1.f.count)
-                {
-                    pCF_ALU->m_Word1.f.cf_inst = SQ_CF_INST_NOP;
-                }
-                else
-                {
-                    R700ALUInstruction * pALU = pCF_ALU->m_pLinkedALUInstruction;
-                    
-                    pALU->m_pLinkedALUClause = NULL;
-                    pALU = (R700ALUInstruction *)(pALU->pNextInst);
-                    pALU->m_pLinkedALUClause = pCF_ALU;
-                    pCF_ALU->m_pLinkedALUInstruction = pALU;
-
-                    pCF_ALU->m_Word1.f.count--;
-                }
-                break;
-            }
-            pInst = pInst->pNextInst;
-        };
     }
 
     return GL_TRUE;

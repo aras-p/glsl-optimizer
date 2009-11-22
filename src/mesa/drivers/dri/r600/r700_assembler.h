@@ -273,27 +273,27 @@ enum
 
 typedef struct FC_LEVEL 
 {
-	R700ControlFlowGenericClause *  first;
+    R700ControlFlowGenericClause *  first;
     R700ControlFlowGenericClause ** mid;
     unsigned int unNumMid;
-	unsigned int midLen;
-	unsigned int type;
-	unsigned int cond;
-	unsigned int inv;
-	unsigned int bpush; ///< 1 if first instruction does branch stack push
-			 int id; ///< id of bool or int variable
+    unsigned int midLen;
+    unsigned int type;
+    unsigned int cond;
+    unsigned int inv;
+    int id; ///< id of bool or int variable
 } FC_LEVEL;
 
 typedef struct VTX_FETCH_METHOD 
 {
-	GLboolean bEnableMini;
-	GLuint mega_fetch_remainder;
+    GLboolean bEnableMini;
+    GLuint mega_fetch_remainder;
 } VTX_FETCH_METHOD;
 
 typedef struct SUB_OFFSET
 {
     GLint  subIL_Offset;
     GLuint unCFoffset;
+    GLuint unStackDepthMax;
     TypedShaderList lstCFInstructions_local;
 } SUB_OFFSET;
 
@@ -306,23 +306,12 @@ typedef struct CALLER_POINTER
 
 #define SQ_MAX_CALL_DEPTH 0x00000020
 
-typedef struct STACK_USAGE 
-{
-	BITS pushs   :8;
-	BITS current :8;
-	BITS max     :8;
-} STACK_USAGE;
-
-typedef union STACKDWORDtag 
-{
-	BITS        bits;
-	STACK_USAGE su;
-} STACKDWORD;
-
 typedef struct CALL_LEVEL
 {
     unsigned int      FCSP_BeforeEntry;
-    STACKDWORD        stackUsage;
+    GLint             subDescIndex;
+    GLushort          current;
+    GLushort          max;
     TypedShaderList * plstCFInstructions_local;
 } CALL_LEVEL;
 
@@ -386,9 +375,6 @@ typedef struct r700_AssemblerBase
 	unsigned int FCSP;
 	FC_LEVEL fc_stack[32];
 
-	unsigned int branch_depth;
-	unsigned int max_branch_depth;
-
 	//-----------------------------------------------------------------------------------
 	// ArgSubst used in Assemble_Source() function
 	//-----------------------------------------------------------------------------------
@@ -449,7 +435,8 @@ typedef struct r700_AssemblerBase
 } r700_AssemblerBase;
 
 //Internal use
-inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason);
+inline void checkStackDepth(r700_AssemblerBase *pAsm, GLuint uReason, GLboolean bCheckMaxOnly);
+inline void decreaseCurrent(r700_AssemblerBase *pAsm, GLuint uReason);
 BITS addrmode_PVSDST(PVSDST * pPVSDST);
 void setaddrmode_PVSDST(PVSDST * pPVSDST, BITS addrmode);
 void nomask_PVSDST(PVSDST * pPVSDST);
