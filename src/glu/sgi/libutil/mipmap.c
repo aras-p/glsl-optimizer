@@ -3526,6 +3526,8 @@ gluScaleImage(GLenum format, GLsizei widthin, GLsizei heightin,
     afterImage =
 	malloc(image_size(widthout, heightout, format, GL_UNSIGNED_SHORT));
     if (beforeImage == NULL || afterImage == NULL) {
+	free(beforeImage);
+	free(afterImage);
 	return GLU_OUT_OF_MEMORY;
     }
 
