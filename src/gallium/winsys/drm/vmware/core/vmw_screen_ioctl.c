@@ -331,6 +331,7 @@ vmw_ioctl_region_create(struct vmw_winsys_screen *vws, uint32_t size)
    return region;
 
  out_err1:
+   FREE(region);
    return NULL;
 }
 
