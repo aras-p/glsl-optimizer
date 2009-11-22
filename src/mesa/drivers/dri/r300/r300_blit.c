@@ -450,10 +450,11 @@ static void emit_cb_setup(struct r300_context *r300,
                        _mesa_get_format_bytes(mesa_format),
                        _mesa_format_row_stride(mesa_format, width));
 
-    BEGIN_BATCH_NO_AUTOSTATE(3);
+    BEGIN_BATCH_NO_AUTOSTATE(5);
     OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
     OUT_BATCH((x1 << R300_SCISSORS_X_SHIFT)|(y1 << R300_SCISSORS_Y_SHIFT));
     OUT_BATCH((x2 << R300_SCISSORS_X_SHIFT)|(y2 << R300_SCISSORS_Y_SHIFT));
+    OUT_BATCH_REGVAL(R300_RB3D_CCTL, 0);
     END_BATCH();
 }
 
