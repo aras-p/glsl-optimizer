@@ -554,7 +554,7 @@ GLboolean assemble_EXP(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR_INT(r700_AssemblerBase *pAsm);
 GLboolean assemble_FRC(r700_AssemblerBase *pAsm);
-GLboolean assemble_KIL(r700_AssemblerBase *pAsm);
+GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode);
 GLboolean assemble_LG2(r700_AssemblerBase *pAsm);
 GLboolean assemble_LRP(r700_AssemblerBase *pAsm);
 GLboolean assemble_LOG(r700_AssemblerBase *pAsm);

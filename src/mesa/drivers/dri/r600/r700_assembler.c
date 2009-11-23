@@ -340,7 +340,10 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
     switch (pAsm->D.dst.opcode)
     {
     case SQ_OP2_INST_ADD:
+    case SQ_OP2_INST_KILLE:
     case SQ_OP2_INST_KILLGT:
+    case SQ_OP2_INST_KILLGE:
+    case SQ_OP2_INST_KILLNE:
     case SQ_OP2_INST_MUL: 
     case SQ_OP2_INST_MAX:
     case SQ_OP2_INST_MIN:
@@ -363,6 +366,7 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
     case SQ_OP2_INST_MOVA_FLOOR:
     case SQ_OP2_INST_FRACT:
     case SQ_OP2_INST_FLOOR:
+    case SQ_OP2_INST_TRUNC:
     case SQ_OP2_INST_EXP_IEEE:
     case SQ_OP2_INST_LOG_CLAMPED:
     case SQ_OP2_INST_LOG_IEEE:
@@ -1379,19 +1383,16 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                 case FRAG_ATTRIB_PNTC:
                     fprintf(stderr, "FRAG_ATTRIB_PNTC unsupported\n");
                     break;
-                case FRAG_ATTRIB_VAR0:
-                    fprintf(stderr, "FRAG_ATTRIB_VAR0 unsupported\n");
-                    break;
             }
 
             if( (pILInst->SrcReg[0].Index >= FRAG_ATTRIB_VAR0) ||
-				(pILInst->SrcReg[0].Index < FRAG_ATTRIB_MAX) )
-			{
+                (pILInst->SrcReg[0].Index < FRAG_ATTRIB_MAX) )
+            {
 				bValidTexCoord = GL_TRUE;
                 pAsm->S[0].src.reg   =
                     pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
                 pAsm->S[0].src.rtype = SRC_REG_INPUT;
-			}
+            }
 
         break;
         }
@@ -2469,9 +2470,9 @@ GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm)
     {
         R700ALUInstruction* alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
         if (alu_instruction_ptr == NULL) 
-		{
-			return GL_FALSE;
-		}
+        {
+            return GL_FALSE;
+        }
         Init_R700ALUInstruction(alu_instruction_ptr);
         
         //src 0
@@ -3545,13 +3546,12 @@ GLboolean assemble_FRC(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
  
-GLboolean assemble_KIL(r700_AssemblerBase *pAsm)
-{
-    /* TODO: doc says KILL has to be last(end) ALU clause */
-    
-    checkop1(pAsm);
+GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
+{  
+    checkop2(pAsm);
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_KILLGT;  
+    pAsm->D.dst.opcode = opcode;  
+    pAsm->D.dst.math = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -3561,24 +3561,24 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm)
     pAsm->D.dst.writez = 0;
     pAsm->D.dst.writew = 0;
 
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg = 0;
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
 
-    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_0);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-
-    if ( GL_FALSE == assemble_src(pAsm, 0, 1) )
+    if( GL_FALSE == assemble_src(pAsm, 1, -1) )
     {
         return GL_FALSE;
     }
   
-    if ( GL_FALSE == next_ins(pAsm) )
+    if ( GL_FALSE == next_ins2(pAsm) )
     {
         return GL_FALSE;
     }
 
+    /* Doc says KILL has to be last(end) ALU clause */
     pAsm->pR700Shader->killIsUsed = GL_TRUE;
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     
     return GL_TRUE;
 }
@@ -5102,7 +5102,7 @@ GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
 
     if(GL_TRUE != bHasElse)
     {
-        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 1;
+        pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count = 1; 
     }
     else
     {
@@ -5172,7 +5172,7 @@ GLboolean assemble_ELSE(r700_AssemblerBase *pAsm)
 GLboolean assemble_ENDIF(r700_AssemblerBase *pAsm)
 {
 #ifdef USE_CF_FOR_POP_AFTER
-    pops(pAsm, 1);
+    pops(pAsm, 1); 
 #endif /* USE_CF_FOR_POP_AFTER */
 
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
@@ -5912,8 +5912,10 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             break;  
 
         case OPCODE_KIL: 
-            if ( GL_FALSE == assemble_KIL(pR700AsmCode) ) 
-                return GL_FALSE;
+        case OPCODE_KIL_NV: 
+            /* done at OPCODE_SE/SGT...etc. */
+            /* if ( GL_FALSE == assemble_KIL(pR700AsmCode) ) 
+                return GL_FALSE; */
             break;
         case OPCODE_LG2: 
             if ( GL_FALSE == assemble_LG2(pR700AsmCode) ) 
@@ -6008,6 +6010,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                     return GL_FALSE;
                 }
             }
+            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+            {
+                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLE) ) 
+                {
+                    return GL_FALSE;
+                }
+            }
             else
             {
                 if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETE) ) 
@@ -6051,6 +6060,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                     return GL_FALSE;
                 }
             }
+            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+            {
+                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGT) ) 
+                {
+                    return GL_FALSE;
+                }
+            }
             else
             {
                 if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGT) ) 
@@ -6090,6 +6106,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
 #endif
 
                 if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
+                {
+                    return GL_FALSE;
+                }
+            }
+            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+            {
+                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGE) ) 
                 {
                     return GL_FALSE;
                 }
@@ -6147,6 +6170,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                     {
                         pILInst[i].SrcReg[0] = SrcRegSave[0];
                         pILInst[i].SrcReg[1] = SrcRegSave[1];
+                        return GL_FALSE;
+                    }
+                }
+                else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+                {
+                    if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGT) ) 
+                    {
                         return GL_FALSE;
                     }
                 }
@@ -6210,6 +6240,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                         return GL_FALSE;
                     }
                 }
+                else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+                {
+                    if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGE) ) 
+                    {
+                        return GL_FALSE;
+                    }
+                }
                 else
                 {
                     if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGE) ) 
@@ -6257,6 +6294,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                     return GL_FALSE;
                 }
             }
+            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
+            {
+                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLNE) ) 
+                {
+                    return GL_FALSE;
+                }
+            }
             else
             {
                 if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETNE) ) 
@@ -6295,6 +6339,11 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         case OPCODE_TXB:  
         case OPCODE_TXP: 
             if ( GL_FALSE == assemble_TEX(pR700AsmCode) ) 
+                return GL_FALSE;
+            break;
+
+        case OPCODE_TRUNC:
+            if ( GL_FALSE == assemble_math_function(pR700AsmCode, SQ_OP2_INST_TRUNC) )
                 return GL_FALSE;
             break;
 
