@@ -250,11 +250,13 @@ driCreateContext(__GLXscreenConfigs * psc,
 {
    __GLXDRIcontextPrivate *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
-   const __DRIcoreExtension *core = psc->core;
+   const __DRIcoreExtension *core;
    __DRIcontext *shared = NULL;
 
    if (!psc || !psc->driScreen)
       return NULL;
+
+   core = psc->core;
 
    if (shareList) {
       pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
