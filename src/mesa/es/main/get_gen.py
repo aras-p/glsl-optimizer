@@ -468,6 +468,10 @@ StateVars_es1 = [
 	("GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES", GLint,
 	 ["ctx->Array.ArrayObj->PointSize.BufferObj->Name"], "", None),
 
+	# GL_EXT_texture_lod_bias
+	( "GL_MAX_TEXTURE_LOD_BIAS_EXT", GLfloat,
+	  ["ctx->Const.MaxTextureLodBias"], "", ["EXT_texture_lod_bias"]),
+
 	# GL_EXT_texture_filter_anisotropic
 	( "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT", GLfloat,
 	  ["ctx->Const.MaxTextureMaxAnisotropy"], "", ["EXT_texture_filter_anisotropic"]),

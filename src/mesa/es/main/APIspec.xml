@@ -492,6 +492,19 @@
 		</desc>
 	</desc>
 
+	<desc name="target" category="EXT_texture_lod_bias">
+		<value name="GL_TEXTURE_FILTER_CONTROL_EXT"/>
+
+		<desc name="pname">
+			<value name="GL_TEXTURE_LOD_BIAS_EXT"/>
+		</desc>
+	</desc>
+
+	<desc name="pname" category="EXT_texture_lod_bias">
+		<value name="GL_TEXTURE_LOD_BIAS_EXT"/>
+		<desc name="params" vector_size="1"/>
+	</desc>
+
 	<desc name="target">
 		<value name="GL_TEXTURE_ENV"/>
 
@@ -1312,6 +1325,19 @@
 		<desc name="params" vector_size="1" convert="false"/>
 	</desc>
 
+	<desc name="target" category="EXT_texture_lod_bias">
+		<value name="GL_TEXTURE_FILTER_CONTROL_EXT"/>
+
+		<desc name="pname">
+			<value name="GL_TEXTURE_LOD_BIAS_EXT"/>
+		</desc>
+	</desc>
+
+	<desc name="pname" category="EXT_texture_lod_bias">
+		<value name="GL_TEXTURE_LOD_BIAS_EXT"/>
+		<desc name="params" vector_size="1"/>
+	</desc>
+
 	<desc name="target">
 		<value name="GL_TEXTURE_ENV"/>
 
@@ -1675,7 +1701,8 @@
 	<desc name="type">
 		<value name="GL_UNSIGNED_BYTE"/>
 		<value name="GL_UNSIGNED_SHORT"/>
-		<value name="GL_UNSIGNED_INT" category="GLES2.0"/>
+		<!-- GL_UNSIGNED_INT is not defined in GLES1.1 headers -->
+		<value name="(0x1405 /* GL_UNSIGNED_INT */)" category="OES_element_index_uint"/>
 	</desc>
 </template>
 
@@ -2033,6 +2060,9 @@
 		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
+
+		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
+		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
 	</desc>
 </template>
 
@@ -2050,6 +2080,9 @@
 		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
+
+		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
+		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
 	</desc>
 
 	<desc name="modeAlpha">
@@ -2059,6 +2092,9 @@
 		<value name="GL_FUNC_ADD_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_SUBTRACT_OES" category="OES_blend_subtract"/>
 		<value name="GL_FUNC_REVERSE_SUBTRACT_OES" category="OES_blend_subtract"/>
+
+		<value name="GL_MIN_EXT" category="EXT_blend_minmax"/>
+		<value name="GL_MAX_EXT" category="EXT_blend_minmax"/>
 	</desc>
 </template>
 
@@ -2363,22 +2399,28 @@
 	</desc>
 
 	<desc name="internalFormat">
-		<value name="GL_PALETTE4_RGB8_OES"/>
-		<value name="GL_PALETTE4_RGBA8_OES"/>
-		<value name="GL_PALETTE4_R5_G6_B5_OES"/>
-		<value name="GL_PALETTE4_RGBA4_OES"/>
-		<value name="GL_PALETTE4_RGB5_A1_OES"/>
-		<value name="GL_PALETTE8_RGB8_OES"/>
-		<value name="GL_PALETTE8_RGBA8_OES"/>
-		<value name="GL_PALETTE8_R5_G6_B5_OES"/>
-		<value name="GL_PALETTE8_RGBA4_OES"/>
-		<value name="GL_PALETTE8_RGB5_A1_OES"/>
 		<value name="GL_ETC1_RGB8_OES" category="OES_compressed_ETC1_RGB8_texture"/>
+
+		<value name="GL_PALETTE4_RGB8_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE4_RGBA8_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE4_R5_G6_B5_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE4_RGBA4_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE4_RGB5_A1_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE8_RGB8_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE8_RGBA8_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE8_R5_G6_B5_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE8_RGBA4_OES" category="OES_compressed_paletted_texture"/>
+		<value name="GL_PALETTE8_RGB5_A1_OES" category="OES_compressed_paletted_texture"/>
+
 		<value name="GL_3DC_X_AMD" category="AMD_compressed_3DC_texture"/>
 		<value name="GL_3DC_XY_AMD" category="AMD_compressed_3DC_texture"/>
+
 		<value name="GL_ATC_RGB_AMD" category="AMD_compressed_ATC_texture"/>
 		<value name="GL_ATC_RGBA_EXPLICIT_ALPHA_AMD" category="AMD_compressed_ATC_texture"/>
 		<value name="GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD" category="AMD_compressed_ATC_texture"/>
+
+		<value name="GL_COMPRESSED_RGB_S3TC_DXT1_EXT" category="EXT_texture_compression_dxt1"/>
+		<value name="GL_COMPRESSED_RGBA_S3TC_DXT1_EXT" category="EXT_texture_compression_dxt1"/>
 	</desc>
 
 	<desc name="border" error="GL_INVALID_VALUE">
@@ -2417,16 +2459,8 @@
 	</desc>
 
 	<desc name="format">
-		<value name="GL_PALETTE4_RGB8_OES"/>
-		<value name="GL_PALETTE4_RGBA8_OES"/>
-		<value name="GL_PALETTE4_R5_G6_B5_OES"/>
-		<value name="GL_PALETTE4_RGBA4_OES"/>
-		<value name="GL_PALETTE4_RGB5_A1_OES"/>
-		<value name="GL_PALETTE8_RGB8_OES"/>
-		<value name="GL_PALETTE8_RGBA8_OES"/>
-		<value name="GL_PALETTE8_R5_G6_B5_OES"/>
-		<value name="GL_PALETTE8_RGBA4_OES"/>
-		<value name="GL_PALETTE8_RGB5_A1_OES"/>
+		<value name="GL_COMPRESSED_RGB_S3TC_DXT1_EXT" category="EXT_texture_compression_dxt1"/>
+		<value name="GL_COMPRESSED_RGBA_S3TC_DXT1_EXT" category="EXT_texture_compression_dxt1"/>
 	</desc>
 </template>
 
@@ -3420,6 +3454,54 @@
 	</proto>
 </template>
 
+<template name="MultiDrawArrays">
+	<proto>
+		<return type="void"/>
+		<param name="mode" type="GLenum"/>
+		<param name="first" type="GLint *"/>
+		<param name="count" type="GLsizei *"/>
+		<param name="primcount" type="GLsizei"/>
+	</proto>
+
+	<desc name="mode">
+		<value name="GL_POINTS"/>
+		<value name="GL_LINES"/>
+		<value name="GL_LINE_LOOP"/>
+		<value name="GL_LINE_STRIP"/>
+		<value name="GL_TRIANGLES"/>
+		<value name="GL_TRIANGLE_STRIP"/>
+		<value name="GL_TRIANGLE_FAN"/>
+	</desc>
+</template>
+
+<template name="MultiDrawElements">
+	<proto>
+		<return type="void"/>
+		<param name="mode" type="GLenum"/>
+		<param name="count" type="const GLsizei *"/>
+		<param name="type" type="GLenum"/>
+		<param name="indices" type="const GLvoid **"/>
+		<param name="primcount" type="GLsizei"/>
+	</proto>
+
+	<desc name="mode">
+		<value name="GL_POINTS"/>
+		<value name="GL_LINES"/>
+		<value name="GL_LINE_LOOP"/>
+		<value name="GL_LINE_STRIP"/>
+		<value name="GL_TRIANGLES"/>
+		<value name="GL_TRIANGLE_STRIP"/>
+		<value name="GL_TRIANGLE_FAN"/>
+	</desc>
+
+	<desc name="type">
+		<value name="GL_UNSIGNED_BYTE"/>
+		<value name="GL_UNSIGNED_SHORT"/>
+		<!-- GL_UNSIGNED_INT is not defined in GLES1.1 headers -->
+		<value name="(0x1405 /* GL_UNSIGNED_INT */)" category="OES_element_index_uint"/>
+	</desc>
+</template>
+
 <api name="mesa" implementation="true">
 	<category name="MESA"/>
 
@@ -3685,6 +3767,10 @@
 	<function name="DrawTexiv" template="DrawTex" gltype="GLint"/>
 	<function name="DrawTexs" template="DrawTex" gltype="GLshort" expand_vector="true"/>
 	<function name="DrawTexsv" template="DrawTex" gltype="GLshort"/>
+
+        <!-- EXT_multi_draw_arrays -->
+        <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
+        <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
 </api>
 
 <api name="GLES1.1">
@@ -3718,7 +3804,13 @@
 	<category name="OES_element_index_uint"/>
 	<category name="OES_mapbuffer"/>
 	<category name="EXT_texture_filter_anisotropic"/>
+
 	<category name="ARB_texture_non_power_of_two"/>
+	<!-- disabled due to missing enums
+	<category name="EXT_texture_compression_dxt1"/>
+	<category name="EXT_texture_lod_bias"/>
+	<category name="EXT_blend_minmax"/>
+	-->
 	<category name="EXT_multi_draw_arrays"/>
 
 	<category name="OES_matrix_palette"/>
@@ -3973,6 +4065,10 @@
 	<function name="DrawTexivOES" template="DrawTex" gltype="GLint"/>
 	<function name="DrawTexsvOES" template="DrawTex" gltype="GLshort"/>
 	<function name="DrawTexxvOES" template="DrawTex" gltype="GLfixed"/>
+
+        <!-- EXT_multi_draw_arrays -->
+        <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
+        <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
 </api>
 
 <api name="GLES2.0">
@@ -3994,6 +4090,11 @@
 	<category name="OES_depth_texture"/>
 	<category name="OES_packed_depth_stencil"/>
 	<category name="OES_standard_derivatives"/>
+
+	<!-- disabled due to missing enums
+	<category name="EXT_texture_compression_dxt1"/>
+	<category name="EXT_blend_minmax"/>
+	-->
 	<category name="EXT_multi_draw_arrays"/>
 
 	<function name="CullFace" template="CullFace"/>
@@ -4188,6 +4289,10 @@
 	<function name="GetShaderPrecisionFormat" template="GetShaderPrecisionFormat"/>
 	<function name="GetUniformfv" template="GetUniform" gltype="GLfloat"/>
 	<function name="GetUniformiv" template="GetUniform" gltype="GLint"/>
+
+        <!-- EXT_multi_draw_arrays -->
+        <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
+        <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
 </api>
 
 </apispec>
