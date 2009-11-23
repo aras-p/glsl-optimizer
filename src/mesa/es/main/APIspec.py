@@ -323,12 +323,27 @@ class Checker(object):
 
     def __init__(self):
         self.switches = {}
+        self.switch_constants = {}
 
     def add_desc(self, desc):
         """Add a description."""
-        # TODO take index into consideration
+        # TODO allow index to vary
+        const_attrs = ["index", "error", "convert", "size_str"]
         if desc.name not in self.switches:
             self.switches[desc.name] = []
+            self.switch_constants[desc.name] = {}
+            for attr in const_attrs:
+                self.switch_constants[desc.name][attr] = None
+
+        # some attributes, like error code, should be the same for all descs
+        consts = self.switch_constants[desc.name]
+        for attr in const_attrs:
+            if getattr(desc, attr) is not None:
+                if (consts[attr] is not None and
+                    consts[attr] != getattr(desc, attr)):
+                    raise SpecError("mismatch %s for %s" % (attr, desc.name))
+                consts[attr] = getattr(desc, attr)
+
         self.switches[desc.name].append(desc)
 
     def validate(self, func, param_nodes):
@@ -348,6 +363,7 @@ class Checker(object):
                     tmp.add_desc(desc)
 
         self.switches = tmp.switches
+        self.switch_constants = tmp.switch_constants
         return True
 
     def flatten(self, name=None):
