@@ -2275,11 +2275,7 @@ exec_instruction(
    case TGSI_OPCODE_EX2:
       FETCH(&r[0], 0, CHAN_X);
 
-#if FAST_MATH
       micro_exp2( &r[0], &r[0] );
-#else
-      micro_pow( &r[0], &mach->Temps[TEMP_2_I].xyzw[TEMP_2_C], &r[0] );
-#endif
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
