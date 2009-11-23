@@ -1461,6 +1461,13 @@ store_dest(
       dst = &mach->Addrs[index].xyzw[chan_index];
       break;
 
+   case TGSI_FILE_LOOP:
+      assert(reg->DstRegister.Index == 0);
+      assert(mach->LoopCounterStackTop > 0);
+      assert(chan_index == CHAN_X);
+      dst = &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[chan_index];
+      break;
+
    case TGSI_FILE_PREDICATE:
       index = reg->DstRegister.Index;
       assert(index < TGSI_EXEC_NUM_PREDS);
@@ -3031,8 +3038,23 @@ exec_instruction(
       for (chan_index = 0; chan_index < 3; chan_index++) {
          FETCH( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[chan_index], 0, chan_index );
       }
-      STORE( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[CHAN_Y], 0, CHAN_X );
       ++mach->LoopCounterStackTop;
+      STORE(&mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X], 0, CHAN_X);
+      /* update LoopMask */
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[0] <= 0.0f) {
+         mach->LoopMask &= ~0x1;
+      }
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[1] <= 0.0f) {
+         mach->LoopMask &= ~0x2;
+      }
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[2] <= 0.0f) {
+         mach->LoopMask &= ~0x4;
+      }
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[3] <= 0.0f) {
+         mach->LoopMask &= ~0x8;
+      }
+      /* TODO: if mach->LoopMask == 0, jump to end of loop */
+      UPDATE_EXEC_MASK(mach);
       /* fall-through (for now) */
    case TGSI_OPCODE_BGNLOOP:
       /* push LoopMask and ContMasks */
@@ -3046,28 +3068,28 @@ exec_instruction(
 
    case TGSI_OPCODE_ENDFOR:
       assert(mach->LoopCounterStackTop > 0);
-      micro_sub( &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X], 
-                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X],
-                 &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+      micro_sub(&mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y], 
+                &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y],
+                &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
       /* update LoopMask */
-      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[0] <= 0) {
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[0] <= 0.0f) {
          mach->LoopMask &= ~0x1;
       }
-      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[1] <= 0 ) {
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[1] <= 0.0f) {
          mach->LoopMask &= ~0x2;
       }
-      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[2] <= 0 ) {
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[2] <= 0.0f) {
          mach->LoopMask &= ~0x4;
       }
-      if( mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X].f[3] <= 0 ) {
+      if (mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y].f[3] <= 0.0f) {
          mach->LoopMask &= ~0x8;
       }
-      micro_add( &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y], 
-                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Y], 
-                 &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Z]);
+      micro_add(&mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X], 
+                &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_X], 
+                &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[CHAN_Z]);
       assert(mach->LoopLabelStackTop > 0);
       inst = mach->Instructions + mach->LoopLabelStack[mach->LoopLabelStackTop - 1];
-      STORE( &mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[CHAN_Y], 0, CHAN_X );
+      STORE(&mach->LoopCounterStack[mach->LoopCounterStackTop].xyzw[CHAN_X], 0, CHAN_X);
       /* Restore ContMask, but don't pop */
       assert(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
