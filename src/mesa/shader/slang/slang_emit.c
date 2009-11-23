@@ -551,6 +551,9 @@ emit_instruction(slang_emit_info *emitInfo,
                                        &srcRelAddr,
                                        NULL,
                                        NULL);
+               if (!inst) {
+                  return NULL;
+               }
 
                src[i] = &newSrc[i];
             }
@@ -948,6 +951,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                               n->Children[0]->Store,
                               n->Children[1]->Store,
                               NULL);
+      if (!inst) {
+         return NULL;
+      }
       inst_comment(inst, "Compare values");
 
       /* Compute val = DOT(temp, temp)  (reduction) */
@@ -957,6 +963,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                               &tempStore,
                               &tempStore,
                               NULL);
+      if (!inst) {
+         return NULL;
+      }
       inst->SrcReg[0].Swizzle = inst->SrcReg[1].Swizzle = swizzle; /*override*/
       inst_comment(inst, "Reduce vec to bool");
 
@@ -972,6 +981,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                                  n->Store,
                                  &zero,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
          inst_comment(inst, "Invert true/false");
       }
    }
@@ -1001,6 +1013,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                                     &srcStore0,
                                     &srcStore1,
                                     NULL);
+            if (!inst) {
+               return NULL;
+            }
             inst_comment(inst, "Begin struct/array comparison");
          }
          else {
@@ -1010,12 +1025,18 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                                     &srcStore0,
                                     &srcStore1,
                                     NULL);
+            if (!inst) {
+               return NULL;
+            }
             /* ADD accTemp, accTemp, sneTemp; # like logical-OR */
             inst = emit_instruction(emitInfo, OPCODE_ADD,
                                     &accTemp, /* dest */
                                     &accTemp,
                                     &sneTemp,
                                     NULL);
+            if (!inst) {
+               return NULL;
+            }
          }
       }
 
@@ -1025,6 +1046,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                               &accTemp,
                               &accTemp,
                               NULL);
+      if (!inst) {
+         return NULL;
+      }
       inst_comment(inst, "End struct/array comparison");
 
       if (n->Opcode == IR_EQUAL) {
@@ -1036,6 +1060,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
                                  n->Store,
                                  &zero,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
          inst_comment(inst, "Invert true/false");
       }
 
@@ -1119,6 +1146,9 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[0]->Store,
                            n->Children[1]->Store,
                            NULL);
+   if (!inst) {
+      return NULL;
+   }
 
    /* n->dest = min(tmp, ch[2]) */
    inst = emit_instruction(emitInfo, OPCODE_MIN,
@@ -1153,7 +1183,9 @@ emit_negation(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[0]->Store,
                            NULL,
                            NULL);
-   inst->SrcReg[0].Negate = NEGATE_XYZW;
+   if (inst) {
+      inst->SrcReg[0].Negate = NEGATE_XYZW;
+   }
    return inst;
 }
 
@@ -1356,6 +1388,9 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[1]->Store,
                            NULL,
                            NULL);
+   if (!inst) {
+      return NULL;
+   }
 
    inst->TexShadow = shadow;
 
@@ -1458,6 +1493,9 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
                                     &srcStore,
                                     NULL,
                                     NULL);
+            if (!inst) {
+               return NULL;
+            }
             inst_comment(inst, "IR_COPY block");
             srcStore.Index++;
             dstStore.Index++;
@@ -1473,6 +1511,9 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
                                  n->Children[1]->Store,
                                  NULL,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
          dstAnnot = storage_annotation(n->Children[0], emitInfo->prog);
          srcAnnot = storage_annotation(n->Children[1], emitInfo->prog);
          inst->Comment = instruction_annotation(inst->Opcode, dstAnnot,
@@ -1534,6 +1575,9 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
                                  n->Children[0]->Store,
                                  NULL,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
          inst->CondUpdate = GL_TRUE;
          inst_comment(inst, "COND expr");
          _slang_free_temp(emitInfo->vt, n->Store);
@@ -1596,6 +1640,9 @@ emit_not(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[0]->Store,
                            &zero,
                            NULL);
+   if (!inst) {
+      return NULL;
+   }
    inst_comment(inst, "NOT");
 
    free_node_storage(emitInfo->vt, n->Children[0]);
@@ -1646,12 +1693,17 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          ifInst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
       }
       else {
+         struct prog_instruction *inst;
+
          /* IF src[0] THEN ... */
-         emit_instruction(emitInfo, OPCODE_IF,
-                          NULL, /* dst */
-                          n->Children[0]->Store, /* op0 */
-                          NULL,
-                          NULL);
+         inst = emit_instruction(emitInfo, OPCODE_IF,
+                                 NULL, /* dst */
+                                 n->Children[0]->Store, /* op0 */
+                                 NULL,
+                                 NULL);
+         if (!inst) {
+            return NULL;
+         }
       }
    }
    else {
@@ -1875,6 +1927,9 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
                                  n->Children[0]->Store,
                                  NULL,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
          n->InstLocation = emitInfo->prog->NumInstructions;
 
          inst = new_instruction(emitInfo, opcode);
@@ -2045,6 +2100,9 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
                                  indexStore, /* the index */
                                  &elemSizeStore,
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
 
          indexStore = indexTemp;
       }
@@ -2071,6 +2129,9 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
                                  indexStore,     /* the index */
                                  &indirectArray, /* indirect array base */
                                  NULL);
+         if (!inst) {
+            return NULL;
+         }
 
          indexStore = indexTemp;
       }
