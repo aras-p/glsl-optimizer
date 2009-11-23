@@ -126,7 +126,13 @@ exec_run( const struct sp_fragment_shader *base,
    setup_pos_vector(quad->posCoef, 
                     (float)quad->input.x0, (float)quad->input.y0, 
                     &machine->QuadPos);
-   
+
+   if (quad->input.facing) {
+      machine->Face = -1.0f;
+   } else {
+      machine->Face = 1.0f;
+   }
+
    quad->inout.mask &= tgsi_exec_machine_run( machine );
    if (quad->inout.mask == 0)
       return FALSE;
