@@ -570,7 +570,7 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 static FetchTexelFuncF
 _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
 {
-   FetchTexelFuncF f;
+   FetchTexelFuncF f = NULL;
    GLuint i;
    /* XXX replace loop with direct table lookup */
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {
