@@ -578,6 +578,24 @@ micro_exp2(
    dst->f[2] = util_fast_exp2( src->f[2] );
    dst->f[3] = util_fast_exp2( src->f[3] );
 #else
+
+#if DEBUG
+   /* Inf is okay for this instruction, so clamp it to silence assertions. */
+   uint i;
+   union tgsi_exec_channel clamped;
+
+   for (i = 0; i < 4; i++) {
+      if (src->f[i] > 127.99999f) {
+         clamped.f[i] = 127.99999f;
+      } else if (src->f[i] < -126.99999f) {
+         clamped.f[i] = -126.99999f;
+      } else {
+         clamped.f[i] = src->f[i];
+      }
+   }
+   src = &clamped;
+#endif
+
    dst->f[0] = powf( 2.0f, src->f[0] );
    dst->f[1] = powf( 2.0f, src->f[1] );
    dst->f[2] = powf( 2.0f, src->f[2] );
