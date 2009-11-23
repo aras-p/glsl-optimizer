@@ -256,45 +256,6 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 typedef void (*_glapi_proc)(void); /* generic function pointer */
 """
 
-# All variant-length arrays in the GLES API are controlled by some
-# selector parameter.  Almost all of those are constant length based
-# on the selector parameter (e.g., in glFogfv(), if the "pname" 
-# parameter is GL_FOG_COLOR, the "params" array is considered to be
-# 4 floats long; for any other value of "pname", the "params' array
-# is considered to be 1 float long.
-#
-# There are a very few instances where the selector parameter chooses
-# a runtime-determined value:
-#   glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS)
-#   glGetIntegerv(GL_SHADER_BINARY_FORMATS)
-# plus the glGetBooleanv, glGetFloatv, glGetFixedv counterparts.
-#
-# The number of formats in both cases is not a constant, but is a
-# runtime-determined value (based on the return value of
-# glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS) or
-# glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS).
-#
-# Rather than hard-code some value (and risk memory errors when we
-# overshoot arrays), in these cases we'll use a constant expresssion
-# (e.g. _get_size(GL_NUM_COMPRESSED_TEXTURE_FORMATS)) to get the
-# value of the variant array.  Note, though, that in these cases the
-# "vector" parameter should be set to some size large enough to hold
-# all values  (and must be set for GLfixed-based conversions, which
-# need it to define an auxiliary array size).
-#
-# Here's the function itself.  Although we only need a couple of values,
-# we'll make it general.
-print """
-extern void GLAPIENTRY _mesa_GetIntegerv(GLenum, GLint *);
-static INLINE unsigned int _get_size(GLenum pname)
-{
-    /* In case of error, make sure the value returned is 0. */
-    GLint value = 0;
-    _mesa_GetIntegerv(pname, &value);
-    return (unsigned int) value;
-}
-"""
-
 # Finally we get to the all-important functions
 print """/*************************************************************
  * Generated functions begin here

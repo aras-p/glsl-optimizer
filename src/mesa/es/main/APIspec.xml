@@ -1201,223 +1201,7 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<!-- XXX some enums might be missing -->
-	<desc name="pname">
-		<value name="GL_CLIENT_ACTIVE_TEXTURE"/>
-		<value name="GL_VERTEX_ARRAY_SIZE"/>
-		<value name="GL_VERTEX_ARRAY_STRIDE"/>
-		<value name="GL_NORMAL_ARRAY_STRIDE"/>
-		<value name="GL_COLOR_ARRAY_SIZE"/>
-		<value name="GL_TEXTURE_COORD_ARRAY_SIZE"/>
-		<value name="GL_TEXTURE_COORD_ARRAY_STRIDE"/>
-
-		<value name="GL_ARRAY_BUFFER_BINDING"/>
-		<value name="GL_VERTEX_ARRAY_BUFFER_BINDING"/>
-		<value name="GL_NORMAL_ARRAY_BUFFER_BINDING"/>
-		<value name="GL_COLOR_ARRAY_BUFFER_BINDING"/>
-		<value name="GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING"/>
-
-		<value name="GL_ELEMENT_ARRAY_BUFFER_BINDING"/>
-		<value name="GL_MODELVIEW_STACK_DEPTH"/>
-		<value name="GL_PROJECTION_STACK_DEPTH"/>
-		<value name="GL_TEXTURE_STACK_DEPTH"/>
-		<value name="GL_FOG_DENSITY"/>
-		<value name="GL_FOG_START"/>
-		<value name="GL_FOG_END"/>
-		<value name="GL_POINT_SIZE"/>
-		<value name="GL_POINT_SIZE_MIN"/>
-		<value name="GL_POINT_SIZE_MAX"/>
-		<value name="GL_POINT_FADE_THRESHOLD_SIZE"/>
-		<value name="GL_LINE_WIDTH"/>
-		<value name="GL_POLYGON_OFFSET_FACTOR"/>
-		<value name="GL_POLYGON_OFFSET_UNITS"/>
-		<value name="GL_SAMPLE_COVERAGE_VALUE"/>
-		<value name="GL_TEXTURE_BINDING_2D"/>
-		<value name="GL_ALPHA_TEST_REF"/>
-		<value name="GL_STENCIL_VALUE_MASK"/>
-		<value name="GL_STENCIL_REF"/>
-		<value name="GL_STENCIL_WRITEMASK"/>
-		<value name="GL_DEPTH_CLEAR_VALUE"/>
-		<value name="GL_STENCIL_CLEAR_VALUE"/>
-		<value name="GL_UNPACK_ALIGNMENT"/>
-		<value name="GL_PACK_ALIGNMENT"/>
-		<value name="GL_MAX_LIGHTS"/>
-		<value name="GL_MAX_CLIP_PLANES"/>
-		<value name="GL_MAX_MODELVIEW_STACK_DEPTH"/>
-		<value name="GL_MAX_PROJECTION_STACK_DEPTH"/>
-		<value name="GL_MAX_TEXTURE_STACK_DEPTH"/>
-		<value name="GL_SUBPIXEL_BITS"/>
-		<value name="GL_MAX_TEXTURE_SIZE"/>
-		<value name="GL_MAX_TEXTURE_UNITS"/>
-		<value name="GL_SAMPLE_BUFFERS"/>
-		<value name="GL_SAMPLES"/>
-		<value name="GL_NUM_COMPRESSED_TEXTURE_FORMATS"/>
-		<value name="GL_RED_BITS"/>
-		<value name="GL_GREEN_BITS"/>
-		<value name="GL_BLUE_BITS"/>
-		<value name="GL_ALPHA_BITS"/>
-		<value name="GL_DEPTH_BITS"/>
-		<value name="GL_STENCIL_BITS"/>
-
-		<value name="GL_FRAMEBUFFER_BINDING_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RENDERBUFFER_BINDING_OES" category="OES_framebuffer_object"/>
-		<value name="GL_MAX_RENDERBUFFER_SIZE_OES" category="OES_framebuffer_object"/>
-
-		<value name="GL_POINT_SIZE_ARRAY_STRIDE_OES" category="OES_point_size_array"/>
-		<value name="GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES" category="OES_point_size_array"/>
-
-		<value name="GL_MAX_PALETTE_MATRICES_OES" category="OES_matrix_palette"/>
-		<value name="GL_MAX_VERTEX_UNITS_OES" category="OES_matrix_palette"/>
-		<value name="GL_CURRENT_PALETTE_MATRIX_OES" category="OES_matrix_palette"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_SIZE_OES" category="OES_matrix_palette"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_STRIDE_OES" category="OES_matrix_palette"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_SIZE_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_STRIDE_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_BUFFER_BINDING_OES" category="OES_matrix_palette"/>
-
-		<value name="GL_TEXTURE_BINDING_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-		<value name="GL_MAX_CUBE_MAP_TEXTURE_SIZE_OES" category="OES_texture_cube_map"/>
-		<value name="GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" category="EXT_texture_filter_anisotropic"/>
-
-		<desc name="params" vector_size="1"/>
-	</desc>
-
-	<!-- These values return booleans or GLenums, and should not have their
-	     value converted -->
-	<desc name="pname">
-		<value name="GL_VERTEX_ARRAY"/>
-		<value name="GL_VERTEX_ARRAY_TYPE"/>
-		<value name="GL_NORMAL_ARRAY"/>
-		<value name="GL_NORMAL_ARRAY_TYPE"/>
-		<value name="GL_COLOR_ARRAY"/>
-		<value name="GL_COLOR_ARRAY_TYPE"/>
-		<value name="GL_TEXTURE_COORD_ARRAY"/>
-		<value name="GL_TEXTURE_COORD_ARRAY_TYPE"/>
-		<value name="GL_MATRIX_MODE"/>
-		<value name="GL_NORMALIZE"/>
-		<value name="GL_RESCALE_NORMAL"/>
-
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-
-		<value name="GL_FOG_MODE"/>
-		<value name="GL_FOG"/>
-		<value name="GL_SHADE_MODEL"/>
-		<value name="GL_LIGHTING"/>
-		<value name="GL_COLOR_MATERIAL"/>
-		<value name="GL_LIGHT_MODEL_TWO_SIDE"/>
-
-		<range base="GL_LIGHT" from="0" to="7"/>
-
-		<value name="GL_POINT_SMOOTH"/>
-		<value name="GL_LINE_SMOOTH"/>
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_CULL_FACE_MODE"/>
-		<value name="GL_FRONT_FACE"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_MULTISAMPLE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_ONE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_ACTIVE_TEXTURE"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_ALPHA_TEST"/>
-		<value name="GL_ALPHA_TEST_FUNC"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_STENCIL_FUNC"/>
-		<value name="GL_STENCIL_FAIL"/>
-		<value name="GL_STENCIL_PASS_DEPTH_FAIL"/>
-		<value name="GL_STENCIL_PASS_DEPTH_PASS"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_DEPTH_FUNC"/>
-		<value name="GL_BLEND"/>
-		<value name="GL_BLEND_SRC"/>
-		<value name="GL_BLEND_DST"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_COLOR_LOGIC_OP"/>
-		<value name="GL_LOGIC_OP_MODE"/>
-		<value name="GL_DEPTH_WRITEMASK"/>
-		<value name="GL_PERSPECTIVE_CORRECTION_HINT"/>
-		<value name="GL_POINT_SMOOTH_HINT"/>
-		<value name="GL_LINE_SMOOTH_HINT"/>
-		<value name="GL_FOG_HINT"/>
-		<value name="GL_GENERATE_MIPMAP_HINT"/>
-
-		<value name="GL_POINT_SPRITE_OES" category="OES_point_sprite"/>
-
-		<value name="GL_MATRIX_INDEX_ARRAY_TYPE_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_TYPE_OES" category="OES_matrix_palette"/>
-
-		<value name="GL_POINT_SIZE_ARRAY_OES" category="OES_point_size_array"/>
-		<value name="GL_POINT_SIZE_ARRAY_TYPE_OES" category="OES_point_size_array"/>
-
-		<value name="GL_BLEND_SRC_RGB_OES" category="OES_blend_subtract"/>
-		<value name="GL_BLEND_DST_RGB_OES" category="OES_blend_subtract"/>
-		<value name="GL_BLEND_SRC_ALPHA_OES" category="OES_blend_subtract"/>
-		<value name="GL_BLEND_DST_ALPHA_OES" category="OES_blend_subtract"/>
-
-		<value name="GL_BLEND_EQUATION_RGB_OES" category="OES_blend_equation_separate"/>
-		<value name="GL_BLEND_EQUATION_ALPHA_OES" category="OES_blend_equation_separate"/>
-
-		<value name="GL_IMPLEMENTATION_COLOR_READ_TYPE" category="GLES2.0"/>
-		<value name="GL_IMPLEMENTATION_COLOR_READ_FORMAT" category="GLES2.0"/>
-		<value name="GL_IMPLEMENTATION_COLOR_READ_TYPE_OES" category="OES_read_format"/>
-		<value name="GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES" category="OES_read_format"/>
-
-		<value name="GL_TEXTURE_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-        </desc>
-
-	<desc name="pname">
-		<value name="GL_MAX_VIEWPORT_DIMS"/>
-		<value name="GL_ALIASED_POINT_SIZE_RANGE"/>
-		<value name="GL_SMOOTH_POINT_SIZE_RANGE"/>
-		<value name="GL_ALIASED_LINE_WIDTH_RANGE"/>
-		<value name="GL_SMOOTH_LINE_WIDTH_RANGE"/>
-		<value name="GL_DEPTH_RANGE"/>
-
-		<desc name="params" vector_size="2"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_CURRENT_NORMAL"/>
-		<value name="GL_POINT_DISTANCE_ATTENUATION"/>
-
-		<desc name="params" vector_size="3"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_CURRENT_COLOR"/>
-		<value name="GL_CURRENT_TEXTURE_COORDS"/>
-		<value name="GL_SCISSOR_BOX"/>
-		<value name="GL_COLOR_WRITEMASK"/>
-		<value name="GL_COLOR_CLEAR_VALUE"/>
-		<value name="GL_LIGHT_MODEL_AMBIENT"/>
-		<value name="GL_VIEWPORT"/>
-		<value name="GL_FOG_COLOR"/>
-
-		<desc name="params" vector_size="4"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_MODELVIEW_MATRIX"/>
-		<value name="GL_PROJECTION_MATRIX"/>
-		<value name="GL_TEXTURE_MATRIX"/>
-
-		<value name="GL_MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES" category="OES_matrix_get"/>
-		<value name="GL_PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES" category="OES_matrix_get"/>
-		<value name="GL_TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES" category="OES_matrix_get"/>
-
-		<desc name="params" vector_size="16"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_COMPRESSED_TEXTURE_FORMATS" />
-		<desc name="params" vector_size="_get_size(GL_COMPRESSED_TEXTURE_FORMATS)" convert="false"/>
-	</desc>
+	<!-- param checking is done in mesa -->
 </template>
 
 <template name="GetLight" direction="get">
@@ -3707,6 +3491,7 @@
 	<function name="GetClipPlane" template="GetClipPlane" gltype="GLdouble"/>
 	<function name="GetError" template="GetError"/>
 	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
+	<function name="GetFixedv" template="GetState" gltype="GLfixed"/>
 	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
 	<function name="GetLightfv" template="GetLight" gltype="GLfloat"/>
@@ -4030,15 +3815,15 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" template="GetState" gltype="GLboolean" skip_desc="true"/>
+	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
 
 	<function name="GetClipPlanef" template="GetClipPlane" gltype="GLfloat"/>
 	<function name="GetClipPlanex" template="GetClipPlane" gltype="GLfixed"/>
 
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" template="GetState" gltype="GLfloat" skip_desc="true"/>
+	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
 	<function name="GetFixedv" template="GetState" gltype="GLfixed"/>
-	<function name="GetIntegerv" template="GetState" gltype="GLint" skip_desc="true"/>
+	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
 	<function name="GetLightfv" template="GetLight" gltype="GLfloat"/>
 	<function name="GetLightxv" template="GetLight" gltype="GLfixed"/>
@@ -4250,10 +4035,10 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" template="GetState" gltype="GLboolean" skip_desc="true"/>
+	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" template="GetState" gltype="GLfloat" skip_desc="true"/>
-	<function name="GetIntegerv" template="GetState" gltype="GLint" skip_desc="true"/>
+	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
+	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
 	<function name="GetString" external="true" template="GetString"/>
 

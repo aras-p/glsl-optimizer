@@ -36,6 +36,7 @@ GLfloat = 3
 GLdouble = 4
 GLboolean = 5
 GLfloatN = 6    # A normalized value, such as a color or depth range
+GLfixed = 7
 
 
 TypeStrings = {
@@ -43,7 +44,8 @@ TypeStrings = {
 	GLenum : "GLenum",
 	GLfloat : "GLfloat",
 	GLdouble : "GLdouble",
-	GLboolean : "GLboolean"
+	GLboolean : "GLboolean",
+	GLfixed : "GLfixed"
 }
 
 
@@ -566,7 +568,8 @@ def EmitGetFunction(stateVars, returnType):
 	"""Emit the code to implement glGetBooleanv, glGetIntegerv or glGetFloatv."""
 	assert (returnType == GLboolean or
 			returnType == GLint or
-			returnType == GLfloat)
+			returnType == GLfloat or
+			returnType == GLfixed)
 
 	strType = TypeStrings[returnType]
 	# Capitalize first letter of return type
@@ -576,6 +579,8 @@ def EmitGetFunction(stateVars, returnType):
 		function = "_mesa_GetBooleanv"
 	elif returnType == GLfloat:
 		function = "_mesa_GetFloatv"
+	elif returnType == GLfixed:
+		function = "_mesa_GetFixedv"
 	else:
 		abort()
 
@@ -688,11 +693,20 @@ def EmitHeader():
 
 
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
+#define FLOAT_TO_FIXED(F)     ( ((F) * 65536.0f > INT_MAX) ? INT_MAX : \\
+                                ((F) * 65536.0f < INT_MIN) ? INT_MIN : \\
+                                (GLint) ((F) * 65536.0f) )
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
+#define INT_TO_FIXED(I)       ( ((I) > SHRT_MAX) ? INT_MAX : \\
+                                ((I) < SHRT_MIN) ? INT_MIN : \\
+                                (GLint) ((I) * 65536) )
 
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
+#define BOOLEAN_TO_FIXED(B)   ( (GLint) ((B) ? 1 : 0) << 16 )
+
+#define ENUM_TO_FIXED(E)      (E)
 
 
 /*
@@ -753,15 +767,20 @@ static GLenum compressed_formats[] = {
 
 #define ARRAY_SIZE(A)  (sizeof(A) / sizeof(A[0]))
 
+void GLAPIENTRY
+_mesa_GetFixedv( GLenum pname, GLfixed *params );
+
 """
 	return
 
 
-def EmitAll(stateVars):
+def EmitAll(stateVars, API):
 	EmitHeader()
 	EmitGetFunction(stateVars, GLboolean)
 	EmitGetFunction(stateVars, GLfloat)
 	EmitGetFunction(stateVars, GLint)
+	if API == 1:
+		EmitGetFunction(stateVars, GLfixed)
 
 
 def main(args):
@@ -779,7 +798,7 @@ def main(args):
 	else:
 		vars = StateVars_common + StateVars_es2
 
-	EmitAll(vars)
+	EmitAll(vars, API)
 
 
 main(sys.argv)
