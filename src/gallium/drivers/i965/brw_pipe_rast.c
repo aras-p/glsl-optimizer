@@ -58,8 +58,10 @@ calculate_clip_key_rast( const struct brw_context *brw,
       key->fill_cw = translate_fill(templ->fill_cw);
    }
 
-   if (key->fill_cw != CLIP_FILL ||
-       key->fill_ccw != CLIP_FILL) {
+   if (key->fill_cw == CLIP_LINE ||
+       key->fill_ccw == CLIP_LINE ||
+       key->fill_cw == CLIP_POINT ||
+       key->fill_ccw == CLIP_POINT) {
       key->do_unfilled = 1;
       key->clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
    }
