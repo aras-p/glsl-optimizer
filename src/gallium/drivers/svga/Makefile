@@ -51,13 +51,7 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers/svga/include
 
 LIBRARY_DEFINES = \
+	-std=gnu99 -fvisibility=hidden \
 	-DHAVE_STDINT_H -DHAVE_SYS_TYPES_H
-
-CC = gcc -fvisibility=hidden -msse -msse2
-
-# Set the gnu99 standard to enable anonymous structs in vmware headers.
-#
-CFLAGS = -Wall -Wmissing-prototypes -std=gnu99 -ffast-math \
-	$(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) $(ASM_FLAGS)
 
 include ../../Makefile.template

@@ -28,20 +28,8 @@ LIBRARY_INCLUDES = \
        $(shell pkg-config libdrm --cflags-only-I)
 
 LIBRARY_DEFINES = \
+       -std=gnu99 -fvisibility=hidden \
        -DHAVE_STDINT_H -D_FILE_OFFSET_BITS=64 \
        $(shell pkg-config libdrm --cflags-only-other)
 
-CC = gcc -fvisibility=hidden -msse -msse2
-
-# Set the gnu99 standard to enable anonymous structs in vmware headers.
-#
-CFLAGS = -Wall -Wmissing-prototypes -std=gnu99 -ffast-math \
-       $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) $(ASM_FLAGS)
-
 include ../../../../Makefile.template
-
-
-symlinks:
-
-
-include depend
