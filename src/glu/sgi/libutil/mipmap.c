@@ -7384,6 +7384,8 @@ int gluScaleImage3D(GLenum format,
    afterImage = malloc(imageSize3D(widthOut, heightOut, depthOut, format,
 				   GL_UNSIGNED_SHORT));
    if (beforeImage == NULL || afterImage == NULL) {
+       free(beforeImage);
+       free(afterImage);
        return GLU_OUT_OF_MEMORY;
    }
    retrieveStoreModes3D(&psm);
