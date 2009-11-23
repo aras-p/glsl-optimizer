@@ -97,8 +97,22 @@
     </function>
 </category>
 
+<!-- the other name is OES_texture_float_linear -->
+<category name="OES_texture_half_float_linear" number="35">
+    <!-- No new functions, types, enums. -->
+</category>
+
+<!-- the other name is OES_texture_float -->
+<category name="OES_texture_half_float" number="36">
+    <enum name="HALF_FLOAT_OES"                           value="0x8D61"/>
+</category>
+
 <category name="GL_OES_texture_npot" number="37">
     <!-- No new functions, types, enums. -->
+</category>
+
+<category name="GL_OES_vertex_half_float" number="38">
+    <enum name="HALF_FLOAT_OES"                           value="0x8D61"/>
 </category>
 
 <category name="GL_EXT_texture_type_2_10_10_10_REV" number="42">
@@ -117,6 +131,32 @@
 
 <category name="GL_OES_standard_derivatives" number="45">
     <enum name="FRAGMENT_SHADER_DERIVATIVE_HINT_OES"      value="0x8B8B"/>
+</category>
+
+<category name="GL_OES_vertex_type_10_10_10_2" number="46">
+    <enum name="UNSIGNED_INT_10_10_10_2_OES"              value="0x8DF6"/>
+    <enum name="INT_10_10_10_2_OES"                       value="0x8DF7"/>
+</category>
+
+<category name="GL_OES_get_program_binary" number="47">
+    <enum name="PROGRAM_BINARY_LENGTH_OES"                value="0x8741"/>
+    <enum name="NUM_PROGRAM_BINARY_FORMATS_OES"           value="0x87FE"/>
+    <enum name="PROGRAM_BINARY_FORMATS_OES"               value="0x87FF"/>
+
+    <function name="GetProgramBinaryOES" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="binaryFormat" type="GLenum *"/>
+        <param name="binary" type="GLvoid *"/>
+    </function>
+
+    <function name="ProgramBinaryOES" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="binaryFormat" type="GLenum"/>
+        <param name="binary" type="const GLvoid *"/>
+        <param name="length" type="GLint"/>
+    </function>
 </category>
 
 </OpenGLAPI>

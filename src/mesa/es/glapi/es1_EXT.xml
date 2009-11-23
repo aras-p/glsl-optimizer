@@ -607,19 +607,19 @@
 
 <!-- part of es1.1 extension pack -->
 <category name="GL_OES_texture_cube_map" number="20">
-    <enum name="GL_TEXTURE_GEN_MODE_OES"                  value="0x2500"/>
-    <enum name="GL_NORMAL_MAP_OES"                        value="0x8511"/>
-    <enum name="GL_REFLECTION_MAP_OES"                    value="0x8512"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_OES"                  value="0x8513"/>
-    <enum name="GL_TEXTURE_BINDING_CUBE_MAP_OES"          value="0x8514"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES"       value="0x8515"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES"       value="0x8516"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES"       value="0x8517"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES"       value="0x8518"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES"       value="0x8519"/>
-    <enum name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES"       value="0x851A"/>
-    <enum name="GL_MAX_CUBE_MAP_TEXTURE_SIZE_OES"         value="0x851C"/>
-    <enum name="GL_TEXTURE_GEN_STR_OES"                   value="0x8D60"/>
+    <enum name="TEXTURE_GEN_MODE_OES"                  value="0x2500"/>
+    <enum name="NORMAL_MAP_OES"                        value="0x8511"/>
+    <enum name="REFLECTION_MAP_OES"                    value="0x8512"/>
+    <enum name="TEXTURE_CUBE_MAP_OES"                  value="0x8513"/>
+    <enum name="TEXTURE_BINDING_CUBE_MAP_OES"          value="0x8514"/>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_X_OES"       value="0x8515"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_X_OES"       value="0x8516"/>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_Y_OES"       value="0x8517"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Y_OES"       value="0x8518"/>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_Z_OES"       value="0x8519"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Z_OES"       value="0x851A"/>
+    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE_OES"         value="0x851C"/>
+    <enum name="TEXTURE_GEN_STR_OES"                   value="0x8D60"/>
 
     <function name="GetTexGenfvOES" offset="279">
         <param name="coord" type="GLenum"/>
@@ -688,6 +688,12 @@
 
 <category name="GL_OES_texture_mirrored_repeat" number="22">
     <!-- No new functions, types, enums. -->
+</category>
+
+<category name="GL_EXT_texture_lod_bias" number="60">
+    <enum name="TEXTURE_FILTER_CONTROL_EXT"               value="0x8500"/>
+    <enum name="TEXTURE_LOD_BIAS_EXT"                     value="0x8501"/>
+    <enum name="MAX_TEXTURE_LOD_BIAS_EXT"                 value="0x84FD"/>
 </category>
 
 </OpenGLAPI>
