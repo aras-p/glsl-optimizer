@@ -622,10 +622,12 @@ generate_fragment(struct llvmpipe_context *lp,
     * Translate the LLVM IR into machine code.
     */
 
+#ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
       LLVMDumpValue(variant->function);
-      abort();
+      assert(0);
    }
+#endif
 
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 

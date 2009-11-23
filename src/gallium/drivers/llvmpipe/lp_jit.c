@@ -167,7 +167,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
       _debug_printf("%s\n", error);
       LLVMDisposeMessage(error);
-      abort();
+      assert(0);
    }
 
    screen->target = LLVMGetExecutionEngineTargetData(screen->engine);
