@@ -396,15 +396,11 @@ xrender_tex(struct ureg_program *ureg,
             struct ureg_dst dst,
             struct ureg_src coords,
             struct ureg_src sampler,
+            struct ureg_src imm0,
             boolean repeat_none,
             boolean swizzle,
             boolean set_alpha)
 {
-   struct ureg_src imm0 = { 0 };
-
-   if (repeat_none || set_alpha)
-      imm0 = ureg_imm4f(ureg, 0, 0, 0, 1);
-
    if (repeat_none) {
       struct ureg_dst tmp0 = ureg_DECL_temporary(ureg);
       struct ureg_dst tmp1 = ureg_DECL_temporary(ureg);
@@ -466,6 +462,7 @@ create_fs(struct pipe_context *pipe,
    struct ureg_src /*dst_pos,*/ src_input, mask_pos;
    struct ureg_dst src, mask;
    struct ureg_dst out;
+   struct ureg_src imm0 = { 0 };
    unsigned has_mask = (fs_traits & FS_MASK) != 0;
    unsigned is_fill = (fs_traits & FS_FILL) != 0;
    unsigned is_composite = (fs_traits & FS_COMPOSITE) != 0;
@@ -483,8 +480,6 @@ create_fs(struct pipe_context *pipe,
    unsigned src_luminance = (fs_traits & FS_SRC_LUMINANCE) != 0;
    unsigned mask_luminance = (fs_traits & FS_MASK_LUMINANCE) != 0;
 
-   if (src_luminance)
-      assert(!"src_luminance not supported");
 #if 0
    print_fs_traits(fs_traits);
 #else
@@ -502,6 +497,11 @@ create_fs(struct pipe_context *pipe,
                           TGSI_SEMANTIC_COLOR,
                           0);
 
+   if (src_repeat_none || mask_repeat_none ||
+       src_set_alpha || mask_set_alpha ||
+       src_luminance) {
+      imm0 = ureg_imm4f(ureg, 0, 0, 0, 1);
+   }
    if (is_composite) {
       src_sampler = ureg_DECL_sampler(ureg, 0);
       src_input = ureg_DECL_fs_input(ureg,
@@ -540,16 +540,17 @@ create_fs(struct pipe_context *pipe,
                                 TGSI_INTERPOLATE_PERSPECTIVE);
 #endif
 
+
    if (is_composite) {
-      if (has_mask)
+      if (has_mask || src_luminance)
          src = ureg_DECL_temporary(ureg);
       else
          src = out;
-      xrender_tex(ureg, src, src_input, src_sampler,
+      xrender_tex(ureg, src, src_input, src_sampler, imm0,
                   src_repeat_none, src_swizzle, src_set_alpha);
    } else if (is_fill) {
       if (is_solid) {
-         if (has_mask)
+         if (has_mask || src_luminance)
             src = ureg_dst(src_input);
          else
             ureg_MOV(ureg, out, src_input);
@@ -557,7 +558,7 @@ create_fs(struct pipe_context *pipe,
          struct ureg_src coords, const0124,
             matrow0, matrow1, matrow2;
 
-         if (has_mask)
+         if (has_mask || src_luminance)
             src = ureg_DECL_temporary(ureg);
          else
             src = out;
@@ -582,10 +583,18 @@ create_fs(struct pipe_context *pipe,
       } else
          debug_assert(!"Unknown fill type!");
    }
+   if (src_luminance) {
+      ureg_MOV(ureg, src,
+               ureg_scalar(ureg_src(src), TGSI_SWIZZLE_X));
+      ureg_MOV(ureg, ureg_writemask(src, TGSI_WRITEMASK_XYZ),
+               ureg_scalar(imm0, TGSI_SWIZZLE_X));
+      if (!has_mask)
+         ureg_MOV(ureg, out, ureg_src(src));
+   }
 
    if (has_mask) {
       mask = ureg_DECL_temporary(ureg);
-      xrender_tex(ureg, mask, mask_pos, mask_sampler,
+      xrender_tex(ureg, mask, mask_pos, mask_sampler, imm0,
                   mask_repeat_none, mask_swizzle, mask_set_alpha);
       /* src IN mask */
       src_in_mask(ureg, out, ureg_src(src), ureg_src(mask),
