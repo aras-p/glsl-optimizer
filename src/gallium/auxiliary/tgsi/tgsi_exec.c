@@ -1832,53 +1832,58 @@ typedef void (* eval_coef_func)(
    unsigned chan );
 
 static void
-exec_declaration(
-   struct tgsi_exec_machine *mach,
-   const struct tgsi_full_declaration *decl )
+exec_declaration(struct tgsi_exec_machine *mach,
+                 const struct tgsi_full_declaration *decl)
 {
-   if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
-      if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-         unsigned first, last, mask;
-         eval_coef_func eval;
+   if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
+      if (decl->Declaration.File == TGSI_FILE_INPUT) {
+         uint first, last, mask;
 
          first = decl->DeclarationRange.First;
          last = decl->DeclarationRange.Last;
          mask = decl->Declaration.UsageMask;
 
-         switch( decl->Declaration.Interpolate ) {
-         case TGSI_INTERPOLATE_CONSTANT:
-            eval = eval_constant_coef;
-            break;
+         if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+            assert(decl->Semantic.SemanticIndex == 0);
+            assert(first == last);
+            assert(mask = TGSI_WRITEMASK_XYZW);
 
-         case TGSI_INTERPOLATE_LINEAR:
-            eval = eval_linear_coef;
-            break;
+            mach->Inputs[first] = mach->QuadPos;
+         } else if (decl->Semantic.SemanticName == TGSI_SEMANTIC_FACE) {
+            uint i;
 
-         case TGSI_INTERPOLATE_PERSPECTIVE:
-            eval = eval_perspective_coef;
-            break;
+            assert(decl->Semantic.SemanticIndex == 0);
+            assert(first == last);
 
-         default:
-            assert( 0 );
-            return;
-         }
-
-         if( mask == TGSI_WRITEMASK_XYZW ) {
-            unsigned i, j;
-
-            for( i = first; i <= last; i++ ) {
-               for( j = 0; j < NUM_CHANNELS; j++ ) {
-                  eval( mach, i, j );
-               }
+            for (i = 0; i < QUAD_SIZE; i++) {
+               mach->Inputs[first].xyzw[0].f[i] = mach->Face;
             }
-         }
-         else {
-            unsigned i, j;
+         } else {
+            eval_coef_func eval;
+            uint i, j;
 
-            for( j = 0; j < NUM_CHANNELS; j++ ) {
-               if( mask & (1 << j) ) {
-                  for( i = first; i <= last; i++ ) {
-                     eval( mach, i, j );
+            switch (decl->Declaration.Interpolate) {
+            case TGSI_INTERPOLATE_CONSTANT:
+               eval = eval_constant_coef;
+               break;
+
+            case TGSI_INTERPOLATE_LINEAR:
+               eval = eval_linear_coef;
+               break;
+
+            case TGSI_INTERPOLATE_PERSPECTIVE:
+               eval = eval_perspective_coef;
+               break;
+
+            default:
+               assert(0);
+               return;
+            }
+
+            for (j = 0; j < NUM_CHANNELS; j++) {
+               if (mask & (1 << j)) {
+                  for (i = first; i <= last; i++) {
+                     eval(mach, i, j);
                   }
                }
             }
