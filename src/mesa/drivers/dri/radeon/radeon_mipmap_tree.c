@@ -492,11 +492,12 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 														 unsigned firstLevel,
 														 unsigned lastLevel)
 {
-	const unsigned numLevels = lastLevel - firstLevel;
+	const unsigned numLevels = lastLevel - firstLevel + 1;
 	unsigned *mtSizes = calloc(numLevels, sizeof(unsigned));
 	radeon_mipmap_tree **mts = calloc(numLevels, sizeof(radeon_mipmap_tree *));
 	unsigned mtCount = 0;
 	unsigned maxMtIndex = 0;
+	radeon_mipmap_tree *tmp;
 
 	for (unsigned level = firstLevel; level <= lastLevel; ++level) {
 		radeon_texture_image *img = get_radeon_texture_image(texObj->base.Image[0][level]);
@@ -518,7 +519,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 
 		if (!found) {
 			mtSizes[mtCount] += img->mt->levels[img->mtlevel].size;
-			mts[mtCount++] = img->mt;
+			mts[mtCount] = img->mt;
 			mtCount++;
 		}
 	}
@@ -533,7 +534,11 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		}
 	}
 
-	return mts[maxMtIndex];
+	tmp = mts[maxMtIndex];
+	free(mtSizes);
+	free(mts);
+
+	return tmp;
 }
 
 /**
