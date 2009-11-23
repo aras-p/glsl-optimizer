@@ -19,7 +19,7 @@
 #include "GLES/glext.h"
 
 
-void GL_APIENTRY _es_CompressedTexImage2D(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+void GL_APIENTRY _es_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
 
 void GL_APIENTRY _mesa_TexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void GL_APIENTRY _mesa_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
@@ -215,9 +215,9 @@ cpal_compressed_teximage2d(GLenum target, GLint level,
 
 
 void GL_APIENTRY
-_es_CompressedTexImage2D(GLenum target, GLint level, GLenum internalFormat,
-                       GLsizei width, GLsizei height, GLint border,
-                       GLsizei imageSize, const GLvoid *data)
+_es_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat,
+                            GLsizei width, GLsizei height, GLint border,
+                            GLsizei imageSize, const GLvoid *data)
 {
    switch (internalFormat) {
    case GL_PALETTE4_RGB8_OES:

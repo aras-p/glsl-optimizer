@@ -272,7 +272,13 @@ for funcName in keys:
     # We're allowed to override the prefix and/or the function name
     # for each function record, though.  The "ConversionFunction"
     # utility is poorly named, BTW...
-    aliasprefix = apiutil.AliasPrefix(funcName)
+    if funcName in allSpecials:
+        # perform checks and pass through
+        funcPrefix = "_check_"
+        aliasprefix = "_es_"
+    else:
+        funcPrefix = "_es_"
+        aliasprefix = apiutil.AliasPrefix(funcName)
     alias = apiutil.ConversionFunction(funcName)
     if not alias:
         # There may still be a Mesa alias for the function
@@ -562,8 +568,9 @@ for funcName in keys:
     # The Mesa functions are scattered across all the Mesa
     # header files.  The easiest way to manage declarations
     # is to create them ourselves.
-    if funcName not in allSpecials:
-        print "extern %s GLAPIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
+    if funcName in allSpecials:
+        print "/* this function is special and is defined elsewhere */"
+    print "extern %s GLAPIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
 
     # A function may be a core function (i.e. it exists in
     # the core specification), a core addition (extension
@@ -594,22 +601,25 @@ for funcName in keys:
         if len(compoundCategory) == 1:
             # This is a core function
             extensionName = None
-            fullFuncName = "_es_" + funcName
+            extensionSuffix = ""
         else:
             # This is an extension function.  We'll need to append
             # the extension suffix.
             extensionName = compoundCategory[1]
             extensionSuffix = extensionName.split("_")[0]
-            fullFuncName = "_es_" + funcName + extensionSuffix
+        fullFuncName = funcPrefix + funcName + extensionSuffix
 
         # Now the generated function.  The text used to mark an API-level
         # function, oddly, is version-specific.
         if extensionName:
             print "/* Extension %s */" % extensionName
 
-        if funcName in allSpecials:
-            print "/* this function is special and is defined elsewhere */"
-            print "extern %s %s(%s);" % (returnType, fullFuncName, declarationString)
+        if (not variables and
+            not switchCode and
+            not conversionCodeOutgoing and
+            not conversionCodeIncoming):
+            # pass through directly
+            print "#define %s %s" % (fullFuncName, passthroughFuncName)
             print
             continue
 
@@ -661,6 +671,7 @@ print "void"
 print "_mesa_init_exec_table(struct _glapi_table *exec)"
 print "{"
 for func in keys:
+    prefix = "_es_" if func not in allSpecials else "_check_"
     for spec in apiutil.Categories(func):
         ext = spec.split(":")
         # version does not match
@@ -670,5 +681,5 @@ for func in keys:
         if ext:
             suffix = ext[0].split("_")[0]
             entry += suffix
-        print "    SET_%s(exec, _es_%s);" % (entry, entry)
+        print "    SET_%s(exec, %s%s);" % (entry, prefix, entry)
 print "}"

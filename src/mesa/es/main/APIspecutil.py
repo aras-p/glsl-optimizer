@@ -59,8 +59,11 @@ def _ParseXML(filename, apiname):
     for func in api.functions:
         alias, need_conv = impl.match(func, conversions)
         if not alias:
-            print >>sys.stderr, "Error: unable to dispatch %s" % func.name
+            # external functions are manually dispatched
+            if not func.is_external:
+                print >>sys.stderr, "Error: unable to dispatch %s" % func.name
             alias = func
+            need_conv = False
 
         __functions[func.name] = func
         __aliases[func.name] = (alias, need_conv)

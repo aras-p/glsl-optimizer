@@ -15,6 +15,10 @@
      parameters.  A <desc> can enumerate the valid values of a parameter.  It
      can also specify the error code when an invalid value is given, and etc.
      By nesting <desc>s, they can create dependency between parameters.
+
+     A function can be marked as external.  It means that the function cannot
+     be dispatched to the corresponding mesa function, if one exists, directly,
+     and requires an external implementation.
 -->
 
 <apispec>
@@ -1284,6 +1288,7 @@
 		<value name="GL_RENDERER"/>
 		<value name="GL_VERSION"/>
 		<value name="GL_EXTENSIONS"/>
+		<value name="GL_SHADING_LANGUAGE_VERSION" category="GLES2.0"/>
 	</desc>
 </template>
 
@@ -3673,8 +3678,6 @@
 	<function name="GetShaderPrecisionFormat" template="GetShaderPrecisionFormat"/>
 	<function name="GetUniformfvARB" template="GetUniform" gltype="GLfloat"/>
 	<function name="GetUniformivARB" template="GetUniform" gltype="GLint"/>
-
-	<function name="QueryMatrixx" template="QueryMatrix" gltype="GLfixed"/>
 
 	<function name="DrawTexf" template="DrawTex" gltype="GLfloat" expand_vector="true"/>
 	<function name="DrawTexfv" template="DrawTex" gltype="GLfloat"/>

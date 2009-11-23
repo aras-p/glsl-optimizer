@@ -10,14 +10,14 @@
 #include "GLES2/gl2ext.h"
 
 
-extern void GL_APIENTRY _es_RenderbufferStorage(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
+extern void GL_APIENTRY _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
 
 extern void GL_APIENTRY _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
 
 
 void GL_APIENTRY
-_es_RenderbufferStorage(GLenum target, GLenum internalFormat,
-                        GLsizei width, GLsizei height)
+_es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
+                           GLsizei width, GLsizei height)
 {
    switch (internalFormat) {
    case GL_RGBA4:

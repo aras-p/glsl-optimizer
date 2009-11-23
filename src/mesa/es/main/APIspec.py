@@ -133,7 +133,7 @@ class Function(object):
         if force_skip_desc:
             self._skip_desc = True
         else:
-            self._skip_desc = (self.is_external or func_node.prop("skip_desc") == "true")
+            self._skip_desc = (func_node.prop("skip_desc") == "true")
 
         self._categories = categories
 
