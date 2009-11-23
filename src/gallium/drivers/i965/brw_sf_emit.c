@@ -324,7 +324,7 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
    GLuint persp_mask = c->key.persp_attrs;
-   GLuint linear_mask = c->key.linear_attrs;
+   GLuint linear_mask = (c->key.persp_attrs | c->key.linear_attrs);
 
    *pc_persp = 0;
    *pc_linear = 0;
