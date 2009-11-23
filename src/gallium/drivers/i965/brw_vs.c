@@ -84,7 +84,7 @@ static enum pipe_error do_vs_prog( struct brw_context *brw,
       return ret;
 
    ret = brw_upload_cache( &brw->cache, BRW_VS_PROG,
-                           &c.key, sizeof(c.key),
+                           &c.key, brw_vs_prog_key_size(&c.key),
                            NULL, 0,
                            program, program_size,
                            &c.prog_data,
