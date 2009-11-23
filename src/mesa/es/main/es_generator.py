@@ -81,50 +81,6 @@ def ConvertValue(value, fromType, toType):
     conversionString = Converters[fromType][toType]
     return conversionString % value
 
-def GetLoopSizeExpression(funcName, paramName, paramMaxVecSize):
-    # The VariantArrays() list will have all the information (for all
-    # parameters) on how to calculate variant array sizes.
-    variantArrays = apiutil.VariantArrays(funcName)
-    defaultSize = paramMaxVecSize
-    loopSizeExpression = ''
-
-    # There can be many different entries in the variantArrays for the
-    # same parameter.  We have to look at all of them and pick out the
-    # ones of interest.
-    for (variantName, variantSize, controllingParam, controllingValues) in variantArrays:
-        if paramName == variantName:
-            # This variant specification applies to us.  It may be of
-            # the form "param size default", meaning that the value should
-            # replace the default size, or it may be 
-            # "param size controlParam value...", in which case the size should
-            # be used if the controlParam has any one of the given values.
-            if len(controllingValues) == 0:
-                defaultSize = variantSize
-            else:
-                # Create a compound conditional that expresses
-                # all the possible values in the list
-                conditional = ''
-                for value in controllingValues:
-                    if len(conditional) > 0:
-                        conditional = conditional + " || "
-                    conditional = conditional + "%s == %s" % (controllingParam, value)
-
-                # Add the possibly compound conditional and
-                # the associated vector size to the 
-                # loop control expression
-                loopSizeExpression = loopSizeExpression + "(%s) ? %s : " % (conditional, variantSize)
-
-        # end if the name matches
-    # end for the list of all variant array declarations
-
-    # Return the expression that returns the actual size of the
-    # array.  Note that 'loopSizeExpression' will already have a 
-    # trailing ": " if it is nonempty.
-    if len(loopSizeExpression) > 0:
-        return "(%s%s)" % (loopSizeExpression, defaultSize)
-    else:
-        return "%s" % defaultSize
-
 FormatStrings = {
     'GLenum' : '0x%x',
     'GLfloat' : '%f',
