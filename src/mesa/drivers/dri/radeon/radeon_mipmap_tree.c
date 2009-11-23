@@ -37,26 +37,35 @@
 #include "main/texobj.h"
 #include "radeon_texture.h"
 
-static GLuint radeon_compressed_texture_size(GLcontext *ctx,
-		GLsizei width, GLsizei height, GLsizei depth,
-		gl_format mesaFormat)
+static unsigned get_aligned_compressed_row_stride(
+		gl_format format,
+		unsigned width,
+		unsigned minStride)
 {
-	GLuint size = _mesa_format_image_size(mesaFormat, width, height, depth);
+	const unsigned blockSize = _mesa_get_format_bytes(format);
+	unsigned blockWidth, blockHeight, numXBlocks;
 
-	if (mesaFormat == MESA_FORMAT_RGB_DXT1 ||
-	    mesaFormat == MESA_FORMAT_RGBA_DXT1) {
-		if (width + 3 < 8)	/* width one block */
-			size = size * 4;
-		else if (width + 3 < 16)
-			size = size * 2;
-	} else {
-		/* DXT3/5, 16 bytes per block */
-	  //		WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
-		if (width + 3 < 8)
-			size = size * 2;
+	_mesa_get_format_block_size(format, &blockWidth, &blockHeight);
+	numXBlocks = (width + blockWidth - 1) / blockWidth;
+
+	while (numXBlocks * blockSize < minStride)
+	{
+		++numXBlocks;
 	}
 
-	return size;
+	return numXBlocks * blockSize;
+}
+
+static unsigned get_compressed_image_size(
+		gl_format format,
+		unsigned rowStride,
+		unsigned height)
+{
+	unsigned blockWidth, blockHeight;
+
+	_mesa_get_format_block_size(format, &blockWidth, &blockHeight);
+
+	return rowStride * ((height + blockHeight - 1) / blockHeight);
 }
 
 /**
@@ -74,10 +83,8 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 
 	/* Find image size in bytes */
 	if (_mesa_is_format_compressed(mt->mesaFormat)) {
-		/* TODO: Is this correct? Need test cases for compressed textures! */
-		row_align = rmesa->texture_compressed_row_align - 1;
-		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
-		lvl->size = radeon_compressed_texture_size(rmesa->glCtx, lvl->width, lvl->height, lvl->depth, mt->mesaFormat);
+		lvl->rowstride = get_aligned_compressed_row_stride(mt->mesaFormat, lvl->width, rmesa->texture_compressed_row_align);
+		lvl->size = get_compressed_image_size(mt->mesaFormat, lvl->rowstride, lvl->height);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
 		row_align = rmesa->texture_rect_row_align - 1;
 		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
@@ -485,11 +492,12 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 														 unsigned firstLevel,
 														 unsigned lastLevel)
 {
-	const unsigned numLevels = lastLevel - firstLevel;
+	const unsigned numLevels = lastLevel - firstLevel + 1;
 	unsigned *mtSizes = calloc(numLevels, sizeof(unsigned));
 	radeon_mipmap_tree **mts = calloc(numLevels, sizeof(radeon_mipmap_tree *));
 	unsigned mtCount = 0;
 	unsigned maxMtIndex = 0;
+	radeon_mipmap_tree *tmp;
 
 	for (unsigned level = firstLevel; level <= lastLevel; ++level) {
 		radeon_texture_image *img = get_radeon_texture_image(texObj->base.Image[0][level]);
@@ -511,7 +519,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 
 		if (!found) {
 			mtSizes[mtCount] += img->mt->levels[img->mtlevel].size;
-			mts[mtCount++] = img->mt;
+			mts[mtCount] = img->mt;
 			mtCount++;
 		}
 	}
@@ -526,7 +534,11 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		}
 	}
 
-	return mts[maxMtIndex];
+	tmp = mts[maxMtIndex];
+	free(mtSizes);
+	free(mts);
+
+	return tmp;
 }
 
 /**

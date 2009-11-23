@@ -112,6 +112,7 @@ void brw_validate_state(struct brw_context *brw);
 void brw_upload_state(struct brw_context *brw);
 void brw_init_state(struct brw_context *brw);
 void brw_destroy_state(struct brw_context *brw);
+void brw_clear_validated_bos(struct brw_context *brw);
 
 /***********************************************************************
  * brw_state_cache.c

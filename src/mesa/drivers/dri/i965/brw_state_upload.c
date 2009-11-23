@@ -143,7 +143,7 @@ static void xor_states( struct brw_state_flags *result,
    result->cache = a->cache ^ b->cache;
 }
 
-static void
+void
 brw_clear_validated_bos(struct brw_context *brw)
 {
    int i;

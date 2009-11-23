@@ -151,9 +151,11 @@ render_filter_to_gallium(int xrender_filter, int *out_filter)
    case PictFilterBest:
       *out_filter = PIPE_TEX_FILTER_LINEAR;
       break;
-   default:
-      debug_printf("Unkown xrender filter\n");
    case PictFilterConvolution:
+      *out_filter = PIPE_TEX_FILTER_NEAREST;
+      return FALSE;
+   default:
+      debug_printf("Unknown xrender filter\n");
       *out_filter = PIPE_TEX_FILTER_NEAREST;
       return FALSE;
    }
@@ -565,6 +567,8 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    renderer_bind_viewport(exa->renderer, pixmap);
    renderer_bind_rasterizer(exa->renderer);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
+   cso_set_samplers(exa->renderer->cso, 0, NULL);
+   cso_set_sampler_textures(exa->renderer->cso, 0, NULL);
    setup_constant_buffers(exa, pixmap);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);

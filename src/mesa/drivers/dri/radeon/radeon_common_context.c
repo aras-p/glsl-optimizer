@@ -262,7 +262,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 		else
 			radeon->texture_row_align = 32;
 		radeon->texture_rect_row_align = 64;
-		radeon->texture_compressed_row_align = 64;
+		radeon->texture_compressed_row_align = 32;
 	}
 
 	radeon_init_dma(radeon);

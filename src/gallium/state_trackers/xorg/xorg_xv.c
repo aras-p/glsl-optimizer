@@ -447,7 +447,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    int x, y, w, h;
    struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
 
-   if (!dst->tex) {
+   if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
 	pScrn->pScreen->ModifyPixmapHeader(pPixmap, 0, 0, 0, 0, 0, NULL);
    }

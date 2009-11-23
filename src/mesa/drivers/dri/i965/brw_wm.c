@@ -157,7 +157,6 @@ static void do_wm_prog( struct brw_context *brw,
 					  sizeof(*c->prog_instructions));
       c->vreg = _mesa_calloc(BRW_WM_MAX_VREG * sizeof(*c->vreg));
       c->refs = _mesa_calloc(BRW_WM_MAX_REF * sizeof(*c->refs));
-      c->vreg = _mesa_calloc(BRW_WM_MAX_VREG * sizeof(*c->vreg));
    } else {
       void *instruction = c->instruction;
       void *prog_instructions = c->prog_instructions;

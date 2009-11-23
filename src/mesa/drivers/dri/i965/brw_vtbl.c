@@ -46,7 +46,7 @@
 #include "brw_state.h"
 #include "brw_fallback.h"
 #include "brw_vs.h"
-
+#include "brw_wm.h"
 
 static void
 dri_bo_release(dri_bo **bo)
@@ -66,8 +66,14 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
-
-   _mesa_free(brw->wm.compile_data);
+   brw_clear_validated_bos(brw);
+   if (brw->wm.compile_data) {
+      _mesa_free(brw->wm.compile_data->instruction);
+      _mesa_free(brw->wm.compile_data->vreg);
+      _mesa_free(brw->wm.compile_data->refs);
+      _mesa_free(brw->wm.compile_data->prog_instructions);
+      _mesa_free(brw->wm.compile_data);
+   }
 
    for (i = 0; i < brw->state.nr_color_regions; i++)
       intel_region_release(&brw->state.color_regions[i]);

@@ -106,6 +106,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
 
    if (0 == nConfigs || !fbConfigs) {
       printf("Error: glxChooseFBConfig failed\n");
+      XFree(fbConfigs);
       XCloseDisplay(dpy);
       return 0;
    }

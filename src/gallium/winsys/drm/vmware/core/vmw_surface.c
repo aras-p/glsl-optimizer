@@ -39,7 +39,7 @@ vmw_svga_winsys_surface_reference(struct vmw_svga_winsys_surface **pdst,
    struct pipe_reference *dst_ref;
    struct vmw_svga_winsys_surface *dst = *pdst;
    
-   if(*pdst == src || pdst == NULL)
+   if(pdst == NULL || *pdst == src)
       return;
    
    src_ref = src ? &src->refcnt : NULL;

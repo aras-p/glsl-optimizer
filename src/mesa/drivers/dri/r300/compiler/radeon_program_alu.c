@@ -560,23 +560,23 @@ static void sincos_constants(struct radeon_compiler* c, unsigned int *constants)
  * MAD dest, tmp.y, weight, tmp.x
  */
 static void sin_approx(
-	struct radeon_compiler* c, struct rc_instruction * before,
+	struct radeon_compiler* c, struct rc_instruction * inst,
 	struct rc_dst_register dst, struct rc_src_register src, const unsigned int* constants)
 {
 	unsigned int tempreg = rc_find_free_temporary(c);
 
-	emit2(c, before, RC_OPCODE_MUL, 0, dstregtmpmask(tempreg, RC_MASK_XY),
+	emit2(c, inst->Prev, RC_OPCODE_MUL, 0, dstregtmpmask(tempreg, RC_MASK_XY),
 		swizzle(src, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X),
 		srcreg(RC_FILE_CONSTANT, constants[0]));
-	emit3(c, before, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_X),
+	emit3(c, inst->Prev, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_X),
 		swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y),
 		absolute(swizzle(src, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X)),
 		swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X));
-	emit3(c, before, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_Y),
+	emit3(c, inst->Prev, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_Y),
 		swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X),
 		absolute(swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X)),
 		negate(swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X)));
-	emit3(c, before, RC_OPCODE_MAD, 0, dst,
+	emit3(c, inst->Prev, RC_OPCODE_MAD, 0, dst,
 		swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y),
 		swizzle(srcreg(RC_FILE_CONSTANT, constants[0]), RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W),
 		swizzle(srcreg(RC_FILE_TEMPORARY, tempreg), RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X));

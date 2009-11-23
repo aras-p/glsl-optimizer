@@ -582,12 +582,12 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 		/* TODO */
 		assert(0);
 	} else {
-		dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
+		dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 	}
 
 	if (dims == 3) {
 		unsigned alignedWidth = dstRowStride/_mesa_get_format_bytes(texImage->TexFormat);
-		dstImageOffsets = allocate_image_offsets(ctx, alignedWidth, height, depth);
+		dstImageOffsets = allocate_image_offsets(ctx, alignedWidth, texImage->Height, texImage->Depth);
 		if (!dstImageOffsets) {
 			return;
 		}
@@ -598,8 +598,11 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 	radeon_teximage_map(image, GL_TRUE);
 
 	if (compressed) {
-		uint32_t srcRowStride, bytesPerRow, rows;
+		uint32_t srcRowStride, bytesPerRow, rows, block_width, block_height;
 		GLubyte *img_start;
+
+		_mesa_get_format_block_size(texImage->TexFormat, &block_width, &block_height);
+
 		if (!image->mt) {
 			dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 			img_start = _mesa_compressed_image_address(xoffset, yoffset, 0,
@@ -607,17 +610,16 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 									texImage->Width, texImage->Data);
 		}
 		else {
-			uint32_t blocks_x, block_width, block_height;
-			_mesa_get_format_block_size(image->mt->mesaFormat, &block_width, &block_height);
-			blocks_x = dstRowStride / block_width;
-			img_start = texImage->Data + _mesa_get_format_bytes(image->mt->mesaFormat) * 4 * (blocks_x * (yoffset / 4) + xoffset / 4);
+			uint32_t offset;
+			offset = dstRowStride / _mesa_get_format_bytes(texImage->TexFormat) * yoffset / block_height + xoffset / block_width;
+			offset *= _mesa_get_format_bytes(texImage->TexFormat);
+			img_start = texImage->Data + offset;
 		}
 		srcRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
 		bytesPerRow = srcRowStride;
-		rows = (height + 3) / 4;
+		rows = (height + block_height - 1) / block_height;
 
-		copy_rows(img_start, dstRowStride,  pixels, srcRowStride, rows,  bytesPerRow);
-
+		copy_rows(img_start, dstRowStride, pixels, srcRowStride, rows, bytesPerRow);
 	}
 	else {
 		if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,

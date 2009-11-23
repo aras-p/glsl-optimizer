@@ -27,6 +27,7 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
    fbConfigs = GetAllFBConfigs(dpy, screen, &nConfigs);
    if (!nConfigs || !fbConfigs) {
       printf("Error: glxGetFBConfigs failed\n");
+      XFree(fbConfigs);
       return;
    }
 

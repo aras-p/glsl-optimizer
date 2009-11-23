@@ -443,7 +443,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
     *    FOO tmpY, arg0, arg1;
     */
 
-   for (i = 0; i < prog->NumInstructions - 1; i++) {
+   for (i = 0; i + 1 < prog->NumInstructions; i++) {
       const struct prog_instruction *mov = prog->Instructions + i;
 
       if (mov->Opcode != OPCODE_MOV ||
