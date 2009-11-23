@@ -2604,7 +2604,7 @@ compile_with_grammar(const char *source,
    }
 
    memset(&options, 0, sizeof(options));
-   if (sl_pp_tokenise(context, &options, source, &intokens)) {
+   if (sl_pp_tokenise(context, source, &options, &intokens)) {
       slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
       return GL_FALSE;
