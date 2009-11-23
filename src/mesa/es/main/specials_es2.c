@@ -86,21 +86,15 @@ make_extension_string(const GLcontext *ctx, char *str)
 {
    size_t len = 0;
 
-   /* Core additions */
-   len += append_extension(&str, "GL_OES_single_precision");
-
-   /* Required extensions */
    len += append_extension(&str, "GL_OES_compressed_paletted_texture");
 
    if (ctx->Extensions.ARB_framebuffer_object) {
-      len += append_extension(&str, "GL_OES_framebuffer_object");
       len += append_extension(&str, "GL_OES_depth24");
       len += append_extension(&str, "GL_OES_depth32");
       len += append_extension(&str, "GL_OES_fbo_render_mipmap");
       len += append_extension(&str, "GL_OES_rgb8_rgba8");
       len += append_extension(&str, "GL_OES_stencil1");
       len += append_extension(&str, "GL_OES_stencil4");
-      len += append_extension(&str, "GL_OES_stencil8");
    }
 
    if (ctx->Extensions.EXT_vertex_array)
@@ -123,6 +117,10 @@ make_extension_string(const GLcontext *ctx, char *str)
    if (ctx->Extensions.ARB_fragment_shader)
       len += append_extension(&str, "GL_OES_standard_derivatives");
 
+   if (ctx->Extensions.EXT_texture_compression_s3tc)
+      len += append_extension(&str, "GL_EXT_texture_compression_dxt1");
+   if (ctx->Extensions.EXT_blend_minmax)
+      len += append_extension(&str, "GL_EXT_blend_minmax");
    if (ctx->Extensions.EXT_multi_draw_arrays)
       len += append_extension(&str, "GL_EXT_multi_draw_arrays");
 

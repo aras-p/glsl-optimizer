@@ -140,8 +140,16 @@ make_extension_string(const GLcontext *ctx, char *str)
    if (ctx->Extensions.EXT_texture_filter_anisotropic)
       len += append_extension(&str, "GL_EXT_texture_filter_anisotropic");
 
+   /* some applications check this for NPOT support */
    if (ctx->Extensions.ARB_texture_non_power_of_two)
       len += append_extension(&str, "GL_ARB_texture_non_power_of_two");
+
+   if (ctx->Extensions.EXT_texture_compression_s3tc)
+      len += append_extension(&str, "GL_EXT_texture_compression_dxt1");
+   if (ctx->Extensions.EXT_texture_lod_bias)
+      len += append_extension(&str, "GL_EXT_texture_lod_bias");
+   if (ctx->Extensions.EXT_blend_minmax)
+      len += append_extension(&str, "GL_EXT_blend_minmax");
    if (ctx->Extensions.EXT_multi_draw_arrays)
       len += append_extension(&str, "GL_EXT_multi_draw_arrays");
 
