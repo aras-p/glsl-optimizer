@@ -154,10 +154,12 @@ static const unsigned gs_prim[PIPE_PRIM_MAX] = {
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
+   const struct brw_fs_signature *sig = &brw->curr.fragment_shader->signature;
+
    memset(key, 0, sizeof(*key));
 
-   /* CACHE_NEW_VS_PROG */
-   key->nr_attrs = brw->vs.prog_data->nr_outputs;
+   /* PIPE_NEW_FRAGMENT_SIGNATURE */
+   key->nr_attrs = sig->nr_inputs + 1;
 
    /* BRW_NEW_PRIMITIVE */
    key->primitive = gs_prim[brw->primitive];
@@ -206,9 +208,9 @@ static int prepare_gs_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = PIPE_NEW_FRAGMENT_SIGNATURE,
       .brw   = BRW_NEW_PRIMITIVE,
-      .cache = CACHE_NEW_VS_PROG
+      .cache = 0,
    },
    .prepare = prepare_gs_prog
 };
