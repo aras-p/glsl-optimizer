@@ -369,6 +369,7 @@ tgsi_exec_machine_create( void )
    memset(mach, 0, sizeof(*mach));
 
    mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
+   mach->Predicates = &mach->Temps[TGSI_EXEC_TEMP_P0];
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
@@ -1194,10 +1195,10 @@ fetch_src_file_channel(
          assert(index->i[1] < TGSI_EXEC_NUM_PREDS);
          assert(index->i[2] < TGSI_EXEC_NUM_PREDS);
          assert(index->i[3] < TGSI_EXEC_NUM_PREDS);
-         chan->u[0] = mach->Addrs[0].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Addrs[0].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Addrs[0].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Addrs[0].xyzw[swizzle].u[3];
+         chan->u[0] = mach->Predicates[0].xyzw[swizzle].u[0];
+         chan->u[1] = mach->Predicates[0].xyzw[swizzle].u[1];
+         chan->u[2] = mach->Predicates[0].xyzw[swizzle].u[2];
+         chan->u[3] = mach->Predicates[0].xyzw[swizzle].u[3];
          break;
 
       case TGSI_FILE_OUTPUT:
@@ -1489,12 +1490,53 @@ store_dest(
    case TGSI_FILE_PREDICATE:
       index = reg->DstRegister.Index;
       assert(index < TGSI_EXEC_NUM_PREDS);
-      dst = &mach->Addrs[index].xyzw[chan_index];
+      dst = &mach->Predicates[index].xyzw[chan_index];
       break;
 
    default:
       assert( 0 );
       return;
+   }
+
+   if (inst->Instruction.Predicate) {
+      uint swizzle;
+      union tgsi_exec_channel *pred;
+
+      switch (chan_index) {
+      case CHAN_X:
+         swizzle = inst->InstructionPredicate.SwizzleX;
+         break;
+      case CHAN_Y:
+         swizzle = inst->InstructionPredicate.SwizzleY;
+         break;
+      case CHAN_Z:
+         swizzle = inst->InstructionPredicate.SwizzleZ;
+         break;
+      case CHAN_W:
+         swizzle = inst->InstructionPredicate.SwizzleW;
+         break;
+      default:
+         assert(0);
+         return;
+      }
+
+      assert(inst->InstructionPredicate.Index == 0);
+
+      pred = &mach->Predicates[inst->InstructionPredicate.Index].xyzw[swizzle];
+
+      if (inst->InstructionPredicate.Negate) {
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if (pred->u[i]) {
+               execmask &= ~(1 << i);
+            }
+         }
+      } else {
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if (!pred->u[i]) {
+               execmask &= ~(1 << i);
+            }
+         }
+      }
    }
 
    switch (inst->Instruction.Saturate) {

@@ -218,6 +218,7 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       Outputs[PIPE_MAX_ATTRIBS];
 
    struct tgsi_exec_vector       *Addrs;
+   struct tgsi_exec_vector       *Predicates;
 
    struct tgsi_sampler           **Samplers;
 
