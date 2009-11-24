@@ -51,21 +51,18 @@ Requirements
 
  - Linux
  
- - udis86, http://udis86.sourceforge.net/ . Use my repository, which decodes
-   opcodes not yet supported by upstream.
+ - A x86 or amd64 processor with support for sse2, sse3, and sse4.1 SIMD
+   instructions. This is necessary because we emit several SSE intrinsics for
+   convenience. See /proc/cpuinfo to know what your CPU supports.
  
-     git clone git://people.freedesktop.org/~jrfonseca/udis86
-     cd udis86
-     ./configure --with-pic
-     make
-     sudo make install
+ - LLVM 2.5 or greater. LLVM 2.6 is preferred.
  
- - LLVM 2.5. On Debian based distributions do:
+   On Debian based distributions do:
  
      aptitude install llvm-dev
 
-   There is a typo in one of the llvm-dev 2.5 headers, that causes compilation
-   errors in the debug build:
+   There is a typo in one of the llvm 2.5 headers, that may cause compilation
+   errors. To fix it apply the change:
 
      --- /usr/include/llvm-c/Core.h.orig	2009-08-10 15:38:54.000000000 +0100
      +++ /usr/include/llvm-c/Core.h	2009-08-10 15:38:25.000000000 +0100
@@ -79,12 +76,17 @@ Requirements
           #endif
           return reinterpret_cast<T**>(Vals);
  
- - A x86 or amd64 processor with support for sse2, sse3, and sse4.1 SIMD
-   instructions. This is necessary because we emit several SSE intrinsics for
-   convenience. See /proc/cpuinfo to know what your CPU supports.
- 
- - scons
+ - scons (optional)
 
+ - udis86, http://udis86.sourceforge.net/ (optional):
+ 
+     git clone git://udis86.git.sourceforge.net/gitroot/udis86/udis86
+     cd udis86
+     ./autogen.sh
+     ./configure --with-pic
+     make
+     sudo make install
+ 
 
 Building
 ========
