@@ -435,7 +435,7 @@ static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, cons
 }
 
 void
-sh_svga_dump(
+svga_shader_dump(
    const unsigned *assem,
    unsigned dwords,
    unsigned do_binary )
@@ -602,7 +602,7 @@ sh_svga_dump(
 
       default:
          {
-            const struct sh_opcode_info *info = sh_svga_opcode_info( op.opcode );
+            const struct sh_opcode_info *info = svga_opcode_info( op.opcode );
             uint i;
             uint num_src = info->num_src + op.predicated;
             boolean not_first_arg = FALSE;

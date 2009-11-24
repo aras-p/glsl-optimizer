@@ -1627,7 +1627,7 @@ svga_dump_commands(const void *commands, uint32_t size)
                const SVGA3dCmdDefineShader *cmd = (const SVGA3dCmdDefineShader *)body;
                dump_SVGA3dCmdDefineShader(cmd);
                body = (const uint8_t *)&cmd[1];
-               sh_svga_dump((const uint32_t *)body, 
+               svga_shader_dump((const uint32_t *)body, 
                             (unsigned)(next - body)/sizeof(uint32_t),
                             FALSE );
                body = next;

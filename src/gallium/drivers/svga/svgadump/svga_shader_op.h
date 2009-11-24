@@ -30,8 +30,8 @@
  * @author Michal Krol <michal@vmware.com>
  */
 
-#ifndef ST_SHADER_SVGA_OP_H
-#define ST_SHADER_SVGA_OP_H
+#ifndef SVGA_SHADER_OP_H
+#define SVGA_SHADER_OP_H
 
 struct sh_opcode_info
 {
@@ -41,6 +41,6 @@ struct sh_opcode_info
    unsigned svga_opcode:16;
 };
 
-const struct sh_opcode_info *sh_svga_opcode_info( unsigned op );
+const struct sh_opcode_info *svga_opcode_info( unsigned op );
 
-#endif /* ST_SHADER_SVGA_OP_H */
+#endif /* SVGA_SHADER_OP_H */
