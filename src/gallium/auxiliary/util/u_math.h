@@ -491,6 +491,26 @@ util_next_power_of_two(unsigned x)
 
 
 /**
+ * Return number of bits set in n.
+ */
+static INLINE unsigned
+util_bitcount(unsigned n)
+{
+#if defined(PIPE_CC_GCC)
+   return __builtin_popcount(n);
+#else
+   /* XXX there are more clever ways of doing this */
+   unsigned bits = 0;
+   while (n) {
+      bits += (n & 1);
+      n = n >> 1;
+   }
+   return bits;
+#endif
+}
+
+
+/**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
  */
