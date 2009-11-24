@@ -134,6 +134,7 @@ static void
 crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
 	       int size)
 {
+    /* XXX: hockup */
 }
 
 static void *
@@ -160,6 +161,7 @@ crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 static void
 crtc_set_cursor_colors(xf86CrtcPtr crtc, int bg, int fg)
 {
+    /* XXX: See if this one is needed, as we only support ARGB cursors */
 }
 
 static void
@@ -170,6 +172,7 @@ crtc_set_cursor_position(xf86CrtcPtr crtc, int x, int y)
 
     drmModeMoveCursor(ms->fd, crtcp->drm_crtc->crtc_id, x, y);
 }
+
 static void
 crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 {
@@ -234,6 +237,9 @@ crtc_hide_cursor(xf86CrtcPtr crtc)
     drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id, 0, 0, 0);
 }
 
+/**
+ * Called at vt leave
+ */
 void
 xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
