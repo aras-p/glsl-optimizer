@@ -21,6 +21,7 @@ LIBS = \
 	$(GALLIUM_AUXILIARIES)
 
 LINKS = \
+	$(shell pkg-config --libs --silence-errors libkms) \
 	$(shell pkg-config --libs libdrm)
 
 DRIVER_DEFINES = \
