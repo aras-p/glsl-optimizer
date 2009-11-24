@@ -8232,6 +8232,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	   glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
 	   glPixelStorei(GL_UNPACK_SKIP_IMAGES, psm.unpack_skip_images);
 	   glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, psm.unpack_image_height);
+	   free(srcImage);
 	   return GLU_OUT_OF_MEMORY;
 	 }
        }
