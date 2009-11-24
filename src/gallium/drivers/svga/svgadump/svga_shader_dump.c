@@ -30,9 +30,9 @@
  * @author Michal Krol <michal@vmware.com>
  */
 
-#include "st_shader.h"
-#include "st_shader_dump.h"
-#include "st_shader_op.h"
+#include "svga_shader.h"
+#include "svga_shader_dump.h"
+#include "svga_shader_op.h"
 #include "util/u_debug.h"
 
 #include "../svga_hw_reg.h"

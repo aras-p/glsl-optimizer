@@ -31,7 +31,7 @@
  */
 
 #include "svga_types.h"
-#include "st_shader_dump.h"
+#include "svga_shader_dump.h"
 #include "svga3d_reg.h"
 
 #include "util/u_debug.h"

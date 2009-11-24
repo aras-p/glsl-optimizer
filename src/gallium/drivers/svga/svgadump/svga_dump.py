@@ -291,7 +291,7 @@ def main():
     print ' */'
     print
     print '#include "svga_types.h"'
-    print '#include "shader_dump/st_shader_dump.h"'
+    print '#include "svga_shader_dump.h"'
     print '#include "svga3d_reg.h"'
     print
     print '#include "pipe/p_debug.h"'

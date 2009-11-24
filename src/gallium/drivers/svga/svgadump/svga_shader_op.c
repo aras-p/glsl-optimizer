@@ -31,7 +31,7 @@
  */
 
 #include "util/u_debug.h"
-#include "st_shader_op.h"
+#include "svga_shader_op.h"
 
 #include "../svga_hw_reg.h"
 #include "svga3d_shaderdefs.h"
