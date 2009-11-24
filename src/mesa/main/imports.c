@@ -629,11 +629,15 @@ _mesa_ffsll(int64_t val)
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
+#if defined(__GNUC__)
+   return __builtin_popcount(n);
+#else
    unsigned int bits;
    for (bits = 0; n > 0; n = n >> 1) {
       bits += (n & 1);
    }
    return bits;
+#endif
 }
 
 
