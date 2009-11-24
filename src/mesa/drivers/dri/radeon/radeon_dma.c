@@ -451,9 +451,11 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
                 rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
                 rmesa->dma.current_vertexptr );
 
-	rmesa->swtcl.bo = first_elem(&rmesa->dma.reserved)->bo;
-	radeon_bo_ref(rmesa->swtcl.bo);
-	radeon_bo_map(rmesa->swtcl.bo, 1);
+	if (!rmesa->swtcl.bo) {
+		rmesa->swtcl.bo = first_elem(&rmesa->dma.reserved)->bo;
+		radeon_bo_ref(rmesa->swtcl.bo);
+		radeon_bo_map(rmesa->swtcl.bo, 1);
+	}
 
 	head = (rmesa->swtcl.bo->ptr + rmesa->dma.current_vertexptr);
 	rmesa->dma.current_vertexptr += bytes;
