@@ -391,12 +391,9 @@ StateVars_es1 = [
         # OES_texture_cube_map
 	( "GL_TEXTURE_CUBE_MAP_ARB", GLboolean,
 	  ["_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB)"], "", None),
-	( "GL_TEXTURE_GEN_S", GLboolean,
+	( "GL_TEXTURE_GEN_STR_OES", GLboolean,
+          # S, T, and R are always set at the same time
 	  ["((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0)"], "", None),
-	( "GL_TEXTURE_GEN_T", GLboolean,
-	  ["((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & T_BIT) ? 1 : 0)"], "", None),
-	( "GL_TEXTURE_GEN_R", GLboolean,
-	  ["((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & R_BIT) ? 1 : 0)"], "", None),
         # ARB_multisample
 	( "GL_MULTISAMPLE_ARB", GLboolean,
 	  ["ctx->Multisample.Enabled"], "", ["ARB_multisample"] ),
@@ -695,6 +692,10 @@ def EmitHeader():
 #define GL_PALETTE8_RGB5_A1_OES                                 0x8B99
 #endif
 
+/* GL_OES_texture_cube_map */
+#ifndef GL_OES_texture_cube_map
+#define GL_TEXTURE_GEN_STR_OES                                  0x8D60
+#endif
 
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
 #define FLOAT_TO_FIXED(F)     ( ((F) * 65536.0f > INT_MAX) ? INT_MAX : \\

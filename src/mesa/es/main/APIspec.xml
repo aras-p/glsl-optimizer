@@ -3546,7 +3546,6 @@
 
 	<function name="TexGenf" template="TexGen" gltype="GLfloat" expand_vector="true"/>
 	<function name="TexGenfv" template="TexGen" gltype="GLfloat"/>
-	<function name="TexGeni" template="TexGen" gltype="GLint" expand_vector="true"/>
 
 	<function name="Clear" template="Clear"/>
 	<function name="ClearColor" template="ClearColor" gltype="GLclampf"/>
@@ -3873,12 +3872,12 @@
 	<function name="TexEnvx" template="TexEnv" gltype="GLfixed" expand_vector="true"/>
 	<function name="TexEnvxv" template="TexEnv" gltype="GLfixed"/>
 
-	<function name="TexGenfOES" template="TexGen" gltype="GLfloat" expand_vector="true"/>
-	<function name="TexGenfvOES" template="TexGen" gltype="GLfloat"/>
-	<function name="TexGeniOES" template="TexGen" gltype="GLint" expand_vector="true"/>
-	<function name="TexGenivOES" template="TexGen" gltype="GLint"/>
-	<function name="TexGenxOES" template="TexGen" gltype="GLfixed" expand_vector="true"/>
-	<function name="TexGenxvOES" template="TexGen" gltype="GLfixed"/>
+	<function name="TexGenfOES" external="true" template="TexGen" gltype="GLfloat" expand_vector="true"/>
+	<function name="TexGenfvOES" external="true" template="TexGen" gltype="GLfloat"/>
+	<function name="TexGeniOES" external="true" template="TexGen" gltype="GLint" expand_vector="true"/>
+	<function name="TexGenivOES" external="true" template="TexGen" gltype="GLint"/>
+	<function name="TexGenxOES" external="true" template="TexGen" gltype="GLfixed" expand_vector="true"/>
+	<function name="TexGenxvOES" external="true" template="TexGen" gltype="GLfixed"/>
 
 	<function name="Clear" template="Clear"/>
 	<function name="ClearColor" template="ClearColor" gltype="GLclampf"/>
@@ -3892,8 +3891,8 @@
 	<function name="ColorMask" template="ColorMask"/>
 	<function name="DepthMask" template="DepthMask"/>
 
-	<function name="Disable" template="Disable"/>
-	<function name="Enable" template="Enable"/>
+	<function name="Disable" external="true" template="Disable"/>
+	<function name="Enable" external="true" template="Enable"/>
 	<function name="Finish" template="Finish"/>
 	<function name="Flush" template="Flush"/>
 
@@ -3932,15 +3931,15 @@
 	<function name="GetTexEnviv" template="GetTexEnv" gltype="GLint"/>
 	<function name="GetTexEnvxv" template="GetTexEnv" gltype="GLfixed"/>
 
-	<function name="GetTexGenfvOES" template="GetTexGen" gltype="GLfloat"/>
-	<function name="GetTexGenivOES" template="GetTexGen" gltype="GLint"/>
-	<function name="GetTexGenxvOES" template="GetTexGen" gltype="GLfixed"/>
+	<function name="GetTexGenfvOES" external="true" template="GetTexGen" gltype="GLfloat"/>
+	<function name="GetTexGenivOES" external="true" template="GetTexGen" gltype="GLint"/>
+	<function name="GetTexGenxvOES" external="true" template="GetTexGen" gltype="GLfixed"/>
 
 	<function name="GetTexParameterfv" template="GetTexParameter" gltype="GLfloat"/>
 	<function name="GetTexParameteriv" template="GetTexParameter" gltype="GLint"/>
 	<function name="GetTexParameterxv" template="GetTexParameter" gltype="GLfixed"/>
 
-	<function name="IsEnabled" template="IsEnabled"/>
+	<function name="IsEnabled" external="true" template="IsEnabled"/>
 
 	<function name="DepthRangef" template="DepthRange" gltype="GLclampf"/>
 	<function name="DepthRangex" template="DepthRange" gltype="GLclampx"/>

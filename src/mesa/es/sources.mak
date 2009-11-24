@@ -8,8 +8,10 @@ LOCAL_ES1_SOURCES :=			\
 	main/specials_es1.c		\
 	main/drawtex.c			\
 	main/es_cpaltex.c		\
+	main/es_enable.c		\
 	main/es_fbo.c			\
 	main/es_query_matrix.c		\
+	main/es_texgen.c		\
 	main/stubs.c			\
 	glapi/glapi-es1/main/enums.c
 
