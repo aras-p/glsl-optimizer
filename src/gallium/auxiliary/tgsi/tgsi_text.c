@@ -799,8 +799,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = file;
    decl.Declaration.UsageMask = writemask;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    cur = ctx->cur;
    eat_opt_white( &cur );

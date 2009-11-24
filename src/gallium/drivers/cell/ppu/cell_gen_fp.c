@@ -1909,8 +1909,8 @@ emit_declaration(struct cell_context *cell,
 
    switch (decl->Declaration.File) {
    case TGSI_FILE_TEMPORARY:
-      for (i = decl->DeclarationRange.First;
-           i <= decl->DeclarationRange.Last;
+      for (i = decl->Range.First;
+           i <= decl->Range.Last;
            i++) {
          assert(i < MAX_TEMPS);
          for (ch = 0; ch < 4; ch++) {

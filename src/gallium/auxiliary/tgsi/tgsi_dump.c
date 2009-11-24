@@ -224,8 +224,8 @@ iter_declaration(
    _dump_register(
       ctx,
       decl->Declaration.File,
-      decl->DeclarationRange.First,
-      decl->DeclarationRange.Last );
+      decl->Range.First,
+      decl->Range.Last );
    _dump_writemask(
       ctx,
       decl->Declaration.UsageMask );

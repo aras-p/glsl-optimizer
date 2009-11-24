@@ -1178,8 +1178,8 @@ emit_declaration(
       unsigned first, last, mask;
       unsigned i, j;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {

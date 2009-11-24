@@ -119,8 +119,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                = &parse.FullToken.FullDeclaration;
             const uint file = fulldecl->Declaration.File;
             uint reg;
-            for (reg = fulldecl->DeclarationRange.First;
-                 reg <= fulldecl->DeclarationRange.Last;
+            for (reg = fulldecl->Range.First;
+                 reg <= fulldecl->Range.Last;
                  reg++) {
 
                /* only first 32 regs will appear in this bitfield */

@@ -133,20 +133,20 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
 
    if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
       uint i;
-      for (i = decl->DeclarationRange.First;
-           i <= decl->DeclarationRange.Last; i++) {
+      for (i = decl->Range.First;
+           i <= decl->Range.Last; i++) {
          pctx->samplersUsed |= 1 << i;
       }
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      pctx->maxInput = MAX2(pctx->maxInput, (int) decl->DeclarationRange.Last);
+      pctx->maxInput = MAX2(pctx->maxInput, (int) decl->Range.Last);
       if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION)
-         pctx->wincoordInput = (int) decl->DeclarationRange.First;
+         pctx->wincoordInput = (int) decl->Range.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->DeclarationRange.First;
-           i <= decl->DeclarationRange.Last; i++) {
+      for (i = decl->Range.First;
+           i <= decl->Range.Last; i++) {
          pctx->tempsUsed |= (1 << i);
       }
    }
@@ -228,23 +228,23 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          decl.Declaration.Semantic = 1;
          decl.Semantic.Name = TGSI_SEMANTIC_POSITION;
          decl.Semantic.Index = 0;
-         decl.DeclarationRange.First = 
-            decl.DeclarationRange.Last = wincoordInput;
+         decl.Range.First = 
+            decl.Range.Last = wincoordInput;
          ctx->emit_declaration(ctx, &decl);
       }
 
       /* declare new sampler */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_SAMPLER;
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = pctx->freeSampler;
+      decl.Range.First = 
+      decl.Range.Last = pctx->freeSampler;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = pctx->texTemp;
+      decl.Range.First = 
+      decl.Range.Last = pctx->texTemp;
       ctx->emit_declaration(ctx, &decl);
 
       /* emit immediate = {1/32, 1/32, 1, 1}

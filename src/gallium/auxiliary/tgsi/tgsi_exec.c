@@ -1895,8 +1895,8 @@ exec_declaration(struct tgsi_exec_machine *mach,
       if (decl->Declaration.File == TGSI_FILE_INPUT) {
          uint first, last, mask;
 
-         first = decl->DeclarationRange.First;
-         last = decl->DeclarationRange.Last;
+         first = decl->Range.First;
+         last = decl->Range.Last;
          mask = decl->Declaration.UsageMask;
 
          if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {

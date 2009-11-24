@@ -133,11 +133,11 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
        decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
        decl->Semantic.Index == 0) {
-      aactx->colorOutput = decl->DeclarationRange.First;
+      aactx->colorOutput = decl->Range.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      if ((int) decl->DeclarationRange.Last > aactx->maxInput)
-         aactx->maxInput = decl->DeclarationRange.Last;
+      if ((int) decl->Range.Last > aactx->maxInput)
+         aactx->maxInput = decl->Range.Last;
       if (decl->Semantic.Name == TGSI_SEMANTIC_GENERIC &&
            (int) decl->Semantic.Index > aactx->maxGeneric) {
          aactx->maxGeneric = decl->Semantic.Index;
@@ -145,8 +145,8 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->DeclarationRange.First;
-           i <= decl->DeclarationRange.Last; i++) {
+      for (i = decl->Range.First;
+           i <= decl->Range.Last; i++) {
          aactx->tempsUsed |= (1 << i);
       }
    }
@@ -200,21 +200,21 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       decl.Declaration.Semantic = 1;
       decl.Semantic.Name = TGSI_SEMANTIC_GENERIC;
       decl.Semantic.Index = aactx->maxGeneric + 1;
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = texInput;
+      decl.Range.First = 
+      decl.Range.Last = texInput;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = tmp0;
+      decl.Range.First = 
+      decl.Range.Last = tmp0;
       ctx->emit_declaration(ctx, &decl);
 
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.DeclarationRange.First = 
-      decl.DeclarationRange.Last = aactx->colorTemp;
+      decl.Range.First = 
+      decl.Range.Last = aactx->colorTemp;
       ctx->emit_declaration(ctx, &decl);
 
       aactx->firstInstruction = FALSE;

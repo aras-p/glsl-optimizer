@@ -833,8 +833,8 @@ exec_declaration(struct spu_exec_machine *mach,
          unsigned first, last, mask;
          interpolation_func interp;
 
-         first = decl->DeclarationRange.First;
-         last = decl->DeclarationRange.Last;
+         first = decl->Range.First;
+         last = decl->Range.Last;
          mask = decl->Declaration.UsageMask;
 
          switch( decl->Declaration.Interpolate ) {

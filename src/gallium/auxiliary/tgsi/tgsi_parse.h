@@ -62,7 +62,7 @@ struct tgsi_full_src_register
 struct tgsi_full_declaration
 {
    struct tgsi_declaration Declaration;
-   struct tgsi_declaration_range DeclarationRange;
+   struct tgsi_declaration_range Range;
    struct tgsi_declaration_semantic Semantic;
 };
 

@@ -79,19 +79,19 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
 
         switch (decl->Semantic.Name) {
             case TGSI_SEMANTIC_POSITION:
-                c->code->outputs[decl->DeclarationRange.First] = 0;
+                c->code->outputs[decl->Range.First] = 0;
                 break;
             case TGSI_SEMANTIC_PSIZE:
-                c->code->outputs[decl->DeclarationRange.First] = 1;
+                c->code->outputs[decl->Range.First] = 1;
                 break;
             case TGSI_SEMANTIC_COLOR:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
+                c->code->outputs[decl->Range.First] = 1 +
                     (pointsize ? 1 : 0) +
                     colors++;
                 break;
             case TGSI_SEMANTIC_FOG:
             case TGSI_SEMANTIC_GENERIC:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
+                c->code->outputs[decl->Range.First] = 1 +
                     (pointsize ? 1 : 0) +
                     out_colors +
                     generic++;

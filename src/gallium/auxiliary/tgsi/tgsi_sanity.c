@@ -286,7 +286,7 @@ iter_declaration(
    file = decl->Declaration.File;
    if (!check_file_name( ctx, file ))
       return TRUE;
-   for (i = decl->DeclarationRange.First; i <= decl->DeclarationRange.Last; i++) {
+   for (i = decl->Range.First; i <= decl->Range.Last; i++) {
       if (is_register_declared( ctx, file, i ))
          report_error( ctx, "%s[%u]: The same register declared more than once", file_names[file], i );
       ctx->regs_decl[file][i / BITS_IN_REG_FLAG] |= (1 << (i % BITS_IN_REG_FLAG));

@@ -676,7 +676,7 @@ nv40_fragprog_parse_decl_attrib(struct nv40_fpc *fpc,
 		return FALSE;
 	}
 
-	fpc->attrib_map[fdec->DeclarationRange.First] = hw;
+	fpc->attrib_map[fdec->Range.First] = hw;
 	return TRUE;
 }
 
@@ -684,7 +684,7 @@ static boolean
 nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 				const struct tgsi_full_declaration *fdec)
 {
-	unsigned idx = fdec->DeclarationRange.First;
+	unsigned idx = fdec->Range.First;
 	unsigned hw;
 
 	switch (fdec->Semantic.Name) {
@@ -738,9 +738,9 @@ nv40_fragprog_prepare(struct nv40_fpc *fpc)
 					goto out_err;
 				break;
 			case TGSI_FILE_TEMPORARY:
-				if (fdec->DeclarationRange.Last > high_temp) {
+				if (fdec->Range.Last > high_temp) {
 					high_temp =
-						fdec->DeclarationRange.Last;
+						fdec->Range.Last;
 				}
 				break;
 			default:

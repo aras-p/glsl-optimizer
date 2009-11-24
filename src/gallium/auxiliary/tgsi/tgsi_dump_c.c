@@ -223,9 +223,9 @@ dump_declaration_verbose(
 
    EOL();
    TXT( "\nFirst: " );
-   UID( decl->DeclarationRange.First );
+   UID( decl->Range.First );
    TXT( "\nLast : " );
-   UID( decl->DeclarationRange.Last );
+   UID( decl->Range.Last );
 
    if( decl->Declaration.Semantic ) {
       EOL();

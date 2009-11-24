@@ -335,8 +335,8 @@ static boolean ps30_sampler( struct svga_shader_emitter *emit,
 boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
                              const struct tgsi_full_declaration *decl )
 {
-   unsigned first = decl->DeclarationRange.First;
-   unsigned last = decl->DeclarationRange.Last;
+   unsigned first = decl->Range.First;
+   unsigned last = decl->Range.Last;
    unsigned semantic = 0;
    unsigned semantic_idx = 0;
    unsigned idx;

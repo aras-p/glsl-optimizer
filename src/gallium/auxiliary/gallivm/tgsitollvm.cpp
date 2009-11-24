@@ -94,8 +94,8 @@ translate_declaration(struct gallivm_ir *prog,
       unsigned first, last, mask;
       uint interp_method;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       /* Do not touch WPOS.xy */
@@ -149,7 +149,7 @@ translate_declarationir(struct gallivm_ir *,
                       struct tgsi_full_declaration *)
 {
    if (decl->Declaration.File == TGSI_FILE_ADDRESS) {
-      int idx = decl->DeclarationRange.First;
+      int idx = decl->Range.First;
       storage->addAddress(idx);
    }
 }

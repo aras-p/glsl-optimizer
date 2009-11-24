@@ -2547,8 +2547,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			unsigned si, last, first, mode;
 
 			d = &tp.FullToken.FullDeclaration;
-			first = d->DeclarationRange.First;
-			last = d->DeclarationRange.Last;
+			first = d->Range.First;
+			last = d->Range.Last;
 
 			switch (d->Declaration.File) {
 			case TGSI_FILE_TEMPORARY:

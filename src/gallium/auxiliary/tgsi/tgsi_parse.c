@@ -112,7 +112,7 @@ tgsi_parse_token(
       memset(decl, 0, sizeof *decl);
       copy_token(&decl->Declaration, &token);
 
-      next_token( ctx, &decl->DeclarationRange );
+      next_token( ctx, &decl->Range );
 
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );

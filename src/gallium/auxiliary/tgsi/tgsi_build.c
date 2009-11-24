@@ -172,7 +172,7 @@ tgsi_default_full_declaration( void )
    struct tgsi_full_declaration  full_declaration;
 
    full_declaration.Declaration  = tgsi_default_declaration();
-   full_declaration.DeclarationRange = tgsi_default_declaration_range();
+   full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
 
    return full_declaration;
@@ -209,8 +209,8 @@ tgsi_build_full_declaration(
    size++;
 
    *dr = tgsi_build_declaration_range(
-      full_decl->DeclarationRange.First,
-      full_decl->DeclarationRange.Last,
+      full_decl->Range.First,
+      full_decl->Range.Last,
       declaration,
       header );
 

@@ -38,8 +38,8 @@ struct tgsi_full_declaration vl_decl_input(unsigned int name, unsigned int index
    decl.Declaration.Semantic = 1;
    decl.Semantic.Name = name;
    decl.Semantic.Index = index;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }
@@ -67,8 +67,8 @@ struct tgsi_full_declaration vl_decl_interpolated_input
    decl.Semantic.Name = name;
    decl.Semantic.Index = index;
    decl.Declaration.Interpolate = interpolation;;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }
@@ -81,8 +81,8 @@ struct tgsi_full_declaration vl_decl_constants(unsigned int name, unsigned int i
    decl.Declaration.Semantic = 1;
    decl.Semantic.Name = name;
    decl.Semantic.Index = index;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }
@@ -95,8 +95,8 @@ struct tgsi_full_declaration vl_decl_output(unsigned int name, unsigned int inde
    decl.Declaration.Semantic = 1;
    decl.Semantic.Name = name;
    decl.Semantic.Index = index;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }
@@ -107,8 +107,8 @@ struct tgsi_full_declaration vl_decl_temps(unsigned int first, unsigned int last
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_TEMPORARY;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }
@@ -119,8 +119,8 @@ struct tgsi_full_declaration vl_decl_samplers(unsigned int first, unsigned int l
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.DeclarationRange.First = first;
-   decl.DeclarationRange.Last = last;
+   decl.Range.First = first;
+   decl.Range.Last = last;
 
    return decl;
 }

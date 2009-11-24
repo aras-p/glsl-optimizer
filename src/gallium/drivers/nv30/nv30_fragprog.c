@@ -604,7 +604,7 @@ nv30_fragprog_parse_decl_attrib(struct nv30_fpc *fpc,
 		return FALSE;
 	}
 
-	fpc->attrib_map[fdec->DeclarationRange.First] = hw;
+	fpc->attrib_map[fdec->Range.First] = hw;
 	return TRUE;
 }
 
@@ -614,10 +614,10 @@ nv30_fragprog_parse_decl_output(struct nv30_fpc *fpc,
 {
 	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
-		fpc->depth_id = fdec->DeclarationRange.First;
+		fpc->depth_id = fdec->Range.First;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		fpc->colour_id = fdec->DeclarationRange.First;
+		fpc->colour_id = fdec->Range.First;
 		break;
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
@@ -653,9 +653,9 @@ nv30_fragprog_prepare(struct nv30_fpc *fpc)
 					goto out_err;
 				break;
 			/*case TGSI_FILE_TEMPORARY:
-				if (fdec->DeclarationRange.Last > high_temp) {
+				if (fdec->Range.Last > high_temp) {
 					high_temp =
-						fdec->DeclarationRange.Last;
+						fdec->Range.Last;
 				}
 				break;*/
 			default:

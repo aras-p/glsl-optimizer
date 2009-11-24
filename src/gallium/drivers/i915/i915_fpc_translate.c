@@ -928,8 +928,8 @@ i915_translate_instructions(struct i915_fp_compile *p,
          if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_CONSTANT) {
             uint i;
-            for (i = parse.FullToken.FullDeclaration.DeclarationRange.First;
-                 i <= parse.FullToken.FullDeclaration.DeclarationRange.Last;
+            for (i = parse.FullToken.FullDeclaration.Range.First;
+                 i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
                assert(ifs->constant_flags[i] == 0x0);
                ifs->constant_flags[i] = I915_CONSTFLAG_USER;
@@ -939,8 +939,8 @@ i915_translate_instructions(struct i915_fp_compile *p,
          else if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_TEMPORARY) {
             uint i;
-            for (i = parse.FullToken.FullDeclaration.DeclarationRange.First;
-                 i <= parse.FullToken.FullDeclaration.DeclarationRange.Last;
+            for (i = parse.FullToken.FullDeclaration.Range.First;
+                 i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
                assert(i < I915_MAX_TEMPORARY);
                /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
