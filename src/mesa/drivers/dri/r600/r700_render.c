@@ -526,6 +526,9 @@ static void r700ConvertAttrib(GLcontext *ctx, int count,
 
     radeonAllocDmaRegion(&context->radeon, &attr->bo, &attr->bo_offset, 
                          sizeof(GLfloat) * input->Size * count, 32);
+
+    radeon_bo_map(attr->bo, 1);
+
     dst_ptr = (GLfloat *)ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
 
     assert(src_ptr != NULL);
@@ -559,6 +562,8 @@ static void r700ConvertAttrib(GLcontext *ctx, int count,
             break;
     }
 
+    radeon_bo_unmap(attr->bo);
+
     if (mapped_named_bo) 
     {
         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
@@ -576,6 +581,8 @@ static void r700AlignDataToDword(GLcontext *ctx,
     GLboolean mapped_named_bo = GL_FALSE;
 
     radeonAllocDmaRegion(&context->radeon, &attr->bo, &attr->bo_offset, size, 32);
+
+    radeon_bo_map(attr->bo, 1);
 
     if (!input->BufferObj->Pointer) 
     {
@@ -596,6 +603,7 @@ static void r700AlignDataToDword(GLcontext *ctx,
         }
     }
 
+    radeon_bo_unmap(attr->bo);
     if (mapped_named_bo) 
     {
         ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
@@ -664,14 +672,18 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
 
                 radeonAllocDmaRegion(&context->radeon, &context->stream_desc[index].bo, 
                                      &context->stream_desc[index].bo_offset, size, 32);
+
+                radeon_bo_map(context->stream_desc[index].bo, 1);
                 assert(context->stream_desc[index].bo->ptr != NULL);
+
+
                 dst = (uint32_t *)ADD_POINTERS(context->stream_desc[index].bo->ptr, 
                                                context->stream_desc[index].bo_offset);
 
                 switch (context->stream_desc[index].dwords) 
                 {
                 case 1:                     
-                    radeonEmitVec4(dst, input[i]->Ptr, input[i]->StrideB, local_count);                         
+                    radeonEmitVec4(dst, input[i]->Ptr, input[i]->StrideB, local_count);
                     break;
                 case 2: 
                     radeonEmitVec8(dst, input[i]->Ptr, input[i]->StrideB, local_count); 
@@ -686,6 +698,7 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
                     assert(0); 
                     break;
                 }
+		radeon_bo_unmap(context->stream_desc[index].bo);
             }
         }
 
@@ -757,6 +770,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 	radeonAllocDmaRegion(&context->radeon, &context->ind_buf.bo,
 			     &context->ind_buf.bo_offset, size, 4);
 
+	radeon_bo_map(context->ind_buf.bo, 1);
 	assert(context->ind_buf.bo->ptr != NULL);
 	out = (GLuint *)ADD_POINTERS(context->ind_buf.bo->ptr, context->ind_buf.bo_offset);
 
@@ -770,6 +784,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
             *out++ = in[i];
         }
 
+	radeon_bo_unmap(context->ind_buf.bo);
 #if MESA_BIG_ENDIAN
     }
     else
@@ -780,6 +795,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 	radeonAllocDmaRegion(&context->radeon, &context->ind_buf.bo,
 			     &context->ind_buf.bo_offset, size, 4);
 
+	radeon_bo_map(context->ind_buf.bo, 1);
 	assert(context->ind_buf.bo->ptr != NULL);
 	out = (GLuint *)ADD_POINTERS(context->ind_buf.bo->ptr, context->ind_buf.bo_offset);
 
@@ -792,6 +808,7 @@ static void r700FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
         {
             *out++ = in[i];
         }
+	radeon_bo_unmap(context->ind_buf.bo);
 #endif
     }
 
@@ -837,11 +854,13 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 	radeonAllocDmaRegion(&context->radeon, &context->ind_buf.bo,
 			     &context->ind_buf.bo_offset, size, 4);
+	radeon_bo_map(context->ind_buf.bo, 1);
 	assert(context->ind_buf.bo->ptr != NULL);
 	dst_ptr = ADD_POINTERS(context->ind_buf.bo->ptr, context->ind_buf.bo_offset);
 
         _mesa_memcpy(dst_ptr, src_ptr, size);
 
+	radeon_bo_unmap(context->ind_buf.bo);
         context->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
         context->ind_buf.count = mesa_ind_buf->count;
 

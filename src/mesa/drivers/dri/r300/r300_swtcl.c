@@ -665,11 +665,11 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 	r300EmitCacheFlush(rmesa);
 
 	radeonEmitState(&rmesa->radeon);
-    r300_emit_scissor(ctx);
+	r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
-			rmesa->radeon.swtcl.vertex_size,
-			first_elem(&rmesa->radeon.dma.reserved)->bo,
-			current_offset);
+			  rmesa->radeon.swtcl.vertex_size,
+			  rmesa->radeon.swtcl.bo,
+			  current_offset);
 
 	r300EmitVbufPrim(rmesa,
 		   rmesa->radeon.swtcl.hw_primitive,

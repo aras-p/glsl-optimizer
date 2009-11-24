@@ -328,6 +328,7 @@ struct radeon_swtcl_info {
 	GLuint vertex_attr_count;
 
 	GLuint emit_prediction;
+        struct radeon_bo *bo;
 };
 
 #define RADEON_MAX_AOS_ARRAYS		16

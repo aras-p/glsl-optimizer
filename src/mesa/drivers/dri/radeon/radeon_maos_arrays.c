@@ -76,12 +76,14 @@ static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 
    /* Emit the data
     */
+   radeon_bo_map(aos->bo, 1);
    out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
    for (i = 0; i < count; i++) {
       out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
       out++;
       data += stride;
    }
+   radeon_bo_unmap(aos->bo);
 }
 
 static void emit_s0_vec(uint32_t *out, GLvoid *data, int stride, int count)
@@ -151,6 +153,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
 
    /* Emit the data
     */
+   radeon_bo_map(aos->bo, 1);
    out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
    switch (size) {
    case 1:
@@ -170,6 +173,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
       exit(1);
       break;
    }
+   radeon_bo_unmap(aos->bo);
 }
 
 

@@ -420,10 +420,10 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    }
 
 
-
+   radeon_bo_map(rmesa->radeon.tcl.aos[0].bo, 1);
    setup_tab[i].emit( ctx, 0, VB->Count, 
 		      rmesa->radeon.tcl.aos[0].bo->ptr + rmesa->radeon.tcl.aos[0].offset);
-
+   radeon_bo_unmap(rmesa->radeon.tcl.aos[0].bo);
    //   rmesa->radeon.tcl.aos[0].size = setup_tab[i].vertex_size;
    rmesa->radeon.tcl.aos[0].stride = setup_tab[i].vertex_size;
    rmesa->tcl.vertex_format = setup_tab[i].vertex_format;

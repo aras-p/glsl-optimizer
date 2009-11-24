@@ -297,7 +297,7 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    radeonEmitState(&rmesa->radeon);
    r200EmitVertexAOS( rmesa,
 		      rmesa->radeon.swtcl.vertex_size,
-		      first_elem(&rmesa->radeon.dma.reserved)->bo,
+		      rmesa->radeon.swtcl.bo,
 		      current_offset);
 
 
