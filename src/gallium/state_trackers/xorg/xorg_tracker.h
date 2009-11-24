@@ -51,6 +51,8 @@
 
 #define DRV_ERROR(msg)	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, msg);
 
+struct kms_bo;
+struct kms_driver;
 struct exa_context;
 
 typedef struct
@@ -85,6 +87,15 @@ typedef struct _modesettingRec
 
     void (*blockHandler)(int, pointer, pointer, pointer);
     CreateScreenResourcesProcPtr createScreenResources;
+
+    /* for frontbuffer backing store */
+    Bool (*destroy_front_buffer)(ScrnInfoPtr pScrn);
+    Bool (*create_front_buffer)(ScrnInfoPtr pScrn);
+    Bool (*bind_front_buffer)(ScrnInfoPtr pScrn);
+
+    /* kms */
+    struct kms_driver *kms;
+    struct kms_bo *root_bo;
 
     /* gallium */
     struct drm_api *api;

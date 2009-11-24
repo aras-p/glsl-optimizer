@@ -52,12 +52,18 @@
 #include "pipe/p_inlines.h"
 #include "util/u_rect.h"
 
+#ifdef HAVE_LIBKMS
+#include "libkms.h"
+#endif
+
 struct crtc_private
 {
     drmModeCrtcPtr drm_crtc;
 
     /* hwcursor */
     struct pipe_texture *cursor_tex;
+    struct kms_bo *cursor_bo;
+
     unsigned cursor_handle;
 };
 
@@ -174,7 +180,7 @@ crtc_set_cursor_position(xf86CrtcPtr crtc, int x, int y)
 }
 
 static void
-crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
+crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 {
     unsigned char *ptr;
     modesettingPtr ms = modesettingPTR(crtc->scrn);
@@ -217,13 +223,63 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
     ms->screen->tex_transfer_destroy(transfer);
 }
 
+#if HAVE_LIBKMS
+static void
+crtc_load_cursor_argb_kms(xf86CrtcPtr crtc, CARD32 * image)
+{
+    modesettingPtr ms = modesettingPTR(crtc->scrn);
+    struct crtc_private *crtcp = crtc->driver_private;
+    unsigned char *ptr;
+
+    if (!crtcp->cursor_bo) {
+	unsigned attr[8];
+
+	attr[0] = KMS_BO_TYPE;
+	attr[1] = KMS_BO_TYPE_CURSOR;
+	attr[2] = KMS_WIDTH;
+	attr[3] = 64;
+	attr[4] = KMS_HEIGHT;
+	attr[5] = 64;
+	attr[6] = 0;
+
+        if (kms_bo_create(ms->kms, attr, &crtcp->cursor_bo))
+	   return;
+
+	if (kms_bo_get_prop(crtcp->cursor_bo, KMS_HANDLE,
+			    &crtcp->cursor_handle))
+	    goto err_bo_destroy;
+    }
+
+    kms_bo_map(crtcp->cursor_bo, (void**)&ptr);
+    memcpy(ptr, image, 64*64*4);
+    kms_bo_unmap(crtcp->cursor_bo);
+
+    return;
+
+err_bo_destroy:
+    kms_bo_destroy(crtcp->cursor_bo);
+}
+#endif
+
+static void
+crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
+{
+    modesettingPtr ms = modesettingPTR(crtc->scrn);
+    if (ms->screen)
+	crtc_load_cursor_argb_ga3d(crtc, image);
+#ifdef HAVE_LIBKMS
+    else if (ms->kms)
+	crtc_load_cursor_argb_kms(crtc, image);
+#endif
+}
+
 static void
 crtc_show_cursor(xf86CrtcPtr crtc)
 {
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_tex)
+    if (crtcp->cursor_tex || crtcp->cursor_bo)
 	drmModeSetCursor(ms->fd, crtcp->drm_crtc->crtc_id,
 			 crtcp->cursor_handle, 64, 64);
 }
@@ -245,9 +301,14 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_tex) {
+    if (crtcp->cursor_tex)
 	pipe_texture_reference(&crtcp->cursor_tex, NULL);
-    }
+#ifdef HAVE_LIBKMS
+    if (crtcp->cursor_bo)
+	kms_bo_destroy(crtcp->cursor_bo);
+#endif
+
+    xfree(crtcp);
 }
 
 /*

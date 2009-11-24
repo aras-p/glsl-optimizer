@@ -56,6 +56,10 @@
 #include "xorg_tracker.h"
 #include "xorg_winsys.h"
 
+#ifdef HAVE_LIBKMS
+#include "libkms.h"
+#endif
+
 /*
  * Functions and symbols exported to Xorg via pointers.
  */
@@ -112,6 +116,7 @@ xorg_tracker_set_functions(ScrnInfoPtr scrn)
  * Internal function definitions
  */
 
+static Bool drv_init_front_buffer_functions(ScrnInfoPtr pScrn);
 static Bool drv_close_screen(int scrnIndex, ScreenPtr pScreen);
 static Bool drv_save_hw_state(ScrnInfoPtr pScrn);
 static Bool drv_restore_hw_state(ScrnInfoPtr pScrn);
@@ -153,74 +158,9 @@ drv_probe_ddc(ScrnInfoPtr pScrn, int index)
 }
 
 static Bool
-drv_create_front_buffer(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned handle, stride;
-    struct pipe_texture *tex;
-
-    ms->noEvict = TRUE;
-
-    tex = xorg_exa_create_root_texture(pScrn, pScrn->virtualX, pScrn->virtualY,
-				       pScrn->depth, pScrn->bitsPerPixel);
-
-    if (!tex)
-	return FALSE;
-
-    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
-					    tex,
-					    &stride,
-					    &handle))
-	return FALSE;
-
-    drmModeAddFB(ms->fd,
-		 pScrn->virtualX,
-		 pScrn->virtualY,
-		 pScrn->depth,
-		 pScrn->bitsPerPixel,
-		 stride,
-		 handle,
-                 &ms->fb_id);
-
-    pScrn->frameX0 = 0;
-    pScrn->frameY0 = 0;
-    drv_adjust_frame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
-
-    pipe_texture_reference(&ms->root_texture, tex);
-    pipe_texture_reference(&tex, NULL);
-    return TRUE;
-}
-
-static Bool
-drv_bind_texture_to_root(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-    ScreenPtr pScreen = pScrn->pScreen;
-    struct pipe_texture *check;
-    PixmapPtr rootPixmap;
-
-    rootPixmap = pScreen->GetScreenPixmap(pScreen);
-
-    xorg_exa_set_displayed_usage(rootPixmap);
-    xorg_exa_set_shared_usage(rootPixmap);
-    xorg_exa_set_texture(rootPixmap, ms->root_texture);
-    if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
-	FatalError("Couldn't adjust screen pixmap\n");
-
-    check = xorg_exa_get_texture(rootPixmap);
-    if (ms->root_texture != check)
-	FatalError("Created new root texture\n");
-
-    pipe_texture_reference(&check, NULL);
-
-    return TRUE;
-}
-
-static Bool
 drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned handle, stride;
     PixmapPtr rootPixmap;
     ScreenPtr pScreen = pScrn->pScreen;
 
@@ -234,36 +174,18 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
      * Remove the old framebuffer & texture.
      */
     drmModeRmFB(ms->fd, ms->fb_id);
-    pipe_texture_reference(&ms->root_texture, NULL);
-
+    if (!ms->destroy_front_buffer(pScrn))
+	FatalError("failed to destroy front buffer\n");
 
     rootPixmap = pScreen->GetScreenPixmap(pScreen);
     if (!pScreen->ModifyPixmapHeader(rootPixmap, width, height, -1, -1, -1, NULL))
 	return FALSE;
 
-    /* takes one ref */
-    ms->root_texture = xorg_exa_get_texture(rootPixmap);
-
-    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
-					    ms->root_texture,
-					    &stride,
-					    &handle))
-	FatalError("Could not get handle and stride from texture\n");
-
-    drmModeAddFB(ms->fd,
-		 pScrn->virtualX,
-		 pScrn->virtualY,
-		 pScrn->depth,
-		 pScrn->bitsPerPixel,
-		 stride,
-		 handle,
-                 &ms->fb_id);
-
     /* HW dependent - FIXME */
     pScrn->displayWidth = pScrn->virtualX;
 
     /* now create new frontbuffer */
-    return drv_create_front_buffer(pScrn) && drv_bind_texture_to_root(pScrn);
+    return ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn);
 }
 
 static const xf86CrtcConfigFuncsRec crtc_config_funcs = {
@@ -291,12 +213,56 @@ drv_init_drm(ScrnInfoPtr pScrn)
 	    return FALSE;
     }
 
-    if (!ms->api) {
-	ms->api = drm_api_create();
+    return TRUE;
+}
 
-	if (!ms->api)
-	    return FALSE;
+static Bool
+drv_init_resource_management(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (ms->screen || ms->kms)
+	return TRUE;
+
+    ms->api = drm_api_create();
+    if (ms->api) {
+	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
+
+	if (ms->screen)
+	    return TRUE;
+
+	if (ms->api->destroy)
+	    ms->api->destroy(ms->api);
+
+	ms->api = NULL;
     }
+
+#ifdef HAVE_LIBKMS
+    if (!kms_create(ms->fd, &ms->kms))
+	return TRUE;
+#endif
+
+    return FALSE;
+}
+
+static Bool
+drv_close_resource_management(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (ms->screen)
+	ms->screen->destroy(ms->screen);
+    ms->screen = NULL;
+
+    if (ms->api && ms->api->destroy)
+	ms->api->destroy(ms->api);
+    ms->api = NULL;
+
+#ifdef HAVE_LIBKMS
+    if (ms->kms)
+	kms_destroy(ms->kms);
+    ms->kms = NULL;
+#endif
 
     return TRUE;
 }
@@ -443,14 +409,16 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     xf86SetDpi(pScrn, 0, 0);
 
     /* Load the required sub modules */
-    if (!xf86LoadSubModule(pScrn, "fb")) {
+    if (!xf86LoadSubModule(pScrn, "fb"))
 	return FALSE;
-    }
 
-    xf86LoadSubModule(pScrn, "exa");
+    /* XXX: these aren't needed when we are using libkms */
+    if (!xf86LoadSubModule(pScrn, "exa"))
+	return FALSE;
 
 #ifdef DRI2
-    xf86LoadSubModule(pScrn, "dri2");
+    if (!xf86LoadSubModule(pScrn, "dri2"))
+	return FALSE;
 #endif
 
     return TRUE;
@@ -482,7 +450,8 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
     pScreen->BlockHandler(i, blockData, pTimeout, pReadmask);
     pScreen->BlockHandler = drv_block_handler;
 
-    ms->ctx->flush(ms->ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+    if (ms->ctx)
+	ms->ctx->flush(ms->ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     {
@@ -525,7 +494,7 @@ drv_create_screen_resources(ScreenPtr pScreen)
     ret = pScreen->CreateScreenResources(pScreen);
     pScreen->CreateScreenResources = drv_create_screen_resources;
 
-    drv_bind_texture_to_root(pScrn);
+    ms->bind_front_buffer(pScrn);
 
     ms->noEvict = FALSE;
 
@@ -559,16 +528,19 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     modesettingPtr ms = modesettingPTR(pScrn);
     VisualPtr visual;
 
-    if (!drv_init_drm(pScrn))
+    if (!drv_init_drm(pScrn)) {
+	FatalError("Could not init DRM");
 	return FALSE;
+    }
 
-    if (!ms->screen) {
-	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
+    if (!drv_init_resource_management(pScrn)) {
+	FatalError("Could not init resource management (!pipe_screen && !libkms)");
+	return FALSE;
+    }
 
-	if (!ms->screen) {
-	    FatalError("Could not init pipe_screen\n");
-	    return FALSE;
-	}
+    if (!drv_init_front_buffer_functions(pScrn)) {
+	FatalError("Could not init front buffer manager");
+	return FALSE;
     }
 
     pScrn->pScreen = pScreen;
@@ -619,11 +591,16 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     xf86SetBlackWhitePixels(pScreen);
 
-    ms->exa = xorg_exa_init(pScrn, xf86ReturnOptValBool(ms->Options,
-                                                        OPTION_2D_ACCEL, TRUE));
-    ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
+    if (ms->screen) {
+	ms->exa = xorg_exa_init(pScrn, xf86ReturnOptValBool(ms->Options,
+							    OPTION_2D_ACCEL, TRUE));
+	ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
 
-    xorg_xv_init(pScreen);
+	xorg_xv_init(pScreen);
+#ifdef DRI2
+	xorg_dri2_init(pScreen);
+#endif
+    }
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -654,10 +631,6 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
-
-#ifdef DRI2
-    xorg_dri2_init(pScreen);
-#endif
 
     return drv_enter_vt(scrnIndex, 1);
 }
@@ -745,10 +718,10 @@ drv_enter_vt(int scrnIndex, int flags)
 	drv_save_hw_state(pScrn);
     }
 
-    if (!drv_create_front_buffer(pScrn))
+    if (!ms->create_front_buffer(pScrn))
 	return FALSE;
 
-    if (!flags && !drv_bind_texture_to_root(pScrn))
+    if (!flags && !ms->bind_front_buffer(pScrn))
 	return FALSE;
 
     if (!xf86SetDesiredModes(pScrn))
@@ -774,8 +747,10 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     if (pScrn->vtSema) {
 	drv_leave_vt(scrnIndex, 0);
     }
+
 #ifdef DRI2
-    xorg_dri2_close(pScreen);
+    if (ms->screen)
+	xorg_dri2_close(pScreen);
 #endif
 
     pScreen->BlockHandler = ms->blockHandler;
@@ -789,14 +764,14 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     }
 #endif
 
-    pipe_texture_reference(&ms->root_texture, NULL);
+    drmModeRmFB(ms->fd, ms->fb_id);
+    ms->destroy_front_buffer(pScrn);
 
     if (ms->exa)
 	xorg_exa_close(pScrn);
+    ms->exa = NULL;
 
-    if (ms->api && ms->api->destroy)
-	ms->api->destroy(ms->api);
-    ms->api = NULL;
+    drv_close_resource_management(pScrn);
 
     drmClose(ms->fd);
     ms->fd = -1;
@@ -810,6 +785,187 @@ static ModeStatus
 drv_valid_mode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     return MODE_OK;
+}
+
+
+/*
+ * Front buffer backing store functions.
+ */
+
+static Bool
+drv_destroy_front_buffer_ga3d(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    pipe_texture_reference(&ms->root_texture, NULL);
+    return TRUE;
+}
+
+static Bool
+drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    unsigned handle, stride;
+    struct pipe_texture *tex;
+
+    ms->noEvict = TRUE;
+
+    tex = xorg_exa_create_root_texture(pScrn, pScrn->virtualX, pScrn->virtualY,
+				       pScrn->depth, pScrn->bitsPerPixel);
+
+    if (!tex)
+	return FALSE;
+
+    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
+					    tex,
+					    &stride,
+					    &handle))
+	return FALSE;
+
+    drmModeAddFB(ms->fd,
+		 pScrn->virtualX,
+		 pScrn->virtualY,
+		 pScrn->depth,
+		 pScrn->bitsPerPixel,
+		 stride,
+		 handle,
+                 &ms->fb_id);
+
+    pScrn->frameX0 = 0;
+    pScrn->frameY0 = 0;
+    drv_adjust_frame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+
+    pipe_texture_reference(&ms->root_texture, tex);
+    pipe_texture_reference(&tex, NULL);
+
+    return TRUE;
+}
+
+static Bool
+drv_bind_front_buffer_ga3d(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    struct pipe_texture *check;
+
+    xorg_exa_set_displayed_usage(rootPixmap);
+    xorg_exa_set_shared_usage(rootPixmap);
+    xorg_exa_set_texture(rootPixmap, ms->root_texture);
+    if (!pScreen->ModifyPixmapHeader(rootPixmap, -1, -1, -1, -1, -1, NULL))
+	FatalError("Couldn't adjust screen pixmap\n");
+
+    check = xorg_exa_get_texture(rootPixmap);
+    if (ms->root_texture != check)
+	FatalError("Created new root texture\n");
+
+    pipe_texture_reference(&check, NULL);
+    return TRUE;
+}
+
+#ifdef HAVE_LIBKMS
+static Bool
+drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (!ms->root_bo)
+	return TRUE;
+
+    kms_bo_unmap(ms->root_bo);
+    kms_bo_destroy(ms->root_bo);
+    ms->root_bo = NULL;
+    return TRUE;
+}
+
+static Bool
+drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    unsigned handle, stride;
+    struct kms_bo *bo;
+    unsigned attr[8];
+
+    attr[0] = KMS_BO_TYPE;
+    attr[1] = KMS_BO_TYPE_SCANOUT;
+    attr[2] = KMS_WIDTH;
+    attr[3] = pScrn->virtualX;
+    attr[4] = KMS_HEIGHT;
+    attr[5] = pScrn->virtualY;
+    attr[6] = 0;
+
+    if (kms_bo_create(ms->kms, attr, &bo))
+	return FALSE;
+
+    if (kms_bo_get_prop(bo, KMS_PITCH, &stride))
+	goto err_destroy;
+
+    if (kms_bo_get_prop(bo, KMS_HANDLE, &handle))
+	goto err_destroy;
+
+    drmModeAddFB(ms->fd,
+		 pScrn->virtualX,
+		 pScrn->virtualY,
+		 pScrn->depth,
+		 pScrn->bitsPerPixel,
+		 stride,
+		 handle,
+                 &ms->fb_id);
+
+    pScrn->frameX0 = 0;
+    pScrn->frameY0 = 0;
+    drv_adjust_frame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
+    ms->root_bo = bo;
+
+    return TRUE;
+
+err_destroy:
+    kms_bo_destroy(bo);
+    return FALSE;
+}
+
+static Bool
+drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    unsigned stride;
+    void *ptr;
+
+    if (kms_bo_get_prop(ms->root_bo, KMS_PITCH, &stride))
+	return FALSE;
+
+    if (kms_bo_map(ms->root_bo, &ptr))
+	return FALSE;
+
+    pScreen->ModifyPixmapHeader(rootPixmap,
+				pScreen->width,
+				pScreen->height,
+				pScreen->rootDepth,
+				pScrn->bitsPerPixel,
+				stride,
+				ptr);
+    return TRUE;
+}
+#endif /* HAVE_LIBKMS */
+
+static Bool drv_init_front_buffer_functions(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    if (ms->screen) {
+	ms->destroy_front_buffer = drv_destroy_front_buffer_ga3d;
+	ms->create_front_buffer = drv_create_front_buffer_ga3d;
+	ms->bind_front_buffer = drv_bind_front_buffer_ga3d;
+#ifdef HAVE_LIBKMS
+    } else if (ms->kms) {
+	ms->destroy_front_buffer = drv_destroy_front_buffer_kms;
+	ms->create_front_buffer = drv_create_front_buffer_kms;
+	ms->bind_front_buffer = drv_bind_front_buffer_kms;
+#endif
+    } else
+	return FALSE;
+
+    return TRUE;
 }
 
 /* vim: set sw=4 ts=8 sts=4: */
