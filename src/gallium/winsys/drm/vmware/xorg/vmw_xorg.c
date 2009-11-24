@@ -31,7 +31,7 @@
  * @author Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
-#include "state_trackers/xorg/xorg_winsys.h"
+#include "vmw_hook.h"
 
 static void vmw_xorg_identify(int flags);
 static Bool vmw_xorg_pci_probe(DriverPtr driver,
@@ -145,6 +145,8 @@ vmw_xorg_pci_probe(DriverPtr driver,
 
 	/* Use all the functions from the xorg tracker */
 	xorg_tracker_set_functions(scrn);
+
+	vmw_screen_set_functions(scrn);
     }
     return scrn != NULL;
 }

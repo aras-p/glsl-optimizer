@@ -1,9 +1,14 @@
-TARGET     = vmwgfx_drv.so
-CFILES     = $(wildcard ./*.c)
-OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
 TOP        = ../../../../../..
 
 include $(TOP)/configs/current
+
+TARGET = vmwgfx_drv.so
+
+CFILES = \
+	vmw_xorg.c \
+	vmw_screen.c
+
+OBJECTS = $(patsubst %.c,%.o,$(CFILES))
 
 INCLUDES = \
 	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
