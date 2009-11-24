@@ -33,7 +33,7 @@ all default: $(TARGET) $(TARGET_STAGING)
 
 $(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
 	$(TOP)/bin/mklib -noprefix -o $@ \
-	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_intel
+	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm)
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
