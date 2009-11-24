@@ -296,7 +296,8 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
       newInst.FullDstRegisters[0].DstRegister.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+      newInst.Instruction.Texture = TRUE;
+      newInst.InstructionTexture.Texture = TGSI_TEXTURE_2D;
       newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.FullSrcRegisters[0].SrcRegister.Index = pctx->texTemp;
       newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;

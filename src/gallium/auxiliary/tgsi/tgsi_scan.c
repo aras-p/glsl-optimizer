@@ -35,7 +35,6 @@
 
 
 #include "util/u_math.h"
-#include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 
@@ -217,11 +216,7 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
                 src->SrcRegister.Index != dst->DstRegister.Index ||
 
                 src->SrcRegister.Negate ||
-                src->SrcRegisterExtMod.Negate ||
-                src->SrcRegisterExtMod.Absolute ||
-                src->SrcRegisterExtMod.Scale2X ||
-                src->SrcRegisterExtMod.Bias ||
-                src->SrcRegisterExtMod.Complement ||
+                src->SrcRegister.Absolute ||
 
                 src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
                 src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||

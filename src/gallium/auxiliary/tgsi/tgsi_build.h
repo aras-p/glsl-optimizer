@@ -171,31 +171,31 @@ tgsi_build_instruction_predicate(int index,
                                  struct tgsi_instruction *instruction,
                                  struct tgsi_header *header);
 
-struct tgsi_instruction_ext_label
-tgsi_default_instruction_ext_label( void );
+struct tgsi_instruction_label
+tgsi_default_instruction_label( void );
 
 unsigned
-tgsi_compare_instruction_ext_label(
-   struct tgsi_instruction_ext_label a,
-   struct tgsi_instruction_ext_label b );
+tgsi_compare_instruction_label(
+   struct tgsi_instruction_label a,
+   struct tgsi_instruction_label b );
 
-struct tgsi_instruction_ext_label
-tgsi_build_instruction_ext_label(
+struct tgsi_instruction_label
+tgsi_build_instruction_label(
    unsigned label,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );
 
-struct tgsi_instruction_ext_texture
-tgsi_default_instruction_ext_texture( void );
+struct tgsi_instruction_texture
+tgsi_default_instruction_texture( void );
 
 unsigned
-tgsi_compare_instruction_ext_texture(
-   struct tgsi_instruction_ext_texture a,
-   struct tgsi_instruction_ext_texture b );
+tgsi_compare_instruction_texture(
+   struct tgsi_instruction_texture a,
+   struct tgsi_instruction_texture b );
 
-struct tgsi_instruction_ext_texture
-tgsi_build_instruction_ext_texture(
+struct tgsi_instruction_texture
+tgsi_build_instruction_texture(
    unsigned texture,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
@@ -212,6 +212,7 @@ tgsi_build_src_register(
    unsigned swizzle_z,
    unsigned swizzle_w,
    unsigned negate,
+   unsigned absolute,
    unsigned indirect,
    unsigned dimension,
    int index,
@@ -221,24 +222,6 @@ tgsi_build_src_register(
 struct tgsi_full_src_register
 tgsi_default_full_src_register( void );
 
-struct tgsi_src_register_ext_mod
-tgsi_default_src_register_ext_mod( void );
-
-unsigned
-tgsi_compare_src_register_ext_mod(
-   struct tgsi_src_register_ext_mod a,
-   struct tgsi_src_register_ext_mod b );
-
-struct tgsi_src_register_ext_mod
-tgsi_build_src_register_ext_mod(
-   unsigned complement,
-   unsigned bias,
-   unsigned scale_2x,
-   unsigned absolute,
-   unsigned negate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
 
 struct tgsi_dimension
 tgsi_default_dimension( void );
@@ -265,20 +248,6 @@ tgsi_build_dst_register(
 struct tgsi_full_dst_register
 tgsi_default_full_dst_register( void );
 
-struct tgsi_dst_register_ext_modulate
-tgsi_default_dst_register_ext_modulate( void );
-
-unsigned
-tgsi_compare_dst_register_ext_modulate(
-   struct tgsi_dst_register_ext_modulate a,
-   struct tgsi_dst_register_ext_modulate b );
-
-struct tgsi_dst_register_ext_modulate
-tgsi_build_dst_register_ext_modulate(
-   unsigned modulate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
 
 #if defined __cplusplus
 }

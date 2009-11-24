@@ -227,14 +227,14 @@ translate_src_register( const struct svga_shader_emitter *emit,
    /* src.mod isn't a bitfield, unfortunately:
     * See tgsi_util_get_full_src_register_sign_mode for implementation details.
     */
-   if (reg->SrcRegisterExtMod.Absolute) {
-      if (reg->SrcRegisterExtMod.Negate)
+   if (reg->SrcRegister.Absolute) {
+      if (reg->SrcRegister.Negate)
          src.base.srcMod = SVGA3DSRCMOD_ABSNEG;
       else
          src.base.srcMod = SVGA3DSRCMOD_ABS;
    }
    else {
-      if (reg->SrcRegister.Negate != reg->SrcRegisterExtMod.Negate)
+      if (reg->SrcRegister.Negate)
          src.base.srcMod = SVGA3DSRCMOD_NEG;
       else
          src.base.srcMod = SVGA3DSRCMOD_NONE;
@@ -986,8 +986,8 @@ static boolean emit_kil(struct svga_shader_emitter *emit,
    inst = inst_token( SVGA3DOP_TEXKILL );
    src0 = translate_src_register( emit, reg );
 
-   if (reg->SrcRegisterExtMod.Absolute ||
-       reg->SrcRegister.Negate != reg->SrcRegisterExtMod.Negate ||
+   if (reg->SrcRegister.Absolute ||
+       reg->SrcRegister.Negate ||
        reg->SrcRegister.Indirect ||
        reg->SrcRegister.SwizzleX != 0 ||
        reg->SrcRegister.SwizzleY != 1 ||
@@ -1953,7 +1953,7 @@ static boolean emit_bgnsub( struct svga_shader_emitter *emit,
 static boolean emit_call( struct svga_shader_emitter *emit,
                            const struct tgsi_full_instruction *insn )
 {
-   unsigned position = insn->InstructionExtLabel.Label;
+   unsigned position = insn->InstructionLabel.Label;
    unsigned i;
    
    for (i = 0; i < emit->nr_labels; i++) {

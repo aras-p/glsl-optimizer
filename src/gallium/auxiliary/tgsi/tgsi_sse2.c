@@ -1464,7 +1464,8 @@ emit_tex( struct x86_function *func,
    unsigned count;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   assert(inst->Instruction.Texture);
+   switch (inst->InstructionTexture.Texture) {
    case TGSI_TEXTURE_1D:
       count = 1;
       break;

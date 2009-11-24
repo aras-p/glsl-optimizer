@@ -150,17 +150,6 @@ static const char *texture_names[] =
 };
 
 
-static const char *modulate_names[TGSI_MODULATE_COUNT] =
-{
-   "",
-   "_2X",
-   "_4X",
-   "_8X",
-   "_D2",
-   "_D4",
-   "_D8"
-};
-
 static void
 _dump_register(
    struct dump_ctx *ctx,
@@ -385,7 +374,6 @@ iter_instruction(
             dst->DstRegister.Index,
             dst->DstRegister.Index );
       }
-      ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
       _dump_writemask( ctx, dst->DstRegister.WriteMask );
 
       first_reg = FALSE;
@@ -398,18 +386,10 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      if (src->SrcRegisterExtMod.Negate)
-         TXT( "-(" );
-      if (src->SrcRegisterExtMod.Absolute)
-         CHR( '|' );
-      if (src->SrcRegisterExtMod.Scale2X)
-         TXT( "2*(" );
-      if (src->SrcRegisterExtMod.Bias)
-         CHR( '(' );
-      if (src->SrcRegisterExtMod.Complement)
-         TXT( "1-(" );
       if (src->SrcRegister.Negate)
-         CHR( '-' );
+         TXT( "-(" );
+      if (src->SrcRegister.Absolute)
+         CHR( '|' );
 
       if (src->SrcRegister.Indirect) {
          _dump_register_ind(
@@ -439,23 +419,17 @@ iter_instruction(
          ENM( src->SrcRegister.SwizzleW, swizzle_names );
       }
 
-      if (src->SrcRegisterExtMod.Complement)
-         CHR( ')' );
-      if (src->SrcRegisterExtMod.Bias)
-         TXT( ")-.5" );
-      if (src->SrcRegisterExtMod.Scale2X)
-         CHR( ')' );
-      if (src->SrcRegisterExtMod.Absolute)
+      if (src->SrcRegister.Absolute)
          CHR( '|' );
-      if (src->SrcRegisterExtMod.Negate)
+      if (src->SrcRegister.Negate)
          CHR( ')' );
 
       first_reg = FALSE;
    }
 
-   if (inst->InstructionExtTexture.Texture != TGSI_TEXTURE_UNKNOWN) {
+   if (inst->Instruction.Texture) {
       TXT( ", " );
-      ENM( inst->InstructionExtTexture.Texture, texture_names );
+      ENM( inst->InstructionTexture.Texture, texture_names );
    }
 
    switch (inst->Instruction.Opcode) {
@@ -465,7 +439,7 @@ iter_instruction(
    case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_CAL:
       TXT( " :" );
-      UID( inst->InstructionExtLabel.Label );
+      UID( inst->InstructionLabel.Label );
       break;
    }
 

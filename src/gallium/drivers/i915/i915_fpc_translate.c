@@ -339,7 +339,7 @@ emit_tex(struct i915_fp_compile *p,
          const struct tgsi_full_instruction *inst,
          uint opcode)
 {
-   uint texture = inst->InstructionExtTexture.Texture;
+   uint texture = inst->InstructionTexture.Texture;
    uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    uint tex = translate_tex_src_target( p, texture );
    uint sampler = i915_emit_decl(p, REG_TYPE_S, unit, tex);

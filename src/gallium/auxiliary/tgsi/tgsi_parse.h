@@ -49,13 +49,11 @@ struct tgsi_full_dst_register
 {
    struct tgsi_dst_register               DstRegister;
    struct tgsi_src_register               DstRegisterInd;
-   struct tgsi_dst_register_ext_modulate  DstRegisterExtModulate;
 };
 
 struct tgsi_full_src_register
 {
    struct tgsi_src_register         SrcRegister;
-   struct tgsi_src_register_ext_mod SrcRegisterExtMod;
    struct tgsi_src_register         SrcRegisterInd;
    struct tgsi_dimension            SrcRegisterDim;
    struct tgsi_src_register         SrcRegisterDimInd;
@@ -81,8 +79,8 @@ struct tgsi_full_instruction
 {
    struct tgsi_instruction             Instruction;
    struct tgsi_instruction_predicate   InstructionPredicate;
-   struct tgsi_instruction_ext_label   InstructionExtLabel;
-   struct tgsi_instruction_ext_texture InstructionExtTexture;
+   struct tgsi_instruction_label       InstructionLabel;
+   struct tgsi_instruction_texture     InstructionTexture;
    struct tgsi_full_dst_register       FullDstRegisters[TGSI_FULL_MAX_DST_REGISTERS];
    struct tgsi_full_src_register       FullSrcRegisters[TGSI_FULL_MAX_SRC_REGISTERS];
    uint Flags;  /**< user-defined usage */

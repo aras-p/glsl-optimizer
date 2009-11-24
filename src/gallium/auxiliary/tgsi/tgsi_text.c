@@ -486,16 +486,6 @@ parse_register_dcl(
    return TRUE;
 }
 
-static const char *modulate_names[TGSI_MODULATE_COUNT] =
-{
-   "_1X",
-   "_2X",
-   "_4X",
-   "_8X",
-   "_D2",
-   "_D4",
-   "_D8"
-};
 
 static boolean
 parse_dst_operand(
@@ -512,19 +502,6 @@ parse_dst_operand(
 
    cur = ctx->cur;
    eat_opt_white( &cur );
-   if (*cur == '_') {
-      uint i;
-
-      for (i = 0; i < TGSI_MODULATE_COUNT; i++) {
-         if (str_match_no_case( &cur, modulate_names[i] )) {
-            if (!is_digit_alpha_underscore( cur )) {
-               dst->DstRegisterExtModulate.Modulate = i;
-               ctx->cur = cur;
-               break;
-            }
-         }
-      }
-   }
 
    if (!parse_opt_writemask( ctx, &writemask ))
       return FALSE;
@@ -577,92 +554,24 @@ parse_src_operand(
    struct translate_ctx *ctx,
    struct tgsi_full_src_register *src )
 {
-   const char *cur;
-   float value;
    uint file;
    int index;
    uint ind_file;
    int ind_index;
    uint ind_comp;
    uint swizzle[4];
-   boolean parsed_ext_negate_paren = FALSE;
    boolean parsed_swizzle;
-
-   if (*ctx->cur == '-') {
-      cur = ctx->cur;
-      cur++;
-      eat_opt_white( &cur );
-      if (*cur == '(') {
-         cur++;
-         src->SrcRegisterExtMod.Negate = 1;
-         eat_opt_white( &cur );
-         ctx->cur = cur;
-         parsed_ext_negate_paren = TRUE;
-      }
-      else if (*cur == '|') {
-         cur++;
-         src->SrcRegisterExtMod.Negate = 1;
-         src->SrcRegisterExtMod.Absolute = 1;
-         eat_opt_white(&cur);
-         ctx->cur = cur;
-      }
-   }
-   else if (*ctx->cur == '|') {
-      ctx->cur++;
-      eat_opt_white( &ctx->cur );
-      src->SrcRegisterExtMod.Absolute = 1;
-   }
 
    if (*ctx->cur == '-') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
       src->SrcRegister.Negate = 1;
    }
-
-   cur = ctx->cur;
-   if (parse_float( &cur, &value )) {
-      if (value == 2.0f) {
-         eat_opt_white( &cur );
-         if (*cur != '*') {
-            report_error( ctx, "Expected `*'" );
-            return FALSE;
-         }
-         cur++;
-         if (*cur != '(') {
-            report_error( ctx, "Expected `('" );
-            return FALSE;
-         }
-         cur++;
-         src->SrcRegisterExtMod.Scale2X = 1;
-         eat_opt_white( &cur );
-         ctx->cur = cur;
-      }
-   }
-
-   if (*ctx->cur == '(') {
+   
+   if (*ctx->cur == '|') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
-      src->SrcRegisterExtMod.Bias = 1;
-   }
-
-   cur = ctx->cur;
-   if (parse_float( &cur, &value )) {
-      if (value == 1.0f) {
-         eat_opt_white( &cur );
-         if (*cur != '-') {
-            report_error( ctx, "Expected `-'" );
-            return FALSE;
-         }
-         cur++;
-         if (*cur != '(') {
-            report_error( ctx, "Expected `('" );
-            return FALSE;
-         }
-         cur++;
-         src->SrcRegisterExtMod.Complement = 1;
-         eat_opt_white( &cur );
-         ctx->cur = cur;
-      }
+      src->SrcRegister.Absolute = 1;
    }
 
    if (!parse_register_src(ctx, &file, &index, &ind_file, &ind_index, &ind_comp))
@@ -690,49 +599,7 @@ parse_src_operand(
       }
    }
 
-   if (src->SrcRegisterExtMod.Complement) {
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != ')') {
-         report_error( ctx, "Expected `)'" );
-         return FALSE;
-      }
-      ctx->cur++;
-   }
-
-   if (src->SrcRegisterExtMod.Bias) {
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != ')') {
-         report_error( ctx, "Expected `)'" );
-         return FALSE;
-      }
-      ctx->cur++;
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != '-') {
-         report_error( ctx, "Expected `-'" );
-         return FALSE;
-      }
-      ctx->cur++;
-      eat_opt_white( &ctx->cur );
-      if (!parse_float( &ctx->cur, &value )) {
-         report_error( ctx, "Expected literal floating point" );
-         return FALSE;
-      }
-      if (value != 0.5f) {
-         report_error( ctx, "Expected 0.5" );
-         return FALSE;
-      }
-   }
-
-   if (src->SrcRegisterExtMod.Scale2X) {
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != ')') {
-         report_error( ctx, "Expected `)'" );
-         return FALSE;
-      }
-      ctx->cur++;
-   }
-
-   if (src->SrcRegisterExtMod.Absolute) {
+   if (src->SrcRegister.Absolute) {
       eat_opt_white( &ctx->cur );
       if (*ctx->cur != '|') {
          report_error( ctx, "Expected `|'" );
@@ -741,14 +608,6 @@ parse_src_operand(
       ctx->cur++;
    }
 
-   if (parsed_ext_negate_paren) {
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != ')') {
-         report_error( ctx, "Expected `)'" );
-         return FALSE;
-      }
-      ctx->cur++;
-   }
 
    return TRUE;
 }
@@ -853,7 +712,8 @@ parse_instruction(
          for (j = 0; j < TGSI_TEXTURE_COUNT; j++) {
             if (str_match_no_case( &ctx->cur, texture_names[j] )) {
                if (!is_digit_alpha_underscore( ctx->cur )) {
-                  inst.InstructionExtTexture.Texture = j;
+                  inst.Instruction.Texture = 1;
+                  inst.InstructionTexture.Texture = j;
                   break;
                }
             }
@@ -879,7 +739,8 @@ parse_instruction(
          report_error( ctx, "Expected a label" );
          return FALSE;
       }
-      inst.InstructionExtLabel.Label = target;
+      inst.Instruction.Label = 1;
+      inst.InstructionLabel.Label = target;
    }
 
    advance = tgsi_build_full_instruction(

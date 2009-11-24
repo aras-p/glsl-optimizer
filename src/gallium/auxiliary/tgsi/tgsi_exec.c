@@ -1397,10 +1397,6 @@ fetch_source(
    case TGSI_UTIL_SIGN_KEEP:
       break;
    }
-
-   if (reg->SrcRegisterExtMod.Complement) {
-      micro_sub( chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], chan );
-   }
 }
 
 static void
@@ -1679,7 +1675,7 @@ exec_tex(struct tgsi_exec_machine *mach,
 
    /*   debug_printf("Sampler %u unit %u\n", sampler, unit); */
 
-   switch (inst->InstructionExtTexture.Texture) {
+   switch (inst->InstructionTexture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
 
@@ -1777,7 +1773,7 @@ exec_txd(struct tgsi_exec_machine *mach,
     * XXX: This is fake TXD -- the derivatives are not taken into account, yet.
     */
 
-   switch (inst->InstructionExtTexture.Texture) {
+   switch (inst->InstructionTexture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
 
@@ -2744,7 +2740,7 @@ exec_instruction(
          mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
 
          /* Finally, jump to the subroutine */
-         *pc = inst->InstructionExtLabel.Label;
+         *pc = inst->InstructionLabel.Label;
       }
       break;
 

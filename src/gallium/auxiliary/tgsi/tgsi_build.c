@@ -122,7 +122,6 @@ tgsi_default_declaration( void )
    declaration.Centroid = 0;
    declaration.Invariant = 0;
    declaration.Padding = 0;
-   declaration.Extended = 0;
 
    return declaration;
 }
@@ -311,7 +310,6 @@ tgsi_default_immediate( void )
    immediate.NrTokens = 1;
    immediate.DataType = TGSI_IMM_FLOAT32;
    immediate.Padding = 0;
-   immediate.Extended = 0;
 
    return immediate;
 }
@@ -422,8 +420,9 @@ tgsi_default_instruction( void )
    instruction.Predicate = 0;
    instruction.NumDstRegs = 1;
    instruction.NumSrcRegs = 1;
+   instruction.Label = 0;
+   instruction.Texture = 0;
    instruction.Padding  = 0;
-   instruction.Extended = 0;
 
    return instruction;
 }
@@ -475,8 +474,8 @@ tgsi_default_full_instruction( void )
 
    full_instruction.Instruction = tgsi_default_instruction();
    full_instruction.InstructionPredicate = tgsi_default_instruction_predicate();
-   full_instruction.InstructionExtLabel = tgsi_default_instruction_ext_label();
-   full_instruction.InstructionExtTexture = tgsi_default_instruction_ext_texture();
+   full_instruction.InstructionLabel = tgsi_default_instruction_label();
+   full_instruction.InstructionTexture = tgsi_default_instruction_texture();
    for( i = 0;  i < TGSI_FULL_MAX_DST_REGISTERS; i++ ) {
       full_instruction.FullDstRegisters[i] = tgsi_default_full_dst_register();
    }
@@ -534,42 +533,42 @@ tgsi_build_full_instruction(
                                           header);
    }
 
-   if( tgsi_compare_instruction_ext_label(
-         full_inst->InstructionExtLabel,
-         tgsi_default_instruction_ext_label() ) ) {
-      struct tgsi_instruction_ext_label *instruction_ext_label;
+   if( tgsi_compare_instruction_label(
+         full_inst->InstructionLabel,
+         tgsi_default_instruction_label() ) ) {
+      struct tgsi_instruction_label *instruction_label;
 
       if( maxsize <= size )
          return 0;
-      instruction_ext_label =
-         (struct  tgsi_instruction_ext_label *) &tokens[size];
+      instruction_label =
+         (struct  tgsi_instruction_label *) &tokens[size];
       size++;
 
-      *instruction_ext_label = tgsi_build_instruction_ext_label(
-         full_inst->InstructionExtLabel.Label,
+      *instruction_label = tgsi_build_instruction_label(
+         full_inst->InstructionLabel.Label,
          prev_token,
          instruction,
          header );
-      prev_token = (struct tgsi_token  *) instruction_ext_label;
+      prev_token = (struct tgsi_token  *) instruction_label;
    }
 
-   if( tgsi_compare_instruction_ext_texture(
-         full_inst->InstructionExtTexture,
-         tgsi_default_instruction_ext_texture() ) ) {
-      struct tgsi_instruction_ext_texture *instruction_ext_texture;
+   if( tgsi_compare_instruction_texture(
+         full_inst->InstructionTexture,
+         tgsi_default_instruction_texture() ) ) {
+      struct tgsi_instruction_texture *instruction_texture;
 
       if( maxsize <= size )
          return 0;
-      instruction_ext_texture =
-         (struct  tgsi_instruction_ext_texture *) &tokens[size];
+      instruction_texture =
+         (struct  tgsi_instruction_texture *) &tokens[size];
       size++;
 
-      *instruction_ext_texture = tgsi_build_instruction_ext_texture(
-         full_inst->InstructionExtTexture.Texture,
+      *instruction_texture = tgsi_build_instruction_texture(
+         full_inst->InstructionTexture.Texture,
          prev_token,
          instruction,
          header   );
-      prev_token = (struct tgsi_token  *) instruction_ext_texture;
+      prev_token = (struct tgsi_token  *) instruction_texture;
    }
 
    for( i = 0;  i <   full_inst->Instruction.NumDstRegs; i++ ) {
@@ -591,25 +590,6 @@ tgsi_build_full_instruction(
          header );
       prev_token = (struct tgsi_token  *) dst_register;
 
-      if( tgsi_compare_dst_register_ext_modulate(
-            reg->DstRegisterExtModulate,
-            tgsi_default_dst_register_ext_modulate() ) ) {
-         struct tgsi_dst_register_ext_modulate *dst_register_ext_modulate;
-
-         if( maxsize <= size )
-            return 0;
-         dst_register_ext_modulate =
-            (struct  tgsi_dst_register_ext_modulate *) &tokens[size];
-         size++;
-
-         *dst_register_ext_modulate = tgsi_build_dst_register_ext_modulate(
-            reg->DstRegisterExtModulate.Modulate,
-            prev_token,
-            instruction,
-            header );
-         prev_token = (struct tgsi_token  *) dst_register_ext_modulate;
-      }
-
       if( reg->DstRegister.Indirect ) {
          struct tgsi_src_register *ind;
 
@@ -625,6 +605,7 @@ tgsi_build_full_instruction(
             reg->DstRegisterInd.SwizzleZ,
             reg->DstRegisterInd.SwizzleW,
             reg->DstRegisterInd.Negate,
+            reg->DstRegisterInd.Absolute,
             reg->DstRegisterInd.Indirect,
             reg->DstRegisterInd.Dimension,
             reg->DstRegisterInd.Index,
@@ -650,35 +631,13 @@ tgsi_build_full_instruction(
          reg->SrcRegister.SwizzleZ,
          reg->SrcRegister.SwizzleW,
          reg->SrcRegister.Negate,
+         reg->SrcRegister.Absolute,
          reg->SrcRegister.Indirect,
          reg->SrcRegister.Dimension,
          reg->SrcRegister.Index,
          instruction,
          header );
       prev_token = (struct tgsi_token  *) src_register;
-
-      if( tgsi_compare_src_register_ext_mod(
-            reg->SrcRegisterExtMod,
-            tgsi_default_src_register_ext_mod() ) ) {
-         struct tgsi_src_register_ext_mod *src_register_ext_mod;
-
-         if( maxsize <= size )
-            return 0;
-         src_register_ext_mod =
-            (struct  tgsi_src_register_ext_mod *) &tokens[size];
-         size++;
-
-         *src_register_ext_mod = tgsi_build_src_register_ext_mod(
-            reg->SrcRegisterExtMod.Complement,
-            reg->SrcRegisterExtMod.Bias,
-            reg->SrcRegisterExtMod.Scale2X,
-            reg->SrcRegisterExtMod.Absolute,
-            reg->SrcRegisterExtMod.Negate,
-            prev_token,
-            instruction,
-            header );
-         prev_token = (struct tgsi_token  *) src_register_ext_mod;
-      }
 
       if( reg->SrcRegister.Indirect ) {
          struct  tgsi_src_register *ind;
@@ -695,6 +654,7 @@ tgsi_build_full_instruction(
             reg->SrcRegisterInd.SwizzleZ,
             reg->SrcRegisterInd.SwizzleW,
             reg->SrcRegisterInd.Negate,
+            reg->SrcRegisterInd.Absolute,
             reg->SrcRegisterInd.Indirect,
             reg->SrcRegisterInd.Dimension,
             reg->SrcRegisterInd.Index,
@@ -733,6 +693,7 @@ tgsi_build_full_instruction(
                reg->SrcRegisterDimInd.SwizzleZ,
                reg->SrcRegisterDimInd.SwizzleW,
                reg->SrcRegisterDimInd.Negate,
+               reg->SrcRegisterDimInd.Absolute,
                reg->SrcRegisterDimInd.Indirect,
                reg->SrcRegisterDimInd.Dimension,
                reg->SrcRegisterDimInd.Index,
@@ -793,86 +754,80 @@ compare32(const void *a, const void *b)
    return *((uint32_t *) a) != *((uint32_t *) b);
 }
 
-struct tgsi_instruction_ext_label
-tgsi_default_instruction_ext_label( void )
+struct tgsi_instruction_label
+tgsi_default_instruction_label( void )
 {
-   struct tgsi_instruction_ext_label instruction_ext_label;
+   struct tgsi_instruction_label instruction_label;
 
-   instruction_ext_label.Type = TGSI_INSTRUCTION_EXT_TYPE_LABEL;
-   instruction_ext_label.Label = 0;
-   instruction_ext_label.Padding = 0;
-   instruction_ext_label.Extended = 0;
+   instruction_label.Label = 0;
+   instruction_label.Padding = 0;
 
-   return instruction_ext_label;
+   return instruction_label;
 }
 
 unsigned
-tgsi_compare_instruction_ext_label(
-   struct tgsi_instruction_ext_label a,
-   struct tgsi_instruction_ext_label b )
+tgsi_compare_instruction_label(
+   struct tgsi_instruction_label a,
+   struct tgsi_instruction_label b )
 {
    a.Padding = b.Padding = 0;
-   a.Extended = b.Extended = 0;
    return compare32(&a, &b);
 }
 
-struct tgsi_instruction_ext_label
-tgsi_build_instruction_ext_label(
+struct tgsi_instruction_label
+tgsi_build_instruction_label(
    unsigned label,
    struct tgsi_token  *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
-   struct tgsi_instruction_ext_label instruction_ext_label;
+   struct tgsi_instruction_label instruction_label;
 
-   instruction_ext_label = tgsi_default_instruction_ext_label();
-   instruction_ext_label.Label = label;
+   instruction_label = tgsi_default_instruction_label();
+   instruction_label.Label = label;
+   instruction->Label = 1;
 
-   prev_token->Extended = 1;
    instruction_grow( instruction, header );
 
-   return instruction_ext_label;
+   return instruction_label;
 }
 
-struct tgsi_instruction_ext_texture
-tgsi_default_instruction_ext_texture( void )
+struct tgsi_instruction_texture
+tgsi_default_instruction_texture( void )
 {
-   struct tgsi_instruction_ext_texture instruction_ext_texture;
+   struct tgsi_instruction_texture instruction_texture;
 
-   instruction_ext_texture.Type = TGSI_INSTRUCTION_EXT_TYPE_TEXTURE;
-   instruction_ext_texture.Texture = TGSI_TEXTURE_UNKNOWN;
-   instruction_ext_texture.Padding = 0;
-   instruction_ext_texture.Extended = 0;
+   instruction_texture.Texture = TGSI_TEXTURE_UNKNOWN;
+   instruction_texture.Padding = 0;
 
-   return instruction_ext_texture;
+   return instruction_texture;
 }
 
 unsigned
-tgsi_compare_instruction_ext_texture(
-   struct tgsi_instruction_ext_texture a,
-   struct tgsi_instruction_ext_texture b )
+tgsi_compare_instruction_texture(
+   struct tgsi_instruction_texture a,
+   struct tgsi_instruction_texture b )
 {
    a.Padding = b.Padding = 0;
-   a.Extended = b.Extended = 0;
    return compare32(&a, &b);
 }
 
-struct tgsi_instruction_ext_texture
-tgsi_build_instruction_ext_texture(
+struct tgsi_instruction_texture
+tgsi_build_instruction_texture(
    unsigned texture,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
-   struct tgsi_instruction_ext_texture instruction_ext_texture;
+   struct tgsi_instruction_texture instruction_texture;
 
-   instruction_ext_texture = tgsi_default_instruction_ext_texture();
-   instruction_ext_texture.Texture = texture;
+   instruction_texture = tgsi_default_instruction_texture();
+   instruction_texture.Texture = texture;
+   instruction->Texture = 1;
 
-   prev_token->Extended = 1;
    instruction_grow( instruction, header );
 
-   return instruction_ext_texture;
+   return instruction_texture;
 }
 
 struct tgsi_src_register
@@ -886,10 +841,10 @@ tgsi_default_src_register( void )
    src_register.SwizzleZ = TGSI_SWIZZLE_Z;
    src_register.SwizzleW = TGSI_SWIZZLE_W;
    src_register.Negate = 0;
+   src_register.Absolute = 0;
    src_register.Indirect = 0;
    src_register.Dimension = 0;
    src_register.Index = 0;
-   src_register.Extended = 0;
 
    return src_register;
 }
@@ -902,6 +857,7 @@ tgsi_build_src_register(
    unsigned swizzle_z,
    unsigned swizzle_w,
    unsigned negate,
+   unsigned absolute,
    unsigned indirect,
    unsigned dimension,
    int index,
@@ -925,6 +881,7 @@ tgsi_build_src_register(
    src_register.SwizzleZ = swizzle_z;
    src_register.SwizzleW = swizzle_w;
    src_register.Negate = negate;
+   src_register.Absolute = absolute;
    src_register.Indirect = indirect;
    src_register.Dimension = dimension;
    src_register.Index = index;
@@ -940,7 +897,6 @@ tgsi_default_full_src_register( void )
    struct tgsi_full_src_register full_src_register;
 
    full_src_register.SrcRegister = tgsi_default_src_register();
-   full_src_register.SrcRegisterExtMod = tgsi_default_src_register_ext_mod();
    full_src_register.SrcRegisterInd = tgsi_default_src_register();
    full_src_register.SrcRegisterDim = tgsi_default_dimension();
    full_src_register.SrcRegisterDimInd = tgsi_default_src_register();
@@ -948,65 +904,6 @@ tgsi_default_full_src_register( void )
    return full_src_register;
 }
 
-
-struct tgsi_src_register_ext_mod
-tgsi_default_src_register_ext_mod( void )
-{
-   struct tgsi_src_register_ext_mod src_register_ext_mod;
-
-   src_register_ext_mod.Type = TGSI_SRC_REGISTER_EXT_TYPE_MOD;
-   src_register_ext_mod.Complement = 0;
-   src_register_ext_mod.Bias = 0;
-   src_register_ext_mod.Scale2X = 0;
-   src_register_ext_mod.Absolute = 0;
-   src_register_ext_mod.Negate = 0;
-   src_register_ext_mod.Padding = 0;
-   src_register_ext_mod.Extended = 0;
-
-   return src_register_ext_mod;
-}
-
-unsigned
-tgsi_compare_src_register_ext_mod(
-   struct tgsi_src_register_ext_mod a,
-   struct tgsi_src_register_ext_mod b )
-{
-   a.Padding = b.Padding = 0;
-   a.Extended = b.Extended = 0;
-   return compare32(&a, &b);
-}
-
-struct tgsi_src_register_ext_mod
-tgsi_build_src_register_ext_mod(
-   unsigned complement,
-   unsigned bias,
-   unsigned scale_2x,
-   unsigned absolute,
-   unsigned negate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_src_register_ext_mod src_register_ext_mod;
-
-   assert( complement <= 1 );
-   assert( bias <= 1 );
-   assert( scale_2x <= 1 );
-   assert( absolute <= 1 );
-   assert( negate <= 1 );
-
-   src_register_ext_mod = tgsi_default_src_register_ext_mod();
-   src_register_ext_mod.Complement = complement;
-   src_register_ext_mod.Bias = bias;
-   src_register_ext_mod.Scale2X = scale_2x;
-   src_register_ext_mod.Absolute = absolute;
-   src_register_ext_mod.Negate = negate;
-
-   prev_token->Extended = 1;
-   instruction_grow( instruction, header );
-
-   return src_register_ext_mod;
-}
 
 struct tgsi_dimension
 tgsi_default_dimension( void )
@@ -1017,7 +914,6 @@ tgsi_default_dimension( void )
    dimension.Dimension = 0;
    dimension.Padding = 0;
    dimension.Index = 0;
-   dimension.Extended = 0;
 
    return dimension;
 }
@@ -1051,7 +947,6 @@ tgsi_default_dst_register( void )
    dst_register.Dimension = 0;
    dst_register.Index = 0;
    dst_register.Padding = 0;
-   dst_register.Extended = 0;
 
    return dst_register;
 }
@@ -1089,51 +984,7 @@ tgsi_default_full_dst_register( void )
 
    full_dst_register.DstRegister = tgsi_default_dst_register();
    full_dst_register.DstRegisterInd = tgsi_default_src_register();
-   full_dst_register.DstRegisterExtModulate =
-      tgsi_default_dst_register_ext_modulate();
 
    return full_dst_register;
 }
 
-struct tgsi_dst_register_ext_modulate
-tgsi_default_dst_register_ext_modulate( void )
-{
-   struct tgsi_dst_register_ext_modulate dst_register_ext_modulate;
-
-   dst_register_ext_modulate.Type = TGSI_DST_REGISTER_EXT_TYPE_MODULATE;
-   dst_register_ext_modulate.Modulate = TGSI_MODULATE_1X;
-   dst_register_ext_modulate.Padding = 0;
-   dst_register_ext_modulate.Extended = 0;
-
-   return dst_register_ext_modulate;
-}
-
-unsigned
-tgsi_compare_dst_register_ext_modulate(
-   struct tgsi_dst_register_ext_modulate a,
-   struct tgsi_dst_register_ext_modulate b )
-{
-   a.Padding = b.Padding = 0;
-   a.Extended = b.Extended = 0;
-   return compare32(&a, &b);
-}
-
-struct tgsi_dst_register_ext_modulate
-tgsi_build_dst_register_ext_modulate(
-   unsigned modulate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header )
-{
-   struct tgsi_dst_register_ext_modulate dst_register_ext_modulate;
-
-   assert( modulate <= TGSI_MODULATE_EIGHTH );
-
-   dst_register_ext_modulate = tgsi_default_dst_register_ext_modulate();
-   dst_register_ext_modulate.Modulate = modulate;
-
-   prev_token->Extended = 1;
-   instruction_grow( instruction, header );
-
-   return dst_register_ext_modulate;
-}

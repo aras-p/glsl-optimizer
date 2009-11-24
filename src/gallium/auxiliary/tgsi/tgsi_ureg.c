@@ -48,13 +48,11 @@ union tgsi_any_token {
    union  tgsi_immediate_data imm_data;
    struct tgsi_instruction insn;
    struct tgsi_instruction_predicate insn_predicate;
-   struct tgsi_instruction_ext_label insn_ext_label;
-   struct tgsi_instruction_ext_texture insn_ext_texture;
+   struct tgsi_instruction_label insn_label;
+   struct tgsi_instruction_texture insn_texture;
    struct tgsi_src_register src;
-   struct tgsi_src_register_ext_mod src_ext_mod;
    struct tgsi_dimension dim;
    struct tgsi_dst_register dst;
-   struct tgsi_dst_register_ext_modulate dst_ext_mod;
    unsigned value;
 };
 
@@ -575,17 +573,8 @@ ureg_emit_src( struct ureg_program *ureg,
    out[n].src.SwizzleW = src.SwizzleW;
    out[n].src.Index = src.Index;
    out[n].src.Negate = src.Negate;
+   out[0].src.Absolute = src.Absolute;
    n++;
-   
-   if (src.Absolute) {
-      out[0].src.Extended = 1;
-      out[0].src.Negate = 0;
-      out[n].value = 0;
-      out[n].src_ext_mod.Type = TGSI_SRC_REGISTER_EXT_TYPE_MOD;
-      out[n].src_ext_mod.Absolute = 1;
-      out[n].src_ext_mod.Negate = src.Negate;
-      n++;
-   }
 
    if (src.Indirect) {
       out[0].src.Indirect = 1;
@@ -712,13 +701,11 @@ ureg_emit_label(struct ureg_program *ureg,
       return;
 
    out = get_tokens( ureg, DOMAIN_INSN, 1 );
-   insn = retrieve_token( ureg, DOMAIN_INSN, extended_token );
-
-   insn->token.Extended = 1;
-
    out[0].value = 0;
-   out[0].insn_ext_label.Type = TGSI_INSTRUCTION_EXT_TYPE_LABEL;
-   
+
+   insn = retrieve_token( ureg, DOMAIN_INSN, extended_token );
+   insn->insn.Label = 1;
+
    *label_token = ureg->domain[DOMAIN_INSN].count - 1;
 }
 
@@ -741,8 +728,7 @@ ureg_fixup_label(struct ureg_program *ureg,
 {
    union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_INSN, label_token );
 
-   assert(out->insn_ext_label.Type == TGSI_INSTRUCTION_EXT_TYPE_LABEL);
-   out->insn_ext_label.Label = instruction_number;
+   out->insn_label.Label = instruction_number;
 }
 
 
@@ -756,11 +742,10 @@ ureg_emit_texture(struct ureg_program *ureg,
    out = get_tokens( ureg, DOMAIN_INSN, 1 );
    insn = retrieve_token( ureg, DOMAIN_INSN, extended_token );
 
-   insn->token.Extended = 1;
+   insn->insn.Texture = 1;
 
    out[0].value = 0;
-   out[0].insn_ext_texture.Type = TGSI_INSTRUCTION_EXT_TYPE_TEXTURE;
-   out[0].insn_ext_texture.Texture = target;
+   out[0].insn_texture.Texture = target;
 }
 
 
@@ -961,7 +946,6 @@ static void emit_immediate( struct ureg_program *ureg,
    out[0].imm.NrTokens = 5;
    out[0].imm.DataType = TGSI_IMM_FLOAT32;
    out[0].imm.Padding = 0;
-   out[0].imm.Extended = 0;
 
    out[1].imm_data.Float = v[0];
    out[2].imm_data.Float = v[1];

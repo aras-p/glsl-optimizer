@@ -191,7 +191,8 @@ struct tgsi_full_instruction vl_tex
    inst.FullDstRegisters[0].DstRegister.File = dst_file;
    inst.FullDstRegisters[0].DstRegister.Index = dst_index;
    inst.Instruction.NumSrcRegs = 2;
-   inst.InstructionExtTexture.Texture = tex;
+   inst.Instruction.Texture = 1;
+   inst.InstructionTexture.Texture = tex;
    inst.FullSrcRegisters[0].SrcRegister.File = src1_file;
    inst.FullSrcRegisters[0].SrcRegister.Index = src1_index;
    inst.FullSrcRegisters[1].SrcRegister.File = src2_file;
