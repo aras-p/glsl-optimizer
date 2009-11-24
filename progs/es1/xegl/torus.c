@@ -22,9 +22,27 @@
 #include <EGL/egl.h>
 
 
-
+static const struct {
+   GLenum internalFormat;
+   const char *name;
+   GLuint num_entries;
+   GLuint size;
+} cpal_formats[] = {
+   { GL_PALETTE4_RGB8_OES,     "GL_PALETTE4_RGB8_OES",      16, 3 },
+   { GL_PALETTE4_RGBA8_OES,    "GL_PALETTE4_RGBA8_OES",     16, 4 },
+   { GL_PALETTE4_R5_G6_B5_OES, "GL_PALETTE4_R5_G6_B5_OES",  16, 2 },
+   { GL_PALETTE4_RGBA4_OES,    "GL_PALETTE4_RGBA4_OES",     16, 2 },
+   { GL_PALETTE4_RGB5_A1_OES,  "GL_PALETTE4_RGB5_A1_OES",   16, 2 },
+   { GL_PALETTE8_RGB8_OES,     "GL_PALETTE8_RGB8_OES",     256, 3 },
+   { GL_PALETTE8_RGBA8_OES,    "GL_PALETTE8_RGBA8_OES",    256, 4 },
+   { GL_PALETTE8_R5_G6_B5_OES, "GL_PALETTE8_R5_G6_B5_OES", 256, 2 },
+   { GL_PALETTE8_RGBA4_OES,    "GL_PALETTE8_RGBA4_OES",    256, 2 },
+   { GL_PALETTE8_RGB5_A1_OES,  "GL_PALETTE8_RGB5_A1_OES",  256, 2 }
+};
+#define NUM_CPAL_FORMATS (sizeof(cpal_formats) / sizeof(cpal_formats[0]))
 
 static GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0;
+static GLint tex_format = NUM_CPAL_FORMATS;
 
 
 static void
@@ -163,7 +181,121 @@ reshape(int width, int height)
 }
 
 
-static void
+static GLint
+make_cpal_texture(GLint idx)
+{
+#define SZ 64
+   GLenum internalFormat = GL_PALETTE4_RGB8_OES + idx;
+   GLenum Filter = GL_LINEAR;
+   GLubyte palette[256 * 4 + SZ * SZ];
+   GLubyte *indices;
+   GLsizei image_size;
+   GLuint i, j;
+   GLuint packed_indices = 0;
+
+   assert(cpal_formats[idx].internalFormat == internalFormat);
+
+   /* init palette */
+   switch (internalFormat) {
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE8_RGB8_OES:
+      /* first entry */
+      palette[0] = 255;
+      palette[1] = 255;
+      palette[2] = 255;
+      /* second entry */
+      palette[3] = 127;
+      palette[4] = 127;
+      palette[5] = 127;
+      break;
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+      /* first entry */
+      palette[0] = 255;
+      palette[1] = 255;
+      palette[2] = 255;
+      palette[3] = 255;
+      /* second entry */
+      palette[4] = 127;
+      palette[5] = 127;
+      palette[6] = 127;
+      palette[7] = 255;
+      break;
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+      {
+         GLushort *pal = (GLushort *) palette;
+         /* first entry */
+         pal[0] = (31 << 11 | 63 << 5 | 31);
+         /* second entry */
+         pal[1] = (15 << 11 | 31 << 5 | 15);
+      }
+      break;
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE8_RGBA4_OES:
+      {
+         GLushort *pal = (GLushort *) palette;
+         /* first entry */
+         pal[0] = (15 << 12 | 15 << 8 | 15 << 4 | 15);
+         /* second entry */
+         pal[1] = (7 << 12 | 7 << 8 | 7 << 4 | 15);
+      }
+      break;
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+      {
+         GLushort *pal = (GLushort *) palette;
+         /* first entry */
+         pal[0] = (31 << 11 | 31 << 6 | 31 << 1 | 1);
+         /* second entry */
+         pal[1] = (15 << 11 | 15 << 6 | 15 << 1 | 1);
+      }
+      break;
+   }
+
+   image_size = cpal_formats[idx].size * cpal_formats[idx].num_entries;
+   indices = palette + image_size;
+   for (i = 0; i < SZ; i++) {
+      for (j = 0; j < SZ; j++) {
+         GLfloat d;
+         GLint index;
+         d = (i - SZ/2) * (i - SZ/2) + (j - SZ/2) * (j - SZ/2);
+         d = sqrt(d);
+         index = (d < SZ / 3) ? 0 : 1;
+
+         if (cpal_formats[idx].num_entries == 16) {
+            /* 4-bit indices packed in GLubyte */
+            packed_indices |= index << (4 * (1 - (j % 2)));
+            if (j % 2) {
+               *(indices + (i * SZ + j - 1) / 2) = packed_indices & 0xff;
+               packed_indices = 0;
+               image_size += 1;
+            }
+         }
+         else {
+            /* 8-bit indices */
+            *(indices + i * SZ + j) = index;
+            image_size += 1;
+         }
+      }
+   }
+
+   glActiveTexture(GL_TEXTURE0); /* unit 0 */
+   glBindTexture(GL_TEXTURE_2D, 42);
+   glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFormat, SZ, SZ, 0,
+                          image_size, palette);
+
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Filter);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Filter);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+#undef SZ
+
+   return image_size;
+}
+
+
+static GLint
 make_texture(void)
 {
 #define SZ 64
@@ -199,6 +331,8 @@ make_texture(void)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 #undef SZ
+
+   return sizeof(image);
 }
 
 
@@ -368,6 +502,19 @@ event_loop(Display *dpy, Window win,
                }
                else if (code == XK_Down) {
                   view_rotx -= 5.0;
+               }
+               else if (code == XK_t) {
+                  GLint size;
+                  tex_format = (tex_format + 1) % (NUM_CPAL_FORMATS + 1);
+                  if (tex_format < NUM_CPAL_FORMATS) {
+                     size = make_cpal_texture(tex_format);
+                     printf("Using %s (%d bytes)\n",
+                           cpal_formats[tex_format].name, size);
+                  }
+                  else {
+                     size = make_texture();
+                     printf("Using uncompressed texture (%d bytes)\n", size);
+                  }
                }
                else {
                   r = XLookupString(&event.xkey, buffer, sizeof(buffer),
