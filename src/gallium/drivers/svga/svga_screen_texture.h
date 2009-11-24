@@ -29,7 +29,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
-
+#include "svga_screen_cache.h"
 
 struct pipe_context;
 struct pipe_screen;
@@ -68,6 +68,7 @@ struct svga_sampler_view
 
    unsigned age;
 
+   struct svga_host_surface_cache_key key;
    struct svga_winsys_surface *handle;
 };
 
@@ -75,8 +76,6 @@ struct svga_sampler_view
 struct svga_texture 
 {
    struct pipe_texture base;
-
-   struct svga_winsys_surface *handle;
 
    boolean defined[6][PIPE_MAX_TEXTURE_LEVELS];
    
@@ -86,6 +85,16 @@ struct svga_texture
    unsigned age;
 
    boolean views_modified;
+
+   /**
+    * Creation key for the host surface handle.
+    * 
+    * This structure describes all the host surface characteristics so that it 
+    * can be looked up in cache, since creating a host surface is often a slow
+    * operation.
+    */
+   struct svga_host_surface_cache_key key;
+   struct svga_winsys_surface *handle;
 };
 
 
@@ -93,6 +102,7 @@ struct svga_surface
 {
    struct pipe_surface base;
 
+   struct svga_host_surface_cache_key key;
    struct svga_winsys_surface *handle;
 
    unsigned real_face;

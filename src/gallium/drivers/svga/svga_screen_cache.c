@@ -24,6 +24,7 @@
  **********************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_hash.h"
 
 #include "svga_debug.h"
 #include "svga_winsys.h"
@@ -36,24 +37,11 @@
 
 /** 
  * Compute the bucket for this key. 
- * 
- * We simply compute log2(width) for now, but
  */
 static INLINE unsigned
 svga_screen_cache_bucket(const struct svga_host_surface_cache_key *key)
 {
-   unsigned bucket = 0;
-   unsigned size = key->size.width;
-   
-   while ((size >>= 1))
-      ++bucket;
-   
-   if(key->flags & SVGA3D_SURFACE_HINT_INDEXBUFFER)
-      bucket += 32;
-   
-   assert(bucket < SVGA_HOST_SURFACE_CACHE_BUCKETS);
-   
-   return bucket;
+   return util_hash_crc32( key, sizeof key ) % SVGA_HOST_SURFACE_CACHE_BUCKETS;
 }
 
 
@@ -68,6 +56,8 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
    struct list_head *curr, *next;
    unsigned bucket;
    unsigned tries = 0;
+
+   assert(key->cachable);
 
    bucket = svga_screen_cache_bucket(key);
 
@@ -104,11 +94,9 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
 
    pipe_mutex_unlock(cache->mutex);
    
-#if 0
-   _debug_printf("%s: cache %s after %u tries\n", __FUNCTION__, handle ? "hit" : "miss", tries);
-#else
-   (void)tries;
-#endif
+   if (SVGA_DEBUG & DEBUG_DMA)
+      debug_printf("%s: cache %s after %u tries\n", __FUNCTION__, 
+                   handle ? "hit" : "miss", tries);
    
    return handle;
 }
@@ -128,6 +116,7 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    struct svga_host_surface_cache_entry *entry = NULL;
    struct svga_winsys_surface *handle = *p_handle;
    
+   assert(key->cachable);
 
    assert(handle);
    if(!handle)
@@ -137,15 +126,15 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    pipe_mutex_lock(cache->mutex);
    
    if(!LIST_IS_EMPTY(&cache->empty)) {
-        /* use the first empty entry */
-        entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->empty.next, head);
+      /* use the first empty entry */
+      entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->empty.next, head);
         
-        LIST_DEL(&entry->head);
-     }
+      LIST_DEL(&entry->head);
+   }
    else if(!LIST_IS_EMPTY(&cache->unused)) {
       /* free the last used buffer and reuse its entry */
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->unused.prev, head);
-      SVGA_DBG(DEBUG_DMA, "unref sid %p\n", entry->handle);
+      SVGA_DBG(DEBUG_DMA, "unref sid %p (make space)\n", entry->handle);
       sws->surface_reference(sws, &entry->handle, NULL);
 
       LIST_DEL(&entry->bucket_head);
@@ -161,7 +150,7 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    }
    else {
       /* Couldn't cache the buffer -- this really shouldn't happen */
-      SVGA_DBG(DEBUG_DMA, "unref sid %p\n", handle);
+      SVGA_DBG(DEBUG_DMA, "unref sid %p (couldn't find space)\n", handle);
       sws->surface_reference(sws, &handle, NULL);
    }
    
@@ -220,7 +209,7 @@ svga_screen_cache_cleanup(struct svga_screen *svgascreen)
    
    for(i = 0; i < SVGA_HOST_SURFACE_CACHE_SIZE; ++i) {
       if(cache->entries[i].handle) {
-	 SVGA_DBG(DEBUG_DMA, "unref sid %p\n", cache->entries[i].handle);
+	 SVGA_DBG(DEBUG_DMA, "unref sid %p (shutdown)\n", cache->entries[i].handle);
 	 sws->surface_reference(sws, &cache->entries[i].handle, NULL);
       }
 
@@ -261,18 +250,42 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
 {
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_winsys_surface *handle = NULL;
+   boolean cachable = SVGA_SURFACE_CACHE_ENABLED && key->cachable;
 
-   if (SVGA_SURFACE_CACHE_ENABLED && key->format == SVGA3D_BUFFER) {
-      /* round the buffer size up to the nearest power of two to increase the
-       * probability of cache hits */
-      uint32_t size = 1;
-      while(size < key->size.width)
-         size <<= 1;
-      key->size.width = size;
-      
+   SVGA_DBG(DEBUG_DMA, "%s sz %dx%dx%d mips %d faces %d cachable %d\n", 
+            __FUNCTION__,
+            key->size.width,
+            key->size.height,
+            key->size.depth,
+            key->numMipLevels,
+            key->numFaces,
+            key->cachable);
+
+   if (cachable) {
+      if (key->format == SVGA3D_BUFFER) {
+         /* For buffers, round the buffer size up to the nearest power
+          * of two to increase the probability of cache hits.  Keep
+          * texture surface dimensions unchanged.
+          */
+         uint32_t size = 1;
+         while(size < key->size.width)
+            size <<= 1;
+         key->size.width = size;
+      }
+
       handle = svga_screen_cache_lookup(svgascreen, key);
-      if (handle)
-         SVGA_DBG(DEBUG_DMA, "  reuse sid %p sz %d\n", handle, size);
+      if (handle) {
+         if (key->format == SVGA3D_BUFFER)
+            SVGA_DBG(DEBUG_DMA, "  reuse sid %p sz %d (buffer)\n", handle, 
+                     key->size.width);
+         else
+            SVGA_DBG(DEBUG_DMA, "  reuse sid %p sz %dx%dx%d mips %d faces %d\n", handle, 
+                     key->size.width,
+                     key->size.height,
+                     key->size.depth,
+                     key->numMipLevels,
+                     key->numFaces);
+      }
    }
 
    if (!handle) {
@@ -297,11 +310,15 @@ svga_screen_surface_destroy(struct svga_screen *svgascreen,
 {
    struct svga_winsys_screen *sws = svgascreen->sws;
    
-   if(SVGA_SURFACE_CACHE_ENABLED && key->format == SVGA3D_BUFFER) {
+   /* We only set the cachable flag for surfaces of which we are the
+    * exclusive owner.  So just hold onto our existing reference in
+    * that case.
+    */
+   if(SVGA_SURFACE_CACHE_ENABLED && key->cachable) {
       svga_screen_cache_add(svgascreen, key, p_handle);
    }
    else {
-      SVGA_DBG(DEBUG_DMA, "unref sid %p\n", *p_handle);
+      SVGA_DBG(DEBUG_DMA, "unref sid %p (uncachable)\n", *p_handle);
       sws->surface_reference(sws, p_handle, NULL);
    }
 }
