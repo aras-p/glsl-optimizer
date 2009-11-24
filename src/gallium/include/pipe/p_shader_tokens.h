@@ -293,6 +293,8 @@ union tgsi_immediate_data
  * respectively. For a given operation code, those numbers are fixed and are
  * present here only for convenience.
  *
+ * If Predicate is TRUE, tgsi_instruction_predicate token immediately follows.
+ *
  * If Extended is TRUE, it is now executed.
  *
  * Saturate controls how are final results in destination registers modified.
@@ -306,7 +308,8 @@ struct tgsi_instruction
    unsigned Saturate   : 2;  /* TGSI_SAT_ */
    unsigned NumDstRegs : 2;  /* UINT */
    unsigned NumSrcRegs : 4;  /* UINT */
-   unsigned Padding    : 3;
+   unsigned Predicate  : 1;  /* BOOL */
+   unsigned Padding    : 2;
    unsigned Extended   : 1;  /* BOOL */
 };
 
@@ -323,7 +326,6 @@ struct tgsi_instruction
 
 #define TGSI_INSTRUCTION_EXT_TYPE_LABEL     1
 #define TGSI_INSTRUCTION_EXT_TYPE_TEXTURE   2
-#define TGSI_INSTRUCTION_EXT_TYPE_PREDICATE 3
 
 struct tgsi_instruction_ext
 {
@@ -338,9 +340,6 @@ struct tgsi_instruction_ext
  * 
  * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_TEXTURE, it
  * should be cast to tgsi_instruction_ext_texture.
- * 
- * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_PREDICATE, it
- * should be cast to tgsi_instruction_ext_predicate.
  * 
  * If tgsi_instruction_ext::Extended is TRUE, another tgsi_instruction_ext
  * follows.
@@ -382,17 +381,15 @@ struct tgsi_instruction_ext_texture
  * For SM3, the following constraint applies.
  *   - Swizzle is either set to identity or replicate.
  */
-struct tgsi_instruction_ext_predicate
+struct tgsi_instruction_predicate
 {
-   unsigned Type     : 4;  /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
+   int      Index    : 16; /* SINT */
    unsigned SwizzleX : 2;  /* TGSI_SWIZZLE_x */
    unsigned SwizzleY : 2;  /* TGSI_SWIZZLE_x */
    unsigned SwizzleZ : 2;  /* TGSI_SWIZZLE_x */
    unsigned SwizzleW : 2;  /* TGSI_SWIZZLE_x */
    unsigned Negate   : 1;  /* BOOL */
-   unsigned SrcIndex : 8;  /* UINT */
-   unsigned Padding  : 10;
-   unsigned Extended : 1;  /* BOOL */
+   unsigned Padding  : 7;
 };
 
 /**
