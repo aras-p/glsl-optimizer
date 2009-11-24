@@ -6503,14 +6503,14 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
         };
     }
 
-    if(0 == pAsm->unSubArrayPointer)
-    {
-        return GL_TRUE;
-    }
-
     if(pAsm->CALLSTACK[0].max > 0)
     {
         pAsm->pR700Shader->uStackSize = ((pAsm->CALLSTACK[0].max + 3)>>2) + 2;
+    }
+
+    if(0 == pAsm->unSubArrayPointer)
+    {
+        return GL_TRUE;
     }
 
     unCFoffset = plstCFmain->uNumOfNode;
