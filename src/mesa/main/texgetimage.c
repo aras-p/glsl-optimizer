@@ -554,7 +554,9 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
       GLuint bw, bh;
       _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
       for (i = 0; i < (texImage->Height + bh - 1) / bh; i++) {
-         memcpy(img + i * row_stride, texImage->Data + i * row_stride_stored, row_stride);
+         memcpy((GLubyte *)img + i * row_stride,
+                (GLubyte *)texImage->Data + i * row_stride_stored,
+                row_stride);
       }
    }
 
