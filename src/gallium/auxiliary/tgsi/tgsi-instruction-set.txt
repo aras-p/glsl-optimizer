@@ -1129,3 +1129,35 @@ TGSI Instruction Specification
 
   target            Label of target instruction.
 
+
+3  Other tokens
+===============
+
+
+3.1  Declaration Semantic
+-------------------------
+
+
+  Follows Declaration token if Semantic bit is set.
+
+  Since its purpose is to link a shader with other stages of the pipeline,
+  it is valid to follow only those Declaration tokens that declare a register
+  either in INPUT or OUTPUT file.
+
+  SemanticName field contains the semantic name of the register being declared.
+  There is no default value.
+
+  SemanticIndex is an optional subscript that can be used to distinguish
+  different register declarations with the same semantic name. The default value
+  is 0.
+
+  The meanings of the individual semantic names are explained in the following
+  sections.
+
+
+3.1.1  FACE
+
+  Valid only in a fragment shader INPUT declaration.
+
+  FACE.x is negative when the primitive is back facing. FACE.x is positive
+  when the primitive is front facing.
