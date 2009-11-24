@@ -53,7 +53,7 @@
 
 #include "xorg_tracker.h"
 
-static char *connector_enum_list[] = {
+static char *output_enum_list[] = {
     "Unknown",
     "VGA",
     "DVI",
@@ -70,19 +70,19 @@ static char *connector_enum_list[] = {
 };
 
 static void
-create_resources(xf86OutputPtr output)
+output_create_resources(xf86OutputPtr output)
 {
 #ifdef RANDR_12_INTERFACE
 #endif /* RANDR_12_INTERFACE */
 }
 
 static void
-dpms(xf86OutputPtr output, int mode)
+output_dpms(xf86OutputPtr output, int mode)
 {
 }
 
 static xf86OutputStatus
-detect(xf86OutputPtr output)
+output_detect(xf86OutputPtr output)
 {
     drmModeConnectorPtr drm_connector = output->driver_private;
 
@@ -97,7 +97,7 @@ detect(xf86OutputPtr output)
 }
 
 static DisplayModePtr
-get_modes(xf86OutputPtr output)
+output_get_modes(xf86OutputPtr output)
 {
     drmModeConnectorPtr drm_connector = output->driver_private;
     drmModeModeInfoPtr drm_mode = NULL;
@@ -135,14 +135,14 @@ get_modes(xf86OutputPtr output)
 }
 
 static int
-mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
+output_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
     return MODE_OK;
 }
 
 #ifdef RANDR_12_INTERFACE
 static Bool
-set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
+output_set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
 {
     return TRUE;
 }
@@ -150,32 +150,32 @@ set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
 
 #ifdef RANDR_13_INTERFACE
 static Bool
-get_property(xf86OutputPtr output, Atom property)
+output_get_property(xf86OutputPtr output, Atom property)
 {
     return TRUE;
 }
 #endif /* RANDR_13_INTERFACE */
 
 static void
-destroy(xf86OutputPtr output)
+output_destroy(xf86OutputPtr output)
 {
     drmModeFreeConnector(output->driver_private);
 }
 
 static const xf86OutputFuncsRec output_funcs = {
-    .create_resources = create_resources,
+    .create_resources = output_create_resources,
 #ifdef RANDR_12_INTERFACE
-    .set_property = set_property,
+    .set_property = output_set_property,
 #endif
 #ifdef RANDR_13_INTERFACE
-    .get_property = get_property,
+    .get_property = output_get_property,
 #endif
-    .dpms = dpms,
-    .detect = detect,
+    .dpms = output_dpms,
+    .detect = output_detect,
 
-    .get_modes = get_modes,
-    .mode_valid = mode_valid,
-    .destroy = destroy,
+    .get_modes = output_get_modes,
+    .mode_valid = output_mode_valid,
+    .destroy = output_destroy,
 };
 
 void
@@ -220,7 +220,7 @@ xorg_output_init(ScrnInfoPtr pScrn)
 #endif
 
 	snprintf(name, 32, "%s%d",
-		 connector_enum_list[drm_connector->connector_type],
+		 output_enum_list[drm_connector->connector_type],
 		 drm_connector->connector_type_id);
 
 
