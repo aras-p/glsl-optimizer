@@ -498,11 +498,11 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 {
     __DRIscreenPrivate *psp;
 
-    pdp->refcount--;
-    if (pdp->refcount)
-	return;
-
     if (pdp) {
+	pdp->refcount--;
+	if (pdp->refcount)
+	    return;
+
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if (pdp->pClipRects) {
