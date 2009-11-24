@@ -364,7 +364,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(fpc, fsrc);
 		}
@@ -373,7 +373,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 
 		switch (fsrc->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
@@ -433,8 +433,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		}
 	}
 
-	dst  = tgsi_dst(fpc, &finst->FullDstRegisters[0]);
-	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+	dst  = tgsi_dst(fpc, &finst->Dst[0]);
+	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
 	sat  = (finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE);
 
 	switch (finst->Instruction.Opcode) {

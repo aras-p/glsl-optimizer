@@ -265,15 +265,15 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_TEX;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = aactx->texTemp;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = aactx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Instruction.Texture = TRUE;
-      newInst.InstructionTexture.Texture = TGSI_TEXTURE_2D;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->maxInput + 1;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = aactx->freeSampler;
+      newInst.Texture.Texture = TGSI_TEXTURE_2D;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[0].SrcRegister.Index = aactx->maxInput + 1;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      newInst.Src[1].SrcRegister.Index = aactx->freeSampler;
 
       ctx->emit_instruction(ctx, &newInst);
 
@@ -281,26 +281,26 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MOV;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.FullDstRegisters[0].DstRegister.Index = aactx->colorOutput;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->colorTemp;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
       ctx->emit_instruction(ctx, &newInst);
 
       /* MUL alpha */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.FullDstRegisters[0].DstRegister.Index = aactx->colorOutput;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->colorTemp;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = aactx->texTemp;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].SrcRegister.Index = aactx->texTemp;
       ctx->emit_instruction(ctx, &newInst);
 
       /* END */
@@ -317,7 +317,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       uint i;
 
       for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-         struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+         struct tgsi_full_dst_register *dst = &inst->Dst[i];
          if (dst->DstRegister.File == TGSI_FILE_OUTPUT &&
              dst->DstRegister.Index == aactx->colorOutput) {
             dst->DstRegister.File = TGSI_FILE_TEMPORARY;

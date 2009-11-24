@@ -334,7 +334,7 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(vpc, fsrc);
 		}
@@ -343,7 +343,7 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 		switch (fsrc->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
 			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
@@ -378,8 +378,8 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 		}
 	}
 
-	dst  = tgsi_dst(vpc, &finst->FullDstRegisters[0]);
-	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+	dst  = tgsi_dst(vpc, &finst->Dst[0]);
+	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:

@@ -258,18 +258,18 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
 
     if (src->Instruction.NumDstRegs)
-        transform_dstreg(ttr, &dst->U.I.DstReg, &src->FullDstRegisters[0]);
+        transform_dstreg(ttr, &dst->U.I.DstReg, &src->Dst[0]);
 
     for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
-        if (src->FullSrcRegisters[i].SrcRegister.File == TGSI_FILE_SAMPLER)
-            dst->U.I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
+        if (src->Src[i].SrcRegister.File == TGSI_FILE_SAMPLER)
+            dst->U.I.TexSrcUnit = src->Src[i].SrcRegister.Index;
         else
-            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->FullSrcRegisters[i]);
+            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->Src[i]);
     }
 
     /* Texturing. */
     if (src->Instruction.Texture)
-       transform_texture(dst, src->InstructionTexture);
+       transform_texture(dst, src->Texture);
 }
 
 static void handle_immediate(struct tgsi_to_rc * ttr, struct tgsi_full_immediate * imm)

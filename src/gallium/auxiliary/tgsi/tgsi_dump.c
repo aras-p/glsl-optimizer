@@ -352,7 +352,7 @@ iter_instruction(
    }
 
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *dst = &inst->Dst[i];
 
       if (!first_reg)
          CHR( ',' );
@@ -380,7 +380,7 @@ iter_instruction(
    }
 
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *src = &inst->Src[i];
 
       if (!first_reg)
          CHR( ',' );
@@ -429,7 +429,7 @@ iter_instruction(
 
    if (inst->Instruction.Texture) {
       TXT( ", " );
-      ENM( inst->InstructionTexture.Texture, texture_names );
+      ENM( inst->Texture.Texture, texture_names );
    }
 
    switch (inst->Instruction.Opcode) {
@@ -439,7 +439,7 @@ iter_instruction(
    case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_CAL:
       TXT( " :" );
-      UID( inst->InstructionLabel.Label );
+      UID( inst->Label.Label );
       break;
    }
 

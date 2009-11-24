@@ -237,10 +237,10 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
       inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -415,10 +415,10 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
       inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -620,10 +620,10 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
       inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -642,10 +642,10 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    /* lerp t1, c1.x, t1, t2        ; Blend past and future texels */
    inst = vl_inst4(TGSI_OPCODE_LRP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-   inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+   inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+   inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+   inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+   inst.Src[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
    ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
    /* add o0, t0, t1               ; Add past/future ref and differential to form final output */

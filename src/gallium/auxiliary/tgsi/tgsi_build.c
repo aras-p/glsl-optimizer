@@ -473,14 +473,14 @@ tgsi_default_full_instruction( void )
    unsigned i;
 
    full_instruction.Instruction = tgsi_default_instruction();
-   full_instruction.InstructionPredicate = tgsi_default_instruction_predicate();
-   full_instruction.InstructionLabel = tgsi_default_instruction_label();
-   full_instruction.InstructionTexture = tgsi_default_instruction_texture();
+   full_instruction.Predicate = tgsi_default_instruction_predicate();
+   full_instruction.Label = tgsi_default_instruction_label();
+   full_instruction.Texture = tgsi_default_instruction_texture();
    for( i = 0;  i < TGSI_FULL_MAX_DST_REGISTERS; i++ ) {
-      full_instruction.FullDstRegisters[i] = tgsi_default_full_dst_register();
+      full_instruction.Dst[i] = tgsi_default_full_dst_register();
    }
    for( i = 0;  i < TGSI_FULL_MAX_SRC_REGISTERS; i++ ) {
-      full_instruction.FullSrcRegisters[i] = tgsi_default_full_src_register();
+      full_instruction.Src[i] = tgsi_default_full_src_register();
    }
 
    return full_instruction;
@@ -521,18 +521,18 @@ tgsi_build_full_instruction(
       size++;
 
       *instruction_predicate =
-         tgsi_build_instruction_predicate(full_inst->InstructionPredicate.Index,
-                                          full_inst->InstructionPredicate.Negate,
-                                          full_inst->InstructionPredicate.SwizzleX,
-                                          full_inst->InstructionPredicate.SwizzleY,
-                                          full_inst->InstructionPredicate.SwizzleZ,
-                                          full_inst->InstructionPredicate.SwizzleW,
+         tgsi_build_instruction_predicate(full_inst->Predicate.Index,
+                                          full_inst->Predicate.Negate,
+                                          full_inst->Predicate.SwizzleX,
+                                          full_inst->Predicate.SwizzleY,
+                                          full_inst->Predicate.SwizzleZ,
+                                          full_inst->Predicate.SwizzleW,
                                           instruction,
                                           header);
    }
 
    if( tgsi_compare_instruction_label(
-         full_inst->InstructionLabel,
+         full_inst->Label,
          tgsi_default_instruction_label() ) ) {
       struct tgsi_instruction_label *instruction_label;
 
@@ -543,7 +543,7 @@ tgsi_build_full_instruction(
       size++;
 
       *instruction_label = tgsi_build_instruction_label(
-         full_inst->InstructionLabel.Label,
+         full_inst->Label.Label,
          prev_token,
          instruction,
          header );
@@ -551,7 +551,7 @@ tgsi_build_full_instruction(
    }
 
    if( tgsi_compare_instruction_texture(
-         full_inst->InstructionTexture,
+         full_inst->Texture,
          tgsi_default_instruction_texture() ) ) {
       struct tgsi_instruction_texture *instruction_texture;
 
@@ -562,7 +562,7 @@ tgsi_build_full_instruction(
       size++;
 
       *instruction_texture = tgsi_build_instruction_texture(
-         full_inst->InstructionTexture.Texture,
+         full_inst->Texture.Texture,
          prev_token,
          instruction,
          header   );
@@ -570,7 +570,7 @@ tgsi_build_full_instruction(
    }
 
    for( i = 0;  i <   full_inst->Instruction.NumDstRegs; i++ ) {
-      const struct tgsi_full_dst_register *reg = &full_inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *reg = &full_inst->Dst[i];
       struct tgsi_dst_register *dst_register;
       struct tgsi_token *prev_token;
 
@@ -613,7 +613,7 @@ tgsi_build_full_instruction(
    }
 
    for( i = 0;  i < full_inst->Instruction.NumSrcRegs; i++ ) {
-      const struct tgsi_full_src_register *reg = &full_inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *reg = &full_inst->Src[i];
       struct tgsi_src_register *src_register;
       struct tgsi_token *prev_token;
 

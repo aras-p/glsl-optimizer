@@ -58,7 +58,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -1331,7 +1331,7 @@ emit_fetch(
 }
 
 #define FETCH( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_fetch( FUNC, XMM, &(INST).FullSrcRegisters[INDEX], CHAN )
+   emit_fetch( FUNC, XMM, &(INST).Src[INDEX], CHAN )
 
 /**
  * Register store.
@@ -1402,7 +1402,7 @@ emit_store(
 }
 
 #define STORE( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
+   emit_store( FUNC, XMM, &(INST).Dst[INDEX], &(INST), CHAN )
 
 
 static void PIPE_CDECL
@@ -1459,13 +1459,13 @@ emit_tex( struct x86_function *func,
           boolean lodbias,
           boolean projected)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].SrcRegister.Index;
    struct x86_reg args[2];
    unsigned count;
    unsigned i;
 
    assert(inst->Instruction.Texture);
-   switch (inst->InstructionTexture.Texture) {
+   switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       count = 1;
       break;
@@ -1720,13 +1720,13 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 {
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *reg = &inst->Src[i];
       if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
           reg->SrcRegister.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
       if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
           reg->DstRegister.Indirect)
          return TRUE;
@@ -2244,7 +2244,7 @@ emit_instruction(
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
-      emit_kil( func, &inst->FullSrcRegisters[0] );
+      emit_kil( func, &inst->Src[0] );
       break;
 
    case TGSI_OPCODE_PK2H:

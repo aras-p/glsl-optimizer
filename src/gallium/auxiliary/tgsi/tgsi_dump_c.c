@@ -334,8 +334,8 @@ dump_instruction_verbose(
    }
 
    for( i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-      struct tgsi_full_dst_register *fd = &fi->FullDstRegisters[i];
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
+      struct tgsi_full_dst_register *fd = &fi->Dst[i];
 
       EOL();
       TXT( "\nFile     : " );
@@ -387,8 +387,8 @@ dump_instruction_verbose(
    }
 
    for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
-      struct tgsi_full_src_register *fs = &fi->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
+      struct tgsi_full_src_register *fs = &fi->Src[i];
 
       EOL();
       TXT( "\nFile     : ");

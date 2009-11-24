@@ -280,28 +280,28 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = pctx->texTemp;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = wincoordInput;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_IMMEDIATE;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = pctx->numImmed;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[0].SrcRegister.Index = wincoordInput;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_IMMEDIATE;
+      newInst.Src[1].SrcRegister.Index = pctx->numImmed;
       ctx->emit_instruction(ctx, &newInst);
 
       /* TEX texTemp, texTemp, sampler; */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_TEX;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = pctx->texTemp;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Instruction.Texture = TRUE;
-      newInst.InstructionTexture.Texture = TGSI_TEXTURE_2D;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = pctx->texTemp;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = pctx->freeSampler;
+      newInst.Texture.Texture = TGSI_TEXTURE_2D;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = pctx->texTemp;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      newInst.Src[1].SrcRegister.Index = pctx->freeSampler;
       ctx->emit_instruction(ctx, &newInst);
 
       /* KIL -texTemp;   # if -texTemp < 0, KILL fragment */
@@ -309,9 +309,9 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = pctx->texTemp;
-      newInst.FullSrcRegisters[0].SrcRegister.Negate = 1;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = pctx->texTemp;
+      newInst.Src[0].SrcRegister.Negate = 1;
       ctx->emit_instruction(ctx, &newInst);
    }
 

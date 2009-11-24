@@ -153,36 +153,36 @@ tgsi_parse_token(
       copy_token(&inst->Instruction, &token);
 
       if (inst->Instruction.Predicate) {
-         next_token(ctx, &inst->InstructionPredicate);
+         next_token(ctx, &inst->Predicate);
       }
 
       if (inst->Instruction.Label) {
-         next_token( ctx, &inst->InstructionLabel);
+         next_token( ctx, &inst->Label);
       }
 
       if (inst->Instruction.Texture) {
-         next_token( ctx, &inst->InstructionTexture);
+         next_token( ctx, &inst->Texture);
       }
 
       assert( inst->Instruction.NumDstRegs <= TGSI_FULL_MAX_DST_REGISTERS );
 
       for(  i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
 
-         next_token( ctx, &inst->FullDstRegisters[i].DstRegister );
+         next_token( ctx, &inst->Dst[i].DstRegister );
 
          /*
           * No support for indirect or multi-dimensional addressing.
           */
-         assert( !inst->FullDstRegisters[i].DstRegister.Dimension );
+         assert( !inst->Dst[i].DstRegister.Dimension );
 
-         if( inst->FullDstRegisters[i].DstRegister.Indirect ) {
-            next_token( ctx, &inst->FullDstRegisters[i].DstRegisterInd );
+         if( inst->Dst[i].DstRegister.Indirect ) {
+            next_token( ctx, &inst->Dst[i].DstRegisterInd );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->FullDstRegisters[i].DstRegisterInd.Dimension );
-            assert( !inst->FullDstRegisters[i].DstRegisterInd.Indirect );
+            assert( !inst->Dst[i].DstRegisterInd.Dimension );
+            assert( !inst->Dst[i].DstRegisterInd.Indirect );
          }
       }
 
@@ -190,34 +190,34 @@ tgsi_parse_token(
 
       for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
 
-         next_token( ctx, &inst->FullSrcRegisters[i].SrcRegister );
+         next_token( ctx, &inst->Src[i].SrcRegister );
 
-         if( inst->FullSrcRegisters[i].SrcRegister.Indirect ) {
-            next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterInd );
+         if( inst->Src[i].SrcRegister.Indirect ) {
+            next_token( ctx, &inst->Src[i].SrcRegisterInd );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Indirect );
-            assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Dimension );
+            assert( !inst->Src[i].SrcRegisterInd.Indirect );
+            assert( !inst->Src[i].SrcRegisterInd.Dimension );
          }
 
-         if( inst->FullSrcRegisters[i].SrcRegister.Dimension ) {
-            next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterDim );
+         if( inst->Src[i].SrcRegister.Dimension ) {
+            next_token( ctx, &inst->Src[i].SrcRegisterDim );
 
             /*
              * No support for multi-dimensional addressing.
              */
-            assert( !inst->FullSrcRegisters[i].SrcRegisterDim.Dimension );
+            assert( !inst->Src[i].SrcRegisterDim.Dimension );
 
-            if( inst->FullSrcRegisters[i].SrcRegisterDim.Indirect ) {
-               next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterDimInd );
+            if( inst->Src[i].SrcRegisterDim.Indirect ) {
+               next_token( ctx, &inst->Src[i].SrcRegisterDimInd );
 
                /*
                * No support for indirect or multi-dimensional addressing.
                */
-               assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Indirect );
-               assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Dimension );
+               assert( !inst->Src[i].SrcRegisterInd.Indirect );
+               assert( !inst->Src[i].SrcRegisterInd.Dimension );
             }
          }
       }

@@ -108,10 +108,10 @@
    for (CHAN = 0; CHAN < 4; CHAN++)
 
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define IS_CHANNEL_ENABLED2(INST, CHAN)\
-   ((INST).FullDstRegisters[1].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[1].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
    FOR_EACH_CHANNEL( CHAN )\
@@ -583,10 +583,10 @@ store_dest(
 }
 
 #define FETCH(VAL,INDEX,CHAN)\
-    fetch_source (mach, VAL, &inst->FullSrcRegisters[INDEX], CHAN)
+    fetch_source (mach, VAL, &inst->Src[INDEX], CHAN)
 
 #define STORE(VAL,INDEX,CHAN)\
-    store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN )
+    store_dest (mach, VAL, &inst->Dst[INDEX], inst, CHAN )
 
 
 /**
@@ -612,7 +612,7 @@ exec_kil(struct spu_exec_machine *mach,
 
       /* unswizzle channel */
       swizzle = tgsi_util_get_full_src_register_swizzle (
-                        &inst->FullSrcRegisters[0],
+                        &inst->Src[0],
                         chan_index);
 
       /* check if the component has not been already tested */
@@ -677,7 +677,7 @@ exec_tex(struct spu_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
          boolean biasLod, boolean projected)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].SrcRegister.Index;
    union spu_exec_channel r[8];
    uint chan_index;
    float lodBias;

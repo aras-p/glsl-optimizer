@@ -234,7 +234,7 @@ translate_instruction(llvm::Module *module,
    inputs[3] = 0;
 
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
       llvm::Value *val = 0;
       llvm::Value *indIdx = 0;
 
@@ -656,7 +656,7 @@ translate_instruction(llvm::Module *module,
 
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
          storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
@@ -683,7 +683,7 @@ translate_instructionir(llvm::Module *module,
    std::vector< std::vector<llvm::Value*> > inputs(inst->Instruction.NumSrcRegs);
 
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
       std::vector<llvm::Value*> val;
       llvm::Value *indIdx = 0;
       int swizzle = swizzleInt(src);
@@ -993,7 +993,7 @@ translate_instructionir(llvm::Module *module,
 
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
       storage->store((enum tgsi_file_type)dst->DstRegister.File,
                      dst->DstRegister.Index, out, dst->DstRegister.WriteMask,
 		     instr->getIRBuilder() );

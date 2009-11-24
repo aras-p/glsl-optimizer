@@ -96,7 +96,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                uint i;
                for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
                   const struct tgsi_full_src_register *src =
-                     &fullinst->FullSrcRegisters[i];
+                     &fullinst->Src[i];
                   if (src->SrcRegister.File == TGSI_FILE_INPUT) {
                      const int ind = src->SrcRegister.Index;
                      if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
@@ -205,9 +205,9 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
             struct tgsi_full_instruction *fullinst =
                &parse.FullToken.FullInstruction;
             const struct tgsi_full_src_register *src =
-               &fullinst->FullSrcRegisters[0];
+               &fullinst->Src[0];
             const struct tgsi_full_dst_register *dst =
-               &fullinst->FullDstRegisters[0];
+               &fullinst->Dst[0];
 
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||

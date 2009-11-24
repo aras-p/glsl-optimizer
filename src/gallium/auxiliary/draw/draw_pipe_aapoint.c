@@ -234,30 +234,30 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_XY;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_XY;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = texInput;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[0].SrcRegister.Index = texInput;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[1].SrcRegister.Index = texInput;
       ctx->emit_instruction(ctx, &newInst);
 
       /* ADD t0.x, t0.x, t0.y;  # x^2 + y^2 */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_ADD;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].SrcRegister.Index = tmp0;
+      newInst.Src[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
       ctx->emit_instruction(ctx, &newInst);
 
 #if NORMALIZE  /* OPTIONAL normalization of length */
@@ -265,24 +265,24 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RSQ;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
       ctx->emit_instruction(ctx, &newInst);
 
       /* RCP t0.x, t0.x; */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RCP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
       ctx->emit_instruction(ctx, &newInst);
 #endif
 
@@ -290,16 +290,16 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SGT;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[1].SrcRegister.Index = texInput;
+      newInst.Src[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
       ctx->emit_instruction(ctx, &newInst);
 
       /* KIL -tmp0.yyyy;   # if -tmp0.y < 0, KILL */
@@ -307,13 +307,13 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.Negate = 1;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.Negate = 1;
       ctx->emit_instruction(ctx, &newInst);
 
 
@@ -323,77 +323,77 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SUB;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[0].SrcRegister.Index = texInput;
+      newInst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[1].SrcRegister.Index = texInput;
+      newInst.Src[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
       ctx->emit_instruction(ctx, &newInst);
 
       /* RCP t0.z, t0.z;  # t0.z = 1 / m */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RCP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Z;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Z;
       ctx->emit_instruction(ctx, &newInst);
 
       /* SUB t0.y, 1, t0.x;  # d = 1 - d */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SUB;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[0].SrcRegister.Index = texInput;
+      newInst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].SrcRegister.Index = tmp0;
+      newInst.Src[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
       ctx->emit_instruction(ctx, &newInst);
 
       /* MUL t0.w, t0.y, t0.z;   # coverage = d * m */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_Z;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].SrcRegister.Index = tmp0;
+      newInst.Src[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_Z;
       ctx->emit_instruction(ctx, &newInst);
 
       /* SLE t0.y, t0.x, tex.z;  # bool b = distance <= k */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SLE;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Z;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[1].SrcRegister.Index = texInput;
+      newInst.Src[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Z;
       ctx->emit_instruction(ctx, &newInst);
 
       /* CMP t0.w, -t0.y, tex.w, t0.w;
@@ -405,29 +405,29 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_CMP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullDstRegisters[0].DstRegister.Index = tmp0;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].DstRegister.Index = tmp0;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 3;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
-      newInst.FullSrcRegisters[0].SrcRegister.Negate = 1;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = texInput;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[2].SrcRegister.Index = tmp0;
-      newInst.FullSrcRegisters[2].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[2].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[2].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-      newInst.FullSrcRegisters[2].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = tmp0;
+      newInst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+      newInst.Src[0].SrcRegister.Negate = 1;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_INPUT;
+      newInst.Src[1].SrcRegister.Index = texInput;
+      newInst.Src[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
+      newInst.Src[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+      newInst.Src[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
+      newInst.Src[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+      newInst.Src[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[2].SrcRegister.Index = tmp0;
+      newInst.Src[2].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
+      newInst.Src[2].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+      newInst.Src[2].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
+      newInst.Src[2].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
       ctx->emit_instruction(ctx, &newInst);
 
    }
@@ -439,26 +439,26 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MOV;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.FullDstRegisters[0].DstRegister.Index = aactx->colorOutput;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->colorTemp;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
       ctx->emit_instruction(ctx, &newInst);
 
       /* MUL result.color.w, colorTemp, tmp0.w; */
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.FullDstRegisters[0].DstRegister.Index = aactx->colorOutput;
-      newInst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
+      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->colorTemp;
-      newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = aactx->tmp0;
+      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
+      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].SrcRegister.Index = aactx->tmp0;
       ctx->emit_instruction(ctx, &newInst);
    }
    else {
@@ -468,7 +468,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       uint i;
 
       for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-         struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+         struct tgsi_full_dst_register *dst = &inst->Dst[i];
          if (dst->DstRegister.File == TGSI_FILE_OUTPUT &&
              dst->DstRegister.Index == aactx->colorOutput) {
             dst->DstRegister.File = TGSI_FILE_TEMPORARY;

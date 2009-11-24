@@ -60,7 +60,7 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -431,7 +431,7 @@ get_src_vec(struct gen_context *gen,
             struct tgsi_full_instruction *inst, int src_reg, uint chan)
 {
    const const struct tgsi_full_src_register *src = 
-      &inst->FullSrcRegisters[src_reg];
+      &inst->Src[src_reg];
    int vec;
    uint i;
 
@@ -482,7 +482,7 @@ get_dst_vec(struct gen_context *gen,
             const struct tgsi_full_instruction *inst,
             unsigned chan_index)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[0];
 
    if (is_ppc_vec_temporary_dst(reg)) {
       int vec = gen->temps_map[reg->DstRegister.Index][chan_index];
@@ -505,7 +505,7 @@ emit_store(struct gen_context *gen,
            unsigned chan_index,
            boolean free_vec)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[0];
 
    switch (reg->DstRegister.File) {
    case TGSI_FILE_OUTPUT:

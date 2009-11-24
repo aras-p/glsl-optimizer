@@ -213,7 +213,7 @@ create_frag_shader(struct vl_compositor *c)
     */
    for (i = 0; i < 4; ++i) {
       inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i);
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 

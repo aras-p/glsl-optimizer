@@ -405,7 +405,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(vpc, fsrc);
 		}
@@ -414,7 +414,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 
 		switch (fsrc->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
@@ -469,8 +469,8 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		}
 	}
 
-	dst  = tgsi_dst(vpc, &finst->FullDstRegisters[0]);
-	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+	dst  = tgsi_dst(vpc, &finst->Dst[0]);
+	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -681,7 +681,7 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 			const struct tgsi_full_dst_register *fdst;
 
 			finst = &p.FullToken.FullInstruction;
-			fdst = &finst->FullDstRegisters[0];
+			fdst = &finst->Dst[0];
 
 			if (fdst->DstRegister.File == TGSI_FILE_ADDRESS) {
 				if (fdst->DstRegister.Index > high_addr)

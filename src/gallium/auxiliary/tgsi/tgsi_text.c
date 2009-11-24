@@ -699,11 +699,11 @@ parse_instruction(
       }
 
       if (i < info->num_dst) {
-         if (!parse_dst_operand( ctx, &inst.FullDstRegisters[i] ))
+         if (!parse_dst_operand( ctx, &inst.Dst[i] ))
             return FALSE;
       }
       else if (i < info->num_dst + info->num_src) {
-         if (!parse_src_operand( ctx, &inst.FullSrcRegisters[i - info->num_dst] ))
+         if (!parse_src_operand( ctx, &inst.Src[i - info->num_dst] ))
             return FALSE;
       }
       else {
@@ -713,7 +713,7 @@ parse_instruction(
             if (str_match_no_case( &ctx->cur, texture_names[j] )) {
                if (!is_digit_alpha_underscore( ctx->cur )) {
                   inst.Instruction.Texture = 1;
-                  inst.InstructionTexture.Texture = j;
+                  inst.Texture.Texture = j;
                   break;
                }
             }
@@ -740,7 +740,7 @@ parse_instruction(
          return FALSE;
       }
       inst.Instruction.Label = 1;
-      inst.InstructionLabel.Label = target;
+      inst.Label.Label = target;
    }
 
    advance = tgsi_build_full_instruction(
