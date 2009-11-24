@@ -32,7 +32,7 @@
 #include "tgsi/tgsi_scan.h"
 #include "util/u_memory.h"
 
-#include "svgadump/st_shader_dump.h"
+#include "svgadump/svga_shader_dump.h"
 
 #include "svga_context.h"
 #include "svga_tgsi.h"

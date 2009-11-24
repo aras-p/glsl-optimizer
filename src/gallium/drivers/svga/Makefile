@@ -4,8 +4,8 @@ include $(TOP)/configs/current
 LIBNAME = svga
 
 C_SOURCES = \
-	svgadump/st_shader_dump.c \
-	svgadump/st_shader_op.c \
+	svgadump/svga_shader_dump.c \
+	svgadump/svga_shader_op.c \
 	svgadump/svga_dump.c \
 	svga_cmd.c \
 	svga_context.c \

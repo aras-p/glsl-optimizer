@@ -60,8 +60,8 @@ sources = [
     'svga_tgsi_insn.c',
     
     'svgadump/svga_dump.c',
-    'svgadump/st_shader_dump.c',
-    'svgadump/st_shader_op.c',
+    'svgadump/svga_shader_dump.c',
+    'svgadump/svga_shader_op.c',
 ]
 
 svga = env.ConvenienceLibrary(
