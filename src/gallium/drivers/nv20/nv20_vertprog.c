@@ -286,14 +286,14 @@ static INLINE struct nv20_sreg
 tgsi_dst(struct nv20_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 	struct nv20_sreg dst;
 
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
 		dst = nv20_sr(NV30SR_OUTPUT,
-			      vpc->output_map[fdst->DstRegister.Index]);
+			      vpc->output_map[fdst->Register.Index]);
 
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = nv20_sr(NV30SR_TEMP, fdst->DstRegister.Index);
+		dst = nv20_sr(NV30SR_TEMP, fdst->Register.Index);
 		if (vpc->high_temp < dst.index)
 			vpc->high_temp = dst.index;
 		break;
@@ -379,7 +379,7 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 	}
 
 	dst  = tgsi_dst(vpc, &finst->Dst[0]);
-	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:

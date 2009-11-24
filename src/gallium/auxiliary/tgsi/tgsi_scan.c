@@ -212,8 +212,8 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
                 src->SrcRegister.File != TGSI_FILE_INPUT ||
-                dst->DstRegister.File != TGSI_FILE_OUTPUT ||
-                src->SrcRegister.Index != dst->DstRegister.Index ||
+                dst->Register.File != TGSI_FILE_OUTPUT ||
+                src->SrcRegister.Index != dst->Register.Index ||
 
                 src->SrcRegister.Negate ||
                 src->SrcRegister.Absolute ||
@@ -223,7 +223,7 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
                 src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
                 src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ||
 
-                dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW)
+                dst->Register.WriteMask != TGSI_WRITEMASK_XYZW)
             {
                tgsi_parse_free(&parse);
                return FALSE;

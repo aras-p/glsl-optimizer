@@ -99,21 +99,21 @@ translate_dst_register( struct svga_shader_emitter *emit,
    const struct tgsi_full_dst_register *reg = &insn->Dst[idx];
    SVGA3dShaderDestToken dest;
 
-   switch (reg->DstRegister.File) {
+   switch (reg->Register.File) {
    case TGSI_FILE_OUTPUT:
       /* Output registers encode semantic information in their name.
        * Need to lookup a table built at decl time:
        */
-      dest = emit->output_map[reg->DstRegister.Index];
+      dest = emit->output_map[reg->Register.Index];
       break;
 
    default:
-      dest = dst_register( translate_file( reg->DstRegister.File ),
-                           reg->DstRegister.Index );
+      dest = dst_register( translate_file( reg->Register.File ),
+                           reg->Register.Index );
       break;
    }
 
-   dest.mask = reg->DstRegister.WriteMask;
+   dest.mask = reg->Register.WriteMask;
 
    if (insn->Instruction.Saturate) 
       dest.dstMod = SVGA3DDSTMOD_SATURATE;
@@ -1434,7 +1434,7 @@ static boolean emit_pow(struct svga_shader_emitter *emit,
    boolean need_tmp = FALSE;
    
    /* POW can only output to a temporary */
-   if (insn->Dst[0].DstRegister.File != TGSI_FILE_TEMPORARY)
+   if (insn->Dst[0].Register.File != TGSI_FILE_TEMPORARY)
       need_tmp = TRUE;
    
    /* POW src1 must not be the same register as dst */

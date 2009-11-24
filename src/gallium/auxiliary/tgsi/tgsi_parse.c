@@ -168,21 +168,21 @@ tgsi_parse_token(
 
       for(  i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
 
-         next_token( ctx, &inst->Dst[i].DstRegister );
+         next_token( ctx, &inst->Dst[i].Register );
 
          /*
           * No support for indirect or multi-dimensional addressing.
           */
-         assert( !inst->Dst[i].DstRegister.Dimension );
+         assert( !inst->Dst[i].Register.Dimension );
 
-         if( inst->Dst[i].DstRegister.Indirect ) {
-            next_token( ctx, &inst->Dst[i].DstRegisterInd );
+         if( inst->Dst[i].Register.Indirect ) {
+            next_token( ctx, &inst->Dst[i].Indirect );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->Dst[i].DstRegisterInd.Dimension );
-            assert( !inst->Dst[i].DstRegisterInd.Indirect );
+            assert( !inst->Dst[i].Indirect.Dimension );
+            assert( !inst->Dst[i].Indirect.Indirect );
          }
       }
 

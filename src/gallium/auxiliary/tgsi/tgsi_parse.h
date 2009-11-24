@@ -47,8 +47,8 @@ struct tgsi_full_header
 
 struct tgsi_full_dst_register
 {
-   struct tgsi_dst_register               DstRegister;
-   struct tgsi_src_register               DstRegisterInd;
+   struct tgsi_dst_register               Register;
+   struct tgsi_src_register               Indirect;
 };
 
 struct tgsi_full_src_register

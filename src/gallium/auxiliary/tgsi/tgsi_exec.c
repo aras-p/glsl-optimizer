@@ -107,10 +107,10 @@
 #define TEMP_P0            TGSI_EXEC_TEMP_P0
 
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
-   ((INST).Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IS_CHANNEL_ENABLED2(INST, CHAN)\
-   ((INST).Dst[1].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[1].Register.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)\
@@ -188,7 +188,7 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
 {
    uint i, chan;
 
-   uint writemask = inst->Dst[0].DstRegister.WriteMask;
+   uint writemask = inst->Dst[0].Register.WriteMask;
    if (writemask == TGSI_WRITEMASK_X ||
        writemask == TGSI_WRITEMASK_Y ||
        writemask == TGSI_WRITEMASK_Z ||
@@ -201,9 +201,9 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
    /* loop over src regs */
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       if ((inst->Src[i].SrcRegister.File ==
-           inst->Dst[0].DstRegister.File) &&
+           inst->Dst[0].Register.File) &&
           (inst->Src[i].SrcRegister.Index ==
-           inst->Dst[0].DstRegister.Index)) {
+           inst->Dst[0].Register.Index)) {
          /* loop over dest channels */
          uint channelsWritten = 0x0;
          FOR_EACH_ENABLED_CHANNEL(*inst, chan) {
@@ -1424,11 +1424,11 @@ store_dest(
     *
     *    file[ind[2].x+1],
     *    where:
-    *       ind = DstRegisterInd.File
-    *       [2] = DstRegisterInd.Index
-    *       .x = DstRegisterInd.SwizzleX
+    *       ind = Indirect.File
+    *       [2] = Indirect.Index
+    *       .x = Indirect.SwizzleX
     */
-   if (reg->DstRegister.Indirect) {
+   if (reg->Register.Indirect) {
       union tgsi_exec_channel index;
       union tgsi_exec_channel indir_index;
       uint swizzle;
@@ -1437,15 +1437,15 @@ store_dest(
       index.i[0] =
       index.i[1] =
       index.i[2] =
-      index.i[3] = reg->DstRegisterInd.Index;
+      index.i[3] = reg->Indirect.Index;
 
       /* get current value of address register[swizzle] */
-      swizzle = tgsi_util_get_src_register_swizzle( &reg->DstRegisterInd, CHAN_X );
+      swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
 
       /* fetch values from the address/indirection register */
       fetch_src_file_channel(
          mach,
-         reg->DstRegisterInd.File,
+         reg->Indirect.File,
          swizzle,
          &index,
          &indir_index );
@@ -1454,37 +1454,37 @@ store_dest(
       offset = (int) indir_index.f[0];
    }
 
-   switch (reg->DstRegister.File) {
+   switch (reg->Register.File) {
    case TGSI_FILE_NULL:
       dst = &null;
       break;
 
    case TGSI_FILE_OUTPUT:
       index = mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
-         + reg->DstRegister.Index;
+         + reg->Register.Index;
       dst = &mach->Outputs[offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_TEMPORARY:
-      index = reg->DstRegister.Index;
+      index = reg->Register.Index;
       assert( index < TGSI_EXEC_NUM_TEMPS );
       dst = &mach->Temps[offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:
-      index = reg->DstRegister.Index;
+      index = reg->Register.Index;
       dst = &mach->Addrs[index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_LOOP:
-      assert(reg->DstRegister.Index == 0);
+      assert(reg->Register.Index == 0);
       assert(mach->LoopCounterStackTop > 0);
       assert(chan_index == CHAN_X);
       dst = &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[chan_index];
       break;
 
    case TGSI_FILE_PREDICATE:
-      index = reg->DstRegister.Index;
+      index = reg->Register.Index;
       assert(index < TGSI_EXEC_NUM_PREDS);
       dst = &mach->Predicates[index].xyzw[chan_index];
       break;

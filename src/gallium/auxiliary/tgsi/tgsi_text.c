@@ -506,9 +506,9 @@ parse_dst_operand(
    if (!parse_opt_writemask( ctx, &writemask ))
       return FALSE;
 
-   dst->DstRegister.File = file;
-   dst->DstRegister.Index = index;
-   dst->DstRegister.WriteMask = writemask;
+   dst->Register.File = file;
+   dst->Register.Index = index;
+   dst->Register.WriteMask = writemask;
    return TRUE;
 }
 

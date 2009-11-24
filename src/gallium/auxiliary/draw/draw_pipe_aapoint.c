@@ -234,9 +234,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_XY;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XY;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
       newInst.Src[0].SrcRegister.Index = texInput;
@@ -248,9 +248,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_ADD;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -265,9 +265,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RSQ;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -277,9 +277,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RCP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -290,9 +290,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SGT;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -323,9 +323,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SUB;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_Z;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
       newInst.Src[0].SrcRegister.Index = texInput;
@@ -339,9 +339,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_RCP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Z;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_Z;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -352,9 +352,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SUB;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
       newInst.Src[0].SrcRegister.Index = texInput;
@@ -368,9 +368,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -384,9 +384,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_SLE;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_Y;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_Y;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -405,9 +405,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_CMP;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = tmp0;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = tmp0;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 3;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = tmp0;
@@ -439,9 +439,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MOV;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
+      newInst.Dst[0].Register.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].Register.Index = aactx->colorOutput;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZ;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
@@ -451,9 +451,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_OUTPUT;
-      newInst.Dst[0].DstRegister.Index = aactx->colorOutput;
-      newInst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_W;
+      newInst.Dst[0].Register.File = TGSI_FILE_OUTPUT;
+      newInst.Dst[0].Register.Index = aactx->colorOutput;
+      newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
@@ -469,10 +469,10 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
 
       for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
          struct tgsi_full_dst_register *dst = &inst->Dst[i];
-         if (dst->DstRegister.File == TGSI_FILE_OUTPUT &&
-             dst->DstRegister.Index == aactx->colorOutput) {
-            dst->DstRegister.File = TGSI_FILE_TEMPORARY;
-            dst->DstRegister.Index = aactx->colorTemp;
+         if (dst->Register.File == TGSI_FILE_OUTPUT &&
+             dst->Register.Index == aactx->colorOutput) {
+            dst->Register.File = TGSI_FILE_TEMPORARY;
+            dst->Register.Index = aactx->colorTemp;
          }
       }
    }

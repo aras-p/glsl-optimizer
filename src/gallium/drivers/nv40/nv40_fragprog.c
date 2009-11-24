@@ -290,15 +290,15 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 
 static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
-		return fpc->r_result[fdst->DstRegister.Index];
+		return fpc->r_result[fdst->Register.Index];
 	case TGSI_FILE_TEMPORARY:
-		return fpc->r_temp[fdst->DstRegister.Index];
+		return fpc->r_temp[fdst->Register.Index];
 	case TGSI_FILE_NULL:
 		return nv40_sr(NV40SR_NONE, 0);
 	default:
-		NOUVEAU_ERR("bad dst file %d\n", fdst->DstRegister.File);
+		NOUVEAU_ERR("bad dst file %d\n", fdst->Register.File);
 		return nv40_sr(NV40SR_NONE, 0);
 	}
 }
@@ -434,7 +434,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	}
 
 	dst  = tgsi_dst(fpc, &finst->Dst[0]);
-	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 	sat  = (finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE);
 
 	switch (finst->Instruction.Opcode) {

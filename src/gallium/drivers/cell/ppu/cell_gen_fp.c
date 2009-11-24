@@ -249,7 +249,7 @@ static boolean
 is_memory_dst(struct codegen *gen, int channel,
               const struct tgsi_full_dst_register *dst)
 {
-   if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
+   if (dst->Register.File == TGSI_FILE_OUTPUT) {
       return TRUE;
    }
    else {
@@ -374,12 +374,12 @@ get_dst_reg(struct codegen *gen,
 {
    int reg = -1;
 
-   switch (dest->DstRegister.File) {
+   switch (dest->Register.File) {
    case TGSI_FILE_TEMPORARY:
       if (gen->if_nesting > 0 || gen->loop_nesting > 0)
          reg = get_itemp(gen);
       else
-         reg = gen->temp_regs[dest->DstRegister.Index][channel];
+         reg = gen->temp_regs[dest->Register.Index][channel];
       break;
    case TGSI_FILE_OUTPUT:
       reg = get_itemp(gen);
@@ -419,10 +419,10 @@ store_dest_reg(struct codegen *gen,
    }
 #endif
 
-   switch (dest->DstRegister.File) {
+   switch (dest->Register.File) {
    case TGSI_FILE_TEMPORARY:
       if (gen->if_nesting > 0 || gen->loop_nesting > 0) {
-         int d_reg = gen->temp_regs[dest->DstRegister.Index][channel];
+         int d_reg = gen->temp_regs[dest->Register.Index][channel];
          int exec_reg = get_exec_mask_reg(gen);
          /* Mix d with new value according to exec mask:
           * d[i] = mask_reg[i] ? value_reg : d_reg
@@ -437,7 +437,7 @@ store_dest_reg(struct codegen *gen,
    case TGSI_FILE_OUTPUT:
       {
          /* offset is measured in quadwords, not bytes */
-         int offset = dest->DstRegister.Index * 4 + channel;
+         int offset = dest->Register.Index * 4 + channel;
          if (gen->if_nesting > 0 || gen->loop_nesting > 0) {
             int exec_reg = get_exec_mask_reg(gen);
             int curval_reg = get_itemp(gen);
@@ -544,7 +544,7 @@ emit_epilogue(struct codegen *gen)
 
 #define FOR_EACH_ENABLED_CHANNEL(inst, ch) \
    for (ch = 0; ch < 4; ch++) \
-      if (inst->Dst[0].DstRegister.WriteMask & (1 << ch))
+      if (inst->Dst[0].Register.WriteMask & (1 << ch))
 
 
 static boolean
@@ -948,7 +948,7 @@ emit_XPD(struct codegen *gen, const struct tgsi_full_instruction *inst)
    /* t = y0 * z1 - t */
    spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
-   if (inst->Dst[0].DstRegister.WriteMask & (1 << CHAN_X)) {
+   if (inst->Dst[0].Register.WriteMask & (1 << CHAN_X)) {
       store_dest_reg(gen, tmp_reg, CHAN_X, &inst->Dst[0]);
    }
 
@@ -962,7 +962,7 @@ emit_XPD(struct codegen *gen, const struct tgsi_full_instruction *inst)
    /* t = z0 * x1 - t */
    spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
-   if (inst->Dst[0].DstRegister.WriteMask & (1 << CHAN_Y)) {
+   if (inst->Dst[0].Register.WriteMask & (1 << CHAN_Y)) {
       store_dest_reg(gen, tmp_reg, CHAN_Y, &inst->Dst[0]);
    }
 
@@ -976,7 +976,7 @@ emit_XPD(struct codegen *gen, const struct tgsi_full_instruction *inst)
    /* t = x0 * y1 - t */
    spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
-   if (inst->Dst[0].DstRegister.WriteMask & (1 << CHAN_Z)) {
+   if (inst->Dst[0].Register.WriteMask & (1 << CHAN_Z)) {
       store_dest_reg(gen, tmp_reg, CHAN_Z, &inst->Dst[0]);
    }
 

@@ -64,7 +64,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST)->Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST)->Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -287,13 +287,13 @@ emit_store(
       assert(0);
    }
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      bld->outputs[reg->DstRegister.Index][chan_index] = value;
+      bld->outputs[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_TEMPORARY:
-      bld->temps[reg->DstRegister.Index][chan_index] = value;
+      bld->temps[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_ADDRESS:
@@ -430,8 +430,8 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
       const struct tgsi_full_dst_register *reg = &inst->Dst[i];
-      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->DstRegister.Indirect)
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    return FALSE;

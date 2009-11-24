@@ -212,8 +212,8 @@ iter_instruction(
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
       check_register_usage(
          ctx,
-         inst->Dst[i].DstRegister.File,
-         inst->Dst[i].DstRegister.Index,
+         inst->Dst[i].Register.File,
+         inst->Dst[i].Register.Index,
          "destination",
          FALSE );
    }
@@ -245,8 +245,8 @@ iter_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_BGNFOR:
    case TGSI_OPCODE_ENDFOR:
-      if (inst->Dst[0].DstRegister.File != TGSI_FILE_LOOP ||
-          inst->Dst[0].DstRegister.Index != 0) {
+      if (inst->Dst[0].Register.File != TGSI_FILE_LOOP ||
+          inst->Dst[0].Register.Index != 0) {
          report_error(ctx, "Destination register must be LOOP[0]");
       }
       break;

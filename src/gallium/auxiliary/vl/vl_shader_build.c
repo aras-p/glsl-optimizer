@@ -138,8 +138,8 @@ struct tgsi_full_instruction vl_inst2
 
    inst.Instruction.Opcode = opcode;
    inst.Instruction.NumDstRegs = 1;
-   inst.Dst[0].DstRegister.File = dst_file;
-   inst.Dst[0].DstRegister.Index = dst_index;
+   inst.Dst[0].Register.File = dst_file;
+   inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 1;
    inst.Src[0].SrcRegister.File = src_file;
    inst.Src[0].SrcRegister.Index = src_index;
@@ -162,8 +162,8 @@ struct tgsi_full_instruction vl_inst3
 
    inst.Instruction.Opcode = opcode;
    inst.Instruction.NumDstRegs = 1;
-   inst.Dst[0].DstRegister.File = dst_file;
-   inst.Dst[0].DstRegister.Index = dst_index;
+   inst.Dst[0].Register.File = dst_file;
+   inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 2;
    inst.Src[0].SrcRegister.File = src1_file;
    inst.Src[0].SrcRegister.Index = src1_index;
@@ -188,8 +188,8 @@ struct tgsi_full_instruction vl_tex
 
    inst.Instruction.Opcode = TGSI_OPCODE_TEX;
    inst.Instruction.NumDstRegs = 1;
-   inst.Dst[0].DstRegister.File = dst_file;
-   inst.Dst[0].DstRegister.Index = dst_index;
+   inst.Dst[0].Register.File = dst_file;
+   inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 2;
    inst.Instruction.Texture = 1;
    inst.Texture.Texture = tex;
@@ -218,8 +218,8 @@ struct tgsi_full_instruction vl_inst4
 
    inst.Instruction.Opcode = opcode;
    inst.Instruction.NumDstRegs = 1;
-   inst.Dst[0].DstRegister.File = dst_file;
-   inst.Dst[0].DstRegister.Index = dst_index;
+   inst.Dst[0].Register.File = dst_file;
+   inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 3;
    inst.Src[0].SrcRegister.File = src1_file;
    inst.Src[0].SrcRegister.Index = src1_index;

@@ -108,10 +108,10 @@
    for (CHAN = 0; CHAN < 4; CHAN++)
 
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
-   ((INST).Dst[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IS_CHANNEL_ENABLED2(INST, CHAN)\
-   ((INST).Dst[1].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[1].Register.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
    FOR_EACH_CHANNEL( CHAN )\
@@ -532,21 +532,21 @@ store_dest(
 {
    union spu_exec_channel *dst;
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_NULL:
       return;
 
    case TGSI_FILE_OUTPUT:
       dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
-                           + reg->DstRegister.Index].xyzw[chan_index];
+                           + reg->Register.Index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_TEMPORARY:
-      dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
+      dst = &mach->Temps[reg->Register.Index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:
-      dst = &mach->Addrs[reg->DstRegister.Index].xyzw[chan_index];
+      dst = &mach->Addrs[reg->Register.Index].xyzw[chan_index];
       break;
 
    default:

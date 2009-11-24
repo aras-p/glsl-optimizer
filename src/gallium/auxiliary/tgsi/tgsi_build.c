@@ -580,15 +580,15 @@ tgsi_build_full_instruction(
       size++;
 
       *dst_register = tgsi_build_dst_register(
-         reg->DstRegister.File,
-         reg->DstRegister.WriteMask,
-         reg->DstRegister.Indirect,
-         reg->DstRegister.Index,
+         reg->Register.File,
+         reg->Register.WriteMask,
+         reg->Register.Indirect,
+         reg->Register.Index,
          instruction,
          header );
       prev_token = (struct tgsi_token  *) dst_register;
 
-      if( reg->DstRegister.Indirect ) {
+      if( reg->Register.Indirect ) {
          struct tgsi_src_register *ind;
 
          if( maxsize <= size )
@@ -597,16 +597,16 @@ tgsi_build_full_instruction(
          size++;
 
          *ind = tgsi_build_src_register(
-            reg->DstRegisterInd.File,
-            reg->DstRegisterInd.SwizzleX,
-            reg->DstRegisterInd.SwizzleY,
-            reg->DstRegisterInd.SwizzleZ,
-            reg->DstRegisterInd.SwizzleW,
-            reg->DstRegisterInd.Negate,
-            reg->DstRegisterInd.Absolute,
-            reg->DstRegisterInd.Indirect,
-            reg->DstRegisterInd.Dimension,
-            reg->DstRegisterInd.Index,
+            reg->Indirect.File,
+            reg->Indirect.SwizzleX,
+            reg->Indirect.SwizzleY,
+            reg->Indirect.SwizzleZ,
+            reg->Indirect.SwizzleW,
+            reg->Indirect.Negate,
+            reg->Indirect.Absolute,
+            reg->Indirect.Indirect,
+            reg->Indirect.Dimension,
+            reg->Indirect.Index,
             instruction,
             header );
       }
@@ -980,8 +980,8 @@ tgsi_default_full_dst_register( void )
 {
    struct tgsi_full_dst_register full_dst_register;
 
-   full_dst_register.DstRegister = tgsi_default_dst_register();
-   full_dst_register.DstRegisterInd = tgsi_default_src_register();
+   full_dst_register.Register = tgsi_default_dst_register();
+   full_dst_register.Indirect = tgsi_default_src_register();
 
    return full_dst_register;
 }

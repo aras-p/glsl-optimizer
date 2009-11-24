@@ -1549,7 +1549,7 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 static unsigned
 nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 {
-	unsigned x, mask = insn->Dst[0].DstRegister.WriteMask;
+	unsigned x, mask = insn->Dst[0].Register.WriteMask;
 
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_COS:
@@ -1612,17 +1612,17 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
-	switch (dst->DstRegister.File) {
+	switch (dst->Register.File) {
 	case TGSI_FILE_TEMPORARY:
-		return &pc->temp[dst->DstRegister.Index * 4 + c];
+		return &pc->temp[dst->Register.Index * 4 + c];
 	case TGSI_FILE_OUTPUT:
-		return &pc->result[dst->DstRegister.Index * 4 + c];
+		return &pc->result[dst->Register.Index * 4 + c];
 	case TGSI_FILE_ADDRESS:
 	{
-		struct nv50_reg *r = pc->addr[dst->DstRegister.Index * 4 + c];
+		struct nv50_reg *r = pc->addr[dst->Register.Index * 4 + c];
 		if (!r) {
 			r = alloc_addr(pc, NULL);
-			pc->addr[dst->DstRegister.Index * 4 + c] = r;
+			pc->addr[dst->Register.Index * 4 + c] = r;
 		}
 		assert(r);
 		return r;
@@ -1850,7 +1850,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	unsigned mask, sat, unit;
 	int i, c;
 
-	mask = inst->Dst[0].DstRegister.WriteMask;
+	mask = inst->Dst[0].Register.WriteMask;
 	sat = inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE;
 
 	memset(src, 0, sizeof(src));
@@ -2264,7 +2264,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	const struct tgsi_dst_register *dst;
 	unsigned i, c, k, mask;
 
-	dst = &insn->Dst[0].DstRegister;
+	dst = &insn->Dst[0].Register;
 	mask = dst->WriteMask;
 
         if (dst->File == TGSI_FILE_TEMPORARY)
@@ -2359,13 +2359,13 @@ static struct nv50_reg *
 tgsi_broadcast_dst(struct nv50_pc *pc,
 		   const struct tgsi_full_dst_register *fd, unsigned mask)
 {
-	if (fd->DstRegister.File == TGSI_FILE_TEMPORARY) {
-		int c = ffs(~mask & fd->DstRegister.WriteMask);
+	if (fd->Register.File == TGSI_FILE_TEMPORARY) {
+		int c = ffs(~mask & fd->Register.WriteMask);
 		if (c)
 			return tgsi_dst(pc, c - 1, fd);
 	} else {
-		int c = ffs(fd->DstRegister.WriteMask) - 1;
-		if ((1 << c) == fd->DstRegister.WriteMask)
+		int c = ffs(fd->Register.WriteMask) - 1;
+		if ((1 << c) == fd->Register.WriteMask)
 			return tgsi_dst(pc, c, fd);
 	}
 
@@ -2391,8 +2391,8 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 		boolean neg_supp = negate_supported(insn, i);
 
 		fs = &insn->Src[i];
-		if (fs->SrcRegister.File != fd->DstRegister.File ||
-		    fs->SrcRegister.Index != fd->DstRegister.Index)
+		if (fs->SrcRegister.File != fd->Register.File ||
+		    fs->SrcRegister.Index != fd->Register.Index)
 			continue;
 
 		for (chn = 0; chn < 4; ++chn) {
@@ -2403,7 +2403,7 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 			c = tgsi_util_get_full_src_register_swizzle(fs, chn);
 			s = tgsi_util_get_full_src_register_sign_mode(fs, chn);
 
-			if (!(fd->DstRegister.WriteMask & (1 << c)))
+			if (!(fd->Register.WriteMask & (1 << c)))
 				continue;
 
 			/* no danger if src is copied to TEMP first */
@@ -2446,10 +2446,10 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	for (i = 0; i < 4; ++i) {
 		assert(pc->r_dst[m[i]] == NULL);
 
-		insn.Dst[0].DstRegister.WriteMask =
-			fd->DstRegister.WriteMask & (1 << m[i]);
+		insn.Dst[0].Register.WriteMask =
+			fd->Register.WriteMask & (1 << m[i]);
 
-		if (!insn.Dst[0].DstRegister.WriteMask)
+		if (!insn.Dst[0].Register.WriteMask)
 			continue;
 
 		if (deqs & (1 << i))

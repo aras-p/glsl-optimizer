@@ -358,23 +358,23 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      if (dst->DstRegister.Indirect) {
+      if (dst->Register.Indirect) {
          _dump_register_ind(
             ctx,
-            dst->DstRegister.File,
-            dst->DstRegister.Index,
-            dst->DstRegisterInd.File,
-            dst->DstRegisterInd.Index,
-            dst->DstRegisterInd.SwizzleX );
+            dst->Register.File,
+            dst->Register.Index,
+            dst->Indirect.File,
+            dst->Indirect.Index,
+            dst->Indirect.SwizzleX );
       }
       else {
          _dump_register(
             ctx,
-            dst->DstRegister.File,
-            dst->DstRegister.Index,
-            dst->DstRegister.Index );
+            dst->Register.File,
+            dst->Register.Index,
+            dst->Register.Index );
       }
-      _dump_writemask( ctx, dst->DstRegister.WriteMask );
+      _dump_writemask( ctx, dst->Register.WriteMask );
 
       first_reg = FALSE;
    }

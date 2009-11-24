@@ -658,12 +658,12 @@ translate_instruction(llvm::Module *module,
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->Dst[i];
 
-      if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
-         storage->setAddrElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+      if (dst->Register.File == TGSI_FILE_OUTPUT) {
+         storage->setOutputElement(dst->Register.Index, out, dst->Register.WriteMask);
+      } else if (dst->Register.File == TGSI_FILE_TEMPORARY) {
+         storage->setTempElement(dst->Register.Index, out, dst->Register.WriteMask);
+      } else if (dst->Register.File == TGSI_FILE_ADDRESS) {
+         storage->setAddrElement(dst->Register.Index, out, dst->Register.WriteMask);
       } else {
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
          assert(!"wrong destination");
@@ -994,8 +994,8 @@ translate_instructionir(llvm::Module *module,
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->Dst[i];
-      storage->store((enum tgsi_file_type)dst->DstRegister.File,
-                     dst->DstRegister.Index, out, dst->DstRegister.WriteMask,
+      storage->store((enum tgsi_file_type)dst->Register.File,
+                     dst->Register.Index, out, dst->Register.WriteMask,
 		     instr->getIRBuilder() );
    }
 }

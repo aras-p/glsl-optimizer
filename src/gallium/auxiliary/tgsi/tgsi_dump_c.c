@@ -339,48 +339,48 @@ dump_instruction_verbose(
 
       EOL();
       TXT( "\nFile     : " );
-      ENM( dst->DstRegister.File, TGSI_FILES );
-      if( deflt || fd->DstRegister.WriteMask != dst->DstRegister.WriteMask ) {
+      ENM( dst->Register.File, TGSI_FILES );
+      if( deflt || fd->Register.WriteMask != dst->Register.WriteMask ) {
          TXT( "\nWriteMask: " );
-         ENM( dst->DstRegister.WriteMask, TGSI_WRITEMASKS );
+         ENM( dst->Register.WriteMask, TGSI_WRITEMASKS );
       }
       if( ignored ) {
-         if( deflt || fd->DstRegister.Indirect != dst->DstRegister.Indirect ) {
+         if( deflt || fd->Register.Indirect != dst->Register.Indirect ) {
             TXT( "\nIndirect : " );
-            UID( dst->DstRegister.Indirect );
+            UID( dst->Register.Indirect );
          }
-         if( deflt || fd->DstRegister.Dimension != dst->DstRegister.Dimension ) {
+         if( deflt || fd->Register.Dimension != dst->Register.Dimension ) {
             TXT( "\nDimension: " );
-            UID( dst->DstRegister.Dimension );
+            UID( dst->Register.Dimension );
          }
       }
-      if( deflt || fd->DstRegister.Index != dst->DstRegister.Index ) {
+      if( deflt || fd->Register.Index != dst->Register.Index ) {
          TXT( "\nIndex    : " );
-         SID( dst->DstRegister.Index );
+         SID( dst->Register.Index );
       }
       if( ignored ) {
          TXT( "\nPadding  : " );
-         UIX( dst->DstRegister.Padding );
-         if( deflt || fd->DstRegister.Extended != dst->DstRegister.Extended ) {
+         UIX( dst->Register.Padding );
+         if( deflt || fd->Register.Extended != dst->Register.Extended ) {
             TXT( "\nExtended : " );
-            UID( dst->DstRegister.Extended );
+            UID( dst->Register.Extended );
          }
       }
 
-      if( deflt || tgsi_compare_dst_register_ext_modulate( dst->DstRegisterExtModulate, fd->DstRegisterExtModulate ) ) {
+      if( deflt || tgsi_compare_dst_register_ext_modulate( dst->RegisterExtModulate, fd->RegisterExtModulate ) ) {
          EOL();
          TXT( "\nType    : " );
-         ENM( dst->DstRegisterExtModulate.Type, TGSI_DST_REGISTER_EXTS );
-         if( deflt || fd->DstRegisterExtModulate.Modulate != dst->DstRegisterExtModulate.Modulate ) {
+         ENM( dst->RegisterExtModulate.Type, TGSI_DST_REGISTER_EXTS );
+         if( deflt || fd->RegisterExtModulate.Modulate != dst->RegisterExtModulate.Modulate ) {
             TXT( "\nModulate: " );
-            ENM( dst->DstRegisterExtModulate.Modulate, TGSI_MODULATES );
+            ENM( dst->RegisterExtModulate.Modulate, TGSI_MODULATES );
          }
          if( ignored ) {
             TXT( "\nPadding : " );
-            UIX( dst->DstRegisterExtModulate.Padding );
-            if( deflt || fd->DstRegisterExtModulate.Extended != dst->DstRegisterExtModulate.Extended ) {
+            UIX( dst->RegisterExtModulate.Padding );
+            if( deflt || fd->RegisterExtModulate.Extended != dst->RegisterExtModulate.Extended ) {
                TXT( "\nExtended: " );
-               UID( dst->DstRegisterExtModulate.Extended );
+               UID( dst->RegisterExtModulate.Extended );
             }
          }
       }

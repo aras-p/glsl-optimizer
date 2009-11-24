@@ -246,10 +246,10 @@ static uint
 get_result_vector(struct i915_fp_compile *p,
                   const struct tgsi_full_dst_register *dest)
 {
-   switch (dest->DstRegister.File) {
+   switch (dest->Register.File) {
    case TGSI_FILE_OUTPUT:
       {
-         uint sem_name = p->shader->info.output_semantic_name[dest->DstRegister.Index];
+         uint sem_name = p->shader->info.output_semantic_name[dest->Register.Index];
          switch (sem_name) {
          case TGSI_SEMANTIC_POSITION:
             return UREG(REG_TYPE_OD, 0);
@@ -261,7 +261,7 @@ get_result_vector(struct i915_fp_compile *p,
          }
       }
    case TGSI_FILE_TEMPORARY:
-      return UREG(REG_TYPE_R, dest->DstRegister.Index);
+      return UREG(REG_TYPE_R, dest->Register.Index);
    default:
       i915_program_error(p, "Bad inst->DstReg.File");
       return 0;
@@ -276,7 +276,7 @@ static uint
 get_result_flags(const struct tgsi_full_instruction *inst)
 {
    const uint writeMask
-      = inst->Dst[0].DstRegister.WriteMask;
+      = inst->Dst[0].Register.WriteMask;
    uint flags = 0x0;
 
    if (inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE)
@@ -738,7 +738,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       swizzle(tmp, X, Y, X, Y),
                       swizzle(tmp, X, X, ONE, ONE), 0);
 
-      writemask = inst->Dst[0].DstRegister.WriteMask;
+      writemask = inst->Dst[0].Register.WriteMask;
 
       if (writemask & TGSI_WRITEMASK_Y) {
          uint tmp1;

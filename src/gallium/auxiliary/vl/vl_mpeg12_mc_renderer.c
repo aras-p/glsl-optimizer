@@ -240,7 +240,7 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
       inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -418,7 +418,7 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -623,7 +623,7 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
       inst.Src[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
       inst.Src[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
-      inst.Dst[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 

@@ -361,8 +361,8 @@ static struct x86_reg aos_get_shader_reg_ptr( struct aos_compilation *cp,
 static struct x86_reg get_dst_ptr( struct aos_compilation *cp, 
                                    const struct tgsi_full_dst_register *dst )
 {
-   unsigned file = dst->DstRegister.File;
-   unsigned idx = dst->DstRegister.Index;
+   unsigned file = dst->Register.File;
+   unsigned idx = dst->Register.Index;
    unsigned i;
    
 
@@ -669,15 +669,15 @@ static void store_dest( struct aos_compilation *cp,
 {
    struct x86_reg dst;
 
-   switch (reg->DstRegister.WriteMask) {
+   switch (reg->Register.WriteMask) {
    case 0:
       return;
    
    case TGSI_WRITEMASK_XYZW:
       aos_adopt_xmm_reg(cp, 
                         get_xmm_writable(cp, result), 
-                        reg->DstRegister.File,
-                        reg->DstRegister.Index,
+                        reg->Register.File,
+                        reg->Register.Index,
                         TRUE);
       return;
    default: 
@@ -685,10 +685,10 @@ static void store_dest( struct aos_compilation *cp,
    }
 
    dst = aos_get_shader_reg_xmm(cp, 
-                                reg->DstRegister.File,
-                                reg->DstRegister.Index);
+                                reg->Register.File,
+                                reg->Register.Index);
 
-   switch (reg->DstRegister.WriteMask) {
+   switch (reg->Register.WriteMask) {
    case TGSI_WRITEMASK_X:
       sse_movss(cp->func, dst, get_xmm(cp, result));
       break;
@@ -710,14 +710,14 @@ static void store_dest( struct aos_compilation *cp,
       break;
 
    default:
-      mask_write(cp, dst, result, reg->DstRegister.WriteMask);
+      mask_write(cp, dst, result, reg->Register.WriteMask);
       break;
    }
 
    aos_adopt_xmm_reg(cp, 
                      dst, 
-                     reg->DstRegister.File,
-                     reg->DstRegister.Index,
+                     reg->Register.File,
+                     reg->Register.Index,
                      TRUE);
 
 }
@@ -737,7 +737,7 @@ static void store_scalar_dest( struct aos_compilation *cp,
                                const struct tgsi_full_dst_register *reg,
                                struct x86_reg result )
 {
-   unsigned writemask = reg->DstRegister.WriteMask;
+   unsigned writemask = reg->Register.WriteMask;
    struct x86_reg dst;
 
    if (writemask != TGSI_WRITEMASK_X &&
@@ -754,12 +754,12 @@ static void store_scalar_dest( struct aos_compilation *cp,
 
    result = get_xmm(cp, result);
    dst = aos_get_shader_reg_xmm(cp, 
-                                reg->DstRegister.File,
-                                reg->DstRegister.Index);
+                                reg->Register.File,
+                                reg->Register.Index);
 
 
 
-   switch (reg->DstRegister.WriteMask) {
+   switch (reg->Register.WriteMask) {
    case TGSI_WRITEMASK_X:
       sse_movss(cp->func, dst, result);
       break;
@@ -782,8 +782,8 @@ static void store_scalar_dest( struct aos_compilation *cp,
 
    aos_adopt_xmm_reg(cp, 
                      dst, 
-                     reg->DstRegister.File,
-                     reg->DstRegister.Index,
+                     reg->Register.File,
+                     reg->Register.Index,
                      TRUE);
 }
    
@@ -819,7 +819,7 @@ static void x87_fstp_dest4( struct aos_compilation *cp,
                             const struct tgsi_full_dst_register *dst )
 {
    struct x86_reg ptr = get_dst_ptr(cp, dst); 
-   unsigned writemask = dst->DstRegister.WriteMask;
+   unsigned writemask = dst->Register.WriteMask;
 
    x87_fst_or_nop(cp->func, writemask, 0, ptr);
    x87_fst_or_nop(cp->func, writemask, 1, ptr);
@@ -1100,7 +1100,7 @@ static boolean emit_EX2( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_FLR( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    struct x86_reg dst = get_dst_ptr(cp, &op->Dst[0]); 
-   unsigned writemask = op->Dst[0].DstRegister.WriteMask;
+   unsigned writemask = op->Dst[0].Register.WriteMask;
    int i;
 
    set_fpu_round_neg_inf( cp );
@@ -1127,7 +1127,7 @@ static boolean emit_FLR( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_RND( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    struct x86_reg dst = get_dst_ptr(cp, &op->Dst[0]); 
-   unsigned writemask = op->Dst[0].DstRegister.WriteMask;
+   unsigned writemask = op->Dst[0].Register.WriteMask;
    int i;
 
    set_fpu_round_nearest( cp );
@@ -1156,7 +1156,7 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg dst = get_dst_ptr(cp, &op->Dst[0]); 
    struct x86_reg st0 = x86_make_reg(file_x87, 0);
    struct x86_reg st1 = x86_make_reg(file_x87, 1);
-   unsigned writemask = op->Dst[0].DstRegister.WriteMask;
+   unsigned writemask = op->Dst[0].Register.WriteMask;
    int i;
 
    set_fpu_round_neg_inf( cp );
@@ -1190,7 +1190,7 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
-   unsigned writemask = op->Dst[0].DstRegister.WriteMask;
+   unsigned writemask = op->Dst[0].Register.WriteMask;
    unsigned lit_count = cp->lit_count++;
    struct x86_reg result, arg0;
    unsigned i;
@@ -1270,7 +1270,7 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_inline_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg dst = get_dst_ptr(cp, &op->Dst[0]); 
-   unsigned writemask = op->Dst[0].DstRegister.WriteMask;
+   unsigned writemask = op->Dst[0].Register.WriteMask;
 
    if (writemask & TGSI_WRITEMASK_YZ) {
       struct x86_reg st1 = x86_make_reg(file_x87, 1);
@@ -1897,10 +1897,10 @@ static void find_last_write_outputs( struct aos_compilation *cp )
          continue;
 
       for (i = 0; i < TGSI_FULL_MAX_DST_REGISTERS; i++) {
-         if (parse.FullToken.FullInstruction.Dst[i].DstRegister.File ==
+         if (parse.FullToken.FullInstruction.Dst[i].Register.File ==
              TGSI_FILE_OUTPUT) 
          {
-            unsigned idx = parse.FullToken.FullInstruction.Dst[i].DstRegister.Index;
+            unsigned idx = parse.FullToken.FullInstruction.Dst[i].Register.Index;
             cp->output_last_write[idx] = this_instruction;
          }
       }

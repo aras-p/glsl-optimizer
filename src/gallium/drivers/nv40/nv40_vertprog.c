@@ -326,15 +326,15 @@ static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 	struct nv40_sreg dst;
 
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
-		dst = vpc->r_result[fdst->DstRegister.Index];
+		dst = vpc->r_result[fdst->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = vpc->r_temp[fdst->DstRegister.Index];
+		dst = vpc->r_temp[fdst->Register.Index];
 		break;
 	case TGSI_FILE_ADDRESS:
-		dst = vpc->r_address[fdst->DstRegister.Index];
+		dst = vpc->r_address[fdst->Register.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad dst file\n");
@@ -470,7 +470,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	}
 
 	dst  = tgsi_dst(vpc, &finst->Dst[0]);
-	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -683,9 +683,9 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 			finst = &p.FullToken.FullInstruction;
 			fdst = &finst->Dst[0];
 
-			if (fdst->DstRegister.File == TGSI_FILE_ADDRESS) {
-				if (fdst->DstRegister.Index > high_addr)
-					high_addr = fdst->DstRegister.Index;
+			if (fdst->Register.File == TGSI_FILE_ADDRESS) {
+				if (fdst->Register.Index > high_addr)
+					high_addr = fdst->Register.Index;
 			}
 		
 		}

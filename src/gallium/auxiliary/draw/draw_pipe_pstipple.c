@@ -280,8 +280,8 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_MUL;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = pctx->texTemp;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
       newInst.Src[0].SrcRegister.Index = wincoordInput;
@@ -293,8 +293,8 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst = tgsi_default_full_instruction();
       newInst.Instruction.Opcode = TGSI_OPCODE_TEX;
       newInst.Instruction.NumDstRegs = 1;
-      newInst.Dst[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Dst[0].DstRegister.Index = pctx->texTemp;
+      newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Dst[0].Register.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Instruction.Texture = TRUE;
       newInst.Texture.Texture = TGSI_TEXTURE_2D;

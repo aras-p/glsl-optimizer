@@ -190,10 +190,10 @@ static void transform_dstreg(
     struct rc_dst_register * dst,
     struct tgsi_full_dst_register * src)
 {
-    dst->File = translate_register_file(src->DstRegister.File);
-    dst->Index = translate_register_index(ttr, src->DstRegister.File, src->DstRegister.Index);
-    dst->WriteMask = src->DstRegister.WriteMask;
-    dst->RelAddr = src->DstRegister.Indirect;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->WriteMask = src->Register.WriteMask;
+    dst->RelAddr = src->Register.Indirect;
 }
 
 static void transform_srcreg(

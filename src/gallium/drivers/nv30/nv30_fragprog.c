@@ -281,22 +281,22 @@ static INLINE struct nv30_sreg
 tgsi_dst(struct nv30_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
 	int idx;
 
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
-		if (fdst->DstRegister.Index == fpc->colour_id)
+		if (fdst->Register.Index == fpc->colour_id)
 			return nv30_sr(NV30SR_OUTPUT, 0);
 		else
 			return nv30_sr(NV30SR_OUTPUT, 1);
 		break;
 	case TGSI_FILE_TEMPORARY:
-		idx = fdst->DstRegister.Index + 1;
+		idx = fdst->Register.Index + 1;
 		if (fpc->high_temp < idx)
 			fpc->high_temp = idx;
 		return nv30_sr(NV30SR_TEMP, idx);
 	case TGSI_FILE_NULL:
 		return nv30_sr(NV30SR_NONE, 0);
 	default:
-		NOUVEAU_ERR("bad dst file %d\n", fdst->DstRegister.File);
+		NOUVEAU_ERR("bad dst file %d\n", fdst->Register.File);
 		return nv30_sr(NV30SR_NONE, 0);
 	}
 }
@@ -424,7 +424,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 	}
 
 	dst  = tgsi_dst(fpc, &finst->Dst[0]);
-	mask = tgsi_mask(finst->Dst[0].DstRegister.WriteMask);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 	sat  = (finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE);
 
 	switch (finst->Instruction.Opcode) {
