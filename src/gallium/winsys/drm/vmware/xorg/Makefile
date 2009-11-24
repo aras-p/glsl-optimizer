@@ -20,6 +20,9 @@ LIBS = \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a \
 	$(GALLIUM_AUXILIARIES)
 
+LINKS = \
+	$(shell pkg-config --libs libdrm)
+
 DRIVER_DEFINES = \
 	-DHAVE_CONFIG_H
 
@@ -31,9 +34,8 @@ TARGET_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
 
 all default: $(TARGET) $(TARGET_STAGING)
 
-$(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
-	$(TOP)/bin/mklib -noprefix -o $@ \
-	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm)
+$(TARGET): $(OBJECTS) Makefile $(LIBS)
+	$(MKLIB) -noprefix -o $@ $(OBJECTS) $(LIBS) $(LINKS)
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
