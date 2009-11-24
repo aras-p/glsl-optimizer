@@ -93,14 +93,6 @@ union tgsi_full_token
    struct tgsi_full_instruction  FullInstruction;
 };
 
-void
-tgsi_full_token_init(
-   union tgsi_full_token *full_token );
-
-void
-tgsi_full_token_free(
-   union tgsi_full_token *full_token );
-
 struct tgsi_parse_context
 {
    const struct tgsi_token    *Tokens;

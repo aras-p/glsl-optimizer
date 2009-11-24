@@ -30,19 +30,6 @@
 #include "tgsi_parse.h"
 #include "util/u_memory.h"
 
-void
-tgsi_full_token_init(
-   union tgsi_full_token *full_token )
-{
-   full_token->Token.Type = TGSI_TOKEN_TYPE_DECLARATION;
-}
-
-void
-tgsi_full_token_free(
-   union tgsi_full_token *full_token )
-{
-}
-
 unsigned
 tgsi_parse_init(
    struct tgsi_parse_context *ctx,
@@ -64,8 +51,6 @@ tgsi_parse_init(
    ctx->Tokens = tokens;
    ctx->Position = 1 + ctx->FullHeader.Header.HeaderSize;
 
-   tgsi_full_token_init( &ctx->FullToken );
-
    return TGSI_PARSE_OK;
 }
 
@@ -73,7 +58,6 @@ void
 tgsi_parse_free(
    struct tgsi_parse_context *ctx )
 {
-   tgsi_full_token_free( &ctx->FullToken );
 }
 
 boolean
@@ -117,9 +101,6 @@ tgsi_parse_token(
 {
    struct tgsi_token token;
    unsigned i;
-
-   tgsi_full_token_free( &ctx->FullToken );
-   tgsi_full_token_init( &ctx->FullToken );
 
    next_token( ctx, &token );
 
