@@ -326,7 +326,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    unsigned num_coords;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   switch (inst->InstructionTexture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
       break;

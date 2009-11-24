@@ -1575,10 +1575,10 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_TEX:
 	case TGSI_OPCODE_TXP:
 	{
-		const struct tgsi_instruction_ext_texture *tex;
+		const struct tgsi_instruction_texture *tex;
 
-		assert(insn->Instruction.Extended);
-		tex = &insn->InstructionExtTexture;
+		assert(insn->Instruction.Texture);
+		tex = &insn->InstructionTexture;
 
 		mask = 0x7;
 		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
@@ -2181,11 +2181,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_TEX:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->InstructionExtTexture.Texture, FALSE);
+			 inst->InstructionTexture.Texture, FALSE);
 		break;
 	case TGSI_OPCODE_TXP:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->InstructionExtTexture.Texture, TRUE);
+			 inst->InstructionTexture.Texture, TRUE);
 		break;
 	case TGSI_OPCODE_TRUNC:
 		for (c = 0; c < 4; c++) {

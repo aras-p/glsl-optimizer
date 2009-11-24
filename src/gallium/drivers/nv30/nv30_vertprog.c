@@ -273,7 +273,7 @@ tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 		break;
 	}
 
-	src.abs = fsrc->SrcRegisterExtMod.Absolute;
+	src.abs = fsrc->SrcRegister.Absolute;
 	src.negate = fsrc->SrcRegister.Negate;
 	src.swz[0] = fsrc->SrcRegister.SwizzleX;
 	src.swz[1] = fsrc->SrcRegister.SwizzleY;

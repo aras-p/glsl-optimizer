@@ -208,11 +208,11 @@ static void transform_srcreg(
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 1) << 3;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
-    dst->Abs = src->SrcRegisterExtMod.Absolute;
+    dst->Abs = src->SrcRegister.Absolute;
     dst->Negate = src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
 }
 
-static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_ext_texture src)
+static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_texture src)
 {
     switch(src.Texture) {
         case TGSI_TEXTURE_1D:
@@ -268,7 +268,8 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     }
 
     /* Texturing. */
-    transform_texture(dst, src->InstructionExtTexture);
+    if (src->Instruction.Texture)
+       transform_texture(dst, src->InstructionTexture);
 }
 
 static void handle_immediate(struct tgsi_to_rc * ttr, struct tgsi_full_immediate * imm)

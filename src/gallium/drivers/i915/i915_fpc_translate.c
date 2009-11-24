@@ -229,12 +229,11 @@ src_vector(struct i915_fp_compile *p,
       src = negate(src, n, n, n, n);
    }
 
-   /* no abs() or post-abs negation */
+   /* no abs() */
 #if 0
    /* XXX assertions disabled to allow arbfplight.c to run */
    /* XXX enable these assertions, or fix things */
-   assert(!source->SrcRegisterExtMod.Absolute);
-   assert(!source->SrcRegisterExtMod.Negate);
+   assert(!source->SrcRegister.Absolute);
 #endif
    return src;
 }
