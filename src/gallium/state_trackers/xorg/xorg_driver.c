@@ -402,8 +402,8 @@ PreInit(ScrnInfoPtr pScrn, int flags)
 
     SaveHWState(pScrn);
 
-    crtc_init(pScrn);
-    output_init(pScrn);
+    xorg_crtc_init(pScrn);
+    xorg_output_init(pScrn);
 
     if (!xf86InitialConfiguration(pScrn, TRUE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes.\n");
@@ -615,7 +615,7 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
                                                         OPTION_2D_ACCEL, TRUE));
     ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
 
-    xorg_init_video(pScreen);
+    xorg_xv_init(pScreen);
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -647,10 +647,8 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 
-#if 1
 #ifdef DRI2
-    driScreenInit(pScreen);
-#endif
+    xorg_dri2_init(pScreen);
 #endif
 
     return EnterVT(scrnIndex, 1);
@@ -689,7 +687,7 @@ LeaveVT(int scrnIndex, int flags)
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
 
-	crtc_cursor_destroy(crtc);
+	xorg_crtc_cursor_destroy(crtc);
 
 	if (crtc->rotatedPixmap || crtc->rotatedData) {
 	    crtc->funcs->shadow_destroy(crtc, crtc->rotatedPixmap,
@@ -769,7 +767,7 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
 	LeaveVT(scrnIndex, 0);
     }
 #ifdef DRI2
-    driCloseScreen(pScreen);
+    xorg_dri2_close(pScreen);
 #endif
 
     pScreen->BlockHandler = ms->blockHandler;

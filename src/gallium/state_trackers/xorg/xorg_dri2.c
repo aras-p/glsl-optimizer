@@ -356,7 +356,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 }
 
 Bool
-driScreenInit(ScreenPtr pScreen)
+xorg_dri2_init(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
@@ -395,7 +395,7 @@ driScreenInit(ScreenPtr pScreen)
 }
 
 void
-driCloseScreen(ScreenPtr pScreen)
+xorg_dri2_close(ScreenPtr pScreen)
 {
     DRI2CloseScreen(pScreen);
 }

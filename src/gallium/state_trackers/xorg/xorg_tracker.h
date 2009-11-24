@@ -141,33 +141,34 @@ xorg_exa_close(ScrnInfoPtr pScrn);
  * xorg_dri2.c
  */
 Bool
-driScreenInit(ScreenPtr pScreen);
+xorg_dri2_init(ScreenPtr pScreen);
 
 void
-driCloseScreen(ScreenPtr pScreen);
+xorg_dri2_close(ScreenPtr pScreen);
 
 
 /***********************************************************************
  * xorg_crtc.c
  */
 void
-crtc_init(ScrnInfoPtr pScrn);
+xorg_crtc_init(ScrnInfoPtr pScrn);
 
 void
-crtc_cursor_destroy(xf86CrtcPtr crtc);
+xorg_crtc_cursor_destroy(xf86CrtcPtr crtc);
 
 
 /***********************************************************************
  * xorg_output.c
  */
 void
-output_init(ScrnInfoPtr pScrn);
+xorg_output_init(ScrnInfoPtr pScrn);
+
 
 /***********************************************************************
  * xorg_xv.c
  */
 void
-xorg_init_video(ScreenPtr pScreen);
+xorg_xv_init(ScreenPtr pScreen);
 
 
 #endif /* _XORG_TRACKER_H_ */

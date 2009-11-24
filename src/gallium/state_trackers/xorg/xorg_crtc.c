@@ -235,7 +235,7 @@ crtc_hide_cursor(xf86CrtcPtr crtc)
 }
 
 void
-crtc_cursor_destroy(xf86CrtcPtr crtc)
+xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
 {
     struct crtc_private *crtcp = crtc->driver_private;
 
@@ -279,7 +279,7 @@ static const xf86CrtcFuncsRec crtc_funcs = {
 };
 
 void
-crtc_init(ScrnInfoPtr pScrn)
+xorg_crtc_init(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
     xf86CrtcPtr crtc;

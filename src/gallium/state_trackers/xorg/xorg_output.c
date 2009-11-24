@@ -179,7 +179,7 @@ static const xf86OutputFuncsRec output_funcs = {
 };
 
 void
-output_init(ScrnInfoPtr pScrn)
+xorg_output_init(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
     xf86OutputPtr output;

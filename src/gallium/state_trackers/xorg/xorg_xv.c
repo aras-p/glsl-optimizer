@@ -686,7 +686,7 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
 }
 
 void
-xorg_init_video(ScreenPtr pScreen)
+xorg_xv_init(ScreenPtr pScreen)
 {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    /*modesettingPtr ms = modesettingPTR(pScrn);*/
