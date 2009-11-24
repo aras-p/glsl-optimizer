@@ -110,7 +110,6 @@ output_get_modes(xf86OutputPtr output)
 	    mode = xcalloc(1, sizeof(DisplayModeRec));
 	    if (!mode)
 		continue;
-	    mode->type = 0;
 	    mode->Clock = drm_mode->clock;
 	    mode->HDisplay = drm_mode->hdisplay;
 	    mode->HSyncStart = drm_mode->hsync_start;
@@ -125,6 +124,11 @@ output_get_modes(xf86OutputPtr output)
 	    mode->VScan = drm_mode->vscan;
 	    mode->VRefresh = xf86ModeVRefresh(mode);
 	    mode->Private = (void *)drm_mode;
+	    mode->type = 0;
+	    if (drm_mode->type & DRM_MODE_TYPE_PREFERRED)
+		mode->type |= M_T_PREFERRED;
+	    if (drm_mode->type & DRM_MODE_TYPE_DRIVER)
+		mode->type |= M_T_DRIVER;
 	    xf86SetModeDefaultName(mode);
 	    modes = xf86ModesAdd(modes, mode);
 	    xf86PrintModeline(0, mode);
